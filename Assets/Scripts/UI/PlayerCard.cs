@@ -54,14 +54,14 @@ public class PlayerCard : MonoBehaviour
         color_changer = GetComponent<UIColorChanger>();
         name_input = GetComponent<InputField>();
 
-        name_text = transform.FindChild("Name").GetComponent<Text>();
-        Transform stats = transform.FindChild("Stats_T");
+        name_text = transform.Find("Name").GetComponent<Text>();
+        Transform stats = transform.Find("Stats_T");
         if (stats)
         {
             total_stats_text = stats.GetComponent<Text>();
         }
 
-        stats = transform.FindChild("Stats_S");
+        stats = transform.Find("Stats_S");
         if (stats)
         {
             session_stats_text = stats.GetComponent<Text>();
