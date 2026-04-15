@@ -53,6 +53,7 @@ cargo run --release -p gomoku-cli -- --black baseline --white random --time-ms 5
 | `--depth` | `5` | Fixed baseline depth (ignored if `--time-ms` is set) |
 | `--time-ms` | — | Time budget per move in milliseconds |
 | `--replay` | — | Write replay JSON to this path |
+| `--rule` | `freestyle` | Rule variant: `freestyle` or `renju` |
 | `--quiet` | — | Suppress per-move board printing |
 
 ---
@@ -76,10 +77,17 @@ Negamax with alpha-beta pruning, iterative deepening, and a transposition table 
 
 ```json
 {
-  "rules": { "board_size": 15, "win_length": 5 },
+  "hash_algo": {
+    "algorithm": "xorshift64",
+    "seed": 16045690984833335166
+  },
+  "rules": { "board_size": 15, "win_length": 5, "variant": "freestyle" },
   "black": "baseline",
   "white": "random",
-  "moves": [[7,7], [3,3], ...],
+  "moves": [
+    { "mv": "H8", "time_ms": 120, "hash": 123456789 },
+    { "mv": "D4", "time_ms": 5, "hash": 987654321, "trace": { "depth": 3 } }
+  ],
   "result": "black_wins",
   "duration_ms": 3520
 }
