@@ -1,7 +1,7 @@
 use std::time::Instant;
 
 use clap::Parser;
-use gomoku_core::{Board, Color, GameResult, Move, RuleConfig, Replay};
+use gomoku_core::{Board, Color, GameResult, Move, RuleConfig, Replay, Variant};
 use gomoku_bot::{Bot, RandomBot, SearchBot};
 
 #[derive(Parser, Debug)]
@@ -26,6 +26,10 @@ struct Args {
     /// Write replay JSON to this path
     #[arg(long)]
     replay: Option<String>,
+
+    /// Rule variant: "freestyle" (default) or "renju"
+    #[arg(long, default_value = "freestyle")]
+    rule: String,
 
     /// Suppress per-move board printing
     #[arg(long)]
@@ -75,7 +79,15 @@ fn color_name(c: Color) -> &'static str {
 fn main() {
     let args = Args::parse();
 
-    let config = RuleConfig::default();
+    let variant = match args.rule.as_str() {
+        "renju" => Variant::Renju,
+        "freestyle" => Variant::Freestyle,
+        other => {
+            eprintln!("Unknown rule variant '{}'. Using freestyle.", other);
+            Variant::Freestyle
+        }
+    };
+    let config = RuleConfig { variant, ..Default::default() };
     let mut board = Board::new(config.clone());
     let mut replay = Replay::new(config, &args.black, &args.white);
 

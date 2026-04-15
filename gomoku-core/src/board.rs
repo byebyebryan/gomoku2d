@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::rules::RuleConfig;
+use crate::rules::{RuleConfig, Variant};
 use crate::zobrist::ZobristTable;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -74,6 +74,8 @@ pub enum MoveError {
     OutOfBounds,
     Occupied,
     GameOver,
+    /// Renju: Black's move violates a restriction (overline, double-four, or double-three).
+    Forbidden,
 }
 
 impl std::fmt::Display for MoveError {
@@ -82,6 +84,7 @@ impl std::fmt::Display for MoveError {
             MoveError::OutOfBounds => write!(f, "move out of bounds"),
             MoveError::Occupied => write!(f, "cell already occupied"),
             MoveError::GameOver => write!(f, "game is already over"),
+            MoveError::Forbidden => write!(f, "move forbidden by Renju rules"),
         }
     }
 }
@@ -116,7 +119,12 @@ impl Board {
             return false;
         }
         let size = self.config.board_size;
-        mv.row < size && mv.col < size && self.cells[mv.row][mv.col].is_none()
+        if mv.row >= size || mv.col >= size { return false; }
+        if self.cells[mv.row][mv.col].is_some() { return false; }
+        if self.config.variant == Variant::Renju && self.current_player == Color::Black {
+            if self.is_renju_forbidden_at(mv) { return false; }
+        }
+        true
     }
 
     pub fn legal_moves(&self) -> Vec<Move> {
@@ -148,6 +156,12 @@ impl Board {
         }
 
         let color = self.current_player;
+        if self.config.variant == Variant::Renju && color == Color::Black {
+            if self.is_renju_forbidden_at(mv) {
+                return Err(MoveError::Forbidden);
+            }
+        }
+
         self.cells[mv.row][mv.col] = Some(color);
         self.history.push(mv);
 
@@ -163,12 +177,16 @@ impl Board {
 
     fn check_win(&self, mv: Move, color: Color) -> bool {
         let win_len = self.config.win_length as isize;
+        // Renju: Black wins only with exactly 5-in-a-row; overlines don't count.
+        let exact_five = self.config.variant == Variant::Renju && color == Color::Black;
 
         for (dr, dc) in DIRS {
             let count = 1
                 + self.count_direction(mv.row as isize, mv.col as isize, dr, dc, color)
                 + self.count_direction(mv.row as isize, mv.col as isize, -dr, -dc, color);
-            if count >= win_len {
+            if exact_five {
+                if count == win_len { return true; }
+            } else if count >= win_len {
                 return true;
             }
         }
@@ -189,6 +207,105 @@ impl Board {
             }
         }
         count
+    }
+
+    // --- Renju restriction helpers ---
+    //
+    // All functions below are called BEFORE the stone is placed.
+    // `cell_virtual` treats (vrow, vcol) as already containing `vcolor`.
+
+    fn cell_virtual(&self, r: isize, c: isize, vrow: isize, vcol: isize, vcolor: Color) -> Option<Cell> {
+        let size = self.config.board_size as isize;
+        if r < 0 || r >= size || c < 0 || c >= size { return None; }
+        if r == vrow && c == vcol { return Some(Some(vcolor)); }
+        Some(self.cells[r as usize][c as usize])
+    }
+
+    /// True if placing a Black stone at `mv` would create an overline, double-four, or
+    /// double-three. Winning moves (exactly 5-in-a-row) are never forbidden.
+    fn is_renju_forbidden_at(&self, mv: Move) -> bool {
+        let row = mv.row as isize;
+        let col = mv.col as isize;
+        let win_len = self.config.win_length as isize;
+        let color = Color::Black;
+
+        let mut creates_win = false;
+
+        for (dr, dc) in DIRS {
+            let run = 1
+                + self.count_direction(row, col, dr, dc, color)
+                + self.count_direction(row, col, -dr, -dc, color);
+            if run > 5 { return true; } // overline → always forbidden
+            if run == win_len { creates_win = true; }
+        }
+
+        if creates_win { return false; } // winning move takes priority
+
+        let mut four_dirs = 0u32;
+        let mut three_dirs = 0u32;
+        for (dr, dc) in DIRS {
+            if self.has_four_at(row, col, dr, dc, color) { four_dirs += 1; }
+            if self.has_open_three_at(row, col, dr, dc, color) { three_dirs += 1; }
+        }
+
+        four_dirs >= 2 || three_dirs >= 2
+    }
+
+    /// True if placing `color` at (row, col) creates a four in direction (dr, dc).
+    /// A four = any window of 5 cells containing (row,col) with exactly 4 `color` stones
+    /// and 1 empty cell (no opponent stones in the window).
+    fn has_four_at(&self, row: isize, col: isize, dr: isize, dc: isize, color: Color) -> bool {
+        for stone_pos in 0..=4isize {
+            let start = -stone_pos;
+            let mut black = 0u32;
+            let mut empty = 0u32;
+            let mut valid = true;
+            for i in 0..5isize {
+                let r = row + (start + i) * dr;
+                let c = col + (start + i) * dc;
+                match self.cell_virtual(r, c, row, col, color) {
+                    None => { valid = false; break; }
+                    Some(Some(cl)) if cl == color => black += 1,
+                    Some(None) => empty += 1,
+                    Some(Some(_)) => { valid = false; break; } // opponent
+                }
+            }
+            if valid && black == 4 && empty == 1 { return true; }
+        }
+        false
+    }
+
+    /// True if placing `color` at (row, col) creates an open three in direction (dr, dc).
+    /// An open three = any 6-cell window where (row,col) is at an inner position (1–4),
+    /// both endpoints are in-bounds and empty, inner 4 cells have exactly 3 `color` + 1 empty,
+    /// and no opponent stones appear anywhere in the window.
+    fn has_open_three_at(&self, row: isize, col: isize, dr: isize, dc: isize, color: Color) -> bool {
+        for stone_pos in 1..=4isize {
+            let start = -stone_pos;
+            let mut black = 0u32;
+            let mut empty = 0u32;
+            let mut valid = true;
+            for i in 0..6isize {
+                let r = row + (start + i) * dr;
+                let c = col + (start + i) * dc;
+                if i == 0 || i == 5 {
+                    // Endpoints must be on-board and empty
+                    match self.cell_virtual(r, c, row, col, color) {
+                        Some(None) => {}
+                        _ => { valid = false; break; }
+                    }
+                } else {
+                    match self.cell_virtual(r, c, row, col, color) {
+                        None => { valid = false; break; }
+                        Some(Some(cl)) if cl == color => black += 1,
+                        Some(None) => empty += 1,
+                        Some(Some(_)) => { valid = false; break; } // opponent
+                    }
+                }
+            }
+            if valid && black == 3 && empty == 1 { return true; }
+        }
+        false
     }
 
     /// Serialize board state to a compact string.
@@ -253,7 +370,7 @@ impl Board {
             return Err("cell string length mismatch".into());
         }
 
-        let config = RuleConfig { board_size, win_length };
+        let config = RuleConfig { board_size, win_length, ..Default::default() };
         let mut board = Board::new(config);
         board.current_player = turn;
 
@@ -353,6 +470,102 @@ mod tests {
         let b2 = Board::from_fen(&fen).unwrap();
         assert_eq!(b2.to_fen(), fen);
         assert_eq!(b2.current_player, b.current_player);
+    }
+
+    fn renju_board() -> Board {
+        Board::new(RuleConfig { variant: crate::rules::Variant::Renju, ..Default::default() })
+    }
+
+    // Helper: make alternating moves (Black, White, Black, ...) from a list of (row, col) pairs.
+    // Panics on any error.
+    fn setup(board: &mut Board, moves: &[(usize, usize)]) {
+        for &(row, col) in moves {
+            board.apply_move(Move { row, col }).unwrap();
+        }
+    }
+
+    // White stone placements that never form 5-in-a-row: row 14, every other column.
+    const W: [(usize,usize); 8] = [(14,0),(14,2),(14,4),(14,6),(14,8),(14,10),(14,12),(13,1)];
+
+    #[test]
+    fn renju_overline_forbidden() {
+        let mut b = renju_board();
+        // Black: cols 0,2,3,4,5 in row 0 (no five-in-a-row yet); White scattered.
+        // Placing at col 1 would create a run of 6 (cols 0–5).
+        setup(&mut b, &[
+            (0,0),W[0], (0,2),W[1], (0,3),W[2], (0,4),W[3], (0,5),W[4],
+        ]);
+        assert_eq!(b.apply_move(Move { row: 0, col: 1 }), Err(MoveError::Forbidden));
+    }
+
+    #[test]
+    fn renju_overline_not_a_win() {
+        // Overline placement is forbidden, not treated as a win.
+        // Black at cols 0,1,2,3 (four in a row) + col 5 (isolated). No five yet.
+        // Placing at col 4 closes the gap and creates a run of 6 (cols 0–5).
+        let mut b = renju_board();
+        setup(&mut b, &[
+            (0,0),W[0], (0,1),W[1], (0,2),W[2], (0,3),W[3], (0,5),W[4],
+        ]);
+        assert_eq!(b.apply_move(Move { row: 0, col: 4 }), Err(MoveError::Forbidden));
+    }
+
+    #[test]
+    fn renju_double_four_forbidden() {
+        let mut b = renju_board();
+        // Black: (7,3),(7,4),(7,5) horizontal + (4,7),(5,7),(6,7) vertical; White scattered.
+        // Placing at (7,7) creates a four in both directions simultaneously.
+        setup(&mut b, &[
+            (7,3),W[0], (7,4),W[1], (7,5),W[2],
+            (4,7),W[3], (5,7),W[4], (6,7),W[5],
+        ]);
+        assert_eq!(b.apply_move(Move { row: 7, col: 7 }), Err(MoveError::Forbidden));
+    }
+
+    #[test]
+    fn renju_double_three_forbidden() {
+        let mut b = renju_board();
+        // Black: (5,7),(6,7) vertical + (7,5),(7,6) horizontal; White scattered.
+        // Placing at (7,7) creates two open threes simultaneously.
+        setup(&mut b, &[
+            (5,7),W[0], (6,7),W[1], (7,5),W[2], (7,6),W[3],
+        ]);
+        assert_eq!(b.apply_move(Move { row: 7, col: 7 }), Err(MoveError::Forbidden));
+    }
+
+    #[test]
+    fn renju_white_unrestricted() {
+        let mut b = renju_board();
+        // Same double-three shape but for White — Black moves first, White builds.
+        setup(&mut b, &[
+            (0,0),(5,7), (0,2),(6,7), (0,4),(7,5), (0,6),(7,6),
+        ]);
+        // White tries (7,7): double-three but White has no restrictions.
+        assert!(b.apply_move(Move { row: 7, col: 7 }).is_ok());
+    }
+
+    #[test]
+    fn renju_five_in_row_wins() {
+        // Five-in-a-row is always a legal winning move for Black, even in Renju.
+        let mut b = renju_board();
+        setup(&mut b, &[
+            (7,3),W[0], (7,4),W[1], (7,5),W[2], (7,6),W[3],
+        ]);
+        let result = b.apply_move(Move { row: 7, col: 7 }).unwrap();
+        assert_eq!(result, GameResult::Winner(Color::Black));
+    }
+
+    #[test]
+    fn renju_freestyle_allows_overline() {
+        // In freestyle, 6-in-a-row is a win (not forbidden).
+        let mut b = default_board();
+        // Black: cols 0,1,2,3 + col 5 (no five); White scattered.
+        setup(&mut b, &[
+            (0,0),W[0], (0,1),W[1], (0,2),W[2], (0,3),W[3], (0,5),W[4],
+        ]);
+        // Col 4 closes to 6-in-a-row → win in freestyle.
+        let result = b.apply_move(Move { row: 0, col: 4 }).unwrap();
+        assert_eq!(result, GameResult::Winner(Color::Black));
     }
 
     #[test]
