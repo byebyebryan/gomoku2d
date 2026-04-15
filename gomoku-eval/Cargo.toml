@@ -3,6 +3,11 @@ name = "gomoku-eval"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "gomoku-eval"
+path = "src/main.rs"
+
 [dependencies]
 gomoku-core = { path = "../gomoku-core" }
 gomoku-bot = { path = "../gomoku-bot" }
+clap = { version = "4", features = ["derive"] }
