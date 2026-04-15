@@ -6,3 +6,4 @@ edition = "2021"
 [dependencies]
 gomoku-core = { path = "../gomoku-core" }
 rand = "0.8"
+serde_json = "1"

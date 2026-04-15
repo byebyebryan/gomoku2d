@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::rules::RuleConfig;
+use crate::zobrist::ZobristTable;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[repr(usize)]
@@ -33,6 +34,32 @@ pub type Cell = Option<Color>;
 pub struct Move {
     pub row: usize,
     pub col: usize,
+}
+
+impl Move {
+    /// Convert to display notation, e.g. `Move { row: 7, col: 7 }` → `"H8"`.
+    pub fn to_notation(self) -> String {
+        let col_char = (b'A' + self.col as u8) as char;
+        format!("{}{}", col_char, self.row + 1)
+    }
+
+    /// Parse display notation, e.g. `"H8"` → `Move { row: 7, col: 7 }`.
+    pub fn from_notation(s: &str) -> Result<Self, String> {
+        let s = s.trim();
+        if s.len() < 2 {
+            return Err(format!("invalid notation: '{s}'"));
+        }
+        let col_char = s.chars().next().unwrap().to_ascii_uppercase();
+        if !col_char.is_ascii_uppercase() {
+            return Err(format!("invalid column in notation: '{s}'"));
+        }
+        let col = (col_char as u8 - b'A') as usize;
+        let row: usize = s[1..].parse().map_err(|_| format!("invalid row in notation: '{s}'"))?;
+        if row == 0 {
+            return Err(format!("row in notation is 1-indexed, got 0: '{s}'"));
+        }
+        Ok(Move { row: row - 1, col })
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -189,6 +216,24 @@ impl Board {
         self.history.pop();
         self.current_player = self.current_player.opponent();
         self.result = GameResult::Ongoing;
+    }
+
+    /// Zobrist hash of the current position. Stable across crates — uses the
+    /// same seed as `ZobristTable::new(board_size)` in `gomoku-core`.
+    pub fn hash(&self) -> u64 {
+        let zt = ZobristTable::new(self.config.board_size);
+        let mut h = 0u64;
+        for row in 0..self.config.board_size {
+            for col in 0..self.config.board_size {
+                if let Some(color) = self.cells[row][col] {
+                    h ^= zt.piece(row, col, color);
+                }
+            }
+        }
+        if self.current_player == Color::White {
+            h ^= zt.turn;
+        }
+        h
     }
 
     pub fn from_fen(fen: &str) -> Result<Self, String> {
