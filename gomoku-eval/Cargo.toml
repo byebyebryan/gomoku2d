@@ -1,0 +1,8 @@
+[package]
+name = "gomoku-eval"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+gomoku-core = { path = "../gomoku-core" }
+gomoku-bot = { path = "../gomoku-bot" }

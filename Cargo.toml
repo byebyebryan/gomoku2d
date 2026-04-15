@@ -1,0 +1,9 @@
+[workspace]
+members = [
+    "gomoku-core",
+    "gomoku-bot",
+    "gomoku-eval",
+    "gomoku-cli",
+    "gomoku-wasm",
+]
+resolver = "2"
