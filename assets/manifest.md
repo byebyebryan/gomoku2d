@@ -19,18 +19,18 @@ Extracted from Unity project. All sprites are pixel-art style at 16x16 per frame
 
 | File | Total Size | Frames | Description |
 |------|-----------|--------|-------------|
-| `Gomoku Stone.png` | 544x16 | 34 | Stone show/idle/hide animations |
-| `Gomoku Pointer.png` | 304x16 | 19 | Cursor hover/pulse animations |
-| `Gomoku Grid Half Line.png` | 304x16 | 19 | Board grid line segments |
-| `Gomoku Warning L.png` | 160x16 | 10 | Win highlight (large overlay) |
-| `Gomoku Warning H.png` | 112x16 | 7 | Win highlight (horizontal) |
-| `Gomoku Numbers.png` | 160x16 | 10 | Digits 0-9 |
+| `gomoku_stone.png` | 544x16 | 34 | Stone show/idle/hide animations |
+| `gomoku_pointer.png` | 304x16 | 19 | Cursor hover/pulse animations |
+| `gomoku_grid_half_line.png` | 304x16 | 19 | Board grid line segments |
+| `gomoku_warning_l.png` | 160x16 | 10 | Win highlight (large overlay) |
+| `gomoku_warning_h.png` | 112x16 | 7 | Win highlight (horizontal) |
+| `gomoku_numbers.png` | 160x16 | 10 | Digits 0-9 |
 
 ### Font
 
 | File | Description |
 |------|-------------|
-| `Minecraft.ttf` | Pixel font, designed for size 16, no anti-aliasing |
+| `minecraft.ttf` | Pixel font, designed for size 16, no anti-aliasing |
 
 ---
 
@@ -45,7 +45,7 @@ frame_index → srcRect = (index * 16, 0, 16, 16)
 
 ## Animation Definitions
 
-### Stone Animations (from `Gomoku Stone.png`)
+### Stone Animations (from `gomoku_stone.png`)
 
 | Animation | Frames | Duration (s) | FPS | Trigger |
 |-----------|--------|-------------|-----|---------|
@@ -83,7 +83,7 @@ hide (default) ──[show trigger]──► show (stone-form anim)
 
 **Idle behavior:** After a random interval (5–10 seconds), one of relax-1 through relax-4 is picked randomly and plays once, then returns to static.
 
-### Pointer Animations (from `Gomoku Pointer.png`)
+### Pointer Animations (from `gomoku_pointer.png`)
 
 | Animation | Frames | Duration (s) | FPS | Trigger |
 |-----------|--------|-------------|-----|---------|
@@ -96,7 +96,7 @@ hide (default) ──[show trigger]──► show (stone-form anim)
 - Hovering occupied cell → same anims but bool `non_empty_cell = true` (different visual state)
 - Leaving cell → soft reset after delay, returns to off-screen
 
-### Warning Animation (from `Gomoku Warning L.png`)
+### Warning Animation (from `gomoku_warning_l.png`)
 
 | Animation | Frames | Duration (s) | FPS | Trigger |
 |-----------|--------|-------------|-----|---------|
@@ -106,7 +106,7 @@ hide (default) ──[show trigger]──► show (stone-form anim)
 
 ## Grid Line Frames
 
-`Gomoku Grid Half Line.png` has 19 frames representing different grid line segments (half-lines between two adjacent cells). Each Cell draws up to 4 half-lines (up, right, down, left) rotated appropriately:
+`gomoku_grid_half_line.png` has 19 frames representing different grid line segments (half-lines between two adjacent cells). Each Cell draws up to 4 half-lines (up, right, down, left) rotated appropriately:
 
 | Direction | Rotation (Z) | Scale |
 |-----------|-------------|-------|
