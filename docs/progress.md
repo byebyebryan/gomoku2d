@@ -9,7 +9,10 @@
 - Win detection: scans 4 directions from placed stone
 - FEN serialization (`to_fen` / `from_fen`) for board state snapshots
 - `Replay` struct — JSON in/out via serde, includes rules, player names, move list, result, duration
-- 10 unit tests (win detection, move errors, FEN round-trip, game-over guard)
+- `Variant` enum: `Freestyle` (default) and `Renju`; stored in `RuleConfig.variant` (serde default = freestyle, backward-compatible)
+- Renju restrictions for Black: overline (6+) forbidden, double-four forbidden, double-three forbidden; winning moves (exactly 5) always allowed; White unrestricted
+- `MoveError::Forbidden` for Renju violations; `is_legal` and `legal_moves` respect restrictions
+- 18 unit tests (win detection, move errors, FEN round-trip, game-over guard, all Renju cases)
 
 **gomoku-bot**
 - `Bot` trait: `name() + choose_move(&Board) -> Move`
