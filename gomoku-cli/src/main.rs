@@ -1,9 +1,8 @@
 use std::time::Instant;
 
 use clap::Parser;
-use gomoku_core::{Board, Color, GameResult, Move, RuleConfig};
+use gomoku_core::{Board, Color, GameResult, Move, RuleConfig, Replay};
 use gomoku_bot::{Bot, RandomBot, SearchBot};
-use gomoku_core::Replay;
 
 #[derive(Parser, Debug)]
 #[command(name = "gomoku-cli", about = "Run a Gomoku match between bots")]
@@ -94,28 +93,32 @@ fn main() {
             print_board(&board);
         }
 
-        let mv: Move = match board.current_player {
+        let player = board.current_player;
+        let move_start = Instant::now();
+        let mv: Move = match player {
             Color::Black => black_bot.choose_move(&board),
             Color::White => white_bot.choose_move(&board),
         };
+        let move_time_ms = move_start.elapsed().as_millis() as u64;
+        let trace = match player {
+            Color::Black => black_bot.trace(),
+            Color::White => white_bot.trace(),
+        };
 
-        let player = board.current_player;
         let bot_name = match player {
             Color::Black => black_bot.name(),
             Color::White => white_bot.name(),
         };
-        let col_label = (b'A' + mv.col as u8) as char;
         println!(
-            "Move {:3}  {}  {} {}{}",
+            "Move {:3}  {}  {} {}",
             move_num,
             color_name(player),
             bot_name,
-            col_label,
-            mv.row + 1
+            mv.to_notation(),
         );
 
-        replay.push_move(mv);
         let result = board.apply_move(mv).expect("bot played illegal move");
+        replay.push_move(mv, move_time_ms, board.hash(), trace);
 
         match result {
             GameResult::Ongoing => {}

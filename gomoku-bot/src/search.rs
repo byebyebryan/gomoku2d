@@ -1,52 +1,26 @@
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
-use gomoku_core::{Board, Color, Move, GameResult, DIRS};
+use gomoku_core::{Board, Color, Move, GameResult, DIRS, ZobristTable};
 use crate::Bot;
 
-// --- Zobrist hashing ---
+// ZobristTable is provided by gomoku-core with a stable shared seed,
+// so hashes are consistent between the search and replay recording.
 
-struct ZobristTable {
-    table: Vec<Vec<[u64; 2]>>, // [row][col][color_index]
-    turn: u64,
-}
-
-impl ZobristTable {
-    fn new(size: usize, seed: u64) -> Self {
-        let mut rng = seed;
-        let mut next = || -> u64 {
-            // xorshift64
-            rng ^= rng << 13;
-            rng ^= rng >> 7;
-            rng ^= rng << 17;
-            rng
-        };
-        let table = (0..size)
-            .map(|_| (0..size).map(|_| [next(), next()]).collect())
-            .collect();
-        Self { table, turn: next() }
-    }
-
-    fn hash_board(&self, board: &Board) -> u64 {
-        let size = board.config.board_size;
-        let mut h = 0u64;
-        for row in 0..size {
-            for col in 0..size {
-                if let Some(color) = board.cell(row, col) {
-                    h ^= self.piece(row, col, color);
-                }
+fn hash_board(zt: &ZobristTable, board: &Board) -> u64 {
+    let size = board.config.board_size;
+    let mut h = 0u64;
+    for row in 0..size {
+        for col in 0..size {
+            if let Some(color) = board.cell(row, col) {
+                h ^= zt.piece(row, col, color);
             }
         }
-        if board.current_player == Color::White {
-            h ^= self.turn;
-        }
-        h
     }
-
-    #[inline(always)]
-    fn piece(&self, row: usize, col: usize, color: Color) -> u64 {
-        self.table[row][col][color as usize]
+    if board.current_player == Color::White {
+        h ^= zt.turn;
     }
+    h
 }
 
 // --- Transposition table ---
@@ -312,8 +286,6 @@ pub struct SearchBot {
     pub last_info: Option<SearchInfo>,
 }
 
-const ZOBRIST_SEED: u64 = 0xdeadbeef_cafebabe;
-
 impl SearchBot {
     pub fn new(max_depth: i32) -> Self {
         Self::build(max_depth, None)
@@ -324,15 +296,13 @@ impl SearchBot {
     }
 
     fn build(max_depth: i32, time_budget: Option<Duration>) -> Self {
-        // ZobristTable size must be >= board_size. Default RuleConfig uses 15x15.
-        // If using a custom board size, construct SearchBot after checking config.
         use gomoku_core::RuleConfig;
         let board_size = RuleConfig::default().board_size;
         Self {
             max_depth,
             time_budget,
             tt: HashMap::new(),
-            zobrist: ZobristTable::new(board_size, ZOBRIST_SEED),
+            zobrist: ZobristTable::new(board_size),
             last_info: None,
         }
     }
@@ -343,12 +313,20 @@ impl Bot for SearchBot {
         "baseline"
     }
 
+    fn trace(&self) -> Option<serde_json::Value> {
+        self.last_info.as_ref().map(|info| serde_json::json!({
+            "depth": info.depth_reached,
+            "nodes": info.nodes,
+            "score": info.score,
+        }))
+    }
+
     fn choose_move(&mut self, board: &Board) -> Move {
         let color = board.current_player;
         let mut working = board.clone();
         let start = Instant::now();
         // Compute hash once at root; children update it incrementally
-        let root_hash = self.zobrist.hash_board(board);
+        let root_hash = hash_board(&self.zobrist, board);
         let center = board.config.board_size / 2;
         let mut best_move = candidate_moves(board, 2)
             .into_iter()
