@@ -33,7 +33,7 @@
 
 ## Up next
 
-- [ ] `gomoku-eval`: self-play runner — N games between two bots, win/loss/draw counts
-- [ ] `gomoku-eval`: basic Elo after a round-robin
+- [x] `gomoku-eval`: self-play runner — N games between two bots, win/loss/draw counts
+- [x] `gomoku-eval`: basic Elo after a round-robin
 - [ ] `gomoku-web`: PlayCanvas + TypeScript project scaffold
 - [ ] `gomoku-wasm`: wasm-pack bridge exposing core to JS
