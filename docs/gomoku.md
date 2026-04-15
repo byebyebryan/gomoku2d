@@ -362,6 +362,14 @@ Suggested modules:
 - spectator mode
 - arena result views
 
+Tech: Phaser 3 + TypeScript. Chosen over PlayCanvas because Phaser is
+2D-native (built-in spritesheets, Arcade physics, scene management) and
+maps to both Gomoku (spritesheet animations, click input) and future
+projects like Pylander (real-time game loop, physics, particles).
+PlayCanvas is a strong 3D engine but adds friction for 2D-first games
+(no built-in physics, raycasting-based input, 3D-centric API). Phaser
+is the right default until a project genuinely needs 3D.
+
 #### `gomoku-gomocup-adapter`
 
 - stdin/stdout bridge
@@ -413,6 +421,19 @@ This makes replays useful for:
 - build tournament / eval harness
 - add timing and metrics
 - build minimal web replay/spectator frontend
+
+## Phase 2.5: web frontend (Phaser)
+
+See `docs/web_frontend_plan.md` for the full breakdown.
+
+Summary:
+
+1. scaffold gomoku-web (Phaser 3 + TypeScript + Vite)
+2. static board renderer (15×15 grid from sprite assets)
+3. click-to-play (human vs human, local state only)
+4. replay viewer (load replay JSON, step through moves)
+5. Wasm bridge (gomoku-wasm for core validation in browser)
+6. bot spectator (human vs bot, bot vs bot)
 
 ## Phase 3
 
