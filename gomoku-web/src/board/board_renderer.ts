@@ -1,16 +1,13 @@
 import Phaser from "phaser";
-import { BOARD_SIZE, SPRITE, FRAME_SIZE } from "./constants";
+import { BOARD_SIZE, WIN_LENGTH, SPRITE, FRAME_SIZE, STONE_ANIMS, POINTER_ANIMS } from "./constants";
 
 // Board colors sampled from the original sprite
-const BOARD_COLOR = 0xffcc66;       // rgb(255,204,102) from grid sprite frame 0
-const BOARD_SIDE_COLOR = 0x261e0f;  // dark brown side depth
-const GRID_LINE_COLOR = 0x261e0f;   // dark brown grid lines
+const BOARD_COLOR = 0xffcc66;
+const BOARD_SIDE_COLOR = 0x261e0f;
+const GRID_LINE_COLOR = 0x261e0f;
 
-/**
- * Renders a 15x15 Gomoku board.
- * Board, side edge, and grid drawn as simple shapes.
- * Stones rendered as sprites on top.
- */
+type CellState = 0 | 1 | null; // null = empty, 0 = black, 1 = white
+
 export class BoardRenderer {
   private scene: Phaser.Scene;
   private cellSize: number;
@@ -38,6 +35,10 @@ export class BoardRenderer {
     return { row, col };
   }
 
+  getCellSize(): number {
+    return this.cellSize;
+  }
+
   drawBoard(): void {
     const gfx = this.scene.add.graphics();
     gfx.setDepth(0);
@@ -48,7 +49,7 @@ export class BoardRenderer {
     const boardHeight = BOARD_SIZE * this.cellSize;
     const sideHeight = this.cellSize / 2;
 
-    // Side/depth (drawn first, below and behind)
+    // Side/depth
     gfx.fillStyle(BOARD_SIDE_COLOR, 1);
     gfx.fillRect(left, top + boardHeight, boardWidth, sideHeight);
 
@@ -56,34 +57,25 @@ export class BoardRenderer {
     gfx.fillStyle(BOARD_COLOR, 1);
     gfx.fillRect(left, top, boardWidth, boardHeight);
 
-    // Grid lines — only between intersection points, not extending to board edge
-    // Line thickness = 1 sprite pixel scaled to screen
+    // Grid lines
     const lineThickness = Math.max(1, Math.round(this.cellSize / FRAME_SIZE));
     gfx.lineStyle(lineThickness, GRID_LINE_COLOR, 1);
 
-    // Horizontal lines
     for (let row = 0; row < BOARD_SIZE; row++) {
       const { x: x0, y } = this.cellToPixel(row, 0);
       const { x: x1 } = this.cellToPixel(row, BOARD_SIZE - 1);
-      const x0i = Math.round(x0);
-      const x1i = Math.round(x1);
-      const yi = Math.round(y) + 0.5; // half-pixel for crisp horizontal lines
       gfx.beginPath();
-      gfx.moveTo(x0i, yi);
-      gfx.lineTo(x1i, yi);
+      gfx.moveTo(Math.round(x0), Math.round(y) + 0.5);
+      gfx.lineTo(Math.round(x1), Math.round(y) + 0.5);
       gfx.strokePath();
     }
 
-    // Vertical lines
     for (let col = 0; col < BOARD_SIZE; col++) {
       const { x, y: y0 } = this.cellToPixel(0, col);
       const { y: y1 } = this.cellToPixel(BOARD_SIZE - 1, col);
-      const xi = Math.round(x) + 0.5; // half-pixel for crisp vertical lines
-      const y0i = Math.round(y0);
-      const y1i = Math.round(y1);
       gfx.beginPath();
-      gfx.moveTo(xi, y0i);
-      gfx.lineTo(xi, y1i);
+      gfx.moveTo(Math.round(x) + 0.5, Math.round(y0));
+      gfx.lineTo(Math.round(x) + 0.5, Math.round(y1));
       gfx.strokePath();
     }
   }
@@ -103,5 +95,35 @@ export class BoardRenderer {
     }
 
     return stone;
+  }
+
+  createPointer(): Phaser.GameObjects.Sprite {
+    const scale = this.cellSize / FRAME_SIZE;
+    const pointer = this.scene.add.sprite(-100, -100, SPRITE.POINTER, 0);
+    pointer.setScale(scale);
+    pointer.setDepth(2);
+    pointer.setVisible(false);
+    return pointer;
+  }
+
+  createInteractiveZones(onCellClick: (row: number, col: number) => void): Phaser.GameObjects.Zone[] {
+    const zones: Phaser.GameObjects.Zone[] = [];
+
+    for (let row = 0; row < BOARD_SIZE; row++) {
+      for (let col = 0; col < BOARD_SIZE; col++) {
+        const { x, y } = this.cellToPixel(row, col);
+        const zone = this.scene.add.zone(x, y, this.cellSize, this.cellSize);
+        zone.setInteractive({ useHandCursor: true });
+        zone.setDepth(3);
+
+        const r = row;
+        const c = col;
+        zone.on("pointerdown", () => onCellClick(r, c));
+
+        zones.push(zone);
+      }
+    }
+
+    return zones;
   }
 }

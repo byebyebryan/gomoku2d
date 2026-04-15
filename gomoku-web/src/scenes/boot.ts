@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { SPRITESHEET_CONFIG, FRAME_SIZE } from "../board/constants";
+import { SPRITESHEET_CONFIG, FRAME_SIZE, SPRITE, STONE_ANIMS, WARNING_ANIMS } from "../board/constants";
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -20,7 +20,53 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
+    // Register all animations
+    this.createAnimations();
+
     // All assets loaded — transition to game scene
     this.scene.start("GameScene");
+  }
+
+  private createAnimations(): void {
+    // Stone animations
+    this.anims.create({
+      key: STONE_ANIMS.FORM.key,
+      frames: this.anims.generateFrameNumbers(SPRITE.STONE, {
+        start: STONE_ANIMS.FORM.start,
+        end: STONE_ANIMS.FORM.end,
+      }),
+      frameRate: STONE_ANIMS.FORM.frameRate,
+    });
+
+    this.anims.create({
+      key: STONE_ANIMS.DESTROY.key,
+      frames: this.anims.generateFrameNumbers(SPRITE.STONE, {
+        start: STONE_ANIMS.DESTROY.start,
+        end: STONE_ANIMS.DESTROY.end,
+      }),
+      frameRate: STONE_ANIMS.DESTROY.frameRate,
+    });
+
+    for (const relax of [STONE_ANIMS.RELAX_1, STONE_ANIMS.RELAX_2, STONE_ANIMS.RELAX_3, STONE_ANIMS.RELAX_4]) {
+      this.anims.create({
+        key: relax.key,
+        frames: this.anims.generateFrameNumbers(SPRITE.STONE, {
+          start: relax.start,
+          end: relax.end,
+        }),
+        frameRate: relax.frameRate,
+      });
+    }
+
+    // Warning animation (loops)
+    this.anims.create({
+      key: WARNING_ANIMS.SURFACE.key,
+      frames: this.anims.generateFrameNumbers(SPRITE.WARNING_L, {
+        start: WARNING_ANIMS.SURFACE.start,
+        end: WARNING_ANIMS.SURFACE.end,
+      }),
+      frameRate: WARNING_ANIMS.SURFACE.frameRate,
+      repeat: -1,
+    });
   }
 }
