@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { SPRITESHEET_CONFIG, FRAME_SIZE, SPRITE } from "../board/constants";
+import { SPRITESHEET_CONFIG, FRAME_SIZE } from "../board/constants";
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -20,26 +20,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
-    // Verify sprites loaded — place a static black stone and white stone
-    const cx = this.cameras.main.centerX;
-    const cy = this.cameras.main.centerY;
-
-    // Black stone (frame 0 = static)
-    this.add.sprite(cx - 32, cy, SPRITE.STONE, 0).setScale(3);
-
-    // White stone (frame 0)
-    this.add.sprite(cx + 32, cy, SPRITE.STONE, 0).setScale(3).setTint(0xffffff);
-
-    // Pointer preview
-    this.add.sprite(cx, cy - 64, SPRITE.POINTER, 0).setScale(3);
-
-    // Title text
-    this.add
-      .text(cx, cy + 80, "Gomoku 2D — Assets Loaded", {
-        fontFamily: "minecraft",
-        fontSize: "20px",
-        color: "#7fffaa",
-      })
-      .setOrigin(0.5);
+    // All assets loaded — transition to game scene
+    this.scene.start("GameScene");
   }
 }
