@@ -143,11 +143,17 @@ export class PlayerCard {
 
   showPendingWin(baseWins: number): void {
     this.winsText.setText(`${baseWins} wins`);
-    // Position "+1" immediately after the wins text with a small gap.
-    this.pendingWinText.setX(this.textLeft + this.winsText.width + 4);
-    const textY = this.isActive ? this.textNeutralY : this.textRaisedY;
-    this.pendingWinText.setY(textY + this.winsOffsetY);
-    this.pendingWinText.setVisible(true);
+    this.showPendingText(this.winsText, this.pendingWinText, this.winsOffsetY);
+  }
+
+  private showPendingText(
+    primary: Phaser.GameObjects.BitmapText,
+    secondary: Phaser.GameObjects.BitmapText,
+    offsetY: number,
+  ): void {
+    secondary.setX(this.textLeft + primary.width + 4);
+    secondary.setY((this.isActive ? this.textNeutralY : this.textRaisedY) + offsetY);
+    secondary.setVisible(true);
   }
 
   setName(name: string): void {
@@ -162,10 +168,7 @@ export class PlayerCard {
   showPendingTimer(base: string, delta: string): void {
     this.timerText.setText(base);
     this.pendingTimerText.setText(delta);
-    this.pendingTimerText.setX(this.textLeft + this.timerText.width + 4);
-    const textY = this.isActive ? this.textNeutralY : this.textRaisedY;
-    this.pendingTimerText.setY(textY + this.timerOffsetY);
-    this.pendingTimerText.setVisible(true);
+    this.showPendingText(this.timerText, this.pendingTimerText, this.timerOffsetY);
   }
 }
 
@@ -480,7 +483,6 @@ export class SettingsPanel {
 
     let currentY = -this.height / 2;
 
-    // --- Rules section ---
     rulesLabel.setPosition(-width / 2, currentY);
     this.container.add(rulesLabel);
     currentY += rulesH + innerGap;
@@ -489,7 +491,6 @@ export class SettingsPanel {
     this.container.add(this.variantToggle.container);
     currentY += this.variantToggle.height + sectionGap;
 
-    // --- Black section ---
     blackLabel.setPosition(-width / 2, currentY);
     this.container.add(blackLabel);
     currentY += blackH + innerGap;
@@ -498,7 +499,6 @@ export class SettingsPanel {
     this.container.add(this.blackToggle.container);
     currentY += this.blackToggle.height + sectionGap;
 
-    // --- White section ---
     whiteLabel.setPosition(-width / 2, currentY);
     this.container.add(whiteLabel);
     currentY += whiteH + innerGap;
@@ -507,7 +507,6 @@ export class SettingsPanel {
     this.container.add(this.whiteToggle.container);
     currentY += this.whiteToggle.height + sectionGap;
 
-    // --- Button section ---
     this.confirmBtn.setPosition(0, currentY + this.confirmBtn.height / 2);
     this.container.add(this.confirmBtn.container);
     currentY += this.confirmBtn.height + innerGap;

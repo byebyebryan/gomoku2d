@@ -2,14 +2,14 @@
 
 ## Done
 
-**Cargo workspace** — `gomoku-core`, `gomoku-bot`, `gomoku-eval` (stub), `gomoku-cli`, `gomoku-wasm` (stub)
+**Cargo workspace** — `gomoku-core`, `gomoku-bot`, `gomoku-eval` (stub), `gomoku-cli`, `gomoku-wasm`, `gomoku-web`
 
 **gomoku-core**
 - `Board` with `apply_move` / `undo_move` / `legal_moves` / `is_legal`
 - Win detection: scans 4 directions from placed stone
 - FEN serialization (`to_fen` / `from_fen`) for board state snapshots
 - `Replay` struct — JSON in/out via serde, includes rules, player names, move list, result, duration
-- `Variant` enum: `Freestyle` (default) and `Renju`; stored in `RuleConfig.variant` (serde default = freestyle, backward-compatible)
+- `Variant` enum: `Freestyle` (default) and `Renju`; stored in `RuleConfig.variant`
 - Renju restrictions for Black: overline (6+) forbidden, double-four forbidden, double-three forbidden; winning moves (exactly 5) always allowed; White unrestricted
 - `MoveError::Forbidden` for Renju violations; `is_legal` and `legal_moves` respect restrictions
 - 18 unit tests (win detection, move errors, FEN round-trip, game-over guard, all Renju cases)
@@ -29,33 +29,31 @@
 - `--black`/`--white` (`random`|`search`), `--depth`, `--time-ms`, `--replay <path>`, `--quiet`
 - ASCII board printed before each move, move log, final result + elapsed time
 
+**gomoku-wasm**
+- `WasmBoard` wraps `gomoku-core::Board` — `new()`, `createWithVariant()`, `applyMove()`, `isLegal()`, `cell()`, `currentPlayer()`, `result()`, `legalMoves()`, `undoLastMove()`, `toFen()`, `fromFen()`, `cloneBoard()`, `moveCount()`
+- `WasmBot` wraps `RandomBot` or `SearchBot` — `createRandom()`, `createBaseline(depth)`, `chooseMove()`, `name()`
+- Built with `wasm-pack build --target bundler` — Vite handles WASM loading via `vite-plugin-wasm`
+- `console_error_panic_hook` for Wasm panic messages; `getrandom` js feature for `rand` crate
+
+**gomoku-web** (Phaser 3 + TypeScript + Vite)
+- Boot scene: preloads all spritesheets + bitmap font, registers all animations
+- Board renderer: float `cellSize` fills screen edge-to-edge with no rounding gaps; depth edge fills to screen bottom
+- All game state via `WasmBoard`; Renju rule enforcement via `createWithVariant("renju")`
+- Human vs bot, bot vs bot, human vs human — bots use `WasmBot.createBaseline(3)`
+- Settings panel: Freestyle / Renju toggle, per-player Human/Bot toggle, inline name editing for human players (click HUMAN button to type)
+- Player profiles decoupled from color slots; color slots swap each game (loser opens as black)
+- Per-player move timers with live delta display; game timer; pending +1 win display
+- Renju forbidden move overlays (red `warning_l` animation) on empty cells within radius 2 of existing stones — shown only when human black is to move
+- Pointer idle animations: random cycle of out/in/full animations with static pauses; persists across cell transitions
+- Stone idle animations: random relax-1/2/3/4 on the last-placed stone only; transfers on each new placement
+- Win highlight: green `warning_l` animation on winning cells
+- 1024×768 canvas (4:3), `Phaser.Scale.FIT` + `CENTER_BOTH`
+
 ---
 
 ## Up next
 
-- [x] `gomoku-eval`: self-play runner — N games between two bots, win/loss/draw counts
-- [x] `gomoku-eval`: basic Elo after a round-robin
-- [x] `gomoku-web`: Phaser 3 + TypeScript + Vite project scaffold
-- [x] `gomoku-web`: Phase B — static board renderer (grid, stones, pointer)
-- [x] `gomoku-web`: Phase C — click-to-play human vs human (win detection, highlighting, reset)
-- [x] `gomoku-wasm`: Phase E — wasm-pack bridge exposing Board + RandomBot to JS
-- [x] `gomoku-web`: Phase E — game.ts refactored to use WasmBoard for all game state
-- [ ] `gomoku-web`: Phase F — bot spectator (human vs bot, bot vs bot)
-
----
-
-## Phase E details
-
-**gomoku-wasm** (Rust):
-- `WasmBoard` wraps `gomoku-core::Board` — `new()`, `applyMove()`, `isLegal()`, `cell()`, `currentPlayer()`, `result()`, `legalMoves()`, `undoLastMove()`, `toFen()`, `fromFen()`, `cloneBoard()`, `moveCount()`
-- `WasmBot` wraps `RandomBot` or `SearchBot` — `createRandom()`, `createBaseline(depth)`, `chooseMove()`, `name()`
-- `console_error_panic_hook` for Wasm panic messages
-- `getrandom` js feature for `rand` crate in wasm32
-- Built with `wasm-pack build --target web` — 52KB .wasm binary
-- `SearchBot` exposed via `instant` crate polyfill for `std::time::Instant` (wasm-safe)
-
-**gomoku-web integration**:
-- `src/core/wasm_bridge.ts` — async `initWasm()` singleton, re-exports `WasmBoard`/`WasmBot`
-- `src/main.ts` — awaits Wasm init before creating Phaser game
-- `src/scenes/game.ts` — all game state via `WasmBoard`; `checkWin()` still in TS for winning cell highlighting
-- Installed as npm `file:` dependency from `../gomoku-wasm/pkg/`
+- `gomoku-eval`: self-play runner — N games between two bots, win/loss/draw counts
+- `gomoku-eval`: basic Elo after a round-robin
+- `gomoku-web`: replay viewer — load replay JSON, step through moves
+- `gomoku-web`: stronger bot option (depth 5+) selectable in settings

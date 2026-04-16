@@ -2,7 +2,7 @@
 
 A Gomoku engine and game framework sandbox — built to validate a reusable architecture for native core + bot + eval + web frontend before applying it to larger projects.
 
-**Stack:** Rust (Cargo workspace) · PlayCanvas + TypeScript (web, Phase 2) · wasm-pack (Phase 2)
+**Stack:** Rust (Cargo workspace) · Phaser 3 + TypeScript + Vite (web) · wasm-pack (Wasm bridge)
 
 ---
 
@@ -10,12 +10,12 @@ A Gomoku engine and game framework sandbox — built to validate a reusable arch
 
 | Crate | Status | Description |
 |-------|--------|-------------|
-| `gomoku-core` | ✅ | Board state, rules, win detection, FEN serialization, replay/JSON schema |
+| `gomoku-core` | ✅ | Board state, rules (Freestyle + Renju), win detection, FEN serialization, replay/JSON schema |
 | `gomoku-bot` | ✅ | `Bot` trait, `RandomBot`, `SearchBot` (negamax + α-β + iterative deepening + TT) |
 | `gomoku-cli` | ✅ | Match runner — bots, ASCII board, replay export |
-| `gomoku-eval` | 🔜 | Self-play, tournaments, Elo (Phase 2) |
-| `gomoku-web` | 🔜 | PlayCanvas + TypeScript frontend (Phase 2) |
-| `gomoku-wasm` | 🔜 | wasm-pack bridge exposing core to JS (Phase 2) |
+| `gomoku-wasm` | ✅ | wasm-pack bridge exposing `WasmBoard` + `WasmBot` to JS |
+| `gomoku-web` | ✅ | Phaser 3 + TypeScript browser game |
+| `gomoku-eval` | 🔜 | Self-play, tournaments, Elo (Phase 3) |
 
 ---
 
@@ -33,9 +33,6 @@ cargo run --release -p gomoku-cli -- --black baseline --white random
 
 # Random vs random
 cargo run --release -p gomoku-cli -- --black random --white random
-
-# Search vs baseline
-cargo run --release -p gomoku-cli -- --black baseline --white baseline
 
 # Quiet output + save replay
 cargo run --release -p gomoku-cli -- --black baseline --white random --quiet --replay /tmp/game.json
@@ -58,12 +55,30 @@ cargo run --release -p gomoku-cli -- --black baseline --white random --time-ms 5
 
 ---
 
+## Web frontend
+
+```sh
+cd gomoku-web
+npm install
+npm run dev   # http://localhost:3000
+```
+
+Features: human vs bot, bot vs bot, Freestyle and Renju rules, per-player timers, inline name editing, animated stones and pointer.
+
+To rebuild the Wasm package after changing `gomoku-wasm/src/`:
+```sh
+~/.cargo/bin/wasm-pack build gomoku-wasm --target bundler --out-dir ../gomoku-web/node_modules/gomoku-wasm
+```
+
+---
+
 ## Rules
 
 - 15×15 board
-- First to get 5 in a row (horizontal, vertical, or diagonal) wins
+- First to get exactly 5 in a row (horizontal, vertical, or diagonal) wins
 - Black always goes first
-- Standard Gomoku — no Renju restrictions
+- **Freestyle** (default): no placement restrictions
+- **Renju**: Black is forbidden from double-three, double-four, and overline (6+) moves; winning moves (exactly 5) always allowed; White unrestricted
 
 ---
 
@@ -77,10 +92,7 @@ Negamax with alpha-beta pruning, iterative deepening, and a transposition table 
 
 ```json
 {
-  "hash_algo": {
-    "algorithm": "xorshift64",
-    "seed": 16045690984833335166
-  },
+  "hash_algo": { "algorithm": "xorshift64", "seed": 16045690984833335166 },
   "rules": { "board_size": 15, "win_length": 5, "variant": "freestyle" },
   "black": "baseline",
   "white": "random",
