@@ -21,12 +21,15 @@ export class PlayerCard {
   private bgActive!: Phaser.GameObjects.NineSlice;
   private nameText!: Phaser.GameObjects.BitmapText;
   private winsText!: Phaser.GameObjects.BitmapText;
+  private pendingWinText!: Phaser.GameObjects.BitmapText;
   private timerText!: Phaser.GameObjects.BitmapText;
+  private pendingTimerText!: Phaser.GameObjects.BitmapText;
   private isActive: boolean = false;
   private textNeutralY: number = 0;
   private textRaisedY: number = 0;
   private winsOffsetY: number = 0;
   private timerOffsetY: number = 0;
+  private textLeft: number = 0;
   readonly height: number; // canvas pixels, for layout stacking
 
   constructor(
@@ -52,8 +55,14 @@ export class PlayerCard {
       .setTint(textTint);
     this.winsText = scene.add.bitmapText(0, 0, "pixel", `${player.wins} wins`, subFontPx)
       .setTint(subTint);
+    this.pendingWinText = scene.add.bitmapText(0, 0, "pixel", "+1", subFontPx)
+      .setTint(0x44dd44)
+      .setVisible(false);
     this.timerText = scene.add.bitmapText(0, 0, "pixel", "0:00", subFontPx)
       .setTint(subTint);
+    this.pendingTimerText = scene.add.bitmapText(0, 0, "pixel", "", subFontPx)
+      .setTint(0xffcc44)
+      .setVisible(false);
 
     const nB = this.nameText.getBounds();
     const wB = this.winsText.getBounds();
@@ -85,6 +94,7 @@ export class PlayerCard {
     // Position texts (canvas pixels, relative to container center).
     const left = -cardW / 2 + padH;
     const top  = -cardH / 2 + padV;
+    this.textLeft     = left;
     this.textNeutralY = top;
     this.textRaisedY  = top - Math.round(PRESS_OFFSET * scale);
     this.winsOffsetY  = nB.height + gap;
@@ -92,10 +102,15 @@ export class PlayerCard {
     // Start in inactive state: button_0 surface, content raised up
     this.nameText.setPosition(left, this.textRaisedY);
     this.winsText.setPosition(left, this.textRaisedY + this.winsOffsetY);
+    this.pendingWinText.setPosition(left, this.textRaisedY + this.winsOffsetY);
     this.timerText.setPosition(left, this.textRaisedY + this.timerOffsetY);
+    this.pendingTimerText.setPosition(left, this.textRaisedY + this.timerOffsetY);
 
     this.container = scene.add.container(x, y, [
-      this.bgNormal, this.bgActive, this.nameText, this.winsText, this.timerText,
+      this.bgNormal, this.bgActive,
+      this.nameText,
+      this.winsText, this.pendingWinText,
+      this.timerText, this.pendingTimerText,
     ]);
     this.container.setDepth(20);
   }
@@ -116,11 +131,23 @@ export class PlayerCard {
     const textY = active ? this.textNeutralY : this.textRaisedY;
     this.nameText.setY(textY);
     this.winsText.setY(textY + this.winsOffsetY);
+    this.pendingWinText.setY(textY + this.winsOffsetY);
     this.timerText.setY(textY + this.timerOffsetY);
+    this.pendingTimerText.setY(textY + this.timerOffsetY);
   }
 
   setWins(wins: number): void {
     this.winsText.setText(`${wins} wins`);
+    this.pendingWinText.setVisible(false);
+  }
+
+  showPendingWin(baseWins: number): void {
+    this.winsText.setText(`${baseWins} wins`);
+    // Position "+1" immediately after the wins text with a small gap.
+    this.pendingWinText.setX(this.textLeft + this.winsText.width + 4);
+    const textY = this.isActive ? this.textNeutralY : this.textRaisedY;
+    this.pendingWinText.setY(textY + this.winsOffsetY);
+    this.pendingWinText.setVisible(true);
   }
 
   setName(name: string): void {
@@ -129,6 +156,16 @@ export class PlayerCard {
 
   setTimer(formatted: string): void {
     this.timerText.setText(formatted);
+    this.pendingTimerText.setVisible(false);
+  }
+
+  showPendingTimer(base: string, delta: string): void {
+    this.timerText.setText(base);
+    this.pendingTimerText.setText(delta);
+    this.pendingTimerText.setX(this.textLeft + this.timerText.width + 4);
+    const textY = this.isActive ? this.textNeutralY : this.textRaisedY;
+    this.pendingTimerText.setY(textY + this.timerOffsetY);
+    this.pendingTimerText.setVisible(true);
   }
 }
 
