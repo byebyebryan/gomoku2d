@@ -21,10 +21,12 @@ export class PlayerCard {
   private bgActive!: Phaser.GameObjects.NineSlice;
   private nameText!: Phaser.GameObjects.BitmapText;
   private winsText!: Phaser.GameObjects.BitmapText;
+  private timerText!: Phaser.GameObjects.BitmapText;
   private isActive: boolean = false;
   private textNeutralY: number = 0;
   private textRaisedY: number = 0;
   private winsOffsetY: number = 0;
+  private timerOffsetY: number = 0;
   readonly height: number; // canvas pixels, for layout stacking
 
   constructor(
@@ -50,13 +52,16 @@ export class PlayerCard {
       .setTint(textTint);
     this.winsText = scene.add.bitmapText(0, 0, "minecraft", `${player.wins} wins`, subFontPx)
       .setTint(subTint);
+    this.timerText = scene.add.bitmapText(0, 0, "minecraft", "0:00", subFontPx)
+      .setTint(subTint);
 
     const nB = this.nameText.getBounds();
     const wB = this.winsText.getBounds();
+    const tB = this.timerText.getBounds();
 
     // Width is caller-specified; height wraps content with vertical padding.
     const cardW = cardWidth;
-    const cardH = Math.round(nB.height + gap + wB.height + 2 * padV);
+    const cardH = Math.round(nB.height + gap + wB.height + gap + tB.height + 2 * padV);
     this.height = cardH;
 
     // NineSlice width/height are given in source pixels; setScale(scale) brings
@@ -83,18 +88,24 @@ export class PlayerCard {
     this.textNeutralY = top;
     this.textRaisedY  = top - Math.round(PRESS_OFFSET * scale);
     this.winsOffsetY  = nB.height + gap;
+    this.timerOffsetY = nB.height + gap + wB.height + gap;
     // Start in inactive state: button_0 surface, content raised up
     this.nameText.setPosition(left, this.textRaisedY);
     this.winsText.setPosition(left, this.textRaisedY + this.winsOffsetY);
+    this.timerText.setPosition(left, this.textRaisedY + this.timerOffsetY);
 
     this.container = scene.add.container(x, y, [
-      this.bgNormal, this.bgActive, this.nameText, this.winsText,
+      this.bgNormal, this.bgActive, this.nameText, this.winsText, this.timerText,
     ]);
     this.container.setDepth(20);
   }
 
   setPosition(x: number, y: number): void {
     this.container.setPosition(x, y);
+  }
+
+  setVisible(v: boolean): void {
+    this.container.setVisible(v);
   }
 
   setActive(active: boolean): void {
@@ -105,6 +116,7 @@ export class PlayerCard {
     const textY = active ? this.textNeutralY : this.textRaisedY;
     this.nameText.setY(textY);
     this.winsText.setY(textY + this.winsOffsetY);
+    this.timerText.setY(textY + this.timerOffsetY);
   }
 
   setWins(wins: number): void {
@@ -114,24 +126,30 @@ export class PlayerCard {
   setName(name: string): void {
     this.nameText.setText(name);
   }
+
+  setTimer(formatted: string): void {
+    this.timerText.setText(formatted);
+  }
 }
 
-export class ResetButton {
-  private container: Phaser.GameObjects.Container;
-  readonly height: number; // canvas pixels
+export class TextButton {
+  container: Phaser.GameObjects.Container;
+  readonly height: number;
 
   constructor(
     scene: Phaser.Scene,
     x: number,
     y: number,
+    text: string,
+    tints: [number, number, number], // normal, hover, pressed
     onClick: () => void,
     scale: number,
-    width: number, // canvas pixels — match card width
+    width: number,
   ) {
     const pad    = Math.round(PAD_H_SRC * scale);
     const fontPx = FONT_PX;
 
-    const label = scene.add.bitmapText(0, 0, "minecraft", "RESET", fontPx)
+    const label = scene.add.bitmapText(0, 0, "minecraft", text, fontPx)
       .setTint(0xffffff)
       .setOrigin(0.5);
 
@@ -140,21 +158,21 @@ export class ResetButton {
     const btnH = Math.round(b.height + 2 * pad);
     this.height = btnH;
 
-    const nsW = btnW / scale; // source pixels for NineSlice
+    const nsW = btnW / scale;
     const nsH = btnH / scale;
 
-    const normal  = scene.add.nineslice(0, 0, "button_0", undefined, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(0xcc2222);
-    const hover   = scene.add.nineslice(0, 0, "button_1", undefined, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(0xff3333).setVisible(false);
-    const pressed = scene.add.nineslice(0, 0, "button_2", undefined, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(0xaa1111).setVisible(false);
+    const normal  = scene.add.nineslice(0, 0, "button_0", undefined, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(tints[0]);
+    const hover   = scene.add.nineslice(0, 0, "button_1", undefined, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(tints[1]).setVisible(false);
+    const pressed = scene.add.nineslice(0, 0, "button_2", undefined, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(tints[2]).setVisible(false);
 
     this.container = scene.add.container(x, y, [normal, hover, pressed, label]);
     this.container.setDepth(20);
-    this.container.setSize(btnW, btnH); // canvas pixels for hit zone
+    this.container.setSize(btnW, btnH);
     this.container.setInteractive({ useHandCursor: true });
 
-    const labelPressedY = 0;                                                         // button_2: centered
-    const labelHoverY   = -Math.round((PRESS_OFFSET - HOVER_OFFSET) * scale);       // button_1: 2px up
-    const labelBaseY    = -Math.round(PRESS_OFFSET * scale);                        // button_0: 3px up
+    const labelPressedY = 0;
+    const labelHoverY   = -Math.round((PRESS_OFFSET - HOVER_OFFSET) * scale);
+    const labelBaseY    = -Math.round(PRESS_OFFSET * scale);
     label.setY(labelBaseY);
 
     this.container.on("pointerover",  () => { normal.setVisible(false); hover.setVisible(true);  pressed.setVisible(false); label.setY(labelHoverY);   });
@@ -165,5 +183,331 @@ export class ResetButton {
 
   setPosition(x: number, y: number): void {
     this.container.setPosition(x, y);
+  }
+
+  setVisible(v: boolean): void {
+    this.container.setVisible(v);
+  }
+}
+
+const RED_TINTS: [number, number, number] = [0xcc2222, 0xff3333, 0xaa1111];
+const GREEN_TINTS: [number, number, number] = [0x22aa44, 0x33cc55, 0x118833];
+
+export class ResetButton extends TextButton {
+  constructor(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    onClick: () => void,
+    scale: number,
+    width: number,
+  ) {
+    super(scene, x, y, "RESET", RED_TINTS, onClick, scale, width);
+  }
+}
+
+export class SettingsButton extends TextButton {
+  constructor(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    onClick: () => void,
+    scale: number,
+    width: number,
+  ) {
+    super(scene, x, y, "SETTINGS", GREEN_TINTS, onClick, scale, width);
+  }
+}
+
+export class ToggleGroup {
+  container: Phaser.GameObjects.Container;
+  private buttons: { container: Phaser.GameObjects.Container; normal: Phaser.GameObjects.NineSlice; hover: Phaser.GameObjects.NineSlice; pressed: Phaser.GameObjects.NineSlice; label: Phaser.GameObjects.BitmapText; labelBaseY: number; labelHoverY: number }[] = [];
+  private selectedIdx: number;
+  private scale: number;
+  readonly height: number;
+
+  constructor(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    options: string[],
+    selectedIdx: number,
+    scale: number,
+    width: number,
+    vertical: boolean = false,
+  ) {
+    this.selectedIdx = selectedIdx;
+    this.scale = scale;
+    const pad     = Math.round(PAD_H_SRC * scale);
+    const fontPx  = FONT_PX;
+    const btnGap  = 0.2 * scale;
+
+    // Measure button height with a temporary text, then destroy it
+    const measure = scene.add.bitmapText(0, 0, "minecraft", options[0], fontPx);
+    const b = measure.getBounds();
+    measure.destroy();
+    const btnH = Math.round(b.height + 2 * pad);
+    const btnW = width;
+
+    this.container = scene.add.container(x, y);
+    this.container.setDepth(20);
+
+    if (vertical) {
+      this.height = options.length * btnH + (options.length - 1) * btnGap;
+    } else {
+      this.height = btnH;
+    }
+
+    for (let i = 0; i < options.length; i++) {
+      const nsW = btnW / scale;
+      const nsH = btnH / scale;
+
+      const isSelected = i === selectedIdx;
+      const tint = isSelected ? 0x44aa66 : 0x666666;
+      const hoverTint = 0x888888;
+
+      const normal  = scene.add.nineslice(0, 0, "button_0", undefined, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(tint);
+      const hover   = scene.add.nineslice(0, 0, "button_1", undefined, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(hoverTint).setVisible(false);
+      const pressed = scene.add.nineslice(0, 0, "button_2", undefined, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(tint).setVisible(false);
+
+      const optLabel = scene.add.bitmapText(0, 0, "minecraft", options[i], fontPx)
+        .setTint(0xffffff)
+        .setOrigin(0.5);
+
+      const labelBaseY  = -Math.round(PRESS_OFFSET * scale);
+      const labelHoverY = -Math.round((PRESS_OFFSET - HOVER_OFFSET) * scale);
+      optLabel.setY(labelBaseY);
+
+      if (isSelected) {
+        normal.setVisible(false);
+        hover.setVisible(false);
+        pressed.setVisible(true);
+        optLabel.setY(0);
+      }
+
+      const btnContainer = scene.add.container(0, 0, [normal, hover, pressed, optLabel]);
+      btnContainer.setSize(btnW, btnH);
+      btnContainer.setInteractive({ useHandCursor: true });
+
+      const idx = i;
+      btnContainer.on("pointerover",  () => {
+        if (idx === this.selectedIdx) return;
+        normal.setVisible(false); hover.setVisible(true); pressed.setVisible(false);
+        optLabel.setY(labelHoverY);
+      });
+      btnContainer.on("pointerout",   () => {
+        if (idx === this.selectedIdx) return;
+        normal.setVisible(true); hover.setVisible(false); pressed.setVisible(false);
+        optLabel.setY(labelBaseY);
+      });
+      btnContainer.on("pointerdown",  () => {
+        if (idx === this.selectedIdx) return;
+        normal.setVisible(false); hover.setVisible(false); pressed.setVisible(true);
+        optLabel.setY(0);
+      });
+      btnContainer.on("pointerup",    () => {
+        if (idx !== this.selectedIdx) {
+          this.select(idx);
+        }
+      });
+
+      this.buttons.push({ container: btnContainer, normal, hover, pressed, label: optLabel, labelBaseY, labelHoverY });
+
+      if (vertical) {
+        const offsetY = -this.height / 2 + i * (btnH + btnGap) + btnH / 2;
+        btnContainer.setPosition(0, offsetY);
+      } else {
+        const offsetX = (i - (options.length - 1) / 2) * btnW;
+        btnContainer.setPosition(offsetX, 0);
+      }
+      this.container.add(btnContainer);
+    }
+  }
+
+  private select(idx: number): void {
+    const prev = this.selectedIdx;
+    this.selectedIdx = idx;
+
+    const prevBtn = this.buttons[prev];
+    prevBtn.normal.setVisible(true);
+    prevBtn.hover.setVisible(false);
+    prevBtn.pressed.setVisible(false);
+    prevBtn.normal.setTint(0x666666);
+    prevBtn.hover.setTint(0x888888);
+    prevBtn.label.setY(prevBtn.labelBaseY);
+
+    const newBtn = this.buttons[idx];
+    newBtn.normal.setVisible(false);
+    newBtn.hover.setVisible(false);
+    newBtn.pressed.setVisible(true);
+    newBtn.pressed.setTint(0x44aa66);
+    newBtn.label.setY(0);
+  }
+
+  getSelected(): number {
+    return this.selectedIdx;
+  }
+
+  setPosition(x: number, y: number): void {
+    this.container.setPosition(x, y);
+  }
+}
+
+export class SettingsPanel {
+  private container: Phaser.GameObjects.Container;
+  private variantToggle!: ToggleGroup;
+  private blackToggle!: ToggleGroup;
+  private whiteToggle!: ToggleGroup;
+  private confirmBtn!: TextButton;
+  private backBtn!: TextButton;
+  readonly height: number;
+
+  constructor(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    scale: number,
+    width: number,
+    initialVariant: "freestyle" | "renju",
+    initialBlackIsHuman: boolean,
+    initialWhiteIsHuman: boolean,
+    onConfirm: (variant: "freestyle" | "renju", blackIsHuman: boolean, whiteIsHuman: boolean) => void,
+    onBack: () => void,
+  ) {
+    const innerGap   = Math.round(1 * scale);  // label → its toggles
+    const sectionGap = Math.round(12 * scale); // between sections
+    const fontPx     = FONT_PX;
+
+    const rulesLabel = scene.add.bitmapText(0, 0, "minecraft", "RULES", fontPx).setTint(0xcccccc).setOrigin(0, 0);
+    const rulesH = rulesLabel.getBounds().height;
+
+    this.variantToggle = new ToggleGroup(scene, 0, 0, ["FREESTYLE", "RENJU"], initialVariant === "renju" ? 1 : 0, scale, width, true);
+
+    const blackLabel = scene.add.bitmapText(0, 0, "minecraft", "BLACK", fontPx).setTint(0x1a1a2e).setOrigin(0, 0);
+    const blackH = blackLabel.getBounds().height;
+
+    this.blackToggle = new ToggleGroup(scene, 0, 0, ["HUMAN", "BOT"], initialBlackIsHuman ? 0 : 1, scale, width, true);
+
+    const whiteLabel = scene.add.bitmapText(0, 0, "minecraft", "WHITE", fontPx).setTint(0xffffff).setOrigin(0, 0);
+    const whiteH = whiteLabel.getBounds().height;
+
+    this.whiteToggle = new ToggleGroup(scene, 0, 0, ["HUMAN", "BOT"], initialWhiteIsHuman ? 0 : 1, scale, width, true);
+
+    this.confirmBtn = new TextButton(scene, 0, 0, "NEW GAME", GREEN_TINTS, () => {
+      const variant = this.variantToggle.getSelected() === 1 ? "renju" : "freestyle";
+      const blackIsHuman = this.blackToggle.getSelected() === 0;
+      const whiteIsHuman = this.whiteToggle.getSelected() === 0;
+      onConfirm(variant, blackIsHuman, whiteIsHuman);
+    }, scale, width);
+
+    this.backBtn = new TextButton(scene, 0, 0, "BACK", RED_TINTS, onBack, scale, width);
+
+    // Content height: tight within sections, larger gaps between sections
+    this.height =
+      (rulesH + innerGap + this.variantToggle.height) + sectionGap
+      + (blackH + innerGap + this.blackToggle.height) + sectionGap
+      + (whiteH + innerGap + this.whiteToggle.height) + sectionGap
+      + (this.confirmBtn.height + innerGap + this.backBtn.height);
+
+    this.container = scene.add.container(x, y);
+    this.container.setDepth(20);
+
+    let currentY = -this.height / 2;
+
+    // --- Rules section ---
+    rulesLabel.setPosition(-width / 2, currentY);
+    this.container.add(rulesLabel);
+    currentY += rulesH + innerGap;
+
+    this.variantToggle.setPosition(0, currentY + this.variantToggle.height / 2);
+    this.container.add(this.variantToggle.container);
+    currentY += this.variantToggle.height + sectionGap;
+
+    // --- Black section ---
+    blackLabel.setPosition(-width / 2, currentY);
+    this.container.add(blackLabel);
+    currentY += blackH + innerGap;
+
+    this.blackToggle.setPosition(0, currentY + this.blackToggle.height / 2);
+    this.container.add(this.blackToggle.container);
+    currentY += this.blackToggle.height + sectionGap;
+
+    // --- White section ---
+    whiteLabel.setPosition(-width / 2, currentY);
+    this.container.add(whiteLabel);
+    currentY += whiteH + innerGap;
+
+    this.whiteToggle.setPosition(0, currentY + this.whiteToggle.height / 2);
+    this.container.add(this.whiteToggle.container);
+    currentY += this.whiteToggle.height + sectionGap;
+
+    // --- Button section ---
+    this.confirmBtn.setPosition(0, currentY + this.confirmBtn.height / 2);
+    this.container.add(this.confirmBtn.container);
+    currentY += this.confirmBtn.height + innerGap;
+
+    this.backBtn.setPosition(0, currentY + this.backBtn.height / 2);
+    this.container.add(this.backBtn.container);
+  }
+
+  setPosition(x: number, y: number): void {
+    this.container.setPosition(x, y);
+  }
+
+  setVisible(v: boolean): void {
+    this.container.setVisible(v);
+  }
+}
+
+export class InfoBar {
+  private container: Phaser.GameObjects.Container;
+  private variantText: Phaser.GameObjects.BitmapText;
+  private timerText: Phaser.GameObjects.BitmapText;
+  readonly height: number;
+
+  constructor(
+    scene: Phaser.Scene,
+    x: number, y: number,
+    scale: number,
+    width: number,
+    variant: "freestyle" | "renju",
+  ) {
+    const fontPx = FONT_PX;
+
+    this.variantText = scene.add.bitmapText(0, 0, "minecraft", variant === "renju" ? "RENJU" : "FREESTYLE", fontPx)
+      .setTint(0xcccccc)
+      .setOrigin(0.5);
+
+    this.timerText = scene.add.bitmapText(0, 0, "minecraft", "00:00", fontPx)
+      .setTint(0xcccccc)
+      .setOrigin(0.5);
+
+    const vB = this.variantText.getBounds();
+    const tB = this.timerText.getBounds();
+    const gap = Math.round(GAP_SRC * scale);
+    const totalH = vB.height + gap + tB.height;
+    this.height = totalH;
+
+    this.variantText.setPosition(0, -(tB.height + gap) / 2);
+    this.timerText.setPosition(0, (vB.height + gap) / 2);
+
+    this.container = scene.add.container(x, y, [this.variantText, this.timerText]);
+    this.container.setDepth(20);
+  }
+
+  setTimer(formatted: string): void {
+    this.timerText.setText(formatted);
+  }
+
+  setVariant(variant: "freestyle" | "renju"): void {
+    this.variantText.setText(variant === "renju" ? "RENJU" : "FREESTYLE");
+  }
+
+  setPosition(x: number, y: number): void {
+    this.container.setPosition(x, y);
+  }
+
+  setVisible(v: boolean): void {
+    this.container.setVisible(v);
   }
 }
