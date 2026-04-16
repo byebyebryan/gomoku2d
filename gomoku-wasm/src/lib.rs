@@ -1,3 +1,10 @@
+//! WASM binding layer for `gomoku-core` and `gomoku-bot`.
+//!
+//! This crate is a **bridge only** — it translates between Rust types and JS
+//! values. It contains no game logic, no rule semantics, and no bot strategy.
+//! All authoritative behaviour lives in `gomoku-core` and `gomoku-bot`;
+//! `gomoku-wasm` just exposes it across the Wasm boundary.
+
 use js_sys::Object;
 use js_sys::Reflect;
 use wasm_bindgen::prelude::*;

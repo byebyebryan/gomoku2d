@@ -6,6 +6,14 @@ pub use search::SearchBot;
 
 use gomoku_core::{Board, Move};
 
+/// Internal trusted-bot interface.
+///
+/// Bots receive full `&Board` access and return a `Move` directly. This is the
+/// right contract for in-process, trusted bots (search, random, eval arena).
+///
+/// It is intentionally not the external bot interface — remote engines, sandboxed
+/// bots, or protocol adapters should use a separate adapter layer rather than
+/// implementing this trait directly.
 pub trait Bot {
     fn name(&self) -> &str;
     fn choose_move(&mut self, board: &Board) -> Move;
