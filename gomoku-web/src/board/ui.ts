@@ -261,6 +261,7 @@ export class ToggleGroup {
   private buttons: { container: Phaser.GameObjects.Container; normal: Phaser.GameObjects.NineSlice; hover: Phaser.GameObjects.NineSlice; pressed: Phaser.GameObjects.NineSlice; label: Phaser.GameObjects.BitmapText; labelBaseY: number; labelHoverY: number }[] = [];
   private selectedIdx: number;
   private scale: number;
+  private onSelectedClick?: (idx: number) => void;
   readonly height: number;
 
   constructor(
@@ -272,7 +273,9 @@ export class ToggleGroup {
     scale: number,
     width: number,
     vertical: boolean = false,
+    onSelectedClick?: (idx: number) => void,
   ) {
+    this.onSelectedClick = onSelectedClick;
     this.selectedIdx = selectedIdx;
     this.scale = scale;
     const pad     = Math.round(PAD_H_SRC * scale);
@@ -345,6 +348,8 @@ export class ToggleGroup {
       btnContainer.on("pointerup",    () => {
         if (idx !== this.selectedIdx) {
           this.select(idx);
+        } else {
+          this.onSelectedClick?.(idx);
         }
       });
 
@@ -385,18 +390,31 @@ export class ToggleGroup {
     return this.selectedIdx;
   }
 
+  setButtonLabel(idx: number, text: string): void {
+    this.buttons[idx].label.setText(text);
+  }
+
   setPosition(x: number, y: number): void {
     this.container.setPosition(x, y);
   }
 }
 
 export class SettingsPanel {
+  private scene: Phaser.Scene;
   private container: Phaser.GameObjects.Container;
   private variantToggle!: ToggleGroup;
   private blackToggle!: ToggleGroup;
   private whiteToggle!: ToggleGroup;
   private confirmBtn!: TextButton;
   private backBtn!: TextButton;
+  private p1Name: string = "Human";
+  private p2Name: string = "Human";
+  private editingPlayer: 0 | 1 | null = null;
+  private inputBuffer: string = "";
+  private cursorOn: boolean = true;
+  private cursorTimer: Phaser.Time.TimerEvent | null = null;
+  private keydownHandler: ((e: KeyboardEvent) => void) | null = null;
+  private pointerupHandler: (() => void) | null = null;
   readonly height: number;
 
   constructor(
@@ -408,9 +426,15 @@ export class SettingsPanel {
     initialVariant: "freestyle" | "renju",
     initialP1IsHuman: boolean,
     initialP2IsHuman: boolean,
-    onConfirm: (variant: "freestyle" | "renju", p1IsHuman: boolean, p2IsHuman: boolean) => void,
+    initialP1Name: string,
+    initialP2Name: string,
+    onConfirm: (variant: "freestyle" | "renju", p1IsHuman: boolean, p2IsHuman: boolean, p1Name: string, p2Name: string) => void,
     onBack: () => void,
   ) {
+    this.scene = scene;
+    this.p1Name = initialP1Name;
+    this.p2Name = initialP2Name;
+
     const innerGap   = Math.round(1 * scale);  // label → its toggles
     const sectionGap = Math.round(12 * scale); // between sections
     const fontPx     = FONT_PX;
@@ -423,18 +447,23 @@ export class SettingsPanel {
     const blackLabel = scene.add.bitmapText(0, 0, "pixel", "PLAYER 1", fontPx).setTint(0xcccccc).setOrigin(0, 0);
     const blackH = blackLabel.getBounds().height;
 
-    this.blackToggle = new ToggleGroup(scene, 0, 0, ["HUMAN", "BOT"], initialP1IsHuman ? 0 : 1, scale, width, true);
+    this.blackToggle = new ToggleGroup(scene, 0, 0, [this.p1Name, "BOT"], initialP1IsHuman ? 0 : 1, scale, width, true,
+      (idx) => { if (idx === 0 && this.editingPlayer === null) this.startEditing(0); },
+    );
 
     const whiteLabel = scene.add.bitmapText(0, 0, "pixel", "PLAYER 2", fontPx).setTint(0xcccccc).setOrigin(0, 0);
     const whiteH = whiteLabel.getBounds().height;
 
-    this.whiteToggle = new ToggleGroup(scene, 0, 0, ["HUMAN", "BOT"], initialP2IsHuman ? 0 : 1, scale, width, true);
+    this.whiteToggle = new ToggleGroup(scene, 0, 0, [this.p2Name, "BOT"], initialP2IsHuman ? 0 : 1, scale, width, true,
+      (idx) => { if (idx === 0 && this.editingPlayer === null) this.startEditing(1); },
+    );
 
     this.confirmBtn = new TextButton(scene, 0, 0, "NEW GAME", GREEN_TINTS, () => {
+      this.stopEditing(true);
       const variant    = this.variantToggle.getSelected() === 1 ? "renju" : "freestyle";
       const p1IsHuman  = this.blackToggle.getSelected() === 0;
       const p2IsHuman  = this.whiteToggle.getSelected() === 0;
-      onConfirm(variant, p1IsHuman, p2IsHuman);
+      onConfirm(variant, p1IsHuman, p2IsHuman, this.p1Name, this.p2Name);
     }, scale, width);
 
     this.backBtn = new TextButton(scene, 0, 0, "BACK", RED_TINTS, onBack, scale, width);
@@ -492,7 +521,76 @@ export class SettingsPanel {
   }
 
   setVisible(v: boolean): void {
+    if (!v) this.stopEditing(false);
     this.container.setVisible(v);
+  }
+
+  private startEditing(playerIdx: 0 | 1): void {
+    this.editingPlayer = playerIdx;
+    this.inputBuffer   = playerIdx === 0 ? this.p1Name : this.p2Name;
+    this.cursorOn      = true;
+    this.updateEditLabel();
+
+    this.cursorTimer = this.scene.time.addEvent({
+      delay: 530,
+      callback: () => { this.cursorOn = !this.cursorOn; this.updateEditLabel(); },
+      loop: true,
+    });
+
+    this.keydownHandler = (e: KeyboardEvent) => this.onKeydown(e);
+    this.scene.input.keyboard!.on("keydown", this.keydownHandler);
+
+    // Defer the click-away listener by one frame to avoid catching the triggering click.
+    this.scene.time.delayedCall(1, () => {
+      if (this.editingPlayer === null) return;
+      this.pointerupHandler = () => this.stopEditing(true);
+      this.scene.input.on("pointerup", this.pointerupHandler);
+    });
+  }
+
+  private stopEditing(confirm: boolean): void {
+    if (this.editingPlayer === null) return;
+    const playerIdx    = this.editingPlayer;
+    this.editingPlayer = null;
+
+    if (confirm) {
+      const name = this.inputBuffer.trim();
+      if (name.length > 0) {
+        if (playerIdx === 0) this.p1Name = name;
+        else                 this.p2Name = name;
+      }
+    }
+    // Restore clean label (no cursor).
+    const toggle = playerIdx === 0 ? this.blackToggle : this.whiteToggle;
+    toggle.setButtonLabel(0, playerIdx === 0 ? this.p1Name : this.p2Name);
+
+    this.inputBuffer = "";
+    this.cursorTimer?.destroy();      this.cursorTimer = null;
+    if (this.keydownHandler)  { this.scene.input.keyboard!.off("keydown", this.keydownHandler); this.keydownHandler = null; }
+    if (this.pointerupHandler){ this.scene.input.off("pointerup", this.pointerupHandler);        this.pointerupHandler = null; }
+  }
+
+  private updateEditLabel(): void {
+    if (this.editingPlayer === null) return;
+    const toggle = this.editingPlayer === 0 ? this.blackToggle : this.whiteToggle;
+    toggle.setButtonLabel(0, this.inputBuffer + (this.cursorOn ? "_" : " "));
+  }
+
+  private onKeydown(e: KeyboardEvent): void {
+    if (this.editingPlayer === null) return;
+    if (e.key === "Enter") {
+      e.preventDefault();
+      this.stopEditing(true);
+    } else if (e.key === "Escape") {
+      this.stopEditing(false);
+    } else if (e.key === "Backspace") {
+      e.preventDefault();
+      this.inputBuffer = this.inputBuffer.slice(0, -1);
+      this.updateEditLabel();
+    } else if (e.key.length === 1 && this.inputBuffer.length < 12) {
+      this.inputBuffer += e.key;
+      this.updateEditLabel();
+    }
   }
 }
 
