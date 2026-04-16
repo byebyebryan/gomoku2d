@@ -85,7 +85,7 @@ export class GameScene extends Phaser.Scene {
     this.board = new BoardRenderer(this, this.cellSize, originX, originY, height);
     this.board.drawBoard();
 
-    this.wasmBoard = new WasmBoard();
+    this.wasmBoard = WasmBoard.createWithVariant(this.gameVariant);
     this.resetting = false;
     this.stoneSprites.clear();
 
