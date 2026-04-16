@@ -1,8 +1,8 @@
 <font>
-  <info face="minecraft" size="16" bold="0" italic="0" charset="" unicode="1" stretchH="100" smooth="0" aa="0" padding="0,0,0,0" spacing="1,1" />
+  <info face="PixelOperator8-Bold" size="16" bold="0" italic="0" charset="" unicode="1" stretchH="100" smooth="0" aa="0" padding="0,0,0,0" spacing="1,1" />
   <common lineHeight="16" base="14" scaleW="251" scaleH="171" pages="1" packed="0" />
   <pages>
-    <page id="0" file="minecraft.png" />
+    <page id="0" file="PixelOperator8-Bold.png" />
   </pages>
   <chars count="95">
     <char id="32" x="12" y="1" width="1" height="1" xoffset="0" yoffset="13" xadvance="9" page="0" chnl="15" />
