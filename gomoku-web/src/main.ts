@@ -5,7 +5,7 @@ import { GameScene } from "./scenes/game";
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   parent: "game",
-  width: 800,
+  width: 1000,
   height: 800,
   backgroundColor: "#3a3a3a",
   pixelArt: true,

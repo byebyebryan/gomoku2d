@@ -8,10 +8,6 @@ export const SPRITE = {
   WARNING_L: "warning_l",
   WARNING_H: "warning_h",
   NUMBERS: "numbers",
-  BUTTON_0: "button_0",
-  BUTTON_1: "button_1",
-  BUTTON_2: "button_2",
-  BUTTON_3: "button_3",
 } as const;
 
 export const FRAME_SIZE = 16;
@@ -23,6 +19,7 @@ export const SPRITESHEET_CONFIG = {
   [SPRITE.WARNING_L]: { url: "assets/sprites/gomoku_warning_l.png", end: 9 },
   [SPRITE.WARNING_H]: { url: "assets/sprites/gomoku_warning_h.png", end: 6 },
   [SPRITE.NUMBERS]: { url: "assets/sprites/gomoku_numbers.png", end: 9 },
+  // button_0..3 are individual 18x18 images, not spritesheets
 } as const;
 
 // Animation definitions — frame ranges from assets/manifest.md
