@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { SPRITESHEET_CONFIG, FRAME_SIZE, SPRITE, STONE_ANIMS, WARNING_ANIMS } from "../board/constants";
+import { SPRITESHEET_CONFIG, FRAME_SIZE, SPRITE, STONE_ANIMS, POINTER_ANIMS, WARNING_ANIMS } from "../board/constants";
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -61,6 +61,15 @@ export class BootScene extends Phaser.Scene {
           end: relax.end,
         }),
         frameRate: relax.frameRate,
+      });
+    }
+
+    // Pointer animations
+    for (const anim of [POINTER_ANIMS.OUT, POINTER_ANIMS.IN, POINTER_ANIMS.FULL]) {
+      this.anims.create({
+        key: anim.key,
+        frames: this.anims.generateFrameNumbers(SPRITE.POINTER, { start: anim.start, end: anim.end }),
+        frameRate: anim.frameRate,
       });
     }
 

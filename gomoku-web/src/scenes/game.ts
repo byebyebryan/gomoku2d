@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { BOARD_SIZE, WIN_LENGTH, SPRITE, FRAME_SIZE, STONE_ANIMS, WARNING_ANIMS } from "../board/constants";
+import { BOARD_SIZE, WIN_LENGTH, SPRITE, FRAME_SIZE, STONE_ANIMS, POINTER_ANIMS, WARNING_ANIMS } from "../board/constants";
 import { BoardRenderer } from "../board/board_renderer";
 import { PlayerCard, ResetButton, PlayerInfo, SettingsButton, SettingsPanel, InfoBar } from "../board/ui";
 import { WasmBoard, WasmBot } from "../core/wasm_bridge";
@@ -41,6 +41,11 @@ export class GameScene extends Phaser.Scene {
   private botTimer: Phaser.Time.TimerEvent | null = null;
 
   private pointer!: Phaser.GameObjects.Sprite;
+  private pointerActive: boolean = false;
+  private pointerIdleTimer: Phaser.Time.TimerEvent | null = null;
+  private lastStoneSprite: Phaser.GameObjects.Sprite | null = null;
+  private stoneIdleActive: boolean = false;
+  private stoneIdleTimer: Phaser.Time.TimerEvent | null = null;
   private blackCard!: PlayerCard;
   private whiteCard!: PlayerCard;
   private resetBtn!: ResetButton;
@@ -187,29 +192,24 @@ export class GameScene extends Phaser.Scene {
     this.refreshForbiddenOverlays();
 
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
-      if (this.wasmBoard.result() !== "ongoing") {
-        this.pointer.setVisible(false);
-        return;
-      }
-      // Hide pointer during bot's turn
+      if (this.wasmBoard.result() !== "ongoing") { this.hidePointer(); return; }
       const currentIdx = this.wasmBoard.currentPlayer() === 1 ? 0 : 1;
-      if (this.bots[currentIdx] !== null) {
-        this.pointer.setVisible(false);
-        return;
-      }
+      if (this.bots[currentIdx] !== null) { this.hidePointer(); return; }
+
       const cell = this.board.pixelToCell(pointer.x, pointer.y);
       if (cell && this.wasmBoard.cell(cell.row, cell.col) === 0) {
         const { x, y } = this.board.cellToPixel(cell.row, cell.col);
         this.pointer.setPosition(x, y);
-        this.pointer.setVisible(true);
+        if (!this.pointer.visible) {
+          this.pointer.setVisible(true);
+          this.startPointerCycle();
+        }
       } else {
-        this.pointer.setVisible(false);
+        this.hidePointer();
       }
     });
 
-    this.input.on("pointerout", () => {
-      this.pointer.setVisible(false);
-    });
+    this.input.on("pointerout", () => { this.hidePointer(); });
 
     // If it's a bot's turn first (unusual but possible), schedule it
     this.scheduleBotIfNeeded();
@@ -286,6 +286,75 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  private hidePointer(): void {
+    this.pointerActive = false;
+    this.cancelPointerIdle();
+    this.pointer.stop();
+    this.pointer.setVisible(false);
+  }
+
+  private startPointerCycle(): void {
+    this.pointerActive = true;
+    this.scheduleNextPointerAnim();
+  }
+
+  private scheduleNextPointerAnim(): void {
+    const delay = 500 + Math.random() * 1000;
+    this.pointerIdleTimer = this.time.delayedCall(delay, () => {
+      if (!this.pointerActive) return;
+      const anims = [POINTER_ANIMS.OUT, POINTER_ANIMS.IN, POINTER_ANIMS.FULL];
+      const anim = anims[Math.floor(Math.random() * anims.length)];
+      this.pointer.play(anim.key);
+      this.pointer.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+        if (!this.pointerActive) return;
+        this.scheduleNextPointerAnim();
+      });
+    });
+  }
+
+  private cancelPointerIdle(): void {
+    if (this.pointerIdleTimer) {
+      this.pointerIdleTimer.destroy();
+      this.pointerIdleTimer = null;
+    }
+    this.pointer.removeAllListeners(Phaser.Animations.Events.ANIMATION_COMPLETE);
+  }
+
+  private startStoneIdle(stone: Phaser.GameObjects.Sprite): void {
+    this.stopStoneIdle();
+    this.lastStoneSprite = stone;
+    this.stoneIdleActive = true;
+    this.scheduleNextStoneAnim();
+  }
+
+  private stopStoneIdle(): void {
+    this.stoneIdleActive = false;
+    if (this.stoneIdleTimer) {
+      this.stoneIdleTimer.destroy();
+      this.stoneIdleTimer = null;
+    }
+    if (this.lastStoneSprite) {
+      this.lastStoneSprite.removeAllListeners(Phaser.Animations.Events.ANIMATION_COMPLETE);
+      this.lastStoneSprite.setFrame(0);
+      this.lastStoneSprite = null;
+    }
+  }
+
+  private scheduleNextStoneAnim(): void {
+    const delay = 700 + Math.random() * 1500;
+    this.stoneIdleTimer = this.time.delayedCall(delay, () => {
+      if (!this.stoneIdleActive || !this.lastStoneSprite) return;
+      const relax = [STONE_ANIMS.RELAX_1, STONE_ANIMS.RELAX_2, STONE_ANIMS.RELAX_3, STONE_ANIMS.RELAX_4];
+      const anim = relax[Math.floor(Math.random() * relax.length)];
+      this.lastStoneSprite.play(anim.key);
+      this.lastStoneSprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+        if (!this.stoneIdleActive) return;
+        this.lastStoneSprite?.setFrame(0);
+        this.scheduleNextStoneAnim();
+      });
+    });
+  }
+
   private showSettings(): void {
     this.showingSettings = true;
 
@@ -343,7 +412,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private applyAndRender(row: number, col: number): void {
-    this.pointer.setVisible(false);
+    this.hidePointer();
 
     const mover = this.wasmBoard.currentPlayer();
     const moveResult = this.wasmBoard.applyMove(row, col);
@@ -357,6 +426,9 @@ export class GameScene extends Phaser.Scene {
     const stone = this.board.placeStone(row, col, wasmPlayer);
     this.stoneSprites.set(this.cellKey(row, col), stone);
     stone.play(STONE_ANIMS.FORM.key);
+    stone.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+      if (this.wasmBoard.result() === "ongoing") this.startStoneIdle(stone);
+    });
 
     const wasmResult = this.wasmBoard.result();
     if (wasmResult === "black" || wasmResult === "white") {
@@ -405,8 +477,7 @@ export class GameScene extends Phaser.Scene {
     const bot = this.bots[currentIdx];
     if (!bot) return;
 
-    // Hide pointer during bot's turn
-    this.pointer.setVisible(false);
+    this.hidePointer();
 
     this.botTimer = this.time.delayedCall(BOT_DELAY_MS, () => {
       this.executeBotMove(bot);
@@ -475,6 +546,7 @@ export class GameScene extends Phaser.Scene {
   private resetGame(): void {
     if (this.resetting) return;
     this.resetting = true;
+    this.stopStoneIdle();
 
     // Kill any pending bot move immediately
     if (this.botTimer) {
@@ -511,6 +583,8 @@ export class GameScene extends Phaser.Scene {
     this.bots = [null, null];
     for (const sprite of this.forbiddenSprites) sprite.destroy();
     this.forbiddenSprites = [];
+    this.stopStoneIdle();
+    this.hidePointer();
     this.wasmBoard.free();
     this.input.removeAllListeners();
     this.children.removeAll();
