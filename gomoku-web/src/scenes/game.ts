@@ -49,6 +49,7 @@ export class GameScene extends Phaser.Scene {
   private showingSettings: boolean = false;
   private gameVariant: "freestyle" | "renju" = "freestyle";
   private zones: Phaser.GameObjects.Zone[] = [];
+  private forbiddenSprites: Phaser.GameObjects.Sprite[] = [];
   private gameStartTime: number = 0;
   private turnStartTime: number = 0;
   private accumulatedMs: [number, number] = [0, 0];
@@ -183,6 +184,7 @@ export class GameScene extends Phaser.Scene {
     this.resetBtn.setPosition(sidebarX, sideY);
 
     this.updatePointerTint();
+    this.refreshForbiddenOverlays();
 
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
       if (this.wasmBoard.result() !== "ongoing") {
@@ -242,6 +244,46 @@ export class GameScene extends Phaser.Scene {
     this.pointer.setTint(wasmPlayer === 1 ? 0x404040 : 0xffffff);
     this.blackCard.setActive(wasmPlayer === 1);
     this.whiteCard.setActive(wasmPlayer === 2);
+  }
+
+  private refreshForbiddenOverlays(): void {
+    for (const sprite of this.forbiddenSprites) sprite.destroy();
+    this.forbiddenSprites = [];
+
+    if (this.gameVariant !== "renju") return;
+    if (this.wasmBoard.result() !== "ongoing") return;
+    if (this.wasmBoard.currentPlayer() !== 1) return; // only on black's turn
+    if (this.bots[0] !== null) return; // only when black is human
+
+    // Collect empty cells within radius 2 of any placed stone — forbidden
+    // moves require proximity to existing stones, so no need to scan the full board.
+    const candidates = new Set<number>();
+    for (let row = 0; row < BOARD_SIZE; row++) {
+      for (let col = 0; col < BOARD_SIZE; col++) {
+        if (this.wasmBoard.cell(row, col) === 0) continue;
+        for (let dr = -2; dr <= 2; dr++) {
+          for (let dc = -2; dc <= 2; dc++) {
+            const r = row + dr, c = col + dc;
+            if (r < 0 || r >= BOARD_SIZE || c < 0 || c >= BOARD_SIZE) continue;
+            if (this.wasmBoard.cell(r, c) !== 0) continue;
+            candidates.add(r * BOARD_SIZE + c);
+          }
+        }
+      }
+    }
+
+    const scale = this.cellSize / FRAME_SIZE;
+    for (const idx of candidates) {
+      const row = Math.floor(idx / BOARD_SIZE), col = idx % BOARD_SIZE;
+      if (this.wasmBoard.isLegal(row, col)) continue;
+      const { x, y } = this.board.cellToPixel(row, col);
+      const sprite = this.add.sprite(x, y, SPRITE.WARNING_L, 0);
+      sprite.setScale(scale);
+      sprite.setDepth(0.5);
+      sprite.setTint(0xff4444);
+      sprite.play({ key: WARNING_ANIMS.SURFACE.key, repeat: -1 });
+      this.forbiddenSprites.push(sprite);
+    }
   }
 
   private showSettings(): void {
@@ -319,6 +361,7 @@ export class GameScene extends Phaser.Scene {
     const wasmResult = this.wasmBoard.result();
     if (wasmResult === "black" || wasmResult === "white") {
       this.gameEndTime = Date.now();
+      this.refreshForbiddenOverlays(); // clear forbidden overlays on game end
       // Freeze timers at final accumulated values.
       this.blackCard.setTimer(this.formatTime(this.accumulatedMs[0]));
       this.whiteCard.setTimer(this.formatTime(this.accumulatedMs[1]));
@@ -342,6 +385,7 @@ export class GameScene extends Phaser.Scene {
 
     if (wasmResult === "draw") {
       this.gameEndTime = Date.now();
+      this.refreshForbiddenOverlays(); // clear forbidden overlays on game end
       // Freeze timers at final accumulated values.
       this.blackCard.setTimer(this.formatTime(this.accumulatedMs[0]));
       this.whiteCard.setTimer(this.formatTime(this.accumulatedMs[1]));
@@ -351,6 +395,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.updatePointerTint();
+    this.refreshForbiddenOverlays();
     this.scheduleBotIfNeeded();
   }
 
@@ -464,6 +509,8 @@ export class GameScene extends Phaser.Scene {
       if (bot) bot.free();
     }
     this.bots = [null, null];
+    for (const sprite of this.forbiddenSprites) sprite.destroy();
+    this.forbiddenSprites = [];
     this.wasmBoard.free();
     this.input.removeAllListeners();
     this.children.removeAll();
