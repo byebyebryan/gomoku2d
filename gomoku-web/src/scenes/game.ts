@@ -217,14 +217,17 @@ export class GameScene extends Phaser.Scene {
     const gameElapsed = now - this.gameStartTime;
     this.infoBar.setTimer(this.formatTime(gameElapsed));
 
-    // Player timers
+    // Player timers — active player shows base + live delta; inactive shows total.
     const currentIdx = this.wasmBoard.currentPlayer() === 1 ? 0 : 1;
     const turnElapsed = now - this.turnStartTime;
 
     for (let i = 0; i < 2; i++) {
-      const acc = this.accumulatedMs[i] + (i === currentIdx ? turnElapsed : 0);
       const card = i === 0 ? this.blackCard : this.whiteCard;
-      card.setTimer(this.formatTime(acc));
+      if (i === currentIdx) {
+        card.showPendingTimer(this.formatTime(this.accumulatedMs[i]), "+" + this.formatTime(turnElapsed));
+      } else {
+        card.setTimer(this.formatTime(this.accumulatedMs[i]));
+      }
     }
   }
 
@@ -310,6 +313,10 @@ export class GameScene extends Phaser.Scene {
     const wasmResult = this.wasmBoard.result();
     if (wasmResult === "black" || wasmResult === "white") {
       this.gameEndTime = Date.now();
+      // Freeze timers at final accumulated values.
+      this.blackCard.setTimer(this.formatTime(this.accumulatedMs[0]));
+      this.whiteCard.setTimer(this.formatTime(this.accumulatedMs[1]));
+
       const winner = wasmResult === "black" ? 0 : 1;
       const winResult = this.checkWin(row, col, winner);
       if (winResult && winResult.winningCells) {
@@ -318,16 +325,20 @@ export class GameScene extends Phaser.Scene {
 
       this.blackCard.setActive(false);
       this.whiteCard.setActive(false);
-      // Map winning color slot → profile and update the correct card.
+      // Map winning color slot → profile; show pending +1 before folding in.
       const winnerProfileIdx = winner === 0 ? this.blackProfileIdx : (1 - this.blackProfileIdx) as 0 | 1;
+      const oldWins = this.profiles[winnerProfileIdx].wins;
       this.profiles[winnerProfileIdx].wins++;
-      if (winner === 0) this.blackCard.setWins(this.profiles[this.blackProfileIdx].wins);
-      else              this.whiteCard.setWins(this.profiles[(1 - this.blackProfileIdx) as 0 | 1].wins);
+      if (winner === 0) this.blackCard.showPendingWin(oldWins);
+      else              this.whiteCard.showPendingWin(oldWins);
       return;
     }
 
     if (wasmResult === "draw") {
       this.gameEndTime = Date.now();
+      // Freeze timers at final accumulated values.
+      this.blackCard.setTimer(this.formatTime(this.accumulatedMs[0]));
+      this.whiteCard.setTimer(this.formatTime(this.accumulatedMs[1]));
       this.blackCard.setActive(false);
       this.whiteCard.setActive(false);
       return;
