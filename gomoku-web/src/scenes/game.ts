@@ -257,12 +257,12 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private createWarnSprite(x: number, y: number, tint: number): Phaser.GameObjects.Sprite {
+  private createWarnSprite(x: number, y: number, tint: number, animKey: string = WARNING_ANIMS.POINTER.key, depth: number = 0.5): Phaser.GameObjects.Sprite {
     const sprite = this.add.sprite(x, y, SPRITE.WARNING, 0);
     sprite.setScale(this.cellSize / FRAME_SIZE);
-    sprite.setDepth(0.5);
+    sprite.setDepth(depth);
     sprite.setTint(tint);
-    sprite.play({ key: WARNING_ANIMS.POINTER.key, repeat: -1 });
+    sprite.play({ key: animKey, repeat: -1 });
     return sprite;
   }
 
@@ -489,9 +489,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   private highlightWin(cells: { row: number; col: number }[]): void {
+    this.stopStoneIdle();
     for (const { row, col } of cells) {
       const { x, y } = this.board.cellToPixel(row, col);
-      this.winSprites.push(this.createWarnSprite(x, y, 0x00ff44));
+      this.winSprites.push(this.createWarnSprite(x, y, 0x00ff44, WARNING_ANIMS.HOVER.key, 2.5));
     }
   }
 
