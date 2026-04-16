@@ -2,6 +2,8 @@
 
 A Gomoku engine and game framework sandbox — built to validate a reusable architecture for native core + bot + eval + web frontend before applying it to larger projects.
 
+**Play:** http://dev.byebyebryan.com/gomoku2d/
+
 **Stack:** Rust (Cargo workspace) · Phaser 3 + TypeScript + Vite (web) · wasm-pack (Wasm bridge)
 
 ---
