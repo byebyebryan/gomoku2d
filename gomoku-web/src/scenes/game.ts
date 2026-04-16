@@ -11,7 +11,7 @@ interface GameResult {
   winningCells?: { row: number; col: number }[];
 }
 
-const SIDEBAR_W = 200;
+const SIDEBAR_W = 240;
 const BOT_DELAY_MS = 300;
 
 export class GameScene extends Phaser.Scene {
@@ -65,17 +65,14 @@ export class GameScene extends Phaser.Scene {
     const height = this.cameras.main.height;
 
     const boardAreaW = width - SIDEBAR_W;
-    const boardAreaH = height;
-    const padding = 20;
-    const available = Math.min(boardAreaW, boardAreaH) - padding * 2;
-    this.cellSize = Math.floor(available / BOARD_SIZE);
+    // Float cellSize so top=0 and edge-bottom=height with no rounding gaps.
+    // Edge ratio: sideH = cellSize/3, total vertical = (BOARD_SIZE + 1/3) * cellSize.
+    const EDGE_RATIO = 1 / 3;
+    this.cellSize = Math.min(boardAreaW / BOARD_SIZE, height / (BOARD_SIZE + EDGE_RATIO));
+    const originY = this.cellSize / 2;
+    const originX = (boardAreaW - (BOARD_SIZE - 1) * this.cellSize) / 2;
 
-    const boardCenterX = boardAreaW / 2;
-    const boardCenterY = height / 2;
-    const originX = Math.floor(boardCenterX - ((BOARD_SIZE - 1) * this.cellSize) / 2);
-    const originY = Math.floor(boardCenterY - ((BOARD_SIZE - 1) * this.cellSize) / 2);
-
-    this.board = new BoardRenderer(this, this.cellSize, originX, originY);
+    this.board = new BoardRenderer(this, this.cellSize, originX, originY, height);
     this.board.drawBoard();
 
     this.wasmBoard = new WasmBoard();

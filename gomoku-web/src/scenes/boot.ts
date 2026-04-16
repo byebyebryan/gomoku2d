@@ -22,7 +22,7 @@ export class BootScene extends Phaser.Scene {
     this.load.image("button_3", "assets/sprites/button_3.png");
 
     // Load bitmap font (pixel-perfect, no AA)
-    this.load.bitmapFont("minecraft", "assets/sprites/PixelOperator8-Bold.png", "assets/sprites/PixelOperator8-Bold.fnt");
+    this.load.bitmapFont("pixel", "assets/sprites/PixelOperator8-Bold.png", "assets/sprites/PixelOperator8-Bold.fnt");
   }
 
   create(): void {
