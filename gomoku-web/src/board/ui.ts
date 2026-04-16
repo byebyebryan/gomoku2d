@@ -2,8 +2,8 @@ import Phaser from "phaser";
 
 // All measurements in source pixels (pre-scale). button sprites are 18×18: 8px corner + 2px center + 8px corner.
 const BUTTON_BORDER  = 8;
-const HOVER_OFFSET   = 1;  // button_1 surface starts 1 source px below button_0
-const PRESS_OFFSET   = 3;  // button_2 surface starts 3 source px below button_0
+const HOVER_OFFSET   = 1;  // frame 1 surface starts 1 source px below frame 0
+const PRESS_OFFSET   = 3;  // frame 2 surface starts 3 source px below frame 0
 const PAD_H_SRC      = 6;  // horizontal text indent inside card
 const PAD_V_SRC      = 10; // vertical padding above/below text
 const GAP_SRC        = 3;  // gap between name and wins lines
@@ -80,13 +80,13 @@ export class PlayerCard {
     const tint = playerColor === 0 ? 0x404040 : 0xffffff;
 
     this.bgNormal = scene.add.nineslice(
-      0, 0, "button_0", undefined,
+      0, 0, "button", 0,
       nsW, nsH,
       BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER,
     ).setScale(scale).setTint(tint);
 
     this.bgActive = scene.add.nineslice(
-      0, 0, "button_2", undefined,
+      0, 0, "button", 2,
       nsW, nsH,
       BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER,
     ).setScale(scale).setTint(tint).setVisible(false);
@@ -99,7 +99,7 @@ export class PlayerCard {
     this.textRaisedY  = top - Math.round(PRESS_OFFSET * scale);
     this.winsOffsetY  = nB.height + gap;
     this.timerOffsetY = nB.height + gap + wB.height + gap;
-    // Start in inactive state: button_0 surface, content raised up
+    // Start in inactive state: frame 0 (up) surface, content raised up
     this.nameText.setPosition(left, this.textRaisedY);
     this.winsText.setPosition(left, this.textRaisedY + this.winsOffsetY);
     this.pendingWinText.setPosition(left, this.textRaisedY + this.winsOffsetY);
@@ -201,9 +201,9 @@ export class TextButton {
     const nsW = btnW / scale;
     const nsH = btnH / scale;
 
-    const normal  = scene.add.nineslice(0, 0, "button_0", undefined, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(tints[0]);
-    const hover   = scene.add.nineslice(0, 0, "button_1", undefined, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(tints[1]).setVisible(false);
-    const pressed = scene.add.nineslice(0, 0, "button_2", undefined, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(tints[2]).setVisible(false);
+    const normal  = scene.add.nineslice(0, 0, "button", 0, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(tints[0]);
+    const hover   = scene.add.nineslice(0, 0, "button", 1, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(tints[1]).setVisible(false);
+    const pressed = scene.add.nineslice(0, 0, "button", 2, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(tints[2]).setVisible(false);
 
     this.container = scene.add.container(x, y, [normal, hover, pressed, label]);
     this.container.setDepth(20);
@@ -309,9 +309,9 @@ export class ToggleGroup {
       const tint = isSelected ? 0x44aa66 : 0x666666;
       const hoverTint = 0x888888;
 
-      const normal  = scene.add.nineslice(0, 0, "button_0", undefined, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(tint);
-      const hover   = scene.add.nineslice(0, 0, "button_1", undefined, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(hoverTint).setVisible(false);
-      const pressed = scene.add.nineslice(0, 0, "button_2", undefined, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(tint).setVisible(false);
+      const normal  = scene.add.nineslice(0, 0, "button", 0, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(tint);
+      const hover   = scene.add.nineslice(0, 0, "button", 1, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(hoverTint).setVisible(false);
+      const pressed = scene.add.nineslice(0, 0, "button", 2, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(tint).setVisible(false);
 
       const optLabel = scene.add.bitmapText(0, 0, "pixel", options[i], fontPx)
         .setTint(0xffffff)

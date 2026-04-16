@@ -1,25 +1,20 @@
-// Sprite assets are all 16x16 per frame, horizontal strips.
+// Sprite assets — 16x16 per frame (spritesheets) or 18x18 per frame (button).
 // Loaded in boot scene via spritesheet configs.
 
 export const SPRITE = {
   STONE: "stone",
   POINTER: "pointer",
-  GRID: "grid",
-  WARNING_L: "warning_l",
-  WARNING_H: "warning_h",
-  NUMBERS: "numbers",
+  WARNING: "warning",
+  BUTTON: "button",
 } as const;
 
 export const FRAME_SIZE = 16;
+export const BUTTON_FRAME_SIZE = 18;
 
 export const SPRITESHEET_CONFIG = {
-  [SPRITE.STONE]: { url: "assets/sprites/gomoku_stone.png", end: 33 },
-  [SPRITE.POINTER]: { url: "assets/sprites/gomoku_pointer.png", end: 18 },
-  [SPRITE.GRID]: { url: "assets/sprites/gomoku_grid_half_line.png", end: 18 },
-  [SPRITE.WARNING_L]: { url: "assets/sprites/gomoku_warning_l.png", end: 9 },
-  [SPRITE.WARNING_H]: { url: "assets/sprites/gomoku_warning_h.png", end: 6 },
-  [SPRITE.NUMBERS]: { url: "assets/sprites/gomoku_numbers.png", end: 9 },
-  // button_0..3 are individual 18x18 images, not spritesheets
+  [SPRITE.STONE]: { url: "assets/sprites/stone.png", end: 33 },
+  [SPRITE.POINTER]: { url: "assets/sprites/pointer.png", end: 18 },
+  [SPRITE.WARNING]: { url: "assets/sprites/warning.png", end: 16 },
 } as const;
 
 // Animation definitions — frame ranges from assets/manifest.md
@@ -40,7 +35,8 @@ export const POINTER_ANIMS = {
 } as const;
 
 export const WARNING_ANIMS = {
-  SURFACE: { start: 0, end: 9, frameRate: 12, key: "warning-surface" },
+  POINTER: { start: 0, end: 9, frameRate: 12, key: "warning-pointer" },
+  HOVER:   { start: 10, end: 16, frameRate: 12, key: "warning-hover" },
 } as const;
 
 // Board layout constants

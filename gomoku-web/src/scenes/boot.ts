@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { SPRITESHEET_CONFIG, FRAME_SIZE, SPRITE, STONE_ANIMS, POINTER_ANIMS, WARNING_ANIMS } from "../board/constants";
+import { SPRITESHEET_CONFIG, FRAME_SIZE, BUTTON_FRAME_SIZE, SPRITE, STONE_ANIMS, POINTER_ANIMS, WARNING_ANIMS } from "../board/constants";
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -15,11 +15,11 @@ export class BootScene extends Phaser.Scene {
       });
     }
 
-    // Load button images (individual 18x18, not spritesheets)
-    this.load.image("button_0", "assets/sprites/button_0.png");
-    this.load.image("button_1", "assets/sprites/button_1.png");
-    this.load.image("button_2", "assets/sprites/button_2.png");
-    this.load.image("button_3", "assets/sprites/button_3.png");
+    // Button spritesheet: 18x18 per frame, 3 frames (0=up, 1=hover, 2=down)
+    this.load.spritesheet(SPRITE.BUTTON, "assets/sprites/button.png", {
+      frameWidth: BUTTON_FRAME_SIZE,
+      frameHeight: BUTTON_FRAME_SIZE,
+    });
 
     // Load bitmap font (pixel-perfect, no AA)
     this.load.bitmapFont("pixel", "assets/sprites/PixelOperator8-Bold.png", "assets/sprites/PixelOperator8-Bold.fnt");
@@ -75,12 +75,12 @@ export class BootScene extends Phaser.Scene {
 
     // Warning animation (loops)
     this.anims.create({
-      key: WARNING_ANIMS.SURFACE.key,
-      frames: this.anims.generateFrameNumbers(SPRITE.WARNING_L, {
-        start: WARNING_ANIMS.SURFACE.start,
-        end: WARNING_ANIMS.SURFACE.end,
+      key: WARNING_ANIMS.POINTER.key,
+      frames: this.anims.generateFrameNumbers(SPRITE.WARNING, {
+        start: WARNING_ANIMS.POINTER.start,
+        end: WARNING_ANIMS.POINTER.end,
       }),
-      frameRate: WARNING_ANIMS.SURFACE.frameRate,
+      frameRate: WARNING_ANIMS.POINTER.frameRate,
       repeat: -1,
     });
   }
