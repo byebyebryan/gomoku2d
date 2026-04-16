@@ -14,6 +14,13 @@ interface GameResult {
 const SIDEBAR_W = 240;
 const BOT_DELAY_MS = 300;
 
+function defaultNames(p1Human: boolean, p2Human: boolean): [string, string] {
+  if (p1Human  && p2Human)  return ["Human 1", "Human 2"];
+  if (!p1Human && !p2Human) return ["Bot 1",   "Bot 2"];
+  if (p1Human)              return ["Human",   "Bot"];
+  return                           ["Bot",     "Human"];
+}
+
 export class GameScene extends Phaser.Scene {
   private board!: BoardRenderer;
   private cellSize: number = 0;
@@ -22,10 +29,13 @@ export class GameScene extends Phaser.Scene {
   private resetting: boolean = false;
   private stoneSprites: Map<string, Phaser.GameObjects.Sprite> = new Map();
 
-  private players: [PlayerInfo, PlayerInfo] = [
-    { name: "Black", wins: 0, isHuman: true },
-    { name: "White", wins: 0, isHuman: false },
+  // Player profiles — indexed by player number (0=P1, 1=P2), not color slot.
+  private profiles: [PlayerInfo, PlayerInfo] = [
+    { name: "Human", wins: 0, isHuman: true  },
+    { name: "Bot",   wins: 0, isHuman: false },
   ];
+  // Which profile index occupies the black slot (0 or 1).
+  private blackProfileIdx: 0 | 1 = 0;
 
   private bots: [(WasmBot | null), (WasmBot | null)] = [null, null];
   private botTimer: Phaser.Time.TimerEvent | null = null;
@@ -79,13 +89,11 @@ export class GameScene extends Phaser.Scene {
     this.resetting = false;
     this.stoneSprites.clear();
 
-    // Create bots for non-human players
+    // Create bots per color slot based on the assigned profile.
+    const whiteProfileIdx = (1 - this.blackProfileIdx) as 0 | 1;
     this.bots = [null, null];
-    for (let i = 0; i < 2; i++) {
-      if (!this.players[i].isHuman) {
-        this.bots[i] = WasmBot.createBaseline(3);
-      }
-    }
+    if (!this.profiles[this.blackProfileIdx].isHuman) this.bots[0] = WasmBot.createBaseline(3);
+    if (!this.profiles[whiteProfileIdx].isHuman)      this.bots[1] = WasmBot.createBaseline(3);
 
     this.pointer = this.board.createPointer();
 
@@ -99,8 +107,8 @@ export class GameScene extends Phaser.Scene {
     const cardW        = Math.floor(width - boardRightX - 2 * cardMargin);
     const sidebarX     = boardRightX + cardMargin + cardW / 2;
 
-    this.blackCard = new PlayerCard(this, 0, 0, 0, this.players[0], uiScale, cardW);
-    this.whiteCard = new PlayerCard(this, 0, 0, 1, this.players[1], uiScale, cardW);
+    this.blackCard = new PlayerCard(this, 0, 0, 0, this.profiles[this.blackProfileIdx], uiScale, cardW);
+    this.whiteCard = new PlayerCard(this, 0, 0, 1, this.profiles[whiteProfileIdx], uiScale, cardW);
     this.resetBtn  = new ResetButton(this, 0, 0, () => this.resetGame(), uiScale, cardW);
     this.settingsBtn = new SettingsButton(this, 0, 0, () => this.showSettings(), uiScale, cardW);
 
@@ -111,12 +119,14 @@ export class GameScene extends Phaser.Scene {
       uiScale,
       cardW,
       this.gameVariant,
-      this.players[0].isHuman,
-      this.players[1].isHuman,
-      (variant, blackIsHuman, whiteIsHuman) => {
+      this.profiles[0].isHuman,
+      this.profiles[1].isHuman,
+      (variant, p1IsHuman, p2IsHuman) => {
         this.gameVariant = variant;
-        this.players[0] = { name: "Black", wins: 0, isHuman: blackIsHuman };
-        this.players[1] = { name: "White", wins: 0, isHuman: whiteIsHuman };
+        const [n1, n2] = defaultNames(p1IsHuman, p2IsHuman);
+        this.profiles[0] = { name: n1, wins: 0, isHuman: p1IsHuman };
+        this.profiles[1] = { name: n2, wins: 0, isHuman: p2IsHuman };
+        this.blackProfileIdx = 0; // P1 always starts as black after settings
         this.hideSettings();
         this.rebuildScene();
       },
@@ -175,7 +185,7 @@ export class GameScene extends Phaser.Scene {
       }
       // Hide pointer during bot's turn
       const currentIdx = this.wasmBoard.currentPlayer() === 1 ? 0 : 1;
-      if (!this.players[currentIdx].isHuman) {
+      if (this.bots[currentIdx] !== null) {
         this.pointer.setVisible(false);
         return;
       }
@@ -268,12 +278,14 @@ export class GameScene extends Phaser.Scene {
 
   private onCellClick(row: number, col: number): void {
     if (this.wasmBoard.result() !== "ongoing") {
+      // Swap color slots so the loser opens as black next game.
+      this.blackProfileIdx = (1 - this.blackProfileIdx) as 0 | 1;
       this.resetGame();
       return;
     }
     // Only humans can click
     const currentIdx = this.wasmBoard.currentPlayer() === 1 ? 0 : 1;
-    if (!this.players[currentIdx].isHuman) return;
+    if (this.bots[currentIdx] !== null) return;
     if (!this.wasmBoard.isLegal(row, col)) return;
 
     this.applyAndRender(row, col);
@@ -306,9 +318,11 @@ export class GameScene extends Phaser.Scene {
 
       this.blackCard.setActive(false);
       this.whiteCard.setActive(false);
-      this.players[winner].wins++;
-      if (winner === 0) this.blackCard.setWins(this.players[0].wins);
-      else this.whiteCard.setWins(this.players[1].wins);
+      // Map winning color slot → profile and update the correct card.
+      const winnerProfileIdx = winner === 0 ? this.blackProfileIdx : (1 - this.blackProfileIdx) as 0 | 1;
+      this.profiles[winnerProfileIdx].wins++;
+      if (winner === 0) this.blackCard.setWins(this.profiles[this.blackProfileIdx].wins);
+      else              this.whiteCard.setWins(this.profiles[(1 - this.blackProfileIdx) as 0 | 1].wins);
       return;
     }
 
