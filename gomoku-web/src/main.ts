@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { BootScene } from "./scenes/boot";
 import { GameScene } from "./scenes/game";
+import { initWasm } from "./core/wasm_bridge";
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -16,4 +17,6 @@ const config: Phaser.Types.Core.GameConfig = {
   scene: [BootScene, GameScene],
 };
 
-const game = new Phaser.Game(config);
+initWasm().then(() => {
+  new Phaser.Game(config);
+});

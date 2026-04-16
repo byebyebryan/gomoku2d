@@ -7,3 +7,4 @@ edition = "2021"
 gomoku-core = { path = "../gomoku-core" }
 rand = "0.8"
 serde_json = "1"
+instant = { version = "0.1", features = ["wasm-bindgen"] }

@@ -7,5 +7,11 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+wasm-bindgen = "0.2"
 gomoku-core = { path = "../gomoku-core" }
-# wasm-bindgen will be added when Phase 2 begins
+gomoku-bot = { path = "../gomoku-bot" }
+js-sys = "0.3"
+console_error_panic_hook = "0.1"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+getrandom = { version = "0.2", features = ["js"] }

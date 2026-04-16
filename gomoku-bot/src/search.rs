@@ -1,8 +1,9 @@
+use instant::Instant;
 use std::collections::HashMap;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
-use gomoku_core::{Board, Color, Move, GameResult, DIRS, ZobristTable};
 use crate::Bot;
+use gomoku_core::{Board, Color, GameResult, Move, ZobristTable, DIRS};
 
 // ZobristTable is provided by gomoku-core with a stable shared seed,
 // so hashes are consistent between the search and replay recording.
@@ -26,7 +27,11 @@ fn hash_board(zt: &ZobristTable, board: &Board) -> u64 {
 // --- Transposition table ---
 
 #[derive(Clone, Copy)]
-enum TTFlag { Exact, LowerBound, UpperBound }
+enum TTFlag {
+    Exact,
+    LowerBound,
+    UpperBound,
+}
 
 #[derive(Clone, Copy)]
 struct TTEntry {
@@ -42,7 +47,9 @@ fn score_line(counts: &[i32; 6], open_ends: &[i32; 6]) -> i32 {
     let mut score = 0i32;
     for len in 2..=5usize {
         let c = counts[len];
-        if c == 0 { continue; }
+        if c == 0 {
+            continue;
+        }
         let o = open_ends[len];
         let base: i32 = match len {
             5 => 1_000_000,
@@ -81,7 +88,8 @@ fn evaluate(board: &Board, color: Color) -> i32 {
                     // Only start a new run from the "back" end to avoid double-counting
                     let pr = row - dr;
                     let pc = col - dc;
-                    let back_in_bounds = pr >= 0 && pr < size as isize && pc >= 0 && pc < size as isize;
+                    let back_in_bounds =
+                        pr >= 0 && pr < size as isize && pc >= 0 && pc < size as isize;
                     if back_in_bounds && board.cell(pr as usize, pc as usize) == Some(player) {
                         continue;
                     }
@@ -91,7 +99,10 @@ fn evaluate(board: &Board, color: Color) -> i32 {
                     // Count run length
                     let mut len = 0isize;
                     let (mut r, mut c) = (row, col);
-                    while r >= 0 && r < size as isize && c >= 0 && c < size as isize
+                    while r >= 0
+                        && r < size as isize
+                        && c >= 0
+                        && c < size as isize
                         && board.cell(r as usize, c as usize) == Some(player)
                     {
                         len += 1;
@@ -99,20 +110,32 @@ fn evaluate(board: &Board, color: Color) -> i32 {
                         c += dc;
                     }
                     if len >= win_len {
-                        if player == color { return 2_000_000; } else { return -2_000_000; }
+                        if player == color {
+                            return 2_000_000;
+                        } else {
+                            return -2_000_000;
+                        }
                     }
-                    if len < 2 { continue; }
+                    if len < 2 {
+                        continue;
+                    }
                     // Count open ends
                     let mut ends = 0i32;
                     // Before
                     let (br, bc) = (row - dr, col - dc);
-                    if br >= 0 && br < size as isize && bc >= 0 && bc < size as isize
+                    if br >= 0
+                        && br < size as isize
+                        && bc >= 0
+                        && bc < size as isize
                         && board.cell(br as usize, bc as usize).is_none()
                     {
                         ends += 1;
                     }
                     // After
-                    if r >= 0 && r < size as isize && c >= 0 && c < size as isize
+                    if r >= 0
+                        && r < size as isize
+                        && c >= 0
+                        && c < size as isize
                         && board.cell(r as usize, c as usize).is_none()
                     {
                         ends += 1;
@@ -127,7 +150,11 @@ fn evaluate(board: &Board, color: Color) -> i32 {
         }
 
         let s = score_line(&counts, &open_ends);
-        if player == color { my_score += s; } else { opp_score += s; }
+        if player == color {
+            my_score += s;
+        } else {
+            opp_score += s;
+        }
     }
 
     my_score - opp_score
@@ -139,7 +166,10 @@ fn candidate_moves(board: &Board, radius: usize) -> Vec<Move> {
     let size = board.config.board_size;
     if board.history.is_empty() {
         let center = size / 2;
-        return vec![Move { row: center, col: center }];
+        return vec![Move {
+            row: center,
+            col: center,
+        }];
     }
 
     // Flat bool array avoids 2D allocation overhead — this is called once per negamax node.
@@ -224,11 +254,11 @@ fn negamax(
     };
 
     for mv in ordered {
-        if !board.is_legal(mv) { continue; }
+        if !board.is_legal(mv) {
+            continue;
+        }
         // Incrementally update hash: XOR in the placed piece and flip turn bit
-        let child_hash = hash
-            ^ zobrist.piece(mv.row, mv.col, color)
-            ^ zobrist.turn;
+        let child_hash = hash ^ zobrist.piece(mv.row, mv.col, color) ^ zobrist.turn;
         board.apply_move(mv).unwrap();
         let (score, _) = negamax(
             board,
@@ -264,7 +294,15 @@ fn negamax(
     } else {
         TTFlag::Exact
     };
-    tt.insert(hash, TTEntry { depth, score: best_score, flag, best_move });
+    tt.insert(
+        hash,
+        TTEntry {
+            depth,
+            score: best_score,
+            flag,
+            best_move,
+        },
+    );
 
     (best_score, best_move)
 }
@@ -314,11 +352,13 @@ impl Bot for SearchBot {
     }
 
     fn trace(&self) -> Option<serde_json::Value> {
-        self.last_info.as_ref().map(|info| serde_json::json!({
-            "depth": info.depth_reached,
-            "nodes": info.nodes,
-            "score": info.score,
-        }))
+        self.last_info.as_ref().map(|info| {
+            serde_json::json!({
+                "depth": info.depth_reached,
+                "nodes": info.nodes,
+                "score": info.score,
+            })
+        })
     }
 
     fn choose_move(&mut self, board: &Board) -> Move {
@@ -331,7 +371,10 @@ impl Bot for SearchBot {
         let mut best_move = candidate_moves(board, 2)
             .into_iter()
             .next()
-            .unwrap_or(Move { row: center, col: center });
+            .unwrap_or(Move {
+                row: center,
+                col: center,
+            });
         let mut best_score = i32::MIN + 1;
         let mut depth_reached = 0;
         let mut total_nodes = 0u64;
@@ -414,7 +457,10 @@ mod tests {
         // Board state: White has (0,0),(0,1),(0,2),(0,3) — threat at (0,4) or (0,-1)
         let mut bot = SearchBot::new(3);
         let mv = bot.choose_move(&board);
-        assert!(mv == (Move { row: 0, col: 4 }) || mv == (Move { row: 0, col: 5 }),
-            "Expected block at (0,4), got {:?}", mv);
+        assert!(
+            mv == (Move { row: 0, col: 4 }) || mv == (Move { row: 0, col: 5 }),
+            "Expected block at (0,4), got {:?}",
+            mv
+        );
     }
 }
