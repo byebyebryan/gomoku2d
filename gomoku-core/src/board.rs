@@ -406,8 +406,11 @@ impl Board {
         self.result = GameResult::Ongoing;
     }
 
-    /// Zobrist hash of the current position. Stable across crates — uses the
-    /// same seed as `ZobristTable::new(board_size)` in `gomoku-core`.
+    /// Zobrist hash of the current position, recomputed from scratch.
+    ///
+    /// Intended for replay verification, debugging, and test assertions —
+    /// not for hot search paths. Search code should maintain an incremental
+    /// hash updated with each `apply_move`/`undo_move` call instead.
     pub fn hash(&self) -> u64 {
         let zt = ZobristTable::new(self.config.board_size);
         let mut h = 0u64;
