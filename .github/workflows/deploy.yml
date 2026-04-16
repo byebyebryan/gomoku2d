@@ -40,7 +40,7 @@ jobs:
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
       - name: Build WASM package
-        run: wasm-pack build gomoku-wasm --target bundler --out-dir ../gomoku-web/node_modules/gomoku-wasm
+        run: wasm-pack build gomoku-wasm --target bundler
 
       - name: Setup Node
         uses: actions/setup-node@v4
