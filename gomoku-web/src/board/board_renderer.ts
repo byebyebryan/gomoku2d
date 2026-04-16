@@ -13,12 +13,14 @@ export class BoardRenderer {
   private cellSize: number;
   private originX: number;
   private originY: number;
+  private screenHeight: number;
 
-  constructor(scene: Phaser.Scene, cellSize: number, originX: number, originY: number) {
+  constructor(scene: Phaser.Scene, cellSize: number, originX: number, originY: number, screenHeight: number) {
     this.scene = scene;
     this.cellSize = cellSize;
     this.originX = originX;
     this.originY = originY;
+    this.screenHeight = screenHeight;
   }
 
   cellToPixel(row: number, col: number): { x: number; y: number } {
@@ -47,7 +49,7 @@ export class BoardRenderer {
     const left = this.originX - this.cellSize / 2;
     const boardWidth = BOARD_SIZE * this.cellSize;
     const boardHeight = BOARD_SIZE * this.cellSize;
-    const sideHeight = this.cellSize / 2;
+    const sideHeight = this.screenHeight - (top + boardHeight);
 
     // Side/depth
     gfx.fillStyle(BOARD_SIDE_COLOR, 1);

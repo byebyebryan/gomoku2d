@@ -6,8 +6,8 @@ import { initWasm } from "./core/wasm_bridge";
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   parent: "game",
-  width: 1000,
-  height: 800,
+  width: 1024,
+  height: 768,
   backgroundColor: "#3a3a3a",
   pixelArt: true,
   scale: {

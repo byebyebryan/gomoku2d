@@ -48,11 +48,11 @@ export class PlayerCard {
     const subTint  = playerColor === 0 ? 0xaaaaaa : 0x555555;
 
     // Create texts first so we can measure rendered bounds (canvas pixels).
-    this.nameText = scene.add.bitmapText(0, 0, "minecraft", player.name, nameFontPx)
+    this.nameText = scene.add.bitmapText(0, 0, "pixel", player.name, nameFontPx)
       .setTint(textTint);
-    this.winsText = scene.add.bitmapText(0, 0, "minecraft", `${player.wins} wins`, subFontPx)
+    this.winsText = scene.add.bitmapText(0, 0, "pixel", `${player.wins} wins`, subFontPx)
       .setTint(subTint);
-    this.timerText = scene.add.bitmapText(0, 0, "minecraft", "0:00", subFontPx)
+    this.timerText = scene.add.bitmapText(0, 0, "pixel", "0:00", subFontPx)
       .setTint(subTint);
 
     const nB = this.nameText.getBounds();
@@ -149,7 +149,7 @@ export class TextButton {
     const pad    = Math.round(PAD_H_SRC * scale);
     const fontPx = FONT_PX;
 
-    const label = scene.add.bitmapText(0, 0, "minecraft", text, fontPx)
+    const label = scene.add.bitmapText(0, 0, "pixel", text, fontPx)
       .setTint(0xffffff)
       .setOrigin(0.5);
 
@@ -243,7 +243,7 @@ export class ToggleGroup {
     const btnGap  = 0.2 * scale;
 
     // Measure button height with a temporary text, then destroy it
-    const measure = scene.add.bitmapText(0, 0, "minecraft", options[0], fontPx);
+    const measure = scene.add.bitmapText(0, 0, "pixel", options[0], fontPx);
     const b = measure.getBounds();
     measure.destroy();
     const btnH = Math.round(b.height + 2 * pad);
@@ -270,7 +270,7 @@ export class ToggleGroup {
       const hover   = scene.add.nineslice(0, 0, "button_1", undefined, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(hoverTint).setVisible(false);
       const pressed = scene.add.nineslice(0, 0, "button_2", undefined, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(tint).setVisible(false);
 
-      const optLabel = scene.add.bitmapText(0, 0, "minecraft", options[i], fontPx)
+      const optLabel = scene.add.bitmapText(0, 0, "pixel", options[i], fontPx)
         .setTint(0xffffff)
         .setOrigin(0.5);
 
@@ -378,17 +378,17 @@ export class SettingsPanel {
     const sectionGap = Math.round(12 * scale); // between sections
     const fontPx     = FONT_PX;
 
-    const rulesLabel = scene.add.bitmapText(0, 0, "minecraft", "RULES", fontPx).setTint(0xcccccc).setOrigin(0, 0);
+    const rulesLabel = scene.add.bitmapText(0, 0, "pixel", "RULES", fontPx).setTint(0xcccccc).setOrigin(0, 0);
     const rulesH = rulesLabel.getBounds().height;
 
     this.variantToggle = new ToggleGroup(scene, 0, 0, ["FREESTYLE", "RENJU"], initialVariant === "renju" ? 1 : 0, scale, width, true);
 
-    const blackLabel = scene.add.bitmapText(0, 0, "minecraft", "BLACK", fontPx).setTint(0x1a1a2e).setOrigin(0, 0);
+    const blackLabel = scene.add.bitmapText(0, 0, "pixel", "BLACK", fontPx).setTint(0x1a1a2e).setOrigin(0, 0);
     const blackH = blackLabel.getBounds().height;
 
     this.blackToggle = new ToggleGroup(scene, 0, 0, ["HUMAN", "BOT"], initialBlackIsHuman ? 0 : 1, scale, width, true);
 
-    const whiteLabel = scene.add.bitmapText(0, 0, "minecraft", "WHITE", fontPx).setTint(0xffffff).setOrigin(0, 0);
+    const whiteLabel = scene.add.bitmapText(0, 0, "pixel", "WHITE", fontPx).setTint(0xffffff).setOrigin(0, 0);
     const whiteH = whiteLabel.getBounds().height;
 
     this.whiteToggle = new ToggleGroup(scene, 0, 0, ["HUMAN", "BOT"], initialWhiteIsHuman ? 0 : 1, scale, width, true);
@@ -473,25 +473,31 @@ export class InfoBar {
     variant: "freestyle" | "renju",
   ) {
     const fontPx = FONT_PX;
-
-    this.variantText = scene.add.bitmapText(0, 0, "minecraft", variant === "renju" ? "RENJU" : "FREESTYLE", fontPx)
-      .setTint(0xcccccc)
-      .setOrigin(0.5);
-
-    this.timerText = scene.add.bitmapText(0, 0, "minecraft", "00:00", fontPx)
-      .setTint(0xcccccc)
-      .setOrigin(0.5);
-
-    const vB = this.variantText.getBounds();
-    const tB = this.timerText.getBounds();
     const gap = Math.round(GAP_SRC * scale);
-    const totalH = vB.height + gap + tB.height;
-    this.height = totalH;
 
-    this.variantText.setPosition(0, -(tB.height + gap) / 2);
-    this.timerText.setPosition(0, (vB.height + gap) / 2);
+    const titleText = scene.add.bitmapText(0, 0, "pixel", "GOMOKU2D", fontPx)
+      .setTint(0xffffff)
+      .setOrigin(0.5);
 
-    this.container = scene.add.container(x, y, [this.variantText, this.timerText]);
+    this.variantText = scene.add.bitmapText(0, 0, "pixel", variant === "renju" ? "RENJU" : "FREESTYLE", fontPx)
+      .setTint(0xcccccc)
+      .setOrigin(0.5);
+
+    this.timerText = scene.add.bitmapText(0, 0, "pixel", "00:00", fontPx)
+      .setTint(0xcccccc)
+      .setOrigin(0.5);
+
+    const tiH = titleText.getBounds().height;
+    const vB  = this.variantText.getBounds();
+    const tB  = this.timerText.getBounds();
+    this.height = tiH + gap + vB.height + gap + tB.height;
+
+    // Stack top-to-bottom, centered on container origin
+    titleText.setPosition(0,       -this.height / 2 + tiH / 2);
+    this.variantText.setPosition(0, -this.height / 2 + tiH + gap + vB.height / 2);
+    this.timerText.setPosition(0,   -this.height / 2 + tiH + gap + vB.height + gap + tB.height / 2);
+
+    this.container = scene.add.container(x, y, [titleText, this.variantText, this.timerText]);
     this.container.setDepth(20);
   }
 
