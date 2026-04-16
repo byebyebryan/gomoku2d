@@ -2,7 +2,7 @@
 
 ## Done
 
-**Cargo workspace** — `gomoku-core`, `gomoku-bot`, `gomoku-eval` (stub), `gomoku-cli`, `gomoku-wasm`, `gomoku-web`
+**Cargo workspace** — `gomoku-core`, `gomoku-bot`, `gomoku-eval`, `gomoku-cli`, `gomoku-wasm`, `gomoku-web`
 
 **gomoku-core**
 - `Board` with `apply_move` / `undo_move` / `legal_moves` / `is_legal`
@@ -24,6 +24,11 @@
   - `--depth` or `--time-ms` budget; exposes `last_info` (depth reached, nodes, score)
   - Strategy + known limitations: `docs/bot_baseline.md`
 - 3 unit tests (legal move guarantee, finds immediate win, blocks opponent win)
+
+**gomoku-eval**
+- `Arena` — runs a single match between two bots with per-move timing and replay capture
+- `Tournament` — round-robin across a bot lineup, configurable games per pairing
+- `Elo` — standard Elo rating update from match results; initialized at 1500
 
 **gomoku-cli**
 - `--black`/`--white` (`random`|`search`), `--depth`, `--time-ms`, `--replay <path>`, `--quiet`
@@ -53,7 +58,5 @@
 
 ## Up next
 
-- `gomoku-eval`: self-play runner — N games between two bots, win/loss/draw counts
-- `gomoku-eval`: basic Elo after a round-robin
 - `gomoku-web`: replay viewer — load replay JSON, step through moves
 - `gomoku-web`: stronger bot option (depth 5+) selectable in settings

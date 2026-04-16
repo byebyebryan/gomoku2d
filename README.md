@@ -15,7 +15,7 @@ A Gomoku engine and game framework sandbox — built to validate a reusable arch
 | `gomoku-cli` | ✅ | Match runner — bots, ASCII board, replay export |
 | `gomoku-wasm` | ✅ | wasm-pack bridge exposing `WasmBoard` + `WasmBot` to JS |
 | `gomoku-web` | ✅ | Phaser 3 + TypeScript browser game |
-| `gomoku-eval` | 🔜 | Self-play, tournaments, Elo (Phase 3) |
+| `gomoku-eval` | ✅ | Self-play arena, round-robin tournaments, Elo ratings |
 
 ---
 
