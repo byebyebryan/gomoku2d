@@ -15,8 +15,14 @@ export class BootScene extends Phaser.Scene {
       });
     }
 
-    // Load font
-    this.load.font("minecraft", "assets/sprites/minecraft.ttf");
+    // Load button images (individual 18x18, not spritesheets)
+    this.load.image("button_0", "assets/sprites/button_0.png");
+    this.load.image("button_1", "assets/sprites/button_1.png");
+    this.load.image("button_2", "assets/sprites/button_2.png");
+    this.load.image("button_3", "assets/sprites/button_3.png");
+
+    // Load bitmap font (pixel-perfect, no AA)
+    this.load.bitmapFont("minecraft", "assets/sprites/minecraft.png", "assets/sprites/minecraft.fnt");
   }
 
   create(): void {
