@@ -258,11 +258,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createWarnSprite(x: number, y: number, tint: number): Phaser.GameObjects.Sprite {
-    const sprite = this.add.sprite(x, y, SPRITE.WARNING_L, 0);
+    const sprite = this.add.sprite(x, y, SPRITE.WARNING, 0);
     sprite.setScale(this.cellSize / FRAME_SIZE);
     sprite.setDepth(0.5);
     sprite.setTint(tint);
-    sprite.play({ key: WARNING_ANIMS.SURFACE.key, repeat: -1 });
+    sprite.play({ key: WARNING_ANIMS.POINTER.key, repeat: -1 });
     return sprite;
   }
 
