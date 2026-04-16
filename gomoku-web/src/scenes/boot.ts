@@ -73,15 +73,17 @@ export class BootScene extends Phaser.Scene {
       });
     }
 
-    // Warning animation (loops)
-    this.anims.create({
-      key: WARNING_ANIMS.POINTER.key,
-      frames: this.anims.generateFrameNumbers(SPRITE.WARNING, {
-        start: WARNING_ANIMS.POINTER.start,
-        end: WARNING_ANIMS.POINTER.end,
-      }),
-      frameRate: WARNING_ANIMS.POINTER.frameRate,
-      repeat: -1,
-    });
+    // Warning animations (both loop)
+    for (const anim of [WARNING_ANIMS.POINTER, WARNING_ANIMS.HOVER]) {
+      this.anims.create({
+        key: anim.key,
+        frames: this.anims.generateFrameNumbers(SPRITE.WARNING, {
+          start: anim.start,
+          end: anim.end,
+        }),
+        frameRate: anim.frameRate,
+        repeat: -1,
+      });
+    }
   }
 }
