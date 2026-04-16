@@ -57,6 +57,8 @@ cargo run --release -p gomoku-cli -- --black baseline --white random --time-ms 5
 
 ## Web frontend
 
+**Live build:** http://dev.byebyebryan.com/gomoku2d/
+
 ```sh
 cd gomoku-web
 npm install
@@ -67,8 +69,19 @@ Features: human vs bot, bot vs bot, Freestyle and Renju rules, per-player timers
 
 To rebuild the Wasm package after changing `gomoku-wasm/src/`:
 ```sh
-~/.cargo/bin/wasm-pack build gomoku-wasm --target bundler --out-dir ../gomoku-web/node_modules/gomoku-wasm
+wasm-pack build gomoku-wasm --target bundler
+cd gomoku-web && npm install  # re-links the file: dependency
 ```
+
+### Publishing
+
+Deployed to GitHub Pages via a manually triggered Actions workflow (`.github/workflows/deploy.yml`):
+
+```sh
+gh workflow run deploy.yml
+```
+
+The workflow builds the Wasm package, runs `npm run build -- --base /gomoku2d/`, and deploys `dist/` to Pages. Rust and npm dependencies are cached between runs.
 
 ---
 
