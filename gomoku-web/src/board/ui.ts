@@ -369,9 +369,9 @@ export class SettingsPanel {
     scale: number,
     width: number,
     initialVariant: "freestyle" | "renju",
-    initialBlackIsHuman: boolean,
-    initialWhiteIsHuman: boolean,
-    onConfirm: (variant: "freestyle" | "renju", blackIsHuman: boolean, whiteIsHuman: boolean) => void,
+    initialP1IsHuman: boolean,
+    initialP2IsHuman: boolean,
+    onConfirm: (variant: "freestyle" | "renju", p1IsHuman: boolean, p2IsHuman: boolean) => void,
     onBack: () => void,
   ) {
     const innerGap   = Math.round(1 * scale);  // label → its toggles
@@ -383,21 +383,21 @@ export class SettingsPanel {
 
     this.variantToggle = new ToggleGroup(scene, 0, 0, ["FREESTYLE", "RENJU"], initialVariant === "renju" ? 1 : 0, scale, width, true);
 
-    const blackLabel = scene.add.bitmapText(0, 0, "pixel", "BLACK", fontPx).setTint(0x1a1a2e).setOrigin(0, 0);
+    const blackLabel = scene.add.bitmapText(0, 0, "pixel", "PLAYER 1", fontPx).setTint(0xcccccc).setOrigin(0, 0);
     const blackH = blackLabel.getBounds().height;
 
-    this.blackToggle = new ToggleGroup(scene, 0, 0, ["HUMAN", "BOT"], initialBlackIsHuman ? 0 : 1, scale, width, true);
+    this.blackToggle = new ToggleGroup(scene, 0, 0, ["HUMAN", "BOT"], initialP1IsHuman ? 0 : 1, scale, width, true);
 
-    const whiteLabel = scene.add.bitmapText(0, 0, "pixel", "WHITE", fontPx).setTint(0xffffff).setOrigin(0, 0);
+    const whiteLabel = scene.add.bitmapText(0, 0, "pixel", "PLAYER 2", fontPx).setTint(0xcccccc).setOrigin(0, 0);
     const whiteH = whiteLabel.getBounds().height;
 
-    this.whiteToggle = new ToggleGroup(scene, 0, 0, ["HUMAN", "BOT"], initialWhiteIsHuman ? 0 : 1, scale, width, true);
+    this.whiteToggle = new ToggleGroup(scene, 0, 0, ["HUMAN", "BOT"], initialP2IsHuman ? 0 : 1, scale, width, true);
 
     this.confirmBtn = new TextButton(scene, 0, 0, "NEW GAME", GREEN_TINTS, () => {
-      const variant = this.variantToggle.getSelected() === 1 ? "renju" : "freestyle";
-      const blackIsHuman = this.blackToggle.getSelected() === 0;
-      const whiteIsHuman = this.whiteToggle.getSelected() === 0;
-      onConfirm(variant, blackIsHuman, whiteIsHuman);
+      const variant    = this.variantToggle.getSelected() === 1 ? "renju" : "freestyle";
+      const p1IsHuman  = this.blackToggle.getSelected() === 0;
+      const p2IsHuman  = this.whiteToggle.getSelected() === 0;
+      onConfirm(variant, p1IsHuman, p2IsHuman);
     }, scale, width);
 
     this.backBtn = new TextButton(scene, 0, 0, "BACK", RED_TINTS, onBack, scale, width);
