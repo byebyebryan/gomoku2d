@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { BOARD_SIZE, WIN_LENGTH, SPRITE, FRAME_SIZE, STONE_ANIMS, WARNING_ANIMS } from "../board/constants";
 import { BoardRenderer } from "../board/board_renderer";
 import { PlayerCard, ResetButton, PlayerInfo } from "../board/ui";
+import { WasmBoard, WasmBot } from "../core/wasm_bridge";
 
 type CellState = 0 | 1 | null;
 
@@ -10,28 +11,25 @@ interface GameResult {
   winningCells?: { row: number; col: number }[];
 }
 
-// Right sidebar — wide enough for scaled cards
 const SIDEBAR_W = 200;
+const BOT_DELAY_MS = 300;
 
 export class GameScene extends Phaser.Scene {
   private board!: BoardRenderer;
   private cellSize: number = 0;
 
-  // Game state
-  private grid: CellState[][] = [];
-  private currentPlayer: 0 | 1 = 0;
-  private moveCount: number = 0;
-  private gameOver: boolean = false;
+  private wasmBoard!: WasmBoard;
   private resetting: boolean = false;
   private stoneSprites: Map<string, Phaser.GameObjects.Sprite> = new Map();
 
-  // Player stats
   private players: [PlayerInfo, PlayerInfo] = [
     { name: "Black", wins: 0, isHuman: true },
-    { name: "White", wins: 0, isHuman: true },
+    { name: "White", wins: 0, isHuman: false },
   ];
 
-  // UI
+  private bots: [(WasmBot | null), (WasmBot | null)] = [null, null];
+  private botTimer: Phaser.Time.TimerEvent | null = null;
+
   private pointer!: Phaser.GameObjects.Sprite;
   private blackCard!: PlayerCard;
   private whiteCard!: PlayerCard;
@@ -50,16 +48,12 @@ export class GameScene extends Phaser.Scene {
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
 
-    // Board fills left side (full height, square)
     const boardAreaW = width - SIDEBAR_W;
     const boardAreaH = height;
     const padding = 20;
     const available = Math.min(boardAreaW, boardAreaH) - padding * 2;
-    // Divide by BOARD_SIZE (not BOARD_SIZE-1) so the half-cell border on each
-    // side of the outermost grid lines also fits within the padded area.
     this.cellSize = Math.floor(available / BOARD_SIZE);
 
-    // Center board in the left area
     const boardCenterX = boardAreaW / 2;
     const boardCenterY = height / 2;
     const originX = Math.floor(boardCenterX - ((BOARD_SIZE - 1) * this.cellSize) / 2);
@@ -68,34 +62,34 @@ export class GameScene extends Phaser.Scene {
     this.board = new BoardRenderer(this, this.cellSize, originX, originY);
     this.board.drawBoard();
 
-    // Init game state
-    this.grid = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(null));
-    this.currentPlayer = 0;
-    this.moveCount = 0;
-    this.gameOver = false;
+    this.wasmBoard = new WasmBoard();
     this.resetting = false;
     this.stoneSprites.clear();
 
-    // Pointer
+    // Create bots for non-human players
+    this.bots = [null, null];
+    for (let i = 0; i < 2; i++) {
+      if (!this.players[i].isHuman) {
+        this.bots[i] = WasmBot.createBaseline(3);
+      }
+    }
+
     this.pointer = this.board.createPointer();
 
-    // Interactive zones
     this.zones = this.board.createInteractiveZones((row, col) => this.onCellClick(row, col));
 
-    // --- Right sidebar ---
     const uiScale      = this.cellSize / FRAME_SIZE;
     const sideGap      = Math.round(6 * uiScale);
     const boardRightX  = originX + (BOARD_SIZE - 1) * this.cellSize + this.cellSize / 2;
-    const cardMargin   = Math.round(4 * uiScale); // gap between board edge and card
+    const cardMargin   = Math.round(4 * uiScale);
     const cardW        = Math.floor(width - boardRightX - 2 * cardMargin);
     const sidebarX     = boardRightX + cardMargin + cardW / 2;
 
-    // Create UI elements at (0,0), then stack them after measuring heights.
     this.blackCard = new PlayerCard(this, 0, 0, 0, this.players[0], uiScale, cardW);
     this.whiteCard = new PlayerCard(this, 0, 0, 1, this.players[1], uiScale, cardW);
     this.resetBtn  = new ResetButton(this, 0, 0, () => this.resetGame(), uiScale, cardW);
 
-    let sideY = originY; // align top of first card to top board grid line
+    let sideY = originY;
 
     sideY += this.blackCard.height / 2;
     this.blackCard.setPosition(sidebarX, sideY);
@@ -108,17 +102,21 @@ export class GameScene extends Phaser.Scene {
     sideY += this.resetBtn.height / 2;
     this.resetBtn.setPosition(sidebarX, sideY);
 
-    // Activate initial state
     this.updatePointerTint();
 
-    // Pointer follows mouse
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
-      if (this.gameOver) {
+      if (this.wasmBoard.result() !== "ongoing") {
+        this.pointer.setVisible(false);
+        return;
+      }
+      // Hide pointer during bot's turn
+      const currentIdx = this.wasmBoard.currentPlayer() === 1 ? 0 : 1;
+      if (!this.players[currentIdx].isHuman) {
         this.pointer.setVisible(false);
         return;
       }
       const cell = this.board.pixelToCell(pointer.x, pointer.y);
-      if (cell && this.grid[cell.row][cell.col] === null) {
+      if (cell && this.wasmBoard.cell(cell.row, cell.col) === 0) {
         const { x, y } = this.board.cellToPixel(cell.row, cell.col);
         this.pointer.setPosition(x, y);
         this.pointer.setVisible(true);
@@ -130,12 +128,16 @@ export class GameScene extends Phaser.Scene {
     this.input.on("pointerout", () => {
       this.pointer.setVisible(false);
     });
+
+    // If it's a bot's turn first (unusual but possible), schedule it
+    this.scheduleBotIfNeeded();
   }
 
   private updatePointerTint(): void {
-    this.pointer.setTint(this.currentPlayer === 0 ? 0x404040 : 0xffffff);
-    this.blackCard.setActive(this.currentPlayer === 0);
-    this.whiteCard.setActive(this.currentPlayer === 1);
+    const wasmPlayer = this.wasmBoard.currentPlayer();
+    this.pointer.setTint(wasmPlayer === 1 ? 0x404040 : 0xffffff);
+    this.blackCard.setActive(wasmPlayer === 1);
+    this.whiteCard.setActive(wasmPlayer === 2);
   }
 
   private cellKey(row: number, col: number): string {
@@ -143,55 +145,77 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onCellClick(row: number, col: number): void {
-    if (this.gameOver) {
+    if (this.wasmBoard.result() !== "ongoing") {
       this.resetGame();
       return;
     }
-    if (this.grid[row][col] !== null) return;
+    // Only humans can click
+    const currentIdx = this.wasmBoard.currentPlayer() === 1 ? 0 : 1;
+    if (!this.players[currentIdx].isHuman) return;
+    if (!this.wasmBoard.isLegal(row, col)) return;
 
+    this.applyAndRender(row, col);
+  }
+
+  private applyAndRender(row: number, col: number): void {
     this.pointer.setVisible(false);
 
-    // Place stone
-    this.grid[row][col] = this.currentPlayer;
-    this.moveCount++;
+    const mover = this.wasmBoard.currentPlayer();
+    const moveResult = this.wasmBoard.applyMove(row, col);
+    if (moveResult.error) return;
 
-    const stone = this.board.placeStone(row, col, this.currentPlayer);
+    const wasmPlayer = mover === 1 ? 0 : 1;
+    const stone = this.board.placeStone(row, col, wasmPlayer);
     this.stoneSprites.set(this.cellKey(row, col), stone);
     stone.play(STONE_ANIMS.FORM.key);
 
-    // Check win
-    const result = this.checkWin(row, col, this.currentPlayer);
-    if (result) {
-      this.gameOver = true;
-      this.pointer.setVisible(false);
-
-      if (result.winningCells) {
-        this.highlightWin(result.winningCells);
+    const wasmResult = this.wasmBoard.result();
+    if (wasmResult === "black" || wasmResult === "white") {
+      const winner = wasmResult === "black" ? 0 : 1;
+      const winResult = this.checkWin(row, col, winner);
+      if (winResult && winResult.winningCells) {
+        this.highlightWin(winResult.winningCells);
       }
 
       this.blackCard.setActive(false);
       this.whiteCard.setActive(false);
-
-      if (result.winner !== null) {
-        this.players[result.winner].wins++;
-        if (result.winner === 0) this.blackCard.setWins(this.players[0].wins);
-        else this.whiteCard.setWins(this.players[1].wins);
-      }
+      this.players[winner].wins++;
+      if (winner === 0) this.blackCard.setWins(this.players[0].wins);
+      else this.whiteCard.setWins(this.players[1].wins);
       return;
     }
 
-    // Check draw
-    if (this.moveCount >= BOARD_SIZE * BOARD_SIZE) {
-      this.gameOver = true;
-      this.pointer.setVisible(false);
+    if (wasmResult === "draw") {
       this.blackCard.setActive(false);
       this.whiteCard.setActive(false);
       return;
     }
 
-    // Switch player
-    this.currentPlayer = this.currentPlayer === 0 ? 1 : 0;
     this.updatePointerTint();
+    this.scheduleBotIfNeeded();
+  }
+
+  private scheduleBotIfNeeded(): void {
+    if (this.wasmBoard.result() !== "ongoing") return;
+    const currentIdx = this.wasmBoard.currentPlayer() === 1 ? 0 : 1;
+    const bot = this.bots[currentIdx];
+    if (!bot) return;
+
+    // Hide pointer during bot's turn
+    this.pointer.setVisible(false);
+
+    this.botTimer = this.time.delayedCall(BOT_DELAY_MS, () => {
+      this.executeBotMove(bot);
+    });
+  }
+
+  private executeBotMove(bot: WasmBot): void {
+    if (this.wasmBoard.result() !== "ongoing") return;
+
+    const move = bot.chooseMove(this.wasmBoard);
+    if (!move) return;
+
+    this.applyAndRender(move.row, move.col);
   }
 
   private checkWin(row: number, col: number, player: CellState): GameResult | null {
@@ -202,6 +226,8 @@ export class GameScene extends Phaser.Scene {
       { dr: 1, dc: -1 },
     ];
 
+    const wasmPlayer = player === 0 ? 1 : 2;
+
     for (const { dr, dc } of directions) {
       const cells: { row: number; col: number }[] = [{ row, col }];
 
@@ -209,7 +235,7 @@ export class GameScene extends Phaser.Scene {
         const r = row + dr * i;
         const c = col + dc * i;
         if (r < 0 || r >= BOARD_SIZE || c < 0 || c >= BOARD_SIZE) break;
-        if (this.grid[r][c] !== player) break;
+        if (this.wasmBoard.cell(r, c) !== wasmPlayer) break;
         cells.push({ row: r, col: c });
       }
 
@@ -217,7 +243,7 @@ export class GameScene extends Phaser.Scene {
         const r = row - dr * i;
         const c = col - dc * i;
         if (r < 0 || r >= BOARD_SIZE || c < 0 || c >= BOARD_SIZE) break;
-        if (this.grid[r][c] !== player) break;
+        if (this.wasmBoard.cell(r, c) !== wasmPlayer) break;
         cells.push({ row: r, col: c });
       }
 
@@ -246,6 +272,12 @@ export class GameScene extends Phaser.Scene {
     if (this.resetting) return;
     this.resetting = true;
 
+    // Kill any pending bot move immediately
+    if (this.botTimer) {
+      this.botTimer.destroy();
+      this.botTimer = null;
+    }
+
     const stones = Array.from(this.stoneSprites.values());
     if (stones.length === 0) {
       this.rebuildScene();
@@ -265,6 +297,15 @@ export class GameScene extends Phaser.Scene {
   }
 
   private rebuildScene(): void {
+    if (this.botTimer) {
+      this.botTimer.destroy();
+      this.botTimer = null;
+    }
+    for (const bot of this.bots) {
+      if (bot) bot.free();
+    }
+    this.bots = [null, null];
+    this.wasmBoard.free();
     this.input.removeAllListeners();
     this.children.removeAll();
     this.zones = [];

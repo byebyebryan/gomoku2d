@@ -35,5 +35,27 @@
 
 - [x] `gomoku-eval`: self-play runner — N games between two bots, win/loss/draw counts
 - [x] `gomoku-eval`: basic Elo after a round-robin
-- [ ] `gomoku-web`: PlayCanvas + TypeScript project scaffold
-- [ ] `gomoku-wasm`: wasm-pack bridge exposing core to JS
+- [x] `gomoku-web`: Phaser 3 + TypeScript + Vite project scaffold
+- [x] `gomoku-web`: Phase B — static board renderer (grid, stones, pointer)
+- [x] `gomoku-web`: Phase C — click-to-play human vs human (win detection, highlighting, reset)
+- [x] `gomoku-wasm`: Phase E — wasm-pack bridge exposing Board + RandomBot to JS
+- [x] `gomoku-web`: Phase E — game.ts refactored to use WasmBoard for all game state
+- [ ] `gomoku-web`: Phase F — bot spectator (human vs bot, bot vs bot)
+
+---
+
+## Phase E details
+
+**gomoku-wasm** (Rust):
+- `WasmBoard` wraps `gomoku-core::Board` — `new()`, `applyMove()`, `isLegal()`, `cell()`, `currentPlayer()`, `result()`, `legalMoves()`, `undoLastMove()`, `toFen()`, `fromFen()`, `cloneBoard()`, `moveCount()`
+- `WasmBot` wraps `RandomBot` or `SearchBot` — `createRandom()`, `createBaseline(depth)`, `chooseMove()`, `name()`
+- `console_error_panic_hook` for Wasm panic messages
+- `getrandom` js feature for `rand` crate in wasm32
+- Built with `wasm-pack build --target web` — 52KB .wasm binary
+- `SearchBot` exposed via `instant` crate polyfill for `std::time::Instant` (wasm-safe)
+
+**gomoku-web integration**:
+- `src/core/wasm_bridge.ts` — async `initWasm()` singleton, re-exports `WasmBoard`/`WasmBot`
+- `src/main.ts` — awaits Wasm init before creating Phaser game
+- `src/scenes/game.ts` — all game state via `WasmBoard`; `checkWin()` still in TS for winning cell highlighting
+- Installed as npm `file:` dependency from `../gomoku-wasm/pkg/`
