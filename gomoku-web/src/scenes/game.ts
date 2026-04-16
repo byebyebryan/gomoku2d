@@ -112,6 +112,10 @@ export class GameScene extends Phaser.Scene {
     this.resetBtn  = new ResetButton(this, 0, 0, () => this.resetGame(), uiScale, cardW);
     this.settingsBtn = new SettingsButton(this, 0, 0, () => this.showSettings(), uiScale, cardW);
 
+    // When showing settings, show human players' current names; bots default to "Human".
+    const p1HumanName = this.profiles[0].isHuman ? this.profiles[0].name : "Human";
+    const p2HumanName = this.profiles[1].isHuman ? this.profiles[1].name : "Human";
+
     this.settingsPanel = new SettingsPanel(
       this,
       0,
@@ -121,12 +125,14 @@ export class GameScene extends Phaser.Scene {
       this.gameVariant,
       this.profiles[0].isHuman,
       this.profiles[1].isHuman,
-      (variant, p1IsHuman, p2IsHuman) => {
+      p1HumanName,
+      p2HumanName,
+      (variant, p1IsHuman, p2IsHuman, p1Name, p2Name) => {
         this.gameVariant = variant;
-        const [n1, n2] = defaultNames(p1IsHuman, p2IsHuman);
-        this.profiles[0] = { name: n1, wins: 0, isHuman: p1IsHuman };
-        this.profiles[1] = { name: n2, wins: 0, isHuman: p2IsHuman };
-        this.blackProfileIdx = 0; // P1 always starts as black after settings
+        const [defN1, defN2] = defaultNames(p1IsHuman, p2IsHuman);
+        this.profiles[0] = { name: p1IsHuman ? p1Name : defN1, wins: 0, isHuman: p1IsHuman };
+        this.profiles[1] = { name: p2IsHuman ? p2Name : defN2, wins: 0, isHuman: p2IsHuman };
+        this.blackProfileIdx = 0;
         this.hideSettings();
         this.rebuildScene();
       },
