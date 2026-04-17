@@ -281,6 +281,7 @@ export class ToggleGroup {
   private scale: number;
   private onSelectedClick?: (idx: number) => void;
   readonly height: number;
+  readonly width: number;
 
   constructor(
     scene: Phaser.Scene,
@@ -298,7 +299,7 @@ export class ToggleGroup {
     this.scale = scale;
     const pad     = Math.round(PAD_H_SRC * scale);
     const fontPx  = FONT_PX;
-    const btnGap  = 0.2 * scale;
+    const btnGap  = Math.max(1, Math.round(4 * scale));
 
     // Measure button height with a temporary text, then destroy it
     const measure = scene.add.bitmapText(0, 0, "pixel", options[0], fontPx);
@@ -311,8 +312,10 @@ export class ToggleGroup {
     this.container.setDepth(20);
 
     if (vertical) {
+      this.width = btnW;
       this.height = options.length * btnH + (options.length - 1) * btnGap;
     } else {
+      this.width = options.length * btnW + (options.length - 1) * btnGap;
       this.height = btnH;
     }
 
@@ -377,7 +380,7 @@ export class ToggleGroup {
         const offsetY = -this.height / 2 + i * (btnH + btnGap) + btnH / 2;
         btnContainer.setPosition(0, offsetY);
       } else {
-        const offsetX = (i - (options.length - 1) / 2) * btnW;
+        const offsetX = -this.width / 2 + i * (btnW + btnGap) + btnW / 2;
         btnContainer.setPosition(offsetX, 0);
       }
       this.container.add(btnContainer);
@@ -539,26 +542,36 @@ export class SettingsPanel {
     this.p1Name = initialP1Name;
     this.p2Name = initialP2Name;
 
-    const innerGap   = Math.round(1 * scale);  // label → its toggles
-    const sectionGap = Math.round(12 * scale); // between sections
-    const fontPx     = FONT_PX;
+    const rowGap        = Math.round(12 * scale);
+    const columnGap     = Math.round(18 * scale);
+    const labelPad      = Math.round(12 * scale);
+    const labelColumnMin = 96;
+    const toggleGap     = Math.max(1, Math.round(4 * scale));
+    const fontPx        = FONT_PX;
 
-    const rulesLabel = scene.add.bitmapText(0, 0, "pixel", "RULES", fontPx).setTint(0xcccccc).setOrigin(0, 0);
-    const rulesH = rulesLabel.getBounds().height;
+    const rulesLabel = scene.add.bitmapText(0, 0, "pixel", "RULES", fontPx).setTint(0xcccccc).setOrigin(0, 0.5);
+    const blackLabel = scene.add.bitmapText(0, 0, "pixel", "PLAYER 1", fontPx).setTint(0xcccccc).setOrigin(0, 0.5);
+    const whiteLabel = scene.add.bitmapText(0, 0, "pixel", "PLAYER 2", fontPx).setTint(0xcccccc).setOrigin(0, 0.5);
 
-    this.variantToggle = new ToggleGroup(scene, 0, 0, ["FREESTYLE", "RENJU"], initialVariant === "renju" ? 1 : 0, scale, width, true);
+    const maxLabelW = Math.max(
+      rulesLabel.getBounds().width,
+      blackLabel.getBounds().width,
+      whiteLabel.getBounds().width,
+    );
+    const labelColumnW = Math.min(
+      Math.max(labelColumnMin, Math.ceil(maxLabelW + labelPad)),
+      Math.floor(width * 0.32),
+    );
+    const toggleButtonW = Math.floor((width - labelColumnW - columnGap - toggleGap) / 2);
+    const controlsLeft = -width / 2 + labelColumnW + columnGap;
 
-    const blackLabel = scene.add.bitmapText(0, 0, "pixel", "PLAYER 1", fontPx).setTint(0xcccccc).setOrigin(0, 0);
-    const blackH = blackLabel.getBounds().height;
+    this.variantToggle = new ToggleGroup(scene, 0, 0, ["FREESTYLE", "RENJU"], initialVariant === "renju" ? 1 : 0, scale, toggleButtonW, false);
 
-    this.blackToggle = new ToggleGroup(scene, 0, 0, [this.p1Name, "BOT"], initialP1IsHuman ? 0 : 1, scale, width, true,
+    this.blackToggle = new ToggleGroup(scene, 0, 0, [this.p1Name, "BOT"], initialP1IsHuman ? 0 : 1, scale, toggleButtonW, false,
       (idx) => { if (idx === 0 && !this.nameEditor.isEditing) this.nameEditor.start(0); },
     );
 
-    const whiteLabel = scene.add.bitmapText(0, 0, "pixel", "PLAYER 2", fontPx).setTint(0xcccccc).setOrigin(0, 0);
-    const whiteH = whiteLabel.getBounds().height;
-
-    this.whiteToggle = new ToggleGroup(scene, 0, 0, [this.p2Name, "BOT"], initialP2IsHuman ? 0 : 1, scale, width, true,
+    this.whiteToggle = new ToggleGroup(scene, 0, 0, [this.p2Name, "BOT"], initialP2IsHuman ? 0 : 1, scale, toggleButtonW, false,
       (idx) => { if (idx === 0 && !this.nameEditor.isEditing) this.nameEditor.start(1); },
     );
 
@@ -569,39 +582,31 @@ export class SettingsPanel {
       (idx: 0 | 1, name: string) => { if (idx === 0) this.p1Name = name; else this.p2Name = name; },
     );
 
-    // Content height: tight within sections, larger gaps between sections
-    this.height =
-      (rulesH + innerGap + this.variantToggle.height) + sectionGap
-      + (blackH + innerGap + this.blackToggle.height) + sectionGap
-      + (whiteH + innerGap + this.whiteToggle.height);
+    const rows = [
+      { label: rulesLabel, control: this.variantToggle, labelH: rulesLabel.getBounds().height },
+      { label: blackLabel, control: this.blackToggle, labelH: blackLabel.getBounds().height },
+      { label: whiteLabel, control: this.whiteToggle, labelH: whiteLabel.getBounds().height },
+    ];
+
+    this.height = rows.reduce((sum, row) => sum + Math.max(row.labelH, row.control.height), 0)
+      + rowGap * (rows.length - 1);
 
     this.container = scene.add.container(x, y);
     this.container.setDepth(20);
 
     let currentY = -this.height / 2;
 
-    rulesLabel.setPosition(-width / 2, currentY);
-    this.container.add(rulesLabel);
-    currentY += rulesH + innerGap;
+    for (const row of rows) {
+      const rowHeight = Math.max(row.labelH, row.control.height);
+      const rowCenterY = currentY + rowHeight / 2;
 
-    this.variantToggle.setPosition(0, currentY + this.variantToggle.height / 2);
-    this.container.add(this.variantToggle.container);
-    currentY += this.variantToggle.height + sectionGap;
+      row.label.setPosition(-width / 2, rowCenterY);
+      row.control.setPosition(controlsLeft + row.control.width / 2, rowCenterY);
 
-    blackLabel.setPosition(-width / 2, currentY);
-    this.container.add(blackLabel);
-    currentY += blackH + innerGap;
-
-    this.blackToggle.setPosition(0, currentY + this.blackToggle.height / 2);
-    this.container.add(this.blackToggle.container);
-    currentY += this.blackToggle.height + sectionGap;
-
-    whiteLabel.setPosition(-width / 2, currentY);
-    this.container.add(whiteLabel);
-    currentY += whiteH + innerGap;
-
-    this.whiteToggle.setPosition(0, currentY + this.whiteToggle.height / 2);
-    this.container.add(this.whiteToggle.container);
+      this.container.add(row.label);
+      this.container.add(row.control.container);
+      currentY += rowHeight + rowGap;
+    }
   }
 
   setPosition(x: number, y: number): void {
