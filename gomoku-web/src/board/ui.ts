@@ -175,6 +175,8 @@ export class PlayerCard {
 export class TextButton {
   container: Phaser.GameObjects.Container;
   readonly height: number;
+  private label: Phaser.GameObjects.BitmapText;
+  private onClick: () => void;
 
   constructor(
     scene: Phaser.Scene,
@@ -186,14 +188,15 @@ export class TextButton {
     scale: number,
     width: number,
   ) {
+    this.onClick = onClick;
     const pad    = Math.round(PAD_H_SRC * scale);
     const fontPx = FONT_PX;
 
-    const label = scene.add.bitmapText(0, 0, "pixel", text, fontPx)
+    this.label = scene.add.bitmapText(0, 0, "pixel", text, fontPx)
       .setTint(0xffffff)
       .setOrigin(0.5);
 
-    const b    = label.getBounds();
+    const b    = this.label.getBounds();
     const btnW = width;
     const btnH = Math.round(b.height + 2 * pad);
     this.height = btnH;
@@ -205,7 +208,7 @@ export class TextButton {
     const hover   = scene.add.nineslice(0, 0, "button", 1, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(tints[1]).setVisible(false);
     const pressed = scene.add.nineslice(0, 0, "button", 2, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(tints[2]).setVisible(false);
 
-    this.container = scene.add.container(x, y, [normal, hover, pressed, label]);
+    this.container = scene.add.container(x, y, [normal, hover, pressed, this.label]);
     this.container.setDepth(20);
     this.container.setSize(btnW, btnH);
     this.container.setInteractive({ useHandCursor: true });
@@ -213,12 +216,12 @@ export class TextButton {
     const labelPressedY = 0;
     const labelHoverY   = -Math.round((PRESS_OFFSET - HOVER_OFFSET) * scale);
     const labelBaseY    = -Math.round(PRESS_OFFSET * scale);
-    label.setY(labelBaseY);
+    this.label.setY(labelBaseY);
 
-    this.container.on("pointerover",  () => { normal.setVisible(false); hover.setVisible(true);  pressed.setVisible(false); label.setY(labelHoverY);   });
-    this.container.on("pointerout",   () => { normal.setVisible(true);  hover.setVisible(false); pressed.setVisible(false); label.setY(labelBaseY);    });
-    this.container.on("pointerdown",  () => { normal.setVisible(false); hover.setVisible(false); pressed.setVisible(true);  label.setY(labelPressedY); });
-    this.container.on("pointerup",    () => { onClick(); normal.setVisible(false); hover.setVisible(true); pressed.setVisible(false); label.setY(labelHoverY); });
+    this.container.on("pointerover",  () => { normal.setVisible(false); hover.setVisible(true);  pressed.setVisible(false); this.label.setY(labelHoverY);   });
+    this.container.on("pointerout",   () => { normal.setVisible(true);  hover.setVisible(false); pressed.setVisible(false); this.label.setY(labelBaseY);    });
+    this.container.on("pointerdown",  () => { normal.setVisible(false); hover.setVisible(false); pressed.setVisible(true);  this.label.setY(labelPressedY); });
+    this.container.on("pointerup",    () => { this.onClick(); normal.setVisible(false); hover.setVisible(true); pressed.setVisible(false); this.label.setY(labelHoverY); });
   }
 
   setPosition(x: number, y: number): void {
@@ -227,6 +230,18 @@ export class TextButton {
 
   setVisible(v: boolean): void {
     this.container.setVisible(v);
+  }
+
+  setLabel(text: string): void {
+    this.label.setText(text);
+  }
+
+  setOnClick(onClick: () => void): void {
+    this.onClick = onClick;
+  }
+
+  destroy(): void {
+    this.container.destroy(true);
   }
 }
 
@@ -503,8 +518,6 @@ export class SettingsPanel {
   private variantToggle!: ToggleGroup;
   private blackToggle!: ToggleGroup;
   private whiteToggle!: ToggleGroup;
-  private confirmBtn!: TextButton;
-  private backBtn!: TextButton;
   private p1Name: string = "Human";
   private p2Name: string = "Human";
   private nameEditor!: NameEditor;
@@ -521,8 +534,6 @@ export class SettingsPanel {
     initialP2IsHuman: boolean,
     initialP1Name: string,
     initialP2Name: string,
-    onConfirm: (variant: "freestyle" | "renju", p1IsHuman: boolean, p2IsHuman: boolean, p1Name: string, p2Name: string) => void,
-    onBack: () => void,
   ) {
     this.scene = scene;
     this.p1Name = initialP1Name;
@@ -558,22 +569,11 @@ export class SettingsPanel {
       (idx: 0 | 1, name: string) => { if (idx === 0) this.p1Name = name; else this.p2Name = name; },
     );
 
-    this.confirmBtn = new TextButton(scene, 0, 0, "NEW GAME", GREEN_TINTS, () => {
-      this.nameEditor.stop(true);
-      const variant    = this.variantToggle.getSelected() === 1 ? "renju" : "freestyle";
-      const p1IsHuman  = this.blackToggle.getSelected() === 0;
-      const p2IsHuman  = this.whiteToggle.getSelected() === 0;
-      onConfirm(variant, p1IsHuman, p2IsHuman, this.p1Name, this.p2Name);
-    }, scale, width);
-
-    this.backBtn = new TextButton(scene, 0, 0, "BACK", RED_TINTS, onBack, scale, width);
-
     // Content height: tight within sections, larger gaps between sections
     this.height =
       (rulesH + innerGap + this.variantToggle.height) + sectionGap
       + (blackH + innerGap + this.blackToggle.height) + sectionGap
-      + (whiteH + innerGap + this.whiteToggle.height) + sectionGap
-      + (this.confirmBtn.height + innerGap + this.backBtn.height);
+      + (whiteH + innerGap + this.whiteToggle.height);
 
     this.container = scene.add.container(x, y);
     this.container.setDepth(20);
@@ -602,23 +602,42 @@ export class SettingsPanel {
 
     this.whiteToggle.setPosition(0, currentY + this.whiteToggle.height / 2);
     this.container.add(this.whiteToggle.container);
-    currentY += this.whiteToggle.height + sectionGap;
-
-    this.confirmBtn.setPosition(0, currentY + this.confirmBtn.height / 2);
-    this.container.add(this.confirmBtn.container);
-    currentY += this.confirmBtn.height + innerGap;
-
-    this.backBtn.setPosition(0, currentY + this.backBtn.height / 2);
-    this.container.add(this.backBtn.container);
   }
 
   setPosition(x: number, y: number): void {
     this.container.setPosition(x, y);
   }
 
+  attachTo(parent: Phaser.GameObjects.Container): void {
+    parent.add(this.container);
+  }
+
   setVisible(v: boolean): void {
     if (!v) this.nameEditor.stop(false);
     this.container.setVisible(v);
+  }
+
+  getValues(): {
+    variant: "freestyle" | "renju";
+    p1IsHuman: boolean;
+    p2IsHuman: boolean;
+    p1Name: string;
+    p2Name: string;
+  } {
+    this.nameEditor.stop(true);
+
+    return {
+      variant: this.variantToggle.getSelected() === 1 ? "renju" : "freestyle",
+      p1IsHuman: this.blackToggle.getSelected() === 0,
+      p2IsHuman: this.whiteToggle.getSelected() === 0,
+      p1Name: this.p1Name,
+      p2Name: this.p2Name,
+    };
+  }
+
+  destroy(): void {
+    this.nameEditor.stop(false);
+    this.container.destroy(true);
   }
 
 }
@@ -679,5 +698,9 @@ export class InfoBar {
 
   setVisible(v: boolean): void {
     this.container.setVisible(v);
+  }
+
+  destroy(): void {
+    this.container.destroy(true);
   }
 }
