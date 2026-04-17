@@ -88,6 +88,9 @@ export class GameScene extends Phaser.Scene {
   private board!: BoardRenderer;
   private boardBounds!: BoardBounds;
   private boardContent!: Phaser.GameObjects.Container;
+  private boardSurfaceContent!: Phaser.GameObjects.Container;
+  private boardOverlayContent!: Phaser.GameObjects.Container;
+  private boardPointerContent!: Phaser.GameObjects.Container;
   private settingsContent!: Phaser.GameObjects.Container;
   private cellSize: number = 0;
 
@@ -171,8 +174,6 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    // Under FIT mode, Phaser expects setGameSize so it can recompute the display size
-    // and preserve the aspect ratio inside the parent viewport.
     this.scale.setGameSize(targetSize.width, targetSize.height);
     this.relayout();
   }
@@ -402,6 +403,14 @@ export class GameScene extends Phaser.Scene {
     this.isNarrow = getLayoutMode(width, height) === "portrait";
 
     this.boardContent = this.add.container(0, 0);
+    this.boardSurfaceContent = this.add.container(0, 0);
+    this.boardOverlayContent = this.add.container(0, 0);
+    this.boardPointerContent = this.add.container(0, 0);
+    this.boardContent.add([
+      this.boardSurfaceContent,
+      this.boardOverlayContent,
+      this.boardPointerContent,
+    ]);
     this.settingsContent = this.add.container(0, 0);
     this.boardContent.setDepth(0);
     this.settingsContent.setDepth(1);
@@ -505,7 +514,7 @@ export class GameScene extends Phaser.Scene {
       this.resetBtn.setPosition(sidebarX, sideY);
     }
 
-    this.board = new BoardRenderer(this, this.cellSize, originX, originY, height, this.boardContent);
+    this.board = new BoardRenderer(this, this.cellSize, originX, originY, height, this.boardSurfaceContent);
     this.board.drawBoard();
     this.boardBounds = this.board.getBounds();
     this.createBoardViewportMask();
@@ -520,7 +529,7 @@ export class GameScene extends Phaser.Scene {
 
     this.createSettingsView(uiScale, settingsDraft);
 
-    this.pointer = this.board.createPointer();
+    this.pointer = this.board.createPointer(this.boardPointerContent);
     this.pointerCycle = new IdleCycle(this, POINTER_IDLE_ANIMS, 500, 1500, null);
     this.stoneCycle = new IdleCycle(this, STONE_IDLE_ANIMS, 700, 2200, 0);
 
@@ -699,17 +708,17 @@ export class GameScene extends Phaser.Scene {
       const row = Math.floor(idx / BOARD_SIZE), col = idx % BOARD_SIZE;
       if (this.wasmBoard.isLegal(row, col)) continue;
       const { x, y } = this.board.cellToPixel(row, col);
-      this.forbiddenSprites.push(this.createWarnSprite(x, y, 0xff4444));
+      this.forbiddenSprites.push(this.createWarnSprite(x, y, 0xff4444, WARNING_ANIMS.FORBIDDEN.key));
     }
   }
 
-  private createWarnSprite(x: number, y: number, tint: number, animKey: string = WARNING_ANIMS.POINTER.key, depth: number = 0.5): Phaser.GameObjects.Sprite {
+  private createWarnSprite(x: number, y: number, tint: number, animKey: string = WARNING_ANIMS.HOVER.key, depth: number = 0.5): Phaser.GameObjects.Sprite {
     const sprite = this.add.sprite(x, y, SPRITE.WARNING, 0);
     sprite.setScale(this.cellSize / FRAME_SIZE);
     sprite.setDepth(depth);
     sprite.setTint(tint);
     sprite.play({ key: animKey, repeat: -1 });
-    this.boardContent.add(sprite);
+    this.boardOverlayContent.add(sprite);
     return sprite;
   }
 

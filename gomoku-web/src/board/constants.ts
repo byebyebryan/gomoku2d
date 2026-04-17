@@ -14,7 +14,7 @@ export const BUTTON_FRAME_SIZE = 18;
 export const SPRITESHEET_CONFIG = {
   [SPRITE.STONE]: { url: "assets/sprites/stone.png", end: 33 },
   [SPRITE.POINTER]: { url: "assets/sprites/pointer.png", end: 18 },
-  [SPRITE.WARNING]: { url: "assets/sprites/warning.png", end: 16 },
+  [SPRITE.WARNING]: { url: "assets/sprites/warning.png", end: 28 },
 } as const;
 
 // Animation definitions — frame ranges from assets/manifest.md
@@ -35,8 +35,8 @@ export const POINTER_ANIMS = {
 } as const;
 
 export const WARNING_ANIMS = {
-  POINTER: { start: 0, end: 9, frameRate: 12, key: "warning-pointer" },
-  HOVER:   { start: 10, end: 16, frameRate: 12, key: "warning-hover" },
+  HOVER: { start: 10, end: 16, frameRate: 12, key: "warning-hover" },
+  FORBIDDEN: { start: 17, end: 28, frameRate: 10, key: "warning-forbidden" },
 } as const;
 
 // Board layout constants
