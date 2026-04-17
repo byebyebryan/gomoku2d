@@ -13,6 +13,18 @@ use gomoku_bot::{Bot, RandomBot, SearchBot};
 use gomoku_core::{Board, Color, GameResult, Move, RuleConfig};
 use gomoku_core::rules::Variant;
 
+fn moves_to_js(moves: Vec<Move>) -> Vec<JsValue> {
+    moves
+        .into_iter()
+        .map(|mv| {
+            let obj = Object::new();
+            let _ = Reflect::set(&obj, &"row".into(), &(mv.row as f64).into());
+            let _ = Reflect::set(&obj, &"col".into(), &(mv.col as f64).into());
+            obj.into()
+        })
+        .collect()
+}
+
 #[wasm_bindgen(start)]
 pub fn init() {
     console_error_panic_hook::set_once();
@@ -104,16 +116,7 @@ impl WasmBoard {
 
     #[wasm_bindgen(js_name = "legalMoves")]
     pub fn legal_moves(&self) -> Vec<JsValue> {
-        self.inner
-            .legal_moves()
-            .into_iter()
-            .map(|mv| {
-                let obj = Object::new();
-                let _ = Reflect::set(&obj, &"row".into(), &(mv.row as f64).into());
-                let _ = Reflect::set(&obj, &"col".into(), &(mv.col as f64).into());
-                obj.into()
-            })
-            .collect()
+        moves_to_js(self.inner.legal_moves())
     }
 
     #[wasm_bindgen(js_name = "immediateWinningMovesFor")]
@@ -124,16 +127,12 @@ impl WasmBoard {
             _ => return vec![],
         };
 
-        self.inner
-            .immediate_winning_moves_for(color)
-            .into_iter()
-            .map(|mv| {
-                let obj = Object::new();
-                let _ = Reflect::set(&obj, &"row".into(), &(mv.row as f64).into());
-                let _ = Reflect::set(&obj, &"col".into(), &(mv.col as f64).into());
-                obj.into()
-            })
-            .collect()
+        moves_to_js(self.inner.immediate_winning_moves_for(color))
+    }
+
+    #[wasm_bindgen(js_name = "forbiddenMovesForCurrentPlayer")]
+    pub fn forbidden_moves_for_current_player(&self) -> Vec<JsValue> {
+        moves_to_js(self.inner.forbidden_moves_for_current_player())
     }
 
     #[wasm_bindgen(js_name = "undoLastMove")]

@@ -131,7 +131,10 @@ impl Board {
         }
 
         let mut wins = Vec::new();
-        for mv in self.nearby_legal_moves_for(color, self.config.win_length.saturating_sub(1)) {
+        for mv in self.nearby_empty_moves(self.config.win_length.saturating_sub(1)) {
+            if !self.is_legal_for(mv, color) {
+                continue;
+            }
             let mut next = self.clone();
             next.current_player = color;
             if let Ok(GameResult::Winner(winner)) = next.apply_move(mv) {
@@ -143,7 +146,24 @@ impl Board {
         wins
     }
 
-    fn nearby_legal_moves_for(&self, color: Color, radius: usize) -> Vec<Move> {
+    pub fn forbidden_moves_for_current_player(&self) -> Vec<Move> {
+        if self.result != GameResult::Ongoing {
+            return vec![];
+        }
+        if self.config.variant != Variant::Renju {
+            return vec![];
+        }
+        if self.current_player != Color::Black {
+            return vec![];
+        }
+
+        self.nearby_empty_moves(self.config.win_length.saturating_sub(1))
+            .into_iter()
+            .filter(|&mv| self.is_renju_forbidden_at(mv))
+            .collect()
+    }
+
+    fn nearby_empty_moves(&self, radius: usize) -> Vec<Move> {
         if self.result != GameResult::Ongoing {
             return vec![];
         }
@@ -172,7 +192,7 @@ impl Board {
                             row: r as usize,
                             col: c as usize,
                         };
-                        if !self.is_legal_for(mv, color) {
+                        if self.cells[mv.row][mv.col].is_some() {
                             continue;
                         }
                         candidates.insert((mv.row, mv.col));
@@ -655,6 +675,31 @@ mod tests {
         );
         assert_eq!(b.current_player, Color::White);
         assert_eq!(b.immediate_winning_moves_for(Color::Black), vec![Move { row: 0, col: 4 }]);
+    }
+
+    #[test]
+    fn renju_forbidden_moves_for_current_player() {
+        let mut b = renju_board();
+        setup(
+            &mut b,
+            &[(5, 7), W[0], (6, 7), W[1], (7, 5), W[2], (7, 6), W[3]],
+        );
+        assert_eq!(b.forbidden_moves_for_current_player(), vec![Move { row: 7, col: 7 }]);
+    }
+
+    #[test]
+    fn forbidden_moves_for_current_player_empty_outside_black_renju_turn() {
+        let mut freestyle = default_board();
+        setup(
+            &mut freestyle,
+            &[(5, 7), W[0], (6, 7), W[1], (7, 5), W[2], (7, 6), W[3]],
+        );
+        assert!(freestyle.forbidden_moves_for_current_player().is_empty());
+
+        let mut renju = renju_board();
+        renju.apply_move(Move { row: 7, col: 7 }).unwrap();
+        assert_eq!(renju.current_player, Color::White);
+        assert!(renju.forbidden_moves_for_current_player().is_empty());
     }
 
     fn renju_board() -> Board {
