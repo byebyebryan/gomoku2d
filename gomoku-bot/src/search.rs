@@ -164,7 +164,37 @@ fn evaluate(board: &Board, color: Color) -> i32 {
 
 fn candidate_moves(board: &Board, radius: usize) -> Vec<Move> {
     let size = board.config.board_size;
-    if board.history.is_empty() {
+    let mut seen = vec![false; size * size];
+    let mut moves = Vec::new();
+    let mut has_stones = false;
+
+    // Generate candidates from the actual board position rather than move history.
+    // This keeps search robust for reconstructed boards (e.g. snapshots sent to a worker).
+    for row in 0..size {
+        for col in 0..size {
+            if board.cell(row, col).is_none() {
+                continue;
+            }
+
+            has_stones = true;
+
+            let rmin = row.saturating_sub(radius);
+            let rmax = (row + radius).min(size - 1);
+            let cmin = col.saturating_sub(radius);
+            let cmax = (col + radius).min(size - 1);
+            for r in rmin..=rmax {
+                for c in cmin..=cmax {
+                    let idx = r * size + c;
+                    if !seen[idx] && board.cell(r, c).is_none() {
+                        seen[idx] = true;
+                        moves.push(Move { row: r, col: c });
+                    }
+                }
+            }
+        }
+    }
+
+    if !has_stones {
         let center = size / 2;
         return vec![Move {
             row: center,
@@ -172,25 +202,6 @@ fn candidate_moves(board: &Board, radius: usize) -> Vec<Move> {
         }];
     }
 
-    // Flat bool array avoids 2D allocation overhead — this is called once per negamax node.
-    let mut seen = vec![false; size * size];
-    let mut moves = Vec::new();
-
-    for &mv in &board.history {
-        let rmin = mv.row.saturating_sub(radius);
-        let rmax = (mv.row + radius).min(size - 1);
-        let cmin = mv.col.saturating_sub(radius);
-        let cmax = (mv.col + radius).min(size - 1);
-        for r in rmin..=rmax {
-            for c in cmin..=cmax {
-                let idx = r * size + c;
-                if !seen[idx] && board.cell(r, c).is_none() {
-                    seen[idx] = true;
-                    moves.push(Move { row: r, col: c });
-                }
-            }
-        }
-    }
     moves
 }
 

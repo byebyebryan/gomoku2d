@@ -2,11 +2,14 @@ import Phaser from "phaser";
 import { BOARD_SIZE, WIN_LENGTH, SPRITE, FRAME_SIZE, STONE_ANIMS, POINTER_ANIMS, WARNING_ANIMS } from "../board/constants";
 import { BoardBounds, BoardRenderer } from "../board/board_renderer";
 import { PlayerCard, ResetButton, PlayerInfo, SettingsButton, SettingsPanel, InfoBar } from "../board/ui";
-import { WasmBoard, WasmBot } from "../core/wasm_bridge";
+import { WasmBoard } from "../core/wasm_bridge";
+import { BotRunner } from "../core/bot_runner";
+import type { BotSpec } from "../core/bot_protocol";
 import { getGameSizeForViewport, getLayoutMode, getViewportSize } from "../layout";
 
 const SIDEBAR_W = 240;
 const BOT_DELAY_MS = 300;
+const BASELINE_BOT_DEPTH = 3;
 const SETTINGS_SLIDE_MS = 220;
 const EDGE_RATIO = 1 / 3;
 const POINTER_IDLE_ANIMS = [POINTER_ANIMS.OUT, POINTER_ANIMS.IN, POINTER_ANIMS.FULL] as const;
@@ -98,8 +101,9 @@ export class GameScene extends Phaser.Scene {
   ];
   private blackProfileIdx: 0 | 1 = 0;
 
-  private bots: [(WasmBot | null), (WasmBot | null)] = [null, null];
+  private botRunner!: BotRunner;
   private botTimer: Phaser.Time.TimerEvent | null = null;
+  private botRequestSeq: number = 0;
 
   private pointer!: Phaser.GameObjects.Sprite;
   private pointerCycle: IdleCycle | null = null;
@@ -132,9 +136,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.botRunner = new BotRunner();
     this.initGame();
     this.attachViewportResizeHandlers();
     this.syncGameSizeToViewport();
+
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.botRunner.dispose());
+    this.events.once(Phaser.Scenes.Events.DESTROY, () => this.botRunner.dispose());
   }
 
   private attachViewportResizeHandlers(): void {
@@ -181,6 +189,35 @@ export class GameScene extends Phaser.Scene {
       x: 0,
       y: this.boardBounds.height + Math.round(this.cellSize * 1.5),
     };
+  }
+
+  private currentTurnSlot(): 0 | 1 {
+    return this.currentTurn === 1 ? 0 : 1;
+  }
+
+  private profileToBotSpec(profile: PlayerInfo): BotSpec {
+    return profile.isHuman
+      ? { kind: "human" }
+      : { kind: "baseline", depth: BASELINE_BOT_DEPTH };
+  }
+
+  private configureBotsForCurrentProfiles(): void {
+    const whiteProfileIdx = (1 - this.blackProfileIdx) as 0 | 1;
+    this.botRunner.configure([
+      this.profileToBotSpec(this.profiles[this.blackProfileIdx]),
+      this.profileToBotSpec(this.profiles[whiteProfileIdx]),
+    ]);
+  }
+
+  private cancelPendingBotWork(): void {
+    this.botRequestSeq += 1;
+
+    if (this.botTimer) {
+      this.botTimer.destroy();
+      this.botTimer = null;
+    }
+
+    this.botRunner.cancelPending();
   }
 
   private setActionButtonsVisible(visible: boolean): void {
@@ -334,10 +371,7 @@ export class GameScene extends Phaser.Scene {
     this.gameOver = false;
     this.winningCells = null;
 
-    const whiteProfileIdx = (1 - this.blackProfileIdx) as 0 | 1;
-    this.bots = [null, null];
-    if (!this.profiles[this.blackProfileIdx].isHuman) this.bots[0] = WasmBot.createBaseline(3);
-    if (!this.profiles[whiteProfileIdx].isHuman)      this.bots[1] = WasmBot.createBaseline(3);
+    this.configureBotsForCurrentProfiles();
 
     this.gameStartTime = Date.now();
     this.turnStartTime = Date.now();
@@ -531,7 +565,7 @@ export class GameScene extends Phaser.Scene {
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
       if (this.showingSettings || this.settingsTransitioning) { this.hidePointer(); return; }
       if (this.wasmBoard.result() !== "ongoing") { this.hidePointer(); return; }
-      if (this.bots[this.currentTurn === 1 ? 0 : 1] !== null) { this.hidePointer(); return; }
+      if (this.botRunner.hasBot(this.currentTurnSlot())) { this.hidePointer(); return; }
 
       const cell = this.board.pixelToCell(pointer.x, pointer.y);
       if (cell && this.wasmBoard.cell(cell.row, cell.col) === 0) {
@@ -550,7 +584,7 @@ export class GameScene extends Phaser.Scene {
       if (this.showingSettings || this.settingsTransitioning) return;
       if (this.getPointerType(pointer) !== "touch") return;
       if (this.wasmBoard.result() !== "ongoing") return;
-      if (this.bots[this.currentTurn === 1 ? 0 : 1] !== null) return;
+      if (this.botRunner.hasBot(this.currentTurnSlot())) return;
 
       const cell = this.board.pixelToCell(pointer.x, pointer.y);
       if (cell && this.wasmBoard.cell(cell.row, cell.col) === 0) {
@@ -570,7 +604,7 @@ export class GameScene extends Phaser.Scene {
         this.resetGame();
         return;
       }
-      if (this.bots[this.currentTurn === 1 ? 0 : 1] !== null) return;
+      if (this.botRunner.hasBot(this.currentTurnSlot())) return;
       if (!cell) return;
 
       if (this.getPointerType(pointer) === "touch") {
@@ -595,11 +629,7 @@ export class GameScene extends Phaser.Scene {
     this.pointerCycle?.stop();
     this.stoneCycle?.stop();
     this.tweens.killTweensOf([this.boardContent, this.settingsContent]);
-
-    if (this.botTimer) {
-      this.botTimer.destroy();
-      this.botTimer = null;
-    }
+    this.cancelPendingBotWork();
 
     const settingsOpen = this.showingSettings;
     const settingsDraft = settingsOpen ? this.settingsPanel.getValues() : null;
@@ -648,7 +678,7 @@ export class GameScene extends Phaser.Scene {
     if (this.gameVariant !== "renju") return;
     if (this.wasmBoard.result() !== "ongoing") return;
     if (this.currentTurn !== 1) return;
-    if (this.bots[0] !== null) return;
+    if (this.botRunner.hasBot(0)) return;
 
     const candidates = new Set<number>();
     for (let row = 0; row < BOARD_SIZE; row++) {
@@ -693,11 +723,7 @@ export class GameScene extends Phaser.Scene {
     if (this.showingSettings || this.settingsTransitioning) return;
     this.showingSettings = true;
     this.settingsOpenedAt = Date.now();
-
-    if (this.botTimer) {
-      this.botTimer.destroy();
-      this.botTimer = null;
-    }
+    this.cancelPendingBotWork();
 
     this.hidePointer();
     this.blackCard.setActive(false);
@@ -794,21 +820,34 @@ export class GameScene extends Phaser.Scene {
   private scheduleBotIfNeeded(): void {
     if (this.showingSettings || this.settingsTransitioning) return;
     if (this.wasmBoard.result() !== "ongoing") return;
-    const bot = this.bots[this.currentTurn === 1 ? 0 : 1];
-    if (!bot) return;
+    const slot = this.currentTurnSlot();
+    if (!this.botRunner.hasBot(slot)) return;
 
     this.hidePointer();
 
+    const requestSeq = ++this.botRequestSeq;
     this.botTimer = this.time.delayedCall(BOT_DELAY_MS, () => {
-      this.executeBotMove(bot);
+      this.botTimer = null;
+      void this.executeBotMove(slot, requestSeq);
     });
   }
 
-  private executeBotMove(bot: WasmBot): void {
+  private async executeBotMove(slot: 0 | 1, requestSeq: number): Promise<void> {
     if (this.wasmBoard.result() !== "ongoing") return;
-    const move = bot.chooseMove(this.wasmBoard);
-    if (!move) return;
-    this.applyAndRender(move.row, move.col);
+
+    try {
+      const move = await this.botRunner.chooseMove(slot, this.gameVariant, this.wasmBoard.toFen());
+      if (requestSeq !== this.botRequestSeq) return;
+      if (this.showingSettings || this.settingsTransitioning) return;
+      if (this.wasmBoard.result() !== "ongoing") return;
+      if (!move) return;
+      if (!this.wasmBoard.isLegal(move.row, move.col)) return;
+
+      this.applyAndRender(move.row, move.col);
+    } catch (error) {
+      if (requestSeq !== this.botRequestSeq) return;
+      console.error("Bot worker failed to choose a move", error);
+    }
   }
 
   private checkWin(row: number, col: number, player: 0 | 1): { row: number; col: number }[] | null {
@@ -858,11 +897,7 @@ export class GameScene extends Phaser.Scene {
     if (this.resetting) return;
     this.resetting = true;
     this.stoneCycle?.stop();
-
-    if (this.botTimer) {
-      this.botTimer.destroy();
-      this.botTimer = null;
-    }
+    this.cancelPendingBotWork();
 
     const stones = Array.from(this.stoneSprites.values());
     if (stones.length === 0) {
@@ -881,18 +916,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   private rebuildScene(): void {
-    if (this.botTimer) {
-      this.botTimer.destroy();
-      this.botTimer = null;
-    }
+    this.cancelPendingBotWork();
     this.tweens.killTweensOf([this.boardContent, this.settingsContent]);
     this.showingSettings = false;
     this.settingsTransitioning = false;
     this.settingsOpenedAt = null;
-    for (const bot of this.bots) {
-      if (bot) bot.free();
-    }
-    this.bots = [null, null];
     for (const sprite of this.forbiddenSprites) sprite.destroy();
     this.forbiddenSprites = [];
     for (const sprite of this.winSprites) sprite.destroy();
