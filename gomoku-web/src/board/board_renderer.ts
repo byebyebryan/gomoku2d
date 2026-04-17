@@ -44,9 +44,13 @@ export class BoardRenderer {
     this.parent = parent ?? null;
   }
 
-  private attach<T extends Phaser.GameObjects.GameObject>(gameObject: T): T {
-    if (this.parent) {
-      this.parent.add(gameObject);
+  private attach<T extends Phaser.GameObjects.GameObject>(
+    gameObject: T,
+    parentOverride?: Phaser.GameObjects.Container | null,
+  ): T {
+    const parent = parentOverride ?? this.parent;
+    if (parent) {
+      parent.add(gameObject);
     }
 
     return gameObject;
@@ -153,13 +157,13 @@ export class BoardRenderer {
     return this.attach(stone);
   }
 
-  createPointer(): Phaser.GameObjects.Sprite {
+  createPointer(parentOverride?: Phaser.GameObjects.Container): Phaser.GameObjects.Sprite {
     const scale = this.cellSize / FRAME_SIZE;
     const pointer = this.scene.add.sprite(-100, -100, SPRITE.POINTER, 0);
     pointer.setScale(scale);
     pointer.setDepth(2);
     pointer.setVisible(false);
-    return this.attach(pointer);
+    return this.attach(pointer, parentOverride);
   }
 
   createInteractiveZones(onCellClick: (row: number, col: number) => void): Phaser.GameObjects.Zone[] {

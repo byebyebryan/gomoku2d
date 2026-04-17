@@ -10,7 +10,7 @@ All sprites are pixel-art style. Spritesheets use 16×16 per frame; button uses 
 |------|------|-------------|
 | `stone.png` | 544×16 | Stone animations — 34 frames |
 | `pointer.png` | 304×16 | Cursor animations — 19 frames |
-| `warning.png` | 272×16 | Warning overlays — 17 frames (0–9 pointer, 10–16 hover) |
+| `warning.png` | 464×16 | Warning overlays — 29 frames (0–9 legacy pointer, 10–16 win, 17–28 forbidden) |
 | `button.png` | 72×18 | Button 9-slice — 4 frames (0=up, 1=hover, 2=down, 3=pointer) |
 | `PixelOperator8-Bold.png` | — | Bitmap font atlas |
 | `PixelOperator8-Bold.fnt` | — | Bitmap font descriptor |
@@ -47,8 +47,9 @@ All sprites are pixel-art style. Spritesheets use 16×16 per frame; button uses 
 
 | Frames | Animation | FPS | Notes |
 |--------|-----------|-----|-------|
-| 0–9 | `warning-pointer` | 12 | Loops; used for forbidden overlays (red tint) and win highlights (green tint) |
-| 10–16 | `warning-hover` | 12 | Not yet wired up |
+| 0–9 | `warning-pointer` | 12 | Legacy / unused currently |
+| 10–16 | `warning-hover` | 12 | Loops; used for win highlights (green tint) |
+| 17–28 | `warning-forbidden` | 10 | Loops; used for forbidden move overlays (red tint) |
 
 ### `button.png` (18×18 per frame, 9-slice borders: 8px each side)
 
