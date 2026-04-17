@@ -74,7 +74,7 @@ export class BootScene extends Phaser.Scene {
     }
 
     // Warning animations (loop)
-    for (const anim of [WARNING_ANIMS.HOVER, WARNING_ANIMS.FORBIDDEN]) {
+    for (const anim of [WARNING_ANIMS.POINTER, WARNING_ANIMS.HOVER, WARNING_ANIMS.FORBIDDEN]) {
       this.anims.create({
         key: anim.key,
         frames: this.anims.generateFrameNumbers(SPRITE.WARNING, {

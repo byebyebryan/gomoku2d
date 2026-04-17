@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeSet;
 
 use crate::rules::{RuleConfig, Variant};
 use crate::zobrist::ZobristTable;
@@ -117,6 +118,100 @@ impl Board {
     }
 
     pub fn is_legal(&self, mv: Move) -> bool {
+        self.is_legal_for(mv, self.current_player)
+    }
+
+    pub fn legal_moves(&self) -> Vec<Move> {
+        self.legal_moves_for(self.current_player)
+    }
+
+    pub fn immediate_winning_moves_for(&self, color: Color) -> Vec<Move> {
+        if self.result != GameResult::Ongoing {
+            return vec![];
+        }
+
+        let mut wins = Vec::new();
+        for mv in self.nearby_legal_moves_for(color, self.config.win_length.saturating_sub(1)) {
+            let mut next = self.clone();
+            next.current_player = color;
+            if let Ok(GameResult::Winner(winner)) = next.apply_move(mv) {
+                if winner == color {
+                    wins.push(mv);
+                }
+            }
+        }
+        wins
+    }
+
+    fn nearby_legal_moves_for(&self, color: Color, radius: usize) -> Vec<Move> {
+        if self.result != GameResult::Ongoing {
+            return vec![];
+        }
+
+        let size = self.config.board_size;
+        let radius = radius as isize;
+        let mut candidates: BTreeSet<(usize, usize)> = BTreeSet::new();
+        let mut has_stone = false;
+
+        for row in 0..size {
+            for col in 0..size {
+                if self.cells[row][col].is_none() {
+                    continue;
+                }
+                has_stone = true;
+
+                for dr in -radius..=radius {
+                    for dc in -radius..=radius {
+                        let r = row as isize + dr;
+                        let c = col as isize + dc;
+                        if r < 0 || r >= size as isize || c < 0 || c >= size as isize {
+                            continue;
+                        }
+
+                        let mv = Move {
+                            row: r as usize,
+                            col: c as usize,
+                        };
+                        if !self.is_legal_for(mv, color) {
+                            continue;
+                        }
+                        candidates.insert((mv.row, mv.col));
+                    }
+                }
+            }
+        }
+
+        if !has_stone {
+            return vec![];
+        }
+
+        candidates
+            .into_iter()
+            .map(|(row, col)| Move { row, col })
+            .collect()
+    }
+
+    fn legal_moves_for(&self, color: Color) -> Vec<Move> {
+        if self.result != GameResult::Ongoing {
+            return vec![];
+        }
+        let size = self.config.board_size;
+        let mut moves = Vec::with_capacity(size * size);
+        for row in 0..size {
+            for col in 0..size {
+                if self.cells[row][col].is_none() {
+                    let mv = Move { row, col };
+                    if !self.is_legal_for(mv, color) {
+                        continue;
+                    }
+                    moves.push(mv);
+                }
+            }
+        }
+        moves
+    }
+
+    fn is_legal_for(&self, mv: Move, color: Color) -> bool {
         if self.result != GameResult::Ongoing {
             return false;
         }
@@ -127,35 +222,12 @@ impl Board {
         if self.cells[mv.row][mv.col].is_some() {
             return false;
         }
-        if self.config.variant == Variant::Renju && self.current_player == Color::Black {
+        if self.config.variant == Variant::Renju && color == Color::Black {
             if self.is_renju_forbidden_at(mv) {
                 return false;
             }
         }
         true
-    }
-
-    pub fn legal_moves(&self) -> Vec<Move> {
-        if self.result != GameResult::Ongoing {
-            return vec![];
-        }
-        let size = self.config.board_size;
-        let mut moves = Vec::with_capacity(size * size);
-        for row in 0..size {
-            for col in 0..size {
-                if self.cells[row][col].is_none() {
-                    let mv = Move { row, col };
-                    if self.config.variant == Variant::Renju
-                        && self.current_player == Color::Black
-                        && self.is_renju_forbidden_at(mv)
-                    {
-                        continue;
-                    }
-                    moves.push(mv);
-                }
-            }
-        }
-        moves
     }
 
     pub fn apply_move(&mut self, mv: Move) -> Result<GameResult, MoveError> {
@@ -560,6 +632,31 @@ mod tests {
         assert_eq!(b2.current_player, b.current_player);
     }
 
+    #[test]
+    fn immediate_winning_moves_for_current_player() {
+        let mut b = default_board();
+        setup(
+            &mut b,
+            &[(7, 3), W[0], (7, 4), W[1], (7, 5), W[2], (7, 6), W[3]],
+        );
+        assert_eq!(b.current_player, Color::Black);
+        assert_eq!(
+            b.immediate_winning_moves_for(Color::Black),
+            vec![Move { row: 7, col: 2 }, Move { row: 7, col: 7 }]
+        );
+    }
+
+    #[test]
+    fn immediate_winning_moves_for_non_current_player() {
+        let mut b = default_board();
+        setup(
+            &mut b,
+            &[(0, 0), (7, 3), (0, 1), (7, 4), (0, 2), (7, 5), (0, 3)],
+        );
+        assert_eq!(b.current_player, Color::White);
+        assert_eq!(b.immediate_winning_moves_for(Color::Black), vec![Move { row: 0, col: 4 }]);
+    }
+
     fn renju_board() -> Board {
         Board::new(RuleConfig {
             variant: crate::rules::Variant::Renju,
@@ -714,6 +811,27 @@ mod tests {
         );
         let result = b.apply_move(Move { row: 7, col: 7 }).unwrap();
         assert_eq!(result, GameResult::Winner(Color::Black));
+    }
+
+    #[test]
+    fn renju_forbidden_move_not_reported_as_immediate_win() {
+        let mut b = renju_board();
+        setup(
+            &mut b,
+            &[
+                (0, 0),
+                W[0],
+                (0, 1),
+                W[1],
+                (0, 2),
+                W[2],
+                (0, 3),
+                W[3],
+                (0, 5),
+                W[4],
+            ],
+        );
+        assert!(!b.immediate_winning_moves_for(Color::Black).contains(&Move { row: 0, col: 4 }));
     }
 
     #[test]
