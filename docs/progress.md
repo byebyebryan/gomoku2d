@@ -52,7 +52,7 @@
 - Pointer idle animations: random cycle of out/in/full animations with static pauses; persists across cell transitions
 - Stone idle animations: random relax-1/2/3/4 on the last-placed stone only; transfers on each new placement
 - Win highlight: green `warning_l` animation on winning cells
-- 1024×768 canvas (4:3), `Phaser.Scale.FIT` + `CENTER_BOTH`
+- Responsive fixed canvas targets: 1200×900 (landscape, 4:3) and 900×1350 (portrait, 2:3), using `Phaser.Scale.FIT` + `CENTER_BOTH`
 
 ---
 

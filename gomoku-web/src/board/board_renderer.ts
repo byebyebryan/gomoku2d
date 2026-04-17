@@ -2,11 +2,23 @@ import Phaser from "phaser";
 import { BOARD_SIZE, WIN_LENGTH, SPRITE, FRAME_SIZE, STONE_ANIMS, POINTER_ANIMS } from "./constants";
 
 // Board colors sampled from the original sprite
-const BOARD_COLOR = 0xffcc66;
-const BOARD_SIDE_COLOR = 0x261e0f;
-const GRID_LINE_COLOR = 0x261e0f;
+export const BOARD_COLOR = 0xffcc66;
+export const BOARD_SIDE_COLOR = 0x261e0f;
+export const GRID_LINE_COLOR = 0x261e0f;
 
 type CellState = 0 | 1 | null; // null = empty, 0 = black, 1 = white
+
+export interface BoardBounds {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  sideHeight: number;
+  right: number;
+  bottom: number;
+  centerX: number;
+  centerY: number;
+}
 
 export class BoardRenderer {
   private scene: Phaser.Scene;
@@ -14,13 +26,30 @@ export class BoardRenderer {
   private originX: number;
   private originY: number;
   private screenHeight: number;
+  private parent: Phaser.GameObjects.Container | null;
 
-  constructor(scene: Phaser.Scene, cellSize: number, originX: number, originY: number, screenHeight: number) {
+  constructor(
+    scene: Phaser.Scene,
+    cellSize: number,
+    originX: number,
+    originY: number,
+    screenHeight: number,
+    parent?: Phaser.GameObjects.Container,
+  ) {
     this.scene = scene;
     this.cellSize = cellSize;
     this.originX = originX;
     this.originY = originY;
     this.screenHeight = screenHeight;
+    this.parent = parent ?? null;
+  }
+
+  private attach<T extends Phaser.GameObjects.GameObject>(gameObject: T): T {
+    if (this.parent) {
+      this.parent.add(gameObject);
+    }
+
+    return gameObject;
   }
 
   cellToPixel(row: number, col: number): { x: number; y: number } {
@@ -41,25 +70,48 @@ export class BoardRenderer {
     return this.cellSize;
   }
 
-  drawBoard(): void {
+  getBounds(): BoardBounds {
+    const top = this.originY - this.cellSize / 2;
+    const left = this.originX - this.cellSize / 2;
+    const width = BOARD_SIZE * this.cellSize;
+    const surfaceHeight = BOARD_SIZE * this.cellSize;
+    const maxSideHeight = this.cellSize / 2;
+    const sideHeight = Math.min(maxSideHeight, this.screenHeight - (top + surfaceHeight));
+    const height = surfaceHeight + sideHeight;
+
+    return {
+      left,
+      top,
+      width,
+      height,
+      sideHeight,
+      right: left + width,
+      bottom: top + height,
+      centerX: left + width / 2,
+      centerY: top + height / 2,
+    };
+  }
+
+  drawBoard(showGrid: boolean = true): Phaser.GameObjects.Graphics {
     const gfx = this.scene.add.graphics();
     gfx.setDepth(0);
 
-    const top = this.originY - this.cellSize / 2;
-    const left = this.originX - this.cellSize / 2;
-    const boardWidth = BOARD_SIZE * this.cellSize;
+    const bounds = this.getBounds();
+    const boardWidth = bounds.width;
     const boardHeight = BOARD_SIZE * this.cellSize;
-    const sideHeight = this.screenHeight - (top + boardHeight);
 
     // Side/depth
     gfx.fillStyle(BOARD_SIDE_COLOR, 1);
-    gfx.fillRect(left, top + boardHeight, boardWidth, sideHeight);
+    gfx.fillRect(bounds.left, bounds.top + boardHeight, boardWidth, bounds.sideHeight);
 
     // Board surface
     gfx.fillStyle(BOARD_COLOR, 1);
-    gfx.fillRect(left, top, boardWidth, boardHeight);
+    gfx.fillRect(bounds.left, bounds.top, boardWidth, boardHeight);
 
-    // Grid lines
+    if (!showGrid) {
+      return this.attach(gfx);
+    }
+
     const lineThickness = Math.max(1, Math.round(this.cellSize / FRAME_SIZE));
     gfx.lineStyle(lineThickness, GRID_LINE_COLOR, 1);
 
@@ -80,6 +132,8 @@ export class BoardRenderer {
       gfx.lineTo(Math.round(x) + 0.5, Math.round(y1));
       gfx.strokePath();
     }
+
+    return this.attach(gfx);
   }
 
   placeStone(row: number, col: number, color: 0 | 1): Phaser.GameObjects.Sprite {
@@ -96,7 +150,7 @@ export class BoardRenderer {
       stone.setTint(0xffffff);
     }
 
-    return stone;
+    return this.attach(stone);
   }
 
   createPointer(): Phaser.GameObjects.Sprite {
@@ -105,7 +159,7 @@ export class BoardRenderer {
     pointer.setScale(scale);
     pointer.setDepth(2);
     pointer.setVisible(false);
-    return pointer;
+    return this.attach(pointer);
   }
 
   createInteractiveZones(onCellClick: (row: number, col: number) => void): Phaser.GameObjects.Zone[] {
