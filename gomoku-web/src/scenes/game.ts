@@ -115,6 +115,7 @@ export class GameScene extends Phaser.Scene {
   private winSprites: Phaser.GameObjects.Sprite[] = [];
   private gameStartTime: number = 0;
   private turnStartTime: number = 0;
+  private settingsOpenedAt: number | null = null;
   private accumulatedMs: [number, number] = [0, 0];
   private gameOver: boolean = false;
   private currentTurn: 1 | 2 = 1;
@@ -340,6 +341,7 @@ export class GameScene extends Phaser.Scene {
 
     this.gameStartTime = Date.now();
     this.turnStartTime = Date.now();
+    this.settingsOpenedAt = null;
     this.accumulatedMs = [0, 0];
 
     this.initVisuals();
@@ -690,6 +692,7 @@ export class GameScene extends Phaser.Scene {
   private showSettings(): void {
     if (this.showingSettings || this.settingsTransitioning) return;
     this.showingSettings = true;
+    this.settingsOpenedAt = Date.now();
 
     if (this.botTimer) {
       this.botTimer.destroy();
@@ -707,10 +710,15 @@ export class GameScene extends Phaser.Scene {
     if (!this.showingSettings || this.settingsTransitioning) return;
     this.showingSettings = false;
     this.lastTimerSec = -1;
+    const pausedAt = this.settingsOpenedAt;
+    this.settingsOpenedAt = null;
 
     this.animateSettingsSwap(false, () => {
       this.configureActionButtonsForGame();
       if (this.wasmBoard.result() === "ongoing") {
+        if (pausedAt !== null) {
+          this.gameStartTime += Date.now() - pausedAt;
+        }
         this.updatePointerTint();
         this.turnStartTime = Date.now();
         this.scheduleBotIfNeeded();
@@ -880,6 +888,7 @@ export class GameScene extends Phaser.Scene {
     this.tweens.killTweensOf([this.boardContent, this.settingsContent]);
     this.showingSettings = false;
     this.settingsTransitioning = false;
+    this.settingsOpenedAt = null;
     for (const bot of this.bots) {
       if (bot) bot.free();
     }
