@@ -6,7 +6,8 @@ function sharedPlugins() {
   return [wasm(), topLevelAwait()];
 }
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  base: command === "build" ? "./" : "/",
   plugins: sharedPlugins(),
   worker: {
     format: "es",
@@ -21,4 +22,4 @@ export default defineConfig({
     port: 3000,
     open: true,
   },
-});
+}));
