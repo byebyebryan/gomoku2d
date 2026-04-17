@@ -687,30 +687,10 @@ export class GameScene extends Phaser.Scene {
     for (const sprite of this.forbiddenSprites) sprite.destroy();
     this.forbiddenSprites = [];
 
-    if (this.gameVariant !== "renju") return;
-    if (this.wasmBoard.result() !== "ongoing") return;
-    if (this.currentTurn !== 1) return;
     if (this.botRunner.hasBot(0)) return;
 
-    const candidates = new Set<number>();
-    for (let row = 0; row < BOARD_SIZE; row++) {
-      for (let col = 0; col < BOARD_SIZE; col++) {
-        if (this.wasmBoard.cell(row, col) === 0) continue;
-        for (let dr = -2; dr <= 2; dr++) {
-          for (let dc = -2; dc <= 2; dc++) {
-            const r = row + dr, c = col + dc;
-            if (r < 0 || r >= BOARD_SIZE || c < 0 || c >= BOARD_SIZE) continue;
-            if (this.wasmBoard.cell(r, c) !== 0) continue;
-            candidates.add(r * BOARD_SIZE + c);
-          }
-        }
-      }
-    }
-
-    for (const idx of candidates) {
-      const row = Math.floor(idx / BOARD_SIZE), col = idx % BOARD_SIZE;
-      if (this.wasmBoard.isLegal(row, col)) continue;
-      const { x, y } = this.board.cellToPixel(row, col);
+    for (const mv of this.wasmBoard.forbiddenMovesForCurrentPlayer() as Array<{ row: number; col: number }>) {
+      const { x, y } = this.board.cellToPixel(mv.row, mv.col);
       this.forbiddenSprites.push(this.createWarnSprite(x, y, 0xff4444, WARNING_ANIMS.FORBIDDEN.key));
     }
   }
