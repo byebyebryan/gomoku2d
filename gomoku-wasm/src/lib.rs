@@ -135,6 +135,19 @@ impl WasmBoard {
             .map_err(|e| JsValue::from_str(&e))
     }
 
+    #[wasm_bindgen(js_name = "fromFenWithVariant")]
+    pub fn from_fen_with_variant(fen: &str, variant: &str) -> Result<WasmBoard, JsValue> {
+        Board::from_fen(fen)
+            .map(|mut inner| {
+                inner.config.variant = match variant {
+                    "renju" => Variant::Renju,
+                    _ => Variant::Freestyle,
+                };
+                WasmBoard { inner }
+            })
+            .map_err(|e| JsValue::from_str(&e))
+    }
+
     #[wasm_bindgen(js_name = "cloneBoard")]
     pub fn clone_board(&self) -> WasmBoard {
         WasmBoard {
