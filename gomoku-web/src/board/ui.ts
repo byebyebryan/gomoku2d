@@ -402,6 +402,101 @@ export class ToggleGroup {
   }
 }
 
+class NameEditor {
+  private scene: Phaser.Scene;
+  private playerIdx: 0 | 1 | null = null;
+  private inputBuffer: string = "";
+  private cursorOn: boolean = true;
+  private cursorTimer: Phaser.Time.TimerEvent | null = null;
+  private keydownHandler: ((e: KeyboardEvent) => void) | null = null;
+  private pointerupHandler: (() => void) | null = null;
+  private getToggle: (idx: 0 | 1) => ToggleGroup;
+  private getName: (idx: 0 | 1) => string;
+  private setName: (idx: 0 | 1, name: string) => void;
+
+  constructor(
+    scene: Phaser.Scene,
+    getToggle: (idx: 0 | 1) => ToggleGroup,
+    getName: (idx: 0 | 1) => string,
+    setName: (idx: 0 | 1, name: string) => void,
+  ) {
+    this.scene = scene;
+    this.getToggle = getToggle;
+    this.getName = getName;
+    this.setName = setName;
+  }
+
+  get isEditing(): boolean {
+    return this.playerIdx !== null;
+  }
+
+  start(playerIdx: 0 | 1): void {
+    this.playerIdx = playerIdx;
+    this.inputBuffer = this.getName(playerIdx);
+    this.cursorOn = true;
+    this.updateLabel();
+
+    this.cursorTimer = this.scene.time.addEvent({
+      delay: 530,
+      callback: () => { this.cursorOn = !this.cursorOn; this.updateLabel(); },
+      loop: true,
+    });
+
+    this.keydownHandler = (e: KeyboardEvent) => this.onKeydown(e);
+    this.scene.input.keyboard!.on("keydown", this.keydownHandler);
+
+    this.scene.time.delayedCall(1, () => {
+      if (this.playerIdx === null) return;
+      this.pointerupHandler = () => this.stop(true);
+      this.scene.input.on("pointerup", this.pointerupHandler);
+    });
+  }
+
+  stop(confirm: boolean): void {
+    if (this.playerIdx === null) return;
+    if (confirm) {
+      const name = this.inputBuffer.trim();
+      if (name.length > 0) this.setName(this.playerIdx, name);
+    }
+    this.getToggle(this.playerIdx).setButtonLabel(0, this.getName(this.playerIdx));
+
+    this.playerIdx = null;
+    this.inputBuffer = "";
+    this.cursorTimer?.destroy();
+    this.cursorTimer = null;
+    if (this.keydownHandler) {
+      this.scene.input.keyboard!.off("keydown", this.keydownHandler);
+      this.keydownHandler = null;
+    }
+    if (this.pointerupHandler) {
+      this.scene.input.off("pointerup", this.pointerupHandler);
+      this.pointerupHandler = null;
+    }
+  }
+
+  private updateLabel(): void {
+    if (this.playerIdx === null) return;
+    this.getToggle(this.playerIdx).setButtonLabel(0, this.inputBuffer + (this.cursorOn ? "_" : " "));
+  }
+
+  private onKeydown(e: KeyboardEvent): void {
+    if (this.playerIdx === null) return;
+    if (e.key === "Enter") {
+      e.preventDefault();
+      this.stop(true);
+    } else if (e.key === "Escape") {
+      this.stop(false);
+    } else if (e.key === "Backspace") {
+      e.preventDefault();
+      this.inputBuffer = this.inputBuffer.slice(0, -1);
+      this.updateLabel();
+    } else if (e.key.length === 1 && this.inputBuffer.length < 12) {
+      this.inputBuffer += e.key;
+      this.updateLabel();
+    }
+  }
+}
+
 export class SettingsPanel {
   private scene: Phaser.Scene;
   private container: Phaser.GameObjects.Container;
@@ -412,12 +507,7 @@ export class SettingsPanel {
   private backBtn!: TextButton;
   private p1Name: string = "Human";
   private p2Name: string = "Human";
-  private editingPlayer: 0 | 1 | null = null;
-  private inputBuffer: string = "";
-  private cursorOn: boolean = true;
-  private cursorTimer: Phaser.Time.TimerEvent | null = null;
-  private keydownHandler: ((e: KeyboardEvent) => void) | null = null;
-  private pointerupHandler: (() => void) | null = null;
+  private nameEditor!: NameEditor;
   readonly height: number;
 
   constructor(
@@ -451,18 +541,25 @@ export class SettingsPanel {
     const blackH = blackLabel.getBounds().height;
 
     this.blackToggle = new ToggleGroup(scene, 0, 0, [this.p1Name, "BOT"], initialP1IsHuman ? 0 : 1, scale, width, true,
-      (idx) => { if (idx === 0 && this.editingPlayer === null) this.startEditing(0); },
+      (idx) => { if (idx === 0 && !this.nameEditor.isEditing) this.nameEditor.start(0); },
     );
 
     const whiteLabel = scene.add.bitmapText(0, 0, "pixel", "PLAYER 2", fontPx).setTint(0xcccccc).setOrigin(0, 0);
     const whiteH = whiteLabel.getBounds().height;
 
     this.whiteToggle = new ToggleGroup(scene, 0, 0, [this.p2Name, "BOT"], initialP2IsHuman ? 0 : 1, scale, width, true,
-      (idx) => { if (idx === 0 && this.editingPlayer === null) this.startEditing(1); },
+      (idx) => { if (idx === 0 && !this.nameEditor.isEditing) this.nameEditor.start(1); },
+    );
+
+    this.nameEditor = new NameEditor(
+      scene,
+      (idx: 0 | 1) => idx === 0 ? this.blackToggle : this.whiteToggle,
+      (idx: 0 | 1) => idx === 0 ? this.p1Name : this.p2Name,
+      (idx: 0 | 1, name: string) => { if (idx === 0) this.p1Name = name; else this.p2Name = name; },
     );
 
     this.confirmBtn = new TextButton(scene, 0, 0, "NEW GAME", GREEN_TINTS, () => {
-      this.stopEditing(true);
+      this.nameEditor.stop(true);
       const variant    = this.variantToggle.getSelected() === 1 ? "renju" : "freestyle";
       const p1IsHuman  = this.blackToggle.getSelected() === 0;
       const p2IsHuman  = this.whiteToggle.getSelected() === 0;
@@ -520,77 +617,10 @@ export class SettingsPanel {
   }
 
   setVisible(v: boolean): void {
-    if (!v) this.stopEditing(false);
+    if (!v) this.nameEditor.stop(false);
     this.container.setVisible(v);
   }
 
-  private startEditing(playerIdx: 0 | 1): void {
-    this.editingPlayer = playerIdx;
-    this.inputBuffer   = playerIdx === 0 ? this.p1Name : this.p2Name;
-    this.cursorOn      = true;
-    this.updateEditLabel();
-
-    this.cursorTimer = this.scene.time.addEvent({
-      delay: 530,
-      callback: () => { this.cursorOn = !this.cursorOn; this.updateEditLabel(); },
-      loop: true,
-    });
-
-    this.keydownHandler = (e: KeyboardEvent) => this.onKeydown(e);
-    this.scene.input.keyboard!.on("keydown", this.keydownHandler);
-
-    // Defer the click-away listener by one frame to avoid catching the triggering click.
-    this.scene.time.delayedCall(1, () => {
-      if (this.editingPlayer === null) return;
-      this.pointerupHandler = () => this.stopEditing(true);
-      this.scene.input.on("pointerup", this.pointerupHandler);
-    });
-  }
-
-  private stopEditing(confirm: boolean): void {
-    if (this.editingPlayer === null) return;
-    const playerIdx    = this.editingPlayer;
-    this.editingPlayer = null;
-
-    if (confirm) {
-      const name = this.inputBuffer.trim();
-      if (name.length > 0) {
-        if (playerIdx === 0) this.p1Name = name;
-        else                 this.p2Name = name;
-      }
-    }
-    // Restore clean label (no cursor).
-    const toggle = playerIdx === 0 ? this.blackToggle : this.whiteToggle;
-    toggle.setButtonLabel(0, playerIdx === 0 ? this.p1Name : this.p2Name);
-
-    this.inputBuffer = "";
-    this.cursorTimer?.destroy();      this.cursorTimer = null;
-    if (this.keydownHandler)  { this.scene.input.keyboard!.off("keydown", this.keydownHandler); this.keydownHandler = null; }
-    if (this.pointerupHandler){ this.scene.input.off("pointerup", this.pointerupHandler);        this.pointerupHandler = null; }
-  }
-
-  private updateEditLabel(): void {
-    if (this.editingPlayer === null) return;
-    const toggle = this.editingPlayer === 0 ? this.blackToggle : this.whiteToggle;
-    toggle.setButtonLabel(0, this.inputBuffer + (this.cursorOn ? "_" : " "));
-  }
-
-  private onKeydown(e: KeyboardEvent): void {
-    if (this.editingPlayer === null) return;
-    if (e.key === "Enter") {
-      e.preventDefault();
-      this.stopEditing(true);
-    } else if (e.key === "Escape") {
-      this.stopEditing(false);
-    } else if (e.key === "Backspace") {
-      e.preventDefault();
-      this.inputBuffer = this.inputBuffer.slice(0, -1);
-      this.updateEditLabel();
-    } else if (e.key.length === 1 && this.inputBuffer.length < 12) {
-      this.inputBuffer += e.key;
-      this.updateEditLabel();
-    }
-  }
 }
 
 export class InfoBar {
