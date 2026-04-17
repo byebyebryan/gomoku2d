@@ -7,12 +7,15 @@ type PendingRequest = {
 
 export class BotRunner {
   private worker: Worker | null = null;
+  private workerReady: boolean = false;
+  private outgoing: BotWorkerRequest[] = [];
   private specs: [BotSpec, BotSpec] = [{ kind: "human" }, { kind: "human" }];
   private nextRequestId: number = 1;
   private pending: Map<number, PendingRequest> = new Map();
 
   constructor() {
     this.worker = this.createWorker();
+    this.send({ type: "configure", specs: this.specs });
   }
 
   hasBot(slot: 0 | 1): boolean {
@@ -22,6 +25,7 @@ export class BotRunner {
   configure(specs: [BotSpec, BotSpec]): void {
     this.specs = specs;
     this.rejectPending(new Error("bot configuration changed"));
+    this.send({ type: "configure", specs });
   }
 
   chooseMove(slot: 0 | 1, variant: GameVariant, fen: string): Promise<BotMove | null> {
@@ -29,18 +33,12 @@ export class BotRunner {
       return Promise.resolve(null);
     }
 
-    const worker = this.ensureWorker();
+    this.ensureWorker();
     const requestId = this.nextRequestId++;
 
     return new Promise<BotMove | null>((resolve, reject) => {
       this.pending.set(requestId, { resolve, reject });
-      worker.postMessage({
-        type: "choose_move",
-        requestId,
-        spec: this.specs[slot],
-        variant,
-        fen,
-      } satisfies BotWorkerRequest);
+      this.send({ type: "choose_move", requestId, slot, variant, fen });
     });
   }
 
@@ -52,24 +50,51 @@ export class BotRunner {
     this.rejectPending(new Error("bot runner disposed"));
     this.worker?.terminate();
     this.worker = null;
+    this.workerReady = false;
+    this.outgoing = [];
   }
 
-  private ensureWorker(): Worker {
+  private ensureWorker(): void {
     if (!this.worker) {
       this.worker = this.createWorker();
+      this.send({ type: "configure", specs: this.specs });
     }
-    return this.worker;
   }
 
   private createWorker(): Worker {
+    this.workerReady = false;
+    this.outgoing = [];
+
     const worker = new Worker(new URL("./bot_worker.ts", import.meta.url), { type: "module" });
-    worker.addEventListener("message", this.handleWorkerMessage);
+    worker.addEventListener("message", (event: MessageEvent<BotWorkerResponse>) => {
+      if (this.worker !== worker) return;
+      this.handleWorkerMessage(event.data);
+    });
     worker.addEventListener("error", (event: ErrorEvent) => {
       if (this.worker !== worker) return;
       this.worker = null;
+      this.workerReady = false;
+      this.outgoing = [];
       this.rejectPending(new Error(event.message || "bot worker failed"));
     });
     return worker;
+  }
+
+  private send(msg: BotWorkerRequest): void {
+    if (!this.worker) return;
+    if (this.workerReady) {
+      this.worker.postMessage(msg);
+    } else {
+      this.outgoing.push(msg);
+    }
+  }
+
+  private flushOutgoing(): void {
+    if (!this.worker) return;
+    for (const msg of this.outgoing) {
+      this.worker.postMessage(msg);
+    }
+    this.outgoing = [];
   }
 
   private rejectPending(error: Error): void {
@@ -79,10 +104,13 @@ export class BotRunner {
     this.pending.clear();
   }
 
-  private handleWorkerMessage = (event: MessageEvent<BotWorkerResponse>): void => {
-    const message = event.data;
-
+  private handleWorkerMessage(message: BotWorkerResponse): void {
     switch (message.type) {
+      case "ready": {
+        this.workerReady = true;
+        this.flushOutgoing();
+        break;
+      }
       case "move": {
         const pending = this.pending.get(message.requestId);
         if (!pending) return;
@@ -96,7 +124,6 @@ export class BotRunner {
           this.rejectPending(error);
           return;
         }
-
         const pending = this.pending.get(message.requestId);
         if (!pending) return;
         this.pending.delete(message.requestId);
@@ -104,5 +131,5 @@ export class BotRunner {
         break;
       }
     }
-  };
+  }
 }

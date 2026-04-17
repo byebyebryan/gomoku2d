@@ -2,44 +2,65 @@
 
 import { WasmBoard, WasmBot } from "gomoku-wasm";
 
-import type { BotWorkerRequest, BotWorkerResponse } from "./bot_protocol";
+import type { BotSpec, BotWorkerRequest, BotWorkerResponse } from "./bot_protocol";
 
 const workerScope = self as DedicatedWorkerGlobalScope;
+let bots: [WasmBot | null, WasmBot | null] = [null, null];
 
 function postMessage(message: BotWorkerResponse): void {
   workerScope.postMessage(message);
 }
 
-workerScope.addEventListener("message", (event: MessageEvent<BotWorkerRequest>) => {
-  const message = event.data;
-  const { requestId, spec, variant, fen } = message;
+function buildBot(spec: BotSpec): WasmBot | null {
+  return spec.kind === "human" ? null : WasmBot.createBaseline(spec.depth);
+}
 
-  if (spec.kind === "human") {
-    postMessage({ type: "move", requestId, move: null });
+function configure(specs: [BotSpec, BotSpec]): void {
+  bots[0]?.free();
+  bots[1]?.free();
+  bots = [buildBot(specs[0]), buildBot(specs[1])];
+}
+
+function handleChooseMove(message: Extract<BotWorkerRequest, { type: "choose_move" }>): void {
+  const bot = bots[message.slot];
+  if (!bot) {
+    postMessage({ type: "move", requestId: message.requestId, move: null });
     return;
   }
 
-  let bot: WasmBot | null = null;
   let board: WasmBoard | null = null;
 
   try {
-    bot = WasmBot.createBaseline(spec.depth);
-    board = WasmBoard.fromFenWithVariant(fen, variant);
+    board = WasmBoard.fromFenWithVariant(message.fen, message.variant);
     const move = bot.chooseMove(board) as { row: number; col: number } | null;
 
     postMessage({
       type: "move",
-      requestId,
+      requestId: message.requestId,
       move: move ? { row: move.row, col: move.col } : null,
     });
   } catch (error) {
     postMessage({
       type: "error",
-      requestId,
+      requestId: message.requestId,
       message: error instanceof Error ? error.message : String(error),
     });
   } finally {
-    bot?.free();
     board?.free();
   }
+}
+
+workerScope.addEventListener("message", (event: MessageEvent<BotWorkerRequest>) => {
+  const message = event.data;
+
+  switch (message.type) {
+    case "configure":
+      configure(message.specs);
+      break;
+    case "choose_move":
+      handleChooseMove(message);
+      break;
+  }
 });
+
+postMessage({ type: "ready" });
