@@ -54,7 +54,7 @@ jobs:
         working-directory: gomoku-web
 
       - name: Build
-        run: npm run build -- --base /gomoku2d/
+        run: npm run build
         working-directory: gomoku-web
 
       - name: Setup Pages
