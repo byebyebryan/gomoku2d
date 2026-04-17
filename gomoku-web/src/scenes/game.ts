@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { BOARD_SIZE, WIN_LENGTH, SPRITE, FRAME_SIZE, STONE_ANIMS, POINTER_ANIMS, WARNING_ANIMS } from "../board/constants";
+import { BOARD_SIZE, WIN_LENGTH, SPRITE, FRAME_SIZE, FONT_KEY, STONE_ANIMS, POINTER_ANIMS, WARNING_ANIMS } from "../board/constants";
 import { BoardBounds, BoardRenderer } from "../board/board_renderer";
 import { PlayerCard, ResetButton, PlayerInfo, SettingsButton, SettingsPanel, InfoBar } from "../board/ui";
 import { WasmBoard } from "../core/wasm_bridge";
@@ -121,6 +121,8 @@ export class GameScene extends Phaser.Scene {
   private forbiddenSprites: Phaser.GameObjects.Sprite[] = [];
   private moveHintSprites: Phaser.GameObjects.Sprite[] = [];
   private winSprites: Phaser.GameObjects.Sprite[] = [];
+  private seqLabels: Phaser.GameObjects.BitmapText[] = [];
+  private moveOrder: Map<string, number> = new Map();
   private gameStartTime: number = 0;
   private turnStartTime: number = 0;
   private settingsOpenedAt: number | null = null;
@@ -369,6 +371,7 @@ export class GameScene extends Phaser.Scene {
     this.wasmBoard = WasmBoard.createWithVariant(this.gameVariant);
     this.resetting = false;
     this.stoneSprites.clear();
+    this.moveOrder.clear();
     this.currentTurn = 1;
     this.gameOver = false;
     this.winningCells = null;
@@ -394,6 +397,8 @@ export class GameScene extends Phaser.Scene {
     this.forbiddenSprites = [];
     this.moveHintSprites = [];
     this.winSprites = [];
+    for (const label of this.seqLabels) label.destroy();
+    this.seqLabels = [];
     this.pointerCycle?.stop();
     this.pointerCycle = null;
     this.stoneCycle?.stop();
@@ -554,6 +559,7 @@ export class GameScene extends Phaser.Scene {
     this.setSettingsViewState(settingsOpen);
 
     if (this.wasmBoard.result() !== "ongoing") {
+      this.showMoveSequence();
       if (this.winningCells) {
         this.highlightWin(this.winningCells);
       }
@@ -794,6 +800,7 @@ export class GameScene extends Phaser.Scene {
 
     const stone = this.board.placeStone(row, col, moverIdx as 0 | 1);
     this.stoneSprites.set(this.cellKey(row, col), stone);
+    this.moveOrder.set(this.cellKey(row, col), this.wasmBoard.moveCount());
     stone.play(STONE_ANIMS.FORM.key);
     stone.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
       if (this.wasmBoard.result() === "ongoing") this.stoneCycle!.start(stone);
@@ -809,6 +816,7 @@ export class GameScene extends Phaser.Scene {
 
       const winner = wasmResult === "black" ? 0 : 1;
       const winCells = this.checkWin(row, col, winner);
+      this.showMoveSequence();
       if (winCells) {
         this.winningCells = winCells;
         this.highlightWin(winCells);
@@ -830,6 +838,7 @@ export class GameScene extends Phaser.Scene {
       this.refreshHumanMoveHints();
       this.blackCard.setTimer(this.formatTime(this.accumulatedMs[0]));
       this.whiteCard.setTimer(this.formatTime(this.accumulatedMs[1]));
+      this.showMoveSequence();
       this.blackCard.setActive(false);
       this.whiteCard.setActive(false);
       return;
@@ -918,6 +927,21 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  private showMoveSequence(): void {
+    const fontSize = Math.round(this.cellSize * 0.25);
+    for (const [key, moveNum] of this.moveOrder) {
+      const [row, col] = key.split(",").map(Number);
+      const { x, y } = this.board.cellToPixel(row, col);
+      const isBlackStone = moveNum % 2 === 1;
+      const label = this.add.bitmapText(x, y, FONT_KEY, String(moveNum), fontSize);
+      label.setTint(isBlackStone ? 0xffffff : 0x1a1a2e);
+      label.setOrigin(0.5, 0.5);
+      label.setDepth(3);
+      this.boardOverlayContent.add(label);
+      this.seqLabels.push(label);
+    }
+  }
+
   private resetGame(): void {
     if (this.resetting) return;
     this.resetting = true;
@@ -952,6 +976,8 @@ export class GameScene extends Phaser.Scene {
     this.moveHintSprites = [];
     for (const sprite of this.winSprites) sprite.destroy();
     this.winSprites = [];
+    for (const label of this.seqLabels) label.destroy();
+    this.seqLabels = [];
     this.stoneCycle?.stop();
     this.hidePointer();
     this.wasmBoard.free();
