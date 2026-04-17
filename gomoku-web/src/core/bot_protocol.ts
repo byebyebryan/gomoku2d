@@ -9,18 +9,13 @@ export interface BotMove {
   col: number;
 }
 
-export type BotWorkerRequest =
-  | {
-      type: "configure";
-      specs: [BotSpec, BotSpec];
-    }
-  | {
-      type: "choose_move";
-      requestId: number;
-      slot: 0 | 1;
-      variant: GameVariant;
-      fen: string;
-    };
+export type BotWorkerRequest = {
+  type: "choose_move";
+  requestId: number;
+  spec: BotSpec;
+  variant: GameVariant;
+  fen: string;
+};
 
 export type BotWorkerResponse =
   | {

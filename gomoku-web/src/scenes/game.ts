@@ -846,7 +846,7 @@ export class GameScene extends Phaser.Scene {
       this.applyAndRender(move.row, move.col);
     } catch (error) {
       if (requestSeq !== this.botRequestSeq) return;
-      console.error("Bot worker failed to choose a move", error);
+      console.error("[bot] worker failed:", error);
     }
   }
 

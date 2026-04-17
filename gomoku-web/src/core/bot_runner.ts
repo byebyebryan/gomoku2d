@@ -13,7 +13,6 @@ export class BotRunner {
 
   constructor() {
     this.worker = this.createWorker();
-    this.postConfigure();
   }
 
   hasBot(slot: 0 | 1): boolean {
@@ -22,7 +21,7 @@ export class BotRunner {
 
   configure(specs: [BotSpec, BotSpec]): void {
     this.specs = specs;
-    this.restartWorker(new Error("bot configuration changed"));
+    this.rejectPending(new Error("bot configuration changed"));
   }
 
   chooseMove(slot: 0 | 1, variant: GameVariant, fen: string): Promise<BotMove | null> {
@@ -38,7 +37,7 @@ export class BotRunner {
       worker.postMessage({
         type: "choose_move",
         requestId,
-        slot,
+        spec: this.specs[slot],
         variant,
         fen,
       } satisfies BotWorkerRequest);
@@ -46,7 +45,7 @@ export class BotRunner {
   }
 
   cancelPending(): void {
-    this.restartWorker(new Error("bot request cancelled"));
+    this.rejectPending(new Error("bot request cancelled"));
   }
 
   dispose(): void {
@@ -58,31 +57,19 @@ export class BotRunner {
   private ensureWorker(): Worker {
     if (!this.worker) {
       this.worker = this.createWorker();
-      this.postConfigure();
     }
-
     return this.worker;
   }
 
   private createWorker(): Worker {
     const worker = new Worker(new URL("./bot_worker.ts", import.meta.url), { type: "module" });
     worker.addEventListener("message", this.handleWorkerMessage);
-    worker.addEventListener("error", this.handleWorkerError);
+    worker.addEventListener("error", (event: ErrorEvent) => {
+      if (this.worker !== worker) return;
+      this.worker = null;
+      this.rejectPending(new Error(event.message || "bot worker failed"));
+    });
     return worker;
-  }
-
-  private postConfigure(): void {
-    this.ensureWorker().postMessage({
-      type: "configure",
-      specs: this.specs,
-    } satisfies BotWorkerRequest);
-  }
-
-  private restartWorker(reason: Error): void {
-    this.rejectPending(reason);
-    this.worker?.terminate();
-    this.worker = this.createWorker();
-    this.postConfigure();
   }
 
   private rejectPending(error: Error): void {
@@ -117,11 +104,5 @@ export class BotRunner {
         break;
       }
     }
-  };
-
-  private handleWorkerError = (event: ErrorEvent): void => {
-    this.worker?.terminate();
-    this.worker = null;
-    this.rejectPending(new Error(event.message || "bot worker failed"));
   };
 }
