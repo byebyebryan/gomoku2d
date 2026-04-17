@@ -116,6 +116,26 @@ impl WasmBoard {
             .collect()
     }
 
+    #[wasm_bindgen(js_name = "immediateWinningMovesFor")]
+    pub fn immediate_winning_moves_for(&self, player: u8) -> Vec<JsValue> {
+        let color = match player {
+            1 => Color::Black,
+            2 => Color::White,
+            _ => return vec![],
+        };
+
+        self.inner
+            .immediate_winning_moves_for(color)
+            .into_iter()
+            .map(|mv| {
+                let obj = Object::new();
+                let _ = Reflect::set(&obj, &"row".into(), &(mv.row as f64).into());
+                let _ = Reflect::set(&obj, &"col".into(), &(mv.col as f64).into());
+                obj.into()
+            })
+            .collect()
+    }
+
     #[wasm_bindgen(js_name = "undoLastMove")]
     pub fn undo_last_move(&mut self) {
         if let Some(mv) = self.inner.history.last().copied() {

@@ -47,7 +47,7 @@ All sprites are pixel-art style. Spritesheets use 16×16 per frame; button uses 
 
 | Frames | Animation | FPS | Notes |
 |--------|-----------|-----|-------|
-| 0–9 | `warning-pointer` | 12 | Legacy / unused currently |
+| 0–9 | `warning-pointer` | 12 | Loops; used for human move hints (green = winning, red = losing) |
 | 10–16 | `warning-hover` | 12 | Loops; used for win highlights (green tint) |
 | 17–28 | `warning-forbidden` | 10 | Loops; used for forbidden move overlays (red tint) |
 

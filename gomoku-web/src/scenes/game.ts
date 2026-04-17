@@ -119,6 +119,7 @@ export class GameScene extends Phaser.Scene {
   private showingSettings: boolean = false;
   private gameVariant: "freestyle" | "renju" = "freestyle";
   private forbiddenSprites: Phaser.GameObjects.Sprite[] = [];
+  private moveHintSprites: Phaser.GameObjects.Sprite[] = [];
   private winSprites: Phaser.GameObjects.Sprite[] = [];
   private gameStartTime: number = 0;
   private turnStartTime: number = 0;
@@ -391,6 +392,7 @@ export class GameScene extends Phaser.Scene {
     this.children.removeAll();
     this.stoneSprites.clear();
     this.forbiddenSprites = [];
+    this.moveHintSprites = [];
     this.winSprites = [];
     this.pointerCycle?.stop();
     this.pointerCycle = null;
@@ -547,6 +549,7 @@ export class GameScene extends Phaser.Scene {
     this.blackCard.setTimer(this.formatTime(this.accumulatedMs[0]));
     this.whiteCard.setTimer(this.formatTime(this.accumulatedMs[1]));
     this.refreshForbiddenOverlays();
+    this.refreshHumanMoveHints();
     this.lastTimerSec = -1;
     this.setSettingsViewState(settingsOpen);
 
@@ -712,6 +715,36 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  private refreshHumanMoveHints(): void {
+    for (const sprite of this.moveHintSprites) sprite.destroy();
+    this.moveHintSprites = [];
+
+    if (this.wasmBoard.result() !== "ongoing") return;
+    if (this.botRunner.hasBot(this.currentTurnSlot())) return;
+
+    const currentPlayer = this.wasmBoard.currentPlayer() as 1 | 2;
+    const winningMoves = new Set(
+      this.wasmBoard
+        .immediateWinningMovesFor(currentPlayer)
+        .map((mv: { row: number; col: number }) => mv.row * BOARD_SIZE + mv.col),
+    );
+
+    for (const idx of winningMoves) {
+      const row = Math.floor(idx / BOARD_SIZE);
+      const col = idx % BOARD_SIZE;
+      const { x, y } = this.board.cellToPixel(row, col);
+      this.moveHintSprites.push(this.createWarnSprite(x, y, 0x00ff44, WARNING_ANIMS.POINTER.key));
+    }
+
+    const opponent = currentPlayer === 1 ? 2 : 1;
+    for (const mv of this.wasmBoard.immediateWinningMovesFor(opponent)) {
+      const idx = mv.row * BOARD_SIZE + mv.col;
+      if (winningMoves.has(idx)) continue;
+      const { x, y } = this.board.cellToPixel(mv.row, mv.col);
+      this.moveHintSprites.push(this.createWarnSprite(x, y, 0xff4444, WARNING_ANIMS.POINTER.key));
+    }
+  }
+
   private createWarnSprite(x: number, y: number, tint: number, animKey: string = WARNING_ANIMS.HOVER.key, depth: number = 0.5): Phaser.GameObjects.Sprite {
     const sprite = this.add.sprite(x, y, SPRITE.WARNING, 0);
     sprite.setScale(this.cellSize / FRAME_SIZE);
@@ -790,6 +823,7 @@ export class GameScene extends Phaser.Scene {
     if (wasmResult === "black" || wasmResult === "white") {
       this.gameOver = true;
       this.refreshForbiddenOverlays();
+      this.refreshHumanMoveHints();
       this.blackCard.setTimer(this.formatTime(this.accumulatedMs[0]));
       this.whiteCard.setTimer(this.formatTime(this.accumulatedMs[1]));
 
@@ -813,6 +847,7 @@ export class GameScene extends Phaser.Scene {
     if (wasmResult === "draw") {
       this.gameOver = true;
       this.refreshForbiddenOverlays();
+      this.refreshHumanMoveHints();
       this.blackCard.setTimer(this.formatTime(this.accumulatedMs[0]));
       this.whiteCard.setTimer(this.formatTime(this.accumulatedMs[1]));
       this.blackCard.setActive(false);
@@ -823,6 +858,7 @@ export class GameScene extends Phaser.Scene {
     this.currentTurn = this.wasmBoard.currentPlayer() as 1 | 2;
     this.updatePointerTint();
     this.refreshForbiddenOverlays();
+    this.refreshHumanMoveHints();
     this.scheduleBotIfNeeded();
   }
 
@@ -932,6 +968,8 @@ export class GameScene extends Phaser.Scene {
     this.settingsOpenedAt = null;
     for (const sprite of this.forbiddenSprites) sprite.destroy();
     this.forbiddenSprites = [];
+    for (const sprite of this.moveHintSprites) sprite.destroy();
+    this.moveHintSprites = [];
     for (const sprite of this.winSprites) sprite.destroy();
     this.winSprites = [];
     this.stoneCycle?.stop();

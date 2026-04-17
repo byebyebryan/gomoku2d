@@ -35,6 +35,7 @@ export const POINTER_ANIMS = {
 } as const;
 
 export const WARNING_ANIMS = {
+  POINTER: { start: 0, end: 9, frameRate: 12, key: "warning-pointer" },
   HOVER: { start: 10, end: 16, frameRate: 12, key: "warning-hover" },
   FORBIDDEN: { start: 17, end: 28, frameRate: 10, key: "warning-forbidden" },
 } as const;
