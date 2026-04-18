@@ -959,6 +959,7 @@ export class GameScene extends Phaser.Scene {
     let pending = stones.length;
     for (const stone of stones) {
       stone.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+        stone.setVisible(false);
         pending--;
         if (pending === 0) afterStones();
       });
@@ -967,6 +968,14 @@ export class GameScene extends Phaser.Scene {
   }
 
   private animateCardSwap(): void {
+    for (const stone of this.stoneSprites.values()) stone.setVisible(false);
+    for (const s of this.winSprites) s.destroy();
+    this.winSprites = [];
+    for (const s of this.moveHintSprites) s.destroy();
+    this.moveHintSprites = [];
+    for (const l of this.seqLabels) l.destroy();
+    this.seqLabels = [];
+
     const blackPos = this.blackCard.getPosition();
     const whitePos = this.whiteCard.getPosition();
     const DURATION = 500;
