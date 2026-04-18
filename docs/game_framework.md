@@ -1,7 +1,14 @@
 # Generic Game Framework Design Doc
 
-**Date:** 2026-04-14  
-**Purpose:** reusable architecture for native core + bot runtime + eval framework + multiple frontends  
+> **Status: legacy / inspiration.** This doc was written before gomoku2d found
+> its actual identity (a Gomoku bot lab + a small web game). It describes a
+> generic "native core + bots + eval + frontends" architecture that this
+> project ended up using a slimmed-down version of, but the framework framing
+> itself is no longer the goal. Kept as background reading and for ideas that
+> may be worth picking up in future projects.
+
+**Date:** 2026-04-14
+**Purpose:** reusable architecture for native core + bot runtime + eval framework + multiple frontends
 **Audience:** coding agents and human developers
 
 ## 1. Executive summary
