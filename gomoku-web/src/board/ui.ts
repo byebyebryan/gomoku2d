@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { COLOR, FONT_KEY, RED_BTN_TINTS, GREEN_BTN_TINTS } from "./constants";
 
 // All measurements in source pixels (pre-scale). button sprites are 18×18: 8px corner + 2px center + 8px corner.
 const BUTTON_BORDER  = 8;
@@ -47,21 +48,21 @@ export class PlayerCard {
     const nameFontPx = FONT_PX;
     const subFontPx  = FONT_PX;
 
-    const textTint = playerColor === 0 ? 0xffffff : 0x1a1a2e;
-    const subTint  = playerColor === 0 ? 0xaaaaaa : 0x555555;
+    const textTint = playerColor === 0 ? COLOR.TEXT_ON_BLACK : COLOR.TEXT_ON_WHITE;
+    const subTint  = COLOR.SUBTEXT;
 
     // Create texts first so we can measure rendered bounds (canvas pixels).
-    this.nameText = scene.add.bitmapText(0, 0, "pixel", player.name, nameFontPx)
+    this.nameText = scene.add.bitmapText(0, 0, FONT_KEY, player.name, nameFontPx)
       .setTint(textTint);
-    this.winsText = scene.add.bitmapText(0, 0, "pixel", `${player.wins} wins`, subFontPx)
+    this.winsText = scene.add.bitmapText(0, 0, FONT_KEY, `${player.wins} wins`, subFontPx)
       .setTint(subTint);
-    this.pendingWinText = scene.add.bitmapText(0, 0, "pixel", "+1", subFontPx)
-      .setTint(0x44dd44)
+    this.pendingWinText = scene.add.bitmapText(0, 0, FONT_KEY, "+1", subFontPx)
+      .setTint(COLOR.SCORE_GAIN)
       .setVisible(false);
-    this.timerText = scene.add.bitmapText(0, 0, "pixel", "0:00", subFontPx)
+    this.timerText = scene.add.bitmapText(0, 0, FONT_KEY, "0:00", subFontPx)
       .setTint(subTint);
-    this.pendingTimerText = scene.add.bitmapText(0, 0, "pixel", "", subFontPx)
-      .setTint(0xffcc44)
+    this.pendingTimerText = scene.add.bitmapText(0, 0, FONT_KEY, "", subFontPx)
+      .setTint(COLOR.TIME_DELTA)
       .setVisible(false);
 
     const nB = this.nameText.getBounds();
@@ -77,7 +78,7 @@ export class PlayerCard {
     // them to canvas size so corners render at the same density as game sprites.
     const nsW = cardW / scale;
     const nsH = cardH / scale;
-    const tint = playerColor === 0 ? 0x404040 : 0xffffff;
+    const tint = playerColor === 0 ? COLOR.STONE_BLACK : COLOR.STONE_WHITE;
 
     this.bgNormal = scene.add.nineslice(
       0, 0, "button", 0,
@@ -192,8 +193,8 @@ export class TextButton {
     const pad    = Math.round(PAD_H_SRC * scale);
     const fontPx = FONT_PX;
 
-    this.label = scene.add.bitmapText(0, 0, "pixel", text, fontPx)
-      .setTint(0xffffff)
+    this.label = scene.add.bitmapText(0, 0, FONT_KEY, text, fontPx)
+      .setTint(COLOR.BTN_LABEL)
       .setOrigin(0.5);
 
     const b    = this.label.getBounds();
@@ -245,8 +246,6 @@ export class TextButton {
   }
 }
 
-const RED_TINTS: [number, number, number] = [0xcc2222, 0xff3333, 0xaa1111];
-const GREEN_TINTS: [number, number, number] = [0x22aa44, 0x33cc55, 0x118833];
 
 export class ResetButton extends TextButton {
   constructor(
@@ -257,7 +256,7 @@ export class ResetButton extends TextButton {
     scale: number,
     width: number,
   ) {
-    super(scene, x, y, "RESET", RED_TINTS, onClick, scale, width);
+    super(scene, x, y, "RESET", RED_BTN_TINTS, onClick, scale, width);
   }
 }
 
@@ -270,7 +269,7 @@ export class SettingsButton extends TextButton {
     scale: number,
     width: number,
   ) {
-    super(scene, x, y, "SETTINGS", GREEN_TINTS, onClick, scale, width);
+    super(scene, x, y, "SETTINGS", GREEN_BTN_TINTS, onClick, scale, width);
   }
 }
 
@@ -302,7 +301,7 @@ export class ToggleGroup {
     const btnGap  = Math.max(1, Math.round(4 * scale));
 
     // Measure button height with a temporary text, then destroy it
-    const measure = scene.add.bitmapText(0, 0, "pixel", options[0], fontPx);
+    const measure = scene.add.bitmapText(0, 0, FONT_KEY, options[0], fontPx);
     const b = measure.getBounds();
     measure.destroy();
     const btnH = Math.round(b.height + 2 * pad);
@@ -324,15 +323,15 @@ export class ToggleGroup {
       const nsH = btnH / scale;
 
       const isSelected = i === selectedIdx;
-      const tint = isSelected ? 0x44aa66 : 0x666666;
-      const hoverTint = 0x888888;
+      const tint = isSelected ? COLOR.TOGGLE_SELECTED : COLOR.TOGGLE_NORMAL;
+      const hoverTint = COLOR.TOGGLE_HOVER;
 
       const normal  = scene.add.nineslice(0, 0, "button", 0, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(tint);
       const hover   = scene.add.nineslice(0, 0, "button", 1, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(hoverTint).setVisible(false);
       const pressed = scene.add.nineslice(0, 0, "button", 2, nsW, nsH, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER, BUTTON_BORDER).setScale(scale).setTint(tint).setVisible(false);
 
-      const optLabel = scene.add.bitmapText(0, 0, "pixel", options[i], fontPx)
-        .setTint(0xffffff)
+      const optLabel = scene.add.bitmapText(0, 0, FONT_KEY, options[i], fontPx)
+        .setTint(COLOR.TOGGLE_LABEL)
         .setOrigin(0.5);
 
       const labelBaseY  = -Math.round(PRESS_OFFSET * scale);
@@ -395,15 +394,15 @@ export class ToggleGroup {
     prevBtn.normal.setVisible(true);
     prevBtn.hover.setVisible(false);
     prevBtn.pressed.setVisible(false);
-    prevBtn.normal.setTint(0x666666);
-    prevBtn.hover.setTint(0x888888);
+    prevBtn.normal.setTint(COLOR.TOGGLE_NORMAL);
+    prevBtn.hover.setTint(COLOR.TOGGLE_HOVER);
     prevBtn.label.setY(prevBtn.labelBaseY);
 
     const newBtn = this.buttons[idx];
     newBtn.normal.setVisible(false);
     newBtn.hover.setVisible(false);
     newBtn.pressed.setVisible(true);
-    newBtn.pressed.setTint(0x44aa66);
+    newBtn.pressed.setTint(COLOR.TOGGLE_SELECTED);
     newBtn.label.setY(0);
   }
 
@@ -549,9 +548,9 @@ export class SettingsPanel {
     const toggleGap     = Math.max(1, Math.round(4 * scale));
     const fontPx        = FONT_PX;
 
-    const rulesLabel = scene.add.bitmapText(0, 0, "pixel", "RULES", fontPx).setTint(0xcccccc).setOrigin(0, 0.5);
-    const blackLabel = scene.add.bitmapText(0, 0, "pixel", "PLAYER 1", fontPx).setTint(0xcccccc).setOrigin(0, 0.5);
-    const whiteLabel = scene.add.bitmapText(0, 0, "pixel", "PLAYER 2", fontPx).setTint(0xcccccc).setOrigin(0, 0.5);
+    const rulesLabel = scene.add.bitmapText(0, 0, FONT_KEY, "RULES", fontPx).setTint(COLOR.LABEL).setOrigin(0, 0.5);
+    const blackLabel = scene.add.bitmapText(0, 0, FONT_KEY, "PLAYER 1", fontPx).setTint(COLOR.LABEL).setOrigin(0, 0.5);
+    const whiteLabel = scene.add.bitmapText(0, 0, FONT_KEY, "PLAYER 2", fontPx).setTint(COLOR.LABEL).setOrigin(0, 0.5);
 
     const maxLabelW = Math.max(
       rulesLabel.getBounds().width,
@@ -663,16 +662,16 @@ export class InfoBar {
     const fontPx = FONT_PX;
     const gap = Math.round(GAP_SRC * scale);
 
-    const titleText = scene.add.bitmapText(0, 0, "pixel", "GOMOKU2D", fontPx)
-      .setTint(0xffffff)
+    const titleText = scene.add.bitmapText(0, 0, FONT_KEY, "GOMOKU2D", fontPx)
+      .setTint(COLOR.TITLE)
       .setOrigin(0.5);
 
-    this.variantText = scene.add.bitmapText(0, 0, "pixel", variant === "renju" ? "RENJU" : "FREESTYLE", fontPx)
-      .setTint(0xcccccc)
+    this.variantText = scene.add.bitmapText(0, 0, FONT_KEY, variant === "renju" ? "RENJU" : "FREESTYLE", fontPx)
+      .setTint(COLOR.SUBTEXT)
       .setOrigin(0.5);
 
-    this.timerText = scene.add.bitmapText(0, 0, "pixel", "00:00", fontPx)
-      .setTint(0xcccccc)
+    this.timerText = scene.add.bitmapText(0, 0, FONT_KEY, "00:00", fontPx)
+      .setTint(COLOR.SUBTEXT)
       .setOrigin(0.5);
 
     const tiH = titleText.getBounds().height;

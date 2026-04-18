@@ -1,10 +1,5 @@
 import Phaser from "phaser";
-import { BOARD_SIZE, WIN_LENGTH, SPRITE, FRAME_SIZE, STONE_ANIMS, POINTER_ANIMS } from "./constants";
-
-// Board colors sampled from the original sprite
-export const BOARD_COLOR = 0xffcc66;
-export const BOARD_SIDE_COLOR = 0x261e0f;
-export const GRID_LINE_COLOR = 0x261e0f;
+import { BOARD_SIZE, WIN_LENGTH, SPRITE, FRAME_SIZE, STONE_ANIMS, POINTER_ANIMS, COLOR } from "./constants";
 
 type CellState = 0 | 1 | null; // null = empty, 0 = black, 1 = white
 
@@ -105,11 +100,11 @@ export class BoardRenderer {
     const boardHeight = BOARD_SIZE * this.cellSize;
 
     // Side/depth
-    gfx.fillStyle(BOARD_SIDE_COLOR, 1);
+    gfx.fillStyle(COLOR.BOARD_EDGE, 1);
     gfx.fillRect(bounds.left, bounds.top + boardHeight, boardWidth, bounds.sideHeight);
 
     // Board surface
-    gfx.fillStyle(BOARD_COLOR, 1);
+    gfx.fillStyle(COLOR.BOARD_SURFACE, 1);
     gfx.fillRect(bounds.left, bounds.top, boardWidth, boardHeight);
 
     if (!showGrid) {
@@ -117,7 +112,7 @@ export class BoardRenderer {
     }
 
     const lineThickness = Math.max(1, Math.round(this.cellSize / FRAME_SIZE));
-    gfx.lineStyle(lineThickness, GRID_LINE_COLOR, 1);
+    gfx.lineStyle(lineThickness, COLOR.GRID, 1);
 
     for (let row = 0; row < BOARD_SIZE; row++) {
       const { x: x0, y } = this.cellToPixel(row, 0);
@@ -148,11 +143,7 @@ export class BoardRenderer {
     stone.setScale(scale);
     stone.setDepth(1);
 
-    if (color === 0) {
-      stone.setTint(0x404040);
-    } else {
-      stone.setTint(0xffffff);
-    }
+    stone.setTint(color === 0 ? COLOR.STONE_BLACK : COLOR.STONE_WHITE);
 
     return this.attach(stone);
   }
