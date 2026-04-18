@@ -12,11 +12,11 @@ The BE design phases and their actual FE prerequisites:
 | BE Phase | Feature | FE blockers | Gap sections |
 |----------|---------|-------------|--------------|
 | **1** | Auth + profile | Firebase SDK init, auth state layer, auth UI in settings, profile model | §1, §2 |
-| **2** | Replay sharing | WASM bridge for Replay, replay viewer, URL routing, share button, Firestore writes | §3, §7 |
-| **3** | Match history | Multi-scene navigation, profile/history scene, global state layer | §4, §5 |
+| **2** | Replay sharing | WASM bridge for Replay, replay viewer, URL routing, share button, Firestore writes | §3, §7, §8 |
+| **3** | Match history | Multi-scene navigation, profile/history scene, global state layer | §4, §5, §8 |
 | **4** | Cloud Run + username | API client, username reservation UI, error handling | §6 |
 | **5** | Replay verifier | Mostly backend; FE needs verified badge UI | §3 |
-| **6+** | Leaderboard / puzzle / correspondence | New scenes, notification system, lobby UI | §4, §8 |
+| **6+** | Leaderboard / puzzle / correspondence | New scenes, notification system, lobby UI | §4 |
 
 Sections below are ordered by BE phase relevance, not severity.
 
@@ -28,7 +28,7 @@ These are the actual blockers for the first BE phase. None of them require multi
 
 ### No auth integration path
 
-The entire UI renders inside a Phaser canvas, and there is currently no auth integration at all. A Phaser button can still trigger Firebase Auth popup/redirect flows, so a DOM overlay is not strictly required just to sign in. The actual gap is that there is no auth service layer, no sign-in/out actions wired to UI, no auth-state subscription, and no pattern for reflecting auth state back into the game UI.
+The entire UI renders inside a Phaser canvas, and there is currently no auth integration at all. Triggering Firebase Auth isn't the hard part — a Phaser button's click handler can call `signInWithPopup` directly, no DOM overlay required. The harder part is the *result* surface: rendering error toasts when a popup is blocked, showing the current signed-in identity and linked providers, confirming destructive actions like unlink, and keeping that UI in sync with auth state changes. Those read naturally in DOM and awkwardly in fixed-canvas Phaser. Beyond the UI question, there is also no auth service layer, no sign-in/out actions wired to UI, no auth-state subscription, and no pattern for reflecting auth state back into the game.
 
 ### No global state outside Phaser lifecycle
 
@@ -167,11 +167,22 @@ Every game currently discards data that BE features would need:
 
 ---
 
-## 9. Quick Wins (no BE dependency)
+## 9. Adjacent gaps (tooling, config, observability)
+
+These aren't FE code gaps per se, but they will surface the moment phase 1 lands and are worth flagging:
+
+- **Firebase config in Vite builds.** Firebase's web SDK needs public config (`apiKey`, `authDomain`, `projectId`, …) baked into the bundle. Wire this through `VITE_FIREBASE_*` env vars, not a checked-in config file, and plan for separate dev and prod Firebase projects so test auth doesn't pollute real data. The config values are *public* (auth is actually enforced by Firebase's own backend + Firestore rules), but the dev/prod split still matters.
+- **Bundle size.** Firebase Auth is ~40–60 KB gzipped and Firestore ~80+ KB on top of Phaser's ~400 KB. Not a blocker, but worth checking `vite build` output size after each phase and using modular imports (`firebase/auth`, `firebase/firestore`) rather than the compat bundle.
+- **No error reporting.** Today, failures silently `console.error`. Once auth, Firestore writes, and Cloud Run calls are live, user-reported bugs will be the only signal unless something like Sentry is added. Free-tier Sentry or an equivalent is worth considering before phase 2.
+- **No web-side test infrastructure.** Fine for the current surface area — the bulk of logic lives in Rust and is covered by `cargo test`. Auth state transitions, reactive Firestore listeners, and async error paths are much harder to change safely without at least Vitest + a Firebase emulator for integration tests. Worth setting up before phase 3.
+
+---
+
+## 10. Quick Wins (no BE dependency)
 
 Some gaps can be closed now without any backend:
 
-- **Undo button** — `undoLastMove()` exists in WASM, just not wired. Useful for casual play.
+- **Undo button** — `undoLastMove()` exists in WASM, just not wired. Trivial to add, but worth a product call first: undo has game-design implications (especially for any future ranked play) and may not belong in the default loop even if it's cheap to build.
 - **Move history export** — Expose move list through WASM, let users copy FEN or move notation.
 - **localStorage persistence** — Settings, win counts, and recent game summaries could persist locally without Firestore.
 - **Bot presets** — The progress.md plan is detailed and ready to implement. No BE dependency.
