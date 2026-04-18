@@ -45,3 +45,63 @@ export const BOARD_SIZE = 15;
 export const WIN_LENGTH = 5;
 
 export const FONT_KEY = "pixel" as const;
+
+const P = {
+  WHITE:  0xffffff,
+  DARK:   0x404040,
+  DARKER: 0x303030,
+  GREY:   0x888888,
+  GOLD:   0xffcc66,
+  BLACK:  0x000000,
+  GREEN:       0x22aa44,
+  GREEN_BRIGHT: 0x44dd44,
+  RED:         0xcc2222,
+  RED_BRIGHT:   0xff4444,
+} as const;
+
+function shade(base: number, f: number): number {
+  const r = Math.min(255, Math.round((base >> 16 & 0xff) * f));
+  const g = Math.min(255, Math.round((base >>  8 & 0xff) * f));
+  const b = Math.min(255, Math.round((base       & 0xff) * f));
+  return (r << 16) | (g << 8) | b;
+}
+
+const BTN_SHADES: [number, number, number] = [1.0, 1.3, 0.7];
+
+export const RED_BTN_TINTS:   [number, number, number] = BTN_SHADES.map(f => shade(P.RED,   f)) as [number, number, number];
+export const GREEN_BTN_TINTS: [number, number, number] = BTN_SHADES.map(f => shade(P.GREEN, f)) as [number, number, number];
+
+export const COLOR = {
+  STONE_BLACK:  P.DARK,
+  STONE_WHITE:  P.WHITE,
+
+  TEXT_ON_BLACK:    P.WHITE,
+  TEXT_ON_WHITE:    P.DARK,
+  SUBTEXT:          P.GREY,
+
+  SCORE_GAIN:   P.GREEN_BRIGHT,
+  TIME_DELTA:   P.GOLD,
+
+  PAGE_BG:       P.DARKER,
+
+  BOARD_SURFACE: P.GOLD,
+  BOARD_EDGE:    P.BLACK,
+  GRID:          P.BLACK,
+
+  TITLE:        P.GOLD,
+  LABEL:        P.WHITE,
+
+  BTN_LABEL:        P.WHITE,
+  TOGGLE_LABEL:     P.WHITE,
+  TOGGLE_NORMAL:    P.GREY,
+  TOGGLE_HOVER:     shade(P.GREY, BTN_SHADES[1]),
+  TOGGLE_SELECTED:  P.GREEN,
+
+  FORBIDDEN:    P.RED_BRIGHT,
+  THREAT:       P.RED_BRIGHT,
+  WIN_MOVE:     P.GREEN_BRIGHT,
+  WIN_CELLS:    P.GREEN_BRIGHT,
+
+  SEQ_ON_BLACK: P.WHITE,
+  SEQ_ON_WHITE: P.DARK,
+} as const;

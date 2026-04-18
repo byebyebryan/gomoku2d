@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { BOARD_SIZE, WIN_LENGTH, SPRITE, FRAME_SIZE, FONT_KEY, STONE_ANIMS, POINTER_ANIMS, WARNING_ANIMS } from "../board/constants";
+import { BOARD_SIZE, WIN_LENGTH, SPRITE, FRAME_SIZE, FONT_KEY, COLOR, STONE_ANIMS, POINTER_ANIMS, WARNING_ANIMS } from "../board/constants";
 import { BoardBounds, BoardRenderer } from "../board/board_renderer";
 import { PlayerCard, ResetButton, PlayerInfo, SettingsButton, SettingsPanel, InfoBar } from "../board/ui";
 import { WasmBoard } from "../core/wasm_bridge";
@@ -684,7 +684,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updatePointerTint(): void {
-    this.pointer.setTint(this.currentTurn === 1 ? 0x404040 : 0xffffff);
+    this.pointer.setTint(this.currentTurn === 1 ? COLOR.STONE_BLACK : COLOR.STONE_WHITE);
     this.blackCard.setActive(this.currentTurn === 1);
     this.whiteCard.setActive(this.currentTurn === 2);
   }
@@ -697,7 +697,7 @@ export class GameScene extends Phaser.Scene {
 
     for (const mv of this.wasmBoard.forbiddenMovesForCurrentPlayer() as Array<{ row: number; col: number }>) {
       const { x, y } = this.board.cellToPixel(mv.row, mv.col);
-      this.forbiddenSprites.push(this.createWarnSprite(x, y, 0xff4444, WARNING_ANIMS.FORBIDDEN.key));
+      this.forbiddenSprites.push(this.createWarnSprite(x, y, COLOR.FORBIDDEN, WARNING_ANIMS.FORBIDDEN.key));
     }
   }
 
@@ -719,7 +719,7 @@ export class GameScene extends Phaser.Scene {
       const row = Math.floor(idx / BOARD_SIZE);
       const col = idx % BOARD_SIZE;
       const { x, y } = this.board.cellToPixel(row, col);
-      this.moveHintSprites.push(this.createWarnSprite(x, y, 0x00ff44, WARNING_ANIMS.POINTER.key));
+      this.moveHintSprites.push(this.createWarnSprite(x, y, COLOR.WIN_MOVE, WARNING_ANIMS.POINTER.key));
     }
 
     const opponent = currentPlayer === 1 ? 2 : 1;
@@ -727,7 +727,7 @@ export class GameScene extends Phaser.Scene {
       const idx = mv.row * BOARD_SIZE + mv.col;
       if (winningMoves.has(idx)) continue;
       const { x, y } = this.board.cellToPixel(mv.row, mv.col);
-      this.moveHintSprites.push(this.createWarnSprite(x, y, 0xff4444, WARNING_ANIMS.POINTER.key));
+      this.moveHintSprites.push(this.createWarnSprite(x, y, COLOR.THREAT, WARNING_ANIMS.POINTER.key));
     }
   }
 
@@ -923,7 +923,7 @@ export class GameScene extends Phaser.Scene {
     this.stoneCycle?.stop();
     for (const { row, col } of cells) {
       const { x, y } = this.board.cellToPixel(row, col);
-      this.winSprites.push(this.createWarnSprite(x, y, 0x00ff44, WARNING_ANIMS.HOVER.key, 2.5));
+      this.winSprites.push(this.createWarnSprite(x, y, COLOR.WIN_CELLS, WARNING_ANIMS.HOVER.key, 2.5));
     }
   }
 
@@ -934,7 +934,7 @@ export class GameScene extends Phaser.Scene {
       const { x, y } = this.board.cellToPixel(row, col);
       const isBlackStone = moveNum % 2 === 1;
       const label = this.add.bitmapText(x, y, FONT_KEY, String(moveNum), fontSize);
-      label.setTint(isBlackStone ? 0xffffff : 0x1a1a2e);
+      label.setTint(isBlackStone ? COLOR.SEQ_ON_BLACK : COLOR.SEQ_ON_WHITE);
       label.setOrigin(0.5, 0.5);
       label.setDepth(3);
       this.boardOverlayContent.add(label);
