@@ -949,8 +949,10 @@ export class GameScene extends Phaser.Scene {
     this.cancelPendingBotWork();
 
     const stones = Array.from(this.stoneSprites.values());
+    const afterStones = () => this.animateCardSwap();
+
     if (stones.length === 0) {
-      this.rebuildScene();
+      afterStones();
       return;
     }
 
@@ -958,10 +960,22 @@ export class GameScene extends Phaser.Scene {
     for (const stone of stones) {
       stone.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
         pending--;
-        if (pending === 0) this.rebuildScene();
+        if (pending === 0) afterStones();
       });
       stone.play(STONE_ANIMS.DESTROY.key);
     }
+  }
+
+  private animateCardSwap(): void {
+    const blackPos = this.blackCard.getPosition();
+    const whitePos = this.whiteCard.getPosition();
+    const DURATION = 500;
+
+    let done = 0;
+    const onComplete = () => { if (++done === 2) this.rebuildScene(); };
+
+    this.blackCard.animateSwap(whitePos.x, whitePos.y, 1, DURATION, this, onComplete);
+    this.whiteCard.animateSwap(blackPos.x, blackPos.y, 0, DURATION, this, onComplete);
   }
 
   private rebuildScene(): void {

@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { COLOR, FONT_KEY, RED_BTN_TINTS, GREEN_BTN_TINTS } from "./constants";
+import { COLOR, FONT_KEY, RED_BTN_TINTS, GREEN_BTN_TINTS, lerpColor } from "./constants";
 
 // All measurements in source pixels (pre-scale). button sprites are 18×18: 8px corner + 2px center + 8px corner.
 const BUTTON_BORDER  = 8;
@@ -26,6 +26,7 @@ export class PlayerCard {
   private timerText!: Phaser.GameObjects.BitmapText;
   private pendingTimerText!: Phaser.GameObjects.BitmapText;
   private isActive: boolean = false;
+  private playerColor: 0 | 1;
   private textNeutralY: number = 0;
   private textRaisedY: number = 0;
   private winsOffsetY: number = 0;
@@ -107,6 +108,8 @@ export class PlayerCard {
     this.timerText.setPosition(left, this.textRaisedY + this.timerOffsetY);
     this.pendingTimerText.setPosition(left, this.textRaisedY + this.timerOffsetY);
 
+    this.playerColor = playerColor;
+
     this.container = scene.add.container(x, y, [
       this.bgNormal, this.bgActive,
       this.nameText,
@@ -114,6 +117,42 @@ export class PlayerCard {
       this.timerText, this.pendingTimerText,
     ]);
     this.container.setDepth(20);
+  }
+
+  getPosition(): { x: number; y: number } {
+    return { x: this.container.x, y: this.container.y };
+  }
+
+  animateSwap(
+    toX: number, toY: number,
+    toColor: 0 | 1,
+    duration: number,
+    scene: Phaser.Scene,
+    onComplete?: () => void,
+  ): void {
+    const fromX = this.container.x;
+    const fromY = this.container.y;
+    const fromBg   = this.playerColor === 0 ? COLOR.STONE_BLACK : COLOR.STONE_WHITE;
+    const toBg     = toColor           === 0 ? COLOR.STONE_BLACK : COLOR.STONE_WHITE;
+    const fromText = this.playerColor === 0 ? COLOR.TEXT_ON_BLACK : COLOR.TEXT_ON_WHITE;
+    const toText   = toColor           === 0 ? COLOR.TEXT_ON_BLACK : COLOR.TEXT_ON_WHITE;
+
+    const proxy = { t: 0 };
+    scene.tweens.add({
+      targets: proxy,
+      t: 1,
+      duration,
+      ease: 'Cubic.easeInOut',
+      onUpdate: () => {
+        const t = proxy.t;
+        this.container.setPosition(fromX + (toX - fromX) * t, fromY + (toY - fromY) * t);
+        const bgTint = lerpColor(fromBg, toBg, t);
+        this.bgNormal.setTint(bgTint);
+        this.bgActive.setTint(bgTint);
+        this.nameText.setTint(lerpColor(fromText, toText, t));
+      },
+      onComplete,
+    });
   }
 
   setPosition(x: number, y: number): void {
