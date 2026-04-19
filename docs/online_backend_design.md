@@ -316,7 +316,7 @@ and search.
 - `axum` or `actix-web` for HTTP
 - Authenticates callers via Firebase ID token (verify JWT against Google's public keys)
 - Talks to Firestore via the gRPC client (`firestore` crate or `gcloud-sdk`), authenticated through ADC — the attached runtime service account bypasses security rules by virtue of its IAM role, not by using an "admin SDK" (no first-party Firebase Admin SDK exists for Rust)
-- Candidate repo location: `gomoku-api/` as a new crate in the workspace
+- Candidate repo location: `gomoku-bot-lab/gomoku-api/` as a new crate in the existing workspace, or a top-level sibling `gomoku-backend/` with its own workspace. See Open questions.
 
 ### Deploy
 
@@ -789,7 +789,10 @@ Everything after that is opportunistic.
   underlying replay, then writes); (b) client writes to a pending collection,
   a background Cloud Run worker verifies and promotes to `leaderboard/*`.
   (a) is simpler and matches the "Cloud Run as first-class" stance.
-- **Project structure.** `gomoku-api/` as a new crate in the workspace, or a
-  sibling repo? Crate keeps the Rust core as a single `path = "../gomoku-core"`
-  dependency; separate repo is cleaner to deploy independently. Leaning
-  toward crate-in-workspace given how small this is.
+- **Project structure.** `gomoku-bot-lab/gomoku-api/` (new crate in the
+  existing Cargo workspace) vs. top-level `gomoku-backend/` (its own workspace,
+  depending on bot-lab crates via path deps). In-workspace keeps the shared
+  core as a single `path = "../gomoku-core"` dep and builds in one pass;
+  sibling workspace is cleaner to deploy and version independently when the
+  service grows. Leaning toward in-workspace to start, splitting out to
+  top-level when deploy cadence diverges.

@@ -32,7 +32,7 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            target
+            gomoku-bot-lab/target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
 
@@ -40,7 +40,7 @@ jobs:
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
       - name: Build WASM package
-        run: wasm-pack build gomoku-wasm --target bundler
+        run: wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler
 
       - name: Setup Node
         uses: actions/setup-node@v4

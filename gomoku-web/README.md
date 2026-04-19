@@ -55,7 +55,7 @@ Prerequisites: Node, Rust, `wasm-pack`.
 
 ```sh
 # 1. Build the Wasm package (from repo root)
-wasm-pack build gomoku-wasm --target bundler
+wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler
 
 # 2. Run the dev server
 cd gomoku-web
@@ -86,16 +86,16 @@ gh workflow run deploy.yml
 
 ## Where this fits
 
-The repo is split between a native Rust bot lab and this web game. The bot you
-play against in the browser is the same code you can pit against itself from
-the command line — `gomoku-wasm` exposes it to JS and the web game calls it
-through a Web Worker.
+The game is the top-level product; the Rust side lives in `gomoku-bot-lab/` as
+a supporting workspace. The bot you play against in the browser is the same
+code you can pit against itself from the command line — `gomoku-wasm` exposes
+it to JS and this package calls it through a Web Worker.
 
 ```
-gomoku-core   — board, rules, Renju enforcement, replay format
-gomoku-bot    — Bot trait + implementations (RandomBot, SearchBot, …)
-gomoku-eval   — self-play arena, tournaments, Elo
-gomoku-cli    — CLI match runner with replay export
-gomoku-wasm   — wasm-pack bridge: WasmBoard + WasmBot for JS
-gomoku-web    — this package
+gomoku-web                     — this package
+gomoku-bot-lab/gomoku-core     — board, rules, Renju enforcement, replay format
+gomoku-bot-lab/gomoku-bot      — Bot trait + implementations (RandomBot, SearchBot, …)
+gomoku-bot-lab/gomoku-eval     — self-play arena, tournaments, Elo
+gomoku-bot-lab/gomoku-cli      — CLI match runner with replay export
+gomoku-bot-lab/gomoku-wasm     — wasm-pack bridge: WasmBoard + WasmBot for JS
 ```

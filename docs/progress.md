@@ -2,7 +2,7 @@
 
 ## Done
 
-**Cargo workspace** — `gomoku-core`, `gomoku-bot`, `gomoku-eval`, `gomoku-cli`, `gomoku-wasm`, `gomoku-web`
+**Repo layout** — `gomoku-web/` (the game) and `gomoku-bot-lab/` (Cargo workspace: `gomoku-core`, `gomoku-bot`, `gomoku-eval`, `gomoku-cli`, `gomoku-wasm`)
 
 **gomoku-core**
 - `Board` with `apply_move` / `undo_move` / `legal_moves` / `is_legal`

@@ -1,26 +1,51 @@
 # gomoku2d
 
-Two projects in one repo:
-
-1. **A native bot lab for Gomoku** — a Rust workspace for writing, running, and
-   benchmarking five-in-a-row bots. Includes the rules engine, a `Bot` trait,
-   sample bots, a CLI match runner, and a self-play / round-robin / Elo arena.
-2. **A browser game** — a small, playful Gomoku game with pixel art, animations,
-   and a few rule variants. Built with Phaser 3 and TypeScript. The bots from
-   the lab compile to WebAssembly and run as the AI opponent in the browser,
-   off-thread in a Web Worker.
-
-The two halves connect through `gomoku-core` (rules + board) and `gomoku-bot`
-(the bot trait and implementations). Anything that works natively can be shipped
-to the browser without rewriting it.
+A browser Gomoku game, with a Rust bot lab powering the AI behind it.
 
 **Play in browser:** http://dev.byebyebryan.com/gomoku2d/
+
+The game itself is the main thing: a small, playful pixel-art take on five-in-a-row with animations, rule variants, and human-or-bot on either side. The rules engine and bot opponent are written in Rust — they live in a separate workspace (`gomoku-bot-lab/`) where bot ideas can be tried out, benchmarked against each other, and compiled to WebAssembly for the browser. Anything that works in the lab ships to the game without a rewrite.
+
+```
+gomoku2d/
+├── gomoku-web/         ← the game (Phaser 3 + TypeScript)
+├── gomoku-bot-lab/     ← the Rust side
+│   ├── gomoku-core/      rules + board
+│   ├── gomoku-bot/       Bot trait + implementations
+│   ├── gomoku-eval/      self-play arena, tournaments, Elo
+│   ├── gomoku-cli/       native match runner
+│   └── gomoku-wasm/      wasm-pack bridge the game imports
+└── docs/
+```
+
+---
+
+## The web game
+
+A small Gomoku game in the browser. Pixel art sprites with frame-by-frame
+animations — stones forming and shattering, a hover pointer cycling through
+idle states, win cells highlighted in green, round-end card swap with color
+lerp.
+
+Features:
+
+- Freestyle and Renju rule sets, switchable from a settings panel
+- Human vs human, human vs bot, bot vs bot — any combination per side
+- Per-player Human/Bot toggle and inline name editing
+- Win counts persist across rounds; color slots swap each game
+- Per-player move timers and total game timer
+- Renju forbidden-move overlays for the human black player
+- Result screen labels every stone with its move number before the next round
+- Bot runs in a Web Worker so it can think without freezing the UI
+
+Lives in [`gomoku-web/`](gomoku-web/) — see its README for local dev.
 
 ---
 
 ## The bot lab
 
-A Cargo workspace where bot ideas can be tried out and measured.
+A Cargo workspace under [`gomoku-bot-lab/`](gomoku-bot-lab/) where bot ideas can
+be tried out and measured.
 
 | Crate | What it does |
 |-------|--------------|
@@ -28,12 +53,15 @@ A Cargo workspace where bot ideas can be tried out and measured.
 | `gomoku-bot` | `Bot` trait + implementations: `RandomBot`, `SearchBot` (negamax + α-β + iterative deepening + transposition table) |
 | `gomoku-cli` | Run one match: pick the bots, print the board, optionally save a replay |
 | `gomoku-eval` | Run many matches: self-play arena, round-robin tournaments, Elo ratings |
+| `gomoku-wasm` | `wasm-pack` bridge — exports the core + bots to the web game |
 
 Adding a new bot means writing one `impl Bot` and dropping it into the bot
-registry. From there the CLI can play it, the eval framework can rate it against
-the rest of the lineup, and the Wasm bridge can ship it to the browser.
+registry. From there the CLI can play it, the eval framework can rate it
+against the rest of the lineup, and the Wasm bridge can ship it to the browser.
 
 ```sh
+cd gomoku-bot-lab
+
 cargo build --release --workspace
 cargo test  --workspace
 
@@ -67,28 +95,6 @@ keyed by incremental Zobrist hashing. Move candidates are pruned to cells within
 of 2–4 in all four directions. It beats `RandomBot` reliably and gives a casual
 human a decent game; there's plenty of headroom for stronger ideas (threat
 search, 4+3 combos, NN eval, …).
-
----
-
-## The web game
-
-A small Gomoku game in the browser. Pixel art sprites with frame-by-frame
-animations — stones forming and shattering, a hover pointer cycling through
-idle states, win cells highlighted in green, round-end card swap with color
-lerp.
-
-Features:
-
-- Freestyle and Renju rule sets, switchable from a settings panel
-- Human vs human, human vs bot, bot vs bot — any combination per side
-- Per-player Human/Bot toggle and inline name editing
-- Win counts persist across rounds; color slots swap each game
-- Per-player move timers and total game timer
-- Renju forbidden-move overlays for the human black player
-- Result screen labels every stone with its move number before the next round
-- Bot runs in a Web Worker so it can think without freezing the UI
-
-Lives in [`gomoku-web/`](gomoku-web/) — see its README for local dev.
 
 ---
 
@@ -143,4 +149,6 @@ and deploys `dist/` to Pages.
 - [`docs/bot_baseline.md`](docs/bot_baseline.md) — current bot strategy and limitations
 - [`docs/progress.md`](docs/progress.md) — what's done and what's next
 - [`docs/web_frontend_plan.md`](docs/web_frontend_plan.md) — web frontend retrospective
+- [`docs/online_backend_design.md`](docs/online_backend_design.md) — planned online backend (Firebase + Firestore + Cloud Run)
+- [`docs/fe_gap_analysis.md`](docs/fe_gap_analysis.md) — what the FE needs for the planned backend features
 - [`docs/game_framework.md`](docs/game_framework.md) — legacy: the generic-framework design doc that originally inspired the repo layout
