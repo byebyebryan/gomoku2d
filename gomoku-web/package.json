@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "gomoku-wasm": "file:../gomoku-wasm/pkg",
+    "gomoku-wasm": "file:../gomoku-bot-lab/gomoku-wasm/pkg",
     "phaser": "^3.87.0"
   },
   "devDependencies": {
