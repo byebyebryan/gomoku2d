@@ -1,4 +1,4 @@
-# gomoku2d
+# Gomoku2D
 
 A browser Gomoku game, with a Rust bot lab powering the AI behind it.
 
@@ -143,12 +143,21 @@ and deploys `dist/` to Pages.
 
 ---
 
-## More
+## Where this is going
 
-- [`gomoku-web/README.md`](gomoku-web/README.md) — web game details
-- [`docs/bot_baseline.md`](docs/bot_baseline.md) — current bot strategy and limitations
-- [`docs/progress.md`](docs/progress.md) — what's done and what's next
-- [`docs/web_frontend_plan.md`](docs/web_frontend_plan.md) — web frontend retrospective
-- [`docs/online_backend_design.md`](docs/online_backend_design.md) — planned online backend (Firebase + Firestore + Cloud Run)
-- [`docs/fe_gap_analysis.md`](docs/fe_gap_analysis.md) — what the FE needs for the planned backend features
-- [`docs/game_framework.md`](docs/game_framework.md) — legacy: the generic-framework design doc that originally inspired the repo layout
+The code in `gomoku-web/` today is the `v0.1` snapshot: offline single-player,
+Phaser-driven. A pivot is underway to a React shell with Phaser reduced to a
+board-only renderer, backed by Firebase (auth, profile, replays) and a Rust
+Cloud Run service (match authority, verification, lab-powered analysis).
+
+The canonical design and schedule live in `docs/`:
+
+- [`docs/product.md`](docs/product.md) — what we're building and why
+- [`docs/architecture.md`](docs/architecture.md) — FE stack, DOM/Phaser boundary, core-sharing story
+- [`docs/design.md`](docs/design.md) — IA, screens, style pillar, component families
+- [`docs/backend.md`](docs/backend.md) — Firebase + Firestore + Cloud Run, auth model, data model, CI/CD
+- [`docs/roadmap.md`](docs/roadmap.md) — phased plan across FE rewrite, BE bring-up, and features
+- [`docs/bot_baseline.md`](docs/bot_baseline.md) — current `SearchBot` strategy
+- [`gomoku-web/README.md`](gomoku-web/README.md) / [`gomoku-bot-lab/README.md`](gomoku-bot-lab/README.md) — package-level details
+
+Pre-pivot planning docs are preserved under [`docs/archive/`](docs/archive/).

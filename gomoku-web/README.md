@@ -91,6 +91,11 @@ a supporting workspace. The bot you play against in the browser is the same
 code you can pit against itself from the command line — `gomoku-wasm` exposes
 it to JS and this package calls it through a Web Worker.
 
+What's here now is the `v0.1` snapshot: offline single-player, Phaser-driven
+end to end. The next phase rewrites the shell in React and reduces Phaser to
+a board-only renderer — see [`../docs/architecture.md`](../docs/architecture.md)
+for the target and [`../docs/roadmap.md`](../docs/roadmap.md) for sequencing.
+
 ```
 gomoku-web                     — this package
 gomoku-bot-lab/gomoku-core     — board, rules, Renju enforcement, replay format
