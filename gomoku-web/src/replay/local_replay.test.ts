@@ -15,7 +15,7 @@ const SAMPLE_MATCH: GuestSavedMatch = {
   ],
   players: [
     { kind: "human", name: "Guest", stone: "black" },
-    { kind: "bot", name: "Search Bot", stone: "white" },
+    { kind: "bot", name: "Classic Bot", stone: "white" },
   ],
   savedAt: "2026-04-21T12:00:00.000Z",
   status: "black_won",

@@ -33,14 +33,14 @@ export function ProfileRoute() {
     <main className={styles.page}>
       <header className={styles.header}>
         <div>
-          <p className={styles.eyebrow}>Phase 2 / local guest profile</p>
+          <p className={styles.eyebrow}>Local player profile</p>
           <h1 className={styles.title}>Profile</h1>
         </div>
         <div className={styles.headerActions}>
           <Link className={styles.primaryAction} to="/match/local">
             Play Bot
           </Link>
-          <Link className={styles.secondaryAction} to="/">
+          <Link className={`${styles.secondaryAction} ${styles.accentAction}`} to="/">
             Home
           </Link>
         </div>
@@ -70,8 +70,8 @@ export function ProfileRoute() {
                 <dd className={styles.metaValue}>{profile?.id ?? "Pending"}</dd>
               </div>
               <div>
-                <dt className={styles.metaLabel}>Public handle</dt>
-                <dd className={styles.metaValue}>Sign-in feature comes later</dd>
+                <dt className={styles.metaLabel}>Online profile</dt>
+                <dd className={styles.metaValue}>No online profile linked</dd>
               </div>
             </dl>
           </section>
@@ -146,7 +146,7 @@ export function ProfileRoute() {
             </div>
 
             {history.length === 0 ? (
-              <p className={styles.emptyState}>Finished local matches will appear here.</p>
+              <p className={styles.emptyState}>Finished matches are saved here.</p>
             ) : (
               <ol className={styles.historyList}>
                 {history.map((match) => (
@@ -162,7 +162,7 @@ export function ProfileRoute() {
                       <div className={styles.historyActions}>
                         <p className={styles.historyMeta}>{new Date(match.savedAt).toLocaleString()}</p>
                         <button
-                          className={styles.historyAction}
+                          className={`${styles.historyAction} ${styles.infoAction}`}
                           onClick={() => {
                             navigate(`/replays/local/${match.id}`);
                           }}

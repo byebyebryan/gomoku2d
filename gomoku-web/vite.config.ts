@@ -35,6 +35,11 @@ export default defineConfig(() => ({
     port: 3001,
     open: true,
   },
+  preview: {
+    host: "0.0.0.0",
+    port: 8001,
+    allowedHosts: true,
+  },
   test: {
     environment: "jsdom",
     include: ["src/**/*.test.ts", "src/**/*.test.tsx"],

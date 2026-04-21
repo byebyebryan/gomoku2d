@@ -45,14 +45,14 @@ test("guest profile persists locally and captures finished local matches", async
   await page.getByRole("link", { name: "Profile" }).click();
 
   await expect(page.getByText("1 local match")).toBeVisible();
-  await expect(page.getByText("Search Bot wins")).toBeVisible();
+  await expect(page.getByText("Classic Bot wins")).toBeVisible();
   await expect(page.getByText("Wins", { exact: true })).toBeVisible();
   await expect(page.getByText("Losses", { exact: true })).toBeVisible();
   await expect(page.getByText("Draws", { exact: true })).toBeVisible();
-  await expect(page.getByText("Bryan Guest (black) vs Search Bot (white)")).toBeVisible();
+  await expect(page.getByText("Bryan Guest (black) vs Classic Bot (white)")).toBeVisible();
 
   await displayName.fill("Bryan Prime");
-  await expect(page.getByText("Bryan Prime (black) vs Search Bot (white)")).toBeVisible();
+  await expect(page.getByText("Bryan Prime (black) vs Classic Bot (white)")).toBeVisible();
 
   await page.getByRole("button", { name: "Reset local profile" }).click();
   await expect(displayName).toHaveValue("Guest");

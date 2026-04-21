@@ -48,7 +48,7 @@ export interface LocalMatchStoreOptions {
 function defaultPlayers(humanDisplayName = "You"): [MatchPlayer, MatchPlayer] {
   return [
     { kind: "human", name: humanDisplayName, stone: "black" },
-    { kind: "bot", name: "Search Bot", stone: "white" },
+    { kind: "bot", name: "Classic Bot", stone: "white" },
   ];
 }
 

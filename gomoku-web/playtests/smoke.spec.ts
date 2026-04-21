@@ -6,7 +6,7 @@ test("home boot and local bot match smoke flow", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Gomoku2D" }),
   ).toBeVisible();
-  await expect(page.getByText(/react shell/i)).toBeVisible();
+  await expect(page.getByText(/five in a row/i)).toBeVisible();
 
   await page.getByRole("link", { name: "Play Bot" }).click();
 
@@ -40,7 +40,7 @@ test("home boot and local bot match smoke flow", async ({ page }) => {
 
   await page.getByRole("button", { name: "New Game" }).click();
   await expect(page.getByText("0 moves")).toBeVisible();
-  await expect(page.getByText("No stones placed yet.")).toBeVisible();
+  await expect(page.getByText("Moves appear here as the game unfolds.")).toBeVisible();
 
   await canvas.click({
     position: {

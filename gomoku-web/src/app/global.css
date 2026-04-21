@@ -6,25 +6,26 @@
 
 :root {
   color-scheme: dark;
-  --bg: #111111;
-  --bg-elevated: rgba(26, 26, 26, 0.92);
-  --bg-strong: #1e1e1e;
-  --surface: rgba(37, 37, 37, 0.9);
-  --surface-strong: rgba(48, 48, 48, 0.96);
-  --surface-muted: rgba(255, 255, 255, 0.04);
-  --border: rgba(255, 255, 255, 0.12);
-  --border-strong: rgba(255, 204, 102, 0.35);
-  --text: #f6f3ea;
-  --text-muted: #b9b1a2;
-  --text-strong: #ffcc66;
-  --accent: #ffcc66;
-  --accent-strong: #ffdd8f;
-  --danger: #ff6b57;
-  --success: #6dd989;
-  --shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
-  --radius-lg: 24px;
-  --radius-md: 18px;
-  --radius-sm: 12px;
+  --bg: #111315;
+  --bg-elevated: #23282d;
+  --bg-strong: #2c3238;
+  --surface: #2a3036;
+  --surface-strong: #333b44;
+  --surface-muted: #191d21;
+  --border: #46515b;
+  --border-strong: #5a6672;
+  --text: #f1ebdd;
+  --text-muted: #a8aca8;
+  --text-strong: #fff5cf;
+  --accent: #f3c44d;
+  --accent-strong: #ffdd76;
+  --info: #53b8ff;
+  --success: #73e36b;
+  --danger: #c24856;
+  --shadow: 8px 8px 0 rgba(0, 0, 0, 0.34);
+  --radius-lg: 0px;
+  --radius-md: 0px;
+  --radius-sm: 0px;
 }
 
 * {
@@ -39,9 +40,7 @@ body,
 
 body {
   margin: 0;
-  background:
-    radial-gradient(circle at top, rgba(255, 204, 102, 0.12), transparent 38%),
-    linear-gradient(180deg, #1b1b1b 0%, #101010 100%);
+  background: var(--bg);
   color: var(--text);
   font-family: "PixelOperator", "Trebuchet MS", sans-serif;
 }
@@ -61,4 +60,26 @@ a {
 
 button {
   cursor: pointer;
+}
+
+button,
+input,
+textarea,
+select {
+  border-radius: 0;
+}
+
+input,
+textarea,
+select {
+  accent-color: var(--success);
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 2px;
 }

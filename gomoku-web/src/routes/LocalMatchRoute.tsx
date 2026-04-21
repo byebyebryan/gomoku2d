@@ -53,17 +53,17 @@ export function LocalMatchRoute() {
     <main className={styles.page}>
       <header className={styles.header}>
         <div>
-          <p className={styles.eyebrow}>Offline / local bot match</p>
+          <p className={styles.eyebrow}>Face the Classic Bot</p>
           <h1 className={styles.title}>Local Match</h1>
         </div>
         <div className={styles.headerActions}>
-          <button className={styles.secondaryAction} onClick={state.startNewMatch} type="button">
+          <button className={`${styles.secondaryAction} ${styles.successAction}`} onClick={state.startNewMatch} type="button">
             New Game
           </button>
-          <Link className={styles.secondaryAction} to="/profile">
+          <Link className={`${styles.secondaryAction} ${styles.infoAction}`} to="/profile">
             Profile
           </Link>
-          <Link className={styles.secondaryAction} to="/">
+          <Link className={`${styles.secondaryAction} ${styles.accentAction}`} to="/">
             Home
           </Link>
         </div>
@@ -104,17 +104,22 @@ export function LocalMatchRoute() {
                 state.status === "playing" &&
                 !state.pendingBotMove &&
                 state.currentPlayer === index + 1;
+              const stoneToneClass = index === 0 ? styles.playerCardBlack : styles.playerCardWhite;
 
               return (
                 <article
-                  className={active ? `${styles.playerCard} ${styles.playerCardActive}` : styles.playerCard}
+                  className={
+                    active
+                      ? `${styles.playerCard} ${stoneToneClass} ${styles.playerCardActive}`
+                      : `${styles.playerCard} ${stoneToneClass}`
+                  }
                   key={player.stone}
                 >
                   <div className={styles.playerMeta}>
                     <p className={styles.playerStone}>{player.stone}</p>
                     <div>
                       <h2 className={styles.playerName}>{player.name}</h2>
-                      <p className={styles.playerKind}>{player.kind === "human" ? "Human" : "Baseline bot"}</p>
+                      <p className={styles.playerKind}>{player.kind === "human" ? "Human" : "Bot"}</p>
                     </div>
                   </div>
                 </article>
@@ -128,7 +133,7 @@ export function LocalMatchRoute() {
               <p className={styles.historyCount}>{state.moves.length} moves</p>
             </div>
             {state.moves.length === 0 ? (
-              <p className={styles.emptyHistory}>No stones placed yet.</p>
+              <p className={styles.emptyHistory}>Moves appear here as the game unfolds.</p>
             ) : (
               <ol className={styles.historyList}>
                 {state.moves.map((move) => (

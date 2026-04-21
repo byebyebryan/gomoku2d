@@ -8,17 +8,15 @@
 .hero {
   width: min(720px, 100%);
   padding: 40px;
-  border-radius: 32px;
-  background:
-    linear-gradient(160deg, rgba(255, 204, 102, 0.1), transparent 45%),
-    var(--bg-elevated);
-  border: 1px solid var(--border-strong);
+  border-radius: 0;
+  background: var(--bg-elevated);
+  border: 2px solid var(--border-strong);
   box-shadow: var(--shadow);
 }
 
 .eyebrow {
   margin: 0 0 12px;
-  color: var(--text-strong);
+  color: var(--info);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -50,10 +48,12 @@
   justify-content: center;
   min-width: 180px;
   padding: 16px 24px;
-  border-radius: 999px;
-  background: var(--accent);
-  color: #2d2414;
-  box-shadow: 0 10px 30px rgba(255, 204, 102, 0.2);
+  border: 2px solid #2b6f28;
+  border-radius: 0;
+  background: var(--success);
+  color: #10220f;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .secondaryAction {
@@ -62,8 +62,10 @@
   justify-content: center;
   min-width: 180px;
   padding: 16px 24px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface-muted);
-  color: var(--text);
+  border: 2px solid #25537c;
+  border-radius: 0;
+  background: var(--info);
+  color: #0d1720;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
