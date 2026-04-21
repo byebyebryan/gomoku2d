@@ -64,9 +64,19 @@ export function LocalMatchRoute() {
           <Board
             cells={state.cells}
             currentPlayer={state.currentPlayer}
-            interactive={!state.pendingBotMove && state.status === "playing" && state.currentPlayer === 1}
+            forbiddenMoves={state.forbiddenMoves}
+            interactive={
+              !state.pendingBotMove &&
+              state.status === "playing" &&
+              state.players[state.currentPlayer - 1].kind === "human"
+            }
             lastMove={state.lastMove}
+            moves={state.moves}
+            onAdvanceRound={state.startNextRound}
             onPlace={state.placeHumanMove}
+            status={state.status}
+            threatMoves={state.threatMoves}
+            winningMoves={state.winningMoves}
             winningCells={state.winningCells}
           />
         </div>

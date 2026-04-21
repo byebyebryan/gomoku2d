@@ -31,8 +31,27 @@ test("home boot and local bot match smoke flow", async ({ page }) => {
     },
   });
 
-  await expect(page.getByText("1 moves")).toBeVisible();
+  await expect
+    .poll(async () => page.locator("ol li").count())
+    .toBeGreaterThan(0);
   await expect(page.getByText("2 moves")).toBeVisible({ timeout: 15_000 });
   await expect(page.locator("ol li")).toHaveCount(2);
   await expect(page.getByText("Black to move")).toBeVisible();
+
+  await page.getByRole("button", { name: "New Game" }).click();
+  await expect(page.getByText("0 moves")).toBeVisible();
+  await expect(page.getByText("No stones placed yet.")).toBeVisible();
+
+  await canvas.click({
+    position: {
+      x: box.width / 2,
+      y: box.height / 2,
+    },
+  });
+
+  await expect
+    .poll(async () => page.locator("ol li").count())
+    .toBeGreaterThan(0);
+  await expect(page.getByText("2 moves")).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator("ol li")).toHaveCount(2);
 });

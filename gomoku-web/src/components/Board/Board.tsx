@@ -3,16 +3,22 @@ import Phaser from "phaser";
 
 import { BoardScene } from "../../board/board_scene";
 import { getGameSizeForViewport, getViewportSize } from "../../layout";
-import type { CellPosition, CellStone } from "../../game/types";
+import type { CellPosition, CellStone, MatchMove, MatchStatus } from "../../game/types";
 
 import styles from "./Board.module.css";
 
 export interface BoardProps {
   cells: CellStone[][];
   currentPlayer: 1 | 2;
+  forbiddenMoves: CellPosition[];
   interactive: boolean;
   lastMove: CellPosition | null;
+  moves: MatchMove[];
+  onAdvanceRound: () => void;
   onPlace: (row: number, col: number) => void;
+  status: MatchStatus;
+  threatMoves: CellPosition[];
+  winningMoves: CellPosition[];
   winningCells: CellPosition[];
 }
 
