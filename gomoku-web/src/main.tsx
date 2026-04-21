@@ -5,6 +5,14 @@ import { App } from "./app/App";
 import { initWasm } from "./core/wasm_bridge";
 import "./app/global.css";
 
+function routerBasename(baseUrl: string): string | undefined {
+  if (baseUrl === "/") {
+    return undefined;
+  }
+
+  return baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+}
+
 await initWasm();
 
 const root = document.getElementById("root");
@@ -14,7 +22,7 @@ if (!root) {
 }
 
 ReactDOM.createRoot(root).render(
-  <BrowserRouter>
+  <BrowserRouter basename={routerBasename(import.meta.env.BASE_URL)}>
     <App />
   </BrowserRouter>,
 );

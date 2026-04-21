@@ -56,6 +56,8 @@ jobs:
       - name: Build
         run: npm run build
         working-directory: gomoku-web
+        env:
+          GOMOKU_BASE_PATH: ${{ format('/{0}/', github.event.repository.name) }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
