@@ -1,0 +1,29 @@
+import { Suspense, lazy } from "react";
+import { Navigate, Route, Routes } from "react-router-dom";
+
+import { HomeRoute } from "../routes/HomeRoute";
+
+import styles from "./App.module.css";
+
+const LocalMatchRoute = lazy(async () => ({
+  default: (await import("../routes/LocalMatchRoute")).LocalMatchRoute,
+}));
+
+export function App() {
+  return (
+    <div className={styles.app}>
+      <Routes>
+        <Route path="/" element={<HomeRoute />} />
+        <Route
+          path="/match/local"
+          element={
+            <Suspense fallback={<main className={styles.loading}>Loading match…</main>}>
+              <LocalMatchRoute />
+            </Suspense>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </div>
+  );
+}

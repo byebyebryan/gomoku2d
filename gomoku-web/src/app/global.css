@@ -1,0 +1,64 @@
+@font-face {
+  font-family: "PixelOperator";
+  src: url("../../assets/fonts/PixelOperator.ttf") format("truetype");
+  font-display: swap;
+}
+
+:root {
+  color-scheme: dark;
+  --bg: #111111;
+  --bg-elevated: rgba(26, 26, 26, 0.92);
+  --bg-strong: #1e1e1e;
+  --surface: rgba(37, 37, 37, 0.9);
+  --surface-strong: rgba(48, 48, 48, 0.96);
+  --surface-muted: rgba(255, 255, 255, 0.04);
+  --border: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 204, 102, 0.35);
+  --text: #f6f3ea;
+  --text-muted: #b9b1a2;
+  --text-strong: #ffcc66;
+  --accent: #ffcc66;
+  --accent-strong: #ffdd8f;
+  --danger: #ff6b57;
+  --success: #6dd989;
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
+  --radius-lg: 24px;
+  --radius-md: 18px;
+  --radius-sm: 12px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at top, rgba(255, 204, 102, 0.12), transparent 38%),
+    linear-gradient(180deg, #1b1b1b 0%, #101010 100%);
+  color: var(--text);
+  font-family: "PixelOperator", "Trebuchet MS", sans-serif;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+}

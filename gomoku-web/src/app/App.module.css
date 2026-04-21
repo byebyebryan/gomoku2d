@@ -1,0 +1,10 @@
+.app {
+  min-height: 100dvh;
+}
+
+.loading {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  color: var(--text-muted);
+}
