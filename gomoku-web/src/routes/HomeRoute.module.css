@@ -17,7 +17,7 @@
 
 .eyebrow {
   margin: 0 0 12px;
-  color: var(--info);
+  color: var(--accent);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -53,6 +53,7 @@
   border-radius: 0;
   background: var(--success);
   color: var(--success-ink);
+  font-family: "PixelOperatorBold", "PixelOperator", "Trebuchet MS", sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -67,6 +68,7 @@
   border-radius: 0;
   background: var(--info);
   color: var(--info-ink);
+  font-family: "PixelOperatorBold", "PixelOperator", "Trebuchet MS", sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }

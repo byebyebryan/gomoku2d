@@ -134,7 +134,7 @@ export function LocalMatchRoute() {
           <Link className={`${styles.secondaryAction} ${styles.infoAction}`} to="/profile">
             Profile
           </Link>
-          <Link className={`${styles.secondaryAction} ${styles.accentAction}`} to="/">
+          <Link className={`${styles.secondaryAction} ${styles.accentAction} ${styles.homeAction}`} to="/">
             Home
           </Link>
         </div>

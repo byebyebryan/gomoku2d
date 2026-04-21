@@ -4,37 +4,44 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "PixelOperatorBold";
+  src: url("../../assets/fonts/PixelOperator-Bold.ttf") format("truetype");
+  font-display: swap;
+}
+
 :root {
   color-scheme: dark;
-  --bg: #111315;
-  --bg-elevated: #23282d;
-  --bg-strong: #2c3238;
-  --surface: #2a3036;
-  --surface-strong: #333b44;
-  --surface-muted: #191d21;
-  --border: #46515b;
-  --border-strong: #5a6672;
-  --text: #f1ebdd;
-  --text-muted: #a8aca8;
-  --text-strong: #fff5cf;
-  --accent: #d7b257;
-  --accent-strong: #ecd07a;
-  --accent-border: #7a6327;
+  --bg: #232323;
+  --bg-elevated: #323232;
+  --bg-strong: #3a3a3a;
+  --surface: #323232;
+  --surface-strong: #3d3d3d;
+  --surface-muted: #242620;
+  --border: #575756;
+  --border-strong: #6b6a6a;
+  --text: #f3efe5;
+  --text-muted: #a6a6a0;
+  --text-strong: #f9cb58;
+  --accent: #d5ab51;
+  --accent-strong: #f9cb58;
+  --accent-border: #a7873e;
   --accent-ink: #241907;
-  --info: #67a5cf;
-  --info-border: #355c72;
-  --info-ink: #0d1620;
-  --info-soft: rgba(103, 165, 207, 0.16);
-  --success: #81c76b;
-  --success-border: #3f6f33;
-  --success-ink: #11200d;
-  --danger: #c96b5f;
-  --danger-border: #7b3a33;
-  --danger-ink: #26120c;
-  --scroll-track: #171b1f;
-  --scroll-thumb: #697580;
-  --scroll-thumb-hover: #7e8a95;
-  --shadow: 8px 8px 0 rgba(0, 0, 0, 0.34);
+  --accent-soft: rgba(213, 171, 81, 0.18);
+  --info: #658a90;
+  --info-border: #4d6d73;
+  --info-ink: #f3efe5;
+  --info-soft: rgba(101, 138, 144, 0.18);
+  --success: #2f9247;
+  --success-border: #246f36;
+  --success-ink: #f3efe5;
+  --danger: #995f3b;
+  --danger-border: #71452d;
+  --danger-ink: #f3efe5;
+  --scroll-track: #242620;
+  --scroll-thumb: #6b6a6a;
+  --scroll-thumb-hover: #a6a6a0;
+  --shadow: 8px 8px 0 rgba(0, 0, 0, 0.42);
   --radius-lg: 0px;
   --radius-md: 0px;
   --radius-sm: 0px;

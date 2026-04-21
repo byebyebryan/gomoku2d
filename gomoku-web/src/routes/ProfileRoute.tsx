@@ -40,7 +40,7 @@ export function ProfileRoute() {
           <Link className={styles.primaryAction} to="/match/local">
             Play Bot
           </Link>
-          <Link className={`${styles.secondaryAction} ${styles.accentAction}`} to="/">
+          <Link className={`${styles.secondaryAction} ${styles.accentAction} ${styles.homeAction}`} to="/">
             Home
           </Link>
         </div>
