@@ -84,6 +84,7 @@ export function LocalMatchRoute() {
             moves={state.moves}
             onAdvanceRound={state.startNextRound}
             onPlace={state.placeHumanMove}
+            showSequenceNumbers
             status={state.status}
             threatMoves={state.threatMoves}
             winningMoves={state.winningMoves}
