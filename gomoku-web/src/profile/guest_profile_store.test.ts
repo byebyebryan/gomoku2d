@@ -36,7 +36,9 @@ describe("createGuestProfileStore", () => {
       id: profile.id,
       kind: "guest",
     });
-    expect(reloadedStore.getState().settings.preferredVariant).toBe("freestyle");
+    expect(reloadedStore.getState().settings).toEqual({
+      preferredVariant: "freestyle",
+    });
   });
 
   it("persists the preferred rules variant", () => {
@@ -102,7 +104,7 @@ describe("createGuestProfileStore", () => {
 
     store.getState().ensureGuestProfile();
     store.getState().renameDisplayName("Bryan Guest");
-    store.getState().updateSettings({ reducedMotion: true, soundEnabled: false });
+    store.getState().updateSettings({ preferredVariant: "renju" });
     store.getState().recordFinishedMatch({
       mode: "bot",
       moves: [{ col: 7, moveNumber: 1, player: 1, row: 7 }],
@@ -121,10 +123,7 @@ describe("createGuestProfileStore", () => {
     expect(resetState.history).toEqual([]);
     expect(resetState.profile).toBeNull();
     expect(resetState.settings).toEqual({
-      boardTheme: "classic",
       preferredVariant: "freestyle",
-      reducedMotion: false,
-      soundEnabled: true,
     });
   });
 });

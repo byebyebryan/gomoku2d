@@ -27,7 +27,7 @@ test("home boot and local bot match smoke flow", async ({ page }) => {
     page.getByRole("heading", { name: "Local Match" }),
   ).toBeVisible();
   await expect(page.getByText("0 moves")).toBeVisible();
-  await expect(page.getByText("Black to move")).toBeVisible();
+  await expect(page.getByText("Guest to move")).toBeVisible();
 
   const canvas = page.locator("canvas").first();
   await expect(canvas).toBeVisible();
@@ -49,7 +49,7 @@ test("home boot and local bot match smoke flow", async ({ page }) => {
     .toBeGreaterThan(0);
   await expect(page.getByText("2 moves")).toBeVisible({ timeout: 15_000 });
   await expect(page.locator("ol li")).toHaveCount(2);
-  await expect(page.getByText("Black to move")).toBeVisible();
+  await expect(page.getByText("Guest to move")).toBeVisible();
   await expect(page.getByText("Current: Freestyle")).toBeVisible();
 
   await page.getByRole("button", { name: "Renju" }).click();
