@@ -17,6 +17,9 @@ export function HomeRoute() {
           <Link className={styles.primaryAction} to="/match/local">
             Play Bot
           </Link>
+          <Link className={styles.secondaryAction} to="/profile">
+            Profile
+          </Link>
         </div>
       </section>
     </main>

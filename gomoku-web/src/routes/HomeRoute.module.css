@@ -39,6 +39,9 @@
 
 .actions {
   margin-top: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .primaryAction {
@@ -51,4 +54,16 @@
   background: var(--accent);
   color: #2d2414;
   box-shadow: 0 10px 30px rgba(255, 204, 102, 0.2);
+}
+
+.secondaryAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 180px;
+  padding: 16px 24px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--text);
 }

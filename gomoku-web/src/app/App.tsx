@@ -8,6 +8,9 @@ import styles from "./App.module.css";
 const LocalMatchRoute = lazy(async () => ({
   default: (await import("../routes/LocalMatchRoute")).LocalMatchRoute,
 }));
+const ProfileRoute = lazy(async () => ({
+  default: (await import("../routes/ProfileRoute")).ProfileRoute,
+}));
 
 export function App() {
   return (
@@ -19,6 +22,14 @@ export function App() {
           element={
             <Suspense fallback={<main className={styles.loading}>Loading match…</main>}>
               <LocalMatchRoute />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <Suspense fallback={<main className={styles.loading}>Loading profile…</main>}>
+              <ProfileRoute />
             </Suspense>
           }
         />
