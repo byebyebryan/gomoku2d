@@ -16,7 +16,7 @@
 
 .eyebrow {
   margin: 0 0 8px;
-  color: var(--info);
+  color: var(--accent);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -40,6 +40,7 @@
   min-width: 132px;
   padding: 12px 18px;
   border-radius: 0;
+  font-family: "PixelOperatorBold", "PixelOperator", "Trebuchet MS", sans-serif;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -60,6 +61,10 @@
   border: 2px solid var(--accent-border);
   background: var(--accent);
   color: var(--accent-ink);
+}
+
+.homeAction {
+  color: var(--text);
 }
 
 .layout {
@@ -120,10 +125,10 @@
 .badge {
   margin: 0;
   padding: 6px 10px;
-  border: 2px solid var(--info-border);
+  border: 2px solid var(--accent-border);
   border-radius: 0;
-  background: var(--info-soft);
-  color: var(--info);
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
 .field {
@@ -199,8 +204,9 @@
   padding: 12px 14px;
   border: 2px solid var(--border);
   border-radius: 0;
-  background: #2a3036;
+  background: var(--surface);
   color: var(--text);
+  font-family: "PixelOperatorBold", "PixelOperator", "Trebuchet MS", sans-serif;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -218,6 +224,7 @@
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
   cursor: pointer;
   justify-content: center;
+  font-family: "PixelOperatorBold", "PixelOperator", "Trebuchet MS", sans-serif;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -243,7 +250,7 @@
 }
 
 .summaryTile:nth-child(1) .summaryValue {
-  color: var(--info);
+  color: var(--accent-strong);
 }
 
 .summaryTile:nth-child(2) .summaryValue {
@@ -316,6 +323,7 @@
   background: var(--surface-muted);
   color: var(--text);
   cursor: pointer;
+  font-family: "PixelOperatorBold", "PixelOperator", "Trebuchet MS", sans-serif;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
