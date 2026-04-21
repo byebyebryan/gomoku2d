@@ -1,0 +1,193 @@
+.page {
+  display: grid;
+  min-height: 100dvh;
+  padding: 24px;
+  gap: 20px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--text-strong);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
+}
+
+.headerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.secondaryAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 132px;
+  padding: 12px 18px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(300px, 360px);
+  gap: 20px;
+  min-height: 0;
+}
+
+.boardPanel {
+  min-height: min(78dvh, 960px);
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.sidebar {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+
+.statusCard,
+.historyCard,
+.playerCard {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.statusCard,
+.historyCard {
+  padding: 18px;
+}
+
+.sectionLabel {
+  margin: 0;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.statusText {
+  margin: 10px 0 0;
+  font-size: 1.6rem;
+  color: var(--text-strong);
+}
+
+.playerList {
+  display: grid;
+  gap: 12px;
+}
+
+.playerCard {
+  padding: 18px;
+}
+
+.playerCardActive {
+  border-color: var(--border-strong);
+  box-shadow: inset 0 0 0 1px rgba(255, 204, 102, 0.14);
+}
+
+.playerMeta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.playerStone {
+  margin: 0;
+  min-width: 64px;
+  color: var(--text-strong);
+  font-size: 1.1rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.playerName {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.playerKind {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+}
+
+.historyHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.historyCount {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.emptyHistory {
+  margin: 14px 0 0;
+  color: var(--text-muted);
+}
+
+.historyList {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.historyItem {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+@media (max-width: 980px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .boardPanel {
+    min-height: min(66dvh, 820px);
+  }
+}
+
+@media (max-width: 720px) {
+  .page {
+    padding: 18px;
+  }
+
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .headerActions {
+    width: 100%;
+  }
+
+  .secondaryAction {
+    flex: 1 1 0;
+  }
+}
