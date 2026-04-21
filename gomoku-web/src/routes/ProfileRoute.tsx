@@ -81,37 +81,6 @@ export function ProfileRoute() {
               <p className={styles.sectionLabel}>Settings</p>
             </div>
             <div className={styles.settingsList}>
-              <label className={styles.toggleRow}>
-                <span>Reduced motion</span>
-                <input
-                  checked={settings.reducedMotion}
-                  onChange={(event) => {
-                    guestProfileStore.getState().updateSettings({ reducedMotion: event.target.checked });
-                  }}
-                  type="checkbox"
-                />
-              </label>
-              <label className={styles.toggleRow}>
-                <span>Sound</span>
-                <input
-                  checked={settings.soundEnabled}
-                  onChange={(event) => {
-                    guestProfileStore.getState().updateSettings({ soundEnabled: event.target.checked });
-                  }}
-                  type="checkbox"
-                />
-              </label>
-              <button
-                className={styles.dangerAction}
-                onClick={() => {
-                  const store = guestProfileStore.getState();
-                  store.resetGuestProfile();
-                  store.ensureGuestProfile();
-                }}
-                type="button"
-              >
-                Reset local profile
-              </button>
               <div className={styles.settingsBlock}>
                 <div className={styles.settingHeader}>
                   <span>Preferred rules</span>
@@ -136,6 +105,17 @@ export function ProfileRoute() {
                   ))}
                 </div>
               </div>
+              <button
+                className={styles.dangerAction}
+                onClick={() => {
+                  const store = guestProfileStore.getState();
+                  store.resetGuestProfile();
+                  store.ensureGuestProfile();
+                }}
+                type="button"
+              >
+                Reset local profile
+              </button>
             </div>
           </section>
         </div>

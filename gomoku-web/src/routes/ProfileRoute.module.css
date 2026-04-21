@@ -45,21 +45,21 @@
 }
 
 .primaryAction {
-  border: 2px solid #2b6f28;
+  border: 2px solid var(--success-border);
   background: var(--success);
-  color: #10220f;
+  color: var(--success-ink);
 }
 
 .secondaryAction {
-  border: 2px solid #25537c;
+  border: 2px solid var(--info-border);
   background: var(--info);
-  color: #0d1720;
+  color: var(--info-ink);
 }
 
 .accentAction {
-  border: 2px solid #8b6b1a;
+  border: 2px solid var(--accent-border);
   background: var(--accent);
-  color: #22180a;
+  color: var(--accent-ink);
 }
 
 .layout {
@@ -120,9 +120,9 @@
 .badge {
   margin: 0;
   padding: 6px 10px;
-  border: 2px solid #25537c;
+  border: 2px solid var(--info-border);
   border-radius: 0;
-  background: rgba(83, 184, 255, 0.14);
+  background: var(--info-soft);
   color: var(--info);
 }
 
@@ -164,7 +164,6 @@
   margin-top: 16px;
 }
 
-.toggleRow,
 .settingsBlock,
 .dangerAction {
   display: flex;
@@ -207,15 +206,15 @@
 }
 
 .variantButtonActive {
-  border-color: #25537c;
+  border-color: var(--info-border);
   background: var(--info);
-  color: #0d1720;
+  color: var(--info-ink);
 }
 
 .dangerAction {
-  border: 2px solid #8f2235;
+  border: 2px solid var(--danger-border);
   background: var(--danger);
-  color: #22180a;
+  color: var(--danger-ink);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
   cursor: pointer;
   justify-content: center;
@@ -322,9 +321,9 @@
 }
 
 .infoAction {
-  border-color: #25537c;
+  border-color: var(--info-border);
   background: var(--info);
-  color: #0d1720;
+  color: var(--info-ink);
 }
 
 .emptyState {

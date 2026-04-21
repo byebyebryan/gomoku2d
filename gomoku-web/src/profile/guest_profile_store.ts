@@ -21,10 +21,7 @@ export interface GuestProfileIdentity {
 }
 
 export interface GuestProfileSettings {
-  boardTheme: "classic";
   preferredVariant: GameVariant;
-  reducedMotion: boolean;
-  soundEnabled: boolean;
 }
 
 export interface GuestSavedMatch {
@@ -59,10 +56,7 @@ const HISTORY_LIMIT = 24;
 
 function createDefaultSettings(): GuestProfileSettings {
   return {
-    boardTheme: "classic",
     preferredVariant: "freestyle",
-    reducedMotion: false,
-    soundEnabled: true,
   };
 }
 

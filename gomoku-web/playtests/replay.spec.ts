@@ -38,7 +38,7 @@ test("local replay opens from profile history and supports stepping plus autopla
       .toBeGreaterThan(beforeCount);
   }
 
-  await expect(page.getByText("White wins")).toBeVisible();
+  await expect(page.getByText("Classic Bot wins")).toBeVisible();
   await page.getByRole("link", { name: "Profile" }).click();
 
   await page.getByRole("button", { name: "Open replay" }).first().click();

@@ -41,7 +41,7 @@ test("finished board click advances to the next round with swapped colors", asyn
       .toBeGreaterThan(beforeCount);
   }
 
-  await expect(page.getByText("White wins")).toBeVisible();
+  await expect(page.getByText("Classic Bot wins")).toBeVisible();
 
   await canvas.click({ position: boardClickPosition(box, 7, 7) });
 

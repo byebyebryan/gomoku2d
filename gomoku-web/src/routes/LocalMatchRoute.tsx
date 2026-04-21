@@ -1,6 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useStore } from "zustand";
+import { createStore } from "zustand/vanilla";
 
 import { Board } from "../components/Board/Board";
 import { createLocalMatchStore } from "../game/local_match_store";
@@ -10,52 +11,92 @@ import { variantLabel } from "../replay/local_replay";
 
 import styles from "./LocalMatchRoute.module.css";
 
-function statusLabel(state: Pick<LocalMatchState, "currentPlayer" | "pendingBotMove" | "status">): string {
-  if (state.status === "black_won") {
-    return "Black wins";
-  }
-  if (state.status === "white_won") {
-    return "White wins";
+function loadingCells(): LocalMatchState["cells"] {
+  return Array.from({ length: 15 }, () => Array.from({ length: 15 }, () => null));
+}
+
+const loadingMatchStore = createStore<LocalMatchState>(() => ({
+  cells: loadingCells(),
+  currentPlayer: 1,
+  currentVariant: "freestyle",
+  forbiddenMoves: [],
+  lastMove: null,
+  moves: [],
+  pendingBotMove: false,
+  placeHumanMove: () => false,
+  players: [
+    { kind: "human", name: "Guest", stone: "black" },
+    { kind: "bot", name: "Classic Bot", stone: "white" },
+  ],
+  selectedVariant: "freestyle",
+  selectVariant: () => undefined,
+  startNewMatch: () => undefined,
+  startNextRound: () => undefined,
+  status: "playing",
+  threatMoves: [],
+  dispose: () => undefined,
+  winningMoves: [],
+  winningCells: [],
+}));
+
+function statusLabel(
+  state: Pick<LocalMatchState, "currentPlayer" | "pendingBotMove" | "players" | "status">,
+): string {
+  if (state.status === "black_won" || state.status === "white_won") {
+    const winningStone = state.status === "black_won" ? "black" : "white";
+    const winner = state.players.find((player) => player.stone === winningStone);
+    return `${winner?.name ?? winningStone} wins`;
   }
   if (state.status === "draw") {
     return "Draw";
   }
   if (state.pendingBotMove) {
-    return "Bot is thinking...";
+    return `${state.players[state.currentPlayer - 1]?.name ?? "Bot"} is thinking...`;
   }
 
-  return state.currentPlayer === 1 ? "Black to move" : "White to move";
+  return `${state.players[state.currentPlayer - 1]?.name ?? "Unknown"} to move`;
 }
 
 export function LocalMatchRoute() {
   const historyBodyRef = useRef<HTMLDivElement | null>(null);
   const previousMoveCountRef = useRef(0);
   const storeRef = useRef<ReturnType<typeof createLocalMatchStore> | null>(null);
+  const [storeReady, setStoreReady] = useState(false);
+  const profile = useStore(guestProfileStore, (snapshot) => snapshot.profile);
+  const preferredVariant = useStore(guestProfileStore, (snapshot) => snapshot.settings.preferredVariant);
+  const state = useStore(storeRef.current ?? loadingMatchStore, (snapshot) => snapshot);
 
-  if (!storeRef.current) {
-    const guestProfile = guestProfileStore.getState();
-    const profile = guestProfile.ensureGuestProfile();
+  useEffect(() => {
+    guestProfileStore.getState().ensureGuestProfile();
+  }, []);
+
+  useEffect(() => {
+    if (!profile || storeRef.current) {
+      return;
+    }
+
     storeRef.current = createLocalMatchStore({
       humanDisplayName: profile.displayName,
       onMatchFinished: (match) => {
         guestProfileStore.getState().recordFinishedMatch(match);
       },
-      variant: guestProfile.settings.preferredVariant,
+      variant: guestProfileStore.getState().settings.preferredVariant,
     });
-  }
-
-  const state = useStore(storeRef.current, (snapshot) => snapshot);
-  const preferredVariant = useStore(guestProfileStore, (snapshot) => snapshot.settings.preferredVariant);
+    setStoreReady(true);
+  }, [profile]);
 
   useEffect(() => {
-    const store = storeRef.current;
-
     return () => {
-      store?.getState().dispose();
+      storeRef.current?.getState().dispose();
+      storeRef.current = null;
     };
   }, []);
 
   useEffect(() => {
+    if (!storeReady) {
+      return;
+    }
+
     const historyBody = historyBodyRef.current;
     if (!historyBody) {
       previousMoveCountRef.current = state.moves.length;
@@ -73,7 +114,11 @@ export function LocalMatchRoute() {
     }
 
     previousMoveCountRef.current = state.moves.length;
-  }, [state.moves.length]);
+  }, [state.moves.length, storeReady]);
+
+  if (!storeReady || !storeRef.current) {
+    return <main className={styles.page}>Loading match…</main>;
+  }
 
   return (
     <main className={styles.page}>

@@ -49,10 +49,10 @@
   justify-content: center;
   min-width: 180px;
   padding: 16px 24px;
-  border: 2px solid #2b6f28;
+  border: 2px solid var(--success-border);
   border-radius: 0;
   background: var(--success);
-  color: #10220f;
+  color: var(--success-ink);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -63,10 +63,10 @@
   justify-content: center;
   min-width: 180px;
   padding: 16px 24px;
-  border: 2px solid #25537c;
+  border: 2px solid var(--info-border);
   border-radius: 0;
   background: var(--info);
-  color: #0d1720;
+  color: var(--info-ink);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
