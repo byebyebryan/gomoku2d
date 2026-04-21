@@ -12,14 +12,18 @@ type MatchBotRunner = Pick<BotRunner, "chooseMove" | "configure" | "dispose">;
 export interface LocalMatchState {
   cells: CellStone[][];
   currentPlayer: 1 | 2;
+  forbiddenMoves: CellPosition[];
   lastMove: CellPosition | null;
   moves: MatchMove[];
   pendingBotMove: boolean;
   players: [MatchPlayer, MatchPlayer];
   startNewMatch: () => void;
+  startNextRound: () => void;
   status: MatchStatus;
+  threatMoves: CellPosition[];
   placeHumanMove: (row: number, col: number) => boolean;
   dispose: () => void;
+  winningMoves: CellPosition[];
   winningCells: CellPosition[];
 }
 
@@ -30,10 +34,23 @@ export interface LocalMatchStoreOptions {
   variant?: GameVariant;
 }
 
-const DEFAULT_PLAYERS: [MatchPlayer, MatchPlayer] = [
-  { kind: "human", name: "You", stone: "black" },
-  { kind: "bot", name: "Search Bot", stone: "white" },
-];
+function defaultPlayers(): [MatchPlayer, MatchPlayer] {
+  return [
+    { kind: "human", name: "You", stone: "black" },
+    { kind: "bot", name: "Search Bot", stone: "white" },
+  ];
+}
+
+function clonePlayers(players: [MatchPlayer, MatchPlayer]): [MatchPlayer, MatchPlayer] {
+  return [{ ...players[0] }, { ...players[1] }];
+}
+
+function swapPlayers(players: [MatchPlayer, MatchPlayer]): [MatchPlayer, MatchPlayer] {
+  return [
+    { ...players[1], stone: "black" },
+    { ...players[0], stone: "white" },
+  ];
+}
 
 function emptyCells(): CellStone[][] {
   return Array.from({ length: BOARD_SIZE }, () =>
@@ -126,25 +143,76 @@ function findWinningCells(
   return [];
 }
 
+function normalizeMoves(moves: Array<{ row: number; col: number }>): CellPosition[] {
+  return moves.map((move) => ({ row: move.row, col: move.col }));
+}
+
+function deriveHumanHints(
+  board: WasmBoard,
+  pendingBotMove: boolean,
+  players: [MatchPlayer, MatchPlayer],
+  status: MatchStatus,
+): Pick<LocalMatchState, "forbiddenMoves" | "threatMoves" | "winningMoves"> {
+  if (status !== "playing" || pendingBotMove) {
+    return {
+      forbiddenMoves: [],
+      threatMoves: [],
+      winningMoves: [],
+    };
+  }
+
+  const currentPlayer = board.currentPlayer() as 1 | 2;
+  const currentIndex = (currentPlayer - 1) as 0 | 1;
+
+  if (players[currentIndex].kind !== "human") {
+    return {
+      forbiddenMoves: [],
+      threatMoves: [],
+      winningMoves: [],
+    };
+  }
+
+  const winningMoves = normalizeMoves(
+    board.immediateWinningMovesFor(currentPlayer) as Array<{ row: number; col: number }>,
+  );
+  const winningKeys = new Set(winningMoves.map((move) => `${move.row},${move.col}`));
+  const opponent = currentPlayer === 1 ? 2 : 1;
+  const threatMoves = normalizeMoves(
+    board.immediateWinningMovesFor(opponent) as Array<{ row: number; col: number }>,
+  ).filter((move) => !winningKeys.has(`${move.row},${move.col}`));
+
+  return {
+    forbiddenMoves: normalizeMoves(
+      board.forbiddenMovesForCurrentPlayer() as Array<{ row: number; col: number }>,
+    ),
+    threatMoves,
+    winningMoves,
+  };
+}
+
 function snapshotState(
   board: WasmBoard,
   moves: MatchMove[],
   pendingBotMove: boolean,
   players: [MatchPlayer, MatchPlayer],
-): Omit<LocalMatchState, "dispose" | "placeHumanMove" | "startNewMatch"> {
+): Omit<LocalMatchState, "dispose" | "placeHumanMove" | "startNewMatch" | "startNextRound"> {
   const lastMove = moves.length > 0 ? moves[moves.length - 1] : null;
   const status = statusFromResult(board.result());
   const winner =
     status === "black_won" ? 1 : status === "white_won" ? 2 : null;
+  const hints = deriveHumanHints(board, pendingBotMove, players, status);
 
   return {
     cells: cellsFromBoard(board),
     currentPlayer: board.currentPlayer() as 1 | 2,
+    forbiddenMoves: hints.forbiddenMoves,
     lastMove,
     moves,
     pendingBotMove,
     players,
     status,
+    threatMoves: hints.threatMoves,
+    winningMoves: hints.winningMoves,
     winningCells: winner ? findWinningCells(board, lastMove, winner) : [],
   };
 }
@@ -156,20 +224,27 @@ export function createLocalMatchStore(
   const botDepth = options.botDepth ?? 3;
   const boardFactory = options.boardFactory ?? WasmBoard.createWithVariant;
   const botRunner = options.botRunner ?? new BotRunner();
-  const players = DEFAULT_PLAYERS;
+  let players = defaultPlayers();
 
   let board = boardFactory(variant);
   let requestToken = 0;
 
-  botRunner.configure([
-    { kind: "human" },
-    { kind: "baseline", depth: botDepth },
-  ] satisfies [BotSpec, BotSpec]);
-
   const store = createStore<LocalMatchState>((set, get) => {
+    const configureBots = (): void => {
+      botRunner.configure(
+        players.map((player) =>
+          player.kind === "human"
+            ? { kind: "human" }
+            : { kind: "baseline", depth: botDepth },
+        ) as [BotSpec, BotSpec],
+      );
+    };
+
     const updateState = (nextMoves: MatchMove[], pendingBotMove: boolean): void => {
       set(snapshotState(board, nextMoves, pendingBotMove, players));
     };
+
+    const currentPlayerSlot = (): 0 | 1 => ((board.currentPlayer() as 1 | 2) - 1) as 0 | 1;
 
     const applyMove = (row: number, col: number, player: 1 | 2): boolean => {
       const result = board.applyMove(row, col) as { error?: unknown };
@@ -192,13 +267,13 @@ export function createLocalMatchStore(
       return true;
     };
 
-    const queueBotMove = async (): Promise<void> => {
+    const queueBotMove = async (slot: 0 | 1): Promise<void> => {
       const activeToken = ++requestToken;
 
       updateState(get().moves, true);
 
       try {
-        const move = await botRunner.chooseMove(1, variant, board.toFen());
+        const move = await botRunner.chooseMove(slot, variant, board.toFen());
 
         if (activeToken !== requestToken) {
           return;
@@ -209,7 +284,7 @@ export function createLocalMatchStore(
           return;
         }
 
-        applyMove(move.row, move.col, 2);
+        applyMove(move.row, move.col, (slot + 1) as 1 | 2);
       } catch (error) {
         console.error("[local_match_store] bot move failed", error);
         if (activeToken === requestToken) {
@@ -217,6 +292,31 @@ export function createLocalMatchStore(
         }
       }
     };
+
+    const maybeQueueBotMove = (): void => {
+      if (board.result() !== "ongoing") {
+        return;
+      }
+
+      const slot = currentPlayerSlot();
+      if (players[slot].kind !== "bot") {
+        return;
+      }
+
+      void queueBotMove(slot);
+    };
+
+    const resetMatch = (nextPlayers: [MatchPlayer, MatchPlayer]): void => {
+      requestToken += 1;
+      board.free();
+      board = boardFactory(variant);
+      players = clonePlayers(nextPlayers);
+      configureBots();
+      updateState([], false);
+      maybeQueueBotMove();
+    };
+
+    configureBots();
 
     return {
       ...snapshotState(board, [], false, players),
@@ -227,27 +327,29 @@ export function createLocalMatchStore(
       },
       placeHumanMove: (row: number, col: number) => {
         const state = get();
+        const player = board.currentPlayer() as 1 | 2;
+        const slot = (player - 1) as 0 | 1;
 
-        if (state.pendingBotMove || state.status !== "playing" || state.currentPlayer !== 1) {
+        if (state.pendingBotMove || state.status !== "playing" || players[slot].kind !== "human") {
           return false;
         }
         if (!board.isLegal(row, col)) {
           return false;
         }
 
-        const moved = applyMove(row, col, 1);
+        const moved = applyMove(row, col, player);
 
-        if (moved && board.result() === "ongoing" && board.currentPlayer() === 2) {
-          void queueBotMove();
+        if (moved) {
+          maybeQueueBotMove();
         }
 
         return moved;
       },
       startNewMatch: () => {
-        requestToken += 1;
-        board.free();
-        board = boardFactory(variant);
-        updateState([], false);
+        resetMatch(players);
+      },
+      startNextRound: () => {
+        resetMatch(swapPlayers(players));
       },
     };
   });
