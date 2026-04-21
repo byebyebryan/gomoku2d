@@ -6,12 +6,11 @@ export function HomeRoute() {
   return (
     <main className={styles.page}>
       <section className={styles.hero}>
-        <p className={styles.eyebrow}>Phase 1 / React shell</p>
+        <p className={styles.eyebrow}>Five in a row</p>
         <h1 className={styles.title}>Gomoku2D</h1>
         <p className={styles.summary}>
-          The board stays in Phaser. Everything around it moves to a DOM shell.
-          This first cut keeps the product narrow: one offline bot match,
-          routed through the new architecture.
+          A quiet board, a stubborn Classic Bot, and one simple goal: make
+          five before it does.
         </p>
         <div className={styles.actions}>
           <Link className={styles.primaryAction} to="/match/local">

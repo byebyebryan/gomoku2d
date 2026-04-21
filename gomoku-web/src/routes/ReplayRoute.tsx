@@ -61,8 +61,8 @@ export function ReplayRoute() {
     return (
       <main className={styles.page}>
         <section className={styles.notFound}>
-          <h1 className={styles.title}>Replay not found</h1>
-          <p className={styles.notFoundText}>This local replay is no longer available on this device.</p>
+          <h1 className={styles.title}>Replay unavailable</h1>
+          <p className={styles.notFoundText}>This replay is no longer stored on this device.</p>
           <Link className={styles.secondaryAction} to="/profile">
             Back to Profile
           </Link>
@@ -77,15 +77,15 @@ export function ReplayRoute() {
     <main className={styles.page}>
       <header className={styles.header}>
         <div>
-          <p className={styles.eyebrow}>Local replay</p>
+          <p className={styles.eyebrow}>Match replay</p>
           <h1 className={styles.title}>Replay</h1>
           <p className={styles.summary}>{replayPlayerLabel(match, guestDisplayName)}</p>
         </div>
         <div className={styles.headerActions}>
-          <Link className={styles.secondaryAction} to="/profile">
+          <Link className={`${styles.secondaryAction} ${styles.infoAction}`} to="/profile">
             Profile
           </Link>
-          <Link className={styles.secondaryAction} to="/">
+          <Link className={`${styles.secondaryAction} ${styles.accentAction}`} to="/">
             Home
           </Link>
         </div>
@@ -121,7 +121,7 @@ export function ReplayRoute() {
             <div className={styles.controlsHeader}>
               <p className={styles.sectionLabel}>Playback</p>
               <button
-                className={styles.secondaryAction}
+                className={`${styles.secondaryAction} ${styles.successAction}`}
                 onClick={() => {
                   setAutoplaying((current) => !current);
                 }}
@@ -185,6 +185,12 @@ export function ReplayRoute() {
                   setAutoplaying(false);
                   setMoveIndex(Number(event.target.value));
                 }}
+                style={
+                  {
+                    "--timeline-progress":
+                      match.moves.length === 0 ? "0%" : `${(frame.moveIndex / match.moves.length) * 100}%`,
+                  } as React.CSSProperties
+                }
                 type="range"
                 value={frame.moveIndex}
               />

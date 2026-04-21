@@ -47,7 +47,7 @@ test("finished board click advances to the next round with swapped colors", asyn
 
   await expect
     .poll(async () => page.locator("article").nth(0).innerText())
-    .toContain("Search Bot");
+    .toContain("Classic Bot");
   await expect(page.locator("article").nth(0)).toContainText("black");
   await expect(page.locator("article").nth(1)).toContainText("Guest");
   await expect(page.locator("article").nth(1)).toContainText("white");

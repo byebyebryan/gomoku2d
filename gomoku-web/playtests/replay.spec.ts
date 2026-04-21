@@ -43,7 +43,7 @@ test("local replay opens from profile history and supports stepping plus autopla
 
   await expect(page.getByRole("heading", { name: "Replay" })).toBeVisible();
   await expect(page.getByText("Move 0 / 10")).toBeVisible();
-  await expect(page.getByText("Bryan Guest (black) vs Search Bot (white)")).toBeVisible();
+  await expect(page.getByText("Bryan Guest (black) vs Classic Bot (white)")).toBeVisible();
   await expect(page.locator('[data-testid="replay-step-controls"] button')).toHaveText([
     "Start",
     "End",
@@ -63,6 +63,6 @@ test("local replay opens from profile history and supports stepping plus autopla
   await expect
     .poll(async () => page.getByText(/Move \d+ \/ 10/).textContent(), { timeout: 15_000 })
     .toBe("Move 10 / 10");
-  await expect(page.getByText("Search Bot wins")).toBeVisible();
+  await expect(page.getByText("Classic Bot wins")).toBeVisible();
   await expect(page.getByRole("button", { name: "Auto play" })).toBeVisible();
 });
