@@ -1,8 +1,9 @@
 .page {
   display: grid;
-  min-height: 100dvh;
+  height: 100dvh;
   padding: 32px;
   place-items: center;
+  overflow: auto;
 }
 
 .hero {

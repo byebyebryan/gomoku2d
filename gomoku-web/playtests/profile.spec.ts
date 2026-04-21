@@ -62,3 +62,58 @@ test("guest profile persists locally and captures finished local matches", async
   await expect(displayName).toHaveValue("Guest");
   await expect(page.getByText("0 local matches")).toBeVisible();
 });
+
+test("profile history keeps summary pinned while the history list scrolls", async ({ page }) => {
+  await page.goto("/profile");
+
+  await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
+  await expect(page.getByText("Finished", { exact: true })).toBeVisible();
+  await expect(page.getByText("Wins", { exact: true })).toBeVisible();
+  await expect(page.getByText("Losses", { exact: true })).toBeVisible();
+  await expect(page.getByText("Draws", { exact: true })).toBeVisible();
+
+  await page.evaluate(() => {
+    const historyBody = document.querySelector('[class*="historyBody"]');
+    if (!historyBody) {
+      throw new Error("history body not found");
+    }
+
+    const filler = document.createElement("div");
+    filler.setAttribute("data-testid", "profile-history-growth-fixture");
+    filler.style.display = "grid";
+    filler.style.gap = "12px";
+    filler.style.marginTop = "16px";
+
+    for (let index = 0; index < 18; index += 1) {
+      const row = document.createElement("div");
+      row.textContent = `Fixture match ${index + 1}`;
+      row.style.padding = "14px";
+      row.style.border = "1px solid rgba(255, 255, 255, 0.12)";
+      row.style.background = "rgba(255, 255, 255, 0.04)";
+      filler.appendChild(row);
+    }
+
+    historyBody.appendChild(filler);
+  });
+
+  await page.waitForTimeout(100);
+
+  const metrics = await page.evaluate(() => {
+    const historyBody = document.querySelector('[class*="historyBody"]');
+
+    if (!historyBody) {
+      return null;
+    }
+
+    return {
+      historyBodyClientHeight: (historyBody as HTMLElement).clientHeight,
+      historyBodyScrollHeight: (historyBody as HTMLElement).scrollHeight,
+      pageClientHeight: document.documentElement.clientHeight,
+      pageHeight: document.documentElement.scrollHeight,
+    };
+  });
+
+  expect(metrics).not.toBeNull();
+  expect(metrics!.pageHeight - metrics!.pageClientHeight).toBeLessThanOrEqual(2);
+  expect(metrics!.historyBodyScrollHeight).toBeGreaterThan(metrics!.historyBodyClientHeight);
+});

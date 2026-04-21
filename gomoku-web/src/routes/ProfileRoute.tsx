@@ -140,8 +140,8 @@ export function ProfileRoute() {
           </section>
         </div>
 
-        <div className={styles.column}>
-          <section className={styles.card}>
+        <div className={`${styles.column} ${styles.historyColumn}`}>
+          <section className={`${styles.card} ${styles.historyCard}`}>
             <div className={styles.cardHeader}>
               <p className={styles.sectionLabel}>Local History</p>
               <p className={styles.historyCount}>{historyCountLabel(history.length)}</p>
@@ -164,40 +164,41 @@ export function ProfileRoute() {
                 <span className={styles.summaryLabel}>Draws</span>
               </article>
             </div>
-
-            {history.length === 0 ? (
-              <p className={styles.emptyState}>Finished matches are saved here.</p>
-            ) : (
-              <ol className={styles.historyList}>
-                {history.map((match) => (
-                  <li className={styles.historyItem} key={match.id}>
-                    <div className={styles.historyRow}>
-                      <div>
-                        <p className={styles.historyTitle}>{replayWinnerLabel(match, guestDisplayName)}</p>
-                        <p className={styles.historyMeta}>{replayPlayerLabel(match, guestDisplayName)}</p>
+            <div className={styles.historyBody}>
+              {history.length === 0 ? (
+                <p className={styles.emptyState}>Finished matches are saved here.</p>
+              ) : (
+                <ol className={styles.historyList}>
+                  {history.map((match) => (
+                    <li className={styles.historyItem} key={match.id}>
+                      <div className={styles.historyRow}>
+                        <div>
+                          <p className={styles.historyTitle}>{replayWinnerLabel(match, guestDisplayName)}</p>
+                          <p className={styles.historyMeta}>{replayPlayerLabel(match, guestDisplayName)}</p>
+                        </div>
                       </div>
-                    </div>
-                    <div className={styles.historyRow}>
-                      <p className={styles.historyMeta}>
-                        {variantLabel(match.variant)} · {match.moves.length} moves
-                      </p>
-                      <div className={styles.historyActions}>
-                        <p className={styles.historyMeta}>{new Date(match.savedAt).toLocaleString()}</p>
-                        <button
-                          className={`${styles.historyAction} ${styles.infoAction}`}
-                          onClick={() => {
-                            navigate(`/replays/local/${match.id}`);
-                          }}
-                          type="button"
-                        >
-                          Open replay
-                        </button>
+                      <div className={styles.historyRow}>
+                        <p className={styles.historyMeta}>
+                          {variantLabel(match.variant)} · {match.moves.length} moves
+                        </p>
+                        <div className={styles.historyActions}>
+                          <p className={styles.historyMeta}>{new Date(match.savedAt).toLocaleString()}</p>
+                          <button
+                            className={`${styles.historyAction} ${styles.infoAction}`}
+                            onClick={() => {
+                              navigate(`/replays/local/${match.id}`);
+                            }}
+                            type="button"
+                          >
+                            Open replay
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            )}
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
           </section>
         </div>
       </section>
