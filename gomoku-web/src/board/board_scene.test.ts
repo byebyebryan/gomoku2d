@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { shouldAnimatePlacedStone, shouldStopStoneIdleCycle } from "./board_scene_logic";
+import {
+  shouldAnimatePlacedStone,
+  shouldRestartPointerCycle,
+  shouldStopStoneIdleCycle,
+} from "./board_scene_logic";
 
 describe("shouldAnimatePlacedStone", () => {
   it("animates new stones while the match is still playing", () => {
@@ -30,5 +34,23 @@ describe("shouldStopStoneIdleCycle", () => {
     expect(shouldStopStoneIdleCycle("playing", "playing")).toBe(false);
     expect(shouldStopStoneIdleCycle("white_won", "white_won")).toBe(false);
     expect(shouldStopStoneIdleCycle("black_won", "playing")).toBe(false);
+  });
+});
+
+describe("shouldRestartPointerCycle", () => {
+  it("starts the cycle when the pointer first becomes visible on a legal cell", () => {
+    expect(shouldRestartPointerCycle(null, "7,7", false)).toBe(true);
+  });
+
+  it("restarts the cycle when the hovered cell changes", () => {
+    expect(shouldRestartPointerCycle("7,7", "7,8", true)).toBe(true);
+  });
+
+  it("does not restart the cycle for pointer jitter within the same cell", () => {
+    expect(shouldRestartPointerCycle("7,7", "7,7", true)).toBe(false);
+  });
+
+  it("does not restart the cycle when there is no valid hovered cell", () => {
+    expect(shouldRestartPointerCycle("7,7", null, true)).toBe(false);
   });
 });

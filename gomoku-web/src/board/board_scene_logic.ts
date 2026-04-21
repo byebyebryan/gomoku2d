@@ -14,3 +14,15 @@ export function shouldStopStoneIdleCycle(
 ): boolean {
   return previousStatus === "playing" && nextStatus !== "playing";
 }
+
+export function shouldRestartPointerCycle(
+  previousCellKey: string | null,
+  nextCellKey: string | null,
+  pointerVisible: boolean,
+): boolean {
+  if (nextCellKey === null) {
+    return false;
+  }
+
+  return !pointerVisible || previousCellKey !== nextCellKey;
+}

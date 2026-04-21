@@ -11,7 +11,11 @@ import {
   WARNING_ANIMS,
 } from "./constants";
 import { BoardRenderer } from "./board_renderer";
-import { shouldAnimatePlacedStone, shouldStopStoneIdleCycle } from "./board_scene_logic";
+import {
+  shouldAnimatePlacedStone,
+  shouldRestartPointerCycle,
+  shouldStopStoneIdleCycle,
+} from "./board_scene_logic";
 
 import type { CellPosition, CellStone, MatchMove, MatchStatus } from "../game/types";
 
@@ -148,6 +152,7 @@ export class BoardScene extends Phaser.Scene {
   private hintSprites: Phaser.GameObjects.Sprite[] = [];
   private overlayLayer: Phaser.GameObjects.Container | null = null;
   private pointer: Phaser.GameObjects.Sprite | null = null;
+  private pointerCellKey: string | null = null;
   private pointerCycle: IdleCycle | null = null;
   private pointerLayer: Phaser.GameObjects.Container | null = null;
   private renderVersion = 0;
@@ -173,7 +178,7 @@ export class BoardScene extends Phaser.Scene {
 
   create(): void {
     this.ensureAnimations();
-    this.pointerCycle = new IdleCycle(this, POINTER_IDLE_ANIMS, 500, 1500, null);
+    this.pointerCycle = new IdleCycle(this, POINTER_IDLE_ANIMS, 500, 1500, POINTER_ANIMS.OUT.start);
     this.stoneCycle = new IdleCycle(this, STONE_IDLE_ANIMS, 700, 2200, 0);
     this.createSceneGraph();
     this.scale.on(Phaser.Scale.Events.RESIZE, this.renderBoard, this);
@@ -198,6 +203,7 @@ export class BoardScene extends Phaser.Scene {
     this.boardLayer = null;
     this.overlayLayer = null;
     this.pointer = null;
+    this.pointerCellKey = null;
     this.pointerLayer = null;
     this.stoneSprites.clear();
   }
@@ -307,6 +313,7 @@ export class BoardScene extends Phaser.Scene {
     this.stoneSprites.clear();
     this.forbiddenSprites = [];
     this.hintSprites = [];
+    this.pointerCellKey = null;
     this.sequenceLabels = [];
     this.winSprites = [];
 
@@ -501,12 +508,19 @@ export class BoardScene extends Phaser.Scene {
     }
 
     const point = this.board.cellToPixel(cell.row, cell.col);
+    const cellKey = this.cellKey(cell.row, cell.col);
+    const restartPointerCycle = shouldRestartPointerCycle(
+      this.pointerCellKey,
+      cellKey,
+      this.pointer.visible,
+    );
     this.pointer
       .setPosition(point.x, point.y)
       .setTint(this.boardState.currentPlayer === 1 ? COLOR.STONE_BLACK : COLOR.STONE_WHITE)
       .setVisible(true);
+    this.pointerCellKey = cellKey;
 
-    if (this.getPointerType(pointer) === "mouse") {
+    if (this.getPointerType(pointer) === "mouse" && restartPointerCycle) {
       this.pointerCycle?.start(this.pointer);
     }
   }
@@ -532,6 +546,7 @@ export class BoardScene extends Phaser.Scene {
       .setPosition(point.x, point.y)
       .setTint(this.boardState.currentPlayer === 1 ? COLOR.STONE_BLACK : COLOR.STONE_WHITE)
       .setVisible(true);
+    this.pointerCellKey = this.cellKey(cell.row, cell.col);
   }
 
   private handlePointerUp(pointer: Phaser.Input.Pointer): void {
@@ -573,6 +588,7 @@ export class BoardScene extends Phaser.Scene {
 
   private hidePointer(): void {
     this.pointerCycle?.stop();
+    this.pointerCellKey = null;
     if (!this.pointer) {
       return;
     }
