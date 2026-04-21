@@ -22,10 +22,13 @@ test("guest profile persists locally and captures finished local matches", async
   await displayName.fill("Bryan Guest");
   await page.reload();
   await expect(displayName).toHaveValue("Bryan Guest");
+  await expect(page.getByText("Preferred rules")).toBeVisible();
+  await page.getByRole("button", { name: "Renju" }).click();
 
   await page.getByRole("link", { name: "Play Bot" }).click();
   await expect(page.getByRole("heading", { name: "Local Match" })).toBeVisible();
   await expect(page.getByText("Bryan Guest")).toBeVisible();
+  await expect(page.getByText("Current: Renju")).toBeVisible();
 
   const canvas = page.locator("canvas").first();
   const box = await canvas.boundingBox();
@@ -50,6 +53,7 @@ test("guest profile persists locally and captures finished local matches", async
   await expect(page.getByText("Losses", { exact: true })).toBeVisible();
   await expect(page.getByText("Draws", { exact: true })).toBeVisible();
   await expect(page.getByText("Bryan Guest (black) vs Classic Bot (white)")).toBeVisible();
+  await expect(page.locator("ol li").first()).toContainText("Renju");
 
   await displayName.fill("Bryan Prime");
   await expect(page.getByText("Bryan Prime (black) vs Classic Bot (white)")).toBeVisible();

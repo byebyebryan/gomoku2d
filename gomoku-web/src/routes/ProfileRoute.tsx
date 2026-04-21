@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useStore } from "zustand";
 
 import { guestProfileStore } from "../profile/guest_profile_store";
-import { replayPlayerLabel, replayWinnerLabel } from "../replay/local_replay";
+import { replayPlayerLabel, replayWinnerLabel, variantLabel } from "../replay/local_replay";
 
 import styles from "./ProfileRoute.module.css";
 
@@ -112,9 +112,29 @@ export function ProfileRoute() {
               >
                 Reset local profile
               </button>
-              <div className={styles.staticSetting}>
-                <span>Board theme</span>
-                <strong>Classic</strong>
+              <div className={styles.settingsBlock}>
+                <div className={styles.settingHeader}>
+                  <span>Preferred rules</span>
+                  <strong>{variantLabel(settings.preferredVariant)}</strong>
+                </div>
+                <div className={styles.variantButtons}>
+                  {(["freestyle", "renju"] as const).map((variant) => (
+                    <button
+                      className={
+                        settings.preferredVariant === variant
+                          ? `${styles.variantButton} ${styles.variantButtonActive}`
+                          : styles.variantButton
+                      }
+                      key={variant}
+                      onClick={() => {
+                        guestProfileStore.getState().updateSettings({ preferredVariant: variant });
+                      }}
+                      type="button"
+                    >
+                      {variantLabel(variant)}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </section>
@@ -158,7 +178,9 @@ export function ProfileRoute() {
                       </div>
                     </div>
                     <div className={styles.historyRow}>
-                      <p className={styles.historyMeta}>{match.moves.length} moves</p>
+                      <p className={styles.historyMeta}>
+                        {variantLabel(match.variant)} · {match.moves.length} moves
+                      </p>
                       <div className={styles.historyActions}>
                         <p className={styles.historyMeta}>{new Date(match.savedAt).toLocaleString()}</p>
                         <button

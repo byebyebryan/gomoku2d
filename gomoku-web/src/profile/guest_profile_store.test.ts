@@ -36,6 +36,17 @@ describe("createGuestProfileStore", () => {
       id: profile.id,
       kind: "guest",
     });
+    expect(reloadedStore.getState().settings.preferredVariant).toBe("freestyle");
+  });
+
+  it("persists the preferred rules variant", () => {
+    const storage = createMemoryStorage();
+    const store = createGuestProfileStore({ storage });
+
+    store.getState().updateSettings({ preferredVariant: "renju" });
+
+    const reloadedStore = createGuestProfileStore({ storage });
+    expect(reloadedStore.getState().settings.preferredVariant).toBe("renju");
   });
 
   it("records finished guest matches and keeps newest history first", () => {
@@ -111,6 +122,7 @@ describe("createGuestProfileStore", () => {
     expect(resetState.profile).toBeNull();
     expect(resetState.settings).toEqual({
       boardTheme: "classic",
+      preferredVariant: "freestyle",
       reducedMotion: false,
       soundEnabled: true,
     });

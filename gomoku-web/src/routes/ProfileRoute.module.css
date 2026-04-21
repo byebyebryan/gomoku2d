@@ -149,7 +149,7 @@
 }
 
 .toggleRow,
-.staticSetting,
+.settingsBlock,
 .dangerAction {
   display: flex;
   align-items: center;
@@ -159,6 +159,41 @@
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--surface-muted);
+}
+
+.settingsBlock {
+  display: grid;
+}
+
+.settingHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.variantButtons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.variantButton {
+  min-width: 0;
+  padding: 12px 14px;
+  border: 2px solid var(--border);
+  border-radius: 0;
+  background: #2a3036;
+  color: var(--text);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.variantButtonActive {
+  border-color: #25537c;
+  background: var(--info);
+  color: #0d1720;
 }
 
 .dangerAction {

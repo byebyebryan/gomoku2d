@@ -43,6 +43,106 @@ describe("createLocalMatchStore", () => {
     });
   });
 
+  it("tracks the active and selected rules variant", () => {
+    const store = createLocalMatchStore({
+      botRunner: {
+        chooseMove: async () => null,
+        configure: () => undefined,
+        dispose: () => undefined,
+      },
+      variant: "renju",
+    });
+
+    const state = store.getState() as LocalMatchState & {
+      currentVariant: "freestyle" | "renju";
+      selectedVariant: "freestyle" | "renju";
+    };
+
+    expect(state.currentVariant).toBe("renju");
+    expect(state.selectedVariant).toBe("renju");
+  });
+
+  it("applies a rules change immediately before the first move", () => {
+    const store = createLocalMatchStore({
+      botRunner: {
+        chooseMove: async () => null,
+        configure: () => undefined,
+        dispose: () => undefined,
+      },
+    });
+
+    const state = store.getState() as LocalMatchState & {
+      currentVariant: "freestyle" | "renju";
+      selectedVariant: "freestyle" | "renju";
+      selectVariant: (variant: "freestyle" | "renju") => void;
+    };
+
+    state.selectVariant("renju");
+
+    expect(store.getState()).toMatchObject({
+      currentPlayer: 1,
+      currentVariant: "renju",
+      moves: [],
+      selectedVariant: "renju",
+      status: "playing",
+    });
+  });
+
+  it("defers a rules change until the next game once moves exist", () => {
+    const store = createLocalMatchStore({
+      botRunner: {
+        chooseMove: async () => null,
+        configure: () => undefined,
+        dispose: () => undefined,
+      },
+    });
+
+    expect(store.getState().placeHumanMove(7, 7)).toBe(true);
+
+    const state = store.getState() as LocalMatchState & {
+      currentVariant: "freestyle" | "renju";
+      selectedVariant: "freestyle" | "renju";
+      selectVariant: (variant: "freestyle" | "renju") => void;
+    };
+
+    state.selectVariant("renju");
+
+    expect(store.getState()).toMatchObject({
+      currentVariant: "freestyle",
+      selectedVariant: "renju",
+    });
+    expect(store.getState().moves).toHaveLength(1);
+  });
+
+  it("starts a new match with the selected rules variant", () => {
+    const store = createLocalMatchStore({
+      botRunner: {
+        chooseMove: async () => null,
+        configure: () => undefined,
+        dispose: () => undefined,
+      },
+    });
+
+    expect(store.getState().placeHumanMove(7, 7)).toBe(true);
+
+    const state = store.getState() as LocalMatchState & {
+      currentVariant: "freestyle" | "renju";
+      selectedVariant: "freestyle" | "renju";
+      selectVariant: (variant: "freestyle" | "renju") => void;
+    };
+
+    state.selectVariant("renju");
+    store.getState().startNewMatch();
+
+    expect(store.getState()).toMatchObject({
+      currentPlayer: 1,
+      currentVariant: "renju",
+      moves: [],
+      selectedVariant: "renju",
+      status: "playing",
+    });
+  });
+
   it("derives human-turn warning cues from the wasm board", () => {
     const board = WasmBoard.createWithVariant("freestyle");
     const moves: Array<[number, number]> = [
@@ -99,9 +199,17 @@ describe("createLocalMatchStore", () => {
       },
     });
 
+    (store.getState() as LocalMatchState & {
+      selectVariant: (variant: "freestyle" | "renju") => void;
+    }).selectVariant("renju");
+
     expect("startNextRound" in store.getState()).toBe(true);
     (store.getState() as LocalMatchState & { startNextRound: () => void }).startNextRound();
 
+    expect((store.getState() as LocalMatchState & {
+      currentVariant: "freestyle" | "renju";
+      selectedVariant: "freestyle" | "renju";
+    }).currentVariant).toBe("renju");
     expect(store.getState().players[0]).toMatchObject({ kind: "bot", stone: "black" });
     expect(store.getState().players[1]).toMatchObject({ kind: "human", stone: "white" });
     expect(store.getState().pendingBotMove).toBe(true);

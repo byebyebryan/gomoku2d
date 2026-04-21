@@ -18,9 +18,11 @@ test("local replay opens from profile history and supports stepping plus autopla
 
   const displayName = page.getByLabel("Display name");
   await displayName.fill("Bryan Guest");
+  await page.getByRole("button", { name: "Renju" }).click();
 
   await page.getByRole("link", { name: "Play Bot" }).click();
   await expect(page.getByRole("heading", { name: "Local Match" })).toBeVisible();
+  await expect(page.getByText("Current: Renju")).toBeVisible();
 
   const canvas = page.locator("canvas").first();
   const box = await canvas.boundingBox();
@@ -44,6 +46,7 @@ test("local replay opens from profile history and supports stepping plus autopla
   await expect(page.getByRole("heading", { name: "Replay" })).toBeVisible();
   await expect(page.getByText("Move 0 / 10")).toBeVisible();
   await expect(page.getByText("Bryan Guest (black) vs Classic Bot (white)")).toBeVisible();
+  await expect(page.getByText("Rules: Renju")).toBeVisible();
   await expect(page.locator('[data-testid="replay-step-controls"] button')).toHaveText([
     "Start",
     "End",
