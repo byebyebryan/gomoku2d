@@ -54,9 +54,12 @@ First backend component. Introduces Firebase but nothing else.
 - Web SDK wired up for Google/GitHub sign-in when a cloud-backed feature
   is needed.
 - Signing in creates or loads `profiles/{uid}` and promotes local guest
-  state to a cloud-backed profile.
+  state to a cloud-backed profile, including one-time import of finished
+  guest match history.
+- Add the promotion UX: sign-in gate, lightweight import progress, success /
+  partial-failure messaging, retry path from profile/settings.
 - Profile screen: guest vs signed-in state, display name, avatar,
-  linked providers, sign out.
+  linked providers, sign out, username claim state.
 - Firestore rules for profile-only access, deployed via a committed
   GH Actions workflow (`deploy-rules.yml`).
 
@@ -94,12 +97,17 @@ First feature users will actually notice. Makes the offline bot match
 into something worth coming back to.
 
 - Guest matches are stored in local history only.
-- Signed-in users get cloud-backed match history in
-  `profiles/{uid}/matches/{id}`.
+- Signed-in users get private cloud-backed match history in
+  `profiles/{uid}/matches/{id}`, written once at match end for local bot/casual
+  matches.
+- These private saved matches are the canonical source for replay viewing and
+  later analysis.
 - Public `replays/{id}` are created only when the user explicitly hits
-  Share / Publish from a cloud-saved match.
+  Share / Publish from a saved private match.
 - Replay screen in the web app: timeline scrubber, playback controls,
   same board code in a read-only mode.
+- Match/replay cards show state clearly (`Private`, `Published`, `Verified` as
+  applicable).
 - "Share" button on match result → copies a public URL. Loading the URL
   while signed out still renders the replay (public read on
   `replays/{id}`).
@@ -120,6 +128,8 @@ The biggest product leap. Two real people playing on the same board.
 - Cloud Run gains match-authority endpoints: `POST /match` (create),
   `POST /match/{id}/move` (apply), with server validating every move
   via `gomoku-core`.
+- Finished trusted matches are also written into each participant's private
+  history as `server_verified` records.
 - Web adds the online lobby (`/online`) as a direct-challenge surface.
   Starts with challenge-by-link; matchmaking queue comes after.
 - Live match screen subscribes to `matches/{id}` via `onSnapshot`.
@@ -140,8 +150,12 @@ Deliver on the lab-as-feature-source pillar.
 - Post-match job (Cloud Run): re-run each move through `SearchBot` at
   server depth, write an `analysis` subdoc with per-move evaluation
   deltas and suggested best moves.
+- Analysis runs from saved private match history; published public replays are
+  projections, not the analysis source of truth.
 - Replay viewer gains: evaluation curve on the timeline, "critical
   moment" markers, analysis panel showing top alternatives.
+- Replay viewer handles async analysis states cleanly: queued, analyzing, ready,
+  unavailable.
 - "Try from here" button: branch into a live bot match from any
   position in a replay. Plays against a bot calibrated to the turning
   point's difficulty.
@@ -156,9 +170,10 @@ without needing to understand evaluation numbers.
 
 Second lab-driven feature. Reuses the analysis pipeline.
 
-- Puzzle generator (Cloud Run job) scans `replays/{id}` for positions
-  with forced wins or forced blocks at depth 5+, verifies with deeper
-  search, tags by theme (open four, double threat, VCF, etc.).
+- Puzzle generator (Cloud Run job) scans `server_verified` saved match history
+  and curated seed positions for states with forced wins or forced blocks at
+  depth 5+, verifies with deeper search, tags by theme (open four, double
+  threat, VCF, etc.).
 - Publishes to `puzzles/{id}`.
 - Web: `/puzzles` list and solver. Per-user progress in
   `puzzle_attempts/{uid}/{id}`.

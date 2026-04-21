@@ -31,6 +31,23 @@ Not every route needs to work for guests. The design assumption is:
 - offline/casual play works as a guest
 - cloud-backed features gate sign-in at the point they become relevant
 
+## Match mode matrix
+
+One table to keep the product rules legible:
+
+| Mode | Sign-in required | Saved where | Trust | Undo | Share | Analysis | Source of truth |
+|---|---|---|---|---|---|---|---|
+| Guest bot match | No | Local browser only | local-only | Yes | No | No | Browser |
+| Signed-in bot / casual local match | Yes | Private cloud history at match end | `client_uploaded` | Yes, rate-limited | Yes, via publish | Yes, private | Browser during play, cloud after finish |
+| Trusted online / ranked match | Yes | Server-owned live match + private history | `server_verified` | No | Yes | Yes | Server during play, cloud after finish |
+| Replay branch / try-from-here | No / Yes | Local by default; optional private save if signed in | local-only or `client_uploaded` | Yes | No until saved / published | Not initially | Browser |
+
+Resume rule:
+
+- In-progress guest and casual local matches resume on the same device only.
+- Trusted online matches resume across devices because the server owns live
+  state.
+
 ## Screen inventory
 
 ### Home (`/`)
@@ -45,6 +62,15 @@ Three sections, stacked:
    Tapping opens the replay. "See all" routes to `/replays`.
 
 No feed, no social graph. Home is an action hub, not a timeline.
+
+State variants:
+
+- **Guest** — show `Play bot`, local recent games, and a lightweight callout:
+  `Sign in to sync games, publish replays, and play online.`
+- **Signed-in** — show `Play bot`, `Play online`, and merged private cloud
+  history (including imported guest matches).
+- **Signed-in but offline** — show cached history plus a small offline banner:
+  `Offline. New local matches will save here until sync is available.`
 
 ### Match (`/match/:id`)
 
@@ -73,9 +99,19 @@ The board is the center of gravity; everything else is a frame.
   below), settings, quit.
 
 **On undo:** in bot matches it's available but rate-limited and visibly
-costs rating (or is off entirely on higher difficulty). In human matches
-it requires opponent consent. The button exists because it's expected in
-casual play; the design discourages it from becoming the default.
+signals "casual mode" (or is off entirely on higher difficulty). In human
+matches it requires opponent consent. In trusted/rated play it does not exist.
+The button is there because it's expected in casual play; the design
+discourages it from becoming the default.
+
+Narrow-screen rules:
+
+- Board stays first and largest.
+- Opponent card compresses above the board; self card compresses below.
+- Move history becomes a bottom sheet / drawer rather than a permanent side
+  panel.
+- Destructive actions (`Resign`, `Leave`) move into the menu instead of staying
+  always visible.
 
 ### Online lobby (`/online`)
 
@@ -108,6 +144,34 @@ The board reused, with a timeline scrubber underneath:
 - **"Try from here"** — branch into a live match against a bot from this
   position. Drives "can you save this game?" mode.
 
+Saved-match and publish states:
+
+- Every signed-in saved match starts as **Private**.
+- Publishing is an explicit action that creates a public replay projection.
+- Replay cards and headers should show compact state badges:
+  - `Private`
+  - `Published`
+  - `Verified` (when the underlying match trust warrants it)
+
+Replay actions:
+
+- `Open replay`
+- `Publish replay` for saved private matches
+- `Copy link` only after publish
+- `Unpublish` is optional later; not required for the first shipped version
+
+Analysis readiness states:
+
+- `No analysis yet`
+- `Queued`
+- `Analyzing`
+- `Ready`
+- `Unavailable`
+
+The replay viewer must still be useful without analysis. The board and timeline
+work immediately; the right-side analysis panel can be empty, skeleton-loaded,
+or show a simple status line depending on state.
+
 ### Puzzles (`/puzzles`)
 
 A puzzle is a position + "find the win in N" or "defend against the threat."
@@ -125,7 +189,7 @@ theme.
 ### Profile (`/profile`)
 
 - **Identity** — local guest state or signed-in profile, avatar, display name,
-  sign in / link to Google or GitHub, sign out.
+  username claim state, sign in / link to Google or GitHub, sign out.
 - **Stats** — games played, win rate by color, rating graph over time,
   bot difficulty distribution.
 - **Settings** — board theme, sound, notifications (if any), accessibility
@@ -133,6 +197,54 @@ theme.
 
 Stats are lightweight summaries, not a dashboard. If someone wants depth,
 they go to replays.
+
+Identity model in the UI:
+
+- **Display name** — editable friendly label used throughout most of the app.
+- **Username** — public handle, only required for public / online features.
+- If username is unset, show `Claim username` rather than blocking profile use.
+- Prompt for username only when entering public / online / publish flows, not
+  immediately at first sign-in.
+- Public/profile/share surfaces can show both, e.g. `Bryan` and `@byebyebryan`.
+
+## Cross-cutting flows
+
+### Guest → signed-in promotion
+
+The first session stays frictionless; sign-in only appears at a clear upgrade
+point.
+
+Trigger actions:
+
+- `Play online`
+- `Publish replay`
+- `Sync history`
+- `Claim username`
+
+Recommended flow:
+
+1. Guest clicks a cloud-gated action.
+2. Modal explains the value: `Sign in to sync your games and unlock online play.`
+3. User chooses Google or GitHub.
+4. After auth, show lightweight progress UI: `Importing your local games…`
+5. On success, show a brief confirmation: `Imported 3 local games.`
+
+If import partially fails, account creation still succeeds. Show:
+
+- `Some local games could not be imported.`
+- `Retry import` entry in profile/settings
+
+### Private history → published replay
+
+Sharing is a publish action, not a side effect of saving a match.
+
+Recommended flow:
+
+1. User opens a saved private match.
+2. User clicks `Publish replay`.
+3. App creates the public replay projection.
+4. UI flips from `Private` to `Published`.
+5. `Copy link` becomes available.
 
 ## Visual language
 
@@ -188,6 +300,29 @@ Restrained. Moves land with a short settle animation; the win line sweeps
 once; route transitions fade. No parallax, no decorative loops. Motion
 should direct attention, not decorate.
 
+### Responsive rules
+
+Desktop / wide layouts:
+
+- Match and replay can use adjacent side panels.
+- History and analysis can remain visible beside the board.
+
+Mobile / narrow layouts:
+
+- Board remains primary.
+- Move history and replay analysis collapse into bottom sheets / drawers.
+- Home and profile stay single-column.
+- Buttons favor fewer, clearer primary actions over dense toolbars.
+
+### Accessibility baseline
+
+- Reduced-motion mode disables non-essential shell transitions and board idle
+  flourishes while keeping move/result clarity.
+- Keyboard interaction exists for replay controls and core board actions where
+  practical.
+- Turn, warning, and win states never rely on color alone.
+- Clocks and move numbers use tabular numerals.
+
 ## Component families
 
 To build incrementally without re-designing each screen from scratch:
@@ -220,6 +355,20 @@ To build incrementally without re-designing each screen from scratch:
 ### Feedback
 - `<Toast>` — transient confirmations and non-blocking errors.
 - `<EmptyState>` — illustrated (pixel-style) empty lists.
+
+## System states
+
+These need explicit UI treatment even if they are not full screens:
+
+- `Sign-in required`
+- `Importing local history`
+- `Import failed`
+- `Offline`
+- `Sync failed`
+- `Waiting for opponent`
+- `Reconnecting`
+- `Opponent disconnected`
+- `Analysis unavailable`
 
 ## What we're explicitly not designing
 
