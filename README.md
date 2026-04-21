@@ -147,8 +147,9 @@ and deploys `dist/` to Pages.
 
 The code in `gomoku-web/` today is the `v0.1` snapshot: offline single-player,
 Phaser-driven. A pivot is underway to a React shell with Phaser reduced to a
-board-only renderer, backed by Firebase (auth, profile, replays) and a Rust
-Cloud Run service (match authority, verification, lab-powered analysis).
+board-only renderer, backed by a guest-first local profile model, Firebase
+(sign-in, cloud profiles, private match history, published replays), and a Rust
+Cloud Run service (trusted match authority, verification, lab-powered analysis).
 
 The canonical design and schedule live in `docs/`:
 

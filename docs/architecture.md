@@ -7,7 +7,7 @@ Three components, one repo:
 ```
 ┌────────────────────────────┐      ┌────────────────────────────┐
 │   gomoku-web (browser)     │      │   gomoku-backend (server)  │
-│   ├─ React app shell (DOM) │◄────►│   ├─ HTTP + WebSocket API  │
+│   ├─ React app shell (DOM) │◄────►│   ├─ HTTP API              │
 │   └─ Phaser board (canvas) │      │   └─ Firestore client      │
 │       ↑ shares core via    │      │       ↑ shares core via    │
 │       wasm bridge          │      │       cargo path dep       │
@@ -163,6 +163,24 @@ This lane is intentionally low-friction and low-trust:
 - local-first
 - no per-move backend validation in the hot path
 
+### Signed-in casual match history
+
+```
+user finishes a local bot/casual match while signed in
+  → browser serializes compact replay + summary
+    → browser writes one private history record to profiles/{uid}/matches/{id}
+      → local cache stays in sync for quick resume/viewing
+```
+
+This path is still intentionally low-trust:
+
+- gameplay stays client-side
+- no per-move backend validation
+- one cloud write on match end instead of syncing the whole live match
+- good fit for bot matches and private history
+
+Public sharing and ranked/trusted features do not rely on this path alone.
+
 ### Trusted / cloud-backed match (target)
 
 ```
@@ -176,10 +194,11 @@ user clicks cell
 
 Two trust levels exist on purpose:
 
-- **Casual / free play** — no per-move backend validation; fine for guest play
-  and disposable local sessions.
+- **Casual / free play** — no per-move backend validation; fine for guest play,
+  signed-in private bot history, and disposable local sessions.
 - **Trusted / cloud-backed play** — backend validates every move. Used for
-  ranked matches, saved cloud history, and any replay we intend to share.
+  ranked matches, server-owned online history, and any replay we intend to
+  trust or share publicly.
 
 That keeps the hot path cheap for throwaway play while making persistent/public
 features trustworthy.
@@ -200,8 +219,9 @@ Rough sequence:
    Offline bot match working end-to-end in the new architecture.
 4. Add local guest profile persistence, then Firebase sign-in and cloud-profile
    promotion.
-5. Add trusted cloud-backed match/history flow.
-6. Lab-powered features (puzzles, replay critical-move tagging).
+5. Add private cloud history save at match end for signed-in casual play.
+6. Add trusted cloud-backed online match flow.
+7. Lab-powered features (puzzles, replay critical-move tagging).
 
 Details are in `roadmap.md`. The architectural contract — what React owns,
 what Phaser owns, how they talk — is the part that needs to hold across
