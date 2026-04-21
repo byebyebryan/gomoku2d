@@ -1,8 +1,9 @@
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useStore } from "zustand";
 
-import { guestProfileStore, type GuestSavedMatch } from "../profile/guest_profile_store";
+import { guestProfileStore } from "../profile/guest_profile_store";
+import { replayPlayerLabel, replayWinnerLabel } from "../replay/local_replay";
 
 import styles from "./ProfileRoute.module.css";
 
@@ -10,28 +11,8 @@ function historyCountLabel(count: number): string {
   return count === 1 ? "1 local match" : `${count} local matches`;
 }
 
-function playerLabel(match: GuestSavedMatch, guestDisplayName: string): string {
-  return match.players
-    .map((player) => {
-      const name = player.kind === "human" ? guestDisplayName : player.name;
-      return `${name} (${player.stone})`;
-    })
-    .join(" vs ");
-}
-
-function winnerLabel(match: GuestSavedMatch, guestDisplayName: string): string {
-  if (match.status === "draw") {
-    return "Draw";
-  }
-
-  const winningStone = match.status === "black_won" ? "black" : "white";
-  const winner = match.players.find((player) => player.stone === winningStone);
-  const winnerName = winner?.kind === "human" ? guestDisplayName : winner?.name ?? winningStone;
-
-  return `${winnerName} wins`;
-}
-
 export function ProfileRoute() {
+  const navigate = useNavigate();
   const history = useStore(guestProfileStore, (state) => state.history);
   const profile = useStore(guestProfileStore, (state) => state.profile);
   const settings = useStore(guestProfileStore, (state) => state.settings);
@@ -172,13 +153,24 @@ export function ProfileRoute() {
                   <li className={styles.historyItem} key={match.id}>
                     <div className={styles.historyRow}>
                       <div>
-                        <p className={styles.historyTitle}>{winnerLabel(match, guestDisplayName)}</p>
-                        <p className={styles.historyMeta}>{playerLabel(match, guestDisplayName)}</p>
+                        <p className={styles.historyTitle}>{replayWinnerLabel(match, guestDisplayName)}</p>
+                        <p className={styles.historyMeta}>{replayPlayerLabel(match, guestDisplayName)}</p>
                       </div>
                     </div>
                     <div className={styles.historyRow}>
                       <p className={styles.historyMeta}>{match.moves.length} moves</p>
-                      <p className={styles.historyMeta}>{new Date(match.savedAt).toLocaleString()}</p>
+                      <div className={styles.historyActions}>
+                        <p className={styles.historyMeta}>{new Date(match.savedAt).toLocaleString()}</p>
+                        <button
+                          className={styles.historyAction}
+                          onClick={() => {
+                            navigate(`/replays/local/${match.id}`);
+                          }}
+                          type="button"
+                        >
+                          Open replay
+                        </button>
+                      </div>
                     </div>
                   </li>
                 ))}

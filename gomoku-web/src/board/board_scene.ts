@@ -115,6 +115,7 @@ export interface BoardSceneState {
   moves: MatchMove[];
   onAdvanceRound: () => void;
   onPlace: (row: number, col: number) => void;
+  showSequenceNumbers: boolean;
   status: MatchStatus;
   threatMoves: CellPosition[];
   winningMoves: CellPosition[];
@@ -132,6 +133,7 @@ const DEFAULT_STATE: BoardSceneState = {
   moves: [],
   onAdvanceRound: () => undefined,
   onPlace: () => undefined,
+  showSequenceNumbers: false,
   status: "playing",
   threatMoves: [],
   winningMoves: [],
@@ -439,7 +441,7 @@ export class BoardScene extends Phaser.Scene {
       );
     }
 
-    if (this.boardState.status !== "playing") {
+    if (this.boardState.showSequenceNumbers && this.boardState.status !== "playing") {
       const fontSize = Math.max(10, Math.round(this.currentCellSize * 0.25));
 
       for (const move of this.boardState.moves) {

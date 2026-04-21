@@ -211,6 +211,25 @@
   margin: 6px 0 0;
 }
 
+.historyActions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.historyAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 132px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-muted);
+  color: var(--text-strong);
+  cursor: pointer;
+}
+
 .emptyState {
   margin: 16px 0 0;
   color: var(--text-muted);
@@ -244,5 +263,11 @@
   .historyRow {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .historyActions {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
   }
 }

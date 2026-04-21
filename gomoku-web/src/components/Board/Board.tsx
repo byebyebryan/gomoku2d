@@ -16,6 +16,7 @@ export interface BoardProps {
   moves: MatchMove[];
   onAdvanceRound: () => void;
   onPlace: (row: number, col: number) => void;
+  showSequenceNumbers: boolean;
   status: MatchStatus;
   threatMoves: CellPosition[];
   winningMoves: CellPosition[];
