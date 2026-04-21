@@ -22,6 +22,9 @@
   --info: #53b8ff;
   --success: #73e36b;
   --danger: #c24856;
+  --scroll-track: #171b1f;
+  --scroll-thumb: #697580;
+  --scroll-thumb-hover: #7e8a95;
   --shadow: 8px 8px 0 rgba(0, 0, 0, 0.34);
   --radius-lg: 0px;
   --radius-md: 0px;
@@ -30,12 +33,36 @@
 
 * {
   box-sizing: border-box;
+  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+  scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--scroll-track);
+  border: 2px solid var(--border);
+  border-radius: 0;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border: 2px solid var(--border-strong);
+  border-radius: 0;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.25);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scroll-thumb-hover);
 }
 
 html,
 body,
 #root {
-  min-height: 100%;
+  height: 100%;
 }
 
 body {
@@ -43,6 +70,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: "PixelOperator", "Trebuchet MS", sans-serif;
+  overflow: hidden;
 }
 
 button,

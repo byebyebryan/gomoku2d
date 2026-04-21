@@ -28,6 +28,8 @@ function statusLabel(state: Pick<LocalMatchState, "currentPlayer" | "pendingBotM
 }
 
 export function LocalMatchRoute() {
+  const historyBodyRef = useRef<HTMLDivElement | null>(null);
+  const previousMoveCountRef = useRef(0);
   const storeRef = useRef<ReturnType<typeof createLocalMatchStore> | null>(null);
 
   if (!storeRef.current) {
@@ -52,6 +54,26 @@ export function LocalMatchRoute() {
       store?.getState().dispose();
     };
   }, []);
+
+  useEffect(() => {
+    const historyBody = historyBodyRef.current;
+    if (!historyBody) {
+      previousMoveCountRef.current = state.moves.length;
+      return;
+    }
+
+    if (state.moves.length === 0) {
+      historyBody.scrollTop = 0;
+      previousMoveCountRef.current = 0;
+      return;
+    }
+
+    if (state.moves.length > previousMoveCountRef.current) {
+      historyBody.scrollTop = historyBody.scrollHeight;
+    }
+
+    previousMoveCountRef.current = state.moves.length;
+  }, [state.moves.length]);
 
   return (
     <main className={styles.page}>
@@ -165,21 +187,23 @@ export function LocalMatchRoute() {
               <p className={styles.sectionLabel}>Move history</p>
               <p className={styles.historyCount}>{state.moves.length} moves</p>
             </div>
-            {state.moves.length === 0 ? (
-              <p className={styles.emptyHistory}>Moves appear here as the game unfolds.</p>
-            ) : (
-              <ol className={styles.historyList}>
-                {state.moves.map((move) => (
-                  <li className={styles.historyItem} key={move.moveNumber}>
-                    <span>M{move.moveNumber}</span>
-                    <span>{move.player === 1 ? "Black" : "White"}</span>
-                    <span>
-                      {move.row + 1},{move.col + 1}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            )}
+            <div className={styles.historyBody} ref={historyBodyRef}>
+              {state.moves.length === 0 ? (
+                <p className={styles.emptyHistory}>Moves appear here as the game unfolds.</p>
+              ) : (
+                <ol className={styles.historyList}>
+                  {state.moves.map((move) => (
+                    <li className={styles.historyItem} key={move.moveNumber}>
+                      <span>M{move.moveNumber}</span>
+                      <span>{move.player === 1 ? "Black" : "White"}</span>
+                      <span>
+                        {move.row + 1},{move.col + 1}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
           </section>
         </aside>
       </section>

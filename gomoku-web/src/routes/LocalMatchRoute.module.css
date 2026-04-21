@@ -1,8 +1,10 @@
 .page {
   display: grid;
-  min-height: 100dvh;
+  height: 100dvh;
+  grid-template-rows: auto minmax(0, 1fr);
   padding: 24px;
   gap: 20px;
+  overflow: hidden;
 }
 
 .header {
@@ -65,12 +67,15 @@
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(300px, 360px);
+  align-items: stretch;
   gap: 20px;
   min-height: 0;
+  overflow: hidden;
 }
 
 .boardPanel {
-  min-height: min(78dvh, 960px);
+  height: 100%;
+  min-height: 0;
   padding: 14px;
   border-radius: var(--radius-lg);
   background: var(--bg-elevated);
@@ -80,8 +85,11 @@
 
 .sidebar {
   display: grid;
-  align-content: start;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+  align-content: stretch;
   gap: 16px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .statusCard,
@@ -97,6 +105,13 @@
 .rulesCard,
 .historyCard {
   padding: 18px;
+}
+
+.historyCard {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
 }
 
 .sectionLabel {
@@ -228,14 +243,21 @@
 }
 
 .emptyHistory {
-  margin: 14px 0 0;
+  margin: 0;
   color: var(--text-muted);
+}
+
+.historyBody {
+  min-height: 0;
+  margin-top: 14px;
+  overflow: auto;
+  padding-right: 4px;
 }
 
 .historyList {
   display: grid;
   gap: 10px;
-  margin: 14px 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
@@ -253,16 +275,32 @@
 @media (max-width: 980px) {
   .layout {
     grid-template-columns: 1fr;
+    overflow: auto;
   }
 
   .boardPanel {
+    height: auto;
     min-height: min(66dvh, 820px);
+  }
+
+  .sidebar {
+    grid-template-rows: none;
+    overflow: visible;
+  }
+
+  .historyCard {
+    overflow: visible;
+  }
+
+  .historyBody {
+    overflow: visible;
+    padding-right: 0;
   }
 }
 
 @media (max-width: 980px) and (orientation: portrait) {
   .boardPanel {
-    min-height: 0;
+    height: auto;
     aspect-ratio: 1;
   }
 }
