@@ -5,6 +5,7 @@ import { useStore } from "zustand";
 import { Board } from "../components/Board/Board";
 import { createLocalMatchStore } from "../game/local_match_store";
 import type { LocalMatchState } from "../game/local_match_store";
+import { guestProfileStore } from "../profile/guest_profile_store";
 
 import styles from "./LocalMatchRoute.module.css";
 
@@ -29,7 +30,13 @@ export function LocalMatchRoute() {
   const storeRef = useRef<ReturnType<typeof createLocalMatchStore> | null>(null);
 
   if (!storeRef.current) {
-    storeRef.current = createLocalMatchStore();
+    const profile = guestProfileStore.getState().ensureGuestProfile();
+    storeRef.current = createLocalMatchStore({
+      humanDisplayName: profile.displayName,
+      onMatchFinished: (match) => {
+        guestProfileStore.getState().recordFinishedMatch(match);
+      },
+    });
   }
 
   const state = useStore(storeRef.current, (snapshot) => snapshot);
@@ -53,6 +60,9 @@ export function LocalMatchRoute() {
           <button className={styles.secondaryAction} onClick={state.startNewMatch} type="button">
             New Game
           </button>
+          <Link className={styles.secondaryAction} to="/profile">
+            Profile
+          </Link>
           <Link className={styles.secondaryAction} to="/">
             Home
           </Link>

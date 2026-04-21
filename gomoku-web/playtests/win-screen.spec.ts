@@ -50,7 +50,7 @@ test("finished board click advances to the next round with swapped colors", asyn
     .poll(async () => page.locator("article").nth(0).innerText())
     .toContain("Search Bot");
   await expect(page.locator("article").nth(0)).toContainText("black");
-  await expect(page.locator("article").nth(1)).toContainText("You");
+  await expect(page.locator("article").nth(1)).toContainText("Guest");
   await expect(page.locator("article").nth(1)).toContainText("white");
   await expect(page.locator("p").filter({ hasText: /\d+ moves/ }).last()).toHaveText(/^[01] moves$/);
 });
