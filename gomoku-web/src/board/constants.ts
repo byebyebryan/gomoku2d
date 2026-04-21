@@ -43,7 +43,6 @@ export const WARNING_ANIMS = {
 // Board layout constants
 export const BOARD_SIZE = 15;
 export const WIN_LENGTH = 5;
-
 export const FONT_KEY = "pixel" as const;
 
 const P = {
@@ -94,7 +93,6 @@ export const COLOR = {
   PAGE_BG:       P.DARKER,
 
   BOARD_SURFACE: P.GOLD,
-  BOARD_EDGE:    P.BLACK,
   GRID:          P.BLACK,
 
   TITLE:        P.GOLD,

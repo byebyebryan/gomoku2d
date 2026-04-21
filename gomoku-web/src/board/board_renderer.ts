@@ -8,7 +8,6 @@ export interface BoardBounds {
   top: number;
   width: number;
   height: number;
-  sideHeight: number;
   right: number;
   bottom: number;
   centerX: number;
@@ -20,7 +19,6 @@ export class BoardRenderer {
   private cellSize: number;
   private originX: number;
   private originY: number;
-  private screenHeight: number;
   private parent: Phaser.GameObjects.Container | null;
 
   constructor(
@@ -28,14 +26,12 @@ export class BoardRenderer {
     cellSize: number,
     originX: number,
     originY: number,
-    screenHeight: number,
     parent?: Phaser.GameObjects.Container,
   ) {
     this.scene = scene;
     this.cellSize = cellSize;
     this.originX = originX;
     this.originY = originY;
-    this.screenHeight = screenHeight;
     this.parent = parent ?? null;
   }
 
@@ -73,17 +69,13 @@ export class BoardRenderer {
     const top = this.originY - this.cellSize / 2;
     const left = this.originX - this.cellSize / 2;
     const width = BOARD_SIZE * this.cellSize;
-    const surfaceHeight = BOARD_SIZE * this.cellSize;
-    const maxSideHeight = this.cellSize / 2;
-    const sideHeight = Math.min(maxSideHeight, this.screenHeight - (top + surfaceHeight));
-    const height = surfaceHeight + sideHeight;
+    const height = BOARD_SIZE * this.cellSize;
 
     return {
       left,
       top,
       width,
       height,
-      sideHeight,
       right: left + width,
       bottom: top + height,
       centerX: left + width / 2,
@@ -97,11 +89,7 @@ export class BoardRenderer {
 
     const bounds = this.getBounds();
     const boardWidth = bounds.width;
-    const boardHeight = BOARD_SIZE * this.cellSize;
-
-    // Side/depth
-    gfx.fillStyle(COLOR.BOARD_EDGE, 1);
-    gfx.fillRect(bounds.left, bounds.top + boardHeight, boardWidth, bounds.sideHeight);
+    const boardHeight = bounds.height;
 
     // Board surface
     gfx.fillStyle(COLOR.BOARD_SURFACE, 1);

@@ -15,7 +15,6 @@ import { shouldAnimatePlacedStone, shouldStopStoneIdleCycle } from "./board_scen
 
 import type { CellPosition, CellStone, MatchMove, MatchStatus } from "../game/types";
 
-const EDGE_RATIO = 1 / 3;
 const POINTER_IDLE_ANIMS = [POINTER_ANIMS.OUT, POINTER_ANIMS.IN, POINTER_ANIMS.FULL] as const;
 const STONE_IDLE_ANIMS = [
   STONE_ANIMS.RELAX_1,
@@ -313,13 +312,13 @@ export class BoardScene extends Phaser.Scene {
 
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
-    const cellSize = Math.min(width / BOARD_SIZE, height / (BOARD_SIZE + EDGE_RATIO));
-    const boardHeight = BOARD_SIZE * cellSize + cellSize / 2;
+    const cellSize = Math.min(width / BOARD_SIZE, height / BOARD_SIZE);
+    const boardHeight = BOARD_SIZE * cellSize;
     const originX = (width - (BOARD_SIZE - 1) * cellSize) / 2;
     const originY = (height - boardHeight) / 2 + cellSize / 2;
 
     this.currentCellSize = cellSize;
-    this.board = new BoardRenderer(this, cellSize, originX, originY, height, this.boardLayer);
+    this.board = new BoardRenderer(this, cellSize, originX, originY, this.boardLayer);
     this.board.drawBoard();
     this.pointer = this.board.createPointer(this.pointerLayer);
     this.syncBoardState(undefined, false);

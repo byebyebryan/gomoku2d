@@ -2,9 +2,8 @@ import { expect, test } from "@playwright/test";
 
 function boardClickPosition(box: { width: number; height: number }, row: number, col: number) {
   const boardSize = 15;
-  const edgeRatio = 1 / 3;
-  const cellSize = Math.min(box.width / boardSize, box.height / (boardSize + edgeRatio));
-  const boardHeight = boardSize * cellSize + cellSize / 2;
+  const cellSize = Math.min(box.width / boardSize, box.height / boardSize);
+  const boardHeight = boardSize * cellSize;
   const originX = (box.width - (boardSize - 1) * cellSize) / 2;
   const originY = (box.height - boardHeight) / 2 + cellSize / 2;
 
