@@ -2,7 +2,7 @@ import { createStore, type StoreApi } from "zustand/vanilla";
 
 import { BOARD_SIZE, WIN_LENGTH } from "../board/constants";
 import { BotRunner } from "../core/bot_runner";
-import type { BotMove, BotSpec, GameVariant } from "../core/bot_protocol";
+import type { BotSpec, GameVariant } from "../core/bot_protocol";
 import { WasmBoard } from "../core/wasm_bridge";
 
 import type { CellPosition, CellStone, MatchMove, MatchPlayer, MatchStatus } from "./types";
@@ -21,11 +21,14 @@ interface FinishedLocalMatch {
 export interface LocalMatchState {
   cells: CellStone[][];
   currentPlayer: 1 | 2;
+  currentVariant: GameVariant;
   forbiddenMoves: CellPosition[];
   lastMove: CellPosition | null;
   moves: MatchMove[];
   pendingBotMove: boolean;
   players: [MatchPlayer, MatchPlayer];
+  selectedVariant: GameVariant;
+  selectVariant: (variant: GameVariant) => void;
   startNewMatch: () => void;
   startNextRound: () => void;
   status: MatchStatus;
@@ -206,7 +209,12 @@ function snapshotState(
   moves: MatchMove[],
   pendingBotMove: boolean,
   players: [MatchPlayer, MatchPlayer],
-): Omit<LocalMatchState, "dispose" | "placeHumanMove" | "startNewMatch" | "startNextRound"> {
+  currentVariant: GameVariant,
+  selectedVariant: GameVariant,
+): Omit<
+  LocalMatchState,
+  "dispose" | "placeHumanMove" | "selectVariant" | "startNewMatch" | "startNextRound"
+> {
   const lastMove = moves.length > 0 ? moves[moves.length - 1] : null;
   const status = statusFromResult(board.result());
   const winner =
@@ -216,11 +224,13 @@ function snapshotState(
   return {
     cells: cellsFromBoard(board),
     currentPlayer: board.currentPlayer() as 1 | 2,
+    currentVariant,
     forbiddenMoves: hints.forbiddenMoves,
     lastMove,
     moves,
     pendingBotMove,
     players,
+    selectedVariant,
     status,
     threatMoves: hints.threatMoves,
     winningMoves: hints.winningMoves,
@@ -234,7 +244,7 @@ function snapshotFinishedMatch(
   players: [MatchPlayer, MatchPlayer],
   variant: GameVariant,
 ): FinishedLocalMatch | null {
-  const snapshot = snapshotState(board, moves, false, players);
+  const snapshot = snapshotState(board, moves, false, players, variant, variant);
   if (snapshot.status === "playing") {
     return null;
   }
@@ -252,13 +262,14 @@ function snapshotFinishedMatch(
 export function createLocalMatchStore(
   options: LocalMatchStoreOptions = {},
 ): StoreApi<LocalMatchState> {
-  const variant = options.variant ?? "freestyle";
+  let currentVariant = options.variant ?? "freestyle";
+  let selectedVariant = currentVariant;
   const botDepth = options.botDepth ?? 3;
   const boardFactory = options.boardFactory ?? WasmBoard.createWithVariant;
   const botRunner = options.botRunner ?? new BotRunner();
   let players = defaultPlayers(options.humanDisplayName);
 
-  let board = boardFactory(variant);
+  let board = boardFactory(currentVariant);
   let requestToken = 0;
 
   const store = createStore<LocalMatchState>((set, get) => {
@@ -273,7 +284,7 @@ export function createLocalMatchStore(
     };
 
     const updateState = (nextMoves: MatchMove[], pendingBotMove: boolean): void => {
-      set(snapshotState(board, nextMoves, pendingBotMove, players));
+      set(snapshotState(board, nextMoves, pendingBotMove, players, currentVariant, selectedVariant));
     };
 
     const currentPlayerSlot = (): 0 | 1 => ((board.currentPlayer() as 1 | 2) - 1) as 0 | 1;
@@ -297,7 +308,7 @@ export function createLocalMatchStore(
 
       updateState(nextMoves, false);
 
-      const finishedMatch = snapshotFinishedMatch(board, nextMoves, players, variant);
+      const finishedMatch = snapshotFinishedMatch(board, nextMoves, players, currentVariant);
       if (finishedMatch) {
         options.onMatchFinished?.(finishedMatch);
       }
@@ -311,7 +322,7 @@ export function createLocalMatchStore(
       updateState(get().moves, true);
 
       try {
-        const move = await botRunner.chooseMove(slot, variant, board.toFen());
+        const move = await botRunner.chooseMove(slot, currentVariant, board.toFen());
 
         if (activeToken !== requestToken) {
           return;
@@ -344,10 +355,11 @@ export function createLocalMatchStore(
       void queueBotMove(slot);
     };
 
-    const resetMatch = (nextPlayers: [MatchPlayer, MatchPlayer]): void => {
+    const resetMatch = (nextPlayers: [MatchPlayer, MatchPlayer], nextVariant = selectedVariant): void => {
       requestToken += 1;
       board.free();
-      board = boardFactory(variant);
+      currentVariant = nextVariant;
+      board = boardFactory(currentVariant);
       players = clonePlayers(nextPlayers);
       configureBots();
       updateState([], false);
@@ -357,7 +369,7 @@ export function createLocalMatchStore(
     configureBots();
 
     return {
-      ...snapshotState(board, [], false, players),
+      ...snapshotState(board, [], false, players, currentVariant, selectedVariant),
       dispose: () => {
         requestToken += 1;
         botRunner.dispose();
@@ -382,6 +394,16 @@ export function createLocalMatchStore(
         }
 
         return moved;
+      },
+      selectVariant: (variant) => {
+        selectedVariant = variant;
+
+        if (get().moves.length === 0) {
+          resetMatch(players, variant);
+          return;
+        }
+
+        updateState(get().moves, get().pendingBotMove);
       },
       startNewMatch: () => {
         resetMatch(players);

@@ -85,6 +85,7 @@
 }
 
 .statusCard,
+.rulesCard,
 .historyCard,
 .playerCard {
   border-radius: var(--radius-md);
@@ -93,6 +94,7 @@
 }
 
 .statusCard,
+.rulesCard,
 .historyCard {
   padding: 18px;
 }
@@ -108,6 +110,42 @@
   margin: 10px 0 0;
   font-size: 1.6rem;
   color: var(--accent-strong);
+}
+
+.rulesHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rulesMeta {
+  margin: 10px 0 0;
+  color: var(--text-muted);
+}
+
+.variantButtons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.variantButton {
+  min-width: 0;
+  padding: 12px 14px;
+  border: 2px solid var(--border);
+  border-radius: 0;
+  background: var(--surface-muted);
+  color: var(--text);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.variantButtonActive {
+  border-color: #25537c;
+  background: var(--info);
+  color: #0d1720;
 }
 
 .playerList {

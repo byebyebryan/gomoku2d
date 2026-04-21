@@ -6,6 +6,7 @@ import { Board } from "../components/Board/Board";
 import { createLocalMatchStore } from "../game/local_match_store";
 import type { LocalMatchState } from "../game/local_match_store";
 import { guestProfileStore } from "../profile/guest_profile_store";
+import { variantLabel } from "../replay/local_replay";
 
 import styles from "./LocalMatchRoute.module.css";
 
@@ -30,16 +31,19 @@ export function LocalMatchRoute() {
   const storeRef = useRef<ReturnType<typeof createLocalMatchStore> | null>(null);
 
   if (!storeRef.current) {
-    const profile = guestProfileStore.getState().ensureGuestProfile();
+    const guestProfile = guestProfileStore.getState();
+    const profile = guestProfile.ensureGuestProfile();
     storeRef.current = createLocalMatchStore({
       humanDisplayName: profile.displayName,
       onMatchFinished: (match) => {
         guestProfileStore.getState().recordFinishedMatch(match);
       },
+      variant: guestProfile.settings.preferredVariant,
     });
   }
 
   const state = useStore(storeRef.current, (snapshot) => snapshot);
+  const preferredVariant = useStore(guestProfileStore, (snapshot) => snapshot.settings.preferredVariant);
 
   useEffect(() => {
     const store = storeRef.current;
@@ -96,6 +100,35 @@ export function LocalMatchRoute() {
           <section className={styles.statusCard}>
             <p className={styles.sectionLabel}>Status</p>
             <p className={styles.statusText}>{statusLabel(state)}</p>
+          </section>
+
+          <section className={styles.rulesCard}>
+            <div className={styles.rulesHeader}>
+              <p className={styles.sectionLabel}>Rules</p>
+              <p className={styles.rulesMeta}>Current: {variantLabel(state.currentVariant)}</p>
+            </div>
+            <div className={styles.variantButtons}>
+              {(["freestyle", "renju"] as const).map((variant) => (
+                <button
+                  className={
+                    preferredVariant === variant
+                      ? `${styles.variantButton} ${styles.variantButtonActive}`
+                      : styles.variantButton
+                  }
+                  key={variant}
+                  onClick={() => {
+                    guestProfileStore.getState().updateSettings({ preferredVariant: variant });
+                    state.selectVariant(variant);
+                  }}
+                  type="button"
+                >
+                  {variantLabel(variant)}
+                </button>
+              ))}
+            </div>
+            {state.selectedVariant !== state.currentVariant ? (
+              <p className={styles.rulesMeta}>Next game: {variantLabel(state.selectedVariant)}</p>
+            ) : null}
           </section>
 
           <section className={styles.playerList}>

@@ -37,10 +37,16 @@ test("home boot and local bot match smoke flow", async ({ page }) => {
   await expect(page.getByText("2 moves")).toBeVisible({ timeout: 15_000 });
   await expect(page.locator("ol li")).toHaveCount(2);
   await expect(page.getByText("Black to move")).toBeVisible();
+  await expect(page.getByText("Current: Freestyle")).toBeVisible();
+
+  await page.getByRole("button", { name: "Renju" }).click();
+  await expect(page.getByText("Current: Freestyle")).toBeVisible();
+  await expect(page.getByText("Next game: Renju")).toBeVisible();
 
   await page.getByRole("button", { name: "New Game" }).click();
   await expect(page.getByText("0 moves")).toBeVisible();
   await expect(page.getByText("Moves appear here as the game unfolds.")).toBeVisible();
+  await expect(page.getByText("Current: Renju")).toBeVisible();
 
   await canvas.click({
     position: {
@@ -62,6 +68,7 @@ test("direct entry to the local match route loads the app", async ({ page }) => 
   await expect(
     page.getByRole("heading", { name: "Local Match" }),
   ).toBeVisible();
+  await expect(page.getByText("Current: Freestyle")).toBeVisible();
   const canvas = page.locator("canvas").first();
   await expect(canvas).toBeVisible();
 

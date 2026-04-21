@@ -9,6 +9,7 @@ import {
   replayPlayerLabel,
   replayWinnerLabel,
   shouldShowReplaySequenceNumbers,
+  variantLabel,
 } from "../replay/local_replay";
 
 import styles from "./ReplayRoute.module.css";
@@ -115,6 +116,7 @@ export function ReplayRoute() {
             <p className={styles.sectionLabel}>Result</p>
             <p className={styles.resultText}>{replayWinnerLabel(match, guestDisplayName)}</p>
             <p className={styles.moveCount}>{moveCountLabel(frame.moveIndex, match.moves.length)}</p>
+            <p className={styles.moveCount}>Rules: {variantLabel(match.variant)}</p>
           </section>
 
           <section className={styles.card}>

@@ -1,4 +1,5 @@
 import { BOARD_SIZE } from "../board/constants";
+import type { GameVariant } from "../core/bot_protocol";
 import type { CellPosition, CellStone, MatchMove, MatchPlayer, MatchStatus } from "../game/types";
 import type { GuestSavedMatch } from "../profile/guest_profile_store";
 
@@ -36,6 +37,10 @@ function clampMoveIndex(moveIndex: number, max: number): number {
 
 export function replayPlayerName(player: MatchPlayer, guestDisplayName: string): string {
   return player.kind === "human" ? guestDisplayName : player.name;
+}
+
+export function variantLabel(variant: GameVariant): string {
+  return variant === "renju" ? "Renju" : "Freestyle";
 }
 
 export function replayPlayerLabel(match: GuestSavedMatch, guestDisplayName: string): string {
