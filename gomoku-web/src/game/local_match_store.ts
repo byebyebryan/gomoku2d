@@ -7,7 +7,8 @@ import { WasmBoard } from "../core/wasm_bridge";
 
 import type { CellPosition, CellStone, MatchMove, MatchPlayer, MatchStatus } from "./types";
 
-type MatchBotRunner = Pick<BotRunner, "chooseMove" | "configure" | "dispose">;
+type MatchBotRunner = Pick<BotRunner, "chooseMove" | "configure" | "dispose"> &
+  Partial<Pick<BotRunner, "cancelPending">>;
 
 interface FinishedLocalMatch {
   mode: "bot";
@@ -33,6 +34,7 @@ export interface LocalMatchState {
   startNextRound: () => void;
   status: MatchStatus;
   threatMoves: CellPosition[];
+  undoLastTurn: () => boolean;
   placeHumanMove: (row: number, col: number) => boolean;
   dispose: () => void;
   winningMoves: CellPosition[];
@@ -213,7 +215,7 @@ function snapshotState(
   selectedVariant: GameVariant,
 ): Omit<
   LocalMatchState,
-  "dispose" | "placeHumanMove" | "selectVariant" | "startNewMatch" | "startNextRound"
+  "dispose" | "placeHumanMove" | "selectVariant" | "startNewMatch" | "startNextRound" | "undoLastTurn"
 > {
   const lastMove = moves.length > 0 ? moves[moves.length - 1] : null;
   const status = statusFromResult(board.result());
@@ -273,6 +275,11 @@ export function createLocalMatchStore(
   let requestToken = 0;
 
   const store = createStore<LocalMatchState>((set, get) => {
+    const interruptBotRequests = (): void => {
+      requestToken += 1;
+      botRunner.cancelPending?.();
+    };
+
     const configureBots = (): void => {
       botRunner.configure(
         players.map((player) =>
@@ -335,8 +342,8 @@ export function createLocalMatchStore(
 
         applyMove(move.row, move.col, (slot + 1) as 1 | 2);
       } catch (error) {
-        console.error("[local_match_store] bot move failed", error);
         if (activeToken === requestToken) {
+          console.error("[local_match_store] bot move failed", error);
           updateState(get().moves, false);
         }
       }
@@ -355,8 +362,10 @@ export function createLocalMatchStore(
       void queueBotMove(slot);
     };
 
+    const minimumRetainedMoveCount = (): number => (players[0].kind === "bot" ? 1 : 0);
+
     const resetMatch = (nextPlayers: [MatchPlayer, MatchPlayer], nextVariant = selectedVariant): void => {
-      requestToken += 1;
+      interruptBotRequests();
       board.free();
       currentVariant = nextVariant;
       board = boardFactory(currentVariant);
@@ -371,7 +380,7 @@ export function createLocalMatchStore(
     return {
       ...snapshotState(board, [], false, players, currentVariant, selectedVariant),
       dispose: () => {
-        requestToken += 1;
+        interruptBotRequests();
         botRunner.dispose();
         board.free();
       },
@@ -410,6 +419,27 @@ export function createLocalMatchStore(
       },
       startNextRound: () => {
         resetMatch(swapPlayers(players));
+      },
+      undoLastTurn: () => {
+        const state = get();
+        const minimumMoves = minimumRetainedMoveCount();
+        if (state.moves.length <= minimumMoves) {
+          return false;
+        }
+
+        interruptBotRequests();
+
+        const nextMoves = [...state.moves];
+        do {
+          board.undoLastMove();
+          nextMoves.pop();
+        } while (
+          nextMoves.length > minimumMoves &&
+          players[((board.currentPlayer() as 1 | 2) - 1) as 0 | 1]?.kind === "bot"
+        );
+
+        updateState(nextMoves, false);
+        return true;
       },
     };
   });

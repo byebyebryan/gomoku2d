@@ -28,6 +28,7 @@ test("home boot and local bot match smoke flow", async ({ page }) => {
   await expect(page.getByTestId("match-move-count")).toHaveText("0");
   await expect(page.getByTestId("match-rule")).toHaveText("Freestyle");
   await expect(page.getByTestId("match-status")).toHaveText("Guest to move");
+  await expect(page.getByRole("button", { name: "Undo" })).toBeDisabled();
 
   const canvas = page.locator("canvas").first();
   await expect(canvas).toBeVisible();
@@ -36,6 +37,21 @@ test("home boot and local bot match smoke flow", async ({ page }) => {
   if (!box) {
     throw new Error("board canvas did not report a bounding box");
   }
+
+  await canvas.click({
+    position: {
+      x: box.width / 2,
+      y: box.height / 2,
+    },
+  });
+
+  await waitForBotReply(page);
+  await expect(page.getByRole("button", { name: "Undo" })).toBeEnabled();
+
+  await page.getByRole("button", { name: "Undo" }).click();
+  await expect(page.getByTestId("match-move-count")).toHaveText("0");
+  await expect(page.getByTestId("match-status")).toHaveText("Guest to move");
+  await expect(page.getByRole("button", { name: "Undo" })).toBeDisabled();
 
   await canvas.click({
     position: {

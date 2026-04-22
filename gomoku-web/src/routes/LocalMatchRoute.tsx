@@ -34,6 +34,7 @@ const loadingMatchStore = createStore<LocalMatchState>(() => ({
   startNextRound: () => undefined,
   status: "playing",
   threatMoves: [],
+  undoLastTurn: () => false,
   dispose: () => undefined,
   winningMoves: [],
   winningCells: [],
@@ -55,6 +56,13 @@ function statusLabel(
   }
 
   return `${state.players[state.currentPlayer - 1]?.name ?? "Unknown"} to move`;
+}
+
+function canUndo(
+  state: Pick<LocalMatchState, "moves" | "players">,
+): boolean {
+  const minimumMoves = state.players[0]?.kind === "bot" ? 1 : 0;
+  return state.moves.length > minimumMoves;
 }
 
 export function LocalMatchRoute() {
@@ -236,6 +244,22 @@ export function LocalMatchRoute() {
                   </article>
                 );
               })}
+            </div>
+
+          </section>
+
+          <div className="uiDivider" />
+
+          <section className={styles.hudSection}>
+            <div className={styles.matchActions}>
+              <button
+                className="uiAction uiActionNeutral"
+                disabled={!canUndo(state)}
+                onClick={state.undoLastTurn}
+                type="button"
+              >
+                Undo
+              </button>
             </div>
           </section>
         </aside>
