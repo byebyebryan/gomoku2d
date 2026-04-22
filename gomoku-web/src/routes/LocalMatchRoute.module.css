@@ -56,9 +56,12 @@
 .statusText {
   margin: 0;
   color: var(--accent-strong);
+  display: flex;
   font-family: var(--font-display);
   font-size: 2.15rem;
   line-height: 1.05;
+  min-height: 2.1em;
+  align-items: flex-start;
   text-transform: uppercase;
 }
 
@@ -92,6 +95,15 @@
 .playerRows {
   display: grid;
   gap: 10px;
+}
+
+.matchActions {
+  display: grid;
+  gap: 10px;
+}
+
+.matchActions :global(.uiAction) {
+  width: 100%;
 }
 
 .playerRow {
@@ -313,6 +325,10 @@
   .playerRows {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
+  }
+
+  .matchActions {
+    gap: 8px;
   }
 
   .playerRow {

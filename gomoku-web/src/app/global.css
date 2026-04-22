@@ -214,6 +214,14 @@ select:focus-visible {
   transform: translateY(3px);
 }
 
+.uiAction:disabled {
+  cursor: default;
+  filter: none;
+  opacity: 0.52;
+  transform: none;
+  box-shadow: none;
+}
+
 .uiActionPrimary {
   border-color: var(--success-border);
   background: var(--success);
