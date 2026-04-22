@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useStore } from "zustand";
 
 import { Board } from "../components/Board/Board";
+import type { LocalMatchResumeSeed } from "../game/local_match_store";
 import { guestProfileStore } from "../profile/guest_profile_store";
 import {
   buildLocalReplayFrame,
+  canResumeReplay,
+  defaultReplayMoveIndex,
   replayPlayerName,
   replayWinnerLabel,
+  replayStartMoveIndex,
   shouldShowReplaySequenceNumbers,
   variantLabel,
 } from "../replay/local_replay";
@@ -22,9 +26,10 @@ function moveCountLabel(moveIndex: number, totalMoves: number): string {
 
 export function ReplayRoute() {
   const { matchId } = useParams<{ matchId: string }>();
+  const navigate = useNavigate();
   const history = useStore(guestProfileStore, (state) => state.history);
   const profile = useStore(guestProfileStore, (state) => state.profile);
-  const [moveIndex, setMoveIndex] = useState(0);
+  const [moveIndex, setMoveIndex] = useState(defaultReplayMoveIndex(0));
   const [autoplaying, setAutoplaying] = useState(false);
 
   useEffect(() => {
@@ -35,9 +40,9 @@ export function ReplayRoute() {
   const guestDisplayName = profile?.displayName ?? "Guest";
 
   useEffect(() => {
-    setMoveIndex(0);
+    setMoveIndex(defaultReplayMoveIndex(match?.moves.length ?? 0));
     setAutoplaying(false);
-  }, [matchId]);
+  }, [match?.moves.length, matchId]);
 
   useEffect(() => {
     if (!match || !autoplaying) {
@@ -73,6 +78,11 @@ export function ReplayRoute() {
   }
 
   const frame = buildLocalReplayFrame(match, moveIndex);
+  const resumeSeed: LocalMatchResumeSeed = {
+    currentPlayer: frame.currentPlayer,
+    moves: frame.moves.map((move) => ({ ...move })),
+    variant: match.variant,
+  };
 
   return (
     <main className={styles.page}>
@@ -181,7 +191,7 @@ export function ReplayRoute() {
                 className="uiAction uiActionNeutral"
                 onClick={() => {
                   setAutoplaying(false);
-                  setMoveIndex(0);
+                  setMoveIndex(replayStartMoveIndex(match.moves.length));
                 }}
                 type="button"
               >
@@ -218,6 +228,17 @@ export function ReplayRoute() {
                 Next move
               </button>
             </div>
+
+            <button
+              className={`uiAction uiActionSecondary ${styles.resumeAction}`}
+              disabled={!canResumeReplay(frame)}
+              onClick={() => {
+                navigate("/match/local", { state: { resumeSeed } });
+              }}
+              type="button"
+            >
+              Play From Here
+            </button>
 
             <label className={styles.timeline}>
               <span className={styles.timelineLabel}>Replay timeline</span>
