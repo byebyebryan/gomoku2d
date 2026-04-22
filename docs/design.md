@@ -98,17 +98,15 @@ Primary elements:
 - short playful subtitle or tagline
 - primary `Play` action
 - secondary `Profile` / record action
-- lightweight rules toggle
 
 Optional lightweight context:
 
 - current opponent label, e.g. `Classic Bot`
-- current preferred rule, if the toggle itself is not enough
+- current preferred rule, if it is worth surfacing as passive context
 
 Rules:
 
 - `Play` starts immediately
-- changing the rules toggle updates the local preferred default
 - no separate confirm screen
 - do not let Home grow into a full configuration dashboard
 - leave negative space; the page should feel like a game title screen
@@ -217,6 +215,7 @@ Transport is the main secondary UI on the page.
 - auto play / pause
 - next
 - jump to end
+- `Play From Here` once the replay is far enough in to form a meaningful branch
 
 #### C. Timeline
 
@@ -229,6 +228,10 @@ Rules:
 - no extra side chronology surface
 - board remains the hero
 - metadata stays compact and quiet
+- starting a replay slightly in is acceptable if the player can still scrub back
+  to the beginning
+- branching from replay should preserve the current board position and rule set,
+  but it becomes a new local match
 
 ### Profile (`/profile`)
 
