@@ -55,6 +55,7 @@ This is the current focus.
 - simplify Home, Match, Replay, and Profile around their current roles
 - keep chronology out of live match UI
 - keep replay transport-first and remove move-list dependence there too
+- allow a replay frame to branch into a new local practice game
 - treat `Profile` as the player's local record screen, not a settings dump
 - keep local profile, local history, replay, and rules switching polished
 - make the shell resilient to future board-theme swaps without redesigning it
@@ -139,7 +140,6 @@ Possible work:
 
 - replay analysis
 - critical-moment tagging
-- "try from here"
 - puzzle generation
 
 These remain intentionally opportunistic. They should earn their way in by
