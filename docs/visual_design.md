@@ -9,12 +9,13 @@ should stay compatible with multiple retro pixel-art board themes, not lock the
 project into one exact sprite pack.
 
 Paired with `design.md`, which defines screen roles and player-facing flows.
+Comparative screenshot review lives in `visual_review.md`.
 
 ## Reference image
 
 Current visual reference sheet:
 
-![Gomoku2D DOM shell visual reference](assets/visual_reference_v0_2.png)
+![Gomoku2D DOM shell visual reference](assets/visual_reference_v0_2_2.png)
 
 Use this as a tone and component-language reference, not a locked screen spec.
 The important takeaways are panel contrast, button weight, spacing, typography,
@@ -23,85 +24,25 @@ should stay in `docs/archive/` unless they become the new canonical reference.
 
 ## Reference set
 
-Use the following active supporting references when reviewing or mocking the
-shell:
-
-- [screenshot_v1_game.png](assets/screenshot_v1_game.png) — the old shipped
-  game screen; useful for retro tone, board dominance, and button punch.
-- [screenshot_v1_settings.png](assets/screenshot_v1_settings.png) — the old
-  settings/state overlay; useful for chunky controls and simple two-column
-  toggle language.
-- [screenshot_v0_2_1_home.png](assets/screenshot_v0_2_1_home.png) — practical
-  current home screen; useful for title-screen density and negative-space
-  balance.
-- [screenshot_v0_2_1_game.png](assets/screenshot_v0_2_1_game.png) — practical
-  current match screen; useful for real HUD density, action hierarchy, and
-  board-to-shell balance under live play.
-- [screenshot_v0_2_1_replay.png](assets/screenshot_v0_2_1_replay.png) —
-  practical current replay screen; useful for transport density and checking
-  whether replay chrome starts crowding the board.
-- [screenshot_v0_2_1_profile.png](assets/screenshot_v0_2_1_profile.png) —
-  practical current profile screen; useful for record/history density, scroll
-  behavior, and ledger-row readability.
+For the comparative screenshot set and critique, see
+[visual_review.md](visual_review.md). That document embeds the active `v0.1`,
+`v0.2.1`, and `v0.2.2` reference captures and records what each revision got
+right and wrong.
 
 The rule of thumb:
 
 - `v1_*` is tone and retro feel
-- `v0_2_1_*` is practical current-state pressure
-
-## What v0.1 got right
-
-Using [screenshot_v1_game.png](assets/screenshot_v1_game.png) and
-[screenshot_v1_settings.png](assets/screenshot_v1_settings.png) as references:
-
-- strong retro tone immediately
-- clear board dominance
-- chunky, high-contrast controls
-- UI feels game-like before it feels app-like
-
-These references are useful when the shell starts feeling too muted, too soft,
-or too much like a generic web app.
-
-## Where v0.1 broke down
-
-- too much of the experience lived inside one game scene
-- gameplay, settings, and shell concerns blurred together
-- UI language was expressive, but not scalable
-
-The lesson is not "go back to v0.1." The lesson is to preserve its punch
-without rebuilding the whole app as one canvas-driven surface.
-
-## What v0.2.1 improved
-
-Using [screenshot_v0_2_1_home.png](assets/screenshot_v0_2_1_home.png),
-[screenshot_v0_2_1_game.png](assets/screenshot_v0_2_1_game.png),
-[screenshot_v0_2_1_replay.png](assets/screenshot_v0_2_1_replay.png), and
-[screenshot_v0_2_1_profile.png](assets/screenshot_v0_2_1_profile.png) as
-references:
-
-- proper DOM-shell structure
-- clearer screen separation between home, match, replay, and profile
-- stronger foundation for local profile and replay features
-- more scalable spacing, scrolling, and panel ownership
-
-These references are useful because they show the shell under practical
-density, not just idealized empty states.
-
-## Where v0.2.1 still feels weak
-
-- the shell can still feel too app-like or too muted
-- some screens still carry more chrome than they need
-- retro charm is less immediate than in v0.1
-- hierarchy is better than before, but not fully confident under dense states
-
-These are the places to pressure-test in a redesign or style-fix round.
+- `v0_2_1_*` is the first practical DOM-shell baseline
+- `v0_2_2_*` is the current post-restyle state and refinement target
 
 ## Design takeaway
 
 - keep v0.1's retro punch and board-first confidence
 - keep v0.2.1's structure, separation, and scalability
+- keep v0.2.2's flatter shell and clearer button-role language
 - avoid reintroducing v0.1's scene-bound UI
-- avoid letting v0.2.1 drift into muted dashboard chrome
+- avoid letting the current shell stay too text-heavy to adapt cleanly to
+  mobile
 
 ## Goal
 
