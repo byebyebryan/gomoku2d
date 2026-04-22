@@ -14,7 +14,7 @@ Paired with `design.md`, which defines screen roles and player-facing flows.
 
 Current visual reference sheet:
 
-![Gomoku2D DOM shell visual reference](assets/visual_reference_v2.png)
+![Gomoku2D DOM shell visual reference](assets/visual_reference_v0_2.png)
 
 Use this as a tone and component-language reference, not a locked screen spec.
 The important takeaways are panel contrast, button weight, spacing, typography,
@@ -31,23 +31,23 @@ shell:
 - [screenshot_v1_settings.png](assets/screenshot_v1_settings.png) — the old
   settings/state overlay; useful for chunky controls and simple two-column
   toggle language.
-- [screenshot_v2_1_home.png](assets/screenshot_v2_1_home.png) — practical
+- [screenshot_v0_2_1_home.png](assets/screenshot_v0_2_1_home.png) — practical
   current home screen; useful for title-screen density and negative-space
   balance.
-- [screenshot_v2_1_game.png](assets/screenshot_v2_1_game.png) — practical
+- [screenshot_v0_2_1_game.png](assets/screenshot_v0_2_1_game.png) — practical
   current match screen; useful for real HUD density, action hierarchy, and
   board-to-shell balance under live play.
-- [screenshot_v2_1_replay.png](assets/screenshot_v2_1_replay.png) —
+- [screenshot_v0_2_1_replay.png](assets/screenshot_v0_2_1_replay.png) —
   practical current replay screen; useful for transport density and checking
   whether replay chrome starts crowding the board.
-- [screenshot_v2_1_profile.png](assets/screenshot_v2_1_profile.png) —
+- [screenshot_v0_2_1_profile.png](assets/screenshot_v0_2_1_profile.png) —
   practical current profile screen; useful for record/history density, scroll
   behavior, and ledger-row readability.
 
 The rule of thumb:
 
 - `v1_*` is tone and retro feel
-- `v2_1_*` is practical current-state pressure
+- `v0_2_1_*` is practical current-state pressure
 
 ## What v0.1 got right
 
@@ -71,12 +71,12 @@ or too much like a generic web app.
 The lesson is not "go back to v0.1." The lesson is to preserve its punch
 without rebuilding the whole app as one canvas-driven surface.
 
-## What v2.1 improved
+## What v0.2.1 improved
 
-Using [screenshot_v2_1_home.png](assets/screenshot_v2_1_home.png),
-[screenshot_v2_1_game.png](assets/screenshot_v2_1_game.png),
-[screenshot_v2_1_replay.png](assets/screenshot_v2_1_replay.png), and
-[screenshot_v2_1_profile.png](assets/screenshot_v2_1_profile.png) as
+Using [screenshot_v0_2_1_home.png](assets/screenshot_v0_2_1_home.png),
+[screenshot_v0_2_1_game.png](assets/screenshot_v0_2_1_game.png),
+[screenshot_v0_2_1_replay.png](assets/screenshot_v0_2_1_replay.png), and
+[screenshot_v0_2_1_profile.png](assets/screenshot_v0_2_1_profile.png) as
 references:
 
 - proper DOM-shell structure
@@ -87,7 +87,7 @@ references:
 These references are useful because they show the shell under practical
 density, not just idealized empty states.
 
-## Where v2.1 still feels weak
+## Where v0.2.1 still feels weak
 
 - the shell can still feel too app-like or too muted
 - some screens still carry more chrome than they need
@@ -99,9 +99,9 @@ These are the places to pressure-test in a redesign or style-fix round.
 ## Design takeaway
 
 - keep v0.1's retro punch and board-first confidence
-- keep v2.1's structure, separation, and scalability
+- keep v0.2.1's structure, separation, and scalability
 - avoid reintroducing v0.1's scene-bound UI
-- avoid letting v2.1 drift into muted dashboard chrome
+- avoid letting v0.2.1 drift into muted dashboard chrome
 
 ## Goal
 
