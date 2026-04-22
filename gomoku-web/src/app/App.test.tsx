@@ -25,7 +25,7 @@ describe("App", () => {
       screen.getByRole("heading", { name: /gomoku2d/i }),
     ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("link", { name: /play bot/i }));
+    fireEvent.click(screen.getByRole("link", { name: /play/i }));
 
     expect(
       await screen.findByRole("heading", { name: /local match/i }),

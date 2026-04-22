@@ -33,30 +33,30 @@ export function ProfileRoute() {
     <main className={styles.page}>
       <header className={styles.header}>
         <div>
-          <p className={styles.eyebrow}>Local player profile</p>
+          <p className="uiPageEyebrow">Player record</p>
           <h1 className={styles.title}>Profile</h1>
         </div>
         <div className={styles.headerActions}>
-          <Link className={styles.primaryAction} to="/match/local">
-            Play Bot
+          <Link className="uiAction uiActionPrimary" to="/match/local">
+            Play
           </Link>
-          <Link className={`${styles.secondaryAction} ${styles.accentAction} ${styles.homeAction}`} to="/">
+          <Link className="uiAction uiActionAccent" to="/">
             Home
           </Link>
         </div>
       </header>
 
       <section className={styles.layout}>
-        <div className={styles.column}>
-          <section className={styles.card}>
-            <div className={styles.cardHeader}>
-              <p className={styles.sectionLabel}>Identity</p>
+        <aside className={`uiPanel ${styles.sidePanel}`}>
+          <section className={styles.sideSection}>
+            <div className={styles.sectionHeader}>
+              <p className="uiSectionLabel">Identity</p>
               <p className={styles.badge}>Guest</p>
             </div>
             <label className={styles.field}>
               <span className={styles.fieldLabel}>Display name</span>
               <input
-                className={styles.textInput}
+                className="uiInput"
                 onChange={(event) => {
                   guestProfileStore.getState().renameDisplayName(event.target.value);
                 }}
@@ -76,111 +76,104 @@ export function ProfileRoute() {
             </dl>
           </section>
 
-          <section className={styles.card}>
-            <div className={styles.cardHeader}>
-              <p className={styles.sectionLabel}>Settings</p>
-            </div>
-            <div className={styles.settingsList}>
-              <div className={styles.settingsBlock}>
-                <div className={styles.settingHeader}>
-                  <span>Preferred rules</span>
-                  <strong>{variantLabel(settings.preferredVariant)}</strong>
-                </div>
-                <div className={styles.variantButtons}>
-                  {(["freestyle", "renju"] as const).map((variant) => (
-                    <button
-                      className={
-                        settings.preferredVariant === variant
-                          ? `${styles.variantButton} ${styles.variantButtonActive}`
-                          : styles.variantButton
-                      }
-                      key={variant}
-                      onClick={() => {
-                        guestProfileStore.getState().updateSettings({ preferredVariant: variant });
-                      }}
-                      type="button"
-                    >
-                      {variantLabel(variant)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <button
-                className={styles.dangerAction}
-                onClick={() => {
-                  const store = guestProfileStore.getState();
-                  store.resetGuestProfile();
-                  store.ensureGuestProfile();
-                }}
-                type="button"
-              >
-                Reset local profile
-              </button>
-            </div>
-          </section>
-        </div>
+          <div className="uiDivider" />
 
-        <div className={`${styles.column} ${styles.historyColumn}`}>
-          <section className={`${styles.card} ${styles.historyCard}`}>
-            <div className={styles.cardHeader}>
-              <p className={styles.sectionLabel}>Local History</p>
-              <p className={styles.historyCount}>{historyCountLabel(history.length)}</p>
+          <section className={styles.sideSection}>
+            <div className={styles.sectionHeader}>
+              <p className="uiSectionLabel">Preferred rules</p>
+              <p className={styles.settingValue}>{variantLabel(settings.preferredVariant)}</p>
             </div>
-            <div className={styles.summaryGrid}>
-              <article className={styles.summaryTile}>
-                <span className={styles.summaryValue}>{history.length}</span>
-                <span className={styles.summaryLabel}>Finished</span>
-              </article>
-              <article className={styles.summaryTile}>
-                <span className={styles.summaryValue}>{wins}</span>
-                <span className={styles.summaryLabel}>Wins</span>
-              </article>
-              <article className={styles.summaryTile}>
-                <span className={styles.summaryValue}>{losses}</span>
-                <span className={styles.summaryLabel}>Losses</span>
-              </article>
-              <article className={styles.summaryTile}>
-                <span className={styles.summaryValue}>{draws}</span>
-                <span className={styles.summaryLabel}>Draws</span>
-              </article>
-            </div>
-            <div className={styles.historyBody}>
-              {history.length === 0 ? (
-                <p className={styles.emptyState}>Finished matches are saved here.</p>
-              ) : (
-                <ol className={styles.historyList}>
-                  {history.map((match) => (
-                    <li className={styles.historyItem} key={match.id}>
-                      <div className={styles.historyRow}>
-                        <div>
-                          <p className={styles.historyTitle}>{replayWinnerLabel(match, guestDisplayName)}</p>
-                          <p className={styles.historyMeta}>{replayPlayerLabel(match, guestDisplayName)}</p>
-                        </div>
-                      </div>
-                      <div className={styles.historyRow}>
-                        <p className={styles.historyMeta}>
-                          {variantLabel(match.variant)} · {match.moves.length} moves
-                        </p>
-                        <div className={styles.historyActions}>
-                          <p className={styles.historyMeta}>{new Date(match.savedAt).toLocaleString()}</p>
-                          <button
-                            className={`${styles.historyAction} ${styles.infoAction}`}
-                            onClick={() => {
-                              navigate(`/replays/local/${match.id}`);
-                            }}
-                            type="button"
-                          >
-                            Open replay
-                          </button>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              )}
+            <div className={styles.variantButtons}>
+              {(["freestyle", "renju"] as const).map((variant) => (
+                <button
+                  className={
+                    settings.preferredVariant === variant
+                      ? "uiSegment uiSegmentActive"
+                      : "uiSegment"
+                  }
+                  key={variant}
+                  onClick={() => {
+                    guestProfileStore.getState().updateSettings({ preferredVariant: variant });
+                  }}
+                  type="button"
+                >
+                  {variantLabel(variant)}
+                </button>
+              ))}
             </div>
           </section>
-        </div>
+
+          <div className="uiDivider" />
+
+          <section className={styles.sideSection}>
+            <button
+              className="uiAction uiActionDanger"
+              onClick={() => {
+                const store = guestProfileStore.getState();
+                store.resetGuestProfile();
+                store.ensureGuestProfile();
+              }}
+              type="button"
+            >
+              Reset local profile
+            </button>
+          </section>
+        </aside>
+
+        <section className={`uiPanel ${styles.recordPanel}`}>
+          <div className={styles.recordHeader}>
+            <p className="uiSectionLabel">Local history</p>
+            <p className={styles.historyCount}>{historyCountLabel(history.length)}</p>
+          </div>
+          <div className={styles.summaryGrid}>
+            <article className={styles.summaryTile}>
+              <span className={styles.summaryValue}>{history.length}</span>
+              <span className={styles.summaryLabel}>Finished</span>
+            </article>
+            <article className={styles.summaryTile}>
+              <span className={styles.summaryValue}>{wins}</span>
+              <span className={styles.summaryLabel}>Wins</span>
+            </article>
+            <article className={styles.summaryTile}>
+              <span className={styles.summaryValue}>{losses}</span>
+              <span className={styles.summaryLabel}>Losses</span>
+            </article>
+            <article className={styles.summaryTile}>
+              <span className={styles.summaryValue}>{draws}</span>
+              <span className={styles.summaryLabel}>Draws</span>
+            </article>
+          </div>
+          <div className={styles.historyBody}>
+            {history.length === 0 ? (
+              <p className={styles.emptyState}>Finished matches are saved here.</p>
+            ) : (
+              <ol className={styles.historyList}>
+                {history.map((match) => (
+                  <li className={styles.historyItem} key={match.id}>
+                    <div className={styles.historyMain}>
+                      <div>
+                        <p className={styles.historyTitle}>{replayWinnerLabel(match, guestDisplayName)}</p>
+                        <p className={styles.historyMatchup}>{replayPlayerLabel(match, guestDisplayName)}</p>
+                      </div>
+                      <button
+                        className="uiAction uiActionSecondary"
+                        onClick={() => {
+                          navigate(`/replays/local/${match.id}`);
+                        }}
+                        type="button"
+                      >
+                        Replay
+                      </button>
+                    </div>
+                    <p className={styles.historyMeta}>
+                      {variantLabel(match.variant)} · {match.moves.length} moves · {new Date(match.savedAt).toLocaleString()}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+        </section>
       </section>
     </main>
   );

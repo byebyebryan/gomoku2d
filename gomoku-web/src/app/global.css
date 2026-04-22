@@ -12,21 +12,21 @@
 
 :root {
   color-scheme: dark;
-  --bg: #232323;
-  --bg-elevated: #323232;
-  --bg-strong: #3a3a3a;
-  --surface: #323232;
-  --surface-strong: #3d3d3d;
-  --surface-muted: #242620;
+  --bg: #1e1e1e;
+  --bg-elevated: #2a2a2a;
+  --bg-strong: #353535;
+  --surface: #2a2a2a;
+  --surface-strong: #353535;
+  --surface-muted: #22241f;
   --border: #575756;
-  --border-strong: #6b6a6a;
+  --border-strong: #706c66;
   --text: #f3efe5;
   --text-muted: #a6a6a0;
   --text-strong: #f9cb58;
   --accent: #d5ab51;
   --accent-strong: #f9cb58;
   --accent-border: #a7873e;
-  --accent-ink: #241907;
+  --accent-ink: #f3efe5;
   --accent-soft: rgba(213, 171, 81, 0.18);
   --info: #658a90;
   --info-border: #4d6d73;
@@ -41,7 +41,9 @@
   --scroll-track: #242620;
   --scroll-thumb: #6b6a6a;
   --scroll-thumb-hover: #a6a6a0;
-  --shadow: 8px 8px 0 rgba(0, 0, 0, 0.42);
+  --shadow: 10px 10px 0 rgba(0, 0, 0, 0.36);
+  --shadow-button: 0 4px 0 rgba(0, 0, 0, 0.38);
+  --shadow-button-pressed: 0 1px 0 rgba(0, 0, 0, 0.38);
   --radius-lg: 0px;
   --radius-md: 0px;
   --radius-sm: 0px;
@@ -126,4 +128,117 @@ textarea:focus-visible,
 select:focus-visible {
   outline: 2px solid var(--info);
   outline-offset: 2px;
+}
+
+.uiPageEyebrow {
+  margin: 0 0 8px;
+  color: var(--accent-strong);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.uiSectionLabel {
+  margin: 0;
+  color: var(--text-muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.uiDivider {
+  height: 1px;
+  background: var(--border);
+}
+
+.uiPanel {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.uiInput {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+.uiAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 132px;
+  min-height: 48px;
+  padding: 10px 18px;
+  border: 2px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--text);
+  box-shadow: var(--shadow-button);
+  font-family: "PixelOperatorBold", "PixelOperator", "Trebuchet MS", sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition:
+    transform 80ms ease,
+    box-shadow 80ms ease,
+    filter 80ms ease;
+}
+
+.uiAction:hover {
+  filter: brightness(1.06);
+}
+
+.uiAction:active {
+  box-shadow: var(--shadow-button-pressed);
+  transform: translateY(3px);
+}
+
+.uiActionPrimary {
+  border-color: var(--success-border);
+  background: var(--success);
+  color: var(--success-ink);
+}
+
+.uiActionSecondary {
+  border-color: var(--info-border);
+  background: var(--info);
+  color: var(--info-ink);
+}
+
+.uiActionAccent {
+  border-color: var(--accent-border);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.uiActionNeutral {
+  border-color: var(--border-strong);
+  background: var(--surface-strong);
+  color: var(--text);
+}
+
+.uiActionDanger {
+  border-color: var(--danger-border);
+  background: var(--danger);
+  color: var(--danger-ink);
+}
+
+.uiSegment {
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 2px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--text);
+  font-family: "PixelOperatorBold", "PixelOperator", "Trebuchet MS", sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.uiSegmentActive {
+  border-color: var(--info-border);
+  background: var(--info);
+  color: var(--info-ink);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 0 0 1px rgba(0, 0, 0, 0.18);
 }

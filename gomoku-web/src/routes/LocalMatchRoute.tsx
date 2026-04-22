@@ -58,9 +58,8 @@ function statusLabel(
 }
 
 export function LocalMatchRoute() {
-  const historyBodyRef = useRef<HTMLDivElement | null>(null);
-  const previousMoveCountRef = useRef(0);
   const storeRef = useRef<ReturnType<typeof createLocalMatchStore> | null>(null);
+  const [latestReplayId, setLatestReplayId] = useState<string | null>(null);
   const [storeReady, setStoreReady] = useState(false);
   const profile = useStore(guestProfileStore, (snapshot) => snapshot.profile);
   const preferredVariant = useStore(guestProfileStore, (snapshot) => snapshot.settings.preferredVariant);
@@ -78,7 +77,8 @@ export function LocalMatchRoute() {
     storeRef.current = createLocalMatchStore({
       humanDisplayName: profile.displayName,
       onMatchFinished: (match) => {
-        guestProfileStore.getState().recordFinishedMatch(match);
+        const replayId = guestProfileStore.getState().recordFinishedMatch(match);
+        setLatestReplayId(replayId);
       },
       variant: guestProfileStore.getState().settings.preferredVariant,
     });
@@ -93,28 +93,10 @@ export function LocalMatchRoute() {
   }, []);
 
   useEffect(() => {
-    if (!storeReady) {
-      return;
+    if (state.status === "playing" && latestReplayId) {
+      setLatestReplayId(null);
     }
-
-    const historyBody = historyBodyRef.current;
-    if (!historyBody) {
-      previousMoveCountRef.current = state.moves.length;
-      return;
-    }
-
-    if (state.moves.length === 0) {
-      historyBody.scrollTop = 0;
-      previousMoveCountRef.current = 0;
-      return;
-    }
-
-    if (state.moves.length > previousMoveCountRef.current) {
-      historyBody.scrollTop = historyBody.scrollHeight;
-    }
-
-    previousMoveCountRef.current = state.moves.length;
-  }, [state.moves.length, storeReady]);
+  }, [latestReplayId, state.status]);
 
   if (!storeReady || !storeRef.current) {
     return <main className={styles.page}>Loading match…</main>;
@@ -124,17 +106,22 @@ export function LocalMatchRoute() {
     <main className={styles.page}>
       <header className={styles.header}>
         <div>
-          <p className={styles.eyebrow}>Face the Classic Bot</p>
+          <p className="uiPageEyebrow">Classic Bot practice</p>
           <h1 className={styles.title}>Local Match</h1>
         </div>
         <div className={styles.headerActions}>
-          <button className={`${styles.secondaryAction} ${styles.successAction}`} onClick={state.startNewMatch} type="button">
+          <button className="uiAction uiActionPrimary" onClick={state.startNewMatch} type="button">
             New Game
           </button>
-          <Link className={`${styles.secondaryAction} ${styles.infoAction}`} to="/profile">
+          {state.status !== "playing" && latestReplayId ? (
+            <Link className="uiAction uiActionSecondary" to={`/replays/local/${latestReplayId}`}>
+              Replay
+            </Link>
+          ) : null}
+          <Link className="uiAction uiActionSecondary" to="/profile">
             Profile
           </Link>
-          <Link className={`${styles.secondaryAction} ${styles.accentAction} ${styles.homeAction}`} to="/">
+          <Link className="uiAction uiActionAccent" to="/">
             Home
           </Link>
         </div>
@@ -163,25 +150,16 @@ export function LocalMatchRoute() {
           />
         </div>
 
-        <aside className={styles.sidebar}>
-          <section className={styles.statusCard}>
-            <p className={styles.sectionLabel}>Status</p>
-            <p className={styles.statusText}>{statusLabel(state)}</p>
-          </section>
-
-          <section className={styles.rulesCard}>
+        <aside className={`uiPanel ${styles.hud}`}>
+          <section className={styles.hudSection}>
             <div className={styles.rulesHeader}>
-              <p className={styles.sectionLabel}>Rules</p>
-              <p className={styles.rulesMeta}>Current: {variantLabel(state.currentVariant)}</p>
+              <p className="uiSectionLabel">Rules</p>
+              <p className={styles.rulesMeta}>{variantLabel(preferredVariant)}</p>
             </div>
             <div className={styles.variantButtons}>
               {(["freestyle", "renju"] as const).map((variant) => (
                 <button
-                  className={
-                    preferredVariant === variant
-                      ? `${styles.variantButton} ${styles.variantButtonActive}`
-                      : styles.variantButton
-                  }
+                  className={preferredVariant === variant ? "uiSegment uiSegmentActive" : "uiSegment"}
                   key={variant}
                   onClick={() => {
                     guestProfileStore.getState().updateSettings({ preferredVariant: variant });
@@ -194,60 +172,71 @@ export function LocalMatchRoute() {
               ))}
             </div>
             {state.selectedVariant !== state.currentVariant ? (
-              <p className={styles.rulesMeta}>Next game: {variantLabel(state.selectedVariant)}</p>
+              <p className={styles.pendingText}>Applies next game.</p>
             ) : null}
           </section>
 
-          <section className={styles.playerList}>
-            {state.players.map((player, index) => {
-              const active =
-                state.status === "playing" &&
-                !state.pendingBotMove &&
-                state.currentPlayer === index + 1;
-              const stoneToneClass = index === 0 ? styles.playerCardBlack : styles.playerCardWhite;
+          <div className="uiDivider" />
 
-              return (
-                <article
-                  className={
-                    active
-                      ? `${styles.playerCard} ${stoneToneClass} ${styles.playerCardActive}`
-                      : `${styles.playerCard} ${stoneToneClass}`
-                  }
-                  key={player.stone}
-                >
-                  <div className={styles.playerMeta}>
+          <section className={styles.hudSection}>
+            <p className="uiSectionLabel">Status</p>
+            <p className={styles.statusText} data-testid="match-status">
+              {statusLabel(state)}
+            </p>
+          </section>
+
+          <div className="uiDivider" />
+
+          <section className={styles.hudSection}>
+            <p className="uiSectionLabel">Match</p>
+            <div className={styles.metaRows}>
+              <div className={styles.metaRow}>
+                <span className={styles.metaLabel}>Rule</span>
+                <span className={styles.metaValue} data-testid="match-rule">
+                  {variantLabel(state.currentVariant)}
+                </span>
+              </div>
+              <div className={styles.metaRow}>
+                <span className={styles.metaLabel}>Move</span>
+                <span className={styles.metaValue} data-testid="match-move-count">
+                  {state.moves.length}
+                </span>
+              </div>
+              {state.selectedVariant !== state.currentVariant ? (
+                <div className={styles.metaRow}>
+                  <span className={styles.metaLabel}>Next game</span>
+                  <span className={styles.metaValue} data-testid="match-next-rule">
+                    {variantLabel(state.selectedVariant)}
+                  </span>
+                </div>
+              ) : null}
+            </div>
+
+            <div className={styles.playerRows}>
+              {state.players.map((player, index) => {
+                const active =
+                  state.status === "playing" &&
+                  !state.pendingBotMove &&
+                  state.currentPlayer === index + 1;
+
+                return (
+                  <article
+                    className={[
+                      styles.playerRow,
+                      player.stone === "black" ? styles.playerRowBlack : styles.playerRowWhite,
+                      active ? styles.playerRowActive : "",
+                    ].join(" ").trim()}
+                    data-testid={`player-row-${player.stone}`}
+                    key={player.stone}
+                  >
                     <p className={styles.playerStone}>{player.stone}</p>
-                    <div>
+                    <div className={styles.playerCopy}>
                       <h2 className={styles.playerName}>{player.name}</h2>
                       <p className={styles.playerKind}>{player.kind === "human" ? "Human" : "Bot"}</p>
                     </div>
-                  </div>
-                </article>
-              );
-            })}
-          </section>
-
-          <section className={styles.historyCard}>
-            <div className={styles.historyHeader}>
-              <p className={styles.sectionLabel}>Move history</p>
-              <p className={styles.historyCount}>{state.moves.length} moves</p>
-            </div>
-            <div className={styles.historyBody} ref={historyBodyRef}>
-              {state.moves.length === 0 ? (
-                <p className={styles.emptyHistory}>Moves appear here as the game unfolds.</p>
-              ) : (
-                <ol className={styles.historyList}>
-                  {state.moves.map((move) => (
-                    <li className={styles.historyItem} key={move.moveNumber}>
-                      <span>M{move.moveNumber}</span>
-                      <span>{move.player === 1 ? "Black" : "White"}</span>
-                      <span>
-                        {move.row + 1},{move.col + 1}
-                      </span>
-                    </li>
-                  ))}
-                </ol>
-              )}
+                  </article>
+                );
+              })}
             </div>
           </section>
         </aside>
