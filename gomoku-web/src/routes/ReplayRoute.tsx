@@ -6,7 +6,7 @@ import { Board } from "../components/Board/Board";
 import { guestProfileStore } from "../profile/guest_profile_store";
 import {
   buildLocalReplayFrame,
-  replayPlayerLabel,
+  replayPlayerName,
   replayWinnerLabel,
   shouldShowReplaySequenceNumbers,
   variantLabel,
@@ -80,7 +80,6 @@ export function ReplayRoute() {
         <div>
           <p className="uiPageEyebrow">Match replay</p>
           <h1 className={styles.title}>Replay</h1>
-          <p className={styles.summary}>{replayPlayerLabel(match, guestDisplayName)}</p>
         </div>
         <div className={styles.headerActions}>
           <Link className="uiAction uiActionSecondary" to="/profile">
@@ -114,14 +113,51 @@ export function ReplayRoute() {
         <aside className={styles.deck}>
           <section className={styles.deckSection}>
             <p className="uiSectionLabel">Result</p>
-            <p className={styles.resultText} data-testid="replay-result">
+            <p className={styles.statusText} data-testid="replay-result">
               {replayWinnerLabel(match, guestDisplayName)}
             </p>
-            <p className={styles.metaLine}>
-              <span data-testid="replay-move-count">{moveCountLabel(frame.moveIndex, match.moves.length)}</span>
-              <span aria-hidden="true">·</span>
-              <span data-testid="replay-rule">{variantLabel(match.variant)}</span>
-            </p>
+          </section>
+
+          <div className="uiDivider" />
+
+          <section className={styles.deckSection}>
+            <p className="uiSectionLabel">Match</p>
+            <div className={styles.metaRows}>
+              <div className={styles.metaRow}>
+                <span className={styles.metaLabel}>Rule</span>
+                <span className={styles.metaValue} data-testid="replay-rule">
+                  {variantLabel(match.variant)}
+                </span>
+              </div>
+              <div className={styles.metaRow}>
+                <span className={styles.metaLabel}>Move</span>
+                <span className={styles.metaValue} data-testid="replay-move-count">
+                  {moveCountLabel(frame.moveIndex, match.moves.length)}
+                </span>
+              </div>
+            </div>
+            <div className={styles.playerRows}>
+              {match.players.map((player, index) => {
+                const active = frame.status === "playing" && frame.currentPlayer === index + 1;
+
+                return (
+                  <article
+                    className={[
+                      styles.playerRow,
+                      player.stone === "black" ? styles.playerRowBlack : styles.playerRowWhite,
+                      active ? styles.playerRowActive : "",
+                    ].join(" ").trim()}
+                    data-testid={`replay-player-row-${player.stone}`}
+                    key={player.stone}
+                  >
+                    <div className={styles.playerCopy}>
+                      <h2 className={styles.playerName}>{replayPlayerName(player, guestDisplayName)}</h2>
+                      <p className={styles.playerKind}>{player.kind === "human" ? "Player" : "Bot"}</p>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
           </section>
 
           <div className="uiDivider" />

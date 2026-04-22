@@ -20,11 +20,6 @@
   line-height: 0.92;
 }
 
-.summary {
-  margin: 10px 0 0;
-  color: var(--text-muted);
-}
-
 .headerActions {
   display: flex;
   flex-wrap: wrap;
@@ -56,21 +51,101 @@
   padding: 18px;
 }
 
-.resultText {
+.statusText {
   margin: 0;
   color: var(--accent-strong);
-  font-size: 1.9rem;
+  display: flex;
+  font-family: var(--font-display);
+  font-size: 2.15rem;
   line-height: 1.05;
+  min-height: 2.1em;
+  align-items: flex-start;
   text-transform: uppercase;
 }
 
-.metaLine {
+.metaRows {
+  display: grid;
+  gap: 10px;
+}
+
+.metaRow {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.metaLabel {
   color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: var(--type-meta);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+
+.metaValue {
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--type-value);
+  text-transform: uppercase;
+}
+
+.playerRows {
+  display: grid;
+  gap: 10px;
+}
+
+.playerRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+}
+
+.playerRowBlack {
+  background: #171717;
+  color: var(--text);
+}
+
+.playerRowWhite {
+  background: #e8dfcf;
+  color: #1f1f1f;
+}
+
+.playerRowActive {
+  box-shadow:
+    inset 7px 0 0 var(--info),
+    inset 0 0 0 2px var(--info-border);
+}
+
+.playerCopy {
+  min-width: 0;
+}
+
+.playerName {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+}
+
+.playerKind {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: var(--type-body);
+}
+
+.playerRowBlack .playerKind {
+  color: #b8b2a6;
+}
+
+.playerRowWhite .playerKind {
+  color: #5f5547;
+}
+
+.playerRowWhite .playerName {
+  color: #1f1f1f;
 }
 
 .playbackHeader {
@@ -234,6 +309,10 @@
   .playbackHeader {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .statusText {
+    font-size: 1.7rem;
   }
 
   .controlsRow {
