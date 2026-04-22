@@ -7,6 +7,10 @@ people online, work through puzzles, and go back through your games to see
 where they turned. The Rust bot lab behind it isn't a side project — it's the
 engine that makes the interesting features possible.
 
+This document describes the broader target product and its long-term pillars.
+The current local-first `v0.2` slice and rollout order live in `design.md` and
+`roadmap.md`.
+
 ## Pillars
 
 ### 1. Lab-as-feature-source
