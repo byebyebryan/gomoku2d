@@ -143,6 +143,77 @@ describe("createLocalMatchStore", () => {
     });
   });
 
+  it("seeds a resumed local match and keeps the replay variant", () => {
+    const store = createLocalMatchStore({
+      botRunner: {
+        chooseMove: async () => null,
+        configure: () => undefined,
+        dispose: () => undefined,
+      },
+      humanDisplayName: "Bryan Guest",
+      resumeState: {
+        currentPlayer: 1,
+        moves: [
+          { col: 7, moveNumber: 1, player: 1, row: 7 },
+          { col: 8, moveNumber: 2, player: 2, row: 7 },
+          { col: 9, moveNumber: 3, player: 1, row: 7 },
+          { col: 10, moveNumber: 4, player: 2, row: 7 },
+        ],
+        variant: "renju",
+      },
+    });
+
+    expect(store.getState()).toMatchObject({
+      currentPlayer: 1,
+      currentVariant: "renju",
+      moves: [
+        expect.objectContaining({ moveNumber: 1, player: 1, row: 7, col: 7 }),
+        expect.objectContaining({ moveNumber: 2, player: 2, row: 7, col: 8 }),
+        expect.objectContaining({ moveNumber: 3, player: 1, row: 7, col: 9 }),
+        expect.objectContaining({ moveNumber: 4, player: 2, row: 7, col: 10 }),
+      ],
+      pendingBotMove: false,
+      selectedVariant: "renju",
+      status: "playing",
+    });
+    expect(store.getState().players[0]).toMatchObject({ kind: "human", stone: "black", name: "Bryan Guest" });
+    expect(store.getState().players[1]).toMatchObject({ kind: "bot", stone: "white", name: "Classic Bot" });
+  });
+
+  it("remaps the replay side to move to the human when resuming as white", () => {
+    let chooseMoveCalls = 0;
+    const store = createLocalMatchStore({
+      botRunner: {
+        chooseMove: async () => {
+          chooseMoveCalls += 1;
+          return null;
+        },
+        configure: () => undefined,
+        dispose: () => undefined,
+      },
+      humanDisplayName: "Bryan Guest",
+      resumeState: {
+        currentPlayer: 2,
+        moves: [
+          { col: 7, moveNumber: 1, player: 1, row: 7 },
+          { col: 8, moveNumber: 2, player: 2, row: 7 },
+          { col: 9, moveNumber: 3, player: 1, row: 7 },
+        ],
+        variant: "freestyle",
+      },
+    });
+
+    expect(store.getState().currentPlayer).toBe(2);
+    expect(store.getState().players[0]).toMatchObject({ kind: "bot", stone: "black", name: "Classic Bot" });
+    expect(store.getState().players[1]).toMatchObject({ kind: "human", stone: "white", name: "Bryan Guest" });
+    expect(store.getState().pendingBotMove).toBe(false);
+    expect(chooseMoveCalls).toBe(0);
+
+    expect(store.getState().placeHumanMove(8, 8)).toBe(true);
+    expect(store.getState().pendingBotMove).toBe(true);
+    expect(chooseMoveCalls).toBe(1);
+  });
+
   it("derives human-turn warning cues from the wasm board", () => {
     const board = WasmBoard.createWithVariant("freestyle");
     const moves: Array<[number, number]> = [

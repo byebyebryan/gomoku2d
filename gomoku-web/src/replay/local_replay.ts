@@ -13,8 +13,22 @@ export interface LocalReplayFrame {
   winningCells: CellPosition[];
 }
 
+export const REPLAY_RESUME_MIN_MOVE_INDEX = 4;
+
 export function shouldShowReplaySequenceNumbers(frame: Pick<LocalReplayFrame, "status">): boolean {
   return frame.status !== "playing";
+}
+
+export function defaultReplayMoveIndex(totalMoves: number): number {
+  return Math.min(totalMoves, REPLAY_RESUME_MIN_MOVE_INDEX);
+}
+
+export function replayStartMoveIndex(totalMoves: number): number {
+  return totalMoves > 0 ? 1 : 0;
+}
+
+export function canResumeReplay(frame: Pick<LocalReplayFrame, "moveIndex" | "status">): boolean {
+  return frame.status === "playing" && frame.moveIndex >= REPLAY_RESUME_MIN_MOVE_INDEX;
 }
 
 function emptyCells(): CellStone[][] {

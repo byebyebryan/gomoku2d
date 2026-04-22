@@ -47,7 +47,14 @@ export interface LocalMatchStoreOptions {
   boardFactory?: (variant: GameVariant) => WasmBoard;
   humanDisplayName?: string;
   onMatchFinished?: (match: FinishedLocalMatch) => void;
+  resumeState?: LocalMatchResumeSeed;
   variant?: GameVariant;
+}
+
+export interface LocalMatchResumeSeed {
+  currentPlayer: 1 | 2;
+  moves: MatchMove[];
+  variant: GameVariant;
 }
 
 function defaultPlayers(humanDisplayName = "You"): [MatchPlayer, MatchPlayer] {
@@ -61,6 +68,10 @@ function clonePlayers(players: [MatchPlayer, MatchPlayer]): [MatchPlayer, MatchP
   return [{ ...players[0] }, { ...players[1] }];
 }
 
+function cloneResumeMoves(moves: MatchMove[]): MatchMove[] {
+  return moves.map((move) => ({ ...move }));
+}
+
 function swapPlayers(players: [MatchPlayer, MatchPlayer]): [MatchPlayer, MatchPlayer] {
   return [
     { ...players[1], stone: "black" },
@@ -72,6 +83,25 @@ function emptyCells(): CellStone[][] {
   return Array.from({ length: BOARD_SIZE }, () =>
     Array.from({ length: BOARD_SIZE }, () => null),
   );
+}
+
+function resumedPlayers(
+  currentPlayer: 1 | 2,
+  humanDisplayName = "You",
+): [MatchPlayer, MatchPlayer] {
+  const base = defaultPlayers(humanDisplayName);
+  return currentPlayer === 1 ? base : swapPlayers(base);
+}
+
+function seedBoard(board: WasmBoard, moves: MatchMove[]): boolean {
+  for (const move of moves) {
+    const result = board.applyMove(move.row, move.col) as { error?: unknown };
+    if (result?.error) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 function cellsFromBoard(board: WasmBoard): CellStone[][] {
@@ -264,14 +294,28 @@ function snapshotFinishedMatch(
 export function createLocalMatchStore(
   options: LocalMatchStoreOptions = {},
 ): StoreApi<LocalMatchState> {
-  let currentVariant = options.variant ?? "freestyle";
+  const initialResumeState = options.resumeState
+    ? {
+        ...options.resumeState,
+        moves: cloneResumeMoves(options.resumeState.moves),
+      }
+    : null;
+  let currentVariant = initialResumeState?.variant ?? options.variant ?? "freestyle";
   let selectedVariant = currentVariant;
   const botDepth = options.botDepth ?? 3;
   const boardFactory = options.boardFactory ?? WasmBoard.createWithVariant;
   const botRunner = options.botRunner ?? new BotRunner();
-  let players = defaultPlayers(options.humanDisplayName);
+  let players = initialResumeState
+    ? resumedPlayers(initialResumeState.currentPlayer, options.humanDisplayName)
+    : defaultPlayers(options.humanDisplayName);
 
   let board = boardFactory(currentVariant);
+  const seededMoves = initialResumeState && seedBoard(board, initialResumeState.moves) ? initialResumeState.moves : [];
+  if (initialResumeState && seededMoves.length !== initialResumeState.moves.length) {
+    board.free();
+    board = boardFactory(currentVariant);
+    players = defaultPlayers(options.humanDisplayName);
+  }
   let requestToken = 0;
 
   const store = createStore<LocalMatchState>((set, get) => {
@@ -378,7 +422,7 @@ export function createLocalMatchStore(
     configureBots();
 
     return {
-      ...snapshotState(board, [], false, players, currentVariant, selectedVariant),
+      ...snapshotState(board, seededMoves, false, players, currentVariant, selectedVariant),
       dispose: () => {
         interruptBotRequests();
         botRunner.dispose();

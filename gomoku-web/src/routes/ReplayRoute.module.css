@@ -165,6 +165,10 @@
   width: 100%;
 }
 
+.resumeAction {
+  width: 100%;
+}
+
 .timeline {
   display: grid;
   gap: 10px;

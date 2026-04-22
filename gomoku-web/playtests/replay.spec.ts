@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 function boardClickPosition(box: { width: number; height: number }, row: number, col: number) {
   const boardSize = 15;
@@ -13,7 +13,7 @@ function boardClickPosition(box: { width: number; height: number }, row: number,
   };
 }
 
-test("local replay opens from profile history and supports stepping plus autoplay", async ({ page }) => {
+async function openFinishedReplay(page: Page) {
   await page.goto("/profile");
 
   const displayName = page.getByLabel("Display name");
@@ -42,18 +42,21 @@ test("local replay opens from profile history and supports stepping plus autopla
 
   await expect(page.getByText("Classic Bot wins")).toBeVisible();
   await page.getByRole("link", { name: "Profile" }).click();
-
   await page.getByRole("button", { name: "Replay" }).first().click();
-
   await expect(page.getByRole("heading", { name: "Replay" })).toBeVisible();
+}
+
+test("local replay opens from profile history and supports stepping plus autoplay", async ({ page }) => {
+  await openFinishedReplay(page);
   await expect(page.getByTestId("replay-result")).toHaveText("Classic Bot wins");
-  await expect(page.getByTestId("replay-move-count")).toHaveText("Move 0 / 10");
+  await expect(page.getByTestId("replay-move-count")).toHaveText("Move 4 / 10");
   await expect(page.getByTestId("replay-rule")).toHaveText("Renju");
   await expect(page.getByTestId("replay-player-row-black")).toContainText("Bryan Guest");
   await expect(page.getByTestId("replay-player-row-black")).toContainText("Player");
   await expect(page.getByTestId("replay-player-row-white")).toContainText("Classic Bot");
   await expect(page.getByTestId("replay-player-row-white")).toContainText("Bot");
   await expect(page.getByTestId("replay-player-row-black")).toHaveCSS("box-shadow", /rgb/);
+  await expect(page.getByRole("button", { name: "Play From Here" })).toBeEnabled();
   await expect(page.locator('[data-testid="replay-step-controls"] button')).toHaveText([
     "Start",
     "End",
@@ -61,14 +64,16 @@ test("local replay opens from profile history and supports stepping plus autopla
     "Next move",
   ]);
 
-  await page.getByRole("button", { name: "Next move" }).click();
+  await page.getByRole("button", { name: "Start" }).click();
   await expect(page.getByTestId("replay-move-count")).toHaveText("Move 1 / 10");
+  await expect(page.getByRole("button", { name: "Play From Here" })).toBeDisabled();
   await expect(page.getByTestId("replay-player-row-white")).toHaveCSS("box-shadow", /rgb/);
   await page.getByRole("button", { name: "End" }).click();
   await expect(page.getByTestId("replay-result")).toHaveText("Classic Bot wins");
   await expect(page.getByTestId("replay-move-count")).toHaveText("Move 10 / 10");
+  await expect(page.getByRole("button", { name: "Play From Here" })).toBeDisabled();
   await page.getByRole("button", { name: "Start" }).click();
-  await expect(page.getByTestId("replay-move-count")).toHaveText("Move 0 / 10");
+  await expect(page.getByTestId("replay-move-count")).toHaveText("Move 1 / 10");
 
   await page.setViewportSize({ width: 430, height: 932 });
   const portraitMetrics = await page.evaluate(() => {
@@ -124,4 +129,25 @@ test("local replay opens from profile history and supports stepping plus autopla
     .toBe("Move 10 / 10");
   await expect(page.getByText("Classic Bot wins")).toBeVisible();
   await expect(page.getByRole("button", { name: "Auto play" })).toBeVisible();
+});
+
+test("local replay can start a new local match from the current replay frame", async ({ page }) => {
+  await openFinishedReplay(page);
+
+  await page.getByRole("button", { name: "Next move" }).click();
+  await expect(page.getByTestId("replay-move-count")).toHaveText("Move 5 / 10");
+  await expect(page.getByTestId("replay-player-row-white")).toHaveCSS("box-shadow", /rgb/);
+  await expect(page.getByRole("button", { name: "Play From Here" })).toBeEnabled();
+
+  await page.getByRole("button", { name: "Play From Here" }).click();
+
+  await expect(page.getByRole("heading", { name: "Local Match" })).toBeVisible();
+  await expect(page.getByTestId("match-rule")).toHaveText("Renju");
+  await expect(page.getByTestId("match-move-count")).toHaveText("5");
+  await expect(page.getByTestId("match-status")).toHaveText("Bryan Guest to move");
+  await expect(page.getByTestId("player-row-black")).toContainText("Classic Bot");
+  await expect(page.getByTestId("player-row-black")).toContainText("Bot");
+  await expect(page.getByTestId("player-row-white")).toContainText("Bryan Guest");
+  await expect(page.getByTestId("player-row-white")).toContainText("Player");
+  await expect(page.getByTestId("player-row-white")).toHaveCSS("box-shadow", /rgb/);
 });

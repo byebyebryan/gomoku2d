@@ -2,7 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import type { GuestSavedMatch } from "../profile/guest_profile_store";
 
-import { buildLocalReplayFrame, shouldShowReplaySequenceNumbers } from "./local_replay";
+import {
+  buildLocalReplayFrame,
+  canResumeReplay,
+  defaultReplayMoveIndex,
+  replayStartMoveIndex,
+  shouldShowReplaySequenceNumbers,
+} from "./local_replay";
 
 const SAMPLE_MATCH: GuestSavedMatch = {
   guestStone: "black",
@@ -60,5 +66,31 @@ describe("buildLocalReplayFrame", () => {
     expect(shouldShowReplaySequenceNumbers(buildLocalReplayFrame(SAMPLE_MATCH, SAMPLE_MATCH.moves.length))).toBe(
       true,
     );
+  });
+
+  it("starts replay a few moves in but keeps Start on the first move", () => {
+    expect(defaultReplayMoveIndex(0)).toBe(0);
+    expect(defaultReplayMoveIndex(2)).toBe(2);
+    expect(defaultReplayMoveIndex(8)).toBe(4);
+    expect(replayStartMoveIndex(0)).toBe(0);
+    expect(replayStartMoveIndex(8)).toBe(1);
+  });
+
+  it("only enables replay resume once the frame is deep enough and still playing", () => {
+    expect(canResumeReplay(buildLocalReplayFrame(SAMPLE_MATCH, 3))).toBe(false);
+    expect(canResumeReplay(buildLocalReplayFrame(SAMPLE_MATCH, SAMPLE_MATCH.moves.length))).toBe(false);
+
+    const longerReplay = {
+      ...SAMPLE_MATCH,
+      moves: [
+        ...SAMPLE_MATCH.moves,
+        { col: 1, moveNumber: 4, player: 2 as const, row: 1 },
+        { col: 9, moveNumber: 5, player: 1 as const, row: 7 },
+      ],
+      status: "playing" as const,
+      winningCells: [],
+    };
+
+    expect(canResumeReplay(buildLocalReplayFrame(longerReplay, 4))).toBe(true);
   });
 });

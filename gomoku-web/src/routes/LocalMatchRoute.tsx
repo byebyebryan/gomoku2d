@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useStore } from "zustand";
 import { createStore } from "zustand/vanilla";
 
 import { Board } from "../components/Board/Board";
 import { createLocalMatchStore } from "../game/local_match_store";
-import type { LocalMatchState } from "../game/local_match_store";
+import type { LocalMatchResumeSeed, LocalMatchState } from "../game/local_match_store";
 import { guestProfileStore } from "../profile/guest_profile_store";
 import { variantLabel } from "../replay/local_replay";
 
@@ -66,12 +66,13 @@ function canUndo(
 }
 
 export function LocalMatchRoute() {
+  const location = useLocation();
   const storeRef = useRef<ReturnType<typeof createLocalMatchStore> | null>(null);
   const [latestReplayId, setLatestReplayId] = useState<string | null>(null);
   const [storeReady, setStoreReady] = useState(false);
   const profile = useStore(guestProfileStore, (snapshot) => snapshot.profile);
-  const preferredVariant = useStore(guestProfileStore, (snapshot) => snapshot.settings.preferredVariant);
   const state = useStore(storeRef.current ?? loadingMatchStore, (snapshot) => snapshot);
+  const resumeSeed = (location.state as { resumeSeed?: LocalMatchResumeSeed } | null)?.resumeSeed ?? null;
 
   useEffect(() => {
     guestProfileStore.getState().ensureGuestProfile();
@@ -88,10 +89,11 @@ export function LocalMatchRoute() {
         const replayId = guestProfileStore.getState().recordFinishedMatch(match);
         setLatestReplayId(replayId);
       },
-      variant: guestProfileStore.getState().settings.preferredVariant,
+      resumeState: resumeSeed ?? undefined,
+      variant: resumeSeed?.variant ?? guestProfileStore.getState().settings.preferredVariant,
     });
     setStoreReady(true);
-  }, [profile]);
+  }, [profile, resumeSeed]);
 
   useEffect(() => {
     return () => {
@@ -162,12 +164,12 @@ export function LocalMatchRoute() {
           <section className={styles.hudSection}>
             <div className={styles.rulesHeader}>
               <p className="uiSectionLabel">Rules</p>
-              <p className={styles.rulesMeta}>{variantLabel(preferredVariant)}</p>
+              <p className={styles.rulesMeta}>{variantLabel(state.selectedVariant)}</p>
             </div>
             <div className={styles.variantButtons}>
               {(["freestyle", "renju"] as const).map((variant) => (
                 <button
-                  className={preferredVariant === variant ? "uiSegment uiSegmentActive" : "uiSegment"}
+                  className={state.selectedVariant === variant ? "uiSegment uiSegmentActive" : "uiSegment"}
                   key={variant}
                   onClick={() => {
                     guestProfileStore.getState().updateSettings({ preferredVariant: variant });
