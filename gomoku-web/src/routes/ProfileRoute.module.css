@@ -456,3 +456,28 @@
     min-width: 96px;
   }
 }
+
+@media (max-width: 980px) and (orientation: portrait) {
+  .page {
+    height: auto;
+    min-height: 100dvh;
+    grid-template-rows: auto auto;
+    overflow: visible;
+  }
+
+  .layout {
+    min-height: auto;
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .recordPanel {
+    grid-template-rows: auto auto auto auto;
+    overflow: visible;
+  }
+
+  .historyBody {
+    overflow: visible;
+    padding-right: 0;
+  }
+}

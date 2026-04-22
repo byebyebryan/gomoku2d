@@ -136,3 +136,64 @@ test("profile history keeps summary pinned while the history list scrolls", asyn
   expect(metrics!.pageHeight - metrics!.pageClientHeight).toBeLessThanOrEqual(2);
   expect(metrics!.historyBodyScrollHeight).toBeGreaterThan(metrics!.historyBodyClientHeight);
 });
+
+test("portrait profile scrolls the page instead of the history pane", async ({ page }) => {
+  await page.setViewportSize({ width: 430, height: 932 });
+  await page.goto("/profile");
+
+  await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
+
+  await page.evaluate(() => {
+    const historyBody = document.querySelector('[class*="historyBody"]');
+    if (!historyBody) {
+      throw new Error("history body not found");
+    }
+
+    const filler = document.createElement("div");
+    filler.setAttribute("data-testid", "profile-portrait-scroll-fixture");
+    filler.style.display = "grid";
+    filler.style.gap = "12px";
+    filler.style.marginTop = "16px";
+
+    for (let index = 0; index < 18; index += 1) {
+      const row = document.createElement("div");
+      row.textContent = `Fixture match ${index + 1}`;
+      row.style.padding = "14px";
+      row.style.border = "1px solid rgba(255, 255, 255, 0.12)";
+      row.style.background = "rgba(255, 255, 255, 0.04)";
+      filler.appendChild(row);
+    }
+
+    historyBody.appendChild(filler);
+  });
+
+  const before = await page.evaluate(() => {
+    const header = document.querySelector("header");
+    const historyBody = document.querySelector('[class*="historyBody"]');
+    const layout = document.querySelector('[class*="layout"]');
+
+    if (!header || !historyBody || !layout) {
+      return null;
+    }
+
+    return {
+      bodyOverflowY: window.getComputedStyle(document.body).overflowY,
+      headerTop: header.getBoundingClientRect().top,
+      historyOverflowY: window.getComputedStyle(historyBody).overflowY,
+      layoutOverflowY: window.getComputedStyle(layout).overflowY,
+    };
+  });
+
+  expect(before).not.toBeNull();
+  expect(before!.bodyOverflowY).toBe("auto");
+  expect(before!.historyOverflowY).toBe("visible");
+  expect(before!.layoutOverflowY).toBe("visible");
+
+  await page.evaluate(() => window.scrollTo(0, 200));
+  await page.waitForTimeout(50);
+  await expect
+    .poll(async () =>
+      page.evaluate(() => document.querySelector("header")?.getBoundingClientRect().top ?? 0),
+    )
+    .toBeLessThan(before!.headerTop - 20);
+});

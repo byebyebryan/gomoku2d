@@ -123,25 +123,44 @@ test("direct entry to the local match route loads the app", async ({ page }) => 
 });
 
 test("portrait local match keeps the board frame tight to the canvas", async ({ page }) => {
-  await page.setViewportSize({ width: 430, height: 932 });
+  await page.setViewportSize({ width: 430, height: 760 });
   await page.goto("/match/local");
 
   await expect(page.getByRole("heading", { name: "Local Match" })).toBeVisible();
 
   const ratios = await page.evaluate(() => {
+    const pageRoot = document.querySelector("main");
+    const header = document.querySelector("header");
+    const layout = document.querySelector('[class*="layout"]');
+    const boardPanel = document.querySelector('[class*="boardPanel"]');
+    const hud = document.querySelector('[class*="hud"]');
+    const headerActions = document.querySelector('[class*="headerActions"]');
     const frame = document.querySelector('[class*="frame"]');
     const viewport = document.querySelector('[class*="viewport"]');
     const canvas = document.querySelector("canvas");
 
-    if (!frame || !viewport || !canvas) {
+    if (!pageRoot || !header || !layout || !boardPanel || !hud || !headerActions || !frame || !viewport || !canvas) {
       return null;
     }
 
+    const layoutBox = layout.getBoundingClientRect();
+    const boardPanelBox = boardPanel.getBoundingClientRect();
+    const hudBox = hud.getBoundingClientRect();
+    const actionButtons = Array.from(headerActions.querySelectorAll("a,button"));
     const frameBox = frame.getBoundingClientRect();
     const viewportBox = viewport.getBoundingClientRect();
     const canvasBox = canvas.getBoundingClientRect();
 
     return {
+      actionRows: new Set(
+        actionButtons.map((button) => Math.round((button as HTMLElement).getBoundingClientRect().top)),
+      ).size,
+      boardToLayoutWidth: boardPanelBox.width / layoutBox.width,
+      bodyOverflowY: window.getComputedStyle(document.body).overflowY,
+      headerTop: header.getBoundingClientRect().top,
+      panelGap: hudBox.top - boardPanelBox.bottom,
+      hudTopInViewport: hudBox.top < window.innerHeight,
+      layoutOverflowY: window.getComputedStyle(layout).overflowY,
       canvasToFrame: Math.min(
         canvasBox.width / frameBox.width,
         canvasBox.height / frameBox.height,
@@ -155,9 +174,23 @@ test("portrait local match keeps the board frame tight to the canvas", async ({ 
   });
 
   expect(ratios).not.toBeNull();
+  expect(ratios!.actionRows).toBe(1);
+  expect(ratios!.boardToLayoutWidth).toBeGreaterThan(0.98);
+  expect(ratios!.bodyOverflowY).toBe("auto");
+  expect(ratios!.panelGap).toBeGreaterThanOrEqual(12);
+  expect(ratios!.hudTopInViewport).toBe(true);
+  expect(ratios!.layoutOverflowY).toBe("visible");
   expect(ratios!.canvasToFrame).toBeGreaterThan(0.9);
   expect(ratios!.viewportToFrame).toBeGreaterThan(0.9);
   expect(ratios!.squareDelta).toBeLessThanOrEqual(1);
+
+  await page.evaluate(() => window.scrollTo(0, 200));
+  await page.waitForTimeout(50);
+  await expect
+    .poll(async () =>
+      page.evaluate(() => document.querySelector("header")?.getBoundingClientRect().top ?? 0),
+    )
+    .toBeLessThan(ratios!.headerTop - 20);
 });
 
 test("canvas stays matched to the board viewport after resizing into portrait", async ({ page }) => {

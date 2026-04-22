@@ -178,19 +178,39 @@
 
 @media (max-width: 980px) {
   .layout {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
     overflow: auto;
   }
 
   .boardPanel {
+    flex: none;
     min-height: min(66dvh, 820px);
+  }
+
+  .deck {
+    flex: none;
+    min-height: auto;
   }
 }
 
 @media (max-width: 980px) and (orientation: portrait) {
+  .page {
+    height: auto;
+    min-height: 100dvh;
+    grid-template-rows: auto auto;
+    overflow: visible;
+  }
+
+  .layout {
+    min-height: auto;
+    overflow: visible;
+  }
+
   .boardPanel {
     min-height: 0;
     aspect-ratio: 1;
+    width: 100%;
   }
 }
 
