@@ -190,7 +190,7 @@
   align-items: center;
   justify-content: start;
   margin-top: 32px;
-  padding: 24px 0 16px;
+  padding: 24px 14px 16px 0;
   border-top: 1px solid var(--border);
 }
 
@@ -226,7 +226,8 @@
 .historyBody {
   min-height: 0;
   overflow: auto;
-  padding-right: 4px;
+  padding-right: 14px;
+  scrollbar-gutter: stable;
 }
 
 .historyList {
@@ -364,6 +365,7 @@
     padding-top: 0;
     overflow: visible;
     padding-right: 0;
+    scrollbar-gutter: auto;
   }
 }
 
