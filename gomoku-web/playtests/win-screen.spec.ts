@@ -48,8 +48,8 @@ test("finished board click advances to the next round with swapped colors", asyn
   await canvas.click({ position: boardClickPosition(box, 7, 7) });
 
   await expect(page.getByTestId("player-row-black")).toContainText("Classic Bot");
-  await expect(page.getByTestId("player-row-black")).toContainText("black");
+  await expect(page.getByTestId("player-row-black")).toContainText("Bot");
   await expect(page.getByTestId("player-row-white")).toContainText("Guest");
-  await expect(page.getByTestId("player-row-white")).toContainText("white");
+  await expect(page.getByTestId("player-row-white")).toContainText("Player");
   await expect(page.getByTestId("match-move-count")).toHaveText(/^[01]$/);
 });

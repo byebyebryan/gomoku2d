@@ -120,8 +120,8 @@
   border: 2px solid var(--border-strong);
   background: linear-gradient(
     90deg,
-    var(--surface-strong) 0,
-    var(--surface-strong) var(--timeline-progress, 0%),
+    var(--info) 0,
+    var(--info) var(--timeline-progress, 0%),
     var(--surface-muted) var(--timeline-progress, 0%),
     var(--surface-muted) 100%
   );
@@ -146,7 +146,7 @@
 .timelineInput::-moz-range-progress {
   height: 10px;
   border: 2px solid var(--border-strong);
-  background: var(--surface-strong);
+  background: var(--info);
 }
 
 .timelineInput::-moz-range-thumb {

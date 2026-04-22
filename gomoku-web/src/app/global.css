@@ -14,33 +14,39 @@
   color-scheme: dark;
   --bg: #1e1e1e;
   --bg-elevated: #2a2a2a;
-  --bg-strong: #353535;
+  --bg-strong: #323232;
   --surface: #2a2a2a;
-  --surface-strong: #353535;
-  --surface-muted: #22241f;
+  --surface-strong: #323232;
+  --surface-muted: #232323;
   --border: #575756;
   --border-strong: #706c66;
-  --text: #f3efe5;
+  --text: #f5f5f5;
   --text-muted: #a6a6a0;
-  --text-strong: #f9cb58;
-  --accent: #d5ab51;
-  --accent-strong: #f9cb58;
+  --text-strong: #fccb57;
+  --accent: #fccb57;
+  --accent-strong: #fccb57;
   --accent-border: #a7873e;
-  --accent-ink: #f3efe5;
-  --accent-soft: rgba(213, 171, 81, 0.18);
-  --info: #658a90;
-  --info-border: #4d6d73;
-  --info-ink: #f3efe5;
-  --info-soft: rgba(101, 138, 144, 0.18);
-  --success: #2f9247;
-  --success-border: #246f36;
-  --success-ink: #f3efe5;
-  --danger: #995f3b;
-  --danger-border: #71452d;
-  --danger-ink: #f3efe5;
+  --accent-ink: #f5f5f5;
+  --accent-soft: rgba(252, 203, 87, 0.18);
+  --info: #5f8b82;
+  --info-border: #4a6f68;
+  --info-ink: #f5f5f5;
+  --info-soft: rgba(95, 139, 130, 0.18);
+  --success: #30a860;
+  --success-border: #247f47;
+  --success-ink: #f5f5f5;
+  --danger: #e04747;
+  --danger-border: #a83535;
+  --danger-ink: #f5f5f5;
   --scroll-track: #242620;
   --scroll-thumb: #6b6a6a;
   --scroll-thumb-hover: #a6a6a0;
+  --font-body: "PixelOperator", "Trebuchet MS", sans-serif;
+  --font-display: "PixelOperatorBold", "PixelOperator", "Trebuchet MS", sans-serif;
+  --type-label: 1.08rem;
+  --type-body: 1.22rem;
+  --type-meta: 1.04rem;
+  --type-value: 1.4rem;
   --shadow: 10px 10px 0 rgba(0, 0, 0, 0.36);
   --shadow-button: 0 4px 0 rgba(0, 0, 0, 0.38);
   --shadow-button-pressed: 0 1px 0 rgba(0, 0, 0, 0.38);
@@ -87,7 +93,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: "PixelOperator", "Trebuchet MS", sans-serif;
+  font-family: var(--font-body);
   overflow: hidden;
 }
 
@@ -133,6 +139,8 @@ select:focus-visible {
 .uiPageEyebrow {
   margin: 0 0 8px;
   color: var(--accent-strong);
+  font-family: var(--font-display);
+  font-size: var(--type-label);
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
@@ -140,6 +148,8 @@ select:focus-visible {
 .uiSectionLabel {
   margin: 0;
   color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: var(--type-meta);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -152,7 +162,6 @@ select:focus-visible {
 .uiPanel {
   background: var(--surface);
   border: 2px solid var(--border);
-  box-shadow: var(--shadow);
 }
 
 .uiInput {
@@ -174,7 +183,8 @@ select:focus-visible {
   background: var(--surface-muted);
   color: var(--text);
   box-shadow: var(--shadow-button);
-  font-family: "PixelOperatorBold", "PixelOperator", "Trebuchet MS", sans-serif;
+  font-family: var(--font-display);
+  font-size: var(--type-body);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   transition:
@@ -229,7 +239,8 @@ select:focus-visible {
   border: 2px solid var(--border);
   background: var(--surface-muted);
   color: var(--text);
-  font-family: "PixelOperatorBold", "PixelOperator", "Trebuchet MS", sans-serif;
+  font-family: var(--font-display);
+  font-size: var(--type-body);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }

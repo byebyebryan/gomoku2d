@@ -2,13 +2,50 @@ import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useStore } from "zustand";
 
-import { guestProfileStore } from "../profile/guest_profile_store";
-import { replayPlayerLabel, replayWinnerLabel, variantLabel } from "../replay/local_replay";
+import { guestProfileStore, type GuestSavedMatch } from "../profile/guest_profile_store";
+import { replayPlayerName, variantLabel } from "../replay/local_replay";
 
 import styles from "./ProfileRoute.module.css";
 
 function historyCountLabel(count: number): string {
   return count === 1 ? "1 local match" : `${count} local matches`;
+}
+
+function historyResultLabel(match: GuestSavedMatch): "Win" | "Loss" | "Draw" {
+  if (match.status === "draw") {
+    return "Draw";
+  }
+
+  const winningStone = match.status === "black_won" ? "black" : "white";
+  return winningStone === match.guestStone ? "Win" : "Loss";
+}
+
+function historyOpponentLabel(match: GuestSavedMatch, guestDisplayName: string): string {
+  const opponent = match.players.find((player) => player.stone !== match.guestStone);
+  if (!opponent) {
+    return "Opponent";
+  }
+
+  return `vs ${replayPlayerName(opponent, guestDisplayName)}`;
+}
+
+function historyDateLabel(savedAt: string): string {
+  return new Date(savedAt).toLocaleDateString(undefined, {
+    month: "2-digit",
+    day: "2-digit",
+    year: "2-digit",
+  });
+}
+
+function historyTimeLabel(savedAt: string): string {
+  return new Date(savedAt).toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function historySideLabel(match: GuestSavedMatch): "Black" | "White" {
+  return match.guestStone === "black" ? "Black" : "White";
 }
 
 export function ProfileRoute() {
@@ -40,14 +77,14 @@ export function ProfileRoute() {
           <Link className="uiAction uiActionPrimary" to="/match/local">
             Play
           </Link>
-          <Link className="uiAction uiActionAccent" to="/">
+          <Link className="uiAction uiActionNeutral" to="/">
             Home
           </Link>
         </div>
       </header>
 
       <section className={styles.layout}>
-        <aside className={`uiPanel ${styles.sidePanel}`}>
+        <aside className={styles.sidePanel}>
           <section className={styles.sideSection}>
             <div className={styles.sectionHeader}>
               <p className="uiSectionLabel">Identity</p>
@@ -120,7 +157,7 @@ export function ProfileRoute() {
           </section>
         </aside>
 
-        <section className={`uiPanel ${styles.recordPanel}`}>
+        <section className={styles.recordPanel}>
           <div className={styles.recordHeader}>
             <p className="uiSectionLabel">Local history</p>
             <p className={styles.historyCount}>{historyCountLabel(history.length)}</p>
@@ -143,18 +180,57 @@ export function ProfileRoute() {
               <span className={styles.summaryLabel}>Draws</span>
             </article>
           </div>
+          {history.length > 0 ? (
+            <div className={styles.historyHead} aria-hidden="true">
+              <span className={styles.historyHeadLabel}>Result</span>
+              <span className={styles.historyHeadLabel}>Opponent</span>
+              <span className={styles.historyHeadLabel}>Rule</span>
+              <span className={styles.historyHeadLabel}>Side</span>
+              <span className={styles.historyHeadLabel}>Moves</span>
+              <span className={styles.historyHeadLabel}>Played</span>
+              <span className={styles.historyHeadSpacer} />
+            </div>
+          ) : null}
           <div className={styles.historyBody}>
             {history.length === 0 ? (
               <p className={styles.emptyState}>Finished matches are saved here.</p>
             ) : (
               <ol className={styles.historyList}>
-                {history.map((match) => (
-                  <li className={styles.historyItem} key={match.id}>
-                    <div className={styles.historyMain}>
-                      <div>
-                        <p className={styles.historyTitle}>{replayWinnerLabel(match, guestDisplayName)}</p>
-                        <p className={styles.historyMatchup}>{replayPlayerLabel(match, guestDisplayName)}</p>
-                      </div>
+                {history.map((match) => {
+                  const result = historyResultLabel(match);
+
+                  return (
+                    <li className={styles.historyItem} key={match.id}>
+                      <p
+                        className={`${styles.historyResult} ${
+                          result === "Win"
+                            ? styles.historyResultWin
+                            : result === "Loss"
+                              ? styles.historyResultLoss
+                              : styles.historyResultDraw
+                        }`}
+                      >
+                        {result}
+                      </p>
+                      <p className={styles.historyOpponent}>{historyOpponentLabel(match, guestDisplayName)}</p>
+                      <p className={styles.historyField} data-label="Rule">
+                        {variantLabel(match.variant)}
+                      </p>
+                      <p
+                        className={`${styles.historyField} ${styles.historyStone} ${
+                          match.guestStone === "black" ? styles.historyStoneBlack : styles.historyStoneWhite
+                        }`}
+                        data-label="Side"
+                      >
+                        {historySideLabel(match)}
+                      </p>
+                      <p className={styles.historyField} data-label="Moves">
+                        {match.moves.length}
+                      </p>
+                      <p className={styles.historyPlayed} data-label="Played">
+                        <span className={styles.historyDate}>{historyDateLabel(match.savedAt)}</span>
+                        <span className={styles.historyTime}>{historyTimeLabel(match.savedAt)}</span>
+                      </p>
                       <button
                         className="uiAction uiActionSecondary"
                         onClick={() => {
@@ -164,12 +240,9 @@ export function ProfileRoute() {
                       >
                         Replay
                       </button>
-                    </div>
-                    <p className={styles.historyMeta}>
-                      {variantLabel(match.variant)} · {match.moves.length} moves · {new Date(match.savedAt).toLocaleString()}
-                    </p>
-                  </li>
-                ))}
+                    </li>
+                  );
+                })}
               </ol>
             )}
           </div>
