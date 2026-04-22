@@ -86,7 +86,7 @@ export function ReplayRoute() {
           <Link className="uiAction uiActionSecondary" to="/profile">
             Profile
           </Link>
-          <Link className="uiAction uiActionAccent" to="/">
+          <Link className="uiAction uiActionNeutral" to="/">
             Home
           </Link>
         </div>
@@ -111,7 +111,7 @@ export function ReplayRoute() {
           />
         </div>
 
-        <aside className={`uiPanel ${styles.deck}`}>
+        <aside className={styles.deck}>
           <section className={styles.deckSection}>
             <p className="uiSectionLabel">Result</p>
             <p className={styles.resultText} data-testid="replay-result">

@@ -56,7 +56,8 @@
 .statusText {
   margin: 0;
   color: var(--accent-strong);
-  font-size: 2rem;
+  font-family: var(--font-display);
+  font-size: 2.15rem;
   line-height: 1.05;
   text-transform: uppercase;
 }
@@ -75,13 +76,16 @@
 
 .metaLabel {
   color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: var(--type-meta);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .metaValue {
   color: var(--text);
-  font-size: 1.1rem;
+  font-family: var(--font-display);
+  font-size: var(--type-value);
   text-transform: uppercase;
 }
 
@@ -92,8 +96,8 @@
 
 .playerRow {
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
   align-items: center;
   padding: 12px 14px;
   border: 1px solid var(--border);
@@ -115,33 +119,26 @@
     inset 0 0 0 2px var(--info-border);
 }
 
-.playerStone {
-  margin: 0;
-  color: var(--text-muted);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
 .playerCopy {
   min-width: 0;
 }
 
 .playerName {
   margin: 0;
-  font-size: 1.4rem;
+  font-family: var(--font-display);
+  font-size: 1.55rem;
 }
 
 .playerKind {
   margin: 4px 0 0;
   color: var(--text-muted);
+  font-size: var(--type-body);
 }
 
-.playerRowBlack .playerStone,
 .playerRowBlack .playerKind {
   color: #b8b2a6;
 }
 
-.playerRowWhite .playerStone,
 .playerRowWhite .playerKind {
   color: #5f5547;
 }
@@ -160,6 +157,8 @@
 .rulesMeta {
   margin: 0;
   color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: var(--type-meta);
   text-transform: uppercase;
 }
 
@@ -172,6 +171,7 @@
 .pendingText {
   margin: 0;
   color: var(--text-muted);
+  font-size: var(--type-body);
 }
 
 @media (max-width: 980px) {

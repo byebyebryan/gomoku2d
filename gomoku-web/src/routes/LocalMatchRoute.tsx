@@ -121,7 +121,7 @@ export function LocalMatchRoute() {
           <Link className="uiAction uiActionSecondary" to="/profile">
             Profile
           </Link>
-          <Link className="uiAction uiActionAccent" to="/">
+          <Link className="uiAction uiActionNeutral" to="/">
             Home
           </Link>
         </div>
@@ -150,7 +150,7 @@ export function LocalMatchRoute() {
           />
         </div>
 
-        <aside className={`uiPanel ${styles.hud}`}>
+        <aside className={styles.hud}>
           <section className={styles.hudSection}>
             <div className={styles.rulesHeader}>
               <p className="uiSectionLabel">Rules</p>
@@ -229,10 +229,9 @@ export function LocalMatchRoute() {
                     data-testid={`player-row-${player.stone}`}
                     key={player.stone}
                   >
-                    <p className={styles.playerStone}>{player.stone}</p>
                     <div className={styles.playerCopy}>
                       <h2 className={styles.playerName}>{player.name}</h2>
-                      <p className={styles.playerKind}>{player.kind === "human" ? "Human" : "Bot"}</p>
+                      <p className={styles.playerKind}>{player.kind === "human" ? "Player" : "Bot"}</p>
                     </div>
                   </article>
                 );
