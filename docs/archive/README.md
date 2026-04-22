@@ -19,3 +19,11 @@ thinking, tradeoffs, and rejected options live here so the canonical docs in
 These drafts were exploratory and not grounded in the v0.1 codebase. They're
 preserved as artifacts of the "about to pivot" state but should not be read as
 current direction.
+
+The archive also keeps a few visual-exploration artifacts from the early
+`v0.2` design pass:
+
+- `v0_2_mock.png`
+- `v0_2_visual.png`
+- `v0_2_ui.md`
+- `v0_2_themes.png`
