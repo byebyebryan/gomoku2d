@@ -1,221 +1,166 @@
 # Roadmap
 
-The order we're going to build in. Picks sequencing across FE rewrite,
-backend bring-up, and features so each phase delivers something playable
-— not a stretch of months that only pays off at the end.
+The order we're going to build in.
 
-Phases aren't time-boxed; this is a personal project. They're sized so
-"phase done" means "a working app, just with less in it than the next
-phase."
+This project is now explicitly sequenced around a local-first `v0.2`, not an
+online-first pivot. The FE stack transition is still important, but it is now a
+means to a richer local product rather than a straight runway into backend
+work.
 
-## Phase 0 — Snapshot (done)
+Phases are not time-boxed. A phase is done when it produces a coherent playable
+state, not when it checks every possible sub-task.
 
-Offline single-player web game with a Phaser-only frontend, backed by
-the Rust core and bots compiled to wasm. Tagged `v0.1`.
+## Phase 0 — Snapshot (`v0.1`, done)
 
-What this proved:
-- Rust core + wasm bridge works in a real browser bundle.
-- `RandomBot` and `SearchBot` play legal games.
-- The build/deploy pipeline (Vite + wasm-pack + GH Actions + Pages)
-  is solid enough to iterate on top of.
+Offline browser Gomoku with a Phaser-driven frontend and Rust+wasm game/core
+integration.
 
-Shipped state is in `docs/archive/progress_v0.1.md`.
+What it proved:
 
-## Phase 1 — FE rewrite (React shell, Phaser board)
+- the Rust core + wasm bridge works in a real browser bundle
+- the existing bot loop is good enough to build on
+- the deploy pipeline is solid enough for fast iteration
 
-The pivot proper. Goal: same offline game, new architecture.
+Historical state is preserved in `docs/archive/progress_v0.1.md`.
 
-- Bring up React + Vite + React Router + Zustand in `gomoku-web/`.
-- Wrap the existing Phaser board in a `<Board>` React component that
-  takes props and emits events. Delete the old scenes and the
-  scene-driven game loop.
-- Rebuild the match screen as DOM: player cards, turn indicator, move
-  history, menu. Wire offline bot match end-to-end through the new
-  React/Zustand state.
-- Establish the palette and layout primitives (`<AppShell>`, `<Card>`,
-  `<Button>`, etc.) so later phases have a kit to pull from.
-- Rebuild home as a simple "Play bot" entry point.
+## Phase 1 — FE foundation (done)
 
-**Done when:** the deployed Pages site looks and plays like v0.1, but
-the code underneath matches `architecture.md`. No regressions in bot
-play, win detection, or performance.
+Establish the new runtime boundary:
 
-**Out of scope:** auth, Firestore, online play, replays, puzzles.
-Offline bot matches only.
+- React shell
+- Phaser reduced to a board-focused renderer
+- local routes
+- local stores
+- board owned by props/events instead of a scene-driven app shell
 
-## Phase 2 — Guest identity + cloud profile
+This phase is effectively complete. Remaining work from here on should feed the
+`v0.2` product pass instead of reopening the old "rewrite first, features
+later" framing.
 
-First backend component. Introduces Firebase but nothing else.
+## Phase 2 — `v0.2` local-first product pass (current)
 
-- Local guest profile created on first meaningful interaction and
-  persisted in browser storage.
-- Firebase project + Firestore database bootstrapped (one-time manual;
-  commands logged in `infra/README.md`).
-- Web SDK wired up for Google/GitHub sign-in when a cloud-backed feature
-  is needed.
-- Signing in creates or loads `profiles/{uid}` and promotes local guest
-  state to a cloud-backed profile, including one-time import of finished
-  guest match history.
-- Add the promotion UX: sign-in gate, lightweight import progress, success /
-  partial-failure messaging, retry path from profile/settings.
-- Profile screen: guest vs signed-in state, display name, avatar,
-  linked providers, sign out, username claim state.
-- Firestore rules for profile-only access, deployed via a committed
-  GH Actions workflow (`deploy-rules.yml`).
+This is the current focus.
 
-**Done when:** a stranger can open the site, play a bot match with a
-local guest profile, and optionally sign in with Google/GitHub without
-feeling like they lost their state.
+### Goals
 
-**Out of scope:** Cloud Run, usernames, match history, anything public.
+- make the FE stack feel native instead of transitional
+- establish a durable DOM-shell visual language
+- simplify the live match UI around a board-first HUD
+- deepen the local play loop with replay, records, and persistent defaults
+- ship a public build that feels coherent as a local game
 
-## Phase 3 — Cloud Run bring-up + username reservation
+### Work in this phase
 
-Stand up the Rust service. Ship one endpoint to prove the path, not
-a whole feature suite.
+- rewrite the shell around the ongoing visual guide in `visual_design.md`
+- simplify Home, Match, Replay, and Profile around their current roles
+- keep chronology out of live match UI
+- keep replay transport-first and remove move-list dependence there too
+- treat `Profile` as the player's local record screen, not a settings dump
+- keep local profile, local history, replay, and rules switching polished
+- make the shell resilient to future board-theme swaps without redesigning it
 
-- `gomoku-bot-lab/gomoku-api/` crate created, depends on `gomoku-core`
-  via path dep.
-- Container builds via Cloud Build, pushed to Artifact Registry.
-- WIF pool + `gh-cd` service account configured (one-time manual).
-- `deploy-api.yml` workflow deploys the container to Cloud Run.
-- `gomoku-api-runtime` SA created with scoped Firestore access.
-- One endpoint: `POST /reserve_username` — JWT-authenticated, runs a
-  Firestore transaction over `usernames/{handle} → uid`, updates the
-  caller's profile.
-- Web adds a "set username" flow, gated to just before public features.
+### Done when
 
-**Done when:** a signed-in user can reserve a unique username, the
-service is deployed by a workflow, and a reviewer could re-create the
-whole setup from `infra/README.md`.
+A player can open the site and get a polished local experience:
 
-**Out of scope:** match authority, replays, any other endpoint.
+- quick play from Home
+- clean board-first match flow
+- local replay that is useful without extra analysis surfaces
+- local player record with persistent defaults and history
+- a consistent shell style that no longer feels like transitional scaffolding
 
-## Phase 4 — Replay persistence + shareable links
+### Out of scope
 
-First feature users will actually notice. Makes the offline bot match
-into something worth coming back to.
+- sign-in
+- Firestore
+- published replay links
+- online matches
+- analysis and puzzles
 
-- Guest matches are stored in local history only.
-- Signed-in users get private cloud-backed match history in
-  `profiles/{uid}/matches/{id}`, written once at match end for local bot/casual
-  matches.
-- These private saved matches are the canonical source for replay viewing and
-  later analysis.
-- Public `replays/{id}` are created only when the user explicitly hits
-  Share / Publish from a saved private match.
-- Replay screen in the web app: timeline scrubber, playback controls,
-  same board code in a read-only mode.
-- Match/replay cards show state clearly (`Private`, `Published`, `Verified` as
-  applicable).
-- "Share" button on match result → copies a public URL. Loading the URL
-  while signed out still renders the replay (public read on
-  `replays/{id}`).
-- Home screen gains the "in progress" and "recently finished" sections.
+## Phase 3 — Cloud-backed continuity
 
-**Done when:** a guest can finish a game and see it locally; a signed-in
-player can see their cloud history; and a signed-in player can explicitly
-publish one replay and share its URL.
+Cloud comes back only after the local product is stable.
 
-**Out of scope:** critical-move tagging, analysis, online play.
+### Goals
 
-## Phase 5 — Online match (human vs human)
+- optional sign-in
+- continuity across devices
+- durable private history beyond one browser/device
 
-The biggest product leap. Two real people playing on the same board.
+### Work in this phase
 
-- `matches/{id}` schema + rules (participants read, server writes
-  authoritative state).
-- Cloud Run gains match-authority endpoints: `POST /match` (create),
-  `POST /match/{id}/move` (apply), with server validating every move
-  via `gomoku-core`.
-- Finished trusted matches are also written into each participant's private
-  history as `server_verified` records.
-- Web adds the online lobby (`/online`) as a direct-challenge surface.
-  Starts with challenge-by-link; matchmaking queue comes after.
-- Live match screen subscribes to `matches/{id}` via `onSnapshot`.
-  Firestore is the fanout layer; Cloud Run is the authoritative writer.
-- Abandonment handling: inactivity timeout, resign flow.
+- guest-to-cloud promotion
+- cloud-backed profile sync
+- private cloud history for signed-in players
+- rules/settings sync if it still feels worthwhile
 
-**Done when:** two people can open two tabs (or two devices), find
-each other via a challenge link, and play a full game with the server
-recording moves and result.
+### Done when
 
-**Out of scope:** matchmaking by skill, notifications, untrusted
-client-authored online matches, spectating.
+Signing in extends the same local-first product without breaking it. A player
+can keep their identity and history across browsers, but the app still makes
+sense without cloud.
 
-## Phase 6 — Lab-powered analysis (critical moves, save-this-game)
+## Phase 4 — Shared replays and public identity
 
-Deliver on the lab-as-feature-source pillar.
+Only after private local/cloud history already feels good.
 
-- Post-match job (Cloud Run): re-run each move through `SearchBot` at
-  server depth, write an `analysis` subdoc with per-move evaluation
-  deltas and suggested best moves.
-- Analysis runs from saved private match history; published public replays are
-  projections, not the analysis source of truth.
-- Replay viewer gains: evaluation curve on the timeline, "critical
-  moment" markers, analysis panel showing top alternatives.
-- Replay viewer handles async analysis states cleanly: queued, analyzing, ready,
-  unavailable.
-- "Try from here" button: branch into a live bot match from any
-  position in a replay. Plays against a bot calibrated to the turning
-  point's difficulty.
+### Work in this phase
 
-**Done when:** an average-skill player can open any of their replays
-and learn something — "you had this move, you missed this threat" —
-without needing to understand evaluation numbers.
+- explicit replay publish flow
+- public replay pages
+- lightweight public identity / username surfaces if needed
 
-**Out of scope:** puzzle generation.
+### Done when
 
-## Phase 7 — Puzzles
+Sharing a replay is deliberate and useful, without collapsing private history
+and public artifacts into the same thing.
 
-Second lab-driven feature. Reuses the analysis pipeline.
+## Phase 5 — Online play
 
-- Puzzle generator (Cloud Run job) scans `server_verified` saved match history
-  and curated seed positions for states with forced wins or forced blocks at
-  depth 5+, verifies with deeper search, tags by theme (open four, double
-  threat, VCF, etc.).
-- Publishes to `puzzles/{id}`.
-- Web: `/puzzles` list and solver. Per-user progress in
-  `puzzle_attempts/{uid}/{id}`.
-- Daily puzzle surface on home screen.
+The big step after the app is already strong as a local product.
 
-**Done when:** a player can open the site and solve today's puzzle,
-with per-puzzle and streak stats persisting.
+### Work in this phase
 
-**Out of scope:** matchmaking improvements, rankings.
+- trusted match authority
+- direct challenge flow first
+- live online match state
+- verified match persistence
 
-## Phase 8+ — Opportunistic
+### Done when
 
-Everything after puzzles is "pick by what's most fun to build":
+Two people can reliably play a full online game without the app feeling like a
+separate product from the local experience.
 
-- **Matchmaking by rating** — queue-based pairing, basic Elo.
-- **Leaderboards** — public, scoped to bot-tier results initially, then
-  verified human-vs-human.
-- **Stronger bot endpoint** — `POST /bot/move` at higher depth for a
-  "champion" preset.
-- **Matchmaking extras** — rated queues, seasonal resets.
-- **Cloud-synced settings** — theme, sound, preferred bot preset.
-- **Spectating** — watch live high-rated games.
-- **Friends** — accept/block, direct challenge UX beyond link-sharing.
+## Phase 6 — Lab-powered features
 
-No commitment on order or on shipping all of these. The framing of
-"product" says we're building what's fun and coherent, not maximizing
-feature count.
+Only worth doing after the main play surfaces are already solid.
 
-## Non-goals along the way
+Possible work:
 
-Called out explicitly so they don't sneak in:
+- replay analysis
+- critical-moment tagging
+- "try from here"
+- puzzle generation
 
-- **Native mobile apps.** Mobile web only.
-- **Real-time voice/video/chat.** Not in scope.
-- **SSR / server-rendered pages.** Vite SPA stays static on Pages until
-  there's a reason to change.
-- **Micro-transactions, ads, account paywalls.** None, ever.
+These remain intentionally opportunistic. They should earn their way in by
+making replay and learning more interesting, not by expanding scope for its own
+sake.
+
+## Non-goals for now
+
+Called out so they do not quietly creep back into the near-term plan:
+
+- native mobile apps
+- chat/social systems
+- SSR/server-rendered app shell
+- monetization
+- forcing cloud or online into the default local flow
 
 ## Tracking
 
-Progress on the current phase lives inline in PR descriptions, not in
-a separate progress doc. When a phase completes, write one paragraph
-at the bottom of this file (or in a tagged release note) covering what
-shipped and what drifted. Avoid the "status log" failure mode — the
-repo tells you what's built; the roadmap tells you where it's going.
+Keep progress lightweight.
+
+- the repo history and deployed build tell most of the story
+- use this file to keep phase intent and sequencing clear
+- archive outdated exploratory docs instead of patching every one into
+  permanence

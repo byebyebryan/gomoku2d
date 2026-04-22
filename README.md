@@ -145,20 +145,33 @@ and deploys `dist/` to Pages.
 
 ## Where this is going
 
-The code in `gomoku-web/` today is the `v0.1` snapshot: offline single-player,
-Phaser-driven. A pivot is underway to a React shell with Phaser reduced to a
-board-only renderer, backed by a guest-first local profile model, Firebase
-(sign-in, cloud profiles, private match history, published replays), and a Rust
-Cloud Run service (trusted match authority, verification, lab-powered analysis).
+The old Phaser-only web game was the `v0.1` snapshot. The project is now
+headed toward a local-first `v0.2`: React owns the shell, Phaser is reduced to
+the board, the UI is being rebuilt around a more scalable DOM layer, and the
+feature focus is on richer local play rather than immediate online/backend
+bring-up.
+
+That means the near-term goals are:
+
+- a proper FE stack and cleaner runtime boundary
+- a more scalable UI shell
+- a consistent visual/style system for the DOM shell
+- deeper local features like local profiles, records, replay, and rules
+  defaults
+
+Cloud sync, published replays, and online play still matter, but they are now
+later phases built on top of a stronger local product.
 
 The canonical design and schedule live in `docs/`:
 
 - [`docs/product.md`](docs/product.md) — what we're building and why
 - [`docs/architecture.md`](docs/architecture.md) — FE stack, DOM/Phaser boundary, core-sharing story
-- [`docs/design.md`](docs/design.md) — IA, screens, style pillar, component families
-- [`docs/backend.md`](docs/backend.md) — Firebase + Firestore + Cloud Run, auth model, data model, CI/CD
-- [`docs/roadmap.md`](docs/roadmap.md) — phased plan across FE rewrite, BE bring-up, and features
+- [`docs/design.md`](docs/design.md) — current local-first routes, flows, and screen contracts
+- [`docs/visual_design.md`](docs/visual_design.md) — DOM shell visual language and styling rules
+- [`docs/backend.md`](docs/backend.md) — Firebase + Firestore + Cloud Run model for later cloud/online phases
+- [`docs/roadmap.md`](docs/roadmap.md) — phased plan, with local-first `v0.2` before cloud/online
 - [`docs/bot_baseline.md`](docs/bot_baseline.md) — current `SearchBot` strategy
 - [`gomoku-web/README.md`](gomoku-web/README.md) / [`gomoku-bot-lab/README.md`](gomoku-bot-lab/README.md) — package-level details
 
-Pre-pivot planning docs are preserved under [`docs/archive/`](docs/archive/).
+Superseded exploratory docs and mock briefs are preserved under
+[`docs/archive/`](docs/archive/).

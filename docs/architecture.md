@@ -37,8 +37,9 @@ Three components, one repo:
 
 - **React + TypeScript** — component model for the app shell.
 - **Vite** — dev server and bundler.
-- **React Router** — URL-driven screens (`/`, `/match/:id`, `/replays/:id`,
-  `/puzzles`, `/profile`).
+- **React Router** — URL-driven screens for the current local-first app
+  (`/`, `/match/local`, `/replays/local/:id`, `/profile`), with future
+  cloud/online routes added later.
 - **Zustand** — client state (current view, draft moves, UI toggles).
 - **Firebase SDK directly** — sign-in, Firestore subscriptions, storage for
   cloud-backed features.
@@ -89,9 +90,9 @@ This is the load-bearing architectural decision for the FE rewrite.
 indicator, win-line animation. Anything that benefits from pixel-level
 control or frame-based animation.
 
-**DOM owns:** everything else. Player name cards, turn indicator, move
-history list, clocks, resign/undo buttons, menus, modals, auth UI, lobby,
-replay timeline, puzzle prompts.
+**DOM owns:** everything else. Status HUD, player identity/info, rule toggles,
+result strips, replay transport/timeline, local record/history views, menus,
+modals, auth UI, and any future cloud/online shell surfaces.
 
 **They communicate through a narrow interface:**
 
@@ -215,8 +216,8 @@ Rough sequence:
    wired but mostly empty.
 2. Wrap the existing `board/` renderer in a `<Board>` React component that
    takes props and emits events. Delete the Phaser scenes.
-3. Rebuild the match screen in DOM (player cards, turn indicator, history).
-   Offline bot match working end-to-end in the new architecture.
+3. Rebuild the match screen in DOM (status HUD, player info, actions, rules
+   switching). Offline bot match working end-to-end in the new architecture.
 4. Add local guest profile persistence, then Firebase sign-in and cloud-profile
    promotion.
 5. Add private cloud history save at match end for signed-in casual play.
