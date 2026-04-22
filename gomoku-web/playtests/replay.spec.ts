@@ -46,9 +46,14 @@ test("local replay opens from profile history and supports stepping plus autopla
   await page.getByRole("button", { name: "Replay" }).first().click();
 
   await expect(page.getByRole("heading", { name: "Replay" })).toBeVisible();
+  await expect(page.getByTestId("replay-result")).toHaveText("Classic Bot wins");
   await expect(page.getByTestId("replay-move-count")).toHaveText("Move 0 / 10");
-  await expect(page.getByText("Bryan Guest (black) vs Classic Bot (white)")).toBeVisible();
   await expect(page.getByTestId("replay-rule")).toHaveText("Renju");
+  await expect(page.getByTestId("replay-player-row-black")).toContainText("Bryan Guest");
+  await expect(page.getByTestId("replay-player-row-black")).toContainText("Player");
+  await expect(page.getByTestId("replay-player-row-white")).toContainText("Classic Bot");
+  await expect(page.getByTestId("replay-player-row-white")).toContainText("Bot");
+  await expect(page.getByTestId("replay-player-row-black")).toHaveCSS("box-shadow", /rgb/);
   await expect(page.locator('[data-testid="replay-step-controls"] button')).toHaveText([
     "Start",
     "End",
@@ -58,7 +63,9 @@ test("local replay opens from profile history and supports stepping plus autopla
 
   await page.getByRole("button", { name: "Next move" }).click();
   await expect(page.getByTestId("replay-move-count")).toHaveText("Move 1 / 10");
+  await expect(page.getByTestId("replay-player-row-white")).toHaveCSS("box-shadow", /rgb/);
   await page.getByRole("button", { name: "End" }).click();
+  await expect(page.getByTestId("replay-result")).toHaveText("Classic Bot wins");
   await expect(page.getByTestId("replay-move-count")).toHaveText("Move 10 / 10");
   await page.getByRole("button", { name: "Start" }).click();
   await expect(page.getByTestId("replay-move-count")).toHaveText("Move 0 / 10");
