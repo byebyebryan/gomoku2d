@@ -61,10 +61,10 @@ export function ReplayRoute() {
   if (!match) {
     return (
       <main className={styles.page}>
-        <section className={styles.notFound}>
+        <section className={`${styles.notFound} uiPanel`}>
           <h1 className={styles.title}>Replay unavailable</h1>
           <p className={styles.notFoundText}>This replay is no longer stored on this device.</p>
-          <Link className={styles.secondaryAction} to="/profile">
+          <Link className="uiAction uiActionSecondary" to="/profile">
             Back to Profile
           </Link>
         </section>
@@ -78,15 +78,15 @@ export function ReplayRoute() {
     <main className={styles.page}>
       <header className={styles.header}>
         <div>
-          <p className={styles.eyebrow}>Match replay</p>
+          <p className="uiPageEyebrow">Match replay</p>
           <h1 className={styles.title}>Replay</h1>
           <p className={styles.summary}>{replayPlayerLabel(match, guestDisplayName)}</p>
         </div>
         <div className={styles.headerActions}>
-          <Link className={`${styles.secondaryAction} ${styles.infoAction}`} to="/profile">
+          <Link className="uiAction uiActionSecondary" to="/profile">
             Profile
           </Link>
-          <Link className={`${styles.secondaryAction} ${styles.accentAction} ${styles.homeAction}`} to="/">
+          <Link className="uiAction uiActionAccent" to="/">
             Home
           </Link>
         </div>
@@ -111,19 +111,26 @@ export function ReplayRoute() {
           />
         </div>
 
-        <aside className={styles.sidebar}>
-          <section className={styles.card}>
-            <p className={styles.sectionLabel}>Result</p>
-            <p className={styles.resultText}>{replayWinnerLabel(match, guestDisplayName)}</p>
-            <p className={styles.moveCount}>{moveCountLabel(frame.moveIndex, match.moves.length)}</p>
-            <p className={styles.moveCount}>Rules: {variantLabel(match.variant)}</p>
+        <aside className={`uiPanel ${styles.deck}`}>
+          <section className={styles.deckSection}>
+            <p className="uiSectionLabel">Result</p>
+            <p className={styles.resultText} data-testid="replay-result">
+              {replayWinnerLabel(match, guestDisplayName)}
+            </p>
+            <p className={styles.metaLine}>
+              <span data-testid="replay-move-count">{moveCountLabel(frame.moveIndex, match.moves.length)}</span>
+              <span aria-hidden="true">·</span>
+              <span data-testid="replay-rule">{variantLabel(match.variant)}</span>
+            </p>
           </section>
 
-          <section className={styles.card}>
-            <div className={styles.controlsHeader}>
-              <p className={styles.sectionLabel}>Playback</p>
+          <div className="uiDivider" />
+
+          <section className={styles.deckSection}>
+            <div className={styles.playbackHeader}>
+              <p className="uiSectionLabel">Playback</p>
               <button
-                className={`${styles.secondaryAction} ${styles.successAction}`}
+                className="uiAction uiActionPrimary"
                 onClick={() => {
                   setAutoplaying((current) => !current);
                 }}
@@ -135,7 +142,7 @@ export function ReplayRoute() {
 
             <div className={styles.controlsRow} data-testid="replay-step-controls">
               <button
-                className={styles.iconAction}
+                className="uiAction uiActionNeutral"
                 onClick={() => {
                   setAutoplaying(false);
                   setMoveIndex(0);
@@ -145,7 +152,7 @@ export function ReplayRoute() {
                 Start
               </button>
               <button
-                className={styles.iconAction}
+                className="uiAction uiActionNeutral"
                 onClick={() => {
                   setAutoplaying(false);
                   setMoveIndex(match.moves.length);
@@ -155,7 +162,7 @@ export function ReplayRoute() {
                 End
               </button>
               <button
-                className={styles.iconAction}
+                className="uiAction uiActionNeutral"
                 onClick={() => {
                   setAutoplaying(false);
                   setMoveIndex((current) => Math.max(0, current - 1));
@@ -165,7 +172,7 @@ export function ReplayRoute() {
                 Previous move
               </button>
               <button
-                className={styles.iconAction}
+                className="uiAction uiActionNeutral"
                 onClick={() => {
                   setAutoplaying(false);
                   setMoveIndex((current) => Math.min(match.moves.length, current + 1));
@@ -197,40 +204,6 @@ export function ReplayRoute() {
                 value={frame.moveIndex}
               />
             </label>
-          </section>
-
-          <section className={styles.card}>
-            <div className={styles.historyHeader}>
-              <p className={styles.sectionLabel}>Moves</p>
-              <p className={styles.historyCount}>{match.moves.length} total</p>
-            </div>
-            {match.moves.length === 0 ? (
-              <p className={styles.emptyState}>No moves recorded.</p>
-            ) : (
-              <ol className={styles.historyList}>
-                {match.moves.map((move) => {
-                  const active = frame.moveIndex === move.moveNumber;
-                  return (
-                    <li className={styles.historyItem} key={move.moveNumber}>
-                      <button
-                        className={active ? `${styles.historyButton} ${styles.historyButtonActive}` : styles.historyButton}
-                        onClick={() => {
-                          setAutoplaying(false);
-                          setMoveIndex(move.moveNumber);
-                        }}
-                        type="button"
-                      >
-                        <span>M{move.moveNumber}</span>
-                        <span>{move.player === 1 ? "Black" : "White"}</span>
-                        <span>
-                          {move.row + 1},{move.col + 1}
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ol>
-            )}
           </section>
         </aside>
       </section>

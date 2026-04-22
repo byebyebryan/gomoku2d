@@ -40,7 +40,7 @@ export interface GuestProfileState {
   ensureGuestProfile: () => GuestProfileIdentity;
   history: GuestSavedMatch[];
   profile: GuestProfileIdentity | null;
-  recordFinishedMatch: (match: Omit<GuestSavedMatch, "guestStone" | "id" | "savedAt">) => void;
+  recordFinishedMatch: (match: Omit<GuestSavedMatch, "guestStone" | "id" | "savedAt">) => string;
   resetGuestProfile: () => void;
   renameDisplayName: (displayName: string) => void;
   settings: GuestProfileSettings;
@@ -136,6 +136,8 @@ export function createGuestProfileStore(
             history: [record, ...state.history].slice(0, HISTORY_LIMIT),
             profile: { ...profile, updatedAt: savedAt },
           }));
+
+          return record.id;
         },
         resetGuestProfile: () => {
           set({

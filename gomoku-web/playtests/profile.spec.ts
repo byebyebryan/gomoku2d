@@ -27,11 +27,10 @@ test("guest profile persists locally and captures finished local matches", async
   await expect(page.getByText("Preferred rules")).toBeVisible();
   await page.getByRole("button", { name: "Renju" }).click();
 
-  await page.getByRole("link", { name: "Play Bot" }).click();
+  await page.getByRole("link", { name: "Play" }).click();
   await expect(page.getByRole("heading", { name: "Local Match" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Bryan Guest" })).toBeVisible();
   await expect(page.getByText("Bryan Guest to move")).toBeVisible();
-  await expect(page.getByText("Current: Renju")).toBeVisible();
+  await expect(page.getByTestId("match-rule")).toHaveText("Renju");
 
   const canvas = page.locator("canvas").first();
   const box = await canvas.boundingBox();
@@ -40,13 +39,16 @@ test("guest profile persists locally and captures finished local matches", async
   }
 
   for (const [row, col] of [[0, 0], [2, 0], [4, 0], [6, 0], [8, 0]]) {
-    const beforeCount = await page.locator("ol li").count();
+    const beforeCount = Number((await page.getByTestId("match-move-count").textContent()) ?? "0");
     await canvas.click({ position: boardClickPosition(box, row, col) });
     await expect
-      .poll(async () => page.locator("ol li").count(), { timeout: 15_000 })
+      .poll(async () => Number((await page.getByTestId("match-move-count").textContent()) ?? "0"), {
+        timeout: 15_000,
+      })
       .toBeGreaterThan(beforeCount);
   }
 
+  await expect(page.getByTestId("match-move-count")).toHaveText("10");
   await expect(page.getByText("Classic Bot wins")).toBeVisible();
   await page.getByRole("link", { name: "Profile" }).click();
 

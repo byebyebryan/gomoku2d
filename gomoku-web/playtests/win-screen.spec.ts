@@ -15,7 +15,7 @@ function boardClickPosition(box: { width: number; height: number }, row: number,
 
 test("finished board click advances to the next round with swapped colors", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("link", { name: "Play Bot" }).click();
+  await page.getByRole("link", { name: "Play" }).click();
 
   const canvas = page.locator("canvas").first();
   await expect(canvas).toBeVisible();
@@ -34,10 +34,12 @@ test("finished board click advances to the next round with swapped colors", asyn
   ];
 
   for (const [row, col] of losingMoves) {
-    const beforeCount = await page.locator("ol li").count();
+    const beforeCount = Number((await page.getByTestId("match-move-count").textContent()) ?? "0");
     await canvas.click({ position: boardClickPosition(box, row, col) });
     await expect
-      .poll(async () => page.locator("ol li").count(), { timeout: 15_000 })
+      .poll(async () => Number((await page.getByTestId("match-move-count").textContent()) ?? "0"), {
+        timeout: 15_000,
+      })
       .toBeGreaterThan(beforeCount);
   }
 
@@ -45,11 +47,9 @@ test("finished board click advances to the next round with swapped colors", asyn
 
   await canvas.click({ position: boardClickPosition(box, 7, 7) });
 
-  await expect
-    .poll(async () => page.locator("article").nth(0).innerText())
-    .toContain("Classic Bot");
-  await expect(page.locator("article").nth(0)).toContainText("black");
-  await expect(page.locator("article").nth(1)).toContainText("Guest");
-  await expect(page.locator("article").nth(1)).toContainText("white");
-  await expect(page.locator("p").filter({ hasText: /\d+ moves/ }).last()).toHaveText(/^[01] moves$/);
+  await expect(page.getByTestId("player-row-black")).toContainText("Classic Bot");
+  await expect(page.getByTestId("player-row-black")).toContainText("black");
+  await expect(page.getByTestId("player-row-white")).toContainText("Guest");
+  await expect(page.getByTestId("player-row-white")).toContainText("white");
+  await expect(page.getByTestId("match-move-count")).toHaveText(/^[01]$/);
 });

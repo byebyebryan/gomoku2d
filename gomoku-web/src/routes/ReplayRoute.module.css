@@ -3,27 +3,21 @@
   height: 100dvh;
   grid-template-rows: auto minmax(0, 1fr);
   padding: 24px;
-  gap: 20px;
+  gap: 18px;
   overflow: hidden;
 }
 
 .header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
 }
 
-.eyebrow {
-  margin: 0 0 8px;
-  color: var(--accent);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
 .title {
   margin: 0;
-  font-size: clamp(2.2rem, 5vw, 3.6rem);
+  font-size: clamp(2.6rem, 6vw, 4.4rem);
+  line-height: 0.92;
 }
 
 .summary {
@@ -37,100 +31,49 @@
   gap: 12px;
 }
 
-.secondaryAction,
-.iconAction {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 132px;
-  padding: 12px 18px;
-  border: 2px solid var(--border);
-  border-radius: 0;
-  background: var(--surface-muted);
-  color: var(--text);
-  font-family: "PixelOperatorBold", "PixelOperator", "Trebuchet MS", sans-serif;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.successAction {
-  border-color: var(--success-border);
-  background: var(--success);
-  color: var(--success-ink);
-}
-
-.infoAction {
-  border-color: var(--info-border);
-  background: var(--info);
-  color: var(--info-ink);
-}
-
-.accentAction {
-  border-color: var(--accent-border);
-  background: var(--accent);
-  color: var(--accent-ink);
-}
-
-.homeAction {
-  color: var(--text);
-}
-
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(300px, 380px);
+  grid-template-columns: minmax(0, 1.55fr) minmax(280px, 340px);
   gap: 20px;
   min-height: 0;
   overflow: hidden;
 }
 
 .boardPanel {
-  height: 100%;
   min-height: 0;
-  padding: 14px;
-  border-radius: var(--radius-lg);
-  background: var(--bg-elevated);
-  border: 2px solid var(--border-strong);
-  box-shadow: var(--shadow);
 }
 
-.sidebar {
+.deck {
   display: grid;
+  grid-auto-rows: min-content;
   align-content: start;
-  gap: 16px;
   min-height: 0;
-  overflow: auto;
-  padding-right: 4px;
 }
 
-.card {
+.deckSection {
+  display: grid;
+  gap: 16px;
   padding: 18px;
-  border-radius: var(--radius-md);
-  border: 2px solid var(--border);
-  background: var(--surface);
-}
-
-.sectionLabel,
-.historyCount,
-.timelineLabel {
-  margin: 0;
-  color: var(--text-muted);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
 }
 
 .resultText {
-  margin: 10px 0 0;
+  margin: 0;
   color: var(--accent-strong);
-  font-size: 1.6rem;
+  font-size: 1.9rem;
+  line-height: 1.05;
+  text-transform: uppercase;
 }
 
-.moveCount {
-  margin: 10px 0 0;
+.metaLine {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
   color: var(--text-muted);
+  text-transform: uppercase;
 }
 
-.controlsHeader,
-.historyHeader {
+.playbackHeader {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -141,17 +84,22 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  margin-top: 16px;
 }
 
-.iconAction {
-  min-width: 0;
+.controlsRow :global(.uiAction) {
+  width: 100%;
 }
 
 .timeline {
   display: grid;
   gap: 10px;
-  margin-top: 16px;
+}
+
+.timelineLabel {
+  margin: 0;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .timelineInput {
@@ -214,36 +162,6 @@
   border: 0;
 }
 
-.historyList {
-  display: grid;
-  gap: 10px;
-  margin: 14px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.historyItem {
-  display: block;
-}
-
-.historyButton {
-  display: grid;
-  width: 100%;
-  grid-template-columns: 56px 1fr auto;
-  gap: 12px;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface-muted);
-  color: var(--text);
-  text-align: left;
-}
-
-.historyButtonActive {
-  border-color: var(--info);
-  box-shadow: inset 0 0 0 2px var(--info-soft);
-}
-
 .emptyState,
 .notFoundText {
   color: var(--text-muted);
@@ -256,9 +174,6 @@
   width: min(560px, 100%);
   margin: auto;
   padding: 24px;
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  border: 2px solid var(--border);
 }
 
 @media (max-width: 980px) {
@@ -268,13 +183,7 @@
   }
 
   .boardPanel {
-    height: auto;
     min-height: min(66dvh, 820px);
-  }
-
-  .sidebar {
-    overflow: visible;
-    padding-right: 0;
   }
 }
 
@@ -291,7 +200,6 @@
   }
 
   .header {
-    align-items: flex-start;
     flex-direction: column;
   }
 
@@ -299,12 +207,11 @@
     width: 100%;
   }
 
-  .secondaryAction {
+  .headerActions :global(.uiAction) {
     flex: 1 1 0;
   }
 
-  .controlsHeader,
-  .historyHeader {
+  .playbackHeader {
     align-items: flex-start;
     flex-direction: column;
   }
