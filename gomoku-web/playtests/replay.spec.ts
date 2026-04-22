@@ -63,6 +63,53 @@ test("local replay opens from profile history and supports stepping plus autopla
   await page.getByRole("button", { name: "Start" }).click();
   await expect(page.getByTestId("replay-move-count")).toHaveText("Move 0 / 10");
 
+  await page.setViewportSize({ width: 430, height: 932 });
+  const portraitMetrics = await page.evaluate(() => {
+    const header = document.querySelector("header");
+    const layout = document.querySelector('[class*="layout"]');
+    const boardPanel = document.querySelector('[class*="boardPanel"]');
+    const deck = document.querySelector('[class*="deck"]');
+    const frame = document.querySelector('[class*="frame"]');
+    const canvas = document.querySelector("canvas");
+
+    if (!header || !layout || !boardPanel || !deck || !frame || !canvas) {
+      return null;
+    }
+
+    const layoutBox = layout.getBoundingClientRect();
+    const boardPanelBox = boardPanel.getBoundingClientRect();
+    const deckBox = deck.getBoundingClientRect();
+    const frameBox = frame.getBoundingClientRect();
+    const canvasBox = canvas.getBoundingClientRect();
+
+    return {
+      boardToLayoutWidth: boardPanelBox.width / layoutBox.width,
+      bodyOverflowY: window.getComputedStyle(document.body).overflowY,
+      headerTop: header.getBoundingClientRect().top,
+      panelGap: deckBox.top - boardPanelBox.bottom,
+      layoutOverflowY: window.getComputedStyle(layout).overflowY,
+      canvasToFrame: Math.min(
+        canvasBox.width / frameBox.width,
+        canvasBox.height / frameBox.height,
+      ),
+    };
+  });
+
+  expect(portraitMetrics).not.toBeNull();
+  expect(portraitMetrics!.boardToLayoutWidth).toBeGreaterThan(0.98);
+  expect(portraitMetrics!.bodyOverflowY).toBe("auto");
+  expect(portraitMetrics!.panelGap).toBeGreaterThanOrEqual(18);
+  expect(portraitMetrics!.layoutOverflowY).toBe("visible");
+  expect(portraitMetrics!.canvasToFrame).toBeGreaterThan(0.98);
+
+  await page.evaluate(() => window.scrollTo(0, 200));
+  await page.waitForTimeout(50);
+  await expect
+    .poll(async () =>
+      page.evaluate(() => document.querySelector("header")?.getBoundingClientRect().top ?? 0),
+    )
+    .toBeLessThan(portraitMetrics!.headerTop - 20);
+
   await page.getByRole("button", { name: "Auto play" }).click();
   await expect(page.getByRole("button", { name: "Pause" })).toBeVisible();
   await expect
