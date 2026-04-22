@@ -1,0 +1,34 @@
+Current icon sheet order
+grid: 5 columns x 6 rows
+cell size: 24x24
+
+row 1, col 1: home [Home] - Primary home navigation.
+row 1, col 2: play [Play] - Plain play / start action.
+row 1, col 3: profile [Profile] - Player record / profile surface.
+row 1, col 4: replay [Replay] - Replay/history surface.
+row 1, col 5: win [Win] - Win / result status.
+row 2, col 1: plus [Plus] - Generic add / new action.
+row 2, col 2: minus [Minus] - Generic remove / less action.
+row 2, col 3: reset [Reset] - Reset / restart action.
+row 2, col 4: undo [Undo] - Undo last action or turn.
+row 2, col 5: last [Last] - Jump to end / last move.
+row 3, col 1: first [First] - Jump to start / first move.
+row 3, col 2: fast_forward [Fast Forward] - Fast-forward transport family.
+row 3, col 3: fast_rewind [Fast Rewind] - Fast-rewind transport family.
+row 3, col 4: next [Next] - Step forward / next move.
+row 3, col 5: prev [Prev] - Step back / previous move.
+row 4, col 1: double_next [Double Next] - Alternate forward transport; semantics still open.
+row 4, col 2: double_prev [Double Prev] - Alternate backward transport; semantics still open.
+row 4, col 3: forward [Forward] - Generic forward navigation.
+row 4, col 4: back [Back] - Generic back navigation.
+row 4, col 5: settings [Settings] - Settings / options surface.
+row 5, col 1: bot [Bot] - Bot / AI player.
+row 5, col 2: human [Human] - Human player.
+row 5, col 3: grid [Grid] - Grid / board surface.
+row 5, col 4: filled_circle [Filled Circle] - Generic filled circle shape.
+row 5, col 5: circle [Circle] - Generic open circle shape.
+row 6, col 1: forbidden [Forbidden] - Forbidden / blocked / unavailable.
+row 6, col 2: info [Info] - Info / details.
+row 6, col 3: close [Close] - Close / dismiss.
+row 6, col 4: confirm [Confirm] - Confirm / accept / done.
+row 6, col 5: help [Help] - Help / question / unsure state.
