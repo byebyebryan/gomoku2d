@@ -135,7 +135,7 @@
     76px
     68px
     minmax(116px, 0.9fr)
-    96px;
+    148px;
   --history-mid-offset: 8px;
   display: grid;
   grid-template-rows: auto auto auto minmax(0, 1fr);
@@ -325,8 +325,9 @@
 }
 
 .historyItem :global(.uiAction) {
-  min-width: 96px;
-  width: 96px;
+  min-width: 132px;
+  width: auto;
+  max-width: 100%;
   justify-self: end;
 }
 

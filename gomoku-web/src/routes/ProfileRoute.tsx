@@ -4,6 +4,7 @@ import { useStore } from "zustand";
 
 import { guestProfileStore, type GuestSavedMatch } from "../profile/guest_profile_store";
 import { replayPlayerName, variantLabel } from "../replay/local_replay";
+import { Icon } from "../ui/Icon";
 
 import styles from "./ProfileRoute.module.css";
 
@@ -75,10 +76,12 @@ export function ProfileRoute() {
         </div>
         <div className={styles.headerActions}>
           <Link className="uiAction uiActionPrimary" to="/match/local">
-            Play
+            <Icon className="uiIconDesktop" name="play" />
+            <span className="uiActionLabel">Play</span>
           </Link>
           <Link className="uiAction uiActionNeutral" to="/">
-            Home
+            <Icon className="uiIconDesktop" name="home" />
+            <span className="uiActionLabel">Home</span>
           </Link>
         </div>
       </header>
@@ -152,7 +155,8 @@ export function ProfileRoute() {
               }}
               type="button"
             >
-              Reset local profile
+              <Icon className="uiIconDesktop" name="reset" />
+              <span className="uiActionLabel">Reset local profile</span>
             </button>
           </section>
         </aside>
@@ -238,7 +242,8 @@ export function ProfileRoute() {
                         }}
                         type="button"
                       >
-                        Replay
+                        <Icon className="uiIconDesktop" name="replay" />
+                        <span className="uiActionLabel">Replay</span>
                       </button>
                     </li>
                   );

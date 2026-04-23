@@ -15,24 +15,25 @@ that sheet.
 
 ## Grid Map
 
-The source sheet is a `5 x 6` grid of exact `24 x 24` cells.
+The source sheet is a `8 x 4` grid of exact `24 x 24` cells.
 
-| Row | Col 1 | Col 2 | Col 3 | Col 4 | Col 5 |
-| --- | --- | --- | --- | --- | --- |
-| 1 | `home` | `play` | `profile` | `replay` | `win` |
-| 2 | `plus` | `minus` | `reset` | `undo` | `last` |
-| 3 | `first` | `fast_forward` | `fast_rewind` | `next` | `prev` |
-| 4 | `double_next` | `double_prev` | `forward` | `back` | `settings` |
-| 5 | `bot` | `human` | `grid` | `filled_circle` | `circle` |
-| 6 | `forbidden` | `info` | `close` | `confirm` | `help` |
+| Row | Col 1 | Col 2 | Col 3 | Col 4 | Col 5 | Col 6 | Col 7 | Col 8 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | `home` | `profile` | `replay` | `win` | `plus` | `minus` | `reset` | `undo` |
+| 2 | `play` | `play_reverse` | `pause` | `last` | `first` | `fast_forward` | `fast_rewind` | `next` |
+| 3 | `prev` | `double_next` | `double_prev` | `forward` | `back` | `settings` | `bot` | `human` |
+| 4 | `grid` | `filled_circle` | `circle` | `forbidden` | `info` | `close` | `confirm` | `help` |
 
 ## Inference Notes
 
 These names are inferred from the current sheet. A few are still intentionally
 provisional and can be trimmed or renamed later.
 
+- `pause` is newly available for autoplay or media-style control states.
+- `play_reverse` is kept provisional until we decide whether it deserves a
+  real product meaning or should be dropped later.
 - `last` / `first` are the bar-plus-triangle jump controls.
-- `next` / `prev` are the simple chevron step controls.
+- `next` / `prev` are the simple single-step controls.
 - `fast_forward` / `fast_rewind` are the double-triangle transport family.
 - `double_next` / `double_prev` are alternate transport icons. Their final app
   meaning is still open.
@@ -56,5 +57,5 @@ The SVGs are authored as:
 For actual UI use, prefer inline SVGs or imported SVG components so the icons
 inherit text color cleanly.
 
-If you use plain `<img src=\"...svg\">`, treat that as a static asset path, not
+If you use plain `<img src="...svg">`, treat that as a static asset path, not
 as a themed `currentColor` pipeline.

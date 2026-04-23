@@ -93,6 +93,7 @@
 .playerRows {
   display: grid;
   gap: 10px;
+  padding-top: 10px;
 }
 
 .playerRow {
@@ -124,24 +125,26 @@
   min-width: 0;
 }
 
+.playerHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .playerName {
   margin: 0;
   font-family: var(--font-display);
   font-size: 1.55rem;
 }
 
-.playerKind {
-  margin: 4px 0 0;
-  color: var(--text-muted);
-  font-size: var(--type-body);
-}
-
-.playerRowBlack .playerKind {
-  color: #b8b2a6;
-}
-
-.playerRowWhite .playerKind {
-  color: #5f5547;
+.playerKindIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
 }
 
 .playerRowWhite .playerName {
@@ -150,18 +153,23 @@
 
 .playbackHeader {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
 
 .controlsRow {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
 }
 
 .controlsRow :global(.uiAction) {
+  width: 100%;
+}
+
+.controlsRow :global(.uiActionIconOnly) {
+  min-width: 0;
   width: 100%;
 }
 
@@ -317,9 +325,5 @@
 
   .statusText {
     font-size: 1.7rem;
-  }
-
-  .controlsRow {
-    grid-template-columns: 1fr;
   }
 }

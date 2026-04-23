@@ -15,6 +15,7 @@ import {
   shouldShowReplaySequenceNumbers,
   variantLabel,
 } from "../replay/local_replay";
+import { Icon } from "../ui/Icon";
 
 import styles from "./ReplayRoute.module.css";
 
@@ -70,7 +71,8 @@ export function ReplayRoute() {
           <h1 className={styles.title}>Replay unavailable</h1>
           <p className={styles.notFoundText}>This replay is no longer stored on this device.</p>
           <Link className="uiAction uiActionSecondary" to="/profile">
-            Back to Profile
+            <Icon className="uiIconDesktop" name="profile" />
+            <span className="uiActionLabel">Back to Profile</span>
           </Link>
         </section>
       </main>
@@ -93,10 +95,12 @@ export function ReplayRoute() {
         </div>
         <div className={styles.headerActions}>
           <Link className="uiAction uiActionSecondary" to="/profile">
-            Profile
+            <Icon className="uiIconDesktop" name="profile" />
+            <span className="uiActionLabel">Profile</span>
           </Link>
           <Link className="uiAction uiActionNeutral" to="/">
-            Home
+            <Icon className="uiIconDesktop" name="home" />
+            <span className="uiActionLabel">Home</span>
           </Link>
         </div>
       </header>
@@ -161,8 +165,16 @@ export function ReplayRoute() {
                     key={player.stone}
                   >
                     <div className={styles.playerCopy}>
-                      <h2 className={styles.playerName}>{replayPlayerName(player, guestDisplayName)}</h2>
-                      <p className={styles.playerKind}>{player.kind === "human" ? "Player" : "Bot"}</p>
+                      <div className={styles.playerHead}>
+                        <h2 className={styles.playerName}>{replayPlayerName(player, guestDisplayName)}</h2>
+                        <span
+                          aria-label={player.kind === "human" ? "Player" : "Bot"}
+                          className={styles.playerKindIcon}
+                          role="img"
+                        >
+                          <Icon name={player.kind === "human" ? "human" : "bot"} />
+                        </span>
+                      </div>
                     </div>
                   </article>
                 );
@@ -175,70 +187,7 @@ export function ReplayRoute() {
           <section className={styles.deckSection}>
             <div className={styles.playbackHeader}>
               <p className="uiSectionLabel">Playback</p>
-              <button
-                className="uiAction uiActionPrimary"
-                onClick={() => {
-                  setAutoplaying((current) => !current);
-                }}
-                type="button"
-              >
-                {autoplaying ? "Pause" : "Auto play"}
-              </button>
             </div>
-
-            <div className={styles.controlsRow} data-testid="replay-step-controls">
-              <button
-                className="uiAction uiActionNeutral"
-                onClick={() => {
-                  setAutoplaying(false);
-                  setMoveIndex(replayStartMoveIndex(match.moves.length));
-                }}
-                type="button"
-              >
-                Start
-              </button>
-              <button
-                className="uiAction uiActionNeutral"
-                onClick={() => {
-                  setAutoplaying(false);
-                  setMoveIndex(match.moves.length);
-                }}
-                type="button"
-              >
-                End
-              </button>
-              <button
-                className="uiAction uiActionNeutral"
-                onClick={() => {
-                  setAutoplaying(false);
-                  setMoveIndex((current) => Math.max(0, current - 1));
-                }}
-                type="button"
-              >
-                Previous move
-              </button>
-              <button
-                className="uiAction uiActionNeutral"
-                onClick={() => {
-                  setAutoplaying(false);
-                  setMoveIndex((current) => Math.min(match.moves.length, current + 1));
-                }}
-                type="button"
-              >
-                Next move
-              </button>
-            </div>
-
-            <button
-              className={`uiAction uiActionSecondary ${styles.resumeAction}`}
-              disabled={!canResumeReplay(frame)}
-              onClick={() => {
-                navigate("/match/local", { state: { resumeSeed } });
-              }}
-              type="button"
-            >
-              Play From Here
-            </button>
 
             <label className={styles.timeline}>
               <span className={styles.timelineLabel}>Replay timeline</span>
@@ -261,6 +210,75 @@ export function ReplayRoute() {
                 value={frame.moveIndex}
               />
             </label>
+
+            <div className={styles.controlsRow} data-testid="replay-step-controls">
+              <button
+                aria-label="Start"
+                className="uiAction uiActionNeutral uiActionIconOnly"
+                onClick={() => {
+                  setAutoplaying(false);
+                  setMoveIndex(replayStartMoveIndex(match.moves.length));
+                }}
+                type="button"
+              >
+                <Icon name="first" />
+              </button>
+              <button
+                aria-label="Previous move"
+                className="uiAction uiActionNeutral uiActionIconOnly"
+                onClick={() => {
+                  setAutoplaying(false);
+                  setMoveIndex((current) => Math.max(0, current - 1));
+                }}
+                type="button"
+              >
+                <Icon name="fastRewind" />
+              </button>
+              <button
+                aria-label={autoplaying ? "Pause" : "Auto play"}
+                className="uiAction uiActionPrimary uiActionIconOnly"
+                onClick={() => {
+                  setAutoplaying((current) => !current);
+                }}
+                type="button"
+              >
+                <Icon name={autoplaying ? "pause" : "play"} />
+              </button>
+              <button
+                aria-label="Next move"
+                className="uiAction uiActionNeutral uiActionIconOnly"
+                onClick={() => {
+                  setAutoplaying(false);
+                  setMoveIndex((current) => Math.min(match.moves.length, current + 1));
+                }}
+                type="button"
+              >
+                <Icon name="fastForward" />
+              </button>
+              <button
+                aria-label="End"
+                className="uiAction uiActionNeutral uiActionIconOnly"
+                onClick={() => {
+                  setAutoplaying(false);
+                  setMoveIndex(match.moves.length);
+                }}
+                type="button"
+              >
+                <Icon name="last" />
+              </button>
+            </div>
+
+            <button
+              className={`uiAction uiActionSecondary ${styles.resumeAction}`}
+              disabled={!canResumeReplay(frame)}
+              onClick={() => {
+                navigate("/match/local", { state: { resumeSeed } });
+              }}
+              type="button"
+            >
+              <Icon className="uiIconDesktop" name="plus" />
+              <span className="uiActionLabel">Play From Here</span>
+            </button>
           </section>
         </aside>
       </section>
