@@ -54,6 +54,7 @@ async function openFinishedReplay(page: Page) {
 test("local replay opens from profile history and supports stepping plus autoplay", async ({ page }) => {
   await openFinishedReplay(page);
   await expect(page.getByTestId("replay-result")).toHaveText("Classic Bot wins");
+  await expect(page.getByText("Replay timeline")).toHaveCount(0);
   await expect(page.getByTestId("replay-move-count")).toHaveText("Move 4 / 10");
   await expect(page.getByTestId("replay-rule")).toHaveText("Renju");
   await expect(page.getByTestId("replay-player-row-black")).toContainText("Bryan Guest");
@@ -186,4 +187,80 @@ test("local replay can start a new local match from the current replay frame", a
   await expect(page.getByTestId("player-row-black").getByRole("img", { name: "Bot" })).toBeVisible();
   await expect(page.getByTestId("player-row-white").getByRole("img", { name: "Player" })).toBeVisible();
   await expect(page.getByTestId("player-row-white")).toHaveCSS("box-shadow", /rgb/);
+});
+
+test("desktop replay rail keeps compact transport and player spacing", async ({ page }) => {
+  await openFinishedReplay(page);
+
+  const metrics = await page.evaluate(() => {
+    const resultSection = document.querySelector('[class*="resultSection"]');
+    const matchSection = document.querySelector('[class*="matchSection"]');
+    const playbackSection = document.querySelector('[class*="playbackSection"]');
+    const metaRows = document.querySelector('[class*="metaRows"]');
+    const playerRows = document.querySelector('[class*="playerRows"]');
+    const playerRow = document.querySelector('[data-testid^="replay-player-row-"]');
+    const timeline = document.querySelector('[class*="timeline"]');
+    const playbackHeader = document.querySelector('[class*="playbackHeader"]');
+    const controlsRow = document.querySelector('[class*="controlsRow"]');
+    const controlsIcon = controlsRow?.querySelector('.uiIcon');
+
+    if (
+      !resultSection ||
+      !matchSection ||
+      !playbackSection ||
+      !metaRows ||
+      !playerRows ||
+      !playerRow ||
+      !timeline ||
+      !playbackHeader ||
+      !controlsRow ||
+      !controlsIcon
+    ) {
+      return null;
+    }
+
+    const resultStyle = window.getComputedStyle(resultSection);
+    const matchStyle = window.getComputedStyle(matchSection);
+    const playbackStyle = window.getComputedStyle(playbackSection);
+    const metaRowsStyle = window.getComputedStyle(metaRows);
+    const playerRowsStyle = window.getComputedStyle(playerRows);
+    const playerRowStyle = window.getComputedStyle(playerRow);
+    const timelineStyle = window.getComputedStyle(timeline);
+    const playbackHeaderStyle = window.getComputedStyle(playbackHeader);
+    const controlsRowStyle = window.getComputedStyle(controlsRow);
+    const controlsIconStyle = window.getComputedStyle(controlsIcon);
+
+    return {
+      controlsGap: controlsRowStyle.gap,
+      controlsIconWidth: Number.parseFloat(controlsIconStyle.width),
+      matchSectionGap: matchStyle.gap,
+      matchSectionPaddingTop: matchStyle.paddingTop,
+      metaRowsGap: metaRowsStyle.gap,
+      playbackHeaderGap: playbackHeaderStyle.gap,
+      playbackSectionGap: playbackStyle.gap,
+      playbackSectionPaddingTop: playbackStyle.paddingTop,
+      playerRowPaddingTop: playerRowStyle.paddingTop,
+      playerRowsGap: playerRowsStyle.gap,
+      playerRowsPaddingTop: playerRowsStyle.paddingTop,
+      resultSectionGap: resultStyle.gap,
+      resultSectionPaddingTop: resultStyle.paddingTop,
+      timelineGap: timelineStyle.gap,
+    };
+  });
+
+  expect(metrics).not.toBeNull();
+  expect(metrics!.resultSectionGap).toBe("12px");
+  expect(metrics!.resultSectionPaddingTop).toBe("16px");
+  expect(metrics!.matchSectionGap).toBe("12px");
+  expect(metrics!.matchSectionPaddingTop).toBe("16px");
+  expect(metrics!.metaRowsGap).toBe("8px");
+  expect(metrics!.playerRowsGap).toBe("8px");
+  expect(metrics!.playerRowsPaddingTop).toBe("8px");
+  expect(metrics!.playerRowPaddingTop).toBe("10px");
+  expect(metrics!.playbackSectionGap).toBe("12px");
+  expect(metrics!.playbackSectionPaddingTop).toBe("16px");
+  expect(metrics!.playbackHeaderGap).toBe("8px");
+  expect(metrics!.timelineGap).toBe("8px");
+  expect(metrics!.controlsGap).toBe("8px");
+  expect(metrics!.controlsIconWidth).toBe(24);
 });

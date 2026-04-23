@@ -221,17 +221,26 @@ desktop/mobile system rather than a desktop-first shell with a narrow fallback.
 - the icon language is helpful now, but it still needs restraint so it does not
   become a separate app skin
 
-### Likely v0.2.4 polish scope
+### v0.2.4 polish direction
 
-If we do one last small UI pass after `v0.2.3`, it should stay narrow:
+`v0.2.3` still serves as the screenshot baseline, but the current `v0.2.4`
+polish pass is deliberately narrow and stays on top of the same shell:
 
-- quiet labels and tighten spacing rhythm
-- normalize icon and button alignment
-- compress the desktop Match and Replay side rails slightly
-- improve desktop Profile hierarchy without adding more boxes or chrome
+- labels are quieter and secondary metadata competes less with values
+- desktop Match and Replay rails are tighter and read more like HUD/transport
+  surfaces than utility sidebars
+- desktop Profile puts more emphasis on the record summary and less on the
+  identity/settings rail
+- replay transport removes one more redundant subtitle (`Replay timeline`) to
+  keep the playback zone compact
+- the icon system stays monochrome and narrow in scope, but now intentionally
+  renders at a uniform `24px` because the authored pack reads best at its
+  native scale
 
-The important constraint is that `v0.2.4` should polish the current shell, not
-reopen the mobile layout or control-model work.
+The important constraint is still the same: `v0.2.4` should polish the current
+shell, not reopen the mobile layout or control-model work. If we capture a new
+reference set after this pass, that can become the dedicated `v0.2.4`
+screenshots.
 
 ## Design takeaway
 

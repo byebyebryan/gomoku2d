@@ -142,6 +142,157 @@ test("profile history keeps summary pinned while the history list scrolls", asyn
   expect(metrics!.historyBodyScrollHeight).toBeGreaterThan(metrics!.historyBodyClientHeight);
 });
 
+test("profile uses quieter labels and compact shared action defaults", async ({ page }) => {
+  await page.goto("/profile");
+
+  await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
+
+  const metrics = await page.evaluate(() => {
+    const sectionLabel = document.querySelector(".uiSectionLabel");
+    const fieldLabel = document.querySelector('[class*="fieldLabel"]');
+    const action = Array.from(document.querySelectorAll(".uiAction")).find((element) =>
+      element.textContent?.includes("Play"),
+    ) as HTMLElement | undefined;
+    const icon = action?.querySelector(".uiIcon") as HTMLElement | null;
+
+    if (!sectionLabel || !fieldLabel || !action || !icon) {
+      return null;
+    }
+
+    const sectionLabelStyle = window.getComputedStyle(sectionLabel);
+    const fieldLabelStyle = window.getComputedStyle(fieldLabel);
+    const actionStyle = window.getComputedStyle(action);
+    const iconStyle = window.getComputedStyle(icon);
+
+    return {
+      actionGap: actionStyle.gap,
+      actionPaddingLeft: actionStyle.paddingLeft,
+      actionPaddingRight: actionStyle.paddingRight,
+      fieldLabelOpacity: Number(fieldLabelStyle.opacity),
+      iconWidth: Number.parseFloat(iconStyle.width),
+      sectionLabelOpacity: Number(sectionLabelStyle.opacity),
+    };
+  });
+
+  expect(metrics).not.toBeNull();
+  expect(metrics!.sectionLabelOpacity).toBeLessThan(1);
+  expect(metrics!.fieldLabelOpacity).toBeLessThan(1);
+  expect(metrics!.actionGap).toBe("8px");
+  expect(metrics!.actionPaddingLeft).toBe("16px");
+  expect(metrics!.actionPaddingRight).toBe("16px");
+  expect(metrics!.iconWidth).toBe(24);
+});
+
+test("desktop profile prioritizes the record summary over the identity rail", async ({ page }) => {
+  await page.goto("/profile");
+
+  await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
+
+  await page.evaluate(() => {
+    localStorage.setItem(
+      "gomoku2d.guest-profile.v1",
+      JSON.stringify({
+        state: {
+          history: [
+            {
+              guestStone: "black",
+              id: "fixture-match",
+              mode: "bot",
+              moves: [
+                { col: 7, row: 7, stone: "black" },
+                { col: 7, row: 8, stone: "white" },
+                { col: 8, row: 7, stone: "black" },
+                { col: 8, row: 8, stone: "white" },
+              ],
+              players: [
+                { kind: "human", name: "Guest", stone: "black" },
+                { kind: "bot", name: "Classic Bot", stone: "white" },
+              ],
+              savedAt: "2026-04-22T18:30:00.000Z",
+              status: "white_won",
+              variant: "renju",
+              winningCells: [],
+            },
+          ],
+          profile: {
+            avatarUrl: null,
+            createdAt: "2026-04-22T18:00:00.000Z",
+            displayName: "Guest",
+            id: "fixture-profile",
+            kind: "guest",
+            updatedAt: "2026-04-22T18:30:00.000Z",
+            username: null,
+          },
+          settings: {
+            preferredVariant: "freestyle",
+          },
+        },
+        version: 0,
+      }),
+    );
+  });
+
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
+
+  const metrics = await page.evaluate(() => {
+    const sideSection = document.querySelector('[class*="sideSection"]');
+    const badge = document.querySelector('[class*="badge"]');
+    const summaryValue = document.querySelector('[class*="summaryValue"]');
+    const summaryGrid = document.querySelector('[class*="summaryGrid"]');
+    const summaryTile = document.querySelector('[class*="summaryTile"]');
+    const historyHeadLabel = document.querySelector('[class*="historyHeadLabel"]');
+    const historyItem = document.querySelector('[class*="historyItem"]');
+
+    if (
+      !sideSection ||
+      !badge ||
+      !summaryValue ||
+      !summaryGrid ||
+      !summaryTile ||
+      !historyHeadLabel ||
+      !historyItem
+    ) {
+      return null;
+    }
+
+    const sideSectionStyle = window.getComputedStyle(sideSection);
+    const badgeStyle = window.getComputedStyle(badge);
+    const summaryValueStyle = window.getComputedStyle(summaryValue);
+    const summaryGridStyle = window.getComputedStyle(summaryGrid);
+    const summaryTileStyle = window.getComputedStyle(summaryTile);
+    const historyHeadLabelStyle = window.getComputedStyle(historyHeadLabel);
+    const historyItemStyle = window.getComputedStyle(historyItem);
+
+    return {
+      badgePaddingLeft: badgeStyle.paddingLeft,
+      badgePaddingTop: badgeStyle.paddingTop,
+      historyHeadLabelColor: historyHeadLabelStyle.color,
+      historyHeadLabelOpacity: Number(historyHeadLabelStyle.opacity),
+      historyItemColumnGap: historyItemStyle.columnGap,
+      historyItemRowGap: historyItemStyle.rowGap,
+      sideSectionGap: sideSectionStyle.gap,
+      sideSectionPaddingTop: sideSectionStyle.paddingTop,
+      summaryGridMarginTop: summaryGridStyle.marginTop,
+      summaryTileGap: summaryTileStyle.gap,
+      summaryValueFontSize: Number.parseFloat(summaryValueStyle.fontSize),
+    };
+  });
+
+  expect(metrics).not.toBeNull();
+  expect(metrics!.sideSectionGap).toBe("12px");
+  expect(metrics!.sideSectionPaddingTop).toBe("16px");
+  expect(metrics!.badgePaddingTop).toBe("4px");
+  expect(metrics!.badgePaddingLeft).toBe("8px");
+  expect(metrics!.summaryGridMarginTop).toBe("12px");
+  expect(metrics!.summaryTileGap).toBe("4px");
+  expect(metrics!.summaryValueFontSize).toBeGreaterThanOrEqual(30);
+  expect(metrics!.historyHeadLabelColor).toBe("rgb(143, 141, 135)");
+  expect(metrics!.historyHeadLabelOpacity).toBeLessThanOrEqual(0.82);
+  expect(metrics!.historyItemColumnGap).toBe("18px");
+  expect(metrics!.historyItemRowGap).toBe("10px");
+});
+
 test("portrait profile scrolls the page instead of the history pane", async ({ page }) => {
   await page.setViewportSize({ width: 430, height: 932 });
   await page.goto("/profile");

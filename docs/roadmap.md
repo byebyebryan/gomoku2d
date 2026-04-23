@@ -81,9 +81,11 @@ A player can open the site and get a polished local experience:
 Near-term release framing:
 
 - `v0.2.3` is the current UI baseline for the local-first shell
-- `v0.2.4` can be a small follow-up polish release if needed
-- that follow-up should stay narrow and avoid reopening the mobile layout and
+- `v0.2.4` is the final small polish release on top of that baseline
+- that polish pass should stay narrow and avoid reopening the mobile layout and
   control-model work unless a real bug appears
+- after `v0.2.4`, remaining `0.2.x` work should focus on non-UI fixes and
+  stability
 
 ### Out of scope
 
