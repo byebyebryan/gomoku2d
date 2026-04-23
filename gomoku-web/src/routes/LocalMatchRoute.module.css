@@ -382,10 +382,17 @@
   }
 
   .ruleControlCopy {
+    display: grid;
+    order: 2;
+    gap: 6px;
+  }
+
+  .ruleControlCopy .metaLabel {
     display: none;
   }
 
   .variantButtons {
+    order: 1;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
     width: 100%;
@@ -400,6 +407,11 @@
 
   .pendingText {
     font-size: 1.08rem;
+    min-height: 0;
+  }
+
+  .pendingText[data-active="false"] {
+    display: none;
   }
 
   .moveRow {
