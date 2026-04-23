@@ -8,10 +8,6 @@ import { Icon } from "../ui/Icon";
 
 import styles from "./ProfileRoute.module.css";
 
-function historyCountLabel(count: number): string {
-  return count === 1 ? "1 local match" : `${count} local matches`;
-}
-
 function historyResultLabel(match: GuestSavedMatch): "Win" | "Loss" | "Draw" {
   if (match.status === "draw") {
     return "Draw";
@@ -71,7 +67,7 @@ export function ProfileRoute() {
     <main className={styles.page}>
       <header className={styles.header}>
         <div className={styles.headerCopy}>
-          <p className="uiPageEyebrow">Player record</p>
+          <p className="uiPageEyebrow">Local record</p>
           <h1 className={styles.title}>Profile</h1>
         </div>
         <div className={styles.headerActions}>
@@ -91,7 +87,7 @@ export function ProfileRoute() {
           <section className={`${styles.sideSection} ${styles.identitySection}`}>
             <div className={styles.sectionHeader}>
               <p className="uiSectionLabel">Identity</p>
-              <p className={styles.badge}>Guest</p>
+              <p className={styles.badge}>Local</p>
             </div>
             <label className={styles.field}>
               <span className={styles.fieldLabel}>Display name</span>
@@ -120,10 +116,7 @@ export function ProfileRoute() {
           <div className="uiDivider" />
 
           <section className={`${styles.sideSection} ${styles.rulesSection}`}>
-            <div className={styles.sectionHeader}>
-              <p className="uiSectionLabel">Preferred rules</p>
-              <p className={styles.settingValue}>{variantLabel(settings.preferredVariant)}</p>
-            </div>
+            <p className="uiSectionLabel">Default rule</p>
             <div className={styles.variantButtons}>
               {(["freestyle", "renju"] as const).map((variant) => (
                 <button
@@ -164,8 +157,7 @@ export function ProfileRoute() {
 
         <section className={styles.recordPanel}>
           <div className={styles.recordHeader}>
-            <p className="uiSectionLabel">Local history</p>
-            <p className={styles.historyCount}>{historyCountLabel(history.length)}</p>
+            <p className="uiSectionLabel">Match History</p>
           </div>
           <div className={styles.summaryGrid}>
             <article className={styles.summaryTile}>

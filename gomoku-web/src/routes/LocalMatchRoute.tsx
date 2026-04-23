@@ -31,7 +31,7 @@ const loadingMatchStore = createStore<LocalMatchState>(() => ({
   placeHumanMove: () => false,
   players: [
     { kind: "human", name: "Guest", stone: "black" },
-    { kind: "bot", name: "Classic Bot", stone: "white" },
+    { kind: "bot", name: "Practice Bot", stone: "white" },
   ],
   selectedVariant: "freestyle",
   selectVariant: () => undefined,
@@ -164,7 +164,7 @@ export function LocalMatchRoute() {
     <main className={styles.page}>
       <header className={styles.header}>
         <div className={styles.headerCopy}>
-          <p className="uiPageEyebrow">Classic Bot practice</p>
+          <p className="uiPageEyebrow">Solo play</p>
           <h1 className={styles.title}>Local Match</h1>
         </div>
         <div className={styles.headerActions}>

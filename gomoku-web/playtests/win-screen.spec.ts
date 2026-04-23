@@ -48,11 +48,11 @@ test("finished board click advances to the next round with swapped colors", asyn
       .toBeGreaterThan(beforeCount);
   }
 
-  await expect(page.getByText("Classic Bot wins")).toBeVisible();
+  await expect(page.getByText("Practice Bot wins")).toBeVisible();
 
   await canvas.click({ position: boardClickPosition(box, 7, 7) });
 
-  await expect(page.getByTestId("player-row-black")).toContainText("Classic Bot");
+  await expect(page.getByTestId("player-row-black")).toContainText("Practice Bot");
   await expect(page.getByTestId("player-row-white")).toContainText("Guest");
   await expect(page.getByTestId("player-row-black").getByRole("img", { name: "Bot" })).toBeVisible();
   await expect(page.getByTestId("player-row-white").getByRole("img", { name: "Player" })).toBeVisible();
