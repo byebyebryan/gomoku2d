@@ -13,14 +13,14 @@ the evidence and critique set.
 <table>
   <tr>
     <td width="50%">
-      <img src="assets/screenshot_v1_game.png" alt="v0.1 game screen" width="100%">
+      <img src="assets/screenshot_v0_1_match_desktop.png" alt="v0.1 match screen on desktop" width="100%">
       <br>
-      <sub>Game</sub>
+      <sub>Match / Desktop</sub>
     </td>
     <td width="50%">
-      <img src="assets/screenshot_v1_settings.png" alt="v0.1 settings screen" width="100%">
+      <img src="assets/screenshot_v0_1_settings_desktop.png" alt="v0.1 settings screen on desktop" width="100%">
       <br>
-      <sub>Settings</sub>
+      <sub>Settings / Desktop</sub>
     </td>
   </tr>
 </table>
@@ -48,26 +48,26 @@ without rebuilding the whole app as one canvas-driven surface.
 <table>
   <tr>
     <td width="50%">
-      <img src="assets/screenshot_v0_2_1_home.png" alt="v0.2.1 home screen" width="100%">
+      <img src="assets/screenshot_v0_2_1_home_desktop.png" alt="v0.2.1 home screen on desktop" width="100%">
       <br>
-      <sub>Home</sub>
+      <sub>Home / Desktop</sub>
     </td>
     <td width="50%">
-      <img src="assets/screenshot_v0_2_1_game.png" alt="v0.2.1 match screen" width="100%">
+      <img src="assets/screenshot_v0_2_1_match_desktop.png" alt="v0.2.1 match screen on desktop" width="100%">
       <br>
-      <sub>Match</sub>
+      <sub>Match / Desktop</sub>
     </td>
   </tr>
   <tr>
     <td width="50%">
-      <img src="assets/screenshot_v0_2_1_replay.png" alt="v0.2.1 replay screen" width="100%">
+      <img src="assets/screenshot_v0_2_1_replay_desktop.png" alt="v0.2.1 replay screen on desktop" width="100%">
       <br>
-      <sub>Replay</sub>
+      <sub>Replay / Desktop</sub>
     </td>
     <td width="50%">
-      <img src="assets/screenshot_v0_2_1_profile.png" alt="v0.2.1 profile screen" width="100%">
+      <img src="assets/screenshot_v0_2_1_profile_desktop.png" alt="v0.2.1 profile screen on desktop" width="100%">
       <br>
-      <sub>Profile</sub>
+      <sub>Profile / Desktop</sub>
     </td>
   </tr>
 </table>
@@ -96,26 +96,26 @@ density, not just idealized empty states.
 <table>
   <tr>
     <td width="50%">
-      <img src="assets/screenshot_v0_2_2_home.png" alt="v0.2.2 home screen" width="100%">
+      <img src="assets/screenshot_v0_2_2_home_desktop.png" alt="v0.2.2 home screen on desktop" width="100%">
       <br>
-      <sub>Home</sub>
+      <sub>Home / Desktop</sub>
     </td>
     <td width="50%">
-      <img src="assets/screenshot_v0_2_2_game.png" alt="v0.2.2 match screen" width="100%">
+      <img src="assets/screenshot_v0_2_2_match_desktop.png" alt="v0.2.2 match screen on desktop" width="100%">
       <br>
-      <sub>Match</sub>
+      <sub>Match / Desktop</sub>
     </td>
   </tr>
   <tr>
     <td width="50%">
-      <img src="assets/screenshot_v0_2_2_replay.png" alt="v0.2.2 replay screen" width="100%">
+      <img src="assets/screenshot_v0_2_2_replay_desktop.png" alt="v0.2.2 replay screen on desktop" width="100%">
       <br>
-      <sub>Replay</sub>
+      <sub>Replay / Desktop</sub>
     </td>
     <td width="50%">
-      <img src="assets/screenshot_v0_2_2_profile.png" alt="v0.2.2 profile screen" width="100%">
+      <img src="assets/screenshot_v0_2_2_profile_desktop.png" alt="v0.2.2 profile screen on desktop" width="100%">
       <br>
-      <sub>Profile</sub>
+      <sub>Profile / Desktop</sub>
     </td>
   </tr>
 </table>
@@ -127,8 +127,8 @@ density, not just idealized empty states.
 - clearer live-match and replay HUD language
 - stronger record-screen treatment on profile
 
-These references are useful as the current baseline for refinement work, not as
-the end of the visual pass.
+These references are useful as the baseline for the next refinement pass, not
+as the end of the visual pass.
 
 ### Where v0.2.2 still needs work
 
@@ -140,11 +140,104 @@ the end of the visual pass.
 - the mobile version likely needs screen-specific layouts, not just more
   breakpoint tuning
 
+## v0.2.3
+
+### References
+
+#### Desktop
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="assets/screenshot_v0_2_3_home_desktop.png" alt="v0.2.3 home screen on desktop" width="100%">
+      <br>
+      <sub>Home / Desktop</sub>
+    </td>
+    <td width="50%">
+      <img src="assets/screenshot_v0_2_3_match_desktop.png" alt="v0.2.3 match screen on desktop" width="100%">
+      <br>
+      <sub>Match / Desktop</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="assets/screenshot_v0_2_3_replay_desktop.png" alt="v0.2.3 replay screen on desktop" width="100%">
+      <br>
+      <sub>Replay / Desktop</sub>
+    </td>
+    <td width="50%">
+      <img src="assets/screenshot_v0_2_3_profile_desktop.png" alt="v0.2.3 profile screen on desktop" width="100%">
+      <br>
+      <sub>Profile / Desktop</sub>
+    </td>
+  </tr>
+</table>
+
+#### Mobile
+
+<table>
+  <tr>
+    <td width="25%">
+      <img src="assets/screenshot_v0_2_3_home_mobile.png" alt="v0.2.3 home screen on mobile" width="100%">
+      <br>
+      <sub>Home / Mobile</sub>
+    </td>
+    <td width="25%">
+      <img src="assets/screenshot_v0_2_3_match_mobile.png" alt="v0.2.3 match screen on mobile" width="100%">
+      <br>
+      <sub>Match / Mobile</sub>
+    </td>
+    <td width="25%">
+      <img src="assets/screenshot_v0_2_3_replay_mobile.png" alt="v0.2.3 replay screen on mobile" width="100%">
+      <br>
+      <sub>Replay / Mobile</sub>
+    </td>
+    <td width="25%">
+      <img src="assets/screenshot_v0_2_3_profile_mobile.png" alt="v0.2.3 profile screen on mobile" width="100%">
+      <br>
+      <sub>Profile / Mobile</sub>
+    </td>
+  </tr>
+</table>
+
+### What v0.2.3 improved
+
+- match, replay, and profile now have intentional portrait layouts instead of
+  reading like desktop screens collapsing downward
+- the shell has a usable icon language for desktop actions and replay transport
+- replay controls are denser and clearer without taking focus away from the
+  board
+- local match on portrait has a dedicated touch-placement flow instead of
+  relying on direct tap-to-place
+
+These references are useful because they show the shell as a paired
+desktop/mobile system rather than a desktop-first shell with a narrow fallback.
+
+### Where v0.2.3 still feels uneven
+
+- profile is still the busiest screen, especially around the settings block and
+  reset action
+- some secondary controls still pull a little more visual weight than they need
+- the icon language is helpful now, but it still needs restraint so it does not
+  become a separate app skin
+
+### Likely v0.2.4 polish scope
+
+If we do one last small UI pass after `v0.2.3`, it should stay narrow:
+
+- quiet labels and tighten spacing rhythm
+- normalize icon and button alignment
+- compress the desktop Match and Replay side rails slightly
+- improve desktop Profile hierarchy without adding more boxes or chrome
+
+The important constraint is that `v0.2.4` should polish the current shell, not
+reopen the mobile layout or control-model work.
+
 ## Design takeaway
 
 - keep v0.1's retro punch and board-first confidence
 - keep v0.2.1's structure, separation, and scalability
 - keep v0.2.2's flatter shell and clearer button-role language
+- keep v0.2.3's intentional mobile layouts and tighter transport language
 - avoid reintroducing v0.1's scene-bound UI
-- avoid letting the current shell stay too text-heavy to adapt cleanly to
-  mobile
+- avoid rebuilding dense sidebars or over-explained controls as the shell grows
