@@ -89,16 +89,16 @@ export function ReplayRoute() {
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <div>
+        <div className={styles.headerCopy}>
           <p className="uiPageEyebrow">Match replay</p>
           <h1 className={styles.title}>Replay</h1>
         </div>
         <div className={styles.headerActions}>
-          <Link className="uiAction uiActionSecondary" to="/profile">
+          <Link aria-label="Profile" className="uiAction uiActionSecondary" to="/profile">
             <Icon className="uiIconDesktop" name="profile" />
             <span className="uiActionLabel">Profile</span>
           </Link>
-          <Link className="uiAction uiActionNeutral" to="/">
+          <Link aria-label="Home" className="uiAction uiActionNeutral" to="/">
             <Icon className="uiIconDesktop" name="home" />
             <span className="uiActionLabel">Home</span>
           </Link>
@@ -125,7 +125,7 @@ export function ReplayRoute() {
         </div>
 
         <aside className={styles.deck}>
-          <section className={styles.deckSection}>
+          <section className={`${styles.deckSection} ${styles.resultSection}`}>
             <p className="uiSectionLabel">Result</p>
             <p className={styles.statusText} data-testid="replay-result">
               {replayWinnerLabel(match, guestDisplayName)}
@@ -134,16 +134,16 @@ export function ReplayRoute() {
 
           <div className="uiDivider" />
 
-          <section className={styles.deckSection}>
-            <p className="uiSectionLabel">Match</p>
+          <section className={`${styles.deckSection} ${styles.matchSection}`}>
+            <p className={`uiSectionLabel ${styles.matchLabel}`}>Match</p>
             <div className={styles.metaRows}>
-              <div className={styles.metaRow}>
+              <div className={`${styles.metaRow} ${styles.ruleRow}`}>
                 <span className={styles.metaLabel}>Rule</span>
                 <span className={styles.metaValue} data-testid="replay-rule">
                   {variantLabel(match.variant)}
                 </span>
               </div>
-              <div className={styles.metaRow}>
+              <div className={`${styles.metaRow} ${styles.moveRow}`}>
                 <span className={styles.metaLabel}>Move</span>
                 <span className={styles.metaValue} data-testid="replay-move-count">
                   {moveCountLabel(frame.moveIndex, match.moves.length)}
@@ -184,9 +184,9 @@ export function ReplayRoute() {
 
           <div className="uiDivider" />
 
-          <section className={styles.deckSection}>
+          <section className={`${styles.deckSection} ${styles.playbackSection}`}>
             <div className={styles.playbackHeader}>
-              <p className="uiSectionLabel">Playback</p>
+              <p className={`uiSectionLabel ${styles.playbackLabel}`}>Playback</p>
             </div>
 
             <label className={styles.timeline}>
