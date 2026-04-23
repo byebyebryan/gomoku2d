@@ -26,23 +26,39 @@ should stay in `docs/archive/` unless they become the new canonical reference.
 
 For the comparative screenshot set and critique, see
 [visual_review.md](visual_review.md). That document embeds the active `v0.1`,
-`v0.2.1`, and `v0.2.2` reference captures and records what each revision got
-right and wrong.
+`v0.2.1`, `v0.2.2`, and `v0.2.3` reference captures and records what each
+revision got right and wrong.
 
 The rule of thumb:
 
-- `v1_*` is tone and retro feel
+- `v0_1_*` is tone and retro feel
 - `v0_2_1_*` is the first practical DOM-shell baseline
-- `v0_2_2_*` is the current post-restyle state and refinement target
+- `v0_2_2_*` is the flatter-shell baseline before the mobile-specific pass
+- `v0_2_3_*` is the current paired desktop/mobile baseline
+
+The current refinement direction is:
+
+- keep `v0.2.2` shell tone, spacing, and button-role clarity
+- keep `v0.2.3`'s screen-specific portrait layouts and compact top-bar pattern
+- keep the later icon work narrow and functional
+- keep tightening dense secondary surfaces like profile instead of re-expanding
+  the shell
+
+The current release assumption is:
+
+- `v0.2.3` establishes the current UI baseline
+- `v0.2.4` may carry one last small polish pass
+- that follow-up should be hierarchy/spacing/consistency work, not a structural
+  layout redo
 
 ## Design takeaway
 
 - keep v0.1's retro punch and board-first confidence
 - keep v0.2.1's structure, separation, and scalability
 - keep v0.2.2's flatter shell and clearer button-role language
+- keep v0.2.3's intentional mobile layouts and tighter transport language
 - avoid reintroducing v0.1's scene-bound UI
-- avoid letting the current shell stay too text-heavy to adapt cleanly to
-  mobile
+- avoid rebuilding dense sidebars or over-explained controls as the shell grows
 
 ## Goal
 

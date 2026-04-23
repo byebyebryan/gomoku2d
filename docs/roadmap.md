@@ -53,11 +53,17 @@ This is the current focus.
 
 - rewrite the shell around the ongoing visual guide in `visual_design.md`
 - simplify Home, Match, Replay, and Profile around their current roles
+- introduce a compact icon language where it improves density without replacing
+  plain-language CTAs
 - keep chronology out of live match UI
 - keep replay transport-first and remove move-list dependence there too
 - allow a replay frame to branch into a new local practice game
 - treat `Profile` as the player's local record screen, not a settings dump
 - keep local profile, local history, replay, and rules switching polished
+- give Match, Replay, and Profile intentional portrait/mobile layouts instead
+  of simple desktop collapse behavior
+- support a mobile-specific local play control model when direct tap placement is
+  too cramped for the board
 - make the shell resilient to future board-theme swaps without redesigning it
 
 ### Done when
@@ -68,7 +74,16 @@ A player can open the site and get a polished local experience:
 - clean board-first match flow
 - local replay that is useful without extra analysis surfaces
 - local player record with persistent defaults and history
+- mobile-web that feels intentionally designed on the key local screens, not
+  just minimally responsive
 - a consistent shell style that no longer feels like transitional scaffolding
+
+Near-term release framing:
+
+- `v0.2.3` is the current UI baseline for the local-first shell
+- `v0.2.4` can be a small follow-up polish release if needed
+- that follow-up should stay narrow and avoid reopening the mobile layout and
+  control-model work unless a real bug appears
 
 ### Out of scope
 
