@@ -70,16 +70,16 @@ export function ProfileRoute() {
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <div>
+        <div className={styles.headerCopy}>
           <p className="uiPageEyebrow">Player record</p>
           <h1 className={styles.title}>Profile</h1>
         </div>
         <div className={styles.headerActions}>
-          <Link className="uiAction uiActionPrimary" to="/match/local">
+          <Link aria-label="Play" className="uiAction uiActionPrimary" to="/match/local">
             <Icon className="uiIconDesktop" name="play" />
             <span className="uiActionLabel">Play</span>
           </Link>
-          <Link className="uiAction uiActionNeutral" to="/">
+          <Link aria-label="Home" className="uiAction uiActionNeutral" to="/">
             <Icon className="uiIconDesktop" name="home" />
             <span className="uiActionLabel">Home</span>
           </Link>
@@ -88,7 +88,7 @@ export function ProfileRoute() {
 
       <section className={styles.layout}>
         <aside className={styles.sidePanel}>
-          <section className={styles.sideSection}>
+          <section className={`${styles.sideSection} ${styles.identitySection}`}>
             <div className={styles.sectionHeader}>
               <p className="uiSectionLabel">Identity</p>
               <p className={styles.badge}>Guest</p>
@@ -100,6 +100,7 @@ export function ProfileRoute() {
                 onChange={(event) => {
                   guestProfileStore.getState().renameDisplayName(event.target.value);
                 }}
+                placeholder="Display name"
                 type="text"
                 value={guestDisplayName}
               />
@@ -118,7 +119,7 @@ export function ProfileRoute() {
 
           <div className="uiDivider" />
 
-          <section className={styles.sideSection}>
+          <section className={`${styles.sideSection} ${styles.rulesSection}`}>
             <div className={styles.sectionHeader}>
               <p className="uiSectionLabel">Preferred rules</p>
               <p className={styles.settingValue}>{variantLabel(settings.preferredVariant)}</p>
@@ -145,7 +146,7 @@ export function ProfileRoute() {
 
           <div className="uiDivider" />
 
-          <section className={styles.sideSection}>
+          <section className={`${styles.sideSection} ${styles.resetSection}`}>
             <button
               className="uiAction uiActionDanger"
               onClick={() => {
@@ -188,10 +189,10 @@ export function ProfileRoute() {
             <div className={styles.historyHead} aria-hidden="true">
               <span className={styles.historyHeadLabel}>Result</span>
               <span className={styles.historyHeadLabel}>Opponent</span>
-              <span className={styles.historyHeadLabel}>Rule</span>
-              <span className={styles.historyHeadLabel}>Side</span>
-              <span className={styles.historyHeadLabel}>Moves</span>
-              <span className={styles.historyHeadLabel}>Played</span>
+              <span className={`${styles.historyHeadLabel} ${styles.historyHeadSide}`}>Side</span>
+              <span className={`${styles.historyHeadLabel} ${styles.historyHeadRule}`}>Rule</span>
+              <span className={`${styles.historyHeadLabel} ${styles.historyHeadMoves}`}>Moves</span>
+              <span className={`${styles.historyHeadLabel} ${styles.historyHeadPlayed}`}>Played</span>
               <span className={styles.historyHeadSpacer} />
             </div>
           ) : null}
@@ -205,38 +206,43 @@ export function ProfileRoute() {
 
                   return (
                     <li className={styles.historyItem} key={match.id}>
-                      <p
-                        className={`${styles.historyResult} ${
-                          result === "Win"
-                            ? styles.historyResultWin
-                            : result === "Loss"
-                              ? styles.historyResultLoss
-                              : styles.historyResultDraw
-                        }`}
-                      >
-                        {result}
-                      </p>
-                      <p className={styles.historyOpponent}>{historyOpponentLabel(match, guestDisplayName)}</p>
-                      <p className={styles.historyField} data-label="Rule">
-                        {variantLabel(match.variant)}
-                      </p>
-                      <p
-                        className={`${styles.historyField} ${styles.historyStone} ${
-                          match.guestStone === "black" ? styles.historyStoneBlack : styles.historyStoneWhite
-                        }`}
-                        data-label="Side"
-                      >
-                        {historySideLabel(match)}
-                      </p>
-                      <p className={styles.historyField} data-label="Moves">
-                        {match.moves.length}
-                      </p>
-                      <p className={styles.historyPlayed} data-label="Played">
-                        <span className={styles.historyDate}>{historyDateLabel(match.savedAt)}</span>
-                        <span className={styles.historyTime}>{historyTimeLabel(match.savedAt)}</span>
-                      </p>
+                      <div className={styles.historySummary}>
+                        <p
+                          className={`${styles.historyResult} ${
+                            result === "Win"
+                              ? styles.historyResultWin
+                              : result === "Loss"
+                                ? styles.historyResultLoss
+                                : styles.historyResultDraw
+                          }`}
+                        >
+                          {result}
+                        </p>
+                        <p className={styles.historyOpponent}>{historyOpponentLabel(match, guestDisplayName)}</p>
+                      </div>
+                      <div className={styles.historyDetails}>
+                        <p
+                          className={`${styles.historyField} ${styles.historyStone} ${styles.historySide} ${
+                            match.guestStone === "black" ? styles.historyStoneBlack : styles.historyStoneWhite
+                          }`}
+                          data-label="Side"
+                        >
+                          {historySideLabel(match)}
+                        </p>
+                        <p className={`${styles.historyField} ${styles.historyRule}`} data-label="Rule">
+                          {variantLabel(match.variant)}
+                        </p>
+                        <p className={`${styles.historyField} ${styles.historyMoves}`} data-label="Moves">
+                          {`Moves ${match.moves.length}`}
+                        </p>
+                        <p className={`${styles.historyPlayed} ${styles.historyPlayedField}`} data-label="Played">
+                          <span className={styles.historyDate}>{historyDateLabel(match.savedAt)}</span>
+                          <span className={styles.historyTime}>{historyTimeLabel(match.savedAt)}</span>
+                        </p>
+                      </div>
                       <button
-                        className="uiAction uiActionSecondary"
+                        aria-label="Replay"
+                        className={`uiAction uiActionSecondary ${styles.historyReplayAction}`}
                         onClick={() => {
                           navigate(`/replays/local/${match.id}`);
                         }}

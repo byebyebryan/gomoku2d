@@ -147,6 +147,7 @@ test("portrait profile scrolls the page instead of the history pane", async ({ p
   await page.goto("/profile");
 
   await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
+  await expect(page.getByText("Local history")).toBeVisible();
 
   await page.evaluate(() => {
     const historyBody = document.querySelector('[class*="historyBody"]');
@@ -176,21 +177,25 @@ test("portrait profile scrolls the page instead of the history pane", async ({ p
     const header = document.querySelector("header");
     const historyBody = document.querySelector('[class*="historyBody"]');
     const layout = document.querySelector('[class*="layout"]');
+    const recordHeader = document.querySelector('[class*="recordHeader"]');
 
-    if (!header || !historyBody || !layout) {
+    if (!header || !historyBody || !layout || !recordHeader) {
       return null;
     }
 
     return {
       bodyOverflowY: window.getComputedStyle(document.body).overflowY,
       headerTop: header.getBoundingClientRect().top,
+      recordHeaderBottom: recordHeader.getBoundingClientRect().bottom,
       historyOverflowY: window.getComputedStyle(historyBody).overflowY,
       layoutOverflowY: window.getComputedStyle(layout).overflowY,
+      viewportHeight: window.innerHeight,
     };
   });
 
   expect(before).not.toBeNull();
   expect(before!.bodyOverflowY).toBe("auto");
+  expect(before!.recordHeaderBottom).toBeLessThanOrEqual(before!.viewportHeight);
   expect(before!.historyOverflowY).toBe("visible");
   expect(before!.layoutOverflowY).toBe("visible");
 
