@@ -35,6 +35,12 @@ pub struct WasmBoard {
     inner: Board,
 }
 
+impl Default for WasmBoard {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[wasm_bindgen]
 impl WasmBoard {
     #[wasm_bindgen(constructor)]
