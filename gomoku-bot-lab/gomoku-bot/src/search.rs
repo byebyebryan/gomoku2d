@@ -205,6 +205,85 @@ fn candidate_moves(board: &Board, radius: usize) -> Vec<Move> {
     moves
 }
 
+fn allows_opponent_forcing_reply(
+    board: &mut Board,
+    mv: Move,
+    deadline: Option<Instant>,
+) -> Option<bool> {
+    if !board.is_legal(mv) {
+        return Some(false);
+    }
+
+    if deadline.is_some_and(|limit| Instant::now() >= limit) {
+        return None;
+    }
+
+    let current = board.current_player;
+    let opponent = current.opponent();
+    board.apply_move(mv).unwrap();
+
+    let mut dangerous = false;
+    let mut timed_out = false;
+    if !matches!(board.result, GameResult::Winner(winner) if winner == current) {
+        for reply in candidate_moves(board, 2) {
+            if deadline.is_some_and(|limit| Instant::now() >= limit) {
+                timed_out = true;
+                break;
+            }
+            if !board.is_legal(reply) {
+                continue;
+            }
+
+            board.apply_move(reply).unwrap();
+            let forcing = matches!(board.result, GameResult::Winner(winner) if winner == opponent)
+                || board.immediate_winning_moves_for(opponent).len() >= 2;
+            board.undo_move(reply);
+            if forcing {
+                dangerous = true;
+                break;
+            }
+        }
+    }
+
+    board.undo_move(mv);
+
+    if timed_out {
+        None
+    } else {
+        Some(dangerous)
+    }
+}
+
+fn root_candidate_moves(board: &Board, deadline: Option<Instant>) -> Vec<Move> {
+    let moves: Vec<Move> = candidate_moves(board, 2)
+        .into_iter()
+        .filter(|&mv| board.is_legal(mv))
+        .collect();
+    if moves.is_empty() {
+        return moves;
+    }
+
+    let mut working = board.clone();
+    let mut safe_moves: Vec<Move> = Vec::with_capacity(moves.len());
+    for mv in moves.iter().copied() {
+        if deadline.is_some_and(|limit| Instant::now() >= limit) {
+            return moves;
+        }
+
+        match allows_opponent_forcing_reply(&mut working, mv, deadline) {
+            Some(false) => safe_moves.push(mv),
+            Some(true) => {}
+            None => return moves,
+        }
+    }
+
+    if safe_moves.is_empty() {
+        moves
+    } else {
+        safe_moves
+    }
+}
+
 // --- Negamax with alpha-beta (incremental Zobrist hash) ---
 
 fn negamax(
@@ -318,6 +397,87 @@ fn negamax(
     (best_score, best_move)
 }
 
+fn search_root(
+    board: &mut Board,
+    hash: u64,
+    depth: i32,
+    root_moves: &[Move],
+    color: Color,
+    tt: &mut HashMap<u64, TTEntry>,
+    zobrist: &ZobristTable,
+    nodes: &mut u64,
+) -> (i32, Option<Move>) {
+    *nodes += 1;
+
+    let mut alpha = i32::MIN + 1;
+    let beta = i32::MAX;
+    let orig_alpha = alpha;
+    let mut best_score = i32::MIN + 1;
+    let mut best_move: Option<Move> = None;
+
+    let tt_move = tt.get(&hash).and_then(|entry| entry.best_move);
+    let ordered: Vec<Move> = if let Some(tm) = tt_move {
+        std::iter::once(tm)
+            .chain(root_moves.iter().copied().filter(|&m| m != tm))
+            .collect()
+    } else {
+        root_moves.to_vec()
+    };
+
+    for mv in ordered {
+        if !board.is_legal(mv) {
+            continue;
+        }
+
+        let child_hash = hash ^ zobrist.piece(mv.row, mv.col, color) ^ zobrist.turn;
+        board.apply_move(mv).unwrap();
+        let (score, _) = negamax(
+            board,
+            child_hash,
+            depth - 1,
+            -beta,
+            -alpha,
+            color.opponent(),
+            color,
+            tt,
+            zobrist,
+            nodes,
+        );
+        let score = -score;
+        board.undo_move(mv);
+
+        if score > best_score {
+            best_score = score;
+            best_move = Some(mv);
+        }
+        if score > alpha {
+            alpha = score;
+        }
+        if alpha >= beta {
+            break;
+        }
+    }
+
+    let flag = if best_score <= orig_alpha {
+        TTFlag::UpperBound
+    } else if best_score >= beta {
+        TTFlag::LowerBound
+    } else {
+        TTFlag::Exact
+    };
+    tt.insert(
+        hash,
+        TTEntry {
+            depth,
+            score: best_score,
+            flag,
+            best_move,
+        },
+    );
+
+    (best_score, best_move)
+}
+
 // --- SearchBot ---
 
 #[derive(Debug, Clone)]
@@ -379,9 +539,12 @@ impl Bot for SearchBot {
         // Compute hash once at root; children update it incrementally
         let root_hash = hash_board(&self.zobrist, board);
         let center = board.config.board_size / 2;
-        let mut best_move = candidate_moves(board, 2)
-            .into_iter()
-            .next()
+        let prefilter_deadline = self.time_budget.map(|budget| start + budget / 2);
+        let root_moves = root_candidate_moves(board, prefilter_deadline);
+        let mut best_move = root_moves
+            .first()
+            .copied()
+            .or_else(|| candidate_moves(board, 2).into_iter().next())
             .unwrap_or(Move {
                 row: center,
                 col: center,
@@ -392,13 +555,11 @@ impl Bot for SearchBot {
 
         for depth in 1..=self.max_depth {
             let mut nodes = 0u64;
-            let (score, mv) = negamax(
+            let (score, mv) = search_root(
                 &mut working,
                 root_hash,
                 depth,
-                i32::MIN + 1,
-                i32::MAX,
-                color,
+                &root_moves,
                 color,
                 &mut self.tt,
                 &self.zobrist,
@@ -473,5 +634,69 @@ mod tests {
             "Expected block at (0,4), got {:?}",
             mv
         );
+    }
+
+    #[test]
+    fn blocks_forcing_open_three_instead_of_greedy_extension() {
+        // Black has an open three on row 7. White also has a tempting diagonal
+        // extension at (4,4), but taking it would allow Black to create an
+        // unstoppable open four on the next move.
+        let mut board = Board::new(RuleConfig::default());
+        for mv in [
+            Move { row: 7, col: 7 },
+            Move { row: 3, col: 3 },
+            Move { row: 7, col: 8 },
+            Move { row: 5, col: 5 },
+            Move { row: 7, col: 9 },
+        ] {
+            board.apply_move(mv).unwrap();
+        }
+
+        let mut bot = SearchBot::new(3);
+        let mv = bot.choose_move(&board);
+
+        assert!(
+            mv == (Move { row: 7, col: 6 }) || mv == (Move { row: 7, col: 10 }),
+            "Expected block at (7,6) or (7,10), got {:?}",
+            mv
+        );
+    }
+
+    #[test]
+    fn root_prefilter_falls_back_to_unfiltered_moves_when_deadline_has_elapsed() {
+        let mut board = Board::new(RuleConfig::default());
+        for mv in [
+            Move { row: 7, col: 7 },
+            Move { row: 3, col: 3 },
+            Move { row: 7, col: 8 },
+            Move { row: 5, col: 5 },
+            Move { row: 7, col: 9 },
+        ] {
+            board.apply_move(mv).unwrap();
+        }
+
+        let expected: Vec<Move> = candidate_moves(&board, 2)
+            .into_iter()
+            .filter(|&mv| board.is_legal(mv))
+            .collect();
+
+        let moves = root_candidate_moves(
+            &board,
+            Some(Instant::now() - Duration::from_millis(1)),
+        );
+
+        assert_eq!(moves, expected);
+    }
+
+    #[test]
+    fn reports_root_node_in_search_info() {
+        let board = Board::new(RuleConfig::default());
+        let mut bot = SearchBot::new(1);
+
+        let _ = bot.choose_move(&board);
+        let info = bot.last_info.expect("expected search info after choose_move");
+
+        assert_eq!(info.depth_reached, 1);
+        assert_eq!(info.nodes, 2);
     }
 }
