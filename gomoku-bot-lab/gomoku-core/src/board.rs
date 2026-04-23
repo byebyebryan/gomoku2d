@@ -674,7 +674,10 @@ mod tests {
             &[(0, 0), (7, 3), (0, 1), (7, 4), (0, 2), (7, 5), (0, 3)],
         );
         assert_eq!(b.current_player, Color::White);
-        assert_eq!(b.immediate_winning_moves_for(Color::Black), vec![Move { row: 0, col: 4 }]);
+        assert_eq!(
+            b.immediate_winning_moves_for(Color::Black),
+            vec![Move { row: 0, col: 4 }]
+        );
     }
 
     #[test]
@@ -684,7 +687,10 @@ mod tests {
             &mut b,
             &[(5, 7), W[0], (6, 7), W[1], (7, 5), W[2], (7, 6), W[3]],
         );
-        assert_eq!(b.forbidden_moves_for_current_player(), vec![Move { row: 7, col: 7 }]);
+        assert_eq!(
+            b.forbidden_moves_for_current_player(),
+            vec![Move { row: 7, col: 7 }]
+        );
     }
 
     #[test]
@@ -876,7 +882,9 @@ mod tests {
                 W[4],
             ],
         );
-        assert!(!b.immediate_winning_moves_for(Color::Black).contains(&Move { row: 0, col: 4 }));
+        assert!(!b
+            .immediate_winning_moves_for(Color::Black)
+            .contains(&Move { row: 0, col: 4 }));
     }
 
     #[test]

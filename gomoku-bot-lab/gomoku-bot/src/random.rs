@@ -1,9 +1,9 @@
+use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
 use rand::SeedableRng;
-use rand::rngs::StdRng;
 
-use gomoku_core::{Board, Move};
 use crate::Bot;
+use gomoku_core::{Board, Move};
 
 pub struct RandomBot {
     rng: StdRng,
@@ -11,11 +11,15 @@ pub struct RandomBot {
 
 impl RandomBot {
     pub fn new() -> Self {
-        Self { rng: StdRng::from_entropy() }
+        Self {
+            rng: StdRng::from_entropy(),
+        }
     }
 
     pub fn seeded(seed: u64) -> Self {
-        Self { rng: StdRng::seed_from_u64(seed) }
+        Self {
+            rng: StdRng::seed_from_u64(seed),
+        }
     }
 }
 
@@ -32,7 +36,10 @@ impl Bot for RandomBot {
 
     fn choose_move(&mut self, board: &Board) -> Move {
         let moves = board.legal_moves();
-        assert!(!moves.is_empty(), "RandomBot called on a board with no legal moves");
+        assert!(
+            !moves.is_empty(),
+            "RandomBot called on a board with no legal moves"
+        );
         *moves.choose(&mut self.rng).unwrap()
     }
 }

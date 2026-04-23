@@ -10,8 +10,8 @@ use js_sys::Reflect;
 use wasm_bindgen::prelude::*;
 
 use gomoku_bot::{Bot, RandomBot, SearchBot};
-use gomoku_core::{Board, Color, GameResult, Move, RuleConfig};
 use gomoku_core::rules::Variant;
+use gomoku_core::{Board, Color, GameResult, Move, RuleConfig};
 
 fn moves_to_js(moves: Vec<Move>) -> Vec<JsValue> {
     moves
@@ -48,10 +48,13 @@ impl WasmBoard {
     pub fn create_with_variant(variant: &str) -> WasmBoard {
         let v = match variant {
             "renju" => Variant::Renju,
-            _       => Variant::Freestyle,
+            _ => Variant::Freestyle,
         };
         WasmBoard {
-            inner: Board::new(RuleConfig { variant: v, ..RuleConfig::default() }),
+            inner: Board::new(RuleConfig {
+                variant: v,
+                ..RuleConfig::default()
+            }),
         }
     }
 

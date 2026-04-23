@@ -680,10 +680,7 @@ mod tests {
             .filter(|&mv| board.is_legal(mv))
             .collect();
 
-        let moves = root_candidate_moves(
-            &board,
-            Some(Instant::now() - Duration::from_millis(1)),
-        );
+        let moves = root_candidate_moves(&board, Some(Instant::now() - Duration::from_millis(1)));
 
         assert_eq!(moves, expected);
     }
@@ -694,7 +691,9 @@ mod tests {
         let mut bot = SearchBot::new(1);
 
         let _ = bot.choose_move(&board);
-        let info = bot.last_info.expect("expected search info after choose_move");
+        let info = bot
+            .last_info
+            .expect("expected search info after choose_move");
 
         assert_eq!(info.depth_reached, 1);
         assert_eq!(info.nodes, 2);
