@@ -27,8 +27,10 @@ core and bots at arbitrary positions:
 - **"Can you save this game?"** mode that drops you into a losing position
   from one of your games and asks you to fight out of it against the bot
   that would have punished you.
-- **Server-side verification** of online games — the backend re-checks legality
-  and result rather than trusting clients.
+
+Running the same Rust core on the server also lets trusted online matches be
+re-verified against the authoritative rules engine, but that is a trust
+boundary (see `backend.md`), not a lab-powered feature in its own right.
 
 If a feature idea doesn't benefit from the lab, that's fine; but the features
 we're most excited about all do.

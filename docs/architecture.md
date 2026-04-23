@@ -38,7 +38,7 @@ Three components, one repo:
 - **React + TypeScript** — component model for the app shell.
 - **Vite** — dev server and bundler.
 - **React Router** — URL-driven screens for the current local-first app
-  (`/`, `/match/local`, `/replays/local/:id`, `/profile`), with future
+  (`/`, `/match/local`, `/replays/local/:matchId`, `/profile`), with future
   cloud/online routes added later.
 - **Zustand** — client state (current view, draft moves, UI toggles).
 - **Firebase SDK directly** — sign-in, Firestore subscriptions, storage for
@@ -77,10 +77,11 @@ you end up managing two caches. Small custom hooks over `onSnapshot` are
 less code and closer to the truth.
 
 **Why no CSS framework (Tailwind / MUI / etc.)?**
-TBD. Leaning toward CSS Modules + a small hand-rolled design system (tokens
-for color, spacing, type), since the UI is small and we want a distinctive
-look. Tailwind is a reasonable alternative if the utility-first workflow
-clicks; the decision can be deferred to the first screen build.
+CSS Modules (`*.module.css`) plus a small hand-rolled token layer in
+`global.css` for color, spacing, and type. The shell is small, the look is
+deliberately distinctive, and the tokens are documented in `visual_design.md`.
+A utility framework would add machinery and fight the retro/chunky visual
+direction. Decided after the first screen builds landed.
 
 ## The DOM/Phaser boundary
 
