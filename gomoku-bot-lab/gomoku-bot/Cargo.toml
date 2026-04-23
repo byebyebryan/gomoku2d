@@ -8,3 +8,10 @@ gomoku-core = { path = "../gomoku-core" }
 rand = "0.10"
 serde_json = "1"
 instant = { version = "0.1", features = ["wasm-bindgen"] }
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "search_perf"
+harness = false
