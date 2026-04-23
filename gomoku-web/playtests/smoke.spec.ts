@@ -110,6 +110,67 @@ test("local match keeps the board frame stable with the compact HUD", async ({ p
   expect(metrics!.hudScrollHeight - metrics!.hudClientHeight).toBeLessThanOrEqual(2);
 });
 
+test("desktop local match rail keeps compact section and player spacing", async ({ page }) => {
+  await page.goto("/match/local");
+
+  await expect(page.getByRole("heading", { name: "Local Match" })).toBeVisible();
+
+  const metrics = await page.evaluate(() => {
+    const statusSection = document.querySelector('[class*="statusSection"]');
+    const matchSection = document.querySelector('[class*="matchSection"]');
+    const actionSection = document.querySelector('[class*="actionSection"]');
+    const metaRows = document.querySelector('[class*="metaRows"]');
+    const playerRows = document.querySelector('[class*="playerRows"]');
+    const playerRow = document.querySelector('[data-testid^="player-row-"]');
+    const matchActions = document.querySelector('[class*="matchActions"]');
+
+    if (
+      !statusSection ||
+      !matchSection ||
+      !actionSection ||
+      !metaRows ||
+      !playerRows ||
+      !playerRow ||
+      !matchActions
+    ) {
+      return null;
+    }
+
+    const statusStyle = window.getComputedStyle(statusSection);
+    const matchStyle = window.getComputedStyle(matchSection);
+    const actionStyle = window.getComputedStyle(actionSection);
+    const metaRowsStyle = window.getComputedStyle(metaRows);
+    const playerRowsStyle = window.getComputedStyle(playerRows);
+    const playerRowStyle = window.getComputedStyle(playerRow);
+    const matchActionsStyle = window.getComputedStyle(matchActions);
+
+    return {
+      actionSectionGap: actionStyle.gap,
+      matchActionsGap: matchActionsStyle.gap,
+      matchSectionGap: matchStyle.gap,
+      matchSectionPaddingTop: matchStyle.paddingTop,
+      metaRowsGap: metaRowsStyle.gap,
+      playerRowPaddingTop: playerRowStyle.paddingTop,
+      playerRowsGap: playerRowsStyle.gap,
+      playerRowsPaddingTop: playerRowsStyle.paddingTop,
+      statusSectionGap: statusStyle.gap,
+      statusSectionPaddingTop: statusStyle.paddingTop,
+    };
+  });
+
+  expect(metrics).not.toBeNull();
+  expect(metrics!.statusSectionGap).toBe("12px");
+  expect(metrics!.statusSectionPaddingTop).toBe("16px");
+  expect(metrics!.matchSectionGap).toBe("12px");
+  expect(metrics!.matchSectionPaddingTop).toBe("16px");
+  expect(metrics!.metaRowsGap).toBe("8px");
+  expect(metrics!.playerRowsGap).toBe("8px");
+  expect(metrics!.playerRowsPaddingTop).toBe("8px");
+  expect(metrics!.playerRowPaddingTop).toBe("10px");
+  expect(metrics!.actionSectionGap).toBe("12px");
+  expect(metrics!.matchActionsGap).toBe("8px");
+});
+
 test("direct entry to the local match route loads the app", async ({ page }) => {
   await page.goto("/match/local");
 

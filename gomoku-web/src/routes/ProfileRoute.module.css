@@ -32,7 +32,7 @@
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
+  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
   gap: 20px;
   min-height: 0;
   overflow: hidden;
@@ -51,8 +51,8 @@
 
 .sideSection {
   display: grid;
-  gap: 14px;
-  padding: 18px;
+  gap: 12px;
+  padding: 16px;
 }
 
 .sectionHeader {
@@ -64,12 +64,13 @@
 
 .badge {
   margin: 0;
-  padding: 6px 10px;
+  padding: 4px 8px;
   border: 2px solid var(--accent-border);
   background: rgba(213, 171, 81, 0.12);
   color: var(--accent-strong);
   font-family: var(--font-display);
-  font-size: var(--type-label);
+  font-size: var(--type-meta);
+  opacity: 0.92;
   text-transform: uppercase;
 }
 
@@ -83,28 +84,29 @@
 .summaryLabel,
 .historyCount,
 .historyHeadLabel {
-  color: var(--text-muted);
+  color: var(--text-soft);
+  opacity: 0.88;
 }
 
 .fieldLabel,
 .summaryLabel,
 .historyCount {
   font-family: var(--font-display);
-  font-size: var(--type-meta);
+  font-size: var(--type-quiet);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .metaList {
   display: grid;
-  gap: 14px;
+  gap: 12px;
   margin: 0;
 }
 
 .metaLabel {
   margin: 0;
   font-family: var(--font-display);
-  font-size: var(--type-meta);
+  font-size: var(--type-quiet);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -143,7 +145,7 @@
   --history-mid-offset: 8px;
   display: grid;
   grid-template-rows: auto auto auto minmax(0, 1fr);
-  padding: 18px;
+  padding: 16px;
   overflow: hidden;
 }
 
@@ -157,20 +159,21 @@
 .summaryGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 16px;
+  gap: 10px;
+  margin-top: 12px;
 }
 
 .summaryTile {
   display: grid;
-  gap: 6px;
-  padding: 0 0 0 14px;
-  border-left: 2px solid var(--border);
+  gap: 4px;
+  padding: 0 0 0 12px;
+  border-left: 1px solid var(--border);
 }
 
 .summaryValue {
   font-family: var(--font-display);
-  font-size: 1.65rem;
+  font-size: 1.9rem;
+  line-height: 1;
 }
 
 .summaryTile:nth-child(1) .summaryValue,
@@ -189,22 +192,22 @@
 .historyHead {
   display: grid;
   grid-template-columns: var(--history-columns);
-  column-gap: 20px;
-  row-gap: 12px;
+  column-gap: 18px;
+  row-gap: 10px;
   align-items: center;
   justify-content: start;
-  margin-top: 32px;
-  padding: 24px 14px 16px 0;
+  margin-top: 24px;
+  padding: 18px 14px 12px 0;
   border-top: 1px solid var(--border);
 }
 
 .historyHeadLabel {
-  color: var(--accent-strong);
+  color: var(--text-soft);
   font-family: var(--font-display);
-  font-size: 0.92rem;
+  font-size: var(--type-quiet);
   letter-spacing: 0.1em;
   line-height: 1;
-  opacity: 0.92;
+  opacity: 0.8;
   padding-bottom: 2px;
   text-transform: uppercase;
 }
@@ -250,11 +253,11 @@
 .historyItem {
   display: grid;
   grid-template-columns: var(--history-columns);
-  column-gap: 20px;
-  row-gap: 12px;
+  column-gap: 18px;
+  row-gap: 10px;
   align-items: center;
   justify-content: start;
-  padding: 16px 0;
+  padding: 14px 0;
   border-top: 1px solid var(--border);
 }
 

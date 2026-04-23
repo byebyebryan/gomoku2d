@@ -1,19 +1,36 @@
 # v0.2.4 UI Polish Notes
 
-Status: ad hoc working notes, not a canonical design doc.
+Status: ad hoc working notes, not a canonical design doc. Most of the
+high-priority polish items in this note have now been implemented in the
+current `v0.2.4` worktree.
 
-Purpose: capture the current UI polish suggestions before implementation so we
-do not lose track of them while `v0.2.4` is being scoped. This is explicitly a
-triage note, not a roadmap commitment and not a replacement for
+Purpose: capture the current UI polish suggestions before and during
+implementation so we do not lose track of them while `v0.2.4` is being scoped
+and landed. This is explicitly a triage note, not a roadmap commitment and not
+a replacement for
 `visual_design.md` or `visual_review.md`.
 
 Context:
 
 - `v0.2.3` is the current desktop/mobile UI baseline
-- `v0.2.4` is now the likely place for one last small polish pass
+- `v0.2.4` is now the final small polish pass on top of the `v0.2.3` baseline
 - that pass should stay small and avoid redesign
 - after that, UI should be considered effectively frozen for the rest of the
   `0.2.x` line
+
+## Current status
+
+These items are now effectively done in the active `v0.2.4` worktree:
+
+- quiet small labels globally
+- tighten spacing rhythm around the shared `4 / 8 / 12 / 16 / 24 / 32` scale
+- standardize icon/button alignment
+- compress the desktop Match right rail
+- tighten the desktop Replay transport group
+- improve desktop Profile hierarchy
+
+What remains from this note is optional tail work only, not a required polish
+pass.
 
 ## Working rules
 

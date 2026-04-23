@@ -53,8 +53,8 @@
 
 .hudSection {
   display: grid;
-  gap: 14px;
-  padding: 18px;
+  gap: 12px;
+  padding: 16px;
 }
 
 .statusText {
@@ -71,7 +71,7 @@
 
 .metaRows {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .metaRow {
@@ -95,10 +95,11 @@
 }
 
 .metaLabel {
-  color: var(--text-muted);
+  color: var(--text-soft);
   font-family: var(--font-display);
-  font-size: var(--type-meta);
+  font-size: var(--type-quiet);
   letter-spacing: 0.1em;
+  opacity: 0.88;
   text-transform: uppercase;
 }
 
@@ -111,13 +112,13 @@
 
 .playerRows {
   display: grid;
-  gap: 10px;
-  padding-top: 10px;
+  gap: 8px;
+  padding-top: 8px;
 }
 
 .matchActions {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .matchActions :global(.uiAction) {
@@ -129,7 +130,7 @@
   grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   align-items: center;
-  padding: 12px 14px;
+  padding: 10px 12px;
   border: 1px solid var(--border);
 }
 

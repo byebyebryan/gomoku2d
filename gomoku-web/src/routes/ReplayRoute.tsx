@@ -192,8 +192,7 @@ export function ReplayRoute() {
               <p className={`uiSectionLabel ${styles.playbackLabel}`}>Playback</p>
             </div>
 
-            <label className={styles.timeline}>
-              <span className={styles.timelineLabel}>Replay timeline</span>
+            <div className={styles.timeline}>
               <input
                 aria-label="Replay timeline"
                 className={styles.timelineInput}
@@ -212,7 +211,7 @@ export function ReplayRoute() {
                 type="range"
                 value={frame.moveIndex}
               />
-            </label>
+            </div>
 
             <div className={styles.controlsRow} data-testid="replay-step-controls">
               <button
