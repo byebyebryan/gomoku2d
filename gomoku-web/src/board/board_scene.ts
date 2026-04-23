@@ -497,7 +497,7 @@ export class BoardScene extends Phaser.Scene {
     }
 
     if (this.boardState.showSequenceNumbers && this.boardState.status !== "playing") {
-      const fontSize = Math.max(10, Math.round(this.currentCellSize * 0.25));
+      const fontSize = Phaser.Math.Clamp(Math.round(this.currentCellSize * 0.28), 8, 10);
 
       for (const move of this.boardState.moves) {
         const cell = this.boardState.cells[move.row][move.col];
