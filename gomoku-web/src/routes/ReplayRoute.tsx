@@ -113,9 +113,12 @@ export function ReplayRoute() {
             forbiddenMoves={[]}
             interactive={false}
             lastMove={frame.lastMove}
+            mobileTouchPlacement={false}
             moves={frame.moves}
             onAdvanceRound={() => undefined}
             onPlace={() => undefined}
+            onTouchCandidateChange={() => undefined}
+            touchCandidateResetVersion={0}
             showSequenceNumbers={shouldShowReplaySequenceNumbers(frame)}
             status={frame.status}
             threatMoves={[]}

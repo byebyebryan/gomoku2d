@@ -12,6 +12,8 @@ import {
 } from "./constants";
 import { BoardRenderer } from "./board_renderer";
 import {
+  canPlaceTouchCandidate,
+  moveTouchCandidateFromDrag,
   shouldAnimatePlacedStone,
   shouldRestartPointerCycle,
   shouldStopStoneIdleCycle,
@@ -118,6 +120,9 @@ export interface BoardSceneState {
   moves: MatchMove[];
   onAdvanceRound: () => void;
   onPlace: (row: number, col: number) => void;
+  onTouchCandidateChange: (candidate: CellPosition | null, canPlace: boolean) => void;
+  touchCandidateResetVersion: number;
+  mobileTouchPlacement: boolean;
   showSequenceNumbers: boolean;
   status: MatchStatus;
   threatMoves: CellPosition[];
@@ -133,9 +138,12 @@ const DEFAULT_STATE: BoardSceneState = {
   forbiddenMoves: [],
   interactive: false,
   lastMove: null,
+  mobileTouchPlacement: false,
   moves: [],
   onAdvanceRound: () => undefined,
   onPlace: () => undefined,
+  onTouchCandidateChange: () => undefined,
+  touchCandidateResetVersion: 0,
   showSequenceNumbers: false,
   status: "playing",
   threatMoves: [],
@@ -156,10 +164,14 @@ export class BoardScene extends Phaser.Scene {
   private pointerCycle: IdleCycle | null = null;
   private pointerLayer: Phaser.GameObjects.Container | null = null;
   private renderVersion = 0;
+  private reportedTouchCandidateKey: string | null = null;
+  private reportedTouchCanPlace = false;
   private root: Phaser.GameObjects.Container | null = null;
   private sequenceLabels: Phaser.GameObjects.BitmapText[] = [];
   private stoneCycle: IdleCycle | null = null;
   private stoneSprites: Map<string, Phaser.GameObjects.Sprite> = new Map();
+  private touchCandidate: CellPosition | null = null;
+  private touchDragOrigin: { x: number; y: number; candidate: CellPosition } | null = null;
   private winSprites: Phaser.GameObjects.Sprite[] = [];
 
   constructor() {
@@ -185,7 +197,7 @@ export class BoardScene extends Phaser.Scene {
     this.input.on("pointermove", this.handlePointerMove, this);
     this.input.on("pointerdown", this.handlePointerDown, this);
     this.input.on("pointerup", this.handlePointerUp, this);
-    this.input.on("pointerout", this.hidePointer, this);
+    this.input.on("pointerout", this.handlePointerOut, this);
     this.renderBoard();
   }
 
@@ -196,7 +208,7 @@ export class BoardScene extends Phaser.Scene {
     this.input?.off?.("pointermove", this.handlePointerMove, this);
     this.input?.off?.("pointerdown", this.handlePointerDown, this);
     this.input?.off?.("pointerup", this.handlePointerUp, this);
-    this.input?.off?.("pointerout", this.hidePointer, this);
+    this.input?.off?.("pointerout", this.handlePointerOut, this);
     this.root?.destroy(true);
     this.root = null;
     this.board = null;
@@ -205,7 +217,10 @@ export class BoardScene extends Phaser.Scene {
     this.pointer = null;
     this.pointerCellKey = null;
     this.pointerLayer = null;
+    this.reportTouchCandidate(null);
     this.stoneSprites.clear();
+    this.touchCandidate = null;
+    this.touchDragOrigin = null;
   }
 
   setBoardState(state: BoardSceneState): void {
@@ -214,6 +229,11 @@ export class BoardScene extends Phaser.Scene {
 
     if (shouldStopStoneIdleCycle(previousState.status, state.status)) {
       this.stoneCycle?.stop();
+    }
+
+    if (previousState.touchCandidateResetVersion !== state.touchCandidateResetVersion) {
+      this.clearTouchCandidate();
+      this.hidePointer();
     }
 
     if (this.sys?.isActive()) {
@@ -403,6 +423,7 @@ export class BoardScene extends Phaser.Scene {
     }
 
     if (!this.boardState.interactive || this.boardState.status !== "playing") {
+      this.clearTouchCandidate();
       this.hidePointer();
       return;
     }
@@ -410,6 +431,34 @@ export class BoardScene extends Phaser.Scene {
     this.pointer
       .setScale(this.currentCellSize / FRAME_SIZE)
       .setTint(this.boardState.currentPlayer === 1 ? COLOR.STONE_BLACK : COLOR.STONE_WHITE);
+
+    if (!this.boardState.mobileTouchPlacement) {
+      this.clearTouchCandidate();
+      return;
+    }
+
+    if (!this.touchCandidate || !this.board) {
+      this.reportTouchCandidate(null);
+      this.hidePointer();
+      return;
+    }
+
+    const point = this.board.cellToPixel(this.touchCandidate.row, this.touchCandidate.col);
+    const cellKey = this.cellKey(this.touchCandidate.row, this.touchCandidate.col);
+    const restartPointerCycle = shouldRestartPointerCycle(
+      this.pointerCellKey,
+      cellKey,
+      this.pointer.visible,
+    );
+    this.pointer
+      .setPosition(point.x, point.y)
+      .setVisible(true);
+    this.pointerCellKey = cellKey;
+    this.reportTouchCandidate(this.touchCandidate);
+
+    if (restartPointerCycle) {
+      this.pointerCycle?.start(this.pointer);
+    }
   }
 
   private syncOverlaySprites(): void {
@@ -494,9 +543,83 @@ export class BoardScene extends Phaser.Scene {
     return (pointer as { pointerType?: string }).pointerType ?? "mouse";
   }
 
+  private reportTouchCandidate(candidate: CellPosition | null): void {
+    const candidateKey = candidate ? this.cellKey(candidate.row, candidate.col) : null;
+    const canPlace = canPlaceTouchCandidate(
+      this.boardState.cells,
+      this.boardState.forbiddenMoves,
+      candidate,
+    );
+
+    if (
+      candidateKey === this.reportedTouchCandidateKey &&
+      canPlace === this.reportedTouchCanPlace
+    ) {
+      return;
+    }
+
+    this.reportedTouchCandidateKey = candidateKey;
+    this.reportedTouchCanPlace = canPlace;
+    this.boardState.onTouchCandidateChange(candidate, canPlace);
+  }
+
+  private setTouchCandidate(candidate: CellPosition | null): void {
+    if (!this.boardState.mobileTouchPlacement) {
+      return;
+    }
+
+    this.touchCandidate = candidate;
+
+    if (!candidate || !this.board || !this.pointer) {
+      this.hidePointer();
+      this.reportTouchCandidate(null);
+      return;
+    }
+
+    const point = this.board.cellToPixel(candidate.row, candidate.col);
+    const cellKey = this.cellKey(candidate.row, candidate.col);
+    const restartPointerCycle = shouldRestartPointerCycle(
+      this.pointerCellKey,
+      cellKey,
+      this.pointer.visible,
+    );
+    this.pointer
+      .setPosition(point.x, point.y)
+      .setTint(this.boardState.currentPlayer === 1 ? COLOR.STONE_BLACK : COLOR.STONE_WHITE)
+      .setVisible(true);
+    this.pointerCellKey = cellKey;
+    this.reportTouchCandidate(candidate);
+
+    if (restartPointerCycle) {
+      this.pointerCycle?.start(this.pointer);
+    }
+  }
+
+  private clearTouchCandidate(): void {
+    this.touchCandidate = null;
+    this.touchDragOrigin = null;
+    this.reportTouchCandidate(null);
+  }
+
   private handlePointerMove(pointer: Phaser.Input.Pointer): void {
     if (!this.boardState.interactive || this.boardState.status !== "playing" || !this.board || !this.pointer) {
       this.hidePointer();
+      return;
+    }
+
+    if (this.boardState.mobileTouchPlacement) {
+      if (!this.touchDragOrigin) {
+        return;
+      }
+
+      this.setTouchCandidate(
+        moveTouchCandidateFromDrag(
+          this.touchDragOrigin.candidate,
+          pointer.x - this.touchDragOrigin.x,
+          pointer.y - this.touchDragOrigin.y,
+          this.currentCellSize,
+        ),
+      );
       return;
     }
 
@@ -529,10 +652,28 @@ export class BoardScene extends Phaser.Scene {
     if (
       !this.boardState.interactive ||
       this.boardState.status !== "playing" ||
-      this.getPointerType(pointer) !== "touch" ||
       !this.board ||
       !this.pointer
     ) {
+      return;
+    }
+
+    if (this.boardState.mobileTouchPlacement) {
+      const originCandidate = this.touchCandidate ?? this.board.pixelToCell(pointer.x, pointer.y);
+      if (!originCandidate) {
+        return;
+      }
+
+      this.touchDragOrigin = {
+        x: pointer.x,
+        y: pointer.y,
+        candidate: originCandidate,
+      };
+      this.setTouchCandidate(originCandidate);
+      return;
+    }
+
+    if (this.getPointerType(pointer) !== "touch") {
       return;
     }
 
@@ -566,13 +707,21 @@ export class BoardScene extends Phaser.Scene {
       return;
     }
 
+    if (this.boardState.mobileTouchPlacement) {
+      this.touchDragOrigin = null;
+      return;
+    }
+
     if (this.getPointerType(pointer) === "touch") {
       if (!this.pointer?.visible) {
         return;
       }
 
       const pointerCell = this.board.pixelToCell(this.pointer.x, this.pointer.y);
-      if (pointerCell && this.boardState.cells[pointerCell.row][pointerCell.col] === null) {
+      if (
+        pointerCell &&
+        canPlaceTouchCandidate(this.boardState.cells, this.boardState.forbiddenMoves, pointerCell)
+      ) {
         this.boardState.onPlace(pointerCell.row, pointerCell.col);
       }
       this.hidePointer();
@@ -584,6 +733,14 @@ export class BoardScene extends Phaser.Scene {
     }
 
     this.boardState.onPlace(cell.row, cell.col);
+  }
+
+  private handlePointerOut(pointer: Phaser.Input.Pointer): void {
+    if (this.boardState.mobileTouchPlacement) {
+      return;
+    }
+
+    this.hidePointer();
   }
 
   private hidePointer(): void {

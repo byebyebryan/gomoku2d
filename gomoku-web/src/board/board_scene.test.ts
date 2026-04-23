@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
 
+import type { CellStone } from "../game/types";
+
 import {
+  canPlaceTouchCandidate,
+  moveTouchCandidateFromDrag,
   shouldAnimatePlacedStone,
   shouldRestartPointerCycle,
   shouldStopStoneIdleCycle,
+  touchDragSteps,
 } from "./board_scene_logic";
 
 describe("shouldAnimatePlacedStone", () => {
@@ -52,5 +57,59 @@ describe("shouldRestartPointerCycle", () => {
 
   it("does not restart the cycle when there is no valid hovered cell", () => {
     expect(shouldRestartPointerCycle("7,7", null, true)).toBe(false);
+  });
+});
+
+describe("touchDragSteps", () => {
+  it("requires a full cell of drag before moving a cell", () => {
+    expect(touchDragSteps(39, 40)).toBe(0);
+    expect(touchDragSteps(40, 40)).toBe(1);
+    expect(touchDragSteps(-39, 40)).toBe(0);
+    expect(touchDragSteps(-40, 40)).toBe(-1);
+  });
+
+  it("accumulates multiple cell steps for larger drags", () => {
+    expect(touchDragSteps(89, 40)).toBe(2);
+    expect(touchDragSteps(-90, 40)).toBe(-2);
+  });
+});
+
+describe("moveTouchCandidateFromDrag", () => {
+  it("moves the candidate relative to its starting cell", () => {
+    expect(moveTouchCandidateFromDrag({ row: 7, col: 7 }, 90, -30, 40)).toEqual({
+      row: 7,
+      col: 9,
+    });
+  });
+
+  it("clamps the candidate inside the board", () => {
+    expect(moveTouchCandidateFromDrag({ row: 0, col: 0 }, -120, -120, 40)).toEqual({
+      row: 0,
+      col: 0,
+    });
+    expect(moveTouchCandidateFromDrag({ row: 14, col: 14 }, 120, 120, 40)).toEqual({
+      row: 14,
+      col: 14,
+    });
+  });
+});
+
+describe("canPlaceTouchCandidate", () => {
+  it("allows empty, non-forbidden cells", () => {
+    const cells: CellStone[][] = Array.from({ length: 15 }, () =>
+      Array.from({ length: 15 }, () => null),
+    );
+
+    expect(canPlaceTouchCandidate(cells, [], { row: 7, col: 7 })).toBe(true);
+  });
+
+  it("blocks occupied or forbidden cells", () => {
+    const cells: CellStone[][] = Array.from({ length: 15 }, () =>
+      Array.from({ length: 15 }, () => null),
+    );
+    cells[7][7] = 1;
+
+    expect(canPlaceTouchCandidate(cells, [], { row: 7, col: 7 })).toBe(false);
+    expect(canPlaceTouchCandidate(cells, [{ row: 8, col: 8 }], { row: 8, col: 8 })).toBe(false);
   });
 });
