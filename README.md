@@ -4,11 +4,11 @@ A browser Gomoku game, with a Rust bot lab powering the AI behind it.
 
 **Play in browser:** http://dev.byebyebryan.com/gomoku2d/
 
-The game itself is the main thing: a small, playful pixel-art take on five-in-a-row with animations, rule variants, and human-or-bot on either side. The rules engine and bot opponent are written in Rust — they live in a separate workspace (`gomoku-bot-lab/`) where bot ideas can be tried out, benchmarked against each other, and compiled to WebAssembly for the browser. Anything that works in the lab ships to the game without a rewrite.
+The game itself is the main thing: a small, playful pixel-art take on five-in-a-row with animations, rule variants, and a local-first practice flow against the bot. The rules engine and bot opponent are written in Rust — they live in a separate workspace (`gomoku-bot-lab/`) where bot ideas can be tried out, benchmarked against each other, and compiled to WebAssembly for the browser. Anything that works in the lab ships to the game without a rewrite.
 
 ```
 gomoku2d/
-├── gomoku-web/         ← the game (Phaser 3 + TypeScript)
+├── gomoku-web/         ← the game (React + Phaser board + TypeScript)
 ├── gomoku-bot-lab/     ← the Rust side
 │   ├── gomoku-core/      rules + board
 │   ├── gomoku-bot/       Bot trait + implementations
@@ -22,23 +22,28 @@ gomoku2d/
 
 ## The web game
 
-A small Gomoku game in the browser. Pixel art sprites with frame-by-frame
-animations — stones forming and shattering, a hover pointer cycling through
-idle states, win cells highlighted in green, round-end card swap with color
-lerp.
+A local-first single-player Gomoku in the browser. React owns the shell
+(home, match, replay, profile); Phaser renders the board as a stateless view
+driven by the shell's state.
 
 Features:
 
-- Freestyle and Renju rule sets, switchable from a settings panel
-- Human vs human, human vs bot, bot vs bot — any combination per side
-- Per-player Human/Bot toggle and inline name editing
-- Win counts persist across rounds; color slots swap each game
-- Per-player move timers and total game timer
-- Renju forbidden-move overlays for the human black player
-- Result screen labels every stone with its move number before the next round
+- One-click `Play` from Home — match starts vs the Practice Bot, no setup
+  flow
+- Freestyle and Renju rule sets; mid-game switches queue for the next round
+- Live forbidden-move warnings when playing Black under Renju
+- Undo the last turn during a live match
+- Local replay viewer with transport controls and timeline scrubbing; branch
+  off mid-replay into a fresh practice game from any position
+- Local guest profile: display name, preferred rule, recent-match history —
+  persisted in browser storage, no sign-in required
+- Intentional desktop and portrait/mobile layouts on every main screen, with
+  a dedicated touch-placement flow on mobile instead of direct tap-to-place
+- Pixel art sprites with frame-by-frame animations — stones form and shatter,
+  winning cells pulse, idle pointer cycles
 - Bot runs in a Web Worker so it can think without freezing the UI
 
-Lives in [`gomoku-web/`](gomoku-web/) — see its README for local dev.
+Lives in [`gomoku-web/`](gomoku-web/) — see its README for stack and local dev.
 
 ---
 
@@ -138,28 +143,28 @@ Production deploys go to GitHub Pages via a manually triggered workflow:
 gh workflow run deploy.yml
 ```
 
-The workflow builds the Wasm package, runs `npm run build -- --base /gomoku2d/`,
-and deploys `dist/` to Pages.
+The workflow builds the Wasm package, sets `GOMOKU_BASE_PATH=/gomoku2d/` for the
+Vite build, and deploys `dist/` to Pages.
 
 ---
 
 ## Where this is going
 
-The old Phaser-only web game was the `v0.1` snapshot. The project is now
-headed toward a local-first `v0.2`: React owns the shell, Phaser is reduced to
-the board, the UI is being rebuilt around a more scalable DOM layer, and the
-feature focus is on richer local play rather than immediate online/backend
-bring-up.
+The old Phaser-only web game was the `v0.1` snapshot. The current line is the
+local-first `v0.2` product pass: React owns the shell, Phaser is reduced to
+the board, and the feature focus is richer local play rather than immediate
+online/backend bring-up.
 
-That means the near-term goals are:
+Phase 1 (FE rewrite, runtime boundary) is done. Phase 2 is the local-first
+polish pass around the desktop/mobile `v0.2.3` baseline plus the final
+`v0.2.4` shell polish on top of it. That covers:
 
-- a proper FE stack and cleaner runtime boundary
-- a more scalable UI shell
-- a consistent visual/style system for the DOM shell
-- deeper local features like local profiles, records, replay, and rules
-  defaults
+- a consistent DOM-shell visual language
+- board-first match HUD and transport-first replay
+- intentional portrait/mobile layouts on the main screens
+- deeper local features — guest profile, local history, replay, rules defaults
 
-Cloud sync, published replays, and online play still matter, but they are now
+Cloud sync, published replays, and online play still matter, but they are
 later phases built on top of a stronger local product.
 
 The canonical design and schedule live in `docs/`:

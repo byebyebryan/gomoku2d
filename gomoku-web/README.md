@@ -1,39 +1,49 @@
 # gomoku-web
 
-A small Gomoku game for the browser, with pixel art and a few playful touches.
+The browser Gomoku game. Pixel-art board, DOM shell around it, desktop and
+portrait/mobile layouts.
 
 **Play:** https://byebyebryan.github.io/gomoku2d/
 
-Built with Phaser 3 + TypeScript + Vite. The rules engine and bot opponent are
-the same Rust code used by the native bot lab in this repo, compiled to Wasm and
-called from JS. The bot runs in a Web Worker so it can think without freezing
-the UI.
+React owns the app shell (home, match, replay, profile). Phaser renders the
+board and nothing else. The rules engine and bot are the same Rust code used by
+the native bot lab in this repo, compiled to Wasm and called from JS. The bot
+runs in a Web Worker so it can think without freezing the UI.
 
 ---
 
 ## What you can do
 
-- Play human vs human, human vs bot, or bot vs bot — any combination per side
-- Switch between Freestyle and Renju rules from the settings panel
-- Edit player names inline; win counts persist across rounds; the two profiles
-  alternate color slots after each completed round
-- Get live forbidden-move warnings when playing Black under Renju
-- Watch the move-by-move sequence on the result screen between rounds
+Single-player, local-first:
+
+- Start a match from Home with one click — opponent is the Practice Bot
+- Switch between Freestyle and Renju rules; changes mid-game queue for the next
+  round
+- Live forbidden-move warnings when playing Black under Renju
+- Undo the last turn during a live match
+- Finish a match, open the replay, scrub move by move, then branch off at any
+  point to play the rest against the bot yourself
+- Local guest profile: display name, preferred rule, recent-match history —
+  persisted in browser storage, no sign-in
+- Desktop and portrait/mobile layouts are intentional rather than collapsed —
+  mobile uses a dedicated touch-placement flow instead of direct tap-to-place
 
 ---
 
 ## A bit of polish
 
-It's a simple game, but the presentation gets a little extra love:
-
 - Pixel art sprites with frame-by-frame animations — stones form and shatter,
-  the hover pointer cycles through idle states, winning cells pulse green
-- Round-end transition: the two player cards swap positions while their
-  background and text colors lerp through each other
-- Idle "relax" animations on the most recently placed stone
-- Per-player move timer with a live delta display, plus a total game timer
-- Responsive canvas: 1200×900 (landscape) or 900×1350 (portrait), scaled to fit
-  any viewport
+  winning cells pulse, a hover pointer cycles through idle states
+- Board-first layouts: slim HUD on match, transport deck on replay, no move
+  list during live play
+- Icon language for desktop actions and replay transport, kept monochrome and
+  scoped so it doesn't become a separate skin
+- Responsive: the board fits its available space on any viewport; portrait
+  layouts are screen-specific rather than collapsed desktop
+
+Design intent and the shell style system are documented in
+[`../docs/design.md`](../docs/design.md) and
+[`../docs/visual_design.md`](../docs/visual_design.md).
 
 ---
 
@@ -41,11 +51,43 @@ It's a simple game, but the presentation gets a little extra love:
 
 | Layer | Tech |
 |-------|------|
-| Renderer / game loop | Phaser 3.87 |
-| Language | TypeScript 5 |
-| Build | Vite 6 |
+| App shell | React 19 |
+| Routing | React Router 7 |
+| Client state | Zustand 5 (vanilla stores + `useStore` selectors) |
+| Board renderer | Phaser 3.87 (canvas, stateless view) |
+| Language | TypeScript 5.8 |
+| Build / dev server | Vite 8 (+ `vite-plugin-wasm`, `vite-plugin-top-level-await`) |
 | Game logic + bot | Rust (`gomoku-core`, `gomoku-bot`) → `wasm-pack --target bundler` |
 | Bot execution | Web Worker (off-thread) |
+| Unit tests | Vitest + Testing Library |
+| End-to-end smoke | Playwright |
+
+Styling is CSS Modules (`*.module.css`) with a shared token layer in
+`src/app/global.css`. No CSS framework.
+
+---
+
+## Source layout
+
+```
+src/
+├── app/            React entry (App.tsx, routes, global tokens)
+├── routes/         Home, LocalMatch, Profile, Replay
+├── components/     Reusable UI (Board wrapper around Phaser)
+├── board/          Phaser scene, renderer, board constants
+├── game/           Local match Zustand store + shared types
+├── profile/        Guest profile Zustand store (persisted to localStorage)
+├── replay/         Replay frame derivation from saved matches
+├── core/           Wasm bridge + bot worker protocol/runner
+└── ui/             Icon component + icon registry
+```
+
+Routes:
+
+- `/` — title screen, single `Play` CTA
+- `/match/local` — live match vs Practice Bot
+- `/replays/local/:matchId` — replay viewer for a locally saved match
+- `/profile` — local player record, preferred rule, history
 
 ---
 
@@ -67,34 +109,38 @@ TypeScript changes hot-reload. After editing Rust, rebuild the Wasm package and
 re-run `npm install` so Vite picks up the relinked `file:` dependency.
 
 ```sh
-npm run build     # production build
-npm run preview   # serve the production build locally
+npm run build              # production build (tsc + vite build + 404.html copy)
+npm run preview            # serve the production build locally
+npm test                   # vitest
+npm run playtest:smoke     # playwright smoke run
 ```
+
+The `postbuild` step copies `dist/index.html` to `dist/404.html` so GitHub
+Pages serves the SPA on deep-linked routes like `/profile` and
+`/replays/local/:matchId` instead of a 404.
 
 ---
 
 ## Deploy
 
-Production deploys to GitHub Pages via a manually triggered workflow at the repo
-root (`.github/workflows/deploy.yml`):
+Production deploys to GitHub Pages via a manually triggered workflow at the
+repo root (`.github/workflows/deploy.yml`):
 
 ```sh
 gh workflow run deploy.yml
 ```
 
+The workflow builds the Wasm package, sets `GOMOKU_BASE_PATH=/gomoku2d/` for the
+Vite build, and deploys `dist/` to Pages.
+
 ---
 
 ## Where this fits
 
-The game is the top-level product; the Rust side lives in `gomoku-bot-lab/` as
-a supporting workspace. The bot you play against in the browser is the same
-code you can pit against itself from the command line — `gomoku-wasm` exposes
-it to JS and this package calls it through a Web Worker.
-
-What's here now is the `v0.1` snapshot: offline single-player, Phaser-driven
-end to end. The next phase rewrites the shell in React and reduces Phaser to
-a board-only renderer — see [`../docs/architecture.md`](../docs/architecture.md)
-for the target and [`../docs/roadmap.md`](../docs/roadmap.md) for sequencing.
+The game is the top-level product; the Rust side in `gomoku-bot-lab/` is a
+supporting workspace. The bot you play against in the browser is the same code
+you can pit against itself from the command line — `gomoku-wasm` exposes it to
+JS and this package calls it through a Web Worker.
 
 ```
 gomoku-web                     — this package
@@ -104,3 +150,10 @@ gomoku-bot-lab/gomoku-eval     — self-play arena, tournaments, Elo
 gomoku-bot-lab/gomoku-cli      — CLI match runner with replay export
 gomoku-bot-lab/gomoku-wasm     — wasm-pack bridge: WasmBoard + WasmBot for JS
 ```
+
+The current line is the local-first `v0.2` product pass. Phase 1 (React shell,
+Phaser-as-board) is done; Phase 2 is the polish pass around the
+desktop/mobile `v0.2.3` baseline and the final `v0.2.4` shell polish on top of
+it. Cloud sign-in, published replays, and online play are deferred to later
+phases — see [`../docs/roadmap.md`](../docs/roadmap.md) for sequencing and
+[`../docs/architecture.md`](../docs/architecture.md) for the runtime boundary.

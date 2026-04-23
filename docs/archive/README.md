@@ -15,6 +15,7 @@ thinking, tradeoffs, and rejected options live here so the canonical docs in
 | `ui_language_doc.md` | Drafty design-system reference (overlapped with ui_ux_design_doc) | `docs/design.md` |
 | `ui_implementation_backlog.md` | Drafty 14-milestone UI execution plan | `docs/roadmap.md` |
 | `fe_architecture_options.md` | Drafty FE stack options writeup | `docs/architecture.md` |
+| `v0_2_4_ui_polish_notes.md` | Triage/working notes captured during the `v0.2.4` shell polish pass | `docs/visual_design.md`, `docs/visual_review.md` |
 
 These drafts were exploratory and not grounded in the v0.1 codebase. They're
 preserved as artifacts of the "about to pivot" state but should not be read as
