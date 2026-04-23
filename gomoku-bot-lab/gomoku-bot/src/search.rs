@@ -286,6 +286,7 @@ fn root_candidate_moves(board: &Board, deadline: Option<Instant>) -> Vec<Move> {
 
 // --- Negamax with alpha-beta (incremental Zobrist hash) ---
 
+#[allow(clippy::too_many_arguments)]
 fn negamax(
     board: &mut Board,
     hash: u64,
@@ -397,6 +398,7 @@ fn negamax(
     (best_score, best_move)
 }
 
+#[allow(clippy::too_many_arguments)]
 fn search_root(
     board: &mut Board,
     hash: u64,

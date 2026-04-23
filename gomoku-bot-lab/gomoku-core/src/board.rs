@@ -242,10 +242,11 @@ impl Board {
         if self.cells[mv.row][mv.col].is_some() {
             return false;
         }
-        if self.config.variant == Variant::Renju && color == Color::Black {
-            if self.is_renju_forbidden_at(mv) {
-                return false;
-            }
+        if self.config.variant == Variant::Renju
+            && color == Color::Black
+            && self.is_renju_forbidden_at(mv)
+        {
+            return false;
         }
         true
     }
@@ -263,10 +264,11 @@ impl Board {
         }
 
         let color = self.current_player;
-        if self.config.variant == Variant::Renju && color == Color::Black {
-            if self.is_renju_forbidden_at(mv) {
-                return Err(MoveError::Forbidden);
-            }
+        if self.config.variant == Variant::Renju
+            && color == Color::Black
+            && self.is_renju_forbidden_at(mv)
+        {
+            return Err(MoveError::Forbidden);
         }
 
         self.cells[mv.row][mv.col] = Some(color);
