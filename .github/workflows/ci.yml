@@ -18,10 +18,10 @@ jobs:
       run:
         working-directory: gomoku-bot-lab
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Cache cargo registry + target
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/registry
@@ -44,7 +44,7 @@ jobs:
     name: Web (typecheck, vitest)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v4
         with:
@@ -58,7 +58,7 @@ jobs:
           version: latest
 
       - name: Cache cargo registry + wasm target
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/registry
