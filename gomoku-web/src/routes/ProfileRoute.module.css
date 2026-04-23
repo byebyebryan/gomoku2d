@@ -55,6 +55,10 @@
   padding: 16px;
 }
 
+.resetSection {
+  padding-top: 22px;
+}
+
 .sectionHeader {
   display: flex;
   align-items: baseline;
@@ -520,6 +524,10 @@
   .sideSection {
     gap: 8px;
     padding: 0;
+  }
+
+  .resetSection {
+    padding-top: 10px;
   }
 
   .identitySection .sectionHeader {
