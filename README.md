@@ -2,7 +2,7 @@
 
 A browser Gomoku game, with a Rust bot lab powering the AI behind it.
 
-**Play in browser:** http://dev.byebyebryan.com/gomoku2d/
+**Play in browser:** https://dev.byebyebryan.com/gomoku2d/
 
 The game itself is the main thing: a small, playful pixel-art take on five-in-a-row with animations, rule variants, and a local-first practice flow against the bot. The rules engine and bot opponent are written in Rust — they live in a separate workspace (`gomoku-bot-lab/`) where bot ideas can be tried out, benchmarked against each other, and compiled to WebAssembly for the browser. Anything that works in the lab ships to the game without a rewrite.
 

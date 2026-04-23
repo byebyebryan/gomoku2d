@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust:
+    name: Rust (fmt, clippy, test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gomoku-bot-lab
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache cargo registry + target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            gomoku-bot-lab/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('gomoku-bot-lab/Cargo.lock', 'rust-toolchain.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: rustfmt
+        run: cargo fmt --all --check
+
+      - name: clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: test
+        run: cargo test --workspace
+
+  web:
+    name: Web (typecheck, vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: gomoku-web/package-lock.json
+
+      - name: Install wasm-pack
+        uses: jetli/wasm-pack-action@v0.4.0
+        with:
+          version: latest
+
+      - name: Cache cargo registry + wasm target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            gomoku-bot-lab/target
+          key: ${{ runner.os }}-wasm-${{ hashFiles('gomoku-bot-lab/Cargo.lock', 'rust-toolchain.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-wasm-
+
+      - name: Build wasm package
+        run: wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler
+
+      - name: Install web deps
+        working-directory: gomoku-web
+        run: npm ci
+
+      - name: Typecheck
+        working-directory: gomoku-web
+        run: npx tsc --noEmit
+
+      - name: Vitest
+        working-directory: gomoku-web
+        run: npm test
+
+      - name: Production build
+        working-directory: gomoku-web
+        run: npm run build
+        env:
+          GOMOKU_BASE_PATH: /gomoku2d/
