@@ -45,7 +45,7 @@ async function openFinishedReplay(page: Page) {
       .toBeGreaterThan(beforeCount);
   }
 
-  await expect(page.getByText("Classic Bot wins")).toBeVisible();
+  await expect(page.getByText("Practice Bot wins")).toBeVisible();
   await page.getByRole("link", { name: "Profile" }).click();
   await page.getByRole("button", { name: "Replay" }).first().click();
   await expect(page.getByRole("heading", { name: "Replay" })).toBeVisible();
@@ -53,12 +53,12 @@ async function openFinishedReplay(page: Page) {
 
 test("local replay opens from profile history and supports stepping plus autoplay", async ({ page }) => {
   await openFinishedReplay(page);
-  await expect(page.getByTestId("replay-result")).toHaveText("Classic Bot wins");
+  await expect(page.getByTestId("replay-result")).toHaveText("Practice Bot wins");
   await expect(page.getByText("Replay timeline")).toHaveCount(0);
   await expect(page.getByTestId("replay-move-count")).toHaveText("Move 4 / 10");
   await expect(page.getByTestId("replay-rule")).toHaveText("Renju");
   await expect(page.getByTestId("replay-player-row-black")).toContainText("Bryan Guest");
-  await expect(page.getByTestId("replay-player-row-white")).toContainText("Classic Bot");
+  await expect(page.getByTestId("replay-player-row-white")).toContainText("Practice Bot");
   await expect(page.getByTestId("replay-player-row-black").getByRole("img", { name: "Player" })).toBeVisible();
   await expect(page.getByTestId("replay-player-row-white").getByRole("img", { name: "Bot" })).toBeVisible();
   await expect(page.getByTestId("replay-player-row-black")).toHaveCSS("box-shadow", /rgb/);
@@ -75,7 +75,7 @@ test("local replay opens from profile history and supports stepping plus autopla
   await expect(page.getByRole("button", { name: "Play From Here" })).toBeDisabled();
   await expect(page.getByTestId("replay-player-row-white")).toHaveCSS("box-shadow", /rgb/);
   await page.getByRole("button", { name: "End" }).click();
-  await expect(page.getByTestId("replay-result")).toHaveText("Classic Bot wins");
+  await expect(page.getByTestId("replay-result")).toHaveText("Practice Bot wins");
   await expect(page.getByTestId("replay-move-count")).toHaveText("Move 10 / 10");
   await expect(page.getByRole("button", { name: "Play From Here" })).toBeDisabled();
   await page.getByRole("button", { name: "Start" }).click();
@@ -164,7 +164,7 @@ test("local replay opens from profile history and supports stepping plus autopla
   await expect
     .poll(async () => page.getByTestId("replay-move-count").textContent(), { timeout: 15_000 })
     .toBe("Move 10 / 10");
-  await expect(page.getByTestId("replay-result")).toHaveText("Classic Bot wins");
+  await expect(page.getByTestId("replay-result")).toHaveText("Practice Bot wins");
   await expect(page.getByRole("button", { name: "Auto play" })).toBeVisible();
 });
 
@@ -182,7 +182,7 @@ test("local replay can start a new local match from the current replay frame", a
   await expect(page.getByTestId("match-rule")).toHaveText("Renju");
   await expect(page.getByTestId("match-move-count")).toHaveText("Move 5");
   await expect(page.getByTestId("match-status")).toHaveText("Bryan Guest to move");
-  await expect(page.getByTestId("player-row-black")).toContainText("Classic Bot");
+  await expect(page.getByTestId("player-row-black")).toContainText("Practice Bot");
   await expect(page.getByTestId("player-row-white")).toContainText("Bryan Guest");
   await expect(page.getByTestId("player-row-black").getByRole("img", { name: "Bot" })).toBeVisible();
   await expect(page.getByTestId("player-row-white").getByRole("img", { name: "Player" })).toBeVisible();

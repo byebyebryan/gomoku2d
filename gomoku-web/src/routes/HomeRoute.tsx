@@ -6,11 +6,9 @@ export function HomeRoute() {
   return (
     <main className={styles.page}>
       <section className={styles.hero}>
-        <p className="uiPageEyebrow">Five in a row</p>
+        <p className="uiPageEyebrow">ByeByeBryan&apos;s</p>
         <h1 className={styles.title}>Gomoku2D</h1>
-        <p className={styles.summary}>
-          Quiet board. Classic Bot. First to five takes it.
-        </p>
+        <p className={styles.summary}>An old favorite, built properly.</p>
         <div className={styles.actions}>
           <Link className="uiAction uiActionPrimary" to="/match/local">
             <Icon className="uiIconDesktop" name="play" />

@@ -90,7 +90,7 @@ export function ReplayRoute() {
     <main className={styles.page}>
       <header className={styles.header}>
         <div className={styles.headerCopy}>
-          <p className="uiPageEyebrow">Match replay</p>
+          <p className="uiPageEyebrow">Saved match</p>
           <h1 className={styles.title}>Replay</h1>
         </div>
         <div className={styles.headerActions}>

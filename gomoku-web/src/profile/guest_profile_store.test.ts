@@ -63,7 +63,7 @@ describe("createGuestProfileStore", () => {
       ],
       players: [
         { kind: "human", name: "Guest", stone: "black" },
-        { kind: "bot", name: "Classic Bot", stone: "white" },
+        { kind: "bot", name: "Practice Bot", stone: "white" },
       ],
       status: "white_won",
       variant: "freestyle",
@@ -77,7 +77,7 @@ describe("createGuestProfileStore", () => {
       mode: "bot",
       moves: [{ col: 7, moveNumber: 1, player: 1, row: 7 }],
       players: [
-        { kind: "bot", name: "Classic Bot", stone: "black" },
+        { kind: "bot", name: "Practice Bot", stone: "black" },
         { kind: "human", name: "Guest", stone: "white" },
       ],
       status: "draw",
@@ -110,7 +110,7 @@ describe("createGuestProfileStore", () => {
       moves: [{ col: 7, moveNumber: 1, player: 1, row: 7 }],
       players: [
         { kind: "human", name: "Bryan Guest", stone: "black" },
-        { kind: "bot", name: "Classic Bot", stone: "white" },
+        { kind: "bot", name: "Practice Bot", stone: "white" },
       ],
       status: "draw",
       variant: "freestyle",

@@ -101,7 +101,7 @@ Primary elements:
 
 Optional lightweight context:
 
-- current opponent label, e.g. `Classic Bot`
+- current opponent label, e.g. `Practice Bot`
 - current preferred rule, if it is worth surfacing as passive context
 
 Rules:

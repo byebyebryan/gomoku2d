@@ -60,7 +60,7 @@ export interface LocalMatchResumeSeed {
 function defaultPlayers(humanDisplayName = "You"): [MatchPlayer, MatchPlayer] {
   return [
     { kind: "human", name: humanDisplayName, stone: "black" },
-    { kind: "bot", name: "Classic Bot", stone: "white" },
+    { kind: "bot", name: "Practice Bot", stone: "white" },
   ];
 }
 

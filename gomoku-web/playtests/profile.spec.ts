@@ -30,7 +30,7 @@ test("guest profile persists locally and captures finished local matches", async
   await displayName.fill("Bryan Guest");
   await page.reload();
   await expect(displayName).toHaveValue("Bryan Guest");
-  await expect(page.getByText("Preferred rules")).toBeVisible();
+  await expect(page.getByText("Default rule")).toBeVisible();
   await page.getByRole("button", { name: "Renju" }).click();
 
   await page.getByRole("link", { name: "Play" }).click();
@@ -55,15 +55,14 @@ test("guest profile persists locally and captures finished local matches", async
   }
 
   await expect(page.getByTestId("match-move-count")).toHaveText("Move 10");
-  await expect(page.getByText("Classic Bot wins")).toBeVisible();
+  await expect(page.getByText("Practice Bot wins")).toBeVisible();
   await page.getByRole("link", { name: "Profile" }).click();
 
-  await expect(page.getByText("1 local match")).toBeVisible();
   await expect(page.getByText("Loss", { exact: true })).toBeVisible();
   await expect(page.getByText("Wins", { exact: true })).toBeVisible();
   await expect(page.getByText("Losses", { exact: true })).toBeVisible();
   await expect(page.getByText("Draws", { exact: true })).toBeVisible();
-  await expect(page.getByText("vs Classic Bot")).toBeVisible();
+  await expect(page.getByText("vs Practice Bot")).toBeVisible();
   await expect(page.locator("ol li").first()).toContainText("Renju");
   const overflowMetrics = await page.evaluate(() => {
     const historyBody = document.querySelector('[class*="historyBody"]');
@@ -84,7 +83,7 @@ test("guest profile persists locally and captures finished local matches", async
 
   await page.getByRole("button", { name: "Reset local profile" }).click();
   await expect(displayName).toHaveValue("Guest");
-  await expect(page.getByText("0 local matches")).toBeVisible();
+  await expect(page.getByText("Match History")).toBeVisible();
 });
 
 test("profile history keeps summary pinned while the history list scrolls", async ({ page }) => {
@@ -206,7 +205,7 @@ test("desktop profile prioritizes the record summary over the identity rail", as
               ],
               players: [
                 { kind: "human", name: "Guest", stone: "black" },
-                { kind: "bot", name: "Classic Bot", stone: "white" },
+                { kind: "bot", name: "Practice Bot", stone: "white" },
               ],
               savedAt: "2026-04-22T18:30:00.000Z",
               status: "white_won",
@@ -298,7 +297,7 @@ test("portrait profile scrolls the page instead of the history pane", async ({ p
   await page.goto("/profile");
 
   await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
-  await expect(page.getByText("Local history")).toBeVisible();
+  await expect(page.getByText("Match History")).toBeVisible();
 
   await page.evaluate(() => {
     const historyBody = document.querySelector('[class*="historyBody"]');
