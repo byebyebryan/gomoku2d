@@ -85,26 +85,54 @@ test("local replay opens from profile history and supports stepping plus autopla
     const header = document.querySelector("header");
     const layout = document.querySelector('[class*="layout"]');
     const boardPanel = document.querySelector('[class*="boardPanel"]');
-    const deck = document.querySelector('[class*="deck"]');
+    const playerRows = document.querySelector('[class*="playerRows"]');
+    const timeline = document.querySelector('[class*="timeline"]');
+    const controlsRow = document.querySelector('[class*="controlsRow"]');
+    const resumeAction = document.querySelector('[class*="resumeAction"]');
+    const metaRows = document.querySelector('[class*="metaRows"]');
+    const resultSection = document.querySelector('[class*="resultSection"]');
+    const headerLabels = Array.from(document.querySelectorAll('[class*="headerActions"] [class*="uiActionLabel"]'));
     const frame = document.querySelector('[class*="frame"]');
     const canvas = document.querySelector("canvas");
 
-    if (!header || !layout || !boardPanel || !deck || !frame || !canvas) {
+    if (
+      !header ||
+      !layout ||
+      !boardPanel ||
+      !playerRows ||
+      !timeline ||
+      !controlsRow ||
+      !resumeAction ||
+      !metaRows ||
+      !resultSection ||
+      !frame ||
+      !canvas
+    ) {
       return null;
     }
 
     const layoutBox = layout.getBoundingClientRect();
     const boardPanelBox = boardPanel.getBoundingClientRect();
-    const deckBox = deck.getBoundingClientRect();
+    const playerRowsBox = playerRows.getBoundingClientRect();
+    const timelineBox = timeline.getBoundingClientRect();
+    const controlsRowBox = controlsRow.getBoundingClientRect();
+    const resumeActionBox = resumeAction.getBoundingClientRect();
+    const metaRowsBox = metaRows.getBoundingClientRect();
     const frameBox = frame.getBoundingClientRect();
     const canvasBox = canvas.getBoundingClientRect();
 
     return {
       boardToLayoutWidth: boardPanelBox.width / layoutBox.width,
-      bodyOverflowY: window.getComputedStyle(document.body).overflowY,
-      headerTop: header.getBoundingClientRect().top,
-      panelGap: deckBox.top - boardPanelBox.bottom,
+      boardFitsLayout: boardPanelBox.right <= layoutBox.right + 1,
+      headerLabelsHidden: headerLabels.every((label) => window.getComputedStyle(label).display === "none"),
+      playerRowsGap: boardPanelBox.top - playerRowsBox.bottom,
+      timelineGap: timelineBox.top - boardPanelBox.bottom,
+      controlsGap: controlsRowBox.top - timelineBox.bottom,
+      resumeGap: resumeActionBox.top - controlsRowBox.bottom,
+      metaGap: metaRowsBox.top - resumeActionBox.bottom,
       layoutOverflowY: window.getComputedStyle(layout).overflowY,
+      pageScrollRange: document.documentElement.scrollHeight - document.documentElement.clientHeight,
+      resultHidden: window.getComputedStyle(resultSection).display === "none",
       canvasToFrame: Math.min(
         canvasBox.width / frameBox.width,
         canvasBox.height / frameBox.height,
@@ -114,25 +142,28 @@ test("local replay opens from profile history and supports stepping plus autopla
 
   expect(portraitMetrics).not.toBeNull();
   expect(portraitMetrics!.boardToLayoutWidth).toBeGreaterThan(0.98);
-  expect(portraitMetrics!.bodyOverflowY).toBe("auto");
-  expect(portraitMetrics!.panelGap).toBeGreaterThanOrEqual(18);
-  expect(portraitMetrics!.layoutOverflowY).toBe("visible");
+  expect(portraitMetrics!.boardFitsLayout).toBe(true);
+  expect(portraitMetrics!.headerLabelsHidden).toBe(true);
+  expect(portraitMetrics!.playerRowsGap).toBeGreaterThanOrEqual(8);
+  expect(portraitMetrics!.timelineGap).toBeGreaterThanOrEqual(8);
+  expect(portraitMetrics!.controlsGap).toBeGreaterThanOrEqual(8);
+  expect(portraitMetrics!.resumeGap).toBeGreaterThanOrEqual(8);
+  expect(portraitMetrics!.metaGap).toBeGreaterThanOrEqual(8);
+  expect(portraitMetrics!.layoutOverflowY).toBe("hidden");
+  expect(portraitMetrics!.pageScrollRange).toBeLessThanOrEqual(2);
+  expect(portraitMetrics!.resultHidden).toBe(true);
   expect(portraitMetrics!.canvasToFrame).toBeGreaterThan(0.98);
 
   await page.evaluate(() => window.scrollTo(0, 200));
   await page.waitForTimeout(50);
-  await expect
-    .poll(async () =>
-      page.evaluate(() => document.querySelector("header")?.getBoundingClientRect().top ?? 0),
-    )
-    .toBeLessThan(portraitMetrics!.headerTop - 20);
+  await expect.poll(async () => page.evaluate(() => window.scrollY)).toBe(0);
 
   await page.getByRole("button", { name: "Auto play" }).click();
   await expect(page.getByRole("button", { name: "Pause" })).toBeVisible();
   await expect
     .poll(async () => page.getByTestId("replay-move-count").textContent(), { timeout: 15_000 })
     .toBe("Move 10 / 10");
-  await expect(page.getByText("Classic Bot wins")).toBeVisible();
+  await expect(page.getByTestId("replay-result")).toHaveText("Classic Bot wins");
   await expect(page.getByRole("button", { name: "Auto play" })).toBeVisible();
 });
 

@@ -14,6 +14,10 @@
   gap: 16px;
 }
 
+.headerCopy {
+  min-width: 0;
+}
+
 .title {
   margin: 0;
   font-size: clamp(2.6rem, 6vw, 4.4rem);
@@ -325,5 +329,177 @@
 
   .statusText {
     font-size: 1.7rem;
+  }
+}
+
+@media (max-width: 720px) and (orientation: portrait) {
+  .page {
+    height: 100dvh;
+    min-height: 100dvh;
+    align-content: start;
+    padding: 10px 12px 12px;
+    gap: 10px;
+    overflow: hidden;
+  }
+
+  .header {
+    align-items: center;
+    flex-direction: row;
+    gap: 12px;
+  }
+
+  .headerCopy :global(.uiPageEyebrow) {
+    display: none;
+  }
+
+  .title {
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+
+  .headerActions {
+    display: grid;
+    grid-auto-columns: 42px;
+    grid-auto-flow: column;
+    gap: 6px;
+    width: auto;
+  }
+
+  .headerActions :global(.uiAction) {
+    width: 42px;
+    min-height: 42px;
+    min-width: 42px;
+    padding: 0;
+  }
+
+  .headerActions :global(.uiActionLabel) {
+    display: none;
+  }
+
+  .headerActions :global(.uiIconDesktop) {
+    display: inline-flex;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) auto auto auto auto auto auto minmax(0, 1fr);
+    align-content: stretch;
+    justify-items: stretch;
+    gap: 10px;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .boardPanel {
+    grid-row: 3;
+    align-self: start;
+    aspect-ratio: 1;
+    min-height: 0;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .deck {
+    display: contents;
+  }
+
+  .deck :global(.uiDivider) {
+    display: none;
+  }
+
+  .resultSection {
+    display: none;
+  }
+
+  .matchSection,
+  .playbackSection {
+    display: contents;
+  }
+
+  .matchLabel,
+  .playbackLabel,
+  .timelineLabel {
+    display: none;
+  }
+
+  .playbackHeader {
+    display: contents;
+  }
+
+  .playerRows {
+    grid-row: 2;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding-top: 0;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .timeline {
+    grid-row: 4;
+    gap: 0;
+    padding-top: 6px;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .controlsRow {
+    grid-row: 5;
+    gap: 10px;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .controlsRow :global(.uiAction) {
+    min-height: 44px;
+  }
+
+  .resumeAction {
+    grid-row: 6;
+    width: 100%;
+  }
+
+  .metaRows {
+    grid-row: 7;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .metaRows .metaLabel {
+    display: none;
+  }
+
+  .ruleRow {
+    justify-self: start;
+  }
+
+  .moveRow {
+    justify-self: end;
+  }
+
+  .moveRow .metaValue {
+    text-align: right;
+  }
+
+  .playerRow {
+    padding: 10px 12px;
+  }
+
+  .playerName {
+    font-size: 1.2rem;
+  }
+
+  .playerKindIcon {
+    width: 22px;
+    height: 22px;
   }
 }
