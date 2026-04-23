@@ -6,11 +6,15 @@ import { createStore } from "zustand/vanilla";
 import { Board } from "../components/Board/Board";
 import { createLocalMatchStore } from "../game/local_match_store";
 import type { LocalMatchResumeSeed, LocalMatchState } from "../game/local_match_store";
+import type { CellPosition } from "../game/types";
 import { guestProfileStore } from "../profile/guest_profile_store";
 import { variantLabel } from "../replay/local_replay";
 import { Icon } from "../ui/Icon";
 
 import styles from "./LocalMatchRoute.module.css";
+
+const MOBILE_TOUCH_QUERY =
+  "(max-width: 720px) and (orientation: portrait) and (hover: none) and (pointer: coarse)";
 
 function loadingCells(): LocalMatchState["cells"] {
   return Array.from({ length: 15 }, () => Array.from({ length: 15 }, () => null));
@@ -73,14 +77,33 @@ function moveCountLabel(moveCount: number): string {
 export function LocalMatchRoute() {
   const location = useLocation();
   const storeRef = useRef<ReturnType<typeof createLocalMatchStore> | null>(null);
+  const [compactTouchMode, setCompactTouchMode] = useState(false);
   const [latestReplayId, setLatestReplayId] = useState<string | null>(null);
   const [storeReady, setStoreReady] = useState(false);
+  const [touchCandidate, setTouchCandidate] = useState<CellPosition | null>(null);
+  const [touchCandidatePlaceable, setTouchCandidatePlaceable] = useState(false);
+  const [touchCandidateResetVersion, setTouchCandidateResetVersion] = useState(0);
   const profile = useStore(guestProfileStore, (snapshot) => snapshot.profile);
   const state = useStore(storeRef.current ?? loadingMatchStore, (snapshot) => snapshot);
   const resumeSeed = (location.state as { resumeSeed?: LocalMatchResumeSeed } | null)?.resumeSeed ?? null;
 
   useEffect(() => {
     guestProfileStore.getState().ensureGuestProfile();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return undefined;
+    }
+
+    const mediaQuery = window.matchMedia(MOBILE_TOUCH_QUERY);
+    const sync = () => setCompactTouchMode(mediaQuery.matches);
+
+    sync();
+    mediaQuery.addEventListener("change", sync);
+    return () => {
+      mediaQuery.removeEventListener("change", sync);
+    };
   }, []);
 
   useEffect(() => {
@@ -113,9 +136,29 @@ export function LocalMatchRoute() {
     }
   }, [latestReplayId, state.status]);
 
+  useEffect(() => {
+    if (compactTouchMode) {
+      return;
+    }
+
+    setTouchCandidate(null);
+    setTouchCandidatePlaceable(false);
+  }, [compactTouchMode]);
+
   if (!storeReady || !storeRef.current) {
     return <main className={styles.page}>Loading match…</main>;
   }
+
+  const humanToMove =
+    !state.pendingBotMove &&
+    state.status === "playing" &&
+    state.players[state.currentPlayer - 1].kind === "human";
+
+  const resetTouchCandidate = () => {
+    setTouchCandidate(null);
+    setTouchCandidatePlaceable(false);
+    setTouchCandidateResetVersion((version) => version + 1);
+  };
 
   return (
     <main className={styles.page}>
@@ -128,7 +171,10 @@ export function LocalMatchRoute() {
           <button
             aria-label="New Game"
             className="uiAction uiActionPrimary"
-            onClick={state.startNewMatch}
+            onClick={() => {
+              resetTouchCandidate();
+              state.startNewMatch();
+            }}
             type="button"
           >
             <Icon className="uiIconDesktop" name="plus" />
@@ -161,15 +207,28 @@ export function LocalMatchRoute() {
             cells={state.cells}
             currentPlayer={state.currentPlayer}
             forbiddenMoves={state.forbiddenMoves}
-            interactive={
-              !state.pendingBotMove &&
-              state.status === "playing" &&
-              state.players[state.currentPlayer - 1].kind === "human"
-            }
+            interactive={humanToMove}
             lastMove={state.lastMove}
+            mobileTouchPlacement={compactTouchMode}
             moves={state.moves}
             onAdvanceRound={state.startNextRound}
             onPlace={state.placeHumanMove}
+            onTouchCandidateChange={(candidate, canPlace) => {
+              setTouchCandidate((previous) => {
+                if (
+                  previous?.row === candidate?.row &&
+                  previous?.col === candidate?.col
+                ) {
+                  return previous;
+                }
+
+                return candidate;
+              });
+              setTouchCandidatePlaceable((previous) => (
+                previous === canPlace ? previous : canPlace
+              ));
+            }}
+            touchCandidateResetVersion={touchCandidateResetVersion}
             showSequenceNumbers
             status={state.status}
             threatMoves={state.threatMoves}
@@ -215,6 +274,9 @@ export function LocalMatchRoute() {
                       }
                       key={variant}
                       onClick={() => {
+                        if (state.moves.length === 0) {
+                          resetTouchCandidate();
+                        }
                         guestProfileStore.getState().updateSettings({ preferredVariant: variant });
                         state.selectVariant(variant);
                       }}
@@ -273,10 +335,29 @@ export function LocalMatchRoute() {
 
           <section className={`${styles.hudSection} ${styles.actionSection}`}>
             <div className={styles.matchActions}>
+              {compactTouchMode ? (
+                <button
+                  className="uiAction uiActionPrimary"
+                  disabled={!humanToMove || !touchCandidate || !touchCandidatePlaceable}
+                  onClick={() => {
+                    if (!touchCandidate) {
+                      return;
+                    }
+
+                    state.placeHumanMove(touchCandidate.row, touchCandidate.col);
+                  }}
+                  type="button"
+                >
+                  <span className="uiActionLabel">Place</span>
+                </button>
+              ) : null}
               <button
                 className="uiAction uiActionNeutral"
                 disabled={!canUndo(state)}
-                onClick={state.undoLastTurn}
+                onClick={() => {
+                  resetTouchCandidate();
+                  state.undoLastTurn();
+                }}
                 type="button"
               >
                 <Icon className="uiIconDesktop" name="undo" />

@@ -248,6 +248,77 @@ test("portrait local match keeps the board frame tight to the canvas", async ({ 
   await expect.poll(async () => page.evaluate(() => window.scrollY)).toBe(0);
 });
 
+test("portrait touch input uses Place instead of auto-placing on release", async ({ browser }) => {
+  const context = await browser.newContext({
+    hasTouch: true,
+    viewport: { width: 430, height: 760 },
+  });
+  const page = await context.newPage();
+
+  try {
+    const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
+    await page.goto(new URL("/match/local", baseUrl).toString());
+
+    await expect(page.getByRole("heading", { name: "Local Match" })).toBeVisible();
+
+    const placeButton = page.getByRole("button", { name: "Place" });
+    await expect(placeButton).toBeDisabled();
+
+    const canvas = page.locator("canvas").first();
+    await expect(canvas).toBeVisible();
+
+    const box = await canvas.boundingBox();
+    if (!box) {
+      throw new Error("board canvas did not report a bounding box");
+    }
+
+    await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+    await page.waitForTimeout(150);
+
+    await expect(page.getByTestId("match-move-count")).toHaveText("Move 0");
+    await expect(placeButton).toBeEnabled();
+
+    await page.getByRole("button", { name: "New Game" }).click();
+    await expect(page.getByTestId("match-move-count")).toHaveText("Move 0");
+    await expect(placeButton).toBeDisabled();
+
+    await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+    await page.waitForTimeout(150);
+    await expect(placeButton).toBeEnabled();
+
+    await placeButton.click();
+    await waitForBotReply(page);
+    await expect(placeButton).toBeDisabled();
+  } finally {
+    await context.close();
+  }
+});
+
+test("narrow non-touch portrait keeps direct click placement without Place mode", async ({ page }) => {
+  await page.setViewportSize({ width: 430, height: 760 });
+  await page.goto("/match/local");
+
+  await expect(page.getByRole("heading", { name: "Local Match" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Place" })).toHaveCount(0);
+
+  const canvas = page.locator("canvas").first();
+  await expect(canvas).toBeVisible();
+
+  const box = await canvas.boundingBox();
+  if (!box) {
+    throw new Error("board canvas did not report a bounding box");
+  }
+
+  await canvas.click({
+    position: {
+      x: box.width / 2,
+      y: box.height / 2,
+    },
+  });
+
+  await waitForBotReply(page);
+});
+
 test("canvas stays matched to the board viewport after resizing into portrait", async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 800 });
   await page.goto("/match/local");

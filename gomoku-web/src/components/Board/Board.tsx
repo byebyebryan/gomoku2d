@@ -12,9 +12,12 @@ export interface BoardProps {
   forbiddenMoves: CellPosition[];
   interactive: boolean;
   lastMove: CellPosition | null;
+  mobileTouchPlacement: boolean;
   moves: MatchMove[];
   onAdvanceRound: () => void;
   onPlace: (row: number, col: number) => void;
+  onTouchCandidateChange: (candidate: CellPosition | null, canPlace: boolean) => void;
+  touchCandidateResetVersion: number;
   showSequenceNumbers: boolean;
   status: MatchStatus;
   threatMoves: CellPosition[];
