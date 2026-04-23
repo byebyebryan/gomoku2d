@@ -3,7 +3,7 @@
 The browser Gomoku game. Pixel-art board, DOM shell around it, desktop and
 portrait/mobile layouts.
 
-**Play:** https://byebyebryan.github.io/gomoku2d/
+**Play:** https://dev.byebyebryan.com/gomoku2d/
 
 React owns the app shell (home, match, replay, profile). Phaser renders the
 board and nothing else. The rules engine and bot are the same Rust code used by
