@@ -30,7 +30,11 @@ impl ZobristTable {
             rng
         };
         let table = (0..size * size).map(|_| [next(), next()]).collect();
-        Self { table, turn: next(), size }
+        Self {
+            table,
+            turn: next(),
+            size,
+        }
     }
 
     #[inline(always)]

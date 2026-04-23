@@ -33,7 +33,13 @@ impl RatingTracker {
         *self.ratings.get(name).unwrap_or(&DEFAULT_INITIAL_RATING)
     }
 
-    pub fn update(&mut self, player_a: &str, player_b: &str, result: &GameResult, a_is_black: bool) {
+    pub fn update(
+        &mut self,
+        player_a: &str,
+        player_b: &str,
+        result: &GameResult,
+        a_is_black: bool,
+    ) {
         let r_a = self.get_rating(player_a);
         let r_b = self.get_rating(player_b);
 
@@ -42,10 +48,18 @@ impl RatingTracker {
 
         let (score_a, score_b) = match result {
             GameResult::Winner(gomoku_core::Color::Black) => {
-                if a_is_black { (1.0, 0.0) } else { (0.0, 1.0) }
+                if a_is_black {
+                    (1.0, 0.0)
+                } else {
+                    (0.0, 1.0)
+                }
             }
             GameResult::Winner(gomoku_core::Color::White) => {
-                if !a_is_black { (1.0, 0.0) } else { (0.0, 1.0) }
+                if !a_is_black {
+                    (1.0, 0.0)
+                } else {
+                    (0.0, 1.0)
+                }
             }
             GameResult::Draw => (0.5, 0.5),
             GameResult::Ongoing => return,
@@ -91,14 +105,24 @@ mod tests {
     #[test]
     fn test_tracker_update() {
         let mut tracker = RatingTracker::new(32.0);
-        
+
         // A wins playing Black
-        tracker.update("BotA", "BotB", &GameResult::Winner(gomoku_core::Color::Black), true);
+        tracker.update(
+            "BotA",
+            "BotB",
+            &GameResult::Winner(gomoku_core::Color::Black),
+            true,
+        );
         assert_eq!(tracker.get_rating("BotA"), 1216.0);
         assert_eq!(tracker.get_rating("BotB"), 1184.0);
 
         // B wins playing Black against A
-        tracker.update("BotB", "BotA", &GameResult::Winner(gomoku_core::Color::Black), true);
+        tracker.update(
+            "BotB",
+            "BotA",
+            &GameResult::Winner(gomoku_core::Color::Black),
+            true,
+        );
         // B expected to lose more often since rating is lower, so win gives more points.
         let expected_b = expected_score(1184.0, 1216.0); // < 0.5
         let expected_new_b = 1184.0 + 32.0 * (1.0 - expected_b);
