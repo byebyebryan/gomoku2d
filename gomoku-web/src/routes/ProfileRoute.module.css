@@ -14,6 +14,10 @@
   gap: 16px;
 }
 
+.headerCopy {
+  min-width: 0;
+}
+
 .title {
   margin: 0;
   font-size: clamp(2.6rem, 6vw, 4.4rem);
@@ -131,9 +135,9 @@
   --history-columns:
     76px
     minmax(180px, 1.2fr)
-    88px
     76px
-    68px
+    88px
+    84px
     minmax(116px, 0.9fr)
     148px;
   --history-mid-offset: 8px;
@@ -209,17 +213,17 @@
   min-width: 0;
 }
 
-.historyHead > :nth-child(3),
-.historyItem > :nth-child(3) {
+.historyHeadSide,
+.historySide {
   padding-left: 4px;
 }
 
-.historyHead > :nth-child(4),
-.historyItem > :nth-child(4),
-.historyHead > :nth-child(5),
-.historyItem > :nth-child(5),
-.historyHead > :nth-child(6),
-.historyItem > :nth-child(6) {
+.historyHeadRule,
+.historyRule,
+.historyHeadMoves,
+.historyMoves,
+.historyHeadPlayed,
+.historyPlayedField {
   padding-left: var(--history-mid-offset);
 }
 
@@ -236,6 +240,11 @@
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.historySummary,
+.historyDetails {
+  display: contents;
 }
 
 .historyItem {
@@ -415,44 +424,6 @@
     align-items: start;
   }
 
-  .historyItem > :nth-child(3),
-  .historyItem > :nth-child(4),
-  .historyItem > :nth-child(5),
-  .historyItem > :nth-child(6) {
-    padding-left: 0;
-  }
-
-  .historyResult,
-  .historyOpponent {
-    grid-column: 1 / 2;
-  }
-
-  .historyField {
-    grid-column: 1 / 2;
-    font-size: var(--type-meta);
-  }
-
-  .historyPlayed {
-    grid-column: 1 / 2;
-  }
-
-  .historyStone {
-    padding: 0;
-    border: 0;
-    justify-self: start;
-  }
-
-  .historyField::before,
-  .historyPlayed::before {
-    content: attr(data-label);
-    color: var(--text-muted);
-    font-family: var(--font-display);
-    font-size: 0.95rem;
-    letter-spacing: 0.06em;
-    margin-right: 8px;
-    text-transform: uppercase;
-  }
-
   .historyItem :global(.uiAction) {
     grid-column: 2 / 3;
     grid-row: 1 / span 6;
@@ -482,5 +453,224 @@
   .historyBody {
     overflow: visible;
     padding-right: 0;
+  }
+}
+
+@media (max-width: 720px) and (orientation: portrait) {
+  .page {
+    min-height: 100dvh;
+    align-content: start;
+    padding: 10px 12px 12px;
+    gap: 10px;
+  }
+
+  .header {
+    align-items: center;
+    flex-direction: row;
+    gap: 12px;
+  }
+
+  .headerCopy :global(.uiPageEyebrow) {
+    display: none;
+  }
+
+  .title {
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+
+  .headerActions {
+    display: grid;
+    grid-auto-columns: 42px;
+    grid-auto-flow: column;
+    gap: 6px;
+    width: auto;
+  }
+
+  .headerActions :global(.uiAction) {
+    width: 42px;
+    min-height: 42px;
+    min-width: 42px;
+    padding: 0;
+  }
+
+  .headerActions :global(.uiActionLabel) {
+    display: none;
+  }
+
+  .headerActions :global(.uiIconDesktop) {
+    display: inline-flex;
+  }
+
+  .layout {
+    gap: 12px;
+  }
+
+  .sidePanel {
+    gap: 8px;
+  }
+
+  .sidePanel :global(.uiDivider) {
+    display: none;
+  }
+
+  .sideSection {
+    gap: 8px;
+    padding: 0;
+  }
+
+  .identitySection .sectionHeader {
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .field {
+    gap: 6px;
+  }
+
+  .fieldLabel {
+    display: none;
+  }
+
+  .metaList {
+    display: none;
+  }
+
+  .rulesSection .sectionHeader {
+    align-items: center;
+  }
+
+  .rulesSection .settingValue {
+    display: none;
+  }
+
+  .variantButtons {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .resetSection :global(.uiAction) {
+    width: 100%;
+  }
+
+  .recordPanel {
+    padding: 0;
+    gap: 0;
+  }
+
+  .recordHeader {
+    align-items: center;
+  }
+
+  .summaryGrid {
+    margin-top: 10px;
+    gap: 8px;
+  }
+
+  .summaryTile {
+    gap: 4px;
+    padding-left: 8px;
+  }
+
+  .summaryValue {
+    font-size: 1.35rem;
+  }
+
+  .historyHead {
+    margin-top: 16px;
+    padding: 14px 8px 12px 0;
+  }
+
+  .historyBody {
+    padding-right: 0;
+  }
+
+  .historyItem {
+    grid-template-columns: minmax(0, 1fr) 48px;
+    gap: 6px 10px;
+  }
+
+  .historySummary {
+    display: grid;
+    gap: 4px;
+    grid-column: 1 / 2;
+  }
+
+  .historyDetails {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 14px;
+    row-gap: 4px;
+    align-items: baseline;
+  }
+
+  .historySide,
+  .historyMoves {
+    justify-self: start;
+    padding-left: 0;
+    font-size: var(--type-meta);
+  }
+
+  .historyRule,
+  .historyPlayedField {
+    justify-self: end;
+    padding-left: 0;
+    font-size: var(--type-meta);
+    text-align: right;
+  }
+
+  .historyStone {
+    padding: 0;
+    border: 0;
+  }
+
+  .historyField::before,
+  .historyPlayed::before {
+    content: none;
+  }
+
+  .historyPlayed {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  .historyDate {
+    color: var(--text);
+    display: inline;
+    font-size: var(--type-meta);
+  }
+
+  .historyTime {
+    font-size: var(--type-meta);
+  }
+
+  .historyItem .historyReplayAction {
+    min-width: 48px;
+    width: 48px;
+    min-height: 48px;
+    padding: 0;
+    gap: 0;
+  }
+
+  .historyItem .historyReplayAction :global(.uiActionLabel) {
+    display: none;
+  }
+
+  .historyItem .historyReplayAction :global(.uiIconDesktop) {
+    display: inline-flex;
+  }
+
+  .historyItem .historyReplayAction :global(.uiIcon) {
+    width: 20px;
+    height: 20px;
+  }
+
+  .historyItem :global(.uiAction) {
+    grid-column: 2 / 3;
+    grid-row: 1;
+    align-self: start;
   }
 }
