@@ -1,5 +1,5 @@
+use rand::prelude::IndexedRandom;
 use rand::rngs::StdRng;
-use rand::seq::SliceRandom;
 use rand::SeedableRng;
 
 use crate::Bot;
@@ -11,8 +11,9 @@ pub struct RandomBot {
 
 impl RandomBot {
     pub fn new() -> Self {
+        let mut seed_rng = rand::rng();
         Self {
-            rng: StdRng::from_entropy(),
+            rng: StdRng::from_rng(&mut seed_rng),
         }
     }
 
