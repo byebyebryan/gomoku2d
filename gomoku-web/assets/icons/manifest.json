@@ -1,8 +1,8 @@
 {
   "source_sheet": "icon_sheet.png",
   "cell_size": 24,
-  "columns": 5,
-  "rows": 6,
+  "columns": 8,
+  "rows": 4,
   "icons": [
     {
       "name": "home",
@@ -13,17 +13,9 @@
       "note": "Primary home navigation."
     },
     {
-      "name": "play",
-      "row": 1,
-      "col": 2,
-      "category": "action",
-      "label": "Play",
-      "note": "Plain play / start action."
-    },
-    {
       "name": "profile",
       "row": 1,
-      "col": 3,
+      "col": 2,
       "category": "nav",
       "label": "Profile",
       "note": "Player record / profile surface."
@@ -31,7 +23,7 @@
     {
       "name": "replay",
       "row": 1,
-      "col": 4,
+      "col": 3,
       "category": "replay",
       "label": "Replay",
       "note": "Replay/history surface."
@@ -39,79 +31,103 @@
     {
       "name": "win",
       "row": 1,
-      "col": 5,
+      "col": 4,
       "category": "status",
       "label": "Win",
       "note": "Win / result status."
     },
     {
       "name": "plus",
-      "row": 2,
-      "col": 1,
+      "row": 1,
+      "col": 5,
       "category": "action",
       "label": "Plus",
       "note": "Generic add / new action."
     },
     {
       "name": "minus",
-      "row": 2,
-      "col": 2,
+      "row": 1,
+      "col": 6,
       "category": "action",
       "label": "Minus",
       "note": "Generic remove / less action."
     },
     {
       "name": "reset",
-      "row": 2,
-      "col": 3,
+      "row": 1,
+      "col": 7,
       "category": "action",
       "label": "Reset",
       "note": "Reset / restart action."
     },
     {
       "name": "undo",
-      "row": 2,
-      "col": 4,
+      "row": 1,
+      "col": 8,
       "category": "action",
       "label": "Undo",
       "note": "Undo last action or turn."
     },
     {
+      "name": "play",
+      "row": 2,
+      "col": 1,
+      "category": "action",
+      "label": "Play",
+      "note": "Plain play / start action."
+    },
+    {
+      "name": "play_reverse",
+      "row": 2,
+      "col": 2,
+      "category": "optional",
+      "label": "Play Reverse",
+      "note": "Mirrored play triangle; provisional semantics."
+    },
+    {
+      "name": "pause",
+      "row": 2,
+      "col": 3,
+      "category": "replay",
+      "label": "Pause",
+      "note": "Pause / stop autoplay state."
+    },
+    {
       "name": "last",
       "row": 2,
-      "col": 5,
+      "col": 4,
       "category": "replay",
       "label": "Last",
       "note": "Jump to end / last move."
     },
     {
       "name": "first",
-      "row": 3,
-      "col": 1,
+      "row": 2,
+      "col": 5,
       "category": "replay",
       "label": "First",
       "note": "Jump to start / first move."
     },
     {
       "name": "fast_forward",
-      "row": 3,
-      "col": 2,
+      "row": 2,
+      "col": 6,
       "category": "replay",
       "label": "Fast Forward",
       "note": "Fast-forward transport family."
     },
     {
       "name": "fast_rewind",
-      "row": 3,
-      "col": 3,
+      "row": 2,
+      "col": 7,
       "category": "replay",
       "label": "Fast Rewind",
       "note": "Fast-rewind transport family."
     },
     {
       "name": "next",
-      "row": 3,
-      "col": 4,
+      "row": 2,
+      "col": 8,
       "category": "replay",
       "label": "Next",
       "note": "Step forward / next move."
@@ -119,127 +135,127 @@
     {
       "name": "prev",
       "row": 3,
-      "col": 5,
+      "col": 1,
       "category": "replay",
       "label": "Prev",
       "note": "Step back / previous move."
     },
     {
       "name": "double_next",
-      "row": 4,
-      "col": 1,
+      "row": 3,
+      "col": 2,
       "category": "optional",
       "label": "Double Next",
       "note": "Alternate forward transport; semantics still open."
     },
     {
       "name": "double_prev",
-      "row": 4,
-      "col": 2,
+      "row": 3,
+      "col": 3,
       "category": "optional",
       "label": "Double Prev",
       "note": "Alternate backward transport; semantics still open."
     },
     {
       "name": "forward",
-      "row": 4,
-      "col": 3,
+      "row": 3,
+      "col": 4,
       "category": "nav",
       "label": "Forward",
       "note": "Generic forward navigation."
     },
     {
       "name": "back",
-      "row": 4,
-      "col": 4,
+      "row": 3,
+      "col": 5,
       "category": "nav",
       "label": "Back",
       "note": "Generic back navigation."
     },
     {
       "name": "settings",
-      "row": 4,
-      "col": 5,
+      "row": 3,
+      "col": 6,
       "category": "utility",
       "label": "Settings",
       "note": "Settings / options surface."
     },
     {
       "name": "bot",
-      "row": 5,
-      "col": 1,
+      "row": 3,
+      "col": 7,
       "category": "match",
       "label": "Bot",
       "note": "Bot / AI player."
     },
     {
       "name": "human",
-      "row": 5,
-      "col": 2,
+      "row": 3,
+      "col": 8,
       "category": "match",
       "label": "Human",
       "note": "Human player."
     },
     {
       "name": "grid",
-      "row": 5,
-      "col": 3,
+      "row": 4,
+      "col": 1,
       "category": "match",
       "label": "Grid",
       "note": "Grid / board surface."
     },
     {
       "name": "filled_circle",
-      "row": 5,
-      "col": 4,
+      "row": 4,
+      "col": 2,
       "category": "match",
       "label": "Filled Circle",
       "note": "Generic filled circle shape."
     },
     {
       "name": "circle",
-      "row": 5,
-      "col": 5,
+      "row": 4,
+      "col": 3,
       "category": "match",
       "label": "Circle",
       "note": "Generic open circle shape."
     },
     {
       "name": "forbidden",
-      "row": 6,
-      "col": 1,
+      "row": 4,
+      "col": 4,
       "category": "match",
       "label": "Forbidden",
       "note": "Forbidden / blocked / unavailable."
     },
     {
       "name": "info",
-      "row": 6,
-      "col": 2,
+      "row": 4,
+      "col": 5,
       "category": "utility",
       "label": "Info",
       "note": "Info / details."
     },
     {
       "name": "close",
-      "row": 6,
-      "col": 3,
+      "row": 4,
+      "col": 6,
       "category": "nav",
       "label": "Close",
       "note": "Close / dismiss."
     },
     {
       "name": "confirm",
-      "row": 6,
-      "col": 4,
+      "row": 4,
+      "col": 7,
       "category": "action",
       "label": "Confirm",
       "note": "Confirm / accept / done."
     },
     {
       "name": "help",
-      "row": 6,
-      "col": 5,
+      "row": 4,
+      "col": 8,
       "category": "utility",
       "label": "Help",
       "note": "Help / question / unsure state."

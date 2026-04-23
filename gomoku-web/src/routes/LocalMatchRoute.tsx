@@ -8,6 +8,7 @@ import { createLocalMatchStore } from "../game/local_match_store";
 import type { LocalMatchResumeSeed, LocalMatchState } from "../game/local_match_store";
 import { guestProfileStore } from "../profile/guest_profile_store";
 import { variantLabel } from "../replay/local_replay";
+import { Icon } from "../ui/Icon";
 
 import styles from "./LocalMatchRoute.module.css";
 
@@ -65,6 +66,10 @@ function canUndo(
   return state.moves.length > minimumMoves;
 }
 
+function moveCountLabel(moveCount: number): string {
+  return `Move ${moveCount}`;
+}
+
 export function LocalMatchRoute() {
   const location = useLocation();
   const storeRef = useRef<ReturnType<typeof createLocalMatchStore> | null>(null);
@@ -115,24 +120,37 @@ export function LocalMatchRoute() {
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <div>
+        <div className={styles.headerCopy}>
           <p className="uiPageEyebrow">Classic Bot practice</p>
           <h1 className={styles.title}>Local Match</h1>
         </div>
         <div className={styles.headerActions}>
-          <button className="uiAction uiActionPrimary" onClick={state.startNewMatch} type="button">
-            New Game
+          <button
+            aria-label="New Game"
+            className="uiAction uiActionPrimary"
+            onClick={state.startNewMatch}
+            type="button"
+          >
+            <Icon className="uiIconDesktop" name="plus" />
+            <span className="uiActionLabel">New Game</span>
           </button>
           {state.status !== "playing" && latestReplayId ? (
-            <Link className="uiAction uiActionSecondary" to={`/replays/local/${latestReplayId}`}>
-              Replay
+            <Link
+              aria-label="Replay"
+              className="uiAction uiActionSecondary"
+              to={`/replays/local/${latestReplayId}`}
+            >
+              <Icon className="uiIconDesktop" name="replay" />
+              <span className="uiActionLabel">Replay</span>
             </Link>
           ) : null}
-          <Link className="uiAction uiActionSecondary" to="/profile">
-            Profile
+          <Link aria-label="Profile" className="uiAction uiActionSecondary" to="/profile">
+            <Icon className="uiIconDesktop" name="profile" />
+            <span className="uiActionLabel">Profile</span>
           </Link>
-          <Link className="uiAction uiActionNeutral" to="/">
-            Home
+          <Link aria-label="Home" className="uiAction uiActionNeutral" to="/">
+            <Icon className="uiIconDesktop" name="home" />
+            <span className="uiActionLabel">Home</span>
           </Link>
         </div>
       </header>
@@ -161,34 +179,7 @@ export function LocalMatchRoute() {
         </div>
 
         <aside className={styles.hud}>
-          <section className={styles.hudSection}>
-            <div className={styles.rulesHeader}>
-              <p className="uiSectionLabel">Rules</p>
-              <p className={styles.rulesMeta}>{variantLabel(state.selectedVariant)}</p>
-            </div>
-            <div className={styles.variantButtons}>
-              {(["freestyle", "renju"] as const).map((variant) => (
-                <button
-                  className={state.selectedVariant === variant ? "uiSegment uiSegmentActive" : "uiSegment"}
-                  key={variant}
-                  onClick={() => {
-                    guestProfileStore.getState().updateSettings({ preferredVariant: variant });
-                    state.selectVariant(variant);
-                  }}
-                  type="button"
-                >
-                  {variantLabel(variant)}
-                </button>
-              ))}
-            </div>
-            {state.selectedVariant !== state.currentVariant ? (
-              <p className={styles.pendingText}>Applies next game.</p>
-            ) : null}
-          </section>
-
-          <div className="uiDivider" />
-
-          <section className={styles.hudSection}>
+          <section className={`${styles.hudSection} ${styles.statusSection}`}>
             <p className="uiSectionLabel">Status</p>
             <p className={styles.statusText} data-testid="match-status">
               {statusLabel(state)}
@@ -197,29 +188,49 @@ export function LocalMatchRoute() {
 
           <div className="uiDivider" />
 
-          <section className={styles.hudSection}>
-            <p className="uiSectionLabel">Match</p>
+          <section className={`${styles.hudSection} ${styles.matchSection}`}>
+            <p className={`uiSectionLabel ${styles.matchLabel}`}>Match</p>
             <div className={styles.metaRows}>
-              <div className={styles.metaRow}>
-                <span className={styles.metaLabel}>Rule</span>
-                <span className={styles.metaValue} data-testid="match-rule">
-                  {variantLabel(state.currentVariant)}
-                </span>
+              <div className={`${styles.metaRow} ${styles.metaRowControls} ${styles.ruleRow}`}>
+                <div className={styles.ruleControlCopy}>
+                  <span className={styles.metaLabel}>Rule</span>
+                  <p
+                    aria-hidden={state.selectedVariant === state.currentVariant}
+                    className={styles.pendingText}
+                    data-active={state.selectedVariant !== state.currentVariant}
+                  >
+                    Applies next game.
+                  </p>
+                </div>
+                <div className={styles.variantButtons}>
+                  {(["freestyle", "renju"] as const).map((variant) => (
+                    <button
+                      className={state.selectedVariant === variant ? "uiSegment uiSegmentActive" : "uiSegment"}
+                      data-testid={
+                        state.currentVariant === variant
+                          ? "match-rule"
+                          : state.selectedVariant !== state.currentVariant && state.selectedVariant === variant
+                            ? "match-next-rule"
+                            : undefined
+                      }
+                      key={variant}
+                      onClick={() => {
+                        guestProfileStore.getState().updateSettings({ preferredVariant: variant });
+                        state.selectVariant(variant);
+                      }}
+                      type="button"
+                    >
+                      {variantLabel(variant)}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className={styles.metaRow}>
+              <div className={`${styles.metaRow} ${styles.moveRow}`}>
                 <span className={styles.metaLabel}>Move</span>
                 <span className={styles.metaValue} data-testid="match-move-count">
-                  {state.moves.length}
+                  {moveCountLabel(state.moves.length)}
                 </span>
               </div>
-              {state.selectedVariant !== state.currentVariant ? (
-                <div className={styles.metaRow}>
-                  <span className={styles.metaLabel}>Next game</span>
-                  <span className={styles.metaValue} data-testid="match-next-rule">
-                    {variantLabel(state.selectedVariant)}
-                  </span>
-                </div>
-              ) : null}
             </div>
 
             <div className={styles.playerRows}>
@@ -240,8 +251,16 @@ export function LocalMatchRoute() {
                     key={player.stone}
                   >
                     <div className={styles.playerCopy}>
-                      <h2 className={styles.playerName}>{player.name}</h2>
-                      <p className={styles.playerKind}>{player.kind === "human" ? "Player" : "Bot"}</p>
+                      <div className={styles.playerHead}>
+                        <h2 className={styles.playerName}>{player.name}</h2>
+                        <span
+                          aria-label={player.kind === "human" ? "Player" : "Bot"}
+                          className={styles.playerKindIcon}
+                          role="img"
+                        >
+                          <Icon name={player.kind === "human" ? "human" : "bot"} />
+                        </span>
+                      </div>
                     </div>
                   </article>
                 );
@@ -252,7 +271,7 @@ export function LocalMatchRoute() {
 
           <div className="uiDivider" />
 
-          <section className={styles.hudSection}>
+          <section className={`${styles.hudSection} ${styles.actionSection}`}>
             <div className={styles.matchActions}>
               <button
                 className="uiAction uiActionNeutral"
@@ -260,7 +279,8 @@ export function LocalMatchRoute() {
                 onClick={state.undoLastTurn}
                 type="button"
               >
-                Undo
+                <Icon className="uiIconDesktop" name="undo" />
+                <span className="uiActionLabel">Undo</span>
               </button>
             </div>
           </section>

@@ -13,7 +13,7 @@ async function waitForBotReply(page: Page) {
       },
       { timeout: 20_000 },
     )
-    .toBe("2|Guest to move");
+    .toBe("Move 2|Guest to move");
 }
 
 test("home boot and local bot match smoke flow", async ({ page }) => {
@@ -25,7 +25,7 @@ test("home boot and local bot match smoke flow", async ({ page }) => {
   await page.getByRole("link", { name: "Play" }).click();
 
   await expect(page.getByRole("heading", { name: "Local Match" })).toBeVisible();
-  await expect(page.getByTestId("match-move-count")).toHaveText("0");
+  await expect(page.getByTestId("match-move-count")).toHaveText("Move 0");
   await expect(page.getByTestId("match-rule")).toHaveText("Freestyle");
   await expect(page.getByTestId("match-status")).toHaveText("Guest to move");
   await expect(page.getByRole("button", { name: "Undo" })).toBeDisabled();
@@ -49,7 +49,7 @@ test("home boot and local bot match smoke flow", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Undo" })).toBeEnabled();
 
   await page.getByRole("button", { name: "Undo" }).click();
-  await expect(page.getByTestId("match-move-count")).toHaveText("0");
+  await expect(page.getByTestId("match-move-count")).toHaveText("Move 0");
   await expect(page.getByTestId("match-status")).toHaveText("Guest to move");
   await expect(page.getByRole("button", { name: "Undo" })).toBeDisabled();
 
@@ -67,7 +67,7 @@ test("home boot and local bot match smoke flow", async ({ page }) => {
   await expect(page.getByTestId("match-next-rule")).toHaveText("Renju");
 
   await page.getByRole("button", { name: "New Game" }).click();
-  await expect(page.getByTestId("match-move-count")).toHaveText("0");
+  await expect(page.getByTestId("match-move-count")).toHaveText("Move 0");
   await expect(page.getByTestId("match-rule")).toHaveText("Renju");
 
   await canvas.click({
@@ -145,24 +145,47 @@ test("portrait local match keeps the board frame tight to the canvas", async ({ 
   await expect(page.getByRole("heading", { name: "Local Match" })).toBeVisible();
 
   const ratios = await page.evaluate(() => {
-    const pageRoot = document.querySelector("main");
     const header = document.querySelector("header");
     const layout = document.querySelector('[class*="layout"]');
     const boardPanel = document.querySelector('[class*="boardPanel"]');
-    const hud = document.querySelector('[class*="hud"]');
+    const playerRows = document.querySelector('[class*="playerRows"]');
+    const matchActions = document.querySelector('[class*="matchActions"]');
+    const ruleRow = document.querySelector('[class*="ruleRow"]');
+    const statusSection = document.querySelector('[class*="statusSection"]');
+    const matchLabel = document.querySelector('[class*="matchLabel"]');
     const headerActions = document.querySelector('[class*="headerActions"]');
     const frame = document.querySelector('[class*="frame"]');
     const viewport = document.querySelector('[class*="viewport"]');
     const canvas = document.querySelector("canvas");
+    const ruleButtons = Array.from(
+      document.querySelectorAll('[class*="variantButtons"] button'),
+    ) as HTMLElement[];
 
-    if (!pageRoot || !header || !layout || !boardPanel || !hud || !headerActions || !frame || !viewport || !canvas) {
+    if (
+      !header ||
+      !layout ||
+      !boardPanel ||
+      !playerRows ||
+      !matchActions ||
+      !ruleRow ||
+      !statusSection ||
+      !matchLabel ||
+      !headerActions ||
+      !frame ||
+      !viewport ||
+      !canvas
+    ) {
       return null;
     }
 
     const layoutBox = layout.getBoundingClientRect();
     const boardPanelBox = boardPanel.getBoundingClientRect();
-    const hudBox = hud.getBoundingClientRect();
+    const playerRowsBox = playerRows.getBoundingClientRect();
+    const matchActionsBox = matchActions.getBoundingClientRect();
+    const ruleRowBox = ruleRow.getBoundingClientRect();
+    const headerBox = header.getBoundingClientRect();
     const actionButtons = Array.from(headerActions.querySelectorAll("a,button"));
+    const headerLabels = Array.from(headerActions.querySelectorAll('[class*="uiActionLabel"]'));
     const frameBox = frame.getBoundingClientRect();
     const viewportBox = viewport.getBoundingClientRect();
     const canvasBox = canvas.getBoundingClientRect();
@@ -172,11 +195,18 @@ test("portrait local match keeps the board frame tight to the canvas", async ({ 
         actionButtons.map((button) => Math.round((button as HTMLElement).getBoundingClientRect().top)),
       ).size,
       boardToLayoutWidth: boardPanelBox.width / layoutBox.width,
-      bodyOverflowY: window.getComputedStyle(document.body).overflowY,
-      headerTop: header.getBoundingClientRect().top,
-      panelGap: hudBox.top - boardPanelBox.bottom,
-      hudTopInViewport: hudBox.top < window.innerHeight,
+      boardFitsLayout: boardPanelBox.right <= layoutBox.right + 1,
+      boardPanelWidth: boardPanelBox.width,
+      headerFitsLayout: headerBox.right <= document.documentElement.clientWidth + 1,
       layoutOverflowY: window.getComputedStyle(layout).overflowY,
+      matchLabelHidden: window.getComputedStyle(matchLabel).display === "none",
+      headerLabelsHidden: headerLabels.every((label) => window.getComputedStyle(label).display === "none"),
+      playerRowsGap: boardPanelBox.top - playerRowsBox.bottom,
+      playerRowsFitLayout: playerRowsBox.right <= layoutBox.right + 1,
+      actionGap: matchActionsBox.top - boardPanelBox.bottom,
+      ruleGap: ruleRowBox.top - matchActionsBox.bottom,
+      pageScrollRange: document.documentElement.scrollHeight - document.documentElement.clientHeight,
+      statusHidden: window.getComputedStyle(statusSection).display === "none",
       canvasToFrame: Math.min(
         canvasBox.width / frameBox.width,
         canvasBox.height / frameBox.height,
@@ -185,6 +215,10 @@ test("portrait local match keeps the board frame tight to the canvas", async ({ 
         viewportBox.width / frameBox.width,
         viewportBox.height / frameBox.height,
       ),
+      minRuleButtonHeight:
+        ruleButtons.length > 0
+          ? Math.min(...ruleButtons.map((button) => button.getBoundingClientRect().height))
+          : 0,
       squareDelta: Math.abs(canvasBox.width - canvasBox.height),
     };
   });
@@ -192,21 +226,26 @@ test("portrait local match keeps the board frame tight to the canvas", async ({ 
   expect(ratios).not.toBeNull();
   expect(ratios!.actionRows).toBe(1);
   expect(ratios!.boardToLayoutWidth).toBeGreaterThan(0.98);
-  expect(ratios!.bodyOverflowY).toBe("auto");
-  expect(ratios!.panelGap).toBeGreaterThanOrEqual(12);
-  expect(ratios!.hudTopInViewport).toBe(true);
-  expect(ratios!.layoutOverflowY).toBe("visible");
+  expect(ratios!.boardPanelWidth).toBeLessThanOrEqual(430);
+  expect(ratios!.boardFitsLayout).toBe(true);
+  expect(ratios!.headerFitsLayout).toBe(true);
+  expect(ratios!.layoutOverflowY).toBe("hidden");
+  expect(ratios!.matchLabelHidden).toBe(true);
+  expect(ratios!.headerLabelsHidden).toBe(true);
+  expect(ratios!.playerRowsGap).toBeGreaterThanOrEqual(8);
+  expect(ratios!.playerRowsFitLayout).toBe(true);
+  expect(ratios!.actionGap).toBeGreaterThanOrEqual(8);
+  expect(ratios!.ruleGap).toBeGreaterThanOrEqual(8);
+  expect(ratios!.pageScrollRange).toBeLessThanOrEqual(2);
+  expect(ratios!.statusHidden).toBe(true);
   expect(ratios!.canvasToFrame).toBeGreaterThan(0.9);
   expect(ratios!.viewportToFrame).toBeGreaterThan(0.9);
+  expect(ratios!.minRuleButtonHeight).toBeGreaterThanOrEqual(44);
   expect(ratios!.squareDelta).toBeLessThanOrEqual(1);
 
   await page.evaluate(() => window.scrollTo(0, 200));
   await page.waitForTimeout(50);
-  await expect
-    .poll(async () =>
-      page.evaluate(() => document.querySelector("header")?.getBoundingClientRect().top ?? 0),
-    )
-    .toBeLessThan(ratios!.headerTop - 20);
+  await expect.poll(async () => page.evaluate(() => window.scrollY)).toBe(0);
 });
 
 test("canvas stays matched to the board viewport after resizing into portrait", async ({ page }) => {

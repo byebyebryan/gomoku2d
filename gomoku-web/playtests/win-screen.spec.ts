@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test";
 
+function moveCount(value: string | null): number {
+  const match = value?.match(/\d+/);
+  return match ? Number(match[0]) : NaN;
+}
+
 function boardClickPosition(box: { width: number; height: number }, row: number, col: number) {
   const boardSize = 15;
   const cellSize = Math.min(box.width / boardSize, box.height / boardSize);
@@ -34,10 +39,10 @@ test("finished board click advances to the next round with swapped colors", asyn
   ];
 
   for (const [row, col] of losingMoves) {
-    const beforeCount = Number((await page.getByTestId("match-move-count").textContent()) ?? "0");
+    const beforeCount = moveCount(await page.getByTestId("match-move-count").textContent());
     await canvas.click({ position: boardClickPosition(box, row, col) });
     await expect
-      .poll(async () => Number((await page.getByTestId("match-move-count").textContent()) ?? "0"), {
+      .poll(async () => moveCount(await page.getByTestId("match-move-count").textContent()), {
         timeout: 15_000,
       })
       .toBeGreaterThan(beforeCount);
@@ -48,8 +53,8 @@ test("finished board click advances to the next round with swapped colors", asyn
   await canvas.click({ position: boardClickPosition(box, 7, 7) });
 
   await expect(page.getByTestId("player-row-black")).toContainText("Classic Bot");
-  await expect(page.getByTestId("player-row-black")).toContainText("Bot");
   await expect(page.getByTestId("player-row-white")).toContainText("Guest");
-  await expect(page.getByTestId("player-row-white")).toContainText("Player");
-  await expect(page.getByTestId("match-move-count")).toHaveText(/^[01]$/);
+  await expect(page.getByTestId("player-row-black").getByRole("img", { name: "Bot" })).toBeVisible();
+  await expect(page.getByTestId("player-row-white").getByRole("img", { name: "Player" })).toBeVisible();
+  await expect(page.getByTestId("match-move-count")).toHaveText(/^Move [01]$/);
 });

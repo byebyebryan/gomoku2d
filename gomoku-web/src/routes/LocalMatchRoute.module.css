@@ -14,6 +14,10 @@
   gap: 16px;
 }
 
+.headerCopy {
+  min-width: 0;
+}
+
 .title {
   margin: 0;
   font-size: clamp(2.6rem, 6vw, 4.4rem);
@@ -77,6 +81,19 @@
   gap: 12px;
 }
 
+.metaRowControls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.ruleControlCopy {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
 .metaLabel {
   color: var(--text-muted);
   font-family: var(--font-display);
@@ -95,6 +112,7 @@
 .playerRows {
   display: grid;
   gap: 10px;
+  padding-top: 10px;
 }
 
 .matchActions {
@@ -135,55 +153,58 @@
   min-width: 0;
 }
 
+.playerHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .playerName {
   margin: 0;
   font-family: var(--font-display);
   font-size: 1.55rem;
 }
 
-.playerKind {
-  margin: 4px 0 0;
-  color: var(--text-muted);
-  font-size: var(--type-body);
-}
-
-.playerRowBlack .playerKind {
-  color: #b8b2a6;
-}
-
-.playerRowWhite .playerKind {
-  color: #5f5547;
+.playerKindIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
 }
 
 .playerRowWhite .playerName {
   color: #1f1f1f;
 }
 
-.rulesHeader {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.rulesMeta {
-  margin: 0;
-  color: var(--text-muted);
-  font-family: var(--font-display);
-  font-size: var(--type-meta);
-  text-transform: uppercase;
-}
-
 .variantButtons {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 12px;
+  width: min(100%, 208px);
+}
+
+@media (hover: hover) and (pointer: fine) and (min-width: 981px) {
+  .variantButtons :global(.uiSegment) {
+    min-height: 0;
+    padding: 6px 10px;
+    font-size: var(--type-label);
+    letter-spacing: 0.06em;
+  }
 }
 
 .pendingText {
   margin: 0;
   color: var(--text-muted);
   font-size: var(--type-body);
+  line-height: 1.2;
+  min-height: 1.2em;
+}
+
+.pendingText[data-active="false"] {
+  visibility: hidden;
 }
 
 @media (max-width: 980px) {
@@ -247,100 +268,176 @@
     font-size: 1.7rem;
   }
 
-  .variantButtons {
+  .metaRowControls {
     grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .variantButtons {
+    width: 100%;
   }
 }
 
 @media (max-width: 720px) and (orientation: portrait) {
   .page {
-    padding: 12px;
-    gap: 14px;
+    height: 100dvh;
+    min-height: 100dvh;
+    align-content: start;
+    padding: 10px 12px 12px;
+    gap: 10px;
+    overflow: hidden;
   }
 
   .header {
-    gap: 10px;
+    align-items: center;
+    flex-direction: row;
+    gap: 12px;
+  }
+
+  .headerCopy :global(.uiPageEyebrow) {
+    display: none;
+  }
+
+  .title {
+    font-size: 1.6rem;
+    line-height: 1;
   }
 
   .headerActions {
     display: grid;
-    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-columns: 42px;
     grid-auto-flow: column;
-    gap: 8px;
-    width: 100%;
+    gap: 6px;
+    width: auto;
   }
 
   .headerActions :global(.uiAction) {
-    min-width: 0;
+    width: 42px;
     min-height: 42px;
-    padding: 8px 8px;
-    font-size: 0.96rem;
-    letter-spacing: 0.04em;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    min-width: 42px;
+    padding: 0;
+  }
+
+  .headerActions :global(.uiActionLabel) {
+    display: none;
+  }
+
+  .headerActions :global(.uiIconDesktop) {
+    display: inline-flex;
   }
 
   .layout {
-    gap: 14px;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) auto auto auto auto minmax(0, 1fr);
+    align-content: stretch;
+    justify-items: stretch;
+    gap: 10px;
+    min-height: 0;
+    overflow: hidden;
   }
 
-  .hudSection {
-    gap: 12px;
-    padding: 14px 0;
+  .boardPanel {
+    grid-row: 3;
+    align-self: start;
+    aspect-ratio: 1;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
   }
 
-  .rulesHeader {
-    align-items: center;
+  .hud {
+    display: contents;
+  }
+
+  .hud :global(.uiDivider) {
+    display: none;
+  }
+
+  .statusSection {
+    display: none;
+  }
+
+  .matchSection,
+  .actionSection {
+    display: contents;
+  }
+
+  .matchLabel {
+    display: none;
+  }
+
+  .metaRows {
+    display: contents;
+  }
+
+  .ruleRow {
+    grid-row: 5;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .ruleControlCopy {
+    display: none;
   }
 
   .variantButtons {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
+    width: 100%;
+  }
+
+  .variantButtons :global(.uiSegment) {
+    min-height: 44px;
+    padding: 8px 10px;
+    font-size: var(--type-label);
+    letter-spacing: 0.06em;
   }
 
   .pendingText {
     font-size: 1.08rem;
   }
 
-  .statusText {
-    font-size: 1.55rem;
-  }
-
-  .metaRows {
-    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
-    gap: 12px;
-  }
-
-  .metaRow {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .metaValue {
-    font-size: 1.26rem;
+  .moveRow {
+    display: none;
   }
 
   .playerRows {
+    grid-row: 2;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+    gap: 10px;
+    padding-top: 0;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
   }
 
   .matchActions {
-    gap: 8px;
+    grid-row: 4;
+    gap: 0;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .matchActions :global(.uiAction) {
+    min-height: 44px;
   }
 
   .playerRow {
-    padding: 12px;
+    padding: 10px 12px;
   }
 
   .playerName {
-    font-size: 1.28rem;
+    font-size: 1.2rem;
   }
 
-  .playerKind {
-    margin-top: 2px;
-    font-size: 1.08rem;
+  .playerKindIcon {
+    width: 22px;
+    height: 22px;
   }
 }

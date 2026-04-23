@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test";
 
+function moveCount(value: string | null): number {
+  const match = value?.match(/\d+/);
+  return match ? Number(match[0]) : NaN;
+}
+
 function boardClickPosition(box: { width: number; height: number }, row: number, col: number) {
   const boardSize = 15;
   const cellSize = Math.min(box.width / boardSize, box.height / boardSize);
@@ -40,16 +45,16 @@ test("guest profile persists locally and captures finished local matches", async
   }
 
   for (const [row, col] of [[0, 0], [2, 0], [4, 0], [6, 0], [8, 0]]) {
-    const beforeCount = Number((await page.getByTestId("match-move-count").textContent()) ?? "0");
+    const beforeCount = moveCount(await page.getByTestId("match-move-count").textContent());
     await canvas.click({ position: boardClickPosition(box, row, col) });
     await expect
-      .poll(async () => Number((await page.getByTestId("match-move-count").textContent()) ?? "0"), {
+      .poll(async () => moveCount(await page.getByTestId("match-move-count").textContent()), {
         timeout: 15_000,
       })
       .toBeGreaterThan(beforeCount);
   }
 
-  await expect(page.getByTestId("match-move-count")).toHaveText("10");
+  await expect(page.getByTestId("match-move-count")).toHaveText("Move 10");
   await expect(page.getByText("Classic Bot wins")).toBeVisible();
   await page.getByRole("link", { name: "Profile" }).click();
 
