@@ -11,6 +11,12 @@ pub struct TournamentResults {
     pub losses: HashMap<String, u32>,
 }
 
+impl Default for TournamentResults {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TournamentResults {
     pub fn new() -> Self {
         Self {

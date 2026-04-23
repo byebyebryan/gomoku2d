@@ -12,7 +12,7 @@ their own section.
 
 ## [Unreleased]
 
-**Theme: final `v0.2.4` polish pass + repo hygiene.**
+**Theme: shell polish + UI freeze + repo hygiene.**
 
 `v0.2.4` is a deliberately narrow polish pass on top of the paired
 desktop/mobile `v0.2.3` baseline. It is not a redesign; the working rule is
