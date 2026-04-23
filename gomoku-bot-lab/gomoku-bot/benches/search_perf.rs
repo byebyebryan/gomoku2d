@@ -19,13 +19,17 @@ fn bench_choose_move_depth3(c: &mut Criterion) {
     let mut group = c.benchmark_group("search/choose_move/depth3");
 
     for scenario in scenarios::SCENARIOS {
-        group.bench_with_input(BenchmarkId::from_parameter(scenario.id), scenario, |b, scenario| {
-            b.iter_batched(
-                || (SearchBot::new(3), scenario.board()),
-                |(mut bot, board)| black_box(bot.choose_move(&board)),
-                BatchSize::SmallInput,
-            );
-        });
+        group.bench_with_input(
+            BenchmarkId::from_parameter(scenario.id),
+            scenario,
+            |b, scenario| {
+                b.iter_batched(
+                    || (SearchBot::new(3), scenario.board()),
+                    |(mut bot, board)| black_box(bot.choose_move(&board)),
+                    BatchSize::SmallInput,
+                );
+            },
+        );
     }
 
     group.finish();

@@ -21,8 +21,9 @@ impl BenchScenario {
         });
 
         for &mv in self.moves {
-            board.apply_move(parse_move(mv))
-                .unwrap_or_else(|err| panic!("scenario '{}' failed to apply move {mv}: {err}", self.id));
+            board.apply_move(parse_move(mv)).unwrap_or_else(|err| {
+                panic!("scenario '{}' failed to apply move {mv}: {err}", self.id)
+            });
         }
 
         assert_eq!(

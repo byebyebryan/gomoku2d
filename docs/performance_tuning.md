@@ -132,18 +132,18 @@ From code inspection before the first benchmark pass:
 5. `gomoku-core/src/board.rs:immediate_winning_moves_for()`
    - currently clones a full board once per candidate move
 
-## Current optimization backlog
+## Optimization backlog
 
-### Quick wins
+### Completed
 
 1. Rewrite `nearby_empty_moves()` to use a dense seen bitmap instead of
-   `BTreeSet`
+   `BTreeSet` (`2026-04-23`)
 2. Rewrite `immediate_winning_moves_for()` to clone once and use
-   `apply_move()` / `undo_move()` per candidate
+   `apply_move()` / `undo_move()` per candidate (`2026-04-23`)
 3. Skip redundant `is_legal()` checks in search nodes where Renju-black
-   forbidden logic is not relevant
+   forbidden logic is not relevant (`2026-04-23`)
 
-### Larger future work
+### Future work
 
 1. More incremental or localized evaluation
 2. Incremental candidate frontier maintenance
@@ -200,3 +200,61 @@ All numbers below are `SearchBot::choose_move()` at depth `3`.
 - `renju_forbidden_cross` is notably heavier than a similarly sized freestyle
   tactical position, which supports the current suspicion that legality and
   nearby-win scanning deserve the first quick-pass optimization work.
+
+## Optimization pass 1 snapshot
+
+Date: `2026-04-23`
+
+Changes:
+
+- `nearby_empty_moves()` now uses a dense seen bitmap and emits row-major moves.
+- `immediate_winning_moves_for()` now clones the board once, then probes with
+  `apply_move()` / `undo_move()`.
+- search nodes now skip pre-`apply_move()` legality checks except for Renju
+  black, where forbidden-move filtering is required.
+
+Commands used:
+
+```sh
+cargo test --workspace
+cargo bench -p gomoku-core --bench board_perf -- --noplot
+cargo bench -p gomoku-bot --bench search_perf -- --noplot
+```
+
+### Core anchors after pass 1
+
+| Benchmark | Time | Baseline |
+|---|---|---|
+| `immediate_winning_moves/current_player/opening_sparse` | `2.4769–2.5033 µs` | `21.37–21.55 µs` |
+| `immediate_winning_moves/current_player/anti_blunder_open_three` | `3.1904–3.2312 µs` | `28.57–28.68 µs` |
+| `immediate_winning_moves/current_player/renju_forbidden_cross` | `50.854–51.433 µs` | `78.08–78.77 µs` |
+| `immediate_winning_moves/current_player/midgame_dense` | `4.4690–4.5294 µs` | `44.35–44.61 µs` |
+| `apply_move_then_undo/opening_sparse` | `307.20–325.54 ns` | `294.30–300.25 ns` |
+| `apply_move_then_undo/renju_forbidden_cross` | `524.85–575.04 ns` | `546.99–581.20 ns` |
+| `apply_move_then_undo/midgame_dense` | `365.02–392.08 ns` | `369.95–400.62 ns` |
+| `forbidden_moves/current_player/renju_forbidden_cross` | `24.032–24.272 µs` | `28.47–28.84 µs` |
+
+### Search anchors after pass 1
+
+All numbers below are `SearchBot::choose_move()` at depth `3`.
+
+| Benchmark | Time | Baseline |
+|---|---|---|
+| `opening_sparse` | `13.717–13.854 ms` | `55.39–56.62 ms` |
+| `early_local_fight` | `13.614–13.729 ms` | `73.35–75.03 ms` |
+| `immediate_win` | `1.5889–1.5966 ms` | `13.91–14.01 ms` |
+| `immediate_block` | `1.9394–1.9676 ms` | `13.73–13.85 ms` |
+| `anti_blunder_open_three` | `14.215–14.304 ms` | `91.13–92.77 ms` |
+| `renju_forbidden_cross` | `18.819–18.928 ms` | `140.83–143.39 ms` |
+| `midgame_medium` | `23.464–23.832 ms` | `139.78–142.50 ms` |
+| `midgame_dense` | `33.215–33.394 ms` | `214.87–228.09 ms` |
+
+### Notes
+
+- The biggest win came from removing per-candidate board clones in immediate
+  win scanning. This also reduced the root anti-blunder prefilter cost.
+- Freestyle immediate-win scans improved by roughly an order of magnitude on
+  the fixed anchors. Renju immediate-win scans improved less because forbidden
+  checks remain the dominant cost there.
+- `apply_move_then_undo` stayed effectively flat, which is expected because
+  this pass did not change the move application path.

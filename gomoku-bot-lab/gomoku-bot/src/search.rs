@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::time::Duration;
 
 use crate::Bot;
-use gomoku_core::{Board, Color, GameResult, Move, ZobristTable, DIRS};
+use gomoku_core::{Board, Color, GameResult, Move, Variant, ZobristTable, DIRS};
 
 // ZobristTable is provided by gomoku-core with a stable shared seed,
 // so hashes are consistent between the search and replay recording.
@@ -163,6 +163,10 @@ fn evaluate(board: &Board, color: Color) -> i32 {
 // --- Candidate move generation ---
 
 fn candidate_moves(board: &Board, radius: usize) -> Vec<Move> {
+    if board.result != GameResult::Ongoing {
+        return Vec::new();
+    }
+
     let size = board.config.board_size;
     let mut seen = vec![false; size * size];
     let mut moves = Vec::new();
@@ -205,12 +209,17 @@ fn candidate_moves(board: &Board, radius: usize) -> Vec<Move> {
     moves
 }
 
+fn needs_renju_legality_check(board: &Board, color: Color) -> bool {
+    board.config.variant == Variant::Renju && color == Color::Black
+}
+
 fn allows_opponent_forcing_reply(
     board: &mut Board,
     mv: Move,
     deadline: Option<Instant>,
 ) -> Option<bool> {
-    if !board.is_legal(mv) {
+    let current = board.current_player;
+    if needs_renju_legality_check(board, current) && !board.is_legal(mv) {
         return Some(false);
     }
 
@@ -218,7 +227,6 @@ fn allows_opponent_forcing_reply(
         return None;
     }
 
-    let current = board.current_player;
     let opponent = current.opponent();
     board.apply_move(mv).unwrap();
 
@@ -230,7 +238,7 @@ fn allows_opponent_forcing_reply(
                 timed_out = true;
                 break;
             }
-            if !board.is_legal(reply) {
+            if needs_renju_legality_check(board, opponent) && !board.is_legal(reply) {
                 continue;
             }
 
@@ -255,10 +263,10 @@ fn allows_opponent_forcing_reply(
 }
 
 fn root_candidate_moves(board: &Board, deadline: Option<Instant>) -> Vec<Move> {
-    let moves: Vec<Move> = candidate_moves(board, 2)
-        .into_iter()
-        .filter(|&mv| board.is_legal(mv))
-        .collect();
+    let mut moves = candidate_moves(board, 2);
+    if needs_renju_legality_check(board, board.current_player) {
+        moves.retain(|&mv| board.is_legal(mv));
+    }
     if moves.is_empty() {
         return moves;
     }
@@ -336,7 +344,7 @@ fn negamax(
 
     // TT move ordering: try best move from TT first
     let tt_move = tt.get(&hash).and_then(|e| e.best_move);
-    let ordered: Vec<Move> = if let Some(tm) = tt_move {
+    let ordered: Vec<Move> = if let Some(tm) = tt_move.filter(|tm| moves.contains(tm)) {
         std::iter::once(tm)
             .chain(moves.into_iter().filter(|&m| m != tm))
             .collect()
@@ -344,8 +352,9 @@ fn negamax(
         moves
     };
 
+    let needs_legality_check = needs_renju_legality_check(board, color);
     for mv in ordered {
-        if !board.is_legal(mv) {
+        if needs_legality_check && !board.is_legal(mv) {
             continue;
         }
         // Incrementally update hash: XOR in the placed piece and flip turn bit
@@ -418,7 +427,7 @@ fn search_root(
     let mut best_move: Option<Move> = None;
 
     let tt_move = tt.get(&hash).and_then(|entry| entry.best_move);
-    let ordered: Vec<Move> = if let Some(tm) = tt_move {
+    let ordered: Vec<Move> = if let Some(tm) = tt_move.filter(|tm| root_moves.contains(tm)) {
         std::iter::once(tm)
             .chain(root_moves.iter().copied().filter(|&m| m != tm))
             .collect()
@@ -426,8 +435,9 @@ fn search_root(
         root_moves.to_vec()
     };
 
+    let needs_legality_check = needs_renju_legality_check(board, color);
     for mv in ordered {
-        if !board.is_legal(mv) {
+        if needs_legality_check && !board.is_legal(mv) {
             continue;
         }
 

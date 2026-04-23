@@ -34,7 +34,8 @@ fn renju_forbidden_anchor_stays_meaningful() {
 
     assert_eq!(board.config.variant, Variant::Renju);
     assert!(
-        board.forbidden_moves_for_current_player()
+        board
+            .forbidden_moves_for_current_player()
             .contains(&scenarios::parse_move("H8")),
         "renju benchmark anchor should keep H8 forbidden"
     );

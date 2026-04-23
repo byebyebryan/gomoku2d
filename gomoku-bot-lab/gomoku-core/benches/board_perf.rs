@@ -21,9 +21,13 @@ fn bench_immediate_winning_moves(c: &mut Criterion) {
     for scenario in scenarios::SCENARIOS {
         let board = scenario.board();
         let color = board.current_player;
-        group.bench_with_input(BenchmarkId::from_parameter(scenario.id), scenario, |b, _| {
-            b.iter(|| black_box(board.immediate_winning_moves_for(color)));
-        });
+        group.bench_with_input(
+            BenchmarkId::from_parameter(scenario.id),
+            scenario,
+            |b, _| {
+                b.iter(|| black_box(board.immediate_winning_moves_for(color)));
+            },
+        );
     }
 
     group.finish();
@@ -35,16 +39,20 @@ fn bench_apply_and_undo(c: &mut Criterion) {
     for scenario in scenarios::SCENARIOS {
         let board = scenario.board();
         let mv = scenario.probe_move();
-        group.bench_with_input(BenchmarkId::from_parameter(scenario.id), scenario, |b, _| {
-            b.iter_batched(
-                || board.clone(),
-                |mut working| {
-                    black_box(working.apply_move(mv).unwrap());
-                    working.undo_move(mv);
-                },
-                BatchSize::SmallInput,
-            );
-        });
+        group.bench_with_input(
+            BenchmarkId::from_parameter(scenario.id),
+            scenario,
+            |b, _| {
+                b.iter_batched(
+                    || board.clone(),
+                    |mut working| {
+                        black_box(working.apply_move(mv).unwrap());
+                        working.undo_move(mv);
+                    },
+                    BatchSize::SmallInput,
+                );
+            },
+        );
     }
 
     group.finish();
@@ -53,14 +61,17 @@ fn bench_apply_and_undo(c: &mut Criterion) {
 fn bench_renju_forbidden_moves(c: &mut Criterion) {
     let mut group = c.benchmark_group("core/forbidden_moves/current_player");
 
-    for scenario in scenarios::SCENARIOS
-        .iter()
-        .filter(|scenario| scenario.variant == gomoku_core::Variant::Renju && scenario.to_move == Color::Black)
-    {
+    for scenario in scenarios::SCENARIOS.iter().filter(|scenario| {
+        scenario.variant == gomoku_core::Variant::Renju && scenario.to_move == Color::Black
+    }) {
         let board = scenario.board();
-        group.bench_with_input(BenchmarkId::from_parameter(scenario.id), scenario, |b, _| {
-            b.iter(|| black_box(board.forbidden_moves_for_current_player()));
-        });
+        group.bench_with_input(
+            BenchmarkId::from_parameter(scenario.id),
+            scenario,
+            |b, _| {
+                b.iter(|| black_box(board.forbidden_moves_for_current_player()));
+            },
+        );
     }
 
     group.finish();

@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeSet;
 
 use crate::rules::{RuleConfig, Variant};
 use crate::zobrist::ZobristTable;
@@ -131,16 +130,18 @@ impl Board {
         }
 
         let mut wins = Vec::new();
+        let mut next = self.clone();
+        next.current_player = color;
+
         for mv in self.nearby_empty_moves(self.config.win_length.saturating_sub(1)) {
-            if !self.is_legal_for(mv, color) {
+            if !next.is_legal_for(mv, color) {
                 continue;
             }
-            let mut next = self.clone();
-            next.current_player = color;
-            if let Ok(GameResult::Winner(winner)) = next.apply_move(mv) {
-                if winner == color {
+            if let Ok(result) = next.apply_move(mv) {
+                if matches!(result, GameResult::Winner(winner) if winner == color) {
                     wins.push(mv);
                 }
+                next.undo_move(mv);
             }
         }
         wins
@@ -170,7 +171,7 @@ impl Board {
 
         let size = self.config.board_size;
         let radius = radius as isize;
-        let mut candidates: BTreeSet<(usize, usize)> = BTreeSet::new();
+        let mut seen = vec![false; size * size];
         let mut has_stone = false;
 
         for row in 0..size {
@@ -195,7 +196,7 @@ impl Board {
                         if self.cells[mv.row][mv.col].is_some() {
                             continue;
                         }
-                        candidates.insert((mv.row, mv.col));
+                        seen[mv.row * size + mv.col] = true;
                     }
                 }
             }
@@ -205,10 +206,15 @@ impl Board {
             return vec![];
         }
 
-        candidates
-            .into_iter()
-            .map(|(row, col)| Move { row, col })
-            .collect()
+        let mut moves = Vec::new();
+        for row in 0..size {
+            for col in 0..size {
+                if seen[row * size + col] {
+                    moves.push(Move { row, col });
+                }
+            }
+        }
+        moves
     }
 
     fn legal_moves_for(&self, color: Color) -> Vec<Move> {
