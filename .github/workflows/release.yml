@@ -1,0 +1,92 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Verify package.json version matches tag
+        run: |
+          set -euo pipefail
+          PKG_VERSION=$(node -p "require('./gomoku-web/package.json').version")
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::package.json version ($PKG_VERSION) does not match tag (${GITHUB_REF_NAME})"
+            echo "::error::Did you run scripts/release.sh ${TAG_VERSION}?"
+            exit 1
+          fi
+
+      - name: Build release title and body
+        id: meta
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+
+          # Extract section between "## [VERSION]" and next "## [" header
+          BODY=$(awk -v v="$VERSION" '
+            $0 ~ "^## \\["v"\\]" {flag=1; next}
+            /^## \[/ {flag=0}
+            flag {print}
+          ' CHANGELOG.md)
+
+          if [ -z "$BODY" ]; then
+            echo "::error::No CHANGELOG section found for [${VERSION}]"
+            exit 1
+          fi
+
+          # Extract Theme block (may span multiple lines); join into one line,
+          # then strip the **Theme: ... ** wrapper, trailing period, backticks.
+          THEME=$(printf '%s\n' "$BODY" | awk '
+              /^\*\*Theme:/ {grab=1}
+              grab {print}
+              grab && /\*\*$/ {exit}
+            ' | tr '\n' ' ' \
+            | sed -E 's/^\*\*Theme: ?//; s/ ?\*\*.*$//; s/\.$//; s/`//g; s/[[:space:]]+$//')
+
+          # Shorten title at first em-dash or comma
+          THEME_SHORT=$(printf '%s' "$THEME" | sed -E 's/ ?[—,].*//')
+
+          if [ -n "$THEME_SHORT" ]; then
+            TITLE="${TAG} — ${THEME_SHORT}"
+          else
+            TITLE="${TAG}"
+          fi
+
+          {
+            echo "**Play this build:** https://dev.byebyebryan.com/gomoku2d/"
+            echo
+            printf '%s\n' "$BODY"
+            echo
+            echo "---"
+            echo
+            echo "Full changelog: [CHANGELOG.md](https://github.com/${GITHUB_REPOSITORY}/blob/main/CHANGELOG.md)"
+          } > release_body.md
+
+          # Expose title via step output (multi-line safe)
+          {
+            echo "title<<__EOF__"
+            printf '%s\n' "$TITLE"
+            echo "__EOF__"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ steps.meta.outputs.title }}
+          body_path: release_body.md
+          draft: false
+          prerelease: false
