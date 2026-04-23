@@ -59,7 +59,10 @@ enum Commands {
     },
 }
 
-fn make_bot_factory(spec: &str) -> Box<dyn Fn() -> Box<dyn Bot>> {
+type BotFactory = Box<dyn Fn() -> Box<dyn Bot>>;
+type NamedBotFactory = (String, BotFactory);
+
+fn make_bot_factory(spec: &str) -> BotFactory {
     let spec = spec.to_string();
     Box::new(move || -> Box<dyn Bot> {
         let parts: Vec<&str> = spec.split('-').collect();
@@ -251,7 +254,7 @@ fn main() {
                 std::fs::create_dir_all(dir).unwrap();
             }
 
-            let mut factories: Vec<(String, Box<dyn Fn() -> Box<dyn Bot>>)> = vec![];
+            let mut factories: Vec<NamedBotFactory> = vec![];
             for name in &bot_names {
                 factories.push((name.clone(), make_bot_factory(name)));
             }

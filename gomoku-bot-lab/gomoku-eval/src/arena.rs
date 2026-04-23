@@ -88,6 +88,12 @@ pub struct SeriesStats {
     pub bot_b_moves: u32,
 }
 
+impl Default for SeriesStats {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SeriesStats {
     pub fn new() -> Self {
         SeriesStats {
