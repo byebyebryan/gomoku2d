@@ -86,6 +86,19 @@ wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler
 This produces `gomoku-bot-lab/gomoku-wasm/pkg/`, which `gomoku-web/` consumes
 via a `file:` dep.
 
+## Performance tuning
+
+Benchmark process, fixed scenario corpus, and baseline snapshots live in
+[`../docs/performance_tuning.md`](../docs/performance_tuning.md).
+
+Run the current harnesses with:
+
+```sh
+cargo test -p gomoku-core --test bench_scenarios
+cargo bench -p gomoku-core --bench board_perf -- --noplot
+cargo bench -p gomoku-bot --bench search_perf -- --noplot
+```
+
 ## Adding a new bot
 
 1. Add a module under `gomoku-bot/src/`
