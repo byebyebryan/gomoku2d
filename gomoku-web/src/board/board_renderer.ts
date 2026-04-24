@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { BOARD_SIZE, WIN_LENGTH, SPRITE, FRAME_SIZE, STONE_ANIMS, POINTER_ANIMS, COLOR } from "./constants";
+import { BOARD_RENDER_DEPTHS, BOARD_SIZE, SPRITE, FRAME_SIZE, COLOR } from "./constants";
 
 type CellState = 0 | 1 | null; // null = empty, 0 = black, 1 = white
 
@@ -85,7 +85,7 @@ export class BoardRenderer {
 
   drawBoard(showGrid: boolean = true): Phaser.GameObjects.Graphics {
     const gfx = this.scene.add.graphics();
-    gfx.setDepth(0);
+    gfx.setDepth(BOARD_RENDER_DEPTHS.BOARD);
 
     const bounds = this.getBounds();
     const boardWidth = bounds.width;
@@ -123,24 +123,29 @@ export class BoardRenderer {
     return this.attach(gfx);
   }
 
-  placeStone(row: number, col: number, color: 0 | 1): Phaser.GameObjects.Sprite {
+  placeStone(
+    row: number,
+    col: number,
+    color: 0 | 1,
+    parentOverride?: Phaser.GameObjects.Container,
+  ): Phaser.GameObjects.Sprite {
     const { x, y } = this.cellToPixel(row, col);
     const scale = this.cellSize / FRAME_SIZE;
 
     const stone = this.scene.add.sprite(x, y, SPRITE.STONE, 0);
     stone.setScale(scale);
-    stone.setDepth(1);
+    stone.setDepth(BOARD_RENDER_DEPTHS.STONE);
 
     stone.setTint(color === 0 ? COLOR.STONE_BLACK : COLOR.STONE_WHITE);
 
-    return this.attach(stone);
+    return this.attach(stone, parentOverride);
   }
 
   createPointer(parentOverride?: Phaser.GameObjects.Container): Phaser.GameObjects.Sprite {
     const scale = this.cellSize / FRAME_SIZE;
     const pointer = this.scene.add.sprite(-100, -100, SPRITE.POINTER, 0);
     pointer.setScale(scale);
-    pointer.setDepth(2);
+    pointer.setDepth(BOARD_RENDER_DEPTHS.POINTER);
     pointer.setVisible(false);
     return this.attach(pointer, parentOverride);
   }
@@ -153,7 +158,7 @@ export class BoardRenderer {
         const { x, y } = this.cellToPixel(row, col);
         const zone = this.scene.add.zone(x, y, this.cellSize, this.cellSize);
         zone.setInteractive({ useHandCursor: true });
-        zone.setDepth(3);
+        zone.setDepth(BOARD_RENDER_DEPTHS.INPUT_ZONE);
 
         const r = row;
         const c = col;

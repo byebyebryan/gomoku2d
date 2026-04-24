@@ -1,43 +1,75 @@
-// Sprite assets — 16x16 per frame (spritesheets) or 18x18 per frame (button).
+// Sprite assets — 16x16 per frame.
 // Loaded in boot scene via spritesheet configs.
 
 export const SPRITE = {
   STONE: "stone",
   POINTER: "pointer",
+  HOVER: "hover",
   WARNING: "warning",
-  BUTTON: "button",
+  TRANSFORM: "transform",
 } as const;
 
 export const FRAME_SIZE = 16;
-export const BUTTON_FRAME_SIZE = 18;
+
+export const BOARD_RENDER_DEPTHS = {
+  BOARD: 0,
+  WARNING_SURFACE: 0.25,
+  WARNING_BLOCKED: 0.25,
+  POINTER: 0.5,
+  STONE: 1,
+  SEQUENCE_NUMBER: 1.5,
+  WARNING_HOVER: 2,
+  INPUT_ZONE: 3,
+} as const;
+
+export const BOARD_RENDER_LAYER_ORDER = [
+  "BOARD",
+  "WARNING",
+  "POINTER",
+  "STONE",
+  "SEQUENCE_NUMBER",
+  "HOVER",
+] as const;
 
 export const SPRITESHEET_CONFIG = {
-  [SPRITE.STONE]: { url: "assets/sprites/stone.png", end: 33 },
-  [SPRITE.POINTER]: { url: "assets/sprites/pointer.png", end: 18 },
-  [SPRITE.WARNING]: { url: "assets/sprites/warning.png", end: 28 },
+  [SPRITE.STONE]: { url: "assets/sprites/stone.png", end: 23 },
+  [SPRITE.POINTER]: { url: "assets/sprites/pointer.png", end: 19 },
+  [SPRITE.HOVER]: { url: "assets/sprites/hover.png", end: 5 },
+  [SPRITE.WARNING]: { url: "assets/sprites/warning.png", end: 29 },
+  [SPRITE.TRANSFORM]: { url: "assets/sprites/transform.png", end: 9 },
 } as const;
 
 // Animation definitions — frame ranges from assets/manifest.md
 export const STONE_ANIMS = {
-  FORM: { start: 25, end: 33, frameRate: 18, key: "stone-form" },
   STATIC: { frame: 0, key: "stone-static" },
   DESTROY: { start: 0, end: 3, frameRate: 12, key: "stone-destroy" },
-  RELAX_1: { start: 0, end: 6, frameRate: 6, key: "stone-relax-1" },
-  RELAX_2: { start: 6, end: 12, frameRate: 6, key: "stone-relax-2" },
-  RELAX_3: { start: 12, end: 18, frameRate: 6, key: "stone-relax-3" },
-  RELAX_4: { start: 18, end: 24, frameRate: 6, key: "stone-relax-4" },
+  IDLE_1: { start: 0, end: 5, frameRate: 6, key: "stone-idle-1" },
+  IDLE_2: { start: 6, end: 11, frameRate: 6, key: "stone-idle-2" },
+  IDLE_3: { start: 12, end: 17, frameRate: 6, key: "stone-idle-3" },
+  IDLE_4: { start: 18, end: 23, frameRate: 6, key: "stone-idle-4" },
 } as const;
 
 export const POINTER_ANIMS = {
-  OUT: { start: 0, end: 4, frameRate: 12, key: "pointer-out" },
-  IN: { start: 4, end: 8, frameRate: 12, key: "pointer-in" },
-  FULL: { start: 8, end: 18, frameRate: 12, key: "pointer-full" },
+  STATIC: { frame: 0, key: "pointer-static" },
+  IDLE_1: { start: 0, end: 5, frameRate: 12, key: "pointer-idle-1" },
+  IDLE_2: { start: 6, end: 9, frameRate: 12, key: "pointer-idle-2" },
+  IDLE_LONG: { start: 10, end: 19, frameRate: 12, key: "pointer-idle-long" },
+} as const;
+
+export const HOVER_ANIMS = {
+  HOVER: { start: 0, end: 5, frameRate: 12, key: "warning-hover" },
 } as const;
 
 export const WARNING_ANIMS = {
-  POINTER: { start: 0, end: 9, frameRate: 12, key: "warning-pointer" },
-  HOVER: { start: 10, end: 16, frameRate: 12, key: "warning-hover" },
-  FORBIDDEN: { start: 17, end: 28, frameRate: 10, key: "warning-forbidden" },
+  WARNING: { start: 0, end: 5, frameRate: 12, key: "warning" },
+  WARNING_ON_FORBIDDEN: { start: 6, end: 11, frameRate: 12, key: "warning-on-forbidden" },
+  FORBIDDEN_OUT: { start: 12, end: 17, frameRate: 12, key: "forbidden-out" },
+  FORBIDDEN_IN: { start: 18, end: 23, frameRate: 12, key: "forbidden-in" },
+  HIGHLIGHT: { start: 24, end: 29, frameRate: 12, key: "warning-highlight" },
+} as const;
+
+export const TRANSFORM_ANIMS = {
+  FORM: { start: 0, end: 9, frameRate: 18, key: "transform-form" },
 } as const;
 
 // Board layout constants
