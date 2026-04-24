@@ -17,6 +17,7 @@ import {
   shouldAnimatePlacedStone,
   shouldRestartPointerCycle,
   shouldStopStoneIdleCycle,
+  warningAnimationForOverlay,
 } from "./board_scene_logic";
 
 import type { CellPosition, CellStone, MatchMove, MatchStatus } from "../game/types";
@@ -478,21 +479,21 @@ export class BoardScene extends Phaser.Scene {
     for (const cell of this.boardState.forbiddenMoves) {
       const point = this.board.cellToPixel(cell.row, cell.col);
       this.forbiddenSprites.push(
-        this.createWarnSprite(point.x, point.y, COLOR.FORBIDDEN, WARNING_ANIMS.FORBIDDEN.key),
+        this.createWarnSprite(point.x, point.y, COLOR.FORBIDDEN, warningAnimationForOverlay("forbidden")),
       );
     }
 
     for (const cell of this.boardState.winningMoves) {
       const point = this.board.cellToPixel(cell.row, cell.col);
       this.hintSprites.push(
-        this.createWarnSprite(point.x, point.y, COLOR.WIN_MOVE, WARNING_ANIMS.POINTER.key),
+        this.createWarnSprite(point.x, point.y, COLOR.WIN_MOVE, warningAnimationForOverlay("tacticalHint")),
       );
     }
 
     for (const cell of this.boardState.threatMoves) {
       const point = this.board.cellToPixel(cell.row, cell.col);
       this.hintSprites.push(
-        this.createWarnSprite(point.x, point.y, COLOR.THREAT, WARNING_ANIMS.POINTER.key),
+        this.createWarnSprite(point.x, point.y, COLOR.THREAT, warningAnimationForOverlay("tacticalHint")),
       );
     }
 
@@ -518,7 +519,7 @@ export class BoardScene extends Phaser.Scene {
     for (const cell of this.boardState.winningCells) {
       const point = this.board.cellToPixel(cell.row, cell.col);
       this.winSprites.push(
-        this.createWarnSprite(point.x, point.y, COLOR.WIN_CELLS, WARNING_ANIMS.HOVER.key, 2.5),
+        this.createWarnSprite(point.x, point.y, COLOR.WIN_CELLS, warningAnimationForOverlay("winningLine"), 2.5),
       );
     }
   }

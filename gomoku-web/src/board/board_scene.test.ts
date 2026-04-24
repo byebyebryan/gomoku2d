@@ -9,6 +9,7 @@ import {
   shouldRestartPointerCycle,
   shouldStopStoneIdleCycle,
   touchDragSteps,
+  warningAnimationForOverlay,
 } from "./board_scene_logic";
 
 describe("shouldAnimatePlacedStone", () => {
@@ -111,5 +112,13 @@ describe("canPlaceTouchCandidate", () => {
 
     expect(canPlaceTouchCandidate(cells, [], { row: 7, col: 7 })).toBe(false);
     expect(canPlaceTouchCandidate(cells, [{ row: 8, col: 8 }], { row: 8, col: 8 })).toBe(false);
+  });
+});
+
+describe("warningAnimationForOverlay", () => {
+  it("uses hover warnings for tactical hints and surface warnings for forbidden moves", () => {
+    expect(warningAnimationForOverlay("tacticalHint")).toBe("warning-hover");
+    expect(warningAnimationForOverlay("winningLine")).toBe("warning-hover");
+    expect(warningAnimationForOverlay("forbidden")).toBe("warning-forbidden");
   });
 });
