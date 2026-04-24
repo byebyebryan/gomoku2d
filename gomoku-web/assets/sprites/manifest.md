@@ -1,59 +1,61 @@
-# Gomoku2D — Sprite Asset Manifest
+# Gomoku2D Sprite Asset Manifest
 
-All sprites are pixel-art style. Spritesheets use 16×16 per frame; button uses 18×18 per frame.
+All runtime board spritesheets use 16x16 frames. The source files in this
+folder are the authoritative copies; matching files under
+`public/assets/sprites/` must stay in sync for deployed asset URLs.
 
----
+## Published Sprites
 
-## Published sprites (copied to `public/assets/sprites/`)
+| File | Size | Layout | Description |
+|------|------|--------|-------------|
+| `hover.png` | 96x16 | 6 cols x 1 row | Winning-line hover overlay |
+| `pointer.png` | 160x32 | 10 cols x 2 rows | Touch/mouse pointer idle cues |
+| `stone.png` | 96x64 | 6 cols x 4 rows | Stone destroy and idle loops |
+| `warning.png` | 96x80 | 6 cols x 5 rows | Tactical warning and forbidden overlays |
+| `transform.png` | 160x16 | 10 cols x 1 row | Form transform used by stone placement |
 
-| File | Size | Description |
-|------|------|-------------|
-| `stone.png` | 544×16 | Stone animations — 34 frames |
-| `pointer.png` | 304×16 | Cursor animations — 19 frames |
-| `warning.png` | 464×16 | Warning overlays — 29 frames (0–9 legacy pointer, 10–16 win, 17–28 forbidden) |
-| `button.png` | 72×18 | Button 9-slice — 4 frames (0=up, 1=hover, 2=down, 3=pointer) |
+## Frame Layout
 
----
+Frame numbers are row-major.
 
+### `hover.png`
 
----
+| Frames | Animation | FPS | Runtime use |
+|--------|-----------|-----|-------------|
+| 0-5 | `warning-hover` | 12 | Winning line, tinted green |
 
-## Spritesheet frame layout
+### `pointer.png`
 
-### `stone.png` (16×16 per frame)
+| Frames | Animation | FPS | Runtime use |
+|--------|-----------|-----|-------------|
+| 0-5 | `pointer-idle-1` | 12 | Blocked pointer cue |
+| 6-9 | `pointer-idle-2` | 12 | Normal open-cell pointer cue |
+| 10-19 | `pointer-idle-long` | 12 | Preferred pointer cue for winning or threat cells |
+| 0 | static | - | Rest frame between pointer loop beats |
 
-| Frames | Animation | FPS | Notes |
-|--------|-----------|-----|-------|
-| 0–3 | `stone-destroy` | 12 | |
-| 0–6 | `stone-relax-1` | 6 | Overlaps destroy range |
-| 6–12 | `stone-relax-2` | 6 | |
-| 12–18 | `stone-relax-3` | 6 | |
-| 18–24 | `stone-relax-4` | 6 | |
-| 25–33 | `stone-form` | 18 | Placement anim |
-| 0 | `stone-static` | — | Resting frame |
+### `stone.png`
 
-### `pointer.png` (16×16 per frame)
+| Frames | Animation | FPS | Runtime use |
+|--------|-----------|-----|-------------|
+| 0-3 | `stone-destroy` | 12 | Stone removal |
+| 0-5 | `stone-idle-1` | 6 | Last placed stone idle variant |
+| 6-11 | `stone-idle-2` | 6 | Last placed stone idle variant |
+| 12-17 | `stone-idle-3` | 6 | Last placed stone idle variant |
+| 18-23 | `stone-idle-4` | 6 | Last placed stone idle variant |
+| 0 | static | - | Normal resting stone frame |
 
-| Frames | Animation | FPS |
-|--------|-----------|-----|
-| 0–4 | `pointer-out` | 12 |
-| 4–8 | `pointer-in` | 12 |
-| 8–18 | `pointer-full` | 12 |
-| 8 | static idle frame | — |
+### `warning.png`
 
-### `warning.png` (16×16 per frame)
+| Frames | Animation | FPS | Runtime use |
+|--------|-----------|-----|-------------|
+| 0-5 | `warning` | 12 | Winning move green, threat move red |
+| 6-11 | `warning-on-forbidden` | 12 | Threat move red when the cell is also forbidden |
+| 12-17 | `forbidden-out` | 12 | Forbidden move loop |
+| 18-23 | `forbidden-in` | 12 | Forbidden move loop |
+| 24-29 | `warning-highlight` | 12 | Reserved; not used by runtime yet |
 
-| Frames | Animation | FPS | Notes |
-|--------|-----------|-----|-------|
-| 0–9 | `warning-pointer` | 12 | Legacy pointer-style warning; currently unused |
-| 10–16 | `warning-hover` | 12 | Loops; used for tactical move hints and win highlights |
-| 17–28 | `warning-forbidden` | 10 | Loops; used for forbidden move overlays (red tint) |
+### `transform.png`
 
-### `button.png` (18×18 per frame, 9-slice borders: 8px each side)
-
-| Frame | State |
-|-------|-------|
-| 0 | Up / normal |
-| 1 | Hover |
-| 2 | Down / pressed / disabled |
-| 3 | Pointer / active / selected |
+| Frames | Animation | FPS | Runtime use |
+|--------|-----------|-----|-------------|
+| 0-9 | `transform-form` | 18 | Stone placement |

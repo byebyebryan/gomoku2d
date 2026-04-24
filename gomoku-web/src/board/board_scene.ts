@@ -1,12 +1,16 @@
 import Phaser from "phaser";
 
 import {
+  BOARD_RENDER_DEPTHS,
+  BOARD_RENDER_LAYER_ORDER,
   BOARD_SIZE,
   COLOR,
   FRAME_SIZE,
+  HOVER_ANIMS,
   POINTER_ANIMS,
   SPRITE,
   STONE_ANIMS,
+  TRANSFORM_ANIMS,
   WARNING_ANIMS,
 } from "./constants";
 import { BoardRenderer } from "./board_renderer";
@@ -14,39 +18,86 @@ import { SEQUENCE_FONT_FAMILY } from "./sequence_font";
 import {
   canPlaceTouchCandidate,
   moveTouchCandidateFromDrag,
+  pointerCueForCandidate,
+  resetSpriteToFrame,
   sequenceNumberFontSize,
   sequenceNumberPosition,
   shouldAnimatePlacedStone,
   shouldRestartPointerCycle,
+  shouldSyncOverlaySprites,
+  shouldStopStoneCycleBeforeStoneRemoval,
   shouldStopStoneIdleCycle,
   warningAnimationForOverlay,
+  warningSpriteForOverlay,
 } from "./board_scene_logic";
 
 import type { CellPosition, CellStone, MatchMove, MatchStatus } from "../game/types";
+import type { PointerCue } from "./board_scene_logic";
 
-const POINTER_IDLE_ANIMS = [POINTER_ANIMS.OUT, POINTER_ANIMS.IN, POINTER_ANIMS.FULL] as const;
 const STONE_IDLE_ANIMS = [
-  STONE_ANIMS.RELAX_1,
-  STONE_ANIMS.RELAX_2,
-  STONE_ANIMS.RELAX_3,
-  STONE_ANIMS.RELAX_4,
+  STONE_ANIMS.IDLE_1,
+  STONE_ANIMS.IDLE_2,
+  STONE_ANIMS.IDLE_3,
+  STONE_ANIMS.IDLE_4,
 ] as const;
 const ASSET_URLS = {
+  hover: new URL("../../assets/sprites/hover.png", import.meta.url).toString(),
   pointer: new URL("../../assets/sprites/pointer.png", import.meta.url).toString(),
   stone: new URL("../../assets/sprites/stone.png", import.meta.url).toString(),
+  transform: new URL("../../assets/sprites/transform.png", import.meta.url).toString(),
   warning: new URL("../../assets/sprites/warning.png", import.meta.url).toString(),
 } as const;
+
+type AnimationRange = {
+  end: number;
+  frameRate: number;
+  key: string;
+  start: number;
+};
+
+type SpriteFrameRef = {
+  frame: number;
+  texture: string;
+};
+
+type SequenceStep =
+  | { kind: "animation"; key: string }
+  | { frame: SpriteFrameRef; kind: "delay"; max: number; min: number }
+  | { keys: readonly string[]; kind: "randomAnimation" };
+
+const STONE_STATIC_FRAME: SpriteFrameRef = { texture: SPRITE.STONE, frame: STONE_ANIMS.STATIC.frame };
+const POINTER_STATIC_FRAME: SpriteFrameRef = { texture: SPRITE.POINTER, frame: POINTER_ANIMS.STATIC.frame };
+
+const POINTER_NORMAL_STEPS: readonly SequenceStep[] = [
+  { kind: "animation", key: POINTER_ANIMS.IDLE_2.key },
+  { kind: "delay", frame: POINTER_STATIC_FRAME, min: 450, max: 1200 },
+] as const;
+
+const POINTER_PREFERRED_STEPS: readonly SequenceStep[] = [
+  { kind: "animation", key: POINTER_ANIMS.IDLE_LONG.key },
+  { kind: "delay", frame: POINTER_STATIC_FRAME, min: 450, max: 1200 },
+] as const;
+
+const POINTER_BLOCKED_STEPS: readonly SequenceStep[] = [
+  { kind: "animation", key: POINTER_ANIMS.IDLE_1.key },
+  { kind: "delay", frame: POINTER_STATIC_FRAME, min: 450, max: 1200 },
+] as const;
+
+const FORBIDDEN_STEPS: readonly SequenceStep[] = [
+  { kind: "animation", key: WARNING_ANIMS.FORBIDDEN_OUT.key },
+  { kind: "animation", key: WARNING_ANIMS.FORBIDDEN_IN.key },
+] as const;
 
 function cssColor(color: number): string {
   return `#${color.toString(16).padStart(6, "0")}`;
 }
 
-class IdleCycle {
+class RandomAnimationCycle {
   private readonly scene: Phaser.Scene;
   private readonly anims: readonly { key: string }[];
   private readonly delayMax: number;
   private readonly delayMin: number;
-  private readonly resetFrame: number | null;
+  private readonly resetFrame: SpriteFrameRef | null;
   private active = false;
   private sprite: Phaser.GameObjects.Sprite | null = null;
   private timer: Phaser.Time.TimerEvent | null = null;
@@ -56,7 +107,7 @@ class IdleCycle {
     anims: readonly { key: string }[],
     delayMin: number,
     delayMax: number,
-    resetFrame: number | null,
+    resetFrame: SpriteFrameRef | null,
   ) {
     this.scene = scene;
     this.anims = anims;
@@ -83,7 +134,7 @@ class IdleCycle {
 
     this.sprite.removeAllListeners(Phaser.Animations.Events.ANIMATION_COMPLETE);
     if (this.resetFrame !== null) {
-      this.sprite.setFrame(this.resetFrame);
+      resetSpriteToFrame(this.sprite, this.resetFrame);
     }
     this.sprite = null;
   }
@@ -108,10 +159,78 @@ class IdleCycle {
         }
 
         if (this.resetFrame !== null) {
-          this.sprite.setFrame(this.resetFrame);
+          resetSpriteToFrame(this.sprite, this.resetFrame);
         }
         this.scheduleNext();
       });
+    });
+  }
+}
+
+class SequenceAnimationCycle {
+  private readonly scene: Phaser.Scene;
+  private readonly steps: readonly SequenceStep[];
+  private active = false;
+  private sprite: Phaser.GameObjects.Sprite | null = null;
+  private stepIndex = 0;
+  private timer: Phaser.Time.TimerEvent | null = null;
+
+  constructor(scene: Phaser.Scene, steps: readonly SequenceStep[]) {
+    this.scene = scene;
+    this.steps = steps;
+  }
+
+  start(sprite: Phaser.GameObjects.Sprite): void {
+    this.stop();
+    this.active = true;
+    this.sprite = sprite;
+    this.stepIndex = 0;
+    this.runNextStep();
+  }
+
+  stop(): void {
+    this.active = false;
+    this.timer?.destroy();
+    this.timer = null;
+
+    if (!this.sprite) {
+      return;
+    }
+
+    this.sprite.removeAllListeners(Phaser.Animations.Events.ANIMATION_COMPLETE);
+    this.sprite = null;
+  }
+
+  private runNextStep(): void {
+    const sprite = this.sprite;
+    if (!this.active || !sprite || !sprite.active || !sprite.scene || this.steps.length === 0) {
+      return;
+    }
+
+    const step = this.steps[this.stepIndex];
+    this.stepIndex = (this.stepIndex + 1) % this.steps.length;
+
+    if (step.kind === "delay") {
+      resetSpriteToFrame(sprite, step.frame);
+      const delay = step.min + Math.random() * (step.max - step.min);
+      this.timer = this.scene.time.delayedCall(delay, () => {
+        this.runNextStep();
+      });
+      return;
+    }
+
+    if (step.kind === "randomAnimation") {
+      const key = step.keys[Math.floor(Math.random() * step.keys.length)];
+      sprite.play(key);
+      sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+        this.runNextStep();
+      });
+      return;
+    }
+
+    sprite.play(step.key);
+    sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+      this.runNextStep();
     });
   }
 }
@@ -163,20 +282,24 @@ export class BoardScene extends Phaser.Scene {
   private currentCellSize = 0;
   private forbiddenSprites: Phaser.GameObjects.Sprite[] = [];
   private hintSprites: Phaser.GameObjects.Sprite[] = [];
-  private overlayLayer: Phaser.GameObjects.Container | null = null;
+  private hoverLayer: Phaser.GameObjects.Container | null = null;
   private pointer: Phaser.GameObjects.Sprite | null = null;
   private pointerCellKey: string | null = null;
-  private pointerCycle: IdleCycle | null = null;
+  private pointerCycle: SequenceAnimationCycle | null = null;
   private pointerLayer: Phaser.GameObjects.Container | null = null;
   private renderVersion = 0;
   private reportedTouchCandidateKey: string | null = null;
   private reportedTouchCanPlace = false;
   private root: Phaser.GameObjects.Container | null = null;
+  private sequenceLayer: Phaser.GameObjects.Container | null = null;
   private sequenceLabels: Phaser.GameObjects.Text[] = [];
-  private stoneCycle: IdleCycle | null = null;
+  private stoneCycle: RandomAnimationCycle | null = null;
+  private stoneLayer: Phaser.GameObjects.Container | null = null;
   private stoneSprites: Map<string, Phaser.GameObjects.Sprite> = new Map();
   private touchCandidate: CellPosition | null = null;
   private touchDragOrigin: { x: number; y: number; candidate: CellPosition } | null = null;
+  private forbiddenCycles: SequenceAnimationCycle[] = [];
+  private warningLayer: Phaser.GameObjects.Container | null = null;
   private winSprites: Phaser.GameObjects.Sprite[] = [];
 
   constructor() {
@@ -186,13 +309,14 @@ export class BoardScene extends Phaser.Scene {
   preload(): void {
     this.preloadSpritesheet(SPRITE.STONE, ASSET_URLS.stone);
     this.preloadSpritesheet(SPRITE.POINTER, ASSET_URLS.pointer);
+    this.preloadSpritesheet(SPRITE.HOVER, ASSET_URLS.hover);
     this.preloadSpritesheet(SPRITE.WARNING, ASSET_URLS.warning);
+    this.preloadSpritesheet(SPRITE.TRANSFORM, ASSET_URLS.transform);
   }
 
   create(): void {
     this.ensureAnimations();
-    this.pointerCycle = new IdleCycle(this, POINTER_IDLE_ANIMS, 500, 1500, POINTER_ANIMS.OUT.start);
-    this.stoneCycle = new IdleCycle(this, STONE_IDLE_ANIMS, 700, 2200, 0);
+    this.stoneCycle = new RandomAnimationCycle(this, STONE_IDLE_ANIMS, 700, 2200, STONE_STATIC_FRAME);
     this.createSceneGraph();
     this.scale.on(Phaser.Scale.Events.RESIZE, this.renderBoard, this);
     this.input.on("pointermove", this.handlePointerMove, this);
@@ -203,8 +327,9 @@ export class BoardScene extends Phaser.Scene {
   }
 
   shutdown(): void {
-    this.pointerCycle?.stop();
+    this.stopPointerCycle();
     this.stoneCycle?.stop();
+    this.stopForbiddenCycles();
     this.scale?.off?.(Phaser.Scale.Events.RESIZE, this.renderBoard, this);
     this.input?.off?.("pointermove", this.handlePointerMove, this);
     this.input?.off?.("pointerdown", this.handlePointerDown, this);
@@ -214,10 +339,13 @@ export class BoardScene extends Phaser.Scene {
     this.root = null;
     this.board = null;
     this.boardLayer = null;
-    this.overlayLayer = null;
+    this.hoverLayer = null;
     this.pointer = null;
     this.pointerCellKey = null;
     this.pointerLayer = null;
+    this.sequenceLayer = null;
+    this.stoneLayer = null;
+    this.warningLayer = null;
     this.reportTouchCandidate(null);
     this.stoneSprites.clear();
     this.touchCandidate = null;
@@ -254,85 +382,94 @@ export class BoardScene extends Phaser.Scene {
   }
 
   private ensureAnimations(): void {
-    if (!this.anims.exists(STONE_ANIMS.FORM.key)) {
-      this.anims.create({
-        key: STONE_ANIMS.FORM.key,
-        frames: this.anims.generateFrameNumbers(SPRITE.STONE, {
-          start: STONE_ANIMS.FORM.start,
-          end: STONE_ANIMS.FORM.end,
-        }),
-        frameRate: STONE_ANIMS.FORM.frameRate,
-      });
+    this.ensureRangeAnimation(SPRITE.TRANSFORM, TRANSFORM_ANIMS.FORM);
+    this.ensureRangeAnimation(SPRITE.STONE, STONE_ANIMS.DESTROY);
+
+    for (const idle of STONE_IDLE_ANIMS) {
+      this.ensureRangeAnimation(SPRITE.STONE, idle);
     }
 
-    for (const relax of STONE_IDLE_ANIMS) {
-      if (this.anims.exists(relax.key)) {
-        continue;
-      }
-
-      this.anims.create({
-        key: relax.key,
-        frames: this.anims.generateFrameNumbers(SPRITE.STONE, {
-          start: relax.start,
-          end: relax.end,
-        }),
-        frameRate: relax.frameRate,
-      });
+    for (const anim of [
+      POINTER_ANIMS.IDLE_1,
+      POINTER_ANIMS.IDLE_2,
+      POINTER_ANIMS.IDLE_LONG,
+    ]) {
+      this.ensureRangeAnimation(SPRITE.POINTER, anim);
     }
 
-    for (const anim of POINTER_IDLE_ANIMS) {
-      if (this.anims.exists(anim.key)) {
-        continue;
-      }
+    this.ensureRangeAnimation(SPRITE.HOVER, HOVER_ANIMS.HOVER);
 
-      this.anims.create({
-        key: anim.key,
-        frames: this.anims.generateFrameNumbers(SPRITE.POINTER, {
-          start: anim.start,
-          end: anim.end,
-        }),
-        frameRate: anim.frameRate,
-      });
+    for (const anim of [
+      WARNING_ANIMS.WARNING,
+      WARNING_ANIMS.WARNING_ON_FORBIDDEN,
+      WARNING_ANIMS.FORBIDDEN_OUT,
+      WARNING_ANIMS.FORBIDDEN_IN,
+      WARNING_ANIMS.HIGHLIGHT,
+    ]) {
+      this.ensureRangeAnimation(SPRITE.WARNING, anim);
+    }
+  }
+
+  private ensureRangeAnimation(sprite: string, anim: AnimationRange, repeat = 0): void {
+    if (this.anims.exists(anim.key)) {
+      return;
     }
 
-    for (const anim of [WARNING_ANIMS.POINTER, WARNING_ANIMS.HOVER, WARNING_ANIMS.FORBIDDEN]) {
-      if (this.anims.exists(anim.key)) {
-        continue;
-      }
-
-      this.anims.create({
-        key: anim.key,
-        frames: this.anims.generateFrameNumbers(SPRITE.WARNING, {
-          start: anim.start,
-          end: anim.end,
-        }),
-        frameRate: anim.frameRate,
-        repeat: -1,
-      });
-    }
+    this.anims.create({
+      key: anim.key,
+      frames: this.anims.generateFrameNumbers(sprite, {
+        start: anim.start,
+        end: anim.end,
+      }),
+      frameRate: anim.frameRate,
+      repeat,
+    });
   }
 
   private createSceneGraph(): void {
     this.root = this.add.container(0, 0);
     this.boardLayer = this.add.container(0, 0);
-    this.overlayLayer = this.add.container(0, 0);
+    this.warningLayer = this.add.container(0, 0);
     this.pointerLayer = this.add.container(0, 0);
-    this.root.add([this.boardLayer, this.overlayLayer, this.pointerLayer]);
+    this.stoneLayer = this.add.container(0, 0);
+    this.sequenceLayer = this.add.container(0, 0);
+    this.hoverLayer = this.add.container(0, 0);
+    const layers = {
+      BOARD: this.boardLayer,
+      HOVER: this.hoverLayer,
+      POINTER: this.pointerLayer,
+      SEQUENCE_NUMBER: this.sequenceLayer,
+      STONE: this.stoneLayer,
+      WARNING: this.warningLayer,
+    } satisfies Record<(typeof BOARD_RENDER_LAYER_ORDER)[number], Phaser.GameObjects.Container>;
+    this.root.add(BOARD_RENDER_LAYER_ORDER.map((layer) => layers[layer]));
   }
 
   private renderBoard(): void {
     this.renderVersion += 1;
-    if (!this.boardLayer || !this.overlayLayer || !this.pointerLayer) {
+    if (
+      !this.boardLayer ||
+      !this.warningLayer ||
+      !this.pointerLayer ||
+      !this.stoneLayer ||
+      !this.sequenceLayer ||
+      !this.hoverLayer
+    ) {
       return;
     }
 
-    this.pointerCycle?.stop();
+    this.stopPointerCycle();
     this.stoneCycle?.stop();
+    this.stopForbiddenCycles();
     this.boardLayer.removeAll(true);
-    this.overlayLayer.removeAll(true);
+    this.warningLayer.removeAll(true);
     this.pointerLayer.removeAll(true);
+    this.stoneLayer.removeAll(true);
+    this.sequenceLayer.removeAll(true);
+    this.hoverLayer.removeAll(true);
     this.stoneSprites.clear();
     this.forbiddenSprites = [];
+    this.forbiddenCycles = [];
     this.hintSprites = [];
     this.pointerCellKey = null;
     this.sequenceLabels = [];
@@ -353,20 +490,23 @@ export class BoardScene extends Phaser.Scene {
   }
 
   private syncBoardState(previousState?: BoardSceneState, animateNewStones = true): void {
-    if (!this.board) {
+    if (!this.board || !this.stoneLayer) {
       return;
     }
 
     this.syncStoneSprites(previousState, animateNewStones);
     this.syncPointerBaseState();
-    this.syncOverlaySprites();
+    if (shouldSyncOverlaySprites(previousState, this.boardState)) {
+      this.syncOverlaySprites();
+    }
   }
 
   private syncStoneSprites(previousState?: BoardSceneState, animateNewStones = true): void {
-    if (!this.board) {
+    if (!this.board || !this.stoneLayer) {
       return;
     }
 
+    const stoneLayer = this.stoneLayer;
     const renderVersion = this.renderVersion;
     const existingKeys = new Set(this.stoneSprites.keys());
 
@@ -385,14 +525,14 @@ export class BoardScene extends Phaser.Scene {
           continue;
         }
 
-        const stone = this.board.placeStone(row, col, cell);
+        const stone = this.board.placeStone(row, col, cell, stoneLayer);
         this.stoneSprites.set(key, stone);
 
         const previousCell = previousState?.cells[row]?.[col] ?? null;
         const isNewStone = previousCell === null;
 
         if (shouldAnimatePlacedStone(isNewStone, animateNewStones, this.boardState.status)) {
-          stone.play(STONE_ANIMS.FORM.key);
+          stone.play(TRANSFORM_ANIMS.FORM.key);
           stone.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
             if (
               renderVersion !== this.renderVersion ||
@@ -412,8 +552,21 @@ export class BoardScene extends Phaser.Scene {
       }
     }
 
+    if (shouldStopStoneCycleBeforeStoneRemoval(existingKeys.size)) {
+      this.stoneCycle?.stop();
+    }
+
     for (const key of existingKeys) {
-      this.stoneSprites.get(key)?.destroy();
+      const stone = this.stoneSprites.get(key);
+      if (stone?.active && stone.scene) {
+        stone.removeAllListeners(Phaser.Animations.Events.ANIMATION_COMPLETE);
+        stone.play(STONE_ANIMS.DESTROY.key);
+        stone.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+          stone.destroy();
+        });
+      } else {
+        stone?.destroy();
+      }
       this.stoneSprites.delete(key);
     }
   }
@@ -444,29 +597,15 @@ export class BoardScene extends Phaser.Scene {
       return;
     }
 
-    const point = this.board.cellToPixel(this.touchCandidate.row, this.touchCandidate.col);
-    const cellKey = this.cellKey(this.touchCandidate.row, this.touchCandidate.col);
-    const restartPointerCycle = shouldRestartPointerCycle(
-      this.pointerCellKey,
-      cellKey,
-      this.pointer.visible,
-    );
-    this.pointer
-      .setPosition(point.x, point.y)
-      .setVisible(true);
-    this.pointerCellKey = cellKey;
-    this.reportTouchCandidate(this.touchCandidate);
-
-    if (restartPointerCycle) {
-      this.pointerCycle?.start(this.pointer);
-    }
+    this.showPointerAtCandidate(this.touchCandidate, true, true);
   }
 
   private syncOverlaySprites(): void {
-    if (!this.board || !this.overlayLayer) {
+    if (!this.board || !this.warningLayer || !this.sequenceLayer || !this.hoverLayer) {
       return;
     }
 
+    this.stopForbiddenCycles();
     this.forbiddenSprites.forEach((sprite) => sprite.destroy());
     this.hintSprites.forEach((sprite) => sprite.destroy());
     this.sequenceLabels.forEach((label) => label.destroy());
@@ -476,24 +615,33 @@ export class BoardScene extends Phaser.Scene {
     this.sequenceLabels = [];
     this.winSprites = [];
 
+    const forbiddenKeys = new Set(
+      this.boardState.forbiddenMoves.map((cell) => this.cellKey(cell.row, cell.col)),
+    );
+
     for (const cell of this.boardState.forbiddenMoves) {
       const point = this.board.cellToPixel(cell.row, cell.col);
-      this.forbiddenSprites.push(
-        this.createWarnSprite(point.x, point.y, COLOR.FORBIDDEN, warningAnimationForOverlay("forbidden")),
-      );
+      const sprite = this.createForbiddenSprite(point.x, point.y);
+      this.forbiddenSprites.push(sprite);
     }
 
     for (const cell of this.boardState.winningMoves) {
       const point = this.board.cellToPixel(cell.row, cell.col);
       this.hintSprites.push(
-        this.createWarnSprite(point.x, point.y, COLOR.WIN_MOVE, warningAnimationForOverlay("tacticalHint")),
+        this.createWarnSprite(point.x, point.y, COLOR.WIN_MOVE, warningAnimationForOverlay("winningMove")),
       );
     }
 
     for (const cell of this.boardState.threatMoves) {
       const point = this.board.cellToPixel(cell.row, cell.col);
+      const isForbidden = forbiddenKeys.has(this.cellKey(cell.row, cell.col));
       this.hintSprites.push(
-        this.createWarnSprite(point.x, point.y, COLOR.THREAT, warningAnimationForOverlay("tacticalHint")),
+        this.createWarnSprite(
+          point.x,
+          point.y,
+          COLOR.THREAT,
+          warningAnimationForOverlay("threatMove", isForbidden),
+        ),
       );
     }
 
@@ -512,8 +660,8 @@ export class BoardScene extends Phaser.Scene {
           fontSize: `${sequenceNumberFontSize(this.currentCellSize)}px`,
         });
         label.setOrigin(0.5, 0.5);
-        label.setDepth(3);
-        this.overlayLayer.add(label);
+        label.setDepth(BOARD_RENDER_DEPTHS.SEQUENCE_NUMBER);
+        this.sequenceLayer.add(label);
         this.sequenceLabels.push(label);
       }
     }
@@ -521,7 +669,14 @@ export class BoardScene extends Phaser.Scene {
     for (const cell of this.boardState.winningCells) {
       const point = this.board.cellToPixel(cell.row, cell.col);
       this.winSprites.push(
-        this.createWarnSprite(point.x, point.y, COLOR.WIN_CELLS, warningAnimationForOverlay("winningLine"), 2.5),
+        this.createWarnSprite(
+          point.x,
+          point.y,
+          COLOR.WIN_CELLS,
+          warningAnimationForOverlay("winningLine"),
+          BOARD_RENDER_DEPTHS.WARNING_HOVER,
+          warningSpriteForOverlay("winningLine"),
+        ),
       );
     }
   }
@@ -531,14 +686,29 @@ export class BoardScene extends Phaser.Scene {
     y: number,
     tint: number,
     animKey: string,
-    depth = 0.5,
+    depth: number = BOARD_RENDER_DEPTHS.WARNING_SURFACE,
+    texture: string = SPRITE.WARNING,
   ): Phaser.GameObjects.Sprite {
-    const sprite = this.add.sprite(x, y, SPRITE.WARNING, 0);
+    const sprite = this.add.sprite(x, y, texture, 0);
     sprite.setScale(this.currentCellSize / FRAME_SIZE);
     sprite.setDepth(depth);
     sprite.setTint(tint);
     sprite.play({ key: animKey, repeat: -1 });
-    this.overlayLayer?.add(sprite);
+    const layer = texture === SPRITE.HOVER ? this.hoverLayer : this.warningLayer;
+    layer?.add(sprite);
+    return sprite;
+  }
+
+  private createForbiddenSprite(x: number, y: number): Phaser.GameObjects.Sprite {
+    const sprite = this.add.sprite(x, y, SPRITE.WARNING, WARNING_ANIMS.FORBIDDEN_OUT.start);
+    sprite.setScale(this.currentCellSize / FRAME_SIZE);
+    sprite.setDepth(BOARD_RENDER_DEPTHS.WARNING_BLOCKED);
+    sprite.setTint(COLOR.FORBIDDEN);
+    this.warningLayer?.add(sprite);
+
+    const cycle = new SequenceAnimationCycle(this, FORBIDDEN_STEPS);
+    cycle.start(sprite);
+    this.forbiddenCycles.push(cycle);
     return sprite;
   }
 
@@ -579,23 +749,7 @@ export class BoardScene extends Phaser.Scene {
       return;
     }
 
-    const point = this.board.cellToPixel(candidate.row, candidate.col);
-    const cellKey = this.cellKey(candidate.row, candidate.col);
-    const restartPointerCycle = shouldRestartPointerCycle(
-      this.pointerCellKey,
-      cellKey,
-      this.pointer.visible,
-    );
-    this.pointer
-      .setPosition(point.x, point.y)
-      .setTint(this.boardState.currentPlayer === 1 ? COLOR.STONE_BLACK : COLOR.STONE_WHITE)
-      .setVisible(true);
-    this.pointerCellKey = cellKey;
-    this.reportTouchCandidate(candidate);
-
-    if (restartPointerCycle) {
-      this.pointerCycle?.start(this.pointer);
-    }
+    this.showPointerAtCandidate(candidate, true, true);
   }
 
   private clearTouchCandidate(): void {
@@ -626,29 +780,11 @@ export class BoardScene extends Phaser.Scene {
       return;
     }
 
-    const cell = this.board.pixelToCell(pointer.x, pointer.y);
-
-    if (!cell || this.boardState.cells[cell.row][cell.col] !== null) {
-      this.hidePointer();
-      return;
-    }
-
-    const point = this.board.cellToPixel(cell.row, cell.col);
-    const cellKey = this.cellKey(cell.row, cell.col);
-    const restartPointerCycle = shouldRestartPointerCycle(
-      this.pointerCellKey,
-      cellKey,
-      this.pointer.visible,
+    this.showPointerAtCandidate(
+      this.board.pixelToCell(pointer.x, pointer.y),
+      false,
+      this.getPointerType(pointer) === "mouse",
     );
-    this.pointer
-      .setPosition(point.x, point.y)
-      .setTint(this.boardState.currentPlayer === 1 ? COLOR.STONE_BLACK : COLOR.STONE_WHITE)
-      .setVisible(true);
-    this.pointerCellKey = cellKey;
-
-    if (this.getPointerType(pointer) === "mouse" && restartPointerCycle) {
-      this.pointerCycle?.start(this.pointer);
-    }
   }
 
   private handlePointerDown(pointer: Phaser.Input.Pointer): void {
@@ -680,17 +816,7 @@ export class BoardScene extends Phaser.Scene {
       return;
     }
 
-    const cell = this.board.pixelToCell(pointer.x, pointer.y);
-    if (!cell || this.boardState.cells[cell.row][cell.col] !== null) {
-      return;
-    }
-
-    const point = this.board.cellToPixel(cell.row, cell.col);
-    this.pointer
-      .setPosition(point.x, point.y)
-      .setTint(this.boardState.currentPlayer === 1 ? COLOR.STONE_BLACK : COLOR.STONE_WHITE)
-      .setVisible(true);
-    this.pointerCellKey = this.cellKey(cell.row, cell.col);
+    this.showPointerAtCandidate(this.board.pixelToCell(pointer.x, pointer.y), false, false);
   }
 
   private handlePointerUp(pointer: Phaser.Input.Pointer): void {
@@ -731,7 +857,10 @@ export class BoardScene extends Phaser.Scene {
       return;
     }
 
-    if (!cell || this.boardState.cells[cell.row][cell.col] !== null) {
+    if (
+      !cell ||
+      !canPlaceTouchCandidate(this.boardState.cells, this.boardState.forbiddenMoves, cell)
+    ) {
       return;
     }
 
@@ -746,8 +875,97 @@ export class BoardScene extends Phaser.Scene {
     this.hidePointer();
   }
 
-  private hidePointer(): void {
+  private showPointerAtCandidate(
+    candidate: CellPosition | null,
+    showBlockedOccupied: boolean,
+    animateCycle: boolean,
+  ): void {
+    if (!candidate || !this.board || !this.pointer) {
+      this.hidePointer();
+      this.reportTouchCandidate(null);
+      return;
+    }
+
+    const cue = pointerCueForCandidate(
+      this.boardState.cells,
+      this.boardState.forbiddenMoves,
+      [...this.boardState.winningMoves, ...this.boardState.threatMoves],
+      candidate,
+      showBlockedOccupied,
+    );
+
+    if (cue === "hidden") {
+      this.hidePointer();
+      return;
+    }
+
+    const point = this.board.cellToPixel(candidate.row, candidate.col);
+    const cellKey = `${this.cellKey(candidate.row, candidate.col)}:${cue}`;
+    const restartPointerCycle = shouldRestartPointerCycle(
+      this.pointerCellKey,
+      cellKey,
+      this.pointer.visible,
+    );
+
+    this.pointer
+      .setPosition(point.x, point.y)
+      .setScale(this.currentCellSize / FRAME_SIZE)
+      .setTint(this.boardState.currentPlayer === 1 ? COLOR.STONE_BLACK : COLOR.STONE_WHITE)
+      .setVisible(true);
+    this.pointerCellKey = cellKey;
+    if (this.boardState.mobileTouchPlacement) {
+      this.reportTouchCandidate(candidate);
+    }
+
+    if (!animateCycle) {
+      this.stopPointerCycle();
+      resetSpriteToFrame(this.pointer, POINTER_STATIC_FRAME);
+      return;
+    }
+
+    if (restartPointerCycle) {
+      this.startPointerCycle(cue);
+    }
+  }
+
+  private startPointerCycle(cue: Exclude<PointerCue, "hidden">): void {
+    if (!this.pointer) {
+      return;
+    }
+
+    this.stopPointerCycle();
+    this.pointerCycle = new SequenceAnimationCycle(
+      this,
+      this.pointerStepsForCue(cue),
+    );
+    this.pointerCycle.start(this.pointer);
+  }
+
+  private pointerStepsForCue(cue: Exclude<PointerCue, "hidden">): readonly SequenceStep[] {
+    switch (cue) {
+      case "blocked":
+        return POINTER_BLOCKED_STEPS;
+      case "preferred":
+        return POINTER_PREFERRED_STEPS;
+      case "normal":
+        return POINTER_NORMAL_STEPS;
+    }
+  }
+
+  private stopPointerCycle(): void {
     this.pointerCycle?.stop();
+    this.pointerCycle = null;
+  }
+
+  private stopForbiddenCycles(): void {
+    this.forbiddenCycles.forEach((cycle) => {
+      cycle.stop();
+    });
+    this.forbiddenCycles = [];
+  }
+
+  private hidePointer(): void {
+    this.stopPointerCycle();
     this.pointerCellKey = null;
     if (!this.pointer) {
       return;
