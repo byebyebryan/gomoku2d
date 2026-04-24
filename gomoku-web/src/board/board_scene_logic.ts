@@ -1,7 +1,21 @@
 import type { CellPosition, CellStone, MatchStatus } from "../game/types";
 
+import { WARNING_ANIMS } from "./constants";
+
 const TOUCH_DRAG_SENSITIVITY = 1.0;
 const DEFAULT_BOARD_SIZE = 15;
+
+export type WarningOverlayRole = "forbidden" | "tacticalHint" | "winningLine";
+
+export function warningAnimationForOverlay(role: WarningOverlayRole): string {
+  switch (role) {
+    case "forbidden":
+      return WARNING_ANIMS.FORBIDDEN.key;
+    case "tacticalHint":
+    case "winningLine":
+      return WARNING_ANIMS.HOVER.key;
+  }
+}
 
 export function shouldAnimatePlacedStone(
   isNewStone: boolean,
