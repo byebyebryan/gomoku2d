@@ -352,6 +352,7 @@ export function LocalMatchRoute() {
                 </button>
               ) : null}
               <button
+                aria-label="Undo"
                 className="uiAction uiActionNeutral"
                 disabled={!canUndo(state)}
                 onClick={() => {

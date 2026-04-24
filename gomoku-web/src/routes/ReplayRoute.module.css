@@ -328,12 +328,12 @@
 
 @media (max-width: 720px) and (orientation: portrait) {
   .page {
-    height: 100dvh;
+    height: auto;
     min-height: 100dvh;
     align-content: start;
     padding: 10px 12px 12px;
     gap: 10px;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .header {
@@ -381,8 +381,8 @@
     align-content: stretch;
     justify-items: stretch;
     gap: 10px;
-    min-height: 0;
-    overflow: hidden;
+    min-height: calc(100dvh - 74px);
+    overflow: visible;
   }
 
   .boardPanel {
