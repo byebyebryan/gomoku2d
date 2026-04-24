@@ -10,6 +10,12 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "PixelOperator8Bold";
+  src: url("../../assets/fonts/PixelOperator8-Bold.ttf") format("truetype");
+  font-display: swap;
+}
+
 :root {
   color-scheme: dark;
   --bg: #1e1e1e;

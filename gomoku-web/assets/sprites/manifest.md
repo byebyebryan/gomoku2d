@@ -12,8 +12,6 @@ All sprites are pixel-art style. Spritesheets use 16×16 per frame; button uses 
 | `pointer.png` | 304×16 | Cursor animations — 19 frames |
 | `warning.png` | 464×16 | Warning overlays — 29 frames (0–9 legacy pointer, 10–16 win, 17–28 forbidden) |
 | `button.png` | 72×18 | Button 9-slice — 4 frames (0=up, 1=hover, 2=down, 3=pointer) |
-| `PixelOperator8-Bold.png` | — | Bitmap font atlas |
-| `PixelOperator8-Bold.fnt` | — | Bitmap font descriptor |
 
 ---
 
@@ -47,8 +45,8 @@ All sprites are pixel-art style. Spritesheets use 16×16 per frame; button uses 
 
 | Frames | Animation | FPS | Notes |
 |--------|-----------|-----|-------|
-| 0–9 | `warning-pointer` | 12 | Loops; used for human move hints (green = winning, red = losing) |
-| 10–16 | `warning-hover` | 12 | Loops; used for win highlights (green tint) |
+| 0–9 | `warning-pointer` | 12 | Legacy pointer-style warning; currently unused |
+| 10–16 | `warning-hover` | 12 | Loops; used for tactical move hints and win highlights |
 | 17–28 | `warning-forbidden` | 10 | Loops; used for forbidden move overlays (red tint) |
 
 ### `button.png` (18×18 per frame, 9-slice borders: 8px each side)

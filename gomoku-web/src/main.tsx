@@ -2,6 +2,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
 import { App } from "./app/App";
+import { loadBoardFonts } from "./board/sequence_font";
 import { initWasm } from "./core/wasm_bridge";
 import "./app/global.css";
 
@@ -14,6 +15,7 @@ function routerBasename(baseUrl: string): string | undefined {
 }
 
 await initWasm();
+await loadBoardFonts();
 
 const root = document.getElementById("root");
 
