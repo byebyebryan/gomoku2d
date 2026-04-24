@@ -11,11 +11,11 @@ thinking, tradeoffs, and rejected options live here so the canonical docs in
 | `game_framework.md` | Generic "native core + bots + frontends" design doc that originally inspired the repo layout | `docs/architecture.md` |
 | `online_backend_design.md` | First-pass BE design — Firebase/Firestore/Cloud Run | `docs/backend.md` |
 | `fe_gap_analysis.md` | Gap analysis of the v0.1 FE vs. planned online features (invalidated by the FE rewrite decision) | `docs/architecture.md` (constraints), `docs/roadmap.md` (phases) |
-| `ui_ux_design_doc.md` | Drafty exploration of IA, screen strategy, visual language | `docs/design.md` |
-| `ui_language_doc.md` | Drafty design-system reference (overlapped with ui_ux_design_doc) | `docs/design.md` |
+| `ui_ux_design_doc.md` | Drafty exploration of IA, screen strategy, visual language | `docs/app_design.md` |
+| `ui_language_doc.md` | Drafty design-system reference (overlapped with ui_ux_design_doc) | `docs/ui_design.md` |
 | `ui_implementation_backlog.md` | Drafty 14-milestone UI execution plan | `docs/roadmap.md` |
 | `fe_architecture_options.md` | Drafty FE stack options writeup | `docs/architecture.md` |
-| `v0_2_4_ui_polish_notes.md` | Triage/working notes captured during the `v0.2.4` shell polish pass | `docs/visual_design.md`, `docs/visual_review.md` |
+| `v0_2_4_ui_polish_notes.md` | Triage/working notes captured during the `v0.2.4` shell polish pass | `docs/ui_design.md`, `docs/ui_screenshot_review.md` |
 
 These drafts were exploratory and not grounded in the v0.1 codebase. They're
 preserved as artifacts of the "about to pivot" state but should not be read as

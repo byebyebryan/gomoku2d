@@ -8,7 +8,7 @@ where they turned. The Rust bot lab behind it isn't a side project — it's the
 engine that makes the interesting features possible.
 
 This document describes the broader target product and its long-term pillars.
-The current local-first `v0.2` slice and rollout order live in `design.md` and
+The current local-first `v0.2` slice and rollout order live in `app_design.md` and
 `roadmap.md`.
 
 ## Pillars

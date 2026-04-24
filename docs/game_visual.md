@@ -1,0 +1,174 @@
+# Game Visual Design
+
+Scope: the **Phaser canvas only**. This guide defines the board-space visual
+language: board rendering, stones, pointer cues, tactical warnings, sequence
+numbers, z-order, and animation semantics.
+
+It does not define the surrounding DOM shell. For app flows and screen
+contracts, see `app_design.md`. For shell styling, see `ui_design.md`. For the
+React/Phaser ownership boundary, see `architecture.md`.
+
+The low-level sprite-sheet inventory lives in
+`gomoku-web/assets/sprites/manifest.md`. This document describes how those
+assets should read in play.
+
+## Goal
+
+The canvas should feel like the game object itself: tactile, readable, and
+board-first. Animation is part of the interaction language, not decoration.
+
+The player should be able to tell:
+
+- where the current move would land
+- which cells are dangerous or winning
+- which moves are forbidden by rules
+- which line ended the game
+- what happened when a stone was placed or removed
+
+## Visual Roles
+
+### Board
+
+The board is the stage.
+
+- keep the surface stable and warm
+- keep grid readability high
+- avoid placing non-board UI inside the canvas
+- do not use board animation as ambient motion
+
+### Stones
+
+Stones are the most important persistent objects on the board.
+
+- normal stones are static
+- newly placed stones use `transform-form`
+- removed stones use `stone-destroy`
+- the last placed stone may idle while the match is still playing
+- result/replay sequence numbers sit above stones only when chronology matters
+
+The idle loop is a focus cue, not a constant board-wide effect. Only one stone
+should own the idle cycle at a time.
+
+### Pointer
+
+The pointer is the current actionable target.
+
+- tint follows the current player
+- it sits above surface warnings and below stones
+- on mobile, touch input moves the pointer like a touchpad
+- blocked pointer state is used for occupied mobile targets and forbidden cells
+
+Pointer modes:
+
+| Mode | Meaning | Animation |
+|------|---------|-----------|
+| `normal` | legal open cell | `pointer-idle-2`, then static delay |
+| `preferred` | legal winning or threat-response cell | `pointer-idle-long`, then static delay |
+| `blocked` | occupied mobile target or forbidden open cell | `pointer-idle-1`, then static delay |
+
+### Warnings
+
+Warnings are board-cell context. They should inform the player without
+covering the pointer.
+
+| Role | Visual |
+|------|--------|
+| Winning move | `warning` tinted green |
+| Threat move | `warning` tinted red |
+| Threat move also forbidden | `warning-on-forbidden` tinted red |
+| Forbidden move | alternating `forbidden-out` and `forbidden-in` |
+| Winning line | `warning-hover` tinted green |
+
+Forbidden and threat can overlap. In that case, the forbidden surface remains
+visible and the threat uses the dedicated overlap animation. Do not introduce a
+new warning color unless the state has a genuinely new meaning.
+
+### Sequence Numbers
+
+Sequence numbers are chronology aids, not live-match UI.
+
+- show them on result/replay states where move order matters
+- keep them above stones and below winning-line hover
+- use whole-pixel positioning to avoid text shimmer
+- keep size readable but subordinate to the stones
+
+## Z-Order
+
+Top to bottom:
+
+1. winning-line hover
+2. sequence number
+3. stone
+4. pointer
+5. warning surface and forbidden warning
+6. board
+
+This order is intentional. The pointer is the actionable target, while warning
+surfaces are context below it. Stones remain stronger than the pointer because
+they are committed board state.
+
+## Animation Semantics
+
+Animation should clarify a state transition or a target state.
+
+Use animation for:
+
+- stone placement
+- stone removal
+- last placed stone focus
+- current pointer target
+- tactical warning cells
+- forbidden cells
+- winning-line result emphasis
+
+Avoid animation for:
+
+- ambient board decoration
+- UI chrome inside the canvas
+- every stone at once
+- states that already read clearly as static objects
+
+Pointer movement should not reset unrelated warning or forbidden loops. Board
+state changes may rebuild overlays; pointer-only movement should not.
+
+## Asset Pipeline
+
+Authoritative sprite sources live under `gomoku-web/assets/sprites/`.
+Matching copies under `gomoku-web/public/assets/sprites/` must stay in sync
+because deployed asset URLs can read from `public`.
+
+When changing canvas assets:
+
+- update both source and public copies
+- update `gomoku-web/assets/sprites/manifest.md`
+- update runtime animation constants in `gomoku-web/src/board/constants.ts`
+- keep sprite roles documented here if the visual language changes
+
+The manifest is the frame table. This document is the meaning table.
+
+## Implementation Boundary
+
+Phaser owns board-space visuals and board input. It should receive declarative
+state from React and emit intent events back up.
+
+Game logic still belongs below the scene:
+
+- win detection in `gomoku-core` / `gomoku-wasm`
+- immediate winning/threat move sets in core/wasm
+- forbidden move sets in core/wasm
+
+The canvas should render those facts. It should not rediscover rules by
+duplicating game logic in the scene.
+
+## Future Theme Rule
+
+Future board themes should mostly swap canvas assets:
+
+- board surface and frame
+- grid and marks
+- stones
+- pointer
+- warning and result effects
+
+The DOM shell should not need a redesign for each board theme. The shell is the
+cabinet; the board theme is the cartridge.
