@@ -217,6 +217,63 @@ impl Board {
             .collect()
     }
 
+    pub fn winning_line(&self) -> Vec<Move> {
+        let GameResult::Winner(color) = self.result else {
+            return vec![];
+        };
+        let Some(&last_move) = self.history.last() else {
+            return vec![];
+        };
+
+        for (dr, dc) in DIRS {
+            let line = self.line_through(last_move, dr, dc, color);
+            if self.is_winning_run(line.len(), color) {
+                return line;
+            }
+        }
+
+        vec![]
+    }
+
+    fn line_through(&self, mv: Move, dr: isize, dc: isize, color: Color) -> Vec<Move> {
+        let mut before = self.moves_in_direction(mv, -dr, -dc, color);
+        before.reverse();
+        before.push(mv);
+        before.extend(self.moves_in_direction(mv, dr, dc, color));
+        before
+    }
+
+    fn moves_in_direction(&self, mv: Move, dr: isize, dc: isize, color: Color) -> Vec<Move> {
+        let size = self.config.board_size as isize;
+        let mut moves = Vec::new();
+        let (mut row, mut col) = (mv.row as isize + dr, mv.col as isize + dc);
+
+        while row >= 0 && row < size && col >= 0 && col < size {
+            let next = Move {
+                row: row as usize,
+                col: col as usize,
+            };
+            if self.cells[next.row][next.col] != Some(color) {
+                break;
+            }
+
+            moves.push(next);
+            row += dr;
+            col += dc;
+        }
+
+        moves
+    }
+
+    fn is_winning_run(&self, count: usize, color: Color) -> bool {
+        let win_len = self.config.win_length;
+        if self.config.variant == Variant::Renju && color == Color::Black {
+            count == win_len
+        } else {
+            count >= win_len
+        }
+    }
+
     fn nearby_empty_moves(&self, radius: usize) -> Vec<Move> {
         if self.result != GameResult::Ongoing {
             return vec![];
@@ -344,19 +401,11 @@ impl Board {
     }
 
     fn check_win(&self, mv: Move, color: Color) -> bool {
-        let win_len = self.config.win_length as isize;
-        // Renju: Black wins only with exactly 5-in-a-row; overlines don't count.
-        let exact_five = self.config.variant == Variant::Renju && color == Color::Black;
-
         for (dr, dc) in DIRS {
             let count = 1
                 + self.count_direction(mv.row as isize, mv.col as isize, dr, dc, color)
                 + self.count_direction(mv.row as isize, mv.col as isize, -dr, -dc, color);
-            if exact_five {
-                if count == win_len {
-                    return true;
-                }
-            } else if count >= win_len {
+            if self.is_winning_run(count as usize, color) {
                 return true;
             }
         }
@@ -703,6 +752,34 @@ mod tests {
     }
 
     #[test]
+    fn winning_line_empty_before_a_win() {
+        let mut b = default_board();
+        b.apply_move(Move { row: 7, col: 7 }).unwrap();
+        assert!(b.winning_line().is_empty());
+    }
+
+    #[test]
+    fn winning_line_returns_the_canonical_run() {
+        let mut b = default_board();
+        setup(
+            &mut b,
+            &[(7, 3), W[0], (7, 4), W[1], (7, 5), W[2], (7, 6), W[3]],
+        );
+        let result = b.apply_move(Move { row: 7, col: 7 }).unwrap();
+        assert_eq!(result, GameResult::Winner(Color::Black));
+        assert_eq!(
+            b.winning_line(),
+            vec![
+                Move { row: 7, col: 3 },
+                Move { row: 7, col: 4 },
+                Move { row: 7, col: 5 },
+                Move { row: 7, col: 6 },
+                Move { row: 7, col: 7 },
+            ]
+        );
+    }
+
+    #[test]
     fn fen_round_trip() {
         let mut b = default_board();
         b.apply_move(Move { row: 7, col: 7 }).unwrap();
@@ -988,6 +1065,17 @@ mod tests {
         // Col 4 closes to 6-in-a-row → win in freestyle.
         let result = b.apply_move(Move { row: 0, col: 4 }).unwrap();
         assert_eq!(result, GameResult::Winner(Color::Black));
+        assert_eq!(
+            b.winning_line(),
+            vec![
+                Move { row: 0, col: 0 },
+                Move { row: 0, col: 1 },
+                Move { row: 0, col: 2 },
+                Move { row: 0, col: 3 },
+                Move { row: 0, col: 4 },
+                Move { row: 0, col: 5 },
+            ]
+        );
     }
 
     #[test]

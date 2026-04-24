@@ -144,6 +144,11 @@ impl WasmBoard {
         moves_to_js(self.inner.forbidden_moves_for_current_player())
     }
 
+    #[wasm_bindgen(js_name = "winningCells")]
+    pub fn winning_cells(&self) -> Vec<JsValue> {
+        moves_to_js(self.inner.winning_line())
+    }
+
     #[wasm_bindgen(js_name = "undoLastMove")]
     pub fn undo_last_move(&mut self) {
         if let Some(mv) = self.inner.history.last().copied() {

@@ -1,6 +1,6 @@
 import { createStore, type StoreApi } from "zustand/vanilla";
 
-import { BOARD_SIZE, WIN_LENGTH } from "../board/constants";
+import { BOARD_SIZE } from "../board/constants";
 import { BotRunner } from "../core/bot_runner";
 import type { BotSpec, GameVariant } from "../core/bot_protocol";
 import { WasmBoard } from "../core/wasm_bridge";
@@ -134,61 +134,6 @@ function statusFromResult(result: string): MatchStatus {
   }
 }
 
-function findWinningCells(
-  board: WasmBoard,
-  lastMove: CellPosition | null,
-  winner: 1 | 2,
-): CellPosition[] {
-  if (!lastMove) {
-    return [];
-  }
-
-  const directions = [
-    { dr: 0, dc: 1 },
-    { dr: 1, dc: 0 },
-    { dr: 1, dc: 1 },
-    { dr: 1, dc: -1 },
-  ];
-
-  for (const { dr, dc } of directions) {
-    const cells: CellPosition[] = [{ row: lastMove.row, col: lastMove.col }];
-
-    for (let step = 1; step < WIN_LENGTH; step += 1) {
-      const row = lastMove.row + dr * step;
-      const col = lastMove.col + dc * step;
-
-      if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE) {
-        break;
-      }
-      if (board.cell(row, col) !== winner) {
-        break;
-      }
-
-      cells.push({ row, col });
-    }
-
-    for (let step = 1; step < WIN_LENGTH; step += 1) {
-      const row = lastMove.row - dr * step;
-      const col = lastMove.col - dc * step;
-
-      if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE) {
-        break;
-      }
-      if (board.cell(row, col) !== winner) {
-        break;
-      }
-
-      cells.push({ row, col });
-    }
-
-    if (cells.length >= WIN_LENGTH) {
-      return cells;
-    }
-  }
-
-  return [];
-}
-
 function normalizeMoves(moves: Array<{ row: number; col: number }>): CellPosition[] {
   return moves.map((move) => ({ row: move.row, col: move.col }));
 }
@@ -249,8 +194,6 @@ function snapshotState(
 > {
   const lastMove = moves.length > 0 ? moves[moves.length - 1] : null;
   const status = statusFromResult(board.result());
-  const winner =
-    status === "black_won" ? 1 : status === "white_won" ? 2 : null;
   const hints = deriveHumanHints(board, pendingBotMove, players, status);
 
   return {
@@ -266,7 +209,7 @@ function snapshotState(
     status,
     threatMoves: hints.threatMoves,
     winningMoves: hints.winningMoves,
-    winningCells: winner ? findWinningCells(board, lastMove, winner) : [],
+    winningCells: normalizeMoves(board.winningCells() as Array<{ row: number; col: number }>),
   };
 }
 

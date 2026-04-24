@@ -252,6 +252,36 @@ describe("createLocalMatchStore", () => {
     expect(state.threatMoves).toEqual([{ row: 0, col: 4 }]);
   });
 
+  it("exposes canonical winning cells from the wasm board", () => {
+    const board = WasmBoard.createWithVariant("freestyle");
+    const moves: Array<[number, number]> = [
+      [0, 0],
+      [14, 0],
+      [0, 1],
+      [14, 2],
+      [0, 2],
+      [14, 4],
+      [0, 3],
+      [14, 6],
+      [0, 5],
+      [14, 8],
+    ];
+
+    for (const [row, col] of moves) {
+      board.applyMove(row, col);
+    }
+
+    expect(board.applyMove(0, 4)).toMatchObject({ result: "black" });
+    expect(board.winningCells()).toEqual([
+      { row: 0, col: 0 },
+      { row: 0, col: 1 },
+      { row: 0, col: 2 },
+      { row: 0, col: 3 },
+      { row: 0, col: 4 },
+      { row: 0, col: 5 },
+    ]);
+  });
+
   it("swaps colors for the next round and lets the black bot open", async () => {
     let resolveMove!: (move: { row: number; col: number }) => void;
     let hasQueuedMove = false;
