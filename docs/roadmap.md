@@ -82,7 +82,8 @@ Near-term release framing:
 
 - `v0.2.3` established the paired desktop/mobile UI baseline for the
   local-first shell
-- `v0.2.4` landed the final small polish pass on top of that baseline
+- `v0.2.4` landed the final small polish and hardening pass on top of that
+  baseline
 - with `v0.2.4` in, the DOM shell is considered effectively frozen for the
   rest of `0.2.x`
 - remaining `0.2.x` work should focus on non-UI fixes and stability, not

@@ -49,8 +49,9 @@ The current release assumption is:
 
 - `v0.2.3` remains the screenshot baseline for the current paired desktop/mobile
   shell
-- `v0.2.4` is the final small polish pass on top of that baseline
-- that pass is hierarchy/spacing/consistency work, not a structural layout redo
+- `v0.2.4` is the final small polish and hardening pass on top of that baseline
+- the visual portion is hierarchy/spacing/consistency work, not a structural
+  layout redo
 - after `v0.2.4`, the DOM shell should be considered effectively frozen for the
   rest of `0.2.x` except for real bug fixes
 

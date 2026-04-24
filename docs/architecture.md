@@ -98,12 +98,19 @@ modals, auth UI, and any future cloud/online shell surfaces.
 **They communicate through a narrow interface:**
 
 ```ts
-// React → Phaser: declarative board state
+// React → Phaser: simplified declarative board state
 interface BoardProps {
   cells: Cell[][];
+  currentPlayer: 1 | 2;
+  forbiddenMoves: Move[];
   lastMove?: Move;
-  hoverable: boolean;
-  highlights?: Move[];        // for puzzle hints, critical-move tagging
+  interactive: boolean;
+  mobileTouchPlacement: boolean;
+  showSequenceNumbers: boolean;
+  status: MatchStatus;
+  threatMoves: Move[];
+  winningMoves: Move[];
+  winningCells: Move[];
 }
 
 // Phaser → React: intent events
@@ -133,7 +140,10 @@ One rules implementation, reused everywhere:
 - **CLI / eval tools:** already using `gomoku-core` via path deps.
 
 This means "is this move legal?" and "did this player win?" have exactly
-one answer, regardless of where the question is asked.
+one answer, regardless of where the question is asked. Tactical queries that
+depend on rules semantics also live below the UI layer: immediate winning
+moves, Renju forbidden moves, and the canonical winning line are exposed from
+`gomoku-core` through `gomoku-wasm` and rendered by the web shell.
 
 ## Data flow
 
