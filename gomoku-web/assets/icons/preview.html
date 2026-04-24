@@ -15,7 +15,7 @@
       --accent: #fccb57;
     }
     * { box-sizing: border-box; }
-    body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.4 sans-serif; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
     main { max-width: 1280px; margin: 0 auto; padding: 32px; display: grid; gap: 24px; }
     h1, h2, p { margin: 0; }
     .panel { background: var(--surface); border: 2px solid var(--border); padding: 20px; display: grid; gap: 16px; }
@@ -23,7 +23,7 @@
     .sheet { width: 100%; max-width: 768px; image-rendering: pixelated; background: #000; }
     .grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 12px; }
     .card { border: 1px solid var(--border); background: #232323; padding: 12px; display: grid; justify-items: center; gap: 8px; }
-    .card img { width: 32px; height: 32px; image-rendering: pixelated; }
+    .card img { filter: brightness(0) invert(1); height: 32px; image-rendering: pixelated; width: 32px; }
     .name { font-weight: 700; text-align: center; word-break: break-word; }
     .meta { color: var(--text-muted); font-size: 12px; }
     code { color: var(--accent); }
@@ -41,7 +41,7 @@
     <section class="panel">
       <div>
         <h2>Exported SVGs</h2>
-        <p class="note">Rendered as external SVG files for visual inspection only.</p>
+        <p class="note">Rendered as external SVG files for visual inspection only. The preview filters them to white because external SVG images do not inherit <code>currentColor</code>.</p>
       </div>
       <div class="grid">
         <div class="card"><img src="home.svg" alt="Home"><div class="name">home</div><div class="meta">r1 c1</div></div>

@@ -5,6 +5,8 @@ portrait/mobile layouts.
 
 **Play:** https://dev.byebyebryan.com/gomoku2d/
 
+**Pixel-art previews:** https://dev.byebyebryan.com/gomoku2d/assets/
+
 React owns the app shell (home, match, replay, profile). Phaser renders the
 board and nothing else. The rules engine and bot are the same Rust code used by
 the native bot lab in this repo, compiled to Wasm and called from JS. The bot
@@ -42,9 +44,15 @@ Single-player, local-first:
 - Responsive: the board fits its available space on any viewport; portrait
   layouts are screen-specific rather than collapsed desktop
 
-Design intent and the shell style system are documented in
-[`../docs/design.md`](../docs/design.md) and
-[`../docs/visual_design.md`](../docs/visual_design.md).
+Design intent is split across:
+
+- [`../docs/app_design.md`](../docs/app_design.md) — routes, flows, and screen contracts
+- [`../docs/ui_design.md`](../docs/ui_design.md) — DOM shell visual language
+- [`../docs/game_visual.md`](../docs/game_visual.md) — Phaser canvas visuals, sprite roles, and animation language
+
+Source assets and local visual preview pages live in
+[`assets/README.md`](assets/README.md). Published builds expose those previews
+under `/gomoku2d/assets/`.
 
 ---
 

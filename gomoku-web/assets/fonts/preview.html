@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gomoku2D font preview</title>
+  <style>
+    @font-face { font-family: "PixelOperator"; src: url("PixelOperator.ttf") format("truetype"); font-display: swap; }
+    @font-face { font-family: "PixelOperatorBold"; src: url("PixelOperator-Bold.ttf") format("truetype"); font-display: swap; }
+    @font-face { font-family: "PixelOperator8"; src: url("PixelOperator8.ttf") format("truetype"); font-display: swap; }
+    @font-face { font-family: "PixelOperator8Bold"; src: url("PixelOperator8-Bold.ttf") format("truetype"); font-display: swap; }
+    @font-face { font-family: "PixelOperatorHB"; src: url("PixelOperatorHB.ttf") format("truetype"); font-display: swap; }
+    @font-face { font-family: "PixelOperatorHB8"; src: url("PixelOperatorHB8.ttf") format("truetype"); font-display: swap; }
+    @font-face { font-family: "PixelOperatorHBSC"; src: url("PixelOperatorHBSC.ttf") format("truetype"); font-display: swap; }
+    @font-face { font-family: "PixelOperatorMono"; src: url("PixelOperatorMono.ttf") format("truetype"); font-display: swap; }
+    @font-face { font-family: "PixelOperatorMonoBold"; src: url("PixelOperatorMono-Bold.ttf") format("truetype"); font-display: swap; }
+    @font-face { font-family: "PixelOperatorMono8"; src: url("PixelOperatorMono8.ttf") format("truetype"); font-display: swap; }
+    @font-face { font-family: "PixelOperatorMono8Bold"; src: url("PixelOperatorMono8-Bold.ttf") format("truetype"); font-display: swap; }
+    @font-face { font-family: "PixelOperatorMonoHB"; src: url("PixelOperatorMonoHB.ttf") format("truetype"); font-display: swap; }
+    @font-face { font-family: "PixelOperatorMonoHB8"; src: url("PixelOperatorMonoHB8.ttf") format("truetype"); font-display: swap; }
+    @font-face { font-family: "PixelOperatorSC"; src: url("PixelOperatorSC.ttf") format("truetype"); font-display: swap; }
+    @font-face { font-family: "PixelOperatorSCBold"; src: url("PixelOperatorSC-Bold.ttf") format("truetype"); font-display: swap; }
+
+    :root {
+      color-scheme: dark;
+      --bg: #1e1e1e;
+      --surface: #2a2a2a;
+      --surface-strong: #333333;
+      --border: #575756;
+      --text: #f5f5f5;
+      --text-muted: #a6a6a0;
+      --accent: #fccb57;
+      --teal: #5fc7c2;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    main {
+      display: grid;
+      gap: 24px;
+      margin: 0 auto;
+      max-width: 1280px;
+      padding: 32px;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    code {
+      color: var(--accent);
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      display: grid;
+      gap: 16px;
+      padding: 20px;
+    }
+
+    .note {
+      color: var(--text-muted);
+      max-width: 78ch;
+    }
+
+    .roleGrid,
+    .fontGrid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+
+    .roleCard,
+    .fontCard {
+      background: #232323;
+      border: 1px solid var(--border);
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+    }
+
+    .roleCard {
+      border-color: #6d684d;
+    }
+
+    .roleLabel,
+    .fontName {
+      color: var(--accent);
+      font: 700 13px/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .sampleLarge {
+      font-size: 34px;
+      line-height: 1.05;
+    }
+
+    .sampleBody {
+      font-size: 22px;
+      line-height: 1.18;
+    }
+
+    .sampleTiny {
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.2;
+    }
+
+    .digits {
+      color: var(--teal);
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .font-pixel-operator { font-family: "PixelOperator", monospace; }
+    .font-pixel-operator-bold { font-family: "PixelOperatorBold", monospace; }
+    .font-pixel-operator-8 { font-family: "PixelOperator8", monospace; }
+    .font-pixel-operator-8-bold { font-family: "PixelOperator8Bold", monospace; }
+    .font-pixel-operator-hb { font-family: "PixelOperatorHB", monospace; }
+    .font-pixel-operator-hb-8 { font-family: "PixelOperatorHB8", monospace; }
+    .font-pixel-operator-hbsc { font-family: "PixelOperatorHBSC", monospace; }
+    .font-pixel-operator-mono { font-family: "PixelOperatorMono", monospace; }
+    .font-pixel-operator-mono-bold { font-family: "PixelOperatorMonoBold", monospace; }
+    .font-pixel-operator-mono-8 { font-family: "PixelOperatorMono8", monospace; }
+    .font-pixel-operator-mono-8-bold { font-family: "PixelOperatorMono8Bold", monospace; }
+    .font-pixel-operator-mono-hb { font-family: "PixelOperatorMonoHB", monospace; }
+    .font-pixel-operator-mono-hb-8 { font-family: "PixelOperatorMonoHB8", monospace; }
+    .font-pixel-operator-sc { font-family: "PixelOperatorSC", monospace; }
+    .font-pixel-operator-sc-bold { font-family: "PixelOperatorSCBold", monospace; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="panel">
+      <div>
+        <h1>Gomoku2D font preview</h1>
+        <p class="note">
+          PixelOperator source files in this folder. Runtime CSS currently uses
+          <code>PixelOperator</code>, <code>PixelOperatorBold</code>, and
+          <code>PixelOperator8Bold</code>.
+        </p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div>
+        <h2>Runtime roles</h2>
+        <p class="note">The three fonts currently wired into the app shell and board canvas.</p>
+      </div>
+      <div class="roleGrid">
+        <article class="roleCard">
+          <div class="roleLabel">UI body - PixelOperator.ttf</div>
+          <p class="sampleBody font-pixel-operator">An old favorite, built properly.</p>
+          <p class="sampleTiny font-pixel-operator">Local match. Practice bot. Move 12 / 225.</p>
+        </article>
+        <article class="roleCard">
+          <div class="roleLabel">UI display - PixelOperator-Bold.ttf</div>
+          <p class="sampleLarge font-pixel-operator-bold">Gomoku2D</p>
+          <p class="sampleTiny font-pixel-operator-bold">FREESTYLE RENJU MATCH HISTORY</p>
+        </article>
+        <article class="roleCard">
+          <div class="roleLabel">Board sequence - PixelOperator8-Bold.ttf</div>
+          <p class="sampleLarge font-pixel-operator-8-bold">1 2 3 13 42</p>
+          <p class="sampleTiny font-pixel-operator-8-bold">Small canvas numbers for result and replay stones.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div>
+        <h2>All variants</h2>
+        <p class="note">Use this grid when comparing pixel density, weight, and digit readability.</p>
+      </div>
+      <div class="fontGrid">
+        <article class="fontCard font-pixel-operator">
+          <div class="fontName">PixelOperator.ttf</div>
+          <p class="sampleBody">Practice Bot vs Local Player</p>
+          <p class="digits">Move 12 / 225 - 0123456789</p>
+        </article>
+        <article class="fontCard font-pixel-operator-bold">
+          <div class="fontName">PixelOperator-Bold.ttf</div>
+          <p class="sampleBody">Practice Bot vs Local Player</p>
+          <p class="digits">Move 12 / 225 - 0123456789</p>
+        </article>
+        <article class="fontCard font-pixel-operator-8">
+          <div class="fontName">PixelOperator8.ttf</div>
+          <p class="sampleBody">Practice Bot vs Local Player</p>
+          <p class="digits">Move 12 / 225 - 0123456789</p>
+        </article>
+        <article class="fontCard font-pixel-operator-8-bold">
+          <div class="fontName">PixelOperator8-Bold.ttf</div>
+          <p class="sampleBody">Practice Bot vs Local Player</p>
+          <p class="digits">Move 12 / 225 - 0123456789</p>
+        </article>
+        <article class="fontCard font-pixel-operator-hb">
+          <div class="fontName">PixelOperatorHB.ttf</div>
+          <p class="sampleBody">Practice Bot vs Local Player</p>
+          <p class="digits">Move 12 / 225 - 0123456789</p>
+        </article>
+        <article class="fontCard font-pixel-operator-hb-8">
+          <div class="fontName">PixelOperatorHB8.ttf</div>
+          <p class="sampleBody">Practice Bot vs Local Player</p>
+          <p class="digits">Move 12 / 225 - 0123456789</p>
+        </article>
+        <article class="fontCard font-pixel-operator-hbsc">
+          <div class="fontName">PixelOperatorHBSC.ttf</div>
+          <p class="sampleBody">Practice Bot vs Local Player</p>
+          <p class="digits">Move 12 / 225 - 0123456789</p>
+        </article>
+        <article class="fontCard font-pixel-operator-mono">
+          <div class="fontName">PixelOperatorMono.ttf</div>
+          <p class="sampleBody">Practice Bot vs Local Player</p>
+          <p class="digits">Move 12 / 225 - 0123456789</p>
+        </article>
+        <article class="fontCard font-pixel-operator-mono-bold">
+          <div class="fontName">PixelOperatorMono-Bold.ttf</div>
+          <p class="sampleBody">Practice Bot vs Local Player</p>
+          <p class="digits">Move 12 / 225 - 0123456789</p>
+        </article>
+        <article class="fontCard font-pixel-operator-mono-8">
+          <div class="fontName">PixelOperatorMono8.ttf</div>
+          <p class="sampleBody">Practice Bot vs Local Player</p>
+          <p class="digits">Move 12 / 225 - 0123456789</p>
+        </article>
+        <article class="fontCard font-pixel-operator-mono-8-bold">
+          <div class="fontName">PixelOperatorMono8-Bold.ttf</div>
+          <p class="sampleBody">Practice Bot vs Local Player</p>
+          <p class="digits">Move 12 / 225 - 0123456789</p>
+        </article>
+        <article class="fontCard font-pixel-operator-mono-hb">
+          <div class="fontName">PixelOperatorMonoHB.ttf</div>
+          <p class="sampleBody">Practice Bot vs Local Player</p>
+          <p class="digits">Move 12 / 225 - 0123456789</p>
+        </article>
+        <article class="fontCard font-pixel-operator-mono-hb-8">
+          <div class="fontName">PixelOperatorMonoHB8.ttf</div>
+          <p class="sampleBody">Practice Bot vs Local Player</p>
+          <p class="digits">Move 12 / 225 - 0123456789</p>
+        </article>
+        <article class="fontCard font-pixel-operator-sc">
+          <div class="fontName">PixelOperatorSC.ttf</div>
+          <p class="sampleBody">Practice Bot vs Local Player</p>
+          <p class="digits">Move 12 / 225 - 0123456789</p>
+        </article>
+        <article class="fontCard font-pixel-operator-sc-bold">
+          <div class="fontName">PixelOperatorSC-Bold.ttf</div>
+          <p class="sampleBody">Practice Bot vs Local Player</p>
+          <p class="digits">Move 12 / 225 - 0123456789</p>
+        </article>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

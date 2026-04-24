@@ -9,8 +9,12 @@ contracts, see `app_design.md`. For shell styling, see `ui_design.md`. For the
 React/Phaser ownership boundary, see `architecture.md`.
 
 The low-level sprite-sheet inventory lives in
-`gomoku-web/assets/sprites/manifest.md`. This document describes how those
+`gomoku-web/assets/sprites/README.md`. This document describes how those
 assets should read in play.
+
+For local visual inspection, open
+`gomoku-web/assets/preview.html` or the sprite-specific
+`gomoku-web/assets/sprites/preview.html`.
 
 ## Goal
 
@@ -141,11 +145,13 @@ because deployed asset URLs can read from `public`.
 When changing canvas assets:
 
 - update both source and public copies
-- update `gomoku-web/assets/sprites/manifest.md`
+- update `gomoku-web/assets/sprites/README.md`
+- update `gomoku-web/assets/sprites/preview.html` when frame layout, z-order,
+  or representative cases change
 - update runtime animation constants in `gomoku-web/src/board/constants.ts`
 - keep sprite roles documented here if the visual language changes
 
-The manifest is the frame table. This document is the meaning table.
+The sprite README is the frame table. This document is the meaning table.
 
 ## Implementation Boundary
 

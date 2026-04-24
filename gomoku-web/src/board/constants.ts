@@ -39,7 +39,7 @@ export const SPRITESHEET_CONFIG = {
   [SPRITE.TRANSFORM]: { url: "assets/sprites/transform.png", end: 9 },
 } as const;
 
-// Animation definitions — frame ranges from assets/manifest.md
+// Animation definitions - frame ranges from assets/sprites/README.md.
 export const STONE_ANIMS = {
   STATIC: { frame: 0, key: "stone-static" },
   DESTROY: { start: 0, end: 3, frameRate: 12, key: "stone-destroy" },

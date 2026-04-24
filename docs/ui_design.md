@@ -42,6 +42,8 @@ The current refinement direction is:
 - keep `v0.2.3`'s screen-specific portrait layouts and compact top-bar pattern
 - keep the later icon work narrow, functional, and rendered at the scale the
   authored pack actually reads well
+- use `gomoku-web/assets/icons/preview.html` and
+  `gomoku-web/assets/fonts/preview.html` when checking icon or type rendering
 - keep tightening dense secondary surfaces like profile instead of re-expanding
   the shell
 
