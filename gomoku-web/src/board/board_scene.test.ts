@@ -21,6 +21,7 @@ import {
   sequenceNumberFontSize,
   sequenceNumberPosition,
   shouldAnimatePlacedStone,
+  shouldRenderStandaloneForbiddenOverlay,
   shouldSyncOverlaySprites,
   shouldStopStoneCycleBeforeStoneRemoval,
   shouldRestartPointerCycle,
@@ -65,13 +66,13 @@ describe("animation sheet inventory", () => {
     });
 
     expect(POINTER_ANIMS).toMatchObject({
-      IDLE_1: { start: 0, end: 5, frameRate: 12, key: "pointer-idle-1" },
-      IDLE_2: { start: 6, end: 9, frameRate: 12, key: "pointer-idle-2" },
-      IDLE_LONG: { start: 10, end: 19, frameRate: 12, key: "pointer-idle-long" },
+      BLOCKED: { start: 0, end: 5, frameRate: 12, key: "pointer-idle-blocked" },
+      OPEN: { start: 6, end: 9, frameRate: 12, key: "pointer-idle-open" },
+      PREFERRED: { start: 10, end: 19, frameRate: 12, key: "pointer-idle-preferred" },
     });
 
     expect(HOVER_ANIMS).toMatchObject({
-      HOVER: { start: 0, end: 5, frameRate: 12, key: "warning-hover" },
+      HOVER: { start: 0, end: 5, frameRate: 12, key: "hover" },
     });
 
     expect(WARNING_ANIMS).toMatchObject({
@@ -79,7 +80,7 @@ describe("animation sheet inventory", () => {
       WARNING_ON_FORBIDDEN: { start: 6, end: 11, frameRate: 12, key: "warning-on-forbidden" },
       FORBIDDEN_OUT: { start: 12, end: 17, frameRate: 12, key: "forbidden-out" },
       FORBIDDEN_IN: { start: 18, end: 23, frameRate: 12, key: "forbidden-in" },
-      HIGHLIGHT: { start: 24, end: 29, frameRate: 12, key: "warning-highlight" },
+      HIGHLIGHT: { start: 24, end: 29, frameRate: 12, key: "highlight" },
     });
 
     expect(TRANSFORM_ANIMS).toMatchObject({
@@ -263,7 +264,7 @@ describe("canPlaceTouchCandidate", () => {
 
 describe("warningAnimationForOverlay", () => {
   it("maps board warnings to the intended overlay language", () => {
-    expect(warningAnimationForOverlay("winningLine")).toBe("warning-hover");
+    expect(warningAnimationForOverlay("winningLine")).toBe("hover");
     expect(warningAnimationForOverlay("winningMove")).toBe("warning");
     expect(warningAnimationForOverlay("threatMove")).toBe("warning");
     expect(warningAnimationForOverlay("threatMove", true)).toBe("warning-on-forbidden");
@@ -280,6 +281,15 @@ describe("warningSpriteForOverlay", () => {
     expect(warningSpriteForOverlay("winningMove")).toBe(SPRITE.WARNING);
     expect(warningSpriteForOverlay("threatMove")).toBe(SPRITE.WARNING);
     expect(warningSpriteForOverlay("forbidden")).toBe(SPRITE.WARNING);
+  });
+});
+
+describe("shouldRenderStandaloneForbiddenOverlay", () => {
+  it("replaces forbidden animation with the combined warning-on-forbidden overlay on threat cells", () => {
+    const threatMoves = [{ row: 8, col: 8 }];
+
+    expect(shouldRenderStandaloneForbiddenOverlay({ row: 8, col: 8 }, threatMoves)).toBe(false);
+    expect(shouldRenderStandaloneForbiddenOverlay({ row: 8, col: 9 }, threatMoves)).toBe(true);
   });
 });
 

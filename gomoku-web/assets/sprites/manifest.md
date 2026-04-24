@@ -6,6 +6,7 @@ folder are the authoritative copies; matching files under
 
 For the meaning of each board-space visual role, see
 `../../../docs/game_visual.md`. This manifest is only the frame inventory.
+For a visual inspection page, open [preview.html](./preview.html).
 
 ## Published Sprites
 
@@ -25,15 +26,15 @@ Frame numbers are row-major.
 
 | Frames | Animation | FPS | Runtime use |
 |--------|-----------|-----|-------------|
-| 0-5 | `warning-hover` | 12 | Winning line, tinted green |
+| 0-5 | `hover` | 12 | Winning line, tinted green |
 
 ### `pointer.png`
 
 | Frames | Animation | FPS | Runtime use |
 |--------|-----------|-----|-------------|
-| 0-5 | `pointer-idle-1` | 12 | Blocked pointer cue |
-| 6-9 | `pointer-idle-2` | 12 | Normal open-cell pointer cue |
-| 10-19 | `pointer-idle-long` | 12 | Preferred pointer cue for winning or threat cells |
+| 0-5 | `pointer-idle-blocked` | 12 | Blocked pointer cue |
+| 6-9 | `pointer-idle-open` | 12 | Normal open-cell pointer cue |
+| 10-19 | `pointer-idle-preferred` | 12 | Preferred pointer cue for winning or threat cells |
 | 0 | static | - | Rest frame between pointer loop beats |
 
 ### `stone.png`
@@ -55,7 +56,7 @@ Frame numbers are row-major.
 | 6-11 | `warning-on-forbidden` | 12 | Threat move red when the cell is also forbidden |
 | 12-17 | `forbidden-out` | 12 | Forbidden move loop |
 | 18-23 | `forbidden-in` | 12 | Forbidden move loop |
-| 24-29 | `warning-highlight` | 12 | Reserved; not used by runtime yet |
+| 24-29 | `highlight` | 12 | Reserved; not used by runtime yet |
 
 ### `transform.png`
 
