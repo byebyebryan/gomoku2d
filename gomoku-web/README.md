@@ -22,7 +22,8 @@ Single-player, local-first:
 - Live forbidden-move warnings when playing Black under Renju
 - Undo the last turn during a live match
 - Finish a match, open the replay, scrub move by move, then branch off at any
-  point to play the rest against the bot yourself
+  point to play the rest against the bot yourself without undoing before the
+  branch point
 - Local guest profile: display name, preferred rule, recent-match history —
   persisted in browser storage, no sign-in
 - Desktop and portrait/mobile layouts are intentional rather than collapsed —

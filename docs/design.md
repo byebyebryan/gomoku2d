@@ -127,8 +127,8 @@ This is the loudest text after the board itself.
 Examples:
 
 - `YOUR MOVE`
-- `CLASSIC BOT THINKING`
-- `CLASSIC BOT WINS`
+- `PRACTICE BOT THINKING`
+- `PRACTICE BOT WINS`
 
 Use player-based language where possible instead of stone-only language.
 
@@ -158,6 +158,8 @@ Rules:
 - no oversized nested cards competing with the board
 - keep the side rail narrow and visually quiet
 - player turn state should be obvious, but not louder than the main status line
+- on narrow/tall-constrained mobile screens, allow the page to flow rather
+  than letting controls overlap the board
 
 #### Rules switching during a match
 
@@ -231,7 +233,7 @@ Rules:
 - starting a replay slightly in is acceptable if the player can still scrub back
   to the beginning
 - branching from replay should preserve the current board position and rule set,
-  but it becomes a new local match
+  but it becomes a new local match with undo capped at the branch point
 
 ### Profile (`/profile`)
 

@@ -1,6 +1,6 @@
 # Gomoku2D
 
-*An old favorite, built properly.* 
+*An old favorite, built properly.*
 
 A retro Gomoku game built on a modern web and Rust stack.
 
@@ -24,7 +24,8 @@ Features:
 - Live forbidden-move warnings when playing Black under Renju
 - Undo the last turn during a live match
 - Local replay viewer with transport controls and timeline scrubbing; branch
-  off mid-replay into a fresh practice game from any position
+  off mid-replay into a fresh practice game without undoing before the branch
+  point
 - Local guest profile: display name, preferred rule, recent-match history —
   persisted in browser storage, no sign-in required
 - Intentional desktop and portrait/mobile layouts on every main screen, with

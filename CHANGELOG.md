@@ -12,14 +12,15 @@ their own section.
 
 ## [Unreleased]
 
-**Theme: shell polish + UI freeze + repo hygiene.**
+**Theme: final shell polish + stability hardening.**
 
-`v0.2.4` is a deliberately narrow polish pass on top of the paired
+`v0.2.4` is the final small polish and hardening pass on top of the paired
 desktop/mobile `v0.2.3` baseline. It is not a redesign; the working rule is
 *board first, status second, controls third, meta last, no extra chrome.*
 After it lands, the DOM shell is considered effectively frozen for the rest of
-the `0.2.x` line — remaining work goes to non-UI fixes and stability. The bot
-lab sees a small anti-blunder fix and a workspace-wide `rustfmt`.
+the `0.2.x` line. The rest of the release tightens the Practice Bot, moves a
+little more board analysis into core, and adds the release/benchmarking
+infrastructure needed to keep future fixes measurable.
 
 ### Design (web)
 
@@ -47,17 +48,38 @@ lab sees a small anti-blunder fix and a workspace-wide `rustfmt`.
 
 **Web**
 
-- Favicon assets.
+- Favicon assets and social-preview imagery.
+
+**Bot lab**
+
+- A bot/core performance benchmark harness with a fixed, reviewable scenario
+  corpus for repeatable tuning work.
 
 ### Changed
 
 **Web**
 
 - Copy polish on screen labels; renamed the local opponent to `Practice Bot`.
+- Mobile Match and Replay now allow page flow/scroll in cramped vertical
+  viewports instead of letting bottom controls collide with the board.
+- Replay branching now preserves an undo floor, so a resumed match cannot undo
+  earlier than the replay position it started from.
+- Tactical move hints now use the hover-warning animation for winning and
+  losing moves while keeping forbidden Renju moves on the surface warning,
+  allowing threat/forbidden overlap to render cleanly.
+- Result-screen move sequence labels now use the TTF pixel font path instead
+  of the old bitmap-font path, with stable desktop/mobile sizing.
+- Winning-line detection now comes from `gomoku-core` through `gomoku-wasm`
+  instead of being re-derived in the web UI.
 
 **Bot lab**
 
 - Hardened the baseline bot's anti-blunder search.
+- Optimized nearby-move generation, immediate-winning-move scans, and the
+  anti-blunder prefilter so the Practice Bot keeps the safety fix without the
+  full slowdown.
+- Added search-bot regression checks over the benchmark corpus, including
+  immediate-win and immediate-block anchors.
 - Formatted the Rust workspace with `rustfmt`.
 
 ### Docs
@@ -66,6 +88,8 @@ lab sees a small anti-blunder fix and a workspace-wide `rustfmt`.
   `backend.md`, `roadmap.md`, `visual_design.md`, `visual_review.md`, root
   `README.md`, `gomoku-web/README.md`) to match the shipped v0.2 product and
   align release framing around the upcoming UI freeze.
+- Added the ongoing bot/core performance tuning note with benchmark rules,
+  fixed scenarios, baseline timings, and optimization-pass snapshots.
 
 ### Tooling
 
@@ -77,6 +101,9 @@ lab sees a small anti-blunder fix and a workspace-wide `rustfmt`.
   for React / Vite / testing), PR template.
 - Committed `gomoku-bot-lab/Cargo.lock` for reproducible builds of the
   workspace binaries.
+- Added release automation and backfill tooling for GitHub Releases, plus
+  smoke-test coverage aligned with the v0.2.4 shell.
+- Batched safe Dependabot updates and fixed the resulting Rust CI lint issues.
 
 ## [0.2.3] - 2026-04-22
 

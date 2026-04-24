@@ -224,7 +224,8 @@ desktop/mobile system rather than a desktop-first shell with a narrow fallback.
 ### v0.2.4 polish direction
 
 `v0.2.3` still serves as the screenshot baseline, but the current `v0.2.4`
-polish pass is deliberately narrow and stays on top of the same shell:
+polish and hardening pass is deliberately narrow and stays on top of the same
+shell:
 
 - labels are quieter and secondary metadata competes less with values
 - desktop Match and Replay rails are tighter and read more like HUD/transport
