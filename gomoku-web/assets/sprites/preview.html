@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gomoku2D sprite preview</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #1e1e1e;
+      --surface: #2a2a2a;
+      --surface-strong: #333333;
+      --border: #575756;
+      --text: #f5f5f5;
+      --text-muted: #a6a6a0;
+      --accent: #fccb57;
+      --board: #ffcc66;
+      --grid: #111111;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    main {
+      display: grid;
+      gap: 24px;
+      margin: 0 auto;
+      max-width: 1280px;
+      padding: 32px;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    code {
+      color: var(--accent);
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      display: grid;
+      gap: 16px;
+      padding: 20px;
+    }
+
+    .note {
+      color: var(--text-muted);
+      max-width: 78ch;
+    }
+
+    .sheetGrid {
+      align-items: start;
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .sheetCard {
+      background: #000;
+      border: 1px solid var(--border);
+      display: grid;
+      gap: 10px;
+      min-height: 160px;
+      padding: 12px;
+    }
+
+    .sheetCard img {
+      align-self: center;
+      image-rendering: pixelated;
+      max-width: 100%;
+      width: var(--sheet-width);
+    }
+
+    .sheetMeta,
+    .meta {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .controls {
+      align-items: center;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    button,
+    select {
+      background: var(--surface-strong);
+      border: 2px solid var(--border);
+      color: var(--text);
+      font: inherit;
+      padding: 8px 12px;
+    }
+
+    button {
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+
+    .animationGrid,
+    .staticGrid,
+    .zCaseGrid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .card {
+      background: #232323;
+      border: 1px solid var(--border);
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+    }
+
+    .stage {
+      align-items: center;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(255,255,255,0.06) 1px, transparent 1px),
+        #151515;
+      background-size: 16px 16px;
+      border: 1px solid #000;
+      display: grid;
+      height: 112px;
+      justify-items: center;
+      overflow: hidden;
+    }
+
+    .sprite {
+      background-repeat: no-repeat;
+      height: 16px;
+      image-rendering: pixelated;
+      transform: scale(var(--preview-scale, 5));
+      width: 16px;
+    }
+
+    [data-tint="black"] {
+      filter: url("#tint-black");
+    }
+
+    [data-tint="green"] {
+      filter: url("#tint-green");
+    }
+
+    [data-tint="red"] {
+      filter: url("#tint-red");
+    }
+
+    .cardHeader {
+      display: grid;
+      gap: 4px;
+    }
+
+    .cardTitle {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .boardCell {
+      background:
+        linear-gradient(90deg, transparent 47%, var(--grid) 47% 53%, transparent 53%),
+        linear-gradient(0deg, transparent 47%, var(--grid) 47% 53%, transparent 53%),
+        var(--board);
+      border: 4px solid #111;
+      height: 160px;
+      position: relative;
+      width: 160px;
+    }
+
+    .zCaseCard {
+      background: #232323;
+      border: 1px solid var(--border);
+      display: grid;
+      gap: 14px;
+      padding: 14px;
+    }
+
+    .zCaseCard .boardCell {
+      height: 144px;
+      width: 144px;
+    }
+
+    .stackSprite,
+    .sequenceNumber {
+      left: 50%;
+      position: absolute;
+      top: 50%;
+    }
+
+    .stackSprite {
+      background-repeat: no-repeat;
+      height: 16px;
+      image-rendering: pixelated;
+      margin: -8px 0 0 -8px;
+      transform: scale(7);
+      width: 16px;
+    }
+
+    .sequenceNumber {
+      color: #111;
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1;
+      transform: translate(-50%, -50%);
+      z-index: 4;
+    }
+
+    .zWarning {
+      z-index: 1;
+    }
+
+    .zWinningWarning {
+      z-index: 1;
+    }
+
+    .zPointer {
+      z-index: 2;
+    }
+
+    .zStone {
+      z-index: 3;
+    }
+
+    .zWhiteStone {
+      z-index: 3;
+    }
+
+    .zHover {
+      z-index: 5;
+    }
+
+    .layerList {
+      color: var(--text-muted);
+      display: grid;
+      gap: 6px;
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .zCaseNotes {
+      color: var(--text-muted);
+      display: grid;
+      gap: 4px;
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    @media (max-width: 680px) {
+      main {
+        padding: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <svg aria-hidden="true" height="0" width="0">
+    <filter id="tint-black" color-interpolation-filters="sRGB">
+      <feColorMatrix
+        type="matrix"
+        values="
+          0.0534 0.1797 0.0181 0 0
+          0.0534 0.1797 0.0181 0 0
+          0.0534 0.1797 0.0181 0 0
+          0      0      0      1 0
+        "
+      />
+    </filter>
+    <filter id="tint-green" color-interpolation-filters="sRGB">
+      <feColorMatrix
+        type="matrix"
+        values="
+          0.0567 0.1907 0.0193 0 0
+          0.1842 0.6202 0.0626 0 0
+          0.0567 0.1907 0.0193 0 0
+          0      0      0      1 0
+        "
+      />
+    </filter>
+    <filter id="tint-red" color-interpolation-filters="sRGB">
+      <feColorMatrix
+        type="matrix"
+        values="
+          0.2126 0.7152 0.0722 0 0
+          0.0567 0.1907 0.0193 0 0
+          0.0567 0.1907 0.0193 0 0
+          0      0      0      1 0
+        "
+      />
+    </filter>
+  </svg>
+  <main>
+    <section class="panel">
+      <div>
+        <h1>Gomoku2D sprite preview</h1>
+        <p class="note">
+          Source sprite sheets and animation loops for board-space assets.
+          Frame ranges should stay aligned with <code>manifest.md</code> and
+          <code>src/board/constants.ts</code>.
+        </p>
+      </div>
+      <div class="controls">
+        <button id="toggle" type="button">Pause</button>
+        <label>
+          Scale
+          <select id="scale">
+            <option value="4">4x</option>
+            <option selected value="5">5x</option>
+            <option value="6">6x</option>
+            <option value="8">8x</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div>
+        <h2>Source sheets</h2>
+        <p class="note">Rendered directly from sibling PNG files in this folder.</p>
+      </div>
+      <div class="sheetGrid" id="sheets"></div>
+    </section>
+
+    <section class="panel">
+      <div>
+        <h2>Static poses</h2>
+        <p class="note">
+          Rest frames used by runtime state resets. Warning-style sheets use the
+          first frame of their animation range as the static pose.
+        </p>
+      </div>
+      <div class="staticGrid" id="staticPoses"></div>
+    </section>
+
+    <section class="panel">
+      <div>
+        <h2>Animation loops</h2>
+        <p class="note">Each card uses row-major 16x16 frame stepping at the runtime FPS.</p>
+      </div>
+      <div class="animationGrid" id="animations"></div>
+    </section>
+
+    <section class="panel">
+      <div>
+        <h2>Z-order cases</h2>
+        <p class="note">
+          Representative board-cell stacks for pointer, warning, forbidden,
+          stone, sequence, and win-line overlap.
+        </p>
+      </div>
+      <div class="zCaseGrid" id="zCases"></div>
+      <ol class="layerList">
+        <li>winning-line hover</li>
+        <li>sequence number</li>
+        <li>stone</li>
+        <li>pointer</li>
+        <li>warning surface / forbidden warning</li>
+        <li>board</li>
+      </ol>
+    </section>
+  </main>
+
+  <script>
+    const FRAME_SIZE = 16;
+
+    const sheets = [
+      { file: "hover.png", cols: 6, rows: 1, label: "winning-line hover overlay" },
+      { file: "pointer.png", cols: 10, rows: 2, label: "touch/mouse pointer cues" },
+      { file: "stone.png", cols: 6, rows: 4, label: "stone destroy and idle loops" },
+      { file: "warning.png", cols: 6, rows: 5, label: "tactical warning and forbidden overlays" },
+      { file: "transform.png", cols: 10, rows: 1, label: "stone placement transform" },
+    ];
+
+    const staticPoses = [
+      { group: "Pointer", name: "pointer-static", role: "pointer reset pose", file: "pointer.png", cols: 10, rows: 2, frame: 0 },
+      { group: "Pointer", name: "pointer-static / black", role: "black player pointer reset pose", file: "pointer.png", cols: 10, rows: 2, frame: 0, tint: "black" },
+      { group: "Stone", name: "stone-static / white", role: "white resting stone", file: "stone.png", cols: 6, rows: 4, frame: 0 },
+      { group: "Stone", name: "stone-static / black", role: "black resting stone", file: "stone.png", cols: 6, rows: 4, frame: 0, tint: "black" },
+      { group: "Hover", name: "hover static", role: "winning-line hover rest pose", file: "hover.png", cols: 6, rows: 1, frame: 0, tint: "green" },
+      { group: "Warning", name: "warning static / win", role: "winning move rest pose", file: "warning.png", cols: 6, rows: 5, frame: 0, tint: "green" },
+      { group: "Warning", name: "warning static / threat", role: "threat move rest pose", file: "warning.png", cols: 6, rows: 5, frame: 0, tint: "red" },
+      { group: "Warning", name: "warning-on-forbidden static", role: "threat-on-forbidden rest pose", file: "warning.png", cols: 6, rows: 5, frame: 6, tint: "red" },
+      { group: "Warning", name: "forbidden static", role: "forbidden move rest pose", file: "warning.png", cols: 6, rows: 5, frame: 12, tint: "red" },
+      { group: "Warning", name: "highlight static", role: "reserved highlight rest pose", file: "warning.png", cols: 6, rows: 5, frame: 24 },
+    ];
+
+    const animations = [
+      { group: "Pointer", name: "pointer-idle-blocked", role: "blocked pointer cue", file: "pointer.png", cols: 10, rows: 2, start: 0, end: 5, fps: 12 },
+      { group: "Pointer", name: "pointer-idle-open", role: "normal open-cell cue", file: "pointer.png", cols: 10, rows: 2, start: 6, end: 9, fps: 12 },
+      { group: "Pointer", name: "pointer-idle-preferred", role: "preferred winning/threat cue", file: "pointer.png", cols: 10, rows: 2, start: 10, end: 19, fps: 12 },
+      { group: "Stone", name: "transform-form", role: "stone placement", file: "transform.png", cols: 10, rows: 1, start: 0, end: 9, fps: 18 },
+      { group: "Stone", name: "stone-destroy", role: "stone removal", file: "stone.png", cols: 6, rows: 4, start: 0, end: 3, fps: 12 },
+      { group: "Stone", name: "stone-idle-1", role: "last stone idle variant", file: "stone.png", cols: 6, rows: 4, start: 0, end: 5, fps: 6 },
+      { group: "Stone", name: "stone-idle-2", role: "last stone idle variant", file: "stone.png", cols: 6, rows: 4, start: 6, end: 11, fps: 6 },
+      { group: "Stone", name: "stone-idle-3", role: "last stone idle variant", file: "stone.png", cols: 6, rows: 4, start: 12, end: 17, fps: 6 },
+      { group: "Stone", name: "stone-idle-4", role: "last stone idle variant", file: "stone.png", cols: 6, rows: 4, start: 18, end: 23, fps: 6 },
+      { group: "Warning", name: "warning / win", role: "winning move, green tint", file: "warning.png", cols: 6, rows: 5, start: 0, end: 5, fps: 12, tint: "green" },
+      { group: "Warning", name: "warning / threat", role: "threat move, red tint", file: "warning.png", cols: 6, rows: 5, start: 0, end: 5, fps: 12, tint: "red" },
+      { group: "Warning", name: "warning-on-forbidden", role: "threat move on forbidden cell", file: "warning.png", cols: 6, rows: 5, start: 6, end: 11, fps: 12, tint: "red" },
+      { group: "Warning", name: "forbidden-out", role: "forbidden move loop half", file: "warning.png", cols: 6, rows: 5, start: 12, end: 17, fps: 12, tint: "red" },
+      { group: "Warning", name: "forbidden-in", role: "forbidden move loop half", file: "warning.png", cols: 6, rows: 5, start: 18, end: 23, fps: 12, tint: "red" },
+      { group: "Warning", name: "forbidden loop", role: "runtime alternating out + in", file: "warning.png", cols: 6, rows: 5, start: 12, end: 23, fps: 12, tint: "red" },
+      { group: "Warning", name: "highlight", role: "reserved, currently unused", file: "warning.png", cols: 6, rows: 5, start: 24, end: 29, fps: 12 },
+      { group: "Hover", name: "hover", role: "winning line, green tint", file: "hover.png", cols: 6, rows: 1, start: 0, end: 5, fps: 12, tint: "green" },
+    ];
+
+    const zCases = [
+      {
+        name: "preferred-pointer-over-warning",
+        title: "Preferred target",
+        note: "A legal winning or threat-response cell: warning context stays below the pointer.",
+        layers: [
+          { className: "zWinningWarning", name: "warning", file: "warning.png", cols: 6, rows: 5, start: 0, end: 5, fps: 12, tint: "green" },
+          { className: "zPointer", name: "pointer-idle-preferred", file: "pointer.png", cols: 10, rows: 2, start: 10, end: 19, fps: 12 },
+        ],
+      },
+      {
+        name: "threat-over-forbidden",
+        title: "Threat + forbidden",
+        note: "A threat cell that black cannot legally play: warning-on-forbidden replaces both the standalone threat warning and forbidden loop.",
+        layers: [
+          { className: "zWarning", name: "warning-on-forbidden", file: "warning.png", cols: 6, rows: 5, start: 6, end: 11, fps: 12, tint: "red" },
+          { className: "zPointer", name: "pointer-idle-blocked / black", file: "pointer.png", cols: 10, rows: 2, start: 0, end: 5, fps: 12, tint: "black" },
+        ],
+      },
+      {
+        name: "mobile-occupied-target",
+        title: "Mobile occupied target",
+        note: "Touchpad pointer can land on an occupied cell, but the committed stone still outranks it.",
+        layers: [
+          { className: "zPointer", name: "pointer-idle-blocked", file: "pointer.png", cols: 10, rows: 2, start: 0, end: 5, fps: 12 },
+          { className: "zStone", name: "stone-static / black", file: "stone.png", cols: 6, rows: 4, frame: 0, tint: "black" },
+        ],
+      },
+      {
+        name: "result-winning-line",
+        title: "Result winning line",
+        note: "End-state chronology and winning-line emphasis sit above the committed stone.",
+        sequence: "7",
+        layers: [
+          { className: "zWhiteStone", name: "stone-static / white", file: "stone.png", cols: 6, rows: 4, frame: 0 },
+          { className: "zHover", name: "hover", file: "hover.png", cols: 6, rows: 1, start: 0, end: 5, fps: 12, tint: "green" },
+        ],
+      },
+    ];
+
+    const sheetContainer = document.querySelector("#sheets");
+    const animationContainer = document.querySelector("#animations");
+    const staticContainer = document.querySelector("#staticPoses");
+    const zCaseContainer = document.querySelector("#zCases");
+    const scaleControl = document.querySelector("#scale");
+    const toggle = document.querySelector("#toggle");
+    let paused = false;
+
+    function createSheetCard(sheet) {
+      const card = document.createElement("article");
+      card.className = "sheetCard";
+      card.innerHTML = `
+        <div>
+          <h3>${sheet.file}</h3>
+          <p class="sheetMeta">${sheet.cols} cols x ${sheet.rows} rows · ${sheet.label}</p>
+        </div>
+        <img
+          alt="${sheet.file} source sheet"
+          src="${sheet.file}"
+          style="--sheet-width: ${sheet.cols * FRAME_SIZE * 4}px"
+        >
+      `;
+      return card;
+    }
+
+    function createAnimationCard(animation) {
+      const card = document.createElement("article");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="stage">
+          <div
+            class="sprite"
+            data-animation="${animation.name}"
+            data-file="${animation.file}"
+            data-cols="${animation.cols}"
+            data-rows="${animation.rows}"
+            data-start="${animation.start}"
+            data-end="${animation.end}"
+            data-fps="${animation.fps}"
+            data-tint="${animation.tint ?? ""}"
+          ></div>
+        </div>
+        <div class="cardHeader">
+          <div class="cardTitle">${animation.name}</div>
+          <div class="meta">${animation.group} · frames ${animation.start}-${animation.end} · ${animation.fps} fps</div>
+          <p class="note">${animation.role}</p>
+        </div>
+      `;
+      return card;
+    }
+
+    function createStaticCard(pose) {
+      const card = document.createElement("article");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="stage">
+          <div
+            class="sprite"
+            data-static="${pose.name}"
+            data-file="${pose.file}"
+            data-cols="${pose.cols}"
+            data-rows="${pose.rows}"
+            data-frame="${pose.frame}"
+            data-tint="${pose.tint ?? ""}"
+          ></div>
+        </div>
+        <div class="cardHeader">
+          <div class="cardTitle">${pose.name}</div>
+          <div class="meta">${pose.group} · frame ${pose.frame}</div>
+          <p class="note">${pose.role}</p>
+        </div>
+      `;
+      return card;
+    }
+
+    function createZCaseCard(zCase) {
+      const card = document.createElement("article");
+      card.className = "zCaseCard";
+      card.dataset.zCase = zCase.name;
+
+      const board = document.createElement("div");
+      board.className = "boardCell";
+      board.setAttribute("aria-label", `${zCase.title} z-order preview`);
+
+      zCase.layers.forEach((layer) => {
+        const sprite = document.createElement("div");
+        sprite.className = `stackSprite ${layer.className}`;
+        sprite.dataset.file = layer.file;
+        sprite.dataset.cols = String(layer.cols);
+        sprite.dataset.rows = String(layer.rows);
+        sprite.dataset.tint = layer.tint ?? "";
+
+        if (Number.isInteger(layer.frame)) {
+          sprite.dataset.static = layer.name;
+          sprite.dataset.frame = String(layer.frame);
+        } else {
+          sprite.dataset.animation = layer.name;
+          sprite.dataset.start = String(layer.start);
+          sprite.dataset.end = String(layer.end);
+          sprite.dataset.fps = String(layer.fps);
+        }
+
+        board.append(sprite);
+      });
+
+      if (zCase.sequence) {
+        const label = document.createElement("div");
+        label.className = "sequenceNumber";
+        label.textContent = zCase.sequence;
+        board.append(label);
+      }
+
+      card.append(board);
+      card.insertAdjacentHTML("beforeend", `
+        <div class="cardHeader">
+          <div class="cardTitle">${zCase.title}</div>
+          <p class="note">${zCase.note}</p>
+        </div>
+      `);
+      const layerNames = zCase.layers.map((layer) => `<li>${layer.name}</li>`).join("");
+      card.insertAdjacentHTML("beforeend", `<ol class="zCaseNotes">${layerNames}</ol>`);
+      return card;
+    }
+
+    function prepareSprite(sprite) {
+      const file = sprite.dataset.file;
+      const cols = Number(sprite.dataset.cols);
+      const rows = Number(sprite.dataset.rows);
+      sprite.style.backgroundImage = `url("${file}")`;
+      sprite.style.backgroundSize = `${cols * FRAME_SIZE}px ${rows * FRAME_SIZE}px`;
+    }
+
+    function setFrame(sprite, frame) {
+      const cols = Number(sprite.dataset.cols);
+      const row = Math.floor(frame / cols);
+      const col = frame % cols;
+      sprite.style.backgroundPosition = `-${col * FRAME_SIZE}px -${row * FRAME_SIZE}px`;
+    }
+
+    function tick(now) {
+      if (!paused) {
+        document.querySelectorAll("[data-animation]").forEach((sprite) => {
+          const start = Number(sprite.dataset.start);
+          const end = Number(sprite.dataset.end);
+          const fps = Number(sprite.dataset.fps);
+          const frameCount = end - start + 1;
+          const offset = Math.floor((now / 1000) * fps) % frameCount;
+          setFrame(sprite, start + offset);
+        });
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    sheets.forEach((sheet) => sheetContainer.append(createSheetCard(sheet)));
+    animations.forEach((animation) => animationContainer.append(createAnimationCard(animation)));
+    staticPoses.forEach((pose) => staticContainer.append(createStaticCard(pose)));
+    zCases.forEach((zCase) => zCaseContainer.append(createZCaseCard(zCase)));
+
+    document.querySelectorAll("[data-animation], [data-static]").forEach((sprite) => {
+      prepareSprite(sprite);
+      setFrame(sprite, Number(sprite.dataset.start ?? sprite.dataset.frame));
+    });
+
+    requestAnimationFrame(tick);
+
+    scaleControl.addEventListener("change", () => {
+      document.documentElement.style.setProperty("--preview-scale", scaleControl.value);
+    });
+
+    toggle.addEventListener("click", () => {
+      paused = !paused;
+      toggle.textContent = paused ? "Play" : "Pause";
+    });
+
+  </script>
+</body>
+</html>

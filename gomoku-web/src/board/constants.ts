@@ -51,13 +51,13 @@ export const STONE_ANIMS = {
 
 export const POINTER_ANIMS = {
   STATIC: { frame: 0, key: "pointer-static" },
-  IDLE_1: { start: 0, end: 5, frameRate: 12, key: "pointer-idle-1" },
-  IDLE_2: { start: 6, end: 9, frameRate: 12, key: "pointer-idle-2" },
-  IDLE_LONG: { start: 10, end: 19, frameRate: 12, key: "pointer-idle-long" },
+  BLOCKED: { start: 0, end: 5, frameRate: 12, key: "pointer-idle-blocked" },
+  OPEN: { start: 6, end: 9, frameRate: 12, key: "pointer-idle-open" },
+  PREFERRED: { start: 10, end: 19, frameRate: 12, key: "pointer-idle-preferred" },
 } as const;
 
 export const HOVER_ANIMS = {
-  HOVER: { start: 0, end: 5, frameRate: 12, key: "warning-hover" },
+  HOVER: { start: 0, end: 5, frameRate: 12, key: "hover" },
 } as const;
 
 export const WARNING_ANIMS = {
@@ -65,7 +65,7 @@ export const WARNING_ANIMS = {
   WARNING_ON_FORBIDDEN: { start: 6, end: 11, frameRate: 12, key: "warning-on-forbidden" },
   FORBIDDEN_OUT: { start: 12, end: 17, frameRate: 12, key: "forbidden-out" },
   FORBIDDEN_IN: { start: 18, end: 23, frameRate: 12, key: "forbidden-in" },
-  HIGHLIGHT: { start: 24, end: 29, frameRate: 12, key: "warning-highlight" },
+  HIGHLIGHT: { start: 24, end: 29, frameRate: 12, key: "highlight" },
 } as const;
 
 export const TRANSFORM_ANIMS = {

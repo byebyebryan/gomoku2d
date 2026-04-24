@@ -62,9 +62,9 @@ Pointer modes:
 
 | Mode | Meaning | Animation |
 |------|---------|-----------|
-| `normal` | legal open cell | `pointer-idle-2`, then static delay |
-| `preferred` | legal winning or threat-response cell | `pointer-idle-long`, then static delay |
-| `blocked` | occupied mobile target or forbidden open cell | `pointer-idle-1`, then static delay |
+| `normal` | legal open cell | `pointer-idle-open`, then static delay |
+| `preferred` | legal winning or threat-response cell | `pointer-idle-preferred`, then static delay |
+| `blocked` | occupied mobile target or forbidden open cell | `pointer-idle-blocked`, then static delay |
 
 ### Warnings
 
@@ -77,11 +77,12 @@ covering the pointer.
 | Threat move | `warning` tinted red |
 | Threat move also forbidden | `warning-on-forbidden` tinted red |
 | Forbidden move | alternating `forbidden-out` and `forbidden-in` |
-| Winning line | `warning-hover` tinted green |
+| Winning line | `hover` tinted green |
 
-Forbidden and threat can overlap. In that case, the forbidden surface remains
-visible and the threat uses the dedicated overlap animation. Do not introduce a
-new warning color unless the state has a genuinely new meaning.
+Forbidden and threat can overlap. In that case, the combined
+`warning-on-forbidden` animation replaces both the standalone threat warning and
+the forbidden loop. Do not introduce a new warning color unless the state has a
+genuinely new meaning.
 
 ### Sequence Numbers
 

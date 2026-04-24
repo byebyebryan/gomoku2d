@@ -88,6 +88,13 @@ export function warningSpriteForOverlay(role: WarningOverlayRole): string {
   return role === "winningLine" ? SPRITE.HOVER : SPRITE.WARNING;
 }
 
+export function shouldRenderStandaloneForbiddenOverlay(
+  forbiddenCell: CellPosition,
+  threatMoves: CellPosition[],
+): boolean {
+  return !threatMoves.some((cell) => cell.row === forbiddenCell.row && cell.col === forbiddenCell.col);
+}
+
 export function sequenceNumberFontSize(cellSize: number): number {
   return cellSize >= SEQUENCE_FONT_DESKTOP_CELL_SIZE
     ? SEQUENCE_FONT_DESKTOP_SIZE

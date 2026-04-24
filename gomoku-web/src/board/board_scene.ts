@@ -23,6 +23,7 @@ import {
   sequenceNumberFontSize,
   sequenceNumberPosition,
   shouldAnimatePlacedStone,
+  shouldRenderStandaloneForbiddenOverlay,
   shouldRestartPointerCycle,
   shouldSyncOverlaySprites,
   shouldStopStoneCycleBeforeStoneRemoval,
@@ -69,17 +70,17 @@ const STONE_STATIC_FRAME: SpriteFrameRef = { texture: SPRITE.STONE, frame: STONE
 const POINTER_STATIC_FRAME: SpriteFrameRef = { texture: SPRITE.POINTER, frame: POINTER_ANIMS.STATIC.frame };
 
 const POINTER_NORMAL_STEPS: readonly SequenceStep[] = [
-  { kind: "animation", key: POINTER_ANIMS.IDLE_2.key },
+  { kind: "animation", key: POINTER_ANIMS.OPEN.key },
   { kind: "delay", frame: POINTER_STATIC_FRAME, min: 450, max: 1200 },
 ] as const;
 
 const POINTER_PREFERRED_STEPS: readonly SequenceStep[] = [
-  { kind: "animation", key: POINTER_ANIMS.IDLE_LONG.key },
+  { kind: "animation", key: POINTER_ANIMS.PREFERRED.key },
   { kind: "delay", frame: POINTER_STATIC_FRAME, min: 450, max: 1200 },
 ] as const;
 
 const POINTER_BLOCKED_STEPS: readonly SequenceStep[] = [
-  { kind: "animation", key: POINTER_ANIMS.IDLE_1.key },
+  { kind: "animation", key: POINTER_ANIMS.BLOCKED.key },
   { kind: "delay", frame: POINTER_STATIC_FRAME, min: 450, max: 1200 },
 ] as const;
 
@@ -390,9 +391,9 @@ export class BoardScene extends Phaser.Scene {
     }
 
     for (const anim of [
-      POINTER_ANIMS.IDLE_1,
-      POINTER_ANIMS.IDLE_2,
-      POINTER_ANIMS.IDLE_LONG,
+      POINTER_ANIMS.BLOCKED,
+      POINTER_ANIMS.OPEN,
+      POINTER_ANIMS.PREFERRED,
     ]) {
       this.ensureRangeAnimation(SPRITE.POINTER, anim);
     }
@@ -620,6 +621,10 @@ export class BoardScene extends Phaser.Scene {
     );
 
     for (const cell of this.boardState.forbiddenMoves) {
+      if (!shouldRenderStandaloneForbiddenOverlay(cell, this.boardState.threatMoves)) {
+        continue;
+      }
+
       const point = this.board.cellToPixel(cell.row, cell.col);
       const sprite = this.createForbiddenSprite(point.x, point.y);
       this.forbiddenSprites.push(sprite);
