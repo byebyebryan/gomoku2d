@@ -32,6 +32,7 @@ export interface GuestSavedMatch {
   players: [MatchPlayer, MatchPlayer];
   savedAt: string;
   status: MatchStatus;
+  undoFloor?: number;
   variant: GameVariant;
   winningCells: CellPosition[];
 }
@@ -85,6 +86,14 @@ function deriveGuestStone(players: [MatchPlayer, MatchPlayer]): "black" | "white
   return human?.stone ?? "black";
 }
 
+function normalizeUndoFloor(undoFloor: number | undefined, moveCount: number): number {
+  if (undoFloor === undefined || !Number.isFinite(undoFloor)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(moveCount, Math.floor(undoFloor)));
+}
+
 export function createGuestProfileStore(
   options: GuestProfileStoreOptions = {},
 ): StoreApi<GuestProfileState> {
@@ -128,6 +137,7 @@ export function createGuestProfileStore(
             players: clonePlayers(match.players),
             savedAt,
             status: match.status,
+            undoFloor: normalizeUndoFloor(match.undoFloor, match.moves.length),
             variant: match.variant,
             winningCells: cloneWinningCells(match.winningCells),
           };

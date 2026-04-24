@@ -39,6 +39,7 @@ const loadingMatchStore = createStore<LocalMatchState>(() => ({
   startNextRound: () => undefined,
   status: "playing",
   threatMoves: [],
+  undoFloor: 0,
   undoLastTurn: () => false,
   dispose: () => undefined,
   winningMoves: [],
@@ -64,9 +65,9 @@ function statusLabel(
 }
 
 function canUndo(
-  state: Pick<LocalMatchState, "moves" | "players">,
+  state: Pick<LocalMatchState, "moves" | "players" | "undoFloor">,
 ): boolean {
-  const minimumMoves = state.players[0]?.kind === "bot" ? 1 : 0;
+  const minimumMoves = Math.max(state.undoFloor, state.players[0]?.kind === "bot" ? 1 : 0);
   return state.moves.length > minimumMoves;
 }
 

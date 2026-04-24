@@ -15,6 +15,7 @@ interface FinishedLocalMatch {
   moves: MatchMove[];
   players: [MatchPlayer, MatchPlayer];
   status: Exclude<MatchStatus, "playing">;
+  undoFloor: number;
   variant: GameVariant;
   winningCells: CellPosition[];
 }
@@ -34,6 +35,7 @@ export interface LocalMatchState {
   startNextRound: () => void;
   status: MatchStatus;
   threatMoves: CellPosition[];
+  undoFloor: number;
   undoLastTurn: () => boolean;
   placeHumanMove: (row: number, col: number) => boolean;
   dispose: () => void;
@@ -54,6 +56,7 @@ export interface LocalMatchStoreOptions {
 export interface LocalMatchResumeSeed {
   currentPlayer: 1 | 2;
   moves: MatchMove[];
+  undoFloor?: number;
   variant: GameVariant;
 }
 
@@ -70,6 +73,15 @@ function clonePlayers(players: [MatchPlayer, MatchPlayer]): [MatchPlayer, MatchP
 
 function cloneResumeMoves(moves: MatchMove[]): MatchMove[] {
   return moves.map((move) => ({ ...move }));
+}
+
+function normalizeUndoFloor(undoFloor: number | undefined, moveCount: number): number {
+  const fallback = undoFloor ?? moveCount;
+  if (!Number.isFinite(fallback)) {
+    return moveCount;
+  }
+
+  return Math.max(0, Math.min(moveCount, Math.floor(fallback)));
 }
 
 function swapPlayers(players: [MatchPlayer, MatchPlayer]): [MatchPlayer, MatchPlayer] {
@@ -188,6 +200,7 @@ function snapshotState(
   players: [MatchPlayer, MatchPlayer],
   currentVariant: GameVariant,
   selectedVariant: GameVariant,
+  undoFloor: number,
 ): Omit<
   LocalMatchState,
   "dispose" | "placeHumanMove" | "selectVariant" | "startNewMatch" | "startNextRound" | "undoLastTurn"
@@ -208,6 +221,7 @@ function snapshotState(
     selectedVariant,
     status,
     threatMoves: hints.threatMoves,
+    undoFloor,
     winningMoves: hints.winningMoves,
     winningCells: normalizeMoves(board.winningCells() as Array<{ row: number; col: number }>),
   };
@@ -218,8 +232,9 @@ function snapshotFinishedMatch(
   moves: MatchMove[],
   players: [MatchPlayer, MatchPlayer],
   variant: GameVariant,
+  undoFloor: number,
 ): FinishedLocalMatch | null {
-  const snapshot = snapshotState(board, moves, false, players, variant, variant);
+  const snapshot = snapshotState(board, moves, false, players, variant, variant, undoFloor);
   if (snapshot.status === "playing") {
     return null;
   }
@@ -229,6 +244,7 @@ function snapshotFinishedMatch(
     moves,
     players,
     status: snapshot.status,
+    undoFloor,
     variant,
     winningCells: snapshot.winningCells,
   };
@@ -254,10 +270,12 @@ export function createLocalMatchStore(
 
   let board = boardFactory(currentVariant);
   const seededMoves = initialResumeState && seedBoard(board, initialResumeState.moves) ? initialResumeState.moves : [];
+  let undoFloor = initialResumeState ? normalizeUndoFloor(initialResumeState.undoFloor, seededMoves.length) : 0;
   if (initialResumeState && seededMoves.length !== initialResumeState.moves.length) {
     board.free();
     board = boardFactory(currentVariant);
     players = defaultPlayers(options.humanDisplayName);
+    undoFloor = 0;
   }
   let requestToken = 0;
 
@@ -278,7 +296,7 @@ export function createLocalMatchStore(
     };
 
     const updateState = (nextMoves: MatchMove[], pendingBotMove: boolean): void => {
-      set(snapshotState(board, nextMoves, pendingBotMove, players, currentVariant, selectedVariant));
+      set(snapshotState(board, nextMoves, pendingBotMove, players, currentVariant, selectedVariant, undoFloor));
     };
 
     const currentPlayerSlot = (): 0 | 1 => ((board.currentPlayer() as 1 | 2) - 1) as 0 | 1;
@@ -302,7 +320,7 @@ export function createLocalMatchStore(
 
       updateState(nextMoves, false);
 
-      const finishedMatch = snapshotFinishedMatch(board, nextMoves, players, currentVariant);
+      const finishedMatch = snapshotFinishedMatch(board, nextMoves, players, currentVariant, undoFloor);
       if (finishedMatch) {
         options.onMatchFinished?.(finishedMatch);
       }
@@ -349,7 +367,8 @@ export function createLocalMatchStore(
       void queueBotMove(slot);
     };
 
-    const minimumRetainedMoveCount = (): number => (players[0].kind === "bot" ? 1 : 0);
+    const minimumRetainedMoveCount = (): number =>
+      Math.max(undoFloor, players[0].kind === "bot" ? 1 : 0);
 
     const resetMatch = (nextPlayers: [MatchPlayer, MatchPlayer], nextVariant = selectedVariant): void => {
       interruptBotRequests();
@@ -357,6 +376,7 @@ export function createLocalMatchStore(
       currentVariant = nextVariant;
       board = boardFactory(currentVariant);
       players = clonePlayers(nextPlayers);
+      undoFloor = 0;
       configureBots();
       updateState([], false);
       maybeQueueBotMove();
@@ -365,7 +385,7 @@ export function createLocalMatchStore(
     configureBots();
 
     return {
-      ...snapshotState(board, seededMoves, false, players, currentVariant, selectedVariant),
+      ...snapshotState(board, seededMoves, false, players, currentVariant, selectedVariant, undoFloor),
       dispose: () => {
         interruptBotRequests();
         botRunner.dispose();

@@ -60,12 +60,17 @@ describe("createGuestProfileStore", () => {
       moves: [
         { col: 7, moveNumber: 1, player: 1, row: 7 },
         { col: 6, moveNumber: 2, player: 2, row: 5 },
+        { col: 8, moveNumber: 3, player: 1, row: 7 },
+        { col: 6, moveNumber: 4, player: 2, row: 6 },
+        { col: 9, moveNumber: 5, player: 1, row: 7 },
+        { col: 6, moveNumber: 6, player: 2, row: 7 },
       ],
       players: [
         { kind: "human", name: "Guest", stone: "black" },
         { kind: "bot", name: "Practice Bot", stone: "white" },
       ],
       status: "white_won",
+      undoFloor: 5,
       variant: "freestyle",
       winningCells: [
         { row: 5, col: 6 },
@@ -95,6 +100,7 @@ describe("createGuestProfileStore", () => {
     expect(state.history[1]).toMatchObject({
       guestStone: "black",
       status: "white_won",
+      undoFloor: 5,
     });
   });
 
