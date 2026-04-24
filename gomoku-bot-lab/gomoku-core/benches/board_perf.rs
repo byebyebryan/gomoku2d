@@ -33,6 +33,24 @@ fn bench_immediate_winning_moves(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_has_multiple_immediate_winning_moves(c: &mut Criterion) {
+    let mut group = c.benchmark_group("core/has_multiple_immediate_winning_moves/current_player");
+
+    for scenario in scenarios::SCENARIOS {
+        let board = scenario.board();
+        let color = board.current_player;
+        group.bench_with_input(
+            BenchmarkId::from_parameter(scenario.id),
+            scenario,
+            |b, _| {
+                b.iter(|| black_box(board.has_multiple_immediate_winning_moves_for(color)));
+            },
+        );
+    }
+
+    group.finish();
+}
+
 fn bench_apply_and_undo(c: &mut Criterion) {
     let mut group = c.benchmark_group("core/apply_move_then_undo");
 
@@ -82,6 +100,7 @@ criterion_group!(
     config = criterion_config();
     targets =
         bench_immediate_winning_moves,
+        bench_has_multiple_immediate_winning_moves,
         bench_apply_and_undo,
         bench_renju_forbidden_moves
 );
