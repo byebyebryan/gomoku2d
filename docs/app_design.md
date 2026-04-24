@@ -1,8 +1,9 @@
-# Design
+# App Design
 
 Scope: information architecture, player-facing flows, and screen-level UI
 contracts for the current web app. Paired with `architecture.md` (runtime
-boundary) and `visual_design.md` (DOM shell style system).
+boundary), `ui_design.md` (DOM shell style system), and `game_visual.md`
+(Phaser canvas visual language).
 
 This document is the canonical UI/product-design guide for the current
 local-first `v0.2` direction. It is intentionally focused on the playable
@@ -16,7 +17,7 @@ leak into the default flows here.
 
 - move the web app onto a proper FE stack
 - make the UI scalable beyond one Phaser scene
-- establish a consistent DOM-shell visual language
+- establish consistent DOM-shell and canvas visual languages
 - deepen local play with richer records, replay, and rules handling
 
 The app remains guest-first and local-first by default:
@@ -59,6 +60,7 @@ The DOM shell should not overfit to one exact sprite pack.
 - The shell stays visually compatible with retro pixel-art board themes.
 - Board sprites, stones, and effects may change later as theme sets.
 - Shell layout and styling should not depend on one exact board palette.
+- Canvas-specific visual rules live in `game_visual.md`.
 
 ## Routes
 

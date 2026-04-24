@@ -8,7 +8,7 @@ Purpose: capture the current UI polish suggestions before and during
 implementation so we do not lose track of them while `v0.2.4` is being scoped
 and landed. This is explicitly a triage note, not a roadmap commitment and not
 a replacement for
-`visual_design.md` or `visual_review.md`.
+`ui_design.md` or `ui_screenshot_review.md`.
 
 Context:
 

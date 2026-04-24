@@ -1,15 +1,15 @@
-# Visual Design
+# UI Design
 
 Scope: the **DOM shell only**. This guide defines the styling language for the
 React/UI shell around the board.
 
 It does **not** define the Phaser board art pipeline, sprite palettes, stone
-effects, or board-theme asset rules. Those can evolve independently. The shell
-should stay compatible with multiple retro pixel-art board themes, not lock the
-project into one exact sprite pack.
+effects, tactical warning language, or board-theme asset rules. Those live in
+`game_visual.md`. The shell should stay compatible with multiple retro
+pixel-art board themes, not lock the project into one exact sprite pack.
 
-Paired with `design.md`, which defines screen roles and player-facing flows.
-Comparative screenshot review lives in `visual_review.md`.
+Paired with `app_design.md`, which defines screen roles and player-facing flows.
+Comparative screenshot review lives in `ui_screenshot_review.md`.
 
 ## Reference image
 
@@ -25,9 +25,9 @@ should stay in `docs/archive/` unless they become the new canonical reference.
 ## Reference set
 
 For the comparative screenshot set and critique, see
-[visual_review.md](visual_review.md). That document embeds the active `v0.1`,
-`v0.2.1`, `v0.2.2`, and `v0.2.3` reference captures and records what each
-revision got right and wrong.
+[ui_screenshot_review.md](ui_screenshot_review.md). That document embeds the
+active `v0.1`, `v0.2.1`, `v0.2.2`, and `v0.2.3` reference captures and records
+what each revision got right and wrong.
 
 The rule of thumb:
 
@@ -137,13 +137,8 @@ Theme support is a later possibility, not a current feature target.
 The important constraint for now is simply: do not paint the shell into a
 corner.
 
-If themes arrive later, they should mostly live in the game layer:
-
-- board base and frame
-- grid and marks
-- black and white pieces
-- cursor and highlight assets
-- win-line or effect visuals
+If themes arrive later, they should mostly live in the game layer described in
+`game_visual.md`.
 
 The DOM shell should remain comparatively stable:
 

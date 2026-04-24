@@ -51,7 +51,7 @@ This is the current focus.
 
 ### Work in this phase
 
-- rewrite the shell around the ongoing visual guide in `visual_design.md`
+- rewrite the shell around the ongoing visual guide in `ui_design.md`
 - simplify Home, Match, Replay, and Profile around their current roles
 - introduce a compact icon language where it improves density without replacing
   plain-language CTAs

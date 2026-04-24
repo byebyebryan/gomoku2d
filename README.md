@@ -93,8 +93,10 @@ The canonical design and schedule live in `docs/`:
 
 - [`docs/product.md`](docs/product.md) — what we're building and why
 - [`docs/architecture.md`](docs/architecture.md) — FE stack, DOM/Phaser boundary, core-sharing story
-- [`docs/design.md`](docs/design.md) — current local-first routes, flows, and screen contracts
-- [`docs/visual_design.md`](docs/visual_design.md) — DOM shell visual language and styling rules
+- [`docs/app_design.md`](docs/app_design.md) — current local-first routes, flows, and screen contracts
+- [`docs/ui_design.md`](docs/ui_design.md) — DOM shell visual language and styling rules
+- [`docs/game_visual.md`](docs/game_visual.md) — Phaser canvas, sprite, warning, and animation language
+- [`docs/ui_screenshot_review.md`](docs/ui_screenshot_review.md) — screenshot history and UI critique
 - [`docs/backend.md`](docs/backend.md) — Firebase + Firestore + Cloud Run model for later cloud/online phases
 - [`docs/roadmap.md`](docs/roadmap.md) — phased plan, with local-first `v0.2` before cloud/online
 - [`docs/bot_baseline.md`](docs/bot_baseline.md) — current `SearchBot` strategy
