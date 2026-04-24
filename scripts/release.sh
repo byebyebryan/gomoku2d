@@ -56,11 +56,9 @@ fi
 
 echo "Preparing release ${TAG} (${DATE})"
 
-# 1. Bump package.json (npm handles package-lock.json too)
-(
-  cd gomoku-web
-  npm version "$VERSION" --no-git-tag-version --allow-same-version >/dev/null
-)
+# 1. Bump package.json (npm handles package-lock.json too). This is safe if
+#    scripts/set-web-version.sh already prepared the same version for screenshots.
+scripts/set-web-version.sh "$VERSION" >/dev/null
 
 # 2. Roll CHANGELOG: rename [Unreleased] to [VERSION] - DATE, insert fresh
 #    [Unreleased] above it, and update the compare-link refs at the bottom.
