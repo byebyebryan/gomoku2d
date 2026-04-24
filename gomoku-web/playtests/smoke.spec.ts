@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
+const DEFAULT_BASE_URL = "http://127.0.0.1:8001";
+
 async function waitForBotReply(page: Page) {
   await expect
     .poll(
@@ -20,7 +22,7 @@ test("home boot and local bot match smoke flow", async ({ page }) => {
   await page.goto("/");
 
   await expect(page.getByRole("heading", { name: "Gomoku2D" })).toBeVisible();
-  await expect(page.getByText(/five in a row/i)).toBeVisible();
+  await expect(page.getByText("An old favorite, built properly.")).toBeVisible();
 
   await page.getByRole("link", { name: "Play" }).click();
 
@@ -199,7 +201,7 @@ test("direct entry to the local match route loads the app", async ({ page }) => 
     .toBeGreaterThan(0.98);
 });
 
-test("portrait local match keeps the board frame tight to the canvas", async ({ page }) => {
+test("portrait local match keeps the board frame tight while allowing page scroll", async ({ page }) => {
   await page.setViewportSize({ width: 430, height: 760 });
   await page.goto("/match/local");
 
@@ -290,14 +292,14 @@ test("portrait local match keeps the board frame tight to the canvas", async ({ 
   expect(ratios!.boardPanelWidth).toBeLessThanOrEqual(430);
   expect(ratios!.boardFitsLayout).toBe(true);
   expect(ratios!.headerFitsLayout).toBe(true);
-  expect(ratios!.layoutOverflowY).toBe("hidden");
+  expect(ratios!.layoutOverflowY).toBe("visible");
   expect(ratios!.matchLabelHidden).toBe(true);
   expect(ratios!.headerLabelsHidden).toBe(true);
   expect(ratios!.playerRowsGap).toBeGreaterThanOrEqual(8);
   expect(ratios!.playerRowsFitLayout).toBe(true);
   expect(ratios!.actionGap).toBeGreaterThanOrEqual(8);
   expect(ratios!.ruleGap).toBeGreaterThanOrEqual(8);
-  expect(ratios!.pageScrollRange).toBeLessThanOrEqual(2);
+  expect(ratios!.pageScrollRange).toBeGreaterThanOrEqual(0);
   expect(ratios!.statusHidden).toBe(true);
   expect(ratios!.canvasToFrame).toBeGreaterThan(0.9);
   expect(ratios!.viewportToFrame).toBeGreaterThan(0.9);
@@ -306,19 +308,23 @@ test("portrait local match keeps the board frame tight to the canvas", async ({ 
 
   await page.evaluate(() => window.scrollTo(0, 200));
   await page.waitForTimeout(50);
-  await expect.poll(async () => page.evaluate(() => window.scrollY)).toBe(0);
+  if (ratios!.pageScrollRange > 2) {
+    await expect.poll(async () => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  } else {
+    await expect.poll(async () => page.evaluate(() => window.scrollY)).toBe(0);
+  }
 });
 
 test("portrait touch input uses Place instead of auto-placing on release", async ({ browser }) => {
   const context = await browser.newContext({
+    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? DEFAULT_BASE_URL,
     hasTouch: true,
     viewport: { width: 430, height: 760 },
   });
   const page = await context.newPage();
 
   try {
-    const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
-    await page.goto(new URL("/match/local", baseUrl).toString());
+    await page.goto("/match/local");
 
     await expect(page.getByRole("heading", { name: "Local Match" })).toBeVisible();
 
