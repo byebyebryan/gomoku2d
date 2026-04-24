@@ -4,6 +4,9 @@ import { WARNING_ANIMS } from "./constants";
 
 const TOUCH_DRAG_SENSITIVITY = 1.0;
 const DEFAULT_BOARD_SIZE = 15;
+const SEQUENCE_FONT_DESKTOP_CELL_SIZE = 40;
+const SEQUENCE_FONT_MOBILE_SIZE = 8;
+const SEQUENCE_FONT_DESKTOP_SIZE = 16;
 
 export type WarningOverlayRole = "forbidden" | "tacticalHint" | "winningLine";
 
@@ -15,6 +18,19 @@ export function warningAnimationForOverlay(role: WarningOverlayRole): string {
     case "winningLine":
       return WARNING_ANIMS.HOVER.key;
   }
+}
+
+export function sequenceNumberFontSize(cellSize: number): number {
+  return cellSize >= SEQUENCE_FONT_DESKTOP_CELL_SIZE
+    ? SEQUENCE_FONT_DESKTOP_SIZE
+    : SEQUENCE_FONT_MOBILE_SIZE;
+}
+
+export function sequenceNumberPosition(x: number, y: number): { x: number; y: number } {
+  return {
+    x: Math.round(x),
+    y: Math.round(y),
+  };
 }
 
 export function shouldAnimatePlacedStone(

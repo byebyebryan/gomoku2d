@@ -4,16 +4,18 @@ import {
   BOARD_SIZE,
   COLOR,
   FRAME_SIZE,
-  FONT_KEY,
   POINTER_ANIMS,
   SPRITE,
   STONE_ANIMS,
   WARNING_ANIMS,
 } from "./constants";
 import { BoardRenderer } from "./board_renderer";
+import { SEQUENCE_FONT_FAMILY } from "./sequence_font";
 import {
   canPlaceTouchCandidate,
   moveTouchCandidateFromDrag,
+  sequenceNumberFontSize,
+  sequenceNumberPosition,
   shouldAnimatePlacedStone,
   shouldRestartPointerCycle,
   shouldStopStoneIdleCycle,
@@ -30,12 +32,14 @@ const STONE_IDLE_ANIMS = [
   STONE_ANIMS.RELAX_4,
 ] as const;
 const ASSET_URLS = {
-  fontData: new URL("../../assets/fonts/PixelOperator8-Bold.fnt", import.meta.url).toString(),
-  fontImage: new URL("../../assets/fonts/PixelOperator8-Bold.png", import.meta.url).toString(),
   pointer: new URL("../../assets/sprites/pointer.png", import.meta.url).toString(),
   stone: new URL("../../assets/sprites/stone.png", import.meta.url).toString(),
   warning: new URL("../../assets/sprites/warning.png", import.meta.url).toString(),
 } as const;
+
+function cssColor(color: number): string {
+  return `#${color.toString(16).padStart(6, "0")}`;
+}
 
 class IdleCycle {
   private readonly scene: Phaser.Scene;
@@ -168,7 +172,7 @@ export class BoardScene extends Phaser.Scene {
   private reportedTouchCandidateKey: string | null = null;
   private reportedTouchCanPlace = false;
   private root: Phaser.GameObjects.Container | null = null;
-  private sequenceLabels: Phaser.GameObjects.BitmapText[] = [];
+  private sequenceLabels: Phaser.GameObjects.Text[] = [];
   private stoneCycle: IdleCycle | null = null;
   private stoneSprites: Map<string, Phaser.GameObjects.Sprite> = new Map();
   private touchCandidate: CellPosition | null = null;
@@ -183,10 +187,6 @@ export class BoardScene extends Phaser.Scene {
     this.preloadSpritesheet(SPRITE.STONE, ASSET_URLS.stone);
     this.preloadSpritesheet(SPRITE.POINTER, ASSET_URLS.pointer);
     this.preloadSpritesheet(SPRITE.WARNING, ASSET_URLS.warning);
-
-    if (!this.cache.bitmapFont.exists(FONT_KEY)) {
-      this.load.bitmapFont(FONT_KEY, ASSET_URLS.fontImage, ASSET_URLS.fontData);
-    }
   }
 
   create(): void {
@@ -498,8 +498,6 @@ export class BoardScene extends Phaser.Scene {
     }
 
     if (this.boardState.showSequenceNumbers && this.boardState.status !== "playing") {
-      const fontSize = Phaser.Math.Clamp(Math.round(this.currentCellSize * 0.28), 8, 10);
-
       for (const move of this.boardState.moves) {
         const cell = this.boardState.cells[move.row][move.col];
         if (cell === null) {
@@ -507,8 +505,12 @@ export class BoardScene extends Phaser.Scene {
         }
 
         const point = this.board.cellToPixel(move.row, move.col);
-        const label = this.add.bitmapText(point.x, point.y, FONT_KEY, String(move.moveNumber), fontSize);
-        label.setTint(cell === 0 ? COLOR.SEQ_ON_BLACK : COLOR.SEQ_ON_WHITE);
+        const position = sequenceNumberPosition(point.x, point.y);
+        const label = this.add.text(position.x, position.y, String(move.moveNumber), {
+          color: cssColor(cell === 0 ? COLOR.SEQ_ON_BLACK : COLOR.SEQ_ON_WHITE),
+          fontFamily: SEQUENCE_FONT_FAMILY,
+          fontSize: `${sequenceNumberFontSize(this.currentCellSize)}px`,
+        });
         label.setOrigin(0.5, 0.5);
         label.setDepth(3);
         this.overlayLayer.add(label);

@@ -5,6 +5,8 @@ import type { CellStone } from "../game/types";
 import {
   canPlaceTouchCandidate,
   moveTouchCandidateFromDrag,
+  sequenceNumberFontSize,
+  sequenceNumberPosition,
   shouldAnimatePlacedStone,
   shouldRestartPointerCycle,
   shouldStopStoneIdleCycle,
@@ -120,5 +122,20 @@ describe("warningAnimationForOverlay", () => {
     expect(warningAnimationForOverlay("tacticalHint")).toBe("warning-hover");
     expect(warningAnimationForOverlay("winningLine")).toBe("warning-hover");
     expect(warningAnimationForOverlay("forbidden")).toBe("warning-forbidden");
+  });
+});
+
+describe("sequenceNumberFontSize", () => {
+  it("uses small pixel-font labels on mobile-sized boards and larger labels on desktop-sized boards", () => {
+    expect(sequenceNumberFontSize(28)).toBe(8);
+    expect(sequenceNumberFontSize(39)).toBe(8);
+    expect(sequenceNumberFontSize(40)).toBe(16);
+    expect(sequenceNumberFontSize(56)).toBe(16);
+  });
+});
+
+describe("sequenceNumberPosition", () => {
+  it("snaps canvas text labels to whole pixels", () => {
+    expect(sequenceNumberPosition(12.4, 20.6)).toEqual({ x: 12, y: 21 });
   });
 });
