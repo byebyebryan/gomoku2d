@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { APP_VERSION } from "../app/version";
 import { Icon } from "../ui/Icon";
 import styles from "./HomeRoute.module.css";
 
@@ -19,6 +20,7 @@ export function HomeRoute() {
             <span className="uiActionLabel">Profile</span>
           </Link>
         </div>
+        <p className={styles.version}>{APP_VERSION}</p>
       </section>
     </main>
   );

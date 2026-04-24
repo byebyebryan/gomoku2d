@@ -26,11 +26,20 @@
   line-height: 1.25;
 }
 
+.version {
+  margin: -14px 0 0;
+  color: var(--text-soft);
+  font-family: var(--font-display);
+  font-size: var(--type-meta);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 @media (max-width: 720px) {
