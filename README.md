@@ -8,6 +8,8 @@ A retro Gomoku game built on a modern web and Rust stack.
 
 **Play in browser:** https://dev.byebyebryan.com/gomoku2d/
 
+**Pixel-art previews:** https://dev.byebyebryan.com/gomoku2d/assets/
+
 Gomoku2D aims for old-school play with better engineering: a crisp board-first
 UI, local replay/history, and a browser build that feels fast and polished on
 desktop and mobile without losing the feel of a small tabletop game.
@@ -96,6 +98,8 @@ The canonical design and schedule live in `docs/`:
 - [`docs/app_design.md`](docs/app_design.md) — current local-first routes, flows, and screen contracts
 - [`docs/ui_design.md`](docs/ui_design.md) — DOM shell visual language and styling rules
 - [`docs/game_visual.md`](docs/game_visual.md) — Phaser canvas, sprite, warning, and animation language
+- [`gomoku-web/assets/README.md`](gomoku-web/assets/README.md) — source asset folders and local preview pages
+- [Live asset previews](https://dev.byebyebryan.com/gomoku2d/assets/) — published sprite, icon, and font previews
 - [`docs/ui_screenshot_review.md`](docs/ui_screenshot_review.md) — screenshot history and UI critique
 - [`docs/backend.md`](docs/backend.md) — Firebase + Firestore + Cloud Run model for later cloud/online phases
 - [`docs/roadmap.md`](docs/roadmap.md) — phased plan, with local-first `v0.2` before cloud/online

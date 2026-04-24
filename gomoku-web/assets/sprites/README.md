@@ -1,11 +1,11 @@
-# Gomoku2D Sprite Asset Manifest
+# Gomoku2D Sprite Assets
 
 All runtime board spritesheets use 16x16 frames. The source files in this
 folder are the authoritative copies; matching files under
 `public/assets/sprites/` must stay in sync for deployed asset URLs.
 
 For the meaning of each board-space visual role, see
-`../../../docs/game_visual.md`. This manifest is only the frame inventory.
+`../../../docs/game_visual.md`. This README is only the frame inventory.
 For a visual inspection page, open [preview.html](./preview.html).
 
 ## Published Sprites

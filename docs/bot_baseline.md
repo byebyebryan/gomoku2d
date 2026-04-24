@@ -1,8 +1,8 @@
 # Bot: Baseline Search
 
-**File:** `gomoku-bot-lab/gomoku-bot/src/search.rs`  
-**Name string:** `"baseline"`  
-**Purpose:** Classic alpha-beta search bot — the reference implementation everything else gets compared against.
+- **File:** `gomoku-bot-lab/gomoku-bot/src/search.rs`
+- **Name string:** `"baseline"`
+- **Purpose:** Classic alpha-beta search bot — the reference implementation everything else gets compared against.
 
 ---
 
