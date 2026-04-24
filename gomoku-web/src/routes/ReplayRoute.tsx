@@ -9,6 +9,8 @@ import {
   buildLocalReplayFrame,
   canResumeReplay,
   defaultReplayMoveIndex,
+  replayResumeUndoFloor,
+  replayUndoFloor,
   replayPlayerName,
   replayWinnerLabel,
   replayStartMoveIndex,
@@ -39,11 +41,12 @@ export function ReplayRoute() {
 
   const match = history.find((entry) => entry.id === matchId) ?? null;
   const guestDisplayName = profile?.displayName ?? "Guest";
+  const replayFloor = match ? replayUndoFloor(match) : 0;
 
   useEffect(() => {
-    setMoveIndex(defaultReplayMoveIndex(match?.moves.length ?? 0));
+    setMoveIndex(defaultReplayMoveIndex(match?.moves.length ?? 0, replayFloor));
     setAutoplaying(false);
-  }, [match?.moves.length, matchId]);
+  }, [match?.moves.length, matchId, replayFloor]);
 
   useEffect(() => {
     if (!match || !autoplaying) {
@@ -83,6 +86,7 @@ export function ReplayRoute() {
   const resumeSeed: LocalMatchResumeSeed = {
     currentPlayer: frame.currentPlayer,
     moves: frame.moves.map((move) => ({ ...move })),
+    undoFloor: replayResumeUndoFloor(match, frame),
     variant: match.variant,
   };
 
@@ -272,7 +276,7 @@ export function ReplayRoute() {
 
             <button
               className={`uiAction uiActionSecondary ${styles.resumeAction}`}
-              disabled={!canResumeReplay(frame)}
+              disabled={!canResumeReplay(frame, replayFloor)}
               onClick={() => {
                 navigate("/match/local", { state: { resumeSeed } });
               }}

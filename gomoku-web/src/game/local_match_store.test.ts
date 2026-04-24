@@ -214,6 +214,63 @@ describe("createLocalMatchStore", () => {
     expect(chooseMoveCalls).toBe(1);
   });
 
+  it("does not undo past the replay resume floor", async () => {
+    const store = createLocalMatchStore({
+      botRunner: {
+        chooseMove: async () => ({ row: 0, col: 2 }),
+        configure: () => undefined,
+        dispose: () => undefined,
+      },
+      resumeState: {
+        currentPlayer: 1,
+        moves: [
+          { col: 7, moveNumber: 1, player: 1, row: 7 },
+          { col: 0, moveNumber: 2, player: 2, row: 0 },
+          { col: 8, moveNumber: 3, player: 1, row: 7 },
+          { col: 1, moveNumber: 4, player: 2, row: 0 },
+        ],
+        variant: "freestyle",
+      },
+    });
+
+    expect(store.getState()).toMatchObject({
+      moves: [
+        expect.objectContaining({ moveNumber: 1, player: 1, row: 7, col: 7 }),
+        expect.objectContaining({ moveNumber: 2, player: 2, row: 0, col: 0 }),
+        expect.objectContaining({ moveNumber: 3, player: 1, row: 7, col: 8 }),
+        expect.objectContaining({ moveNumber: 4, player: 2, row: 0, col: 1 }),
+      ],
+      undoFloor: 4,
+    });
+    expect(store.getState().undoLastTurn()).toBe(false);
+
+    expect(store.getState().placeHumanMove(7, 9)).toBe(true);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(store.getState().moves).toEqual([
+      expect.objectContaining({ moveNumber: 1, player: 1, row: 7, col: 7 }),
+      expect.objectContaining({ moveNumber: 2, player: 2, row: 0, col: 0 }),
+      expect.objectContaining({ moveNumber: 3, player: 1, row: 7, col: 8 }),
+      expect.objectContaining({ moveNumber: 4, player: 2, row: 0, col: 1 }),
+      expect.objectContaining({ moveNumber: 5, player: 1, row: 7, col: 9 }),
+      expect.objectContaining({ moveNumber: 6, player: 2, row: 0, col: 2 }),
+    ]);
+
+    expect(store.getState().undoLastTurn()).toBe(true);
+    expect(store.getState()).toMatchObject({
+      currentPlayer: 1,
+      moves: [
+        expect.objectContaining({ moveNumber: 1, player: 1, row: 7, col: 7 }),
+        expect.objectContaining({ moveNumber: 2, player: 2, row: 0, col: 0 }),
+        expect.objectContaining({ moveNumber: 3, player: 1, row: 7, col: 8 }),
+        expect.objectContaining({ moveNumber: 4, player: 2, row: 0, col: 1 }),
+      ],
+      pendingBotMove: false,
+      undoFloor: 4,
+    });
+    expect(store.getState().undoLastTurn()).toBe(false);
+  });
+
   it("derives human-turn warning cues from the wasm board", () => {
     const board = WasmBoard.createWithVariant("freestyle");
     const moves: Array<[number, number]> = [
@@ -501,6 +558,7 @@ describe("createLocalMatchStore", () => {
     const finishedMatches: Array<{
       players: LocalMatchState["players"];
       status: LocalMatchState["status"];
+      undoFloor: number;
       variant: "freestyle" | "renju";
       winningCells: LocalMatchState["winningCells"];
     }> = [];
@@ -516,6 +574,7 @@ describe("createLocalMatchStore", () => {
         finishedMatches.push({
           players: match.players,
           status: match.status,
+          undoFloor: match.undoFloor,
           variant: match.variant,
           winningCells: match.winningCells,
         });
@@ -532,6 +591,7 @@ describe("createLocalMatchStore", () => {
           expect.objectContaining({ kind: "bot", stone: "white" }),
         ],
         status: "black_won",
+        undoFloor: 0,
         variant: "renju",
       }),
     ]);

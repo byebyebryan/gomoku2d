@@ -19,16 +19,40 @@ export function shouldShowReplaySequenceNumbers(frame: Pick<LocalReplayFrame, "s
   return frame.status !== "playing";
 }
 
-export function defaultReplayMoveIndex(totalMoves: number): number {
-  return Math.min(totalMoves, REPLAY_RESUME_MIN_MOVE_INDEX);
+function normalizeUndoFloor(undoFloor: number | undefined, moveCount: number): number {
+  if (undoFloor === undefined || !Number.isFinite(undoFloor)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(moveCount, Math.floor(undoFloor)));
+}
+
+export function replayUndoFloor(match: Pick<GuestSavedMatch, "moves" | "undoFloor">): number {
+  return normalizeUndoFloor(match.undoFloor, match.moves.length);
+}
+
+export function defaultReplayMoveIndex(totalMoves: number, undoFloor = 0): number {
+  return Math.min(totalMoves, Math.max(REPLAY_RESUME_MIN_MOVE_INDEX, normalizeUndoFloor(undoFloor, totalMoves)));
 }
 
 export function replayStartMoveIndex(totalMoves: number): number {
   return totalMoves > 0 ? 1 : 0;
 }
 
-export function canResumeReplay(frame: Pick<LocalReplayFrame, "moveIndex" | "status">): boolean {
-  return frame.status === "playing" && frame.moveIndex >= REPLAY_RESUME_MIN_MOVE_INDEX;
+export function canResumeReplay(
+  frame: Pick<LocalReplayFrame, "moveIndex" | "status">,
+  undoFloor = 0,
+): boolean {
+  const floor = Number.isFinite(undoFloor) ? Math.max(0, Math.floor(undoFloor)) : 0;
+  const minimumMoveIndex = Math.max(REPLAY_RESUME_MIN_MOVE_INDEX, floor);
+  return frame.status === "playing" && frame.moveIndex >= minimumMoveIndex;
+}
+
+export function replayResumeUndoFloor(
+  match: Pick<GuestSavedMatch, "moves" | "undoFloor">,
+  frame: Pick<LocalReplayFrame, "moveIndex">,
+): number {
+  return Math.max(replayUndoFloor(match), frame.moveIndex);
 }
 
 function emptyCells(): CellStone[][] {

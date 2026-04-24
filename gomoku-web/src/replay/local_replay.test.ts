@@ -6,6 +6,7 @@ import {
   buildLocalReplayFrame,
   canResumeReplay,
   defaultReplayMoveIndex,
+  replayResumeUndoFloor,
   replayStartMoveIndex,
   shouldShowReplaySequenceNumbers,
 } from "./local_replay";
@@ -72,6 +73,7 @@ describe("buildLocalReplayFrame", () => {
     expect(defaultReplayMoveIndex(0)).toBe(0);
     expect(defaultReplayMoveIndex(2)).toBe(2);
     expect(defaultReplayMoveIndex(8)).toBe(4);
+    expect(defaultReplayMoveIndex(8, 5)).toBe(5);
     expect(replayStartMoveIndex(0)).toBe(0);
     expect(replayStartMoveIndex(8)).toBe(1);
   });
@@ -92,5 +94,24 @@ describe("buildLocalReplayFrame", () => {
     };
 
     expect(canResumeReplay(buildLocalReplayFrame(longerReplay, 4))).toBe(true);
+    expect(canResumeReplay(buildLocalReplayFrame(longerReplay, 4), 5)).toBe(false);
+    expect(canResumeReplay(buildLocalReplayFrame(longerReplay, 5), 5)).toBe(true);
+  });
+
+  it("only raises the replay undo floor when branching again", () => {
+    const branchedReplay = {
+      ...SAMPLE_MATCH,
+      moves: [
+        ...SAMPLE_MATCH.moves,
+        { col: 1, moveNumber: 4, player: 2 as const, row: 1 },
+        { col: 9, moveNumber: 5, player: 1 as const, row: 7 },
+        { col: 2, moveNumber: 6, player: 2 as const, row: 2 },
+      ],
+      undoFloor: 5,
+      winningCells: [],
+    };
+
+    expect(replayResumeUndoFloor(branchedReplay, buildLocalReplayFrame(branchedReplay, 5))).toBe(5);
+    expect(replayResumeUndoFloor(branchedReplay, buildLocalReplayFrame(branchedReplay, 6))).toBe(6);
   });
 });
