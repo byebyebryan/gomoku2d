@@ -244,7 +244,7 @@ fn allows_opponent_forcing_reply(
 
             board.apply_move(reply).unwrap();
             let forcing = matches!(board.result, GameResult::Winner(winner) if winner == opponent)
-                || board.immediate_winning_moves_for(opponent).len() >= 2;
+                || board.has_multiple_immediate_winning_moves_for(opponent);
             board.undo_move(reply);
             if forcing {
                 dangerous = true;
@@ -607,6 +607,10 @@ impl Bot for SearchBot {
 }
 
 #[cfg(test)]
+#[path = "../../benchmarks/scenarios.rs"]
+mod scenarios;
+
+#[cfg(test)]
 mod tests {
     use super::*;
     use gomoku_core::RuleConfig;
@@ -709,5 +713,55 @@ mod tests {
 
         assert_eq!(info.depth_reached, 1);
         assert_eq!(info.nodes, 2);
+    }
+
+    #[test]
+    fn benchmark_scenarios_return_legal_moves() {
+        for scenario in scenarios::SCENARIOS {
+            let board = scenario.board();
+            let mut bot = SearchBot::new(3);
+            let mv = bot.choose_move(&board);
+
+            assert!(
+                board.is_legal(mv),
+                "scenario '{}' returned illegal move {:?}",
+                scenario.id,
+                mv
+            );
+        }
+    }
+
+    #[test]
+    fn benchmark_immediate_win_anchor_plays_winning_move() {
+        let scenario = scenarios::SCENARIOS
+            .iter()
+            .find(|scenario| scenario.id == "immediate_win")
+            .expect("expected immediate-win benchmark scenario");
+        let board = scenario.board();
+        let winning_moves = board.immediate_winning_moves_for(board.current_player);
+        let mut bot = SearchBot::new(3);
+
+        assert!(
+            winning_moves.contains(&bot.choose_move(&board)),
+            "expected bot to choose one of {:?}",
+            winning_moves
+        );
+    }
+
+    #[test]
+    fn benchmark_immediate_block_anchor_blocks_opponent_win() {
+        let scenario = scenarios::SCENARIOS
+            .iter()
+            .find(|scenario| scenario.id == "immediate_block")
+            .expect("expected immediate-block benchmark scenario");
+        let board = scenario.board();
+        let opponent_wins = board.immediate_winning_moves_for(board.current_player.opponent());
+        let mut bot = SearchBot::new(3);
+
+        assert!(
+            opponent_wins.contains(&bot.choose_move(&board)),
+            "expected bot to block one of {:?}",
+            opponent_wins
+        );
     }
 }

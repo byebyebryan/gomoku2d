@@ -134,16 +134,69 @@ impl Board {
         next.current_player = color;
 
         for mv in self.nearby_empty_moves(self.config.win_length.saturating_sub(1)) {
-            if !next.is_legal_for(mv, color) {
-                continue;
-            }
-            if let Ok(result) = next.apply_move(mv) {
-                if matches!(result, GameResult::Winner(winner) if winner == color) {
-                    wins.push(mv);
-                }
-                next.undo_move(mv);
+            if Self::probe_immediate_winning_move(&mut next, mv, color) {
+                wins.push(mv);
             }
         }
+        wins
+    }
+
+    pub fn has_multiple_immediate_winning_moves_for(&self, color: Color) -> bool {
+        if self.result != GameResult::Ongoing {
+            return false;
+        }
+
+        let mut wins = 0;
+        let mut next = self.clone();
+        next.current_player = color;
+        let radius = self.config.win_length.saturating_sub(1) as isize;
+        let size = self.config.board_size;
+        let mut seen = vec![false; size * size];
+
+        for row in 0..size {
+            for col in 0..size {
+                if self.cells[row][col].is_none() {
+                    continue;
+                }
+
+                for dr in -radius..=radius {
+                    for dc in -radius..=radius {
+                        let r = row as isize + dr;
+                        let c = col as isize + dc;
+                        if r < 0 || r >= size as isize || c < 0 || c >= size as isize {
+                            continue;
+                        }
+
+                        let mv = Move {
+                            row: r as usize,
+                            col: c as usize,
+                        };
+                        let idx = mv.row * size + mv.col;
+                        if seen[idx] || self.cells[mv.row][mv.col].is_some() {
+                            continue;
+                        }
+                        seen[idx] = true;
+
+                        if Self::probe_immediate_winning_move(&mut next, mv, color) {
+                            wins += 1;
+                            if wins >= 2 {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        false
+    }
+
+    fn probe_immediate_winning_move(next: &mut Board, mv: Move, color: Color) -> bool {
+        let Ok(result) = next.apply_move(mv) else {
+            return false;
+        };
+        let wins = matches!(result, GameResult::Winner(winner) if winner == color);
+        next.undo_move(mv);
         wins
     }
 
@@ -672,6 +725,23 @@ mod tests {
             b.immediate_winning_moves_for(Color::Black),
             vec![Move { row: 7, col: 2 }, Move { row: 7, col: 7 }]
         );
+    }
+
+    #[test]
+    fn detects_multiple_immediate_winning_moves_for_player() {
+        let mut fork = default_board();
+        setup(
+            &mut fork,
+            &[(7, 3), W[0], (7, 4), W[1], (7, 5), W[2], (7, 6), W[3]],
+        );
+        assert!(fork.has_multiple_immediate_winning_moves_for(Color::Black));
+
+        let mut single = default_board();
+        setup(
+            &mut single,
+            &[(0, 0), (7, 3), (0, 1), (7, 4), (0, 2), (7, 5), (0, 3)],
+        );
+        assert!(!single.has_multiple_immediate_winning_moves_for(Color::Black));
     }
 
     #[test]

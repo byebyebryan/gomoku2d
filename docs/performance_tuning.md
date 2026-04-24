@@ -72,6 +72,7 @@ File: `gomoku-bot-lab/gomoku-core/benches/board_perf.rs`
 Current measurements:
 
 - `immediate_winning_moves_for(current_player)`
+- `has_multiple_immediate_winning_moves_for(current_player)`
 - `apply_move()` followed by `undo_move()` on a representative legal move
 - `forbidden_moves_for_current_player()` on Renju anchor positions
 
@@ -112,7 +113,7 @@ Search benchmark suite:
 cargo bench -p gomoku-bot --bench search_perf -- --noplot
 ```
 
-## Current hotspot findings
+## Initial hotspot findings
 
 From code inspection before the first benchmark pass:
 
@@ -142,6 +143,12 @@ From code inspection before the first benchmark pass:
    `apply_move()` / `undo_move()` per candidate (`2026-04-23`)
 3. Skip redundant `is_legal()` checks in search nodes where Renju-black
    forbidden logic is not relevant (`2026-04-23`)
+4. Add `has_multiple_immediate_winning_moves_for()` so the root anti-blunder
+   prefilter can stop after two immediate wins (`2026-04-23`)
+5. Let `apply_move()` be the immediate-win legality gate instead of calling
+   `is_legal_for()` first and repeating Renju checks (`2026-04-23`)
+6. Add benchmark-corpus search tests for legal output plus immediate
+   win/block anchors (`2026-04-23`)
 
 ### Future work
 
@@ -258,3 +265,68 @@ All numbers below are `SearchBot::choose_move()` at depth `3`.
   checks remain the dominant cost there.
 - `apply_move_then_undo` stayed effectively flat, which is expected because
   this pass did not change the move application path.
+
+## Optimization pass 2 snapshot
+
+Date: `2026-04-23`
+
+Changes:
+
+- `Board::has_multiple_immediate_winning_moves_for()` scans nearby candidates
+  directly and returns as soon as it finds two wins.
+- `SearchBot` uses that helper in the anti-blunder prefilter instead of
+  collecting every immediate winning move and checking `len() >= 2`.
+- `immediate_winning_moves_for()` now uses the same probe path and lets
+  `apply_move()` reject illegal candidates, avoiding duplicate Renju forbidden
+  checks.
+- Bot tests now assert all fixed benchmark scenarios produce legal moves, and
+  the immediate-win / immediate-block anchors keep their expected behavior.
+
+Commands used:
+
+```sh
+cargo test --workspace
+cargo bench -p gomoku-core --bench board_perf -- --noplot
+cargo bench -p gomoku-bot --bench search_perf -- --noplot
+```
+
+### Core anchors after pass 2
+
+| Benchmark | Time | Pass 1 |
+|---|---|---|
+| `immediate_winning_moves/current_player/opening_sparse` | `2.4295–2.4505 µs` | `2.4769–2.5033 µs` |
+| `immediate_winning_moves/current_player/anti_blunder_open_three` | `3.1551–3.1626 µs` | `3.1904–3.2312 µs` |
+| `immediate_winning_moves/current_player/renju_forbidden_cross` | `26.990–27.135 µs` | `50.854–51.433 µs` |
+| `immediate_winning_moves/current_player/midgame_dense` | `4.4511–4.4783 µs` | `4.4690–4.5294 µs` |
+| `has_multiple_immediate_winning_moves/current_player/opening_sparse` | `2.2625–2.2687 µs` | new benchmark |
+| `has_multiple_immediate_winning_moves/current_player/immediate_win` | `1.5401–1.5536 µs` | new benchmark |
+| `has_multiple_immediate_winning_moves/current_player/anti_blunder_open_three` | `2.8538–2.8745 µs` | new benchmark |
+| `has_multiple_immediate_winning_moves/current_player/renju_forbidden_cross` | `26.573–26.837 µs` | new benchmark |
+| `has_multiple_immediate_winning_moves/current_player/midgame_dense` | `4.1642–4.1895 µs` | new benchmark |
+| `forbidden_moves/current_player/renju_forbidden_cross` | `24.403–24.581 µs` | `24.032–24.272 µs` |
+
+### Search anchors after pass 2
+
+All numbers below are `SearchBot::choose_move()` at depth `3`.
+
+| Benchmark | Time | Pass 1 |
+|---|---|---|
+| `opening_sparse` | `13.180–13.311 ms` | `13.717–13.854 ms` |
+| `early_local_fight` | `13.148–13.245 ms` | `13.614–13.729 ms` |
+| `immediate_win` | `1.4407–1.4486 ms` | `1.5889–1.5966 ms` |
+| `immediate_block` | `1.7686–1.7827 ms` | `1.9394–1.9676 ms` |
+| `anti_blunder_open_three` | `13.194–13.431 ms` | `14.215–14.304 ms` |
+| `renju_forbidden_cross` | `17.489–17.690 ms` | `18.819–18.928 ms` |
+| `midgame_medium` | `22.643–22.935 ms` | `23.464–23.832 ms` |
+| `midgame_dense` | `32.766–33.130 ms` | `33.215–33.394 ms` |
+
+### Notes
+
+- The large core win is Renju immediate-win scanning, because the duplicate
+  forbidden check was removed.
+- The anti-blunder prefilter now uses a purpose-built boolean query, so it no
+  longer allocates a full winning-move list when it only needs to know whether
+  two replies exist.
+- Search improved modestly across the fixed corpus. The pass is still a quick
+  win, not a replacement for the larger future work around localized eval or
+  incremental candidate frontiers.
