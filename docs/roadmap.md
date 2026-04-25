@@ -2,188 +2,197 @@
 
 The order we're going to build in.
 
-This project is now explicitly sequenced around a local-first `v0.2`, not an
-online-first pivot. The FE stack transition is still important, but it is now a
-means to a richer local product rather than a straight runway into backend
-work.
+Versions are the planning spine. A phase is done when it produces a coherent
+playable/product state, not when it checks every possible sub-task. Patch
+releases can polish or harden a phase, but they should not blur phase intent.
 
-Phases are not time-boxed. A phase is done when it produces a coherent playable
-state, not when it checks every possible sub-task.
+## P1 — `v0.1` POC (done)
 
-## Phase 0 — Snapshot (`v0.1`, done)
+Validate that the basic stack idea works:
 
-Offline browser Gomoku with a Phaser-driven frontend and Rust+wasm game/core
-integration.
+- Rust rules/core logic
+- bot loop good enough to build against
+- wasm bridge into a browser build
+- Phaser-rendered browser game loop
+- GitHub Pages deployment
 
 What it proved:
 
-- the Rust core + wasm bridge works in a real browser bundle
-- the existing bot loop is good enough to build on
-- the deploy pipeline is solid enough for fast iteration
+- Rust + Wasm + web is a viable foundation for this project
+- the bot lab can power the browser game without a rewrite
+- a lightweight public deploy loop is enough for fast iteration
 
 Historical state is preserved in `docs/archive/progress_v0.1.md`.
 
-## Phase 1 — FE foundation (done)
+## P2 — `v0.2` FE Foundation And Local Play (done)
 
-Establish the new runtime boundary:
-
-- React shell
-- Phaser reduced to a board-focused renderer
-- local routes
-- local stores
-- board owned by props/events instead of a scene-driven app shell
-
-This phase is effectively complete. Remaining work from here on should feed the
-`v0.2` product pass instead of reopening the old "rewrite first, features
-later" framing.
-
-## Phase 2 — `v0.2` local-first product pass (current)
-
-This is the current focus.
+Move from proof-of-concept to a proper frontend product surface.
 
 ### Goals
 
-- make the FE stack feel native instead of transitional
-- establish a durable DOM-shell visual language
-- simplify the live match UI around a board-first HUD
-- deepen the local play loop with replay, records, and persistent defaults
-- ship a public build that feels coherent as a local game
+- replace the single-scene Phaser app with a scalable FE stack
+- put React in charge of the app shell, routes, and UI state
+- reduce Phaser to a board-focused renderer
+- establish durable DOM-shell and canvas visual languages
+- make the local game feel complete without cloud
+- support desktop and mobile intentionally
 
-### Work in this phase
+### Work In This Phase
 
-- rewrite the shell around the ongoing visual guide in `ui_design.md`
-- simplify Home, Match, Replay, and Profile around their current roles
-- introduce a compact icon language where it improves density without replacing
-  plain-language CTAs
-- keep chronology out of live match UI
-- keep replay transport-first and remove move-list dependence there too
-- allow a replay frame to branch into a new local practice game
-- treat `Profile` as the player's local record screen, not a settings dump
-- keep local profile, local history, replay, and rules switching polished
-- give Match, Replay, and Profile intentional portrait/mobile layouts instead
-  of simple desktop collapse behavior
-- support a mobile-specific local play control model when direct tap placement is
-  too cramped for the board
-- make the shell resilient to future board-theme swaps without redesigning it
+- React shell and route structure
+- local stores and browser persistence
+- board owned by props/events instead of scene-owned app state
+- Home, Match, Replay, and Profile as separate surfaces
+- local guest profile and preferred-rule persistence
+- local match history and replay viewer
+- replay branching back into local practice
+- board-first desktop and mobile match layouts
+- mobile touch-pad placement mode for cramped boards
+- asset previews, screenshot/reference assets, release hygiene
+- dependency/runtime maintenance after `v0.2.4` without cutting another product
+  release
 
-### Done when
+### Done When
 
 A player can open the site and get a polished local experience:
 
 - quick play from Home
 - clean board-first match flow
-- local replay that is useful without extra analysis surfaces
+- useful local replay without extra analysis surfaces
 - local player record with persistent defaults and history
-- mobile-web that feels intentionally designed on the key local screens, not
-  just minimally responsive
-- a consistent shell style that no longer feels like transitional scaffolding
+- mobile-web that feels intentionally designed
+- consistent shell style that no longer feels like transitional scaffolding
 
-Near-term release framing:
-
-- `v0.2.3` established the paired desktop/mobile UI baseline for the
-  local-first shell
-- `v0.2.4` landed the final small polish and hardening pass on top of that
-  baseline
-- `v0.2.4` also captured the release reference assets: desktop/mobile
-  screenshots, README hero GIF, Open Graph image, and asset-preview docs
-- with `v0.2.4` in, the DOM shell is considered effectively frozen for the
-  rest of `0.2.x`
-- remaining `0.2.x` work should focus on non-UI fixes and stability, not
-  reopening the mobile layout or control-model work
-- before tagging `v0.2.4`, only release-blocking bugs, doc alignment, and
-  capture/metadata fixes should be accepted
-
-### Out of scope
+### Out Of Scope
 
 - sign-in
-- Firestore
-- published replay links
+- Firestore/cloud persistence
+- public replay links
 - online matches
-- analysis and puzzles
+- replay analysis and puzzles
 
-## Phase 3 — Cloud-backed continuity
+## P3 — `v0.3` BE Foundation And Cloud Continuity (current)
 
-Cloud comes back only after the local product is stable.
+Add backend foundation without putting cloud in front of the local game.
+
+Detailed working notes live in `docs/archive/v0_3_plan.md`. That file is an
+ad-hoc planning artifact; this section remains the canonical roadmap.
 
 ### Goals
 
 - optional sign-in
-- continuity across devices
+- cloud-backed profile
+- continuity across browsers/devices
 - durable private history beyond one browser/device
+- basic backend plumbing that later online features can build on
 
-### Work in this phase
+### Work In This Phase
 
+- Firebase project/env setup and documentation
+- Firebase Auth integration
+- Profile sign-in/sign-out UI
+- cloud profile create/load
 - guest-to-cloud promotion
-- cloud-backed profile sync
+- preferred settings/profile sync
 - private cloud history for signed-in players
-- rules/settings sync if it still feels worthwhile
+- cloud-saved private replay loading
+- starter Firestore rules for owner-scoped profile/history docs
 
-### Done when
+### Done When
 
-Signing in extends the same local-first product without breaking it. A player
-can keep their identity and history across browsers, but the app still makes
-sense without cloud.
+Signing in extends the same local-first product without breaking it:
 
-## Phase 4 — Shared replays and public identity
+- guest-only play remains complete
+- signed-in profile/history works across browsers
+- local guest history can be promoted without duplicates
+- future signed-in matches save privately to cloud
+- no public artifacts are created implicitly
 
-Only after private local/cloud history already feels good.
+### Out Of Scope
 
-### Work in this phase
+- public replay sharing
+- public profile URLs / username reservation unless required for auth polish
+- live PvP
+- matchmaking
+- ranked/trusted matches
+- Cloud Run match authority
+- leaderboards
+- replay analysis and puzzles
 
+## P4 — `v0.4` Online Product Expansion
+
+Turn the cloud foundation into player-facing online features.
+
+### Goals
+
+- make online human play real
+- introduce trusted server-backed match records
+- add public/shareable surfaces deliberately
+- keep casual and trusted/ranked lanes distinct
+
+### Possible Work
+
+- direct challenge flow
+- live PvP match state
+- trusted match authority
+- verified match persistence
+- matchmaking if direct challenge proves too limited
+- ranked mode and rating/leaderboard surfaces
 - explicit replay publish flow
 - public replay pages
-- lightweight public identity / username surfaces if needed
+- lightweight public identity / username surfaces
+- shareable profile or match links if they earn their way in
 
-### Done when
+### Done When
 
-Sharing a replay is deliberate and useful, without collapsing private history
-and public artifacts into the same thing.
+Two people can reliably play a full online game, and the app can distinguish:
 
-## Phase 5 — Online play
+- local guest history
+- signed-in private cloud history
+- server-verified online/ranked history
+- explicitly published public replays
 
-The big step after the app is already strong as a local product.
+## P5 — `v0.5` Lab-Powered Features
 
-### Work in this phase
+Use the Rust bot lab as a visible product differentiator.
 
-- trusted match authority
-- direct challenge flow first
-- live online match state
-- verified match persistence
+### Goals
 
-### Done when
+- make saved games more useful after they end
+- turn bot/search tooling into learning and replay features
+- add features that would not exist without the Rust core/bot lab
 
-Two people can reliably play a full online game without the app feeling like a
-separate product from the local experience.
-
-## Phase 6 — Lab-powered features
-
-Only worth doing after the main play surfaces are already solid.
-
-Possible work:
+### Possible Work
 
 - replay analysis
 - critical-moment tagging
-- puzzle generation
+- better-move suggestions
+- puzzle generation from real or curated games
+- "save this game" positions from losing replays
+- stronger bot endpoint if needed for analysis
 
-These remain intentionally opportunistic. They should earn their way in by
-making replay and learning more interesting, not by expanding scope for its own
-sake.
+### Done When
 
-## Non-goals for now
+At least one player-facing feature clearly exists because the bot lab can run
+positions and searches outside the live board.
+
+## Non-Goals For Now
 
 Called out so they do not quietly creep back into the near-term plan:
 
 - native mobile apps
-- chat/social systems
+- chat/social feeds
 - SSR/server-rendered app shell
 - monetization
+- ranked/esports depth before basic online play works
 - forcing cloud or online into the default local flow
 
 ## Tracking
 
-Keep progress lightweight.
+Keep progress lightweight:
 
 - the repo history and deployed build tell most of the story
 - use this file to keep phase intent and sequencing clear
+- keep detailed temporary milestone notes in `docs/archive/`
 - archive outdated exploratory docs instead of patching every one into
   permanence

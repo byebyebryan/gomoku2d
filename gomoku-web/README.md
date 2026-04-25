@@ -63,8 +63,8 @@ under `/gomoku2d/assets/`.
 | App shell | React 19 |
 | Routing | React Router 7 |
 | Client state | Zustand 5 (vanilla stores + `useStore` selectors) |
-| Board renderer | Phaser 3.87 (canvas, stateless view) |
-| Language | TypeScript 5.8 |
+| Board renderer | Phaser 4 (canvas, stateless view) |
+| Language | TypeScript 6 |
 | Build / dev server | Vite 8 (+ `vite-plugin-wasm`, `vite-plugin-top-level-await`) |
 | Game logic + bot | Rust (`gomoku-core`, `gomoku-bot`) → `wasm-pack --target bundler` |
 | Bot execution | Web Worker (off-thread) |
@@ -158,9 +158,10 @@ gomoku-bot-lab/gomoku-cli      — CLI match runner with replay export
 gomoku-bot-lab/gomoku-wasm     — wasm-pack bridge: WasmBoard + WasmBot for JS
 ```
 
-The current line is the local-first `v0.2` product pass. Phase 1 (React shell,
-Phaser-as-board) is done; Phase 2 landed the paired desktop/mobile shell in
-`v0.2.3` and the final `v0.2.4` polish/reference set on top of it. Cloud
-sign-in, published replays, and online play are deferred to later
-phases — see [`../docs/roadmap.md`](../docs/roadmap.md) for sequencing and
-[`../docs/architecture.md`](../docs/architecture.md) for the runtime boundary.
+The local-first `v0.2` product pass is complete. `P1` proved Rust + Wasm +
+browser play; `P2` landed the paired desktop/mobile shell in
+`v0.2.3` and the final `v0.2.4` polish/reference set on top of it. The current
+`v0.3` focus is optional cloud-backed continuity; published replays and online
+play stay deferred to later phases — see [`../docs/roadmap.md`](../docs/roadmap.md)
+for sequencing and [`../docs/architecture.md`](../docs/architecture.md) for the
+runtime boundary.

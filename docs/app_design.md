@@ -5,15 +5,15 @@ contracts for the current web app. Paired with `architecture.md` (runtime
 boundary), `ui_design.md` (DOM shell style system), and `game_visual.md`
 (Phaser canvas visual language).
 
-This document is the canonical UI/product-design guide for the current
-local-first `v0.2` direction. It is intentionally focused on the playable
-surfaces we have now or are actively shaping next. Cloud sync, published
-replays, and online play are deferred to later roadmap phases and should not
-leak into the default flows here.
+This document is the canonical UI/product-design guide for the local-first app
+baseline established in `v0.2`. It is intentionally focused on the playable
+surfaces we have now. The current `v0.3` cloud-continuity work may extend
+Profile and persistence, but cloud sync, published replays, and online play
+should not leak into the default local play flow.
 
 ## Product frame
 
-`v0.2` is about four things:
+The `v0.2` baseline is about four things:
 
 - move the web app onto a proper FE stack
 - make the UI scalable beyond one Phaser scene
