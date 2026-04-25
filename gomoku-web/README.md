@@ -134,12 +134,8 @@ Pages serves the SPA on deep-linked routes like `/profile` and
 
 Release and local-preview steps live in [`../docs/release.md`](../docs/release.md).
 
-Production deploys to GitHub Pages when a `v*` tag is pushed, or via a manually
-triggered workflow at the repo root (`.github/workflows/deploy.yml`):
-
-```sh
-gh workflow run deploy.yml
-```
+Production deploys to GitHub Pages only when a `v*` tag is pushed. Normal
+commits to `main` run CI but do not publish the site.
 
 The workflow builds the Wasm package, sets `GOMOKU_BASE_PATH=/gomoku2d/` for the
 Vite build, and deploys `dist/` to Pages.

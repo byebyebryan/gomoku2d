@@ -111,6 +111,6 @@ Release ${TAG} prepared locally.
   Review:  git show ${TAG}
   Push:    git push origin main && git push origin ${TAG}
 
-Pushing main fires the deploy workflow. Pushing the tag fires the GitHub
-Release workflow.
+Pushing main updates the release commit without publishing the site. Pushing
+the tag fires the GitHub Release and Pages deploy workflows.
 EOF
