@@ -84,6 +84,7 @@ src/
 ├── routes/         Home, LocalMatch, Profile, Replay
 ├── components/     Reusable UI (Board wrapper around Phaser)
 ├── board/          Phaser scene, renderer, board constants
+├── cloud/          Firebase config/bootstrap for cloud-backed v0.3 surfaces
 ├── game/           Local match Zustand store + shared types
 ├── profile/        Guest profile Zustand store (persisted to localStorage)
 ├── replay/         Replay frame derivation from saved matches
@@ -116,6 +117,40 @@ npm run dev
 
 TypeScript changes hot-reload. After editing Rust, rebuild the Wasm package and
 re-run `npm install` so Vite picks up the relinked `file:` dependency.
+
+Firebase is optional during local development. Guest/local play works without
+any Firebase env vars. To enable the cloud-backed `v0.3` surfaces, copy the
+example file and fill the public web-app config from Firebase:
+
+```sh
+cp .env.example .env.local
+```
+
+Required Vite env vars:
+
+- `VITE_FIREBASE_API_KEY`
+- `VITE_FIREBASE_AUTH_DOMAIN`
+- `VITE_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_STORAGE_BUCKET`
+- `VITE_FIREBASE_MESSAGING_SENDER_ID`
+- `VITE_FIREBASE_APP_ID`
+
+The current Firebase project is `gomoku2d`. Live setup details and API-based
+config fetch commands live in [`../docs/backend_infra.md`](../docs/backend_infra.md).
+
+Fetch registered web apps and then the selected app config with:
+
+```sh
+TOKEN=$(gcloud auth print-access-token)
+curl -H "Authorization: Bearer ${TOKEN}" \
+  -H "X-Goog-User-Project: gomoku2d" \
+  "https://firebase.googleapis.com/v1beta1/projects/gomoku2d/webApps"
+
+APP_ID="1:892554744656:web:..."
+curl -H "Authorization: Bearer ${TOKEN}" \
+  -H "X-Goog-User-Project: gomoku2d" \
+  "https://firebase.googleapis.com/v1beta1/projects/gomoku2d/webApps/${APP_ID}/config"
+```
 
 ```sh
 npm run build              # production build (tsc + vite build + 404.html copy)

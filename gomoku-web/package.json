@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "clsx": "^2.1.1",
+    "firebase": "^12.12.1",
     "gomoku-wasm": "file:../gomoku-bot-lab/gomoku-wasm/pkg",
     "phaser": "^4.0.0",
     "react": "^19.2.5",

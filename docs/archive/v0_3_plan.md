@@ -2,7 +2,8 @@
 
 Status: ad-hoc milestone plan. This file is a working contract for the `v0.3`
 line, not a canonical product spec. Keep `docs/roadmap.md`, `docs/backend.md`,
-and `docs/app_design.md` as the long-lived sources of truth.
+`docs/backend_infra.md`, `docs/backend_cost.md`, and `docs/app_design.md` as
+the long-lived sources of truth.
 
 ## Frame
 
@@ -51,6 +52,17 @@ Those belong to `v0.4+` after private cloud continuity feels solid.
 - add a thin Firebase client module in `gomoku-web`
 - add starter Firestore rules for owner-scoped profile/history docs
 - keep config public and secrets out of the repo
+
+Initial state as of the first `v0.3` pass:
+
+- use one Firebase/GCP project for now: `gomoku2d`
+- Firebase project and web app are initialized
+- Firebase/Auth/Firestore APIs are enabled
+- web Firebase config is env-driven and optional at runtime
+- Firestore is created as the default Native-mode database in `us-central1`
+- Firestore rules are in repo and deployed to the `cloud.firestore` release
+- live setup tracking lives in `docs/backend_infra.md`
+- backend cost tracking lives in `docs/backend_cost.md`
 
 ### 2. Auth State Layer
 

@@ -38,6 +38,16 @@ Cloud Run is part of the target backend, but `v0.3` does not need it unless an
 early feature, such as username reservation, proves it cannot be handled safely
 with Auth + Firestore rules alone.
 
+## Implementation References
+
+This file is the backend design contract. Operational state and setup commands
+live elsewhere so the design doc does not become a deployment log:
+
+- `backend_infra.md` — live Firebase/GCP setup, locations, app IDs, enabled
+  APIs, Firestore rules deployment, and pending infra checklist.
+- `backend_cost.md` — free-tier assumptions, rough usage estimates, and
+  headroom checks.
+
 ## Architecture
 
 Four components:
@@ -46,7 +56,7 @@ Four components:
 |---|---|---|
 | **Local guest profile** | Local identity, guest settings, guest match history | No backend cost |
 | **Firebase Auth** | Sign-in when cloud-backed features are needed | Social sign-in is no-cost in standard Firebase pricing; quotas change if Auth is upgraded to Identity Platform |
-| **Firestore** | Document storage: cloud profiles, trusted matches, published replays, puzzles | 1 GiB · 50k reads · 20k writes · 20k deletes per day |
+| **Firestore** | Document storage: cloud profiles, trusted matches, published replays, puzzles | Current database state lives in `backend_infra.md`; cost posture lives in `backend_cost.md` |
 | **Cloud Run** | Rust service: trusted match authority, username reservation, verification, strong bot, puzzle generation | For request-based billing: 2M requests · 180k vCPU-s · 360k GiB-s per month free (us-central1-based) |
 
 Everything scales to zero when idle. The browser is the fast path when
@@ -62,6 +72,8 @@ trust doesn't matter; Cloud Run is the path when it does.
   diverges enough to justify the split.
 - `firestore.rules` at the repo root — security rules, deployable and
   reviewed alongside code.
+- `gomoku-web/src/cloud/firebase.ts` — browser Firebase initialization. It
+  stays inert until all required `VITE_FIREBASE_*` env vars are present.
 
 ## Auth
 
@@ -193,17 +205,33 @@ type PublishedReplay = {
 };
 ```
 
-Starter rules for profile-only phase:
+Starter rules for profile-only phase live in `firestore.rules`:
 
 ```
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
     match /profiles/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
-      allow write: if request.auth != null
-        && request.auth.uid == uid
+      allow read: if isOwner(uid);
+      allow create, update: if isOwner(uid)
         && request.resource.data.uid == uid;
+      allow delete: if false;
+
+      match /matches/{matchId} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && request.resource.data.owner_uid == uid;
+        allow update, delete: if false;
+      }
     }
   }
 }

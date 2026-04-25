@@ -1,1 +1,8 @@
 target/
+
+.env
+.env.*
+!.env.example
+gomoku-web/.env
+gomoku-web/.env.*
+!gomoku-web/.env.example
