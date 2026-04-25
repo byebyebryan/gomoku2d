@@ -15,10 +15,8 @@ backend design lives in `backend.md`; free-tier estimates live in
 | Firebase web app | `Gomoku2D Web` |
 | Firebase web app ID | `1:892554744656:web:17524b73c8afb856841255` |
 | Auth config | Initialized; subtype `IDENTITY_PLATFORM` |
-| Auth providers | Google enabled |
-| Authorized Auth domains | `gomoku2d.firebaseapp.com`, `gomoku2d.web.app`, `localhost`, `dev.byebyebryan.com` |
-| Google OAuth client | `projects/gomoku2d/locations/global/oauthClients/gomoku2d-web-auth` |
-| Google OAuth client ID | `afb571e3f-1dd4-44d0-902b-f5664aa8f5aa` |
+| Auth providers | Google pending Google Auth Platform Web client |
+| Authorized Auth domains | `gomoku2d.firebaseapp.com`, `gomoku2d.web.app`, `localhost`, `127.0.0.1`, `dev.byebyebryan.com` |
 | Firestore database | `(default)` |
 | Firestore mode | Native |
 | Firestore location | `us-central1` |
@@ -96,9 +94,11 @@ curl -sS \
 Expected essentials:
 
 - `subtype: IDENTITY_PLATFORM`
-- authorized domains include `localhost` and `dev.byebyebryan.com`
+- authorized domains include `localhost`, `127.0.0.1`, and
+  `dev.byebyebryan.com`
 
-Verify the Google provider:
+Verify the Google provider. Until the Google Auth Platform Web client is
+created and attached, this should return `CONFIGURATION_NOT_FOUND`:
 
 ```sh
 curl -sS \
@@ -108,63 +108,47 @@ curl -sS \
   | jq '{name, enabled, clientId}'
 ```
 
-Expected essentials:
+Important: `gcloud iam oauth-clients create` is not a valid substitute for a
+Google Auth Platform Web client here. It creates a Cloud IAM OAuth client with a
+UUID-style client ID, which Google Sign-In rejects with `invalid_client`.
 
-- `enabled: true`
-- `clientId: "afb571e3f-1dd4-44d0-902b-f5664aa8f5aa"`
+Create the correct OAuth client in the Google Cloud console:
 
-Verify the backing OAuth client:
+1. Open
+   `https://console.cloud.google.com/auth/clients?project=gomoku2d`.
+2. If prompted to configure Google Auth Platform branding, use:
+   - App name: `Gomoku2D`
+   - User support email: `byebyebryan@gmail.com`
+   - Audience: external/public
+   - Developer contact: `byebyebryan@gmail.com`
+3. Create an OAuth client:
+   - Application type: `Web application`
+   - Name: `Gomoku2D Firebase Web`
+4. Add Authorized JavaScript origins:
+   - `http://localhost:8001`
+   - `http://127.0.0.1:8001`
+   - `http://localhost:5173`
+   - `http://127.0.0.1:5173`
+   - `https://dev.byebyebryan.com`
+   - `https://gomoku2d.firebaseapp.com`
+   - `https://gomoku2d.web.app`
+5. Add Authorized redirect URIs:
+   - `https://gomoku2d.firebaseapp.com/__/auth/handler`
+   - `https://gomoku2d.web.app/__/auth/handler`
+   - `https://dev.byebyebryan.com/gomoku2d/__/auth/handler`
+   - `http://localhost:8001/__/auth/handler`
+   - `http://127.0.0.1:8001/__/auth/handler`
+   - `http://localhost:5173/__/auth/handler`
+   - `http://127.0.0.1:5173/__/auth/handler`
+6. Save the generated client ID and client secret outside the repo. The client
+   ID should look like `...apps.googleusercontent.com`.
 
-```sh
-gcloud iam oauth-clients describe gomoku2d-web-auth \
-  --project=gomoku2d \
-  --location=global \
-  --format='yaml(name,clientId,state,allowedRedirectUris,allowedScopes,clientType)'
-```
-
-Expected essentials:
-
-- `state: ACTIVE`
-- `clientType: CONFIDENTIAL_CLIENT`
-- `allowedScopes` includes `openid` and `email`
-- `allowedRedirectUris` includes:
-  - `https://gomoku2d.firebaseapp.com/__/auth/handler`
-  - `https://gomoku2d.web.app/__/auth/handler`
-  - `https://dev.byebyebryan.com/gomoku2d/__/auth/handler`
-  - `http://localhost:5173/__/auth/handler`
-
-The OAuth client credential secret was shown once at creation time and is not
-stored in the repo. Identity Toolkit stores the provider copy. If the secret
-needs rotation, create a new credential and patch the provider config with the
-new value.
-
-Create the Google provider without using the Firebase console:
-
-```sh
-gcloud iam oauth-clients create gomoku2d-web-auth \
-  --project=gomoku2d \
-  --location=global \
-  --client-type=confidential-client \
-  --display-name='Gomoku2D Web Auth' \
-  --description='Firebase Auth Google provider for Gomoku2D web app' \
-  --allowed-grant-types=authorization-code-grant,refresh-token-grant \
-  --allowed-scopes=openid,email \
-  --allowed-redirect-uris=https://gomoku2d.firebaseapp.com/__/auth/handler,https://gomoku2d.web.app/__/auth/handler,https://dev.byebyebryan.com/gomoku2d/__/auth/handler,http://localhost:5173/__/auth/handler
-
-gcloud iam oauth-clients credentials create gomoku2d-web-auth-secret \
-  --project=gomoku2d \
-  --location=global \
-  --oauth-client=gomoku2d-web-auth \
-  --display-name='Gomoku2D Web Auth Secret'
-```
-
-Capture the `clientSecret` from the credential creation output, then configure
-Identity Toolkit:
+After creating the Web client, configure Identity Toolkit:
 
 ```sh
 TOKEN=$(gcloud auth print-access-token)
-CLIENT_ID='afb571e3f-1dd4-44d0-902b-f5664aa8f5aa'
-CLIENT_SECRET='<clientSecret from credential creation output>'
+CLIENT_ID='<Google Auth Platform Web client ID>'
+CLIENT_SECRET='<Google Auth Platform Web client secret>'
 
 jq -n \
   --arg clientId "${CLIENT_ID}" \
@@ -183,7 +167,7 @@ jq -n \
       -d @-
 ```
 
-If the provider already exists, use the same body with:
+If the provider already exists, use the same JSON body with:
 
 ```sh
 curl -sS -X PATCH \
