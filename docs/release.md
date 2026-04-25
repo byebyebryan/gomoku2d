@@ -108,10 +108,9 @@ git push origin main
 git push origin v0.2.4
 ```
 
-Pushing `main` fires:
-
-- `.github/workflows/deploy.yml`
+Pushing `main` updates the release commit. It does not publish the site.
 
 Pushing the tag fires:
 
 - `.github/workflows/release.yml`
+- `.github/workflows/deploy.yml`
