@@ -23,6 +23,21 @@ backend services exist for durability, sharing, and trust boundaries.
   latency; Firestore listeners are fine.
 - Paid tiers, SLAs, or anything that risks billing surprises.
 
+## Version Mapping
+
+`docs/roadmap.md` owns sequencing. This backend doc describes the target
+service model and the feature menu, but not every piece lands at once.
+
+| Version | Backend intent | Included | Deferred |
+|---|---|---|---|
+| `P3 / v0.3` | Backend foundation and cloud continuity | Firebase Auth, cloud profile, guest promotion, private cloud history, owner-scoped Firestore rules | live PvP, ranked/trusted matches, public replay sharing, replay analysis, puzzles |
+| `P4 / v0.4` | Online product expansion | Cloud Run match authority, direct challenge/PvP, trusted match history, matchmaking/ranked if useful, explicit public shareables | lab-powered analysis/puzzles unless they are needed to support online surfaces |
+| `P5 / v0.5` | Lab-powered features | replay analysis, critical moments, puzzles, save-this-game positions, stronger bot endpoints if needed | broad social features |
+
+Cloud Run is part of the target backend, but `v0.3` does not need it unless an
+early feature, such as username reservation, proves it cannot be handled safely
+with Auth + Firestore rules alone.
+
 ## Architecture
 
 Four components:
@@ -113,8 +128,9 @@ Local guest state is disposable. Cloud state is durable.
 
 ## Firestore data model
 
-Starting shape — widens as features land. Each collection maps to a
-security rule; new features touch both in the same commit.
+Starting shape — widens as features land. Each collection maps to a security
+rule; new features touch both in the same commit. For `v0.3`, the critical path
+is `profiles/{uid}` plus private `profiles/{uid}/matches/{id}` history.
 
 | Collection | Ownership | Used by |
 |---|---|---|

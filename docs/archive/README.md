@@ -28,3 +28,10 @@ The archive also keeps a few visual-exploration artifacts from the early
 - `v0_2_visual.png`
 - `v0_2_ui.md`
 - `v0_2_themes.png`
+
+Current-line ad-hoc planning notes can also live here when they are useful
+during implementation but should not compete with canonical docs:
+
+| Doc | What it is | Canonical docs |
+|---|---|---|
+| `v0_3_plan.md` | Working plan for the `v0.3` cloud-backed continuity line | `docs/roadmap.md`, `docs/backend.md`, `docs/app_design.md` |

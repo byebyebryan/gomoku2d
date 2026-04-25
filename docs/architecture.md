@@ -6,7 +6,7 @@ Three components, one repo:
 
 ```
 ┌────────────────────────────┐      ┌────────────────────────────┐
-│   gomoku-web (browser)     │      │   gomoku-backend (server)  │
+│   gomoku-web (browser)     │      │ gomoku-api / backend       │
 │   ├─ React app shell (DOM) │◄────►│   ├─ HTTP API              │
 │   └─ Phaser board (canvas) │      │   └─ Firestore client      │
 │       ↑ shares core via    │      │       ↑ shares core via    │
@@ -26,10 +26,11 @@ Three components, one repo:
 - **`gomoku-bot-lab`** is the Rust workspace. Core rules, bots, evaluation
   tools, and the wasm bridge live together because they share logic. The web
   and (future) server both borrow from it.
-- **`gomoku-backend`** (not built yet) is a Rust service that hosts matches,
-  persists game state, and runs the features that need server trust. Starts
-  as `gomoku-bot-lab/gomoku-api/` in the workspace, graduates to a top-level
-  sibling when its deploy cadence diverges.
+- **`gomoku-api` / backend** is the future Rust service for the features that
+  need cloud durability or server trust. It starts as
+  `gomoku-bot-lab/gomoku-api/` so it can share workspace deps and graduate to a
+  top-level `gomoku-backend/` only when deploy cadence or ownership justifies
+  the split.
 
 ## Frontend stack
 
@@ -135,8 +136,8 @@ One rules implementation, reused everywhere:
 - **Browser:** `gomoku-bot-lab/gomoku-wasm` compiles `gomoku-core` to wasm.
   Web imports it via `gomoku-wasm = "file:../gomoku-bot-lab/gomoku-wasm/pkg"`
   in `package.json`. Vite's wasm plugin handles the load.
-- **Server (future):** `gomoku-backend` depends on `gomoku-core` as a Cargo
-  path dependency. Same Rust code, native target.
+- **Server (future):** `gomoku-api` depends on `gomoku-core` as a Cargo path
+  dependency. Same Rust code, native target.
 - **CLI / eval tools:** already using `gomoku-core` via path deps.
 
 This means "is this move legal?" and "did this player win?" have exactly
@@ -215,26 +216,25 @@ Two trust levels exist on purpose:
 That keeps the hot path cheap for throwaway play while making persistent/public
 features trustworthy.
 
-## Migration plan
+## Version sequence
 
-The v0.1 code under `gomoku-web/src/` (Phaser-only, scene-driven) needs to
-be rewritten, not incrementally patched. Keeping the Phaser board code
-(`board/`) is viable; the scenes and `main.ts` entry are not.
+The old v0.1-to-v0.2 migration is complete. React now owns the shell, Phaser is
+the board renderer, and local guest play/history/replay are the working product
+baseline.
 
-Rough sequence:
+From here, the version plan is:
 
-1. Bring up React + Vite in `gomoku-web/`, with React Router and Zustand
-   wired but mostly empty.
-2. Wrap the existing `board/` renderer in a `<Board>` React component that
-   takes props and emits events. Delete the Phaser scenes.
-3. Rebuild the match screen in DOM (status HUD, player info, actions, rules
-   switching). Offline bot match working end-to-end in the new architecture.
-4. Add local guest profile persistence, then Firebase sign-in and cloud-profile
-   promotion.
-5. Add private cloud history save at match end for signed-in casual play.
-6. Add trusted cloud-backed online match flow.
-7. Lab-powered features (puzzles, replay critical-move tagging).
+- **P3 / `v0.3` — backend foundation and cloud continuity.** Add Firebase
+  config, Auth, cloud profiles, guest-to-cloud promotion, private cloud match
+  history, and owner-scoped Firestore rules. The browser remains authoritative
+  for local/casual play.
+- **P4 / `v0.4` — online product expansion.** Add the Cloud Run authority,
+  direct challenge / PvP flows, trusted match persistence, ranked or matchmaking
+  surfaces, and deliberate public/shareable artifacts.
+- **P5 / `v0.5` — lab-powered features.** Use the Rust core/bot/eval tools for
+  replay analysis, critical-moment tagging, puzzles, and related learning
+  modes.
 
-Details are in `roadmap.md`. The architectural contract — what React owns,
-what Phaser owns, how they talk — is the part that needs to hold across
-all of it.
+Details are in `roadmap.md`. The architectural contract — what React owns, what
+Phaser owns, how they talk, and where `gomoku-core` is authoritative — is the
+part that needs to hold across all of it.

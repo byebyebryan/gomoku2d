@@ -79,10 +79,10 @@ Build, CLI usage, replay format, and `SearchBot` notes live in
 
 ## Current status
 
-The current line is the local-first `v0.2.x` product pass. The core play loop,
+The local-first `v0.2.x` product pass is complete. The core play loop,
 desktop/mobile shell, replay flow, and guest-local profile/history are in
-place; the remaining `0.2.x` work is mostly hardening and non-UI fixes rather
-than another broad UX rewrite.
+place; the current `v0.3` focus is optional cloud-backed continuity without
+putting sign-in in front of the local game.
 
 For the longer-term sequencing — cloud continuity, published replays, online
 play, and later lab-powered features — see [`docs/roadmap.md`](docs/roadmap.md).
@@ -102,7 +102,7 @@ The canonical design and schedule live in `docs/`:
 - [Live asset previews](https://dev.byebyebryan.com/gomoku2d/assets/) — published sprite, icon, and font previews
 - [`docs/ui_screenshot_review.md`](docs/ui_screenshot_review.md) — screenshot history and UI critique
 - [`docs/backend.md`](docs/backend.md) — Firebase + Firestore + Cloud Run model for later cloud/online phases
-- [`docs/roadmap.md`](docs/roadmap.md) — phased plan, with local-first `v0.2` before cloud/online
+- [`docs/roadmap.md`](docs/roadmap.md) — version-based phase plan from POC to cloud, online, and lab-powered features
 - [`docs/release.md`](docs/release.md) — local preview, release checks, tagging, and publish workflow
 - [`docs/bot_baseline.md`](docs/bot_baseline.md) — current `SearchBot` strategy
 - [`gomoku-web/README.md`](gomoku-web/README.md) — web game stack, local dev, deploy/runtime details
