@@ -102,7 +102,7 @@ Routes:
 
 ## Local development
 
-Prerequisites: Node, Rust, `wasm-pack`.
+Prerequisites: Node 24 (see repo-root `.nvmrc`), Rust, `wasm-pack`.
 
 ```sh
 # 1. Build the Wasm package (from repo root)
