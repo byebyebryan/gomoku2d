@@ -184,6 +184,25 @@ curl -sS -X PATCH \
   -d @-
 ```
 
+## Popup Auth Headers
+
+The web app currently uses Firebase Auth's popup flow. In Chrome, the Firebase
+SDK may log `Cross-Origin-Opener-Policy policy would block the window.closed
+call` while it polls the Google popup. If sign-in completes and the profile
+loads, this is popup-flow console noise rather than an Auth failure.
+
+For local development, Vite dev/preview responses set:
+
+- `Cross-Origin-Opener-Policy: same-origin-allow-popups`
+- `Referrer-Policy: no-referrer-when-downgrade`
+
+Google Identity Services recommends `same-origin-allow-popups` for popup flows
+when FedCM is disabled. GitHub Pages cannot set custom response headers, so the
+deployed GitHub Pages build may still show the warning even when sign-in works.
+If this becomes unacceptable, the cleaner production fix is to move hosting
+behind a platform that can set headers, or switch the app to a redirect-based
+flow and follow Firebase's redirect best-practice setup.
+
 ## Firebase Web Config
 
 Firebase web config is public configuration, not a secret, but keep local env
