@@ -22,7 +22,7 @@
   "dependencies": {
     "clsx": "^2.1.1",
     "gomoku-wasm": "file:../gomoku-bot-lab/gomoku-wasm/pkg",
-    "phaser": "^3.87.0",
+    "phaser": "^4.0.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-router-dom": "^7.14.2",
@@ -38,7 +38,7 @@
     "esbuild": "^0.28.0",
     "jsdom": "^29.0.2",
     "rollup": "^4.60.2",
-    "typescript": "^5.8.0",
+    "typescript": "^6.0.3",
     "vite": "^8.0.10",
     "vite-plugin-top-level-await": "^1.6.0",
     "vite-plugin-wasm": "^3.6.0",
