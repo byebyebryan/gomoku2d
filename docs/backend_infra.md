@@ -11,8 +11,12 @@ backend design lives in `backend.md`; free-tier estimates live in
 |---|---|
 | GCP/Firebase project | `gomoku2d` |
 | Project number | `892554744656` |
+| Cloud billing | Enabled |
 | Firebase web app | `Gomoku2D Web` |
 | Firebase web app ID | `1:892554744656:web:17524b73c8afb856841255` |
+| Auth config | Initialized; subtype `IDENTITY_PLATFORM` |
+| Auth providers | Google pending OAuth client/provider config |
+| Authorized Auth domains | `gomoku2d.firebaseapp.com`, `gomoku2d.web.app`, `localhost`, `dev.byebyebryan.com` |
 | Firestore database | `(default)` |
 | Firestore mode | Native |
 | Firestore location | `us-central1` |
@@ -74,6 +78,40 @@ Expected essentials:
 - `type: FIRESTORE_NATIVE`
 - `databaseEdition: STANDARD`
 - `freeTier: true`
+
+## Verify Auth
+
+```sh
+TOKEN=$(gcloud auth print-access-token)
+
+curl -sS \
+  -H "Authorization: Bearer ${TOKEN}" \
+  -H "X-Goog-User-Project: gomoku2d" \
+  "https://identitytoolkit.googleapis.com/admin/v2/projects/892554744656/config" \
+  | jq '{name, subtype, authorizedDomains, client}'
+```
+
+Expected essentials:
+
+- `subtype: IDENTITY_PLATFORM`
+- authorized domains include `localhost` and `dev.byebyebryan.com`
+
+Google sign-in provider is not fully enabled yet. Creating the provider through
+the Identity Toolkit API requires an OAuth client ID/secret; the Firebase
+console normally provisions that credential when enabling the Google provider.
+
+Current API check:
+
+```sh
+curl -sS \
+  -H "Authorization: Bearer ${TOKEN}" \
+  -H "X-Goog-User-Project: gomoku2d" \
+  "https://identitytoolkit.googleapis.com/admin/v2/projects/892554744656/defaultSupportedIdpConfigs/google.com"
+```
+
+Expected until provider setup is complete:
+
+- `CONFIGURATION_NOT_FOUND`
 
 ## Firebase Web Config
 
@@ -167,11 +205,8 @@ curl -sS \
 
 Before cloud UI ships publicly:
 
-- Enable Google sign-in in Firebase Auth.
-- Add `localhost` and the GitHub Pages domain to authorized Auth domains if
-  they are not already present.
-- Add GitHub Actions/Pages environment variables for the `VITE_FIREBASE_*`
-  config.
+- Enable Google sign-in in Firebase Auth by provisioning/configuring the Google
+  OAuth client.
 - Confirm the production build initializes Firebase only when config is present.
 - Review Firebase/Firestore usage dashboards after the first signed-in test.
 

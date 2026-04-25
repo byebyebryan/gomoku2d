@@ -123,6 +123,54 @@
   word-break: break-word;
 }
 
+.cloudStatus {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.cloudCopy {
+  display: grid;
+  gap: 4px;
+}
+
+.cloudTitle,
+.cloudText,
+.cloudError {
+  margin: 0;
+}
+
+.cloudTitle {
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  font-size: var(--type-body);
+}
+
+.cloudText {
+  color: var(--text-muted);
+  font-size: var(--type-meta);
+  line-height: 1.18;
+}
+
+.cloudError {
+  color: var(--danger);
+  font-size: var(--type-meta);
+  line-height: 1.18;
+}
+
+.cloudStatus :global(.uiAction) {
+  width: 100%;
+}
+
+.cloudStatus :global(.uiAction:disabled) {
+  cursor: not-allowed;
+  filter: grayscale(0.4);
+  opacity: 0.55;
+  transform: none;
+}
+
 .settingValue {
   margin: 0;
   color: var(--text);
@@ -545,6 +593,19 @@
 
   .metaList {
     display: none;
+  }
+
+  .cloudStatus {
+    padding: 10px;
+  }
+
+  .cloudText,
+  .cloudError {
+    display: none;
+  }
+
+  .cloudStatus :global(.uiAction) {
+    min-height: 42px;
   }
 
   .rulesSection .sectionHeader {

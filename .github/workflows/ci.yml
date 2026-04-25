@@ -86,3 +86,9 @@ jobs:
         run: npm run build
         env:
           GOMOKU_BASE_PATH: /gomoku2d/
+          VITE_FIREBASE_API_KEY: AIzaSyAGB97sL0GRf_x4IyzTaA-lo4fq5XoXWfw
+          VITE_FIREBASE_APP_ID: 1:892554744656:web:17524b73c8afb856841255
+          VITE_FIREBASE_AUTH_DOMAIN: gomoku2d.firebaseapp.com
+          VITE_FIREBASE_MESSAGING_SENDER_ID: '892554744656'
+          VITE_FIREBASE_PROJECT_ID: gomoku2d
+          VITE_FIREBASE_STORAGE_BUCKET: gomoku2d.firebasestorage.app

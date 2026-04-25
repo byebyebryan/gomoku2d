@@ -137,6 +137,8 @@ Required Vite env vars:
 
 The current Firebase project is `gomoku2d`. Live setup details and API-based
 config fetch commands live in [`../docs/backend_infra.md`](../docs/backend_infra.md).
+CI and tag deploy builds include these public config values so the released app
+can initialize Firebase.
 
 Fetch registered web apps and then the selected app config with:
 
