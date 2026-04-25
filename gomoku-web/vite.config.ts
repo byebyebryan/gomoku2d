@@ -19,6 +19,11 @@ function sharedPlugins() {
   return [react(), wasm(), topLevelAwait()];
 }
 
+const popupAuthHeaders = {
+  "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
+  "Referrer-Policy": "no-referrer-when-downgrade",
+};
+
 export default defineConfig(() => ({
   base: normalizeBasePath(process.env.GOMOKU_BASE_PATH),
   build: {
@@ -38,11 +43,13 @@ export default defineConfig(() => ({
     },
   },
   server: {
+    headers: popupAuthHeaders,
     port: 3001,
     open: true,
   },
   preview: {
     host: "0.0.0.0",
+    headers: popupAuthHeaders,
     port: 8001,
     allowedHosts: true,
   },
