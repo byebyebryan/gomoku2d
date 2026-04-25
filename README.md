@@ -102,6 +102,8 @@ The canonical design and schedule live in `docs/`:
 - [Live asset previews](https://dev.byebyebryan.com/gomoku2d/assets/) — published sprite, icon, and font previews
 - [`docs/ui_screenshot_review.md`](docs/ui_screenshot_review.md) — screenshot history and UI critique
 - [`docs/backend.md`](docs/backend.md) — Firebase + Firestore + Cloud Run model for later cloud/online phases
+- [`docs/backend_infra.md`](docs/backend_infra.md) — live Firebase/GCP setup, rules deployment, and env checklist
+- [`docs/backend_cost.md`](docs/backend_cost.md) — backend free-tier assumptions, estimates, and headroom tracking
 - [`docs/roadmap.md`](docs/roadmap.md) — version-based phase plan from POC to cloud, online, and lab-powered features
 - [`docs/release.md`](docs/release.md) — local preview, release checks, tagging, and publish workflow
 - [`docs/bot_baseline.md`](docs/bot_baseline.md) — current `SearchBot` strategy
