@@ -13,35 +13,37 @@ Comparative screenshot review lives in `ui_screenshot_review.md`.
 
 ## Reference image
 
-Current visual reference sheet:
+Static visual language reference sheet:
 
 ![Gomoku2D DOM shell visual reference](assets/visual_reference_v0_2_2.png)
 
-Use this as a tone and component-language reference, not a locked screen spec.
-The important takeaways are panel contrast, button weight, spacing, typography,
-and accent roles. Individual layouts can still evolve. Alternative explorations
-should stay in `docs/archive/` unless they become the new canonical reference.
+Use this older sheet as a tone and component-language reference, not as the
+current screen baseline. The important takeaways are panel contrast, button
+weight, spacing, typography, and accent roles. Current screen captures live in
+`ui_screenshot_review.md`. Alternative explorations should stay in
+`docs/archive/` unless they become the new canonical reference.
 
 ## Reference set
 
 For the comparative screenshot set and critique, see
 [ui_screenshot_review.md](ui_screenshot_review.md). That document embeds the
-active `v0.1`, `v0.2.1`, `v0.2.2`, and `v0.2.3` reference captures and records
-what each revision got right and wrong.
+active `v0.1`, `v0.2.1`, `v0.2.2`, `v0.2.3`, and `v0.2.4` reference captures
+and records what each revision got right and wrong.
 
 The rule of thumb:
 
 - `v0_1_*` is tone and retro feel
 - `v0_2_1_*` is the first practical DOM-shell baseline
 - `v0_2_2_*` is the flatter-shell baseline before the mobile-specific pass
-- `v0_2_3_*` is the current paired desktop/mobile baseline
+- `v0_2_3_*` is the paired desktop/mobile baseline
+- `v0_2_4_*` is the final polish/reference set for the current `0.2.x` shell
 
 The current refinement direction is:
 
 - keep `v0.2.2` shell tone, spacing, and button-role clarity
 - keep `v0.2.3`'s screen-specific portrait layouts and compact top-bar pattern
-- keep the later icon work narrow, functional, and rendered at the scale the
-  authored pack actually reads well
+- keep `v0.2.4`'s icon scale, denser profile treatment, and asset-preview
+  documentation
 - use `gomoku-web/assets/icons/preview.html` and
   `gomoku-web/assets/fonts/preview.html` when checking icon or type rendering
 - keep tightening dense secondary surfaces like profile instead of re-expanding
@@ -49,9 +51,9 @@ The current refinement direction is:
 
 The current release assumption is:
 
-- `v0.2.3` remains the screenshot baseline for the current paired desktop/mobile
+- `v0.2.4` is the screenshot baseline for the current paired desktop/mobile
   shell
-- `v0.2.4` is the final small polish and hardening pass on top of that baseline
+- `v0.2.4` is the final small polish and hardening pass for `0.2.x`
 - the visual portion is hierarchy/spacing/consistency work, not a structural
   layout redo
 - after `v0.2.4`, the DOM shell should be considered effectively frozen for the
@@ -63,6 +65,7 @@ The current release assumption is:
 - keep v0.2.1's structure, separation, and scalability
 - keep v0.2.2's flatter shell and clearer button-role language
 - keep v0.2.3's intentional mobile layouts and tighter transport language
+- keep v0.2.4's tighter icon scale, profile density, and documented asset set
 - avoid reintroducing v0.1's scene-bound UI
 - avoid rebuilding dense sidebars or over-explained controls as the shell grows
 

@@ -24,7 +24,7 @@ jobs:
           TAG_VERSION="${GITHUB_REF_NAME#v}"
           if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
             echo "::error::package.json version ($PKG_VERSION) does not match tag (${GITHUB_REF_NAME})"
-            echo "::error::Did you run scripts/release.sh ${TAG_VERSION}?"
+            echo "::error::Did you run scripts/set-web-version.sh ${TAG_VERSION} before finalizing the release?"
             exit 1
           fi
 
