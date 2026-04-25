@@ -15,8 +15,10 @@ backend design lives in `backend.md`; free-tier estimates live in
 | Firebase web app | `Gomoku2D Web` |
 | Firebase web app ID | `1:892554744656:web:17524b73c8afb856841255` |
 | Auth config | Initialized; subtype `IDENTITY_PLATFORM` |
-| Auth providers | Google pending OAuth client/provider config |
+| Auth providers | Google enabled |
 | Authorized Auth domains | `gomoku2d.firebaseapp.com`, `gomoku2d.web.app`, `localhost`, `dev.byebyebryan.com` |
+| Google OAuth client | `projects/gomoku2d/locations/global/oauthClients/gomoku2d-web-auth` |
+| Google OAuth client ID | `afb571e3f-1dd4-44d0-902b-f5664aa8f5aa` |
 | Firestore database | `(default)` |
 | Firestore mode | Native |
 | Firestore location | `us-central1` |
@@ -96,22 +98,101 @@ Expected essentials:
 - `subtype: IDENTITY_PLATFORM`
 - authorized domains include `localhost` and `dev.byebyebryan.com`
 
-Google sign-in provider is not fully enabled yet. Creating the provider through
-the Identity Toolkit API requires an OAuth client ID/secret; the Firebase
-console normally provisions that credential when enabling the Google provider.
-
-Current API check:
+Verify the Google provider:
 
 ```sh
 curl -sS \
   -H "Authorization: Bearer ${TOKEN}" \
   -H "X-Goog-User-Project: gomoku2d" \
-  "https://identitytoolkit.googleapis.com/admin/v2/projects/892554744656/defaultSupportedIdpConfigs/google.com"
+  "https://identitytoolkit.googleapis.com/admin/v2/projects/892554744656/defaultSupportedIdpConfigs/google.com" \
+  | jq '{name, enabled, clientId}'
 ```
 
-Expected until provider setup is complete:
+Expected essentials:
 
-- `CONFIGURATION_NOT_FOUND`
+- `enabled: true`
+- `clientId: "afb571e3f-1dd4-44d0-902b-f5664aa8f5aa"`
+
+Verify the backing OAuth client:
+
+```sh
+gcloud iam oauth-clients describe gomoku2d-web-auth \
+  --project=gomoku2d \
+  --location=global \
+  --format='yaml(name,clientId,state,allowedRedirectUris,allowedScopes,clientType)'
+```
+
+Expected essentials:
+
+- `state: ACTIVE`
+- `clientType: CONFIDENTIAL_CLIENT`
+- `allowedScopes` includes `openid` and `email`
+- `allowedRedirectUris` includes:
+  - `https://gomoku2d.firebaseapp.com/__/auth/handler`
+  - `https://gomoku2d.web.app/__/auth/handler`
+  - `https://dev.byebyebryan.com/gomoku2d/__/auth/handler`
+  - `http://localhost:5173/__/auth/handler`
+
+The OAuth client credential secret was shown once at creation time and is not
+stored in the repo. Identity Toolkit stores the provider copy. If the secret
+needs rotation, create a new credential and patch the provider config with the
+new value.
+
+Create the Google provider without using the Firebase console:
+
+```sh
+gcloud iam oauth-clients create gomoku2d-web-auth \
+  --project=gomoku2d \
+  --location=global \
+  --client-type=confidential-client \
+  --display-name='Gomoku2D Web Auth' \
+  --description='Firebase Auth Google provider for Gomoku2D web app' \
+  --allowed-grant-types=authorization-code-grant,refresh-token-grant \
+  --allowed-scopes=openid,email \
+  --allowed-redirect-uris=https://gomoku2d.firebaseapp.com/__/auth/handler,https://gomoku2d.web.app/__/auth/handler,https://dev.byebyebryan.com/gomoku2d/__/auth/handler,http://localhost:5173/__/auth/handler
+
+gcloud iam oauth-clients credentials create gomoku2d-web-auth-secret \
+  --project=gomoku2d \
+  --location=global \
+  --oauth-client=gomoku2d-web-auth \
+  --display-name='Gomoku2D Web Auth Secret'
+```
+
+Capture the `clientSecret` from the credential creation output, then configure
+Identity Toolkit:
+
+```sh
+TOKEN=$(gcloud auth print-access-token)
+CLIENT_ID='afb571e3f-1dd4-44d0-902b-f5664aa8f5aa'
+CLIENT_SECRET='<clientSecret from credential creation output>'
+
+jq -n \
+  --arg clientId "${CLIENT_ID}" \
+  --arg clientSecret "${CLIENT_SECRET}" \
+  '{
+    name: "projects/892554744656/defaultSupportedIdpConfigs/google.com",
+    enabled: true,
+    clientId: $clientId,
+    clientSecret: $clientSecret
+  }' \
+  | curl -sS -X POST \
+      -H "Authorization: Bearer ${TOKEN}" \
+      -H "X-Goog-User-Project: gomoku2d" \
+      -H "Content-Type: application/json" \
+      "https://identitytoolkit.googleapis.com/admin/v2/projects/892554744656/defaultSupportedIdpConfigs?idpId=google.com" \
+      -d @-
+```
+
+If the provider already exists, use the same body with:
+
+```sh
+curl -sS -X PATCH \
+  -H "Authorization: Bearer ${TOKEN}" \
+  -H "X-Goog-User-Project: gomoku2d" \
+  -H "Content-Type: application/json" \
+  "https://identitytoolkit.googleapis.com/admin/v2/projects/892554744656/defaultSupportedIdpConfigs/google.com?updateMask=enabled,clientId,clientSecret" \
+  -d @-
+```
 
 ## Firebase Web Config
 
@@ -205,8 +286,10 @@ curl -sS \
 
 Before cloud UI ships publicly:
 
-- Enable Google sign-in in Firebase Auth by provisioning/configuring the Google
-  OAuth client.
+- Test real browser Google sign-in on localhost and the deployed GitHub Pages
+  URL.
+- Verify that first sign-in creates the expected owner-scoped Firestore
+  profile document.
 - Confirm the production build initializes Firebase only when config is present.
 - Review Firebase/Firestore usage dashboards after the first signed-in test.
 

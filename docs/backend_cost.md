@@ -28,7 +28,7 @@ Project: `gomoku2d`
 |---|---|---|
 | Firebase project | Linked to GCP project `gomoku2d` | No direct cost |
 | Firebase web app | `Gomoku2D Web` | No direct cost |
-| Firebase Auth | Initialized as Identity Platform; Google provider pending OAuth config | Billing is enabled; stay inside no-cost MAU tier and avoid phone/SAML/OIDC |
+| Firebase Auth | Initialized as Identity Platform; Google provider enabled | Billing is enabled; stay inside no-cost MAU tier and avoid phone/SAML/OIDC |
 | Firestore | Default Native-mode database in `us-central1`; `freeTier: true` | Uses the one free Firestore database for the project |
 | Firestore rules | Repo rules deployed to `cloud.firestore` release | No runtime cost |
 | Cloud Run | Not created in `v0.3` | Future `v0.4+`; billing is enabled, but no service exists yet |
