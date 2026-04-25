@@ -16,7 +16,7 @@ backend design lives in `backend.md`; free-tier estimates live in
 | Firebase web app ID | `1:892554744656:web:17524b73c8afb856841255` |
 | Auth config | Initialized; subtype `IDENTITY_PLATFORM` |
 | Auth providers | Google enabled |
-| Authorized Auth domains | `gomoku2d.firebaseapp.com`, `gomoku2d.web.app`, `localhost`, `starship.lan`, `dev.byebyebryan.com` |
+| Authorized Auth domains | `gomoku2d.firebaseapp.com`, `gomoku2d.web.app`, `localhost`, `dev.byebyebryan.com` |
 | Google OAuth client ID | `892554744656-hksl91isq2pb4pp4dga2h3mi2d02ris2.apps.googleusercontent.com` |
 | Firestore database | `(default)` |
 | Firestore mode | Native |
@@ -95,8 +95,7 @@ curl -sS \
 Expected essentials:
 
 - `subtype: IDENTITY_PLATFORM`
-- authorized domains include `localhost`, `starship.lan`, and
-  `dev.byebyebryan.com`
+- authorized domains include `localhost` and `dev.byebyebryan.com`
 
 Verify the Google provider:
 
@@ -133,7 +132,6 @@ Google Cloud console:
 4. Add Authorized JavaScript origins:
    - `http://localhost:8001`
    - `http://localhost:3001`
-   - `http://starship.lan:8001`
    - `https://dev.byebyebryan.com`
    - `https://gomoku2d.firebaseapp.com`
    - `https://gomoku2d.web.app`
@@ -143,9 +141,15 @@ Google Cloud console:
    - `https://dev.byebyebryan.com/gomoku2d/__/auth/handler`
    - `http://localhost:8001/__/auth/handler`
    - `http://localhost:3001/__/auth/handler`
-   - `http://starship.lan:8001/__/auth/handler`
 6. Save the generated client ID and client secret outside the repo. The client
    ID should look like `...apps.googleusercontent.com`.
+
+For remote development over SSH, prefer port forwarding so the browser origin
+stays `localhost`, for example:
+
+```sh
+ssh -L 8001:127.0.0.1:8001 bryan@starship.lan
+```
 
 After creating the Web client, configure Identity Toolkit:
 
