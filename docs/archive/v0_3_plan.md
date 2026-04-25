@@ -58,8 +58,8 @@ Initial state as of the first `v0.3` pass:
 - use one Firebase/GCP project for now: `gomoku2d`
 - Firebase project and web app are initialized
 - Firebase/Auth/Firestore APIs are enabled
-- Auth config is initialized; Google provider needs a Google Auth Platform Web
-  OAuth client before browser sign-in works
+- Auth config is initialized; Google provider is enabled with a Google Auth
+  Platform Web OAuth client
 - web Firebase config is env-driven and optional at runtime
 - Firestore is created as the default Native-mode database in `us-central1`
 - Firestore rules are in repo and deployed to the `cloud.firestore` release

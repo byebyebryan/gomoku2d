@@ -15,8 +15,9 @@ backend design lives in `backend.md`; free-tier estimates live in
 | Firebase web app | `Gomoku2D Web` |
 | Firebase web app ID | `1:892554744656:web:17524b73c8afb856841255` |
 | Auth config | Initialized; subtype `IDENTITY_PLATFORM` |
-| Auth providers | Google pending Google Auth Platform Web client |
+| Auth providers | Google enabled |
 | Authorized Auth domains | `gomoku2d.firebaseapp.com`, `gomoku2d.web.app`, `localhost`, `127.0.0.1`, `dev.byebyebryan.com` |
+| Google OAuth client ID | `892554744656-hksl91isq2pb4pp4dga2h3mi2d02ris2.apps.googleusercontent.com` |
 | Firestore database | `(default)` |
 | Firestore mode | Native |
 | Firestore location | `us-central1` |
@@ -97,8 +98,7 @@ Expected essentials:
 - authorized domains include `localhost`, `127.0.0.1`, and
   `dev.byebyebryan.com`
 
-Verify the Google provider. Until the Google Auth Platform Web client is
-created and attached, this should return `CONFIGURATION_NOT_FOUND`:
+Verify the Google provider:
 
 ```sh
 curl -sS \
@@ -108,11 +108,17 @@ curl -sS \
   | jq '{name, enabled, clientId}'
 ```
 
+Expected essentials:
+
+- `enabled: true`
+- `clientId` ends with `.apps.googleusercontent.com`
+
 Important: `gcloud iam oauth-clients create` is not a valid substitute for a
 Google Auth Platform Web client here. It creates a Cloud IAM OAuth client with a
 UUID-style client ID, which Google Sign-In rejects with `invalid_client`.
 
-Create the correct OAuth client in the Google Cloud console:
+If the provider must be recreated, create the correct OAuth client in the
+Google Cloud console:
 
 1. Open
    `https://console.cloud.google.com/auth/clients?project=gomoku2d`.
