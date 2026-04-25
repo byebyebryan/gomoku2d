@@ -28,10 +28,10 @@ Project: `gomoku2d`
 |---|---|---|
 | Firebase project | Linked to GCP project `gomoku2d` | No direct cost |
 | Firebase web app | `Gomoku2D Web` | No direct cost |
-| Firebase Auth | API enabled, providers not configured yet | Social sign-in is intended to stay no-cost; avoid phone auth |
+| Firebase Auth | Initialized as Identity Platform; Google provider pending OAuth config | Billing is enabled; stay inside no-cost MAU tier and avoid phone/SAML/OIDC |
 | Firestore | Default Native-mode database in `us-central1`; `freeTier: true` | Uses the one free Firestore database for the project |
 | Firestore rules | Repo rules deployed to `cloud.firestore` release | No runtime cost |
-| Cloud Run | Not created in `v0.3` | Future `v0.4+`; requires billing/Blaze for real use |
+| Cloud Run | Not created in `v0.3` | Future `v0.4+`; billing is enabled, but no service exists yet |
 
 ## Firestore Free Tier
 
@@ -122,16 +122,24 @@ work, add a separate estimate for:
 
 ## Auth Cost Notes
 
-Base Firebase Authentication social sign-in is treated as no-cost for this
-project. Avoid:
+The project is currently initialized with an Identity Platform Auth config and
+has Cloud Billing enabled. This is still safe for the expected scale, but cost
+control now depends on staying inside the no-cost tier and monitoring usage,
+not on Spark-plan shutoff behavior.
+
+Current no-cost planning assumptions:
+
+- Email, social, anonymous, and custom auth have a no-cost tier of 50,000 MAUs
+  on Blaze / Identity Platform.
+- SAML/OIDC has a much smaller no-cost tier and is out of scope.
+
+Avoid:
 
 - phone auth
-- upgrading to Firebase Authentication with Identity Platform unless we need
-  one of its features
 - SAML/OIDC providers
 
-If the project is upgraded to Firebase Authentication with Identity Platform,
-different user-count limits/pricing apply. Re-check before making that change.
+Re-check Auth pricing before adding any provider beyond Google/GitHub social
+sign-in.
 
 ## Cloud Run Future Budget
 

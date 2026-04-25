@@ -55,7 +55,7 @@ Four components:
 | Component | Role | Cost note |
 |---|---|---|
 | **Local guest profile** | Local identity, guest settings, guest match history | No backend cost |
-| **Firebase Auth** | Sign-in when cloud-backed features are needed | Social sign-in is no-cost in standard Firebase pricing; quotas change if Auth is upgraded to Identity Platform |
+| **Firebase Auth** | Sign-in when cloud-backed features are needed | Auth is initialized as Identity Platform; keep providers inside the no-cost social-sign-in tier tracked in `backend_cost.md` |
 | **Firestore** | Document storage: cloud profiles, trusted matches, published replays, puzzles | Current database state lives in `backend_infra.md`; cost posture lives in `backend_cost.md` |
 | **Cloud Run** | Rust service: trusted match authority, username reservation, verification, strong bot, puzzle generation | For request-based billing: 2M requests · 180k vCPU-s · 360k GiB-s per month free (us-central1-based) |
 
@@ -83,7 +83,8 @@ Instead:
 
 - first meaningful interaction creates a **local guest profile** in browser
   storage
-- **Google** and **GitHub** are the cloud sign-in providers
+- **Google** is the first cloud sign-in provider; GitHub can follow if it stays
+  small enough to justify the extra provider setup
 - sign-in happens when the user opts into a cloud-backed feature such as synced
   history, online play, or replay sharing
 

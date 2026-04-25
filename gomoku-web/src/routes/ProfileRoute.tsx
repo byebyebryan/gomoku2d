@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useStore } from "zustand";
 
+import { cloudAuthStore } from "../cloud/auth_store";
+import { cloudProfileStore } from "../cloud/cloud_profile_store";
 import { guestProfileStore, type GuestSavedMatch } from "../profile/guest_profile_store";
 import { replayPlayerName, variantLabel } from "../replay/local_replay";
 import { Icon } from "../ui/Icon";
@@ -45,8 +47,33 @@ function historySideLabel(match: GuestSavedMatch): "Black" | "White" {
   return match.guestStone === "black" ? "Black" : "White";
 }
 
+function cloudStateLabel(
+  authStatus: ReturnType<typeof cloudAuthStore.getState>["status"],
+  profileStatus: ReturnType<typeof cloudProfileStore.getState>["status"],
+): string {
+  if (authStatus === "unconfigured") {
+    return "Unavailable";
+  }
+
+  if (authStatus === "loading" || profileStatus === "loading") {
+    return "Checking";
+  }
+
+  if (authStatus === "signed_in" && profileStatus === "ready") {
+    return "Cloud";
+  }
+
+  if (authStatus === "error" || profileStatus === "error") {
+    return "Error";
+  }
+
+  return "Local";
+}
+
 export function ProfileRoute() {
   const navigate = useNavigate();
+  const cloudAuth = useStore(cloudAuthStore, (state) => state);
+  const cloudProfile = useStore(cloudProfileStore, (state) => state);
   const history = useStore(guestProfileStore, (state) => state.history);
   const profile = useStore(guestProfileStore, (state) => state.profile);
   const settings = useStore(guestProfileStore, (state) => state.settings);
@@ -55,6 +82,23 @@ export function ProfileRoute() {
     guestProfileStore.getState().ensureGuestProfile();
   }, []);
 
+  useEffect(() => {
+    cloudAuthStore.getState().start();
+
+    return () => {
+      cloudAuthStore.getState().stop();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (cloudAuth.status === "signed_in" && cloudAuth.user) {
+      void cloudProfileStore.getState().loadForUser(cloudAuth.user, settings.preferredVariant);
+      return;
+    }
+
+    cloudProfileStore.getState().reset();
+  }, [cloudAuth.status, cloudAuth.user, settings.preferredVariant]);
+
   const wins = history.filter((match) => {
     const winner = match.status === "black_won" ? "black" : match.status === "white_won" ? "white" : null;
     return winner !== null && winner === match.guestStone;
@@ -62,6 +106,9 @@ export function ProfileRoute() {
   const draws = history.filter((match) => match.status === "draw").length;
   const losses = history.length - wins - draws;
   const guestDisplayName = profile?.displayName ?? "Guest";
+  const cloudBadge = cloudStateLabel(cloudAuth.status, cloudProfile.status);
+  const cloudIdentity = cloudProfile.profile ?? null;
+  const cloudError = cloudAuth.errorMessage ?? cloudProfile.errorMessage;
 
   return (
     <main className={styles.page}>
@@ -87,7 +134,7 @@ export function ProfileRoute() {
           <section className={`${styles.sideSection} ${styles.identitySection}`}>
             <div className={styles.sectionHeader}>
               <p className="uiSectionLabel">Identity</p>
-              <p className={styles.badge}>Local</p>
+              <p className={styles.badge}>{cloudBadge}</p>
             </div>
             <label className={styles.field}>
               <span className={styles.fieldLabel}>Display name</span>
@@ -108,9 +155,50 @@ export function ProfileRoute() {
               </div>
               <div>
                 <dt className={styles.metaLabel}>Online profile</dt>
-                <dd className={styles.metaValue}>No online profile linked</dd>
+                <dd className={styles.metaValue}>
+                  {cloudIdentity?.uid ?? (cloudAuth.status === "unconfigured" ? "Not configured" : "Not linked")}
+                </dd>
               </div>
             </dl>
+            <div className={styles.cloudStatus}>
+              <div className={styles.cloudCopy}>
+                <p className={styles.cloudTitle}>
+                  {cloudIdentity ? `Signed in as ${cloudIdentity.displayName}` : "Cloud profile"}
+                </p>
+                <p className={styles.cloudText}>
+                  {cloudAuth.status === "unconfigured"
+                    ? "Cloud sign-in is not configured for this build."
+                    : cloudIdentity
+                      ? "Private cloud identity is linked. Local history remains local until promotion ships."
+                      : "Sign in when you want this profile to follow you across browsers."}
+                </p>
+                {cloudError ? <p className={styles.cloudError}>{cloudError}</p> : null}
+              </div>
+              {cloudAuth.status === "signed_in" ? (
+                <button
+                  className="uiAction uiActionNeutral"
+                  onClick={() => {
+                    void cloudAuthStore.getState().signOut();
+                  }}
+                  type="button"
+                >
+                  <span className="uiActionLabel">Sign out</span>
+                </button>
+              ) : (
+                <button
+                  className="uiAction uiActionSecondary"
+                  disabled={!cloudAuth.isConfigured || cloudAuth.status === "loading"}
+                  onClick={() => {
+                    void cloudAuthStore.getState().signInWithGoogle();
+                  }}
+                  type="button"
+                >
+                  <span className="uiActionLabel">
+                    {cloudAuth.status === "loading" ? "Checking" : "Sign in with Google"}
+                  </span>
+                </button>
+              )}
+            </div>
           </section>
 
           <div className="uiDivider" />

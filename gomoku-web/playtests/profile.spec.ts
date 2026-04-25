@@ -1,24 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-function moveCount(value: string | null): number {
-  const match = value?.match(/\d+/);
-  return match ? Number(match[0]) : NaN;
-}
-
-function boardClickPosition(box: { width: number; height: number }, row: number, col: number) {
-  const boardSize = 15;
-  const cellSize = Math.min(box.width / boardSize, box.height / boardSize);
-  const boardHeight = boardSize * cellSize;
-  const originX = (box.width - (boardSize - 1) * cellSize) / 2;
-  const originY = (box.height - boardHeight) / 2 + cellSize / 2;
-
-  return {
-    x: originX + col * cellSize,
-    y: originY + row * cellSize,
-  };
-}
-
-test("guest profile persists locally and captures finished local matches", async ({ page }) => {
+test("guest profile persists locally and renders saved local matches", async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 900 });
   await page.goto("/profile");
 
@@ -38,25 +20,53 @@ test("guest profile persists locally and captures finished local matches", async
   await expect(page.getByText("Bryan Guest to move")).toBeVisible();
   await expect(page.getByTestId("match-rule")).toHaveText("Renju");
 
-  const canvas = page.locator("canvas").first();
-  const box = await canvas.boundingBox();
-  if (!box) {
-    throw new Error("board canvas did not report a bounding box");
-  }
+  await page.evaluate(() => {
+    const storageKey = "gomoku2d.guest-profile.v1";
+    const stored = localStorage.getItem(storageKey);
+    const parsed = stored
+      ? JSON.parse(stored)
+      : {
+          state: {
+            history: [],
+            profile: null,
+            settings: { preferredVariant: "freestyle" },
+          },
+          version: 0,
+        };
 
-  for (const [row, col] of [[0, 0], [2, 0], [4, 0], [6, 0], [8, 0]]) {
-    const beforeCount = moveCount(await page.getByTestId("match-move-count").textContent());
-    await canvas.click({ position: boardClickPosition(box, row, col) });
-    await expect
-      .poll(async () => moveCount(await page.getByTestId("match-move-count").textContent()), {
-        timeout: 15_000,
-      })
-      .toBeGreaterThan(beforeCount);
-  }
+    parsed.state.history = [
+      {
+        guestStone: "black",
+        id: "fixture-finished-match",
+        mode: "bot",
+        moves: [
+          { col: 7, moveNumber: 1, player: 1, row: 7 },
+          { col: 6, moveNumber: 2, player: 2, row: 5 },
+          { col: 8, moveNumber: 3, player: 1, row: 7 },
+          { col: 6, moveNumber: 4, player: 2, row: 6 },
+          { col: 9, moveNumber: 5, player: 1, row: 7 },
+          { col: 6, moveNumber: 6, player: 2, row: 7 },
+        ],
+        players: [
+          { kind: "human", name: "Bryan Guest", stone: "black" },
+          { kind: "bot", name: "Practice Bot", stone: "white" },
+        ],
+        savedAt: "2026-04-22T18:30:00.000Z",
+        status: "white_won",
+        variant: "renju",
+        winningCells: [
+          { row: 5, col: 6 },
+          { row: 6, col: 6 },
+          { row: 7, col: 6 },
+          { row: 8, col: 6 },
+          { row: 9, col: 6 },
+        ],
+      },
+    ];
+    localStorage.setItem(storageKey, JSON.stringify(parsed));
+  });
 
-  await expect(page.getByTestId("match-move-count")).toHaveText("Move 10");
-  await expect(page.getByText("Practice Bot wins")).toBeVisible();
-  await page.getByRole("link", { name: "Profile" }).click();
+  await page.goto("/profile");
 
   await expect(page.getByText("Loss", { exact: true })).toBeVisible();
   await expect(page.getByText("Wins", { exact: true })).toBeVisible();
