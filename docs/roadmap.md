@@ -84,10 +84,14 @@ Near-term release framing:
   local-first shell
 - `v0.2.4` landed the final small polish and hardening pass on top of that
   baseline
+- `v0.2.4` also captured the release reference assets: desktop/mobile
+  screenshots, README hero GIF, Open Graph image, and asset-preview docs
 - with `v0.2.4` in, the DOM shell is considered effectively frozen for the
   rest of `0.2.x`
 - remaining `0.2.x` work should focus on non-UI fixes and stability, not
   reopening the mobile layout or control-model work
+- before tagging `v0.2.4`, only release-blocking bugs, doc alignment, and
+  capture/metadata fixes should be accepted
 
 ### Out of scope
 

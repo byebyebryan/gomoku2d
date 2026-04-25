@@ -103,6 +103,7 @@ The canonical design and schedule live in `docs/`:
 - [`docs/ui_screenshot_review.md`](docs/ui_screenshot_review.md) — screenshot history and UI critique
 - [`docs/backend.md`](docs/backend.md) — Firebase + Firestore + Cloud Run model for later cloud/online phases
 - [`docs/roadmap.md`](docs/roadmap.md) — phased plan, with local-first `v0.2` before cloud/online
+- [`docs/release.md`](docs/release.md) — local preview, release checks, tagging, and publish workflow
 - [`docs/bot_baseline.md`](docs/bot_baseline.md) — current `SearchBot` strategy
 - [`gomoku-web/README.md`](gomoku-web/README.md) — web game stack, local dev, deploy/runtime details
 - [`gomoku-bot-lab/README.md`](gomoku-bot-lab/README.md) — bot-lab build/test, CLI usage, replay format, bot notes

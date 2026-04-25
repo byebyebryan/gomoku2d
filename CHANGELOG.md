@@ -12,97 +12,84 @@ their own section.
 
 ## [Unreleased]
 
-**Theme: final shell polish + stability hardening.**
+## [0.2.4] - 2026-04-24
 
-`v0.2.4` is the final small polish and hardening pass on top of the paired
-desktop/mobile `v0.2.3` baseline. It is not a redesign; the working rule is
-*board first, status second, controls third, meta last, no extra chrome.*
-After it lands, the DOM shell is considered effectively frozen for the rest of
-the `0.2.x` line. The rest of the release tightens the Practice Bot, moves a
-little more board analysis into core, and adds the release/benchmarking
-infrastructure needed to keep future fixes measurable.
+**Theme: wrap up `v0.2` with polish, release hygiene, and better iteration
+loops.**
 
-### Design (web)
+`v0.2.4` is the wrap-up release for the local-first `0.2.x` line. It does not
+try to redesign the app. Instead, it closes the loop on the paired
+desktop/mobile shell from `v0.2.3`, hardens the Practice Bot without turning it
+into a stronger opponent, and puts better workflows in place for future bot,
+asset, and release work.
 
-- Quieter small labels globally (eyebrows, section labels, mini field labels,
-  table headers) so labels organize information instead of competing with
-  values.
-- Tightened spacing rhythm around the shared `4 / 8 / 12 / 16 / 24 / 32` scale
-  to remove the last "assembled section by section" feel from desktop Match,
-  Replay, and Profile.
-- Standardized icon and button alignment (size, icon-to-label gap, left
-  padding, vertical centering) so top nav and action buttons read as one
-  system.
-- Compressed the desktop Match right rail so it reads more like a HUD and
-  less like a utility sidebar.
-- Tightened the desktop Replay transport group into a single playback-console
-  object, with `Play From Here` clearly secondary.
-- Re-hierarchied desktop Profile: stats as hero, identity/settings demoted,
-  history softened from a data-table feel into a player-record ledger.
-- Dropped the redundant `Replay timeline` subtitle from the replay transport
-  zone.
-- Locked the icon system to a uniform `24px` render, matching the authored
-  pack's native scale.
+After `v0.2.4`, the DOM shell is considered effectively frozen for the rest of
+`0.2.x`; future work should be bug fixes, bot/core iteration, or explicitly
+new feature phases.
 
-### Added
+### Web polish
 
-**Web**
+- Refined the outer DOM shell one more time: quieter labels, tighter spacing,
+  consistent icon/button alignment, denser desktop Match and Replay rails, and
+  a Profile screen that reads more like a local record page than a settings
+  form.
+- Kept the mobile layouts from `v0.2.3`, but made cramped Match and Replay
+  viewports safer by allowing page flow/scroll instead of letting bottom
+  controls collide with the board.
+- Polished player-facing copy, renamed the local opponent to `Practice Bot`,
+  and added a Home-screen version label sourced from the web package version.
+- Added favicon assets, refreshed the README hero GIF, regenerated the Open
+  Graph image, and captured the final `v0.2.4` desktop/mobile screenshot set.
 
-- Favicon assets and social-preview imagery.
+### Game visuals and asset workflow
 
-**Bot lab**
+- Reworked canvas warning language so winning/threat cells, forbidden Renju
+  cells, and threat-plus-forbidden overlaps can be shown without fighting the
+  pointer.
+- Refined the sprite animation set and z-order rules for pointer, warnings,
+  stones, winning-line hover, and result sequence numbers.
+- Switched result-screen sequence labels from the old bitmap-font path to the
+  TTF pixel-font path with stable desktop/mobile sizing.
+- Split DOM-shell styling and canvas/game visuals into separate docs:
+  `ui_design.md` for the shell and `game_visual.md` for Phaser board-space
+  rendering.
+- Added published preview pages for sprites, icons, and fonts so asset changes
+  can be inspected quickly, shared visually, and used as a small showcase for
+  the retro pixel-art style.
 
-- A bot/core performance benchmark harness with a fixed, reviewable scenario
-  corpus for repeatable tuning work.
+### Bot lab and core workflow
 
-### Changed
+- Hardened the baseline Practice Bot against obvious anti-blunder failures,
+  especially immediate-win and immediate-block cases.
+- Added a bot/core performance benchmark harness with a fixed, reviewable
+  scenario corpus so future tuning work can be measured instead of guessed.
+- Optimized nearby-move generation, immediate-winning-move scans, and the
+  anti-blunder prefilter so the safety fix does not carry unnecessary
+  slowdown.
+- Added search-bot regression coverage over the benchmark corpus and formatted
+  the Rust workspace with `rustfmt`.
+- Moved winning-line detection into `gomoku-core` / `gomoku-wasm`, reducing
+  duplicated game-rule logic in the web UI.
 
-**Web**
+### Gameplay fixes
 
-- Copy polish on screen labels; renamed the local opponent to `Practice Bot`.
-- Mobile Match and Replay now allow page flow/scroll in cramped vertical
-  viewports instead of letting bottom controls collide with the board.
 - Replay branching now preserves an undo floor, so a resumed match cannot undo
   earlier than the replay position it started from.
-- Tactical move hints now use the hover-warning animation for winning and
-  losing moves while keeping forbidden Renju moves on the surface warning,
-  allowing threat/forbidden overlap to render cleanly.
-- Result-screen move sequence labels now use the TTF pixel font path instead
-  of the old bitmap-font path, with stable desktop/mobile sizing.
-- Winning-line detection now comes from `gomoku-core` through `gomoku-wasm`
-  instead of being re-derived in the web UI.
+- Mobile Match keeps the touch-placement flow from `v0.2.3`, while preserving
+  the board-first layout and making failure cases safer on short screens.
 
-**Bot lab**
+### Project and release hygiene
 
-- Hardened the baseline bot's anti-blunder search.
-- Optimized nearby-move generation, immediate-winning-move scans, and the
-  anti-blunder prefilter so the Practice Bot keeps the safety fix without the
-  full slowdown.
-- Added search-bot regression checks over the benchmark corpus, including
-  immediate-win and immediate-block anchors.
-- Formatted the Rust workspace with `rustfmt`.
-
-### Docs
-
-- Refreshed canonical doc set (`product.md`, `architecture.md`, `design.md`,
-  `backend.md`, `roadmap.md`, `visual_design.md`, `visual_review.md`, root
-  `README.md`, `gomoku-web/README.md`) to match the shipped v0.2 product and
-  align release framing around the upcoming UI freeze.
+- Refreshed the canonical doc set (`product.md`, `architecture.md`,
+  `app_design.md`, `backend.md`, `roadmap.md`, `ui_design.md`,
+  `game_visual.md`, `ui_screenshot_review.md`, root `README.md`,
+  `gomoku-web/README.md`) around the `0.2.x` freeze.
 - Added the ongoing bot/core performance tuning note with benchmark rules,
   fixed scenarios, baseline timings, and optimization-pass snapshots.
-
-### Tooling
-
-- Added `LICENSE` (MIT), `CHANGELOG.md`, CI workflow (rustfmt / clippy /
-  cargo test / tsc / vitest / production build), `.editorconfig`,
-  `rust-toolchain.toml` pinning `stable` + `rustfmt` + `clippy` +
-  `wasm32-unknown-unknown`, Node version pin (`.nvmrc` + `engines`),
-  Dependabot config (cargo + npm + github-actions, with npm ecosystem groups
-  for React / Vite / testing), PR template.
-- Committed `gomoku-bot-lab/Cargo.lock` for reproducible builds of the
-  workspace binaries.
-- Added release automation and backfill tooling for GitHub Releases, plus
-  smoke-test coverage aligned with the v0.2.4 shell.
+- Added `LICENSE` (MIT), `.editorconfig`, CI workflow, `rust-toolchain.toml`,
+  Node version pin, Dependabot config, PR template, release automation,
+  release backfill tooling, smoke-test coverage, and committed
+  `gomoku-bot-lab/Cargo.lock` for reproducible workspace binaries.
 - Batched safe Dependabot updates and fixed the resulting Rust CI lint issues.
 
 ## [0.2.3] - 2026-04-22
@@ -233,7 +220,7 @@ behind a React wrapper instead of a Phaser scene.
 - **Product direction reframed** around a guest-first, local-first `v0.2`;
   cloud sign-in, published replays, and online play deferred to later phases.
 - New canonical doc set written as the new north star: `product.md`,
-  `architecture.md`, `design.md`, `backend.md`, `roadmap.md`.
+  `architecture.md`, `app_design.md`, `backend.md`, `roadmap.md`.
 - Pre-pivot exploratory docs moved to `docs/archive/` (progress log,
   Phaser-era FE plan, online backend design, FE gap analysis, UI/UX
   exploration notes).
@@ -305,7 +292,8 @@ together in one canvas-driven surface. That lesson drove the `v0.2.1` rewrite.
   concerns blurred together.
 - Expressive UI language, but not scalable beyond one canvas.
 
-[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.2.4...HEAD
+[0.2.4]: https://github.com/byebyebryan/gomoku2d/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/byebyebryan/gomoku2d/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/byebyebryan/gomoku2d/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/byebyebryan/gomoku2d/compare/v0.1...v0.2.1

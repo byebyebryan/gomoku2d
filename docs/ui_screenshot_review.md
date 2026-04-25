@@ -223,9 +223,8 @@ desktop/mobile system rather than a desktop-first shell with a narrow fallback.
 
 ### v0.2.4 polish direction
 
-`v0.2.3` still serves as the screenshot baseline, but the current `v0.2.4`
-polish and hardening pass is deliberately narrow and stays on top of the same
-shell:
+These notes became the `v0.2.4` polish pass. The work stayed deliberately
+narrow and on top of the same shell:
 
 - labels are quieter and secondary metadata competes less with values
 - desktop Match and Replay rails are tighter and read more like HUD/transport
@@ -238,10 +237,88 @@ shell:
   renders at a uniform `24px` because the authored pack reads best at its
   native scale
 
-The important constraint is still the same: `v0.2.4` should polish the current
-shell, not reopen the mobile layout or control-model work. If we capture a new
-reference set after this pass, that can become the dedicated `v0.2.4`
-screenshots.
+The important constraint stayed the same: `v0.2.4` polished the current shell,
+not the mobile layout or control model.
+
+## v0.2.4
+
+### References
+
+#### Desktop
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="assets/screenshot_v0_2_4_home_desktop.png" alt="v0.2.4 home screen on desktop" width="100%">
+      <br>
+      <sub>Home / Desktop</sub>
+    </td>
+    <td width="50%">
+      <img src="assets/screenshot_v0_2_4_match_desktop.png" alt="v0.2.4 match screen on desktop" width="100%">
+      <br>
+      <sub>Match / Desktop</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="assets/screenshot_v0_2_4_replay_desktop.png" alt="v0.2.4 replay screen on desktop" width="100%">
+      <br>
+      <sub>Replay / Desktop</sub>
+    </td>
+    <td width="50%">
+      <img src="assets/screenshot_v0_2_4_profile_desktop.png" alt="v0.2.4 profile screen on desktop" width="100%">
+      <br>
+      <sub>Profile / Desktop</sub>
+    </td>
+  </tr>
+</table>
+
+#### Mobile
+
+<table>
+  <tr>
+    <td width="25%">
+      <img src="assets/screenshot_v0_2_4_home_mobile.png" alt="v0.2.4 home screen on mobile" width="100%">
+      <br>
+      <sub>Home / Mobile</sub>
+    </td>
+    <td width="25%">
+      <img src="assets/screenshot_v0_2_4_match_mobile.png" alt="v0.2.4 match screen on mobile" width="100%">
+      <br>
+      <sub>Match / Mobile</sub>
+    </td>
+    <td width="25%">
+      <img src="assets/screenshot_v0_2_4_replay_mobile.png" alt="v0.2.4 replay screen on mobile" width="100%">
+      <br>
+      <sub>Replay / Mobile</sub>
+    </td>
+    <td width="25%">
+      <img src="assets/screenshot_v0_2_4_profile_mobile.png" alt="v0.2.4 profile screen on mobile" width="100%">
+      <br>
+      <sub>Profile / Mobile</sub>
+    </td>
+  </tr>
+</table>
+
+### What v0.2.4 improved
+
+- the app now exposes the release version on Home without adding another
+  persistent metadata block
+- the final icon scale is more legible and consistent across the shell
+- Profile is denser and reads more like a local record page than a settings
+  form
+- the canvas warning language and sequence-number rendering are cleaner after
+  the animation and font passes
+- the README hero and social image now reflect the current `v0.2.4` look
+
+### Remaining watch points
+
+- mobile Profile is still the densest screen, so future additions should be
+  conservative
+- small pixel labels can still get hard to read at mobile scale; avoid adding
+  more low-priority microcopy there
+- the shell should stay effectively frozen for the rest of `0.2.x` unless a
+  real bug or release-blocking polish issue appears
 
 ## Design takeaway
 
@@ -249,5 +326,6 @@ screenshots.
 - keep v0.2.1's structure, separation, and scalability
 - keep v0.2.2's flatter shell and clearer button-role language
 - keep v0.2.3's intentional mobile layouts and tighter transport language
+- keep v0.2.4's tighter icon scale, profile density, and documented asset set
 - avoid reintroducing v0.1's scene-bound UI
 - avoid rebuilding dense sidebars or over-explained controls as the shell grows

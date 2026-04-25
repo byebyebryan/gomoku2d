@@ -132,8 +132,10 @@ Pages serves the SPA on deep-linked routes like `/profile` and
 
 ## Deploy
 
-Production deploys to GitHub Pages via a manually triggered workflow at the
-repo root (`.github/workflows/deploy.yml`):
+Release and local-preview steps live in [`../docs/release.md`](../docs/release.md).
+
+Production deploys to GitHub Pages when a `v*` tag is pushed, or via a manually
+triggered workflow at the repo root (`.github/workflows/deploy.yml`):
 
 ```sh
 gh workflow run deploy.yml
@@ -161,8 +163,8 @@ gomoku-bot-lab/gomoku-wasm     — wasm-pack bridge: WasmBoard + WasmBot for JS
 ```
 
 The current line is the local-first `v0.2` product pass. Phase 1 (React shell,
-Phaser-as-board) is done; Phase 2 is the polish pass around the
-desktop/mobile `v0.2.3` baseline and the final `v0.2.4` shell polish on top of
-it. Cloud sign-in, published replays, and online play are deferred to later
+Phaser-as-board) is done; Phase 2 landed the paired desktop/mobile shell in
+`v0.2.3` and the final `v0.2.4` polish/reference set on top of it. Cloud
+sign-in, published replays, and online play are deferred to later
 phases — see [`../docs/roadmap.md`](../docs/roadmap.md) for sequencing and
 [`../docs/architecture.md`](../docs/architecture.md) for the runtime boundary.
