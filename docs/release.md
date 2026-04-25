@@ -108,7 +108,10 @@ git push origin main
 git push origin v0.2.4
 ```
 
-Pushing the tag fires both:
+Pushing `main` fires:
 
 - `.github/workflows/deploy.yml`
+
+Pushing the tag fires:
+
 - `.github/workflows/release.yml`
