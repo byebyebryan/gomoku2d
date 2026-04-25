@@ -1,4 +1,4 @@
-import Phaser from "phaser";
+import * as Phaser from "phaser";
 import { BOARD_RENDER_DEPTHS, BOARD_SIZE, SPRITE, FRAME_SIZE, COLOR } from "./constants";
 
 type CellState = 0 | 1 | null; // null = empty, 0 = black, 1 = white
