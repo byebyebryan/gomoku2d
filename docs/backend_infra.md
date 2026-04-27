@@ -186,6 +186,38 @@ curl -sS -X PATCH \
   -d @-
 ```
 
+### OAuth Audience And Public Access
+
+Google Auth Platform has two separate gates:
+
+- **User type**: `External` means the app can target any Google Account.
+- **Publishing status**: `Testing` still limits authorization to explicitly
+  listed test users. To let arbitrary Google users sign in, publish the app to
+  production.
+
+Before a public Gomoku2D release with Google sign-in:
+
+1. Open `https://console.cloud.google.com/auth/audience?project=gomoku2d`.
+2. Confirm user type is `External`.
+3. Confirm publishing status. If it is `Testing`, only configured test users
+   can authorize, up to Google's test-user limit.
+4. Use **Publish app** to move the app to `In production` when public sign-in is
+   intended.
+5. Review `https://console.cloud.google.com/auth/scopes?project=gomoku2d`.
+   Gomoku2D should only request the basic Google Sign-In scopes. Do not add
+   Gmail, Drive, Calendar, or other sensitive/restricted scopes without a
+   separate verification plan.
+6. Review `https://console.cloud.google.com/auth/branding?project=gomoku2d` if
+   Google asks for brand verification or if the consent screen needs public
+   app identity polish. Verification can require a public homepage, privacy
+   policy, and Search Console ownership for authorized domains.
+
+Current expectation for `v0.3`: publishing from `Testing` to `In production`
+is the access gate. Sensitive-scope verification should not be required as long
+as the app only uses Google Sign-In identity scopes. Brand verification may
+still be requested before Google displays final app name/logo details or if
+branding fields change.
+
 ## Popup Auth Headers
 
 The web app currently uses Firebase Auth's popup flow. In Chrome, the Firebase
