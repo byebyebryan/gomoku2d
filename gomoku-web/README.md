@@ -98,6 +98,7 @@ Routes:
 - `/match/local` — live match vs Practice Bot
 - `/replays/local/:matchId` — replay viewer for a locally saved match
 - `/profile` — local player record, preferred rule, history
+- `/privacy/` and `/terms/` — static info-page-template policy pages for the public app
 
 ---
 
