@@ -228,12 +228,15 @@ From here, the version plan is:
   config, Auth, cloud profiles, guest-to-cloud promotion, private cloud match
   history, and owner-scoped Firestore rules. The browser remains authoritative
   for local/casual play.
-- **P4 / `v0.4` — online product expansion.** Add the Cloud Run authority,
+- **P4 / `v0.4` — lab-powered product identity.** Use the Rust core/bot/eval
+  tools for replay analysis, critical-moment tagging, puzzles, bot
+  personalities, and related learning modes.
+- **P5 / `v0.5` — presentation systems and skins.** Extend the frontend visual
+  system so the product can support more than one tone without losing the
+  board-first design.
+- **P6 / `v0.6` — online product expansion.** Add the Cloud Run authority,
   direct challenge / PvP flows, trusted match persistence, ranked or matchmaking
   surfaces, and deliberate public/shareable artifacts.
-- **P5 / `v0.5` — lab-powered features.** Use the Rust core/bot/eval tools for
-  replay analysis, critical-moment tagging, puzzles, and related learning
-  modes.
 
 Details are in `roadmap.md`. The architectural contract — what React owns, what
 Phaser owns, how they talk, and where `gomoku-core` is authoritative — is the

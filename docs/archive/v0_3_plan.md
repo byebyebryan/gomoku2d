@@ -40,7 +40,7 @@ The app should still make complete sense if the player never signs in.
 - no puzzles
 - no replay analysis
 
-Those belong to `v0.4+` after private cloud continuity feels solid.
+Those belong to later phases after private cloud continuity feels solid.
 
 ## Scope
 
@@ -166,7 +166,8 @@ into one hard-to-debug release.
 - Public artifacts are not created implicitly.
 - The docs keep local guest history, cloud private history, and future public
   replay sharing as separate concepts.
-- `v0.4` online work has a clear backend/auth/history foundation to build on.
+- Later lab-powered and online work has a clear backend/auth/history foundation
+  to build on.
 
 ## Risks
 
@@ -177,4 +178,4 @@ into one hard-to-debug release.
 - Promotion bugs are easy to hide until real local history exists. Stable IDs
   and retry-safe writes matter more than fancy UI.
 - Cloud history can blur with future public replay sharing. Keep the `v0.3`
-  language private-only unless explicitly entering `P4`.
+  language private-only unless explicitly entering a later publish/share phase.

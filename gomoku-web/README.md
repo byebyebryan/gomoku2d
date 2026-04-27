@@ -200,7 +200,7 @@ browser play; `P2` landed the paired desktop/mobile shell in
 `v0.2.3` and the final `v0.2.4` polish/reference set on top of it. The current
 `v0.3` focus is optional cloud-backed continuity. Firebase config, Google
 sign-in, and cloud profile create/load are the first slice; guest promotion and
-private cloud history are next. Published replays and online play stay deferred
-to later phases — see [`../docs/roadmap.md`](../docs/roadmap.md) for sequencing
-and [`../docs/architecture.md`](../docs/architecture.md) for the runtime
-boundary.
+private cloud history are next. Lab-powered product features, skins, published
+replays, and online play stay sequenced in later phases — see
+[`../docs/roadmap.md`](../docs/roadmap.md) for sequencing and
+[`../docs/architecture.md`](../docs/architecture.md) for the runtime boundary.

@@ -31,7 +31,7 @@ Project: `gomoku2d`
 | Firebase Auth | Initialized as Identity Platform; Google provider enabled | Billing is enabled; stay inside no-cost MAU tier and avoid phone/SAML/OIDC |
 | Firestore | Default Native-mode database in `us-central1`; `freeTier: true` | Uses the one free Firestore database for the project |
 | Firestore rules | Repo rules deployed to `cloud.firestore` release | No runtime cost |
-| Cloud Run | Not created in `v0.3` | Future `v0.4+`; billing is enabled, but no service exists yet |
+| Cloud Run | Not created in `v0.3` | Future online/trusted-match phase, or earlier only if lab-powered analysis needs server compute; billing is enabled, but no service exists yet |
 
 ## Firestore Free Tier
 
@@ -112,8 +112,8 @@ before adding more history-heavy surfaces.
 ### Replay Sharing / Online Future
 
 Public replay pages, online match subscriptions, and trusted server-written
-match state can change the read/write profile quickly. Before `v0.4` online
-work, add a separate estimate for:
+match state can change the read/write profile quickly. Before the online
+product-expansion phase, add a separate estimate for:
 
 - active online match listeners
 - per-move server writes
