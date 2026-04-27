@@ -207,37 +207,16 @@ type PublishedReplay = {
 };
 ```
 
-Starter rules for profile-only phase live in `firestore.rules`:
+Starter rules for the profile-only phase live in `firestore.rules`. The current
+rules intentionally keep the first public backend slice narrow:
 
-```
-rules_version = '2';
-
-service cloud.firestore {
-  match /databases/{database}/documents {
-    function signedIn() {
-      return request.auth != null;
-    }
-
-    function isOwner(uid) {
-      return signedIn() && request.auth.uid == uid;
-    }
-
-    match /profiles/{uid} {
-      allow read: if isOwner(uid);
-      allow create, update: if isOwner(uid)
-        && request.resource.data.uid == uid;
-      allow delete: if false;
-
-      match /matches/{matchId} {
-        allow read: if isOwner(uid);
-        allow create: if isOwner(uid)
-          && request.resource.data.owner_uid == uid;
-        allow update, delete: if false;
-      }
-    }
-  }
-}
-```
+- owners can read their own `profiles/{uid}` document
+- owners can create/update that document only if it matches the expected profile
+  schema
+- client updates preserve app-owned fields such as `created_at`, `display_name`,
+  and `username`
+- private match subcollections are readable by the owner, but client writes stay
+  closed until the cloud-history slice actually ships
 
 ## Cloud Run service
 
