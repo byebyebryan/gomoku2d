@@ -3,9 +3,9 @@
 The browser Gomoku game. Pixel-art board, DOM shell around it, desktop and
 portrait/mobile layouts.
 
-**Play:** https://dev.byebyebryan.com/gomoku2d/
+**Play:** https://gomoku2d.byebyebryan.com/
 
-**Pixel-art previews:** https://dev.byebyebryan.com/gomoku2d/assets/
+**Pixel-art previews:** https://gomoku2d.byebyebryan.com/assets/
 
 React owns the app shell (home, match, replay, profile). Phaser renders the
 board and nothing else. The rules engine and bot are the same Rust code used by
@@ -52,7 +52,7 @@ Design intent is split across:
 
 Source assets and local visual preview pages live in
 [`assets/README.md`](assets/README.md). Published builds expose those previews
-under `/gomoku2d/assets/`.
+under `/assets/`.
 
 ---
 
@@ -174,8 +174,8 @@ Release and local-preview steps live in [`../docs/release.md`](../docs/release.m
 Production deploys to GitHub Pages only when a `v*` tag is pushed. Normal
 commits to `main` run CI but do not publish the site.
 
-The workflow builds the Wasm package, sets `GOMOKU_BASE_PATH=/gomoku2d/` for the
-Vite build, and deploys `dist/` to Pages.
+The workflow builds the Wasm package, sets `GOMOKU_BASE_PATH=/` for the custom
+domain Vite build, and deploys `dist/` to Pages.
 
 ---
 

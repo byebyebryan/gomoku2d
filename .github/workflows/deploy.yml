@@ -3,6 +3,7 @@ name: Deploy to GitHub Pages
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -58,7 +59,7 @@ jobs:
         run: npm run build
         working-directory: gomoku-web
         env:
-          GOMOKU_BASE_PATH: ${{ format('/{0}/', github.event.repository.name) }}
+          GOMOKU_BASE_PATH: /
           VITE_FIREBASE_API_KEY: AIzaSyAGB97sL0GRf_x4IyzTaA-lo4fq5XoXWfw
           VITE_FIREBASE_APP_ID: 1:892554744656:web:17524b73c8afb856841255
           VITE_FIREBASE_AUTH_DOMAIN: gomoku2d.firebaseapp.com

@@ -2,6 +2,18 @@
 
 This is the release checklist for the web game and repo-level tags.
 
+## Public Host
+
+The canonical public URL is:
+
+```text
+https://gomoku2d.byebyebryan.com/
+```
+
+GitHub Pages is configured with that custom domain and HTTPS enforcement. DNS
+is managed in Cloudflare with `gomoku2d` as a `CNAME` to
+`byebyebryan.github.io`.
+
 ## Local Preview
 
 Reserve port `8001` for the local production preview.
@@ -29,8 +41,13 @@ Open:
 http://localhost:8001/
 ```
 
-The local preview build uses Vite's default root base path. GitHub Pages deploy
-still builds with `GOMOKU_BASE_PATH=/gomoku2d/`.
+The local preview build uses Vite's default root base path. GitHub Pages also
+builds with `GOMOKU_BASE_PATH=/` because the public app is served from the
+custom domain root:
+
+```text
+https://gomoku2d.byebyebryan.com/
+```
 
 ## Version For Captures
 
@@ -72,7 +89,7 @@ cd ..
 
 cd gomoku-web
 npm test
-GOMOKU_BASE_PATH=/gomoku2d/ npm run build
+GOMOKU_BASE_PATH=/ npm run build
 PLAYWRIGHT_BASE_URL=http://127.0.0.1:8001 npm run playtest:smoke
 ```
 
@@ -114,3 +131,10 @@ Pushing the tag fires:
 
 - `.github/workflows/release.yml`
 - `.github/workflows/deploy.yml`
+
+For a custom-domain smoke redeploy without cutting a release, run the Pages
+workflow manually after the relevant deploy config has been pushed to `main`:
+
+```sh
+gh workflow run deploy.yml --ref main
+```
