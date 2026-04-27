@@ -12,6 +12,58 @@ their own section.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-04-27
+
+**Theme: backend foundation without putting cloud in front of local play.**
+
+`v0.3.0` opens the backend line with optional public Google sign-in and a
+private cloud profile. The product remains local-first: guests can still play,
+save local history, and replay matches without signing in. Cloud identity now
+exists as the foundation for later guest promotion and private cloud history,
+but those continuity features stay in follow-up `0.3.x` slices.
+
+### Web and cloud profile
+
+- Added env-gated Firebase browser bootstrap so cloud features initialize only
+  when all required `VITE_FIREBASE_*` values are present.
+- Added Google sign-in/sign-out on Profile and a cloud state badge that keeps
+  local, unavailable, loading, error, and signed-in states visible.
+- Added private cloud profile create/load at `profiles/{uid}`, seeded from the
+  Google provider and updated with provider metadata, preferred rule, and login
+  timestamps.
+- Kept guest/local history separate from cloud identity; signed-in Profile copy
+  explicitly says local history remains local until promotion ships.
+- Verified the no-config production build path: cloud sign-in is disabled,
+  no Auth/Firestore requests are made, and Home/Local Match still work.
+
+### Public app readiness
+
+- Moved the public app to `https://gomoku2d.byebyebryan.com/` with GitHub Pages
+  serving from the custom domain root.
+- Added crawlable static `/privacy/` and `/terms/` pages using the same
+  retro/info-page surface language as the app shell.
+- Linked policy pages from the raw home HTML and the React-rendered Home screen
+  so OAuth crawlers and users can both find them.
+- Added the public contact/deletion address `gomoku2d@byebyebryan.com`.
+- Published the Google Auth Platform app to production, kept OAuth scopes to
+  basic identity/profile/email sign-in, and intentionally left the OAuth logo
+  blank to avoid unnecessary brand-verification work.
+
+### Infra and docs
+
+- Documented the live Firebase/GCP setup in `backend_infra.md`: project IDs,
+  enabled APIs, Auth domains, OAuth access gate, Firebase web config, rules
+  deployment, and smoke-test checks.
+- Split backend cost/headroom tracking into `backend_cost.md` with explicit
+  Firestore/Auth free-tier assumptions and guardrails for future `0.3.x` work.
+- Deployed hardened profile-only Firestore rules for `profiles/{uid}`, with
+  private match writes kept closed until the cloud-history slice ships.
+- Refined the roadmap around the project thesis: `v0.3` is backend continuity,
+  `v0.4` should make the Rust lab visible as product identity, and later
+  online/trusted-match work remains out of scope.
+- Updated release and deployment docs for the custom-domain Pages workflow and
+  manual release-candidate deploys.
+
 ## [0.2.4] - 2026-04-24
 
 **Theme: wrap up `v0.2` with polish, release hygiene, and better iteration
@@ -292,7 +344,8 @@ together in one canvas-driven surface. That lesson drove the `v0.2.1` rewrite.
   concerns blurred together.
 - Expressive UI language, but not scalable beyond one canvas.
 
-[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.2.4...HEAD
+[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/byebyebryan/gomoku2d/compare/v0.2.4...v0.3.0
 [0.2.4]: https://github.com/byebyebryan/gomoku2d/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/byebyebryan/gomoku2d/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/byebyebryan/gomoku2d/compare/v0.2.1...v0.2.2

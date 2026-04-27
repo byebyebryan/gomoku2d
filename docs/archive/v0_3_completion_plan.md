@@ -38,30 +38,34 @@ Already in place:
 - Unit coverage exists for Firebase config gating, auth store behavior, cloud
   profile mapping/writes, cloud profile store behavior, and Profile cloud UI
   states.
-- Firestore owner-scoped rules are deployed for `profiles/{uid}` and
-  `profiles/{uid}/matches/{matchId}`.
+- Firestore rules are deployed for owner-scoped `profiles/{uid}` reads/writes,
+  with private match writes intentionally closed until cloud history ships.
+- Public app host is `https://gomoku2d.byebyebryan.com/`, served from the
+  GitHub Pages custom-domain root.
+- Static `/privacy/` and `/terms/` policy pages are deployed and linked from
+  Home for users and OAuth crawlers.
+- Google Auth Platform is published to production, with the OAuth logo left
+  blank intentionally to avoid brand verification for this slice.
+- Production Google sign-in has been smoke-tested from the public domain.
+- The no-Firebase-config production build path has been smoke-tested: Profile
+  shows cloud sign-in as unavailable, makes no Auth/Firestore requests, and
+  local Home/Match still work.
+- Firebase/Auth/Firestore dashboards have been reviewed after the public smoke
+  test and looked normal.
+
+Release prep now in place:
+
+- `gomoku-web/package.json` and lockfile are bumped to `0.3.0`.
+- `CHANGELOG.md` has a dated `0.3.0` section and updated compare links.
+- `scripts/release.sh --check 0.3.0` passes.
+- The full release checklist in `docs/release.md` has been run for the
+  prepared `0.3.0` diff.
 
 What is still missing before cutting `0.3.0`:
 
-- Test Google sign-in on `https://gomoku2d.byebyebryan.com/` after a tagged
-  deploy or release-candidate deploy.
-- Confirm the Google Auth Platform Web client allows
-  `https://gomoku2d.byebyebryan.com` as a JavaScript origin.
-- Decide the OAuth audience gate:
-  - keep `Testing` if `0.3.0` is a limited smoke release for configured test
-    users
-  - publish to `In production` if arbitrary public Google users should be able
-    to sign in
-- Confirm the released production build behaves correctly with Firebase config
-  present.
-- Do one no-Firebase-config production build/Profile smoke test so the local
-  guest path still shows the unconfigured cloud state cleanly.
-- Review Firebase/Auth/Firestore usage dashboards after the first deployed
-  cloud-profile smoke test.
-- Prepare release mechanics:
-  - bump `gomoku-web/package.json` and lockfile to `0.3.0`
-  - add a dated `CHANGELOG.md` entry for `0.3.0`
-  - run the release checklist in `docs/release.md`
+- Review and commit the prepared release diff.
+- Finalize/tag `v0.3.0`, push `main` and the tag, then verify the release and
+  deploy workflows.
 
 Not required for `0.3.0`:
 
