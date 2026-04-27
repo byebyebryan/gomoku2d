@@ -66,6 +66,20 @@ Initial state as of the first `v0.3` pass:
 - live setup tracking lives in `docs/backend_infra.md`
 - backend cost tracking lives in `docs/backend_cost.md`
 
+Checkpoint after the first implementation slice:
+
+- Auth state is wired through the web app and remains inert when Firebase env
+  vars are absent.
+- Profile can sign in/out with Google and create/load the cloud profile at
+  `profiles/{uid}`.
+- The first live `profiles/{uid}` document has been observed in Firestore via
+  the REST API.
+- Local guest profile/history remain the visible record; the UI explicitly
+  says local history stays local until promotion ships.
+- Local popup-auth headers and SSH port-forwarding guidance are documented.
+- The public access gate is now explicit: an `External` OAuth app in `Testing`
+  only works for configured test users until it is published to production.
+
 ### 2. Auth State Layer
 
 - add auth-state subscription
@@ -117,7 +131,15 @@ Initial state as of the first `v0.3` pass:
 - cloud profile create/load
 - no history promotion yet
 
-This is the smallest safe public cut if auth itself needs validation.
+This is mostly implemented. Remaining validation before calling it releasable:
+
+- test Google sign-in from the deployed GitHub Pages URL after the next tagged
+  deploy
+- confirm the production build initializes Firebase only when config is present
+- review Firebase/Firestore usage dashboards after the first cloud-profile
+  smoke test
+- decide whether to publish the OAuth app from Testing to In production for
+  arbitrary public Google users
 
 ### `0.3.1` — Guest Promotion
 

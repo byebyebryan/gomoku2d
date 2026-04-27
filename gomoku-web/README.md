@@ -198,7 +198,9 @@ gomoku-bot-lab/gomoku-wasm     — wasm-pack bridge: WasmBoard + WasmBot for JS
 The local-first `v0.2` product pass is complete. `P1` proved Rust + Wasm +
 browser play; `P2` landed the paired desktop/mobile shell in
 `v0.2.3` and the final `v0.2.4` polish/reference set on top of it. The current
-`v0.3` focus is optional cloud-backed continuity; published replays and online
-play stay deferred to later phases — see [`../docs/roadmap.md`](../docs/roadmap.md)
-for sequencing and [`../docs/architecture.md`](../docs/architecture.md) for the
-runtime boundary.
+`v0.3` focus is optional cloud-backed continuity. Firebase config, Google
+sign-in, and cloud profile create/load are the first slice; guest promotion and
+private cloud history are next. Published replays and online play stay deferred
+to later phases — see [`../docs/roadmap.md`](../docs/roadmap.md) for sequencing
+and [`../docs/architecture.md`](../docs/architecture.md) for the runtime
+boundary.

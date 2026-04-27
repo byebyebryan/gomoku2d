@@ -325,14 +325,33 @@ curl -sS \
   "https://firebaserules.googleapis.com/v1/projects/gomoku2d/releases/cloud.firestore"
 ```
 
+## Verify Cloud Profile Documents
+
+`gcloud firestore` does not currently expose a `documents list` command in this
+local SDK install, so use the Firestore REST API when checking smoke-test data:
+
+```sh
+TOKEN=$(gcloud auth print-access-token)
+
+curl -sS \
+  -H "Authorization: Bearer ${TOKEN}" \
+  -H "X-Goog-User-Project: gomoku2d" \
+  "https://firestore.googleapis.com/v1/projects/gomoku2d/databases/(default)/documents/profiles?pageSize=5" \
+  | jq '{documents: (.documents // []) | map(.name), error}'
+```
+
+Expected after a successful Profile sign-in smoke test: at least one
+`profiles/{uid}` document.
+
 ## Pending Infra Checklist
 
 Before cloud UI ships publicly:
 
-- Test real browser Google sign-in on localhost and the deployed GitHub Pages
-  URL.
-- Verify that first sign-in creates the expected owner-scoped Firestore
-  profile document.
+- Localhost Google sign-in has been manually confirmed, and the first live
+  `profiles/{uid}` document has been observed in Firestore. Still test the
+  deployed GitHub Pages URL after the next tagged deploy.
+- Confirm the OAuth app publishing status. If it is still `Testing`, publish it
+  to production before expecting arbitrary public Google users to sign in.
 - Confirm the production build initializes Firebase only when config is present.
 - Review Firebase/Firestore usage dashboards after the first signed-in test.
 
