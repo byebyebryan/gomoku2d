@@ -130,22 +130,23 @@ The first backend-foundation slice is in place:
 
 - Firebase/GCP project, Firebase web app, and env-driven web bootstrap
 - Firestore `(default)` in `us-central1`
-- owner-scoped Firestore rules for `profiles/{uid}` and private match docs
+- hardened owner-scoped Firestore rules for `profiles/{uid}`; private match
+  writes remain closed until cloud history ships
 - Google Auth provider configured through the Firebase Auth / Identity Toolkit
   path
 - Profile sign-in/sign-out UI
 - cloud profile create/load at `profiles/{uid}`
 - local guest play/history still working without Firebase config
+- Google Auth Platform published to production for public sign-in
+- static `/privacy/` and `/terms/` pages plus contact/deletion email for OAuth
+  app readiness
+- public-domain sign-in smoke and no-config fallback smoke completed for
+  `0.3.0`
 - infra and free-tier tracking split into `backend_infra.md` and
   `backend_cost.md`
 
 The remaining `v0.3` work is product continuity rather than raw setup:
 
-- verify deployed-site sign-in after the next tagged deploy
-- confirm production-build config gating and review Firebase/Firestore usage
-  dashboards after the first cloud-profile smoke test
-- publish the OAuth app from Testing to In production when public sign-in is
-  intended
 - import local guest profile/history into cloud state idempotently
 - save future signed-in casual matches privately to Firestore
 - load cloud-saved private history/replays from Profile

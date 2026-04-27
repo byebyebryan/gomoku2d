@@ -172,3 +172,6 @@ Before each backend release:
 - Add a row to this doc for the new backend feature.
 - Decide whether the feature needs a read/write cap, pagination, cache, or
   manual rate limit.
+
+`v0.3.0` note: Firebase/Auth/Firestore dashboards were reviewed after the
+public sign-in smoke test and looked normal for the first cloud-profile slice.

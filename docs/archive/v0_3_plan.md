@@ -79,6 +79,12 @@ Checkpoint after the first implementation slice:
 - Local popup-auth headers and SSH port-forwarding guidance are documented.
 - The public access gate is now explicit: an `External` OAuth app in `Testing`
   only works for configured test users until it is published to production.
+- Public access has since been flipped to `In production`, with the OAuth logo
+  intentionally left blank to avoid brand verification for this first cloud
+  profile slice.
+- The production domain, policy pages, contact email, public sign-in smoke, and
+  no-config fallback smoke are recorded in `docs/backend_infra.md` and
+  `docs/archive/v0_3_completion_plan.md`.
 
 ### 2. Auth State Layer
 
@@ -131,15 +137,9 @@ Checkpoint after the first implementation slice:
 - cloud profile create/load
 - no history promotion yet
 
-This is mostly implemented. Remaining validation before calling it releasable:
-
-- test Google sign-in from the deployed GitHub Pages URL after the next tagged
-  deploy
-- confirm the production build initializes Firebase only when config is present
-- review Firebase/Firestore usage dashboards after the first cloud-profile
-  smoke test
-- decide whether to publish the OAuth app from Testing to In production for
-  arbitrary public Google users
+This is implemented and validated. Remaining work before tagging is release
+mechanics: version/changelog/docs prep, checks, `v0.3.0` tag, and release
+deploy verification.
 
 ### `0.3.1` — Guest Promotion
 
