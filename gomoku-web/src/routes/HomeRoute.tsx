@@ -3,6 +3,8 @@ import { APP_VERSION } from "../app/version";
 import { Icon } from "../ui/Icon";
 import styles from "./HomeRoute.module.css";
 
+const baseUrl = import.meta.env.BASE_URL;
+
 export function HomeRoute() {
   return (
     <main className={styles.page}>
@@ -21,6 +23,11 @@ export function HomeRoute() {
           </Link>
         </div>
         <p className={styles.version}>{APP_VERSION}</p>
+        <nav className={styles.legalLinks} aria-label="Legal links">
+          <a href={`${baseUrl}privacy/`}>Privacy</a>
+          <span aria-hidden="true">/</span>
+          <a href={`${baseUrl}terms/`}>Terms</a>
+        </nav>
       </section>
     </main>
   );

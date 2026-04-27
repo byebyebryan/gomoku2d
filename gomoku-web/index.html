@@ -25,9 +25,41 @@
   <meta name="twitter:description" content="A browser Gomoku game with a pixel-art board and a Rust bot behind it. Local-first, one click to play." />
   <meta name="twitter:image" content="https://gomoku2d.byebyebryan.com/og.png" />
   <meta name="twitter:image:alt" content="Gomoku2D — Local Match in progress against the Practice Bot on a pixel-art board." />
+  <style>
+    .static-policy-links {
+      position: fixed;
+      right: 24px;
+      bottom: 18px;
+      z-index: 0;
+      display: flex;
+      gap: 12px;
+      color: #8f8d87;
+      font-family: "Courier New", monospace;
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .static-policy-links a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .static-policy-links a:hover {
+      color: #fccb57;
+    }
+
+    #root:not(:empty) + .static-policy-links {
+      display: none;
+    }
+  </style>
 </head>
 <body>
   <div id="root"></div>
+  <nav class="static-policy-links" aria-label="Policy links">
+    <a href="/privacy/">Privacy</a>
+    <a href="/terms/">Terms</a>
+  </nav>
   <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>

@@ -35,6 +35,25 @@
   text-transform: uppercase;
 }
 
+.legalLinks {
+  display: flex;
+  gap: 8px;
+  margin: -18px 0 0;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--type-quiet);
+  letter-spacing: 0.1em;
+  opacity: 0.86;
+  text-transform: uppercase;
+}
+
+.legalLinks a:hover,
+.legalLinks a:focus-visible {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;
