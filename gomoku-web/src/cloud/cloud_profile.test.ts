@@ -79,4 +79,25 @@ describe("cloud profile writes", () => {
     expect(existingCloudProfileUpdate(authUser, "freestyle")).not.toHaveProperty("display_name");
     expect(existingCloudProfileUpdate(authUser, "freestyle")).not.toHaveProperty("username");
   });
+
+  it("returns the refreshed provider fields after updating an existing profile", () => {
+    const existing = {
+      auth_providers: ["github.com"],
+      avatar_url: "https://example.com/old.png",
+      display_name: "ByeByeBryan",
+      email: "old@example.com",
+      preferred_variant: "freestyle",
+      username: "byebyebryan",
+    };
+    const update = existingCloudProfileUpdate(authUser, "renju");
+
+    expect(cloudProfileFromDocument(authUser, "freestyle", { ...existing, ...update })).toMatchObject({
+      authProviders: ["google.com"],
+      avatarUrl: authUser.avatarUrl,
+      displayName: "ByeByeBryan",
+      email: authUser.email,
+      preferredVariant: "renju",
+      username: "byebyebryan",
+    });
+  });
 });
