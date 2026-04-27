@@ -21,7 +21,7 @@ Reserve port `8001` for the local production preview.
 The tmux session name is:
 
 ```sh
-gomoku2d-preview
+gomoku-preview
 ```
 
 To rebuild and restart it:
@@ -31,7 +31,8 @@ To rebuild and restart it:
 cd gomoku-web
 npm run build
 tmux kill-session -t gomoku2d-preview 2>/dev/null || true
-tmux new-session -d -s gomoku2d-preview -c /home/bryan/code/gomoku2d/gomoku-web \
+tmux kill-session -t gomoku-preview 2>/dev/null || true
+tmux new-session -d -s gomoku-preview -c /home/bryan/code/gomoku2d/gomoku-web \
   'npm run preview -- --host 0.0.0.0 --port 8001'
 ```
 
@@ -55,7 +56,7 @@ If screenshots or recordings should show the upcoming version, bump the web
 package version before capturing:
 
 ```sh
-scripts/set-web-version.sh 0.2.4
+scripts/set-web-version.sh 0.3.0
 ```
 
 This updates `gomoku-web/package.json` and `gomoku-web/package-lock.json`
@@ -63,7 +64,11 @@ without touching the changelog, committing, or tagging.
 
 ## Release Asset Pass
 
-Before tagging:
+Run this pass for visual releases, asset changes, or releases where README/social
+captures should change. For backend/docs-only releases, record that the existing
+captures remain current and skip the refresh.
+
+When needed before tagging:
 
 - capture the desktop/mobile screenshot set
 - capture or refresh the README hero GIF
@@ -101,8 +106,8 @@ release-blocking.
 After reviewing `git status` and the diff, finalize the prepared release:
 
 ```sh
-scripts/release.sh --check 0.2.4
-scripts/release.sh 0.2.4
+scripts/release.sh --check 0.3.0
+scripts/release.sh 0.3.0
 ```
 
 `release.sh` validates:
@@ -122,7 +127,7 @@ Push when ready:
 
 ```sh
 git push origin main
-git push origin v0.2.4
+git push origin v0.3.0
 ```
 
 Pushing `main` updates the release commit. It does not publish the site.
