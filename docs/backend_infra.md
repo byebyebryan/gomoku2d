@@ -17,14 +17,19 @@ backend design lives in `backend.md`; free-tier estimates live in
 | Auth config | Initialized; subtype `IDENTITY_PLATFORM` |
 | Auth providers | Google enabled |
 | Authorized Auth domains | `gomoku2d.firebaseapp.com`, `gomoku2d.web.app`, `localhost`, `dev.byebyebryan.com`, `gomoku2d.byebyebryan.com` |
+| OAuth publishing status | `In production` |
+| OAuth scopes observed | `openid`, `userinfo.email`, `profile` |
+| OAuth logo | Not set; intentionally blank to avoid brand verification for `v0.3.0` |
 | Google OAuth client ID | `892554744656-hksl91isq2pb4pp4dga2h3mi2d02ris2.apps.googleusercontent.com` |
+| Public policy pages | `https://gomoku2d.byebyebryan.com/privacy/`, `https://gomoku2d.byebyebryan.com/terms/` |
+| Contact/deletion email | `gomoku2d@byebyebryan.com` |
 | Firestore database | `(default)` |
 | Firestore mode | Native |
 | Firestore location | `us-central1` |
 | Firestore edition | Standard |
 | Firestore free tier | `true` |
 | Firestore rules release | `projects/gomoku2d/releases/cloud.firestore` |
-| Current ruleset | `projects/gomoku2d/rulesets/4ff3b3d1-4315-49ed-8d81-115ca6ba30dd` |
+| Current ruleset | `projects/gomoku2d/rulesets/f22868f2-7b53-4883-b71f-2e1a3b020695` |
 
 Important irreversible choice: the default Firestore database is in
 `us-central1`. Do not delete/recreate it casually; the database location is a
@@ -56,7 +61,7 @@ gcloud services list \
 |---|---|
 | `.firebaserc` | Maps default Firebase project to `gomoku2d` |
 | `firebase.json` | Points Firebase tooling at Firestore rules/index files |
-| `firestore.rules` | Owner-scoped profile/history security rules |
+| `firestore.rules` | Hardened owner-scoped profile rules; private match writes currently closed |
 | `firestore.indexes.json` | Firestore index config, currently empty |
 | `gomoku-web/.env.example` | Public Vite Firebase config template |
 | `gomoku-web/src/cloud/firebase.ts` | Optional Firebase browser bootstrap |
@@ -213,11 +218,17 @@ Before a public Gomoku2D release with Google sign-in:
    app identity polish. Verification can require a public homepage, privacy
    policy, and Search Console ownership for authorized domains.
 
-Current expectation for `v0.3`: publishing from `Testing` to `In production`
-is the access gate. Sensitive-scope verification should not be required as long
-as the app only uses Google Sign-In identity scopes. Brand verification may
-still be requested before Google displays final app name/logo details or if
-branding fields change.
+Current `v0.3.0` state: the OAuth app is `In production`, and runtime sign-in
+has been observed requesting only basic identity scopes:
+
+```text
+openid https://www.googleapis.com/auth/userinfo.email profile
+```
+
+Sensitive-scope verification should not be required as long as the app only
+uses Google Sign-In identity scopes. The OAuth logo is intentionally blank for
+`v0.3.0`; adding a logo or changing visible branding details can trigger brand
+verification.
 
 ## Popup Auth Headers
 
@@ -313,8 +324,8 @@ curl -sS -X PATCH \
   -H "Authorization: Bearer ${TOKEN}" \
   -H "X-Goog-User-Project: gomoku2d" \
   -H "Content-Type: application/json" \
-  "https://firebaserules.googleapis.com/v1/projects/gomoku2d/releases/cloud.firestore?updateMask=rulesetName" \
-  -d "{\"rulesetName\":\"${RULESET_NAME}\"}"
+  "https://firebaserules.googleapis.com/v1/projects/gomoku2d/releases/cloud.firestore" \
+  -d "{\"release\":{\"name\":\"projects/gomoku2d/releases/cloud.firestore\",\"rulesetName\":\"${RULESET_NAME}\"},\"updateMask\":\"rulesetName\"}"
 ```
 
 Verify the live release:
@@ -348,16 +359,22 @@ Expected after a successful Profile sign-in smoke test: at least one
 
 Before cloud UI ships publicly:
 
-- Localhost Google sign-in has been manually confirmed, and the first live
-  `profiles/{uid}` document has been observed in Firestore. Still test the
-  deployed GitHub Pages URL after the next tagged deploy.
-- Confirm the Google Auth Platform Web client includes
-  `https://gomoku2d.byebyebryan.com` in Authorized JavaScript origins. The
-  Firebase Auth authorized-domain list already includes the custom domain.
-- Confirm the OAuth app publishing status. If it is still `Testing`, publish it
-  to production before expecting arbitrary public Google users to sign in.
-- Confirm the production build initializes Firebase only when config is present.
-- Review Firebase/Firestore usage dashboards after the first signed-in test.
+- Localhost Google sign-in has been manually confirmed.
+- Production sign-in from `https://gomoku2d.byebyebryan.com/profile` has been
+  manually confirmed after publishing the OAuth app to production.
+- Runtime OAuth requests from production use only basic identity scopes:
+  `openid`, `userinfo.email`, and `profile`.
+- The first live `profiles/{uid}` document has been observed in Firestore.
+- The no-Firebase-config production build path has been smoke-tested: Profile
+  reports cloud sign-in unavailable, the sign-in button is disabled, no
+  Auth/Firestore requests are made, and Home/Local Match still load.
+- Firebase/Auth/Firestore dashboards have been reviewed after the public smoke
+  test and looked normal.
+
+Remaining before tagging `v0.3.0`:
+
+- Review and commit the prepared `0.3.0` release diff.
+- Tag and push `v0.3.0`, then verify the release/deploy workflows.
 
 Deferred until later phases:
 

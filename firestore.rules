@@ -10,17 +10,84 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == uid;
     }
 
+    function validProfileKeys() {
+      return request.resource.data.keys().hasAll([
+        'auth_providers',
+        'avatar_url',
+        'created_at',
+        'display_name',
+        'email',
+        'last_login_at',
+        'preferred_variant',
+        'uid',
+        'updated_at',
+        'username',
+      ]) && request.resource.data.keys().hasOnly([
+        'auth_providers',
+        'avatar_url',
+        'created_at',
+        'display_name',
+        'email',
+        'last_login_at',
+        'preferred_variant',
+        'uid',
+        'updated_at',
+        'username',
+      ]);
+    }
+
+    function nullableString(value, maxLength) {
+      return value == null || (value is string && value.size() <= maxLength);
+    }
+
+    function validProviders(value) {
+      return value is list
+        && value.size() > 0
+        && value.size() <= 2
+        && value.hasOnly(['google.com', 'github.com']);
+    }
+
+    function validProfileDocument(uid) {
+      return validProfileKeys()
+        && request.resource.data.uid == uid
+        && request.resource.data.uid is string
+        && request.resource.data.display_name is string
+        && request.resource.data.display_name.size() > 0
+        && request.resource.data.display_name.size() <= 80
+        && nullableString(request.resource.data.avatar_url, 2048)
+        && nullableString(request.resource.data.email, 320)
+        && nullableString(request.resource.data.username, 40)
+        && request.resource.data.preferred_variant in ['freestyle', 'renju']
+        && validProviders(request.resource.data.auth_providers)
+        && request.resource.data.created_at is timestamp
+        && request.resource.data.updated_at is timestamp
+        && request.resource.data.last_login_at is timestamp;
+    }
+
+    function appOwnedProfileFieldsUnchanged() {
+      return request.resource.data.created_at == resource.data.created_at
+        && request.resource.data.display_name == resource.data.display_name
+        && request.resource.data.username == resource.data.username;
+    }
+
     match /profiles/{uid} {
       allow read: if isOwner(uid);
-      allow create, update: if isOwner(uid)
-        && request.resource.data.uid == uid;
+      allow create: if isOwner(uid)
+        && validProfileDocument(uid)
+        && request.resource.data.username == null
+        && request.resource.data.created_at == request.time
+        && request.resource.data.updated_at == request.time
+        && request.resource.data.last_login_at == request.time;
+      allow update: if isOwner(uid)
+        && validProfileDocument(uid)
+        && appOwnedProfileFieldsUnchanged()
+        && request.resource.data.updated_at == request.time
+        && request.resource.data.last_login_at == request.time;
       allow delete: if false;
 
       match /matches/{matchId} {
         allow read: if isOwner(uid);
-        allow create: if isOwner(uid)
-          && request.resource.data.owner_uid == uid;
-        allow update, delete: if false;
+        allow create, update, delete: if false;
       }
     }
   }
