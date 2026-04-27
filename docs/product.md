@@ -1,5 +1,8 @@
 # Product
 
+Product scope lives here. The broader reason this repo exists, including the
+AI-assisted product-development experiment behind it, lives in `project.md`.
+
 ## What we're building
 
 A browser-based Gomoku game where you can play against bots, play against other
@@ -8,8 +11,8 @@ where they turned. The Rust bot lab behind it isn't a side project — it's the
 engine that makes the interesting features possible.
 
 This document describes the broader target product and its long-term pillars.
-The local-first app baseline lives in `app_design.md`; version sequencing and
-the current `v0.3` backend-foundation focus live in `roadmap.md`.
+The local-first app baseline lives in `app_design.md`; version sequencing lives
+in `roadmap.md`.
 
 ## Pillars
 
@@ -34,6 +37,10 @@ boundary (see `backend.md`), not a lab-powered feature in its own right.
 
 If a feature idea doesn't benefit from the lab, that's fine; but the features
 we're most excited about all do.
+
+This pillar should move earlier than generic online checkboxes once the
+foundation is in place. Basic PvP and share links are useful, but lab-powered
+features are what can make Gomoku2D feel like its own product.
 
 ### 2. Guest-first on-ramp, cloud-backed depth
 
@@ -71,9 +78,11 @@ Calling these out so scope stays honest:
 - **Not a social network.** Friends lists and direct challenges are plausible;
   feeds, followers, and chat timelines are not.
 - **Not native mobile.** Mobile-web should work. Native apps are out.
-- **Not maximal polish.** This is a personal project. "Good enough to enjoy
-  playing and show friends" beats "ship-grade AAA." If a feature takes six
-  months to polish, cut it.
+- **Not a commercial bet.** This should be polished like a real alpha/beta
+  product, but the goal is learning the AI-assisted production process, not
+  monetization.
+- **Not maximal scope.** Product polish matters; endless product surface does
+  not. If a feature takes six months to justify, cut or shrink it.
 
 ## Success looks like
 

@@ -14,6 +14,11 @@ Gomoku2D aims for old-school play with better engineering: a crisp board-first
 UI, local replay/history, and a browser build that feels fast and polished on
 desktop and mobile without losing the feel of a small tabletop game.
 
+It is also a process lab: a serious attempt to learn how far a veteran engineer
+can push an old, sentimental project with current AI coding agents while still
+holding the work to real product standards. The product has to be good enough
+for the process lessons to matter.
+
 Right now the focus is quick solo play against the Practice Bot. Matches start
 fast, the board stays central, and the surrounding UI is there to support the
 game instead of competing with it.
@@ -86,8 +91,8 @@ Firestore rules, Google sign-in, and cloud profile plumbing; the next focus is
 guest promotion and private cloud history without putting sign-in in front of
 the local game.
 
-For the longer-term sequencing — cloud continuity, published replays, online
-play, and later lab-powered features — see [`docs/roadmap.md`](docs/roadmap.md).
+For the longer-term sequencing from cloud continuity to lab-powered features,
+skins, and later online play, see [`docs/roadmap.md`](docs/roadmap.md).
 
 ---
 
@@ -95,6 +100,7 @@ play, and later lab-powered features — see [`docs/roadmap.md`](docs/roadmap.md
 
 The canonical design and schedule live in `docs/`:
 
+- [`docs/project.md`](docs/project.md) — the product/process thesis and project tenets
 - [`docs/product.md`](docs/product.md) — what we're building and why
 - [`docs/architecture.md`](docs/architecture.md) — FE stack, DOM/Phaser boundary, core-sharing story
 - [`docs/app_design.md`](docs/app_design.md) — current local-first routes, flows, and screen contracts
@@ -103,10 +109,10 @@ The canonical design and schedule live in `docs/`:
 - [`gomoku-web/assets/README.md`](gomoku-web/assets/README.md) — source asset folders and local preview pages
 - [Live asset previews](https://dev.byebyebryan.com/gomoku2d/assets/) — published sprite, icon, and font previews
 - [`docs/ui_screenshot_review.md`](docs/ui_screenshot_review.md) — screenshot history and UI critique
-- [`docs/backend.md`](docs/backend.md) — Firebase + Firestore + Cloud Run model for later cloud/online phases
+- [`docs/backend.md`](docs/backend.md) — Firebase + Firestore + Cloud Run model for cloud, lab-powered, and online phases
 - [`docs/backend_infra.md`](docs/backend_infra.md) — live Firebase/GCP setup, rules deployment, and env checklist
 - [`docs/backend_cost.md`](docs/backend_cost.md) — backend free-tier assumptions, estimates, and headroom tracking
-- [`docs/roadmap.md`](docs/roadmap.md) — version-based phase plan from POC to cloud, online, and lab-powered features
+- [`docs/roadmap.md`](docs/roadmap.md) — version-based phase plan from POC to cloud, lab-powered identity, skins, and online features
 - [`docs/release.md`](docs/release.md) — local preview, release checks, tagging, and publish workflow
 - [`docs/bot_baseline.md`](docs/bot_baseline.md) — current `SearchBot` strategy
 - [`gomoku-web/README.md`](gomoku-web/README.md) — web game stack, local dev, deploy/runtime details
