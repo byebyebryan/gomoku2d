@@ -23,7 +23,7 @@ else
   TAGS=(v0.1 v0.2.1 v0.2.2 v0.2.3)
 fi
 
-PLAY_URL="https://dev.byebyebryan.com/gomoku2d/"
+PLAY_URL="https://gomoku2d.byebyebryan.com/"
 REPO_SLUG="$(gh repo view --json nameWithOwner -q .nameWithOwner)"
 
 for TAG in "${TAGS[@]}"; do

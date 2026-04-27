@@ -16,7 +16,7 @@ backend design lives in `backend.md`; free-tier estimates live in
 | Firebase web app ID | `1:892554744656:web:17524b73c8afb856841255` |
 | Auth config | Initialized; subtype `IDENTITY_PLATFORM` |
 | Auth providers | Google enabled |
-| Authorized Auth domains | `gomoku2d.firebaseapp.com`, `gomoku2d.web.app`, `localhost`, `dev.byebyebryan.com` |
+| Authorized Auth domains | `gomoku2d.firebaseapp.com`, `gomoku2d.web.app`, `localhost`, `dev.byebyebryan.com`, `gomoku2d.byebyebryan.com` |
 | Google OAuth client ID | `892554744656-hksl91isq2pb4pp4dga2h3mi2d02ris2.apps.googleusercontent.com` |
 | Firestore database | `(default)` |
 | Firestore mode | Native |
@@ -95,7 +95,8 @@ curl -sS \
 Expected essentials:
 
 - `subtype: IDENTITY_PLATFORM`
-- authorized domains include `localhost` and `dev.byebyebryan.com`
+- authorized domains include `localhost`, `dev.byebyebryan.com`, and
+  `gomoku2d.byebyebryan.com`
 
 Verify the Google provider:
 
@@ -132,13 +133,13 @@ Google Cloud console:
 4. Add Authorized JavaScript origins:
    - `http://localhost:8001`
    - `http://localhost:3001`
+   - `https://gomoku2d.byebyebryan.com`
    - `https://dev.byebyebryan.com`
    - `https://gomoku2d.firebaseapp.com`
    - `https://gomoku2d.web.app`
 5. Add Authorized redirect URIs:
    - `https://gomoku2d.firebaseapp.com/__/auth/handler`
    - `https://gomoku2d.web.app/__/auth/handler`
-   - `https://dev.byebyebryan.com/gomoku2d/__/auth/handler`
    - `http://localhost:8001/__/auth/handler`
    - `http://localhost:3001/__/auth/handler`
 6. Save the generated client ID and client secret outside the repo. The client
@@ -350,6 +351,9 @@ Before cloud UI ships publicly:
 - Localhost Google sign-in has been manually confirmed, and the first live
   `profiles/{uid}` document has been observed in Firestore. Still test the
   deployed GitHub Pages URL after the next tagged deploy.
+- Confirm the Google Auth Platform Web client includes
+  `https://gomoku2d.byebyebryan.com` in Authorized JavaScript origins. The
+  Firebase Auth authorized-domain list already includes the custom domain.
 - Confirm the OAuth app publishing status. If it is still `Testing`, publish it
   to production before expecting arbitrary public Google users to sign in.
 - Confirm the production build initializes Firebase only when config is present.

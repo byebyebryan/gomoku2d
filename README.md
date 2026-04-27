@@ -4,11 +4,11 @@
 
 A retro Gomoku game built on a modern web and Rust stack.
 
-[![Gomoku2D hero capture — Local Match in progress on the pixel-art board](docs/assets/capture_v0_2_4_match_desktop.gif)](https://dev.byebyebryan.com/gomoku2d/)
+[![Gomoku2D hero capture — Local Match in progress on the pixel-art board](docs/assets/capture_v0_2_4_match_desktop.gif)](https://gomoku2d.byebyebryan.com/)
 
-**Play in browser:** https://dev.byebyebryan.com/gomoku2d/
+**Play in browser:** https://gomoku2d.byebyebryan.com/
 
-**Pixel-art previews:** https://dev.byebyebryan.com/gomoku2d/assets/
+**Pixel-art previews:** https://gomoku2d.byebyebryan.com/assets/
 
 Gomoku2D aims for old-school play with better engineering: a crisp board-first
 UI, local replay/history, and a browser build that feels fast and polished on
@@ -107,7 +107,7 @@ The canonical design and schedule live in `docs/`:
 - [`docs/ui_design.md`](docs/ui_design.md) — DOM shell visual language and styling rules
 - [`docs/game_visual.md`](docs/game_visual.md) — Phaser canvas, sprite, warning, and animation language
 - [`gomoku-web/assets/README.md`](gomoku-web/assets/README.md) — source asset folders and local preview pages
-- [Live asset previews](https://dev.byebyebryan.com/gomoku2d/assets/) — published sprite, icon, and font previews
+- [Live asset previews](https://gomoku2d.byebyebryan.com/assets/) — published sprite, icon, and font previews
 - [`docs/ui_screenshot_review.md`](docs/ui_screenshot_review.md) — screenshot history and UI critique
 - [`docs/backend.md`](docs/backend.md) — Firebase + Firestore + Cloud Run model for cloud, lab-powered, and online phases
 - [`docs/backend_infra.md`](docs/backend_infra.md) — live Firebase/GCP setup, rules deployment, and env checklist
