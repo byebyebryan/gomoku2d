@@ -116,8 +116,9 @@ export async function ensureCloudProfile(
 
   if (snapshot.exists()) {
     const data = snapshot.data() as CloudProfileDocument;
-    await setDoc(profileRef, existingCloudProfileUpdate(user, preferredVariant), { merge: true });
-    return cloudProfileFromDocument(user, preferredVariant, data);
+    const update = existingCloudProfileUpdate(user, preferredVariant);
+    await setDoc(profileRef, update, { merge: true });
+    return cloudProfileFromDocument(user, preferredVariant, { ...data, ...update });
   }
 
   const profile = newCloudProfileWrite(user, preferredVariant);
