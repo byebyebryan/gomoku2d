@@ -98,6 +98,32 @@ ad-hoc planning artifact; this section remains the canonical roadmap.
 - cloud-saved private replay loading
 - starter Firestore rules for owner-scoped profile/history docs
 
+### Current State
+
+The first backend-foundation slice is in place:
+
+- Firebase/GCP project, Firebase web app, and env-driven web bootstrap
+- Firestore `(default)` in `us-central1`
+- owner-scoped Firestore rules for `profiles/{uid}` and private match docs
+- Google Auth provider configured through the Firebase Auth / Identity Toolkit
+  path
+- Profile sign-in/sign-out UI
+- cloud profile create/load at `profiles/{uid}`
+- local guest play/history still working without Firebase config
+- infra and free-tier tracking split into `backend_infra.md` and
+  `backend_cost.md`
+
+The remaining `v0.3` work is product continuity rather than raw setup:
+
+- verify deployed-site sign-in after the next tagged deploy
+- confirm production-build config gating and review Firebase/Firestore usage
+  dashboards after the first cloud-profile smoke test
+- publish the OAuth app from Testing to In production when public sign-in is
+  intended
+- import local guest profile/history into cloud state idempotently
+- save future signed-in casual matches privately to Firestore
+- load cloud-saved private history/replays from Profile
+
 ### Done When
 
 Signing in extends the same local-first product without breaking it:
