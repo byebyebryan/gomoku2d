@@ -218,8 +218,44 @@
 .recordHeader {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
   gap: 12px;
+}
+
+.historySyncStatus {
+  margin: 0;
+  padding: 4px 8px;
+  border: 2px solid var(--border);
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--text-soft);
+  font-family: var(--font-display);
+  font-size: var(--type-meta);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.historySyncStatusBusy {
+  border-color: var(--info-border);
+  background: var(--info-soft);
+  color: var(--text);
+}
+
+.historySyncStatusError {
+  border-color: var(--danger-soft-border);
+  background: var(--danger-soft);
+  color: var(--danger-soft-text);
+}
+
+.historySyncStatusPending {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.historySyncStatusSynced {
+  border-color: var(--border);
+  background: transparent;
+  color: var(--text-soft);
 }
 
 .summaryGrid {
@@ -651,6 +687,7 @@
 
   .recordHeader {
     align-items: center;
+    justify-content: space-between;
   }
 
   .summaryGrid {
