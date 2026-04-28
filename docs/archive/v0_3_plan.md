@@ -1,7 +1,8 @@
 # v0.3 Plan
 
-Status: ad-hoc milestone plan. This file is a working contract for the `v0.3`
-line, not a canonical product spec. Keep `docs/roadmap.md`, `docs/backend.md`,
+Status: ad-hoc milestone plan captured near the start of the `v0.3` line. It
+is no longer the current status tracker; use `v0_3_completion_plan.md` for the
+active rest-of-`0.3` slice notes, and keep `docs/roadmap.md`, `docs/backend.md`,
 `docs/backend_infra.md`, `docs/backend_cost.md`, and `docs/app_design.md` as
 the long-lived sources of truth.
 

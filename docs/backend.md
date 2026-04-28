@@ -169,8 +169,8 @@ current rules intentionally keep the first public backend slice narrow:
 - client updates preserve locked app-owned fields such as `created_at` and
   `username`; `display_name` can be promoted from a user-chosen local profile
 - private match subcollections are readable by the owner, and owner creates are
-  limited to deterministic `guest_import` records until broader cloud history
-  ships
+  limited to validated `guest_import` and `cloud_saved` private history records
+  until broader trusted/cloud history ships
 
 ## Cloud Run service
 

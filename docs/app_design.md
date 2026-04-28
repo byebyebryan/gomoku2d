@@ -7,9 +7,9 @@ boundary), `ui_design.md` (DOM shell style system), and `game_visual.md`
 
 This document is the canonical UI/product-design guide for the local-first app
 baseline established in `v0.2`. It is intentionally focused on the playable
-surfaces we have now. The current `v0.3` cloud-continuity work may extend
-Profile and persistence, but cloud sync, published replays, and online play
-should not leak into the default local play flow.
+surfaces we have now. The current `v0.3` cloud-continuity work extends Profile
+and persistence, but cloud sync, published replays, and online play should not
+leak into the default local play flow.
 
 ## Product frame
 
@@ -51,7 +51,8 @@ The app should already feel complete as a local game.
 
 - `Profile` is really the player's local record screen.
 - Stats, preferred rules, and recent matches all work without sign-in.
-- Cloud-backed identity can extend this later, not redefine it.
+- Cloud-backed identity extends this record when the player signs in; it should
+  not redefine the local game.
 
 ### 4. Stable shell, swappable board themes
 
@@ -73,8 +74,8 @@ Current canonical surfaces:
 | `/replays/local/:matchId` | Local replay viewer |
 | `/profile` | Local player record, defaults, and history |
 
-Future cloud or online routes can be added later. They are not part of the
-default design contract for `v0.2`.
+Future dedicated cloud or online routes can be added later. They are not part
+of the default local-play contract.
 
 ## Persistent local model
 
@@ -85,8 +86,9 @@ The local-first model should stay simple and visible in the UI:
 - finished local matches are persisted locally
 - replay reads from saved local match history
 
-When cloud sync arrives later, it should extend these flows rather than replace
-them.
+When cloud sync is enabled, it should extend these flows rather than replace
+them. Guest-to-cloud promotion copies finished local matches into private cloud
+history while leaving the local copies on-device.
 
 ## Screen contracts
 
@@ -244,6 +246,8 @@ Rules:
 Primary elements:
 
 - player name / local identity
+- optional linked cloud identity
+- cloud promotion/import status when signed in
 - summary stats strip
 - preferred rules control
 - recent local matches

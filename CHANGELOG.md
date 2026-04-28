@@ -12,9 +12,18 @@ their own section.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-04-28
+
+**Theme: private cloud continuity without a sign-in wall.**
+
+`v0.3.1` makes sign-in feel like continuity instead of a separate account
+mode. Local guest profiles and finished local matches can now promote into
+private cloud state after sign-in, while local play remains complete without
+cloud and no public artifacts are created implicitly.
+
 ### Web and cloud profile
 
-- Started `0.3.1` guest-to-cloud promotion: local profile display name,
+- Added guest-to-cloud promotion: local profile display name,
   preferred rule, and finished local matches are copied to private cloud state
   after sign-in.
 - Default `Guest` profiles now adopt the linked cloud display name on sign-in;
@@ -32,6 +41,9 @@ their own section.
   winning-line reconstruction backed by the shared core rules path.
 - Updated Profile cloud copy to show background import progress, success, and
   failure while keeping local history on-device.
+- Smoke-tested the local build promotion path with a 24-match guest history:
+  Firestore imported exactly 24 private `guest_import` matches with matching
+  `local_match_id`s and no extra/missing records.
 
 ### Schema and data model
 
@@ -390,7 +402,8 @@ together in one canvas-driven surface. That lesson drove the `v0.2.1` rewrite.
   concerns blurred together.
 - Expressive UI language, but not scalable beyond one canvas.
 
-[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/byebyebryan/gomoku2d/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/byebyebryan/gomoku2d/compare/v0.2.4...v0.3.0
 [0.2.4]: https://github.com/byebyebryan/gomoku2d/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/byebyebryan/gomoku2d/compare/v0.2.2...v0.2.3

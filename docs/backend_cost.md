@@ -175,3 +175,8 @@ Before each backend release:
 
 `v0.3.0` note: Firebase/Auth/Firestore dashboards were reviewed after the
 public sign-in smoke test and looked normal for the first cloud-profile slice.
+
+`v0.3.1` note: the first local-build guest promotion smoke imported 24 private
+`guest_import` matches for one signed-in profile. This is well inside the free
+tier; the cost-relevant next check is repeated promotion/sign-in behavior and
+future `cloud_saved` writes from newly finished signed-in matches.
