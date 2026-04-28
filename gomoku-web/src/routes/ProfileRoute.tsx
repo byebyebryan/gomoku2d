@@ -96,7 +96,7 @@ function cloudStateLabel(
   profileStatus: ReturnType<typeof cloudProfileStore.getState>["status"],
 ): string {
   if (authStatus === "unconfigured") {
-    return "Unavailable";
+    return "Local";
   }
 
   if (authStatus === "loading" || profileStatus === "loading") {
@@ -119,39 +119,81 @@ function cloudCopyText({
   hasCloudIdentity,
   historyCount,
   promotionStatus,
+  profileStatus,
   totalPromotedMatches,
 }: {
   authStatus: ReturnType<typeof cloudAuthStore.getState>["status"];
   hasCloudIdentity: boolean;
   historyCount: number;
   promotionStatus: ReturnType<typeof cloudPromotionStore.getState>["status"];
+  profileStatus: ReturnType<typeof cloudProfileStore.getState>["status"];
   totalPromotedMatches: number;
 }): string {
   if (authStatus === "unconfigured") {
-    return "Cloud sign-in is not configured for this build.";
+    return "Online features disabled.";
+  }
+
+  if (authStatus === "loading") {
+    return "Checking online features...";
+  }
+
+  if (authStatus === "error") {
+    return "Sign-in unavailable.";
   }
 
   if (!hasCloudIdentity) {
-    return "Sign in when you want this profile to follow you across browsers.";
+    if (authStatus === "signed_in" || profileStatus === "loading") {
+      return "Loading cloud profile...";
+    }
+
+    if (profileStatus === "error") {
+      return "Cloud profile unavailable.";
+    }
+
+    return "Sign in for cloud history.";
   }
 
   if (promotionStatus === "promoting") {
-    return "Copying local history to private cloud...";
+    return "Syncing local history...";
   }
 
   if (promotionStatus === "error") {
-    return "Cloud import failed. Local history is safe on this device.";
+    return "Sync failed.";
   }
 
   if (promotionStatus === "complete") {
     return totalPromotedMatches > 0
-      ? "Local history copied to private cloud. Local copies stay on this device."
-      : "Private cloud identity is linked. Match history sync is ready.";
+      ? "Local history synced to cloud."
+      : "Cloud history enabled.";
   }
 
-  return historyCount > 0
-    ? "Private cloud identity is linked. Local history will copy to private cloud automatically."
-    : "Private cloud identity is linked. New matches sync in the background.";
+  return "Cloud history enabled.";
+}
+
+function cloudTitleText({
+  authStatus,
+  cloudDisplayName,
+}: {
+  authStatus: ReturnType<typeof cloudAuthStore.getState>["status"];
+  cloudDisplayName: string | undefined;
+}): string {
+  if (authStatus === "unconfigured") {
+    return "Local profile";
+  }
+
+  if (authStatus === "loading") {
+    return "Checking sign-in";
+  }
+
+  if (authStatus === "signed_in") {
+    return cloudDisplayName ? `Signed in as ${cloudDisplayName}` : "Signed in";
+  }
+
+  if (authStatus === "error") {
+    return "Sign-in needs attention";
+  }
+
+  return "Cloud profile";
 }
 
 function shouldAdoptCloudDisplayName(
@@ -300,7 +342,12 @@ export function ProfileRoute() {
     hasCloudIdentity: Boolean(cloudIdentity),
     historyCount: localHistory.length,
     promotionStatus: cloudPromotion.status,
+    profileStatus: cloudProfile.status,
     totalPromotedMatches: cloudPromotion.result?.totalMatches ?? 0,
+  });
+  const cloudTitle = cloudTitleText({
+    authStatus: cloudAuth.status,
+    cloudDisplayName,
   });
   const signedIn = cloudAuth.status === "signed_in" && Boolean(cloudAuth.user);
   const resetDisabled = resetBusy || (signedIn && cloudProfile.status === "loading");
@@ -382,23 +429,9 @@ export function ProfileRoute() {
                 value={guestDisplayName}
               />
             </label>
-            <dl className={styles.metaList}>
-              <div>
-                <dt className={styles.metaLabel}>Profile id</dt>
-                <dd className={styles.metaValue}>{profile?.id ?? "Pending"}</dd>
-              </div>
-              <div>
-                <dt className={styles.metaLabel}>Online profile</dt>
-                <dd className={styles.metaValue}>
-                  {cloudIdentity?.uid ?? (cloudAuth.status === "unconfigured" ? "Not configured" : "Not linked")}
-                </dd>
-              </div>
-            </dl>
             <div className={styles.cloudStatus}>
               <div className={styles.cloudCopy}>
-                <p className={styles.cloudTitle}>
-                  {cloudDisplayName ? `Signed in as ${cloudDisplayName}` : "Cloud profile"}
-                </p>
+                <p className={styles.cloudTitle}>{cloudTitle}</p>
                 <p className={styles.cloudText}>{cloudText}</p>
                 {cloudError ? <p className={styles.cloudError}>{cloudError}</p> : null}
               </div>
@@ -422,7 +455,7 @@ export function ProfileRoute() {
                   type="button"
                 >
                   <span className="uiActionLabel">
-                    {cloudAuth.status === "loading" ? "Checking" : "Sign in with Google"}
+                    {cloudAuth.status === "loading" ? "Checking" : "Sign in"}
                   </span>
                 </button>
               )}
