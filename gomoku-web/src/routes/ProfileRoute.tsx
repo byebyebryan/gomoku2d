@@ -517,7 +517,7 @@ export function ProfileRoute() {
               </div>
             ) : (
               <button
-                className="uiAction uiActionDanger"
+                className={`uiAction uiActionNeutral ${styles.resetTrigger}`}
                 disabled={resetDisabled}
                 onClick={() => {
                   setResetConfirming(true);
