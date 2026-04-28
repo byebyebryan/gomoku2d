@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { CloudAuthUser } from "./auth_store";
 import {
+  CLOUD_PROFILE_SCHEMA_VERSION,
   cloudProfileFromDocument,
   existingCloudProfileUpdate,
   newCloudProfileWrite,
@@ -63,6 +64,7 @@ describe("cloud profile writes", () => {
       display_name: "Bryan",
       email: "bryan@example.com",
       preferred_variant: "renju",
+      schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
       uid: "uid-1",
       username: null,
     });
@@ -74,6 +76,7 @@ describe("cloud profile writes", () => {
       avatar_url: authUser.avatarUrl,
       email: "bryan@example.com",
       preferred_variant: "freestyle",
+      schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
       uid: "uid-1",
     });
     expect(existingCloudProfileUpdate(authUser, "freestyle")).not.toHaveProperty("display_name");

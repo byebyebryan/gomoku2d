@@ -3,14 +3,17 @@ import { describe, expect, it } from "vitest";
 import type { CloudAuthUser } from "./auth_store";
 import {
   CLOUD_MATCH_SCHEMA_VERSION,
+  CLOUD_MATCH_SOURCE_CLOUD_SAVED,
   CLOUD_MATCH_SOURCE_GUEST_IMPORT,
   CLOUD_MATCH_TRUST_CLIENT_UPLOADED,
   PRACTICE_BOT_CONFIG_VERSION,
   PRACTICE_BOT_DEPTH,
   PRACTICE_BOT_ENGINE,
   PRACTICE_BOT_ID,
+  cloudDirectSavedMatchId,
   cloudMatchIdForGuestMatch,
   cloudSavedMatchFromGuestMatch,
+  createCloudDirectSavedDocument,
   localOriginIdForGuestMatch,
 } from "./cloud_match";
 import type { GuestProfileIdentity, GuestSavedMatch } from "../profile/guest_profile_store";
@@ -143,6 +146,16 @@ describe("cloud match serialization", () => {
     ).toThrow("outside the board");
   });
 
+  it("rejects records that are not local-only history", () => {
+    expect(() =>
+      cloudSavedMatchFromGuestMatch(user, guestProfile, {
+        ...match,
+        source: "cloud_saved",
+        trust: "client_uploaded",
+      } as unknown as GuestSavedMatch),
+    ).toThrow("local history records");
+  });
+
   it("rejects imports without one human and one bot player", () => {
     expect(() =>
       cloudSavedMatchFromGuestMatch(user, guestProfile, {
@@ -155,5 +168,60 @@ describe("cloud match serialization", () => {
         },
       }),
     ).toThrow("one human player and one bot player");
+  });
+});
+
+describe("cloud direct-saved match", () => {
+  it("uses the local match id as the cloud doc id", () => {
+    expect(cloudDirectSavedMatchId(match)).toBe("match-1");
+  });
+
+  it("serializes a finished signed-in match for direct cloud save", () => {
+    const document = createCloudDirectSavedDocument(user, match);
+
+    expect(document).toMatchObject({
+      board_size: 15,
+      id: "match-1",
+      match_kind: "local_vs_bot",
+      move_cells: [112, 113],
+      move_count: 2,
+      player_black: {
+        bot: null,
+        display_name: "ByeByeBryan",
+        kind: "human",
+        local_profile_id: null,
+        profile_uid: "uid-1",
+      },
+      player_white: {
+        bot: {
+          config: { depth: PRACTICE_BOT_DEPTH, kind: "baseline" },
+          config_version: PRACTICE_BOT_CONFIG_VERSION,
+          engine: PRACTICE_BOT_ENGINE,
+          id: PRACTICE_BOT_ID,
+          version: 1,
+        },
+        display_name: "Practice Bot",
+        kind: "bot",
+        local_profile_id: null,
+        profile_uid: null,
+      },
+      saved_at: "2026-04-27T01:02:03.000Z",
+      schema_version: CLOUD_MATCH_SCHEMA_VERSION,
+      source: CLOUD_MATCH_SOURCE_CLOUD_SAVED,
+      status: "black_won",
+      trust: CLOUD_MATCH_TRUST_CLIENT_UPLOADED,
+      variant: "renju",
+    });
+  });
+
+  it("sets local_profile_id to null on the human player for cross-device identity", () => {
+    const document = createCloudDirectSavedDocument(user, match);
+    expect(document.player_black.local_profile_id).toBeNull();
+  });
+
+  it("rejects unfinished matches", () => {
+    expect(() =>
+      createCloudDirectSavedDocument(user, { ...match, status: "playing" } as unknown as typeof match),
+    ).toThrow("finished matches");
   });
 });

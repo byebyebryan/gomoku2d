@@ -19,6 +19,7 @@ service cloud.firestore {
         'email',
         'last_login_at',
         'preferred_variant',
+        'schema_version',
         'uid',
         'updated_at',
         'username',
@@ -30,6 +31,7 @@ service cloud.firestore {
         'email',
         'last_login_at',
         'preferred_variant',
+        'schema_version',
         'uid',
         'updated_at',
         'username',
@@ -49,6 +51,7 @@ service cloud.firestore {
 
     function validProfileDocument(uid) {
       return validProfileKeys()
+        && request.resource.data.schema_version == 1
         && request.resource.data.uid == uid
         && request.resource.data.uid is string
         && request.resource.data.display_name is string
@@ -69,7 +72,7 @@ service cloud.firestore {
         && request.resource.data.username == resource.data.username;
     }
 
-    function validCloudMatchKeys() {
+    function validGuestImportKeys() {
       return request.resource.data.keys().hasAll([
         'board_size',
         'id',
@@ -94,6 +97,42 @@ service cloud.firestore {
         'imported_at',
         'local_match_id',
         'local_origin_id',
+        'match_kind',
+        'move_cells',
+        'move_count',
+        'player_black',
+        'player_white',
+        'saved_at',
+        'schema_version',
+        'source',
+        'status',
+        'trust',
+        'undo_floor',
+        'variant',
+      ]);
+    }
+
+    function validCloudSavedMatchKeys() {
+      return request.resource.data.keys().hasAll([
+        'board_size',
+        'created_at',
+        'id',
+        'match_kind',
+        'move_cells',
+        'move_count',
+        'player_black',
+        'player_white',
+        'saved_at',
+        'schema_version',
+        'source',
+        'status',
+        'trust',
+        'undo_floor',
+        'variant',
+      ]) && request.resource.data.keys().hasOnly([
+        'board_size',
+        'created_at',
+        'id',
         'match_kind',
         'move_cells',
         'move_count',
@@ -139,11 +178,9 @@ service cloud.firestore {
         ]);
     }
 
-    function validImportedMatch(matchId) {
-      return validCloudMatchKeys()
-        && request.resource.data.id == matchId
+    function validMatchCommon(matchId) {
+      return request.resource.data.id == matchId
         && request.resource.data.schema_version == 1
-        && request.resource.data.source == 'guest_import'
         && request.resource.data.trust == 'client_uploaded'
         && request.resource.data.board_size == 15
         && request.resource.data.match_kind == 'local_vs_bot'
@@ -151,13 +188,6 @@ service cloud.firestore {
         && request.resource.data.status in ['black_won', 'white_won', 'draw']
         && request.resource.data.id is string
         && request.resource.data.id.size() > 0
-        && request.resource.data.id.size() <= 180
-        && request.resource.data.local_match_id is string
-        && request.resource.data.local_match_id.size() > 0
-        && request.resource.data.local_match_id.size() <= 128
-        && request.resource.data.local_origin_id is string
-        && request.resource.data.local_origin_id.size() > 0
-        && request.resource.data.local_origin_id.size() <= 280
         && request.resource.data.saved_at is string
         && request.resource.data.saved_at.size() <= 40
         && request.resource.data.move_count is int
@@ -166,8 +196,29 @@ service cloud.firestore {
         && request.resource.data.undo_floor is int
         && request.resource.data.undo_floor >= 0
         && request.resource.data.undo_floor <= request.resource.data.move_count
-        && validMoveCells(request.resource.data.move_cells, request.resource.data.move_count)
+        && validMoveCells(request.resource.data.move_cells, request.resource.data.move_count);
+    }
+
+    function validImportedMatch(matchId) {
+      return validGuestImportKeys()
+        && validMatchCommon(matchId)
+        && request.resource.data.id.size() <= 180
+        && request.resource.data.source == 'guest_import'
+        && request.resource.data.local_match_id is string
+        && request.resource.data.local_match_id.size() > 0
+        && request.resource.data.local_match_id.size() <= 128
+        && request.resource.data.local_origin_id is string
+        && request.resource.data.local_origin_id.size() > 0
+        && request.resource.data.local_origin_id.size() <= 280
         && request.resource.data.imported_at == request.time;
+    }
+
+    function validCloudSavedMatch(matchId) {
+      return validCloudSavedMatchKeys()
+        && validMatchCommon(matchId)
+        && request.resource.data.id.size() <= 128
+        && request.resource.data.source == 'cloud_saved'
+        && request.resource.data.created_at == request.time;
     }
 
     function validImportedMatchPlayer(player) {
@@ -202,7 +253,7 @@ service cloud.firestore {
         && player.bot == null;
     }
 
-    function validImportedBotIdentity(bot) {
+    function validBotIdentity(bot) {
       return bot is map
         && bot.keys().hasAll(['config', 'config_version', 'engine', 'id', 'version'])
         && bot.keys().hasOnly(['config', 'config_version', 'engine', 'id', 'version'])
@@ -222,7 +273,15 @@ service cloud.firestore {
         && player.kind == 'bot'
         && player.profile_uid == null
         && player.local_profile_id == null
-        && validImportedBotIdentity(player.bot);
+        && validBotIdentity(player.bot);
+    }
+
+    function validCloudSavedHumanPlayer(uid, player) {
+      return validImportedMatchPlayer(player)
+        && player.kind == 'human'
+        && player.profile_uid == uid
+        && player.local_profile_id == null
+        && player.bot == null;
     }
 
     match /profiles/{uid} {
@@ -242,18 +301,34 @@ service cloud.firestore {
 
       match /matches/{matchId} {
         allow read: if isOwner(uid);
-        allow create: if isOwner(uid)
-          && validImportedMatch(matchId)
-          && (
-            (
-              validImportedHumanPlayer(uid, request.resource.data.player_black)
-              && validImportedBotPlayer(request.resource.data.player_white)
+        allow create: if isOwner(uid) && (
+          (
+            validImportedMatch(matchId)
+            && (
+              (
+                validImportedHumanPlayer(uid, request.resource.data.player_black)
+                && validImportedBotPlayer(request.resource.data.player_white)
+              )
+              || (
+                validImportedBotPlayer(request.resource.data.player_black)
+                && validImportedHumanPlayer(uid, request.resource.data.player_white)
+              )
             )
-            || (
-              validImportedBotPlayer(request.resource.data.player_black)
-              && validImportedHumanPlayer(uid, request.resource.data.player_white)
+          )
+          || (
+            validCloudSavedMatch(matchId)
+            && (
+              (
+                validCloudSavedHumanPlayer(uid, request.resource.data.player_black)
+                && validImportedBotPlayer(request.resource.data.player_white)
+              )
+              || (
+                validImportedBotPlayer(request.resource.data.player_black)
+                && validCloudSavedHumanPlayer(uid, request.resource.data.player_white)
+              )
             )
-          );
+          )
+        );
         allow update, delete: if false;
       }
     }

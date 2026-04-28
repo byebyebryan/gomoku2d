@@ -44,6 +44,7 @@ type CloudProfileDocument = {
   email: string | null;
   last_login_at: Timestamp;
   preferred_variant: "freestyle" | "renju";
+  schema_version: 1;
   uid: string;
   updated_at: Timestamp;
   username: string | null;
@@ -54,9 +55,15 @@ Rules:
 
 - `uid` must match the document ID.
 - `created_at` and `username` are app-owned after creation.
-- `display_name` can be updated during guest promotion. If the local display
-  name is still the default `Guest`, the app adopts the provider/cloud display
-  name instead of overwriting cloud state with `Guest`.
+- `schema_version` is always `1`; increments require a writer + rules + reader
+  update in the same slice.
+- Writer behavior: during guest promotion, the browser only sends
+  `display_name` if the local guest has a custom name and the loaded cloud name
+  still matches the provider default. If the local display name is still the
+  default `Guest`, the app adopts the provider/cloud display name locally
+  instead of overwriting cloud state with `Guest`.
+- Firestore rules enforce ownership, shape, and timestamps for profile writes;
+  they do not currently enforce the provider-default display-name condition.
 
 ## Private Match History
 
@@ -76,9 +83,8 @@ checks and skips the already-created cloud document.
 ### Saved Match v1
 
 Current `schema_version: 1` is shared by browser-local history and private
-cloud history. Cloud imports add a small amount of import metadata, but the
-replay payload and player shape stay aligned so promotion does not become a
-second schema.
+cloud history. Cloud records diverge only in source-specific fields; the core
+replay payload and player shape stay aligned across all sources.
 
 ```ts
 type SavedMatchV1 = {
@@ -97,28 +103,48 @@ type SavedMatchV1 = {
   move_cells: number[];
   undo_floor: number;
 
-  player_black: SavedMatchPlayerV1;
-  player_white: SavedMatchPlayerV1;
+  player_black: SavedMatchPlayer;
+  player_white: SavedMatchPlayer;
 
   saved_at: string;
 };
 ```
 
+**`guest_import`** — local match promoted to cloud after sign-in:
+
 ```ts
 type CloudImportedMatchV1 = SavedMatchV1 & {
-  id: string; // same as the Firestore document ID
+  id: string; // deterministic: "local-${encodeURIComponent(local_match_id)}"
   source: "guest_import";
   trust: "client_uploaded";
 
   local_match_id: string;
-  local_origin_id: string;
+  local_origin_id: string; // "guest:{guestProfileId}:{localMatchId}"
 
-  imported_at: Timestamp;
+  imported_at: Timestamp; // server timestamp of the import write
 };
 ```
 
+**`cloud_saved`** — match played while signed in, saved directly to cloud:
+
 ```ts
-type SavedMatchPlayerV1 = {
+type CloudDirectSavedMatchV1 = SavedMatchV1 & {
+  id: string; // same as the local match UUID (no encoding needed)
+  source: "cloud_saved";
+  trust: "client_uploaded";
+
+  created_at: Timestamp; // server timestamp of the cloud write
+};
+```
+
+Key differences from `guest_import`:
+- No `imported_at`, `local_match_id`, `local_origin_id` fields.
+- `id` is the raw local UUID rather than a prefixed encoding.
+- Human player's `local_profile_id` is always `null`; use `profile_uid` for
+  cross-device identity matching (see `matchUserSide` in `saved_match.ts`).
+
+```ts
+type SavedMatchPlayer = {
   kind: "human" | "bot";
   profile_uid: string | null;
   local_profile_id: string | null;
@@ -127,12 +153,16 @@ type SavedMatchPlayerV1 = {
 };
 ```
 
-For `guest_import` records, exactly one player is the owner human and exactly
-one player is the practice bot. Side is encoded by the field name
-(`player_black` or `player_white`), not duplicated inside the player object.
-`display_name` is a replay snapshot, not the identity key. The imported cloud
-document uses the deterministic Firestore document ID as `id`; `local_match_id`
-preserves the source local match ID.
+Side is encoded by the field name (`player_black` or `player_white`), not
+duplicated inside the player object. `display_name` is a replay snapshot, not
+an identity key.
+
+**Identity matching across devices:** Use `matchUserSide(match, { profileUid,
+localProfileId })` from `saved_match.ts`. It tries `profile_uid` first (correct
+for cloud matches on any device) then falls back to `local_profile_id`
+(correct for local-only and guest-imported records). For `cloud_saved` records,
+`local_profile_id` is always `null` on the human player — only `profile_uid`
+identifies them.
 
 ### Bot Identity
 
@@ -153,7 +183,8 @@ type SavedMatchBotIdentityV1 = {
 
 This is intentionally more structured than the current UI needs. Future bot
 personalities, benchmark-backed presets, and stronger analysis bots can add new
-bot IDs/config versions without pretending every bot is the same opponent.
+bot IDs/config versions through an explicit writer, reader, rules, and docs
+slice without pretending every bot is the same opponent.
 
 ### Move Encoding
 

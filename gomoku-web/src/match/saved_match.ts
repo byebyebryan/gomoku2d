@@ -52,6 +52,11 @@ export interface SavedMatchV1 {
   variant: GameVariant;
 }
 
+export type LocalSavedMatchV1 = SavedMatchV1 & {
+  source: "local_history";
+  trust: "local_only";
+};
+
 export interface CreateLocalSavedMatchInput {
   id: string;
   localProfileId: string;
@@ -183,6 +188,10 @@ export function isSavedMatchV1(value: unknown): value is SavedMatchV1 {
   );
 }
 
+export function isLocalSavedMatchV1(value: unknown): value is LocalSavedMatchV1 {
+  return isSavedMatchV1(value) && value.source === "local_history" && value.trust === "local_only";
+}
+
 export function practiceBotIdentity(): SavedMatchBotIdentity {
   return {
     config: {
@@ -297,7 +306,7 @@ function sidePlayers(
   };
 }
 
-export function createLocalSavedMatch(input: CreateLocalSavedMatchInput): SavedMatchV1 {
+export function createLocalSavedMatch(input: CreateLocalSavedMatchInput): LocalSavedMatchV1 {
   const players = sidePlayers(input.players, input.localProfileId);
   const moveCells = encodeMoveCells(input.moves);
 
@@ -322,7 +331,7 @@ export function createLocalSavedMatch(input: CreateLocalSavedMatchInput): SavedM
 export function migrateLegacyGuestSavedMatch(
   match: LegacyGuestSavedMatch,
   localProfileId: string,
-): SavedMatchV1 {
+): LocalSavedMatchV1 {
   return createLocalSavedMatch({
     id: match.id,
     localProfileId,
@@ -365,6 +374,29 @@ export function savedMatchLocalSide(
   }
 
   return null;
+}
+
+/**
+ * Resolves the local user's side for a match using cloud or local identity.
+ * Prefers profile_uid (works cross-device for cloud matches), falls back to
+ * local_profile_id (works for local-only and guest-imported records).
+ */
+export function matchUserSide(
+  match: SavedMatchV1,
+  opts: { localProfileId?: string | null; profileUid?: string | null },
+): SavedMatchSide | null {
+  const { localProfileId, profileUid } = opts;
+
+  if (profileUid) {
+    if (match.player_black.profile_uid === profileUid) {
+      return "black";
+    }
+    if (match.player_white.profile_uid === profileUid) {
+      return "white";
+    }
+  }
+
+  return savedMatchLocalSide(match, localProfileId);
 }
 
 export function savedMatchWinningSide(match: Pick<SavedMatchV1, "status">): SavedMatchSide | null {

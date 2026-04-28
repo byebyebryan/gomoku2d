@@ -11,12 +11,14 @@ import type { CloudAuthUser } from "./auth_store";
 import {
   cloudMatchIdForGuestMatch,
   cloudSavedMatchFromGuestMatch,
-  type CloudSavedMatchDocument,
+  type CloudGuestImportDocument,
 } from "./cloud_match";
 import { existingCloudProfileUpdate } from "./cloud_profile";
 import { getFirebaseClients } from "./firebase";
 
 export interface GuestPromotionInput {
+  /** Current display name on the cloud profile; undefined means not yet loaded. */
+  cloudDisplayName?: string | null;
   guestHistory: GuestSavedMatch[];
   guestProfile: GuestProfileIdentity;
   settings: GuestProfileSettings;
@@ -32,7 +34,7 @@ export interface GuestPromotionResult {
 }
 
 export interface CloudPromotionBackend {
-  createMatch: (matchId: string, document: CloudSavedMatchDocument) => Promise<void>;
+  createMatch: (matchId: string, document: CloudGuestImportDocument) => Promise<void>;
   matchExists: (matchId: string) => Promise<boolean>;
   updateProfile: (patch: Record<string, unknown>) => Promise<void>;
 }
@@ -47,14 +49,20 @@ function customGuestDisplayName(profile: GuestProfileIdentity): string | null {
   return name && name !== DEFAULT_GUEST_DISPLAY_NAME ? name : null;
 }
 
+function cloudDisplayNameIsProviderDefault(cloudName: string | null | undefined, providerName: string): boolean {
+  return cloudName === null || cloudName === providerName;
+}
+
 export function cloudProfilePromotionUpdate(input: GuestPromotionInput): Record<string, unknown> {
   const update: Record<string, unknown> = {
     ...existingCloudProfileUpdate(input.user, input.settings.preferredVariant),
   };
-  const displayName = customGuestDisplayName(input.guestProfile);
+  const customLocal = customGuestDisplayName(input.guestProfile);
 
-  if (displayName) {
-    update.display_name = displayName;
+  // Only promote the local custom name if the cloud name hasn't been customized
+  // by another device (i.e., still holds the provider default or hasn't been set).
+  if (customLocal && cloudDisplayNameIsProviderDefault(input.cloudDisplayName, input.user.displayName)) {
+    update.display_name = customLocal;
   }
 
   return update;
@@ -95,6 +103,7 @@ function resolvePromotionBackend(
 
 export function promotionInputKey(input: GuestPromotionInput): string {
   return JSON.stringify({
+    cloud: [input.cloudDisplayName !== undefined, input.cloudDisplayName ?? null],
     history: input.guestHistory.map((match) => [match.id, match.saved_at, match.move_count]),
     profile: [input.guestProfile.id, input.guestProfile.displayName],
     rule: input.settings.preferredVariant,

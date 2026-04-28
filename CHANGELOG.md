@@ -18,7 +18,8 @@ their own section.
   preferred rule, and finished local matches are copied to private cloud state
   after sign-in.
 - Default `Guest` profiles now adopt the linked cloud display name on sign-in;
-  custom local display names still override the cloud name during promotion.
+  custom local display names promote only while the cloud name still matches the
+  provider default.
 - Added deterministic `guest_import` match document IDs so retries skip already
   imported local matches instead of duplicating them.
 - Added `docs/data_model.md`, moved local history to canonical
@@ -32,11 +33,30 @@ their own section.
 - Updated Profile cloud copy to show background import progress, success, and
   failure while keeping local history on-device.
 
+### Schema and data model
+
+- Versioned cloud profile documents with `schema_version: 1`; existing profiles
+  receive the field on next sign-in via merge update.
+- Prepared the `cloud_saved` document shape for future matches saved directly to
+  cloud while signed in: no import metadata fields, `created_at` server
+  timestamp instead of `imported_at`, human player carries `profile_uid` only
+  (`local_profile_id: null`).
+- Added `matchUserSide(match, { profileUid, localProfileId })` helper to resolve
+  the user's side cross-device: prefers `profile_uid` (correct on any device for
+  cloud records), falls back to `local_profile_id` for local-only records.
+- Fixed display-name promotion so a custom local name only overwrites the cloud
+  name when the cloud still holds the provider default — prevents a second device
+  from silently overwriting a name chosen on the first.
+
 ### Infra
 
 - Opened Firestore rules narrowly for owner-only private `guest_import` match
   creates and local display-name promotion; match updates/deletes remain closed.
 - Tightened Firestore match validation for compact move-cell payloads.
+- Extended Firestore rules to accept `cloud_saved` match creates alongside
+  `guest_import`; both paths share common field validation via `validMatchCommon`.
+- Kept source-specific match document keys and bot identity pinned in Firestore
+  rules so persisted v1 data cannot drift ahead of the client decoder.
 
 ## [0.3.0] - 2026-04-27
 
