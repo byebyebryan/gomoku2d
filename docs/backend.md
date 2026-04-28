@@ -171,6 +171,9 @@ current rules intentionally keep the first public backend slice narrow:
 - private match subcollections are readable by the owner, and owner creates are
   limited to validated `guest_import` and `cloud_saved` private history records
   until broader trusted/cloud history ships
+- owner deletes are limited to private `client_uploaded` match records so Reset
+  Profile can clear casual history without granting delete access to future
+  `server_verified` records
 
 ## Cloud Run service
 
