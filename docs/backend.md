@@ -140,83 +140,37 @@ When a guest decides to sign in:
 
 Local guest state is disposable. Cloud state is durable.
 
-## Firestore data model
+## Data model
 
-Starting shape — widens as features land. Each collection maps to a security
-rule; new features touch both in the same commit. For `v0.3`, the critical path
-is `profiles/{uid}` plus private `profiles/{uid}/matches/{id}` history.
+Canonical Firestore collections, document schemas, schema versions, and
+field-level invariants live in [data_model.md](data_model.md).
 
-| Collection | Ownership | Used by |
-|---|---|---|
-| `profiles/{uid}` | owner read/write, self-only | Cloud identity, settings |
-| `profiles/{uid}/matches/{id}` | owner read, owner create for casual saves, server writes trusted records / upgrades trust metadata | Cloud match history |
-| `matches/{id}` | participants read, server writes authoritative state | Trusted live matches |
-| `replays/{id}` | public read, owner/server create on explicit publish | Shared replays only |
-| `puzzles/{id}` | public read, server write | Puzzle library |
-| `puzzle_attempts/{uid}/{id}` | owner read/write | Per-user puzzle progress |
-| `usernames/{handle}` | public read, server-only write | Username uniqueness |
+For `v0.3`, the critical path is:
+
+- `profiles/{uid}` for owner-scoped cloud identity and settings
+- `profiles/{uid}/matches/{id}` for private cloud match history
 
 Important distinction:
 
 - **Guest history** lives locally only.
-- **Signed-in casual history** is auto-saved privately to `profiles/{uid}/matches/{id}`
-  at match end.
-- **Trusted online/ranked history** also lands in `profiles/{uid}/matches/{id}`,
-  but with server-written trust metadata.
-- **Public shared replays** are a separate publish step; they are not created
-  for every finished match by default.
+- **Signed-in casual history** is saved privately to
+  `profiles/{uid}/matches/{id}`.
+- **Trusted online/ranked history** later uses the same private history lane, but
+  with server-written trust metadata.
+- **Public shared replays** are a separate publish step; they are not created for
+  every finished match by default.
 
-A private match-history record is the canonical saved-match object. Published
-replays are projections of those records, not the primary source of truth.
-
-Suggested trust field on saved matches:
-
-```ts
-type MatchTrust = "client_uploaded" | "server_verified";
-```
-
-Suggested private match shape:
-
-```ts
-type SavedMatch = {
-  id: string;
-  owner_uid: string;
-  mode: "bot" | "local_pvp" | "online";
-  rules: RuleConfig;
-  players: { black: string; white: string };
-  result: ReplayResult;
-  replay: Replay;
-  trust: MatchTrust;
-  saved_at: Timestamp;
-  local_origin_id?: string;      // for one-time guest import dedupe
-  analysis_status?: "none" | "queued" | "ready" | "failed";
-  published_replay_id?: string | null;
-};
-```
-
-Suggested published replay shape:
-
-```ts
-type PublishedReplay = {
-  id: string;
-  owner_uid: string;
-  source_match_id: string;
-  replay: Replay;
-  trust: MatchTrust;
-  published_at: Timestamp;
-};
-```
-
-Starter rules for the profile-only phase live in `firestore.rules`. The current
-rules intentionally keep the first public backend slice narrow:
+Starter rules for the backend-foundation phase live in `firestore.rules`. The
+current rules intentionally keep the first public backend slice narrow:
 
 - owners can read their own `profiles/{uid}` document
 - owners can create/update that document only if it matches the expected profile
   schema
-- client updates preserve app-owned fields such as `created_at`, `display_name`,
-  and `username`
-- private match subcollections are readable by the owner, but client writes stay
-  closed until the cloud-history slice actually ships
+- client updates preserve locked app-owned fields such as `created_at` and
+  `username`; `display_name` can be promoted from a user-chosen local profile
+- private match subcollections are readable by the owner, and owner creates are
+  limited to deterministic `guest_import` records until broader cloud history
+  ships
 
 ## Cloud Run service
 
