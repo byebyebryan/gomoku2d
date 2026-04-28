@@ -122,7 +122,8 @@ ad-hoc planning artifact; this section remains the canonical roadmap.
 - preferred settings/profile sync
 - private cloud history for signed-in players
 - cloud-saved private replay loading
-- starter Firestore rules for owner-scoped profile/history docs
+- hardened Firestore rules for owner-scoped profile/history docs
+- profile reset barrier and private-history clear path
 
 ### Current State
 
@@ -139,6 +140,12 @@ The backend-foundation and first continuity slices are in place:
 - guest-to-cloud profile/settings promotion after sign-in
 - deterministic local guest match imports into
   `profiles/{uid}/matches/local-{localMatchId}`
+- direct private `cloud_saved` writes for newly finished signed-in casual
+  matches
+- per-user cloud-history cache and active-history resolution for Profile and
+  Replay
+- signed-in Reset Profile flow with confirmation, reset barrier, private
+  `client_uploaded` history deletion, and per-device cache clear
 - compact, versioned private match schema documented in `data_model.md`
 - local guest play/history still working without Firebase config
 - Google Auth Platform published to production for public sign-in
@@ -148,14 +155,21 @@ The backend-foundation and first continuity slices are in place:
   `0.3.0`
 - local-build guest-history promotion smoke completed for `0.3.1`: one 24-match
   local history imported exactly once with matching `local_match_id`s
+- `0.3.2` private-history smoke completed across production and local builds:
+  signed-in saves persisted, cloud history restored after refresh/sign-out,
+  Reset Profile cleared cloud/local active history, old rows did not re-import,
+  and post-reset saves worked normally
+- Firestore rules tests cover owner scoping, reset-barrier writes, stale match
+  rejection, private match creates, and private match deletes
 - infra and free-tier tracking split into `backend_infra.md` and
   `backend_cost.md`
 
-The remaining `v0.3` work is product continuity rather than raw setup:
+The remaining `v0.3` work is release wrap-up rather than new product scope:
 
-- save future signed-in casual matches privately to Firestore
-- load cloud-saved private history/replays from Profile
-- harden auth/promotion/cloud-history error states and release checks
+- cut and publish `v0.3.2`
+- keep one final production smoke after the tag deploy
+- carry any non-blocking auth/cloud-history hardening into later `0.3.x` only if
+  real usage exposes it
 
 ### Done When
 
@@ -163,7 +177,7 @@ Signing in extends the same local-first product without breaking it:
 
 - guest-only play remains complete
 - local guest history can be promoted without duplicates
-- future signed-in matches save privately to cloud
+- signed-in matches save privately to cloud
 - signed-in profile/history works across browsers
 - no public artifacts are created implicitly
 

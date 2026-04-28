@@ -56,7 +56,7 @@ If screenshots or recordings should show the upcoming version, bump the web
 package version before capturing:
 
 ```sh
-scripts/set-web-version.sh 0.3.1
+scripts/set-web-version.sh 0.3.2
 ```
 
 This updates `gomoku-web/package.json` and `gomoku-web/package-lock.json`
@@ -94,6 +94,8 @@ cd ..
 
 cd gomoku-web
 npm test
+npm run test:rules
+npm audit --omit=dev
 GOMOKU_BASE_PATH=/ npm run build
 PLAYWRIGHT_BASE_URL=http://127.0.0.1:8001 npm run playtest:smoke
 ```
@@ -106,8 +108,8 @@ release-blocking.
 After reviewing `git status` and the diff, finalize the prepared release:
 
 ```sh
-scripts/release.sh --check 0.3.1
-scripts/release.sh 0.3.1
+scripts/release.sh --check 0.3.2
+scripts/release.sh 0.3.2
 ```
 
 `release.sh` validates:
@@ -127,7 +129,7 @@ Push when ready:
 
 ```sh
 git push origin main
-git push origin v0.3.1
+git push origin v0.3.2
 ```
 
 Pushing `main` updates the release commit. It does not publish the site.
@@ -136,6 +138,7 @@ Pushing the tag fires:
 
 - `.github/workflows/release.yml`
 - `.github/workflows/deploy.yml`
+- `.github/workflows/deploy-firestore.yml`
 
 For a custom-domain smoke redeploy without cutting a release, run the Pages
 workflow manually after the relevant deploy config has been pushed to `main`:

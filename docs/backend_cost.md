@@ -183,3 +183,10 @@ public sign-in smoke test and looked normal for the first cloud-profile slice.
 `guest_import` matches for one signed-in profile. This is well inside the free
 tier; the cost-relevant next check is repeated promotion/sign-in behavior and
 future `cloud_saved` writes from newly finished signed-in matches.
+
+`v0.3.2` note: production and local-build smoke covered signed-in
+`cloud_saved` writes, cloud-history reload, Reset Profile deletion/barrier
+behavior, and post-reset saves. The operation profile still matches the
+estimates above: one finished signed-in match writes one private match document
+after a small number of dedupe/profile reads, and Reset Profile pays one profile
+write plus one delete per private `client_uploaded` match cleared.

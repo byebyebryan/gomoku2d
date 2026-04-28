@@ -148,6 +148,8 @@ deploy verification.
 - idempotent local-origin IDs
 - clearer Profile copy for local vs cloud-backed state
 
+This has been cut and published as `v0.3.1`.
+
 ### `0.3.2` — Private Cloud History
 
 - save future signed-in matches to cloud
@@ -167,8 +169,9 @@ deploy verification.
 - keep source/trust/provenance internal so sync, dedupe, and future publish
   flows remain explicit
 
-The exact split can change, but avoid bundling auth, import, and history sync
-into one hard-to-debug release.
+This is implemented, deployed from `main`, and smoke-tested across production
+and local builds. Remaining work is release mechanics: version/changelog/docs
+prep, checks, `v0.3.2` tag, and release deploy verification.
 
 ## Acceptance Criteria For The `0.3` Line
 
