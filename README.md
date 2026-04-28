@@ -2,7 +2,13 @@
 
 *An old favorite, built properly.*
 
-A retro Gomoku game built on a modern web and Rust stack.
+Gomoku2D is a simple, fun web Gomoku with a retro feel and serious engineering
+underneath: a modern frontend, a Rust/WebAssembly rules core, and a Rust bot lab
+for game logic and AI experiments.
+
+It is also a production experiment: one developer, an AI-centric workflow, and
+a question more interesting than raw speed: how much of a real product team's
+surface area can agents help cover without lowering the quality bar?
 
 [![Gomoku2D hero capture — Local Match in progress on the pixel-art board](docs/assets/capture_v0_2_4_match_desktop.gif)](https://gomoku2d.byebyebryan.com/)
 
@@ -10,51 +16,54 @@ A retro Gomoku game built on a modern web and Rust stack.
 
 **Pixel-art previews:** https://gomoku2d.byebyebryan.com/assets/
 
-Gomoku2D aims for old-school play with better engineering: a crisp board-first
-UI, local replay/history, and a browser build that feels fast and polished on
-desktop and mobile without losing the feel of a small tabletop game.
+The answer so far is not "type less code and ship anything." It is closer to
+running a tiny product team through agents: implementation, review, test
+coverage, infrastructure, asset iteration, release notes, and design critique
+all stay in the loop.
 
-It is also a process lab: a serious attempt to learn how far a veteran engineer
-can push an old, sentimental project with current AI coding agents while still
-holding the work to real product standards. The product has to be good enough
-for the process lessons to matter.
+## What makes it different
 
-Right now the focus is quick solo play against the Practice Bot. Matches start
-fast, the board stays central, and the surrounding UI is there to support the
-game instead of competing with it.
+- **Personal, but not casual.** Gomoku was a paper-and-pencil childhood
+  favorite and one of my first game-dev targets. This version keeps that
+  sentimental thread, but treats it like a real alpha product instead of a
+  nostalgic weekend sketch.
+- **Small surface, serious foundation.** React owns the app shell, Phaser
+  renders the board, and Rust rules/bot logic ship to the browser through
+  WebAssembly. The split keeps the UI light without trapping core game logic in
+  the frontend.
+- **A lab under the board.** The Rust workspace is where rules, bots,
+  benchmarks, replay formats, and future analysis/puzzle features can be built
+  natively before they reach the browser.
+- **AI as production leverage.** The experiment is not whether agents can
+  generate code quickly. It is whether one person can use agents to cover more
+  of the product loop while still preserving taste, scope control, and review
+  discipline.
+- **Retro assets with a real workflow.** Sprites, icons, and fonts have source
+  assets, manifests, and live preview pages, so the pixel-art style can be
+  iterated deliberately instead of treated as decoration.
 
-Features:
+## What works today
 
-- One-click `Play` from Home — match starts vs the Practice Bot, no setup
-  flow
-- Freestyle and Renju rule sets; mid-game switches queue for the next round
-- Live forbidden-move warnings when playing Black under Renju
-- Undo the last turn during a live match
-- Local replay viewer with transport controls and timeline scrubbing; branch
-  off mid-replay into a fresh practice game without undoing before the branch
-  point
-- Local guest profile: display name, preferred rule, recent-match history —
-  persisted in browser storage, no sign-in required
-- Intentional desktop and portrait/mobile layouts on every main screen, with
-  a dedicated touch-placement flow on mobile instead of direct tap-to-place
-- Pixel art sprites with frame-by-frame animations — stones form and shatter,
-  winning cells pulse, idle pointer cycles
-
-Under the hood, React owns the shell, Phaser renders the board, and the Rust
-rules and bot code ship to the browser through WebAssembly. The bot runs in a
-Web Worker so it can think without freezing the UI.
+- Start a practice match immediately, no account required.
+- Play Freestyle or Renju against the Practice Bot, with Renju forbidden-move
+  feedback and mobile-friendly placement controls.
+- Review local replays, scrub the timeline, and branch from a replay position
+  into a fresh practice game.
+- Keep guest-local history by default, or sign in with Google for private
+  cloud-backed history across browsers.
+- Use the same board-first app on desktop and portrait mobile.
 
 Lives in [`gomoku-web/`](gomoku-web/) — see its README for stack, local
 development, and deploy/runtime details.
 
 ---
 
-## The bot lab
+## The Bot Lab
 
-A Cargo workspace under [`gomoku-bot-lab/`](gomoku-bot-lab/) where the game
-logic can be developed seriously without making the browser app carry all that
-weight. Rules, replay format, and bot behavior live here first, can be tested
-and benchmarked natively, and then ship to the web game through WebAssembly.
+[`gomoku-bot-lab/`](gomoku-bot-lab/) is the other half of the project: a Rust
+workspace where the game can grow beyond "browser board plus bot." Rules,
+replay format, and bot behavior live here first, can be tested and benchmarked
+natively, and then ship to the web game through WebAssembly.
 
 ```
 gomoku2d/
@@ -82,25 +91,27 @@ Build, CLI usage, replay format, and `SearchBot` notes live in
 
 ---
 
-## Current status
+## Current Status
 
-The local-first `v0.2.x` product pass is complete. The core play loop,
-desktop/mobile shell, replay flow, and guest-local profile/history are in
-place. The `v0.3` backend-continuity line now has Firebase, Firestore rules,
-Google sign-in, cloud profile plumbing, local guest-history promotion, private
-signed-in match saves, cloud history loading, and Reset Profile hardening in
-place without putting sign-in in front of the local game.
+The local-first `v0.2.x` product pass made the game feel complete without
+cloud: board-first play, desktop/mobile layout, replay, profile, and local
+history. The `v0.3` backend-continuity line added optional Google sign-in,
+Firebase/Firestore plumbing, guest-history promotion, private cloud saves,
+cloud history loading, and Reset Profile hardening without putting sign-in in
+front of the game.
 
-For the longer-term sequencing from cloud continuity to lab-powered features,
-skins, and later online play, see [`docs/roadmap.md`](docs/roadmap.md).
+The next product identity push is the lab-powered line: replay analysis,
+puzzles, bot personalities, and game-review features that make the Rust lab
+visible to players. For the longer-term sequencing, see
+[`docs/roadmap.md`](docs/roadmap.md).
 
 ---
 
-## Learn more
+## Learn More
 
-The canonical design and schedule live in `docs/`:
+The canonical design, architecture, and release docs live in `docs/`:
 
-- [`docs/project.md`](docs/project.md) — the product/process thesis and project tenets
+- [`docs/project.md`](docs/project.md) — the product/production thesis and project tenets
 - [`docs/product.md`](docs/product.md) — what we're building and why
 - [`docs/architecture.md`](docs/architecture.md) — FE stack, DOM/Phaser boundary, core-sharing story
 - [`docs/app_design.md`](docs/app_design.md) — current local-first routes, flows, and screen contracts

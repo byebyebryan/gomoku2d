@@ -1,8 +1,8 @@
 # v0.3 Completion Plan
 
-Status: ad-hoc planning note. `docs/roadmap.md` owns canonical phase intent;
-this file tracks the practical rest-of-`0.3` release plan after the roadmap
-pivot toward lab-powered product identity in `v0.4`.
+Status: completed ad-hoc planning note. `docs/roadmap.md` owns canonical phase
+intent; this file preserves the practical rest-of-`0.3` release plan after the
+roadmap pivot toward lab-powered product identity in `v0.4`.
 
 ## Frame
 
@@ -13,7 +13,7 @@ The product reason is straightforward: `v0.4` needs durable saved games as
 source material for analysis, puzzles, bot tuning, and "save this game"
 challenges. Those saved games should not depend on one browser's local storage.
 
-The process reason is equally important: `v0.3` establishes the cloud
+The production reason is equally important: `v0.3` establishes the cloud
 persistence workflow that future AI-agent work can build on safely. If auth,
 Firestore writes, docs, cost notes, and release gates are clear here, later
 lab-powered and online work can focus on product features instead of guessing
@@ -124,8 +124,9 @@ making new signed-in matches durable across browsers/devices.
 
 Release status:
 
-- implementation is complete and deployed from `main` for release-candidate
-  smoke
+- `v0.3.2` has been cut and published.
+- CI, GitHub Release, GitHub Pages deploy, and Firestore rules deployment all
+  passed from the `v0.3.2` tag.
 - production and local-build smoke checks are green:
   signed-in save, refresh/sign-out/sign-in restore, Reset Profile, old-row
   non-reimport, post-reset save, and cross-build cloud sync
@@ -229,13 +230,11 @@ Smoke checklist:
 
 ### `0.3.x` — Hardening
 
-Purpose: close the backend-foundation line without pulling `v0.4` forward.
+Purpose: only handle backend-foundation hardening if real usage exposes it.
+This is not an active product scope.
 
 Work:
 
-- release `0.3.2` from the completed private-history slice
-- keep one post-tag production smoke for guest-only play, signed-in Profile,
-  signed-in save/load, and Reset Profile
 - watch Firebase/Auth/Firestore usage after a little more real traffic and
   refresh cost notes if the dashboard shows anything surprising
 - carry any remaining auth/offline polish into later `0.3.x` only if real usage
