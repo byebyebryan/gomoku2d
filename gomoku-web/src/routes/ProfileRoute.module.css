@@ -56,7 +56,23 @@
 }
 
 .resetSection {
-  padding-top: 22px;
+  display: grid;
+  gap: 12px;
+}
+
+.resetTrigger {
+  min-height: 42px;
+  width: 100%;
+  border-color: var(--danger-soft-border);
+  background: var(--danger-soft);
+  box-shadow: none;
+  color: var(--danger-soft-text);
+}
+
+.resetTrigger:hover {
+  border-color: var(--danger-border);
+  background: rgba(224, 71, 71, 0.12);
+  color: var(--danger-soft-text-hover);
 }
 
 .resetConfirm {
@@ -573,7 +589,7 @@
   }
 
   .resetSection {
-    padding-top: 10px;
+    gap: 8px;
   }
 
   .identitySection .sectionHeader {

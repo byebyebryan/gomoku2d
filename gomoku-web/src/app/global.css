@@ -45,6 +45,10 @@
   --danger: #e04747;
   --danger-border: #a83535;
   --danger-ink: #f5f5f5;
+  --danger-soft: rgba(224, 71, 71, 0.08);
+  --danger-soft-border: rgba(224, 71, 71, 0.46);
+  --danger-soft-text: #f0b4a8;
+  --danger-soft-text-hover: #ffd0c7;
   --scroll-track: #242620;
   --scroll-thumb: #6b6a6a;
   --scroll-thumb-hover: #a6a6a0;
