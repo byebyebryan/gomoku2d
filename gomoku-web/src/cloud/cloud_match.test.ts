@@ -224,4 +224,14 @@ describe("cloud direct-saved match", () => {
       createCloudDirectSavedDocument(user, { ...match, status: "playing" } as unknown as typeof match),
     ).toThrow("finished matches");
   });
+
+  it("rejects records that are already cloud sourced", () => {
+    expect(() =>
+      createCloudDirectSavedDocument(user, {
+        ...match,
+        source: "guest_import",
+        trust: "client_uploaded",
+      }),
+    ).toThrow("local history records");
+  });
 });

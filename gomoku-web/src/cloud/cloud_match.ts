@@ -28,6 +28,10 @@ export {
 
 export type CloudMatchBotIdentity = SavedMatchBotIdentity;
 export type CloudMatchPlayerDocument = SavedMatchPlayer;
+export type CloudDirectSavedMatch = SavedMatchV1 & {
+  source: typeof CLOUD_MATCH_SOURCE_CLOUD_SAVED;
+  trust: typeof CLOUD_MATCH_TRUST_CLIENT_UPLOADED;
+};
 
 /** Document shape for matches promoted from local guest history. */
 export interface CloudGuestImportDocument
@@ -171,13 +175,23 @@ export function createCloudDirectSavedDocument(
   user: Pick<CloudAuthUser, "uid">,
   match: SavedMatchV1,
 ): CloudDirectSavedDocument {
+  return {
+    ...createCloudDirectSavedMatch(user, match),
+    created_at: serverTimestamp(),
+  };
+}
+
+export function createCloudDirectSavedMatch(
+  user: Pick<CloudAuthUser, "uid">,
+  match: SavedMatchV1,
+): CloudDirectSavedMatch {
+  assertGuestLocalMatch(match);
   assertFinishedMatch(match);
   assertValidMovePayload(match);
   assertLocalVsBotPlayers(match);
 
   return {
     ...match,
-    created_at: serverTimestamp(),
     player_black: cloudDirectSavedPlayerDocument(match.player_black, user),
     player_white: cloudDirectSavedPlayerDocument(match.player_white, user),
     source: CLOUD_MATCH_SOURCE_CLOUD_SAVED,

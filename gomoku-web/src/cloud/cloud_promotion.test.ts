@@ -196,6 +196,28 @@ describe("promoteGuestToCloud", () => {
     });
   });
 
+  it("skips local history that was already saved directly while signed in", async () => {
+    const { backend } = createBackend(["match-1"]);
+
+    const result = await promoteGuestToCloud(
+      {
+        cloudDisplayName: user.displayName,
+        guestHistory: [match],
+        guestProfile,
+        settings,
+        user,
+      },
+      { backend },
+    );
+
+    expect(backend.createMatch).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      importedMatches: 0,
+      skippedMatches: 1,
+      totalMatches: 1,
+    });
+  });
+
   it("treats a raced create as skipped if the match now exists", async () => {
     const { backend } = createBackend();
     vi.mocked(backend.createMatch).mockImplementationOnce(async () => {
