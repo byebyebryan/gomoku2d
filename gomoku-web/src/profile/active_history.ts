@@ -1,9 +1,10 @@
-import type { SavedMatchV1 } from "../match/saved_match";
+import { savedMatchIsAfterReset, type SavedMatchV1 } from "../match/saved_match";
 
 type HistoryPriority = 1 | 2 | 3;
 
 export interface ResolveActiveHistoryInput {
   cloudHistory: SavedMatchV1[];
+  historyResetAt?: string | null;
   localHistory: SavedMatchV1[];
 }
 
@@ -49,6 +50,10 @@ export function resolveActiveHistory(input: ResolveActiveHistoryInput): SavedMat
   const byKey = new Map<string, SavedMatchV1>();
 
   for (const match of [...input.localHistory, ...input.cloudHistory]) {
+    if (!savedMatchIsAfterReset(match, input.historyResetAt)) {
+      continue;
+    }
+
     const key = dedupeKey(match);
     const existing = byKey.get(key);
 

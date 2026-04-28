@@ -27,6 +27,7 @@ const cloudProfile: CloudProfile = {
   avatarUrl: null,
   displayName: "Bryan",
   email: "bryan@example.com",
+  historyResetAt: null,
   preferredVariant: "freestyle",
   uid: "uid-1",
   username: null,
@@ -77,9 +78,11 @@ describe("ProfileRoute cloud state", () => {
       loadForUser: vi.fn(),
       profile: null,
       reset: vi.fn(),
+      resetForUser: vi.fn(),
       status: "idle",
     });
     cloudHistoryStore.setState({
+      clearForUser: vi.fn().mockResolvedValue(undefined),
       errorMessage: null,
       loadForUser: vi.fn().mockResolvedValue(undefined),
       loadStatus: "idle",
@@ -156,6 +159,7 @@ describe("ProfileRoute cloud state", () => {
       loadForUser: vi.fn(),
       profile: cloudProfile,
       reset: vi.fn(),
+      resetForUser: vi.fn(),
       status: "ready",
     });
 
@@ -206,6 +210,7 @@ describe("ProfileRoute cloud state", () => {
       loadForUser: vi.fn(),
       profile: cloudProfile,
       reset: vi.fn(),
+      resetForUser: vi.fn(),
       status: "ready",
     });
     cloudHistoryStore.setState({
@@ -246,6 +251,7 @@ describe("ProfileRoute cloud state", () => {
       loadForUser: vi.fn(),
       profile: cloudProfile,
       reset: vi.fn(),
+      resetForUser: vi.fn(),
       status: "ready",
     });
     cloudPromotionStore.setState({
@@ -266,6 +272,7 @@ describe("ProfileRoute cloud state", () => {
           displayName: "ByeByeBryan",
           id: guestProfile.id,
         }),
+        historyResetAt: null,
         settings: { preferredVariant: "freestyle" },
         user: cloudUser,
       });
@@ -290,6 +297,7 @@ describe("ProfileRoute cloud state", () => {
       loadForUser: vi.fn(),
       profile: cloudProfile,
       reset: vi.fn(),
+      resetForUser: vi.fn(),
       status: "ready",
     });
     cloudPromotionStore.setState({
@@ -313,6 +321,7 @@ describe("ProfileRoute cloud state", () => {
           displayName: "Bryan",
           id: guestProfile.id,
         }),
+        historyResetAt: null,
         settings: { preferredVariant: "freestyle" },
         user: cloudUser,
       });

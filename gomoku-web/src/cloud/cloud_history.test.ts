@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { createLocalSavedMatch } from "../match/saved_match";
 
 import type { CloudAuthUser } from "./auth_store";
-import { loadCloudHistory, saveCloudMatch, type CloudHistoryBackend } from "./cloud_history";
+import { clearCloudHistory, loadCloudHistory, saveCloudMatch, type CloudHistoryBackend } from "./cloud_history";
 
 const user: CloudAuthUser = {
   avatarUrl: null,
@@ -33,6 +33,14 @@ function createBackend(existingMatchIds: string[] = []) {
     createMatch: vi.fn(async (matchId, document) => {
       created.set(matchId, document);
       existing.add(matchId);
+    }),
+    deleteClientUploadedMatches: vi.fn(async (limitCount) => {
+      const deleted = Math.min(limitCount, created.size);
+      for (const matchId of Array.from(created.keys()).slice(0, deleted)) {
+        created.delete(matchId);
+        existing.delete(matchId);
+      }
+      return deleted;
     }),
     loadMatches: vi.fn(async () => Array.from(created.values())),
     matchExists: vi.fn(async (matchId) => existing.has(matchId)),
@@ -95,7 +103,7 @@ describe("cloud history", () => {
     });
   });
 
-  it("loads only valid saved match documents", async () => {
+  it("loads only valid saved match documents after the reset barrier", async () => {
     const { backend } = createBackend();
     vi.mocked(backend.loadMatches).mockResolvedValueOnce([
       {
@@ -108,13 +116,37 @@ describe("cloud history", () => {
         source: "cloud_saved",
         trust: "client_uploaded",
       },
+      {
+        ...match,
+        id: "old-match",
+        saved_at: "2026-04-27T01:02:03.000Z",
+      },
       { id: "bad-match" },
     ]);
 
-    const history = await loadCloudHistory(user, { backend, limitCount: 10 });
+    const history = await loadCloudHistory(user, {
+      backend,
+      historyResetAt: "2026-04-28T00:00:00.000Z",
+      limitCount: 10,
+    });
 
     expect(backend.loadMatches).toHaveBeenCalledWith(10);
     expect(history).toHaveLength(1);
     expect(history[0]?.id).toBe("match-1");
+  });
+
+  it("clears client-uploaded cloud history in bounded batches", async () => {
+    const { backend, created } = createBackend();
+    created.set("match-1", match);
+    created.set("match-2", { ...match, id: "match-2" });
+    vi.mocked(backend.deleteClientUploadedMatches)
+      .mockResolvedValueOnce(2)
+      .mockResolvedValueOnce(0);
+
+    const deleted = await clearCloudHistory(user, { backend, batchSize: 2 });
+
+    expect(deleted).toBe(2);
+    expect(backend.deleteClientUploadedMatches).toHaveBeenCalledTimes(2);
+    expect(backend.deleteClientUploadedMatches).toHaveBeenCalledWith(2);
   });
 });

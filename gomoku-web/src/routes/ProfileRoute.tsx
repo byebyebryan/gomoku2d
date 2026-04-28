@@ -229,6 +229,7 @@ export function ProfileRoute() {
         cloudDisplayName: cloudProfile.profile?.displayName ?? null,
         guestHistory: localHistory,
         guestProfile: profile,
+        historyResetAt: cloudProfile.profile?.historyResetAt ?? null,
         settings,
         user: cloudAuth.user,
       });
@@ -240,6 +241,7 @@ export function ProfileRoute() {
     cloudAuth.status,
     cloudAuth.user,
     cloudProfile.profile?.displayName,
+    cloudProfile.profile?.historyResetAt,
     cloudProfile.status,
     localHistory,
     profile,
@@ -252,10 +254,17 @@ export function ProfileRoute() {
     }
 
     const user = cloudAuth.user;
-    void cloudHistoryStore.getState().loadForUser(user).then(() => {
-      void cloudHistoryStore.getState().syncPendingForUser(user);
+    const historyResetAt = cloudProfile.profile?.historyResetAt ?? null;
+    void cloudHistoryStore.getState().loadForUser(user, historyResetAt).then(() => {
+      void cloudHistoryStore.getState().syncPendingForUser(user, historyResetAt);
     });
-  }, [cloudAuth.status, cloudAuth.user, cloudProfile.status, cloudPromotion.status]);
+  }, [
+    cloudAuth.status,
+    cloudAuth.user,
+    cloudProfile.profile?.historyResetAt,
+    cloudProfile.status,
+    cloudPromotion.status,
+  ]);
 
   const cloudCache =
     cloudAuth.status === "signed_in" && cloudAuth.user
@@ -263,6 +272,7 @@ export function ProfileRoute() {
       : [];
   const history = resolveActiveHistory({
     cloudHistory: cloudCache,
+    historyResetAt: cloudAuth.status === "signed_in" ? cloudProfile.profile?.historyResetAt : null,
     localHistory,
   });
   const historyIdentity: HistoryIdentity = {

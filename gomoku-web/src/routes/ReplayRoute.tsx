@@ -5,6 +5,7 @@ import { useStore } from "zustand";
 import { Board } from "../components/Board/Board";
 import { cloudAuthStore } from "../cloud/auth_store";
 import { cloudHistoryStore } from "../cloud/cloud_history_store";
+import { cloudProfileStore } from "../cloud/cloud_profile_store";
 import type { LocalMatchResumeSeed } from "../game/local_match_store";
 import type { CellPosition } from "../game/types";
 import { savedMatchPlayers } from "../match/saved_match";
@@ -37,8 +38,9 @@ export function ReplayRoute() {
   const navigate = useNavigate();
   const cloudAuth = useStore(cloudAuthStore, (state) => state);
   const cloudHistory = useStore(cloudHistoryStore, (state) => state);
+  const cloudProfile = useStore(cloudProfileStore, (state) => state);
   const localHistory = useStore(guestProfileStore, (state) => state.history);
-  const profile = useStore(guestProfileStore, (state) => state.profile);
+  const localProfile = useStore(guestProfileStore, (state) => state.profile);
   const [moveIndex, setMoveIndex] = useState(defaultReplayMoveIndex(0));
   const [autoplaying, setAutoplaying] = useState(false);
   const [coreWinningCells, setCoreWinningCells] = useState<CellPosition[]>([]);
@@ -57,9 +59,17 @@ export function ReplayRoute() {
 
   useEffect(() => {
     if (cloudAuth.status === "signed_in" && cloudAuth.user) {
-      void cloudHistoryStore.getState().loadForUser(cloudAuth.user);
+      void cloudProfileStore.getState().loadForUser(cloudAuth.user, guestProfileStore.getState().settings.preferredVariant);
+    } else {
+      cloudProfileStore.getState().reset();
     }
   }, [cloudAuth.status, cloudAuth.user]);
+
+  useEffect(() => {
+    if (cloudAuth.status === "signed_in" && cloudAuth.user && cloudProfile.status === "ready") {
+      void cloudHistoryStore.getState().loadForUser(cloudAuth.user, cloudProfile.profile?.historyResetAt ?? null);
+    }
+  }, [cloudAuth.status, cloudAuth.user, cloudProfile.profile?.historyResetAt, cloudProfile.status]);
 
   const cloudCache =
     cloudAuth.status === "signed_in" && cloudAuth.user
@@ -67,10 +77,11 @@ export function ReplayRoute() {
       : [];
   const history = resolveActiveHistory({
     cloudHistory: cloudCache,
+    historyResetAt: cloudAuth.status === "signed_in" ? cloudProfile.profile?.historyResetAt : null,
     localHistory,
   });
   const match = history.find((entry) => entry.id === matchId) ?? null;
-  const guestDisplayName = profile?.displayName ?? cloudAuth.user?.displayName ?? "Guest";
+  const guestDisplayName = localProfile?.displayName ?? cloudAuth.user?.displayName ?? "Guest";
   const replayFloor = match ? replayUndoFloor(match) : 0;
 
   useEffect(() => {
