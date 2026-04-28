@@ -3,9 +3,12 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useStore } from "zustand";
 
 import { Board } from "../components/Board/Board";
+import { cloudAuthStore } from "../cloud/auth_store";
+import { cloudHistoryStore } from "../cloud/cloud_history_store";
 import type { LocalMatchResumeSeed } from "../game/local_match_store";
 import type { CellPosition } from "../game/types";
 import { savedMatchPlayers } from "../match/saved_match";
+import { resolveActiveHistory } from "../profile/active_history";
 import { guestProfileStore } from "../profile/guest_profile_store";
 import {
   buildLocalReplayFrame,
@@ -32,7 +35,9 @@ function moveCountLabel(moveIndex: number, totalMoves: number): string {
 export function ReplayRoute() {
   const { matchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
-  const history = useStore(guestProfileStore, (state) => state.history);
+  const cloudAuth = useStore(cloudAuthStore, (state) => state);
+  const cloudHistory = useStore(cloudHistoryStore, (state) => state);
+  const localHistory = useStore(guestProfileStore, (state) => state.history);
   const profile = useStore(guestProfileStore, (state) => state.profile);
   const [moveIndex, setMoveIndex] = useState(defaultReplayMoveIndex(0));
   const [autoplaying, setAutoplaying] = useState(false);
@@ -42,8 +47,30 @@ export function ReplayRoute() {
     guestProfileStore.getState().ensureGuestProfile();
   }, []);
 
+  useEffect(() => {
+    cloudAuthStore.getState().start();
+
+    return () => {
+      cloudAuthStore.getState().stop();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (cloudAuth.status === "signed_in" && cloudAuth.user) {
+      void cloudHistoryStore.getState().loadForUser(cloudAuth.user);
+    }
+  }, [cloudAuth.status, cloudAuth.user]);
+
+  const cloudCache =
+    cloudAuth.status === "signed_in" && cloudAuth.user
+      ? cloudHistory.users[cloudAuth.user.uid]?.cachedMatches ?? []
+      : [];
+  const history = resolveActiveHistory({
+    cloudHistory: cloudCache,
+    localHistory,
+  });
   const match = history.find((entry) => entry.id === matchId) ?? null;
-  const guestDisplayName = profile?.displayName ?? "Guest";
+  const guestDisplayName = profile?.displayName ?? cloudAuth.user?.displayName ?? "Guest";
   const replayFloor = match ? replayUndoFloor(match) : 0;
 
   useEffect(() => {

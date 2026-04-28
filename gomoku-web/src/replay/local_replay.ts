@@ -7,8 +7,8 @@ import {
   savedMatchPlayers,
   savedMatchWinningSide,
   type SavedMatchPlayer,
+  type SavedMatchV1,
 } from "../match/saved_match";
-import type { GuestSavedMatch } from "../profile/guest_profile_store";
 
 export interface LocalReplayFrame {
   cells: CellStone[][];
@@ -34,7 +34,7 @@ function normalizeUndoFloor(undoFloor: number | undefined, moveCount: number): n
   return Math.max(0, Math.min(moveCount, Math.floor(undoFloor)));
 }
 
-export function replayUndoFloor(match: Pick<GuestSavedMatch, "move_count" | "undo_floor">): number {
+export function replayUndoFloor(match: Pick<SavedMatchV1, "move_count" | "undo_floor">): number {
   return normalizeUndoFloor(match.undo_floor, match.move_count);
 }
 
@@ -56,7 +56,7 @@ export function canResumeReplay(
 }
 
 export function replayResumeUndoFloor(
-  match: Pick<GuestSavedMatch, "move_count" | "undo_floor">,
+  match: Pick<SavedMatchV1, "move_count" | "undo_floor">,
   frame: Pick<LocalReplayFrame, "moveIndex">,
 ): number {
   return Math.max(replayUndoFloor(match), frame.moveIndex);
@@ -84,13 +84,13 @@ export function variantLabel(variant: GameVariant): string {
   return variant === "renju" ? "Renju" : "Freestyle";
 }
 
-export function replayPlayerLabel(match: GuestSavedMatch, guestDisplayName: string): string {
+export function replayPlayerLabel(match: SavedMatchV1, guestDisplayName: string): string {
   return savedMatchPlayers(match)
     .map(({ player, side }) => `${replayPlayerName(player, guestDisplayName)} (${side})`)
     .join(" vs ");
 }
 
-export function replayWinnerLabel(match: GuestSavedMatch, guestDisplayName: string): string {
+export function replayWinnerLabel(match: SavedMatchV1, guestDisplayName: string): string {
   if (match.status === "draw") {
     return "Draw";
   }
@@ -103,9 +103,9 @@ export function replayWinnerLabel(match: GuestSavedMatch, guestDisplayName: stri
 }
 
 export function buildLocalReplayFrame(
-  match: GuestSavedMatch,
+  match: SavedMatchV1,
   moveIndex: number,
-  winningCellsForMatch: (match: GuestSavedMatch) => CellPosition[] = () => [],
+  winningCellsForMatch: (match: SavedMatchV1) => CellPosition[] = () => [],
 ): LocalReplayFrame {
   const matchMoves = movesFromMoveCells(match.move_cells);
   const clampedMoveIndex = clampMoveIndex(moveIndex, matchMoves.length);

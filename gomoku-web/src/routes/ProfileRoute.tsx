@@ -3,27 +3,34 @@ import { Link, useNavigate } from "react-router-dom";
 import { useStore } from "zustand";
 
 import { cloudAuthStore } from "../cloud/auth_store";
+import { cloudHistoryStore } from "../cloud/cloud_history_store";
 import { cloudProfileStore } from "../cloud/cloud_profile_store";
 import { cloudPromotionStore } from "../cloud/cloud_promotion_store";
 import {
-  savedMatchLocalSide,
+  matchUserSide,
   savedMatchPlayerForSide,
   savedMatchPlayers,
   savedMatchWinningSide,
+  type SavedMatchV1,
   type SavedMatchSide,
 } from "../match/saved_match";
+import { resolveActiveHistory } from "../profile/active_history";
 import {
   DEFAULT_GUEST_DISPLAY_NAME,
   guestProfileStore,
-  type GuestSavedMatch,
 } from "../profile/guest_profile_store";
 import { replayPlayerName, variantLabel } from "../replay/local_replay";
 import { Icon } from "../ui/Icon";
 
 import styles from "./ProfileRoute.module.css";
 
-function historyLocalSide(match: GuestSavedMatch, localProfileId: string | null | undefined): SavedMatchSide | null {
-  const localSide = savedMatchLocalSide(match, localProfileId);
+interface HistoryIdentity {
+  localProfileId?: string | null;
+  profileUid?: string | null;
+}
+
+function historyLocalSide(match: SavedMatchV1, identity: HistoryIdentity): SavedMatchSide | null {
+  const localSide = matchUserSide(match, identity);
   if (localSide) {
     return localSide;
   }
@@ -32,22 +39,22 @@ function historyLocalSide(match: GuestSavedMatch, localProfileId: string | null 
 }
 
 function historyResultLabel(
-  match: GuestSavedMatch,
-  localProfileId: string | null | undefined,
+  match: SavedMatchV1,
+  identity: HistoryIdentity,
 ): "Win" | "Loss" | "Draw" {
   if (match.status === "draw") {
     return "Draw";
   }
 
-  return savedMatchWinningSide(match) === historyLocalSide(match, localProfileId) ? "Win" : "Loss";
+  return savedMatchWinningSide(match) === historyLocalSide(match, identity) ? "Win" : "Loss";
 }
 
 function historyOpponentLabel(
-  match: GuestSavedMatch,
-  localProfileId: string | null | undefined,
+  match: SavedMatchV1,
+  identity: HistoryIdentity,
   guestDisplayName: string,
 ): string {
-  const localSide = historyLocalSide(match, localProfileId);
+  const localSide = historyLocalSide(match, identity);
   const opponentSide = localSide === "black" ? "white" : localSide === "white" ? "black" : null;
   if (!opponentSide) {
     return "Opponent";
@@ -139,12 +146,12 @@ function cloudCopyText({
   if (promotionStatus === "complete") {
     return totalPromotedMatches > 0
       ? "Local history copied to private cloud. Local copies stay on this device."
-      : "Private cloud identity is linked. No local matches need importing yet.";
+      : "Private cloud identity is linked. Match history sync is ready.";
   }
 
   return historyCount > 0
     ? "Private cloud identity is linked. Local history will copy to private cloud automatically."
-    : "Private cloud identity is linked. Local play still works without cloud history.";
+    : "Private cloud identity is linked. New matches sync in the background.";
 }
 
 function shouldAdoptCloudDisplayName(
@@ -161,9 +168,10 @@ function shouldAdoptCloudDisplayName(
 export function ProfileRoute() {
   const navigate = useNavigate();
   const cloudAuth = useStore(cloudAuthStore, (state) => state);
+  const cloudHistory = useStore(cloudHistoryStore, (state) => state);
   const cloudProfile = useStore(cloudProfileStore, (state) => state);
   const cloudPromotion = useStore(cloudPromotionStore, (state) => state);
-  const history = useStore(guestProfileStore, (state) => state.history);
+  const localHistory = useStore(guestProfileStore, (state) => state.history);
   const profile = useStore(guestProfileStore, (state) => state.profile);
   const settings = useStore(guestProfileStore, (state) => state.settings);
 
@@ -219,7 +227,7 @@ export function ProfileRoute() {
     ) {
       void cloudPromotionStore.getState().promote({
         cloudDisplayName: cloudProfile.profile?.displayName ?? null,
-        guestHistory: history,
+        guestHistory: localHistory,
         guestProfile: profile,
         settings,
         user: cloudAuth.user,
@@ -233,13 +241,36 @@ export function ProfileRoute() {
     cloudAuth.user,
     cloudProfile.profile?.displayName,
     cloudProfile.status,
-    history,
+    localHistory,
     profile,
     settings,
   ]);
 
+  useEffect(() => {
+    if (cloudAuth.status !== "signed_in" || !cloudAuth.user || cloudProfile.status !== "ready") {
+      return;
+    }
+
+    const user = cloudAuth.user;
+    void cloudHistoryStore.getState().loadForUser(user).then(() => {
+      void cloudHistoryStore.getState().syncPendingForUser(user);
+    });
+  }, [cloudAuth.status, cloudAuth.user, cloudProfile.status, cloudPromotion.status]);
+
+  const cloudCache =
+    cloudAuth.status === "signed_in" && cloudAuth.user
+      ? cloudHistory.users[cloudAuth.user.uid]?.cachedMatches ?? []
+      : [];
+  const history = resolveActiveHistory({
+    cloudHistory: cloudCache,
+    localHistory,
+  });
+  const historyIdentity: HistoryIdentity = {
+    localProfileId: profile?.id,
+    profileUid: cloudAuth.status === "signed_in" ? cloudAuth.user?.uid : null,
+  };
   const wins = history.filter((match) => {
-    return historyResultLabel(match, profile?.id) === "Win";
+    return historyResultLabel(match, historyIdentity) === "Win";
   }).length;
   const draws = history.filter((match) => match.status === "draw").length;
   const losses = history.length - wins - draws;
@@ -247,11 +278,15 @@ export function ProfileRoute() {
   const cloudBadge = cloudStateLabel(cloudAuth.status, cloudProfile.status);
   const cloudIdentity = cloudProfile.profile ?? null;
   const cloudDisplayName = cloudPromotion.result?.promotedDisplayName ?? cloudIdentity?.displayName;
-  const cloudError = cloudAuth.errorMessage ?? cloudProfile.errorMessage ?? cloudPromotion.errorMessage;
+  const cloudError =
+    cloudAuth.errorMessage
+    ?? cloudProfile.errorMessage
+    ?? cloudPromotion.errorMessage
+    ?? cloudHistory.errorMessage;
   const cloudText = cloudCopyText({
     authStatus: cloudAuth.status,
     hasCloudIdentity: Boolean(cloudIdentity),
-    historyCount: history.length,
+    historyCount: localHistory.length,
     promotionStatus: cloudPromotion.status,
     totalPromotedMatches: cloudPromotion.result?.totalMatches ?? 0,
   });
@@ -422,8 +457,8 @@ export function ProfileRoute() {
             ) : (
               <ol className={styles.historyList}>
                 {history.map((match) => {
-                  const localSide = historyLocalSide(match, profile?.id);
-                  const result = historyResultLabel(match, profile?.id);
+                  const localSide = historyLocalSide(match, historyIdentity);
+                  const result = historyResultLabel(match, historyIdentity);
 
                   return (
                     <li className={styles.historyItem} key={match.id}>
@@ -440,7 +475,7 @@ export function ProfileRoute() {
                           {result}
                         </p>
                         <p className={styles.historyOpponent}>
-                          {historyOpponentLabel(match, profile?.id, guestDisplayName)}
+                          {historyOpponentLabel(match, historyIdentity, guestDisplayName)}
                         </p>
                       </div>
                       <div className={styles.historyDetails}>

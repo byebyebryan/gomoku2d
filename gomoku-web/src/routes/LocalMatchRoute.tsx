@@ -4,6 +4,8 @@ import { useStore } from "zustand";
 import { createStore } from "zustand/vanilla";
 
 import { Board } from "../components/Board/Board";
+import { cloudAuthStore } from "../cloud/auth_store";
+import { cloudHistoryStore } from "../cloud/cloud_history_store";
 import { createLocalMatchStore } from "../game/local_match_store";
 import type { LocalMatchResumeSeed, LocalMatchState } from "../game/local_match_store";
 import type { CellPosition } from "../game/types";
@@ -93,6 +95,14 @@ export function LocalMatchRoute() {
   }, []);
 
   useEffect(() => {
+    cloudAuthStore.getState().start();
+
+    return () => {
+      cloudAuthStore.getState().stop();
+    };
+  }, []);
+
+  useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
       return undefined;
     }
@@ -116,6 +126,11 @@ export function LocalMatchRoute() {
       humanDisplayName: profile.displayName,
       onMatchFinished: (match) => {
         const replayId = guestProfileStore.getState().recordFinishedMatch(match);
+        const savedMatch = guestProfileStore.getState().history.find((entry) => entry.id === replayId);
+        const cloudAuth = cloudAuthStore.getState();
+        if (savedMatch && cloudAuth.status === "signed_in" && cloudAuth.user) {
+          void cloudHistoryStore.getState().syncMatchForUser(cloudAuth.user, savedMatch);
+        }
         setLatestReplayId(replayId);
       },
       resumeState: resumeSeed ?? undefined,
