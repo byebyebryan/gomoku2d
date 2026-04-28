@@ -4,27 +4,56 @@ import { useStore } from "zustand";
 
 import { cloudAuthStore } from "../cloud/auth_store";
 import { cloudProfileStore } from "../cloud/cloud_profile_store";
-import { guestProfileStore, type GuestSavedMatch } from "../profile/guest_profile_store";
+import { cloudPromotionStore } from "../cloud/cloud_promotion_store";
+import {
+  savedMatchLocalSide,
+  savedMatchPlayerForSide,
+  savedMatchPlayers,
+  savedMatchWinningSide,
+  type SavedMatchSide,
+} from "../match/saved_match";
+import {
+  DEFAULT_GUEST_DISPLAY_NAME,
+  guestProfileStore,
+  type GuestSavedMatch,
+} from "../profile/guest_profile_store";
 import { replayPlayerName, variantLabel } from "../replay/local_replay";
 import { Icon } from "../ui/Icon";
 
 import styles from "./ProfileRoute.module.css";
 
-function historyResultLabel(match: GuestSavedMatch): "Win" | "Loss" | "Draw" {
+function historyLocalSide(match: GuestSavedMatch, localProfileId: string | null | undefined): SavedMatchSide | null {
+  const localSide = savedMatchLocalSide(match, localProfileId);
+  if (localSide) {
+    return localSide;
+  }
+
+  return savedMatchPlayers(match).find(({ player }) => player.kind === "human")?.side ?? null;
+}
+
+function historyResultLabel(
+  match: GuestSavedMatch,
+  localProfileId: string | null | undefined,
+): "Win" | "Loss" | "Draw" {
   if (match.status === "draw") {
     return "Draw";
   }
 
-  const winningStone = match.status === "black_won" ? "black" : "white";
-  return winningStone === match.guestStone ? "Win" : "Loss";
+  return savedMatchWinningSide(match) === historyLocalSide(match, localProfileId) ? "Win" : "Loss";
 }
 
-function historyOpponentLabel(match: GuestSavedMatch, guestDisplayName: string): string {
-  const opponent = match.players.find((player) => player.stone !== match.guestStone);
-  if (!opponent) {
+function historyOpponentLabel(
+  match: GuestSavedMatch,
+  localProfileId: string | null | undefined,
+  guestDisplayName: string,
+): string {
+  const localSide = historyLocalSide(match, localProfileId);
+  const opponentSide = localSide === "black" ? "white" : localSide === "white" ? "black" : null;
+  if (!opponentSide) {
     return "Opponent";
   }
 
+  const opponent = savedMatchPlayerForSide(match, opponentSide);
   return `vs ${replayPlayerName(opponent, guestDisplayName)}`;
 }
 
@@ -43,8 +72,16 @@ function historyTimeLabel(savedAt: string): string {
   });
 }
 
-function historySideLabel(match: GuestSavedMatch): "Black" | "White" {
-  return match.guestStone === "black" ? "Black" : "White";
+function historySideLabel(side: SavedMatchSide | null): "Black" | "White" | "Unknown" {
+  if (side === "black") {
+    return "Black";
+  }
+
+  if (side === "white") {
+    return "White";
+  }
+
+  return "Unknown";
 }
 
 function cloudStateLabel(
@@ -70,10 +107,62 @@ function cloudStateLabel(
   return "Local";
 }
 
+function cloudCopyText({
+  authStatus,
+  hasCloudIdentity,
+  historyCount,
+  promotionStatus,
+  totalPromotedMatches,
+}: {
+  authStatus: ReturnType<typeof cloudAuthStore.getState>["status"];
+  hasCloudIdentity: boolean;
+  historyCount: number;
+  promotionStatus: ReturnType<typeof cloudPromotionStore.getState>["status"];
+  totalPromotedMatches: number;
+}): string {
+  if (authStatus === "unconfigured") {
+    return "Cloud sign-in is not configured for this build.";
+  }
+
+  if (!hasCloudIdentity) {
+    return "Sign in when you want this profile to follow you across browsers.";
+  }
+
+  if (promotionStatus === "promoting") {
+    return "Copying local history to private cloud...";
+  }
+
+  if (promotionStatus === "error") {
+    return "Cloud import failed. Local history is safe on this device.";
+  }
+
+  if (promotionStatus === "complete") {
+    return totalPromotedMatches > 0
+      ? "Local history copied to private cloud. Local copies stay on this device."
+      : "Private cloud identity is linked. No local matches need importing yet.";
+  }
+
+  return historyCount > 0
+    ? "Private cloud identity is linked. Local history will copy to private cloud automatically."
+    : "Private cloud identity is linked. Local play still works without cloud history.";
+}
+
+function shouldAdoptCloudDisplayName(
+  localDisplayName: string | undefined,
+  cloudDisplayName: string | undefined,
+): cloudDisplayName is string {
+  return (
+    localDisplayName === DEFAULT_GUEST_DISPLAY_NAME
+    && Boolean(cloudDisplayName?.trim())
+    && cloudDisplayName !== DEFAULT_GUEST_DISPLAY_NAME
+  );
+}
+
 export function ProfileRoute() {
   const navigate = useNavigate();
   const cloudAuth = useStore(cloudAuthStore, (state) => state);
   const cloudProfile = useStore(cloudProfileStore, (state) => state);
+  const cloudPromotion = useStore(cloudPromotionStore, (state) => state);
   const history = useStore(guestProfileStore, (state) => state.history);
   const profile = useStore(guestProfileStore, (state) => state.profile);
   const settings = useStore(guestProfileStore, (state) => state.settings);
@@ -99,16 +188,72 @@ export function ProfileRoute() {
     cloudProfileStore.getState().reset();
   }, [cloudAuth.status, cloudAuth.user, settings.preferredVariant]);
 
+  useEffect(() => {
+    const cloudDisplayName = cloudProfile.profile?.displayName;
+    if (
+      cloudAuth.status === "signed_in"
+      && cloudProfile.status === "ready"
+      && shouldAdoptCloudDisplayName(profile?.displayName, cloudDisplayName)
+    ) {
+      guestProfileStore.getState().renameDisplayName(cloudDisplayName);
+    }
+  }, [
+    cloudAuth.status,
+    cloudProfile.profile?.displayName,
+    cloudProfile.status,
+    profile?.displayName,
+  ]);
+
+  useEffect(() => {
+    const waitingForCloudNameAdoption = shouldAdoptCloudDisplayName(
+      profile?.displayName,
+      cloudProfile.profile?.displayName,
+    );
+
+    if (
+      cloudAuth.status === "signed_in"
+      && cloudAuth.user
+      && cloudProfile.status === "ready"
+      && profile
+      && !waitingForCloudNameAdoption
+    ) {
+      void cloudPromotionStore.getState().promote({
+        guestHistory: history,
+        guestProfile: profile,
+        settings,
+        user: cloudAuth.user,
+      });
+      return;
+    }
+
+    cloudPromotionStore.getState().reset();
+  }, [
+    cloudAuth.status,
+    cloudAuth.user,
+    cloudProfile.profile?.displayName,
+    cloudProfile.status,
+    history,
+    profile,
+    settings,
+  ]);
+
   const wins = history.filter((match) => {
-    const winner = match.status === "black_won" ? "black" : match.status === "white_won" ? "white" : null;
-    return winner !== null && winner === match.guestStone;
+    return historyResultLabel(match, profile?.id) === "Win";
   }).length;
   const draws = history.filter((match) => match.status === "draw").length;
   const losses = history.length - wins - draws;
-  const guestDisplayName = profile?.displayName ?? "Guest";
+  const guestDisplayName = profile?.displayName ?? DEFAULT_GUEST_DISPLAY_NAME;
   const cloudBadge = cloudStateLabel(cloudAuth.status, cloudProfile.status);
   const cloudIdentity = cloudProfile.profile ?? null;
-  const cloudError = cloudAuth.errorMessage ?? cloudProfile.errorMessage;
+  const cloudDisplayName = cloudPromotion.result?.promotedDisplayName ?? cloudIdentity?.displayName;
+  const cloudError = cloudAuth.errorMessage ?? cloudProfile.errorMessage ?? cloudPromotion.errorMessage;
+  const cloudText = cloudCopyText({
+    authStatus: cloudAuth.status,
+    hasCloudIdentity: Boolean(cloudIdentity),
+    historyCount: history.length,
+    promotionStatus: cloudPromotion.status,
+    totalPromotedMatches: cloudPromotion.result?.totalMatches ?? 0,
+  });
 
   return (
     <main className={styles.page}>
@@ -163,15 +308,9 @@ export function ProfileRoute() {
             <div className={styles.cloudStatus}>
               <div className={styles.cloudCopy}>
                 <p className={styles.cloudTitle}>
-                  {cloudIdentity ? `Signed in as ${cloudIdentity.displayName}` : "Cloud profile"}
+                  {cloudDisplayName ? `Signed in as ${cloudDisplayName}` : "Cloud profile"}
                 </p>
-                <p className={styles.cloudText}>
-                  {cloudAuth.status === "unconfigured"
-                    ? "Cloud sign-in is not configured for this build."
-                    : cloudIdentity
-                      ? "Private cloud identity is linked. Local history remains local until promotion ships."
-                      : "Sign in when you want this profile to follow you across browsers."}
-                </p>
+                <p className={styles.cloudText}>{cloudText}</p>
                 {cloudError ? <p className={styles.cloudError}>{cloudError}</p> : null}
               </div>
               {cloudAuth.status === "signed_in" ? (
@@ -282,7 +421,8 @@ export function ProfileRoute() {
             ) : (
               <ol className={styles.historyList}>
                 {history.map((match) => {
-                  const result = historyResultLabel(match);
+                  const localSide = historyLocalSide(match, profile?.id);
+                  const result = historyResultLabel(match, profile?.id);
 
                   return (
                     <li className={styles.historyItem} key={match.id}>
@@ -298,26 +438,32 @@ export function ProfileRoute() {
                         >
                           {result}
                         </p>
-                        <p className={styles.historyOpponent}>{historyOpponentLabel(match, guestDisplayName)}</p>
+                        <p className={styles.historyOpponent}>
+                          {historyOpponentLabel(match, profile?.id, guestDisplayName)}
+                        </p>
                       </div>
                       <div className={styles.historyDetails}>
                         <p
                           className={`${styles.historyField} ${styles.historyStone} ${styles.historySide} ${
-                            match.guestStone === "black" ? styles.historyStoneBlack : styles.historyStoneWhite
+                            localSide === "black"
+                              ? styles.historyStoneBlack
+                              : localSide === "white"
+                                ? styles.historyStoneWhite
+                                : ""
                           }`}
                           data-label="Side"
                         >
-                          {historySideLabel(match)}
+                          {historySideLabel(localSide)}
                         </p>
                         <p className={`${styles.historyField} ${styles.historyRule}`} data-label="Rule">
                           {variantLabel(match.variant)}
                         </p>
                         <p className={`${styles.historyField} ${styles.historyMoves}`} data-label="Moves">
-                          {`Moves ${match.moves.length}`}
+                          {`Moves ${match.move_count}`}
                         </p>
                         <p className={`${styles.historyPlayed} ${styles.historyPlayedField}`} data-label="Played">
-                          <span className={styles.historyDate}>{historyDateLabel(match.savedAt)}</span>
-                          <span className={styles.historyTime}>{historyTimeLabel(match.savedAt)}</span>
+                          <span className={styles.historyDate}>{historyDateLabel(match.saved_at)}</span>
+                          <span className={styles.historyTime}>{historyTimeLabel(match.saved_at)}</span>
                         </p>
                       </div>
                       <button
