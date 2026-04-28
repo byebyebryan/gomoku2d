@@ -1,9 +1,8 @@
 import { WasmBoard } from "../core/wasm_bridge";
 import type { CellPosition } from "../game/types";
-import { movesFromMoveCells } from "../match/saved_match";
-import type { GuestSavedMatch } from "../profile/guest_profile_store";
+import { movesFromMoveCells, type SavedMatchV1 } from "../match/saved_match";
 
-export function winningCellsFromCore(match: GuestSavedMatch): CellPosition[] {
+export function winningCellsFromCore(match: SavedMatchV1): CellPosition[] {
   const board = WasmBoard.createWithVariant(match.variant);
 
   try {
