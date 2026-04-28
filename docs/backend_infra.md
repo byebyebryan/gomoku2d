@@ -29,7 +29,7 @@ backend design lives in `backend.md`; free-tier estimates live in
 | Firestore edition | Standard |
 | Firestore free tier | `true` |
 | Firestore rules release | `projects/gomoku2d/releases/cloud.firestore` |
-| Current ruleset | `projects/gomoku2d/rulesets/f22868f2-7b53-4883-b71f-2e1a3b020695` |
+| Current ruleset | `projects/gomoku2d/rulesets/ceedae72-8543-4c4b-aae5-3cb15a0ff220` |
 
 Important irreversible choice: the default Firestore database is in
 `us-central1`. Do not delete/recreate it casually; the database location is a
@@ -61,8 +61,8 @@ gcloud services list \
 |---|---|
 | `.firebaserc` | Maps default Firebase project to `gomoku2d` |
 | `firebase.json` | Points Firebase tooling at Firestore rules/index files |
-| `firestore.rules` | Hardened owner-scoped profile rules; private match writes currently closed |
-| `firestore.indexes.json` | Firestore index config, currently empty |
+| `firestore.rules` | Hardened owner-scoped profile rules and private guest-import match creates |
+| `firestore.indexes.json` | Firestore index config; disables indexing for bulky match replay payload fields |
 | `gomoku-web/.env.example` | Public Vite Firebase config template |
 | `gomoku-web/src/cloud/firebase.ts` | Optional Firebase browser bootstrap |
 
@@ -335,6 +335,33 @@ curl -sS \
   -H "Authorization: Bearer ${TOKEN}" \
   -H "X-Goog-User-Project: gomoku2d" \
   "https://firebaserules.googleapis.com/v1/projects/gomoku2d/releases/cloud.firestore"
+```
+
+## Deploy Firestore Index Settings
+
+`firestore.indexes.json` is the repo source of truth. For the current local CLI
+setup, field exemptions can also be applied directly with `gcloud`.
+
+The `move_cells` replay payload is not queried directly, so indexing is disabled
+for that field across the `matches` collection group:
+
+```sh
+gcloud firestore indexes fields update move_cells \
+  --project=gomoku2d \
+  --database='(default)' \
+  --collection-group=matches \
+  --disable-indexes
+```
+
+Verify:
+
+```sh
+gcloud firestore indexes fields list \
+  --project=gomoku2d \
+  --database='(default)' \
+  --collection-group=matches \
+  --format=json \
+  | jq '.[] | select(.name | endswith("/fields/move_cells"))'
 ```
 
 ## Verify Cloud Profile Documents

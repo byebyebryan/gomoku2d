@@ -66,8 +66,163 @@ service cloud.firestore {
 
     function appOwnedProfileFieldsUnchanged() {
       return request.resource.data.created_at == resource.data.created_at
-        && request.resource.data.display_name == resource.data.display_name
         && request.resource.data.username == resource.data.username;
+    }
+
+    function validCloudMatchKeys() {
+      return request.resource.data.keys().hasAll([
+        'board_size',
+        'id',
+        'imported_at',
+        'local_match_id',
+        'local_origin_id',
+        'match_kind',
+        'move_cells',
+        'move_count',
+        'player_black',
+        'player_white',
+        'saved_at',
+        'schema_version',
+        'source',
+        'status',
+        'trust',
+        'undo_floor',
+        'variant',
+      ]) && request.resource.data.keys().hasOnly([
+        'board_size',
+        'id',
+        'imported_at',
+        'local_match_id',
+        'local_origin_id',
+        'match_kind',
+        'move_cells',
+        'move_count',
+        'player_black',
+        'player_white',
+        'saved_at',
+        'schema_version',
+        'source',
+        'status',
+        'trust',
+        'undo_floor',
+        'variant',
+      ]);
+    }
+
+    function validMoveCells(value, moveCount) {
+      return value is list
+        && value.size() == moveCount
+        && value.hasOnly([
+          0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+          10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+          20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+          30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+          40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+          50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
+          60, 61, 62, 63, 64, 65, 66, 67, 68, 69,
+          70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
+          80, 81, 82, 83, 84, 85, 86, 87, 88, 89,
+          90, 91, 92, 93, 94, 95, 96, 97, 98, 99,
+          100, 101, 102, 103, 104, 105, 106, 107, 108, 109,
+          110, 111, 112, 113, 114, 115, 116, 117, 118, 119,
+          120, 121, 122, 123, 124, 125, 126, 127, 128, 129,
+          130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
+          140, 141, 142, 143, 144, 145, 146, 147, 148, 149,
+          150, 151, 152, 153, 154, 155, 156, 157, 158, 159,
+          160, 161, 162, 163, 164, 165, 166, 167, 168, 169,
+          170, 171, 172, 173, 174, 175, 176, 177, 178, 179,
+          180, 181, 182, 183, 184, 185, 186, 187, 188, 189,
+          190, 191, 192, 193, 194, 195, 196, 197, 198, 199,
+          200, 201, 202, 203, 204, 205, 206, 207, 208, 209,
+          210, 211, 212, 213, 214, 215, 216, 217, 218, 219,
+          220, 221, 222, 223, 224
+        ]);
+    }
+
+    function validImportedMatch(matchId) {
+      return validCloudMatchKeys()
+        && request.resource.data.id == matchId
+        && request.resource.data.schema_version == 1
+        && request.resource.data.source == 'guest_import'
+        && request.resource.data.trust == 'client_uploaded'
+        && request.resource.data.board_size == 15
+        && request.resource.data.match_kind == 'local_vs_bot'
+        && request.resource.data.variant in ['freestyle', 'renju']
+        && request.resource.data.status in ['black_won', 'white_won', 'draw']
+        && request.resource.data.id is string
+        && request.resource.data.id.size() > 0
+        && request.resource.data.id.size() <= 180
+        && request.resource.data.local_match_id is string
+        && request.resource.data.local_match_id.size() > 0
+        && request.resource.data.local_match_id.size() <= 128
+        && request.resource.data.local_origin_id is string
+        && request.resource.data.local_origin_id.size() > 0
+        && request.resource.data.local_origin_id.size() <= 280
+        && request.resource.data.saved_at is string
+        && request.resource.data.saved_at.size() <= 40
+        && request.resource.data.move_count is int
+        && request.resource.data.move_count >= 0
+        && request.resource.data.move_count <= 225
+        && request.resource.data.undo_floor is int
+        && request.resource.data.undo_floor >= 0
+        && request.resource.data.undo_floor <= request.resource.data.move_count
+        && validMoveCells(request.resource.data.move_cells, request.resource.data.move_count)
+        && request.resource.data.imported_at == request.time;
+    }
+
+    function validImportedMatchPlayer(player) {
+      return player is map
+        && player.keys().hasAll([
+          'bot',
+          'display_name',
+          'kind',
+          'local_profile_id',
+          'profile_uid',
+        ])
+        && player.keys().hasOnly([
+          'bot',
+          'display_name',
+          'kind',
+          'local_profile_id',
+          'profile_uid',
+        ])
+        && player.kind in ['human', 'bot']
+        && player.display_name is string
+        && player.display_name.size() > 0
+        && player.display_name.size() <= 80;
+    }
+
+    function validImportedHumanPlayer(uid, player) {
+      return validImportedMatchPlayer(player)
+        && player.kind == 'human'
+        && player.profile_uid == uid
+        && player.local_profile_id is string
+        && player.local_profile_id.size() > 0
+        && player.local_profile_id.size() <= 128
+        && player.bot == null;
+    }
+
+    function validImportedBotIdentity(bot) {
+      return bot is map
+        && bot.keys().hasAll(['config', 'config_version', 'engine', 'id', 'version'])
+        && bot.keys().hasOnly(['config', 'config_version', 'engine', 'id', 'version'])
+        && bot.id == 'practice_bot'
+        && bot.version == 1
+        && bot.engine == 'baseline_search'
+        && bot.config_version == 1
+        && bot.config is map
+        && bot.config.keys().hasAll(['depth', 'kind'])
+        && bot.config.keys().hasOnly(['depth', 'kind'])
+        && bot.config.kind == 'baseline'
+        && bot.config.depth == 3;
+    }
+
+    function validImportedBotPlayer(player) {
+      return validImportedMatchPlayer(player)
+        && player.kind == 'bot'
+        && player.profile_uid == null
+        && player.local_profile_id == null
+        && validImportedBotIdentity(player.bot);
     }
 
     match /profiles/{uid} {
@@ -87,7 +242,19 @@ service cloud.firestore {
 
       match /matches/{matchId} {
         allow read: if isOwner(uid);
-        allow create, update, delete: if false;
+        allow create: if isOwner(uid)
+          && validImportedMatch(matchId)
+          && (
+            (
+              validImportedHumanPlayer(uid, request.resource.data.player_black)
+              && validImportedBotPlayer(request.resource.data.player_white)
+            )
+            || (
+              validImportedBotPlayer(request.resource.data.player_black)
+              && validImportedHumanPlayer(uid, request.resource.data.player_white)
+            )
+          );
+        allow update, delete: if false;
       }
     }
   }

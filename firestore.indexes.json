@@ -1,4 +1,10 @@
 {
   "indexes": [],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    {
+      "collectionGroup": "matches",
+      "fieldPath": "move_cells",
+      "indexes": []
+    }
+  ]
 }
