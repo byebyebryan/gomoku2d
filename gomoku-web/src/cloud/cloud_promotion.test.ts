@@ -156,15 +156,18 @@ describe("promoteGuestToCloud", () => {
     });
     expect(backend.matchExists).toHaveBeenCalledWith("local-match-1");
     expect(backend.createMatch).toHaveBeenCalledTimes(1);
-    expect(created.get("local-match-1")).toMatchObject({
+    const createdDocument = created.get("local-match-1") as { match_saved_at: { toDate: () => Date } };
+    expect(createdDocument).toMatchObject({
       id: "local-match-1",
       local_match_id: "match-1",
       match_kind: "local_vs_bot",
+      match_saved_at: expect.anything(),
       player_black: expect.objectContaining({
         local_profile_id: "guest-1",
         profile_uid: "uid-1",
       }),
     });
+    expect(createdDocument.match_saved_at.toDate().toISOString()).toBe(match.saved_at);
     expect(result).toEqual({
       importedMatches: 1,
       profileDisplayNamePromoted: true,

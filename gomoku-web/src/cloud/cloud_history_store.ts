@@ -5,6 +5,7 @@ import { savedMatchIsAfterReset, type SavedMatchV1 } from "../match/saved_match"
 
 import type { CloudAuthUser } from "./auth_store";
 import { clearCloudHistory, loadCloudHistory, saveCloudMatch } from "./cloud_history";
+import { cloudProfileStore } from "./cloud_profile_store";
 
 export type CloudHistoryLoadStatus = "idle" | "loading" | "ready" | "error";
 export type CloudHistorySyncStatus = "idle" | "syncing" | "error";
@@ -38,6 +39,7 @@ export interface CloudHistoryState {
 
 export interface CloudHistoryStoreOptions {
   clearHistory?: (user: CloudAuthUser) => Promise<number>;
+  historyResetAtForUser?: (uid: string) => string | null | undefined;
   loadHistory?: (user: CloudAuthUser, historyResetAt?: string | null) => Promise<SavedMatchV1[]>;
   now?: () => string;
   saveMatch?: (user: CloudAuthUser, match: SavedMatchV1) => Promise<{ match: SavedMatchV1 }>;
@@ -121,10 +123,40 @@ function cacheWithoutMatch(cache: CloudHistoryUserCache, matchId: string): Cloud
   };
 }
 
+function newerResetAt(
+  left: string | null | undefined,
+  right: string | null | undefined,
+): string | null {
+  if (!left) {
+    return right ?? null;
+  }
+
+  if (!right) {
+    return left;
+  }
+
+  return left >= right ? left : right;
+}
+
+function activeSyncsFor(
+  activeSyncs: Map<string, Set<Promise<void>>>,
+  uid: string,
+): Set<Promise<void>> {
+  const existing = activeSyncs.get(uid);
+  if (existing) {
+    return existing;
+  }
+
+  const created = new Set<Promise<void>>();
+  activeSyncs.set(uid, created);
+  return created;
+}
+
 export function createCloudHistoryStore(
   options: CloudHistoryStoreOptions = {},
 ): StoreApi<CloudHistoryState> {
   const clearHistory = options.clearHistory ?? clearCloudHistory;
+  const historyResetAtForUser = options.historyResetAtForUser ?? (() => null);
   const loadHistory =
     options.loadHistory
     ?? ((user: CloudAuthUser, historyResetAt: string | null | undefined) =>
@@ -132,6 +164,10 @@ export function createCloudHistoryStore(
   const saveMatch = options.saveMatch ?? saveCloudMatch;
   const now = options.now ?? (() => new Date().toISOString());
   const storage = createJSONStorage<Pick<CloudHistoryState, "users">>(() => options.storage ?? localStorage);
+  const latestResetAt = (uid: string, requestedResetAt: string | null | undefined) =>
+    newerResetAt(requestedResetAt, historyResetAtForUser(uid));
+  const activeSyncs = new Map<string, Set<Promise<void>>>();
+  const resettingUids = new Set<string>();
 
   return createStore<CloudHistoryState>()(
     persist(
@@ -141,8 +177,10 @@ export function createCloudHistoryStore(
             errorMessage: null,
             syncStatus: "syncing",
           });
+          resettingUids.add(user.uid);
 
           try {
+            await Promise.allSettled(activeSyncs.get(user.uid) ?? []);
             await clearHistory(user);
             set((state) => {
               const { [user.uid]: _removed, ...users } = state.users;
@@ -153,10 +191,14 @@ export function createCloudHistoryStore(
               };
             });
           } catch (error) {
+            const message = errorMessageFor(error);
             set({
-              errorMessage: errorMessageFor(error),
+              errorMessage: message,
               syncStatus: "error",
             });
+            throw new Error(message);
+          } finally {
+            resettingUids.delete(user.uid);
           }
         },
         errorMessage: null,
@@ -192,7 +234,7 @@ export function createCloudHistoryStore(
           });
         },
         syncMatchForUser: async (user, match, historyResetAt = null) => {
-          if (!savedMatchIsAfterReset(match, historyResetAt)) {
+          if (resettingUids.has(user.uid) || !savedMatchIsAfterReset(match, latestResetAt(user.uid, historyResetAt))) {
             set((state) => ({
               errorMessage: null,
               users: updateUserCache(state.users, user.uid, (cache) => cacheWithoutMatch(cache, match.id)),
@@ -208,8 +250,17 @@ export function createCloudHistoryStore(
             ),
           }));
 
-          try {
+          const syncPromise = (async () => {
             const result = await saveMatch(user, match);
+            if (!savedMatchIsAfterReset(result.match, latestResetAt(user.uid, historyResetAt))) {
+              set((state) => ({
+                errorMessage: null,
+                syncStatus: "idle",
+                users: updateUserCache(state.users, user.uid, (cache) => cacheWithoutMatch(cache, match.id)),
+              }));
+              return;
+            }
+
             set((state) => ({
               errorMessage: null,
               syncStatus: "idle",
@@ -220,6 +271,11 @@ export function createCloudHistoryStore(
                 ),
               ),
             }));
+          })();
+          activeSyncsFor(activeSyncs, user.uid).add(syncPromise);
+
+          try {
+            await syncPromise;
           } catch (error) {
             const message = errorMessageFor(error);
             set((state) => ({
@@ -229,6 +285,12 @@ export function createCloudHistoryStore(
                 cacheWithSyncMeta(cache, match, "error", message, now()),
               ),
             }));
+          } finally {
+            const syncs = activeSyncs.get(user.uid);
+            syncs?.delete(syncPromise);
+            if (syncs?.size === 0) {
+              activeSyncs.delete(user.uid);
+            }
           }
         },
         syncPendingForUser: async (user, historyResetAt = null) => {
@@ -249,4 +311,9 @@ export function createCloudHistoryStore(
   );
 }
 
-export const cloudHistoryStore = createCloudHistoryStore();
+export const cloudHistoryStore = createCloudHistoryStore({
+  historyResetAtForUser: (uid) => {
+    const profile = cloudProfileStore.getState().profile;
+    return profile?.uid === uid ? profile.historyResetAt : null;
+  },
+});

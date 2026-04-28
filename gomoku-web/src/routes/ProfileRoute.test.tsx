@@ -307,6 +307,61 @@ describe("ProfileRoute cloud state", () => {
     expect(guestProfileStore.getState().history).toEqual([]);
   });
 
+  it("keeps signed-in reset confirmation open and local history intact when cloud clear fails", async () => {
+    const resetForUser = vi.fn().mockResolvedValue(undefined);
+    const clearForUser = vi.fn().mockRejectedValue(new Error("permission denied"));
+    const resetUserCache = vi.fn();
+    const guestProfile = guestProfileStore.getState().ensureGuestProfile();
+    const localMatch = createLocalSavedMatch({
+      id: "match-1",
+      localProfileId: guestProfile.id,
+      moves: [{ col: 7, moveNumber: 1, player: 1, row: 7 }],
+      players: [
+        { kind: "human", name: "Guest", stone: "black" },
+        { kind: "bot", name: "Practice Bot", stone: "white" },
+      ],
+      savedAt: "2026-04-28T01:00:00.000Z",
+      status: "draw",
+      variant: "freestyle",
+    });
+
+    guestProfileStore.setState({ history: [localMatch] });
+    cloudAuthStore.setState({
+      errorMessage: null,
+      isConfigured: true,
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+      start: vi.fn(),
+      status: "signed_in",
+      stop: vi.fn(),
+      user: cloudUser,
+    });
+    cloudProfileStore.setState({
+      errorMessage: null,
+      loadForUser: vi.fn(),
+      profile: cloudProfile,
+      reset: vi.fn(),
+      resetForUser,
+      status: "ready",
+    });
+    cloudHistoryStore.setState({
+      clearForUser,
+      resetUserCache,
+    });
+
+    renderProfileRoute();
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm reset" }));
+
+    await waitFor(() => {
+      expect(clearForUser).toHaveBeenCalledWith(cloudUser);
+    });
+    expect(screen.getByRole("button", { name: "Confirm reset" })).toBeInTheDocument();
+    expect(resetUserCache).not.toHaveBeenCalled();
+    expect(guestProfileStore.getState().history).toEqual([localMatch]);
+  });
+
   it("starts background guest promotion after cloud profile loads", async () => {
     const promote = vi.fn().mockResolvedValue(undefined);
     const guestProfile = guestProfileStore.getState().ensureGuestProfile();

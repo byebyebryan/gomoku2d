@@ -65,8 +65,8 @@ Estimated operation budgets:
 | First sign-in / cloud profile create | 1 | 1-2 | Read-or-create profile, maybe update login timestamp/settings |
 | Later sign-in | 1 | 0-1 | Load profile, maybe update `last_login_at` |
 | Promote guest settings | 0-1 | 1 | Profile/settings merge |
-| Promote one local match | 0-1 | 1 | Stable `local_origin_id` makes retry safe |
-| Save one finished signed-in match | 0 | 1-2 | Match record, maybe profile summary update |
+| Promote one local match | 1-2 | 1 | Dedupe read plus rules-side profile barrier check; stable `local_origin_id` makes retry safe |
+| Save one finished signed-in match | 1-2 | 1-2 | Dedupe read plus rules-side profile barrier check; match record, maybe profile summary update |
 | Open Profile history | Up to current history page size | 0 | Reads one document per returned match |
 | Open one saved replay directly | 1 | 0 | If not already loaded from history |
 
@@ -78,6 +78,9 @@ Initial implementation guardrails:
 - Prefer one write at match end over per-move cloud writes for casual play.
 - Keep public replay publishing out of `v0.3`; private history and public
   shareables have different cost and trust profiles.
+- Budget match creates as also reading the owner profile in rules. Firestore
+  rules use the profile's `history_reset_at` as a server-side reset barrier, so
+  the dashboard should be checked after real promotion/save smoke tests.
 
 ## Headroom Scenarios
 

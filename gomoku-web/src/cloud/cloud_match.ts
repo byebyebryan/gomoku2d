@@ -1,4 +1,4 @@
-import { serverTimestamp, type FieldValue } from "firebase/firestore";
+import { serverTimestamp, Timestamp, type FieldValue } from "firebase/firestore";
 
 import {
   PRACTICE_BOT_CONFIG_VERSION,
@@ -39,6 +39,7 @@ export interface CloudGuestImportDocument
   imported_at: FieldValue;
   local_match_id: string;
   local_origin_id: string;
+  match_saved_at: Timestamp;
   player_black: CloudMatchPlayerDocument;
   player_white: CloudMatchPlayerDocument;
   source: typeof CLOUD_MATCH_SOURCE_GUEST_IMPORT;
@@ -49,6 +50,7 @@ export interface CloudGuestImportDocument
 export interface CloudDirectSavedDocument
   extends Omit<SavedMatchV1, "player_black" | "player_white" | "source" | "trust"> {
   created_at: FieldValue;
+  match_saved_at: Timestamp;
   player_black: CloudMatchPlayerDocument;
   player_white: CloudMatchPlayerDocument;
   source: typeof CLOUD_MATCH_SOURCE_CLOUD_SAVED;
@@ -69,6 +71,15 @@ function assertValidMovePayload(match: Pick<SavedMatchV1, "move_count" | "move_c
   for (const cell of match.move_cells) {
     decodeMoveCell(cell);
   }
+}
+
+function matchSavedAtTimestamp(match: Pick<SavedMatchV1, "saved_at">): Timestamp {
+  const millis = Date.parse(match.saved_at);
+  if (!Number.isFinite(millis)) {
+    throw new Error("Cloud match promotion requires a valid saved_at timestamp.");
+  }
+
+  return Timestamp.fromMillis(millis);
 }
 
 function assertGuestLocalMatch(match: Pick<SavedMatchV1, "source" | "trust">): void {
@@ -160,6 +171,7 @@ export function cloudSavedMatchFromGuestMatch(
     imported_at: serverTimestamp(),
     local_match_id: match.id,
     local_origin_id: localOriginIdForGuestMatch(guestProfile, match),
+    match_saved_at: matchSavedAtTimestamp(match),
     player_black: guestImportPlayerDocument(match.player_black, user, guestProfile),
     player_white: guestImportPlayerDocument(match.player_white, user, guestProfile),
     source: CLOUD_MATCH_SOURCE_GUEST_IMPORT,
@@ -178,6 +190,7 @@ export function createCloudDirectSavedDocument(
   return {
     ...createCloudDirectSavedMatch(user, match),
     created_at: serverTimestamp(),
+    match_saved_at: matchSavedAtTimestamp(match),
   };
 }
 

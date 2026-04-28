@@ -335,6 +335,20 @@ Rollback path: the Firestore release can be patched back to the previous ruleset
 ID if permission errors spike. Keep the previous ruleset from the GitHub Actions
 summary or from the release history before tightening rules.
 
+Local validation:
+
+```sh
+cd gomoku-web
+npm run test:rules
+```
+
+This requires Java for the local Firestore emulator. It runs the emulator
+against the checked-in `firestore.rules` and covers owner scoping, private match
+creates/deletes, `history_reset_at` movement, and the server-side reset barrier
+enforced through `match_saved_at > history_reset_at`. The regular CI web job
+installs Java and runs this command after Vitest and before the production
+build.
+
 ## Manual Firestore Rules Deploy
 
 Manual deploys from a local machine are a break-glass path for local
@@ -467,8 +481,11 @@ Current cloud UI / data smoke state:
 
 Remaining before the next `v0.3.x` release:
 
-- Deploy the updated Firestore rules for `history_reset_at` and owner-scoped
-  private `client_uploaded` match deletes.
+- Deploy the updated Firestore rules for `history_reset_at`, `match_saved_at`
+  reset-barrier enforcement, and owner-scoped private `client_uploaded` match
+  deletes. This ruleset requires the matching web build because cloud match
+  creates without `match_saved_at` are rejected; old open clients may need a
+  refresh after deploy.
 - Smoke-test Reset Profile while signed in: cloud history clears, this device's
   local/cache state clears, and older local rows do not re-import afterward.
 - Refresh cost/headroom notes after a few more real cloud writes.

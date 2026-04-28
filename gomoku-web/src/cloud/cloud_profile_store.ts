@@ -99,10 +99,12 @@ export function createCloudProfileStore(
           return;
         }
 
+        const message = errorMessageFor(error);
         set({
-          errorMessage: errorMessageFor(error),
+          errorMessage: message,
           status: "error",
         });
+        throw new Error(message);
       }
     },
     status: "idle",

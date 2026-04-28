@@ -76,6 +76,11 @@ jobs:
         working-directory: gomoku-web
         run: npm ci
 
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
       - name: Typecheck
         working-directory: gomoku-web
         run: npx tsc --noEmit
@@ -83,6 +88,10 @@ jobs:
       - name: Vitest
         working-directory: gomoku-web
         run: npm test
+
+      - name: Firestore rules tests
+        working-directory: gomoku-web
+        run: npm run test:rules
 
       - name: Production build
         working-directory: gomoku-web
