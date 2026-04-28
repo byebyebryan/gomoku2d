@@ -1,5 +1,6 @@
 import { doc, getDoc, setDoc, type Firestore } from "firebase/firestore";
 
+import { savedMatchIsAfterReset } from "../match/saved_match";
 import {
   DEFAULT_GUEST_DISPLAY_NAME,
   type GuestProfileIdentity,
@@ -22,6 +23,7 @@ export interface GuestPromotionInput {
   cloudDisplayName?: string | null;
   guestHistory: GuestSavedMatch[];
   guestProfile: GuestProfileIdentity;
+  historyResetAt?: string | null;
   settings: GuestProfileSettings;
   user: CloudAuthUser;
 }
@@ -106,6 +108,7 @@ export function promotionInputKey(input: GuestPromotionInput): string {
   return JSON.stringify({
     cloud: [input.cloudDisplayName !== undefined, input.cloudDisplayName ?? null],
     history: input.guestHistory.map((match) => [match.id, match.saved_at, match.move_count]),
+    reset: input.historyResetAt ?? null,
     profile: [input.guestProfile.id, input.guestProfile.displayName],
     rule: input.settings.preferredVariant,
     uid: input.user.uid,
@@ -124,7 +127,9 @@ export async function promoteGuestToCloud(
   let importedMatches = 0;
   let skippedMatches = 0;
 
-  for (const match of input.guestHistory) {
+  const eligibleHistory = input.guestHistory.filter((match) => savedMatchIsAfterReset(match, input.historyResetAt));
+
+  for (const match of eligibleHistory) {
     const matchId = cloudMatchIdForGuestMatch(match);
     const directMatchId = cloudDirectSavedMatchId(match);
     if (await backend.matchExists(matchId) || await backend.matchExists(directMatchId)) {
@@ -150,6 +155,6 @@ export async function promoteGuestToCloud(
     profileDisplayNamePromoted: Object.prototype.hasOwnProperty.call(profileUpdate, "display_name"),
     promotedDisplayName: typeof profileUpdate.display_name === "string" ? profileUpdate.display_name : null,
     skippedMatches,
-    totalMatches: input.guestHistory.length,
+    totalMatches: eligibleHistory.length,
   };
 }

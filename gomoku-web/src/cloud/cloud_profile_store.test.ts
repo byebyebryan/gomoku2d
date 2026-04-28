@@ -17,6 +17,7 @@ const profile: CloudProfile = {
   avatarUrl: null,
   displayName: "Bryan",
   email: "bryan@example.com",
+  historyResetAt: null,
   preferredVariant: "freestyle",
   uid: "uid-1",
   username: null,
@@ -55,6 +56,27 @@ describe("createCloudProfileStore", () => {
       errorMessage: null,
       profile: null,
       status: "idle",
+    });
+  });
+
+  it("resets a cloud profile for a signed-in user", async () => {
+    const resetProfile = vi.fn().mockResolvedValue({
+      ...profile,
+      historyResetAt: "2026-04-28T00:00:00.000Z",
+    });
+    const store = createCloudProfileStore({ resetProfile });
+
+    const promise = store.getState().resetForUser(authUser, "freestyle");
+    expect(store.getState().status).toBe("loading");
+    await promise;
+
+    expect(resetProfile).toHaveBeenCalledWith(authUser, "freestyle");
+    expect(store.getState()).toMatchObject({
+      errorMessage: null,
+      profile: {
+        historyResetAt: "2026-04-28T00:00:00.000Z",
+      },
+      status: "ready",
     });
   });
 });

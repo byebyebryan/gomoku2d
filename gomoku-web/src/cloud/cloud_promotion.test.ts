@@ -218,6 +218,30 @@ describe("promoteGuestToCloud", () => {
     });
   });
 
+  it("does not import local matches at or before the reset barrier", async () => {
+    const { backend } = createBackend();
+
+    const result = await promoteGuestToCloud(
+      {
+        cloudDisplayName: user.displayName,
+        guestHistory: [match],
+        guestProfile,
+        historyResetAt: "2026-04-28T00:00:00.000Z",
+        settings,
+        user,
+      },
+      { backend },
+    );
+
+    expect(backend.matchExists).not.toHaveBeenCalled();
+    expect(backend.createMatch).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      importedMatches: 0,
+      skippedMatches: 0,
+      totalMatches: 0,
+    });
+  });
+
   it("treats a raced create as skipped if the match now exists", async () => {
     const { backend } = createBackend();
     vi.mocked(backend.createMatch).mockImplementationOnce(async () => {

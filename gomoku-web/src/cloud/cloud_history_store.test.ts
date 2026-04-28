@@ -65,6 +65,7 @@ describe("createCloudHistoryStore", () => {
     await store.getState().loadForUser(user);
 
     expect(store.getState().loadStatus).toBe("ready");
+    expect(loadHistory).toHaveBeenCalledWith(user, null);
     expect(store.getState().users["uid-1"]).toMatchObject({
       cachedMatches: [cloudMatch],
       loadedAt: "2026-04-28T02:00:00.000Z",
@@ -131,5 +132,37 @@ describe("createCloudHistoryStore", () => {
 
     expect(saveMatch).toHaveBeenCalledTimes(2);
     expect(store.getState().users["uid-1"]?.pendingMatches).toEqual({});
+  });
+
+  it("drops pending records older than the reset barrier without syncing them", async () => {
+    const saveMatch = vi.fn().mockResolvedValue({ match: cloudMatch });
+    const store = createCloudHistoryStore({
+      saveMatch,
+      storage: createMemoryStorage(),
+    });
+
+    await store.getState().syncMatchForUser(user, match, "2026-04-28T02:00:00.000Z");
+
+    expect(saveMatch).not.toHaveBeenCalled();
+    expect(store.getState().users["uid-1"]?.pendingMatches).toEqual({});
+  });
+
+  it("clears remote history and the local per-user cache", async () => {
+    const clearHistory = vi.fn().mockResolvedValue(1);
+    const store = createCloudHistoryStore({
+      clearHistory,
+      loadHistory: vi.fn().mockResolvedValue([cloudMatch]),
+      storage: createMemoryStorage(),
+    });
+
+    await store.getState().loadForUser(user);
+    await store.getState().clearForUser(user);
+
+    expect(clearHistory).toHaveBeenCalledWith(user);
+    expect(store.getState()).toMatchObject({
+      errorMessage: null,
+      syncStatus: "idle",
+      users: {},
+    });
   });
 });

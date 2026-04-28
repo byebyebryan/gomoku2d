@@ -6,6 +6,7 @@ import {
   cloudProfileFromDocument,
   existingCloudProfileUpdate,
   newCloudProfileWrite,
+  resetCloudProfileUpdate,
 } from "./cloud_profile";
 
 const authUser: CloudAuthUser = {
@@ -32,6 +33,7 @@ describe("cloudProfileFromDocument", () => {
       avatarUrl: "https://example.com/cloud.png",
       displayName: "ByeByeBryan",
       email: "cloud@example.com",
+      historyResetAt: null,
       preferredVariant: "renju",
       uid: "uid-1",
       username: "byebyebryan",
@@ -50,8 +52,22 @@ describe("cloudProfileFromDocument", () => {
       avatarUrl: authUser.avatarUrl,
       displayName: authUser.displayName,
       email: authUser.email,
+      historyResetAt: null,
       preferredVariant: "freestyle",
       username: null,
+    });
+  });
+
+  it("maps Firestore reset timestamps to stable ISO strings", () => {
+    expect(
+      cloudProfileFromDocument(authUser, "freestyle", {
+        history_reset_at: {
+          nanoseconds: 123_000_000,
+          seconds: 1_777_363_200,
+        },
+      }),
+    ).toMatchObject({
+      historyResetAt: "2026-04-28T08:00:00.123Z",
     });
   });
 });
@@ -63,6 +79,7 @@ describe("cloud profile writes", () => {
       avatar_url: authUser.avatarUrl,
       display_name: "Bryan",
       email: "bryan@example.com",
+      history_reset_at: null,
       preferred_variant: "renju",
       schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
       uid: "uid-1",
@@ -80,7 +97,22 @@ describe("cloud profile writes", () => {
       uid: "uid-1",
     });
     expect(existingCloudProfileUpdate(authUser, "freestyle")).not.toHaveProperty("display_name");
+    expect(existingCloudProfileUpdate(authUser, "freestyle")).not.toHaveProperty("history_reset_at");
     expect(existingCloudProfileUpdate(authUser, "freestyle")).not.toHaveProperty("username");
+  });
+
+  it("resets profile-owned fields and writes a history reset barrier", () => {
+    expect(resetCloudProfileUpdate(authUser, "freestyle")).toMatchObject({
+      auth_providers: ["google.com"],
+      avatar_url: authUser.avatarUrl,
+      display_name: authUser.displayName,
+      email: authUser.email,
+      preferred_variant: "freestyle",
+      schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
+      uid: "uid-1",
+    });
+    expect(resetCloudProfileUpdate(authUser, "freestyle")).toHaveProperty("history_reset_at");
+    expect(resetCloudProfileUpdate(authUser, "freestyle")).not.toHaveProperty("username");
   });
 
   it("returns the refreshed provider fields after updating an existing profile", () => {
@@ -99,6 +131,7 @@ describe("cloud profile writes", () => {
       avatarUrl: authUser.avatarUrl,
       displayName: "ByeByeBryan",
       email: authUser.email,
+      historyResetAt: null,
       preferredVariant: "renju",
       username: "byebyebryan",
     });

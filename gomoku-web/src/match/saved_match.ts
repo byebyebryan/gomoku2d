@@ -410,3 +410,10 @@ export function savedMatchWinningSide(match: Pick<SavedMatchV1, "status">): Save
 
   return null;
 }
+
+export function savedMatchIsAfterReset(
+  match: Pick<SavedMatchV1, "saved_at">,
+  historyResetAt: string | null | undefined,
+): boolean {
+  return !historyResetAt || match.saved_at > historyResetAt;
+}

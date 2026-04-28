@@ -29,6 +29,7 @@ service cloud.firestore {
         'created_at',
         'display_name',
         'email',
+        'history_reset_at',
         'last_login_at',
         'preferred_variant',
         'schema_version',
@@ -60,6 +61,11 @@ service cloud.firestore {
         && nullableString(request.resource.data.avatar_url, 2048)
         && nullableString(request.resource.data.email, 320)
         && nullableString(request.resource.data.username, 40)
+        && (
+          !request.resource.data.keys().hasAny(['history_reset_at'])
+          || request.resource.data.history_reset_at == null
+          || request.resource.data.history_reset_at is timestamp
+        )
         && request.resource.data.preferred_variant in ['freestyle', 'renju']
         && validProviders(request.resource.data.auth_providers)
         && request.resource.data.created_at is timestamp
@@ -329,7 +335,9 @@ service cloud.firestore {
             )
           )
         );
-        allow update, delete: if false;
+        allow update: if false;
+        allow delete: if isOwner(uid)
+          && resource.data.trust == 'client_uploaded';
       }
     }
   }

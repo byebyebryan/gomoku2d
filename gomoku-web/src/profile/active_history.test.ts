@@ -91,4 +91,17 @@ describe("resolveActiveHistory", () => {
     expect(history).toHaveLength(1);
     expect(history[0]?.saved_at).toBe("2026-04-28T02:00:00.000Z");
   });
+
+  it("filters local and cloud rows at or before the reset barrier", () => {
+    const older = localMatch("older", "2026-04-28T01:00:00.000Z");
+    const newer = localMatch("newer", "2026-04-28T03:00:00.000Z");
+
+    const history = resolveActiveHistory({
+      cloudHistory: [],
+      historyResetAt: "2026-04-28T02:00:00.000Z",
+      localHistory: [older, newer],
+    });
+
+    expect(history.map((match) => match.id)).toEqual(["newer"]);
+  });
 });

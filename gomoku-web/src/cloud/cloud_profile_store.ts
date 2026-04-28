@@ -3,7 +3,7 @@ import { createStore, type StoreApi } from "zustand/vanilla";
 import type { GameVariant } from "../core/bot_protocol";
 
 import type { CloudAuthUser } from "./auth_store";
-import { ensureCloudProfile, type CloudProfile } from "./cloud_profile";
+import { ensureCloudProfile, resetCloudProfile, type CloudProfile } from "./cloud_profile";
 
 export type CloudProfileStatus = "idle" | "loading" | "ready" | "error";
 
@@ -12,11 +12,13 @@ export interface CloudProfileState {
   loadForUser: (user: CloudAuthUser, preferredVariant: GameVariant) => Promise<void>;
   profile: CloudProfile | null;
   reset: () => void;
+  resetForUser: (user: CloudAuthUser, preferredVariant: GameVariant) => Promise<void>;
   status: CloudProfileStatus;
 }
 
 export interface CloudProfileStoreOptions {
   loadProfile?: (user: CloudAuthUser, preferredVariant: GameVariant) => Promise<CloudProfile>;
+  resetProfile?: (user: CloudAuthUser, preferredVariant: GameVariant) => Promise<CloudProfile>;
 }
 
 function errorMessageFor(error: unknown): string {
@@ -27,6 +29,7 @@ export function createCloudProfileStore(
   options: CloudProfileStoreOptions = {},
 ): StoreApi<CloudProfileState> {
   const loadProfile = options.loadProfile ?? ensureCloudProfile;
+  const resetProfile = options.resetProfile ?? resetCloudProfile;
   let requestId = 0;
 
   return createStore<CloudProfileState>((set) => ({
@@ -70,6 +73,37 @@ export function createCloudProfileStore(
         profile: null,
         status: "idle",
       });
+    },
+    resetForUser: async (user, preferredVariant) => {
+      const currentRequestId = requestId + 1;
+      requestId = currentRequestId;
+
+      set({
+        errorMessage: null,
+        status: "loading",
+      });
+
+      try {
+        const profile = await resetProfile(user, preferredVariant);
+        if (requestId !== currentRequestId) {
+          return;
+        }
+
+        set({
+          errorMessage: null,
+          profile,
+          status: "ready",
+        });
+      } catch (error) {
+        if (requestId !== currentRequestId) {
+          return;
+        }
+
+        set({
+          errorMessage: errorMessageFor(error),
+          status: "error",
+        });
+      }
     },
     status: "idle",
   }));
