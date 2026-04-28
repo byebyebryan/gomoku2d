@@ -130,8 +130,8 @@ The first backend-foundation slice is in place:
 
 - Firebase/GCP project, Firebase web app, and env-driven web bootstrap
 - Firestore `(default)` in `us-central1`
-- hardened owner-scoped Firestore rules for `profiles/{uid}`; private match
-  writes remain closed until cloud history ships
+- hardened owner-scoped Firestore rules for `profiles/{uid}` and private
+  `guest_import` match creates
 - Google Auth provider configured through the Firebase Auth / Identity Toolkit
   path
 - Profile sign-in/sign-out UI
@@ -147,7 +147,7 @@ The first backend-foundation slice is in place:
 
 The remaining `v0.3` work is product continuity rather than raw setup:
 
-- import local guest profile/history into cloud state idempotently
+- finish and smoke-test local guest profile/history promotion
 - save future signed-in casual matches privately to Firestore
 - load cloud-saved private history/replays from Profile
 

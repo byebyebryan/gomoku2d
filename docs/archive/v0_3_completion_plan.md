@@ -85,6 +85,21 @@ the next `0.3.x` slice."
 
 Purpose: make sign-in feel like continuity instead of a separate account mode.
 
+Implementation is now started:
+
+- deterministic private cloud match IDs are based on local match IDs
+- local history now has an explicit `guest-profile.v2` saved-match schema, with
+  v1 history migrated on read and preserved as a rollback source
+- private cloud match v1 uses the same compact `move_cells` replay storage and
+  records field-level schema details in `docs/data_model.md`
+- player records now carry stable human profile IDs and versioned practice-bot
+  identity/config snapshots
+- Profile starts promotion in the background after cloud profile load
+- default `Guest` local names adopt the cloud name on first sign-in; custom local
+  names still override the cloud name during promotion
+- Firestore rules allow owner-only `guest_import` match creates and keep
+  updates/deletes closed
+
 Work:
 
 - import local guest profile/settings into `profiles/{uid}`

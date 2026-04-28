@@ -12,6 +12,32 @@ their own section.
 
 ## [Unreleased]
 
+### Web and cloud profile
+
+- Started `0.3.1` guest-to-cloud promotion: local profile display name,
+  preferred rule, and finished local matches are copied to private cloud state
+  after sign-in.
+- Default `Guest` profiles now adopt the linked cloud display name on sign-in;
+  custom local display names still override the cloud name during promotion.
+- Added deterministic `guest_import` match document IDs so retries skip already
+  imported local matches instead of duplicating them.
+- Added `docs/data_model.md`, moved local history to canonical
+  `guest-profile.v2`, and tightened saved-match v1 around compact `move_cells`
+  replay storage instead of verbose move objects.
+- Added identity-bearing player records for saved matches, including owner UID
+  snapshots for promoted humans and versioned practice-bot identity/config
+  snapshots.
+- Added saved-match validation for local history hydration and kept replay
+  winning-line reconstruction backed by the shared core rules path.
+- Updated Profile cloud copy to show background import progress, success, and
+  failure while keeping local history on-device.
+
+### Infra
+
+- Opened Firestore rules narrowly for owner-only private `guest_import` match
+  creates and local display-name promotion; match updates/deletes remain closed.
+- Tightened Firestore match validation for compact move-cell payloads.
+
 ## [0.3.0] - 2026-04-27
 
 **Theme: backend foundation without putting cloud in front of local play.**
