@@ -29,7 +29,7 @@ backend design lives in `backend.md`; free-tier estimates live in
 | Firestore edition | Standard |
 | Firestore free tier | `true` |
 | Firestore rules release | `projects/gomoku2d/releases/cloud.firestore` |
-| Current ruleset | `projects/gomoku2d/rulesets/ceedae72-8543-4c4b-aae5-3cb15a0ff220` |
+| Current ruleset | `projects/gomoku2d/rulesets/4c4fcf1f-6e05-466c-aeb6-2588241a779f` |
 
 Important irreversible choice: the default Firestore database is in
 `us-central1`. Do not delete/recreate it casually; the database location is a
