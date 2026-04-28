@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useStore } from "zustand";
 
@@ -167,6 +167,8 @@ function shouldAdoptCloudDisplayName(
 
 export function ProfileRoute() {
   const navigate = useNavigate();
+  const [resetConfirming, setResetConfirming] = useState(false);
+  const [resetBusy, setResetBusy] = useState(false);
   const cloudAuth = useStore(cloudAuthStore, (state) => state);
   const cloudHistory = useStore(cloudHistoryStore, (state) => state);
   const cloudProfile = useStore(cloudProfileStore, (state) => state);
@@ -300,6 +302,48 @@ export function ProfileRoute() {
     promotionStatus: cloudPromotion.status,
     totalPromotedMatches: cloudPromotion.result?.totalMatches ?? 0,
   });
+  const signedIn = cloudAuth.status === "signed_in" && Boolean(cloudAuth.user);
+  const resetDisabled = resetBusy || (signedIn && cloudProfile.status === "loading");
+  const resetConfirmationText = signedIn
+    ? "This clears cloud history, resets cloud profile values, and clears this device's local cache."
+    : "This clears the local profile and match history on this device.";
+
+  async function resetSignedInProfile(): Promise<void> {
+    if (cloudAuth.status !== "signed_in" || !cloudAuth.user) {
+      return;
+    }
+
+    const user = cloudAuth.user;
+    const defaultVariant = "freestyle" as const;
+    await cloudProfileStore.getState().resetForUser(user, defaultVariant);
+    if (cloudProfileStore.getState().status === "error") {
+      return;
+    }
+
+    await cloudHistoryStore.getState().clearForUser(user);
+    cloudHistoryStore.getState().resetUserCache(user.uid);
+    cloudPromotionStore.getState().reset();
+
+    const guestStore = guestProfileStore.getState();
+    guestStore.resetGuestProfile();
+    guestStore.ensureGuestProfile();
+  }
+
+  async function confirmResetProfile(): Promise<void> {
+    setResetBusy(true);
+    try {
+      if (signedIn) {
+        await resetSignedInProfile();
+      } else {
+        const store = guestProfileStore.getState();
+        store.resetGuestProfile();
+        store.ensureGuestProfile();
+      }
+    } finally {
+      setResetBusy(false);
+      setResetConfirming(false);
+    }
+  }
 
   return (
     <main className={styles.page}>
@@ -413,18 +457,45 @@ export function ProfileRoute() {
           <div className="uiDivider" />
 
           <section className={`${styles.sideSection} ${styles.resetSection}`}>
-            <button
-              className="uiAction uiActionDanger"
-              onClick={() => {
-                const store = guestProfileStore.getState();
-                store.resetGuestProfile();
-                store.ensureGuestProfile();
-              }}
-              type="button"
-            >
-              <Icon className="uiIconDesktop" name="reset" />
-              <span className="uiActionLabel">Reset local profile</span>
-            </button>
+            {resetConfirming ? (
+              <div className={styles.resetConfirm}>
+                <p className={styles.resetConfirmText}>{resetConfirmationText}</p>
+                <div className={styles.resetConfirmActions}>
+                  <button
+                    className="uiAction uiActionDanger"
+                    disabled={resetDisabled}
+                    onClick={() => {
+                      void confirmResetProfile();
+                    }}
+                    type="button"
+                  >
+                    <span className="uiActionLabel">{resetBusy ? "Resetting" : "Confirm reset"}</span>
+                  </button>
+                  <button
+                    className="uiAction uiActionNeutral"
+                    disabled={resetBusy}
+                    onClick={() => {
+                      setResetConfirming(false);
+                    }}
+                    type="button"
+                  >
+                    <span className="uiActionLabel">Cancel</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                className="uiAction uiActionDanger"
+                disabled={resetDisabled}
+                onClick={() => {
+                  setResetConfirming(true);
+                }}
+                type="button"
+              >
+                <Icon className="uiIconDesktop" name="reset" />
+                <span className="uiActionLabel">Reset Profile</span>
+              </button>
+            )}
           </section>
         </aside>
 

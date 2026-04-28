@@ -142,6 +142,24 @@ describe("ProfileRoute cloud state", () => {
     expect(screen.getByText("Moves 9")).toBeInTheDocument();
   });
 
+  it("confirms before resetting the local-only profile", () => {
+    guestProfileStore.getState().ensureGuestProfile();
+    guestProfileStore.getState().renameDisplayName("ByeByeBryan");
+
+    renderProfileRoute();
+
+    expect(screen.getByLabelText("Display name")).toHaveValue("ByeByeBryan");
+    fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
+    expect(screen.getByText("This clears the local profile and match history on this device.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.getByLabelText("Display name")).toHaveValue("ByeByeBryan");
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm reset" }));
+
+    expect(screen.getByLabelText("Display name")).toHaveValue("Guest");
+  });
+
   it("shows the linked cloud profile and allows sign-out", () => {
     const signOut = vi.fn().mockResolvedValue(undefined);
     cloudAuthStore.setState({
@@ -229,6 +247,64 @@ describe("ProfileRoute cloud state", () => {
     expect(screen.getByText("Win")).toBeInTheDocument();
     expect(screen.getByText("Moves 5")).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "Replay" })).toHaveLength(1);
+  });
+
+  it("resets cloud profile scope and local cache when signed in", async () => {
+    const resetForUser = vi.fn().mockResolvedValue(undefined);
+    const clearForUser = vi.fn().mockResolvedValue(undefined);
+    const resetUserCache = vi.fn();
+    const guestProfile = guestProfileStore.getState().ensureGuestProfile();
+    const localMatch = createLocalSavedMatch({
+      id: "match-1",
+      localProfileId: guestProfile.id,
+      moves: [{ col: 7, moveNumber: 1, player: 1, row: 7 }],
+      players: [
+        { kind: "human", name: "Guest", stone: "black" },
+        { kind: "bot", name: "Practice Bot", stone: "white" },
+      ],
+      savedAt: "2026-04-28T01:00:00.000Z",
+      status: "draw",
+      variant: "freestyle",
+    });
+
+    guestProfileStore.setState({ history: [localMatch] });
+    cloudAuthStore.setState({
+      errorMessage: null,
+      isConfigured: true,
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+      start: vi.fn(),
+      status: "signed_in",
+      stop: vi.fn(),
+      user: cloudUser,
+    });
+    cloudProfileStore.setState({
+      errorMessage: null,
+      loadForUser: vi.fn(),
+      profile: cloudProfile,
+      reset: vi.fn(),
+      resetForUser,
+      status: "ready",
+    });
+    cloudHistoryStore.setState({
+      clearForUser,
+      resetUserCache,
+    });
+
+    renderProfileRoute();
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
+    expect(
+      screen.getByText("This clears cloud history, resets cloud profile values, and clears this device's local cache."),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Confirm reset" }));
+
+    await waitFor(() => {
+      expect(resetForUser).toHaveBeenCalledWith(cloudUser, "freestyle");
+    });
+    expect(clearForUser).toHaveBeenCalledWith(cloudUser);
+    expect(resetUserCache).toHaveBeenCalledWith("uid-1");
+    expect(guestProfileStore.getState().history).toEqual([]);
   });
 
   it("starts background guest promotion after cloud profile loads", async () => {
