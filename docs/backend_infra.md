@@ -39,7 +39,7 @@ foundational project decision.
 
 ## Enabled APIs
 
-Required for the current `v0.3` backend foundation:
+Required for the released `v0.3` backend foundation:
 
 - `firebase.googleapis.com`
 - `firestore.googleapis.com`
@@ -485,12 +485,12 @@ Current cloud UI / data smoke state:
 - The matching `v0.3.2` web build and Firestore rules were manually dispatched
   from `main` before release prep and both completed successfully.
 
-Remaining before the next `v0.3.x` tag:
+After the `v0.3.2` tag:
 
-- Cut `v0.3.2` from the prepared release diff.
-- Run one post-tag production smoke. Cloud match creates require the matching
-  web build because rules reject writes without `match_saved_at`; old open
-  clients may need a refresh after deploy.
+- `v0.3.2` has been cut and published.
+- Keep the compatibility caveat in mind for future rules changes: cloud match
+  creates require the matching web build because rules reject writes without
+  `match_saved_at`; old open clients may need a refresh after deploy.
 - Refresh cost/headroom notes again after a little more real traffic if the
   dashboard shows anything surprising.
 

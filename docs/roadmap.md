@@ -10,8 +10,9 @@ This roadmap tracks two things at once:
 
 - **Product story**: each phase should make Gomoku2D more credible as a real
   alpha/beta product.
-- **Process story**: each phase should teach something useful about building a
-  product with AI agents as active collaborators.
+- **Production story**: each phase should teach something useful about how much
+  of a small product team's surface area AI agents can help one developer cover
+  without lowering the quality bar.
 
 The project thesis behind that split lives in `project.md`.
 
@@ -31,12 +32,12 @@ What it proved:
 - the bot lab can power the browser game without a rewrite
 - a lightweight public deploy loop is enough for fast iteration
 
-Process lens:
+Production lens:
 
 - prove whether an old native/game-logic idea can be revived into a browser
   product without throwing away the original technical core
 - establish that repo docs, code review, and release notes can keep pace with
-  rapid AI-assisted iteration
+  rapid AI-centric iteration
 
 Historical state is preserved in `docs/archive/progress_v0.1.md`.
 
@@ -87,7 +88,7 @@ A player can open the site and get a polished local experience:
 - online matches
 - replay analysis and puzzles
 
-### Process Lens
+### Production Lens
 
 - learn how far agents can help shape a frontend product, not just generate UI
   code
@@ -96,7 +97,7 @@ A player can open the site and get a polished local experience:
 - validate the React/Phaser/Rust boundaries that let agents work in one layer
   without constantly breaking another
 
-## P3 — `v0.3` BE Foundation And Cloud Continuity (current)
+## P3 — `v0.3` BE Foundation And Cloud Continuity (done)
 
 Add backend foundation without putting cloud in front of the local game.
 
@@ -125,9 +126,9 @@ ad-hoc planning artifact; this section remains the canonical roadmap.
 - hardened Firestore rules for owner-scoped profile/history docs
 - profile reset barrier and private-history clear path
 
-### Current State
+### Final State
 
-The backend-foundation and first continuity slices are in place:
+The backend-foundation and first continuity slices shipped through `v0.3.2`:
 
 - Firebase/GCP project, Firebase web app, and env-driven web bootstrap
 - Firestore `(default)` in `us-central1`
@@ -164,12 +165,9 @@ The backend-foundation and first continuity slices are in place:
 - infra and free-tier tracking split into `backend_infra.md` and
   `backend_cost.md`
 
-The remaining `v0.3` work is release wrap-up rather than new product scope:
-
-- cut and publish `v0.3.2`
-- keep one final production smoke after the tag deploy
-- carry any non-blocking auth/cloud-history hardening into later `0.3.x` only if
-  real usage exposes it
+Any future `0.3.x` work should be narrow hardening only: auth edge cases,
+offline/sync polish, or cloud-history fixes exposed by real usage. Do not add
+new product scope to this phase.
 
 ### Done When
 
@@ -192,7 +190,7 @@ Signing in extends the same local-first product without breaking it:
 - leaderboards
 - replay analysis and puzzles
 
-### Process Lens
+### Production Lens
 
 - learn the practical boundary between local-first UX and cloud-backed
   persistence
@@ -200,7 +198,7 @@ Signing in extends the same local-first product without breaking it:
 - keep cloud setup, cost estimates, auth caveats, and release gates documented
   well enough that future agents can continue without guessing
 
-## P4 — `v0.4` Lab-Powered Product Identity
+## P4 — `v0.4` Lab-Powered Product Identity (next)
 
 Make the Rust lab visible as a product differentiator.
 
@@ -208,6 +206,7 @@ Make the Rust lab visible as a product differentiator.
 
 - make saved games useful after they end
 - turn bot/search tooling into player-facing learning and challenge features
+- make the Rust lab visible as a real product advantage
 - give Gomoku2D a reason to exist beyond retro styling and basic play
 - keep the lab-to-product loop tight: core/bot findings should become UI
   features without a rewrite
@@ -229,9 +228,9 @@ At least one player-facing feature clearly exists because the bot lab can run
 positions and searches outside the live board. A stranger should be able to see
 why this is not just another Gomoku board with a bot.
 
-### Process Lens
+### Production Lens
 
-- test agent-assisted work across the hardest boundary in the repo: Rust search
+- test agentic work across the hardest boundary in the repo: Rust search
   logic, wasm/API plumbing, and explanatory UI
 - develop a repeatable workflow for turning bot-lab experiments into polished
   product features
@@ -264,12 +263,12 @@ losing the board-first design.
 The app can change visual tone without becoming a different product, and the
 skin system proves the FE stack can support more than one presentation layer.
 
-### Process Lens
+### Production Lens
 
 - test whether agents can extend a visual system without flattening it into
   generic UI
 - learn how much design direction, asset tooling, and screenshot review are
-  needed to keep AI-assisted frontend polish coherent
+  needed to keep AI-centric frontend polish coherent
 - keep theme work constrained so it supports the product story instead of
   becoming an endless cosmetics pass
 
@@ -308,7 +307,7 @@ Two people can reliably play a full online game, and the app can distinguish:
 - server-verified online/ranked history
 - explicitly published public replays
 
-### Process Lens
+### Production Lens
 
 - test backend authority, realtime state, and public sharing only after the app
   has distinctive product moments worth preserving

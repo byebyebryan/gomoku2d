@@ -1,9 +1,12 @@
 # gomoku-bot-lab
 
-The Rust side of gomoku2d — a Cargo workspace where the rules engine and the
-bots live, and where bot ideas can be tried out and measured. The web game
-(`../gomoku-web/`) imports the compiled `gomoku-wasm` artifact and has no
-other knowledge of what's in here.
+The lab under the board: a Rust workspace where Gomoku2D's rules engine, bots,
+replay format, benchmarks, and WebAssembly bridge live.
+
+The web game (`../gomoku-web/`) imports the compiled `gomoku-wasm` artifact and
+stays deliberately ignorant of the native lab internals. That keeps the browser
+surface simple while letting core game logic and AI experiments evolve here
+first.
 
 ## Crates
 

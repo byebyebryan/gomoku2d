@@ -1,20 +1,21 @@
 # gomoku-web
 
-The browser Gomoku game. Pixel-art board, DOM shell around it, desktop and
-portrait/mobile layouts.
+The browser product surface for Gomoku2D: a retro-feeling board game shell on
+top of React, Phaser, and the Rust/WebAssembly core.
 
 **Play:** https://gomoku2d.byebyebryan.com/
 
 **Pixel-art previews:** https://gomoku2d.byebyebryan.com/assets/
 
-React owns the app shell (home, match, replay, profile). Phaser renders the
-board and nothing else. The rules engine and bot are the same Rust code used by
-the native bot lab in this repo, compiled to Wasm and called from JS. The bot
-runs in a Web Worker so it can think without freezing the UI.
+React owns the app shell: home, match, replay, profile, auth, and local/cloud
+history. Phaser renders the board and nothing else. The rules engine and bot
+are the same Rust code used by the native bot lab in this repo, compiled to
+Wasm and called from JS. The bot runs in a Web Worker so it can think without
+freezing the UI.
 
 ---
 
-## What you can do
+## What works today
 
 Single-player, local-first:
 
@@ -27,13 +28,15 @@ Single-player, local-first:
   point to play the rest against the bot yourself without undoing before the
   branch point
 - Local guest profile: display name, preferred rule, recent-match history —
-  persisted in browser storage, no sign-in
+  persisted in browser storage, no sign-in required
+- Optional Google sign-in for private cloud-backed profile/history continuity
+  across browsers
 - Desktop and portrait/mobile layouts are intentional rather than collapsed —
   mobile uses a dedicated touch-placement flow instead of direct tap-to-place
 
 ---
 
-## A bit of polish
+## What gives it character
 
 - Pixel art sprites with frame-by-frame animations — stones form and shatter,
   winning cells pulse, a hover pointer cycles through idle states

@@ -7,9 +7,9 @@ boundary), `ui_design.md` (DOM shell style system), and `game_visual.md`
 
 This document is the canonical UI/product-design guide for the local-first app
 baseline established in `v0.2`. It is intentionally focused on the playable
-surfaces we have now. The current `v0.3` cloud-continuity work extends Profile
-and persistence, but cloud sync, published replays, and online play should not
-leak into the default local play flow.
+surfaces we have now. The `v0.3` cloud-continuity line extends Profile and
+persistence, but cloud sync, published replays, and online play should not leak
+into the default local play flow.
 
 ## Product frame
 

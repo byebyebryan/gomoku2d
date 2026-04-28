@@ -220,14 +220,12 @@ features trustworthy.
 
 The old v0.1-to-v0.2 migration is complete. React now owns the shell, Phaser is
 the board renderer, and local guest play/history/replay are the working product
-baseline.
+baseline. The `v0.3` backend-continuity line has since added optional Firebase
+Auth, private cloud profile/history, and owner-scoped Firestore rules without
+moving casual gameplay out of the browser.
 
 From here, the version plan is:
 
-- **P3 / `v0.3` — backend foundation and cloud continuity.** Add Firebase
-  config, Auth, cloud profiles, guest-to-cloud promotion, private cloud match
-  history, and owner-scoped Firestore rules. The browser remains authoritative
-  for local/casual play.
 - **P4 / `v0.4` — lab-powered product identity.** Use the Rust core/bot/eval
   tools for replay analysis, critical-moment tagging, puzzles, bot
   personalities, and related learning modes.

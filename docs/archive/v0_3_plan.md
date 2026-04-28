@@ -169,9 +169,7 @@ This has been cut and published as `v0.3.1`.
 - keep source/trust/provenance internal so sync, dedupe, and future publish
   flows remain explicit
 
-This is implemented, deployed from `main`, and smoke-tested across production
-and local builds. Remaining work is release mechanics: version/changelog/docs
-prep, checks, `v0.3.2` tag, and release deploy verification.
+This has been cut and published as `v0.3.2`.
 
 ## Acceptance Criteria For The `0.3` Line
 
