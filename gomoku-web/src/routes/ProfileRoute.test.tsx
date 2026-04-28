@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 
@@ -6,6 +6,7 @@ import type { CloudAuthUser } from "../cloud/auth_store";
 import { cloudAuthStore } from "../cloud/auth_store";
 import type { CloudProfile } from "../cloud/cloud_profile";
 import { cloudProfileStore } from "../cloud/cloud_profile_store";
+import { cloudPromotionStore } from "../cloud/cloud_promotion_store";
 import { guestProfileStore } from "../profile/guest_profile_store";
 
 import { ProfileRoute } from "./ProfileRoute";
@@ -30,6 +31,7 @@ const cloudProfile: CloudProfile = {
 
 const initialCloudAuthState = cloudAuthStore.getState();
 const initialCloudProfileState = cloudProfileStore.getState();
+const initialCloudPromotionState = cloudPromotionStore.getState();
 const initialGuestProfileState = guestProfileStore.getState();
 
 function renderProfileRoute() {
@@ -45,6 +47,7 @@ describe("ProfileRoute cloud state", () => {
     cleanup();
     cloudAuthStore.setState(initialCloudAuthState, true);
     cloudProfileStore.setState(initialCloudProfileState, true);
+    cloudPromotionStore.setState(initialCloudPromotionState, true);
     guestProfileStore.setState(initialGuestProfileState, true);
   });
 
@@ -71,6 +74,13 @@ describe("ProfileRoute cloud state", () => {
       reset: vi.fn(),
       status: "idle",
     });
+    cloudPromotionStore.setState({
+      errorMessage: null,
+      promote: vi.fn(),
+      reset: vi.fn(),
+      result: null,
+      status: "idle",
+    });
   });
 
   it("keeps local profile usable when cloud auth is not configured", () => {
@@ -81,6 +91,37 @@ describe("ProfileRoute cloud state", () => {
     expect(screen.getByRole("button", { name: "Sign in with Google" })).toBeDisabled();
     expect(screen.getByText("Default rule")).toBeInTheDocument();
     expect(screen.getByLabelText("Display name")).toHaveValue("Guest");
+  });
+
+  it("renders canonical local saved-match history", () => {
+    guestProfileStore.getState().ensureGuestProfile();
+    guestProfileStore.getState().recordFinishedMatch({
+      mode: "bot",
+      moves: [
+        { col: 5, moveNumber: 1, player: 1, row: 7 },
+        { col: 0, moveNumber: 2, player: 2, row: 0 },
+        { col: 6, moveNumber: 3, player: 1, row: 7 },
+        { col: 1, moveNumber: 4, player: 2, row: 0 },
+        { col: 7, moveNumber: 5, player: 1, row: 7 },
+        { col: 2, moveNumber: 6, player: 2, row: 0 },
+        { col: 8, moveNumber: 7, player: 1, row: 7 },
+        { col: 3, moveNumber: 8, player: 2, row: 0 },
+        { col: 9, moveNumber: 9, player: 1, row: 7 },
+      ],
+      players: [
+        { kind: "human", name: "Guest", stone: "black" },
+        { kind: "bot", name: "Practice Bot", stone: "white" },
+      ],
+      status: "black_won",
+      variant: "freestyle",
+    });
+
+    renderProfileRoute();
+
+    expect(screen.getByText("Win")).toBeInTheDocument();
+    expect(screen.getByText("vs Practice Bot")).toBeInTheDocument();
+    expect(screen.getByText("Black")).toBeInTheDocument();
+    expect(screen.getByText("Moves 9")).toBeInTheDocument();
   });
 
   it("shows the linked cloud profile and allows sign-out", () => {
@@ -107,7 +148,100 @@ describe("ProfileRoute cloud state", () => {
 
     expect(screen.getByText("Signed in as Bryan")).toBeInTheDocument();
     expect(screen.getByText("uid-1")).toBeInTheDocument();
+    expect(screen.getByText("Private cloud identity is linked. Local play still works without cloud history.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
     expect(signOut).toHaveBeenCalledTimes(1);
+  });
+
+  it("starts background guest promotion after cloud profile loads", async () => {
+    const promote = vi.fn().mockResolvedValue(undefined);
+    const guestProfile = guestProfileStore.getState().ensureGuestProfile();
+    guestProfileStore.getState().renameDisplayName("ByeByeBryan");
+    const history = guestProfileStore.getState().history;
+    cloudAuthStore.setState({
+      errorMessage: null,
+      isConfigured: true,
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+      start: vi.fn(),
+      status: "signed_in",
+      stop: vi.fn(),
+      user: cloudUser,
+    });
+    cloudProfileStore.setState({
+      errorMessage: null,
+      loadForUser: vi.fn(),
+      profile: cloudProfile,
+      reset: vi.fn(),
+      status: "ready",
+    });
+    cloudPromotionStore.setState({
+      errorMessage: null,
+      promote,
+      reset: vi.fn(),
+      result: null,
+      status: "idle",
+    });
+
+    renderProfileRoute();
+
+    await waitFor(() => {
+      expect(promote).toHaveBeenCalledWith({
+        guestHistory: history,
+        guestProfile: expect.objectContaining({
+          displayName: "ByeByeBryan",
+          id: guestProfile.id,
+        }),
+        settings: { preferredVariant: "freestyle" },
+        user: cloudUser,
+      });
+    });
+  });
+
+  it("adopts the cloud display name before promoting a default local guest name", async () => {
+    const promote = vi.fn().mockResolvedValue(undefined);
+    const guestProfile = guestProfileStore.getState().ensureGuestProfile();
+    cloudAuthStore.setState({
+      errorMessage: null,
+      isConfigured: true,
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+      start: vi.fn(),
+      status: "signed_in",
+      stop: vi.fn(),
+      user: cloudUser,
+    });
+    cloudProfileStore.setState({
+      errorMessage: null,
+      loadForUser: vi.fn(),
+      profile: cloudProfile,
+      reset: vi.fn(),
+      status: "ready",
+    });
+    cloudPromotionStore.setState({
+      errorMessage: null,
+      promote,
+      reset: vi.fn(),
+      result: null,
+      status: "idle",
+    });
+
+    renderProfileRoute();
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Display name")).toHaveValue("Bryan");
+    });
+    await waitFor(() => {
+      expect(promote).toHaveBeenCalledWith({
+        guestHistory: [],
+        guestProfile: expect.objectContaining({
+          displayName: "Bryan",
+          id: guestProfile.id,
+        }),
+        settings: { preferredVariant: "freestyle" },
+        user: cloudUser,
+      });
+    });
+    expect(promote).toHaveBeenCalledTimes(1);
   });
 });

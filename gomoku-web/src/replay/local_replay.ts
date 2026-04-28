@@ -1,6 +1,13 @@
 import { BOARD_SIZE } from "../board/constants";
 import type { GameVariant } from "../core/bot_protocol";
-import type { CellPosition, CellStone, MatchMove, MatchPlayer, MatchStatus } from "../game/types";
+import type { CellPosition, CellStone, MatchMove, MatchStatus } from "../game/types";
+import {
+  movesFromMoveCells,
+  savedMatchPlayerForSide,
+  savedMatchPlayers,
+  savedMatchWinningSide,
+  type SavedMatchPlayer,
+} from "../match/saved_match";
 import type { GuestSavedMatch } from "../profile/guest_profile_store";
 
 export interface LocalReplayFrame {
@@ -27,8 +34,8 @@ function normalizeUndoFloor(undoFloor: number | undefined, moveCount: number): n
   return Math.max(0, Math.min(moveCount, Math.floor(undoFloor)));
 }
 
-export function replayUndoFloor(match: Pick<GuestSavedMatch, "moves" | "undoFloor">): number {
-  return normalizeUndoFloor(match.undoFloor, match.moves.length);
+export function replayUndoFloor(match: Pick<GuestSavedMatch, "move_count" | "undo_floor">): number {
+  return normalizeUndoFloor(match.undo_floor, match.move_count);
 }
 
 export function defaultReplayMoveIndex(totalMoves: number, undoFloor = 0): number {
@@ -49,7 +56,7 @@ export function canResumeReplay(
 }
 
 export function replayResumeUndoFloor(
-  match: Pick<GuestSavedMatch, "moves" | "undoFloor">,
+  match: Pick<GuestSavedMatch, "move_count" | "undo_floor">,
   frame: Pick<LocalReplayFrame, "moveIndex">,
 ): number {
   return Math.max(replayUndoFloor(match), frame.moveIndex);
@@ -65,16 +72,12 @@ function cloneMoves(moves: MatchMove[]): MatchMove[] {
   return moves.map((move) => ({ ...move }));
 }
 
-function cloneWinningCells(cells: CellPosition[]): CellPosition[] {
-  return cells.map((cell) => ({ ...cell }));
-}
-
 function clampMoveIndex(moveIndex: number, max: number): number {
   return Math.max(0, Math.min(moveIndex, max));
 }
 
-export function replayPlayerName(player: MatchPlayer, guestDisplayName: string): string {
-  return player.kind === "human" ? guestDisplayName : player.name;
+export function replayPlayerName(player: SavedMatchPlayer, guestDisplayName: string): string {
+  return player.kind === "human" ? guestDisplayName : player.display_name;
 }
 
 export function variantLabel(variant: GameVariant): string {
@@ -82,8 +85,8 @@ export function variantLabel(variant: GameVariant): string {
 }
 
 export function replayPlayerLabel(match: GuestSavedMatch, guestDisplayName: string): string {
-  return match.players
-    .map((player) => `${replayPlayerName(player, guestDisplayName)} (${player.stone})`)
+  return savedMatchPlayers(match)
+    .map(({ player, side }) => `${replayPlayerName(player, guestDisplayName)} (${side})`)
     .join(" vs ");
 }
 
@@ -92,16 +95,21 @@ export function replayWinnerLabel(match: GuestSavedMatch, guestDisplayName: stri
     return "Draw";
   }
 
-  const winningStone = match.status === "black_won" ? "black" : "white";
-  const winner = match.players.find((player) => player.stone === winningStone);
-  const winnerName = winner ? replayPlayerName(winner, guestDisplayName) : winningStone;
+  const winningSide = savedMatchWinningSide(match);
+  const winner = winningSide ? savedMatchPlayerForSide(match, winningSide) : null;
+  const winnerName = winner ? replayPlayerName(winner, guestDisplayName) : winningSide;
 
   return `${winnerName} wins`;
 }
 
-export function buildLocalReplayFrame(match: GuestSavedMatch, moveIndex: number): LocalReplayFrame {
-  const clampedMoveIndex = clampMoveIndex(moveIndex, match.moves.length);
-  const moves = cloneMoves(match.moves.slice(0, clampedMoveIndex));
+export function buildLocalReplayFrame(
+  match: GuestSavedMatch,
+  moveIndex: number,
+  winningCellsForMatch: (match: GuestSavedMatch) => CellPosition[] = () => [],
+): LocalReplayFrame {
+  const matchMoves = movesFromMoveCells(match.move_cells);
+  const clampedMoveIndex = clampMoveIndex(moveIndex, matchMoves.length);
+  const moves = cloneMoves(matchMoves.slice(0, clampedMoveIndex));
   const cells = emptyCells();
 
   for (const move of moves) {
@@ -109,7 +117,7 @@ export function buildLocalReplayFrame(match: GuestSavedMatch, moveIndex: number)
   }
 
   const lastMove = moves.length > 0 ? moves[moves.length - 1] : null;
-  const atEnd = clampedMoveIndex === match.moves.length;
+  const atEnd = clampedMoveIndex === matchMoves.length;
 
   return {
     cells,
@@ -118,6 +126,6 @@ export function buildLocalReplayFrame(match: GuestSavedMatch, moveIndex: number)
     moveIndex: clampedMoveIndex,
     moves,
     status: atEnd ? match.status : "playing",
-    winningCells: atEnd ? cloneWinningCells(match.winningCells) : [],
+    winningCells: atEnd ? winningCellsForMatch(match) : [],
   };
 }

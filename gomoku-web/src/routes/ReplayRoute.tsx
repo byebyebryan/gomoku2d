@@ -4,6 +4,8 @@ import { useStore } from "zustand";
 
 import { Board } from "../components/Board/Board";
 import type { LocalMatchResumeSeed } from "../game/local_match_store";
+import type { CellPosition } from "../game/types";
+import { savedMatchPlayers } from "../match/saved_match";
 import { guestProfileStore } from "../profile/guest_profile_store";
 import {
   buildLocalReplayFrame,
@@ -34,6 +36,7 @@ export function ReplayRoute() {
   const profile = useStore(guestProfileStore, (state) => state.profile);
   const [moveIndex, setMoveIndex] = useState(defaultReplayMoveIndex(0));
   const [autoplaying, setAutoplaying] = useState(false);
+  const [coreWinningCells, setCoreWinningCells] = useState<CellPosition[]>([]);
 
   useEffect(() => {
     guestProfileStore.getState().ensureGuestProfile();
@@ -44,28 +47,50 @@ export function ReplayRoute() {
   const replayFloor = match ? replayUndoFloor(match) : 0;
 
   useEffect(() => {
-    setMoveIndex(defaultReplayMoveIndex(match?.moves.length ?? 0, replayFloor));
+    setMoveIndex(defaultReplayMoveIndex(match?.move_count ?? 0, replayFloor));
     setAutoplaying(false);
-  }, [match?.moves.length, matchId, replayFloor]);
+    setCoreWinningCells([]);
+  }, [match?.move_count, matchId, replayFloor]);
 
   useEffect(() => {
     if (!match || !autoplaying) {
       return undefined;
     }
 
-    if (moveIndex >= match.moves.length) {
+    if (moveIndex >= match.move_count) {
       setAutoplaying(false);
       return undefined;
     }
 
     const timer = window.setTimeout(() => {
-      setMoveIndex((current) => Math.min(match.moves.length, current + 1));
+      setMoveIndex((current) => Math.min(match.move_count, current + 1));
     }, AUTOPLAY_DELAY_MS);
 
     return () => {
       window.clearTimeout(timer);
     };
   }, [autoplaying, match, moveIndex]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!match || moveIndex !== match.move_count) {
+      setCoreWinningCells([]);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    void import("../replay/local_replay_core").then(({ winningCellsFromCore }) => {
+      if (!cancelled) {
+        setCoreWinningCells(winningCellsFromCore(match));
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [match, moveIndex]);
 
   if (!match) {
     return (
@@ -82,7 +107,7 @@ export function ReplayRoute() {
     );
   }
 
-  const frame = buildLocalReplayFrame(match, moveIndex);
+  const frame = buildLocalReplayFrame(match, moveIndex, () => coreWinningCells);
   const resumeSeed: LocalMatchResumeSeed = {
     currentPlayer: frame.currentPlayer,
     moves: frame.moves.map((move) => ({ ...move })),
@@ -153,23 +178,23 @@ export function ReplayRoute() {
               <div className={`${styles.metaRow} ${styles.moveRow}`}>
                 <span className={styles.metaLabel}>Move</span>
                 <span className={styles.metaValue} data-testid="replay-move-count">
-                  {moveCountLabel(frame.moveIndex, match.moves.length)}
+                  {moveCountLabel(frame.moveIndex, match.move_count)}
                 </span>
               </div>
             </div>
             <div className={styles.playerRows}>
-              {match.players.map((player, index) => {
-                const active = frame.status === "playing" && frame.currentPlayer === index + 1;
+              {savedMatchPlayers(match).map(({ player, side }) => {
+                const active = frame.status === "playing" && frame.currentPlayer === (side === "black" ? 1 : 2);
 
                 return (
                   <article
                     className={[
                       styles.playerRow,
-                      player.stone === "black" ? styles.playerRowBlack : styles.playerRowWhite,
+                      side === "black" ? styles.playerRowBlack : styles.playerRowWhite,
                       active ? styles.playerRowActive : "",
                     ].join(" ").trim()}
-                    data-testid={`replay-player-row-${player.stone}`}
-                    key={player.stone}
+                    data-testid={`replay-player-row-${side}`}
+                    key={side}
                   >
                     <div className={styles.playerCopy}>
                       <div className={styles.playerHead}>
@@ -200,7 +225,7 @@ export function ReplayRoute() {
               <input
                 aria-label="Replay timeline"
                 className={styles.timelineInput}
-                max={match.moves.length}
+                max={match.move_count}
                 min={0}
                 onChange={(event) => {
                   setAutoplaying(false);
@@ -209,7 +234,7 @@ export function ReplayRoute() {
                 style={
                   {
                     "--timeline-progress":
-                      match.moves.length === 0 ? "0%" : `${(frame.moveIndex / match.moves.length) * 100}%`,
+                      match.move_count === 0 ? "0%" : `${(frame.moveIndex / match.move_count) * 100}%`,
                   } as React.CSSProperties
                 }
                 type="range"
@@ -223,7 +248,7 @@ export function ReplayRoute() {
                 className="uiAction uiActionNeutral uiActionIconOnly"
                 onClick={() => {
                   setAutoplaying(false);
-                  setMoveIndex(replayStartMoveIndex(match.moves.length));
+                  setMoveIndex(replayStartMoveIndex(match.move_count));
                 }}
                 type="button"
               >
@@ -255,7 +280,7 @@ export function ReplayRoute() {
                 className="uiAction uiActionNeutral uiActionIconOnly"
                 onClick={() => {
                   setAutoplaying(false);
-                  setMoveIndex((current) => Math.min(match.moves.length, current + 1));
+                  setMoveIndex((current) => Math.min(match.move_count, current + 1));
                 }}
                 type="button"
               >
@@ -266,7 +291,7 @@ export function ReplayRoute() {
                 className="uiAction uiActionNeutral uiActionIconOnly"
                 onClick={() => {
                   setAutoplaying(false);
-                  setMoveIndex(match.moves.length);
+                  setMoveIndex(match.move_count);
                 }}
                 type="button"
               >

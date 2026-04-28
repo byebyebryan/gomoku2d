@@ -2,7 +2,15 @@ import { createStore, type StoreApi } from "zustand/vanilla";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 import type { GameVariant } from "../core/bot_protocol";
-import type { CellPosition, MatchMove, MatchPlayer, MatchStatus } from "../game/types";
+import type { MatchMove, MatchPlayer } from "../game/types";
+import {
+  createLocalSavedMatch,
+  isSavedMatchV1,
+  migrateLegacyGuestSavedMatch,
+  type LegacyGuestSavedMatch,
+  type SavedMatchStatus,
+  type SavedMatchV1,
+} from "../match/saved_match";
 
 export interface GuestProfileStorage {
   getItem: (name: string) => string | null;
@@ -24,24 +32,23 @@ export interface GuestProfileSettings {
   preferredVariant: GameVariant;
 }
 
-export interface GuestSavedMatch {
-  guestStone: "black" | "white";
-  id: string;
+export type GuestSavedMatch = SavedMatchV1;
+
+export interface FinishedGuestMatchInput {
   mode: "bot";
   moves: MatchMove[];
   players: [MatchPlayer, MatchPlayer];
-  savedAt: string;
-  status: MatchStatus;
+  status: SavedMatchStatus;
   undoFloor?: number;
   variant: GameVariant;
-  winningCells: CellPosition[];
+  winningCells?: unknown;
 }
 
 export interface GuestProfileState {
   ensureGuestProfile: () => GuestProfileIdentity;
   history: GuestSavedMatch[];
   profile: GuestProfileIdentity | null;
-  recordFinishedMatch: (match: Omit<GuestSavedMatch, "guestStone" | "id" | "savedAt">) => string;
+  recordFinishedMatch: (match: FinishedGuestMatchInput) => string;
   resetGuestProfile: () => void;
   renameDisplayName: (displayName: string) => void;
   settings: GuestProfileSettings;
@@ -52,8 +59,10 @@ export interface GuestProfileStoreOptions {
   storage?: GuestProfileStorage;
 }
 
-const STORAGE_KEY = "gomoku2d.guest-profile.v1";
+const LEGACY_STORAGE_KEY = "gomoku2d.guest-profile.v1";
+const STORAGE_KEY = "gomoku2d.guest-profile.v2";
 const HISTORY_LIMIT = 24;
+export const DEFAULT_GUEST_DISPLAY_NAME = "Guest";
 
 function createDefaultSettings(): GuestProfileSettings {
   return {
@@ -69,36 +78,107 @@ function createId(): string {
   return globalThis.crypto?.randomUUID?.() ?? `guest-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function cloneMoves(moves: MatchMove[]): MatchMove[] {
-  return moves.map((move) => ({ ...move }));
+interface PersistedGuestProfileState {
+  history: unknown[];
+  profile: GuestProfileIdentity | null;
+  settings: GuestProfileSettings;
 }
 
-function clonePlayers(players: [MatchPlayer, MatchPlayer]): [MatchPlayer, MatchPlayer] {
-  return [{ ...players[0] }, { ...players[1] }];
-}
-
-function cloneWinningCells(cells: CellPosition[]): CellPosition[] {
-  return cells.map((cell) => ({ ...cell }));
-}
-
-function deriveGuestStone(players: [MatchPlayer, MatchPlayer]): "black" | "white" {
-  const human = players.find((player) => player.kind === "human");
-  return human?.stone ?? "black";
-}
-
-function normalizeUndoFloor(undoFloor: number | undefined, moveCount: number): number {
-  if (undoFloor === undefined || !Number.isFinite(undoFloor)) {
-    return 0;
+function persistedStateFromRaw(raw: string | null): PersistedGuestProfileState | null {
+  if (!raw) {
+    return null;
   }
 
-  return Math.max(0, Math.min(moveCount, Math.floor(undoFloor)));
+  try {
+    const parsed = JSON.parse(raw) as { state?: Partial<PersistedGuestProfileState> };
+    return {
+      history: Array.isArray(parsed.state?.history) ? parsed.state.history : [],
+      profile: parsed.state?.profile ?? null,
+      settings: parsed.state?.settings ?? createDefaultSettings(),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function migrateHistory(history: unknown[], profile: GuestProfileIdentity | null): GuestSavedMatch[] {
+  const localProfileId = profile?.id ?? "legacy-guest";
+
+  return history.flatMap((match) => {
+    if (isSavedMatchV1(match)) {
+      return [match];
+    }
+
+    const candidate = match as Partial<SavedMatchV1>;
+    if (candidate.schema_version === 1) {
+      return [];
+    }
+
+    try {
+      return [migrateLegacyGuestSavedMatch(match as LegacyGuestSavedMatch, localProfileId)];
+    } catch {
+      return [];
+    }
+  });
+}
+
+function migrateGuestProfileStorage(storage: GuestProfileStorage): void {
+  if (storage.getItem(STORAGE_KEY)) {
+    return;
+  }
+
+  const legacy = persistedStateFromRaw(storage.getItem(LEGACY_STORAGE_KEY));
+  if (!legacy) {
+    return;
+  }
+
+  const migrated: Pick<GuestProfileState, "history" | "profile" | "settings"> = {
+    history: migrateHistory(legacy.history, legacy.profile),
+    profile: legacy.profile,
+    settings: legacy.settings,
+  };
+
+  storage.setItem(STORAGE_KEY, JSON.stringify({ state: migrated, version: 0 }));
+}
+
+function validatedGuestProfileStorage(storage: GuestProfileStorage): GuestProfileStorage {
+  return {
+    getItem: (name) => {
+      const raw = storage.getItem(name);
+      if (name !== STORAGE_KEY) {
+        return raw;
+      }
+
+      const persisted = persistedStateFromRaw(raw);
+      if (!persisted) {
+        return null;
+      }
+
+      const sanitized: Pick<GuestProfileState, "history" | "profile" | "settings"> = {
+        history: migrateHistory(persisted.history, persisted.profile),
+        profile: persisted.profile,
+        settings: persisted.settings,
+      };
+
+      return JSON.stringify({ state: sanitized, version: 0 });
+    },
+    removeItem: (name) => {
+      storage.removeItem(name);
+    },
+    setItem: (name, value) => {
+      storage.setItem(name, value);
+    },
+  };
 }
 
 export function createGuestProfileStore(
   options: GuestProfileStoreOptions = {},
 ): StoreApi<GuestProfileState> {
+  const baseStorage = options.storage ?? localStorage;
+  migrateGuestProfileStorage(baseStorage);
+
   const storage = createJSONStorage<Pick<GuestProfileState, "history" | "profile" | "settings">>(
-    () => options.storage ?? localStorage,
+    () => validatedGuestProfileStorage(baseStorage),
   );
 
   return createStore<GuestProfileState>()(
@@ -114,7 +194,7 @@ export function createGuestProfileStore(
           const profile: GuestProfileIdentity = {
             avatarUrl: null,
             createdAt: created,
-            displayName: "Guest",
+            displayName: DEFAULT_GUEST_DISPLAY_NAME,
             id: createId(),
             kind: "guest",
             updatedAt: created,
@@ -129,25 +209,24 @@ export function createGuestProfileStore(
         recordFinishedMatch: (match) => {
           const profile = get().ensureGuestProfile();
           const savedAt = nowIso();
-          const record: GuestSavedMatch = {
-            guestStone: deriveGuestStone(match.players),
-            id: createId(),
-            mode: match.mode,
-            moves: cloneMoves(match.moves),
-            players: clonePlayers(match.players),
+          const id = createId();
+          const record = createLocalSavedMatch({
+            id,
+            localProfileId: profile.id,
+            moves: match.moves,
+            players: match.players,
             savedAt,
             status: match.status,
-            undoFloor: normalizeUndoFloor(match.undoFloor, match.moves.length),
+            undoFloor: match.undoFloor,
             variant: match.variant,
-            winningCells: cloneWinningCells(match.winningCells),
-          };
+          });
 
           set((state) => ({
             history: [record, ...state.history].slice(0, HISTORY_LIMIT),
             profile: { ...profile, updatedAt: savedAt },
           }));
 
-          return record.id;
+          return id;
         },
         resetGuestProfile: () => {
           set({
@@ -158,7 +237,7 @@ export function createGuestProfileStore(
         },
         renameDisplayName: (displayName) => {
           const profile = get().ensureGuestProfile();
-          const nextName = displayName.trim() || "Guest";
+          const nextName = displayName.trim() || DEFAULT_GUEST_DISPLAY_NAME;
           set({
             profile: {
               ...profile,
