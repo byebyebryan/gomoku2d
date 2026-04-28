@@ -122,6 +122,16 @@ Done:
 Purpose: make match history feel like one continuous product surface while
 making new signed-in matches durable across browsers/devices.
 
+Release status:
+
+- implementation is complete and deployed from `main` for release-candidate
+  smoke
+- production and local-build smoke checks are green:
+  signed-in save, refresh/sign-out/sign-in restore, Reset Profile, old-row
+  non-reimport, post-reset save, and cross-build cloud sync
+- Firestore rules and the matching web build were deployed together because
+  private match creates now require `match_saved_at`
+
 UX decision:
 
 - do not make users manage "local history" versus "cloud history"
@@ -159,35 +169,38 @@ Sync model:
 
 Work:
 
-- add a direct `cloud_saved` write path for finished signed-in casual matches
+- added a direct `cloud_saved` write path for finished signed-in casual matches
   at `profiles/{uid}/matches/{match.id}`
-- prevent duplicate cloud records: guest promotion must skip a local match if
+- prevented duplicate cloud records: guest promotion skips a local match if
   either the deterministic guest-import ID or the raw direct-save ID already
   exists
-- add a small pending-sync model for local records that have not reached cloud
+- added a small pending-sync model for local records that have not reached cloud
   yet
-- load private cloud match history on Profile, with an initial cap/pagination
+- loaded private cloud match history on Profile, with an initial cap/pagination
   boundary to avoid repeated long-history reads
-- cache loaded cloud records locally per signed-in `uid` rather than mixing them
+- cached loaded cloud records locally per signed-in `uid` rather than mixing them
   into the guest/device history bucket
-- present one Match History list in Profile while surfacing pending/failed sync
+- presented one Match History list in Profile while surfacing pending/failed sync
   only when needed
-- define the active-history resolver: merge pending local rows and per-uid cloud
+- defined the active-history resolver: merge pending local rows and per-uid cloud
   cache, dedupe direct `cloud_saved` IDs against `guest_import` `local_match_id`
   records, prefer synced cloud records over local duplicates, sort by
   `saved_at`, and derive Profile stats from this resolved list
-- keep replay resolution local-first by reading from the active visible history
+- kept replay resolution local-first by reading from the active visible history
   cache; defer a dedicated cloud replay route until public/shareable replay work
-- replace the old local-only reset wording with **Reset Profile** plus inline
+- replaced the old local-only reset wording with **Reset Profile** plus inline
   Confirm/Cancel controls
-- implement signed-in reset as reset-barrier write, bounded deletion of owned
+- implemented signed-in reset as reset-barrier write, bounded deletion of owned
   `profiles/{uid}/matches/*`, profile-field reset to defaults, active local
   cache/history clear on this device, per-uid cloud cache clear, and pending-sync
   queue clear
-- update Firestore profile schema/rules for `history_reset_at`, owner-only
-  private match deletes, and the signed-in reset write path; deploy those rules
-  before relying on the UI
-- keep deletes limited to private `client_uploaded` records in this phase; do
+- updated Firestore profile schema/rules for `history_reset_at`, `match_saved_at`
+  reset-barrier enforcement, owner-only private match creates/deletes, and the
+  signed-in reset write path
+- added emulator-backed Firestore rules tests for owner scoping, reset-barrier
+  writes, stale match rejection, private match creates, and private match
+  deletes
+- kept deletes limited to private `client_uploaded` records in this phase; do
   not create rules that could delete future `server_verified` records
 
 Done when:
@@ -220,13 +233,13 @@ Purpose: close the backend-foundation line without pulling `v0.4` forward.
 
 Work:
 
-- offline/error-state review for auth, profile loading, promotion, and match
-  saves
-- Firestore rules validation beyond live smoke testing
-- bundle-size check after Firebase imports
-- smoke tests for guest-only play and signed-in Profile
-- cost/headroom doc refresh after real usage
-- final docs sync and release notes
+- release `0.3.2` from the completed private-history slice
+- keep one post-tag production smoke for guest-only play, signed-in Profile,
+  signed-in save/load, and Reset Profile
+- watch Firebase/Auth/Firestore usage after a little more real traffic and
+  refresh cost notes if the dashboard shows anything surprising
+- carry any remaining auth/offline polish into later `0.3.x` only if real usage
+  exposes it; do not invent more backend scope before `v0.4`
 
 Done when:
 

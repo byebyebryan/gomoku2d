@@ -12,6 +12,59 @@ their own section.
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-04-28
+
+**Theme: private cloud history becomes the active history surface.**
+
+`v0.3.2` finishes the core cloud-continuity loop for `v0.3`: signed-in matches
+save privately to Firestore, cloud history loads back into Profile/Replay, and
+Reset Profile has a server-side barrier so old local rows cannot silently
+return after a reset. The UX still abstracts away storage when sync is healthy:
+guest users see local history, signed-in users see "my history", and public
+replay sharing remains a later explicit publish feature.
+
+### Web and cloud history
+
+- Added direct `cloud_saved` writes for finished signed-in casual matches under
+  `profiles/{uid}/matches/{match.id}` while still saving locally first.
+- Added per-user cloud-history cache and active-history resolution so Profile
+  and Replay can use one visible history surface across local pending rows,
+  promoted guest imports, and cloud-saved matches.
+- Added dedupe between direct `cloud_saved` IDs and deterministic
+  `guest_import` IDs so promotion/retry paths do not duplicate the same local
+  match.
+- Added background pending-sync metadata, retry hooks, and visible sync failure
+  states without blocking local play.
+- Added signed-in Reset Profile with inline confirmation, cloud profile/default
+  reset, bounded private-history delete, per-device cache clear, and local
+  pending-sync clear.
+- Kept guest-only and no-Firebase behavior intact: local profile/history/replay
+  still work without cloud config.
+
+### Rules, schema, and tests
+
+- Added `history_reset_at` to the cloud profile reset model and made client
+  promotion, direct sync, cloud loads, and active-history resolution ignore
+  records at or before the barrier.
+- Added `match_saved_at` to private cloud match documents so Firestore rules
+  can compare match age against the reset barrier without parsing strings.
+- Hardened Firestore rules for owner-only private match creates/deletes,
+  request-time-only reset barrier writes, monotonic reset movement, and
+  server-side rejection of stale post-reset match creates.
+- Added emulator-backed Firestore rules tests and wired them into CI with Java
+  setup.
+- Added package overrides so the Firebase rules tooling keeps `npm audit`
+  clean.
+
+### Validation
+
+- Local and production smoke tested signed-in save, reload, sign-out/sign-in,
+  Reset Profile, post-reset save, and live/local cross-profile cloud sync.
+- Manually deployed and verified the matching web build and Firestore rules
+  before preparing the release.
+- Refreshed backend infra, cost, data-model, roadmap, and completion-plan docs
+  around the completed private-history slice.
+
 ## [0.3.1] - 2026-04-28
 
 **Theme: private cloud continuity without a sign-in wall.**
@@ -402,7 +455,8 @@ together in one canvas-driven surface. That lesson drove the `v0.2.1` rewrite.
   concerns blurred together.
 - Expressive UI language, but not scalable beyond one canvas.
 
-[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.3.2...HEAD
+[0.3.2]: https://github.com/byebyebryan/gomoku2d/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/byebyebryan/gomoku2d/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/byebyebryan/gomoku2d/compare/v0.2.4...v0.3.0
 [0.2.4]: https://github.com/byebyebryan/gomoku2d/compare/v0.2.3...v0.2.4

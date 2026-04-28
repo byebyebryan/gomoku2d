@@ -478,17 +478,21 @@ Current cloud UI / data smoke state:
   signing out and resetting local profile state, signing back in restored the
   cloud-backed profile/history; a newly finished signed-in match also restored
   after refresh/sign-out/sign-in and could be opened from Replay.
+- `v0.3.2` production and local-build smoke has been manually confirmed:
+  signed-in match save, profile/history reload, refresh/sign-out/sign-in
+  persistence, Reset Profile, old-row non-reimport after reset, post-reset save,
+  and live/local cross-profile sync are all green.
+- The matching `v0.3.2` web build and Firestore rules were manually dispatched
+  from `main` before release prep and both completed successfully.
 
-Remaining before the next `v0.3.x` release:
+Remaining before the next `v0.3.x` tag:
 
-- Deploy the updated Firestore rules for `history_reset_at`, `match_saved_at`
-  reset-barrier enforcement, and owner-scoped private `client_uploaded` match
-  deletes. This ruleset requires the matching web build because cloud match
-  creates without `match_saved_at` are rejected; old open clients may need a
-  refresh after deploy.
-- Smoke-test Reset Profile while signed in: cloud history clears, this device's
-  local/cache state clears, and older local rows do not re-import afterward.
-- Refresh cost/headroom notes after a few more real cloud writes.
+- Cut `v0.3.2` from the prepared release diff.
+- Run one post-tag production smoke. Cloud match creates require the matching
+  web build because rules reject writes without `match_saved_at`; old open
+  clients may need a refresh after deploy.
+- Refresh cost/headroom notes again after a little more real traffic if the
+  dashboard shows anything surprising.
 
 Deferred until later phases:
 
