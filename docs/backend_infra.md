@@ -460,11 +460,17 @@ Current cloud UI / data smoke state:
   `gomoku2d.guest-profile.v2` had 24 local matches, Firestore had 24 matching
   `guest_import` docs under `profiles/{uid}/matches`, and no local/cloud
   `local_match_id` mismatches were found.
+- Local Phase 1 cloud-history sync has been manually smoke-tested: after
+  signing out and resetting local profile state, signing back in restored the
+  cloud-backed profile/history; a newly finished signed-in match also restored
+  after refresh/sign-out/sign-in and could be opened from Replay.
 
 Remaining before the next `v0.3.x` release:
 
-- Save future signed-in casual matches privately to Firestore.
-- Load private cloud history/replays from Profile.
+- Deploy the updated Firestore rules for `history_reset_at` and owner-scoped
+  private `client_uploaded` match deletes.
+- Smoke-test Reset Profile while signed in: cloud history clears, this device's
+  local/cache state clears, and older local rows do not re-import afterward.
 - Refresh cost/headroom notes after a few more real cloud writes.
 
 Deferred until later phases:

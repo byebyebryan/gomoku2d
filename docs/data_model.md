@@ -42,6 +42,7 @@ type CloudProfileDocument = {
   created_at: Timestamp;
   display_name: string;
   email: string | null;
+  history_reset_at?: Timestamp | null;
   last_login_at: Timestamp;
   preferred_variant: "freestyle" | "renju";
   schema_version: 1;
@@ -55,6 +56,9 @@ Rules:
 
 - `uid` must match the document ID.
 - `created_at` and `username` are app-owned after creation.
+- `history_reset_at` is a reset barrier. When present, local promotion, direct
+  sync retry, cloud history load, and active-history resolution ignore matches
+  with `saved_at <= history_reset_at`.
 - `schema_version` is always `1`; increments require a writer + rules + reader
   update in the same slice.
 - Writer behavior: during guest promotion, the browser only sends
@@ -64,6 +68,10 @@ Rules:
   instead of overwriting cloud state with `Guest`.
 - Firestore rules enforce ownership, shape, and timestamps for profile writes;
   they do not currently enforce the provider-default display-name condition.
+- Reset Profile while signed in writes `history_reset_at`, resets cloud profile
+  display/default-rule fields to provider/default values, deletes private
+  `client_uploaded` match documents where rules allow it, and clears this
+  device's local/cloud caches.
 
 ## Private Match History
 
@@ -142,6 +150,9 @@ Key differences from `guest_import`:
 - `id` is the raw local UUID rather than a prefixed encoding.
 - Human player's `local_profile_id` is always `null`; use `profile_uid` for
   cross-device identity matching (see `matchUserSide` in `saved_match.ts`).
+- Reset Profile deletes only private `client_uploaded` records in this
+  subcollection; future `server_verified` history must not be deleted by the
+  owner-client reset path.
 
 ```ts
 type SavedMatchPlayer = {
