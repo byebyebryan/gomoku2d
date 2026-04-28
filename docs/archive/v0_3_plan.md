@@ -152,7 +152,20 @@ deploy verification.
 
 - save future signed-in matches to cloud
 - load cloud match history on Profile
-- replay cloud-saved private matches
+- cache cloud history locally per signed-in user and replay from the active
+  local history view
+- resolve one visible history list from pending local rows plus per-user cloud
+  cache, with explicit dedupe/precedence rules
+- present one user-facing Match History surface instead of asking players to
+  manage local versus cloud storage
+- replace the old local-only reset with one **Reset Profile** danger action
+  whose confirmation and effect depend on signed-in state
+- for signed-in reset, clear private cloud history and write a reset barrier so
+  older local records do not re-sync afterward
+- update Firestore rules/schema for the reset barrier and owner-only private
+  match deletes
+- keep source/trust/provenance internal so sync, dedupe, and future publish
+  flows remain explicit
 
 The exact split can change, but avoid bundling auth, import, and history sync
 into one hard-to-debug release.
