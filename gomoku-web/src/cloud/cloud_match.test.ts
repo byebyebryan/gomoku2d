@@ -69,6 +69,7 @@ describe("cloud match serialization", () => {
       local_match_id: "match-1",
       local_origin_id: "guest:guest-1:match-1",
       match_kind: "local_vs_bot",
+      match_saved_at: expect.anything(),
       move_cells: [112, 113],
       move_count: 2,
       player_black: {
@@ -102,6 +103,7 @@ describe("cloud match serialization", () => {
       undo_floor: 2,
       variant: "renju",
     });
+    expect(document.match_saved_at.toDate().toISOString()).toBe(match.saved_at);
   });
 
   it("uses the current promoted guest display name for human player snapshots", () => {
@@ -169,6 +171,15 @@ describe("cloud match serialization", () => {
       }),
     ).toThrow("one human player and one bot player");
   });
+
+  it("rejects imports without a valid saved_at timestamp", () => {
+    expect(() =>
+      cloudSavedMatchFromGuestMatch(user, guestProfile, {
+        ...match,
+        saved_at: "not-a-date",
+      }),
+    ).toThrow("valid saved_at timestamp");
+  });
 });
 
 describe("cloud direct-saved match", () => {
@@ -183,6 +194,7 @@ describe("cloud direct-saved match", () => {
       board_size: 15,
       id: "match-1",
       match_kind: "local_vs_bot",
+      match_saved_at: expect.anything(),
       move_cells: [112, 113],
       move_count: 2,
       player_black: {
@@ -212,6 +224,7 @@ describe("cloud direct-saved match", () => {
       trust: CLOUD_MATCH_TRUST_CLIENT_UPLOADED,
       variant: "renju",
     });
+    expect(document.match_saved_at.toDate().toISOString()).toBe(match.saved_at);
   });
 
   it("sets local_profile_id to null on the human player for cross-device identity", () => {
@@ -233,5 +246,14 @@ describe("cloud direct-saved match", () => {
         trust: "client_uploaded",
       }),
     ).toThrow("local history records");
+  });
+
+  it("rejects direct saves without a valid saved_at timestamp", () => {
+    expect(() =>
+      createCloudDirectSavedDocument(user, {
+        ...match,
+        saved_at: "not-a-date",
+      }),
+    ).toThrow("valid saved_at timestamp");
   });
 });

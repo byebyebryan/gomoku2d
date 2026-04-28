@@ -43,6 +43,43 @@ service cloud.firestore {
       return value == null || (value is string && value.size() <= maxLength);
     }
 
+    function hasHistoryResetAt(data) {
+      return data.keys().hasAny(['history_reset_at']);
+    }
+
+    function validHistoryResetAtValue(data) {
+      return !hasHistoryResetAt(data)
+        || data.history_reset_at == null
+        || data.history_reset_at is timestamp;
+    }
+
+    function validHistoryResetAtOnCreate() {
+      return !hasHistoryResetAt(request.resource.data)
+        || request.resource.data.history_reset_at == null
+        || request.resource.data.history_reset_at == request.time;
+    }
+
+    function validHistoryResetAtOnUpdate() {
+      return (
+          !hasHistoryResetAt(resource.data)
+          && !hasHistoryResetAt(request.resource.data)
+        )
+        || (
+          hasHistoryResetAt(resource.data)
+          && hasHistoryResetAt(request.resource.data)
+          && request.resource.data.history_reset_at == resource.data.history_reset_at
+        )
+        || (
+          hasHistoryResetAt(request.resource.data)
+          && request.resource.data.history_reset_at == request.time
+          && (
+            !hasHistoryResetAt(resource.data)
+            || resource.data.history_reset_at == null
+            || request.resource.data.history_reset_at > resource.data.history_reset_at
+          )
+        );
+    }
+
     function validProviders(value) {
       return value is list
         && value.size() > 0
@@ -61,11 +98,7 @@ service cloud.firestore {
         && nullableString(request.resource.data.avatar_url, 2048)
         && nullableString(request.resource.data.email, 320)
         && nullableString(request.resource.data.username, 40)
-        && (
-          !request.resource.data.keys().hasAny(['history_reset_at'])
-          || request.resource.data.history_reset_at == null
-          || request.resource.data.history_reset_at is timestamp
-        )
+        && validHistoryResetAtValue(request.resource.data)
         && request.resource.data.preferred_variant in ['freestyle', 'renju']
         && validProviders(request.resource.data.auth_providers)
         && request.resource.data.created_at is timestamp
@@ -86,6 +119,7 @@ service cloud.firestore {
         'local_match_id',
         'local_origin_id',
         'match_kind',
+        'match_saved_at',
         'move_cells',
         'move_count',
         'player_black',
@@ -104,6 +138,7 @@ service cloud.firestore {
         'local_match_id',
         'local_origin_id',
         'match_kind',
+        'match_saved_at',
         'move_cells',
         'move_count',
         'player_black',
@@ -124,6 +159,7 @@ service cloud.firestore {
         'created_at',
         'id',
         'match_kind',
+        'match_saved_at',
         'move_cells',
         'move_count',
         'player_black',
@@ -140,6 +176,7 @@ service cloud.firestore {
         'created_at',
         'id',
         'match_kind',
+        'match_saved_at',
         'move_cells',
         'move_count',
         'player_black',
@@ -184,7 +221,29 @@ service cloud.firestore {
         ]);
     }
 
-    function validMatchCommon(matchId) {
+    function profileExists(uid) {
+      return exists(/databases/$(database)/documents/profiles/$(uid));
+    }
+
+    function profileHistoryResetAt(uid) {
+      return get(/databases/$(database)/documents/profiles/$(uid)).data.history_reset_at;
+    }
+
+    function hasProfileHistoryResetAt(uid) {
+      return profileExists(uid)
+        && hasHistoryResetAt(get(/databases/$(database)/documents/profiles/$(uid)).data)
+        && profileHistoryResetAt(uid) != null;
+    }
+
+    function matchIsAfterHistoryReset(uid) {
+      return profileExists(uid)
+        && (
+          !hasProfileHistoryResetAt(uid)
+          || request.resource.data.match_saved_at > profileHistoryResetAt(uid)
+        );
+    }
+
+    function validMatchCommon(uid, matchId) {
       return request.resource.data.id == matchId
         && request.resource.data.schema_version == 1
         && request.resource.data.trust == 'client_uploaded'
@@ -196,6 +255,8 @@ service cloud.firestore {
         && request.resource.data.id.size() > 0
         && request.resource.data.saved_at is string
         && request.resource.data.saved_at.size() <= 40
+        && request.resource.data.match_saved_at is timestamp
+        && matchIsAfterHistoryReset(uid)
         && request.resource.data.move_count is int
         && request.resource.data.move_count >= 0
         && request.resource.data.move_count <= 225
@@ -205,9 +266,9 @@ service cloud.firestore {
         && validMoveCells(request.resource.data.move_cells, request.resource.data.move_count);
     }
 
-    function validImportedMatch(matchId) {
+    function validImportedMatch(uid, matchId) {
       return validGuestImportKeys()
-        && validMatchCommon(matchId)
+        && validMatchCommon(uid, matchId)
         && request.resource.data.id.size() <= 180
         && request.resource.data.source == 'guest_import'
         && request.resource.data.local_match_id is string
@@ -219,9 +280,9 @@ service cloud.firestore {
         && request.resource.data.imported_at == request.time;
     }
 
-    function validCloudSavedMatch(matchId) {
+    function validCloudSavedMatch(uid, matchId) {
       return validCloudSavedMatchKeys()
-        && validMatchCommon(matchId)
+        && validMatchCommon(uid, matchId)
         && request.resource.data.id.size() <= 128
         && request.resource.data.source == 'cloud_saved'
         && request.resource.data.created_at == request.time;
@@ -297,19 +358,21 @@ service cloud.firestore {
         && request.resource.data.username == null
         && request.resource.data.created_at == request.time
         && request.resource.data.updated_at == request.time
-        && request.resource.data.last_login_at == request.time;
+        && request.resource.data.last_login_at == request.time
+        && validHistoryResetAtOnCreate();
       allow update: if isOwner(uid)
         && validProfileDocument(uid)
         && appOwnedProfileFieldsUnchanged()
         && request.resource.data.updated_at == request.time
-        && request.resource.data.last_login_at == request.time;
+        && request.resource.data.last_login_at == request.time
+        && validHistoryResetAtOnUpdate();
       allow delete: if false;
 
       match /matches/{matchId} {
         allow read: if isOwner(uid);
         allow create: if isOwner(uid) && (
           (
-            validImportedMatch(matchId)
+            validImportedMatch(uid, matchId)
             && (
               (
                 validImportedHumanPlayer(uid, request.resource.data.player_black)
@@ -322,7 +385,7 @@ service cloud.firestore {
             )
           )
           || (
-            validCloudSavedMatch(matchId)
+            validCloudSavedMatch(uid, matchId)
             && (
               (
                 validCloudSavedHumanPlayer(uid, request.resource.data.player_black)

@@ -167,10 +167,13 @@ current rules intentionally keep the first public backend slice narrow:
 - owners can create/update that document only if it matches the expected profile
   schema
 - client updates preserve locked app-owned fields such as `created_at` and
-  `username`; `display_name` can be promoted from a user-chosen local profile
+  `username`; `history_reset_at` can only stay unchanged or advance to the
+  current write time; `display_name` can be promoted from a user-chosen local
+  profile
 - private match subcollections are readable by the owner, and owner creates are
   limited to validated `guest_import` and `cloud_saved` private history records
-  until broader trusted/cloud history ships
+  with `match_saved_at` after the profile reset barrier until broader
+  trusted/cloud history ships
 - owner deletes are limited to private `client_uploaded` match records so Reset
   Profile can clear casual history without granting delete access to future
   `server_verified` records

@@ -69,11 +69,14 @@ describe("cloud history", () => {
       trust: "client_uploaded",
     });
     expect(backend.createMatch).toHaveBeenCalledTimes(1);
-    expect(created.get("match-1")).toMatchObject({
+    const createdDocument = created.get("match-1") as { match_saved_at: { toDate: () => Date } };
+    expect(createdDocument).toMatchObject({
       id: "match-1",
+      match_saved_at: expect.anything(),
       source: "cloud_saved",
       trust: "client_uploaded",
     });
+    expect(createdDocument.match_saved_at.toDate().toISOString()).toBe(match.saved_at);
   });
 
   it("treats an existing direct cloud match as an idempotent save", async () => {

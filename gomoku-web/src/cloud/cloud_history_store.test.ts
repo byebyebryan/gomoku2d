@@ -147,6 +147,28 @@ describe("createCloudHistoryStore", () => {
     expect(store.getState().users["uid-1"]?.pendingMatches).toEqual({});
   });
 
+  it("drops a cloud save result when the reset barrier appears during sync", async () => {
+    let historyResetAt: string | null = null;
+    const saveMatch = vi.fn(async () => {
+      historyResetAt = "2026-04-28T02:00:00.000Z";
+      return { match: cloudMatch };
+    });
+    const store = createCloudHistoryStore({
+      historyResetAtForUser: () => historyResetAt,
+      saveMatch,
+      storage: createMemoryStorage(),
+    });
+
+    await store.getState().syncMatchForUser(user, match);
+
+    const cache = store.getState().users["uid-1"];
+    expect(saveMatch).toHaveBeenCalledWith(user, match);
+    expect(cache?.cachedMatches).toEqual([]);
+    expect(cache?.pendingMatches).toEqual({});
+    expect(cache?.sync).toEqual({});
+    expect(store.getState().syncStatus).toBe("idle");
+  });
+
   it("clears remote history and the local per-user cache", async () => {
     const clearHistory = vi.fn().mockResolvedValue(1);
     const store = createCloudHistoryStore({
@@ -164,5 +186,57 @@ describe("createCloudHistoryStore", () => {
       syncStatus: "idle",
       users: {},
     });
+  });
+
+  it("waits for active syncs before clearing remote history", async () => {
+    const events: string[] = [];
+    let resolveSave!: (value: { match: typeof cloudMatch }) => void;
+    const saveMatch = vi.fn(
+      () =>
+        new Promise<{ match: typeof cloudMatch }>((resolve) => {
+          resolveSave = resolve;
+        }),
+    );
+    const clearHistory = vi.fn(async () => {
+      events.push("clear");
+      return 1;
+    });
+    const store = createCloudHistoryStore({
+      clearHistory,
+      saveMatch,
+      storage: createMemoryStorage(),
+    });
+
+    const syncPromise = store.getState().syncMatchForUser(user, match);
+    expect(saveMatch).toHaveBeenCalled();
+    const clearPromise = store.getState().clearForUser(user);
+    expect(clearHistory).not.toHaveBeenCalled();
+
+    events.push("save");
+    resolveSave({ match: cloudMatch });
+    await syncPromise;
+    await clearPromise;
+
+    expect(events).toEqual(["save", "clear"]);
+    expect(store.getState().users["uid-1"]).toBeUndefined();
+  });
+
+  it("does not clear the local cache when remote history clear fails", async () => {
+    const clearHistory = vi.fn().mockRejectedValue(new Error("permission denied"));
+    const store = createCloudHistoryStore({
+      clearHistory,
+      loadHistory: vi.fn().mockResolvedValue([cloudMatch]),
+      storage: createMemoryStorage(),
+    });
+
+    await store.getState().loadForUser(user);
+    await expect(store.getState().clearForUser(user)).rejects.toThrow("permission denied");
+
+    expect(clearHistory).toHaveBeenCalledWith(user);
+    expect(store.getState()).toMatchObject({
+      errorMessage: "permission denied",
+      syncStatus: "error",
+    });
+    expect(store.getState().users["uid-1"]?.cachedMatches).toEqual([cloudMatch]);
   });
 });

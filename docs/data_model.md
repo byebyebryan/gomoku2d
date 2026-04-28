@@ -58,7 +58,7 @@ Rules:
 - `created_at` and `username` are app-owned after creation.
 - `history_reset_at` is a reset barrier. When present, local promotion, direct
   sync retry, cloud history load, and active-history resolution ignore matches
-  with `saved_at <= history_reset_at`.
+  with `match_saved_at <= history_reset_at`.
 - `schema_version` is always `1`; increments require a writer + rules + reader
   update in the same slice.
 - Writer behavior: during guest promotion, the browser only sends
@@ -66,8 +66,10 @@ Rules:
   still matches the provider default. If the local display name is still the
   default `Guest`, the app adopts the provider/cloud display name locally
   instead of overwriting cloud state with `Guest`.
-- Firestore rules enforce ownership, shape, and timestamps for profile writes;
-  they do not currently enforce the provider-default display-name condition.
+- Firestore rules enforce ownership, shape, write timestamps, and reset-barrier
+  movement for profile writes. The browser can leave `history_reset_at`
+  unchanged or set it to the current write's `request.time`; it cannot move the
+  barrier backward, remove it, or set an arbitrary timestamp.
 - Reset Profile while signed in writes `history_reset_at`, resets cloud profile
   display/default-rule fields to provider/default values, deletes private
   `client_uploaded` match documents where rules allow it, and clears this
@@ -130,6 +132,7 @@ type CloudImportedMatchV1 = SavedMatchV1 & {
   local_origin_id: string; // "guest:{guestProfileId}:{localMatchId}"
 
   imported_at: Timestamp; // server timestamp of the import write
+  match_saved_at: Timestamp; // Firestore-comparable copy of saved_at
 };
 ```
 
@@ -142,6 +145,7 @@ type CloudDirectSavedMatchV1 = SavedMatchV1 & {
   trust: "client_uploaded";
 
   created_at: Timestamp; // server timestamp of the cloud write
+  match_saved_at: Timestamp; // Firestore-comparable copy of saved_at
 };
 ```
 
@@ -150,6 +154,8 @@ Key differences from `guest_import`:
 - `id` is the raw local UUID rather than a prefixed encoding.
 - Human player's `local_profile_id` is always `null`; use `profile_uid` for
   cross-device identity matching (see `matchUserSide` in `saved_match.ts`).
+- `match_saved_at` is duplicated from the ISO `saved_at` field as a Firestore
+  timestamp so security rules can reject stale writes after Reset Profile.
 - Reset Profile deletes only private `client_uploaded` records in this
   subcollection; future `server_verified` history must not be deleted by the
   owner-client reset path.
@@ -229,6 +235,11 @@ history.
 because it is useful summary metadata and lets rules assert
 `move_cells.size() == move_count`. Current Firestore rules also restrict
 `move_cells` values to valid 15x15 board indexes.
+
+Cloud match documents also store `match_saved_at`, the timestamp form of
+`saved_at`. The ISO string remains the app-facing replay/display field; the
+timestamp exists so Firestore rules can compare match age against profile reset
+barriers without parsing strings.
 
 ## Indexing Notes
 

@@ -316,9 +316,6 @@ export function ProfileRoute() {
     const user = cloudAuth.user;
     const defaultVariant = "freestyle" as const;
     await cloudProfileStore.getState().resetForUser(user, defaultVariant);
-    if (cloudProfileStore.getState().status === "error") {
-      return;
-    }
 
     await cloudHistoryStore.getState().clearForUser(user);
     cloudHistoryStore.getState().resetUserCache(user.uid);
@@ -339,9 +336,11 @@ export function ProfileRoute() {
         store.resetGuestProfile();
         store.ensureGuestProfile();
       }
+      setResetConfirming(false);
+    } catch {
+      // Store actions already expose foreground reset failures through cloudError.
     } finally {
       setResetBusy(false);
-      setResetConfirming(false);
     }
   }
 

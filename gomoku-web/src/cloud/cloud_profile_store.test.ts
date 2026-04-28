@@ -79,4 +79,16 @@ describe("createCloudProfileStore", () => {
       status: "ready",
     });
   });
+
+  it("rejects reset failures after surfacing the error", async () => {
+    const store = createCloudProfileStore({
+      resetProfile: vi.fn().mockRejectedValue(new Error("permission denied")),
+    });
+
+    await expect(store.getState().resetForUser(authUser, "freestyle")).rejects.toThrow("permission denied");
+    expect(store.getState()).toMatchObject({
+      errorMessage: "permission denied",
+      status: "error",
+    });
+  });
 });
