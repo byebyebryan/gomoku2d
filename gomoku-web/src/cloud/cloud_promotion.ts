@@ -9,6 +9,7 @@ import {
 
 import type { CloudAuthUser } from "./auth_store";
 import {
+  cloudDirectSavedMatchId,
   cloudMatchIdForGuestMatch,
   cloudSavedMatchFromGuestMatch,
   type CloudGuestImportDocument,
@@ -125,7 +126,8 @@ export async function promoteGuestToCloud(
 
   for (const match of input.guestHistory) {
     const matchId = cloudMatchIdForGuestMatch(match);
-    if (await backend.matchExists(matchId)) {
+    const directMatchId = cloudDirectSavedMatchId(match);
+    if (await backend.matchExists(matchId) || await backend.matchExists(directMatchId)) {
       skippedMatches += 1;
       continue;
     }
@@ -134,7 +136,7 @@ export async function promoteGuestToCloud(
       await backend.createMatch(matchId, cloudSavedMatchFromGuestMatch(input.user, input.guestProfile, match));
       importedMatches += 1;
     } catch (error) {
-      if (await backend.matchExists(matchId)) {
+      if (await backend.matchExists(matchId) || await backend.matchExists(directMatchId)) {
         skippedMatches += 1;
         continue;
       }
