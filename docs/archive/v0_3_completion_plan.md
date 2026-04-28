@@ -102,39 +102,117 @@ Implementation status:
 - local-build smoke verified one 24-match local history promoted into exactly
   24 private `guest_import` Firestore docs with matching `local_match_id`s
 
-Remaining work for this slice:
+Release status:
 
-- run the normal unit/build checks after this doc sync
-- decide whether `0.3.1` needs additional manual smoke on the public domain or
-  whether local-build promotion plus deployed rules is enough
-- prepare release notes/version bump if cutting `0.3.1`
+- `v0.3.1` has been cut and published.
+- CI, GitHub Release, GitHub Pages deploy, and Firestore rules deployment all
+  passed from the `v0.3.1` tag.
 
-Done when:
+Done:
 
 - signing in with existing local history imports that history once — verified
 - retrying the import does not duplicate matches — covered by deterministic IDs
   and unit tests; repeat live smoke still optional
 - local guest play still works if import fails or the user signs out — covered
-  by current fallback behavior, still worth one final smoke before release
+  by current fallback behavior; keep one guest-only smoke in future release
+  checks
 
 ### `0.3.2` — Private Cloud History
 
-Purpose: make new signed-in matches durable across browsers/devices.
+Purpose: make match history feel like one continuous product surface while
+making new signed-in matches durable across browsers/devices.
+
+UX decision:
+
+- do not make users manage "local history" versus "cloud history"
+- signed out: Match History is device-local
+- signed in: Match History becomes "my history", backed by private cloud and
+  cached locally where useful
+- cloud is durable storage; the local active-history cache remains the replay
+  source for `0.3.2`
+- show sync state only when it matters: pending, failed, offline, or retrying
+- keep a single **Reset Profile** danger action, but make its confirmation copy
+  state-specific: signed out resets the guest profile on this device; signed in
+  resets the cloud profile/history and clears this device's cloud cache
+- keep `source`, `trust`, local IDs, cloud IDs, and replay provenance internal
+  for dedupe, rules, future sharing, and future trusted/ranked history
+
+Sync model:
+
+- save local history immediately at match end
+- enqueue/attempt direct cloud save in the background when signed in
+- retry pending saves at natural sync points: sign-in, Profile open, app start,
+  auth recovery, and later online recovery if we add explicit network signals
+- treat batching as a reliability tool, not a cost tool; Firestore charges by
+  read/write/delete operations, so delaying ten match writes still costs ten
+  writes
+- use sidecar local sync metadata instead of adding sync-only fields to
+  `SavedMatchV1`; the canonical replay record should stay valid for local,
+  cloud-cache, and future publish flows
+- cloud reset writes a reset barrier such as `history_reset_at` before deleting
+  history; promotion, direct-sync retry, history load, and the active-history
+  resolver must ignore records older than that barrier
+- pause or re-check sync attempts while reset is in progress so an in-flight
+  match-end save cannot recreate pre-reset history
+- avoid write amplification in this slice: do not update profile counters after
+  every match unless a later performance problem proves it is needed
 
 Work:
 
-- define the private cloud match record shape for
-  `profiles/{uid}/matches/{id}`
-- save future signed-in casual matches at match end
-- load cloud match history on Profile
-- open private cloud-saved replays without introducing public replay URLs
-- make local guest history and cloud private history visibly distinct
+- add a direct `cloud_saved` write path for finished signed-in casual matches
+  at `profiles/{uid}/matches/{match.id}`
+- prevent duplicate cloud records: guest promotion must skip a local match if
+  either the deterministic guest-import ID or the raw direct-save ID already
+  exists
+- add a small pending-sync model for local records that have not reached cloud
+  yet
+- load private cloud match history on Profile, with an initial cap/pagination
+  boundary to avoid repeated long-history reads
+- cache loaded cloud records locally per signed-in `uid` rather than mixing them
+  into the guest/device history bucket
+- present one Match History list in Profile while surfacing pending/failed sync
+  only when needed
+- define the active-history resolver: merge pending local rows and per-uid cloud
+  cache, dedupe direct `cloud_saved` IDs against `guest_import` `local_match_id`
+  records, prefer synced cloud records over local duplicates, sort by
+  `saved_at`, and derive Profile stats from this resolved list
+- keep replay resolution local-first by reading from the active visible history
+  cache; defer a dedicated cloud replay route until public/shareable replay work
+- replace the old local-only reset wording with **Reset Profile** plus inline
+  Confirm/Cancel controls
+- implement signed-in reset as reset-barrier write, bounded deletion of owned
+  `profiles/{uid}/matches/*`, profile-field reset to defaults, active local
+  cache/history clear on this device, per-uid cloud cache clear, and pending-sync
+  queue clear
+- update Firestore profile schema/rules for `history_reset_at`, owner-only
+  private match deletes, and the signed-in reset write path; deploy those rules
+  before relying on the UI
+- keep deletes limited to private `client_uploaded` records in this phase; do
+  not create rules that could delete future `server_verified` records
 
 Done when:
 
 - a signed-in player can finish a match on one browser and review it on another
-- local guest history, signed-in private cloud history, and future public
-  replay sharing remain separate concepts
+- guest-only play still saves and replays locally with no Firebase config
+- sync retries do not create duplicate `guest_import` and `cloud_saved` records
+- cloud-loaded matches can replay after being cached locally for the signed-in
+  user
+- reset profile cannot silently delete the wrong scope and cannot re-import
+  pre-reset local history afterward
+- account switching does not mix per-user cloud caches or pending sync queues
+- Firestore rules tests or deployed-rule smoke cover cloud saves, cloud loads,
+  reset-barrier writes, and private match deletes
+- the UI reads as one history surface, while docs/tests still keep local guest
+  history, private cloud history, and future public replay sharing distinct
+
+Smoke checklist:
+
+- signed-out/no-Firebase build still records and replays local history
+- signed-in match saves locally first, then reaches Firestore as `cloud_saved`
+- a second browser/device loads cloud history, caches it locally, and replays it
+- Reset Profile while signed in clears cloud history and this device's active
+  cache without re-importing older local records
+- failed/offline sync remains visible but does not block play
 
 ### `0.3.x` — Hardening
 
@@ -160,7 +238,9 @@ Done when:
 
 - Do not add a sign-in wall.
 - Do not create public artifacts implicitly.
-- Do not blur local guest history with private cloud history.
+- Do not blur internal provenance for local guest history, private cloud
+  history, or future public replay sharing; the UX can abstract storage details
+  when sync is healthy.
 - Do not introduce Cloud Run unless a chosen `0.3.x` task cannot be solved with
   Firebase Auth + Firestore rules.
 - Do not start replay analysis, puzzles, skins, PvP, or sharing inside `0.3`.
