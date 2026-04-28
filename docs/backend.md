@@ -271,12 +271,13 @@ Two credential stories, kept separate:
   **Application Default Credentials** via the attached service account.
   No secret to store.
 
-Two service accounts:
+Current and planned service accounts:
 
 | SA | Used by | Can | Cannot |
 |---|---|---|---|
-| `gh-cd` | GH Actions during deploys | Build/push images, deploy Cloud Run, publish Firestore rules, impersonate runtime SA | Read user data, read runtime secrets |
-| `gomoku-api-runtime` | Cloud Run at runtime | Firestore access (scoped), read pinned Secret Manager versions if needed | Deploy anything, modify infra |
+| `github-firestore-deploy` | GH Actions Firestore rules deploy | Publish Firestore rules through Firebase Rules API | Read user data, read runtime secrets, deploy app/runtime infra |
+| `gh-cloud-run-deploy` | Future GH Actions Cloud Run deploy | Build/push images, deploy Cloud Run, impersonate runtime SA | Read user data, read runtime secrets |
+| `gomoku-api-runtime` | Future Cloud Run runtime | Firestore access (scoped), read pinned Secret Manager versions if needed | Deploy anything, modify infra |
 
 Secrets from non-GCP sources (third-party API keys, signing keys) go in
 Secret Manager with **pinned versions** (`:3`, not `:latest`). Rotations
@@ -286,12 +287,12 @@ require one — the pattern is documented so it's ready when we do.
 Workflows live at:
 
 - `.github/workflows/deploy.yml` — web (GitHub Pages), already exists
-- `.github/workflows/deploy-api.yml` — Cloud Run service
-- `.github/workflows/deploy-rules.yml` — Firestore rules
+- `.github/workflows/deploy-firestore.yml` — Firestore rules, tag/manual only
+- `.github/workflows/deploy-api.yml` — future Cloud Run service
 
-The bootstrap commands (project creation, WIF pool, service accounts,
-Artifact Registry) are a one-time manual run documented in `infra/README.md`
-(to be added when the first of these bootstraps actually happens).
+The live Firebase/GCP setup, Workload Identity Federation bootstrap, deploy
+model, and break-glass rules deploy path are documented in
+`docs/backend_infra.md`.
 
 ## Feature catalog
 

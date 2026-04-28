@@ -29,7 +29,9 @@ backend design lives in `backend.md`; free-tier estimates live in
 | Firestore edition | Standard |
 | Firestore free tier | `true` |
 | Firestore rules release | `projects/gomoku2d/releases/cloud.firestore` |
-| Current ruleset | `projects/gomoku2d/rulesets/4c4fcf1f-6e05-466c-aeb6-2588241a779f` |
+| Firestore rules deployer | GitHub Actions OIDC as `github-firestore-deploy@gomoku2d.iam.gserviceaccount.com` |
+| Last manual ruleset before CD | `projects/gomoku2d/rulesets/4c4fcf1f-6e05-466c-aeb6-2588241a779f` |
+| GitHub Actions default token | Read-only |
 
 Important irreversible choice: the default Firestore database is in
 `us-central1`. Do not delete/recreate it casually; the database location is a
@@ -43,6 +45,9 @@ Required for the current `v0.3` backend foundation:
 - `firestore.googleapis.com`
 - `firebaserules.googleapis.com`
 - `identitytoolkit.googleapis.com`
+- `iam.googleapis.com`
+- `iamcredentials.googleapis.com`
+- `sts.googleapis.com`
 
 Verify:
 
@@ -50,7 +55,7 @@ Verify:
 gcloud services list \
   --project=gomoku2d \
   --enabled \
-  --filter='config.name:(firebase.googleapis.com OR firestore.googleapis.com OR firebaserules.googleapis.com OR identitytoolkit.googleapis.com)' \
+  --filter='config.name:(firebase.googleapis.com OR firestore.googleapis.com OR firebaserules.googleapis.com OR iam.googleapis.com OR iamcredentials.googleapis.com OR identitytoolkit.googleapis.com OR sts.googleapis.com)' \
   --format='value(config.name)' \
   | sort
 ```
@@ -281,7 +286,60 @@ curl -H "Authorization: Bearer ${TOKEN}" \
 The `X-Goog-User-Project` header matters when using local user credentials with
 Firebase Management APIs.
 
-## Deploy Firestore Rules
+## Data Deployment
+
+Normal Firestore rules deployment is CD from GitHub Actions, but it is not tied
+to every `main` commit:
+
+- Workflow/job: `.github/workflows/deploy-firestore.yml` / `deploy`
+- Automatic trigger: `push` tags matching `v*`
+- Manual trigger: `workflow_dispatch` from `main`
+- Auth: GitHub OIDC through Workload Identity Federation, no JSON service-account
+  key and no long-lived GitHub secret
+- OIDC condition: only `byebyebryan/gomoku2d` runs from
+  `.github/workflows/deploy-firestore.yml`, and only `v*` tag pushes or manual
+  dispatches from `main`, can impersonate the deployer
+- GCP service account:
+  `github-firestore-deploy@gomoku2d.iam.gserviceaccount.com`
+- GCP role: `roles/firebaserules.admin`
+- WIF provider:
+  `projects/892554744656/locations/global/workloadIdentityPools/github-actions/providers/gomoku2d`
+- GitHub repo variables:
+  `GCP_WORKLOAD_IDENTITY_PROVIDER`,
+  `GCP_FIRESTORE_DEPLOY_SERVICE_ACCOUNT`
+
+The workflow creates a new ruleset from the checked-out `firestore.rules`,
+records the previous ruleset in the job summary, patches
+`projects/gomoku2d/releases/cloud.firestore` to the new ruleset, and verifies
+the live release points at the new ruleset. The live ruleset ID is an
+operational artifact, not source-of-truth code; query it when needed instead of
+committing a new docs-only ruleset update after every deploy.
+
+Release model:
+
+- `main` remains an integration branch; ordinary pushes run CI but do not publish
+  Firestore rules.
+- Version tags publish web assets and Firestore rules for the tagged source.
+- Manual dispatch from `main` is the controlled escape hatch for transitional
+  rules, rollback, or pre-release data migrations.
+
+Live-data rollout rule: treat Firestore rules like an API/schema migration.
+When existing clients or data may still use the old shape, use expand/contract:
+
+1. Deploy transitional rules that accept both old and new valid shapes.
+2. Deploy the web app that writes the new shape.
+3. Wait for old cached/open clients to age out and smoke-test production writes.
+4. Tighten rules in a follow-up commit/deploy.
+
+Rollback path: the Firestore release can be patched back to the previous ruleset
+ID if permission errors spike. Keep the previous ruleset from the GitHub Actions
+summary or from the release history before tightening rules.
+
+## Manual Firestore Rules Deploy
+
+Manual deploys from a local machine are a break-glass path for local
+verification or rollback. Prefer the GitHub Actions workflow for normal changes
+so production rules are tied to a recorded source ref/SHA.
 
 `firebase-tools` expects its own interactive `firebase login`, even when
 `gcloud` is already authenticated. To keep this runbook usable with the current
