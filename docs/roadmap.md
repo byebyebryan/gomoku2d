@@ -126,39 +126,45 @@ ad-hoc planning artifact; this section remains the canonical roadmap.
 
 ### Current State
 
-The first backend-foundation slice is in place:
+The backend-foundation and first continuity slices are in place:
 
 - Firebase/GCP project, Firebase web app, and env-driven web bootstrap
 - Firestore `(default)` in `us-central1`
 - hardened owner-scoped Firestore rules for `profiles/{uid}` and private
-  `guest_import` match creates
+  `guest_import` and `cloud_saved` match creates
 - Google Auth provider configured through the Firebase Auth / Identity Toolkit
   path
 - Profile sign-in/sign-out UI
 - cloud profile create/load at `profiles/{uid}`
+- guest-to-cloud profile/settings promotion after sign-in
+- deterministic local guest match imports into
+  `profiles/{uid}/matches/local-{localMatchId}`
+- compact, versioned private match schema documented in `data_model.md`
 - local guest play/history still working without Firebase config
 - Google Auth Platform published to production for public sign-in
 - static `/privacy/` and `/terms/` pages plus contact/deletion email for OAuth
   app readiness
 - public-domain sign-in smoke and no-config fallback smoke completed for
   `0.3.0`
+- local-build guest-history promotion smoke completed for `0.3.1`: one 24-match
+  local history imported exactly once with matching `local_match_id`s
 - infra and free-tier tracking split into `backend_infra.md` and
   `backend_cost.md`
 
 The remaining `v0.3` work is product continuity rather than raw setup:
 
-- finish and smoke-test local guest profile/history promotion
 - save future signed-in casual matches privately to Firestore
 - load cloud-saved private history/replays from Profile
+- harden auth/promotion/cloud-history error states and release checks
 
 ### Done When
 
 Signing in extends the same local-first product without breaking it:
 
 - guest-only play remains complete
-- signed-in profile/history works across browsers
 - local guest history can be promoted without duplicates
 - future signed-in matches save privately to cloud
+- signed-in profile/history works across browsers
 - no public artifacts are created implicitly
 
 ### Out Of Scope

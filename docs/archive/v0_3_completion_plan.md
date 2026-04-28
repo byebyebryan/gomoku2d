@@ -38,8 +38,8 @@ Already in place:
 - Unit coverage exists for Firebase config gating, auth store behavior, cloud
   profile mapping/writes, cloud profile store behavior, and Profile cloud UI
   states.
-- Firestore rules are deployed for owner-scoped `profiles/{uid}` reads/writes,
-  with private match writes intentionally closed until cloud history ships.
+- Firestore rules were deployed for owner-scoped `profiles/{uid}` reads/writes,
+  with private match writes intentionally closed for the `0.3.0` slice.
 - Public app host is `https://gomoku2d.byebyebryan.com/`, served from the
   GitHub Pages custom-domain root.
 - Static `/privacy/` and `/terms/` policy pages are deployed and linked from
@@ -61,11 +61,11 @@ Release prep now in place:
 - The full release checklist in `docs/release.md` has been run for the
   prepared `0.3.0` diff.
 
-What is still missing before cutting `0.3.0`:
+Release status:
 
-- Review and commit the prepared release diff.
-- Finalize/tag `v0.3.0`, push `main` and the tag, then verify the release and
-  deploy workflows.
+- `v0.3.0` has been cut and published.
+- Follow-up workflow fixes split Firestore rules deployment into a tag/manual
+  GitHub Actions flow backed by Workload Identity Federation.
 
 Not required for `0.3.0`:
 
@@ -85,7 +85,7 @@ the next `0.3.x` slice."
 
 Purpose: make sign-in feel like continuity instead of a separate account mode.
 
-Implementation is now started:
+Implementation status:
 
 - deterministic private cloud match IDs are based on local match IDs
 - local history now has an explicit `guest-profile.v2` saved-match schema, with
@@ -97,24 +97,25 @@ Implementation is now started:
 - Profile starts promotion in the background after cloud profile load
 - default `Guest` local names adopt the cloud name on first sign-in; custom local
   names still override the cloud name during promotion
-- Firestore rules allow owner-only `guest_import` match creates and keep
-  updates/deletes closed
+- Firestore rules allow owner-only `guest_import` and prepared `cloud_saved`
+  match creates and keep updates/deletes closed
+- local-build smoke verified one 24-match local history promoted into exactly
+  24 private `guest_import` Firestore docs with matching `local_match_id`s
 
-Work:
+Remaining work for this slice:
 
-- import local guest profile/settings into `profiles/{uid}`
-- import finished local matches into `profiles/{uid}/matches/{id}`
-- assign stable local-origin IDs so retries are idempotent
-- avoid deleting local history until cloud import is confirmed
-- make duplicate prevention testable
-- update Profile copy so users understand what was promoted and what remains
-  local
+- run the normal unit/build checks after this doc sync
+- decide whether `0.3.1` needs additional manual smoke on the public domain or
+  whether local-build promotion plus deployed rules is enough
+- prepare release notes/version bump if cutting `0.3.1`
 
 Done when:
 
-- signing in with existing local history imports that history once
-- retrying the import does not duplicate matches
-- local guest play still works if import fails or the user signs out
+- signing in with existing local history imports that history once — verified
+- retrying the import does not duplicate matches — covered by deterministic IDs
+  and unit tests; repeat live smoke still optional
+- local guest play still works if import fails or the user signs out — covered
+  by current fallback behavior, still worth one final smoke before release
 
 ### `0.3.2` — Private Cloud History
 

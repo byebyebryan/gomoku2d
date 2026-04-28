@@ -86,10 +86,11 @@ Build, CLI usage, replay format, and `SearchBot` notes live in
 
 The local-first `v0.2.x` product pass is complete. The core play loop,
 desktop/mobile shell, replay flow, and guest-local profile/history are in
-place. The current `v0.3` backend-foundation work has started with Firebase,
-Firestore rules, Google sign-in, and cloud profile plumbing; the next focus is
-guest promotion and private cloud history without putting sign-in in front of
-the local game.
+place. The current `v0.3` backend-continuity work has Firebase, Firestore rules,
+Google sign-in, cloud profile plumbing, and local guest-history promotion in
+place; the next focus is saving new signed-in matches privately to cloud and
+loading that private cloud history without putting sign-in in front of the
+local game.
 
 For the longer-term sequencing from cloud continuity to lab-powered features,
 skins, and later online play, see [`docs/roadmap.md`](docs/roadmap.md).

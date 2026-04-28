@@ -56,7 +56,7 @@ If screenshots or recordings should show the upcoming version, bump the web
 package version before capturing:
 
 ```sh
-scripts/set-web-version.sh 0.3.0
+scripts/set-web-version.sh 0.3.1
 ```
 
 This updates `gomoku-web/package.json` and `gomoku-web/package-lock.json`
@@ -106,8 +106,8 @@ release-blocking.
 After reviewing `git status` and the diff, finalize the prepared release:
 
 ```sh
-scripts/release.sh --check 0.3.0
-scripts/release.sh 0.3.0
+scripts/release.sh --check 0.3.1
+scripts/release.sh 0.3.1
 ```
 
 `release.sh` validates:
@@ -127,7 +127,7 @@ Push when ready:
 
 ```sh
 git push origin main
-git push origin v0.3.0
+git push origin v0.3.1
 ```
 
 Pushing `main` updates the release commit. It does not publish the site.

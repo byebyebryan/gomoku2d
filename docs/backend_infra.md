@@ -223,7 +223,7 @@ Before a public Gomoku2D release with Google sign-in:
    app identity polish. Verification can require a public homepage, privacy
    policy, and Search Console ownership for authorized domains.
 
-Current `v0.3.0` state: the OAuth app is `In production`, and runtime sign-in
+Current `v0.3` state: the OAuth app is `In production`, and runtime sign-in
 has been observed requesting only basic identity scopes:
 
 ```text
@@ -232,8 +232,8 @@ openid https://www.googleapis.com/auth/userinfo.email profile
 
 Sensitive-scope verification should not be required as long as the app only
 uses Google Sign-In identity scopes. The OAuth logo is intentionally blank for
-`v0.3.0`; adding a logo or changing visible branding details can trigger brand
-verification.
+the `v0.3` backend-continuity line; adding a logo or changing visible branding
+details can trigger brand verification.
 
 ## Popup Auth Headers
 
@@ -440,9 +440,9 @@ curl -sS \
 Expected after a successful Profile sign-in smoke test: at least one
 `profiles/{uid}` document.
 
-## Pending Infra Checklist
+## Smoke-Test State
 
-Before cloud UI ships publicly:
+Current cloud UI / data smoke state:
 
 - Localhost Google sign-in has been manually confirmed.
 - Production sign-in from `https://gomoku2d.byebyebryan.com/profile` has been
@@ -455,11 +455,17 @@ Before cloud UI ships publicly:
   Auth/Firestore requests are made, and Home/Local Match still load.
 - Firebase/Auth/Firestore dashboards have been reviewed after the public smoke
   test and looked normal.
+- Local-build guest promotion has been manually smoke-tested for
+  `profiles/DbsocAJ0vHVd9LYjk2oaeQx2qec2`: Chrome `localStorage`
+  `gomoku2d.guest-profile.v2` had 24 local matches, Firestore had 24 matching
+  `guest_import` docs under `profiles/{uid}/matches`, and no local/cloud
+  `local_match_id` mismatches were found.
 
-Remaining before tagging `v0.3.0`:
+Remaining before the next `v0.3.x` release:
 
-- Review and commit the prepared `0.3.0` release diff.
-- Tag and push `v0.3.0`, then verify the release/deploy workflows.
+- Save future signed-in casual matches privately to Firestore.
+- Load private cloud history/replays from Profile.
+- Refresh cost/headroom notes after a few more real cloud writes.
 
 Deferred until later phases:
 
