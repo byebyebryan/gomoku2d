@@ -29,6 +29,13 @@ interface HistoryIdentity {
   profileUid?: string | null;
 }
 
+type HistorySyncTone = "busy" | "error" | "pending" | "synced";
+
+interface HistorySyncStatus {
+  label: string;
+  tone: HistorySyncTone;
+}
+
 function historyLocalSide(match: SavedMatchV1, identity: HistoryIdentity): SavedMatchSide | null {
   const localSide = matchUserSide(match, identity);
   if (localSide) {
@@ -89,6 +96,57 @@ function historySideLabel(side: SavedMatchSide | null): "Black" | "White" | "Unk
   }
 
   return "Unknown";
+}
+
+function historySyncStatus({
+  authStatus,
+  hasCloudHistoryLoaded,
+  hasPendingError,
+  loadStatus,
+  pendingCount,
+  profileStatus,
+  promotionStatus,
+  syncStatus,
+}: {
+  authStatus: ReturnType<typeof cloudAuthStore.getState>["status"];
+  hasCloudHistoryLoaded: boolean;
+  hasPendingError: boolean;
+  loadStatus: ReturnType<typeof cloudHistoryStore.getState>["loadStatus"];
+  pendingCount: number;
+  profileStatus: ReturnType<typeof cloudProfileStore.getState>["status"];
+  promotionStatus: ReturnType<typeof cloudPromotionStore.getState>["status"];
+  syncStatus: ReturnType<typeof cloudHistoryStore.getState>["syncStatus"];
+}): HistorySyncStatus | null {
+  if (authStatus !== "signed_in") {
+    return null;
+  }
+
+  if (
+    loadStatus === "error"
+    || syncStatus === "error"
+    || promotionStatus === "error"
+    || hasPendingError
+  ) {
+    return { label: "Retrying", tone: "error" };
+  }
+
+  if (profileStatus === "loading" || loadStatus === "loading" || !hasCloudHistoryLoaded) {
+    return { label: "Loading", tone: "busy" };
+  }
+
+  if (syncStatus === "syncing" || promotionStatus === "promoting") {
+    return { label: "Syncing", tone: "busy" };
+  }
+
+  if (pendingCount > 0) {
+    return { label: `Pending ${pendingCount}`, tone: "pending" };
+  }
+
+  if (profileStatus === "ready") {
+    return { label: "Synced", tone: "synced" };
+  }
+
+  return null;
 }
 
 function cloudStateLabel(
@@ -314,6 +372,15 @@ export function ProfileRoute() {
     cloudAuth.status === "signed_in" && cloudAuth.user
       ? cloudHistory.users[cloudAuth.user.uid]?.cachedMatches ?? []
       : [];
+  const cloudUserCache =
+    cloudAuth.status === "signed_in" && cloudAuth.user
+      ? cloudHistory.users[cloudAuth.user.uid]
+      : null;
+  const pendingCloudMatches = cloudUserCache?.pendingMatches ?? {};
+  const pendingCloudMatchCount = Object.keys(pendingCloudMatches).length;
+  const hasPendingCloudMatchError = Object.values(cloudUserCache?.sync ?? {}).some((sync) => (
+    sync.status === "error" && sync.matchId in pendingCloudMatches
+  ));
   const history = resolveActiveHistory({
     cloudHistory: cloudCache,
     historyResetAt: cloudAuth.status === "signed_in" ? cloudProfile.profile?.historyResetAt : null,
@@ -349,6 +416,28 @@ export function ProfileRoute() {
     authStatus: cloudAuth.status,
     cloudDisplayName,
   });
+  const historyStatus = historySyncStatus({
+    authStatus: cloudAuth.status,
+    hasCloudHistoryLoaded: Boolean(cloudUserCache?.loadedAt),
+    hasPendingError: hasPendingCloudMatchError,
+    loadStatus: cloudHistory.loadStatus,
+    pendingCount: pendingCloudMatchCount,
+    profileStatus: cloudProfile.status,
+    promotionStatus: cloudPromotion.status,
+    syncStatus: cloudHistory.syncStatus,
+  });
+  const historyStatusClassName = historyStatus
+    ? [
+      styles.historySyncStatus,
+      historyStatus.tone === "busy"
+        ? styles.historySyncStatusBusy
+        : historyStatus.tone === "error"
+          ? styles.historySyncStatusError
+          : historyStatus.tone === "pending"
+            ? styles.historySyncStatusPending
+            : styles.historySyncStatusSynced,
+    ].join(" ")
+    : "";
   const signedIn = cloudAuth.status === "signed_in" && Boolean(cloudAuth.user);
   const resetDisabled = resetBusy || (signedIn && cloudProfile.status === "loading");
   const resetConfirmationText = signedIn
@@ -534,6 +623,9 @@ export function ProfileRoute() {
         <section className={styles.recordPanel}>
           <div className={styles.recordHeader}>
             <p className="uiSectionLabel">Match History</p>
+            {historyStatus ? (
+              <p className={historyStatusClassName} aria-live="polite">{historyStatus.label}</p>
+            ) : null}
           </div>
           <div className={styles.summaryGrid}>
             <article className={styles.summaryTile}>

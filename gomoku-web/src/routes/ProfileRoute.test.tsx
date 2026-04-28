@@ -191,6 +191,99 @@ describe("ProfileRoute cloud state", () => {
     expect(signOut).toHaveBeenCalledTimes(1);
   });
 
+  it("shows compact cloud history status when signed-in history has loaded", () => {
+    cloudAuthStore.setState({
+      errorMessage: null,
+      isConfigured: true,
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+      start: vi.fn(),
+      status: "signed_in",
+      stop: vi.fn(),
+      user: cloudUser,
+    });
+    cloudProfileStore.setState({
+      errorMessage: null,
+      loadForUser: vi.fn(),
+      profile: cloudProfile,
+      reset: vi.fn(),
+      resetForUser: vi.fn(),
+      status: "ready",
+    });
+    cloudHistoryStore.setState({
+      loadStatus: "ready",
+      users: {
+        [cloudUser.uid]: {
+          cachedMatches: [],
+          loadedAt: "2026-04-28T01:01:00.000Z",
+          pendingMatches: {},
+          sync: {},
+        },
+      },
+    });
+
+    renderProfileRoute();
+
+    expect(screen.getByText("Synced")).toBeInTheDocument();
+  });
+
+  it("shows retrying when pending cloud history sync has failed", () => {
+    const guestProfile = guestProfileStore.getState().ensureGuestProfile();
+    const localMatch = createLocalSavedMatch({
+      id: "match-1",
+      localProfileId: guestProfile.id,
+      moves: [{ col: 7, moveNumber: 1, player: 1, row: 7 }],
+      players: [
+        { kind: "human", name: "Guest", stone: "black" },
+        { kind: "bot", name: "Practice Bot", stone: "white" },
+      ],
+      savedAt: "2026-04-28T01:00:00.000Z",
+      status: "draw",
+      variant: "freestyle",
+    });
+
+    cloudAuthStore.setState({
+      errorMessage: null,
+      isConfigured: true,
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+      start: vi.fn(),
+      status: "signed_in",
+      stop: vi.fn(),
+      user: cloudUser,
+    });
+    cloudProfileStore.setState({
+      errorMessage: null,
+      loadForUser: vi.fn(),
+      profile: cloudProfile,
+      reset: vi.fn(),
+      resetForUser: vi.fn(),
+      status: "ready",
+    });
+    cloudHistoryStore.setState({
+      loadStatus: "ready",
+      users: {
+        [cloudUser.uid]: {
+          cachedMatches: [],
+          loadedAt: "2026-04-28T01:01:00.000Z",
+          pendingMatches: { [localMatch.id]: localMatch },
+          sync: {
+            [localMatch.id]: {
+              errorMessage: "network failed",
+              matchId: localMatch.id,
+              status: "error",
+              updatedAt: "2026-04-28T01:02:00.000Z",
+            },
+          },
+        },
+      },
+    });
+
+    renderProfileRoute();
+
+    expect(screen.getByText("Retrying")).toBeInTheDocument();
+  });
+
   it("uses signed-in loading copy while the cloud profile is loading", () => {
     cloudAuthStore.setState({
       errorMessage: null,
