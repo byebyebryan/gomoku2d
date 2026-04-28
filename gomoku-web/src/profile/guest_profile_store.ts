@@ -5,9 +5,10 @@ import type { GameVariant } from "../core/bot_protocol";
 import type { MatchMove, MatchPlayer } from "../game/types";
 import {
   createLocalSavedMatch,
-  isSavedMatchV1,
+  isLocalSavedMatchV1,
   migrateLegacyGuestSavedMatch,
   type LegacyGuestSavedMatch,
+  type LocalSavedMatchV1,
   type SavedMatchStatus,
   type SavedMatchV1,
 } from "../match/saved_match";
@@ -32,7 +33,7 @@ export interface GuestProfileSettings {
   preferredVariant: GameVariant;
 }
 
-export type GuestSavedMatch = SavedMatchV1;
+export type GuestSavedMatch = LocalSavedMatchV1;
 
 export interface FinishedGuestMatchInput {
   mode: "bot";
@@ -105,7 +106,7 @@ function migrateHistory(history: unknown[], profile: GuestProfileIdentity | null
   const localProfileId = profile?.id ?? "legacy-guest";
 
   return history.flatMap((match) => {
-    if (isSavedMatchV1(match)) {
+    if (isLocalSavedMatchV1(match)) {
       return [match];
     }
 

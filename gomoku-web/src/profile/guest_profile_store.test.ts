@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { movesFromMoveCells } from "../match/saved_match";
+import { createLocalSavedMatch, movesFromMoveCells } from "../match/saved_match";
 
 import type { GuestProfileStorage } from "./guest_profile_store";
 import { createGuestProfileStore } from "./guest_profile_store";
@@ -206,6 +206,50 @@ describe("createGuestProfileStore", () => {
               status: "draw",
             },
           ],
+          profile: {
+            avatarUrl: null,
+            createdAt: "2026-04-20T12:00:00.000Z",
+            displayName: "Guest",
+            id: "guest-1",
+            kind: "guest",
+            updatedAt: "2026-04-20T12:00:00.000Z",
+            username: null,
+          },
+          settings: { preferredVariant: "freestyle" },
+        },
+        version: 0,
+      }),
+    );
+
+    const store = createGuestProfileStore({ storage });
+
+    expect(store.getState().history).toEqual([]);
+  });
+
+  it("drops non-local schema v1 records from local history", () => {
+    const storage = createMemoryStorage();
+    const cloudRecord = {
+      ...createLocalSavedMatch({
+        id: "cloud-match",
+        localProfileId: "guest-1",
+        moves: [{ col: 7, moveNumber: 1, player: 1, row: 7 }],
+        players: [
+          { kind: "human", name: "Guest", stone: "black" },
+          { kind: "bot", name: "Practice Bot", stone: "white" },
+        ],
+        savedAt: "2026-04-21T12:00:00.000Z",
+        status: "draw",
+        variant: "freestyle",
+      }),
+      source: "guest_import",
+      trust: "client_uploaded",
+    };
+
+    storage.setItem(
+      "gomoku2d.guest-profile.v2",
+      JSON.stringify({
+        state: {
+          history: [cloudRecord],
           profile: {
             avatarUrl: null,
             createdAt: "2026-04-20T12:00:00.000Z",

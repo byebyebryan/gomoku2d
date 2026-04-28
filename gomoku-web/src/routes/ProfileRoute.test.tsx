@@ -187,6 +187,7 @@ describe("ProfileRoute cloud state", () => {
 
     await waitFor(() => {
       expect(promote).toHaveBeenCalledWith({
+        cloudDisplayName: cloudProfile.displayName,
         guestHistory: history,
         guestProfile: expect.objectContaining({
           displayName: "ByeByeBryan",
@@ -233,6 +234,7 @@ describe("ProfileRoute cloud state", () => {
     });
     await waitFor(() => {
       expect(promote).toHaveBeenCalledWith({
+        cloudDisplayName: cloudProfile.displayName,
         guestHistory: [],
         guestProfile: expect.objectContaining({
           displayName: "Bryan",

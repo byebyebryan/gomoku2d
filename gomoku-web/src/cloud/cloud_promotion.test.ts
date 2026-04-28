@@ -62,6 +62,7 @@ describe("cloudProfilePromotionUpdate", () => {
   it("promotes a user-chosen local display name", () => {
     expect(
       cloudProfilePromotionUpdate({
+        cloudDisplayName: user.displayName,
         guestHistory: [],
         guestProfile,
         settings,
@@ -84,6 +85,53 @@ describe("cloudProfilePromotionUpdate", () => {
 
     expect(update).not.toHaveProperty("display_name");
   });
+
+  it("does not promote a custom local display name before the cloud name is loaded", () => {
+    const update = cloudProfilePromotionUpdate({
+      guestHistory: [],
+      guestProfile,
+      settings,
+      user,
+    });
+
+    expect(update).not.toHaveProperty("display_name");
+  });
+
+  it("promotes local display name when cloud still holds the provider default", () => {
+    const update = cloudProfilePromotionUpdate({
+      cloudDisplayName: user.displayName,
+      guestHistory: [],
+      guestProfile,
+      settings,
+      user,
+    });
+
+    expect(update).toMatchObject({ display_name: "ByeByeBryan" });
+  });
+
+  it("does not overwrite a custom cloud display name set from another device", () => {
+    const update = cloudProfilePromotionUpdate({
+      cloudDisplayName: "AliceFromDeviceA",
+      guestHistory: [],
+      guestProfile,
+      settings,
+      user,
+    });
+
+    expect(update).not.toHaveProperty("display_name");
+  });
+
+  it("promotes when cloud display name is null (fresh account)", () => {
+    const update = cloudProfilePromotionUpdate({
+      cloudDisplayName: null,
+      guestHistory: [],
+      guestProfile,
+      settings,
+      user,
+    });
+
+    expect(update).toMatchObject({ display_name: "ByeByeBryan" });
+  });
 });
 
 describe("promoteGuestToCloud", () => {
@@ -92,6 +140,7 @@ describe("promoteGuestToCloud", () => {
 
     const result = await promoteGuestToCloud(
       {
+        cloudDisplayName: user.displayName,
         guestHistory: [match],
         guestProfile,
         settings,
@@ -130,6 +179,7 @@ describe("promoteGuestToCloud", () => {
 
     const result = await promoteGuestToCloud(
       {
+        cloudDisplayName: user.displayName,
         guestHistory: [match],
         guestProfile,
         settings,
@@ -155,6 +205,7 @@ describe("promoteGuestToCloud", () => {
 
     const result = await promoteGuestToCloud(
       {
+        cloudDisplayName: user.displayName,
         guestHistory: [match],
         guestProfile,
         settings,

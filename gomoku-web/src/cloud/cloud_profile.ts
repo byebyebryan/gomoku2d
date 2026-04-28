@@ -29,6 +29,7 @@ export interface CloudProfileDocument {
   email?: unknown;
   last_login_at?: unknown;
   preferred_variant?: unknown;
+  schema_version?: unknown;
   uid?: unknown;
   updated_at?: unknown;
   username?: unknown;
@@ -70,6 +71,8 @@ export function cloudProfileFromDocument(
   };
 }
 
+export const CLOUD_PROFILE_SCHEMA_VERSION = 1;
+
 export function newCloudProfileWrite(user: CloudAuthUser, preferredVariant: GameVariant) {
   const now = serverTimestamp();
 
@@ -81,6 +84,7 @@ export function newCloudProfileWrite(user: CloudAuthUser, preferredVariant: Game
     email: user.email,
     last_login_at: now,
     preferred_variant: preferredVariant,
+    schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
     uid: user.uid,
     updated_at: now,
     username: null,
@@ -96,6 +100,7 @@ export function existingCloudProfileUpdate(user: CloudAuthUser, preferredVariant
     email: user.email,
     last_login_at: now,
     preferred_variant: preferredVariant,
+    schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
     uid: user.uid,
     updated_at: now,
   };

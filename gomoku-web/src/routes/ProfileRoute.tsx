@@ -218,6 +218,7 @@ export function ProfileRoute() {
       && !waitingForCloudNameAdoption
     ) {
       void cloudPromotionStore.getState().promote({
+        cloudDisplayName: cloudProfile.profile?.displayName ?? null,
         guestHistory: history,
         guestProfile: profile,
         settings,
