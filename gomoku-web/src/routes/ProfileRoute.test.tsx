@@ -105,8 +105,9 @@ describe("ProfileRoute cloud state", () => {
     renderProfileRoute();
 
     expect(screen.getByRole("heading", { name: "Profile" })).toBeInTheDocument();
-    expect(screen.getByText("Cloud sign-in is not configured for this build.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Sign in with Google" })).toBeDisabled();
+    expect(screen.getByText("Local profile")).toBeInTheDocument();
+    expect(screen.getByText("Online features disabled.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sign in" })).toBeDisabled();
     expect(screen.getByText("Default rule")).toBeInTheDocument();
     expect(screen.getByLabelText("Display name")).toHaveValue("Guest");
   });
@@ -184,10 +185,39 @@ describe("ProfileRoute cloud state", () => {
     renderProfileRoute();
 
     expect(screen.getByText("Signed in as Bryan")).toBeInTheDocument();
-    expect(screen.getByText("uid-1")).toBeInTheDocument();
-    expect(screen.getByText("Private cloud identity is linked. New matches sync in the background.")).toBeInTheDocument();
+    expect(screen.queryByText("uid-1")).not.toBeInTheDocument();
+    expect(screen.getByText("Cloud history enabled.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
     expect(signOut).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses signed-in loading copy while the cloud profile is loading", () => {
+    cloudAuthStore.setState({
+      errorMessage: null,
+      isConfigured: true,
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+      start: vi.fn(),
+      status: "signed_in",
+      stop: vi.fn(),
+      user: cloudUser,
+    });
+    cloudProfileStore.setState({
+      errorMessage: null,
+      loadForUser: vi.fn(),
+      profile: null,
+      reset: vi.fn(),
+      resetForUser: vi.fn(),
+      status: "loading",
+    });
+
+    renderProfileRoute();
+
+    expect(screen.getByText("Signed in")).toBeInTheDocument();
+    expect(screen.getByText("Loading cloud profile...")).toBeInTheDocument();
+    expect(screen.queryByText("Sign in for cloud history."))
+      .not
+      .toBeInTheDocument();
   });
 
   it("shows merged cloud and local history without duplicate direct cloud saves", () => {
