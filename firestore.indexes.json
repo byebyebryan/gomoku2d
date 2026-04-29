@@ -5,6 +5,11 @@
       "collectionGroup": "matches",
       "fieldPath": "move_cells",
       "indexes": []
+    },
+    {
+      "collectionGroup": "profiles",
+      "fieldPath": "recent_matches",
+      "indexes": []
     }
   ]
 }

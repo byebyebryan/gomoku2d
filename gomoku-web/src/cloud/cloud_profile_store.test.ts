@@ -15,11 +15,18 @@ const authUser: CloudAuthUser = {
 const profile: CloudProfile = {
   authProviders: ["google.com"],
   avatarUrl: null,
+  createdAt: null,
   displayName: "Bryan",
   email: "bryan@example.com",
   historyResetAt: null,
   preferredVariant: "freestyle",
+  recentMatches: {
+    matches: [],
+    schemaVersion: 1,
+    updatedAt: null,
+  },
   uid: "uid-1",
+  updatedAt: null,
   username: null,
 };
 

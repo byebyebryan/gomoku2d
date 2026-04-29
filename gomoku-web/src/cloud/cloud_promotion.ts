@@ -1,6 +1,6 @@
-import { doc, getDoc, setDoc, type Firestore } from "firebase/firestore";
+import { doc, setDoc, type Firestore } from "firebase/firestore";
 
-import { savedMatchIsAfterReset } from "../match/saved_match";
+import { savedMatchIsAfterReset, type SavedMatchV1 } from "../match/saved_match";
 import {
   DEFAULT_GUEST_DISPLAY_NAME,
   type GuestProfileIdentity,
@@ -10,14 +10,11 @@ import {
 
 import type { CloudAuthUser } from "./auth_store";
 import {
-  cloudDirectSavedMatchId,
-  cloudMatchIdForGuestMatch,
-  cloudSavedMatchFromGuestMatch,
-  type CloudGuestImportDocument,
-} from "./cloud_match";
-import {
   CLOUD_PROFILE_SCHEMA_VERSION,
+  cloudProfileNeedsSnapshotSync,
+  cloudProfileSnapshotUpdate,
   existingCloudProfileUpdate,
+  mergeCloudRecentMatches,
   type CloudProfileDocument,
 } from "./cloud_profile";
 import { getFirebaseClients } from "./firebase";
@@ -32,6 +29,7 @@ export interface GuestPromotionInput {
   historyResetAt?: string | null;
   settings: GuestProfileSettings;
   user: CloudAuthUser;
+  cloudHistory?: SavedMatchV1[];
 }
 
 export interface GuestPromotionResult {
@@ -43,8 +41,6 @@ export interface GuestPromotionResult {
 }
 
 export interface CloudPromotionBackend {
-  createMatch: (matchId: string, document: CloudGuestImportDocument) => Promise<void>;
-  matchExists: (matchId: string) => Promise<boolean>;
   updateProfile: (patch: Record<string, unknown>) => Promise<void>;
 }
 
@@ -72,6 +68,11 @@ function currentCloudProfileDocument(input: GuestPromotionInput): CloudProfileDo
     avatar_url: input.user.avatarUrl,
     email: input.user.email,
     preferred_variant: input.cloudPreferredVariant,
+    recent_matches: {
+      matches: input.cloudHistory ?? [],
+      schema_version: 1,
+      updated_at: null,
+    },
     schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
     uid: input.user.uid,
   };
@@ -102,13 +103,6 @@ function createFirestorePromotionBackend(user: CloudAuthUser, firestore: Firesto
   const profileRef = doc(firestore, "profiles", user.uid);
 
   return {
-    createMatch: async (matchId, document) => {
-      await setDoc(doc(profileRef, "matches", matchId), document);
-    },
-    matchExists: async (matchId) => {
-      const snapshot = await getDoc(doc(profileRef, "matches", matchId));
-      return snapshot.exists();
-    },
     updateProfile: async (patch) => {
       await setDoc(profileRef, patch, { merge: true });
     },
@@ -140,6 +134,7 @@ export function promotionInputKey(input: GuestPromotionInput): string {
       input.cloudPreferredVariant ?? null,
     ],
     history: input.guestHistory.map((match) => [match.id, match.saved_at, match.move_count]),
+    cloudHistory: (input.cloudHistory ?? []).map((match) => [match.id, match.saved_at, match.move_count]),
     reset: input.historyResetAt ?? null,
     profile: [input.guestProfile.id, input.guestProfile.displayName],
     rule: input.settings.preferredVariant,
@@ -152,47 +147,46 @@ export async function promoteGuestToCloud(
   options: PromoteGuestToCloudOptions = {},
 ): Promise<GuestPromotionResult> {
   const backend = resolvePromotionBackend(input.user, options);
-  const profileUpdate = cloudProfilePromotionUpdate(input);
-
-  if (profileUpdate) {
-    await backend.updateProfile(profileUpdate);
-  }
-
-  let importedMatches = 0;
-  let skippedMatches = 0;
-
   const eligibleHistory = input.guestHistory.filter((match) => savedMatchIsAfterReset(match, input.historyResetAt));
+  const recentMatches = mergeCloudRecentMatches(
+    input.user,
+    [...(input.cloudHistory ?? []), ...eligibleHistory],
+    input.historyResetAt,
+  );
+  const profileUpdate = cloudProfilePromotionUpdate(input);
+  const displayName = typeof profileUpdate?.display_name === "string"
+    ? profileUpdate.display_name
+    : input.cloudDisplayName ?? input.user.displayName;
+  const preferredVariant = profileUpdate?.preferred_variant === "freestyle" || profileUpdate?.preferred_variant === "renju"
+    ? profileUpdate.preferred_variant
+    : input.cloudPreferredVariant ?? input.settings.preferredVariant;
+  const needsSnapshotSync = cloudProfileNeedsSnapshotSync({
+    cloudDisplayName: input.cloudDisplayName ?? input.user.displayName,
+    cloudPreferredVariant: input.cloudPreferredVariant ?? input.settings.preferredVariant,
+    cloudRecentMatches: input.cloudHistory ?? [],
+    displayName,
+    preferredVariant,
+    recentMatches,
+  });
 
-  for (const match of eligibleHistory) {
-    const matchId = cloudMatchIdForGuestMatch(match);
-    const directMatchId = cloudDirectSavedMatchId(match);
-    if (await backend.matchExists(matchId) || await backend.matchExists(directMatchId)) {
-      skippedMatches += 1;
-      continue;
-    }
-
-    try {
-      await backend.createMatch(matchId, cloudSavedMatchFromGuestMatch(input.user, input.guestProfile, match));
-      importedMatches += 1;
-    } catch (error) {
-      if (await backend.matchExists(matchId) || await backend.matchExists(directMatchId)) {
-        skippedMatches += 1;
-        continue;
-      }
-
-      throw error;
-    }
+  if (needsSnapshotSync || profileUpdate) {
+    await backend.updateProfile(cloudProfileSnapshotUpdate({
+      displayName,
+      preferredVariant,
+      recentMatches,
+      user: input.user,
+    }));
   }
 
   return {
-    importedMatches,
+    importedMatches: eligibleHistory.length,
     profileDisplayNamePromoted: Boolean(
       profileUpdate && Object.prototype.hasOwnProperty.call(profileUpdate, "display_name"),
     ),
     promotedDisplayName: profileUpdate && typeof profileUpdate.display_name === "string"
       ? profileUpdate.display_name
       : null,
-    skippedMatches,
+    skippedMatches: 0,
     totalMatches: eligibleHistory.length,
   };
 }

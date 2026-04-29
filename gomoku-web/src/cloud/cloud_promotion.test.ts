@@ -1,9 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { CloudAuthUser } from "./auth_store";
-import { cloudProfilePromotionUpdate, promoteGuestToCloud, type CloudPromotionBackend } from "./cloud_promotion";
 import { createLocalSavedMatch } from "../match/saved_match";
 import type { GuestProfileIdentity, GuestProfileSettings, GuestSavedMatch } from "../profile/guest_profile_store";
+
+import type { CloudAuthUser } from "./auth_store";
+import { cloudProfilePromotionUpdate, promoteGuestToCloud, type CloudPromotionBackend } from "./cloud_promotion";
 
 const user: CloudAuthUser = {
   avatarUrl: "https://example.com/avatar.png",
@@ -40,22 +41,15 @@ const match: GuestSavedMatch = createLocalSavedMatch({
   variant: "freestyle",
 });
 
-function createBackend(existingMatchIds: string[] = []) {
-  const existing = new Set(existingMatchIds);
-  const created = new Map<string, unknown>();
+function createBackend() {
   const profileUpdates: Array<Record<string, unknown>> = [];
   const backend: CloudPromotionBackend = {
-    createMatch: vi.fn(async (matchId, document) => {
-      created.set(matchId, document);
-      existing.add(matchId);
-    }),
-    matchExists: vi.fn(async (matchId) => existing.has(matchId)),
     updateProfile: vi.fn(async (patch) => {
       profileUpdates.push(patch);
     }),
   };
 
-  return { backend, created, profileUpdates };
+  return { backend, profileUpdates };
 }
 
 describe("cloudProfilePromotionUpdate", () => {
@@ -63,6 +57,7 @@ describe("cloudProfilePromotionUpdate", () => {
     expect(
       cloudProfilePromotionUpdate({
         cloudDisplayName: user.displayName,
+        cloudHistory: [],
         guestHistory: [],
         guestProfile,
         settings,
@@ -77,6 +72,7 @@ describe("cloudProfilePromotionUpdate", () => {
 
   it("keeps the provider display name when local profile is still Guest", () => {
     const update = cloudProfilePromotionUpdate({
+      cloudHistory: [],
       guestHistory: [],
       guestProfile: { ...guestProfile, displayName: "Guest" },
       settings,
@@ -90,6 +86,7 @@ describe("cloudProfilePromotionUpdate", () => {
     expect(
       cloudProfilePromotionUpdate({
         cloudDisplayName: user.displayName,
+        cloudHistory: [],
         cloudPreferredVariant: "renju",
         guestHistory: [],
         guestProfile: { ...guestProfile, displayName: "Guest" },
@@ -102,6 +99,7 @@ describe("cloudProfilePromotionUpdate", () => {
   it("writes only changed cloud fields when the loaded preferred rule is stale", () => {
     const update = cloudProfilePromotionUpdate({
       cloudDisplayName: user.displayName,
+      cloudHistory: [],
       cloudPreferredVariant: "freestyle",
       guestHistory: [],
       guestProfile: { ...guestProfile, displayName: "Guest" },
@@ -114,32 +112,10 @@ describe("cloudProfilePromotionUpdate", () => {
     expect(update).not.toHaveProperty("uid");
   });
 
-  it("does not promote a custom local display name before the cloud name is loaded", () => {
-    const update = cloudProfilePromotionUpdate({
-      guestHistory: [],
-      guestProfile,
-      settings,
-      user,
-    });
-
-    expect(update).not.toHaveProperty("display_name");
-  });
-
-  it("promotes local display name when cloud still holds the provider default", () => {
-    const update = cloudProfilePromotionUpdate({
-      cloudDisplayName: user.displayName,
-      guestHistory: [],
-      guestProfile,
-      settings,
-      user,
-    });
-
-    expect(update).toMatchObject({ display_name: "ByeByeBryan" });
-  });
-
   it("does not overwrite a custom cloud display name set from another device", () => {
     const update = cloudProfilePromotionUpdate({
       cloudDisplayName: "AliceFromDeviceA",
+      cloudHistory: [],
       guestHistory: [],
       guestProfile,
       settings,
@@ -147,28 +123,17 @@ describe("cloudProfilePromotionUpdate", () => {
     });
 
     expect(update).not.toHaveProperty("display_name");
-  });
-
-  it("promotes when cloud display name is null (fresh account)", () => {
-    const update = cloudProfilePromotionUpdate({
-      cloudDisplayName: null,
-      guestHistory: [],
-      guestProfile,
-      settings,
-      user,
-    });
-
-    expect(update).toMatchObject({ display_name: "ByeByeBryan" });
   });
 });
 
 describe("promoteGuestToCloud", () => {
-  it("updates the cloud profile and imports missing local matches", async () => {
-    const { backend, created, profileUpdates } = createBackend();
+  it("updates the cloud profile with a single embedded history snapshot", async () => {
+    const { backend, profileUpdates } = createBackend();
 
     const result = await promoteGuestToCloud(
       {
         cloudDisplayName: user.displayName,
+        cloudHistory: [],
         guestHistory: [match],
         guestProfile,
         settings,
@@ -181,21 +146,17 @@ describe("promoteGuestToCloud", () => {
     expect(profileUpdates[0]).toMatchObject({
       display_name: "ByeByeBryan",
       preferred_variant: "renju",
+      recent_matches: {
+        matches: [
+          expect.objectContaining({
+            id: "match-1",
+            source: "cloud_saved",
+            trust: "client_uploaded",
+          }),
+        ],
+        schema_version: 1,
+      },
     });
-    expect(backend.matchExists).toHaveBeenCalledWith("local-match-1");
-    expect(backend.createMatch).toHaveBeenCalledTimes(1);
-    const createdDocument = created.get("local-match-1") as { match_saved_at: { toDate: () => Date } };
-    expect(createdDocument).toMatchObject({
-      id: "local-match-1",
-      local_match_id: "match-1",
-      match_kind: "local_vs_bot",
-      match_saved_at: expect.anything(),
-      player_black: expect.objectContaining({
-        local_profile_id: "guest-1",
-        profile_uid: "uid-1",
-      }),
-    });
-    expect(createdDocument.match_saved_at.toDate().toISOString()).toBe(match.saved_at);
     expect(result).toEqual({
       importedMatches: 1,
       profileDisplayNamePromoted: true,
@@ -205,12 +166,23 @@ describe("promoteGuestToCloud", () => {
     });
   });
 
-  it("imports missing matches without touching an already-current cloud profile", async () => {
-    const { backend, created, profileUpdates } = createBackend();
+  it("does not write when profile and embedded history are already current", async () => {
+    const { backend, profileUpdates } = createBackend();
+    const cloudMatch = {
+      ...match,
+      player_black: {
+        ...match.player_black,
+        local_profile_id: null,
+        profile_uid: "uid-1",
+      },
+      source: "cloud_saved" as const,
+      trust: "client_uploaded" as const,
+    };
 
     const result = await promoteGuestToCloud(
       {
         cloudDisplayName: user.displayName,
+        cloudHistory: [cloudMatch],
         cloudPreferredVariant: "renju",
         guestHistory: [match],
         guestProfile: { ...guestProfile, displayName: "Guest" },
@@ -221,67 +193,20 @@ describe("promoteGuestToCloud", () => {
     );
 
     expect(profileUpdates).toHaveLength(0);
-    expect(backend.createMatch).toHaveBeenCalledTimes(1);
-    expect(created.has("local-match-1")).toBe(true);
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       importedMatches: 1,
-      profileDisplayNamePromoted: false,
-      promotedDisplayName: null,
       skippedMatches: 0,
       totalMatches: 1,
     });
   });
 
-  it("skips previously imported matches by deterministic doc id", async () => {
-    const { backend } = createBackend(["local-match-1"]);
+  it("does not include local matches at or before the reset barrier", async () => {
+    const { backend, profileUpdates } = createBackend();
 
     const result = await promoteGuestToCloud(
       {
         cloudDisplayName: user.displayName,
-        guestHistory: [match],
-        guestProfile,
-        settings,
-        user,
-      },
-      { backend },
-    );
-
-    expect(backend.createMatch).not.toHaveBeenCalled();
-    expect(result).toMatchObject({
-      importedMatches: 0,
-      skippedMatches: 1,
-      totalMatches: 1,
-    });
-  });
-
-  it("skips local history that was already saved directly while signed in", async () => {
-    const { backend } = createBackend(["match-1"]);
-
-    const result = await promoteGuestToCloud(
-      {
-        cloudDisplayName: user.displayName,
-        guestHistory: [match],
-        guestProfile,
-        settings,
-        user,
-      },
-      { backend },
-    );
-
-    expect(backend.createMatch).not.toHaveBeenCalled();
-    expect(result).toMatchObject({
-      importedMatches: 0,
-      skippedMatches: 1,
-      totalMatches: 1,
-    });
-  });
-
-  it("does not import local matches at or before the reset barrier", async () => {
-    const { backend } = createBackend();
-
-    const result = await promoteGuestToCloud(
-      {
-        cloudDisplayName: user.displayName,
+        cloudHistory: [],
         guestHistory: [match],
         guestProfile,
         historyResetAt: "2026-04-28T00:00:00.000Z",
@@ -291,37 +216,15 @@ describe("promoteGuestToCloud", () => {
       { backend },
     );
 
-    expect(backend.matchExists).not.toHaveBeenCalled();
-    expect(backend.createMatch).not.toHaveBeenCalled();
+    expect(profileUpdates[0]).toMatchObject({
+      recent_matches: {
+        matches: [],
+      },
+    });
     expect(result).toMatchObject({
       importedMatches: 0,
       skippedMatches: 0,
       totalMatches: 0,
-    });
-  });
-
-  it("treats a raced create as skipped if the match now exists", async () => {
-    const { backend } = createBackend();
-    vi.mocked(backend.createMatch).mockImplementationOnce(async () => {
-      vi.mocked(backend.matchExists).mockResolvedValueOnce(true);
-      throw new Error("permission denied");
-    });
-
-    const result = await promoteGuestToCloud(
-      {
-        cloudDisplayName: user.displayName,
-        guestHistory: [match],
-        guestProfile,
-        settings,
-        user,
-      },
-      { backend },
-    );
-
-    expect(result).toMatchObject({
-      importedMatches: 0,
-      skippedMatches: 1,
-      totalMatches: 1,
     });
   });
 });

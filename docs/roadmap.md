@@ -132,21 +132,21 @@ The backend-foundation and first continuity slices shipped through `v0.3.2`:
 
 - Firebase/GCP project, Firebase web app, and env-driven web bootstrap
 - Firestore `(default)` in `us-central1`
-- hardened owner-scoped Firestore rules for `profiles/{uid}` and private
-  `guest_import` and `cloud_saved` match creates
+- hardened owner-scoped Firestore rules for `profiles/{uid}` with embedded
+  private recent history
 - Google Auth provider configured through the Firebase Auth / Identity Toolkit
   path
 - Profile sign-in/sign-out UI
 - cloud profile create/load at `profiles/{uid}`
 - guest-to-cloud profile/settings promotion after sign-in
-- deterministic local guest match imports into
-  `profiles/{uid}/matches/local-{localMatchId}`
-- direct private `cloud_saved` writes for newly finished signed-in casual
-  matches
+- capped private `recent_matches` cloud snapshot embedded directly in the cloud
+  profile
+- 15-minute coalesced profile/history sync lane for profile edits and finished
+  signed-in casual matches
 - per-user cloud-history cache and active-history resolution for Profile and
   Replay
-- signed-in Reset Profile flow with confirmation, reset barrier, private
-  `client_uploaded` history deletion, and per-device cache clear
+- signed-in Reset Profile flow with confirmation, reset barrier, embedded
+  private-history clear, and per-device cache clear
 - compact, versioned private match schema documented in `data_model.md`
 - local guest play/history still working without Firebase config
 - Google Auth Platform published to production for public sign-in
@@ -155,14 +155,14 @@ The backend-foundation and first continuity slices shipped through `v0.3.2`:
 - public-domain sign-in smoke and no-config fallback smoke completed for
   `0.3.0`
 - local-build guest-history promotion smoke completed for `0.3.1`: one 24-match
-  local history imported exactly once with matching `local_match_id`s
+  local history imported exactly once before the later profile-snapshot pivot
 - `0.3.2` private-history smoke completed across production and local builds:
   signed-in saves persisted, cloud history restored after refresh/sign-out,
   Reset Profile cleared cloud/local active history, old rows did not re-import,
   and post-reset saves worked normally
 - Firestore rules tests cover owner scoping, profile update cooldowns,
-  reset-barrier writes, stale match rejection, private match creates, and
-  private match deletes
+  reset-barrier writes, embedded-history caps/timestamps, and closed casual
+  match subcollection writes
 - infra and free-tier tracking split into `backend_infra.md` and
   `backend_cost.md`
 

@@ -63,14 +63,10 @@ Counting assumptions:
 
 - Firestore bills document reads, writes, and deletes separately.
 - A query has a one-read minimum even when it returns no documents.
-- Security rules can add dependent reads. Our private match-create rules read
-  the owner profile through `exists()` / `get()` to enforce the
-  `history_reset_at` reset barrier. Count accepted private match creates as one
-  additional dependent profile read.
-- Repeated rule references to the same dependent document are charged once per
-  request, not once per helper call.
+- Private casual history is embedded in `profiles/{uid}.recent_matches`; there
+  is no per-match document create in the current casual cloud path.
 - Replay currently resolves from the active Profile/history cache; there is no
-  dedicated cloud replay fetch route in `v0.3.2`.
+  dedicated cloud replay fetch route in `v0.3.3`.
 
 Estimated operation budgets for the current implementation:
 
@@ -79,62 +75,54 @@ Estimated operation budgets for the current implementation:
 | Guest local play / local match finish | 0 | 0 | 0 | LocalStorage only |
 | No-config build / signed-out Profile | 0 | 0 | 0 | Firebase bootstrap stays disabled |
 | First sign-in / cloud profile create | 1 | 1 | 0 | `getDoc(profiles/{uid})`, then create profile |
-| Cloud profile load / refresh | 1 | 0-1 | 0 | `getDoc(profiles/{uid})`; existing profiles only write when provider metadata or preferred rule changed |
-| Signed-in Profile history load | `1..24` | 0 | 0 | `limit(24)` query; one-read minimum if empty |
-| Promote guest profile/settings | 0 | 0-1 | 0 | Profile merge only when local name/settings differ from loaded cloud state |
-| Promote one eligible local match | `2..3` | 1 | 0 | Client checks `guest_import` and `cloud_saved` IDs, then match create adds one dependent profile read through rules |
-| Skip one already-promoted local match | `1..2` | 0 | 0 | Stops after first matching deterministic ID |
-| Save one finished signed-in match | 2 | 1 | 0 | Client existence read + dependent profile read through rules + `cloud_saved` document write |
-| Retry a pending signed-in save | 2 | 0-1 | 0 | Same as direct save; no write if the match already exists |
+| Cloud profile/history load | 1 | 0-1 | 0 | `getDoc(profiles/{uid})`; existing profiles only write when provider metadata or schema needs refresh |
+| Coalesced profile/history sync | 0 | 0-1 | 0 | One profile snapshot write at most every 15 minutes when local profile/history is dirty |
 | Open Replay from loaded history | 0 | 0 | 0 | Uses active local/cloud history cache |
-| Reset signed-in profile with `D` private matches | `2 + max(1, D)` | 1 | `D` | Profile get + profile refresh get + profile reset write + query/read/delete private `client_uploaded` matches |
+| Reset signed-in profile | 1-2 | 1 | 0 | Profile reset write clears `recent_matches`; optional refresh read returns server timestamps |
 
 Initial implementation guardrails:
 
-- Limit history queries, starting with the existing local cap of 24 records.
+- Limit embedded recent history to the existing local cap of 24 records.
 - Avoid always-on listeners for full match history unless the UI actually needs
   live updates.
-- Prefer one write at match end over per-move cloud writes for casual play.
+- Prefer one coalesced profile snapshot write over per-match cloud documents for
+  casual play.
 - Keep routine signed-in profile refreshes read-only; write profile updates only
   when a user-visible setting or provider-owned field changed.
 - Defer signed-in profile/settings sync to sign-in, retry, and match-finish
   checkpoints so rapid name typing or default-rule toggles stay local until a
   meaningful cloud sync point.
-- Enforce a 5-minute server-side cooldown between normal profile updates in
-  Firestore rules. Reset-barrier writes can bypass the normal edit cooldown, but
-  are still scoped to real reset writes.
+- Enforce a 15-minute server-side cooldown between normal profile snapshot
+  updates in Firestore rules. Reset-barrier writes can bypass the normal edit
+  cooldown, but are still scoped to real reset writes.
 - Keep public replay publishing out of `v0.3`; private history and public
   shareables have different cost and trust profiles.
-- Budget match creates as also reading the owner profile in rules. Firestore
-  rules use the profile's `history_reset_at` as a server-side reset barrier, so
-  the dashboard should be checked after real promotion/save smoke tests.
+- Budget cloud history as profile writes, not match creates. The free-tier write
+  knob is now the sync interval: `1440 / interval_minutes` writes per
+  continuously dirty active user per day.
 
-## `v0.3.2` Cost Formulas
+## `v0.3.3` Cost Formulas
 
-These formulas are intentionally conservative enough for release planning. They
-count private match creates with the extra dependent rules read noted above.
+These formulas are intentionally conservative enough for release planning.
 
 Let:
 
-- `H = 24`, the current signed-in history query limit.
 - `P = profile opens per signed-in user per day`.
-- `M = new signed-in matches saved per user per day`.
-- `G = one-time guest matches imported on first promotion`.
-- `D = private matches cleared by Reset Profile`.
+- `S = profile/history snapshot syncs per signed-in user per day`.
+- `I = sync interval in minutes`; currently `15`.
 
 Approximate daily operations per signed-in user:
 
 | Flow | Reads | Writes | Deletes |
 |---|---:|---:|---:|
-| Signed-in Profile opens | `P * (H + 1)` | `0` normally | `0` |
-| New signed-in matches | `M * 2` | `M` | `0` |
-| First guest promotion | `G * 3` | `0-1 + G` | `0` |
-| Reset Profile | `2 + max(1, D)` | `1` | `D` |
+| Signed-in Profile opens | `P` | `0` normally | `0` |
+| Dirty profile/history syncs | `0` | `S`, capped by `1440 / I` | `0` |
+| Reset Profile | `1..2` | `1` | `0` |
 
-The first likely bottleneck is repeated history reads, not match writes. A user
-who opens Profile five times with a full 24-match history costs about 125 reads
-and normally no writes if their profile fields are already current. By contrast,
-saving five signed-in matches costs about 10 reads and 5 writes.
+With `I = 15`, a continuously dirty signed-in user can write at most 96 profile
+snapshots per day. Real users should be far lower because idle users do not
+write, and multiple matches/profile edits inside a 15-minute window coalesce
+into the next snapshot.
 
 ## Headroom Scenarios
 
@@ -143,28 +131,45 @@ mistakes before implementation.
 
 ### Small Public Release
 
-Assumption: 100 signed-in users/day, each opens Profile twice and saves 5
-matches.
+Assumption: 100 signed-in users/day, each opens Profile twice and has one dirty
+cloud snapshot sync.
 
 | Metric | Estimate | Free-tier headroom |
 |---|---:|---:|
-| Reads | ~6,000/day | ~8x below 50,000/day |
-| Writes | ~500/day | ~40x below 20,000/day |
+| Reads | ~200/day | ~250x below 50,000/day |
+| Writes | ~100/day | ~200x below 20,000/day |
 | Deletes | 0/day | No concern |
 
 This is safely inside the free tier.
 
 ### Profile-Heavy Usage
 
-Assumption: 500 signed-in users/day, each opens a 24-match history page 5 times.
+Assumption: 500 signed-in users/day, each opens Profile 5 times.
 
 | Metric | Estimate | Free-tier headroom |
 |---|---:|---:|
-| Reads | ~62,500/day | Exceeds 50,000/day |
+| Reads | ~2,500/day | ~20x below 50,000/day |
 | Writes | ~0/day before match saves | No concern |
 
-If this becomes plausible, add pagination, caching, or a cheaper summary view
-before adding more history-heavy surfaces.
+Embedding capped history in the profile removes the old history-query read
+amplification. If future history grows beyond the embedded cap, revisit
+pagination before adding more history-heavy surfaces.
+
+### Continuously Dirty Users
+
+Worst case: each active signed-in user keeps changing local profile/history
+state continuously all day.
+
+| Metric | Estimate | Free-tier headroom |
+|---|---:|---:|
+| 5-minute interval | 288 writes/user/day | ~69 continuously dirty users |
+| 10-minute interval | 144 writes/user/day | ~138 continuously dirty users |
+| 15-minute interval | 96 writes/user/day | ~208 continuously dirty users |
+| 30-minute interval | 48 writes/user/day | ~416 continuously dirty users |
+| 60-minute interval | 24 writes/user/day | ~833 continuously dirty users |
+
+The current 15-minute interval is a conservative alpha default. It keeps a
+simple cost knob without introducing per-match sync UX.
 
 ### One-Time Promotion Spike
 
@@ -173,24 +178,23 @@ matches each.
 
 | Metric | Estimate | Free-tier headroom |
 |---|---:|---:|
-| Reads | ~7,300 one-time reads | ~6x below 50,000/day |
-| Writes | ~2,600 one-time writes | ~7x below 20,000/day |
+| Reads | ~100 one-time reads | ~500x below 50,000/day |
+| Writes | ~200 one-time writes | ~100x below 20,000/day |
 | Deletes | 0 | No concern |
 
-This is fine for current scale, but promotion is intentionally a one-time import
-path. If the app ever has thousands of existing local players, staggered rollout
-or smaller import batches would be safer.
+This is fine for current scale because promotion writes one capped profile
+snapshot rather than one document per match.
 
 ### Reset-Heavy Debug Day
 
-Assumption: 20 signed-in test profiles each reset a full 24-match private
+Assumption: 20 signed-in test profiles each reset a full embedded private
 history during QA.
 
 | Metric | Estimate | Free-tier headroom |
 |---|---:|---:|
-| Reads | ~520/day | No concern |
+| Reads | ~20..40/day | No concern |
 | Writes | ~20/day | No concern |
-| Deletes | ~480/day | No concern |
+| Deletes | 0/day | No concern |
 
 Reset is not a cost risk at current scale. The bigger risk is correctness:
 reset-barrier writes and stale-match rejection must stay covered by rules tests.
@@ -263,24 +267,21 @@ Before each backend release:
 public sign-in smoke test and looked normal for the first cloud-profile slice.
 
 `v0.3.1` note: the first local-build guest promotion smoke imported 24 private
-`guest_import` matches for one signed-in profile. This is well inside the free
-tier; the cost-relevant next check is repeated promotion/sign-in behavior and
-future `cloud_saved` writes from newly finished signed-in matches.
+`guest_import` match documents for one signed-in profile. This was well inside
+the free tier, but it exposed the per-match-write cost model that `v0.3.3`
+later replaced.
 
 `v0.3.2` note: production and local-build smoke covered signed-in
 `cloud_saved` writes, cloud-history reload, Reset Profile deletion/barrier
-behavior, and post-reset saves. The operation profile still matches the
-estimates above: one finished signed-in match writes one private match document
-after a small number of dedupe/profile reads, and Reset Profile pays one profile
-write plus one delete per private `client_uploaded` match cleared.
+behavior, and post-reset saves. At that point, one finished signed-in match
+wrote one private match document after a small number of dedupe/profile reads,
+and Reset Profile paid one profile write plus one delete per private
+`client_uploaded` match cleared. That per-match document model was replaced in
+`v0.3.3`.
 
-`v0.3.3` note: routine existing-profile loads were changed from
-read-then-merge-write to read-only when cloud profile fields are already current.
-Profile writes now happen on first profile create, Reset Profile, guest
-promotion, or real metadata/default-rule changes. Profile/settings changes on
-the profile page are stored locally first and deferred to sign-in, retry, or
-match-finish sync checkpoints. Guest promotion skips the profile merge entirely
-when loaded cloud fields already match local state. Firestore rules also enforce
-a 5-minute cooldown between normal profile updates so direct scripted profile
-edits cannot run at browser-click speed. Reset-barrier writes can bypass that
-normal edit cooldown so Reset Profile is not blocked by a recent profile sync.
+`v0.3.3` note: routine existing-profile loads are read-only when cloud profile
+fields are already current. Casual private history moved from one match document
+per save to an embedded, capped `recent_matches` profile snapshot. Profile,
+settings, and history updates now share one coalesced profile write lane with a
+15-minute rules-enforced cooldown; Reset-barrier writes can bypass the normal
+cooldown so Reset Profile is not blocked by a recent profile sync.

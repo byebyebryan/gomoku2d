@@ -1,8 +1,8 @@
 import type { CloudAuthUser } from "./auth_store";
-import type { CloudProfile } from "./cloud_profile";
+import { cloudProfileSyncDue, mergeCloudRecentMatches, type CloudProfile } from "./cloud_profile";
 import { cloudProfileStore } from "./cloud_profile_store";
 import { cloudPromotionStore } from "./cloud_promotion_store";
-import { guestProfileStore, type GuestSavedMatch } from "../profile/guest_profile_store";
+import { DEFAULT_GUEST_DISPLAY_NAME, guestProfileStore, type GuestSavedMatch } from "../profile/guest_profile_store";
 
 export interface FlushCloudProfileSyncOptions {
   guestHistory?: GuestSavedMatch[];
@@ -26,10 +26,30 @@ export async function flushCloudProfileSync(
     return null;
   }
 
+  const guestHistory = options.guestHistory ?? [];
+  const nextRecentMatches = mergeCloudRecentMatches(
+    user,
+    [...cloudState.profile.recentMatches.matches, ...guestHistory],
+    cloudState.profile.historyResetAt,
+  );
+  const historyChanged = JSON.stringify(nextRecentMatches) !== JSON.stringify(cloudState.profile.recentMatches.matches);
+  const profileChanged =
+    cloudState.profile.preferredVariant !== settings.preferredVariant
+    || (
+      guestProfile.displayName.trim()
+      && guestProfile.displayName !== DEFAULT_GUEST_DISPLAY_NAME
+      && cloudState.profile.displayName === user.displayName
+    );
+
+  if ((historyChanged || profileChanged) && !cloudProfileSyncDue(cloudState.profile)) {
+    return cloudState.profile;
+  }
+
   await cloudPromotionStore.getState().promote({
     cloudDisplayName: cloudState.profile.displayName,
+    cloudHistory: cloudState.profile.recentMatches.matches,
     cloudPreferredVariant: cloudState.profile.preferredVariant,
-    guestHistory: options.guestHistory ?? [],
+    guestHistory,
     guestProfile,
     historyResetAt: cloudState.profile.historyResetAt,
     settings,
@@ -41,8 +61,15 @@ export async function flushCloudProfileSync(
   }
 
   const promotionResult = cloudPromotionStore.getState().result;
-  const profilePatch: Partial<Pick<CloudProfile, "displayName" | "preferredVariant">> = {
+  const syncedAt = new Date().toISOString();
+  const profilePatch: Partial<CloudProfile> = {
     preferredVariant: settings.preferredVariant,
+    recentMatches: {
+      matches: nextRecentMatches,
+      schemaVersion: cloudState.profile.recentMatches.schemaVersion,
+      updatedAt: syncedAt,
+    },
+    updatedAt: syncedAt,
   };
 
   if (promotionResult?.profileDisplayNamePromoted && promotionResult.promotedDisplayName) {

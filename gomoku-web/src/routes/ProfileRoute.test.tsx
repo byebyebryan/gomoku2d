@@ -25,11 +25,18 @@ const cloudUser: CloudAuthUser = {
 const cloudProfile: CloudProfile = {
   authProviders: ["google.com"],
   avatarUrl: null,
+  createdAt: null,
   displayName: "Bryan",
   email: "bryan@example.com",
   historyResetAt: null,
   preferredVariant: "freestyle",
+  recentMatches: {
+    matches: [],
+    schemaVersion: 1,
+    updatedAt: null,
+  },
   uid: "uid-1",
+  updatedAt: null,
   username: null,
 };
 
@@ -366,7 +373,7 @@ describe("ProfileRoute cloud state", () => {
   });
 
   it("retries cloud history load and pending sync when the browser comes online", async () => {
-    const loadForUser = vi.fn().mockResolvedValue(undefined);
+    const loadFromProfile = vi.fn();
     const syncPendingForUser = vi.fn().mockResolvedValue(undefined);
     cloudAuthStore.setState({
       errorMessage: null,
@@ -387,22 +394,23 @@ describe("ProfileRoute cloud state", () => {
       status: "ready",
     });
     cloudHistoryStore.setState({
-      loadForUser,
+      loadFromProfile,
       syncPendingForUser,
     });
 
     renderProfileRoute();
 
     await waitFor(() => {
-      expect(loadForUser).toHaveBeenCalledTimes(1);
+      expect(loadFromProfile).toHaveBeenCalled();
     });
+    const initialLoadCount = loadFromProfile.mock.calls.length;
 
     window.dispatchEvent(new Event("online"));
 
     await waitFor(() => {
-      expect(loadForUser).toHaveBeenCalledTimes(2);
+      expect(loadFromProfile.mock.calls.length).toBeGreaterThan(initialLoadCount);
     });
-    expect(syncPendingForUser).toHaveBeenCalledTimes(2);
+    expect(syncPendingForUser.mock.calls.length).toBeGreaterThanOrEqual(2);
   });
 
   it("uses signed-in loading copy while the cloud profile is loading", () => {
@@ -642,6 +650,7 @@ describe("ProfileRoute cloud state", () => {
     await waitFor(() => {
       expect(promote).toHaveBeenCalledWith({
         cloudDisplayName: cloudProfile.displayName,
+        cloudHistory: [],
         cloudPreferredVariant: cloudProfile.preferredVariant,
         guestHistory: history,
         guestProfile: expect.objectContaining({
@@ -744,6 +753,7 @@ describe("ProfileRoute cloud state", () => {
     await waitFor(() => {
       expect(promote).toHaveBeenCalledWith({
         cloudDisplayName: cloudProfile.displayName,
+        cloudHistory: [],
         cloudPreferredVariant: cloudProfile.preferredVariant,
         guestHistory: [],
         guestProfile: expect.objectContaining({

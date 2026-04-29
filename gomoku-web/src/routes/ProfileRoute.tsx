@@ -41,10 +41,15 @@ function syncCloudHistoryForUser(user: CloudAuthUser, historyResetAt: string | n
   const profileSync = flushProfile ? flushCloudProfileSync(user) : Promise.resolve(null);
 
   void profileSync.then((cloudProfile) => {
-    const activeHistoryResetAt = cloudProfile?.historyResetAt ?? historyResetAt;
-    return cloudHistoryStore.getState().loadForUser(user, activeHistoryResetAt).then(() => {
-      void cloudHistoryStore.getState().syncPendingForUser(user, activeHistoryResetAt);
-    });
+    const activeProfile = cloudProfile ?? cloudProfileStore.getState().profile;
+    const activeHistoryResetAt = activeProfile?.historyResetAt ?? historyResetAt;
+    if (activeProfile) {
+      cloudHistoryStore.getState().loadFromProfile(user, activeProfile, activeHistoryResetAt);
+    } else {
+      void cloudHistoryStore.getState().loadForUser(user, activeHistoryResetAt);
+    }
+
+    void cloudHistoryStore.getState().syncPendingForUser(user, activeHistoryResetAt);
   });
 }
 
@@ -150,11 +155,11 @@ function historySyncStatus({
   }
 
   if (syncStatus === "syncing" || promotionStatus === "promoting") {
-    return { label: "Syncing", tone: "busy" };
+      return { label: "Syncing", tone: "busy" };
   }
 
   if (pendingCount > 0) {
-    return { label: `${pendingCount} pending`, tone: "pending" };
+    return { label: "Pending", tone: "pending" };
   }
 
   if (profileStatus === "ready") {
@@ -357,7 +362,19 @@ export function ProfileRoute() {
       && initialPromotionKeyRef.current !== initialPromotionKey
     ) {
       initialPromotionKeyRef.current = initialPromotionKey;
-      void flushCloudProfileSync(cloudAuth.user, { guestHistory: localHistory });
+      const user = cloudAuth.user;
+      void flushCloudProfileSync(user, { guestHistory: localHistory }).then((cloudProfile) => {
+        if (!cloudProfile) {
+          return;
+        }
+
+        cloudHistoryStore.getState().loadFromProfile(user, cloudProfile);
+        for (const match of localHistory) {
+          if (!cloudProfile.recentMatches.matches.some((entry) => entry.id === match.id)) {
+            void cloudHistoryStore.getState().syncMatchForUser(user, match, cloudProfile.historyResetAt);
+          }
+        }
+      });
       return undefined;
     }
 

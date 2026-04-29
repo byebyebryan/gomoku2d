@@ -148,15 +148,14 @@ field-level invariants live in [data_model.md](data_model.md).
 For `v0.3`, the critical path is:
 
 - `profiles/{uid}` for owner-scoped cloud identity and settings
-- `profiles/{uid}/matches/{id}` for private cloud match history
+- `profiles/{uid}.recent_matches` for capped private casual cloud history
 
 Important distinction:
 
 - **Guest history** lives locally only.
-- **Signed-in casual history** is saved privately to
-  `profiles/{uid}/matches/{id}`.
-- **Trusted online/ranked history** later uses the same private history lane, but
-  with server-written trust metadata.
+- **Signed-in casual history** is saved as a capped private profile snapshot.
+- **Trusted online/ranked history** later uses server-written match records with
+  trust metadata.
 - **Public shared replays** are a separate publish step; they are not created for
   every finished match by default.
 
@@ -170,13 +169,13 @@ current rules intentionally keep the first public backend slice narrow:
   `username`; `history_reset_at` can only stay unchanged or advance to the
   current write time; `display_name` can be promoted from a user-chosen local
   profile
-- private match subcollections are readable by the owner, and owner creates are
-  limited to validated `guest_import` and `cloud_saved` private history records
-  with `match_saved_at` after the profile reset barrier until broader
-  trusted/cloud history ships
-- owner deletes are limited to private `client_uploaded` match records so Reset
-  Profile can clear casual history without granting delete access to future
-  `server_verified` records
+- `recent_matches` is capped at 24 records and only changes as part of the
+  profile snapshot write lane
+- normal profile snapshot writes are throttled by a 15-minute cooldown; reset
+  writes can bypass that cooldown when they advance the reset barrier and clear
+  the embedded history
+- private match subcollections are closed for the current casual path and kept
+  reserved for future server-verified/shareable records
 
 ## Cloud Run service
 
@@ -214,8 +213,8 @@ There are two distinct lanes:
    - local-first
    - no per-move backend validation in the hot path
    - guest sessions stay local only
-   - signed-in casual matches can still auto-save privately to cloud at match
-     end as `client_uploaded`
+   - signed-in casual matches can still sync privately to the cloud profile's
+     embedded `recent_matches` snapshot as `client_uploaded`
 
 2. **Trusted / cloud-backed play**
    - backend validates every move
@@ -310,7 +309,7 @@ menu.
 | Local guest profile | Browser-only guest mode | None |
 | Auth + cloud profile | Google/GitHub sign-in, profile sync | Firebase Auth |
 | Username reservation | `/reserve_username` | Cloud Run transaction |
-| Cloud match history | Save finished signed-in casual match to `profiles/{uid}/matches/{id}` at match end | Private; `client_uploaded` |
+| Cloud match history | Coalesce finished signed-in casual matches into `profiles/{uid}.recent_matches` | Private; `client_uploaded` |
 | Trusted match history | Server-validated online/ranked history in `profiles/{uid}/matches/{id}` | `server_verified` |
 | Replay sharing | Public URL via `replays/{id}` projected from a saved private match | Explicit publish step |
 | Online match (human vs human) | `matches/{id}` + Cloud Run authority | Server validates every move |

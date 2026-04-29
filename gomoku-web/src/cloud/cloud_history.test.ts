@@ -3,7 +3,13 @@ import { describe, expect, it, vi } from "vitest";
 import { createLocalSavedMatch } from "../match/saved_match";
 
 import type { CloudAuthUser } from "./auth_store";
-import { clearCloudHistory, loadCloudHistory, saveCloudMatch, type CloudHistoryBackend } from "./cloud_history";
+import {
+  clearCloudHistory,
+  cloudHistoryFromProfile,
+  saveCloudHistorySnapshot,
+  type CloudHistoryBackend,
+} from "./cloud_history";
+import type { CloudProfile } from "./cloud_profile";
 
 const user: CloudAuthUser = {
   avatarUrl: null,
@@ -26,130 +32,123 @@ const match = createLocalSavedMatch({
   variant: "freestyle",
 });
 
-function createBackend(existingMatchIds: string[] = []) {
-  const existing = new Set(existingMatchIds);
-  const created = new Map<string, unknown>();
+function cloudProfile(overrides: Partial<CloudProfile> = {}): CloudProfile {
+  return {
+    authProviders: ["google.com"],
+    avatarUrl: null,
+    createdAt: "2026-04-28T00:00:00.000Z",
+    displayName: "Bryan",
+    email: "bryan@example.com",
+    historyResetAt: null,
+    preferredVariant: "freestyle",
+    recentMatches: {
+      matches: [],
+      schemaVersion: 1,
+      updatedAt: null,
+    },
+    uid: "uid-1",
+    updatedAt: "2026-04-28T00:00:00.000Z",
+    username: null,
+    ...overrides,
+  };
+}
+
+function createBackend() {
+  const updates: Array<Record<string, unknown>> = [];
   const backend: CloudHistoryBackend = {
-    createMatch: vi.fn(async (matchId, document) => {
-      created.set(matchId, document);
-      existing.add(matchId);
+    loadProfile: vi.fn(async () => null),
+    updateProfile: vi.fn(async (patch) => {
+      updates.push(patch);
     }),
-    deleteClientUploadedMatches: vi.fn(async (limitCount) => {
-      const deleted = Math.min(limitCount, created.size);
-      for (const matchId of Array.from(created.keys()).slice(0, deleted)) {
-        created.delete(matchId);
-        existing.delete(matchId);
-      }
-      return deleted;
-    }),
-    loadMatches: vi.fn(async () => Array.from(created.values())),
-    matchExists: vi.fn(async (matchId) => existing.has(matchId)),
   };
 
-  return { backend, created, existing };
+  return { backend, updates };
 }
 
 describe("cloud history", () => {
-  it("saves a finished local match as cloud_saved", async () => {
-    const { backend, created } = createBackend();
-
-    const result = await saveCloudMatch(user, match, { backend });
-
-    expect(result).toMatchObject({
-      matchId: "match-1",
-      skipped: false,
-    });
-    expect(result.match).toMatchObject({
-      id: "match-1",
-      player_black: {
-        local_profile_id: null,
-        profile_uid: "uid-1",
-      },
-      source: "cloud_saved",
-      trust: "client_uploaded",
-    });
-    expect(backend.createMatch).toHaveBeenCalledTimes(1);
-    const createdDocument = created.get("match-1") as { match_saved_at: { toDate: () => Date } };
-    expect(createdDocument).toMatchObject({
-      id: "match-1",
-      match_saved_at: expect.anything(),
-      source: "cloud_saved",
-      trust: "client_uploaded",
-    });
-    expect(createdDocument.match_saved_at.toDate().toISOString()).toBe(match.saved_at);
-  });
-
-  it("treats an existing direct cloud match as an idempotent save", async () => {
-    const { backend } = createBackend(["match-1"]);
-
-    const result = await saveCloudMatch(user, match, { backend });
-
-    expect(result).toMatchObject({
-      matchId: "match-1",
-      skipped: true,
-    });
-    expect(backend.createMatch).not.toHaveBeenCalled();
-  });
-
-  it("treats a raced create as saved when the document now exists", async () => {
-    const { backend, existing } = createBackend();
-    vi.mocked(backend.createMatch).mockImplementationOnce(async (matchId) => {
-      existing.add(matchId);
-      throw new Error("permission denied");
-    });
-
-    const result = await saveCloudMatch(user, match, { backend });
-
-    expect(result).toMatchObject({
-      matchId: "match-1",
-      skipped: true,
-    });
-  });
-
-  it("loads only valid saved match documents after the reset barrier", async () => {
-    const { backend } = createBackend();
-    vi.mocked(backend.loadMatches).mockResolvedValueOnce([
-      {
-        ...match,
-        player_black: {
-          ...match.player_black,
-          local_profile_id: null,
-          profile_uid: "uid-1",
-        },
-        source: "cloud_saved",
-        trust: "client_uploaded",
-      },
-      {
-        ...match,
-        id: "old-match",
-        saved_at: "2026-04-27T01:02:03.000Z",
-      },
-      { id: "bad-match" },
-    ]);
-
-    const history = await loadCloudHistory(user, {
-      backend,
+  it("filters embedded cloud history after the reset barrier", () => {
+    const profile = cloudProfile({
       historyResetAt: "2026-04-28T00:00:00.000Z",
-      limitCount: 10,
+      recentMatches: {
+        matches: [
+          { ...match, source: "cloud_saved", trust: "client_uploaded" },
+          {
+            ...match,
+            id: "old-match",
+            saved_at: "2026-04-27T01:02:03.000Z",
+            source: "cloud_saved",
+            trust: "client_uploaded",
+          },
+        ],
+        schemaVersion: 1,
+        updatedAt: null,
+      },
     });
 
-    expect(backend.loadMatches).toHaveBeenCalledWith(10);
-    expect(history).toHaveLength(1);
-    expect(history[0]?.id).toBe("match-1");
+    expect(cloudHistoryFromProfile(profile)).toHaveLength(1);
+    expect(cloudHistoryFromProfile(profile)[0]?.id).toBe("match-1");
   });
 
-  it("clears client-uploaded cloud history in bounded batches", async () => {
-    const { backend, created } = createBackend();
-    created.set("match-1", match);
-    created.set("match-2", { ...match, id: "match-2" });
-    vi.mocked(backend.deleteClientUploadedMatches)
-      .mockResolvedValueOnce(2)
-      .mockResolvedValueOnce(0);
+  it("writes one profile snapshot for a merged history save", async () => {
+    const { backend, updates } = createBackend();
+    const profile = cloudProfile();
 
-    const deleted = await clearCloudHistory(user, { backend, batchSize: 2 });
+    const result = await saveCloudHistorySnapshot(
+      user,
+      {
+        cloudProfile: profile,
+        displayName: "Bryan",
+        matches: [match],
+        preferredVariant: "renju",
+      },
+      { backend },
+    );
 
-    expect(deleted).toBe(2);
-    expect(backend.deleteClientUploadedMatches).toHaveBeenCalledTimes(2);
-    expect(backend.deleteClientUploadedMatches).toHaveBeenCalledWith(2);
+    expect(backend.updateProfile).toHaveBeenCalledTimes(1);
+    expect(updates[0]).toMatchObject({
+      display_name: "Bryan",
+      preferred_variant: "renju",
+      recent_matches: {
+        matches: [
+          expect.objectContaining({
+            id: "match-1",
+            source: "cloud_saved",
+            trust: "client_uploaded",
+          }),
+        ],
+        schema_version: 1,
+      },
+    });
+    expect(result.matches).toHaveLength(1);
+    expect(result.matches[0]?.player_black.profile_uid).toBe("uid-1");
+  });
+
+  it("clears embedded cloud history with one profile snapshot write", async () => {
+    const { backend, updates } = createBackend();
+    const profile = cloudProfile({
+      recentMatches: {
+        matches: [{ ...match, source: "cloud_saved", trust: "client_uploaded" }],
+        schemaVersion: 1,
+        updatedAt: null,
+      },
+    });
+
+    const result = await clearCloudHistory(
+      user,
+      {
+        cloudProfile: profile,
+        displayName: "Bryan",
+        preferredVariant: "freestyle",
+      },
+      { backend },
+    );
+
+    expect(backend.updateProfile).toHaveBeenCalledTimes(1);
+    expect(updates[0]).toMatchObject({
+      recent_matches: {
+        matches: [],
+      },
+    });
+    expect(result.matches).toEqual([]);
   });
 });

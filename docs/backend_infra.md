@@ -373,11 +373,11 @@ npm run test:rules
 ```
 
 This requires Java for the local Firestore emulator. It runs the emulator
-against the checked-in `firestore.rules` and covers owner scoping, private match
-creates/deletes, `history_reset_at` movement, and the server-side reset barrier
-enforced through `match_saved_at > history_reset_at`. The regular CI web job
-installs Java and runs this command after Vitest and before the production
-build.
+against the checked-in `firestore.rules` and covers owner scoping,
+`history_reset_at` movement, embedded `recent_matches` caps/timestamps, profile
+update cooldowns, reset bypasses, and closed casual match subcollection writes.
+The regular CI web job installs Java and runs this command after Vitest and
+before the production build.
 
 ## Manual Firestore Rules Deploy
 
@@ -501,9 +501,8 @@ Current cloud UI / data smoke state:
   test and looked normal.
 - Local-build guest promotion has been manually smoke-tested for
   `profiles/DbsocAJ0vHVd9LYjk2oaeQx2qec2`: Chrome `localStorage`
-  `gomoku2d.guest-profile.v2` had 24 local matches, Firestore had 24 matching
-  `guest_import` docs under `profiles/{uid}/matches`, and no local/cloud
-  `local_match_id` mismatches were found.
+  `gomoku2d.guest-profile.v2` had 24 local matches, and Firestore imported the
+  matching private history under the then-current per-match document model.
 - Local Phase 1 cloud-history sync has been manually smoke-tested: after
   signing out and resetting local profile state, signing back in restored the
   cloud-backed profile/history; a newly finished signed-in match also restored
@@ -519,8 +518,9 @@ After the `v0.3.2` tag:
 
 - `v0.3.2` has been cut and published.
 - Keep the compatibility caveat in mind for future rules changes: cloud match
-  creates require the matching web build because rules reject writes without
-  `match_saved_at`; old open clients may need a refresh after deploy.
+  history writes require the matching web build because rules now expect profile
+  schema v2 with embedded `recent_matches`; old open clients may need a refresh
+  after deploy.
 - Refresh cost/headroom notes again after a little more real traffic if the
   dashboard shows anything surprising.
 

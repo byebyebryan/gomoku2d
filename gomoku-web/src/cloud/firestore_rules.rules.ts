@@ -36,7 +36,12 @@ function profileDocument(uid: string, overrides: Record<string, unknown> = {}): 
     history_reset_at: null,
     last_login_at: timestamp("2020-01-01T00:00:00.000Z"),
     preferred_variant: "freestyle",
-    schema_version: 1,
+    recent_matches: {
+      matches: [],
+      schema_version: 1,
+      updated_at: null,
+    },
+    schema_version: 2,
     uid,
     updated_at: timestamp("2020-01-01T00:00:00.000Z"),
     username: null,
@@ -158,6 +163,14 @@ async function seedMatch(uid: string, matchId: string, document: Record<string, 
   });
 }
 
+function recentMatchesUpdate(matches: unknown[] = []): Record<string, unknown> {
+  return {
+    matches,
+    schema_version: 1,
+    updated_at: serverTimestamp(),
+  };
+}
+
 beforeAll(async () => {
   const rules = await readFile(new URL("../../../firestore.rules", import.meta.url), "utf8");
   testEnv = await initializeTestEnvironment({
@@ -189,6 +202,7 @@ describe("Firestore profile rules", () => {
       ownerDb().doc("profiles/uid-1").set(
         profileUpdateDocument("uid-1", {
           history_reset_at: serverTimestamp(),
+          recent_matches: recentMatchesUpdate(),
         }),
       ),
     );
@@ -212,6 +226,7 @@ describe("Firestore profile rules", () => {
       ownerDb().doc("profiles/uid-1").set(
         profileUpdateDocument("uid-1", {
           history_reset_at: serverTimestamp(),
+          recent_matches: recentMatchesUpdate(),
         }),
       ),
     );
@@ -257,6 +272,29 @@ describe("Firestore profile rules", () => {
           created_at: timestamp("2999-01-01T00:00:00.000Z"),
           display_name: "Promoted Local Name",
           preferred_variant: "renju",
+          recent_matches: recentMatchesUpdate([
+            {
+              id: "match-1",
+            },
+          ]),
+        }),
+      ),
+    );
+  });
+
+  it("allows old alpha profiles to be refreshed into profile schema v2", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const legacyProfile = profileDocument("uid-1", {
+        schema_version: 1,
+      });
+      delete legacyProfile.recent_matches;
+      await context.firestore().doc("profiles/uid-1").set(legacyProfile);
+    });
+
+    await assertSucceeds(
+      ownerDb().doc("profiles/uid-1").set(
+        profileUpdateDocument("uid-1", {
+          recent_matches: recentMatchesUpdate(),
         }),
       ),
     );
@@ -297,6 +335,7 @@ describe("Firestore profile rules", () => {
       ownerDb().doc("profiles/uid-1").set(
         profileUpdateDocument("uid-1", {
           history_reset_at: serverTimestamp(),
+          recent_matches: recentMatchesUpdate(),
         }),
       ),
     );
@@ -311,78 +350,72 @@ describe("Firestore profile rules", () => {
       ),
     );
   });
+
+  it("allows embedded recent history in a settled profile snapshot update", async () => {
+    await seedProfile("uid-1", {
+      updated_at: timestamp("2020-01-01T00:00:00.000Z"),
+    });
+
+    await assertSucceeds(
+      ownerDb().doc("profiles/uid-1").set(
+        profileUpdateDocument("uid-1", {
+          recent_matches: recentMatchesUpdate([
+            {
+              id: "match-1",
+            },
+          ]),
+        }),
+      ),
+    );
+  });
+
+  it("rejects embedded recent history snapshots over the cap", async () => {
+    await seedProfile("uid-1", {
+      updated_at: timestamp("2020-01-01T00:00:00.000Z"),
+    });
+
+    await assertFails(
+      ownerDb().doc("profiles/uid-1").set(
+        profileUpdateDocument("uid-1", {
+          recent_matches: recentMatchesUpdate(Array.from({ length: 25 }, (_, index) => ({ id: `match-${index}` }))),
+        }),
+      ),
+    );
+  });
+
+  it("rejects embedded recent history changes without a server timestamp", async () => {
+    await seedProfile("uid-1");
+
+    await assertFails(
+      ownerDb().doc("profiles/uid-1").set(
+        profileUpdateDocument("uid-1", {
+          recent_matches: {
+            matches: [{ id: "match-1" }],
+            schema_version: 1,
+            updated_at: timestamp("2026-04-28T08:00:00.000Z"),
+          },
+        }),
+      ),
+    );
+  });
 });
 
-describe("Firestore private match rules", () => {
-  it("allows owner cloud_saved creates after the profile reset barrier", async () => {
-    await seedProfile("uid-1", {
-      history_reset_at: timestamp("2020-01-01T00:00:00.000Z"),
-    });
-
-    await assertSucceeds(
-      ownerDb().doc("profiles/uid-1/matches/match-1").set(
-        cloudSavedMatchDocument("uid-1", "match-1", timestamp("2020-01-01T01:00:00.000Z")),
-      ),
-    );
-  });
-
-  it("allows owner guest_import creates after the profile reset barrier", async () => {
-    await seedProfile("uid-1", {
-      history_reset_at: timestamp("2020-01-01T00:00:00.000Z"),
-    });
-
-    await assertSucceeds(
-      ownerDb().doc("profiles/uid-1/matches/local-match-1").set(
-        guestImportMatchDocument("uid-1", "local-match-1", timestamp("2020-01-01T01:00:00.000Z")),
-      ),
-    );
-  });
-
-  it("rejects stale match creates at or before the profile reset barrier", async () => {
-    await seedProfile("uid-1", {
-      history_reset_at: timestamp("2020-01-01T00:00:00.000Z"),
-    });
-
-    await assertFails(
-      ownerDb().doc("profiles/uid-1/matches/match-1").set(
-        cloudSavedMatchDocument("uid-1", "match-1", timestamp("2020-01-01T00:00:00.000Z")),
-      ),
-    );
-  });
-
-  it("requires match_saved_at on match creates", async () => {
-    await seedProfile("uid-1");
-
-    const missingTimestamp = cloudSavedMatchDocument("uid-1", "match-1", timestamp("2020-01-01T01:00:00.000Z"));
-    delete missingTimestamp.match_saved_at;
-    await assertFails(ownerDb().doc("profiles/uid-1/matches/match-1").set(missingTimestamp));
-  });
-
-  it("rejects match creates when the parent cloud profile does not exist", async () => {
-    await assertFails(
-      ownerDb().doc("profiles/uid-1/matches/match-1").set(
-        cloudSavedMatchDocument("uid-1", "match-1", timestamp("2020-01-01T01:00:00.000Z")),
-      ),
-    );
-  });
-
-  it("rejects cross-user match writes and reads", async () => {
+describe("Firestore private match subcollection rules", () => {
+  it("rejects private match subcollection creates after the profile-v2 pivot", async () => {
     await seedProfile("uid-1");
 
     await assertFails(
-      ownerDb("uid-2").doc("profiles/uid-1/matches/match-1").set(
+      ownerDb().doc("profiles/uid-1/matches/match-1").set(
         cloudSavedMatchDocument("uid-1", "match-1", timestamp("2020-01-01T01:00:00.000Z")),
       ),
     );
-    await assertFails(ownerDb("uid-2").doc("profiles/uid-1/matches/match-1").get());
   });
 
-  it("lets owners delete private client-uploaded matches but not verified matches", async () => {
+  it("rejects private match subcollection reads and deletes", async () => {
     await seedProfile("uid-1");
     await seedMatch("uid-1", "client-match", { trust: "client_uploaded" });
-    await seedMatch("uid-1", "verified-match", { trust: "server_verified" });
 
-    await assertSucceeds(ownerDb().doc("profiles/uid-1/matches/client-match").delete());
-    await assertFails(ownerDb().doc("profiles/uid-1/matches/verified-match").delete());
+    await assertFails(ownerDb().doc("profiles/uid-1/matches/client-match").get());
+    await assertFails(ownerDb().doc("profiles/uid-1/matches/client-match").delete());
   });
 });

@@ -131,12 +131,20 @@ export function LocalMatchRoute() {
         const cloudAuth = cloudAuthStore.getState();
         if (savedMatch && cloudAuth.status === "signed_in" && cloudAuth.user) {
           const signedInUser = cloudAuth.user;
-          void flushCloudProfileSync(signedInUser).then((cloudProfile) => {
-            void cloudHistoryStore.getState().syncMatchForUser(
-              signedInUser,
-              savedMatch,
-              cloudProfile?.historyResetAt ?? null,
-            );
+          void flushCloudProfileSync(signedInUser, { guestHistory: guestProfileStore.getState().history }).then((cloudProfile) => {
+            if (!cloudProfile) {
+              void cloudHistoryStore.getState().syncMatchForUser(signedInUser, savedMatch);
+              return;
+            }
+
+            cloudHistoryStore.getState().loadFromProfile(signedInUser, cloudProfile);
+            if (!cloudProfile.recentMatches.matches.some((entry) => entry.id === savedMatch.id)) {
+              void cloudHistoryStore.getState().syncMatchForUser(
+                signedInUser,
+                savedMatch,
+                cloudProfile.historyResetAt,
+              );
+            }
           });
         }
         setLatestReplayId(replayId);

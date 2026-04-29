@@ -8,7 +8,7 @@ import { ensureCloudProfile, resetCloudProfile, type CloudProfile } from "./clou
 export type CloudProfileStatus = "idle" | "loading" | "ready" | "error";
 
 export interface CloudProfileState {
-  applyLocalPatch: (patch: Partial<Pick<CloudProfile, "displayName" | "preferredVariant">>) => void;
+  applyLocalPatch: (patch: Partial<CloudProfile>) => void;
   errorMessage: string | null;
   loadForUser: (user: CloudAuthUser, preferredVariant: GameVariant) => Promise<void>;
   profile: CloudProfile | null;
