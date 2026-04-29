@@ -235,12 +235,25 @@ uses Google Sign-In identity scopes. The OAuth logo is intentionally blank for
 the `v0.3` backend-continuity line; adding a logo or changing visible branding
 details can trigger brand verification.
 
-## Popup Auth Headers
+## Auth Popup And Redirect Behavior
 
-The web app currently uses Firebase Auth's popup flow. In Chrome, the Firebase
-SDK may log `Cross-Origin-Opener-Policy policy would block the window.closed
-call` while it polls the Google popup. If sign-in completes and the profile
-loads, this is popup-flow console noise rather than an Auth failure.
+The web app uses Firebase Auth directly, with two browser sign-in paths:
+
+- desktop/top-level browsing contexts try `signInWithPopup` first
+- mobile, coarse-pointer, or embedded contexts use `signInWithRedirect`
+
+If the desktop popup is blocked or unsupported in the current environment, the
+client falls back to redirect. If the user intentionally closes the popup, the
+client does not redirect behind their back.
+
+At startup, the auth store calls `getRedirectResult` so returning from a
+redirect sign-in can complete before the normal profile/cloud load path
+continues.
+
+In Chrome, the Firebase SDK may still log
+`Cross-Origin-Opener-Policy policy would block the window.closed call` while it
+polls a Google popup. If sign-in completes and the profile loads, this is
+popup-flow console noise rather than an Auth failure.
 
 For local development, Vite dev/preview responses set:
 
@@ -249,10 +262,13 @@ For local development, Vite dev/preview responses set:
 
 Google Identity Services recommends `same-origin-allow-popups` for popup flows
 when FedCM is disabled. GitHub Pages cannot set custom response headers, so the
-deployed GitHub Pages build may still show the warning even when sign-in works.
-If this becomes unacceptable, the cleaner production fix is to move hosting
-behind a platform that can set headers, or switch the app to a redirect-based
-flow and follow Firebase's redirect best-practice setup.
+deployed GitHub Pages build may still show the popup warning even when sign-in
+works. Redirect sign-in is the production-safe fallback for environments where
+the popup path is unreliable.
+
+Redirect sign-in depends on the Firebase Auth handler route. Keep the Google
+OAuth Web client redirect URIs in sync with the entries documented in the Auth
+setup section above.
 
 ## Firebase Web Config
 
@@ -544,6 +560,12 @@ After the `v0.3.2` tag:
   history writes require the matching web build because rules now expect profile
   schema v3 with embedded `match_history`; old open clients may need a refresh
   after deploy, and pre-v3 alpha profile docs are intentionally not migrated.
+- `v0.3.3` hardening has been validated locally across Vitest, Firestore rules
+  tests, production build, and targeted live/local cloud-sync smoke during the
+  development slice. Before tagging, deploy the final release candidate from
+  the current `main`, then smoke production sign-in, `/profile` direct load,
+  one signed-in match save, Profile history, Replay, Reset Profile, and Delete
+  Cloud on a disposable signed-in profile.
 - Refresh cost/headroom notes again after a little more real traffic if the
   dashboard shows anything surprising.
 

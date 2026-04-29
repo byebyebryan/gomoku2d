@@ -12,35 +12,72 @@ their own section.
 
 ## [Unreleased]
 
-### Web copy
+## [0.3.3] - 2026-04-29
+
+**Theme: wrap up `v0.3` by hardening cloud continuity instead of expanding
+backend scope.**
+
+`v0.3.3` grew larger than a normal patch because it closes the backend
+foundation line: private history is now one cost-aware profile snapshot,
+local/cloud profile shapes are aligned, auth handles more browser contexts, and
+the operational docs describe the actual production path. The product remains
+local-first and private-by-default; public replay sharing, online play, and
+server-verified matches stay out of `v0.3`.
+
+### Web and profile UX
 
 - Polished Profile, Privacy, and Terms wording around local profile state, cloud
-  sync, private history, and reset behavior.
+  sync, private history, experimental online features, and reset behavior.
+- Softened the Reset Profile action, tightened confirmation copy, and kept the
+  signed-in/signed-out reset scopes explicit.
+- Added a signed-in Delete Cloud path behind Reset Profile so users can delete
+  their Gomoku2D cloud profile, clear cloud history, and sign out while keeping
+  local browser history local.
+- Added compact profile-history sync badges for queued, syncing, synced, and
+  retry states without adding another heavy status block.
+- Added a `Show more` history control so the Profile page can keep 128 replay
+  records without rendering an oversized list by default.
 - Renamed the saved replay route from `/replays/local/:matchId` to
-  `/replay/:matchId` as a clean URL break before replay URLs become user-facing.
+  `/replay/:matchId` as a clean URL break before replay URLs become
+  user-facing.
 
-### Ops and docs
+### Cloud sync and schema
 
-- Tightened the release runbook for push/CI checks, manual Pages deploys,
-  manual Firestore rules deploys, and production smoke coverage.
-- Expanded backend cost notes with current Firestore operation math for sign-in,
-  embedded history load, coalesced profile/history sync, reset, and retry flows.
+- Pivoted casual private cloud history from per-match documents to one embedded
+  `profiles/{uid}.match_history` snapshot.
+- Introduced profile schema v3 with `auth.providers`, `settings.default_rules`,
+  `reset_at`, and mutually exclusive `replay_matches`, `summary_matches`, and
+  `archived_stats` retention tiers.
+- Aligned local history with the cloud shape under the clean-break
+  `gomoku2d.local-profile.v3` key.
+- Raised private replay retention to 128 full replay records, added a 1024-row
+  lightweight summary tier, and rolled older records into archived aggregate
+  stats.
+- Changed signed-in profile/settings/history sync to a 5-minute coalesced
+  profile-write lane, so rapid name edits, rule toggles, and multiple finished
+  matches collapse into bounded snapshot writes.
 - Avoided routine Firestore profile refresh writes when signed-in cloud profile
-  fields are already current.
-- Deferred signed-in profile/settings sync to sign-in, retry, and match-finish
-  checkpoints, and skipped no-op guest promotion profile writes to avoid write
-  amplification from rapid name/default-rule edits.
-- Added a Firestore profile-update cooldown in security rules, with emulator
-  coverage, so scripted profile edits cannot write as fast as the client can
-  send requests.
-- Pivoted casual private cloud history from per-match subcollection documents to
-  a capped `recent_matches` snapshot embedded in `profiles/{uid}`.
-- Changed cloud profile/history sync to one 15-minute coalesced write lane, so
-  multiple profile edits and finished matches can collapse into one profile
-  snapshot write.
-- Updated Firestore rules and index exemptions for profile schema v2, embedded
-  recent-history caps, reset-time history clearing, and closed casual match
-  subcollection writes.
+  fields are already current, and skipped no-op local-to-cloud promotion writes.
+- Reconciled queued cloud-history sync against refreshed profile snapshots so
+  live/local build races do not leave stale error badges after the data already
+  reached Firestore.
+
+### Auth, rules, and deploy
+
+- Added Firebase Auth redirect fallback: desktop prefers popup, mobile or
+  embedded contexts prefer redirect, popup-blocked/unsupported errors fall back
+  to redirect, and intentional popup closes do not.
+- Added direct GitHub Pages route entries for `/profile` and `/match/local` to
+  avoid deep-linking through a visible `404` response where static routes are
+  known.
+- Hardened Firestore rules for profile schema v3, embedded-history caps,
+  reset-barrier writes, 5-minute profile-update cooldowns, reset cooldown
+  bypasses, owner-only profile deletes, and closed casual match subcollection
+  writes.
+- Updated Firestore index exemptions for the embedded history fields.
+- Tightened release, backend infra, data-model, and cost docs around tag-only
+  deploys, manual deploy smoke, Workload Identity rules deployment, and current
+  Firestore free-tier math.
 
 ## [0.3.2] - 2026-04-28
 
@@ -485,7 +522,8 @@ together in one canvas-driven surface. That lesson drove the `v0.2.1` rewrite.
   concerns blurred together.
 - Expressive UI language, but not scalable beyond one canvas.
 
-[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.3.2...HEAD
+[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.3.3...HEAD
+[0.3.3]: https://github.com/byebyebryan/gomoku2d/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/byebyebryan/gomoku2d/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/byebyebryan/gomoku2d/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/byebyebryan/gomoku2d/compare/v0.2.4...v0.3.0

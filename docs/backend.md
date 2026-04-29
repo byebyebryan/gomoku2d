@@ -185,8 +185,8 @@ current rules intentionally keep the first public backend slice narrow:
 - owners can read their own `profiles/{uid}` document
 - owners can create/update that document only if it matches the expected profile
   schema
-- owners can delete their own `profiles/{uid}` document through Delete Online
-  Profile; local browser history is not deleted by that cloud delete path
+- owners can delete their own `profiles/{uid}` document through Delete Cloud;
+  local browser history is not deleted by that cloud delete path
 - client updates preserve locked app-owned fields such as `created_at` and
   `username`; `reset_at` can only stay unchanged or advance to the
   current write time; `display_name` can be promoted from a user-chosen local

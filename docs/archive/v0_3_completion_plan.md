@@ -228,7 +228,51 @@ Smoke checklist:
   cache without re-importing older local records
 - failed/offline sync remains visible but does not block play
 
-### `0.3.x` — Hardening
+### `0.3.3` — Backend Continuity Wrap-Up
+
+Purpose: stop expanding `v0.3` and harden the cloud-continuity layer enough
+that `v0.4` can build on it.
+
+This slice replaced several intermediate `0.3.1`/`0.3.2` shapes rather than
+preserving them as long-lived migrations. The alpha data set was still test
+data, so the project accepted clean breaks where they made the backend model
+simpler.
+
+Work completed after `v0.3.2`:
+
+- moved casual private history out of `profiles/{uid}/matches/*` and into the
+  owner profile's embedded `match_history` snapshot
+- introduced profile schema v3 with `auth.providers`, `settings.default_rules`,
+  `reset_at`, `replay_matches`, `summary_matches`, and `archived_stats`
+- aligned local history to the clean-break `gomoku2d.local-profile.v3` key and
+  intentionally ignored older `guest-profile.*` keys
+- capped full replay retention at 128 records, kept the next 1024 summaries,
+  and rolled older records into archive counters
+- coalesced signed-in profile/settings/history writes into a 5-minute profile
+  snapshot lane
+- hardened Firestore rules for schema v3, history caps, profile update
+  cooldowns, reset-barrier writes, reset cooldown bypasses, and closed casual
+  match subcollection writes
+- added a signed-in Delete Cloud path behind Reset Profile for owner-only cloud
+  profile deletion and sign-out without clearing local browser history
+- reconciled queued cloud-history sync after live/local races so stale local
+  errors clear when Firestore already contains the match
+- added Firebase Auth redirect fallback for mobile, embedded, blocked-popup,
+  and unsupported-popup environments
+- added direct GitHub Pages route entries for `/profile` and `/match/local`
+- polished Profile and policy copy around local profile, cloud profile,
+  experimental online features, sync state, and reset scope
+- updated release, infra, data-model, and cost docs to match the final `v0.3`
+  backend posture
+
+Release status:
+
+- `v0.3.3` is the intended wrap-up release for the backend-continuity line.
+- Final pre-tag work is limited to release mechanics: bump package version,
+  run release checks, deploy the release candidate if needed, smoke production,
+  then tag.
+
+### Later `0.3.x` — Narrow Hardening Only
 
 Purpose: only handle backend-foundation hardening if real usage exposes it.
 This is not an active product scope.

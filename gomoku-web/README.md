@@ -89,7 +89,7 @@ src/
 ├── board/          Phaser scene, renderer, board constants
 ├── cloud/          Firebase config/bootstrap for cloud-backed v0.3 surfaces
 ├── game/           Local match Zustand store + shared types
-├── profile/        Guest profile Zustand store (persisted to localStorage)
+├── profile/        Local profile Zustand store (persisted to localStorage)
 ├── replay/         Replay frame derivation from saved matches
 ├── core/           Wasm bridge + bot worker protocol/runner
 └── ui/             Icon component + icon registry
@@ -203,8 +203,8 @@ The local-first `v0.2` product pass is complete. `P1` proved Rust + Wasm +
 browser play; `P2` landed the paired desktop/mobile shell in
 `v0.2.3` and the final `v0.2.4` polish/reference set on top of it. The `v0.3`
 backend-continuity line now has optional Firebase config, Google sign-in, cloud
-profile create/load, guest-history promotion, direct private cloud saves for
-newly finished signed-in matches, cloud history/replay loading, and reset
+profile create/load, local-to-cloud profile promotion, embedded private
+cloud-backed history, cloud replay loading, auth fallback hardening, and reset
 barrier hardening. Lab-powered product features, skins, published replays, and
 online play stay sequenced in later phases — see
 [`../docs/roadmap.md`](../docs/roadmap.md) for sequencing and

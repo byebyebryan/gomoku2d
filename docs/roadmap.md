@@ -128,7 +128,8 @@ ad-hoc planning artifact; this section remains the canonical roadmap.
 
 ### Final State
 
-The backend-foundation and first continuity slices have reached `v0.3.3` prep:
+The backend-foundation and first continuity slices have reached the `v0.3.3`
+wrap-up state:
 
 - Firebase/GCP project, Firebase web app, and env-driven web bootstrap
 - Firestore `(default)` in `us-central1`
@@ -136,6 +137,9 @@ The backend-foundation and first continuity slices have reached `v0.3.3` prep:
   private match history
 - Google Auth provider configured through the Firebase Auth / Identity Toolkit
   path
+- Firebase Auth popup/redirect handling: desktop tries popup first, mobile and
+  embedded contexts use redirect, and popup-blocked/unsupported errors fall back
+  to redirect without retrying intentional popup closes
 - Profile sign-in/sign-out UI
 - cloud profile create/load at `profiles/{uid}`
 - local profile-to-cloud profile/settings promotion after sign-in
@@ -145,8 +149,13 @@ The backend-foundation and first continuity slices have reached `v0.3.3` prep:
   signed-in casual matches
 - per-user cloud-history cache and active-history resolution for Profile and
   Replay
+- queued cloud-history reconciliation after live/local build races, so stale
+  local sync errors clear when Firestore already contains the match
 - signed-in Reset Profile flow with confirmation, reset barrier, embedded
   private-history clear, and per-device cache clear
+- signed-in Delete Cloud path behind Reset Profile for deleting
+  `profiles/{uid}`, clearing this device's cloud cache for that user, and
+  signing out while leaving local browser history local
 - compact, versioned private match schema documented in `data_model.md`
 - local profile storage moved to the clean-break `local-profile.v3` key,
   aligned with the cloud replay/summary/archive retention tiers
@@ -154,6 +163,9 @@ The backend-foundation and first continuity slices have reached `v0.3.3` prep:
 - Google Auth Platform published to production for public sign-in
 - static `/privacy/` and `/terms/` pages plus contact/deletion email for OAuth
   app readiness
+- GitHub Pages publishes direct SPA entries for `/profile` and `/match/local`
+  in addition to the fallback `404.html` route, reducing visible deep-link
+  `404` noise for static app routes
 - public-domain sign-in smoke and no-config fallback smoke completed for
   `0.3.0`
 - local-build local-history promotion smoke completed for `0.3.1`: one 24-match
@@ -163,8 +175,8 @@ The backend-foundation and first continuity slices have reached `v0.3.3` prep:
   Reset Profile cleared cloud/local active history, old rows did not re-import,
   and post-reset saves worked normally
 - Firestore rules tests cover owner scoping, profile update cooldowns,
-  reset-barrier writes, embedded-history caps, and closed casual
-  match subcollection writes
+  reset-barrier writes, embedded-history caps, owner-only profile deletes, and
+  closed casual match subcollection writes
 - infra and free-tier tracking split into `backend_infra.md` and
   `backend_cost.md`
 

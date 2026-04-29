@@ -96,9 +96,9 @@ Build, CLI usage, replay format, and `SearchBot` notes live in
 The local-first `v0.2.x` product pass made the game feel complete without
 cloud: board-first play, desktop/mobile layout, replay, profile, and local
 history. The `v0.3` backend-continuity line added optional Google sign-in,
-Firebase/Firestore plumbing, guest-history promotion, private cloud saves,
-cloud history loading, and Reset Profile hardening without putting sign-in in
-front of the game.
+Firebase/Firestore plumbing, local-to-cloud profile promotion, private
+cloud-backed history, schema/rules hardening, and Reset Profile without putting
+sign-in in front of the game.
 
 The next product identity push is the lab-powered line: replay analysis,
 puzzles, bot personalities, and game-review features that make the Rust lab
