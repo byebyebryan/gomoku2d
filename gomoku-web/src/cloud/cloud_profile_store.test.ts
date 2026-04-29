@@ -59,6 +59,23 @@ describe("createCloudProfileStore", () => {
     });
   });
 
+  it("applies local cloud profile patches after background sync", async () => {
+    const store = createCloudProfileStore({
+      loadProfile: vi.fn().mockResolvedValue(profile),
+    });
+
+    await store.getState().loadForUser(authUser, "freestyle");
+    store.getState().applyLocalPatch({
+      displayName: "ByeByeBryan",
+      preferredVariant: "renju",
+    });
+
+    expect(store.getState().profile).toMatchObject({
+      displayName: "ByeByeBryan",
+      preferredVariant: "renju",
+    });
+  });
+
   it("resets a cloud profile for a signed-in user", async () => {
     const resetProfile = vi.fn().mockResolvedValue({
       ...profile,

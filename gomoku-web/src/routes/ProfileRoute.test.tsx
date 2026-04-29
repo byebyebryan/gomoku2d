@@ -642,6 +642,7 @@ describe("ProfileRoute cloud state", () => {
     await waitFor(() => {
       expect(promote).toHaveBeenCalledWith({
         cloudDisplayName: cloudProfile.displayName,
+        cloudPreferredVariant: cloudProfile.preferredVariant,
         guestHistory: history,
         guestProfile: expect.objectContaining({
           displayName: "ByeByeBryan",
@@ -651,7 +652,59 @@ describe("ProfileRoute cloud state", () => {
         settings: { preferredVariant: "freestyle" },
         user: cloudUser,
       });
+    }, { timeout: 3_000 });
+  });
+
+  it("does not promote again when local profile fields change after initial sync", async () => {
+    const promote = vi.fn().mockResolvedValue(undefined);
+    const guestProfile = guestProfileStore.getState().ensureGuestProfile();
+    cloudAuthStore.setState({
+      errorMessage: null,
+      isConfigured: true,
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+      start: vi.fn(),
+      status: "signed_in",
+      stop: vi.fn(),
+      user: cloudUser,
     });
+    cloudProfileStore.setState({
+      errorMessage: null,
+      loadForUser: vi.fn(),
+      profile: cloudProfile,
+      reset: vi.fn(),
+      resetForUser: vi.fn(),
+      status: "ready",
+    });
+    cloudPromotionStore.setState({
+      errorMessage: null,
+      promote,
+      reset: vi.fn(),
+      result: null,
+      status: "idle",
+    });
+
+    renderProfileRoute();
+
+    await waitFor(() => {
+      expect(promote).toHaveBeenCalledTimes(1);
+    });
+
+    fireEvent.change(screen.getByLabelText("Name"), {
+      target: { value: "Later Name" },
+    });
+    await waitFor(() => {
+      expect(screen.getByLabelText("Name")).toHaveValue("Later Name");
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Renju" }));
+    await Promise.resolve();
+
+    expect(promote).toHaveBeenCalledTimes(1);
+    expect(promote).toHaveBeenCalledWith(expect.objectContaining({
+      guestProfile: expect.objectContaining({
+        id: guestProfile.id,
+      }),
+    }));
   });
 
   it("adopts the cloud display name before promoting a default local guest name", async () => {
@@ -691,6 +744,7 @@ describe("ProfileRoute cloud state", () => {
     await waitFor(() => {
       expect(promote).toHaveBeenCalledWith({
         cloudDisplayName: cloudProfile.displayName,
+        cloudPreferredVariant: cloudProfile.preferredVariant,
         guestHistory: [],
         guestProfile: expect.objectContaining({
           displayName: "Bryan",
@@ -700,7 +754,7 @@ describe("ProfileRoute cloud state", () => {
         settings: { preferredVariant: "freestyle" },
         user: cloudUser,
       });
-    });
+    }, { timeout: 3_000 });
     expect(promote).toHaveBeenCalledTimes(1);
   });
 });

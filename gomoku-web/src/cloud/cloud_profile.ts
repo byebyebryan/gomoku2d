@@ -78,6 +78,26 @@ function providerIds(value: unknown, fallback: string[]): string[] {
   return value.filter((entry): entry is string => typeof entry === "string" && entry.trim().length > 0);
 }
 
+function hasOwnField(document: CloudProfileDocument, field: keyof CloudProfileDocument): boolean {
+  return Object.prototype.hasOwnProperty.call(document, field);
+}
+
+function providerIdsMatch(value: unknown, expected: string[]): boolean {
+  return (
+    Array.isArray(value)
+    && value.length === expected.length
+    && value.every((entry, index) => entry === expected[index])
+  );
+}
+
+function nullableFieldMatches(
+  document: CloudProfileDocument,
+  field: keyof Pick<CloudProfileDocument, "avatar_url" | "email">,
+  expected: string | null,
+): boolean {
+  return hasOwnField(document, field) && document[field] === expected;
+}
+
 export function cloudProfileFromDocument(
   user: CloudAuthUser,
   fallbackVariant: GameVariant,
@@ -116,17 +136,48 @@ export function newCloudProfileWrite(user: CloudAuthUser, preferredVariant: Game
   };
 }
 
-export function existingCloudProfileUpdate(user: CloudAuthUser, preferredVariant: GameVariant) {
+export function existingCloudProfileUpdate(
+  user: CloudAuthUser,
+): Record<string, unknown>;
+export function existingCloudProfileUpdate(
+  user: CloudAuthUser,
+  document: CloudProfileDocument,
+): Record<string, unknown> | null;
+export function existingCloudProfileUpdate(
+  user: CloudAuthUser,
+  document?: CloudProfileDocument,
+): Record<string, unknown> | null {
+  const patch: Record<string, unknown> = {};
+
+  if (!document || !providerIdsMatch(document.auth_providers, user.providerIds)) {
+    patch.auth_providers = user.providerIds;
+  }
+
+  if (!document || !nullableFieldMatches(document, "avatar_url", user.avatarUrl)) {
+    patch.avatar_url = user.avatarUrl;
+  }
+
+  if (!document || !nullableFieldMatches(document, "email", user.email)) {
+    patch.email = user.email;
+  }
+
+  if (!document || document.schema_version !== CLOUD_PROFILE_SCHEMA_VERSION) {
+    patch.schema_version = CLOUD_PROFILE_SCHEMA_VERSION;
+  }
+
+  if (!document || document.uid !== user.uid) {
+    patch.uid = user.uid;
+  }
+
+  if (document && Object.keys(patch).length === 0) {
+    return null;
+  }
+
   const now = serverTimestamp();
 
   return {
-    auth_providers: user.providerIds,
-    avatar_url: user.avatarUrl,
-    email: user.email,
+    ...patch,
     last_login_at: now,
-    preferred_variant: preferredVariant,
-    schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
-    uid: user.uid,
     updated_at: now,
   };
 }
@@ -163,7 +214,11 @@ export async function ensureCloudProfile(
 
   if (snapshot.exists()) {
     const data = snapshot.data() as CloudProfileDocument;
-    const update = existingCloudProfileUpdate(user, preferredVariant);
+    const update = existingCloudProfileUpdate(user, data);
+    if (!update) {
+      return cloudProfileFromDocument(user, preferredVariant, data);
+    }
+
     await setDoc(profileRef, update, { merge: true });
     return cloudProfileFromDocument(user, preferredVariant, { ...data, ...update });
   }

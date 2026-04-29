@@ -64,6 +64,17 @@ describe("createCloudPromotionStore", () => {
     expect(promoteGuest).toHaveBeenCalledTimes(2);
   });
 
+  it("reruns promotion when only the loaded cloud preferred rule changes", async () => {
+    const promoteGuest = vi.fn().mockResolvedValue(promotionResult);
+    const store = createCloudPromotionStore({ promoteGuest });
+    const input = { guestHistory: [], guestProfile, settings, user };
+
+    await store.getState().promote({ ...input, cloudPreferredVariant: "freestyle" });
+    await store.getState().promote({ ...input, cloudPreferredVariant: "renju" });
+
+    expect(promoteGuest).toHaveBeenCalledTimes(2);
+  });
+
   it("deduplicates identical promotion requests while one is in flight", async () => {
     let resolvePromotion: (result: typeof promotionResult) => void = () => {};
     const promoteGuest = vi.fn(

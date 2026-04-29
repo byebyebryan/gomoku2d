@@ -86,6 +86,34 @@ describe("cloudProfilePromotionUpdate", () => {
     expect(update).not.toHaveProperty("display_name");
   });
 
+  it("skips the profile update when loaded cloud fields already match", () => {
+    expect(
+      cloudProfilePromotionUpdate({
+        cloudDisplayName: user.displayName,
+        cloudPreferredVariant: "renju",
+        guestHistory: [],
+        guestProfile: { ...guestProfile, displayName: "Guest" },
+        settings,
+        user,
+      }),
+    ).toBeNull();
+  });
+
+  it("writes only changed cloud fields when the loaded preferred rule is stale", () => {
+    const update = cloudProfilePromotionUpdate({
+      cloudDisplayName: user.displayName,
+      cloudPreferredVariant: "freestyle",
+      guestHistory: [],
+      guestProfile: { ...guestProfile, displayName: "Guest" },
+      settings,
+      user,
+    });
+
+    expect(update).toMatchObject({ preferred_variant: "renju" });
+    expect(update).not.toHaveProperty("display_name");
+    expect(update).not.toHaveProperty("uid");
+  });
+
   it("does not promote a custom local display name before the cloud name is loaded", () => {
     const update = cloudProfilePromotionUpdate({
       guestHistory: [],
@@ -172,6 +200,33 @@ describe("promoteGuestToCloud", () => {
       importedMatches: 1,
       profileDisplayNamePromoted: true,
       promotedDisplayName: "ByeByeBryan",
+      skippedMatches: 0,
+      totalMatches: 1,
+    });
+  });
+
+  it("imports missing matches without touching an already-current cloud profile", async () => {
+    const { backend, created, profileUpdates } = createBackend();
+
+    const result = await promoteGuestToCloud(
+      {
+        cloudDisplayName: user.displayName,
+        cloudPreferredVariant: "renju",
+        guestHistory: [match],
+        guestProfile: { ...guestProfile, displayName: "Guest" },
+        settings,
+        user,
+      },
+      { backend },
+    );
+
+    expect(profileUpdates).toHaveLength(0);
+    expect(backend.createMatch).toHaveBeenCalledTimes(1);
+    expect(created.has("local-match-1")).toBe(true);
+    expect(result).toEqual({
+      importedMatches: 1,
+      profileDisplayNamePromoted: false,
+      promotedDisplayName: null,
       skippedMatches: 0,
       totalMatches: 1,
     });

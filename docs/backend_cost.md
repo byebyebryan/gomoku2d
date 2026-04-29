@@ -79,9 +79,9 @@ Estimated operation budgets for the current implementation:
 | Guest local play / local match finish | 0 | 0 | 0 | LocalStorage only |
 | No-config build / signed-out Profile | 0 | 0 | 0 | Firebase bootstrap stays disabled |
 | First sign-in / cloud profile create | 1 | 1 | 0 | `getDoc(profiles/{uid})`, then create profile |
-| Cloud profile load / refresh | 1 | 1 | 0 | `getDoc(profiles/{uid})`, then merge login/provider/settings metadata; currently happens on signed-in Profile/Replay surfaces |
+| Cloud profile load / refresh | 1 | 0-1 | 0 | `getDoc(profiles/{uid})`; existing profiles only write when provider metadata or preferred rule changed |
 | Signed-in Profile history load | `1..24` | 0 | 0 | `limit(24)` query; one-read minimum if empty |
-| Promote guest profile/settings | 0 | 1 | 0 | Profile merge before match import loop |
+| Promote guest profile/settings | 0 | 0-1 | 0 | Profile merge only when local name/settings differ from loaded cloud state |
 | Promote one eligible local match | `2..3` | 1 | 0 | Client checks `guest_import` and `cloud_saved` IDs, then match create adds one dependent profile read through rules |
 | Skip one already-promoted local match | `1..2` | 0 | 0 | Stops after first matching deterministic ID |
 | Save one finished signed-in match | 2 | 1 | 0 | Client existence read + dependent profile read through rules + `cloud_saved` document write |
@@ -95,6 +95,11 @@ Initial implementation guardrails:
 - Avoid always-on listeners for full match history unless the UI actually needs
   live updates.
 - Prefer one write at match end over per-move cloud writes for casual play.
+- Keep routine signed-in profile refreshes read-only; write profile updates only
+  when a user-visible setting or provider-owned field changed.
+- Defer signed-in profile/settings sync to sign-in, retry, and match-finish
+  checkpoints so rapid name typing or default-rule toggles stay local until a
+  meaningful cloud sync point.
 - Keep public replay publishing out of `v0.3`; private history and public
   shareables have different cost and trust profiles.
 - Budget match creates as also reading the owner profile in rules. Firestore
@@ -118,14 +123,14 @@ Approximate daily operations per signed-in user:
 
 | Flow | Reads | Writes | Deletes |
 |---|---:|---:|---:|
-| Signed-in Profile opens | `P * (H + 1)` | `P` | `0` |
+| Signed-in Profile opens | `P * (H + 1)` | `0` normally | `0` |
 | New signed-in matches | `M * 2` | `M` | `0` |
-| First guest promotion | `G * 3` | `1 + G` | `0` |
+| First guest promotion | `G * 3` | `0-1 + G` | `0` |
 | Reset Profile | `2 + max(1, D)` | `1` | `D` |
 
 The first likely bottleneck is repeated history reads, not match writes. A user
 who opens Profile five times with a full 24-match history costs about 125 reads
-and 5 profile refresh writes even if they play no new games. By contrast,
+and normally no writes if their profile fields are already current. By contrast,
 saving five signed-in matches costs about 10 reads and 5 writes.
 
 ## Headroom Scenarios
@@ -141,7 +146,7 @@ matches.
 | Metric | Estimate | Free-tier headroom |
 |---|---:|---:|
 | Reads | ~6,000/day | ~8x below 50,000/day |
-| Writes | ~700/day | ~28x below 20,000/day |
+| Writes | ~500/day | ~40x below 20,000/day |
 | Deletes | 0/day | No concern |
 
 This is safely inside the free tier.
@@ -153,7 +158,7 @@ Assumption: 500 signed-in users/day, each opens a 24-match history page 5 times.
 | Metric | Estimate | Free-tier headroom |
 |---|---:|---:|
 | Reads | ~62,500/day | Exceeds 50,000/day |
-| Writes | ~2,500/day before match saves | Still below 20,000/day |
+| Writes | ~0/day before match saves | No concern |
 
 If this becomes plausible, add pagination, caching, or a cheaper summary view
 before adding more history-heavy surfaces.
@@ -265,3 +270,11 @@ behavior, and post-reset saves. The operation profile still matches the
 estimates above: one finished signed-in match writes one private match document
 after a small number of dedupe/profile reads, and Reset Profile pays one profile
 write plus one delete per private `client_uploaded` match cleared.
+
+`v0.3.3` note: routine existing-profile loads were changed from
+read-then-merge-write to read-only when cloud profile fields are already current.
+Profile writes now happen on first profile create, Reset Profile, guest
+promotion, or real metadata/default-rule changes. Profile/settings changes on
+the profile page are stored locally first and deferred to sign-in, retry, or
+match-finish sync checkpoints. Guest promotion skips the profile merge entirely
+when loaded cloud fields already match local state.
