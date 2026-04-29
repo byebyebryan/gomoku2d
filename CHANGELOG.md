@@ -12,6 +12,18 @@ their own section.
 
 ## [Unreleased]
 
+### Web copy
+
+- Polished Profile, Privacy, and Terms wording around local profile state, cloud
+  sync, private history, and reset behavior.
+
+### Ops and docs
+
+- Tightened the release runbook for push/CI checks, manual Pages deploys,
+  manual Firestore rules deploys, and production smoke coverage.
+- Expanded backend cost notes with current Firestore operation math for sign-in,
+  history load, guest promotion, direct cloud saves, reset, and retry flows.
+
 ## [0.3.2] - 2026-04-28
 
 **Theme: private cloud history becomes the active history surface.**
