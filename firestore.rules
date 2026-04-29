@@ -111,6 +111,54 @@ service cloud.firestore {
         && request.resource.data.username == resource.data.username;
     }
 
+    function profileUpdateCooldownPassed() {
+      return request.time >= resource.data.updated_at + duration.value(5, 'm');
+    }
+
+    function profileResetCooldownPassed() {
+      return !hasHistoryResetAt(resource.data)
+        || resource.data.history_reset_at == null
+        || request.time >= resource.data.history_reset_at + duration.value(5, 'm');
+    }
+
+    function profileResetCooldownBypass() {
+      return hasHistoryResetAt(request.resource.data)
+        && request.resource.data.history_reset_at == request.time
+        && (
+          !hasHistoryResetAt(resource.data)
+          || resource.data.history_reset_at == null
+          || request.resource.data.history_reset_at > resource.data.history_reset_at
+        )
+        && profileResetCooldownPassed()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'auth_providers',
+          'avatar_url',
+          'display_name',
+          'email',
+          'history_reset_at',
+          'last_login_at',
+          'preferred_variant',
+          'schema_version',
+          'uid',
+          'updated_at'
+        ]);
+    }
+
+    function initialProfileSyncBypass() {
+      return resource.data.created_at == resource.data.updated_at
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'auth_providers',
+          'avatar_url',
+          'display_name',
+          'email',
+          'last_login_at',
+          'preferred_variant',
+          'schema_version',
+          'uid',
+          'updated_at'
+        ]);
+    }
+
     function validGuestImportKeys() {
       return request.resource.data.keys().hasAll([
         'board_size',
@@ -365,6 +413,11 @@ service cloud.firestore {
         && appOwnedProfileFieldsUnchanged()
         && request.resource.data.updated_at == request.time
         && request.resource.data.last_login_at == request.time
+        && (
+          profileUpdateCooldownPassed()
+          || profileResetCooldownBypass()
+          || initialProfileSyncBypass()
+        )
         && validHistoryResetAtOnUpdate();
       allow delete: if false;
 
