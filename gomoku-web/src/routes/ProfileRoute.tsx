@@ -148,7 +148,7 @@ function historySyncStatus({
   }
 
   if (pendingCount > 0) {
-    return { label: `Pending ${pendingCount}`, tone: "pending" };
+    return { label: `${pendingCount} pending`, tone: "pending" };
   }
 
   if (profileStatus === "ready") {
@@ -197,11 +197,11 @@ function cloudCopyText({
   totalPromotedMatches: number;
 }): string {
   if (authStatus === "unconfigured") {
-    return "Online features disabled.";
+    return "Cloud sync unavailable.";
   }
 
   if (authStatus === "loading") {
-    return "Checking online features...";
+    return "Checking cloud sync...";
   }
 
   if (authStatus === "error") {
@@ -225,7 +225,7 @@ function cloudCopyText({
   }
 
   if (promotionStatus === "error") {
-    return "Sync failed.";
+    return "Sync will retry.";
   }
 
   if (promotionStatus === "complete") {
@@ -239,10 +239,8 @@ function cloudCopyText({
 
 function cloudTitleText({
   authStatus,
-  cloudDisplayName,
 }: {
   authStatus: ReturnType<typeof cloudAuthStore.getState>["status"];
-  cloudDisplayName: string | undefined;
 }): string {
   if (authStatus === "unconfigured") {
     return "Local profile";
@@ -253,7 +251,7 @@ function cloudTitleText({
   }
 
   if (authStatus === "signed_in") {
-    return cloudDisplayName ? `Signed in as ${cloudDisplayName}` : "Signed in";
+    return "Cloud profile";
   }
 
   if (authStatus === "error") {
@@ -427,7 +425,6 @@ export function ProfileRoute() {
   const guestDisplayName = profile?.displayName ?? DEFAULT_GUEST_DISPLAY_NAME;
   const cloudBadge = cloudStateLabel(cloudAuth.status, cloudProfile.status);
   const cloudIdentity = cloudProfile.profile ?? null;
-  const cloudDisplayName = cloudPromotion.result?.promotedDisplayName ?? cloudIdentity?.displayName;
   const cloudError =
     cloudAuth.errorMessage
     ?? cloudProfile.errorMessage
@@ -443,7 +440,6 @@ export function ProfileRoute() {
   });
   const cloudTitle = cloudTitleText({
     authStatus: cloudAuth.status,
-    cloudDisplayName,
   });
   const historyStatus = historySyncStatus({
     authStatus: cloudAuth.status,
@@ -470,8 +466,8 @@ export function ProfileRoute() {
   const signedIn = cloudAuth.status === "signed_in" && Boolean(cloudAuth.user);
   const resetDisabled = resetBusy || (signedIn && cloudProfile.status === "loading");
   const resetConfirmationText = signedIn
-    ? "This clears cloud history, resets cloud profile values, and clears this device's local cache."
-    : "This clears the local profile and match history on this device.";
+    ? "Reset cloud profile and clear both cloud and local match history?"
+    : "Reset local profile and clear local match history?";
 
   async function resetSignedInProfile(): Promise<void> {
     if (cloudAuth.status !== "signed_in" || !cloudAuth.user) {
@@ -513,7 +509,7 @@ export function ProfileRoute() {
     <main className={styles.page}>
       <header className={styles.header}>
         <div className={styles.headerCopy}>
-          <p className="uiPageEyebrow">Local record</p>
+          <p className="uiPageEyebrow">Player record</p>
           <h1 className={styles.title}>Profile</h1>
         </div>
         <div className={styles.headerActions}>
@@ -536,13 +532,13 @@ export function ProfileRoute() {
               <p className={styles.badge}>{cloudBadge}</p>
             </div>
             <label className={styles.field}>
-              <span className={styles.fieldLabel}>Display name</span>
+              <span className={styles.fieldLabel}>Name</span>
               <input
                 className="uiInput"
                 onChange={(event) => {
                   guestProfileStore.getState().renameDisplayName(event.target.value);
                 }}
-                placeholder="Display name"
+                placeholder="Name"
                 type="text"
                 value={guestDisplayName}
               />
@@ -619,7 +615,7 @@ export function ProfileRoute() {
                     }}
                     type="button"
                   >
-                    <span className="uiActionLabel">{resetBusy ? "Resetting" : "Confirm reset"}</span>
+                    <span className="uiActionLabel">Reset</span>
                   </button>
                   <button
                     className="uiAction uiActionNeutral"
