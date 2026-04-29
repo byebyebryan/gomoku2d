@@ -7,10 +7,11 @@ import { Board } from "../components/Board/Board";
 import { cloudAuthStore } from "../cloud/auth_store";
 import { cloudHistoryStore } from "../cloud/cloud_history_store";
 import { flushCloudProfileSync } from "../cloud/cloud_sync";
+import { cloudMatchHistoryHasMatch } from "../cloud/cloud_profile";
 import { createLocalMatchStore } from "../game/local_match_store";
 import type { LocalMatchResumeSeed, LocalMatchState } from "../game/local_match_store";
 import type { CellPosition } from "../game/types";
-import { guestProfileStore } from "../profile/guest_profile_store";
+import { localProfileStore } from "../profile/local_profile_store";
 import { variantLabel } from "../replay/local_replay";
 import { Icon } from "../ui/Icon";
 
@@ -87,12 +88,12 @@ export function LocalMatchRoute() {
   const [touchCandidate, setTouchCandidate] = useState<CellPosition | null>(null);
   const [touchCandidatePlaceable, setTouchCandidatePlaceable] = useState(false);
   const [touchCandidateResetVersion, setTouchCandidateResetVersion] = useState(0);
-  const profile = useStore(guestProfileStore, (snapshot) => snapshot.profile);
+  const profile = useStore(localProfileStore, (snapshot) => snapshot.profile);
   const state = useStore(storeRef.current ?? loadingMatchStore, (snapshot) => snapshot);
   const resumeSeed = (location.state as { resumeSeed?: LocalMatchResumeSeed } | null)?.resumeSeed ?? null;
 
   useEffect(() => {
-    guestProfileStore.getState().ensureGuestProfile();
+    localProfileStore.getState().ensureLocalProfile();
   }, []);
 
   useEffect(() => {
@@ -126,23 +127,24 @@ export function LocalMatchRoute() {
     storeRef.current = createLocalMatchStore({
       humanDisplayName: profile.displayName,
       onMatchFinished: (match) => {
-        const replayId = guestProfileStore.getState().recordFinishedMatch(match);
-        const savedMatch = guestProfileStore.getState().history.find((entry) => entry.id === replayId);
+        const replayId = localProfileStore.getState().recordFinishedMatch(match);
+        const localMatchHistory = localProfileStore.getState().matchHistory;
+        const savedMatch = localMatchHistory.replayMatches.find((entry) => entry.id === replayId);
         const cloudAuth = cloudAuthStore.getState();
         if (savedMatch && cloudAuth.status === "signed_in" && cloudAuth.user) {
           const signedInUser = cloudAuth.user;
-          void flushCloudProfileSync(signedInUser, { guestHistory: guestProfileStore.getState().history }).then((cloudProfile) => {
+          void flushCloudProfileSync(signedInUser, { localMatchHistory }).then((cloudProfile) => {
             if (!cloudProfile) {
               void cloudHistoryStore.getState().syncMatchForUser(signedInUser, savedMatch);
               return;
             }
 
             cloudHistoryStore.getState().loadFromProfile(signedInUser, cloudProfile);
-            if (!cloudProfile.recentMatches.matches.some((entry) => entry.id === savedMatch.id)) {
+            if (!cloudMatchHistoryHasMatch(cloudProfile.matchHistory, savedMatch.id)) {
               void cloudHistoryStore.getState().syncMatchForUser(
                 signedInUser,
                 savedMatch,
-                cloudProfile.historyResetAt,
+                cloudProfile.resetAt,
               );
             }
           });
@@ -150,7 +152,7 @@ export function LocalMatchRoute() {
         setLatestReplayId(replayId);
       },
       resumeState: resumeSeed ?? undefined,
-      variant: resumeSeed?.variant ?? guestProfileStore.getState().settings.preferredVariant,
+      variant: resumeSeed?.variant ?? localProfileStore.getState().settings.preferredVariant,
     });
     setStoreReady(true);
   }, [profile, resumeSeed]);
@@ -309,7 +311,7 @@ export function LocalMatchRoute() {
                         if (state.moves.length === 0) {
                           resetTouchCandidate();
                         }
-                        guestProfileStore.getState().updateSettings({ preferredVariant: variant });
+                        localProfileStore.getState().updateSettings({ preferredVariant: variant });
                         state.selectVariant(variant);
                       }}
                       type="button"

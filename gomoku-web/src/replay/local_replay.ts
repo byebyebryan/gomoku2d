@@ -76,28 +76,28 @@ function clampMoveIndex(moveIndex: number, max: number): number {
   return Math.max(0, Math.min(moveIndex, max));
 }
 
-export function replayPlayerName(player: SavedMatchPlayer, guestDisplayName: string): string {
-  return player.kind === "human" ? guestDisplayName : player.display_name;
+export function replayPlayerName(player: SavedMatchPlayer, localDisplayName: string): string {
+  return player.kind === "human" ? localDisplayName : player.display_name;
 }
 
 export function variantLabel(variant: GameVariant): string {
   return variant === "renju" ? "Renju" : "Freestyle";
 }
 
-export function replayPlayerLabel(match: SavedMatchV1, guestDisplayName: string): string {
+export function replayPlayerLabel(match: SavedMatchV1, localDisplayName: string): string {
   return savedMatchPlayers(match)
-    .map(({ player, side }) => `${replayPlayerName(player, guestDisplayName)} (${side})`)
+    .map(({ player, side }) => `${replayPlayerName(player, localDisplayName)} (${side})`)
     .join(" vs ");
 }
 
-export function replayWinnerLabel(match: SavedMatchV1, guestDisplayName: string): string {
+export function replayWinnerLabel(match: SavedMatchV1, localDisplayName: string): string {
   if (match.status === "draw") {
     return "Draw";
   }
 
   const winningSide = savedMatchWinningSide(match);
   const winner = winningSide ? savedMatchPlayerForSide(match, winningSide) : null;
-  const winnerName = winner ? replayPlayerName(winner, guestDisplayName) : winningSide;
+  const winnerName = winner ? replayPlayerName(winner, localDisplayName) : winningSide;
 
   return `${winnerName} wins`;
 }

@@ -20,10 +20,10 @@ The `v0.2` baseline is about four things:
 - establish consistent DOM-shell and canvas visual languages
 - deepen local play with richer records, replay, and rules handling
 
-The app remains guest-first and local-first by default:
+The app remains local-first by default:
 
 - landing on the site should feel instant
-- the first meaningful interaction creates a local guest profile
+- the first meaningful interaction creates a local profile
 - no sign-in should be required for the core play loop
 
 ## Core design rules
@@ -81,13 +81,13 @@ of the default local-play contract.
 
 The local-first model should stay simple and visible in the UI:
 
-- a local guest profile is created on first meaningful interaction
+- a local profile is created on first meaningful interaction
 - preferred rules are persisted locally
 - finished local matches are persisted locally
 - replay reads from saved local match history
 
 When cloud sync is enabled, it should extend these flows rather than replace
-them. Guest-to-cloud promotion copies finished local matches into private cloud
+them. Local profile-to-cloud promotion copies finished local matches into private cloud
 history while leaving the local copies on-device.
 
 ## Screen contracts

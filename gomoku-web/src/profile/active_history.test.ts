@@ -7,7 +7,7 @@ import { resolveActiveHistory } from "./active_history";
 function localMatch(id: string, savedAt: string) {
   return createLocalSavedMatch({
     id,
-    localProfileId: "guest-1",
+    localProfileId: "local-1",
     moves: [{ col: 7, moveNumber: 1, player: 1, row: 7 }],
     players: [
       { kind: "human", name: "Bryan", stone: "black" },
@@ -53,25 +53,6 @@ describe("resolveActiveHistory", () => {
     expect(history[0]).toMatchObject({
       id: "match-1",
       source: "cloud_saved",
-    });
-  });
-
-  it("dedupes guest imports by local_match_id", () => {
-    const local = localMatch("match-1", "2026-04-28T01:00:00.000Z");
-    const imported = {
-      ...local,
-      id: "local-match-1",
-      local_match_id: "match-1",
-      source: "guest_import" as const,
-      trust: "client_uploaded" as const,
-    };
-
-    const history = resolveActiveHistory({ cloudHistory: [imported], localHistory: [local] });
-
-    expect(history).toHaveLength(1);
-    expect(history[0]).toMatchObject({
-      id: "local-match-1",
-      source: "guest_import",
     });
   });
 

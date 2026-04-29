@@ -10,134 +10,191 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == uid;
     }
 
+    function profileWriteKeys() {
+      return [
+        'auth',
+        'created_at',
+        'display_name',
+        'match_history',
+        'reset_at',
+        'schema_version',
+        'settings',
+        'uid',
+        'updated_at',
+        'username',
+      ];
+    }
+
     function validProfileKeys() {
-      return request.resource.data.keys().hasAll([
-        'auth_providers',
-        'avatar_url',
-        'created_at',
-        'display_name',
-        'email',
-        'last_login_at',
-        'preferred_variant',
-        'recent_matches',
-        'schema_version',
-        'uid',
-        'updated_at',
-        'username',
-      ]) && request.resource.data.keys().hasOnly([
-        'auth_providers',
-        'avatar_url',
-        'created_at',
-        'display_name',
-        'email',
-        'history_reset_at',
-        'last_login_at',
-        'preferred_variant',
-        'recent_matches',
-        'schema_version',
-        'uid',
-        'updated_at',
-        'username',
-      ]);
+      return request.resource.data.keys().hasAll(profileWriteKeys())
+        && request.resource.data.keys().hasOnly(profileWriteKeys());
     }
 
     function nullableString(value, maxLength) {
       return value == null || (value is string && value.size() <= maxLength);
     }
 
-    function hasHistoryResetAt(data) {
-      return data.keys().hasAny(['history_reset_at']);
+    function hasResetAt(data) {
+      return data.keys().hasAny(['reset_at']);
     }
 
-    function validHistoryResetAtValue(data) {
-      return !hasHistoryResetAt(data)
-        || data.history_reset_at == null
-        || data.history_reset_at is timestamp;
+    function validResetAtValue(data) {
+      return hasResetAt(data)
+        && (data.reset_at == null || data.reset_at is timestamp);
     }
 
-    function validHistoryResetAtOnCreate() {
-      return !hasHistoryResetAt(request.resource.data)
-        || request.resource.data.history_reset_at == null
-        || request.resource.data.history_reset_at == request.time;
+    function validResetAtOnCreate() {
+      return request.resource.data.reset_at == null
+        || request.resource.data.reset_at == request.time;
     }
 
-    function validHistoryResetAtOnUpdate() {
+    function validResetAtOnUpdate() {
       return (
-          !hasHistoryResetAt(resource.data)
-          && !hasHistoryResetAt(request.resource.data)
+          !hasResetAt(resource.data)
+          && request.resource.data.reset_at == null
         )
         || (
-          hasHistoryResetAt(resource.data)
-          && hasHistoryResetAt(request.resource.data)
-          && request.resource.data.history_reset_at == resource.data.history_reset_at
+          hasResetAt(resource.data)
+          && request.resource.data.reset_at == resource.data.reset_at
         )
         || (
-          hasHistoryResetAt(request.resource.data)
-          && request.resource.data.history_reset_at == request.time
+          request.resource.data.reset_at == request.time
           && (
-            !hasHistoryResetAt(resource.data)
-            || resource.data.history_reset_at == null
-            || request.resource.data.history_reset_at > resource.data.history_reset_at
+            !hasResetAt(resource.data)
+            || resource.data.reset_at == null
+            || request.resource.data.reset_at > resource.data.reset_at
           )
         );
     }
 
-    function validProviders(value) {
-      return value is list
-        && value.size() > 0
-        && value.size() <= 2
-        && value.hasOnly(['google.com', 'github.com']);
+    function validAuthProvider(provider) {
+      return provider is map
+        && provider.keys().hasAll(['avatar_url', 'display_name', 'provider'])
+        && provider.keys().hasOnly(['avatar_url', 'display_name', 'provider'])
+        && nullableString(provider.avatar_url, 2048)
+        && nullableString(provider.display_name, 80)
+        && provider.provider in ['google.com', 'github.com'];
     }
 
-    function validRecentMatches(value) {
+    function validAuthProviders(providers) {
+      return providers is list
+        && providers.size() > 0
+        && providers.size() <= 2
+        && validAuthProvider(providers[0])
+        && (providers.size() == 1 || validAuthProvider(providers[1]));
+    }
+
+    function validAuth(value) {
       return value is map
-        && value.keys().hasAll(['matches', 'schema_version', 'updated_at'])
-        && value.keys().hasOnly(['matches', 'schema_version', 'updated_at'])
+        && value.keys().hasAll(['providers'])
+        && value.keys().hasOnly(['providers'])
+        && validAuthProviders(value.providers);
+    }
+
+    function validDefaultRules(value) {
+      return value is map
+        && value.keys().hasAll(['opening', 'ruleset'])
+        && value.keys().hasOnly(['opening', 'ruleset'])
+        && value.opening == 'standard'
+        && value.ruleset in ['freestyle', 'renju'];
+    }
+
+    function validSettings(value) {
+      return value is map
+        && value.keys().hasAll(['default_rules'])
+        && value.keys().hasOnly(['default_rules'])
+        && validDefaultRules(value.default_rules);
+    }
+
+    function validMatchHistory(value) {
+      return value is map
+        && value.keys().hasAll(['archived_stats', 'replay_matches', 'summary_matches'])
+        && value.keys().hasOnly(['archived_stats', 'replay_matches', 'summary_matches'])
+        && value.replay_matches is list
+        && value.replay_matches.size() <= 128
+        && value.summary_matches is list
+        && value.summary_matches.size() <= 1024
+        && validArchivedMatchStats(value.archived_stats);
+    }
+
+    function validMatchHistoryOnCreate() {
+      return request.resource.data.match_history.replay_matches.size() == 0
+        && request.resource.data.match_history.summary_matches.size() == 0
+        && emptyArchivedMatchStats(request.resource.data.match_history.archived_stats);
+    }
+
+    function validStatsCounter(value) {
+      return value is map
+        && value.keys().hasAll(['draws', 'losses', 'matches', 'moves', 'wins'])
+        && value.keys().hasOnly(['draws', 'losses', 'matches', 'moves', 'wins'])
+        && value.draws is int
+        && value.draws >= 0
+        && value.losses is int
+        && value.losses >= 0
+        && value.matches is int
+        && value.matches >= 0
+        && value.moves is int
+        && value.moves >= 0
+        && value.wins is int
+        && value.wins >= 0;
+    }
+
+    function validArchivedMatchStats(value) {
+      return value is map
+        && value.keys().hasAll([
+          'archived_before',
+          'archived_count',
+          'by_opponent_type',
+          'by_ruleset',
+          'by_side',
+          'schema_version',
+          'totals',
+        ])
+        && value.keys().hasOnly([
+          'archived_before',
+          'archived_count',
+          'by_opponent_type',
+          'by_ruleset',
+          'by_side',
+          'schema_version',
+          'totals',
+        ])
+        && nullableString(value.archived_before, 40)
+        && value.archived_count is int
+        && value.archived_count >= 0
         && value.schema_version == 1
-        && value.matches is list
-        && value.matches.size() <= 24
-        && (
-          value.updated_at == null
-          || value.updated_at is timestamp
-        );
+        && value.by_opponent_type is map
+        && value.by_opponent_type.keys().hasAll(['bot', 'human'])
+        && value.by_opponent_type.keys().hasOnly(['bot', 'human'])
+        && value.by_ruleset is map
+        && value.by_ruleset.keys().hasAll(['freestyle', 'renju'])
+        && value.by_ruleset.keys().hasOnly(['freestyle', 'renju'])
+        && value.by_side is map
+        && value.by_side.keys().hasAll(['black', 'white'])
+        && value.by_side.keys().hasOnly(['black', 'white'])
+        && validStatsCounter(value.totals);
     }
 
-    function validRecentMatchesOnCreate() {
-      return request.resource.data.recent_matches.updated_at == null;
-    }
-
-    function hasRecentMatches(data) {
-      return data.keys().hasAny(['recent_matches']);
-    }
-
-    function recentMatchesChanged() {
-      return !hasRecentMatches(resource.data)
-        || request.resource.data.recent_matches != resource.data.recent_matches;
-    }
-
-    function validRecentMatchesOnUpdate() {
-      return !recentMatchesChanged()
-        || request.resource.data.recent_matches.updated_at == request.time;
+    function emptyArchivedMatchStats(value) {
+      return value.archived_before == null
+        && value.archived_count == 0;
     }
 
     function validProfileDocument(uid) {
       return validProfileKeys()
-        && request.resource.data.schema_version == 2
+        && request.resource.data.schema_version == 3
         && request.resource.data.uid == uid
         && request.resource.data.uid is string
         && request.resource.data.display_name is string
         && request.resource.data.display_name.size() > 0
         && request.resource.data.display_name.size() <= 80
-        && nullableString(request.resource.data.avatar_url, 2048)
-        && nullableString(request.resource.data.email, 320)
         && nullableString(request.resource.data.username, 40)
-        && validHistoryResetAtValue(request.resource.data)
-        && validRecentMatches(request.resource.data.recent_matches)
-        && request.resource.data.preferred_variant in ['freestyle', 'renju']
-        && validProviders(request.resource.data.auth_providers)
+        && validAuth(request.resource.data.auth)
+        && validSettings(request.resource.data.settings)
+        && validResetAtValue(request.resource.data)
+        && validMatchHistory(request.resource.data.match_history)
         && request.resource.data.created_at is timestamp
-        && request.resource.data.updated_at is timestamp
-        && request.resource.data.last_login_at is timestamp;
+        && request.resource.data.updated_at is timestamp;
     }
 
     function appOwnedProfileFieldsUnchanged() {
@@ -146,55 +203,30 @@ service cloud.firestore {
     }
 
     function profileUpdateCooldownPassed() {
-      return request.time >= resource.data.updated_at + duration.value(15, 'm');
+      return request.time >= resource.data.updated_at + duration.value(5, 'm');
     }
 
     function profileResetCooldownPassed() {
-      return !hasHistoryResetAt(resource.data)
-        || resource.data.history_reset_at == null
-        || request.time >= resource.data.history_reset_at + duration.value(15, 'm');
+      return !hasResetAt(resource.data)
+        || resource.data.reset_at == null
+        || request.time >= resource.data.reset_at + duration.value(5, 'm');
     }
 
     function profileResetCooldownBypass() {
-      return hasHistoryResetAt(request.resource.data)
-        && request.resource.data.history_reset_at == request.time
+      return request.resource.data.reset_at == request.time
         && (
-          !hasHistoryResetAt(resource.data)
-          || resource.data.history_reset_at == null
-          || request.resource.data.history_reset_at > resource.data.history_reset_at
+          !hasResetAt(resource.data)
+          || resource.data.reset_at == null
+          || request.resource.data.reset_at > resource.data.reset_at
         )
         && profileResetCooldownPassed()
-        && request.resource.data.recent_matches.matches.size() == 0
-        && request.resource.data.recent_matches.updated_at == request.time
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'auth_providers',
-          'avatar_url',
-          'display_name',
-          'email',
-          'history_reset_at',
-          'last_login_at',
-          'preferred_variant',
-          'recent_matches',
-          'schema_version',
-          'uid',
-          'updated_at'
-        ]);
+        && validMatchHistoryOnCreate()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(profileWriteKeys());
     }
 
     function initialProfileSyncBypass() {
       return resource.data.created_at == resource.data.updated_at
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'auth_providers',
-          'avatar_url',
-          'display_name',
-          'email',
-          'last_login_at',
-          'preferred_variant',
-          'recent_matches',
-          'schema_version',
-          'uid',
-          'updated_at'
-        ]);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(profileWriteKeys());
     }
 
     match /profiles/{uid} {
@@ -204,21 +236,18 @@ service cloud.firestore {
         && request.resource.data.username == null
         && request.resource.data.created_at == request.time
         && request.resource.data.updated_at == request.time
-        && request.resource.data.last_login_at == request.time
-        && validRecentMatchesOnCreate()
-        && validHistoryResetAtOnCreate();
+        && validMatchHistoryOnCreate()
+        && validResetAtOnCreate();
       allow update: if isOwner(uid)
         && validProfileDocument(uid)
         && appOwnedProfileFieldsUnchanged()
         && request.resource.data.updated_at == request.time
-        && request.resource.data.last_login_at == request.time
-        && validRecentMatchesOnUpdate()
         && (
           profileUpdateCooldownPassed()
           || profileResetCooldownBypass()
           || initialProfileSyncBypass()
         )
-        && validHistoryResetAtOnUpdate();
+        && validResetAtOnUpdate();
       allow delete: if false;
 
       match /matches/{matchId} {

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { CloudAuthUser } from "./auth_store";
-import type { CloudProfile } from "./cloud_profile";
+import { emptyCloudMatchHistory, type CloudProfile } from "./cloud_profile";
 import { createCloudProfileStore } from "./cloud_profile_store";
 
 const authUser: CloudAuthUser = {
@@ -13,17 +13,24 @@ const authUser: CloudAuthUser = {
 };
 
 const profile: CloudProfile = {
-  authProviders: ["google.com"],
-  avatarUrl: null,
+  auth: {
+    providers: [
+      {
+        avatarUrl: null,
+        displayName: "Bryan",
+        provider: "google.com",
+      },
+    ],
+  },
   createdAt: null,
   displayName: "Bryan",
-  email: "bryan@example.com",
-  historyResetAt: null,
-  preferredVariant: "freestyle",
-  recentMatches: {
-    matches: [],
-    schemaVersion: 1,
-    updatedAt: null,
+  matchHistory: emptyCloudMatchHistory(),
+  resetAt: null,
+  settings: {
+    defaultRules: {
+      opening: "standard",
+      ruleset: "freestyle",
+    },
   },
   uid: "uid-1",
   updatedAt: null,
@@ -74,19 +81,28 @@ describe("createCloudProfileStore", () => {
     await store.getState().loadForUser(authUser, "freestyle");
     store.getState().applyLocalPatch({
       displayName: "ByeByeBryan",
-      preferredVariant: "renju",
+      settings: {
+        defaultRules: {
+          opening: "standard",
+          ruleset: "renju",
+        },
+      },
     });
 
     expect(store.getState().profile).toMatchObject({
       displayName: "ByeByeBryan",
-      preferredVariant: "renju",
+      settings: {
+        defaultRules: {
+          ruleset: "renju",
+        },
+      },
     });
   });
 
   it("resets a cloud profile for a signed-in user", async () => {
     const resetProfile = vi.fn().mockResolvedValue({
       ...profile,
-      historyResetAt: "2026-04-28T00:00:00.000Z",
+      resetAt: "2026-04-28T00:00:00.000Z",
     });
     const store = createCloudProfileStore({ resetProfile });
 
@@ -98,7 +114,7 @@ describe("createCloudProfileStore", () => {
     expect(store.getState()).toMatchObject({
       errorMessage: null,
       profile: {
-        historyResetAt: "2026-04-28T00:00:00.000Z",
+        resetAt: "2026-04-28T00:00:00.000Z",
       },
       status: "ready",
     });

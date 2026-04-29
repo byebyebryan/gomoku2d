@@ -9,10 +9,17 @@ import {
 
 import { getFirebaseClients, type FirebaseClients } from "./firebase";
 
+export interface CloudAuthUserProvider {
+  avatarUrl: string | null;
+  displayName: string | null;
+  provider: string;
+}
+
 export interface CloudAuthUser {
   avatarUrl: string | null;
   displayName: string;
   email: string | null;
+  providers?: CloudAuthUserProvider[];
   providerIds: string[];
   uid: string;
 }
@@ -56,6 +63,11 @@ export function cloudAuthUserFromFirebaseUser(user: User): CloudAuthUser {
       email: user.email,
     }),
     email: user.email,
+    providers: user.providerData.map((provider) => ({
+      avatarUrl: provider.photoURL,
+      displayName: provider.displayName,
+      provider: provider.providerId,
+    })),
     providerIds: user.providerData.map((provider) => provider.providerId),
     uid: user.uid,
   };

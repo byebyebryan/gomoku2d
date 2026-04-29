@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { createLocalSavedMatch } from "../match/saved_match";
-import type { GuestProfileStorage } from "../profile/guest_profile_store";
+import type { LocalProfileStorage } from "../profile/local_profile_store";
 
 import type { CloudAuthUser } from "./auth_store";
-import type { CloudProfile } from "./cloud_profile";
+import { emptyCloudMatchHistory, type CloudProfile } from "./cloud_profile";
 import { createCloudHistoryStore } from "./cloud_history_store";
 
-function createMemoryStorage(): GuestProfileStorage {
+function createMemoryStorage(): LocalProfileStorage {
   const backing = new Map<string, string>();
 
   return {
@@ -31,7 +31,7 @@ const user: CloudAuthUser = {
 
 const match = createLocalSavedMatch({
   id: "match-1",
-  localProfileId: "guest-1",
+  localProfileId: "local-1",
   moves: [{ col: 7, moveNumber: 1, player: 1, row: 7 }],
   players: [
     { kind: "human", name: "Bryan", stone: "black" },
@@ -55,17 +55,27 @@ const cloudMatch = {
 
 function cloudProfile(overrides: Partial<CloudProfile> = {}): CloudProfile {
   return {
-    authProviders: ["google.com"],
-    avatarUrl: null,
+    auth: {
+      providers: [
+        {
+          avatarUrl: null,
+          displayName: "Bryan",
+          provider: "google.com",
+        },
+      ],
+    },
     createdAt: "2026-04-28T00:00:00.000Z",
     displayName: "Bryan",
-    email: "bryan@example.com",
-    historyResetAt: null,
-    preferredVariant: "freestyle",
-    recentMatches: {
-      matches: [cloudMatch],
-      schemaVersion: 1,
-      updatedAt: "2026-04-28T00:00:00.000Z",
+    matchHistory: {
+      ...emptyCloudMatchHistory(),
+      replayMatches: [cloudMatch],
+    },
+    resetAt: null,
+    settings: {
+      defaultRules: {
+        opening: "standard",
+        ruleset: "freestyle",
+      },
     },
     uid: "uid-1",
     updatedAt: "2026-04-28T00:00:00.000Z",
@@ -111,7 +121,7 @@ describe("createCloudHistoryStore", () => {
     });
   });
 
-  it("keeps a local match pending when the 15-minute profile sync gate is closed", async () => {
+  it("keeps a local match pending when the 5-minute profile sync gate is closed", async () => {
     const saveHistory = vi.fn().mockResolvedValue({ matches: [cloudMatch], profile: cloudProfile() });
     const store = createCloudHistoryStore({
       cloudProfileForUser: () => cloudProfile({ updatedAt: "2999-01-01T00:00:00.000Z" }),
@@ -126,7 +136,7 @@ describe("createCloudHistoryStore", () => {
   });
 
   it("writes one merged profile snapshot when the sync gate is open", async () => {
-    const profile = cloudProfile({ recentMatches: { matches: [], schemaVersion: 1, updatedAt: null } });
+    const profile = cloudProfile({ matchHistory: emptyCloudMatchHistory() });
     const saveHistory = vi.fn().mockResolvedValue({ matches: [cloudMatch], profile });
     const store = createCloudHistoryStore({
       cloudProfileForUser: () => profile,
@@ -142,7 +152,7 @@ describe("createCloudHistoryStore", () => {
   });
 
   it("keeps failed snapshot sync records pending for retry", async () => {
-    const profile = cloudProfile({ recentMatches: { matches: [], schemaVersion: 1, updatedAt: null } });
+    const profile = cloudProfile({ matchHistory: emptyCloudMatchHistory() });
     const saveHistory = vi.fn().mockRejectedValue(new Error("offline"));
     const store = createCloudHistoryStore({
       cloudProfileForUser: () => profile,

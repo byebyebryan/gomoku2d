@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createLocalSavedMatch } from "../match/saved_match";
-import type { GuestSavedMatch } from "../profile/guest_profile_store";
+import type { LocalProfileSavedMatch } from "../profile/local_profile_store";
 
 import type { CloudAuthUser } from "./auth_store";
 import {
@@ -23,9 +23,9 @@ const user: CloudAuthUser = {
   uid: "uid-1",
 };
 
-const match: GuestSavedMatch = createLocalSavedMatch({
+const match: LocalProfileSavedMatch = createLocalSavedMatch({
   id: "match-1",
-  localProfileId: "guest-1",
+  localProfileId: "local-1",
   moves: [
     { col: 7, moveNumber: 1, player: 1, row: 7 },
     { col: 8, moveNumber: 2, player: 2, row: 7 },
@@ -97,7 +97,7 @@ describe("cloud match serialization", () => {
       createCloudSavedMatch(user, {
         ...match,
         status: "playing",
-      } as unknown as GuestSavedMatch),
+      } as unknown as LocalProfileSavedMatch),
     ).toThrow("finished matches");
   });
 
@@ -117,7 +117,7 @@ describe("cloud match serialization", () => {
         ...match,
         source: "cloud_saved",
         trust: "client_uploaded",
-      } as unknown as GuestSavedMatch),
+      } as unknown as LocalProfileSavedMatch),
     ).toThrow("local history records");
   });
 
@@ -129,7 +129,7 @@ describe("cloud match serialization", () => {
           ...match.player_white,
           bot: null,
           kind: "human",
-          local_profile_id: "guest-2",
+          local_profile_id: "local-2",
         },
       }),
     ).toThrow("one human player and one bot player");

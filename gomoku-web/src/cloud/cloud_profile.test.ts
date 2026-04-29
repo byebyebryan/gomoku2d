@@ -2,12 +2,16 @@ import { describe, expect, it } from "vitest";
 
 import type { CloudAuthUser } from "./auth_store";
 import {
-  CLOUD_RECENT_MATCHES_LIMIT,
   CLOUD_PROFILE_SCHEMA_VERSION,
+  CLOUD_REPLAY_MATCHES_LIMIT,
+  CLOUD_SUMMARY_MATCHES_LIMIT,
   cloudProfileFromDocument,
   cloudProfileSyncDue,
+  emptyCloudArchivedMatchStats,
+  emptyCloudMatchHistory,
   existingCloudProfileUpdate,
-  mergeCloudRecentMatches,
+  mergeCloudMatchSummaryState,
+  mergeCloudReplayMatches,
   newCloudProfileWrite,
   resetCloudProfileUpdate,
 } from "./cloud_profile";
@@ -21,31 +25,83 @@ const authUser: CloudAuthUser = {
   uid: "uid-1",
 };
 
+function emptyMatchHistoryDocument() {
+  return {
+    archived_stats: emptyCloudArchivedMatchStats(),
+    replay_matches: [],
+    summary_matches: [],
+  };
+}
+
+function localMatch(id: string, savedAt: string) {
+  return createLocalSavedMatch({
+    id,
+    localProfileId: "local-1",
+    moves: [{ col: 7, moveNumber: 1, player: 1, row: 7 }],
+    players: [
+      { kind: "human", name: "Bryan", stone: "black" },
+      { kind: "bot", name: "Practice Bot", stone: "white" },
+    ],
+    savedAt,
+    status: "draw",
+    variant: "freestyle",
+  });
+}
+
 describe("cloudProfileFromDocument", () => {
   it("maps existing Firestore profile data and preserves app-owned fields", () => {
     expect(
       cloudProfileFromDocument(authUser, "freestyle", {
-        auth_providers: ["google.com", "github.com"],
-        avatar_url: "https://example.com/cloud.png",
+        auth: {
+          providers: [
+            {
+              avatar_url: "https://example.com/cloud.png",
+              display_name: "Google Bryan",
+              provider: "google.com",
+            },
+            {
+              avatar_url: null,
+              display_name: "GitHub Bryan",
+              provider: "github.com",
+            },
+          ],
+        },
         display_name: "ByeByeBryan",
-        email: "cloud@example.com",
-        preferred_variant: "renju",
+        match_history: emptyMatchHistoryDocument(),
+        settings: {
+          default_rules: {
+            opening: "standard",
+            ruleset: "renju",
+          },
+        },
         username: "byebyebryan",
       }),
     ).toEqual({
-      authProviders: ["google.com", "github.com"],
-      avatarUrl: "https://example.com/cloud.png",
-      displayName: "ByeByeBryan",
-      email: "cloud@example.com",
-      historyResetAt: null,
-      preferredVariant: "renju",
-      uid: "uid-1",
-      createdAt: null,
-      recentMatches: {
-        matches: [],
-        schemaVersion: 1,
-        updatedAt: null,
+      auth: {
+        providers: [
+          {
+            avatarUrl: "https://example.com/cloud.png",
+            displayName: "Google Bryan",
+            provider: "google.com",
+          },
+          {
+            avatarUrl: null,
+            displayName: "GitHub Bryan",
+            provider: "github.com",
+          },
+        ],
       },
+      createdAt: null,
+      displayName: "ByeByeBryan",
+      matchHistory: emptyCloudMatchHistory(),
+      resetAt: null,
+      settings: {
+        defaultRules: {
+          opening: "standard",
+          ruleset: "renju",
+        },
+      },
+      uid: "uid-1",
       updatedAt: null,
       username: "byebyebryan",
     });
@@ -54,21 +110,32 @@ describe("cloudProfileFromDocument", () => {
   it("falls back to auth user data for missing or invalid fields", () => {
     expect(
       cloudProfileFromDocument(authUser, "freestyle", {
-        auth_providers: [null, "google.com"],
         display_name: "",
-        preferred_variant: "unknown",
+        settings: {
+          default_rules: {
+            opening: "standard",
+            ruleset: "unknown",
+          },
+        },
       }),
     ).toMatchObject({
-      authProviders: ["google.com"],
-      avatarUrl: authUser.avatarUrl,
+      auth: {
+        providers: [
+          {
+            avatarUrl: authUser.avatarUrl,
+            displayName: authUser.displayName,
+            provider: "google.com",
+          },
+        ],
+      },
       displayName: authUser.displayName,
-      email: authUser.email,
-      historyResetAt: null,
-      preferredVariant: "freestyle",
-      recentMatches: {
-        matches: [],
-        schemaVersion: 1,
-        updatedAt: null,
+      matchHistory: emptyCloudMatchHistory(),
+      resetAt: null,
+      settings: {
+        defaultRules: {
+          opening: "standard",
+          ruleset: "freestyle",
+        },
       },
       username: null,
     });
@@ -77,13 +144,13 @@ describe("cloudProfileFromDocument", () => {
   it("maps Firestore reset timestamps to stable ISO strings", () => {
     expect(
       cloudProfileFromDocument(authUser, "freestyle", {
-        history_reset_at: {
+        reset_at: {
           nanoseconds: 123_000_000,
           seconds: 1_777_363_200,
         },
       }),
     ).toMatchObject({
-      historyResetAt: "2026-04-28T08:00:00.123Z",
+      resetAt: "2026-04-28T08:00:00.123Z",
     });
   });
 });
@@ -91,50 +158,78 @@ describe("cloudProfileFromDocument", () => {
 describe("cloud profile writes", () => {
   it("creates a complete profile document for first sign-in", () => {
     expect(newCloudProfileWrite(authUser, "renju")).toMatchObject({
-      auth_providers: ["google.com"],
-      avatar_url: authUser.avatarUrl,
-      display_name: "Bryan",
-      email: "bryan@example.com",
-      history_reset_at: null,
-      preferred_variant: "renju",
-      recent_matches: {
-        matches: [],
-        schema_version: 1,
-        updated_at: null,
+      auth: {
+        providers: [
+          {
+            avatar_url: authUser.avatarUrl,
+            display_name: authUser.displayName,
+            provider: "google.com",
+          },
+        ],
       },
+      display_name: "Bryan",
+      match_history: emptyMatchHistoryDocument(),
+      reset_at: null,
       schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
+      settings: {
+        default_rules: {
+          opening: "standard",
+          ruleset: "renju",
+        },
+      },
       uid: "uid-1",
       username: null,
     });
   });
 
-  it("updates provider-owned fields without overwriting app-owned display name", () => {
+  it("updates auth-owned fields without overwriting app-owned display name", () => {
     expect(existingCloudProfileUpdate(authUser)).toMatchObject({
-      auth_providers: ["google.com"],
-      avatar_url: authUser.avatarUrl,
-      email: "bryan@example.com",
+      auth: {
+        providers: [
+          {
+            avatar_url: authUser.avatarUrl,
+            display_name: authUser.displayName,
+            provider: "google.com",
+          },
+        ],
+      },
+      match_history: emptyMatchHistoryDocument(),
+      reset_at: null,
       schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
+      settings: {
+        default_rules: {
+          opening: "standard",
+          ruleset: "freestyle",
+        },
+      },
       uid: "uid-1",
     });
     expect(existingCloudProfileUpdate(authUser)).not.toHaveProperty("display_name");
-    expect(existingCloudProfileUpdate(authUser)).not.toHaveProperty("history_reset_at");
-    expect(existingCloudProfileUpdate(authUser)).not.toHaveProperty("preferred_variant");
+    expect(existingCloudProfileUpdate(authUser)).not.toHaveProperty("email");
     expect(existingCloudProfileUpdate(authUser)).not.toHaveProperty("username");
   });
 
   it("skips existing profile writes when cloud fields are already current", () => {
     expect(
       existingCloudProfileUpdate(authUser, {
-        auth_providers: ["google.com"],
-        avatar_url: authUser.avatarUrl,
-        email: authUser.email,
-        preferred_variant: "freestyle",
-        recent_matches: {
-          matches: [],
-          schema_version: 1,
-          updated_at: null,
+        auth: {
+          providers: [
+            {
+              avatar_url: authUser.avatarUrl,
+              display_name: authUser.displayName,
+              provider: "google.com",
+            },
+          ],
         },
+        match_history: emptyMatchHistoryDocument(),
+        reset_at: null,
         schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
+        settings: {
+          default_rules: {
+            opening: "standard",
+            ruleset: "freestyle",
+          },
+        },
         uid: "uid-1",
       }),
     ).toBeNull();
@@ -143,156 +238,168 @@ describe("cloud profile writes", () => {
   it("does not sync preferred rule during existing profile load", () => {
     expect(
       existingCloudProfileUpdate(authUser, {
-        auth_providers: ["google.com"],
-        avatar_url: authUser.avatarUrl,
-        email: authUser.email,
-        preferred_variant: "freestyle",
-        recent_matches: {
-          matches: [],
-          schema_version: 1,
-          updated_at: null,
+        auth: {
+          providers: [
+            {
+              avatar_url: authUser.avatarUrl,
+              display_name: authUser.displayName,
+              provider: "google.com",
+            },
+          ],
         },
+        match_history: emptyMatchHistoryDocument(),
+        reset_at: null,
         schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
+        settings: {
+          default_rules: {
+            opening: "standard",
+            ruleset: "freestyle",
+          },
+        },
         uid: "uid-1",
-      }),
+      }, "renju"),
     ).toBeNull();
   });
 
-  it("keeps existing profile updates narrow when one provider field changes", () => {
-    expect(
-      existingCloudProfileUpdate(authUser, {
-        auth_providers: ["google.com"],
-        avatar_url: "https://example.com/old.png",
-        email: authUser.email,
-        preferred_variant: "freestyle",
-        recent_matches: {
-          matches: [],
-          schema_version: 1,
-          updated_at: null,
+  it("keeps existing profile updates narrow when one auth field changes", () => {
+    const update = existingCloudProfileUpdate(authUser, {
+      auth: {
+        providers: [
+          {
+            avatar_url: "https://example.com/old.png",
+            display_name: authUser.displayName,
+            provider: "google.com",
+          },
+        ],
+      },
+      match_history: emptyMatchHistoryDocument(),
+      reset_at: null,
+      schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
+      settings: {
+        default_rules: {
+          opening: "standard",
+          ruleset: "freestyle",
         },
-        schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
-        uid: "uid-1",
-      }),
-    ).toMatchObject({
-      avatar_url: authUser.avatarUrl,
+      },
+      uid: "uid-1",
     });
-    expect(
-      existingCloudProfileUpdate(authUser, {
-        auth_providers: ["google.com"],
-        avatar_url: "https://example.com/old.png",
-        email: authUser.email,
-        preferred_variant: "freestyle",
-        recent_matches: {
-          matches: [],
-          schema_version: 1,
-          updated_at: null,
-        },
-        schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
-        uid: "uid-1",
-      }),
-    ).not.toHaveProperty("preferred_variant");
+
+    expect(update).toMatchObject({
+      auth: {
+        providers: [
+          expect.objectContaining({
+            avatar_url: authUser.avatarUrl,
+          }),
+        ],
+      },
+    });
+    expect(update).not.toHaveProperty("settings");
   });
 
   it("resets profile-owned fields and writes a history reset barrier", () => {
     expect(resetCloudProfileUpdate(authUser, "freestyle")).toMatchObject({
-      auth_providers: ["google.com"],
-      avatar_url: authUser.avatarUrl,
-      display_name: authUser.displayName,
-      email: authUser.email,
-      preferred_variant: "freestyle",
-      recent_matches: {
-        matches: [],
-        schema_version: 1,
-        updated_at: expect.anything(),
+      auth: {
+        providers: [
+          {
+            avatar_url: authUser.avatarUrl,
+            display_name: authUser.displayName,
+            provider: "google.com",
+          },
+        ],
       },
+      display_name: authUser.displayName,
+      match_history: emptyMatchHistoryDocument(),
       schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
+      settings: {
+        default_rules: {
+          opening: "standard",
+          ruleset: "freestyle",
+        },
+      },
       uid: "uid-1",
     });
-    expect(resetCloudProfileUpdate(authUser, "freestyle")).toHaveProperty("history_reset_at");
+    expect(resetCloudProfileUpdate(authUser, "freestyle")).toHaveProperty("reset_at");
+    expect(resetCloudProfileUpdate(authUser, "freestyle")).not.toHaveProperty("email");
     expect(resetCloudProfileUpdate(authUser, "freestyle")).not.toHaveProperty("username");
   });
 
-  it("returns the refreshed provider fields after updating an existing profile", () => {
-    const existing = {
-      auth_providers: ["github.com"],
-      avatar_url: "https://example.com/old.png",
-      display_name: "ByeByeBryan",
-      email: "old@example.com",
-      preferred_variant: "freestyle",
-      recent_matches: {
-        matches: [],
-        schema_version: 1,
-        updated_at: null,
-      },
-      username: "byebyebryan",
-    };
-    const update = existingCloudProfileUpdate(authUser);
-
-    expect(cloudProfileFromDocument(authUser, "freestyle", { ...existing, ...update })).toMatchObject({
-      authProviders: ["google.com"],
-      avatarUrl: authUser.avatarUrl,
-      displayName: "ByeByeBryan",
-      email: authUser.email,
-      historyResetAt: null,
-      preferredVariant: "freestyle",
-      recentMatches: {
-        matches: [],
-        schemaVersion: 1,
-        updatedAt: null,
-      },
-      username: "byebyebryan",
-    });
-  });
-
-  it("uses a 15-minute sync interval for settled profile snapshots", () => {
-    const syncedMatch = mergeCloudRecentMatches(authUser, [
-      createLocalSavedMatch({
-        id: "match-sync-test",
-        localProfileId: "guest-1",
-        moves: [{ col: 7, moveNumber: 1, player: 1, row: 7 }],
-        players: [
-          { kind: "human", name: "Bryan", stone: "black" },
-          { kind: "bot", name: "Practice Bot", stone: "white" },
-        ],
-        savedAt: "2026-04-28T07:59:00.000Z",
-        status: "draw",
-        variant: "freestyle",
-      }),
+  it("uses a 5-minute sync interval for settled profile snapshots", () => {
+    const syncedMatch = mergeCloudReplayMatches(authUser, [
+      localMatch("match-sync-test", "2026-04-28T07:59:00.000Z"),
     ])[0]!;
     const profile = {
       createdAt: "2026-04-28T08:00:00.000Z",
-      recentMatches: {
-        matches: [syncedMatch],
-        schemaVersion: 1 as const,
-        updatedAt: null,
+      matchHistory: {
+        ...emptyCloudMatchHistory(),
+        replayMatches: [syncedMatch],
       },
       updatedAt: "2026-04-28T08:00:00.000Z",
     };
 
-    expect(cloudProfileSyncDue(profile, Date.parse("2026-04-28T08:10:00.000Z"))).toBe(false);
-    expect(cloudProfileSyncDue(profile, Date.parse("2026-04-28T08:15:00.000Z"))).toBe(true);
+    expect(cloudProfileSyncDue(profile, Date.parse("2026-04-28T08:04:59.999Z"))).toBe(false);
+    expect(cloudProfileSyncDue(profile, Date.parse("2026-04-28T08:05:00.000Z"))).toBe(true);
   });
 
-  it("merges local matches into a capped cloud snapshot", () => {
-    const matches = Array.from({ length: CLOUD_RECENT_MATCHES_LIMIT + 1 }, (_, index) =>
-      createLocalSavedMatch({
-        id: `match-${index}`,
-        localProfileId: "guest-1",
-        moves: [{ col: index % 15, moveNumber: 1, player: 1, row: Math.floor(index / 15) }],
-        players: [
-          { kind: "human", name: "Bryan", stone: "black" },
-          { kind: "bot", name: "Practice Bot", stone: "white" },
-        ],
-        savedAt: new Date(Date.parse("2026-04-28T00:00:00.000Z") + index * 1000).toISOString(),
-        status: "draw",
-        variant: "freestyle",
-      })
+  it("merges local matches into a capped cloud replay tier", () => {
+    const matches = Array.from({ length: CLOUD_REPLAY_MATCHES_LIMIT + 1 }, (_, index) =>
+      localMatch(
+        `match-${index}`,
+        new Date(Date.parse("2026-04-28T00:00:00.000Z") + index * 1000).toISOString(),
+      )
     );
 
-    const merged = mergeCloudRecentMatches(authUser, matches);
-    expect(merged).toHaveLength(CLOUD_RECENT_MATCHES_LIMIT);
-    expect(merged[0]?.id).toBe(`match-${CLOUD_RECENT_MATCHES_LIMIT}`);
+    const merged = mergeCloudReplayMatches(authUser, matches);
+    expect(merged).toHaveLength(CLOUD_REPLAY_MATCHES_LIMIT);
+    expect(merged[0]?.id).toBe(`match-${CLOUD_REPLAY_MATCHES_LIMIT}`);
     expect(merged[0]?.source).toBe("cloud_saved");
     expect(merged[0]?.player_black.profile_uid).toBe("uid-1");
+  });
+
+  it("keeps a longer summary tier and archives evicted stats", () => {
+    const matches = Array.from({ length: CLOUD_SUMMARY_MATCHES_LIMIT + 1 }, (_, index) =>
+      localMatch(
+        `record-${index}`,
+        new Date(Date.parse("2026-04-28T00:00:00.000Z") + index * 1000).toISOString(),
+      )
+    );
+
+    const state = mergeCloudMatchSummaryState({
+      archivedStats: emptyCloudArchivedMatchStats(),
+      matches,
+      replayMatches: [],
+      summaries: [],
+      user: authUser,
+    });
+
+    expect(state.summaryMatches).toHaveLength(CLOUD_SUMMARY_MATCHES_LIMIT);
+    expect(state.summaryMatches[0]?.id).toBe(`record-${CLOUD_SUMMARY_MATCHES_LIMIT}`);
+    expect(state.summaryMatches[state.summaryMatches.length - 1]?.id).toBe("record-1");
+    expect(state.archivedStats.archived_count).toBe(1);
+    expect(state.archivedStats.archived_before).toBe("2026-04-28T00:00:00.000Z");
+    expect(state.archivedStats.totals).toMatchObject({
+      draws: 1,
+      matches: 1,
+      moves: 1,
+    });
+    expect(state.archivedStats.by_opponent_type.bot.matches).toBe(1);
+    expect(state.archivedStats.by_ruleset.freestyle.matches).toBe(1);
+    expect(state.archivedStats.by_side.black.matches).toBe(1);
+  });
+
+  it("keeps full replay records out of the summary tier", () => {
+    const newerReplayMatch = localMatch("replay-match", "2026-04-28T00:01:00.000Z");
+    const olderSummaryMatch = localMatch("summary-match", "2026-04-28T00:00:00.000Z");
+    const replayMatches = mergeCloudReplayMatches(authUser, [newerReplayMatch]);
+
+    const state = mergeCloudMatchSummaryState({
+      archivedStats: emptyCloudArchivedMatchStats(),
+      matches: [newerReplayMatch, olderSummaryMatch],
+      replayMatches,
+      summaries: [],
+      user: authUser,
+    });
+
+    expect(state.summaryMatches).toHaveLength(1);
+    expect(state.summaryMatches[0]?.id).toBe("summary-match");
   });
 });

@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CloudAuthUser } from "./auth_store";
-import type { CloudProfile } from "./cloud_profile";
+import { emptyCloudMatchHistory, type CloudProfile } from "./cloud_profile";
 import { cloudProfileStore } from "./cloud_profile_store";
 import { cloudPromotionStore } from "./cloud_promotion_store";
 import { flushCloudProfileSync } from "./cloud_sync";
-import type { GuestPromotionInput, GuestPromotionResult } from "./cloud_promotion";
-import { guestProfileStore, type GuestProfileIdentity } from "../profile/guest_profile_store";
+import type { LocalProfilePromotionInput, LocalProfilePromotionResult } from "./cloud_promotion";
+import { emptyLocalMatchHistory, localProfileStore, type LocalProfileIdentity } from "../profile/local_profile_store";
 
 const user: CloudAuthUser = {
   avatarUrl: null,
@@ -16,35 +16,42 @@ const user: CloudAuthUser = {
   uid: "uid-1",
 };
 
-const guestProfile: GuestProfileIdentity = {
+const localProfile: LocalProfileIdentity = {
   avatarUrl: null,
   createdAt: "2026-04-27T00:00:00.000Z",
   displayName: "ByeByeBryan",
-  id: "guest-1",
-  kind: "guest",
+  id: "local-1",
+  kind: "local",
   updatedAt: "2026-04-27T00:00:00.000Z",
   username: null,
 };
 
 const cloudProfile: CloudProfile = {
-  authProviders: ["google.com"],
-  avatarUrl: null,
+  auth: {
+    providers: [
+      {
+        avatarUrl: null,
+        displayName: "Bryan",
+        provider: "google.com",
+      },
+    ],
+  },
   createdAt: null,
   displayName: "Bryan",
-  email: "bryan@example.com",
-  historyResetAt: null,
-  preferredVariant: "freestyle",
-  recentMatches: {
-    matches: [],
-    schemaVersion: 1,
-    updatedAt: null,
+  matchHistory: emptyCloudMatchHistory(),
+  resetAt: null,
+  settings: {
+    defaultRules: {
+      opening: "standard",
+      ruleset: "freestyle",
+    },
   },
   uid: "uid-1",
   updatedAt: null,
   username: null,
 };
 
-const promotionResult: GuestPromotionResult = {
+const promotionResult: LocalProfilePromotionResult = {
   localMatchesSynced: 0,
   profileDisplayNamePromoted: true,
   promotedDisplayName: "ByeByeBryan",
@@ -52,25 +59,25 @@ const promotionResult: GuestPromotionResult = {
 
 const initialCloudProfileState = cloudProfileStore.getState();
 const initialCloudPromotionState = cloudPromotionStore.getState();
-const initialGuestProfileState = guestProfileStore.getState();
+const initialLocalProfileState = localProfileStore.getState();
 
 describe("flushCloudProfileSync", () => {
   afterEach(() => {
     cloudProfileStore.setState(initialCloudProfileState, true);
     cloudPromotionStore.setState(initialCloudPromotionState, true);
-    guestProfileStore.setState(initialGuestProfileState, true);
+    localProfileStore.setState(initialLocalProfileState, true);
   });
 
   beforeEach(() => {
-    guestProfileStore.setState({
-      history: [],
-      profile: guestProfile,
+    localProfileStore.setState({
+      matchHistory: emptyLocalMatchHistory(),
+      profile: localProfile,
       settings: { preferredVariant: "renju" },
     });
   });
 
   it("flushes the current local profile/settings to cloud on demand", async () => {
-    const promote = vi.fn(async (_input: GuestPromotionInput) => {
+    const promote = vi.fn(async (_input: LocalProfilePromotionInput) => {
       cloudPromotionStore.setState({
         errorMessage: null,
         result: promotionResult,
@@ -90,17 +97,26 @@ describe("flushCloudProfileSync", () => {
 
     expect(promote).toHaveBeenCalledWith({
       cloudDisplayName: "Bryan",
-      cloudHistory: [],
-      cloudPreferredVariant: "freestyle",
-      guestHistory: [],
-      guestProfile,
-      historyResetAt: null,
+      cloudMatchHistory: emptyCloudMatchHistory(),
+      cloudSettings: {
+        defaultRules: {
+          opening: "standard",
+          ruleset: "freestyle",
+        },
+      },
+      localMatchHistory: emptyLocalMatchHistory(),
+      localProfile,
+      resetAt: null,
       settings: { preferredVariant: "renju" },
       user,
     });
     expect(result).toMatchObject({
       displayName: "ByeByeBryan",
-      preferredVariant: "renju",
+      settings: {
+        defaultRules: {
+          ruleset: "renju",
+        },
+      },
     });
   });
 

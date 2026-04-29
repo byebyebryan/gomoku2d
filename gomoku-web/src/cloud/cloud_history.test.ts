@@ -8,7 +8,12 @@ import {
   saveCloudHistorySnapshot,
   type CloudHistoryBackend,
 } from "./cloud_history";
-import type { CloudProfile } from "./cloud_profile";
+import {
+  CLOUD_REPLAY_MATCHES_LIMIT,
+  emptyCloudArchivedMatchStats,
+  emptyCloudMatchHistory,
+  type CloudProfile,
+} from "./cloud_profile";
 
 const user: CloudAuthUser = {
   avatarUrl: null,
@@ -20,7 +25,7 @@ const user: CloudAuthUser = {
 
 const match = createLocalSavedMatch({
   id: "match-1",
-  localProfileId: "guest-1",
+  localProfileId: "local-1",
   moves: [{ col: 7, moveNumber: 1, player: 1, row: 7 }],
   players: [
     { kind: "human", name: "Bryan", stone: "black" },
@@ -31,19 +36,41 @@ const match = createLocalSavedMatch({
   variant: "freestyle",
 });
 
+function localMatch(id: string, savedAt: string) {
+  return createLocalSavedMatch({
+    id,
+    localProfileId: "local-1",
+    moves: [{ col: 7, moveNumber: 1, player: 1, row: 7 }],
+    players: [
+      { kind: "human", name: "Bryan", stone: "black" },
+      { kind: "bot", name: "Practice Bot", stone: "white" },
+    ],
+    savedAt,
+    status: "draw",
+    variant: "freestyle",
+  });
+}
+
 function cloudProfile(overrides: Partial<CloudProfile> = {}): CloudProfile {
   return {
-    authProviders: ["google.com"],
-    avatarUrl: null,
+    auth: {
+      providers: [
+        {
+          avatarUrl: null,
+          displayName: "Bryan",
+          provider: "google.com",
+        },
+      ],
+    },
     createdAt: "2026-04-28T00:00:00.000Z",
     displayName: "Bryan",
-    email: "bryan@example.com",
-    historyResetAt: null,
-    preferredVariant: "freestyle",
-    recentMatches: {
-      matches: [],
-      schemaVersion: 1,
-      updatedAt: null,
+    matchHistory: emptyCloudMatchHistory(),
+    resetAt: null,
+    settings: {
+      defaultRules: {
+        opening: "standard",
+        ruleset: "freestyle",
+      },
     },
     uid: "uid-1",
     updatedAt: "2026-04-28T00:00:00.000Z",
@@ -67,9 +94,10 @@ function createBackend() {
 describe("cloud history", () => {
   it("filters embedded cloud history after the reset barrier", () => {
     const profile = cloudProfile({
-      historyResetAt: "2026-04-28T00:00:00.000Z",
-      recentMatches: {
-        matches: [
+      resetAt: "2026-04-28T00:00:00.000Z",
+      matchHistory: {
+        ...emptyCloudMatchHistory(),
+        replayMatches: [
           { ...match, source: "cloud_saved", trust: "client_uploaded" },
           {
             ...match,
@@ -79,8 +107,6 @@ describe("cloud history", () => {
             trust: "client_uploaded",
           },
         ],
-        schemaVersion: 1,
-        updatedAt: null,
       },
     });
 
@@ -106,29 +132,68 @@ describe("cloud history", () => {
     expect(backend.updateProfile).toHaveBeenCalledTimes(1);
     expect(updates[0]).toMatchObject({
       display_name: "Bryan",
-      preferred_variant: "renju",
-      recent_matches: {
-        matches: [
+      match_history: {
+        archived_stats: emptyCloudArchivedMatchStats(),
+        replay_matches: [
           expect.objectContaining({
             id: "match-1",
             source: "cloud_saved",
             trust: "client_uploaded",
           }),
         ],
-        schema_version: 1,
+        summary_matches: [],
+      },
+      settings: {
+        default_rules: {
+          opening: "standard",
+          ruleset: "renju",
+        },
       },
     });
     expect(result.matches).toHaveLength(1);
     expect(result.matches[0]?.player_black.profile_uid).toBe("uid-1");
   });
 
+  it("moves replay overflow into the summary tier", async () => {
+    const { backend, updates } = createBackend();
+    const matches = Array.from({ length: CLOUD_REPLAY_MATCHES_LIMIT + 1 }, (_, index) =>
+      localMatch(
+        `match-${index}`,
+        new Date(Date.parse("2026-04-28T00:00:00.000Z") + index * 1000).toISOString(),
+      )
+    );
+
+    await saveCloudHistorySnapshot(
+      user,
+      {
+        cloudProfile: cloudProfile(),
+        displayName: "Bryan",
+        matches,
+        preferredVariant: "freestyle",
+      },
+      { backend },
+    );
+
+    expect(updates[0]).toMatchObject({
+      match_history: {
+        replay_matches: expect.arrayContaining([
+          expect.objectContaining({ id: `match-${CLOUD_REPLAY_MATCHES_LIMIT}` }),
+        ]),
+        summary_matches: [
+          expect.objectContaining({
+            id: "match-0",
+          }),
+        ],
+      },
+    });
+  });
+
   it("clears embedded cloud history with one profile snapshot write", async () => {
     const { backend, updates } = createBackend();
     const profile = cloudProfile({
-      recentMatches: {
-        matches: [{ ...match, source: "cloud_saved", trust: "client_uploaded" }],
-        schemaVersion: 1,
-        updatedAt: null,
+      matchHistory: {
+        ...emptyCloudMatchHistory(),
+        replayMatches: [{ ...match, source: "cloud_saved", trust: "client_uploaded" }],
       },
     });
 
@@ -145,8 +210,9 @@ describe("cloud history", () => {
 
     expect(backend.updateProfile).toHaveBeenCalledTimes(1);
     expect(updates[0]).toMatchObject({
-      recent_matches: {
-        matches: [],
+      match_history: {
+        replay_matches: [],
+        summary_matches: [],
       },
     });
     expect(result.matches).toEqual([]);

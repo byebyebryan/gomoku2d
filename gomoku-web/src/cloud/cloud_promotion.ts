@@ -2,37 +2,43 @@ import { doc, setDoc, type Firestore } from "firebase/firestore";
 
 import { savedMatchIsAfterReset, type SavedMatchV1 } from "../match/saved_match";
 import {
-  DEFAULT_GUEST_DISPLAY_NAME,
-  type GuestProfileIdentity,
-  type GuestProfileSettings,
-  type GuestSavedMatch,
-} from "../profile/guest_profile_store";
+  DEFAULT_LOCAL_DISPLAY_NAME,
+  type LocalProfileMatchHistory,
+  type LocalProfileIdentity,
+  type LocalProfileSettings,
+} from "../profile/local_profile_store";
 
 import type { CloudAuthUser } from "./auth_store";
 import {
-  CLOUD_PROFILE_SCHEMA_VERSION,
   cloudProfileNeedsSnapshotSync,
   cloudProfileSnapshotUpdate,
+  cloudSettingsDocument,
+  cloudSettingsForVariant,
+  cloudMatchHistoryIsEmpty,
   existingCloudProfileUpdate,
-  mergeCloudRecentMatches,
-  type CloudProfileDocument,
+  emptyCloudMatchHistory,
+  mergeCloudArchivedMatchStats,
+  mergeCloudMatchSummaryState,
+  mergeCloudReplayMatches,
+  type CloudMatchHistory,
+  type CloudProfileSettings,
 } from "./cloud_profile";
 import { getFirebaseClients } from "./firebase";
 
-export interface GuestPromotionInput {
+export interface LocalProfilePromotionInput {
   /** Current display name on the cloud profile; undefined means not yet loaded. */
   cloudDisplayName?: string | null;
-  /** Current preferred rule on the cloud profile; undefined means not yet loaded. */
-  cloudPreferredVariant?: GuestProfileSettings["preferredVariant"] | null;
-  guestHistory: GuestSavedMatch[];
-  guestProfile: GuestProfileIdentity;
-  historyResetAt?: string | null;
-  settings: GuestProfileSettings;
+  cloudMatchHistory?: CloudMatchHistory | null;
+  /** Current cloud settings; undefined means not yet loaded. */
+  cloudSettings?: CloudProfileSettings | null;
+  localMatchHistory: LocalProfileMatchHistory;
+  localProfile: LocalProfileIdentity;
+  resetAt?: string | null;
+  settings: LocalProfileSettings;
   user: CloudAuthUser;
-  cloudHistory?: SavedMatchV1[];
 }
 
-export interface GuestPromotionResult {
+export interface LocalProfilePromotionResult {
   localMatchesSynced: number;
   profileDisplayNamePromoted: boolean;
   promotedDisplayName: string | null;
@@ -42,50 +48,28 @@ export interface CloudPromotionBackend {
   updateProfile: (patch: Record<string, unknown>) => Promise<void>;
 }
 
-export interface PromoteGuestToCloudOptions {
+export interface PromoteLocalProfileToCloudOptions {
   backend?: CloudPromotionBackend;
   firestore?: Firestore;
 }
 
-function customGuestDisplayName(profile: GuestProfileIdentity): string | null {
+function customLocalDisplayName(profile: LocalProfileIdentity): string | null {
   const name = profile.displayName.trim();
-  return name && name !== DEFAULT_GUEST_DISPLAY_NAME ? name : null;
+  return name && name !== DEFAULT_LOCAL_DISPLAY_NAME ? name : null;
 }
 
 function cloudDisplayNameIsProviderDefault(cloudName: string | null | undefined, providerName: string): boolean {
   return cloudName === null || cloudName === providerName;
 }
 
-function currentCloudProfileDocument(input: GuestPromotionInput): CloudProfileDocument | null {
-  if (!input.cloudPreferredVariant) {
-    return null;
-  }
-
-  return {
-    auth_providers: input.user.providerIds,
-    avatar_url: input.user.avatarUrl,
-    email: input.user.email,
-    preferred_variant: input.cloudPreferredVariant,
-    recent_matches: {
-      matches: input.cloudHistory ?? [],
-      schema_version: 1,
-      updated_at: null,
-    },
-    schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
-    uid: input.user.uid,
-  };
-}
-
-export function cloudProfilePromotionUpdate(input: GuestPromotionInput): Record<string, unknown> | null {
-  const cloudDocument = currentCloudProfileDocument(input);
-  const baseUpdate = cloudDocument
-    ? existingCloudProfileUpdate(input.user, cloudDocument)
-    : existingCloudProfileUpdate(input.user);
+export function cloudProfilePromotionUpdate(input: LocalProfilePromotionInput): Record<string, unknown> | null {
+  const baseUpdate = input.cloudSettings ? null : existingCloudProfileUpdate(input.user);
   const update: Record<string, unknown> = baseUpdate ? { ...baseUpdate } : {};
-  const customLocal = customGuestDisplayName(input.guestProfile);
+  const customLocal = customLocalDisplayName(input.localProfile);
+  const nextSettings = cloudSettingsForVariant(input.settings.preferredVariant);
 
-  if (input.cloudPreferredVariant !== input.settings.preferredVariant) {
-    update.preferred_variant = input.settings.preferredVariant;
+  if (!input.cloudSettings || JSON.stringify(input.cloudSettings) !== JSON.stringify(nextSettings)) {
+    update.settings = cloudSettingsDocument(nextSettings);
   }
 
   // Only promote the local custom name if the cloud name hasn't been customized
@@ -109,7 +93,7 @@ function createFirestorePromotionBackend(user: CloudAuthUser, firestore: Firesto
 
 function resolvePromotionBackend(
   user: CloudAuthUser,
-  options: PromoteGuestToCloudOptions,
+  options: PromoteLocalProfileToCloudOptions,
 ): CloudPromotionBackend {
   if (options.backend) {
     return options.backend;
@@ -123,57 +107,81 @@ function resolvePromotionBackend(
   return createFirestorePromotionBackend(user, firestore);
 }
 
-export function promotionInputKey(input: GuestPromotionInput): string {
+export function promotionInputKey(input: LocalProfilePromotionInput): string {
   return JSON.stringify({
     cloud: [
       input.cloudDisplayName !== undefined,
       input.cloudDisplayName ?? null,
-      input.cloudPreferredVariant !== undefined,
-      input.cloudPreferredVariant ?? null,
+      input.cloudSettings !== undefined,
+      input.cloudSettings ?? null,
     ],
-    history: input.guestHistory.map((match) => [match.id, match.saved_at, match.move_count]),
-    cloudHistory: (input.cloudHistory ?? []).map((match) => [match.id, match.saved_at, match.move_count]),
-    reset: input.historyResetAt ?? null,
-    profile: [input.guestProfile.id, input.guestProfile.displayName],
+    history: input.localMatchHistory,
+    cloudHistory: input.cloudMatchHistory ?? null,
+    reset: input.resetAt ?? null,
+    profile: [input.localProfile.id, input.localProfile.displayName],
     rule: input.settings.preferredVariant,
     uid: input.user.uid,
   });
 }
 
-export async function promoteGuestToCloud(
-  input: GuestPromotionInput,
-  options: PromoteGuestToCloudOptions = {},
-): Promise<GuestPromotionResult> {
+export async function promoteLocalProfileToCloud(
+  input: LocalProfilePromotionInput,
+  options: PromoteLocalProfileToCloudOptions = {},
+): Promise<LocalProfilePromotionResult> {
   const backend = resolvePromotionBackend(input.user, options);
-  const eligibleHistory = input.guestHistory.filter((match) => savedMatchIsAfterReset(match, input.historyResetAt));
-  const recentMatches = mergeCloudRecentMatches(
+  const localReplayMatches = input.localMatchHistory.replayMatches;
+  const eligibleHistory = localReplayMatches.filter((match) => savedMatchIsAfterReset(match, input.resetAt));
+  const cloudMatchHistory = input.cloudMatchHistory ?? emptyCloudMatchHistory();
+  const replayMatches = mergeCloudReplayMatches(
     input.user,
-    [...(input.cloudHistory ?? []), ...eligibleHistory],
-    input.historyResetAt,
+    [...cloudMatchHistory.replayMatches, ...eligibleHistory],
+    input.resetAt,
   );
+  const archivedStats = cloudMatchHistoryIsEmpty(cloudMatchHistory)
+    ? mergeCloudArchivedMatchStats(cloudMatchHistory.archivedStats, input.localMatchHistory.archivedStats)
+    : cloudMatchHistory.archivedStats;
+  const summaryState = mergeCloudMatchSummaryState({
+    archivedStats,
+    matches: [...cloudMatchHistory.replayMatches, ...eligibleHistory],
+    replayMatches,
+    resetAt: input.resetAt,
+    summaries: [
+      ...cloudMatchHistory.summaryMatches,
+      ...input.localMatchHistory.summaryMatches.map((summary) => ({
+        ...summary,
+        trust: "client_uploaded" as const,
+      })),
+    ],
+    user: input.user,
+  });
+  const matchHistory: CloudMatchHistory = {
+    archivedStats: summaryState.archivedStats,
+    replayMatches,
+    summaryMatches: summaryState.summaryMatches,
+  };
   const profileUpdate = cloudProfilePromotionUpdate(input);
   const displayName = typeof profileUpdate?.display_name === "string"
     ? profileUpdate.display_name
     : input.cloudDisplayName ?? input.user.displayName;
-  const preferredVariant = profileUpdate?.preferred_variant === "freestyle" || profileUpdate?.preferred_variant === "renju"
-    ? profileUpdate.preferred_variant
-    : input.cloudPreferredVariant ?? input.settings.preferredVariant;
+  const nextSettings = cloudSettingsForVariant(input.settings.preferredVariant);
   const needsSnapshotSync = cloudProfileNeedsSnapshotSync({
     cloudDisplayName: input.cloudDisplayName ?? input.user.displayName,
-    cloudPreferredVariant: input.cloudPreferredVariant ?? input.settings.preferredVariant,
-    cloudRecentMatches: input.cloudHistory ?? [],
+    cloudMatchHistory,
+    cloudSettings: input.cloudSettings ?? nextSettings,
     displayName,
-    preferredVariant,
-    recentMatches,
+    matchHistory,
+    preferredVariant: input.settings.preferredVariant,
   });
 
   if (needsSnapshotSync || profileUpdate) {
-    await backend.updateProfile(cloudProfileSnapshotUpdate({
+    const snapshotUpdate = cloudProfileSnapshotUpdate({
       displayName,
-      preferredVariant,
-      recentMatches,
+      matchHistory,
+      preferredVariant: input.settings.preferredVariant,
       user: input.user,
-    }));
+    });
+
+    await backend.updateProfile(profileUpdate ? { ...profileUpdate, ...snapshotUpdate } : snapshotUpdate);
   }
 
   return {

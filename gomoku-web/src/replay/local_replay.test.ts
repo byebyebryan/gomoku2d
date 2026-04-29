@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createLocalSavedMatch, movesFromMoveCells } from "../match/saved_match";
-import type { GuestSavedMatch } from "../profile/guest_profile_store";
+import type { LocalProfileSavedMatch } from "../profile/local_profile_store";
 
 import {
   buildLocalReplayFrame,
@@ -27,12 +27,12 @@ const SAMPLE_MOVES = [
 
 function savedMatchWithMoves(
   moves: typeof SAMPLE_MOVES,
-  patch: Partial<Pick<GuestSavedMatch, "status" | "undo_floor">> = {},
-): GuestSavedMatch {
+  patch: Partial<Pick<LocalProfileSavedMatch, "status" | "undo_floor">> = {},
+): LocalProfileSavedMatch {
   return {
     ...createLocalSavedMatch({
       id: "match-1",
-      localProfileId: "guest-1",
+      localProfileId: "local-1",
       moves,
       players: [
         { kind: "human", name: "Guest", stone: "black" },

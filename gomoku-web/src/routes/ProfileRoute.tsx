@@ -4,6 +4,12 @@ import { useStore } from "zustand";
 
 import { cloudAuthStore, type CloudAuthUser } from "../cloud/auth_store";
 import { cloudHistoryStore } from "../cloud/cloud_history_store";
+import {
+  cloudMatchHistoryHasMatch,
+  type CloudArchivedMatchStatsV1,
+  type CloudMatchHistory,
+  type CloudMatchSummaryV1,
+} from "../cloud/cloud_profile";
 import { cloudProfileStore } from "../cloud/cloud_profile_store";
 import { cloudPromotionStore } from "../cloud/cloud_promotion_store";
 import { flushCloudProfileSync } from "../cloud/cloud_sync";
@@ -17,9 +23,10 @@ import {
 } from "../match/saved_match";
 import { resolveActiveHistory } from "../profile/active_history";
 import {
-  DEFAULT_GUEST_DISPLAY_NAME,
-  guestProfileStore,
-} from "../profile/guest_profile_store";
+  DEFAULT_LOCAL_DISPLAY_NAME,
+  localProfileStore,
+  type LocalProfileMatchHistory,
+} from "../profile/local_profile_store";
 import { replayPlayerName, variantLabel } from "../replay/local_replay";
 import { Icon } from "../ui/Icon";
 
@@ -37,12 +44,19 @@ interface HistorySyncStatus {
   tone: HistorySyncTone;
 }
 
+interface HistoryStats {
+  draws: number;
+  losses: number;
+  matches: number;
+  wins: number;
+}
+
 function syncCloudHistoryForUser(user: CloudAuthUser, historyResetAt: string | null, flushProfile = false): void {
   const profileSync = flushProfile ? flushCloudProfileSync(user) : Promise.resolve(null);
 
   void profileSync.then((cloudProfile) => {
     const activeProfile = cloudProfile ?? cloudProfileStore.getState().profile;
-    const activeHistoryResetAt = activeProfile?.historyResetAt ?? historyResetAt;
+    const activeHistoryResetAt = activeProfile?.resetAt ?? historyResetAt;
     if (activeProfile) {
       cloudHistoryStore.getState().loadFromProfile(user, activeProfile, activeHistoryResetAt);
     } else {
@@ -73,10 +87,93 @@ function historyResultLabel(
   return savedMatchWinningSide(match) === historyLocalSide(match, identity) ? "Win" : "Loss";
 }
 
+function emptyHistoryStats(): HistoryStats {
+  return {
+    draws: 0,
+    losses: 0,
+    matches: 0,
+    wins: 0,
+  };
+}
+
+function addHistoryStats(target: HistoryStats, source: HistoryStats): void {
+  target.draws += source.draws;
+  target.losses += source.losses;
+  target.matches += source.matches;
+  target.wins += source.wins;
+}
+
+function statsFromReplayMatches(matches: SavedMatchV1[], identity: HistoryIdentity): HistoryStats {
+  const stats = emptyHistoryStats();
+
+  for (const match of matches) {
+    stats.matches += 1;
+    const result = historyResultLabel(match, identity);
+    if (result === "Win") {
+      stats.wins += 1;
+    } else if (result === "Loss") {
+      stats.losses += 1;
+    } else {
+      stats.draws += 1;
+    }
+  }
+
+  return stats;
+}
+
+function statsFromSummaryMatches(
+  summaries: CloudMatchSummaryV1[],
+  replayIds: Set<string>,
+): HistoryStats {
+  const stats = emptyHistoryStats();
+
+  for (const summary of summaries) {
+    if (replayIds.has(summary.id)) {
+      continue;
+    }
+
+    stats.matches += 1;
+    if (summary.outcome === "win") {
+      stats.wins += 1;
+    } else if (summary.outcome === "loss") {
+      stats.losses += 1;
+    } else {
+      stats.draws += 1;
+    }
+  }
+
+  return stats;
+}
+
+function statsFromArchive(archive: CloudArchivedMatchStatsV1): HistoryStats {
+  return {
+    draws: archive.totals.draws,
+    losses: archive.totals.losses,
+    matches: archive.totals.matches,
+    wins: archive.totals.wins,
+  };
+}
+
+function statsFromMatchHistory(input: {
+  identity: HistoryIdentity;
+  replayHistory: SavedMatchV1[];
+  sourceHistory: CloudMatchHistory | LocalProfileMatchHistory | null;
+}): HistoryStats {
+  const stats = statsFromReplayMatches(input.replayHistory, input.identity);
+  if (!input.sourceHistory) {
+    return stats;
+  }
+
+  const replayIds = new Set(input.replayHistory.map((match) => match.id));
+  addHistoryStats(stats, statsFromSummaryMatches(input.sourceHistory.summaryMatches, replayIds));
+  addHistoryStats(stats, statsFromArchive(input.sourceHistory.archivedStats));
+  return stats;
+}
+
 function historyOpponentLabel(
   match: SavedMatchV1,
   identity: HistoryIdentity,
-  guestDisplayName: string,
+  localDisplayName: string,
 ): string {
   const localSide = historyLocalSide(match, identity);
   const opponentSide = localSide === "black" ? "white" : localSide === "white" ? "black" : null;
@@ -85,7 +182,7 @@ function historyOpponentLabel(
   }
 
   const opponent = savedMatchPlayerForSide(match, opponentSide);
-  return `vs ${replayPlayerName(opponent, guestDisplayName)}`;
+  return `vs ${replayPlayerName(opponent, localDisplayName)}`;
 }
 
 function historyDateLabel(savedAt: string): string {
@@ -155,7 +252,7 @@ function historySyncStatus({
   }
 
   if (syncStatus === "syncing" || promotionStatus === "promoting") {
-      return { label: "Syncing", tone: "busy" };
+    return { label: "Syncing", tone: "busy" };
   }
 
   if (pendingCount > 0) {
@@ -275,9 +372,9 @@ function shouldAdoptCloudDisplayName(
   cloudDisplayName: string | undefined,
 ): cloudDisplayName is string {
   return (
-    localDisplayName === DEFAULT_GUEST_DISPLAY_NAME
+    localDisplayName === DEFAULT_LOCAL_DISPLAY_NAME
     && Boolean(cloudDisplayName?.trim())
-    && cloudDisplayName !== DEFAULT_GUEST_DISPLAY_NAME
+    && cloudDisplayName !== DEFAULT_LOCAL_DISPLAY_NAME
   );
 }
 
@@ -290,12 +387,13 @@ export function ProfileRoute() {
   const cloudHistory = useStore(cloudHistoryStore, (state) => state);
   const cloudProfile = useStore(cloudProfileStore, (state) => state);
   const cloudPromotion = useStore(cloudPromotionStore, (state) => state);
-  const localHistory = useStore(guestProfileStore, (state) => state.history);
-  const profile = useStore(guestProfileStore, (state) => state.profile);
-  const settings = useStore(guestProfileStore, (state) => state.settings);
+  const localMatchHistory = useStore(localProfileStore, (state) => state.matchHistory);
+  const localHistory = localMatchHistory.replayMatches;
+  const profile = useStore(localProfileStore, (state) => state.profile);
+  const settings = useStore(localProfileStore, (state) => state.settings);
 
   useEffect(() => {
-    guestProfileStore.getState().ensureGuestProfile();
+    localProfileStore.getState().ensureLocalProfile();
   }, []);
 
   useEffect(() => {
@@ -310,7 +408,7 @@ export function ProfileRoute() {
     if (cloudAuth.status === "signed_in" && cloudAuth.user) {
       void cloudProfileStore.getState().loadForUser(
         cloudAuth.user,
-        guestProfileStore.getState().settings.preferredVariant,
+        localProfileStore.getState().settings.preferredVariant,
       );
       return;
     }
@@ -325,7 +423,7 @@ export function ProfileRoute() {
       && cloudProfile.status === "ready"
       && shouldAdoptCloudDisplayName(profile?.displayName, cloudDisplayName)
     ) {
-      guestProfileStore.getState().renameDisplayName(cloudDisplayName);
+      localProfileStore.getState().renameDisplayName(cloudDisplayName);
     }
   }, [
     cloudAuth.status,
@@ -346,7 +444,7 @@ export function ProfileRoute() {
     )
       ? [
         cloudAuth.user.uid,
-        cloudProfile.profile.historyResetAt ?? "",
+        cloudProfile.profile.resetAt ?? "",
       ].join(":")
       : null;
 
@@ -361,15 +459,15 @@ export function ProfileRoute() {
     ) {
       initialPromotionKeyRef.current = initialPromotionKey;
       const user = cloudAuth.user;
-      void flushCloudProfileSync(user, { guestHistory: localHistory }).then((cloudProfile) => {
+      void flushCloudProfileSync(user, { localMatchHistory: localMatchHistory }).then((cloudProfile) => {
         if (!cloudProfile) {
           return;
         }
 
         cloudHistoryStore.getState().loadFromProfile(user, cloudProfile);
         for (const match of localHistory) {
-          if (!cloudProfile.recentMatches.matches.some((entry) => entry.id === match.id)) {
-            void cloudHistoryStore.getState().syncMatchForUser(user, match, cloudProfile.historyResetAt);
+          if (!cloudMatchHistoryHasMatch(cloudProfile.matchHistory, match.id)) {
+            void cloudHistoryStore.getState().syncMatchForUser(user, match, cloudProfile.resetAt);
           }
         }
       });
@@ -385,9 +483,10 @@ export function ProfileRoute() {
     cloudAuth.status,
     cloudAuth.user,
     cloudProfile.profile?.displayName,
-    cloudProfile.profile?.historyResetAt,
+    cloudProfile.profile?.resetAt,
     cloudProfile.status,
     localHistory,
+    localMatchHistory,
     profile,
   ]);
 
@@ -397,12 +496,12 @@ export function ProfileRoute() {
     }
 
     const user = cloudAuth.user;
-    const historyResetAt = cloudProfile.profile?.historyResetAt ?? null;
+    const historyResetAt = cloudProfile.profile?.resetAt ?? null;
     syncCloudHistoryForUser(user, historyResetAt);
   }, [
     cloudAuth.status,
     cloudAuth.user,
-    cloudProfile.profile?.historyResetAt,
+    cloudProfile.profile?.resetAt,
     cloudProfile.status,
     cloudPromotion.status,
   ]);
@@ -413,7 +512,7 @@ export function ProfileRoute() {
     }
 
     const user = cloudAuth.user;
-    const historyResetAt = cloudProfile.profile?.historyResetAt ?? null;
+    const historyResetAt = cloudProfile.profile?.resetAt ?? null;
     const retryCloudHistory = () => {
       syncCloudHistoryForUser(user, historyResetAt, true);
     };
@@ -425,7 +524,7 @@ export function ProfileRoute() {
   }, [
     cloudAuth.status,
     cloudAuth.user,
-    cloudProfile.profile?.historyResetAt,
+    cloudProfile.profile?.resetAt,
     cloudProfile.status,
   ]);
 
@@ -444,19 +543,23 @@ export function ProfileRoute() {
   ));
   const history = resolveActiveHistory({
     cloudHistory: cloudCache,
-    historyResetAt: cloudAuth.status === "signed_in" ? cloudProfile.profile?.historyResetAt : null,
+    historyResetAt: cloudAuth.status === "signed_in" ? cloudProfile.profile?.resetAt : null,
     localHistory,
   });
   const historyIdentity: HistoryIdentity = {
     localProfileId: profile?.id,
     profileUid: cloudAuth.status === "signed_in" ? cloudAuth.user?.uid : null,
   };
-  const wins = history.filter((match) => {
-    return historyResultLabel(match, historyIdentity) === "Win";
-  }).length;
-  const draws = history.filter((match) => match.status === "draw").length;
-  const losses = history.length - wins - draws;
-  const guestDisplayName = profile?.displayName ?? DEFAULT_GUEST_DISPLAY_NAME;
+  const sourceHistory =
+    cloudAuth.status === "signed_in"
+      ? cloudProfile.profile?.matchHistory ?? null
+      : localMatchHistory;
+  const stats = statsFromMatchHistory({
+    identity: historyIdentity,
+    replayHistory: history,
+    sourceHistory,
+  });
+  const localDisplayName = profile?.displayName ?? DEFAULT_LOCAL_DISPLAY_NAME;
   const cloudBadge = cloudStateLabel(cloudAuth.status, cloudProfile.status);
   const cloudIdentity = cloudProfile.profile ?? null;
   const cloudError =
@@ -515,9 +618,9 @@ export function ProfileRoute() {
     cloudHistoryStore.getState().resetUserCache(user.uid);
     cloudPromotionStore.getState().reset();
 
-    const guestStore = guestProfileStore.getState();
-    guestStore.resetGuestProfile();
-    guestStore.ensureGuestProfile();
+    const localStore = localProfileStore.getState();
+    localStore.resetLocalProfile();
+    localStore.ensureLocalProfile();
   }
 
   async function confirmResetProfile(): Promise<void> {
@@ -526,9 +629,9 @@ export function ProfileRoute() {
       if (signedIn) {
         await resetSignedInProfile();
       } else {
-        const store = guestProfileStore.getState();
-        store.resetGuestProfile();
-        store.ensureGuestProfile();
+        const store = localProfileStore.getState();
+        store.resetLocalProfile();
+        store.ensureLocalProfile();
       }
       setResetConfirming(false);
     } catch {
@@ -569,11 +672,11 @@ export function ProfileRoute() {
               <input
                 className="uiInput"
                 onChange={(event) => {
-                  guestProfileStore.getState().renameDisplayName(event.target.value);
+                  localProfileStore.getState().renameDisplayName(event.target.value);
                 }}
                 placeholder="Name"
                 type="text"
-                value={guestDisplayName}
+                value={localDisplayName}
               />
             </label>
             <div className={styles.cloudStatus}>
@@ -623,7 +726,7 @@ export function ProfileRoute() {
                   }
                   key={variant}
                   onClick={() => {
-                    guestProfileStore.getState().updateSettings({ preferredVariant: variant });
+                    localProfileStore.getState().updateSettings({ preferredVariant: variant });
                   }}
                   type="button"
                 >
@@ -687,19 +790,19 @@ export function ProfileRoute() {
           </div>
           <div className={styles.summaryGrid}>
             <article className={styles.summaryTile}>
-              <span className={styles.summaryValue}>{history.length}</span>
+              <span className={styles.summaryValue}>{stats.matches}</span>
               <span className={styles.summaryLabel}>Finished</span>
             </article>
             <article className={styles.summaryTile}>
-              <span className={styles.summaryValue}>{wins}</span>
+              <span className={styles.summaryValue}>{stats.wins}</span>
               <span className={styles.summaryLabel}>Wins</span>
             </article>
             <article className={styles.summaryTile}>
-              <span className={styles.summaryValue}>{losses}</span>
+              <span className={styles.summaryValue}>{stats.losses}</span>
               <span className={styles.summaryLabel}>Losses</span>
             </article>
             <article className={styles.summaryTile}>
-              <span className={styles.summaryValue}>{draws}</span>
+              <span className={styles.summaryValue}>{stats.draws}</span>
               <span className={styles.summaryLabel}>Draws</span>
             </article>
           </div>
@@ -743,7 +846,7 @@ export function ProfileRoute() {
                           {result}
                         </p>
                         <p className={styles.historyOpponent}>
-                          {historyOpponentLabel(match, historyIdentity, guestDisplayName)}
+                          {historyOpponentLabel(match, historyIdentity, localDisplayName)}
                         </p>
                       </div>
                       <div className={styles.historyDetails}>

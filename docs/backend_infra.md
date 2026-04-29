@@ -66,7 +66,7 @@ gcloud services list \
 |---|---|
 | `.firebaserc` | Maps default Firebase project to `gomoku2d` |
 | `firebase.json` | Points Firebase tooling at Firestore rules/index files |
-| `firestore.rules` | Hardened owner-scoped profile rules and private guest-import match creates |
+| `firestore.rules` | Hardened owner-scoped profile rules and embedded private-history snapshots |
 | `firestore.indexes.json` | Firestore index config; disables indexing for bulky match replay payload fields |
 | `gomoku-web/.env.example` | Public Vite Firebase config template |
 | `gomoku-web/src/cloud/firebase.ts` | Optional Firebase browser bootstrap |
@@ -374,7 +374,7 @@ npm run test:rules
 
 This requires Java for the local Firestore emulator. It runs the emulator
 against the checked-in `firestore.rules` and covers owner scoping,
-`history_reset_at` movement, embedded `recent_matches` caps/timestamps, profile
+`reset_at` movement, embedded `match_history` caps, profile
 update cooldowns, reset bypasses, and closed casual match subcollection writes.
 The regular CI web job installs Java and runs this command after Vitest and
 before the production build.
@@ -444,14 +444,32 @@ curl -sS \
 `firestore.indexes.json` is the repo source of truth. For the current local CLI
 setup, field exemptions can also be applied directly with `gcloud`.
 
-The `move_cells` replay payload is not queried directly, so indexing is disabled
-for that field across the `matches` collection group:
+The embedded profile history fields are not queried directly, so disable
+indexing for them across the `profiles` collection group:
 
 ```sh
-gcloud firestore indexes fields update move_cells \
+gcloud firestore indexes fields update match_history \
   --project=gomoku2d \
   --database='(default)' \
-  --collection-group=matches \
+  --collection-group=profiles \
+  --disable-indexes
+
+gcloud firestore indexes fields update match_history.replay_matches \
+  --project=gomoku2d \
+  --database='(default)' \
+  --collection-group=profiles \
+  --disable-indexes
+
+gcloud firestore indexes fields update match_history.summary_matches \
+  --project=gomoku2d \
+  --database='(default)' \
+  --collection-group=profiles \
+  --disable-indexes
+
+gcloud firestore indexes fields update match_history.archived_stats \
+  --project=gomoku2d \
+  --database='(default)' \
+  --collection-group=profiles \
   --disable-indexes
 ```
 
@@ -461,9 +479,9 @@ Verify:
 gcloud firestore indexes fields list \
   --project=gomoku2d \
   --database='(default)' \
-  --collection-group=matches \
+  --collection-group=profiles \
   --format=json \
-  | jq '.[] | select(.name | endswith("/fields/move_cells"))'
+  | jq '.[] | select(.name | endswith("/fields/match_history") or endswith("/fields/match_history.replay_matches") or endswith("/fields/match_history.summary_matches") or endswith("/fields/match_history.archived_stats"))'
 ```
 
 ## Verify Cloud Profile Documents
@@ -499,10 +517,15 @@ Current cloud UI / data smoke state:
   Auth/Firestore requests are made, and Home/Local Match still load.
 - Firebase/Auth/Firestore dashboards have been reviewed after the public smoke
   test and looked normal.
-- Local-build guest promotion has been manually smoke-tested for
+- Local-build local profile promotion has been manually smoke-tested for
   `profiles/DbsocAJ0vHVd9LYjk2oaeQx2qec2`: Chrome `localStorage`
   `gomoku2d.guest-profile.v2` had 24 local matches, and Firestore imported the
   matching private history under the then-current per-match document model.
+- `v0.3.3` local history now uses `gomoku2d.local-profile.v3`, mirroring the
+  cloud replay/summary/archive retention tiers before sync.
+- The old alpha Firestore v2 profile documents were deleted before the v3
+  rules/schema deployment prep. Current live `profiles` state is intentionally
+  empty until the next production/local sign-in creates fresh v3 documents.
 - Local Phase 1 cloud-history sync has been manually smoke-tested: after
   signing out and resetting local profile state, signing back in restored the
   cloud-backed profile/history; a newly finished signed-in match also restored
@@ -519,8 +542,8 @@ After the `v0.3.2` tag:
 - `v0.3.2` has been cut and published.
 - Keep the compatibility caveat in mind for future rules changes: cloud match
   history writes require the matching web build because rules now expect profile
-  schema v2 with embedded `recent_matches`; old open clients may need a refresh
-  after deploy.
+  schema v3 with embedded `match_history`; old open clients may need a refresh
+  after deploy, and pre-v3 alpha profile docs are intentionally not migrated.
 - Refresh cost/headroom notes again after a little more real traffic if the
   dashboard shows anything surprising.
 
@@ -528,5 +551,5 @@ Deferred until later phases:
 
 - GitHub sign-in provider, unless Google-only feels too narrow.
 - Cloud Run service and runtime service account.
-- Firestore indexes beyond the empty starter file.
+- Composite Firestore indexes beyond the current field-exemption overrides.
 - Public replay storage and publish/share infra.

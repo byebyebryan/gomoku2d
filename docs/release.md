@@ -195,7 +195,7 @@ changed surface:
 
 - Home loads from `https://gomoku2d.byebyebryan.com/`.
 - `/profile`, `/privacy/`, and `/terms/` return `200`.
-- Guest-only match/replay still works without signing in.
+- Local-only match/replay still works without signing in.
 - If auth/profile changed: sign in from production, refresh, sign out, sign in
   again, and confirm history/profile continuity.
 - If match history or rules changed: finish one signed-in match, confirm it
@@ -203,3 +203,5 @@ changed surface:
   the intended source ref.
 - If Reset Profile changed: reset a signed-in test profile, confirm old rows do
   not reappear, then save one post-reset match.
+- If profile schema changed without migration: confirm old alpha test documents
+  were deleted or rewritten before deploying stricter rules.

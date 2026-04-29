@@ -6,11 +6,11 @@ import type { CloudAuthUser } from "../cloud/auth_store";
 import { cloudAuthStore } from "../cloud/auth_store";
 import { cloudHistoryStore } from "../cloud/cloud_history_store";
 import { createCloudSavedMatch } from "../cloud/cloud_match";
-import type { CloudProfile } from "../cloud/cloud_profile";
+import { emptyCloudMatchHistory, type CloudProfile } from "../cloud/cloud_profile";
 import { cloudProfileStore } from "../cloud/cloud_profile_store";
 import { cloudPromotionStore } from "../cloud/cloud_promotion_store";
 import { createLocalSavedMatch } from "../match/saved_match";
-import { guestProfileStore } from "../profile/guest_profile_store";
+import { emptyLocalMatchHistory, localProfileStore, type LocalProfileSavedMatch } from "../profile/local_profile_store";
 
 import { ProfileRoute } from "./ProfileRoute";
 
@@ -23,17 +23,24 @@ const cloudUser: CloudAuthUser = {
 };
 
 const cloudProfile: CloudProfile = {
-  authProviders: ["google.com"],
-  avatarUrl: null,
+  auth: {
+    providers: [
+      {
+        avatarUrl: null,
+        displayName: "Bryan",
+        provider: "google.com",
+      },
+    ],
+  },
   createdAt: null,
   displayName: "Bryan",
-  email: "bryan@example.com",
-  historyResetAt: null,
-  preferredVariant: "freestyle",
-  recentMatches: {
-    matches: [],
-    schemaVersion: 1,
-    updatedAt: null,
+  matchHistory: emptyCloudMatchHistory(),
+  resetAt: null,
+  settings: {
+    defaultRules: {
+      opening: "standard",
+      ruleset: "freestyle",
+    },
   },
   uid: "uid-1",
   updatedAt: null,
@@ -44,7 +51,7 @@ const initialCloudAuthState = cloudAuthStore.getState();
 const initialCloudHistoryState = cloudHistoryStore.getState();
 const initialCloudProfileState = cloudProfileStore.getState();
 const initialCloudPromotionState = cloudPromotionStore.getState();
-const initialGuestProfileState = guestProfileStore.getState();
+const initialLocalProfileState = localProfileStore.getState();
 
 function renderProfileRoute() {
   render(
@@ -54,6 +61,13 @@ function renderProfileRoute() {
   );
 }
 
+function localMatchHistoryWith(matches: LocalProfileSavedMatch[] = []) {
+  return {
+    ...emptyLocalMatchHistory(),
+    replayMatches: matches,
+  };
+}
+
 describe("ProfileRoute cloud state", () => {
   afterEach(() => {
     cleanup();
@@ -61,12 +75,12 @@ describe("ProfileRoute cloud state", () => {
     cloudHistoryStore.setState(initialCloudHistoryState, true);
     cloudProfileStore.setState(initialCloudProfileState, true);
     cloudPromotionStore.setState(initialCloudPromotionState, true);
-    guestProfileStore.setState(initialGuestProfileState, true);
+    localProfileStore.setState(initialLocalProfileState, true);
   });
 
   beforeEach(() => {
-    guestProfileStore.setState({
-      history: [],
+    localProfileStore.setState({
+      matchHistory: emptyLocalMatchHistory(),
       profile: null,
       settings: { preferredVariant: "freestyle" },
     });
@@ -120,8 +134,8 @@ describe("ProfileRoute cloud state", () => {
   });
 
   it("renders canonical local saved-match history", () => {
-    guestProfileStore.getState().ensureGuestProfile();
-    guestProfileStore.getState().recordFinishedMatch({
+    localProfileStore.getState().ensureLocalProfile();
+    localProfileStore.getState().recordFinishedMatch({
       mode: "bot",
       moves: [
         { col: 5, moveNumber: 1, player: 1, row: 7 },
@@ -151,8 +165,8 @@ describe("ProfileRoute cloud state", () => {
   });
 
   it("confirms before resetting the local-only profile", () => {
-    guestProfileStore.getState().ensureGuestProfile();
-    guestProfileStore.getState().renameDisplayName("ByeByeBryan");
+    localProfileStore.getState().ensureLocalProfile();
+    localProfileStore.getState().renameDisplayName("ByeByeBryan");
 
     renderProfileRoute();
 
@@ -236,10 +250,10 @@ describe("ProfileRoute cloud state", () => {
   });
 
   it("shows retrying when pending cloud history sync has failed", () => {
-    const guestProfile = guestProfileStore.getState().ensureGuestProfile();
+    const localProfile = localProfileStore.getState().ensureLocalProfile();
     const localMatch = createLocalSavedMatch({
       id: "match-1",
-      localProfileId: guestProfile.id,
+      localProfileId: localProfile.id,
       moves: [{ col: 7, moveNumber: 1, player: 1, row: 7 }],
       players: [
         { kind: "human", name: "Guest", stone: "black" },
@@ -443,10 +457,10 @@ describe("ProfileRoute cloud state", () => {
   });
 
   it("shows merged cloud and local history without duplicate direct cloud saves", () => {
-    const guestProfile = guestProfileStore.getState().ensureGuestProfile();
+    const localProfile = localProfileStore.getState().ensureLocalProfile();
     const localMatch = createLocalSavedMatch({
       id: "match-1",
-      localProfileId: guestProfile.id,
+      localProfileId: localProfile.id,
       moves: [
         { col: 5, moveNumber: 1, player: 1, row: 7 },
         { col: 0, moveNumber: 2, player: 2, row: 0 },
@@ -464,7 +478,7 @@ describe("ProfileRoute cloud state", () => {
     });
     const cloudMatch = createCloudSavedMatch(cloudUser, localMatch);
 
-    guestProfileStore.setState({ history: [localMatch] });
+    localProfileStore.setState({ matchHistory: localMatchHistoryWith([localMatch]) });
     cloudAuthStore.setState({
       errorMessage: null,
       isConfigured: true,
@@ -505,10 +519,10 @@ describe("ProfileRoute cloud state", () => {
     const resetForUser = vi.fn().mockResolvedValue(undefined);
     const clearForUser = vi.fn().mockResolvedValue(undefined);
     const resetUserCache = vi.fn();
-    const guestProfile = guestProfileStore.getState().ensureGuestProfile();
+    const localProfile = localProfileStore.getState().ensureLocalProfile();
     const localMatch = createLocalSavedMatch({
       id: "match-1",
-      localProfileId: guestProfile.id,
+      localProfileId: localProfile.id,
       moves: [{ col: 7, moveNumber: 1, player: 1, row: 7 }],
       players: [
         { kind: "human", name: "Guest", stone: "black" },
@@ -519,7 +533,7 @@ describe("ProfileRoute cloud state", () => {
       variant: "freestyle",
     });
 
-    guestProfileStore.setState({ history: [localMatch] });
+    localProfileStore.setState({ matchHistory: localMatchHistoryWith([localMatch]) });
     cloudAuthStore.setState({
       errorMessage: null,
       isConfigured: true,
@@ -556,17 +570,17 @@ describe("ProfileRoute cloud state", () => {
     });
     expect(clearForUser).toHaveBeenCalledWith(cloudUser);
     expect(resetUserCache).toHaveBeenCalledWith("uid-1");
-    expect(guestProfileStore.getState().history).toEqual([]);
+    expect(localProfileStore.getState().matchHistory.replayMatches).toEqual([]);
   });
 
   it("keeps signed-in reset confirmation open and local history intact when cloud clear fails", async () => {
     const resetForUser = vi.fn().mockResolvedValue(undefined);
     const clearForUser = vi.fn().mockRejectedValue(new Error("permission denied"));
     const resetUserCache = vi.fn();
-    const guestProfile = guestProfileStore.getState().ensureGuestProfile();
+    const localProfile = localProfileStore.getState().ensureLocalProfile();
     const localMatch = createLocalSavedMatch({
       id: "match-1",
-      localProfileId: guestProfile.id,
+      localProfileId: localProfile.id,
       moves: [{ col: 7, moveNumber: 1, player: 1, row: 7 }],
       players: [
         { kind: "human", name: "Guest", stone: "black" },
@@ -577,7 +591,7 @@ describe("ProfileRoute cloud state", () => {
       variant: "freestyle",
     });
 
-    guestProfileStore.setState({ history: [localMatch] });
+    localProfileStore.setState({ matchHistory: localMatchHistoryWith([localMatch]) });
     cloudAuthStore.setState({
       errorMessage: null,
       isConfigured: true,
@@ -611,14 +625,14 @@ describe("ProfileRoute cloud state", () => {
     });
     expect(screen.getByRole("button", { name: "Reset" })).toBeInTheDocument();
     expect(resetUserCache).not.toHaveBeenCalled();
-    expect(guestProfileStore.getState().history).toEqual([localMatch]);
+    expect(localProfileStore.getState().matchHistory.replayMatches).toEqual([localMatch]);
   });
 
-  it("starts background guest promotion after cloud profile loads", async () => {
+  it("starts background local profile promotion after cloud profile loads", async () => {
     const promote = vi.fn().mockResolvedValue(undefined);
-    const guestProfile = guestProfileStore.getState().ensureGuestProfile();
-    guestProfileStore.getState().renameDisplayName("ByeByeBryan");
-    const history = guestProfileStore.getState().history;
+    const localProfile = localProfileStore.getState().ensureLocalProfile();
+    localProfileStore.getState().renameDisplayName("ByeByeBryan");
+    const matchHistory = localProfileStore.getState().matchHistory;
     cloudAuthStore.setState({
       errorMessage: null,
       isConfigured: true,
@@ -650,14 +664,14 @@ describe("ProfileRoute cloud state", () => {
     await waitFor(() => {
       expect(promote).toHaveBeenCalledWith({
         cloudDisplayName: cloudProfile.displayName,
-        cloudHistory: [],
-        cloudPreferredVariant: cloudProfile.preferredVariant,
-        guestHistory: history,
-        guestProfile: expect.objectContaining({
+        cloudMatchHistory: cloudProfile.matchHistory,
+        cloudSettings: cloudProfile.settings,
+        localMatchHistory: matchHistory,
+        localProfile: expect.objectContaining({
           displayName: "ByeByeBryan",
-          id: guestProfile.id,
+          id: localProfile.id,
         }),
-        historyResetAt: null,
+        resetAt: null,
         settings: { preferredVariant: "freestyle" },
         user: cloudUser,
       });
@@ -666,7 +680,7 @@ describe("ProfileRoute cloud state", () => {
 
   it("does not promote again when local profile fields change after initial sync", async () => {
     const promote = vi.fn().mockResolvedValue(undefined);
-    const guestProfile = guestProfileStore.getState().ensureGuestProfile();
+    const localProfile = localProfileStore.getState().ensureLocalProfile();
     cloudAuthStore.setState({
       errorMessage: null,
       isConfigured: true,
@@ -710,15 +724,15 @@ describe("ProfileRoute cloud state", () => {
 
     expect(promote).toHaveBeenCalledTimes(1);
     expect(promote).toHaveBeenCalledWith(expect.objectContaining({
-      guestProfile: expect.objectContaining({
-        id: guestProfile.id,
+      localProfile: expect.objectContaining({
+        id: localProfile.id,
       }),
     }));
   });
 
-  it("adopts the cloud display name before promoting a default local guest name", async () => {
+  it("adopts the cloud display name before promoting a default local name", async () => {
     const promote = vi.fn().mockResolvedValue(undefined);
-    const guestProfile = guestProfileStore.getState().ensureGuestProfile();
+    const localProfile = localProfileStore.getState().ensureLocalProfile();
     cloudAuthStore.setState({
       errorMessage: null,
       isConfigured: true,
@@ -753,14 +767,14 @@ describe("ProfileRoute cloud state", () => {
     await waitFor(() => {
       expect(promote).toHaveBeenCalledWith({
         cloudDisplayName: cloudProfile.displayName,
-        cloudHistory: [],
-        cloudPreferredVariant: cloudProfile.preferredVariant,
-        guestHistory: [],
-        guestProfile: expect.objectContaining({
+        cloudMatchHistory: cloudProfile.matchHistory,
+        cloudSettings: cloudProfile.settings,
+        localMatchHistory: emptyLocalMatchHistory(),
+        localProfile: expect.objectContaining({
           displayName: "Bryan",
-          id: guestProfile.id,
+          id: localProfile.id,
         }),
-        historyResetAt: null,
+        resetAt: null,
         settings: { preferredVariant: "freestyle" },
         user: cloudUser,
       });

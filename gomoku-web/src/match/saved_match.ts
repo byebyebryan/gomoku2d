@@ -10,7 +10,7 @@ export const PRACTICE_BOT_ENGINE = "baseline_search";
 export const PRACTICE_BOT_CONFIG_VERSION = 1;
 export const PRACTICE_BOT_DEPTH = 3;
 
-export type SavedMatchSource = "local_history" | "guest_import" | "cloud_saved";
+export type SavedMatchSource = "local_history" | "cloud_saved";
 export type SavedMatchTrust = "local_only" | "client_uploaded" | "server_verified";
 export type SavedMatchKind = "local_vs_bot" | "local_pvp" | "online_pvp" | "puzzle_challenge";
 export type SavedMatchStatus = "black_won" | "white_won" | "draw";
@@ -68,19 +68,6 @@ export interface CreateLocalSavedMatchInput {
   variant: GameVariant;
 }
 
-export interface LegacyGuestSavedMatch {
-  guestStone?: "black" | "white";
-  id: string;
-  mode: "bot";
-  moves: MatchMove[];
-  players: [MatchPlayer, MatchPlayer];
-  savedAt: string;
-  status: SavedMatchStatus;
-  undoFloor?: number;
-  variant: GameVariant;
-  winningCells?: CellPosition[];
-}
-
 function isString(value: unknown): value is string {
   return typeof value === "string";
 }
@@ -90,7 +77,7 @@ function isNullableString(value: unknown): value is string | null {
 }
 
 function isSavedMatchSource(value: unknown): value is SavedMatchSource {
-  return value === "local_history" || value === "guest_import" || value === "cloud_saved";
+  return value === "local_history" || value === "cloud_saved";
 }
 
 function isSavedMatchTrust(value: unknown): value is SavedMatchTrust {
@@ -213,14 +200,6 @@ function normalizeUndoFloor(undoFloor: number | undefined, moveCount: number): n
   return Math.max(0, Math.min(moveCount, Math.floor(undoFloor)));
 }
 
-function normalizeSavedMatchStatus(status: string): SavedMatchStatus {
-  if (status === "black_won" || status === "white_won" || status === "draw") {
-    return status;
-  }
-
-  throw new Error("Saved match only supports finished matches.");
-}
-
 function sideForPlayer(player: MatchPlayer): SavedMatchSide {
   return player.stone;
 }
@@ -328,22 +307,6 @@ export function createLocalSavedMatch(input: CreateLocalSavedMatchInput): LocalS
   };
 }
 
-export function migrateLegacyGuestSavedMatch(
-  match: LegacyGuestSavedMatch,
-  localProfileId: string,
-): LocalSavedMatchV1 {
-  return createLocalSavedMatch({
-    id: match.id,
-    localProfileId,
-    moves: match.moves,
-    players: match.players,
-    savedAt: match.savedAt,
-    status: normalizeSavedMatchStatus(match.status),
-    undoFloor: match.undoFloor,
-    variant: match.variant,
-  });
-}
-
 export function savedMatchPlayerForSide(match: SavedMatchV1, side: SavedMatchSide): SavedMatchPlayer {
   return side === "black" ? match.player_black : match.player_white;
 }
@@ -379,7 +342,7 @@ export function savedMatchLocalSide(
 /**
  * Resolves the local user's side for a match using cloud or local identity.
  * Prefers profile_uid (works cross-device for cloud matches), falls back to
- * local_profile_id (works for local-only and guest-imported records).
+ * local_profile_id (works for local-only records).
  */
 export function matchUserSide(
   match: SavedMatchV1,
