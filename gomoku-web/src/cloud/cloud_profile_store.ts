@@ -8,6 +8,7 @@ import { ensureCloudProfile, resetCloudProfile, type CloudProfile } from "./clou
 export type CloudProfileStatus = "idle" | "loading" | "ready" | "error";
 
 export interface CloudProfileState {
+  applyLocalPatch: (patch: Partial<Pick<CloudProfile, "displayName" | "preferredVariant">>) => void;
   errorMessage: string | null;
   loadForUser: (user: CloudAuthUser, preferredVariant: GameVariant) => Promise<void>;
   profile: CloudProfile | null;
@@ -33,6 +34,11 @@ export function createCloudProfileStore(
   let requestId = 0;
 
   return createStore<CloudProfileState>((set) => ({
+    applyLocalPatch: (patch) => {
+      set((state) => ({
+        profile: state.profile ? { ...state.profile, ...patch } : state.profile,
+      }));
+    },
     errorMessage: null,
     loadForUser: async (user, preferredVariant) => {
       const currentRequestId = requestId + 1;

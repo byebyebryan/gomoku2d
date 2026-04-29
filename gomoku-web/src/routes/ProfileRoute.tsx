@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useStore } from "zustand";
 
@@ -6,6 +6,7 @@ import { cloudAuthStore, type CloudAuthUser } from "../cloud/auth_store";
 import { cloudHistoryStore } from "../cloud/cloud_history_store";
 import { cloudProfileStore } from "../cloud/cloud_profile_store";
 import { cloudPromotionStore } from "../cloud/cloud_promotion_store";
+import { flushCloudProfileSync } from "../cloud/cloud_sync";
 import {
   matchUserSide,
   savedMatchPlayerForSide,
@@ -36,9 +37,14 @@ interface HistorySyncStatus {
   tone: HistorySyncTone;
 }
 
-function syncCloudHistoryForUser(user: CloudAuthUser, historyResetAt: string | null): void {
-  void cloudHistoryStore.getState().loadForUser(user, historyResetAt).then(() => {
-    void cloudHistoryStore.getState().syncPendingForUser(user, historyResetAt);
+function syncCloudHistoryForUser(user: CloudAuthUser, historyResetAt: string | null, flushProfile = false): void {
+  const profileSync = flushProfile ? flushCloudProfileSync(user) : Promise.resolve(null);
+
+  void profileSync.then((cloudProfile) => {
+    const activeHistoryResetAt = cloudProfile?.historyResetAt ?? historyResetAt;
+    return cloudHistoryStore.getState().loadForUser(user, activeHistoryResetAt).then(() => {
+      void cloudHistoryStore.getState().syncPendingForUser(user, activeHistoryResetAt);
+    });
   });
 }
 
@@ -274,6 +280,7 @@ function shouldAdoptCloudDisplayName(
 
 export function ProfileRoute() {
   const navigate = useNavigate();
+  const initialPromotionKeyRef = useRef<string | null>(null);
   const [resetConfirming, setResetConfirming] = useState(false);
   const [resetBusy, setResetBusy] = useState(false);
   const cloudAuth = useStore(cloudAuthStore, (state) => state);
@@ -298,12 +305,15 @@ export function ProfileRoute() {
 
   useEffect(() => {
     if (cloudAuth.status === "signed_in" && cloudAuth.user) {
-      void cloudProfileStore.getState().loadForUser(cloudAuth.user, settings.preferredVariant);
+      void cloudProfileStore.getState().loadForUser(
+        cloudAuth.user,
+        guestProfileStore.getState().settings.preferredVariant,
+      );
       return;
     }
 
     cloudProfileStore.getState().reset();
-  }, [cloudAuth.status, cloudAuth.user, settings.preferredVariant]);
+  }, [cloudAuth.status, cloudAuth.user]);
 
   useEffect(() => {
     const cloudDisplayName = cloudProfile.profile?.displayName;
@@ -326,6 +336,16 @@ export function ProfileRoute() {
       profile?.displayName,
       cloudProfile.profile?.displayName,
     );
+    const initialPromotionKey = (
+      cloudAuth.status === "signed_in"
+      && cloudAuth.user
+      && cloudProfile.profile
+    )
+      ? [
+        cloudAuth.user.uid,
+        cloudProfile.profile.historyResetAt ?? "",
+      ].join(":")
+      : null;
 
     if (
       cloudAuth.status === "signed_in"
@@ -333,19 +353,19 @@ export function ProfileRoute() {
       && cloudProfile.status === "ready"
       && profile
       && !waitingForCloudNameAdoption
+      && initialPromotionKey
+      && initialPromotionKeyRef.current !== initialPromotionKey
     ) {
-      void cloudPromotionStore.getState().promote({
-        cloudDisplayName: cloudProfile.profile?.displayName ?? null,
-        guestHistory: localHistory,
-        guestProfile: profile,
-        historyResetAt: cloudProfile.profile?.historyResetAt ?? null,
-        settings,
-        user: cloudAuth.user,
-      });
-      return;
+      initialPromotionKeyRef.current = initialPromotionKey;
+      void flushCloudProfileSync(cloudAuth.user, { guestHistory: localHistory });
+      return undefined;
     }
 
-    cloudPromotionStore.getState().reset();
+    if (cloudAuth.status !== "signed_in" || cloudProfile.status !== "ready") {
+      initialPromotionKeyRef.current = null;
+      cloudPromotionStore.getState().reset();
+    }
+    return undefined;
   }, [
     cloudAuth.status,
     cloudAuth.user,
@@ -354,7 +374,6 @@ export function ProfileRoute() {
     cloudProfile.status,
     localHistory,
     profile,
-    settings,
   ]);
 
   useEffect(() => {
@@ -381,7 +400,7 @@ export function ProfileRoute() {
     const user = cloudAuth.user;
     const historyResetAt = cloudProfile.profile?.historyResetAt ?? null;
     const retryCloudHistory = () => {
-      syncCloudHistoryForUser(user, historyResetAt);
+      syncCloudHistoryForUser(user, historyResetAt, true);
     };
 
     window.addEventListener("online", retryCloudHistory);

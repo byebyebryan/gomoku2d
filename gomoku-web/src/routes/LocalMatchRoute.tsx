@@ -6,6 +6,7 @@ import { createStore } from "zustand/vanilla";
 import { Board } from "../components/Board/Board";
 import { cloudAuthStore } from "../cloud/auth_store";
 import { cloudHistoryStore } from "../cloud/cloud_history_store";
+import { flushCloudProfileSync } from "../cloud/cloud_sync";
 import { createLocalMatchStore } from "../game/local_match_store";
 import type { LocalMatchResumeSeed, LocalMatchState } from "../game/local_match_store";
 import type { CellPosition } from "../game/types";
@@ -129,7 +130,14 @@ export function LocalMatchRoute() {
         const savedMatch = guestProfileStore.getState().history.find((entry) => entry.id === replayId);
         const cloudAuth = cloudAuthStore.getState();
         if (savedMatch && cloudAuth.status === "signed_in" && cloudAuth.user) {
-          void cloudHistoryStore.getState().syncMatchForUser(cloudAuth.user, savedMatch);
+          const signedInUser = cloudAuth.user;
+          void flushCloudProfileSync(signedInUser).then((cloudProfile) => {
+            void cloudHistoryStore.getState().syncMatchForUser(
+              signedInUser,
+              savedMatch,
+              cloudProfile?.historyResetAt ?? null,
+            );
+          });
         }
         setLatestReplayId(replayId);
       },

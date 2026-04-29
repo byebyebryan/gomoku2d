@@ -88,17 +88,68 @@ describe("cloud profile writes", () => {
   });
 
   it("updates provider-owned fields without overwriting app-owned display name", () => {
-    expect(existingCloudProfileUpdate(authUser, "freestyle")).toMatchObject({
+    expect(existingCloudProfileUpdate(authUser)).toMatchObject({
       auth_providers: ["google.com"],
       avatar_url: authUser.avatarUrl,
       email: "bryan@example.com",
-      preferred_variant: "freestyle",
       schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
       uid: "uid-1",
     });
-    expect(existingCloudProfileUpdate(authUser, "freestyle")).not.toHaveProperty("display_name");
-    expect(existingCloudProfileUpdate(authUser, "freestyle")).not.toHaveProperty("history_reset_at");
-    expect(existingCloudProfileUpdate(authUser, "freestyle")).not.toHaveProperty("username");
+    expect(existingCloudProfileUpdate(authUser)).not.toHaveProperty("display_name");
+    expect(existingCloudProfileUpdate(authUser)).not.toHaveProperty("history_reset_at");
+    expect(existingCloudProfileUpdate(authUser)).not.toHaveProperty("preferred_variant");
+    expect(existingCloudProfileUpdate(authUser)).not.toHaveProperty("username");
+  });
+
+  it("skips existing profile writes when cloud fields are already current", () => {
+    expect(
+      existingCloudProfileUpdate(authUser, {
+        auth_providers: ["google.com"],
+        avatar_url: authUser.avatarUrl,
+        email: authUser.email,
+        preferred_variant: "freestyle",
+        schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
+        uid: "uid-1",
+      }),
+    ).toBeNull();
+  });
+
+  it("does not sync preferred rule during existing profile load", () => {
+    expect(
+      existingCloudProfileUpdate(authUser, {
+        auth_providers: ["google.com"],
+        avatar_url: authUser.avatarUrl,
+        email: authUser.email,
+        preferred_variant: "freestyle",
+        schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
+        uid: "uid-1",
+      }),
+    ).toBeNull();
+  });
+
+  it("keeps existing profile updates narrow when one provider field changes", () => {
+    expect(
+      existingCloudProfileUpdate(authUser, {
+        auth_providers: ["google.com"],
+        avatar_url: "https://example.com/old.png",
+        email: authUser.email,
+        preferred_variant: "freestyle",
+        schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
+        uid: "uid-1",
+      }),
+    ).toMatchObject({
+      avatar_url: authUser.avatarUrl,
+    });
+    expect(
+      existingCloudProfileUpdate(authUser, {
+        auth_providers: ["google.com"],
+        avatar_url: "https://example.com/old.png",
+        email: authUser.email,
+        preferred_variant: "freestyle",
+        schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
+        uid: "uid-1",
+      }),
+    ).not.toHaveProperty("preferred_variant");
   });
 
   it("resets profile-owned fields and writes a history reset barrier", () => {
@@ -124,7 +175,7 @@ describe("cloud profile writes", () => {
       preferred_variant: "freestyle",
       username: "byebyebryan",
     };
-    const update = existingCloudProfileUpdate(authUser, "renju");
+    const update = existingCloudProfileUpdate(authUser);
 
     expect(cloudProfileFromDocument(authUser, "freestyle", { ...existing, ...update })).toMatchObject({
       authProviders: ["google.com"],
@@ -132,7 +183,7 @@ describe("cloud profile writes", () => {
       displayName: "ByeByeBryan",
       email: authUser.email,
       historyResetAt: null,
-      preferredVariant: "renju",
+      preferredVariant: "freestyle",
       username: "byebyebryan",
     });
   });
