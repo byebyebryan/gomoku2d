@@ -106,10 +106,10 @@ describe("ProfileRoute cloud state", () => {
 
     expect(screen.getByRole("heading", { name: "Profile" })).toBeInTheDocument();
     expect(screen.getByText("Local profile")).toBeInTheDocument();
-    expect(screen.getByText("Online features disabled.")).toBeInTheDocument();
+    expect(screen.getByText("Cloud sync unavailable.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign in" })).toBeDisabled();
     expect(screen.getByText("Default rule")).toBeInTheDocument();
-    expect(screen.getByLabelText("Display name")).toHaveValue("Guest");
+    expect(screen.getByLabelText("Name")).toHaveValue("Guest");
   });
 
   it("renders canonical local saved-match history", () => {
@@ -149,16 +149,16 @@ describe("ProfileRoute cloud state", () => {
 
     renderProfileRoute();
 
-    expect(screen.getByLabelText("Display name")).toHaveValue("ByeByeBryan");
+    expect(screen.getByLabelText("Name")).toHaveValue("ByeByeBryan");
     fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
-    expect(screen.getByText("This clears the local profile and match history on this device.")).toBeInTheDocument();
+    expect(screen.getByText("Reset local profile and clear local match history?")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
-    expect(screen.getByLabelText("Display name")).toHaveValue("ByeByeBryan");
+    expect(screen.getByLabelText("Name")).toHaveValue("ByeByeBryan");
 
     fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
-    fireEvent.click(screen.getByRole("button", { name: "Confirm reset" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
 
-    expect(screen.getByLabelText("Display name")).toHaveValue("Guest");
+    expect(screen.getByLabelText("Name")).toHaveValue("Guest");
   });
 
   it("shows the linked cloud profile and allows sign-out", () => {
@@ -184,7 +184,7 @@ describe("ProfileRoute cloud state", () => {
 
     renderProfileRoute();
 
-    expect(screen.getByText("Signed in as Bryan")).toBeInTheDocument();
+    expect(screen.getByText("Cloud profile")).toBeInTheDocument();
     expect(screen.queryByText("uid-1")).not.toBeInTheDocument();
     expect(screen.getByText("Cloud history enabled.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
@@ -427,7 +427,7 @@ describe("ProfileRoute cloud state", () => {
 
     renderProfileRoute();
 
-    expect(screen.getByText("Signed in")).toBeInTheDocument();
+    expect(screen.getByText("Cloud profile")).toBeInTheDocument();
     expect(screen.getByText("Loading cloud profile...")).toBeInTheDocument();
     expect(screen.queryByText("Sign in for cloud history."))
       .not
@@ -539,9 +539,9 @@ describe("ProfileRoute cloud state", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
     expect(
-      screen.getByText("This clears cloud history, resets cloud profile values, and clears this device's local cache."),
+      screen.getByText("Reset cloud profile and clear both cloud and local match history?"),
     ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Confirm reset" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
 
     await waitFor(() => {
       expect(resetForUser).toHaveBeenCalledWith(cloudUser, "freestyle");
@@ -596,12 +596,12 @@ describe("ProfileRoute cloud state", () => {
     renderProfileRoute();
 
     fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
-    fireEvent.click(screen.getByRole("button", { name: "Confirm reset" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
 
     await waitFor(() => {
       expect(clearForUser).toHaveBeenCalledWith(cloudUser);
     });
-    expect(screen.getByRole("button", { name: "Confirm reset" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Reset" })).toBeInTheDocument();
     expect(resetUserCache).not.toHaveBeenCalled();
     expect(guestProfileStore.getState().history).toEqual([localMatch]);
   });
@@ -686,7 +686,7 @@ describe("ProfileRoute cloud state", () => {
     renderProfileRoute();
 
     await waitFor(() => {
-      expect(screen.getByLabelText("Display name")).toHaveValue("Bryan");
+      expect(screen.getByLabelText("Name")).toHaveValue("Bryan");
     });
     await waitFor(() => {
       expect(promote).toHaveBeenCalledWith({

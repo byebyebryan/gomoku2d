@@ -135,7 +135,7 @@ export function ReplayRoute() {
       <main className={styles.page}>
         <section className={`${styles.notFound} uiPanel`}>
           <h1 className={styles.title}>Replay unavailable</h1>
-          <p className={styles.notFoundText}>This replay is no longer stored on this device.</p>
+          <p className={styles.notFoundText}>This replay is no longer available.</p>
           <Link className="uiAction uiActionSecondary" to="/profile">
             <Icon className="uiIconDesktop" name="profile" />
             <span className="uiActionLabel">Back to Profile</span>

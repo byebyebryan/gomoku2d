@@ -6,7 +6,7 @@
     <title>Privacy Policy | Gomoku2D</title>
     <meta
       name="description"
-      content="Privacy policy for Gomoku2D, a local-first browser Gomoku game with optional cloud profile features."
+      content="Privacy policy for Gomoku2D, a local-first browser Gomoku game with optional cloud profile and private history features."
     />
     <link rel="canonical" href="https://gomoku2d.byebyebryan.com/privacy/" />
     <link rel="stylesheet" href="/info-page.css" />
@@ -17,7 +17,7 @@
         <div class="infoHeaderCopy">
           <p class="infoEyebrow">Gomoku2D policy</p>
           <h1 class="infoTitle">Privacy</h1>
-          <p class="infoUpdated">Last updated: April 27, 2026</p>
+          <p class="infoUpdated">Last updated: April 29, 2026</p>
         </div>
         <nav class="infoHeaderActions" aria-label="Page navigation">
           <a class="infoAction" href="/">
@@ -62,30 +62,33 @@
         <article class="infoPanel">
           <p class="infoSummary">
             Gomoku2D is a local-first browser game. Most play data stays in your
-            browser. Google sign-in is optional and currently powers
-            experimental cloud profile features.
+            browser. Google sign-in is optional; when you use it, Gomoku2D
+            stores a cloud profile and private match history so your profile
+            and games can sync across browsers.
           </p>
 
           <div class="infoSections">
             <section class="infoSection">
               <h2>Information stored locally</h2>
               <p>
-                When you play as a guest, Gomoku2D stores your display name,
+                When you play as a guest, Gomoku2D stores your profile name,
                 preferred rule setting, and local match history in your
-                browser's local storage. This data stays on your device unless
-                you clear it, reset your local profile, or later choose a cloud
-                promotion feature.
+                browser's local storage. This stays on your device unless you
+                clear site data, reset your local profile, or sign in, which
+                can sync eligible local history to your private cloud history.
               </p>
             </section>
 
             <section class="infoSection">
-              <h2>Information stored for cloud profiles</h2>
+              <h2>Information stored for cloud profiles and history</h2>
               <p>
                 If you sign in with Google, Gomoku2D may store a private cloud
                 profile in Firebase/Firestore. That profile can include your
-                Google account identifier, display name, email address, avatar
+                Google account identifier, profile name, email address, avatar
                 URL, provider IDs, preferred rule setting, and login/update
-                timestamps.
+                timestamps. Gomoku2D may also store private match history,
+                including game results, rule variants, players, moves,
+                timestamps, and replay metadata.
               </p>
             </section>
 
@@ -107,20 +110,21 @@
             </section>
 
             <section class="infoSection">
-              <h2>Alpha cloud features</h2>
+              <h2>Experimental cloud features</h2>
               <p class="infoCallout">
-                Online profiles are an alpha/beta feature. Cloud data may be
-                reset while the backend foundation is still being built.
+                Cloud profiles and history are experimental. Cloud data may be
+                changed, migrated, or reset while backend work continues.
               </p>
             </section>
 
             <section class="infoSection">
               <h2>Data deletion</h2>
               <p>
-                You can clear local data from the Profile screen by resetting
-                the local profile, or by clearing site data in your browser.
-                Until self-service cloud deletion ships, request cloud profile
-                deletion by emailing
+                You can use Reset Profile from the Profile screen. Signed out,
+                it resets your local profile and local match history. Signed in,
+                it resets your cloud profile and history, then clears this
+                device's local cache. You can also clear browser site data
+                manually. For deletion questions, email
                 <a href="mailto:gomoku2d@byebyebryan.com"
                   >gomoku2d@byebyebryan.com</a
                 >.
