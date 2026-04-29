@@ -10,7 +10,7 @@ import type { LocalMatchResumeSeed } from "../game/local_match_store";
 import type { CellPosition } from "../game/types";
 import { savedMatchPlayers } from "../match/saved_match";
 import { resolveActiveHistory } from "../profile/active_history";
-import { guestProfileStore } from "../profile/guest_profile_store";
+import { localProfileStore } from "../profile/local_profile_store";
 import {
   buildLocalReplayFrame,
   canResumeReplay,
@@ -39,14 +39,14 @@ export function ReplayRoute() {
   const cloudAuth = useStore(cloudAuthStore, (state) => state);
   const cloudHistory = useStore(cloudHistoryStore, (state) => state);
   const cloudProfile = useStore(cloudProfileStore, (state) => state);
-  const localHistory = useStore(guestProfileStore, (state) => state.history);
-  const localProfile = useStore(guestProfileStore, (state) => state.profile);
+  const localHistory = useStore(localProfileStore, (state) => state.matchHistory.replayMatches);
+  const localProfile = useStore(localProfileStore, (state) => state.profile);
   const [moveIndex, setMoveIndex] = useState(defaultReplayMoveIndex(0));
   const [autoplaying, setAutoplaying] = useState(false);
   const [coreWinningCells, setCoreWinningCells] = useState<CellPosition[]>([]);
 
   useEffect(() => {
-    guestProfileStore.getState().ensureGuestProfile();
+    localProfileStore.getState().ensureLocalProfile();
   }, []);
 
   useEffect(() => {
@@ -59,7 +59,7 @@ export function ReplayRoute() {
 
   useEffect(() => {
     if (cloudAuth.status === "signed_in" && cloudAuth.user) {
-      void cloudProfileStore.getState().loadForUser(cloudAuth.user, guestProfileStore.getState().settings.preferredVariant);
+      void cloudProfileStore.getState().loadForUser(cloudAuth.user, localProfileStore.getState().settings.preferredVariant);
     } else {
       cloudProfileStore.getState().reset();
     }
@@ -67,9 +67,9 @@ export function ReplayRoute() {
 
   useEffect(() => {
     if (cloudAuth.status === "signed_in" && cloudAuth.user && cloudProfile.status === "ready") {
-      void cloudHistoryStore.getState().loadForUser(cloudAuth.user, cloudProfile.profile?.historyResetAt ?? null);
+      void cloudHistoryStore.getState().loadForUser(cloudAuth.user, cloudProfile.profile?.resetAt ?? null);
     }
-  }, [cloudAuth.status, cloudAuth.user, cloudProfile.profile?.historyResetAt, cloudProfile.status]);
+  }, [cloudAuth.status, cloudAuth.user, cloudProfile.profile?.resetAt, cloudProfile.status]);
 
   const cloudCache =
     cloudAuth.status === "signed_in" && cloudAuth.user
@@ -77,11 +77,11 @@ export function ReplayRoute() {
       : [];
   const history = resolveActiveHistory({
     cloudHistory: cloudCache,
-    historyResetAt: cloudAuth.status === "signed_in" ? cloudProfile.profile?.historyResetAt : null,
+    historyResetAt: cloudAuth.status === "signed_in" ? cloudProfile.profile?.resetAt : null,
     localHistory,
   });
   const match = history.find((entry) => entry.id === matchId) ?? null;
-  const guestDisplayName = localProfile?.displayName ?? cloudAuth.user?.displayName ?? "Guest";
+  const localDisplayName = localProfile?.displayName ?? cloudAuth.user?.displayName ?? "Guest";
   const replayFloor = match ? replayUndoFloor(match) : 0;
 
   useEffect(() => {
@@ -198,7 +198,7 @@ export function ReplayRoute() {
           <section className={`${styles.deckSection} ${styles.resultSection}`}>
             <p className="uiSectionLabel">Result</p>
             <p className={styles.statusText} data-testid="replay-result">
-              {replayWinnerLabel(match, guestDisplayName)}
+              {replayWinnerLabel(match, localDisplayName)}
             </p>
           </section>
 
@@ -236,7 +236,7 @@ export function ReplayRoute() {
                   >
                     <div className={styles.playerCopy}>
                       <div className={styles.playerHead}>
-                        <h2 className={styles.playerName}>{replayPlayerName(player, guestDisplayName)}</h2>
+                        <h2 className={styles.playerName}>{replayPlayerName(player, localDisplayName)}</h2>
                         <span
                           aria-label={player.kind === "human" ? "Player" : "Bot"}
                           className={styles.playerKindIcon}

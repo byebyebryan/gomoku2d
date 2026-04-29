@@ -46,17 +46,17 @@ This pillar moves earlier than generic online checkboxes now that the backend
 foundation is in place. Basic PvP and share links are useful, but lab-powered
 features are what can make Gomoku2D feel like its own product.
 
-### 2. Guest-first on-ramp, cloud-backed depth
+### 2. Local-first on-ramp, cloud-backed depth
 
 The first session should feel disposable and frictionless; the deeper features
 should feel durable once you choose to sign in. Specifically:
 
-- First meaningful interaction creates a **local guest profile** on the device.
+- First meaningful interaction creates a **local profile** on the device.
   You can play bot matches and build up local history without creating a cloud
   account.
-- Signing in with Google or GitHub **promotes** the local guest state to a
+- Signing in with Google or GitHub **promotes** the local state to a
   cloud-backed profile without making the user feel they "started over."
-- **Local guest data** is the source of truth for guest sessions. **Cloud
+- **Local data** is the source of truth for local-only sessions. **Cloud
   state** becomes the source of truth for signed-in features such as synced
   history, shareable replays, online play, and anything public.
 - Online human matches and any replay we intend to trust or share go through
@@ -90,7 +90,7 @@ Calling these out so scope stays honest:
 
 ## Success looks like
 
-- A stranger can open the URL, play a bot match as a guest, decide they care,
+- A stranger can open the URL, play a bot match as a local player, decide they care,
   sign in with Google, keep their progress, and review a saved game without
   reading instructions.
 - At least one feature in the game exists specifically *because* we have a

@@ -30,7 +30,7 @@ service model and the feature menu, but not every piece lands at once.
 
 | Version | Backend intent | Included | Deferred |
 |---|---|---|---|
-| `P3 / v0.3` | Backend foundation and cloud continuity | Firebase Auth, cloud profile, guest promotion, private cloud history, owner-scoped Firestore rules | live PvP, ranked/trusted matches, public replay sharing, replay analysis, puzzles |
+| `P3 / v0.3` | Backend foundation and cloud continuity | Firebase Auth, cloud profile, local profile promotion, private cloud history, owner-scoped Firestore rules | live PvP, ranked/trusted matches, public replay sharing, replay analysis, puzzles |
 | `P4 / v0.4` | Lab-powered product identity | replay analysis, critical moments, puzzles, save-this-game positions, bot personalities/customization; Cloud Run only if browser-side wasm is not enough | live PvP, ranked/trusted matches, broad public sharing |
 | `P5 / v0.5` | Presentation systems and skins | theme/skin support and product polish; backend usually unchanged | live PvP, ranked/trusted matches, broad public sharing |
 | `P6 / v0.6` | Online product expansion | Cloud Run match authority, direct challenge/PvP, trusted match history, matchmaking/ranked if useful, explicit public shareables | broad social features |
@@ -55,7 +55,7 @@ Four components:
 
 | Component | Role | Cost note |
 |---|---|---|
-| **Local guest profile** | Local identity, guest settings, guest match history | No backend cost |
+| **Local profile** | Local identity, local settings, local match history | No backend cost |
 | **Firebase Auth** | Sign-in when cloud-backed features are needed | Auth is initialized as Identity Platform; keep providers inside the no-cost social-sign-in tier tracked in `backend_cost.md` |
 | **Firestore** | Document storage: cloud profiles, trusted matches, published replays, puzzles | Current database state lives in `backend_infra.md`; cost posture lives in `backend_cost.md` |
 | **Cloud Run** | Rust service: trusted match authority, username reservation, verification, strong bot, puzzle generation | For request-based billing: 2M requests · 180k vCPU-s · 360k GiB-s per month free (us-central1-based) |
@@ -82,7 +82,7 @@ Default path is **not** "anonymous auth on page load."
 
 Instead:
 
-- first meaningful interaction creates a **local guest profile** in browser
+- first meaningful interaction creates a **local profile** in browser
   storage
 - **Google** is the first cloud sign-in provider; GitHub can follow if it stays
   small enough to justify the extra provider setup
@@ -90,7 +90,7 @@ Instead:
   history, online play, or replay sharing
 
 This avoids creating backend identities for drive-by visitors while still
-letting guests get a feel for the game immediately.
+letting players get a feel for the game immediately.
 
 The web uses the Firebase JS SDK directly (see `architecture.md`). Cloud Run
 verifies callers by validating the Firebase ID token JWT against Google's
@@ -100,7 +100,7 @@ public keys.
 
 Three layers:
 
-1. **Local guest profile** — who are you on this device before sign-in?
+1. **Local profile** — who are you on this device before sign-in?
    Browser-managed only.
 2. **Firebase user** — who are you in cloud auth? Managed by Auth after sign-in.
 3. **Gomoku cloud profile** — who are you *in this game* once cloud-backed?
@@ -114,11 +114,27 @@ type Profile = {
   uid: string;
   username: string | null;        // unique, app-owned, reserved via Cloud Run
   display_name: string;           // seeded from provider, editable, not unique
-  avatar_url: string | null;
-  auth_providers: string[];       // ["google.com"], ["google.com", "github.com"]
+  auth: {
+    providers: Array<{
+      provider: "google.com" | "github.com";
+      display_name: string | null;
+      avatar_url: string | null;
+    }>;
+  };
+  settings: {
+    default_rules: {
+      ruleset: "freestyle" | "renju";
+      opening: "standard";
+    };
+  };
+  reset_at: Timestamp | null;
+  match_history: {
+    replay_matches: SavedMatchV1[];
+    summary_matches: CloudMatchSummaryV1[];
+    archived_stats: CloudArchivedMatchStatsV1;
+  };
   created_at: Timestamp;
   updated_at: Timestamp;
-  last_login_at: Timestamp;
 };
 ```
 
@@ -128,17 +144,17 @@ Cloud Run so the `usernames/{handle} → uid` transaction is atomic.
 
 ### Promotion flow
 
-When a guest decides to sign in:
+When a local player decides to sign in:
 
 1. The app signs them in with Google or GitHub.
 2. Firebase returns a stable `uid`.
 3. The app creates or loads `profiles/{uid}`.
-4. Local guest settings and finished guest match history are imported once into
+4. Local settings and finished local match history are imported into
    the cloud profile/history.
 5. Imported local records keep a stable local-origin ID so the import is
    idempotent if the flow is retried.
 
-Local guest state is disposable. Cloud state is durable.
+Local state is disposable. Cloud state is durable.
 
 ## Data model
 
@@ -148,11 +164,15 @@ field-level invariants live in [data_model.md](data_model.md).
 For `v0.3`, the critical path is:
 
 - `profiles/{uid}` for owner-scoped cloud identity and settings
-- `profiles/{uid}.recent_matches` for capped private casual cloud history
+- `profiles/{uid}.match_history.replay_matches` for capped private casual
+  replay payloads
+- `profiles/{uid}.match_history.summary_matches` plus
+  `match_history.archived_stats` for longer private history stats without
+  retaining every move list
 
 Important distinction:
 
-- **Guest history** lives locally only.
+- **Local history** lives locally only.
 - **Signed-in casual history** is saved as a capped private profile snapshot.
 - **Trusted online/ranked history** later uses server-written match records with
   trust metadata.
@@ -166,14 +186,15 @@ current rules intentionally keep the first public backend slice narrow:
 - owners can create/update that document only if it matches the expected profile
   schema
 - client updates preserve locked app-owned fields such as `created_at` and
-  `username`; `history_reset_at` can only stay unchanged or advance to the
+  `username`; `reset_at` can only stay unchanged or advance to the
   current write time; `display_name` can be promoted from a user-chosen local
   profile
-- `recent_matches` is capped at 24 records and only changes as part of the
-  profile snapshot write lane
-- normal profile snapshot writes are throttled by a 15-minute cooldown; reset
-  writes can bypass that cooldown when they advance the reset barrier and clear
-  the embedded history
+- `match_history.replay_matches` is capped at 128 full replay records;
+  `match_history.summary_matches` is capped at 1024 lightweight summary records
+  and rolls older stats into `match_history.archived_stats`
+- normal profile snapshot writes are throttled by a 5-minute cooldown; reset
+  writes can bypass that cooldown only when they clear history and advance the
+  reset barrier inside the constrained reset shape
 - private match subcollections are closed for the current casual path and kept
   reserved for future server-verified/shareable records
 
@@ -212,9 +233,9 @@ There are two distinct lanes:
    - browser-authoritative
    - local-first
    - no per-move backend validation in the hot path
-   - guest sessions stay local only
+   - local-only sessions stay local only
    - signed-in casual matches can still sync privately to the cloud profile's
-     embedded `recent_matches` snapshot as `client_uploaded`
+     embedded `match_history` snapshot as `client_uploaded`
 
 2. **Trusted / cloud-backed play**
    - backend validates every move
@@ -306,10 +327,10 @@ menu.
 
 | Feature | Surface | Trust gate |
 |---|---|---|
-| Local guest profile | Browser-only guest mode | None |
+| Local profile | Browser-only local mode | None |
 | Auth + cloud profile | Google/GitHub sign-in, profile sync | Firebase Auth |
 | Username reservation | `/reserve_username` | Cloud Run transaction |
-| Cloud match history | Coalesce finished signed-in casual matches into `profiles/{uid}.recent_matches` | Private; `client_uploaded` |
+| Cloud match history | Coalesce finished signed-in casual matches into `profiles/{uid}.match_history` | Private; `client_uploaded` |
 | Trusted match history | Server-validated online/ranked history in `profiles/{uid}/matches/{id}` | `server_verified` |
 | Replay sharing | Public URL via `replays/{id}` projected from a saved private match | Explicit publish step |
 | Online match (human vs human) | `matches/{id}` + Cloud Run authority | Server validates every move |

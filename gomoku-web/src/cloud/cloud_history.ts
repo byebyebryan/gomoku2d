@@ -5,21 +5,24 @@ import {
   type Firestore,
 } from "firebase/firestore";
 
+import type { GameVariant } from "../core/bot_protocol";
 import { savedMatchIsAfterReset, type SavedMatchV1 } from "../match/saved_match";
 
 import type { CloudAuthUser } from "./auth_store";
 import {
-  CLOUD_RECENT_MATCHES_LIMIT,
-  CLOUD_RECENT_MATCHES_SCHEMA_VERSION,
+  CLOUD_REPLAY_MATCHES_LIMIT,
   cloudProfileFromDocument,
   cloudProfileSnapshotUpdate,
-  mergeCloudRecentMatches,
+  cloudSettingsForVariant,
+  mergeCloudMatchSummaryState,
+  mergeCloudReplayMatches,
+  type CloudMatchHistory,
   type CloudProfile,
   type CloudProfileDocument,
 } from "./cloud_profile";
 import { getFirebaseClients } from "./firebase";
 
-export const CLOUD_HISTORY_LIMIT = CLOUD_RECENT_MATCHES_LIMIT;
+export const CLOUD_HISTORY_LIMIT = CLOUD_REPLAY_MATCHES_LIMIT;
 
 export interface CloudHistoryBackend {
   loadProfile: () => Promise<CloudProfileDocument | null>;
@@ -64,10 +67,10 @@ function resolveCloudHistoryBackend(user: CloudAuthUser, options: CloudHistoryOp
 }
 
 export function cloudHistoryFromProfile(
-  profile: Pick<CloudProfile, "historyResetAt" | "recentMatches">,
-  historyResetAt: string | null | undefined = profile.historyResetAt,
+  profile: Pick<CloudProfile, "matchHistory" | "resetAt">,
+  historyResetAt: string | null | undefined = profile.resetAt,
 ): SavedMatchV1[] {
-  return profile.recentMatches.matches.filter((match) => savedMatchIsAfterReset(match, historyResetAt));
+  return profile.matchHistory.replayMatches.filter((match) => savedMatchIsAfterReset(match, historyResetAt));
 }
 
 export async function loadCloudHistory(
@@ -86,16 +89,29 @@ export async function saveCloudHistorySnapshot(
     cloudProfile: CloudProfile;
     displayName: string;
     matches: SavedMatchV1[];
-    preferredVariant: CloudProfile["preferredVariant"];
+    preferredVariant: GameVariant;
   },
   options: CloudHistoryOptions = {},
 ): Promise<CloudSaveHistoryResult> {
   const backend = resolveCloudHistoryBackend(user, options);
-  const matches = mergeCloudRecentMatches(user, input.matches, input.cloudProfile.historyResetAt);
+  const replayMatches = mergeCloudReplayMatches(user, input.matches, input.cloudProfile.resetAt);
+  const summaryState = mergeCloudMatchSummaryState({
+    archivedStats: input.cloudProfile.matchHistory.archivedStats,
+    matches: input.matches,
+    replayMatches,
+    resetAt: input.cloudProfile.resetAt,
+    summaries: input.cloudProfile.matchHistory.summaryMatches,
+    user,
+  });
+  const matchHistory: CloudMatchHistory = {
+    archivedStats: summaryState.archivedStats,
+    replayMatches,
+    summaryMatches: summaryState.summaryMatches,
+  };
   const patch = cloudProfileSnapshotUpdate({
     displayName: input.displayName,
+    matchHistory,
     preferredVariant: input.preferredVariant,
-    recentMatches: matches,
     user,
   });
 
@@ -103,16 +119,12 @@ export async function saveCloudHistorySnapshot(
   const syncedAt = new Date().toISOString();
 
   return {
-    matches,
+    matches: replayMatches,
     profile: {
       ...input.cloudProfile,
       displayName: input.displayName,
-      preferredVariant: input.preferredVariant,
-      recentMatches: {
-        matches,
-        schemaVersion: CLOUD_RECENT_MATCHES_SCHEMA_VERSION,
-        updatedAt: syncedAt,
-      },
+      matchHistory,
+      settings: cloudSettingsForVariant(input.preferredVariant),
       updatedAt: syncedAt,
     },
   };

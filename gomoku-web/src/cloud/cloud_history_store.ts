@@ -1,15 +1,16 @@
 import { createJSONStorage, persist, type StateStorage } from "zustand/middleware";
 import { createStore, type StoreApi } from "zustand/vanilla";
 
+import type { GameVariant } from "../core/bot_protocol";
 import { savedMatchIsAfterReset, type SavedMatchV1 } from "../match/saved_match";
-import { guestProfileStore } from "../profile/guest_profile_store";
+import { localProfileStore } from "../profile/local_profile_store";
 
 import type { CloudAuthUser } from "./auth_store";
 import { saveCloudHistorySnapshot } from "./cloud_history";
 import {
-  CLOUD_RECENT_MATCHES_LIMIT,
+  CLOUD_REPLAY_MATCHES_LIMIT,
   cloudProfileSyncDue,
-  mergeCloudRecentMatches,
+  mergeCloudSavedMatches,
   type CloudProfile,
 } from "./cloud_profile";
 import { cloudProfileStore } from "./cloud_profile_store";
@@ -56,13 +57,13 @@ export interface CloudHistoryStoreOptions {
       cloudProfile: CloudProfile;
       displayName: string;
       matches: SavedMatchV1[];
-      preferredVariant: CloudProfile["preferredVariant"];
+      preferredVariant: GameVariant;
     },
   ) => Promise<{ matches: SavedMatchV1[]; profile: CloudProfile }>;
   storage?: StateStorage;
 }
 
-const STORAGE_KEY = "gomoku2d.cloud-history.v2";
+const STORAGE_KEY = "gomoku2d.cloud-history.v3";
 
 function errorMessageFor(error: unknown): string {
   return error instanceof Error ? error.message : "Cloud history sync failed.";
@@ -118,7 +119,7 @@ function cacheWithPendingMatch(
 
   return {
     ...cache,
-    cachedMatches: sortMatches([match, ...withoutExisting]).slice(0, CLOUD_RECENT_MATCHES_LIMIT),
+    cachedMatches: sortMatches([match, ...withoutExisting]).slice(0, CLOUD_REPLAY_MATCHES_LIMIT),
     pendingMatches: { ...cache.pendingMatches, [match.id]: match },
     sync: {
       ...cache.sync,
@@ -158,7 +159,7 @@ function cacheWithSyncedMatches(
 
   return {
     ...cache,
-    cachedMatches: sortMatches([...matches, ...Object.values(pendingMatches)]).slice(0, CLOUD_RECENT_MATCHES_LIMIT),
+    cachedMatches: sortMatches([...matches, ...Object.values(pendingMatches)]).slice(0, CLOUD_REPLAY_MATCHES_LIMIT),
     pendingMatches,
     sync,
   };
@@ -185,11 +186,11 @@ export function createCloudHistoryStore(
     const profile = cloudProfileStore.getState().profile;
     return profile?.uid === uid ? profile : null;
   });
-  const historyResetAtForUser = options.historyResetAtForUser ?? ((uid) => cloudProfileForUser(uid)?.historyResetAt);
+  const historyResetAtForUser = options.historyResetAtForUser ?? ((uid) => cloudProfileForUser(uid)?.resetAt);
   const loadHistory = options.loadHistory ?? (async (_user, historyResetAt) => {
     const profile = cloudProfileForUser(_user.uid);
     return profile
-      ? profile.recentMatches.matches.filter((match) => savedMatchIsAfterReset(match, historyResetAt))
+      ? profile.matchHistory.replayMatches.filter((match) => savedMatchIsAfterReset(match, historyResetAt))
       : [];
   });
   const saveHistory = options.saveHistory ?? saveCloudHistorySnapshot;
@@ -245,7 +246,7 @@ export function createCloudHistoryStore(
               loadStatus: "ready",
               users: updateUserCache(state.users, user.uid, (cache) => ({
                 ...cache,
-                cachedMatches: sortMatches(matches).slice(0, CLOUD_RECENT_MATCHES_LIMIT),
+                cachedMatches: sortMatches(matches).slice(0, CLOUD_REPLAY_MATCHES_LIMIT),
                 loadedAt: now(),
               })),
             }));
@@ -256,14 +257,16 @@ export function createCloudHistoryStore(
             });
           }
         },
-        loadFromProfile: (user, profile, historyResetAt = profile.historyResetAt) => {
-          const matches = profile.recentMatches.matches.filter((match) => savedMatchIsAfterReset(match, historyResetAt));
+        loadFromProfile: (user, profile, historyResetAt = profile.resetAt) => {
+          const matches = profile.matchHistory.replayMatches.filter((match) =>
+            savedMatchIsAfterReset(match, historyResetAt)
+          );
           set((state) => ({
             errorMessage: null,
             loadStatus: "ready",
             users: updateUserCache(state.users, user.uid, (cache) => ({
               ...cache,
-              cachedMatches: sortMatches(matches).slice(0, CLOUD_RECENT_MATCHES_LIMIT),
+              cachedMatches: sortMatches(matches).slice(0, CLOUD_REPLAY_MATCHES_LIMIT),
               loadedAt: now(),
             })),
           }));
@@ -313,23 +316,23 @@ export function createCloudHistoryStore(
 
           const syncPromise = (async () => {
             const resetAt = latestResetAt(user.uid, historyResetAt);
-            const localProfile = guestProfileStore.getState();
-            const merged = mergeCloudRecentMatches(
+            const localProfile = localProfileStore.getState();
+            const candidateMatches = mergeCloudSavedMatches(
               user,
-              [...profile.recentMatches.matches, ...cache.cachedMatches, ...pending],
+              [...profile.matchHistory.replayMatches, ...cache.cachedMatches, ...pending],
               resetAt,
             );
             const result = await saveHistory(user, {
               cloudProfile: profile,
               displayName: localProfile.profile?.displayName ?? profile.displayName,
-              matches: merged,
+              matches: candidateMatches,
               preferredVariant: localProfile.settings.preferredVariant,
             });
 
             cloudProfileStore.getState().applyLocalPatch({
               displayName: result.profile.displayName,
-              preferredVariant: result.profile.preferredVariant,
-              recentMatches: result.profile.recentMatches,
+              matchHistory: result.profile.matchHistory,
+              settings: result.profile.settings,
               updatedAt: result.profile.updatedAt,
             });
 

@@ -1,10 +1,21 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { createLocalSavedMatch } from "../match/saved_match";
-import type { GuestProfileIdentity, GuestProfileSettings, GuestSavedMatch } from "../profile/guest_profile_store";
+import {
+  emptyLocalMatchHistory,
+  type LocalProfileIdentity,
+  type LocalProfileSettings,
+  type LocalProfileSavedMatch,
+} from "../profile/local_profile_store";
 
 import type { CloudAuthUser } from "./auth_store";
-import { cloudProfilePromotionUpdate, promoteGuestToCloud, type CloudPromotionBackend } from "./cloud_promotion";
+import { cloudProfilePromotionUpdate, promoteLocalProfileToCloud, type CloudPromotionBackend } from "./cloud_promotion";
+import {
+  cloudMatchSummaryForMatch,
+  emptyCloudArchivedMatchStats,
+  emptyCloudMatchHistory,
+  mergeCloudMatchSummaryState,
+} from "./cloud_profile";
 
 const user: CloudAuthUser = {
   avatarUrl: "https://example.com/avatar.png",
@@ -14,23 +25,23 @@ const user: CloudAuthUser = {
   uid: "uid-1",
 };
 
-const guestProfile: GuestProfileIdentity = {
+const localProfile: LocalProfileIdentity = {
   avatarUrl: null,
   createdAt: "2026-04-27T00:00:00.000Z",
   displayName: "ByeByeBryan",
-  id: "guest-1",
-  kind: "guest",
+  id: "local-1",
+  kind: "local",
   updatedAt: "2026-04-27T00:00:00.000Z",
   username: null,
 };
 
-const settings: GuestProfileSettings = {
+const settings: LocalProfileSettings = {
   preferredVariant: "renju",
 };
 
-const match: GuestSavedMatch = createLocalSavedMatch({
+const match: LocalProfileSavedMatch = createLocalSavedMatch({
   id: "match-1",
-  localProfileId: "guest-1",
+  localProfileId: "local-1",
   moves: [{ col: 7, moveNumber: 1, player: 1, row: 7 }],
   players: [
     { kind: "human", name: "ByeByeBryan", stone: "black" },
@@ -52,29 +63,41 @@ function createBackend() {
   return { backend, profileUpdates };
 }
 
+function localMatchHistory(matches: LocalProfileSavedMatch[] = []) {
+  return {
+    ...emptyLocalMatchHistory(),
+    replayMatches: matches,
+  };
+}
+
 describe("cloudProfilePromotionUpdate", () => {
   it("promotes a user-chosen local display name", () => {
     expect(
       cloudProfilePromotionUpdate({
         cloudDisplayName: user.displayName,
-        cloudHistory: [],
-        guestHistory: [],
-        guestProfile,
+        cloudMatchHistory: emptyCloudMatchHistory(),
+        localMatchHistory: localMatchHistory(),
+        localProfile,
         settings,
         user,
       }),
     ).toMatchObject({
       display_name: "ByeByeBryan",
-      preferred_variant: "renju",
+      settings: {
+        default_rules: {
+          opening: "standard",
+          ruleset: "renju",
+        },
+      },
       uid: "uid-1",
     });
   });
 
   it("keeps the provider display name when local profile is still Guest", () => {
     const update = cloudProfilePromotionUpdate({
-      cloudHistory: [],
-      guestHistory: [],
-      guestProfile: { ...guestProfile, displayName: "Guest" },
+      cloudMatchHistory: emptyCloudMatchHistory(),
+      localMatchHistory: localMatchHistory(),
+      localProfile: { ...localProfile, displayName: "Guest" },
       settings,
       user,
     });
@@ -86,10 +109,15 @@ describe("cloudProfilePromotionUpdate", () => {
     expect(
       cloudProfilePromotionUpdate({
         cloudDisplayName: user.displayName,
-        cloudHistory: [],
-        cloudPreferredVariant: "renju",
-        guestHistory: [],
-        guestProfile: { ...guestProfile, displayName: "Guest" },
+        cloudMatchHistory: emptyCloudMatchHistory(),
+        cloudSettings: {
+          defaultRules: {
+            opening: "standard",
+            ruleset: "renju",
+          },
+        },
+        localMatchHistory: localMatchHistory(),
+        localProfile: { ...localProfile, displayName: "Guest" },
         settings,
         user,
       }),
@@ -99,15 +127,27 @@ describe("cloudProfilePromotionUpdate", () => {
   it("writes only changed cloud fields when the loaded preferred rule is stale", () => {
     const update = cloudProfilePromotionUpdate({
       cloudDisplayName: user.displayName,
-      cloudHistory: [],
-      cloudPreferredVariant: "freestyle",
-      guestHistory: [],
-      guestProfile: { ...guestProfile, displayName: "Guest" },
+      cloudMatchHistory: emptyCloudMatchHistory(),
+      cloudSettings: {
+        defaultRules: {
+          opening: "standard",
+          ruleset: "freestyle",
+        },
+      },
+      localMatchHistory: localMatchHistory(),
+      localProfile: { ...localProfile, displayName: "Guest" },
       settings,
       user,
     });
 
-    expect(update).toMatchObject({ preferred_variant: "renju" });
+    expect(update).toMatchObject({
+      settings: {
+        default_rules: {
+          opening: "standard",
+          ruleset: "renju",
+        },
+      },
+    });
     expect(update).not.toHaveProperty("display_name");
     expect(update).not.toHaveProperty("uid");
   });
@@ -115,9 +155,9 @@ describe("cloudProfilePromotionUpdate", () => {
   it("does not overwrite a custom cloud display name set from another device", () => {
     const update = cloudProfilePromotionUpdate({
       cloudDisplayName: "AliceFromDeviceA",
-      cloudHistory: [],
-      guestHistory: [],
-      guestProfile,
+      cloudMatchHistory: emptyCloudMatchHistory(),
+      localMatchHistory: localMatchHistory(),
+      localProfile,
       settings,
       user,
     });
@@ -126,16 +166,16 @@ describe("cloudProfilePromotionUpdate", () => {
   });
 });
 
-describe("promoteGuestToCloud", () => {
+describe("promoteLocalProfileToCloud", () => {
   it("updates the cloud profile with a single embedded history snapshot", async () => {
     const { backend, profileUpdates } = createBackend();
 
-    const result = await promoteGuestToCloud(
+    const result = await promoteLocalProfileToCloud(
       {
         cloudDisplayName: user.displayName,
-        cloudHistory: [],
-        guestHistory: [match],
-        guestProfile,
+        cloudMatchHistory: emptyCloudMatchHistory(),
+        localMatchHistory: localMatchHistory([match]),
+        localProfile,
         settings,
         user,
       },
@@ -145,16 +185,21 @@ describe("promoteGuestToCloud", () => {
     expect(profileUpdates).toHaveLength(1);
     expect(profileUpdates[0]).toMatchObject({
       display_name: "ByeByeBryan",
-      preferred_variant: "renju",
-      recent_matches: {
-        matches: [
+      match_history: {
+        replay_matches: [
           expect.objectContaining({
             id: "match-1",
             source: "cloud_saved",
             trust: "client_uploaded",
           }),
         ],
-        schema_version: 1,
+        summary_matches: [],
+      },
+      settings: {
+        default_rules: {
+          opening: "standard",
+          ruleset: "renju",
+        },
       },
     });
     expect(result).toEqual({
@@ -176,14 +221,31 @@ describe("promoteGuestToCloud", () => {
       source: "cloud_saved" as const,
       trust: "client_uploaded" as const,
     };
+    const recordState = mergeCloudMatchSummaryState({
+      archivedStats: emptyCloudArchivedMatchStats(),
+      matches: [cloudMatch],
+      replayMatches: [cloudMatch],
+      summaries: [],
+      user,
+    });
+    const cloudMatchHistory = {
+      archivedStats: recordState.archivedStats,
+      replayMatches: [cloudMatch],
+      summaryMatches: recordState.summaryMatches,
+    };
 
-    const result = await promoteGuestToCloud(
+    const result = await promoteLocalProfileToCloud(
       {
         cloudDisplayName: user.displayName,
-        cloudHistory: [cloudMatch],
-        cloudPreferredVariant: "renju",
-        guestHistory: [match],
-        guestProfile: { ...guestProfile, displayName: "Guest" },
+        cloudMatchHistory,
+        cloudSettings: {
+          defaultRules: {
+            opening: "standard",
+            ruleset: "renju",
+          },
+        },
+        localMatchHistory: localMatchHistory([match]),
+        localProfile: { ...localProfile, displayName: "Guest" },
         settings,
         user,
       },
@@ -199,13 +261,13 @@ describe("promoteGuestToCloud", () => {
   it("does not include local matches at or before the reset barrier", async () => {
     const { backend, profileUpdates } = createBackend();
 
-    const result = await promoteGuestToCloud(
+    const result = await promoteLocalProfileToCloud(
       {
         cloudDisplayName: user.displayName,
-        cloudHistory: [],
-        guestHistory: [match],
-        guestProfile,
-        historyResetAt: "2026-04-28T00:00:00.000Z",
+        cloudMatchHistory: emptyCloudMatchHistory(),
+        localMatchHistory: localMatchHistory([match]),
+        localProfile,
+        resetAt: "2026-04-28T00:00:00.000Z",
         settings,
         user,
       },
@@ -213,12 +275,47 @@ describe("promoteGuestToCloud", () => {
     );
 
     expect(profileUpdates[0]).toMatchObject({
-      recent_matches: {
-        matches: [],
+      match_history: {
+        replay_matches: [],
+        summary_matches: [],
       },
     });
     expect(result).toMatchObject({
       localMatchesSynced: 0,
+    });
+  });
+
+  it("promotes local summary-tier records when full replay records have already rolled off", async () => {
+    const { backend, profileUpdates } = createBackend();
+    const summary = cloudMatchSummaryForMatch({ localProfileId: localProfile.id }, match);
+
+    await promoteLocalProfileToCloud(
+      {
+        cloudDisplayName: user.displayName,
+        cloudMatchHistory: emptyCloudMatchHistory(),
+        localMatchHistory: {
+          ...emptyLocalMatchHistory(),
+          summaryMatches: [summary],
+        },
+        localProfile,
+        settings,
+        user,
+      },
+      { backend },
+    );
+
+    expect(profileUpdates[0]).toMatchObject({
+      match_history: {
+        replay_matches: [],
+        summary_matches: [
+          expect.objectContaining({
+            id: "match-1",
+            outcome: "draw",
+            side: "black",
+            trust: "client_uploaded",
+          }),
+        ],
+      },
     });
   });
 });

@@ -1,24 +1,24 @@
 import { createStore, type StoreApi } from "zustand/vanilla";
 
 import {
-  promoteGuestToCloud,
+  promoteLocalProfileToCloud,
   promotionInputKey,
-  type GuestPromotionInput,
-  type GuestPromotionResult,
+  type LocalProfilePromotionInput,
+  type LocalProfilePromotionResult,
 } from "./cloud_promotion";
 
 export type CloudPromotionStatus = "idle" | "promoting" | "complete" | "error";
 
 export interface CloudPromotionState {
   errorMessage: string | null;
-  promote: (input: GuestPromotionInput) => Promise<void>;
+  promote: (input: LocalProfilePromotionInput) => Promise<void>;
   reset: () => void;
-  result: GuestPromotionResult | null;
+  result: LocalProfilePromotionResult | null;
   status: CloudPromotionStatus;
 }
 
 export interface CloudPromotionStoreOptions {
-  promoteGuest?: (input: GuestPromotionInput) => Promise<GuestPromotionResult>;
+  promoteLocalProfile?: (input: LocalProfilePromotionInput) => Promise<LocalProfilePromotionResult>;
 }
 
 function errorMessageFor(error: unknown): string {
@@ -28,7 +28,7 @@ function errorMessageFor(error: unknown): string {
 export function createCloudPromotionStore(
   options: CloudPromotionStoreOptions = {},
 ): StoreApi<CloudPromotionState> {
-  const promoteGuest = options.promoteGuest ?? promoteGuestToCloud;
+  const promoteLocalProfile = options.promoteLocalProfile ?? promoteLocalProfileToCloud;
   let requestId = 0;
   let completedInputKey: string | null = null;
   let activeInputKey: string | null = null;
@@ -57,7 +57,7 @@ export function createCloudPromotionStore(
 
       const promotionPromise = (async () => {
         try {
-          const result = await promoteGuest(input);
+          const result = await promoteLocalProfile(input);
           if (requestId !== currentRequestId) {
             return;
           }

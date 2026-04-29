@@ -26,19 +26,19 @@ describe("createLocalMatchStore", () => {
     expect(state.threatMoves).toEqual([]);
   });
 
-  it("uses the provided human display name for the guest player", () => {
+  it("uses the provided human display name for the local player", () => {
     const store = createLocalMatchStore({
       botRunner: {
         chooseMove: async () => null,
         configure: () => undefined,
         dispose: () => undefined,
       },
-      humanDisplayName: "Bryan Guest",
+      humanDisplayName: "Bryan Local",
     });
 
     expect(store.getState().players[0]).toMatchObject({
       kind: "human",
-      name: "Bryan Guest",
+      name: "Bryan Local",
       stone: "black",
     });
   });
@@ -150,7 +150,7 @@ describe("createLocalMatchStore", () => {
         configure: () => undefined,
         dispose: () => undefined,
       },
-      humanDisplayName: "Bryan Guest",
+      humanDisplayName: "Bryan Local",
       resumeState: {
         currentPlayer: 1,
         moves: [
@@ -176,7 +176,7 @@ describe("createLocalMatchStore", () => {
       selectedVariant: "renju",
       status: "playing",
     });
-    expect(store.getState().players[0]).toMatchObject({ kind: "human", stone: "black", name: "Bryan Guest" });
+    expect(store.getState().players[0]).toMatchObject({ kind: "human", stone: "black", name: "Bryan Local" });
     expect(store.getState().players[1]).toMatchObject({ kind: "bot", stone: "white", name: "Practice Bot" });
   });
 
@@ -191,7 +191,7 @@ describe("createLocalMatchStore", () => {
         configure: () => undefined,
         dispose: () => undefined,
       },
-      humanDisplayName: "Bryan Guest",
+      humanDisplayName: "Bryan Local",
       resumeState: {
         currentPlayer: 2,
         moves: [
@@ -205,7 +205,7 @@ describe("createLocalMatchStore", () => {
 
     expect(store.getState().currentPlayer).toBe(2);
     expect(store.getState().players[0]).toMatchObject({ kind: "bot", stone: "black", name: "Practice Bot" });
-    expect(store.getState().players[1]).toMatchObject({ kind: "human", stone: "white", name: "Bryan Guest" });
+    expect(store.getState().players[1]).toMatchObject({ kind: "human", stone: "white", name: "Bryan Local" });
     expect(store.getState().pendingBotMove).toBe(false);
     expect(chooseMoveCalls).toBe(0);
 

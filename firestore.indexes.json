@@ -2,13 +2,23 @@
   "indexes": [],
   "fieldOverrides": [
     {
-      "collectionGroup": "matches",
-      "fieldPath": "move_cells",
+      "collectionGroup": "profiles",
+      "fieldPath": "match_history",
       "indexes": []
     },
     {
       "collectionGroup": "profiles",
-      "fieldPath": "recent_matches",
+      "fieldPath": "match_history.replay_matches",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "profiles",
+      "fieldPath": "match_history.summary_matches",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "profiles",
+      "fieldPath": "match_history.archived_stats",
       "indexes": []
     }
   ]

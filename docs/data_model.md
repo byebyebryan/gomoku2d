@@ -22,14 +22,14 @@ live in `backend_infra.md`.
 
 | Path | Visibility | Writer | Purpose |
 |---|---|---|---|
-| `profiles/{uid}` | owner read | owner client | Cloud identity, user settings, and capped private recent history |
+| `profiles/{uid}` | owner read | owner client | Cloud identity, user settings, and capped private match history |
 | `profiles/{uid}/matches/{matchId}` | disabled for casual history | server later | Reserved for future server-verified/shareable match records |
 | `matches/{matchId}` | participants read | server | Future trusted live match state |
 | `replays/{replayId}` | public read | owner/server on explicit publish | Future shareable replay projection |
 
-Guest-local state is not mirrored one-to-one in Firestore. On sign-in, the app
+Local profile state is not mirrored one-to-one in Firestore. On sign-in, the app
 merges the latest local matches into the signed-in profile's capped
-`recent_matches` snapshot while leaving local copies on-device.
+`match_history` snapshot while leaving local copies on-device.
 
 ## `profiles/{uid}`
 
@@ -37,20 +37,28 @@ Current profile documents are owned by the signed-in user.
 
 ```ts
 type CloudProfileDocument = {
-  auth_providers: string[];
-  avatar_url: string | null;
+  auth: {
+    providers: Array<{
+      provider: "google.com" | "github.com";
+      display_name: string | null;
+      avatar_url: string | null;
+    }>;
+  };
   created_at: Timestamp;
   display_name: string;
-  email: string | null;
-  history_reset_at?: Timestamp | null;
-  last_login_at: Timestamp;
-  preferred_variant: "freestyle" | "renju";
-  recent_matches: {
-    matches: SavedMatchV1[]; // newest first, capped at 24
-    schema_version: 1;
-    updated_at: Timestamp | null;
+  match_history: {
+    replay_matches: SavedMatchV1[]; // newest first, capped at 128
+    summary_matches: CloudMatchSummaryV1[]; // next tier, capped at 1024
+    archived_stats: CloudArchivedMatchStatsV1;
   };
-  schema_version: 2;
+  reset_at: Timestamp | null;
+  schema_version: 3;
+  settings: {
+    default_rules: {
+      ruleset: "freestyle" | "renju";
+      opening: "standard"; // future-safe slot for openings such as swap2
+    };
+  };
   uid: string;
   updated_at: Timestamp;
   username: string | null;
@@ -61,37 +69,104 @@ Rules:
 
 - `uid` must match the document ID.
 - `created_at` and `username` are app-owned after creation.
-- `history_reset_at` is a reset barrier. When present, local promotion, direct
+- `auth.providers` stores provider-sourced display/avatar metadata without
+  copying email into the app profile document.
+- `settings.default_rules.ruleset` is the user's default casual rule set.
+  `settings.default_rules.opening` is currently always `standard` and exists so
+  later rule/opening combinations can be added without another top-level field.
+- `reset_at` is a reset barrier. When present, local promotion, direct
   sync retry, cloud history load, and active-history resolution ignore matches
-  with `saved_at <= history_reset_at`.
-- `schema_version` is always `2`; increments require a writer + rules + reader
+  with `saved_at <= reset_at`.
+- `schema_version` is always `3`; increments require a writer + rules + reader
   update in the same slice.
-- `recent_matches.matches` stores the latest private cloud history snapshot
-  directly inside the profile document. The browser writes a merged snapshot,
-  not one document per match. Firestore rules cap the array at 24 records and
-  require `recent_matches.updated_at` to be the current request time whenever
-  the snapshot changes.
-- Writer behavior: during guest promotion, the browser only sends
-  `display_name` if the local guest has a custom name and the loaded cloud name
+- `match_history` is one embedded private-history container, not a set of
+  independent record stores. The browser writes a merged snapshot, not one
+  document per match.
+- `match_history.replay_matches` stores the newest full replay payloads and is
+  capped at 128 records.
+- `match_history.summary_matches` stores the next private-history tier after a
+  record ages out of the full replay window. These records keep summary metadata
+  for stats/filtering without retaining every move list, newest first, capped at
+  1024 records.
+- `match_history.archived_stats` stores aggregate stats for records that age out
+  of the summary tier. These three tiers are mutually exclusive retention
+  stages for the same match history.
+- Writer behavior: during local profile promotion, the browser only sends
+  `display_name` if the local profile has a custom name and the loaded cloud name
   still matches the provider default. If the local display name is still the
   default `Guest`, the app adopts the provider/cloud display name locally
   instead of overwriting cloud state with `Guest`.
 - Firestore rules enforce ownership, shape, write timestamps, and reset-barrier
-  movement for profile writes. The browser can leave `history_reset_at`
+  movement for profile writes. The browser can leave `reset_at`
   unchanged or set it to the current write's `request.time`; it cannot move the
   barrier backward, remove it, or set an arbitrary timestamp.
-- Firestore rules also enforce a 15-minute cooldown between normal profile
-  snapshot updates using `updated_at`. Profile changes and recent-history
+- Firestore rules also enforce a 5-minute cooldown between normal profile
+  snapshot updates using `updated_at`. Profile changes and match-history
   changes remain local-first and coalesce into the next eligible sync checkpoint.
-  Reset-barrier writes can bypass the normal edit cooldown so Reset Profile is
-  not blocked by a recent profile sync.
-- Reset Profile while signed in writes `history_reset_at`, resets cloud profile
-  display/default-rule fields to provider/default values, clears
-  `recent_matches.matches`, and clears this device's local/cloud caches.
+  Reset-barrier writes can bypass the normal edit cooldown only when they clear
+  history and advance `reset_at` inside the constrained reset shape.
+- Reset Profile while signed in writes `reset_at`, resets cloud profile
+  display/default-rule fields to provider/default values, clears every
+  `match_history` tier, and clears this device's local/cloud caches.
+
+### Match History Tiers
+
+`match_history.replay_matches` contains `SavedMatchV1` records. It is the only
+cloud tier that can power replay playback directly.
+
+`match_history.summary_matches` contains private, compact summary records
+derived from saved matches after they age out of the replay tier. It exists so
+stats and future filtering can survive longer than the full replay window
+without keeping every move list forever.
+
+```ts
+type CloudMatchSummaryV1 = {
+  id: string;
+  schema_version: 1;
+  match_kind: "local_vs_bot" | "local_pvp" | "online_pvp" | "puzzle_challenge";
+  ruleset: "freestyle" | "renju";
+  opening: "standard";
+  side: "black" | "white";
+  outcome: "win" | "loss" | "draw";
+  opponent: {
+    kind: "bot" | "human";
+    display_name: string;
+    profile_uid: string | null;
+    bot_key: string | null;
+  };
+  move_count: number;
+  saved_at: string;
+  trust: "local_only" | "client_uploaded" | "server_verified";
+};
+```
+
+`match_history.archived_stats` carries lifetime aggregates for records evicted
+from the summary tier:
+
+```ts
+type CloudArchivedMatchStatsV1 = {
+  schema_version: 1;
+  archived_before: string | null;
+  archived_count: number;
+  totals: CloudMatchStatsCounter;
+  by_ruleset: Record<"freestyle" | "renju", CloudMatchStatsCounter>;
+  by_side: Record<"black" | "white", CloudMatchStatsCounter>;
+  by_opponent_type: Record<"bot" | "human", CloudMatchStatsCounter>;
+};
+
+type CloudMatchStatsCounter = {
+  matches: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  moves: number;
+};
+```
 
 ## Private Match History
 
-Current casual private history is embedded in `profiles/{uid}.recent_matches`.
+Current casual private history is embedded in
+`profiles/{uid}.match_history.replay_matches`.
 The old `profiles/{uid}/matches/{matchId}` casual subcollection path is closed
 in rules for `v0.3.3`; keep that namespace reserved for future
 server-verified/shareable records rather than private browser snapshots.
@@ -108,7 +183,7 @@ type SavedMatchV1 = {
   schema_version: 1;
   board_size: 15;
 
-  source: "local_history" | "guest_import" | "cloud_saved";
+  source: "local_history" | "cloud_saved";
   trust: "local_only" | "client_uploaded" | "server_verified";
 
   match_kind: "local_vs_bot" | "local_pvp" | "online_pvp" | "puzzle_challenge";
@@ -158,7 +233,7 @@ an identity key.
 **Identity matching across devices:** Use `matchUserSide(match, { profileUid,
 localProfileId })` from `saved_match.ts`. It tries `profile_uid` first (correct
 for cloud matches on any device) then falls back to `local_profile_id`
-(correct for local-only and guest-imported records). For `cloud_saved` records,
+(correct for local-only records). For `cloud_saved` records,
 `local_profile_id` is always `null` on the human player — only `profile_uid`
 identifies them.
 
@@ -217,50 +292,82 @@ because it is useful summary metadata. Embedded private-history records are
 client-uploaded continuity records; Firestore rules validate the top-level
 profile snapshot shape and cap rather than every nested replay field.
 
+The 128 full-replay cap plus 1024 summary cap leaves practical room under
+Firestore's 1 MiB document limit. Current `SavedMatchV1` sizing estimates put
+128 typical 60-move matches around 160 KiB and 128 full-board 225-move matches
+around 330 KiB before future schema growth; the summary tier is intentionally
+metadata-only so stats can retain a longer window without storing moves.
+
 ## Indexing Notes
 
-`recent_matches` and `move_cells` are not queried directly and should not be
-indexed. The repo-level `firestore.indexes.json` disables single-field indexes
-for the embedded `profiles.recent_matches` field and keeps the old
-`matches.move_cells` override for the future reserved match namespace.
+`match_history`, `match_history.replay_matches`,
+`match_history.summary_matches`, and `match_history.archived_stats` are not
+queried directly and should not be indexed. The repo-level
+`firestore.indexes.json` disables single-field indexes for those embedded
+profile history fields.
 
-## Local Guest History
+## Local Profile History
 
 Current local history lives in browser `localStorage` under
-`gomoku2d.guest-profile.v2`. Finished local matches use `SavedMatchV1` with:
+`gomoku2d.local-profile.v3`. The local profile uses the same replay, summary,
+and archived-stats retention tiers as the cloud profile:
+
+```ts
+type LocalProfileV3 = {
+  matchHistory: {
+    replayMatches: LocalProfileSavedMatch[]; // newest first, capped at 128
+    summaryMatches: CloudMatchSummaryV1[]; // next tier, capped at 1024
+    archivedStats: CloudArchivedMatchStatsV1;
+  };
+  profile: LocalProfileIdentity | null;
+  settings: LocalProfileSettings;
+};
+```
+
+Finished local matches use `SavedMatchV1` with:
 
 - `source: "local_history"`
 - `trust: "local_only"`
 - `id` equal to the browser-local match ID
 
 ```ts
-type GuestSavedMatch = SavedMatchV1 & {
+type LocalProfileSavedMatch = SavedMatchV1 & {
   id: string;
   source: "local_history";
   trust: "local_only";
 };
 ```
 
-Legacy local history from `gomoku2d.guest-profile.v1` is migrated into v2 on
-store creation. The old v1 key is left untouched as a rollback/re-import safety
-net. The migration:
+`gomoku2d.local-profile.v3` is a clean-break key. Older
+`gomoku2d.guest-profile.*` keys are intentionally ignored instead of migrated;
+this is acceptable during the alpha period because no real user data needs to be
+preserved yet. If the new key is missing or malformed, the browser starts a new
+local profile and empty local history.
 
-- converts `mode: "bot"` to `match_kind: "local_vs_bot"`
-- encodes verbose `moves` as `move_cells`
-- converts local `players` into fixed `player_black` and `player_white`
-- derives local side from the human player instead of storing `guestStone`
-- drops `winningCells`; replay/result screens reconstruct them from moves
-- drops malformed schema-version-1 records instead of loading them into the UI
+The signed-in cloud-history cache lives under `gomoku2d.cloud-history.v3`.
+It is a disposable per-user cache/pending-sync queue, not a canonical data
+source. The v3 key intentionally drops older cached cloud-history state so old
+pre-profile-snapshot records cannot reappear after the schema pivot.
 
-Cloud profile sync turns canonical local records into embedded `cloud_saved`
-records by changing `source`, `trust`, and the human player's `profile_uid`.
-It does not reinterpret moves or player sides.
+Cloud profile sync turns canonical local replay records into embedded
+`cloud_saved` records by changing `source`, `trust`, and the human player's
+`profile_uid`. Local summary records are imported as `client_uploaded` summary
+records when possible. Local archived stats are imported only when the target
+cloud history is empty, because archived counters no longer carry per-match IDs
+and cannot be safely deduped against an existing cloud archive.
 
 ## Migration Notes
 
-There is no meaningful production cloud match history before the profile-v2
-embedded snapshot pivot, so this slice intentionally updates alpha data in
-place instead of carrying a migration layer. Future schema versions should
+The profile-v3 pivot stores casual cloud history directly in
+`profiles/{uid}.match_history`, moves rule preferences into `settings`, moves
+provider metadata into `auth.providers`, splits private history into
+`replay_matches`, `summary_matches`, and `archived_stats` tiers, removes copied
+email from app-owned profile data, and standardizes the profile reset barrier as
+`reset_at`. This is a clean alpha break: the app no longer imports old v2
+profile fields such as `recent_matches`, `preferred_variant`, or
+`history_reset_at`. Existing alpha Firestore v2 profile documents were test
+data and were cleared before deploying the matching v3 rules, rather than
+carrying a long-lived client-side migration layer. Future schema versions should
 either:
 
 - keep readers backward-compatible for existing versions, or

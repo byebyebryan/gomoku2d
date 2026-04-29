@@ -44,7 +44,7 @@ Three components, one repo:
 - **Zustand** — client state (current view, draft moves, UI toggles).
 - **Firebase SDK directly** — sign-in, Firestore subscriptions, storage for
   cloud-backed features.
-- **Local persistence** — local guest profile + guest history live in browser
+- **Local persistence** — local profile + local history live in browser
   storage until the user chooses to sign in.
 - **Phaser** — board rendering only. Receives a plain board state and emits
   intent events.
@@ -159,14 +159,14 @@ user clicks cell
         → bot's turn: wasm bot picks a move, same loop
 ```
 
-### Casual / guest match
+### Casual / local match
 
 ```
 user clicks cell
   → React dispatches place-move
     → gomoku-wasm applies move, returns new board
       → Zustand store updated
-        → local guest history/profile persisted in browser storage
+        → local history/profile persisted in browser storage
         → <Board> re-renders with new props
 ```
 
@@ -181,8 +181,8 @@ This lane is intentionally low-friction and low-trust:
 ```
 user finishes a local bot/casual match while signed in
   → browser serializes compact replay + summary
-    → browser merges it into profiles/{uid}.recent_matches
-      → browser writes the capped profile snapshot when the 15-minute sync gate is open
+    → browser merges it into profiles/{uid}.match_history replay/summary tiers
+      → browser writes the capped profile snapshot when the 5-minute sync gate is open
       → local cache stays in sync for quick resume/viewing
 ```
 
@@ -208,7 +208,7 @@ user clicks cell
 
 Two trust levels exist on purpose:
 
-- **Casual / free play** — no per-move backend validation; fine for guest play,
+- **Casual / free play** — no per-move backend validation; fine for local play,
   signed-in private bot history, and disposable local sessions.
 - **Trusted / cloud-backed play** — backend validates every move. Used for
   ranked matches, server-owned online history, and any replay we intend to
@@ -220,7 +220,7 @@ features trustworthy.
 ## Version sequence
 
 The old v0.1-to-v0.2 migration is complete. React now owns the shell, Phaser is
-the board renderer, and local guest play/history/replay are the working product
+the board renderer, and local play/history/replay are the working product
 baseline. The `v0.3` backend-continuity line has since added optional Firebase
 Auth, private cloud profile/history, and owner-scoped Firestore rules without
 moving casual gameplay out of the browser.

@@ -60,7 +60,7 @@ Move from proof-of-concept to a proper frontend product surface.
 - local stores and browser persistence
 - board owned by props/events instead of scene-owned app state
 - Home, Match, Replay, and Profile as separate surfaces
-- local guest profile and preferred-rule persistence
+- local profile and preferred-rule persistence
 - local match history and replay viewer
 - replay branching back into local practice
 - board-first desktop and mobile match layouts
@@ -119,7 +119,7 @@ ad-hoc planning artifact; this section remains the canonical roadmap.
 - Firebase Auth integration
 - Profile sign-in/sign-out UI
 - cloud profile create/load
-- guest-to-cloud promotion
+- local profile-to-cloud promotion
 - preferred settings/profile sync
 - private cloud history for signed-in players
 - cloud-saved private replay loading
@@ -128,40 +128,42 @@ ad-hoc planning artifact; this section remains the canonical roadmap.
 
 ### Final State
 
-The backend-foundation and first continuity slices shipped through `v0.3.2`:
+The backend-foundation and first continuity slices have reached `v0.3.3` prep:
 
 - Firebase/GCP project, Firebase web app, and env-driven web bootstrap
 - Firestore `(default)` in `us-central1`
 - hardened owner-scoped Firestore rules for `profiles/{uid}` with embedded
-  private recent history
+  private match history
 - Google Auth provider configured through the Firebase Auth / Identity Toolkit
   path
 - Profile sign-in/sign-out UI
 - cloud profile create/load at `profiles/{uid}`
-- guest-to-cloud profile/settings promotion after sign-in
-- capped private `recent_matches` cloud snapshot embedded directly in the cloud
-  profile
-- 15-minute coalesced profile/history sync lane for profile edits and finished
+- local profile-to-cloud profile/settings promotion after sign-in
+- capped private `match_history` replay, summary, and archived-stats tiers
+  embedded directly in the cloud profile
+- 5-minute coalesced profile/history sync lane for profile edits and finished
   signed-in casual matches
 - per-user cloud-history cache and active-history resolution for Profile and
   Replay
 - signed-in Reset Profile flow with confirmation, reset barrier, embedded
   private-history clear, and per-device cache clear
 - compact, versioned private match schema documented in `data_model.md`
-- local guest play/history still working without Firebase config
+- local profile storage moved to the clean-break `local-profile.v3` key,
+  aligned with the cloud replay/summary/archive retention tiers
+- local play/history still working without Firebase config
 - Google Auth Platform published to production for public sign-in
 - static `/privacy/` and `/terms/` pages plus contact/deletion email for OAuth
   app readiness
 - public-domain sign-in smoke and no-config fallback smoke completed for
   `0.3.0`
-- local-build guest-history promotion smoke completed for `0.3.1`: one 24-match
+- local-build local-history promotion smoke completed for `0.3.1`: one 24-match
   local history imported exactly once before the later profile-snapshot pivot
 - `0.3.2` private-history smoke completed across production and local builds:
   signed-in saves persisted, cloud history restored after refresh/sign-out,
   Reset Profile cleared cloud/local active history, old rows did not re-import,
   and post-reset saves worked normally
 - Firestore rules tests cover owner scoping, profile update cooldowns,
-  reset-barrier writes, embedded-history caps/timestamps, and closed casual
+  reset-barrier writes, embedded-history caps, and closed casual
   match subcollection writes
 - infra and free-tier tracking split into `backend_infra.md` and
   `backend_cost.md`
@@ -174,8 +176,8 @@ new product scope to this phase.
 
 Signing in extends the same local-first product without breaking it:
 
-- guest-only play remains complete
-- local guest history can be promoted without duplicates
+- local-only play remains complete
+- local history can be promoted without duplicates
 - signed-in matches save privately to cloud
 - signed-in profile/history works across browsers
 - no public artifacts are created implicitly
@@ -303,7 +305,7 @@ online features.
 
 Two people can reliably play a full online game, and the app can distinguish:
 
-- local guest history
+- local history
 - signed-in private cloud history
 - server-verified online/ranked history
 - explicitly published public replays

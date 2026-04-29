@@ -7,48 +7,122 @@ import {
 } from "firebase/firestore";
 
 import type { GameVariant } from "../core/bot_protocol";
-import { isSavedMatchV1, savedMatchIsAfterReset, type SavedMatchV1 } from "../match/saved_match";
+import {
+  isSavedMatchV1,
+  savedMatchIsAfterReset,
+  savedMatchPlayers,
+  savedMatchWinningSide,
+  type SavedMatchPlayer,
+  type SavedMatchSide,
+  type SavedMatchV1,
+} from "../match/saved_match";
 
-import { getFirebaseClients } from "./firebase";
 import type { CloudAuthUser } from "./auth_store";
 import { createCloudSavedMatch } from "./cloud_match";
+import { getFirebaseClients } from "./firebase";
 
-export const CLOUD_PROFILE_SCHEMA_VERSION = 2;
-export const CLOUD_RECENT_MATCHES_SCHEMA_VERSION = 1;
-export const CLOUD_RECENT_MATCHES_LIMIT = 24;
-export const CLOUD_PROFILE_SYNC_INTERVAL_MS = 15 * 60 * 1000;
+export const CLOUD_PROFILE_SCHEMA_VERSION = 3;
+export const CLOUD_REPLAY_MATCHES_LIMIT = 128;
+export const CLOUD_SUMMARY_MATCHES_LIMIT = 1024;
+export const CLOUD_MATCH_SUMMARY_SCHEMA_VERSION = 1;
+export const CLOUD_ARCHIVED_MATCH_STATS_SCHEMA_VERSION = 1;
+export const CLOUD_PROFILE_SYNC_INTERVAL_MS = 5 * 60 * 1000;
+export const CLOUD_DEFAULT_RULE_OPENING = "standard";
 
-export interface CloudRecentMatches {
-  matches: SavedMatchV1[];
-  schemaVersion: typeof CLOUD_RECENT_MATCHES_SCHEMA_VERSION;
-  updatedAt: string | null;
+export type CloudAuthProviderId = "github.com" | "google.com";
+
+export interface CloudAuthProvider {
+  avatarUrl: string | null;
+  displayName: string | null;
+  provider: CloudAuthProviderId;
+}
+
+export interface CloudProfileAuth {
+  providers: CloudAuthProvider[];
+}
+
+export interface CloudDefaultRules {
+  opening: typeof CLOUD_DEFAULT_RULE_OPENING;
+  ruleset: GameVariant;
+}
+
+export interface CloudProfileSettings {
+  defaultRules: CloudDefaultRules;
+}
+
+export type CloudMatchSummaryOutcome = "draw" | "loss" | "win";
+export type CloudMatchSummaryOpponentKind = "bot" | "human";
+
+export interface CloudMatchSummaryOpponent {
+  bot_key: string | null;
+  display_name: string;
+  kind: CloudMatchSummaryOpponentKind;
+  profile_uid: string | null;
+}
+
+export interface CloudMatchSummaryV1 {
+  id: string;
+  match_kind: SavedMatchV1["match_kind"];
+  move_count: number;
+  opening: typeof CLOUD_DEFAULT_RULE_OPENING;
+  opponent: CloudMatchSummaryOpponent;
+  outcome: CloudMatchSummaryOutcome;
+  ruleset: GameVariant;
+  saved_at: string;
+  schema_version: typeof CLOUD_MATCH_SUMMARY_SCHEMA_VERSION;
+  side: SavedMatchSide;
+  trust: SavedMatchV1["trust"];
+}
+
+export interface CloudMatchStatsCounter {
+  draws: number;
+  losses: number;
+  matches: number;
+  moves: number;
+  wins: number;
+}
+
+export interface CloudArchivedMatchStatsV1 {
+  archived_before: string | null;
+  archived_count: number;
+  by_opponent_type: Record<CloudMatchSummaryOpponentKind, CloudMatchStatsCounter>;
+  by_ruleset: Record<GameVariant, CloudMatchStatsCounter>;
+  by_side: Record<SavedMatchSide, CloudMatchStatsCounter>;
+  schema_version: typeof CLOUD_ARCHIVED_MATCH_STATS_SCHEMA_VERSION;
+  totals: CloudMatchStatsCounter;
+}
+
+export interface CloudMatchHistory {
+  archivedStats: CloudArchivedMatchStatsV1;
+  replayMatches: SavedMatchV1[];
+  summaryMatches: CloudMatchSummaryV1[];
+}
+
+export interface CloudMatchSummaryIdentity {
+  localProfileId?: string | null;
+  profileUid?: string | null;
 }
 
 export interface CloudProfile {
-  authProviders: string[];
-  avatarUrl: string | null;
+  auth: CloudProfileAuth;
   createdAt: string | null;
   displayName: string;
-  email: string | null;
-  historyResetAt: string | null;
-  preferredVariant: GameVariant;
-  recentMatches: CloudRecentMatches;
+  matchHistory: CloudMatchHistory;
+  resetAt: string | null;
+  settings: CloudProfileSettings;
   uid: string;
   updatedAt: string | null;
   username: string | null;
 }
 
 export interface CloudProfileDocument {
-  auth_providers?: unknown;
-  avatar_url?: unknown;
+  auth?: unknown;
   created_at?: unknown;
   display_name?: unknown;
-  email?: unknown;
-  history_reset_at?: unknown;
-  last_login_at?: unknown;
-  preferred_variant?: unknown;
-  recent_matches?: unknown;
+  match_history?: unknown;
+  reset_at?: unknown;
   schema_version?: unknown;
+  settings?: unknown;
   uid?: unknown;
   updated_at?: unknown;
   username?: unknown;
@@ -64,6 +138,10 @@ function validVariant(value: unknown): GameVariant | null {
 
 function stringOrNull(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value : null;
+}
+
+function isNullableString(value: unknown): value is string | null {
+  return value === null || typeof value === "string";
 }
 
 function timestampIsoOrNull(value: unknown): string | null {
@@ -87,49 +165,171 @@ function timestampIsoOrNull(value: unknown): string | null {
   return null;
 }
 
-function providerIds(value: unknown, fallback: string[]): string[] {
-  if (!Array.isArray(value)) {
-    return fallback;
+function normalizeProvider(value: unknown): CloudAuthProviderId | null {
+  if (value === "google.com" || value === "google") {
+    return "google.com";
   }
 
-  return value.filter((entry): entry is string => typeof entry === "string" && entry.trim().length > 0);
+  if (value === "github.com" || value === "github") {
+    return "github.com";
+  }
+
+  return null;
 }
 
-function sortRecentMatches(matches: SavedMatchV1[]): SavedMatchV1[] {
-  return [...matches].sort((left, right) => right.saved_at.localeCompare(left.saved_at));
+function authProviderForUser(user: CloudAuthUser): CloudAuthProvider[] {
+  const rawProviders = user.providers?.length
+    ? user.providers
+    : user.providerIds.map((providerId) => ({
+      avatarUrl: user.avatarUrl,
+      displayName: user.displayName,
+      provider: providerId,
+    }));
+  const byId = new Map<CloudAuthProviderId, CloudAuthProvider>();
+
+  for (const rawProvider of rawProviders) {
+    const provider = normalizeProvider(rawProvider.provider);
+    if (!provider) {
+      continue;
+    }
+
+    byId.set(provider, {
+      avatarUrl: stringOrNull(rawProvider.avatarUrl),
+      displayName: stringOrNull(rawProvider.displayName),
+      provider,
+    });
+  }
+
+  return Array.from(byId.values()).sort((left, right) => left.provider.localeCompare(right.provider));
 }
 
-function recentMatchesFromDocument(
-  value: unknown,
-  historyResetAt: string | null,
-): CloudRecentMatches {
-  const candidate = value as {
-    matches?: unknown;
-    schema_version?: unknown;
-    updated_at?: unknown;
-  } | null;
-  const matches = Array.isArray(candidate?.matches)
-    ? candidate.matches
-      .filter(isSavedMatchV1)
-      .filter((match) => savedMatchIsAfterReset(match, historyResetAt))
-    : [];
+function authForUser(user: CloudAuthUser): CloudProfileAuth {
+  const providers = authProviderForUser(user);
 
   return {
-    matches: sortRecentMatches(matches).slice(0, CLOUD_RECENT_MATCHES_LIMIT),
-    schemaVersion: CLOUD_RECENT_MATCHES_SCHEMA_VERSION,
-    updatedAt: timestampIsoOrNull(candidate?.updated_at),
+    providers: providers.length > 0
+      ? providers
+      : [{
+        avatarUrl: stringOrNull(user.avatarUrl),
+        displayName: stringOrNull(user.displayName),
+        provider: "google.com",
+      }],
   };
 }
 
-export function mergeCloudRecentMatches(
+function authProviderFromDocument(value: unknown): CloudAuthProvider | null {
+  const candidate = value as {
+    avatar_url?: unknown;
+    display_name?: unknown;
+    provider?: unknown;
+    provider_id?: unknown;
+  } | null;
+  const provider = normalizeProvider(candidate?.provider) ?? normalizeProvider(candidate?.provider_id);
+
+  if (!provider) {
+    return null;
+  }
+
+  return {
+    avatarUrl: stringOrNull(candidate?.avatar_url),
+    displayName: stringOrNull(candidate?.display_name),
+    provider,
+  };
+}
+
+function authFromDocument(value: unknown, fallback: CloudProfileAuth): CloudProfileAuth {
+  const candidate = value as { providers?: unknown } | null;
+  if (!Array.isArray(candidate?.providers)) {
+    return fallback;
+  }
+
+  const providers = candidate.providers.flatMap((entry) => {
+    const provider = authProviderFromDocument(entry);
+    return provider ? [provider] : [];
+  });
+
+  return providers.length > 0 ? { providers } : fallback;
+}
+
+function authDocument(auth: CloudProfileAuth) {
+  return {
+    providers: auth.providers.map((provider) => ({
+      avatar_url: provider.avatarUrl,
+      display_name: provider.displayName,
+      provider: provider.provider,
+    })),
+  };
+}
+
+function authEqual(left: CloudProfileAuth, right: CloudProfileAuth): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+export function cloudSettingsForVariant(variant: GameVariant): CloudProfileSettings {
+  return {
+    defaultRules: {
+      opening: CLOUD_DEFAULT_RULE_OPENING,
+      ruleset: variant,
+    },
+  };
+}
+
+function settingsFromDocument(value: unknown, fallbackVariant: GameVariant): CloudProfileSettings {
+  const candidate = value as {
+    default_rules?: {
+      opening?: unknown;
+      ruleset?: unknown;
+    };
+  } | null;
+  const ruleset = validVariant(candidate?.default_rules?.ruleset) ?? fallbackVariant;
+
+  return {
+    defaultRules: {
+      opening: CLOUD_DEFAULT_RULE_OPENING,
+      ruleset,
+    },
+  };
+}
+
+export function cloudSettingsDocument(settings: CloudProfileSettings) {
+  return {
+    default_rules: {
+      opening: settings.defaultRules.opening,
+      ruleset: settings.defaultRules.ruleset,
+    },
+  };
+}
+
+function settingsEqual(left: CloudProfileSettings, right: CloudProfileSettings): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function sortReplayMatches(matches: SavedMatchV1[]): SavedMatchV1[] {
+  return [...matches].sort((left, right) => right.saved_at.localeCompare(left.saved_at));
+}
+
+function replayMatchesFromDocument(
+  matchHistoryValue: unknown,
+  resetAt: string | null,
+): SavedMatchV1[] {
+  const candidate = matchHistoryValue as { replay_matches?: unknown } | null;
+  const rawMatches = Array.isArray(candidate?.replay_matches) ? candidate.replay_matches : [];
+  const matches = rawMatches
+    .filter(isSavedMatchV1)
+    .filter((match) => savedMatchIsAfterReset(match, resetAt));
+
+  return sortReplayMatches(matches).slice(0, CLOUD_REPLAY_MATCHES_LIMIT);
+}
+
+export function mergeCloudSavedMatches(
   user: Pick<CloudAuthUser, "uid">,
   matches: SavedMatchV1[],
-  historyResetAt: string | null | undefined = null,
+  resetAt: string | null | undefined = null,
 ): SavedMatchV1[] {
   const byId = new Map<string, SavedMatchV1>();
 
   for (const match of matches) {
-    if (!savedMatchIsAfterReset(match, historyResetAt)) {
+    if (!savedMatchIsAfterReset(match, resetAt)) {
       continue;
     }
 
@@ -143,39 +343,409 @@ export function mergeCloudRecentMatches(
     }
   }
 
-  return sortRecentMatches(Array.from(byId.values())).slice(0, CLOUD_RECENT_MATCHES_LIMIT);
+  return sortReplayMatches(Array.from(byId.values()));
 }
 
-function recentMatchesDocument(matches: SavedMatchV1[], updatedAt: unknown = serverTimestamp()) {
+export function mergeCloudReplayMatches(
+  user: Pick<CloudAuthUser, "uid">,
+  matches: SavedMatchV1[],
+  resetAt: string | null | undefined = null,
+): SavedMatchV1[] {
+  return mergeCloudSavedMatches(user, matches, resetAt).slice(0, CLOUD_REPLAY_MATCHES_LIMIT);
+}
+
+function replayMatchesEqual(left: SavedMatchV1[], right: SavedMatchV1[]): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function emptyStatsCounter(): CloudMatchStatsCounter {
   return {
-    matches,
-    schema_version: CLOUD_RECENT_MATCHES_SCHEMA_VERSION,
-    updated_at: updatedAt,
+    draws: 0,
+    losses: 0,
+    matches: 0,
+    moves: 0,
+    wins: 0,
   };
 }
 
-function recentMatchesEqual(left: SavedMatchV1[], right: SavedMatchV1[]): boolean {
+function emptyStatsByRuleset(): Record<GameVariant, CloudMatchStatsCounter> {
+  return {
+    freestyle: emptyStatsCounter(),
+    renju: emptyStatsCounter(),
+  };
+}
+
+function emptyStatsBySide(): Record<SavedMatchSide, CloudMatchStatsCounter> {
+  return {
+    black: emptyStatsCounter(),
+    white: emptyStatsCounter(),
+  };
+}
+
+function emptyStatsByOpponentType(): Record<CloudMatchSummaryOpponentKind, CloudMatchStatsCounter> {
+  return {
+    bot: emptyStatsCounter(),
+    human: emptyStatsCounter(),
+  };
+}
+
+export function emptyCloudArchivedMatchStats(): CloudArchivedMatchStatsV1 {
+  return {
+    archived_before: null,
+    archived_count: 0,
+    by_opponent_type: emptyStatsByOpponentType(),
+    by_ruleset: emptyStatsByRuleset(),
+    by_side: emptyStatsBySide(),
+    schema_version: CLOUD_ARCHIVED_MATCH_STATS_SCHEMA_VERSION,
+    totals: emptyStatsCounter(),
+  };
+}
+
+function counterFromDocument(value: unknown): CloudMatchStatsCounter | null {
+  const candidate = value as Partial<CloudMatchStatsCounter> | null;
+  if (
+    candidate === null
+    || typeof candidate !== "object"
+    || !Number.isFinite(candidate.draws)
+    || !Number.isFinite(candidate.losses)
+    || !Number.isFinite(candidate.matches)
+    || !Number.isFinite(candidate.moves)
+    || !Number.isFinite(candidate.wins)
+  ) {
+    return null;
+  }
+
+  return {
+    draws: Math.max(0, Math.floor(Number(candidate.draws))),
+    losses: Math.max(0, Math.floor(Number(candidate.losses))),
+    matches: Math.max(0, Math.floor(Number(candidate.matches))),
+    moves: Math.max(0, Math.floor(Number(candidate.moves))),
+    wins: Math.max(0, Math.floor(Number(candidate.wins))),
+  };
+}
+
+export function archivedStatsFromDocument(value: unknown): CloudArchivedMatchStatsV1 {
+  const candidate = value as Partial<CloudArchivedMatchStatsV1> | null;
+  const totals = counterFromDocument(candidate?.totals);
+  const freestyle = counterFromDocument(candidate?.by_ruleset?.freestyle);
+  const renju = counterFromDocument(candidate?.by_ruleset?.renju);
+  const black = counterFromDocument(candidate?.by_side?.black);
+  const white = counterFromDocument(candidate?.by_side?.white);
+  const bot = counterFromDocument(candidate?.by_opponent_type?.bot);
+  const human = counterFromDocument(candidate?.by_opponent_type?.human);
+
+  if (
+    candidate === null
+    || typeof candidate !== "object"
+    || candidate.schema_version !== CLOUD_ARCHIVED_MATCH_STATS_SCHEMA_VERSION
+    || !totals
+    || !freestyle
+    || !renju
+    || !black
+    || !white
+    || !bot
+    || !human
+  ) {
+    return emptyCloudArchivedMatchStats();
+  }
+
+  return {
+    archived_before: stringOrNull(candidate.archived_before),
+    archived_count: Math.max(0, Math.floor(Number(candidate.archived_count) || 0)),
+    by_opponent_type: { bot, human },
+    by_ruleset: { freestyle, renju },
+    by_side: { black, white },
+    schema_version: CLOUD_ARCHIVED_MATCH_STATS_SCHEMA_VERSION,
+    totals,
+  };
+}
+
+function incrementCounter(counter: CloudMatchStatsCounter, summary: CloudMatchSummaryV1): void {
+  counter.matches += 1;
+  counter.moves += summary.move_count;
+
+  if (summary.outcome === "win") {
+    counter.wins += 1;
+  } else if (summary.outcome === "loss") {
+    counter.losses += 1;
+  } else {
+    counter.draws += 1;
+  }
+}
+
+function addStatsCounter(target: CloudMatchStatsCounter, source: CloudMatchStatsCounter): void {
+  target.draws += source.draws;
+  target.losses += source.losses;
+  target.matches += source.matches;
+  target.moves += source.moves;
+  target.wins += source.wins;
+}
+
+export function mergeCloudArchivedMatchStats(
+  left: CloudArchivedMatchStatsV1,
+  right: CloudArchivedMatchStatsV1,
+): CloudArchivedMatchStatsV1 {
+  if (right.archived_count === 0) {
+    return left;
+  }
+
+  const next: CloudArchivedMatchStatsV1 = JSON.parse(JSON.stringify(left)) as CloudArchivedMatchStatsV1;
+  next.archived_count += right.archived_count;
+  const archivedBefore = [next.archived_before, right.archived_before]
+    .filter((value): value is string => Boolean(value))
+    .sort();
+  next.archived_before = archivedBefore.length > 0 ? archivedBefore[archivedBefore.length - 1]! : null;
+
+  addStatsCounter(next.totals, right.totals);
+  addStatsCounter(next.by_ruleset.freestyle, right.by_ruleset.freestyle);
+  addStatsCounter(next.by_ruleset.renju, right.by_ruleset.renju);
+  addStatsCounter(next.by_side.black, right.by_side.black);
+  addStatsCounter(next.by_side.white, right.by_side.white);
+  addStatsCounter(next.by_opponent_type.bot, right.by_opponent_type.bot);
+  addStatsCounter(next.by_opponent_type.human, right.by_opponent_type.human);
+
+  return next;
+}
+
+function archiveWithSummaries(
+  archivedStats: CloudArchivedMatchStatsV1,
+  summaries: CloudMatchSummaryV1[],
+): CloudArchivedMatchStatsV1 {
+  if (summaries.length === 0) {
+    return archivedStats;
+  }
+
+  const next: CloudArchivedMatchStatsV1 = JSON.parse(JSON.stringify(archivedStats)) as CloudArchivedMatchStatsV1;
+  for (const summary of summaries) {
+    incrementCounter(next.totals, summary);
+    incrementCounter(next.by_ruleset[summary.ruleset], summary);
+    incrementCounter(next.by_side[summary.side], summary);
+    incrementCounter(next.by_opponent_type[summary.opponent.kind], summary);
+  }
+
+  next.archived_count += summaries.length;
+  next.archived_before = summaries
+    .map((summary) => summary.saved_at)
+    .reduce((latest, savedAt) => (latest && latest > savedAt ? latest : savedAt), next.archived_before);
+
+  return next;
+}
+
+function botKeyForPlayer(player: SavedMatchPlayer): string | null {
+  if (player.kind !== "bot" || !player.bot) {
+    return null;
+  }
+
+  return [
+    `${player.bot.id}@${player.bot.version}`,
+    `${player.bot.engine}/${player.bot.config.kind}:d${player.bot.config.depth}`,
+  ].join(":");
+}
+
+export function cloudMatchSummaryForMatch(
+  identity: CloudMatchSummaryIdentity,
+  match: SavedMatchV1,
+): CloudMatchSummaryV1 {
+  const players = savedMatchPlayers(match);
+  const local = players.find(({ player }) => identity.profileUid && player.profile_uid === identity.profileUid)
+    ?? players.find(({ player }) => identity.localProfileId && player.local_profile_id === identity.localProfileId)
+    ?? players.find(({ player }) => player.kind === "human")
+    ?? players[0]!;
+  const opponent = players.find(({ side }) => side !== local.side)?.player ?? players[1]!.player;
+  const winningSide = savedMatchWinningSide(match);
+
+  return {
+    id: match.id,
+    match_kind: match.match_kind,
+    move_count: match.move_count,
+    opening: CLOUD_DEFAULT_RULE_OPENING,
+    opponent: {
+      bot_key: botKeyForPlayer(opponent),
+      display_name: opponent.display_name,
+      kind: opponent.kind === "bot" ? "bot" : "human",
+      profile_uid: opponent.profile_uid,
+    },
+    outcome: winningSide === null ? "draw" : winningSide === local.side ? "win" : "loss",
+    ruleset: match.variant,
+    saved_at: match.saved_at,
+    schema_version: CLOUD_MATCH_SUMMARY_SCHEMA_VERSION,
+    side: local.side,
+    trust: match.trust,
+  };
+}
+
+export function isCloudMatchSummaryV1(value: unknown): value is CloudMatchSummaryV1 {
+  const candidate = value as Partial<CloudMatchSummaryV1> | null;
+  const opponent = candidate?.opponent as Partial<CloudMatchSummaryOpponent> | undefined;
+
+  return (
+    candidate !== null
+    && typeof candidate === "object"
+    && typeof candidate.id === "string"
+    && candidate.id.length > 0
+    && candidate.schema_version === CLOUD_MATCH_SUMMARY_SCHEMA_VERSION
+    && typeof candidate.saved_at === "string"
+    && candidate.saved_at.length > 0
+    && typeof candidate.move_count === "number"
+    && Number.isInteger(candidate.move_count)
+    && candidate.move_count >= 0
+    && (candidate.match_kind === "local_vs_bot"
+      || candidate.match_kind === "local_pvp"
+      || candidate.match_kind === "online_pvp"
+      || candidate.match_kind === "puzzle_challenge")
+    && validVariant(candidate.ruleset) !== null
+    && candidate.opening === CLOUD_DEFAULT_RULE_OPENING
+    && (candidate.side === "black" || candidate.side === "white")
+    && (candidate.outcome === "win" || candidate.outcome === "loss" || candidate.outcome === "draw")
+    && (candidate.trust === "local_only"
+      || candidate.trust === "client_uploaded"
+      || candidate.trust === "server_verified")
+    && opponent !== undefined
+    && (opponent.kind === "bot" || opponent.kind === "human")
+    && typeof opponent.display_name === "string"
+    && opponent.display_name.length > 0
+    && isNullableString(opponent.profile_uid)
+    && isNullableString(opponent.bot_key)
+  );
+}
+
+function summaryMatchesFromDocument(
+  matchHistoryValue: unknown,
+  resetAt: string | null,
+): CloudMatchSummaryV1[] {
+  const candidate = matchHistoryValue as { summary_matches?: unknown } | null;
+  const rawSummaries = Array.isArray(candidate?.summary_matches) ? candidate.summary_matches : [];
+  const summaries = Array.isArray(rawSummaries)
+    ? rawSummaries
+      .filter(isCloudMatchSummaryV1)
+      .filter((summary) => savedMatchIsAfterReset({ saved_at: summary.saved_at }, resetAt))
+    : [];
+
+  return summaries
+    .sort((left, right) => right.saved_at.localeCompare(left.saved_at))
+    .slice(0, CLOUD_SUMMARY_MATCHES_LIMIT);
+}
+
+export function mergeCloudMatchSummaryState(input: {
+  archivedStats: CloudArchivedMatchStatsV1;
+  convertLocalMatches?: boolean;
+  identity?: CloudMatchSummaryIdentity;
+  matches: SavedMatchV1[];
+  replayMatches: SavedMatchV1[];
+  resetAt?: string | null;
+  summaries: CloudMatchSummaryV1[];
+  user?: Pick<CloudAuthUser, "uid">;
+}): Pick<CloudMatchHistory, "archivedStats" | "summaryMatches"> {
+  const byId = new Map<string, CloudMatchSummaryV1>();
+  const replayMatchIds = new Set(input.replayMatches.map((match) => match.id));
+
+  for (const summary of input.summaries) {
+    if (!savedMatchIsAfterReset({ saved_at: summary.saved_at }, input.resetAt)) {
+      continue;
+    }
+    if (replayMatchIds.has(summary.id)) {
+      continue;
+    }
+    byId.set(summary.id, summary);
+  }
+
+  for (const match of input.matches) {
+    if (!savedMatchIsAfterReset(match, input.resetAt)) {
+      continue;
+    }
+
+    const shouldConvertLocal = input.convertLocalMatches !== false && input.user;
+    const cloudMatch = shouldConvertLocal && match.source === "local_history"
+      ? createCloudSavedMatch(input.user!, match)
+      : match;
+    const summary = cloudMatchSummaryForMatch(input.identity ?? { profileUid: input.user?.uid ?? null }, cloudMatch);
+    if (replayMatchIds.has(summary.id)) {
+      continue;
+    }
+
+    const existing = byId.get(summary.id);
+    if (!existing || summary.saved_at >= existing.saved_at) {
+      byId.set(summary.id, summary);
+    }
+  }
+
+  const sorted = Array.from(byId.values()).sort((left, right) => right.saved_at.localeCompare(left.saved_at));
+  const summaryMatches = sorted.slice(0, CLOUD_SUMMARY_MATCHES_LIMIT);
+  const evicted = sorted.slice(CLOUD_SUMMARY_MATCHES_LIMIT);
+
+  return {
+    archivedStats: archiveWithSummaries(input.archivedStats, evicted),
+    summaryMatches,
+  };
+}
+
+function matchHistoryFromDocument(
+  document: CloudProfileDocument | null | undefined,
+  resetAt: string | null,
+  user: Pick<CloudAuthUser, "uid">,
+): CloudMatchHistory {
+  const candidate = document?.match_history as { archived_stats?: unknown } | null;
+  const replayMatches = replayMatchesFromDocument(document?.match_history, resetAt);
+  const summaryMatches = summaryMatchesFromDocument(document?.match_history, resetAt);
+  const archivedStats = archivedStatsFromDocument(candidate?.archived_stats);
+  const summaryState = mergeCloudMatchSummaryState({
+    archivedStats,
+    matches: [],
+    replayMatches,
+    resetAt,
+    summaries: summaryMatches,
+    user,
+  });
+
+  return {
+    archivedStats: summaryState.archivedStats,
+    replayMatches,
+    summaryMatches: summaryState.summaryMatches,
+  };
+}
+
+function matchHistoryDocument(history: CloudMatchHistory): Record<string, unknown> {
+  return {
+    archived_stats: history.archivedStats,
+    replay_matches: history.replayMatches,
+    summary_matches: history.summaryMatches,
+  };
+}
+
+export function emptyCloudMatchHistory(): CloudMatchHistory {
+  return {
+    archivedStats: emptyCloudArchivedMatchStats(),
+    replayMatches: [],
+    summaryMatches: [],
+  };
+}
+
+function isGroupedMatchHistoryDocument(value: unknown): boolean {
+  const candidate = value as { archived_stats?: unknown; replay_matches?: unknown; summary_matches?: unknown } | null;
+  return candidate !== null
+    && typeof candidate === "object"
+    && Array.isArray(candidate.replay_matches)
+    && Array.isArray(candidate.summary_matches)
+    && candidate.archived_stats !== undefined;
+}
+
+function matchHistoryEqual(left: CloudMatchHistory, right: CloudMatchHistory): boolean {
   return JSON.stringify(left) === JSON.stringify(right);
+}
+
+export function cloudMatchHistoryHasMatch(history: CloudMatchHistory, matchId: string): boolean {
+  return history.replayMatches.some((match) => match.id === matchId)
+    || history.summaryMatches.some((match) => match.id === matchId);
+}
+
+export function cloudMatchHistoryIsEmpty(history: CloudMatchHistory): boolean {
+  return history.replayMatches.length === 0
+    && history.summaryMatches.length === 0
+    && history.archivedStats.archived_count === 0;
 }
 
 function hasOwnField(document: CloudProfileDocument, field: keyof CloudProfileDocument): boolean {
   return Object.prototype.hasOwnProperty.call(document, field);
-}
-
-function providerIdsMatch(value: unknown, expected: string[]): boolean {
-  return (
-    Array.isArray(value)
-    && value.length === expected.length
-    && value.every((entry, index) => entry === expected[index])
-  );
-}
-
-function nullableFieldMatches(
-  document: CloudProfileDocument,
-  field: keyof Pick<CloudProfileDocument, "avatar_url" | "email">,
-  expected: string | null,
-): boolean {
-  return hasOwnField(document, field) && document[field] === expected;
 }
 
 export function cloudProfileFromDocument(
@@ -183,17 +753,18 @@ export function cloudProfileFromDocument(
   fallbackVariant: GameVariant,
   document: CloudProfileDocument | null,
 ): CloudProfile {
-  const historyResetAt = timestampIsoOrNull(document?.history_reset_at);
+  const fallbackAuth = authForUser(user);
+  const resetAt = timestampIsoOrNull(document?.reset_at);
+  const settings = settingsFromDocument(document?.settings, fallbackVariant);
+  const matchHistory = matchHistoryFromDocument(document, resetAt, user);
 
   return {
-    authProviders: providerIds(document?.auth_providers, user.providerIds),
-    avatarUrl: stringOrNull(document?.avatar_url) ?? user.avatarUrl,
+    auth: authFromDocument(document?.auth, fallbackAuth),
     createdAt: timestampIsoOrNull(document?.created_at),
     displayName: stringOrNull(document?.display_name) ?? user.displayName,
-    email: stringOrNull(document?.email) ?? user.email,
-    historyResetAt,
-    preferredVariant: validVariant(document?.preferred_variant) ?? fallbackVariant,
-    recentMatches: recentMatchesFromDocument(document?.recent_matches, historyResetAt),
+    matchHistory,
+    resetAt,
+    settings,
     uid: user.uid,
     updatedAt: timestampIsoOrNull(document?.updated_at),
     username: stringOrNull(document?.username),
@@ -202,18 +773,16 @@ export function cloudProfileFromDocument(
 
 export function newCloudProfileWrite(user: CloudAuthUser, preferredVariant: GameVariant) {
   const now = serverTimestamp();
+  const settings = cloudSettingsForVariant(preferredVariant);
 
   return {
-    auth_providers: user.providerIds,
-    avatar_url: user.avatarUrl,
+    auth: authDocument(authForUser(user)),
     created_at: now,
     display_name: user.displayName,
-    email: user.email,
-    history_reset_at: null,
-    last_login_at: now,
-    preferred_variant: preferredVariant,
-    recent_matches: recentMatchesDocument([], null),
+    match_history: matchHistoryDocument(emptyCloudMatchHistory()),
+    reset_at: null,
     schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
+    settings: cloudSettingsDocument(settings),
     uid: user.uid,
     updated_at: now,
     username: null,
@@ -226,31 +795,37 @@ export function existingCloudProfileUpdate(
 export function existingCloudProfileUpdate(
   user: CloudAuthUser,
   document: CloudProfileDocument,
+  fallbackVariant?: GameVariant,
 ): Record<string, unknown> | null;
 export function existingCloudProfileUpdate(
   user: CloudAuthUser,
   document?: CloudProfileDocument,
+  fallbackVariant: GameVariant = "freestyle",
 ): Record<string, unknown> | null {
   const patch: Record<string, unknown> = {};
+  const expectedAuth = authForUser(user);
 
-  if (!document || !providerIdsMatch(document.auth_providers, user.providerIds)) {
-    patch.auth_providers = user.providerIds;
-  }
-
-  if (!document || !nullableFieldMatches(document, "avatar_url", user.avatarUrl)) {
-    patch.avatar_url = user.avatarUrl;
-  }
-
-  if (!document || !nullableFieldMatches(document, "email", user.email)) {
-    patch.email = user.email;
+  if (!document || !authEqual(authFromDocument(document.auth, expectedAuth), expectedAuth)) {
+    patch.auth = authDocument(expectedAuth);
   }
 
   if (!document || document.schema_version !== CLOUD_PROFILE_SCHEMA_VERSION) {
     patch.schema_version = CLOUD_PROFILE_SCHEMA_VERSION;
   }
 
-  if (!document || !document.recent_matches) {
-    patch.recent_matches = recentMatchesDocument([]);
+  if (!document || !hasOwnField(document, "settings")) {
+    patch.settings = cloudSettingsDocument(settingsFromDocument(document?.settings, fallbackVariant));
+  }
+
+  if (!document || !hasOwnField(document, "reset_at")) {
+    patch.reset_at = null;
+  }
+
+  const resetAt = timestampIsoOrNull(document?.reset_at);
+  const matchHistory = matchHistoryFromDocument(document, resetAt, user);
+
+  if (!document || !isGroupedMatchHistoryDocument(document.match_history)) {
+    patch.match_history = matchHistoryDocument(matchHistory);
   }
 
   if (!document || document.uid !== user.uid) {
@@ -261,64 +836,63 @@ export function existingCloudProfileUpdate(
     return null;
   }
 
-  const now = serverTimestamp();
-
   return {
     ...patch,
-    last_login_at: now,
-    updated_at: now,
+    updated_at: serverTimestamp(),
   };
 }
 
 export function resetCloudProfileUpdate(user: CloudAuthUser, preferredVariant: GameVariant) {
   const now = serverTimestamp();
-
-  return {
-    auth_providers: user.providerIds,
-    avatar_url: user.avatarUrl,
+  const settings = cloudSettingsForVariant(preferredVariant);
+  const update: Record<string, unknown> = {
+    auth: authDocument(authForUser(user)),
     display_name: user.displayName,
-    email: user.email,
-    history_reset_at: now,
-    last_login_at: now,
-    preferred_variant: preferredVariant,
-    recent_matches: recentMatchesDocument([], now),
+    match_history: matchHistoryDocument(emptyCloudMatchHistory()),
+    reset_at: now,
     schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
+    settings: cloudSettingsDocument(settings),
     uid: user.uid,
     updated_at: now,
   };
+
+  return update;
 }
 
 export function cloudProfileSnapshotUpdate(input: {
   displayName: string;
+  matchHistory: CloudMatchHistory;
   preferredVariant: GameVariant;
-  recentMatches: SavedMatchV1[];
   user: CloudAuthUser;
 }): Record<string, unknown> {
   const now = serverTimestamp();
-
-  return {
-    auth_providers: input.user.providerIds,
-    avatar_url: input.user.avatarUrl,
+  const settings = cloudSettingsForVariant(input.preferredVariant);
+  const update: Record<string, unknown> = {
+    auth: authDocument(authForUser(input.user)),
     display_name: input.displayName,
-    email: input.user.email,
-    last_login_at: now,
-    preferred_variant: input.preferredVariant,
-    recent_matches: recentMatchesDocument(input.recentMatches, now),
+    match_history: matchHistoryDocument(input.matchHistory),
     schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
+    settings: cloudSettingsDocument(settings),
     uid: input.user.uid,
     updated_at: now,
   };
+
+  return update;
 }
 
 export function cloudProfileSyncDue(
-  profile: Pick<CloudProfile, "createdAt" | "recentMatches" | "updatedAt">,
+  profile: Pick<CloudProfile, "createdAt" | "matchHistory" | "updatedAt">,
   nowMs = Date.now(),
 ): boolean {
   if (!profile.updatedAt) {
     return true;
   }
 
-  if (profile.createdAt === profile.updatedAt && profile.recentMatches.matches.length === 0) {
+  if (
+    profile.createdAt === profile.updatedAt
+    && profile.matchHistory.replayMatches.length === 0
+    && profile.matchHistory.summaryMatches.length === 0
+  ) {
     return true;
   }
 
@@ -328,15 +902,17 @@ export function cloudProfileSyncDue(
 
 export function cloudProfileNeedsSnapshotSync(input: {
   cloudDisplayName: string;
-  cloudPreferredVariant: GameVariant;
-  cloudRecentMatches: SavedMatchV1[];
+  cloudMatchHistory: CloudMatchHistory;
+  cloudSettings: CloudProfileSettings;
   displayName: string;
+  matchHistory: CloudMatchHistory;
   preferredVariant: GameVariant;
-  recentMatches: SavedMatchV1[];
 }): boolean {
+  const settings = cloudSettingsForVariant(input.preferredVariant);
+
   return input.cloudDisplayName !== input.displayName
-    || input.cloudPreferredVariant !== input.preferredVariant
-    || !recentMatchesEqual(input.cloudRecentMatches, input.recentMatches);
+    || !settingsEqual(input.cloudSettings, settings)
+    || !matchHistoryEqual(input.cloudMatchHistory, input.matchHistory);
 }
 
 export async function ensureCloudProfile(
@@ -354,7 +930,7 @@ export async function ensureCloudProfile(
 
   if (snapshot.exists()) {
     const data = snapshot.data() as CloudProfileDocument;
-    const update = existingCloudProfileUpdate(user, data);
+    const update = existingCloudProfileUpdate(user, data, preferredVariant);
     if (!update) {
       return cloudProfileFromDocument(user, preferredVariant, data);
     }
@@ -383,7 +959,7 @@ export async function resetCloudProfile(
   if (!snapshot.exists()) {
     const profile = {
       ...newCloudProfileWrite(user, preferredVariant),
-      history_reset_at: serverTimestamp(),
+      reset_at: serverTimestamp(),
     };
     await setDoc(profileRef, profile);
     const refreshed = await getDoc(profileRef);

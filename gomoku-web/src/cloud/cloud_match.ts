@@ -48,7 +48,7 @@ function assertValidSavedAt(match: Pick<SavedMatchV1, "saved_at">): void {
   }
 }
 
-function assertGuestLocalMatch(match: Pick<SavedMatchV1, "source" | "trust">): void {
+function assertLocalHistoryMatch(match: Pick<SavedMatchV1, "source" | "trust">): void {
   if (match.source !== "local_history" || match.trust !== "local_only") {
     throw new Error("Cloud history sync only supports local history records.");
   }
@@ -89,7 +89,7 @@ export function createCloudSavedMatch(
   user: Pick<CloudAuthUser, "uid">,
   match: SavedMatchV1,
 ): CloudSavedMatch {
-  assertGuestLocalMatch(match);
+  assertLocalHistoryMatch(match);
   assertFinishedMatch(match);
   assertValidMovePayload(match);
   assertValidSavedAt(match);
