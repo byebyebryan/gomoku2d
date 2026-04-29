@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createLocalSavedMatch } from "../match/saved_match";
-import type { GuestProfileIdentity, GuestSavedMatch } from "../profile/guest_profile_store";
+import type { GuestSavedMatch } from "../profile/guest_profile_store";
 
 import type { CloudAuthUser } from "./auth_store";
 import {
@@ -12,11 +12,7 @@ import {
   PRACTICE_BOT_DEPTH,
   PRACTICE_BOT_ENGINE,
   PRACTICE_BOT_ID,
-  cloudDirectSavedMatchId,
-  cloudMatchIdForGuestMatch,
-  cloudSavedMatchFromGuestMatch,
-  createCloudDirectSavedMatch,
-  localOriginIdForGuestMatch,
+  createCloudSavedMatch,
 } from "./cloud_match";
 
 const user: CloudAuthUser = {
@@ -25,16 +21,6 @@ const user: CloudAuthUser = {
   email: "bryan@example.com",
   providerIds: ["google.com"],
   uid: "uid-1",
-};
-
-const guestProfile: GuestProfileIdentity = {
-  avatarUrl: null,
-  createdAt: "2026-04-27T00:00:00.000Z",
-  displayName: "ByeByeBryan",
-  id: "guest-1",
-  kind: "guest",
-  updatedAt: "2026-04-27T00:00:00.000Z",
-  username: null,
 };
 
 const match: GuestSavedMatch = createLocalSavedMatch({
@@ -56,13 +42,11 @@ const match: GuestSavedMatch = createLocalSavedMatch({
 
 describe("cloud match serialization", () => {
   it("keeps local match identifiers for embedded profile history", () => {
-    expect(cloudMatchIdForGuestMatch(match)).toBe("match-1");
-    expect(cloudDirectSavedMatchId(match)).toBe("match-1");
-    expect(localOriginIdForGuestMatch(guestProfile, match)).toBe("guest:guest-1:match-1");
+    expect(createCloudSavedMatch(user, match).id).toBe("match-1");
   });
 
   it("serializes a finished local match as a cloud-saved embedded record", () => {
-    const document = cloudSavedMatchFromGuestMatch(user, guestProfile, match);
+    const document = createCloudSavedMatch(user, match);
 
     expect(document).toMatchObject({
       board_size: 15,
@@ -104,13 +88,13 @@ describe("cloud match serialization", () => {
   });
 
   it("sets local_profile_id to null on the human player for cross-device identity", () => {
-    const document = createCloudDirectSavedMatch(user, match);
+    const document = createCloudSavedMatch(user, match);
     expect(document.player_black.local_profile_id).toBeNull();
   });
 
   it("rejects unfinished local matches", () => {
     expect(() =>
-      cloudSavedMatchFromGuestMatch(user, guestProfile, {
+      createCloudSavedMatch(user, {
         ...match,
         status: "playing",
       } as unknown as GuestSavedMatch),
@@ -119,7 +103,7 @@ describe("cloud match serialization", () => {
 
   it("rejects moves outside the board", () => {
     expect(() =>
-      cloudSavedMatchFromGuestMatch(user, guestProfile, {
+      createCloudSavedMatch(user, {
         ...match,
         move_cells: [225],
         move_count: 1,
@@ -129,7 +113,7 @@ describe("cloud match serialization", () => {
 
   it("rejects records that are not local-only history", () => {
     expect(() =>
-      createCloudDirectSavedMatch(user, {
+      createCloudSavedMatch(user, {
         ...match,
         source: "cloud_saved",
         trust: "client_uploaded",
@@ -139,7 +123,7 @@ describe("cloud match serialization", () => {
 
   it("rejects imports without one human and one bot player", () => {
     expect(() =>
-      cloudSavedMatchFromGuestMatch(user, guestProfile, {
+      createCloudSavedMatch(user, {
         ...match,
         player_white: {
           ...match.player_white,
@@ -153,7 +137,7 @@ describe("cloud match serialization", () => {
 
   it("rejects records without a valid saved_at timestamp", () => {
     expect(() =>
-      cloudSavedMatchFromGuestMatch(user, guestProfile, {
+      createCloudSavedMatch(user, {
         ...match,
         saved_at: "not-a-date",
       }),

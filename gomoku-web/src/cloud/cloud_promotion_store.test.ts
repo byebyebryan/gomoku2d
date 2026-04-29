@@ -28,11 +28,9 @@ const settings: GuestProfileSettings = {
 
 describe("createCloudPromotionStore", () => {
   const promotionResult = {
-    importedMatches: 0,
+    localMatchesSynced: 0,
     profileDisplayNamePromoted: true,
     promotedDisplayName: "ByeByeBryan",
-    skippedMatches: 0,
-    totalMatches: 0,
   };
 
   it("promotes once for the same input signature", async () => {

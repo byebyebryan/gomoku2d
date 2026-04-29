@@ -5,11 +5,9 @@ import {
   PRACTICE_BOT_ID,
   SAVED_MATCH_SCHEMA_VERSION,
   decodeMoveCell,
-  type SavedMatchBotIdentity,
   type SavedMatchPlayer,
   type SavedMatchV1,
 } from "../match/saved_match";
-import type { GuestProfileIdentity, GuestSavedMatch } from "../profile/guest_profile_store";
 
 import type { CloudAuthUser } from "./auth_store";
 
@@ -23,8 +21,6 @@ export {
   PRACTICE_BOT_ID,
 };
 
-export type CloudMatchBotIdentity = SavedMatchBotIdentity;
-export type CloudMatchPlayerDocument = SavedMatchPlayer;
 export type CloudSavedMatch = SavedMatchV1 & {
   source: typeof CLOUD_MATCH_SOURCE_CLOUD_SAVED;
   trust: typeof CLOUD_MATCH_TRUST_CLIENT_UPLOADED;
@@ -32,13 +28,13 @@ export type CloudSavedMatch = SavedMatchV1 & {
 
 function assertFinishedMatch(match: Pick<SavedMatchV1, "status">): void {
   if (match.status !== "black_won" && match.status !== "white_won" && match.status !== "draw") {
-    throw new Error("Cloud match promotion only supports finished matches.");
+    throw new Error("Cloud history sync only supports finished matches.");
   }
 }
 
 function assertValidMovePayload(match: Pick<SavedMatchV1, "move_count" | "move_cells">): void {
   if (match.move_count !== match.move_cells.length) {
-    throw new Error("Cloud match promotion requires move_count to match move_cells.");
+    throw new Error("Cloud history sync requires move_count to match move_cells.");
   }
 
   for (const cell of match.move_cells) {
@@ -48,13 +44,13 @@ function assertValidMovePayload(match: Pick<SavedMatchV1, "move_count" | "move_c
 
 function assertValidSavedAt(match: Pick<SavedMatchV1, "saved_at">): void {
   if (!Number.isFinite(Date.parse(match.saved_at))) {
-    throw new Error("Cloud match promotion requires a valid saved_at timestamp.");
+    throw new Error("Cloud history sync requires a valid saved_at timestamp.");
   }
 }
 
 function assertGuestLocalMatch(match: Pick<SavedMatchV1, "source" | "trust">): void {
   if (match.source !== "local_history" || match.trust !== "local_only") {
-    throw new Error("Cloud match promotion only supports local history records.");
+    throw new Error("Cloud history sync only supports local history records.");
   }
 }
 
@@ -63,14 +59,14 @@ function assertLocalVsBotPlayers(match: Pick<SavedMatchV1, "match_kind" | "playe
   const botCount = [match.player_black, match.player_white].filter((player) => player.kind === "bot").length;
 
   if (match.match_kind !== "local_vs_bot" || humanCount !== 1 || botCount !== 1) {
-    throw new Error("Cloud match promotion requires one human player and one bot player.");
+    throw new Error("Cloud history sync requires one human player and one bot player.");
   }
 }
 
-function cloudDirectSavedPlayerDocument(
+function cloudSavedPlayer(
   player: SavedMatchPlayer,
   user: Pick<CloudAuthUser, "uid">,
-): CloudMatchPlayerDocument {
+): SavedMatchPlayer {
   if (player.kind === "human") {
     return {
       ...player,
@@ -89,21 +85,9 @@ function cloudDirectSavedPlayerDocument(
   };
 }
 
-export function cloudMatchIdForGuestMatch(match: Pick<GuestSavedMatch, "id">): string {
-  return match.id;
-}
-
-export function localOriginIdForGuestMatch(
-  guestProfile: Pick<GuestProfileIdentity, "id">,
-  match: Pick<GuestSavedMatch, "id">,
-): string {
-  return `guest:${guestProfile.id}:${match.id}`;
-}
-
-export function cloudSavedMatchFromGuestMatch(
+export function createCloudSavedMatch(
   user: Pick<CloudAuthUser, "uid">,
-  _guestProfile: Pick<GuestProfileIdentity, "displayName" | "id">,
-  match: GuestSavedMatch,
+  match: SavedMatchV1,
 ): CloudSavedMatch {
   assertGuestLocalMatch(match);
   assertFinishedMatch(match);
@@ -111,26 +95,10 @@ export function cloudSavedMatchFromGuestMatch(
   assertValidSavedAt(match);
   assertLocalVsBotPlayers(match);
 
-  return createCloudDirectSavedMatch(user, match);
-}
-
-export function cloudDirectSavedMatchId(match: Pick<SavedMatchV1, "id">): string {
-  return match.id;
-}
-
-export function createCloudDirectSavedMatch(
-  user: Pick<CloudAuthUser, "uid">,
-  match: SavedMatchV1,
-): CloudSavedMatch {
-  assertGuestLocalMatch(match);
-  assertFinishedMatch(match);
-  assertValidMovePayload(match);
-  assertLocalVsBotPlayers(match);
-
   return {
     ...match,
-    player_black: cloudDirectSavedPlayerDocument(match.player_black, user),
-    player_white: cloudDirectSavedPlayerDocument(match.player_white, user),
+    player_black: cloudSavedPlayer(match.player_black, user),
+    player_white: cloudSavedPlayer(match.player_white, user),
     source: CLOUD_MATCH_SOURCE_CLOUD_SAVED,
     trust: CLOUD_MATCH_TRUST_CLIENT_UPLOADED,
   };

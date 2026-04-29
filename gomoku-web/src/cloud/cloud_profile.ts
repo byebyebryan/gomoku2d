@@ -11,7 +11,7 @@ import { isSavedMatchV1, savedMatchIsAfterReset, type SavedMatchV1 } from "../ma
 
 import { getFirebaseClients } from "./firebase";
 import type { CloudAuthUser } from "./auth_store";
-import { createCloudDirectSavedMatch } from "./cloud_match";
+import { createCloudSavedMatch } from "./cloud_match";
 
 export const CLOUD_PROFILE_SCHEMA_VERSION = 2;
 export const CLOUD_RECENT_MATCHES_SCHEMA_VERSION = 1;
@@ -134,7 +134,7 @@ export function mergeCloudRecentMatches(
     }
 
     const cloudMatch = match.source === "local_history"
-      ? createCloudDirectSavedMatch(user, match)
+      ? createCloudSavedMatch(user, match)
       : match;
     const existing = byId.get(cloudMatch.id);
 

@@ -4,7 +4,6 @@ import { createLocalSavedMatch } from "../match/saved_match";
 
 import type { CloudAuthUser } from "./auth_store";
 import {
-  clearCloudHistory,
   cloudHistoryFromProfile,
   saveCloudHistorySnapshot,
   type CloudHistoryBackend,
@@ -133,11 +132,12 @@ describe("cloud history", () => {
       },
     });
 
-    const result = await clearCloudHistory(
+    const result = await saveCloudHistorySnapshot(
       user,
       {
         cloudProfile: profile,
         displayName: "Bryan",
+        matches: [],
         preferredVariant: "freestyle",
       },
       { backend },

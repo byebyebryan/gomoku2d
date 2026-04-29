@@ -195,17 +195,15 @@ function cloudStateLabel(
 function cloudCopyText({
   authStatus,
   hasCloudIdentity,
-  historyCount,
+  localMatchesSynced,
   promotionStatus,
   profileStatus,
-  totalPromotedMatches,
 }: {
   authStatus: ReturnType<typeof cloudAuthStore.getState>["status"];
   hasCloudIdentity: boolean;
-  historyCount: number;
+  localMatchesSynced: number;
   promotionStatus: ReturnType<typeof cloudPromotionStore.getState>["status"];
   profileStatus: ReturnType<typeof cloudProfileStore.getState>["status"];
-  totalPromotedMatches: number;
 }): string {
   if (authStatus === "unconfigured") {
     return "Cloud sync unavailable.";
@@ -240,7 +238,7 @@ function cloudCopyText({
   }
 
   if (promotionStatus === "complete") {
-    return totalPromotedMatches > 0
+    return localMatchesSynced > 0
       ? "Local history synced to cloud."
       : "Cloud history enabled.";
   }
@@ -469,10 +467,9 @@ export function ProfileRoute() {
   const cloudText = cloudCopyText({
     authStatus: cloudAuth.status,
     hasCloudIdentity: Boolean(cloudIdentity),
-    historyCount: localHistory.length,
+    localMatchesSynced: cloudPromotion.result?.localMatchesSynced ?? 0,
     promotionStatus: cloudPromotion.status,
     profileStatus: cloudProfile.status,
-    totalPromotedMatches: cloudPromotion.result?.totalMatches ?? 0,
   });
   const cloudTitle = cloudTitleText({
     authStatus: cloudAuth.status,

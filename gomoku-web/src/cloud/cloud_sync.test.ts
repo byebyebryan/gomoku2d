@@ -45,11 +45,9 @@ const cloudProfile: CloudProfile = {
 };
 
 const promotionResult: GuestPromotionResult = {
-  importedMatches: 0,
+  localMatchesSynced: 0,
   profileDisplayNamePromoted: true,
   promotedDisplayName: "ByeByeBryan",
-  skippedMatches: 0,
-  totalMatches: 0,
 };
 
 const initialCloudProfileState = cloudProfileStore.getState();

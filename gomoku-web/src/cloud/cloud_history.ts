@@ -117,24 +117,3 @@ export async function saveCloudHistorySnapshot(
     },
   };
 }
-
-export async function clearCloudHistory(
-  user: CloudAuthUser,
-  input: {
-    cloudProfile: CloudProfile;
-    displayName: string;
-    preferredVariant: CloudProfile["preferredVariant"];
-  },
-  options: CloudHistoryOptions = {},
-): Promise<CloudSaveHistoryResult> {
-  return saveCloudHistorySnapshot(
-    user,
-    {
-      cloudProfile: input.cloudProfile,
-      displayName: input.displayName,
-      matches: [],
-      preferredVariant: input.preferredVariant,
-    },
-    options,
-  );
-}

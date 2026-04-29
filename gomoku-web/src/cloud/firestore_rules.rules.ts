@@ -74,89 +74,6 @@ async function seedProfile(uid: string, overrides: Record<string, unknown> = {})
   });
 }
 
-function botPlayer(): Record<string, unknown> {
-  return {
-    bot: {
-      config: {
-        depth: 3,
-        kind: "baseline",
-      },
-      config_version: 1,
-      engine: "baseline_search",
-      id: "practice_bot",
-      version: 1,
-    },
-    display_name: "Practice Bot",
-    kind: "bot",
-    local_profile_id: null,
-    profile_uid: null,
-  };
-}
-
-function cloudHumanPlayer(uid: string): Record<string, unknown> {
-  return {
-    bot: null,
-    display_name: "Bryan",
-    kind: "human",
-    local_profile_id: null,
-    profile_uid: uid,
-  };
-}
-
-function importedHumanPlayer(uid: string): Record<string, unknown> {
-  return {
-    ...cloudHumanPlayer(uid),
-    local_profile_id: "guest-1",
-  };
-}
-
-function cloudSavedMatchDocument(
-  uid: string,
-  matchId: string,
-  matchSavedAt: firebase.firestore.Timestamp,
-  overrides: Record<string, unknown> = {},
-): Record<string, unknown> {
-  return {
-    board_size: 15,
-    created_at: serverTimestamp(),
-    id: matchId,
-    match_kind: "local_vs_bot",
-    match_saved_at: matchSavedAt,
-    move_cells: [112],
-    move_count: 1,
-    player_black: cloudHumanPlayer(uid),
-    player_white: botPlayer(),
-    saved_at: matchSavedAt.toDate().toISOString(),
-    schema_version: 1,
-    source: "cloud_saved",
-    status: "draw",
-    trust: "client_uploaded",
-    undo_floor: 0,
-    variant: "freestyle",
-    ...overrides,
-  };
-}
-
-function guestImportMatchDocument(
-  uid: string,
-  matchId: string,
-  matchSavedAt: firebase.firestore.Timestamp,
-  overrides: Record<string, unknown> = {},
-): Record<string, unknown> {
-  const document: Record<string, unknown> = {
-    ...cloudSavedMatchDocument(uid, matchId, matchSavedAt),
-    id: matchId,
-    imported_at: serverTimestamp(),
-    local_match_id: "local-1",
-    local_origin_id: "guest:guest-1:local-1",
-    player_black: importedHumanPlayer(uid),
-    source: "guest_import",
-    ...overrides,
-  };
-  delete document.created_at;
-  return document;
-}
-
 async function seedMatch(uid: string, matchId: string, document: Record<string, unknown>): Promise<void> {
   await testEnv.withSecurityRulesDisabled(async (context) => {
     await context.firestore().doc(`profiles/${uid}/matches/${matchId}`).set(document);
@@ -406,7 +323,11 @@ describe("Firestore private match subcollection rules", () => {
 
     await assertFails(
       ownerDb().doc("profiles/uid-1/matches/match-1").set(
-        cloudSavedMatchDocument("uid-1", "match-1", timestamp("2020-01-01T01:00:00.000Z")),
+        {
+          id: "match-1",
+          source: "cloud_saved",
+          trust: "client_uploaded",
+        },
       ),
     );
   });
