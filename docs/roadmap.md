@@ -160,8 +160,9 @@ The backend-foundation and first continuity slices shipped through `v0.3.2`:
   signed-in saves persisted, cloud history restored after refresh/sign-out,
   Reset Profile cleared cloud/local active history, old rows did not re-import,
   and post-reset saves worked normally
-- Firestore rules tests cover owner scoping, reset-barrier writes, stale match
-  rejection, private match creates, and private match deletes
+- Firestore rules tests cover owner scoping, profile update cooldowns,
+  reset-barrier writes, stale match rejection, private match creates, and
+  private match deletes
 - infra and free-tier tracking split into `backend_infra.md` and
   `backend_cost.md`
 

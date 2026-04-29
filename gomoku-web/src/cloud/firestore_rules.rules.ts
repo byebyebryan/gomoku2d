@@ -202,6 +202,81 @@ describe("Firestore profile rules", () => {
     );
   });
 
+  it("allows reset barriers to bypass the normal profile update cooldown", async () => {
+    await seedProfile("uid-1", {
+      history_reset_at: null,
+      updated_at: timestamp("2999-01-01T00:00:00.000Z"),
+    });
+
+    await assertSucceeds(
+      ownerDb().doc("profiles/uid-1").set(
+        profileUpdateDocument("uid-1", {
+          history_reset_at: serverTimestamp(),
+        }),
+      ),
+    );
+  });
+
+  it("rejects rapid profile updates inside the server-side cooldown", async () => {
+    await seedProfile("uid-1", {
+      updated_at: timestamp("2999-01-01T00:00:00.000Z"),
+    });
+
+    await assertFails(
+      ownerDb().doc("profiles/uid-1").set(
+        profileUpdateDocument("uid-1", {
+          display_name: "Rapid Edit",
+        }),
+      ),
+    );
+  });
+
+  it("allows profile updates after the server-side cooldown", async () => {
+    await seedProfile("uid-1", {
+      updated_at: timestamp("2020-01-01T00:00:00.000Z"),
+    });
+
+    await assertSucceeds(
+      ownerDb().doc("profiles/uid-1").set(
+        profileUpdateDocument("uid-1", {
+          display_name: "Settled Edit",
+        }),
+      ),
+    );
+  });
+
+  it("allows one initial profile sync immediately after profile creation", async () => {
+    await seedProfile("uid-1", {
+      created_at: timestamp("2999-01-01T00:00:00.000Z"),
+      updated_at: timestamp("2999-01-01T00:00:00.000Z"),
+    });
+
+    await assertSucceeds(
+      ownerDb().doc("profiles/uid-1").set(
+        profileUpdateDocument("uid-1", {
+          created_at: timestamp("2999-01-01T00:00:00.000Z"),
+          display_name: "Promoted Local Name",
+          preferred_variant: "renju",
+        }),
+      ),
+    );
+  });
+
+  it("does not allow the initial profile sync bypass after a later profile update", async () => {
+    await seedProfile("uid-1", {
+      created_at: timestamp("2020-01-01T00:00:00.000Z"),
+      updated_at: timestamp("2999-01-01T00:00:00.000Z"),
+    });
+
+    await assertFails(
+      ownerDb().doc("profiles/uid-1").set(
+        profileUpdateDocument("uid-1", {
+          display_name: "Rapid Followup",
+        }),
+      ),
+    );
+  });
+
   it("does not allow the owner to remove an existing reset barrier", async () => {
     await seedProfile("uid-1", {
       history_reset_at: timestamp("2020-01-01T00:00:00.000Z"),

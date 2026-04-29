@@ -70,6 +70,11 @@ Rules:
   movement for profile writes. The browser can leave `history_reset_at`
   unchanged or set it to the current write's `request.time`; it cannot move the
   barrier backward, remove it, or set an arbitrary timestamp.
+- Firestore rules also enforce a 5-minute cooldown between normal profile
+  updates using `updated_at`. Profile changes remain local-first and are retried
+  at later sync checkpoints if the server rejects an update inside the cooldown.
+  Reset-barrier writes can bypass the normal edit cooldown so Reset Profile is
+  not blocked by a recent profile sync.
 - Reset Profile while signed in writes `history_reset_at`, resets cloud profile
   display/default-rule fields to provider/default values, deletes private
   `client_uploaded` match documents where rules allow it, and clears this

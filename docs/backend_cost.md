@@ -100,6 +100,9 @@ Initial implementation guardrails:
 - Defer signed-in profile/settings sync to sign-in, retry, and match-finish
   checkpoints so rapid name typing or default-rule toggles stay local until a
   meaningful cloud sync point.
+- Enforce a 5-minute server-side cooldown between normal profile updates in
+  Firestore rules. Reset-barrier writes can bypass the normal edit cooldown, but
+  are still scoped to real reset writes.
 - Keep public replay publishing out of `v0.3`; private history and public
   shareables have different cost and trust profiles.
 - Budget match creates as also reading the owner profile in rules. Firestore
@@ -277,4 +280,7 @@ Profile writes now happen on first profile create, Reset Profile, guest
 promotion, or real metadata/default-rule changes. Profile/settings changes on
 the profile page are stored locally first and deferred to sign-in, retry, or
 match-finish sync checkpoints. Guest promotion skips the profile merge entirely
-when loaded cloud fields already match local state.
+when loaded cloud fields already match local state. Firestore rules also enforce
+a 5-minute cooldown between normal profile updates so direct scripted profile
+edits cannot run at browser-click speed. Reset-barrier writes can bypass that
+normal edit cooldown so Reset Profile is not blocked by a recent profile sync.

@@ -30,6 +30,9 @@ their own section.
 - Deferred signed-in profile/settings sync to sign-in, retry, and match-finish
   checkpoints, and skipped no-op guest promotion profile writes to avoid write
   amplification from rapid name/default-rule edits.
+- Added a Firestore profile-update cooldown in security rules, with emulator
+  coverage, so scripted profile edits cannot write as fast as the client can
+  send requests.
 
 ## [0.3.2] - 2026-04-28
 
