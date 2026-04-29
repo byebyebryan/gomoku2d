@@ -200,7 +200,7 @@ export function LocalMatchRoute() {
             <Link
               aria-label="Replay"
               className="uiAction uiActionSecondary"
-              to={`/replays/local/${latestReplayId}`}
+              to={`/replay/${latestReplayId}`}
             >
               <Icon className="uiIconDesktop" name="replay" />
               <span className="uiActionLabel">Replay</span>

@@ -37,7 +37,7 @@ export function App() {
           }
         />
         <Route
-          path="/replays/local/:matchId"
+          path="/replay/:matchId"
           element={
             <Suspense fallback={<main className={styles.loading}>Loading replay…</main>}>
               <ReplayRoute />

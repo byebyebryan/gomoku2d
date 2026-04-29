@@ -71,7 +71,7 @@ Current canonical surfaces:
 |---|---|
 | `/` | Home / title screen |
 | `/match/local` | Local match against the current local bot preset |
-| `/replays/local/:matchId` | Local replay viewer |
+| `/replay/:matchId` | Saved match replay viewer |
 | `/profile` | Local player record, defaults, and history |
 
 Future dedicated cloud or online routes can be added later. They are not part
@@ -198,7 +198,7 @@ Arcade shortcut:
 - clicking the finished board can still advance to the next round quickly
 - shell buttons remain visible for discoverability and navigation
 
-### Replay (`/replays/local/:matchId`)
+### Replay (`/replay/:matchId`)
 
 Replay is the dedicated chronology surface, but it should still stay sparse.
 

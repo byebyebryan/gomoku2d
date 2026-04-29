@@ -99,7 +99,7 @@ Routes:
 
 - `/` — title screen, single `Play` CTA
 - `/match/local` — live match vs Practice Bot
-- `/replays/local/:matchId` — replay viewer for a locally saved match
+- `/replay/:matchId` — replay viewer for a saved match
 - `/profile` — local player record, preferred rule, history
 - `/privacy/` and `/terms/` — static info-page-template policy pages for the public app
 
@@ -166,8 +166,8 @@ npm run playtest:smoke     # playwright smoke run
 ```
 
 The `postbuild` step copies `dist/index.html` to `dist/404.html` so GitHub
-Pages serves the SPA on deep-linked routes like `/profile` and
-`/replays/local/:matchId` instead of a 404.
+Pages serves the SPA on deep-linked routes like `/profile` and `/replay/:matchId`
+instead of a 404.
 
 ---
 

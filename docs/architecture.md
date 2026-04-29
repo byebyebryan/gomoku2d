@@ -39,7 +39,7 @@ Three components, one repo:
 - **React + TypeScript** — component model for the app shell.
 - **Vite** — dev server and bundler.
 - **React Router** — URL-driven screens for the current local-first app
-  (`/`, `/match/local`, `/replays/local/:matchId`, `/profile`), with future
+  (`/`, `/match/local`, `/replay/:matchId`, `/profile`), with future
   cloud/online routes added later.
 - **Zustand** — client state (current view, draft moves, UI toggles).
 - **Firebase SDK directly** — sign-in, Firestore subscriptions, storage for

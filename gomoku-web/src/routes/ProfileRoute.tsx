@@ -741,7 +741,7 @@ export function ProfileRoute() {
                         aria-label="Replay"
                         className={`uiAction uiActionSecondary ${styles.historyReplayAction}`}
                         onClick={() => {
-                          navigate(`/replays/local/${match.id}`);
+                          navigate(`/replay/${match.id}`);
                         }}
                         type="button"
                       >
