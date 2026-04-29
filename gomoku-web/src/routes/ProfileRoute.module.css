@@ -303,6 +303,11 @@
   border-top: 1px solid var(--border);
 }
 
+.historyHeadEmpty {
+  min-height: 1px;
+  padding: 0;
+}
+
 .historyHeadLabel {
   color: var(--text-soft);
   font-family: var(--font-display);
@@ -443,11 +448,6 @@
   width: auto;
   max-width: 100%;
   justify-self: end;
-}
-
-.emptyState {
-  margin: 0;
-  color: var(--text-muted);
 }
 
 .summaryTile:first-child {

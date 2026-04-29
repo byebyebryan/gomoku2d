@@ -225,6 +225,7 @@ describe("ProfileRoute cloud state", () => {
     renderProfileRoute();
 
     expect(screen.getByText("Synced")).toBeInTheDocument();
+    expect(screen.queryByText("Finished matches are saved here.")).not.toBeInTheDocument();
   });
 
   it("shows retrying when pending cloud history sync has failed", () => {
@@ -282,6 +283,126 @@ describe("ProfileRoute cloud state", () => {
     renderProfileRoute();
 
     expect(screen.getByText("Retrying")).toBeInTheDocument();
+  });
+
+  it("does not show history retrying for a non-history sync error with no pending matches", () => {
+    cloudAuthStore.setState({
+      errorMessage: null,
+      isConfigured: true,
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+      start: vi.fn(),
+      status: "signed_in",
+      stop: vi.fn(),
+      user: cloudUser,
+    });
+    cloudProfileStore.setState({
+      errorMessage: null,
+      loadForUser: vi.fn(),
+      profile: cloudProfile,
+      reset: vi.fn(),
+      resetForUser: vi.fn(),
+      status: "ready",
+    });
+    cloudHistoryStore.setState({
+      errorMessage: "permission denied",
+      loadStatus: "ready",
+      syncStatus: "error",
+      users: {
+        [cloudUser.uid]: {
+          cachedMatches: [],
+          loadedAt: "2026-04-28T01:01:00.000Z",
+          pendingMatches: {},
+          sync: {},
+        },
+      },
+    });
+
+    renderProfileRoute();
+
+    expect(screen.getByText("Synced")).toBeInTheDocument();
+    expect(screen.queryByText("Retrying")).not.toBeInTheDocument();
+  });
+
+  it("shows cloud history loading and unavailable badge states", () => {
+    cloudAuthStore.setState({
+      errorMessage: null,
+      isConfigured: true,
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+      start: vi.fn(),
+      status: "signed_in",
+      stop: vi.fn(),
+      user: cloudUser,
+    });
+    cloudProfileStore.setState({
+      errorMessage: null,
+      loadForUser: vi.fn(),
+      profile: cloudProfile,
+      reset: vi.fn(),
+      resetForUser: vi.fn(),
+      status: "ready",
+    });
+    cloudHistoryStore.setState({
+      loadStatus: "loading",
+    });
+
+    renderProfileRoute();
+
+    expect(screen.getByText("Loading")).toBeInTheDocument();
+    expect(screen.queryByText("Finished matches are saved here.")).not.toBeInTheDocument();
+
+    cleanup();
+    cloudHistoryStore.setState({
+      errorMessage: "network failed",
+      loadStatus: "error",
+      users: {},
+    });
+
+    renderProfileRoute();
+
+    expect(screen.getByText("Retrying")).toBeInTheDocument();
+    expect(screen.queryByText("Finished matches are saved here.")).not.toBeInTheDocument();
+  });
+
+  it("retries cloud history load and pending sync when the browser comes online", async () => {
+    const loadForUser = vi.fn().mockResolvedValue(undefined);
+    const syncPendingForUser = vi.fn().mockResolvedValue(undefined);
+    cloudAuthStore.setState({
+      errorMessage: null,
+      isConfigured: true,
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+      start: vi.fn(),
+      status: "signed_in",
+      stop: vi.fn(),
+      user: cloudUser,
+    });
+    cloudProfileStore.setState({
+      errorMessage: null,
+      loadForUser: vi.fn(),
+      profile: cloudProfile,
+      reset: vi.fn(),
+      resetForUser: vi.fn(),
+      status: "ready",
+    });
+    cloudHistoryStore.setState({
+      loadForUser,
+      syncPendingForUser,
+    });
+
+    renderProfileRoute();
+
+    await waitFor(() => {
+      expect(loadForUser).toHaveBeenCalledTimes(1);
+    });
+
+    window.dispatchEvent(new Event("online"));
+
+    await waitFor(() => {
+      expect(loadForUser).toHaveBeenCalledTimes(2);
+    });
+    expect(syncPendingForUser).toHaveBeenCalledTimes(2);
   });
 
   it("uses signed-in loading copy while the cloud profile is loading", () => {
