@@ -236,6 +236,23 @@ function cacheHasPendingError(cache: CloudHistoryUserCache): boolean {
   ));
 }
 
+function cacheWithQueuedPendingMatches(cache: CloudHistoryUserCache, updatedAt: string): CloudHistoryUserCache {
+  return {
+    ...cache,
+    sync: Object.fromEntries(
+      Object.keys(cache.pendingMatches).map((matchId) => [
+        matchId,
+        {
+          errorMessage: null,
+          matchId,
+          status: "pending" as const,
+          updatedAt,
+        },
+      ]),
+    ),
+  };
+}
+
 function errorMessageAfterCacheRefresh(
   currentErrorMessage: string | null,
   cache: CloudHistoryUserCache,
@@ -516,6 +533,46 @@ export function createCloudHistoryStore(
             await syncPromise;
           } catch (error) {
             const message = errorMessageFor(error);
+            let handledAsRace = false;
+
+            try {
+              const refreshedProfile = await refreshCloudProfileForUser(user, localProfile.settings.preferredVariant);
+              const latestProfile = refreshedProfile ?? cloudProfileForUser(user.uid);
+              if (latestProfile) {
+                const activeProfile = latestProfile;
+                const resetAt = latestResetAt(user.uid, historyResetAt ?? activeProfile.resetAt);
+                const cooldownClosed = !cloudProfileSyncDue(activeProfile);
+
+                set((state) => {
+                  const users = updateUserCache(state.users, user.uid, (currentCache) => {
+                    const reconciledCache = cacheWithProfileSnapshot(currentCache, activeProfile, resetAt, now());
+                    return cooldownClosed
+                      ? cacheWithQueuedPendingMatches(reconciledCache, now())
+                      : reconciledCache;
+                  });
+                  const nextCache = users[user.uid] ?? defaultUserCache();
+                  const hasPending = Object.keys(nextCache.pendingMatches).length > 0;
+                  handledAsRace = !hasPending || cooldownClosed;
+
+                  if (!handledAsRace) {
+                    return { users };
+                  }
+
+                  return {
+                    errorMessage: null,
+                    syncStatus: syncStatusAfterCacheRefresh("error", nextCache),
+                    users,
+                  };
+                });
+              }
+            } catch {
+              // Keep the original write failure. A failed refresh cannot prove this was only a cooldown race.
+            }
+
+            if (handledAsRace) {
+              return;
+            }
+
             set((state) => ({
               errorMessage: message,
               syncStatus: "error",
