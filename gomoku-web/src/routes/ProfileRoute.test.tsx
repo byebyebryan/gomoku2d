@@ -5,7 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 import type { CloudAuthUser } from "../cloud/auth_store";
 import { cloudAuthStore } from "../cloud/auth_store";
 import { cloudHistoryStore } from "../cloud/cloud_history_store";
-import { createCloudDirectSavedMatch } from "../cloud/cloud_match";
+import { createCloudSavedMatch } from "../cloud/cloud_match";
 import type { CloudProfile } from "../cloud/cloud_profile";
 import { cloudProfileStore } from "../cloud/cloud_profile_store";
 import { cloudPromotionStore } from "../cloud/cloud_promotion_store";
@@ -462,7 +462,7 @@ describe("ProfileRoute cloud state", () => {
       status: "black_won",
       variant: "freestyle",
     });
-    const cloudMatch = createCloudDirectSavedMatch(cloudUser, localMatch);
+    const cloudMatch = createCloudSavedMatch(cloudUser, localMatch);
 
     guestProfileStore.setState({ history: [localMatch] });
     cloudAuthStore.setState({

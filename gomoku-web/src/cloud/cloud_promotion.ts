@@ -33,11 +33,9 @@ export interface GuestPromotionInput {
 }
 
 export interface GuestPromotionResult {
-  importedMatches: number;
+  localMatchesSynced: number;
   profileDisplayNamePromoted: boolean;
   promotedDisplayName: string | null;
-  skippedMatches: number;
-  totalMatches: number;
 }
 
 export interface CloudPromotionBackend {
@@ -179,14 +177,12 @@ export async function promoteGuestToCloud(
   }
 
   return {
-    importedMatches: eligibleHistory.length,
+    localMatchesSynced: eligibleHistory.length,
     profileDisplayNamePromoted: Boolean(
       profileUpdate && Object.prototype.hasOwnProperty.call(profileUpdate, "display_name"),
     ),
     promotedDisplayName: profileUpdate && typeof profileUpdate.display_name === "string"
       ? profileUpdate.display_name
       : null,
-    skippedMatches: 0,
-    totalMatches: eligibleHistory.length,
   };
 }

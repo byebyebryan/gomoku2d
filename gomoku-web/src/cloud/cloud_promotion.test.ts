@@ -158,11 +158,9 @@ describe("promoteGuestToCloud", () => {
       },
     });
     expect(result).toEqual({
-      importedMatches: 1,
+      localMatchesSynced: 1,
       profileDisplayNamePromoted: true,
       promotedDisplayName: "ByeByeBryan",
-      skippedMatches: 0,
-      totalMatches: 1,
     });
   });
 
@@ -194,9 +192,7 @@ describe("promoteGuestToCloud", () => {
 
     expect(profileUpdates).toHaveLength(0);
     expect(result).toMatchObject({
-      importedMatches: 1,
-      skippedMatches: 0,
-      totalMatches: 1,
+      localMatchesSynced: 1,
     });
   });
 
@@ -222,9 +218,7 @@ describe("promoteGuestToCloud", () => {
       },
     });
     expect(result).toMatchObject({
-      importedMatches: 0,
-      skippedMatches: 0,
-      totalMatches: 0,
+      localMatchesSynced: 0,
     });
   });
 });
