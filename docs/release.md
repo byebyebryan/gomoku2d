@@ -203,8 +203,8 @@ changed surface:
   the intended source ref.
 - If Reset Profile changed: reset a signed-in test profile, confirm old rows do
   not reappear, then save one post-reset match.
-- If Delete Online Profile changed: delete a signed-in test profile, confirm the
-  app signs out and Firestore no longer has `profiles/{uid}`, then sign in
-  again only if recreating a fresh cloud profile is intended.
+- If Delete Cloud changed: delete a signed-in test profile, confirm the app
+  signs out and Firestore no longer has `profiles/{uid}`, then sign in again
+  only if recreating a fresh cloud profile is intended.
 - If profile schema changed without migration: confirm old alpha test documents
   were deleted or rewritten before deploying stricter rules.
