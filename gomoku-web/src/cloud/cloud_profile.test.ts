@@ -2,12 +2,16 @@ import { describe, expect, it } from "vitest";
 
 import type { CloudAuthUser } from "./auth_store";
 import {
+  CLOUD_RECENT_MATCHES_LIMIT,
   CLOUD_PROFILE_SCHEMA_VERSION,
   cloudProfileFromDocument,
+  cloudProfileSyncDue,
   existingCloudProfileUpdate,
+  mergeCloudRecentMatches,
   newCloudProfileWrite,
   resetCloudProfileUpdate,
 } from "./cloud_profile";
+import { createLocalSavedMatch } from "../match/saved_match";
 
 const authUser: CloudAuthUser = {
   avatarUrl: "https://example.com/avatar.png",
@@ -36,6 +40,13 @@ describe("cloudProfileFromDocument", () => {
       historyResetAt: null,
       preferredVariant: "renju",
       uid: "uid-1",
+      createdAt: null,
+      recentMatches: {
+        matches: [],
+        schemaVersion: 1,
+        updatedAt: null,
+      },
+      updatedAt: null,
       username: "byebyebryan",
     });
   });
@@ -54,6 +65,11 @@ describe("cloudProfileFromDocument", () => {
       email: authUser.email,
       historyResetAt: null,
       preferredVariant: "freestyle",
+      recentMatches: {
+        matches: [],
+        schemaVersion: 1,
+        updatedAt: null,
+      },
       username: null,
     });
   });
@@ -81,6 +97,11 @@ describe("cloud profile writes", () => {
       email: "bryan@example.com",
       history_reset_at: null,
       preferred_variant: "renju",
+      recent_matches: {
+        matches: [],
+        schema_version: 1,
+        updated_at: null,
+      },
       schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
       uid: "uid-1",
       username: null,
@@ -108,6 +129,11 @@ describe("cloud profile writes", () => {
         avatar_url: authUser.avatarUrl,
         email: authUser.email,
         preferred_variant: "freestyle",
+        recent_matches: {
+          matches: [],
+          schema_version: 1,
+          updated_at: null,
+        },
         schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
         uid: "uid-1",
       }),
@@ -121,6 +147,11 @@ describe("cloud profile writes", () => {
         avatar_url: authUser.avatarUrl,
         email: authUser.email,
         preferred_variant: "freestyle",
+        recent_matches: {
+          matches: [],
+          schema_version: 1,
+          updated_at: null,
+        },
         schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
         uid: "uid-1",
       }),
@@ -134,6 +165,11 @@ describe("cloud profile writes", () => {
         avatar_url: "https://example.com/old.png",
         email: authUser.email,
         preferred_variant: "freestyle",
+        recent_matches: {
+          matches: [],
+          schema_version: 1,
+          updated_at: null,
+        },
         schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
         uid: "uid-1",
       }),
@@ -146,6 +182,11 @@ describe("cloud profile writes", () => {
         avatar_url: "https://example.com/old.png",
         email: authUser.email,
         preferred_variant: "freestyle",
+        recent_matches: {
+          matches: [],
+          schema_version: 1,
+          updated_at: null,
+        },
         schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
         uid: "uid-1",
       }),
@@ -159,6 +200,11 @@ describe("cloud profile writes", () => {
       display_name: authUser.displayName,
       email: authUser.email,
       preferred_variant: "freestyle",
+      recent_matches: {
+        matches: [],
+        schema_version: 1,
+        updated_at: expect.anything(),
+      },
       schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
       uid: "uid-1",
     });
@@ -173,6 +219,11 @@ describe("cloud profile writes", () => {
       display_name: "ByeByeBryan",
       email: "old@example.com",
       preferred_variant: "freestyle",
+      recent_matches: {
+        matches: [],
+        schema_version: 1,
+        updated_at: null,
+      },
       username: "byebyebryan",
     };
     const update = existingCloudProfileUpdate(authUser);
@@ -184,7 +235,64 @@ describe("cloud profile writes", () => {
       email: authUser.email,
       historyResetAt: null,
       preferredVariant: "freestyle",
+      recentMatches: {
+        matches: [],
+        schemaVersion: 1,
+        updatedAt: null,
+      },
       username: "byebyebryan",
     });
+  });
+
+  it("uses a 15-minute sync interval for settled profile snapshots", () => {
+    const syncedMatch = mergeCloudRecentMatches(authUser, [
+      createLocalSavedMatch({
+        id: "match-sync-test",
+        localProfileId: "guest-1",
+        moves: [{ col: 7, moveNumber: 1, player: 1, row: 7 }],
+        players: [
+          { kind: "human", name: "Bryan", stone: "black" },
+          { kind: "bot", name: "Practice Bot", stone: "white" },
+        ],
+        savedAt: "2026-04-28T07:59:00.000Z",
+        status: "draw",
+        variant: "freestyle",
+      }),
+    ])[0]!;
+    const profile = {
+      createdAt: "2026-04-28T08:00:00.000Z",
+      recentMatches: {
+        matches: [syncedMatch],
+        schemaVersion: 1 as const,
+        updatedAt: null,
+      },
+      updatedAt: "2026-04-28T08:00:00.000Z",
+    };
+
+    expect(cloudProfileSyncDue(profile, Date.parse("2026-04-28T08:10:00.000Z"))).toBe(false);
+    expect(cloudProfileSyncDue(profile, Date.parse("2026-04-28T08:15:00.000Z"))).toBe(true);
+  });
+
+  it("merges local matches into a capped cloud snapshot", () => {
+    const matches = Array.from({ length: CLOUD_RECENT_MATCHES_LIMIT + 1 }, (_, index) =>
+      createLocalSavedMatch({
+        id: `match-${index}`,
+        localProfileId: "guest-1",
+        moves: [{ col: index % 15, moveNumber: 1, player: 1, row: Math.floor(index / 15) }],
+        players: [
+          { kind: "human", name: "Bryan", stone: "black" },
+          { kind: "bot", name: "Practice Bot", stone: "white" },
+        ],
+        savedAt: new Date(Date.parse("2026-04-28T00:00:00.000Z") + index * 1000).toISOString(),
+        status: "draw",
+        variant: "freestyle",
+      })
+    );
+
+    const merged = mergeCloudRecentMatches(authUser, matches);
+    expect(merged).toHaveLength(CLOUD_RECENT_MATCHES_LIMIT);
+    expect(merged[0]?.id).toBe(`match-${CLOUD_RECENT_MATCHES_LIMIT}`);
+    expect(merged[0]?.source).toBe("cloud_saved");
+    expect(merged[0]?.player_black.profile_uid).toBe("uid-1");
   });
 });

@@ -1,5 +1,3 @@
-import { serverTimestamp, Timestamp, type FieldValue } from "firebase/firestore";
-
 import {
   PRACTICE_BOT_CONFIG_VERSION,
   PRACTICE_BOT_DEPTH,
@@ -16,7 +14,6 @@ import type { GuestProfileIdentity, GuestSavedMatch } from "../profile/guest_pro
 import type { CloudAuthUser } from "./auth_store";
 
 export const CLOUD_MATCH_SCHEMA_VERSION = SAVED_MATCH_SCHEMA_VERSION;
-export const CLOUD_MATCH_SOURCE_GUEST_IMPORT = "guest_import";
 export const CLOUD_MATCH_SOURCE_CLOUD_SAVED = "cloud_saved";
 export const CLOUD_MATCH_TRUST_CLIENT_UPLOADED = "client_uploaded";
 export {
@@ -28,34 +25,10 @@ export {
 
 export type CloudMatchBotIdentity = SavedMatchBotIdentity;
 export type CloudMatchPlayerDocument = SavedMatchPlayer;
-export type CloudDirectSavedMatch = SavedMatchV1 & {
+export type CloudSavedMatch = SavedMatchV1 & {
   source: typeof CLOUD_MATCH_SOURCE_CLOUD_SAVED;
   trust: typeof CLOUD_MATCH_TRUST_CLIENT_UPLOADED;
 };
-
-/** Document shape for matches promoted from local guest history. */
-export interface CloudGuestImportDocument
-  extends Omit<SavedMatchV1, "player_black" | "player_white" | "source" | "trust"> {
-  imported_at: FieldValue;
-  local_match_id: string;
-  local_origin_id: string;
-  match_saved_at: Timestamp;
-  player_black: CloudMatchPlayerDocument;
-  player_white: CloudMatchPlayerDocument;
-  source: typeof CLOUD_MATCH_SOURCE_GUEST_IMPORT;
-  trust: typeof CLOUD_MATCH_TRUST_CLIENT_UPLOADED;
-}
-
-/** Document shape for matches saved directly to cloud while signed in. */
-export interface CloudDirectSavedDocument
-  extends Omit<SavedMatchV1, "player_black" | "player_white" | "source" | "trust"> {
-  created_at: FieldValue;
-  match_saved_at: Timestamp;
-  player_black: CloudMatchPlayerDocument;
-  player_white: CloudMatchPlayerDocument;
-  source: typeof CLOUD_MATCH_SOURCE_CLOUD_SAVED;
-  trust: typeof CLOUD_MATCH_TRUST_CLIENT_UPLOADED;
-}
 
 function assertFinishedMatch(match: Pick<SavedMatchV1, "status">): void {
   if (match.status !== "black_won" && match.status !== "white_won" && match.status !== "draw") {
@@ -73,13 +46,10 @@ function assertValidMovePayload(match: Pick<SavedMatchV1, "move_count" | "move_c
   }
 }
 
-function matchSavedAtTimestamp(match: Pick<SavedMatchV1, "saved_at">): Timestamp {
-  const millis = Date.parse(match.saved_at);
-  if (!Number.isFinite(millis)) {
+function assertValidSavedAt(match: Pick<SavedMatchV1, "saved_at">): void {
+  if (!Number.isFinite(Date.parse(match.saved_at))) {
     throw new Error("Cloud match promotion requires a valid saved_at timestamp.");
   }
-
-  return Timestamp.fromMillis(millis);
 }
 
 function assertGuestLocalMatch(match: Pick<SavedMatchV1, "source" | "trust">): void {
@@ -95,29 +65,6 @@ function assertLocalVsBotPlayers(match: Pick<SavedMatchV1, "match_kind" | "playe
   if (match.match_kind !== "local_vs_bot" || humanCount !== 1 || botCount !== 1) {
     throw new Error("Cloud match promotion requires one human player and one bot player.");
   }
-}
-
-function guestImportPlayerDocument(
-  player: SavedMatchPlayer,
-  user: Pick<CloudAuthUser, "uid">,
-  guestProfile: Pick<GuestProfileIdentity, "displayName" | "id">,
-): CloudMatchPlayerDocument {
-  if (player.kind === "human") {
-    return {
-      ...player,
-      bot: null,
-      display_name: guestProfile.displayName,
-      local_profile_id: player.local_profile_id ?? guestProfile.id,
-      profile_uid: user.uid,
-    };
-  }
-
-  return {
-    ...player,
-    bot: player.bot,
-    local_profile_id: null,
-    profile_uid: null,
-  };
 }
 
 function cloudDirectSavedPlayerDocument(
@@ -143,7 +90,7 @@ function cloudDirectSavedPlayerDocument(
 }
 
 export function cloudMatchIdForGuestMatch(match: Pick<GuestSavedMatch, "id">): string {
-  return `local-${encodeURIComponent(match.id)}`;
+  return match.id;
 }
 
 export function localOriginIdForGuestMatch(
@@ -155,49 +102,26 @@ export function localOriginIdForGuestMatch(
 
 export function cloudSavedMatchFromGuestMatch(
   user: Pick<CloudAuthUser, "uid">,
-  guestProfile: Pick<GuestProfileIdentity, "displayName" | "id">,
+  _guestProfile: Pick<GuestProfileIdentity, "displayName" | "id">,
   match: GuestSavedMatch,
-): CloudGuestImportDocument {
+): CloudSavedMatch {
   assertGuestLocalMatch(match);
   assertFinishedMatch(match);
   assertValidMovePayload(match);
+  assertValidSavedAt(match);
   assertLocalVsBotPlayers(match);
 
-  const matchId = cloudMatchIdForGuestMatch(match);
-
-  return {
-    ...match,
-    id: matchId,
-    imported_at: serverTimestamp(),
-    local_match_id: match.id,
-    local_origin_id: localOriginIdForGuestMatch(guestProfile, match),
-    match_saved_at: matchSavedAtTimestamp(match),
-    player_black: guestImportPlayerDocument(match.player_black, user, guestProfile),
-    player_white: guestImportPlayerDocument(match.player_white, user, guestProfile),
-    source: CLOUD_MATCH_SOURCE_GUEST_IMPORT,
-    trust: CLOUD_MATCH_TRUST_CLIENT_UPLOADED,
-  };
+  return createCloudDirectSavedMatch(user, match);
 }
 
 export function cloudDirectSavedMatchId(match: Pick<SavedMatchV1, "id">): string {
   return match.id;
 }
 
-export function createCloudDirectSavedDocument(
-  user: Pick<CloudAuthUser, "uid">,
-  match: SavedMatchV1,
-): CloudDirectSavedDocument {
-  return {
-    ...createCloudDirectSavedMatch(user, match),
-    created_at: serverTimestamp(),
-    match_saved_at: matchSavedAtTimestamp(match),
-  };
-}
-
 export function createCloudDirectSavedMatch(
   user: Pick<CloudAuthUser, "uid">,
   match: SavedMatchV1,
-): CloudDirectSavedMatch {
+): CloudSavedMatch {
   assertGuestLocalMatch(match);
   assertFinishedMatch(match);
   assertValidMovePayload(match);

@@ -4,6 +4,7 @@ import { createLocalSavedMatch } from "../match/saved_match";
 import type { GuestProfileStorage } from "../profile/guest_profile_store";
 
 import type { CloudAuthUser } from "./auth_store";
+import type { CloudProfile } from "./cloud_profile";
 import { createCloudHistoryStore } from "./cloud_history_store";
 
 function createMemoryStorage(): GuestProfileStorage {
@@ -52,6 +53,27 @@ const cloudMatch = {
   trust: "client_uploaded" as const,
 };
 
+function cloudProfile(overrides: Partial<CloudProfile> = {}): CloudProfile {
+  return {
+    authProviders: ["google.com"],
+    avatarUrl: null,
+    createdAt: "2026-04-28T00:00:00.000Z",
+    displayName: "Bryan",
+    email: "bryan@example.com",
+    historyResetAt: null,
+    preferredVariant: "freestyle",
+    recentMatches: {
+      matches: [cloudMatch],
+      schemaVersion: 1,
+      updatedAt: "2026-04-28T00:00:00.000Z",
+    },
+    uid: "uid-1",
+    updatedAt: "2026-04-28T00:00:00.000Z",
+    username: null,
+    ...overrides,
+  };
+}
+
 describe("createCloudHistoryStore", () => {
   it("loads and persists a per-user cloud history cache", async () => {
     const storage = createMemoryStorage();
@@ -75,31 +97,56 @@ describe("createCloudHistoryStore", () => {
     expect(reloaded.getState().users["uid-1"]?.cachedMatches).toHaveLength(1);
   });
 
-  it("syncs a pending local match and caches the cloud version", async () => {
-    const saveMatch = vi.fn().mockResolvedValue({ match: cloudMatch });
+  it("loads directly from a cloud profile snapshot", () => {
     const store = createCloudHistoryStore({
       now: () => "2026-04-28T02:00:00.000Z",
-      saveMatch,
+      storage: createMemoryStorage(),
+    });
+
+    store.getState().loadFromProfile(user, cloudProfile());
+
+    expect(store.getState().users["uid-1"]).toMatchObject({
+      cachedMatches: [cloudMatch],
+      loadedAt: "2026-04-28T02:00:00.000Z",
+    });
+  });
+
+  it("keeps a local match pending when the 15-minute profile sync gate is closed", async () => {
+    const saveHistory = vi.fn().mockResolvedValue({ matches: [cloudMatch], profile: cloudProfile() });
+    const store = createCloudHistoryStore({
+      cloudProfileForUser: () => cloudProfile({ updatedAt: "2999-01-01T00:00:00.000Z" }),
+      saveHistory,
       storage: createMemoryStorage(),
     });
 
     await store.getState().syncMatchForUser(user, match);
 
-    const cache = store.getState().users["uid-1"];
-    expect(saveMatch).toHaveBeenCalledWith(user, match);
-    expect(cache?.cachedMatches).toEqual([cloudMatch]);
-    expect(cache?.pendingMatches).toEqual({});
-    expect(cache?.sync["match-1"]).toMatchObject({
-      errorMessage: null,
-      status: "synced",
-    });
+    expect(saveHistory).not.toHaveBeenCalled();
+    expect(store.getState().users["uid-1"]?.pendingMatches["match-1"]).toEqual(match);
   });
 
-  it("keeps failed sync records pending for retry", async () => {
-    const saveMatch = vi.fn().mockRejectedValue(new Error("offline"));
+  it("writes one merged profile snapshot when the sync gate is open", async () => {
+    const profile = cloudProfile({ recentMatches: { matches: [], schemaVersion: 1, updatedAt: null } });
+    const saveHistory = vi.fn().mockResolvedValue({ matches: [cloudMatch], profile });
     const store = createCloudHistoryStore({
-      now: () => "2026-04-28T02:00:00.000Z",
-      saveMatch,
+      cloudProfileForUser: () => profile,
+      saveHistory,
+      storage: createMemoryStorage(),
+    });
+
+    await store.getState().syncMatchForUser(user, match);
+
+    expect(saveHistory).toHaveBeenCalledTimes(1);
+    expect(saveHistory.mock.calls[0]?.[1].matches).toEqual([cloudMatch]);
+    expect(store.getState().users["uid-1"]?.pendingMatches).toEqual({});
+  });
+
+  it("keeps failed snapshot sync records pending for retry", async () => {
+    const profile = cloudProfile({ recentMatches: { matches: [], schemaVersion: 1, updatedAt: null } });
+    const saveHistory = vi.fn().mockRejectedValue(new Error("offline"));
+    const store = createCloudHistoryStore({
+      cloudProfileForUser: () => profile,
+      saveHistory,
       storage: createMemoryStorage(),
     });
 
@@ -117,62 +164,22 @@ describe("createCloudHistoryStore", () => {
     });
   });
 
-  it("retries all pending records for a user", async () => {
-    const saveMatch = vi
-      .fn()
-      .mockRejectedValueOnce(new Error("offline"))
-      .mockResolvedValueOnce({ match: cloudMatch });
-    const store = createCloudHistoryStore({
-      saveMatch,
-      storage: createMemoryStorage(),
-    });
-
-    await store.getState().syncMatchForUser(user, match);
-    await store.getState().syncPendingForUser(user);
-
-    expect(saveMatch).toHaveBeenCalledTimes(2);
-    expect(store.getState().users["uid-1"]?.pendingMatches).toEqual({});
-  });
-
   it("drops pending records older than the reset barrier without syncing them", async () => {
-    const saveMatch = vi.fn().mockResolvedValue({ match: cloudMatch });
+    const saveHistory = vi.fn().mockResolvedValue({ matches: [cloudMatch], profile: cloudProfile() });
     const store = createCloudHistoryStore({
-      saveMatch,
+      cloudProfileForUser: () => cloudProfile(),
+      saveHistory,
       storage: createMemoryStorage(),
     });
 
     await store.getState().syncMatchForUser(user, match, "2026-04-28T02:00:00.000Z");
 
-    expect(saveMatch).not.toHaveBeenCalled();
+    expect(saveHistory).not.toHaveBeenCalled();
     expect(store.getState().users["uid-1"]?.pendingMatches).toEqual({});
   });
 
-  it("drops a cloud save result when the reset barrier appears during sync", async () => {
-    let historyResetAt: string | null = null;
-    const saveMatch = vi.fn(async () => {
-      historyResetAt = "2026-04-28T02:00:00.000Z";
-      return { match: cloudMatch };
-    });
+  it("clears only the local per-user cache after profile reset", async () => {
     const store = createCloudHistoryStore({
-      historyResetAtForUser: () => historyResetAt,
-      saveMatch,
-      storage: createMemoryStorage(),
-    });
-
-    await store.getState().syncMatchForUser(user, match);
-
-    const cache = store.getState().users["uid-1"];
-    expect(saveMatch).toHaveBeenCalledWith(user, match);
-    expect(cache?.cachedMatches).toEqual([]);
-    expect(cache?.pendingMatches).toEqual({});
-    expect(cache?.sync).toEqual({});
-    expect(store.getState().syncStatus).toBe("idle");
-  });
-
-  it("clears remote history and the local per-user cache", async () => {
-    const clearHistory = vi.fn().mockResolvedValue(1);
-    const store = createCloudHistoryStore({
-      clearHistory,
       loadHistory: vi.fn().mockResolvedValue([cloudMatch]),
       storage: createMemoryStorage(),
     });
@@ -180,63 +187,10 @@ describe("createCloudHistoryStore", () => {
     await store.getState().loadForUser(user);
     await store.getState().clearForUser(user);
 
-    expect(clearHistory).toHaveBeenCalledWith(user);
     expect(store.getState()).toMatchObject({
       errorMessage: null,
       syncStatus: "idle",
       users: {},
     });
-  });
-
-  it("waits for active syncs before clearing remote history", async () => {
-    const events: string[] = [];
-    let resolveSave!: (value: { match: typeof cloudMatch }) => void;
-    const saveMatch = vi.fn(
-      () =>
-        new Promise<{ match: typeof cloudMatch }>((resolve) => {
-          resolveSave = resolve;
-        }),
-    );
-    const clearHistory = vi.fn(async () => {
-      events.push("clear");
-      return 1;
-    });
-    const store = createCloudHistoryStore({
-      clearHistory,
-      saveMatch,
-      storage: createMemoryStorage(),
-    });
-
-    const syncPromise = store.getState().syncMatchForUser(user, match);
-    expect(saveMatch).toHaveBeenCalled();
-    const clearPromise = store.getState().clearForUser(user);
-    expect(clearHistory).not.toHaveBeenCalled();
-
-    events.push("save");
-    resolveSave({ match: cloudMatch });
-    await syncPromise;
-    await clearPromise;
-
-    expect(events).toEqual(["save", "clear"]);
-    expect(store.getState().users["uid-1"]).toBeUndefined();
-  });
-
-  it("does not clear the local cache when remote history clear fails", async () => {
-    const clearHistory = vi.fn().mockRejectedValue(new Error("permission denied"));
-    const store = createCloudHistoryStore({
-      clearHistory,
-      loadHistory: vi.fn().mockResolvedValue([cloudMatch]),
-      storage: createMemoryStorage(),
-    });
-
-    await store.getState().loadForUser(user);
-    await expect(store.getState().clearForUser(user)).rejects.toThrow("permission denied");
-
-    expect(clearHistory).toHaveBeenCalledWith(user);
-    expect(store.getState()).toMatchObject({
-      errorMessage: "permission denied",
-      syncStatus: "error",
-    });
-    expect(store.getState().users["uid-1"]?.cachedMatches).toEqual([cloudMatch]);
   });
 });

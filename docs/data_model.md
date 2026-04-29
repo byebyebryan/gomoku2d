@@ -22,14 +22,14 @@ live in `backend_infra.md`.
 
 | Path | Visibility | Writer | Purpose |
 |---|---|---|---|
-| `profiles/{uid}` | owner read | owner client | Cloud identity and user settings |
-| `profiles/{uid}/matches/{matchId}` | owner read | owner client for casual imports; server later for trusted records | Private cloud match history |
+| `profiles/{uid}` | owner read | owner client | Cloud identity, user settings, and capped private recent history |
+| `profiles/{uid}/matches/{matchId}` | disabled for casual history | server later | Reserved for future server-verified/shareable match records |
 | `matches/{matchId}` | participants read | server | Future trusted live match state |
 | `replays/{replayId}` | public read | owner/server on explicit publish | Future shareable replay projection |
 
 Guest-local state is not mirrored one-to-one in Firestore. On sign-in, the app
-imports finished local matches into private cloud history while leaving local
-copies on-device.
+merges the latest local matches into the signed-in profile's capped
+`recent_matches` snapshot while leaving local copies on-device.
 
 ## `profiles/{uid}`
 
@@ -45,7 +45,12 @@ type CloudProfileDocument = {
   history_reset_at?: Timestamp | null;
   last_login_at: Timestamp;
   preferred_variant: "freestyle" | "renju";
-  schema_version: 1;
+  recent_matches: {
+    matches: SavedMatchV1[]; // newest first, capped at 24
+    schema_version: 1;
+    updated_at: Timestamp | null;
+  };
+  schema_version: 2;
   uid: string;
   updated_at: Timestamp;
   username: string | null;
@@ -58,9 +63,14 @@ Rules:
 - `created_at` and `username` are app-owned after creation.
 - `history_reset_at` is a reset barrier. When present, local promotion, direct
   sync retry, cloud history load, and active-history resolution ignore matches
-  with `match_saved_at <= history_reset_at`.
-- `schema_version` is always `1`; increments require a writer + rules + reader
+  with `saved_at <= history_reset_at`.
+- `schema_version` is always `2`; increments require a writer + rules + reader
   update in the same slice.
+- `recent_matches.matches` stores the latest private cloud history snapshot
+  directly inside the profile document. The browser writes a merged snapshot,
+  not one document per match. Firestore rules cap the array at 24 records and
+  require `recent_matches.updated_at` to be the current request time whenever
+  the snapshot changes.
 - Writer behavior: during guest promotion, the browser only sends
   `display_name` if the local guest has a custom name and the loaded cloud name
   still matches the provider default. If the local display name is still the
@@ -70,30 +80,21 @@ Rules:
   movement for profile writes. The browser can leave `history_reset_at`
   unchanged or set it to the current write's `request.time`; it cannot move the
   barrier backward, remove it, or set an arbitrary timestamp.
-- Firestore rules also enforce a 5-minute cooldown between normal profile
-  updates using `updated_at`. Profile changes remain local-first and are retried
-  at later sync checkpoints if the server rejects an update inside the cooldown.
+- Firestore rules also enforce a 15-minute cooldown between normal profile
+  snapshot updates using `updated_at`. Profile changes and recent-history
+  changes remain local-first and coalesce into the next eligible sync checkpoint.
   Reset-barrier writes can bypass the normal edit cooldown so Reset Profile is
   not blocked by a recent profile sync.
 - Reset Profile while signed in writes `history_reset_at`, resets cloud profile
-  display/default-rule fields to provider/default values, deletes private
-  `client_uploaded` match documents where rules allow it, and clears this
-  device's local/cloud caches.
+  display/default-rule fields to provider/default values, clears
+  `recent_matches.matches`, and clears this device's local/cloud caches.
 
 ## Private Match History
 
-Path: `profiles/{uid}/matches/{matchId}`
-
-### Document IDs
-
-Imported guest matches use deterministic IDs:
-
-```ts
-`local-${encodeURIComponent(local_match_id)}`
-```
-
-The deterministic ID makes promotion idempotent. Retrying the same local import
-checks and skips the already-created cloud document.
+Current casual private history is embedded in `profiles/{uid}.recent_matches`.
+The old `profiles/{uid}/matches/{matchId}` casual subcollection path is closed
+in rules for `v0.3.3`; keep that namespace reserved for future
+server-verified/shareable records rather than private browser snapshots.
 
 ### Saved Match v1
 
@@ -125,45 +126,20 @@ type SavedMatchV1 = {
 };
 ```
 
-**`guest_import`** — local match promoted to cloud after sign-in:
-
-```ts
-type CloudImportedMatchV1 = SavedMatchV1 & {
-  id: string; // deterministic: "local-${encodeURIComponent(local_match_id)}"
-  source: "guest_import";
-  trust: "client_uploaded";
-
-  local_match_id: string;
-  local_origin_id: string; // "guest:{guestProfileId}:{localMatchId}"
-
-  imported_at: Timestamp; // server timestamp of the import write
-  match_saved_at: Timestamp; // Firestore-comparable copy of saved_at
-};
-```
-
-**`cloud_saved`** — match played while signed in, saved directly to cloud:
+**`cloud_saved`** — local match included in the signed-in profile snapshot:
 
 ```ts
 type CloudDirectSavedMatchV1 = SavedMatchV1 & {
-  id: string; // same as the local match UUID (no encoding needed)
+  id: string; // same as the local match UUID
   source: "cloud_saved";
   trust: "client_uploaded";
-
-  created_at: Timestamp; // server timestamp of the cloud write
-  match_saved_at: Timestamp; // Firestore-comparable copy of saved_at
 };
 ```
 
-Key differences from `guest_import`:
-- No `imported_at`, `local_match_id`, `local_origin_id` fields.
-- `id` is the raw local UUID rather than a prefixed encoding.
-- Human player's `local_profile_id` is always `null`; use `profile_uid` for
-  cross-device identity matching (see `matchUserSide` in `saved_match.ts`).
-- `match_saved_at` is duplicated from the ISO `saved_at` field as a Firestore
-  timestamp so security rules can reject stale writes after Reset Profile.
-- Reset Profile deletes only private `client_uploaded` records in this
-  subcollection; future `server_verified` history must not be deleted by the
-  owner-client reset path.
+All embedded cloud history records currently use `source: "cloud_saved"` and
+`trust: "client_uploaded"`, whether they were first played before or after
+sign-in. Human player's `local_profile_id` is always `null`; use `profile_uid`
+for cross-device identity matching (see `matchUserSide` in `saved_match.ts`).
 
 ```ts
 type SavedMatchPlayer = {
@@ -237,23 +213,16 @@ move. This avoids storing redundant derived state that can disagree with the mov
 history.
 
 `move_count` is stored even though it is derivable from `move_cells.length`
-because it is useful summary metadata and lets rules assert
-`move_cells.size() == move_count`. Current Firestore rules also restrict
-`move_cells` values to valid 15x15 board indexes.
-
-Cloud match documents also store `match_saved_at`, the timestamp form of
-`saved_at`. The ISO string remains the app-facing replay/display field; the
-timestamp exists so Firestore rules can compare match age against profile reset
-barriers without parsing strings.
+because it is useful summary metadata. Embedded private-history records are
+client-uploaded continuity records; Firestore rules validate the top-level
+profile snapshot shape and cap rather than every nested replay field.
 
 ## Indexing Notes
 
-`move_cells` is not queried directly and should not be indexed. The repo-level
-`firestore.indexes.json` disables single-field indexes for the `matches`
-collection group field.
-
-Expected query fields for private history are metadata fields such as
-`saved_at`, `variant`, `status`, and future trust/source fields.
+`recent_matches` and `move_cells` are not queried directly and should not be
+indexed. The repo-level `firestore.indexes.json` disables single-field indexes
+for the embedded `profiles.recent_matches` field and keeps the old
+`matches.move_cells` override for the future reserved match namespace.
 
 ## Local Guest History
 
@@ -283,15 +252,16 @@ net. The migration:
 - drops `winningCells`; replay/result screens reconstruct them from moves
 - drops malformed schema-version-1 records instead of loading them into the UI
 
-Cloud guest promotion then turns the canonical local record into a
-`CloudImportedMatchV1` by changing `id`, `source`, `trust`, human `profile_uid`,
-and adding import metadata. It does not reinterpret moves or player sides.
+Cloud profile sync turns canonical local records into embedded `cloud_saved`
+records by changing `source`, `trust`, and the human player's `profile_uid`.
+It does not reinterpret moves or player sides.
 
 ## Migration Notes
 
-There is no production cloud match history before `CloudImportedMatchV1`, so the
-first promotion release can tighten the shape without a cloud data migration.
-Future schema versions should either:
+There is no meaningful production cloud match history before the profile-v2
+embedded snapshot pivot, so this slice intentionally updates alpha data in
+place instead of carrying a migration layer. Future schema versions should
+either:
 
 - keep readers backward-compatible for existing versions, or
 - run a one-time migration and record it here.

@@ -24,7 +24,7 @@ their own section.
 - Tightened the release runbook for push/CI checks, manual Pages deploys,
   manual Firestore rules deploys, and production smoke coverage.
 - Expanded backend cost notes with current Firestore operation math for sign-in,
-  history load, guest promotion, direct cloud saves, reset, and retry flows.
+  embedded history load, coalesced profile/history sync, reset, and retry flows.
 - Avoided routine Firestore profile refresh writes when signed-in cloud profile
   fields are already current.
 - Deferred signed-in profile/settings sync to sign-in, retry, and match-finish
@@ -33,6 +33,14 @@ their own section.
 - Added a Firestore profile-update cooldown in security rules, with emulator
   coverage, so scripted profile edits cannot write as fast as the client can
   send requests.
+- Pivoted casual private cloud history from per-match subcollection documents to
+  a capped `recent_matches` snapshot embedded in `profiles/{uid}`.
+- Changed cloud profile/history sync to one 15-minute coalesced write lane, so
+  multiple profile edits and finished matches can collapse into one profile
+  snapshot write.
+- Updated Firestore rules and index exemptions for profile schema v2, embedded
+  recent-history caps, reset-time history clearing, and closed casual match
+  subcollection writes.
 
 ## [0.3.2] - 2026-04-28
 

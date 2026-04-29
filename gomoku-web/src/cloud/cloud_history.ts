@@ -1,35 +1,29 @@
 import {
-  collection,
   doc,
   getDoc,
-  getDocs,
-  limit,
-  orderBy,
-  query,
   setDoc,
-  where,
-  writeBatch,
   type Firestore,
 } from "firebase/firestore";
 
-import { isSavedMatchV1, savedMatchIsAfterReset, type SavedMatchV1 } from "../match/saved_match";
+import { savedMatchIsAfterReset, type SavedMatchV1 } from "../match/saved_match";
 
 import type { CloudAuthUser } from "./auth_store";
 import {
-  cloudDirectSavedMatchId,
-  createCloudDirectSavedDocument,
-  createCloudDirectSavedMatch,
-  type CloudDirectSavedDocument,
-} from "./cloud_match";
+  CLOUD_RECENT_MATCHES_LIMIT,
+  CLOUD_RECENT_MATCHES_SCHEMA_VERSION,
+  cloudProfileFromDocument,
+  cloudProfileSnapshotUpdate,
+  mergeCloudRecentMatches,
+  type CloudProfile,
+  type CloudProfileDocument,
+} from "./cloud_profile";
 import { getFirebaseClients } from "./firebase";
 
-export const CLOUD_HISTORY_LIMIT = 24;
+export const CLOUD_HISTORY_LIMIT = CLOUD_RECENT_MATCHES_LIMIT;
 
 export interface CloudHistoryBackend {
-  createMatch: (matchId: string, document: CloudDirectSavedDocument) => Promise<void>;
-  deleteClientUploadedMatches: (limitCount: number) => Promise<number>;
-  loadMatches: (limitCount: number) => Promise<unknown[]>;
-  matchExists: (matchId: string) => Promise<boolean>;
+  loadProfile: () => Promise<CloudProfileDocument | null>;
+  updateProfile: (patch: Record<string, unknown>) => Promise<void>;
 }
 
 export interface CloudHistoryOptions {
@@ -37,42 +31,21 @@ export interface CloudHistoryOptions {
   firestore?: Firestore;
 }
 
-export interface CloudSaveMatchResult {
-  match: SavedMatchV1;
-  matchId: string;
-  skipped: boolean;
+export interface CloudSaveHistoryResult {
+  matches: SavedMatchV1[];
+  profile: CloudProfile;
 }
 
 function createFirestoreCloudHistoryBackend(user: CloudAuthUser, firestore: Firestore): CloudHistoryBackend {
   const profileRef = doc(firestore, "profiles", user.uid);
-  const matchesRef = collection(profileRef, "matches");
 
   return {
-    createMatch: async (matchId, document) => {
-      await setDoc(doc(matchesRef, matchId), document);
+    loadProfile: async () => {
+      const snapshot = await getDoc(profileRef);
+      return snapshot.exists() ? (snapshot.data() as CloudProfileDocument) : null;
     },
-    deleteClientUploadedMatches: async (limitCount) => {
-      const snapshot = await getDocs(query(matchesRef, where("trust", "==", "client_uploaded"), limit(limitCount)));
-      const batch = writeBatch(firestore);
-
-      for (const entry of snapshot.docs) {
-        batch.delete(entry.ref);
-      }
-
-      if (snapshot.empty) {
-        return 0;
-      }
-
-      await batch.commit();
-      return snapshot.size;
-    },
-    loadMatches: async (limitCount) => {
-      const snapshot = await getDocs(query(matchesRef, orderBy("saved_at", "desc"), limit(limitCount)));
-      return snapshot.docs.map((entry) => entry.data());
-    },
-    matchExists: async (matchId) => {
-      const snapshot = await getDoc(doc(matchesRef, matchId));
-      return snapshot.exists();
+    updateProfile: async (patch) => {
+      await setDoc(profileRef, patch, { merge: true });
     },
   };
 }
@@ -90,57 +63,78 @@ function resolveCloudHistoryBackend(user: CloudAuthUser, options: CloudHistoryOp
   return createFirestoreCloudHistoryBackend(user, firestore);
 }
 
-export async function saveCloudMatch(
-  user: CloudAuthUser,
-  match: SavedMatchV1,
-  options: CloudHistoryOptions = {},
-): Promise<CloudSaveMatchResult> {
-  const backend = resolveCloudHistoryBackend(user, options);
-  const matchId = cloudDirectSavedMatchId(match);
-  const cloudMatch = createCloudDirectSavedMatch(user, match);
-
-  if (await backend.matchExists(matchId)) {
-    return { match: cloudMatch, matchId, skipped: true };
-  }
-
-  try {
-    await backend.createMatch(matchId, createCloudDirectSavedDocument(user, match));
-    return { match: cloudMatch, matchId, skipped: false };
-  } catch (error) {
-    if (await backend.matchExists(matchId)) {
-      return { match: cloudMatch, matchId, skipped: true };
-    }
-
-    throw error;
-  }
+export function cloudHistoryFromProfile(
+  profile: Pick<CloudProfile, "historyResetAt" | "recentMatches">,
+  historyResetAt: string | null | undefined = profile.historyResetAt,
+): SavedMatchV1[] {
+  return profile.recentMatches.matches.filter((match) => savedMatchIsAfterReset(match, historyResetAt));
 }
 
 export async function loadCloudHistory(
   user: CloudAuthUser,
-  options: CloudHistoryOptions & { historyResetAt?: string | null; limitCount?: number } = {},
+  options: CloudHistoryOptions & { historyResetAt?: string | null } = {},
 ): Promise<SavedMatchV1[]> {
   const backend = resolveCloudHistoryBackend(user, options);
-  const documents = await backend.loadMatches(options.limitCount ?? CLOUD_HISTORY_LIMIT);
+  const document = await backend.loadProfile();
+  const profile = cloudProfileFromDocument(user, "freestyle", document);
+  return cloudHistoryFromProfile(profile, options.historyResetAt);
+}
 
-  return documents
-    .filter(isSavedMatchV1)
-    .filter((match) => savedMatchIsAfterReset(match, options.historyResetAt));
+export async function saveCloudHistorySnapshot(
+  user: CloudAuthUser,
+  input: {
+    cloudProfile: CloudProfile;
+    displayName: string;
+    matches: SavedMatchV1[];
+    preferredVariant: CloudProfile["preferredVariant"];
+  },
+  options: CloudHistoryOptions = {},
+): Promise<CloudSaveHistoryResult> {
+  const backend = resolveCloudHistoryBackend(user, options);
+  const matches = mergeCloudRecentMatches(user, input.matches, input.cloudProfile.historyResetAt);
+  const patch = cloudProfileSnapshotUpdate({
+    displayName: input.displayName,
+    preferredVariant: input.preferredVariant,
+    recentMatches: matches,
+    user,
+  });
+
+  await backend.updateProfile(patch);
+  const syncedAt = new Date().toISOString();
+
+  return {
+    matches,
+    profile: {
+      ...input.cloudProfile,
+      displayName: input.displayName,
+      preferredVariant: input.preferredVariant,
+      recentMatches: {
+        matches,
+        schemaVersion: CLOUD_RECENT_MATCHES_SCHEMA_VERSION,
+        updatedAt: syncedAt,
+      },
+      updatedAt: syncedAt,
+    },
+  };
 }
 
 export async function clearCloudHistory(
   user: CloudAuthUser,
-  options: CloudHistoryOptions & { batchSize?: number } = {},
-): Promise<number> {
-  const backend = resolveCloudHistoryBackend(user, options);
-  const batchSize = Math.max(1, Math.min(options.batchSize ?? 500, 500));
-  let deleted = 0;
-
-  for (;;) {
-    const count = await backend.deleteClientUploadedMatches(batchSize);
-    deleted += count;
-
-    if (count < batchSize) {
-      return deleted;
-    }
-  }
+  input: {
+    cloudProfile: CloudProfile;
+    displayName: string;
+    preferredVariant: CloudProfile["preferredVariant"];
+  },
+  options: CloudHistoryOptions = {},
+): Promise<CloudSaveHistoryResult> {
+  return saveCloudHistorySnapshot(
+    user,
+    {
+      cloudProfile: input.cloudProfile,
+      displayName: input.displayName,
+      matches: [],
+      preferredVariant: input.preferredVariant,
+    },
+    options,
+  );
 }

@@ -181,7 +181,8 @@ This lane is intentionally low-friction and low-trust:
 ```
 user finishes a local bot/casual match while signed in
   → browser serializes compact replay + summary
-    → browser writes one private history record to profiles/{uid}/matches/{id}
+    → browser merges it into profiles/{uid}.recent_matches
+      → browser writes the capped profile snapshot when the 15-minute sync gate is open
       → local cache stays in sync for quick resume/viewing
 ```
 
@@ -189,7 +190,7 @@ This path is still intentionally low-trust:
 
 - gameplay stays client-side
 - no per-move backend validation
-- one cloud write on match end instead of syncing the whole live match
+- one coalesced profile snapshot write instead of one cloud document per match
 - good fit for bot matches and private history
 
 Public sharing and ranked/trusted features do not rely on this path alone.
