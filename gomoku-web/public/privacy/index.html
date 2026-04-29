@@ -84,9 +84,10 @@
               <p>
                 If you sign in with Google, Gomoku2D may store a private cloud
                 profile in Firebase/Firestore. That profile can include your
-                Google account identifier, profile name, email address, avatar
-                URL, provider IDs, preferred rule setting, and login/update
-                timestamps. Gomoku2D may also store private match history,
+                Google account identifier, profile name, avatar URL, provider
+                IDs, preferred rule setting, and login/update timestamps. The
+                app-owned profile does not copy your email address into
+                Firestore. Gomoku2D may also store private match history,
                 including game results, rule variants, players, moves,
                 timestamps, and replay metadata.
               </p>
@@ -123,8 +124,10 @@
                 You can use Reset Profile from the Profile screen. Signed out,
                 it resets your local profile and local match history. Signed in,
                 it resets your cloud profile and history, then clears this
-                device's local cache. You can also clear browser site data
-                manually. For deletion questions, email
+                device's local cache. Signed in, open Reset Profile and choose
+                Delete Cloud to delete your Gomoku2D cloud profile and sign out.
+                Local browser data on that device remains local unless you reset
+                it or clear site data manually. For deletion questions, email
                 <a href="mailto:gomoku2d@byebyebryan.com"
                   >gomoku2d@byebyebryan.com</a
                 >.

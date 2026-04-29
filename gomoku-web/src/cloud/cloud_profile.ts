@@ -1,4 +1,5 @@
 import {
+  deleteDoc,
   doc,
   getDoc,
   serverTimestamp,
@@ -983,4 +984,16 @@ export async function resetCloudProfile(
     preferredVariant,
     refreshed.exists() ? (refreshed.data() as CloudProfileDocument) : fallback,
   );
+}
+
+export async function deleteCloudProfile(
+  user: CloudAuthUser,
+  options: EnsureCloudProfileOptions = {},
+): Promise<void> {
+  const firestore = options.firestore ?? getFirebaseClients()?.firestore;
+  if (!firestore) {
+    throw new Error("Cloud profile deletion is not configured for this build.");
+  }
+
+  await deleteDoc(doc(firestore, "profiles", user.uid));
 }

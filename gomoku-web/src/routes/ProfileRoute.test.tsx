@@ -110,6 +110,7 @@ describe("ProfileRoute cloud state", () => {
       user: null,
     });
     cloudProfileStore.setState({
+      deleteForUser: vi.fn(),
       errorMessage: null,
       loadForUser: vi.fn(),
       profile: null,
@@ -642,6 +643,63 @@ describe("ProfileRoute cloud state", () => {
     expect(clearForUser).toHaveBeenCalledWith(cloudUser);
     expect(resetUserCache).toHaveBeenCalledWith("uid-1");
     expect(localProfileStore.getState().matchHistory.replayMatches).toEqual([]);
+  });
+
+  it("deletes the online profile and signs out without clearing local history", async () => {
+    const deleteForUser = vi.fn().mockResolvedValue(undefined);
+    const clearForUser = vi.fn().mockResolvedValue(undefined);
+    const resetUserCache = vi.fn();
+    const signOut = vi.fn().mockResolvedValue(undefined);
+    const localProfile = localProfileStore.getState().ensureLocalProfile();
+    const localMatch = localSavedMatch("match-1", localProfile.id);
+
+    localProfileStore.setState({ matchHistory: localMatchHistoryWith([localMatch]) });
+    cloudAuthStore.setState({
+      errorMessage: null,
+      isConfigured: true,
+      signInWithGoogle: vi.fn(),
+      signOut,
+      start: vi.fn(),
+      status: "signed_in",
+      stop: vi.fn(),
+      user: cloudUser,
+    });
+    cloudProfileStore.setState({
+      deleteForUser,
+      errorMessage: null,
+      loadForUser: vi.fn(),
+      profile: cloudProfile,
+      reset: vi.fn(),
+      resetForUser: vi.fn(),
+      status: "ready",
+    });
+    cloudHistoryStore.setState({
+      clearForUser,
+      resetUserCache,
+    });
+
+    renderProfileRoute();
+
+    expect(screen.queryByRole("button", { name: "Delete Cloud" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete Cloud" }));
+    expect(
+      screen.getByText("Delete cloud profile, then sign out? Local profile stays on this device."),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(deleteForUser).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete Cloud" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    await waitFor(() => {
+      expect(deleteForUser).toHaveBeenCalledWith(cloudUser);
+    });
+    expect(clearForUser).toHaveBeenCalledWith(cloudUser);
+    expect(resetUserCache).toHaveBeenCalledWith("uid-1");
+    expect(signOut).toHaveBeenCalledTimes(1);
+    expect(localProfileStore.getState().matchHistory.replayMatches).toEqual([localMatch]);
   });
 
   it("keeps signed-in reset confirmation open and local history intact when cloud clear fails", async () => {
