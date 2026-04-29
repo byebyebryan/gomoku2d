@@ -36,6 +36,7 @@ test("finished board click advances to the next round with swapped colors", asyn
     [4, 0],
     [6, 0],
     [8, 0],
+    [10, 0],
   ];
 
   for (const [row, col] of losingMoves) {
