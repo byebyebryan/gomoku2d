@@ -352,6 +352,13 @@
   list-style: none;
 }
 
+.historyMoreAction {
+  width: 100%;
+  min-height: 42px;
+  margin-top: 12px;
+  justify-content: center;
+}
+
 .historySummary,
 .historyDetails {
   display: contents;

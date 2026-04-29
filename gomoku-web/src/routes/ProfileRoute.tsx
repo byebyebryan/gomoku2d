@@ -51,6 +51,8 @@ interface HistoryStats {
   wins: number;
 }
 
+const HISTORY_VISIBLE_BATCH_SIZE = 16;
+
 function syncCloudHistoryForUser(user: CloudAuthUser, historyResetAt: string | null, flushProfile = false): void {
   const profileSync = flushProfile ? flushCloudProfileSync(user) : Promise.resolve(null);
 
@@ -256,7 +258,7 @@ function historySyncStatus({
   }
 
   if (pendingCount > 0) {
-    return { label: "Pending", tone: "pending" };
+    return { label: "Queued", tone: "pending" };
   }
 
   if (profileStatus === "ready") {
@@ -383,6 +385,7 @@ export function ProfileRoute() {
   const initialPromotionKeyRef = useRef<string | null>(null);
   const [resetConfirming, setResetConfirming] = useState(false);
   const [resetBusy, setResetBusy] = useState(false);
+  const [visibleHistoryCount, setVisibleHistoryCount] = useState(HISTORY_VISIBLE_BATCH_SIZE);
   const cloudAuth = useStore(cloudAuthStore, (state) => state);
   const cloudHistory = useStore(cloudHistoryStore, (state) => state);
   const cloudProfile = useStore(cloudProfileStore, (state) => state);
@@ -395,6 +398,10 @@ export function ProfileRoute() {
   useEffect(() => {
     localProfileStore.getState().ensureLocalProfile();
   }, []);
+
+  useEffect(() => {
+    setVisibleHistoryCount(HISTORY_VISIBLE_BATCH_SIZE);
+  }, [cloudAuth.status, cloudAuth.user?.uid, profile?.id]);
 
   useEffect(() => {
     cloudAuthStore.getState().start();
@@ -546,6 +553,8 @@ export function ProfileRoute() {
     historyResetAt: cloudAuth.status === "signed_in" ? cloudProfile.profile?.resetAt : null,
     localHistory,
   });
+  const visibleHistory = history.slice(0, visibleHistoryCount);
+  const hiddenHistoryCount = Math.max(0, history.length - visibleHistory.length);
   const historyIdentity: HistoryIdentity = {
     localProfileId: profile?.id,
     profileUid: cloudAuth.status === "signed_in" ? cloudAuth.user?.uid : null,
@@ -791,7 +800,7 @@ export function ProfileRoute() {
           <div className={styles.summaryGrid}>
             <article className={styles.summaryTile}>
               <span className={styles.summaryValue}>{stats.matches}</span>
-              <span className={styles.summaryLabel}>Finished</span>
+              <span className={styles.summaryLabel}>Matches</span>
             </article>
             <article className={styles.summaryTile}>
               <span className={styles.summaryValue}>{stats.wins}</span>
@@ -827,7 +836,7 @@ export function ProfileRoute() {
           <div className={styles.historyBody}>
             {history.length > 0 ? (
               <ol className={styles.historyList}>
-                {history.map((match) => {
+                {visibleHistory.map((match) => {
                   const localSide = historyLocalSide(match, historyIdentity);
                   const result = historyResultLabel(match, historyIdentity);
 
@@ -888,6 +897,19 @@ export function ProfileRoute() {
                   );
                 })}
               </ol>
+            ) : null}
+            {hiddenHistoryCount > 0 ? (
+              <button
+                className={`uiAction uiActionNeutral ${styles.historyMoreAction}`}
+                onClick={() => {
+                  setVisibleHistoryCount((count) =>
+                    Math.min(history.length, count + HISTORY_VISIBLE_BATCH_SIZE)
+                  );
+                }}
+                type="button"
+              >
+                <span className="uiActionLabel">Show more</span>
+              </button>
             ) : null}
           </div>
         </section>

@@ -124,7 +124,10 @@ describe("createCloudHistoryStore", () => {
   it("keeps a local match pending when the 5-minute profile sync gate is closed", async () => {
     const saveHistory = vi.fn().mockResolvedValue({ matches: [cloudMatch], profile: cloudProfile() });
     const store = createCloudHistoryStore({
-      cloudProfileForUser: () => cloudProfile({ updatedAt: "2999-01-01T00:00:00.000Z" }),
+      cloudProfileForUser: () => cloudProfile({
+        matchHistory: emptyCloudMatchHistory(),
+        updatedAt: "2999-01-01T00:00:00.000Z",
+      }),
       saveHistory,
       storage: createMemoryStorage(),
     });
@@ -133,6 +136,62 @@ describe("createCloudHistoryStore", () => {
 
     expect(saveHistory).not.toHaveBeenCalled();
     expect(store.getState().users["uid-1"]?.pendingMatches["match-1"]).toEqual(match);
+  });
+
+  it("refreshes a stale due profile before writing queued history", async () => {
+    const staleProfile = cloudProfile({
+      matchHistory: emptyCloudMatchHistory(),
+      updatedAt: "2026-04-28T00:00:00.000Z",
+    });
+    const refreshedProfile = cloudProfile({
+      matchHistory: emptyCloudMatchHistory(),
+      updatedAt: "2999-01-01T00:00:00.000Z",
+    });
+    const refreshCloudProfileForUser = vi.fn().mockResolvedValue(refreshedProfile);
+    const saveHistory = vi.fn().mockResolvedValue({ matches: [cloudMatch], profile: refreshedProfile });
+    const store = createCloudHistoryStore({
+      cloudProfileForUser: () => staleProfile,
+      refreshCloudProfileForUser,
+      saveHistory,
+      storage: createMemoryStorage(),
+    });
+
+    await store.getState().syncMatchForUser(user, match);
+
+    expect(refreshCloudProfileForUser).toHaveBeenCalledWith(user, "freestyle");
+    expect(saveHistory).not.toHaveBeenCalled();
+    expect(store.getState()).toMatchObject({
+      errorMessage: null,
+      syncStatus: "idle",
+    });
+    expect(store.getState().users["uid-1"]?.pendingMatches["match-1"]).toEqual(match);
+  });
+
+  it("clears a queued match when the refreshed profile already contains it", async () => {
+    const staleProfile = cloudProfile({
+      matchHistory: emptyCloudMatchHistory(),
+      updatedAt: "2026-04-28T00:00:00.000Z",
+    });
+    const refreshedProfile = cloudProfile({ updatedAt: "2999-01-01T00:00:00.000Z" });
+    const refreshCloudProfileForUser = vi.fn().mockResolvedValue(refreshedProfile);
+    const saveHistory = vi.fn().mockResolvedValue({ matches: [cloudMatch], profile: refreshedProfile });
+    const store = createCloudHistoryStore({
+      cloudProfileForUser: () => staleProfile,
+      refreshCloudProfileForUser,
+      saveHistory,
+      storage: createMemoryStorage(),
+    });
+
+    await store.getState().syncMatchForUser(user, match);
+
+    expect(refreshCloudProfileForUser).toHaveBeenCalledWith(user, "freestyle");
+    expect(saveHistory).not.toHaveBeenCalled();
+    expect(store.getState()).toMatchObject({
+      errorMessage: null,
+      syncStatus: "idle",
+    });
+    expect(store.getState().users["uid-1"]?.pendingMatches).toEqual({});
+    expect(store.getState().users["uid-1"]?.sync).toEqual({});
   });
 
   it("writes one merged profile snapshot when the sync gate is open", async () => {
@@ -172,6 +231,33 @@ describe("createCloudHistoryStore", () => {
       errorMessage: "offline",
       status: "error",
     });
+  });
+
+  it("clears stale pending errors when a loaded cloud profile already has the match", async () => {
+    const profile = cloudProfile({ matchHistory: emptyCloudMatchHistory() });
+    const saveHistory = vi.fn().mockRejectedValue(new Error("offline"));
+    const store = createCloudHistoryStore({
+      cloudProfileForUser: () => profile,
+      saveHistory,
+      storage: createMemoryStorage(),
+    });
+
+    await store.getState().syncMatchForUser(user, match);
+    expect(store.getState().users["uid-1"]?.sync["match-1"]).toMatchObject({
+      errorMessage: "offline",
+      status: "error",
+    });
+
+    store.getState().loadFromProfile(user, cloudProfile());
+
+    expect(store.getState()).toMatchObject({
+      errorMessage: null,
+      loadStatus: "ready",
+      syncStatus: "idle",
+    });
+    expect(store.getState().users["uid-1"]?.cachedMatches).toEqual([cloudMatch]);
+    expect(store.getState().users["uid-1"]?.pendingMatches).toEqual({});
+    expect(store.getState().users["uid-1"]?.sync).toEqual({});
   });
 
   it("drops pending records older than the reset barrier without syncing them", async () => {

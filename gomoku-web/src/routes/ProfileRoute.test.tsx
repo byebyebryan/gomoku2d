@@ -68,6 +68,21 @@ function localMatchHistoryWith(matches: LocalProfileSavedMatch[] = []) {
   };
 }
 
+function localSavedMatch(id: string, localProfileId: string, minuteOffset = 0): LocalProfileSavedMatch {
+  return createLocalSavedMatch({
+    id,
+    localProfileId,
+    moves: [{ col: 7, moveNumber: 1, player: 1, row: 7 }],
+    players: [
+      { kind: "human", name: "Guest", stone: "black" },
+      { kind: "bot", name: "Practice Bot", stone: "white" },
+    ],
+    savedAt: new Date(Date.UTC(2026, 3, 28, 1, minuteOffset, 0)).toISOString(),
+    status: "draw",
+    variant: "freestyle",
+  });
+}
+
 describe("ProfileRoute cloud state", () => {
   afterEach(() => {
     cleanup();
@@ -130,6 +145,7 @@ describe("ProfileRoute cloud state", () => {
     expect(screen.getByText("Cloud sync unavailable.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign in" })).toBeDisabled();
     expect(screen.getByText("Default rule")).toBeInTheDocument();
+    expect(screen.getByText("Matches")).toBeInTheDocument();
     expect(screen.getByLabelText("Name")).toHaveValue("Guest");
   });
 
@@ -304,6 +320,45 @@ describe("ProfileRoute cloud state", () => {
     renderProfileRoute();
 
     expect(screen.getByText("Retrying")).toBeInTheDocument();
+  });
+
+  it("shows queued when cloud history has pending matches", () => {
+    const localProfile = localProfileStore.getState().ensureLocalProfile();
+    const localMatch = localSavedMatch("match-1", localProfile.id);
+
+    cloudAuthStore.setState({
+      errorMessage: null,
+      isConfigured: true,
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+      start: vi.fn(),
+      status: "signed_in",
+      stop: vi.fn(),
+      user: cloudUser,
+    });
+    cloudProfileStore.setState({
+      errorMessage: null,
+      loadForUser: vi.fn(),
+      profile: cloudProfile,
+      reset: vi.fn(),
+      resetForUser: vi.fn(),
+      status: "ready",
+    });
+    cloudHistoryStore.setState({
+      loadStatus: "ready",
+      users: {
+        [cloudUser.uid]: {
+          cachedMatches: [],
+          loadedAt: "2026-04-28T01:01:00.000Z",
+          pendingMatches: { [localMatch.id]: localMatch },
+          sync: {},
+        },
+      },
+    });
+
+    renderProfileRoute();
+
+    expect(screen.getByText("Queued")).toBeInTheDocument();
   });
 
   it("does not show history retrying for a non-history sync error with no pending matches", () => {
@@ -513,6 +568,22 @@ describe("ProfileRoute cloud state", () => {
     expect(screen.getByText("Win")).toBeInTheDocument();
     expect(screen.getByText("Moves 5")).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "Replay" })).toHaveLength(1);
+  });
+
+  it("reveals replay history in batches", () => {
+    const localProfile = localProfileStore.getState().ensureLocalProfile();
+    const matches = Array.from({ length: 20 }, (_, index) =>
+      localSavedMatch(`match-${index}`, localProfile.id, index)
+    );
+
+    localProfileStore.setState({ matchHistory: localMatchHistoryWith(matches) });
+
+    renderProfileRoute();
+
+    expect(screen.getAllByRole("button", { name: "Replay" })).toHaveLength(16);
+    fireEvent.click(screen.getByRole("button", { name: "Show more" }));
+    expect(screen.getAllByRole("button", { name: "Replay" })).toHaveLength(20);
+    expect(screen.queryByRole("button", { name: "Show more" })).not.toBeInTheDocument();
   });
 
   it("resets cloud profile scope and local cache when signed in", async () => {

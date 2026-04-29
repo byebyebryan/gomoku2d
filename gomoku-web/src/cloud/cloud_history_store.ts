@@ -9,6 +9,7 @@ import type { CloudAuthUser } from "./auth_store";
 import { saveCloudHistorySnapshot } from "./cloud_history";
 import {
   CLOUD_REPLAY_MATCHES_LIMIT,
+  cloudMatchHistoryHasMatch,
   cloudProfileSyncDue,
   mergeCloudSavedMatches,
   type CloudProfile,
@@ -51,6 +52,7 @@ export interface CloudHistoryStoreOptions {
   historyResetAtForUser?: (uid: string) => string | null | undefined;
   loadHistory?: (user: CloudAuthUser, historyResetAt?: string | null) => Promise<SavedMatchV1[]>;
   now?: () => string;
+  refreshCloudProfileForUser?: (user: CloudAuthUser, preferredVariant: GameVariant) => Promise<CloudProfile | null>;
   saveHistory?: (
     user: CloudAuthUser,
     input: {
@@ -153,8 +155,9 @@ function cacheWithSyncedMatches(
   const pendingMatches = Object.fromEntries(
     Object.entries(cache.pendingMatches).filter(([matchId]) => !syncedMatchIds.has(matchId)),
   );
+  const pendingMatchIds = new Set(Object.keys(pendingMatches));
   const sync = Object.fromEntries(
-    Object.entries(cache.sync).filter(([matchId]) => !syncedMatchIds.has(matchId)),
+    Object.entries(cache.sync).filter(([matchId]) => pendingMatchIds.has(matchId)),
   );
 
   return {
@@ -163,6 +166,92 @@ function cacheWithSyncedMatches(
     pendingMatches,
     sync,
   };
+}
+
+function cacheWithLoadedMatches(
+  cache: CloudHistoryUserCache,
+  matches: SavedMatchV1[],
+  historyResetAt: string | null | undefined,
+  loadedAt: string,
+): CloudHistoryUserCache {
+  const activeMatches = matches.filter((match) => savedMatchIsAfterReset(match, historyResetAt));
+  const loadedMatchIds = new Set(activeMatches.map((match) => match.id));
+  const pendingMatches = Object.fromEntries(
+    Object.entries(cache.pendingMatches).filter(([matchId, match]) => (
+      savedMatchIsAfterReset(match, historyResetAt) && !loadedMatchIds.has(matchId)
+    )),
+  );
+  const pendingMatchIds = new Set(Object.keys(pendingMatches));
+  const sync = Object.fromEntries(
+    Object.entries(cache.sync).filter(([matchId]) => pendingMatchIds.has(matchId)),
+  );
+
+  return {
+    ...cache,
+    cachedMatches: sortMatches([...activeMatches, ...Object.values(pendingMatches)]).slice(
+      0,
+      CLOUD_REPLAY_MATCHES_LIMIT,
+    ),
+    loadedAt,
+    pendingMatches,
+    sync,
+  };
+}
+
+function cacheWithProfileSnapshot(
+  cache: CloudHistoryUserCache,
+  profile: CloudProfile,
+  historyResetAt: string | null | undefined,
+  loadedAt: string,
+): CloudHistoryUserCache {
+  const activeMatches = profile.matchHistory.replayMatches.filter((match) =>
+    savedMatchIsAfterReset(match, historyResetAt)
+  );
+  const pendingMatches = Object.fromEntries(
+    Object.entries(cache.pendingMatches).filter(([matchId, match]) => (
+      savedMatchIsAfterReset(match, historyResetAt)
+        && !cloudMatchHistoryHasMatch(profile.matchHistory, matchId)
+    )),
+  );
+  const pendingMatchIds = new Set(Object.keys(pendingMatches));
+  const sync = Object.fromEntries(
+    Object.entries(cache.sync).filter(([matchId]) => pendingMatchIds.has(matchId)),
+  );
+
+  return {
+    ...cache,
+    cachedMatches: sortMatches([...activeMatches, ...Object.values(pendingMatches)]).slice(
+      0,
+      CLOUD_REPLAY_MATCHES_LIMIT,
+    ),
+    loadedAt,
+    pendingMatches,
+    sync,
+  };
+}
+
+function cacheHasPendingError(cache: CloudHistoryUserCache): boolean {
+  return Object.values(cache.sync).some((sync) => (
+    sync.status === "error" && sync.matchId in cache.pendingMatches
+  ));
+}
+
+function errorMessageAfterCacheRefresh(
+  currentErrorMessage: string | null,
+  cache: CloudHistoryUserCache,
+): string | null {
+  return cacheHasPendingError(cache) ? currentErrorMessage : null;
+}
+
+function syncStatusAfterCacheRefresh(
+  currentSyncStatus: CloudHistorySyncStatus,
+  cache: CloudHistoryUserCache,
+): CloudHistorySyncStatus {
+  if (currentSyncStatus !== "error") {
+    return currentSyncStatus;
+  }
+
+  return cacheHasPendingError(cache) ? "error" : "idle";
 }
 
 function activeSyncsFor(
@@ -185,6 +274,15 @@ export function createCloudHistoryStore(
   const cloudProfileForUser = options.cloudProfileForUser ?? ((uid) => {
     const profile = cloudProfileStore.getState().profile;
     return profile?.uid === uid ? profile : null;
+  });
+  const refreshCloudProfileForUser = options.refreshCloudProfileForUser ?? (async (user, preferredVariant) => {
+    if (options.cloudProfileForUser) {
+      return cloudProfileForUser(user.uid);
+    }
+
+    await cloudProfileStore.getState().loadForUser(user, preferredVariant);
+    const profile = cloudProfileStore.getState().profile;
+    return profile?.uid === user.uid ? profile : null;
   });
   const historyResetAtForUser = options.historyResetAtForUser ?? ((uid) => cloudProfileForUser(uid)?.resetAt);
   const loadHistory = options.loadHistory ?? (async (_user, historyResetAt) => {
@@ -241,15 +339,23 @@ export function createCloudHistoryStore(
 
           try {
             const matches = await loadHistory(user, historyResetAt);
-            set((state) => ({
-              errorMessage: null,
-              loadStatus: "ready",
-              users: updateUserCache(state.users, user.uid, (cache) => ({
-                ...cache,
-                cachedMatches: sortMatches(matches).slice(0, CLOUD_REPLAY_MATCHES_LIMIT),
-                loadedAt: now(),
-              })),
-            }));
+            set((state) => {
+              const users = updateUserCache(state.users, user.uid, (cache) =>
+                cacheWithLoadedMatches(cache, matches, historyResetAt, now())
+              );
+              return {
+                errorMessage: errorMessageAfterCacheRefresh(
+                  state.errorMessage,
+                  users[user.uid] ?? defaultUserCache(),
+                ),
+                loadStatus: "ready",
+                syncStatus: syncStatusAfterCacheRefresh(
+                  state.syncStatus,
+                  users[user.uid] ?? defaultUserCache(),
+                ),
+                users,
+              };
+            });
           } catch (error) {
             set({
               errorMessage: errorMessageFor(error),
@@ -258,18 +364,23 @@ export function createCloudHistoryStore(
           }
         },
         loadFromProfile: (user, profile, historyResetAt = profile.resetAt) => {
-          const matches = profile.matchHistory.replayMatches.filter((match) =>
-            savedMatchIsAfterReset(match, historyResetAt)
-          );
-          set((state) => ({
-            errorMessage: null,
-            loadStatus: "ready",
-            users: updateUserCache(state.users, user.uid, (cache) => ({
-              ...cache,
-              cachedMatches: sortMatches(matches).slice(0, CLOUD_REPLAY_MATCHES_LIMIT),
-              loadedAt: now(),
-            })),
-          }));
+          set((state) => {
+            const users = updateUserCache(state.users, user.uid, (cache) =>
+              cacheWithProfileSnapshot(cache, profile, historyResetAt, now())
+            );
+            return {
+              errorMessage: errorMessageAfterCacheRefresh(
+                state.errorMessage,
+                users[user.uid] ?? defaultUserCache(),
+                ),
+                loadStatus: "ready",
+                syncStatus: syncStatusAfterCacheRefresh(
+                  state.syncStatus,
+                  users[user.uid] ?? defaultUserCache(),
+                ),
+                users,
+              };
+            });
         },
         loadStatus: "idle",
         resetUserCache: (uid) => {
@@ -297,9 +408,30 @@ export function createCloudHistoryStore(
           await get().syncPendingForUser(user, historyResetAt);
         },
         syncPendingForUser: async (user, historyResetAt = null) => {
-          const profile = cloudProfileForUser(user.uid);
-          const cache = get().users[user.uid] ?? defaultUserCache();
-          const pending = Object.values(cache.pendingMatches);
+          let profile = cloudProfileForUser(user.uid);
+          if (profile) {
+            const activeProfile = profile;
+            const resetAt = latestResetAt(user.uid, historyResetAt ?? activeProfile.resetAt);
+            set((state) => {
+              const users = updateUserCache(state.users, user.uid, (cache) =>
+                cacheWithProfileSnapshot(cache, activeProfile, resetAt, now())
+              );
+              return {
+                errorMessage: errorMessageAfterCacheRefresh(
+                  state.errorMessage,
+                  users[user.uid] ?? defaultUserCache(),
+                ),
+                syncStatus: syncStatusAfterCacheRefresh(
+                  state.syncStatus,
+                  users[user.uid] ?? defaultUserCache(),
+                ),
+                users,
+              };
+            });
+          }
+
+          let cache = get().users[user.uid] ?? defaultUserCache();
+          let pending = Object.values(cache.pendingMatches);
           if (!profile || pending.length === 0 || resettingUids.has(user.uid)) {
             return;
           }
@@ -307,7 +439,41 @@ export function createCloudHistoryStore(
           if (!cloudProfileSyncDue(profile)) {
             return;
           }
-          const pendingMatchIds = new Set(pending.map((match) => match.id));
+
+          const localProfile = localProfileStore.getState();
+          const refreshedProfile = await refreshCloudProfileForUser(user, localProfile.settings.preferredVariant);
+          profile = refreshedProfile ?? cloudProfileForUser(user.uid);
+          if (profile) {
+            const activeProfile = profile;
+            const resetAt = latestResetAt(user.uid, historyResetAt ?? activeProfile.resetAt);
+            set((state) => {
+              const users = updateUserCache(state.users, user.uid, (currentCache) =>
+                cacheWithProfileSnapshot(currentCache, activeProfile, resetAt, now())
+              );
+              return {
+                errorMessage: errorMessageAfterCacheRefresh(
+                  state.errorMessage,
+                  users[user.uid] ?? defaultUserCache(),
+                ),
+                syncStatus: syncStatusAfterCacheRefresh(
+                  state.syncStatus,
+                  users[user.uid] ?? defaultUserCache(),
+                ),
+                users,
+              };
+            });
+          }
+          if (!profile || !cloudProfileSyncDue(profile)) {
+            return;
+          }
+
+          const refreshedCache = get().users[user.uid] ?? defaultUserCache();
+          const refreshedPending = Object.values(refreshedCache.pendingMatches);
+          if (refreshedPending.length === 0 || resettingUids.has(user.uid)) {
+            return;
+          }
+
+          const pendingMatchIds = new Set(refreshedPending.map((match) => match.id));
 
           set({
             errorMessage: null,
@@ -316,10 +482,9 @@ export function createCloudHistoryStore(
 
           const syncPromise = (async () => {
             const resetAt = latestResetAt(user.uid, historyResetAt);
-            const localProfile = localProfileStore.getState();
             const candidateMatches = mergeCloudSavedMatches(
               user,
-              [...profile.matchHistory.replayMatches, ...cache.cachedMatches, ...pending],
+              [...profile.matchHistory.replayMatches, ...refreshedCache.cachedMatches, ...refreshedPending],
               resetAt,
             );
             const result = await saveHistory(user, {
