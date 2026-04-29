@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useStore } from "zustand";
 
-import { cloudAuthStore } from "../cloud/auth_store";
+import { cloudAuthStore, type CloudAuthUser } from "../cloud/auth_store";
 import { cloudHistoryStore } from "../cloud/cloud_history_store";
 import { cloudProfileStore } from "../cloud/cloud_profile_store";
 import { cloudPromotionStore } from "../cloud/cloud_promotion_store";
@@ -34,6 +34,12 @@ type HistorySyncTone = "busy" | "error" | "pending" | "synced";
 interface HistorySyncStatus {
   label: string;
   tone: HistorySyncTone;
+}
+
+function syncCloudHistoryForUser(user: CloudAuthUser, historyResetAt: string | null): void {
+  void cloudHistoryStore.getState().loadForUser(user, historyResetAt).then(() => {
+    void cloudHistoryStore.getState().syncPendingForUser(user, historyResetAt);
+  });
 }
 
 function historyLocalSide(match: SavedMatchV1, identity: HistoryIdentity): SavedMatchSide | null {
@@ -121,16 +127,19 @@ function historySyncStatus({
     return null;
   }
 
+  if (profileStatus === "loading" || loadStatus === "loading") {
+    return { label: "Loading", tone: "busy" };
+  }
+
   if (
     loadStatus === "error"
-    || syncStatus === "error"
     || promotionStatus === "error"
     || hasPendingError
   ) {
     return { label: "Retrying", tone: "error" };
   }
 
-  if (profileStatus === "loading" || loadStatus === "loading" || !hasCloudHistoryLoaded) {
+  if (!hasCloudHistoryLoaded) {
     return { label: "Loading", tone: "busy" };
   }
 
@@ -357,15 +366,35 @@ export function ProfileRoute() {
 
     const user = cloudAuth.user;
     const historyResetAt = cloudProfile.profile?.historyResetAt ?? null;
-    void cloudHistoryStore.getState().loadForUser(user, historyResetAt).then(() => {
-      void cloudHistoryStore.getState().syncPendingForUser(user, historyResetAt);
-    });
+    syncCloudHistoryForUser(user, historyResetAt);
   }, [
     cloudAuth.status,
     cloudAuth.user,
     cloudProfile.profile?.historyResetAt,
     cloudProfile.status,
     cloudPromotion.status,
+  ]);
+
+  useEffect(() => {
+    if (cloudAuth.status !== "signed_in" || !cloudAuth.user || cloudProfile.status !== "ready") {
+      return;
+    }
+
+    const user = cloudAuth.user;
+    const historyResetAt = cloudProfile.profile?.historyResetAt ?? null;
+    const retryCloudHistory = () => {
+      syncCloudHistoryForUser(user, historyResetAt);
+    };
+
+    window.addEventListener("online", retryCloudHistory);
+    return () => {
+      window.removeEventListener("online", retryCloudHistory);
+    };
+  }, [
+    cloudAuth.status,
+    cloudAuth.user,
+    cloudProfile.profile?.historyResetAt,
+    cloudProfile.status,
   ]);
 
   const cloudCache =
@@ -645,8 +674,14 @@ export function ProfileRoute() {
               <span className={styles.summaryLabel}>Draws</span>
             </article>
           </div>
-          {history.length > 0 ? (
-            <div className={styles.historyHead} aria-hidden="true">
+          <div
+            className={`${styles.historyHead} ${
+              history.length === 0 ? styles.historyHeadEmpty : ""
+            }`}
+            aria-hidden="true"
+          >
+            {history.length > 0 ? (
+              <>
               <span className={styles.historyHeadLabel}>Result</span>
               <span className={styles.historyHeadLabel}>Opponent</span>
               <span className={`${styles.historyHeadLabel} ${styles.historyHeadSide}`}>Side</span>
@@ -654,12 +689,11 @@ export function ProfileRoute() {
               <span className={`${styles.historyHeadLabel} ${styles.historyHeadMoves}`}>Moves</span>
               <span className={`${styles.historyHeadLabel} ${styles.historyHeadPlayed}`}>Played</span>
               <span className={styles.historyHeadSpacer} />
-            </div>
-          ) : null}
+              </>
+            ) : null}
+          </div>
           <div className={styles.historyBody}>
-            {history.length === 0 ? (
-              <p className={styles.emptyState}>Finished matches are saved here.</p>
-            ) : (
+            {history.length > 0 ? (
               <ol className={styles.historyList}>
                 {history.map((match) => {
                   const localSide = historyLocalSide(match, historyIdentity);
@@ -722,7 +756,7 @@ export function ProfileRoute() {
                   );
                 })}
               </ol>
-            )}
+            ) : null}
           </div>
         </section>
       </section>
