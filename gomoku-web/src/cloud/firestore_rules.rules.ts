@@ -399,6 +399,14 @@ describe("Firestore profile rules", () => {
       ),
     );
   });
+
+  it("allows only the owner to delete their profile document", async () => {
+    await seedProfile("uid-1");
+
+    await assertFails(ownerDb("uid-2").doc("profiles/uid-1").delete());
+    await assertFails(testEnv.unauthenticatedContext().firestore().doc("profiles/uid-1").delete());
+    await assertSucceeds(ownerDb().doc("profiles/uid-1").delete());
+  });
 });
 
 describe("Firestore private match subcollection rules", () => {

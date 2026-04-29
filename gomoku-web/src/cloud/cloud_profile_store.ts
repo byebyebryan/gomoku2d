@@ -3,12 +3,13 @@ import { createStore, type StoreApi } from "zustand/vanilla";
 import type { GameVariant } from "../core/bot_protocol";
 
 import type { CloudAuthUser } from "./auth_store";
-import { ensureCloudProfile, resetCloudProfile, type CloudProfile } from "./cloud_profile";
+import { deleteCloudProfile, ensureCloudProfile, resetCloudProfile, type CloudProfile } from "./cloud_profile";
 
 export type CloudProfileStatus = "idle" | "loading" | "ready" | "error";
 
 export interface CloudProfileState {
   applyLocalPatch: (patch: Partial<CloudProfile>) => void;
+  deleteForUser: (user: CloudAuthUser) => Promise<void>;
   errorMessage: string | null;
   loadForUser: (user: CloudAuthUser, preferredVariant: GameVariant) => Promise<void>;
   profile: CloudProfile | null;
@@ -18,6 +19,7 @@ export interface CloudProfileState {
 }
 
 export interface CloudProfileStoreOptions {
+  deleteProfile?: (user: CloudAuthUser) => Promise<void>;
   loadProfile?: (user: CloudAuthUser, preferredVariant: GameVariant) => Promise<CloudProfile>;
   resetProfile?: (user: CloudAuthUser, preferredVariant: GameVariant) => Promise<CloudProfile>;
 }
@@ -29,6 +31,7 @@ function errorMessageFor(error: unknown): string {
 export function createCloudProfileStore(
   options: CloudProfileStoreOptions = {},
 ): StoreApi<CloudProfileState> {
+  const deleteProfile = options.deleteProfile ?? deleteCloudProfile;
   const loadProfile = options.loadProfile ?? ensureCloudProfile;
   const resetProfile = options.resetProfile ?? resetCloudProfile;
   let requestId = 0;
@@ -38,6 +41,39 @@ export function createCloudProfileStore(
       set((state) => ({
         profile: state.profile ? { ...state.profile, ...patch } : state.profile,
       }));
+    },
+    deleteForUser: async (user) => {
+      const currentRequestId = requestId + 1;
+      requestId = currentRequestId;
+
+      set({
+        errorMessage: null,
+        status: "loading",
+      });
+
+      try {
+        await deleteProfile(user);
+        if (requestId !== currentRequestId) {
+          return;
+        }
+
+        set({
+          errorMessage: null,
+          profile: null,
+          status: "idle",
+        });
+      } catch (error) {
+        if (requestId !== currentRequestId) {
+          return;
+        }
+
+        const message = errorMessageFor(error);
+        set({
+          errorMessage: message,
+          status: "error",
+        });
+        throw new Error(message);
+      }
     },
     errorMessage: null,
     loadForUser: async (user, preferredVariant) => {

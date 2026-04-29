@@ -248,7 +248,7 @@ service cloud.firestore {
           || initialProfileSyncBypass()
         )
         && validResetAtOnUpdate();
-      allow delete: if false;
+      allow delete: if isOwner(uid);
 
       match /matches/{matchId} {
         allow read, write: if false;

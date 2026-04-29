@@ -108,6 +108,9 @@ Rules:
 - Reset Profile while signed in writes `reset_at`, resets cloud profile
   display/default-rule fields to provider/default values, clears every
   `match_history` tier, and clears this device's local/cloud caches.
+- Delete Online Profile while signed in deletes `profiles/{uid}`, clears this
+  device's cloud cache for that user, and signs out. Local browser profile and
+  local match history remain local unless the user resets them separately.
 
 ### Match History Tiers
 

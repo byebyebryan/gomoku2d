@@ -131,4 +131,36 @@ describe("createCloudProfileStore", () => {
       status: "error",
     });
   });
+
+  it("deletes a cloud profile for a signed-in user", async () => {
+    const deleteProfile = vi.fn().mockResolvedValue(undefined);
+    const store = createCloudProfileStore({
+      deleteProfile,
+      loadProfile: vi.fn().mockResolvedValue(profile),
+    });
+
+    await store.getState().loadForUser(authUser, "freestyle");
+    const promise = store.getState().deleteForUser(authUser);
+    expect(store.getState().status).toBe("loading");
+    await promise;
+
+    expect(deleteProfile).toHaveBeenCalledWith(authUser);
+    expect(store.getState()).toMatchObject({
+      errorMessage: null,
+      profile: null,
+      status: "idle",
+    });
+  });
+
+  it("rejects delete failures after surfacing the error", async () => {
+    const store = createCloudProfileStore({
+      deleteProfile: vi.fn().mockRejectedValue(new Error("permission denied")),
+    });
+
+    await expect(store.getState().deleteForUser(authUser)).rejects.toThrow("permission denied");
+    expect(store.getState()).toMatchObject({
+      errorMessage: "permission denied",
+      status: "error",
+    });
+  });
 });

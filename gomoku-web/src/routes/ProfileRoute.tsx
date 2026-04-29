@@ -38,6 +38,7 @@ interface HistoryIdentity {
 }
 
 type HistorySyncTone = "busy" | "error" | "pending" | "synced";
+type ProfileDangerAction = "delete" | "reset";
 
 interface HistorySyncStatus {
   label: string;
@@ -383,8 +384,8 @@ function shouldAdoptCloudDisplayName(
 export function ProfileRoute() {
   const navigate = useNavigate();
   const initialPromotionKeyRef = useRef<string | null>(null);
-  const [resetConfirming, setResetConfirming] = useState(false);
-  const [resetBusy, setResetBusy] = useState(false);
+  const [confirmingProfileAction, setConfirmingProfileAction] = useState<ProfileDangerAction | null>(null);
+  const [profileActionBusy, setProfileActionBusy] = useState(false);
   const [visibleHistoryCount, setVisibleHistoryCount] = useState(HISTORY_VISIBLE_BATCH_SIZE);
   const cloudAuth = useStore(cloudAuthStore, (state) => state);
   const cloudHistory = useStore(cloudHistoryStore, (state) => state);
@@ -609,10 +610,13 @@ export function ProfileRoute() {
     ].join(" ")
     : "";
   const signedIn = cloudAuth.status === "signed_in" && Boolean(cloudAuth.user);
-  const resetDisabled = resetBusy || (signedIn && cloudProfile.status === "loading");
-  const resetConfirmationText = signedIn
-    ? "Reset cloud profile and clear both cloud and local match history?"
-    : "Reset local profile and clear local match history?";
+  const profileActionDisabled = profileActionBusy || (signedIn && cloudProfile.status === "loading");
+  const confirmationText = confirmingProfileAction === "delete"
+    ? "Delete cloud profile, then sign out? Local profile stays on this device."
+    : signedIn
+      ? "Reset cloud profile and clear both cloud and local match history?"
+      : "Reset local profile and clear local match history?";
+  const confirmationButtonText = confirmingProfileAction === "delete" ? "Delete" : "Reset";
 
   async function resetSignedInProfile(): Promise<void> {
     if (cloudAuth.status !== "signed_in" || !cloudAuth.user) {
@@ -632,21 +636,41 @@ export function ProfileRoute() {
     localStore.ensureLocalProfile();
   }
 
-  async function confirmResetProfile(): Promise<void> {
-    setResetBusy(true);
+  async function deleteSignedInProfile(): Promise<void> {
+    if (cloudAuth.status !== "signed_in" || !cloudAuth.user) {
+      return;
+    }
+
+    const user = cloudAuth.user;
+    await cloudHistoryStore.getState().clearForUser(user);
+    await cloudProfileStore.getState().deleteForUser(user);
+    cloudHistoryStore.getState().resetUserCache(user.uid);
+    cloudPromotionStore.getState().reset();
+    await cloudAuthStore.getState().signOut();
+  }
+
+  async function confirmProfileAction(): Promise<void> {
+    const action = confirmingProfileAction;
+    if (!action) {
+      return;
+    }
+
+    setProfileActionBusy(true);
     try {
-      if (signedIn) {
+      if (action === "delete") {
+        await deleteSignedInProfile();
+      } else if (signedIn) {
         await resetSignedInProfile();
       } else {
         const store = localProfileStore.getState();
         store.resetLocalProfile();
         store.ensureLocalProfile();
       }
-      setResetConfirming(false);
+      setConfirmingProfileAction(null);
     } catch {
-      // Store actions already expose foreground reset failures through cloudError.
+      // Store actions already expose foreground failures through cloudError.
     } finally {
-      setResetBusy(false);
+      setProfileActionBusy(false);
     }
   }
 
@@ -748,38 +772,52 @@ export function ProfileRoute() {
           <div className="uiDivider" />
 
           <section className={`${styles.sideSection} ${styles.resetSection}`}>
-            {resetConfirming ? (
+            {confirmingProfileAction ? (
               <div className={styles.resetConfirm}>
-                <p className={styles.resetConfirmText}>{resetConfirmationText}</p>
+                <p className={styles.resetConfirmText}>{confirmationText}</p>
                 <div className={styles.resetConfirmActions}>
-                  <button
-                    className="uiAction uiActionDanger"
-                    disabled={resetDisabled}
-                    onClick={() => {
-                      void confirmResetProfile();
-                    }}
-                    type="button"
-                  >
-                    <span className="uiActionLabel">Reset</span>
-                  </button>
-                  <button
-                    className="uiAction uiActionNeutral"
-                    disabled={resetBusy}
-                    onClick={() => {
-                      setResetConfirming(false);
-                    }}
-                    type="button"
-                  >
-                    <span className="uiActionLabel">Cancel</span>
-                  </button>
+                  <div className={styles.resetConfirmPrimaryActions}>
+                    <button
+                      className="uiAction uiActionDanger"
+                      disabled={profileActionDisabled}
+                      onClick={() => {
+                        void confirmProfileAction();
+                      }}
+                      type="button"
+                    >
+                      <span className="uiActionLabel">{confirmationButtonText}</span>
+                    </button>
+                    <button
+                      className="uiAction uiActionNeutral"
+                      disabled={profileActionBusy}
+                      onClick={() => {
+                        setConfirmingProfileAction(null);
+                      }}
+                      type="button"
+                    >
+                      <span className="uiActionLabel">Cancel</span>
+                    </button>
+                  </div>
+                  {signedIn && confirmingProfileAction === "reset" ? (
+                    <button
+                      className="uiAction uiActionNeutral"
+                      disabled={profileActionBusy}
+                      onClick={() => {
+                        setConfirmingProfileAction("delete");
+                      }}
+                      type="button"
+                    >
+                      <span className="uiActionLabel">Delete Cloud</span>
+                    </button>
+                  ) : null}
                 </div>
               </div>
             ) : (
               <button
                 className={`uiAction uiActionNeutral ${styles.resetTrigger}`}
-                disabled={resetDisabled}
+                disabled={profileActionDisabled}
                 onClick={() => {
-                  setResetConfirming(true);
+                  setConfirmingProfileAction("reset");
                 }}
                 type="button"
               >
