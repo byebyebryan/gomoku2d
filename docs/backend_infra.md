@@ -323,6 +323,21 @@ Release model:
 - Manual dispatch from `main` is the controlled escape hatch for transitional
   rules, rollback, or pre-release data migrations.
 
+Manual dispatch commands:
+
+```sh
+gh workflow run deploy-firestore.yml --ref main
+gh run list --workflow deploy-firestore.yml --limit 3
+```
+
+If the rules change depends on a matching web build, also dispatch Pages from
+the same `main` source or cut a version tag:
+
+```sh
+gh workflow run deploy.yml --ref main
+gh run list --workflow deploy.yml --limit 3
+```
+
 Live-data rollout rule: treat Firestore rules like an API/schema migration.
 When existing clients or data may still use the old shape, use expand/contract:
 
@@ -334,6 +349,21 @@ When existing clients or data may still use the old shape, use expand/contract:
 Rollback path: the Firestore release can be patched back to the previous ruleset
 ID if permission errors spike. Keep the previous ruleset from the GitHub Actions
 summary or from the release history before tightening rules.
+
+Rules deploy smoke:
+
+1. Confirm the deploy workflow summary shows the expected source ref/SHA.
+2. Confirm the live `cloud.firestore` release points at the deployed ruleset.
+3. Run a no-config local build smoke if the change should preserve offline/local
+   behavior.
+4. Run one production signed-in write smoke if the change affects profile,
+   history, reset, or match creates.
+5. Check Firestore usage/error dashboards after the smoke if rules were
+   tightened.
+
+Do not use a local REST deploy for normal production changes unless GitHub
+Actions is unavailable. A local deploy is harder to tie back to a source ref and
+should be treated as break-glass.
 
 Local validation:
 

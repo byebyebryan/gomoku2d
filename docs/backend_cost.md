@@ -9,7 +9,8 @@ lanes live in `backend.md`.
 
 This is an estimate document, not billing truth. Re-check official pricing
 before each backend release and use the Firebase/GCP usage dashboards after
-deploying.
+deploying. Pricing assumptions below were last re-checked against Firebase's
+official pricing and Firestore billing docs on 2026-04-29.
 
 Sources:
 
@@ -58,17 +59,35 @@ Features to avoid while we are intentionally staying free-tier-first:
 The `v0.3` cloud path is private profile/history continuity, not live gameplay.
 Local guest play has no backend cost.
 
-Estimated operation budgets:
+Counting assumptions:
 
-| Action | Expected Firestore reads | Expected Firestore writes | Notes |
-|---|---:|---:|---|
-| First sign-in / cloud profile create | 1 | 1-2 | Read-or-create profile, maybe update login timestamp/settings |
-| Later sign-in | 1 | 0-1 | Load profile, maybe update `last_login_at` |
-| Promote guest settings | 0-1 | 1 | Profile/settings merge |
-| Promote one local match | 1-2 | 1 | Dedupe read plus rules-side profile barrier check; stable `local_origin_id` makes retry safe |
-| Save one finished signed-in match | 1-2 | 1-2 | Dedupe read plus rules-side profile barrier check; match record, maybe profile summary update |
-| Open Profile history | Up to current history page size | 0 | Reads one document per returned match |
-| Open one saved replay directly | 1 | 0 | If not already loaded from history |
+- Firestore bills document reads, writes, and deletes separately.
+- A query has a one-read minimum even when it returns no documents.
+- Security rules can add dependent reads. Our private match-create rules read
+  the owner profile through `exists()` / `get()` to enforce the
+  `history_reset_at` reset barrier. Count accepted private match creates as one
+  additional dependent profile read.
+- Repeated rule references to the same dependent document are charged once per
+  request, not once per helper call.
+- Replay currently resolves from the active Profile/history cache; there is no
+  dedicated cloud replay fetch route in `v0.3.2`.
+
+Estimated operation budgets for the current implementation:
+
+| Action | Expected reads | Expected writes | Expected deletes | Notes |
+|---|---:|---:|---:|---|
+| Guest local play / local match finish | 0 | 0 | 0 | LocalStorage only |
+| No-config build / signed-out Profile | 0 | 0 | 0 | Firebase bootstrap stays disabled |
+| First sign-in / cloud profile create | 1 | 1 | 0 | `getDoc(profiles/{uid})`, then create profile |
+| Cloud profile load / refresh | 1 | 1 | 0 | `getDoc(profiles/{uid})`, then merge login/provider/settings metadata; currently happens on signed-in Profile/Replay surfaces |
+| Signed-in Profile history load | `1..24` | 0 | 0 | `limit(24)` query; one-read minimum if empty |
+| Promote guest profile/settings | 0 | 1 | 0 | Profile merge before match import loop |
+| Promote one eligible local match | `2..3` | 1 | 0 | Client checks `guest_import` and `cloud_saved` IDs, then match create adds one dependent profile read through rules |
+| Skip one already-promoted local match | `1..2` | 0 | 0 | Stops after first matching deterministic ID |
+| Save one finished signed-in match | 2 | 1 | 0 | Client existence read + dependent profile read through rules + `cloud_saved` document write |
+| Retry a pending signed-in save | 2 | 0-1 | 0 | Same as direct save; no write if the match already exists |
+| Open Replay from loaded history | 0 | 0 | 0 | Uses active local/cloud history cache |
+| Reset signed-in profile with `D` private matches | `2 + max(1, D)` | 1 | `D` | Profile get + profile refresh get + profile reset write + query/read/delete private `client_uploaded` matches |
 
 Initial implementation guardrails:
 
@@ -82,6 +101,33 @@ Initial implementation guardrails:
   rules use the profile's `history_reset_at` as a server-side reset barrier, so
   the dashboard should be checked after real promotion/save smoke tests.
 
+## `v0.3.2` Cost Formulas
+
+These formulas are intentionally conservative enough for release planning. They
+count private match creates with the extra dependent rules read noted above.
+
+Let:
+
+- `H = 24`, the current signed-in history query limit.
+- `P = profile opens per signed-in user per day`.
+- `M = new signed-in matches saved per user per day`.
+- `G = one-time guest matches imported on first promotion`.
+- `D = private matches cleared by Reset Profile`.
+
+Approximate daily operations per signed-in user:
+
+| Flow | Reads | Writes | Deletes |
+|---|---:|---:|---:|
+| Signed-in Profile opens | `P * (H + 1)` | `P` | `0` |
+| New signed-in matches | `M * 2` | `M` | `0` |
+| First guest promotion | `G * 3` | `1 + G` | `0` |
+| Reset Profile | `2 + max(1, D)` | `1` | `D` |
+
+The first likely bottleneck is repeated history reads, not match writes. A user
+who opens Profile five times with a full 24-match history costs about 125 reads
+and 5 profile refresh writes even if they play no new games. By contrast,
+saving five signed-in matches costs about 10 reads and 5 writes.
+
 ## Headroom Scenarios
 
 These are deliberately rough. They are meant to catch order-of-magnitude
@@ -94,8 +140,8 @@ matches.
 
 | Metric | Estimate | Free-tier headroom |
 |---|---:|---:|
-| Reads | ~5,000/day | ~10x below 50,000/day |
-| Writes | ~1,200/day | ~16x below 20,000/day |
+| Reads | ~6,000/day | ~8x below 50,000/day |
+| Writes | ~700/day | ~28x below 20,000/day |
 | Deletes | 0/day | No concern |
 
 This is safely inside the free tier.
@@ -106,11 +152,40 @@ Assumption: 500 signed-in users/day, each opens a 24-match history page 5 times.
 
 | Metric | Estimate | Free-tier headroom |
 |---|---:|---:|
-| Reads | ~60,000/day | Exceeds 50,000/day |
-| Writes | Depends on matches saved | Usually still fine |
+| Reads | ~62,500/day | Exceeds 50,000/day |
+| Writes | ~2,500/day before match saves | Still below 20,000/day |
 
 If this becomes plausible, add pagination, caching, or a cheaper summary view
 before adding more history-heavy surfaces.
+
+### One-Time Promotion Spike
+
+Assumption: 100 existing local players sign in for the first time with 24 local
+matches each.
+
+| Metric | Estimate | Free-tier headroom |
+|---|---:|---:|
+| Reads | ~7,300 one-time reads | ~6x below 50,000/day |
+| Writes | ~2,600 one-time writes | ~7x below 20,000/day |
+| Deletes | 0 | No concern |
+
+This is fine for current scale, but promotion is intentionally a one-time import
+path. If the app ever has thousands of existing local players, staggered rollout
+or smaller import batches would be safer.
+
+### Reset-Heavy Debug Day
+
+Assumption: 20 signed-in test profiles each reset a full 24-match private
+history during QA.
+
+| Metric | Estimate | Free-tier headroom |
+|---|---:|---:|
+| Reads | ~520/day | No concern |
+| Writes | ~20/day | No concern |
+| Deletes | ~480/day | No concern |
+
+Reset is not a cost risk at current scale. The bigger risk is correctness:
+reset-barrier writes and stale-match rejection must stay covered by rules tests.
 
 ### Replay Sharing / Online Future
 

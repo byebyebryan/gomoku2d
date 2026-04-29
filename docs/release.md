@@ -56,7 +56,8 @@ If screenshots or recordings should show the upcoming version, bump the web
 package version before capturing:
 
 ```sh
-scripts/set-web-version.sh 0.3.2
+VERSION=0.3.3
+scripts/set-web-version.sh "$VERSION"
 ```
 
 This updates `gomoku-web/package.json` and `gomoku-web/package-lock.json`
@@ -103,13 +104,34 @@ PLAYWRIGHT_BASE_URL=http://127.0.0.1:8001 npm run playtest:smoke
 The Vite chunk-size warning for Phaser is expected and is not currently
 release-blocking.
 
+## Push And CI Baseline
+
+For normal hardening commits, push `main` and let CI prove the integration
+branch before dispatching any deploy workflow:
+
+```sh
+git push origin main
+gh run list --branch main --limit 5
+gh run watch <run-id> --exit-status
+```
+
+`main` pushes run `.github/workflows/ci.yml` only. They do not publish the web
+site and do not deploy Firestore rules.
+
+If a run fails, inspect the failing job before retrying:
+
+```sh
+gh run view <run-id> --log-failed
+```
+
 ## Finalize
 
 After reviewing `git status` and the diff, finalize the prepared release:
 
 ```sh
-scripts/release.sh --check 0.3.2
-scripts/release.sh 0.3.2
+VERSION=0.3.3
+scripts/release.sh --check "$VERSION"
+scripts/release.sh "$VERSION"
 ```
 
 `release.sh` validates:
@@ -129,7 +151,7 @@ Push when ready:
 
 ```sh
 git push origin main
-git push origin v0.3.2
+git push origin "v$VERSION"
 ```
 
 Pushing `main` updates the release commit. It does not publish the site.
@@ -146,3 +168,38 @@ workflow manually after the relevant deploy config has been pushed to `main`:
 ```sh
 gh workflow run deploy.yml --ref main
 ```
+
+For a Firestore-rules smoke deploy without cutting a release, run the Firestore
+workflow manually from `main`:
+
+```sh
+gh workflow run deploy-firestore.yml --ref main
+```
+
+Use manual dispatch only when the current `main` source is intentionally
+deployable. If Firestore rules require a new web write shape, deploy the
+matching web build as well or cut a tag so Pages and rules deploy from the same
+source.
+
+Watch deploy status:
+
+```sh
+gh run list --workflow deploy.yml --limit 3
+gh run list --workflow deploy-firestore.yml --limit 3
+```
+
+## Production Smoke
+
+After a tag release or manual deploy, run the smallest smoke that covers the
+changed surface:
+
+- Home loads from `https://gomoku2d.byebyebryan.com/`.
+- `/profile`, `/privacy/`, and `/terms/` return `200`.
+- Guest-only match/replay still works without signing in.
+- If auth/profile changed: sign in from production, refresh, sign out, sign in
+  again, and confirm history/profile continuity.
+- If match history or rules changed: finish one signed-in match, confirm it
+  appears in Profile, open Replay, and confirm Firestore rules deployment used
+  the intended source ref.
+- If Reset Profile changed: reset a signed-in test profile, confirm old rows do
+  not reappear, then save one post-reset match.
