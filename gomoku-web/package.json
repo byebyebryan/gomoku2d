@@ -19,6 +19,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:rules": "firebase emulators:exec --project demo-gomoku2d-rules-test --only firestore --config ../firebase.json \"vitest run --config vitest.rules.config.ts\"",
+    "playtest": "playwright test",
     "playtest:smoke": "playwright test playtests/smoke.spec.ts"
   },
   "dependencies": {

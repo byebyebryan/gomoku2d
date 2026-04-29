@@ -16,6 +16,8 @@ their own section.
 
 - Polished Profile, Privacy, and Terms wording around local profile state, cloud
   sync, private history, and reset behavior.
+- Renamed the saved replay route from `/replays/local/:matchId` to
+  `/replay/:matchId` as a clean URL break before replay URLs become user-facing.
 
 ### Ops and docs
 

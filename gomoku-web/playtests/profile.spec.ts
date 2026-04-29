@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { seedLocalSavedMatch } from "./helpers/local_history";
+
 test("guest profile persists locally and renders saved local matches", async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 900 });
   await page.goto("/profile");
@@ -8,7 +10,7 @@ test("guest profile persists locally and renders saved local matches", async ({ 
   await expect(page.getByText("Reduced motion")).toHaveCount(0);
   await expect(page.getByText("Sound")).toHaveCount(0);
 
-  const displayName = page.getByLabel("Display name");
+  const displayName = page.getByLabel("Name");
   await displayName.fill("Bryan Guest");
   await page.reload();
   await expect(displayName).toHaveValue("Bryan Guest");
@@ -20,50 +22,21 @@ test("guest profile persists locally and renders saved local matches", async ({ 
   await expect(page.getByText("Bryan Guest to move")).toBeVisible();
   await expect(page.getByTestId("match-rule")).toHaveText("Renju");
 
-  await page.evaluate(() => {
-    const storageKey = "gomoku2d.guest-profile.v1";
-    const stored = localStorage.getItem(storageKey);
-    const parsed = stored
-      ? JSON.parse(stored)
-      : {
-          state: {
-            history: [],
-            profile: null,
-            settings: { preferredVariant: "freestyle" },
-          },
-          version: 0,
-        };
-
-    parsed.state.history = [
-      {
-        guestStone: "black",
-        id: "fixture-finished-match",
-        mode: "bot",
-        moves: [
-          { col: 7, moveNumber: 1, player: 1, row: 7 },
-          { col: 6, moveNumber: 2, player: 2, row: 5 },
-          { col: 8, moveNumber: 3, player: 1, row: 7 },
-          { col: 6, moveNumber: 4, player: 2, row: 6 },
-          { col: 9, moveNumber: 5, player: 1, row: 7 },
-          { col: 6, moveNumber: 6, player: 2, row: 7 },
-        ],
-        players: [
-          { kind: "human", name: "Bryan Guest", stone: "black" },
-          { kind: "bot", name: "Practice Bot", stone: "white" },
-        ],
-        savedAt: "2026-04-22T18:30:00.000Z",
-        status: "white_won",
-        variant: "renju",
-        winningCells: [
-          { row: 5, col: 6 },
-          { row: 6, col: 6 },
-          { row: 7, col: 6 },
-          { row: 8, col: 6 },
-          { row: 9, col: 6 },
-        ],
-      },
-    ];
-    localStorage.setItem(storageKey, JSON.stringify(parsed));
+  await seedLocalSavedMatch(page, {
+    displayName: "Bryan Guest",
+    id: "fixture-finished-match",
+    moves: [
+      { col: 7, row: 7 },
+      { col: 6, row: 5 },
+      { col: 8, row: 7 },
+      { col: 6, row: 6 },
+      { col: 9, row: 7 },
+      { col: 6, row: 7 },
+    ],
+    preferredVariant: "renju",
+    savedAt: "2026-04-22T18:30:00.000Z",
+    status: "white_won",
+    variant: "renju",
   });
 
   await page.goto("/profile");
@@ -91,7 +64,9 @@ test("guest profile persists locally and renders saved local matches", async ({ 
   await displayName.fill("Bryan Prime");
   await expect(displayName).toHaveValue("Bryan Prime");
 
-  await page.getByRole("button", { name: "Reset local profile" }).click();
+  await page.getByRole("button", { name: "Reset Profile" }).click();
+  await expect(page.getByText("Reset local profile and clear local match history?")).toBeVisible();
+  await page.getByRole("button", { name: "Reset", exact: true }).click();
   await expect(displayName).toHaveValue("Guest");
   await expect(page.getByText("Match History")).toBeVisible();
 });
@@ -197,48 +172,19 @@ test("desktop profile prioritizes the record summary over the identity rail", as
 
   await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
 
-  await page.evaluate(() => {
-    localStorage.setItem(
-      "gomoku2d.guest-profile.v1",
-      JSON.stringify({
-        state: {
-          history: [
-            {
-              guestStone: "black",
-              id: "fixture-match",
-              mode: "bot",
-              moves: [
-                { col: 7, row: 7, stone: "black" },
-                { col: 7, row: 8, stone: "white" },
-                { col: 8, row: 7, stone: "black" },
-                { col: 8, row: 8, stone: "white" },
-              ],
-              players: [
-                { kind: "human", name: "Guest", stone: "black" },
-                { kind: "bot", name: "Practice Bot", stone: "white" },
-              ],
-              savedAt: "2026-04-22T18:30:00.000Z",
-              status: "white_won",
-              variant: "renju",
-              winningCells: [],
-            },
-          ],
-          profile: {
-            avatarUrl: null,
-            createdAt: "2026-04-22T18:00:00.000Z",
-            displayName: "Guest",
-            id: "fixture-profile",
-            kind: "guest",
-            updatedAt: "2026-04-22T18:30:00.000Z",
-            username: null,
-          },
-          settings: {
-            preferredVariant: "freestyle",
-          },
-        },
-        version: 0,
-      }),
-    );
+  await seedLocalSavedMatch(page, {
+    displayName: "Guest",
+    id: "fixture-match",
+    moves: [
+      { col: 7, row: 7 },
+      { col: 7, row: 8 },
+      { col: 8, row: 7 },
+      { col: 8, row: 8 },
+    ],
+    preferredVariant: "freestyle",
+    savedAt: "2026-04-22T18:30:00.000Z",
+    status: "white_won",
+    variant: "renju",
   });
 
   await page.reload();

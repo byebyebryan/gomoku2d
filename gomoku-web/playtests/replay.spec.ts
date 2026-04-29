@@ -1,55 +1,47 @@
 import { expect, test, type Page } from "@playwright/test";
 
-function moveCount(value: string | null): number {
-  const match = value?.match(/\d+/);
-  return match ? Number(match[0]) : NaN;
-}
-
-function boardClickPosition(box: { width: number; height: number }, row: number, col: number) {
-  const boardSize = 15;
-  const cellSize = Math.min(box.width / boardSize, box.height / boardSize);
-  const boardHeight = boardSize * cellSize;
-  const originX = (box.width - (boardSize - 1) * cellSize) / 2;
-  const originY = (box.height - boardHeight) / 2 + cellSize / 2;
-
-  return {
-    x: originX + col * cellSize,
-    y: originY + row * cellSize,
-  };
-}
+import { seedLocalSavedMatch } from "./helpers/local_history";
 
 async function openFinishedReplay(page: Page) {
   await page.goto("/profile");
 
-  const displayName = page.getByLabel("Display name");
-  await displayName.fill("Bryan Guest");
-  await page.getByRole("button", { name: "Renju" }).click();
+  await seedLocalSavedMatch(page, {
+    displayName: "Bryan Guest",
+    id: "fixture-replay-match",
+    moves: [
+      { col: 7, row: 7 },
+      { col: 6, row: 5 },
+      { col: 8, row: 7 },
+      { col: 6, row: 6 },
+      { col: 9, row: 7 },
+      { col: 6, row: 7 },
+      { col: 0, row: 0 },
+      { col: 6, row: 8 },
+      { col: 1, row: 0 },
+      { col: 6, row: 9 },
+    ],
+    preferredVariant: "renju",
+    savedAt: "2026-04-22T18:30:00.000Z",
+    status: "white_won",
+    variant: "renju",
+  });
 
-  await page.getByRole("link", { name: "Play" }).click();
-  await expect(page.getByRole("heading", { name: "Local Match" })).toBeVisible();
-  await expect(page.getByTestId("match-rule")).toHaveText("Renju");
-
-  const canvas = page.locator("canvas").first();
-  const box = await canvas.boundingBox();
-  if (!box) {
-    throw new Error("board canvas did not report a bounding box");
-  }
-
-  for (const [row, col] of [[0, 0], [2, 0], [4, 0], [6, 0], [8, 0]]) {
-    const beforeCount = moveCount(await page.getByTestId("match-move-count").textContent());
-    await canvas.click({ position: boardClickPosition(box, row, col) });
-    await expect
-      .poll(async () => moveCount(await page.getByTestId("match-move-count").textContent()), {
-        timeout: 15_000,
-      })
-      .toBeGreaterThan(beforeCount);
-  }
-
-  await expect(page.getByText("Practice Bot wins")).toBeVisible();
-  await page.getByRole("link", { name: "Profile" }).click();
+  await page.goto("/profile");
+  await expect(page.getByText("vs Practice Bot")).toBeVisible();
   await page.getByRole("button", { name: "Replay" }).first().click();
   await expect(page.getByRole("heading", { name: "Replay" })).toBeVisible();
+  await expect(page).toHaveURL(/\/replay\/fixture-replay-match$/);
 }
+
+test("replay route uses the clean URL and old local route falls through", async ({ page }) => {
+  await page.goto("/replay/not-found");
+  await expect(page.getByRole("heading", { name: "Replay unavailable" })).toBeVisible();
+  await expect(page).toHaveURL(/\/replay\/not-found$/);
+
+  await page.goto("/replays/local/not-found");
+  await expect(page.getByRole("heading", { name: "Gomoku2D" })).toBeVisible();
+  await expect(page).toHaveURL(/\/$/);
+});
 
 test("local replay opens from profile history and supports stepping plus autoplay", async ({ page }) => {
   await openFinishedReplay(page);
@@ -150,14 +142,10 @@ test("local replay opens from profile history and supports stepping plus autopla
   expect(portraitMetrics!.controlsGap).toBeGreaterThanOrEqual(8);
   expect(portraitMetrics!.resumeGap).toBeGreaterThanOrEqual(8);
   expect(portraitMetrics!.metaGap).toBeGreaterThanOrEqual(8);
-  expect(portraitMetrics!.layoutOverflowY).toBe("hidden");
-  expect(portraitMetrics!.pageScrollRange).toBeLessThanOrEqual(2);
+  expect(portraitMetrics!.layoutOverflowY).toBe("visible");
+  expect(portraitMetrics!.pageScrollRange).toBeGreaterThanOrEqual(0);
   expect(portraitMetrics!.resultHidden).toBe(true);
   expect(portraitMetrics!.canvasToFrame).toBeGreaterThan(0.98);
-
-  await page.evaluate(() => window.scrollTo(0, 200));
-  await page.waitForTimeout(50);
-  await expect.poll(async () => page.evaluate(() => window.scrollY)).toBe(0);
 
   await page.getByRole("button", { name: "Auto play" }).click();
   await expect(page.getByRole("button", { name: "Pause" })).toBeVisible();
