@@ -15,7 +15,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "postbuild": "node scripts/publish_asset_previews.mjs && cp dist/index.html dist/404.html",
+    "postbuild": "node scripts/publish_asset_previews.mjs && node scripts/publish_spa_routes.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "test:rules": "firebase emulators:exec --project demo-gomoku2d-rules-test --only firestore --config ../firebase.json \"vitest run --config vitest.rules.config.ts\"",

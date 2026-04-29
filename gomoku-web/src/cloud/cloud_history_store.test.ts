@@ -194,6 +194,78 @@ describe("createCloudHistoryStore", () => {
     expect(store.getState().users["uid-1"]?.sync).toEqual({});
   });
 
+  it("clears a queued match after a write race when the next refresh contains it", async () => {
+    const staleProfile = cloudProfile({
+      matchHistory: emptyCloudMatchHistory(),
+      updatedAt: "2026-04-28T00:00:00.000Z",
+    });
+    const dueProfile = cloudProfile({
+      matchHistory: emptyCloudMatchHistory(),
+      updatedAt: "2026-04-28T00:00:00.000Z",
+    });
+    const racedProfile = cloudProfile({ updatedAt: "2999-01-01T00:00:00.000Z" });
+    const refreshCloudProfileForUser = vi.fn()
+      .mockResolvedValueOnce(dueProfile)
+      .mockResolvedValueOnce(racedProfile);
+    const saveHistory = vi.fn().mockRejectedValue(new Error("Missing or insufficient permissions."));
+    const store = createCloudHistoryStore({
+      cloudProfileForUser: () => staleProfile,
+      refreshCloudProfileForUser,
+      saveHistory,
+      storage: createMemoryStorage(),
+    });
+
+    await store.getState().syncMatchForUser(user, match);
+
+    expect(saveHistory).toHaveBeenCalledTimes(1);
+    expect(refreshCloudProfileForUser).toHaveBeenCalledTimes(2);
+    expect(store.getState()).toMatchObject({
+      errorMessage: null,
+      syncStatus: "idle",
+    });
+    expect(store.getState().users["uid-1"]?.pendingMatches).toEqual({});
+    expect(store.getState().users["uid-1"]?.sync).toEqual({});
+  });
+
+  it("keeps a write race queued when the refreshed profile is inside the sync cooldown", async () => {
+    const staleProfile = cloudProfile({
+      matchHistory: emptyCloudMatchHistory(),
+      updatedAt: "2026-04-28T00:00:00.000Z",
+    });
+    const dueProfile = cloudProfile({
+      matchHistory: emptyCloudMatchHistory(),
+      updatedAt: "2026-04-28T00:00:00.000Z",
+    });
+    const cooldownProfile = cloudProfile({
+      matchHistory: emptyCloudMatchHistory(),
+      updatedAt: "2999-01-01T00:00:00.000Z",
+    });
+    const refreshCloudProfileForUser = vi.fn()
+      .mockResolvedValueOnce(dueProfile)
+      .mockResolvedValueOnce(cooldownProfile);
+    const saveHistory = vi.fn().mockRejectedValue(new Error("Missing or insufficient permissions."));
+    const store = createCloudHistoryStore({
+      cloudProfileForUser: () => staleProfile,
+      refreshCloudProfileForUser,
+      saveHistory,
+      storage: createMemoryStorage(),
+    });
+
+    await store.getState().syncMatchForUser(user, match);
+
+    const cache = store.getState().users["uid-1"];
+    expect(saveHistory).toHaveBeenCalledTimes(1);
+    expect(store.getState()).toMatchObject({
+      errorMessage: null,
+      syncStatus: "idle",
+    });
+    expect(cache?.pendingMatches["match-1"]).toEqual(match);
+    expect(cache?.sync["match-1"]).toMatchObject({
+      errorMessage: null,
+      status: "pending",
+    });
+  });
+
   it("writes one merged profile snapshot when the sync gate is open", async () => {
     const profile = cloudProfile({ matchHistory: emptyCloudMatchHistory() });
     const saveHistory = vi.fn().mockResolvedValue({ matches: [cloudMatch], profile });
