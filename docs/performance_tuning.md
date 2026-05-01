@@ -58,10 +58,24 @@ Why this format:
 | `early_local_fight` | freestyle | Black | opening, local-fight | compact early tactical cluster |
 | `immediate_win` | freestyle | Black | tactical, immediate-win | direct win available now |
 | `immediate_block` | freestyle | Black | tactical, immediate-block | forced defensive block |
+| `attack_wins_race` | freestyle | Black | tactical, attack-vs-defense | take the direct win instead of blocking |
 | `anti_blunder_open_three` | freestyle | White | tactical, anti-blunder | repro for the recent search safety fix |
 | `renju_forbidden_cross` | renju | Black | renju, forbidden | black to move with a forbidden tactical point |
 | `midgame_medium` | freestyle | Black | midgame, medium-density | representative clustered midgame |
 | `midgame_dense` | freestyle | Black | midgame, dense | denser midgame with larger frontier/eval cost |
+
+### Search behavior cases
+
+The corpus also defines `SEARCH_BEHAVIOR_CASES`, which pair scenarios with a
+named lab config and expected moves. These are not performance measurements; they
+are behavior anchors for the `v0.4` bot-discovery pass.
+
+Current cases exercise the `balanced` lab config:
+
+- immediate win
+- immediate block
+- open-three anti-blunder block
+- attack-vs-defense race where winning now is better than blocking
 
 ## Benchmark suites
 
@@ -88,10 +102,13 @@ File: `gomoku-bot-lab/gomoku-bot/benches/search_perf.rs`
 
 Current measurement:
 
-- `SearchBot::choose_move()` at depth `3`
+- `SearchBot::choose_move()` across the named baseline-search lab configs:
+  `fast`, `balanced`, and `deep`
 
-Depth `3` is used because it matches the current browser-side practice bot
-configuration in `gomoku-web`.
+The `balanced` lab config uses depth `3` because it matches the current
+browser-side practice bot configuration in `gomoku-web`. The `deep` lab config
+matches the native CLI's historical depth-`5` default, and `fast` gives a cheap
+comparison target.
 
 ## Commands
 
@@ -111,6 +128,13 @@ Search benchmark suite:
 
 ```sh
 cargo bench -p gomoku-bot --bench search_perf -- --noplot
+```
+
+Preset/tournament smoke:
+
+```sh
+cargo run --release -p gomoku-cli -- --black balanced --white fast --quiet
+cargo run --release -p gomoku-eval -- versus --bot-a fast --bot-b balanced --games 1
 ```
 
 ## Initial hotspot findings

@@ -12,6 +12,14 @@ pub struct BenchScenario {
     pub moves: &'static [&'static str],
 }
 
+pub struct SearchBehaviorCase {
+    pub id: &'static str,
+    pub scenario_id: &'static str,
+    pub config_id: &'static str,
+    pub expected_moves: &'static [&'static str],
+    pub description: &'static str,
+}
+
 #[allow(dead_code)]
 impl BenchScenario {
     pub fn board(&self) -> Board {
@@ -36,6 +44,29 @@ impl BenchScenario {
 
     pub fn probe_move(&self) -> Move {
         parse_move(self.probe_move)
+    }
+}
+
+#[allow(dead_code)]
+impl SearchBehaviorCase {
+    pub fn scenario(&self) -> &'static BenchScenario {
+        SCENARIOS
+            .iter()
+            .find(|scenario| scenario.id == self.scenario_id)
+            .unwrap_or_else(|| {
+                panic!(
+                    "behavior case '{}' references unknown scenario '{}'",
+                    self.id, self.scenario_id
+                )
+            })
+    }
+
+    pub fn expected_moves(&self) -> Vec<Move> {
+        self.expected_moves
+            .iter()
+            .copied()
+            .map(parse_move)
+            .collect()
     }
 }
 
@@ -70,7 +101,7 @@ pub static SCENARIOS: &[BenchScenario] = &[
         tags: &["tactical", "immediate-win", "freestyle"],
         description: "Black has a direct winning move on the current turn.",
         probe_move: "G8",
-        moves: &["H8", "A1", "I8", "B1", "J8", "C1", "K8", "D1"],
+        moves: &["H8", "A1", "I8", "C1", "J8", "E1", "K8", "G1"],
     },
     BenchScenario {
         id: "immediate_block",
@@ -80,6 +111,15 @@ pub static SCENARIOS: &[BenchScenario] = &[
         description: "Black must block White's direct horizontal win threat.",
         probe_move: "E1",
         moves: &["H8", "A1", "O1", "B1", "O2", "C1", "O3", "D1"],
+    },
+    BenchScenario {
+        id: "attack_wins_race",
+        variant: Variant::Freestyle,
+        to_move: Color::Black,
+        tags: &["tactical", "attack-vs-defense", "freestyle"],
+        description: "Both players have an immediate win threat; Black should win now instead of blocking.",
+        probe_move: "G8",
+        moves: &["H8", "A1", "I8", "B1", "J8", "C1", "K8", "D1"],
     },
     BenchScenario {
         id: "anti_blunder_open_three",
@@ -121,5 +161,36 @@ pub static SCENARIOS: &[BenchScenario] = &[
             "H8", "I8", "H7", "G8", "I7", "G7", "H9", "I9", "F8", "J8", "G9", "H6", "J7",
             "F7", "G6", "J9", "F9", "I6", "E8", "K8",
         ],
+    },
+];
+
+pub static SEARCH_BEHAVIOR_CASES: &[SearchBehaviorCase] = &[
+    SearchBehaviorCase {
+        id: "balanced_takes_immediate_win",
+        scenario_id: "immediate_win",
+        config_id: "balanced",
+        expected_moves: &["G8", "L8"],
+        description: "Balanced should finish its own open four.",
+    },
+    SearchBehaviorCase {
+        id: "balanced_blocks_immediate_loss",
+        scenario_id: "immediate_block",
+        config_id: "balanced",
+        expected_moves: &["E1"],
+        description: "Balanced should block an opponent open four.",
+    },
+    SearchBehaviorCase {
+        id: "balanced_blocks_open_three",
+        scenario_id: "anti_blunder_open_three",
+        config_id: "balanced",
+        expected_moves: &["G8", "K8"],
+        description: "Balanced should block the forcing open three instead of extending elsewhere.",
+    },
+    SearchBehaviorCase {
+        id: "balanced_wins_race_before_blocking",
+        scenario_id: "attack_wins_race",
+        config_id: "balanced",
+        expected_moves: &["G8", "L8"],
+        description: "Balanced should take the immediate win when both sides threaten.",
     },
 ];

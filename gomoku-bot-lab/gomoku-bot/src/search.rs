@@ -216,6 +216,7 @@ fn needs_renju_legality_check(board: &Board, color: Color) -> bool {
 fn allows_opponent_forcing_reply(
     board: &mut Board,
     mv: Move,
+    candidate_radius: usize,
     deadline: Option<Instant>,
 ) -> Option<bool> {
     let current = board.current_player;
@@ -233,7 +234,7 @@ fn allows_opponent_forcing_reply(
     let mut dangerous = false;
     let mut timed_out = false;
     if !matches!(board.result, GameResult::Winner(winner) if winner == current) {
-        for reply in candidate_moves(board, 2) {
+        for reply in candidate_moves(board, candidate_radius) {
             if deadline.is_some_and(|limit| Instant::now() >= limit) {
                 timed_out = true;
                 break;
@@ -262,12 +263,17 @@ fn allows_opponent_forcing_reply(
     }
 }
 
-fn root_candidate_moves(board: &Board, deadline: Option<Instant>) -> Vec<Move> {
-    let mut moves = candidate_moves(board, 2);
+fn root_candidate_moves(
+    board: &Board,
+    candidate_radius: usize,
+    enable_prefilter: bool,
+    deadline: Option<Instant>,
+) -> Vec<Move> {
+    let mut moves = candidate_moves(board, candidate_radius);
     if needs_renju_legality_check(board, board.current_player) {
         moves.retain(|&mv| board.is_legal(mv));
     }
-    if moves.is_empty() {
+    if moves.is_empty() || !enable_prefilter {
         return moves;
     }
 
@@ -278,7 +284,7 @@ fn root_candidate_moves(board: &Board, deadline: Option<Instant>) -> Vec<Move> {
             return moves;
         }
 
-        match allows_opponent_forcing_reply(&mut working, mv, deadline) {
+        match allows_opponent_forcing_reply(&mut working, mv, candidate_radius, deadline) {
             Some(false) => safe_moves.push(mv),
             Some(true) => {}
             None => return moves,
@@ -305,6 +311,7 @@ fn negamax(
     root_color: Color,
     tt: &mut HashMap<u64, TTEntry>,
     zobrist: &ZobristTable,
+    candidate_radius: usize,
     nodes: &mut u64,
 ) -> (i32, Option<Move>) {
     *nodes += 1;
@@ -332,7 +339,7 @@ fn negamax(
         return (sign * evaluate(board, root_color), None);
     }
 
-    let moves = candidate_moves(board, 2);
+    let moves = candidate_moves(board, candidate_radius);
     if moves.is_empty() {
         let sign = if color == root_color { 1 } else { -1 };
         return (sign * evaluate(board, root_color), None);
@@ -370,6 +377,7 @@ fn negamax(
             root_color,
             tt,
             zobrist,
+            candidate_radius,
             nodes,
         );
         let score = -score;
@@ -416,6 +424,7 @@ fn search_root(
     color: Color,
     tt: &mut HashMap<u64, TTEntry>,
     zobrist: &ZobristTable,
+    candidate_radius: usize,
     nodes: &mut u64,
 ) -> (i32, Option<Move>) {
     *nodes += 1;
@@ -453,6 +462,7 @@ fn search_root(
             color,
             tt,
             zobrist,
+            candidate_radius,
             nodes,
         );
         let score = -score;
@@ -492,6 +502,47 @@ fn search_root(
 
 // --- SearchBot ---
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SearchBotConfig {
+    pub max_depth: i32,
+    pub time_budget_ms: Option<u64>,
+    pub candidate_radius: usize,
+    pub root_prefilter: bool,
+}
+
+impl SearchBotConfig {
+    pub const fn custom_depth(max_depth: i32) -> Self {
+        Self {
+            max_depth,
+            time_budget_ms: None,
+            candidate_radius: 2,
+            root_prefilter: true,
+        }
+    }
+
+    pub const fn custom_time_budget(time_budget_ms: u64) -> Self {
+        Self {
+            max_depth: 20,
+            time_budget_ms: Some(time_budget_ms),
+            candidate_radius: 2,
+            root_prefilter: true,
+        }
+    }
+
+    fn time_budget(self) -> Option<Duration> {
+        self.time_budget_ms.map(Duration::from_millis)
+    }
+
+    fn trace(self) -> serde_json::Value {
+        serde_json::json!({
+            "max_depth": self.max_depth,
+            "time_budget_ms": self.time_budget_ms,
+            "candidate_radius": self.candidate_radius,
+            "root_prefilter": self.root_prefilter,
+        })
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct SearchInfo {
     pub depth_reached: i32,
@@ -500,8 +551,7 @@ pub struct SearchInfo {
 }
 
 pub struct SearchBot {
-    max_depth: i32,
-    time_budget: Option<Duration>,
+    config: SearchBotConfig,
     tt: HashMap<u64, TTEntry>,
     zobrist: ZobristTable,
     pub last_info: Option<SearchInfo>,
@@ -509,23 +559,26 @@ pub struct SearchBot {
 
 impl SearchBot {
     pub fn new(max_depth: i32) -> Self {
-        Self::build(max_depth, None)
+        Self::with_config(SearchBotConfig::custom_depth(max_depth))
     }
 
     pub fn with_time(budget_ms: u64) -> Self {
-        Self::build(20, Some(Duration::from_millis(budget_ms)))
+        Self::with_config(SearchBotConfig::custom_time_budget(budget_ms))
     }
 
-    fn build(max_depth: i32, time_budget: Option<Duration>) -> Self {
+    pub fn with_config(config: SearchBotConfig) -> Self {
         use gomoku_core::RuleConfig;
         let board_size = RuleConfig::default().board_size;
         Self {
-            max_depth,
-            time_budget,
+            config,
             tt: HashMap::new(),
             zobrist: ZobristTable::new(board_size),
             last_info: None,
         }
+    }
+
+    pub fn config(&self) -> SearchBotConfig {
+        self.config
     }
 }
 
@@ -537,6 +590,7 @@ impl Bot for SearchBot {
     fn trace(&self) -> Option<serde_json::Value> {
         self.last_info.as_ref().map(|info| {
             serde_json::json!({
+                "config": self.config.trace(),
                 "depth": info.depth_reached,
                 "nodes": info.nodes,
                 "score": info.score,
@@ -548,15 +602,25 @@ impl Bot for SearchBot {
         let color = board.current_player;
         let mut working = board.clone();
         let start = Instant::now();
+        let time_budget = self.config.time_budget();
         // Compute hash once at root; children update it incrementally
         let root_hash = hash_board(&self.zobrist, board);
         let center = board.config.board_size / 2;
-        let prefilter_deadline = self.time_budget.map(|budget| start + budget / 2);
-        let root_moves = root_candidate_moves(board, prefilter_deadline);
+        let prefilter_deadline = time_budget.map(|budget| start + budget / 2);
+        let root_moves = root_candidate_moves(
+            board,
+            self.config.candidate_radius,
+            self.config.root_prefilter,
+            prefilter_deadline,
+        );
         let mut best_move = root_moves
             .first()
             .copied()
-            .or_else(|| candidate_moves(board, 2).into_iter().next())
+            .or_else(|| {
+                candidate_moves(board, self.config.candidate_radius)
+                    .into_iter()
+                    .next()
+            })
             .unwrap_or(Move {
                 row: center,
                 col: center,
@@ -565,7 +629,7 @@ impl Bot for SearchBot {
         let mut depth_reached = 0;
         let mut total_nodes = 0u64;
 
-        for depth in 1..=self.max_depth {
+        for depth in 1..=self.config.max_depth {
             let mut nodes = 0u64;
             let (score, mv) = search_root(
                 &mut working,
@@ -575,6 +639,7 @@ impl Bot for SearchBot {
                 color,
                 &mut self.tt,
                 &self.zobrist,
+                self.config.candidate_radius,
                 &mut nodes,
             );
             total_nodes += nodes;
@@ -585,7 +650,7 @@ impl Bot for SearchBot {
             }
             depth_reached = depth;
 
-            if let Some(budget) = self.time_budget {
+            if let Some(budget) = time_budget {
                 if start.elapsed() >= budget / 2 {
                     break;
                 }
@@ -696,9 +761,31 @@ mod tests {
             .filter(|&mv| board.is_legal(mv))
             .collect();
 
-        let moves = root_candidate_moves(&board, Some(Instant::now() - Duration::from_millis(1)));
+        let moves = root_candidate_moves(
+            &board,
+            2,
+            true,
+            Some(Instant::now() - Duration::from_millis(1)),
+        );
 
         assert_eq!(moves, expected);
+    }
+
+    #[test]
+    fn explicit_config_constructors_preserve_legacy_defaults() {
+        assert_eq!(SearchBot::new(3).config(), SearchBotConfig::custom_depth(3));
+        assert_eq!(
+            SearchBot::with_time(250).config(),
+            SearchBotConfig::custom_time_budget(250)
+        );
+
+        let config = SearchBotConfig {
+            max_depth: 4,
+            time_budget_ms: None,
+            candidate_radius: 3,
+            root_prefilter: false,
+        };
+        assert_eq!(SearchBot::with_config(config).config(), config);
     }
 
     #[test]
@@ -716,6 +803,20 @@ mod tests {
     }
 
     #[test]
+    fn trace_records_search_config() {
+        let board = Board::new(RuleConfig::default());
+        let mut bot = SearchBot::with_config(SearchBotConfig::custom_depth(3));
+
+        let _ = bot.choose_move(&board);
+        let trace = bot.trace().expect("expected search trace");
+
+        assert_eq!(trace["config"]["max_depth"], 3);
+        assert_eq!(trace["config"]["candidate_radius"], 2);
+        assert_eq!(trace["config"]["root_prefilter"], true);
+        assert_eq!(trace["depth"], 3);
+    }
+
+    #[test]
     fn benchmark_scenarios_return_legal_moves() {
         for scenario in scenarios::SCENARIOS {
             let board = scenario.board();
@@ -727,6 +828,29 @@ mod tests {
                 "scenario '{}' returned illegal move {:?}",
                 scenario.id,
                 mv
+            );
+        }
+    }
+
+    #[test]
+    fn behavior_cases_choose_expected_moves() {
+        for case in scenarios::SEARCH_BEHAVIOR_CASES {
+            let board = case.scenario().board();
+            let config = match case.config_id {
+                "balanced" => SearchBotConfig::custom_depth(3),
+                other => panic!("unknown behavior config '{}'", other),
+            };
+            let mut bot = SearchBot::with_config(config);
+            let expected_moves = case.expected_moves();
+            let actual = bot.choose_move(&board);
+
+            assert!(
+                expected_moves.contains(&actual),
+                "case '{}' expected one of {:?}, got {:?}: {}",
+                case.id,
+                expected_moves,
+                actual,
+                case.description
             );
         }
     }

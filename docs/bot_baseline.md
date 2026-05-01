@@ -22,6 +22,54 @@ Iterative deepening gives move ordering for free: the best move from depth N is 
 
 ---
 
+## Explicit config
+
+`SearchBot` is now built from `SearchBotConfig`. The compatibility constructors
+still exist:
+
+- `SearchBot::new(depth)` creates a custom fixed-depth baseline bot.
+- `SearchBot::with_time(ms)` creates a custom time-budgeted baseline bot.
+
+`gomoku-bot` intentionally exposes explicit engine knobs rather than owning
+product presets:
+
+| Config field | Meaning |
+|---|---|
+| `max_depth` | Fixed maximum iterative-deepening depth |
+| `time_budget_ms` | Optional per-move time budget |
+| `candidate_radius` | Distance around existing stones used to generate candidate moves |
+| `root_prefilter` | Whether to run the root anti-blunder prefilter |
+
+The lab tools define temporary aliases over these fields for experiments:
+
+| Alias | Max depth | Candidate radius | Root prefilter | Intent |
+|---|---:|---:|---|---|
+| `fast` | 2 | 2 | on | cheap comparison target |
+| `balanced` | 3 | 2 | on | current browser practice-bot depth |
+| `deep` | 5 | 2 | on | current CLI default depth |
+
+These aliases are not core bot identity, and they are not character bots yet.
+They exist so the lab can benchmark stable configs before deciding whether UI
+presets like aggressive or defensive are real enough to expose.
+
+Search traces include both the result and the config:
+
+```json
+{
+  "config": {
+    "max_depth": 3,
+    "time_budget_ms": null,
+    "candidate_radius": 2,
+    "root_prefilter": true
+  },
+  "depth": 3,
+  "nodes": 1234,
+  "score": 200
+}
+```
+
+---
+
 ## Transposition table
 
 Each position is keyed by a Zobrist hash (64-bit). The table stores:
