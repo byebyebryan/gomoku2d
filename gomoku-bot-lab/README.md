@@ -43,8 +43,8 @@ cargo run --release -p gomoku-cli -- --black baseline --white random --quiet --r
 |------|---------|-------------|
 | `--black` | `baseline` | Bot for Black: `random`, `baseline`, `baseline-N`, or a lab alias (`fast`, `balanced`, `deep`) |
 | `--white` | `random`   | Bot for White: `random`, `baseline`, `baseline-N`, or a lab alias (`fast`, `balanced`, `deep`) |
-| `--depth` | `5`        | Fixed baseline depth (ignored if `--time-ms` is set) |
-| `--time-ms` | —        | Time budget per move for the legacy `baseline` spec |
+| `--depth` | `5`        | Fixed baseline depth for the plain `baseline` spec |
+| `--time-ms` | —        | Time budget per move for search bots, including lab aliases |
 | `--rule` | `freestyle` | Rule variant: `freestyle` or `renju` |
 | `--replay` | —         | Write replay JSON to this path |
 | `--quiet` | —          | Suppress per-move board printing |
@@ -67,10 +67,47 @@ config, not canonical product presets.
 | `balanced` | depth 3, radius 2, root prefilter on | current browser practice-bot depth |
 | `deep` | depth 5, radius 2, root prefilter on | current CLI default depth |
 
-Legacy specs still work: `baseline` uses `--depth` / `--time-ms`, and
-`baseline-N` creates a custom fixed-depth baseline bot.
+Legacy specs still work: plain `baseline` uses `--depth`, `baseline-N` creates a
+custom fixed-depth baseline bot, and `--time-ms` can cap search bots during CLI
+games.
 
 More detailed strategy notes live in [`../docs/bot_baseline.md`](../docs/bot_baseline.md).
+
+### Eval harness
+
+`gomoku-eval` runs head-to-head series, self-play, and multi-threaded
+round-robin tournaments. Tournament games run in parallel, then results are
+folded back in deterministic match order so replay names and sequential Elo
+updates are reported consistently. CPU-time-budgeted searches can still vary
+under scheduler load, so use repeated runs or fixed-depth eval for ranking
+confidence. Eval defaults to Renju because bot rankings are easier to compare
+when first-player advantage is constrained; pass `--rule freestyle` for
+freestyle-specific product checks.
+
+```sh
+cargo run --release -p gomoku-eval -- --search-cpu-time-ms 100 --max-game-ms 10000 --seed 42 tournament --bots fast,balanced,deep --games-per-pair 10 --opening-plies 4
+```
+
+Useful eval flags:
+
+| Flag | Description |
+|------|-------------|
+| `--rule` | Rule variant: `renju` by default, or `freestyle` |
+| `--search-time-ms` | Applies a per-move budget to search bots, including lab aliases |
+| `--search-cpu-time-ms` | Applies a Linux thread CPU-time budget to search bots |
+| `--max-game-ms` | Records a still-running game as a draw after this wall-clock cap |
+| `--max-moves` | Records a still-running game as a draw after this move count |
+| `--seed` | Base seed for reproducible random bots and tournament openings |
+| `--opening-plies` | Tournament-only seeded random opening moves before bots take over; defaults to `4` |
+| `--threads` | Tournament worker count; defaults to available CPU parallelism minus 2 |
+| `--games-per-pair` | Tournament games per bot pair; use an even number for color balance |
+| `--replay-dir` | Writes replay JSON for each eval game |
+
+Seeded openings make deterministic bots see varied positions. Wall-clock budgets
+are practical but noisy under multi-threaded load. CPU-time budgets are better
+for Linux ranking eval, while fixed-depth configs remain the most reproducible
+option. Tournament standings include average move time and average traced nodes
+per search move.
 
 ## Replay format
 
@@ -93,11 +130,15 @@ that replay format directly.
         "config": {
           "max_depth": 3,
           "time_budget_ms": null,
+          "cpu_time_budget_ms": null,
           "candidate_radius": 2,
           "root_prefilter": true
         },
         "depth": 3,
         "nodes": 42,
+        "prefilter_nodes": 4,
+        "total_nodes": 46,
+        "budget_exhausted": false,
         "score": 100
       }
     }
