@@ -36,3 +36,4 @@ during implementation but should not compete with canonical docs:
 |---|---|---|
 | `v0_3_plan.md` | Working plan for the `v0.3` cloud-backed continuity line | `docs/roadmap.md`, `docs/backend.md`, `docs/app_design.md` |
 | `v0_3_completion_plan.md` | Practical rest-of-`0.3` release slicing after the product-identity roadmap pivot | `docs/roadmap.md`, `docs/backend.md`, `docs/backend_infra.md` |
+| `v0_4_plan.md` | Working plan for the `v0.4` lab-powered product identity line, starting with bot discovery before settings UI | `docs/roadmap.md`, `docs/product.md`, `docs/backend.md` |
