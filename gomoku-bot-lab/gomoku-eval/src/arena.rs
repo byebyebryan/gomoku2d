@@ -1,6 +1,40 @@
-use gomoku_bot::Bot;
+use gomoku_bot::{Bot, RandomBot};
 use gomoku_core::{Board, Color, GameResult, Move, Replay, RuleConfig};
 use std::time::Instant;
+
+/// Optional evaluation-side safety limits for bot matches.
+///
+/// These limits do not change Gomoku rules. If a limit is reached before the
+/// board reaches a terminal state, the eval harness records the game as a draw.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct MatchLimits {
+    pub max_moves: Option<usize>,
+    pub max_game_ms: Option<u64>,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct MatchSetup {
+    /// Number of seeded random opening moves to apply before bots take over.
+    pub opening_plies: usize,
+    pub opening_seed: u64,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum MatchEndReason {
+    Natural,
+    MaxMoves,
+    MaxGameTime,
+}
+
+impl MatchEndReason {
+    pub fn label(self) -> &'static str {
+        match self {
+            MatchEndReason::Natural => "natural",
+            MatchEndReason::MaxMoves => "max moves",
+            MatchEndReason::MaxGameTime => "max game time",
+        }
+    }
+}
 
 /// Per-player timing accumulated during a single match.
 pub struct MatchTiming {
@@ -15,6 +49,7 @@ pub struct MatchResult {
     pub result: GameResult,
     pub replay: Replay,
     pub timing: MatchTiming,
+    pub end_reason: MatchEndReason,
 }
 
 /// Runs a single match between two bots, calling `on_move` after each move
@@ -23,6 +58,34 @@ pub fn run_match(
     black: &mut dyn Bot,
     white: &mut dyn Bot,
     config: RuleConfig,
+    on_move: impl FnMut(usize, Color, Move, u64),
+) -> MatchResult {
+    run_match_with_limits(black, white, config, MatchLimits::default(), on_move)
+}
+
+pub fn run_match_with_limits(
+    black: &mut dyn Bot,
+    white: &mut dyn Bot,
+    config: RuleConfig,
+    limits: MatchLimits,
+    mut on_move: impl FnMut(usize, Color, Move, u64),
+) -> MatchResult {
+    run_match_with_setup(
+        black,
+        white,
+        config,
+        limits,
+        MatchSetup::default(),
+        &mut on_move,
+    )
+}
+
+pub fn run_match_with_setup(
+    black: &mut dyn Bot,
+    white: &mut dyn Bot,
+    config: RuleConfig,
+    limits: MatchLimits,
+    setup: MatchSetup,
     mut on_move: impl FnMut(usize, Color, Move, u64),
 ) -> MatchResult {
     let mut board = Board::new(config.clone());
@@ -36,6 +99,43 @@ pub fn run_match(
 
     let start = Instant::now();
     let mut move_num: usize = 0;
+    let mut opening_bot = RandomBot::seeded(setup.opening_seed);
+
+    for _ in 0..setup.opening_plies {
+        let player = board.current_player;
+        let mv = opening_bot.choose_move(&board);
+        let result = board
+            .apply_move(mv)
+            .expect("opening bot played illegal move");
+        replay.push_move(mv, 0, board.hash(), None);
+
+        move_num += 1;
+        on_move(move_num, player, mv, 0);
+
+        if result != GameResult::Ongoing {
+            replay.finish(&result, Some(start.elapsed().as_millis() as u64));
+            return MatchResult {
+                result,
+                replay,
+                timing,
+                end_reason: MatchEndReason::Natural,
+            };
+        }
+
+        if limits
+            .max_moves
+            .is_some_and(|max_moves| move_num >= max_moves)
+        {
+            let result = GameResult::Draw;
+            replay.finish(&result, Some(start.elapsed().as_millis() as u64));
+            return MatchResult {
+                result,
+                replay,
+                timing,
+                end_reason: MatchEndReason::MaxMoves,
+            };
+        }
+    }
 
     loop {
         let player = board.current_player;
@@ -73,6 +173,35 @@ pub fn run_match(
                 result,
                 replay,
                 timing,
+                end_reason: MatchEndReason::Natural,
+            };
+        }
+
+        if limits
+            .max_moves
+            .is_some_and(|max_moves| move_num >= max_moves)
+        {
+            let result = GameResult::Draw;
+            replay.finish(&result, Some(start.elapsed().as_millis() as u64));
+            return MatchResult {
+                result,
+                replay,
+                timing,
+                end_reason: MatchEndReason::MaxMoves,
+            };
+        }
+
+        if limits
+            .max_game_ms
+            .is_some_and(|max_ms| start.elapsed().as_millis() >= max_ms as u128)
+        {
+            let result = GameResult::Draw;
+            replay.finish(&result, Some(start.elapsed().as_millis() as u64));
+            return MatchResult {
+                result,
+                replay,
+                timing,
+                end_reason: MatchEndReason::MaxGameTime,
             };
         }
     }
@@ -120,6 +249,27 @@ pub fn run_match_series<F>(
 where
     F: FnMut() -> (Box<dyn Bot>, Box<dyn Bot>),
 {
+    run_match_series_with_limits(
+        &mut make_bots,
+        games,
+        config,
+        MatchLimits::default(),
+        &mut on_move,
+        |game_idx, mr| on_game_end(game_idx, &mr.result, &mr.replay),
+    )
+}
+
+pub fn run_match_series_with_limits<F>(
+    mut make_bots: F,
+    games: u32,
+    config: RuleConfig,
+    limits: MatchLimits,
+    mut on_move: impl FnMut(usize, u32, Color, Move, u64),
+    mut on_game_end: impl FnMut(u32, &MatchResult),
+) -> SeriesStats
+where
+    F: FnMut() -> (Box<dyn Bot>, Box<dyn Bot>),
+{
     let mut stats = SeriesStats::new();
 
     for i in 0..games {
@@ -128,17 +278,19 @@ where
         let bot_a_plays_black = i % 2 == 0;
         let game_idx = i;
         let mr = if bot_a_plays_black {
-            run_match(
+            run_match_with_limits(
                 bot_a.as_mut(),
                 bot_b.as_mut(),
                 config.clone(),
+                limits,
                 |move_num, player, mv, time_ms| on_move(move_num, game_idx, player, mv, time_ms),
             )
         } else {
-            run_match(
+            run_match_with_limits(
                 bot_b.as_mut(),
                 bot_a.as_mut(),
                 config.clone(),
+                limits,
                 |move_num, player, mv, time_ms| on_move(move_num, game_idx, player, mv, time_ms),
             )
         };
@@ -185,7 +337,7 @@ where
         stats.bot_b_time_ms += b_time;
         stats.bot_b_moves += b_moves;
 
-        on_game_end(i, &mr.result, &mr.replay);
+        on_game_end(i, &mr);
     }
 
     stats
@@ -212,5 +364,31 @@ mod tests {
         assert!(!mr.replay.moves.is_empty());
         assert!(mr.timing.black_moves > 0);
         assert!(mr.timing.white_moves > 0);
+        assert_eq!(mr.end_reason, MatchEndReason::Natural);
+    }
+
+    #[test]
+    fn max_moves_caps_match_as_draw() {
+        let config = RuleConfig {
+            variant: Variant::Freestyle,
+            ..Default::default()
+        };
+        let mut black = RandomBot::new();
+        let mut white = RandomBot::new();
+
+        let mr = run_match_with_limits(
+            &mut black,
+            &mut white,
+            config,
+            MatchLimits {
+                max_moves: Some(1),
+                max_game_ms: None,
+            },
+            |_, _, _, _| {},
+        );
+
+        assert_eq!(mr.result, GameResult::Draw);
+        assert_eq!(mr.end_reason, MatchEndReason::MaxMoves);
+        assert_eq!(mr.replay.moves.len(), 1);
     }
 }

@@ -14,7 +14,7 @@ use gomoku_core::{Board, Move};
 /// It is intentionally not the external bot interface — remote engines, sandboxed
 /// bots, or protocol adapters should use a separate adapter layer rather than
 /// implementing this trait directly.
-pub trait Bot {
+pub trait Bot: Send {
     fn name(&self) -> &str;
     fn choose_move(&mut self, board: &Board) -> Move;
     /// Optional freeform trace output emitted after the last `choose_move` call.
