@@ -1,4 +1,5 @@
 target/
+gomoku-bot-lab/outputs/
 
 .env
 .env.*

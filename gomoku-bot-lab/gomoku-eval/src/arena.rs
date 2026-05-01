@@ -37,6 +37,7 @@ impl MatchEndReason {
 }
 
 /// Per-player timing accumulated during a single match.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct MatchTiming {
     pub black_time_ms: u128,
     pub black_moves: u32,
@@ -45,6 +46,7 @@ pub struct MatchTiming {
 }
 
 /// Result of running a single match between two bots.
+#[derive(Debug, Clone)]
 pub struct MatchResult {
     pub result: GameResult,
     pub replay: Replay,

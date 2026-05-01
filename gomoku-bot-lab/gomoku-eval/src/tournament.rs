@@ -49,6 +49,27 @@ pub struct TournamentResults {
     pub nodes: HashMap<String, u64>,
     pub node_samples: HashMap<String, u32>,
     pub end_reasons: HashMap<MatchEndReason, u32>,
+    pub matches: Vec<TournamentMatchRecord>,
+}
+
+#[derive(Debug, Clone)]
+pub struct TournamentMatchRecord {
+    pub match_idx: usize,
+    pub black_name: String,
+    pub white_name: String,
+    pub result: GameResult,
+    pub replay: Replay,
+    pub timing: crate::arena::MatchTiming,
+    pub end_reason: MatchEndReason,
+}
+
+struct MatchRecordInput<'a> {
+    match_idx: usize,
+    name_a: &'a str,
+    name_b: &'a str,
+    black_name: &'a str,
+    white_name: &'a str,
+    a_is_black: bool,
 }
 
 impl Default for TournamentResults {
@@ -69,6 +90,7 @@ impl TournamentResults {
             nodes: HashMap::new(),
             node_samples: HashMap::new(),
             end_reasons: HashMap::new(),
+            matches: Vec::new(),
         }
     }
 
@@ -124,36 +146,36 @@ impl TournamentResults {
         }
     }
 
-    fn record_match(
-        &mut self,
-        name_a: &str,
-        name_b: &str,
-        black_name: &str,
-        white_name: &str,
-        a_is_black: bool,
-        mr: &MatchResult,
-    ) {
+    fn record_match(&mut self, input: MatchRecordInput<'_>, mr: &MatchResult) {
         self.elo_tracker
-            .update(name_a, name_b, &mr.result, a_is_black);
+            .update(input.name_a, input.name_b, &mr.result, input.a_is_black);
 
         match mr.result {
             GameResult::Winner(Color::Black) => {
-                self.record_result(name_a, a_is_black, false);
-                self.record_result(name_b, !a_is_black, false);
+                self.record_result(input.name_a, input.a_is_black, false);
+                self.record_result(input.name_b, !input.a_is_black, false);
             }
             GameResult::Winner(Color::White) => {
-                self.record_result(name_a, !a_is_black, false);
-                self.record_result(name_b, a_is_black, false);
+                self.record_result(input.name_a, !input.a_is_black, false);
+                self.record_result(input.name_b, input.a_is_black, false);
             }
             GameResult::Draw => {
-                self.record_result(name_a, false, true);
-                self.record_result(name_b, false, true);
+                self.record_result(input.name_a, false, true);
+                self.record_result(input.name_b, false, true);
             }
             GameResult::Ongoing => unreachable!(),
         }
 
-        self.record_timing(black_name, mr.timing.black_time_ms, mr.timing.black_moves);
-        self.record_timing(white_name, mr.timing.white_time_ms, mr.timing.white_moves);
+        self.record_timing(
+            input.black_name,
+            mr.timing.black_time_ms,
+            mr.timing.black_moves,
+        );
+        self.record_timing(
+            input.white_name,
+            mr.timing.white_time_ms,
+            mr.timing.white_moves,
+        );
         for (idx, replay_move) in mr.replay.moves.iter().enumerate() {
             let Some(trace) = &replay_move.trace else {
                 continue;
@@ -165,10 +187,23 @@ impl TournamentResults {
             else {
                 continue;
             };
-            let player = if idx % 2 == 0 { black_name } else { white_name };
+            let player = if idx % 2 == 0 {
+                input.black_name
+            } else {
+                input.white_name
+            };
             self.record_nodes(player, nodes);
         }
         self.record_end_reason(mr.end_reason);
+        self.matches.push(TournamentMatchRecord {
+            match_idx: input.match_idx,
+            black_name: input.black_name.to_string(),
+            white_name: input.white_name.to_string(),
+            result: mr.result.clone(),
+            replay: mr.replay.clone(),
+            timing: mr.timing,
+            end_reason: mr.end_reason,
+        });
     }
 }
 
@@ -208,12 +243,14 @@ where
 
     results.initialize_players(bot_factories);
 
+    let mut match_idx = 0usize;
     for i in 0..num_bots {
         for j in (i + 1)..num_bots {
             let (name_a, factory_a) = &bot_factories[i];
             let (name_b, factory_b) = &bot_factories[j];
 
             for game in 0..games_per_pair {
+                match_idx += 1;
                 let mut bot_a = factory_a();
                 let mut bot_b = factory_b();
 
@@ -240,7 +277,17 @@ where
                 let black_name = if a_is_black { name_a } else { name_b };
                 let white_name = if a_is_black { name_b } else { name_a };
 
-                results.record_match(name_a, name_b, black_name, white_name, a_is_black, &mr);
+                results.record_match(
+                    MatchRecordInput {
+                        match_idx,
+                        name_a,
+                        name_b,
+                        black_name,
+                        white_name,
+                        a_is_black,
+                    },
+                    &mr,
+                );
 
                 on_game_end(black_name, white_name, &mr);
             }
@@ -364,11 +411,14 @@ pub fn run_round_robin_parallel(
 
     for outcome in outcomes {
         results.record_match(
-            &outcome.name_a,
-            &outcome.name_b,
-            &outcome.black_name,
-            &outcome.white_name,
-            outcome.a_is_black,
+            MatchRecordInput {
+                match_idx: outcome.match_idx,
+                name_a: &outcome.name_a,
+                name_b: &outcome.name_b,
+                black_name: &outcome.black_name,
+                white_name: &outcome.white_name,
+                a_is_black: outcome.a_is_black,
+            },
             &outcome.mr,
         );
         on_game_end(&outcome.black_name, &outcome.white_name, &outcome.mr);

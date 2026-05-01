@@ -135,7 +135,9 @@ Lab config and tournament smoke:
 ```sh
 cargo run --release -p gomoku-cli -- --black balanced --white fast --quiet
 cargo run --release -p gomoku-eval -- versus --bot-a fast --bot-b balanced --games 1
-cargo run --release -p gomoku-eval -- --search-cpu-time-ms 100 --max-game-ms 10000 --seed 42 tournament --bots fast,balanced,deep --games-per-pair 10 --opening-plies 4
+mkdir -p outputs
+cargo run --release -p gomoku-eval -- tournament --bots fast,balanced,deep --games-per-pair 10 --opening-plies 4 --search-cpu-time-ms 100 --max-game-ms 10000 --seed 42 --report-json outputs/gomoku-tournament.json
+cargo run --release -p gomoku-eval -- report-html --input outputs/gomoku-tournament.json --output outputs/gomoku-tournament.html
 ```
 
 `gomoku-eval` defaults to Renju so ranking tournaments are less dominated by
@@ -145,8 +147,9 @@ coverage. Tournament games run multi-threaded by default and use seeded random
 opening plies so deterministic bots do not replay one empty-board line forever.
 For Linux ranking eval, prefer `--search-cpu-time-ms` over wall-clock
 `--search-time-ms`; fixed-depth configs are still the cleanest reproducibility
-baseline. The standings report average move time plus average traced node count
-per search move.
+baseline. The reusable JSON report is the source of truth for ranking analysis;
+the HTML report is a derived view that can be regenerated without rerunning the
+tournament.
 
 ## Initial hotspot findings
 
