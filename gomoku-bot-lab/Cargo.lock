@@ -345,6 +345,8 @@ dependencies = [
  "gomoku-bot",
  "gomoku-core",
  "rayon",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

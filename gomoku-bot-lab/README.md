@@ -85,7 +85,9 @@ when first-player advantage is constrained; pass `--rule freestyle` for
 freestyle-specific product checks.
 
 ```sh
-cargo run --release -p gomoku-eval -- --search-cpu-time-ms 100 --max-game-ms 10000 --seed 42 tournament --bots fast,balanced,deep --games-per-pair 10 --opening-plies 4
+mkdir -p outputs
+cargo run --release -p gomoku-eval -- tournament --bots fast,balanced,deep --games-per-pair 10 --opening-plies 4 --search-cpu-time-ms 100 --max-game-ms 10000 --seed 42 --report-json outputs/gomoku-tournament.json
+cargo run --release -p gomoku-eval -- report-html --input outputs/gomoku-tournament.json --output outputs/gomoku-tournament.html
 ```
 
 Useful eval flags:
@@ -102,12 +104,14 @@ Useful eval flags:
 | `--threads` | Tournament worker count; defaults to available CPU parallelism minus 2 |
 | `--games-per-pair` | Tournament games per bot pair; use an even number for color balance |
 | `--replay-dir` | Writes replay JSON for each eval game |
+| `--report-json` | Writes a compact tournament report with summary stats and `cell_index_v1` move lists |
 
 Seeded openings make deterministic bots see varied positions. Wall-clock budgets
 are practical but noisy under multi-threaded load. CPU-time budgets are better
 for Linux ranking eval, while fixed-depth configs remain the most reproducible
-option. Tournament standings include average move time and average traced nodes
-per search move.
+option. Tournament reports include pairwise records, color splits, shuffled-order
+Elo averages, depth/budget stats, and compact `move_cells` using the same
+`row * 15 + col` codec as saved web matches.
 
 ## Replay format
 

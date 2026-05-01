@@ -1,10 +1,11 @@
-use clap::{Parser, Subcommand};
+use clap::{Args, Parser, Subcommand};
 use std::path::PathBuf;
 use std::sync::Arc;
 
 use gomoku_bot::{RandomBot, SearchBot};
 use gomoku_core::{Color, GameResult, Move, RuleConfig, Variant};
 use gomoku_eval::arena::{run_match_series_with_limits, MatchEndReason, MatchLimits, MatchResult};
+use gomoku_eval::report::{render_tournament_report_html, TournamentReport, TournamentRunReport};
 use gomoku_eval::seed::derive_seed;
 use gomoku_eval::tournament::{
     default_thread_count, run_round_robin_parallel, TournamentBotFactory, TournamentOptions,
@@ -18,29 +19,41 @@ mod search_configs;
 struct Cli {
     #[command(subcommand)]
     command: Commands,
+}
 
+#[derive(Args, Debug, Clone)]
+struct EvalOptions {
     /// Rule variant: "renju" (default) or "freestyle"
-    #[arg(long, global = true, default_value = "renju")]
+    #[arg(long, default_value = "renju")]
     rule: String,
 
     /// Per-move search budget for search bots, in milliseconds
-    #[arg(long, global = true)]
+    #[arg(long)]
     search_time_ms: Option<u64>,
 
     /// Per-move Linux thread CPU-time budget for search bots, in milliseconds
-    #[arg(long, global = true)]
+    #[arg(long)]
     search_cpu_time_ms: Option<u64>,
 
     /// Stop a game after this many moves and record it as a draw
-    #[arg(long, global = true)]
+    #[arg(long)]
     max_moves: Option<usize>,
 
     /// Stop a game after this wall-clock duration and record it as a draw
-    #[arg(long, global = true)]
+    #[arg(long)]
     max_game_ms: Option<u64>,
 
     /// Base seed for reproducible random bots and tournament openings
-    #[arg(long, global = true, default_value_t = 0)]
+    #[arg(long, default_value_t = 0)]
+    seed: u64,
+}
+
+struct EvalContext {
+    config: RuleConfig,
+    rule_label: &'static str,
+    limits: MatchLimits,
+    search_time_ms: Option<u64>,
+    search_cpu_time_ms: Option<u64>,
     seed: u64,
 }
 
@@ -48,6 +61,9 @@ struct Cli {
 enum Commands {
     /// Run N games between two different bots
     Versus {
+        #[command(flatten)]
+        options: EvalOptions,
+
         #[arg(long, default_value = "baseline")]
         bot_a: String,
 
@@ -62,6 +78,9 @@ enum Commands {
     },
     /// Run N games of a single bot playing against itself
     SelfPlay {
+        #[command(flatten)]
+        options: EvalOptions,
+
         #[arg(long, default_value = "baseline")]
         bot: String,
 
@@ -71,8 +90,19 @@ enum Commands {
         #[arg(long)]
         replay_dir: Option<PathBuf>,
     },
+    /// Render a saved tournament JSON report to standalone HTML
+    ReportHtml {
+        #[arg(long)]
+        input: PathBuf,
+
+        #[arg(long)]
+        output: PathBuf,
+    },
     /// Run a round-robin tournament among a list of bots
     Tournament {
+        #[command(flatten)]
+        options: EvalOptions,
+
         /// Comma-separated list of bots (e.g. "random,fast,balanced,deep,baseline-5")
         #[arg(long)]
         bots: String,
@@ -83,6 +113,10 @@ enum Commands {
 
         #[arg(long)]
         replay_dir: Option<PathBuf>,
+
+        /// Write reusable tournament report JSON
+        #[arg(long)]
+        report_json: Option<PathBuf>,
 
         /// Number of seeded random opening plies before bots take over
         #[arg(long, default_value_t = 4)]
@@ -130,6 +164,31 @@ fn variant_label(variant: &Variant) -> &'static str {
     }
 }
 
+fn eval_context(options: &EvalOptions) -> EvalContext {
+    let variant = match options.rule.as_str() {
+        "renju" => Variant::Renju,
+        "freestyle" => Variant::Freestyle,
+        other => exit_with_error(format!(
+            "Unknown rule variant '{other}'. Use 'renju' or 'freestyle'."
+        )),
+    };
+    let rule_label = variant_label(&variant);
+    EvalContext {
+        config: RuleConfig {
+            variant,
+            ..Default::default()
+        },
+        rule_label,
+        limits: MatchLimits {
+            max_moves: options.max_moves,
+            max_game_ms: options.max_game_ms,
+        },
+        search_time_ms: options.search_time_ms,
+        search_cpu_time_ms: options.search_cpu_time_ms,
+        seed: options.seed,
+    }
+}
+
 fn print_move_progress(move_num: usize, game_idx: u32, player: Color, mv: Move, time_ms: u64) {
     let time_str = if time_ms >= 1000 {
         format!("{:.1}s", time_ms as f64 / 1000.0)
@@ -168,33 +227,22 @@ fn print_game_result(i: u32, total: u32, mr: &MatchResult) {
 fn main() {
     let cli = Cli::parse();
 
-    let variant = match cli.rule.as_str() {
-        "renju" => Variant::Renju,
-        "freestyle" => Variant::Freestyle,
-        other => exit_with_error(format!(
-            "Unknown rule variant '{other}'. Use 'renju' or 'freestyle'."
-        )),
-    };
-    let rule_label = variant_label(&variant);
-    let config = RuleConfig {
-        variant,
-        ..Default::default()
-    };
-    let limits = MatchLimits {
-        max_moves: cli.max_moves,
-        max_game_ms: cli.max_game_ms,
-    };
-    let search_time_ms = cli.search_time_ms;
-    let search_cpu_time_ms = cli.search_cpu_time_ms;
-    let seed = cli.seed;
-
     match cli.command {
         Commands::Versus {
+            options,
             bot_a,
             bot_b,
             games,
             replay_dir,
         } => {
+            let EvalContext {
+                config,
+                rule_label,
+                limits,
+                search_time_ms,
+                search_cpu_time_ms,
+                seed,
+            } = eval_context(&options);
             println!("--- Versus: {} vs {} ({} games) ---", bot_a, bot_b, games);
             println!("Rule: {rule_label}");
             if let Some(ms) = search_time_ms {
@@ -264,10 +312,19 @@ fn main() {
             println!("{}: {:.2} ms", bot_b, b_avg_time);
         }
         Commands::SelfPlay {
+            options,
             bot,
             games,
             replay_dir,
         } => {
+            let EvalContext {
+                config,
+                rule_label,
+                limits,
+                search_time_ms,
+                search_cpu_time_ms,
+                seed,
+            } = eval_context(&options);
             println!("--- Self-Play: {} vs {} ({} games) ---", bot, bot, games);
             println!("Rule: {rule_label}");
             if let Some(ms) = search_time_ms {
@@ -330,12 +387,22 @@ fn main() {
             println!("\nAvg time per move: {:.2} ms", avg_time);
         }
         Commands::Tournament {
+            options,
             bots,
             games_per_pair,
             replay_dir,
+            report_json,
             opening_plies,
             threads,
         } => {
+            let EvalContext {
+                config,
+                rule_label,
+                limits,
+                search_time_ms,
+                search_cpu_time_ms,
+                seed,
+            } = eval_context(&options);
             let bot_names: Vec<String> = bots
                 .split(',')
                 .map(|s| s.trim().to_string())
@@ -356,7 +423,8 @@ fn main() {
             println!("Games per pair: {}", games_per_pair);
             println!("Seed: {}", seed);
             println!("Opening plies: {}", opening_plies);
-            println!("Threads: {}", threads.unwrap_or_else(default_thread_count));
+            let threads = threads.unwrap_or_else(default_thread_count);
+            println!("Threads: {}", threads);
             if let Some(ms) = search_time_ms {
                 println!("Search time budget: {ms} ms/move");
             }
@@ -387,12 +455,12 @@ fn main() {
             let results = run_round_robin_parallel(
                 &factories,
                 games_per_pair,
-                config,
+                config.clone(),
                 TournamentOptions {
                     limits,
                     seed,
                     opening_plies,
-                    threads: threads.unwrap_or_else(default_thread_count),
+                    threads,
                 },
                 |black_name, white_name, mr| {
                     match_idx += 1;
@@ -422,30 +490,89 @@ fn main() {
                 },
             );
 
+            let report = match TournamentReport::from_results(
+                TournamentRunReport {
+                    bots: bot_names,
+                    rules: config,
+                    games_per_pair,
+                    seed,
+                    opening_plies,
+                    threads,
+                    search_time_ms,
+                    search_cpu_time_ms,
+                    max_moves: limits.max_moves,
+                    max_game_ms: limits.max_game_ms,
+                },
+                &results,
+            ) {
+                Ok(report) => report,
+                Err(err) => exit_with_error(format!("Failed to build tournament report: {err}")),
+            };
+
+            if let Some(path) = &report_json {
+                let json = report.to_json().unwrap_or_else(|err| {
+                    exit_with_error(format!("Failed to serialize report: {err}"))
+                });
+                std::fs::write(path, json).unwrap_or_else(|err| {
+                    exit_with_error(format!("Failed to write report: {err}"))
+                });
+                println!("\nReport JSON: {}", path.display());
+            }
+
             println!("\n--- Standings ---");
-            for (name, rating) in results.elo_tracker.get_sorted_ratings() {
-                let w = results.wins.get(&name).unwrap_or(&0);
-                let d = results.draws.get(&name).unwrap_or(&0);
-                let l = results.losses.get(&name).unwrap_or(&0);
-                let avg_ms = results.avg_time_per_move_ms(&name);
-                let avg_nodes = results.avg_nodes_per_search_move(&name);
+            for row in &report.standings {
                 println!(
-                    "{:<15} | Elo: {:>6.1} | W: {:>3} | D: {:>3} | L: {:>3} | Avg: {:>7.2} ms | Nodes: {:>9.0}",
-                    name, rating, w, d, l, avg_ms, avg_nodes
+                    "{:<15} | Seq: {:>6.1} | Avg: {:>6.1} | W: {:>3} | D: {:>3} | L: {:>3} | ms: {:>7.2} | nodes: {:>9.0} | depth: {:>4.2} | budget: {:>5.1}%",
+                    row.bot,
+                    row.sequential_elo,
+                    row.shuffled_elo_avg,
+                    row.wins,
+                    row.draws,
+                    row.losses,
+                    row.avg_search_time_ms,
+                    row.avg_nodes,
+                    row.avg_depth,
+                    row.budget_exhausted_rate * 100.0
+                );
+            }
+
+            println!("\n--- Pairwise ---");
+            for row in &report.pairwise {
+                println!(
+                    "{:<15} / {:<15} | {:>3}-{:>3}-{:>3} | score {:>5.1}-{:>5.1}",
+                    row.bot_a,
+                    row.bot_b,
+                    row.wins_a,
+                    row.wins_b,
+                    row.draws,
+                    row.score_a,
+                    row.score_b
+                );
+            }
+
+            println!("\n--- Color split ---");
+            for row in &report.color_splits {
+                println!(
+                    "{:<15} (B) vs {:<15} (W) | B: {:>3} | W: {:>3} | D: {:>3}",
+                    row.black, row.white, row.black_wins, row.white_wins, row.draws
                 );
             }
 
             println!("\n--- End reasons ---");
-            for reason in [
-                MatchEndReason::Natural,
-                MatchEndReason::MaxMoves,
-                MatchEndReason::MaxGameTime,
-            ] {
-                let count = results.end_reasons.get(&reason).unwrap_or(&0);
-                if *count > 0 {
-                    println!("{:<15} {}", reason.label(), count);
-                }
+            for reason in &report.end_reasons {
+                println!("{:<15} {}", reason.key, reason.count);
             }
+        }
+        Commands::ReportHtml { input, output } => {
+            let json = std::fs::read_to_string(&input)
+                .unwrap_or_else(|err| exit_with_error(format!("Failed to read report: {err}")));
+            let report = TournamentReport::from_json(&json)
+                .unwrap_or_else(|err| exit_with_error(format!("Failed to parse report: {err}")));
+            let html = render_tournament_report_html(&report);
+            std::fs::write(&output, html).unwrap_or_else(|err| {
+                exit_with_error(format!("Failed to write HTML report: {err}"))
+            });
+            println!("HTML report: {}", output.display());
         }
     }
 }
