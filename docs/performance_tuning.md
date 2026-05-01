@@ -130,12 +130,23 @@ Search benchmark suite:
 cargo bench -p gomoku-bot --bench search_perf -- --noplot
 ```
 
-Preset/tournament smoke:
+Lab config and tournament smoke:
 
 ```sh
 cargo run --release -p gomoku-cli -- --black balanced --white fast --quiet
 cargo run --release -p gomoku-eval -- versus --bot-a fast --bot-b balanced --games 1
+cargo run --release -p gomoku-eval -- --search-cpu-time-ms 100 --max-game-ms 10000 --seed 42 tournament --bots fast,balanced,deep --games-per-pair 10 --opening-plies 4
 ```
+
+`gomoku-eval` defaults to Renju so ranking tournaments are less dominated by
+first-player advantage; pass `--rule freestyle` when validating freestyle product
+behavior. Use an even `--games-per-pair` so each pair gets balanced color
+coverage. Tournament games run multi-threaded by default and use seeded random
+opening plies so deterministic bots do not replay one empty-board line forever.
+For Linux ranking eval, prefer `--search-cpu-time-ms` over wall-clock
+`--search-time-ms`; fixed-depth configs are still the cleanest reproducibility
+baseline. The standings report average move time plus average traced node count
+per search move.
 
 ## Initial hotspot findings
 

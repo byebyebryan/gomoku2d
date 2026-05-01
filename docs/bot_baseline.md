@@ -8,7 +8,11 @@
 
 ## Algorithm overview
 
-Negamax with alpha-beta pruning and iterative deepening. The bot searches deeper on each iteration, keeping the best result found so far, and cuts off when the time budget is exhausted or a forced win/loss is detected.
+Negamax with alpha-beta pruning and iterative deepening. The bot searches deeper
+on each iteration, keeping the best result found so far, and cuts off when the
+time budget is exhausted or a forced win/loss is detected. Time-budgeted search
+checks the deadline inside the alpha-beta loop, so eval tournaments can compare
+fixed-depth configs with a practical per-move cap.
 
 ```
 for depth in 1..=max_depth:
@@ -36,7 +40,8 @@ product presets:
 | Config field | Meaning |
 |---|---|
 | `max_depth` | Fixed maximum iterative-deepening depth |
-| `time_budget_ms` | Optional per-move time budget |
+| `time_budget_ms` | Optional per-move wall-clock budget |
+| `cpu_time_budget_ms` | Optional per-move Linux thread CPU-time budget |
 | `candidate_radius` | Distance around existing stones used to generate candidate moves |
 | `root_prefilter` | Whether to run the root anti-blunder prefilter |
 
@@ -59,14 +64,23 @@ Search traces include both the result and the config:
   "config": {
     "max_depth": 3,
     "time_budget_ms": null,
+    "cpu_time_budget_ms": null,
     "candidate_radius": 2,
     "root_prefilter": true
   },
   "depth": 3,
   "nodes": 1234,
-  "score": 200
+  "prefilter_nodes": 56,
+  "total_nodes": 1290,
+  "score": 200,
+  "budget_exhausted": false
 }
 ```
+
+`nodes` counts alpha-beta search nodes. `prefilter_nodes` counts the root
+anti-blunder prefilter probes, and `total_nodes` is the aggregate used by eval
+reporting. Node budgets are not enforced yet; this is currently a trace and
+tournament metric.
 
 ---
 
