@@ -11,7 +11,7 @@ instant = { version = "0.1", features = ["wasm-bindgen"] }
 libc = "0.2"
 
 [dev-dependencies]
-criterion = "0.5"
+criterion = "0.8"
 
 [[bench]]
 name = "search_perf"
