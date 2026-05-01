@@ -24,6 +24,64 @@ fn hash_board(zt: &ZobristTable, board: &Board) -> u64 {
     h
 }
 
+#[cfg(target_os = "linux")]
+fn thread_cpu_time() -> Option<Duration> {
+    let mut ts = libc::timespec {
+        tv_sec: 0,
+        tv_nsec: 0,
+    };
+    let ok = unsafe { libc::clock_gettime(libc::CLOCK_THREAD_CPUTIME_ID, &mut ts) == 0 };
+    if ok {
+        Some(Duration::new(ts.tv_sec as u64, ts.tv_nsec as u32))
+    } else {
+        None
+    }
+}
+
+#[cfg(not(target_os = "linux"))]
+fn thread_cpu_time() -> Option<Duration> {
+    None
+}
+
+#[derive(Clone, Copy)]
+struct SearchDeadline {
+    wall_deadline: Option<Instant>,
+    cpu_start: Option<Duration>,
+    cpu_budget: Option<Duration>,
+}
+
+impl SearchDeadline {
+    fn new(
+        wall_start: Instant,
+        wall_budget: Option<Duration>,
+        cpu_start: Option<Duration>,
+        cpu_budget: Option<Duration>,
+    ) -> Self {
+        Self {
+            wall_deadline: wall_budget.map(|budget| wall_start + budget),
+            cpu_start,
+            cpu_budget,
+        }
+    }
+
+    fn expired(self) -> bool {
+        if self
+            .wall_deadline
+            .is_some_and(|deadline| Instant::now() >= deadline)
+        {
+            return true;
+        }
+
+        if let (Some(start), Some(budget), Some(now)) =
+            (self.cpu_start, self.cpu_budget, thread_cpu_time())
+        {
+            return now.saturating_sub(start) >= budget;
+        }
+
+        false
+    }
+}
+
 // --- Transposition table ---
 
 #[derive(Clone, Copy)]
@@ -217,16 +275,18 @@ fn allows_opponent_forcing_reply(
     board: &mut Board,
     mv: Move,
     candidate_radius: usize,
-    deadline: Option<Instant>,
+    deadline: SearchDeadline,
+    prefilter_nodes: &mut u64,
 ) -> Option<bool> {
     let current = board.current_player;
     if needs_renju_legality_check(board, current) && !board.is_legal(mv) {
         return Some(false);
     }
 
-    if deadline.is_some_and(|limit| Instant::now() >= limit) {
+    if deadline.expired() {
         return None;
     }
+    *prefilter_nodes += 1;
 
     let opponent = current.opponent();
     board.apply_move(mv).unwrap();
@@ -235,7 +295,7 @@ fn allows_opponent_forcing_reply(
     let mut timed_out = false;
     if !matches!(board.result, GameResult::Winner(winner) if winner == current) {
         for reply in candidate_moves(board, candidate_radius) {
-            if deadline.is_some_and(|limit| Instant::now() >= limit) {
+            if deadline.expired() {
                 timed_out = true;
                 break;
             }
@@ -243,6 +303,7 @@ fn allows_opponent_forcing_reply(
                 continue;
             }
 
+            *prefilter_nodes += 1;
             board.apply_move(reply).unwrap();
             let forcing = matches!(board.result, GameResult::Winner(winner) if winner == opponent)
                 || board.has_multiple_immediate_winning_moves_for(opponent);
@@ -267,34 +328,41 @@ fn root_candidate_moves(
     board: &Board,
     candidate_radius: usize,
     enable_prefilter: bool,
-    deadline: Option<Instant>,
-) -> Vec<Move> {
+    deadline: SearchDeadline,
+) -> (Vec<Move>, u64, bool) {
     let mut moves = candidate_moves(board, candidate_radius);
     if needs_renju_legality_check(board, board.current_player) {
         moves.retain(|&mv| board.is_legal(mv));
     }
     if moves.is_empty() || !enable_prefilter {
-        return moves;
+        return (moves, 0, false);
     }
 
     let mut working = board.clone();
     let mut safe_moves: Vec<Move> = Vec::with_capacity(moves.len());
+    let mut prefilter_nodes = 0u64;
     for mv in moves.iter().copied() {
-        if deadline.is_some_and(|limit| Instant::now() >= limit) {
-            return moves;
+        if deadline.expired() {
+            return (moves, prefilter_nodes, true);
         }
 
-        match allows_opponent_forcing_reply(&mut working, mv, candidate_radius, deadline) {
+        match allows_opponent_forcing_reply(
+            &mut working,
+            mv,
+            candidate_radius,
+            deadline,
+            &mut prefilter_nodes,
+        ) {
             Some(false) => safe_moves.push(mv),
             Some(true) => {}
-            None => return moves,
+            None => return (moves, prefilter_nodes, true),
         }
     }
 
     if safe_moves.is_empty() {
-        moves
+        (moves, prefilter_nodes, false)
     } else {
-        safe_moves
+        (safe_moves, prefilter_nodes, false)
     }
 }
 
@@ -313,21 +381,27 @@ fn negamax(
     zobrist: &ZobristTable,
     candidate_radius: usize,
     nodes: &mut u64,
-) -> (i32, Option<Move>) {
+    deadline: SearchDeadline,
+) -> (i32, Option<Move>, bool) {
     *nodes += 1;
+
+    if deadline.expired() {
+        let sign = if color == root_color { 1 } else { -1 };
+        return (sign * evaluate(board, root_color), None, true);
+    }
 
     if let Some(entry) = tt.get(&hash) {
         if entry.depth >= depth {
             match entry.flag {
-                TTFlag::Exact => return (entry.score, entry.best_move),
+                TTFlag::Exact => return (entry.score, entry.best_move, false),
                 TTFlag::LowerBound => {
                     if entry.score >= beta {
-                        return (entry.score, entry.best_move);
+                        return (entry.score, entry.best_move, false);
                     }
                 }
                 TTFlag::UpperBound => {
                     if entry.score <= alpha {
-                        return (entry.score, entry.best_move);
+                        return (entry.score, entry.best_move, false);
                     }
                 }
             }
@@ -336,13 +410,13 @@ fn negamax(
 
     if depth == 0 || board.result != GameResult::Ongoing {
         let sign = if color == root_color { 1 } else { -1 };
-        return (sign * evaluate(board, root_color), None);
+        return (sign * evaluate(board, root_color), None, false);
     }
 
     let moves = candidate_moves(board, candidate_radius);
     if moves.is_empty() {
         let sign = if color == root_color { 1 } else { -1 };
-        return (sign * evaluate(board, root_color), None);
+        return (sign * evaluate(board, root_color), None, false);
     }
 
     let orig_alpha = alpha;
@@ -360,14 +434,19 @@ fn negamax(
     };
 
     let needs_legality_check = needs_renju_legality_check(board, color);
+    let mut timed_out = false;
     for mv in ordered {
+        if deadline.expired() {
+            timed_out = true;
+            break;
+        }
         if needs_legality_check && !board.is_legal(mv) {
             continue;
         }
         // Incrementally update hash: XOR in the placed piece and flip turn bit
         let child_hash = hash ^ zobrist.piece(mv.row, mv.col, color) ^ zobrist.turn;
         board.apply_move(mv).unwrap();
-        let (score, _) = negamax(
+        let (score, _, child_timed_out) = negamax(
             board,
             child_hash,
             depth - 1,
@@ -379,10 +458,14 @@ fn negamax(
             zobrist,
             candidate_radius,
             nodes,
+            deadline,
         );
         let score = -score;
         board.undo_move(mv);
 
+        if child_timed_out {
+            timed_out = true;
+        }
         if score > best_score {
             best_score = score;
             best_move = Some(mv);
@@ -393,6 +476,18 @@ fn negamax(
         if alpha >= beta {
             break;
         }
+        if timed_out {
+            break;
+        }
+    }
+
+    if best_move.is_none() {
+        let sign = if color == root_color { 1 } else { -1 };
+        return (sign * evaluate(board, root_color), None, timed_out);
+    }
+
+    if timed_out {
+        return (best_score, best_move, true);
     }
 
     let flag = if best_score <= orig_alpha {
@@ -412,7 +507,7 @@ fn negamax(
         },
     );
 
-    (best_score, best_move)
+    (best_score, best_move, false)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -426,8 +521,12 @@ fn search_root(
     zobrist: &ZobristTable,
     candidate_radius: usize,
     nodes: &mut u64,
-) -> (i32, Option<Move>) {
+    deadline: SearchDeadline,
+) -> (i32, Option<Move>, bool) {
     *nodes += 1;
+    if deadline.expired() {
+        return (evaluate(board, color), None, true);
+    }
 
     let mut alpha = i32::MIN + 1;
     let beta = i32::MAX;
@@ -445,14 +544,19 @@ fn search_root(
     };
 
     let needs_legality_check = needs_renju_legality_check(board, color);
+    let mut timed_out = false;
     for mv in ordered {
+        if deadline.expired() {
+            timed_out = true;
+            break;
+        }
         if needs_legality_check && !board.is_legal(mv) {
             continue;
         }
 
         let child_hash = hash ^ zobrist.piece(mv.row, mv.col, color) ^ zobrist.turn;
         board.apply_move(mv).unwrap();
-        let (score, _) = negamax(
+        let (score, _, child_timed_out) = negamax(
             board,
             child_hash,
             depth - 1,
@@ -464,10 +568,14 @@ fn search_root(
             zobrist,
             candidate_radius,
             nodes,
+            deadline,
         );
         let score = -score;
         board.undo_move(mv);
 
+        if child_timed_out {
+            timed_out = true;
+        }
         if score > best_score {
             best_score = score;
             best_move = Some(mv);
@@ -478,6 +586,17 @@ fn search_root(
         if alpha >= beta {
             break;
         }
+        if timed_out {
+            break;
+        }
+    }
+
+    if best_move.is_none() {
+        return (evaluate(board, color), None, timed_out);
+    }
+
+    if timed_out {
+        return (best_score, best_move, true);
     }
 
     let flag = if best_score <= orig_alpha {
@@ -497,7 +616,7 @@ fn search_root(
         },
     );
 
-    (best_score, best_move)
+    (best_score, best_move, false)
 }
 
 // --- SearchBot ---
@@ -506,6 +625,7 @@ fn search_root(
 pub struct SearchBotConfig {
     pub max_depth: i32,
     pub time_budget_ms: Option<u64>,
+    pub cpu_time_budget_ms: Option<u64>,
     pub candidate_radius: usize,
     pub root_prefilter: bool,
 }
@@ -515,6 +635,7 @@ impl SearchBotConfig {
         Self {
             max_depth,
             time_budget_ms: None,
+            cpu_time_budget_ms: None,
             candidate_radius: 2,
             root_prefilter: true,
         }
@@ -524,6 +645,17 @@ impl SearchBotConfig {
         Self {
             max_depth: 20,
             time_budget_ms: Some(time_budget_ms),
+            cpu_time_budget_ms: None,
+            candidate_radius: 2,
+            root_prefilter: true,
+        }
+    }
+
+    pub const fn custom_cpu_time_budget(cpu_time_budget_ms: u64) -> Self {
+        Self {
+            max_depth: 20,
+            time_budget_ms: None,
+            cpu_time_budget_ms: Some(cpu_time_budget_ms),
             candidate_radius: 2,
             root_prefilter: true,
         }
@@ -533,10 +665,15 @@ impl SearchBotConfig {
         self.time_budget_ms.map(Duration::from_millis)
     }
 
+    fn cpu_time_budget(self) -> Option<Duration> {
+        self.cpu_time_budget_ms.map(Duration::from_millis)
+    }
+
     fn trace(self) -> serde_json::Value {
         serde_json::json!({
             "max_depth": self.max_depth,
             "time_budget_ms": self.time_budget_ms,
+            "cpu_time_budget_ms": self.cpu_time_budget_ms,
             "candidate_radius": self.candidate_radius,
             "root_prefilter": self.root_prefilter,
         })
@@ -547,7 +684,9 @@ impl SearchBotConfig {
 pub struct SearchInfo {
     pub depth_reached: i32,
     pub nodes: u64,
+    pub prefilter_nodes: u64,
     pub score: i32,
+    pub budget_exhausted: bool,
 }
 
 pub struct SearchBot {
@@ -593,7 +732,10 @@ impl Bot for SearchBot {
                 "config": self.config.trace(),
                 "depth": info.depth_reached,
                 "nodes": info.nodes,
+                "prefilter_nodes": info.prefilter_nodes,
+                "total_nodes": info.nodes + info.prefilter_nodes,
                 "score": info.score,
+                "budget_exhausted": info.budget_exhausted,
             })
         })
     }
@@ -603,11 +745,19 @@ impl Bot for SearchBot {
         let mut working = board.clone();
         let start = Instant::now();
         let time_budget = self.config.time_budget();
+        let cpu_time_budget = self.config.cpu_time_budget();
+        let cpu_start = cpu_time_budget.and_then(|_| thread_cpu_time());
+        let deadline = SearchDeadline::new(start, time_budget, cpu_start, cpu_time_budget);
         // Compute hash once at root; children update it incrementally
         let root_hash = hash_board(&self.zobrist, board);
         let center = board.config.board_size / 2;
-        let prefilter_deadline = time_budget.map(|budget| start + budget / 2);
-        let root_moves = root_candidate_moves(
+        let prefilter_deadline = SearchDeadline::new(
+            start,
+            time_budget.map(|budget| budget / 2),
+            cpu_start,
+            cpu_time_budget.map(|budget| budget / 2),
+        );
+        let (root_moves, prefilter_nodes, mut budget_exhausted) = root_candidate_moves(
             board,
             self.config.candidate_radius,
             self.config.root_prefilter,
@@ -630,8 +780,12 @@ impl Bot for SearchBot {
         let mut total_nodes = 0u64;
 
         for depth in 1..=self.config.max_depth {
+            if deadline.expired() {
+                budget_exhausted = true;
+                break;
+            }
             let mut nodes = 0u64;
-            let (score, mv) = search_root(
+            let (score, mv, timed_out) = search_root(
                 &mut working,
                 root_hash,
                 depth,
@@ -641,19 +795,26 @@ impl Bot for SearchBot {
                 &self.zobrist,
                 self.config.candidate_radius,
                 &mut nodes,
+                deadline,
             );
             total_nodes += nodes;
 
-            if let Some(m) = mv {
-                best_move = m;
-                best_score = score;
-            }
-            depth_reached = depth;
-
-            if let Some(budget) = time_budget {
-                if start.elapsed() >= budget / 2 {
-                    break;
+            if !timed_out {
+                if let Some(m) = mv {
+                    best_move = m;
+                    best_score = score;
                 }
+                depth_reached = depth;
+            } else if depth_reached == 0 {
+                if let Some(m) = mv {
+                    best_move = m;
+                    best_score = score;
+                }
+            }
+
+            if timed_out {
+                budget_exhausted = true;
+                break;
             }
             // Early exit on forced win/loss
             if best_score.abs() >= 1_000_000 {
@@ -664,7 +825,9 @@ impl Bot for SearchBot {
         self.last_info = Some(SearchInfo {
             depth_reached,
             nodes: total_nodes,
+            prefilter_nodes,
             score: best_score,
+            budget_exhausted,
         });
 
         best_move
@@ -765,10 +928,17 @@ mod tests {
             &board,
             2,
             true,
-            Some(Instant::now() - Duration::from_millis(1)),
+            SearchDeadline::new(
+                Instant::now() - Duration::from_millis(2),
+                Some(Duration::from_millis(1)),
+                None,
+                None,
+            ),
         );
 
+        let (moves, _, timed_out) = moves;
         assert_eq!(moves, expected);
+        assert!(timed_out);
     }
 
     #[test]
@@ -782,6 +952,7 @@ mod tests {
         let config = SearchBotConfig {
             max_depth: 4,
             time_budget_ms: None,
+            cpu_time_budget_ms: None,
             candidate_radius: 3,
             root_prefilter: false,
         };
@@ -813,6 +984,9 @@ mod tests {
         assert_eq!(trace["config"]["max_depth"], 3);
         assert_eq!(trace["config"]["candidate_radius"], 2);
         assert_eq!(trace["config"]["root_prefilter"], true);
+        assert!(trace["nodes"].as_u64().unwrap() > 0);
+        assert!(trace["total_nodes"].as_u64().unwrap() >= trace["nodes"].as_u64().unwrap());
+        assert_eq!(trace["budget_exhausted"], false);
         assert_eq!(trace["depth"], 3);
     }
 

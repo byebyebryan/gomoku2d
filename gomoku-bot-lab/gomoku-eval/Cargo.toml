@@ -11,3 +11,4 @@ path = "src/main.rs"
 gomoku-core = { path = "../gomoku-core" }
 gomoku-bot = { path = "../gomoku-bot" }
 clap = { version = "4", features = ["derive"] }
+rayon = "1"

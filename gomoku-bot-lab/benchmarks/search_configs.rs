@@ -11,6 +11,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
         config: SearchBotConfig {
             max_depth: 2,
             time_budget_ms: None,
+            cpu_time_budget_ms: None,
             candidate_radius: 2,
             root_prefilter: true,
         },
@@ -20,6 +21,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
         config: SearchBotConfig {
             max_depth: 3,
             time_budget_ms: None,
+            cpu_time_budget_ms: None,
             candidate_radius: 2,
             root_prefilter: true,
         },
@@ -29,6 +31,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
         config: SearchBotConfig {
             max_depth: 5,
             time_budget_ms: None,
+            cpu_time_budget_ms: None,
             candidate_radius: 2,
             root_prefilter: true,
         },
@@ -44,14 +47,18 @@ pub fn search_config_from_lab_spec(
     spec: &str,
     default_depth: i32,
     time_budget_ms: Option<u64>,
+    cpu_time_budget_ms: Option<u64>,
 ) -> Option<SearchBotConfig> {
     let spec = spec.trim();
 
     if spec == "baseline" || spec == "search" {
-        return Some(match time_budget_ms {
-            Some(ms) => SearchBotConfig::custom_time_budget(ms),
-            None => SearchBotConfig::custom_depth(default_depth),
-        });
+        let mut config = SearchBotConfig::custom_depth(default_depth);
+        config.time_budget_ms = time_budget_ms;
+        config.cpu_time_budget_ms = cpu_time_budget_ms;
+        if time_budget_ms.is_some() || cpu_time_budget_ms.is_some() {
+            config.max_depth = 20;
+        }
+        return Some(config);
     }
 
     if let Some(depth) = spec
@@ -59,7 +66,10 @@ pub fn search_config_from_lab_spec(
         .or_else(|| spec.strip_prefix("search-"))
         .and_then(|value| value.parse::<i32>().ok())
     {
-        return Some(SearchBotConfig::custom_depth(depth));
+        let mut config = SearchBotConfig::custom_depth(depth);
+        config.time_budget_ms = time_budget_ms;
+        config.cpu_time_budget_ms = cpu_time_budget_ms;
+        return Some(config);
     }
 
     let alias = spec
@@ -67,5 +77,10 @@ pub fn search_config_from_lab_spec(
         .or_else(|| spec.strip_prefix("search-"))
         .unwrap_or(spec);
 
-    lab_search_config(alias).map(|lab_config| lab_config.config)
+    lab_search_config(alias).map(|lab_config| {
+        let mut config = lab_config.config;
+        config.time_budget_ms = time_budget_ms.or(config.time_budget_ms);
+        config.cpu_time_budget_ms = cpu_time_budget_ms.or(config.cpu_time_budget_ms);
+        config
+    })
 }

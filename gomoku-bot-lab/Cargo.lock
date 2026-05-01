@@ -314,6 +314,7 @@ dependencies = [
  "criterion",
  "gomoku-core",
  "instant",
+ "libc",
  "rand",
  "serde_json",
 ]
@@ -343,6 +344,7 @@ dependencies = [
  "clap",
  "gomoku-bot",
  "gomoku-core",
+ "rayon",
 ]
 
 [[package]]

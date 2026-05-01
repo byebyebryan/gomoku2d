@@ -44,7 +44,7 @@ fn make_bot(name: &str, depth: i32, time_ms: Option<u64>) -> Box<dyn Bot> {
         return Box::new(RandomBot::new());
     }
 
-    if let Some(config) = search_configs::search_config_from_lab_spec(name, depth, time_ms) {
+    if let Some(config) = search_configs::search_config_from_lab_spec(name, depth, time_ms, None) {
         return Box::new(SearchBot::with_config(config));
     }
 
