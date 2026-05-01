@@ -32,6 +32,7 @@ cargo test  --workspace
 
 ```sh
 cargo run --release -p gomoku-cli -- --black baseline --white random
+cargo run --release -p gomoku-cli -- --black balanced --white fast
 cargo run --release -p gomoku-cli -- --black baseline --white random --time-ms 500
 cargo run --release -p gomoku-cli -- --black baseline --white random --quiet --replay /tmp/game.json
 ```
@@ -40,10 +41,10 @@ cargo run --release -p gomoku-cli -- --black baseline --white random --quiet --r
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--black` | `baseline` | Bot for Black: `random` or `baseline` |
-| `--white` | `random`   | Bot for White: `random` or `baseline` |
+| `--black` | `baseline` | Bot for Black: `random`, `baseline`, `baseline-N`, or a lab alias (`fast`, `balanced`, `deep`) |
+| `--white` | `random`   | Bot for White: `random`, `baseline`, `baseline-N`, or a lab alias (`fast`, `balanced`, `deep`) |
 | `--depth` | `5`        | Fixed baseline depth (ignored if `--time-ms` is set) |
-| `--time-ms` | —        | Time budget per move in milliseconds |
+| `--time-ms` | —        | Time budget per move for the legacy `baseline` spec |
 | `--rule` | `freestyle` | Rule variant: `freestyle` or `renju` |
 | `--replay` | —         | Write replay JSON to this path |
 | `--quiet` | —          | Suppress per-move board printing |
@@ -55,6 +56,19 @@ keyed by incremental Zobrist hashing. Move candidates are pruned to cells within
 2 steps of any existing stone. Static evaluation scores open and half-open runs
 of 2–4 in all four directions. It reliably beats `RandomBot` and is intentionally
 good enough for practice without trying to be a perfect Gomoku engine.
+
+The lab now has named baseline-search aliases. `gomoku-bot` itself exposes
+explicit `SearchBotConfig` fields; these names are lab conveniences over that
+config, not canonical product presets.
+
+| Alias | Config | Intent |
+|---|---|---|
+| `fast` | depth 2, radius 2, root prefilter on | cheap comparison target |
+| `balanced` | depth 3, radius 2, root prefilter on | current browser practice-bot depth |
+| `deep` | depth 5, radius 2, root prefilter on | current CLI default depth |
+
+Legacy specs still work: `baseline` uses `--depth` / `--time-ms`, and
+`baseline-N` creates a custom fixed-depth baseline bot.
 
 More detailed strategy notes live in [`../docs/bot_baseline.md`](../docs/bot_baseline.md).
 
@@ -71,7 +85,22 @@ that replay format directly.
   "white": "random",
   "moves": [
     { "mv": "H8", "time_ms": 120, "hash": 123456789 },
-    { "mv": "D4", "time_ms": 5,   "hash": 987654321, "trace": { "depth": 3 } }
+    {
+      "mv": "D4",
+      "time_ms": 5,
+      "hash": 987654321,
+      "trace": {
+        "config": {
+          "max_depth": 3,
+          "time_budget_ms": null,
+          "candidate_radius": 2,
+          "root_prefilter": true
+        },
+        "depth": 3,
+        "nodes": 42,
+        "score": 100
+      }
+    }
   ],
   "result": "black_wins",
   "duration_ms": 3520
@@ -106,6 +135,6 @@ cargo bench -p gomoku-bot --bench search_perf -- --noplot
 
 1. Add a module under `gomoku-bot/src/`
 2. `impl Bot for YourBot`
-3. Register it in the bot registry
+3. Register it in the relevant bot or lab-alias registry
 4. The CLI can play it immediately; `gomoku-eval` can rate it; `gomoku-wasm`
    can ship it to the browser once surfaced through `WasmBot`

@@ -6,6 +6,9 @@ use gomoku_core::{Color, GameResult, Move, RuleConfig, Variant};
 use gomoku_eval::arena::run_match_series;
 use gomoku_eval::tournament::run_round_robin;
 
+#[path = "../../benchmarks/search_configs.rs"]
+mod search_configs;
+
 #[derive(Parser, Debug)]
 #[command(name = "gomoku-eval", about = "Evaluation harness for Gomoku bots")]
 struct Cli {
@@ -46,7 +49,7 @@ enum Commands {
     },
     /// Run a round-robin tournament among a list of bots
     Tournament {
-        /// Comma-separated list of bots (e.g. "random,baseline,search-10")
+        /// Comma-separated list of bots (e.g. "random,fast,balanced,deep,baseline-5")
         #[arg(long)]
         bots: String,
 
@@ -65,21 +68,16 @@ type NamedBotFactory = (String, BotFactory);
 fn make_bot_factory(spec: &str) -> BotFactory {
     let spec = spec.to_string();
     Box::new(move || -> Box<dyn Bot> {
-        let parts: Vec<&str> = spec.split('-').collect();
-        match parts[0] {
-            "random" => Box::new(RandomBot::new()),
-            "baseline" => {
-                let depth = parts
-                    .get(1)
-                    .and_then(|s| s.parse::<i32>().ok())
-                    .unwrap_or(5);
-                Box::new(SearchBot::new(depth))
-            }
-            other => {
-                eprintln!("Unknown bot type: '{}'. Falling back to random.", other);
-                Box::new(RandomBot::new())
-            }
+        if spec == "random" {
+            return Box::new(RandomBot::new());
         }
+
+        if let Some(config) = search_configs::search_config_from_lab_spec(&spec, 5, None) {
+            return Box::new(SearchBot::with_config(config));
+        }
+
+        eprintln!("Unknown bot type: '{}'. Falling back to random.", spec);
+        Box::new(RandomBot::new())
     })
 }
 

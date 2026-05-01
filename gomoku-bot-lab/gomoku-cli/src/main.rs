@@ -4,14 +4,17 @@ use clap::Parser;
 use gomoku_bot::{Bot, RandomBot, SearchBot};
 use gomoku_core::{Board, Color, GameResult, Move, Replay, RuleConfig, Variant};
 
+#[path = "../../benchmarks/search_configs.rs"]
+mod search_configs;
+
 #[derive(Parser, Debug)]
 #[command(name = "gomoku-cli", about = "Run a Gomoku match between bots")]
 struct Args {
-    /// Bot for Black: "random" or "baseline"
+    /// Bot for Black: "random", "baseline", a lab alias ("fast", "balanced", "deep"), or "baseline-N"
     #[arg(long, default_value = "baseline")]
     black: String,
 
-    /// Bot for White: "random" or "baseline"
+    /// Bot for White: "random", "baseline", a lab alias ("fast", "balanced", "deep"), or "baseline-N"
     #[arg(long, default_value = "random")]
     white: String,
 
@@ -19,7 +22,7 @@ struct Args {
     #[arg(long, default_value_t = 5)]
     depth: i32,
 
-    /// Time budget per move in milliseconds (overrides depth if set)
+    /// Time budget per move in milliseconds for the legacy "baseline" spec (overrides depth if set)
     #[arg(long)]
     time_ms: Option<u64>,
 
@@ -37,20 +40,16 @@ struct Args {
 }
 
 fn make_bot(name: &str, depth: i32, time_ms: Option<u64>) -> Box<dyn Bot> {
-    match name {
-        "random" => Box::new(RandomBot::new()),
-        "baseline" => {
-            if let Some(ms) = time_ms {
-                Box::new(SearchBot::with_time(ms))
-            } else {
-                Box::new(SearchBot::new(depth))
-            }
-        }
-        other => {
-            eprintln!("Unknown bot '{}'. Using random.", other);
-            Box::new(RandomBot::new())
-        }
+    if name == "random" {
+        return Box::new(RandomBot::new());
     }
+
+    if let Some(config) = search_configs::search_config_from_lab_spec(name, depth, time_ms) {
+        return Box::new(SearchBot::with_config(config));
+    }
+
+    eprintln!("Unknown bot '{}'. Using random.", name);
+    Box::new(RandomBot::new())
 }
 
 fn print_board(board: &Board) {
