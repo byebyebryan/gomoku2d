@@ -134,6 +134,31 @@ worktree is intentionally captured as a `_dirty` git revision and shown as a
 development-run warning in the report. That warning is fine for scratch output
 under `outputs/`, but avoid publishing it as the canonical `/bot-report/`.
 
+### Tactical scenario diagnostics
+
+Tournament reports answer "which config scores better over many games?"
+Tactical scenarios answer a narrower question: "does this config choose the
+expected one-move tactical response in this position, and what did it cost?"
+
+Run the baseline tactical sweep from `gomoku-bot-lab/`:
+
+```sh
+cargo run -p gomoku-eval -- tactical-scenarios --bots search-d2,search-d3,search-d5 --search-cpu-time-ms 1000
+```
+
+The command reports pass/fail, chosen move, expected move set, depth reached,
+nodes, prefilter nodes, time, and budget exhaustion. To capture reusable JSON:
+
+```sh
+mkdir -p outputs
+cargo run -p gomoku-eval -- tactical-scenarios --bots search-d2,search-d3,search-d5 --search-cpu-time-ms 1000 --report-json outputs/tactical-scenarios.json
+```
+
+Treat this as diagnostic coverage, not a ranking system. If a baseline config
+already passes a scenario, that fixture becomes a regression guard. New search
+logic should be driven by scenarios that expose real gaps, then confirmed with
+tournament ablation.
+
 ## Replay format
 
 Both `gomoku-cli` and `gomoku-eval` write the same JSON. The web game consumes

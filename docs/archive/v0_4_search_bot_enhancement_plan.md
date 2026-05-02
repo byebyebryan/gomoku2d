@@ -10,7 +10,10 @@ Current progress:
 - Commit 3 tactical candidates was rejected after focused testing.
 - Commit 4 tactical move ordering was rejected after focused testing.
 - Commit 5 tactical eval was rejected after focused testing.
-- Commit 6 tactical shape features is in progress.
+- Commit 6 tactical shape features landed in
+  `263e734 feat(bot): add tactical shape analyzer labels`.
+- Commit 7 tactical scenario diagnostics is in progress.
+- Next planning focus: bounded forced-line search.
 
 ## Goal
 
@@ -35,6 +38,24 @@ Stable lab specs stay focused on reproducible baseline configs:
 
 This avoids duplicating the search loop while still allowing tournament reports
 to compare meaningful variants once a feature has earned a config surface.
+
+The next likely improvement is not another shallow tactical toggle. It is a
+bounded forced-line search path: spend extra depth only when the position is in
+a forcing tactical branch. In Gomoku terms, the depth problem is often narrow
+but deep. A plain depth-3 search can miss a lethal open-three/double-threat
+sequence because it spends depth on unrelated replies, while a global depth
+increase is too expensive. Forced-line search should make the search selectively
+deeper where the opponent's useful replies are constrained.
+
+Tactical scenarios still matter, but as diagnostics rather than match ranking.
+They answer:
+
+- Does the current baseline already solve this position?
+- Does a proposed tactical change solve it with acceptable node/time cost?
+- Does the change regress obvious safety cases?
+
+If baseline depth 3 or depth 5 already solves a scenario, that scenario becomes
+a regression guard, not a reason to add new logic.
 
 ## Phases
 
@@ -136,6 +157,85 @@ Current implementation note: this slice adds labels to `analyze_tactical_move`
 only. The search loop still uses the same candidates, ordering, and static eval
 as the baseline.
 
+### Phase 7: Tactical Scenario Diagnostics
+
+Add a focused scenario runner before adding more bot behavior.
+
+This is intentionally not a replacement for tournament eval. Tournament eval
+answers "which bot scores better over many games?" Scenario diagnostics answer
+"does this bot understand this specific tactical shape, and what did it cost?"
+
+Scenario categories:
+
+- immediate win
+- forced block
+- open four
+- blocked four
+- open three
+- broken three
+- double threat
+- tempting bad extension
+- sparse long-range threat, only if radius-2 genuinely misses it
+
+Each scenario should record:
+
+- board position
+- side to move
+- expected move set initially; tactical-class assertions can be added later
+- actual move
+- pass/fail
+- nodes, prefilter nodes, time, depth reached, budget exhaustion
+
+Run the baseline configs first: `search-d2`, `search-d3`, and `search-d5`.
+Only positions that expose a real baseline gap should drive new search logic.
+
+Current implementation note: `gomoku-eval tactical-scenarios` runs the focused
+one-move diagnostics across search configs and can write JSON. The initial
+seven-case smoke run showed `search-d2` failing the broken-three creation case,
+while `search-d3` and `search-d5` passed the current set. This is useful
+diagnostic evidence, but the set is still too small to justify product-facing
+bot presets.
+
+### Phase 8: Bounded Forced-Line Search
+
+Add selective extension for forcing tactical branches.
+
+Target behavior:
+
+1. If the current player has an immediate win, prefer/return it immediately.
+2. If the opponent has exactly one immediate win, treat the block as forced and
+   extend that line.
+3. If the opponent has multiple immediate wins and the current player cannot win
+   now, treat the position as a near-forced loss.
+4. If a move creates a forcing threat, extend that branch by a small bounded
+   amount.
+5. Stop extension with explicit caps: max extension depth, node/time deadline,
+   and normal terminal checks.
+
+This should be implemented as a tactical extension around search, not as an
+unbounded "keep searching threats forever" mode.
+
+Initial limits:
+
+- `max_threat_extension_depth`: small, likely 2-4
+- reuse existing wall/CPU deadline checks
+- no product-facing config until focused scenarios and tournament ablation show
+  value
+
+### Phase 9: Shape-Aware Eval Or Ordering
+
+Defer this until forced-line behavior is measured.
+
+If forced-line search solves the horizon issue, eval/order may only need to make
+the existing search cheaper. If it does not, shape-aware eval can score richer
+non-terminal positions using the Phase 6 analyzer labels.
+
+Likely order:
+
+1. Shape-aware ordering for pruning only.
+2. Shape-aware eval if scenario failures remain at leaves.
+3. Candidate expansion only with concrete sparse-position evidence.
+
 ## Intended Commit Boundaries
 
 ### Commit 1: Config Plumbing And Baseline Guardrails
@@ -194,6 +294,55 @@ Includes:
 
 Expected behavior change: none.
 
+Completed in `263e734`.
+
+### Commit 7: Tactical Scenario Diagnostics
+
+Includes:
+
+- Scenario data structure for tactical fixtures.
+- Runner/report output for pass/fail, chosen move, expected move set, and
+  search metrics.
+- Initial scenario set covering a useful subset of the Phase 7 categories.
+- Baseline run comparing `search-d2`, `search-d3`, and `search-d5`.
+
+Expected behavior change: none.
+
+Current working slice. No search behavior changes should be included here.
+
+### Commit 8: Forced-Line Search Primitives
+
+Includes:
+
+- Internal helpers to classify immediate-win, forced-block, multi-threat, and
+  creates-threat states.
+- Focused unit tests for the forcing-state classifier.
+- No integration with the normal search loop yet.
+
+Expected behavior change: none.
+
+### Commit 9: Bounded Threat Extension
+
+Includes:
+
+- Search integration behind internal experimental config or lab-only path.
+- Extension caps for depth and existing wall/CPU deadlines.
+- Scenario comparison against baseline.
+- Small tournament ablation only if scenarios show improvement.
+
+Expected behavior change: only for the experimental forced-line config.
+
+### Commit 10: Decision And Cleanup
+
+Includes:
+
+- Keep the forced-line path only if it improves targeted scenarios without
+  unacceptable tournament/runtime regression.
+- Remove failed code paths rather than carrying dead toggles.
+- Update this doc with the decision and next integration target.
+
+Expected behavior change: depends on whether Commit 9 survives evaluation.
+
 ## Evaluation Gates
 
 Before moving from one behavioral commit to the next:
@@ -208,6 +357,10 @@ For behavioral integration commits, also run at least a small ablation
 tournament. After a feature survives focused testing, run a clean full
 tournament report and publish/update the report only from a clean code commit.
 
+Scenario diagnostics are required before the next behavioral integration commit.
+The tactical scenario runner should be cheap enough to run during development,
+while full tournament reports remain the slower release-quality check.
+
 ## Risks
 
 - Tactical candidates can increase branching factor enough to erase strength
@@ -218,5 +371,9 @@ tournament report and publish/update the report only from a clean code commit.
   while making play feel worse.
 - Shape detection can easily become a second rules engine. Keep the analyzer
   narrow, tested, and derived from existing core board APIs where possible.
+- Forced-line search can become unbounded threat-space search by accident. Keep
+  explicit extension caps and deadline checks.
+- Scenario fixtures can become overfit. Treat them as diagnostic coverage, then
+  confirm useful changes with tournament ablation.
 - If toggles make `search.rs` too hard to reason about, revisit splitting into
   a separate bot or extracting modules before adding more features.
