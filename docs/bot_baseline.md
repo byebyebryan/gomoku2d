@@ -44,6 +44,7 @@ product presets:
 | `cpu_time_budget_ms` | Optional per-move Linux thread CPU-time budget |
 | `candidate_radius` | Distance around existing stones used to generate candidate moves |
 | `root_prefilter` | Whether to run the root anti-blunder prefilter |
+| `threat_extension_depth` | Experimental forced-line extension depth; `0` for stable baseline configs |
 
 The lab tools define temporary aliases over these fields for experiments:
 
@@ -66,7 +67,8 @@ Search traces include both the result and the config:
     "time_budget_ms": null,
     "cpu_time_budget_ms": null,
     "candidate_radius": 2,
-    "root_prefilter": true
+    "root_prefilter": true,
+    "threat_extension_depth": 0
   },
   "depth": 3,
   "nodes": 1234,
@@ -81,6 +83,11 @@ Search traces include both the result and the config:
 anti-blunder prefilter probes, and `total_nodes` is the aggregate used by eval
 reporting. Node budgets are not enforced yet; this is currently a trace and
 tournament metric.
+
+`threat_extension_depth` is lab-only for now. It follows immediate forced-line
+states at depth-0 leaves, but it does not score quiet shape-building moves such
+as broken threes. Keep stable aliases at `0` unless focused scenario and
+tournament evidence justify promotion.
 
 ---
 

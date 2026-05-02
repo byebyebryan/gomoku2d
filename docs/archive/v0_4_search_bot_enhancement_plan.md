@@ -14,7 +14,11 @@ Current progress:
   `263e734 feat(bot): add tactical shape analyzer labels`.
 - Commit 7 tactical scenario diagnostics landed in
   `341f2fc feat(bot): add tactical scenario diagnostics`.
-- Commit 8 forced-line search primitives is in progress.
+- Commit 8 forced-line search primitives landed in
+  `dfc10c9 feat(bot): add forced-line search primitives`.
+- Commit 9 bounded threat extension is in progress. Focused investigation shows
+  it is useful for already-forced immediate threat lines, but it does not solve
+  non-terminal shape creation such as broken threes.
 
 ## Goal
 
@@ -40,13 +44,19 @@ Stable lab specs stay focused on reproducible baseline configs:
 This avoids duplicating the search loop while still allowing tournament reports
 to compare meaningful variants once a feature has earned a config surface.
 
-The next likely improvement is not another shallow tactical toggle. It is a
-bounded forced-line search path: spend extra depth only when the position is in
-a forcing tactical branch. In Gomoku terms, the depth problem is often narrow
-but deep. A plain depth-3 search can miss a lethal open-three/double-threat
-sequence because it spends depth on unrelated replies, while a global depth
-increase is too expensive. Forced-line search should make the search selectively
-deeper where the opponent's useful replies are constrained.
+The current split is clearer now:
+
+- **Forced-line search** is useful once a branch has immediate tactical forcing
+  states: win now, one legal forced block, opponent multi-threat, or unblockable
+  loss.
+- **Shape-aware ordering/eval** is needed for non-terminal shape creation:
+  broken threes, open threes, and other moves that matter before immediate
+  winning replies exist.
+
+In Gomoku terms, some depth problems are narrow but deep, while others start as
+shape-recognition problems. A global depth increase is too expensive, but a
+forced-line extension alone cannot make the bot choose a quiet shape-building
+move if the leaf classifier still sees the position as `Quiet`.
 
 Tactical scenarios still matter, but as diagnostics rather than match ranking.
 They answer:
@@ -218,31 +228,57 @@ unbounded "keep searching threats forever" mode.
 
 Initial limits:
 
-- `max_threat_extension_depth`: small, likely 2-4
+- `threat_extension_depth`: small, likely 1-2 until proven useful
 - reuse existing wall/CPU deadline checks
 - no product-facing config until focused scenarios and tournament ablation show
   value
 
-Current implementation note: the first forced-line slice adds classifiers for
+Current implementation note: the first forced-line slice added classifiers for
 the node's immediate tactical state and the threat state after a candidate move.
 The node-state classifier distinguishes a legal forced block from an unblockable
-immediate loss, which matters for Renju forbidden-move overlap cases. It does
-not integrate those helpers into candidate generation, move ordering, or static
-eval yet.
+immediate loss, which matters for Renju forbidden-move overlap cases.
+
+The first integration pass adds a default-off `threat_extension_depth` config and
+lab-only `+threatN` spec suffix. The extension only activates at depth-0 leaves
+and only follows forced tactical states: immediate win, legal forced block,
+opponent multi-threat, or unblockable immediate loss.
+
+Measured behavior from the focused tactical sweep:
+
+- `search-d2+threat1` does not improve the current scenario pass count because
+  the remaining miss is `create_broken_three`, which creates a broken-three
+  shape rather than an immediate forced line.
+- It does reduce work on already-solved forced cases. In one sweep,
+  `create_open_four` dropped from depth 2 / 234 nodes to depth 1 / 53 nodes, and
+  `create_double_threat` dropped from depth 2 / 312 nodes to depth 1 / 83 nodes.
+- This is useful evidence for the extension mechanism, but not enough to promote
+  `+threatN` to a stable bot preset or player-facing knob.
 
 ### Phase 9: Shape-Aware Eval Or Ordering
 
-Defer this until forced-line behavior is measured.
+This is now the next likely behavior slice.
 
-If forced-line search solves the horizon issue, eval/order may only need to make
-the existing search cheaper. If it does not, shape-aware eval can score richer
-non-terminal positions using the Phase 6 analyzer labels.
+Forced-line search did not solve the `create_broken_three` gap because that move
+does not create an immediate winning reply. The Phase 6 analyzer already labels
+`open_three`, `broken_three`, `open_four`, `blocked_four`, and `double_threat`;
+the next experiment should use those labels to influence search without
+pretending they are terminal forced lines.
 
 Likely order:
 
-1. Shape-aware ordering for pruning only.
-2. Shape-aware eval if scenario failures remain at leaves.
+1. Shape-aware ordering for pruning and cheaper discovery.
+2. Shape-aware eval if scenario failures remain because leaf scores undervalue
+   non-terminal shapes.
 3. Candidate expansion only with concrete sparse-position evidence.
+
+Initial usefulness target:
+
+- `search-d2` should choose `I8` or `J8` in `create_broken_three` without
+  requiring global depth 3.
+- The change should not regress immediate win/block, open-four, double-threat,
+  or Renju forbidden-overlap cases.
+- If ordering alone reduces nodes but still chooses the wrong move, treat that as
+  partial evidence and move to a small shape-aware eval experiment.
 
 ## Intended Commit Boundaries
 
@@ -329,7 +365,7 @@ Includes:
 
 Expected behavior change: none.
 
-Current working slice. No search behavior changes should be included here.
+Completed in `dfc10c9`.
 
 ### Commit 9: Bounded Threat Extension
 
@@ -338,20 +374,42 @@ Includes:
 - Search integration behind internal experimental config or lab-only path.
 - Extension caps for depth and existing wall/CPU deadlines.
 - Scenario comparison against baseline.
-- Small tournament ablation only if scenarios show improvement.
+- No tournament ablation unless the tactical sweep shows either a pass-count
+  improvement or a clear strength hypothesis. Node reduction on already-passing
+  scenarios is useful, but not enough by itself.
 
 Expected behavior change: only for the experimental forced-line config.
+
+Current working slice. Baseline configs should remain unchanged.
 
 ### Commit 10: Decision And Cleanup
 
 Includes:
 
-- Keep the forced-line path only if it improves targeted scenarios without
-  unacceptable tournament/runtime regression.
-- Remove failed code paths rather than carrying dead toggles.
+- Decide whether the bounded threat extension is worth keeping as a lab-only,
+  default-off diagnostic feature. The current evidence supports "narrow but
+  real", not "ready to productize".
+- If kept, document its boundary: immediate forced lines only, not shape
+  creation.
+- If discarded, keep the learning and remove the config/code path rather than
+  carrying a dead toggle.
 - Update this doc with the decision and next integration target.
 
-Expected behavior change: depends on whether Commit 9 survives evaluation.
+Expected behavior change: baseline configs stay unchanged either way.
+
+### Commit 11: Shape-Aware Ordering/Eval Experiment
+
+Includes:
+
+- A focused red test or tactical sweep expectation for `create_broken_three`.
+- First attempt should prefer ordering if it can be scoped narrowly and measured
+  by node count plus move choice.
+- If ordering does not change the chosen move, move to a small eval adjustment
+  that scores Phase 6 shape labels at leaves.
+- Remove or document failed sub-experiments before moving on.
+
+Expected behavior change: only for experimental lab specs until scenario and
+tournament evidence justify promotion.
 
 ## Evaluation Gates
 
