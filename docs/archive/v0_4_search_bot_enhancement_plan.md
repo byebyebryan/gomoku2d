@@ -12,8 +12,9 @@ Current progress:
 - Commit 5 tactical eval was rejected after focused testing.
 - Commit 6 tactical shape features landed in
   `263e734 feat(bot): add tactical shape analyzer labels`.
-- Commit 7 tactical scenario diagnostics is in progress.
-- Next planning focus: bounded forced-line search.
+- Commit 7 tactical scenario diagnostics landed in
+  `341f2fc feat(bot): add tactical scenario diagnostics`.
+- Commit 8 forced-line search primitives is in progress.
 
 ## Goal
 
@@ -222,6 +223,13 @@ Initial limits:
 - no product-facing config until focused scenarios and tournament ablation show
   value
 
+Current implementation note: the first forced-line slice adds classifiers for
+the node's immediate tactical state and the threat state after a candidate move.
+The node-state classifier distinguishes a legal forced block from an unblockable
+immediate loss, which matters for Renju forbidden-move overlap cases. It does
+not integrate those helpers into candidate generation, move ordering, or static
+eval yet.
+
 ### Phase 9: Shape-Aware Eval Or Ordering
 
 Defer this until forced-line behavior is measured.
@@ -308,7 +316,7 @@ Includes:
 
 Expected behavior change: none.
 
-Current working slice. No search behavior changes should be included here.
+Completed in `341f2fc`.
 
 ### Commit 8: Forced-Line Search Primitives
 
@@ -320,6 +328,8 @@ Includes:
 - No integration with the normal search loop yet.
 
 Expected behavior change: none.
+
+Current working slice. No search behavior changes should be included here.
 
 ### Commit 9: Bounded Threat Extension
 
