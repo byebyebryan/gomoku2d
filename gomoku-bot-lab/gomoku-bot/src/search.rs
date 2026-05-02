@@ -218,6 +218,30 @@ fn evaluate(board: &Board, color: Color) -> i32 {
     my_score - opp_score
 }
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[cfg_attr(not(test), allow(dead_code))]
+struct TacticalMoveFeatures {
+    is_legal: bool,
+    immediate_win: bool,
+    immediate_block: bool,
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn analyze_tactical_move(board: &Board, mv: Move) -> TacticalMoveFeatures {
+    let is_legal = board.is_legal(mv);
+    if !is_legal {
+        return TacticalMoveFeatures::default();
+    }
+
+    let player = board.current_player;
+    let opponent = player.opponent();
+    TacticalMoveFeatures {
+        is_legal,
+        immediate_win: board.immediate_winning_moves_for(player).contains(&mv),
+        immediate_block: board.immediate_winning_moves_for(opponent).contains(&mv),
+    }
+}
+
 // --- Candidate move generation ---
 
 fn candidate_moves(board: &Board, radius: usize) -> Vec<Move> {
@@ -628,6 +652,9 @@ pub struct SearchBotConfig {
     pub cpu_time_budget_ms: Option<u64>,
     pub candidate_radius: usize,
     pub root_prefilter: bool,
+    pub tactical_candidates: bool,
+    pub tactical_move_ordering: bool,
+    pub tactical_eval: bool,
 }
 
 impl SearchBotConfig {
@@ -638,6 +665,9 @@ impl SearchBotConfig {
             cpu_time_budget_ms: None,
             candidate_radius: 2,
             root_prefilter: true,
+            tactical_candidates: false,
+            tactical_move_ordering: false,
+            tactical_eval: false,
         }
     }
 
@@ -648,6 +678,9 @@ impl SearchBotConfig {
             cpu_time_budget_ms: None,
             candidate_radius: 2,
             root_prefilter: true,
+            tactical_candidates: false,
+            tactical_move_ordering: false,
+            tactical_eval: false,
         }
     }
 
@@ -658,6 +691,9 @@ impl SearchBotConfig {
             cpu_time_budget_ms: Some(cpu_time_budget_ms),
             candidate_radius: 2,
             root_prefilter: true,
+            tactical_candidates: false,
+            tactical_move_ordering: false,
+            tactical_eval: false,
         }
     }
 
@@ -676,6 +712,9 @@ impl SearchBotConfig {
             "cpu_time_budget_ms": self.cpu_time_budget_ms,
             "candidate_radius": self.candidate_radius,
             "root_prefilter": self.root_prefilter,
+            "tactical_candidates": self.tactical_candidates,
+            "tactical_move_ordering": self.tactical_move_ordering,
+            "tactical_eval": self.tactical_eval,
         })
     }
 }
@@ -943,7 +982,11 @@ mod tests {
 
     #[test]
     fn explicit_config_constructors_preserve_legacy_defaults() {
-        assert_eq!(SearchBot::new(3).config(), SearchBotConfig::custom_depth(3));
+        let baseline = SearchBotConfig::custom_depth(3);
+        assert_eq!(SearchBot::new(3).config(), baseline);
+        assert!(!baseline.tactical_candidates);
+        assert!(!baseline.tactical_move_ordering);
+        assert!(!baseline.tactical_eval);
         assert_eq!(
             SearchBot::with_time(250).config(),
             SearchBotConfig::custom_time_budget(250)
@@ -955,6 +998,9 @@ mod tests {
             cpu_time_budget_ms: None,
             candidate_radius: 3,
             root_prefilter: false,
+            tactical_candidates: true,
+            tactical_move_ordering: true,
+            tactical_eval: true,
         };
         assert_eq!(SearchBot::with_config(config).config(), config);
     }
@@ -984,10 +1030,41 @@ mod tests {
         assert_eq!(trace["config"]["max_depth"], 3);
         assert_eq!(trace["config"]["candidate_radius"], 2);
         assert_eq!(trace["config"]["root_prefilter"], true);
+        assert_eq!(trace["config"]["tactical_candidates"], false);
+        assert_eq!(trace["config"]["tactical_move_ordering"], false);
+        assert_eq!(trace["config"]["tactical_eval"], false);
         assert!(trace["nodes"].as_u64().unwrap() > 0);
         assert!(trace["total_nodes"].as_u64().unwrap() >= trace["nodes"].as_u64().unwrap());
         assert_eq!(trace["budget_exhausted"], false);
         assert_eq!(trace["depth"], 3);
+    }
+
+    #[test]
+    fn tactical_analyzer_identifies_immediate_win_and_block() {
+        let mut board = Board::new(RuleConfig::default());
+        for i in 0..4usize {
+            board.apply_move(Move { row: 7, col: 7 + i }).unwrap();
+            board.apply_move(Move { row: 0, col: i }).unwrap();
+        }
+
+        let winning = analyze_tactical_move(&board, Move { row: 7, col: 11 });
+        assert!(winning.is_legal);
+        assert!(winning.immediate_win);
+        assert!(!winning.immediate_block);
+
+        let mut board = Board::new(RuleConfig::default());
+        board.apply_move(Move { row: 7, col: 7 }).unwrap();
+        for i in 0..4usize {
+            board.apply_move(Move { row: 0, col: i }).unwrap();
+            if i < 3 {
+                board.apply_move(Move { row: 14, col: i }).unwrap();
+            }
+        }
+
+        let blocking = analyze_tactical_move(&board, Move { row: 0, col: 4 });
+        assert!(blocking.is_legal);
+        assert!(!blocking.immediate_win);
+        assert!(blocking.immediate_block);
     }
 
     #[test]
