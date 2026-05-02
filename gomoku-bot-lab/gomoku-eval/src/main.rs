@@ -10,6 +10,9 @@ use gomoku_eval::report::{
     render_tournament_report_html_with_options, ReportRenderOptions, TournamentReport,
     TournamentRunReport,
 };
+use gomoku_eval::scenario::{
+    run_tactical_scenarios, ScenarioSearchConfig, TacticalScenarioResult, TACTICAL_SCENARIO_CASES,
+};
 use gomoku_eval::seed::derive_seed;
 use gomoku_eval::tournament::{
     default_thread_count, run_round_robin_parallel, TournamentBotFactory, TournamentOptions,
@@ -134,6 +137,24 @@ enum Commands {
         #[arg(long)]
         threads: Option<usize>,
     },
+    /// Run focused one-move tactical diagnostics against search configs
+    TacticalScenarios {
+        /// Comma-separated search configs (e.g. "search-d2,search-d3,search-d5")
+        #[arg(long, default_value = "search-d2,search-d3,search-d5")]
+        bots: String,
+
+        /// Per-move search budget for search bots, in milliseconds
+        #[arg(long)]
+        search_time_ms: Option<u64>,
+
+        /// Per-move Linux thread CPU-time budget for search bots, in milliseconds
+        #[arg(long)]
+        search_cpu_time_ms: Option<u64>,
+
+        /// Write reusable tactical scenario report JSON
+        #[arg(long)]
+        report_json: Option<PathBuf>,
+    },
 }
 
 type BotFactory = TournamentBotFactory;
@@ -230,6 +251,55 @@ fn print_game_result(i: u32, total: u32, mr: &MatchResult) {
         GameResult::Draw => println!("  Game {:3}/{:3}  Draw{}", i + 1, total, suffix),
         GameResult::Ongoing => unreachable!(),
     }
+}
+
+fn parse_search_config_specs(
+    specs: &str,
+    search_time_ms: Option<u64>,
+    search_cpu_time_ms: Option<u64>,
+) -> Result<Vec<ScenarioSearchConfig>, String> {
+    let names: Vec<String> = specs
+        .split(',')
+        .map(|spec| spec.trim().to_string())
+        .filter(|spec| !spec.is_empty())
+        .collect();
+
+    if names.is_empty() {
+        return Err("At least one search config is required.".to_string());
+    }
+
+    names
+        .into_iter()
+        .map(|name| {
+            let config = search_configs::search_config_from_lab_spec(
+                &name,
+                5,
+                search_time_ms,
+                search_cpu_time_ms,
+            )
+            .ok_or_else(|| {
+                format!("Unknown search config: '{name}'. Use search-dN, fast, balanced, or deep.")
+            })?;
+            Ok(ScenarioSearchConfig { id: name, config })
+        })
+        .collect()
+}
+
+fn print_tactical_scenario_result(result: &TacticalScenarioResult) {
+    let status = if result.passed { "PASS" } else { "FAIL" };
+    let expected = result.expected_moves.join("/");
+    println!(
+        "{:<5} {:<10} {:<28} actual {:<3} expected {:<7} depth {:>2} nodes {:>8} prefilter {:>5} time {:>4}ms",
+        status,
+        result.config_id,
+        result.case_id,
+        result.actual_move,
+        expected,
+        result.metrics.depth_reached,
+        result.metrics.nodes,
+        result.metrics.prefilter_nodes,
+        result.metrics.time_ms
+    );
 }
 
 fn main() {
@@ -597,6 +667,52 @@ fn main() {
                 exit_with_error(format!("Failed to write HTML report: {err}"))
             });
             println!("HTML report: {}", output.display());
+        }
+        Commands::TacticalScenarios {
+            bots,
+            search_time_ms,
+            search_cpu_time_ms,
+            report_json,
+        } => {
+            let configs = parse_search_config_specs(&bots, search_time_ms, search_cpu_time_ms)
+                .unwrap_or_else(|err| exit_with_error(err));
+
+            println!("--- Tactical Scenarios ---");
+            println!(
+                "Configs: {:?}",
+                configs
+                    .iter()
+                    .map(|config| config.id.as_str())
+                    .collect::<Vec<_>>()
+            );
+            println!("Cases: {}", TACTICAL_SCENARIO_CASES.len());
+            if let Some(ms) = search_time_ms {
+                println!("Search time budget: {ms} ms/move");
+            }
+            if let Some(ms) = search_cpu_time_ms {
+                println!("Search CPU-time budget: {ms} ms/move");
+            }
+            println!();
+
+            let report = run_tactical_scenarios(&configs, TACTICAL_SCENARIO_CASES);
+            for result in &report.results {
+                print_tactical_scenario_result(result);
+            }
+
+            println!(
+                "\n--- Summary ---\n{} passed / {} total ({} failed)",
+                report.passed, report.total, report.failed
+            );
+
+            if let Some(path) = &report_json {
+                let json = report.to_json().unwrap_or_else(|err| {
+                    exit_with_error(format!("Failed to serialize tactical report: {err}"))
+                });
+                std::fs::write(path, json).unwrap_or_else(|err| {
+                    exit_with_error(format!("Failed to write tactical report: {err}"))
+                });
+                println!("Report JSON: {}", path.display());
+            }
         }
     }
 }
