@@ -80,10 +80,12 @@ Current cases exercise the `balanced` lab config:
 - open-three anti-blunder block
 - attack-vs-defense race where winning now is better than blocking
 
-The tactical scenario runner can also compare ad-hoc experimental specs such as
-`search-d2+threat1`. Treat those as diagnostic probes: if a config only reduces
-nodes on already-passing forced-line scenarios, it is useful evidence for the
-mechanism but not enough to become a product-facing preset.
+The tactical scenario runner can also compare ad-hoc search configs while a
+slice is under development. Treat those as diagnostic probes: if a config only
+reduces counted nodes on already-passing forced-line scenarios, it is useful
+evidence for the mechanism but not enough to become a product-facing preset.
+Discarded experiments should be documented in the active v0.4 plan and removed
+from the live lab spec surface.
 
 ## Benchmark suites
 

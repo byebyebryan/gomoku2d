@@ -16,9 +16,10 @@ Current progress:
   `341f2fc feat(bot): add tactical scenario diagnostics`.
 - Commit 8 forced-line search primitives landed in
   `dfc10c9 feat(bot): add forced-line search primitives`.
-- Commit 9 bounded threat extension is in progress. Focused investigation shows
-  it is useful for already-forced immediate threat lines, but it does not solve
-  non-terminal shape creation such as broken threes.
+- Commit 9 broad bounded threat extension is being rejected after focused
+  analysis. It found forced lines by scanning the whole board at every leaf,
+  which reduced counted nodes on some cases but increased wall/CPU cost and lost
+  match strength.
 
 ## Goal
 
@@ -27,12 +28,45 @@ forking a separate `AdvancedSearchBot` yet. The current baseline must remain
 reproducible, and experimental features should only become exposed config after
 they show value in focused tests.
 
+This is not a solver project. The near-term product goal is a fast, efficient
+practice bot with enough real knobs to support interesting gameplay, plus a
+foundation for later reverse search, replay analysis, and puzzle generation.
+Threat-space search is relevant because it gives Gomoku-specific tactical
+language, not because `v0.4.0` should become a full TSS/proof-number solver.
+
+That creates two lanes:
+
+- **Practice bot:** must stay responsive, configurable, and tunable for play
+  style. It should use tactical knowledge when it helps, but it should not turn
+  into a rigid solver that only optimizes proof quality.
+- **Analysis tooling:** can become more solver-like later if replay analysis,
+  reverse search, or puzzle generation needs proof-oriented machinery.
+
 ## Design Direction
 
 Keep one `SearchBot` implementation, but do not keep dead feature toggles in
 `SearchBotConfig`. The first three shallow integration attempts were discarded,
 so the next pass should improve the analyzer vocabulary before wiring new
 behavior into search.
+
+Decision: do not pivot the main bot to full threat-space search for `v0.4.0`.
+Borrow the tactical model, not the whole architecture. TSS is valuable for
+describing forcing threats and concrete replies, but a full dependency-tree
+search is optimized for proof, not for a fast practice opponent with adjustable
+style and difficulty.
+
+Adopt threat-space-search terminology where it helps:
+
+- **gain square:** the attacking move that creates a threat
+- **cost/defense squares:** defender replies required to answer that threat
+- **rest squares:** remaining squares that make the threat pattern possible
+
+Do not pivot the primary bot to a full TSS engine yet. Full TSS is
+solver-oriented and brings dependency trees, conflict checks, all-defenses
+handling, and proof verification. Those can become analysis modules later. For
+normal play, the main bot should stay alpha-beta based, with local threat facts
+feeding candidate ordering, static eval, tactical diagnostics, and eventually
+small forced-line modules.
 
 Stable lab specs stay focused on reproducible baseline configs:
 
@@ -47,16 +81,19 @@ to compare meaningful variants once a feature has earned a config surface.
 The current split is clearer now:
 
 - **Forced-line search** is useful once a branch has immediate tactical forcing
-  states: win now, one legal forced block, opponent multi-threat, or unblockable
-  loss.
-- **Shape-aware ordering/eval** is needed for non-terminal shape creation:
-  broken threes, open threes, and other moves that matter before immediate
-  winning replies exist.
+  states, but it must derive those facts from local shapes instead of scanning
+  the whole board at every leaf.
+- **Shape labels** are useful for non-terminal shape creation: broken threes,
+  open threes, and other moves that matter before immediate winning replies
+  exist.
+- **TSS-style local threat facts** sit between those two ideas. They inspect the
+  four lines through the last/candidate move and return concrete tactical facts:
+  severity/type, gain square, cost/defense squares, rest squares, and whether the
+  shape is forcing.
 
 In Gomoku terms, some depth problems are narrow but deep, while others start as
 shape-recognition problems. A global depth increase is too expensive, but a
-forced-line extension alone cannot make the bot choose a quiet shape-building
-move if the leaf classifier still sees the position as `Quiet`.
+forced-line extension must exploit local shape structure to stay cheap.
 
 Tactical scenarios still matter, but as diagnostics rather than match ranking.
 They answer:
@@ -207,11 +244,12 @@ while `search-d3` and `search-d5` passed the current set. This is useful
 diagnostic evidence, but the set is still too small to justify product-facing
 bot presets.
 
-### Phase 8: Bounded Forced-Line Search
+### Phase 8: Broad Bounded Forced-Line Search
 
-Add selective extension for forcing tactical branches.
+Decision: reject the broad integration.
 
-Target behavior:
+The goal was reasonable: spend extra depth only when the position is in a
+forcing tactical branch.
 
 1. If the current player has an immediate win, prefer/return it immediately.
 2. If the opponent has exactly one immediate win, treat the block as forced and
@@ -223,27 +261,17 @@ Target behavior:
 5. Stop extension with explicit caps: max extension depth, node/time deadline,
    and normal terminal checks.
 
-This should be implemented as a tactical extension around search, not as an
-unbounded "keep searching threats forever" mode.
-
-Initial limits:
-
-- `threat_extension_depth`: small, likely 1-2 until proven useful
-- reuse existing wall/CPU deadline checks
-- no product-facing config until focused scenarios and tournament ablation show
-  value
-
 Current implementation note: the first forced-line slice added classifiers for
 the node's immediate tactical state and the threat state after a candidate move.
 The node-state classifier distinguishes a legal forced block from an unblockable
 immediate loss, which matters for Renju forbidden-move overlap cases.
 
-The first integration pass adds a default-off `threat_extension_depth` config and
-lab-only `+threatN` spec suffix. The extension only activates at depth-0 leaves
-and only follows forced tactical states: immediate win, legal forced block,
-opponent multi-threat, or unblockable immediate loss.
+The rejected integration pass added a default-off `threat_extension_depth` config
+and lab-only `+threatN` spec suffix. The extension activated at depth-0 leaves
+and called `immediate_winning_moves_for()` for both sides through
+`classify_forced_line_state()`.
 
-Measured behavior from the focused tactical sweep:
+Measured behavior:
 
 - `search-d2+threat1` does not improve the current scenario pass count because
   the remaining miss is `create_broken_three`, which creates a broken-three
@@ -251,12 +279,71 @@ Measured behavior from the focused tactical sweep:
 - It does reduce work on already-solved forced cases. In one sweep,
   `create_open_four` dropped from depth 2 / 234 nodes to depth 1 / 53 nodes, and
   `create_double_threat` dropped from depth 2 / 312 nodes to depth 1 / 83 nodes.
-- This is useful evidence for the extension mechanism, but not enough to promote
-  `+threatN` to a stable bot preset or player-facing knob.
+- It performs poorly in match ablation. In a 16-game d3 Renju head-to-head,
+  `search-d3` beat `search-d3+threat1` by `11-5`. The extension cut counted
+  nodes but increased average move time from `236.63 ms` to `480.53 ms` and
+  budget exhaustion from `3.3%` to `26.1%`.
 
-### Phase 9: Shape-Aware Eval Or Ordering
+Root cause:
 
-This is now the next likely behavior slice.
+- `nodes` only counts negamax nodes.
+- The extension adds expensive leaf work that is not reflected in `nodes`.
+- `immediate_winning_moves_for()` scans nearby empty moves, clones/probes board
+  state, and can invoke Renju forbidden logic. Doing that twice at every quiet
+  leaf is too broad.
+
+Learning:
+
+- Whole-board immediate-win scans are useful diagnostics, not a cheap extension
+  primitive.
+- Real threat-space search should derive forced replies from the shape that was
+  just created: inspect four lines through the last/candidate move and emit the
+  concrete continuation moves directly.
+
+### Phase 9: TSS-Style Local Threat Facts
+
+Add local tactical facts before trying another forced-line integration.
+
+This is related to the existing shape labels, but it is not the same thing.
+Phase 6 labels answer "what kind of shape did this move create?" The next
+primitive should answer "which concrete moves does this shape force?" using the
+TSS vocabulary of gain, cost/defense, and rest squares.
+
+This is the right next step because it improves the shared tactical vocabulary
+without committing to a solver architecture. The same facts can support:
+
+- move ordering and static eval for the practice bot
+- scenario diagnostics and tournament explanations in bot lab
+- future replay analysis and reverse-search/puzzle features
+
+Target facts:
+
+- terminal five / win now
+- open four with two winning endpoints
+- simple four with one forced block
+- open three with extension/block endpoints
+- broken three as a non-forced shape fact for eval/order
+- no forcing shape
+
+Rules:
+
+- Inspect only the four lines through the last/candidate move.
+- Return concrete move lists, not just booleans.
+- Represent each fact in TSS-like terms: gain square, cost/defense squares, rest
+  squares, severity, and forcing/non-forcing status.
+- Avoid `immediate_winning_moves_for()` in the hot path.
+- Keep Renju handling explicit: start with freestyle/local-shape facts if needed,
+  then add legality filtering at the consumer boundary.
+
+Non-goal:
+
+- Do not build dependency-tree TSS, all-defenses search, or proof-number search
+  in this slice.
+- Do not make the default practice bot depend on proof-oriented tactical search.
+
+### Phase 10: Shape-Aware Eval Or Ordering
+
+This remains the next search-behavior slice after local threat facts exist.
 
 Forced-line search did not solve the `create_broken_three` gap because that move
 does not create an immediate winning reply. The Phase 6 analyzer already labels
@@ -279,6 +366,32 @@ Initial usefulness target:
   or Renju forbidden-overlap cases.
 - If ordering alone reduces nodes but still chooses the wrong move, treat that as
   partial evidence and move to a small shape-aware eval experiment.
+
+### Phase 11: TSS-Inspired Forced Extension
+
+Only retry forced-line extension after Phase 9 exists.
+
+The retry should not ask "does this leaf have immediate wins?" by scanning the
+board. It should consume concrete continuation moves from the local threat facts:
+
+- open four: treat as winning unless the ruleset creates a legal exception
+- simple four: extend only the forced block
+- open three: extend the small reply set and attacking continuations
+
+Promotion gate:
+
+- improves a targeted forced-line scenario or material runtime without hurting
+  d3 tournament ablation
+- records tactical-probe metrics if any non-node work remains significant
+- remains lab-only until it has both scenario and tournament evidence
+
+This is still not full TSS. It is a bounded tactical module plugged into the
+alpha-beta bot. A broader TSS/proof module belongs later if replay analysis,
+reverse search, or puzzle generation needs it.
+
+If this retry starts needing dependency trees, rest-square conflict resolution,
+or all-defenses proof handling, stop and split it out as an analysis module
+instead of burying it inside `SearchBot`.
 
 ## Intended Commit Boundaries
 
@@ -367,35 +480,28 @@ Expected behavior change: none.
 
 Completed in `dfc10c9`.
 
-### Commit 9: Bounded Threat Extension
+### Commit 9: Broad Bounded Threat Extension
+
+Decision: discard.
+
+Record the failed experiment in this doc and remove the `threat_extension_depth`
+config, `+threatN` parser support, and depth-0 broad extension code path.
+
+Expected behavior change: none after cleanup.
+
+### Commit 10: TSS-Style Local Threat Fact Primitive
 
 Includes:
 
-- Search integration behind internal experimental config or lab-only path.
-- Extension caps for depth and existing wall/CPU deadlines.
-- Scenario comparison against baseline.
-- No tournament ablation unless the tactical sweep shows either a pass-count
-  improvement or a clear strength hypothesis. Node reduction on already-passing
-  scenarios is useful, but not enough by itself.
+- Extend or replace the Phase 6 shape analyzer with a local fact helper that
+  inspects four lines through a candidate move.
+- Return gain, cost/defense, and rest squares for open fours, simple fours, and
+  open threes.
+- Keep broken three as a non-forced fact.
+- Focused tests for each shape's concrete moves.
+- No search integration yet.
 
-Expected behavior change: only for the experimental forced-line config.
-
-Current working slice. Baseline configs should remain unchanged.
-
-### Commit 10: Decision And Cleanup
-
-Includes:
-
-- Decide whether the bounded threat extension is worth keeping as a lab-only,
-  default-off diagnostic feature. The current evidence supports "narrow but
-  real", not "ready to productize".
-- If kept, document its boundary: immediate forced lines only, not shape
-  creation.
-- If discarded, keep the learning and remove the config/code path rather than
-  carrying a dead toggle.
-- Update this doc with the decision and next integration target.
-
-Expected behavior change: baseline configs stay unchanged either way.
+Expected behavior change: none.
 
 ### Commit 11: Shape-Aware Ordering/Eval Experiment
 
@@ -410,6 +516,17 @@ Includes:
 
 Expected behavior change: only for experimental lab specs until scenario and
 tournament evidence justify promotion.
+
+### Commit 12: TSS-Inspired Forced Extension Retry
+
+Includes:
+
+- Consume local threat facts instead of whole-board immediate-win scans.
+- Extend only concrete forced reply lists.
+- Add metrics for any tactical-probe work outside the negamax node count.
+- Run focused tactical sweep and d3 ablation before deciding whether to keep it.
+
+Expected behavior change: only for experimental lab specs until proven.
 
 ## Evaluation Gates
 
