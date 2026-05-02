@@ -57,6 +57,9 @@ Source assets and local visual preview pages live in
 [`assets/README.md`](assets/README.md). Published builds expose those previews
 under `/assets/`.
 
+Curated bot-lab reports live in [`../gomoku-bot-lab/reports/`](../gomoku-bot-lab/reports/)
+and are copied into published builds under `/bot-report/`.
+
 ---
 
 ## Stack
