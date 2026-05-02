@@ -60,6 +60,9 @@ Why this format:
 | `immediate_block` | freestyle | Black | tactical, immediate-block | forced defensive block |
 | `attack_wins_race` | freestyle | Black | tactical, attack-vs-defense | take the direct win instead of blocking |
 | `anti_blunder_open_three` | freestyle | White | tactical, anti-blunder | repro for the recent search safety fix |
+| `create_open_four` | freestyle | Black | tactical, open-four | create a forcing open-four threat |
+| `create_broken_three` | freestyle | Black | tactical, broken-three | choose a non-terminal shape-building move |
+| `create_double_threat` | freestyle | Black | tactical, double-threat | create simultaneous immediate winning threats |
 | `renju_forbidden_cross` | renju | Black | renju, forbidden | black to move with a forbidden tactical point |
 | `midgame_medium` | freestyle | Black | midgame, medium-density | representative clustered midgame |
 | `midgame_dense` | freestyle | Black | midgame, dense | denser midgame with larger frontier/eval cost |
@@ -76,6 +79,11 @@ Current cases exercise the `balanced` lab config:
 - immediate block
 - open-three anti-blunder block
 - attack-vs-defense race where winning now is better than blocking
+
+The tactical scenario runner can also compare ad-hoc experimental specs such as
+`search-d2+threat1`. Treat those as diagnostic probes: if a config only reduces
+nodes on already-passing forced-line scenarios, it is useful evidence for the
+mechanism but not enough to become a product-facing preset.
 
 ## Benchmark suites
 

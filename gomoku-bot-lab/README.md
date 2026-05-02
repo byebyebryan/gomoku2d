@@ -71,6 +71,13 @@ Legacy specs still work: plain `baseline` uses `--depth`, `baseline-N` creates a
 custom fixed-depth baseline bot, and `--time-ms` can cap search bots during CLI
 games.
 
+Experimental lab specs can append `+threatN` to enable bounded threat-line
+extension for `N` extra forced plies, for example `search-d2+threat1`. Keep
+these suffixes in eval reports until tournament/scenario evidence proves they
+are worth promoting to a stable preset. This extension follows immediate forced
+lines; it does not, by itself, value quiet shape-building moves such as broken
+threes.
+
 More detailed strategy notes live in [`../docs/bot_baseline.md`](../docs/bot_baseline.md).
 
 ### Eval harness
@@ -158,6 +165,17 @@ Treat this as diagnostic coverage, not a ranking system. If a baseline config
 already passes a scenario, that fixture becomes a regression guard. New search
 logic should be driven by scenarios that expose real gaps, then confirmed with
 tournament ablation.
+
+To compare the first bounded threat-line experiment:
+
+```sh
+cargo run -p gomoku-eval -- tactical-scenarios --bots search-d2,search-d2+threat1 --search-cpu-time-ms 1000
+```
+
+Read that comparison as a mechanism check first. `+threat1` can reduce
+depth/nodes on already-forced open-four or double-threat cases, but a
+broken-three miss points at shape-aware ordering/eval rather than more forced
+line depth.
 
 ## Replay format
 
