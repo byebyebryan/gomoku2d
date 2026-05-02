@@ -258,6 +258,120 @@ fn analyze_tactical_move(board: &Board, mv: Move) -> TacticalMoveFeatures {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(not(test), allow(dead_code))]
+enum ForcedLineKind {
+    ImmediateWin,
+    ForcedBlock,
+    UnblockableImmediateLoss,
+    OpponentMultiThreat,
+    Quiet,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(not(test), allow(dead_code))]
+struct ForcedLineState {
+    player: Color,
+    kind: ForcedLineKind,
+    immediate_wins: Vec<Move>,
+    opponent_wins: Vec<Move>,
+    legal_blocks: Vec<Move>,
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+impl ForcedLineState {
+    fn forced_block(&self) -> Option<Move> {
+        if self.kind == ForcedLineKind::ForcedBlock {
+            self.legal_blocks.first().copied()
+        } else {
+            None
+        }
+    }
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn classify_forced_line_state(board: &Board) -> ForcedLineState {
+    let player = board.current_player;
+    let immediate_wins = board.immediate_winning_moves_for(player);
+    let opponent_wins = board.immediate_winning_moves_for(player.opponent());
+    let legal_blocks = opponent_wins
+        .iter()
+        .copied()
+        .filter(|&mv| board.is_legal(mv))
+        .collect::<Vec<_>>();
+    let kind = if !immediate_wins.is_empty() {
+        ForcedLineKind::ImmediateWin
+    } else {
+        match opponent_wins.len() {
+            0 => ForcedLineKind::Quiet,
+            1 if legal_blocks.len() == 1 => ForcedLineKind::ForcedBlock,
+            1 => ForcedLineKind::UnblockableImmediateLoss,
+            _ => ForcedLineKind::OpponentMultiThreat,
+        }
+    };
+
+    ForcedLineState {
+        player,
+        kind,
+        immediate_wins,
+        opponent_wins,
+        legal_blocks,
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(not(test), allow(dead_code))]
+enum ThreatAfterMoveKind {
+    Illegal,
+    WinsNow,
+    SingleThreat,
+    MultiThreat,
+    Quiet,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(not(test), allow(dead_code))]
+struct ThreatAfterMoveState {
+    player: Color,
+    kind: ThreatAfterMoveKind,
+    winning_replies: Vec<Move>,
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn classify_threat_after_move(board: &Board, mv: Move) -> ThreatAfterMoveState {
+    let player = board.current_player;
+    if !board.is_legal(mv) {
+        return ThreatAfterMoveState {
+            player,
+            kind: ThreatAfterMoveKind::Illegal,
+            winning_replies: Vec::new(),
+        };
+    }
+
+    let mut after = board.clone();
+    let result = after.apply_move(mv).unwrap();
+    if matches!(result, GameResult::Winner(winner) if winner == player) {
+        return ThreatAfterMoveState {
+            player,
+            kind: ThreatAfterMoveKind::WinsNow,
+            winning_replies: Vec::new(),
+        };
+    }
+
+    let winning_replies = after.immediate_winning_moves_for(player);
+    let kind = match winning_replies.len() {
+        0 => ThreatAfterMoveKind::Quiet,
+        1 => ThreatAfterMoveKind::SingleThreat,
+        _ => ThreatAfterMoveKind::MultiThreat,
+    };
+
+    ThreatAfterMoveState {
+        player,
+        kind,
+        winning_replies,
+    }
+}
+
 #[derive(Debug, Clone, Copy, Default)]
 struct TacticalShapeFeatures {
     open_four: bool,
@@ -1040,6 +1154,16 @@ mod tests {
     use super::*;
     use gomoku_core::RuleConfig;
 
+    fn mv(notation: &str) -> Move {
+        Move::from_notation(notation).unwrap()
+    }
+
+    fn apply_moves(board: &mut Board, moves: &[&str]) {
+        for &notation in moves {
+            board.apply_move(mv(notation)).unwrap();
+        }
+    }
+
     #[test]
     fn finds_immediate_win() {
         // Black has 4 in a row; SearchBot should complete to 5
@@ -1304,6 +1428,121 @@ mod tests {
 
         let filler = analyze_tactical_move(&board, Move { row: 1, col: 1 });
         assert!(!filler.double_threat);
+    }
+
+    #[test]
+    fn forced_line_classifier_prioritizes_current_immediate_win() {
+        let scenario = scenarios::SCENARIOS
+            .iter()
+            .find(|scenario| scenario.id == "attack_wins_race")
+            .expect("expected attack race scenario");
+        let board = scenario.board();
+
+        let state = classify_forced_line_state(&board);
+
+        assert_eq!(state.player, Color::Black);
+        assert_eq!(state.kind, ForcedLineKind::ImmediateWin);
+        assert!(state.immediate_wins.contains(&mv("G8")));
+        assert!(state.opponent_wins.contains(&mv("E1")));
+        assert!(state.legal_blocks.contains(&mv("E1")));
+        assert_eq!(state.forced_block(), None);
+    }
+
+    #[test]
+    fn forced_line_classifier_identifies_single_forced_block() {
+        let scenario = scenarios::SCENARIOS
+            .iter()
+            .find(|scenario| scenario.id == "immediate_block")
+            .expect("expected immediate block scenario");
+        let board = scenario.board();
+
+        let state = classify_forced_line_state(&board);
+
+        assert_eq!(state.kind, ForcedLineKind::ForcedBlock);
+        assert!(state.immediate_wins.is_empty());
+        assert_eq!(state.legal_blocks, vec![mv("E1")]);
+        assert_eq!(state.forced_block(), Some(mv("E1")));
+    }
+
+    #[test]
+    fn forced_line_classifier_does_not_force_illegal_renju_block() {
+        let mut board = Board::new(RuleConfig {
+            variant: Variant::Renju,
+            ..Default::default()
+        });
+        apply_moves(
+            &mut board,
+            &["C3", "O15", "H6", "D4", "H7", "E5", "F8", "F6", "G8", "G7"],
+        );
+
+        assert_eq!(board.current_player, Color::Black);
+        assert_eq!(
+            board.immediate_winning_moves_for(Color::White),
+            vec![mv("H8")]
+        );
+        assert!(!board.is_legal(mv("H8")));
+
+        let state = classify_forced_line_state(&board);
+
+        assert_eq!(state.kind, ForcedLineKind::UnblockableImmediateLoss);
+        assert_eq!(state.opponent_wins, vec![mv("H8")]);
+        assert!(state.legal_blocks.is_empty());
+        assert_eq!(state.forced_block(), None);
+    }
+
+    #[test]
+    fn forced_line_classifier_identifies_opponent_multi_threat() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(
+            &mut board,
+            &["O15", "H1", "M15", "I1", "K15", "J1", "I15", "K1"],
+        );
+
+        let state = classify_forced_line_state(&board);
+
+        assert_eq!(state.player, Color::Black);
+        assert_eq!(state.kind, ForcedLineKind::OpponentMultiThreat);
+        assert!(state.immediate_wins.is_empty());
+        assert!(state.opponent_wins.contains(&mv("G1")));
+        assert!(state.opponent_wins.contains(&mv("L1")));
+        assert_eq!(state.forced_block(), None);
+    }
+
+    #[test]
+    fn threat_after_move_classifier_labels_win_threats_and_illegal_moves() {
+        let scenario = scenarios::SCENARIOS
+            .iter()
+            .find(|scenario| scenario.id == "immediate_win")
+            .expect("expected immediate win scenario");
+        let board = scenario.board();
+
+        let winning = classify_threat_after_move(&board, mv("G8"));
+        assert_eq!(winning.kind, ThreatAfterMoveKind::WinsNow);
+        assert!(winning.winning_replies.is_empty());
+
+        let illegal = classify_threat_after_move(&board, mv("H8"));
+        assert_eq!(illegal.kind, ThreatAfterMoveKind::Illegal);
+        assert!(illegal.winning_replies.is_empty());
+
+        let mut blocked_four_board = Board::new(RuleConfig::default());
+        apply_moves(
+            &mut blocked_four_board,
+            &["H8", "G8", "I8", "A1", "J8", "C1"],
+        );
+        let single = classify_threat_after_move(&blocked_four_board, mv("K8"));
+        assert_eq!(single.kind, ThreatAfterMoveKind::SingleThreat);
+        assert_eq!(single.winning_replies, vec![mv("L8")]);
+
+        let mut open_four_board = Board::new(RuleConfig::default());
+        apply_moves(&mut open_four_board, &["H8", "A1", "I8", "C1", "J8", "E1"]);
+        let multi = classify_threat_after_move(&open_four_board, mv("K8"));
+        assert_eq!(multi.kind, ThreatAfterMoveKind::MultiThreat);
+        assert!(multi.winning_replies.contains(&mv("G8")));
+        assert!(multi.winning_replies.contains(&mv("L8")));
+
+        let quiet = classify_threat_after_move(&open_four_board, mv("B2"));
+        assert_eq!(quiet.kind, ThreatAfterMoveKind::Quiet);
+        assert!(quiet.winning_replies.is_empty());
     }
 
     #[test]
