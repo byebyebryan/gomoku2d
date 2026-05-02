@@ -3,33 +3,38 @@
 Status: ad-hoc implementation plan. This captures the current bot-lab work loop
 so the commit boundaries and evaluation gates stay clear.
 
+Current progress:
+
+- Commit 1 and Commit 2 landed together in
+  `29a88ca feat(bot): scaffold tactical search experiments`.
+- Commit 3 tactical candidates was rejected after focused testing.
+- Commit 4 tactical move ordering was rejected after focused testing.
+- Commit 5 tactical eval was rejected after focused testing.
+- Commit 6 tactical shape features is in progress.
+
 ## Goal
 
 Evolve the existing `SearchBot` into a measurable experimental bot without
 forking a separate `AdvancedSearchBot` yet. The current baseline must remain
-reproducible through config, while tactical features can be enabled one by one
-for ablation testing.
+reproducible, and experimental features should only become exposed config after
+they show value in focused tests.
 
 ## Design Direction
 
-Keep one `SearchBot` implementation and extend `SearchBotConfig` with explicit
-advanced toggles:
+Keep one `SearchBot` implementation, but do not keep dead feature toggles in
+`SearchBotConfig`. The first three shallow integration attempts were discarded,
+so the next pass should improve the analyzer vocabulary before wiring new
+behavior into search.
 
-- `tactical_candidates`
-- `tactical_move_ordering`
-- `tactical_eval`
-
-Baseline constructors and aliases keep those toggles off. Lab specs opt into
-features with suffixes such as:
+Stable lab specs stay focused on reproducible baseline configs:
 
 - `search-d3`
-- `search-d3+candidates`
-- `search-d3+ordering`
-- `search-d3+eval`
-- `search-d3+all`
+- `fast`
+- `balanced`
+- `deep`
 
 This avoids duplicating the search loop while still allowing tournament reports
-to compare each feature in isolation.
+to compare meaningful variants once a feature has earned a config surface.
 
 ## Phases
 
@@ -40,18 +45,18 @@ choice.
 
 - Keep `SearchBot::new(depth)` and `SearchBotConfig::custom_depth(depth)` as
   frozen baseline config.
-- Add tests that baseline tactical toggles default to off.
-- Ensure trace output records all config fields so reports explain which knobs
-  were active.
+- Add tests that baseline constructors preserve the current config.
+- Ensure trace output records stable config fields so reports explain which
+  knobs were active.
 - Keep current web practice bot behavior unchanged.
 
 ### Phase 2: Add Experimental Config And Tactical Analyzer Skeleton
 
 Add the scaffolding required for ablation tests without changing search results.
 
-- Extend `SearchBotConfig` with the tactical toggles.
-- Extend lab spec parsing so explicit depth specs and feature suffixes resolve
-  into configs.
+- Keep `SearchBotConfig` stable until an experiment proves useful.
+- Keep lab spec parsing focused on stable baseline depth specs and named
+  presets.
 - Add an internal tactical analyzer skeleton.
 - First analyzer fields:
   - legal move
@@ -61,46 +66,75 @@ Add the scaffolding required for ablation tests without changing search results.
 
 ### Phase 3: Tactical Candidates
 
-When `tactical_candidates` is enabled, keep radius-based candidates but
-force-add tactically important moves that radius filtering might miss.
+Decision: discarded for now.
 
-- Start with immediate wins and immediate blocks.
-- Keep baseline candidate generation unchanged when the flag is off.
-- Add curated sparse-position tests where the tactical move is outside the
-  normal radius.
-- Measure branching-factor impact through node counts.
+Focused testing showed that immediate-win/block candidate expansion is
+redundant with the current radius-2 baseline. A 16-game Renju comparison at
+1000 ms CPU/move ended `search-d3` over `search-d3+candidates` by `9-7`, with
+the candidates variant slightly higher average move time and budget exhaustion.
+
+Learning:
+
+- Do not keep a `tactical_candidates` toggle just to force-add immediate
+  wins/blocks.
+- Candidate expansion may become useful later, but only after the analyzer can
+  identify richer shapes that radius-2 can miss in practice.
+- Move ordering and eval can proceed without widening the candidate set.
 
 ### Phase 4: Tactical Move Ordering
 
-When `tactical_move_ordering` is enabled, rank root and child candidates by
-tactical urgency before alpha-beta search.
+Decision: discarded for now.
 
-Suggested priority:
+Immediate-win/block ordering was not strong enough to keep as a separate
+toggle. A corrected implementation used tactical priority before TT tie-breaks,
+but an 8-game Renju comparison at 1000 ms CPU/move ended `search-d3` over
+`search-d3+ordering` by `5-3`. The ordering variant searched fewer nodes but
+had higher average move time and slightly higher budget exhaustion.
 
-1. Immediate win.
-2. Immediate block.
-3. Creates major threat.
-4. Blocks major threat.
-5. Normal positional move.
-6. Suspicious or low-value move.
+Learning:
 
-Initial implementation can use only the analyzer fields that exist at the time.
-Later analyzer work can refine the priority list.
+- Do not keep an immediate-win/block-only `tactical_move_ordering` toggle.
+- The existing TT ordering is already useful; shallow tactical sorting can
+  interfere without producing better play.
+- Revisit ordering only after tactical eval/shape detection can classify richer
+  threats.
 
 ### Phase 5: Tactical Eval
 
-When `tactical_eval` is enabled, augment or replace the current contiguous-run
-eval with feature-aware scoring.
+Decision: discarded for now.
 
-Start conservative:
+The first pass only scored immediate winning moves for the current player and
+the opponent. That is too shallow: the baseline search/root prefilter already
+handles many immediate tactical cases, while adding another leaf-eval branch
+increased complexity without producing a clear strength gain.
 
-- Terminal win/loss scores stay unchanged.
-- Own immediate/near-forcing threats score high.
-- Opponent immediate/near-forcing threats score slightly higher defensively.
-- Broken-three and double-threat features can be added after the first measured
-  pass.
+Learning:
 
-This phase is tuning-heavy and should not be merged just because tests pass.
+- Do not keep an immediate-win/block-only `tactical_eval` toggle.
+- Eval work should wait until the analyzer can describe richer shapes:
+  open three, open four, blocked four, broken three, double threat, and forcing
+  reply.
+- The next commit should be behavior-neutral shape detection with focused unit
+  tests, not another direct search integration.
+
+### Phase 6: Tactical Shape Features
+
+Add richer analyzer output without changing move choice.
+
+Initial target features:
+
+- open four
+- blocked four
+- open three
+- broken three
+- double threat
+
+This should stay behind internal helpers and tests. Search integration comes
+later only if the shape features are correct and readable.
+
+Current implementation note: this slice adds labels to `analyze_tactical_move`
+only. The search loop still uses the same candidates, ordering, and static eval
+as the baseline.
 
 ## Intended Commit Boundaries
 
@@ -108,10 +142,10 @@ This phase is tuning-heavy and should not be merged just because tests pass.
 
 Includes:
 
-- New config toggle fields.
-- Baseline constructors/presets with toggles off.
-- Trace output including toggles.
-- Lab spec parser support for feature suffixes.
+- Baseline constructor/preset guardrails.
+- Trace output for stable config fields.
+- Lab spec parser tests for stable depth specs and named presets.
+- Rejection tests for discarded feature suffixes.
 - Tests for baseline defaults and parser behavior.
 
 Expected behavior change: none.
@@ -126,38 +160,39 @@ Includes:
 
 Expected behavior change: none.
 
-Current local slice combines Commit 1 and Commit 2 in code, but they can still
-be split if we want separate history.
+Completed in `29a88ca` together with Commit 1.
 
 ### Commit 3: Tactical Candidates
 
-Includes:
+Decision: discarded.
 
-- Candidate expansion when `tactical_candidates` is enabled.
-- Focused tests for tactical move inclusion outside the normal radius.
-- Small benchmark or tournament sanity check.
-
-Expected behavior change: only for configs with `tactical_candidates = true`.
+Record the failed experiment in this doc and remove the config/code path rather
+than carrying a toggle with no demonstrated value.
 
 ### Commit 4: Tactical Move Ordering
 
-Includes:
+Decision: discarded.
 
-- Candidate ordering when `tactical_move_ordering` is enabled.
-- Tests that priority ordering is stable for immediate wins/blocks.
-- Ablation tournament comparing baseline vs ordering-enabled configs.
-
-Expected behavior change: only for configs with `tactical_move_ordering = true`.
+Record the failed experiment in this doc and remove the config/code path rather
+than carrying another shallow tactical toggle.
 
 ### Commit 5: Tactical Eval
 
+Decision: discarded.
+
+Record the failed experiment in this doc and remove the config/code path rather
+than carrying a third shallow tactical toggle.
+
+### Commit 6: Tactical Shape Features
+
 Includes:
 
-- Eval changes behind `tactical_eval`.
-- Tests for tactical score direction, not exact brittle values where possible.
-- Ablation tournament comparing baseline, individual features, and full config.
+- Analyzer fields for richer tactical shapes.
+- Curated board tests for open/blocked fours, open threes, broken threes, and
+  double threats.
+- No candidate generation, ordering, or eval integration.
 
-Expected behavior change: only for configs with `tactical_eval = true`.
+Expected behavior change: none.
 
 ## Evaluation Gates
 
@@ -169,9 +204,9 @@ Before moving from one behavioral commit to the next:
 - `wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler`
 - `npm --prefix gomoku-web run build`
 
-For commits 3-5, also run at least a small ablation tournament. After commit 5,
-run a clean full tournament report and publish/update the report only from a
-clean code commit.
+For behavioral integration commits, also run at least a small ablation
+tournament. After a feature survives focused testing, run a clean full
+tournament report and publish/update the report only from a clean code commit.
 
 ## Risks
 
@@ -181,6 +216,7 @@ clean code commit.
   tactical tunnel vision.
 - Tactical eval is the highest-risk phase because tuning can pass unit tests
   while making play feel worse.
+- Shape detection can easily become a second rules engine. Keep the analyzer
+  narrow, tested, and derived from existing core board APIs where possible.
 - If toggles make `search.rs` too hard to reason about, revisit splitting into
   a separate bot or extracting modules before adding more features.
-

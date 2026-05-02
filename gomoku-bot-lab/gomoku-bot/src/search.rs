@@ -224,6 +224,11 @@ struct TacticalMoveFeatures {
     is_legal: bool,
     immediate_win: bool,
     immediate_block: bool,
+    open_four: bool,
+    blocked_four: bool,
+    open_three: bool,
+    broken_three: bool,
+    double_threat: bool,
 }
 
 #[cfg_attr(not(test), allow(dead_code))]
@@ -235,11 +240,179 @@ fn analyze_tactical_move(board: &Board, mv: Move) -> TacticalMoveFeatures {
 
     let player = board.current_player;
     let opponent = player.opponent();
+    let immediate_wins_before = board.immediate_winning_moves_for(player).len();
+    let mut after = board.clone();
+    after.apply_move(mv).unwrap();
+    let shape = analyze_shapes_through_move(&after, mv, player);
+    let immediate_wins_after = after.immediate_winning_moves_for(player).len();
+
     TacticalMoveFeatures {
         is_legal,
         immediate_win: board.immediate_winning_moves_for(player).contains(&mv),
         immediate_block: board.immediate_winning_moves_for(opponent).contains(&mv),
+        open_four: shape.open_four,
+        blocked_four: shape.blocked_four,
+        open_three: shape.open_three,
+        broken_three: shape.broken_three,
+        double_threat: immediate_wins_after >= 2 && immediate_wins_after > immediate_wins_before,
     }
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+struct TacticalShapeFeatures {
+    open_four: bool,
+    blocked_four: bool,
+    open_three: bool,
+    broken_three: bool,
+}
+
+fn analyze_shapes_through_move(board: &Board, mv: Move, player: Color) -> TacticalShapeFeatures {
+    let mut features = TacticalShapeFeatures::default();
+    for &(dr, dc) in &DIRS {
+        let (run_len, open_ends) = contiguous_run_through_move(board, mv, dr, dc, player);
+        if run_len == 4 && open_ends == 2 {
+            features.open_four = true;
+        } else if run_len == 4 && open_ends == 1 {
+            features.blocked_four = true;
+        } else if run_len == 3 && open_ends == 2 {
+            features.open_three = true;
+        }
+
+        if is_broken_three_through_move(board, mv, dr, dc, player) {
+            features.broken_three = true;
+        }
+    }
+    features
+}
+
+fn contiguous_run_through_move(
+    board: &Board,
+    mv: Move,
+    dr: isize,
+    dc: isize,
+    player: Color,
+) -> (usize, usize) {
+    let before = count_player_in_direction(board, mv, -dr, -dc, player);
+    let after = count_player_in_direction(board, mv, dr, dc, player);
+    let open_before = offset_cell_is_empty(board, mv, -dr, -dc, before + 1);
+    let open_after = offset_cell_is_empty(board, mv, dr, dc, after + 1);
+
+    (
+        before + 1 + after,
+        usize::from(open_before) + usize::from(open_after),
+    )
+}
+
+fn count_player_in_direction(
+    board: &Board,
+    mv: Move,
+    dr: isize,
+    dc: isize,
+    player: Color,
+) -> usize {
+    let mut count = 0usize;
+    let mut row = mv.row as isize + dr;
+    let mut col = mv.col as isize + dc;
+    while in_bounds(board, row, col) && board.cell(row as usize, col as usize) == Some(player) {
+        count += 1;
+        row += dr;
+        col += dc;
+    }
+    count
+}
+
+fn offset_cell_is_empty(board: &Board, mv: Move, dr: isize, dc: isize, distance: usize) -> bool {
+    let row = mv.row as isize + dr * distance as isize;
+    let col = mv.col as isize + dc * distance as isize;
+    in_bounds(board, row, col) && board.cell(row as usize, col as usize).is_none()
+}
+
+fn in_bounds(board: &Board, row: isize, col: isize) -> bool {
+    let size = board.config.board_size as isize;
+    row >= 0 && row < size && col >= 0 && col < size
+}
+
+fn is_broken_three_through_move(
+    board: &Board,
+    mv: Move,
+    dr: isize,
+    dc: isize,
+    player: Color,
+) -> bool {
+    for start in -4isize..=0 {
+        let mut player_offsets = Vec::new();
+        let mut empty_offsets = Vec::new();
+        let mut blocked = false;
+
+        for offset in start..start + 5 {
+            let row = mv.row as isize + dr * offset;
+            let col = mv.col as isize + dc * offset;
+            if !in_bounds(board, row, col) {
+                blocked = true;
+                break;
+            }
+
+            match board.cell(row as usize, col as usize) {
+                Some(color) if color == player => player_offsets.push(offset),
+                None => empty_offsets.push(offset),
+                _ => {
+                    blocked = true;
+                    break;
+                }
+            }
+        }
+
+        if blocked || player_offsets.len() != 3 || empty_offsets.len() != 2 {
+            continue;
+        }
+        if player_offsets.windows(2).all(|pair| pair[1] == pair[0] + 1) {
+            continue;
+        }
+        if empty_offsets
+            .iter()
+            .copied()
+            .any(|offset| virtual_run_len(board, mv, dr, dc, offset, player) >= 4)
+        {
+            return true;
+        }
+    }
+
+    false
+}
+
+fn virtual_run_len(
+    board: &Board,
+    mv: Move,
+    dr: isize,
+    dc: isize,
+    virtual_offset: isize,
+    player: Color,
+) -> usize {
+    1 + virtual_count_in_direction(board, mv, dr, dc, virtual_offset, -1, player)
+        + virtual_count_in_direction(board, mv, dr, dc, virtual_offset, 1, player)
+}
+
+fn virtual_count_in_direction(
+    board: &Board,
+    mv: Move,
+    dr: isize,
+    dc: isize,
+    virtual_offset: isize,
+    step: isize,
+    player: Color,
+) -> usize {
+    let mut count = 0usize;
+    let mut offset = virtual_offset + step;
+    loop {
+        let row = mv.row as isize + dr * offset;
+        let col = mv.col as isize + dc * offset;
+        if !in_bounds(board, row, col) || board.cell(row as usize, col as usize) != Some(player) {
+            break;
+        }
+        count += 1;
+        offset += step;
+    }
+    count
 }
 
 // --- Candidate move generation ---
@@ -652,9 +825,6 @@ pub struct SearchBotConfig {
     pub cpu_time_budget_ms: Option<u64>,
     pub candidate_radius: usize,
     pub root_prefilter: bool,
-    pub tactical_candidates: bool,
-    pub tactical_move_ordering: bool,
-    pub tactical_eval: bool,
 }
 
 impl SearchBotConfig {
@@ -665,9 +835,6 @@ impl SearchBotConfig {
             cpu_time_budget_ms: None,
             candidate_radius: 2,
             root_prefilter: true,
-            tactical_candidates: false,
-            tactical_move_ordering: false,
-            tactical_eval: false,
         }
     }
 
@@ -678,9 +845,6 @@ impl SearchBotConfig {
             cpu_time_budget_ms: None,
             candidate_radius: 2,
             root_prefilter: true,
-            tactical_candidates: false,
-            tactical_move_ordering: false,
-            tactical_eval: false,
         }
     }
 
@@ -691,9 +855,6 @@ impl SearchBotConfig {
             cpu_time_budget_ms: Some(cpu_time_budget_ms),
             candidate_radius: 2,
             root_prefilter: true,
-            tactical_candidates: false,
-            tactical_move_ordering: false,
-            tactical_eval: false,
         }
     }
 
@@ -712,9 +873,6 @@ impl SearchBotConfig {
             "cpu_time_budget_ms": self.cpu_time_budget_ms,
             "candidate_radius": self.candidate_radius,
             "root_prefilter": self.root_prefilter,
-            "tactical_candidates": self.tactical_candidates,
-            "tactical_move_ordering": self.tactical_move_ordering,
-            "tactical_eval": self.tactical_eval,
         })
     }
 }
@@ -984,9 +1142,6 @@ mod tests {
     fn explicit_config_constructors_preserve_legacy_defaults() {
         let baseline = SearchBotConfig::custom_depth(3);
         assert_eq!(SearchBot::new(3).config(), baseline);
-        assert!(!baseline.tactical_candidates);
-        assert!(!baseline.tactical_move_ordering);
-        assert!(!baseline.tactical_eval);
         assert_eq!(
             SearchBot::with_time(250).config(),
             SearchBotConfig::custom_time_budget(250)
@@ -998,9 +1153,6 @@ mod tests {
             cpu_time_budget_ms: None,
             candidate_radius: 3,
             root_prefilter: false,
-            tactical_candidates: true,
-            tactical_move_ordering: true,
-            tactical_eval: true,
         };
         assert_eq!(SearchBot::with_config(config).config(), config);
     }
@@ -1030,9 +1182,6 @@ mod tests {
         assert_eq!(trace["config"]["max_depth"], 3);
         assert_eq!(trace["config"]["candidate_radius"], 2);
         assert_eq!(trace["config"]["root_prefilter"], true);
-        assert_eq!(trace["config"]["tactical_candidates"], false);
-        assert_eq!(trace["config"]["tactical_move_ordering"], false);
-        assert_eq!(trace["config"]["tactical_eval"], false);
         assert!(trace["nodes"].as_u64().unwrap() > 0);
         assert!(trace["total_nodes"].as_u64().unwrap() >= trace["nodes"].as_u64().unwrap());
         assert_eq!(trace["budget_exhausted"], false);
@@ -1065,6 +1214,96 @@ mod tests {
         assert!(blocking.is_legal);
         assert!(!blocking.immediate_win);
         assert!(blocking.immediate_block);
+    }
+
+    #[test]
+    fn tactical_analyzer_labels_open_and_blocked_fours() {
+        let mut board = Board::new(RuleConfig::default());
+        for mv in [
+            Move { row: 7, col: 7 },
+            Move { row: 0, col: 0 },
+            Move { row: 7, col: 8 },
+            Move { row: 0, col: 1 },
+            Move { row: 7, col: 9 },
+            Move { row: 0, col: 2 },
+        ] {
+            board.apply_move(mv).unwrap();
+        }
+
+        let open_four = analyze_tactical_move(&board, Move { row: 7, col: 10 });
+        assert!(open_four.open_four);
+        assert!(!open_four.blocked_four);
+
+        let mut board = Board::new(RuleConfig::default());
+        for mv in [
+            Move { row: 7, col: 7 },
+            Move { row: 7, col: 6 },
+            Move { row: 7, col: 8 },
+            Move { row: 0, col: 0 },
+            Move { row: 7, col: 9 },
+            Move { row: 0, col: 1 },
+        ] {
+            board.apply_move(mv).unwrap();
+        }
+
+        let blocked_four = analyze_tactical_move(&board, Move { row: 7, col: 10 });
+        assert!(!blocked_four.open_four);
+        assert!(blocked_four.blocked_four);
+    }
+
+    #[test]
+    fn tactical_analyzer_labels_three_shapes_and_double_threats() {
+        let mut board = Board::new(RuleConfig::default());
+        for mv in [
+            Move { row: 7, col: 7 },
+            Move { row: 0, col: 0 },
+            Move { row: 7, col: 8 },
+            Move { row: 0, col: 1 },
+        ] {
+            board.apply_move(mv).unwrap();
+        }
+
+        let open_three = analyze_tactical_move(&board, Move { row: 7, col: 9 });
+        assert!(open_three.open_three);
+        assert!(!open_three.broken_three);
+
+        let mut board = Board::new(RuleConfig::default());
+        for mv in [
+            Move { row: 7, col: 7 },
+            Move { row: 0, col: 0 },
+            Move { row: 7, col: 10 },
+            Move { row: 0, col: 1 },
+        ] {
+            board.apply_move(mv).unwrap();
+        }
+
+        let broken_three = analyze_tactical_move(&board, Move { row: 7, col: 9 });
+        assert!(!broken_three.open_three);
+        assert!(broken_three.broken_three);
+
+        let mut board = Board::new(RuleConfig::default());
+        for mv in [
+            Move { row: 7, col: 6 },
+            Move { row: 0, col: 0 },
+            Move { row: 7, col: 7 },
+            Move { row: 0, col: 2 },
+            Move { row: 7, col: 8 },
+            Move { row: 0, col: 4 },
+            Move { row: 6, col: 9 },
+            Move { row: 2, col: 0 },
+            Move { row: 8, col: 9 },
+            Move { row: 2, col: 2 },
+            Move { row: 9, col: 9 },
+            Move { row: 2, col: 4 },
+        ] {
+            board.apply_move(mv).unwrap();
+        }
+
+        let fork = analyze_tactical_move(&board, Move { row: 7, col: 9 });
+        assert!(fork.double_threat);
+
+        let filler = analyze_tactical_move(&board, Move { row: 1, col: 1 });
+        assert!(!filler.double_threat);
     }
 
     #[test]
