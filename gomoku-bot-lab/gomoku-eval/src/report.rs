@@ -5,6 +5,8 @@ use gomoku_core::{Color, GameResult, Move, RuleConfig};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
+use std::process::Command;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const TOURNAMENT_REPORT_SCHEMA_VERSION: u32 = 1;
 pub const MOVE_CODEC: &str = "cell_index_v1";
@@ -22,6 +24,8 @@ pub struct TournamentRunReport {
     pub search_cpu_time_ms: Option<u64>,
     pub max_moves: Option<usize>,
     pub max_game_ms: Option<u64>,
+    #[serde(default)]
+    pub total_wall_time_ms: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -31,12 +35,62 @@ pub struct TournamentReport {
     pub board_size: usize,
     pub move_codec: String,
     pub shuffled_elo_samples: usize,
+    #[serde(default)]
+    pub provenance: ReportProvenance,
     pub run: TournamentRunReport,
     pub standings: Vec<StandingReport>,
     pub pairwise: Vec<PairwiseReport>,
     pub color_splits: Vec<ColorSplitReport>,
     pub end_reasons: Vec<CountReport>,
     pub matches: Vec<MatchReport>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ReportProvenance {
+    pub generated_at_utc: Option<String>,
+    pub generated_at_local: Option<String>,
+    pub git_commit: Option<String>,
+    pub git_dirty: Option<bool>,
+    pub command: Vec<String>,
+    pub host: Option<HostReport>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct HostReport {
+    pub os: String,
+    pub arch: String,
+    pub logical_cpus: Option<usize>,
+    pub cpu_model: Option<String>,
+    pub cpu_mhz: Option<f64>,
+}
+
+impl ReportProvenance {
+    fn capture() -> Self {
+        Self {
+            generated_at_utc: Some(detect_generated_at_utc()),
+            generated_at_local: Some(detect_generated_at_local()),
+            git_commit: detect_git_commit(),
+            git_dirty: detect_git_dirty(),
+            command: std::env::args().collect(),
+            host: Some(HostReport::capture()),
+        }
+    }
+}
+
+impl HostReport {
+    fn capture() -> Self {
+        let (cpu_model, cpu_mhz) = detect_linux_cpu_info();
+
+        Self {
+            os: std::env::consts::OS.to_string(),
+            arch: std::env::consts::ARCH.to_string(),
+            logical_cpus: std::thread::available_parallelism()
+                .ok()
+                .map(std::num::NonZeroUsize::get),
+            cpu_model,
+            cpu_mhz,
+        }
+    }
 }
 
 impl TournamentReport {
@@ -58,6 +112,7 @@ impl TournamentReport {
             board_size,
             move_codec: MOVE_CODEC.to_string(),
             shuffled_elo_samples: SHUFFLED_ELO_SAMPLES,
+            provenance: ReportProvenance::capture(),
             standings: standings(&run.bots, results, &matches, &shuffled_elo),
             pairwise: pairwise(&run.bots, &matches),
             color_splits: color_splits(&matches),
@@ -610,49 +665,202 @@ fn avg(total: f64, count: u32) -> f64 {
     }
 }
 
+fn detect_git_commit() -> Option<String> {
+    if let Some(sha) = option_env!("GITHUB_SHA") {
+        return Some(sha.chars().take(12).collect());
+    }
+
+    let output = Command::new("git")
+        .args(["rev-parse", "--short=12", "HEAD"])
+        .output()
+        .ok()?;
+    if !output.status.success() {
+        return None;
+    }
+
+    let value = String::from_utf8(output.stdout).ok()?.trim().to_string();
+    (!value.is_empty()).then_some(value)
+}
+
+fn detect_git_dirty() -> Option<bool> {
+    let output = Command::new("git")
+        .args(["status", "--porcelain"])
+        .output()
+        .ok()?;
+    if !output.status.success() {
+        return None;
+    }
+
+    Some(!output.stdout.is_empty())
+}
+
+fn detect_generated_at_utc() -> String {
+    if let Ok(output) = Command::new("date")
+        .args(["-u", "+%Y-%m-%dT%H:%M:%SZ"])
+        .output()
+    {
+        if output.status.success() {
+            if let Ok(value) = String::from_utf8(output.stdout) {
+                let value = value.trim().to_string();
+                if !value.is_empty() {
+                    return value;
+                }
+            }
+        }
+    }
+
+    let seconds = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_secs())
+        .unwrap_or_default();
+    format!("unix:{seconds}")
+}
+
+fn detect_generated_at_local() -> String {
+    if let Ok(output) = Command::new("date")
+        .args(["+%Y-%m-%d %H:%M:%S %Z"])
+        .output()
+    {
+        if output.status.success() {
+            if let Ok(value) = String::from_utf8(output.stdout) {
+                let value = value.trim().to_string();
+                if !value.is_empty() {
+                    return value;
+                }
+            }
+        }
+    }
+
+    detect_generated_at_utc()
+}
+
+fn detect_linux_cpu_info() -> (Option<String>, Option<f64>) {
+    let Ok(cpuinfo) = std::fs::read_to_string("/proc/cpuinfo") else {
+        return (None, None);
+    };
+
+    let mut model = None;
+    let mut mhz = None;
+    for line in cpuinfo.lines() {
+        if model.is_none() {
+            if let Some(value) = line.strip_prefix("model name") {
+                model = cpuinfo_value(value);
+            }
+        }
+        if mhz.is_none() {
+            if let Some(value) = line.strip_prefix("cpu MHz") {
+                mhz = cpuinfo_value(value).and_then(|value| value.parse::<f64>().ok());
+            }
+        }
+        if model.is_some() && mhz.is_some() {
+            break;
+        }
+    }
+
+    (model, mhz)
+}
+
+fn cpuinfo_value(input: &str) -> Option<String> {
+    input
+        .split_once(':')
+        .map(|(_, value)| value.trim().to_string())
+        .filter(|value| !value.is_empty())
+}
+
 pub fn render_tournament_report_html(report: &TournamentReport) -> String {
+    render_tournament_report_html_with_options(report, &ReportRenderOptions::default())
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct ReportRenderOptions {
+    pub raw_json_href: Option<String>,
+}
+
+pub fn render_tournament_report_html_with_options(
+    report: &TournamentReport,
+    options: &ReportRenderOptions,
+) -> String {
     let mut html = String::new();
+    let leader = report_leader(report);
+    let budget = budget_label(&report.run);
+    let generated_at_utc = report
+        .provenance
+        .generated_at_utc
+        .as_deref()
+        .unwrap_or("unknown");
+    let generated_at_local = report
+        .provenance
+        .generated_at_local
+        .as_deref()
+        .unwrap_or(generated_at_utc);
+    let git_revision = git_revision_label(&report.provenance);
+    let command = command_line(&report.provenance.command);
+
     html.push_str("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">");
     html.push_str("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
-    html.push_str("<title>Gomoku2D Tournament Report</title>");
+    html.push_str("<title>Gomoku2D Bot Lab Report</title>");
     html.push_str(STYLE);
-    html.push_str("</head><body><main>");
-    html.push_str("<header><p class=\"eyebrow\">Gomoku2D Bot Lab</p><h1>Tournament Report</h1>");
-    html.push_str(&format!(
-        "<p class=\"lede\">{} bots, {} games per pair, {} rule, seed {}.</p></header>",
-        report.run.bots.len(),
-        report.run.games_per_pair,
-        html_escape(&variant_label(&report.run.rules)),
-        report.run.seed
-    ));
+    html.push_str("</head><body><main><header class=\"hero\">");
+    html.push_str(
+        "<nav class=\"top-links\"><a href=\"/\">Game</a><a href=\"/assets/\">Asset previews</a>",
+    );
+    if let Some(href) = &options.raw_json_href {
+        html.push_str(&format!("<a href=\"{}\">Raw JSON</a>", html_escape(href)));
+    }
+    html.push_str("</nav>");
+    html.push_str("<p class=\"eyebrow\">Gomoku2D Bot Lab</p><h1>Bot Lab Report</h1>");
+    html.push_str("<p class=\"lede\">A round-robin tournament report for comparing bot specs under one rule set, opening policy, and search budget.</p></header>");
+    if report.provenance.git_dirty == Some(true) {
+        html.push_str(
+            "<p class=\"run-warning\">Development run: generated from a dirty git worktree.</p>",
+        );
+    }
 
-    html.push_str("<section class=\"cards\">");
+    html.push_str("<section class=\"cards\"><div class=\"card-group\"><h2>Tournament</h2><div class=\"card-row\">");
+    metric_card(&mut html, "Entrants", entrant_summary(report));
+    metric_card(&mut html, "Schedule", schedule_summary(report));
+    metric_card(
+        &mut html,
+        "Rule",
+        variant_label(&report.run.rules).to_string(),
+    );
+    metric_card(&mut html, "Opening", opening_summary(report));
+    html.push_str("</div></div><div class=\"card-group\"><h2>Summary</h2><div class=\"card-row\">");
     metric_card(&mut html, "Matches", report.matches.len().to_string());
+    metric_card(&mut html, "Finish", finish_summary(report));
+    metric_card(&mut html, "Result By Color", color_summary(report));
+    html.push_str("</div></div><div class=\"card-group\"><h2>Ranking</h2><div class=\"card-row\">");
+    metric_card(&mut html, "Leader", leader);
     metric_card(
         &mut html,
-        "Opening Plies",
-        report.run.opening_plies.to_string(),
+        "Elo Start",
+        format!("{DEFAULT_INITIAL_RATING:.0}"),
     );
-    metric_card(&mut html, "Threads", report.run.threads.to_string());
+    metric_card(&mut html, "K Factor", format!("{DEFAULT_K_FACTOR:.0}"));
     metric_card(
         &mut html,
-        "CPU Budget",
-        report
-            .run
-            .search_cpu_time_ms
-            .map(|ms| format!("{ms} ms"))
-            .unwrap_or_else(|| "none".to_string()),
+        "Shuffled Samples",
+        report.shuffled_elo_samples.to_string(),
     );
+    html.push_str("</div></div><div class=\"card-group\"><h2>Run</h2><div class=\"card-row\">");
+    metric_card(&mut html, "Budget", budget);
+    metric_card(
+        &mut html,
+        "Wall Clock",
+        format_duration_ms(report.run.total_wall_time_ms),
+    );
+    metric_card(&mut html, "Eval Threads", report.run.threads.to_string());
+    metric_card(&mut html, "CPU", host_cpu_summary(report));
+    html.push_str("</div></div>");
     html.push_str("</section>");
 
-    html.push_str("<section><h2>Standings</h2><table><thead><tr>");
+    html.push_str("<section><div class=\"section-heading\"><h2>Standings</h2><p>Sorted by shuffled Elo.</p></div><table><thead><tr>");
     for head in [
-        "Bot",
-        "W",
-        "D",
-        "L",
-        "Seq Elo",
-        "Avg Elo",
+        "Spec",
+        "Score %",
+        "W-D-L",
+        "Run-order Elo",
+        "Shuffled Elo",
         "Avg ms",
         "Avg nodes",
         "Avg depth",
@@ -663,8 +871,9 @@ pub fn render_tournament_report_html(report: &TournamentReport) -> String {
     html.push_str("</tr></thead><tbody>");
     for row in &report.standings {
         html.push_str(&format!(
-            "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{:.1}</td><td>{:.1} +/- {:.1}</td><td>{:.1}</td><td>{:.0}</td><td>{:.2}</td><td>{:.0}%</td></tr>",
-            html_escape(&row.bot),
+            "<tr><td>{}</td><td>{:.1}%</td><td>{}-{}-{}</td><td>{:.1}</td><td>{:.1} +/- {:.1}</td><td>{:.1}</td><td>{:.0}</td><td>{:.2}</td><td>{:.0}%</td></tr>",
+            html_escape(&compact_bot_label(report, &row.bot)),
+            score_rate(row.wins, row.draws, row.match_count) * 100.0,
             row.wins,
             row.draws,
             row.losses,
@@ -679,83 +888,548 @@ pub fn render_tournament_report_html(report: &TournamentReport) -> String {
     }
     html.push_str("</tbody></table></section>");
 
-    html.push_str("<section><h2>Pairwise</h2><table><thead><tr>");
-    for head in ["Pair", "A wins", "B wins", "Draws", "Score"] {
-        html.push_str(&format!("<th>{head}</th>"));
-    }
-    html.push_str("</tr></thead><tbody>");
-    for row in &report.pairwise {
-        html.push_str(&format!(
-            "<tr><td>{} / {}</td><td>{}</td><td>{}</td><td>{}</td><td>{:.1} - {:.1}</td></tr>",
-            html_escape(&row.bot_a),
-            html_escape(&row.bot_b),
-            row.wins_a,
-            row.wins_b,
-            row.draws,
-            row.score_a,
-            row.score_b,
-        ));
-    }
-    html.push_str("</tbody></table></section>");
+    render_match_tree(&mut html, report);
+    render_how_to_read_section(&mut html);
 
-    html.push_str("<section><h2>Color Splits</h2><table><thead><tr>");
-    for head in ["Black", "White", "Black wins", "White wins", "Draws"] {
-        html.push_str(&format!("<th>{head}</th>"));
+    html.push_str("<section class=\"provenance\"><div class=\"section-heading\"><h2>Provenance</h2><p>Enough context to reproduce the run or compare against a later tuning pass.</p></div>");
+    html.push_str("<dl>");
+    html.push_str(&format!(
+        "<dt>Generated local</dt><dd>{}</dd>",
+        html_escape(generated_at_local)
+    ));
+    html.push_str(&format!(
+        "<dt>Generated UTC</dt><dd>{}</dd>",
+        html_escape(generated_at_utc)
+    ));
+    html.push_str(&format!(
+        "<dt>Wall clock</dt><dd>{}</dd>",
+        html_escape(&format_duration_ms(report.run.total_wall_time_ms))
+    ));
+    html.push_str(&format!(
+        "<dt>Host</dt><dd>{} / {}</dd>",
+        html_escape(&host_cpu_summary(report)),
+        html_escape(&host_os_arch(report))
+    ));
+    html.push_str(&format!(
+        "<dt>Git revision</dt><dd>{}</dd>",
+        html_escape(&git_revision)
+    ));
+    html.push_str(&format!(
+        "<dt>Schema</dt><dd>v{} / {}</dd>",
+        report.schema_version,
+        html_escape(&report.move_codec)
+    ));
+    html.push_str("</dl>");
+    html.push_str(&format!(
+        "<p class=\"command\"><code>{}</code></p>",
+        html_escape(&command)
+    ));
+    html.push_str("</section></main></body></html>");
+    html
+}
+
+fn git_revision_label(provenance: &ReportProvenance) -> String {
+    let mut revision = provenance
+        .git_commit
+        .as_deref()
+        .unwrap_or("unknown")
+        .to_string();
+
+    if provenance.git_dirty == Some(true) {
+        revision.push_str("_dirty");
     }
-    html.push_str("</tr></thead><tbody>");
+
+    revision
+}
+
+fn report_leader(report: &TournamentReport) -> String {
+    report
+        .standings
+        .first()
+        .map(|row| {
+            format!(
+                "{} ({:.1})",
+                bot_label(report, &row.bot),
+                row.shuffled_elo_avg
+            )
+        })
+        .unwrap_or_else(|| "none".to_string())
+}
+
+fn budget_label(run: &TournamentRunReport) -> String {
+    match (run.search_cpu_time_ms, run.search_time_ms) {
+        (Some(cpu_ms), Some(wall_ms)) => {
+            format!("CPU {cpu_ms} ms/move, wall {wall_ms} ms/move")
+        }
+        (Some(cpu_ms), None) => format!("CPU {cpu_ms} ms/move"),
+        (None, Some(wall_ms)) => format!("Wall {wall_ms} ms/move"),
+        (None, None) => "no per-move budget".to_string(),
+    }
+}
+
+fn color_summary(report: &TournamentReport) -> String {
+    let mut black_wins = 0u32;
+    let mut white_wins = 0u32;
+    let mut draws = 0u32;
+
     for row in &report.color_splits {
-        html.push_str(&format!(
-            "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>",
-            html_escape(&row.black),
-            html_escape(&row.white),
-            row.black_wins,
-            row.white_wins,
-            row.draws,
-        ));
+        black_wins += row.black_wins;
+        white_wins += row.white_wins;
+        draws += row.draws;
     }
-    html.push_str("</tbody></table></section>");
 
-    html.push_str("<section><h2>Matches</h2><div class=\"match-list\">");
-    for row in &report.matches {
-        html.push_str("<details class=\"match\"><summary>");
+    let total = black_wins + white_wins + draws;
+    if total == 0 {
+        return "none".to_string();
+    }
+
+    format!(
+        "Black {} ({:.1}%) / White {} ({:.1}%) / Draw {} ({:.1}%)",
+        black_wins,
+        black_wins as f64 * 100.0 / total as f64,
+        white_wins,
+        white_wins as f64 * 100.0 / total as f64,
+        draws,
+        draws as f64 * 100.0 / total as f64
+    )
+}
+
+fn finish_summary(report: &TournamentReport) -> String {
+    if report.end_reasons.is_empty() {
+        return "none".to_string();
+    }
+
+    let finished = count_end_reason(report, "natural");
+    let max_moves = count_end_reason(report, "max_moves");
+    let max_time = count_end_reason(report, "max_game_time");
+    let mut parts = Vec::new();
+
+    if finished > 0 {
+        parts.push(format!("{finished} finished"));
+    }
+    if max_moves > 0 {
+        parts.push(format!("{max_moves} max moves"));
+    }
+    if max_time > 0 {
+        parts.push(format!("{max_time} max time"));
+    }
+
+    if parts.is_empty() {
+        "none".to_string()
+    } else {
+        parts.join(" / ")
+    }
+}
+
+fn count_end_reason(report: &TournamentReport, key: &str) -> u32 {
+    report
+        .end_reasons
+        .iter()
+        .find(|reason| reason.key == key)
+        .map(|reason| reason.count)
+        .unwrap_or(0)
+}
+
+fn entrant_summary(report: &TournamentReport) -> String {
+    let labels = report
+        .run
+        .bots
+        .iter()
+        .map(|bot| entrant_label(bot, &report.run))
+        .collect::<Vec<_>>();
+
+    collapse_searchbot_depth_labels(&labels).unwrap_or_else(|| labels.join(", "))
+}
+
+fn collapse_searchbot_depth_labels(labels: &[String]) -> Option<String> {
+    let prefix = "SearchBot @ depth ";
+    let depths = labels
+        .iter()
+        .map(|label| label.strip_prefix(prefix))
+        .collect::<Option<Vec<_>>>()?;
+
+    Some(format!("{prefix}{}", depths.join(" / ")))
+}
+
+fn schedule_summary(report: &TournamentReport) -> String {
+    let entrants = report.run.bots.len();
+    let pair_count = entrants.saturating_mul(entrants.saturating_sub(1)) / 2;
+    format!(
+        "{} pairs x {} games = {} matches",
+        pair_count,
+        report.run.games_per_pair,
+        report.matches.len()
+    )
+}
+
+fn opening_summary(report: &TournamentReport) -> String {
+    format!(
+        "base seed {}, {} plies",
+        report.run.seed, report.run.opening_plies
+    )
+}
+
+fn bot_label(report: &TournamentReport, bot: &str) -> String {
+    entrant_label(bot, &report.run)
+}
+
+fn compact_bot_label(report: &TournamentReport, bot: &str) -> String {
+    if bot == "random" {
+        return "RandomBot".to_string();
+    }
+
+    if let Some(depth) = searchbot_depth(bot, &report.run) {
+        return format!("SearchBot_D{depth}");
+    }
+
+    bot.to_string()
+}
+
+fn entrant_label(bot: &str, run: &TournamentRunReport) -> String {
+    if bot == "random" {
+        return "RandomBot".to_string();
+    }
+
+    if let Some(depth) = searchbot_depth(bot, run) {
+        return format!("SearchBot @ depth {depth}");
+    }
+
+    bot.to_string()
+}
+
+fn searchbot_depth(bot: &str, run: &TournamentRunReport) -> Option<i32> {
+    match bot {
+        "fast" => Some(2),
+        "balanced" => Some(3),
+        "deep" => Some(5),
+        "baseline" | "search"
+            if run.search_time_ms.is_some() || run.search_cpu_time_ms.is_some() =>
+        {
+            Some(20)
+        }
+        "baseline" | "search" => Some(5),
+        _ => bot
+            .strip_prefix("baseline-")
+            .or_else(|| bot.strip_prefix("search-"))
+            .and_then(|depth| depth.parse::<i32>().ok()),
+    }
+}
+
+fn format_duration_ms(value: Option<u64>) -> String {
+    let Some(ms) = value else {
+        return "not captured".to_string();
+    };
+    if ms < 1_000 {
+        format!("{ms} ms")
+    } else if ms < 60_000 {
+        format!("{:.2} s", ms as f64 / 1_000.0)
+    } else {
+        let minutes = ms / 60_000;
+        let seconds = (ms % 60_000) as f64 / 1_000.0;
+        format!("{minutes}m {seconds:.1}s")
+    }
+}
+
+fn host_cpu_summary(report: &TournamentReport) -> String {
+    let model = report
+        .provenance
+        .host
+        .as_ref()
+        .and_then(|host| host.cpu_model.clone())
+        .map(|model| {
+            model
+                .replace(" 12-Core Processor", "")
+                .replace(" Processor", "")
+        })
+        .unwrap_or_else(|| "unknown CPU".to_string());
+    let Some(mhz) = report
+        .provenance
+        .host
+        .as_ref()
+        .and_then(|host| host.cpu_mhz)
+    else {
+        return model;
+    };
+
+    format!("{model} @ {:.1} GHz", mhz / 1_000.0)
+}
+
+fn host_os_arch(report: &TournamentReport) -> String {
+    report
+        .provenance
+        .host
+        .as_ref()
+        .map(|host| format!("{} {}", host.os, host.arch))
+        .unwrap_or_else(|| "unknown host".to_string())
+}
+
+fn score_rate(wins: u32, draws: u32, total: u32) -> f64 {
+    avg(wins as f64 + draws as f64 * 0.5, total)
+}
+
+fn command_line(command: &[String]) -> String {
+    if command.is_empty() {
+        return "not captured".to_string();
+    }
+    command
+        .iter()
+        .map(|part| {
+            if part.contains(char::is_whitespace) {
+                format!("{part:?}")
+            } else {
+                part.clone()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+fn render_how_to_read_section(html: &mut String) {
+    html.push_str("<section><div class=\"section-heading\"><h2>How To Read This</h2><p>Compact definitions for the metrics above.</p></div><div class=\"term-grid\">");
+    term_card(
+        html,
+        "Run Shape",
+        "Round robin. Schedule shows pair count, games per pair, and total matches. Opening shows the seeded legal moves before bots take over.",
+    );
+    term_card(
+        html,
+        "Elo",
+        "Relative rating for this report only. Shuffled Elo averages repeated Elo passes over shuffled match orders to reduce run-order noise.",
+    );
+    term_card(
+        html,
+        "Score",
+        "Score % is wins plus half draws over games. A-D-B means A wins, draws, then B wins for the listed pair.",
+    );
+    term_card(
+        html,
+        "Color Result",
+        "Pair groups show each bot's win rate as black and white. Useful when a result is carried by first-player edge or opening assignment.",
+    );
+    term_card(
+        html,
+        "Timing",
+        "CPU-time budget limits search CPU per move. Wall clock plus hardware gives context for comparing runs.",
+    );
+    html.push_str("</div></section>");
+}
+
+fn render_match_tree(html: &mut String, report: &TournamentReport) {
+    html.push_str("<section><div class=\"section-heading\"><h2>Matches By Pair</h2><p>Expand a bot pair to inspect individual games. Finished boards and human move notation come first; raw cell indexes stay tucked under each match.</p></div><div class=\"pair-tree\">");
+    for pair in &report.pairwise {
+        let matches = report
+            .matches
+            .iter()
+            .filter(|report_match| same_pair(report_match, &pair.bot_a, &pair.bot_b))
+            .collect::<Vec<_>>();
+
+        html.push_str("<details class=\"pair-group\"><summary>");
         html.push_str(&format!(
-            "<span>#{:03}</span><strong>{} vs {}</strong><span>{}</span></summary>",
-            row.match_index,
-            html_escape(&row.black),
-            html_escape(&row.white),
-            html_escape(&result_label(row)),
+            "<strong>{}</strong><span>{} matches</span><span>{}</span><span>{}</span></summary>",
+            html_escape(&pair_label(report, pair)),
+            matches.len(),
+            html_escape(&pair_record_label(pair)),
+            html_escape(&pair_score_label(pair)),
         ));
-        html.push_str("<div class=\"match-grid\">");
-        html.push_str(&format!(
-            "<p><b>Moves</b><br>{}</p>",
-            html_escape(&move_notations(&row.move_cells, report.board_size).join(" "))
-        ));
-        html.push_str(&format!(
-            "<p><b>Move cells</b><br>{}</p>",
-            row.move_cells
-                .iter()
-                .map(usize::to_string)
-                .collect::<Vec<_>>()
-                .join(" ")
-        ));
-        html.push_str(&format!(
-            "<p><b>Black stats</b><br>{:.1} ms, {:.0} nodes, depth {:.2}, budget {:.0}%</p>",
-            row.black_stats.avg_search_time_ms,
-            row.black_stats.avg_nodes,
-            row.black_stats.avg_depth,
-            row.black_stats.budget_exhausted_rate * 100.0,
-        ));
-        html.push_str(&format!(
-            "<p><b>White stats</b><br>{:.1} ms, {:.0} nodes, depth {:.2}, budget {:.0}%</p>",
-            row.white_stats.avg_search_time_ms,
-            row.white_stats.avg_nodes,
-            row.white_stats.avg_depth,
-            row.white_stats.budget_exhausted_rate * 100.0,
-        ));
+        render_pair_overview(html, report, pair);
+        html.push_str("<div class=\"match-list\">");
+        for report_match in matches {
+            render_match(html, report, pair, report_match);
+        }
         html.push_str("</div></details>");
     }
-    html.push_str("</div></section></main></body></html>");
-    html
+    html.push_str("</div></section>");
+}
+
+fn render_pair_overview(html: &mut String, report: &TournamentReport, pair: &PairwiseReport) {
+    html.push_str("<div class=\"pair-overview\">");
+    html.push_str(&format!(
+        "<p><b>Pair result</b><br>{}; {}; {} points rate {:.1}%</p>",
+        html_escape(&pair_record_label(pair)),
+        html_escape(&pair_score_label(pair)),
+        html_escape(&compact_bot_label(report, &pair.bot_a)),
+        avg(pair.score_a * 100.0, pair.total),
+    ));
+
+    let color_lines = color_result_lines(report, pair);
+    if !color_lines.is_empty() {
+        html.push_str(&format!(
+            "<p><b>Color result</b><br>{}</p>",
+            color_lines
+                .iter()
+                .map(|line| html_escape(line))
+                .collect::<Vec<_>>()
+                .join("<br>")
+        ));
+    }
+    html.push_str("</div>");
+}
+
+fn render_match(
+    html: &mut String,
+    report: &TournamentReport,
+    pair: &PairwiseReport,
+    report_match: &MatchReport,
+) {
+    html.push_str("<details class=\"match\"><summary>");
+    let bot_a_label = match_side_label(report, &pair.bot_a, report_match);
+    let bot_b_label = match_side_label(report, &pair.bot_b, report_match);
+    html.push_str(&format!(
+        "<span>#{:03}</span><strong>{} vs {}</strong><span>{}</span><span>{} moves</span><span>{}</span></summary>",
+        report_match.match_index,
+        html_escape(&bot_a_label),
+        html_escape(&bot_b_label),
+        html_escape(&result_label(report, report_match)),
+        report_match.move_count,
+        html_escape(&report_match.end_reason),
+    ));
+    html.push_str("<div class=\"match-grid\">");
+    html.push_str(&format!(
+        "<div class=\"board-panel\"><b>Finished board</b><pre class=\"board-ascii\">{}</pre></div>",
+        html_escape(&finished_board_ascii(
+            &report_match.move_cells,
+            report.board_size
+        ))
+    ));
+    html.push_str(&format!(
+        "<p><b>Moves</b><br>{}</p>",
+        html_escape(&move_notations(&report_match.move_cells, report.board_size).join(" "))
+    ));
+    html.push_str(&format!(
+        "<p><b>{} stats</b><br>{}</p>",
+        html_escape(&bot_a_label),
+        html_escape(&side_stats_label(side_stats_for_bot(
+            report_match,
+            &pair.bot_a
+        )))
+    ));
+    html.push_str(&format!(
+        "<p><b>{} stats</b><br>{}</p>",
+        html_escape(&bot_b_label),
+        html_escape(&side_stats_label(side_stats_for_bot(
+            report_match,
+            &pair.bot_b
+        )))
+    ));
+    html.push_str(&format!(
+        "<details class=\"raw-data\"><summary>Raw data</summary><p><b>Move cells</b><br>{}</p></details>",
+        report_match
+            .move_cells
+            .iter()
+            .map(usize::to_string)
+            .collect::<Vec<_>>()
+            .join(" ")
+    ));
+    html.push_str("</div></details>");
+}
+
+fn match_side_label(report: &TournamentReport, bot: &str, report_match: &MatchReport) -> String {
+    let side = if report_match.black == bot {
+        "B"
+    } else if report_match.white == bot {
+        "W"
+    } else {
+        "?"
+    };
+    format!("{} ({side})", compact_bot_label(report, bot))
+}
+
+fn side_stats_for_bot<'a>(report_match: &'a MatchReport, bot: &str) -> &'a SideStatsReport {
+    if report_match.black == bot {
+        &report_match.black_stats
+    } else {
+        &report_match.white_stats
+    }
+}
+
+fn side_stats_label(stats: &SideStatsReport) -> String {
+    format!(
+        "{:.1} ms, {:.0} nodes, depth {:.2}, budget {:.0}%",
+        stats.avg_search_time_ms,
+        stats.avg_nodes,
+        stats.avg_depth,
+        stats.budget_exhausted_rate * 100.0,
+    )
+}
+
+fn same_pair(report_match: &MatchReport, bot_a: &str, bot_b: &str) -> bool {
+    (report_match.black == bot_a && report_match.white == bot_b)
+        || (report_match.black == bot_b && report_match.white == bot_a)
+}
+
+fn pair_label(report: &TournamentReport, pair: &PairwiseReport) -> String {
+    format!(
+        "{} vs {}",
+        compact_bot_label(report, &pair.bot_a),
+        compact_bot_label(report, &pair.bot_b)
+    )
+}
+
+fn pair_record_label(pair: &PairwiseReport) -> String {
+    format!("{}-{}-{} A-D-B", pair.wins_a, pair.draws, pair.wins_b)
+}
+
+fn pair_score_label(pair: &PairwiseReport) -> String {
+    format!("{:.1}-{:.1} points", pair.score_a, pair.score_b)
+}
+
+fn color_result_lines(report: &TournamentReport, pair: &PairwiseReport) -> Vec<String> {
+    let mut splits = report
+        .color_splits
+        .iter()
+        .filter(|split| same_bot_pair(&split.black, &split.white, &pair.bot_a, &pair.bot_b))
+        .collect::<Vec<_>>();
+    splits.sort_by_key(|split| {
+        if split.black == pair.bot_a {
+            0
+        } else if split.black == pair.bot_b {
+            1
+        } else {
+            2
+        }
+    });
+    [
+        color_result_label(report, pair, &pair.bot_a, &splits),
+        color_result_label(report, pair, &pair.bot_b, &splits),
+    ]
+    .into_iter()
+    .flatten()
+    .collect()
+}
+
+fn same_bot_pair(left_a: &str, left_b: &str, right_a: &str, right_b: &str) -> bool {
+    (left_a == right_a && left_b == right_b) || (left_a == right_b && left_b == right_a)
+}
+
+fn color_result_label(
+    report: &TournamentReport,
+    pair: &PairwiseReport,
+    bot: &str,
+    splits: &[&ColorSplitReport],
+) -> Option<String> {
+    let as_black = splits.iter().find(|split| split.black == bot)?;
+    let opponent = if bot == pair.bot_a {
+        &pair.bot_b
+    } else {
+        &pair.bot_a
+    };
+    let as_white = splits
+        .iter()
+        .find(|split| split.black == *opponent && split.white == bot)?;
+
+    let black_win_rate = avg(as_black.black_wins as f64 * 100.0, as_black.total);
+    let white_win_rate = avg(as_white.white_wins as f64 * 100.0, as_white.total);
+
+    Some(format!(
+        "{}: black {:.1}% ({}/{}), white {:.1}% ({}/{})",
+        compact_bot_label(report, bot),
+        black_win_rate,
+        as_black.black_wins,
+        as_black.total,
+        white_win_rate,
+        as_white.white_wins,
+        as_white.total,
+    ))
 }
 
 fn metric_card(html: &mut String, label: &str, value: String) {
@@ -766,6 +1440,14 @@ fn metric_card(html: &mut String, label: &str, value: String) {
     ));
 }
 
+fn term_card(html: &mut String, title: &str, body: &str) {
+    html.push_str(&format!(
+        "<article class=\"term\"><h3>{}</h3><p>{}</p></article>",
+        html_escape(title),
+        body,
+    ));
+}
+
 fn variant_label(rules: &RuleConfig) -> String {
     match rules.variant {
         gomoku_core::Variant::Freestyle => "freestyle".to_string(),
@@ -773,9 +1455,9 @@ fn variant_label(rules: &RuleConfig) -> String {
     }
 }
 
-fn result_label(report_match: &MatchReport) -> String {
+fn result_label(report: &TournamentReport, report_match: &MatchReport) -> String {
     match report_match.winner.as_deref() {
-        Some(winner) => format!("{winner} wins"),
+        Some(winner) => format!("{} wins", compact_bot_label(report, winner)),
         None => "draw".to_string(),
     }
 }
@@ -791,6 +1473,50 @@ fn move_notations(move_cells: &[usize], board_size: usize) -> Vec<String> {
         .collect()
 }
 
+fn finished_board_ascii(move_cells: &[usize], board_size: usize) -> String {
+    let mut cells = vec![None; board_size.saturating_mul(board_size)];
+    for (idx, cell) in move_cells.iter().copied().enumerate() {
+        if cell >= cells.len() {
+            continue;
+        }
+        cells[cell] = Some(if idx % 2 == 0 {
+            Color::Black
+        } else {
+            Color::White
+        });
+    }
+
+    let mut output = String::new();
+    output.push_str("   ");
+    for col in 0..board_size {
+        if col > 0 {
+            output.push(' ');
+        }
+        output.push(column_label(col));
+    }
+    output.push('\n');
+
+    for row in 0..board_size {
+        output.push_str(&format!("{:2} ", row + 1));
+        for col in 0..board_size {
+            if col > 0 {
+                output.push(' ');
+            }
+            let cell = row * board_size + col;
+            output.push(cells[cell].map_or('.', Color::to_char));
+        }
+        if row + 1 < board_size {
+            output.push('\n');
+        }
+    }
+
+    output
+}
+
+fn column_label(col: usize) -> char {
+    char::from(b'A'.saturating_add(col as u8))
+}
+
 fn html_escape(input: &str) -> String {
     input
         .replace('&', "&amp;")
@@ -802,14 +1528,18 @@ fn html_escape(input: &str) -> String {
 
 const STYLE: &str = r#"
 <style>
-:root{color-scheme:dark;--bg:#111619;--panel:#1b2427;--text:#f2f0dc;--muted:#9ca99e;--line:#324044;--accent:#e2b84b;--green:#5ad17a}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#253034,#111619 48rem);color:var(--text);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;line-height:1.45}
-main{width:min(1180px,calc(100% - 32px));margin:0 auto;padding:40px 0 56px}header{margin-bottom:28px}.eyebrow{margin:0 0 8px;color:var(--accent);letter-spacing:.14em;text-transform:uppercase;font-size:12px}h1{margin:0;font-size:clamp(32px,6vw,64px)}.lede{max-width:760px;color:var(--muted)}
-.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:24px 0}article,section,.match{background:color-mix(in srgb,var(--panel) 88%,transparent);border:1px solid var(--line);box-shadow:0 8px 0 rgba(0,0,0,.18)}
-article{padding:14px 16px}article span{display:block;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.1em}article strong{font-size:22px;color:var(--green)}
-section{padding:18px;margin:16px 0;overflow:auto}h2{margin:0 0 14px;color:var(--accent);font-size:18px}table{width:100%;border-collapse:collapse;min-width:760px}th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
-.match-list{display:grid;gap:10px}.match{padding:0}.match summary{cursor:pointer;display:grid;grid-template-columns:72px 1fr auto;gap:12px;align-items:center;padding:12px 14px}.match summary span{color:var(--muted)}.match-grid{display:grid;grid-template-columns:1.4fr 1.4fr 1fr 1fr;gap:12px;padding:0 14px 14px;color:var(--muted)}.match-grid p{margin:0;word-break:break-word}.match-grid b{color:var(--text)}
-@media (max-width:760px){main{width:min(100% - 20px,1180px);padding-top:24px}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.match summary{grid-template-columns:1fr}.match-grid{grid-template-columns:1fr}}
+:root{color-scheme:dark;--bg:#1e1e1e;--surface:#2a2a2a;--surface-strong:#333333;--card:#232323;--border:#575756;--text:#f5f5f5;--text-muted:#a6a6a0;--accent:#fccb57;--green:#5ad17a;--teal:#5fc7c2}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+main{display:grid;gap:24px;margin:0 auto;max-width:1180px;padding:32px}h1,h2,p{margin:0}a{color:inherit;text-decoration:none}code{color:var(--accent)}
+.hero,section,.run-warning{background:var(--surface);border:2px solid var(--border);display:grid;gap:16px;padding:20px;overflow:auto}.run-warning{border-color:var(--accent);color:var(--accent)}.top-links{display:flex;flex-wrap:wrap;gap:8px}.top-links a{background:var(--surface-strong);border:2px solid var(--border);color:var(--text);display:inline-block;padding:8px 12px;text-transform:uppercase}.top-links a:hover,.top-links a:focus{border-color:var(--teal);outline:none}
+.eyebrow{color:var(--accent);font-size:12px;letter-spacing:.16em;text-transform:uppercase}h1{font-size:clamp(34px,7vw,64px);line-height:1}.lede{color:var(--text);font-size:clamp(17px,2vw,21px);max-width:78ch}.section-heading p,.match summary span,.match-grid,.note{color:var(--text-muted)}
+.cards{display:grid;gap:18px}.card-group{display:grid;gap:10px}.card-group h2{color:var(--accent);font-size:1.2rem}.card-row{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}article,.pair-group,.match{background:var(--card);border:1px solid var(--border);display:grid;gap:10px;padding:16px}article:hover,.pair-group:hover,.match:hover{border-color:var(--teal)}article span{color:var(--text-muted);font-size:12px;letter-spacing:.1em;text-transform:uppercase}article strong{color:var(--green);font-size:clamp(18px,2vw,24px);line-height:1.18;word-break:break-word}
+.term-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}.term{align-content:start}.term h3{color:var(--green);font-size:1rem;margin:0}.term p{color:var(--text-muted);margin:0}.term code{color:var(--accent)}
+.section-heading{display:grid;gap:8px}.section-heading h2{color:var(--accent);font-size:1.2rem}.section-heading p{max-width:78ch}
+table{border-collapse:collapse;min-width:820px;width:100%}th,td{border-bottom:1px solid var(--border);padding:9px 10px;text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{color:var(--text-muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.pair-tree,.match-list{display:grid;gap:12px}.pair-group,.match{padding:0}.pair-group summary,.match summary{cursor:pointer;display:grid;gap:12px;align-items:center;padding:12px 14px}.pair-group summary{grid-template-columns:1fr auto auto auto}.match summary{grid-template-columns:72px 1fr auto auto auto}.pair-group summary strong,.match summary strong{color:var(--text)}.pair-overview{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));padding:0 18px 16px}.pair-overview p{background:var(--surface-strong);border:1px solid var(--border);margin:0;padding:12px}.pair-group>.match-list{padding:8px 18px 18px}.match-grid{display:grid;gap:12px;grid-template-columns:1.4fr 1fr 1fr;padding:0 14px 14px}.match-grid p{margin:0;word-break:break-word}.pair-overview b,.match-grid b{color:var(--text)}.board-panel,.raw-data{grid-column:1/-1}.board-ascii,.raw-data{background:var(--surface-strong);border:1px solid var(--border)}.board-ascii{color:var(--text);font:14px/1.35 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:8px 0 0;overflow:auto;padding:12px;white-space:pre}.raw-data{padding:10px}.raw-data summary{cursor:pointer;padding:0}.raw-data p{margin:8px 0 0}
+.provenance dl{display:grid;gap:8px 18px;grid-template-columns:max-content 1fr;margin:0}.provenance dt{color:var(--text-muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase}.provenance dd{margin:0}.command{background:var(--surface-strong);border:1px solid var(--border);margin:0;overflow:auto;padding:12px}
+@media (max-width:760px){main{padding:20px}.pair-group summary,.match summary{grid-template-columns:1fr}.match-grid{grid-template-columns:1fr}.provenance dl{grid-template-columns:1fr}table{min-width:760px}}
 </style>
 "#;
 
@@ -830,6 +1560,92 @@ mod tests {
     #[test]
     fn html_escape_handles_special_chars() {
         assert_eq!(html_escape("<bot & 'x'>"), "&lt;bot &amp; &#39;x&#39;&gt;");
+    }
+
+    #[test]
+    fn finished_board_ascii_matches_cli_shape() {
+        let output = finished_board_ascii(&[0, 4, 12], 5);
+
+        assert_eq!(
+            output,
+            "   A B C D E\n 1 B . . . W\n 2 . . . . .\n 3 . . B . .\n 4 . . . . .\n 5 . . . . ."
+        );
+    }
+
+    #[test]
+    fn color_summary_includes_counts_and_precise_percentages() {
+        let mut report = sample_report();
+        report.color_splits = vec![ColorSplitReport {
+            black: "fast".to_string(),
+            white: "balanced".to_string(),
+            black_wins: 105,
+            white_wins: 84,
+            draws: 3,
+            total: 192,
+        }];
+
+        assert_eq!(
+            color_summary(&report),
+            "Black 105 (54.7%) / White 84 (43.8%) / Draw 3 (1.6%)"
+        );
+    }
+
+    #[test]
+    fn html_report_groups_matches_by_pair_and_demotes_raw_cells() {
+        let report = sample_report();
+        let html = render_tournament_report_html(&report);
+
+        assert!(html.contains("<details class=\"pair-group\">"));
+        assert!(html.contains("SearchBot_D2 vs SearchBot_D3"));
+        assert!(html.contains("2 matches"));
+        assert!(html.contains("<div class=\"pair-overview\">"));
+        assert!(html.contains("<b>Pair result</b>"));
+        assert!(html.contains("0-0-2 A-D-B; 0.0-2.0 points; SearchBot_D2 points rate 0.0%"));
+        assert!(html.contains("<b>Color result</b>"));
+        assert!(html.contains("SearchBot_D2: black 0.0% (0/1), white 0.0% (0/1)"));
+        assert!(html.contains("SearchBot_D3: black 100.0% (1/1), white 100.0% (1/1)"));
+        assert!(html.contains("#001</span><strong>SearchBot_D2 (B) vs SearchBot_D3 (W)</strong>"));
+        assert!(html.contains("#002</span><strong>SearchBot_D2 (W) vs SearchBot_D3 (B)</strong>"));
+        assert!(html.contains("<b>SearchBot_D2 (W) stats</b>"));
+        assert!(html.contains("<b>SearchBot_D3 (B) stats</b>"));
+        assert!(!html.contains("<h2>Pairwise</h2>"));
+        assert!(!html.contains("<h2>Color Splits</h2>"));
+        assert!(html.contains("<details class=\"raw-data\">"));
+
+        let pair_pos = html.find("SearchBot_D2 vs SearchBot_D3").unwrap();
+        let overview_pos = html.find("<div class=\"pair-overview\">").unwrap();
+        let color_a_pos = html.find("SearchBot_D2: black").unwrap();
+        let color_b_pos = html.find("SearchBot_D3: black").unwrap();
+        let match_pos = html.find("#001").unwrap();
+        let how_to_read_pos = html.find("<h2>How To Read This</h2>").unwrap();
+        let provenance_pos = html.find("<h2>Provenance</h2>").unwrap();
+        let match_body = &html[match_pos..];
+        let board_pos = match_pos + match_body.find("Finished board").unwrap();
+        let moves_pos = match_pos + match_body.find("<b>Moves</b>").unwrap();
+        let raw_pos = match_pos + match_body.find("Raw data").unwrap();
+        assert!(pair_pos < overview_pos);
+        assert!(overview_pos < color_a_pos);
+        assert!(color_a_pos < color_b_pos);
+        assert!(color_b_pos < match_pos);
+        assert!(overview_pos < match_pos);
+        assert!(match_pos < board_pos);
+        assert!(board_pos < moves_pos);
+        assert!(moves_pos < raw_pos);
+        assert!(raw_pos < how_to_read_pos);
+        assert!(how_to_read_pos < provenance_pos);
+    }
+
+    #[test]
+    fn html_report_combines_git_commit_and_dirty_flag() {
+        let mut report = sample_report();
+        report.provenance.git_commit = Some("abcdef123456".to_string());
+        report.provenance.git_dirty = Some(true);
+
+        let html = render_tournament_report_html(&report);
+
+        assert!(html.contains("<dt>Git revision</dt><dd>abcdef123456_dirty</dd>"));
+        assert!(!html.contains("<dt>Git commit</dt>"));
+        assert!(!html.contains("<dt>Git dirty</dt>"));
     }
 
     #[test]
@@ -861,5 +1677,83 @@ mod tests {
 
         let err = TournamentReport::from_json(input).unwrap_err();
         assert!(err.contains("unsupported tournament report schema version"));
+    }
+
+    fn sample_report() -> TournamentReport {
+        TournamentReport {
+            schema_version: TOURNAMENT_REPORT_SCHEMA_VERSION,
+            report_kind: "tournament".to_string(),
+            board_size: 15,
+            move_codec: MOVE_CODEC.to_string(),
+            shuffled_elo_samples: SHUFFLED_ELO_SAMPLES,
+            provenance: ReportProvenance::default(),
+            run: TournamentRunReport {
+                bots: vec!["fast".to_string(), "balanced".to_string()],
+                rules: RuleConfig {
+                    board_size: 15,
+                    win_length: 5,
+                    variant: gomoku_core::Variant::Renju,
+                },
+                games_per_pair: 2,
+                seed: 42,
+                opening_plies: 4,
+                threads: 1,
+                search_time_ms: None,
+                search_cpu_time_ms: Some(1000),
+                max_moves: Some(120),
+                max_game_ms: None,
+                total_wall_time_ms: Some(100),
+            },
+            standings: Vec::new(),
+            pairwise: vec![PairwiseReport {
+                bot_a: "fast".to_string(),
+                bot_b: "balanced".to_string(),
+                wins_a: 0,
+                wins_b: 2,
+                draws: 0,
+                total: 2,
+                score_a: 0.0,
+                score_b: 2.0,
+            }],
+            color_splits: vec![
+                ColorSplitReport {
+                    black: "fast".to_string(),
+                    white: "balanced".to_string(),
+                    black_wins: 0,
+                    white_wins: 1,
+                    draws: 0,
+                    total: 1,
+                },
+                ColorSplitReport {
+                    black: "balanced".to_string(),
+                    white: "fast".to_string(),
+                    black_wins: 1,
+                    white_wins: 0,
+                    draws: 0,
+                    total: 1,
+                },
+            ],
+            end_reasons: Vec::new(),
+            matches: vec![
+                sample_match(1, "fast", "balanced", Some("balanced")),
+                sample_match(2, "balanced", "fast", Some("balanced")),
+            ],
+        }
+    }
+
+    fn sample_match(index: usize, black: &str, white: &str, winner: Option<&str>) -> MatchReport {
+        MatchReport {
+            match_index: index,
+            black: black.to_string(),
+            white: white.to_string(),
+            result: if winner.is_some() { "win" } else { "draw" }.to_string(),
+            winner: winner.map(str::to_string),
+            end_reason: "natural".to_string(),
+            duration_ms: Some(100),
+            move_cells: vec![112, 113, 127, 128, 142],
+            move_count: 5,
+            black_stats: SideStatsReport::default(),
+            white_stats: SideStatsReport::default(),
+        }
     }
 }

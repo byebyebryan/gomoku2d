@@ -87,7 +87,16 @@ freestyle-specific product checks.
 ```sh
 mkdir -p outputs
 cargo run --release -p gomoku-eval -- tournament --bots fast,balanced,deep --games-per-pair 10 --opening-plies 4 --search-cpu-time-ms 100 --max-game-ms 10000 --seed 42 --report-json outputs/gomoku-tournament.json
-cargo run --release -p gomoku-eval -- report-html --input outputs/gomoku-tournament.json --output outputs/gomoku-tournament.html
+cargo run --release -p gomoku-eval -- report-html --input outputs/gomoku-tournament.json --output outputs/gomoku-tournament.html --json-href gomoku-tournament.json
+```
+
+Use the larger curated-report run from `gomoku-bot-lab/` when publishing
+bot-lab results:
+
+```sh
+mkdir -p reports
+cargo run --release -p gomoku-eval -- tournament --bots fast,balanced,deep --games-per-pair 64 --opening-plies 4 --search-cpu-time-ms 1000 --max-moves 120 --seed 42 --report-json reports/latest.json
+cargo run --release -p gomoku-eval -- report-html --input reports/latest.json --output reports/index.html --json-href latest.json
 ```
 
 Useful eval flags:
@@ -105,6 +114,7 @@ Useful eval flags:
 | `--games-per-pair` | Tournament games per bot pair; use an even number for color balance |
 | `--replay-dir` | Writes replay JSON for each eval game |
 | `--report-json` | Writes a compact tournament report with summary stats and `cell_index_v1` move lists |
+| `report-html --json-href` | Adds the raw JSON link shown in the rendered HTML |
 
 Seeded openings make deterministic bots see varied positions. Wall-clock budgets
 are practical but noisy under multi-threaded load. CPU-time budgets are better
@@ -112,6 +122,17 @@ for Linux ranking eval, while fixed-depth configs remain the most reproducible
 option. Tournament reports include pairwise records, color splits, shuffled-order
 Elo averages, depth/budget stats, and compact `move_cells` using the same
 `row * 15 + col` codec as saved web matches.
+
+Scratch reports should stay in ignored `outputs/`. Curated reports for the
+public site live in [`reports/`](reports/); the web build copies that folder to
+`/bot-report/`. To publish a selected run, write the JSON to
+`reports/latest.json` and render the HTML to `reports/index.html`.
+
+Curated reports should be generated as a follow-up artifact commit after the
+bot/report code is already committed. Run `git status --short` first; a dirty
+worktree is intentionally captured as a `_dirty` git revision and shown as a
+development-run warning in the report. That warning is fine for scratch output
+under `outputs/`, but avoid publishing it as the canonical `/bot-report/`.
 
 ## Replay format
 

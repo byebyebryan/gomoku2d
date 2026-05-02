@@ -130,14 +130,22 @@ Search benchmark suite:
 cargo bench -p gomoku-bot --bench search_perf -- --noplot
 ```
 
-Lab config and tournament smoke:
+Lab config and quick tournament smoke:
 
 ```sh
 cargo run --release -p gomoku-cli -- --black balanced --white fast --quiet
 cargo run --release -p gomoku-eval -- versus --bot-a fast --bot-b balanced --games 1
 mkdir -p outputs
 cargo run --release -p gomoku-eval -- tournament --bots fast,balanced,deep --games-per-pair 10 --opening-plies 4 --search-cpu-time-ms 100 --max-game-ms 10000 --seed 42 --report-json outputs/gomoku-tournament.json
-cargo run --release -p gomoku-eval -- report-html --input outputs/gomoku-tournament.json --output outputs/gomoku-tournament.html
+cargo run --release -p gomoku-eval -- report-html --input outputs/gomoku-tournament.json --output outputs/gomoku-tournament.html --json-href gomoku-tournament.json
+```
+
+Curated ranking report, from `gomoku-bot-lab/`:
+
+```sh
+mkdir -p reports
+cargo run --release -p gomoku-eval -- tournament --bots fast,balanced,deep --games-per-pair 64 --opening-plies 4 --search-cpu-time-ms 1000 --max-moves 120 --seed 42 --report-json reports/latest.json
+cargo run --release -p gomoku-eval -- report-html --input reports/latest.json --output reports/index.html --json-href latest.json
 ```
 
 `gomoku-eval` defaults to Renju so ranking tournaments are less dominated by
@@ -149,7 +157,15 @@ For Linux ranking eval, prefer `--search-cpu-time-ms` over wall-clock
 `--search-time-ms`; fixed-depth configs are still the cleanest reproducibility
 baseline. The reusable JSON report is the source of truth for ranking analysis;
 the HTML report is a derived view that can be regenerated without rerunning the
-tournament.
+tournament. Keep scratch output under `gomoku-bot-lab/outputs/`; curated
+reports under `gomoku-bot-lab/reports/` are copied into the public web build as
+`/bot-report/`.
+
+For release-quality reports, commit the bot/report implementation first, then
+generate `reports/latest.json` and `reports/index.html` from a clean worktree
+and commit those artifacts separately. The report records the git revision; if
+the tree is dirty at tournament time, the HTML intentionally displays a
+`_dirty` suffix and a development-run warning.
 
 ## Initial hotspot findings
 

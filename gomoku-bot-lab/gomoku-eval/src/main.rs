@@ -1,11 +1,15 @@
 use clap::{Args, Parser, Subcommand};
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::time::Instant;
 
 use gomoku_bot::{RandomBot, SearchBot};
 use gomoku_core::{Color, GameResult, Move, RuleConfig, Variant};
 use gomoku_eval::arena::{run_match_series_with_limits, MatchEndReason, MatchLimits, MatchResult};
-use gomoku_eval::report::{render_tournament_report_html, TournamentReport, TournamentRunReport};
+use gomoku_eval::report::{
+    render_tournament_report_html_with_options, ReportRenderOptions, TournamentReport,
+    TournamentRunReport,
+};
 use gomoku_eval::seed::derive_seed;
 use gomoku_eval::tournament::{
     default_thread_count, run_round_robin_parallel, TournamentBotFactory, TournamentOptions,
@@ -97,6 +101,10 @@ enum Commands {
 
         #[arg(long)]
         output: PathBuf,
+
+        /// Link to the raw JSON from the rendered HTML; defaults to the input file name
+        #[arg(long)]
+        json_href: Option<String>,
     },
     /// Run a round-robin tournament among a list of bots
     Tournament {
@@ -452,6 +460,7 @@ fn main() {
             }
 
             let mut match_idx = 0;
+            let tournament_start = Instant::now();
             let results = run_round_robin_parallel(
                 &factories,
                 games_per_pair,
@@ -489,6 +498,7 @@ fn main() {
                     }
                 },
             );
+            let total_wall_time_ms = Some(tournament_start.elapsed().as_millis() as u64);
 
             let report = match TournamentReport::from_results(
                 TournamentRunReport {
@@ -502,6 +512,7 @@ fn main() {
                     search_cpu_time_ms,
                     max_moves: limits.max_moves,
                     max_game_ms: limits.max_game_ms,
+                    total_wall_time_ms,
                 },
                 &results,
             ) {
@@ -543,8 +554,8 @@ fn main() {
                     row.bot_a,
                     row.bot_b,
                     row.wins_a,
-                    row.wins_b,
                     row.draws,
+                    row.wins_b,
                     row.score_a,
                     row.score_b
                 );
@@ -563,12 +574,25 @@ fn main() {
                 println!("{:<15} {}", reason.key, reason.count);
             }
         }
-        Commands::ReportHtml { input, output } => {
+        Commands::ReportHtml {
+            input,
+            output,
+            json_href,
+        } => {
             let json = std::fs::read_to_string(&input)
                 .unwrap_or_else(|err| exit_with_error(format!("Failed to read report: {err}")));
             let report = TournamentReport::from_json(&json)
                 .unwrap_or_else(|err| exit_with_error(format!("Failed to parse report: {err}")));
-            let html = render_tournament_report_html(&report);
+            let raw_json_href = json_href.or_else(|| {
+                input
+                    .file_name()
+                    .and_then(|name| name.to_str())
+                    .map(str::to_string)
+            });
+            let html = render_tournament_report_html_with_options(
+                &report,
+                &ReportRenderOptions { raw_json_href },
+            );
             std::fs::write(&output, html).unwrap_or_else(|err| {
                 exit_with_error(format!("Failed to write HTML report: {err}"))
             });
