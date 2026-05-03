@@ -104,6 +104,30 @@ PLAYWRIGHT_BASE_URL=http://127.0.0.1:8001 npm run playtest:smoke
 The Vite chunk-size warning for Phaser is expected and is not currently
 release-blocking.
 
+## Bot Report Refresh
+
+Curated bot-lab report artifacts live in `gomoku-bot-lab/reports/` and are
+published under `/bot-report/` by the web build. Scratch reports belong in the
+ignored `gomoku-bot-lab/outputs/` folder.
+
+The report JSON captures git provenance when the tournament command runs, so
+refresh it only from a clean committed toolchain:
+
+1. Commit bot/report code changes first.
+2. Confirm `git status --short` is clean.
+3. Run the curated tournament into `gomoku-bot-lab/reports/latest.json`.
+4. Render `gomoku-bot-lab/reports/index.html` from that JSON.
+5. Confirm `reports/latest.json` says `"git_dirty": false`.
+6. Commit the report artifacts as a follow-up commit.
+
+Current curated command, from `gomoku-bot-lab/`:
+
+```sh
+cargo run --release -p gomoku-eval -- tournament --bots search-d2,search-d3,search-d5 --games-per-pair 64 --opening-plies 4 --search-cpu-time-ms 1000 --max-moves 120 --seed 48 --threads 22 --report-json reports/latest.json
+cargo run --release -p gomoku-eval -- report-html --input reports/latest.json --output reports/index.html --json-href latest.json
+jq '.provenance | {git_commit, git_dirty}' reports/latest.json
+```
+
 ## Push And CI Baseline
 
 For normal hardening commits, push `main` and let CI prove the integration
