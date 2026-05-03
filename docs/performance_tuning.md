@@ -61,6 +61,7 @@ Why this format:
 | `attack_wins_race` | freestyle | Black | tactical, attack-vs-defense | take the direct win instead of blocking |
 | `anti_blunder_open_three` | freestyle | White | tactical, anti-blunder | repro for the recent search safety fix |
 | `create_open_four` | freestyle | Black | tactical, open-four | create a forcing open-four threat |
+| `counter_open_three_with_four` | freestyle | White | tactical, counter-threat, open-four | create a four instead of immediately blocking an open three |
 | `create_broken_three` | freestyle | Black | tactical, broken-three | choose a non-terminal shape-building move |
 | `create_double_threat` | freestyle | Black | tactical, double-threat | create simultaneous immediate winning threats |
 | `renju_forbidden_cross` | renju | Black | renju, forbidden | black to move with a forbidden tactical point |
@@ -88,6 +89,13 @@ Discarded experiments should be documented in the active v0.4 plan and removed
 from the live lab spec surface. The broad `shape-eval` attempt fixed the
 depth-2 broken-three diagnostic, but was discarded because it lost to simply
 using `search-d3` and reduced effective depth under CPU budgets.
+
+The tactical scenario corpus is documented in
+[`tactical_scenarios.md`](tactical_scenarios.md), including board prints,
+roles, and expected moves. Hard safety-gate cases are
+regression guards; diagnostic cases are not promotion gates on their own.
+The shape terms used by those scenarios and the bot's local facts are defined in
+[`tactical_shapes.md`](tactical_shapes.md).
 
 The next performance pass should start with measurement rather than another
 tactical consumer: identify how much time `search-d3` spends in eval,

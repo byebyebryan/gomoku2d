@@ -287,11 +287,18 @@ fn parse_search_config_specs(
 
 fn print_tactical_scenario_result(result: &TacticalScenarioResult) {
     let status = if result.passed { "PASS" } else { "FAIL" };
-    let expected = result.expected_moves.join("/");
+    let expected = if result.expected_moves.is_empty() {
+        "-".to_string()
+    } else {
+        result.expected_moves.join("/")
+    };
     println!(
-        "{:<5} {:<10} {:<28} actual {:<3} expected {:<7} depth {:>2} nodes {:>8} safety {:>5} eval {:>7} cand r/s {:>5}/{:<5} legal r/s {:>6}/{:<6} tt {:>5}/{:<5} cut {:>5} time {:>4}ms",
+        "{:<5} {:<10} {:<16} {:?}/{:?} {:<32} actual {:<3} expect {:<7} depth {:>2} nodes {:>8} safety {:>5} eval {:>7} cand r/s {:>5}/{:<5} legal r/s {:>6}/{:<6} tt {:>5}/{:<5} cut {:>5} time {:>4}ms",
         status,
         result.config_id,
+        result.role,
+        result.variant,
+        result.to_move,
         result.case_id,
         result.actual_move,
         expected,

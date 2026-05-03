@@ -411,7 +411,7 @@ struct TacticalMoveFeatures {
     immediate_win: bool,
     immediate_block: bool,
     open_four: bool,
-    blocked_four: bool,
+    closed_four: bool,
     open_three: bool,
     broken_three: bool,
     double_threat: bool,
@@ -437,7 +437,7 @@ fn analyze_tactical_move(board: &Board, mv: Move) -> TacticalMoveFeatures {
         immediate_win: board.immediate_winning_moves_for(player).contains(&mv),
         immediate_block: board.immediate_winning_moves_for(opponent).contains(&mv),
         open_four: shape.open_four,
-        blocked_four: shape.blocked_four,
+        closed_four: shape.closed_four,
         open_three: shape.open_three,
         broken_three: shape.broken_three,
         double_threat: immediate_wins_after >= 2 && immediate_wins_after > immediate_wins_before,
@@ -561,7 +561,7 @@ fn classify_threat_after_move(board: &Board, mv: Move) -> ThreatAfterMoveState {
 #[derive(Debug, Clone, Copy, Default)]
 struct TacticalShapeFeatures {
     open_four: bool,
-    blocked_four: bool,
+    closed_four: bool,
     open_three: bool,
     broken_three: bool,
 }
@@ -571,8 +571,10 @@ struct TacticalShapeFeatures {
 enum LocalThreatKind {
     Five,
     OpenFour,
-    SimpleFour,
+    ClosedFour,
+    BrokenFour,
     OpenThree,
+    ClosedThree,
     BrokenThree,
 }
 
@@ -582,14 +584,17 @@ impl LocalThreatKind {
         match self {
             LocalThreatKind::Five => 5,
             LocalThreatKind::OpenFour => 4,
-            LocalThreatKind::SimpleFour => 3,
+            LocalThreatKind::ClosedFour | LocalThreatKind::BrokenFour => 3,
             LocalThreatKind::OpenThree => 2,
-            LocalThreatKind::BrokenThree => 1,
+            LocalThreatKind::ClosedThree | LocalThreatKind::BrokenThree => 1,
         }
     }
 
     fn is_forcing(self) -> bool {
-        !matches!(self, LocalThreatKind::BrokenThree)
+        !matches!(
+            self,
+            LocalThreatKind::ClosedThree | LocalThreatKind::BrokenThree
+        )
     }
 }
 
@@ -664,9 +669,14 @@ fn local_threat_fact_in_direction(
             });
         }
         1 => {
+            let kind = if run_len == 4 {
+                LocalThreatKind::ClosedFour
+            } else {
+                LocalThreatKind::BrokenFour
+            };
             return Some(LocalThreatFact {
                 player,
-                kind: LocalThreatKind::SimpleFour,
+                kind,
                 gain_square: mv,
                 defense_squares: four_completion_squares,
                 rest_squares: Vec::new(),
@@ -691,6 +701,13 @@ fn local_threat_fact_in_direction(
             defense_squares: open_ends,
             rest_squares: Vec::new(),
         }),
+        (3, 1) => Some(LocalThreatFact {
+            player,
+            kind: LocalThreatKind::ClosedThree,
+            gain_square: mv,
+            defense_squares: open_ends,
+            rest_squares: Vec::new(),
+        }),
         _ => {
             let rest_squares = broken_three_rest_squares_through_move(board, mv, dr, dc, player);
             if rest_squares.is_empty() {
@@ -700,7 +717,7 @@ fn local_threat_fact_in_direction(
                     player,
                     kind: LocalThreatKind::BrokenThree,
                     gain_square: mv,
-                    defense_squares: Vec::new(),
+                    defense_squares: rest_squares.clone(),
                     rest_squares,
                 })
             }
@@ -767,7 +784,7 @@ fn analyze_shapes_through_move(board: &Board, mv: Move, player: Color) -> Tactic
         if run_len == 4 && open_ends == 2 {
             features.open_four = true;
         } else if run_len == 4 && open_ends == 1 {
-            features.blocked_four = true;
+            features.closed_four = true;
         } else if run_len == 3 && open_ends == 2 {
             features.open_three = true;
         }
@@ -2363,7 +2380,7 @@ mod tests {
     }
 
     #[test]
-    fn tactical_analyzer_labels_open_and_blocked_fours() {
+    fn tactical_analyzer_labels_open_and_closed_fours() {
         let mut board = Board::new(RuleConfig::default());
         for mv in [
             Move { row: 7, col: 7 },
@@ -2378,7 +2395,7 @@ mod tests {
 
         let open_four = analyze_tactical_move(&board, Move { row: 7, col: 10 });
         assert!(open_four.open_four);
-        assert!(!open_four.blocked_four);
+        assert!(!open_four.closed_four);
 
         let mut board = Board::new(RuleConfig::default());
         for mv in [
@@ -2392,9 +2409,9 @@ mod tests {
             board.apply_move(mv).unwrap();
         }
 
-        let blocked_four = analyze_tactical_move(&board, Move { row: 7, col: 10 });
-        assert!(!blocked_four.open_four);
-        assert!(blocked_four.blocked_four);
+        let closed_four = analyze_tactical_move(&board, Move { row: 7, col: 10 });
+        assert!(!closed_four.open_four);
+        assert!(closed_four.closed_four);
     }
 
     #[test]
@@ -2453,7 +2470,7 @@ mod tests {
     }
 
     #[test]
-    fn local_threat_facts_report_five_open_four_and_simple_four() {
+    fn local_threat_facts_report_five_open_four_and_closed_four() {
         let mut five_board = Board::new(RuleConfig::default());
         apply_moves(
             &mut five_board,
@@ -2489,28 +2506,28 @@ mod tests {
         );
         assert!(open_four[0].is_forcing());
 
-        let mut simple_four_board = Board::new(RuleConfig::default());
+        let mut closed_four_board = Board::new(RuleConfig::default());
         apply_moves(
-            &mut simple_four_board,
+            &mut closed_four_board,
             &["H8", "G8", "I8", "A1", "J8", "C1"],
         );
 
-        let simple_four = local_threat_facts_after_move(&simple_four_board, mv("K8"));
+        let closed_four = local_threat_facts_after_move(&closed_four_board, mv("K8"));
         assert_eq!(
-            simple_four,
+            closed_four,
             vec![LocalThreatFact {
                 player: Color::Black,
-                kind: LocalThreatKind::SimpleFour,
+                kind: LocalThreatKind::ClosedFour,
                 gain_square: mv("K8"),
                 defense_squares: vec![mv("L8")],
                 rest_squares: vec![],
             }]
         );
-        assert!(simple_four[0].is_forcing());
+        assert!(closed_four[0].is_forcing());
     }
 
     #[test]
-    fn local_threat_facts_report_gap_four_as_simple_four() {
+    fn local_threat_facts_report_broken_four() {
         let mut board = Board::new(RuleConfig::default());
         apply_moves(&mut board, &["H8", "A1", "I8", "C1", "L8", "E1"]);
 
@@ -2519,7 +2536,7 @@ mod tests {
             gap_four,
             vec![LocalThreatFact {
                 player: Color::Black,
-                kind: LocalThreatKind::SimpleFour,
+                kind: LocalThreatKind::BrokenFour,
                 gain_square: mv("J8"),
                 defense_squares: vec![mv("K8")],
                 rest_squares: vec![],
@@ -2529,7 +2546,7 @@ mod tests {
     }
 
     #[test]
-    fn local_threat_facts_report_open_three_and_broken_three() {
+    fn local_threat_facts_report_open_closed_and_broken_three() {
         let mut open_three_board = Board::new(RuleConfig::default());
         apply_moves(&mut open_three_board, &["H8", "A1", "I8", "C1"]);
 
@@ -2546,6 +2563,22 @@ mod tests {
         );
         assert!(open_three[0].is_forcing());
 
+        let mut closed_three_board = Board::new(RuleConfig::default());
+        apply_moves(&mut closed_three_board, &["H8", "G8", "I8", "A1"]);
+
+        let closed_three = local_threat_facts_after_move(&closed_three_board, mv("J8"));
+        assert_eq!(
+            closed_three,
+            vec![LocalThreatFact {
+                player: Color::Black,
+                kind: LocalThreatKind::ClosedThree,
+                gain_square: mv("J8"),
+                defense_squares: vec![mv("K8")],
+                rest_squares: vec![],
+            }]
+        );
+        assert!(!closed_three[0].is_forcing());
+
         let mut broken_three_board = Board::new(RuleConfig::default());
         apply_moves(&mut broken_three_board, &["H8", "A1", "K8", "C1"]);
 
@@ -2556,7 +2589,7 @@ mod tests {
                 player: Color::Black,
                 kind: LocalThreatKind::BrokenThree,
                 gain_square: mv("J8"),
-                defense_squares: vec![],
+                defense_squares: vec![mv("I8")],
                 rest_squares: vec![mv("I8")],
             }]
         );
@@ -2667,12 +2700,12 @@ mod tests {
         assert_eq!(illegal.kind, ThreatAfterMoveKind::Illegal);
         assert!(illegal.winning_replies.is_empty());
 
-        let mut blocked_four_board = Board::new(RuleConfig::default());
+        let mut closed_four_board = Board::new(RuleConfig::default());
         apply_moves(
-            &mut blocked_four_board,
+            &mut closed_four_board,
             &["H8", "G8", "I8", "A1", "J8", "C1"],
         );
-        let single = classify_threat_after_move(&blocked_four_board, mv("K8"));
+        let single = classify_threat_after_move(&closed_four_board, mv("K8"));
         assert_eq!(single.kind, ThreatAfterMoveKind::SingleThreat);
         assert_eq!(single.winning_replies, vec![mv("L8")]);
 
