@@ -85,7 +85,7 @@ plain `search-d3`, so it is documented rather than exposed as a live lab spec.
 Current notes live in
 [`../docs/archive/v0_4_search_bot_enhancement_plan.md`](../docs/archive/v0_4_search_bot_enhancement_plan.md).
 
-More detailed strategy notes live in [`../docs/bot_baseline.md`](../docs/bot_baseline.md).
+More detailed strategy notes live in [`../docs/search_bot.md`](../docs/search_bot.md).
 
 ### Eval harness
 

@@ -89,7 +89,7 @@ gomoku2d/
 
 Build, CLI usage, replay format, and `SearchBot` notes live in
 [`gomoku-bot-lab/README.md`](gomoku-bot-lab/README.md) and
-[`docs/bot_baseline.md`](docs/bot_baseline.md).
+[`docs/search_bot.md`](docs/search_bot.md).
 
 ---
 
@@ -128,7 +128,7 @@ The canonical design, architecture, and release docs live in `docs/`:
 - [`docs/backend_cost.md`](docs/backend_cost.md) — backend free-tier assumptions, estimates, and headroom tracking
 - [`docs/roadmap.md`](docs/roadmap.md) — version-based phase plan from POC to cloud, lab-powered identity, skins, and online features
 - [`docs/release.md`](docs/release.md) — local preview, release checks, tagging, and publish workflow
-- [`docs/bot_baseline.md`](docs/bot_baseline.md) — current `SearchBot` strategy
+- [`docs/search_bot.md`](docs/search_bot.md) — configurable `SearchBot` strategy, pipeline, and experiment takeaways
 - [`gomoku-web/README.md`](gomoku-web/README.md) — web game stack, local dev, deploy/runtime details
 - [`gomoku-bot-lab/README.md`](gomoku-bot-lab/README.md) — bot-lab build/test, CLI usage, replay format, bot notes
 

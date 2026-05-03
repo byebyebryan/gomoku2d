@@ -1,8 +1,9 @@
-# Bot: Baseline Search
+# Bot: SearchBot
 
 - **File:** `gomoku-bot-lab/gomoku-bot/src/search.rs`
-- **Name string:** `"baseline"`
-- **Purpose:** Classic alpha-beta search bot — the reference implementation everything else gets compared against.
+- **Legacy name string:** `"baseline"`
+- **Purpose:** Configurable alpha-beta search bot and the reference search
+  implementation everything else gets compared against.
 
 ---
 
@@ -28,11 +29,11 @@ Iterative deepening gives move ordering for free: the best move from depth N is 
 
 ## Explicit config
 
-`SearchBot` is now built from `SearchBotConfig`. The compatibility constructors
-still exist:
+`SearchBot` is built from `SearchBotConfig`. The compatibility constructors
+still exist for legacy `baseline` specs and tests:
 
-- `SearchBot::new(depth)` creates a custom fixed-depth baseline bot.
-- `SearchBot::with_time(ms)` creates a custom time-budgeted baseline bot.
+- `SearchBot::new(depth)` creates a custom fixed-depth search bot.
+- `SearchBot::with_time(ms)` creates a custom time-budgeted search bot.
 
 `gomoku-bot` intentionally exposes explicit engine knobs rather than owning
 product presets:
@@ -72,9 +73,9 @@ For lab-only ablations, append `+near-all-r1`, `+near-all-r2`, or
 `search-d5+near-all-r3+no-safety`. These switches measure one pipeline axis at a
 time; defaults remain `near_all_r2` plus `opponent_reply_search_probe`.
 
-These aliases are not core bot identity, and they are not character bots yet.
-They exist so the lab can benchmark stable configs before deciding whether UI
-presets like aggressive or defensive are real enough to expose.
+These aliases are not durable product identity, and they are not character bots
+yet. They exist so the lab can benchmark stable configs before deciding whether
+UI presets like aggressive or defensive are real enough to expose.
 
 Search traces include both the result and the config:
 
@@ -113,22 +114,42 @@ the aggregate used by eval reporting. Root/search candidate and legality metrics
 are split so pipeline-stage costs can be compared independently. Node budgets
 are not enforced yet; this is currently a trace and tournament metric.
 
-Failed experimental knobs are removed instead of kept as dormant config fields.
-The rejected broad threat-extension and broad shape-eval experiments are
-documented in
+## `v0.4.0` experiment takeaways
+
+The detailed experiment log lives in
 [`archive/v0_4_search_bot_enhancement_plan.md`](archive/v0_4_search_bot_enhancement_plan.md).
+The canonical lessons are:
+
+- Keep one `SearchBot` implementation for now. A separate `AdvancedSearchBot`
+  is not justified until a behavior-changing strategy survives evaluation.
+- Failed experimental knobs should be removed instead of kept as dormant config
+  fields. Dead toggles make future reports harder to interpret.
+- Depth remains the most reliable strength lever. A tactical feature must prove
+  that it improves reached depth, runtime, or tournament strength under the same
+  budget; fixing one depth-2 fixture is not enough.
+- Tactical candidates, immediate-win/block ordering, broad threat extension, and
+  broad shape eval all failed their promotion gates. The common failure mode was
+  hidden extra work that reduced effective depth or match strength.
+- `create_broken_three` is a diagnostic, not a target. If depth 3 already solves
+  a position cleanly, making depth 2 imitate it is only useful when it is cheaper
+  than reaching depth 3 normally.
+- TSS vocabulary is useful for facts such as gain, cost/defense, and rest
+  squares, but the practice bot should not become a full threat-space-search
+  solver in this line. Solver-like work belongs in later analysis modules if
+  replay review or puzzles need proof-oriented machinery.
+
 The current direction is depth-oriented: improve the normal search cost first,
 then use tactical facts only for cheap safety, move ordering, or narrow forced
 branches that improve reached depth under the same budget.
 
-Positive baseline optimizations should land in place when they preserve exact
+Positive search optimizations should land in place when they preserve exact
 behavior and improve measured hot paths. They should become configurable only
 when they represent a real tradeoff: strength versus speed, breadth versus
 depth, style, safety, or explainability.
 
 For the next bot slice, `search-d3` is the primary optimization target. Tactical
-scenarios remain diagnostics; a change should not be kept just because it fixes a
-depth-2 fixture if it loses reached depth or tournament strength against the
+scenarios remain diagnostics; a change should not be kept just because it fixes
+a depth-2 fixture if it loses reached depth or tournament strength against the
 current depth-3 baseline.
 
 ---
