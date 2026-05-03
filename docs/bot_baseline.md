@@ -53,9 +53,11 @@ The lab tools define temporary aliases over these fields for experiments:
 | `balanced` | 3 | `near_all_r2` | `opponent_reply_search_probe` | current browser practice-bot depth |
 | `deep` | 5 | `near_all_r2` | `opponent_reply_search_probe` | current CLI default depth |
 
-For lab-only ablations, append `+no-safety` to a search spec to disable the root
-safety gate, for example `search-d5+no-safety`. This is meant to measure the
-safety-gate tradeoff; defaults keep `opponent_reply_search_probe` enabled.
+For lab-only ablations, append `+near-all-r1`, `+near-all-r2`, or
+`+near-all-r3` to change candidate-source radius. Append `+no-safety` to
+disable the root safety gate, for example `search-d5+near-all-r3+no-safety`.
+These switches measure one pipeline axis at a time; defaults remain
+`near_all_r2` plus `opponent_reply_search_probe`.
 
 These aliases are not core bot identity, and they are not character bots yet.
 They exist so the lab can benchmark stable configs before deciding whether UI
