@@ -973,7 +973,85 @@ fn virtual_count_in_direction(
 
 // --- Candidate move generation ---
 
+const STACK_SEEN_WORDS: usize = 4;
+const STACK_SEEN_CELLS: usize = STACK_SEEN_WORDS * u64::BITS as usize;
+
 fn candidate_moves(board: &Board, radius: usize) -> Vec<Move> {
+    if board.result != GameResult::Ongoing {
+        return Vec::new();
+    }
+
+    let size = board.config.board_size;
+    let cell_count = size * size;
+    let mut moves = Vec::with_capacity(cell_count);
+    let has_stones = if cell_count <= STACK_SEEN_CELLS {
+        let mut seen = [0u64; STACK_SEEN_WORDS];
+        collect_candidate_moves(board, radius, &mut seen, &mut moves)
+    } else {
+        let mut seen = vec![0u64; cell_count.div_ceil(u64::BITS as usize)];
+        collect_candidate_moves(board, radius, &mut seen, &mut moves)
+    };
+
+    if !has_stones {
+        let center = size / 2;
+        return vec![Move {
+            row: center,
+            col: center,
+        }];
+    }
+
+    moves
+}
+
+fn collect_candidate_moves(
+    board: &Board,
+    radius: usize,
+    seen: &mut [u64],
+    moves: &mut Vec<Move>,
+) -> bool {
+    let size = board.config.board_size;
+    let mut has_stones = false;
+
+    // Generate candidates from the actual board position rather than move history.
+    // This keeps search robust for reconstructed boards (e.g. snapshots sent to a worker).
+    for row in 0..size {
+        for col in 0..size {
+            if board.cell(row, col).is_none() {
+                continue;
+            }
+
+            has_stones = true;
+
+            let rmin = row.saturating_sub(radius);
+            let rmax = (row + radius).min(size - 1);
+            let cmin = col.saturating_sub(radius);
+            let cmax = (col + radius).min(size - 1);
+            for r in rmin..=rmax {
+                for c in cmin..=cmax {
+                    let idx = r * size + c;
+                    if mark_seen(seen, idx) && board.cell(r, c).is_none() {
+                        moves.push(Move { row: r, col: c });
+                    }
+                }
+            }
+        }
+    }
+
+    has_stones
+}
+
+fn mark_seen(seen: &mut [u64], idx: usize) -> bool {
+    let word = idx / u64::BITS as usize;
+    let bit = 1u64 << (idx % u64::BITS as usize);
+    if seen[word] & bit != 0 {
+        return false;
+    }
+    seen[word] |= bit;
+    true
+}
+
+#[cfg(test)]
+fn candidate_moves_reference(board: &Board, radius: usize) -> Vec<Move> {
     if board.result != GameResult::Ongoing {
         return Vec::new();
     }
@@ -983,8 +1061,6 @@ fn candidate_moves(board: &Board, radius: usize) -> Vec<Move> {
     let mut moves = Vec::new();
     let mut has_stones = false;
 
-    // Generate candidates from the actual board position rather than move history.
-    // This keeps search robust for reconstructed boards (e.g. snapshots sent to a worker).
     for row in 0..size {
         for col in 0..size {
             if board.cell(row, col).is_none() {
@@ -1945,6 +2021,29 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn optimized_candidates_match_reference_order() {
+        for scenario in scenarios::SCENARIOS {
+            let board = scenario.board();
+            for radius in [1, 2, 3] {
+                assert_eq!(
+                    candidate_moves(&board, radius),
+                    candidate_moves_reference(&board, radius),
+                    "scenario '{}' diverged for radius {}",
+                    scenario.id,
+                    radius
+                );
+            }
+        }
+
+        let empty = Board::new(RuleConfig::default());
+        assert_eq!(
+            candidate_moves(&empty, 2),
+            candidate_moves_reference(&empty, 2),
+            "empty board center candidate diverged"
+        );
     }
 
     #[test]
