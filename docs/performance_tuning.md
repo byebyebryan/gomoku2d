@@ -85,7 +85,15 @@ slice is under development. Treat those as diagnostic probes: if a config only
 reduces counted nodes on already-passing forced-line scenarios, it is useful
 evidence for the mechanism but not enough to become a product-facing preset.
 Discarded experiments should be documented in the active v0.4 plan and removed
-from the live lab spec surface.
+from the live lab spec surface. The broad `shape-eval` attempt fixed the
+depth-2 broken-three diagnostic, but was discarded because it lost to simply
+using `search-d3` and reduced effective depth under CPU budgets.
+
+The next performance pass should start with measurement rather than another
+tactical consumer: identify how much time `search-d3` spends in eval,
+candidate generation, legality checks, root prefiltering, and hidden tactical
+probe work. Only keep a search change if it improves reached depth, average move
+time, or tournament score under the same CPU budget.
 
 ## Benchmark suites
 

@@ -72,7 +72,9 @@ custom fixed-depth baseline bot, and `--time-ms` can cap search bots during CLI
 games.
 
 Failed search experiments are intentionally removed instead of kept as dead lab
-suffixes. Current notes live in
+suffixes. The broad shape-eval attempt fixed one depth-2 diagnostic but lost to
+plain `search-d3`, so it is documented rather than exposed as a live lab spec.
+Current notes live in
 [`../docs/archive/v0_4_search_bot_enhancement_plan.md`](../docs/archive/v0_4_search_bot_enhancement_plan.md).
 
 More detailed strategy notes live in [`../docs/bot_baseline.md`](../docs/bot_baseline.md).
@@ -161,8 +163,9 @@ cargo run -p gomoku-eval -- tactical-scenarios --bots search-d2,search-d3,search
 Treat this as diagnostic coverage, not a ranking system. If a baseline config
 already passes a scenario, that fixture becomes a regression guard. New search
 logic should be driven by scenarios that expose real gaps, then confirmed with
-tournament ablation. The rejected broad threat-extension experiment is recorded
-in the v0.4 search plan rather than exposed as a current lab spec.
+tournament ablation. The rejected broad threat-extension and broad shape-eval
+experiments are recorded in the v0.4 search plan rather than exposed as current
+lab specs.
 
 ## Replay format
 
