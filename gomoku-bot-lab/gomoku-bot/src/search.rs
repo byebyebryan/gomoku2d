@@ -134,75 +134,82 @@ fn evaluate(board: &Board, color: Color) -> i32 {
 
     let mut counts = [[0i32; 6]; 2];
     let mut open_ends = [[0i32; 6]; 2];
+    let mut terminal_score = None;
 
     for &(dr, dc) in &DIRS {
-        for row in 0..size as isize {
-            for col in 0..size as isize {
-                let Some(player) = board.cell(row as usize, col as usize) else {
-                    continue;
-                };
-
-                // Only score a contiguous run once, from its back end.
-                let pr = row - dr;
-                let pc = col - dc;
-                if pr >= 0
-                    && pr < size as isize
-                    && pc >= 0
-                    && pc < size as isize
-                    && board.cell(pr as usize, pc as usize) == Some(player)
-                {
-                    continue;
-                }
-
-                let mut len = 0isize;
-                let (mut r, mut c) = (row, col);
-                while r >= 0
-                    && r < size as isize
-                    && c >= 0
-                    && c < size as isize
-                    && board.cell(r as usize, c as usize) == Some(player)
-                {
-                    len += 1;
-                    r += dr;
-                    c += dc;
-                }
-
-                if len >= win_len {
-                    return if player == color {
-                        2_000_000
-                    } else {
-                        -2_000_000
-                    };
-                }
-                if len < 2 {
-                    continue;
-                }
-
-                let mut ends = 0i32;
-                let (br, bc) = (row - dr, col - dc);
-                if br >= 0
-                    && br < size as isize
-                    && bc >= 0
-                    && bc < size as isize
-                    && board.cell(br as usize, bc as usize).is_none()
-                {
-                    ends += 1;
-                }
-                if r >= 0
-                    && r < size as isize
-                    && c >= 0
-                    && c < size as isize
-                    && board.cell(r as usize, c as usize).is_none()
-                {
-                    ends += 1;
-                }
-                if ends > 0 {
-                    let score_idx = if player == color { 0 } else { 1 };
-                    let len_idx = len.min(5) as usize;
-                    counts[score_idx][len_idx] += 1;
-                    open_ends[score_idx][len_idx] += ends;
-                }
+        board.for_each_occupied(|row, col, player| {
+            if terminal_score.is_some() {
+                return;
             }
+
+            let row = row as isize;
+            let col = col as isize;
+
+            // Only score a contiguous run once, from its back end.
+            let pr = row - dr;
+            let pc = col - dc;
+            if pr >= 0
+                && pr < size as isize
+                && pc >= 0
+                && pc < size as isize
+                && board.has_color(pr as usize, pc as usize, player)
+            {
+                return;
+            }
+
+            let mut len = 0isize;
+            let (mut r, mut c) = (row, col);
+            while r >= 0
+                && r < size as isize
+                && c >= 0
+                && c < size as isize
+                && board.has_color(r as usize, c as usize, player)
+            {
+                len += 1;
+                r += dr;
+                c += dc;
+            }
+
+            if len >= win_len {
+                terminal_score = Some(if player == color {
+                    2_000_000
+                } else {
+                    -2_000_000
+                });
+                return;
+            }
+            if len < 2 {
+                return;
+            }
+
+            let mut ends = 0i32;
+            let (br, bc) = (row - dr, col - dc);
+            if br >= 0
+                && br < size as isize
+                && bc >= 0
+                && bc < size as isize
+                && board.is_empty(br as usize, bc as usize)
+            {
+                ends += 1;
+            }
+            if r >= 0
+                && r < size as isize
+                && c >= 0
+                && c < size as isize
+                && board.is_empty(r as usize, c as usize)
+            {
+                ends += 1;
+            }
+            if ends > 0 {
+                let score_idx = if player == color { 0 } else { 1 };
+                let len_idx = len.min(5) as usize;
+                counts[score_idx][len_idx] += 1;
+                open_ends[score_idx][len_idx] += ends;
+            }
+        });
+
+        if let Some(score) = terminal_score {
+            return score;
         }
     }
 
@@ -236,10 +243,10 @@ fn evaluate_reference(board: &Board, color: Color) -> i32 {
                     let pc = col - dc;
                     let back_in_bounds =
                         pr >= 0 && pr < size as isize && pc >= 0 && pc < size as isize;
-                    if back_in_bounds && board.cell(pr as usize, pc as usize) == Some(player) {
+                    if back_in_bounds && board.has_color(pr as usize, pc as usize, player) {
                         continue;
                     }
-                    if board.cell(row as usize, col as usize) != Some(player) {
+                    if !board.has_color(row as usize, col as usize, player) {
                         continue;
                     }
 
@@ -249,7 +256,7 @@ fn evaluate_reference(board: &Board, color: Color) -> i32 {
                         && r < size as isize
                         && c >= 0
                         && c < size as isize
-                        && board.cell(r as usize, c as usize) == Some(player)
+                        && board.has_color(r as usize, c as usize, player)
                     {
                         len += 1;
                         r += dr;
@@ -272,7 +279,7 @@ fn evaluate_reference(board: &Board, color: Color) -> i32 {
                         && br < size as isize
                         && bc >= 0
                         && bc < size as isize
-                        && board.cell(br as usize, bc as usize).is_none()
+                        && board.is_empty(br as usize, bc as usize)
                     {
                         ends += 1;
                     }
@@ -280,7 +287,7 @@ fn evaluate_reference(board: &Board, color: Color) -> i32 {
                         && r < size as isize
                         && c >= 0
                         && c < size as isize
-                        && board.cell(r as usize, c as usize).is_none()
+                        && board.is_empty(r as usize, c as usize)
                     {
                         ends += 1;
                     }
@@ -741,22 +748,16 @@ fn four_completion_squares_through_move(
                 break;
             }
 
-            match board.cell(row as usize, col as usize) {
-                Some(color) if color == player => player_count += 1,
-                None if empty_square.is_none() => {
-                    empty_square = Some(Move {
-                        row: row as usize,
-                        col: col as usize,
-                    });
-                }
-                None => {
-                    blocked = true;
-                    break;
-                }
-                _ => {
-                    blocked = true;
-                    break;
-                }
+            if board.has_color(row as usize, col as usize, player) {
+                player_count += 1;
+            } else if board.is_empty(row as usize, col as usize) && empty_square.is_none() {
+                empty_square = Some(Move {
+                    row: row as usize,
+                    col: col as usize,
+                });
+            } else {
+                blocked = true;
+                break;
             }
         }
 
@@ -822,7 +823,7 @@ fn count_player_in_direction(
     let mut count = 0usize;
     let mut row = mv.row as isize + dr;
     let mut col = mv.col as isize + dc;
-    while in_bounds(board, row, col) && board.cell(row as usize, col as usize) == Some(player) {
+    while in_bounds(board, row, col) && board.has_color(row as usize, col as usize, player) {
         count += 1;
         row += dr;
         col += dc;
@@ -833,7 +834,7 @@ fn count_player_in_direction(
 fn offset_cell_is_empty(board: &Board, mv: Move, dr: isize, dc: isize, distance: usize) -> bool {
     let row = mv.row as isize + dr * distance as isize;
     let col = mv.col as isize + dc * distance as isize;
-    in_bounds(board, row, col) && board.cell(row as usize, col as usize).is_none()
+    in_bounds(board, row, col) && board.is_empty(row as usize, col as usize)
 }
 
 #[cfg_attr(not(test), allow(dead_code))]
@@ -846,7 +847,7 @@ fn empty_offset_move(
 ) -> Option<Move> {
     let row = mv.row as isize + dr * distance as isize;
     let col = mv.col as isize + dc * distance as isize;
-    if in_bounds(board, row, col) && board.cell(row as usize, col as usize).is_none() {
+    if in_bounds(board, row, col) && board.is_empty(row as usize, col as usize) {
         Some(Move {
             row: row as usize,
             col: col as usize,
@@ -894,13 +895,13 @@ fn broken_three_rest_squares_through_move(
                 break;
             }
 
-            match board.cell(row as usize, col as usize) {
-                Some(color) if color == player => player_offsets.push(offset),
-                None => empty_offsets.push(offset),
-                _ => {
-                    blocked = true;
-                    break;
-                }
+            if board.has_color(row as usize, col as usize, player) {
+                player_offsets.push(offset);
+            } else if board.is_empty(row as usize, col as usize) {
+                empty_offsets.push(offset);
+            } else {
+                blocked = true;
+                break;
             }
         }
 
@@ -962,7 +963,7 @@ fn virtual_count_in_direction(
     loop {
         let row = mv.row as isize + dr * offset;
         let col = mv.col as isize + dc * offset;
-        if !in_bounds(board, row, col) || board.cell(row as usize, col as usize) != Some(player) {
+        if !in_bounds(board, row, col) || !board.has_color(row as usize, col as usize, player) {
             break;
         }
         count += 1;
@@ -1011,30 +1012,22 @@ fn mark_candidate_moves(board: &Board, radius: usize, seen: &mut [u64]) -> bool 
     let size = board.config.board_size;
     let mut has_stones = false;
 
-    // Generate candidates from the actual board position rather than move history.
-    // This keeps search robust for reconstructed boards (e.g. snapshots sent to a worker).
-    for row in 0..size {
-        for col in 0..size {
-            if board.cell(row, col).is_none() {
-                continue;
-            }
+    board.for_each_occupied(|row, col, _| {
+        has_stones = true;
 
-            has_stones = true;
-
-            let rmin = row.saturating_sub(radius);
-            let rmax = (row + radius).min(size - 1);
-            let cmin = col.saturating_sub(radius);
-            let cmax = (col + radius).min(size - 1);
-            for r in rmin..=rmax {
-                for c in cmin..=cmax {
-                    let idx = r * size + c;
-                    if board.cell(r, c).is_none() {
-                        mark_seen(seen, idx);
-                    }
+        let rmin = row.saturating_sub(radius);
+        let rmax = (row + radius).min(size - 1);
+        let cmin = col.saturating_sub(radius);
+        let cmax = (col + radius).min(size - 1);
+        for r in rmin..=rmax {
+            for c in cmin..=cmax {
+                let idx = r * size + c;
+                if board.is_empty(r, c) {
+                    mark_seen(seen, idx);
                 }
             }
         }
-    }
+    });
 
     has_stones
 }
@@ -1080,7 +1073,7 @@ fn candidate_moves_reference(board: &Board, radius: usize) -> Vec<Move> {
 
     for row in 0..size {
         for col in 0..size {
-            if board.cell(row, col).is_none() {
+            if board.is_empty(row, col) {
                 continue;
             }
 
@@ -1093,7 +1086,7 @@ fn candidate_moves_reference(board: &Board, radius: usize) -> Vec<Move> {
             for r in rmin..=rmax {
                 for c in cmin..=cmax {
                     let idx = r * size + c;
-                    if !seen[idx] && board.cell(r, c).is_none() {
+                    if !seen[idx] && board.is_empty(r, c) {
                         seen[idx] = true;
                         moves.push(Move { row: r, col: c });
                     }
