@@ -154,7 +154,7 @@ Lab config and quick tournament smoke:
 cargo run --release -p gomoku-cli -- --black balanced --white fast --quiet
 cargo run --release -p gomoku-eval -- versus --bot-a fast --bot-b balanced --games 1
 mkdir -p outputs
-cargo run --release -p gomoku-eval -- tournament --bots fast,balanced,deep --games-per-pair 10 --opening-plies 4 --search-cpu-time-ms 100 --max-game-ms 10000 --seed 42 --report-json outputs/gomoku-tournament.json
+cargo run --release -p gomoku-eval -- tournament --bots search-d2,search-d3,search-d5 --games-per-pair 10 --opening-plies 4 --search-cpu-time-ms 100 --max-game-ms 10000 --seed 42 --report-json outputs/gomoku-tournament.json
 cargo run --release -p gomoku-eval -- report-html --input outputs/gomoku-tournament.json --output outputs/gomoku-tournament.html --json-href gomoku-tournament.json
 ```
 
@@ -162,7 +162,7 @@ Curated ranking report, from `gomoku-bot-lab/`:
 
 ```sh
 mkdir -p reports
-cargo run --release -p gomoku-eval -- tournament --bots fast,balanced,deep --games-per-pair 64 --opening-plies 4 --search-cpu-time-ms 1000 --max-moves 120 --seed 42 --report-json reports/latest.json
+cargo run --release -p gomoku-eval -- tournament --bots search-d2,search-d3,search-d5 --games-per-pair 64 --opening-plies 4 --search-cpu-time-ms 1000 --max-moves 120 --seed 48 --threads 22 --report-json reports/latest.json
 cargo run --release -p gomoku-eval -- report-html --input reports/latest.json --output reports/index.html --json-href latest.json
 ```
 
@@ -215,8 +215,8 @@ From code inspection before the first benchmark pass:
    `apply_move()` / `undo_move()` per candidate (`2026-04-23`)
 3. Skip redundant `is_legal()` checks in search nodes where Renju-black
    forbidden logic is not relevant (`2026-04-23`)
-4. Add `has_multiple_immediate_winning_moves_for()` so the root anti-blunder
-   prefilter can stop after two immediate wins (`2026-04-23`)
+4. Add `has_multiple_immediate_winning_moves_for()` so the root safety gate can
+   stop after two immediate wins (`2026-04-23`)
 5. Let `apply_move()` be the immediate-win legality gate instead of calling
    `is_legal_for()` first and repeating Renju checks (`2026-04-23`)
 6. Add benchmark-corpus search tests for legal output plus immediate
