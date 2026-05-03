@@ -211,7 +211,7 @@ impl Board {
             return vec![];
         }
 
-        self.nearby_empty_moves(self.config.win_length.saturating_sub(1))
+        self.renju_forbidden_candidate_moves()
             .into_iter()
             .filter(|&mv| self.is_renju_forbidden_at(mv))
             .collect()
@@ -327,6 +327,63 @@ impl Board {
         moves
     }
 
+    fn nearby_empty_moves_for_color(&self, color: Color, radius: usize) -> Vec<Move> {
+        if self.result != GameResult::Ongoing {
+            return vec![];
+        }
+
+        let size = self.config.board_size;
+        let radius = radius as isize;
+        let mut seen = vec![false; size * size];
+        let mut has_anchor = false;
+
+        for row in 0..size {
+            for col in 0..size {
+                if self.cells[row][col] != Some(color) {
+                    continue;
+                }
+                has_anchor = true;
+
+                for dr in -radius..=radius {
+                    for dc in -radius..=radius {
+                        let r = row as isize + dr;
+                        let c = col as isize + dc;
+                        if r < 0 || r >= size as isize || c < 0 || c >= size as isize {
+                            continue;
+                        }
+
+                        let mv = Move {
+                            row: r as usize,
+                            col: c as usize,
+                        };
+                        if self.cells[mv.row][mv.col].is_some() {
+                            continue;
+                        }
+                        seen[mv.row * size + mv.col] = true;
+                    }
+                }
+            }
+        }
+
+        if !has_anchor {
+            return vec![];
+        }
+
+        let mut moves = Vec::new();
+        for row in 0..size {
+            for col in 0..size {
+                if seen[row * size + col] {
+                    moves.push(Move { row, col });
+                }
+            }
+        }
+        moves
+    }
+
+    fn renju_forbidden_candidate_moves(&self) -> Vec<Move> {
+        self.nearby_empty_moves_for_color(Color::Black, 2)
+    }
+
     fn legal_moves_for(&self, color: Color) -> Vec<Move> {
         if self.result != GameResult::Ongoing {
             return vec![];
@@ -360,6 +417,7 @@ impl Board {
         }
         if self.config.variant == Variant::Renju
             && color == Color::Black
+            && self.can_be_renju_forbidden_at(mv)
             && self.is_renju_forbidden_at(mv)
         {
             return false;
@@ -382,6 +440,7 @@ impl Board {
         let color = self.current_player;
         if self.config.variant == Variant::Renju
             && color == Color::Black
+            && self.can_be_renju_forbidden_at(mv)
             && self.is_renju_forbidden_at(mv)
         {
             return Err(MoveError::Forbidden);
@@ -432,6 +491,36 @@ impl Board {
     //
     // All functions below are called BEFORE the stone is placed.
     // `cell_virtual` treats (vrow, vcol) as already containing `vcolor`.
+
+    fn can_be_renju_forbidden_at(&self, mv: Move) -> bool {
+        self.has_color_within_chebyshev(mv, Color::Black, 2)
+    }
+
+    fn has_color_within_chebyshev(&self, mv: Move, color: Color, radius: usize) -> bool {
+        let size = self.config.board_size as isize;
+        let row = mv.row as isize;
+        let col = mv.col as isize;
+        let radius = radius as isize;
+
+        for dr in -radius..=radius {
+            for dc in -radius..=radius {
+                if dr == 0 && dc == 0 {
+                    continue;
+                }
+
+                let r = row + dr;
+                let c = col + dc;
+                if r < 0 || r >= size || c < 0 || c >= size {
+                    continue;
+                }
+                if self.cells[r as usize][c as usize] == Some(color) {
+                    return true;
+                }
+            }
+        }
+
+        false
+    }
 
     fn cell_virtual(
         &self,
@@ -868,6 +957,77 @@ mod tests {
             variant: crate::rules::Variant::Renju,
             ..Default::default()
         })
+    }
+
+    fn full_scan_forbidden_moves_for_current_player(board: &Board) -> Vec<Move> {
+        if board.result != GameResult::Ongoing
+            || board.config.variant != Variant::Renju
+            || board.current_player != Color::Black
+        {
+            return vec![];
+        }
+
+        let mut moves = Vec::new();
+        for row in 0..board.config.board_size {
+            for col in 0..board.config.board_size {
+                if board.cells[row][col].is_none() {
+                    let mv = Move { row, col };
+                    if board.is_renju_forbidden_at(mv) {
+                        moves.push(mv);
+                    }
+                }
+            }
+        }
+        moves
+    }
+
+    #[test]
+    fn renju_forbidden_candidate_moves_only_follow_black_stones() {
+        let mut b = renju_board();
+        setup(&mut b, &[(7, 7), (0, 0), (10, 10), (0, 2)]);
+
+        let candidates = b.renju_forbidden_candidate_moves();
+
+        assert!(candidates.contains(&Move { row: 7, col: 5 }));
+        assert!(candidates.contains(&Move { row: 12, col: 12 }));
+        assert!(!candidates.contains(&Move { row: 0, col: 1 }));
+        assert!(!candidates.contains(&Move { row: 2, col: 2 }));
+    }
+
+    #[test]
+    fn optimized_renju_forbidden_moves_match_full_scan() {
+        let mut double_three = renju_board();
+        setup(
+            &mut double_three,
+            &[(5, 7), W[0], (6, 7), W[1], (7, 5), W[2], (7, 6), W[3]],
+        );
+
+        let mut overline = renju_board();
+        setup(
+            &mut overline,
+            &[
+                (0, 0),
+                W[0],
+                (0, 2),
+                W[1],
+                (0, 3),
+                W[2],
+                (0, 4),
+                W[3],
+                (0, 5),
+                W[4],
+            ],
+        );
+
+        let mut white_noise = renju_board();
+        setup(&mut white_noise, &[(7, 7), (0, 0), (10, 10), (0, 2)]);
+
+        for board in [&double_three, &overline, &white_noise] {
+            assert_eq!(
+                board.forbidden_moves_for_current_player(),
+                full_scan_forbidden_moves_for_current_player(board)
+            );
+        }
     }
 
     // Helper: make alternating moves (Black, White, Black, ...) from a list of (row, col) pairs.

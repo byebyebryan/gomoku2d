@@ -953,17 +953,42 @@ fn needs_renju_legality_check(board: &Board, color: Color) -> bool {
     board.config.variant == Variant::Renju && color == Color::Black
 }
 
+fn needs_legality_gate(board: &Board, color: Color, legality_gate: LegalityGate) -> bool {
+    match legality_gate {
+        LegalityGate::ExactRules => needs_renju_legality_check(board, color),
+    }
+}
+
+fn legal_by_gate_counted(
+    board: &Board,
+    mv: Move,
+    legality_gate: LegalityGate,
+    metrics: &mut SearchMetrics,
+    phase: SearchMetricPhase,
+) -> bool {
+    match legality_gate {
+        LegalityGate::ExactRules => metrics.record_legality(board.is_legal(mv), phase),
+    }
+}
+
 fn allows_opponent_forcing_reply(
     board: &mut Board,
     mv: Move,
     candidate_source: CandidateSource,
+    legality_gate: LegalityGate,
     deadline: SearchDeadline,
     prefilter_nodes: &mut u64,
     metrics: &mut SearchMetrics,
 ) -> Option<bool> {
     let current = board.current_player;
-    if needs_renju_legality_check(board, current)
-        && !metrics.record_legality(board.is_legal(mv), SearchMetricPhase::Prefilter)
+    if needs_legality_gate(board, current, legality_gate)
+        && !legal_by_gate_counted(
+            board,
+            mv,
+            legality_gate,
+            metrics,
+            SearchMetricPhase::Prefilter,
+        )
     {
         return Some(false);
     }
@@ -989,8 +1014,14 @@ fn allows_opponent_forcing_reply(
                 timed_out = true;
                 break;
             }
-            if needs_renju_legality_check(board, opponent)
-                && !metrics.record_legality(board.is_legal(reply), SearchMetricPhase::Prefilter)
+            if needs_legality_gate(board, opponent, legality_gate)
+                && !legal_by_gate_counted(
+                    board,
+                    reply,
+                    legality_gate,
+                    metrics,
+                    SearchMetricPhase::Prefilter,
+                )
             {
                 continue;
             }
@@ -1019,6 +1050,7 @@ fn allows_opponent_forcing_reply(
 fn root_candidate_moves_with_metrics(
     board: &Board,
     candidate_source: CandidateSource,
+    legality_gate: LegalityGate,
     enable_prefilter: bool,
     deadline: SearchDeadline,
     metrics: &mut SearchMetrics,
@@ -1029,9 +1061,15 @@ fn root_candidate_moves_with_metrics(
         metrics,
         SearchMetricPhase::Prefilter,
     );
-    if needs_renju_legality_check(board, board.current_player) {
+    if needs_legality_gate(board, board.current_player, legality_gate) {
         moves.retain(|&mv| {
-            metrics.record_legality(board.is_legal(mv), SearchMetricPhase::Prefilter)
+            legal_by_gate_counted(
+                board,
+                mv,
+                legality_gate,
+                metrics,
+                SearchMetricPhase::Prefilter,
+            )
         });
     }
     if moves.is_empty() || !enable_prefilter {
@@ -1050,6 +1088,7 @@ fn root_candidate_moves_with_metrics(
             &mut working,
             mv,
             candidate_source,
+            legality_gate,
             deadline,
             &mut prefilter_nodes,
             metrics,
@@ -1081,6 +1120,7 @@ fn negamax(
     tt: &mut HashMap<u64, TTEntry>,
     zobrist: &ZobristTable,
     candidate_source: CandidateSource,
+    legality_gate: LegalityGate,
     nodes: &mut u64,
     metrics: &mut SearchMetrics,
     deadline: SearchDeadline,
@@ -1158,7 +1198,7 @@ fn negamax(
         moves
     };
 
-    let needs_legality_check = needs_renju_legality_check(board, color);
+    let needs_legality_check = needs_legality_gate(board, color, legality_gate);
     let mut timed_out = false;
     for mv in ordered {
         if deadline.expired() {
@@ -1166,7 +1206,7 @@ fn negamax(
             break;
         }
         if needs_legality_check
-            && !metrics.record_legality(board.is_legal(mv), SearchMetricPhase::Search)
+            && !legal_by_gate_counted(board, mv, legality_gate, metrics, SearchMetricPhase::Search)
         {
             continue;
         }
@@ -1184,6 +1224,7 @@ fn negamax(
             tt,
             zobrist,
             candidate_source,
+            legality_gate,
             nodes,
             metrics,
             deadline,
@@ -1253,6 +1294,7 @@ fn search_root(
     tt: &mut HashMap<u64, TTEntry>,
     zobrist: &ZobristTable,
     candidate_source: CandidateSource,
+    legality_gate: LegalityGate,
     nodes: &mut u64,
     metrics: &mut SearchMetrics,
     deadline: SearchDeadline,
@@ -1277,7 +1319,7 @@ fn search_root(
         root_moves.to_vec()
     };
 
-    let needs_legality_check = needs_renju_legality_check(board, color);
+    let needs_legality_check = needs_legality_gate(board, color, legality_gate);
     let mut timed_out = false;
     for mv in ordered {
         if deadline.expired() {
@@ -1285,7 +1327,7 @@ fn search_root(
             break;
         }
         if needs_legality_check
-            && !metrics.record_legality(board.is_legal(mv), SearchMetricPhase::Search)
+            && !legal_by_gate_counted(board, mv, legality_gate, metrics, SearchMetricPhase::Search)
         {
             continue;
         }
@@ -1303,6 +1345,7 @@ fn search_root(
             tt,
             zobrist,
             candidate_source,
+            legality_gate,
             nodes,
             metrics,
             deadline,
@@ -1561,6 +1604,7 @@ impl Bot for SearchBot {
         let root_hash = hash_board(&self.zobrist, board);
         let center = board.config.board_size / 2;
         let candidate_source = self.config.candidate_source();
+        let legality_gate = self.config.legality_gate();
         let prefilter_deadline = SearchDeadline::new(
             start,
             time_budget.map(|budget| budget / 2),
@@ -1570,6 +1614,7 @@ impl Bot for SearchBot {
         let (root_moves, prefilter_nodes, mut budget_exhausted) = root_candidate_moves_with_metrics(
             board,
             candidate_source,
+            legality_gate,
             self.config.root_prefilter,
             prefilter_deadline,
             &mut metrics,
@@ -1610,6 +1655,7 @@ impl Bot for SearchBot {
                 &mut self.tt,
                 &self.zobrist,
                 candidate_source,
+                legality_gate,
                 &mut nodes,
                 &mut metrics,
                 deadline,
@@ -1756,6 +1802,7 @@ mod tests {
         let moves = root_candidate_moves_with_metrics(
             &board,
             CandidateSource::NearAll { radius: 2 },
+            LegalityGate::ExactRules,
             true,
             SearchDeadline::new(
                 Instant::now() - Duration::from_millis(2),
