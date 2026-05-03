@@ -219,6 +219,110 @@ fn evaluate(board: &Board, color: Color) -> i32 {
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct SearchMetrics {
+    pub eval_calls: u64,
+    pub candidate_generations: u64,
+    pub candidate_moves_total: u64,
+    pub candidate_moves_max: u64,
+    pub prefilter_candidate_generations: u64,
+    pub prefilter_candidate_moves_total: u64,
+    pub prefilter_candidate_moves_max: u64,
+    pub search_candidate_generations: u64,
+    pub search_candidate_moves_total: u64,
+    pub search_candidate_moves_max: u64,
+    pub legality_checks: u64,
+    pub illegal_moves_skipped: u64,
+    pub prefilter_legality_checks: u64,
+    pub prefilter_illegal_moves_skipped: u64,
+    pub search_legality_checks: u64,
+    pub search_illegal_moves_skipped: u64,
+    pub tt_hits: u64,
+    pub tt_cutoffs: u64,
+    pub beta_cutoffs: u64,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SearchMetricPhase {
+    Prefilter,
+    Search,
+}
+
+impl SearchMetrics {
+    fn record_candidates(&mut self, count: usize, phase: SearchMetricPhase) {
+        let count = count as u64;
+        self.candidate_generations += 1;
+        self.candidate_moves_total += count;
+        self.candidate_moves_max = self.candidate_moves_max.max(count);
+
+        match phase {
+            SearchMetricPhase::Prefilter => {
+                self.prefilter_candidate_generations += 1;
+                self.prefilter_candidate_moves_total += count;
+                self.prefilter_candidate_moves_max = self.prefilter_candidate_moves_max.max(count);
+            }
+            SearchMetricPhase::Search => {
+                self.search_candidate_generations += 1;
+                self.search_candidate_moves_total += count;
+                self.search_candidate_moves_max = self.search_candidate_moves_max.max(count);
+            }
+        }
+    }
+
+    fn record_legality(&mut self, legal: bool, phase: SearchMetricPhase) -> bool {
+        self.legality_checks += 1;
+        if !legal {
+            self.illegal_moves_skipped += 1;
+        }
+
+        match phase {
+            SearchMetricPhase::Prefilter => {
+                self.prefilter_legality_checks += 1;
+                if !legal {
+                    self.prefilter_illegal_moves_skipped += 1;
+                }
+            }
+            SearchMetricPhase::Search => {
+                self.search_legality_checks += 1;
+                if !legal {
+                    self.search_illegal_moves_skipped += 1;
+                }
+            }
+        }
+
+        legal
+    }
+
+    fn trace(self) -> serde_json::Value {
+        serde_json::json!({
+            "eval_calls": self.eval_calls,
+            "candidate_generations": self.candidate_generations,
+            "candidate_moves_total": self.candidate_moves_total,
+            "candidate_moves_max": self.candidate_moves_max,
+            "prefilter_candidate_generations": self.prefilter_candidate_generations,
+            "prefilter_candidate_moves_total": self.prefilter_candidate_moves_total,
+            "prefilter_candidate_moves_max": self.prefilter_candidate_moves_max,
+            "search_candidate_generations": self.search_candidate_generations,
+            "search_candidate_moves_total": self.search_candidate_moves_total,
+            "search_candidate_moves_max": self.search_candidate_moves_max,
+            "legality_checks": self.legality_checks,
+            "illegal_moves_skipped": self.illegal_moves_skipped,
+            "prefilter_legality_checks": self.prefilter_legality_checks,
+            "prefilter_illegal_moves_skipped": self.prefilter_illegal_moves_skipped,
+            "search_legality_checks": self.search_legality_checks,
+            "search_illegal_moves_skipped": self.search_illegal_moves_skipped,
+            "tt_hits": self.tt_hits,
+            "tt_cutoffs": self.tt_cutoffs,
+            "beta_cutoffs": self.beta_cutoffs,
+        })
+    }
+}
+
+fn evaluate_counted(board: &Board, color: Color, metrics: &mut SearchMetrics) -> i32 {
+    metrics.eval_calls += 1;
+    evaluate(board, color)
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 #[cfg_attr(not(test), allow(dead_code))]
 struct TacticalMoveFeatures {
     is_legal: bool,
@@ -825,6 +929,17 @@ fn candidate_moves(board: &Board, radius: usize) -> Vec<Move> {
     moves
 }
 
+fn candidate_moves_counted(
+    board: &Board,
+    radius: usize,
+    metrics: &mut SearchMetrics,
+    phase: SearchMetricPhase,
+) -> Vec<Move> {
+    let moves = candidate_moves(board, radius);
+    metrics.record_candidates(moves.len(), phase);
+    moves
+}
+
 fn needs_renju_legality_check(board: &Board, color: Color) -> bool {
     board.config.variant == Variant::Renju && color == Color::Black
 }
@@ -835,9 +950,12 @@ fn allows_opponent_forcing_reply(
     candidate_radius: usize,
     deadline: SearchDeadline,
     prefilter_nodes: &mut u64,
+    metrics: &mut SearchMetrics,
 ) -> Option<bool> {
     let current = board.current_player;
-    if needs_renju_legality_check(board, current) && !board.is_legal(mv) {
+    if needs_renju_legality_check(board, current)
+        && !metrics.record_legality(board.is_legal(mv), SearchMetricPhase::Prefilter)
+    {
         return Some(false);
     }
 
@@ -852,12 +970,19 @@ fn allows_opponent_forcing_reply(
     let mut dangerous = false;
     let mut timed_out = false;
     if !matches!(board.result, GameResult::Winner(winner) if winner == current) {
-        for reply in candidate_moves(board, candidate_radius) {
+        for reply in candidate_moves_counted(
+            board,
+            candidate_radius,
+            metrics,
+            SearchMetricPhase::Prefilter,
+        ) {
             if deadline.expired() {
                 timed_out = true;
                 break;
             }
-            if needs_renju_legality_check(board, opponent) && !board.is_legal(reply) {
+            if needs_renju_legality_check(board, opponent)
+                && !metrics.record_legality(board.is_legal(reply), SearchMetricPhase::Prefilter)
+            {
                 continue;
             }
 
@@ -882,15 +1007,23 @@ fn allows_opponent_forcing_reply(
     }
 }
 
-fn root_candidate_moves(
+fn root_candidate_moves_with_metrics(
     board: &Board,
     candidate_radius: usize,
     enable_prefilter: bool,
     deadline: SearchDeadline,
+    metrics: &mut SearchMetrics,
 ) -> (Vec<Move>, u64, bool) {
-    let mut moves = candidate_moves(board, candidate_radius);
+    let mut moves = candidate_moves_counted(
+        board,
+        candidate_radius,
+        metrics,
+        SearchMetricPhase::Prefilter,
+    );
     if needs_renju_legality_check(board, board.current_player) {
-        moves.retain(|&mv| board.is_legal(mv));
+        moves.retain(|&mv| {
+            metrics.record_legality(board.is_legal(mv), SearchMetricPhase::Prefilter)
+        });
     }
     if moves.is_empty() || !enable_prefilter {
         return (moves, 0, false);
@@ -910,6 +1043,7 @@ fn root_candidate_moves(
             candidate_radius,
             deadline,
             &mut prefilter_nodes,
+            metrics,
         ) {
             Some(false) => safe_moves.push(mv),
             Some(true) => {}
@@ -939,26 +1073,37 @@ fn negamax(
     zobrist: &ZobristTable,
     candidate_radius: usize,
     nodes: &mut u64,
+    metrics: &mut SearchMetrics,
     deadline: SearchDeadline,
 ) -> (i32, Option<Move>, bool) {
     *nodes += 1;
 
     if deadline.expired() {
         let sign = if color == root_color { 1 } else { -1 };
-        return (sign * evaluate(board, root_color), None, true);
+        return (
+            sign * evaluate_counted(board, root_color, metrics),
+            None,
+            true,
+        );
     }
 
     if let Some(entry) = tt.get(&hash) {
+        metrics.tt_hits += 1;
         if entry.depth >= depth {
             match entry.flag {
-                TTFlag::Exact => return (entry.score, entry.best_move, false),
+                TTFlag::Exact => {
+                    metrics.tt_cutoffs += 1;
+                    return (entry.score, entry.best_move, false);
+                }
                 TTFlag::LowerBound => {
                     if entry.score >= beta {
+                        metrics.tt_cutoffs += 1;
                         return (entry.score, entry.best_move, false);
                     }
                 }
                 TTFlag::UpperBound => {
                     if entry.score <= alpha {
+                        metrics.tt_cutoffs += 1;
                         return (entry.score, entry.best_move, false);
                     }
                 }
@@ -968,13 +1113,22 @@ fn negamax(
 
     if depth == 0 || board.result != GameResult::Ongoing {
         let sign = if color == root_color { 1 } else { -1 };
-        return (sign * evaluate(board, root_color), None, false);
+        return (
+            sign * evaluate_counted(board, root_color, metrics),
+            None,
+            false,
+        );
     }
 
-    let moves = candidate_moves(board, candidate_radius);
+    let moves =
+        candidate_moves_counted(board, candidate_radius, metrics, SearchMetricPhase::Search);
     if moves.is_empty() {
         let sign = if color == root_color { 1 } else { -1 };
-        return (sign * evaluate(board, root_color), None, false);
+        return (
+            sign * evaluate_counted(board, root_color, metrics),
+            None,
+            false,
+        );
     }
 
     let orig_alpha = alpha;
@@ -998,7 +1152,9 @@ fn negamax(
             timed_out = true;
             break;
         }
-        if needs_legality_check && !board.is_legal(mv) {
+        if needs_legality_check
+            && !metrics.record_legality(board.is_legal(mv), SearchMetricPhase::Search)
+        {
             continue;
         }
         // Incrementally update hash: XOR in the placed piece and flip turn bit
@@ -1016,6 +1172,7 @@ fn negamax(
             zobrist,
             candidate_radius,
             nodes,
+            metrics,
             deadline,
         );
         let score = -score;
@@ -1032,6 +1189,7 @@ fn negamax(
             alpha = score;
         }
         if alpha >= beta {
+            metrics.beta_cutoffs += 1;
             break;
         }
         if timed_out {
@@ -1041,7 +1199,11 @@ fn negamax(
 
     if best_move.is_none() {
         let sign = if color == root_color { 1 } else { -1 };
-        return (sign * evaluate(board, root_color), None, timed_out);
+        return (
+            sign * evaluate_counted(board, root_color, metrics),
+            None,
+            timed_out,
+        );
     }
 
     if timed_out {
@@ -1079,11 +1241,12 @@ fn search_root(
     zobrist: &ZobristTable,
     candidate_radius: usize,
     nodes: &mut u64,
+    metrics: &mut SearchMetrics,
     deadline: SearchDeadline,
 ) -> (i32, Option<Move>, bool) {
     *nodes += 1;
     if deadline.expired() {
-        return (evaluate(board, color), None, true);
+        return (evaluate_counted(board, color, metrics), None, true);
     }
 
     let mut alpha = i32::MIN + 1;
@@ -1108,7 +1271,9 @@ fn search_root(
             timed_out = true;
             break;
         }
-        if needs_legality_check && !board.is_legal(mv) {
+        if needs_legality_check
+            && !metrics.record_legality(board.is_legal(mv), SearchMetricPhase::Search)
+        {
             continue;
         }
 
@@ -1126,6 +1291,7 @@ fn search_root(
             zobrist,
             candidate_radius,
             nodes,
+            metrics,
             deadline,
         );
         let score = -score;
@@ -1142,6 +1308,7 @@ fn search_root(
             alpha = score;
         }
         if alpha >= beta {
+            metrics.beta_cutoffs += 1;
             break;
         }
         if timed_out {
@@ -1150,7 +1317,7 @@ fn search_root(
     }
 
     if best_move.is_none() {
-        return (evaluate(board, color), None, timed_out);
+        return (evaluate_counted(board, color, metrics), None, timed_out);
     }
 
     if timed_out {
@@ -1243,6 +1410,7 @@ pub struct SearchInfo {
     pub depth_reached: i32,
     pub nodes: u64,
     pub prefilter_nodes: u64,
+    pub metrics: SearchMetrics,
     pub score: i32,
     pub budget_exhausted: bool,
 }
@@ -1292,6 +1460,7 @@ impl Bot for SearchBot {
                 "nodes": info.nodes,
                 "prefilter_nodes": info.prefilter_nodes,
                 "total_nodes": info.nodes + info.prefilter_nodes,
+                "metrics": info.metrics.trace(),
                 "score": info.score,
                 "budget_exhausted": info.budget_exhausted,
             })
@@ -1301,6 +1470,7 @@ impl Bot for SearchBot {
     fn choose_move(&mut self, board: &Board) -> Move {
         let color = board.current_player;
         let mut working = board.clone();
+        let mut metrics = SearchMetrics::default();
         let start = Instant::now();
         let time_budget = self.config.time_budget();
         let cpu_time_budget = self.config.cpu_time_budget();
@@ -1315,19 +1485,25 @@ impl Bot for SearchBot {
             cpu_start,
             cpu_time_budget.map(|budget| budget / 2),
         );
-        let (root_moves, prefilter_nodes, mut budget_exhausted) = root_candidate_moves(
+        let (root_moves, prefilter_nodes, mut budget_exhausted) = root_candidate_moves_with_metrics(
             board,
             self.config.candidate_radius,
             self.config.root_prefilter,
             prefilter_deadline,
+            &mut metrics,
         );
         let mut best_move = root_moves
             .first()
             .copied()
             .or_else(|| {
-                candidate_moves(board, self.config.candidate_radius)
-                    .into_iter()
-                    .next()
+                candidate_moves_counted(
+                    board,
+                    self.config.candidate_radius,
+                    &mut metrics,
+                    SearchMetricPhase::Search,
+                )
+                .into_iter()
+                .next()
             })
             .unwrap_or(Move {
                 row: center,
@@ -1353,6 +1529,7 @@ impl Bot for SearchBot {
                 &self.zobrist,
                 self.config.candidate_radius,
                 &mut nodes,
+                &mut metrics,
                 deadline,
             );
             total_nodes += nodes;
@@ -1384,6 +1561,7 @@ impl Bot for SearchBot {
             depth_reached,
             nodes: total_nodes,
             prefilter_nodes,
+            metrics,
             score: best_score,
             budget_exhausted,
         });
@@ -1492,7 +1670,8 @@ mod tests {
             .filter(|&mv| board.is_legal(mv))
             .collect();
 
-        let moves = root_candidate_moves(
+        let mut metrics = SearchMetrics::default();
+        let moves = root_candidate_moves_with_metrics(
             &board,
             2,
             true,
@@ -1502,6 +1681,7 @@ mod tests {
                 None,
                 None,
             ),
+            &mut metrics,
         );
 
         let (moves, _, timed_out) = moves;
@@ -1544,7 +1724,10 @@ mod tests {
 
     #[test]
     fn trace_records_search_config() {
-        let board = Board::new(RuleConfig::default());
+        let board = Board::new(RuleConfig {
+            variant: Variant::Renju,
+            ..Default::default()
+        });
         let mut bot = SearchBot::with_config(SearchBotConfig::custom_depth(3));
 
         let _ = bot.choose_move(&board);
@@ -1557,6 +1740,33 @@ mod tests {
         assert!(trace["total_nodes"].as_u64().unwrap() >= trace["nodes"].as_u64().unwrap());
         assert_eq!(trace["budget_exhausted"], false);
         assert_eq!(trace["depth"], 3);
+
+        let metrics = &trace["metrics"];
+        assert!(metrics["eval_calls"].as_u64().unwrap() > 0);
+        assert!(metrics["candidate_generations"].as_u64().unwrap() > 0);
+        assert!(
+            metrics["candidate_moves_total"].as_u64().unwrap()
+                >= metrics["candidate_moves_max"].as_u64().unwrap()
+        );
+        assert_eq!(
+            metrics["candidate_generations"].as_u64().unwrap(),
+            metrics["prefilter_candidate_generations"].as_u64().unwrap()
+                + metrics["search_candidate_generations"].as_u64().unwrap()
+        );
+        assert_eq!(
+            metrics["candidate_moves_total"].as_u64().unwrap(),
+            metrics["prefilter_candidate_moves_total"].as_u64().unwrap()
+                + metrics["search_candidate_moves_total"].as_u64().unwrap()
+        );
+        assert!(metrics["legality_checks"].as_u64().unwrap() > 0);
+        assert_eq!(
+            metrics["legality_checks"].as_u64().unwrap(),
+            metrics["prefilter_legality_checks"].as_u64().unwrap()
+                + metrics["search_legality_checks"].as_u64().unwrap()
+        );
+        assert!(metrics["tt_hits"].as_u64().is_some());
+        assert!(metrics["tt_cutoffs"].as_u64().is_some());
+        assert!(metrics["beta_cutoffs"].as_u64().is_some());
     }
 
     #[test]

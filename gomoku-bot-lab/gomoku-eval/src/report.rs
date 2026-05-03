@@ -165,6 +165,52 @@ pub struct StandingReport {
     pub avg_search_time_ms: f64,
     pub total_nodes: u64,
     pub avg_nodes: f64,
+    #[serde(default)]
+    pub eval_calls: u64,
+    #[serde(default)]
+    pub avg_eval_calls: f64,
+    #[serde(default)]
+    pub candidate_generations: u64,
+    #[serde(default)]
+    pub avg_candidate_generations: f64,
+    #[serde(default)]
+    pub candidate_moves_total: u64,
+    #[serde(default)]
+    pub avg_candidate_moves: f64,
+    #[serde(default)]
+    pub candidate_moves_max: u64,
+    #[serde(default)]
+    pub prefilter_candidate_generations: u64,
+    #[serde(default)]
+    pub prefilter_candidate_moves_total: u64,
+    #[serde(default)]
+    pub prefilter_candidate_moves_max: u64,
+    #[serde(default)]
+    pub search_candidate_generations: u64,
+    #[serde(default)]
+    pub search_candidate_moves_total: u64,
+    #[serde(default)]
+    pub search_candidate_moves_max: u64,
+    #[serde(default)]
+    pub legality_checks: u64,
+    #[serde(default)]
+    pub avg_legality_checks: f64,
+    #[serde(default)]
+    pub illegal_moves_skipped: u64,
+    #[serde(default)]
+    pub prefilter_legality_checks: u64,
+    #[serde(default)]
+    pub prefilter_illegal_moves_skipped: u64,
+    #[serde(default)]
+    pub search_legality_checks: u64,
+    #[serde(default)]
+    pub search_illegal_moves_skipped: u64,
+    #[serde(default)]
+    pub tt_hits: u64,
+    #[serde(default)]
+    pub tt_cutoffs: u64,
+    #[serde(default)]
+    pub beta_cutoffs: u64,
     pub avg_depth: f64,
     pub max_depth: u32,
     pub budget_exhausted_count: u32,
@@ -260,6 +306,52 @@ pub struct SideStatsReport {
     pub prefilter_nodes: u64,
     pub total_nodes: u64,
     pub avg_nodes: f64,
+    #[serde(default)]
+    pub eval_calls: u64,
+    #[serde(default)]
+    pub avg_eval_calls: f64,
+    #[serde(default)]
+    pub candidate_generations: u64,
+    #[serde(default)]
+    pub avg_candidate_generations: f64,
+    #[serde(default)]
+    pub candidate_moves_total: u64,
+    #[serde(default)]
+    pub avg_candidate_moves: f64,
+    #[serde(default)]
+    pub candidate_moves_max: u64,
+    #[serde(default)]
+    pub prefilter_candidate_generations: u64,
+    #[serde(default)]
+    pub prefilter_candidate_moves_total: u64,
+    #[serde(default)]
+    pub prefilter_candidate_moves_max: u64,
+    #[serde(default)]
+    pub search_candidate_generations: u64,
+    #[serde(default)]
+    pub search_candidate_moves_total: u64,
+    #[serde(default)]
+    pub search_candidate_moves_max: u64,
+    #[serde(default)]
+    pub legality_checks: u64,
+    #[serde(default)]
+    pub avg_legality_checks: f64,
+    #[serde(default)]
+    pub illegal_moves_skipped: u64,
+    #[serde(default)]
+    pub prefilter_legality_checks: u64,
+    #[serde(default)]
+    pub prefilter_illegal_moves_skipped: u64,
+    #[serde(default)]
+    pub search_legality_checks: u64,
+    #[serde(default)]
+    pub search_illegal_moves_skipped: u64,
+    #[serde(default)]
+    pub tt_hits: u64,
+    #[serde(default)]
+    pub tt_cutoffs: u64,
+    #[serde(default)]
+    pub beta_cutoffs: u64,
     pub depth_sum: u64,
     pub avg_depth: f64,
     pub max_depth: u32,
@@ -275,6 +367,25 @@ struct SideStatsAccumulator {
     search_nodes: u64,
     prefilter_nodes: u64,
     total_nodes: u64,
+    eval_calls: u64,
+    candidate_generations: u64,
+    candidate_moves_total: u64,
+    candidate_moves_max: u64,
+    prefilter_candidate_generations: u64,
+    prefilter_candidate_moves_total: u64,
+    prefilter_candidate_moves_max: u64,
+    search_candidate_generations: u64,
+    search_candidate_moves_total: u64,
+    search_candidate_moves_max: u64,
+    legality_checks: u64,
+    illegal_moves_skipped: u64,
+    prefilter_legality_checks: u64,
+    prefilter_illegal_moves_skipped: u64,
+    search_legality_checks: u64,
+    search_illegal_moves_skipped: u64,
+    tt_hits: u64,
+    tt_cutoffs: u64,
+    beta_cutoffs: u64,
     depth_sum: u64,
     max_depth: u32,
     budget_exhausted_count: u32,
@@ -293,6 +404,39 @@ impl SideStatsAccumulator {
         self.search_nodes += trace_value_u64(trace, "nodes");
         self.prefilter_nodes += trace_value_u64(trace, "prefilter_nodes");
         self.total_nodes += trace_value_u64(trace, "total_nodes");
+        if let Some(metrics) = trace.get("metrics") {
+            self.eval_calls += trace_value_u64(metrics, "eval_calls");
+            self.candidate_generations += trace_value_u64(metrics, "candidate_generations");
+            self.candidate_moves_total += trace_value_u64(metrics, "candidate_moves_total");
+            self.candidate_moves_max = self
+                .candidate_moves_max
+                .max(trace_value_u64(metrics, "candidate_moves_max"));
+            self.prefilter_candidate_generations +=
+                trace_value_u64(metrics, "prefilter_candidate_generations");
+            self.prefilter_candidate_moves_total +=
+                trace_value_u64(metrics, "prefilter_candidate_moves_total");
+            self.prefilter_candidate_moves_max = self
+                .prefilter_candidate_moves_max
+                .max(trace_value_u64(metrics, "prefilter_candidate_moves_max"));
+            self.search_candidate_generations +=
+                trace_value_u64(metrics, "search_candidate_generations");
+            self.search_candidate_moves_total +=
+                trace_value_u64(metrics, "search_candidate_moves_total");
+            self.search_candidate_moves_max = self
+                .search_candidate_moves_max
+                .max(trace_value_u64(metrics, "search_candidate_moves_max"));
+            self.legality_checks += trace_value_u64(metrics, "legality_checks");
+            self.illegal_moves_skipped += trace_value_u64(metrics, "illegal_moves_skipped");
+            self.prefilter_legality_checks += trace_value_u64(metrics, "prefilter_legality_checks");
+            self.prefilter_illegal_moves_skipped +=
+                trace_value_u64(metrics, "prefilter_illegal_moves_skipped");
+            self.search_legality_checks += trace_value_u64(metrics, "search_legality_checks");
+            self.search_illegal_moves_skipped +=
+                trace_value_u64(metrics, "search_illegal_moves_skipped");
+            self.tt_hits += trace_value_u64(metrics, "tt_hits");
+            self.tt_cutoffs += trace_value_u64(metrics, "tt_cutoffs");
+            self.beta_cutoffs += trace_value_u64(metrics, "beta_cutoffs");
+        }
         if let Some(depth) = trace.get("depth").and_then(Value::as_u64) {
             self.depth_sum += depth;
             self.max_depth = self.max_depth.max(depth as u32);
@@ -313,6 +457,29 @@ impl SideStatsAccumulator {
         self.search_nodes += stats.search_nodes;
         self.prefilter_nodes += stats.prefilter_nodes;
         self.total_nodes += stats.total_nodes;
+        self.eval_calls += stats.eval_calls;
+        self.candidate_generations += stats.candidate_generations;
+        self.candidate_moves_total += stats.candidate_moves_total;
+        self.candidate_moves_max = self.candidate_moves_max.max(stats.candidate_moves_max);
+        self.prefilter_candidate_generations += stats.prefilter_candidate_generations;
+        self.prefilter_candidate_moves_total += stats.prefilter_candidate_moves_total;
+        self.prefilter_candidate_moves_max = self
+            .prefilter_candidate_moves_max
+            .max(stats.prefilter_candidate_moves_max);
+        self.search_candidate_generations += stats.search_candidate_generations;
+        self.search_candidate_moves_total += stats.search_candidate_moves_total;
+        self.search_candidate_moves_max = self
+            .search_candidate_moves_max
+            .max(stats.search_candidate_moves_max);
+        self.legality_checks += stats.legality_checks;
+        self.illegal_moves_skipped += stats.illegal_moves_skipped;
+        self.prefilter_legality_checks += stats.prefilter_legality_checks;
+        self.prefilter_illegal_moves_skipped += stats.prefilter_illegal_moves_skipped;
+        self.search_legality_checks += stats.search_legality_checks;
+        self.search_illegal_moves_skipped += stats.search_illegal_moves_skipped;
+        self.tt_hits += stats.tt_hits;
+        self.tt_cutoffs += stats.tt_cutoffs;
+        self.beta_cutoffs += stats.beta_cutoffs;
         self.depth_sum += stats.depth_sum;
         self.max_depth = self.max_depth.max(stats.max_depth);
         self.budget_exhausted_count += stats.budget_exhausted_count;
@@ -321,6 +488,14 @@ impl SideStatsAccumulator {
     fn finish(self) -> SideStatsReport {
         let avg_search_time_ms = avg(self.total_time_ms as f64, self.search_move_count);
         let avg_nodes = avg(self.total_nodes as f64, self.search_move_count);
+        let avg_eval_calls = avg(self.eval_calls as f64, self.search_move_count);
+        let avg_candidate_generations =
+            avg(self.candidate_generations as f64, self.search_move_count);
+        let avg_candidate_moves = avg(
+            self.candidate_moves_total as f64,
+            self.candidate_generations as u32,
+        );
+        let avg_legality_checks = avg(self.legality_checks as f64, self.search_move_count);
         let avg_depth = avg(self.depth_sum as f64, self.search_move_count);
         let budget_exhausted_rate = avg(self.budget_exhausted_count as f64, self.search_move_count);
 
@@ -333,6 +508,29 @@ impl SideStatsAccumulator {
             prefilter_nodes: self.prefilter_nodes,
             total_nodes: self.total_nodes,
             avg_nodes,
+            eval_calls: self.eval_calls,
+            avg_eval_calls,
+            candidate_generations: self.candidate_generations,
+            avg_candidate_generations,
+            candidate_moves_total: self.candidate_moves_total,
+            avg_candidate_moves,
+            candidate_moves_max: self.candidate_moves_max,
+            prefilter_candidate_generations: self.prefilter_candidate_generations,
+            prefilter_candidate_moves_total: self.prefilter_candidate_moves_total,
+            prefilter_candidate_moves_max: self.prefilter_candidate_moves_max,
+            search_candidate_generations: self.search_candidate_generations,
+            search_candidate_moves_total: self.search_candidate_moves_total,
+            search_candidate_moves_max: self.search_candidate_moves_max,
+            legality_checks: self.legality_checks,
+            avg_legality_checks,
+            illegal_moves_skipped: self.illegal_moves_skipped,
+            prefilter_legality_checks: self.prefilter_legality_checks,
+            prefilter_illegal_moves_skipped: self.prefilter_illegal_moves_skipped,
+            search_legality_checks: self.search_legality_checks,
+            search_illegal_moves_skipped: self.search_illegal_moves_skipped,
+            tt_hits: self.tt_hits,
+            tt_cutoffs: self.tt_cutoffs,
+            beta_cutoffs: self.beta_cutoffs,
             depth_sum: self.depth_sum,
             avg_depth,
             max_depth: self.max_depth,
@@ -413,6 +611,29 @@ fn standings(
                 avg_search_time_ms: side_stats.avg_search_time_ms,
                 total_nodes: side_stats.total_nodes,
                 avg_nodes: side_stats.avg_nodes,
+                eval_calls: side_stats.eval_calls,
+                avg_eval_calls: side_stats.avg_eval_calls,
+                candidate_generations: side_stats.candidate_generations,
+                avg_candidate_generations: side_stats.avg_candidate_generations,
+                candidate_moves_total: side_stats.candidate_moves_total,
+                avg_candidate_moves: side_stats.avg_candidate_moves,
+                candidate_moves_max: side_stats.candidate_moves_max,
+                prefilter_candidate_generations: side_stats.prefilter_candidate_generations,
+                prefilter_candidate_moves_total: side_stats.prefilter_candidate_moves_total,
+                prefilter_candidate_moves_max: side_stats.prefilter_candidate_moves_max,
+                search_candidate_generations: side_stats.search_candidate_generations,
+                search_candidate_moves_total: side_stats.search_candidate_moves_total,
+                search_candidate_moves_max: side_stats.search_candidate_moves_max,
+                legality_checks: side_stats.legality_checks,
+                avg_legality_checks: side_stats.avg_legality_checks,
+                illegal_moves_skipped: side_stats.illegal_moves_skipped,
+                prefilter_legality_checks: side_stats.prefilter_legality_checks,
+                prefilter_illegal_moves_skipped: side_stats.prefilter_illegal_moves_skipped,
+                search_legality_checks: side_stats.search_legality_checks,
+                search_illegal_moves_skipped: side_stats.search_illegal_moves_skipped,
+                tt_hits: side_stats.tt_hits,
+                tt_cutoffs: side_stats.tt_cutoffs,
+                beta_cutoffs: side_stats.beta_cutoffs,
                 avg_depth: side_stats.avg_depth,
                 max_depth: side_stats.max_depth,
                 budget_exhausted_count: side_stats.budget_exhausted_count,
@@ -1646,6 +1867,100 @@ mod tests {
         assert!(html.contains("<dt>Git revision</dt><dd>abcdef123456_dirty</dd>"));
         assert!(!html.contains("<dt>Git commit</dt>"));
         assert!(!html.contains("<dt>Git dirty</dt>"));
+    }
+
+    #[test]
+    fn from_json_defaults_additive_search_metrics_for_legacy_reports() {
+        let input = r#"{
+          "schema_version": 1,
+          "report_kind": "tournament",
+          "board_size": 15,
+          "move_codec": "cell_index_v1",
+          "shuffled_elo_samples": 256,
+          "run": {
+            "bots": ["fast", "balanced"],
+            "rules": {"board_size": 15, "win_length": 5, "variant": "renju"},
+            "games_per_pair": 2,
+            "seed": 42,
+            "opening_plies": 4,
+            "threads": 1,
+            "search_time_ms": null,
+            "search_cpu_time_ms": 1000,
+            "max_moves": 120,
+            "max_game_ms": null
+          },
+          "standings": [{
+            "bot": "fast",
+            "wins": 1,
+            "draws": 0,
+            "losses": 1,
+            "sequential_elo": 1000.0,
+            "shuffled_elo_avg": 1000.0,
+            "shuffled_elo_stddev": 0.0,
+            "match_count": 2,
+            "move_count": 10,
+            "search_move_count": 10,
+            "total_time_ms": 100,
+            "avg_search_time_ms": 10.0,
+            "total_nodes": 1000,
+            "avg_nodes": 100.0,
+            "avg_depth": 3.0,
+            "max_depth": 3,
+            "budget_exhausted_count": 0,
+            "budget_exhausted_rate": 0.0
+          }],
+          "pairwise": [],
+          "color_splits": [],
+          "end_reasons": [],
+          "matches": [{
+            "match_index": 1,
+            "black": "fast",
+            "white": "balanced",
+            "result": "black_won",
+            "winner": "fast",
+            "end_reason": "natural",
+            "duration_ms": 100,
+            "move_cells": [112, 113],
+            "move_count": 2,
+            "black_stats": {
+              "move_count": 1,
+              "search_move_count": 1,
+              "total_time_ms": 10,
+              "avg_search_time_ms": 10.0,
+              "search_nodes": 100,
+              "prefilter_nodes": 10,
+              "total_nodes": 110,
+              "avg_nodes": 110.0,
+              "depth_sum": 3,
+              "avg_depth": 3.0,
+              "max_depth": 3,
+              "budget_exhausted_count": 0,
+              "budget_exhausted_rate": 0.0
+            },
+            "white_stats": {
+              "move_count": 1,
+              "search_move_count": 1,
+              "total_time_ms": 10,
+              "avg_search_time_ms": 10.0,
+              "search_nodes": 100,
+              "prefilter_nodes": 10,
+              "total_nodes": 110,
+              "avg_nodes": 110.0,
+              "depth_sum": 3,
+              "avg_depth": 3.0,
+              "max_depth": 3,
+              "budget_exhausted_count": 0,
+              "budget_exhausted_rate": 0.0
+            }
+          }]
+        }"#;
+
+        let report = TournamentReport::from_json(input).expect("legacy report should parse");
+
+        assert_eq!(report.standings[0].eval_calls, 0);
+        assert_eq!(report.standings[0].search_candidate_generations, 0);
+        assert_eq!(report.matches[0].black_stats.prefilter_legality_checks, 0);
+        assert_eq!(report.matches[0].white_stats.search_legality_checks, 0);
     }
 
     #[test]
