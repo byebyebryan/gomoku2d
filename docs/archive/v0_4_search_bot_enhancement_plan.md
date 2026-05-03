@@ -233,7 +233,7 @@ Learning:
 
 - Do not keep an immediate-win/block-only `tactical_eval` toggle.
 - Eval work should wait until the analyzer can describe richer shapes:
-  open three, open four, blocked four, broken three, double threat, and forcing
+  open three, open four, closed four, broken three, double threat, and forcing
   reply.
 - The next commit should be behavior-neutral shape detection with focused unit
   tests, not another direct search integration.
@@ -245,7 +245,7 @@ Add richer analyzer output without changing move choice.
 Initial target features:
 
 - open four
-- blocked four
+- closed four
 - open three
 - broken three
 - double threat
@@ -270,7 +270,7 @@ Scenario categories:
 - immediate win
 - forced block
 - open four
-- blocked four
+- closed four
 - open three
 - broken three
 - double threat
@@ -292,7 +292,7 @@ Only positions that expose a real baseline gap should drive new search logic.
 Current implementation note: `gomoku-eval tactical-scenarios` runs the focused
 one-move diagnostics across search configs and can write JSON. The initial
 seven-case smoke run showed `search-d2` failing the broken-three creation case,
-while `search-d3` and `search-d5` passed the current set. This is useful
+while `search-d3` and `search-d5` passed that initial set. This is useful
 diagnostic evidence, but the set is still too small to justify product-facing
 bot presets.
 
@@ -373,9 +373,9 @@ Target facts:
 
 - terminal five / win now
 - open four with two winning endpoints
-- simple four with one forced block
+- closed/broken four with one forced block
 - open three with extension/block endpoints
-- broken three as a non-forced shape fact for eval/order
+- closed/broken three as non-forced shape facts for eval/order
 - no forcing shape
 
 Rules:
@@ -494,7 +494,7 @@ than carrying a third shallow tactical toggle.
 Includes:
 
 - Analyzer fields for richer tactical shapes.
-- Curated board tests for open/blocked fours, open threes, broken threes, and
+- Curated board tests for open/closed fours, open threes, broken threes, and
   double threats.
 - No candidate generation, ordering, or eval integration.
 
@@ -544,18 +544,19 @@ Includes:
 
 - Extend or replace the Phase 6 shape analyzer with a local fact helper that
   inspects four lines through a candidate move.
-- Return gain, cost/defense, and rest squares for open fours, simple fours, and
-  open threes.
-- Keep broken three as a non-forced fact.
+- Return gain, cost/defense, and rest squares for open fours, closed/broken
+  fours, and open threes.
+- Keep closed/broken three as non-forced facts.
 - Focused tests for each shape's concrete moves.
 - No search integration yet.
 
 Expected behavior change: none.
 
 Completed in `84ea128`. The helper remains private and behavior-neutral: it
-returns concrete facts for terminal fives, open fours, simple fours, open
-threes, and broken threes, but it does not affect candidate generation, move
-ordering, static eval, or search depth until a later ablation commit consumes it.
+returns concrete facts for terminal fives, open fours, closed/broken fours,
+open/closed threes, and broken threes, but it does not affect candidate
+generation, move ordering, static eval, or search depth until a later ablation
+commit consumes it.
 
 ### Commit 11: Broad Shape Eval Experiment
 
@@ -613,6 +614,11 @@ Progress:
   cutoffs.
 - Extended tactical scenario JSON/CLI output and tournament report JSON so
   future optimization runs can compare non-node work directly.
+- Hardened the tactical scenario corpus with explicit roles, category-level
+  semantic validation, and a dedicated board-print doc.
+- Kept Renju legality-only fixtures out of active tactical hard gates; future
+  Renju tactical cases should test threat judgment around forbidden points, not
+  simple "do not play illegal moves" behavior.
 - Kept new tournament report metrics additive/defaulted so existing committed
   report JSON can still be rendered.
 - Wrote ignored raw baseline reports under `gomoku-bot-lab/outputs/`.
@@ -626,13 +632,17 @@ cargo run --release -p gomoku-eval -- tactical-scenarios \
   --report-json outputs/tactical_baseline_search_metrics.json
 ```
 
-- `search-d2`: `6 / 7` passed; still misses `create_broken_three`.
-- `search-d3`: `7 / 7` passed; all cases completed quickly.
-- `search-d5`: `7 / 7` passed, but several cases hit the `1000 ms` CPU budget
-  and only reached depth `3` or `4`.
-- Tactical fixtures currently use freestyle-like legality, so legality counters
-  are expected to stay at `0` there; Renju legality cost shows up in tournament
-  runs.
+- Current corpus size: `8` cases: `4` hard safety-gate cases and `4`
+  diagnostics.
+- `search-d2`: `6 / 8` passed; all hard safety gates passed, but it misses
+  `counter_open_three_with_four` and `create_broken_three`.
+- `search-d3`: `7 / 8` passed; all hard safety gates passed, but it still takes
+  the conservative block in `counter_open_three_with_four`.
+- `search-d5`: `7 / 8` passed; all hard safety gates passed, but it still takes
+  the conservative block in `counter_open_three_with_four`.
+- `counter_open_three_with_four` is intentionally diagnostic: it captures a real
+  tactical gap where creating an open four should override blocking an open
+  three, but it should not fail the current baseline safety gate.
 
 Renju tournament baseline:
 
@@ -699,7 +709,8 @@ cargo run --release -p gomoku-eval -- tournament \
 
 These measurements compare the default root safety gate with `+no-safety`,
 which disables the root safety gate while keeping the candidate source and
-legality gate unchanged.
+legality gate unchanged. They predate the current tactical corpus revision that
+keeps Renju legality-only cases out of active hard gates.
 
 | Run | Bot | Result | Avg ms | Avg depth | Budget hit | Search nodes | Safety probe nodes |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -715,7 +726,8 @@ legality gate unchanged.
 Immediate reading:
 
 - No-safety is a useful control, not a clear replacement. It fails the
-  `block_open_three` tactical case for both D3 and D5.
+  earlier `block_open_three` tactical case, now named
+  `prevent_open_three_reply`.
 - The current safety gate is buying real tactical safety and helps D5 preserve
   reached depth under the `1000 ms` CPU budget.
 - The current safety gate can still be counterproductive for shallower D3 match
@@ -766,8 +778,8 @@ Stage definitions:
   directions for overline, double-four, and double-three windows. The cheap part
   is deciding whether a candidate needs that exact check at all.
 - **Tactical annotation** should compute facts such as immediate win,
-  immediate block, open four, simple four, open three, and multi-threat without
-  deleting moves by itself.
+  immediate block, open four, closed/broken four, open three, and multi-threat
+  without deleting moves by itself.
 - **Safety gate** is where a move may be removed. The current implementation is
   `opponent_reply_search_probe`: a shallow search-like probe that applies each
   root candidate, scans legal opponent replies, and rejects the root candidate

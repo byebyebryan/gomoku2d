@@ -153,6 +153,12 @@ under `outputs/`, but avoid publishing it as the canonical `/bot-report/`.
 Tournament reports answer "which config scores better over many games?"
 Tactical scenarios answer a narrower question: "does this config choose the
 expected one-move tactical response in this position, and what did it cost?"
+The current corpus is documented in
+[`../docs/tactical_scenarios.md`](../docs/tactical_scenarios.md), including
+exact board prints, hard safety-gate cases, diagnostic cases, and
+expected moves.
+The shared shape terms behind those cases live in
+[`../docs/tactical_shapes.md`](../docs/tactical_shapes.md).
 
 Run the baseline tactical sweep from `gomoku-bot-lab/`:
 
@@ -160,9 +166,10 @@ Run the baseline tactical sweep from `gomoku-bot-lab/`:
 cargo run -p gomoku-eval -- tactical-scenarios --bots search-d2,search-d3,search-d5 --search-cpu-time-ms 1000
 ```
 
-The command reports pass/fail, chosen move, expected move set, depth reached,
-nodes, root safety-gate probe nodes (`safety_nodes`), root/search candidate and
-legality costs, time, and budget exhaustion. To capture reusable JSON:
+The command reports pass/fail, rule variant, side to move, case role, chosen
+move, expected move sets, depth reached, nodes, root safety-gate
+probe nodes (`safety_nodes`), root/search candidate and legality costs, time,
+and budget exhaustion. To capture reusable JSON:
 
 ```sh
 mkdir -p outputs

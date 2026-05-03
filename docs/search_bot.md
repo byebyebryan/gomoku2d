@@ -152,6 +152,16 @@ scenarios remain diagnostics; a change should not be kept just because it fixes
 a depth-2 fixture if it loses reached depth or tournament strength against the
 current depth-3 baseline.
 
+The focused tactical scenario corpus is documented in
+[`tactical_scenarios.md`](tactical_scenarios.md). Use the hard safety-gate cases
+as regression guards before tournament ablations; use diagnostic cases to
+understand behavior and cost, not as standalone promotion gates.
+
+The tactical shape vocabulary is documented in
+[`tactical_shapes.md`](tactical_shapes.md). Shape facts are move-centric records
+with a `kind`, `gain_square`, `defense_squares`, and `rest_squares`; this keeps
+offense, defense, and future eval work tied to the same definitions.
+
 ---
 
 ## Transposition table

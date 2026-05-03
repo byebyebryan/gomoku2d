@@ -1,5 +1,5 @@
 use gomoku_bot::{Bot, SearchBot, SearchBotConfig};
-use gomoku_core::Move;
+use gomoku_core::{Color, Move, Variant};
 use serde::Serialize;
 use std::time::Instant;
 
@@ -8,11 +8,27 @@ mod benchmark_scenarios;
 
 use benchmark_scenarios::{parse_move, BenchScenario, SCENARIOS};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TacticalScenarioRole {
+    HardSafetyGate,
+    Diagnostic,
+}
+
+impl TacticalScenarioRole {
+    const fn as_str(self) -> &'static str {
+        match self {
+            TacticalScenarioRole::HardSafetyGate => "hard_safety_gate",
+            TacticalScenarioRole::Diagnostic => "diagnostic",
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct TacticalScenarioCase {
     pub id: &'static str,
     pub scenario_id: &'static str,
     pub category: &'static str,
+    pub role: TacticalScenarioRole,
     pub description: &'static str,
     pub expected_moves: &'static [&'static str],
 }
@@ -44,6 +60,7 @@ pub static TACTICAL_SCENARIO_CASES: &[TacticalScenarioCase] = &[
         id: "take_immediate_win",
         scenario_id: "immediate_win",
         category: "immediate_win",
+        role: TacticalScenarioRole::HardSafetyGate,
         description: "Current player should finish a direct four-in-a-row.",
         expected_moves: &["G8", "L8"],
     },
@@ -51,6 +68,7 @@ pub static TACTICAL_SCENARIO_CASES: &[TacticalScenarioCase] = &[
         id: "block_immediate_loss",
         scenario_id: "immediate_block",
         category: "forced_block",
+        role: TacticalScenarioRole::HardSafetyGate,
         description: "Current player should block the opponent's direct win.",
         expected_moves: &["E1"],
     },
@@ -58,20 +76,31 @@ pub static TACTICAL_SCENARIO_CASES: &[TacticalScenarioCase] = &[
         id: "win_race_before_blocking",
         scenario_id: "attack_wins_race",
         category: "attack_vs_defense",
+        role: TacticalScenarioRole::HardSafetyGate,
         description: "Current player should win immediately instead of blocking.",
         expected_moves: &["G8", "L8"],
     },
     TacticalScenarioCase {
-        id: "block_open_three",
+        id: "prevent_open_three_reply",
         scenario_id: "anti_blunder_open_three",
         category: "open_three",
-        description: "Current player should block the forcing open three.",
+        role: TacticalScenarioRole::HardSafetyGate,
+        description: "Current player should prevent the opponent's open-three reply from becoming an open-four threat.",
         expected_moves: &["G8", "K8"],
+    },
+    TacticalScenarioCase {
+        id: "counter_open_three_with_four",
+        scenario_id: "counter_open_three_with_four",
+        category: "counter_four",
+        role: TacticalScenarioRole::Diagnostic,
+        description: "Current player can create an open four, so it may counter-threat instead of blocking the opponent's open three.",
+        expected_moves: &["B4", "F4"],
     },
     TacticalScenarioCase {
         id: "create_open_four",
         scenario_id: "create_open_four",
         category: "open_four",
+        role: TacticalScenarioRole::Diagnostic,
         description: "Current player should create an open four when no direct win exists.",
         expected_moves: &["G8", "K8"],
     },
@@ -79,6 +108,7 @@ pub static TACTICAL_SCENARIO_CASES: &[TacticalScenarioCase] = &[
         id: "create_broken_three",
         scenario_id: "create_broken_three",
         category: "broken_three",
+        role: TacticalScenarioRole::Diagnostic,
         description: "Current player should create a broken three shape from a spaced pair.",
         expected_moves: &["I8", "J8"],
     },
@@ -86,6 +116,7 @@ pub static TACTICAL_SCENARIO_CASES: &[TacticalScenarioCase] = &[
         id: "create_double_threat",
         scenario_id: "create_double_threat",
         category: "double_threat",
+        role: TacticalScenarioRole::Diagnostic,
         description: "Current player should create simultaneous immediate winning threats.",
         expected_moves: &["J8"],
     },
@@ -132,6 +163,9 @@ pub struct TacticalScenarioResult {
     pub case_id: &'static str,
     pub scenario_id: &'static str,
     pub category: &'static str,
+    pub role: &'static str,
+    pub variant: Variant,
+    pub to_move: Color,
     pub config_id: String,
     pub description: &'static str,
     pub expected_moves: Vec<String>,
@@ -177,6 +211,9 @@ pub fn run_tactical_case(
         case_id: case.id,
         scenario_id: case.scenario_id,
         category: case.category,
+        role: case.role.as_str(),
+        variant: board.config.variant.clone(),
+        to_move: board.current_player,
         config_id: config_id.into(),
         description: case.description,
         expected_moves: expected_moves
@@ -232,7 +269,7 @@ pub fn run_tactical_scenarios(
     let total = results.len();
 
     TacticalScenarioReport {
-        schema_version: 1,
+        schema_version: 2,
         configs: configs.iter().map(|config| config.id.clone()).collect(),
         total,
         passed,
@@ -244,9 +281,11 @@ pub fn run_tactical_scenarios(
 #[cfg(test)]
 mod tests {
     use gomoku_bot::SearchBotConfig;
+    use gomoku_core::{Board, GameResult, Move, Variant};
 
     use super::{
-        run_tactical_case, run_tactical_scenarios, ScenarioSearchConfig, TACTICAL_SCENARIO_CASES,
+        run_tactical_case, run_tactical_scenarios, ScenarioSearchConfig, TacticalScenarioRole,
+        TACTICAL_SCENARIO_CASES,
     };
 
     #[test]
@@ -261,6 +300,8 @@ mod tests {
         assert!(result.passed);
         assert_eq!(result.case_id, "take_immediate_win");
         assert_eq!(result.config_id, "search-d3");
+        assert_eq!(result.role, "hard_safety_gate");
+        assert_eq!(result.variant, Variant::Freestyle);
         assert!(result.expected_moves.contains(&result.actual_move));
         assert!(result.metrics.nodes > 0);
         assert!(result.metrics.depth_reached >= 1);
@@ -290,9 +331,185 @@ mod tests {
 
         let report = run_tactical_scenarios(&configs, cases);
 
+        assert_eq!(report.schema_version, 2);
         assert_eq!(report.configs, vec!["search-d2", "search-d3"]);
         assert_eq!(report.results.len(), configs.len() * cases.len());
         assert_eq!(report.total, 4);
         assert_eq!(report.passed + report.failed, report.total);
+    }
+
+    #[test]
+    fn tactical_cases_keep_renju_legality_out_of_active_hard_gates() {
+        assert!(
+            TACTICAL_SCENARIO_CASES
+                .iter()
+                .filter(|case| case.role == TacticalScenarioRole::HardSafetyGate)
+                .all(|case| case.scenario().variant == Variant::Freestyle),
+            "active tactical hard gates should not use Renju legality-only cases as tactical gates"
+        );
+        assert!(
+            TACTICAL_SCENARIO_CASES.iter().any(|case| {
+                case.id == "counter_open_three_with_four"
+                    && case.category == "counter_four"
+                    && case.role == TacticalScenarioRole::Diagnostic
+            }),
+            "diagnostic corpus should include a counter-threat case where creating a four can defer blocking an open three"
+        );
+    }
+
+    #[test]
+    fn tactical_case_expected_moves_match_declared_semantics() {
+        for case in TACTICAL_SCENARIO_CASES {
+            let board = case.scenario().board();
+            let expected_moves = case.expected_move_set();
+            assert!(
+                !expected_moves.is_empty(),
+                "case '{}' must define at least one expected move",
+                case.id
+            );
+            for &mv in &expected_moves {
+                assert!(
+                    board.is_legal(mv),
+                    "case '{}' expected move {} must be legal",
+                    case.id,
+                    mv.to_notation()
+                );
+            }
+
+            match case.category {
+                "immediate_win" => {
+                    let wins = board.immediate_winning_moves_for(board.current_player);
+                    assert_contains_all(case.id, &wins, &expected_moves);
+                }
+                "forced_block" => {
+                    let opponent_wins =
+                        board.immediate_winning_moves_for(board.current_player.opponent());
+                    assert_contains_all(case.id, &opponent_wins, &expected_moves);
+                }
+                "attack_vs_defense" => {
+                    let wins = board.immediate_winning_moves_for(board.current_player);
+                    let opponent_wins =
+                        board.immediate_winning_moves_for(board.current_player.opponent());
+                    assert!(
+                        !wins.is_empty() && !opponent_wins.is_empty(),
+                        "case '{}' must contain wins for both sides",
+                        case.id
+                    );
+                    assert_contains_all(case.id, &wins, &expected_moves);
+                }
+                "open_three" => {
+                    for &mv in &expected_moves {
+                        assert!(
+                            opponent_forcing_replies_after(&board, mv).is_empty(),
+                            "case '{}' expected move {} should prevent opponent forcing replies",
+                            case.id,
+                            mv.to_notation()
+                        );
+                    }
+                }
+                "counter_four" => {
+                    let opponent_forcing_replies = opponent_forcing_replies_now(&board);
+                    assert!(
+                        !opponent_forcing_replies.is_empty(),
+                        "case '{}' should start with an opponent open-three style forcing reply",
+                        case.id
+                    );
+                    for &mv in &expected_moves {
+                        let own_replies = own_immediate_replies_after(&board, mv);
+                        assert!(
+                            own_replies.len() >= 2,
+                            "case '{}' expected move {} should create an open four before blocking, got {:?}",
+                            case.id,
+                            mv.to_notation(),
+                            own_replies
+                        );
+                    }
+                }
+                "open_four" | "double_threat" => {
+                    for &mv in &expected_moves {
+                        let own_replies = own_immediate_replies_after(&board, mv);
+                        assert!(
+                            own_replies.len() >= 2,
+                            "case '{}' expected move {} should create at least two immediate replies, got {:?}",
+                            case.id,
+                            mv.to_notation(),
+                            own_replies
+                        );
+                    }
+                }
+                "broken_three" => {
+                    assert!(
+                        board
+                            .immediate_winning_moves_for(board.current_player)
+                            .is_empty(),
+                        "case '{}' should not already have an immediate win",
+                        case.id
+                    );
+                    assert!(
+                        board
+                            .immediate_winning_moves_for(board.current_player.opponent())
+                            .is_empty(),
+                        "case '{}' should not already require an immediate block",
+                        case.id
+                    );
+                }
+                other => panic!("case '{}' has unvalidated category '{}'", case.id, other),
+            }
+        }
+    }
+
+    fn assert_contains_all(case_id: &str, actual: &[Move], expected: &[Move]) {
+        for &mv in expected {
+            assert!(
+                actual.contains(&mv),
+                "case '{}' expected {} in {:?}",
+                case_id,
+                mv.to_notation(),
+                actual
+            );
+        }
+    }
+
+    fn own_immediate_replies_after(board: &Board, mv: Move) -> Vec<Move> {
+        let player = board.current_player;
+        let mut next = board.clone();
+        next.apply_move(mv).expect("expected legal move");
+        next.immediate_winning_moves_for(player)
+    }
+
+    fn opponent_forcing_replies_after(board: &Board, mv: Move) -> Vec<Move> {
+        let mut next = board.clone();
+        next.apply_move(mv).expect("expected legal move");
+
+        forcing_replies_for_current_player(&next)
+    }
+
+    fn opponent_forcing_replies_now(board: &Board) -> Vec<Move> {
+        let mut opponent_turn = board.clone();
+        opponent_turn.current_player = board.current_player.opponent();
+        forcing_replies_for_current_player(&opponent_turn)
+    }
+
+    fn forcing_replies_for_current_player(board: &Board) -> Vec<Move> {
+        let player = board.current_player;
+        let mut forcing = Vec::new();
+        for row in 0..board.config.board_size {
+            for col in 0..board.config.board_size {
+                let reply = Move { row, col };
+                if !board.is_legal(reply) {
+                    continue;
+                }
+
+                let mut after_reply = board.clone();
+                let result = after_reply.apply_move(reply).expect("expected legal reply");
+                if matches!(result, GameResult::Winner(winner) if winner == player)
+                    || after_reply.has_multiple_immediate_winning_moves_for(player)
+                {
+                    forcing.push(reply);
+                }
+            }
+        }
+
+        forcing
     }
 }

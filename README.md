@@ -129,6 +129,8 @@ The canonical design, architecture, and release docs live in `docs/`:
 - [`docs/roadmap.md`](docs/roadmap.md) — version-based phase plan from POC to cloud, lab-powered identity, skins, and online features
 - [`docs/release.md`](docs/release.md) — local preview, release checks, tagging, and publish workflow
 - [`docs/search_bot.md`](docs/search_bot.md) — configurable `SearchBot` strategy, pipeline, and experiment takeaways
+- [`docs/tactical_shapes.md`](docs/tactical_shapes.md) — canonical bot shape vocabulary for tactical facts and eval work
+- [`docs/tactical_scenarios.md`](docs/tactical_scenarios.md) — focused bot tactical cases with board prints and expected moves
 - [`gomoku-web/README.md`](gomoku-web/README.md) — web game stack, local dev, deploy/runtime details
 - [`gomoku-bot-lab/README.md`](gomoku-bot-lab/README.md) — bot-lab build/test, CLI usage, replay format, bot notes
 

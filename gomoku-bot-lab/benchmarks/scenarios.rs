@@ -140,6 +140,15 @@ pub static SCENARIOS: &[BenchScenario] = &[
         moves: &["H8", "A1", "I8", "C1", "J8", "E1"],
     },
     BenchScenario {
+        id: "counter_open_three_with_four",
+        variant: Variant::Freestyle,
+        to_move: Color::White,
+        tags: &["tactical", "counter-threat", "open-four", "freestyle"],
+        description: "White can create an open four, so it can defer blocking Black's open three.",
+        probe_move: "F4",
+        moves: &["H8", "C4", "I8", "D4", "J8", "E4", "A15"],
+    },
+    BenchScenario {
         id: "create_broken_three",
         variant: Variant::Freestyle,
         to_move: Color::Black,
