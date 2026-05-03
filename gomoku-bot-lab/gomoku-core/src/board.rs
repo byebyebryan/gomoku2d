@@ -185,6 +185,10 @@ impl Board {
         });
     }
 
+    pub fn for_each_occupied_color(&self, color: Color, f: impl FnMut(usize, usize)) {
+        for_each_set_bit(self.bits_for_color(color), self.config.board_size, f);
+    }
+
     fn index(&self, row: usize, col: usize) -> usize {
         debug_assert!(row < self.config.board_size);
         debug_assert!(col < self.config.board_size);
@@ -307,6 +311,43 @@ impl Board {
         false
     }
 
+    fn mark_nearby_empty_moves(&self, row: usize, col: usize, radius: isize, seen: &mut [bool]) {
+        let size = self.config.board_size;
+        let row = row as isize;
+        let col = col as isize;
+        for dr in -radius..=radius {
+            for dc in -radius..=radius {
+                let r = row + dr;
+                let c = col + dc;
+                if r < 0 || r >= size as isize || c < 0 || c >= size as isize {
+                    continue;
+                }
+
+                let mv = Move {
+                    row: r as usize,
+                    col: c as usize,
+                };
+                if !self.is_empty_at(mv.row, mv.col) {
+                    continue;
+                }
+                seen[mv.row * size + mv.col] = true;
+            }
+        }
+    }
+
+    fn collect_seen_moves(&self, seen: &[bool]) -> Vec<Move> {
+        let size = self.config.board_size;
+        let mut moves = Vec::new();
+        for row in 0..size {
+            for col in 0..size {
+                if seen[row * size + col] {
+                    moves.push(Move { row, col });
+                }
+            }
+        }
+        moves
+    }
+
     fn probe_immediate_winning_move(&self, mv: Move, color: Color) -> bool {
         if !self.is_legal_for(mv, color) {
             return false;
@@ -406,47 +447,16 @@ impl Board {
         let mut seen = vec![false; size * size];
         let mut has_stone = false;
 
-        for row in 0..size {
-            for col in 0..size {
-                if self.is_empty_at(row, col) {
-                    continue;
-                }
-                has_stone = true;
-
-                for dr in -radius..=radius {
-                    for dc in -radius..=radius {
-                        let r = row as isize + dr;
-                        let c = col as isize + dc;
-                        if r < 0 || r >= size as isize || c < 0 || c >= size as isize {
-                            continue;
-                        }
-
-                        let mv = Move {
-                            row: r as usize,
-                            col: c as usize,
-                        };
-                        if !self.is_empty_at(mv.row, mv.col) {
-                            continue;
-                        }
-                        seen[mv.row * size + mv.col] = true;
-                    }
-                }
-            }
-        }
+        self.for_each_occupied(|row, col, _| {
+            has_stone = true;
+            self.mark_nearby_empty_moves(row, col, radius, &mut seen);
+        });
 
         if !has_stone {
             return vec![];
         }
 
-        let mut moves = Vec::new();
-        for row in 0..size {
-            for col in 0..size {
-                if seen[row * size + col] {
-                    moves.push(Move { row, col });
-                }
-            }
-        }
-        moves
+        self.collect_seen_moves(&seen)
     }
 
     fn nearby_empty_moves_for_color(&self, color: Color, radius: usize) -> Vec<Move> {
@@ -459,47 +469,16 @@ impl Board {
         let mut seen = vec![false; size * size];
         let mut has_anchor = false;
 
-        for row in 0..size {
-            for col in 0..size {
-                if !self.has_color_at(row, col, color) {
-                    continue;
-                }
-                has_anchor = true;
-
-                for dr in -radius..=radius {
-                    for dc in -radius..=radius {
-                        let r = row as isize + dr;
-                        let c = col as isize + dc;
-                        if r < 0 || r >= size as isize || c < 0 || c >= size as isize {
-                            continue;
-                        }
-
-                        let mv = Move {
-                            row: r as usize,
-                            col: c as usize,
-                        };
-                        if !self.is_empty_at(mv.row, mv.col) {
-                            continue;
-                        }
-                        seen[mv.row * size + mv.col] = true;
-                    }
-                }
-            }
-        }
+        self.for_each_occupied_color(color, |row, col| {
+            has_anchor = true;
+            self.mark_nearby_empty_moves(row, col, radius, &mut seen);
+        });
 
         if !has_anchor {
             return vec![];
         }
 
-        let mut moves = Vec::new();
-        for row in 0..size {
-            for col in 0..size {
-                if seen[row * size + col] {
-                    moves.push(Move { row, col });
-                }
-            }
-        }
-        moves
+        self.collect_seen_moves(&seen)
     }
 
     fn renju_forbidden_candidate_moves(&self) -> Vec<Move> {
@@ -944,6 +923,20 @@ mod tests {
                 (7, 7, Color::Black),
             ]
         );
+    }
+
+    #[test]
+    fn occupied_cells_for_color_visit_only_requested_stones() {
+        let mut b = default_board();
+        b.apply_move(Move { row: 7, col: 7 }).unwrap();
+        b.apply_move(Move { row: 6, col: 8 }).unwrap();
+        b.apply_move(Move { row: 5, col: 9 }).unwrap();
+
+        let mut black = Vec::new();
+        b.for_each_occupied_color(Color::Black, |row, col| black.push((row, col)));
+        black.sort();
+
+        assert_eq!(black, vec![(5, 9), (7, 7)]);
     }
 
     #[test]
