@@ -1,4 +1,4 @@
-use gomoku_bot::{SafetyGate, SearchBotConfig};
+use gomoku_bot::{MoveOrdering, SafetyGate, SearchBotConfig};
 
 pub struct LabSearchConfig {
     pub id: &'static str,
@@ -14,6 +14,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             cpu_time_budget_ms: None,
             candidate_radius: 2,
             safety_gate: SafetyGate::OpponentReplySearchProbe,
+            move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
         },
     },
     LabSearchConfig {
@@ -24,6 +25,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             cpu_time_budget_ms: None,
             candidate_radius: 2,
             safety_gate: SafetyGate::OpponentReplySearchProbe,
+            move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
         },
     },
     LabSearchConfig {
@@ -34,6 +36,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             cpu_time_budget_ms: None,
             candidate_radius: 2,
             safety_gate: SafetyGate::OpponentReplySearchProbe,
+            move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
         },
     },
 ];
