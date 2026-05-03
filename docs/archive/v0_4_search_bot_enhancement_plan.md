@@ -594,6 +594,69 @@ Includes:
 Expected behavior change: only for experimental lab specs until proven, unless
 the change is a behavior-neutral optimization.
 
+Progress:
+
+- Added behavior-neutral `SearchMetrics` counters to `SearchBot` traces:
+  eval calls, phase-split candidate generations, total/max candidate moves,
+  phase-split Renju legality checks, illegal skips, TT hits/cutoffs, and beta
+  cutoffs.
+- Extended tactical scenario JSON/CLI output and tournament report JSON so
+  future optimization runs can compare non-node work directly.
+- Kept new tournament report metrics additive/defaulted so existing committed
+  report JSON can still be rendered.
+- Wrote ignored raw baseline reports under `gomoku-bot-lab/outputs/`.
+
+Focused tactical baseline:
+
+```sh
+cargo run --release -p gomoku-eval -- tactical-scenarios \
+  --bots search-d2,search-d3,search-d5 \
+  --search-cpu-time-ms 1000 \
+  --report-json outputs/tactical_baseline_search_metrics.json
+```
+
+- `search-d2`: `6 / 7` passed; still misses `create_broken_three`.
+- `search-d3`: `7 / 7` passed; all cases completed quickly.
+- `search-d5`: `7 / 7` passed, but several cases hit the `1000 ms` CPU budget
+  and only reached depth `3` or `4`.
+- Tactical fixtures currently use freestyle-like legality, so legality counters
+  are expected to stay at `0` there; Renju legality cost shows up in tournament
+  runs.
+
+Renju tournament baseline:
+
+```sh
+cargo run --release -p gomoku-eval -- tournament \
+  --bots search-d2,search-d3,search-d5 \
+  --games-per-pair 64 \
+  --opening-plies 4 \
+  --search-cpu-time-ms 1000 \
+  --max-moves 120 \
+  --seed 48 \
+  --threads 22 \
+  --report-json outputs/tournament_baseline_search_metrics.json
+```
+
+Wall clock: `168.49s`; shell-reported CPU utilization: `1875%`.
+
+| Bot | W-D-L | Avg ms | Avg nodes | Avg depth | Budget hit | Avg eval | Avg candidate generations | Avg candidate moves | Avg legality checks |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `search-d5` | `81-1-46` | `862.91` | `137240` | `3.60` | `76.9%` | `120165` | `9317` | `93.9` | `70176` |
+| `search-d3` | `80-5-43` | `290.00` | `27117` | `2.89` | `10.1%` | `20595` | `651` | `94.7` | `15327` |
+| `search-d2` | `25-6-97` | `192.09` | `6361` | `1.99` | `11.4%` | `1032` | `140` | `92.8` | `3568` |
+
+Immediate reading:
+
+- Nominal depth `5` is only marginally ahead of depth `3` in this run, and
+  `search-d3` split `32-0-32` against `search-d5`.
+- Candidate width is consistently broad at roughly `93-95` moves per generated
+  candidate set. The cost explosion is from repeated candidate generation,
+  static evaluation, and Renju legality checks rather than a single unusually
+  wide branch.
+- The next optimization slice should be behavior-neutral and should target
+  cheaper candidate generation / legality filtering / board scanning before any
+  new tactical feature is added.
+
 ## Evaluation Gates
 
 Before moving from one behavioral commit to the next:
