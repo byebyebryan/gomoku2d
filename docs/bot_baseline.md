@@ -49,8 +49,14 @@ Search traces expose explicit pipeline stages: `candidate_source`,
 `legality_gate`, and `safety_gate`. Today there is one candidate source family
 (`near_all_rN`), one legality gate (`exact_rules`), and one optional safety gate
 (`opponent_reply_search_probe` or `none`). Renju forbidden-move checks still use
-exact core rules, but core first applies a cheap candidate gate: only empty
-cells within 2 spaces of a black stone can be forbidden.
+exact core rules, but core first applies a cheap necessary-condition guard:
+a forbidden candidate must have at least two black stones on one of the four
+local axes before the exact detector runs.
+
+That Renju guard is deliberately not exposed as a bot component. It is a
+correctness-preserving core legality optimization, not a playing-style knob:
+the exact legality result is unchanged, while the measured candidate-legality
+hot path is cheaper.
 
 The lab tools define temporary aliases over these fields for experiments:
 
@@ -114,6 +120,11 @@ documented in
 The current direction is depth-oriented: improve the normal search cost first,
 then use tactical facts only for cheap safety, move ordering, or narrow forced
 branches that improve reached depth under the same budget.
+
+Positive baseline optimizations should land in place when they preserve exact
+behavior and improve measured hot paths. They should become configurable only
+when they represent a real tradeoff: strength versus speed, breadth versus
+depth, style, safety, or explainability.
 
 For the next bot slice, `search-d3` is the primary optimization target. Tactical
 scenarios remain diagnostics; a change should not be kept just because it fixes a

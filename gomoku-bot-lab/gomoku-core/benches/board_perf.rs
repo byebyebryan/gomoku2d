@@ -3,7 +3,7 @@ use std::time::Duration;
 use criterion::{criterion_group, criterion_main, BatchSize, BenchmarkId, Criterion};
 use std::hint::black_box;
 
-use gomoku_core::Color;
+use gomoku_core::{Board, Color, Move};
 
 #[path = "../../benchmarks/scenarios.rs"]
 mod scenarios;
@@ -96,6 +96,74 @@ fn bench_renju_forbidden_moves(c: &mut Criterion) {
     group.finish();
 }
 
+fn candidate_moves(board: &Board, radius: usize) -> Vec<Move> {
+    let size = board.config.board_size;
+    let radius = radius as isize;
+    let mut seen = vec![false; size * size];
+
+    for row in 0..size {
+        for col in 0..size {
+            if board.cell(row, col).is_none() {
+                continue;
+            }
+
+            for dr in -radius..=radius {
+                for dc in -radius..=radius {
+                    let r = row as isize + dr;
+                    let c = col as isize + dc;
+                    if r < 0 || r >= size as isize || c < 0 || c >= size as isize {
+                        continue;
+                    }
+
+                    let row = r as usize;
+                    let col = c as usize;
+                    if board.cell(row, col).is_none() {
+                        seen[row * size + col] = true;
+                    }
+                }
+            }
+        }
+    }
+
+    let mut moves = Vec::new();
+    for row in 0..size {
+        for col in 0..size {
+            if seen[row * size + col] {
+                moves.push(Move { row, col });
+            }
+        }
+    }
+    moves
+}
+
+fn bench_candidate_legality(c: &mut Criterion) {
+    let mut group = c.benchmark_group("core/candidate_legality/current_player");
+
+    for scenario in scenarios::SCENARIOS.iter().filter(|scenario| {
+        scenario.variant == gomoku_core::Variant::Renju && scenario.to_move == Color::Black
+    }) {
+        let board = scenario.board();
+        let candidates = candidate_moves(&board, 2);
+        group.bench_with_input(
+            BenchmarkId::from_parameter(scenario.id),
+            scenario,
+            |b, _| {
+                b.iter(|| {
+                    black_box(
+                        candidates
+                            .iter()
+                            .copied()
+                            .filter(|&mv| board.is_legal(mv))
+                            .count(),
+                    )
+                });
+            },
+        );
+    }
+
+    group.finish();
+}
+
 criterion_group!(
     name = board_perf;
     config = criterion_config();
@@ -103,6 +171,7 @@ criterion_group!(
         bench_immediate_winning_moves,
         bench_has_multiple_immediate_winning_moves,
         bench_apply_and_undo,
-        bench_renju_forbidden_moves
+        bench_renju_forbidden_moves,
+        bench_candidate_legality
 );
 criterion_main!(board_perf);
