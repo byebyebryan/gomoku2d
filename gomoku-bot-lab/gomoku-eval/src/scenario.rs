@@ -102,22 +102,22 @@ pub struct ScenarioSearchMetrics {
     pub time_ms: u64,
     pub depth_reached: i32,
     pub nodes: u64,
-    pub prefilter_nodes: u64,
+    pub safety_nodes: u64,
     pub total_nodes: u64,
     pub eval_calls: u64,
     pub candidate_generations: u64,
     pub candidate_moves_total: u64,
     pub candidate_moves_max: u64,
-    pub prefilter_candidate_generations: u64,
-    pub prefilter_candidate_moves_total: u64,
-    pub prefilter_candidate_moves_max: u64,
+    pub root_candidate_generations: u64,
+    pub root_candidate_moves_total: u64,
+    pub root_candidate_moves_max: u64,
     pub search_candidate_generations: u64,
     pub search_candidate_moves_total: u64,
     pub search_candidate_moves_max: u64,
     pub legality_checks: u64,
     pub illegal_moves_skipped: u64,
-    pub prefilter_legality_checks: u64,
-    pub prefilter_illegal_moves_skipped: u64,
+    pub root_legality_checks: u64,
+    pub root_illegal_moves_skipped: u64,
     pub search_legality_checks: u64,
     pub search_illegal_moves_skipped: u64,
     pub tt_hits: u64,
@@ -190,22 +190,22 @@ pub fn run_tactical_case(
             time_ms,
             depth_reached: info.depth_reached,
             nodes: info.nodes,
-            prefilter_nodes: info.prefilter_nodes,
-            total_nodes: info.nodes + info.prefilter_nodes,
+            safety_nodes: info.safety_nodes,
+            total_nodes: info.nodes + info.safety_nodes,
             eval_calls: info.metrics.eval_calls,
             candidate_generations: info.metrics.candidate_generations,
             candidate_moves_total: info.metrics.candidate_moves_total,
             candidate_moves_max: info.metrics.candidate_moves_max,
-            prefilter_candidate_generations: info.metrics.prefilter_candidate_generations,
-            prefilter_candidate_moves_total: info.metrics.prefilter_candidate_moves_total,
-            prefilter_candidate_moves_max: info.metrics.prefilter_candidate_moves_max,
+            root_candidate_generations: info.metrics.root_candidate_generations,
+            root_candidate_moves_total: info.metrics.root_candidate_moves_total,
+            root_candidate_moves_max: info.metrics.root_candidate_moves_max,
             search_candidate_generations: info.metrics.search_candidate_generations,
             search_candidate_moves_total: info.metrics.search_candidate_moves_total,
             search_candidate_moves_max: info.metrics.search_candidate_moves_max,
             legality_checks: info.metrics.legality_checks,
             illegal_moves_skipped: info.metrics.illegal_moves_skipped,
-            prefilter_legality_checks: info.metrics.prefilter_legality_checks,
-            prefilter_illegal_moves_skipped: info.metrics.prefilter_illegal_moves_skipped,
+            root_legality_checks: info.metrics.root_legality_checks,
+            root_illegal_moves_skipped: info.metrics.root_illegal_moves_skipped,
             search_legality_checks: info.metrics.search_legality_checks,
             search_illegal_moves_skipped: info.metrics.search_illegal_moves_skipped,
             tt_hits: info.metrics.tt_hits,
@@ -266,12 +266,11 @@ mod tests {
         assert!(result.metrics.depth_reached >= 1);
         assert_eq!(
             result.metrics.candidate_generations,
-            result.metrics.prefilter_candidate_generations
-                + result.metrics.search_candidate_generations
+            result.metrics.root_candidate_generations + result.metrics.search_candidate_generations
         );
         assert_eq!(
             result.metrics.legality_checks,
-            result.metrics.prefilter_legality_checks + result.metrics.search_legality_checks
+            result.metrics.root_legality_checks + result.metrics.search_legality_checks
         );
     }
 

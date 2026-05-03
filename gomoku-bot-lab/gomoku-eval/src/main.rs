@@ -289,7 +289,7 @@ fn print_tactical_scenario_result(result: &TacticalScenarioResult) {
     let status = if result.passed { "PASS" } else { "FAIL" };
     let expected = result.expected_moves.join("/");
     println!(
-        "{:<5} {:<10} {:<28} actual {:<3} expected {:<7} depth {:>2} nodes {:>8} prefilter {:>5} eval {:>7} cand p/s {:>5}/{:<5} legal p/s {:>6}/{:<6} tt {:>5}/{:<5} cut {:>5} time {:>4}ms",
+        "{:<5} {:<10} {:<28} actual {:<3} expected {:<7} depth {:>2} nodes {:>8} safety {:>5} eval {:>7} cand r/s {:>5}/{:<5} legal r/s {:>6}/{:<6} tt {:>5}/{:<5} cut {:>5} time {:>4}ms",
         status,
         result.config_id,
         result.case_id,
@@ -297,11 +297,11 @@ fn print_tactical_scenario_result(result: &TacticalScenarioResult) {
         expected,
         result.metrics.depth_reached,
         result.metrics.nodes,
-        result.metrics.prefilter_nodes,
+        result.metrics.safety_nodes,
         result.metrics.eval_calls,
-        result.metrics.prefilter_candidate_generations,
+        result.metrics.root_candidate_generations,
         result.metrics.search_candidate_generations,
-        result.metrics.prefilter_legality_checks,
+        result.metrics.root_legality_checks,
         result.metrics.search_legality_checks,
         result.metrics.tt_hits,
         result.metrics.tt_cutoffs,
