@@ -1,4 +1,4 @@
-use gomoku_bot::{MoveOrdering, SafetyGate, SearchBotConfig};
+use gomoku_bot::{MoveOrdering, SafetyGate, SearchAlgorithm, SearchBotConfig, StaticEvaluation};
 
 pub struct LabSearchConfig {
     pub id: &'static str,
@@ -15,6 +15,8 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             candidate_radius: 2,
             safety_gate: SafetyGate::OpponentReplySearchProbe,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
+            search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
+            static_eval: StaticEvaluation::LineShapeEval,
         },
     },
     LabSearchConfig {
@@ -26,6 +28,8 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             candidate_radius: 2,
             safety_gate: SafetyGate::OpponentReplySearchProbe,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
+            search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
+            static_eval: StaticEvaluation::LineShapeEval,
         },
     },
     LabSearchConfig {
@@ -37,6 +41,8 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             candidate_radius: 2,
             safety_gate: SafetyGate::OpponentReplySearchProbe,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
+            search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
+            static_eval: StaticEvaluation::LineShapeEval,
         },
     },
 ];
