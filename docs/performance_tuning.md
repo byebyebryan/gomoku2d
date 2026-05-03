@@ -225,6 +225,8 @@ From code inspection before the first benchmark pass:
 7. Tighten the Renju forbidden precheck from "near any black stone" to "two
    black stones on one local axis" before the exact forbidden detector
    (`2026-05-03`)
+8. Replace immediate-win probe apply/undo with virtual directional run checks
+   (`2026-05-03`)
 
 ### Future work
 
@@ -458,3 +460,54 @@ cargo bench -p gomoku-bot --bench search_perf -- renju_forbidden_cross --noplot
   component. It preserves exact rules behavior and has no meaningful product or
   tuning tradeoff; exposing it as config would add surface area without helping
   evaluation.
+
+## Optimization pass 4 snapshot
+
+Date: `2026-05-03`
+
+Changes:
+
+- `Board::immediate_winning_moves_for()` and
+  `Board::has_multiple_immediate_winning_moves_for()` now use a virtual
+  directional win probe instead of cloning a board and applying/undoing each
+  candidate move.
+- The probe still calls exact legality first, so Renju forbidden moves remain
+  excluded.
+- `gomoku-core/tests/bench_scenarios.rs` now compares the optimized immediate
+  winning move list against a full apply/undo scan for every benchmark scenario
+  and both colors.
+
+Commands used:
+
+```sh
+cargo test -p gomoku-core immediate
+cargo test -p gomoku-core --test bench_scenarios
+cargo bench -p gomoku-core --bench board_perf -- "immediate_winning_moves/current_player|has_multiple_immediate_winning_moves/current_player" --noplot
+cargo bench -p gomoku-bot --bench search_perf -- "balanced/(create_double_threat|renju_forbidden_cross|midgame_dense)" --noplot
+```
+
+### Targeted core anchors after pass 4
+
+| Benchmark | Result |
+|---|---|
+| `immediate_winning_moves/current_player/*` | `~23-32%` faster on freestyle anchors |
+| `immediate_winning_moves/current_player/renju_forbidden_cross` | `~9%` faster |
+| `has_multiple_immediate_winning_moves/current_player/*` | `~22-33%` faster on freestyle anchors |
+| `has_multiple_immediate_winning_moves/current_player/renju_forbidden_cross` | `~10%` faster |
+
+### Targeted search anchors after pass 4
+
+| Benchmark | Time | Criterion change |
+|---|---|---|
+| `balanced/create_double_threat` | `50.600-50.826 ms` | `-10.04% to -9.39%` |
+| `balanced/renju_forbidden_cross` | `17.142-17.221 ms` | `-15.14% to -14.44%` |
+| `balanced/midgame_dense` | `36.110-36.173 ms` | `-9.98% to -9.00%` |
+
+### Notes
+
+- This is another in-place core optimization rather than a bot component. It
+  preserves exact move legality and winning semantics while removing repeated
+  board mutation from a hot query used by UI hints and the search safety gate.
+- The end-to-end search improvement is larger on safety-heavy positions because
+  `opponent_reply_search_probe` calls
+  `has_multiple_immediate_winning_moves_for()` many times.

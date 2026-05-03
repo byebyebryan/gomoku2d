@@ -130,11 +130,9 @@ impl Board {
         }
 
         let mut wins = Vec::new();
-        let mut next = self.clone();
-        next.current_player = color;
 
         for mv in self.nearby_empty_moves(self.config.win_length.saturating_sub(1)) {
-            if Self::probe_immediate_winning_move(&mut next, mv, color) {
+            if self.probe_immediate_winning_move(mv, color) {
                 wins.push(mv);
             }
         }
@@ -147,8 +145,6 @@ impl Board {
         }
 
         let mut wins = 0;
-        let mut next = self.clone();
-        next.current_player = color;
         let radius = self.config.win_length.saturating_sub(1) as isize;
         let size = self.config.board_size;
         let mut seen = vec![false; size * size];
@@ -177,7 +173,7 @@ impl Board {
                         }
                         seen[idx] = true;
 
-                        if Self::probe_immediate_winning_move(&mut next, mv, color) {
+                        if self.probe_immediate_winning_move(mv, color) {
                             wins += 1;
                             if wins >= 2 {
                                 return true;
@@ -191,13 +187,19 @@ impl Board {
         false
     }
 
-    fn probe_immediate_winning_move(next: &mut Board, mv: Move, color: Color) -> bool {
-        let Ok(result) = next.apply_move(mv) else {
+    fn probe_immediate_winning_move(&self, mv: Move, color: Color) -> bool {
+        if !self.is_legal_for(mv, color) {
             return false;
-        };
-        let wins = matches!(result, GameResult::Winner(winner) if winner == color);
-        next.undo_move(mv);
-        wins
+        }
+
+        let row = mv.row as isize;
+        let col = mv.col as isize;
+        DIRS.iter().any(|&(dr, dc)| {
+            let count = 1
+                + self.count_direction(row, col, dr, dc, color)
+                + self.count_direction(row, col, -dr, -dc, color);
+            self.is_winning_run(count as usize, color)
+        })
     }
 
     pub fn forbidden_moves_for_current_player(&self) -> Vec<Move> {
