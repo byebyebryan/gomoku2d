@@ -1347,6 +1347,47 @@ fn search_root(
 // --- SearchBot ---
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CandidateSource {
+    NearAll { radius: usize },
+}
+
+impl CandidateSource {
+    fn name(self) -> String {
+        match self {
+            CandidateSource::NearAll { radius } => format!("near_all_r{radius}"),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LegalityGate {
+    ExactRules,
+}
+
+impl LegalityGate {
+    const fn name(self) -> &'static str {
+        match self {
+            LegalityGate::ExactRules => "exact_rules",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SafetyGate {
+    None,
+    OpponentReplySearchProbe,
+}
+
+impl SafetyGate {
+    const fn name(self) -> &'static str {
+        match self {
+            SafetyGate::None => "none",
+            SafetyGate::OpponentReplySearchProbe => "opponent_reply_search_probe",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SearchBotConfig {
     pub max_depth: i32,
     pub time_budget_ms: Option<u64>,
@@ -1394,6 +1435,24 @@ impl SearchBotConfig {
         self.cpu_time_budget_ms.map(Duration::from_millis)
     }
 
+    pub const fn candidate_source(self) -> CandidateSource {
+        CandidateSource::NearAll {
+            radius: self.candidate_radius,
+        }
+    }
+
+    pub const fn legality_gate(self) -> LegalityGate {
+        LegalityGate::ExactRules
+    }
+
+    pub const fn safety_gate(self) -> SafetyGate {
+        if self.root_prefilter {
+            SafetyGate::OpponentReplySearchProbe
+        } else {
+            SafetyGate::None
+        }
+    }
+
     fn trace(self) -> serde_json::Value {
         serde_json::json!({
             "max_depth": self.max_depth,
@@ -1401,6 +1460,9 @@ impl SearchBotConfig {
             "cpu_time_budget_ms": self.cpu_time_budget_ms,
             "candidate_radius": self.candidate_radius,
             "root_prefilter": self.root_prefilter,
+            "candidate_source": self.candidate_source().name(),
+            "legality_gate": self.legality_gate().name(),
+            "safety_gate": self.safety_gate().name(),
         })
     }
 }
@@ -1694,6 +1756,12 @@ mod tests {
         let baseline = SearchBotConfig::custom_depth(3);
         assert_eq!(SearchBot::new(3).config(), baseline);
         assert_eq!(
+            baseline.candidate_source(),
+            CandidateSource::NearAll { radius: 2 }
+        );
+        assert_eq!(baseline.legality_gate(), LegalityGate::ExactRules);
+        assert_eq!(baseline.safety_gate(), SafetyGate::OpponentReplySearchProbe);
+        assert_eq!(
             SearchBot::with_time(250).config(),
             SearchBotConfig::custom_time_budget(250)
         );
@@ -1706,6 +1774,11 @@ mod tests {
             root_prefilter: false,
         };
         assert_eq!(SearchBot::with_config(config).config(), config);
+        assert_eq!(
+            config.candidate_source(),
+            CandidateSource::NearAll { radius: 3 }
+        );
+        assert_eq!(config.safety_gate(), SafetyGate::None);
     }
 
     #[test]
@@ -1736,6 +1809,12 @@ mod tests {
         assert_eq!(trace["config"]["max_depth"], 3);
         assert_eq!(trace["config"]["candidate_radius"], 2);
         assert_eq!(trace["config"]["root_prefilter"], true);
+        assert_eq!(trace["config"]["candidate_source"], "near_all_r2");
+        assert_eq!(trace["config"]["legality_gate"], "exact_rules");
+        assert_eq!(
+            trace["config"]["safety_gate"],
+            "opponent_reply_search_probe"
+        );
         assert!(trace["nodes"].as_u64().unwrap() > 0);
         assert!(trace["total_nodes"].as_u64().unwrap() >= trace["nodes"].as_u64().unwrap());
         assert_eq!(trace["budget_exhausted"], false);
