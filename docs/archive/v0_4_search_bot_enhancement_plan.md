@@ -719,12 +719,11 @@ Immediate reading:
 
 Pipeline reset:
 
-The root safety-gate ablation exposed a design problem: the current legacy
-`root_prefilter` implementation is not one clean stage. It combines candidate
+The root safety-gate ablation exposed a design problem: the old
+`root_prefilter` implementation was not one clean stage. It combined candidate
 generation, Renju legality filtering, opponent reply generation, tactical
-detection, and root candidate deletion. That makes toggling the legacy
-`root_prefilter` field a muddy ablation because it changes several dimensions at
-once.
+detection, and root candidate deletion. Treating that bool as the primary
+ablation made results muddy because it changed several dimensions at once.
 
 Use this per-move pipeline vocabulary going forward:
 
@@ -775,20 +774,23 @@ Current SearchBot profile:
 | Candidate source | `near_all_r2` | Empty cells within radius 2 of any existing stone |
 | Legality gate | `exact_rules` | Calls the rules engine; Renju black uses exact forbidden checks |
 | Tactical annotator | `none` | Tactical facts exist in helper experiments but are not a separate pipeline stage yet |
-| Safety gate | `opponent_reply_search_probe` | Existing `root_prefilter` field controls this gate |
+| Safety gate | `opponent_reply_search_probe` | Explicit `SafetyGate` config chooses `none` or `opponent_reply_search_probe` |
 | Move ordering | `board_order` | Stable generated order; no tactical ordering yet |
 | Search | `alpha_beta_id` | Alpha-beta with iterative deepening and transposition table |
 | Static eval | `line_shape_eval` | Scores open and half-open line runs |
 
 Implication for the next implementation slice:
 
-- First split the code and metrics around these stages so ablations isolate one
-  dimension at a time.
+- Keep splitting the code and metrics around these stages so ablations isolate
+  one dimension at a time. Candidate source, legality gate, and safety gate are
+  now explicit code stages; tactical annotation and move ordering are still
+  pending.
 - Keep current product behavior available as `near_all_r2 + exact_rules +
   opponent_reply_search_probe` until a replacement proves better.
-- Add clean lab specs for `+near-all-r1`, `+near-all-r2`, `+near-all-r3`,
-  `+no-safety`, and `+opponent-reply-search-probe` rather than treating the
-  current `root_prefilter` implementation as the baseline.
+- Add clean lab specs for each stage rather than treating the old root
+  prefilter bool as the baseline. The current implemented suffixes are
+  `+near-all-r1`, `+near-all-r2`, `+near-all-r3`, `+no-safety`, and
+  `+opponent-reply-search-probe`.
 - Optimize Renju legality by exact-checking only black candidates within `r2` of
   black stones, regardless of whether search candidate selection uses `r1`,
   `r2`, or `r3`.

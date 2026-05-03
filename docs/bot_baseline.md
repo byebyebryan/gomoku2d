@@ -43,15 +43,14 @@ product presets:
 | `time_budget_ms` | Optional per-move wall-clock budget |
 | `cpu_time_budget_ms` | Optional per-move Linux thread CPU-time budget |
 | `candidate_radius` | Distance around existing stones used to generate candidate moves |
-| `root_prefilter` | Whether to run the root safety gate |
+| `safety_gate` | Root safety gate: `opponent_reply_search_probe` or `none` |
 
-These raw fields are projected into explicit pipeline stages in search traces:
-`candidate_source`, `legality_gate`, and `safety_gate`. Today there is one
-candidate source family (`near_all_rN`), one legality gate (`exact_rules`), and
-one optional safety gate (`opponent_reply_search_probe` or `none`). Renju
-forbidden-move checks still use exact core rules, but core first applies a cheap
-candidate gate: only empty cells within 2 spaces of a black stone can be
-forbidden.
+Search traces expose explicit pipeline stages: `candidate_source`,
+`legality_gate`, and `safety_gate`. Today there is one candidate source family
+(`near_all_rN`), one legality gate (`exact_rules`), and one optional safety gate
+(`opponent_reply_search_probe` or `none`). Renju forbidden-move checks still use
+exact core rules, but core first applies a cheap candidate gate: only empty
+cells within 2 spaces of a black stone can be forbidden.
 
 The lab tools define temporary aliases over these fields for experiments:
 
@@ -62,10 +61,10 @@ The lab tools define temporary aliases over these fields for experiments:
 | `deep` | 5 | `near_all_r2` | `opponent_reply_search_probe` | current CLI default depth |
 
 For lab-only ablations, append `+near-all-r1`, `+near-all-r2`, or
-`+near-all-r3` to change candidate-source radius. Append `+no-safety` to
-disable the root safety gate, for example `search-d5+near-all-r3+no-safety`.
-These switches measure one pipeline axis at a time; defaults remain
-`near_all_r2` plus `opponent_reply_search_probe`.
+`+near-all-r3` to change candidate-source radius. Append `+no-safety` or
+`+opponent-reply-search-probe` to choose the safety gate, for example
+`search-d5+near-all-r3+no-safety`. These switches measure one pipeline axis at a
+time; defaults remain `near_all_r2` plus `opponent_reply_search_probe`.
 
 These aliases are not core bot identity, and they are not character bots yet.
 They exist so the lab can benchmark stable configs before deciding whether UI
@@ -80,7 +79,6 @@ Search traces include both the result and the config:
     "time_budget_ms": null,
     "cpu_time_budget_ms": null,
     "candidate_radius": 2,
-    "root_prefilter": true,
     "candidate_source": "near_all_r2",
     "legality_gate": "exact_rules",
     "safety_gate": "opponent_reply_search_probe"
