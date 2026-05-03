@@ -213,18 +213,44 @@ Signing in extends the same local-first product without breaking it:
 - keep cloud setup, cost estimates, auth caveats, and release gates documented
   well enough that future agents can continue without guessing
 
-## P4 — `v0.4` Lab-Powered Product Identity (next)
+## P4 — `v0.4` Lab-Powered Product Identity (current)
 
 Make the Rust lab visible as a product differentiator.
 
 ### Goals
 
+- build a measured bot-lab foundation before exposing new player-facing bot
+  controls
 - make saved games useful after they end
 - turn bot/search tooling into player-facing learning and challenge features
 - make the Rust lab visible as a real product advantage
 - give Gomoku2D a reason to exist beyond retro styling and basic play
 - keep the lab-to-product loop tight: core/bot findings should become UI
   features without a rewrite
+
+### Current Sequencing
+
+`0.4.0` is a foundation release, not the first visible analysis feature. The
+initial bot experiments showed that style labels and tactical shortcuts are easy
+to invent but hard to justify. The release therefore focuses on:
+
+- explicit bot config and lab specs
+- tactical scenario diagnostics
+- multi-threaded tournament/report output
+- search-pipeline metrics and ablation vocabulary
+- behavior-preserving core/search hot-path optimizations
+- written records of rejected tactical experiments
+
+`0.4.1` should use that foundation for a narrower tactical ranking / move
+ordering pass. The target is not "make one depth-2 fixture pass"; it is better
+reached depth, runtime, or match strength under the same budget.
+
+`0.4.2` is the earliest likely UI bridge for bot controls/settings. Expose only
+knobs that have survived lab evidence. Profile should not become a dumping
+ground for bot/debug preferences.
+
+Later `0.4.x` slices can compete based on which lab-powered product surface
+feels strongest.
 
 ### Possible Work
 

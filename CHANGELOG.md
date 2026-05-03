@@ -12,6 +12,55 @@ their own section.
 
 ## [Unreleased]
 
+**Theme: turn `v0.4` toward bot-lab foundations before exposing player-facing
+bot controls.**
+
+The current `v0.4.0` candidate is intentionally not a settings/UI release. The
+early bot-style experiments showed that "more tactical features" is not useful
+unless the lab can prove better reached depth, runtime, or tournament strength.
+This slice therefore hardens the measurement/reporting workflow, makes the
+search pipeline explicit, records rejected experiments, and lands
+behavior-preserving core/search optimizations that give later tactical ranking
+work a cleaner base.
+
+### Bot lab
+
+- Added explicit `SearchBotConfig` plumbing, lab specs such as `search-d3`, and
+  trace output for candidate source, legality gate, safety gate, search
+  algorithm, static eval, node counts, and phase-split metrics.
+- Added tactical scenario diagnostics for one-move correctness and cost probes
+  without treating those fixtures as ranking substitutes.
+- Added multi-threaded tournament JSON and HTML reports with CPU-time budgets,
+  seeded openings, compact move lists, match trees, pipeline metrics, and clean
+  provenance handling for public `/bot-report/` publishing.
+- Recorded and removed rejected tactical candidate, ordering, broad threat
+  extension, and broad shape-eval experiments instead of keeping dead config
+  toggles.
+- Split the search pipeline into explicit candidate source, exact legality,
+  optional safety gate, move ordering, alpha-beta search, and static-eval
+  stages so future ablations can isolate one variable at a time.
+
+### Core and performance
+
+- Added benchmark coverage for board storage, candidate generation, legality,
+  immediate-win probes, pipeline stages, and fixed tactical/search scenarios.
+- Tightened the Renju forbidden precheck so exact forbidden detection only runs
+  after a cheap local necessary-condition guard.
+- Replaced immediate-winning-move probes with virtual directional win checks
+  while preserving exact legality handling.
+- Switched core board storage to dual bitboards and routed hot bot eval and
+  candidate paths through occupied-stone iteration.
+- Kept positive behavior-preserving optimizations in place, while leaving
+  tradeoff-heavy bot behavior changes behind lab specs and reports.
+
+### Repo and docs
+
+- Published the bot report alongside existing asset previews through GitHub
+  Pages.
+- Updated bot-lab README, baseline-bot notes, performance tuning notes, and
+  `v0.4` planning docs around the pivot from product settings to measured bot
+  foundation work.
+
 ## [0.3.3] - 2026-04-29
 
 **Theme: wrap up `v0.3` by hardening cloud continuity instead of expanding

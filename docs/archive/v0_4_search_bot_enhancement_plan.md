@@ -1,7 +1,8 @@
 # `v0.4.0` Search Bot Enhancement Plan
 
-Status: ad-hoc implementation plan. This captures the current bot-lab work loop
-so the commit boundaries and evaluation gates stay clear.
+Status: active retrospective and follow-up plan. This started as the `0.4.0`
+bot-lab work loop; it now records which experiments failed, which foundation
+pieces landed, and what the next measured search slice should be.
 
 Current progress:
 
@@ -25,6 +26,15 @@ Current progress:
 - Commit 11 broad shape eval was rejected after focused analysis. It fixed one
   depth-2 diagnostic but lost to plain deeper baselines and reduced effective
   search depth under CPU budgets.
+- Commit 12 search metrics, pipeline reporting, and explicit pipeline stages
+  landed across the bot/report refactor commits.
+- The first depth-oriented optimization pass landed as behavior-preserving
+  core/search work: Renju forbidden precheck, virtual immediate-win probes,
+  trusted apply, candidate-generation cleanup, bitboard board storage, and
+  occupied-stone hot-path iteration.
+- `0.4.0` is therefore a bot-lab foundation release, not a product bot-settings
+  release. The next behavior-changing slice should start from this measured
+  baseline.
 
 ## Goal
 

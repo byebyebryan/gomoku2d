@@ -233,6 +233,9 @@ From code inspection before the first benchmark pass:
    (`2026-05-03`)
 9. Replace `Board`'s `Vec<Vec<Cell>>` storage with dual bitboards and route bot
    eval/candidate hot loops through occupied-stone iteration (`2026-05-03`)
+10. Clean up remaining bitboard-era hot-path callers: reuse Zobrist tables for
+   root hashes, classify virtual cells without `Board::cell()`, and iterate
+   occupied stones when generating nearby moves (`2026-05-03`)
 
 ### Future work
 
@@ -572,3 +575,51 @@ cargo bench -p gomoku-bot --bench search_perf -- balanced/midgame_dense --noplot
 - Keep bitboard details inside core for now. Bot code should depend on semantic
   helpers (`is_empty`, `has_color`, `for_each_occupied`) rather than accessing
   raw storage.
+
+## Optimization pass 6 snapshot
+
+Date: `2026-05-03`
+
+Changes:
+
+- Added `Board::hash_with(&ZobristTable)` so root search hashing can reuse the
+  searcher's existing table instead of rebuilding hash state through a private
+  bot-side scan.
+- Routed virtual-cell classification through bitboard helpers instead of
+  `Board::cell()`.
+- Rewrote `nearby_empty_moves()` and `nearby_empty_moves_for_color()` to iterate
+  occupied stones directly instead of scanning the full board for anchor cells.
+- Kept `has_multiple_immediate_winning_moves_for()` on the direct scan path
+  after the occupied-anchor rewrite regressed dense midgame benchmarks. That
+  helper scans possible replies and exits early after two wins, so the simpler
+  direct path remains better there.
+
+Commands used:
+
+```sh
+cargo test -p gomoku-core -p gomoku-bot
+cargo bench -p gomoku-core --bench board_perf -- "board_hash/opening_sparse|immediate_winning_moves/current_player/midgame_dense|has_multiple_immediate_winning_moves/current_player/midgame_dense|candidate_legality/current_player/renju_forbidden_cross" --noplot
+cargo bench -p gomoku-bot --bench search_perf -- "balanced/(renju_forbidden_cross|midgame_dense)" --noplot
+```
+
+### Targeted anchors after pass 6
+
+| Benchmark | Result |
+|---|---|
+| `candidate_legality/current_player/renju_forbidden_cross` | small improvement in targeted runs after removing a root hash scan |
+| `balanced/renju_forbidden_cross` | effectively neutral in targeted runs |
+| `balanced/midgame_dense` | roughly `2%` faster in the targeted occupied-anchor run |
+
+### Notes
+
+- This was a cleanup pass, not a new search strategy. The goal was to stop
+  paying accidental bitboard-era adapter costs in callers that are already on
+  the hot path.
+- The direct-scan result for
+  `has_multiple_immediate_winning_moves_for()` is a useful constraint: occupied
+  iteration is not automatically faster when a helper's dominant shape is
+  "scan candidate replies and return early."
+- Future bitboard follow-ups should be profile-driven. The raw storage change
+  has already paid off; the remaining wins are likely from higher-level search
+  structure, candidate ordering, or localized eval rather than more storage
+  plumbing.
