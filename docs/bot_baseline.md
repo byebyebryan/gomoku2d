@@ -158,11 +158,18 @@ child_hash = parent_hash ^ piece(row, col, color) ^ turn_bit
 
 ## Candidate move generation
 
-Rather than searching all 225 cells, only cells within Manhattan radius 2 of any existing stone are considered. This typically keeps the branching factor under 30 even in mid-game.
+Rather than searching all 225 cells, only empty cells within two rows/columns of
+any existing stone are considered (`near_all_r2`). This is a square/Chebyshev
+radius. The current tournament metrics show a typical generated candidate set
+around 90 moves in developed Renju positions; earlier small-position estimates
+are no longer a reliable planning number.
 
 On an empty board, the first move is forced to the center.
 
-**Known weakness:** radius 2 can miss long-range threats in sparse positions. Radius 3 would catch more but grows the branching factor.
+**Known weakness:** radius 2 can miss long-range threats in sparse positions.
+Radius 3 would catch more but grows the branching factor. Candidate radius is
+now an explicit lab axis (`near_all_r1`, `near_all_r2`, `near_all_r3`) so future
+experiments can trade breadth for reached depth deliberately.
 
 ---
 

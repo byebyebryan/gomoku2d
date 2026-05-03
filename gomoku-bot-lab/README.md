@@ -52,10 +52,11 @@ cargo run --release -p gomoku-cli -- --black baseline --white random --quiet --r
 ### Current `SearchBot`
 
 Negamax with alpha-beta pruning, iterative deepening, and a transposition table
-keyed by incremental Zobrist hashing. Move candidates are pruned to cells within
-2 steps of any existing stone. Static evaluation scores open and half-open runs
-of 2–4 in all four directions. It reliably beats `RandomBot` and is intentionally
-good enough for practice without trying to be a perfect Gomoku engine.
+keyed by incremental Zobrist hashing. Move candidates are pruned to empty cells
+within two rows/columns of any existing stone (`near_all_r2`). Static evaluation
+scores open and half-open runs of 2–4 in all four directions. It reliably beats
+`RandomBot` and is intentionally good enough for practice without trying to be a
+perfect Gomoku engine.
 
 The lab now has named baseline-search aliases. `gomoku-bot` itself exposes
 explicit `SearchBotConfig` fields; these names are lab conveniences over that
