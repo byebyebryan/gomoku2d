@@ -448,6 +448,21 @@ impl Board {
             return Err(MoveError::Forbidden);
         }
 
+        Ok(self.apply_trusted_legal_move(mv))
+    }
+
+    /// Apply an already-validated legal move without repeating legality checks.
+    ///
+    /// This is intended for trusted in-process callers such as search, where
+    /// candidate moves have already passed the relevant legality gate.
+    pub fn apply_trusted_legal_move(&mut self, mv: Move) -> GameResult {
+        debug_assert_eq!(self.result, GameResult::Ongoing);
+        let size = self.config.board_size;
+        debug_assert!(mv.row < size);
+        debug_assert!(mv.col < size);
+        debug_assert!(self.cells[mv.row][mv.col].is_none());
+
+        let color = self.current_player;
         self.cells[mv.row][mv.col] = Some(color);
         self.history.push(mv);
 
@@ -458,7 +473,7 @@ impl Board {
         }
 
         self.current_player = color.opponent();
-        Ok(self.result.clone())
+        self.result.clone()
     }
 
     fn check_win(&self, mv: Move, color: Color) -> bool {

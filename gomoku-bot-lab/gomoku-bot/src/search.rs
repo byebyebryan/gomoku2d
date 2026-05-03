@@ -1086,7 +1086,7 @@ fn allows_opponent_forcing_reply(
     let opponent = current.opponent();
     // Root moves are legality-filtered before the safety gate; only opponent
     // replies need fresh legality checks here.
-    board.apply_move(mv).unwrap();
+    board.apply_trusted_legal_move(mv);
 
     let mut dangerous = false;
     let mut timed_out = false;
@@ -1114,7 +1114,7 @@ fn allows_opponent_forcing_reply(
             }
 
             *safety_nodes += 1;
-            board.apply_move(reply).unwrap();
+            board.apply_trusted_legal_move(reply);
             let forcing = matches!(board.result, GameResult::Winner(winner) if winner == opponent)
                 || board.has_multiple_immediate_winning_moves_for(opponent);
             board.undo_move(reply);
@@ -1343,7 +1343,7 @@ fn negamax(
         }
         // Incrementally update hash: XOR in the placed piece and flip turn bit
         let child_hash = hash ^ zobrist.piece(mv.row, mv.col, color) ^ zobrist.turn;
-        board.apply_move(mv).unwrap();
+        board.apply_trusted_legal_move(mv);
         let (score, _, child_timed_out) = negamax(
             board,
             child_hash,
@@ -1454,7 +1454,7 @@ fn search_root(
         }
 
         let child_hash = hash ^ zobrist.piece(mv.row, mv.col, color) ^ zobrist.turn;
-        board.apply_move(mv).unwrap();
+        board.apply_trusted_legal_move(mv);
         let (score, _, child_timed_out) = negamax(
             board,
             child_hash,
@@ -1902,6 +1902,46 @@ mod tests {
                     "scenario '{}' diverged for {:?}",
                     scenario.id,
                     color
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn trusted_apply_matches_regular_apply_for_legal_candidates() {
+        for scenario in scenarios::SCENARIOS {
+            let board = scenario.board();
+            for mv in candidate_moves(&board, 2)
+                .into_iter()
+                .filter(|&mv| board.is_legal(mv))
+            {
+                let mut regular = board.clone();
+                let mut trusted = board.clone();
+
+                let regular_result = regular.apply_move(mv).unwrap();
+                let trusted_result = trusted.apply_trusted_legal_move(mv);
+
+                assert_eq!(
+                    trusted_result, regular_result,
+                    "scenario '{}' result diverged for {:?}",
+                    scenario.id, mv
+                );
+                assert_eq!(
+                    trusted.to_fen(),
+                    regular.to_fen(),
+                    "scenario '{}' position diverged for {:?}",
+                    scenario.id,
+                    mv
+                );
+                assert_eq!(
+                    trusted.result, regular.result,
+                    "scenario '{}' game result diverged for {:?}",
+                    scenario.id, mv
+                );
+                assert_eq!(
+                    trusted.history, regular.history,
+                    "scenario '{}' history diverged for {:?}",
+                    scenario.id, mv
                 );
             }
         }
