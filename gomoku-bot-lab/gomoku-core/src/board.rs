@@ -4,7 +4,7 @@ use crate::rules::{RuleConfig, Variant};
 use crate::zobrist::ZobristTable;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[repr(usize)]
+#[repr(u8)]
 pub enum Color {
     Black = 0,
     White = 1,
@@ -29,6 +29,45 @@ impl Color {
 }
 
 pub type Cell = Option<Color>;
+
+fn bit_word_count(board_size: usize) -> usize {
+    (board_size * board_size).div_ceil(BITS_PER_WORD)
+}
+
+fn word_mask(idx: usize) -> (usize, u64) {
+    (idx / BITS_PER_WORD, 1u64 << (idx % BITS_PER_WORD))
+}
+
+fn bit_is_set(bits: &[u64], idx: usize) -> bool {
+    let (word, mask) = word_mask(idx);
+    bits[word] & mask != 0
+}
+
+fn set_bit(bits: &mut [u64], idx: usize) {
+    let (word, mask) = word_mask(idx);
+    bits[word] |= mask;
+}
+
+fn clear_bit(bits: &mut [u64], idx: usize) {
+    let (word, mask) = word_mask(idx);
+    bits[word] &= !mask;
+}
+
+fn for_each_set_bit(bits: &[u64], board_size: usize, mut f: impl FnMut(usize, usize)) {
+    let cell_count = board_size * board_size;
+    for (word_idx, &word) in bits.iter().enumerate() {
+        let mut remaining = word;
+        while remaining != 0 {
+            let bit_idx = remaining.trailing_zeros() as usize;
+            let idx = word_idx * BITS_PER_WORD + bit_idx;
+            if idx >= cell_count {
+                return;
+            }
+            f(idx / board_size, idx % board_size);
+            remaining &= remaining - 1;
+        }
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Move {
@@ -94,17 +133,22 @@ impl std::fmt::Display for MoveError {
 #[derive(Debug, Clone)]
 pub struct Board {
     pub config: RuleConfig,
-    cells: Vec<Vec<Cell>>,
+    black_bits: Vec<u64>,
+    white_bits: Vec<u64>,
     pub history: Vec<Move>,
     pub current_player: Color,
     pub result: GameResult,
 }
 
+const BITS_PER_WORD: usize = u64::BITS as usize;
+
 impl Board {
     pub fn new(config: RuleConfig) -> Self {
         let size = config.board_size;
+        let words = bit_word_count(size);
         Self {
-            cells: vec![vec![None; size]; size],
+            black_bits: vec![0; words],
+            white_bits: vec![0; words],
             history: Vec::new(),
             current_player: Color::Black,
             result: GameResult::Ongoing,
@@ -113,7 +157,83 @@ impl Board {
     }
 
     pub fn cell(&self, row: usize, col: usize) -> Cell {
-        self.cells[row][col]
+        let idx = self.index(row, col);
+        if bit_is_set(&self.black_bits, idx) {
+            Some(Color::Black)
+        } else if bit_is_set(&self.white_bits, idx) {
+            Some(Color::White)
+        } else {
+            None
+        }
+    }
+
+    pub fn is_empty(&self, row: usize, col: usize) -> bool {
+        self.is_empty_at(row, col)
+    }
+
+    pub fn has_color(&self, row: usize, col: usize, color: Color) -> bool {
+        self.has_color_at(row, col, color)
+    }
+
+    pub fn for_each_occupied(&self, mut f: impl FnMut(usize, usize, Color)) {
+        let size = self.config.board_size;
+        for_each_set_bit(&self.black_bits, size, |row, col| {
+            f(row, col, Color::Black);
+        });
+        for_each_set_bit(&self.white_bits, size, |row, col| {
+            f(row, col, Color::White);
+        });
+    }
+
+    fn index(&self, row: usize, col: usize) -> usize {
+        debug_assert!(row < self.config.board_size);
+        debug_assert!(col < self.config.board_size);
+        row * self.config.board_size + col
+    }
+
+    fn is_empty_at(&self, row: usize, col: usize) -> bool {
+        let idx = self.index(row, col);
+        !bit_is_set(&self.black_bits, idx) && !bit_is_set(&self.white_bits, idx)
+    }
+
+    fn has_color_at(&self, row: usize, col: usize, color: Color) -> bool {
+        let idx = self.index(row, col);
+        bit_is_set(self.bits_for_color(color), idx)
+    }
+
+    fn bits_for_color(&self, color: Color) -> &[u64] {
+        match color {
+            Color::Black => &self.black_bits,
+            Color::White => &self.white_bits,
+        }
+    }
+
+    fn bits_for_color_mut(&mut self, color: Color) -> &mut [u64] {
+        match color {
+            Color::Black => &mut self.black_bits,
+            Color::White => &mut self.white_bits,
+        }
+    }
+
+    fn set_cell(&mut self, mv: Move, color: Color) {
+        let idx = self.index(mv.row, mv.col);
+        set_bit(self.bits_for_color_mut(color), idx);
+    }
+
+    fn clear_cell(&mut self, mv: Move) {
+        let idx = self.index(mv.row, mv.col);
+        clear_bit(&mut self.black_bits, idx);
+        clear_bit(&mut self.white_bits, idx);
+    }
+
+    fn cell_at_index(&self, idx: usize) -> Cell {
+        if bit_is_set(&self.black_bits, idx) {
+            Some(Color::Black)
+        } else if bit_is_set(&self.white_bits, idx) {
+            Some(Color::White)
+        } else {
+            None
+        }
     }
 
     pub fn is_legal(&self, mv: Move) -> bool {
@@ -151,7 +271,7 @@ impl Board {
 
         for row in 0..size {
             for col in 0..size {
-                if self.cells[row][col].is_none() {
+                if self.is_empty_at(row, col) {
                     continue;
                 }
 
@@ -168,7 +288,7 @@ impl Board {
                             col: c as usize,
                         };
                         let idx = mv.row * size + mv.col;
-                        if seen[idx] || self.cells[mv.row][mv.col].is_some() {
+                        if seen[idx] || !self.is_empty_at(mv.row, mv.col) {
                             continue;
                         }
                         seen[idx] = true;
@@ -255,7 +375,7 @@ impl Board {
                 row: row as usize,
                 col: col as usize,
             };
-            if self.cells[next.row][next.col] != Some(color) {
+            if !self.has_color_at(next.row, next.col, color) {
                 break;
             }
 
@@ -288,7 +408,7 @@ impl Board {
 
         for row in 0..size {
             for col in 0..size {
-                if self.cells[row][col].is_none() {
+                if self.is_empty_at(row, col) {
                     continue;
                 }
                 has_stone = true;
@@ -305,7 +425,7 @@ impl Board {
                             row: r as usize,
                             col: c as usize,
                         };
-                        if self.cells[mv.row][mv.col].is_some() {
+                        if !self.is_empty_at(mv.row, mv.col) {
                             continue;
                         }
                         seen[mv.row * size + mv.col] = true;
@@ -341,7 +461,7 @@ impl Board {
 
         for row in 0..size {
             for col in 0..size {
-                if self.cells[row][col] != Some(color) {
+                if !self.has_color_at(row, col, color) {
                     continue;
                 }
                 has_anchor = true;
@@ -358,7 +478,7 @@ impl Board {
                             row: r as usize,
                             col: c as usize,
                         };
-                        if self.cells[mv.row][mv.col].is_some() {
+                        if !self.is_empty_at(mv.row, mv.col) {
                             continue;
                         }
                         seen[mv.row * size + mv.col] = true;
@@ -394,7 +514,7 @@ impl Board {
         let mut moves = Vec::with_capacity(size * size);
         for row in 0..size {
             for col in 0..size {
-                if self.cells[row][col].is_none() {
+                if self.is_empty_at(row, col) {
                     let mv = Move { row, col };
                     if !self.is_legal_for(mv, color) {
                         continue;
@@ -414,7 +534,7 @@ impl Board {
         if mv.row >= size || mv.col >= size {
             return false;
         }
-        if self.cells[mv.row][mv.col].is_some() {
+        if !self.is_empty_at(mv.row, mv.col) {
             return false;
         }
         if self.config.variant == Variant::Renju
@@ -435,7 +555,7 @@ impl Board {
         if mv.row >= size || mv.col >= size {
             return Err(MoveError::OutOfBounds);
         }
-        if self.cells[mv.row][mv.col].is_some() {
+        if !self.is_empty_at(mv.row, mv.col) {
             return Err(MoveError::Occupied);
         }
 
@@ -460,10 +580,10 @@ impl Board {
         let size = self.config.board_size;
         debug_assert!(mv.row < size);
         debug_assert!(mv.col < size);
-        debug_assert!(self.cells[mv.row][mv.col].is_none());
+        debug_assert!(self.is_empty_at(mv.row, mv.col));
 
         let color = self.current_player;
-        self.cells[mv.row][mv.col] = Some(color);
+        self.set_cell(mv, color);
         self.history.push(mv);
 
         if self.check_win(mv, color) {
@@ -493,7 +613,7 @@ impl Board {
         let mut count = 0;
         let (mut r, mut c) = (row + dr, col + dc);
         while r >= 0 && r < size && c >= 0 && c < size {
-            if self.cells[r as usize][c as usize] == Some(color) {
+            if self.has_color_at(r as usize, c as usize, color) {
                 count += 1;
                 r += dr;
                 c += dc;
@@ -526,7 +646,7 @@ impl Board {
                 if r < 0 || r >= size || c < 0 || c >= size {
                     continue;
                 }
-                if self.cells[r as usize][c as usize] == Some(Color::Black) {
+                if self.has_color_at(r as usize, c as usize, Color::Black) {
                     black += 1;
                     if black >= 2 {
                         return true;
@@ -553,7 +673,7 @@ impl Board {
         if r == vrow && c == vcol {
             return Some(Some(vcolor));
         }
-        Some(self.cells[r as usize][c as usize])
+        Some(self.cell(r as usize, c as usize))
     }
 
     /// True if placing a Black stone at `mv` would create an overline, double-four, or
@@ -687,12 +807,11 @@ impl Board {
             Color::Black => 'B',
             Color::White => 'W',
         };
-        let cells: String = self
-            .cells
-            .iter()
-            .flatten()
-            .map(|c| c.map_or('.', Color::to_char))
-            .collect();
+        let size = self.config.board_size;
+        let mut cells = String::with_capacity(size * size);
+        for idx in 0..size * size {
+            cells.push(self.cell_at_index(idx).map_or('.', Color::to_char));
+        }
         format!(
             "{}/{}/{}/{}",
             self.config.board_size, self.config.win_length, turn, cells
@@ -707,7 +826,7 @@ impl Board {
             Some(&mv),
             "undo_move called with wrong move"
         );
-        self.cells[mv.row][mv.col] = None;
+        self.clear_cell(mv);
         self.history.pop();
         self.current_player = self.current_player.opponent();
         self.result = GameResult::Ongoing;
@@ -721,13 +840,12 @@ impl Board {
     pub fn hash(&self) -> u64 {
         let zt = ZobristTable::new(self.config.board_size);
         let mut h = 0u64;
-        for row in 0..self.config.board_size {
-            for col in 0..self.config.board_size {
-                if let Some(color) = self.cells[row][col] {
-                    h ^= zt.piece(row, col, color);
-                }
-            }
-        }
+        for_each_set_bit(&self.black_bits, self.config.board_size, |row, col| {
+            h ^= zt.piece(row, col, Color::Black);
+        });
+        for_each_set_bit(&self.white_bits, self.config.board_size, |row, col| {
+            h ^= zt.piece(row, col, Color::White);
+        });
         if self.current_player == Color::White {
             h ^= zt.turn;
         }
@@ -762,12 +880,12 @@ impl Board {
         for (i, ch) in cell_str.chars().enumerate() {
             let row = i / board_size;
             let col = i % board_size;
-            board.cells[row][col] = match ch {
-                '.' => None,
-                'B' => Some(Color::Black),
-                'W' => Some(Color::White),
+            match ch {
+                '.' => {}
+                'B' => board.set_cell(Move { row, col }, Color::Black),
+                'W' => board.set_cell(Move { row, col }, Color::White),
                 _ => return Err(format!("invalid cell char '{ch}'")),
-            };
+            }
         }
         Ok(board)
     }
@@ -787,6 +905,33 @@ mod tests {
         assert_eq!(b.legal_moves().len(), 225);
         assert_eq!(b.current_player, Color::Black);
         assert_eq!(b.result, GameResult::Ongoing);
+    }
+
+    #[test]
+    fn color_and_cell_have_compact_representation() {
+        assert_eq!(std::mem::size_of::<Color>(), 1);
+        assert_eq!(std::mem::size_of::<Cell>(), 1);
+    }
+
+    #[test]
+    fn occupied_cells_visit_each_stone_with_color() {
+        let mut b = default_board();
+        b.apply_move(Move { row: 7, col: 7 }).unwrap();
+        b.apply_move(Move { row: 6, col: 8 }).unwrap();
+        b.apply_move(Move { row: 5, col: 9 }).unwrap();
+
+        let mut visited = Vec::new();
+        b.for_each_occupied(|row, col, color| visited.push((row, col, color)));
+        visited.sort_by_key(|&(row, col, color)| (row, col, color as u8));
+
+        assert_eq!(
+            visited,
+            vec![
+                (5, 9, Color::Black),
+                (6, 8, Color::White),
+                (7, 7, Color::Black),
+            ]
+        );
     }
 
     #[test]
@@ -986,7 +1131,7 @@ mod tests {
         let mut moves = Vec::new();
         for row in 0..board.config.board_size {
             for col in 0..board.config.board_size {
-                if board.cells[row][col].is_none() {
+                if board.cell(row, col).is_none() {
                     let mv = Move { row, col };
                     if board.is_renju_forbidden_at(mv) {
                         moves.push(mv);
