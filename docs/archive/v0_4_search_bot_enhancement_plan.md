@@ -215,7 +215,7 @@ Learning:
 Decision: discarded for now.
 
 The first pass only scored immediate winning moves for the current player and
-the opponent. That is too shallow: the baseline search/root prefilter already
+the opponent. That is too shallow: the baseline search/root safety probe already
 handles many immediate tactical cases, while adding another leaf-eval branch
 increased complexity without producing a clear strength gain.
 
@@ -274,7 +274,7 @@ Each scenario should record:
 - expected move set initially; tactical-class assertions can be added later
 - actual move
 - pass/fail
-- nodes, prefilter nodes, time, depth reached, budget exhaustion
+- nodes, root safety-gate probe nodes, time, depth reached, budget exhaustion
 
 Run the baseline configs first: `search-d2`, `search-d3`, and `search-d5`.
 Only positions that expose a real baseline gap should drive new search logic.
@@ -579,8 +579,9 @@ Expected behavior change: none after cleanup.
 Includes:
 
 - Add enough instrumentation to explain where `search-d3` spends time under a
-  CPU budget: eval calls, candidate generation, legality checks, prefilter work,
-  average candidate count, reached depth, and budget exhaustion.
+  CPU budget: eval calls, candidate generation, legality checks, root
+  safety-gate probe work, average candidate count, reached depth, and budget
+  exhaustion.
 - Pick one behavior-neutral baseline optimization from that evidence before
   adding another tactical feature.
 - Preserve cheap tactical safety for immediate wins/losses.
@@ -656,6 +657,143 @@ Immediate reading:
 - The next optimization slice should be behavior-neutral and should target
   cheaper candidate generation / legality filtering / board scanning before any
   new tactical feature is added.
+
+Root safety-gate ablation:
+
+```sh
+cargo run --release -p gomoku-eval -- tactical-scenarios \
+  --bots search-d3,search-d3+no-safety,search-d5,search-d5+no-safety \
+  --search-cpu-time-ms 1000 \
+  --report-json outputs/tactical_safety_ablation.json
+
+cargo run --release -p gomoku-eval -- tournament \
+  --bots search-d3,search-d3+no-safety \
+  --games-per-pair 64 \
+  --opening-plies 4 \
+  --search-cpu-time-ms 1000 \
+  --max-moves 120 \
+  --seed 65 \
+  --threads 22 \
+  --report-json outputs/tournament_safety_d3_ablation_64.json
+
+cargo run --release -p gomoku-eval -- tournament \
+  --bots search-d5,search-d5+no-safety \
+  --games-per-pair 64 \
+  --opening-plies 4 \
+  --search-cpu-time-ms 1000 \
+  --max-moves 120 \
+  --seed 65 \
+  --threads 22 \
+  --report-json outputs/tournament_safety_d5_ablation_64.json
+```
+
+These measurements were captured before the lab suffix was renamed from
+`+no-prefilter` to `+no-safety`; the old label maps to the same behavior:
+disable the root safety gate while keeping the candidate source and legality
+gate unchanged.
+
+| Run | Bot | Result | Avg ms | Avg depth | Budget hit | Search nodes | Safety probe nodes |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Tactical | `search-d3` | `7 / 7` pass | `19.9` | n/a | `0` | `3999` | `2411` |
+| Tactical | `search-d3+no-safety` | `6 / 7` pass | `15.4` | n/a | `0` | `5943` | `0` |
+| Tactical | `search-d5` | `7 / 7` pass | `442.0` | n/a | `3` | `163623` | `2411` |
+| Tactical | `search-d5+no-safety` | `6 / 7` pass | `435.4` | n/a | `3` | `165490` | `0` |
+| D3 64-game | `search-d3` | `29-0-35` | `213.1` | `2.86` | `7.2%` | `16430` | `4657` |
+| D3 64-game | `search-d3+no-safety` | `35-0-29` | `145.8` | `2.85` | `2.5%` | `29130` | `0` |
+| D5 64-game | `search-d5` | `33-1-30` | `817.8` | `3.76` | `69.3%` | `146497` | `4804` |
+| D5 64-game | `search-d5+no-safety` | `30-1-33` | `898.3` | `3.50` | `87.3%` | `191405` | `0` |
+
+Immediate reading:
+
+- No-safety is a useful control, not a clear replacement. It fails the
+  `block_open_three` tactical case for both D3 and D5.
+- The current safety gate is buying real tactical safety and helps D5 preserve
+  reached depth under the `1000 ms` CPU budget.
+- The current safety gate can still be counterproductive for shallower D3 match
+  play: it adds about `4.7k` hidden nodes per searched move in the D3 ablation,
+  while the no-safety variant won that 64-game head-to-head.
+- The next likely target is a cheaper, more meaningful root filter: keep
+  immediate win/block safety, avoid broad whole-board opponent rescans, and use
+  local threat facts around the candidate move to reject only obvious blunders
+  when a safe alternative exists.
+
+Pipeline reset:
+
+The root safety-gate ablation exposed a design problem: the current legacy
+`root_prefilter` implementation is not one clean stage. It combines candidate
+generation, Renju legality filtering, opponent reply generation, tactical
+detection, and root candidate deletion. That makes toggling the legacy
+`root_prefilter` field a muddy ablation because it changes several dimensions at
+once.
+
+Use this per-move pipeline vocabulary going forward:
+
+```text
+board state
+-> move source / candidate selection
+-> rules legality gate
+-> tactical annotation
+-> optional safety gate
+-> move ordering
+-> alpha-beta search
+-> static eval
+```
+
+Stage definitions:
+
+- **Move source / candidate selection** controls breadth only. The useful lab
+  axis is `near_all_r1`, `near_all_r2`, and `near_all_r3`: empty cells within
+  radius `1`, `2`, or `3` of any existing stone. Future experiments may also
+  try owner-aware sources such as `near_own_r2` or `near_opp_r2`. Whole-board
+  move generation is conceptually pure but probably too far from a useful bot
+  baseline, so keep it as a possible diagnostic, not the main baseline axis.
+- **Rules legality gate** must be separate from candidate selection and tactical
+  safety. Freestyle legality is just bounds, empty cell, and ongoing game. Renju
+  forbidden legality is only relevant for Black.
+- **Renju forbidden discovery** can be tighter than search candidate selection.
+  Any black forbidden move must be within Chebyshev `r2` of an existing black
+  stone. White stones can block patterns during the exact forbidden check, but
+  white stones do not need to seed the possible-forbidden set.
+- **Exact Renju forbidden check** may still inspect farther along the four board
+  directions for overline, double-four, and double-three windows. The cheap part
+  is deciding whether a candidate needs that exact check at all.
+- **Tactical annotation** should compute facts such as immediate win,
+  immediate block, open four, simple four, open three, and multi-threat without
+  deleting moves by itself.
+- **Safety gate** is where a move may be removed. The current implementation is
+  `opponent_reply_search_probe`: a shallow search-like probe that applies each
+  root candidate, scans legal opponent replies, and rejects the root candidate
+  if a reply wins immediately or creates multiple immediate winning moves. It
+  should not be treated as the baseline candidate selector.
+- **Move ordering** should consume tactical facts to improve alpha-beta pruning
+  without changing the legal candidate set.
+
+Current SearchBot profile:
+
+| Stage | Current name | Notes |
+| --- | --- | --- |
+| Candidate source | `near_all_r2` | Empty cells within radius 2 of any existing stone |
+| Legality gate | `exact_rules` | Calls the rules engine; Renju black uses exact forbidden checks |
+| Tactical annotator | `none` | Tactical facts exist in helper experiments but are not a separate pipeline stage yet |
+| Safety gate | `opponent_reply_search_probe` | Existing `root_prefilter` field controls this gate |
+| Move ordering | `board_order` | Stable generated order; no tactical ordering yet |
+| Search | `alpha_beta_id` | Alpha-beta with iterative deepening and transposition table |
+| Static eval | `line_shape_eval` | Scores open and half-open line runs |
+
+Implication for the next implementation slice:
+
+- First split the code and metrics around these stages so ablations isolate one
+  dimension at a time.
+- Keep current product behavior available as `near_all_r2 + exact_rules +
+  opponent_reply_search_probe` until a replacement proves better.
+- Add clean lab specs for `+near-all-r1`, `+near-all-r2`, `+near-all-r3`,
+  `+no-safety`, and `+opponent-reply-search-probe` rather than treating the
+  current `root_prefilter` implementation as the baseline.
+- Optimize Renju legality by exact-checking only black candidates within `r2` of
+  black stones, regardless of whether search candidate selection uses `r1`,
+  `r2`, or `r3`.
+- After the pipeline split, compare candidate radius, legality cost, current
+  safety probe, and any cheap local safety gate independently.
 
 ## Evaluation Gates
 
