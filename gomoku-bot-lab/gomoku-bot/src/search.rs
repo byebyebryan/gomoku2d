@@ -981,11 +981,6 @@ fn allows_opponent_forcing_reply(
     metrics: &mut SearchMetrics,
 ) -> Option<bool> {
     let current = board.current_player;
-    if needs_legality_gate(board, current, legality_gate)
-        && !legal_by_gate_counted(board, mv, legality_gate, metrics, SearchMetricPhase::Root)
-    {
-        return Some(false);
-    }
 
     if deadline.expired() {
         return None;
@@ -993,6 +988,8 @@ fn allows_opponent_forcing_reply(
     *safety_nodes += 1;
 
     let opponent = current.opponent();
+    // Root moves are legality-filtered before the safety gate; only opponent
+    // replies need fresh legality checks here.
     board.apply_move(mv).unwrap();
 
     let mut dangerous = false;
@@ -1353,17 +1350,11 @@ fn search_root(
     let tt_move = tt.get(&hash).and_then(|entry| entry.best_move);
     let ordered = order_moves(root_moves.to_vec(), move_ordering, tt_move);
 
-    let needs_legality_check = needs_legality_gate(board, color, legality_gate);
     let mut timed_out = false;
     for mv in ordered {
         if deadline.expired() {
             timed_out = true;
             break;
-        }
-        if needs_legality_check
-            && !legal_by_gate_counted(board, mv, legality_gate, metrics, SearchMetricPhase::Search)
-        {
-            continue;
         }
 
         let child_hash = hash ^ zobrist.piece(mv.row, mv.col, color) ^ zobrist.turn;
@@ -2047,6 +2038,37 @@ mod tests {
         assert!(metrics["tt_hits"].as_u64().is_some());
         assert!(metrics["tt_cutoffs"].as_u64().is_some());
         assert!(metrics["beta_cutoffs"].as_u64().is_some());
+    }
+
+    #[test]
+    fn root_legality_filter_does_not_count_as_search_work() {
+        let mut board = Board::new(RuleConfig {
+            variant: Variant::Renju,
+            ..Default::default()
+        });
+        apply_moves(&mut board, &["H8", "A1"]);
+
+        let config = SearchBotConfig {
+            max_depth: 1,
+            time_budget_ms: None,
+            cpu_time_budget_ms: None,
+            candidate_radius: 2,
+            safety_gate: SafetyGate::None,
+            move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
+            search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
+            static_eval: StaticEvaluation::LineShapeEval,
+        };
+        let mut bot = SearchBot::with_config(config);
+
+        let chosen = bot.choose_move(&board);
+        let info = bot
+            .last_info
+            .as_ref()
+            .expect("expected search info after choose_move");
+
+        assert!(board.is_legal(chosen));
+        assert!(info.metrics.root_legality_checks > 0);
+        assert_eq!(info.metrics.search_legality_checks, 0);
     }
 
     #[test]
