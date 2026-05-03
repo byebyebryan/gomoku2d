@@ -180,11 +180,11 @@ pub struct StandingReport {
     #[serde(default)]
     pub candidate_moves_max: u64,
     #[serde(default)]
-    pub prefilter_candidate_generations: u64,
+    pub root_candidate_generations: u64,
     #[serde(default)]
-    pub prefilter_candidate_moves_total: u64,
+    pub root_candidate_moves_total: u64,
     #[serde(default)]
-    pub prefilter_candidate_moves_max: u64,
+    pub root_candidate_moves_max: u64,
     #[serde(default)]
     pub search_candidate_generations: u64,
     #[serde(default)]
@@ -198,9 +198,9 @@ pub struct StandingReport {
     #[serde(default)]
     pub illegal_moves_skipped: u64,
     #[serde(default)]
-    pub prefilter_legality_checks: u64,
+    pub root_legality_checks: u64,
     #[serde(default)]
-    pub prefilter_illegal_moves_skipped: u64,
+    pub root_illegal_moves_skipped: u64,
     #[serde(default)]
     pub search_legality_checks: u64,
     #[serde(default)]
@@ -303,7 +303,7 @@ pub struct SideStatsReport {
     pub total_time_ms: u64,
     pub avg_search_time_ms: f64,
     pub search_nodes: u64,
-    pub prefilter_nodes: u64,
+    pub safety_nodes: u64,
     pub total_nodes: u64,
     pub avg_nodes: f64,
     #[serde(default)]
@@ -321,11 +321,11 @@ pub struct SideStatsReport {
     #[serde(default)]
     pub candidate_moves_max: u64,
     #[serde(default)]
-    pub prefilter_candidate_generations: u64,
+    pub root_candidate_generations: u64,
     #[serde(default)]
-    pub prefilter_candidate_moves_total: u64,
+    pub root_candidate_moves_total: u64,
     #[serde(default)]
-    pub prefilter_candidate_moves_max: u64,
+    pub root_candidate_moves_max: u64,
     #[serde(default)]
     pub search_candidate_generations: u64,
     #[serde(default)]
@@ -339,9 +339,9 @@ pub struct SideStatsReport {
     #[serde(default)]
     pub illegal_moves_skipped: u64,
     #[serde(default)]
-    pub prefilter_legality_checks: u64,
+    pub root_legality_checks: u64,
     #[serde(default)]
-    pub prefilter_illegal_moves_skipped: u64,
+    pub root_illegal_moves_skipped: u64,
     #[serde(default)]
     pub search_legality_checks: u64,
     #[serde(default)]
@@ -365,22 +365,22 @@ struct SideStatsAccumulator {
     search_move_count: u32,
     total_time_ms: u64,
     search_nodes: u64,
-    prefilter_nodes: u64,
+    safety_nodes: u64,
     total_nodes: u64,
     eval_calls: u64,
     candidate_generations: u64,
     candidate_moves_total: u64,
     candidate_moves_max: u64,
-    prefilter_candidate_generations: u64,
-    prefilter_candidate_moves_total: u64,
-    prefilter_candidate_moves_max: u64,
+    root_candidate_generations: u64,
+    root_candidate_moves_total: u64,
+    root_candidate_moves_max: u64,
     search_candidate_generations: u64,
     search_candidate_moves_total: u64,
     search_candidate_moves_max: u64,
     legality_checks: u64,
     illegal_moves_skipped: u64,
-    prefilter_legality_checks: u64,
-    prefilter_illegal_moves_skipped: u64,
+    root_legality_checks: u64,
+    root_illegal_moves_skipped: u64,
     search_legality_checks: u64,
     search_illegal_moves_skipped: u64,
     tt_hits: u64,
@@ -402,7 +402,7 @@ impl SideStatsAccumulator {
 
         self.search_move_count += 1;
         self.search_nodes += trace_value_u64(trace, "nodes");
-        self.prefilter_nodes += trace_value_u64(trace, "prefilter_nodes");
+        self.safety_nodes += trace_value_u64(trace, "safety_nodes");
         self.total_nodes += trace_value_u64(trace, "total_nodes");
         if let Some(metrics) = trace.get("metrics") {
             self.eval_calls += trace_value_u64(metrics, "eval_calls");
@@ -411,13 +411,13 @@ impl SideStatsAccumulator {
             self.candidate_moves_max = self
                 .candidate_moves_max
                 .max(trace_value_u64(metrics, "candidate_moves_max"));
-            self.prefilter_candidate_generations +=
-                trace_value_u64(metrics, "prefilter_candidate_generations");
-            self.prefilter_candidate_moves_total +=
-                trace_value_u64(metrics, "prefilter_candidate_moves_total");
-            self.prefilter_candidate_moves_max = self
-                .prefilter_candidate_moves_max
-                .max(trace_value_u64(metrics, "prefilter_candidate_moves_max"));
+            self.root_candidate_generations +=
+                trace_value_u64(metrics, "root_candidate_generations");
+            self.root_candidate_moves_total +=
+                trace_value_u64(metrics, "root_candidate_moves_total");
+            self.root_candidate_moves_max = self
+                .root_candidate_moves_max
+                .max(trace_value_u64(metrics, "root_candidate_moves_max"));
             self.search_candidate_generations +=
                 trace_value_u64(metrics, "search_candidate_generations");
             self.search_candidate_moves_total +=
@@ -427,9 +427,9 @@ impl SideStatsAccumulator {
                 .max(trace_value_u64(metrics, "search_candidate_moves_max"));
             self.legality_checks += trace_value_u64(metrics, "legality_checks");
             self.illegal_moves_skipped += trace_value_u64(metrics, "illegal_moves_skipped");
-            self.prefilter_legality_checks += trace_value_u64(metrics, "prefilter_legality_checks");
-            self.prefilter_illegal_moves_skipped +=
-                trace_value_u64(metrics, "prefilter_illegal_moves_skipped");
+            self.root_legality_checks += trace_value_u64(metrics, "root_legality_checks");
+            self.root_illegal_moves_skipped +=
+                trace_value_u64(metrics, "root_illegal_moves_skipped");
             self.search_legality_checks += trace_value_u64(metrics, "search_legality_checks");
             self.search_illegal_moves_skipped +=
                 trace_value_u64(metrics, "search_illegal_moves_skipped");
@@ -455,17 +455,17 @@ impl SideStatsAccumulator {
         self.search_move_count += stats.search_move_count;
         self.total_time_ms += stats.total_time_ms;
         self.search_nodes += stats.search_nodes;
-        self.prefilter_nodes += stats.prefilter_nodes;
+        self.safety_nodes += stats.safety_nodes;
         self.total_nodes += stats.total_nodes;
         self.eval_calls += stats.eval_calls;
         self.candidate_generations += stats.candidate_generations;
         self.candidate_moves_total += stats.candidate_moves_total;
         self.candidate_moves_max = self.candidate_moves_max.max(stats.candidate_moves_max);
-        self.prefilter_candidate_generations += stats.prefilter_candidate_generations;
-        self.prefilter_candidate_moves_total += stats.prefilter_candidate_moves_total;
-        self.prefilter_candidate_moves_max = self
-            .prefilter_candidate_moves_max
-            .max(stats.prefilter_candidate_moves_max);
+        self.root_candidate_generations += stats.root_candidate_generations;
+        self.root_candidate_moves_total += stats.root_candidate_moves_total;
+        self.root_candidate_moves_max = self
+            .root_candidate_moves_max
+            .max(stats.root_candidate_moves_max);
         self.search_candidate_generations += stats.search_candidate_generations;
         self.search_candidate_moves_total += stats.search_candidate_moves_total;
         self.search_candidate_moves_max = self
@@ -473,8 +473,8 @@ impl SideStatsAccumulator {
             .max(stats.search_candidate_moves_max);
         self.legality_checks += stats.legality_checks;
         self.illegal_moves_skipped += stats.illegal_moves_skipped;
-        self.prefilter_legality_checks += stats.prefilter_legality_checks;
-        self.prefilter_illegal_moves_skipped += stats.prefilter_illegal_moves_skipped;
+        self.root_legality_checks += stats.root_legality_checks;
+        self.root_illegal_moves_skipped += stats.root_illegal_moves_skipped;
         self.search_legality_checks += stats.search_legality_checks;
         self.search_illegal_moves_skipped += stats.search_illegal_moves_skipped;
         self.tt_hits += stats.tt_hits;
@@ -505,7 +505,7 @@ impl SideStatsAccumulator {
             total_time_ms: self.total_time_ms,
             avg_search_time_ms,
             search_nodes: self.search_nodes,
-            prefilter_nodes: self.prefilter_nodes,
+            safety_nodes: self.safety_nodes,
             total_nodes: self.total_nodes,
             avg_nodes,
             eval_calls: self.eval_calls,
@@ -515,17 +515,17 @@ impl SideStatsAccumulator {
             candidate_moves_total: self.candidate_moves_total,
             avg_candidate_moves,
             candidate_moves_max: self.candidate_moves_max,
-            prefilter_candidate_generations: self.prefilter_candidate_generations,
-            prefilter_candidate_moves_total: self.prefilter_candidate_moves_total,
-            prefilter_candidate_moves_max: self.prefilter_candidate_moves_max,
+            root_candidate_generations: self.root_candidate_generations,
+            root_candidate_moves_total: self.root_candidate_moves_total,
+            root_candidate_moves_max: self.root_candidate_moves_max,
             search_candidate_generations: self.search_candidate_generations,
             search_candidate_moves_total: self.search_candidate_moves_total,
             search_candidate_moves_max: self.search_candidate_moves_max,
             legality_checks: self.legality_checks,
             avg_legality_checks,
             illegal_moves_skipped: self.illegal_moves_skipped,
-            prefilter_legality_checks: self.prefilter_legality_checks,
-            prefilter_illegal_moves_skipped: self.prefilter_illegal_moves_skipped,
+            root_legality_checks: self.root_legality_checks,
+            root_illegal_moves_skipped: self.root_illegal_moves_skipped,
             search_legality_checks: self.search_legality_checks,
             search_illegal_moves_skipped: self.search_illegal_moves_skipped,
             tt_hits: self.tt_hits,
@@ -618,17 +618,17 @@ fn standings(
                 candidate_moves_total: side_stats.candidate_moves_total,
                 avg_candidate_moves: side_stats.avg_candidate_moves,
                 candidate_moves_max: side_stats.candidate_moves_max,
-                prefilter_candidate_generations: side_stats.prefilter_candidate_generations,
-                prefilter_candidate_moves_total: side_stats.prefilter_candidate_moves_total,
-                prefilter_candidate_moves_max: side_stats.prefilter_candidate_moves_max,
+                root_candidate_generations: side_stats.root_candidate_generations,
+                root_candidate_moves_total: side_stats.root_candidate_moves_total,
+                root_candidate_moves_max: side_stats.root_candidate_moves_max,
                 search_candidate_generations: side_stats.search_candidate_generations,
                 search_candidate_moves_total: side_stats.search_candidate_moves_total,
                 search_candidate_moves_max: side_stats.search_candidate_moves_max,
                 legality_checks: side_stats.legality_checks,
                 avg_legality_checks: side_stats.avg_legality_checks,
                 illegal_moves_skipped: side_stats.illegal_moves_skipped,
-                prefilter_legality_checks: side_stats.prefilter_legality_checks,
-                prefilter_illegal_moves_skipped: side_stats.prefilter_illegal_moves_skipped,
+                root_legality_checks: side_stats.root_legality_checks,
+                root_illegal_moves_skipped: side_stats.root_illegal_moves_skipped,
                 search_legality_checks: side_stats.search_legality_checks,
                 search_illegal_moves_skipped: side_stats.search_illegal_moves_skipped,
                 tt_hits: side_stats.tt_hits,
@@ -1437,7 +1437,7 @@ fn render_how_to_read_section(html: &mut String) {
     term_card(
         html,
         "Search Cost",
-        "Cand p/s and legal p/s split prefilter work from alpha-beta search work. Width is average candidate moves per generated candidate set.",
+        "Cand r/s and legal r/s split root-stage work from alpha-beta search work. Width is average candidate moves per generated candidate set.",
     );
     html.push_str("</div></section>");
 }
@@ -1447,13 +1447,13 @@ fn render_search_cost_section(html: &mut String, report: &TournamentReport) {
         return;
     }
 
-    html.push_str("<section><div class=\"section-heading\"><h2>Search Cost</h2><p>Per-search-move instrumentation. Split cells show prefilter / search costs.</p></div><table><thead><tr>");
+    html.push_str("<section><div class=\"section-heading\"><h2>Search Cost</h2><p>Per-search-move instrumentation. Split cells show root-stage / search costs.</p></div><table><thead><tr>");
     for head in [
         "Spec",
         "Avg eval",
-        "Cand gen p/s",
+        "Cand gen r/s",
         "Avg width",
-        "Legal p/s",
+        "Legal r/s",
         "TT hit/cut",
         "Beta cuts",
     ] {
@@ -1466,13 +1466,13 @@ fn render_search_cost_section(html: &mut String, report: &TournamentReport) {
             html_escape(&compact_bot_label(report, &row.bot)),
             row.avg_eval_calls,
             html_escape(&phase_average_label(
-                row.prefilter_candidate_generations,
+                row.root_candidate_generations,
                 row.search_candidate_generations,
                 row.search_move_count,
             )),
             row.avg_candidate_moves,
             html_escape(&phase_average_label(
-                row.prefilter_legality_checks,
+                row.root_legality_checks,
                 row.search_legality_checks,
                 row.search_move_count,
             )),
@@ -1629,15 +1629,15 @@ fn side_stats_label(stats: &SideStatsReport) -> String {
     }
 
     format!(
-        "{base}; eval {:.0}, cand p/s {}, legal p/s {}, tt {}/{}",
+        "{base}; eval {:.0}, cand r/s {}, legal r/s {}, tt {}/{}",
         stats.avg_eval_calls,
         phase_average_label(
-            stats.prefilter_candidate_generations,
+            stats.root_candidate_generations,
             stats.search_candidate_generations,
             stats.search_move_count,
         ),
         phase_average_label(
-            stats.prefilter_legality_checks,
+            stats.root_legality_checks,
             stats.search_legality_checks,
             stats.search_move_count,
         ),
@@ -1994,8 +1994,8 @@ mod tests {
         assert!(html.contains("2.0 / 4.0"));
         assert!(html.contains("TT hit/cut"));
         assert!(html.contains("0.0 / 0.0"));
-        assert!(html.contains("cand p/s 1.0 / 4.0"));
-        assert!(html.contains("legal p/s 2.0 / 4.0"));
+        assert!(html.contains("cand r/s 1.0 / 4.0"));
+        assert!(html.contains("legal r/s 2.0 / 4.0"));
         assert!(html.contains("<h3>Search Cost</h3>"));
     }
 
@@ -2013,7 +2013,7 @@ mod tests {
     }
 
     #[test]
-    fn from_json_defaults_additive_search_metrics_for_legacy_reports() {
+    fn from_json_defaults_missing_search_metrics() {
         let input = r#"{
           "schema_version": 1,
           "report_kind": "tournament",
@@ -2071,7 +2071,7 @@ mod tests {
               "total_time_ms": 10,
               "avg_search_time_ms": 10.0,
               "search_nodes": 100,
-              "prefilter_nodes": 10,
+              "safety_nodes": 10,
               "total_nodes": 110,
               "avg_nodes": 110.0,
               "depth_sum": 3,
@@ -2086,7 +2086,7 @@ mod tests {
               "total_time_ms": 10,
               "avg_search_time_ms": 10.0,
               "search_nodes": 100,
-              "prefilter_nodes": 10,
+              "safety_nodes": 10,
               "total_nodes": 110,
               "avg_nodes": 110.0,
               "depth_sum": 3,
@@ -2098,11 +2098,11 @@ mod tests {
           }]
         }"#;
 
-        let report = TournamentReport::from_json(input).expect("legacy report should parse");
+        let report = TournamentReport::from_json(input).expect("report should parse");
 
         assert_eq!(report.standings[0].eval_calls, 0);
         assert_eq!(report.standings[0].search_candidate_generations, 0);
-        assert_eq!(report.matches[0].black_stats.prefilter_legality_checks, 0);
+        assert_eq!(report.matches[0].black_stats.root_legality_checks, 0);
         assert_eq!(report.matches[0].white_stats.search_legality_checks, 0);
     }
 
@@ -2238,17 +2238,17 @@ mod tests {
             candidate_moves_total: 2500,
             avg_candidate_moves: 100.0,
             candidate_moves_max: 120,
-            prefilter_candidate_generations: 5,
-            prefilter_candidate_moves_total: 400,
-            prefilter_candidate_moves_max: 90,
+            root_candidate_generations: 5,
+            root_candidate_moves_total: 400,
+            root_candidate_moves_max: 90,
             search_candidate_generations: 20,
             search_candidate_moves_total: 2100,
             search_candidate_moves_max: 120,
             legality_checks: 30,
             avg_legality_checks: 6.0,
             illegal_moves_skipped: 2,
-            prefilter_legality_checks: 10,
-            prefilter_illegal_moves_skipped: 1,
+            root_legality_checks: 10,
+            root_illegal_moves_skipped: 1,
             search_legality_checks: 20,
             search_illegal_moves_skipped: 1,
             tt_hits: 7,
@@ -2268,7 +2268,7 @@ mod tests {
             total_time_ms: 50,
             avg_search_time_ms: 10.0,
             search_nodes: 900,
-            prefilter_nodes: 100,
+            safety_nodes: 100,
             total_nodes: 1000,
             avg_nodes: 200.0,
             eval_calls: 500,
@@ -2278,17 +2278,17 @@ mod tests {
             candidate_moves_total: 2500,
             avg_candidate_moves: 100.0,
             candidate_moves_max: 120,
-            prefilter_candidate_generations: 5,
-            prefilter_candidate_moves_total: 400,
-            prefilter_candidate_moves_max: 90,
+            root_candidate_generations: 5,
+            root_candidate_moves_total: 400,
+            root_candidate_moves_max: 90,
             search_candidate_generations: 20,
             search_candidate_moves_total: 2100,
             search_candidate_moves_max: 120,
             legality_checks: 30,
             avg_legality_checks: 6.0,
             illegal_moves_skipped: 2,
-            prefilter_legality_checks: 10,
-            prefilter_illegal_moves_skipped: 1,
+            root_legality_checks: 10,
+            root_illegal_moves_skipped: 1,
             search_legality_checks: 20,
             search_illegal_moves_skipped: 1,
             tt_hits: 7,

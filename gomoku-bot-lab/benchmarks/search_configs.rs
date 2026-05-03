@@ -248,9 +248,6 @@ mod tests {
             super::search_config_from_lab_spec("search-d3+shape-eval", 5, None, None).is_none()
         );
         assert!(
-            super::search_config_from_lab_spec("search-d3+no-prefilter", 5, None, None).is_none()
-        );
-        assert!(
             super::search_config_from_lab_spec("search-d3+near-all-r0", 5, None, None).is_none()
         );
         assert!(
