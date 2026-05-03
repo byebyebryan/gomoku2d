@@ -322,6 +322,11 @@ fn evaluate_counted(board: &Board, color: Color, metrics: &mut SearchMetrics) ->
     evaluate(board, color)
 }
 
+#[doc(hidden)]
+pub fn pipeline_bench_evaluate(board: &Board, color: Color) -> i32 {
+    evaluate(board, color)
+}
+
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 #[cfg_attr(not(test), allow(dead_code))]
 struct TacticalMoveFeatures {
@@ -927,6 +932,11 @@ fn candidate_moves(board: &Board, radius: usize) -> Vec<Move> {
     }
 
     moves
+}
+
+#[doc(hidden)]
+pub fn pipeline_bench_candidate_moves(board: &Board, radius: usize) -> Vec<Move> {
+    candidate_moves(board, radius)
 }
 
 fn candidate_moves_counted(

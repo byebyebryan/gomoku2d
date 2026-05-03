@@ -16,3 +16,7 @@ criterion = "0.8"
 [[bench]]
 name = "search_perf"
 harness = false
+
+[[bench]]
+name = "pipeline_perf"
+harness = false
