@@ -2,7 +2,9 @@ pub mod random;
 pub mod search;
 
 pub use random::RandomBot;
-pub use search::{MoveOrdering, SafetyGate, SearchBot, SearchBotConfig};
+pub use search::{
+    MoveOrdering, SafetyGate, SearchAlgorithm, SearchBot, SearchBotConfig, StaticEvaluation,
+};
 
 use gomoku_core::{Board, Move};
 

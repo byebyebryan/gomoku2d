@@ -1510,6 +1510,32 @@ impl MoveOrdering {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SearchAlgorithm {
+    AlphaBetaIterativeDeepening,
+}
+
+impl SearchAlgorithm {
+    const fn name(self) -> &'static str {
+        match self {
+            SearchAlgorithm::AlphaBetaIterativeDeepening => "alpha_beta_id",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StaticEvaluation {
+    LineShapeEval,
+}
+
+impl StaticEvaluation {
+    const fn name(self) -> &'static str {
+        match self {
+            StaticEvaluation::LineShapeEval => "line_shape_eval",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SearchBotConfig {
     pub max_depth: i32,
     pub time_budget_ms: Option<u64>,
@@ -1517,6 +1543,8 @@ pub struct SearchBotConfig {
     pub candidate_radius: usize,
     pub safety_gate: SafetyGate,
     pub move_ordering: MoveOrdering,
+    pub search_algorithm: SearchAlgorithm,
+    pub static_eval: StaticEvaluation,
 }
 
 impl SearchBotConfig {
@@ -1528,6 +1556,8 @@ impl SearchBotConfig {
             candidate_radius: 2,
             safety_gate: SafetyGate::OpponentReplySearchProbe,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
+            search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
+            static_eval: StaticEvaluation::LineShapeEval,
         }
     }
 
@@ -1539,6 +1569,8 @@ impl SearchBotConfig {
             candidate_radius: 2,
             safety_gate: SafetyGate::OpponentReplySearchProbe,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
+            search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
+            static_eval: StaticEvaluation::LineShapeEval,
         }
     }
 
@@ -1550,6 +1582,8 @@ impl SearchBotConfig {
             candidate_radius: 2,
             safety_gate: SafetyGate::OpponentReplySearchProbe,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
+            search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
+            static_eval: StaticEvaluation::LineShapeEval,
         }
     }
 
@@ -1585,6 +1619,8 @@ impl SearchBotConfig {
             "legality_gate": self.legality_gate().name(),
             "safety_gate": self.safety_gate().name(),
             "move_ordering": self.move_ordering.name(),
+            "search_algorithm": self.search_algorithm.name(),
+            "static_eval": self.static_eval.name(),
         })
     }
 }
@@ -1929,6 +1965,11 @@ mod tests {
             MoveOrdering::TranspositionFirstBoardOrder
         );
         assert_eq!(
+            baseline.search_algorithm,
+            SearchAlgorithm::AlphaBetaIterativeDeepening
+        );
+        assert_eq!(baseline.static_eval, StaticEvaluation::LineShapeEval);
+        assert_eq!(
             SearchBot::with_time(250).config(),
             SearchBotConfig::custom_time_budget(250)
         );
@@ -1940,6 +1981,8 @@ mod tests {
             candidate_radius: 3,
             safety_gate: SafetyGate::None,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
+            search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
+            static_eval: StaticEvaluation::LineShapeEval,
         };
         assert_eq!(SearchBot::with_config(config).config(), config);
         assert_eq!(
@@ -1984,6 +2027,8 @@ mod tests {
             "opponent_reply_search_probe"
         );
         assert_eq!(trace["config"]["move_ordering"], "tt_first_board_order");
+        assert_eq!(trace["config"]["search_algorithm"], "alpha_beta_id");
+        assert_eq!(trace["config"]["static_eval"], "line_shape_eval");
         assert!(trace["nodes"].as_u64().unwrap() > 0);
         assert!(trace["total_nodes"].as_u64().unwrap() >= trace["nodes"].as_u64().unwrap());
         assert_eq!(trace["budget_exhausted"], false);
