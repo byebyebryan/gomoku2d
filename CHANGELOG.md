@@ -12,6 +12,8 @@ their own section.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-05-03
+
 **Theme: turn `v0.4` toward bot-lab foundations before exposing player-facing
 bot controls.**
 
@@ -571,7 +573,8 @@ together in one canvas-driven surface. That lesson drove the `v0.2.1` rewrite.
   concerns blurred together.
 - Expressive UI language, but not scalable beyond one canvas.
 
-[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.3.3...HEAD
+[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/byebyebryan/gomoku2d/compare/v0.3.3...v0.4.0
 [0.3.3]: https://github.com/byebyebryan/gomoku2d/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/byebyebryan/gomoku2d/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/byebyebryan/gomoku2d/compare/v0.3.0...v0.3.1
