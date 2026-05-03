@@ -503,6 +503,12 @@ Includes:
 
 Expected behavior change: none.
 
+Current working slice: add this as a private, behavior-neutral helper in
+`gomoku-bot/src/search.rs` first. The helper should return concrete facts for
+terminal fives, open fours, simple fours, open threes, and broken threes, but it
+must not affect candidate generation, move ordering, static eval, or search
+depth until a later ablation commit consumes it.
+
 ### Commit 11: Shape-Aware Ordering/Eval Experiment
 
 Includes:

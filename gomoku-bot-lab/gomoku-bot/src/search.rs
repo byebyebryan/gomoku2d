@@ -380,6 +380,206 @@ struct TacticalShapeFeatures {
     broken_three: bool,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(not(test), allow(dead_code))]
+enum LocalThreatKind {
+    Five,
+    OpenFour,
+    SimpleFour,
+    OpenThree,
+    BrokenThree,
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+impl LocalThreatKind {
+    fn rank(self) -> u8 {
+        match self {
+            LocalThreatKind::Five => 5,
+            LocalThreatKind::OpenFour => 4,
+            LocalThreatKind::SimpleFour => 3,
+            LocalThreatKind::OpenThree => 2,
+            LocalThreatKind::BrokenThree => 1,
+        }
+    }
+
+    fn is_forcing(self) -> bool {
+        !matches!(self, LocalThreatKind::BrokenThree)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(not(test), allow(dead_code))]
+struct LocalThreatFact {
+    player: Color,
+    kind: LocalThreatKind,
+    gain_square: Move,
+    defense_squares: Vec<Move>,
+    rest_squares: Vec<Move>,
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+impl LocalThreatFact {
+    fn is_forcing(&self) -> bool {
+        self.kind.is_forcing()
+    }
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn local_threat_facts_after_move(board: &Board, mv: Move) -> Vec<LocalThreatFact> {
+    let player = board.current_player;
+    if !board.is_legal(mv) {
+        return Vec::new();
+    }
+
+    let mut after = board.clone();
+    if after.apply_move(mv).is_err() {
+        return Vec::new();
+    }
+
+    let mut facts = DIRS
+        .iter()
+        .filter_map(|&(dr, dc)| local_threat_fact_in_direction(&after, mv, player, dr, dc))
+        .collect::<Vec<_>>();
+    facts.sort_by_key(|fact| std::cmp::Reverse(fact.kind.rank()));
+    facts
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn local_threat_fact_in_direction(
+    board: &Board,
+    mv: Move,
+    player: Color,
+    dr: isize,
+    dc: isize,
+) -> Option<LocalThreatFact> {
+    let before = count_player_in_direction(board, mv, -dr, -dc, player);
+    let after = count_player_in_direction(board, mv, dr, dc, player);
+    let run_len = before + 1 + after;
+
+    if run_len >= board.config.win_length {
+        return Some(LocalThreatFact {
+            player,
+            kind: LocalThreatKind::Five,
+            gain_square: mv,
+            defense_squares: Vec::new(),
+            rest_squares: Vec::new(),
+        });
+    }
+
+    let four_completion_squares = four_completion_squares_through_move(board, mv, dr, dc, player);
+    match four_completion_squares.len() {
+        2.. => {
+            return Some(LocalThreatFact {
+                player,
+                kind: LocalThreatKind::OpenFour,
+                gain_square: mv,
+                defense_squares: four_completion_squares,
+                rest_squares: Vec::new(),
+            });
+        }
+        1 => {
+            return Some(LocalThreatFact {
+                player,
+                kind: LocalThreatKind::SimpleFour,
+                gain_square: mv,
+                defense_squares: four_completion_squares,
+                rest_squares: Vec::new(),
+            });
+        }
+        0 => {}
+    }
+
+    let mut open_ends = Vec::new();
+    if let Some(open_before) = empty_offset_move(board, mv, -dr, -dc, before + 1) {
+        open_ends.push(open_before);
+    }
+    if let Some(open_after) = empty_offset_move(board, mv, dr, dc, after + 1) {
+        open_ends.push(open_after);
+    }
+
+    match (run_len, open_ends.len()) {
+        (3, 2) => Some(LocalThreatFact {
+            player,
+            kind: LocalThreatKind::OpenThree,
+            gain_square: mv,
+            defense_squares: open_ends,
+            rest_squares: Vec::new(),
+        }),
+        _ => {
+            let rest_squares = broken_three_rest_squares_through_move(board, mv, dr, dc, player);
+            if rest_squares.is_empty() {
+                None
+            } else {
+                Some(LocalThreatFact {
+                    player,
+                    kind: LocalThreatKind::BrokenThree,
+                    gain_square: mv,
+                    defense_squares: Vec::new(),
+                    rest_squares,
+                })
+            }
+        }
+    }
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn four_completion_squares_through_move(
+    board: &Board,
+    mv: Move,
+    dr: isize,
+    dc: isize,
+    player: Color,
+) -> Vec<Move> {
+    let win_len = board.config.win_length as isize;
+    let mut completions = Vec::new();
+
+    for start in -(win_len - 1)..=0 {
+        let mut player_count = 0usize;
+        let mut empty_square = None;
+        let mut blocked = false;
+
+        for offset in start..start + win_len {
+            let row = mv.row as isize + dr * offset;
+            let col = mv.col as isize + dc * offset;
+            if !in_bounds(board, row, col) {
+                blocked = true;
+                break;
+            }
+
+            match board.cell(row as usize, col as usize) {
+                Some(color) if color == player => player_count += 1,
+                None if empty_square.is_none() => {
+                    empty_square = Some(Move {
+                        row: row as usize,
+                        col: col as usize,
+                    });
+                }
+                None => {
+                    blocked = true;
+                    break;
+                }
+                _ => {
+                    blocked = true;
+                    break;
+                }
+            }
+        }
+
+        let Some(empty_square) = empty_square else {
+            continue;
+        };
+        if !blocked
+            && player_count == board.config.win_length.saturating_sub(1)
+            && !completions.contains(&empty_square)
+        {
+            completions.push(empty_square);
+        }
+    }
+
+    completions.sort_by_key(|mv| (mv.row, mv.col));
+    completions
+}
+
 fn analyze_shapes_through_move(board: &Board, mv: Move, player: Color) -> TacticalShapeFeatures {
     let mut features = TacticalShapeFeatures::default();
     for &(dr, dc) in &DIRS {
@@ -441,6 +641,26 @@ fn offset_cell_is_empty(board: &Board, mv: Move, dr: isize, dc: isize, distance:
     in_bounds(board, row, col) && board.cell(row as usize, col as usize).is_none()
 }
 
+#[cfg_attr(not(test), allow(dead_code))]
+fn empty_offset_move(
+    board: &Board,
+    mv: Move,
+    dr: isize,
+    dc: isize,
+    distance: usize,
+) -> Option<Move> {
+    let row = mv.row as isize + dr * distance as isize;
+    let col = mv.col as isize + dc * distance as isize;
+    if in_bounds(board, row, col) && board.cell(row as usize, col as usize).is_none() {
+        Some(Move {
+            row: row as usize,
+            col: col as usize,
+        })
+    } else {
+        None
+    }
+}
+
 fn in_bounds(board: &Board, row: isize, col: isize) -> bool {
     let size = board.config.board_size as isize;
     row >= 0 && row < size && col >= 0 && col < size
@@ -453,6 +673,19 @@ fn is_broken_three_through_move(
     dc: isize,
     player: Color,
 ) -> bool {
+    !broken_three_rest_squares_through_move(board, mv, dr, dc, player).is_empty()
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn broken_three_rest_squares_through_move(
+    board: &Board,
+    mv: Move,
+    dr: isize,
+    dc: isize,
+    player: Color,
+) -> Vec<Move> {
+    let mut rest_squares = Vec::new();
+
     for start in -4isize..=0 {
         let mut player_offsets = Vec::new();
         let mut empty_offsets = Vec::new();
@@ -482,16 +715,30 @@ fn is_broken_three_through_move(
         if player_offsets.windows(2).all(|pair| pair[1] == pair[0] + 1) {
             continue;
         }
-        if empty_offsets
-            .iter()
-            .copied()
-            .any(|offset| virtual_run_len(board, mv, dr, dc, offset, player) >= 4)
-        {
-            return true;
+
+        for offset in empty_offsets {
+            if virtual_run_len(board, mv, dr, dc, offset, player) < 4 {
+                continue;
+            }
+
+            let row = mv.row as isize + dr * offset;
+            let col = mv.col as isize + dc * offset;
+            if !in_bounds(board, row, col) {
+                continue;
+            }
+
+            let rest = Move {
+                row: row as usize,
+                col: col as usize,
+            };
+            if !rest_squares.contains(&rest) {
+                rest_squares.push(rest);
+            }
         }
     }
 
-    false
+    rest_squares.sort_by_key(|mv| (mv.row, mv.col));
+    rest_squares
 }
 
 fn virtual_run_len(
@@ -1428,6 +1675,127 @@ mod tests {
 
         let filler = analyze_tactical_move(&board, Move { row: 1, col: 1 });
         assert!(!filler.double_threat);
+    }
+
+    #[test]
+    fn local_threat_facts_report_five_open_four_and_simple_four() {
+        let mut five_board = Board::new(RuleConfig::default());
+        apply_moves(
+            &mut five_board,
+            &["H8", "A1", "I8", "C1", "J8", "E1", "K8", "G1"],
+        );
+
+        let five = local_threat_facts_after_move(&five_board, mv("L8"));
+        assert_eq!(
+            five,
+            vec![LocalThreatFact {
+                player: Color::Black,
+                kind: LocalThreatKind::Five,
+                gain_square: mv("L8"),
+                defense_squares: vec![],
+                rest_squares: vec![],
+            }]
+        );
+        assert!(five[0].is_forcing());
+
+        let mut open_four_board = Board::new(RuleConfig::default());
+        apply_moves(&mut open_four_board, &["H8", "A1", "I8", "C1", "J8", "E1"]);
+
+        let open_four = local_threat_facts_after_move(&open_four_board, mv("K8"));
+        assert_eq!(
+            open_four,
+            vec![LocalThreatFact {
+                player: Color::Black,
+                kind: LocalThreatKind::OpenFour,
+                gain_square: mv("K8"),
+                defense_squares: vec![mv("G8"), mv("L8")],
+                rest_squares: vec![],
+            }]
+        );
+        assert!(open_four[0].is_forcing());
+
+        let mut simple_four_board = Board::new(RuleConfig::default());
+        apply_moves(
+            &mut simple_four_board,
+            &["H8", "G8", "I8", "A1", "J8", "C1"],
+        );
+
+        let simple_four = local_threat_facts_after_move(&simple_four_board, mv("K8"));
+        assert_eq!(
+            simple_four,
+            vec![LocalThreatFact {
+                player: Color::Black,
+                kind: LocalThreatKind::SimpleFour,
+                gain_square: mv("K8"),
+                defense_squares: vec![mv("L8")],
+                rest_squares: vec![],
+            }]
+        );
+        assert!(simple_four[0].is_forcing());
+    }
+
+    #[test]
+    fn local_threat_facts_report_gap_four_as_simple_four() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(&mut board, &["H8", "A1", "I8", "C1", "L8", "E1"]);
+
+        let gap_four = local_threat_facts_after_move(&board, mv("J8"));
+        assert_eq!(
+            gap_four,
+            vec![LocalThreatFact {
+                player: Color::Black,
+                kind: LocalThreatKind::SimpleFour,
+                gain_square: mv("J8"),
+                defense_squares: vec![mv("K8")],
+                rest_squares: vec![],
+            }]
+        );
+        assert!(gap_four[0].is_forcing());
+    }
+
+    #[test]
+    fn local_threat_facts_report_open_three_and_broken_three() {
+        let mut open_three_board = Board::new(RuleConfig::default());
+        apply_moves(&mut open_three_board, &["H8", "A1", "I8", "C1"]);
+
+        let open_three = local_threat_facts_after_move(&open_three_board, mv("J8"));
+        assert_eq!(
+            open_three,
+            vec![LocalThreatFact {
+                player: Color::Black,
+                kind: LocalThreatKind::OpenThree,
+                gain_square: mv("J8"),
+                defense_squares: vec![mv("G8"), mv("K8")],
+                rest_squares: vec![],
+            }]
+        );
+        assert!(open_three[0].is_forcing());
+
+        let mut broken_three_board = Board::new(RuleConfig::default());
+        apply_moves(&mut broken_three_board, &["H8", "A1", "K8", "C1"]);
+
+        let broken_three = local_threat_facts_after_move(&broken_three_board, mv("J8"));
+        assert_eq!(
+            broken_three,
+            vec![LocalThreatFact {
+                player: Color::Black,
+                kind: LocalThreatKind::BrokenThree,
+                gain_square: mv("J8"),
+                defense_squares: vec![],
+                rest_squares: vec![mv("I8")],
+            }]
+        );
+        assert!(!broken_three[0].is_forcing());
+    }
+
+    #[test]
+    fn local_threat_facts_skip_quiet_and_illegal_moves() {
+        let empty = Board::new(RuleConfig::default());
+        assert!(local_threat_facts_after_move(&empty, mv("H8")).is_empty());
+
+        let mut occupied = Board::new(RuleConfig::default());
+        occupied.apply_move(mv("H8")).unwrap();
+        assert!(local_threat_facts_after_move(&occupied, mv("H8")).is_empty());
     }
 
     #[test]
