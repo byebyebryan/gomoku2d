@@ -940,6 +940,15 @@ fn candidate_moves_counted(
     moves
 }
 
+fn candidate_moves_from_source_counted(
+    board: &Board,
+    candidate_source: CandidateSource,
+    metrics: &mut SearchMetrics,
+    phase: SearchMetricPhase,
+) -> Vec<Move> {
+    candidate_moves_counted(board, candidate_source.radius(), metrics, phase)
+}
+
 fn needs_renju_legality_check(board: &Board, color: Color) -> bool {
     board.config.variant == Variant::Renju && color == Color::Black
 }
@@ -947,7 +956,7 @@ fn needs_renju_legality_check(board: &Board, color: Color) -> bool {
 fn allows_opponent_forcing_reply(
     board: &mut Board,
     mv: Move,
-    candidate_radius: usize,
+    candidate_source: CandidateSource,
     deadline: SearchDeadline,
     prefilter_nodes: &mut u64,
     metrics: &mut SearchMetrics,
@@ -970,9 +979,9 @@ fn allows_opponent_forcing_reply(
     let mut dangerous = false;
     let mut timed_out = false;
     if !matches!(board.result, GameResult::Winner(winner) if winner == current) {
-        for reply in candidate_moves_counted(
+        for reply in candidate_moves_from_source_counted(
             board,
-            candidate_radius,
+            candidate_source,
             metrics,
             SearchMetricPhase::Prefilter,
         ) {
@@ -1009,14 +1018,14 @@ fn allows_opponent_forcing_reply(
 
 fn root_candidate_moves_with_metrics(
     board: &Board,
-    candidate_radius: usize,
+    candidate_source: CandidateSource,
     enable_prefilter: bool,
     deadline: SearchDeadline,
     metrics: &mut SearchMetrics,
 ) -> (Vec<Move>, u64, bool) {
-    let mut moves = candidate_moves_counted(
+    let mut moves = candidate_moves_from_source_counted(
         board,
-        candidate_radius,
+        candidate_source,
         metrics,
         SearchMetricPhase::Prefilter,
     );
@@ -1040,7 +1049,7 @@ fn root_candidate_moves_with_metrics(
         match allows_opponent_forcing_reply(
             &mut working,
             mv,
-            candidate_radius,
+            candidate_source,
             deadline,
             &mut prefilter_nodes,
             metrics,
@@ -1071,7 +1080,7 @@ fn negamax(
     root_color: Color,
     tt: &mut HashMap<u64, TTEntry>,
     zobrist: &ZobristTable,
-    candidate_radius: usize,
+    candidate_source: CandidateSource,
     nodes: &mut u64,
     metrics: &mut SearchMetrics,
     deadline: SearchDeadline,
@@ -1120,8 +1129,12 @@ fn negamax(
         );
     }
 
-    let moves =
-        candidate_moves_counted(board, candidate_radius, metrics, SearchMetricPhase::Search);
+    let moves = candidate_moves_from_source_counted(
+        board,
+        candidate_source,
+        metrics,
+        SearchMetricPhase::Search,
+    );
     if moves.is_empty() {
         let sign = if color == root_color { 1 } else { -1 };
         return (
@@ -1170,7 +1183,7 @@ fn negamax(
             root_color,
             tt,
             zobrist,
-            candidate_radius,
+            candidate_source,
             nodes,
             metrics,
             deadline,
@@ -1239,7 +1252,7 @@ fn search_root(
     color: Color,
     tt: &mut HashMap<u64, TTEntry>,
     zobrist: &ZobristTable,
-    candidate_radius: usize,
+    candidate_source: CandidateSource,
     nodes: &mut u64,
     metrics: &mut SearchMetrics,
     deadline: SearchDeadline,
@@ -1289,7 +1302,7 @@ fn search_root(
             color,
             tt,
             zobrist,
-            candidate_radius,
+            candidate_source,
             nodes,
             metrics,
             deadline,
@@ -1352,6 +1365,12 @@ pub enum CandidateSource {
 }
 
 impl CandidateSource {
+    const fn radius(self) -> usize {
+        match self {
+            CandidateSource::NearAll { radius } => radius,
+        }
+    }
+
     fn name(self) -> String {
         match self {
             CandidateSource::NearAll { radius } => format!("near_all_r{radius}"),
@@ -1541,6 +1560,7 @@ impl Bot for SearchBot {
         // Compute hash once at root; children update it incrementally
         let root_hash = hash_board(&self.zobrist, board);
         let center = board.config.board_size / 2;
+        let candidate_source = self.config.candidate_source();
         let prefilter_deadline = SearchDeadline::new(
             start,
             time_budget.map(|budget| budget / 2),
@@ -1549,7 +1569,7 @@ impl Bot for SearchBot {
         );
         let (root_moves, prefilter_nodes, mut budget_exhausted) = root_candidate_moves_with_metrics(
             board,
-            self.config.candidate_radius,
+            candidate_source,
             self.config.root_prefilter,
             prefilter_deadline,
             &mut metrics,
@@ -1558,9 +1578,9 @@ impl Bot for SearchBot {
             .first()
             .copied()
             .or_else(|| {
-                candidate_moves_counted(
+                candidate_moves_from_source_counted(
                     board,
-                    self.config.candidate_radius,
+                    candidate_source,
                     &mut metrics,
                     SearchMetricPhase::Search,
                 )
@@ -1589,7 +1609,7 @@ impl Bot for SearchBot {
                 color,
                 &mut self.tt,
                 &self.zobrist,
-                self.config.candidate_radius,
+                candidate_source,
                 &mut nodes,
                 &mut metrics,
                 deadline,
@@ -1735,7 +1755,7 @@ mod tests {
         let mut metrics = SearchMetrics::default();
         let moves = root_candidate_moves_with_metrics(
             &board,
-            2,
+            CandidateSource::NearAll { radius: 2 },
             true,
             SearchDeadline::new(
                 Instant::now() - Duration::from_millis(2),

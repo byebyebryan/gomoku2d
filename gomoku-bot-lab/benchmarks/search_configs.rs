@@ -64,6 +64,18 @@ pub fn search_config_from_lab_spec(
 
 fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchBotConfig> {
     match suffix {
+        "near-all-r1" => {
+            config.candidate_radius = 1;
+            Some(config)
+        }
+        "near-all-r2" => {
+            config.candidate_radius = 2;
+            Some(config)
+        }
+        "near-all-r3" => {
+            config.candidate_radius = 3;
+            Some(config)
+        }
         "no-safety" => {
             config.root_prefilter = false;
             Some(config)
@@ -174,6 +186,27 @@ mod tests {
     }
 
     #[test]
+    fn parses_near_all_radius_suffixes() {
+        let r1 = super::search_config_from_lab_spec("search-d3+near-all-r1", 5, None, None)
+            .expect("expected near-all-r1 search spec to parse");
+        assert_eq!(r1.max_depth, 3);
+        assert_eq!(r1.candidate_radius, 1);
+        assert!(r1.root_prefilter);
+
+        let r3 = super::search_config_from_lab_spec(
+            "balanced+near-all-r3+no-safety",
+            5,
+            Some(1000),
+            None,
+        )
+        .expect("expected combined radius and safety suffixes to parse");
+        assert_eq!(r3.max_depth, 3);
+        assert_eq!(r3.time_budget_ms, Some(1000));
+        assert_eq!(r3.candidate_radius, 3);
+        assert!(!r3.root_prefilter);
+    }
+
+    #[test]
     fn rejects_tactical_feature_flags() {
         assert!(super::search_config_from_lab_spec("search-d3+magic", 5, None, None).is_none());
         assert!(
@@ -187,6 +220,12 @@ mod tests {
         );
         assert!(
             super::search_config_from_lab_spec("search-d3+no-prefilter", 5, None, None).is_none()
+        );
+        assert!(
+            super::search_config_from_lab_spec("search-d3+near-all-r0", 5, None, None).is_none()
+        );
+        assert!(
+            super::search_config_from_lab_spec("search-d3+near-all-r4", 5, None, None).is_none()
         );
     }
 
