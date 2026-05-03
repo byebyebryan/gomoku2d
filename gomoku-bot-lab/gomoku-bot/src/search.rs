@@ -132,6 +132,95 @@ fn evaluate(board: &Board, color: Color) -> i32 {
     let size = board.config.board_size;
     let win_len = board.config.win_length as isize;
 
+    let mut counts = [[0i32; 6]; 2];
+    let mut open_ends = [[0i32; 6]; 2];
+
+    for &(dr, dc) in &DIRS {
+        for row in 0..size as isize {
+            for col in 0..size as isize {
+                let Some(player) = board.cell(row as usize, col as usize) else {
+                    continue;
+                };
+
+                // Only score a contiguous run once, from its back end.
+                let pr = row - dr;
+                let pc = col - dc;
+                if pr >= 0
+                    && pr < size as isize
+                    && pc >= 0
+                    && pc < size as isize
+                    && board.cell(pr as usize, pc as usize) == Some(player)
+                {
+                    continue;
+                }
+
+                let mut len = 0isize;
+                let (mut r, mut c) = (row, col);
+                while r >= 0
+                    && r < size as isize
+                    && c >= 0
+                    && c < size as isize
+                    && board.cell(r as usize, c as usize) == Some(player)
+                {
+                    len += 1;
+                    r += dr;
+                    c += dc;
+                }
+
+                if len >= win_len {
+                    return if player == color {
+                        2_000_000
+                    } else {
+                        -2_000_000
+                    };
+                }
+                if len < 2 {
+                    continue;
+                }
+
+                let mut ends = 0i32;
+                let (br, bc) = (row - dr, col - dc);
+                if br >= 0
+                    && br < size as isize
+                    && bc >= 0
+                    && bc < size as isize
+                    && board.cell(br as usize, bc as usize).is_none()
+                {
+                    ends += 1;
+                }
+                if r >= 0
+                    && r < size as isize
+                    && c >= 0
+                    && c < size as isize
+                    && board.cell(r as usize, c as usize).is_none()
+                {
+                    ends += 1;
+                }
+                if ends > 0 {
+                    let score_idx = if player == color { 0 } else { 1 };
+                    let len_idx = len.min(5) as usize;
+                    counts[score_idx][len_idx] += 1;
+                    open_ends[score_idx][len_idx] += ends;
+                }
+            }
+        }
+    }
+
+    score_line(&counts[0], &open_ends[0]) - score_line(&counts[1], &open_ends[1])
+}
+
+#[cfg(test)]
+fn evaluate_reference(board: &Board, color: Color) -> i32 {
+    if let GameResult::Winner(w) = &board.result {
+        return if *w == color { 2_000_000 } else { -2_000_000 };
+    }
+    if board.result == GameResult::Draw {
+        return 0;
+    }
+
+    let size = board.config.board_size;
+    let win_len = board.config.win_length as isize;
+
     let mut my_score = 0i32;
     let mut opp_score = 0i32;
     let opp = color.opponent();
@@ -143,7 +232,6 @@ fn evaluate(board: &Board, color: Color) -> i32 {
         for &(dr, dc) in &DIRS {
             for row in 0..size as isize {
                 for col in 0..size as isize {
-                    // Only start a new run from the "back" end to avoid double-counting
                     let pr = row - dr;
                     let pc = col - dc;
                     let back_in_bounds =
@@ -154,7 +242,7 @@ fn evaluate(board: &Board, color: Color) -> i32 {
                     if board.cell(row as usize, col as usize) != Some(player) {
                         continue;
                     }
-                    // Count run length
+
                     let mut len = 0isize;
                     let (mut r, mut c) = (row, col);
                     while r >= 0
@@ -177,9 +265,8 @@ fn evaluate(board: &Board, color: Color) -> i32 {
                     if len < 2 {
                         continue;
                     }
-                    // Count open ends
+
                     let mut ends = 0i32;
-                    // Before
                     let (br, bc) = (row - dr, col - dc);
                     if br >= 0
                         && br < size as isize
@@ -189,7 +276,6 @@ fn evaluate(board: &Board, color: Color) -> i32 {
                     {
                         ends += 1;
                     }
-                    // After
                     if r >= 0
                         && r < size as isize
                         && c >= 0
@@ -1802,6 +1888,22 @@ mod tests {
     fn apply_moves(board: &mut Board, moves: &[&str]) {
         for &notation in moves {
             board.apply_move(mv(notation)).unwrap();
+        }
+    }
+
+    #[test]
+    fn optimized_eval_matches_reference_on_benchmark_scenarios() {
+        for scenario in scenarios::SCENARIOS {
+            let board = scenario.board();
+            for color in [Color::Black, Color::White] {
+                assert_eq!(
+                    evaluate(&board, color),
+                    evaluate_reference(&board, color),
+                    "scenario '{}' diverged for {:?}",
+                    scenario.id,
+                    color
+                );
+            }
         }
     }
 
