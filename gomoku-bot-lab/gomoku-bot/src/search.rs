@@ -983,13 +983,17 @@ fn candidate_moves(board: &Board, radius: usize) -> Vec<Move> {
 
     let size = board.config.board_size;
     let cell_count = size * size;
-    let mut moves = Vec::with_capacity(cell_count);
+    let mut moves = Vec::new();
     let has_stones = if cell_count <= STACK_SEEN_CELLS {
         let mut seen = [0u64; STACK_SEEN_WORDS];
-        collect_candidate_moves(board, radius, &mut seen, &mut moves)
+        let has_stones = mark_candidate_moves(board, radius, &mut seen);
+        collect_marked_candidates(board, &seen, &mut moves);
+        has_stones
     } else {
         let mut seen = vec![0u64; cell_count.div_ceil(u64::BITS as usize)];
-        collect_candidate_moves(board, radius, &mut seen, &mut moves)
+        let has_stones = mark_candidate_moves(board, radius, &mut seen);
+        collect_marked_candidates(board, &seen, &mut moves);
+        has_stones
     };
 
     if !has_stones {
@@ -1003,12 +1007,7 @@ fn candidate_moves(board: &Board, radius: usize) -> Vec<Move> {
     moves
 }
 
-fn collect_candidate_moves(
-    board: &Board,
-    radius: usize,
-    seen: &mut [u64],
-    moves: &mut Vec<Move>,
-) -> bool {
+fn mark_candidate_moves(board: &Board, radius: usize, seen: &mut [u64]) -> bool {
     let size = board.config.board_size;
     let mut has_stones = false;
 
@@ -1029,8 +1028,8 @@ fn collect_candidate_moves(
             for r in rmin..=rmax {
                 for c in cmin..=cmax {
                     let idx = r * size + c;
-                    if mark_seen(seen, idx) && board.cell(r, c).is_none() {
-                        moves.push(Move { row: r, col: c });
+                    if board.cell(r, c).is_none() {
+                        mark_seen(seen, idx);
                     }
                 }
             }
@@ -1040,14 +1039,32 @@ fn collect_candidate_moves(
     has_stones
 }
 
-fn mark_seen(seen: &mut [u64], idx: usize) -> bool {
+fn collect_marked_candidates(board: &Board, seen: &[u64], moves: &mut Vec<Move>) {
+    let size = board.config.board_size;
+    let cell_count = size * size;
+    moves.reserve(size * size);
+
+    for (word_idx, &word) in seen.iter().enumerate() {
+        let mut bits = word;
+        while bits != 0 {
+            let bit_idx = bits.trailing_zeros() as usize;
+            let idx = word_idx * u64::BITS as usize + bit_idx;
+            if idx >= cell_count {
+                return;
+            }
+            moves.push(Move {
+                row: idx / size,
+                col: idx % size,
+            });
+            bits &= bits - 1;
+        }
+    }
+}
+
+fn mark_seen(seen: &mut [u64], idx: usize) {
     let word = idx / u64::BITS as usize;
     let bit = 1u64 << (idx % u64::BITS as usize);
-    if seen[word] & bit != 0 {
-        return false;
-    }
     seen[word] |= bit;
-    true
 }
 
 #[cfg(test)]
@@ -2024,16 +2041,19 @@ mod tests {
     }
 
     #[test]
-    fn optimized_candidates_match_reference_order() {
+    fn optimized_candidates_match_reference_set() {
         for scenario in scenarios::SCENARIOS {
             let board = scenario.board();
             for radius in [1, 2, 3] {
+                let mut optimized = candidate_moves(&board, radius);
+                let mut reference = candidate_moves_reference(&board, radius);
+                optimized.sort_by_key(|mv| (mv.row, mv.col));
+                reference.sort_by_key(|mv| (mv.row, mv.col));
+
                 assert_eq!(
-                    candidate_moves(&board, radius),
-                    candidate_moves_reference(&board, radius),
-                    "scenario '{}' diverged for radius {}",
-                    scenario.id,
-                    radius
+                    optimized, reference,
+                    "scenario '{}' candidate set diverged for radius {}",
+                    scenario.id, radius
                 );
             }
         }
@@ -2044,6 +2064,21 @@ mod tests {
             candidate_moves_reference(&empty, 2),
             "empty board center candidate diverged"
         );
+    }
+
+    #[test]
+    fn optimized_candidates_emit_board_order() {
+        for scenario in scenarios::SCENARIOS {
+            let board = scenario.board();
+            let candidates = candidate_moves(&board, 2);
+            assert!(
+                candidates
+                    .windows(2)
+                    .all(|pair| (pair[0].row, pair[0].col) <= (pair[1].row, pair[1].col)),
+                "scenario '{}' candidates should use board order",
+                scenario.id
+            );
+        }
     }
 
     #[test]
