@@ -63,9 +63,13 @@ config, not canonical product presets.
 
 | Alias | Config | Intent |
 |---|---|---|
-| `fast` | depth 2, radius 2, root prefilter on | cheap comparison target |
-| `balanced` | depth 3, radius 2, root prefilter on | current browser practice-bot depth |
-| `deep` | depth 5, radius 2, root prefilter on | current CLI default depth |
+| `fast` | depth 2, `near_all_r2`, `opponent_reply_search_probe` | cheap comparison target |
+| `balanced` | depth 3, `near_all_r2`, `opponent_reply_search_probe` | current browser practice-bot depth |
+| `deep` | depth 5, `near_all_r2`, `opponent_reply_search_probe` | current CLI default depth |
+
+Append `+no-safety` to a lab search spec to disable the root safety gate for
+ablation runs, for example `search-d3+no-safety`. This is a diagnostic switch,
+not a product preset.
 
 Legacy specs still work: plain `baseline` uses `--depth`, `baseline-N` creates a
 custom fixed-depth baseline bot, and `--time-ms` can cap search bots during CLI
@@ -153,7 +157,8 @@ cargo run -p gomoku-eval -- tactical-scenarios --bots search-d2,search-d3,search
 ```
 
 The command reports pass/fail, chosen move, expected move set, depth reached,
-nodes, prefilter nodes, time, and budget exhaustion. To capture reusable JSON:
+nodes, root safety-gate probe nodes (`prefilter_nodes` in the current JSON
+schema), time, and budget exhaustion. To capture reusable JSON:
 
 ```sh
 mkdir -p outputs

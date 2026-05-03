@@ -43,15 +43,19 @@ product presets:
 | `time_budget_ms` | Optional per-move wall-clock budget |
 | `cpu_time_budget_ms` | Optional per-move Linux thread CPU-time budget |
 | `candidate_radius` | Distance around existing stones used to generate candidate moves |
-| `root_prefilter` | Whether to run the root anti-blunder prefilter |
+| `root_prefilter` | Whether to run the root safety gate |
 
 The lab tools define temporary aliases over these fields for experiments:
 
-| Alias | Max depth | Candidate radius | Root prefilter | Intent |
-|---|---:|---:|---|---|
-| `fast` | 2 | 2 | on | cheap comparison target |
-| `balanced` | 3 | 2 | on | current browser practice-bot depth |
-| `deep` | 5 | 2 | on | current CLI default depth |
+| Alias | Max depth | Candidate source | Safety gate | Intent |
+|---|---:|---|---|---|
+| `fast` | 2 | `near_all_r2` | `opponent_reply_search_probe` | cheap comparison target |
+| `balanced` | 3 | `near_all_r2` | `opponent_reply_search_probe` | current browser practice-bot depth |
+| `deep` | 5 | `near_all_r2` | `opponent_reply_search_probe` | current CLI default depth |
+
+For lab-only ablations, append `+no-safety` to a search spec to disable the root
+safety gate, for example `search-d5+no-safety`. This is meant to measure the
+safety-gate tradeoff; defaults keep `opponent_reply_search_probe` enabled.
 
 These aliases are not core bot identity, and they are not character bots yet.
 They exist so the lab can benchmark stable configs before deciding whether UI
@@ -77,10 +81,10 @@ Search traces include both the result and the config:
 }
 ```
 
-`nodes` counts alpha-beta search nodes. `prefilter_nodes` counts the root
-anti-blunder prefilter probes, and `total_nodes` is the aggregate used by eval
-reporting. Node budgets are not enforced yet; this is currently a trace and
-tournament metric.
+`nodes` counts alpha-beta search nodes. `prefilter_nodes` is the legacy metric
+name for root safety-gate probes, currently `opponent_reply_search_probe`.
+`total_nodes` is the aggregate used by eval reporting. Node budgets are not
+enforced yet; this is currently a trace and tournament metric.
 
 Failed experimental knobs are removed instead of kept as dormant config fields.
 The rejected broad threat-extension and broad shape-eval experiments are

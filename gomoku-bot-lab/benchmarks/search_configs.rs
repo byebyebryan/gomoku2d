@@ -53,13 +53,23 @@ pub fn search_config_from_lab_spec(
     let mut parts = spec.split('+');
     let base = parts.next().unwrap_or_default();
 
-    let config = base_search_config(base, default_depth, time_budget_ms, cpu_time_budget_ms)?;
+    let mut config = base_search_config(base, default_depth, time_budget_ms, cpu_time_budget_ms)?;
 
-    if parts.next().is_some() {
-        return None;
+    for suffix in parts {
+        config = apply_lab_suffix(config, suffix)?;
     }
 
     Some(config)
+}
+
+fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchBotConfig> {
+    match suffix {
+        "no-safety" => {
+            config.root_prefilter = false;
+            Some(config)
+        }
+        _ => None,
+    }
 }
 
 fn base_search_config(
@@ -146,6 +156,24 @@ mod tests {
     }
 
     #[test]
+    fn parses_lab_no_safety_suffix() {
+        let depth_spec =
+            super::search_config_from_lab_spec("search-d3+no-safety", 5, Some(1000), None)
+                .expect("expected no-safety search spec to parse");
+        assert_eq!(depth_spec.max_depth, 3);
+        assert_eq!(depth_spec.time_budget_ms, Some(1000));
+        assert_eq!(depth_spec.cpu_time_budget_ms, None);
+        assert_eq!(depth_spec.candidate_radius, 2);
+        assert!(!depth_spec.root_prefilter);
+
+        let alias = super::search_config_from_lab_spec("balanced+no-safety", 5, None, Some(250))
+            .expect("expected no-safety alias spec to parse");
+        assert_eq!(alias.max_depth, 3);
+        assert_eq!(alias.cpu_time_budget_ms, Some(250));
+        assert!(!alias.root_prefilter);
+    }
+
+    #[test]
     fn rejects_tactical_feature_flags() {
         assert!(super::search_config_from_lab_spec("search-d3+magic", 5, None, None).is_none());
         assert!(
@@ -156,6 +184,9 @@ mod tests {
         assert!(super::search_config_from_lab_spec("search-d3+all", 5, None, None).is_none());
         assert!(
             super::search_config_from_lab_spec("search-d3+shape-eval", 5, None, None).is_none()
+        );
+        assert!(
+            super::search_config_from_lab_spec("search-d3+no-prefilter", 5, None, None).is_none()
         );
     }
 
