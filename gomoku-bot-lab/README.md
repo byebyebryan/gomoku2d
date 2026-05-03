@@ -99,7 +99,7 @@ freestyle-specific product checks.
 
 ```sh
 mkdir -p outputs
-cargo run --release -p gomoku-eval -- tournament --bots fast,balanced,deep --games-per-pair 10 --opening-plies 4 --search-cpu-time-ms 100 --max-game-ms 10000 --seed 42 --report-json outputs/gomoku-tournament.json
+cargo run --release -p gomoku-eval -- tournament --bots search-d2,search-d3,search-d5 --games-per-pair 10 --opening-plies 4 --search-cpu-time-ms 100 --max-game-ms 10000 --seed 42 --report-json outputs/gomoku-tournament.json
 cargo run --release -p gomoku-eval -- report-html --input outputs/gomoku-tournament.json --output outputs/gomoku-tournament.html --json-href gomoku-tournament.json
 ```
 
@@ -108,7 +108,7 @@ bot-lab results:
 
 ```sh
 mkdir -p reports
-cargo run --release -p gomoku-eval -- tournament --bots fast,balanced,deep --games-per-pair 64 --opening-plies 4 --search-cpu-time-ms 1000 --max-moves 120 --seed 42 --report-json reports/latest.json
+cargo run --release -p gomoku-eval -- tournament --bots search-d2,search-d3,search-d5 --games-per-pair 64 --opening-plies 4 --search-cpu-time-ms 1000 --max-moves 120 --seed 48 --threads 22 --report-json reports/latest.json
 cargo run --release -p gomoku-eval -- report-html --input reports/latest.json --output reports/index.html --json-href latest.json
 ```
 
@@ -160,8 +160,8 @@ cargo run -p gomoku-eval -- tactical-scenarios --bots search-d2,search-d3,search
 ```
 
 The command reports pass/fail, chosen move, expected move set, depth reached,
-nodes, root safety-gate probe nodes (`prefilter_nodes` in the current JSON
-schema), time, and budget exhaustion. To capture reusable JSON:
+nodes, root safety-gate probe nodes (`safety_nodes`), root/search candidate and
+legality costs, time, and budget exhaustion. To capture reusable JSON:
 
 ```sh
 mkdir -p outputs
@@ -200,12 +200,21 @@ that replay format directly.
           "candidate_radius": 2,
           "candidate_source": "near_all_r2",
           "legality_gate": "exact_rules",
-          "safety_gate": "opponent_reply_search_probe"
+          "safety_gate": "opponent_reply_search_probe",
+          "move_ordering": "tt_first_board_order",
+          "search_algorithm": "alpha_beta_id",
+          "static_eval": "line_shape_eval"
         },
         "depth": 3,
         "nodes": 42,
-        "prefilter_nodes": 4,
+        "safety_nodes": 4,
         "total_nodes": 46,
+        "metrics": {
+          "root_candidate_generations": 1,
+          "search_candidate_generations": 12,
+          "root_legality_checks": 4,
+          "search_legality_checks": 80
+        },
         "budget_exhausted": false,
         "score": 100
       }

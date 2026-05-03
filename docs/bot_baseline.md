@@ -81,21 +81,31 @@ Search traces include both the result and the config:
     "candidate_radius": 2,
     "candidate_source": "near_all_r2",
     "legality_gate": "exact_rules",
-    "safety_gate": "opponent_reply_search_probe"
+    "safety_gate": "opponent_reply_search_probe",
+    "move_ordering": "tt_first_board_order",
+    "search_algorithm": "alpha_beta_id",
+    "static_eval": "line_shape_eval"
   },
   "depth": 3,
   "nodes": 1234,
-  "prefilter_nodes": 56,
+  "safety_nodes": 56,
   "total_nodes": 1290,
+  "metrics": {
+    "root_candidate_generations": 1,
+    "search_candidate_generations": 80,
+    "root_legality_checks": 20,
+    "search_legality_checks": 400
+  },
   "score": 200,
   "budget_exhausted": false
 }
 ```
 
-`nodes` counts alpha-beta search nodes. `prefilter_nodes` is the legacy metric
-name for root safety-gate probes, currently `opponent_reply_search_probe`.
-`total_nodes` is the aggregate used by eval reporting. Node budgets are not
-enforced yet; this is currently a trace and tournament metric.
+`nodes` counts alpha-beta search nodes. `safety_nodes` counts the optional root
+safety-gate probe, currently `opponent_reply_search_probe`. `total_nodes` is
+the aggregate used by eval reporting. Root/search candidate and legality metrics
+are split so pipeline-stage costs can be compared independently. Node budgets
+are not enforced yet; this is currently a trace and tournament metric.
 
 Failed experimental knobs are removed instead of kept as dormant config fields.
 The rejected broad threat-extension and broad shape-eval experiments are
