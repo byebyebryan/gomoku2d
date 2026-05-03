@@ -77,6 +77,82 @@ fn bench_apply_and_undo(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_board_clone(c: &mut Criterion) {
+    let mut group = c.benchmark_group("core/board_clone");
+
+    for scenario in scenarios::SCENARIOS {
+        let board = scenario.board();
+        group.bench_with_input(
+            BenchmarkId::from_parameter(scenario.id),
+            scenario,
+            |b, _| b.iter(|| black_box(board.clone())),
+        );
+    }
+
+    group.finish();
+}
+
+fn bench_board_cell_scan(c: &mut Criterion) {
+    let mut group = c.benchmark_group("core/board_cell_scan");
+
+    for scenario in scenarios::SCENARIOS {
+        let board = scenario.board();
+        let size = board.config.board_size;
+        group.bench_with_input(
+            BenchmarkId::from_parameter(scenario.id),
+            scenario,
+            |b, _| {
+                b.iter(|| {
+                    let mut black = 0usize;
+                    let mut white = 0usize;
+                    for row in 0..size {
+                        for col in 0..size {
+                            match board.cell(row, col) {
+                                Some(Color::Black) => black += 1,
+                                Some(Color::White) => white += 1,
+                                None => {}
+                            }
+                        }
+                    }
+                    black_box((black, white))
+                });
+            },
+        );
+    }
+
+    group.finish();
+}
+
+fn bench_board_hash(c: &mut Criterion) {
+    let mut group = c.benchmark_group("core/board_hash");
+
+    for scenario in scenarios::SCENARIOS {
+        let board = scenario.board();
+        group.bench_with_input(
+            BenchmarkId::from_parameter(scenario.id),
+            scenario,
+            |b, _| b.iter(|| black_box(board.hash())),
+        );
+    }
+
+    group.finish();
+}
+
+fn bench_board_to_fen(c: &mut Criterion) {
+    let mut group = c.benchmark_group("core/board_to_fen");
+
+    for scenario in scenarios::SCENARIOS {
+        let board = scenario.board();
+        group.bench_with_input(
+            BenchmarkId::from_parameter(scenario.id),
+            scenario,
+            |b, _| b.iter(|| black_box(board.to_fen())),
+        );
+    }
+
+    group.finish();
+}
+
 fn bench_renju_forbidden_moves(c: &mut Criterion) {
     let mut group = c.benchmark_group("core/forbidden_moves/current_player");
 
@@ -171,6 +247,10 @@ criterion_group!(
         bench_immediate_winning_moves,
         bench_has_multiple_immediate_winning_moves,
         bench_apply_and_undo,
+        bench_board_clone,
+        bench_board_cell_scan,
+        bench_board_hash,
+        bench_board_to_fen,
         bench_renju_forbidden_moves,
         bench_candidate_legality
 );
