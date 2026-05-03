@@ -1148,6 +1148,20 @@ fn opponent_reply_search_probe_root_candidates(
     }
 }
 
+fn order_moves(moves: Vec<Move>, move_ordering: MoveOrdering, tt_move: Option<Move>) -> Vec<Move> {
+    match move_ordering {
+        MoveOrdering::TranspositionFirstBoardOrder => {
+            if let Some(tm) = tt_move.filter(|tm| moves.contains(tm)) {
+                std::iter::once(tm)
+                    .chain(moves.into_iter().filter(|&m| m != tm))
+                    .collect()
+            } else {
+                moves
+            }
+        }
+    }
+}
+
 // --- Negamax with alpha-beta (incremental Zobrist hash) ---
 
 #[allow(clippy::too_many_arguments)]
@@ -1163,6 +1177,7 @@ fn negamax(
     zobrist: &ZobristTable,
     candidate_source: CandidateSource,
     legality_gate: LegalityGate,
+    move_ordering: MoveOrdering,
     nodes: &mut u64,
     metrics: &mut SearchMetrics,
     deadline: SearchDeadline,
@@ -1230,15 +1245,8 @@ fn negamax(
     let mut best_score = i32::MIN + 1;
     let mut best_move: Option<Move> = None;
 
-    // TT move ordering: try best move from TT first
     let tt_move = tt.get(&hash).and_then(|e| e.best_move);
-    let ordered: Vec<Move> = if let Some(tm) = tt_move.filter(|tm| moves.contains(tm)) {
-        std::iter::once(tm)
-            .chain(moves.into_iter().filter(|&m| m != tm))
-            .collect()
-    } else {
-        moves
-    };
+    let ordered = order_moves(moves, move_ordering, tt_move);
 
     let needs_legality_check = needs_legality_gate(board, color, legality_gate);
     let mut timed_out = false;
@@ -1267,6 +1275,7 @@ fn negamax(
             zobrist,
             candidate_source,
             legality_gate,
+            move_ordering,
             nodes,
             metrics,
             deadline,
@@ -1337,6 +1346,7 @@ fn search_root(
     zobrist: &ZobristTable,
     candidate_source: CandidateSource,
     legality_gate: LegalityGate,
+    move_ordering: MoveOrdering,
     nodes: &mut u64,
     metrics: &mut SearchMetrics,
     deadline: SearchDeadline,
@@ -1353,13 +1363,7 @@ fn search_root(
     let mut best_move: Option<Move> = None;
 
     let tt_move = tt.get(&hash).and_then(|entry| entry.best_move);
-    let ordered: Vec<Move> = if let Some(tm) = tt_move.filter(|tm| root_moves.contains(tm)) {
-        std::iter::once(tm)
-            .chain(root_moves.iter().copied().filter(|&m| m != tm))
-            .collect()
-    } else {
-        root_moves.to_vec()
-    };
+    let ordered = order_moves(root_moves.to_vec(), move_ordering, tt_move);
 
     let needs_legality_check = needs_legality_gate(board, color, legality_gate);
     let mut timed_out = false;
@@ -1388,6 +1392,7 @@ fn search_root(
             zobrist,
             candidate_source,
             legality_gate,
+            move_ordering,
             nodes,
             metrics,
             deadline,
@@ -1492,12 +1497,26 @@ impl SafetyGate {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MoveOrdering {
+    TranspositionFirstBoardOrder,
+}
+
+impl MoveOrdering {
+    const fn name(self) -> &'static str {
+        match self {
+            MoveOrdering::TranspositionFirstBoardOrder => "tt_first_board_order",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SearchBotConfig {
     pub max_depth: i32,
     pub time_budget_ms: Option<u64>,
     pub cpu_time_budget_ms: Option<u64>,
     pub candidate_radius: usize,
     pub safety_gate: SafetyGate,
+    pub move_ordering: MoveOrdering,
 }
 
 impl SearchBotConfig {
@@ -1508,6 +1527,7 @@ impl SearchBotConfig {
             cpu_time_budget_ms: None,
             candidate_radius: 2,
             safety_gate: SafetyGate::OpponentReplySearchProbe,
+            move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
         }
     }
 
@@ -1518,6 +1538,7 @@ impl SearchBotConfig {
             cpu_time_budget_ms: None,
             candidate_radius: 2,
             safety_gate: SafetyGate::OpponentReplySearchProbe,
+            move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
         }
     }
 
@@ -1528,6 +1549,7 @@ impl SearchBotConfig {
             cpu_time_budget_ms: Some(cpu_time_budget_ms),
             candidate_radius: 2,
             safety_gate: SafetyGate::OpponentReplySearchProbe,
+            move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
         }
     }
 
@@ -1562,6 +1584,7 @@ impl SearchBotConfig {
             "candidate_source": self.candidate_source().name(),
             "legality_gate": self.legality_gate().name(),
             "safety_gate": self.safety_gate().name(),
+            "move_ordering": self.move_ordering.name(),
         })
     }
 }
@@ -1643,6 +1666,7 @@ impl Bot for SearchBot {
         let candidate_source = self.config.candidate_source();
         let legality_gate = self.config.legality_gate();
         let safety_gate = self.config.safety_gate();
+        let move_ordering = self.config.move_ordering;
         let prefilter_deadline = SearchDeadline::new(
             start,
             time_budget.map(|budget| budget / 2),
@@ -1694,6 +1718,7 @@ impl Bot for SearchBot {
                 &self.zobrist,
                 candidate_source,
                 legality_gate,
+                move_ordering,
                 &mut nodes,
                 &mut metrics,
                 deadline,
@@ -1900,6 +1925,10 @@ mod tests {
         assert_eq!(baseline.legality_gate(), LegalityGate::ExactRules);
         assert_eq!(baseline.safety_gate(), SafetyGate::OpponentReplySearchProbe);
         assert_eq!(
+            baseline.move_ordering,
+            MoveOrdering::TranspositionFirstBoardOrder
+        );
+        assert_eq!(
             SearchBot::with_time(250).config(),
             SearchBotConfig::custom_time_budget(250)
         );
@@ -1910,6 +1939,7 @@ mod tests {
             cpu_time_budget_ms: None,
             candidate_radius: 3,
             safety_gate: SafetyGate::None,
+            move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
         };
         assert_eq!(SearchBot::with_config(config).config(), config);
         assert_eq!(
@@ -1953,6 +1983,7 @@ mod tests {
             trace["config"]["safety_gate"],
             "opponent_reply_search_probe"
         );
+        assert_eq!(trace["config"]["move_ordering"], "tt_first_board_order");
         assert!(trace["nodes"].as_u64().unwrap() > 0);
         assert!(trace["total_nodes"].as_u64().unwrap() >= trace["nodes"].as_u64().unwrap());
         assert_eq!(trace["budget_exhausted"], false);
