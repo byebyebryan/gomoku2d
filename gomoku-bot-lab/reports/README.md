@@ -21,8 +21,9 @@ curated reports should come from a clean committed toolchain.
 ```sh
 git status --short
 mkdir -p reports
-cargo run --release -p gomoku-eval -- tournament --bots fast,balanced,deep --games-per-pair 64 --opening-plies 4 --search-cpu-time-ms 1000 --max-moves 120 --seed 42 --report-json reports/latest.json
+cargo run --release -p gomoku-eval -- tournament --bots search-d2,search-d3,search-d5 --games-per-pair 64 --opening-plies 4 --search-cpu-time-ms 1000 --max-moves 120 --seed 48 --threads 22 --report-json reports/latest.json
 cargo run --release -p gomoku-eval -- report-html --input reports/latest.json --output reports/index.html --json-href latest.json
+jq '.provenance | {git_commit, git_dirty}' reports/latest.json
 ```
 
 Keep the raw JSON next to the generated HTML so the report can be inspected or

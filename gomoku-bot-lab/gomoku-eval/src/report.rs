@@ -1109,6 +1109,7 @@ pub fn render_tournament_report_html_with_options(
     }
     html.push_str("</tbody></table></section>");
 
+    render_search_cost_section(&mut html, report);
     render_match_tree(&mut html, report);
     render_how_to_read_section(&mut html);
 
@@ -1332,6 +1333,7 @@ fn searchbot_depth(bot: &str, run: &TournamentRunReport) -> Option<i32> {
         _ => bot
             .strip_prefix("baseline-")
             .or_else(|| bot.strip_prefix("search-"))
+            .map(|depth| depth.strip_prefix('d').unwrap_or(depth))
             .and_then(|depth| depth.parse::<i32>().ok()),
     }
 }
@@ -1432,7 +1434,57 @@ fn render_how_to_read_section(html: &mut String) {
         "Timing",
         "CPU-time budget limits search CPU per move. Wall clock plus hardware gives context for comparing runs.",
     );
+    term_card(
+        html,
+        "Search Cost",
+        "Cand p/s and legal p/s split prefilter work from alpha-beta search work. Width is average candidate moves per generated candidate set.",
+    );
     html.push_str("</div></section>");
+}
+
+fn render_search_cost_section(html: &mut String, report: &TournamentReport) {
+    if !report.standings.iter().any(has_search_cost_metrics) {
+        return;
+    }
+
+    html.push_str("<section><div class=\"section-heading\"><h2>Search Cost</h2><p>Per-search-move instrumentation. Split cells show prefilter / search costs.</p></div><table><thead><tr>");
+    for head in [
+        "Spec",
+        "Avg eval",
+        "Cand gen p/s",
+        "Avg width",
+        "Legal p/s",
+        "TT hit/cut",
+        "Beta cuts",
+    ] {
+        html.push_str(&format!("<th>{head}</th>"));
+    }
+    html.push_str("</tr></thead><tbody>");
+    for row in &report.standings {
+        html.push_str(&format!(
+            "<tr><td>{}</td><td>{:.1}</td><td>{}</td><td>{:.1}</td><td>{}</td><td>{}</td><td>{}</td></tr>",
+            html_escape(&compact_bot_label(report, &row.bot)),
+            row.avg_eval_calls,
+            html_escape(&phase_average_label(
+                row.prefilter_candidate_generations,
+                row.search_candidate_generations,
+                row.search_move_count,
+            )),
+            row.avg_candidate_moves,
+            html_escape(&phase_average_label(
+                row.prefilter_legality_checks,
+                row.search_legality_checks,
+                row.search_move_count,
+            )),
+            html_escape(&phase_average_label_zero_valid(
+                row.tt_hits,
+                row.tt_cutoffs,
+                row.search_move_count,
+            )),
+            html_escape(&average_label(row.beta_cutoffs, row.search_move_count)),
+        ));
+    }
+    html.push_str("</tbody></table></section>");
 }
 
 fn render_match_tree(html: &mut String, report: &TournamentReport) {
@@ -1564,13 +1616,80 @@ fn side_stats_for_bot<'a>(report_match: &'a MatchReport, bot: &str) -> &'a SideS
 }
 
 fn side_stats_label(stats: &SideStatsReport) -> String {
-    format!(
+    let base = format!(
         "{:.1} ms, {:.0} nodes, depth {:.2}, budget {:.0}%",
         stats.avg_search_time_ms,
         stats.avg_nodes,
         stats.avg_depth,
         stats.budget_exhausted_rate * 100.0,
+    );
+
+    if !has_side_search_cost_metrics(stats) {
+        return base;
+    }
+
+    format!(
+        "{base}; eval {:.0}, cand p/s {}, legal p/s {}, tt {}/{}",
+        stats.avg_eval_calls,
+        phase_average_label(
+            stats.prefilter_candidate_generations,
+            stats.search_candidate_generations,
+            stats.search_move_count,
+        ),
+        phase_average_label(
+            stats.prefilter_legality_checks,
+            stats.search_legality_checks,
+            stats.search_move_count,
+        ),
+        average_label(stats.tt_hits, stats.search_move_count),
+        average_label(stats.tt_cutoffs, stats.search_move_count),
     )
+}
+
+fn has_search_cost_metrics(row: &StandingReport) -> bool {
+    row.eval_calls > 0
+        || row.candidate_generations > 0
+        || row.legality_checks > 0
+        || row.tt_hits > 0
+        || row.tt_cutoffs > 0
+        || row.beta_cutoffs > 0
+}
+
+fn has_side_search_cost_metrics(stats: &SideStatsReport) -> bool {
+    stats.eval_calls > 0
+        || stats.candidate_generations > 0
+        || stats.legality_checks > 0
+        || stats.tt_hits > 0
+        || stats.tt_cutoffs > 0
+        || stats.beta_cutoffs > 0
+}
+
+fn phase_average_label(left_total: u64, right_total: u64, count: u32) -> String {
+    if count == 0 || (left_total == 0 && right_total == 0) {
+        return "n/a".to_string();
+    }
+
+    phase_average_label_zero_valid(left_total, right_total, count)
+}
+
+fn phase_average_label_zero_valid(left_total: u64, right_total: u64, count: u32) -> String {
+    if count == 0 {
+        return "n/a".to_string();
+    }
+
+    format!(
+        "{} / {}",
+        average_label(left_total, count),
+        average_label(right_total, count)
+    )
+}
+
+fn average_label(total: u64, count: u32) -> String {
+    if count == 0 {
+        return "n/a".to_string();
+    }
+
+    format!("{:.1}", avg(total as f64, count))
 }
 
 fn same_pair(report_match: &MatchReport, bot_a: &str, bot_b: &str) -> bool {
@@ -1857,6 +1976,30 @@ mod tests {
     }
 
     #[test]
+    fn html_report_surfaces_search_cost_metrics() {
+        let mut report = sample_report();
+        let mut zero_tt_standing = sample_standing_with_search_costs("search-d2");
+        zero_tt_standing.tt_hits = 0;
+        zero_tt_standing.tt_cutoffs = 0;
+        report.run.bots = vec!["search-d2".to_string()];
+        report.standings = vec![zero_tt_standing];
+        report.matches[0].black_stats = sample_side_stats_with_search_costs();
+
+        let html = render_tournament_report_html(&report);
+
+        assert!(html.contains("<h2>Search Cost</h2>"));
+        assert!(html.contains("SearchBot_D2"));
+        assert!(html.contains("100.0"));
+        assert!(html.contains("1.0 / 4.0"));
+        assert!(html.contains("2.0 / 4.0"));
+        assert!(html.contains("TT hit/cut"));
+        assert!(html.contains("0.0 / 0.0"));
+        assert!(html.contains("cand p/s 1.0 / 4.0"));
+        assert!(html.contains("legal p/s 2.0 / 4.0"));
+        assert!(html.contains("<h3>Search Cost</h3>"));
+    }
+
+    #[test]
     fn html_report_combines_git_commit_and_dirty_flag() {
         let mut report = sample_report();
         report.provenance.git_commit = Some("abcdef123456".to_string());
@@ -2069,6 +2212,93 @@ mod tests {
             move_count: 5,
             black_stats: SideStatsReport::default(),
             white_stats: SideStatsReport::default(),
+        }
+    }
+
+    fn sample_standing_with_search_costs(bot: &str) -> StandingReport {
+        StandingReport {
+            bot: bot.to_string(),
+            wins: 1,
+            draws: 0,
+            losses: 1,
+            sequential_elo: 1000.0,
+            shuffled_elo_avg: 1000.0,
+            shuffled_elo_stddev: 0.0,
+            match_count: 2,
+            move_count: 10,
+            search_move_count: 5,
+            total_time_ms: 50,
+            avg_search_time_ms: 10.0,
+            total_nodes: 1000,
+            avg_nodes: 200.0,
+            eval_calls: 500,
+            avg_eval_calls: 100.0,
+            candidate_generations: 25,
+            avg_candidate_generations: 5.0,
+            candidate_moves_total: 2500,
+            avg_candidate_moves: 100.0,
+            candidate_moves_max: 120,
+            prefilter_candidate_generations: 5,
+            prefilter_candidate_moves_total: 400,
+            prefilter_candidate_moves_max: 90,
+            search_candidate_generations: 20,
+            search_candidate_moves_total: 2100,
+            search_candidate_moves_max: 120,
+            legality_checks: 30,
+            avg_legality_checks: 6.0,
+            illegal_moves_skipped: 2,
+            prefilter_legality_checks: 10,
+            prefilter_illegal_moves_skipped: 1,
+            search_legality_checks: 20,
+            search_illegal_moves_skipped: 1,
+            tt_hits: 7,
+            tt_cutoffs: 3,
+            beta_cutoffs: 9,
+            avg_depth: 3.0,
+            max_depth: 3,
+            budget_exhausted_count: 1,
+            budget_exhausted_rate: 0.2,
+        }
+    }
+
+    fn sample_side_stats_with_search_costs() -> SideStatsReport {
+        SideStatsReport {
+            move_count: 5,
+            search_move_count: 5,
+            total_time_ms: 50,
+            avg_search_time_ms: 10.0,
+            search_nodes: 900,
+            prefilter_nodes: 100,
+            total_nodes: 1000,
+            avg_nodes: 200.0,
+            eval_calls: 500,
+            avg_eval_calls: 100.0,
+            candidate_generations: 25,
+            avg_candidate_generations: 5.0,
+            candidate_moves_total: 2500,
+            avg_candidate_moves: 100.0,
+            candidate_moves_max: 120,
+            prefilter_candidate_generations: 5,
+            prefilter_candidate_moves_total: 400,
+            prefilter_candidate_moves_max: 90,
+            search_candidate_generations: 20,
+            search_candidate_moves_total: 2100,
+            search_candidate_moves_max: 120,
+            legality_checks: 30,
+            avg_legality_checks: 6.0,
+            illegal_moves_skipped: 2,
+            prefilter_legality_checks: 10,
+            prefilter_illegal_moves_skipped: 1,
+            search_legality_checks: 20,
+            search_illegal_moves_skipped: 1,
+            tt_hits: 7,
+            tt_cutoffs: 3,
+            beta_cutoffs: 9,
+            depth_sum: 15,
+            avg_depth: 3.0,
+            max_depth: 3,
+            budget_exhausted_count: 1,
+            budget_exhausted_rate: 0.2,
         }
     }
 }
