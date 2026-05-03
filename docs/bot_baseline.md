@@ -83,10 +83,17 @@ reporting. Node budgets are not enforced yet; this is currently a trace and
 tournament metric.
 
 Failed experimental knobs are removed instead of kept as dormant config fields.
-The rejected broad threat-extension experiment is documented in
-[`archive/v0_4_search_bot_enhancement_plan.md`](archive/v0_4_search_bot_enhancement_plan.md);
-the next bot slice should add local threat facts before wiring new search
-behavior.
+The rejected broad threat-extension and broad shape-eval experiments are
+documented in
+[`archive/v0_4_search_bot_enhancement_plan.md`](archive/v0_4_search_bot_enhancement_plan.md).
+The current direction is depth-oriented: improve the normal search cost first,
+then use tactical facts only for cheap safety, move ordering, or narrow forced
+branches that improve reached depth under the same budget.
+
+For the next bot slice, `search-d3` is the primary optimization target. Tactical
+scenarios remain diagnostics; a change should not be kept just because it fixes a
+depth-2 fixture if it loses reached depth or tournament strength against the
+current depth-3 baseline.
 
 ---
 

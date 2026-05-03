@@ -154,6 +154,9 @@ mod tests {
         assert!(super::search_config_from_lab_spec("search-d3+ordering", 5, None, None).is_none());
         assert!(super::search_config_from_lab_spec("search-d3+eval", 5, None, None).is_none());
         assert!(super::search_config_from_lab_spec("search-d3+all", 5, None, None).is_none());
+        assert!(
+            super::search_config_from_lab_spec("search-d3+shape-eval", 5, None, None).is_none()
+        );
     }
 
     #[test]

@@ -16,10 +16,15 @@ Current progress:
   `341f2fc feat(bot): add tactical scenario diagnostics`.
 - Commit 8 forced-line search primitives landed in
   `dfc10c9 feat(bot): add forced-line search primitives`.
-- Commit 9 broad bounded threat extension is being rejected after focused
-  analysis. It found forced lines by scanning the whole board at every leaf,
-  which reduced counted nodes on some cases but increased wall/CPU cost and lost
-  match strength.
+- Commit 9 broad bounded threat extension was rejected after focused analysis.
+  It found forced lines by scanning the whole board at every leaf, which reduced
+  counted nodes on some cases but increased wall/CPU cost and lost match
+  strength.
+- Commit 10 local threat facts landed in
+  `84ea128 feat(bot): add local threat facts`.
+- Commit 11 broad shape eval was rejected after focused analysis. It fixed one
+  depth-2 diagnostic but lost to plain deeper baselines and reduced effective
+  search depth under CPU budgets.
 
 ## Goal
 
@@ -31,6 +36,18 @@ they show value in focused tests.
 This is not a solver project. The near-term product goal is a fast, efficient
 practice bot with enough real knobs to support interesting gameplay, plus a
 foundation for later reverse search, replay analysis, and puzzle generation.
+Depth remains the primary strength lever: all else equal, deeper search is still
+the most reliable way to improve play. The hard constraint is the per-move time
+budget and Gomoku's broad candidate space.
+
+The revised target is therefore depth-oriented:
+
+- optimize the baseline so the same budget reaches more real depth
+- use cheap tactical shortcuts only when they extend effective depth without
+  broad leaf scans
+- trade breadth for depth through narrower candidates and stronger move ordering
+  while preserving cheap immediate-threat safety
+
 Threat-space search is relevant because it gives Gomoku-specific tactical
 language, not because `v0.4.0` should become a full TSS/proof-number solver.
 
@@ -42,12 +59,35 @@ That creates two lanes:
 - **Analysis tooling:** can become more solver-like later if replay analysis,
   reverse search, or puzzle generation needs proof-oriented machinery.
 
+## Strategy Checkpoint
+
+All behavior-changing experiments so far have failed their promotion gates:
+
+- tactical candidates, tactical ordering, and tactical eval did not demonstrate
+  enough value to keep as config surface
+- broad bounded threat extension reduced counted alpha-beta nodes but made the
+  bot slower because the hidden leaf-probe cost dominated
+- broad shape eval fixed one depth-2 diagnostic but made deeper baselines weaker
+  by spending too much work at every leaf
+
+The shared failure mode is clear: each attempt added tactical work before proving
+that the extra work increased effective depth or match strength. The next slice
+must reverse that order. Start with measurement and baseline cost reduction, then
+only add tactical shortcuts where the candidate set is already narrow or the
+continuation moves are concrete.
+
+Do not use `create_broken_three` as a pass/fail target. It remains useful because
+it demonstrates why shallow search misses quiet shape-building moves, but any
+fix that only makes depth 2 imitate depth 3 is not valuable unless it is cheaper
+than reaching depth 3 normally.
+
 ## Design Direction
 
 Keep one `SearchBot` implementation, but do not keep dead feature toggles in
-`SearchBotConfig`. The first three shallow integration attempts were discarded,
-so the next pass should improve the analyzer vocabulary before wiring new
-behavior into search.
+`SearchBotConfig`. The shallow integration attempts and broad shape-eval pass
+showed that passing one tactical fixture is the wrong goal. Tactical scenarios
+are diagnostics; tournament strength, reached depth, budget stability, and
+runtime explain whether a search change is worth keeping.
 
 Decision: do not pivot the main bot to full threat-space search for `v0.4.0`.
 Borrow the tactical model, not the whole architecture. TSS is valuable for
@@ -65,8 +105,9 @@ Do not pivot the primary bot to a full TSS engine yet. Full TSS is
 solver-oriented and brings dependency trees, conflict checks, all-defenses
 handling, and proof verification. Those can become analysis modules later. For
 normal play, the main bot should stay alpha-beta based, with local threat facts
-feeding candidate ordering, static eval, tactical diagnostics, and eventually
-small forced-line modules.
+feeding tactical diagnostics, candidate ordering, and eventually small
+forced-line modules. Static eval should only consume these facts if it can do so
+locally or incrementally; broad leaf scans are explicitly out of scope.
 
 Stable lab specs stay focused on reproducible baseline configs:
 
@@ -83,17 +124,18 @@ The current split is clearer now:
 - **Forced-line search** is useful once a branch has immediate tactical forcing
   states, but it must derive those facts from local shapes instead of scanning
   the whole board at every leaf.
-- **Shape labels** are useful for non-terminal shape creation: broken threes,
-  open threes, and other moves that matter before immediate winning replies
-  exist.
+- **Shape labels** are useful for explaining non-terminal shape creation:
+  broken threes, open threes, and other moves that matter before immediate
+  winning replies exist. They are not automatically worth scoring at every leaf.
 - **TSS-style local threat facts** sit between those two ideas. They inspect the
   four lines through the last/candidate move and return concrete tactical facts:
   severity/type, gain square, cost/defense squares, rest squares, and whether the
   shape is forcing.
 
-In Gomoku terms, some depth problems are narrow but deep, while others start as
-shape-recognition problems. A global depth increase is too expensive, but a
-forced-line extension must exploit local shape structure to stay cheap.
+In Gomoku terms, the useful opportunity is not "make depth 2 solve every shape."
+It is identifying narrow but deep tactical branches and spending extra depth
+only there. If a shape shortcut costs enough to reduce effective depth globally,
+it is worse than simply using the existing deeper baseline.
 
 Tactical scenarios still matter, but as diagnostics rather than match ranking.
 They answer:
@@ -312,7 +354,8 @@ TSS vocabulary of gain, cost/defense, and rest squares.
 This is the right next step because it improves the shared tactical vocabulary
 without committing to a solver architecture. The same facts can support:
 
-- move ordering and static eval for the practice bot
+- move ordering and cheap tactical safety for the practice bot
+- future static eval only if facts are available locally or incrementally
 - scenario diagnostics and tournament explanations in bot lab
 - future replay analysis and reverse-search/puzzle features
 
@@ -341,57 +384,53 @@ Non-goal:
   in this slice.
 - Do not make the default practice bot depend on proof-oriented tactical search.
 
-### Phase 10: Shape-Aware Eval Or Ordering
+### Phase 10: Depth-Oriented Optimization
 
-This remains the next search-behavior slice after local threat facts exist.
+Before adding another tactical consumer, optimize the normal search path and
+measure whether the same budget reaches more depth.
 
-Forced-line search did not solve the `create_broken_three` gap because that move
-does not create an immediate winning reply. The Phase 6 analyzer already labels
-`open_three`, `broken_three`, `open_four`, `blocked_four`, and `double_threat`;
-the next experiment should use those labels to influence search without
-pretending they are terminal forced lines.
+Candidate targets:
 
-Likely order:
-
-1. Shape-aware ordering for pruning and cheaper discovery.
-2. Shape-aware eval if scenario failures remain because leaf scores undervalue
-   non-terminal shapes.
-3. Candidate expansion only with concrete sparse-position evidence.
-
-Initial usefulness target:
-
-- `search-d2` should choose `I8` or `J8` in `create_broken_three` without
-  requiring global depth 3.
-- The change should not regress immediate win/block, open-four, double-threat,
-  or Renju forbidden-overlap cases.
-- If ordering alone reduces nodes but still chooses the wrong move, treat that as
-  partial evidence and move to a small shape-aware eval experiment.
-
-### Phase 11: TSS-Inspired Forced Extension
-
-Only retry forced-line extension after Phase 9 exists.
-
-The retry should not ask "does this leaf have immediate wins?" by scanning the
-board. It should consume concrete continuation moves from the local threat facts:
-
-- open four: treat as winning unless the ruleset creates a legal exception
-- simple four: extend only the forced block
-- open three: extend the small reply set and attacking continuations
+- reduce legality and winner-check overhead in hot search paths
+- make candidate generation cheaper or cacheable without changing behavior
+- improve transposition-table reuse and move-order feedback
+- add better instrumentation for non-node tactical/probe work so reports show
+  the real cost, not just alpha-beta nodes
 
 Promotion gate:
 
-- improves a targeted forced-line scenario or material runtime without hurting
-  d3 tournament ablation
+- improves reached depth, average move time, or tournament score for `search-d3`
+  under the same CPU budget
+- keeps immediate win/block and existing behavior scenarios green
+- does not add a product-facing config knob unless the improvement is stable
+
+### Phase 11: Narrower Search And Move Ordering
+
+Only after the baseline is measured and optimized, try trading breadth for depth.
+
+The useful target is not "make `search-d2` pass `create_broken_three`." The
+target is a narrower search that reaches deeper under the same budget while
+avoiding obvious tactical mistakes. Cheap threat detection should protect
+immediate wins, immediate losses, and concrete forcing replies; move ordering
+should put likely forcing or high-value moves first without scanning every leaf.
+
+Candidate experiments:
+
+- root/child ordering from local threat facts
+- candidate caps or staged candidates, with forced tactical moves always retained
+- shallow tactical safety filters that are cheap enough to run at root or near
+  root, not at every quiet leaf
+- optional forced extensions only when local facts provide concrete reply lists
+
+Promotion gate:
+
+- improves d3 tournament ablation or reached-depth metrics, not just one scenario
 - records tactical-probe metrics if any non-node work remains significant
 - remains lab-only until it has both scenario and tournament evidence
 
-This is still not full TSS. It is a bounded tactical module plugged into the
-alpha-beta bot. A broader TSS/proof module belongs later if replay analysis,
-reverse search, or puzzle generation needs it.
-
-If this retry starts needing dependency trees, rest-square conflict resolution,
-or all-defenses proof handling, stop and split it out as an analysis module
-instead of burying it inside `SearchBot`.
+If an experiment starts needing dependency trees, rest-square conflict
+resolution, or all-defenses proof handling, stop and split it out as an analysis
+module instead of burying it inside `SearchBot`.
 
 ## Intended Commit Boundaries
 
@@ -503,36 +542,57 @@ Includes:
 
 Expected behavior change: none.
 
-Current working slice: add this as a private, behavior-neutral helper in
-`gomoku-bot/src/search.rs` first. The helper should return concrete facts for
-terminal fives, open fours, simple fours, open threes, and broken threes, but it
-must not affect candidate generation, move ordering, static eval, or search
-depth until a later ablation commit consumes it.
+Completed in `84ea128`. The helper remains private and behavior-neutral: it
+returns concrete facts for terminal fives, open fours, simple fours, open
+threes, and broken threes, but it does not affect candidate generation, move
+ordering, static eval, or search depth until a later ablation commit consumes it.
 
-### Commit 11: Shape-Aware Ordering/Eval Experiment
+### Commit 11: Broad Shape Eval Experiment
+
+Decision: discard.
+
+Root ordering alone did not fix `search-d2` on `create_broken_three`, and broad
+leaf shape eval fixed that one d2 diagnostic by scanning both players' local
+candidate threats at evaluation leaves. That was the wrong target and the wrong
+cost profile.
+
+Measured result:
+
+- `search-d2+shape-eval` fixed `create_broken_three`, but plain `search-d3`
+  already fixed it cheaply.
+- In 64-game Renju ablations at `1000 ms` CPU/move, `search-d2+shape-eval`
+  beat `search-d2` but remained slower and weaker than deeper baselines.
+- `search-d3` beat `search-d3+shape-eval` by `36.5-27.5` at `1000 ms` and
+  `22.0-10.0` at `2000 ms`.
+- `search-d3+shape-eval` reduced effective depth: about `1.88` reached depth at
+  `1000 ms` and `2.03` at `2000 ms`, versus plain `search-d3` around `2.9`.
+
+Learning: shape information is useful, but not as broad leaf scoring. The next
+search behavior pass should optimize for effective depth under budget, then try
+narrower candidate ordering/search only if it improves d3 tournament or reached
+depth metrics.
+
+Expected behavior change: none after cleanup.
+
+### Commit 12: Depth-Oriented Search Improvement
 
 Includes:
 
-- A focused red test or tactical sweep expectation for `create_broken_three`.
-- First attempt should prefer ordering if it can be scoped narrowly and measured
-  by node count plus move choice.
-- If ordering does not change the chosen move, move to a small eval adjustment
-  that scores Phase 6 shape labels at leaves.
-- Remove or document failed sub-experiments before moving on.
+- Add enough instrumentation to explain where `search-d3` spends time under a
+  CPU budget: eval calls, candidate generation, legality checks, prefilter work,
+  average candidate count, reached depth, and budget exhaustion.
+- Pick one behavior-neutral baseline optimization from that evidence before
+  adding another tactical feature.
+- Preserve cheap tactical safety for immediate wins/losses.
+- Prefer changes that let `search-d3` reach more depth or spend less time under
+  the same CPU budget.
+- If tactical/probe work is added later, report it separately from alpha-beta
+  nodes so hidden cost cannot masquerade as a node reduction.
+- Run focused tactical sweep and d3 ablation before deciding whether to keep any
+  behavior-changing experiment.
 
-Expected behavior change: only for experimental lab specs until scenario and
-tournament evidence justify promotion.
-
-### Commit 12: TSS-Inspired Forced Extension Retry
-
-Includes:
-
-- Consume local threat facts instead of whole-board immediate-win scans.
-- Extend only concrete forced reply lists.
-- Add metrics for any tactical-probe work outside the negamax node count.
-- Run focused tactical sweep and d3 ablation before deciding whether to keep it.
-
-Expected behavior change: only for experimental lab specs until proven.
+Expected behavior change: only for experimental lab specs until proven, unless
+the change is a behavior-neutral optimization.
 
 ## Evaluation Gates
 
