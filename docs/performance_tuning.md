@@ -103,6 +103,10 @@ File: `gomoku-bot-lab/gomoku-core/benches/board_perf.rs`
 
 Current measurements:
 
+- `Board::clone()` on a fixed opening snapshot
+- full `Board::cell()` scan on a fixed opening snapshot
+- `Board::hash()` on a fixed opening snapshot
+- `Board::to_fen()` on a fixed opening snapshot
 - `immediate_winning_moves_for(current_player)`
 - `has_multiple_immediate_winning_moves_for(current_player)`
 - `apply_move()` followed by `undo_move()` on a representative legal move
@@ -227,12 +231,15 @@ From code inspection before the first benchmark pass:
    (`2026-05-03`)
 8. Replace immediate-win probe apply/undo with virtual directional run checks
    (`2026-05-03`)
+9. Replace `Board`'s `Vec<Vec<Cell>>` storage with dual bitboards and route bot
+   eval/candidate hot loops through occupied-stone iteration (`2026-05-03`)
 
 ### Future work
 
 1. More incremental or localized evaluation
 2. Incremental candidate frontier maintenance
-3. Flat board storage instead of `Vec<Vec<Cell>>`
+3. Bitboard-aware helpers for any remaining full-cell-scan callers that become
+   hot under profiling
 
 ## Baseline snapshot
 
@@ -511,3 +518,57 @@ cargo bench -p gomoku-bot --bench search_perf -- "balanced/(create_double_threat
 - The end-to-end search improvement is larger on safety-heavy positions because
   `opponent_reply_search_probe` calls
   `has_multiple_immediate_winning_moves_for()` many times.
+
+## Optimization pass 5 snapshot
+
+Date: `2026-05-03`
+
+Changes:
+
+- `Board` now stores stones in two compact `u64` bitsets instead of
+  `Vec<Vec<Cell>>`.
+- `Color` now uses `repr(u8)`, keeping `Cell = Option<Color>` compact.
+- `Board::for_each_occupied()` exposes efficient occupied-stone iteration for
+  callers that do not need to scan empty cells.
+- `SearchBot` static eval and candidate generation now use occupied-stone
+  iteration. This is required for the bitboard storage change to be a net
+  search win: naive bitboards made full `cell()` scans slower.
+
+Commands used:
+
+```sh
+cargo test -p gomoku-core occupied_cells_visit_each_stone_with_color
+cargo test -p gomoku-core -p gomoku-bot
+cargo bench -p gomoku-core --bench board_perf -- "board_clone/opening_sparse|board_cell_scan/opening_sparse|board_hash/opening_sparse|board_to_fen/opening_sparse" --noplot
+cargo bench -p gomoku-bot --bench pipeline_perf -- "pipeline/static_eval/current_player/midgame_dense|pipeline/candidate_moves/r2/midgame_dense" --noplot
+cargo bench -p gomoku-bot --bench search_perf -- balanced/midgame_dense --noplot
+```
+
+### Targeted core anchors after pass 5
+
+| Benchmark | Time | Local pre-bitboard anchor |
+|---|---|---|
+| `board_clone/opening_sparse` | `23.741-23.953 ns` | `~129 ns` |
+| `board_cell_scan/opening_sparse` | `126.62-128.78 ns` | `~96 ns` |
+| `board_hash/opening_sparse` | `565.34-566.08 ns` | `~598 ns` |
+| `board_to_fen/opening_sparse` | `271.95-272.84 ns` | `~304 ns` |
+
+### Targeted bot anchors after pass 5
+
+| Benchmark | Time | Criterion change |
+|---|---|---|
+| `pipeline/static_eval/current_player/midgame_dense` | `574.90-580.76 ns` | `-42.32% to -41.77%` |
+| `pipeline/candidate_moves/r2/midgame_dense` | `1.0457-1.0528 µs` | no significant change after occupied-iteration fix |
+| `balanced/midgame_dense` | `28.253-28.413 ms` | `-12.04% to -11.40%` |
+
+### Notes
+
+- Compact storage is a clear win for clone-heavy search paths and serialized
+  board utilities, but `Board::cell()` now costs two bit checks. Avoid
+  full-board `cell()` scans in hot loops; iterate occupied bits instead.
+- The search improvement came only after routing eval and candidate generation
+  through `Board::for_each_occupied()`. A storage-only bitboard conversion
+  regressed end-to-end search because empty-cell scans became more expensive.
+- Keep bitboard details inside core for now. Bot code should depend on semantic
+  helpers (`is_empty`, `has_color`, `for_each_occupied`) rather than accessing
+  raw storage.
