@@ -22,7 +22,7 @@
   - Candidate move pruning: only cells within radius 2 of existing stones
   - Pattern eval: scores open/half-open runs of 2–4 in all 4 directions
   - `--depth` or `--time-ms` budget; exposes `last_info` (depth reached, nodes, score)
-  - Strategy + known limitations: `docs/bot_baseline.md`
+  - Strategy + known limitations: `docs/search_bot.md`
 - 3 unit tests (legal move guarantee, finds immediate win, blocks opponent win)
 
 **gomoku-eval**

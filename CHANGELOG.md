@@ -57,7 +57,7 @@ work a cleaner base.
 
 - Published the bot report alongside existing asset previews through GitHub
   Pages.
-- Updated bot-lab README, baseline-bot notes, performance tuning notes, and
+- Updated bot-lab README, search-bot notes, performance tuning notes, and
   `v0.4` planning docs around the pivot from product settings to measured bot
   foundation work.
 
