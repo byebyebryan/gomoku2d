@@ -616,6 +616,8 @@ Progress:
   future optimization runs can compare non-node work directly.
 - Hardened the tactical scenario corpus with explicit roles, category-level
   semantic validation, and a dedicated board-print doc.
+- Added paired diagnostic fixtures for offensive and defensive versions of the
+  six local shape terms: open/closed/broken fours and open/closed/broken threes.
 - Kept Renju legality-only fixtures out of active tactical hard gates; future
   Renju tactical cases should test threat judgment around forbidden points, not
   simple "do not play illegal moves" behavior.
@@ -632,8 +634,8 @@ cargo run --release -p gomoku-eval -- tactical-scenarios \
   --report-json outputs/tactical_baseline_search_metrics.json
 ```
 
-- Current corpus size: `8` cases: `4` hard safety-gate cases and `4`
-  diagnostics.
+- Baseline snapshot before the shape-pair fixture expansion: `8` cases: `4`
+  hard safety-gate cases and `4` diagnostics.
 - `search-d2`: `6 / 8` passed; all hard safety gates passed, but it misses
   `counter_open_three_with_four` and `create_broken_three`.
 - `search-d3`: `7 / 8` passed; all hard safety gates passed, but it still takes

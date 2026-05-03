@@ -37,6 +37,35 @@ Renju legality-only positions are intentionally not active tactical gates. They
 belong in core/search legality coverage unless they test a real tactical
 judgment beyond "do not play a forbidden move."
 
+## Shape Pair Fixtures
+
+Shape pair fixtures are diagnostic cases for the vocabulary in
+[`tactical_shapes.md`](tactical_shapes.md). They come in offense/defense pairs:
+
+- Offense: the side to move can play the `gain_square` that creates the shape.
+- Defense: the side to move can occupy a defense, completion, or rest square for
+  the opponent's existing shape. For `OpenFour`, this records either completion
+  square even though one block is not enough to stop the threat.
+
+They are not promotion gates yet. They exist so future ordering/eval experiments
+can measure whether a change understands the same shape language. Exact board
+prints are included in the case list below.
+
+| Case | Shape | Stance | Side | Expected |
+| --- | --- | --- | --- | --- |
+| `shape_offense_open_four` | `OpenFour` | offense | Black | `G8` or `K8` |
+| `shape_defense_open_four` | `OpenFour` | defense | White | `G8` or `L8` |
+| `shape_offense_closed_four` | `ClosedFour` | offense | Black | `K8` |
+| `shape_defense_closed_four` | `ClosedFour` | defense | White | `L8` |
+| `shape_offense_broken_four` | `BrokenFour` | offense | Black | `J8` or `K8` |
+| `shape_defense_broken_four` | `BrokenFour` | defense | White | `K8` |
+| `shape_offense_open_three` | `OpenThree` | offense | Black | `G8` or `J8` |
+| `shape_defense_open_three` | `OpenThree` | defense | White | `G8` or `K8` |
+| `shape_offense_closed_three` | `ClosedThree` | offense | Black | `J8` |
+| `shape_defense_closed_three` | `ClosedThree` | defense | White | `K8` |
+| `shape_offense_broken_three` | `BrokenThree` | offense | Black | `I8` or `J8` |
+| `shape_defense_broken_three` | `BrokenThree` | defense | White | `I8` |
+
 ## Board Legend
 
 - `B`: black stone
@@ -218,6 +247,354 @@ judgment beyond "do not play a forbidden move."
  3  . . . . . . . . . . . . . . .  3
  2  . . . . . . . . . . . . . . .  2
  1  W . W . W . . . . . . . . . .  1
+    A B C D E F G H I J K L M N O
+```
+
+### shape_offense_open_four
+
+- Role: `diagnostic`
+- Rule: freestyle
+- Side to move: Black
+- Expected: `G8` or `K8`
+- Intent: paired offensive fixture for `OpenFour`; Black can create two
+  immediate completions from the row-8 three.
+
+```text
+    A B C D E F G H I J K L M N O
+15  . . . . . . . . . . . . . . .  15
+14  . . . . . . . . . . . . . . .  14
+13  . . . . . . . . . . . . . . .  13
+12  . . . . . . . . . . . . . . .  12
+11  . . . . . . . . . . . . . . .  11
+10  . . . . . . . . . . . . . . .  10
+ 9  . . . . . . . . . . . . . . .  9
+ 8  . . . . . . . B B B . . . . .  8
+ 7  . . . . . . . . . . . . . . .  7
+ 6  . . . . . . . . . . . . . . .  6
+ 5  . . . . . . . . . . . . . . .  5
+ 4  . . . . . . . . . . . . . . .  4
+ 3  . . . . . . . . . . . . . . .  3
+ 2  . . . . . . . . . . . . . . .  2
+ 1  W . W . W . . . . . . . . . .  1
+    A B C D E F G H I J K L M N O
+```
+
+### shape_defense_open_four
+
+- Role: `diagnostic`
+- Rule: freestyle
+- Side to move: White
+- Expected: `G8` or `L8`
+- Intent: paired defensive fixture for `OpenFour`; either endpoint is a
+  completion square, even though one block cannot fully stop an open four.
+
+```text
+    A B C D E F G H I J K L M N O
+15  . . . . . . . . . . . . . . .  15
+14  . . . . . . . . . . . . . . .  14
+13  . . . . . . . . . . . . . . .  13
+12  . . . . . . . . . . . . . . .  12
+11  . . . . . . . . . . . . . . .  11
+10  . . . . . . . . . . . . . . .  10
+ 9  . . . . . . . . . . . . . . .  9
+ 8  . . . . . . . B B B B . . . .  8
+ 7  . . . . . . . . . . . . . . .  7
+ 6  . . . . . . . . . . . . . . .  6
+ 5  . . . . . . . . . . . . . . .  5
+ 4  . . . . . . . . . . . . . . .  4
+ 3  . . . . . . . . . . . . . . .  3
+ 2  . . . . . . . . . . . . . . .  2
+ 1  W . W . W . . . . . . . . . .  1
+    A B C D E F G H I J K L M N O
+```
+
+### shape_offense_closed_four
+
+- Role: `diagnostic`
+- Rule: freestyle
+- Side to move: Black
+- Expected: `K8`
+- Intent: paired offensive fixture for `ClosedFour`; Black can create a
+  contiguous four with one open completion.
+
+```text
+    A B C D E F G H I J K L M N O
+15  . . . . . . . . . . . . . . .  15
+14  . . . . . . . . . . . . . . .  14
+13  . . . . . . . . . . . . . . .  13
+12  . . . . . . . . . . . . . . .  12
+11  . . . . . . . . . . . . . . .  11
+10  . . . . . . . . . . . . . . .  10
+ 9  . . . . . . . . . . . . . . .  9
+ 8  . . . . . . W B B B . . . . .  8
+ 7  . . . . . . . . . . . . . . .  7
+ 6  . . . . . . . . . . . . . . .  6
+ 5  . . . . . . . . . . . . . . .  5
+ 4  . . . . . . . . . . . . . . .  4
+ 3  . . . . . . . . . . . . . . .  3
+ 2  . . . . . . . . . . . . . . .  2
+ 1  W . W . . . . . . . . . . . .  1
+    A B C D E F G H I J K L M N O
+```
+
+### shape_defense_closed_four
+
+- Role: `diagnostic`
+- Rule: freestyle
+- Side to move: White
+- Expected: `L8`
+- Intent: paired defensive fixture for `ClosedFour`; White can occupy the only
+  open completion.
+
+```text
+    A B C D E F G H I J K L M N O
+15  . . . . . . . . . . . . . . .  15
+14  . . . . . . . . . . . . . . .  14
+13  . . . . . . . . . . . . . . .  13
+12  . . . . . . . . . . . . . . .  12
+11  . . . . . . . . . . . . . . .  11
+10  . . . . . . . . . . . . . . .  10
+ 9  . . . . . . . . . . . . . . .  9
+ 8  . . . . . . W B B B B . . . .  8
+ 7  . . . . . . . . . . . . . . .  7
+ 6  . . . . . . . . . . . . . . .  6
+ 5  . . . . . . . . . . . . . . .  5
+ 4  . . . . . . . . . . . . . . .  4
+ 3  . . . . . . . . . . . . . . .  3
+ 2  . . . . . . . . . . . . . . .  2
+ 1  W . W . . . . . . . . . . . .  1
+    A B C D E F G H I J K L M N O
+```
+
+### shape_offense_broken_four
+
+- Role: `diagnostic`
+- Rule: freestyle
+- Side to move: Black
+- Expected: `J8` or `K8`
+- Intent: paired offensive fixture for `BrokenFour`; Black can create a
+  one-gap four with one internal completion.
+
+```text
+    A B C D E F G H I J K L M N O
+15  . . . . . . . . . . . . . . .  15
+14  . . . . . . . . . . . . . . .  14
+13  . . . . . . . . . . . . . . .  13
+12  . . . . . . . . . . . . . . .  12
+11  . . . . . . . . . . . . . . .  11
+10  . . . . . . . . . . . . . . .  10
+ 9  . . . . . . . . . . . . . . .  9
+ 8  . . . . . . . B B . . B . . .  8
+ 7  . . . . . . . . . . . . . . .  7
+ 6  . . . . . . . . . . . . . . .  6
+ 5  . . . . . . . . . . . . . . .  5
+ 4  . . . . . . . . . . . . . . .  4
+ 3  . . . . . . . . . . . . . . .  3
+ 2  . . . . . . . . . . . . . . .  2
+ 1  W . W . W . . . . . . . . . .  1
+    A B C D E F G H I J K L M N O
+```
+
+### shape_defense_broken_four
+
+- Role: `diagnostic`
+- Rule: freestyle
+- Side to move: White
+- Expected: `K8`
+- Intent: paired defensive fixture for `BrokenFour`; White can occupy the
+  internal completion.
+
+```text
+    A B C D E F G H I J K L M N O
+15  . . . . . . . . . . . . . . .  15
+14  . . . . . . . . . . . . . . .  14
+13  . . . . . . . . . . . . . . .  13
+12  . . . . . . . . . . . . . . .  12
+11  . . . . . . . . . . . . . . .  11
+10  . . . . . . . . . . . . . . .  10
+ 9  . . . . . . . . . . . . . . .  9
+ 8  . . . . . . . B B B . B . . .  8
+ 7  . . . . . . . . . . . . . . .  7
+ 6  . . . . . . . . . . . . . . .  6
+ 5  . . . . . . . . . . . . . . .  5
+ 4  . . . . . . . . . . . . . . .  4
+ 3  . . . . . . . . . . . . . . .  3
+ 2  . . . . . . . . . . . . . . .  2
+ 1  W . W . W . . . . . . . . . .  1
+    A B C D E F G H I J K L M N O
+```
+
+### shape_offense_open_three
+
+- Role: `diagnostic`
+- Rule: freestyle
+- Side to move: Black
+- Expected: `G8` or `J8`
+- Intent: paired offensive fixture for `OpenThree`; Black can create a
+  two-ended three.
+
+```text
+    A B C D E F G H I J K L M N O
+15  . . . . . . . . . . . . . . .  15
+14  . . . . . . . . . . . . . . .  14
+13  . . . . . . . . . . . . . . .  13
+12  . . . . . . . . . . . . . . .  12
+11  . . . . . . . . . . . . . . .  11
+10  . . . . . . . . . . . . . . .  10
+ 9  . . . . . . . . . . . . . . .  9
+ 8  . . . . . . . B B . . . . . .  8
+ 7  . . . . . . . . . . . . . . .  7
+ 6  . . . . . . . . . . . . . . .  6
+ 5  . . . . . . . . . . . . . . .  5
+ 4  . . . . . . . . . . . . . . .  4
+ 3  . . . . . . . . . . . . . . .  3
+ 2  . . . . . . . . . . . . . . .  2
+ 1  W . W . . . . . . . . . . . .  1
+    A B C D E F G H I J K L M N O
+```
+
+### shape_defense_open_three
+
+- Role: `diagnostic`
+- Rule: freestyle
+- Side to move: White
+- Expected: `G8` or `K8`
+- Intent: paired defensive fixture for `OpenThree`; White can interrupt either
+  extension square before Black creates an open four.
+
+```text
+    A B C D E F G H I J K L M N O
+15  . . . . . . . . . . . . . . .  15
+14  . . . . . . . . . . . . . . .  14
+13  . . . . . . . . . . . . . . .  13
+12  . . . . . . . . . . . . . . .  12
+11  . . . . . . . . . . . . . . .  11
+10  . . . . . . . . . . . . . . .  10
+ 9  . . . . . . . . . . . . . . .  9
+ 8  . . . . . . . B B B . . . . .  8
+ 7  . . . . . . . . . . . . . . .  7
+ 6  . . . . . . . . . . . . . . .  6
+ 5  . . . . . . . . . . . . . . .  5
+ 4  . . . . . . . . . . . . . . .  4
+ 3  . . . . . . . . . . . . . . .  3
+ 2  . . . . . . . . . . . . . . .  2
+ 1  W . W . . . . . . . . . . . .  1
+    A B C D E F G H I J K L M N O
+```
+
+### shape_offense_closed_three
+
+- Role: `diagnostic`
+- Rule: freestyle
+- Side to move: Black
+- Expected: `J8`
+- Intent: paired offensive fixture for `ClosedThree`; Black can create a
+  one-ended contiguous three.
+
+```text
+    A B C D E F G H I J K L M N O
+15  . . . . . . . . . . . . . . .  15
+14  . . . . . . . . . . . . . . .  14
+13  . . . . . . . . . . . . . . .  13
+12  . . . . . . . . . . . . . . .  12
+11  . . . . . . . . . . . . . . .  11
+10  . . . . . . . . . . . . . . .  10
+ 9  . . . . . . . . . . . . . . .  9
+ 8  . . . . . . W B B . . . . . .  8
+ 7  . . . . . . . . . . . . . . .  7
+ 6  . . . . . . . . . . . . . . .  6
+ 5  . . . . . . . . . . . . . . .  5
+ 4  . . . . . . . . . . . . . . .  4
+ 3  . . . . . . . . . . . . . . .  3
+ 2  . . . . . . . . . . . . . . .  2
+ 1  W . . . . . . . . . . . . . .  1
+    A B C D E F G H I J K L M N O
+```
+
+### shape_defense_closed_three
+
+- Role: `diagnostic`
+- Rule: freestyle
+- Side to move: White
+- Expected: `K8`
+- Intent: paired defensive fixture for `ClosedThree`; White can occupy the one
+  open end before Black extends.
+
+```text
+    A B C D E F G H I J K L M N O
+15  . . . . . . . . . . . . . . .  15
+14  . . . . . . . . . . . . . . .  14
+13  . . . . . . . . . . . . . . .  13
+12  . . . . . . . . . . . . . . .  12
+11  . . . . . . . . . . . . . . .  11
+10  . . . . . . . . . . . . . . .  10
+ 9  . . . . . . . . . . . . . . .  9
+ 8  . . . . . . W B B B . . . . .  8
+ 7  . . . . . . . . . . . . . . .  7
+ 6  . . . . . . . . . . . . . . .  6
+ 5  . . . . . . . . . . . . . . .  5
+ 4  . . . . . . . . . . . . . . .  4
+ 3  . . . . . . . . . . . . . . .  3
+ 2  . . . . . . . . . . . . . . .  2
+ 1  W . . . . . . . . . . . . . .  1
+    A B C D E F G H I J K L M N O
+```
+
+### shape_offense_broken_three
+
+- Role: `diagnostic`
+- Rule: freestyle
+- Side to move: Black
+- Expected: `I8` or `J8`
+- Intent: paired offensive fixture for `BrokenThree`; Black can create a
+  non-contiguous three with an internal rest square.
+
+```text
+    A B C D E F G H I J K L M N O
+15  . . . . . . . . . . . . . . .  15
+14  . . . . . . . . . . . . . . .  14
+13  . . . . . . . . . . . . . . .  13
+12  . . . . . . . . . . . . . . .  12
+11  . . . . . . . . . . . . . . .  11
+10  . . . . . . . . . . . . . . .  10
+ 9  . . . . . . . . . . . . . . .  9
+ 8  . . . . . . . B . . B . . . .  8
+ 7  . . . . . . . . . . . . . . .  7
+ 6  . . . . . . . . . . . . . . .  6
+ 5  . . . . . . . . . . . . . . .  5
+ 4  . . . . . . . . . . . . . . .  4
+ 3  . . . . . . . . . . . . . . .  3
+ 2  . . . . . . . . . . . . . . .  2
+ 1  W . W . . . . . . . . . . . .  1
+    A B C D E F G H I J K L M N O
+```
+
+### shape_defense_broken_three
+
+- Role: `diagnostic`
+- Rule: freestyle
+- Side to move: White
+- Expected: `I8`
+- Intent: paired defensive fixture for `BrokenThree`; White can occupy the
+  current rest square.
+
+```text
+    A B C D E F G H I J K L M N O
+15  . . . . . . . . . . . . . . .  15
+14  . . . . . . . . . . . . . . .  14
+13  . . . . . . . . . . . . . . .  13
+12  . . . . . . . . . . . . . . .  12
+11  . . . . . . . . . . . . . . .  11
+10  . . . . . . . . . . . . . . .  10
+ 9  . . . . . . . . . . . . . . .  9
+ 8  . . . . . . . B . B B . . . .  8
+ 7  . . . . . . . . . . . . . . .  7
+ 6  . . . . . . . . . . . . . . .  6
+ 5  . . . . . . . . . . . . . . .  5
+ 4  . . . . . . . . . . . . . . .  4
+ 3  . . . . . . . . . . . . . . .  3
+ 2  . . . . . . . . . . . . . . .  2
+ 1  W . W . . . . . . . . . . . .  1
     A B C D E F G H I J K L M N O
 ```
 

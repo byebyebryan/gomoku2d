@@ -61,7 +61,19 @@ Why this format:
 | `attack_wins_race` | freestyle | Black | tactical, attack-vs-defense | take the direct win instead of blocking |
 | `anti_blunder_open_three` | freestyle | White | tactical, anti-blunder | repro for the recent search safety fix |
 | `create_open_four` | freestyle | Black | tactical, open-four | create a forcing open-four threat |
+| `shape_offense_open_four` | freestyle | Black | tactical, shape, offense, open-four | diagnostic offense pair for `OpenFour` |
+| `shape_defense_open_four` | freestyle | White | tactical, shape, defense, open-four | diagnostic defense pair for `OpenFour` |
+| `shape_offense_closed_four` | freestyle | Black | tactical, shape, offense, closed-four | diagnostic offense pair for `ClosedFour` |
+| `shape_defense_closed_four` | freestyle | White | tactical, shape, defense, closed-four | diagnostic defense pair for `ClosedFour` |
+| `shape_offense_broken_four` | freestyle | Black | tactical, shape, offense, broken-four | diagnostic offense pair for `BrokenFour` |
+| `shape_defense_broken_four` | freestyle | White | tactical, shape, defense, broken-four | diagnostic defense pair for `BrokenFour` |
 | `counter_open_three_with_four` | freestyle | White | tactical, counter-threat, open-four | create a four instead of immediately blocking an open three |
+| `shape_offense_open_three` | freestyle | Black | tactical, shape, offense, open-three | diagnostic offense pair for `OpenThree` |
+| `shape_defense_open_three` | freestyle | White | tactical, shape, defense, open-three | diagnostic defense pair for `OpenThree` |
+| `shape_offense_closed_three` | freestyle | Black | tactical, shape, offense, closed-three | diagnostic offense pair for `ClosedThree` |
+| `shape_defense_closed_three` | freestyle | White | tactical, shape, defense, closed-three | diagnostic defense pair for `ClosedThree` |
+| `shape_offense_broken_three` | freestyle | Black | tactical, shape, offense, broken-three | diagnostic offense pair for `BrokenThree` |
+| `shape_defense_broken_three` | freestyle | White | tactical, shape, defense, broken-three | diagnostic defense pair for `BrokenThree` |
 | `create_broken_three` | freestyle | Black | tactical, broken-three | choose a non-terminal shape-building move |
 | `create_double_threat` | freestyle | Black | tactical, double-threat | create simultaneous immediate winning threats |
 | `renju_forbidden_cross` | renju | Black | renju, forbidden | black to move with a forbidden tactical point |

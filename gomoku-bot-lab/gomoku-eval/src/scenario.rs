@@ -105,6 +105,102 @@ pub static TACTICAL_SCENARIO_CASES: &[TacticalScenarioCase] = &[
         expected_moves: &["G8", "K8"],
     },
     TacticalScenarioCase {
+        id: "shape_offense_open_four",
+        scenario_id: "shape_offense_open_four",
+        category: "shape_offense_open_four",
+        role: TacticalScenarioRole::Diagnostic,
+        description: "Current player should create an open four.",
+        expected_moves: &["G8", "K8"],
+    },
+    TacticalScenarioCase {
+        id: "shape_defense_open_four",
+        scenario_id: "shape_defense_open_four",
+        category: "shape_defense_open_four",
+        role: TacticalScenarioRole::Diagnostic,
+        description: "Current player should occupy one completion square of the opponent's open four.",
+        expected_moves: &["G8", "L8"],
+    },
+    TacticalScenarioCase {
+        id: "shape_offense_closed_four",
+        scenario_id: "shape_offense_closed_four",
+        category: "shape_offense_closed_four",
+        role: TacticalScenarioRole::Diagnostic,
+        description: "Current player should create a closed four.",
+        expected_moves: &["K8"],
+    },
+    TacticalScenarioCase {
+        id: "shape_defense_closed_four",
+        scenario_id: "shape_defense_closed_four",
+        category: "shape_defense_closed_four",
+        role: TacticalScenarioRole::Diagnostic,
+        description: "Current player should answer the only completion square of the opponent's closed four.",
+        expected_moves: &["L8"],
+    },
+    TacticalScenarioCase {
+        id: "shape_offense_broken_four",
+        scenario_id: "shape_offense_broken_four",
+        category: "shape_offense_broken_four",
+        role: TacticalScenarioRole::Diagnostic,
+        description: "Current player should create a broken four.",
+        expected_moves: &["J8", "K8"],
+    },
+    TacticalScenarioCase {
+        id: "shape_defense_broken_four",
+        scenario_id: "shape_defense_broken_four",
+        category: "shape_defense_broken_four",
+        role: TacticalScenarioRole::Diagnostic,
+        description: "Current player should answer the internal completion square of the opponent's broken four.",
+        expected_moves: &["K8"],
+    },
+    TacticalScenarioCase {
+        id: "shape_offense_open_three",
+        scenario_id: "shape_offense_open_three",
+        category: "shape_offense_open_three",
+        role: TacticalScenarioRole::Diagnostic,
+        description: "Current player should create an open three.",
+        expected_moves: &["G8", "J8"],
+    },
+    TacticalScenarioCase {
+        id: "shape_defense_open_three",
+        scenario_id: "shape_defense_open_three",
+        category: "shape_defense_open_three",
+        role: TacticalScenarioRole::Diagnostic,
+        description: "Current player should occupy one extension square of the opponent's open three.",
+        expected_moves: &["G8", "K8"],
+    },
+    TacticalScenarioCase {
+        id: "shape_offense_closed_three",
+        scenario_id: "shape_offense_closed_three",
+        category: "shape_offense_closed_three",
+        role: TacticalScenarioRole::Diagnostic,
+        description: "Current player should create a closed three.",
+        expected_moves: &["J8"],
+    },
+    TacticalScenarioCase {
+        id: "shape_defense_closed_three",
+        scenario_id: "shape_defense_closed_three",
+        category: "shape_defense_closed_three",
+        role: TacticalScenarioRole::Diagnostic,
+        description: "Current player should occupy the only extension square of the opponent's closed three.",
+        expected_moves: &["K8"],
+    },
+    TacticalScenarioCase {
+        id: "shape_offense_broken_three",
+        scenario_id: "shape_offense_broken_three",
+        category: "shape_offense_broken_three",
+        role: TacticalScenarioRole::Diagnostic,
+        description: "Current player should create a broken three.",
+        expected_moves: &["I8", "J8"],
+    },
+    TacticalScenarioCase {
+        id: "shape_defense_broken_three",
+        scenario_id: "shape_defense_broken_three",
+        category: "shape_defense_broken_three",
+        role: TacticalScenarioRole::Diagnostic,
+        description: "Current player should occupy the rest square of the opponent's broken three.",
+        expected_moves: &["I8"],
+    },
+    TacticalScenarioCase {
         id: "create_broken_three",
         scenario_id: "create_broken_three",
         category: "broken_three",
@@ -358,6 +454,29 @@ mod tests {
     }
 
     #[test]
+    fn tactical_cases_include_shape_offense_defense_pairs() {
+        for shape in [
+            "open_four",
+            "closed_four",
+            "broken_four",
+            "open_three",
+            "closed_three",
+            "broken_three",
+        ] {
+            for stance in ["offense", "defense"] {
+                let expected_category = format!("shape_{stance}_{shape}");
+                assert!(
+                    TACTICAL_SCENARIO_CASES.iter().any(|case| {
+                        case.category == expected_category
+                            && case.role == TacticalScenarioRole::Diagnostic
+                    }),
+                    "missing diagnostic tactical shape case for {expected_category}"
+                );
+            }
+        }
+    }
+
+    #[test]
     fn tactical_case_expected_moves_match_declared_semantics() {
         for case in TACTICAL_SCENARIO_CASES {
             let board = case.scenario().board();
@@ -374,6 +493,15 @@ mod tests {
                     case.id,
                     mv.to_notation()
                 );
+            }
+
+            if let Some(shape) = case.category.strip_prefix("shape_offense_") {
+                assert_shape_offense(case.id, shape, &board, &expected_moves);
+                continue;
+            }
+            if let Some(shape) = case.category.strip_prefix("shape_defense_") {
+                assert_shape_defense(case.id, shape, &board, &expected_moves);
+                continue;
             }
 
             match case.category {
@@ -458,6 +586,72 @@ mod tests {
         }
     }
 
+    fn assert_shape_offense(case_id: &str, shape: &str, board: &Board, expected_moves: &[Move]) {
+        match shape {
+            "open_four" => {
+                for &mv in expected_moves {
+                    let own_replies = own_immediate_replies_after(board, mv);
+                    assert!(
+                        own_replies.len() >= 2,
+                        "case '{case_id}' expected {} to create an open four, got {:?}",
+                        mv.to_notation(),
+                        own_replies
+                    );
+                }
+            }
+            "closed_four" | "broken_four" => {
+                for &mv in expected_moves {
+                    let own_replies = own_immediate_replies_after(board, mv);
+                    assert_eq!(
+                        own_replies.len(),
+                        1,
+                        "case '{case_id}' expected {} to create one immediate completion, got {:?}",
+                        mv.to_notation(),
+                        own_replies
+                    );
+                }
+            }
+            "open_three" => {
+                for &mv in expected_moves {
+                    let next_threats = threat_creating_replies_after(board, mv);
+                    assert!(
+                        next_threats.len() >= 2,
+                        "case '{case_id}' expected {} to create an open three, got continuations {:?}",
+                        mv.to_notation(),
+                        next_threats
+                    );
+                }
+            }
+            "closed_three" | "broken_three" => {
+                for &mv in expected_moves {
+                    let next_threats = threat_creating_replies_after(board, mv);
+                    assert!(
+                        !next_threats.is_empty(),
+                        "case '{case_id}' expected {} to create at least one continuation",
+                        mv.to_notation()
+                    );
+                }
+            }
+            other => panic!("case '{case_id}' has unknown offense shape '{other}'"),
+        }
+    }
+
+    fn assert_shape_defense(case_id: &str, shape: &str, board: &Board, expected_moves: &[Move]) {
+        match shape {
+            "open_four" | "closed_four" | "broken_four" => {
+                let opponent_wins =
+                    board.immediate_winning_moves_for(board.current_player.opponent());
+                assert_contains_all(case_id, &opponent_wins, expected_moves);
+            }
+            "open_three" | "closed_three" | "broken_three" => {
+                let opponent_continuations =
+                    threat_creating_replies_for_player(board, board.current_player.opponent());
+                assert_contains_all(case_id, &opponent_continuations, expected_moves);
+            }
+            other => panic!("case '{case_id}' has unknown defense shape '{other}'"),
+        }
+    }
+
     fn assert_contains_all(case_id: &str, actual: &[Move], expected: &[Move]) {
         for &mv in expected {
             assert!(
@@ -475,6 +669,38 @@ mod tests {
         let mut next = board.clone();
         next.apply_move(mv).expect("expected legal move");
         next.immediate_winning_moves_for(player)
+    }
+
+    fn threat_creating_replies_after(board: &Board, mv: Move) -> Vec<Move> {
+        let player = board.current_player;
+        let mut next = board.clone();
+        next.apply_move(mv).expect("expected legal move");
+        threat_creating_replies_for_player(&next, player)
+    }
+
+    fn threat_creating_replies_for_player(board: &Board, player: gomoku_core::Color) -> Vec<Move> {
+        let mut player_turn = board.clone();
+        player_turn.current_player = player;
+
+        let mut threats = Vec::new();
+        for row in 0..player_turn.config.board_size {
+            for col in 0..player_turn.config.board_size {
+                let reply = Move { row, col };
+                if !player_turn.is_legal(reply) {
+                    continue;
+                }
+
+                let mut after_reply = player_turn.clone();
+                let result = after_reply.apply_move(reply).expect("expected legal reply");
+                if matches!(result, GameResult::Winner(winner) if winner == player)
+                    || !after_reply.immediate_winning_moves_for(player).is_empty()
+                {
+                    threats.push(reply);
+                }
+            }
+        }
+
+        threats
     }
 
     fn opponent_forcing_replies_after(board: &Board, mv: Move) -> Vec<Move> {
