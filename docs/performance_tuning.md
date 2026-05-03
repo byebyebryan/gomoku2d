@@ -107,6 +107,7 @@ Current measurements:
 - `has_multiple_immediate_winning_moves_for(current_player)`
 - `apply_move()` followed by `undo_move()` on a representative legal move
 - `forbidden_moves_for_current_player()` on Renju anchor positions
+- candidate-set `is_legal()` filtering on Renju anchor positions
 
 These cover the current quick-win candidates:
 
@@ -221,6 +222,9 @@ From code inspection before the first benchmark pass:
    `is_legal_for()` first and repeating Renju checks (`2026-04-23`)
 6. Add benchmark-corpus search tests for legal output plus immediate
    win/block anchors (`2026-04-23`)
+7. Tighten the Renju forbidden precheck from "near any black stone" to "two
+   black stones on one local axis" before the exact forbidden detector
+   (`2026-05-03`)
 
 ### Future work
 
@@ -402,3 +406,55 @@ All numbers below are `SearchBot::choose_move()` at depth `3`.
 - Search improved modestly across the fixed corpus. The pass is still a quick
   win, not a replacement for the larger future work around localized eval or
   incremental candidate frontiers.
+
+## Optimization pass 3 snapshot
+
+Date: `2026-05-03`
+
+Changes:
+
+- `Board::can_be_renju_forbidden_at()` now uses a directional local guard:
+  a candidate must have at least two black stones on one of the four axes before
+  the exact Renju forbidden detector runs.
+- The exact forbidden detector is unchanged. The guard only rejects impossible
+  forbidden candidates earlier.
+- `board_perf` now includes a candidate-set legality benchmark to measure the
+  path used by bot root/search candidate filtering.
+
+Commands used:
+
+```sh
+cargo test -p gomoku-core renju_forbidden_guard_rejects_single_nearby_black_stone
+cargo test -p gomoku-core optimized_renju_forbidden_moves_match_full_scan
+cargo test -p gomoku-core --test bench_scenarios
+cargo bench -p gomoku-core --bench board_perf -- "forbidden_moves/current_player/renju_forbidden_cross|candidate_legality/current_player/renju_forbidden_cross" --noplot
+cargo bench -p gomoku-bot --bench search_perf -- renju_forbidden_cross --noplot
+```
+
+### Targeted core anchors after pass 3
+
+| Benchmark | Time | Local baseline before pass 3 |
+|---|---|---|
+| `forbidden_moves/current_player/renju_forbidden_cross` | `7.4991-7.5844 µs` | `7.4633-7.5145 µs` |
+| `candidate_legality/current_player/renju_forbidden_cross` | `4.5258-4.5532 µs` | `7.6663-7.7254 µs` |
+
+### Targeted search anchors after pass 3
+
+| Benchmark | Time | Criterion change |
+|---|---|---|
+| `fast/renju_forbidden_cross` | `15.371-15.556 ms` | `-4.26% to -1.55%` |
+| `balanced/renju_forbidden_cross` | `20.034-20.225 ms` | `-6.35% to -5.05%` |
+| `deep/renju_forbidden_cross` | `549.30-552.28 ms` | `-4.51% to -3.93%` |
+
+### Notes
+
+- The full forbidden-list benchmark is effectively flat. That path already
+  starts from black-nearby candidates, so the stricter guard does not buy much.
+- The candidate legality benchmark improves by roughly 41%, which is the more
+  relevant hot path for search candidate filtering.
+- The search benchmark shows a modest but measurable improvement on the Renju
+  legality-pressure scenario.
+- Learning: keep this as an in-place core legality optimization, not a new bot
+  component. It preserves exact rules behavior and has no meaningful product or
+  tuning tradeoff; exposing it as config would add surface area without helping
+  evaluation.

@@ -493,28 +493,27 @@ impl Board {
     // `cell_virtual` treats (vrow, vcol) as already containing `vcolor`.
 
     fn can_be_renju_forbidden_at(&self, mv: Move) -> bool {
-        self.has_color_within_chebyshev(mv, Color::Black, 2)
+        self.has_two_black_stones_on_any_axis(mv)
     }
 
-    fn has_color_within_chebyshev(&self, mv: Move, color: Color, radius: usize) -> bool {
+    fn has_two_black_stones_on_any_axis(&self, mv: Move) -> bool {
         let size = self.config.board_size as isize;
         let row = mv.row as isize;
         let col = mv.col as isize;
-        let radius = radius as isize;
 
-        for dr in -radius..=radius {
-            for dc in -radius..=radius {
-                if dr == 0 && dc == 0 {
-                    continue;
-                }
-
-                let r = row + dr;
-                let c = col + dc;
+        for (dr, dc) in DIRS {
+            let mut black = 0;
+            for step in [-4, -3, -2, -1, 1, 2, 3, 4] {
+                let r = row + dr * step;
+                let c = col + dc * step;
                 if r < 0 || r >= size || c < 0 || c >= size {
                     continue;
                 }
-                if self.cells[r as usize][c as usize] == Some(color) {
-                    return true;
+                if self.cells[r as usize][c as usize] == Some(Color::Black) {
+                    black += 1;
+                    if black >= 2 {
+                        return true;
+                    }
                 }
             }
         }
@@ -992,6 +991,14 @@ mod tests {
         assert!(candidates.contains(&Move { row: 12, col: 12 }));
         assert!(!candidates.contains(&Move { row: 0, col: 1 }));
         assert!(!candidates.contains(&Move { row: 2, col: 2 }));
+    }
+
+    #[test]
+    fn renju_forbidden_guard_rejects_single_nearby_black_stone() {
+        let mut b = renju_board();
+        setup(&mut b, &[(7, 7), (0, 0)]);
+
+        assert!(!b.can_be_renju_forbidden_at(Move { row: 7, col: 9 }));
     }
 
     #[test]
