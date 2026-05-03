@@ -8,22 +8,6 @@ use gomoku_core::{Board, Color, GameResult, Move, Variant, ZobristTable, DIRS};
 // ZobristTable is provided by gomoku-core with a stable shared seed,
 // so hashes are consistent between the search and replay recording.
 
-fn hash_board(zt: &ZobristTable, board: &Board) -> u64 {
-    let size = board.config.board_size;
-    let mut h = 0u64;
-    for row in 0..size {
-        for col in 0..size {
-            if let Some(color) = board.cell(row, col) {
-                h ^= zt.piece(row, col, color);
-            }
-        }
-    }
-    if board.current_player == Color::White {
-        h ^= zt.turn;
-    }
-    h
-}
-
 #[cfg(target_os = "linux")]
 fn thread_cpu_time() -> Option<Duration> {
     let mut ts = libc::timespec {
@@ -1858,7 +1842,7 @@ impl Bot for SearchBot {
         let cpu_start = cpu_time_budget.and_then(|_| thread_cpu_time());
         let deadline = SearchDeadline::new(start, time_budget, cpu_start, cpu_time_budget);
         // Compute hash once at root; children update it incrementally
-        let root_hash = hash_board(&self.zobrist, board);
+        let root_hash = board.hash_with(&self.zobrist);
         let center = board.config.board_size / 2;
         let candidate_source = self.config.candidate_source();
         let legality_gate = self.config.legality_gate();

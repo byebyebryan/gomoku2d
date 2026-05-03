@@ -673,7 +673,14 @@ impl Board {
         if r == vrow && c == vcol {
             return Some(Some(vcolor));
         }
-        Some(self.cell(r as usize, c as usize))
+        let idx = self.index(r as usize, c as usize);
+        if bit_is_set(&self.black_bits, idx) {
+            Some(Some(Color::Black))
+        } else if bit_is_set(&self.white_bits, idx) {
+            Some(Some(Color::White))
+        } else {
+            Some(None)
+        }
     }
 
     /// True if placing a Black stone at `mv` would create an overline, double-four, or
@@ -839,6 +846,11 @@ impl Board {
     /// hash updated with each `apply_move`/`undo_move` call instead.
     pub fn hash(&self) -> u64 {
         let zt = ZobristTable::new(self.config.board_size);
+        self.hash_with(&zt)
+    }
+
+    /// Zobrist hash of the current position using an existing table.
+    pub fn hash_with(&self, zt: &ZobristTable) -> u64 {
         let mut h = 0u64;
         for_each_set_bit(&self.black_bits, self.config.board_size, |row, col| {
             h ^= zt.piece(row, col, Color::Black);
@@ -932,6 +944,18 @@ mod tests {
                 (7, 7, Color::Black),
             ]
         );
+    }
+
+    #[test]
+    fn hash_with_reuses_existing_zobrist_table() {
+        let mut b = default_board();
+        b.apply_move(Move { row: 7, col: 7 }).unwrap();
+        b.apply_move(Move { row: 6, col: 8 }).unwrap();
+        b.apply_move(Move { row: 5, col: 9 }).unwrap();
+
+        let zt = ZobristTable::new(b.config.board_size);
+
+        assert_eq!(b.hash_with(&zt), b.hash());
     }
 
     #[test]
