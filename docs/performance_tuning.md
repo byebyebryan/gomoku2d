@@ -91,9 +91,9 @@ using `search-d3` and reduced effective depth under CPU budgets.
 
 The next performance pass should start with measurement rather than another
 tactical consumer: identify how much time `search-d3` spends in eval,
-candidate generation, legality checks, root prefiltering, and hidden tactical
-probe work. Only keep a search change if it improves reached depth, average move
-time, or tournament score under the same CPU budget.
+candidate generation, legality checks, safety-gate probes, and hidden tactical
+work. Only keep a search change if it improves reached depth, average move time,
+or tournament score under the same CPU budget.
 
 ## Benchmark suites
 
@@ -196,7 +196,7 @@ From code inspection before the first benchmark pass:
 2. `gomoku-bot/src/search.rs:candidate_moves()`
    - rescans the full board at each node
 
-3. Root anti-blunder prefilter
+3. Root safety gate
    - adds extra board work before the main search
 
 4. `gomoku-core/src/board.rs:nearby_empty_moves()`
@@ -331,7 +331,7 @@ All numbers below are `SearchBot::choose_move()` at depth `3`.
 ### Notes
 
 - The biggest win came from removing per-candidate board clones in immediate
-  win scanning. This also reduced the root anti-blunder prefilter cost.
+  win scanning. This also reduced the root safety-gate cost.
 - Freestyle immediate-win scans improved by roughly an order of magnitude on
   the fixed anchors. Renju immediate-win scans improved less because forbidden
   checks remain the dominant cost there.
@@ -346,7 +346,7 @@ Changes:
 
 - `Board::has_multiple_immediate_winning_moves_for()` scans nearby candidates
   directly and returns as soon as it finds two wins.
-- `SearchBot` uses that helper in the anti-blunder prefilter instead of
+- `SearchBot` uses that helper in the opponent-reply safety gate instead of
   collecting every immediate winning move and checking `len() >= 2`.
 - `immediate_winning_moves_for()` now uses the same probe path and lets
   `apply_move()` reject illegal candidates, avoiding duplicate Renju forbidden
@@ -396,7 +396,7 @@ All numbers below are `SearchBot::choose_move()` at depth `3`.
 
 - The large core win is Renju immediate-win scanning, because the duplicate
   forbidden check was removed.
-- The anti-blunder prefilter now uses a purpose-built boolean query, so it no
+- The opponent-reply safety gate now uses a purpose-built boolean query, so it no
   longer allocates a full winning-move list when it only needs to know whether
   two replies exist.
 - Search improved modestly across the fixed corpus. The pass is still a quick

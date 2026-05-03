@@ -1,4 +1,4 @@
-use gomoku_bot::SearchBotConfig;
+use gomoku_bot::{SafetyGate, SearchBotConfig};
 
 pub struct LabSearchConfig {
     pub id: &'static str,
@@ -13,7 +13,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             time_budget_ms: None,
             cpu_time_budget_ms: None,
             candidate_radius: 2,
-            root_prefilter: true,
+            safety_gate: SafetyGate::OpponentReplySearchProbe,
         },
     },
     LabSearchConfig {
@@ -23,7 +23,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             time_budget_ms: None,
             cpu_time_budget_ms: None,
             candidate_radius: 2,
-            root_prefilter: true,
+            safety_gate: SafetyGate::OpponentReplySearchProbe,
         },
     },
     LabSearchConfig {
@@ -33,7 +33,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             time_budget_ms: None,
             cpu_time_budget_ms: None,
             candidate_radius: 2,
-            root_prefilter: true,
+            safety_gate: SafetyGate::OpponentReplySearchProbe,
         },
     },
 ];
@@ -77,7 +77,11 @@ fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchB
             Some(config)
         }
         "no-safety" => {
-            config.root_prefilter = false;
+            config.safety_gate = SafetyGate::None;
+            Some(config)
+        }
+        "opponent-reply-search-probe" => {
+            config.safety_gate = SafetyGate::OpponentReplySearchProbe;
             Some(config)
         }
         _ => None,
@@ -151,7 +155,10 @@ mod tests {
         assert_eq!(config.time_budget_ms, Some(1000));
         assert_eq!(config.cpu_time_budget_ms, None);
         assert_eq!(config.candidate_radius, 2);
-        assert!(config.root_prefilter);
+        assert_eq!(
+            config.safety_gate,
+            super::SafetyGate::OpponentReplySearchProbe
+        );
     }
 
     #[test]
@@ -176,13 +183,26 @@ mod tests {
         assert_eq!(depth_spec.time_budget_ms, Some(1000));
         assert_eq!(depth_spec.cpu_time_budget_ms, None);
         assert_eq!(depth_spec.candidate_radius, 2);
-        assert!(!depth_spec.root_prefilter);
+        assert_eq!(depth_spec.safety_gate, super::SafetyGate::None);
 
         let alias = super::search_config_from_lab_spec("balanced+no-safety", 5, None, Some(250))
             .expect("expected no-safety alias spec to parse");
         assert_eq!(alias.max_depth, 3);
         assert_eq!(alias.cpu_time_budget_ms, Some(250));
-        assert!(!alias.root_prefilter);
+        assert_eq!(alias.safety_gate, super::SafetyGate::None);
+
+        let explicit = super::search_config_from_lab_spec(
+            "balanced+no-safety+opponent-reply-search-probe",
+            5,
+            None,
+            None,
+        )
+        .expect("expected explicit safety gate suffix to parse");
+        assert_eq!(explicit.max_depth, 3);
+        assert_eq!(
+            explicit.safety_gate,
+            super::SafetyGate::OpponentReplySearchProbe
+        );
     }
 
     #[test]
@@ -191,7 +211,7 @@ mod tests {
             .expect("expected near-all-r1 search spec to parse");
         assert_eq!(r1.max_depth, 3);
         assert_eq!(r1.candidate_radius, 1);
-        assert!(r1.root_prefilter);
+        assert_eq!(r1.safety_gate, super::SafetyGate::OpponentReplySearchProbe);
 
         let r3 = super::search_config_from_lab_spec(
             "balanced+near-all-r3+no-safety",
@@ -203,7 +223,7 @@ mod tests {
         assert_eq!(r3.max_depth, 3);
         assert_eq!(r3.time_budget_ms, Some(1000));
         assert_eq!(r3.candidate_radius, 3);
-        assert!(!r3.root_prefilter);
+        assert_eq!(r3.safety_gate, super::SafetyGate::None);
     }
 
     #[test]

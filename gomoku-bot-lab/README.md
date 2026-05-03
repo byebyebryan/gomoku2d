@@ -70,8 +70,9 @@ config, not canonical product presets.
 Append `+near-all-r1`, `+near-all-r2`, or `+near-all-r3` to change the candidate
 source radius. Append `+no-safety` to disable the root safety gate. For example,
 `search-d3+near-all-r1+no-safety` keeps the depth-3 search but uses a radius-1
-candidate source and no root safety gate. These are diagnostic switches, not
-product presets.
+candidate source and no root safety gate. Append `+opponent-reply-search-probe`
+to explicitly re-enable the current safety gate in combined specs. These are
+diagnostic switches, not product presets.
 
 Legacy specs still work: plain `baseline` uses `--depth`, `baseline-N` creates a
 custom fixed-depth baseline bot, and `--time-ms` can cap search bots during CLI
@@ -197,7 +198,9 @@ that replay format directly.
           "time_budget_ms": null,
           "cpu_time_budget_ms": null,
           "candidate_radius": 2,
-          "root_prefilter": true
+          "candidate_source": "near_all_r2",
+          "legality_gate": "exact_rules",
+          "safety_gate": "opponent_reply_search_probe"
         },
         "depth": 3,
         "nodes": 42,

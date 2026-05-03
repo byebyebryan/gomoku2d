@@ -1051,7 +1051,7 @@ fn root_candidate_moves_with_metrics(
     board: &Board,
     candidate_source: CandidateSource,
     legality_gate: LegalityGate,
-    enable_prefilter: bool,
+    safety_gate: SafetyGate,
     deadline: SearchDeadline,
     metrics: &mut SearchMetrics,
 ) -> (Vec<Move>, u64, bool) {
@@ -1072,7 +1072,49 @@ fn root_candidate_moves_with_metrics(
             )
         });
     }
-    if moves.is_empty() || !enable_prefilter {
+
+    apply_safety_gate_to_root_candidates(
+        board,
+        moves,
+        candidate_source,
+        legality_gate,
+        safety_gate,
+        deadline,
+        metrics,
+    )
+}
+
+fn apply_safety_gate_to_root_candidates(
+    board: &Board,
+    moves: Vec<Move>,
+    candidate_source: CandidateSource,
+    legality_gate: LegalityGate,
+    safety_gate: SafetyGate,
+    deadline: SearchDeadline,
+    metrics: &mut SearchMetrics,
+) -> (Vec<Move>, u64, bool) {
+    match safety_gate {
+        SafetyGate::None => (moves, 0, false),
+        SafetyGate::OpponentReplySearchProbe => opponent_reply_search_probe_root_candidates(
+            board,
+            moves,
+            candidate_source,
+            legality_gate,
+            deadline,
+            metrics,
+        ),
+    }
+}
+
+fn opponent_reply_search_probe_root_candidates(
+    board: &Board,
+    moves: Vec<Move>,
+    candidate_source: CandidateSource,
+    legality_gate: LegalityGate,
+    deadline: SearchDeadline,
+    metrics: &mut SearchMetrics,
+) -> (Vec<Move>, u64, bool) {
+    if moves.is_empty() {
         return (moves, 0, false);
     }
 
@@ -1455,7 +1497,7 @@ pub struct SearchBotConfig {
     pub time_budget_ms: Option<u64>,
     pub cpu_time_budget_ms: Option<u64>,
     pub candidate_radius: usize,
-    pub root_prefilter: bool,
+    pub safety_gate: SafetyGate,
 }
 
 impl SearchBotConfig {
@@ -1465,7 +1507,7 @@ impl SearchBotConfig {
             time_budget_ms: None,
             cpu_time_budget_ms: None,
             candidate_radius: 2,
-            root_prefilter: true,
+            safety_gate: SafetyGate::OpponentReplySearchProbe,
         }
     }
 
@@ -1475,7 +1517,7 @@ impl SearchBotConfig {
             time_budget_ms: Some(time_budget_ms),
             cpu_time_budget_ms: None,
             candidate_radius: 2,
-            root_prefilter: true,
+            safety_gate: SafetyGate::OpponentReplySearchProbe,
         }
     }
 
@@ -1485,7 +1527,7 @@ impl SearchBotConfig {
             time_budget_ms: None,
             cpu_time_budget_ms: Some(cpu_time_budget_ms),
             candidate_radius: 2,
-            root_prefilter: true,
+            safety_gate: SafetyGate::OpponentReplySearchProbe,
         }
     }
 
@@ -1508,11 +1550,7 @@ impl SearchBotConfig {
     }
 
     pub const fn safety_gate(self) -> SafetyGate {
-        if self.root_prefilter {
-            SafetyGate::OpponentReplySearchProbe
-        } else {
-            SafetyGate::None
-        }
+        self.safety_gate
     }
 
     fn trace(self) -> serde_json::Value {
@@ -1521,7 +1559,6 @@ impl SearchBotConfig {
             "time_budget_ms": self.time_budget_ms,
             "cpu_time_budget_ms": self.cpu_time_budget_ms,
             "candidate_radius": self.candidate_radius,
-            "root_prefilter": self.root_prefilter,
             "candidate_source": self.candidate_source().name(),
             "legality_gate": self.legality_gate().name(),
             "safety_gate": self.safety_gate().name(),
@@ -1605,6 +1642,7 @@ impl Bot for SearchBot {
         let center = board.config.board_size / 2;
         let candidate_source = self.config.candidate_source();
         let legality_gate = self.config.legality_gate();
+        let safety_gate = self.config.safety_gate();
         let prefilter_deadline = SearchDeadline::new(
             start,
             time_budget.map(|budget| budget / 2),
@@ -1615,7 +1653,7 @@ impl Bot for SearchBot {
             board,
             candidate_source,
             legality_gate,
-            self.config.root_prefilter,
+            safety_gate,
             prefilter_deadline,
             &mut metrics,
         );
@@ -1781,7 +1819,7 @@ mod tests {
     }
 
     #[test]
-    fn root_prefilter_falls_back_to_unfiltered_moves_when_deadline_has_elapsed() {
+    fn safety_gate_reply_probe_falls_back_to_unfiltered_moves_when_deadline_has_elapsed() {
         let mut board = Board::new(RuleConfig::default());
         for mv in [
             Move { row: 7, col: 7 },
@@ -1803,7 +1841,7 @@ mod tests {
             &board,
             CandidateSource::NearAll { radius: 2 },
             LegalityGate::ExactRules,
-            true,
+            SafetyGate::OpponentReplySearchProbe,
             SearchDeadline::new(
                 Instant::now() - Duration::from_millis(2),
                 Some(Duration::from_millis(1)),
@@ -1816,6 +1854,39 @@ mod tests {
         let (moves, _, timed_out) = moves;
         assert_eq!(moves, expected);
         assert!(timed_out);
+    }
+
+    #[test]
+    fn safety_gate_none_skips_opponent_reply_probe() {
+        let mut board = Board::new(RuleConfig::default());
+        for mv in [
+            Move { row: 7, col: 7 },
+            Move { row: 3, col: 3 },
+            Move { row: 7, col: 8 },
+            Move { row: 5, col: 5 },
+            Move { row: 7, col: 9 },
+        ] {
+            board.apply_move(mv).unwrap();
+        }
+
+        let expected: Vec<Move> = candidate_moves(&board, 2)
+            .into_iter()
+            .filter(|&mv| board.is_legal(mv))
+            .collect();
+
+        let mut metrics = SearchMetrics::default();
+        let (moves, safety_nodes, timed_out) = root_candidate_moves_with_metrics(
+            &board,
+            CandidateSource::NearAll { radius: 2 },
+            LegalityGate::ExactRules,
+            SafetyGate::None,
+            SearchDeadline::new(Instant::now(), Some(Duration::from_millis(100)), None, None),
+            &mut metrics,
+        );
+
+        assert_eq!(moves, expected);
+        assert_eq!(safety_nodes, 0);
+        assert!(!timed_out);
     }
 
     #[test]
@@ -1838,14 +1909,14 @@ mod tests {
             time_budget_ms: None,
             cpu_time_budget_ms: None,
             candidate_radius: 3,
-            root_prefilter: false,
+            safety_gate: SafetyGate::None,
         };
         assert_eq!(SearchBot::with_config(config).config(), config);
         assert_eq!(
             config.candidate_source(),
             CandidateSource::NearAll { radius: 3 }
         );
-        assert_eq!(config.safety_gate(), SafetyGate::None);
+        assert_eq!(config.safety_gate, SafetyGate::None);
     }
 
     #[test]
@@ -1875,7 +1946,7 @@ mod tests {
 
         assert_eq!(trace["config"]["max_depth"], 3);
         assert_eq!(trace["config"]["candidate_radius"], 2);
-        assert_eq!(trace["config"]["root_prefilter"], true);
+        assert!(trace["config"].get("root_prefilter").is_none());
         assert_eq!(trace["config"]["candidate_source"], "near_all_r2");
         assert_eq!(trace["config"]["legality_gate"], "exact_rules");
         assert_eq!(
