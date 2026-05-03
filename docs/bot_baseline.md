@@ -45,6 +45,14 @@ product presets:
 | `candidate_radius` | Distance around existing stones used to generate candidate moves |
 | `root_prefilter` | Whether to run the root safety gate |
 
+These raw fields are projected into explicit pipeline stages in search traces:
+`candidate_source`, `legality_gate`, and `safety_gate`. Today there is one
+candidate source family (`near_all_rN`), one legality gate (`exact_rules`), and
+one optional safety gate (`opponent_reply_search_probe` or `none`). Renju
+forbidden-move checks still use exact core rules, but core first applies a cheap
+candidate gate: only empty cells within 2 spaces of a black stone can be
+forbidden.
+
 The lab tools define temporary aliases over these fields for experiments:
 
 | Alias | Max depth | Candidate source | Safety gate | Intent |
@@ -72,7 +80,10 @@ Search traces include both the result and the config:
     "time_budget_ms": null,
     "cpu_time_budget_ms": null,
     "candidate_radius": 2,
-    "root_prefilter": true
+    "root_prefilter": true,
+    "candidate_source": "near_all_r2",
+    "legality_gate": "exact_rules",
+    "safety_gate": "opponent_reply_search_probe"
   },
   "depth": 3,
   "nodes": 1234,
