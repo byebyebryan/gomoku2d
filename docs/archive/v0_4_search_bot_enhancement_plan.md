@@ -839,11 +839,12 @@ Immediate reading:
 - No-safety is a useful control, not a clear replacement. It fails the
   earlier `block_open_three` tactical case, now named
   `priority_prevent_open_four_over_extend_three`.
-- The current safety gate is buying real tactical safety and helps D5 preserve
-  reached depth under the `1000 ms` CPU budget.
-- The current safety gate can still be counterproductive for shallower D3 match
-  play: it adds about `4.7k` hidden nodes per searched move in the D3 ablation,
-  while the no-safety variant won that 64-game head-to-head.
+- The then-current search-probe safety gate was buying real tactical safety and
+  helped D5 preserve reached depth under the `1000 ms` CPU budget.
+- The then-current search-probe safety gate could still be counterproductive
+  for shallower D3 match play: it added about `4.7k` hidden nodes per searched
+  move in the D3 ablation, while the no-safety variant won that 64-game
+  head-to-head.
 - The next likely target is a cheaper, more meaningful root filter: keep
   immediate win/block safety, avoid broad whole-board opponent rescans, and use
   local threat facts around the candidate move to reject only obvious blunders
@@ -891,11 +892,12 @@ Stage definitions:
 - **Tactical annotation** should compute facts such as immediate win,
   immediate block, open four, closed/broken four, open three, and multi-threat
   without deleting moves by itself.
-- **Safety gate** is where a move may be removed. The current implementation is
-  `opponent_reply_search_probe`: a shallow search-like probe that applies each
-  root candidate, scans legal opponent replies, and rejects the root candidate
-  if a reply wins immediately or creates multiple immediate winning moves. It
-  should not be treated as the baseline candidate selector.
+- **Safety gate** is where a move may be removed. The promoted implementation is
+  `opponent_reply_local_threat_probe`: it applies each root candidate, scans
+  legal opponent replies, and classifies each reply through local threat facts
+  instead of running a full immediate-winning-move scan after every reply. The
+  older `opponent_reply_search_probe` remains available for comparison. Neither
+  should be treated as the baseline candidate selector.
 - **Move ordering** should consume tactical facts to improve alpha-beta pruning
   without changing the legal candidate set.
 
@@ -906,7 +908,7 @@ Current SearchBot profile:
 | Candidate source | `near_all_r2` | Empty cells within radius 2 of any existing stone |
 | Legality gate | `exact_rules` | Calls the rules engine; Renju black uses exact forbidden checks |
 | Tactical annotator | `none` | Tactical facts exist in helper experiments but are not a separate pipeline stage yet |
-| Safety gate | `opponent_reply_search_probe` | Explicit `SafetyGate` config chooses `none` or `opponent_reply_search_probe` |
+| Safety gate | `opponent_reply_local_threat_probe` | Explicit `SafetyGate` config chooses `none`, `opponent_reply_search_probe`, or `opponent_reply_local_threat_probe` |
 | Move ordering | `tt_first_board_order` | Transposition-table move first, then stable generated order; no tactical ordering yet |
 | Search | `alpha_beta_id` | Alpha-beta with iterative deepening and transposition table |
 | Static eval | `line_shape_eval` | Scores open and half-open line runs |
@@ -917,14 +919,14 @@ Implication for the next implementation slice:
   one dimension at a time. Candidate source, legality gate, and safety gate are
   now explicit code stages. Move ordering is explicit but still intentionally
   simple. Tactical annotation is still pending as a separate stage.
-- Keep current product behavior available as `near_all_r2 + exact_rules +
-  opponent_reply_search_probe` until a replacement proves better.
+- Keep the older product behavior available as `near_all_r2 + exact_rules +
+  opponent_reply_search_probe`, but default to the cheaper local-threat safety
+  gate after promotion.
 - Add clean lab specs for each stage rather than using one bundled root-stage
   switch as the baseline. The current implemented suffixes are `+near-all-r1`,
-  `+near-all-r2`, `+near-all-r3`, `+no-safety`, and
-  `+opponent-reply-search-probe`. The `0.4.1` safety-gate slice also adds
-  `+opponent-reply-local-threat-probe` as an experimental local-fact
-  alternative.
+  `+near-all-r2`, `+near-all-r3`, `+no-safety`,
+  `+opponent-reply-search-probe`, and
+  `+opponent-reply-local-threat-probe`.
 - Optimize Renju legality by exact-checking only black candidates within `r2` of
   black stones, regardless of whether search candidate selection uses `r1`,
   `r2`, or `r3`.
@@ -933,7 +935,9 @@ Implication for the next implementation slice:
 
 Initial `0.4.1` local safety-gate experiment:
 
-- Added `+opponent-reply-local-threat-probe` as a default-off lab suffix.
+- Added `+opponent-reply-local-threat-probe` as a default-off lab suffix, then
+  promoted it as the default safety gate after focused tactical and tournament
+  evidence.
 - It still scans legal opponent replies at the root, but classifies each reply
   with local threat facts instead of running a full immediate-winning-move scan
   after every reply.
@@ -941,12 +945,12 @@ Initial `0.4.1` local safety-gate experiment:
   `search-d3+opponent-reply-local-threat-probe` had the same pass/fail pattern:
   all hard safety gates passed, with the same diagnostic misses.
 - In a 64-game Renju head-to-head at `1000 ms` CPU/move, seed `52`, opening
-  plies `4`, max moves `120`, and `8` threads, the result was score-neutral:
-  `32-0-32`. Average move time improved from `90.80 ms` to `47.63 ms`; average
-  reached depth stayed `2.90`; budget hits stayed `0.1%`.
-- This is promising cost evidence, not promotion evidence yet. The next review
-  should confirm whether the local predicate is semantically equivalent enough
-  to the current safety gate, then rerun the standard report-sized eval if kept.
+  plies `4`, max moves `120`, and `22` threads, the result was score-neutral:
+  `32-0-32`. Average move time improved from `147.93 ms` to `77.54 ms`;
+  average reached depth stayed `2.90`; budget hits improved from `0.9%` to
+  `0.4%`.
+- A d2/d3/d5 tactical sweep showed no differences in pass/fail, chosen move,
+  reached depth, or budget exhaustion between the old and new safety gates.
 
 ## Revised `0.4.1` Action Plan
 
@@ -960,10 +964,9 @@ ladder above to keep each slice honest.
    priority races, and combo probes are not collapsed into one flat pass/fail
    count.
 2. **Finish the local safety-gate decision.**
-   Confirm whether `opponent_reply_local_threat_probe` is semantically close
-   enough to `opponent_reply_search_probe` for root safety. If yes, promote it
-   as the cheaper default safety gate after a standard report-sized eval. If no,
-   keep the learning and remove the suffix.
+   Completed: `opponent_reply_local_threat_probe` is promoted as the cheaper
+   default safety gate. Keep `opponent_reply_search_probe` as an explicit lab
+   suffix for comparison and regression investigation.
 3. **Extract tactical annotation as a real pipeline stage.**
    Local threat facts should be available once per relevant move and reusable by
    safety, ordering, reports, and future forced-chain code. Do not hide scans
