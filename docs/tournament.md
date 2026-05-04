@@ -1,13 +1,21 @@
 # Tournament Eval
 
-`gomoku-eval tournament` is the bot-lab round-robin harness. It is for comparing
+`gomoku-eval tournament` is the bot-lab scheduling harness. It is for comparing
 bot configs under repeatable conditions, not for modeling the full product game
 flow or official human tournament opening rules.
 
 ## Schedule
 
-The harness receives a comma-separated bot list and runs every unordered pair.
-For each pair it creates `games-per-pair` jobs. Even values are important:
+The harness supports three pairing workflows:
+
+| Schedule | Use For | Pairing Rule |
+|----------|---------|--------------|
+| `round-robin` | Curated/reference reports and final comparison sets | Every unordered bot pair from `--bots` |
+| `head-to-head` | One focused question, such as line eval vs pattern eval | Exactly two bots from `--bots` |
+| `gauntlet` | Testing one candidate without quadratic growth | `--candidate` against each bot in `--anchors` |
+
+For each scheduled pair it creates `games-per-pair` jobs. Even values are
+important:
 
 - game `0` uses bot A as black and bot B as white
 - game `1` reuses the same opening with colors swapped
@@ -15,6 +23,15 @@ For each pair it creates `games-per-pair` jobs. Even values are important:
 
 Jobs run in parallel, then results are sorted back into deterministic match
 order before sequential Elo, pairwise records, and reports are built.
+
+Full round-robin scales quadratically:
+
+```text
+pairs = n * (n - 1) / 2
+```
+
+Use `head-to-head` or `gauntlet` while tuning. Promote only promising candidates
+into the next full round-robin/reference report.
 
 For ranking runs, prefer running from `gomoku-bot-lab/`:
 
@@ -32,6 +49,38 @@ cargo run --release -p gomoku-eval -- tournament \
   --threads 22 \
   --report-json reports/latest.json
 ```
+
+Focused head-to-head:
+
+```sh
+cargo run --release -p gomoku-eval -- tournament \
+  --schedule head-to-head \
+  --bots search-d5+tactical-first+child-cap-8,search-d5+tactical-first+child-cap-8+pattern-eval \
+  --games-per-pair 64 \
+  --opening-policy centered-suite \
+  --opening-plies 4 \
+  --search-cpu-time-ms 1000 \
+  --report-json outputs/head-to-head.json
+```
+
+Candidate gauntlet:
+
+```sh
+cargo run --release -p gomoku-eval -- tournament \
+  --schedule gauntlet \
+  --candidate search-d7+tactical-first+child-cap-8+pattern-eval \
+  --anchors search-d3+pattern-eval,search-d5+tactical-first+child-cap-8+pattern-eval,search-d7+tactical-first+child-cap-8 \
+  --games-per-pair 64 \
+  --opening-policy centered-suite \
+  --opening-plies 4 \
+  --search-cpu-time-ms 1000 \
+  --report-json outputs/gauntlet.json
+```
+
+Gauntlet ratings should be treated as working calibration, not permanent truth:
+anchor ratings come from the latest clean reference tournament, while the
+candidate estimate is useful only under the same rule, opening policy, budget,
+and code revision.
 
 ## Opening Policies
 

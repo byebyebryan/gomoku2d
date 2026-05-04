@@ -106,18 +106,22 @@ until those metrics show caching is worth the complexity.
 
 ### Eval harness
 
-`gomoku-eval` runs head-to-head series, self-play, and multi-threaded
-round-robin tournaments. Tournament games run in parallel, then results are
-folded back in deterministic match order so replay names and sequential Elo
-updates are reported consistently. CPU-time-budgeted searches can still vary
-under scheduler load, so use repeated runs or fixed-depth eval for ranking
-confidence. Eval defaults to Renju because bot rankings are easier to compare
-when first-player advantage is constrained; pass `--rule freestyle` for
-freestyle-specific product checks.
+`gomoku-eval` runs head-to-head series, self-play, and multi-threaded bot
+evaluation schedules. Full round-robin remains the release-quality coverage
+mode, but focused tuning should usually start with `head-to-head` or `gauntlet`
+so new knobs do not explode into every possible pairing. Tournament games run in
+parallel, then results are folded back in deterministic match order so replay
+names and sequential Elo updates are reported consistently. CPU-time-budgeted
+searches can still vary under scheduler load, so use repeated runs or
+fixed-depth eval for ranking confidence. Eval defaults to Renju because bot
+rankings are easier to compare when first-player advantage is constrained; pass
+`--rule freestyle` for freestyle-specific product checks.
 
 ```sh
 mkdir -p outputs
 cargo run --release -p gomoku-eval -- tournament --bots search-d2,search-d3,search-d5 --games-per-pair 10 --opening-policy centered-suite --opening-plies 4 --search-cpu-time-ms 100 --max-game-ms 10000 --seed 42 --report-json outputs/gomoku-tournament.json
+cargo run --release -p gomoku-eval -- tournament --schedule head-to-head --bots search-d5+tactical-first+child-cap-8,search-d5+tactical-first+child-cap-8+pattern-eval --games-per-pair 64 --opening-policy centered-suite --opening-plies 4 --search-cpu-time-ms 1000 --report-json outputs/head-to-head.json
+cargo run --release -p gomoku-eval -- tournament --schedule gauntlet --candidate search-d7+tactical-first+child-cap-8+pattern-eval --anchors search-d3+pattern-eval,search-d5+tactical-first+child-cap-8+pattern-eval,search-d7+tactical-first+child-cap-8 --games-per-pair 64 --opening-policy centered-suite --opening-plies 4 --search-cpu-time-ms 1000 --report-json outputs/gauntlet.json
 cargo run --release -p gomoku-eval -- report-html --input outputs/gomoku-tournament.json --output outputs/gomoku-tournament.html --json-href gomoku-tournament.json
 ```
 
@@ -134,6 +138,10 @@ Useful eval flags:
 
 | Flag | Description |
 |------|-------------|
+| `--schedule` | Tournament pairing workflow: `round-robin` by default, `head-to-head`, or `gauntlet` |
+| `--bots` | Bot list for `round-robin`; exactly two bots for `head-to-head` |
+| `--candidate` | Candidate bot for `gauntlet` |
+| `--anchors` | Comma-separated anchor bots for `gauntlet` |
 | `--rule` | Rule variant: `renju` by default, or `freestyle` |
 | `--search-time-ms` | Applies a per-move budget to search bots, including lab aliases |
 | `--search-cpu-time-ms` | Applies a Linux thread CPU-time budget to search bots |
