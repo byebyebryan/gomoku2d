@@ -316,6 +316,21 @@ pub struct SearchMetrics {
     pub tactical_annotations: u64,
     pub root_tactical_annotations: u64,
     pub search_tactical_annotations: u64,
+    pub child_cap_hits: u64,
+    pub root_child_cap_hits: u64,
+    pub search_child_cap_hits: u64,
+    pub child_moves_before_total: u64,
+    pub root_child_moves_before_total: u64,
+    pub search_child_moves_before_total: u64,
+    pub child_moves_before_max: u64,
+    pub root_child_moves_before_max: u64,
+    pub search_child_moves_before_max: u64,
+    pub child_moves_after_total: u64,
+    pub root_child_moves_after_total: u64,
+    pub search_child_moves_after_total: u64,
+    pub child_moves_after_max: u64,
+    pub root_child_moves_after_max: u64,
+    pub search_child_moves_after_max: u64,
     pub tt_hits: u64,
     pub tt_cutoffs: u64,
     pub beta_cutoffs: u64,
@@ -380,6 +395,40 @@ impl SearchMetrics {
         }
     }
 
+    fn record_child_limit(&mut self, before: usize, after: usize, phase: SearchMetricPhase) {
+        let before = before as u64;
+        let after = after as u64;
+
+        self.child_moves_before_total += before;
+        self.child_moves_before_max = self.child_moves_before_max.max(before);
+        self.child_moves_after_total += after;
+        self.child_moves_after_max = self.child_moves_after_max.max(after);
+        if after < before {
+            self.child_cap_hits += 1;
+        }
+
+        match phase {
+            SearchMetricPhase::Root => {
+                self.root_child_moves_before_total += before;
+                self.root_child_moves_before_max = self.root_child_moves_before_max.max(before);
+                self.root_child_moves_after_total += after;
+                self.root_child_moves_after_max = self.root_child_moves_after_max.max(after);
+                if after < before {
+                    self.root_child_cap_hits += 1;
+                }
+            }
+            SearchMetricPhase::Search => {
+                self.search_child_moves_before_total += before;
+                self.search_child_moves_before_max = self.search_child_moves_before_max.max(before);
+                self.search_child_moves_after_total += after;
+                self.search_child_moves_after_max = self.search_child_moves_after_max.max(after);
+                if after < before {
+                    self.search_child_cap_hits += 1;
+                }
+            }
+        }
+    }
+
     fn trace(self) -> serde_json::Value {
         serde_json::json!({
             "eval_calls": self.eval_calls,
@@ -401,6 +450,21 @@ impl SearchMetrics {
             "tactical_annotations": self.tactical_annotations,
             "root_tactical_annotations": self.root_tactical_annotations,
             "search_tactical_annotations": self.search_tactical_annotations,
+            "child_cap_hits": self.child_cap_hits,
+            "root_child_cap_hits": self.root_child_cap_hits,
+            "search_child_cap_hits": self.search_child_cap_hits,
+            "child_moves_before_total": self.child_moves_before_total,
+            "root_child_moves_before_total": self.root_child_moves_before_total,
+            "search_child_moves_before_total": self.search_child_moves_before_total,
+            "child_moves_before_max": self.child_moves_before_max,
+            "root_child_moves_before_max": self.root_child_moves_before_max,
+            "search_child_moves_before_max": self.search_child_moves_before_max,
+            "child_moves_after_total": self.child_moves_after_total,
+            "root_child_moves_after_total": self.root_child_moves_after_total,
+            "search_child_moves_after_total": self.search_child_moves_after_total,
+            "child_moves_after_max": self.child_moves_after_max,
+            "root_child_moves_after_max": self.root_child_moves_after_max,
+            "search_child_moves_after_max": self.search_child_moves_after_max,
             "tt_hits": self.tt_hits,
             "tt_cutoffs": self.tt_cutoffs,
             "beta_cutoffs": self.beta_cutoffs,
@@ -1525,18 +1589,121 @@ fn opponent_reply_local_threat_probe_root_candidates(
     }
 }
 
-fn order_moves(moves: Vec<Move>, move_ordering: MoveOrdering, tt_move: Option<Move>) -> Vec<Move> {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct OrderedMove {
+    mv: Move,
+    must_keep: bool,
+}
+
+fn order_moves(
+    board: &Board,
+    moves: Vec<Move>,
+    move_ordering: MoveOrdering,
+    tt_move: Option<Move>,
+    metrics: &mut SearchMetrics,
+    phase: SearchMetricPhase,
+) -> Vec<OrderedMove> {
     match move_ordering {
         MoveOrdering::TranspositionFirstBoardOrder => {
             if let Some(tm) = tt_move.filter(|tm| moves.contains(tm)) {
                 std::iter::once(tm)
                     .chain(moves.into_iter().filter(|&m| m != tm))
+                    .map(|mv| OrderedMove {
+                        mv,
+                        must_keep: false,
+                    })
                     .collect()
             } else {
                 moves
+                    .into_iter()
+                    .map(|mv| OrderedMove {
+                        mv,
+                        must_keep: false,
+                    })
+                    .collect()
             }
         }
+        MoveOrdering::TacticalFirst => {
+            order_moves_tactical_first(board, moves, tt_move, metrics, phase)
+        }
     }
+}
+
+fn order_moves_tactical_first(
+    board: &Board,
+    moves: Vec<Move>,
+    tt_move: Option<Move>,
+    metrics: &mut SearchMetrics,
+    phase: SearchMetricPhase,
+) -> Vec<OrderedMove> {
+    let opponent_wins = board.immediate_winning_moves_for(board.current_player.opponent());
+    let mut scored = moves
+        .into_iter()
+        .enumerate()
+        .map(|(index, mv)| {
+            let annotation = annotate_legal_tactical_move_counted(board, mv, metrics, phase);
+            let (score, must_keep) =
+                tactical_ordering_score(&annotation, opponent_wins.contains(&mv));
+            (index, mv, score, must_keep, Some(mv) == tt_move)
+        })
+        .collect::<Vec<_>>();
+
+    scored.sort_by(|a, b| {
+        b.2.cmp(&a.2)
+            .then_with(|| b.4.cmp(&a.4))
+            .then_with(|| a.0.cmp(&b.0))
+    });
+    scored
+        .into_iter()
+        .map(|(_, mv, _, must_keep, _)| OrderedMove { mv, must_keep })
+        .collect()
+}
+
+fn tactical_ordering_score(
+    annotation: &TacticalMoveAnnotation,
+    immediate_block: bool,
+) -> (i32, bool) {
+    let mut score = if immediate_block { 90_000 } else { 0 };
+    let mut must_keep = immediate_block;
+    for fact in annotation.local_threats.iter() {
+        let fact_score = match fact.kind {
+            LocalThreatKind::Five => 100_000,
+            LocalThreatKind::OpenFour => 80_000,
+            LocalThreatKind::ClosedFour | LocalThreatKind::BrokenFour => 70_000,
+            LocalThreatKind::OpenThree => 50_000,
+            LocalThreatKind::ClosedThree | LocalThreatKind::BrokenThree => 10_000,
+        };
+        score = score.max(fact_score);
+        must_keep |= fact.is_forcing();
+    }
+
+    (score, must_keep)
+}
+
+fn apply_child_limit(
+    ordered: Vec<OrderedMove>,
+    child_limit: Option<usize>,
+    metrics: &mut SearchMetrics,
+    phase: SearchMetricPhase,
+) -> Vec<Move> {
+    let Some(limit) = child_limit else {
+        return ordered.into_iter().map(|ordered| ordered.mv).collect();
+    };
+    let limit = limit.max(1);
+    let before = ordered.len();
+    let moves = ordered
+        .into_iter()
+        .enumerate()
+        .filter_map(|(index, ordered)| {
+            if index < limit || ordered.must_keep {
+                Some(ordered.mv)
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<_>>();
+    metrics.record_child_limit(before, moves.len(), phase);
+    moves
 }
 
 // --- Negamax with alpha-beta (incremental Zobrist hash) ---
@@ -1555,6 +1722,7 @@ fn negamax(
     candidate_source: CandidateSource,
     legality_gate: LegalityGate,
     move_ordering: MoveOrdering,
+    child_limit: Option<usize>,
     nodes: &mut u64,
     metrics: &mut SearchMetrics,
     deadline: SearchDeadline,
@@ -1603,12 +1771,21 @@ fn negamax(
         );
     }
 
-    let moves = candidate_moves_from_source_counted(
+    let mut moves = candidate_moves_from_source_counted(
         board,
         candidate_source,
         metrics,
         SearchMetricPhase::Search,
     );
+    let mut needs_legality_check = needs_legality_gate(board, color, legality_gate);
+    if (move_ordering == MoveOrdering::TacticalFirst || child_limit.is_some())
+        && needs_legality_check
+    {
+        moves.retain(|&mv| {
+            legal_by_gate_counted(board, mv, legality_gate, metrics, SearchMetricPhase::Search)
+        });
+        needs_legality_check = false;
+    }
     if moves.is_empty() {
         let sign = if color == root_color { 1 } else { -1 };
         return (
@@ -1623,9 +1800,16 @@ fn negamax(
     let mut best_move: Option<Move> = None;
 
     let tt_move = tt.get(&hash).and_then(|e| e.best_move);
-    let ordered = order_moves(moves, move_ordering, tt_move);
+    let ordered = order_moves(
+        board,
+        moves,
+        move_ordering,
+        tt_move,
+        metrics,
+        SearchMetricPhase::Search,
+    );
+    let ordered = apply_child_limit(ordered, child_limit, metrics, SearchMetricPhase::Search);
 
-    let needs_legality_check = needs_legality_gate(board, color, legality_gate);
     let mut timed_out = false;
     for mv in ordered {
         if deadline.expired() {
@@ -1653,6 +1837,7 @@ fn negamax(
             candidate_source,
             legality_gate,
             move_ordering,
+            child_limit,
             nodes,
             metrics,
             deadline,
@@ -1724,6 +1909,7 @@ fn search_root(
     candidate_source: CandidateSource,
     legality_gate: LegalityGate,
     move_ordering: MoveOrdering,
+    child_limit: Option<usize>,
     nodes: &mut u64,
     metrics: &mut SearchMetrics,
     deadline: SearchDeadline,
@@ -1740,7 +1926,18 @@ fn search_root(
     let mut best_move: Option<Move> = None;
 
     let tt_move = tt.get(&hash).and_then(|entry| entry.best_move);
-    let ordered = order_moves(root_moves.to_vec(), move_ordering, tt_move);
+    let ordered = order_moves(
+        board,
+        root_moves.to_vec(),
+        move_ordering,
+        tt_move,
+        metrics,
+        SearchMetricPhase::Root,
+    );
+    let ordered = ordered
+        .into_iter()
+        .map(|ordered| ordered.mv)
+        .collect::<Vec<_>>();
 
     let mut timed_out = false;
     for mv in ordered {
@@ -1764,6 +1961,7 @@ fn search_root(
             candidate_source,
             legality_gate,
             move_ordering,
+            child_limit,
             nodes,
             metrics,
             deadline,
@@ -1872,12 +2070,14 @@ impl SafetyGate {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MoveOrdering {
     TranspositionFirstBoardOrder,
+    TacticalFirst,
 }
 
 impl MoveOrdering {
     const fn name(self) -> &'static str {
         match self {
             MoveOrdering::TranspositionFirstBoardOrder => "tt_first_board_order",
+            MoveOrdering::TacticalFirst => "tactical_first",
         }
     }
 }
@@ -1916,6 +2116,7 @@ pub struct SearchBotConfig {
     pub candidate_radius: usize,
     pub safety_gate: SafetyGate,
     pub move_ordering: MoveOrdering,
+    pub child_limit: Option<usize>,
     pub search_algorithm: SearchAlgorithm,
     pub static_eval: StaticEvaluation,
 }
@@ -1929,6 +2130,7 @@ impl SearchBotConfig {
             candidate_radius: 2,
             safety_gate: SafetyGate::OpponentReplyLocalThreatProbe,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
+            child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
         }
@@ -1942,6 +2144,7 @@ impl SearchBotConfig {
             candidate_radius: 2,
             safety_gate: SafetyGate::OpponentReplyLocalThreatProbe,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
+            child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
         }
@@ -1955,6 +2158,7 @@ impl SearchBotConfig {
             candidate_radius: 2,
             safety_gate: SafetyGate::OpponentReplyLocalThreatProbe,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
+            child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
         }
@@ -1992,6 +2196,7 @@ impl SearchBotConfig {
             "legality_gate": self.legality_gate().name(),
             "safety_gate": self.safety_gate().name(),
             "move_ordering": self.move_ordering.name(),
+            "child_limit": self.child_limit,
             "search_algorithm": self.search_algorithm.name(),
             "static_eval": self.static_eval.name(),
         })
@@ -2128,6 +2333,7 @@ impl Bot for SearchBot {
                 candidate_source,
                 legality_gate,
                 move_ordering,
+                self.config.child_limit,
                 &mut nodes,
                 &mut metrics,
                 deadline,
@@ -2476,6 +2682,126 @@ mod tests {
     }
 
     #[test]
+    fn tactical_ordering_prioritizes_win_block_forcing_then_quiet_moves() {
+        let mut win_board = Board::new(RuleConfig::default());
+        apply_moves(
+            &mut win_board,
+            &["H8", "A1", "I8", "B1", "J8", "C1", "K8", "D1"],
+        );
+        let mut metrics = SearchMetrics::default();
+        let ordered = order_moves(
+            &win_board,
+            vec![mv("B2"), mv("E1"), mv("L8")],
+            MoveOrdering::TacticalFirst,
+            None,
+            &mut metrics,
+            SearchMetricPhase::Root,
+        );
+
+        assert_eq!(
+            ordered.iter().map(|ordered| ordered.mv).collect::<Vec<_>>(),
+            vec![mv("L8"), mv("E1"), mv("B2")]
+        );
+        assert_eq!(metrics.root_tactical_annotations, 3);
+
+        let mut shape_board = Board::new(RuleConfig::default());
+        apply_moves(
+            &mut shape_board,
+            &["H8", "A1", "I8", "B1", "J8", "C1", "O15", "D1"],
+        );
+        let mut metrics = SearchMetrics::default();
+        let ordered = order_moves(
+            &shape_board,
+            vec![mv("B2"), mv("K8"), mv("E1")],
+            MoveOrdering::TacticalFirst,
+            None,
+            &mut metrics,
+            SearchMetricPhase::Search,
+        );
+
+        assert_eq!(
+            ordered.iter().map(|ordered| ordered.mv).collect::<Vec<_>>(),
+            vec![mv("E1"), mv("K8"), mv("B2")]
+        );
+        assert_eq!(metrics.search_tactical_annotations, 3);
+    }
+
+    #[test]
+    fn child_limit_preserves_must_keep_moves_after_nominal_cap() {
+        let ordered = vec![
+            OrderedMove {
+                mv: mv("B2"),
+                must_keep: false,
+            },
+            OrderedMove {
+                mv: mv("C3"),
+                must_keep: false,
+            },
+            OrderedMove {
+                mv: mv("L8"),
+                must_keep: true,
+            },
+        ];
+        let mut metrics = SearchMetrics::default();
+
+        let capped = apply_child_limit(ordered, Some(1), &mut metrics, SearchMetricPhase::Search);
+
+        assert_eq!(capped, vec![mv("B2"), mv("L8")]);
+        assert_eq!(metrics.search_child_cap_hits, 1);
+        assert_eq!(metrics.search_child_moves_before_total, 3);
+        assert_eq!(metrics.search_child_moves_after_total, 2);
+    }
+
+    #[test]
+    fn child_limit_filters_renju_legality_before_capping_default_ordering() {
+        let mut board = Board::new(RuleConfig {
+            variant: Variant::Renju,
+            ..Default::default()
+        });
+        apply_moves(
+            &mut board,
+            &[
+                "A1", "A15", "C1", "C15", "D1", "E15", "E1", "G15", "F1", "I15",
+            ],
+        );
+        assert_eq!(board.current_player, Color::Black);
+        assert!(!board.is_legal(mv("B1")));
+        assert_eq!(candidate_moves(&board, 2).first().copied(), Some(mv("B1")));
+
+        let zobrist = ZobristTable::new(board.config.board_size);
+        let hash = board.hash_with(&zobrist);
+        let mut tt = HashMap::new();
+        let mut nodes = 0;
+        let mut metrics = SearchMetrics::default();
+        let deadline = SearchDeadline::new(Instant::now(), None, None, None);
+
+        let (_, best_move, _) = negamax(
+            &mut board,
+            hash,
+            1,
+            i32::MIN + 1,
+            i32::MAX,
+            Color::Black,
+            Color::Black,
+            &mut tt,
+            &zobrist,
+            CandidateSource::NearAll { radius: 2 },
+            LegalityGate::ExactRules,
+            MoveOrdering::TranspositionFirstBoardOrder,
+            Some(1),
+            &mut nodes,
+            &mut metrics,
+            deadline,
+        );
+
+        let best_move = best_move.expect("legal moves after the illegal first candidate");
+        assert!(board.is_legal(best_move));
+        assert_ne!(best_move, mv("B1"));
+        assert_eq!(metrics.search_child_cap_hits, 1);
+        assert!(metrics.search_legality_checks > 1);
+    }
+
+    #[test]
     fn explicit_config_constructors_preserve_legacy_defaults() {
         let baseline = SearchBotConfig::custom_depth(3);
         assert_eq!(SearchBot::new(3).config(), baseline);
@@ -2509,6 +2835,7 @@ mod tests {
             candidate_radius: 3,
             safety_gate: SafetyGate::None,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
+            child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
         };
@@ -2554,6 +2881,7 @@ mod tests {
             "opponent_reply_local_threat_probe"
         );
         assert_eq!(trace["config"]["move_ordering"], "tt_first_board_order");
+        assert_eq!(trace["config"]["child_limit"], serde_json::Value::Null);
         assert_eq!(trace["config"]["search_algorithm"], "alpha_beta_id");
         assert_eq!(trace["config"]["static_eval"], "line_shape_eval");
         assert!(trace["nodes"].as_u64().unwrap() > 0);
@@ -2599,6 +2927,56 @@ mod tests {
     }
 
     #[test]
+    fn trace_records_tactical_ordering_metrics() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(
+            &mut board,
+            &["H8", "A1", "I8", "B1", "J8", "C1", "O15", "D1"],
+        );
+        let mut config = SearchBotConfig::custom_depth(2);
+        config.safety_gate = SafetyGate::None;
+        config.move_ordering = MoveOrdering::TacticalFirst;
+        let mut bot = SearchBot::with_config(config);
+
+        let _ = bot.choose_move(&board);
+        let trace = bot.trace().expect("expected search trace");
+        let metrics = &trace["metrics"];
+
+        assert_eq!(trace["config"]["move_ordering"], "tactical_first");
+        assert!(metrics["root_tactical_annotations"].as_u64().unwrap() > 0);
+        assert!(metrics["search_tactical_annotations"].as_u64().unwrap() > 0);
+    }
+
+    #[test]
+    fn trace_records_child_limit_metrics() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(
+            &mut board,
+            &["H8", "A1", "I8", "B1", "J8", "C1", "O15", "D1"],
+        );
+        let mut config = SearchBotConfig::custom_depth(2);
+        config.safety_gate = SafetyGate::None;
+        config.move_ordering = MoveOrdering::TacticalFirst;
+        config.child_limit = Some(4);
+        let mut bot = SearchBot::with_config(config);
+
+        let _ = bot.choose_move(&board);
+        let trace = bot.trace().expect("expected search trace");
+        let metrics = &trace["metrics"];
+
+        assert_eq!(trace["config"]["child_limit"], 4);
+        assert!(metrics["child_cap_hits"].as_u64().unwrap() > 0);
+        assert_eq!(metrics["root_child_cap_hits"], 0);
+        assert_eq!(metrics["root_child_moves_before_total"], 0);
+        assert_eq!(metrics["root_child_moves_after_total"], 0);
+        assert!(metrics["search_child_cap_hits"].as_u64().unwrap() > 0);
+        assert!(
+            metrics["search_child_moves_before_total"].as_u64().unwrap()
+                > metrics["search_child_moves_after_total"].as_u64().unwrap()
+        );
+    }
+
+    #[test]
     fn root_legality_filter_does_not_count_as_search_work() {
         let mut board = Board::new(RuleConfig {
             variant: Variant::Renju,
@@ -2613,6 +2991,7 @@ mod tests {
             candidate_radius: 2,
             safety_gate: SafetyGate::None,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
+            child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
         };

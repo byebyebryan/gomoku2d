@@ -898,8 +898,13 @@ Stage definitions:
   instead of running a full immediate-winning-move scan after every reply. The
   older `opponent_reply_search_probe` remains available for comparison. Neither
   should be treated as the baseline candidate selector.
-- **Move ordering** should consume tactical facts to improve alpha-beta pruning
-  without changing the legal candidate set.
+- **Move ordering** consumes tactical facts in the lab-only `tactical_first`
+  mode to improve alpha-beta pruning without changing the legal candidate set.
+- **Child frontier cap** is a lab-only post-ordering limit on how many non-root
+  children alpha-beta searches. It does not change candidate discovery radius,
+  and it does not cap root move choice after the root safety gate. In
+  `tactical_first` mode, forcing tactical moves are kept even when they fall
+  beyond the nominal cap.
 
 Current SearchBot profile:
 
@@ -909,7 +914,8 @@ Current SearchBot profile:
 | Legality gate | `exact_rules` | Calls the rules engine; Renju black uses exact forbidden checks |
 | Tactical annotator | `local_threat_annotation` | Scan-based move annotation for local threat facts; trace metrics split root/search annotation work |
 | Safety gate | `opponent_reply_local_threat_probe` | Explicit `SafetyGate` config chooses `none`, `opponent_reply_search_probe`, or `opponent_reply_local_threat_probe` |
-| Move ordering | `tt_first_board_order` | Transposition-table move first, then stable generated order; no tactical ordering yet |
+| Move ordering | `tt_first_board_order` default, `tactical_first` lab-only | Default keeps transposition-table move first, then stable generated order; lab mode ranks immediate wins, blocks, and local forcing shapes first |
+| Child frontier | no cap default, `child_cap_N` lab-only | Optional non-root cap after ordering; root stays uncapped, and tactical ordering preserves must-keep tactical moves |
 | Search | `alpha_beta_id` | Alpha-beta with iterative deepening and transposition table |
 | Static eval | `line_shape_eval` | Scores open and half-open line runs |
 
@@ -917,17 +923,19 @@ Implication for the next implementation slice:
 
 - Keep splitting the code and metrics around these stages so ablations isolate
   one dimension at a time. Candidate source, legality gate, and safety gate are
-  now explicit code stages. Move ordering is explicit but still intentionally
-  simple. Tactical annotation is now explicit enough for the safety gate and can
-  be reused by ordering/reporting without hiding scans inside eval leaves.
+  now explicit code stages. Tactical annotation is explicit enough for the
+  safety gate and can be reused by ordering/reporting without hiding scans
+  inside eval leaves. Move ordering now has a default-off tactical lab mode for
+  evaluation, and child frontier capping is available as the next breadth-vs-
+  depth experiment without changing candidate radius.
 - Keep the older product behavior available as `near_all_r2 + exact_rules +
   opponent_reply_search_probe`, but default to the cheaper local-threat safety
   gate after promotion.
 - Add clean lab specs for each stage rather than using one bundled root-stage
   switch as the baseline. The current implemented suffixes are `+near-all-r1`,
   `+near-all-r2`, `+near-all-r3`, `+no-safety`,
-  `+opponent-reply-search-probe`, and
-  `+opponent-reply-local-threat-probe`.
+  `+opponent-reply-search-probe`,
+  `+opponent-reply-local-threat-probe`, `+tactical-first`, and `+child-cap-N`.
 - Optimize Renju legality by exact-checking only black candidates within `r2` of
   black stones, regardless of whether search candidate selection uses `r1`,
   `r2`, or `r3`.
@@ -974,21 +982,59 @@ ladder above to keep each slice honest.
    inside eval leaves. Keep the API cache-friendly: explicit inputs, stable fact
    structs, clear candidate/reply ownership, and metrics for annotation work.
 4. **Try ordering before eval.**
-   Use local facts to rank forcing gains, immediate completions, and priority
-   moves ahead of quiet candidates. Promotion requires better reached depth or
-   tournament score, not only prettier tactical-scenario results.
-5. **Prototype bounded forced-chain search as lab-only.**
+   In progress: `+tactical-first` uses local facts to rank immediate
+   completions, forced blocks, and forcing shapes ahead of quiet candidates.
+   Promotion still requires better reached depth or tournament score, not only
+   prettier tactical-scenario results.
+   Initial evidence is mixed but worth continuing: a focused D3 tactical sweep
+   kept all hard safety cases green and improved one diagnostic case
+   (`local_create_broken_four`), but added annotation time. A 16-game D3 Renju
+   head-to-head was score-neutral (`8-0-8`) with fewer alpha-beta nodes but
+   slightly slower moves. An 8-game D5 Renju smoke was positive (`5-0-3`) with
+   far fewer alpha-beta nodes, but high budget pressure means this is not yet
+   promotion evidence.
+5. **Try ordered child frontier caps before forced-chain search.**
+   In progress: `+child-cap-N` keeps candidate radius fixed but limits the
+   ordered non-root frontier that alpha-beta searches after move ordering. Root
+   remains uncapped after safety filtering. This tests whether tactical ordering
+   can provide useful deeper-node coverage with fewer searched children and
+   better effective depth. Promotion requires tactical safety staying green plus
+   better reached depth, runtime, or tournament score under the same CPU budget.
+   Initial evidence before the root/child split: child caps without tactical
+   ordering were reckless (`search-d5+child-cap-12` went `0-1-47` in a 4-bot
+   focused tournament). That negative-control result also predates the later
+   legality-before-cap cleanup, so rerun it before treating it as current
+   evidence. Tactical ordering carried the cap:
+   `search-d5+tactical-first+child-cap-8` matched uncapped D5's `12/16`
+   tactical-scenario pass count while cutting average scenario time from about
+   `472 ms` to `14 ms`, and all hard safety cases stayed green.
+   After correcting the implementation so root stays uncapped and only non-root
+   children are limited, the breadth-for-depth hypothesis became stronger. In a
+   64-games-per-pair Renju tournament, `search-d5+tactical-first+child-cap-8`
+   beat uncapped `search-d3` by `47-1-16`; `search-d7+tactical-first+child-cap-8`
+   beat uncapped `search-d3` by `48-0-16`; and D7 cap8 beat D5 cap8 by
+   `38-1-25`. A direct same-depth D5 head-to-head was the strongest evidence:
+   `search-d5+tactical-first+child-cap-8` beat uncapped `search-d5` by
+   `44-1-19`, while averaging about `13k` nodes and `304 ms` per move versus
+   uncapped D5's about `309k` nodes and `797 ms` per move under the same
+   `1000 ms` CPU budget. A follow-up four-bot run tried
+   `search-d9+tactical-first+child-cap-4`: it beat D3 by `43-0-21` and D5 cap8
+   by `38-0-26`, but lost to D7 cap8 by `26-1-37`. It reached deeper on average
+   than D7 cap8 but likely cut too much breadth. Treat child caps as a promising
+   depth/difficulty lab axis, with the next question being whether cap size or
+   depth can compete with uncapped D5 under the same CPU budget.
+6. **Prototype bounded forced-chain search as lab-only.**
    Start at root or near-root, only when local facts provide concrete gain and
    defense squares. Keep strict caps and record all non-alpha-beta work in
    traces. This is the first slice that can meaningfully support future
    offensive/defensive styles.
-6. **Defer full incremental frontier state until metrics justify it.**
+7. **Defer full incremental frontier state until metrics justify it.**
    A `SearchPosition` / `FrontierState` wrapper can maintain candidate masks,
    tactical annotations, and dirty cells around apply/undo, but only after the
    scan-based annotation semantics are stable. Run this as a scan-vs-frontier
    performance experiment if annotation or candidate regeneration remains a hot
    cost after ordering/staging work.
-7. **Defer full TSS and product bot personalities.**
+8. **Defer full TSS and product bot personalities.**
    If the prototype needs dependency trees, all-defenses proof, or rest-square
    conflict resolution to be correct, split it into analysis tooling instead of
    forcing it into `SearchBot`.

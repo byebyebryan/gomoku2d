@@ -15,6 +15,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             candidate_radius: 2,
             safety_gate: SafetyGate::OpponentReplyLocalThreatProbe,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
+            child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
         },
@@ -28,6 +29,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             candidate_radius: 2,
             safety_gate: SafetyGate::OpponentReplyLocalThreatProbe,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
+            child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
         },
@@ -41,6 +43,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             candidate_radius: 2,
             safety_gate: SafetyGate::OpponentReplyLocalThreatProbe,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
+            child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
         },
@@ -72,6 +75,15 @@ pub fn search_config_from_lab_spec(
 }
 
 fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchBotConfig> {
+    if let Some(limit) = suffix.strip_prefix("child-cap-") {
+        let limit = limit.parse::<usize>().ok()?;
+        if limit == 0 {
+            return None;
+        }
+        config.child_limit = Some(limit);
+        return Some(config);
+    }
+
     match suffix {
         "near-all-r1" => {
             config.candidate_radius = 1;
@@ -95,6 +107,10 @@ fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchB
         }
         "opponent-reply-local-threat-probe" => {
             config.safety_gate = SafetyGate::OpponentReplyLocalThreatProbe;
+            Some(config)
+        }
+        "tactical-first" => {
+            config.move_ordering = MoveOrdering::TacticalFirst;
             Some(config)
         }
         _ => None,
@@ -231,6 +247,31 @@ mod tests {
         assert_eq!(
             config.safety_gate,
             super::SafetyGate::OpponentReplyLocalThreatProbe
+        );
+    }
+
+    #[test]
+    fn parses_tactical_move_ordering_suffix() {
+        let config = super::search_config_from_lab_spec("search-d3+tactical-first", 5, None, None)
+            .expect("expected tactical ordering spec to parse");
+
+        assert_eq!(config.move_ordering, super::MoveOrdering::TacticalFirst);
+    }
+
+    #[test]
+    fn parses_child_cap_suffix() {
+        let config = super::search_config_from_lab_spec(
+            "search-d5+tactical-first+child-cap-12",
+            3,
+            None,
+            None,
+        )
+        .expect("expected child cap spec to parse");
+
+        assert_eq!(config.child_limit, Some(12));
+        assert_eq!(config.move_ordering, super::MoveOrdering::TacticalFirst);
+        assert!(
+            super::search_config_from_lab_spec("search-d5+child-cap-0", 3, None, None).is_none()
         );
     }
 
