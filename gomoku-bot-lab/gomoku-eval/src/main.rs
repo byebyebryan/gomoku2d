@@ -295,7 +295,7 @@ fn print_tactical_scenario_result(result: &TacticalScenarioResult) {
     };
     let shape = result.shape.unwrap_or("-");
     println!(
-        "{:<5} {:<10} {:<16} {:<8} {:<13} {:<12} {:?}/{:?} {:<48} actual {:<3} expect {:<7} depth {:>2} nodes {:>8} safety {:>5} eval {:>7} cand r/s {:>5}/{:<5} legal r/s {:>6}/{:<6} tt {:>5}/{:<5} cut {:>5} time {:>4}ms",
+        "{:<5} {:<10} {:<16} {:<8} {:<13} {:<12} {:?}/{:?} {:<48} actual {:<3} expect {:<7} depth {:>2} nodes {:>8} safety {:>5} eval {:>7} cand r/s {:>5}/{:<5} child {:>5}->{:<5} cap {:>4} legal r/s {:>6}/{:<6} tt {:>5}/{:<5} cut {:>5} time {:>4}ms",
         status,
         result.config_id,
         result.role,
@@ -313,6 +313,9 @@ fn print_tactical_scenario_result(result: &TacticalScenarioResult) {
         result.metrics.eval_calls,
         result.metrics.root_candidate_generations,
         result.metrics.search_candidate_generations,
+        result.metrics.child_moves_before_total,
+        result.metrics.child_moves_after_total,
+        result.metrics.child_cap_hits,
         result.metrics.root_legality_checks,
         result.metrics.search_legality_checks,
         result.metrics.tt_hits,

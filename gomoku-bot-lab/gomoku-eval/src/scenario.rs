@@ -344,6 +344,15 @@ pub struct ScenarioSearchMetrics {
     pub root_illegal_moves_skipped: u64,
     pub search_legality_checks: u64,
     pub search_illegal_moves_skipped: u64,
+    pub child_cap_hits: u64,
+    pub root_child_cap_hits: u64,
+    pub search_child_cap_hits: u64,
+    pub child_moves_before_total: u64,
+    pub root_child_moves_before_total: u64,
+    pub search_child_moves_before_total: u64,
+    pub child_moves_after_total: u64,
+    pub root_child_moves_after_total: u64,
+    pub search_child_moves_after_total: u64,
     pub tt_hits: u64,
     pub tt_cutoffs: u64,
     pub beta_cutoffs: u64,
@@ -470,6 +479,15 @@ pub fn run_tactical_case(
             root_illegal_moves_skipped: info.metrics.root_illegal_moves_skipped,
             search_legality_checks: info.metrics.search_legality_checks,
             search_illegal_moves_skipped: info.metrics.search_illegal_moves_skipped,
+            child_cap_hits: info.metrics.child_cap_hits,
+            root_child_cap_hits: info.metrics.root_child_cap_hits,
+            search_child_cap_hits: info.metrics.search_child_cap_hits,
+            child_moves_before_total: info.metrics.child_moves_before_total,
+            root_child_moves_before_total: info.metrics.root_child_moves_before_total,
+            search_child_moves_before_total: info.metrics.search_child_moves_before_total,
+            child_moves_after_total: info.metrics.child_moves_after_total,
+            root_child_moves_after_total: info.metrics.root_child_moves_after_total,
+            search_child_moves_after_total: info.metrics.search_child_moves_after_total,
             tt_hits: info.metrics.tt_hits,
             tt_cutoffs: info.metrics.tt_cutoffs,
             beta_cutoffs: info.metrics.beta_cutoffs,
@@ -620,6 +638,25 @@ mod tests {
             result.metrics.legality_checks,
             result.metrics.root_legality_checks + result.metrics.search_legality_checks
         );
+    }
+
+    #[test]
+    fn tactical_case_result_records_child_cap_metrics() {
+        let case = TACTICAL_SCENARIO_CASES
+            .iter()
+            .find(|case| case.id == "local_create_open_four")
+            .expect("expected tactical case");
+        let mut config = SearchBotConfig::custom_depth(2);
+        config.child_limit = Some(4);
+
+        let result = run_tactical_case(case, "search-d2+child-cap-4", config);
+
+        assert!(result.metrics.child_cap_hits > 0);
+        assert_eq!(
+            result.metrics.child_cap_hits,
+            result.metrics.root_child_cap_hits + result.metrics.search_child_cap_hits
+        );
+        assert!(result.metrics.child_moves_before_total > result.metrics.child_moves_after_total);
     }
 
     #[test]

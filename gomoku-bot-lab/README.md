@@ -74,7 +74,13 @@ source radius. Append `+no-safety` to disable the root safety gate. For example,
 candidate source and no root safety gate. Append `+opponent-reply-search-probe`
 to compare against the older search-like safety gate in combined specs. Append
 `+opponent-reply-local-threat-probe` to explicitly select the current default
-local-threat safety gate. These are diagnostic switches, not product presets.
+local-threat safety gate. Append `+tactical-first` to try local-threat move
+ordering before alpha-beta search. Append `+child-cap-N` to cap the ordered
+non-root child frontier after candidate generation, legality filtering, and move
+ordering, for example `search-d5+tactical-first+child-cap-12`. Root still
+considers every legal/safe candidate; candidate radius controls discovery, while
+child cap controls how many ordered non-root children alpha-beta searches. These
+are diagnostic switches, not product presets.
 
 Legacy specs still work: plain `baseline` uses `--depth`, `baseline-N` creates a
 custom fixed-depth baseline bot, and `--time-ms` can cap search bots during CLI
@@ -92,9 +98,11 @@ first, casual combo play next, then bounded forced-chain search before any
 product-facing offensive/defensive bot personalities. Tactical facts are meant
 to buy effective depth through safer narrowing, ordering, and selective
 extension, not to replace alpha-beta search with broad shape scoring. The
-current tactical annotation stage is scan-based and records its own trace
-metrics; a full incremental frontier/threat-state model is intentionally
-deferred until those metrics show caching is worth the complexity.
+current tactical annotation stage is scan-based, records its own trace metrics,
+feeds the lab-only `tactical_first` ordering mode, and can be paired with the
+lab-only child frontier cap to test whether better ordering buys effective
+depth; a full incremental frontier/threat-state model is intentionally deferred
+until those metrics show caching is worth the complexity.
 
 ### Eval harness
 

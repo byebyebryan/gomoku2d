@@ -45,14 +45,18 @@ product presets:
 | `cpu_time_budget_ms` | Optional per-move Linux thread CPU-time budget |
 | `candidate_radius` | Distance around existing stones used to generate candidate moves |
 | `safety_gate` | Root safety gate: `opponent_reply_search_probe`, `opponent_reply_local_threat_probe`, or `none` |
+| `move_ordering` | Alpha-beta move ordering: `tt_first_board_order` or lab-only `tactical_first` |
+| `child_limit` | Optional lab-only cap on the ordered non-root child frontier searched by alpha-beta |
 
 Search traces expose explicit pipeline stages: `candidate_source`,
-`legality_gate`, tactical annotation counters, and `safety_gate`. Today there is
-one candidate source family (`near_all_rN`), one legality gate (`exact_rules`),
-one scan-based local-threat annotation object, and two optional safety gates
-(`opponent_reply_search_probe`, `opponent_reply_local_threat_probe`, or `none`).
-Renju forbidden-move checks still use exact core rules, but core first applies a
-cheap necessary-condition guard:
+`legality_gate`, tactical annotation counters, `safety_gate`, and
+`move_ordering`. Today there is one candidate source family (`near_all_rN`), one
+legality gate (`exact_rules`), one scan-based local-threat annotation object,
+two optional safety gates (`opponent_reply_search_probe`,
+`opponent_reply_local_threat_probe`, or `none`), two move-ordering modes
+(`tt_first_board_order` default, `tactical_first` lab-only), and an optional
+`child_limit` lab cap. Renju forbidden-move checks still use exact core rules,
+but core first applies a cheap necessary-condition guard:
 a forbidden candidate must have at least two black stones on one of the four
 local axes before the exact detector runs.
 
@@ -72,9 +76,17 @@ The lab tools define temporary aliases over these fields for experiments:
 For lab-only ablations, append `+near-all-r1`, `+near-all-r2`, or
 `+near-all-r3` to change candidate-source radius. Append `+no-safety`,
 `+opponent-reply-search-probe`, or `+opponent-reply-local-threat-probe` to choose
-the safety gate, for example `search-d5+near-all-r3+no-safety`. These switches
-measure one pipeline axis at a time; defaults remain `near_all_r2` plus
-`opponent_reply_local_threat_probe`.
+the safety gate. Append `+tactical-first` to use local-threat facts for ordering
+before alpha-beta visits candidate moves, for example
+`search-d5+tactical-first`. Append `+child-cap-N` to limit the ordered non-root
+child frontier after candidate generation, legality filtering, and move
+ordering, for example `search-d5+tactical-first+child-cap-12`. Root still
+considers every legal/safe candidate. Candidate radius and child cap are
+intentionally separate: radius defines the discovery boundary, while child cap
+tests whether ordering can keep useful deeper-node coverage while alpha-beta
+searches fewer children. These switches measure one pipeline axis at a time;
+defaults remain `near_all_r2`, `opponent_reply_local_threat_probe`,
+`tt_first_board_order`, and no child cap.
 
 These aliases are not durable product identity, and they are not character bots
 yet. They exist so the lab can benchmark stable configs before deciding whether
@@ -93,6 +105,7 @@ Search traces include both the result and the config:
     "legality_gate": "exact_rules",
     "safety_gate": "opponent_reply_local_threat_probe",
     "move_ordering": "tt_first_board_order",
+    "child_limit": null,
     "search_algorithm": "alpha_beta_id",
     "static_eval": "line_shape_eval"
   },
@@ -106,7 +119,13 @@ Search traces include both the result and the config:
     "root_legality_checks": 20,
     "search_legality_checks": 400,
     "root_tactical_annotations": 56,
-    "search_tactical_annotations": 0
+    "search_tactical_annotations": 0,
+    "root_child_cap_hits": 0,
+    "search_child_cap_hits": 0,
+    "root_child_moves_before_total": 0,
+    "search_child_moves_before_total": 0,
+    "root_child_moves_after_total": 0,
+    "search_child_moves_after_total": 0
   },
   "score": 200,
   "budget_exhausted": false
@@ -122,6 +141,9 @@ compare it as safety-gate work rather than as alpha-beta-equivalent nodes.
 legality metrics are split so pipeline-stage costs can be compared
 independently. Tactical annotation metrics count reusable local-threat
 classification work separately from candidate generation and alpha-beta nodes.
+Child-cap metrics count ordered non-root frontier size before and after the
+optional `child_limit`; root cap metrics stay zero because root is intentionally
+uncapped, and all cap metrics are zero for default uncapped configs.
 Node budgets are not enforced yet; this is currently a trace and tournament
 metric.
 
@@ -153,6 +175,20 @@ The current direction is depth-oriented: improve the normal search cost first,
 then use tactical facts only for cheap safety, move ordering, or narrow forced
 branches that improve reached depth under the same budget.
 
+`child_limit` is currently a lab knob, not a default. Early tests show it is
+most useful when paired with tactical ordering: pre-cleanup tests showed that a
+cap without ordering dropped too much important coverage, while tactical-first
+ordering with `child_limit` creates a real breadth-for-depth tradeoff. With root
+uncapped, the D5 and D7 `tactical-first + child-cap-8` variants both beat
+uncapped `search-d3` in a focused Renju tournament, and D7 beat D5. The clearest
+same-depth signal so far is a 64-game Renju head-to-head where
+`search-d5+tactical-first+child-cap-8` beat uncapped `search-d5` by `44-1-19`,
+searched far fewer nodes, and reached more completed depth under the same
+`1000 ms` CPU budget. A follow-up D9 `tactical-first + child-cap-4` variant
+reached deeper on average than D7 cap8 but lost the head-to-head, suggesting
+cap4 cuts too much breadth. That makes the cap a useful lab axis for
+harder/slower search variants, but not yet a product default.
+
 The key assumption is that depth remains the mechanism for seeing long play.
 Non-tactical alpha-beta should find winning combinations if it can search deep
 enough, but Gomoku's broad candidate set makes that unrealistic without better
@@ -163,11 +199,13 @@ extend only narrow forcing branches with concrete replies.
 
 Tactical annotation stays scan-based but cache-friendly. `Board` remains the
 source of truth; search-side annotation computes local facts into a reusable move
-annotation and can feed safety, ordering, and reports. A full frontier model,
-where a `SearchPosition` tracks changed candidate masks and threat facts through
-apply/undo, is a later optimization experiment. It should wait until the fact
-schema and consumers are stable and metrics show annotation or candidate
-regeneration is worth making incremental.
+annotation and now feeds both safety and the lab-only `tactical_first` ordering
+mode. It can also pair with `child_limit` to test whether ordered tactical
+coverage lets alpha-beta search fewer children without changing candidate
+discovery. A full frontier model, where a `SearchPosition` tracks changed
+candidate masks and threat facts through apply/undo, is a later optimization
+experiment. It should wait until the fact schema and consumers are stable and
+metrics show annotation or candidate regeneration is worth making incremental.
 
 For `v0.4.1`, the strategic target is a practice bot that climbs a tactical
 ladder:
