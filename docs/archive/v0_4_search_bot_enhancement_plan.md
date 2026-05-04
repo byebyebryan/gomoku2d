@@ -1,4 +1,4 @@
-# `v0.4.0` Search Bot Enhancement Plan
+# `v0.4.x` Search Bot Enhancement Plan
 
 Status: active retrospective and follow-up plan. This started as the `0.4.0`
 bot-lab work loop; it now records which experiments failed, which foundation
@@ -33,8 +33,8 @@ Current progress:
   trusted apply, candidate-generation cleanup, bitboard board storage, and
   occupied-stone hot-path iteration.
 - `0.4.0` is therefore a bot-lab foundation release, not a product bot-settings
-  release. The next behavior-changing slice should start from this measured
-  baseline.
+  release. `0.4.1` should start from this measured baseline instead of chasing a
+  single tactical fixture.
 
 ## Goal
 
@@ -58,8 +58,44 @@ The revised target is therefore depth-oriented:
 - trade breadth for depth through narrower candidates and stronger move ordering
   while preserving cheap immediate-threat safety
 
+The working hypothesis is that search depth is still the lever that discovers
+long-horizon plans and winning combinations. Vanilla alpha-beta can theoretically
+find those plans if it reaches enough depth. In practice, the current candidate
+breadth is too wide for that to happen consistently under a per-move budget.
+Local threat detection should therefore serve search efficiency: preserve
+tactical safety while making the search look at fewer, better ordered moves.
+
+That means tactical work should be judged by effective depth, not by whether it
+looks smarter in isolation. A useful local-shape primitive should help at least
+one of these stages:
+
+- **must-keep safety:** never prune immediate wins, forced blocks, forcing gains,
+  or concrete defenses
+- **move ordering:** search the tactically meaningful moves first so alpha-beta
+  cuts more work
+- **candidate staging:** try a narrower set first while retaining tactical
+  must-keep moves outside the normal radius/cap
+- **selective extension:** spend extra depth only when local facts provide a
+  concrete forcing branch and reply set
+
+Frontier/incremental threat state is a likely optimization, but it should not be
+the next behavior dependency. Today "cheap local threat detection" still often
+means scan-derived facts around candidates or reply sets. A true frontier model
+would maintain candidate masks and threat facts alongside apply/undo, updating
+only the cells and line windows affected by the last move. That could reduce
+repeated candidate generation and annotation cost, but it also couples threat
+correctness, Renju legality, and search recursion more tightly.
+
+Decision: keep `Board` as the authoritative state for now, and make the next
+tactical annotation stage cache-friendly rather than fully incremental. The
+frontier model should be a lab-only optimization after the local threat fact
+schema and consumers are stable. The trigger for that experiment is evidence
+that annotation, candidate regeneration, or reply-set rescans are a top cost
+after ordering/candidate-staging work lands.
+
 Threat-space search is relevant because it gives Gomoku-specific tactical
-language, not because `v0.4.0` should become a full TSS/proof-number solver.
+language, not because the `0.4.x` search line should become a full
+TSS/proof-number solver.
 
 That creates two lanes:
 
@@ -68,6 +104,72 @@ That creates two lanes:
   into a rigid solver that only optimizes proof quality.
 - **Analysis tooling:** can become more solver-like later if replay analysis,
   reverse search, or puzzle generation needs proof-oriented machinery.
+
+## Product Bot Strategy
+
+The next direction should be framed as a tactical ladder, not as "make one
+fixture pass" and not as "build the strongest solver."
+
+### Layer 1: Local tactical competence
+
+The basic bot should handle single local threats correctly:
+
+- take an immediate win
+- block a single forced win
+- complete or answer closed/broken fours
+- recognize open threes and fours well enough to avoid obvious one-ply blunders
+
+This is the minimum bar for a practice opponent. A bot that fails here feels
+random, and human hint overlays become less trustworthy because the opponent
+does not respect the same tactical language.
+
+### Layer 2: Casual combo play
+
+Assume both sides handle local threats correctly, but neither side has a deep
+strategic plan. The game then becomes a casual PVE pattern: players probe,
+extend lines, and eventually one side stumbles into a compound threat the other
+side cannot fully answer. This is likely where the current product should feel
+fun for a while, because it matches paper-Gomoku play better than solver-grade
+perfection.
+
+The bot should therefore become better at finding and not missing compound
+threats, but without spending the whole move budget on proof machinery. Double
+threats, four-over-three priority, and safe candidate narrowing matter more
+than making depth 2 pass every quiet-shape diagnostic.
+
+### Layer 3: Forced-chain steering
+
+The advanced layer is not just "more local shapes." It is recognizing sequences
+where one side makes forcing threats, expects the opponent to answer them, and
+uses those forced replies to steer the board into a different, harder-to-block
+threat.
+
+This suggests a narrow forced-chain search:
+
+- generate forcing gain moves from local threat facts
+- derive concrete defense/cost replies from the created shape
+- allow immediate counter-threat overrides when the defender can win or create a
+  stronger forcing threat
+- stop on win, fizzle, repeated/invalid line, or a small node/time budget
+
+That is close to threat-space-search language, but it is intentionally not full
+TSS yet. Full TSS requires dependency trees, rest-square conflicts, all-defenses
+handling, and proof verification. Those are likely analysis features before
+they are practice-bot features.
+
+### Style knobs as budget allocation
+
+Offensive and defensive styles should not be fake eval weights pasted on top of
+the same search. The useful future distinction is budget allocation:
+
+- **Offensive:** spend extra budget looking for own forcing chains and compound
+  threats.
+- **Defensive:** spend extra budget looking for opponent forcing chains and
+  suppressing their setup moves.
+
+That framing gives future UI knobs something real to expose. Until then, lab
+presets should stay explicit search configs and should not be marketed as bot
+personalities.
 
 ## Strategy Checkpoint
 
@@ -86,10 +188,10 @@ must reverse that order. Start with measurement and baseline cost reduction, the
 only add tactical shortcuts where the candidate set is already narrow or the
 continuation moves are concrete.
 
-Do not use `create_broken_three` as a pass/fail target. It remains useful because
-it demonstrates why shallow search misses quiet shape-building moves, but any
-fix that only makes depth 2 imitate depth 3 is not valuable unless it is cheaper
-than reaching depth 3 normally.
+Do not use `local_create_broken_three` as a pass/fail target. It remains useful
+because it demonstrates why shallow search misses quiet shape-building moves,
+but any fix that only makes depth 2 imitate depth 3 is not valuable unless it is
+cheaper than reaching depth 3 normally.
 
 ## Design Direction
 
@@ -99,7 +201,8 @@ showed that passing one tactical fixture is the wrong goal. Tactical scenarios
 are diagnostics; tournament strength, reached depth, budget stability, and
 runtime explain whether a search change is worth keeping.
 
-Decision: do not pivot the main bot to full threat-space search for `v0.4.0`.
+Decision: do not pivot the main bot to full threat-space search for the `0.4.x`
+search line.
 Borrow the tactical model, not the whole architecture. TSS is valuable for
 describing forcing threats and concrete replies, but a full dependency-tree
 search is optimized for proof, not for a fast practice opponent with adjustable
@@ -326,11 +429,12 @@ and called `immediate_winning_moves_for()` for both sides through
 Measured behavior:
 
 - `search-d2+threat1` does not improve the current scenario pass count because
-  the remaining miss is `create_broken_three`, which creates a broken-three
-  shape rather than an immediate forced line.
+  the remaining miss is `local_create_broken_three`, which creates a
+  broken-three shape rather than an immediate forced line.
 - It does reduce work on already-solved forced cases. In one sweep,
-  `create_open_four` dropped from depth 2 / 234 nodes to depth 1 / 53 nodes, and
-  `create_double_threat` dropped from depth 2 / 312 nodes to depth 1 / 83 nodes.
+  `local_create_open_four` dropped from depth 2 / 234 nodes to depth 1 / 53
+  nodes, and `combo_create_double_threat` dropped from depth 2 / 312 nodes to
+  depth 1 / 83 nodes.
 - It performs poorly in match ablation. In a 16-game d3 Renju head-to-head,
   `search-d3` beat `search-d3+threat1` by `11-5`. The extension cut counted
   nodes but increased average move time from `236.63 ms` to `480.53 ms` and
@@ -418,7 +522,7 @@ Promotion gate:
 
 Only after the baseline is measured and optimized, try trading breadth for depth.
 
-The useful target is not "make `search-d2` pass `create_broken_three`." The
+The useful target is not "make `search-d2` pass `local_create_broken_three`." The
 target is a narrower search that reaches deeper under the same budget while
 avoiding obvious tactical mistakes. Cheap threat detection should protect
 immediate wins, immediate losses, and concrete forcing replies; move ordering
@@ -562,14 +666,14 @@ commit consumes it.
 
 Decision: discard.
 
-Root ordering alone did not fix `search-d2` on `create_broken_three`, and broad
-leaf shape eval fixed that one d2 diagnostic by scanning both players' local
-candidate threats at evaluation leaves. That was the wrong target and the wrong
-cost profile.
+Root ordering alone did not fix `search-d2` on `local_create_broken_three`, and
+broad leaf shape eval fixed that one d2 diagnostic by scanning both players'
+local candidate threats at evaluation leaves. That was the wrong target and the
+wrong cost profile.
 
 Measured result:
 
-- `search-d2+shape-eval` fixed `create_broken_three`, but plain `search-d3`
+- `search-d2+shape-eval` fixed `local_create_broken_three`, but plain `search-d3`
   already fixed it cheaply.
 - In 64-game Renju ablations at `1000 ms` CPU/move, `search-d2+shape-eval`
   beat `search-d2` but remained slower and weaker than deeper baselines.
@@ -616,8 +720,11 @@ Progress:
   future optimization runs can compare non-node work directly.
 - Hardened the tactical scenario corpus with explicit roles, category-level
   semantic validation, and a dedicated board-print doc.
-- Added paired diagnostic fixtures for offensive and defensive versions of the
-  six local shape terms: open/closed/broken fours and open/closed/broken threes.
+- Split tactical scenarios into `local_*`, `priority_*`, and `combo_*` layers.
+  Local fixtures cover create/prevent/react/complete versions of the shape
+  vocabulary. The taxonomy is intentionally asymmetric; open-four reaction is
+  not a normal block fixture because one endpoint block still loses to the other
+  endpoint.
 - Kept Renju legality-only fixtures out of active tactical hard gates; future
   Renju tactical cases should test threat judgment around forbidden points, not
   simple "do not play illegal moves" behavior.
@@ -634,17 +741,19 @@ cargo run --release -p gomoku-eval -- tactical-scenarios \
   --report-json outputs/tactical_baseline_search_metrics.json
 ```
 
-- Baseline snapshot before the shape-pair fixture expansion: `8` cases: `4`
+- Baseline snapshot before the tactical-layer fixture expansion: `8` cases: `4`
   hard safety-gate cases and `4` diagnostics.
 - `search-d2`: `6 / 8` passed; all hard safety gates passed, but it misses
-  `counter_open_three_with_four` and `create_broken_three`.
+  `priority_create_open_four_over_prevent_open_three` and
+  `local_create_broken_three`.
 - `search-d3`: `7 / 8` passed; all hard safety gates passed, but it still takes
-  the conservative block in `counter_open_three_with_four`.
+  the conservative block in `priority_create_open_four_over_prevent_open_three`.
 - `search-d5`: `7 / 8` passed; all hard safety gates passed, but it still takes
-  the conservative block in `counter_open_three_with_four`.
-- `counter_open_three_with_four` is intentionally diagnostic: it captures a real
-  tactical gap where creating an open four should override blocking an open
-  three, but it should not fail the current baseline safety gate.
+  the conservative block in `priority_create_open_four_over_prevent_open_three`.
+- `priority_create_open_four_over_prevent_open_three` is intentionally
+  diagnostic: it captures a real tactical gap where creating an open four should
+  override blocking an open three, but it should not fail the current baseline
+  safety gate.
 
 Renju tournament baseline:
 
@@ -729,7 +838,7 @@ Immediate reading:
 
 - No-safety is a useful control, not a clear replacement. It fails the
   earlier `block_open_three` tactical case, now named
-  `prevent_open_three_reply`.
+  `priority_prevent_open_four_over_extend_three`.
 - The current safety gate is buying real tactical safety and helps D5 preserve
   reached depth under the `1000 ms` CPU budget.
 - The current safety gate can still be counterproductive for shallower D3 match
@@ -813,12 +922,66 @@ Implication for the next implementation slice:
 - Add clean lab specs for each stage rather than using one bundled root-stage
   switch as the baseline. The current implemented suffixes are `+near-all-r1`,
   `+near-all-r2`, `+near-all-r3`, `+no-safety`, and
-  `+opponent-reply-search-probe`.
+  `+opponent-reply-search-probe`. The `0.4.1` safety-gate slice also adds
+  `+opponent-reply-local-threat-probe` as an experimental local-fact
+  alternative.
 - Optimize Renju legality by exact-checking only black candidates within `r2` of
   black stones, regardless of whether search candidate selection uses `r1`,
   `r2`, or `r3`.
 - After the pipeline split, compare candidate radius, legality cost, current
   safety probe, and any cheap local safety gate independently.
+
+Initial `0.4.1` local safety-gate experiment:
+
+- Added `+opponent-reply-local-threat-probe` as a default-off lab suffix.
+- It still scans legal opponent replies at the root, but classifies each reply
+  with local threat facts instead of running a full immediate-winning-move scan
+  after every reply.
+- In the 16-case tactical sweep, `search-d3` and
+  `search-d3+opponent-reply-local-threat-probe` had the same pass/fail pattern:
+  all hard safety gates passed, with the same diagnostic misses.
+- In a 64-game Renju head-to-head at `1000 ms` CPU/move, seed `52`, opening
+  plies `4`, max moves `120`, and `8` threads, the result was score-neutral:
+  `32-0-32`. Average move time improved from `90.80 ms` to `47.63 ms`; average
+  reached depth stayed `2.90`; budget hits stayed `0.1%`.
+- This is promising cost evidence, not promotion evidence yet. The next review
+  should confirm whether the local predicate is semantically equivalent enough
+  to the current safety gate, then rerun the standard report-sized eval if kept.
+
+## Revised `0.4.1` Action Plan
+
+The next work should avoid another broad tactical integration. Use the tactical
+ladder above to keep each slice honest.
+
+1. **Finish the local safety-gate decision.**
+   Confirm whether `opponent_reply_local_threat_probe` is semantically close
+   enough to `opponent_reply_search_probe` for root safety. If yes, promote it
+   as the cheaper default safety gate after a standard report-sized eval. If no,
+   keep the learning and remove the suffix.
+2. **Extract tactical annotation as a real pipeline stage.**
+   Local threat facts should be available once per relevant move and reusable by
+   safety, ordering, reports, and future forced-chain code. Do not hide scans
+   inside eval leaves. Keep the API cache-friendly: explicit inputs, stable fact
+   structs, clear candidate/reply ownership, and metrics for annotation work.
+3. **Try ordering before eval.**
+   Use local facts to rank forcing gains, immediate completions, and priority
+   moves ahead of quiet candidates. Promotion requires better reached depth or
+   tournament score, not only prettier tactical-scenario results.
+4. **Prototype bounded forced-chain search as lab-only.**
+   Start at root or near-root, only when local facts provide concrete gain and
+   defense squares. Keep strict caps and record all non-alpha-beta work in
+   traces. This is the first slice that can meaningfully support future
+   offensive/defensive styles.
+5. **Defer full incremental frontier state until metrics justify it.**
+   A `SearchPosition` / `FrontierState` wrapper can maintain candidate masks,
+   tactical annotations, and dirty cells around apply/undo, but only after the
+   scan-based annotation semantics are stable. Run this as a scan-vs-frontier
+   performance experiment if annotation or candidate regeneration remains a hot
+   cost after ordering/staging work.
+6. **Defer full TSS and product bot personalities.**
+   If the prototype needs dependency trees, all-defenses proof, or rest-square
+   conflict resolution to be correct, split it into analysis tooling instead of
+   forcing it into `SearchBot`.
 
 ## Evaluation Gates
 

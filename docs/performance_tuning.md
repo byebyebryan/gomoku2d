@@ -56,26 +56,22 @@ Why this format:
 |---|---|---|---|---|
 | `opening_sparse` | freestyle | Black | opening, sparse | early local opening around center |
 | `early_local_fight` | freestyle | Black | opening, local-fight | compact early tactical cluster |
-| `immediate_win` | freestyle | Black | tactical, immediate-win | direct win available now |
-| `immediate_block` | freestyle | Black | tactical, immediate-block | forced defensive block |
-| `attack_wins_race` | freestyle | Black | tactical, attack-vs-defense | take the direct win instead of blocking |
-| `anti_blunder_open_three` | freestyle | White | tactical, anti-blunder | repro for the recent search safety fix |
-| `create_open_four` | freestyle | Black | tactical, open-four | create a forcing open-four threat |
-| `shape_offense_open_four` | freestyle | Black | tactical, shape, offense, open-four | diagnostic offense pair for `OpenFour` |
-| `shape_defense_open_four` | freestyle | White | tactical, shape, defense, open-four | diagnostic defense pair for `OpenFour` |
-| `shape_offense_closed_four` | freestyle | Black | tactical, shape, offense, closed-four | diagnostic offense pair for `ClosedFour` |
-| `shape_defense_closed_four` | freestyle | White | tactical, shape, defense, closed-four | diagnostic defense pair for `ClosedFour` |
-| `shape_offense_broken_four` | freestyle | Black | tactical, shape, offense, broken-four | diagnostic offense pair for `BrokenFour` |
-| `shape_defense_broken_four` | freestyle | White | tactical, shape, defense, broken-four | diagnostic defense pair for `BrokenFour` |
-| `counter_open_three_with_four` | freestyle | White | tactical, counter-threat, open-four | create a four instead of immediately blocking an open three |
-| `shape_offense_open_three` | freestyle | Black | tactical, shape, offense, open-three | diagnostic offense pair for `OpenThree` |
-| `shape_defense_open_three` | freestyle | White | tactical, shape, defense, open-three | diagnostic defense pair for `OpenThree` |
-| `shape_offense_closed_three` | freestyle | Black | tactical, shape, offense, closed-three | diagnostic offense pair for `ClosedThree` |
-| `shape_defense_closed_three` | freestyle | White | tactical, shape, defense, closed-three | diagnostic defense pair for `ClosedThree` |
-| `shape_offense_broken_three` | freestyle | Black | tactical, shape, offense, broken-three | diagnostic offense pair for `BrokenThree` |
-| `shape_defense_broken_three` | freestyle | White | tactical, shape, defense, broken-three | diagnostic defense pair for `BrokenThree` |
-| `create_broken_three` | freestyle | Black | tactical, broken-three | choose a non-terminal shape-building move |
-| `create_double_threat` | freestyle | Black | tactical, double-threat | create simultaneous immediate winning threats |
+| `local_complete_open_four` | freestyle | Black | tactical, local, complete, open-four | complete an existing open four |
+| `local_react_closed_four` | freestyle | Black | tactical, local, react, closed-four | answer the only completion square of an opponent closed four |
+| `priority_complete_open_four_over_react_closed_four` | freestyle | Black | tactical, priority, complete, react | complete an open four instead of reacting to an opponent closed four |
+| `priority_prevent_open_four_over_extend_three` | freestyle | White | tactical, priority, prevent, extend | prevent an opponent open three from becoming an open four |
+| `priority_create_open_four_over_prevent_open_three` | freestyle | White | tactical, priority, counter-threat, open-four | create a four instead of immediately blocking an open three |
+| `local_create_open_four` | freestyle | Black | tactical, local, create, open-four | diagnostic create case for `OpenFour` |
+| `local_create_closed_four` | freestyle | Black | tactical, local, create, closed-four | diagnostic create case for `ClosedFour` |
+| `local_create_broken_four` | freestyle | Black | tactical, local, create, broken-four | diagnostic create case for `BrokenFour` |
+| `local_react_broken_four` | freestyle | White | tactical, local, react, broken-four | diagnostic reaction case for `BrokenFour` |
+| `local_create_open_three` | freestyle | Black | tactical, local, create, open-three | diagnostic create case for `OpenThree` |
+| `local_prevent_open_four_from_open_three` | freestyle | White | tactical, local, prevent, open-four, open-three | prevent an open three from becoming an open four |
+| `local_create_closed_three` | freestyle | Black | tactical, local, create, closed-three | diagnostic create case for `ClosedThree` |
+| `local_prevent_closed_four_from_closed_three` | freestyle | White | tactical, local, prevent, closed-four, closed-three | prevent a closed three from becoming a closed four |
+| `local_create_broken_three` | freestyle | Black | tactical, local, create, broken-three | diagnostic create case for `BrokenThree` |
+| `local_prevent_broken_four_from_broken_three` | freestyle | White | tactical, local, prevent, broken-four, broken-three | prevent a broken three from becoming a broken four |
+| `combo_create_double_threat` | freestyle | Black | tactical, combo, double-threat | create simultaneous immediate winning threats |
 | `renju_forbidden_cross` | renju | Black | renju, forbidden | black to move with a forbidden tactical point |
 | `midgame_medium` | freestyle | Black | midgame, medium-density | representative clustered midgame |
 | `midgame_dense` | freestyle | Black | midgame, dense | denser midgame with larger frontier/eval cost |
@@ -88,10 +84,10 @@ are behavior anchors for the `v0.4` bot-discovery pass.
 
 Current cases exercise the `balanced` lab config:
 
-- immediate win
-- immediate block
-- open-three anti-blunder block
-- attack-vs-defense race where winning now is better than blocking
+- complete open four
+- react to closed four
+- prevent open four over extending a weaker line
+- complete open four over reacting to the opponent's four
 
 The tactical scenario runner can also compare ad-hoc search configs while a
 slice is under development. Treat those as diagnostic probes: if a config only
@@ -114,6 +110,25 @@ tactical consumer: identify how much time `search-d3` spends in eval,
 candidate generation, legality checks, safety-gate probes, and hidden tactical
 work. Only keep a search change if it improves reached depth, average move time,
 or tournament score under the same CPU budget.
+
+For the `0.4.1` bot direction, treat tactical facts as a way to buy effective
+depth. The measurement question is not "did this shape detector make one case
+pass?" but "did local threat facts let the same budget search a narrower or
+better ordered tree without losing tactical safety?" Candidate staging, move
+ordering, and selective forced-chain extension should all report enough metrics
+to show whether breadth was reduced and reached depth improved.
+
+Do not optimize tactical facts into a full incremental frontier model until the
+scan-based annotation semantics are stable. The frontier experiment should have
+a clear before/after target:
+
+- same tactical behavior and scenario pass/fail set
+- lower annotation, candidate generation, or reply-generation cost
+- better reached depth or lower move time under the same CPU budget
+- no hidden apply/undo correctness risk from stale threat facts
+
+Until those gates are testable, prefer explicit annotation metrics over
+maintaining updated/deleted shapes alongside board state.
 
 ## Benchmark suites
 
@@ -284,7 +299,7 @@ cargo bench -p gomoku-bot --bench search_perf -- --noplot
 | Benchmark | Time |
 |---|---|
 | `immediate_winning_moves/current_player/opening_sparse` | `21.37–21.55 µs` |
-| `immediate_winning_moves/current_player/anti_blunder_open_three` | `28.57–28.68 µs` |
+| `immediate_winning_moves/current_player/priority_prevent_open_four_over_extend_three` | `28.57–28.68 µs` |
 | `immediate_winning_moves/current_player/renju_forbidden_cross` | `78.08–78.77 µs` |
 | `immediate_winning_moves/current_player/midgame_dense` | `44.35–44.61 µs` |
 | `apply_move_then_undo/opening_sparse` | `294.30–300.25 ns` |
@@ -300,9 +315,9 @@ All numbers below are `SearchBot::choose_move()` at depth `3`.
 |---|---|
 | `opening_sparse` | `55.39–56.62 ms` |
 | `early_local_fight` | `73.35–75.03 ms` |
-| `immediate_win` | `13.91–14.01 ms` |
-| `immediate_block` | `13.73–13.85 ms` |
-| `anti_blunder_open_three` | `91.13–92.77 ms` |
+| `local_complete_open_four` | `13.91–14.01 ms` |
+| `local_react_closed_four` | `13.73–13.85 ms` |
+| `priority_prevent_open_four_over_extend_three` | `91.13–92.77 ms` |
 | `renju_forbidden_cross` | `140.83–143.39 ms` |
 | `midgame_medium` | `139.78–142.50 ms` |
 | `midgame_dense` | `214.87–228.09 ms` |
@@ -341,7 +356,7 @@ cargo bench -p gomoku-bot --bench search_perf -- --noplot
 | Benchmark | Time | Baseline |
 |---|---|---|
 | `immediate_winning_moves/current_player/opening_sparse` | `2.4769–2.5033 µs` | `21.37–21.55 µs` |
-| `immediate_winning_moves/current_player/anti_blunder_open_three` | `3.1904–3.2312 µs` | `28.57–28.68 µs` |
+| `immediate_winning_moves/current_player/priority_prevent_open_four_over_extend_three` | `3.1904–3.2312 µs` | `28.57–28.68 µs` |
 | `immediate_winning_moves/current_player/renju_forbidden_cross` | `50.854–51.433 µs` | `78.08–78.77 µs` |
 | `immediate_winning_moves/current_player/midgame_dense` | `4.4690–4.5294 µs` | `44.35–44.61 µs` |
 | `apply_move_then_undo/opening_sparse` | `307.20–325.54 ns` | `294.30–300.25 ns` |
@@ -357,9 +372,9 @@ All numbers below are `SearchBot::choose_move()` at depth `3`.
 |---|---|---|
 | `opening_sparse` | `13.717–13.854 ms` | `55.39–56.62 ms` |
 | `early_local_fight` | `13.614–13.729 ms` | `73.35–75.03 ms` |
-| `immediate_win` | `1.5889–1.5966 ms` | `13.91–14.01 ms` |
-| `immediate_block` | `1.9394–1.9676 ms` | `13.73–13.85 ms` |
-| `anti_blunder_open_three` | `14.215–14.304 ms` | `91.13–92.77 ms` |
+| `local_complete_open_four` | `1.5889–1.5966 ms` | `13.91–14.01 ms` |
+| `local_react_closed_four` | `1.9394–1.9676 ms` | `13.73–13.85 ms` |
+| `priority_prevent_open_four_over_extend_three` | `14.215–14.304 ms` | `91.13–92.77 ms` |
 | `renju_forbidden_cross` | `18.819–18.928 ms` | `140.83–143.39 ms` |
 | `midgame_medium` | `23.464–23.832 ms` | `139.78–142.50 ms` |
 | `midgame_dense` | `33.215–33.394 ms` | `214.87–228.09 ms` |
@@ -403,12 +418,12 @@ cargo bench -p gomoku-bot --bench search_perf -- --noplot
 | Benchmark | Time | Pass 1 |
 |---|---|---|
 | `immediate_winning_moves/current_player/opening_sparse` | `2.4295–2.4505 µs` | `2.4769–2.5033 µs` |
-| `immediate_winning_moves/current_player/anti_blunder_open_three` | `3.1551–3.1626 µs` | `3.1904–3.2312 µs` |
+| `immediate_winning_moves/current_player/priority_prevent_open_four_over_extend_three` | `3.1551–3.1626 µs` | `3.1904–3.2312 µs` |
 | `immediate_winning_moves/current_player/renju_forbidden_cross` | `26.990–27.135 µs` | `50.854–51.433 µs` |
 | `immediate_winning_moves/current_player/midgame_dense` | `4.4511–4.4783 µs` | `4.4690–4.5294 µs` |
 | `has_multiple_immediate_winning_moves/current_player/opening_sparse` | `2.2625–2.2687 µs` | new benchmark |
-| `has_multiple_immediate_winning_moves/current_player/immediate_win` | `1.5401–1.5536 µs` | new benchmark |
-| `has_multiple_immediate_winning_moves/current_player/anti_blunder_open_three` | `2.8538–2.8745 µs` | new benchmark |
+| `has_multiple_immediate_winning_moves/current_player/local_complete_open_four` | `1.5401–1.5536 µs` | new benchmark |
+| `has_multiple_immediate_winning_moves/current_player/priority_prevent_open_four_over_extend_three` | `2.8538–2.8745 µs` | new benchmark |
 | `has_multiple_immediate_winning_moves/current_player/renju_forbidden_cross` | `26.573–26.837 µs` | new benchmark |
 | `has_multiple_immediate_winning_moves/current_player/midgame_dense` | `4.1642–4.1895 µs` | new benchmark |
 | `forbidden_moves/current_player/renju_forbidden_cross` | `24.403–24.581 µs` | `24.032–24.272 µs` |
@@ -421,9 +436,9 @@ All numbers below are `SearchBot::choose_move()` at depth `3`.
 |---|---|---|
 | `opening_sparse` | `13.180–13.311 ms` | `13.717–13.854 ms` |
 | `early_local_fight` | `13.148–13.245 ms` | `13.614–13.729 ms` |
-| `immediate_win` | `1.4407–1.4486 ms` | `1.5889–1.5966 ms` |
-| `immediate_block` | `1.7686–1.7827 ms` | `1.9394–1.9676 ms` |
-| `anti_blunder_open_three` | `13.194–13.431 ms` | `14.215–14.304 ms` |
+| `local_complete_open_four` | `1.4407–1.4486 ms` | `1.5889–1.5966 ms` |
+| `local_react_closed_four` | `1.7686–1.7827 ms` | `1.9394–1.9676 ms` |
+| `priority_prevent_open_four_over_extend_three` | `13.194–13.431 ms` | `14.215–14.304 ms` |
 | `renju_forbidden_cross` | `17.489–17.690 ms` | `18.819–18.928 ms` |
 | `midgame_medium` | `22.643–22.935 ms` | `23.464–23.832 ms` |
 | `midgame_dense` | `32.766–33.130 ms` | `33.215–33.394 ms` |
@@ -513,7 +528,7 @@ Commands used:
 cargo test -p gomoku-core immediate
 cargo test -p gomoku-core --test bench_scenarios
 cargo bench -p gomoku-core --bench board_perf -- "immediate_winning_moves/current_player|has_multiple_immediate_winning_moves/current_player" --noplot
-cargo bench -p gomoku-bot --bench search_perf -- "balanced/(create_double_threat|renju_forbidden_cross|midgame_dense)" --noplot
+cargo bench -p gomoku-bot --bench search_perf -- "balanced/(combo_create_double_threat|renju_forbidden_cross|midgame_dense)" --noplot
 ```
 
 ### Targeted core anchors after pass 4
@@ -529,7 +544,7 @@ cargo bench -p gomoku-bot --bench search_perf -- "balanced/(create_double_threat
 
 | Benchmark | Time | Criterion change |
 |---|---|---|
-| `balanced/create_double_threat` | `50.600-50.826 ms` | `-10.04% to -9.39%` |
+| `balanced/combo_create_double_threat` | `50.600-50.826 ms` | `-10.04% to -9.39%` |
 | `balanced/renju_forbidden_cross` | `17.142-17.221 ms` | `-15.14% to -14.44%` |
 | `balanced/midgame_dense` | `36.110-36.173 ms` | `-9.98% to -9.00%` |
 

@@ -44,13 +44,14 @@ product presets:
 | `time_budget_ms` | Optional per-move wall-clock budget |
 | `cpu_time_budget_ms` | Optional per-move Linux thread CPU-time budget |
 | `candidate_radius` | Distance around existing stones used to generate candidate moves |
-| `safety_gate` | Root safety gate: `opponent_reply_search_probe` or `none` |
+| `safety_gate` | Root safety gate: `opponent_reply_search_probe`, `opponent_reply_local_threat_probe`, or `none` |
 
 Search traces expose explicit pipeline stages: `candidate_source`,
 `legality_gate`, and `safety_gate`. Today there is one candidate source family
-(`near_all_rN`), one legality gate (`exact_rules`), and one optional safety gate
-(`opponent_reply_search_probe` or `none`). Renju forbidden-move checks still use
-exact core rules, but core first applies a cheap necessary-condition guard:
+(`near_all_rN`), one legality gate (`exact_rules`), and two optional safety
+gates (`opponent_reply_search_probe`, `opponent_reply_local_threat_probe`, or
+`none`). Renju forbidden-move checks still use exact core rules, but core first
+applies a cheap necessary-condition guard:
 a forbidden candidate must have at least two black stones on one of the four
 local axes before the exact detector runs.
 
@@ -68,10 +69,11 @@ The lab tools define temporary aliases over these fields for experiments:
 | `deep` | 5 | `near_all_r2` | `opponent_reply_search_probe` | current CLI default depth |
 
 For lab-only ablations, append `+near-all-r1`, `+near-all-r2`, or
-`+near-all-r3` to change candidate-source radius. Append `+no-safety` or
-`+opponent-reply-search-probe` to choose the safety gate, for example
-`search-d5+near-all-r3+no-safety`. These switches measure one pipeline axis at a
-time; defaults remain `near_all_r2` plus `opponent_reply_search_probe`.
+`+near-all-r3` to change candidate-source radius. Append `+no-safety`,
+`+opponent-reply-search-probe`, or `+opponent-reply-local-threat-probe` to choose
+the safety gate, for example `search-d5+near-all-r3+no-safety`. These switches
+measure one pipeline axis at a time; defaults remain `near_all_r2` plus
+`opponent_reply_search_probe`.
 
 These aliases are not durable product identity, and they are not character bots
 yet. They exist so the lab can benchmark stable configs before deciding whether
@@ -109,10 +111,14 @@ Search traces include both the result and the config:
 ```
 
 `nodes` counts alpha-beta search nodes. `safety_nodes` counts the optional root
-safety-gate probe, currently `opponent_reply_search_probe`. `total_nodes` is
-the aggregate used by eval reporting. Root/search candidate and legality metrics
-are split so pipeline-stage costs can be compared independently. Node budgets
-are not enforced yet; this is currently a trace and tournament metric.
+safety-gate probe. For `opponent_reply_search_probe`, that is shallow
+search-like reply work. For `opponent_reply_local_threat_probe`, it is inspected
+root candidates and opponent replies classified through local threat facts, so
+compare it as safety-gate work rather than as alpha-beta-equivalent nodes.
+`total_nodes` is the aggregate used by eval reporting. Root/search candidate and
+legality metrics are split so pipeline-stage costs can be compared
+independently. Node budgets are not enforced yet; this is currently a trace and
+tournament metric.
 
 ## `v0.4.0` experiment takeaways
 
@@ -130,9 +136,9 @@ The canonical lessons are:
 - Tactical candidates, immediate-win/block ordering, broad threat extension, and
   broad shape eval all failed their promotion gates. The common failure mode was
   hidden extra work that reduced effective depth or match strength.
-- `create_broken_three` is a diagnostic, not a target. If depth 3 already solves
-  a position cleanly, making depth 2 imitate it is only useful when it is cheaper
-  than reaching depth 3 normally.
+- `local_create_broken_three` is a diagnostic, not a target. If depth 3 already
+  solves a position cleanly, making depth 2 imitate it is only useful when it is
+  cheaper than reaching depth 3 normally.
 - TSS vocabulary is useful for facts such as gain, cost/defense, and rest
   squares, but the practice bot should not become a full threat-space-search
   solver in this line. Solver-like work belongs in later analysis modules if
@@ -141,6 +147,37 @@ The canonical lessons are:
 The current direction is depth-oriented: improve the normal search cost first,
 then use tactical facts only for cheap safety, move ordering, or narrow forced
 branches that improve reached depth under the same budget.
+
+The key assumption is that depth remains the mechanism for seeing long play.
+Non-tactical alpha-beta should find winning combinations if it can search deep
+enough, but Gomoku's broad candidate set makes that unrealistic without better
+breadth control. Local threat facts are therefore search-efficiency data, not a
+replacement for search. They should let the bot keep tactically required moves,
+order promising moves earlier, stage or cap quiet candidates more safely, and
+extend only narrow forcing branches with concrete replies.
+
+The next tactical annotation pass should stay scan-based but cache-friendly.
+`Board` remains the source of truth; search-side annotation can compute local
+facts once per candidate/reply set and feed safety, ordering, and reports. A
+full frontier model, where a `SearchPosition` tracks changed candidate masks and
+threat facts through apply/undo, is a later optimization experiment. It should
+wait until the fact schema and consumers are stable and metrics show annotation
+or candidate regeneration is worth making incremental.
+
+For `v0.4.1`, the strategic target is a practice bot that climbs a tactical
+ladder:
+
+1. Local competence: never miss obvious immediate wins, single forced blocks,
+   or clear four-shape reactions.
+2. Casual combo play: recognize compound threats and priority races that casual
+   human players often discover through probing.
+3. Forced-chain steering: eventually spend bounded extra depth on narrow lines
+   where local threat facts provide the gain move and concrete defender replies.
+
+This keeps the bot aligned with the product. It should become more interesting
+and configurable, not just more solver-like. Offensive and defensive styles
+should eventually mean different budget allocation: own forced-chain search
+versus opponent forced-chain prevention.
 
 Positive search optimizations should land in place when they preserve exact
 behavior and improve measured hot paths. They should become configurable only
@@ -153,14 +190,15 @@ a depth-2 fixture if it loses reached depth or tournament strength against the
 current depth-3 baseline.
 
 The focused tactical scenario corpus is documented in
-[`tactical_scenarios.md`](tactical_scenarios.md). Use the hard safety-gate cases
-as regression guards before tournament ablations; use diagnostic cases to
-understand behavior and cost, not as standalone promotion gates.
+[`tactical_scenarios.md`](tactical_scenarios.md). It is layered into `local_*`,
+`priority_*`, and `combo_*` cases. Use the hard safety-gate cases as regression
+guards before tournament ablations; use diagnostic cases to understand behavior
+and cost, not as standalone promotion gates.
 
 The tactical shape vocabulary is documented in
 [`tactical_shapes.md`](tactical_shapes.md). Shape facts are move-centric records
 with a `kind`, `gain_square`, `defense_squares`, and `rest_squares`; this keeps
-offense, defense, and future eval work tied to the same definitions.
+create, prevent, react, and future eval work tied to the same definitions.
 
 ---
 

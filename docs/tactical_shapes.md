@@ -24,12 +24,13 @@ A tactical shape fact is move-centric:
 - `rest_squares`: points the attacker needs later to turn a weaker shape into a
   stronger forcing shape.
 
-Offense means "play the gain square and create this shape."
+Create means "play the gain square and create this shape."
 
-Defense means "play one of the defense squares to answer this shape." For
-weaker shapes, defense may only be a useful interruption rather than a forced
-move. For open fours, no single defense is sufficient because the attacker has
-multiple winning completions.
+Defense squares are local shape facts, not always a scenario role. Depending on
+timing, the useful tactical question may be to prevent a stronger shape before
+it exists, or to react to a forcing shape after it exists. For open fours, no
+single normal reaction is sufficient because the attacker has multiple winning
+completions.
 
 ## Shape Definitions
 
@@ -40,7 +41,7 @@ Notation:
 - `.`: empty legal point.
 - `_`: any point outside the five-cell local window.
 
-| Shape | Local pattern | Offense meaning | Defense / cost squares | Forcing |
+| Shape | Local pattern | Create meaning | Defense / cost squares | Forcing |
 | --- | --- | --- | --- | --- |
 | `Five` | `XXXXX` | Wins immediately. | None. | Yes |
 | `OpenFour` | `.XXXX.` | Creates two immediate winning completions. | Both ends are completions; one block is not enough. | Yes |
@@ -63,24 +64,33 @@ The current local priority is intentionally coarse:
 This priority is not yet the static eval. It is a shared vocabulary for
 diagnostics, move ordering, safety gates, and later evaluation experiments.
 
-## Offense / Defense Pairs
+## Local Scenario Roles
 
-Every shape should have paired offensive and defensive tests:
+Local tactical scenario fixtures use three roles:
 
-- Offense test: applying `gain_square` creates the expected `kind`.
-- Defense test: each `defense_square` is a plausible opponent answer to that
-  offensive fact.
-- Rest test: each `rest_square` is an attacker continuation square for weaker
-  shapes.
+- Create test: applying `gain_square` creates the expected `kind`.
+- Prevent test: the side to move occupies a point before the opponent can
+  upgrade an existing weaker shape into a stronger one.
+- React test: the side to move answers a forcing shape after the opponent has
+  already created it.
+
+The roles are intentionally not symmetric. `ClosedFour` and `BrokenFour` have
+clear react fixtures because one completion square must be answered. `OpenFour`
+does not have a normal react fixture: blocking one endpoint still leaves the
+other endpoint as a win unless the current player can win immediately or create
+a stronger counter-threat.
+
+Rest tests remain useful for weaker shapes because each `rest_square` is an
+attacker continuation square that can turn the shape into a four.
 
 Examples:
 
-- `OpenFour`: offense `K8` from `H8 I8 J8` creates completions `G8` and `L8`.
-- `ClosedFour`: offense `K8` from `O G8, X H8 I8 J8` creates completion `L8`.
-- `BrokenFour`: offense `J8` from `H8 I8 L8` creates completion `K8`.
-- `OpenThree`: offense `J8` from `H8 I8` creates defense squares `G8` and `K8`.
-- `ClosedThree`: offense `J8` from `O G8, X H8 I8` creates defense square `K8`.
-- `BrokenThree`: offense `J8` from `H8 K8` creates rest/defense square `I8`.
+- `OpenFour`: create `K8` from `H8 I8 J8` creates completions `G8` and `L8`.
+- `ClosedFour`: create `K8` from `O G8, X H8 I8 J8` creates completion `L8`.
+- `BrokenFour`: create `J8` from `H8 I8 L8` creates completion `K8`.
+- `OpenThree`: create `J8` from `H8 I8` creates defense squares `G8` and `K8`.
+- `ClosedThree`: create `J8` from `O G8, X H8 I8` creates defense square `K8`.
+- `BrokenThree`: create `J8` from `H8 K8` creates rest/defense square `I8`.
 
 ## Renju
 
