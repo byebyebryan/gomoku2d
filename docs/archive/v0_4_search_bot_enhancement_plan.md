@@ -595,6 +595,38 @@ Interpretation:
   reduce redundant window work or make high-severity windows dominate without
   overcounting weak two-stone patterns.
 
+### Phase 13: Candidate Mask Search Plumbing
+
+Status: implemented optimization.
+
+This phase keeps bot quality unchanged and trades a small amount of memory for
+search speed:
+
+- default `15x15` candidate masks are precomputed for radius `1`, `2`, and `3`
+- candidate generation ORs masks from occupied cells, then subtracts occupied
+  cells, instead of looping every nearby square around every stone
+- default TT-first move ordering stays separate from tactical ordering so normal
+  search avoids `OrderedMove` wrapping
+
+Early evidence:
+
+- r2 candidate generation improved by about `70-86%` on the focused pipeline
+  scenarios.
+- focused `balanced` and `deep` `choose_move` benchmarks improved by about
+  `47-64%` on `early_local_fight`, `renju_forbidden_cross`, and
+  `midgame_dense`.
+- line static-eval timings stayed effectively unchanged.
+- direct pattern static-eval timings drifted slightly despite untouched scoring
+  code; a focused rerun reduced the apparent hit to roughly `1-3%`, so treat it
+  as a watch item for the lab-only pattern axis rather than a blocker.
+
+Interpretation:
+
+- This is a quality-neutral baseline optimization and should stay in place while
+  broader tournament checks remain clean.
+- The next larger memory-for-speed candidate is a fixed-size transposition
+  table with collision-key validation.
+
 ## Intended Commit Boundaries
 
 ### Commit 1: Config Plumbing And Baseline Guardrails
