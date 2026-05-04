@@ -195,7 +195,7 @@ Lab config and quick tournament smoke:
 cargo run --release -p gomoku-cli -- --black balanced --white fast --quiet
 cargo run --release -p gomoku-eval -- versus --bot-a fast --bot-b balanced --games 1
 mkdir -p outputs
-cargo run --release -p gomoku-eval -- tournament --bots search-d2,search-d3,search-d5 --games-per-pair 10 --opening-plies 4 --search-cpu-time-ms 100 --max-game-ms 10000 --seed 42 --report-json outputs/gomoku-tournament.json
+cargo run --release -p gomoku-eval -- tournament --bots search-d2,search-d3,search-d5 --games-per-pair 10 --opening-policy centered-suite --opening-plies 4 --search-cpu-time-ms 100 --max-game-ms 10000 --seed 42 --report-json outputs/gomoku-tournament.json
 cargo run --release -p gomoku-eval -- report-html --input outputs/gomoku-tournament.json --output outputs/gomoku-tournament.html --json-href gomoku-tournament.json
 ```
 
@@ -203,19 +203,20 @@ Curated ranking report, from `gomoku-bot-lab/`:
 
 ```sh
 mkdir -p reports
-cargo run --release -p gomoku-eval -- tournament --bots search-d2,search-d3,search-d5 --games-per-pair 64 --opening-plies 4 --search-cpu-time-ms 1000 --max-moves 120 --seed 48 --threads 22 --report-json reports/latest.json
+cargo run --release -p gomoku-eval -- tournament --bots search-d2,search-d3,search-d5 --games-per-pair 64 --opening-policy centered-suite --opening-plies 4 --search-cpu-time-ms 1000 --max-moves 120 --seed 48 --threads 22 --report-json reports/latest.json
 cargo run --release -p gomoku-eval -- report-html --input reports/latest.json --output reports/index.html --json-href latest.json
 ```
 
 `gomoku-eval` defaults to Renju so ranking tournaments are less dominated by
 first-player advantage; pass `--rule freestyle` when validating freestyle product
 behavior. Use an even `--games-per-pair` so each pair gets balanced color
-coverage. Tournament games run multi-threaded by default and use seeded random
-opening plies so deterministic bots do not replay one empty-board line forever.
-For Linux ranking eval, prefer `--search-cpu-time-ms` over wall-clock
-`--search-time-ms`; fixed-depth configs are still the cleanest reproducibility
-baseline. The reusable JSON report is the source of truth for ranking analysis;
-the HTML report is a derived view that can be regenerated without rerunning the
+coverage. Tournament games run multi-threaded by default and use a seeded
+centered opening suite so deterministic bots see varied local positions without
+random whole-board scatter. For Linux ranking eval, prefer
+`--search-cpu-time-ms` over wall-clock `--search-time-ms`; fixed-depth configs
+are still the cleanest reproducibility baseline. The reusable JSON report is the
+source of truth for ranking analysis; the HTML report is a derived view that can
+be regenerated without rerunning the
 tournament. Keep scratch output under `gomoku-bot-lab/outputs/`; curated
 reports under `gomoku-bot-lab/reports/` are copied into the public web build as
 `/bot-report/`.

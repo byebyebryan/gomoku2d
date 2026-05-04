@@ -117,7 +117,7 @@ freestyle-specific product checks.
 
 ```sh
 mkdir -p outputs
-cargo run --release -p gomoku-eval -- tournament --bots search-d2,search-d3,search-d5 --games-per-pair 10 --opening-plies 4 --search-cpu-time-ms 100 --max-game-ms 10000 --seed 42 --report-json outputs/gomoku-tournament.json
+cargo run --release -p gomoku-eval -- tournament --bots search-d2,search-d3,search-d5 --games-per-pair 10 --opening-policy centered-suite --opening-plies 4 --search-cpu-time-ms 100 --max-game-ms 10000 --seed 42 --report-json outputs/gomoku-tournament.json
 cargo run --release -p gomoku-eval -- report-html --input outputs/gomoku-tournament.json --output outputs/gomoku-tournament.html --json-href gomoku-tournament.json
 ```
 
@@ -126,7 +126,7 @@ bot-lab results:
 
 ```sh
 mkdir -p reports
-cargo run --release -p gomoku-eval -- tournament --bots search-d2,search-d3,search-d5 --games-per-pair 64 --opening-plies 4 --search-cpu-time-ms 1000 --max-moves 120 --seed 48 --threads 22 --report-json reports/latest.json
+cargo run --release -p gomoku-eval -- tournament --bots search-d2,search-d3,search-d5 --games-per-pair 64 --opening-policy centered-suite --opening-plies 4 --search-cpu-time-ms 1000 --max-moves 120 --seed 48 --threads 22 --report-json reports/latest.json
 cargo run --release -p gomoku-eval -- report-html --input reports/latest.json --output reports/index.html --json-href latest.json
 ```
 
@@ -139,20 +139,24 @@ Useful eval flags:
 | `--search-cpu-time-ms` | Applies a Linux thread CPU-time budget to search bots |
 | `--max-game-ms` | Records a still-running game as a draw after this wall-clock cap |
 | `--max-moves` | Records a still-running game as a draw after this move count |
-| `--seed` | Base seed for reproducible random bots and tournament openings |
-| `--opening-plies` | Tournament-only seeded random opening moves before bots take over; defaults to `4` |
+| `--seed` | Base seed for reproducible random bots and tournament opening-suite rotation |
+| `--opening-policy` | Tournament opening policy; defaults to `centered-suite`; `random-legal` keeps the older whole-board random opening mode |
+| `--opening-plies` | Tournament-only opening moves before bots take over; defaults to `4` |
 | `--threads` | Tournament worker count; defaults to available CPU parallelism minus 2 |
 | `--games-per-pair` | Tournament games per bot pair; use an even number for color balance |
 | `--replay-dir` | Writes replay JSON for each eval game |
 | `--report-json` | Writes a compact tournament report with summary stats and `cell_index_v1` move lists |
 | `report-html --json-href` | Adds the raw JSON link shown in the rendered HTML |
 
-Seeded openings make deterministic bots see varied positions. Wall-clock budgets
-are practical but noisy under multi-threaded load. CPU-time budgets are better
-for Linux ranking eval, while fixed-depth configs remain the most reproducible
-option. Tournament reports include pairwise records, color splits, shuffled-order
-Elo averages, depth/budget stats, and compact `move_cells` using the same
-`row * 15 + col` codec as saved web matches.
+The default centered opening suite gives every bot pair the same local 4-ply
+openings, with both color assignments, so rankings are less dominated by random
+whole-board stones. Wall-clock budgets are practical but noisy under
+multi-threaded load. CPU-time budgets are better for Linux ranking eval, while
+fixed-depth configs remain the most reproducible option. Tournament reports
+include pairwise records, color splits, shuffled-order Elo averages,
+depth/budget stats, and compact `move_cells` using the same
+`row * 15 + col` codec as saved web matches. The tournament harness and opening
+suite are documented in [`../docs/tournament.md`](../docs/tournament.md).
 
 Scratch reports should stay in ignored `outputs/`. Curated reports for the
 public site live in [`reports/`](reports/); the web build copies that folder to

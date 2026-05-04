@@ -3,9 +3,10 @@ use crate::arena::{
     MatchSetup,
 };
 use crate::elo::RatingTracker;
+use crate::opening::{opening_moves_for_game, OpeningPolicy};
 use crate::seed::derive_seed;
 use gomoku_bot::Bot;
-use gomoku_core::{Color, GameResult, Replay, RuleConfig};
+use gomoku_core::{Color, GameResult, Move, Replay, RuleConfig};
 use rayon::prelude::*;
 use rayon::ThreadPoolBuilder;
 use std::collections::HashMap;
@@ -18,6 +19,7 @@ pub struct TournamentOptions {
     pub limits: MatchLimits,
     pub seed: u64,
     pub opening_plies: usize,
+    pub opening_policy: OpeningPolicy,
     pub threads: usize,
 }
 
@@ -27,6 +29,7 @@ impl Default for TournamentOptions {
             limits: MatchLimits::default(),
             seed: 0,
             opening_plies: 0,
+            opening_policy: OpeningPolicy::default(),
             threads: default_thread_count(),
         }
     }
@@ -302,7 +305,7 @@ struct TournamentJob {
     bot_a_idx: usize,
     bot_b_idx: usize,
     a_is_black: bool,
-    opening_seed: u64,
+    opening_moves: Vec<Move>,
     bot_a_seed: u64,
     bot_b_seed: u64,
 }
@@ -339,9 +342,12 @@ pub fn run_round_robin_parallel(
                     bot_a_idx: i,
                     bot_b_idx: j,
                     a_is_black: game % 2 == 0,
-                    opening_seed: derive_seed(
+                    opening_moves: opening_moves_for_game(
+                        options.opening_policy,
+                        &config,
+                        options.opening_plies,
                         options.seed,
-                        [i as u64, j as u64, paired_game as u64],
+                        paired_game,
                     ),
                     bot_a_seed: derive_seed(options.seed, [i as u64, j as u64, game as u64, 0]),
                     bot_b_seed: derive_seed(options.seed, [i as u64, j as u64, game as u64, 1]),
@@ -363,8 +369,7 @@ pub fn run_round_robin_parallel(
                 let mut bot_a = factory_a(job.bot_a_seed);
                 let mut bot_b = factory_b(job.bot_b_seed);
                 let setup = MatchSetup {
-                    opening_plies: options.opening_plies,
-                    opening_seed: job.opening_seed,
+                    opening_moves: job.opening_moves.clone(),
                 };
 
                 let mr = if job.a_is_black {
@@ -431,7 +436,7 @@ pub fn run_round_robin_parallel(
 mod tests {
     use super::*;
     use gomoku_bot::RandomBot;
-    use gomoku_core::Variant;
+    use gomoku_core::{Move, Variant};
 
     type TestBotFactory = fn() -> Box<dyn Bot>;
 
@@ -499,6 +504,7 @@ mod tests {
                 },
                 seed: 7,
                 opening_plies: 0,
+                opening_policy: OpeningPolicy::CenteredSuite,
                 threads: 2,
             },
             |_, _, _| {},
@@ -512,5 +518,66 @@ mod tests {
         );
         assert_eq!(*results.moves.get("random-a").unwrap(), 1);
         assert_eq!(*results.moves.get("random-b").unwrap(), 1);
+    }
+
+    #[test]
+    fn parallel_round_robin_uses_shared_centered_openings_across_pairs() {
+        let factories: Vec<(String, TournamentBotFactory)> = vec![
+            (
+                "random-a".to_string(),
+                Arc::new(|seed| Box::new(RandomBot::seeded(seed))),
+            ),
+            (
+                "random-b".to_string(),
+                Arc::new(|seed| Box::new(RandomBot::seeded(seed))),
+            ),
+            (
+                "random-c".to_string(),
+                Arc::new(|seed| Box::new(RandomBot::seeded(seed))),
+            ),
+        ];
+        let config = RuleConfig {
+            variant: Variant::Renju,
+            ..Default::default()
+        };
+
+        let results = run_round_robin_parallel(
+            &factories,
+            4,
+            config,
+            TournamentOptions {
+                limits: MatchLimits {
+                    max_moves: Some(4),
+                    max_game_ms: None,
+                },
+                seed: 7,
+                opening_plies: 4,
+                opening_policy: OpeningPolicy::CenteredSuite,
+                threads: 2,
+            },
+            |_, _, _| {},
+        );
+
+        let center = Move { row: 7, col: 7 }.to_notation();
+        fn replay_moves(record: &TournamentMatchRecord) -> Vec<String> {
+            record.replay.moves.iter().map(|mv| mv.mv.clone()).collect()
+        }
+
+        let first_opening = replay_moves(&results.matches[0]);
+        let second_opening = replay_moves(&results.matches[2]);
+
+        assert_eq!(first_opening[0], center);
+        assert_ne!(first_opening, second_opening);
+        for pair_games in results.matches.chunks_exact(4) {
+            let first_color_opening = replay_moves(&pair_games[0]);
+            let first_swapped_opening = replay_moves(&pair_games[1]);
+            let second_color_opening = replay_moves(&pair_games[2]);
+            let second_swapped_opening = replay_moves(&pair_games[3]);
+
+            assert_eq!(first_color_opening, first_swapped_opening);
+            assert_eq!(first_color_opening, first_opening);
+            assert_eq!(second_color_opening, second_swapped_opening);
+            assert_eq!(second_color_opening, second_opening);
+        }
     }
 }

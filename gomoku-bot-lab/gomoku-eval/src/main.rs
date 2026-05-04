@@ -1,4 +1,4 @@
-use clap::{Args, Parser, Subcommand};
+use clap::{Args, Parser, Subcommand, ValueEnum};
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Instant;
@@ -6,6 +6,7 @@ use std::time::Instant;
 use gomoku_bot::{RandomBot, SearchBot};
 use gomoku_core::{Color, GameResult, Move, RuleConfig, Variant};
 use gomoku_eval::arena::{run_match_series_with_limits, MatchEndReason, MatchLimits, MatchResult};
+use gomoku_eval::opening::{OpeningPolicy, CENTERED_SUITE_MAX_PLIES};
 use gomoku_eval::report::{
     render_tournament_report_html_with_options, ReportRenderOptions, TournamentReport,
     TournamentRunReport,
@@ -27,6 +28,22 @@ mod search_configs;
 struct Cli {
     #[command(subcommand)]
     command: Commands,
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+#[clap(rename_all = "kebab-case")]
+enum CliOpeningPolicy {
+    CenteredSuite,
+    RandomLegal,
+}
+
+impl From<CliOpeningPolicy> for OpeningPolicy {
+    fn from(value: CliOpeningPolicy) -> Self {
+        match value {
+            CliOpeningPolicy::CenteredSuite => OpeningPolicy::CenteredSuite,
+            CliOpeningPolicy::RandomLegal => OpeningPolicy::RandomLegal,
+        }
+    }
 }
 
 #[derive(Args, Debug, Clone)]
@@ -130,9 +147,13 @@ enum Commands {
         #[arg(long)]
         report_json: Option<PathBuf>,
 
-        /// Number of seeded random opening plies before bots take over
+        /// Number of opening plies before bots take over
         #[arg(long, default_value_t = 4)]
         opening_plies: usize,
+
+        /// Opening policy used before bots take over
+        #[arg(long, value_enum, default_value = "centered-suite")]
+        opening_policy: CliOpeningPolicy,
 
         /// Worker threads used to run tournament games
         #[arg(long)]
@@ -521,6 +542,7 @@ fn main() {
             replay_dir,
             report_json,
             opening_plies,
+            opening_policy,
             threads,
         } => {
             let EvalContext {
@@ -544,13 +566,25 @@ fn main() {
                     "Warning: odd games-per-pair leaves each pair with uneven color coverage."
                 );
             }
+            let opening_policy: OpeningPolicy = opening_policy.into();
+            if opening_policy == OpeningPolicy::CenteredSuite
+                && opening_plies > CENTERED_SUITE_MAX_PLIES
+            {
+                exit_with_error(format!(
+                    "centered-suite openings support at most {CENTERED_SUITE_MAX_PLIES} plies"
+                ));
+            }
 
             println!("--- Tournament ---");
             println!("Bots: {:?}", bot_names);
             println!("Rule: {rule_label}");
             println!("Games per pair: {}", games_per_pair);
             println!("Seed: {}", seed);
-            println!("Opening plies: {}", opening_plies);
+            println!(
+                "Opening: {}, {} plies",
+                opening_policy.label(),
+                opening_plies
+            );
             let threads = threads.unwrap_or_else(default_thread_count);
             println!("Threads: {}", threads);
             if let Some(ms) = search_time_ms {
@@ -589,6 +623,7 @@ fn main() {
                     limits,
                     seed,
                     opening_plies,
+                    opening_policy,
                     threads,
                 },
                 |black_name, white_name, mr| {
@@ -627,6 +662,7 @@ fn main() {
                     games_per_pair,
                     seed,
                     opening_plies,
+                    opening_policy: opening_policy.label().to_string(),
                     threads,
                     search_time_ms,
                     search_cpu_time_ms,

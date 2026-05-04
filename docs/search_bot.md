@@ -147,6 +147,17 @@ uncapped, and all cap metrics are zero for default uncapped configs.
 Node budgets are not enforced yet; this is currently a trace and tournament
 metric.
 
+## Tournament openings
+
+`gomoku-eval tournament` defaults to `--opening-policy centered-suite` with
+`--opening-plies 4`. The suite contains 32 deterministic, center-local Renju-safe
+opening templates. In a 64-games-per-pair run, each bot pair sees each opening
+once with both color assignments. This replaced the older `random-legal` mode,
+which chose each opening move uniformly from the whole legal board and often
+created scattered, color-dominated positions. Keep `--opening-policy
+random-legal` only for noisy stress checks, not ranking. See
+[`tournament.md`](tournament.md) for the harness schedule and base templates.
+
 ## `v0.4.0` experiment takeaways
 
 The detailed experiment log lives in
@@ -175,6 +186,17 @@ The current direction is depth-oriented: improve the normal search cost first,
 then use tactical facts only for cheap safety, move ordering, or narrow forced
 branches that improve reached depth under the same budget.
 
+On the easier side, depth can be lowered further than the current D3 baseline
+without allowing obvious local-threat blunders. A focused tactical sweep showed
+`search-d1`, `search-d2`, and `search-d3` all passing the `4/4` hard safety-gate
+cases. D1 passed `13/16` total tactical cases, D2 passed `12/16`, and D3 passed
+`11/16`; the non-hard cases are diagnostic shape/eval probes, so the key result
+is that the safety gate covers immediate local win/block/open-three handling
+even at depth 1. A 64-games-per-pair Renju tournament still produced a clear
+strength ladder: D1 lost to D2 by `16-4-44`, D1 lost to D3 by `13-0-51`, and D2
+lost to D3 by `11-2-51`. That makes D1 a plausible beginner/easy bot, D2 a
+casual-but-less-soft bot, and D3 the stable baseline.
+
 `child_limit` is currently a lab knob, not a default. Early tests show it is
 most useful when paired with tactical ordering: pre-cleanup tests showed that a
 cap without ordering dropped too much important coverage, while tactical-first
@@ -188,6 +210,16 @@ searched far fewer nodes, and reached more completed depth under the same
 reached deeper on average than D7 cap8 but lost the head-to-head, suggesting
 cap4 cuts too much breadth. That makes the cap a useful lab axis for
 harder/slower search variants, but not yet a product default.
+
+A wider 64-games-per-pair Renju tournament with the centered opening suite
+across `search-d1`, `search-d3`, `search-d5+tactical-first+child-cap-8`, and
+`search-d7+tactical-first+child-cap-8` confirmed the ladder shape: D1 was clearly
+soft, D3 sat in the middle, and the two capped variants occupied the harder
+side. Pairwise results were D1/D3 `3-0-61`, D1/D5-cap8 `3-0-61`, D1/D7-cap8
+`3-0-61`, D3/D5-cap8 `23-0-41`, D3/D7-cap8 `15-0-49`, and D5-cap8/D7-cap8
+`26-1-37`. D7 cap8 is the stronger hard-side bot in this suite, but it spent far
+more budget than D5 cap8. Treat D5 cap8 as the efficient hard bot and D7 cap8 as
+the slower hard-side variant.
 
 The key assumption is that depth remains the mechanism for seeing long play.
 Non-tactical alpha-beta should find winning combinations if it can search deep
@@ -316,4 +348,7 @@ Score per run = `base × open_ends_count`. A fully open four (score 20,000) is t
 - Eval doesn't detect double-threat patterns (double-three, four+three)
 - Candidate radius 2 may miss some long-range setups
 - No opening book — always searches from scratch on move 1
+- Opening-suite balance is still hand-curated; future eval should track opening
+  IDs and retire templates that remain color-dominated under stronger reference
+  bots
 - TT grows unbounded (no eviction); for longer matches this could be addressed with a fixed-size table and age-based replacement

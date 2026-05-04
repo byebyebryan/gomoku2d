@@ -1,4 +1,4 @@
-use gomoku_bot::{Bot, RandomBot};
+use gomoku_bot::Bot;
 use gomoku_core::{Board, Color, GameResult, Move, Replay, RuleConfig};
 use std::time::Instant;
 
@@ -12,11 +12,10 @@ pub struct MatchLimits {
     pub max_game_ms: Option<u64>,
 }
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct MatchSetup {
-    /// Number of seeded random opening moves to apply before bots take over.
-    pub opening_plies: usize,
-    pub opening_seed: u64,
+    /// Pre-applied opening moves before bots take over.
+    pub opening_moves: Vec<Move>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -101,11 +100,8 @@ pub fn run_match_with_setup(
 
     let start = Instant::now();
     let mut move_num: usize = 0;
-    let mut opening_bot = RandomBot::seeded(setup.opening_seed);
-
-    for _ in 0..setup.opening_plies {
+    for mv in setup.opening_moves {
         let player = board.current_player;
-        let mv = opening_bot.choose_move(&board);
         let result = board
             .apply_move(mv)
             .expect("opening bot played illegal move");
