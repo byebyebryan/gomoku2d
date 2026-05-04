@@ -64,17 +64,17 @@ config, not canonical product presets.
 
 | Alias | Config | Intent |
 |---|---|---|
-| `fast` | depth 2, `near_all_r2`, `opponent_reply_search_probe` | cheap comparison target |
-| `balanced` | depth 3, `near_all_r2`, `opponent_reply_search_probe` | current browser practice-bot depth |
-| `deep` | depth 5, `near_all_r2`, `opponent_reply_search_probe` | current CLI default depth |
+| `fast` | depth 2, `near_all_r2`, `opponent_reply_local_threat_probe` | cheap comparison target |
+| `balanced` | depth 3, `near_all_r2`, `opponent_reply_local_threat_probe` | current browser practice-bot depth |
+| `deep` | depth 5, `near_all_r2`, `opponent_reply_local_threat_probe` | current CLI default depth |
 
 Append `+near-all-r1`, `+near-all-r2`, or `+near-all-r3` to change the candidate
 source radius. Append `+no-safety` to disable the root safety gate. For example,
 `search-d3+near-all-r1+no-safety` keeps the depth-3 search but uses a radius-1
 candidate source and no root safety gate. Append `+opponent-reply-search-probe`
-to explicitly re-enable the current safety gate in combined specs. Append
-`+opponent-reply-local-threat-probe` to try the experimental local-threat safety
-gate. These are diagnostic switches, not product presets.
+to compare against the older search-like safety gate in combined specs. Append
+`+opponent-reply-local-threat-probe` to explicitly select the current default
+local-threat safety gate. These are diagnostic switches, not product presets.
 
 Legacy specs still work: plain `baseline` uses `--depth`, `baseline-N` creates a
 custom fixed-depth baseline bot, and `--time-ms` can cap search bots during CLI
@@ -217,7 +217,7 @@ that replay format directly.
           "candidate_radius": 2,
           "candidate_source": "near_all_r2",
           "legality_gate": "exact_rules",
-          "safety_gate": "opponent_reply_search_probe",
+          "safety_gate": "opponent_reply_local_threat_probe",
           "move_ordering": "tt_first_board_order",
           "search_algorithm": "alpha_beta_id",
           "static_eval": "line_shape_eval"

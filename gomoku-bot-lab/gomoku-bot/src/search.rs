@@ -1865,7 +1865,7 @@ impl SearchBotConfig {
             time_budget_ms: None,
             cpu_time_budget_ms: None,
             candidate_radius: 2,
-            safety_gate: SafetyGate::OpponentReplySearchProbe,
+            safety_gate: SafetyGate::OpponentReplyLocalThreatProbe,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
@@ -1878,7 +1878,7 @@ impl SearchBotConfig {
             time_budget_ms: Some(time_budget_ms),
             cpu_time_budget_ms: None,
             candidate_radius: 2,
-            safety_gate: SafetyGate::OpponentReplySearchProbe,
+            safety_gate: SafetyGate::OpponentReplyLocalThreatProbe,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
@@ -1891,7 +1891,7 @@ impl SearchBotConfig {
             time_budget_ms: None,
             cpu_time_budget_ms: Some(cpu_time_budget_ms),
             candidate_radius: 2,
-            safety_gate: SafetyGate::OpponentReplySearchProbe,
+            safety_gate: SafetyGate::OpponentReplyLocalThreatProbe,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
@@ -2397,7 +2397,10 @@ mod tests {
             CandidateSource::NearAll { radius: 2 }
         );
         assert_eq!(baseline.legality_gate(), LegalityGate::ExactRules);
-        assert_eq!(baseline.safety_gate(), SafetyGate::OpponentReplySearchProbe);
+        assert_eq!(
+            baseline.safety_gate(),
+            SafetyGate::OpponentReplyLocalThreatProbe
+        );
         assert_eq!(
             baseline.move_ordering,
             MoveOrdering::TranspositionFirstBoardOrder
@@ -2461,7 +2464,7 @@ mod tests {
         assert_eq!(trace["config"]["legality_gate"], "exact_rules");
         assert_eq!(
             trace["config"]["safety_gate"],
-            "opponent_reply_search_probe"
+            "opponent_reply_local_threat_probe"
         );
         assert_eq!(trace["config"]["move_ordering"], "tt_first_board_order");
         assert_eq!(trace["config"]["search_algorithm"], "alpha_beta_id");

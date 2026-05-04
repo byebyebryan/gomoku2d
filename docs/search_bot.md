@@ -64,16 +64,16 @@ The lab tools define temporary aliases over these fields for experiments:
 
 | Alias | Max depth | Candidate source | Safety gate | Intent |
 |---|---:|---|---|---|
-| `fast` | 2 | `near_all_r2` | `opponent_reply_search_probe` | cheap comparison target |
-| `balanced` | 3 | `near_all_r2` | `opponent_reply_search_probe` | current browser practice-bot depth |
-| `deep` | 5 | `near_all_r2` | `opponent_reply_search_probe` | current CLI default depth |
+| `fast` | 2 | `near_all_r2` | `opponent_reply_local_threat_probe` | cheap comparison target |
+| `balanced` | 3 | `near_all_r2` | `opponent_reply_local_threat_probe` | current browser practice-bot depth |
+| `deep` | 5 | `near_all_r2` | `opponent_reply_local_threat_probe` | current CLI default depth |
 
 For lab-only ablations, append `+near-all-r1`, `+near-all-r2`, or
 `+near-all-r3` to change candidate-source radius. Append `+no-safety`,
 `+opponent-reply-search-probe`, or `+opponent-reply-local-threat-probe` to choose
 the safety gate, for example `search-d5+near-all-r3+no-safety`. These switches
 measure one pipeline axis at a time; defaults remain `near_all_r2` plus
-`opponent_reply_search_probe`.
+`opponent_reply_local_threat_probe`.
 
 These aliases are not durable product identity, and they are not character bots
 yet. They exist so the lab can benchmark stable configs before deciding whether
@@ -90,7 +90,7 @@ Search traces include both the result and the config:
     "candidate_radius": 2,
     "candidate_source": "near_all_r2",
     "legality_gate": "exact_rules",
-    "safety_gate": "opponent_reply_search_probe",
+    "safety_gate": "opponent_reply_local_threat_probe",
     "move_ordering": "tt_first_board_order",
     "search_algorithm": "alpha_beta_id",
     "static_eval": "line_shape_eval"

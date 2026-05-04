@@ -554,7 +554,7 @@ cargo bench -p gomoku-bot --bench search_perf -- "balanced/(combo_create_double_
   preserves exact move legality and winning semantics while removing repeated
   board mutation from a hot query used by UI hints and the search safety gate.
 - The end-to-end search improvement is larger on safety-heavy positions because
-  `opponent_reply_search_probe` calls
+  the older `opponent_reply_search_probe` calls
   `has_multiple_immediate_winning_moves_for()` many times.
 
 ## Optimization pass 5 snapshot

@@ -13,7 +13,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             time_budget_ms: None,
             cpu_time_budget_ms: None,
             candidate_radius: 2,
-            safety_gate: SafetyGate::OpponentReplySearchProbe,
+            safety_gate: SafetyGate::OpponentReplyLocalThreatProbe,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
@@ -26,7 +26,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             time_budget_ms: None,
             cpu_time_budget_ms: None,
             candidate_radius: 2,
-            safety_gate: SafetyGate::OpponentReplySearchProbe,
+            safety_gate: SafetyGate::OpponentReplyLocalThreatProbe,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
@@ -39,7 +39,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             time_budget_ms: None,
             cpu_time_budget_ms: None,
             candidate_radius: 2,
-            safety_gate: SafetyGate::OpponentReplySearchProbe,
+            safety_gate: SafetyGate::OpponentReplyLocalThreatProbe,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
@@ -170,7 +170,7 @@ mod tests {
         assert_eq!(config.candidate_radius, 2);
         assert_eq!(
             config.safety_gate,
-            super::SafetyGate::OpponentReplySearchProbe
+            super::SafetyGate::OpponentReplyLocalThreatProbe
         );
     }
 
@@ -240,7 +240,10 @@ mod tests {
             .expect("expected near-all-r1 search spec to parse");
         assert_eq!(r1.max_depth, 3);
         assert_eq!(r1.candidate_radius, 1);
-        assert_eq!(r1.safety_gate, super::SafetyGate::OpponentReplySearchProbe);
+        assert_eq!(
+            r1.safety_gate,
+            super::SafetyGate::OpponentReplyLocalThreatProbe
+        );
 
         let r3 = super::search_config_from_lab_spec(
             "balanced+near-all-r3+no-safety",
