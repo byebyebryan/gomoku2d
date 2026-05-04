@@ -15,6 +15,8 @@ const SHUFFLED_ELO_SAMPLES: usize = 256;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TournamentRunReport {
     pub bots: Vec<String>,
+    #[serde(default = "default_schedule")]
+    pub schedule: String,
     pub rules: RuleConfig,
     pub games_per_pair: u32,
     pub seed: u64,
@@ -1032,7 +1034,7 @@ pub fn render_tournament_report_html_with_options(
     }
     html.push_str("</nav>");
     html.push_str("<p class=\"eyebrow\">Gomoku2D Bot Lab</p><h1>Bot Lab Report</h1>");
-    html.push_str("<p class=\"lede\">A round-robin tournament report for comparing bot specs under one rule set, opening policy, and search budget.</p></header>");
+    html.push_str("<p class=\"lede\">A bot evaluation report for comparing specs under one rule set, opening policy, and search budget.</p></header>");
     if report.provenance.git_dirty == Some(true) {
         html.push_str(
             "<p class=\"run-warning\">Development run: generated from a dirty git worktree.</p>",
@@ -1040,6 +1042,7 @@ pub fn render_tournament_report_html_with_options(
     }
 
     html.push_str("<section class=\"cards\"><div class=\"card-group\"><h2>Tournament</h2><div class=\"card-row\">");
+    metric_card(&mut html, "Workflow", report.run.schedule.clone());
     metric_card(&mut html, "Entrants", entrant_summary(report));
     metric_card(&mut html, "Schedule", schedule_summary(report));
     metric_card(
@@ -1276,11 +1279,12 @@ fn collapse_searchbot_depth_labels(labels: &[String]) -> Option<String> {
 }
 
 fn schedule_summary(report: &TournamentReport) -> String {
-    let entrants = report.run.bots.len();
-    let pair_count = entrants.saturating_mul(entrants.saturating_sub(1)) / 2;
+    let pair_count = report.pairwise.len();
+    let pair_word = if pair_count == 1 { "pair" } else { "pairs" };
     format!(
-        "{} pairs x {} games = {} matches",
+        "{} {} x {} games = {} matches",
         pair_count,
+        pair_word,
         report.run.games_per_pair,
         report.matches.len()
     )
@@ -1295,6 +1299,10 @@ fn opening_summary(report: &TournamentReport) -> String {
 
 fn default_opening_policy() -> String {
     "random-legal".to_string()
+}
+
+fn default_schedule() -> String {
+    "round-robin".to_string()
 }
 
 fn bot_label(report: &TournamentReport, bot: &str) -> String {
@@ -1418,7 +1426,7 @@ fn render_how_to_read_section(html: &mut String) {
     term_card(
         html,
         "Run Shape",
-        "Round robin. Schedule shows pair count, games per pair, and total matches. Opening shows the seeded legal moves before bots take over.",
+        "Workflow names the pairing mode. Schedule shows played pair count, games per pair, and total matches. Opening shows the seeded legal moves before bots take over.",
     );
     term_card(
         html,
@@ -2006,6 +2014,18 @@ mod tests {
     }
 
     #[test]
+    fn schedule_summary_uses_played_pairs_for_sparse_schedules() {
+        let mut report = sample_report();
+        report.run.bots = vec![
+            "candidate".to_string(),
+            "anchor-a".to_string(),
+            "anchor-b".to_string(),
+        ];
+
+        assert_eq!(schedule_summary(&report), "1 pair x 2 games = 2 matches");
+    }
+
+    #[test]
     fn html_report_combines_git_commit_and_dirty_flag() {
         let mut report = sample_report();
         report.provenance.git_commit = Some("abcdef123456".to_string());
@@ -2106,6 +2126,7 @@ mod tests {
 
         let report = TournamentReport::from_json(input).expect("report should parse");
 
+        assert_eq!(report.run.schedule, "round-robin");
         assert_eq!(report.standings[0].eval_calls, 0);
         assert_eq!(report.standings[0].search_candidate_generations, 0);
         assert_eq!(report.matches[0].black_stats.root_legality_checks, 0);
@@ -2153,6 +2174,7 @@ mod tests {
             provenance: ReportProvenance::default(),
             run: TournamentRunReport {
                 bots: vec!["fast".to_string(), "balanced".to_string()],
+                schedule: "round-robin".to_string(),
                 rules: RuleConfig {
                     board_size: 15,
                     win_length: 5,

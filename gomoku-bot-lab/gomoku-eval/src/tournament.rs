@@ -75,6 +75,12 @@ struct MatchRecordInput<'a> {
     a_is_black: bool,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct TournamentPair {
+    pub bot_a_idx: usize,
+    pub bot_b_idx: usize,
+}
+
 impl Default for TournamentResults {
     fn default() -> Self {
         Self::new()
@@ -327,32 +333,68 @@ pub fn run_round_robin_parallel(
     options: TournamentOptions,
     mut on_game_end: impl FnMut(&str, &str, &MatchResult),
 ) -> TournamentResults {
+    let pairs = round_robin_pairs(bot_factories.len());
+    run_scheduled_pairs_parallel(
+        bot_factories,
+        &pairs,
+        games_per_pair,
+        config,
+        options,
+        &mut on_game_end,
+    )
+}
+
+pub fn round_robin_pairs(bot_count: usize) -> Vec<TournamentPair> {
+    let mut pairs = Vec::new();
+    for i in 0..bot_count {
+        for j in (i + 1)..bot_count {
+            pairs.push(TournamentPair {
+                bot_a_idx: i,
+                bot_b_idx: j,
+            });
+        }
+    }
+    pairs
+}
+
+pub fn run_scheduled_pairs_parallel(
+    bot_factories: &[(String, TournamentBotFactory)],
+    pairs: &[TournamentPair],
+    games_per_pair: u32,
+    config: RuleConfig,
+    options: TournamentOptions,
+    mut on_game_end: impl FnMut(&str, &str, &MatchResult),
+) -> TournamentResults {
     let mut results = TournamentResults::new();
     results.initialize_players(bot_factories);
 
     let mut jobs = Vec::new();
     let mut match_idx = 0usize;
-    for i in 0..bot_factories.len() {
-        for j in (i + 1)..bot_factories.len() {
-            for game in 0..games_per_pair {
-                match_idx += 1;
-                let paired_game = game / 2;
-                jobs.push(TournamentJob {
-                    match_idx,
-                    bot_a_idx: i,
-                    bot_b_idx: j,
-                    a_is_black: game % 2 == 0,
-                    opening_moves: opening_moves_for_game(
-                        options.opening_policy,
-                        &config,
-                        options.opening_plies,
-                        options.seed,
-                        paired_game,
-                    ),
-                    bot_a_seed: derive_seed(options.seed, [i as u64, j as u64, game as u64, 0]),
-                    bot_b_seed: derive_seed(options.seed, [i as u64, j as u64, game as u64, 1]),
-                });
-            }
+    for pair in pairs {
+        for game in 0..games_per_pair {
+            match_idx += 1;
+            let paired_game = game / 2;
+            jobs.push(TournamentJob {
+                match_idx,
+                bot_a_idx: pair.bot_a_idx,
+                bot_b_idx: pair.bot_b_idx,
+                a_is_black: game % 2 == 0,
+                opening_moves: opening_moves_for_game(
+                    options.opening_policy,
+                    &config,
+                    options.opening_plies,
+                    options.seed,
+                    paired_game,
+                ),
+                bot_a_seed: derive_seed(
+                    options.seed,
+                    [pair.bot_a_idx as u64, pair.bot_b_idx as u64, game as u64, 0],
+                ),
+                bot_b_seed: derive_seed(
+                    options.seed,
+                    [pair.bot_a_idx as u64, pair.bot_b_idx as u64, game as u64, 1],
+                ),
+            });
         }
     }
 
@@ -579,5 +621,57 @@ mod tests {
             assert_eq!(second_color_opening, second_swapped_opening);
             assert_eq!(second_color_opening, second_opening);
         }
+    }
+
+    #[test]
+    fn parallel_scheduled_pairs_runs_only_requested_pairs() {
+        let factories: Vec<(String, TournamentBotFactory)> = vec![
+            (
+                "candidate".to_string(),
+                Arc::new(|seed| Box::new(RandomBot::seeded(seed))),
+            ),
+            (
+                "anchor-a".to_string(),
+                Arc::new(|seed| Box::new(RandomBot::seeded(seed))),
+            ),
+            (
+                "anchor-b".to_string(),
+                Arc::new(|seed| Box::new(RandomBot::seeded(seed))),
+            ),
+        ];
+        let config = RuleConfig {
+            variant: Variant::Freestyle,
+            ..Default::default()
+        };
+
+        let results = run_scheduled_pairs_parallel(
+            &factories,
+            &[TournamentPair {
+                bot_a_idx: 0,
+                bot_b_idx: 1,
+            }],
+            2,
+            config,
+            TournamentOptions {
+                limits: MatchLimits {
+                    max_moves: Some(1),
+                    max_game_ms: None,
+                },
+                seed: 7,
+                opening_plies: 0,
+                opening_policy: OpeningPolicy::CenteredSuite,
+                threads: 2,
+            },
+            |_, _, _| {},
+        );
+
+        assert_eq!(results.matches.len(), 2);
+        assert!(results
+            .matches
+            .iter()
+            .all(|record| record.black_name != "anchor-b" && record.white_name != "anchor-b"));
+        assert_eq!(*results.moves.get("candidate").unwrap(), 1);
+        assert_eq!(*results.moves.get("anchor-a").unwrap(), 1);
+        assert_eq!(*results.moves.get("anchor-b").unwrap(), 0);
     }
 }

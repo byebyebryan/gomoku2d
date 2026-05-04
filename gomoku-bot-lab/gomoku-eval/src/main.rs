@@ -17,7 +17,8 @@ use gomoku_eval::scenario::{
 };
 use gomoku_eval::seed::derive_seed;
 use gomoku_eval::tournament::{
-    default_thread_count, run_round_robin_parallel, TournamentBotFactory, TournamentOptions,
+    default_thread_count, round_robin_pairs, run_scheduled_pairs_parallel, TournamentBotFactory,
+    TournamentOptions, TournamentPair,
 };
 
 #[path = "../../benchmarks/search_configs.rs"]
@@ -42,6 +43,24 @@ impl From<CliOpeningPolicy> for OpeningPolicy {
         match value {
             CliOpeningPolicy::CenteredSuite => OpeningPolicy::CenteredSuite,
             CliOpeningPolicy::RandomLegal => OpeningPolicy::RandomLegal,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+#[clap(rename_all = "kebab-case")]
+enum CliTournamentSchedule {
+    RoundRobin,
+    HeadToHead,
+    Gauntlet,
+}
+
+impl CliTournamentSchedule {
+    fn label(self) -> &'static str {
+        match self {
+            CliTournamentSchedule::RoundRobin => "round-robin",
+            CliTournamentSchedule::HeadToHead => "head-to-head",
+            CliTournamentSchedule::Gauntlet => "gauntlet",
         }
     }
 }
@@ -132,9 +151,21 @@ enum Commands {
         #[command(flatten)]
         options: EvalOptions,
 
+        /// Pairing workflow used for tournament jobs
+        #[arg(long, value_enum, default_value = "round-robin")]
+        schedule: CliTournamentSchedule,
+
         /// Comma-separated list of bots (e.g. "random,fast,balanced,deep,baseline-5")
         #[arg(long)]
-        bots: String,
+        bots: Option<String>,
+
+        /// Candidate bot for gauntlet mode
+        #[arg(long)]
+        candidate: Option<String>,
+
+        /// Comma-separated anchor bots for gauntlet mode
+        #[arg(long)]
+        anchors: Option<String>,
 
         /// Number of games each pair plays
         #[arg(long, default_value_t = 2)]
@@ -181,6 +212,201 @@ enum Commands {
 
 type BotFactory = TournamentBotFactory;
 type NamedBotFactory = (String, BotFactory);
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct TournamentPlan {
+    bot_names: Vec<String>,
+    pairs: Vec<TournamentPair>,
+}
+
+fn tournament_plan(
+    schedule: CliTournamentSchedule,
+    bots: Option<&str>,
+    candidate: Option<&str>,
+    anchors: Option<&str>,
+) -> Result<TournamentPlan, String> {
+    match schedule {
+        CliTournamentSchedule::RoundRobin => {
+            reject_gauntlet_args(schedule, candidate, anchors)?;
+            let bot_names =
+                parse_required_bot_list(bots, "Round-robin tournament requires --bots.")?;
+            if bot_names.len() < 2 {
+                return Err("Round-robin tournament requires at least 2 bots.".to_string());
+            }
+            validate_unique_bot_names(&bot_names)?;
+            let pairs = round_robin_pairs(bot_names.len());
+            Ok(TournamentPlan { bot_names, pairs })
+        }
+        CliTournamentSchedule::HeadToHead => {
+            reject_gauntlet_args(schedule, candidate, anchors)?;
+            let bot_names =
+                parse_required_bot_list(bots, "Head-to-head tournament requires --bots.")?;
+            if bot_names.len() != 2 {
+                return Err("Head-to-head tournament requires exactly 2 bots.".to_string());
+            }
+            validate_unique_bot_names(&bot_names)?;
+            Ok(TournamentPlan {
+                bot_names,
+                pairs: vec![TournamentPair {
+                    bot_a_idx: 0,
+                    bot_b_idx: 1,
+                }],
+            })
+        }
+        CliTournamentSchedule::Gauntlet => {
+            if bots.is_some() {
+                return Err(
+                    "Gauntlet tournament uses --candidate and --anchors instead of --bots."
+                        .to_string(),
+                );
+            }
+            let candidate_names =
+                parse_required_bot_list(candidate, "Gauntlet tournament requires --candidate.")?;
+            if candidate_names.len() != 1 {
+                return Err("Gauntlet tournament requires exactly 1 candidate.".to_string());
+            }
+            let anchor_names =
+                parse_required_bot_list(anchors, "Gauntlet tournament requires --anchors.")?;
+            if anchor_names.is_empty() {
+                return Err("Gauntlet tournament requires at least 1 anchor.".to_string());
+            }
+
+            let mut bot_names = candidate_names;
+            bot_names.extend(anchor_names);
+            validate_unique_bot_names(&bot_names)?;
+            let pairs = (1..bot_names.len())
+                .map(|bot_b_idx| TournamentPair {
+                    bot_a_idx: 0,
+                    bot_b_idx,
+                })
+                .collect();
+            Ok(TournamentPlan { bot_names, pairs })
+        }
+    }
+}
+
+fn parse_required_bot_list(input: Option<&str>, message: &str) -> Result<Vec<String>, String> {
+    let Some(input) = input else {
+        return Err(message.to_string());
+    };
+    let bot_names = parse_bot_list(input);
+    if bot_names.is_empty() {
+        return Err(message.to_string());
+    }
+    Ok(bot_names)
+}
+
+fn parse_bot_list(input: &str) -> Vec<String> {
+    input
+        .split(',')
+        .map(str::trim)
+        .filter(|name| !name.is_empty())
+        .map(ToString::to_string)
+        .collect()
+}
+
+fn reject_gauntlet_args(
+    schedule: CliTournamentSchedule,
+    candidate: Option<&str>,
+    anchors: Option<&str>,
+) -> Result<(), String> {
+    if candidate.is_some() || anchors.is_some() {
+        return Err(format!(
+            "{} tournament uses --bots, not --candidate/--anchors.",
+            schedule.label()
+        ));
+    }
+    Ok(())
+}
+
+fn validate_unique_bot_names(bot_names: &[String]) -> Result<(), String> {
+    for (idx, name) in bot_names.iter().enumerate() {
+        if bot_names.iter().skip(idx + 1).any(|other| other == name) {
+            return Err(format!("Duplicate bot in tournament schedule: {name}"));
+        }
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tournament_plan_builds_round_robin_pairs() {
+        let plan = tournament_plan(CliTournamentSchedule::RoundRobin, Some("a,b,c"), None, None)
+            .expect("round robin plan should parse");
+
+        assert_eq!(plan.bot_names, vec!["a", "b", "c"]);
+        assert_eq!(
+            plan.pairs,
+            vec![
+                TournamentPair {
+                    bot_a_idx: 0,
+                    bot_b_idx: 1,
+                },
+                TournamentPair {
+                    bot_a_idx: 0,
+                    bot_b_idx: 2,
+                },
+                TournamentPair {
+                    bot_a_idx: 1,
+                    bot_b_idx: 2,
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn tournament_plan_requires_exactly_two_head_to_head_bots() {
+        let plan = tournament_plan(CliTournamentSchedule::HeadToHead, Some("d5,d7"), None, None)
+            .expect("head-to-head plan should parse");
+
+        assert_eq!(plan.bot_names, vec!["d5", "d7"]);
+        assert_eq!(
+            plan.pairs,
+            vec![TournamentPair {
+                bot_a_idx: 0,
+                bot_b_idx: 1,
+            }]
+        );
+
+        let err = tournament_plan(
+            CliTournamentSchedule::HeadToHead,
+            Some("d3,d5,d7"),
+            None,
+            None,
+        )
+        .unwrap_err();
+        assert!(err.contains("exactly 2 bots"));
+    }
+
+    #[test]
+    fn tournament_plan_builds_candidate_vs_anchor_gauntlet() {
+        let plan = tournament_plan(
+            CliTournamentSchedule::Gauntlet,
+            None,
+            Some("candidate"),
+            Some("anchor-a,anchor-b"),
+        )
+        .expect("gauntlet plan should parse");
+
+        assert_eq!(plan.bot_names, vec!["candidate", "anchor-a", "anchor-b"]);
+        assert_eq!(
+            plan.pairs,
+            vec![
+                TournamentPair {
+                    bot_a_idx: 0,
+                    bot_b_idx: 1,
+                },
+                TournamentPair {
+                    bot_a_idx: 0,
+                    bot_b_idx: 2,
+                },
+            ]
+        );
+    }
+}
 
 fn make_bot_factory(
     spec: &str,
@@ -537,7 +763,10 @@ fn main() {
         }
         Commands::Tournament {
             options,
+            schedule,
             bots,
+            candidate,
+            anchors,
             games_per_pair,
             replay_dir,
             report_json,
@@ -553,14 +782,13 @@ fn main() {
                 search_cpu_time_ms,
                 seed,
             } = eval_context(&options);
-            let bot_names: Vec<String> = bots
-                .split(',')
-                .map(|s| s.trim().to_string())
-                .filter(|s| !s.is_empty())
-                .collect();
-            if bot_names.len() < 2 {
-                exit_with_error("Tournament requires at least 2 bots.");
-            }
+            let TournamentPlan { bot_names, pairs } = tournament_plan(
+                schedule,
+                bots.as_deref(),
+                candidate.as_deref(),
+                anchors.as_deref(),
+            )
+            .unwrap_or_else(|err| exit_with_error(err));
             if games_per_pair % 2 != 0 {
                 eprintln!(
                     "Warning: odd games-per-pair leaves each pair with uneven color coverage."
@@ -576,8 +804,10 @@ fn main() {
             }
 
             println!("--- Tournament ---");
+            println!("Schedule: {}", schedule.label());
             println!("Bots: {:?}", bot_names);
             println!("Rule: {rule_label}");
+            println!("Pairings: {}", pairs.len());
             println!("Games per pair: {}", games_per_pair);
             println!("Seed: {}", seed);
             println!(
@@ -615,8 +845,9 @@ fn main() {
 
             let mut match_idx = 0;
             let tournament_start = Instant::now();
-            let results = run_round_robin_parallel(
+            let results = run_scheduled_pairs_parallel(
                 &factories,
+                &pairs,
                 games_per_pair,
                 config.clone(),
                 TournamentOptions {
@@ -658,6 +889,7 @@ fn main() {
             let report = match TournamentReport::from_results(
                 TournamentRunReport {
                     bots: bot_names,
+                    schedule: schedule.label().to_string(),
                     rules: config,
                     games_per_pair,
                     seed,
