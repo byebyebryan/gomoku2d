@@ -19,6 +19,8 @@ pub struct TournamentRunReport {
     pub games_per_pair: u32,
     pub seed: u64,
     pub opening_plies: usize,
+    #[serde(default = "default_opening_policy")]
+    pub opening_policy: String,
     pub threads: usize,
     pub search_time_ms: Option<u64>,
     pub search_cpu_time_ms: Option<u64>,
@@ -1286,9 +1288,13 @@ fn schedule_summary(report: &TournamentReport) -> String {
 
 fn opening_summary(report: &TournamentReport) -> String {
     format!(
-        "base seed {}, {} plies",
-        report.run.seed, report.run.opening_plies
+        "{}, base seed {}, {} plies",
+        report.run.opening_policy, report.run.seed, report.run.opening_plies
     )
+}
+
+fn default_opening_policy() -> String {
+    "random-legal".to_string()
 }
 
 fn bot_label(report: &TournamentReport, bot: &str) -> String {
@@ -2155,6 +2161,7 @@ mod tests {
                 games_per_pair: 2,
                 seed: 42,
                 opening_plies: 4,
+                opening_policy: "centered-suite".to_string(),
                 threads: 1,
                 search_time_ms: None,
                 search_cpu_time_ms: Some(1000),

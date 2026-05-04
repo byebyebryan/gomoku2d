@@ -1023,6 +1023,27 @@ ladder above to keep each slice honest.
    than D7 cap8 but likely cut too much breadth. Treat child caps as a promising
    depth/difficulty lab axis, with the next question being whether cap size or
    depth can compete with uncapped D5 under the same CPU budget.
+   On the easy side, a tactical sweep showed that even `search-d1` passes all
+   `4/4` hard safety-gate cases; it passed `13/16` total tactical cases, while
+   D2 passed `12/16` and D3 passed `11/16`. A 64-games-per-pair Renju tournament
+   across D1/D2/D3 still showed a clear strength ladder: D1 lost to D2 by
+   `16-4-44`, D1 lost to D3 by `13-0-51`, and D2 lost to D3 by `11-2-51`.
+   A later 64-games-per-pair Renju ladder run across D1, D3,
+   `search-d5+tactical-first+child-cap-8`, and
+   `search-d7+tactical-first+child-cap-8` initially confirmed the intended
+   product shape, but also exposed a harness problem: random opening plies were
+   whole-board legal moves, and opening seeds were tied to bot-pair indices. That
+   made wide and focused tournaments compare different opening suites and allowed
+   color-dominated random openings to hide strength differences.
+
+   The harness now defaults to a shared `centered-suite` opening policy: 32
+   deterministic 4-ply, center-local Renju-safe templates, each played with both
+   color assignments in a 64-games-per-pair run. With that suite, the D1/D3/D5/D7
+   ladder results were D1/D3 `3-0-61`, D1/D5 cap8 `3-0-61`, D1/D7 cap8 `3-0-61`,
+   D3/D5 cap8 `23-0-41`, D3/D7 cap8 `15-0-49`, and D5 cap8/D7 cap8 `26-1-37`.
+   D7 cap8 was the stronger hard-side bot in this suite, while D5 cap8 remained
+   much cheaper. Treat D5 cap8 as the efficient hard bot and D7 cap8 as the slower
+   hard-side variant.
 6. **Prototype bounded forced-chain search as lab-only.**
    Start at root or near-root, only when local facts provide concrete gain and
    defense squares. Keep strict caps and record all non-alpha-beta work in
