@@ -230,6 +230,44 @@ prior snapshot. Treat that as benchmark/code-layout noise to watch, not a
 product concern: the end-to-end default search path improved substantially, and
 pattern eval remains lab-only.
 
+## Optimization pass 9 snapshot
+
+Date: `2026-05-04`
+
+This pass replaced clone/apply local-threat annotation with a virtual
+board-after-move view. The tactical classifier now reads the hypothetical gain
+stone through a small view object instead of cloning the full board and applying
+the candidate move for every annotation.
+
+Verification:
+
+- added a parity test comparing virtual local-threat facts against the previous
+  clone/apply reference on five, open-four, closed-four, and broken-three cases
+- reran local-threat and tactical unit tests
+- reran focused tactical scenarios for `search-d3`,
+  `search-d5+tactical-first+child-cap-8`, and
+  `search-d7+tactical-first+child-cap-8`; all hard safety gates passed
+
+Focused `choose_move` benchmark, compared against the previous Criterion
+snapshot:
+
+| Benchmark | Change |
+|---|---:|
+| `fast/early_local_fight` | about `-72%` |
+| `fast/renju_forbidden_cross` | about `-69%` |
+| `fast/midgame_dense` | about `-79%` |
+| `balanced/early_local_fight` | about `-3%` |
+| `balanced/renju_forbidden_cross` | about `-6%` |
+| `balanced/midgame_dense` | about `-4%` |
+| `deep/early_local_fight` | about `-3%` |
+| `deep/renju_forbidden_cross` | within noise, about `+1%` |
+| `deep/midgame_dense` | about `-5%` |
+
+Interpretation: this is a quality-neutral hot-path cleanup worth keeping. The
+largest win is in shallow configs where the local-threat safety gate dominates
+runtime. Deeper configs still spend most time in search/eval, so the gain is
+smaller.
+
 ## Benchmark suites
 
 ### Core
