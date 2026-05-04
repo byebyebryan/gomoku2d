@@ -263,10 +263,38 @@ snapshot:
 | `deep/renju_forbidden_cross` | within noise, about `+1%` |
 | `deep/midgame_dense` | about `-5%` |
 
+Smoke tournament, compared against parent commit `b8d0fc2` with the same
+`48`-match Renju run:
+
+Command shape:
+
+```sh
+cargo run --release -p gomoku-eval -- tournament \
+  --bots search-d1,search-d3,search-d5+tactical-first+child-cap-8,search-d7+tactical-first+child-cap-8 \
+  --games-per-pair 8 \
+  --opening-policy centered-suite \
+  --opening-plies 4 \
+  --rule renju \
+  --search-cpu-time-ms 1000
+```
+
+| Bot | Before | After | Change |
+|---|---:|---:|---:|
+| `search-d1` | `7.62ms` | `6.74ms` | about `-12%` |
+| `search-d3` | `59.52ms` | `60.16ms` | about `+1%` |
+| `search-d5+tactical-first+child-cap-8` | `184.66ms` | `174.33ms` | about `-6%` |
+| `search-d7+tactical-first+child-cap-8` | `419.92ms` | `397.60ms` | about `-5%` |
+
+Tournament outcomes were unchanged: same `W-D-L`, same pairwise results, and
+all `48` games ended naturally. Overall tournament wall time improved from
+`30.457s` to `29.354s`, about `-4%`.
+
 Interpretation: this is a quality-neutral hot-path cleanup worth keeping. The
 largest win is in shallow configs where the local-threat safety gate dominates
 runtime. Deeper configs still spend most time in search/eval, so the gain is
-smaller.
+smaller. There is still no direct `pipeline/tactical_annotation` microbench; add
+one if we need isolated annotation-only timing instead of end-to-end search and
+tournament evidence.
 
 ## Benchmark suites
 
