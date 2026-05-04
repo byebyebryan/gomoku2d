@@ -72,8 +72,9 @@ Append `+near-all-r1`, `+near-all-r2`, or `+near-all-r3` to change the candidate
 source radius. Append `+no-safety` to disable the root safety gate. For example,
 `search-d3+near-all-r1+no-safety` keeps the depth-3 search but uses a radius-1
 candidate source and no root safety gate. Append `+opponent-reply-search-probe`
-to explicitly re-enable the current safety gate in combined specs. These are
-diagnostic switches, not product presets.
+to explicitly re-enable the current safety gate in combined specs. Append
+`+opponent-reply-local-threat-probe` to try the experimental local-threat safety
+gate. These are diagnostic switches, not product presets.
 
 Legacy specs still work: plain `baseline` uses `--depth`, `baseline-N` creates a
 custom fixed-depth baseline bot, and `--time-ms` can cap search bots during CLI
@@ -86,6 +87,14 @@ Current notes live in
 [`../docs/archive/v0_4_search_bot_enhancement_plan.md`](../docs/archive/v0_4_search_bot_enhancement_plan.md).
 
 More detailed strategy notes live in [`../docs/search_bot.md`](../docs/search_bot.md).
+The active `0.4.1` direction is a tactical ladder: local threat competence
+first, casual combo play next, then bounded forced-chain search before any
+product-facing offensive/defensive bot personalities. Tactical facts are meant
+to buy effective depth through safer narrowing, ordering, and selective
+extension, not to replace alpha-beta search with broad shape scoring. A full
+incremental frontier/threat-state model is intentionally deferred until the
+scan-based tactical annotation stage is stable and metrics show it is worth
+caching.
 
 ### Eval harness
 
