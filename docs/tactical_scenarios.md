@@ -37,9 +37,23 @@ Renju legality-only positions are intentionally not active tactical gates. They
 belong in core/search legality coverage unless they test a real tactical
 judgment beyond "do not play a forbidden move."
 
+The expected move check is intentionally concrete and narrow. The surrounding
+metadata explains what the case is trying to measure:
+
+- `role`: whether a miss is a hard safety regression or a diagnostic miss.
+- `layer`: whether the case is local, priority/race, or combo-oriented.
+- `intent`: whether the bot is completing, creating, reacting, preventing,
+  counter-threatening, or creating a double threat.
+- `shape`: the primary expected-move shape when the case has one. Priority
+  cases may contain other competing shapes on the board.
+
+The JSON report uses schema version `3`. Each result records those metadata
+fields, and the report includes grouped summaries by role, layer, and intent so
+hard-gate failures do not get buried inside diagnostic misses.
+
 ## Tactical Layers
 
-The corpus is split into three layers:
+The corpus is split into three explicit layers:
 
 - `local_*`: one localized threat fact in isolation. These cases cover complete,
   create, react, and prevent operations around a single shape.
@@ -87,24 +101,24 @@ lines start.
 
 Exact board prints are included in the case list below.
 
-| Case | Layer | Concept | Side | Role | Expected |
-| --- | --- | --- | --- | --- | --- |
-| `local_complete_open_four` | local | complete `OpenFour` | Black | hard | `G8` or `L8` |
-| `local_react_closed_four` | local | react to `ClosedFour` | Black | hard | `E1` |
-| `priority_complete_open_four_over_react_closed_four` | priority | complete four before block | Black | hard | `G8` or `L8` |
-| `priority_prevent_open_four_over_extend_three` | priority | prevent stronger threat over extending weaker one | White | hard | `G8` or `K8` |
-| `priority_create_open_four_over_prevent_open_three` | priority | counter-threat with four instead of blocking three | White | diagnostic | `B4` or `F4` |
-| `local_create_open_four` | local | create `OpenFour` | Black | diagnostic | `G8` or `K8` |
-| `local_create_closed_four` | local | create `ClosedFour` | Black | diagnostic | `K8` |
-| `local_create_broken_four` | local | create `BrokenFour` | Black | diagnostic | `J8` or `K8` |
-| `local_react_broken_four` | local | react to `BrokenFour` | White | diagnostic | `K8` |
-| `local_create_open_three` | local | create `OpenThree` | Black | diagnostic | `G8` or `J8` |
-| `local_prevent_open_four_from_open_three` | local | prevent `OpenThree` -> `OpenFour` | White | diagnostic | `G8` or `K8` |
-| `local_create_closed_three` | local | create `ClosedThree` | Black | diagnostic | `J8` |
-| `local_prevent_closed_four_from_closed_three` | local | prevent `ClosedThree` -> `ClosedFour` | White | diagnostic | `K8` |
-| `local_create_broken_three` | local | create `BrokenThree` | Black | diagnostic | `I8` or `J8` |
-| `local_prevent_broken_four_from_broken_three` | local | prevent `BrokenThree` -> `BrokenFour` | White | diagnostic | `I8` |
-| `combo_create_double_threat` | combo | create two immediate threats | Black | diagnostic | `J8` |
+| Case | Role | Layer | Intent | Shape | Side | Expected |
+| --- | --- | --- | --- | --- | --- | --- |
+| `local_complete_open_four` | hard | local | complete | `OpenFour` | Black | `G8` or `L8` |
+| `local_react_closed_four` | hard | local | react | `ClosedFour` | Black | `E1` |
+| `priority_complete_open_four_over_react_closed_four` | hard | priority | complete | `OpenFour` | Black | `G8` or `L8` |
+| `priority_prevent_open_four_over_extend_three` | hard | priority | prevent | `OpenThree` | White | `G8` or `K8` |
+| `priority_create_open_four_over_prevent_open_three` | diagnostic | priority | counter | `OpenFour` | White | `B4` or `F4` |
+| `local_create_open_four` | diagnostic | local | create | `OpenFour` | Black | `G8` or `K8` |
+| `local_create_closed_four` | diagnostic | local | create | `ClosedFour` | Black | `K8` |
+| `local_create_broken_four` | diagnostic | local | create | `BrokenFour` | Black | `J8` or `K8` |
+| `local_react_broken_four` | diagnostic | local | react | `BrokenFour` | White | `K8` |
+| `local_create_open_three` | diagnostic | local | create | `OpenThree` | Black | `G8` or `J8` |
+| `local_prevent_open_four_from_open_three` | diagnostic | local | prevent | `OpenThree` | White | `G8` or `K8` |
+| `local_create_closed_three` | diagnostic | local | create | `ClosedThree` | Black | `J8` |
+| `local_prevent_closed_four_from_closed_three` | diagnostic | local | prevent | `ClosedThree` | White | `K8` |
+| `local_create_broken_three` | diagnostic | local | create | `BrokenThree` | Black | `I8` or `J8` |
+| `local_prevent_broken_four_from_broken_three` | diagnostic | local | prevent | `BrokenThree` | White | `I8` |
+| `combo_create_double_threat` | diagnostic | combo | double threat | - | Black | `J8` |
 
 ## Board Legend
 

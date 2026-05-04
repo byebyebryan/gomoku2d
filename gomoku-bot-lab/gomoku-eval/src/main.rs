@@ -11,7 +11,8 @@ use gomoku_eval::report::{
     TournamentRunReport,
 };
 use gomoku_eval::scenario::{
-    run_tactical_scenarios, ScenarioSearchConfig, TacticalScenarioResult, TACTICAL_SCENARIO_CASES,
+    run_tactical_scenarios, ScenarioSearchConfig, TacticalScenarioGroupSummary,
+    TacticalScenarioReport, TacticalScenarioResult, TACTICAL_SCENARIO_CASES,
 };
 use gomoku_eval::seed::derive_seed;
 use gomoku_eval::tournament::{
@@ -292,11 +293,15 @@ fn print_tactical_scenario_result(result: &TacticalScenarioResult) {
     } else {
         result.expected_moves.join("/")
     };
+    let shape = result.shape.unwrap_or("-");
     println!(
-        "{:<5} {:<10} {:<16} {:?}/{:?} {:<32} actual {:<3} expect {:<7} depth {:>2} nodes {:>8} safety {:>5} eval {:>7} cand r/s {:>5}/{:<5} legal r/s {:>6}/{:<6} tt {:>5}/{:<5} cut {:>5} time {:>4}ms",
+        "{:<5} {:<10} {:<16} {:<8} {:<13} {:<12} {:?}/{:?} {:<48} actual {:<3} expect {:<7} depth {:>2} nodes {:>8} safety {:>5} eval {:>7} cand r/s {:>5}/{:<5} legal r/s {:>6}/{:<6} tt {:>5}/{:<5} cut {:>5} time {:>4}ms",
         status,
         result.config_id,
         result.role,
+        result.layer,
+        result.intent,
+        shape,
         result.variant,
         result.to_move,
         result.case_id,
@@ -315,6 +320,33 @@ fn print_tactical_scenario_result(result: &TacticalScenarioResult) {
         result.metrics.beta_cutoffs,
         result.metrics.time_ms
     );
+}
+
+fn print_tactical_group_summary(title: &str, summaries: &[TacticalScenarioGroupSummary]) {
+    println!("\n{title}");
+    for summary in summaries {
+        println!(
+            "  {:<16} {:>3}/{:<3} passed, {:>3} failed, avg depth {:>4.1}, avg total nodes {:>8.0}, avg safety {:>7.0}, avg time {:>5.1}ms",
+            summary.key,
+            summary.passed,
+            summary.total,
+            summary.failed,
+            summary.avg_depth_reached,
+            summary.avg_total_nodes,
+            summary.avg_safety_nodes,
+            summary.avg_time_ms
+        );
+    }
+}
+
+fn print_tactical_report_summary(report: &TacticalScenarioReport) {
+    println!(
+        "\n--- Summary ---\n{} passed / {} total ({} failed)",
+        report.passed, report.total, report.failed
+    );
+    print_tactical_group_summary("By role", &report.role_summaries);
+    print_tactical_group_summary("By layer", &report.layer_summaries);
+    print_tactical_group_summary("By intent", &report.intent_summaries);
 }
 
 fn main() {
@@ -714,10 +746,7 @@ fn main() {
                 print_tactical_scenario_result(result);
             }
 
-            println!(
-                "\n--- Summary ---\n{} passed / {} total ({} failed)",
-                report.passed, report.total, report.failed
-            );
+            print_tactical_report_summary(&report);
 
             if let Some(path) = &report_json {
                 let json = report.to_json().unwrap_or_else(|err| {

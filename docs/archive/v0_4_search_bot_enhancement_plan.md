@@ -953,32 +953,38 @@ Initial `0.4.1` local safety-gate experiment:
 The next work should avoid another broad tactical integration. Use the tactical
 ladder above to keep each slice honest.
 
-1. **Finish the local safety-gate decision.**
+1. **Realign tactical eval around the tactical ladder.**
+   Keep the existing one-move expected-move checks, but make the report schema
+   explicit about `role`, `layer`, `intent`, and optional `shape`. Summarize
+   results by role/layer/intent so hard safety failures, local diagnostics,
+   priority races, and combo probes are not collapsed into one flat pass/fail
+   count.
+2. **Finish the local safety-gate decision.**
    Confirm whether `opponent_reply_local_threat_probe` is semantically close
    enough to `opponent_reply_search_probe` for root safety. If yes, promote it
    as the cheaper default safety gate after a standard report-sized eval. If no,
    keep the learning and remove the suffix.
-2. **Extract tactical annotation as a real pipeline stage.**
+3. **Extract tactical annotation as a real pipeline stage.**
    Local threat facts should be available once per relevant move and reusable by
    safety, ordering, reports, and future forced-chain code. Do not hide scans
    inside eval leaves. Keep the API cache-friendly: explicit inputs, stable fact
    structs, clear candidate/reply ownership, and metrics for annotation work.
-3. **Try ordering before eval.**
+4. **Try ordering before eval.**
    Use local facts to rank forcing gains, immediate completions, and priority
    moves ahead of quiet candidates. Promotion requires better reached depth or
    tournament score, not only prettier tactical-scenario results.
-4. **Prototype bounded forced-chain search as lab-only.**
+5. **Prototype bounded forced-chain search as lab-only.**
    Start at root or near-root, only when local facts provide concrete gain and
    defense squares. Keep strict caps and record all non-alpha-beta work in
    traces. This is the first slice that can meaningfully support future
    offensive/defensive styles.
-5. **Defer full incremental frontier state until metrics justify it.**
+6. **Defer full incremental frontier state until metrics justify it.**
    A `SearchPosition` / `FrontierState` wrapper can maintain candidate masks,
    tactical annotations, and dirty cells around apply/undo, but only after the
    scan-based annotation semantics are stable. Run this as a scan-vs-frontier
    performance experiment if annotation or candidate regeneration remains a hot
    cost after ordering/staging work.
-6. **Defer full TSS and product bot personalities.**
+7. **Defer full TSS and product bot personalities.**
    If the prototype needs dependency trees, all-defenses proof, or rest-square
    conflict resolution to be correct, split it into analysis tooling instead of
    forcing it into `SearchBot`.

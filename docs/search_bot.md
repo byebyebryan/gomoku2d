@@ -191,7 +191,8 @@ current depth-3 baseline.
 
 The focused tactical scenario corpus is documented in
 [`tactical_scenarios.md`](tactical_scenarios.md). It is layered into `local_*`,
-`priority_*`, and `combo_*` cases. Use the hard safety-gate cases as regression
+`priority_*`, and `combo_*` cases, with explicit role, layer, intent, and shape
+metadata in the JSON report. Use the hard safety-gate cases as regression
 guards before tournament ablations; use diagnostic cases to understand behavior
 and cost, not as standalone promotion gates.
 

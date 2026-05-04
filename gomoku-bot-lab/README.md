@@ -164,8 +164,8 @@ Tactical scenarios answer a narrower question: "does this config choose the
 expected one-move tactical response in this position, and what did it cost?"
 The current corpus is documented in
 [`../docs/tactical_scenarios.md`](../docs/tactical_scenarios.md), including
-exact board prints, hard safety-gate cases, diagnostic cases, and
-expected moves.
+exact board prints, hard safety-gate cases, diagnostic cases, expected moves,
+and the role/layer/intent/shape metadata used by reports.
 The shared shape terms behind those cases live in
 [`../docs/tactical_shapes.md`](../docs/tactical_shapes.md).
 
@@ -176,8 +176,8 @@ cargo run -p gomoku-eval -- tactical-scenarios --bots search-d2,search-d3,search
 ```
 
 The command reports pass/fail, rule variant, side to move, case role, chosen
-move, expected move sets, depth reached, nodes, root safety-gate
-probe nodes (`safety_nodes`), root/search candidate and legality costs, time,
+move, expected move sets, layer, intent, shape, depth reached, nodes, root
+safety-gate probe nodes (`safety_nodes`), root/search candidate and legality costs, time,
 and budget exhaustion. To capture reusable JSON:
 
 ```sh
