@@ -127,8 +127,9 @@ a clear before/after target:
 - better reached depth or lower move time under the same CPU budget
 - no hidden apply/undo correctness risk from stale threat facts
 
-Until those gates are testable, prefer explicit annotation metrics over
-maintaining updated/deleted shapes alongside board state.
+Now that local-threat annotation has explicit trace metrics, use those counters
+to decide whether caching is worth the complexity before maintaining
+updated/deleted shapes alongside board state.
 
 ## Benchmark suites
 

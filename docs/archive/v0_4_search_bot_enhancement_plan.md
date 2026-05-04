@@ -889,9 +889,9 @@ Stage definitions:
 - **Exact Renju forbidden check** may still inspect farther along the four board
   directions for overline, double-four, and double-three windows. The cheap part
   is deciding whether a candidate needs that exact check at all.
-- **Tactical annotation** should compute facts such as immediate win,
-  immediate block, open four, closed/broken four, open three, and multi-threat
-  without deleting moves by itself.
+- **Tactical annotation** computes local threat facts into reusable move
+  annotations without deleting moves by itself. The current stage is scan-based,
+  records trace metrics, and is consumed by the local-threat safety gate.
 - **Safety gate** is where a move may be removed. The promoted implementation is
   `opponent_reply_local_threat_probe`: it applies each root candidate, scans
   legal opponent replies, and classifies each reply through local threat facts
@@ -907,7 +907,7 @@ Current SearchBot profile:
 | --- | --- | --- |
 | Candidate source | `near_all_r2` | Empty cells within radius 2 of any existing stone |
 | Legality gate | `exact_rules` | Calls the rules engine; Renju black uses exact forbidden checks |
-| Tactical annotator | `none` | Tactical facts exist in helper experiments but are not a separate pipeline stage yet |
+| Tactical annotator | `local_threat_annotation` | Scan-based move annotation for local threat facts; trace metrics split root/search annotation work |
 | Safety gate | `opponent_reply_local_threat_probe` | Explicit `SafetyGate` config chooses `none`, `opponent_reply_search_probe`, or `opponent_reply_local_threat_probe` |
 | Move ordering | `tt_first_board_order` | Transposition-table move first, then stable generated order; no tactical ordering yet |
 | Search | `alpha_beta_id` | Alpha-beta with iterative deepening and transposition table |
@@ -918,7 +918,8 @@ Implication for the next implementation slice:
 - Keep splitting the code and metrics around these stages so ablations isolate
   one dimension at a time. Candidate source, legality gate, and safety gate are
   now explicit code stages. Move ordering is explicit but still intentionally
-  simple. Tactical annotation is still pending as a separate stage.
+  simple. Tactical annotation is now explicit enough for the safety gate and can
+  be reused by ordering/reporting without hiding scans inside eval leaves.
 - Keep the older product behavior available as `near_all_r2 + exact_rules +
   opponent_reply_search_probe`, but default to the cheaper local-threat safety
   gate after promotion.
@@ -968,8 +969,8 @@ ladder above to keep each slice honest.
    default safety gate. Keep `opponent_reply_search_probe` as an explicit lab
    suffix for comparison and regression investigation.
 3. **Extract tactical annotation as a real pipeline stage.**
-   Local threat facts should be available once per relevant move and reusable by
-   safety, ordering, reports, and future forced-chain code. Do not hide scans
+   Completed for local-threat facts: move annotations are reusable by safety,
+   ordering, reports, and future forced-chain code. Do not hide future scans
    inside eval leaves. Keep the API cache-friendly: explicit inputs, stable fact
    structs, clear candidate/reply ownership, and metrics for annotation work.
 4. **Try ordering before eval.**
