@@ -41,6 +41,8 @@ pub struct TournamentReport {
     pub shuffled_elo_samples: usize,
     #[serde(default)]
     pub provenance: ReportProvenance,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reference_anchors: Option<AnchorReferenceReport>,
     pub run: TournamentRunReport,
     pub standings: Vec<StandingReport>,
     pub pairwise: Vec<PairwiseReport>,
@@ -66,6 +68,41 @@ pub struct HostReport {
     pub logical_cpus: Option<usize>,
     pub cpu_model: Option<String>,
     pub cpu_mhz: Option<f64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AnchorReferenceReport {
+    pub source: AnchorReferenceSource,
+    pub anchors: Vec<AnchorStandingReport>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AnchorReferenceSource {
+    pub path: Option<String>,
+    pub schedule: String,
+    pub git_commit: Option<String>,
+    pub git_dirty: Option<bool>,
+    pub rules: RuleConfig,
+    pub games_per_pair: u32,
+    pub opening_policy: String,
+    pub opening_plies: usize,
+    pub seed: u64,
+    pub search_time_ms: Option<u64>,
+    pub search_cpu_time_ms: Option<u64>,
+    #[serde(default)]
+    pub max_moves: Option<usize>,
+    #[serde(default)]
+    pub max_game_ms: Option<u64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AnchorStandingReport {
+    pub bot: String,
+    pub sequential_elo: f64,
+    pub shuffled_elo_avg: f64,
+    pub shuffled_elo_stddev: f64,
+    pub match_count: u32,
+    pub score_percentage: f64,
 }
 
 impl ReportProvenance {
@@ -97,6 +134,115 @@ impl HostReport {
     }
 }
 
+impl AnchorReferenceReport {
+    pub fn from_report(
+        source_path: Option<String>,
+        source_report: &TournamentReport,
+        anchor_names: &[String],
+    ) -> Result<Self, String> {
+        if source_report.run.schedule != "round-robin" {
+            return Err(format!(
+                "anchor report must come from a round-robin reference report, got {}",
+                source_report.run.schedule
+            ));
+        }
+
+        let mut standings_by_bot: HashMap<&str, &StandingReport> = HashMap::new();
+        for standing in &source_report.standings {
+            standings_by_bot.insert(&standing.bot, standing);
+        }
+
+        let mut missing = Vec::new();
+        let mut anchors = Vec::new();
+        for anchor_name in anchor_names {
+            let Some(standing) = standings_by_bot.get(anchor_name.as_str()) else {
+                missing.push(anchor_name.clone());
+                continue;
+            };
+            anchors.push(AnchorStandingReport::from_standing(standing));
+        }
+
+        if !missing.is_empty() {
+            return Err(format!(
+                "anchor report is missing standings for: {}",
+                missing.join(", ")
+            ));
+        }
+
+        Ok(Self {
+            source: AnchorReferenceSource {
+                path: source_path,
+                schedule: source_report.run.schedule.clone(),
+                git_commit: source_report.provenance.git_commit.clone(),
+                git_dirty: source_report.provenance.git_dirty,
+                rules: source_report.run.rules.clone(),
+                games_per_pair: source_report.run.games_per_pair,
+                opening_policy: source_report.run.opening_policy.clone(),
+                opening_plies: source_report.run.opening_plies,
+                seed: source_report.run.seed,
+                search_time_ms: source_report.run.search_time_ms,
+                search_cpu_time_ms: source_report.run.search_cpu_time_ms,
+                max_moves: source_report.run.max_moves,
+                max_game_ms: source_report.run.max_game_ms,
+            },
+            anchors,
+        })
+    }
+
+    pub fn validate_compatible_run(&self, run: &TournamentRunReport) -> Result<(), String> {
+        let source = &self.source;
+        let mut mismatches = Vec::new();
+
+        if source.rules.board_size != run.rules.board_size
+            || source.rules.win_length != run.rules.win_length
+            || source.rules.variant != run.rules.variant
+        {
+            mismatches.push("rules".to_string());
+        }
+        if source.opening_policy != run.opening_policy {
+            mismatches.push("opening_policy".to_string());
+        }
+        if source.opening_plies != run.opening_plies {
+            mismatches.push("opening_plies".to_string());
+        }
+        if source.search_time_ms != run.search_time_ms {
+            mismatches.push("search_time_ms".to_string());
+        }
+        if source.search_cpu_time_ms != run.search_cpu_time_ms {
+            mismatches.push("search_cpu_time_ms".to_string());
+        }
+        if source.max_moves != run.max_moves {
+            mismatches.push("max_moves".to_string());
+        }
+        if source.max_game_ms != run.max_game_ms {
+            mismatches.push("max_game_ms".to_string());
+        }
+
+        if mismatches.is_empty() {
+            return Ok(());
+        }
+
+        Err(format!(
+            "anchor report eval context does not match current run: {}",
+            mismatches.join(", ")
+        ))
+    }
+}
+
+impl AnchorStandingReport {
+    fn from_standing(standing: &StandingReport) -> Self {
+        Self {
+            bot: standing.bot.clone(),
+            sequential_elo: standing.sequential_elo,
+            shuffled_elo_avg: standing.shuffled_elo_avg,
+            shuffled_elo_stddev: standing.shuffled_elo_stddev,
+            match_count: standing.match_count,
+            score_percentage: score_rate(standing.wins, standing.draws, standing.match_count)
+                * 100.0,
+        }
+    }
+}
+
 impl TournamentReport {
     pub fn from_results(
         run: TournamentRunReport,
@@ -117,6 +263,7 @@ impl TournamentReport {
             move_codec: MOVE_CODEC.to_string(),
             shuffled_elo_samples: SHUFFLED_ELO_SAMPLES,
             provenance: ReportProvenance::capture(),
+            reference_anchors: None,
             standings: standings(&run.bots, results, &matches, &shuffled_elo),
             pairwise: pairwise(&run.bots, &matches),
             color_splits: color_splits(&matches),
@@ -1080,6 +1227,8 @@ pub fn render_tournament_report_html_with_options(
     html.push_str("</div></div>");
     html.push_str("</section>");
 
+    render_reference_anchors_section(&mut html, report);
+
     html.push_str("<section><div class=\"section-heading\"><h2>Standings</h2><p>Sorted by shuffled Elo.</p></div><table><thead><tr>");
     for head in [
         "Spec",
@@ -1153,6 +1302,99 @@ pub fn render_tournament_report_html_with_options(
     ));
     html.push_str("</section></main></body></html>");
     html
+}
+
+fn render_reference_anchors_section(html: &mut String, report: &TournamentReport) {
+    let Some(reference) = &report.reference_anchors else {
+        return;
+    };
+
+    html.push_str("<section><div class=\"section-heading\"><h2>Reference Anchors</h2>");
+    html.push_str("<p>Cached ratings copied from a curated full report. Use them as working calibration for this gauntlet, not as permanent truth.</p></div>");
+    html.push_str("<div class=\"pair-overview\">");
+    html.push_str(&format!(
+        "<p><b>Source</b><br>{}<br>{}, {} games/pair, {}, {} plies, seed {}</p>",
+        html_escape(
+            reference
+                .source
+                .path
+                .as_deref()
+                .unwrap_or("embedded report")
+        ),
+        html_escape(&reference.source.schedule),
+        reference.source.games_per_pair,
+        html_escape(&reference.source.opening_policy),
+        reference.source.opening_plies,
+        reference.source.seed,
+    ));
+    html.push_str(&format!(
+        "<p><b>Reference</b><br>{}; {}; {}; git {}</p>",
+        html_escape(&variant_label(&reference.source.rules)),
+        html_escape(&anchor_budget_label(&reference.source)),
+        html_escape(&anchor_match_cap_label(&reference.source)),
+        html_escape(&anchor_reference_revision(&reference.source)),
+    ));
+    html.push_str("</div>");
+    html.push_str("<table><thead><tr>");
+    for head in [
+        "Anchor",
+        "Run-order Elo",
+        "Shuffled Elo",
+        "Score %",
+        "Matches",
+    ] {
+        html.push_str(&format!("<th>{head}</th>"));
+    }
+    html.push_str("</tr></thead><tbody>");
+    for anchor in &reference.anchors {
+        html.push_str(&format!(
+            "<tr><td>{}</td><td>{:.1}</td><td>{:.1} +/- {:.1}</td><td>{:.1}%</td><td>{}</td></tr>",
+            html_escape(&anchor.bot),
+            anchor.sequential_elo,
+            anchor.shuffled_elo_avg,
+            anchor.shuffled_elo_stddev,
+            anchor.score_percentage,
+            anchor.match_count,
+        ));
+    }
+    html.push_str("</tbody></table></section>");
+}
+
+fn anchor_reference_revision(source: &AnchorReferenceSource) -> String {
+    let mut revision = source
+        .git_commit
+        .as_deref()
+        .unwrap_or("unknown")
+        .to_string();
+    if source.git_dirty == Some(true) {
+        revision.push_str("_dirty");
+    }
+    revision
+}
+
+fn anchor_budget_label(source: &AnchorReferenceSource) -> String {
+    match (source.search_cpu_time_ms, source.search_time_ms) {
+        (Some(cpu_ms), Some(wall_ms)) => {
+            format!("CPU {cpu_ms} ms/move, wall {wall_ms} ms/move")
+        }
+        (Some(cpu_ms), None) => format!("CPU {cpu_ms} ms/move"),
+        (None, Some(wall_ms)) => format!("Wall {wall_ms} ms/move"),
+        (None, None) => "no per-move budget".to_string(),
+    }
+}
+
+fn anchor_match_cap_label(source: &AnchorReferenceSource) -> String {
+    match (source.max_moves, source.max_game_ms) {
+        (Some(max_moves), Some(max_game_ms)) => {
+            format!(
+                "max {max_moves} moves, {}",
+                format_duration_ms(Some(max_game_ms))
+            )
+        }
+        (Some(max_moves), None) => format!("max {max_moves} moves"),
+        (None, Some(max_game_ms)) => format!("max {}", format_duration_ms(Some(max_game_ms))),
+        (None, None) => "no match cap".to_string(),
+    }
 }
 
 fn git_revision_label(provenance: &ReportProvenance) -> String {
@@ -2026,6 +2268,146 @@ mod tests {
     }
 
     #[test]
+    fn reference_anchors_copy_requested_standings_from_source_report() {
+        let mut source = sample_report();
+        source.run.schedule = "round-robin".to_string();
+        source.provenance.git_commit = Some("abc123".to_string());
+        source.provenance.git_dirty = Some(false);
+        source.standings = vec![
+            sample_standing_with_search_costs("candidate"),
+            sample_standing_with_search_costs("anchor-a"),
+            sample_standing_with_search_costs("anchor-b"),
+        ];
+        source.standings[1].shuffled_elo_avg = 1234.5;
+        source.standings[1].shuffled_elo_stddev = 12.0;
+        source.standings[2].shuffled_elo_avg = 1175.0;
+
+        let reference = AnchorReferenceReport::from_report(
+            Some("reports/latest.json".to_string()),
+            &source,
+            &["anchor-a".to_string(), "anchor-b".to_string()],
+        )
+        .expect("anchors should be copied");
+
+        assert_eq!(
+            reference.source.path.as_deref(),
+            Some("reports/latest.json")
+        );
+        assert_eq!(reference.source.schedule, "round-robin");
+        assert_eq!(reference.source.git_commit.as_deref(), Some("abc123"));
+        assert_eq!(reference.anchors.len(), 2);
+        assert_eq!(reference.anchors[0].bot, "anchor-a");
+        assert_eq!(reference.anchors[0].shuffled_elo_avg, 1234.5);
+        assert_eq!(reference.anchors[0].shuffled_elo_stddev, 12.0);
+        assert_eq!(reference.anchors[1].bot, "anchor-b");
+        assert_eq!(reference.anchors[1].shuffled_elo_avg, 1175.0);
+    }
+
+    #[test]
+    fn reference_anchors_reject_missing_anchor_names() {
+        let mut source = sample_report();
+        source.standings = vec![sample_standing_with_search_costs("anchor-a")];
+
+        let err = AnchorReferenceReport::from_report(
+            None,
+            &source,
+            &["anchor-a".to_string(), "missing-anchor".to_string()],
+        )
+        .unwrap_err();
+
+        assert!(err.contains("missing-anchor"));
+    }
+
+    #[test]
+    fn reference_anchors_require_round_robin_source_report() {
+        let mut source = sample_report();
+        source.run.schedule = "gauntlet".to_string();
+        source.standings = vec![sample_standing_with_search_costs("anchor-a")];
+
+        let err = AnchorReferenceReport::from_report(None, &source, &["anchor-a".to_string()])
+            .unwrap_err();
+
+        assert!(err.contains("round-robin"));
+    }
+
+    #[test]
+    fn reference_anchors_copy_max_limits_from_source_report() {
+        let mut source = sample_report();
+        source.run.max_moves = Some(120);
+        source.run.max_game_ms = Some(10_000);
+        source.standings = vec![sample_standing_with_search_costs("anchor-a")];
+
+        let reference =
+            AnchorReferenceReport::from_report(None, &source, &["anchor-a".to_string()])
+                .expect("anchor reference should copy limits");
+
+        assert_eq!(reference.source.max_moves, Some(120));
+        assert_eq!(reference.source.max_game_ms, Some(10_000));
+    }
+
+    #[test]
+    fn reference_anchors_validate_matching_eval_context() {
+        let mut source = sample_report();
+        source.run.max_moves = Some(120);
+        source.standings = vec![sample_standing_with_search_costs("anchor-a")];
+        let reference =
+            AnchorReferenceReport::from_report(None, &source, &["anchor-a".to_string()])
+                .expect("anchor reference should parse");
+        let mut run = source.run.clone();
+
+        reference
+            .validate_compatible_run(&run)
+            .expect("same context should be compatible");
+
+        run.search_cpu_time_ms = Some(500);
+        let err = reference.validate_compatible_run(&run).unwrap_err();
+
+        assert!(err.contains("search_cpu_time_ms"));
+    }
+
+    #[test]
+    fn html_report_renders_reference_anchors() {
+        let mut report = sample_report();
+        report.run.schedule = "gauntlet".to_string();
+        report.reference_anchors = Some(AnchorReferenceReport {
+            source: AnchorReferenceSource {
+                path: Some("reports/latest.json".to_string()),
+                schedule: "round-robin".to_string(),
+                git_commit: Some("abc123".to_string()),
+                git_dirty: Some(false),
+                rules: report.run.rules.clone(),
+                games_per_pair: 64,
+                opening_policy: "centered-suite".to_string(),
+                opening_plies: 4,
+                seed: 48,
+                search_time_ms: None,
+                search_cpu_time_ms: Some(1000),
+                max_moves: Some(120),
+                max_game_ms: None,
+            },
+            anchors: vec![AnchorStandingReport {
+                bot: "anchor-a".to_string(),
+                sequential_elo: 1220.0,
+                shuffled_elo_avg: 1234.5,
+                shuffled_elo_stddev: 12.0,
+                match_count: 128,
+                score_percentage: 56.27,
+            }],
+        });
+
+        let html = render_tournament_report_html(&report);
+
+        assert!(html.contains("<h2>Reference Anchors</h2>"));
+        assert!(html.contains("reports/latest.json"));
+        assert!(html.contains("CPU 1000 ms/move"));
+        assert!(html.contains("max 120 moves"));
+        assert!(html.contains("abc123"));
+        assert!(html.contains("anchor-a"));
+        assert!(html.contains("1234.5 +/- 12.0"));
+        assert!(html.contains("56.3%"));
+    }
+
+    #[test]
     fn html_report_combines_git_commit_and_dirty_flag() {
         let mut report = sample_report();
         report.provenance.git_commit = Some("abcdef123456".to_string());
@@ -2172,6 +2554,7 @@ mod tests {
             move_codec: MOVE_CODEC.to_string(),
             shuffled_elo_samples: SHUFFLED_ELO_SAMPLES,
             provenance: ReportProvenance::default(),
+            reference_anchors: None,
             run: TournamentRunReport {
                 bots: vec!["fast".to_string(), "balanced".to_string()],
                 schedule: "round-robin".to_string(),

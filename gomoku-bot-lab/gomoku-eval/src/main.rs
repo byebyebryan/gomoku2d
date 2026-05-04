@@ -8,8 +8,8 @@ use gomoku_core::{Color, GameResult, Move, RuleConfig, Variant};
 use gomoku_eval::arena::{run_match_series_with_limits, MatchEndReason, MatchLimits, MatchResult};
 use gomoku_eval::opening::{OpeningPolicy, CENTERED_SUITE_MAX_PLIES};
 use gomoku_eval::report::{
-    render_tournament_report_html_with_options, ReportRenderOptions, TournamentReport,
-    TournamentRunReport,
+    render_tournament_report_html_with_options, AnchorReferenceReport, ReportRenderOptions,
+    TournamentReport, TournamentRunReport,
 };
 use gomoku_eval::scenario::{
     run_tactical_scenarios, ScenarioSearchConfig, TacticalScenarioGroupSummary,
@@ -167,6 +167,10 @@ enum Commands {
         #[arg(long)]
         anchors: Option<String>,
 
+        /// Full tournament report used as the reference anchor source for gauntlet mode
+        #[arg(long)]
+        anchor_report: Option<PathBuf>,
+
         /// Number of games each pair plays
         #[arg(long, default_value_t = 2)]
         games_per_pair: u32,
@@ -216,6 +220,8 @@ type NamedBotFactory = (String, BotFactory);
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct TournamentPlan {
     bot_names: Vec<String>,
+    anchor_names: Vec<String>,
+    anchor_report: Option<String>,
     pairs: Vec<TournamentPair>,
 }
 
@@ -224,9 +230,11 @@ fn tournament_plan(
     bots: Option<&str>,
     candidate: Option<&str>,
     anchors: Option<&str>,
+    anchor_report: Option<&str>,
 ) -> Result<TournamentPlan, String> {
     match schedule {
         CliTournamentSchedule::RoundRobin => {
+            reject_anchor_report_args(schedule, anchor_report)?;
             reject_gauntlet_args(schedule, candidate, anchors)?;
             let bot_names =
                 parse_required_bot_list(bots, "Round-robin tournament requires --bots.")?;
@@ -235,9 +243,15 @@ fn tournament_plan(
             }
             validate_unique_bot_names(&bot_names)?;
             let pairs = round_robin_pairs(bot_names.len());
-            Ok(TournamentPlan { bot_names, pairs })
+            Ok(TournamentPlan {
+                bot_names,
+                anchor_names: Vec::new(),
+                anchor_report: None,
+                pairs,
+            })
         }
         CliTournamentSchedule::HeadToHead => {
+            reject_anchor_report_args(schedule, anchor_report)?;
             reject_gauntlet_args(schedule, candidate, anchors)?;
             let bot_names =
                 parse_required_bot_list(bots, "Head-to-head tournament requires --bots.")?;
@@ -247,6 +261,8 @@ fn tournament_plan(
             validate_unique_bot_names(&bot_names)?;
             Ok(TournamentPlan {
                 bot_names,
+                anchor_names: Vec::new(),
+                anchor_report: None,
                 pairs: vec![TournamentPair {
                     bot_a_idx: 0,
                     bot_b_idx: 1,
@@ -272,7 +288,7 @@ fn tournament_plan(
             }
 
             let mut bot_names = candidate_names;
-            bot_names.extend(anchor_names);
+            bot_names.extend(anchor_names.clone());
             validate_unique_bot_names(&bot_names)?;
             let pairs = (1..bot_names.len())
                 .map(|bot_b_idx| TournamentPair {
@@ -280,7 +296,12 @@ fn tournament_plan(
                     bot_b_idx,
                 })
                 .collect();
-            Ok(TournamentPlan { bot_names, pairs })
+            Ok(TournamentPlan {
+                bot_names,
+                anchor_names,
+                anchor_report: anchor_report.map(ToString::to_string),
+                pairs,
+            })
         }
     }
 }
@@ -319,6 +340,19 @@ fn reject_gauntlet_args(
     Ok(())
 }
 
+fn reject_anchor_report_args(
+    schedule: CliTournamentSchedule,
+    anchor_report: Option<&str>,
+) -> Result<(), String> {
+    if anchor_report.is_some() {
+        return Err(format!(
+            "{} tournament does not use --anchor-report.",
+            schedule.label()
+        ));
+    }
+    Ok(())
+}
+
 fn validate_unique_bot_names(bot_names: &[String]) -> Result<(), String> {
     for (idx, name) in bot_names.iter().enumerate() {
         if bot_names.iter().skip(idx + 1).any(|other| other == name) {
@@ -328,16 +362,36 @@ fn validate_unique_bot_names(bot_names: &[String]) -> Result<(), String> {
     Ok(())
 }
 
+fn load_anchor_reference(
+    path: &PathBuf,
+    source_path: String,
+    anchor_names: &[String],
+) -> Result<AnchorReferenceReport, String> {
+    let json = std::fs::read_to_string(path)
+        .map_err(|err| format!("Failed to read anchor report {}: {err}", path.display()))?;
+    let source_report = TournamentReport::from_json(&json)
+        .map_err(|err| format!("Failed to parse anchor report {}: {err}", path.display()))?;
+    AnchorReferenceReport::from_report(Some(source_path), &source_report, anchor_names)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn tournament_plan_builds_round_robin_pairs() {
-        let plan = tournament_plan(CliTournamentSchedule::RoundRobin, Some("a,b,c"), None, None)
-            .expect("round robin plan should parse");
+        let plan = tournament_plan(
+            CliTournamentSchedule::RoundRobin,
+            Some("a,b,c"),
+            None,
+            None,
+            None,
+        )
+        .expect("round robin plan should parse");
 
         assert_eq!(plan.bot_names, vec!["a", "b", "c"]);
+        assert!(plan.anchor_names.is_empty());
+        assert_eq!(plan.anchor_report, None);
         assert_eq!(
             plan.pairs,
             vec![
@@ -359,8 +413,14 @@ mod tests {
 
     #[test]
     fn tournament_plan_requires_exactly_two_head_to_head_bots() {
-        let plan = tournament_plan(CliTournamentSchedule::HeadToHead, Some("d5,d7"), None, None)
-            .expect("head-to-head plan should parse");
+        let plan = tournament_plan(
+            CliTournamentSchedule::HeadToHead,
+            Some("d5,d7"),
+            None,
+            None,
+            None,
+        )
+        .expect("head-to-head plan should parse");
 
         assert_eq!(plan.bot_names, vec!["d5", "d7"]);
         assert_eq!(
@@ -376,6 +436,7 @@ mod tests {
             Some("d3,d5,d7"),
             None,
             None,
+            None,
         )
         .unwrap_err();
         assert!(err.contains("exactly 2 bots"));
@@ -388,10 +449,13 @@ mod tests {
             None,
             Some("candidate"),
             Some("anchor-a,anchor-b"),
+            Some("reports/latest.json"),
         )
         .expect("gauntlet plan should parse");
 
         assert_eq!(plan.bot_names, vec!["candidate", "anchor-a", "anchor-b"]);
+        assert_eq!(plan.anchor_names, vec!["anchor-a", "anchor-b"]);
+        assert_eq!(plan.anchor_report.as_deref(), Some("reports/latest.json"));
         assert_eq!(
             plan.pairs,
             vec![
@@ -405,6 +469,20 @@ mod tests {
                 },
             ]
         );
+    }
+
+    #[test]
+    fn tournament_plan_rejects_anchor_report_outside_gauntlet() {
+        let err = tournament_plan(
+            CliTournamentSchedule::RoundRobin,
+            Some("a,b"),
+            None,
+            None,
+            Some("reports/latest.json"),
+        )
+        .unwrap_err();
+
+        assert!(err.contains("--anchor-report"));
     }
 }
 
@@ -767,6 +845,7 @@ fn main() {
             bots,
             candidate,
             anchors,
+            anchor_report,
             games_per_pair,
             replay_dir,
             report_json,
@@ -782,11 +861,20 @@ fn main() {
                 search_cpu_time_ms,
                 seed,
             } = eval_context(&options);
-            let TournamentPlan { bot_names, pairs } = tournament_plan(
+            let anchor_report_display = anchor_report
+                .as_ref()
+                .map(|path| path.to_string_lossy().into_owned());
+            let TournamentPlan {
+                bot_names,
+                anchor_names,
+                anchor_report: planned_anchor_report,
+                pairs,
+            } = tournament_plan(
                 schedule,
                 bots.as_deref(),
                 candidate.as_deref(),
                 anchors.as_deref(),
+                anchor_report_display.as_deref(),
             )
             .unwrap_or_else(|err| exit_with_error(err));
             if games_per_pair % 2 != 0 {
@@ -829,6 +917,33 @@ fn main() {
             if let Some(max_game_ms) = limits.max_game_ms {
                 println!("Max game time: {max_game_ms} ms");
             }
+            let mut run_report = TournamentRunReport {
+                bots: bot_names.clone(),
+                schedule: schedule.label().to_string(),
+                rules: config.clone(),
+                games_per_pair,
+                seed,
+                opening_plies,
+                opening_policy: opening_policy.label().to_string(),
+                threads,
+                search_time_ms,
+                search_cpu_time_ms,
+                max_moves: limits.max_moves,
+                max_game_ms: limits.max_game_ms,
+                total_wall_time_ms: None,
+            };
+            let reference_anchors = match (&anchor_report, planned_anchor_report) {
+                (Some(path), Some(source_path)) => {
+                    println!("Anchor report: {source_path}");
+                    let reference = load_anchor_reference(path, source_path, &anchor_names)
+                        .unwrap_or_else(|err| exit_with_error(err));
+                    reference
+                        .validate_compatible_run(&run_report)
+                        .unwrap_or_else(|err| exit_with_error(err));
+                    Some(reference)
+                }
+                _ => None,
+            };
             println!();
 
             if let Some(dir) = &replay_dir {
@@ -885,28 +1000,13 @@ fn main() {
                 },
             );
             let total_wall_time_ms = Some(tournament_start.elapsed().as_millis() as u64);
+            run_report.total_wall_time_ms = total_wall_time_ms;
 
-            let report = match TournamentReport::from_results(
-                TournamentRunReport {
-                    bots: bot_names,
-                    schedule: schedule.label().to_string(),
-                    rules: config,
-                    games_per_pair,
-                    seed,
-                    opening_plies,
-                    opening_policy: opening_policy.label().to_string(),
-                    threads,
-                    search_time_ms,
-                    search_cpu_time_ms,
-                    max_moves: limits.max_moves,
-                    max_game_ms: limits.max_game_ms,
-                    total_wall_time_ms,
-                },
-                &results,
-            ) {
+            let mut report = match TournamentReport::from_results(run_report, &results) {
                 Ok(report) => report,
                 Err(err) => exit_with_error(format!("Failed to build tournament report: {err}")),
             };
+            report.reference_anchors = reference_anchors;
 
             if let Some(path) = &report_json {
                 let json = report.to_json().unwrap_or_else(|err| {
