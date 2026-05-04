@@ -28,3 +28,10 @@ jq '.provenance | {git_commit, git_dirty}' reports/latest.json
 
 Keep the raw JSON next to the generated HTML so the report can be inspected or
 re-rendered without rerunning the tournament.
+
+`latest.json` is also the default anchor-rating source for focused gauntlet
+runs. Gauntlets can embed selected standings from this full round-robin report
+with `--anchor-report reports/latest.json`, which keeps scratch comparisons
+calibrated without maintaining a separate cache file. The gauntlet command
+validates rule, opening, search budget, and match-cap compatibility before it
+uses the reference standings.

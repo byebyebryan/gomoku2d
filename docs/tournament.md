@@ -69,18 +69,29 @@ Candidate gauntlet:
 cargo run --release -p gomoku-eval -- tournament \
   --schedule gauntlet \
   --candidate search-d7+tactical-first+child-cap-8+pattern-eval \
-  --anchors search-d3+pattern-eval,search-d5+tactical-first+child-cap-8+pattern-eval,search-d7+tactical-first+child-cap-8 \
+  --anchors search-d3,search-d5+tactical-first+child-cap-8,search-d7+tactical-first+child-cap-8 \
+  --anchor-report reports/latest.json \
   --games-per-pair 64 \
   --opening-policy centered-suite \
   --opening-plies 4 \
   --search-cpu-time-ms 1000 \
+  --max-moves 120 \
   --report-json outputs/gauntlet.json
 ```
 
 Gauntlet ratings should be treated as working calibration, not permanent truth:
 anchor ratings come from the latest clean reference tournament, while the
-candidate estimate is useful only under the same rule, opening policy, budget,
-and code revision.
+gauntlet result is useful only under the same rule, opening policy, budget,
+match caps, and code revision.
+
+`--anchor-report` points at a full round-robin report, normally
+`gomoku-bot-lab/reports/latest.json`. The gauntlet report embeds the requested
+anchor standings from that source, including source config and git provenance,
+so scratch gauntlets can be read without maintaining a separate rating cache.
+The source report must be `round-robin`; a gauntlet or head-to-head report is
+not accepted as an anchor reference. The command also validates the source
+report against the current rule config, opening policy/plies, search budgets,
+and max move/game caps before running.
 
 ## Opening Policies
 

@@ -121,7 +121,7 @@ rankings are easier to compare when first-player advantage is constrained; pass
 mkdir -p outputs
 cargo run --release -p gomoku-eval -- tournament --bots search-d2,search-d3,search-d5 --games-per-pair 10 --opening-policy centered-suite --opening-plies 4 --search-cpu-time-ms 100 --max-game-ms 10000 --seed 42 --report-json outputs/gomoku-tournament.json
 cargo run --release -p gomoku-eval -- tournament --schedule head-to-head --bots search-d5+tactical-first+child-cap-8,search-d5+tactical-first+child-cap-8+pattern-eval --games-per-pair 64 --opening-policy centered-suite --opening-plies 4 --search-cpu-time-ms 1000 --report-json outputs/head-to-head.json
-cargo run --release -p gomoku-eval -- tournament --schedule gauntlet --candidate search-d7+tactical-first+child-cap-8+pattern-eval --anchors search-d3+pattern-eval,search-d5+tactical-first+child-cap-8+pattern-eval,search-d7+tactical-first+child-cap-8 --games-per-pair 64 --opening-policy centered-suite --opening-plies 4 --search-cpu-time-ms 1000 --report-json outputs/gauntlet.json
+cargo run --release -p gomoku-eval -- tournament --schedule gauntlet --candidate search-d7+tactical-first+child-cap-8+pattern-eval --anchors search-d3,search-d5+tactical-first+child-cap-8,search-d7+tactical-first+child-cap-8 --anchor-report reports/latest.json --games-per-pair 64 --opening-policy centered-suite --opening-plies 4 --search-cpu-time-ms 1000 --max-moves 120 --report-json outputs/gauntlet.json
 cargo run --release -p gomoku-eval -- report-html --input outputs/gomoku-tournament.json --output outputs/gomoku-tournament.html --json-href gomoku-tournament.json
 ```
 
@@ -142,6 +142,7 @@ Useful eval flags:
 | `--bots` | Bot list for `round-robin`; exactly two bots for `head-to-head` |
 | `--candidate` | Candidate bot for `gauntlet` |
 | `--anchors` | Comma-separated anchor bots for `gauntlet` |
+| `--anchor-report` | Optional full round-robin report used as the gauntlet rating reference, usually `reports/latest.json`; validates rule/opening/budget/cap compatibility |
 | `--rule` | Rule variant: `renju` by default, or `freestyle` |
 | `--search-time-ms` | Applies a per-move budget to search bots, including lab aliases |
 | `--search-cpu-time-ms` | Applies a Linux thread CPU-time budget to search bots |
@@ -176,6 +177,9 @@ bot/report code is already committed. Run `git status --short` first; a dirty
 worktree is intentionally captured as a `_dirty` git revision and shown as a
 development-run warning in the report. That warning is fine for scratch output
 under `outputs/`, but avoid publishing it as the canonical `/bot-report/`.
+The latest curated full round-robin report also acts as the anchor-rating source
+for focused gauntlet runs; do not maintain a separate anchor cache unless the
+published report workflow stops being enough.
 
 ### Tactical scenario diagnostics
 
