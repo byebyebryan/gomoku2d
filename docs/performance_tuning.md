@@ -190,6 +190,46 @@ Conclusion: the optimization is a pure improvement for the experiment, but it
 does not change the product decision. `+pattern-eval` remains a useful lab axis;
 it is still too expensive to promote as a default.
 
+## Optimization pass 8 snapshot
+
+Date: `2026-05-04`
+
+This pass kept the evaluator choice unchanged and optimized search plumbing:
+
+- precomputed default-board candidate masks for radius `1`, `2`, and `3`
+- generated candidates by OR-ing per-stone masks and subtracting occupied cells
+  instead of rescanning each occupied stone's local square
+- split the default TT-first move-ordering path from tactical ordering, so the
+  normal search path no longer wraps every move in `OrderedMove`
+
+Pattern eval stayed enabled only as a benchmark axis. It is not a default
+product setting.
+
+Direct pipeline benchmark:
+
+| Benchmark | Before | After | Change |
+|---|---:|---:|---:|
+| `pipeline/candidate_moves/r2/early_local_fight` | `511.15-514.49 ns` | `95.973-96.935 ns` | about `-81%` |
+| `pipeline/candidate_moves/r2/renju_forbidden_cross` | `426.41-429.35 ns` | `125.69-126.10 ns` | about `-70%` |
+| `pipeline/candidate_moves/r2/midgame_dense` | `1.0915-1.1042 us` | `154.45-156.73 ns` | about `-86%` |
+
+Focused `choose_move` benchmark:
+
+| Benchmark | Result |
+|---|---:|
+| `balanced/early_local_fight` | about `-64%` |
+| `balanced/renju_forbidden_cross` | about `-52%` |
+| `balanced/midgame_dense` | about `-47%` |
+| `deep/early_local_fight` | about `-63%` |
+| `deep/renju_forbidden_cross` | about `-50%` |
+| `deep/midgame_dense` | about `-62%` |
+
+Direct pattern static-eval measurements drifted slightly in repeat runs despite
+untouched scoring code. The final focused rerun was roughly `+1-3%` versus the
+prior snapshot. Treat that as benchmark/code-layout noise to watch, not a
+product concern: the end-to-end default search path improved substantially, and
+pattern eval remains lab-only.
+
 ## Benchmark suites
 
 ### Core

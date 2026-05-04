@@ -1,5 +1,6 @@
 use instant::Instant;
 use std::collections::HashMap;
+use std::sync::OnceLock;
 use std::time::Duration;
 
 use crate::Bot;
@@ -1275,6 +1276,18 @@ fn virtual_count_in_direction(
 
 const STACK_SEEN_WORDS: usize = 4;
 const STACK_SEEN_CELLS: usize = STACK_SEEN_WORDS * u64::BITS as usize;
+const DEFAULT_BOARD_SIZE: usize = 15;
+
+#[derive(Debug)]
+struct CandidateMaskSet {
+    size: usize,
+    words: usize,
+    masks: Vec<[u64; STACK_SEEN_WORDS]>,
+}
+
+static DEFAULT_CANDIDATE_MASKS_R1: OnceLock<CandidateMaskSet> = OnceLock::new();
+static DEFAULT_CANDIDATE_MASKS_R2: OnceLock<CandidateMaskSet> = OnceLock::new();
+static DEFAULT_CANDIDATE_MASKS_R3: OnceLock<CandidateMaskSet> = OnceLock::new();
 
 fn candidate_moves(board: &Board, radius: usize) -> Vec<Move> {
     if board.result != GameResult::Ongoing {
@@ -1284,7 +1297,13 @@ fn candidate_moves(board: &Board, radius: usize) -> Vec<Move> {
     let size = board.config.board_size;
     let cell_count = size * size;
     let mut moves = Vec::new();
-    let has_stones = if cell_count <= STACK_SEEN_CELLS {
+    let has_stones = if let Some(masks) = candidate_masks(size, radius) {
+        let mut seen = [0u64; STACK_SEEN_WORDS];
+        let mut occupied = [0u64; STACK_SEEN_WORDS];
+        let has_stones = mark_candidate_moves_from_masks(board, masks, &mut seen, &mut occupied);
+        collect_marked_candidates(board, &seen, &mut moves);
+        has_stones
+    } else if cell_count <= STACK_SEEN_CELLS {
         let mut seen = [0u64; STACK_SEEN_WORDS];
         let has_stones = mark_candidate_moves(board, radius, &mut seen);
         collect_marked_candidates(board, &seen, &mut moves);
@@ -1305,6 +1324,73 @@ fn candidate_moves(board: &Board, radius: usize) -> Vec<Move> {
     }
 
     moves
+}
+
+fn candidate_masks(size: usize, radius: usize) -> Option<&'static CandidateMaskSet> {
+    (size == DEFAULT_BOARD_SIZE && (1..=3).contains(&radius))
+        .then(|| default_candidate_masks(radius))
+}
+
+fn default_candidate_masks(radius: usize) -> &'static CandidateMaskSet {
+    match radius {
+        1 => DEFAULT_CANDIDATE_MASKS_R1
+            .get_or_init(|| build_candidate_masks(DEFAULT_BOARD_SIZE, radius)),
+        2 => DEFAULT_CANDIDATE_MASKS_R2
+            .get_or_init(|| build_candidate_masks(DEFAULT_BOARD_SIZE, radius)),
+        3 => DEFAULT_CANDIDATE_MASKS_R3
+            .get_or_init(|| build_candidate_masks(DEFAULT_BOARD_SIZE, radius)),
+        _ => panic!("default candidate masks are only available for radius 1-3"),
+    }
+}
+
+fn build_candidate_masks(size: usize, radius: usize) -> CandidateMaskSet {
+    let words = (size * size).div_ceil(u64::BITS as usize);
+    debug_assert!(words <= STACK_SEEN_WORDS);
+
+    let mut masks = Vec::with_capacity(size * size);
+    for row in 0..size {
+        for col in 0..size {
+            let mut mask = [0u64; STACK_SEEN_WORDS];
+            let rmin = row.saturating_sub(radius);
+            let rmax = (row + radius).min(size - 1);
+            let cmin = col.saturating_sub(radius);
+            let cmax = (col + radius).min(size - 1);
+            for r in rmin..=rmax {
+                for c in cmin..=cmax {
+                    mark_seen(&mut mask, r * size + c);
+                }
+            }
+            masks.push(mask);
+        }
+    }
+
+    CandidateMaskSet { size, words, masks }
+}
+
+fn mark_candidate_moves_from_masks(
+    board: &Board,
+    masks: &CandidateMaskSet,
+    seen: &mut [u64],
+    occupied: &mut [u64],
+) -> bool {
+    let size = board.config.board_size;
+    debug_assert_eq!(size, masks.size);
+    let mut has_stones = false;
+
+    board.for_each_occupied(|row, col, _| {
+        has_stones = true;
+        let idx = row * size + col;
+        mark_seen(occupied, idx);
+        for (seen_word, mask_word) in seen.iter_mut().zip(masks.masks[idx]).take(masks.words) {
+            *seen_word |= mask_word;
+        }
+    });
+
+    for (seen_word, occupied_word) in seen.iter_mut().zip(occupied.iter()).take(masks.words) {
+        *seen_word &= !occupied_word;
+    }
+
+    has_stones
 }
 
 fn mark_candidate_moves(board: &Board, radius: usize, seen: &mut [u64]) -> bool {
@@ -1357,6 +1443,14 @@ fn mark_seen(seen: &mut [u64], idx: usize) {
     let word = idx / u64::BITS as usize;
     let bit = 1u64 << (idx % u64::BITS as usize);
     seen[word] |= bit;
+}
+
+#[cfg(test)]
+fn mask_contains(mask: [u64; STACK_SEEN_WORDS], mv: Move, size: usize) -> bool {
+    let idx = mv.row * size + mv.col;
+    let word = idx / u64::BITS as usize;
+    let bit = 1u64 << (idx % u64::BITS as usize);
+    mask[word] & bit != 0
 }
 
 #[cfg(test)]
@@ -1743,38 +1837,59 @@ struct OrderedMove {
     must_keep: bool,
 }
 
-fn order_moves(
+fn order_root_moves(
     board: &Board,
     moves: Vec<Move>,
     move_ordering: MoveOrdering,
     tt_move: Option<Move>,
     metrics: &mut SearchMetrics,
     phase: SearchMetricPhase,
-) -> Vec<OrderedMove> {
+) -> Vec<Move> {
     match move_ordering {
-        MoveOrdering::TranspositionFirstBoardOrder => {
-            if let Some(tm) = tt_move.filter(|tm| moves.contains(tm)) {
-                std::iter::once(tm)
-                    .chain(moves.into_iter().filter(|&m| m != tm))
-                    .map(|mv| OrderedMove {
-                        mv,
-                        must_keep: false,
-                    })
-                    .collect()
-            } else {
-                moves
-                    .into_iter()
-                    .map(|mv| OrderedMove {
-                        mv,
-                        must_keep: false,
-                    })
-                    .collect()
-            }
-        }
+        MoveOrdering::TranspositionFirstBoardOrder => order_tt_first(moves, tt_move),
         MoveOrdering::TacticalFirst => {
             order_moves_tactical_first(board, moves, tt_move, metrics, phase)
+                .into_iter()
+                .map(|ordered| ordered.mv)
+                .collect()
         }
     }
+}
+
+fn order_search_moves(
+    board: &Board,
+    moves: Vec<Move>,
+    move_ordering: MoveOrdering,
+    tt_move: Option<Move>,
+    child_limit: Option<usize>,
+    metrics: &mut SearchMetrics,
+    phase: SearchMetricPhase,
+) -> Vec<Move> {
+    match move_ordering {
+        MoveOrdering::TranspositionFirstBoardOrder => {
+            let moves = order_tt_first(moves, tt_move);
+            apply_plain_child_limit(moves, child_limit, metrics, phase)
+        }
+        MoveOrdering::TacticalFirst => {
+            let ordered = order_moves_tactical_first(board, moves, tt_move, metrics, phase);
+            apply_child_limit(ordered, child_limit, metrics, phase)
+        }
+    }
+}
+
+fn order_tt_first(mut moves: Vec<Move>, tt_move: Option<Move>) -> Vec<Move> {
+    let Some(tt_move) = tt_move else {
+        return moves;
+    };
+
+    if let Some(index) = moves.iter().position(|&mv| mv == tt_move) {
+        if index > 0 {
+            let tt_move = moves.remove(index);
+            moves.insert(0, tt_move);
+        }
+    }
+
+    moves
 }
 
 fn order_moves_tactical_first(
@@ -1850,6 +1965,22 @@ fn apply_child_limit(
             }
         })
         .collect::<Vec<_>>();
+    metrics.record_child_limit(before, moves.len(), phase);
+    moves
+}
+
+fn apply_plain_child_limit(
+    mut moves: Vec<Move>,
+    child_limit: Option<usize>,
+    metrics: &mut SearchMetrics,
+    phase: SearchMetricPhase,
+) -> Vec<Move> {
+    let Some(limit) = child_limit else {
+        return moves;
+    };
+    let limit = limit.max(1);
+    let before = moves.len();
+    moves.truncate(limit);
     metrics.record_child_limit(before, moves.len(), phase);
     moves
 }
@@ -1949,15 +2080,15 @@ fn negamax(
     let mut best_move: Option<Move> = None;
 
     let tt_move = tt.get(&hash).and_then(|e| e.best_move);
-    let ordered = order_moves(
+    let ordered = order_search_moves(
         board,
         moves,
         move_ordering,
         tt_move,
+        child_limit,
         metrics,
         SearchMetricPhase::Search,
     );
-    let ordered = apply_child_limit(ordered, child_limit, metrics, SearchMetricPhase::Search);
 
     let mut timed_out = false;
     for mv in ordered {
@@ -2081,7 +2212,7 @@ fn search_root(
     let mut best_move: Option<Move> = None;
 
     let tt_move = tt.get(&hash).and_then(|entry| entry.best_move);
-    let ordered = order_moves(
+    let ordered = order_root_moves(
         board,
         root_moves.to_vec(),
         move_ordering,
@@ -2089,10 +2220,6 @@ fn search_root(
         metrics,
         SearchMetricPhase::Root,
     );
-    let ordered = ordered
-        .into_iter()
-        .map(|ordered| ordered.mv)
-        .collect::<Vec<_>>();
 
     let mut timed_out = false;
     for mv in ordered {
@@ -2743,6 +2870,42 @@ mod tests {
     }
 
     #[test]
+    fn candidate_radius_zero_uses_generic_candidate_path() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(&mut board, &["H8", "A1"]);
+
+        assert_eq!(
+            candidate_moves(&board, 0),
+            candidate_moves_reference(&board, 0)
+        );
+    }
+
+    #[test]
+    fn default_candidate_masks_cover_nearby_cells_for_default_board() {
+        let masks = default_candidate_masks(2);
+        let center = mv("H8");
+        let center_idx = center.row * masks.size + center.col;
+        let center_mask = masks.masks[center_idx];
+
+        assert_eq!(masks.size, 15);
+        assert_eq!(masks.words, STACK_SEEN_WORDS);
+        assert!(mask_contains(center_mask, mv("F6"), masks.size));
+        assert!(mask_contains(center_mask, mv("J10"), masks.size));
+        assert!(!mask_contains(center_mask, mv("E5"), masks.size));
+    }
+
+    #[test]
+    fn tt_first_ordering_moves_hit_without_reordering_other_moves() {
+        let moves = vec![mv("A1"), mv("B1"), mv("C1"), mv("D1")];
+
+        assert_eq!(
+            order_tt_first(moves.clone(), Some(mv("C1"))),
+            vec![mv("C1"), mv("A1"), mv("B1"), mv("D1")]
+        );
+        assert_eq!(order_tt_first(moves.clone(), Some(mv("H8"))), moves);
+    }
+
+    #[test]
     fn finds_immediate_win() {
         // Black has 4 in a row; SearchBot should complete to 5
         let mut board = Board::new(RuleConfig::default());
@@ -2939,10 +3102,9 @@ mod tests {
             &["H8", "A1", "I8", "B1", "J8", "C1", "K8", "D1"],
         );
         let mut metrics = SearchMetrics::default();
-        let ordered = order_moves(
+        let ordered = order_moves_tactical_first(
             &win_board,
             vec![mv("B2"), mv("E1"), mv("L8")],
-            MoveOrdering::TacticalFirst,
             None,
             &mut metrics,
             SearchMetricPhase::Root,
@@ -2960,10 +3122,9 @@ mod tests {
             &["H8", "A1", "I8", "B1", "J8", "C1", "O15", "D1"],
         );
         let mut metrics = SearchMetrics::default();
-        let ordered = order_moves(
+        let ordered = order_moves_tactical_first(
             &shape_board,
             vec![mv("B2"), mv("K8"), mv("E1")],
-            MoveOrdering::TacticalFirst,
             None,
             &mut metrics,
             SearchMetricPhase::Search,
