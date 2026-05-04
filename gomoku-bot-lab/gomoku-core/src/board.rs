@@ -244,6 +244,10 @@ impl Board {
         self.is_legal_for(mv, self.current_player)
     }
 
+    pub fn is_legal_for_color(&self, mv: Move, color: Color) -> bool {
+        self.is_legal_for(mv, color)
+    }
+
     pub fn legal_moves(&self) -> Vec<Move> {
         self.legal_moves_for(self.current_player)
     }
@@ -1330,6 +1334,21 @@ mod tests {
             b.apply_move(Move { row: 7, col: 7 }),
             Err(MoveError::Forbidden)
         );
+    }
+
+    #[test]
+    fn legality_can_be_checked_for_non_current_color() {
+        let mut b = renju_board();
+        // Black: (5,7),(6,7) vertical + (7,5),(7,6) horizontal; White scattered.
+        // (7,7) is forbidden for Black but legal for White.
+        setup(
+            &mut b,
+            &[(5, 7), W[0], (6, 7), W[1], (7, 5), W[2], (7, 6), W[3]],
+        );
+
+        assert_eq!(b.current_player, Color::Black);
+        assert!(!b.is_legal_for_color(Move { row: 7, col: 7 }, Color::Black));
+        assert!(b.is_legal_for_color(Move { row: 7, col: 7 }, Color::White));
     }
 
     #[test]
