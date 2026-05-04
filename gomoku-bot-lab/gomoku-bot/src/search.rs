@@ -105,6 +105,13 @@ fn score_line(counts: &[i32; 6], open_ends: &[i32; 6]) -> i32 {
     score
 }
 
+fn evaluate_static(board: &Board, color: Color, static_eval: StaticEvaluation) -> i32 {
+    match static_eval {
+        StaticEvaluation::LineShapeEval => evaluate(board, color),
+        StaticEvaluation::PatternEval => evaluate_pattern(board, color),
+    }
+}
+
 fn evaluate(board: &Board, color: Color) -> i32 {
     if let GameResult::Winner(w) = &board.result {
         return if *w == color { 2_000_000 } else { -2_000_000 };
@@ -198,6 +205,84 @@ fn evaluate(board: &Board, color: Color) -> i32 {
     }
 
     score_line(&counts[0], &open_ends[0]) - score_line(&counts[1], &open_ends[1])
+}
+
+fn evaluate_pattern(board: &Board, color: Color) -> i32 {
+    if let GameResult::Winner(w) = &board.result {
+        return if *w == color { 2_000_000 } else { -2_000_000 };
+    }
+    if board.result == GameResult::Draw {
+        return 0;
+    }
+
+    pattern_score_for_player(board, color) - pattern_score_for_player(board, color.opponent())
+}
+
+fn pattern_score_for_player(board: &Board, player: Color) -> i32 {
+    let size = board.config.board_size as isize;
+    let mut score = 0i32;
+
+    for &(dr, dc) in &DIRS {
+        for row in 0..size {
+            for col in 0..size {
+                let end_row = row + dr * 4;
+                let end_col = col + dc * 4;
+                if !in_bounds(board, end_row, end_col) {
+                    continue;
+                }
+
+                let mut player_count = 0usize;
+                let mut empty_moves = [Move { row: 0, col: 0 }; 5];
+                let mut empty_count = 0usize;
+                let mut blocked = false;
+                for offset in 0..5isize {
+                    let r = (row + dr * offset) as usize;
+                    let c = (col + dc * offset) as usize;
+                    match board.cell(r, c) {
+                        Some(color) if color == player => player_count += 1,
+                        Some(_) => {
+                            blocked = true;
+                            break;
+                        }
+                        None => {
+                            empty_moves[empty_count] = Move { row: r, col: c };
+                            empty_count += 1;
+                        }
+                    }
+                }
+
+                if blocked || player_count < 2 {
+                    continue;
+                }
+
+                if player_count >= 5 {
+                    score += 1_000_000;
+                    continue;
+                }
+
+                let legal_empty_count = empty_moves[..empty_count]
+                    .iter()
+                    .filter(|&&mv| is_legal_pattern_square(board, mv, player))
+                    .count() as i32;
+                if legal_empty_count == 0 {
+                    continue;
+                }
+
+                score += match player_count {
+                    4 => 12_000 * legal_empty_count,
+                    3 => 1_000 * legal_empty_count,
+                    2 => 80 * legal_empty_count,
+                    _ => 0,
+                };
+            }
+        }
+    }
+
+    score
+}
+
+fn is_legal_pattern_square(board: &Board, mv: Move, player: Color) -> bool {
+    board.is_legal_for_color(mv, player)
 }
 
 #[cfg(test)]
@@ -472,9 +557,14 @@ impl SearchMetrics {
     }
 }
 
-fn evaluate_counted(board: &Board, color: Color, metrics: &mut SearchMetrics) -> i32 {
+fn evaluate_counted(
+    board: &Board,
+    color: Color,
+    static_eval: StaticEvaluation,
+    metrics: &mut SearchMetrics,
+) -> i32 {
     metrics.eval_calls += 1;
-    evaluate(board, color)
+    evaluate_static(board, color, static_eval)
 }
 
 #[doc(hidden)]
@@ -1723,6 +1813,7 @@ fn negamax(
     legality_gate: LegalityGate,
     move_ordering: MoveOrdering,
     child_limit: Option<usize>,
+    static_eval: StaticEvaluation,
     nodes: &mut u64,
     metrics: &mut SearchMetrics,
     deadline: SearchDeadline,
@@ -1732,7 +1823,7 @@ fn negamax(
     if deadline.expired() {
         let sign = if color == root_color { 1 } else { -1 };
         return (
-            sign * evaluate_counted(board, root_color, metrics),
+            sign * evaluate_counted(board, root_color, static_eval, metrics),
             None,
             true,
         );
@@ -1765,7 +1856,7 @@ fn negamax(
     if depth == 0 || board.result != GameResult::Ongoing {
         let sign = if color == root_color { 1 } else { -1 };
         return (
-            sign * evaluate_counted(board, root_color, metrics),
+            sign * evaluate_counted(board, root_color, static_eval, metrics),
             None,
             false,
         );
@@ -1789,7 +1880,7 @@ fn negamax(
     if moves.is_empty() {
         let sign = if color == root_color { 1 } else { -1 };
         return (
-            sign * evaluate_counted(board, root_color, metrics),
+            sign * evaluate_counted(board, root_color, static_eval, metrics),
             None,
             false,
         );
@@ -1838,6 +1929,7 @@ fn negamax(
             legality_gate,
             move_ordering,
             child_limit,
+            static_eval,
             nodes,
             metrics,
             deadline,
@@ -1867,7 +1959,7 @@ fn negamax(
     if best_move.is_none() {
         let sign = if color == root_color { 1 } else { -1 };
         return (
-            sign * evaluate_counted(board, root_color, metrics),
+            sign * evaluate_counted(board, root_color, static_eval, metrics),
             None,
             timed_out,
         );
@@ -1910,13 +2002,18 @@ fn search_root(
     legality_gate: LegalityGate,
     move_ordering: MoveOrdering,
     child_limit: Option<usize>,
+    static_eval: StaticEvaluation,
     nodes: &mut u64,
     metrics: &mut SearchMetrics,
     deadline: SearchDeadline,
 ) -> (i32, Option<Move>, bool) {
     *nodes += 1;
     if deadline.expired() {
-        return (evaluate_counted(board, color, metrics), None, true);
+        return (
+            evaluate_counted(board, color, static_eval, metrics),
+            None,
+            true,
+        );
     }
 
     let mut alpha = i32::MIN + 1;
@@ -1962,6 +2059,7 @@ fn search_root(
             legality_gate,
             move_ordering,
             child_limit,
+            static_eval,
             nodes,
             metrics,
             deadline,
@@ -1989,7 +2087,11 @@ fn search_root(
     }
 
     if best_move.is_none() {
-        return (evaluate_counted(board, color, metrics), None, timed_out);
+        return (
+            evaluate_counted(board, color, static_eval, metrics),
+            None,
+            timed_out,
+        );
     }
 
     if timed_out {
@@ -2098,12 +2200,14 @@ impl SearchAlgorithm {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StaticEvaluation {
     LineShapeEval,
+    PatternEval,
 }
 
 impl StaticEvaluation {
     const fn name(self) -> &'static str {
         match self {
             StaticEvaluation::LineShapeEval => "line_shape_eval",
+            StaticEvaluation::PatternEval => "pattern_eval",
         }
     }
 }
@@ -2334,6 +2438,7 @@ impl Bot for SearchBot {
                 legality_gate,
                 move_ordering,
                 self.config.child_limit,
+                self.config.static_eval,
                 &mut nodes,
                 &mut metrics,
                 deadline,
@@ -2789,6 +2894,7 @@ mod tests {
             LegalityGate::ExactRules,
             MoveOrdering::TranspositionFirstBoardOrder,
             Some(1),
+            StaticEvaluation::LineShapeEval,
             &mut nodes,
             &mut metrics,
             deadline,
@@ -2923,6 +3029,44 @@ mod tests {
             metrics["tactical_annotations"].as_u64().unwrap(),
             metrics["root_tactical_annotations"].as_u64().unwrap()
                 + metrics["search_tactical_annotations"].as_u64().unwrap()
+        );
+    }
+
+    #[test]
+    fn trace_records_pattern_static_eval() {
+        let board = Board::new(RuleConfig::default());
+        let mut config = SearchBotConfig::custom_depth(1);
+        config.static_eval = StaticEvaluation::PatternEval;
+        let mut bot = SearchBot::with_config(config);
+
+        let _ = bot.choose_move(&board);
+        let trace = bot.trace().expect("expected search trace");
+
+        assert_eq!(trace["config"]["static_eval"], "pattern_eval");
+    }
+
+    #[test]
+    fn pattern_eval_downgrades_renju_forbidden_overline_completion() {
+        let mut board = Board::new(RuleConfig {
+            variant: Variant::Renju,
+            ..Default::default()
+        });
+        apply_moves(
+            &mut board,
+            &[
+                "A1", "G1", "C1", "A15", "D1", "C15", "E1", "E15", "F1", "G15",
+            ],
+        );
+
+        assert_eq!(board.current_player, Color::Black);
+        assert!(!board.is_legal(mv("B1")));
+
+        let line_score = evaluate_static(&board, Color::Black, StaticEvaluation::LineShapeEval);
+        let pattern_score = evaluate_static(&board, Color::Black, StaticEvaluation::PatternEval);
+
+        assert!(
+            pattern_score < line_score,
+            "expected pattern eval to discount forbidden completion: line={line_score}, pattern={pattern_score}"
         );
     }
 

@@ -97,6 +97,21 @@ Discarded experiments should be documented in the active v0.4 plan and removed
 from the live lab spec surface. The broad `shape-eval` attempt fixed the
 depth-2 broken-three diagnostic, but was discarded because it lost to simply
 using `search-d3` and reduced effective depth under CPU budgets.
+The follow-up selective frontier local-threat eval was also discarded. It only
+scored legal local-threat moves near the last four plies, which avoided the full
+candidate scan, but the partial coverage made it inconsistent as a board-value
+term. It improved a small number of tactical or short tournament samples while
+remaining slower and unstable across D3/D5/D7 capped ablations.
+The current `+pattern-eval` experiment is intentionally different: it stays
+global, scans five-cell windows instead of recent plies, and filters
+completion/extension squares through exact Renju legality. Early 16-game Renju
+head-to-heads showed a possible strength signal, so we reran 64-game
+comparisons. The stronger sample kept the D3 and D5-cap8 signal
+(`search-d3+pattern-eval` over D3 by `45-0-19`, D5-cap8 pattern over D5-cap8 by
+`39-0-25`) but neutralized D7-cap8 (`32-0-32`). The cost is still real: D3
+pattern averaged `405 ms` per move versus `44 ms` for default eval and exhausted
+the `1000 ms` CPU budget on `14.1%` of moves. Keep it as an active lab axis for
+now, not as a default.
 
 The tactical scenario corpus is documented in
 [`tactical_scenarios.md`](tactical_scenarios.md), including board prints,
@@ -117,6 +132,16 @@ pass?" but "did local threat facts let the same budget search a narrower or
 better ordered tree without losing tactical safety?" Candidate staging, move
 ordering, and selective forced-chain extension should all report enough metrics
 to show whether breadth was reduced and reached depth improved.
+
+Do not use partial local-threat facts as static eval unless they can be made
+globally consistent or incrementally maintained across the whole live board. A
+partial leaf score can reward the last local fight while missing older threats
+elsewhere; that is worse than the crude but consistent global line eval. Partial
+tactical facts are safer as ordering/filtering/extension hints because they
+change which branches are searched first, not the final board-value semantics.
+The pattern-eval branch is the current test of the "globally consistent" side
+of that rule. It should be judged by match strength per CPU budget, not by one
+tactical scenario pass count.
 
 Do not optimize tactical facts into a full incremental frontier model until the
 scan-based annotation semantics are stable. The frontier experiment should have

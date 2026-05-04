@@ -47,6 +47,7 @@ product presets:
 | `safety_gate` | Root safety gate: `opponent_reply_search_probe`, `opponent_reply_local_threat_probe`, or `none` |
 | `move_ordering` | Alpha-beta move ordering: `tt_first_board_order` or lab-only `tactical_first` |
 | `child_limit` | Optional lab-only cap on the ordered non-root child frontier searched by alpha-beta |
+| `static_eval` | Leaf board evaluator: default `line_shape_eval` or lab-only `pattern_eval` |
 
 Search traces expose explicit pipeline stages: `candidate_source`,
 `legality_gate`, tactical annotation counters, `safety_gate`, and
@@ -55,8 +56,10 @@ legality gate (`exact_rules`), one scan-based local-threat annotation object,
 two optional safety gates (`opponent_reply_search_probe`,
 `opponent_reply_local_threat_probe`, or `none`), two move-ordering modes
 (`tt_first_board_order` default, `tactical_first` lab-only), and an optional
-`child_limit` lab cap. Renju forbidden-move checks still use exact core rules,
-but core first applies a cheap necessary-condition guard:
+`child_limit` lab cap. Static eval defaults to the global line-shape evaluator;
+`pattern_eval` is a lab-only alternative that scores five-cell windows with
+Renju-aware completion/extension squares. Renju forbidden-move checks still use
+exact core rules, but core first applies a cheap necessary-condition guard:
 a forbidden candidate must have at least two black stones on one of the four
 local axes before the exact detector runs.
 
@@ -84,9 +87,11 @@ ordering, for example `search-d5+tactical-first+child-cap-12`. Root still
 considers every legal/safe candidate. Candidate radius and child cap are
 intentionally separate: radius defines the discovery boundary, while child cap
 tests whether ordering can keep useful deeper-node coverage while alpha-beta
-searches fewer children. These switches measure one pipeline axis at a time;
-defaults remain `near_all_r2`, `opponent_reply_local_threat_probe`,
-`tt_first_board_order`, and no child cap.
+searches fewer children. Append `+pattern-eval` to replace the default
+line-shape static eval with the lab-only pattern evaluator. These switches
+measure one pipeline axis at a time; defaults remain `near_all_r2`,
+`opponent_reply_local_threat_probe`, `tt_first_board_order`, no child cap, and
+`line_shape_eval`.
 
 These aliases are not durable product identity, and they are not character bots
 yet. They exist so the lab can benchmark stable configs before deciding whether
@@ -174,6 +179,13 @@ The canonical lessons are:
 - Tactical candidates, immediate-win/block ordering, broad threat extension, and
   broad shape eval all failed their promotion gates. The common failure mode was
   hidden extra work that reduced effective depth or match strength.
+- Local-threat static eval has a sharper constraint than ordering/filtering:
+  board-value scoring must stay globally consistent. A global tactical leaf eval
+  is closer to semantically useful, but it is too expensive under fixed CPU
+  budgets. A partial frontier leaf eval is cheaper, but it can overvalue recent
+  local threats while ignoring older live threats elsewhere. Tactical facts
+  should therefore feed ordering, must-keep child caps, safety gates, or narrow
+  forced extensions before they feed static board value.
 - `local_create_broken_three` is a diagnostic, not a target. If depth 3 already
   solves a position cleanly, making depth 2 imitate it is only useful when it is
   cheaper than reaching depth 3 normally.
@@ -228,6 +240,13 @@ breadth control. Local threat facts are therefore search-efficiency data, not a
 replacement for search. They should let the bot keep tactically required moves,
 order promising moves earlier, stage or cap quiet candidates more safely, and
 extend only narrow forcing branches with concrete replies.
+
+Static eval is intentionally still the global line-shape evaluator. The rejected
+local-threat eval experiments showed the risk on both sides: broad local-threat
+leaf scoring preserves global coverage but consumes too much compute, while a
+recent-frontier-only leaf score is cheaper but can create tactical tunnel vision.
+For now, tactical facts are consumers of the search pipeline, not a replacement
+for globally consistent board evaluation.
 
 Tactical annotation stays scan-based but cache-friendly. `Board` remains the
 source of truth; search-side annotation computes local facts into a reusable move
@@ -324,7 +343,10 @@ Called at leaf nodes (depth 0) or terminal positions.
 
 Terminal positions return ±2,000,000 immediately.
 
-For non-terminal positions, the eval scores runs of consecutive same-color stones in all 4 directions (horizontal, vertical, diagonal ↘, diagonal ↗) for both sides and returns `my_score - opponent_score`.
+For non-terminal positions, the default `line_shape_eval` scores runs of
+consecutive same-color stones in all 4 directions (horizontal, vertical,
+diagonal ↘, diagonal ↗) for both sides and returns
+`my_score - opponent_score`.
 
 ### Run scoring
 
@@ -339,6 +361,30 @@ Each run is characterised by its **length** (2–4) and the number of **open end
 Score per run = `base × open_ends_count`. A fully open four (score 20,000) is treated as near-forcing. An open three (2,000) is a serious threat.
 
 **Known weakness:** the eval doesn't model threat interactions — two simultaneous open threes (a "double-three") aren't scored higher than their sum. A stronger eval would detect these compound threats explicitly.
+
+### Pattern eval experiment
+
+`pattern_eval` is a lab-only alternative selected with `+pattern-eval`. It scans
+every five-cell window, scores windows with 2-4 stones and no opponent stones,
+and counts only empty completion/extension squares that are legal for the
+scored color. That means black Renju overline/double-three/double-four
+completion squares are discounted through core legality, without changing the
+board's current player during static eval.
+
+Current evidence is mixed but still useful. In 64-game Renju head-to-heads at
+`1000 ms` CPU/move with the centered opening suite:
+
+| Pair | Pattern result | Avg move time tradeoff | Budget signal |
+|---|---:|---|---|
+| `search-d3` vs `search-d3+pattern-eval` | `45-0-19` | `405 ms` vs `44 ms` | pattern exhausted budget on `14.1%` of moves |
+| `search-d5+tactical-first+child-cap-8` vs same `+pattern-eval` | `39-0-25` | `258 ms` vs `176 ms` | pattern exhausted budget on `0.6%` of moves |
+| `search-d7+tactical-first+child-cap-8` vs same `+pattern-eval` | `32-0-32` | `571 ms` vs `433 ms` | both spent budget; pattern exhausted `39.3%` |
+
+This is enough to keep `+pattern-eval` as an active lab axis, but not enough to
+promote it as the default. The D3 and D5-cap8 results show a match-strength
+signal; the D7-cap8 result is neutral while costing more. The next question is
+whether the five-cell window taxonomy can be made cheaper or more selective
+while preserving the D3/D5 signal.
 
 ---
 

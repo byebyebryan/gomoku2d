@@ -32,6 +32,9 @@ Current progress:
   core/search work: Renju forbidden precheck, virtual immediate-win probes,
   trusted apply, candidate-generation cleanup, bitboard board storage, and
   occupied-stone hot-path iteration.
+- Commit 13 pattern static eval adds a lab-only static-eval branch. Unlike the
+  rejected recent-frontier local-threat eval, it is globally consistent and
+  Renju-aware, but ablations show it is expensive enough to remain experimental.
 - `0.4.0` is therefore a bot-lab foundation release, not a product bot-settings
   release. `0.4.1` should start from this measured baseline instead of chasing a
   single tactical fixture.
@@ -228,6 +231,10 @@ Stable lab specs stay focused on reproducible baseline configs:
 - `fast`
 - `balanced`
 - `deep`
+
+Experimental suffixes can exist when they isolate a real pipeline axis.
+`+pattern-eval` is the current example: it swaps only the static evaluator while
+leaving candidate generation, safety, ordering, and child caps unchanged.
 
 This avoids duplicating the search loop while still allowing tournament reports
 to compare meaningful variants once a feature has earned a config surface.
@@ -546,6 +553,44 @@ If an experiment starts needing dependency trees, rest-square conflict
 resolution, or all-defenses proof handling, stop and split it out as an analysis
 module instead of burying it inside `SearchBot`.
 
+### Phase 12: Global Pattern Static Eval
+
+Status: active lab experiment.
+
+This phase tests whether a globally consistent tactical-ish leaf evaluator can
+beat the crude contiguous-run evaluator without repeating the failed local eval
+mistakes.
+
+Design constraints:
+
+- scan stable five-cell windows across the whole board
+- avoid move simulation, apply/undo, or candidate generation inside static eval
+- filter only relevant empty completion/extension squares through exact core
+  legality, so Renju black forbidden completions are not overvalued
+- keep the default evaluator unchanged
+
+Early evidence:
+
+- Tactical scenarios: `search-d3+pattern-eval` passed `10/16` versus D3
+  `11/16`, averaging `71 ms` per scenario versus `15 ms` and no longer
+  exhausting the `1000 ms` CPU budget after removing per-window allocation.
+- D3 64-game head-to-head: pattern won `45-0-19`, but averaged `405 ms` per
+  move versus `44 ms` and exhausted budget on `14.1%` of moves.
+- D5 cap8 64-game head-to-head: pattern won `39-0-25`, averaged `258 ms`
+  versus `176 ms`, and barely exhausted budget (`0.6%`).
+- D7 cap8 64-game head-to-head: pattern was neutral at `32-0-32`, averaged
+  `571 ms` versus `433 ms`, and exhausted budget on `39.3%` of moves.
+
+Interpretation:
+
+- The D3 and D5-cap8 match-strength signal is real enough to keep exploring.
+- The D7-cap8 result says pattern eval does not automatically scale to deeper
+  capped search; at that point the extra eval cost can erase the benefit.
+- The cost is too high to make it a default.
+- The next useful step is taxonomy/cost tuning: keep the global semantics, but
+  reduce redundant window work or make high-severity windows dominate without
+  overcounting weak two-stone patterns.
+
 ## Intended Commit Boundaries
 
 ### Commit 1: Config Plumbing And Baseline Guardrails
@@ -686,6 +731,36 @@ Learning: shape information is useful, but not as broad leaf scoring. The next
 search behavior pass should optimize for effective depth under budget, then try
 narrower candidate ordering/search only if it improves d3 tournament or reached
 depth metrics.
+
+Expected behavior change: none after cleanup.
+
+### Commit 11b: Selective Frontier Local-Threat Eval Experiment
+
+Decision: discard.
+
+After rejecting broad local-threat leaf eval, a narrower experiment scored only
+legal local-threat moves near the last four plies with radius one. The intent was
+to test whether recent-frontier coverage could retain the useful tactical signal
+without scanning every generated candidate at every static-eval leaf.
+
+Measured result:
+
+- Tactical sweep at `1000 ms` CPU/move: `search-d3` stayed `11/16`, while
+  `search-d5+tactical-first+child-cap-8` improved from `11/16` to `12/16`.
+- D3 16-game Renju ablation: the frontier eval variant beat baseline `11-0-5`,
+  but average move time rose from roughly `45 ms` to `394 ms`, with budget hits.
+- D5 cap8 16-game Renju ablation: baseline beat the frontier eval variant
+  `9-1-6`.
+- D7 cap8 64-game Renju ablation: the frontier eval variant was effectively
+  neutral at `33.0-31.0`, but slower and more budget constrained.
+
+Learning: local-threat board-value scoring has an awkward split. A global scan
+has the right semantic coverage but costs too much at leaf nodes. A partial
+recent-frontier score is cheaper, but it can overvalue the latest local fight
+while ignoring older live threats elsewhere. Static eval must remain globally
+consistent. Local threat facts should stay in move ordering, safety gates,
+must-keep child caps, or narrow forced-line extensions until a whole-board
+incremental threat model is justified by metrics.
 
 Expected behavior change: none after cleanup.
 

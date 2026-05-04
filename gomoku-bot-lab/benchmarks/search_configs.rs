@@ -113,6 +113,10 @@ fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchB
             config.move_ordering = MoveOrdering::TacticalFirst;
             Some(config)
         }
+        "pattern-eval" => {
+            config.static_eval = StaticEvaluation::PatternEval;
+            Some(config)
+        }
         _ => None,
     }
 }
@@ -256,6 +260,14 @@ mod tests {
             .expect("expected tactical ordering spec to parse");
 
         assert_eq!(config.move_ordering, super::MoveOrdering::TacticalFirst);
+    }
+
+    #[test]
+    fn parses_pattern_eval_suffix() {
+        let config = super::search_config_from_lab_spec("search-d3+pattern-eval", 5, None, None)
+            .expect("expected pattern eval spec to parse");
+
+        assert_eq!(config.static_eval, super::StaticEvaluation::PatternEval);
     }
 
     #[test]
