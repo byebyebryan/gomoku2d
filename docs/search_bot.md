@@ -376,15 +376,17 @@ Current evidence is mixed but still useful. In 64-game Renju head-to-heads at
 
 | Pair | Pattern result | Avg move time tradeoff | Budget signal |
 |---|---:|---|---|
-| `search-d3` vs `search-d3+pattern-eval` | `45-0-19` | `405 ms` vs `44 ms` | pattern exhausted budget on `14.1%` of moves |
-| `search-d5+tactical-first+child-cap-8` vs same `+pattern-eval` | `39-0-25` | `258 ms` vs `176 ms` | pattern exhausted budget on `0.6%` of moves |
-| `search-d7+tactical-first+child-cap-8` vs same `+pattern-eval` | `32-0-32` | `571 ms` vs `433 ms` | both spent budget; pattern exhausted `39.3%` |
+| `search-d3` vs `search-d3+pattern-eval` | `49-0-15` | `326 ms` vs `39 ms` | pattern exhausted budget on `7.9%` of moves |
+| `search-d5+tactical-first+child-cap-8` vs same `+pattern-eval` | `39-0-25` | `250 ms` vs `181 ms` | pattern exhausted budget on `1.2%` of moves |
+| `search-d7+tactical-first+child-cap-8` vs same `+pattern-eval` | `35-3-26` | `581 ms` vs `429 ms` | both spent budget; pattern exhausted `40.9%` |
 
 This is enough to keep `+pattern-eval` as an active lab axis, but not enough to
 promote it as the default. The D3 and D5-cap8 results show a match-strength
-signal; the D7-cap8 result is neutral while costing more. The next question is
-whether the five-cell window taxonomy can be made cheaper or more selective
-while preserving the D3/D5 signal.
+signal; D7-cap8 is now slightly positive too, but still spends too much budget
+to treat as a clean default candidate. The next question is whether the
+five-cell window taxonomy can become more selective without giving up the global
+board-value semantics that made this attempt more stable than partial frontier
+eval.
 
 ---
 

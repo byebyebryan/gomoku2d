@@ -215,12 +215,23 @@ fn evaluate_pattern(board: &Board, color: Color) -> i32 {
         return 0;
     }
 
-    pattern_score_for_player(board, color) - pattern_score_for_player(board, color.opponent())
+    let scores = pattern_scores(board);
+    match color {
+        Color::Black => scores.black - scores.white,
+        Color::White => scores.white - scores.black,
+    }
 }
 
-fn pattern_score_for_player(board: &Board, player: Color) -> i32 {
+#[derive(Default)]
+struct PatternScores {
+    black: i32,
+    white: i32,
+}
+
+fn pattern_scores(board: &Board) -> PatternScores {
     let size = board.config.board_size as isize;
-    let mut score = 0i32;
+    let mut scores = PatternScores::default();
+    let mut legality_cache = PatternLegalityCache::new(board);
 
     for &(dr, dc) in &DIRS {
         for row in 0..size {
@@ -231,19 +242,16 @@ fn pattern_score_for_player(board: &Board, player: Color) -> i32 {
                     continue;
                 }
 
-                let mut player_count = 0usize;
+                let mut black_count = 0usize;
+                let mut white_count = 0usize;
                 let mut empty_moves = [Move { row: 0, col: 0 }; 5];
                 let mut empty_count = 0usize;
-                let mut blocked = false;
                 for offset in 0..5isize {
                     let r = (row + dr * offset) as usize;
                     let c = (col + dc * offset) as usize;
                     match board.cell(r, c) {
-                        Some(color) if color == player => player_count += 1,
-                        Some(_) => {
-                            blocked = true;
-                            break;
-                        }
+                        Some(Color::Black) => black_count += 1,
+                        Some(Color::White) => white_count += 1,
                         None => {
                             empty_moves[empty_count] = Move { row: r, col: c };
                             empty_count += 1;
@@ -251,38 +259,79 @@ fn pattern_score_for_player(board: &Board, player: Color) -> i32 {
                     }
                 }
 
-                if blocked || player_count < 2 {
+                if black_count > 0 && white_count > 0 {
                     continue;
                 }
 
-                if player_count >= 5 {
-                    score += 1_000_000;
-                    continue;
+                if black_count >= 2 {
+                    scores.black += score_pattern_window(
+                        black_count,
+                        legality_cache.count_legal_black_moves(board, &empty_moves[..empty_count]),
+                    );
+                } else if white_count >= 2 {
+                    scores.white += score_pattern_window(white_count, empty_count as i32);
                 }
-
-                let legal_empty_count = empty_moves[..empty_count]
-                    .iter()
-                    .filter(|&&mv| is_legal_pattern_square(board, mv, player))
-                    .count() as i32;
-                if legal_empty_count == 0 {
-                    continue;
-                }
-
-                score += match player_count {
-                    4 => 12_000 * legal_empty_count,
-                    3 => 1_000 * legal_empty_count,
-                    2 => 80 * legal_empty_count,
-                    _ => 0,
-                };
             }
         }
     }
 
-    score
+    scores
 }
 
-fn is_legal_pattern_square(board: &Board, mv: Move, player: Color) -> bool {
-    board.is_legal_for_color(mv, player)
+fn score_pattern_window(player_count: usize, legal_empty_count: i32) -> i32 {
+    if player_count >= 5 {
+        return 1_000_000;
+    }
+    if legal_empty_count == 0 {
+        return 0;
+    }
+
+    match player_count {
+        4 => 12_000 * legal_empty_count,
+        3 => 1_000 * legal_empty_count,
+        2 => 80 * legal_empty_count,
+        _ => 0,
+    }
+}
+
+struct PatternLegalityCache {
+    board_size: usize,
+    renju_black: Option<Vec<Option<bool>>>,
+}
+
+impl PatternLegalityCache {
+    fn new(board: &Board) -> Self {
+        let needs_exact_renju_black = board.config.variant == Variant::Renju;
+        let renju_black = needs_exact_renju_black
+            .then(|| vec![None; board.config.board_size * board.config.board_size]);
+
+        Self {
+            board_size: board.config.board_size,
+            renju_black,
+        }
+    }
+
+    fn count_legal_black_moves(&mut self, board: &Board, moves: &[Move]) -> i32 {
+        moves
+            .iter()
+            .filter(|&&mv| self.is_legal_black_move(board, mv))
+            .count() as i32
+    }
+
+    fn is_legal_black_move(&mut self, board: &Board, mv: Move) -> bool {
+        let Some(cache) = &mut self.renju_black else {
+            return true;
+        };
+
+        let index = mv.row * self.board_size + mv.col;
+        if let Some(is_legal) = cache[index] {
+            return is_legal;
+        }
+
+        let is_legal = board.is_legal_for_color(mv, Color::Black);
+        cache[index] = Some(is_legal);
+        is_legal
+    }
 }
 
 #[cfg(test)]
@@ -570,6 +619,15 @@ fn evaluate_counted(
 #[doc(hidden)]
 pub fn pipeline_bench_evaluate(board: &Board, color: Color) -> i32 {
     evaluate(board, color)
+}
+
+#[doc(hidden)]
+pub fn pipeline_bench_evaluate_static(
+    board: &Board,
+    color: Color,
+    static_eval: StaticEvaluation,
+) -> i32 {
+    evaluate_static(board, color, static_eval)
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -2517,6 +2575,93 @@ mod tests {
     }
 
     #[test]
+    fn optimized_pattern_eval_matches_reference_on_benchmark_scenarios() {
+        for scenario in scenarios::SCENARIOS {
+            let board = scenario.board();
+            for color in [Color::Black, Color::White] {
+                assert_eq!(
+                    evaluate_static(&board, color, StaticEvaluation::PatternEval),
+                    evaluate_pattern_reference(&board, color),
+                    "scenario '{}' diverged for {:?}",
+                    scenario.id,
+                    color
+                );
+            }
+        }
+    }
+
+    fn evaluate_pattern_reference(board: &Board, color: Color) -> i32 {
+        if let GameResult::Winner(w) = &board.result {
+            return if *w == color { 2_000_000 } else { -2_000_000 };
+        }
+        if board.result == GameResult::Draw {
+            return 0;
+        }
+
+        pattern_score_for_player_reference(board, color)
+            - pattern_score_for_player_reference(board, color.opponent())
+    }
+
+    fn pattern_score_for_player_reference(board: &Board, player: Color) -> i32 {
+        let size = board.config.board_size as isize;
+        let mut score = 0i32;
+
+        for &(dr, dc) in &DIRS {
+            for row in 0..size {
+                for col in 0..size {
+                    let end_row = row + dr * 4;
+                    let end_col = col + dc * 4;
+                    if !in_bounds(board, end_row, end_col) {
+                        continue;
+                    }
+
+                    let mut player_count = 0usize;
+                    let mut empty_moves = [Move { row: 0, col: 0 }; 5];
+                    let mut empty_count = 0usize;
+                    let mut blocked = false;
+                    for offset in 0..5isize {
+                        let r = (row + dr * offset) as usize;
+                        let c = (col + dc * offset) as usize;
+                        match board.cell(r, c) {
+                            Some(color) if color == player => player_count += 1,
+                            Some(_) => {
+                                blocked = true;
+                                break;
+                            }
+                            None => {
+                                empty_moves[empty_count] = Move { row: r, col: c };
+                                empty_count += 1;
+                            }
+                        }
+                    }
+
+                    if blocked || player_count < 2 {
+                        continue;
+                    }
+
+                    let legal_empty_count = empty_moves[..empty_count]
+                        .iter()
+                        .filter(|&&mv| board.is_legal_for_color(mv, player))
+                        .count() as i32;
+                    if legal_empty_count == 0 {
+                        continue;
+                    }
+
+                    score += match player_count {
+                        5.. => 1_000_000,
+                        4 => 12_000 * legal_empty_count,
+                        3 => 1_000 * legal_empty_count,
+                        2 => 80 * legal_empty_count,
+                        _ => 0,
+                    };
+                }
+            }
+        }
+
+        score
+    }
+
+    #[test]
     fn trusted_apply_matches_regular_apply_for_legal_candidates() {
         for scenario in scenarios::SCENARIOS {
             let board = scenario.board();
@@ -3043,6 +3188,16 @@ mod tests {
         let trace = bot.trace().expect("expected search trace");
 
         assert_eq!(trace["config"]["static_eval"], "pattern_eval");
+    }
+
+    #[test]
+    fn pipeline_bench_static_eval_supports_pattern_eval() {
+        let board = Board::new(RuleConfig::default());
+
+        assert_eq!(
+            pipeline_bench_evaluate_static(&board, Color::Black, StaticEvaluation::PatternEval),
+            evaluate_static(&board, Color::Black, StaticEvaluation::PatternEval)
+        );
     }
 
     #[test]
