@@ -3,7 +3,10 @@ use std::time::Duration;
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use std::hint::black_box;
 
-use gomoku_bot::search::{pipeline_bench_candidate_moves, pipeline_bench_evaluate};
+use gomoku_bot::search::{
+    pipeline_bench_candidate_moves, pipeline_bench_evaluate, pipeline_bench_evaluate_static,
+};
+use gomoku_bot::StaticEvaluation;
 
 #[path = "../../benchmarks/scenarios.rs"]
 mod scenarios;
@@ -32,6 +35,30 @@ fn bench_static_eval(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_pattern_static_eval(c: &mut Criterion) {
+    let mut group = c.benchmark_group("pipeline/static_eval/pattern_eval/current_player");
+
+    for scenario in scenarios::SCENARIOS {
+        let board = scenario.board();
+        let color = board.current_player;
+        group.bench_with_input(
+            BenchmarkId::from_parameter(scenario.id),
+            scenario,
+            |b, _| {
+                b.iter(|| {
+                    black_box(pipeline_bench_evaluate_static(
+                        &board,
+                        color,
+                        StaticEvaluation::PatternEval,
+                    ))
+                })
+            },
+        );
+    }
+
+    group.finish();
+}
+
 fn bench_candidate_moves(c: &mut Criterion) {
     let mut group = c.benchmark_group("pipeline/candidate_moves/r2");
 
@@ -52,6 +79,7 @@ criterion_group!(
     config = criterion_config();
     targets =
         bench_static_eval,
+        bench_pattern_static_eval,
         bench_candidate_moves
 );
 criterion_main!(pipeline_perf);

@@ -107,11 +107,12 @@ global, scans five-cell windows instead of recent plies, and filters
 completion/extension squares through exact Renju legality. Early 16-game Renju
 head-to-heads showed a possible strength signal, so we reran 64-game
 comparisons. The stronger sample kept the D3 and D5-cap8 signal
-(`search-d3+pattern-eval` over D3 by `45-0-19`, D5-cap8 pattern over D5-cap8 by
-`39-0-25`) but neutralized D7-cap8 (`32-0-32`). The cost is still real: D3
-pattern averaged `405 ms` per move versus `44 ms` for default eval and exhausted
-the `1000 ms` CPU budget on `14.1%` of moves. Keep it as an active lab axis for
-now, not as a default.
+(`search-d3+pattern-eval` over D3 by `49-0-15`, D5-cap8 pattern over D5-cap8 by
+`39-0-25`) and made D7-cap8 slightly positive (`35-3-26`). The cost is still
+real: D3 pattern averaged `326 ms` per move versus `39 ms` for default eval and
+exhausted the `1000 ms` CPU budget on `7.9%` of moves. D7-cap8 pattern averaged
+`581 ms` and exhausted budget on `40.9%` of moves. Keep it as an active lab axis
+for now, not as a default.
 
 The tactical scenario corpus is documented in
 [`tactical_scenarios.md`](tactical_scenarios.md), including board prints,
@@ -155,6 +156,39 @@ a clear before/after target:
 Now that local-threat annotation has explicit trace metrics, use those counters
 to decide whether caching is worth the complexity before maintaining
 updated/deleted shapes alongside board state.
+
+## Optimization pass 7 snapshot
+
+Date: `2026-05-04`
+
+This pass measured the global pattern evaluator directly and then removed
+obvious redundant work without changing its semantics:
+
+- added a Criterion group for
+  `pipeline/static_eval/pattern_eval/current_player`
+- cached exact Renju-black legality checks inside one pattern-eval call
+- scored black and white five-cell windows in one scan instead of scanning the
+  board once per color
+
+Direct static-eval benchmark:
+
+| Benchmark | Before | After | Change |
+|---|---:|---:|---:|
+| `pipeline/static_eval/pattern_eval/current_player/midgame_dense` | `4.6769-4.7078 us` | `2.6536-2.6895 us` | about `-43%` |
+| `pipeline/static_eval/pattern_eval/current_player/renju_forbidden_cross` | `14.351-14.397 us` | `7.3447-7.3995 us` | about `-49%` |
+
+End-to-end effect:
+
+- D3 pattern improved from `45-0-19`, `405 ms`, and `14.1%` budget exhaustion
+  to `49-0-15`, `326 ms`, and `7.9%`.
+- D5 cap8 pattern stayed positive at `39-0-25` and remained mostly within
+  budget (`1.2%` exhausted).
+- D7 cap8 pattern moved from neutral to slightly positive (`35-3-26`), but it
+  still exhausted budget on `40.9%` of moves.
+
+Conclusion: the optimization is a pure improvement for the experiment, but it
+does not change the product decision. `+pattern-eval` remains a useful lab axis;
+it is still too expensive to promote as a default.
 
 ## Benchmark suites
 

@@ -569,23 +569,27 @@ Design constraints:
   legality, so Renju black forbidden completions are not overvalued
 - keep the default evaluator unchanged
 
-Early evidence:
+Current evidence:
 
 - Tactical scenarios: `search-d3+pattern-eval` passed `10/16` versus D3
-  `11/16`, averaging `71 ms` per scenario versus `15 ms` and no longer
-  exhausting the `1000 ms` CPU budget after removing per-window allocation.
-- D3 64-game head-to-head: pattern won `45-0-19`, but averaged `405 ms` per
-  move versus `44 ms` and exhausted budget on `14.1%` of moves.
-- D5 cap8 64-game head-to-head: pattern won `39-0-25`, averaged `258 ms`
-  versus `176 ms`, and barely exhausted budget (`0.6%`).
-- D7 cap8 64-game head-to-head: pattern was neutral at `32-0-32`, averaged
-  `571 ms` versus `433 ms`, and exhausted budget on `39.3%` of moves.
+  `11/16`, averaging `48 ms` per scenario versus `15 ms` and not exhausting
+  the `1000 ms` CPU budget.
+- D3 64-game head-to-head: pattern won `49-0-15`, but averaged `326 ms` per
+  move versus `39 ms` and exhausted budget on `7.9%` of moves.
+- D5 cap8 64-game head-to-head: pattern won `39-0-25`, averaged `250 ms`
+  versus `181 ms`, and barely exhausted budget (`1.2%`).
+- D7 cap8 64-game head-to-head: pattern won `35-3-26`, averaged `581 ms`
+  versus `429 ms`, and exhausted budget on `40.9%` of moves.
+- Direct pattern static-eval cost improved by about `43%` on `midgame_dense`
+  and about `49%` on `renju_forbidden_cross` after caching Renju-black legality
+  and scanning both colors in one pass.
 
 Interpretation:
 
 - The D3 and D5-cap8 match-strength signal is real enough to keep exploring.
-- The D7-cap8 result says pattern eval does not automatically scale to deeper
-  capped search; at that point the extra eval cost can erase the benefit.
+- The D7-cap8 result is now slightly positive, but still says pattern eval does
+  not automatically scale to deeper capped search; at that point the extra eval
+  cost can erase the benefit.
 - The cost is too high to make it a default.
 - The next useful step is taxonomy/cost tuning: keep the global semantics, but
   reduce redundant window work or make high-severity windows dominate without
