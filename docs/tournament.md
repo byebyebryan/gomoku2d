@@ -55,7 +55,7 @@ Focused head-to-head:
 ```sh
 cargo run --release -p gomoku-eval -- tournament \
   --schedule head-to-head \
-  --bots search-d5+tactical-first+child-cap-8,search-d5+tactical-first+child-cap-8+pattern-eval \
+  --bots search-d5+tactical-cap-8,search-d5+tactical-cap-8+pattern-eval \
   --games-per-pair 64 \
   --opening-policy centered-suite \
   --opening-plies 4 \
@@ -68,8 +68,8 @@ Candidate gauntlet:
 ```sh
 cargo run --release -p gomoku-eval -- tournament \
   --schedule gauntlet \
-  --candidate search-d7+tactical-first+child-cap-8+pattern-eval \
-  --anchors search-d3,search-d5+tactical-first+child-cap-8,search-d7+tactical-first+child-cap-8 \
+  --candidate search-d7+tactical-cap-8+pattern-eval \
+  --anchors search-d3,search-d5+tactical-cap-8,search-d7+tactical-cap-8 \
   --anchor-report reports/latest.json \
   --games-per-pair 64 \
   --opening-policy centered-suite \

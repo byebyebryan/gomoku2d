@@ -83,7 +83,8 @@ the safety gate. Append `+tactical-first` to use local-threat facts for ordering
 before alpha-beta visits candidate moves, for example
 `search-d5+tactical-first`. Append `+child-cap-N` to limit the ordered non-root
 child frontier after candidate generation, legality filtering, and move
-ordering, for example `search-d5+tactical-first+child-cap-12`. Root still
+ordering. Use `+tactical-cap-N` as shorthand for `+tactical-first+child-cap-N`
+in reports and tournament specs, for example `search-d5+tactical-cap-12`. Root still
 considers every legal/safe candidate. Candidate radius and child cap are
 intentionally separate: radius defines the discovery boundary, while child cap
 tests whether ordering can keep useful deeper-node coverage while alpha-beta
@@ -216,7 +217,7 @@ ordering with `child_limit` creates a real breadth-for-depth tradeoff. With root
 uncapped, the D5 and D7 `tactical-first + child-cap-8` variants both beat
 uncapped `search-d3` in a focused Renju tournament, and D7 beat D5. The clearest
 same-depth signal so far is a 64-game Renju head-to-head where
-`search-d5+tactical-first+child-cap-8` beat uncapped `search-d5` by `44-1-19`,
+`search-d5+tactical-cap-8` beat uncapped `search-d5` by `44-1-19`,
 searched far fewer nodes, and reached more completed depth under the same
 `1000 ms` CPU budget. A follow-up D9 `tactical-first + child-cap-4` variant
 reached deeper on average than D7 cap8 but lost the head-to-head, suggesting
@@ -224,8 +225,8 @@ cap4 cuts too much breadth. That makes the cap a useful lab axis for
 harder/slower search variants, but not yet a product default.
 
 A wider 64-games-per-pair Renju tournament with the centered opening suite
-across `search-d1`, `search-d3`, `search-d5+tactical-first+child-cap-8`, and
-`search-d7+tactical-first+child-cap-8` confirmed the ladder shape: D1 was clearly
+across `search-d1`, `search-d3`, `search-d5+tactical-cap-8`, and
+`search-d7+tactical-cap-8` confirmed the ladder shape: D1 was clearly
 soft, D3 sat in the middle, and the two capped variants occupied the harder
 side. Pairwise results were D1/D3 `3-0-61`, D1/D5-cap8 `3-0-61`, D1/D7-cap8
 `3-0-61`, D3/D5-cap8 `23-0-41`, D3/D7-cap8 `15-0-49`, and D5-cap8/D7-cap8
@@ -377,8 +378,8 @@ Current evidence is mixed but still useful. In 64-game Renju head-to-heads at
 | Pair | Pattern result | Avg move time tradeoff | Budget signal |
 |---|---:|---|---|
 | `search-d3` vs `search-d3+pattern-eval` | `49-0-15` | `326 ms` vs `39 ms` | pattern exhausted budget on `7.9%` of moves |
-| `search-d5+tactical-first+child-cap-8` vs same `+pattern-eval` | `39-0-25` | `250 ms` vs `181 ms` | pattern exhausted budget on `1.2%` of moves |
-| `search-d7+tactical-first+child-cap-8` vs same `+pattern-eval` | `35-3-26` | `581 ms` vs `429 ms` | both spent budget; pattern exhausted `40.9%` |
+| `search-d5+tactical-cap-8` vs same `+pattern-eval` | `39-0-25` | `250 ms` vs `181 ms` | pattern exhausted budget on `1.2%` of moves |
+| `search-d7+tactical-cap-8` vs same `+pattern-eval` | `35-3-26` | `581 ms` vs `429 ms` | both spent budget; pattern exhausted `40.9%` |
 
 This is enough to keep `+pattern-eval` as an active lab axis, but not enough to
 promote it as the default. The D3 and D5-cap8 results show a match-strength

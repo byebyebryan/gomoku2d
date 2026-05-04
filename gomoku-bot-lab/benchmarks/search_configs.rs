@@ -76,10 +76,14 @@ pub fn search_config_from_lab_spec(
 
 fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchBotConfig> {
     if let Some(limit) = suffix.strip_prefix("child-cap-") {
-        let limit = limit.parse::<usize>().ok()?;
-        if limit == 0 {
-            return None;
-        }
+        let limit = parse_positive_limit(limit)?;
+        config.child_limit = Some(limit);
+        return Some(config);
+    }
+
+    if let Some(limit) = suffix.strip_prefix("tactical-cap-") {
+        let limit = parse_positive_limit(limit)?;
+        config.move_ordering = MoveOrdering::TacticalFirst;
         config.child_limit = Some(limit);
         return Some(config);
     }
@@ -119,6 +123,14 @@ fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchB
         }
         _ => None,
     }
+}
+
+fn parse_positive_limit(value: &str) -> Option<usize> {
+    let limit = value.parse::<usize>().ok()?;
+    if limit == 0 {
+        return None;
+    }
+    Some(limit)
 }
 
 fn base_search_config(
@@ -284,6 +296,19 @@ mod tests {
         assert_eq!(config.move_ordering, super::MoveOrdering::TacticalFirst);
         assert!(
             super::search_config_from_lab_spec("search-d5+child-cap-0", 3, None, None).is_none()
+        );
+    }
+
+    #[test]
+    fn parses_tactical_cap_shorthand_suffix() {
+        let config = super::search_config_from_lab_spec("search-d7+tactical-cap-8", 3, None, None)
+            .expect("expected tactical cap shorthand spec to parse");
+
+        assert_eq!(config.max_depth, 7);
+        assert_eq!(config.move_ordering, super::MoveOrdering::TacticalFirst);
+        assert_eq!(config.child_limit, Some(8));
+        assert!(
+            super::search_config_from_lab_spec("search-d7+tactical-cap-0", 3, None, None).is_none()
         );
     }
 
