@@ -650,12 +650,18 @@ Evidence:
 - `balanced` and `deep` generally improved by about `3-6%`, with one deep Renju
   case inside noise
 - focused tactical scenarios still pass all hard safety gates
+- a `48`-match Renju smoke tournament against parent commit `b8d0fc2` produced
+  unchanged outcomes and about `-4%` overall wall time; per-move time improved
+  for `search-d1`, `search-d5+tactical-first+child-cap-8`, and
+  `search-d7+tactical-first+child-cap-8`, while `search-d3` stayed flat
 
 Interpretation:
 
 - This is a quality-neutral cleanup and should stay in place.
 - The gain confirms that local-threat annotation cost matters most before search
   depth dominates runtime.
+- There is still no dedicated tactical-annotation microbench; add one only if
+  future tuning needs isolated annotation-only timing.
 
 ## Intended Commit Boundaries
 
