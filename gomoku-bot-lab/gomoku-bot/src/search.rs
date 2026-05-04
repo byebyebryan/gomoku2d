@@ -313,6 +313,9 @@ pub struct SearchMetrics {
     pub root_illegal_moves_skipped: u64,
     pub search_legality_checks: u64,
     pub search_illegal_moves_skipped: u64,
+    pub tactical_annotations: u64,
+    pub root_tactical_annotations: u64,
+    pub search_tactical_annotations: u64,
     pub tt_hits: u64,
     pub tt_cutoffs: u64,
     pub beta_cutoffs: u64,
@@ -369,6 +372,14 @@ impl SearchMetrics {
         legal
     }
 
+    fn record_tactical_annotation(&mut self, phase: SearchMetricPhase) {
+        self.tactical_annotations += 1;
+        match phase {
+            SearchMetricPhase::Root => self.root_tactical_annotations += 1,
+            SearchMetricPhase::Search => self.search_tactical_annotations += 1,
+        }
+    }
+
     fn trace(self) -> serde_json::Value {
         serde_json::json!({
             "eval_calls": self.eval_calls,
@@ -387,6 +398,9 @@ impl SearchMetrics {
             "root_illegal_moves_skipped": self.root_illegal_moves_skipped,
             "search_legality_checks": self.search_legality_checks,
             "search_illegal_moves_skipped": self.search_illegal_moves_skipped,
+            "tactical_annotations": self.tactical_annotations,
+            "root_tactical_annotations": self.root_tactical_annotations,
+            "search_tactical_annotations": self.search_tactical_annotations,
             "tt_hits": self.tt_hits,
             "tt_cutoffs": self.tt_cutoffs,
             "beta_cutoffs": self.beta_cutoffs,
@@ -613,6 +627,75 @@ impl LocalThreatFact {
     fn is_forcing(&self) -> bool {
         self.kind.is_forcing()
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(not(test), allow(dead_code))]
+struct TacticalMoveAnnotation {
+    player: Color,
+    mv: Move,
+    local_threats: Vec<LocalThreatFact>,
+}
+
+impl TacticalMoveAnnotation {
+    fn creates_immediate_or_multi_threat(&self) -> bool {
+        let mut completion_squares = Vec::new();
+        for fact in self.local_threats.iter() {
+            match fact.kind {
+                LocalThreatKind::Five | LocalThreatKind::OpenFour => return true,
+                LocalThreatKind::ClosedFour | LocalThreatKind::BrokenFour => {
+                    for defense in fact.defense_squares.iter().copied() {
+                        if !completion_squares.contains(&defense) {
+                            completion_squares.push(defense);
+                        }
+                    }
+                    if completion_squares.len() >= 2 {
+                        return true;
+                    }
+                }
+                LocalThreatKind::OpenThree
+                | LocalThreatKind::ClosedThree
+                | LocalThreatKind::BrokenThree => {}
+            }
+        }
+
+        false
+    }
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn annotate_tactical_move(board: &Board, mv: Move) -> TacticalMoveAnnotation {
+    if board.is_legal(mv) {
+        annotate_legal_tactical_move(board, mv)
+    } else {
+        TacticalMoveAnnotation {
+            player: board.current_player,
+            mv,
+            local_threats: Vec::new(),
+        }
+    }
+}
+
+fn annotate_legal_tactical_move(board: &Board, mv: Move) -> TacticalMoveAnnotation {
+    let player = board.current_player;
+    TacticalMoveAnnotation {
+        player,
+        mv,
+        local_threats: local_threat_facts_after_legal_move(board, mv)
+            .into_iter()
+            .filter(|fact| fact.player == player)
+            .collect(),
+    }
+}
+
+fn annotate_legal_tactical_move_counted(
+    board: &Board,
+    mv: Move,
+    metrics: &mut SearchMetrics,
+    phase: SearchMetricPhase,
+) -> TacticalMoveAnnotation {
+    metrics.record_tactical_annotation(phase);
+    annotate_legal_tactical_move(board, mv)
 }
 
 #[cfg_attr(not(test), allow(dead_code))]
@@ -1374,7 +1457,8 @@ fn allows_opponent_local_forcing_reply(
             }
 
             *safety_nodes += 1;
-            if local_reply_creates_immediate_or_multi_threat(board, reply, opponent) {
+            debug_assert_eq!(board.current_player, opponent);
+            if local_reply_creates_immediate_or_multi_threat(board, reply, metrics) {
                 dangerous = true;
                 break;
             }
@@ -1393,32 +1477,10 @@ fn allows_opponent_local_forcing_reply(
 fn local_reply_creates_immediate_or_multi_threat(
     board: &Board,
     reply: Move,
-    player: Color,
+    metrics: &mut SearchMetrics,
 ) -> bool {
-    let mut completion_squares = Vec::new();
-    for fact in local_threat_facts_after_legal_move(board, reply)
-        .into_iter()
-        .filter(|fact| fact.player == player)
-    {
-        match fact.kind {
-            LocalThreatKind::Five | LocalThreatKind::OpenFour => return true,
-            LocalThreatKind::ClosedFour | LocalThreatKind::BrokenFour => {
-                for defense in fact.defense_squares {
-                    if !completion_squares.contains(&defense) {
-                        completion_squares.push(defense);
-                    }
-                }
-                if completion_squares.len() >= 2 {
-                    return true;
-                }
-            }
-            LocalThreatKind::OpenThree
-            | LocalThreatKind::ClosedThree
-            | LocalThreatKind::BrokenThree => {}
-        }
-    }
-
-    false
+    annotate_legal_tactical_move_counted(board, reply, metrics, SearchMetricPhase::Root)
+        .creates_immediate_or_multi_threat()
 }
 
 fn opponent_reply_local_threat_probe_root_candidates(
@@ -2389,6 +2451,31 @@ mod tests {
     }
 
     #[test]
+    fn tactical_annotation_summarizes_local_threat_replies() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(&mut board, &["H8", "A1", "I8", "C1", "J8", "E1"]);
+
+        let annotation = annotate_tactical_move(&board, mv("K8"));
+
+        assert_eq!(annotation.player, Color::Black);
+        assert_eq!(annotation.mv, mv("K8"));
+        assert_eq!(
+            annotation.local_threats,
+            vec![LocalThreatFact {
+                player: Color::Black,
+                kind: LocalThreatKind::OpenFour,
+                gain_square: mv("K8"),
+                defense_squares: vec![mv("G8"), mv("L8")],
+                rest_squares: vec![],
+            }]
+        );
+        assert!(annotation.creates_immediate_or_multi_threat());
+
+        let quiet = annotate_tactical_move(&board, mv("B2"));
+        assert!(!quiet.creates_immediate_or_multi_threat());
+    }
+
+    #[test]
     fn explicit_config_constructors_preserve_legacy_defaults() {
         let baseline = SearchBotConfig::custom_depth(3);
         assert_eq!(SearchBot::new(3).config(), baseline);
@@ -2500,6 +2587,15 @@ mod tests {
         assert!(metrics["tt_hits"].as_u64().is_some());
         assert!(metrics["tt_cutoffs"].as_u64().is_some());
         assert!(metrics["beta_cutoffs"].as_u64().is_some());
+        assert!(
+            metrics["tactical_annotations"].as_u64().unwrap()
+                >= metrics["root_tactical_annotations"].as_u64().unwrap()
+        );
+        assert_eq!(
+            metrics["tactical_annotations"].as_u64().unwrap(),
+            metrics["root_tactical_annotations"].as_u64().unwrap()
+                + metrics["search_tactical_annotations"].as_u64().unwrap()
+        );
     }
 
     #[test]

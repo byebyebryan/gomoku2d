@@ -47,11 +47,12 @@ product presets:
 | `safety_gate` | Root safety gate: `opponent_reply_search_probe`, `opponent_reply_local_threat_probe`, or `none` |
 
 Search traces expose explicit pipeline stages: `candidate_source`,
-`legality_gate`, and `safety_gate`. Today there is one candidate source family
-(`near_all_rN`), one legality gate (`exact_rules`), and two optional safety
-gates (`opponent_reply_search_probe`, `opponent_reply_local_threat_probe`, or
-`none`). Renju forbidden-move checks still use exact core rules, but core first
-applies a cheap necessary-condition guard:
+`legality_gate`, tactical annotation counters, and `safety_gate`. Today there is
+one candidate source family (`near_all_rN`), one legality gate (`exact_rules`),
+one scan-based local-threat annotation object, and two optional safety gates
+(`opponent_reply_search_probe`, `opponent_reply_local_threat_probe`, or `none`).
+Renju forbidden-move checks still use exact core rules, but core first applies a
+cheap necessary-condition guard:
 a forbidden candidate must have at least two black stones on one of the four
 local axes before the exact detector runs.
 
@@ -103,7 +104,9 @@ Search traces include both the result and the config:
     "root_candidate_generations": 1,
     "search_candidate_generations": 80,
     "root_legality_checks": 20,
-    "search_legality_checks": 400
+    "search_legality_checks": 400,
+    "root_tactical_annotations": 56,
+    "search_tactical_annotations": 0
   },
   "score": 200,
   "budget_exhausted": false
@@ -117,8 +120,10 @@ root candidates and opponent replies classified through local threat facts, so
 compare it as safety-gate work rather than as alpha-beta-equivalent nodes.
 `total_nodes` is the aggregate used by eval reporting. Root/search candidate and
 legality metrics are split so pipeline-stage costs can be compared
-independently. Node budgets are not enforced yet; this is currently a trace and
-tournament metric.
+independently. Tactical annotation metrics count reusable local-threat
+classification work separately from candidate generation and alpha-beta nodes.
+Node budgets are not enforced yet; this is currently a trace and tournament
+metric.
 
 ## `v0.4.0` experiment takeaways
 
@@ -156,13 +161,13 @@ replacement for search. They should let the bot keep tactically required moves,
 order promising moves earlier, stage or cap quiet candidates more safely, and
 extend only narrow forcing branches with concrete replies.
 
-The next tactical annotation pass should stay scan-based but cache-friendly.
-`Board` remains the source of truth; search-side annotation can compute local
-facts once per candidate/reply set and feed safety, ordering, and reports. A
-full frontier model, where a `SearchPosition` tracks changed candidate masks and
-threat facts through apply/undo, is a later optimization experiment. It should
-wait until the fact schema and consumers are stable and metrics show annotation
-or candidate regeneration is worth making incremental.
+Tactical annotation stays scan-based but cache-friendly. `Board` remains the
+source of truth; search-side annotation computes local facts into a reusable move
+annotation and can feed safety, ordering, and reports. A full frontier model,
+where a `SearchPosition` tracks changed candidate masks and threat facts through
+apply/undo, is a later optimization experiment. It should wait until the fact
+schema and consumers are stable and metrics show annotation or candidate
+regeneration is worth making incremental.
 
 For `v0.4.1`, the strategic target is a practice bot that climbs a tactical
 ladder:

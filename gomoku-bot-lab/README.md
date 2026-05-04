@@ -91,10 +91,10 @@ The active `0.4.1` direction is a tactical ladder: local threat competence
 first, casual combo play next, then bounded forced-chain search before any
 product-facing offensive/defensive bot personalities. Tactical facts are meant
 to buy effective depth through safer narrowing, ordering, and selective
-extension, not to replace alpha-beta search with broad shape scoring. A full
-incremental frontier/threat-state model is intentionally deferred until the
-scan-based tactical annotation stage is stable and metrics show it is worth
-caching.
+extension, not to replace alpha-beta search with broad shape scoring. The
+current tactical annotation stage is scan-based and records its own trace
+metrics; a full incremental frontier/threat-state model is intentionally
+deferred until those metrics show caching is worth the complexity.
 
 ### Eval harness
 
@@ -230,7 +230,9 @@ that replay format directly.
           "root_candidate_generations": 1,
           "search_candidate_generations": 12,
           "root_legality_checks": 4,
-          "search_legality_checks": 80
+          "search_legality_checks": 80,
+          "root_tactical_annotations": 4,
+          "search_tactical_annotations": 0
         },
         "budget_exhausted": false,
         "score": 100
