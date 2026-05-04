@@ -627,6 +627,36 @@ Interpretation:
 - The next larger memory-for-speed candidate is a fixed-size transposition
   table with collision-key validation.
 
+### Phase 14: Virtual Local-Threat Annotation
+
+Status: implemented optimization.
+
+This phase keeps local-threat semantics unchanged and removes clone/apply work
+from the tactical annotation hot path:
+
+- local-threat annotation now uses a virtual board-after-move view for the
+  candidate gain square
+- existing after-board shape logic and virtual after-move logic share one
+  generic tactical board view implementation
+- the previous clone/apply path remains only as a test reference
+
+Evidence:
+
+- parity test covers five, open-four, closed-four, and broken-three annotations
+  against the clone/apply reference
+- focused `choose_move` benchmarks improved heavily for `fast` (`~69-79%` on
+  the three benchmark scenarios) because local-threat safety dominates shallow
+  search
+- `balanced` and `deep` generally improved by about `3-6%`, with one deep Renju
+  case inside noise
+- focused tactical scenarios still pass all hard safety gates
+
+Interpretation:
+
+- This is a quality-neutral cleanup and should stay in place.
+- The gain confirms that local-threat annotation cost matters most before search
+  depth dominates runtime.
+
 ## Intended Commit Boundaries
 
 ### Commit 1: Config Plumbing And Baseline Guardrails

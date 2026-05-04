@@ -922,31 +922,117 @@ fn local_threat_facts_after_move(board: &Board, mv: Move) -> Vec<LocalThreatFact
 
 #[cfg_attr(not(test), allow(dead_code))]
 fn local_threat_facts_after_legal_move(board: &Board, mv: Move) -> Vec<LocalThreatFact> {
+    local_threat_facts_after_legal_move_virtual(board, mv)
+}
+
+fn local_threat_facts_after_legal_move_virtual(board: &Board, mv: Move) -> Vec<LocalThreatFact> {
     let player = board.current_player;
-    let mut after = board.clone();
-    after.apply_trusted_legal_move(mv);
+    let after = BoardAfterMove { board, mv, player };
 
     let mut facts = DIRS
         .iter()
-        .filter_map(|&(dr, dc)| local_threat_fact_in_direction(&after, mv, player, dr, dc))
+        .filter_map(|&(dr, dc)| local_threat_fact_in_direction_view(&after, dr, dc))
         .collect::<Vec<_>>();
     facts.sort_by_key(|fact| std::cmp::Reverse(fact.kind.rank()));
     facts
 }
 
-#[cfg_attr(not(test), allow(dead_code))]
-fn local_threat_fact_in_direction(
-    board: &Board,
+struct BoardAfterMove<'a> {
+    board: &'a Board,
     mv: Move,
     player: Color,
+}
+
+struct ExistingBoardView<'a> {
+    board: &'a Board,
+    mv: Move,
+    player: Color,
+}
+
+trait TacticalBoardView {
+    fn board(&self) -> &Board;
+    fn mv(&self) -> Move;
+    fn player(&self) -> Color;
+    fn has_color(&self, row: usize, col: usize, color: Color) -> bool;
+    fn is_empty(&self, row: usize, col: usize) -> bool;
+
+    fn win_length(&self) -> usize {
+        self.board().config.win_length
+    }
+
+    fn in_bounds(&self, row: isize, col: isize) -> bool {
+        in_bounds(self.board(), row, col)
+    }
+
+    fn has_color_or_extra_rest(&self, row: usize, col: usize, color: Color, rest: Move) -> bool {
+        if row == rest.row && col == rest.col {
+            color == self.player()
+        } else {
+            self.has_color(row, col, color)
+        }
+    }
+}
+
+impl TacticalBoardView for BoardAfterMove<'_> {
+    fn board(&self) -> &Board {
+        self.board
+    }
+
+    fn mv(&self) -> Move {
+        self.mv
+    }
+
+    fn player(&self) -> Color {
+        self.player
+    }
+
+    fn has_color(&self, row: usize, col: usize, color: Color) -> bool {
+        if row == self.mv.row && col == self.mv.col {
+            color == self.player
+        } else {
+            self.board.has_color(row, col, color)
+        }
+    }
+
+    fn is_empty(&self, row: usize, col: usize) -> bool {
+        !(row == self.mv.row && col == self.mv.col) && self.board.is_empty(row, col)
+    }
+}
+
+impl TacticalBoardView for ExistingBoardView<'_> {
+    fn board(&self) -> &Board {
+        self.board
+    }
+
+    fn mv(&self) -> Move {
+        self.mv
+    }
+
+    fn player(&self) -> Color {
+        self.player
+    }
+
+    fn has_color(&self, row: usize, col: usize, color: Color) -> bool {
+        self.board.has_color(row, col, color)
+    }
+
+    fn is_empty(&self, row: usize, col: usize) -> bool {
+        self.board.is_empty(row, col)
+    }
+}
+
+fn local_threat_fact_in_direction_view(
+    board: &impl TacticalBoardView,
     dr: isize,
     dc: isize,
 ) -> Option<LocalThreatFact> {
-    let before = count_player_in_direction(board, mv, -dr, -dc, player);
-    let after = count_player_in_direction(board, mv, dr, dc, player);
+    let player = board.player();
+    let mv = board.mv();
+    let before = count_player_in_direction_view(board, -dr, -dc, player);
+    let after = count_player_in_direction_view(board, dr, dc, player);
     let run_len = before + 1 + after;
 
-    if run_len >= board.config.win_length {
+    if run_len >= board.win_length() {
         return Some(LocalThreatFact {
             player,
             kind: LocalThreatKind::Five,
@@ -956,7 +1042,7 @@ fn local_threat_fact_in_direction(
         });
     }
 
-    let four_completion_squares = four_completion_squares_through_move(board, mv, dr, dc, player);
+    let four_completion_squares = four_completion_squares_through_view(board, dr, dc);
     match four_completion_squares.len() {
         2.. => {
             return Some(LocalThreatFact {
@@ -985,10 +1071,10 @@ fn local_threat_fact_in_direction(
     }
 
     let mut open_ends = Vec::new();
-    if let Some(open_before) = empty_offset_move(board, mv, -dr, -dc, before + 1) {
+    if let Some(open_before) = empty_offset_move_view(board, -dr, -dc, before + 1) {
         open_ends.push(open_before);
     }
-    if let Some(open_after) = empty_offset_move(board, mv, dr, dc, after + 1) {
+    if let Some(open_after) = empty_offset_move_view(board, dr, dc, after + 1) {
         open_ends.push(open_after);
     }
 
@@ -1008,7 +1094,7 @@ fn local_threat_fact_in_direction(
             rest_squares: Vec::new(),
         }),
         _ => {
-            let rest_squares = broken_three_rest_squares_through_move(board, mv, dr, dc, player);
+            let rest_squares = broken_three_rest_squares_through_view(board, dr, dc);
             if rest_squares.is_empty() {
                 None
             } else {
@@ -1024,15 +1110,14 @@ fn local_threat_fact_in_direction(
     }
 }
 
-#[cfg_attr(not(test), allow(dead_code))]
-fn four_completion_squares_through_move(
-    board: &Board,
-    mv: Move,
+fn four_completion_squares_through_view(
+    board: &impl TacticalBoardView,
     dr: isize,
     dc: isize,
-    player: Color,
 ) -> Vec<Move> {
-    let win_len = board.config.win_length as isize;
+    let mv = board.mv();
+    let player = board.player();
+    let win_len = board.win_length() as isize;
     let mut completions = Vec::new();
 
     for start in -(win_len - 1)..=0 {
@@ -1043,18 +1128,17 @@ fn four_completion_squares_through_move(
         for offset in start..start + win_len {
             let row = mv.row as isize + dr * offset;
             let col = mv.col as isize + dc * offset;
-            if !in_bounds(board, row, col) {
+            if !board.in_bounds(row, col) {
                 blocked = true;
                 break;
             }
 
-            if board.has_color(row as usize, col as usize, player) {
+            let row = row as usize;
+            let col = col as usize;
+            if board.has_color(row, col, player) {
                 player_count += 1;
-            } else if board.is_empty(row as usize, col as usize) && empty_square.is_none() {
-                empty_square = Some(Move {
-                    row: row as usize,
-                    col: col as usize,
-                });
+            } else if board.is_empty(row, col) && empty_square.is_none() {
+                empty_square = Some(Move { row, col });
             } else {
                 blocked = true;
                 break;
@@ -1065,7 +1149,7 @@ fn four_completion_squares_through_move(
             continue;
         };
         if !blocked
-            && player_count == board.config.win_length.saturating_sub(1)
+            && player_count == board.win_length().saturating_sub(1)
             && !completions.contains(&empty_square)
         {
             completions.push(empty_square);
@@ -1074,6 +1158,156 @@ fn four_completion_squares_through_move(
 
     completions.sort_by_key(|mv| (mv.row, mv.col));
     completions
+}
+
+fn count_player_in_direction_view(
+    board: &impl TacticalBoardView,
+    dr: isize,
+    dc: isize,
+    player: Color,
+) -> usize {
+    let mut count = 0usize;
+    let mv = board.mv();
+    let mut row = mv.row as isize + dr;
+    let mut col = mv.col as isize + dc;
+    while board.in_bounds(row, col) && board.has_color(row as usize, col as usize, player) {
+        count += 1;
+        row += dr;
+        col += dc;
+    }
+    count
+}
+
+fn empty_offset_move_view(
+    board: &impl TacticalBoardView,
+    dr: isize,
+    dc: isize,
+    distance: usize,
+) -> Option<Move> {
+    let mv = board.mv();
+    let row = mv.row as isize + dr * distance as isize;
+    let col = mv.col as isize + dc * distance as isize;
+    if board.in_bounds(row, col) && board.is_empty(row as usize, col as usize) {
+        Some(Move {
+            row: row as usize,
+            col: col as usize,
+        })
+    } else {
+        None
+    }
+}
+
+fn broken_three_rest_squares_through_view(
+    board: &impl TacticalBoardView,
+    dr: isize,
+    dc: isize,
+) -> Vec<Move> {
+    let mut rest_squares = Vec::new();
+    let mv = board.mv();
+    let player = board.player();
+
+    for start in -4isize..=0 {
+        let mut player_offsets = Vec::new();
+        let mut empty_offsets = Vec::new();
+        let mut blocked = false;
+
+        for offset in start..start + 5 {
+            let row = mv.row as isize + dr * offset;
+            let col = mv.col as isize + dc * offset;
+            if !board.in_bounds(row, col) {
+                blocked = true;
+                break;
+            }
+
+            let row = row as usize;
+            let col = col as usize;
+            if board.has_color(row, col, player) {
+                player_offsets.push(offset);
+            } else if board.is_empty(row, col) {
+                empty_offsets.push(offset);
+            } else {
+                blocked = true;
+                break;
+            }
+        }
+
+        if blocked || player_offsets.len() != 3 || empty_offsets.len() != 2 {
+            continue;
+        }
+        if player_offsets.windows(2).all(|pair| pair[1] == pair[0] + 1) {
+            continue;
+        }
+
+        for offset in empty_offsets {
+            let row = mv.row as isize + dr * offset;
+            let col = mv.col as isize + dc * offset;
+            if !board.in_bounds(row, col) {
+                continue;
+            }
+
+            let rest = Move {
+                row: row as usize,
+                col: col as usize,
+            };
+            if virtual_run_len_view(board, dr, dc, rest, player) < 4 {
+                continue;
+            }
+
+            if !rest_squares.contains(&rest) {
+                rest_squares.push(rest);
+            }
+        }
+    }
+
+    rest_squares.sort_by_key(|mv| (mv.row, mv.col));
+    rest_squares
+}
+
+fn virtual_run_len_view(
+    board: &impl TacticalBoardView,
+    dr: isize,
+    dc: isize,
+    rest: Move,
+    player: Color,
+) -> usize {
+    1 + virtual_count_in_direction_view(board, dr, dc, rest, -1, player)
+        + virtual_count_in_direction_view(board, dr, dc, rest, 1, player)
+}
+
+fn virtual_count_in_direction_view(
+    board: &impl TacticalBoardView,
+    dr: isize,
+    dc: isize,
+    rest: Move,
+    step: isize,
+    player: Color,
+) -> usize {
+    let mut count = 0usize;
+    let mut row = rest.row as isize + dr * step;
+    let mut col = rest.col as isize + dc * step;
+    loop {
+        if !board.in_bounds(row, col)
+            || !board.has_color_or_extra_rest(row as usize, col as usize, player, rest)
+        {
+            break;
+        }
+        count += 1;
+        row += dr * step;
+        col += dc * step;
+    }
+    count
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn local_threat_fact_in_direction(
+    board: &Board,
+    mv: Move,
+    player: Color,
+    dr: isize,
+    dc: isize,
+) -> Option<LocalThreatFact> {
+    let view = ExistingBoardView { board, mv, player };
+    local_threat_fact_in_direction_view(&view, dr, dc)
 }
 
 fn analyze_shapes_through_move(board: &Board, mv: Move, player: Color) -> TacticalShapeFeatures {
@@ -1137,26 +1371,6 @@ fn offset_cell_is_empty(board: &Board, mv: Move, dr: isize, dc: isize, distance:
     in_bounds(board, row, col) && board.is_empty(row as usize, col as usize)
 }
 
-#[cfg_attr(not(test), allow(dead_code))]
-fn empty_offset_move(
-    board: &Board,
-    mv: Move,
-    dr: isize,
-    dc: isize,
-    distance: usize,
-) -> Option<Move> {
-    let row = mv.row as isize + dr * distance as isize;
-    let col = mv.col as isize + dc * distance as isize;
-    if in_bounds(board, row, col) && board.is_empty(row as usize, col as usize) {
-        Some(Move {
-            row: row as usize,
-            col: col as usize,
-        })
-    } else {
-        None
-    }
-}
-
 fn in_bounds(board: &Board, row: isize, col: isize) -> bool {
     let size = board.config.board_size as isize;
     row >= 0 && row < size && col >= 0 && col < size
@@ -1169,107 +1383,8 @@ fn is_broken_three_through_move(
     dc: isize,
     player: Color,
 ) -> bool {
-    !broken_three_rest_squares_through_move(board, mv, dr, dc, player).is_empty()
-}
-
-#[cfg_attr(not(test), allow(dead_code))]
-fn broken_three_rest_squares_through_move(
-    board: &Board,
-    mv: Move,
-    dr: isize,
-    dc: isize,
-    player: Color,
-) -> Vec<Move> {
-    let mut rest_squares = Vec::new();
-
-    for start in -4isize..=0 {
-        let mut player_offsets = Vec::new();
-        let mut empty_offsets = Vec::new();
-        let mut blocked = false;
-
-        for offset in start..start + 5 {
-            let row = mv.row as isize + dr * offset;
-            let col = mv.col as isize + dc * offset;
-            if !in_bounds(board, row, col) {
-                blocked = true;
-                break;
-            }
-
-            if board.has_color(row as usize, col as usize, player) {
-                player_offsets.push(offset);
-            } else if board.is_empty(row as usize, col as usize) {
-                empty_offsets.push(offset);
-            } else {
-                blocked = true;
-                break;
-            }
-        }
-
-        if blocked || player_offsets.len() != 3 || empty_offsets.len() != 2 {
-            continue;
-        }
-        if player_offsets.windows(2).all(|pair| pair[1] == pair[0] + 1) {
-            continue;
-        }
-
-        for offset in empty_offsets {
-            if virtual_run_len(board, mv, dr, dc, offset, player) < 4 {
-                continue;
-            }
-
-            let row = mv.row as isize + dr * offset;
-            let col = mv.col as isize + dc * offset;
-            if !in_bounds(board, row, col) {
-                continue;
-            }
-
-            let rest = Move {
-                row: row as usize,
-                col: col as usize,
-            };
-            if !rest_squares.contains(&rest) {
-                rest_squares.push(rest);
-            }
-        }
-    }
-
-    rest_squares.sort_by_key(|mv| (mv.row, mv.col));
-    rest_squares
-}
-
-fn virtual_run_len(
-    board: &Board,
-    mv: Move,
-    dr: isize,
-    dc: isize,
-    virtual_offset: isize,
-    player: Color,
-) -> usize {
-    1 + virtual_count_in_direction(board, mv, dr, dc, virtual_offset, -1, player)
-        + virtual_count_in_direction(board, mv, dr, dc, virtual_offset, 1, player)
-}
-
-fn virtual_count_in_direction(
-    board: &Board,
-    mv: Move,
-    dr: isize,
-    dc: isize,
-    virtual_offset: isize,
-    step: isize,
-    player: Color,
-) -> usize {
-    let mut count = 0usize;
-    let mut offset = virtual_offset + step;
-    loop {
-        let row = mv.row as isize + dr * offset;
-        let col = mv.col as isize + dc * offset;
-        if !in_bounds(board, row, col) || !board.has_color(row as usize, col as usize, player) {
-            break;
-        }
-        count += 1;
-        offset += step;
-    }
-    count
+    let view = ExistingBoardView { board, mv, player };
+    !broken_three_rest_squares_through_view(&view, dr, dc).is_empty()
 }
 
 // --- Candidate move generation ---
@@ -3721,6 +3836,47 @@ mod tests {
         let mut occupied = Board::new(RuleConfig::default());
         occupied.apply_move(mv("H8")).unwrap();
         assert!(local_threat_facts_after_move(&occupied, mv("H8")).is_empty());
+    }
+
+    #[test]
+    fn virtual_local_threat_facts_match_clone_apply_reference() {
+        let cases = [
+            (["H8", "A1", "I8", "C1", "J8", "E1"].as_slice(), "K8"),
+            (["H8", "G8", "I8", "A1", "J8", "C1"].as_slice(), "K8"),
+            (["H8", "A1", "K8", "C1"].as_slice(), "J8"),
+            (
+                ["H8", "A1", "I8", "C1", "J8", "E1", "K8", "G1"].as_slice(),
+                "L8",
+            ),
+        ];
+
+        for (moves, notation) in cases {
+            let mut board = Board::new(RuleConfig::default());
+            apply_moves(&mut board, moves);
+            let candidate = mv(notation);
+
+            assert_eq!(
+                local_threat_facts_after_legal_move_virtual(&board, candidate),
+                local_threat_facts_after_legal_move_clone_reference(&board, candidate),
+                "virtual annotation diverged for {notation}"
+            );
+        }
+    }
+
+    fn local_threat_facts_after_legal_move_clone_reference(
+        board: &Board,
+        mv: Move,
+    ) -> Vec<LocalThreatFact> {
+        let player = board.current_player;
+        let mut after = board.clone();
+        after.apply_trusted_legal_move(mv);
+
+        let mut facts = DIRS
+            .iter()
+            .filter_map(|&(dr, dc)| local_threat_fact_in_direction(&after, mv, player, dr, dc))
+            .collect::<Vec<_>>();
+        facts.sort_by_key(|fact| std::cmp::Reverse(fact.kind.rank()));
+        facts
     }
 
     #[test]
