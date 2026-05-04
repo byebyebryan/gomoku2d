@@ -57,161 +57,129 @@ impl TacticalScenarioCase {
 
 pub static TACTICAL_SCENARIO_CASES: &[TacticalScenarioCase] = &[
     TacticalScenarioCase {
-        id: "take_immediate_win",
-        scenario_id: "immediate_win",
-        category: "immediate_win",
+        id: "local_complete_open_four",
+        scenario_id: "local_complete_open_four",
+        category: "local_complete_open_four",
         role: TacticalScenarioRole::HardSafetyGate,
-        description: "Current player should finish a direct four-in-a-row.",
+        description: "Current player should complete an existing open four.",
         expected_moves: &["G8", "L8"],
     },
     TacticalScenarioCase {
-        id: "block_immediate_loss",
-        scenario_id: "immediate_block",
-        category: "forced_block",
+        id: "local_react_closed_four",
+        scenario_id: "local_react_closed_four",
+        category: "local_react_closed_four",
         role: TacticalScenarioRole::HardSafetyGate,
-        description: "Current player should block the opponent's direct win.",
+        description: "Current player should answer the only completion square of the opponent's closed four.",
         expected_moves: &["E1"],
     },
     TacticalScenarioCase {
-        id: "win_race_before_blocking",
-        scenario_id: "attack_wins_race",
-        category: "attack_vs_defense",
+        id: "priority_complete_open_four_over_react_closed_four",
+        scenario_id: "priority_complete_open_four_over_react_closed_four",
+        category: "priority_complete_open_four_over_react_closed_four",
         role: TacticalScenarioRole::HardSafetyGate,
-        description: "Current player should win immediately instead of blocking.",
+        description: "Current player should complete its open four instead of reacting to the opponent's closed four.",
         expected_moves: &["G8", "L8"],
     },
     TacticalScenarioCase {
-        id: "prevent_open_three_reply",
-        scenario_id: "anti_blunder_open_three",
-        category: "open_three",
+        id: "priority_prevent_open_four_over_extend_three",
+        scenario_id: "priority_prevent_open_four_over_extend_three",
+        category: "priority_prevent_open_four_over_extend_three",
         role: TacticalScenarioRole::HardSafetyGate,
-        description: "Current player should prevent the opponent's open-three reply from becoming an open-four threat.",
+        description: "Current player should prevent the opponent's open three from becoming an open four instead of extending its own weaker line.",
         expected_moves: &["G8", "K8"],
     },
     TacticalScenarioCase {
-        id: "counter_open_three_with_four",
-        scenario_id: "counter_open_three_with_four",
-        category: "counter_four",
+        id: "priority_create_open_four_over_prevent_open_three",
+        scenario_id: "priority_create_open_four_over_prevent_open_three",
+        category: "priority_create_open_four_over_prevent_open_three",
         role: TacticalScenarioRole::Diagnostic,
         description: "Current player can create an open four, so it may counter-threat instead of blocking the opponent's open three.",
         expected_moves: &["B4", "F4"],
     },
     TacticalScenarioCase {
-        id: "create_open_four",
-        scenario_id: "create_open_four",
-        category: "open_four",
-        role: TacticalScenarioRole::Diagnostic,
-        description: "Current player should create an open four when no direct win exists.",
-        expected_moves: &["G8", "K8"],
-    },
-    TacticalScenarioCase {
-        id: "shape_offense_open_four",
-        scenario_id: "shape_offense_open_four",
-        category: "shape_offense_open_four",
+        id: "local_create_open_four",
+        scenario_id: "local_create_open_four",
+        category: "local_create_open_four",
         role: TacticalScenarioRole::Diagnostic,
         description: "Current player should create an open four.",
         expected_moves: &["G8", "K8"],
     },
     TacticalScenarioCase {
-        id: "shape_defense_open_four",
-        scenario_id: "shape_defense_open_four",
-        category: "shape_defense_open_four",
-        role: TacticalScenarioRole::Diagnostic,
-        description: "Current player should occupy one completion square of the opponent's open four.",
-        expected_moves: &["G8", "L8"],
-    },
-    TacticalScenarioCase {
-        id: "shape_offense_closed_four",
-        scenario_id: "shape_offense_closed_four",
-        category: "shape_offense_closed_four",
+        id: "local_create_closed_four",
+        scenario_id: "local_create_closed_four",
+        category: "local_create_closed_four",
         role: TacticalScenarioRole::Diagnostic,
         description: "Current player should create a closed four.",
         expected_moves: &["K8"],
     },
     TacticalScenarioCase {
-        id: "shape_defense_closed_four",
-        scenario_id: "shape_defense_closed_four",
-        category: "shape_defense_closed_four",
-        role: TacticalScenarioRole::Diagnostic,
-        description: "Current player should answer the only completion square of the opponent's closed four.",
-        expected_moves: &["L8"],
-    },
-    TacticalScenarioCase {
-        id: "shape_offense_broken_four",
-        scenario_id: "shape_offense_broken_four",
-        category: "shape_offense_broken_four",
+        id: "local_create_broken_four",
+        scenario_id: "local_create_broken_four",
+        category: "local_create_broken_four",
         role: TacticalScenarioRole::Diagnostic,
         description: "Current player should create a broken four.",
         expected_moves: &["J8", "K8"],
     },
     TacticalScenarioCase {
-        id: "shape_defense_broken_four",
-        scenario_id: "shape_defense_broken_four",
-        category: "shape_defense_broken_four",
+        id: "local_react_broken_four",
+        scenario_id: "local_react_broken_four",
+        category: "local_react_broken_four",
         role: TacticalScenarioRole::Diagnostic,
         description: "Current player should answer the internal completion square of the opponent's broken four.",
         expected_moves: &["K8"],
     },
     TacticalScenarioCase {
-        id: "shape_offense_open_three",
-        scenario_id: "shape_offense_open_three",
-        category: "shape_offense_open_three",
+        id: "local_create_open_three",
+        scenario_id: "local_create_open_three",
+        category: "local_create_open_three",
         role: TacticalScenarioRole::Diagnostic,
         description: "Current player should create an open three.",
         expected_moves: &["G8", "J8"],
     },
     TacticalScenarioCase {
-        id: "shape_defense_open_three",
-        scenario_id: "shape_defense_open_three",
-        category: "shape_defense_open_three",
+        id: "local_prevent_open_four_from_open_three",
+        scenario_id: "local_prevent_open_four_from_open_three",
+        category: "local_prevent_open_four_from_open_three",
         role: TacticalScenarioRole::Diagnostic,
-        description: "Current player should occupy one extension square of the opponent's open three.",
+        description: "Current player should prevent the opponent's open three from becoming an open four.",
         expected_moves: &["G8", "K8"],
     },
     TacticalScenarioCase {
-        id: "shape_offense_closed_three",
-        scenario_id: "shape_offense_closed_three",
-        category: "shape_offense_closed_three",
+        id: "local_create_closed_three",
+        scenario_id: "local_create_closed_three",
+        category: "local_create_closed_three",
         role: TacticalScenarioRole::Diagnostic,
         description: "Current player should create a closed three.",
         expected_moves: &["J8"],
     },
     TacticalScenarioCase {
-        id: "shape_defense_closed_three",
-        scenario_id: "shape_defense_closed_three",
-        category: "shape_defense_closed_three",
+        id: "local_prevent_closed_four_from_closed_three",
+        scenario_id: "local_prevent_closed_four_from_closed_three",
+        category: "local_prevent_closed_four_from_closed_three",
         role: TacticalScenarioRole::Diagnostic,
-        description: "Current player should occupy the only extension square of the opponent's closed three.",
+        description: "Current player should prevent the opponent's closed three from becoming a closed four.",
         expected_moves: &["K8"],
     },
     TacticalScenarioCase {
-        id: "shape_offense_broken_three",
-        scenario_id: "shape_offense_broken_three",
-        category: "shape_offense_broken_three",
+        id: "local_create_broken_three",
+        scenario_id: "local_create_broken_three",
+        category: "local_create_broken_three",
         role: TacticalScenarioRole::Diagnostic,
         description: "Current player should create a broken three.",
         expected_moves: &["I8", "J8"],
     },
     TacticalScenarioCase {
-        id: "shape_defense_broken_three",
-        scenario_id: "shape_defense_broken_three",
-        category: "shape_defense_broken_three",
+        id: "local_prevent_broken_four_from_broken_three",
+        scenario_id: "local_prevent_broken_four_from_broken_three",
+        category: "local_prevent_broken_four_from_broken_three",
         role: TacticalScenarioRole::Diagnostic,
-        description: "Current player should occupy the rest square of the opponent's broken three.",
+        description: "Current player should prevent the opponent's broken three from becoming a broken four.",
         expected_moves: &["I8"],
     },
     TacticalScenarioCase {
-        id: "create_broken_three",
-        scenario_id: "create_broken_three",
-        category: "broken_three",
-        role: TacticalScenarioRole::Diagnostic,
-        description: "Current player should create a broken three shape from a spaced pair.",
-        expected_moves: &["I8", "J8"],
-    },
-    TacticalScenarioCase {
-        id: "create_double_threat",
-        scenario_id: "create_double_threat",
-        category: "double_threat",
+        id: "combo_create_double_threat",
+        scenario_id: "combo_create_double_threat",
+        category: "combo_create_double_threat",
         role: TacticalScenarioRole::Diagnostic,
         description: "Current player should create simultaneous immediate winning threats.",
         expected_moves: &["J8"],
@@ -388,13 +356,13 @@ mod tests {
     fn tactical_case_result_records_expected_move_and_search_metrics() {
         let case = TACTICAL_SCENARIO_CASES
             .iter()
-            .find(|case| case.id == "take_immediate_win")
+            .find(|case| case.id == "local_complete_open_four")
             .expect("expected tactical case");
 
         let result = run_tactical_case(case, "search-d3", SearchBotConfig::custom_depth(3));
 
         assert!(result.passed);
-        assert_eq!(result.case_id, "take_immediate_win");
+        assert_eq!(result.case_id, "local_complete_open_four");
         assert_eq!(result.config_id, "search-d3");
         assert_eq!(result.role, "hard_safety_gate");
         assert_eq!(result.variant, Variant::Freestyle);
@@ -445,8 +413,8 @@ mod tests {
         );
         assert!(
             TACTICAL_SCENARIO_CASES.iter().any(|case| {
-                case.id == "counter_open_three_with_four"
-                    && case.category == "counter_four"
+                case.id == "priority_create_open_four_over_prevent_open_three"
+                    && case.category == "priority_create_open_four_over_prevent_open_three"
                     && case.role == TacticalScenarioRole::Diagnostic
             }),
             "diagnostic corpus should include a counter-threat case where creating a four can defer blocking an open three"
@@ -454,25 +422,58 @@ mod tests {
     }
 
     #[test]
-    fn tactical_cases_include_shape_offense_defense_pairs() {
-        for shape in [
-            "open_four",
-            "closed_four",
-            "broken_four",
-            "open_three",
-            "closed_three",
-            "broken_three",
+    fn tactical_cases_use_layered_local_priority_combo_taxonomy() {
+        for category in [
+            "local_complete_open_four",
+            "local_create_open_four",
+            "local_create_closed_four",
+            "local_react_closed_four",
+            "local_create_broken_four",
+            "local_react_broken_four",
+            "local_create_open_three",
+            "local_prevent_open_four_from_open_three",
+            "local_create_closed_three",
+            "local_prevent_closed_four_from_closed_three",
+            "local_create_broken_three",
+            "local_prevent_broken_four_from_broken_three",
+            "priority_complete_open_four_over_react_closed_four",
+            "priority_prevent_open_four_over_extend_three",
+            "priority_create_open_four_over_prevent_open_three",
+            "combo_create_double_threat",
         ] {
-            for stance in ["offense", "defense"] {
-                let expected_category = format!("shape_{stance}_{shape}");
-                assert!(
-                    TACTICAL_SCENARIO_CASES.iter().any(|case| {
-                        case.category == expected_category
-                            && case.role == TacticalScenarioRole::Diagnostic
-                    }),
-                    "missing diagnostic tactical shape case for {expected_category}"
-                );
-            }
+            assert!(
+                TACTICAL_SCENARIO_CASES
+                    .iter()
+                    .any(|case| case.category == category),
+                "missing tactical case category for {category}"
+            );
+        }
+
+        for case in TACTICAL_SCENARIO_CASES {
+            assert!(
+                case.category.starts_with("local_")
+                    || case.category.starts_with("priority_")
+                    || case.category.starts_with("combo_"),
+                "case '{}' should use local_/priority_/combo_ category, got '{}'",
+                case.id,
+                case.category
+            );
+            assert!(
+                !case.id.starts_with("shape_")
+                    && !case.category.starts_with("shape_")
+                    && !matches!(
+                        case.id,
+                        "take_immediate_win"
+                            | "block_immediate_loss"
+                            | "win_race_before_blocking"
+                            | "prevent_open_three_reply"
+                            | "create_open_four"
+                            | "create_broken_three"
+                            | "create_double_threat"
+                    ),
+                "case '{}' should be named by the layered tactical taxonomy",
+                case.id
+            );
         }
     }
 
@@ -495,26 +496,25 @@ mod tests {
                 );
             }
 
-            if let Some(shape) = case.category.strip_prefix("shape_offense_") {
-                assert_shape_offense(case.id, shape, &board, &expected_moves);
+            if let Some(shape) = case.category.strip_prefix("local_create_") {
+                assert_local_create(case.id, shape, &board, &expected_moves);
                 continue;
             }
-            if let Some(shape) = case.category.strip_prefix("shape_defense_") {
-                assert_shape_defense(case.id, shape, &board, &expected_moves);
+            if let Some(shape) = case.category.strip_prefix("local_react_") {
+                assert_local_react(case.id, shape, &board, &expected_moves);
+                continue;
+            }
+            if case.category.starts_with("local_prevent_") {
+                assert_local_prevent(case.id, case.category, &board, &expected_moves);
                 continue;
             }
 
             match case.category {
-                "immediate_win" => {
+                "local_complete_open_four" => {
                     let wins = board.immediate_winning_moves_for(board.current_player);
                     assert_contains_all(case.id, &wins, &expected_moves);
                 }
-                "forced_block" => {
-                    let opponent_wins =
-                        board.immediate_winning_moves_for(board.current_player.opponent());
-                    assert_contains_all(case.id, &opponent_wins, &expected_moves);
-                }
-                "attack_vs_defense" => {
+                "priority_complete_open_four_over_react_closed_four" => {
                     let wins = board.immediate_winning_moves_for(board.current_player);
                     let opponent_wins =
                         board.immediate_winning_moves_for(board.current_player.opponent());
@@ -525,7 +525,13 @@ mod tests {
                     );
                     assert_contains_all(case.id, &wins, &expected_moves);
                 }
-                "open_three" => {
+                "priority_prevent_open_four_over_extend_three" => {
+                    let opponent_forcing_replies = opponent_forcing_replies_now(&board);
+                    assert!(
+                        !opponent_forcing_replies.is_empty(),
+                        "case '{}' should start with an opponent open-three style forcing reply",
+                        case.id
+                    );
                     for &mv in &expected_moves {
                         assert!(
                             opponent_forcing_replies_after(&board, mv).is_empty(),
@@ -535,7 +541,7 @@ mod tests {
                         );
                     }
                 }
-                "counter_four" => {
+                "priority_create_open_four_over_prevent_open_three" => {
                     let opponent_forcing_replies = opponent_forcing_replies_now(&board);
                     assert!(
                         !opponent_forcing_replies.is_empty(),
@@ -553,7 +559,7 @@ mod tests {
                         );
                     }
                 }
-                "open_four" | "double_threat" => {
+                "combo_create_double_threat" => {
                     for &mv in &expected_moves {
                         let own_replies = own_immediate_replies_after(&board, mv);
                         assert!(
@@ -565,28 +571,12 @@ mod tests {
                         );
                     }
                 }
-                "broken_three" => {
-                    assert!(
-                        board
-                            .immediate_winning_moves_for(board.current_player)
-                            .is_empty(),
-                        "case '{}' should not already have an immediate win",
-                        case.id
-                    );
-                    assert!(
-                        board
-                            .immediate_winning_moves_for(board.current_player.opponent())
-                            .is_empty(),
-                        "case '{}' should not already require an immediate block",
-                        case.id
-                    );
-                }
                 other => panic!("case '{}' has unvalidated category '{}'", case.id, other),
             }
         }
     }
 
-    fn assert_shape_offense(case_id: &str, shape: &str, board: &Board, expected_moves: &[Move]) {
+    fn assert_local_create(case_id: &str, shape: &str, board: &Board, expected_moves: &[Move]) {
         match shape {
             "open_four" => {
                 for &mv in expected_moves {
@@ -632,23 +622,31 @@ mod tests {
                     );
                 }
             }
-            other => panic!("case '{case_id}' has unknown offense shape '{other}'"),
+            other => panic!("case '{case_id}' has unknown local create shape '{other}'"),
         }
     }
 
-    fn assert_shape_defense(case_id: &str, shape: &str, board: &Board, expected_moves: &[Move]) {
+    fn assert_local_react(case_id: &str, shape: &str, board: &Board, expected_moves: &[Move]) {
         match shape {
-            "open_four" | "closed_four" | "broken_four" => {
+            "closed_four" | "broken_four" => {
                 let opponent_wins =
                     board.immediate_winning_moves_for(board.current_player.opponent());
                 assert_contains_all(case_id, &opponent_wins, expected_moves);
             }
-            "open_three" | "closed_three" | "broken_three" => {
+            other => panic!("case '{case_id}' has unknown local react shape '{other}'"),
+        }
+    }
+
+    fn assert_local_prevent(case_id: &str, category: &str, board: &Board, expected_moves: &[Move]) {
+        match category {
+            "local_prevent_open_four_from_open_three"
+            | "local_prevent_closed_four_from_closed_three"
+            | "local_prevent_broken_four_from_broken_three" => {
                 let opponent_continuations =
                     threat_creating_replies_for_player(board, board.current_player.opponent());
                 assert_contains_all(case_id, &opponent_continuations, expected_moves);
             }
-            other => panic!("case '{case_id}' has unknown defense shape '{other}'"),
+            other => panic!("case '{case_id}' has unknown local prevent category '{other}'"),
         }
     }
 

@@ -617,15 +617,18 @@ impl LocalThreatFact {
 
 #[cfg_attr(not(test), allow(dead_code))]
 fn local_threat_facts_after_move(board: &Board, mv: Move) -> Vec<LocalThreatFact> {
-    let player = board.current_player;
     if !board.is_legal(mv) {
         return Vec::new();
     }
 
+    local_threat_facts_after_legal_move(board, mv)
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn local_threat_facts_after_legal_move(board: &Board, mv: Move) -> Vec<LocalThreatFact> {
+    let player = board.current_player;
     let mut after = board.clone();
-    if after.apply_move(mv).is_err() {
-        return Vec::new();
-    }
+    after.apply_trusted_legal_move(mv);
 
     let mut facts = DIRS
         .iter()
@@ -1271,6 +1274,16 @@ fn apply_safety_gate_to_root_candidates(
             deadline,
             metrics,
         ),
+        SafetyGate::OpponentReplyLocalThreatProbe => {
+            opponent_reply_local_threat_probe_root_candidates(
+                board,
+                moves,
+                candidate_source,
+                legality_gate,
+                deadline,
+                metrics,
+            )
+        }
     }
 }
 
@@ -1295,6 +1308,140 @@ fn opponent_reply_search_probe_root_candidates(
         }
 
         match allows_opponent_forcing_reply(
+            &mut working,
+            mv,
+            candidate_source,
+            legality_gate,
+            deadline,
+            &mut safety_nodes,
+            metrics,
+        ) {
+            Some(false) => safe_moves.push(mv),
+            Some(true) => {}
+            None => return (moves, safety_nodes, true),
+        }
+    }
+
+    if safe_moves.is_empty() {
+        (moves, safety_nodes, false)
+    } else {
+        (safe_moves, safety_nodes, false)
+    }
+}
+
+fn allows_opponent_local_forcing_reply(
+    board: &mut Board,
+    mv: Move,
+    candidate_source: CandidateSource,
+    legality_gate: LegalityGate,
+    deadline: SearchDeadline,
+    safety_nodes: &mut u64,
+    metrics: &mut SearchMetrics,
+) -> Option<bool> {
+    let current = board.current_player;
+
+    if deadline.expired() {
+        return None;
+    }
+    *safety_nodes += 1;
+
+    let opponent = current.opponent();
+    board.apply_trusted_legal_move(mv);
+
+    let mut dangerous = false;
+    let mut timed_out = false;
+    if !matches!(board.result, GameResult::Winner(winner) if winner == current) {
+        for reply in candidate_moves_from_source_counted(
+            board,
+            candidate_source,
+            metrics,
+            SearchMetricPhase::Root,
+        ) {
+            if deadline.expired() {
+                timed_out = true;
+                break;
+            }
+            if needs_legality_gate(board, opponent, legality_gate)
+                && !legal_by_gate_counted(
+                    board,
+                    reply,
+                    legality_gate,
+                    metrics,
+                    SearchMetricPhase::Root,
+                )
+            {
+                continue;
+            }
+
+            *safety_nodes += 1;
+            if local_reply_creates_immediate_or_multi_threat(board, reply, opponent) {
+                dangerous = true;
+                break;
+            }
+        }
+    }
+
+    board.undo_move(mv);
+
+    if timed_out {
+        None
+    } else {
+        Some(dangerous)
+    }
+}
+
+fn local_reply_creates_immediate_or_multi_threat(
+    board: &Board,
+    reply: Move,
+    player: Color,
+) -> bool {
+    let mut completion_squares = Vec::new();
+    for fact in local_threat_facts_after_legal_move(board, reply)
+        .into_iter()
+        .filter(|fact| fact.player == player)
+    {
+        match fact.kind {
+            LocalThreatKind::Five | LocalThreatKind::OpenFour => return true,
+            LocalThreatKind::ClosedFour | LocalThreatKind::BrokenFour => {
+                for defense in fact.defense_squares {
+                    if !completion_squares.contains(&defense) {
+                        completion_squares.push(defense);
+                    }
+                }
+                if completion_squares.len() >= 2 {
+                    return true;
+                }
+            }
+            LocalThreatKind::OpenThree
+            | LocalThreatKind::ClosedThree
+            | LocalThreatKind::BrokenThree => {}
+        }
+    }
+
+    false
+}
+
+fn opponent_reply_local_threat_probe_root_candidates(
+    board: &Board,
+    moves: Vec<Move>,
+    candidate_source: CandidateSource,
+    legality_gate: LegalityGate,
+    deadline: SearchDeadline,
+    metrics: &mut SearchMetrics,
+) -> (Vec<Move>, u64, bool) {
+    if moves.is_empty() {
+        return (moves, 0, false);
+    }
+
+    let mut working = board.clone();
+    let mut safe_moves: Vec<Move> = Vec::with_capacity(moves.len());
+    let mut safety_nodes = 0u64;
+    for mv in moves.iter().copied() {
+        if deadline.expired() {
+            return (moves, safety_nodes, true);
+        }
+
+        match allows_opponent_local_forcing_reply(
             &mut working,
             mv,
             candidate_source,
@@ -1647,6 +1794,7 @@ impl LegalityGate {
 pub enum SafetyGate {
     None,
     OpponentReplySearchProbe,
+    OpponentReplyLocalThreatProbe,
 }
 
 impl SafetyGate {
@@ -1654,6 +1802,7 @@ impl SafetyGate {
         match self {
             SafetyGate::None => "none",
             SafetyGate::OpponentReplySearchProbe => "opponent_reply_search_probe",
+            SafetyGate::OpponentReplyLocalThreatProbe => "opponent_reply_local_threat_probe",
         }
     }
 }
@@ -2210,6 +2359,36 @@ mod tests {
     }
 
     #[test]
+    fn safety_gate_local_threat_probe_filters_open_three_blunders() {
+        let mut board = Board::new(RuleConfig::default());
+        for mv in [
+            Move { row: 7, col: 7 },
+            Move { row: 3, col: 3 },
+            Move { row: 7, col: 8 },
+            Move { row: 5, col: 5 },
+            Move { row: 7, col: 9 },
+        ] {
+            board.apply_move(mv).unwrap();
+        }
+
+        let mut metrics = SearchMetrics::default();
+        let (moves, safety_nodes, timed_out) = root_candidate_moves_with_metrics(
+            &board,
+            CandidateSource::NearAll { radius: 2 },
+            LegalityGate::ExactRules,
+            SafetyGate::OpponentReplyLocalThreatProbe,
+            SearchDeadline::new(Instant::now(), Some(Duration::from_millis(100)), None, None),
+            &mut metrics,
+        );
+
+        assert!(moves.contains(&Move { row: 7, col: 6 }));
+        assert!(moves.contains(&Move { row: 7, col: 10 }));
+        assert!(!moves.contains(&Move { row: 4, col: 4 }));
+        assert!(safety_nodes > 0);
+        assert!(!timed_out);
+    }
+
+    #[test]
     fn explicit_config_constructors_preserve_legacy_defaults() {
         let baseline = SearchBotConfig::custom_depth(3);
         assert_eq!(SearchBot::new(3).config(), baseline);
@@ -2610,8 +2789,8 @@ mod tests {
     fn forced_line_classifier_prioritizes_current_immediate_win() {
         let scenario = scenarios::SCENARIOS
             .iter()
-            .find(|scenario| scenario.id == "attack_wins_race")
-            .expect("expected attack race scenario");
+            .find(|scenario| scenario.id == "priority_complete_open_four_over_react_closed_four")
+            .expect("expected priority complete-over-react scenario");
         let board = scenario.board();
 
         let state = classify_forced_line_state(&board);
@@ -2628,8 +2807,8 @@ mod tests {
     fn forced_line_classifier_identifies_single_forced_block() {
         let scenario = scenarios::SCENARIOS
             .iter()
-            .find(|scenario| scenario.id == "immediate_block")
-            .expect("expected immediate block scenario");
+            .find(|scenario| scenario.id == "local_react_closed_four")
+            .expect("expected local react closed four scenario");
         let board = scenario.board();
 
         let state = classify_forced_line_state(&board);
@@ -2688,8 +2867,8 @@ mod tests {
     fn threat_after_move_classifier_labels_win_threats_and_illegal_moves() {
         let scenario = scenarios::SCENARIOS
             .iter()
-            .find(|scenario| scenario.id == "immediate_win")
-            .expect("expected immediate win scenario");
+            .find(|scenario| scenario.id == "local_complete_open_four")
+            .expect("expected local complete open four scenario");
         let board = scenario.board();
 
         let winning = classify_threat_after_move(&board, mv("G8"));
@@ -2764,8 +2943,8 @@ mod tests {
     fn benchmark_immediate_win_anchor_plays_winning_move() {
         let scenario = scenarios::SCENARIOS
             .iter()
-            .find(|scenario| scenario.id == "immediate_win")
-            .expect("expected immediate-win benchmark scenario");
+            .find(|scenario| scenario.id == "local_complete_open_four")
+            .expect("expected local complete open four benchmark scenario");
         let board = scenario.board();
         let winning_moves = board.immediate_winning_moves_for(board.current_player);
         let mut bot = SearchBot::new(3);
@@ -2781,8 +2960,8 @@ mod tests {
     fn benchmark_immediate_block_anchor_blocks_opponent_win() {
         let scenario = scenarios::SCENARIOS
             .iter()
-            .find(|scenario| scenario.id == "immediate_block")
-            .expect("expected immediate-block benchmark scenario");
+            .find(|scenario| scenario.id == "local_react_closed_four")
+            .expect("expected local react closed four benchmark scenario");
         let board = scenario.board();
         let opponent_wins = board.immediate_winning_moves_for(board.current_player.opponent());
         let mut bot = SearchBot::new(3);

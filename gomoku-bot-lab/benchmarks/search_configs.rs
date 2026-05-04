@@ -93,6 +93,10 @@ fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchB
             config.safety_gate = SafetyGate::OpponentReplySearchProbe;
             Some(config)
         }
+        "opponent-reply-local-threat-probe" => {
+            config.safety_gate = SafetyGate::OpponentReplyLocalThreatProbe;
+            Some(config)
+        }
         _ => None,
     }
 }
@@ -211,6 +215,22 @@ mod tests {
         assert_eq!(
             explicit.safety_gate,
             super::SafetyGate::OpponentReplySearchProbe
+        );
+    }
+
+    #[test]
+    fn parses_lab_local_threat_safety_suffix() {
+        let config = super::search_config_from_lab_spec(
+            "search-d3+opponent-reply-local-threat-probe",
+            5,
+            None,
+            None,
+        )
+        .expect("expected local-threat safety spec to parse");
+
+        assert_eq!(
+            config.safety_gate,
+            super::SafetyGate::OpponentReplyLocalThreatProbe
         );
     }
 
