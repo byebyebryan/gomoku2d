@@ -2015,10 +2015,11 @@ fn render_entrant_row(
 
     html.push_str("<details class=\"entrant-row\"><summary>");
     render_bot_label(html, report, &row.bot);
-    render_metric_cell(html, "metric-results", &format!("#{rank}"), None);
+    render_metric_cell(html, "metric-results", "Rank", &format!("#{rank}"), None);
     render_metric_cell(
         html,
         "metric-results",
+        "Score %",
         &format!(
             "{:.1}%",
             score_rate(row.wins, row.draws, row.match_count) * 100.0
@@ -2028,49 +2029,57 @@ fn render_entrant_row(
     render_metric_cell(
         html,
         "metric-results metric-nowrap",
+        "W-D-L",
         &format!("{}-{}-{}", row.wins, row.draws, row.losses),
         None,
     );
     render_metric_cell(
         html,
         "metric-results",
+        "Shuffled Elo",
         &format!("{:.1}", row.shuffled_elo_avg),
         Some(format!("+/- {:.1}", row.shuffled_elo_stddev)),
     );
     render_metric_cell(
         html,
         "metric-results",
+        "Avg depth",
         &format!("{:.2}", row.avg_depth),
         None,
     );
-    render_breadth_metric_cell(html, "metric-results", row);
+    render_breadth_metric_cell(html, "metric-results", "Breadth", row);
     render_metric_cell(
         html,
         "metric-results",
+        "Avg ms",
         &format!("{:.1}", row.avg_search_time_ms),
         None,
     );
     render_metric_cell(
         html,
         "metric-results",
+        "Budget exhausted",
         &format!("{:.0}%", row.budget_exhausted_rate * 100.0),
         None,
     );
     render_metric_cell(
         html,
         "metric-search",
+        "Avg nodes",
         &compact_number_label(row.avg_nodes),
         None,
     );
     render_metric_cell(
         html,
         "metric-search",
+        "Eval",
         &format!("{:.0}", row.avg_eval_calls),
         None,
     );
     render_metric_cell(
         html,
         "metric-search",
+        "Cand gen",
         &phase_average_label(
             row.root_candidate_generations,
             row.search_candidate_generations,
@@ -2078,10 +2087,11 @@ fn render_entrant_row(
         ),
         None,
     );
-    render_breadth_metric_cell(html, "metric-search", row);
+    render_breadth_metric_cell(html, "metric-search", "Breadth", row);
     render_metric_cell(
         html,
         "metric-search",
+        "Legal",
         &phase_average_label(
             row.root_legality_checks,
             row.search_legality_checks,
@@ -2092,17 +2102,25 @@ fn render_entrant_row(
     render_metric_cell(
         html,
         "metric-search",
+        "TT hit/cut",
         &phase_average_label(row.tt_hits, row.tt_cutoffs, row.search_move_count),
         None,
     );
     render_metric_cell(
         html,
         "metric-pairwise",
+        "Pairs",
         &format!("{} opponents", pairs.len()),
         None,
     );
-    render_metric_cell(html, "metric-pairwise", &best_pair.0, best_pair.1);
-    render_metric_cell(html, "metric-pairwise", &worst_pair.0, worst_pair.1);
+    render_metric_cell(html, "metric-pairwise", "Best", &best_pair.0, best_pair.1);
+    render_metric_cell(
+        html,
+        "metric-pairwise",
+        "Worst",
+        &worst_pair.0,
+        worst_pair.1,
+    );
     html.push_str("</summary>");
     render_entrant_result_comparisons(html, report, row, &pairs);
     render_entrant_search_comparisons(html, report, row, &pairs);
@@ -2134,11 +2152,13 @@ fn render_bot_label_with_prefix(
 fn render_metric_cell(
     html: &mut String,
     metric_class: &str,
+    label: &str,
     primary: &str,
     secondary: Option<String>,
 ) {
     html.push_str(&format!(
-        "<span class=\"metric {metric_class}\"><span>{}</span>",
+        "<span class=\"metric {metric_class}\" data-label=\"{}\"><span>{}</span>",
+        html_escape(label),
         html_escape(primary)
     ));
     if let Some(secondary) = secondary {
@@ -2147,9 +2167,14 @@ fn render_metric_cell(
     html.push_str("</span>");
 }
 
-fn render_breadth_metric_cell(html: &mut String, metric_class: &str, row: &StandingReport) {
+fn render_breadth_metric_cell(
+    html: &mut String,
+    metric_class: &str,
+    label: &str,
+    row: &StandingReport,
+) {
     let (primary, secondary) = breadth_metric_label(row);
-    render_metric_cell(html, metric_class, &primary, secondary);
+    render_metric_cell(html, metric_class, label, &primary, secondary);
 }
 
 fn breadth_metric_label(row: &StandingReport) -> (String, Option<String>) {
@@ -2163,9 +2188,10 @@ fn breadth_metric_label(row: &StandingReport) -> (String, Option<String>) {
     }
 }
 
-fn delta_cell(label: &str, delta_class: &str) -> String {
+fn delta_cell(label: &str, delta_class: &str, data_label: &str) -> String {
     format!(
-        "<span class=\"delta {delta_class}\">{}</span>",
+        "<span class=\"delta {delta_class}\" data-label=\"{}\">{}</span>",
+        html_escape(data_label),
         html_escape(label)
     )
 }
@@ -2208,9 +2234,9 @@ fn render_entrant_result_comparisons(
         let delta = pair_rate - overall_rate;
         html.push_str("<div class=\"comparison-row\">");
         html.push_str(&format!(
-            "<span>Vs {}</span><span>{pair_rate:.1}%</span>{}<span>{}</span>",
+            "<span data-label=\"Opponent\">Vs {}</span><span data-label=\"Score\">{pair_rate:.1}%</span>{}<span data-label=\"Record\">{}</span>",
             html_escape(&compact_bot_label(report, opponent)),
-            delta_cell(&signed_pp_label(delta), result_delta_class(delta)),
+            delta_cell(&signed_pp_label(delta), result_delta_class(delta), "Vs overall"),
             html_escape(&pair_record_for_bot_standing_label(pair, &row.bot)),
         ));
         html.push_str("</div>");
@@ -2235,17 +2261,19 @@ fn render_entrant_search_comparisons(
         let nodes_delta = pair_stats.avg_nodes() - row.avg_nodes;
         html.push_str("<div class=\"comparison-row\">");
         html.push_str(&format!(
-            "<span>Vs {}</span><span>{}</span>{}<span>{}</span>{}",
+            "<span data-label=\"Opponent\">Vs {}</span><span data-label=\"Avg ms\">{}</span>{}<span data-label=\"Avg nodes\">{}</span>{}",
             html_escape(&compact_bot_label(report, opponent)),
             html_escape(&ms_label(pair_stats.avg_search_time_ms())),
             delta_cell(
                 &signed_ms_label(time_delta),
-                cost_delta_class(time_delta, 0.05)
+                cost_delta_class(time_delta, 0.05),
+                "Vs overall"
             ),
             html_escape(&nodes_label(pair_stats.avg_nodes())),
             delta_cell(
                 &signed_nodes_label(nodes_delta),
-                cost_delta_class(nodes_delta, 0.5)
+                cost_delta_class(nodes_delta, 0.5),
+                "Vs overall"
             ),
         ));
         html.push_str("</div>");
@@ -2271,7 +2299,7 @@ fn render_entrant_pairwise(
         html.push_str("<details class=\"opponent-row\"><summary>");
         render_bot_label_with_prefix(html, report, opponent, "Vs ");
         html.push_str(&format!(
-            "<span>{} matches</span><span>{}</span><span>{}</span></summary>",
+            "<span data-label=\"Matches\">{} matches</span><span data-label=\"W-D-L\">{}</span><span data-label=\"Points\">{}</span></summary>",
             matches.len(),
             html_escape(&pair_record_for_bot_standing_label(pair, bot)),
             html_escape(&pair_score_for_bot_label(pair, bot)),
@@ -2435,7 +2463,7 @@ fn render_match(
     html.push_str("<details class=\"match\"><summary>");
     let opponent = opponent_for_pair(pair, bot);
     html.push_str(&format!(
-        "<span>{}</span><span>{}</span><span>{} moves</span><span>{}</span></summary>",
+        "<span data-label=\"Side\">{}</span><span data-label=\"Result\">{}</span><span data-label=\"Moves\">{} moves</span><span data-label=\"End\">{}</span></summary>",
         html_escape(&match_color_label(report_match, bot, opponent)),
         html_escape(match_result_for_bot(report_match, bot)),
         report_match.move_count,
@@ -2656,7 +2684,8 @@ table{border-collapse:collapse;min-width:820px;width:100%}th,td{border-bottom:1p
 .view-toggle{display:flex;flex-wrap:wrap;gap:8px}.report-view-radio{height:1px;opacity:0;position:absolute;width:1px}.view-toggle label{background:var(--surface-strong);border:1px solid var(--border);cursor:pointer;padding:8px 12px;text-transform:uppercase}.view-toggle label:hover{border-color:var(--teal)}.entrant-workbench:has(#view-results:checked) label[for=view-results],.entrant-workbench:has(#view-search:checked) label[for=view-search],.entrant-workbench:has(#view-pairwise:checked) label[for=view-pairwise]{border-color:var(--accent);color:var(--accent)}
 .entrant-grid,.match-list{display:grid;gap:12px}.entrant-head,.entrant-row summary{display:grid;gap:10px;align-items:center}.entrant-workbench:has(#view-results:checked) .entrant-head,.entrant-workbench:has(#view-results:checked) .entrant-row summary{grid-template-columns:minmax(260px,1.6fr) repeat(8,minmax(82px,1fr))}.entrant-workbench:has(#view-search:checked) .entrant-head,.entrant-workbench:has(#view-search:checked) .entrant-row summary{grid-template-columns:minmax(240px,1.4fr) repeat(6,minmax(92px,1fr))}.entrant-workbench:has(#view-pairwise:checked) .entrant-head,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{grid-template-columns:minmax(280px,1.6fr) repeat(3,minmax(120px,1fr))}.entrant-head{color:var(--text-muted);font-size:12px;letter-spacing:.08em;padding:0 14px;text-transform:uppercase}.entrant-row,.opponent-row,.match{padding:0}.entrant-row summary,.opponent-row summary,.match summary{cursor:pointer;padding:12px 14px}.entrant-row summary>*,.opponent-row summary>*{min-width:0}.entrant-row summary .bot-label,.opponent-row summary strong,.match summary strong{color:var(--text);overflow-wrap:anywhere}.bot-label span,.metric span{display:block}.metric-nowrap,.metric-nowrap span{white-space:nowrap}.entrant-row summary .bot-label span:first-child{color:var(--text)}.entrant-row summary .bot-label span+span,.metric span+span{color:var(--text-muted);font-size:11px;letter-spacing:.08em;margin-top:2px}.entrant-row summary span,.opponent-row summary span,.match summary span{color:var(--text-muted)}.metric-search,.metric-pairwise{display:none}.entrant-workbench:has(#view-search:checked) .metric-results,.entrant-workbench:has(#view-search:checked) .metric-pairwise,.entrant-workbench:has(#view-pairwise:checked) .metric-results,.entrant-workbench:has(#view-pairwise:checked) .metric-search{display:none}.entrant-workbench:has(#view-search:checked) .metric-search,.entrant-workbench:has(#view-pairwise:checked) .metric-pairwise{display:block}.entrant-head .metric,.entrant-row summary .metric{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;line-height:1.22;padding-left:10px;text-align:right}.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs{display:none;gap:10px;padding:8px 18px 18px}.entrant-workbench:has(#view-results:checked) .entrant-result-comparisons,.entrant-workbench:has(#view-search:checked) .entrant-search-comparisons,.entrant-workbench:has(#view-pairwise:checked) .entrant-pairs{display:grid}.comparison-head,.comparison-row{align-items:center;display:grid;gap:12px}.entrant-result-comparisons .comparison-head,.entrant-result-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(92px,120px) minmax(96px,120px) minmax(120px,140px)}.entrant-search-comparisons .comparison-head,.entrant-search-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(86px,120px) minmax(96px,120px) minmax(104px,130px) minmax(96px,120px)}.comparison-head{border:1px solid transparent;color:var(--text-muted);font-size:11px;letter-spacing:.08em;padding:0 12px;text-transform:uppercase}.comparison-row{background:var(--surface-strong);border:1px solid var(--border);padding:10px 12px}.comparison-row span:not(:first-child),.comparison-head span:not(:first-child){border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.delta-good{color:var(--green)!important}.delta-bad{color:#e78f85!important}.delta-neutral{color:var(--text-muted)!important}.opponent-row summary{display:grid;gap:12px;grid-template-columns:minmax(0,1fr) repeat(3,max-content);align-items:center}.opponent-row summary span{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.match summary{display:grid;gap:12px;grid-template-columns:repeat(4,minmax(82px,max-content));align-items:center}.pair-overview{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));padding:0 18px 16px}.pair-overview p{background:var(--surface-strong);border:1px solid var(--border);margin:0;padding:12px}.match-grid{display:grid;gap:12px;grid-template-columns:1fr;padding:0 14px 14px}.match-grid p{margin:0;word-break:break-word}.pair-overview b,.match-grid b{color:var(--text)}.board-panel,.raw-data{grid-column:1/-1}.board-ascii,.raw-data{background:var(--surface-strong);border:1px solid var(--border)}.board-ascii{color:var(--text);font:14px/1.35 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:8px 0 0;overflow:auto;padding:12px;white-space:pre}.raw-data{padding:10px}.raw-data summary{cursor:pointer;padding:0}.raw-data p{margin:8px 0 0}
 .provenance dl{display:grid;gap:8px 18px;grid-template-columns:max-content 1fr;margin:0}.provenance dt{color:var(--text-muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase}.provenance dd{margin:0}.command{background:var(--surface-strong);border:1px solid var(--border);margin:0;overflow:auto;padding:12px}
-@media (max-width:760px){main{padding:20px}.entrant-head,.comparison-head{display:none}.entrant-row summary,.opponent-row summary,.match summary,.entrant-result-comparisons .comparison-row,.entrant-search-comparisons .comparison-row{grid-template-columns:1fr}.comparison-row span:not(:first-child){border-left:0;border-top:1px solid var(--border);padding-left:0;padding-top:8px}.match-grid,.term-row{grid-template-columns:1fr}.term-row{gap:4px}.provenance dl{grid-template-columns:1fr}table{min-width:760px}}
+@media (max-width:760px){main{padding:16px}.hero,section,.run-warning{padding:16px}.run-chip{justify-content:space-between;width:100%}.entrant-head,.comparison-head{display:none}.entrant-grid,.entrant-row,.opponent-row,.match,.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs,.comparison-row{min-width:0;width:100%}.entrant-row summary,.entrant-workbench:has(#view-results:checked) .entrant-row summary,.entrant-workbench:has(#view-search:checked) .entrant-row summary,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{gap:8px 12px;grid-template-columns:repeat(2,minmax(0,1fr))}.entrant-row summary .bot-label{grid-column:1/-1}.entrant-row summary .metric{border-left:0;display:grid;gap:2px 10px;grid-template-columns:minmax(0,1fr) auto;padding:8px 0 0;text-align:right}.entrant-row summary .metric::before,.comparison-row span::before,.opponent-row summary span::before,.match summary span::before{color:var(--text-muted);content:attr(data-label);font-size:11px;letter-spacing:.08em;text-align:left;text-transform:uppercase}.entrant-row summary .metric::before{align-self:start;grid-column:1;grid-row:1/span 2}.entrant-row summary .metric span{grid-column:2}.entrant-row summary .metric-search,.entrant-row summary .metric-pairwise,.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-results,.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-pairwise,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-results,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-search{display:none}.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-search,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-pairwise{display:grid}.opponent-row summary,.match summary,.entrant-result-comparisons .comparison-row,.entrant-search-comparisons .comparison-row{grid-template-columns:1fr}.comparison-row span,.opponent-row summary span,.match summary span{border-left:0!important;display:flex;gap:12px;justify-content:space-between;min-width:0;overflow-wrap:anywhere;padding-left:0!important;text-align:right}.comparison-row span:not(:first-child),.opponent-row summary span,.match summary span{border-top:1px solid var(--border);padding-top:8px}.opponent-row summary span:first-of-type,.match summary span:first-child{border-top:0;padding-top:0}.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs{padding:4px 12px 14px}.match-grid,.term-row{grid-template-columns:1fr}.term-row{gap:4px}.board-ascii{font-size:12px}.provenance dl{grid-template-columns:1fr}table{min-width:760px}}
+@media (max-width:420px){.entrant-row summary,.entrant-workbench:has(#view-results:checked) .entrant-row summary,.entrant-workbench:has(#view-search:checked) .entrant-row summary,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{grid-template-columns:1fr}}
 </style>
 "#;
 
@@ -2799,10 +2828,10 @@ mod tests {
         assert!(!html.contains("<b>Color result</b>"));
         assert!(!html.contains("A-D-B"));
         assert!(html.contains(
-            "<summary><span>B vs W</span><span>lose</span><span>5 moves</span><span>finished</span></summary>"
+            "<summary><span data-label=\"Side\">B vs W</span><span data-label=\"Result\">lose</span><span data-label=\"Moves\">5 moves</span><span data-label=\"End\">finished</span></summary>"
         ));
         assert!(html.contains(
-            "<summary><span>W vs B</span><span>lose</span><span>5 moves</span><span>finished</span></summary>"
+            "<summary><span data-label=\"Side\">W vs B</span><span data-label=\"Result\">lose</span><span data-label=\"Moves\">5 moves</span><span data-label=\"End\">finished</span></summary>"
         ));
         assert!(!html.contains("#001</span>"));
         assert!(!html.contains("#002</span>"));
@@ -2819,7 +2848,7 @@ mod tests {
         let entrant_pos = html.find("<details class=\"entrant-row\">").unwrap();
         let pair_pos = html.find("Vs SearchBot_D3").unwrap();
         let match_pos = html
-            .find("<summary><span>B vs W</span><span>lose</span>")
+            .find("<summary><span data-label=\"Side\">B vs W</span>")
             .unwrap();
         let how_to_read_pos = html.find("<h2>How To Read This</h2>").unwrap();
         let provenance_pos = html.find("<h2>Provenance</h2>").unwrap();
@@ -2853,12 +2882,12 @@ mod tests {
             "<strong class=\"bot-label\"><span>SearchBot_D7</span><span>TCap8 + Pattern</span></strong>"
         ));
         assert!(html.contains(
-            "<span class=\"metric metric-results\"><span>1000.0</span><span>+/- 0.0</span></span>"
+            "<span class=\"metric metric-results\" data-label=\"Shuffled Elo\"><span>1000.0</span><span>+/- 0.0</span></span>"
         ));
         assert!(html.contains("<span class=\"metric metric-results\">Rank</span>"));
         assert!(html.contains("<span class=\"metric metric-results metric-nowrap\">W-D-L</span>"));
         assert!(html.contains(
-            "<span class=\"metric metric-results metric-nowrap\"><span>1-0-1</span></span>"
+            "<span class=\"metric metric-results metric-nowrap\" data-label=\"W-D-L\"><span>1-0-1</span></span>"
         ));
         assert!(html.contains("<span class=\"metric metric-results\">Avg depth</span>"));
         assert!(html.contains("<span class=\"metric metric-results\">Breadth</span>"));
@@ -2868,14 +2897,14 @@ mod tests {
         assert!(!html.contains("<span class=\"metric metric-results\">Best</span>"));
         assert!(!html.contains("<span class=\"metric metric-results\">Worst</span>"));
         assert!(html.contains(
-            "<span class=\"metric metric-results\"><span>8.0</span><span>pre 12.0</span></span>"
+            "<span class=\"metric metric-results\" data-label=\"Breadth\"><span>8.0</span><span>pre 12.0</span></span>"
         ));
         assert!(html.contains("id=\"view-pairwise\""));
         assert!(!html.contains("event.preventDefault()"));
         assert!(!html.contains("removeAttribute('open')"));
         assert!(!html.contains("<span class=\"metric metric-pairwise\">Open row</span>"));
         assert!(html.contains(
-            "<span class=\"metric metric-pairwise\"><span>0.0%</span><span>SearchBot_D3</span>"
+            "<span class=\"metric metric-pairwise\" data-label=\"Worst\"><span>0.0%</span><span>SearchBot_D3</span>"
         ));
         assert!(html.contains(
             ".entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs{display:none"
@@ -2884,6 +2913,11 @@ mod tests {
             ".entrant-workbench:has(#view-pairwise:checked) .entrant-pairs{display:grid"
         ));
         assert!(html.contains(".comparison-head{border:1px solid transparent"));
+        assert!(html.contains(".entrant-row summary .metric::before"));
+        assert!(html.contains("content:attr(data-label)"));
+        assert!(html.contains(
+            ".entrant-row summary,.entrant-workbench:has(#view-results:checked) .entrant-row summary"
+        ));
         assert!(html.contains(
             ".entrant-result-comparisons .comparison-head,.entrant-result-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(92px,120px) minmax(96px,120px) minmax(120px,140px)}"
         ));
@@ -2919,8 +2953,8 @@ mod tests {
         let html = render_tournament_report_html(&report);
 
         assert!(html.contains("<div class=\"entrant-result-comparisons\">"));
-        assert!(html.contains("<span>Vs SearchBot_D3</span><span>0.0%</span><span class=\"delta delta-bad\">-50.0 pp</span><span>0-0-2 W-D-L</span>"));
-        assert!(html.contains("<span>Vs SearchBot_D2</span><span>100.0%</span><span class=\"delta delta-good\">+50.0 pp</span><span>2-0-0 W-D-L</span>"));
+        assert!(html.contains("<span data-label=\"Opponent\">Vs SearchBot_D3</span><span data-label=\"Score\">0.0%</span><span class=\"delta delta-bad\" data-label=\"Vs overall\">-50.0 pp</span><span data-label=\"Record\">0-0-2 W-D-L</span>"));
+        assert!(html.contains("<span data-label=\"Opponent\">Vs SearchBot_D2</span><span data-label=\"Score\">100.0%</span><span class=\"delta delta-good\" data-label=\"Vs overall\">+50.0 pp</span><span data-label=\"Record\">2-0-0 W-D-L</span>"));
     }
 
     #[test]
@@ -2938,8 +2972,8 @@ mod tests {
         let html = render_tournament_report_html(&report);
 
         assert!(html.contains("<div class=\"entrant-search-comparisons\">"));
-        assert!(html.contains("<span>Vs SearchBot_D3</span><span>10.0 ms</span><span class=\"delta delta-neutral\">+0.0 ms</span><span>200 nodes</span><span class=\"delta delta-neutral\">+0 nodes</span>"));
-        assert!(html.contains("<span>Vs SearchBot_D2</span><span>10.0 ms</span><span class=\"delta delta-neutral\">+0.0 ms</span><span>200 nodes</span><span class=\"delta delta-neutral\">+0 nodes</span>"));
+        assert!(html.contains("<span data-label=\"Opponent\">Vs SearchBot_D3</span><span data-label=\"Avg ms\">10.0 ms</span><span class=\"delta delta-neutral\" data-label=\"Vs overall\">+0.0 ms</span><span data-label=\"Avg nodes\">200 nodes</span><span class=\"delta delta-neutral\" data-label=\"Vs overall\">+0 nodes</span>"));
+        assert!(html.contains("<span data-label=\"Opponent\">Vs SearchBot_D2</span><span data-label=\"Avg ms\">10.0 ms</span><span class=\"delta delta-neutral\" data-label=\"Vs overall\">+0.0 ms</span><span data-label=\"Avg nodes\">200 nodes</span><span class=\"delta delta-neutral\" data-label=\"Vs overall\">+0 nodes</span>"));
     }
 
     #[test]
