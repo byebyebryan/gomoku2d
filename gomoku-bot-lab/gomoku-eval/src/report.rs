@@ -4,7 +4,7 @@ use crate::tournament::TournamentResults;
 use gomoku_core::{Color, GameResult, Move, RuleConfig};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -74,6 +74,10 @@ pub struct HostReport {
 pub struct AnchorReferenceReport {
     pub source: AnchorReferenceSource,
     pub anchors: Vec<AnchorStandingReport>,
+    #[serde(default)]
+    pub pairwise: Vec<PairwiseReport>,
+    #[serde(default)]
+    pub pair_search: Vec<ReferencePairSearchReport>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -103,6 +107,18 @@ pub struct AnchorStandingReport {
     pub shuffled_elo_stddev: f64,
     pub match_count: u32,
     pub score_percentage: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReferencePairSearchReport {
+    pub bot_a: String,
+    pub bot_b: String,
+    pub bot_a_search_move_count: u32,
+    pub bot_a_total_time_ms: u64,
+    pub bot_a_total_nodes: u64,
+    pub bot_b_search_move_count: u32,
+    pub bot_b_total_time_ms: u64,
+    pub bot_b_total_nodes: u64,
 }
 
 impl ReportProvenance {
@@ -169,6 +185,20 @@ impl AnchorReferenceReport {
             ));
         }
 
+        let anchor_set = anchor_names
+            .iter()
+            .map(String::as_str)
+            .collect::<HashSet<_>>();
+        let pairwise: Vec<PairwiseReport> = source_report
+            .pairwise
+            .iter()
+            .filter(|pair| {
+                anchor_set.contains(pair.bot_a.as_str()) && anchor_set.contains(pair.bot_b.as_str())
+            })
+            .cloned()
+            .collect();
+        let pair_search = reference_pair_search_reports(source_report, &pairwise);
+
         Ok(Self {
             source: AnchorReferenceSource {
                 path: source_path,
@@ -186,6 +216,8 @@ impl AnchorReferenceReport {
                 max_game_ms: source_report.run.max_game_ms,
             },
             anchors,
+            pairwise,
+            pair_search,
         })
     }
 
@@ -1874,10 +1906,6 @@ fn score_rate(wins: u32, draws: u32, total: u32) -> f64 {
     avg(wins as f64 + draws as f64 * 0.5, total)
 }
 
-fn signed_pp_label(value: f64) -> String {
-    format!("{:+.1} pp", normalized_zero(value, 0.05))
-}
-
 fn ms_label(value: f64) -> String {
     format!("{value:.1} ms")
 }
@@ -1958,7 +1986,7 @@ fn render_how_to_read_section(html: &mut String) {
     term_row(
         html,
         "Score",
-        "Score % is wins plus half draws over games. W-D-L is entrant wins, draws, then losses. pp means percentage-point delta from the entrant's overall score.",
+        "Score % is wins plus half draws over games. W-D-L is entrant wins, draws, then losses. Ranking comparisons mark scores above 50% green.",
     );
     term_row(
         html,
@@ -2037,11 +2065,17 @@ fn render_entrant_row(
     row: &StandingReport,
     rank: usize,
 ) {
-    let pairs = ranked_pairs_for_bot(report, &row.bot);
-    let best_pair = best_pair_for_bot(report, &row.bot, &pairs);
-    let worst_pair = worst_pair_for_bot(report, &row.bot, &pairs);
+    let pairwise_entries = ranked_pairwise_entries_for_bot(report, &row.bot);
+    let best_pair = best_pair_for_bot(report, &row.bot, &pairwise_entries);
+    let worst_pair = worst_pair_for_bot(report, &row.bot, &pairwise_entries);
+    let role = gauntlet_role(report, &row.bot);
+    let role_class = role
+        .map(|role| format!(" role-{}", role.key()))
+        .unwrap_or_default();
 
-    html.push_str("<details class=\"entrant-row\"><summary>");
+    html.push_str(&format!(
+        "<details class=\"entrant-row{role_class}\"><summary>"
+    ));
     render_bot_label(html, report, &row.bot);
     render_metric_cell(html, "metric-results", "Rank", &format!("#{rank}"), None);
     render_metric_cell(
@@ -2138,7 +2172,7 @@ fn render_entrant_row(
         html,
         "metric-pairwise",
         "Pairs",
-        &format!("{} opponents", pairs.len()),
+        &format!("{} opponents", pairwise_entries.len()),
         None,
     );
     render_metric_cell(html, "metric-pairwise", "Best", &best_pair.0, best_pair.1);
@@ -2150,9 +2184,9 @@ fn render_entrant_row(
         worst_pair.1,
     );
     html.push_str("</summary>");
-    render_entrant_result_comparisons(html, report, row, &pairs);
-    render_entrant_search_comparisons(html, report, row, &pairs);
-    render_entrant_pairwise(html, report, &row.bot, &pairs);
+    render_entrant_result_comparisons(html, report, row, &pairwise_entries);
+    render_entrant_search_comparisons(html, report, row, &pairwise_entries);
+    render_entrant_pairwise(html, report, &row.bot, &pairwise_entries);
     html.push_str("</details>");
 }
 
@@ -2174,7 +2208,49 @@ fn render_bot_label_with_prefix(
     if let Some(modifiers) = modifiers {
         html.push_str(&format!("<span>{}</span>", html_escape(&modifiers)));
     }
+    if let Some(role) = gauntlet_role(report, bot) {
+        html.push_str(&format!(
+            "<span class=\"role-badge role-badge-{}\">{}</span>",
+            role.key(),
+            role.label()
+        ));
+    }
     html.push_str("</strong>");
+}
+
+#[derive(Clone, Copy)]
+enum GauntletRole {
+    Candidate,
+    Anchor,
+}
+
+impl GauntletRole {
+    fn key(self) -> &'static str {
+        match self {
+            Self::Candidate => "candidate",
+            Self::Anchor => "anchor",
+        }
+    }
+
+    fn label(self) -> &'static str {
+        match self {
+            Self::Candidate => "candidate",
+            Self::Anchor => "anchor",
+        }
+    }
+}
+
+fn gauntlet_role(report: &TournamentReport, bot: &str) -> Option<GauntletRole> {
+    if report.run.schedule != "gauntlet" {
+        return None;
+    }
+
+    let reference = report.reference_anchors.as_ref()?;
+    if reference.anchors.iter().any(|anchor| anchor.bot == bot) {
+        Some(GauntletRole::Anchor)
+    } else {
+        Some(GauntletRole::Candidate)
+    }
 }
 
 fn render_metric_cell(
@@ -2224,16 +2300,6 @@ fn delta_cell(label: &str, delta_class: &str, data_label: &str) -> String {
     )
 }
 
-fn result_delta_class(value: f64) -> &'static str {
-    if value > 0.05 {
-        "delta-good"
-    } else if value < -0.05 {
-        "delta-bad"
-    } else {
-        "delta-neutral"
-    }
-}
-
 fn cost_delta_class(value: f64, threshold: f64) -> &'static str {
     if value < -threshold {
         "delta-good"
@@ -2244,27 +2310,35 @@ fn cost_delta_class(value: f64, threshold: f64) -> &'static str {
     }
 }
 
+fn score_cell(score: f64) -> String {
+    let score_class = if score > 50.0 {
+        "score-good"
+    } else {
+        "score-bad"
+    };
+    format!("<span class=\"score {score_class}\" data-label=\"Score\">{score:.1}%</span>")
+}
+
 fn render_entrant_result_comparisons(
     html: &mut String,
     report: &TournamentReport,
     row: &StandingReport,
-    pairs: &[&PairwiseReport],
+    pairs: &[PairwiseEntry<'_>],
 ) {
-    let overall_rate = score_rate(row.wins, row.draws, row.match_count) * 100.0;
-
     html.push_str("<div class=\"entrant-result-comparisons\">");
     html.push_str(
-        "<div class=\"comparison-head\"><span>Opponent</span><span>Score</span><span>Vs overall</span><span>Record</span></div>",
+        "<div class=\"comparison-head\"><span>Opponent</span><span>Source</span><span>Score</span><span>Record</span></div>",
     );
-    for pair in pairs {
+    for entry in pairs {
+        let pair = entry.pair;
         let opponent = opponent_for_pair(pair, &row.bot);
         let pair_rate = pair_score_rate_for_bot(pair, &row.bot);
-        let delta = pair_rate - overall_rate;
         html.push_str("<div class=\"comparison-row\">");
         html.push_str(&format!(
-            "<span data-label=\"Opponent\">Vs {}</span><span data-label=\"Score\">{pair_rate:.1}%</span>{}<span data-label=\"Record\">{}</span>",
+            "<span data-label=\"Opponent\">Vs {}</span><span data-label=\"Source\">{}</span>{}<span data-label=\"Record\">{}</span>",
             html_escape(&compact_bot_label(report, opponent)),
-            delta_cell(&signed_pp_label(delta), result_delta_class(delta), "Vs overall"),
+            html_escape(entry.source.label()),
+            score_cell(pair_rate),
             html_escape(&pair_record_for_bot_standing_label(pair, &row.bot)),
         ));
         html.push_str("</div>");
@@ -2276,21 +2350,23 @@ fn render_entrant_search_comparisons(
     html: &mut String,
     report: &TournamentReport,
     row: &StandingReport,
-    pairs: &[&PairwiseReport],
+    pairs: &[PairwiseEntry<'_>],
 ) {
     html.push_str("<div class=\"entrant-search-comparisons\">");
     html.push_str(
-        "<div class=\"comparison-head\"><span>Opponent</span><span>Avg ms</span><span>Vs overall</span><span>Avg nodes</span><span>Vs overall</span></div>",
+        "<div class=\"comparison-head\"><span>Opponent</span><span>Source</span><span>Avg ms</span><span>Vs overall</span><span>Avg nodes</span><span>Vs overall</span></div>",
     );
-    for pair in pairs {
+    for entry in pairs {
+        let pair = entry.pair;
         let opponent = opponent_for_pair(pair, &row.bot);
-        let pair_stats = pair_search_stats_for_bot(report, pair, &row.bot);
+        let pair_stats = pair_search_stats_for_entry(report, *entry, &row.bot);
         let time_delta = pair_stats.avg_search_time_ms() - row.avg_search_time_ms;
         let nodes_delta = pair_stats.avg_nodes() - row.avg_nodes;
         html.push_str("<div class=\"comparison-row\">");
         html.push_str(&format!(
-            "<span data-label=\"Opponent\">Vs {}</span><span data-label=\"Avg ms\">{}</span>{}<span data-label=\"Avg nodes\">{}</span>{}",
+            "<span data-label=\"Opponent\">Vs {}</span><span data-label=\"Source\">{}</span><span data-label=\"Avg ms\">{}</span>{}<span data-label=\"Avg nodes\">{}</span>{}",
             html_escape(&compact_bot_label(report, opponent)),
+            html_escape(entry.source.label()),
             html_escape(&ms_label(pair_stats.avg_search_time_ms())),
             delta_cell(
                 &signed_ms_label(time_delta),
@@ -2313,22 +2389,27 @@ fn render_entrant_pairwise(
     html: &mut String,
     report: &TournamentReport,
     bot: &str,
-    pairs: &[&PairwiseReport],
+    pairs: &[PairwiseEntry<'_>],
 ) {
     html.push_str("<div class=\"entrant-pairs\">");
-    for pair in pairs {
+    for entry in pairs {
+        let pair = entry.pair;
         let opponent = opponent_for_pair(pair, bot);
         let matches = report
             .matches
             .iter()
             .filter(|report_match| same_pair(report_match, &pair.bot_a, &pair.bot_b))
             .collect::<Vec<_>>();
+        let match_label = match entry.source {
+            PairwiseSource::Current => format!("{} matches", matches.len()),
+            PairwiseSource::Reference => format!("{} reference matches", pair.total),
+        };
 
         html.push_str("<details class=\"opponent-row\"><summary>");
         render_bot_label_with_prefix(html, report, opponent, "Vs ");
         html.push_str(&format!(
-            "<span data-label=\"Matches\">{} matches</span><span data-label=\"W-D-L\">{}</span><span data-label=\"Points\">{}</span></summary>",
-            matches.len(),
+            "<span data-label=\"Matches\">{}</span><span data-label=\"W-D-L\">{}</span><span data-label=\"Points\">{}</span></summary>",
+            html_escape(&match_label),
             html_escape(&pair_record_for_bot_standing_label(pair, bot)),
             html_escape(&pair_score_for_bot_label(pair, bot)),
         ));
@@ -2336,31 +2417,79 @@ fn render_entrant_pairwise(
         for report_match in matches {
             render_match(html, report, pair, bot, report_match);
         }
+        if entry.source == PairwiseSource::Reference {
+            html.push_str(
+                "<p class=\"reference-pair-note\">Reference anchor aggregate; per-match details live in the source anchor report.</p>",
+            );
+        }
         html.push_str("</div></details>");
     }
     html.push_str("</div>");
 }
 
-fn ranked_pairs_for_bot<'a>(report: &'a TournamentReport, bot: &str) -> Vec<&'a PairwiseReport> {
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum PairwiseSource {
+    Current,
+    Reference,
+}
+
+impl PairwiseSource {
+    fn label(self) -> &'static str {
+        match self {
+            Self::Current => "current",
+            Self::Reference => "reference",
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+struct PairwiseEntry<'a> {
+    pair: &'a PairwiseReport,
+    source: PairwiseSource,
+}
+
+fn ranked_pairwise_entries_for_bot<'a>(
+    report: &'a TournamentReport,
+    bot: &str,
+) -> Vec<PairwiseEntry<'a>> {
     let ranking = report
         .standings
         .iter()
         .enumerate()
         .map(|(index, row)| (row.bot.as_str(), index))
         .collect::<HashMap<_, _>>();
-    let mut pairs = report
+    let mut entries = report
         .pairwise
         .iter()
         .filter(|pair| pair.bot_a == bot || pair.bot_b == bot)
+        .map(|pair| PairwiseEntry {
+            pair,
+            source: PairwiseSource::Current,
+        })
         .collect::<Vec<_>>();
 
-    pairs.sort_by_key(|pair| {
+    if let Some(reference) = &report.reference_anchors {
+        if reference.anchors.iter().any(|anchor| anchor.bot == bot) {
+            entries.extend(
+                reference
+                    .pairwise
+                    .iter()
+                    .filter(|pair| pair.bot_a == bot || pair.bot_b == bot)
+                    .map(|pair| PairwiseEntry {
+                        pair,
+                        source: PairwiseSource::Reference,
+                    }),
+            );
+        }
+    }
+
+    entries.sort_by_key(|entry| {
         ranking
-            .get(opponent_for_pair(pair, bot))
+            .get(opponent_for_pair(entry.pair, bot))
             .copied()
             .unwrap_or(usize::MAX)
     });
-    pairs
+    entries
 }
 
 fn opponent_for_pair<'a>(pair: &'a PairwiseReport, bot: &str) -> &'a str {
@@ -2399,19 +2528,22 @@ fn pair_score_rate_for_bot(pair: &PairwiseReport, bot: &str) -> f64 {
 fn best_pair_for_bot(
     report: &TournamentReport,
     bot: &str,
-    pairs: &[&PairwiseReport],
+    pairs: &[PairwiseEntry<'_>],
 ) -> (String, Option<String>) {
     pairs
         .iter()
         .max_by(|a, b| {
-            pair_score_rate_for_bot(a, bot)
-                .partial_cmp(&pair_score_rate_for_bot(b, bot))
+            pair_score_rate_for_bot(a.pair, bot)
+                .partial_cmp(&pair_score_rate_for_bot(b.pair, bot))
                 .unwrap_or(std::cmp::Ordering::Equal)
         })
-        .map(|pair| {
+        .map(|entry| {
             (
-                format!("{:.1}%", pair_score_rate_for_bot(pair, bot)),
-                Some(compact_bot_label(report, opponent_for_pair(pair, bot))),
+                format!("{:.1}%", pair_score_rate_for_bot(entry.pair, bot)),
+                Some(compact_bot_label(
+                    report,
+                    opponent_for_pair(entry.pair, bot),
+                )),
             )
         })
         .unwrap_or_else(|| ("n/a".to_string(), None))
@@ -2420,19 +2552,22 @@ fn best_pair_for_bot(
 fn worst_pair_for_bot(
     report: &TournamentReport,
     bot: &str,
-    pairs: &[&PairwiseReport],
+    pairs: &[PairwiseEntry<'_>],
 ) -> (String, Option<String>) {
     pairs
         .iter()
         .min_by(|a, b| {
-            pair_score_rate_for_bot(a, bot)
-                .partial_cmp(&pair_score_rate_for_bot(b, bot))
+            pair_score_rate_for_bot(a.pair, bot)
+                .partial_cmp(&pair_score_rate_for_bot(b.pair, bot))
                 .unwrap_or(std::cmp::Ordering::Equal)
         })
-        .map(|pair| {
+        .map(|entry| {
             (
-                format!("{:.1}%", pair_score_rate_for_bot(pair, bot)),
-                Some(compact_bot_label(report, opponent_for_pair(pair, bot))),
+                format!("{:.1}%", pair_score_rate_for_bot(entry.pair, bot)),
+                Some(compact_bot_label(
+                    report,
+                    opponent_for_pair(entry.pair, bot),
+                )),
             )
         })
         .unwrap_or_else(|| ("n/a".to_string(), None))
@@ -2461,13 +2596,97 @@ impl PairSearchStats {
     }
 }
 
+impl ReferencePairSearchReport {
+    fn from_pair_and_stats(
+        pair: &PairwiseReport,
+        bot_a_stats: &PairSearchStats,
+        bot_b_stats: &PairSearchStats,
+    ) -> Self {
+        Self {
+            bot_a: pair.bot_a.clone(),
+            bot_b: pair.bot_b.clone(),
+            bot_a_search_move_count: bot_a_stats.search_move_count,
+            bot_a_total_time_ms: bot_a_stats.total_time_ms,
+            bot_a_total_nodes: bot_a_stats.total_nodes,
+            bot_b_search_move_count: bot_b_stats.search_move_count,
+            bot_b_total_time_ms: bot_b_stats.total_time_ms,
+            bot_b_total_nodes: bot_b_stats.total_nodes,
+        }
+    }
+
+    fn matches_pair(&self, pair: &PairwiseReport) -> bool {
+        self.bot_a == pair.bot_a && self.bot_b == pair.bot_b
+    }
+
+    fn stats_for_bot(&self, bot: &str) -> PairSearchStats {
+        if self.bot_a == bot {
+            PairSearchStats {
+                search_move_count: self.bot_a_search_move_count,
+                total_time_ms: self.bot_a_total_time_ms,
+                total_nodes: self.bot_a_total_nodes,
+            }
+        } else {
+            PairSearchStats {
+                search_move_count: self.bot_b_search_move_count,
+                total_time_ms: self.bot_b_total_time_ms,
+                total_nodes: self.bot_b_total_nodes,
+            }
+        }
+    }
+}
+
+fn reference_pair_search_reports(
+    source_report: &TournamentReport,
+    pairwise: &[PairwiseReport],
+) -> Vec<ReferencePairSearchReport> {
+    pairwise
+        .iter()
+        .map(|pair| {
+            let bot_a_stats =
+                pair_search_stats_for_matches(&source_report.matches, pair, &pair.bot_a);
+            let bot_b_stats =
+                pair_search_stats_for_matches(&source_report.matches, pair, &pair.bot_b);
+            ReferencePairSearchReport::from_pair_and_stats(pair, &bot_a_stats, &bot_b_stats)
+        })
+        .collect()
+}
+
 fn pair_search_stats_for_bot(
     report: &TournamentReport,
     pair: &PairwiseReport,
     bot: &str,
 ) -> PairSearchStats {
+    pair_search_stats_for_matches(&report.matches, pair, bot)
+}
+
+fn pair_search_stats_for_entry(
+    report: &TournamentReport,
+    entry: PairwiseEntry<'_>,
+    bot: &str,
+) -> PairSearchStats {
+    match entry.source {
+        PairwiseSource::Current => pair_search_stats_for_bot(report, entry.pair, bot),
+        PairwiseSource::Reference => report
+            .reference_anchors
+            .as_ref()
+            .and_then(|reference| {
+                reference
+                    .pair_search
+                    .iter()
+                    .find(|search| search.matches_pair(entry.pair))
+            })
+            .map(|search| search.stats_for_bot(bot))
+            .unwrap_or_default(),
+    }
+}
+
+fn pair_search_stats_for_matches(
+    matches: &[MatchReport],
+    pair: &PairwiseReport,
+    bot: &str,
+) -> PairSearchStats {
     let mut stats = PairSearchStats::default();
-    for report_match in &report.matches {
+    for report_match in matches {
         if !same_pair(report_match, &pair.bot_a, &pair.bot_b) {
             continue;
         }
@@ -2706,11 +2925,12 @@ main{display:grid;gap:24px;margin:0 auto;max-width:1180px;padding:32px}h1,h2,p{m
 .hero,section,.run-warning{background:var(--surface);border:2px solid var(--border);display:grid;gap:16px;padding:20px;overflow:auto}.run-warning{border-color:var(--accent);color:var(--accent)}.top-links{display:flex;flex-wrap:wrap;gap:8px}.top-links a{background:var(--surface-strong);border:2px solid var(--border);color:var(--text);display:inline-block;padding:8px 12px;text-transform:uppercase}.top-links a:hover,.top-links a:focus{border-color:var(--teal);outline:none}
 .eyebrow{color:var(--accent);font-size:12px;letter-spacing:.16em;text-transform:uppercase}h1{font-size:clamp(34px,7vw,64px);line-height:1}.match summary span,.match-grid,.note{color:var(--text-muted)}
 .run-strip{display:flex;flex-wrap:wrap;gap:8px;padding:0}.run-chip{background:var(--card);border:1px solid var(--border);display:inline-flex;gap:8px;align-items:baseline;min-width:0;padding:7px 10px}.run-chip span{color:var(--text-muted);font-size:11px;letter-spacing:.1em;text-transform:uppercase}.run-chip strong{color:var(--green);font-size:14px;line-height:1.2}.entrant-row,.opponent-row,.match{background:var(--card);border:1px solid var(--border);display:grid;gap:10px;padding:16px}.entrant-row:hover,.opponent-row:hover,.match:hover{border-color:var(--teal)}
+.entrant-row.role-candidate{border-left:4px solid var(--green)}.entrant-row.role-anchor{border-left:4px solid var(--border);opacity:.86}.role-badge{border:1px solid var(--border);display:inline-block!important;font-size:10px!important;letter-spacing:.1em!important;line-height:1;margin-top:6px!important;padding:4px 6px;text-transform:uppercase;width:max-content}.role-badge-candidate{border-color:rgba(90,209,122,.5);color:var(--green)!important}.role-badge-anchor{color:var(--text-muted)!important}
 .term-list{display:grid;gap:0;margin:0}.term-row{border-top:1px solid var(--border);display:grid;gap:18px;grid-template-columns:minmax(140px,.28fr) 1fr;padding:10px 0}.term-row:first-child{border-top:0;padding-top:0}.term-row:last-child{padding-bottom:0}.term-row dt{color:var(--green);font-size:13px;letter-spacing:.08em;text-transform:uppercase}.term-row dd{color:var(--text-muted);margin:0;max-width:86ch}.term-row code{color:var(--accent)}
 .section-heading{display:grid}.section-heading h2{color:var(--accent);font-size:1.2rem}
 table{border-collapse:collapse;min-width:820px;width:100%}th,td{border-bottom:1px solid var(--border);padding:9px 10px;text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{color:var(--text-muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
 .view-toggle{display:flex;flex-wrap:wrap;gap:8px}.report-view-radio{height:1px;opacity:0;position:absolute;width:1px}.view-toggle label{background:var(--surface-strong);border:1px solid var(--border);cursor:pointer;padding:8px 12px;text-transform:uppercase}.view-toggle label:hover{border-color:var(--teal)}.entrant-workbench:has(#view-results:checked) label[for=view-results],.entrant-workbench:has(#view-search:checked) label[for=view-search],.entrant-workbench:has(#view-pairwise:checked) label[for=view-pairwise]{border-color:var(--accent);color:var(--accent)}
-.entrant-grid,.match-list{display:grid;gap:12px}.entrant-head,.entrant-row summary{display:grid;gap:10px;align-items:center}.entrant-workbench:has(#view-results:checked) .entrant-head,.entrant-workbench:has(#view-results:checked) .entrant-row summary{grid-template-columns:minmax(260px,1.6fr) repeat(8,minmax(82px,1fr))}.entrant-workbench:has(#view-search:checked) .entrant-head,.entrant-workbench:has(#view-search:checked) .entrant-row summary{grid-template-columns:minmax(240px,1.4fr) repeat(6,minmax(92px,1fr))}.entrant-workbench:has(#view-pairwise:checked) .entrant-head,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{grid-template-columns:minmax(280px,1.6fr) repeat(3,minmax(120px,1fr))}.entrant-head{color:var(--text-muted);font-size:12px;letter-spacing:.08em;padding:0 14px;text-transform:uppercase}.entrant-row,.opponent-row,.match{padding:0}.entrant-row summary,.opponent-row summary,.match summary{cursor:pointer;padding:12px 14px}.entrant-row summary>*,.opponent-row summary>*{min-width:0}.entrant-row summary .bot-label,.opponent-row summary strong,.match summary strong{color:var(--text);overflow-wrap:anywhere}.bot-label span,.metric span{display:block}.metric-nowrap,.metric-nowrap span{white-space:nowrap}.entrant-row summary .bot-label span:first-child{color:var(--text)}.entrant-row summary .bot-label span+span,.metric span+span{color:var(--text-muted);font-size:11px;letter-spacing:.08em;margin-top:2px}.entrant-row summary span,.opponent-row summary span,.match summary span{color:var(--text-muted)}.metric-search,.metric-pairwise{display:none}.entrant-workbench:has(#view-search:checked) .metric-results,.entrant-workbench:has(#view-search:checked) .metric-pairwise,.entrant-workbench:has(#view-pairwise:checked) .metric-results,.entrant-workbench:has(#view-pairwise:checked) .metric-search{display:none}.entrant-workbench:has(#view-search:checked) .metric-search,.entrant-workbench:has(#view-pairwise:checked) .metric-pairwise{display:block}.entrant-head .metric,.entrant-row summary .metric{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;line-height:1.22;padding-left:10px;text-align:right}.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs{display:none;gap:10px;padding:8px 18px 18px}.entrant-workbench:has(#view-results:checked) .entrant-result-comparisons,.entrant-workbench:has(#view-search:checked) .entrant-search-comparisons,.entrant-workbench:has(#view-pairwise:checked) .entrant-pairs{display:grid}.comparison-head,.comparison-row{align-items:center;display:grid;gap:12px}.entrant-result-comparisons .comparison-head,.entrant-result-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(92px,120px) minmax(96px,120px) minmax(120px,140px)}.entrant-search-comparisons .comparison-head,.entrant-search-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(86px,120px) minmax(96px,120px) minmax(104px,130px) minmax(96px,120px)}.comparison-head{border:1px solid transparent;color:var(--text-muted);font-size:11px;letter-spacing:.08em;padding:0 12px;text-transform:uppercase}.comparison-row{background:var(--surface-strong);border:1px solid var(--border);padding:10px 12px}.comparison-row span:not(:first-child),.comparison-head span:not(:first-child){border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.delta-good{color:var(--green)!important}.delta-bad{color:#e78f85!important}.delta-neutral{color:var(--text-muted)!important}.opponent-row summary{display:grid;gap:12px;grid-template-columns:minmax(0,1fr) repeat(3,max-content);align-items:center}.opponent-row summary span{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.match summary{display:grid;gap:12px;grid-template-columns:repeat(4,minmax(82px,max-content));align-items:center}.pair-overview{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));padding:0 18px 16px}.pair-overview p{background:var(--surface-strong);border:1px solid var(--border);margin:0;padding:12px}.match-grid{display:grid;gap:12px;grid-template-columns:1fr;padding:0 14px 14px}.match-grid p{margin:0;word-break:break-word}.pair-overview b,.match-grid b{color:var(--text)}.board-panel,.raw-data{grid-column:1/-1}.board-ascii,.raw-data{background:var(--surface-strong);border:1px solid var(--border)}.board-ascii{color:var(--text);font:14px/1.35 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:8px 0 0;overflow:auto;padding:12px;white-space:pre}.raw-data{padding:10px}.raw-data summary{cursor:pointer;padding:0}.raw-data p{margin:8px 0 0}
+.entrant-grid,.match-list{display:grid;gap:12px}.entrant-head,.entrant-row summary{display:grid;gap:10px;align-items:center}.entrant-workbench:has(#view-results:checked) .entrant-head,.entrant-workbench:has(#view-results:checked) .entrant-row summary{grid-template-columns:minmax(260px,1.6fr) repeat(8,minmax(82px,1fr))}.entrant-workbench:has(#view-search:checked) .entrant-head,.entrant-workbench:has(#view-search:checked) .entrant-row summary{grid-template-columns:minmax(240px,1.4fr) repeat(6,minmax(92px,1fr))}.entrant-workbench:has(#view-pairwise:checked) .entrant-head,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{grid-template-columns:minmax(280px,1.6fr) repeat(3,minmax(120px,1fr))}.entrant-head{color:var(--text-muted);font-size:12px;letter-spacing:.08em;padding:0 14px;text-transform:uppercase}.entrant-row,.opponent-row,.match{padding:0}.entrant-row summary,.opponent-row summary,.match summary{cursor:pointer;padding:12px 14px}.entrant-row summary>*,.opponent-row summary>*{min-width:0}.entrant-row summary .bot-label,.opponent-row summary strong,.match summary strong{color:var(--text);overflow-wrap:anywhere}.bot-label span,.metric span{display:block}.metric-nowrap,.metric-nowrap span{white-space:nowrap}.entrant-row summary .bot-label span:first-child{color:var(--text)}.entrant-row summary .bot-label span+span,.metric span+span{color:var(--text-muted);font-size:11px;letter-spacing:.08em;margin-top:2px}.entrant-row summary span,.opponent-row summary span,.match summary span{color:var(--text-muted)}.metric-search,.metric-pairwise{display:none}.entrant-workbench:has(#view-search:checked) .metric-results,.entrant-workbench:has(#view-search:checked) .metric-pairwise,.entrant-workbench:has(#view-pairwise:checked) .metric-results,.entrant-workbench:has(#view-pairwise:checked) .metric-search{display:none}.entrant-workbench:has(#view-search:checked) .metric-search,.entrant-workbench:has(#view-pairwise:checked) .metric-pairwise{display:block}.entrant-head .metric,.entrant-row summary .metric{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;line-height:1.22;padding-left:10px;text-align:right}.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs{display:none;gap:10px;padding:8px 18px 18px}.entrant-workbench:has(#view-results:checked) .entrant-result-comparisons,.entrant-workbench:has(#view-search:checked) .entrant-search-comparisons,.entrant-workbench:has(#view-pairwise:checked) .entrant-pairs{display:grid}.comparison-head,.comparison-row{align-items:center;display:grid;gap:12px}.entrant-result-comparisons .comparison-head,.entrant-result-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(78px,96px) minmax(92px,120px) minmax(120px,140px)}.entrant-search-comparisons .comparison-head,.entrant-search-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(78px,96px) minmax(86px,120px) minmax(96px,120px) minmax(104px,130px) minmax(96px,120px)}.comparison-head{border:1px solid transparent;color:var(--text-muted);font-size:11px;letter-spacing:.08em;padding:0 12px;text-transform:uppercase}.comparison-row{background:var(--surface-strong);border:1px solid var(--border);padding:10px 12px}.comparison-row span:not(:first-child),.comparison-head span:not(:first-child){border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.delta-good,.score-good{color:var(--green)!important}.delta-bad,.score-bad{color:#e78f85!important}.delta-neutral{color:var(--text-muted)!important}.opponent-row summary{display:grid;gap:12px;grid-template-columns:minmax(0,1fr) repeat(3,max-content);align-items:center}.opponent-row summary span{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.match summary{display:grid;gap:12px;grid-template-columns:repeat(4,minmax(82px,max-content));align-items:center}.pair-overview{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));padding:0 18px 16px}.pair-overview p{background:var(--surface-strong);border:1px solid var(--border);margin:0;padding:12px}.match-grid{display:grid;gap:12px;grid-template-columns:1fr;padding:0 14px 14px}.match-grid p{margin:0;word-break:break-word}.reference-pair-note{background:var(--surface-strong);border:1px solid var(--border);color:var(--text-muted);margin:0;padding:10px 12px}.pair-overview b,.match-grid b{color:var(--text)}.board-panel,.raw-data{grid-column:1/-1}.board-ascii,.raw-data{background:var(--surface-strong);border:1px solid var(--border)}.board-ascii{color:var(--text);font:14px/1.35 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:8px 0 0;overflow:auto;padding:12px;white-space:pre}.raw-data{padding:10px}.raw-data summary{cursor:pointer;padding:0}.raw-data p{margin:8px 0 0}
 .provenance dl{display:grid;gap:8px 18px;grid-template-columns:max-content 1fr;margin:0}.provenance dt{color:var(--text-muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase}.provenance dd{margin:0}.command{background:var(--surface-strong);border:1px solid var(--border);margin:0;overflow:auto;padding:12px}
 @media (max-width:760px){main{padding:16px}.hero,section,.run-warning{padding:16px}.run-chip{justify-content:space-between;width:100%}.entrant-head,.comparison-head{display:none}.entrant-grid,.entrant-row,.opponent-row,.match,.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs,.comparison-row{min-width:0;width:100%}.entrant-row summary,.entrant-workbench:has(#view-results:checked) .entrant-row summary,.entrant-workbench:has(#view-search:checked) .entrant-row summary,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{gap:8px 12px;grid-template-columns:repeat(2,minmax(0,1fr))}.entrant-row summary .bot-label{grid-column:1/-1}.entrant-row summary .metric{border-left:0;display:grid;gap:2px 10px;grid-template-columns:minmax(0,1fr) auto;padding:8px 0 0;text-align:right}.entrant-row summary .metric::before,.comparison-row span::before,.opponent-row summary span::before,.match summary span::before{color:var(--text-muted);content:attr(data-label);font-size:11px;letter-spacing:.08em;text-align:left;text-transform:uppercase}.entrant-row summary .metric::before{align-self:start;grid-column:1;grid-row:1/span 2}.entrant-row summary .metric span{grid-column:2}.entrant-row summary .metric-search,.entrant-row summary .metric-pairwise,.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-results,.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-pairwise,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-results,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-search{display:none}.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-search,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-pairwise{display:grid}.opponent-row summary,.match summary,.entrant-result-comparisons .comparison-row,.entrant-search-comparisons .comparison-row{grid-template-columns:1fr}.comparison-row span,.opponent-row summary span,.match summary span{border-left:0!important;display:flex;gap:12px;justify-content:space-between;min-width:0;overflow-wrap:anywhere;padding-left:0!important;text-align:right}.comparison-row span:not(:first-child),.opponent-row summary span,.match summary span{border-top:1px solid var(--border);padding-top:8px}.opponent-row summary span:first-of-type,.match summary span:first-child{border-top:0;padding-top:0}.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs{padding:4px 12px 14px}.match-grid,.term-row{grid-template-columns:1fr}.term-row{gap:4px}.board-ascii{font-size:12px}.provenance dl{grid-template-columns:1fr}table{min-width:760px}}
 @media (max-width:420px){.entrant-row summary,.entrant-workbench:has(#view-results:checked) .entrant-row summary,.entrant-workbench:has(#view-search:checked) .entrant-row summary,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{grid-template-columns:1fr}}
@@ -2823,6 +3043,8 @@ mod tests {
                 max_game_ms: None,
             },
             anchors: vec![],
+            pairwise: vec![],
+            pair_search: vec![],
         });
         let html = render_tournament_report_html(&report);
 
@@ -2947,10 +3169,10 @@ mod tests {
             ".entrant-row summary,.entrant-workbench:has(#view-results:checked) .entrant-row summary"
         ));
         assert!(html.contains(
-            ".entrant-result-comparisons .comparison-head,.entrant-result-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(92px,120px) minmax(96px,120px) minmax(120px,140px)}"
+            ".entrant-result-comparisons .comparison-head,.entrant-result-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(78px,96px) minmax(92px,120px) minmax(120px,140px)}"
         ));
         assert!(html.contains(
-            ".entrant-search-comparisons .comparison-head,.entrant-search-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(86px,120px) minmax(96px,120px) minmax(104px,130px) minmax(96px,120px)}"
+            ".entrant-search-comparisons .comparison-head,.entrant-search-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(78px,96px) minmax(86px,120px) minmax(96px,120px) minmax(104px,130px) minmax(96px,120px)}"
         ));
         assert!(!html.contains(
             ".entrant-result-comparisons .comparison-head,.entrant-result-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) repeat(3,minmax(90px,max-content))}"
@@ -2981,8 +3203,10 @@ mod tests {
         let html = render_tournament_report_html(&report);
 
         assert!(html.contains("<div class=\"entrant-result-comparisons\">"));
-        assert!(html.contains("<span data-label=\"Opponent\">Vs SearchBot_D3</span><span data-label=\"Score\">0.0%</span><span class=\"delta delta-bad\" data-label=\"Vs overall\">-50.0 pp</span><span data-label=\"Record\">0-0-2 W-D-L</span>"));
-        assert!(html.contains("<span data-label=\"Opponent\">Vs SearchBot_D2</span><span data-label=\"Score\">100.0%</span><span class=\"delta delta-good\" data-label=\"Vs overall\">+50.0 pp</span><span data-label=\"Record\">2-0-0 W-D-L</span>"));
+        assert!(html.contains("<div class=\"comparison-head\"><span>Opponent</span><span>Source</span><span>Score</span><span>Record</span></div>"));
+        assert!(html.contains("<span data-label=\"Opponent\">Vs SearchBot_D3</span><span data-label=\"Source\">current</span><span class=\"score score-bad\" data-label=\"Score\">0.0%</span><span data-label=\"Record\">0-0-2 W-D-L</span>"));
+        assert!(html.contains("<span data-label=\"Opponent\">Vs SearchBot_D2</span><span data-label=\"Source\">current</span><span class=\"score score-good\" data-label=\"Score\">100.0%</span><span data-label=\"Record\">2-0-0 W-D-L</span>"));
+        assert!(!html.contains("<span>Vs overall</span><span>Record</span>"));
     }
 
     #[test]
@@ -3000,8 +3224,8 @@ mod tests {
         let html = render_tournament_report_html(&report);
 
         assert!(html.contains("<div class=\"entrant-search-comparisons\">"));
-        assert!(html.contains("<span data-label=\"Opponent\">Vs SearchBot_D3</span><span data-label=\"Avg ms\">10.0 ms</span><span class=\"delta delta-neutral\" data-label=\"Vs overall\">+0.0 ms</span><span data-label=\"Avg nodes\">200 nodes</span><span class=\"delta delta-neutral\" data-label=\"Vs overall\">+0 nodes</span>"));
-        assert!(html.contains("<span data-label=\"Opponent\">Vs SearchBot_D2</span><span data-label=\"Avg ms\">10.0 ms</span><span class=\"delta delta-neutral\" data-label=\"Vs overall\">+0.0 ms</span><span data-label=\"Avg nodes\">200 nodes</span><span class=\"delta delta-neutral\" data-label=\"Vs overall\">+0 nodes</span>"));
+        assert!(html.contains("<span data-label=\"Opponent\">Vs SearchBot_D3</span><span data-label=\"Source\">current</span><span data-label=\"Avg ms\">10.0 ms</span><span class=\"delta delta-neutral\" data-label=\"Vs overall\">+0.0 ms</span><span data-label=\"Avg nodes\">200 nodes</span><span class=\"delta delta-neutral\" data-label=\"Vs overall\">+0 nodes</span>"));
+        assert!(html.contains("<span data-label=\"Opponent\">Vs SearchBot_D2</span><span data-label=\"Source\">current</span><span data-label=\"Avg ms\">10.0 ms</span><span class=\"delta delta-neutral\" data-label=\"Vs overall\">+0.0 ms</span><span data-label=\"Avg nodes\">200 nodes</span><span class=\"delta delta-neutral\" data-label=\"Vs overall\">+0 nodes</span>"));
     }
 
     #[test]
@@ -3052,7 +3276,7 @@ mod tests {
         assert!(html.contains("TT hit/cut"));
         assert!(!html.contains("0.0 / 0.0"));
         assert!(html.contains("<dt>Search Cost</dt>"));
-        assert!(html.contains("percentage-point delta"));
+        assert!(html.contains("Ranking comparisons mark scores above 50% green."));
     }
 
     #[test]
@@ -3219,6 +3443,8 @@ mod tests {
                     score_percentage: 50.0,
                 },
             ],
+            pairwise: vec![],
+            pair_search: vec![],
         });
 
         assert_eq!(
@@ -3256,6 +3482,28 @@ mod tests {
         source.standings[1].shuffled_elo_avg = 1234.5;
         source.standings[1].shuffled_elo_stddev = 12.0;
         source.standings[2].shuffled_elo_avg = 1175.0;
+        source.pairwise = vec![
+            PairwiseReport {
+                bot_a: "anchor-a".to_string(),
+                bot_b: "anchor-b".to_string(),
+                wins_a: 35,
+                wins_b: 29,
+                draws: 0,
+                total: 64,
+                score_a: 35.0,
+                score_b: 29.0,
+            },
+            PairwiseReport {
+                bot_a: "candidate".to_string(),
+                bot_b: "anchor-a".to_string(),
+                wins_a: 31,
+                wins_b: 33,
+                draws: 0,
+                total: 64,
+                score_a: 31.0,
+                score_b: 33.0,
+            },
+        ];
 
         let reference = AnchorReferenceReport::from_report(
             Some("reports/latest.json".to_string()),
@@ -3276,6 +3524,9 @@ mod tests {
         assert_eq!(reference.anchors[0].shuffled_elo_stddev, 12.0);
         assert_eq!(reference.anchors[1].bot, "anchor-b");
         assert_eq!(reference.anchors[1].shuffled_elo_avg, 1175.0);
+        assert_eq!(reference.pairwise.len(), 1);
+        assert_eq!(reference.pairwise[0].bot_a, "anchor-a");
+        assert_eq!(reference.pairwise[0].bot_b, "anchor-b");
     }
 
     #[test]
@@ -3368,6 +3619,8 @@ mod tests {
                 match_count: 128,
                 score_percentage: 56.27,
             }],
+            pairwise: vec![],
+            pair_search: vec![],
         });
 
         let html = render_tournament_report_html(&report);
@@ -3380,6 +3633,198 @@ mod tests {
         assert!(html.contains("anchor-a"));
         assert!(html.contains("1234.5 +/- 12.0"));
         assert!(html.contains("56.3%"));
+    }
+
+    #[test]
+    fn html_report_marks_gauntlet_candidates_and_anchors() {
+        let mut report = sample_report();
+        report.run.schedule = "gauntlet".to_string();
+        report.run.bots = vec!["candidate-a".to_string(), "anchor-a".to_string()];
+        report.standings = vec![
+            sample_standing_with_search_costs("candidate-a"),
+            sample_standing_with_search_costs("anchor-a"),
+        ];
+        report.reference_anchors = Some(AnchorReferenceReport {
+            source: AnchorReferenceSource {
+                path: Some("reports/latest.json".to_string()),
+                schedule: "round-robin".to_string(),
+                git_commit: Some("abc123".to_string()),
+                git_dirty: Some(false),
+                rules: report.run.rules.clone(),
+                games_per_pair: 64,
+                opening_policy: "centered-suite".to_string(),
+                opening_plies: 4,
+                seed: 48,
+                search_time_ms: None,
+                search_cpu_time_ms: Some(1000),
+                max_moves: Some(120),
+                max_game_ms: None,
+            },
+            anchors: vec![AnchorStandingReport {
+                bot: "anchor-a".to_string(),
+                sequential_elo: 1220.0,
+                shuffled_elo_avg: 1234.5,
+                shuffled_elo_stddev: 12.0,
+                match_count: 128,
+                score_percentage: 56.27,
+            }],
+            pairwise: vec![],
+            pair_search: vec![],
+        });
+
+        let html = render_tournament_report_html(&report);
+
+        assert!(html.contains("<details class=\"entrant-row role-candidate\">"));
+        assert!(html.contains("<span class=\"role-badge role-badge-candidate\">candidate</span>"));
+        assert!(html.contains("<details class=\"entrant-row role-anchor\">"));
+        assert!(html.contains("<span class=\"role-badge role-badge-anchor\">anchor</span>"));
+    }
+
+    #[test]
+    fn html_report_adds_reference_anchor_pairs_to_anchor_rows() {
+        let mut report = sample_report();
+        report.run.schedule = "gauntlet".to_string();
+        report.run.bots = vec![
+            "candidate-a".to_string(),
+            "anchor-a".to_string(),
+            "anchor-b".to_string(),
+        ];
+        report.standings = vec![
+            sample_standing_with_search_costs("candidate-a"),
+            sample_standing_with_search_costs("anchor-a"),
+            sample_standing_with_search_costs("anchor-b"),
+        ];
+        report.pairwise = vec![PairwiseReport {
+            bot_a: "candidate-a".to_string(),
+            bot_b: "anchor-a".to_string(),
+            wins_a: 12,
+            wins_b: 20,
+            draws: 0,
+            total: 32,
+            score_a: 12.0,
+            score_b: 20.0,
+        }];
+        report.reference_anchors = Some(AnchorReferenceReport {
+            source: AnchorReferenceSource {
+                path: Some("reports/latest.json".to_string()),
+                schedule: "round-robin".to_string(),
+                git_commit: Some("abc123".to_string()),
+                git_dirty: Some(false),
+                rules: report.run.rules.clone(),
+                games_per_pair: 64,
+                opening_policy: "centered-suite".to_string(),
+                opening_plies: 4,
+                seed: 48,
+                search_time_ms: None,
+                search_cpu_time_ms: Some(1000),
+                max_moves: Some(120),
+                max_game_ms: None,
+            },
+            anchors: vec![
+                AnchorStandingReport {
+                    bot: "anchor-a".to_string(),
+                    sequential_elo: 1220.0,
+                    shuffled_elo_avg: 1234.5,
+                    shuffled_elo_stddev: 12.0,
+                    match_count: 128,
+                    score_percentage: 56.27,
+                },
+                AnchorStandingReport {
+                    bot: "anchor-b".to_string(),
+                    sequential_elo: 1180.0,
+                    shuffled_elo_avg: 1188.0,
+                    shuffled_elo_stddev: 12.0,
+                    match_count: 128,
+                    score_percentage: 43.73,
+                },
+            ],
+            pairwise: vec![PairwiseReport {
+                bot_a: "anchor-a".to_string(),
+                bot_b: "anchor-b".to_string(),
+                wins_a: 35,
+                wins_b: 29,
+                draws: 0,
+                total: 64,
+                score_a: 35.0,
+                score_b: 29.0,
+            }],
+            pair_search: vec![],
+        });
+
+        let html = render_tournament_report_html(&report);
+
+        assert!(html.contains(
+            "<span class=\"metric metric-pairwise\" data-label=\"Pairs\"><span>2 opponents</span>"
+        ));
+        assert!(html.contains("<span data-label=\"Matches\">64 reference matches</span>"));
+        assert!(html.contains(
+            "Reference anchor aggregate; per-match details live in the source anchor report."
+        ));
+    }
+
+    #[test]
+    fn html_report_adds_reference_pairs_to_result_and_search_comparisons() {
+        let mut source = sample_report();
+        source.run.schedule = "round-robin".to_string();
+        source.standings = vec![
+            sample_standing_with_search_costs("anchor-a"),
+            sample_standing_with_search_costs("anchor-b"),
+        ];
+        source.pairwise = vec![PairwiseReport {
+            bot_a: "anchor-a".to_string(),
+            bot_b: "anchor-b".to_string(),
+            wins_a: 35,
+            wins_b: 29,
+            draws: 0,
+            total: 64,
+            score_a: 35.0,
+            score_b: 29.0,
+        }];
+        let mut reference_match = sample_match(1, "anchor-a", "anchor-b", Some("anchor-a"));
+        reference_match.black_stats = sample_side_stats_with_search_costs();
+        reference_match.black_stats.total_time_ms = 60;
+        reference_match.black_stats.total_nodes = 6000;
+        reference_match.white_stats = sample_side_stats_with_search_costs();
+        reference_match.white_stats.total_time_ms = 90;
+        reference_match.white_stats.total_nodes = 1500;
+        source.matches = vec![reference_match];
+        let reference = AnchorReferenceReport::from_report(
+            Some("reports/latest.json".to_string()),
+            &source,
+            &["anchor-a".to_string(), "anchor-b".to_string()],
+        )
+        .expect("reference should include anchor pair data");
+
+        let mut report = sample_report();
+        report.run.schedule = "gauntlet".to_string();
+        report.run.bots = vec![
+            "candidate-a".to_string(),
+            "anchor-a".to_string(),
+            "anchor-b".to_string(),
+        ];
+        report.standings = vec![
+            sample_standing_with_search_costs("candidate-a"),
+            sample_standing_with_search_costs("anchor-a"),
+            sample_standing_with_search_costs("anchor-b"),
+        ];
+        report.pairwise = vec![PairwiseReport {
+            bot_a: "candidate-a".to_string(),
+            bot_b: "anchor-a".to_string(),
+            wins_a: 12,
+            wins_b: 20,
+            draws: 0,
+            total: 32,
+            score_a: 12.0,
+            score_b: 20.0,
+        }];
+        report.reference_anchors = Some(reference);
+
+        let html = render_tournament_report_html(&report);
+
+        assert!(html.contains("<span data-label=\"Source\">reference</span>"));
+        assert!(html.contains("<span class=\"score score-good\" data-label=\"Score\">54.7%</span>"));
+        assert!(html.contains("<span data-label=\"Avg ms\">12.0 ms</span>"));
+        assert!(html.contains("<span data-label=\"Avg nodes\">1.2k nodes</span>"));
     }
 
     #[test]

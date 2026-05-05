@@ -336,6 +336,36 @@ The tactical shape vocabulary is documented in
 with a `kind`, `gain_square`, `defense_squares`, and `rest_squares`; this keeps
 create, prevent, react, and future eval work tied to the same definitions.
 
+### `0.4.2` sweep A read
+
+The first `0.4.2` sweep stayed in the lab and used a batch gauntlet rather than
+another full round robin: `8` child-cap / pattern-eval candidates against the
+`8` clean `0.4.1` reference anchors, `32` games per candidate-anchor pair,
+Renju, centered-suite openings, and `1000 ms` CPU time per move.
+
+The important read is comparative, not absolute. A gauntlet does not play
+candidate-vs-candidate or anchor-vs-anchor games, so it is a screening tool for
+"worth testing again", not a final product-preset ranking.
+
+Current takeaways:
+
+- Pattern eval is still the main strength signal. The best candidate scores in
+  this sweep all used `+pattern-eval`.
+- Pattern eval is still not a default. The cost spread is wide: `D5 cap4
+  pattern` was cheap enough to remain interesting, while `D7 cap16 pattern`
+  spent too much budget.
+- `tactical-cap-16` is not a general upgrade. Line-eval cap16 got slower and
+  weaker; pattern cap16 had some score upside but did not look clean enough to
+  justify the extra cost.
+- `tactical-cap-4` is a real candidate, not just a toy narrowing. With tactical
+  ordering and safety gates, cap4 often buys useful depth without obviously
+  collapsing tactical coverage.
+- The most useful next comparison is a smaller survivor run around `D5 cap4`,
+  `D5 cap4 pattern`, `D5 cap8 pattern`, `D7 cap4`, `D7 cap4 pattern`, and the
+  current `D7 cap8` anchors.
+
+Detailed numbers live in [`performance_tuning.md`](performance_tuning.md).
+
 ---
 
 ## Transposition table
