@@ -106,6 +106,23 @@ Acceptance:
 - The report surfaces the relevant pipeline metrics.
 - Failed alternatives are removed from code and recorded in docs.
 
+Current checkpoint:
+
+- The active reference tournament set is now explicit:
+  `search-d1`, `search-d3`, `search-d5`, `search-d5+tactical-cap-8`,
+  `search-d7+tactical-cap-8`, `search-d3+pattern-eval`,
+  `search-d5+tactical-cap-8+pattern-eval`, and
+  `search-d7+tactical-cap-8+pattern-eval`.
+- This set covers the easy/default/deep ladder, the current breadth-for-depth
+  tactical-cap candidates, and the active pattern-eval ablation.
+- A current tactical-scenario preflight across the non-pattern ladder
+  (`search-d1`, `search-d3`, `search-d5`, `search-d5+tactical-cap-8`,
+  `search-d7+tactical-cap-8`) passed all `20/20` hard safety-gate cases.
+  Diagnostic misses remain expected and are not tournament blockers.
+- The next checkpoint should be a clean curated report from a clean committed
+  toolchain, committed as a follow-up report artifact. Do that before another
+  behavior-changing bot experiment so later comparisons have a stable anchor.
+
 ## `0.4.2` — Settings And Bot Config Surface
 
 Purpose: make customization real once the preset vocabulary is grounded.
