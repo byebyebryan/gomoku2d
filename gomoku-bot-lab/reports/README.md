@@ -38,6 +38,11 @@ jq '.provenance | {git_commit, git_dirty}' reports/latest.json
 Keep the raw JSON next to the generated HTML so the report can be inspected or
 re-rendered without rerunning the tournament.
 
+If only the HTML renderer changes, re-render `index.html` from the existing
+clean `latest.json`; do not spend another full tournament just to refresh
+presentation. The JSON provenance remains the match-data provenance, while the
+HTML can track later renderer polish.
+
 `latest.json` is also the default anchor-rating source for focused gauntlet
 runs. Gauntlets can embed selected standings from this full round-robin report
 with `--anchor-report reports/latest.json`, which keeps scratch comparisons

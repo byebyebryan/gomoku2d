@@ -177,6 +177,11 @@ For published reports:
 3. Confirm report provenance has `"git_dirty": false`.
 4. Commit report JSON/HTML as a follow-up report commit.
 
+If the tournament JSON is still the desired data source and only report
+presentation changed, re-render the HTML from the existing clean
+`reports/latest.json` instead of rerunning the tournament. The JSON remains the
+source of truth for ranking and anchor ratings; the HTML is a derived view.
+
 ## Known Limitations
 
 The centered suite is hand-curated, not solved. It is a better baseline than

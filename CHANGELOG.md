@@ -12,6 +12,15 @@ their own section.
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-05-04
+
+**Theme: turn the bot-lab foundation into a measured difficulty ladder.**
+
+`0.4.1` is still a lab-facing release, not the player-facing settings bridge.
+It uses the `0.4.0` pipeline/reporting foundation to prove a stronger bot
+ladder, refine report readability, and decide that `0.4.2` should stay
+lab-first for one more bot exploration pass before exposing settings.
+
 ### Bot lab
 
 - Realigned `0.4.1` around a measured tactical ladder rather than broad bot
@@ -603,7 +612,8 @@ together in one canvas-driven surface. That lesson drove the `v0.2.1` rewrite.
   concerns blurred together.
 - Expressive UI language, but not scalable beyond one canvas.
 
-[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/byebyebryan/gomoku2d/compare/v0.3.3...v0.4.0
 [0.3.3]: https://github.com/byebyebryan/gomoku2d/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/byebyebryan/gomoku2d/compare/v0.3.1...v0.3.2
