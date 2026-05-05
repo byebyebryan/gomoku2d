@@ -374,118 +374,6 @@ fn load_anchor_reference(
     AnchorReferenceReport::from_report(Some(source_path), &source_report, anchor_names)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn tournament_plan_builds_round_robin_pairs() {
-        let plan = tournament_plan(
-            CliTournamentSchedule::RoundRobin,
-            Some("a,b,c"),
-            None,
-            None,
-            None,
-        )
-        .expect("round robin plan should parse");
-
-        assert_eq!(plan.bot_names, vec!["a", "b", "c"]);
-        assert!(plan.anchor_names.is_empty());
-        assert_eq!(plan.anchor_report, None);
-        assert_eq!(
-            plan.pairs,
-            vec![
-                TournamentPair {
-                    bot_a_idx: 0,
-                    bot_b_idx: 1,
-                },
-                TournamentPair {
-                    bot_a_idx: 0,
-                    bot_b_idx: 2,
-                },
-                TournamentPair {
-                    bot_a_idx: 1,
-                    bot_b_idx: 2,
-                },
-            ]
-        );
-    }
-
-    #[test]
-    fn tournament_plan_requires_exactly_two_head_to_head_bots() {
-        let plan = tournament_plan(
-            CliTournamentSchedule::HeadToHead,
-            Some("d5,d7"),
-            None,
-            None,
-            None,
-        )
-        .expect("head-to-head plan should parse");
-
-        assert_eq!(plan.bot_names, vec!["d5", "d7"]);
-        assert_eq!(
-            plan.pairs,
-            vec![TournamentPair {
-                bot_a_idx: 0,
-                bot_b_idx: 1,
-            }]
-        );
-
-        let err = tournament_plan(
-            CliTournamentSchedule::HeadToHead,
-            Some("d3,d5,d7"),
-            None,
-            None,
-            None,
-        )
-        .unwrap_err();
-        assert!(err.contains("exactly 2 bots"));
-    }
-
-    #[test]
-    fn tournament_plan_builds_candidate_vs_anchor_gauntlet() {
-        let plan = tournament_plan(
-            CliTournamentSchedule::Gauntlet,
-            None,
-            Some("candidate"),
-            Some("anchor-a,anchor-b"),
-            Some("reports/latest.json"),
-        )
-        .expect("gauntlet plan should parse");
-
-        assert_eq!(plan.bot_names, vec!["candidate", "anchor-a", "anchor-b"]);
-        assert_eq!(plan.anchor_names, vec!["anchor-a", "anchor-b"]);
-        assert_eq!(plan.anchor_report.as_deref(), Some("reports/latest.json"));
-        assert_eq!(
-            plan.pairs,
-            vec![
-                TournamentPair {
-                    bot_a_idx: 0,
-                    bot_b_idx: 1,
-                },
-                TournamentPair {
-                    bot_a_idx: 0,
-                    bot_b_idx: 2,
-                },
-            ]
-        );
-    }
-
-    #[test]
-    fn tournament_plan_rejects_anchor_report_outside_gauntlet() {
-        let err = tournament_plan(
-            CliTournamentSchedule::RoundRobin,
-            Some("a,b"),
-            None,
-            None,
-            Some("reports/latest.json"),
-        )
-        .unwrap_err();
-
-        assert!(err.contains("--anchor-report"));
-    }
-}
-
 fn make_bot_factory(
     spec: &str,
     search_time_ms: Option<u64>,
@@ -1129,5 +1017,117 @@ fn main() {
                 println!("Report JSON: {}", path.display());
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tournament_plan_builds_round_robin_pairs() {
+        let plan = tournament_plan(
+            CliTournamentSchedule::RoundRobin,
+            Some("a,b,c"),
+            None,
+            None,
+            None,
+        )
+        .expect("round robin plan should parse");
+
+        assert_eq!(plan.bot_names, vec!["a", "b", "c"]);
+        assert!(plan.anchor_names.is_empty());
+        assert_eq!(plan.anchor_report, None);
+        assert_eq!(
+            plan.pairs,
+            vec![
+                TournamentPair {
+                    bot_a_idx: 0,
+                    bot_b_idx: 1,
+                },
+                TournamentPair {
+                    bot_a_idx: 0,
+                    bot_b_idx: 2,
+                },
+                TournamentPair {
+                    bot_a_idx: 1,
+                    bot_b_idx: 2,
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn tournament_plan_requires_exactly_two_head_to_head_bots() {
+        let plan = tournament_plan(
+            CliTournamentSchedule::HeadToHead,
+            Some("d5,d7"),
+            None,
+            None,
+            None,
+        )
+        .expect("head-to-head plan should parse");
+
+        assert_eq!(plan.bot_names, vec!["d5", "d7"]);
+        assert_eq!(
+            plan.pairs,
+            vec![TournamentPair {
+                bot_a_idx: 0,
+                bot_b_idx: 1,
+            }]
+        );
+
+        let err = tournament_plan(
+            CliTournamentSchedule::HeadToHead,
+            Some("d3,d5,d7"),
+            None,
+            None,
+            None,
+        )
+        .unwrap_err();
+        assert!(err.contains("exactly 2 bots"));
+    }
+
+    #[test]
+    fn tournament_plan_builds_candidate_vs_anchor_gauntlet() {
+        let plan = tournament_plan(
+            CliTournamentSchedule::Gauntlet,
+            None,
+            Some("candidate"),
+            Some("anchor-a,anchor-b"),
+            Some("reports/latest.json"),
+        )
+        .expect("gauntlet plan should parse");
+
+        assert_eq!(plan.bot_names, vec!["candidate", "anchor-a", "anchor-b"]);
+        assert_eq!(plan.anchor_names, vec!["anchor-a", "anchor-b"]);
+        assert_eq!(plan.anchor_report.as_deref(), Some("reports/latest.json"));
+        assert_eq!(
+            plan.pairs,
+            vec![
+                TournamentPair {
+                    bot_a_idx: 0,
+                    bot_b_idx: 1,
+                },
+                TournamentPair {
+                    bot_a_idx: 0,
+                    bot_b_idx: 2,
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn tournament_plan_rejects_anchor_report_outside_gauntlet() {
+        let err = tournament_plan(
+            CliTournamentSchedule::RoundRobin,
+            Some("a,b"),
+            None,
+            None,
+            Some("reports/latest.json"),
+        )
+        .unwrap_err();
+
+        assert!(err.contains("--anchor-report"));
     }
 }
