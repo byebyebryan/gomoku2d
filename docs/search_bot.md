@@ -126,6 +126,10 @@ Search traces include both the result and the config:
     "search_legality_checks": 400,
     "root_tactical_annotations": 56,
     "search_tactical_annotations": 0,
+    "child_limit_applications": 0,
+    "root_child_limit_applications": 0,
+    "search_child_limit_applications": 0,
+    "child_cap_hits": 0,
     "root_child_cap_hits": 0,
     "search_child_cap_hits": 0,
     "root_child_moves_before_total": 0,
@@ -150,6 +154,9 @@ classification work separately from candidate generation and alpha-beta nodes.
 Child-cap metrics count ordered non-root frontier size before and after the
 optional `child_limit`; root cap metrics stay zero because root is intentionally
 uncapped, and all cap metrics are zero for default uncapped configs.
+Tournament reports preserve this split as generated candidate width versus
+post-ordering child width, so capped bots no longer look uncapped just because
+their candidate generator still sees the same broad board frontier.
 Node budgets are not enforced yet; this is currently a trace and tournament
 metric.
 
@@ -397,7 +404,7 @@ eval.
 - Eval doesn't detect double-threat patterns (double-three, four+three)
 - Candidate radius 2 may miss some long-range setups
 - No opening book — always searches from scratch on move 1
-- Opening-suite balance is still hand-curated; future eval should track opening
-  IDs and retire templates that remain color-dominated under stronger reference
-  bots
+- Opening-suite balance is still hand-curated; tournament reports now track
+  opening IDs so future eval can retire templates that remain color-dominated
+  under stronger reference bots
 - TT grows unbounded (no eviction); for longer matches this could be addressed with a fixed-size table and age-based replacement

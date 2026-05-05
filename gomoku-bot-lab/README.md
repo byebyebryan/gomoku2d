@@ -173,9 +173,10 @@ whole-board stones. Wall-clock budgets are practical but noisy under
 multi-threaded load. CPU-time budgets are better for Linux ranking eval, while
 fixed-depth configs remain the most reproducible option. Tournament reports
 include pairwise records, color splits, shuffled-order Elo averages,
-depth/budget stats, and compact `move_cells` using the same
-`row * 15 + col` codec as saved web matches. The tournament harness and opening
-suite are documented in [`../docs/tournament.md`](../docs/tournament.md).
+depth/budget stats, opening IDs, generated candidate width, post-ordering child
+width, and compact `move_cells` using the same `row * 15 + col` codec as saved
+web matches. The tournament harness and opening suite are documented in
+[`../docs/tournament.md`](../docs/tournament.md).
 
 Scratch reports should stay in ignored `outputs/`. Curated reports for the
 public site live in [`reports/`](reports/); the web build copies that folder to
@@ -253,6 +254,7 @@ that replay format directly.
           "legality_gate": "exact_rules",
           "safety_gate": "opponent_reply_local_threat_probe",
           "move_ordering": "tt_first_board_order",
+          "child_limit": null,
           "search_algorithm": "alpha_beta_id",
           "static_eval": "line_shape_eval"
         },
@@ -266,7 +268,10 @@ that replay format directly.
           "root_legality_checks": 4,
           "search_legality_checks": 80,
           "root_tactical_annotations": 4,
-          "search_tactical_annotations": 0
+          "search_tactical_annotations": 0,
+          "child_limit_applications": 0,
+          "search_child_limit_applications": 0,
+          "child_cap_hits": 0
         },
         "budget_exhausted": false,
         "score": 100

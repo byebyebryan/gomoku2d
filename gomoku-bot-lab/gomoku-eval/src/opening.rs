@@ -13,6 +13,15 @@ pub enum OpeningPolicy {
     RandomLegal,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct OpeningMetadata {
+    pub policy: OpeningPolicy,
+    pub index: u32,
+    pub suite_index: Option<usize>,
+    pub template_index: Option<usize>,
+    pub transform_index: Option<usize>,
+}
+
 impl OpeningPolicy {
     pub fn label(self) -> &'static str {
         match self {
@@ -54,6 +63,34 @@ pub fn opening_moves_for_game(
             centered_suite_opening(config.board_size, plies, base_seed, opening_index)
         }
         OpeningPolicy::RandomLegal => random_legal_opening(config, plies, base_seed, opening_index),
+    }
+}
+
+pub fn opening_metadata_for_game(
+    policy: OpeningPolicy,
+    base_seed: u64,
+    opening_index: u32,
+) -> OpeningMetadata {
+    match policy {
+        OpeningPolicy::CenteredSuite => {
+            let suite_len = BASE_CENTERED_OPENINGS.len() * CENTERED_TRANSFORMS.len();
+            let seed_offset = derive_seed(base_seed, [0]) as usize % suite_len;
+            let suite_index = (seed_offset + opening_index as usize) % suite_len;
+            OpeningMetadata {
+                policy,
+                index: opening_index,
+                suite_index: Some(suite_index),
+                template_index: Some(suite_index / CENTERED_TRANSFORMS.len()),
+                transform_index: Some(suite_index % CENTERED_TRANSFORMS.len()),
+            }
+        }
+        OpeningPolicy::RandomLegal => OpeningMetadata {
+            policy,
+            index: opening_index,
+            suite_index: None,
+            template_index: None,
+            transform_index: None,
+        },
     }
 }
 
@@ -176,5 +213,35 @@ mod tests {
         }
 
         assert_eq!(seen.len(), 32);
+    }
+
+    #[test]
+    fn centered_suite_metadata_matches_rotated_suite_index() {
+        let metadata = opening_metadata_for_game(OpeningPolicy::CenteredSuite, 7, 5);
+        let suite_index = metadata
+            .suite_index
+            .expect("centered suite should record suite index");
+
+        assert_eq!(metadata.policy, OpeningPolicy::CenteredSuite);
+        assert_eq!(metadata.index, 5);
+        assert_eq!(
+            metadata.template_index,
+            Some(suite_index / CENTERED_TRANSFORMS.len())
+        );
+        assert_eq!(
+            metadata.transform_index,
+            Some(suite_index % CENTERED_TRANSFORMS.len())
+        );
+    }
+
+    #[test]
+    fn random_legal_metadata_keeps_policy_and_opening_index_only() {
+        let metadata = opening_metadata_for_game(OpeningPolicy::RandomLegal, 7, 5);
+
+        assert_eq!(metadata.policy, OpeningPolicy::RandomLegal);
+        assert_eq!(metadata.index, 5);
+        assert_eq!(metadata.suite_index, None);
+        assert_eq!(metadata.template_index, None);
+        assert_eq!(metadata.transform_index, None);
     }
 }

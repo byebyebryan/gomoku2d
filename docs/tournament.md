@@ -146,6 +146,25 @@ that as an eval-harness signal, not as a bot-strength conclusion.
 Shuffled Elo is report-local. It helps reduce sequential update noise, but it is
 not a persistent rating system.
 
+## Report Source Data
+
+Tournament JSON records enough source data to explain the report without
+re-running the tournament:
+
+- each match stores compact `cell_index_v1` moves plus opening metadata
+- centered-suite openings store opening index, suite index, base template, and
+  transform index
+- standings and per-side match stats split alpha-beta nodes from safety-gate
+  nodes
+- candidate width is reported separately from child width after ordering and
+  optional caps
+- tactical annotation, legality, transposition-table, beta-cut, and reached
+  depth counters are preserved for later report rendering
+
+Generated candidate width can stay high for capped bots because the cap applies
+after candidate generation, legality filtering, and ordering. Use `Child width`
+in the report to see the actual searched non-root frontier.
+
 ## Report Process
 
 Scratch tournament JSON and HTML belong in `gomoku-bot-lab/outputs/`, which is
@@ -161,6 +180,6 @@ For published reports:
 ## Known Limitations
 
 The centered suite is hand-curated, not solved. It is a better baseline than
-whole-board random openings, but future eval should track opening IDs directly
-and retire templates that remain heavily color-dominated under stronger
-reference bots.
+whole-board random openings, and reports now track opening IDs directly. The
+next eval-harness improvement is to use those IDs to identify and retire
+templates that remain heavily color-dominated under stronger reference bots.

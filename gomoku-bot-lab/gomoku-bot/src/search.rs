@@ -451,6 +451,9 @@ pub struct SearchMetrics {
     pub tactical_annotations: u64,
     pub root_tactical_annotations: u64,
     pub search_tactical_annotations: u64,
+    pub child_limit_applications: u64,
+    pub root_child_limit_applications: u64,
+    pub search_child_limit_applications: u64,
     pub child_cap_hits: u64,
     pub root_child_cap_hits: u64,
     pub search_child_cap_hits: u64,
@@ -534,6 +537,7 @@ impl SearchMetrics {
         let before = before as u64;
         let after = after as u64;
 
+        self.child_limit_applications += 1;
         self.child_moves_before_total += before;
         self.child_moves_before_max = self.child_moves_before_max.max(before);
         self.child_moves_after_total += after;
@@ -544,6 +548,7 @@ impl SearchMetrics {
 
         match phase {
             SearchMetricPhase::Root => {
+                self.root_child_limit_applications += 1;
                 self.root_child_moves_before_total += before;
                 self.root_child_moves_before_max = self.root_child_moves_before_max.max(before);
                 self.root_child_moves_after_total += after;
@@ -553,6 +558,7 @@ impl SearchMetrics {
                 }
             }
             SearchMetricPhase::Search => {
+                self.search_child_limit_applications += 1;
                 self.search_child_moves_before_total += before;
                 self.search_child_moves_before_max = self.search_child_moves_before_max.max(before);
                 self.search_child_moves_after_total += after;
@@ -585,6 +591,9 @@ impl SearchMetrics {
             "tactical_annotations": self.tactical_annotations,
             "root_tactical_annotations": self.root_tactical_annotations,
             "search_tactical_annotations": self.search_tactical_annotations,
+            "child_limit_applications": self.child_limit_applications,
+            "root_child_limit_applications": self.root_child_limit_applications,
+            "search_child_limit_applications": self.search_child_limit_applications,
             "child_cap_hits": self.child_cap_hits,
             "root_child_cap_hits": self.root_child_cap_hits,
             "search_child_cap_hits": self.search_child_cap_hits,
