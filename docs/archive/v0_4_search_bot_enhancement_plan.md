@@ -35,6 +35,9 @@ Current progress:
 - Commit 13 pattern static eval adds a lab-only static-eval branch. Unlike the
   rejected recent-frontier local-threat eval, it is globally consistent and
   Renju-aware, but ablations show it is expensive enough to remain experimental.
+- The follow-up `0.4.1` foundation work added focused tournament schedules,
+  gauntlet anchor references, the `+tactical-cap-N` report-facing shorthand,
+  and the first explicit curated reference set for the next published report.
 - `0.4.0` is therefore a bot-lab foundation release, not a product bot-settings
   release. `0.4.1` should start from this measured baseline instead of chasing a
   single tactical fixture.
@@ -1183,26 +1186,46 @@ ladder above to keep each slice honest.
    made wide and focused tournaments compare different opening suites and allowed
    color-dominated random openings to hide strength differences.
 
-   The harness now defaults to a shared `centered-suite` opening policy: 32
-   deterministic 4-ply, center-local Renju-safe templates, each played with both
-   color assignments in a 64-games-per-pair run. With that suite, the D1/D3/D5/D7
-   ladder results were D1/D3 `3-0-61`, D1/D5 cap8 `3-0-61`, D1/D7 cap8 `3-0-61`,
-   D3/D5 cap8 `23-0-41`, D3/D7 cap8 `15-0-49`, and D5 cap8/D7 cap8 `26-1-37`.
-   D7 cap8 was the stronger hard-side bot in this suite, while D5 cap8 remained
-   much cheaper. Treat D5 cap8 as the efficient hard bot and D7 cap8 as the slower
-   hard-side variant.
-6. **Prototype bounded forced-chain search as lab-only.**
+The harness now defaults to a shared `centered-suite` opening policy: 32
+deterministic 4-ply, center-local Renju-safe templates, each played with both
+color assignments in a 64-games-per-pair run. With that suite, the D1/D3/D5/D7
+ladder results were D1/D3 `3-0-61`, D1/D5 cap8 `3-0-61`, D1/D7 cap8 `3-0-61`,
+D3/D5 cap8 `23-0-41`, D3/D7 cap8 `15-0-49`, and D5 cap8/D7 cap8 `26-1-37`.
+D7 cap8 was the stronger hard-side bot in this suite, while D5 cap8 remained
+much cheaper. Treat D5 cap8 as the efficient hard bot and D7 cap8 as the slower
+hard-side variant.
+
+6. **Run the clean curated reference tournament.**
+   Run one clean 8-entrant reference tournament before the next
+   behavior-changing bot slice. The entrant set should be
+   `search-d1`, `search-d3`, `search-d5`, `search-d5+tactical-cap-8`,
+   `search-d7+tactical-cap-8`, `search-d3+pattern-eval`,
+   `search-d5+tactical-cap-8+pattern-eval`, and
+   `search-d7+tactical-cap-8+pattern-eval`. This is intentionally a reference
+   report, not a product-preset decision. It should answer whether the pattern
+   axis is still worth carrying, whether D5/D7 tactical-cap remain the hard-side
+   candidates, and how much compute headroom each entrant has under the same
+   centered-suite, Renju, `1000 ms` CPU/move budget.
+
+   Preflight status: the current non-pattern ladder
+   (`search-d1`, `search-d3`, `search-d5`, `search-d5+tactical-cap-8`,
+   `search-d7+tactical-cap-8`) passed all `20/20` hard safety-gate tactical
+   cases under the `1000 ms` CPU budget. It failed diagnostic cases in expected
+   areas, so the tactical gate is clear for tournament ranking; the full
+   tournament should decide ranking, compute headroom, and whether
+   `+pattern-eval` remains worth carrying.
+7. **Prototype bounded forced-chain search as lab-only.**
    Start at root or near-root, only when local facts provide concrete gain and
    defense squares. Keep strict caps and record all non-alpha-beta work in
    traces. This is the first slice that can meaningfully support future
    offensive/defensive styles.
-7. **Defer full incremental frontier state until metrics justify it.**
+8. **Defer full incremental frontier state until metrics justify it.**
    A `SearchPosition` / `FrontierState` wrapper can maintain candidate masks,
    tactical annotations, and dirty cells around apply/undo, but only after the
    scan-based annotation semantics are stable. Run this as a scan-vs-frontier
    performance experiment if annotation or candidate regeneration remains a hot
    cost after ordering/staging work.
-8. **Defer full TSS and product bot personalities.**
+9. **Defer full TSS and product bot personalities.**
    If the prototype needs dependency trees, all-defenses proof, or rest-square
    conflict resolution to be correct, split it into analysis tooling instead of
    forcing it into `SearchBot`.

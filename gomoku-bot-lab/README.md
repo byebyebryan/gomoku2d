@@ -206,7 +206,7 @@ The shared shape terms behind those cases live in
 Run the baseline tactical sweep from `gomoku-bot-lab/`:
 
 ```sh
-cargo run -p gomoku-eval -- tactical-scenarios --bots search-d2,search-d3,search-d5 --search-cpu-time-ms 1000
+cargo run -p gomoku-eval -- tactical-scenarios --bots search-d1,search-d3,search-d5,search-d5+tactical-cap-8,search-d7+tactical-cap-8 --search-cpu-time-ms 1000
 ```
 
 The command reports pass/fail, rule variant, side to move, case role, chosen
@@ -216,7 +216,7 @@ and budget exhaustion. To capture reusable JSON:
 
 ```sh
 mkdir -p outputs
-cargo run -p gomoku-eval -- tactical-scenarios --bots search-d2,search-d3,search-d5 --search-cpu-time-ms 1000 --report-json outputs/tactical-scenarios.json
+cargo run -p gomoku-eval -- tactical-scenarios --bots search-d1,search-d3,search-d5,search-d5+tactical-cap-8,search-d7+tactical-cap-8 --search-cpu-time-ms 1000 --report-json outputs/tactical-scenarios.json
 ```
 
 Treat this as diagnostic coverage, not a ranking system. If a baseline config

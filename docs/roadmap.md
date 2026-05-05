@@ -245,6 +245,11 @@ to invent but hard to justify. The release therefore focuses on:
 ordering pass. The target is not "make one depth-2 fixture pass"; it is better
 reached depth, runtime, or match strength under the same budget.
 
+The current `0.4.1` checkpoint has produced the first serious reference set:
+depth ladder, tactical-cap hard variants, and pattern-eval ablations. Before
+adding another behavior-changing bot slice, refresh the clean curated tournament
+report so the next decisions use one shared baseline.
+
 `0.4.2` is the earliest likely UI bridge for bot controls/settings. Expose only
 knobs that have survived lab evidence. Profile should not become a dumping
 ground for bot/debug preferences.

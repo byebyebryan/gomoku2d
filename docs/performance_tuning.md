@@ -360,7 +360,7 @@ Lab config and quick tournament smoke:
 cargo run --release -p gomoku-cli -- --black balanced --white fast --quiet
 cargo run --release -p gomoku-eval -- versus --bot-a fast --bot-b balanced --games 1
 mkdir -p outputs
-cargo run --release -p gomoku-eval -- tournament --bots search-d2,search-d3,search-d5 --games-per-pair 10 --opening-policy centered-suite --opening-plies 4 --search-cpu-time-ms 100 --max-game-ms 10000 --seed 42 --report-json outputs/gomoku-tournament.json
+cargo run --release -p gomoku-eval -- tournament --bots search-d1,search-d3,search-d5 --games-per-pair 10 --opening-policy centered-suite --opening-plies 4 --search-cpu-time-ms 100 --max-game-ms 10000 --seed 42 --report-json outputs/gomoku-tournament.json
 cargo run --release -p gomoku-eval -- report-html --input outputs/gomoku-tournament.json --output outputs/gomoku-tournament.html --json-href gomoku-tournament.json
 ```
 
@@ -368,7 +368,16 @@ Curated ranking report, from `gomoku-bot-lab/`:
 
 ```sh
 mkdir -p reports
-cargo run --release -p gomoku-eval -- tournament --bots search-d2,search-d3,search-d5 --games-per-pair 64 --opening-policy centered-suite --opening-plies 4 --search-cpu-time-ms 1000 --max-moves 120 --seed 48 --threads 22 --report-json reports/latest.json
+cargo run --release -p gomoku-eval -- tournament \
+  --bots search-d1,search-d3,search-d5,search-d5+tactical-cap-8,search-d7+tactical-cap-8,search-d3+pattern-eval,search-d5+tactical-cap-8+pattern-eval,search-d7+tactical-cap-8+pattern-eval \
+  --games-per-pair 64 \
+  --opening-policy centered-suite \
+  --opening-plies 4 \
+  --search-cpu-time-ms 1000 \
+  --max-moves 120 \
+  --seed 63 \
+  --threads 22 \
+  --report-json reports/latest.json
 cargo run --release -p gomoku-eval -- report-html --input reports/latest.json --output reports/index.html --json-href latest.json
 ```
 
