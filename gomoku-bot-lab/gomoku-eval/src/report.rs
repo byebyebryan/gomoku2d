@@ -1692,6 +1692,34 @@ fn count_end_reason(report: &TournamentReport, key: &str) -> u32 {
 }
 
 fn schedule_summary(report: &TournamentReport) -> String {
+    if report.run.schedule == "gauntlet" {
+        if let Some(reference) = &report.reference_anchors {
+            let anchor_count = reference.anchors.len();
+            if anchor_count > 0 && report.run.bots.len() > anchor_count {
+                let candidate_count = report.run.bots.len() - anchor_count;
+                let candidate_word = if candidate_count == 1 {
+                    "candidate"
+                } else {
+                    "candidates"
+                };
+                let anchor_word = if anchor_count == 1 {
+                    "anchor"
+                } else {
+                    "anchors"
+                };
+                return format!(
+                    "{} {} x {} {} x {} games = {} matches",
+                    candidate_count,
+                    candidate_word,
+                    anchor_count,
+                    anchor_word,
+                    report.run.games_per_pair,
+                    report.matches.len()
+                );
+            }
+        }
+    }
+
     let pair_count = report.pairwise.len();
     let pair_word = if pair_count == 1 { "pair" } else { "pairs" };
     format!(
@@ -3142,6 +3170,61 @@ mod tests {
         ];
 
         assert_eq!(schedule_summary(&report), "1 pair x 2 games = 2 matches");
+    }
+
+    #[test]
+    fn schedule_summary_describes_batch_gauntlet_shape() {
+        let mut report = sample_report();
+        report.run.schedule = "gauntlet".to_string();
+        report.run.bots = vec![
+            "candidate-a".to_string(),
+            "candidate-b".to_string(),
+            "anchor-a".to_string(),
+            "anchor-b".to_string(),
+        ];
+        report.matches = (0..8)
+            .map(|index| sample_match(index + 1, "candidate-a", "anchor-a", None))
+            .collect();
+        report.reference_anchors = Some(AnchorReferenceReport {
+            source: AnchorReferenceSource {
+                path: Some("reports/latest.json".to_string()),
+                schedule: "round-robin".to_string(),
+                git_commit: Some("abc123".to_string()),
+                git_dirty: Some(false),
+                rules: report.run.rules.clone(),
+                games_per_pair: 64,
+                opening_policy: "centered-suite".to_string(),
+                opening_plies: 4,
+                seed: 63,
+                search_time_ms: None,
+                search_cpu_time_ms: Some(1000),
+                max_moves: Some(120),
+                max_game_ms: None,
+            },
+            anchors: vec![
+                AnchorStandingReport {
+                    bot: "anchor-a".to_string(),
+                    sequential_elo: 1200.0,
+                    shuffled_elo_avg: 1200.0,
+                    shuffled_elo_stddev: 0.0,
+                    match_count: 64,
+                    score_percentage: 50.0,
+                },
+                AnchorStandingReport {
+                    bot: "anchor-b".to_string(),
+                    sequential_elo: 1200.0,
+                    shuffled_elo_avg: 1200.0,
+                    shuffled_elo_stddev: 0.0,
+                    match_count: 64,
+                    score_percentage: 50.0,
+                },
+            ],
+        });
+
+        assert_eq!(
+            schedule_summary(&report),
+            "2 candidates x 2 anchors x 2 games = 8 matches"
+        );
     }
 
     #[test]

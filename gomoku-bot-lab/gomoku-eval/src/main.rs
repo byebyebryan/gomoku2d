@@ -163,6 +163,10 @@ enum Commands {
         #[arg(long)]
         candidate: Option<String>,
 
+        /// Comma-separated candidate bots for batch gauntlet mode
+        #[arg(long)]
+        candidates: Option<String>,
+
         /// Comma-separated anchor bots for gauntlet mode
         #[arg(long)]
         anchors: Option<String>,
@@ -229,13 +233,14 @@ fn tournament_plan(
     schedule: CliTournamentSchedule,
     bots: Option<&str>,
     candidate: Option<&str>,
+    candidates: Option<&str>,
     anchors: Option<&str>,
     anchor_report: Option<&str>,
 ) -> Result<TournamentPlan, String> {
     match schedule {
         CliTournamentSchedule::RoundRobin => {
             reject_anchor_report_args(schedule, anchor_report)?;
-            reject_gauntlet_args(schedule, candidate, anchors)?;
+            reject_gauntlet_args(schedule, candidate, candidates, anchors)?;
             let bot_names =
                 parse_required_bot_list(bots, "Round-robin tournament requires --bots.")?;
             if bot_names.len() < 2 {
@@ -252,7 +257,7 @@ fn tournament_plan(
         }
         CliTournamentSchedule::HeadToHead => {
             reject_anchor_report_args(schedule, anchor_report)?;
-            reject_gauntlet_args(schedule, candidate, anchors)?;
+            reject_gauntlet_args(schedule, candidate, candidates, anchors)?;
             let bot_names =
                 parse_required_bot_list(bots, "Head-to-head tournament requires --bots.")?;
             if bot_names.len() != 2 {
@@ -272,28 +277,27 @@ fn tournament_plan(
         CliTournamentSchedule::Gauntlet => {
             if bots.is_some() {
                 return Err(
-                    "Gauntlet tournament uses --candidate and --anchors instead of --bots."
+                    "Gauntlet tournament uses --candidate/--candidates and --anchors instead of --bots."
                         .to_string(),
                 );
             }
-            let candidate_names =
-                parse_required_bot_list(candidate, "Gauntlet tournament requires --candidate.")?;
-            if candidate_names.len() != 1 {
-                return Err("Gauntlet tournament requires exactly 1 candidate.".to_string());
-            }
+            let candidate_names = parse_gauntlet_candidates(candidate, candidates)?;
             let anchor_names =
                 parse_required_bot_list(anchors, "Gauntlet tournament requires --anchors.")?;
             if anchor_names.is_empty() {
                 return Err("Gauntlet tournament requires at least 1 anchor.".to_string());
             }
 
+            let candidate_count = candidate_names.len();
             let mut bot_names = candidate_names;
             bot_names.extend(anchor_names.clone());
             validate_unique_bot_names(&bot_names)?;
-            let pairs = (1..bot_names.len())
-                .map(|bot_b_idx| TournamentPair {
-                    bot_a_idx: 0,
-                    bot_b_idx,
+            let pairs = (0..candidate_count)
+                .flat_map(|candidate_idx| {
+                    (candidate_count..bot_names.len()).map(move |anchor_idx| TournamentPair {
+                        bot_a_idx: candidate_idx,
+                        bot_b_idx: anchor_idx,
+                    })
                 })
                 .collect();
             Ok(TournamentPlan {
@@ -317,6 +321,37 @@ fn parse_required_bot_list(input: Option<&str>, message: &str) -> Result<Vec<Str
     Ok(bot_names)
 }
 
+fn parse_gauntlet_candidates(
+    candidate: Option<&str>,
+    candidates: Option<&str>,
+) -> Result<Vec<String>, String> {
+    match (candidate, candidates) {
+        (Some(_), Some(_)) => Err(
+            "Gauntlet tournament uses either --candidate or --candidates, not both.".to_string(),
+        ),
+        (Some(candidate), None) => {
+            let candidate_names = parse_required_bot_list(
+                Some(candidate),
+                "Gauntlet tournament requires --candidate or --candidates.",
+            )?;
+            if candidate_names.len() != 1 {
+                return Err(
+                    "Gauntlet --candidate accepts exactly 1 bot; use --candidates for batch gauntlets."
+                        .to_string(),
+                );
+            }
+            Ok(candidate_names)
+        }
+        (None, Some(candidates)) => parse_required_bot_list(
+            Some(candidates),
+            "Gauntlet tournament requires --candidate or --candidates.",
+        ),
+        (None, None) => {
+            Err("Gauntlet tournament requires --candidate or --candidates.".to_string())
+        }
+    }
+}
+
 fn parse_bot_list(input: &str) -> Vec<String> {
     input
         .split(',')
@@ -329,11 +364,12 @@ fn parse_bot_list(input: &str) -> Vec<String> {
 fn reject_gauntlet_args(
     schedule: CliTournamentSchedule,
     candidate: Option<&str>,
+    candidates: Option<&str>,
     anchors: Option<&str>,
 ) -> Result<(), String> {
-    if candidate.is_some() || anchors.is_some() {
+    if candidate.is_some() || candidates.is_some() || anchors.is_some() {
         return Err(format!(
-            "{} tournament uses --bots, not --candidate/--anchors.",
+            "{} tournament uses --bots, not --candidate/--candidates/--anchors.",
             schedule.label()
         ));
     }
@@ -732,6 +768,7 @@ fn main() {
             schedule,
             bots,
             candidate,
+            candidates,
             anchors,
             anchor_report,
             games_per_pair,
@@ -761,6 +798,7 @@ fn main() {
                 schedule,
                 bots.as_deref(),
                 candidate.as_deref(),
+                candidates.as_deref(),
                 anchors.as_deref(),
                 anchor_report_display.as_deref(),
             )
@@ -1032,6 +1070,7 @@ mod tests {
             None,
             None,
             None,
+            None,
         )
         .expect("round robin plan should parse");
 
@@ -1065,6 +1104,7 @@ mod tests {
             None,
             None,
             None,
+            None,
         )
         .expect("head-to-head plan should parse");
 
@@ -1083,6 +1123,7 @@ mod tests {
             None,
             None,
             None,
+            None,
         )
         .unwrap_err();
         assert!(err.contains("exactly 2 bots"));
@@ -1094,6 +1135,7 @@ mod tests {
             CliTournamentSchedule::Gauntlet,
             None,
             Some("candidate"),
+            None,
             Some("anchor-a,anchor-b"),
             Some("reports/latest.json"),
         )
@@ -1118,10 +1160,82 @@ mod tests {
     }
 
     #[test]
+    fn tournament_plan_builds_batch_candidate_gauntlet() {
+        let plan = tournament_plan(
+            CliTournamentSchedule::Gauntlet,
+            None,
+            None,
+            Some("candidate-a,candidate-b"),
+            Some("anchor-a,anchor-b"),
+            Some("reports/latest.json"),
+        )
+        .expect("batch gauntlet plan should parse");
+
+        assert_eq!(
+            plan.bot_names,
+            vec!["candidate-a", "candidate-b", "anchor-a", "anchor-b"]
+        );
+        assert_eq!(plan.anchor_names, vec!["anchor-a", "anchor-b"]);
+        assert_eq!(plan.anchor_report.as_deref(), Some("reports/latest.json"));
+        assert_eq!(
+            plan.pairs,
+            vec![
+                TournamentPair {
+                    bot_a_idx: 0,
+                    bot_b_idx: 2,
+                },
+                TournamentPair {
+                    bot_a_idx: 0,
+                    bot_b_idx: 3,
+                },
+                TournamentPair {
+                    bot_a_idx: 1,
+                    bot_b_idx: 2,
+                },
+                TournamentPair {
+                    bot_a_idx: 1,
+                    bot_b_idx: 3,
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn tournament_plan_rejects_mixed_gauntlet_candidate_args() {
+        let err = tournament_plan(
+            CliTournamentSchedule::Gauntlet,
+            None,
+            Some("candidate-a"),
+            Some("candidate-b"),
+            Some("anchor-a"),
+            None,
+        )
+        .unwrap_err();
+
+        assert!(err.contains("either --candidate or --candidates"));
+    }
+
+    #[test]
+    fn tournament_plan_rejects_candidates_outside_gauntlet() {
+        let err = tournament_plan(
+            CliTournamentSchedule::RoundRobin,
+            Some("a,b"),
+            None,
+            Some("candidate-a,candidate-b"),
+            None,
+            None,
+        )
+        .unwrap_err();
+
+        assert!(err.contains("--candidate/--candidates/--anchors"));
+    }
+
+    #[test]
     fn tournament_plan_rejects_anchor_report_outside_gauntlet() {
         let err = tournament_plan(
             CliTournamentSchedule::RoundRobin,
             Some("a,b"),
+            None,
             None,
             None,
             Some("reports/latest.json"),
