@@ -1349,7 +1349,7 @@ fn render_reference_anchors_section(html: &mut String, report: &TournamentReport
     for anchor in &reference.anchors {
         html.push_str(&format!(
             "<tr><td>{}</td><td>{:.1}</td><td>{:.1} +/- {:.1}</td><td>{:.1}%</td><td>{}</td></tr>",
-            html_escape(&anchor.bot),
+            html_escape(&compact_bot_label(report, &anchor.bot)),
             anchor.sequential_elo,
             anchor.shuffled_elo_avg,
             anchor.shuffled_elo_stddev,
@@ -1556,8 +1556,13 @@ fn compact_bot_label(report: &TournamentReport, bot: &str) -> String {
         return "RandomBot".to_string();
     }
 
-    if let Some(depth) = searchbot_depth(bot, &report.run) {
-        return format!("SearchBot_D{depth}");
+    if let Some((depth, features)) = searchbot_spec(bot, &report.run) {
+        let mut label = format!("SearchBot_D{depth}");
+        for feature in features {
+            label.push('+');
+            label.push_str(&compact_searchbot_feature_label(feature));
+        }
+        return label;
     }
 
     bot.to_string()
@@ -1568,14 +1573,26 @@ fn entrant_label(bot: &str, run: &TournamentRunReport) -> String {
         return "RandomBot".to_string();
     }
 
-    if let Some(depth) = searchbot_depth(bot, run) {
-        return format!("SearchBot @ depth {depth}");
+    if let Some((depth, features)) = searchbot_spec(bot, run) {
+        let mut label = format!("SearchBot @ depth {depth}");
+        for feature in features {
+            label.push_str(" + ");
+            label.push_str(&full_searchbot_feature_label(feature));
+        }
+        return label;
     }
 
     bot.to_string()
 }
 
-fn searchbot_depth(bot: &str, run: &TournamentRunReport) -> Option<i32> {
+fn searchbot_spec<'a>(bot: &'a str, run: &TournamentRunReport) -> Option<(i32, Vec<&'a str>)> {
+    let mut parts = bot.split('+');
+    let base = parts.next()?;
+    let depth = searchbot_base_depth(base, run)?;
+    Some((depth, parts.collect()))
+}
+
+fn searchbot_base_depth(bot: &str, run: &TournamentRunReport) -> Option<i32> {
     match bot {
         "fast" => Some(2),
         "balanced" => Some(3),
@@ -1591,6 +1608,48 @@ fn searchbot_depth(bot: &str, run: &TournamentRunReport) -> Option<i32> {
             .or_else(|| bot.strip_prefix("search-"))
             .map(|depth| depth.strip_prefix('d').unwrap_or(depth))
             .and_then(|depth| depth.parse::<i32>().ok()),
+    }
+}
+
+fn compact_searchbot_feature_label(feature: &str) -> String {
+    if let Some(cap) = feature.strip_prefix("tactical-cap-") {
+        return format!("TCap{cap}");
+    }
+    if let Some(cap) = feature.strip_prefix("child-cap-") {
+        return format!("Cap{cap}");
+    }
+    if let Some(radius) = feature.strip_prefix("near-all-r") {
+        return format!("NearR{radius}");
+    }
+
+    match feature {
+        "pattern-eval" => "Pattern".to_string(),
+        "tactical-first" => "Tactical".to_string(),
+        "no-safety" => "NoSafety".to_string(),
+        "opponent-reply-search-probe" => "SearchProbe".to_string(),
+        "opponent-reply-local-threat-probe" => "LocalThreat".to_string(),
+        _ => feature.to_string(),
+    }
+}
+
+fn full_searchbot_feature_label(feature: &str) -> String {
+    if let Some(cap) = feature.strip_prefix("tactical-cap-") {
+        return format!("tactical cap {cap}");
+    }
+    if let Some(cap) = feature.strip_prefix("child-cap-") {
+        return format!("child cap {cap}");
+    }
+    if let Some(radius) = feature.strip_prefix("near-all-r") {
+        return format!("near all r{radius}");
+    }
+
+    match feature {
+        "pattern-eval" => "pattern eval".to_string(),
+        "tactical-first" => "tactical first".to_string(),
+        "no-safety" => "no safety".to_string(),
+        "opponent-reply-search-probe" => "opponent reply search probe".to_string(),
+        "opponent-reply-local-threat-probe" => "opponent reply local threat probe".to_string(),
+        _ => feature.to_string(),
     }
 }
 
@@ -2265,6 +2324,25 @@ mod tests {
         ];
 
         assert_eq!(schedule_summary(&report), "1 pair x 2 games = 2 matches");
+    }
+
+    #[test]
+    fn searchbot_labels_keep_report_variants_distinct() {
+        let report = sample_report();
+
+        assert_eq!(compact_bot_label(&report, "search-d5"), "SearchBot_D5");
+        assert_eq!(
+            compact_bot_label(&report, "search-d5+tactical-cap-8"),
+            "SearchBot_D5+TCap8"
+        );
+        assert_eq!(
+            compact_bot_label(&report, "search-d5+tactical-cap-8+pattern-eval"),
+            "SearchBot_D5+TCap8+Pattern"
+        );
+        assert_eq!(
+            bot_label(&report, "search-d5+tactical-cap-8+pattern-eval"),
+            "SearchBot @ depth 5 + tactical cap 8 + pattern eval"
+        );
     }
 
     #[test]
