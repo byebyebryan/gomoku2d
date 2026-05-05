@@ -449,6 +449,11 @@ and commit those artifacts separately. The report records the git revision; if
 the tree is dirty at tournament time, the HTML intentionally displays a
 `_dirty` suffix and a development-run warning.
 
+Renderer-only report polish is different: keep the clean `latest.json`, rerender
+`reports/index.html`, and commit the HTML/renderer change without rerunning the
+long tournament. The report JSON provenance should continue to identify the
+bot/eval code that produced the match data.
+
 ## Initial hotspot findings
 
 From code inspection before the first benchmark pass:

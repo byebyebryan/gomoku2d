@@ -56,7 +56,7 @@ If screenshots or recordings should show the upcoming version, bump the web
 package version before capturing:
 
 ```sh
-VERSION=0.3.3
+VERSION=0.4.1
 scripts/set-web-version.sh "$VERSION"
 ```
 
@@ -120,6 +120,13 @@ refresh it only from a clean committed toolchain:
 5. Confirm `reports/latest.json` says `"git_dirty": false`.
 6. Commit the report artifacts as a follow-up commit.
 
+If only the HTML report renderer changed after a clean tournament, do not rerun
+the long tournament just to update presentation. Re-render
+`gomoku-bot-lab/reports/index.html` from the existing `latest.json`, confirm the
+JSON is still clean, and commit the HTML together with the renderer change or as
+its own report-render refresh. The JSON provenance remains the tournament
+provenance, not the renderer commit.
+
 Current curated command, from `gomoku-bot-lab/`:
 
 ```sh
@@ -162,7 +169,7 @@ gh run view <run-id> --log-failed
 After reviewing `git status` and the diff, finalize the prepared release:
 
 ```sh
-VERSION=0.3.3
+VERSION=0.4.1
 scripts/release.sh --check "$VERSION"
 scripts/release.sh "$VERSION"
 ```
