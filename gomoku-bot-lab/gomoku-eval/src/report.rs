@@ -4,7 +4,7 @@ use crate::tournament::TournamentResults;
 use gomoku_core::{Color, GameResult, Move, RuleConfig};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -314,6 +314,10 @@ pub struct StandingReport {
     pub search_move_count: u32,
     pub total_time_ms: u64,
     pub avg_search_time_ms: f64,
+    #[serde(default)]
+    pub search_nodes: u64,
+    #[serde(default)]
+    pub safety_nodes: u64,
     pub total_nodes: u64,
     pub avg_nodes: f64,
     #[serde(default)]
@@ -357,6 +361,52 @@ pub struct StandingReport {
     #[serde(default)]
     pub search_illegal_moves_skipped: u64,
     #[serde(default)]
+    pub tactical_annotations: u64,
+    #[serde(default)]
+    pub root_tactical_annotations: u64,
+    #[serde(default)]
+    pub search_tactical_annotations: u64,
+    #[serde(default)]
+    pub child_limit_applications: u64,
+    #[serde(default)]
+    pub root_child_limit_applications: u64,
+    #[serde(default)]
+    pub search_child_limit_applications: u64,
+    #[serde(default)]
+    pub child_cap_hits: u64,
+    #[serde(default)]
+    pub root_child_cap_hits: u64,
+    #[serde(default)]
+    pub search_child_cap_hits: u64,
+    #[serde(default)]
+    pub child_moves_before_total: u64,
+    #[serde(default)]
+    pub root_child_moves_before_total: u64,
+    #[serde(default)]
+    pub search_child_moves_before_total: u64,
+    #[serde(default)]
+    pub child_moves_before_max: u64,
+    #[serde(default)]
+    pub root_child_moves_before_max: u64,
+    #[serde(default)]
+    pub search_child_moves_before_max: u64,
+    #[serde(default)]
+    pub child_moves_after_total: u64,
+    #[serde(default)]
+    pub root_child_moves_after_total: u64,
+    #[serde(default)]
+    pub search_child_moves_after_total: u64,
+    #[serde(default)]
+    pub child_moves_after_max: u64,
+    #[serde(default)]
+    pub root_child_moves_after_max: u64,
+    #[serde(default)]
+    pub search_child_moves_after_max: u64,
+    #[serde(default)]
+    pub avg_child_moves_before: f64,
+    #[serde(default)]
+    pub avg_child_moves_after: f64,
+    #[serde(default)]
     pub tt_hits: u64,
     #[serde(default)]
     pub tt_cutoffs: u64,
@@ -364,6 +414,8 @@ pub struct StandingReport {
     pub beta_cutoffs: u64,
     pub avg_depth: f64,
     pub max_depth: u32,
+    #[serde(default)]
+    pub depth_reached_counts: Vec<DepthCountReport>,
     pub budget_exhausted_count: u32,
     pub budget_exhausted_rate: f64,
 }
@@ -396,6 +448,12 @@ pub struct CountReport {
     pub count: u32,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DepthCountReport {
+    pub depth: u32,
+    pub count: u32,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MatchReport {
     pub match_index: usize,
@@ -405,10 +463,25 @@ pub struct MatchReport {
     pub winner: Option<String>,
     pub end_reason: String,
     pub duration_ms: Option<u64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub opening: Option<MatchOpeningReport>,
     pub move_cells: Vec<usize>,
     pub move_count: usize,
     pub black_stats: SideStatsReport,
     pub white_stats: SideStatsReport,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MatchOpeningReport {
+    pub policy: String,
+    pub index: u32,
+    pub ply_count: usize,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub suite_index: Option<usize>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub template_index: Option<usize>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub transform_index: Option<usize>,
 }
 
 impl MatchReport {
@@ -439,6 +512,14 @@ impl MatchReport {
             winner: winner_name(&record.result, &record.black_name, &record.white_name),
             end_reason: end_reason_code(record.end_reason).to_string(),
             duration_ms: record.replay.duration_ms,
+            opening: record.opening.as_ref().map(|opening| MatchOpeningReport {
+                policy: opening.policy.clone(),
+                index: opening.index,
+                ply_count: opening.ply_count,
+                suite_index: opening.suite_index,
+                template_index: opening.template_index,
+                transform_index: opening.transform_index,
+            }),
             move_count: move_cells.len(),
             move_cells,
             black_stats: black_stats.finish(),
@@ -498,6 +579,52 @@ pub struct SideStatsReport {
     #[serde(default)]
     pub search_illegal_moves_skipped: u64,
     #[serde(default)]
+    pub tactical_annotations: u64,
+    #[serde(default)]
+    pub root_tactical_annotations: u64,
+    #[serde(default)]
+    pub search_tactical_annotations: u64,
+    #[serde(default)]
+    pub child_limit_applications: u64,
+    #[serde(default)]
+    pub root_child_limit_applications: u64,
+    #[serde(default)]
+    pub search_child_limit_applications: u64,
+    #[serde(default)]
+    pub child_cap_hits: u64,
+    #[serde(default)]
+    pub root_child_cap_hits: u64,
+    #[serde(default)]
+    pub search_child_cap_hits: u64,
+    #[serde(default)]
+    pub child_moves_before_total: u64,
+    #[serde(default)]
+    pub root_child_moves_before_total: u64,
+    #[serde(default)]
+    pub search_child_moves_before_total: u64,
+    #[serde(default)]
+    pub child_moves_before_max: u64,
+    #[serde(default)]
+    pub root_child_moves_before_max: u64,
+    #[serde(default)]
+    pub search_child_moves_before_max: u64,
+    #[serde(default)]
+    pub child_moves_after_total: u64,
+    #[serde(default)]
+    pub root_child_moves_after_total: u64,
+    #[serde(default)]
+    pub search_child_moves_after_total: u64,
+    #[serde(default)]
+    pub child_moves_after_max: u64,
+    #[serde(default)]
+    pub root_child_moves_after_max: u64,
+    #[serde(default)]
+    pub search_child_moves_after_max: u64,
+    #[serde(default)]
+    pub avg_child_moves_before: f64,
+    #[serde(default)]
+    pub avg_child_moves_after: f64,
+    #[serde(default)]
     pub tt_hits: u64,
     #[serde(default)]
     pub tt_cutoffs: u64,
@@ -506,6 +633,8 @@ pub struct SideStatsReport {
     pub depth_sum: u64,
     pub avg_depth: f64,
     pub max_depth: u32,
+    #[serde(default)]
+    pub depth_reached_counts: Vec<DepthCountReport>,
     pub budget_exhausted_count: u32,
     pub budget_exhausted_rate: f64,
 }
@@ -534,11 +663,33 @@ struct SideStatsAccumulator {
     root_illegal_moves_skipped: u64,
     search_legality_checks: u64,
     search_illegal_moves_skipped: u64,
+    tactical_annotations: u64,
+    root_tactical_annotations: u64,
+    search_tactical_annotations: u64,
+    child_limit_applications: u64,
+    root_child_limit_applications: u64,
+    search_child_limit_applications: u64,
+    child_cap_hits: u64,
+    root_child_cap_hits: u64,
+    search_child_cap_hits: u64,
+    child_moves_before_total: u64,
+    root_child_moves_before_total: u64,
+    search_child_moves_before_total: u64,
+    child_moves_before_max: u64,
+    root_child_moves_before_max: u64,
+    search_child_moves_before_max: u64,
+    child_moves_after_total: u64,
+    root_child_moves_after_total: u64,
+    search_child_moves_after_total: u64,
+    child_moves_after_max: u64,
+    root_child_moves_after_max: u64,
+    search_child_moves_after_max: u64,
     tt_hits: u64,
     tt_cutoffs: u64,
     beta_cutoffs: u64,
     depth_sum: u64,
     max_depth: u32,
+    depth_reached_counts: BTreeMap<u32, u32>,
     budget_exhausted_count: u32,
 }
 
@@ -584,6 +735,46 @@ impl SideStatsAccumulator {
             self.search_legality_checks += trace_value_u64(metrics, "search_legality_checks");
             self.search_illegal_moves_skipped +=
                 trace_value_u64(metrics, "search_illegal_moves_skipped");
+            self.tactical_annotations += trace_value_u64(metrics, "tactical_annotations");
+            self.root_tactical_annotations += trace_value_u64(metrics, "root_tactical_annotations");
+            self.search_tactical_annotations +=
+                trace_value_u64(metrics, "search_tactical_annotations");
+            self.child_limit_applications += trace_value_u64(metrics, "child_limit_applications");
+            self.root_child_limit_applications +=
+                trace_value_u64(metrics, "root_child_limit_applications");
+            self.search_child_limit_applications +=
+                trace_value_u64(metrics, "search_child_limit_applications");
+            self.child_cap_hits += trace_value_u64(metrics, "child_cap_hits");
+            self.root_child_cap_hits += trace_value_u64(metrics, "root_child_cap_hits");
+            self.search_child_cap_hits += trace_value_u64(metrics, "search_child_cap_hits");
+            self.child_moves_before_total += trace_value_u64(metrics, "child_moves_before_total");
+            self.root_child_moves_before_total +=
+                trace_value_u64(metrics, "root_child_moves_before_total");
+            self.search_child_moves_before_total +=
+                trace_value_u64(metrics, "search_child_moves_before_total");
+            self.child_moves_before_max = self
+                .child_moves_before_max
+                .max(trace_value_u64(metrics, "child_moves_before_max"));
+            self.root_child_moves_before_max = self
+                .root_child_moves_before_max
+                .max(trace_value_u64(metrics, "root_child_moves_before_max"));
+            self.search_child_moves_before_max = self
+                .search_child_moves_before_max
+                .max(trace_value_u64(metrics, "search_child_moves_before_max"));
+            self.child_moves_after_total += trace_value_u64(metrics, "child_moves_after_total");
+            self.root_child_moves_after_total +=
+                trace_value_u64(metrics, "root_child_moves_after_total");
+            self.search_child_moves_after_total +=
+                trace_value_u64(metrics, "search_child_moves_after_total");
+            self.child_moves_after_max = self
+                .child_moves_after_max
+                .max(trace_value_u64(metrics, "child_moves_after_max"));
+            self.root_child_moves_after_max = self
+                .root_child_moves_after_max
+                .max(trace_value_u64(metrics, "root_child_moves_after_max"));
+            self.search_child_moves_after_max = self
+                .search_child_moves_after_max
+                .max(trace_value_u64(metrics, "search_child_moves_after_max"));
             self.tt_hits += trace_value_u64(metrics, "tt_hits");
             self.tt_cutoffs += trace_value_u64(metrics, "tt_cutoffs");
             self.beta_cutoffs += trace_value_u64(metrics, "beta_cutoffs");
@@ -591,6 +782,7 @@ impl SideStatsAccumulator {
         if let Some(depth) = trace.get("depth").and_then(Value::as_u64) {
             self.depth_sum += depth;
             self.max_depth = self.max_depth.max(depth as u32);
+            *self.depth_reached_counts.entry(depth as u32).or_insert(0) += 1;
         }
         if trace
             .get("budget_exhausted")
@@ -628,11 +820,45 @@ impl SideStatsAccumulator {
         self.root_illegal_moves_skipped += stats.root_illegal_moves_skipped;
         self.search_legality_checks += stats.search_legality_checks;
         self.search_illegal_moves_skipped += stats.search_illegal_moves_skipped;
+        self.tactical_annotations += stats.tactical_annotations;
+        self.root_tactical_annotations += stats.root_tactical_annotations;
+        self.search_tactical_annotations += stats.search_tactical_annotations;
+        self.child_limit_applications += stats.child_limit_applications;
+        self.root_child_limit_applications += stats.root_child_limit_applications;
+        self.search_child_limit_applications += stats.search_child_limit_applications;
+        self.child_cap_hits += stats.child_cap_hits;
+        self.root_child_cap_hits += stats.root_child_cap_hits;
+        self.search_child_cap_hits += stats.search_child_cap_hits;
+        self.child_moves_before_total += stats.child_moves_before_total;
+        self.root_child_moves_before_total += stats.root_child_moves_before_total;
+        self.search_child_moves_before_total += stats.search_child_moves_before_total;
+        self.child_moves_before_max = self
+            .child_moves_before_max
+            .max(stats.child_moves_before_max);
+        self.root_child_moves_before_max = self
+            .root_child_moves_before_max
+            .max(stats.root_child_moves_before_max);
+        self.search_child_moves_before_max = self
+            .search_child_moves_before_max
+            .max(stats.search_child_moves_before_max);
+        self.child_moves_after_total += stats.child_moves_after_total;
+        self.root_child_moves_after_total += stats.root_child_moves_after_total;
+        self.search_child_moves_after_total += stats.search_child_moves_after_total;
+        self.child_moves_after_max = self.child_moves_after_max.max(stats.child_moves_after_max);
+        self.root_child_moves_after_max = self
+            .root_child_moves_after_max
+            .max(stats.root_child_moves_after_max);
+        self.search_child_moves_after_max = self
+            .search_child_moves_after_max
+            .max(stats.search_child_moves_after_max);
         self.tt_hits += stats.tt_hits;
         self.tt_cutoffs += stats.tt_cutoffs;
         self.beta_cutoffs += stats.beta_cutoffs;
         self.depth_sum += stats.depth_sum;
         self.max_depth = self.max_depth.max(stats.max_depth);
+        for count in &stats.depth_reached_counts {
+            *self.depth_reached_counts.entry(count.depth).or_insert(0) += count.count;
+        }
         self.budget_exhausted_count += stats.budget_exhausted_count;
     }
 
@@ -646,9 +872,22 @@ impl SideStatsAccumulator {
             self.candidate_moves_total as f64,
             self.candidate_generations as u32,
         );
+        let avg_child_moves_before = avg(
+            self.child_moves_before_total as f64,
+            self.child_limit_applications as u32,
+        );
+        let avg_child_moves_after = avg(
+            self.child_moves_after_total as f64,
+            self.child_limit_applications as u32,
+        );
         let avg_legality_checks = avg(self.legality_checks as f64, self.search_move_count);
         let avg_depth = avg(self.depth_sum as f64, self.search_move_count);
         let budget_exhausted_rate = avg(self.budget_exhausted_count as f64, self.search_move_count);
+        let depth_reached_counts = self
+            .depth_reached_counts
+            .into_iter()
+            .map(|(depth, count)| DepthCountReport { depth, count })
+            .collect();
 
         SideStatsReport {
             move_count: self.move_count,
@@ -679,12 +918,36 @@ impl SideStatsAccumulator {
             root_illegal_moves_skipped: self.root_illegal_moves_skipped,
             search_legality_checks: self.search_legality_checks,
             search_illegal_moves_skipped: self.search_illegal_moves_skipped,
+            tactical_annotations: self.tactical_annotations,
+            root_tactical_annotations: self.root_tactical_annotations,
+            search_tactical_annotations: self.search_tactical_annotations,
+            child_limit_applications: self.child_limit_applications,
+            root_child_limit_applications: self.root_child_limit_applications,
+            search_child_limit_applications: self.search_child_limit_applications,
+            child_cap_hits: self.child_cap_hits,
+            root_child_cap_hits: self.root_child_cap_hits,
+            search_child_cap_hits: self.search_child_cap_hits,
+            child_moves_before_total: self.child_moves_before_total,
+            root_child_moves_before_total: self.root_child_moves_before_total,
+            search_child_moves_before_total: self.search_child_moves_before_total,
+            child_moves_before_max: self.child_moves_before_max,
+            root_child_moves_before_max: self.root_child_moves_before_max,
+            search_child_moves_before_max: self.search_child_moves_before_max,
+            child_moves_after_total: self.child_moves_after_total,
+            root_child_moves_after_total: self.root_child_moves_after_total,
+            search_child_moves_after_total: self.search_child_moves_after_total,
+            child_moves_after_max: self.child_moves_after_max,
+            root_child_moves_after_max: self.root_child_moves_after_max,
+            search_child_moves_after_max: self.search_child_moves_after_max,
+            avg_child_moves_before,
+            avg_child_moves_after,
             tt_hits: self.tt_hits,
             tt_cutoffs: self.tt_cutoffs,
             beta_cutoffs: self.beta_cutoffs,
             depth_sum: self.depth_sum,
             avg_depth,
             max_depth: self.max_depth,
+            depth_reached_counts,
             budget_exhausted_count: self.budget_exhausted_count,
             budget_exhausted_rate,
         }
@@ -760,6 +1023,8 @@ fn standings(
                 search_move_count: side_stats.search_move_count,
                 total_time_ms: side_stats.total_time_ms,
                 avg_search_time_ms: side_stats.avg_search_time_ms,
+                search_nodes: side_stats.search_nodes,
+                safety_nodes: side_stats.safety_nodes,
                 total_nodes: side_stats.total_nodes,
                 avg_nodes: side_stats.avg_nodes,
                 eval_calls: side_stats.eval_calls,
@@ -782,11 +1047,35 @@ fn standings(
                 root_illegal_moves_skipped: side_stats.root_illegal_moves_skipped,
                 search_legality_checks: side_stats.search_legality_checks,
                 search_illegal_moves_skipped: side_stats.search_illegal_moves_skipped,
+                tactical_annotations: side_stats.tactical_annotations,
+                root_tactical_annotations: side_stats.root_tactical_annotations,
+                search_tactical_annotations: side_stats.search_tactical_annotations,
+                child_limit_applications: side_stats.child_limit_applications,
+                root_child_limit_applications: side_stats.root_child_limit_applications,
+                search_child_limit_applications: side_stats.search_child_limit_applications,
+                child_cap_hits: side_stats.child_cap_hits,
+                root_child_cap_hits: side_stats.root_child_cap_hits,
+                search_child_cap_hits: side_stats.search_child_cap_hits,
+                child_moves_before_total: side_stats.child_moves_before_total,
+                root_child_moves_before_total: side_stats.root_child_moves_before_total,
+                search_child_moves_before_total: side_stats.search_child_moves_before_total,
+                child_moves_before_max: side_stats.child_moves_before_max,
+                root_child_moves_before_max: side_stats.root_child_moves_before_max,
+                search_child_moves_before_max: side_stats.search_child_moves_before_max,
+                child_moves_after_total: side_stats.child_moves_after_total,
+                root_child_moves_after_total: side_stats.root_child_moves_after_total,
+                search_child_moves_after_total: side_stats.search_child_moves_after_total,
+                child_moves_after_max: side_stats.child_moves_after_max,
+                root_child_moves_after_max: side_stats.root_child_moves_after_max,
+                search_child_moves_after_max: side_stats.search_child_moves_after_max,
+                avg_child_moves_before: side_stats.avg_child_moves_before,
+                avg_child_moves_after: side_stats.avg_child_moves_after,
                 tt_hits: side_stats.tt_hits,
                 tt_cutoffs: side_stats.tt_cutoffs,
                 beta_cutoffs: side_stats.beta_cutoffs,
                 avg_depth: side_stats.avg_depth,
                 max_depth: side_stats.max_depth,
+                depth_reached_counts: side_stats.depth_reached_counts,
                 budget_exhausted_count: side_stats.budget_exhausted_count,
                 budget_exhausted_rate: side_stats.budget_exhausted_rate,
             }
@@ -1188,43 +1477,22 @@ pub fn render_tournament_report_html_with_options(
         );
     }
 
-    html.push_str("<section class=\"cards\"><div class=\"card-group\"><h2>Tournament</h2><div class=\"card-row\">");
-    metric_card(&mut html, "Workflow", report.run.schedule.clone());
-    metric_card(&mut html, "Entrants", entrant_summary(report));
-    metric_card(&mut html, "Schedule", schedule_summary(report));
-    metric_card(
+    html.push_str("<section class=\"run-strip\" aria-label=\"Run summary\">");
+    run_chip(&mut html, "Schedule", schedule_summary(report));
+    run_chip(
         &mut html,
         "Rule",
         variant_label(&report.run.rules).to_string(),
     );
-    metric_card(&mut html, "Opening", opening_summary(report));
-    html.push_str("</div></div><div class=\"card-group\"><h2>Summary</h2><div class=\"card-row\">");
-    metric_card(&mut html, "Matches", report.matches.len().to_string());
-    metric_card(&mut html, "Finish", finish_summary(report));
-    metric_card(&mut html, "Result By Color", color_summary(report));
-    html.push_str("</div></div><div class=\"card-group\"><h2>Ranking</h2><div class=\"card-row\">");
-    metric_card(&mut html, "Leader", leader);
-    metric_card(
+    run_chip(&mut html, "Opening", opening_summary(report));
+    run_chip(&mut html, "Budget", budget);
+    run_chip(
         &mut html,
-        "Elo Start",
-        format!("{DEFAULT_INITIAL_RATING:.0}"),
-    );
-    metric_card(&mut html, "K Factor", format!("{DEFAULT_K_FACTOR:.0}"));
-    metric_card(
-        &mut html,
-        "Shuffled Samples",
-        report.shuffled_elo_samples.to_string(),
-    );
-    html.push_str("</div></div><div class=\"card-group\"><h2>Run</h2><div class=\"card-row\">");
-    metric_card(&mut html, "Budget", budget);
-    metric_card(
-        &mut html,
-        "Wall Clock",
+        "Wall",
         format_duration_ms(report.run.total_wall_time_ms),
     );
-    metric_card(&mut html, "Eval Threads", report.run.threads.to_string());
-    metric_card(&mut html, "CPU", host_cpu_summary(report));
-    html.push_str("</div></div>");
+    run_chip(&mut html, "Finish", finish_summary(report));
+    run_chip(&mut html, "Leader", leader);
     html.push_str("</section>");
 
     render_reference_anchors_section(&mut html, report);
@@ -1418,7 +1686,7 @@ fn report_leader(report: &TournamentReport) -> String {
         .map(|row| {
             format!(
                 "{} ({:.1})",
-                bot_label(report, &row.bot),
+                compact_bot_label(report, &row.bot),
                 row.shuffled_elo_avg
             )
         })
@@ -1434,33 +1702,6 @@ fn budget_label(run: &TournamentRunReport) -> String {
         (None, Some(wall_ms)) => format!("Wall {wall_ms} ms/move"),
         (None, None) => "no per-move budget".to_string(),
     }
-}
-
-fn color_summary(report: &TournamentReport) -> String {
-    let mut black_wins = 0u32;
-    let mut white_wins = 0u32;
-    let mut draws = 0u32;
-
-    for row in &report.color_splits {
-        black_wins += row.black_wins;
-        white_wins += row.white_wins;
-        draws += row.draws;
-    }
-
-    let total = black_wins + white_wins + draws;
-    if total == 0 {
-        return "none".to_string();
-    }
-
-    format!(
-        "Black {} ({:.1}%) / White {} ({:.1}%) / Draw {} ({:.1}%)",
-        black_wins,
-        black_wins as f64 * 100.0 / total as f64,
-        white_wins,
-        white_wins as f64 * 100.0 / total as f64,
-        draws,
-        draws as f64 * 100.0 / total as f64
-    )
 }
 
 fn finish_summary(report: &TournamentReport) -> String {
@@ -1499,27 +1740,6 @@ fn count_end_reason(report: &TournamentReport, key: &str) -> u32 {
         .unwrap_or(0)
 }
 
-fn entrant_summary(report: &TournamentReport) -> String {
-    let labels = report
-        .run
-        .bots
-        .iter()
-        .map(|bot| entrant_label(bot, &report.run))
-        .collect::<Vec<_>>();
-
-    collapse_searchbot_depth_labels(&labels).unwrap_or_else(|| labels.join(", "))
-}
-
-fn collapse_searchbot_depth_labels(labels: &[String]) -> Option<String> {
-    let prefix = "SearchBot @ depth ";
-    let depths = labels
-        .iter()
-        .map(|label| label.strip_prefix(prefix))
-        .collect::<Option<Vec<_>>>()?;
-
-    Some(format!("{prefix}{}", depths.join(" / ")))
-}
-
 fn schedule_summary(report: &TournamentReport) -> String {
     let pair_count = report.pairwise.len();
     let pair_word = if pair_count == 1 { "pair" } else { "pairs" };
@@ -1547,10 +1767,6 @@ fn default_schedule() -> String {
     "round-robin".to_string()
 }
 
-fn bot_label(report: &TournamentReport, bot: &str) -> String {
-    entrant_label(bot, &report.run)
-}
-
 fn compact_bot_label(report: &TournamentReport, bot: &str) -> String {
     if bot == "random" {
         return "RandomBot".to_string();
@@ -1561,23 +1777,6 @@ fn compact_bot_label(report: &TournamentReport, bot: &str) -> String {
         for feature in features {
             label.push('+');
             label.push_str(&compact_searchbot_feature_label(feature));
-        }
-        return label;
-    }
-
-    bot.to_string()
-}
-
-fn entrant_label(bot: &str, run: &TournamentRunReport) -> String {
-    if bot == "random" {
-        return "RandomBot".to_string();
-    }
-
-    if let Some((depth, features)) = searchbot_spec(bot, run) {
-        let mut label = format!("SearchBot @ depth {depth}");
-        for feature in features {
-            label.push_str(" + ");
-            label.push_str(&full_searchbot_feature_label(feature));
         }
         return label;
     }
@@ -1628,27 +1827,6 @@ fn compact_searchbot_feature_label(feature: &str) -> String {
         "no-safety" => "NoSafety".to_string(),
         "opponent-reply-search-probe" => "SearchProbe".to_string(),
         "opponent-reply-local-threat-probe" => "LocalThreat".to_string(),
-        _ => feature.to_string(),
-    }
-}
-
-fn full_searchbot_feature_label(feature: &str) -> String {
-    if let Some(cap) = feature.strip_prefix("tactical-cap-") {
-        return format!("tactical cap {cap}");
-    }
-    if let Some(cap) = feature.strip_prefix("child-cap-") {
-        return format!("child cap {cap}");
-    }
-    if let Some(radius) = feature.strip_prefix("near-all-r") {
-        return format!("near all r{radius}");
-    }
-
-    match feature {
-        "pattern-eval" => "pattern eval".to_string(),
-        "tactical-first" => "tactical first".to_string(),
-        "no-safety" => "no safety".to_string(),
-        "opponent-reply-search-probe" => "opponent reply search probe".to_string(),
-        "opponent-reply-local-threat-probe" => "opponent reply local threat probe".to_string(),
         _ => feature.to_string(),
     }
 }
@@ -1752,7 +1930,7 @@ fn render_how_to_read_section(html: &mut String) {
     term_card(
         html,
         "Search Cost",
-        "Cand r/s and legal r/s split root-stage work from alpha-beta search work. Width is average candidate moves per generated candidate set.",
+        "Node split is alpha-beta / safety-gate work. Candidate width is generated breadth; child width is the post-ordering frontier after optional caps.",
     );
     html.push_str("</div></section>");
 }
@@ -1765,9 +1943,13 @@ fn render_search_cost_section(html: &mut String, report: &TournamentReport) {
     html.push_str("<section><div class=\"section-heading\"><h2>Search Cost</h2><p>Per-search-move instrumentation. Split cells show root-stage / search costs.</p></div><table><thead><tr>");
     for head in [
         "Spec",
+        "Node split",
         "Avg eval",
         "Cand gen r/s",
-        "Avg width",
+        "Cand width r/s",
+        "Child width",
+        "Cap hit",
+        "Tactical ann r/s",
         "Legal r/s",
         "TT hit/cut",
         "Beta cuts",
@@ -1777,15 +1959,31 @@ fn render_search_cost_section(html: &mut String, report: &TournamentReport) {
     html.push_str("</tr></thead><tbody>");
     for row in &report.standings {
         html.push_str(&format!(
-            "<tr><td>{}</td><td>{:.1}</td><td>{}</td><td>{:.1}</td><td>{}</td><td>{}</td><td>{}</td></tr>",
+            "<tr><td>{}</td><td>{}</td><td>{:.1}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>",
             html_escape(&compact_bot_label(report, &row.bot)),
+            html_escape(&phase_average_label(
+                row.search_nodes,
+                row.safety_nodes,
+                row.search_move_count,
+            )),
             row.avg_eval_calls,
             html_escape(&phase_average_label(
                 row.root_candidate_generations,
                 row.search_candidate_generations,
                 row.search_move_count,
             )),
-            row.avg_candidate_moves,
+            html_escape(&candidate_width_label(row)),
+            html_escape(&child_width_label(
+                row.child_limit_applications,
+                row.avg_child_moves_before,
+                row.avg_child_moves_after,
+            )),
+            html_escape(&percent_label(row.child_cap_hits, row.child_limit_applications)),
+            html_escape(&phase_average_label(
+                row.root_tactical_annotations,
+                row.search_tactical_annotations,
+                row.search_move_count,
+            )),
             html_escape(&phase_average_label(
                 row.root_legality_checks,
                 row.search_legality_checks,
@@ -1900,7 +2098,8 @@ fn render_match(
         )))
     ));
     html.push_str(&format!(
-        "<details class=\"raw-data\"><summary>Raw data</summary><p><b>Move cells</b><br>{}</p></details>",
+        "<details class=\"raw-data\"><summary>Raw data</summary><p><b>Opening</b><br>{}</p><p><b>Move cells</b><br>{}</p></details>",
+        html_escape(&opening_label(report_match)),
         report_match
             .move_cells
             .iter()
@@ -1930,6 +2129,28 @@ fn side_stats_for_bot<'a>(report_match: &'a MatchReport, bot: &str) -> &'a SideS
     }
 }
 
+fn opening_label(report_match: &MatchReport) -> String {
+    let Some(opening) = &report_match.opening else {
+        return "not captured".to_string();
+    };
+
+    let mut parts = vec![
+        format!("{} #{}", opening.policy, opening.index),
+        format!("{} plies", opening.ply_count),
+    ];
+    if let Some(suite_index) = opening.suite_index {
+        parts.push(format!("suite {suite_index}"));
+    }
+    if let Some(template_index) = opening.template_index {
+        parts.push(format!("template {template_index}"));
+    }
+    if let Some(transform_index) = opening.transform_index {
+        parts.push(format!("transform {transform_index}"));
+    }
+
+    parts.join(", ")
+}
+
 fn side_stats_label(stats: &SideStatsReport) -> String {
     let base = format!(
         "{:.1} ms, {:.0} nodes, depth {:.2}, budget {:.0}%",
@@ -1944,12 +2165,18 @@ fn side_stats_label(stats: &SideStatsReport) -> String {
     }
 
     format!(
-        "{base}; eval {:.0}, cand r/s {}, legal r/s {}, tt {}/{}",
+        "{base}; eval {:.0}, cand r/s {}, width r/s {}, child {}, legal r/s {}, tt {}/{}",
         stats.avg_eval_calls,
         phase_average_label(
             stats.root_candidate_generations,
             stats.search_candidate_generations,
             stats.search_move_count,
+        ),
+        side_candidate_width_label(stats),
+        child_width_label(
+            stats.child_limit_applications,
+            stats.avg_child_moves_before,
+            stats.avg_child_moves_after,
         ),
         phase_average_label(
             stats.root_legality_checks,
@@ -1965,6 +2192,8 @@ fn has_search_cost_metrics(row: &StandingReport) -> bool {
     row.eval_calls > 0
         || row.candidate_generations > 0
         || row.legality_checks > 0
+        || row.tactical_annotations > 0
+        || row.child_limit_applications > 0
         || row.tt_hits > 0
         || row.tt_cutoffs > 0
         || row.beta_cutoffs > 0
@@ -1974,9 +2203,70 @@ fn has_side_search_cost_metrics(stats: &SideStatsReport) -> bool {
     stats.eval_calls > 0
         || stats.candidate_generations > 0
         || stats.legality_checks > 0
+        || stats.tactical_annotations > 0
+        || stats.child_limit_applications > 0
         || stats.tt_hits > 0
         || stats.tt_cutoffs > 0
         || stats.beta_cutoffs > 0
+}
+
+fn candidate_width_label(row: &StandingReport) -> String {
+    ratio_pair_label(
+        row.root_candidate_moves_total,
+        row.root_candidate_generations,
+        row.search_candidate_moves_total,
+        row.search_candidate_generations,
+    )
+}
+
+fn side_candidate_width_label(stats: &SideStatsReport) -> String {
+    ratio_pair_label(
+        stats.root_candidate_moves_total,
+        stats.root_candidate_generations,
+        stats.search_candidate_moves_total,
+        stats.search_candidate_generations,
+    )
+}
+
+fn ratio_pair_label(
+    left_total: u64,
+    left_count: u64,
+    right_total: u64,
+    right_count: u64,
+) -> String {
+    if left_count == 0 && right_count == 0 {
+        return "n/a".to_string();
+    }
+
+    format!(
+        "{} / {}",
+        ratio_label(left_total, left_count),
+        ratio_label(right_total, right_count)
+    )
+}
+
+fn ratio_label(total: u64, count: u64) -> String {
+    if count == 0 {
+        "0.0".to_string()
+    } else {
+        format!("{:.1}", total as f64 / count as f64)
+    }
+}
+
+fn child_width_label(applications: u64, before: f64, after: f64) -> String {
+    if applications == 0 {
+        "n/a".to_string()
+    } else {
+        format!("{before:.1} -> {after:.1}")
+    }
+}
+
+fn percent_label(count: u64, total: u64) -> String {
+    if total == 0 {
+        "n/a".to_string()
+    } else {
+        format!("{:.0}%", count as f64 / total as f64 * 100.0)
+    }
 }
 
 fn phase_average_label(left_total: u64, right_total: u64, count: u32) -> String {
@@ -2087,9 +2377,9 @@ fn color_result_label(
     ))
 }
 
-fn metric_card(html: &mut String, label: &str, value: String) {
+fn run_chip(html: &mut String, label: &str, value: String) {
     html.push_str(&format!(
-        "<article><span>{}</span><strong>{}</strong></article>",
+        "<div class=\"run-chip\"><span>{}</span><strong>{}</strong></div>",
         html_escape(label),
         html_escape(&value)
     ));
@@ -2188,7 +2478,7 @@ const STYLE: &str = r#"
 main{display:grid;gap:24px;margin:0 auto;max-width:1180px;padding:32px}h1,h2,p{margin:0}a{color:inherit;text-decoration:none}code{color:var(--accent)}
 .hero,section,.run-warning{background:var(--surface);border:2px solid var(--border);display:grid;gap:16px;padding:20px;overflow:auto}.run-warning{border-color:var(--accent);color:var(--accent)}.top-links{display:flex;flex-wrap:wrap;gap:8px}.top-links a{background:var(--surface-strong);border:2px solid var(--border);color:var(--text);display:inline-block;padding:8px 12px;text-transform:uppercase}.top-links a:hover,.top-links a:focus{border-color:var(--teal);outline:none}
 .eyebrow{color:var(--accent);font-size:12px;letter-spacing:.16em;text-transform:uppercase}h1{font-size:clamp(34px,7vw,64px);line-height:1}.lede{color:var(--text);font-size:clamp(17px,2vw,21px);max-width:78ch}.section-heading p,.match summary span,.match-grid,.note{color:var(--text-muted)}
-.cards{display:grid;gap:18px}.card-group{display:grid;gap:10px}.card-group h2{color:var(--accent);font-size:1.2rem}.card-row{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}article,.pair-group,.match{background:var(--card);border:1px solid var(--border);display:grid;gap:10px;padding:16px}article:hover,.pair-group:hover,.match:hover{border-color:var(--teal)}article span{color:var(--text-muted);font-size:12px;letter-spacing:.1em;text-transform:uppercase}article strong{color:var(--green);font-size:clamp(18px,2vw,24px);line-height:1.18;word-break:break-word}
+.run-strip{display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px}.run-chip{background:var(--card);border:1px solid var(--border);display:inline-flex;gap:8px;align-items:baseline;min-width:0;padding:7px 10px}.run-chip span{color:var(--text-muted);font-size:11px;letter-spacing:.1em;text-transform:uppercase}.run-chip strong{color:var(--green);font-size:14px;line-height:1.2}article,.pair-group,.match{background:var(--card);border:1px solid var(--border);display:grid;gap:10px;padding:16px}article:hover,.pair-group:hover,.match:hover,.run-chip:hover{border-color:var(--teal)}article span{color:var(--text-muted);font-size:12px;letter-spacing:.1em;text-transform:uppercase}article strong{color:var(--green);font-size:clamp(18px,2vw,24px);line-height:1.18;word-break:break-word}
 .term-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}.term{align-content:start}.term h3{color:var(--green);font-size:1rem;margin:0}.term p{color:var(--text-muted);margin:0}.term code{color:var(--accent)}
 .section-heading{display:grid;gap:8px}.section-heading h2{color:var(--accent);font-size:1.2rem}.section-heading p{max-width:78ch}
 table{border-collapse:collapse;min-width:820px;width:100%}th,td{border-bottom:1px solid var(--border);padding:9px 10px;text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{color:var(--text-muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
@@ -2228,21 +2518,23 @@ mod tests {
     }
 
     #[test]
-    fn color_summary_includes_counts_and_precise_percentages() {
+    fn html_report_uses_compact_run_strip_before_standings() {
         let mut report = sample_report();
-        report.color_splits = vec![ColorSplitReport {
-            black: "fast".to_string(),
-            white: "balanced".to_string(),
-            black_wins: 105,
-            white_wins: 84,
-            draws: 3,
-            total: 192,
-        }];
+        report.standings = vec![sample_standing_with_search_costs(
+            "search-d7+tactical-cap-8+pattern-eval",
+        )];
 
-        assert_eq!(
-            color_summary(&report),
-            "Black 105 (54.7%) / White 84 (43.8%) / Draw 3 (1.6%)"
-        );
+        let html = render_tournament_report_html(&report);
+
+        assert!(html.contains("<section class=\"run-strip\" aria-label=\"Run summary\">"));
+        assert!(html.contains("<div class=\"run-chip\"><span>Schedule</span>"));
+        assert!(html.contains("SearchBot_D7+TCap8+Pattern (1000.0)"));
+        assert!(!html.contains("<span>Entrants</span>"));
+        assert!(!html.contains("SearchBot @ depth 7 + tactical cap 8 + pattern eval"));
+
+        let run_strip_pos = html.find("class=\"run-strip\"").unwrap();
+        let standings_pos = html.find("<h2>Standings</h2>").unwrap();
+        assert!(run_strip_pos < standings_pos);
     }
 
     #[test]
@@ -2277,6 +2569,7 @@ mod tests {
         let match_body = &html[match_pos..];
         let board_pos = match_pos + match_body.find("Finished board").unwrap();
         let moves_pos = match_pos + match_body.find("<b>Moves</b>").unwrap();
+        let opening_pos = match_pos + match_body.find("<b>Opening</b>").unwrap();
         let raw_pos = match_pos + match_body.find("Raw data").unwrap();
         assert!(pair_pos < overview_pos);
         assert!(overview_pos < color_a_pos);
@@ -2286,8 +2579,18 @@ mod tests {
         assert!(match_pos < board_pos);
         assert!(board_pos < moves_pos);
         assert!(moves_pos < raw_pos);
+        assert!(raw_pos < opening_pos);
         assert!(raw_pos < how_to_read_pos);
         assert!(how_to_read_pos < provenance_pos);
+    }
+
+    #[test]
+    fn html_report_surfaces_match_opening_metadata() {
+        let report = sample_report();
+        let html = render_tournament_report_html(&report);
+
+        assert!(html.contains("<b>Opening</b>"));
+        assert!(html.contains("centered-suite #0, 4 plies, suite 3, template 0, transform 3"));
     }
 
     #[test]
@@ -2305,13 +2608,130 @@ mod tests {
         assert!(html.contains("<h2>Search Cost</h2>"));
         assert!(html.contains("SearchBot_D2"));
         assert!(html.contains("100.0"));
+        assert!(html.contains("Node split"));
+        assert!(html.contains("180.0 / 20.0"));
         assert!(html.contains("1.0 / 4.0"));
+        assert!(html.contains("Cand width r/s"));
+        assert!(html.contains("80.0 / 105.0"));
+        assert!(html.contains("Child width"));
+        assert!(html.contains("12.0 -&gt; 8.0"));
+        assert!(html.contains("Cap hit"));
+        assert!(html.contains("75%"));
+        assert!(html.contains("Tactical ann r/s"));
+        assert!(html.contains("0.4 / 1.2"));
         assert!(html.contains("2.0 / 4.0"));
         assert!(html.contains("TT hit/cut"));
         assert!(html.contains("0.0 / 0.0"));
         assert!(html.contains("cand r/s 1.0 / 4.0"));
+        assert!(html.contains("width r/s 80.0 / 105.0"));
+        assert!(html.contains("child 12.0 -&gt; 8.0"));
         assert!(html.contains("legal r/s 2.0 / 4.0"));
         assert!(html.contains("<h3>Search Cost</h3>"));
+    }
+
+    #[test]
+    fn side_stats_capture_child_caps_tactical_annotations_and_depth_distribution() {
+        let mut stats = SideStatsAccumulator::default();
+        let trace = serde_json::json!({
+            "nodes": 100,
+            "safety_nodes": 20,
+            "total_nodes": 120,
+            "depth": 5,
+            "metrics": {
+                "eval_calls": 30,
+                "tactical_annotations": 9,
+                "root_tactical_annotations": 2,
+                "search_tactical_annotations": 7,
+                "child_limit_applications": 4,
+                "root_child_limit_applications": 0,
+                "search_child_limit_applications": 4,
+                "child_cap_hits": 3,
+                "root_child_cap_hits": 0,
+                "search_child_cap_hits": 3,
+                "child_moves_before_total": 48,
+                "root_child_moves_before_total": 0,
+                "search_child_moves_before_total": 48,
+                "child_moves_before_max": 14,
+                "root_child_moves_before_max": 0,
+                "search_child_moves_before_max": 14,
+                "child_moves_after_total": 32,
+                "root_child_moves_after_total": 0,
+                "search_child_moves_after_total": 32,
+                "child_moves_after_max": 9,
+                "root_child_moves_after_max": 0,
+                "search_child_moves_after_max": 9
+            }
+        });
+
+        stats.record_move(11, Some(&trace));
+        let report = stats.finish();
+
+        assert_eq!(report.search_nodes, 100);
+        assert_eq!(report.safety_nodes, 20);
+        assert_eq!(report.tactical_annotations, 9);
+        assert_eq!(report.root_tactical_annotations, 2);
+        assert_eq!(report.search_tactical_annotations, 7);
+        assert_eq!(report.child_limit_applications, 4);
+        assert_eq!(report.search_child_limit_applications, 4);
+        assert_eq!(report.child_cap_hits, 3);
+        assert_eq!(report.search_child_cap_hits, 3);
+        assert_eq!(report.child_moves_before_total, 48);
+        assert_eq!(report.child_moves_after_total, 32);
+        assert_eq!(report.avg_child_moves_before, 12.0);
+        assert_eq!(report.avg_child_moves_after, 8.0);
+        assert_eq!(
+            report.depth_reached_counts,
+            vec![DepthCountReport { depth: 5, count: 1 }]
+        );
+    }
+
+    #[test]
+    fn standings_preserve_search_node_split_and_child_cap_metrics() {
+        let mut report = sample_report();
+        let mut first_match = sample_match(1, "search-d5+tactical-cap-8", "search-d3", None);
+        first_match.black_stats = sample_side_stats_with_search_costs();
+        first_match.black_stats.search_nodes = 900;
+        first_match.black_stats.safety_nodes = 100;
+        first_match.black_stats.tactical_annotations = 20;
+        first_match.black_stats.search_tactical_annotations = 20;
+        first_match.black_stats.child_limit_applications = 10;
+        first_match.black_stats.search_child_limit_applications = 10;
+        first_match.black_stats.child_cap_hits = 8;
+        first_match.black_stats.search_child_cap_hits = 8;
+        first_match.black_stats.child_moves_before_total = 120;
+        first_match.black_stats.search_child_moves_before_total = 120;
+        first_match.black_stats.child_moves_after_total = 80;
+        first_match.black_stats.search_child_moves_after_total = 80;
+        first_match.black_stats.avg_child_moves_before = 12.0;
+        first_match.black_stats.avg_child_moves_after = 8.0;
+        first_match.black_stats.depth_reached_counts =
+            vec![DepthCountReport { depth: 5, count: 5 }];
+        report.matches = vec![first_match];
+        report.run.bots = vec![
+            "search-d5+tactical-cap-8".to_string(),
+            "search-d3".to_string(),
+        ];
+        let results = TournamentResults::new();
+
+        let rows = standings(&report.run.bots, &results, &report.matches, &HashMap::new());
+        let row = rows
+            .iter()
+            .find(|row| row.bot == "search-d5+tactical-cap-8")
+            .expect("standing row should exist");
+
+        assert_eq!(row.search_nodes, 900);
+        assert_eq!(row.safety_nodes, 100);
+        assert_eq!(row.tactical_annotations, 20);
+        assert_eq!(row.child_limit_applications, 10);
+        assert_eq!(row.child_cap_hits, 8);
+        assert_eq!(row.child_moves_before_total, 120);
+        assert_eq!(row.child_moves_after_total, 80);
+        assert_eq!(row.avg_child_moves_before, 12.0);
+        assert_eq!(row.avg_child_moves_after, 8.0);
+        assert_eq!(
+            row.depth_reached_counts,
+            vec![DepthCountReport { depth: 5, count: 5 }]
+        );
     }
 
     #[test]
@@ -2338,10 +2758,6 @@ mod tests {
         assert_eq!(
             compact_bot_label(&report, "search-d5+tactical-cap-8+pattern-eval"),
             "SearchBot_D5+TCap8+Pattern"
-        );
-        assert_eq!(
-            bot_label(&report, "search-d5+tactical-cap-8+pattern-eval"),
-            "SearchBot @ depth 5 + tactical cap 8 + pattern eval"
         );
     }
 
@@ -2589,6 +3005,7 @@ mod tests {
         assert_eq!(report.run.schedule, "round-robin");
         assert_eq!(report.standings[0].eval_calls, 0);
         assert_eq!(report.standings[0].search_candidate_generations, 0);
+        assert!(report.matches[0].opening.is_none());
         assert_eq!(report.matches[0].black_stats.root_legality_checks, 0);
         assert_eq!(report.matches[0].white_stats.search_legality_checks, 0);
     }
@@ -2698,6 +3115,14 @@ mod tests {
             winner: winner.map(str::to_string),
             end_reason: "natural".to_string(),
             duration_ms: Some(100),
+            opening: Some(MatchOpeningReport {
+                policy: "centered-suite".to_string(),
+                index: 0,
+                ply_count: 4,
+                suite_index: Some(3),
+                template_index: Some(0),
+                transform_index: Some(3),
+            }),
             move_cells: vec![112, 113, 127, 128, 142],
             move_count: 5,
             black_stats: SideStatsReport::default(),
@@ -2719,6 +3144,8 @@ mod tests {
             search_move_count: 5,
             total_time_ms: 50,
             avg_search_time_ms: 10.0,
+            search_nodes: 900,
+            safety_nodes: 100,
             total_nodes: 1000,
             avg_nodes: 200.0,
             eval_calls: 500,
@@ -2741,11 +3168,35 @@ mod tests {
             root_illegal_moves_skipped: 1,
             search_legality_checks: 20,
             search_illegal_moves_skipped: 1,
+            tactical_annotations: 8,
+            root_tactical_annotations: 2,
+            search_tactical_annotations: 6,
+            child_limit_applications: 4,
+            root_child_limit_applications: 0,
+            search_child_limit_applications: 4,
+            child_cap_hits: 3,
+            root_child_cap_hits: 0,
+            search_child_cap_hits: 3,
+            child_moves_before_total: 48,
+            root_child_moves_before_total: 0,
+            search_child_moves_before_total: 48,
+            child_moves_before_max: 14,
+            root_child_moves_before_max: 0,
+            search_child_moves_before_max: 14,
+            child_moves_after_total: 32,
+            root_child_moves_after_total: 0,
+            search_child_moves_after_total: 32,
+            child_moves_after_max: 9,
+            root_child_moves_after_max: 0,
+            search_child_moves_after_max: 9,
+            avg_child_moves_before: 12.0,
+            avg_child_moves_after: 8.0,
             tt_hits: 7,
             tt_cutoffs: 3,
             beta_cutoffs: 9,
             avg_depth: 3.0,
             max_depth: 3,
+            depth_reached_counts: vec![DepthCountReport { depth: 3, count: 5 }],
             budget_exhausted_count: 1,
             budget_exhausted_rate: 0.2,
         }
@@ -2781,12 +3232,36 @@ mod tests {
             root_illegal_moves_skipped: 1,
             search_legality_checks: 20,
             search_illegal_moves_skipped: 1,
+            tactical_annotations: 8,
+            root_tactical_annotations: 2,
+            search_tactical_annotations: 6,
+            child_limit_applications: 4,
+            root_child_limit_applications: 0,
+            search_child_limit_applications: 4,
+            child_cap_hits: 3,
+            root_child_cap_hits: 0,
+            search_child_cap_hits: 3,
+            child_moves_before_total: 48,
+            root_child_moves_before_total: 0,
+            search_child_moves_before_total: 48,
+            child_moves_before_max: 14,
+            root_child_moves_before_max: 0,
+            search_child_moves_before_max: 14,
+            child_moves_after_total: 32,
+            root_child_moves_after_total: 0,
+            search_child_moves_after_total: 32,
+            child_moves_after_max: 9,
+            root_child_moves_after_max: 0,
+            search_child_moves_after_max: 9,
+            avg_child_moves_before: 12.0,
+            avg_child_moves_after: 8.0,
             tt_hits: 7,
             tt_cutoffs: 3,
             beta_cutoffs: 9,
             depth_sum: 15,
             avg_depth: 3.0,
             max_depth: 3,
+            depth_reached_counts: vec![DepthCountReport { depth: 3, count: 5 }],
             budget_exhausted_count: 1,
             budget_exhausted_rate: 0.2,
         }

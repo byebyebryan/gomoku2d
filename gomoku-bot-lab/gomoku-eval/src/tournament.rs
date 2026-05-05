@@ -3,7 +3,7 @@ use crate::arena::{
     MatchSetup,
 };
 use crate::elo::RatingTracker;
-use crate::opening::{opening_moves_for_game, OpeningPolicy};
+use crate::opening::{opening_metadata_for_game, opening_moves_for_game, OpeningPolicy};
 use crate::seed::derive_seed;
 use gomoku_bot::Bot;
 use gomoku_core::{Color, GameResult, Move, Replay, RuleConfig};
@@ -64,6 +64,17 @@ pub struct TournamentMatchRecord {
     pub replay: Replay,
     pub timing: crate::arena::MatchTiming,
     pub end_reason: MatchEndReason,
+    pub opening: Option<TournamentOpeningRecord>,
+}
+
+#[derive(Debug, Clone)]
+pub struct TournamentOpeningRecord {
+    pub policy: String,
+    pub index: u32,
+    pub suite_index: Option<usize>,
+    pub template_index: Option<usize>,
+    pub transform_index: Option<usize>,
+    pub ply_count: usize,
 }
 
 struct MatchRecordInput<'a> {
@@ -73,6 +84,7 @@ struct MatchRecordInput<'a> {
     black_name: &'a str,
     white_name: &'a str,
     a_is_black: bool,
+    opening: Option<TournamentOpeningRecord>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -212,6 +224,7 @@ impl TournamentResults {
             replay: mr.replay.clone(),
             timing: mr.timing,
             end_reason: mr.end_reason,
+            opening: input.opening,
         });
     }
 }
@@ -294,6 +307,7 @@ where
                         black_name,
                         white_name,
                         a_is_black,
+                        opening: None,
                     },
                     &mr,
                 );
@@ -312,6 +326,7 @@ struct TournamentJob {
     bot_b_idx: usize,
     a_is_black: bool,
     opening_moves: Vec<Move>,
+    opening: TournamentOpeningRecord,
     bot_a_seed: u64,
     bot_b_seed: u64,
 }
@@ -323,6 +338,7 @@ struct TournamentOutcome {
     black_name: String,
     white_name: String,
     a_is_black: bool,
+    opening: TournamentOpeningRecord,
     mr: MatchResult,
 }
 
@@ -374,18 +390,29 @@ pub fn run_scheduled_pairs_parallel(
         for game in 0..games_per_pair {
             match_idx += 1;
             let paired_game = game / 2;
+            let opening_metadata =
+                opening_metadata_for_game(options.opening_policy, options.seed, paired_game);
+            let opening_moves = opening_moves_for_game(
+                options.opening_policy,
+                &config,
+                options.opening_plies,
+                options.seed,
+                paired_game,
+            );
             jobs.push(TournamentJob {
                 match_idx,
                 bot_a_idx: pair.bot_a_idx,
                 bot_b_idx: pair.bot_b_idx,
                 a_is_black: game % 2 == 0,
-                opening_moves: opening_moves_for_game(
-                    options.opening_policy,
-                    &config,
-                    options.opening_plies,
-                    options.seed,
-                    paired_game,
-                ),
+                opening: TournamentOpeningRecord {
+                    policy: opening_metadata.policy.label().to_string(),
+                    index: opening_metadata.index,
+                    suite_index: opening_metadata.suite_index,
+                    template_index: opening_metadata.template_index,
+                    transform_index: opening_metadata.transform_index,
+                    ply_count: opening_moves.len(),
+                },
+                opening_moves,
                 bot_a_seed: derive_seed(
                     options.seed,
                     [pair.bot_a_idx as u64, pair.bot_b_idx as u64, game as u64, 0],
@@ -449,6 +476,7 @@ pub fn run_scheduled_pairs_parallel(
                         name_a.clone()
                     },
                     a_is_black: job.a_is_black,
+                    opening: job.opening.clone(),
                     mr,
                 }
             })
@@ -465,6 +493,7 @@ pub fn run_scheduled_pairs_parallel(
                 black_name: &outcome.black_name,
                 white_name: &outcome.white_name,
                 a_is_black: outcome.a_is_black,
+                opening: Some(outcome.opening.clone()),
             },
             &outcome.mr,
         );
@@ -607,9 +636,19 @@ mod tests {
 
         let first_opening = replay_moves(&results.matches[0]);
         let second_opening = replay_moves(&results.matches[2]);
+        let first_metadata = results.matches[0]
+            .opening
+            .as_ref()
+            .expect("parallel tournament should record opening metadata");
 
         assert_eq!(first_opening[0], center);
         assert_ne!(first_opening, second_opening);
+        assert_eq!(first_metadata.policy, "centered-suite");
+        assert_eq!(first_metadata.index, 0);
+        assert_eq!(first_metadata.ply_count, 4);
+        assert!(first_metadata.suite_index.is_some());
+        assert!(first_metadata.template_index.is_some());
+        assert!(first_metadata.transform_index.is_some());
         for pair_games in results.matches.chunks_exact(4) {
             let first_color_opening = replay_moves(&pair_games[0]);
             let first_swapped_opening = replay_moves(&pair_games[1]);
