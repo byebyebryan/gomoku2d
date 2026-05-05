@@ -37,10 +37,14 @@ Current progress:
   Renju-aware, but ablations show it is expensive enough to remain experimental.
 - The follow-up `0.4.1` foundation work added focused tournament schedules,
   gauntlet anchor references, the `+tactical-cap-N` report-facing shorthand,
-  and the first explicit curated reference set for the next published report.
+  and the first explicit curated reference set for published reports.
+- The clean `0.4.1` 8-entrant report was generated and published from
+  `822045148556` with `git_dirty=false`, giving the depth ladder,
+  tactical-cap variants, and pattern-eval variants one shared comparison
+  baseline.
 - `0.4.0` is therefore a bot-lab foundation release, not a product bot-settings
-  release. `0.4.1` should start from this measured baseline instead of chasing a
-  single tactical fixture.
+  release. `0.4.1` now uses this measured baseline instead of chasing a single
+  tactical fixture.
 
 ## Goal
 
@@ -1132,10 +1136,10 @@ ladder above to keep each slice honest.
    inside eval leaves. Keep the API cache-friendly: explicit inputs, stable fact
    structs, clear candidate/reply ownership, and metrics for annotation work.
 4. **Try ordering before eval.**
-   In progress: `+tactical-first` uses local facts to rank immediate
-   completions, forced blocks, and forcing shapes ahead of quiet candidates.
-   Promotion still requires better reached depth or tournament score, not only
-   prettier tactical-scenario results.
+   Completed enough for the current checkpoint: `+tactical-first` uses local
+   facts to rank immediate completions, forced blocks, and forcing shapes ahead
+   of quiet candidates. Promotion still requires better reached depth or
+   tournament score, not only prettier tactical-scenario results.
    Initial evidence is mixed but worth continuing: a focused D3 tactical sweep
    kept all hard safety cases green and improved one diagnostic case
    (`local_create_broken_four`), but added annotation time. A 16-game D3 Renju
@@ -1144,12 +1148,13 @@ ladder above to keep each slice honest.
    far fewer alpha-beta nodes, but high budget pressure means this is not yet
    promotion evidence.
 5. **Try ordered child frontier caps before forced-chain search.**
-   In progress: `+child-cap-N` keeps candidate radius fixed but limits the
-   ordered non-root frontier that alpha-beta searches after move ordering. Root
-   remains uncapped after safety filtering. This tests whether tactical ordering
-   can provide useful deeper-node coverage with fewer searched children and
-   better effective depth. Promotion requires tactical safety staying green plus
-   better reached depth, runtime, or tournament score under the same CPU budget.
+   Completed enough for the current checkpoint: `+child-cap-N` keeps candidate
+   radius fixed but limits the ordered non-root frontier that alpha-beta
+   searches after move ordering. Root remains uncapped after safety filtering.
+   This tests whether tactical ordering can provide useful deeper-node coverage
+   with fewer searched children and better effective depth. Promotion requires
+   tactical safety staying green plus better reached depth, runtime, or
+   tournament score under the same CPU budget.
    Initial evidence before the root/child split: child caps without tactical
    ordering were reckless (`search-d5+child-cap-12` went `0-1-47` in a 4-bot
    focused tournament). That negative-control result also predates the later
@@ -1196,36 +1201,46 @@ much cheaper. Treat D5 cap8 as the efficient hard bot and D7 cap8 as the slower
 hard-side variant.
 
 6. **Run the clean curated reference tournament.**
-   Run one clean 8-entrant reference tournament before the next
-   behavior-changing bot slice. The entrant set should be
-   `search-d1`, `search-d3`, `search-d5`, `search-d5+tactical-cap-8`,
+   Completed. The clean 8-entrant reference tournament used `search-d1`,
+   `search-d3`, `search-d5`, `search-d5+tactical-cap-8`,
    `search-d7+tactical-cap-8`, `search-d3+pattern-eval`,
    `search-d5+tactical-cap-8+pattern-eval`, and
-   `search-d7+tactical-cap-8+pattern-eval`. This is intentionally a reference
-   report, not a product-preset decision. It should answer whether the pattern
-   axis is still worth carrying, whether D5/D7 tactical-cap remain the hard-side
-   candidates, and how much compute headroom each entrant has under the same
-   centered-suite, Renju, `1000 ms` CPU/move budget.
+   `search-d7+tactical-cap-8+pattern-eval` with the centered-suite Renju
+   harness, `64` games per pair, `1000 ms` CPU/move, `120` max moves, seed `63`,
+   and `22` worker threads. It produced `1792` matches from clean
+   `822045148556` provenance.
 
-   Preflight status: the current non-pattern ladder
-   (`search-d1`, `search-d3`, `search-d5`, `search-d5+tactical-cap-8`,
-   `search-d7+tactical-cap-8`) passed all `20/20` hard safety-gate tactical
-   cases under the `1000 ms` CPU budget. It failed diagnostic cases in expected
-   areas, so the tactical gate is clear for tournament ranking; the full
-   tournament should decide ranking, compute headroom, and whether
-   `+pattern-eval` remains worth carrying.
-7. **Prototype bounded forced-chain search as lab-only.**
+   Current read: D1 is a credible easy lane but non-competitive; D3 remains the
+   stable default baseline; D5 tactical-cap is the efficient hard-side candidate;
+   D7 tactical-cap is stronger but spends more budget; pattern eval has a real
+   match-strength signal but remains a lab axis because it is still a compute
+   tradeoff.
+
+   This is enough to make `0.4.1` a coherent release checkpoint.
+7. **Run a second bot-lab pass before UI.**
+   `0.4.2` should start with focused sweeps over existing knobs: depth, child
+   cap, candidate radius, pattern eval, and possible asymmetric candidate-source
+   choices. Use head-to-heads and gauntlets against the clean reference report
+   anchors before promoting anything into another full round-robin. The goal is
+   to refine the easy/default/hard ladder, not to expose more raw config.
+8. **Prototype bounded forced-chain search as lab-only.**
    Start at root or near-root, only when local facts provide concrete gain and
    defense squares. Keep strict caps and record all non-alpha-beta work in
    traces. This is the first slice that can meaningfully support future
    offensive/defensive styles.
-8. **Defer full incremental frontier state until metrics justify it.**
+9. **Keep style/character behind mechanisms.**
+   Do not create "aggressive" or "defensive" labels by tuning generic eval
+   weights. Style should mean budget allocation: spend extra work on own
+   forcing chains for offensive play, or on opponent forced-chain prevention for
+   defensive play. If forced-chain machinery does not survive evaluation, style
+   labels should wait.
+10. **Defer full incremental frontier state until metrics justify it.**
    A `SearchPosition` / `FrontierState` wrapper can maintain candidate masks,
    tactical annotations, and dirty cells around apply/undo, but only after the
    scan-based annotation semantics are stable. Run this as a scan-vs-frontier
    performance experiment if annotation or candidate regeneration remains a hot
    cost after ordering/staging work.
-9. **Defer full TSS and product bot personalities.**
+11. **Defer full TSS and product bot personalities.**
    If the prototype needs dependency trees, all-defenses proof, or rest-square
    conflict resolution to be correct, split it into analysis tooling instead of
    forcing it into `SearchBot`.

@@ -241,6 +241,29 @@ side. Pairwise results were D1/D3 `3-0-61`, D1/D5-cap8 `3-0-61`, D1/D7-cap8
 more budget than D5 cap8. Treat D5 cap8 as the efficient hard bot and D7 cap8 as
 the slower hard-side variant.
 
+A refreshed 8-entrant reference report now adds uncapped D5 and the active
+pattern-eval variants to that ladder. The run used Renju, the centered opening
+suite, `64` games per pair, `1000 ms` Linux CPU time per move, and a clean
+`822045148556` report provenance. Its standings were:
+
+| Rank | Bot | W-D-L | Read |
+|---:|---|---:|---|
+| 1 | `search-d7+tactical-cap-8+pattern-eval` | `303-6-139` | strongest sample, but high budget pressure |
+| 2 | `search-d5+tactical-cap-8+pattern-eval` | `285-2-161` | strongest efficient pattern-eval result |
+| 3 | `search-d7+tactical-cap-8` | `280-3-165` | stronger hard-side line-eval bot |
+| 4 | `search-d3+pattern-eval` | `277-3-168` | surprisingly strong, but much slower than D3 |
+| 5 | `search-d5+tactical-cap-8` | `227-2-219` | efficient hard-side product candidate |
+| 6 | `search-d5` | `218-9-221` | expensive uncapped depth without enough return |
+| 7 | `search-d3` | `170-1-277` | stable default baseline |
+| 8 | `search-d1` | `17-4-427` | easy/beginner lane, not competitive |
+
+The report strengthens two conclusions. First, uncapped D5 is not the useful
+hard path: it spends far more budget than D5 cap8 while ranking below it.
+Second, pattern eval has a real match-strength signal across D3, D5 cap8, and
+D7 cap8, but it remains a lab axis because the extra leaf cost is still the
+central tradeoff. Do not make pattern eval the default until it can win on
+strength per budget, not just raw match score.
+
 The key assumption is that depth remains the mechanism for seeing long play.
 Non-tactical alpha-beta should find winning combinations if it can search deep
 enough, but Gomoku's broad candidate set makes that unrealistic without better
@@ -286,10 +309,20 @@ behavior and improve measured hot paths. They should become configurable only
 when they represent a real tradeoff: strength versus speed, breadth versus
 depth, style, safety, or explainability.
 
-For the next bot slice, `search-d3` is the primary optimization target. Tactical
-scenarios remain diagnostics; a change should not be kept just because it fixes
-a depth-2 fixture if it loses reached depth or tournament strength against the
-current depth-3 baseline.
+For the next bot slice, the default assumption should be restraint. `0.4.1`
+already has enough evidence to cut a bot-ladder/report checkpoint. After that,
+`0.4.2` should use the stronger harness for one more lab pass before UI:
+
+1. Tune existing axes first: depth, child cap, candidate radius, pattern eval,
+   and possible asymmetric candidate sources.
+2. Prototype bounded forced-chain search only where local facts provide concrete
+   gain and defense replies.
+3. Treat style/character as a later budget-allocation mechanism, not as an
+   up-front label or eval-weight tweak.
+
+Tactical scenarios remain diagnostics; a change should not be kept just because
+it fixes a shallow fixture if it loses reached depth or tournament strength
+against the current depth-3 and hard-side capped baselines.
 
 The focused tactical scenario corpus is documented in
 [`tactical_scenarios.md`](tactical_scenarios.md). It is layered into `local_*`,

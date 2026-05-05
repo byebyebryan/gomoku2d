@@ -105,6 +105,18 @@ lab-only child frontier cap to test whether better ordering buys effective
 depth; a full incremental frontier/threat-state model is intentionally deferred
 until those metrics show caching is worth the complexity.
 
+The current clean reference report compares the depth ladder, tactical-cap
+variants, and pattern-eval variants. Its product read is conservative: D1 is an
+easy lane, D3 remains the default baseline, D5 tactical-cap is the efficient
+hard-side candidate, D7 tactical-cap is stronger but slower, and pattern eval is
+still lab-only because the score gain comes with real compute cost.
+
+After `0.4.1`, keep `0.4.2` lab-first rather than jumping straight to UI
+settings. Sweep existing knobs with head-to-heads and gauntlets, then try a
+bounded forced-chain prototype only if local facts provide concrete gain and
+defense replies. Treat offensive/defensive style as future search-budget
+allocation, not as a name pasted onto eval weights.
+
 ### Eval harness
 
 `gomoku-eval` runs head-to-head series, self-play, and multi-threaded bot

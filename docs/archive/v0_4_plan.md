@@ -90,15 +90,17 @@ Acceptance:
 Purpose: use the explicit pipeline to try one behavior-changing bot improvement
 with real evaluation gates.
 
-Likely work:
+Work so far:
 
-- Start from `search-d3` as the primary product-strength target.
-- Use tactical facts for move ordering or staged candidate ranking, not broad
-  leaf scanning.
-- Keep immediate win/block safety explicit and cheap.
-- Compare candidate radius, safety gate, and ordering changes independently.
-- Promote a change only if it improves reached depth, runtime, or tournament
-  strength under the same CPU budget while keeping tactical scenarios green.
+- Kept `search-d3` as the default baseline and compared it against shallow,
+  uncapped-deep, capped-deep, and pattern-eval variants.
+- Promoted the local-threat safety gate as the default cheap safety path.
+- Used tactical facts for ordering and non-root child frontier caps rather than
+  broad leaf scanning.
+- Kept immediate win/block safety explicit and measured through hard tactical
+  scenario gates.
+- Compared candidate radius, safety gate, ordering, child caps, and static eval
+  as separate lab axes before publishing the clean reference report.
 
 Acceptance:
 
@@ -119,13 +121,61 @@ Current checkpoint:
   (`search-d1`, `search-d3`, `search-d5`, `search-d5+tactical-cap-8`,
   `search-d7+tactical-cap-8`) passed all `20/20` hard safety-gate cases.
   Diagnostic misses remain expected and are not tournament blockers.
-- The next checkpoint should be a clean curated report from a clean committed
-  toolchain, committed as a follow-up report artifact. Do that before another
-  behavior-changing bot experiment so later comparisons have a stable anchor.
+- The clean curated reference report has been generated and published from a
+  clean `822045148556` provenance. It gives `0.4.1` a stable anchor for the
+  depth ladder, tactical-cap hard-side candidates, and pattern-eval ablations.
+- The current release decision is whether `0.4.1` should stop here as the
+  bot-ladder/reporting checkpoint, or take one more narrow forced-chain slice.
+  Do not add another broad tactical scan, broad leaf eval, or product-facing
+  bot knob before that decision is explicit.
 
-## `0.4.2` — Settings And Bot Config Surface
+## `0.4.2` — Bot Exploration II
 
-Purpose: make customization real once the preset vocabulary is grounded.
+Purpose: use the stronger harness to do one more measured bot pass before
+productizing settings. `0.4.1` gives us a real difficulty ladder and a usable
+report; `0.4.2` should tighten that ladder and probe whether forced play can
+create a more interesting practice opponent.
+
+Expected work:
+
+- Sweep existing knobs before adding new mechanisms: depth, child cap, candidate
+  radius, pattern eval, and possible asymmetric candidate-source choices.
+- Prefer `head-to-head` and `gauntlet` runs for tuning so the experiment matrix
+  does not explode into every possible pairing.
+- Keep the published round-robin report as the anchor source; refresh it only
+  after a candidate survives focused tests.
+- Prototype bounded forced-chain search as lab-only, using local threat facts to
+  derive concrete gain and defense replies instead of scanning the whole board
+  at every leaf.
+- Record explicit metrics for all non-alpha-beta work so "fewer nodes" cannot
+  hide extra tactical cost.
+- Treat bot style/character as a mechanism question, not a label question.
+  Offensive and defensive variants should mean different budget allocation over
+  own forcing chains versus opponent forcing-chain prevention.
+
+Non-goals:
+
+- No product settings page yet.
+- No public offensive/defensive personality labels yet.
+- No full TSS/proof search inside `SearchBot`.
+- No broad tactical scan or broad leaf-eval experiment unless the focused
+  harness proves why it is worth revisiting.
+
+Acceptance:
+
+- The easy/default/hard ladder is either confirmed or refined with focused
+  evidence.
+- Any forced-chain prototype reports its own cost and either survives focused
+  tournament checks or is removed and documented.
+- Style language remains lab-internal unless it maps to a real search-budget
+  mechanism.
+- The next UI/settings slice has fewer raw knobs and clearer product presets to
+  expose.
+
+## `0.4.3` — Settings And Bot Config Surface
+
+Purpose: make customization real once the preset vocabulary is grounded by the
+`0.4.1` and `0.4.2` reports.
 
 Expected work:
 
@@ -159,8 +209,8 @@ Acceptance:
 
 ## Later `0.4.x` Exploration
 
-Pick the next slice based on what feels strongest after the bot pipeline has one
-validated improvement and the UI has a place for settings.
+Pick the next slice based on what feels strongest after the bot pipeline has a
+validated ladder and the UI has a place for settings.
 
 Likely candidates:
 

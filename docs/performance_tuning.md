@@ -296,6 +296,54 @@ smaller. There is still no direct `pipeline/tactical_annotation` microbench; add
 one if we need isolated annotation-only timing instead of end-to-end search and
 tournament evidence.
 
+## `0.4.1` reference tournament checkpoint
+
+Date: `2026-05-04`
+
+The latest clean curated report was generated from git commit `822045148556`
+with `"git_dirty": false`. It used:
+
+- Renju rules
+- centered-suite openings with `4` opening plies
+- `64` games per pair across `8` entrants, for `1792` total matches
+- `1000 ms` Linux thread CPU time per move
+- `120` max moves
+- `22` worker threads on an AMD Ryzen 9 7900X host
+- `908649 ms` total wall time
+
+Standings:
+
+| Rank | Bot | W-D-L | Avg depth | Avg move time | Budget hit |
+|---:|---|---:|---:|---:|---:|
+| 1 | `search-d7+tactical-cap-8+pattern-eval` | `303-6-139` | `5.50` | `520.0 ms` | `32%` |
+| 2 | `search-d5+tactical-cap-8+pattern-eval` | `285-2-161` | `4.60` | `259.3 ms` | `1%` |
+| 3 | `search-d7+tactical-cap-8` | `280-3-165` | `5.59` | `452.4 ms` | `26%` |
+| 4 | `search-d3+pattern-eval` | `277-3-168` | `2.80` | `333.5 ms` | `10%` |
+| 5 | `search-d5+tactical-cap-8` | `227-2-219` | `4.62` | `203.0 ms` | `1%` |
+| 6 | `search-d5` | `218-9-221` | `3.82` | `790.8 ms` | `66%` |
+| 7 | `search-d3` | `170-1-277` | `2.91` | `69.3 ms` | `0%` |
+| 8 | `search-d1` | `17-4-427` | `1.00` | `7.8 ms` | `0%` |
+
+Interpretation:
+
+- `search-d1` is a credible easy lane only because the local-threat safety gate
+  handles hard immediate threat cases; it is not competitive in the reference
+  ladder.
+- `search-d3` remains the clean default baseline: low cost, stable behavior,
+  and no budget pressure.
+- `search-d5+tactical-cap-8` is the efficient hard-side line-eval candidate.
+  It outranks uncapped D5 while using far less time and budget.
+- `search-d7+tactical-cap-8` is stronger than D5 cap8 but pays for it with
+  materially higher budget pressure.
+- Pattern eval improves raw tournament score, especially at D5 cap8, but it is
+  still a strength-versus-budget tradeoff. Keep it as a lab axis until the cost
+  side is better understood.
+
+This is a good release checkpoint for `0.4.1`: the lab has a current shared
+baseline and enough evidence to avoid another broad tactical experiment. The
+next behavior slice, if any, should be bounded forced-chain search using
+concrete local gain/defense replies.
+
 ## Benchmark suites
 
 ### Core
@@ -447,6 +495,10 @@ From code inspection before the first benchmark pass:
 10. Clean up remaining bitboard-era hot-path callers: reuse Zobrist tables for
    root hashes, classify virtual cells without `Board::cell()`, and iterate
    occupied stones when generating nearby moves (`2026-05-03`)
+11. Precompute radius candidate masks and generate candidates from occupied
+    masks instead of scanning local squares around every stone (`2026-05-04`)
+12. Replace clone/apply local-threat annotation with a virtual board-after-move
+    view while preserving the same tactical facts (`2026-05-04`)
 
 ### Future work
 
