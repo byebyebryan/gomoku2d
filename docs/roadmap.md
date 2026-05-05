@@ -241,18 +241,46 @@ to invent but hard to justify. The release therefore focuses on:
 - behavior-preserving core/search hot-path optimizations
 - written records of rejected tactical experiments
 
-`0.4.1` should use that foundation for a narrower tactical ranking / move
-ordering pass. The target is not "make one depth-2 fixture pass"; it is better
-reached depth, runtime, or match strength under the same budget.
+`0.4.1` uses that foundation for a narrower tactical ranking / move-ordering
+pass. The target is not "make one depth-2 fixture pass"; it is better reached
+depth, runtime, or match strength under the same budget.
 
-The current `0.4.1` checkpoint has produced the first serious reference set:
-depth ladder, tactical-cap hard variants, and pattern-eval ablations. Before
-adding another behavior-changing bot slice, refresh the clean curated tournament
-report so the next decisions use one shared baseline.
+The current `0.4.1` checkpoint has produced and published the first clean
+8-entrant reference report: depth ladder, tactical-cap hard variants, and
+pattern-eval ablations under the same Renju rule, centered opening suite, and
+`1000 ms` CPU-per-move budget. The practical read is:
 
-`0.4.2` is the earliest likely UI bridge for bot controls/settings. Expose only
-knobs that have survived lab evidence. Profile should not become a dumping
-ground for bot/debug preferences.
+- `search-d1` is now a plausible easy/beginner lane because the safety gate
+  covers hard local threats even at shallow depth.
+- `search-d3` remains the stable default practice-bot baseline.
+- `search-d5+tactical-cap-8` is the efficient hard-side candidate.
+- `search-d7+tactical-cap-8` is stronger, but spends more budget.
+- `+pattern-eval` is promising enough to keep as a lab axis, but too expensive
+  and unsettled to promote as a default product preset.
+
+That is enough for a coherent `0.4.1` release if we want this patch to be the
+"bot ladder, report, and tactical pipeline" checkpoint. One more narrow
+behavior slice is still possible, but it should be a bounded forced-chain
+prototype with concrete gain/defense replies, not another broad tactical scan or
+leaf-eval experiment.
+
+`0.4.2` should stay in the lab for one more bot exploration pass before UI.
+The harness is now strong enough to justify a second measured pass, and the
+product presets will be cleaner if they come from that evidence rather than
+from today's raw knobs. The order should be:
+
+- tune existing axes first: depth, child cap, candidate radius, pattern eval,
+  and possible asymmetric candidate-source choices
+- prototype bounded forced-chain search second, using only concrete local
+  gain/defense replies with strict caps and explicit non-alpha-beta metrics
+- treat style/character last; offensive/defensive labels should emerge from
+  real budget allocation, not from ad hoc eval weights
+
+`0.4.3` is the earliest likely UI bridge for bot controls/settings. Expose only
+knobs that have survived lab evidence. A reasonable product-facing starting
+point is an easy/default/hard ladder backed by reports; keep raw pattern-eval,
+child-cap, and forced-chain knobs lab-only until they become product language.
+Profile should not become a dumping ground for bot/debug preferences.
 
 Later `0.4.x` slices can compete based on which lab-powered product surface
 feels strongest.

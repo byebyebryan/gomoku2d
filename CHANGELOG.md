@@ -12,6 +12,36 @@ their own section.
 
 ## [Unreleased]
 
+### Bot lab
+
+- Realigned `0.4.1` around a measured tactical ladder rather than broad bot
+  feature experiments: local threat safety, tactical-first ordering, child
+  frontier caps, and pattern-eval ablations now have shared scenario and
+  tournament vocabulary.
+- Promoted the local-threat safety gate as the default safety path after it
+  preserved hard tactical behavior with lower cost than the older shallow
+  search-probe gate.
+- Added reusable tactical annotation metrics and report fields so safety,
+  ordering, and capped-child experiments expose generated candidate breadth
+  separately from searched child breadth.
+- Added `+tactical-cap-N` as the report-facing shorthand for
+  `+tactical-first+child-cap-N`, keeping candidate radius and non-root child
+  breadth as separate lab axes.
+- Refreshed the clean 8-entrant Renju reference report with the depth ladder,
+  tactical-cap variants, and pattern-eval variants under the centered opening
+  suite.
+
+### Repo and docs
+
+- Polished the bot-report UI around the ranking table, expandable pairwise
+  comparisons, search metrics, mobile layout, and navigation from the game and
+  asset previews.
+- Updated the `0.4` planning docs, search-bot notes, tournament notes, and
+  performance notes around the current `0.4.1` checkpoint.
+- Captured the next `0.4.x` sequencing: cut `0.4.1` as the bot-ladder/report
+  checkpoint, keep `0.4.2` as one more lab-first bot exploration pass, and move
+  the player-facing settings bridge to `0.4.3`.
+
 ## [0.4.0] - 2026-05-03
 
 **Theme: turn `v0.4` toward bot-lab foundations before exposing player-facing
