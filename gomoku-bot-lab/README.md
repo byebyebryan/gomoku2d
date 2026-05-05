@@ -117,6 +117,11 @@ bounded forced-chain prototype only if local facts provide concrete gain and
 defense replies. Treat offensive/defensive style as future search-budget
 allocation, not as a name pasted onto eval weights.
 
+The first `0.4.2` sweep keeps that direction: pattern eval remains the strongest
+lab signal, cap16 is not a clear upgrade, and cap4 is a viable narrowing point
+when paired with tactical ordering. Treat those as candidates for the next
+focused survivor run, not product presets yet.
+
 ### Eval harness
 
 `gomoku-eval` runs head-to-head series, self-play, and multi-threaded bot

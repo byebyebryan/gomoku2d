@@ -344,6 +344,58 @@ baseline and enough evidence to avoid another broad tactical experiment. The
 next behavior slice, if any, should be bounded forced-chain search using
 concrete local gain/defense replies.
 
+## `0.4.2` sweep A gauntlet checkpoint
+
+Date: `2026-05-05`
+
+The first `0.4.2` sweep used the `0.4.1` clean reference report as its anchor
+source and tested child-cap / pattern-eval candidates against those anchors.
+It used:
+
+- Renju rules
+- centered-suite openings with `4` opening plies
+- `8` candidates x `8` anchors x `32` games, for `2048` total matches
+- `1000 ms` Linux thread CPU time per move
+- `120` max moves
+- `22` worker threads on an AMD Ryzen 9 7900X host
+- `1230537 ms` total wall time
+
+This is a screening run, not a full 16-entrant round robin. Candidate rows
+measure candidate-vs-anchor results. Anchor rows measure anchor-vs-candidate
+results and should be read together with the embedded reference anchor report.
+
+Candidate screen:
+
+| Candidate | W-D-L | Score | Avg depth | Avg move time | Budget exhausted | Breadth |
+|---|---:|---:|---:|---:|---:|---:|
+| `search-d5+tactical-cap-16+pattern-eval` | `158-5-93` | `62.7%` | `4.53` | `436.7 ms` | `10.6%` | `16.0 / pre 89.6` |
+| `search-d7+tactical-cap-4+pattern-eval` | `157-3-96` | `61.9%` | `5.72` | `408.7 ms` | `19.3%` | `7.5 / pre 89.1` |
+| `search-d5+tactical-cap-4+pattern-eval` | `155-4-97` | `61.3%` | `4.61` | `200.3 ms` | `0.5%` | `8.1 / pre 90.9` |
+| `search-d7+tactical-cap-16+pattern-eval` | `144-7-105` | `57.6%` | `5.03` | `738.0 ms` | `56.0%` | `16.0 / pre 88.4` |
+| `search-d7+tactical-cap-4` | `143-2-111` | `56.3%` | `5.71` | `359.9 ms` | `15.8%` | `7.9 / pre 87.3` |
+| `search-d5+tactical-cap-4` | `142-2-112` | `55.9%` | `4.56` | `142.3 ms` | `0.3%` | `7.7 / pre 84.2` |
+| `search-d7+tactical-cap-16` | `126-1-129` | `49.4%` | `5.29` | `662.1 ms` | `44.2%` | `16.0 / pre 85.7` |
+| `search-d5+tactical-cap-16` | `115-1-140` | `45.1%` | `4.58` | `337.7 ms` | `5.7%` | `16.1 / pre 86.3` |
+
+Interpretation:
+
+- Pattern eval remains a real strength signal, but still not a free default.
+  The strongest candidate scores are all pattern-eval variants, and the costs
+  range from acceptable (`D5 cap4 pattern`) to too heavy (`D7 cap16 pattern`).
+- `tactical-cap-16` is not a clear upgrade. The line-eval cap16 candidates
+  underperformed and cost more. Pattern cap16 can score well at D5, but it is
+  slower and lost its direct anchor comparison against `D5 cap8 pattern`.
+- `tactical-cap-4` is more interesting than expected. It often searches about
+  as narrowly as cap8 in practice because the safety/order gates already trim
+  weak branches; `D5 cap4 pattern` is the cleanest fast hard-side candidate,
+  and `D7 cap4 pattern` is the most interesting deeper candidate.
+- `D7 cap16` is not attractive right now. Both line and pattern variants spend
+  too much budget without producing a convincing screening result.
+- Do not promote a new product preset from this gauntlet alone. The next useful
+  check is a smaller focused run among the survivors: `D5 cap4`, `D5 cap4
+  pattern`, `D5 cap8 pattern`, `D7 cap4`, `D7 cap4 pattern`, and the current
+  `D7 cap8` / `D7 cap8 pattern` anchors.
+
 ## Benchmark suites
 
 ### Core

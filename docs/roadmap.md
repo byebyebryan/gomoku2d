@@ -276,6 +276,13 @@ from today's raw knobs. The order should be:
 - treat style/character last; offensive/defensive labels should emerge from
   real budget allocation, not from ad hoc eval weights
 
+The first `0.4.2` sweep has now covered child-cap and pattern-eval candidates
+with a batch gauntlet against the clean `0.4.1` anchors. It narrowed the next
+bot question rather than closing it: pattern eval is still the strongest signal
+but remains a cost tradeoff, cap16 is not a general upgrade, and cap4 is more
+viable than expected when paired with tactical ordering. The next bot-lab step
+should be a smaller survivor comparison before any player-facing setting work.
+
 `0.4.3` is the earliest likely UI bridge for bot controls/settings. Expose only
 knobs that have survived lab evidence. A reasonable product-facing starting
 point is an easy/default/hard ladder backed by reports; keep raw pattern-eval,

@@ -162,6 +162,19 @@ Non-goals:
 - No broad tactical scan or broad leaf-eval experiment unless the focused
   harness proves why it is worth revisiting.
 
+Current sweep status:
+
+- Sweep A used a batch gauntlet, not a full round robin: `8` candidates against
+  `8` clean `0.4.1` reference anchors, `32` games per pair, Renju,
+  centered-suite openings, and `1000 ms` CPU time per move.
+- Pattern eval remains the clearest strength signal but still has a wide cost
+  range. Keep it lab-only until the survivor set is clearer.
+- `tactical-cap-16` is not a general upgrade. The wider frontier often spends
+  more budget without a clean score gain.
+- `tactical-cap-4` is viable enough to keep testing because tactical ordering
+  and the safety gate already remove many weak branches before the cap matters.
+- Next step should be a smaller survivor comparison, not UI exposure.
+
 Acceptance:
 
 - The easy/default/hard ladder is either confirmed or refined with focused

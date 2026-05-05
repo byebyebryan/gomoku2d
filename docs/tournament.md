@@ -110,11 +110,15 @@ head-to-head or the next curated round-robin when that comparison matters.
 `--anchor-report` points at a full round-robin report, normally
 `gomoku-bot-lab/reports/latest.json`. The gauntlet report embeds the requested
 anchor standings from that source, including source config and git provenance,
-so scratch gauntlets can be read without maintaining a separate rating cache.
-The source report must be `round-robin`; a gauntlet or head-to-head report is
-not accepted as an anchor reference. The command also validates the source
-report against the current rule config, opening policy/plies, search budgets,
-and max move/game caps before running.
+anchor-vs-anchor pair summaries, and aggregate anchor search-cost summaries, so
+scratch gauntlets can be read without maintaining a separate rating cache. The
+HTML report marks comparison rows by `current` versus `reference`: current rows
+come from the gauntlet JSON itself; reference rows come from the embedded anchor
+report and do not include per-match boards in the scratch report. The source
+report must be `round-robin`; a gauntlet or head-to-head report is not accepted
+as an anchor reference. The command also validates the source report against the
+current rule config, opening policy/plies, search budgets, and max move/game
+caps before running.
 
 ## Opening Policies
 
