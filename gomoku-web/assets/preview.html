@@ -59,6 +59,27 @@
       padding: 20px;
     }
 
+    .top-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .top-links a {
+      background: var(--surface-strong);
+      border: 2px solid var(--border);
+      color: var(--text);
+      display: inline-block;
+      padding: 8px 12px;
+      text-transform: uppercase;
+    }
+
+    .top-links a:hover,
+    .top-links a:focus {
+      border-color: var(--teal);
+      outline: none;
+    }
+
     .note {
       color: var(--text-muted);
       max-width: 78ch;
@@ -110,6 +131,10 @@
 <body>
   <main>
     <section class="panel">
+      <nav class="top-links" aria-label="Project links">
+        <a href="/">Game</a>
+        <a href="/bot-report/">Bots</a>
+      </nav>
       <div>
         <h1>Gomoku2D asset previews</h1>
         <p class="note">

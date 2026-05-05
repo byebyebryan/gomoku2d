@@ -26,8 +26,14 @@
   line-height: 1.25;
 }
 
+.footer {
+  display: grid;
+  gap: 7px;
+  margin-top: 12px;
+}
+
 .version {
-  margin: -14px 0 0;
+  margin: 0;
   color: var(--text-soft);
   font-family: var(--font-display);
   font-size: var(--type-meta);
@@ -35,11 +41,10 @@
   text-transform: uppercase;
 }
 
-.legalLinks {
+.footerLinks {
   display: flex;
   gap: 8px;
-  margin: -18px 0 0;
-  color: var(--text);
+  color: var(--text-soft);
   font-family: var(--font-display);
   font-size: var(--type-quiet);
   letter-spacing: 0.1em;
@@ -47,8 +52,8 @@
   text-transform: uppercase;
 }
 
-.legalLinks a:hover,
-.legalLinks a:focus-visible {
+.footerLinks a:hover,
+.footerLinks a:focus-visible {
   color: var(--accent);
   text-decoration: underline;
   text-underline-offset: 3px;
