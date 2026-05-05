@@ -12,7 +12,7 @@ The harness supports three pairing workflows:
 |----------|---------|--------------|
 | `round-robin` | Curated/reference reports and final comparison sets | Every unordered bot pair from `--bots` |
 | `head-to-head` | One focused question, such as line eval vs pattern eval | Exactly two bots from `--bots` |
-| `gauntlet` | Testing one candidate without quadratic growth | `--candidate` against each bot in `--anchors` |
+| `gauntlet` | Testing one or more candidates without quadratic growth | `--candidate` or `--candidates` against each bot in `--anchors` |
 
 For each scheduled pair it creates `games-per-pair` jobs. Even values are
 important:
@@ -82,10 +82,30 @@ cargo run --release -p gomoku-eval -- tournament \
   --report-json outputs/gauntlet.json
 ```
 
+Batch gauntlet:
+
+```sh
+cargo run --release -p gomoku-eval -- tournament \
+  --schedule gauntlet \
+  --candidates search-d5+tactical-cap-4,search-d5+tactical-cap-16,search-d7+tactical-cap-4,search-d7+tactical-cap-16 \
+  --anchors search-d3,search-d5+tactical-cap-8,search-d7+tactical-cap-8 \
+  --anchor-report reports/latest.json \
+  --games-per-pair 32 \
+  --opening-policy centered-suite \
+  --opening-plies 4 \
+  --search-cpu-time-ms 1000 \
+  --max-moves 120 \
+  --report-json outputs/sweep-a-gauntlet.json
+```
+
 Gauntlet ratings should be treated as working calibration, not permanent truth:
 anchor ratings come from the latest clean reference tournament, while the
 gauntlet result is useful only under the same rule, opening policy, budget,
 match caps, and code revision.
+
+Batch gauntlets play candidates against anchors only. They intentionally do not
+play candidate-vs-candidate games; promote surviving candidates to a focused
+head-to-head or the next curated round-robin when that comparison matters.
 
 `--anchor-report` points at a full round-robin report, normally
 `gomoku-bot-lab/reports/latest.json`. The gauntlet report embeds the requested

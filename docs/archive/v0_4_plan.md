@@ -140,8 +140,9 @@ Expected work:
 
 - Sweep existing knobs before adding new mechanisms: depth, child cap, candidate
   radius, pattern eval, and possible asymmetric candidate-source choices.
-- Prefer `head-to-head` and `gauntlet` runs for tuning so the experiment matrix
-  does not explode into every possible pairing.
+- Prefer `head-to-head` and batch `gauntlet` runs for tuning so the experiment
+  matrix does not explode into every possible pairing. Batch gauntlets should
+  play candidates against stable anchors only, not candidate-vs-candidate.
 - Keep the published round-robin report as the anchor source; refresh it only
   after a candidate survives focused tests.
 - Prototype bounded forced-chain search as lab-only, using local threat facts to
