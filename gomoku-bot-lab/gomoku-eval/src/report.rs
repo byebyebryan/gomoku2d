@@ -1497,42 +1497,7 @@ pub fn render_tournament_report_html_with_options(
 
     render_reference_anchors_section(&mut html, report);
 
-    html.push_str("<section><div class=\"section-heading\"><h2>Standings</h2><p>Sorted by shuffled Elo.</p></div><table><thead><tr>");
-    for head in [
-        "Spec",
-        "Score %",
-        "W-D-L",
-        "Run-order Elo",
-        "Shuffled Elo",
-        "Avg ms",
-        "Avg nodes",
-        "Avg depth",
-        "Budget hit",
-    ] {
-        html.push_str(&format!("<th>{head}</th>"));
-    }
-    html.push_str("</tr></thead><tbody>");
-    for row in &report.standings {
-        html.push_str(&format!(
-            "<tr><td>{}</td><td>{:.1}%</td><td>{}-{}-{}</td><td>{:.1}</td><td>{:.1} +/- {:.1}</td><td>{:.1}</td><td>{:.0}</td><td>{:.2}</td><td>{:.0}%</td></tr>",
-            html_escape(&compact_bot_label(report, &row.bot)),
-            score_rate(row.wins, row.draws, row.match_count) * 100.0,
-            row.wins,
-            row.draws,
-            row.losses,
-            row.sequential_elo,
-            row.shuffled_elo_avg,
-            row.shuffled_elo_stddev,
-            row.avg_search_time_ms,
-            row.avg_nodes,
-            row.avg_depth,
-            row.budget_exhausted_rate * 100.0,
-        ));
-    }
-    html.push_str("</tbody></table></section>");
-
-    render_search_cost_section(&mut html, report);
-    render_match_tree(&mut html, report);
+    render_entrant_workbench(&mut html, report);
     render_how_to_read_section(&mut html);
 
     html.push_str("<section class=\"provenance\"><div class=\"section-heading\"><h2>Provenance</h2><p>Enough context to reproduce the run or compare against a later tuning pass.</p></div>");
@@ -1935,106 +1900,227 @@ fn render_how_to_read_section(html: &mut String) {
     html.push_str("</div></section>");
 }
 
-fn render_search_cost_section(html: &mut String, report: &TournamentReport) {
-    if !report.standings.iter().any(has_search_cost_metrics) {
-        return;
+fn render_entrant_workbench(html: &mut String, report: &TournamentReport) {
+    html.push_str("<section class=\"entrant-workbench\"><div class=\"section-heading\"><h2>Entrants</h2><p>One entrant-first table. Switch modes to compare result, search-cost, or pairwise detail columns without horizontal scrolling.</p></div>");
+    html.push_str("<div class=\"view-toggle\" aria-label=\"Entrant table mode\">");
+    html.push_str("<input class=\"report-view-radio\" type=\"radio\" name=\"entrant-view\" id=\"view-results\" checked>");
+    html.push_str("<label for=\"view-results\">Results</label>");
+    html.push_str("<input class=\"report-view-radio\" type=\"radio\" name=\"entrant-view\" id=\"view-search\">");
+    html.push_str("<label for=\"view-search\">Search</label>");
+    html.push_str("<input class=\"report-view-radio\" type=\"radio\" name=\"entrant-view\" id=\"view-pairwise\">");
+    html.push_str("<label for=\"view-pairwise\">Pairwise</label>");
+    html.push_str("</div>");
+    html.push_str("<div class=\"entrant-grid\">");
+    render_entrant_header(html);
+    for row in &report.standings {
+        render_entrant_row(html, report, row);
     }
+    html.push_str("</div></section>");
+}
 
-    html.push_str("<section><div class=\"section-heading\"><h2>Search Cost</h2><p>Per-search-move instrumentation. Split cells show root-stage / search costs.</p></div><table><thead><tr>");
+fn render_entrant_header(html: &mut String) {
+    html.push_str("<div class=\"entrant-head\">");
+    html.push_str("<span>Spec</span>");
     for head in [
-        "Spec",
+        "Score %",
+        "W-D-L",
+        "Shuffled Elo",
+        "Avg ms",
+        "Avg depth",
+        "Budget hit",
+    ] {
+        html.push_str(&format!(
+            "<span class=\"metric metric-results\">{head}</span>"
+        ));
+    }
+    for head in [
         "Node split",
         "Avg eval",
         "Cand gen r/s",
         "Cand width r/s",
+        "Legal r/s",
         "Child width",
         "Cap hit",
         "Tactical ann r/s",
-        "Legal r/s",
         "TT hit/cut",
-        "Beta cuts",
     ] {
-        html.push_str(&format!("<th>{head}</th>"));
-    }
-    html.push_str("</tr></thead><tbody>");
-    for row in &report.standings {
         html.push_str(&format!(
-            "<tr><td>{}</td><td>{}</td><td>{:.1}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>",
-            html_escape(&compact_bot_label(report, &row.bot)),
-            html_escape(&phase_average_label(
-                row.search_nodes,
-                row.safety_nodes,
-                row.search_move_count,
-            )),
-            row.avg_eval_calls,
-            html_escape(&phase_average_label(
-                row.root_candidate_generations,
-                row.search_candidate_generations,
-                row.search_move_count,
-            )),
-            html_escape(&candidate_width_label(row)),
-            html_escape(&child_width_label(
-                row.child_limit_applications,
-                row.avg_child_moves_before,
-                row.avg_child_moves_after,
-            )),
-            html_escape(&percent_label(row.child_cap_hits, row.child_limit_applications)),
-            html_escape(&phase_average_label(
-                row.root_tactical_annotations,
-                row.search_tactical_annotations,
-                row.search_move_count,
-            )),
-            html_escape(&phase_average_label(
-                row.root_legality_checks,
-                row.search_legality_checks,
-                row.search_move_count,
-            )),
-            html_escape(&phase_average_label_zero_valid(
-                row.tt_hits,
-                row.tt_cutoffs,
-                row.search_move_count,
-            )),
-            html_escape(&average_label(row.beta_cutoffs, row.search_move_count)),
+            "<span class=\"metric metric-search\">{head}</span>"
         ));
     }
-    html.push_str("</tbody></table></section>");
+    for head in ["Pairs", "Best", "Worst", "Open row"] {
+        html.push_str(&format!(
+            "<span class=\"metric metric-pairwise\">{head}</span>"
+        ));
+    }
+    html.push_str("</div>");
 }
 
-fn render_match_tree(html: &mut String, report: &TournamentReport) {
-    html.push_str("<section><div class=\"section-heading\"><h2>Matches By Pair</h2><p>Expand a bot pair to inspect individual games. Finished boards and human move notation come first; raw cell indexes stay tucked under each match.</p></div><div class=\"pair-tree\">");
-    for pair in &report.pairwise {
+fn render_entrant_row(html: &mut String, report: &TournamentReport, row: &StandingReport) {
+    let pairs = ranked_pairs_for_bot(report, &row.bot);
+    let best_pair = best_pair_for_bot(report, &row.bot, &pairs);
+    let worst_pair = worst_pair_for_bot(report, &row.bot, &pairs);
+
+    html.push_str("<details class=\"entrant-row\"><summary>");
+    html.push_str(&format!(
+        "<strong>{}</strong>",
+        html_escape(&compact_bot_label(report, &row.bot))
+    ));
+    html.push_str(&format!(
+        "<span class=\"metric metric-results\">{:.1}%</span>",
+        score_rate(row.wins, row.draws, row.match_count) * 100.0,
+    ));
+    html.push_str(&format!(
+        "<span class=\"metric metric-results\">{}-{}-{}</span>",
+        row.wins, row.draws, row.losses
+    ));
+    html.push_str(&format!(
+        "<span class=\"metric metric-results\">{:.1} +/- {:.1}</span>",
+        row.shuffled_elo_avg, row.shuffled_elo_stddev
+    ));
+    html.push_str(&format!(
+        "<span class=\"metric metric-results\">{:.1}</span>",
+        row.avg_search_time_ms
+    ));
+    html.push_str(&format!(
+        "<span class=\"metric metric-results\">{:.2}</span>",
+        row.avg_depth
+    ));
+    html.push_str(&format!(
+        "<span class=\"metric metric-results\">{:.0}%</span>",
+        row.budget_exhausted_rate * 100.0
+    ));
+    html.push_str(&format!(
+        "<span class=\"metric metric-search\">{}</span>",
+        html_escape(&phase_average_label(
+            row.search_nodes,
+            row.safety_nodes,
+            row.search_move_count,
+        ))
+    ));
+    html.push_str(&format!(
+        "<span class=\"metric metric-search\">{:.1}</span>",
+        row.avg_eval_calls
+    ));
+    html.push_str(&format!(
+        "<span class=\"metric metric-search\">{}</span>",
+        html_escape(&phase_average_label(
+            row.root_candidate_generations,
+            row.search_candidate_generations,
+            row.search_move_count,
+        ))
+    ));
+    html.push_str(&format!(
+        "<span class=\"metric metric-search\">{}</span>",
+        html_escape(&candidate_width_label(row))
+    ));
+    html.push_str(&format!(
+        "<span class=\"metric metric-search\">{}</span>",
+        html_escape(&phase_average_label(
+            row.root_legality_checks,
+            row.search_legality_checks,
+            row.search_move_count,
+        ))
+    ));
+    html.push_str(&format!(
+        "<span class=\"metric metric-search\">{}</span>",
+        html_escape(&child_width_label(
+            row.child_limit_applications,
+            row.avg_child_moves_before,
+            row.avg_child_moves_after,
+        ))
+    ));
+    html.push_str(&format!(
+        "<span class=\"metric metric-search\">{}</span>",
+        html_escape(&percent_label(
+            row.child_cap_hits,
+            row.child_limit_applications
+        ))
+    ));
+    html.push_str(&format!(
+        "<span class=\"metric metric-search\">{}</span>",
+        html_escape(&phase_average_label(
+            row.root_tactical_annotations,
+            row.search_tactical_annotations,
+            row.search_move_count,
+        ))
+    ));
+    html.push_str(&format!(
+        "<span class=\"metric metric-search\">{}</span>",
+        html_escape(&phase_average_label_zero_valid(
+            row.tt_hits,
+            row.tt_cutoffs,
+            row.search_move_count,
+        ))
+    ));
+    html.push_str(&format!(
+        "<span class=\"metric metric-pairwise\">{} opponents</span>",
+        pairs.len()
+    ));
+    html.push_str(&format!(
+        "<span class=\"metric metric-pairwise\">{}</span>",
+        html_escape(&best_pair)
+    ));
+    html.push_str(&format!(
+        "<span class=\"metric metric-pairwise\">{}</span>",
+        html_escape(&worst_pair)
+    ));
+    html.push_str("<span class=\"metric metric-pairwise\">Expand</span>");
+    html.push_str("</summary>");
+    render_entrant_pairwise(html, report, &row.bot, &pairs);
+    html.push_str("</details>");
+}
+
+fn render_entrant_pairwise(
+    html: &mut String,
+    report: &TournamentReport,
+    bot: &str,
+    pairs: &[&PairwiseReport],
+) {
+    html.push_str("<div class=\"entrant-pairs\">");
+    for pair in pairs {
+        let opponent = opponent_for_pair(pair, bot);
         let matches = report
             .matches
             .iter()
             .filter(|report_match| same_pair(report_match, &pair.bot_a, &pair.bot_b))
             .collect::<Vec<_>>();
 
-        html.push_str("<details class=\"pair-group\"><summary>");
+        html.push_str("<details class=\"opponent-row\"><summary>");
         html.push_str(&format!(
             "<strong>{}</strong><span>{} matches</span><span>{}</span><span>{}</span></summary>",
-            html_escape(&pair_label(report, pair)),
+            html_escape(&format!(
+                "{} vs {}",
+                compact_bot_label(report, bot),
+                compact_bot_label(report, opponent),
+            )),
             matches.len(),
-            html_escape(&pair_record_label(pair)),
-            html_escape(&pair_score_label(pair)),
+            html_escape(&pair_record_for_bot_label(pair, bot)),
+            html_escape(&pair_score_for_bot_label(pair, bot)),
         ));
-        render_pair_overview(html, report, pair);
+        render_pair_overview_for_bot(html, report, pair, bot);
         html.push_str("<div class=\"match-list\">");
         for report_match in matches {
             render_match(html, report, pair, report_match);
         }
         html.push_str("</div></details>");
     }
-    html.push_str("</div></section>");
+    html.push_str("</div>");
 }
 
-fn render_pair_overview(html: &mut String, report: &TournamentReport, pair: &PairwiseReport) {
+fn render_pair_overview_for_bot(
+    html: &mut String,
+    report: &TournamentReport,
+    pair: &PairwiseReport,
+    bot: &str,
+) {
     html.push_str("<div class=\"pair-overview\">");
     html.push_str(&format!(
         "<p><b>Pair result</b><br>{}; {}; {} points rate {:.1}%</p>",
-        html_escape(&pair_record_label(pair)),
-        html_escape(&pair_score_label(pair)),
-        html_escape(&compact_bot_label(report, &pair.bot_a)),
-        avg(pair.score_a * 100.0, pair.total),
+        html_escape(&pair_record_for_bot_label(pair, bot)),
+        html_escape(&pair_score_for_bot_label(pair, bot)),
+        html_escape(&compact_bot_label(report, bot)),
+        pair_score_rate_for_bot(pair, bot),
     ));
 
     let color_lines = color_result_lines(report, pair);
@@ -2049,6 +2135,97 @@ fn render_pair_overview(html: &mut String, report: &TournamentReport, pair: &Pai
         ));
     }
     html.push_str("</div>");
+}
+
+fn ranked_pairs_for_bot<'a>(report: &'a TournamentReport, bot: &str) -> Vec<&'a PairwiseReport> {
+    let ranking = report
+        .standings
+        .iter()
+        .enumerate()
+        .map(|(index, row)| (row.bot.as_str(), index))
+        .collect::<HashMap<_, _>>();
+    let mut pairs = report
+        .pairwise
+        .iter()
+        .filter(|pair| pair.bot_a == bot || pair.bot_b == bot)
+        .collect::<Vec<_>>();
+
+    pairs.sort_by_key(|pair| {
+        ranking
+            .get(opponent_for_pair(pair, bot))
+            .copied()
+            .unwrap_or(usize::MAX)
+    });
+    pairs
+}
+
+fn opponent_for_pair<'a>(pair: &'a PairwiseReport, bot: &str) -> &'a str {
+    if pair.bot_a == bot {
+        &pair.bot_b
+    } else {
+        &pair.bot_a
+    }
+}
+
+fn pair_record_for_bot_label(pair: &PairwiseReport, bot: &str) -> String {
+    if pair.bot_a == bot {
+        pair_record_label(pair)
+    } else {
+        format!("{}-{}-{} A-D-B", pair.wins_b, pair.draws, pair.wins_a)
+    }
+}
+
+fn pair_score_for_bot_label(pair: &PairwiseReport, bot: &str) -> String {
+    if pair.bot_a == bot {
+        pair_score_label(pair)
+    } else {
+        format!("{:.1}-{:.1} points", pair.score_b, pair.score_a)
+    }
+}
+
+fn pair_score_rate_for_bot(pair: &PairwiseReport, bot: &str) -> f64 {
+    let score = if pair.bot_a == bot {
+        pair.score_a
+    } else {
+        pair.score_b
+    };
+    avg(score * 100.0, pair.total)
+}
+
+fn best_pair_for_bot(report: &TournamentReport, bot: &str, pairs: &[&PairwiseReport]) -> String {
+    pairs
+        .iter()
+        .max_by(|a, b| {
+            pair_score_rate_for_bot(a, bot)
+                .partial_cmp(&pair_score_rate_for_bot(b, bot))
+                .unwrap_or(std::cmp::Ordering::Equal)
+        })
+        .map(|pair| {
+            format!(
+                "{} {:.1}%",
+                compact_bot_label(report, opponent_for_pair(pair, bot)),
+                pair_score_rate_for_bot(pair, bot)
+            )
+        })
+        .unwrap_or_else(|| "n/a".to_string())
+}
+
+fn worst_pair_for_bot(report: &TournamentReport, bot: &str, pairs: &[&PairwiseReport]) -> String {
+    pairs
+        .iter()
+        .min_by(|a, b| {
+            pair_score_rate_for_bot(a, bot)
+                .partial_cmp(&pair_score_rate_for_bot(b, bot))
+                .unwrap_or(std::cmp::Ordering::Equal)
+        })
+        .map(|pair| {
+            format!(
+                "{} {:.1}%",
+                compact_bot_label(report, opponent_for_pair(pair, bot)),
+                pair_score_rate_for_bot(pair, bot)
+            )
+        })
+        .unwrap_or_else(|| "n/a".to_string())
 }
 
 fn render_match(
@@ -2188,17 +2365,6 @@ fn side_stats_label(stats: &SideStatsReport) -> String {
     )
 }
 
-fn has_search_cost_metrics(row: &StandingReport) -> bool {
-    row.eval_calls > 0
-        || row.candidate_generations > 0
-        || row.legality_checks > 0
-        || row.tactical_annotations > 0
-        || row.child_limit_applications > 0
-        || row.tt_hits > 0
-        || row.tt_cutoffs > 0
-        || row.beta_cutoffs > 0
-}
-
 fn has_side_search_cost_metrics(stats: &SideStatsReport) -> bool {
     stats.eval_calls > 0
         || stats.candidate_generations > 0
@@ -2300,14 +2466,6 @@ fn average_label(total: u64, count: u32) -> String {
 fn same_pair(report_match: &MatchReport, bot_a: &str, bot_b: &str) -> bool {
     (report_match.black == bot_a && report_match.white == bot_b)
         || (report_match.black == bot_b && report_match.white == bot_a)
-}
-
-fn pair_label(report: &TournamentReport, pair: &PairwiseReport) -> String {
-    format!(
-        "{} vs {}",
-        compact_bot_label(report, &pair.bot_a),
-        compact_bot_label(report, &pair.bot_b)
-    )
 }
 
 fn pair_record_label(pair: &PairwiseReport) -> String {
@@ -2478,13 +2636,14 @@ const STYLE: &str = r#"
 main{display:grid;gap:24px;margin:0 auto;max-width:1180px;padding:32px}h1,h2,p{margin:0}a{color:inherit;text-decoration:none}code{color:var(--accent)}
 .hero,section,.run-warning{background:var(--surface);border:2px solid var(--border);display:grid;gap:16px;padding:20px;overflow:auto}.run-warning{border-color:var(--accent);color:var(--accent)}.top-links{display:flex;flex-wrap:wrap;gap:8px}.top-links a{background:var(--surface-strong);border:2px solid var(--border);color:var(--text);display:inline-block;padding:8px 12px;text-transform:uppercase}.top-links a:hover,.top-links a:focus{border-color:var(--teal);outline:none}
 .eyebrow{color:var(--accent);font-size:12px;letter-spacing:.16em;text-transform:uppercase}h1{font-size:clamp(34px,7vw,64px);line-height:1}.lede{color:var(--text);font-size:clamp(17px,2vw,21px);max-width:78ch}.section-heading p,.match summary span,.match-grid,.note{color:var(--text-muted)}
-.run-strip{display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px}.run-chip{background:var(--card);border:1px solid var(--border);display:inline-flex;gap:8px;align-items:baseline;min-width:0;padding:7px 10px}.run-chip span{color:var(--text-muted);font-size:11px;letter-spacing:.1em;text-transform:uppercase}.run-chip strong{color:var(--green);font-size:14px;line-height:1.2}article,.pair-group,.match{background:var(--card);border:1px solid var(--border);display:grid;gap:10px;padding:16px}article:hover,.pair-group:hover,.match:hover,.run-chip:hover{border-color:var(--teal)}article span{color:var(--text-muted);font-size:12px;letter-spacing:.1em;text-transform:uppercase}article strong{color:var(--green);font-size:clamp(18px,2vw,24px);line-height:1.18;word-break:break-word}
+.run-strip{display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px}.run-chip{background:var(--card);border:1px solid var(--border);display:inline-flex;gap:8px;align-items:baseline;min-width:0;padding:7px 10px}.run-chip span{color:var(--text-muted);font-size:11px;letter-spacing:.1em;text-transform:uppercase}.run-chip strong{color:var(--green);font-size:14px;line-height:1.2}article,.entrant-row,.opponent-row,.match{background:var(--card);border:1px solid var(--border);display:grid;gap:10px;padding:16px}article:hover,.entrant-row:hover,.opponent-row:hover,.match:hover,.run-chip:hover{border-color:var(--teal)}article span{color:var(--text-muted);font-size:12px;letter-spacing:.1em;text-transform:uppercase}article strong{color:var(--green);font-size:clamp(18px,2vw,24px);line-height:1.18;word-break:break-word}
 .term-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}.term{align-content:start}.term h3{color:var(--green);font-size:1rem;margin:0}.term p{color:var(--text-muted);margin:0}.term code{color:var(--accent)}
 .section-heading{display:grid;gap:8px}.section-heading h2{color:var(--accent);font-size:1.2rem}.section-heading p{max-width:78ch}
 table{border-collapse:collapse;min-width:820px;width:100%}th,td{border-bottom:1px solid var(--border);padding:9px 10px;text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{color:var(--text-muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
-.pair-tree,.match-list{display:grid;gap:12px}.pair-group,.match{padding:0}.pair-group summary,.match summary{cursor:pointer;display:grid;gap:12px;align-items:center;padding:12px 14px}.pair-group summary{grid-template-columns:1fr auto auto auto}.match summary{grid-template-columns:72px 1fr auto auto auto}.pair-group summary strong,.match summary strong{color:var(--text)}.pair-overview{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));padding:0 18px 16px}.pair-overview p{background:var(--surface-strong);border:1px solid var(--border);margin:0;padding:12px}.pair-group>.match-list{padding:8px 18px 18px}.match-grid{display:grid;gap:12px;grid-template-columns:1.4fr 1fr 1fr;padding:0 14px 14px}.match-grid p{margin:0;word-break:break-word}.pair-overview b,.match-grid b{color:var(--text)}.board-panel,.raw-data{grid-column:1/-1}.board-ascii,.raw-data{background:var(--surface-strong);border:1px solid var(--border)}.board-ascii{color:var(--text);font:14px/1.35 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:8px 0 0;overflow:auto;padding:12px;white-space:pre}.raw-data{padding:10px}.raw-data summary{cursor:pointer;padding:0}.raw-data p{margin:8px 0 0}
+.view-toggle{display:flex;flex-wrap:wrap;gap:8px}.report-view-radio{height:1px;opacity:0;position:absolute;width:1px}.view-toggle label{background:var(--surface-strong);border:1px solid var(--border);cursor:pointer;padding:8px 12px;text-transform:uppercase}.view-toggle label:hover{border-color:var(--teal)}.entrant-workbench:has(#view-results:checked) label[for=view-results],.entrant-workbench:has(#view-search:checked) label[for=view-search],.entrant-workbench:has(#view-pairwise:checked) label[for=view-pairwise]{border-color:var(--accent);color:var(--accent)}
+.entrant-grid,.entrant-pairs,.match-list{display:grid;gap:12px}.entrant-head,.entrant-row summary{display:grid;gap:10px;grid-template-columns:minmax(170px,1.35fr) repeat(9,minmax(58px,1fr));align-items:center}.entrant-head{color:var(--text-muted);font-size:12px;letter-spacing:.08em;padding:0 14px;text-transform:uppercase}.entrant-row,.opponent-row,.match{padding:0}.entrant-row summary,.opponent-row summary,.match summary{cursor:pointer;padding:12px 14px}.entrant-row summary strong,.opponent-row summary strong,.match summary strong{color:var(--text)}.entrant-row summary span,.opponent-row summary span,.match summary span{color:var(--text-muted)}.metric-search,.metric-pairwise{display:none}.entrant-workbench:has(#view-search:checked) .metric-results,.entrant-workbench:has(#view-search:checked) .metric-pairwise,.entrant-workbench:has(#view-pairwise:checked) .metric-results,.entrant-workbench:has(#view-pairwise:checked) .metric-search{display:none}.entrant-workbench:has(#view-search:checked) .metric-search,.entrant-workbench:has(#view-pairwise:checked) .metric-pairwise{display:block}.entrant-pairs{padding:8px 18px 18px}.opponent-row summary{display:grid;gap:12px;grid-template-columns:1fr auto auto auto;align-items:center}.match summary{display:grid;gap:12px;grid-template-columns:72px 1fr auto auto auto;align-items:center}.pair-overview{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));padding:0 18px 16px}.pair-overview p{background:var(--surface-strong);border:1px solid var(--border);margin:0;padding:12px}.match-grid{display:grid;gap:12px;grid-template-columns:1.4fr 1fr 1fr;padding:0 14px 14px}.match-grid p{margin:0;word-break:break-word}.pair-overview b,.match-grid b{color:var(--text)}.board-panel,.raw-data{grid-column:1/-1}.board-ascii,.raw-data{background:var(--surface-strong);border:1px solid var(--border)}.board-ascii{color:var(--text);font:14px/1.35 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:8px 0 0;overflow:auto;padding:12px;white-space:pre}.raw-data{padding:10px}.raw-data summary{cursor:pointer;padding:0}.raw-data p{margin:8px 0 0}
 .provenance dl{display:grid;gap:8px 18px;grid-template-columns:max-content 1fr;margin:0}.provenance dt{color:var(--text-muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase}.provenance dd{margin:0}.command{background:var(--surface-strong);border:1px solid var(--border);margin:0;overflow:auto;padding:12px}
-@media (max-width:760px){main{padding:20px}.pair-group summary,.match summary{grid-template-columns:1fr}.match-grid{grid-template-columns:1fr}.provenance dl{grid-template-columns:1fr}table{min-width:760px}}
+@media (max-width:760px){main{padding:20px}.entrant-head{display:none}.entrant-row summary,.opponent-row summary,.match summary{grid-template-columns:1fr}.match-grid{grid-template-columns:1fr}.provenance dl{grid-template-columns:1fr}table{min-width:760px}}
 </style>
 "#;
 
@@ -2518,7 +2677,7 @@ mod tests {
     }
 
     #[test]
-    fn html_report_uses_compact_run_strip_before_standings() {
+    fn html_report_uses_compact_run_strip_before_entrant_workbench() {
         let mut report = sample_report();
         report.standings = vec![sample_standing_with_search_costs(
             "search-d7+tactical-cap-8+pattern-eval",
@@ -2531,18 +2690,28 @@ mod tests {
         assert!(html.contains("SearchBot_D7+TCap8+Pattern (1000.0)"));
         assert!(!html.contains("<span>Entrants</span>"));
         assert!(!html.contains("SearchBot @ depth 7 + tactical cap 8 + pattern eval"));
+        assert!(html.contains("<h2>Entrants</h2>"));
+        assert!(!html.contains("<h2>Standings</h2>"));
+        assert!(!html.contains("<h2>Search Cost</h2>"));
+        assert!(!html.contains("<h2>Matches By Pair</h2>"));
 
         let run_strip_pos = html.find("class=\"run-strip\"").unwrap();
-        let standings_pos = html.find("<h2>Standings</h2>").unwrap();
-        assert!(run_strip_pos < standings_pos);
+        let entrants_pos = html.find("<h2>Entrants</h2>").unwrap();
+        assert!(run_strip_pos < entrants_pos);
     }
 
     #[test]
-    fn html_report_groups_matches_by_pair_and_demotes_raw_cells() {
-        let report = sample_report();
+    fn html_report_drills_from_entrant_to_opponent_matches() {
+        let mut report = sample_report();
+        report.standings = vec![
+            sample_standing_with_search_costs("fast"),
+            sample_standing_with_search_costs("balanced"),
+        ];
         let html = render_tournament_report_html(&report);
 
-        assert!(html.contains("<details class=\"pair-group\">"));
+        assert!(html.contains("<section class=\"entrant-workbench\">"));
+        assert!(html.contains("<details class=\"entrant-row\">"));
+        assert!(html.contains("<details class=\"opponent-row\">"));
         assert!(html.contains("SearchBot_D2 vs SearchBot_D3"));
         assert!(html.contains("2 matches"));
         assert!(html.contains("<div class=\"pair-overview\">"));
@@ -2555,10 +2724,12 @@ mod tests {
         assert!(html.contains("#002</span><strong>SearchBot_D2 (W) vs SearchBot_D3 (B)</strong>"));
         assert!(html.contains("<b>SearchBot_D2 (W) stats</b>"));
         assert!(html.contains("<b>SearchBot_D3 (B) stats</b>"));
+        assert!(html.contains("<label for=\"view-pairwise\">Pairwise</label>"));
         assert!(!html.contains("<h2>Pairwise</h2>"));
         assert!(!html.contains("<h2>Color Splits</h2>"));
         assert!(html.contains("<details class=\"raw-data\">"));
 
+        let entrant_pos = html.find("<details class=\"entrant-row\">").unwrap();
         let pair_pos = html.find("SearchBot_D2 vs SearchBot_D3").unwrap();
         let overview_pos = html.find("<div class=\"pair-overview\">").unwrap();
         let color_a_pos = html.find("SearchBot_D2: black").unwrap();
@@ -2571,6 +2742,7 @@ mod tests {
         let moves_pos = match_pos + match_body.find("<b>Moves</b>").unwrap();
         let opening_pos = match_pos + match_body.find("<b>Opening</b>").unwrap();
         let raw_pos = match_pos + match_body.find("Raw data").unwrap();
+        assert!(entrant_pos < pair_pos);
         assert!(pair_pos < overview_pos);
         assert!(overview_pos < color_a_pos);
         assert!(color_a_pos < color_b_pos);
@@ -2586,7 +2758,11 @@ mod tests {
 
     #[test]
     fn html_report_surfaces_match_opening_metadata() {
-        let report = sample_report();
+        let mut report = sample_report();
+        report.standings = vec![
+            sample_standing_with_search_costs("fast"),
+            sample_standing_with_search_costs("balanced"),
+        ];
         let html = render_tournament_report_html(&report);
 
         assert!(html.contains("<b>Opening</b>"));
@@ -2605,7 +2781,11 @@ mod tests {
 
         let html = render_tournament_report_html(&report);
 
-        assert!(html.contains("<h2>Search Cost</h2>"));
+        assert!(html.contains("<h2>Entrants</h2>"));
+        assert!(html.contains("<label for=\"view-results\">Results</label>"));
+        assert!(html.contains("<label for=\"view-search\">Search</label>"));
+        assert!(html.contains("<label for=\"view-pairwise\">Pairwise</label>"));
+        assert!(!html.contains("<h2>Search Cost</h2>"));
         assert!(html.contains("SearchBot_D2"));
         assert!(html.contains("100.0"));
         assert!(html.contains("Node split"));
@@ -2622,10 +2802,6 @@ mod tests {
         assert!(html.contains("2.0 / 4.0"));
         assert!(html.contains("TT hit/cut"));
         assert!(html.contains("0.0 / 0.0"));
-        assert!(html.contains("cand r/s 1.0 / 4.0"));
-        assert!(html.contains("width r/s 80.0 / 105.0"));
-        assert!(html.contains("child 12.0 -&gt; 8.0"));
-        assert!(html.contains("legal r/s 2.0 / 4.0"));
         assert!(html.contains("<h3>Search Cost</h3>"));
     }
 
