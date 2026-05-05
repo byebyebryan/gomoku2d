@@ -33,19 +33,22 @@ pairs = n * (n - 1) / 2
 Use `head-to-head` or `gauntlet` while tuning. Promote only promising candidates
 into the next full round-robin/reference report.
 
-For ranking runs, prefer running from `gomoku-bot-lab/`:
+For ranking runs, prefer running the curated reference set from
+`gomoku-bot-lab/`. The current set covers the depth ladder, tactical-cap
+variants, and pattern-eval ablations without keeping no-safety bots in the
+published baseline.
 
 ```sh
 mkdir -p reports
 
 cargo run --release -p gomoku-eval -- tournament \
-  --bots search-d2,search-d3,search-d5 \
+  --bots search-d1,search-d3,search-d5,search-d5+tactical-cap-8,search-d7+tactical-cap-8,search-d3+pattern-eval,search-d5+tactical-cap-8+pattern-eval,search-d7+tactical-cap-8+pattern-eval \
   --games-per-pair 64 \
   --opening-policy centered-suite \
   --opening-plies 4 \
   --search-cpu-time-ms 1000 \
   --max-moves 120 \
-  --seed 48 \
+  --seed 63 \
   --threads 22 \
   --report-json reports/latest.json
 ```
