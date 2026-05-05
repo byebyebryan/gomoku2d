@@ -9,16 +9,21 @@
       color-scheme: dark;
       --bg: #1e1e1e;
       --surface: #2a2a2a;
+      --surface-strong: #333333;
       --border: #575756;
       --text: #f5f5f5;
       --text-muted: #a6a6a0;
       --accent: #fccb57;
+      --teal: #5fc7c2;
     }
     * { box-sizing: border-box; }
     body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
     main { max-width: 1280px; margin: 0 auto; padding: 32px; display: grid; gap: 24px; }
     h1, h2, p { margin: 0; }
     .panel { background: var(--surface); border: 2px solid var(--border); padding: 20px; display: grid; gap: 16px; }
+    .top-links { display: flex; flex-wrap: wrap; gap: 8px; }
+    .top-links a { background: var(--surface-strong); border: 2px solid var(--border); color: var(--text); display: inline-block; padding: 8px 12px; text-decoration: none; text-transform: uppercase; }
+    .top-links a:hover, .top-links a:focus { border-color: var(--teal); outline: none; }
     .note { color: var(--text-muted); }
     .sheet { width: 100%; max-width: 768px; image-rendering: pixelated; background: #000; }
     .grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 12px; }
@@ -32,6 +37,10 @@
 <body>
   <main>
     <section class="panel">
+      <nav class="top-links" aria-label="Project links">
+        <a href="/">Game</a>
+        <a href="/bot-report/">Bots</a>
+      </nav>
       <div>
         <h1>Gomoku2D icon preview</h1>
         <p class="note">Current source sheet plus exported SVG pack. Names below follow the current inferred mapping from <code>icon_sheet.png</code>.</p>
