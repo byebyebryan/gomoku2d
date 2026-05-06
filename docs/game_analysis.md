@@ -198,17 +198,24 @@ It does not yet expose a first-class threat inventory with named shapes, cost
 squares, or all defender reply classifications. That inventory is the next
 design step before broader forced-line claims.
 
+`hybrid_defense` is now the experiment lane for that inventory. It can use
+small named local-threat reply sets and bounded local-threat forcing extensions
+when the shape count stays narrow. This lets the analyzer prove some positions
+that were previously outside the immediate-winning-square model, such as a
+double open-three that turns into an unavoidable four. It is still a
+model-bounded proof, not a general TSS solver.
+
 One Renju-specific implementation trap: a tactical reply helper may derive raw
 attacker cost squares, intersect them with defender-legal moves, and end up with
 no defender reply because the only natural Black block is forbidden. That case
 must be classified as `no_legal_block` / forced terminal, not silently downgraded
 to `unknown`.
 
-The next slice should stay at the immediate-winning-square / four-level threat
-layer: `Five`, `OpenFour`, `ClosedFour`, and `BrokenFour`. Do not expand this
-slice into open-three rest-square dependency search yet. Open-three and weaker
-shape chains require richer TSS-style dependency handling and should wait until
-the four-level model is explicit and fixture-backed.
+The current hybrid slice is deliberately small: contiguous `OpenFour`,
+`ClosedFour`, and `OpenThree` facts only. It does not yet cover broken shapes,
+rest-square dependency graphs, or multi-threat combinations beyond the narrow
+bounded reply set. Those belong in later TSS-style work once runtime and
+telemetry are under control.
 
 ## Backward Walk
 
@@ -560,6 +567,18 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   `model_scope_unknown`, meaning the narrow tactical model did not have a
   concrete reply/forcing set for the previous prefix. This is useful evidence
   for future model design, not a product-safe proof.
+- A hybrid-defense local-threat smoke run against the same top-two matchup,
+  sampled at `8` games with depth `2`, forced extensions `4`, and backward
+  window `8`, found `2` missed defenses, `5` unclear proof-limit entries, and
+  `1` draw/ongoing game. The useful signal is that bounded local-threat replies
+  can resolve some real report samples, not only synthetic fixtures. The risk is
+  runtime: the slowest sampled entry took about `55s`, and summed per-entry time
+  was about `95s`. The next analyzer slice should add tighter proof budgets,
+  memoization, or better activation telemetry before widening shape coverage.
+- A stricter double-threat-only trigger was fast but did not improve the sampled
+  report, while a broader one-or-two-threat trigger improved coverage but became
+  expensive. Keep both facts in mind before treating local-threat replies as a
+  default product model.
 - Raising all-legal depth is not the next practical move. The 8-game smoke at
   `all_legal_defense`, depth `3`, forced extensions `4` still left `7`
   unresolved entries and took roughly `190s` wall-clock / `626s` summed
@@ -568,9 +587,10 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   issue is normal proof depth plus defender breadth, not forced-extension
   budget.
 
-Current next target: improve the proof model around named local threats and
-hybrid reply sets. Do not expose replay analysis in the web UI yet, and do not
-try to solve this by simply raising all-legal depth.
+Current next target: make hybrid local-threat proof bounded and inspectable.
+Do not expose replay analysis in the web UI yet, and do not try to solve this
+by simply raising all-legal depth or widening shape coverage before runtime is
+under control.
 
 Example:
 
