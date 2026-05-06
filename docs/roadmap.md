@@ -269,19 +269,20 @@ The harness is now strong enough to justify a second measured pass, and the
 product presets will be cleaner if they come from that evidence rather than
 from today's raw knobs. The order should be:
 
-- tune existing axes first: depth, child cap, candidate radius, pattern eval,
-  and possible asymmetric candidate-source choices
+- tune existing axes first: depth, child cap, candidate source, and pattern eval
 - prototype bounded forced-chain search second, using only concrete local
   gain/defense replies with strict caps and explicit non-alpha-beta metrics
 - treat style/character last; offensive/defensive labels should emerge from
   real budget allocation, not from ad hoc eval weights
 
-The first `0.4.2` sweep has now covered child-cap and pattern-eval candidates
-with a batch gauntlet against the clean `0.4.1` anchors. It narrowed the next
+The first `0.4.2` sweeps have now covered child-cap, pattern-eval, symmetric
+candidate radius, and one asymmetric candidate source. They narrowed the next
 bot question rather than closing it: pattern eval is still the strongest signal
-but remains a cost tradeoff, cap16 is not a general upgrade, and cap4 is more
-viable than expected when paired with tactical ordering. The next bot-lab step
-should be a smaller survivor comparison before any player-facing setting work.
+but remains a cost tradeoff, cap16 is not a general upgrade, cap4 is viable when
+paired with tactical ordering, and `self2/opponent1` mainly looks useful as an
+efficiency tweak for `D3 + pattern-eval`. No anchor promotion yet; the next
+bot-lab step should be a smaller survivor comparison only if we need to choose
+between efficient pattern-eval variants before player-facing setting work.
 
 `0.4.3` is the earliest likely UI bridge for bot controls/settings. Expose only
 knobs that have survived lab evidence. A reasonable product-facing starting

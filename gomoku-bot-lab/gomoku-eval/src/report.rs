@@ -1843,6 +1843,11 @@ fn compact_searchbot_feature_label(feature: &str) -> String {
     if let Some(radius) = feature.strip_prefix("near-all-r") {
         return format!("NearR{radius}");
     }
+    if let Some(rest) = feature.strip_prefix("near-self-r") {
+        if let Some((self_radius, opponent_radius)) = rest.split_once("-opponent-r") {
+            return format!("SelfR{self_radius}OppR{opponent_radius}");
+        }
+    }
 
     match feature {
         "pattern-eval" => "Pattern".to_string(),
@@ -3465,6 +3470,10 @@ mod tests {
         assert_eq!(
             compact_bot_label(&report, "search-d5+tactical-cap-8+pattern-eval"),
             "SearchBot_D5+TCap8+Pattern"
+        );
+        assert_eq!(
+            compact_bot_label(&report, "search-d5+tactical-cap-8+near-self-r2-opponent-r1"),
+            "SearchBot_D5+TCap8+SelfR2OppR1"
         );
     }
 

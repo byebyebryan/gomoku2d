@@ -396,6 +396,58 @@ Interpretation:
   pattern`, `D5 cap8 pattern`, `D7 cap4`, `D7 cap4 pattern`, and the current
   `D7 cap8` / `D7 cap8 pattern` anchors.
 
+## `0.4.2` sweep B/C candidate-source checkpoint
+
+Date: `2026-05-05`
+
+The next sweep focused on candidate-source breadth rather than child cap. A
+radius gauntlet confirmed the expected tradeoff: symmetric `near-all-r3` is too
+expensive to be a good default direction, while symmetric `near-all-r1` is too
+limiting as a general source. That pushed the sweep toward asymmetric candidate
+sources, especially `near-self-r2-opponent-r1`: keep radius 2 around the side to
+move, but trim opponent-stone expansion to radius 1.
+
+The full asymmetric gauntlet used:
+
+- Renju rules
+- centered-suite openings with `4` opening plies
+- `6` candidates x `8` anchors x `32` games, for `1536` total matches
+- `1000 ms` Linux thread CPU time per move
+- `120` max moves
+- `22` worker threads on an AMD Ryzen 9 7900X host
+- `632271 ms` total wall time
+
+The report was generated from a dirty workspace because the asymmetric-source
+implementation was under review. Treat the numbers as screening evidence, not
+publishable anchor data.
+
+Candidate screen:
+
+| Candidate | W-D-L | Score | Avg depth | Avg move time | Budget exhausted | Breadth |
+|---|---:|---:|---:|---:|---:|---:|
+| `search-d3+near-self-r2-opponent-r1+pattern-eval` | `166-2-88` | `65.2%` | `2.87` | `175.7 ms` | `1.8%` | `67.8` |
+| `search-d7+tactical-cap-8+near-self-r2-opponent-r1+pattern-eval` | `165-5-86` | `65.4%` | `5.70` | `430.2 ms` | `19.2%` | `9.0 / pre 72.3` |
+| `search-d5+tactical-cap-8+near-self-r2-opponent-r1+pattern-eval` | `161-1-94` | `63.1%` | `4.59` | `170.1 ms` | `0.2%` | `9.2 / pre 72.5` |
+| `search-d7+tactical-cap-8+near-self-r2-opponent-r1` | `139-4-113` | `55.1%` | `5.71` | `412.2 ms` | `18.8%` | `9.1 / pre 71.1` |
+| `search-d5+tactical-cap-8+near-self-r2-opponent-r1` | `123-1-132` | `48.2%` | `4.63` | `143.8 ms` | `0.1%` | `9.4 / pre 70.2` |
+| `search-d3+near-self-r2-opponent-r1` | `100-0-156` | `39.1%` | `2.91` | `41.2 ms` | `0.1%` | `68.4` |
+
+Interpretation:
+
+- The most interesting result is `D3 + self2/opponent1 + pattern-eval`, not a
+  deeper capped variant. It tied `D3 + pattern-eval` directly (`16-0-16`) while
+  cutting average move time materially in this gauntlet schedule.
+- The impact on tactical-cap variants is less clean. `self2/opponent1` shrinks
+  the pre-ordering frontier, but tactical ordering plus the child cap still does
+  most of the useful pruning. The extra config axis is not yet justified for a
+  product preset.
+- Plain `self2/opponent1` without pattern eval should not be promoted. It helps
+  some same-family line-eval comparisons but underperforms the active
+  pattern-eval anchors.
+- Do not promote new anchors from this checkpoint. Keep asymmetric candidate
+  sources as a lab axis and run a clean survivor comparison only if we need to
+  choose between efficient pattern-eval variants.
+
 ## Benchmark suites
 
 ### Core

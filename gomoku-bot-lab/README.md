@@ -68,20 +68,23 @@ config, not canonical product presets.
 | `balanced` | depth 3, `near_all_r2`, `opponent_reply_local_threat_probe` | current browser practice-bot depth |
 | `deep` | depth 5, `near_all_r2`, `opponent_reply_local_threat_probe` | current CLI default depth |
 
-Append `+near-all-r1`, `+near-all-r2`, or `+near-all-r3` to change the candidate
-source radius. Append `+no-safety` to disable the root safety gate. For example,
-`search-d3+near-all-r1+no-safety` keeps the depth-3 search but uses a radius-1
-candidate source and no root safety gate. Append `+opponent-reply-search-probe`
-to compare against the older search-like safety gate in combined specs. Append
-`+opponent-reply-local-threat-probe` to explicitly select the current default
-local-threat safety gate. Append `+tactical-first` to try local-threat move
-ordering before alpha-beta search. Append `+child-cap-N` to cap the ordered
-non-root child frontier after candidate generation, legality filtering, and move
-ordering. `+tactical-cap-N` is shorthand for `+tactical-first+child-cap-N` and
-is the preferred report-facing form, for example `search-d5+tactical-cap-12`. Root still
-considers every legal/safe candidate; candidate radius controls discovery, while
-child cap controls how many ordered non-root children alpha-beta searches. These
-are diagnostic switches, not product presets.
+Append `+near-all-r1`, `+near-all-r2`, or `+near-all-r3` to change the symmetric
+candidate source radius. Append `+near-self-rN-opponent-rM` to test asymmetric
+current-player versus opponent-stone frontiers, for example
+`+near-self-r2-opponent-r1`. Append `+no-safety` to disable the root safety
+gate. For example, `search-d3+near-all-r1+no-safety` keeps the depth-3 search
+but uses a radius-1 candidate source and no root safety gate. Append
+`+opponent-reply-search-probe` to compare against the older search-like safety
+gate in combined specs. Append `+opponent-reply-local-threat-probe` to
+explicitly select the current default local-threat safety gate. Append
+`+tactical-first` to try local-threat move ordering before alpha-beta search.
+Append `+child-cap-N` to cap the ordered non-root child frontier after candidate
+generation, legality filtering, and move ordering. `+tactical-cap-N` is
+shorthand for `+tactical-first+child-cap-N` and is the preferred report-facing
+form, for example `search-d5+tactical-cap-12`. Root still considers every
+legal/safe candidate; candidate source controls discovery, while child cap
+controls how many ordered non-root children alpha-beta searches. These are
+diagnostic switches, not product presets.
 
 Legacy specs still work: plain `baseline` uses `--depth`, `baseline-N` creates a
 custom fixed-depth baseline bot, and `--time-ms` can cap search bots during CLI
@@ -117,10 +120,11 @@ bounded forced-chain prototype only if local facts provide concrete gain and
 defense replies. Treat offensive/defensive style as future search-budget
 allocation, not as a name pasted onto eval weights.
 
-The first `0.4.2` sweep keeps that direction: pattern eval remains the strongest
-lab signal, cap16 is not a clear upgrade, and cap4 is a viable narrowing point
-when paired with tactical ordering. Treat those as candidates for the next
-focused survivor run, not product presets yet.
+The first `0.4.2` sweeps keep that direction: pattern eval remains the strongest
+lab signal, cap16 is not a clear upgrade, cap4 is a viable narrowing point when
+paired with tactical ordering, and asymmetric `self2/opponent1` candidate
+discovery is most interesting as an efficiency tweak for `D3 + pattern-eval`.
+Treat these as lab candidates, not product presets yet.
 
 ### Eval harness
 

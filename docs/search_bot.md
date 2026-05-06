@@ -43,7 +43,8 @@ product presets:
 | `max_depth` | Fixed maximum iterative-deepening depth |
 | `time_budget_ms` | Optional per-move wall-clock budget |
 | `cpu_time_budget_ms` | Optional per-move Linux thread CPU-time budget |
-| `candidate_radius` | Distance around existing stones used to generate candidate moves |
+| `candidate_radius` | Distance around existing stones used to generate candidate moves, or current-player stones for asymmetric candidate sources |
+| `candidate_opponent_radius` | Optional opponent-stone radius for asymmetric candidate sources |
 | `safety_gate` | Root safety gate: `opponent_reply_search_probe`, `opponent_reply_local_threat_probe`, or `none` |
 | `move_ordering` | Alpha-beta move ordering: `tt_first_board_order` or lab-only `tactical_first` |
 | `child_limit` | Optional lab-only cap on the ordered non-root child frontier searched by alpha-beta |
@@ -51,17 +52,18 @@ product presets:
 
 Search traces expose explicit pipeline stages: `candidate_source`,
 `legality_gate`, tactical annotation counters, `safety_gate`, and
-`move_ordering`. Today there is one candidate source family (`near_all_rN`), one
-legality gate (`exact_rules`), one scan-based local-threat annotation object,
-two optional safety gates (`opponent_reply_search_probe`,
-`opponent_reply_local_threat_probe`, or `none`), two move-ordering modes
-(`tt_first_board_order` default, `tactical_first` lab-only), and an optional
-`child_limit` lab cap. Static eval defaults to the global line-shape evaluator;
-`pattern_eval` is a lab-only alternative that scores five-cell windows with
-Renju-aware completion/extension squares. Renju forbidden-move checks still use
-exact core rules, but core first applies a cheap necessary-condition guard:
-a forbidden candidate must have at least two black stones on one of the four
-local axes before the exact detector runs.
+`move_ordering`. Candidate sources currently cover symmetric near-all radii
+(`near_all_rN`) and lab-only asymmetric current-player/opponent radii
+(`near_self_rN_opponent_rM`). There is one legality gate (`exact_rules`), one
+scan-based local-threat annotation object, two optional safety gates
+(`opponent_reply_search_probe`, `opponent_reply_local_threat_probe`, or `none`),
+two move-ordering modes (`tt_first_board_order` default, `tactical_first`
+lab-only), and an optional `child_limit` lab cap. Static eval defaults to the
+global line-shape evaluator; `pattern_eval` is a lab-only alternative that
+scores five-cell windows with Renju-aware completion/extension squares. Renju
+forbidden-move checks still use exact core rules, but core first applies a cheap
+necessary-condition guard: a forbidden candidate must have at least two black
+stones on one of the four local axes before the exact detector runs.
 
 That Renju guard is deliberately not exposed as a bot component. It is a
 correctness-preserving core legality optimization, not a playing-style knob:
@@ -77,16 +79,18 @@ The lab tools define temporary aliases over these fields for experiments:
 | `deep` | 5 | `near_all_r2` | `opponent_reply_local_threat_probe` | current CLI default depth |
 
 For lab-only ablations, append `+near-all-r1`, `+near-all-r2`, or
-`+near-all-r3` to change candidate-source radius. Append `+no-safety`,
+`+near-all-r3` to change symmetric candidate-source radius. Append
+`+near-self-rN-opponent-rM` to test an asymmetric source, for example
+`+near-self-r2-opponent-r1`. Append `+no-safety`,
 `+opponent-reply-search-probe`, or `+opponent-reply-local-threat-probe` to choose
 the safety gate. Append `+tactical-first` to use local-threat facts for ordering
 before alpha-beta visits candidate moves, for example
 `search-d5+tactical-first`. Append `+child-cap-N` to limit the ordered non-root
 child frontier after candidate generation, legality filtering, and move
 ordering. Use `+tactical-cap-N` as shorthand for `+tactical-first+child-cap-N`
-in reports and tournament specs, for example `search-d5+tactical-cap-12`. Root still
-considers every legal/safe candidate. Candidate radius and child cap are
-intentionally separate: radius defines the discovery boundary, while child cap
+in reports and tournament specs, for example `search-d5+tactical-cap-12`. Root
+still considers every legal/safe candidate. Candidate source and child cap are
+intentionally separate: source defines the discovery boundary, while child cap
 tests whether ordering can keep useful deeper-node coverage while alpha-beta
 searches fewer children. Append `+pattern-eval` to replace the default
 line-shape static eval with the lab-only pattern evaluator. These switches
@@ -313,8 +317,8 @@ For the next bot slice, the default assumption should be restraint. `0.4.1`
 already has enough evidence to cut a bot-ladder/report checkpoint. After that,
 `0.4.2` should use the stronger harness for one more lab pass before UI:
 
-1. Tune existing axes first: depth, child cap, candidate radius, pattern eval,
-   and possible asymmetric candidate sources.
+1. Tune existing axes first: depth, child cap, candidate source, and pattern
+   eval.
 2. Prototype bounded forced-chain search only where local facts provide concrete
    gain and defense replies.
 3. Treat style/character as a later budget-allocation mechanism, not as an
@@ -366,6 +370,34 @@ Current takeaways:
 
 Detailed numbers live in [`performance_tuning.md`](performance_tuning.md).
 
+### `0.4.2` sweep B/C read
+
+The next `0.4.2` sweeps tested candidate-source breadth. Symmetric `r3` was too
+expensive to justify, and symmetric `r1` was too limiting as a general source.
+The more useful question was asymmetric discovery: keep radius 2 around the
+current player's stones while trimming opponent-stone discovery to radius 1
+(`+near-self-r2-opponent-r1`).
+
+A full gauntlet tested `D3`, `D5 tactical-cap-8`, and `D7 tactical-cap-8`, with
+and without `+pattern-eval`, against the `8` clean reference anchors. The
+strongest product conclusion is conservative: do not promote a new anchor from
+this sweep. `self2/opponent1` is a useful lab axis, but its value depends on the
+rest of the pipeline.
+
+Takeaways:
+
+- Plain `self2/opponent1` is not enough. It helps capped D5/D7 against their
+  line-eval baselines, but it still loses badly to the pattern-eval anchors.
+- `D3 + self2/opponent1 + pattern-eval` is the most interesting result. It
+  tied `D3 + pattern-eval` head-to-head while reducing average move time from
+  roughly `277 ms` to `176 ms` in the gauntlet schedule.
+- The capped tactical variants are more questionable. Asymmetric candidates
+  reduce the pre-ordering frontier, but tactical ordering and child caps still
+  do the main pruning work.
+- No anchor changes yet. The existing clean reference anchors remain the source
+  of truth until a clean survivor run proves a replacement is both stronger and
+  worth the extra config complexity.
+
 ---
 
 ## Transposition table
@@ -404,7 +436,10 @@ On an empty board, the first move is forced to the center.
 **Known weakness:** radius 2 can miss long-range threats in sparse positions.
 Radius 3 would catch more but grows the branching factor. Candidate radius is
 now an explicit lab axis (`near_all_r1`, `near_all_r2`, `near_all_r3`) so future
-experiments can trade breadth for reached depth deliberately.
+experiments can trade breadth for reached depth deliberately. The lab also
+supports asymmetric current-player/opponent radii (`near_self_rN_opponent_rM`),
+currently exposed in specs as `+near-self-rN-opponent-rM`, to test whether
+own-stone expansion can stay wider than opponent-stone expansion.
 
 ---
 

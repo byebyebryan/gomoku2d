@@ -13,6 +13,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             time_budget_ms: None,
             cpu_time_budget_ms: None,
             candidate_radius: 2,
+            candidate_opponent_radius: None,
             safety_gate: SafetyGate::OpponentReplyLocalThreatProbe,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
             child_limit: None,
@@ -27,6 +28,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             time_budget_ms: None,
             cpu_time_budget_ms: None,
             candidate_radius: 2,
+            candidate_opponent_radius: None,
             safety_gate: SafetyGate::OpponentReplyLocalThreatProbe,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
             child_limit: None,
@@ -41,6 +43,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             time_budget_ms: None,
             cpu_time_budget_ms: None,
             candidate_radius: 2,
+            candidate_opponent_radius: None,
             safety_gate: SafetyGate::OpponentReplyLocalThreatProbe,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
             child_limit: None,
@@ -91,14 +94,17 @@ fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchB
     match suffix {
         "near-all-r1" => {
             config.candidate_radius = 1;
+            config.candidate_opponent_radius = None;
             Some(config)
         }
         "near-all-r2" => {
             config.candidate_radius = 2;
+            config.candidate_opponent_radius = None;
             Some(config)
         }
         "near-all-r3" => {
             config.candidate_radius = 3;
+            config.candidate_opponent_radius = None;
             Some(config)
         }
         "no-safety" => {
@@ -121,6 +127,29 @@ fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchB
             config.static_eval = StaticEvaluation::PatternEval;
             Some(config)
         }
+        _ => apply_asymmetric_candidate_source_suffix(config, suffix),
+    }
+}
+
+fn apply_asymmetric_candidate_source_suffix(
+    mut config: SearchBotConfig,
+    suffix: &str,
+) -> Option<SearchBotConfig> {
+    let suffix = suffix.strip_prefix("near-self-r")?;
+    let (self_radius, suffix) = suffix.split_once("-opponent-r")?;
+    let self_radius = parse_candidate_radius(self_radius)?;
+    let opponent_radius = parse_candidate_radius(suffix)?;
+    if self_radius == opponent_radius {
+        return None;
+    }
+    config.candidate_radius = self_radius;
+    config.candidate_opponent_radius = Some(opponent_radius);
+    Some(config)
+}
+
+fn parse_candidate_radius(value: &str) -> Option<usize> {
+    match value.parse::<usize>().ok()? {
+        radius @ 1..=3 => Some(radius),
         _ => None,
     }
 }
@@ -318,6 +347,7 @@ mod tests {
             .expect("expected near-all-r1 search spec to parse");
         assert_eq!(r1.max_depth, 3);
         assert_eq!(r1.candidate_radius, 1);
+        assert_eq!(r1.candidate_opponent_radius, None);
         assert_eq!(
             r1.safety_gate,
             super::SafetyGate::OpponentReplyLocalThreatProbe
@@ -333,7 +363,32 @@ mod tests {
         assert_eq!(r3.max_depth, 3);
         assert_eq!(r3.time_budget_ms, Some(1000));
         assert_eq!(r3.candidate_radius, 3);
+        assert_eq!(r3.candidate_opponent_radius, None);
         assert_eq!(r3.safety_gate, super::SafetyGate::None);
+    }
+
+    #[test]
+    fn parses_asymmetric_candidate_source_suffix() {
+        let config = super::search_config_from_lab_spec(
+            "search-d5+tactical-cap-8+near-self-r2-opponent-r1",
+            3,
+            None,
+            Some(1000),
+        )
+        .expect("expected asymmetric candidate source spec to parse");
+
+        assert_eq!(config.max_depth, 5);
+        assert_eq!(config.child_limit, Some(8));
+        assert_eq!(config.candidate_radius, 2);
+        assert_eq!(config.candidate_opponent_radius, Some(1));
+        assert_eq!(
+            config.candidate_source(),
+            gomoku_bot::CandidateSource::NearSelfOpponent {
+                self_radius: 2,
+                opponent_radius: 1
+            }
+        );
+        assert_eq!(config.cpu_time_budget_ms, Some(1000));
     }
 
     #[test]
@@ -354,6 +409,20 @@ mod tests {
         assert!(
             super::search_config_from_lab_spec("search-d3+near-all-r4", 5, None, None).is_none()
         );
+        assert!(super::search_config_from_lab_spec(
+            "search-d3+near-self-r0-opponent-r1",
+            5,
+            None,
+            None
+        )
+        .is_none());
+        assert!(super::search_config_from_lab_spec(
+            "search-d3+near-self-r2-opponent-r2",
+            5,
+            None,
+            None
+        )
+        .is_none());
     }
 
     #[test]
