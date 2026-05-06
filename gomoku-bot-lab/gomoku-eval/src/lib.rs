@@ -1,6 +1,7 @@
 pub mod analysis;
 pub mod analysis_batch;
 pub mod analysis_fixture;
+pub mod analysis_report;
 pub mod arena;
 pub mod elo;
 pub mod opening;

@@ -7,12 +7,14 @@ use gomoku_bot::{RandomBot, SearchBot};
 use gomoku_core::{Color, GameResult, Move, Replay, RuleConfig, Variant};
 use gomoku_eval::analysis::{analyze_replay, AnalysisOptions, DefensePolicy};
 use gomoku_eval::analysis_batch::{
-    render_analysis_batch_report_html, run_analysis_batch, AnalysisBatchReport,
+    render_analysis_batch_report_html, run_analysis_batch, run_analysis_batch_replays,
+    AnalysisBatchReport, ReplayAnalysisInput,
 };
 use gomoku_eval::analysis_fixture::{
     render_analysis_fixture_report_html, run_analysis_fixtures, AnalysisFixtureReport,
     AnalysisFixtureResult,
 };
+use gomoku_eval::analysis_report::{report_match_to_replay, select_report_matches};
 use gomoku_eval::arena::{run_match_series_with_limits, MatchEndReason, MatchLimits, MatchResult};
 use gomoku_eval::opening::{OpeningPolicy, CENTERED_SUITE_MAX_PLIES};
 use gomoku_eval::report::{
@@ -92,6 +94,12 @@ impl From<CliDefensePolicy> for DefensePolicy {
             CliDefensePolicy::Hybrid => DefensePolicy::HybridDefense,
         }
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+#[clap(rename_all = "kebab-case")]
+enum CliReportSamplePolicy {
+    Stratified,
 }
 
 #[derive(Args, Debug, Clone)]
@@ -276,6 +284,52 @@ enum Commands {
         /// Directory containing replay JSON files
         #[arg(long)]
         replay_dir: PathBuf,
+
+        /// Write reusable batch report JSON
+        #[arg(long)]
+        report_json: Option<PathBuf>,
+
+        /// Write standalone batch report HTML
+        #[arg(long)]
+        report_html: Option<PathBuf>,
+
+        /// Defender reply model used by the bounded proof engine
+        #[arg(long, value_enum, default_value = "all-legal-defense")]
+        defense_policy: CliDefensePolicy,
+
+        /// Maximum proof depth in plies
+        #[arg(long, default_value_t = 2)]
+        max_depth: usize,
+
+        /// Narrow forcing continuations allowed after a defender answers a direct threat
+        #[arg(long, default_value_t = 4)]
+        max_forced_extensions: usize,
+
+        /// Optional number of final plies to scan backward
+        #[arg(long)]
+        max_backward_window: Option<usize>,
+    },
+    /// Analyze sampled replays embedded in a tournament report
+    AnalyzeReportReplays {
+        /// Tournament report JSON containing compact match move cells
+        #[arg(long)]
+        report: PathBuf,
+
+        /// First entrant in the head-to-head matchup; defaults to standing #1
+        #[arg(long)]
+        entrant_a: Option<String>,
+
+        /// Second entrant in the head-to-head matchup; defaults to standing #2
+        #[arg(long)]
+        entrant_b: Option<String>,
+
+        /// Number of head-to-head games to sample before analysis
+        #[arg(long, default_value_t = 8)]
+        sample_size: usize,
+
+        /// Sampling policy used for selecting report matches
+        #[arg(long, value_enum, default_value = "stratified")]
+        sample_policy: CliReportSamplePolicy,
 
         /// Write reusable batch report JSON
         #[arg(long)]
@@ -775,6 +829,43 @@ fn print_analysis_batch_report_summary(report: &AnalysisBatchReport) {
         report.summary.ongoing_or_draw,
         report.summary.analysis_error
     );
+}
+
+fn resolve_report_replay_entrants(
+    standing_bots: &[String],
+    entrant_a: Option<String>,
+    entrant_b: Option<String>,
+) -> Result<(String, String), String> {
+    match (entrant_a, entrant_b) {
+        (Some(a), Some(b)) if a == b => Err("report replay entrants must be different".to_string()),
+        (Some(a), Some(b)) => Ok((a, b)),
+        (Some(a), None) => {
+            let b = highest_different_standing(standing_bots, &a)
+                .ok_or_else(|| format!("Tournament report has no standing different from {a}."))?;
+            Ok((a, b))
+        }
+        (None, Some(b)) => {
+            let a = highest_different_standing(standing_bots, &b)
+                .ok_or_else(|| format!("Tournament report has no standing different from {b}."))?;
+            Ok((a, b))
+        }
+        (None, None) => {
+            let a = standing_bots
+                .first()
+                .cloned()
+                .ok_or_else(|| "Tournament report has no standing #1.".to_string())?;
+            let b = highest_different_standing(standing_bots, &a)
+                .ok_or_else(|| "Tournament report has no standing #2.".to_string())?;
+            Ok((a, b))
+        }
+    }
+}
+
+fn highest_different_standing(standing_bots: &[String], entrant: &str) -> Option<String> {
+    standing_bots
+        .iter()
+        .find(|bot| bot.as_str() != entrant)
+        .cloned()
 }
 
 fn main() {
@@ -1310,6 +1401,88 @@ fn main() {
                 std::process::exit(1);
             }
         }
+        Commands::AnalyzeReportReplays {
+            report,
+            entrant_a,
+            entrant_b,
+            sample_size,
+            sample_policy: _,
+            report_json,
+            report_html,
+            defense_policy,
+            max_depth,
+            max_forced_extensions,
+            max_backward_window,
+        } => {
+            let json = std::fs::read_to_string(&report).unwrap_or_else(|err| {
+                exit_with_error(format!("Failed to read tournament report: {err}"))
+            });
+            let tournament_report = TournamentReport::from_json(&json).unwrap_or_else(|err| {
+                exit_with_error(format!("Failed to parse tournament report: {err}"))
+            });
+            let standing_bots = tournament_report
+                .standings
+                .iter()
+                .map(|standing| standing.bot.clone())
+                .collect::<Vec<_>>();
+            let (entrant_a, entrant_b) =
+                resolve_report_replay_entrants(&standing_bots, entrant_a, entrant_b)
+                    .unwrap_or_else(|err| exit_with_error(err));
+            let selections =
+                select_report_matches(&tournament_report, &entrant_a, &entrant_b, sample_size)
+                    .unwrap_or_else(|err| exit_with_error(err));
+            let mut inputs = Vec::with_capacity(selections.len());
+            for selection in selections {
+                let replay = report_match_to_replay(&tournament_report, selection.match_report)
+                    .unwrap_or_else(|err| {
+                        exit_with_error(format!(
+                            "Failed to convert match {} to replay: {err}",
+                            selection.match_report.match_index
+                        ))
+                    });
+                inputs.push(ReplayAnalysisInput {
+                    label: format!(
+                        "match_{:04}__{}__vs__{}",
+                        selection.match_report.match_index,
+                        selection.match_report.black.replace('+', "_"),
+                        selection.match_report.white.replace('+', "_")
+                    ),
+                    replay,
+                });
+            }
+            let batch_report = run_analysis_batch_replays(
+                format!("{}:{} vs {}", report.display(), entrant_a, entrant_b),
+                inputs,
+                AnalysisOptions {
+                    defense_policy: defense_policy.into(),
+                    max_depth,
+                    max_forced_extensions,
+                    max_backward_window,
+                },
+            );
+
+            print_analysis_batch_report_summary(&batch_report);
+
+            if let Some(path) = report_json {
+                let json = serde_json::to_string_pretty(&batch_report).unwrap_or_else(|err| {
+                    exit_with_error(format!("Failed to serialize analysis batch report: {err}"))
+                });
+                std::fs::write(&path, json).unwrap_or_else(|err| {
+                    exit_with_error(format!("Failed to write analysis batch report: {err}"))
+                });
+                println!("Report JSON: {}", path.display());
+            }
+            if let Some(path) = report_html {
+                let html = render_analysis_batch_report_html(&batch_report);
+                std::fs::write(&path, html).unwrap_or_else(|err| {
+                    exit_with_error(format!("Failed to write analysis batch HTML: {err}"))
+                });
+                println!("Report HTML: {}", path.display());
+            }
+            if batch_report.failed > 0 {
+                std::process::exit(1);
+            }
+        }
         Commands::AnalysisFixtures {
             report_json,
             report_html,
@@ -1679,5 +1852,96 @@ mod tests {
         assert_eq!(max_depth, 3);
         assert_eq!(max_forced_extensions, 5);
         assert_eq!(max_backward_window, Some(12));
+    }
+
+    #[test]
+    fn analyze_report_replays_command_parses_matchup_sample_and_model_limits() {
+        let cli = Cli::try_parse_from([
+            "gomoku-eval",
+            "analyze-report-replays",
+            "--report",
+            "reports/latest.json",
+            "--entrant-a",
+            "search-d7+tactical-cap-8+pattern-eval",
+            "--entrant-b",
+            "search-d5+tactical-cap-8+pattern-eval",
+            "--sample-size",
+            "8",
+            "--sample-policy",
+            "stratified",
+            "--report-json",
+            "outputs/analysis/top2-smoke.json",
+            "--report-html",
+            "outputs/analysis/top2-smoke.html",
+            "--defense-policy",
+            "all-legal-defense",
+            "--max-depth",
+            "2",
+            "--max-forced-extensions",
+            "4",
+            "--max-backward-window",
+            "8",
+        ])
+        .expect("analyze-report-replays command should parse");
+
+        let Commands::AnalyzeReportReplays {
+            report,
+            entrant_a,
+            entrant_b,
+            sample_size,
+            sample_policy,
+            report_json,
+            report_html,
+            defense_policy,
+            max_depth,
+            max_forced_extensions,
+            max_backward_window,
+        } = cli.command
+        else {
+            panic!("expected analyze-report-replays command");
+        };
+
+        assert_eq!(report, PathBuf::from("reports/latest.json"));
+        assert_eq!(
+            entrant_a.as_deref(),
+            Some("search-d7+tactical-cap-8+pattern-eval")
+        );
+        assert_eq!(
+            entrant_b.as_deref(),
+            Some("search-d5+tactical-cap-8+pattern-eval")
+        );
+        assert_eq!(sample_size, 8);
+        assert_eq!(sample_policy, CliReportSamplePolicy::Stratified);
+        assert_eq!(
+            report_json,
+            Some(PathBuf::from("outputs/analysis/top2-smoke.json"))
+        );
+        assert_eq!(
+            report_html,
+            Some(PathBuf::from("outputs/analysis/top2-smoke.html"))
+        );
+        assert_eq!(defense_policy, CliDefensePolicy::AllLegal);
+        assert_eq!(max_depth, 2);
+        assert_eq!(max_forced_extensions, 4);
+        assert_eq!(max_backward_window, Some(8));
+    }
+
+    #[test]
+    fn report_replay_default_entrant_selection_avoids_self_match() {
+        let standings = vec![
+            "search-d7+tactical-cap-8+pattern-eval".to_string(),
+            "search-d5+tactical-cap-8+pattern-eval".to_string(),
+            "search-d3+pattern-eval".to_string(),
+        ];
+
+        let (entrant_a, entrant_b) = resolve_report_replay_entrants(
+            &standings,
+            Some("search-d5+tactical-cap-8+pattern-eval".to_string()),
+            None,
+        )
+        .expect("missing entrant should default to the highest different standing");
+
+        assert_eq!(entrant_a, "search-d5+tactical-cap-8+pattern-eval");
+        assert_eq!(entrant_b, "search-d7+tactical-cap-8+pattern-eval");
     }
 }

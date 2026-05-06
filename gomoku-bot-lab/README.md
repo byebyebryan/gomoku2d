@@ -146,6 +146,7 @@ cargo run --release -p gomoku-eval -- tournament --schedule head-to-head --bots 
 cargo run --release -p gomoku-eval -- tournament --schedule gauntlet --candidates search-d5+tactical-cap-4,search-d5+tactical-cap-16,search-d7+tactical-cap-4,search-d7+tactical-cap-16 --anchors search-d3,search-d5+tactical-cap-8,search-d7+tactical-cap-8 --anchor-report reports/latest.json --games-per-pair 32 --opening-policy centered-suite --opening-plies 4 --search-cpu-time-ms 1000 --max-moves 120 --report-json outputs/sweep-a-gauntlet.json
 cargo run --release -p gomoku-eval -- report-html --input outputs/gomoku-tournament.json --output outputs/gomoku-tournament.html --json-href gomoku-tournament.json
 cargo run --release -p gomoku-eval -- analyze-replay-batch --replay-dir outputs/replays --report-json outputs/analysis-batch.json --report-html outputs/analysis-batch.html --max-backward-window 24
+cargo run --release -p gomoku-eval -- analyze-report-replays --report reports/latest.json --sample-size 8 --max-backward-window 8 --report-json outputs/analysis/top2-smoke.json --report-html outputs/analysis/top2-smoke.html
 ```
 
 Use the larger curated-report run from `gomoku-bot-lab/` when publishing
@@ -190,6 +191,7 @@ Useful eval flags:
 | `--report-json` | Writes a compact tournament report with summary stats and `cell_index_v1` move lists |
 | `report-html --json-href` | Adds the raw JSON link shown in the rendered HTML |
 | `analyze-replay-batch --replay-dir` | Analyzes saved replay JSON files and writes grouped analysis JSON/HTML reports |
+| `analyze-report-replays --report` | Samples compact tournament report matches, reconstructs replay objects in memory, and writes grouped analysis JSON/HTML reports |
 
 The default centered opening suite gives every bot pair the same local 4-ply
 openings, with both color assignments, so rankings are less dominated by random
@@ -201,6 +203,14 @@ depth/budget stats, opening IDs, generated candidate width, post-ordering child
 width, and compact `move_cells` using the same `row * 15 + col` codec as saved
 web matches. The tournament harness and opening suite are documented in
 [`../docs/tournament.md`](../docs/tournament.md).
+
+For replay analysis iteration, prefer `analyze-report-replays --sample-size 8`
+against an existing tournament report before running a full matchup. The
+stratified sample is deterministic and tries to include both entrants, both
+colors where available, a draw or max-move game, and short/long games. The batch
+report includes `unclear_reason`, final forced-interval presence, prefix counts,
+and per-entry elapsed time so an `unclear` result distinguishes proof limits,
+scan-window cutoffs, and games with no final forced interval.
 
 Scratch reports should stay in ignored `outputs/`. Curated reports for the
 public site live in [`reports/`](reports/); the web build copies that folder to

@@ -488,6 +488,9 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
 - `gomoku-eval analyze-replay --input <replay.json>` emits JSON analysis.
 - `gomoku-eval analyze-replay-batch --replay-dir <dir>` analyzes a replay
   directory and emits grouped JSON/HTML reports for tournament smoke runs.
+- `gomoku-eval analyze-report-replays --report <report.json>` samples compact
+  tournament-report matches, reconstructs temporary replay objects in memory,
+  and analyzes them without first writing replay JSON files.
 - `gomoku-eval analysis-fixtures` runs curated replay fixtures and prints
   expected-vs-actual labels for the current analysis model.
 - The current proof engine handles immediate wins, single-threat escapes,
@@ -502,9 +505,12 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
 - Tactical-defense mode now exposes legal cost replies, defender immediate wins,
   and forbidden cost squares in schema-v2 branch evidence, but it is still not a
   full threat-space search.
-- A smoke run against two generated `search-d3` vs `random` eval replays passed
-  with `2 analyzed / 2 total`, both `unclear`. That is useful: the batch
-  workflow works, and the current analyzer is still shallow for real bot games.
+- A top-two report smoke run against
+  `search-d7+tactical-cap-8+pattern-eval` vs
+  `search-d5+tactical-cap-8+pattern-eval` passed with `8 analyzed / 8 total`
+  and `0 failed`. It found final forced intervals in decisive games, but most
+  root causes stayed `unclear` because the prefix before the final interval was
+  still proof-limited or outside the scan window.
 
 Example:
 
@@ -531,7 +537,26 @@ cargo run -p gomoku-eval -- analyze-replay-batch \
   --max-depth 2 \
   --max-forced-extensions 4 \
   --max-backward-window 24
+
+cargo run --release -p gomoku-eval -- analyze-report-replays \
+  --report reports/latest.json \
+  --entrant-a search-d7+tactical-cap-8+pattern-eval \
+  --entrant-b search-d5+tactical-cap-8+pattern-eval \
+  --sample-size 8 \
+  --report-json outputs/analysis/top2_smoke.json \
+  --report-html outputs/analysis/top2_smoke.html \
+  --defense-policy all-legal-defense \
+  --max-depth 2 \
+  --max-forced-extensions 4 \
+  --max-backward-window 8
 ```
+
+Use the report-sampled 8-game smoke path while tuning analyzer output or proof
+logic. It covers both entrants, color assignments where available, draws or
+max-move games, and short/long games deterministically. Run a full 64-game
+head-to-head analysis only for checkpoint reports. `--max-backward-window 8`
+is the practical default for iteration; `24` is reserved for focused samples or
+longer runs until the proof model becomes narrower.
 
 This is still a lab artifact. Do not expose it in the web replay UI until the
 fixture set and report output make the limits obvious enough for players.
