@@ -358,6 +358,10 @@ impl ThreatReplySet {
     }
 }
 
+fn next_attacker_move_after_defender_reply(principal_line: &[Move]) -> Option<Move> {
+    principal_line.get(1).copied()
+}
+
 fn prove_forced_win_inner(
     board: &Board,
     attacker: Color,
@@ -542,7 +546,7 @@ fn prove_defender_node(
     }
 
     if saw_unknown {
-        let next_forcing_move = principal_line.last().copied();
+        let next_forcing_move = next_attacker_move_after_defender_reply(&principal_line);
         base(
             ProofStatus::Unknown,
             principal_line,
@@ -561,7 +565,7 @@ fn prove_defender_node(
             },
         )
     } else {
-        let next_forcing_move = principal_line.last().copied();
+        let next_forcing_move = next_attacker_move_after_defender_reply(&principal_line);
         base(
             ProofStatus::ForcedWin,
             principal_line,
@@ -748,7 +752,7 @@ fn prove_defender_forced_extension_node(
     }
 
     if saw_unknown {
-        let next_forcing_move = principal_line.last().copied();
+        let next_forcing_move = next_attacker_move_after_defender_reply(&principal_line);
         base(
             ProofStatus::Unknown,
             principal_line,
@@ -763,7 +767,7 @@ fn prove_defender_forced_extension_node(
             )],
         )
     } else {
-        let next_forcing_move = principal_line.last().copied();
+        let next_forcing_move = next_attacker_move_after_defender_reply(&principal_line);
         base(
             ProofStatus::ForcedWin,
             principal_line,
@@ -1183,6 +1187,20 @@ mod tests {
         assert_eq!(proof.status, ProofStatus::ForcedWin);
         assert_eq!(proof.principal_line.first(), Some(&mv("L8")));
         assert!(proof.principal_line.contains(&mv("K9")));
+        let evidence = proof
+            .threat_evidence
+            .iter()
+            .find(|evidence| evidence.raw_cost_squares == vec![mv("L8")])
+            .expect("forced block should be explained");
+        assert_eq!(
+            evidence.reply_classification,
+            ReplyClassification::BlockedButForced
+        );
+        assert_eq!(
+            evidence.next_forcing_move,
+            proof.principal_line.get(1).copied()
+        );
+        assert!(evidence.next_forcing_move.is_some());
     }
 
     #[test]

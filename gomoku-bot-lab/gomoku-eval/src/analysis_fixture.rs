@@ -312,6 +312,7 @@ pub struct AnalysisFixtureProofRow {
     pub status: ProofStatus,
     pub principal_line: Vec<Move>,
     pub escape_moves: Vec<Move>,
+    pub reply_classifications: Vec<ReplyClassification>,
 }
 
 pub fn run_analysis_fixtures(
@@ -388,6 +389,11 @@ fn run_analysis_fixture(
                 status: proof.status,
                 principal_line: proof.principal_line.clone(),
                 escape_moves: proof.escape_moves.clone(),
+                reply_classifications: proof
+                    .threat_evidence
+                    .iter()
+                    .map(|evidence| evidence.reply_classification)
+                    .collect(),
             })
             .collect(),
     })
@@ -700,12 +706,13 @@ fn render_analysis_fixture_case_html(result: &AnalysisFixtureResult) -> String {
         .iter()
         .map(|row| {
             format!(
-                "<tr><td>{}</td><td>{:?}</td><td>{:?}</td><td>{}</td><td>{}</td></tr>",
+                "<tr><td>{}</td><td>{:?}</td><td>{:?}</td><td>{}</td><td>{}</td><td>{}</td></tr>",
                 row.ply,
                 row.side_to_move,
                 row.status,
                 html_escape(&moves_label(&row.principal_line)),
-                html_escape(&moves_label(&row.escape_moves))
+                html_escape(&moves_label(&row.escape_moves)),
+                html_escape(&reply_classifications_label(&row.reply_classifications))
             )
         })
         .collect::<String>();
@@ -738,7 +745,7 @@ fn render_analysis_fixture_case_html(result: &AnalysisFixtureResult) -> String {
   <div>
     <h3>Proof Rows</h3>
     <table>
-      <thead><tr><th>Ply</th><th>Side</th><th>Status</th><th>Principal</th><th>Escapes</th></tr></thead>
+      <thead><tr><th>Ply</th><th>Side</th><th>Status</th><th>Principal</th><th>Escapes</th><th>Reply Classes</th></tr></thead>
       <tbody>{proof_rows}</tbody>
     </table>
   </div>

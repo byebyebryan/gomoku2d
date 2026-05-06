@@ -356,6 +356,11 @@ ThreatSequenceEvidence
   single winning square.
 - `unknown`: the analyzer cannot classify the reply within the current model.
 
+`prefix_ply` and `actual_reply` are reserved for replay-context attribution.
+The current lab proof records branch evidence for proof rows, but it does not
+yet thread exact proof-tree ply attribution through nested forced-extension
+nodes.
+
 Proof result records should use explicit status:
 
 - `forced_win`: proven within the model and limits.
@@ -484,13 +489,16 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   expected-vs-actual labels for the current analysis model.
 - The current proof engine handles immediate wins, single-threat escapes,
   open-four style unavoidable immediate wins, one narrow forced-chain extension,
-  proof intervals, conversion notes, missed defenses, missed wins, ongoing/draw
+  defender immediate-win escapes, Renju forbidden-block terminals, proof
+  intervals, conversion notes, missed defenses, missed wins, ongoing/draw
   summaries, and explicit `unknown` states.
 - The fixture report currently covers missed defense, delayed conversion,
   losing-side missed win, shallow-model unknown guard, closed-four to open-four
-  forced-chain continuation, and ongoing replay behavior.
-- Tactical-defense mode is present as a model flag and immediate-threat reply
-  subset, but it is not yet a full threat-space search.
+  forced-chain continuation, defender counter-win escape, Renju no-legal-block
+  terminal behavior, and ongoing replay behavior.
+- Tactical-defense mode now exposes legal cost replies, defender immediate wins,
+  and forbidden cost squares in schema-v2 branch evidence, but it is still not a
+  full threat-space search.
 
 Example:
 
