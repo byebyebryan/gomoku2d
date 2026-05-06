@@ -4,7 +4,8 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use gomoku_bot::{RandomBot, SearchBot};
-use gomoku_core::{Color, GameResult, Move, RuleConfig, Variant};
+use gomoku_core::{Color, GameResult, Move, Replay, RuleConfig, Variant};
+use gomoku_eval::analysis::{analyze_replay, AnalysisOptions, DefensePolicy};
 use gomoku_eval::arena::{run_match_series_with_limits, MatchEndReason, MatchLimits, MatchResult};
 use gomoku_eval::opening::{OpeningPolicy, CENTERED_SUITE_MAX_PLIES};
 use gomoku_eval::report::{
@@ -61,6 +62,27 @@ impl CliTournamentSchedule {
             CliTournamentSchedule::RoundRobin => "round-robin",
             CliTournamentSchedule::HeadToHead => "head-to-head",
             CliTournamentSchedule::Gauntlet => "gauntlet",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+#[clap(rename_all = "kebab-case")]
+enum CliDefensePolicy {
+    #[value(name = "all-legal-defense")]
+    AllLegal,
+    #[value(name = "tactical-defense")]
+    Tactical,
+    #[value(name = "hybrid-defense")]
+    Hybrid,
+}
+
+impl From<CliDefensePolicy> for DefensePolicy {
+    fn from(value: CliDefensePolicy) -> Self {
+        match value {
+            CliDefensePolicy::AllLegal => DefensePolicy::AllLegalDefense,
+            CliDefensePolicy::Tactical => DefensePolicy::TacticalDefense,
+            CliDefensePolicy::Hybrid => DefensePolicy::HybridDefense,
         }
     }
 }
@@ -215,6 +237,28 @@ enum Commands {
         /// Write reusable tactical scenario report JSON
         #[arg(long)]
         report_json: Option<PathBuf>,
+    },
+    /// Analyze a saved replay and emit bounded proof/classification JSON
+    AnalyzeReplay {
+        /// Replay JSON to analyze
+        #[arg(long)]
+        input: PathBuf,
+
+        /// Write analysis JSON to this path instead of stdout
+        #[arg(long)]
+        output: Option<PathBuf>,
+
+        /// Defender reply model used by the bounded proof engine
+        #[arg(long, value_enum, default_value = "all-legal-defense")]
+        defense_policy: CliDefensePolicy,
+
+        /// Maximum proof depth in plies
+        #[arg(long, default_value_t = 2)]
+        max_depth: usize,
+
+        /// Optional number of final plies to scan backward
+        #[arg(long)]
+        max_backward_window: Option<usize>,
     },
 }
 
@@ -1055,6 +1099,39 @@ fn main() {
                 println!("Report JSON: {}", path.display());
             }
         }
+        Commands::AnalyzeReplay {
+            input,
+            output,
+            defense_policy,
+            max_depth,
+            max_backward_window,
+        } => {
+            let json = std::fs::read_to_string(&input)
+                .unwrap_or_else(|err| exit_with_error(format!("Failed to read replay: {err}")));
+            let replay = Replay::from_json(&json)
+                .unwrap_or_else(|err| exit_with_error(format!("Failed to parse replay: {err}")));
+            let analysis = analyze_replay(
+                &replay,
+                AnalysisOptions {
+                    defense_policy: defense_policy.into(),
+                    max_depth,
+                    max_backward_window,
+                },
+            )
+            .unwrap_or_else(|err| exit_with_error(format!("Failed to analyze replay: {err}")));
+            let output_json = serde_json::to_string_pretty(&analysis).unwrap_or_else(|err| {
+                exit_with_error(format!("Failed to serialize analysis: {err}"))
+            });
+
+            if let Some(output) = output {
+                std::fs::write(&output, output_json).unwrap_or_else(|err| {
+                    exit_with_error(format!("Failed to write analysis: {err}"))
+                });
+                println!("Analysis JSON: {}", output.display());
+            } else {
+                println!("{output_json}");
+            }
+        }
     }
 }
 
@@ -1243,5 +1320,41 @@ mod tests {
         .unwrap_err();
 
         assert!(err.contains("--anchor-report"));
+    }
+
+    #[test]
+    fn analyze_replay_command_parses_input_output_and_model_limits() {
+        let cli = Cli::try_parse_from([
+            "gomoku-eval",
+            "analyze-replay",
+            "--input",
+            "replays/match.json",
+            "--output",
+            "outputs/analysis.json",
+            "--defense-policy",
+            "tactical-defense",
+            "--max-depth",
+            "3",
+            "--max-backward-window",
+            "12",
+        ])
+        .expect("analyze-replay command should parse");
+
+        let Commands::AnalyzeReplay {
+            input,
+            output,
+            defense_policy,
+            max_depth,
+            max_backward_window,
+        } = cli.command
+        else {
+            panic!("expected analyze-replay command");
+        };
+
+        assert_eq!(input, PathBuf::from("replays/match.json"));
+        assert_eq!(output, Some(PathBuf::from("outputs/analysis.json")));
+        assert_eq!(defense_policy, CliDefensePolicy::Tactical);
+        assert_eq!(max_depth, 3);
+        assert_eq!(max_backward_window, Some(12));
     }
 }
