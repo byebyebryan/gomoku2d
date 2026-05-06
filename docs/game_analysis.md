@@ -588,19 +588,24 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   and analyzes them without first writing replay JSON files.
 - `gomoku-eval analysis-fixtures` runs curated replay fixtures and prints
   expected-vs-actual labels for the current analysis model.
+- The current replay analyzer uses corridor-exit semantics for proof summaries:
+  attacker nodes follow actual corridor moves or immediate wins, while defender
+  nodes classify only model-valid corridor exits before calling a prefix forced.
+  The older broad `prove_forced_win` path remains as a reference/validation
+  helper for small positions.
 - The current proof engine handles immediate wins, single-threat escapes,
   open-four style unavoidable immediate wins, one narrow forced-chain extension,
   defender immediate-win escapes, Renju forbidden-block terminals, proof
   intervals, conversion notes, missed defenses, missed wins, ongoing/draw
   summaries, and explicit `unknown` states.
 - The fixture report currently covers missed defense, delayed conversion,
-  losing-side missed win, shallow-model unknown guard, closed-four to open-four
-  forced-chain continuation, defender counter-win escape, Renju no-legal-block
-  terminal behavior, and ongoing replay behavior.
+  losing-side missed win, shallow open-four corridor detection, closed-four to
+  open-four forced-chain continuation, defender counter-win escape, Renju
+  no-legal-block terminal behavior, and ongoing replay behavior.
 - Tactical-defense mode exposes legal cost replies, defender immediate wins,
   and forbidden cost squares in branch evidence, but it is still not a full
   threat-space search.
-- Batch analysis reports now include `unclear_context` and limit-cause counts
+- Batch analysis reports include `unclear_context` and limit-cause counts
   for unresolved entries: previous prefix status, proof-limit flag, named limit
   causes, principal-line notation, and compact board snapshots. This is meant
   to make proof-limit, model-scope, and scan-window failures inspectable before
@@ -647,13 +652,11 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   issue is normal proof depth plus defender breadth, not forced-extension
   budget.
 
-Current next target: pivot hybrid local-threat proof toward bounded
-corridor-exit semantics. The analyzer should not try to prove that every
-alternate defender state is a game-theoretic loss. It should prove the actual
-ending corridor, then identify whether a defender reply can leave that corridor
-without losing immediately or entering another known narrow forced chain. Do not
-expose replay analysis in the web UI yet, and do not try to solve the remaining
-unknowns by simply raising all-legal depth or widening shape coverage.
+Current next target: run corridor-exit replay analysis against report samples,
+then use the failures to decide whether the next slice should improve named
+local exits, forced-chain evidence, or report readability. Do not expose replay
+analysis in the web UI yet, and do not try to solve remaining unknowns by simply
+raising all-legal depth or widening shape coverage.
 
 Example:
 

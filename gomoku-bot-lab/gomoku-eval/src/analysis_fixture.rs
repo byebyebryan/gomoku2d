@@ -122,8 +122,8 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         },
     },
     AnalysisFixtureCase {
-        case_id: "unknown_guard_open_four_depth1",
-        description: "A deliberately shallow model must keep an unknown prefix instead of over-labeling the loss.",
+        case_id: "open_four_corridor_depth1",
+        description: "A shallow corridor model should still identify the open-four point of no return.",
         variant: Variant::Freestyle,
         moves: &["H8", "A1", "I8", "A2", "J8", "A3", "K8", "B1", "L8"],
         options: AnalysisFixtureOptions {
@@ -134,15 +134,15 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         },
         expected: AnalysisFixtureExpected {
             winner: Some(Color::Black),
-            root_cause: RootCause::Unclear,
+            root_cause: RootCause::MissedDefense,
             final_forced_interval: ForcedInterval {
-                start_ply: 7,
+                start_ply: 6,
                 end_ply: 9,
             },
-            last_chance_ply: None,
-            critical_mistake_ply: None,
-            tactical_notes: &[],
-            required_unknown_gaps: &[6],
+            last_chance_ply: Some(5),
+            critical_mistake_ply: Some(6),
+            tactical_notes: &[TacticalNote::AccidentalBlunder],
+            required_unknown_gaps: &[],
             required_reply_classifications: &[],
         },
     },
@@ -162,15 +162,15 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         },
         expected: AnalysisFixtureExpected {
             winner: Some(Color::Black),
-            root_cause: RootCause::Unclear,
+            root_cause: RootCause::MissedDefense,
             final_forced_interval: ForcedInterval {
                 start_ply: 10,
                 end_ply: 15,
             },
-            last_chance_ply: None,
-            critical_mistake_ply: None,
-            tactical_notes: &[],
-            required_unknown_gaps: &[9],
+            last_chance_ply: Some(9),
+            critical_mistake_ply: Some(10),
+            tactical_notes: &[TacticalNote::AccidentalBlunder],
+            required_unknown_gaps: &[],
             required_reply_classifications: &[ReplyClassification::BlockedButForced],
         },
     },
@@ -966,7 +966,7 @@ mod tests {
         let json = serde_json::to_string_pretty(&report)
             .expect("analysis fixture report should serialize");
 
-        assert!(json.contains("\"schema_version\": 4"));
+        assert!(json.contains("\"schema_version\": 5"));
         assert!(json.contains("\"case_id\": \"missed_defense_closed_four\""));
         assert!(json.contains("\"expected\""));
         assert!(json.contains("\"actual\""));

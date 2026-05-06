@@ -673,9 +673,7 @@ mod tests {
         render_analysis_batch_report_html, run_analysis_batch, run_analysis_batch_replays,
         ReplayAnalysisInput,
     };
-    use crate::analysis::{
-        AnalysisOptions, ProofLimitCause, ProofStatus, RootCause, UnclearReason,
-    };
+    use crate::analysis::{AnalysisOptions, ProofLimitCause, RootCause, UnclearReason};
 
     fn replay_from_moves(variant: Variant, moves: &[&str]) -> Replay {
         let rules = RuleConfig {
@@ -811,7 +809,7 @@ mod tests {
     }
 
     #[test]
-    fn analysis_batch_replays_records_unclear_drilldown_context() {
+    fn analysis_batch_replays_records_scan_window_drilldown_context() {
         let replay = replay_from_moves(
             Variant::Freestyle,
             &["H8", "A1", "I8", "A2", "J8", "A3", "K8", "B1", "L8"],
@@ -824,7 +822,7 @@ mod tests {
                 replay,
             }],
             AnalysisOptions {
-                max_depth: 1,
+                max_backward_window: Some(0),
                 ..AnalysisOptions::default()
             },
         );
@@ -833,32 +831,33 @@ mod tests {
         let context = entry
             .unclear_context
             .as_ref()
-            .expect("unclear proof-limited entries should expose drilldown context");
+            .expect("scan-window-limited entries should expose drilldown context");
 
-        assert_eq!(entry.unclear_reason, Some(UnclearReason::ProofLimitHit));
-        assert_eq!(context.previous_prefix_ply, Some(6));
-        assert_eq!(context.previous_proof_status, Some(ProofStatus::Unknown));
-        assert_eq!(context.previous_proof_limit_hit, Some(true));
+        assert_eq!(entry.unclear_reason, Some(UnclearReason::ScanWindowCutoff));
+        assert_eq!(context.previous_prefix_ply, Some(7));
+        assert_eq!(context.previous_proof_status, None);
+        assert_eq!(context.previous_proof_limit_hit, None);
         assert!(context
             .previous_limit_causes
-            .contains(&ProofLimitCause::DepthCutoff));
-        assert!(entry.limit_causes.contains(&ProofLimitCause::DepthCutoff));
+            .contains(&ProofLimitCause::OutsideScanWindow));
+        assert!(entry
+            .limit_causes
+            .contains(&ProofLimitCause::OutsideScanWindow));
         assert!(report
             .limit_cause_counts
             .iter()
-            .any(|count| count.cause == ProofLimitCause::DepthCutoff && count.count == 1));
+            .any(|count| count.cause == ProofLimitCause::OutsideScanWindow && count.count == 1));
         assert_eq!(context.move_count, 9);
         assert!(!context.principal_line.is_empty());
         assert!(!context.principal_line_notation.is_empty());
         assert!(context
             .snapshots
             .iter()
-            .any(|snapshot| snapshot.label == "previous_prefix" && snapshot.ply == 6));
+            .any(|snapshot| snapshot.label == "previous_prefix" && snapshot.ply == 7));
 
         let html = render_analysis_batch_report_html(&report);
         assert!(html.contains("<details"));
-        assert!(html.contains("previous_prefix @ ply 6"));
-        assert!(html.contains("limit hit"));
-        assert!(html.contains("depth cutoff"));
+        assert!(html.contains("previous_prefix @ ply 7"));
+        assert!(html.contains("outside scan window"));
     }
 }
