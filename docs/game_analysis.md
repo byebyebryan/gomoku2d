@@ -610,13 +610,14 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   causes, principal-line notation, and compact board snapshots. This is meant
   to make proof-limit, model-scope, and scan-window failures inspectable before
   adding more search.
-- A top-two report smoke run against
+- After the corridor-exit pivot, a top-two report smoke run against
   `search-d7+tactical-cap-8+pattern-eval` vs
   `search-d5+tactical-cap-8+pattern-eval` passed with `8 analyzed / 8 total`
-  and `0 failed`. It found final forced intervals in decisive games, but most
-  root causes stayed `unclear` because the prefix before the final interval was
-  still proof-limited or outside the scan window.
-- The latest 64-game sampled checkpoint passed with `64 analyzed / 64 total`
+  and `0 failed` in about `3.9s` total elapsed time. It classified the decisive
+  sample as `6` strategic losses and `1` missed defense, with `1` draw/ongoing
+  entry and no decisive-game `unclear` roots.
+- Before the corridor-exit pivot, the 64-game sampled checkpoint passed with
+  `64 analyzed / 64 total`
   and `0 failed`: `63` proof-limit hits and `1` draw/ongoing game. Bounded
   scan expansion removed the previous scan-window cutoffs. Under
   `all_legal_defense`, `61` decisive games hit `depth_cutoff` plus
@@ -652,11 +653,13 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   issue is normal proof depth plus defender breadth, not forced-extension
   budget.
 
-Current next target: run corridor-exit replay analysis against report samples,
-then use the failures to decide whether the next slice should improve named
-local exits, forced-chain evidence, or report readability. Do not expose replay
-analysis in the web UI yet, and do not try to solve remaining unknowns by simply
-raising all-legal depth or widening shape coverage.
+Current next target: inspect the corridor-exit smoke classifications for
+readability and plausibility, then run a larger checkpoint if the report shape
+looks right. Use remaining failures or suspicious labels to decide whether the
+next slice should improve named local exits, forced-chain evidence, or report
+readability. Do not expose replay analysis in the web UI yet, and do not try to
+solve remaining unknowns by simply raising all-legal depth or widening shape
+coverage.
 
 Example:
 
