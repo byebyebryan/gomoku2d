@@ -30,6 +30,16 @@ pub enum RootCause {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
+pub enum UnclearReason {
+    PreviousPrefixUnknown,
+    ScanWindowCutoff,
+    ProofLimitHit,
+    NoFinalForcedInterval,
+    DrawOrOngoing,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum TacticalNote {
     AccidentalBlunder,
     ConversionError,
@@ -86,6 +96,7 @@ pub struct ProofResult {
     pub principal_line: Vec<Move>,
     pub escape_moves: Vec<Move>,
     pub threat_evidence: Vec<ThreatSequenceEvidence>,
+    pub limit_hit: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -169,9 +180,11 @@ pub struct GameAnalysis {
     pub final_move: Option<Move>,
     pub final_winning_line: Vec<Move>,
     pub model: AnalysisModel,
+    pub final_forced_interval_found: bool,
     pub final_forced_interval: ForcedInterval,
     pub proof_intervals: Vec<ForcedInterval>,
     pub unknown_gaps: Vec<usize>,
+    pub unclear_reason: Option<UnclearReason>,
     pub last_chance_ply: Option<usize>,
     pub decisive_attack_ply: Option<usize>,
     pub critical_mistake_ply: Option<usize>,
@@ -222,12 +235,14 @@ pub fn analyze_replay(
                 .and_then(|mv| Move::from_notation(&mv.mv).ok()),
             final_winning_line: Vec::new(),
             model,
+            final_forced_interval_found: false,
             final_forced_interval: ForcedInterval {
                 start_ply: 0,
                 end_ply: 0,
             },
             proof_intervals: Vec::new(),
             unknown_gaps: Vec::new(),
+            unclear_reason: Some(UnclearReason::DrawOrOngoing),
             last_chance_ply: None,
             decisive_attack_ply: None,
             critical_mistake_ply: None,
@@ -259,6 +274,9 @@ pub fn analyze_replay(
     }
 
     let proof_intervals = proof_intervals(&proof_summary, scan_start);
+    let final_forced_interval_found = proof_intervals
+        .iter()
+        .any(|interval| interval.end_ply == replay.moves.len());
     let final_forced_interval = proof_intervals
         .iter()
         .rev()
@@ -312,6 +330,14 @@ pub fn analyze_replay(
     let principal_line = proof_at(&proof_summary, scan_start, final_forced_interval.start_ply)
         .map(|proof| proof.principal_line.clone())
         .unwrap_or_default();
+    let unclear_reason = unclear_reason(UnclearReasonInput {
+        root_cause,
+        final_forced_interval_found,
+        final_forced_interval: &final_forced_interval,
+        previous_status,
+        proof_summary: &proof_summary,
+        scan_start,
+    });
 
     Ok(GameAnalysis {
         schema_version: ANALYSIS_SCHEMA_VERSION,
@@ -324,9 +350,11 @@ pub fn analyze_replay(
             .and_then(|mv| Move::from_notation(&mv.mv).ok()),
         final_winning_line: final_board.winning_line(),
         model,
+        final_forced_interval_found,
         final_forced_interval,
         proof_intervals,
         unknown_gaps,
+        unclear_reason,
         last_chance_ply,
         decisive_attack_ply,
         critical_mistake_ply,
@@ -411,6 +439,15 @@ fn next_attacker_move_after_defender_reply(principal_line: &[Move]) -> Option<Mo
     principal_line.get(1).copied()
 }
 
+fn proof_limit_hit_from_evidence(threat_evidence: &[ThreatSequenceEvidence]) -> bool {
+    threat_evidence.iter().any(|evidence| evidence.limit_hit)
+}
+
+fn with_limit_hit(mut proof: ProofResult, limit_hit: bool) -> ProofResult {
+    proof.limit_hit |= limit_hit;
+    proof
+}
+
 fn prove_forced_win_inner(
     board: &Board,
     attacker: Color,
@@ -419,14 +456,21 @@ fn prove_forced_win_inner(
     trace: Option<ProofTrace<'_>>,
 ) -> ProofResult {
     let model = analysis_model(board, options);
-    let base = |status, principal_line, escape_moves, threat_evidence| ProofResult {
-        status,
-        attacker,
-        side_to_move: board.current_player,
-        model: model.clone(),
-        principal_line,
-        escape_moves,
-        threat_evidence,
+    let base = |status: ProofStatus,
+                principal_line: Vec<Move>,
+                escape_moves: Vec<Move>,
+                threat_evidence: Vec<ThreatSequenceEvidence>| {
+        let limit_hit = proof_limit_hit_from_evidence(&threat_evidence);
+        ProofResult {
+            status,
+            attacker,
+            side_to_move: board.current_player,
+            model: model.clone(),
+            principal_line,
+            escape_moves,
+            threat_evidence,
+            limit_hit,
+        }
     };
 
     match board.result {
@@ -440,7 +484,10 @@ fn prove_forced_win_inner(
     }
 
     if depth_remaining == 0 {
-        return base(ProofStatus::Unknown, Vec::new(), Vec::new(), Vec::new());
+        return with_limit_hit(
+            base(ProofStatus::Unknown, Vec::new(), Vec::new(), Vec::new()),
+            true,
+        );
     }
 
     if board.current_player == attacker {
@@ -463,6 +510,7 @@ fn prove_attacker_node(
         return base(ProofStatus::ForcedWin, vec![mv], Vec::new(), Vec::new());
     }
 
+    let mut child_limit_hit = false;
     for mv in board.legal_moves() {
         let mut next = board.clone();
         if next.apply_move(mv).is_err() {
@@ -479,16 +527,25 @@ fn prove_attacker_node(
             let mut principal_line = Vec::with_capacity(proof.principal_line.len() + 1);
             principal_line.push(mv);
             principal_line.extend(proof.principal_line);
-            return base(
-                ProofStatus::ForcedWin,
-                principal_line,
-                Vec::new(),
-                proof.threat_evidence,
+            return with_limit_hit(
+                base(
+                    ProofStatus::ForcedWin,
+                    principal_line,
+                    Vec::new(),
+                    proof.threat_evidence,
+                ),
+                proof.limit_hit,
             );
+        }
+        if proof.status == ProofStatus::Unknown {
+            child_limit_hit |= proof.limit_hit;
         }
     }
 
-    base(ProofStatus::Unknown, Vec::new(), Vec::new(), Vec::new())
+    with_limit_hit(
+        base(ProofStatus::Unknown, Vec::new(), Vec::new(), Vec::new()),
+        child_limit_hit,
+    )
 }
 
 fn prove_defender_node(
@@ -535,6 +592,7 @@ fn prove_defender_node(
 
     let mut principal_line = Vec::new();
     let mut saw_unknown = false;
+    let mut child_limit_hit = false;
     let mut forced_replies = Vec::new();
     for mv in reply_moves {
         let mut next = board.clone();
@@ -574,6 +632,7 @@ fn prove_defender_node(
                 }
                 ProofStatus::Unknown => {
                     saw_unknown = true;
+                    child_limit_hit |= proof.limit_hit;
                     continue;
                 }
             }
@@ -616,29 +675,33 @@ fn prove_defender_node(
             }
             ProofStatus::Unknown => {
                 saw_unknown = true;
+                child_limit_hit |= proof.limit_hit;
             }
         }
     }
 
     if saw_unknown {
         let next_forcing_move = next_attacker_move_after_defender_reply(&principal_line);
-        base(
-            ProofStatus::Unknown,
-            principal_line,
-            Vec::new(),
-            if current_immediate_wins.is_empty() {
-                Vec::new()
-            } else {
-                vec![threat.evidence(ThreatEvidenceInput {
-                    attribution,
-                    reply_classification: ReplyClassification::Unknown,
-                    escape_replies: Vec::new(),
-                    forced_replies,
-                    next_forcing_move,
-                    proof_status: ProofStatus::Unknown,
-                    limit_hit: true,
-                })]
-            },
+        with_limit_hit(
+            base(
+                ProofStatus::Unknown,
+                principal_line,
+                Vec::new(),
+                if current_immediate_wins.is_empty() {
+                    Vec::new()
+                } else {
+                    vec![threat.evidence(ThreatEvidenceInput {
+                        attribution,
+                        reply_classification: ReplyClassification::Unknown,
+                        escape_replies: Vec::new(),
+                        forced_replies,
+                        next_forcing_move,
+                        proof_status: ProofStatus::Unknown,
+                        limit_hit: true,
+                    })]
+                },
+            ),
+            child_limit_hit,
         )
     } else {
         let next_forcing_move = next_attacker_move_after_defender_reply(&principal_line);
@@ -671,14 +734,21 @@ fn prove_forced_extension(
     trace: Option<ProofTrace<'_>>,
 ) -> ProofResult {
     let model = analysis_model(board, options);
-    let base = |status, principal_line, escape_moves, threat_evidence| ProofResult {
-        status,
-        attacker,
-        side_to_move: board.current_player,
-        model: model.clone(),
-        principal_line,
-        escape_moves,
-        threat_evidence,
+    let base = |status: ProofStatus,
+                principal_line: Vec<Move>,
+                escape_moves: Vec<Move>,
+                threat_evidence: Vec<ThreatSequenceEvidence>| {
+        let limit_hit = proof_limit_hit_from_evidence(&threat_evidence);
+        ProofResult {
+            status,
+            attacker,
+            side_to_move: board.current_player,
+            model: model.clone(),
+            principal_line,
+            escape_moves,
+            threat_evidence,
+            limit_hit,
+        }
     };
 
     match board.result {
@@ -692,7 +762,10 @@ fn prove_forced_extension(
     }
 
     if extensions_remaining == 0 {
-        return base(ProofStatus::Unknown, Vec::new(), Vec::new(), Vec::new());
+        return with_limit_hit(
+            base(ProofStatus::Unknown, Vec::new(), Vec::new(), Vec::new()),
+            true,
+        );
     }
 
     if board.current_player == attacker {
@@ -730,6 +803,7 @@ fn prove_attacker_forced_extension_node(
     }
 
     let mut saw_unknown = false;
+    let mut child_limit_hit = false;
     for mv in forcing_moves(board, attacker) {
         let mut next = board.clone();
         if next.apply_move(mv).is_err() {
@@ -746,20 +820,27 @@ fn prove_attacker_forced_extension_node(
             let mut principal_line = Vec::with_capacity(proof.principal_line.len() + 1);
             principal_line.push(mv);
             principal_line.extend(proof.principal_line);
-            return base(
-                ProofStatus::ForcedWin,
-                principal_line,
-                Vec::new(),
-                proof.threat_evidence,
+            return with_limit_hit(
+                base(
+                    ProofStatus::ForcedWin,
+                    principal_line,
+                    Vec::new(),
+                    proof.threat_evidence,
+                ),
+                proof.limit_hit,
             );
         }
         if proof.status == ProofStatus::Unknown {
             saw_unknown = true;
+            child_limit_hit |= proof.limit_hit;
         }
     }
 
     if saw_unknown {
-        base(ProofStatus::Unknown, Vec::new(), Vec::new(), Vec::new())
+        with_limit_hit(
+            base(ProofStatus::Unknown, Vec::new(), Vec::new(), Vec::new()),
+            child_limit_hit,
+        )
     } else {
         base(ProofStatus::EscapeFound, Vec::new(), Vec::new(), Vec::new())
     }
@@ -810,6 +891,7 @@ fn prove_defender_forced_extension_node(
 
     let mut principal_line = Vec::new();
     let mut saw_unknown = false;
+    let mut child_limit_hit = false;
     let mut forced_replies = Vec::new();
     for mv in reply_moves {
         let mut next = board.clone();
@@ -848,6 +930,7 @@ fn prove_defender_forced_extension_node(
                 }
                 ProofStatus::Unknown => {
                     saw_unknown = true;
+                    child_limit_hit |= proof.limit_hit;
                 }
             }
             continue;
@@ -864,19 +947,22 @@ fn prove_defender_forced_extension_node(
 
     if saw_unknown {
         let next_forcing_move = next_attacker_move_after_defender_reply(&principal_line);
-        base(
-            ProofStatus::Unknown,
-            principal_line,
-            Vec::new(),
-            vec![threat.evidence(ThreatEvidenceInput {
-                attribution,
-                reply_classification: ReplyClassification::Unknown,
-                escape_replies: Vec::new(),
-                forced_replies,
-                next_forcing_move,
-                proof_status: ProofStatus::Unknown,
-                limit_hit: true,
-            })],
+        with_limit_hit(
+            base(
+                ProofStatus::Unknown,
+                principal_line,
+                Vec::new(),
+                vec![threat.evidence(ThreatEvidenceInput {
+                    attribution,
+                    reply_classification: ReplyClassification::Unknown,
+                    escape_replies: Vec::new(),
+                    forced_replies,
+                    next_forcing_move,
+                    proof_status: ProofStatus::Unknown,
+                    limit_hit: true,
+                })],
+            ),
+            child_limit_hit,
         )
     } else {
         let next_forcing_move = next_attacker_move_after_defender_reply(&principal_line);
@@ -1055,6 +1141,47 @@ fn classify_root_cause(
     }
 }
 
+struct UnclearReasonInput<'a> {
+    root_cause: RootCause,
+    final_forced_interval_found: bool,
+    final_forced_interval: &'a ForcedInterval,
+    previous_status: Option<ProofStatus>,
+    proof_summary: &'a [ProofResult],
+    scan_start: usize,
+}
+
+fn unclear_reason(input: UnclearReasonInput<'_>) -> Option<UnclearReason> {
+    if input.root_cause != RootCause::Unclear {
+        return None;
+    }
+    if !input.final_forced_interval_found {
+        return Some(UnclearReason::NoFinalForcedInterval);
+    }
+    let previous_ply = input.final_forced_interval.start_ply.checked_sub(1);
+    let Some(previous_ply) = previous_ply else {
+        return Some(UnclearReason::ScanWindowCutoff);
+    };
+    let Some(previous_proof) = proof_at(input.proof_summary, input.scan_start, previous_ply) else {
+        return Some(UnclearReason::ScanWindowCutoff);
+    };
+    match input.previous_status {
+        Some(ProofStatus::Unknown) if proof_has_limit_hit(previous_proof) => {
+            Some(UnclearReason::ProofLimitHit)
+        }
+        Some(ProofStatus::Unknown) => Some(UnclearReason::PreviousPrefixUnknown),
+        None => Some(UnclearReason::ScanWindowCutoff),
+        _ => Some(UnclearReason::PreviousPrefixUnknown),
+    }
+}
+
+fn proof_has_limit_hit(proof: &ProofResult) -> bool {
+    proof.limit_hit
+        || proof
+            .threat_evidence
+            .iter()
+            .any(|evidence| evidence.limit_hit)
+}
+
 struct TacticalNoteInput<'a> {
     replay: &'a Replay,
     boards: &'a [Board],
@@ -1212,7 +1339,7 @@ mod tests {
 
     use super::{
         analyze_replay, prove_forced_win, AnalysisOptions, DefensePolicy, ProofStatus,
-        ReplyClassification, RootCause, TacticalNote,
+        ReplyClassification, RootCause, TacticalNote, UnclearReason,
     };
 
     fn mv(notation: &str) -> Move {
@@ -1353,6 +1480,7 @@ mod tests {
         );
 
         assert_eq!(proof.status, ProofStatus::Unknown);
+        assert!(proof.limit_hit);
     }
 
     #[test]
@@ -1540,6 +1668,8 @@ mod tests {
         .expect("finished replay should analyze");
 
         assert_eq!(analysis.root_cause, RootCause::Unclear);
+        assert_eq!(analysis.unclear_reason, Some(UnclearReason::ProofLimitHit));
+        assert!(analysis.final_forced_interval_found);
         assert!(analysis.unknown_gaps.contains(&6));
     }
 
@@ -1552,6 +1682,8 @@ mod tests {
 
         assert_eq!(analysis.winner, None);
         assert_eq!(analysis.root_cause, RootCause::Unclear);
+        assert_eq!(analysis.unclear_reason, Some(UnclearReason::DrawOrOngoing));
+        assert!(!analysis.final_forced_interval_found);
         assert_eq!(analysis.final_forced_interval.start_ply, 0);
         assert_eq!(analysis.final_forced_interval.end_ply, 0);
     }
