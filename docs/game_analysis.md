@@ -211,11 +211,12 @@ no defender reply because the only natural Black block is forbidden. That case
 must be classified as `no_legal_block` / forced terminal, not silently downgraded
 to `unknown`.
 
-The current hybrid slice is deliberately small: contiguous `OpenFour`,
-`ClosedFour`, and `OpenThree` facts only. It does not yet cover broken shapes,
-rest-square dependency graphs, or multi-threat combinations beyond the narrow
-bounded reply set. Those belong in later TSS-style work once runtime and
-telemetry are under control.
+The current hybrid slice is deliberately small: local `OpenFour`, `ClosedFour`,
+`BrokenFour`, `OpenThree`, and diagnostic `BrokenThree` facts only. `BrokenThree`
+is recorded for shape visibility, but it is not treated as a forcing reply yet:
+an attempted report smoke made that branch much slower before proving a coverage
+gain. Rest-square dependency graphs and multi-threat combinations belong in later
+TSS-style work once the basic shape facts are validated on report samples.
 
 ## Backward Walk
 
@@ -579,6 +580,11 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   report, while a broader one-or-two-threat trigger improved coverage but became
   expensive. Keep both facts in mind before treating local-threat replies as a
   default product model.
+- Adding `BrokenFour` facts and diagnostic `BrokenThree` facts did not change
+  the same 8-game smoke result: still `2` missed defenses, `5` unclear
+  proof-limit entries, and `1` draw/ongoing game, with roughly the same runtime.
+  Temporarily treating `BrokenThree` as forcing was much slower and was narrowed
+  back to diagnostic-only before checkpointing.
 - Raising all-legal depth is not the next practical move. The 8-game smoke at
   `all_legal_defense`, depth `3`, forced extensions `4` still left `7`
   unresolved entries and took roughly `190s` wall-clock / `626s` summed
