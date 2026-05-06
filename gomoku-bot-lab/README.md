@@ -207,8 +207,11 @@ web matches. The tournament harness and opening suite are documented in
 For replay analysis iteration, prefer `analyze-report-replays --sample-size 8`
 against an existing tournament report before running a full matchup. The
 stratified sample is deterministic and tries to include both entrants, both
-colors where available, a draw or max-move game, and short/long games. The batch
-report includes `unclear_reason`, final forced-interval presence, prefix counts,
+colors where available, a draw or max-move game, and short/long games. Replay
+analysis now uses corridor-exit semantics: it follows the actual ending
+corridor and asks whether model-valid defender replies can leave it, rather than
+trying to prove every alternate state as a game-theoretic loss. The batch report
+includes `unclear_reason`, final forced-interval presence, prefix counts,
 per-entry elapsed time, limit-cause counts, and `unclear_context` drilldown so
 an `unclear` result distinguishes depth cutoffs, forced-extension cutoffs,
 defender-reply unknowns, model-scope unknowns, scan-window cutoffs, games with
