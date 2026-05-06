@@ -42,11 +42,21 @@ it behind a single "best move" label.
 
 ## Proof Model
 
-The ideal-game layer asks one narrow question from a board prefix:
+The ideal-game layer asks two related, bounded questions:
 
-> Can the eventual winner force a win from this position?
+- Corridor proof: from this prefix, can the eventual winner stay inside a narrow
+  modeled forced line to the actual ending?
+- Corridor exit: at a losing-side reply point, is there any legal reply that
+  exits that detected corridor?
 
-This is proof-oriented analysis, not generic best-move analysis.
+For replay analysis, "force" is intentionally model-bounded. The first product
+goal is to explain the detected forced corridor near the end of the actual game,
+not to prove that every alternate state is a game-theoretic loss under perfect
+play. An escape reply can leave the detected corridor even if the defender might
+still lose later.
+
+This is proof-oriented analysis, not generic best-move analysis or full solver
+analysis.
 
 For a move list `m1..mn`:
 
@@ -54,14 +64,16 @@ For a move list `m1..mn`:
 - `winner` is the actual game winner.
 - `side_to_move(P_k)` determines whether the root is an attacker node or a
   defender node.
-- `forced_win(P_k, winner, model)` returns `forced_win`, `escape_found`, or
-  `unknown`.
+- `corridor_status(P_k, winner, model)` returns `forced_win`, `escape_found`,
+  or `unknown`.
 
 Avoid a plain `not_proven` result. In a bounded analyzer, "not found" does not
 mean "defensible." The useful distinction is:
 
-- `forced_win`: the analyzer proved a win under the stated model and limits.
-- `escape_found`: the defender has at least one model-valid escape.
+- `forced_win`: the analyzer proved that the detected corridor reaches a win
+  under the stated model and limits.
+- `escape_found`: the defender has at least one model-valid move that exits the
+  detected forced corridor.
 - `unknown`: the analyzer hit depth, node, time, or model-scope limits.
 
 Every result must carry its model and limits. A proof without those fields is
@@ -81,9 +93,11 @@ Terminology:
   `defense_square` from [`tactical_shapes.md`](tactical_shapes.md). Cost squares
   must be split into legal cost replies and illegal cost squares before they are
   used in a proof.
-- Escape reply: a legal defender move that either wins immediately for the
-  defender, or answers the current threat and avoids entering another proven
-  forced win.
+- Escape reply: a legal defender move that exits the detected forced corridor:
+  it wins immediately for the defender, answers the next known threat without
+  losing immediately, or avoids another narrow forced losing chain within the
+  stated model and limits. It does not prove the defender survives the rest of
+  the game.
 - Forced reply: a defender move that answers the current threat but still leaves
   the attacker a forced continuation.
 
@@ -107,8 +121,36 @@ The forced cases are the strategically interesting ones. Walking backward one
 round at a time, after a winning-side move `PX - 2`, ask:
 
 > Is there any legal losing-side reply `PX - 1` that either wins immediately for
-> the loser, or prevents the next immediate win `PX` and avoids another forced
-> win?
+> the loser, or prevents the next immediate win `PX` and exits the known forced
+> corridor?
+
+The escape test is deliberately bounded:
+
+- `A`: the reply must stop the next known attacker win or create an immediate
+  counter-win.
+- `B`: after that reply, the defender must not lose immediately and must not
+  enter another narrow forced losing chain recognized by the current model.
+
+Only `A`-valid replies should enter the `B` check. The corridor-exit analyzer
+should not search every legal defender move hoping to prove long-term survival;
+that is the rabbit hole. A broad all-legal proof can remain a validation mode
+for tiny fixtures, but it should not be the default replay-analysis path.
+
+`B` is not a global survival proof. If the alternate move reaches a different
+non-terminal game state outside the detected corridor, that is enough to call it
+an escape for replay explanation. The report should say "last known escape" or
+"exits the detected forced line" rather than "the defender was safe."
+
+For each `A`-valid candidate, classify the bounded `B` check explicitly:
+
+- `forced`: the move still loses immediately, or enters another known narrow
+  forced losing chain.
+- `escape`: the bounded check completes with no immediate loss and no known
+  narrow forced losing chain.
+- `unknown`: the model cannot classify the candidate before hitting depth,
+  extension, branch, or scope limits.
+
+An immediate counter-win is an escape without needing the rest of `B`.
 
 If such a reply exists, it is an escape reply. If it is the final escape before
 the forced interval, it becomes the last chance. If the actual move did not
@@ -122,10 +164,10 @@ rules used elsewhere:
 - previous prefix `unknown`, current prefix `forced_win`: `unclear`, even if the
   current forced sequence is proven.
 
-If no escape reply exists, then `PX - 2` is still inside the forced sequence.
-The defender may have legal cost replies, but all of them are forced replies
-rather than escapes. Keep walking backward until the analyzer finds an escape
-reply or hits an `unknown` boundary.
+If no escape reply exists, then `PX - 2` is still inside the detected forced
+sequence. The defender may have legal cost replies, but all model-visible
+replies stay inside the corridor rather than escaping it. Keep walking backward
+until the analyzer finds an escape reply or hits an `unknown` boundary.
 
 All winning squares, cost squares, and escape checks are rule-aware and
 side-specific. A forbidden Renju point is not a legal winning square or escape
@@ -138,7 +180,8 @@ This distinction is important for product copy:
 - Accidental miss: "there was one block and it was missed."
 - Forced sequence: "the block was forced, but the next threat was still
   unavoidable."
-- Unknown: "the analyzer cannot prove whether an escape existed earlier."
+- Unknown: "the analyzer cannot determine whether the forced line started
+  earlier."
 
 ## Reply-Set Bounds
 
@@ -146,7 +189,8 @@ The biggest design risk is pretending a tactical proof is stronger than it is.
 Defender reply semantics must be explicit:
 
 - `all_legal_defense`: the defender may choose any legal move. This is the
-  strongest proof style, but it is much more expensive.
+  strongest validation style, but it is much more expensive and should not be
+  the default corridor-exit path.
 - `tactical_defense`: the defender only replies with legal local cost replies,
   defender immediate wins, and other explicitly named tactical escapes derived
   from the current forcing shape. This is useful for forced-chain exploration,
@@ -159,9 +203,16 @@ Search semantics:
 - Attacker means the side we are proving a forced win for, even if that side is
   not currently to move.
 - Attacker node: at least one legal forcing move must lead to a win.
-- Defender node: every move in the selected reply set must still lose.
-- Escape: a defender move in the selected reply set that breaks the proof.
+- Defender node: every move in the selected reply set must stay inside the
+  detected forced corridor.
+- Escape: a defender move in the selected reply set that exits the detected
+  forced corridor.
 - Principal line: one representative forced line from the proof tree.
+
+For corridor-exit analysis, the selected reply set is not "all legal moves" by
+default. It should start with replies that satisfy the `A` filter: block the
+next known threat, win immediately, or produce another named tactical escape.
+Those candidates are then checked against bounded `B` semantics.
 
 For `tactical_defense`, the reply set must be named and inspectable. At minimum,
 the implementation should record whether the set includes only legal local cost
@@ -169,9 +220,9 @@ replies or also defender immediate wins, counter-threats, and Renju-forbidden
 cost-square handling. Leaving those out may be useful for a narrow experiment,
 but it weakens the product claim.
 
-Product copy must reflect the model. "Forced line" is acceptable for
-`all_legal_defense`; "forced line within tactical replies" is safer for
-`tactical_defense` until the behavior is validated.
+Product copy must reflect the model. "Forced line" is acceptable when the report
+also shows the model and limits. "Detected forced line" or "last known escape" is
+safer than implying the loser had a proven long-term save.
 
 ## Forced Extensions
 
@@ -271,7 +322,9 @@ Use a two-part classification:
 Root-cause categories:
 
 - `strategic_loss`: a move changes the position from `escape_found` to
-  `forced_win` under the same model and limits.
+  `forced_win` under the same model and limits. This means the move entered the
+  detected forced corridor; it does not claim the previous position was a
+  game-theoretic draw or win for the loser.
 - `missed_defense`: the losing side had at least one escape move, but the
   actual move did not play one.
 - `missed_win`: a player had an immediate or forced win, but played elsewhere
@@ -357,7 +410,7 @@ ThreatSequenceEvidence
 - `ignored_single_win`: one winning square existed and the actual reply did not
   answer it.
 - `blocked_but_forced`: the reply answered the current threat but all modeled
-  continuations still lose.
+  continuations stay inside the detected forced corridor.
 - `escaped`: the reply wins immediately, breaks the threat, or avoids the next
   forced continuation.
 - `no_legal_block`: the only apparent cost squares are illegal for the defender
@@ -372,8 +425,9 @@ these fields empty instead of pretending it maps to a real move.
 
 Proof result records should use explicit status:
 
-- `forced_win`: proven within the model and limits.
-- `escape_found`: defender has at least one model-valid escape.
+- `forced_win`: detected corridor proven within the model and limits.
+- `escape_found`: defender has at least one model-valid move that exits the
+  detected forced corridor.
 - `unknown`: search was cut off or the position exceeded analyzer scope.
 
 Unknown proof results should also carry named causes. Current lab causes are:
@@ -593,10 +647,13 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   issue is normal proof depth plus defender breadth, not forced-extension
   budget.
 
-Current next target: make hybrid local-threat proof bounded and inspectable.
-Do not expose replay analysis in the web UI yet, and do not try to solve this
-by simply raising all-legal depth or widening shape coverage before runtime is
-under control.
+Current next target: pivot hybrid local-threat proof toward bounded
+corridor-exit semantics. The analyzer should not try to prove that every
+alternate defender state is a game-theoretic loss. It should prove the actual
+ending corridor, then identify whether a defender reply can leave that corridor
+without losing immediately or entering another known narrow forced chain. Do not
+expose replay analysis in the web UI yet, and do not try to solve the remaining
+unknowns by simply raising all-legal depth or widening shape coverage.
 
 Example:
 
