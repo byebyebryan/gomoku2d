@@ -41,6 +41,7 @@ pub enum TacticalNote {
 pub struct AnalysisOptions {
     pub defense_policy: DefensePolicy,
     pub max_depth: usize,
+    pub max_forced_extensions: usize,
     pub max_backward_window: Option<usize>,
 }
 
@@ -49,6 +50,7 @@ impl Default for AnalysisOptions {
         Self {
             defense_policy: DefensePolicy::AllLegalDefense,
             max_depth: 2,
+            max_forced_extensions: 4,
             max_backward_window: None,
         }
     }
@@ -61,6 +63,7 @@ pub struct AnalysisModel {
     pub attacker_move_policy: String,
     pub rule_set: String,
     pub max_depth: usize,
+    pub max_forced_extensions: usize,
     pub max_backward_window: Option<usize>,
 }
 
@@ -339,7 +342,24 @@ fn prove_defender_node(
         }
         let next_immediate_wins = next.immediate_winning_moves_for(attacker);
         if !current_immediate_wins.is_empty() && next_immediate_wins.is_empty() {
-            return base(ProofStatus::EscapeFound, Vec::new(), vec![mv]);
+            let proof =
+                prove_forced_extension(&next, attacker, options.max_forced_extensions, options);
+            match proof.status {
+                ProofStatus::ForcedWin => {
+                    if principal_line.is_empty() {
+                        principal_line.push(mv);
+                        principal_line.extend(proof.principal_line);
+                    }
+                    continue;
+                }
+                ProofStatus::EscapeFound => {
+                    return base(ProofStatus::EscapeFound, Vec::new(), vec![mv]);
+                }
+                ProofStatus::Unknown => {
+                    saw_unknown = true;
+                    continue;
+                }
+            }
         }
         if let Some(&winning_reply) = next_immediate_wins.first() {
             if principal_line.is_empty() {
@@ -372,9 +392,176 @@ fn prove_defender_node(
     }
 }
 
+fn prove_forced_extension(
+    board: &Board,
+    attacker: Color,
+    extensions_remaining: usize,
+    options: &AnalysisOptions,
+) -> ProofResult {
+    let model = analysis_model(board, options);
+    let base = |status, principal_line, escape_moves| ProofResult {
+        status,
+        attacker,
+        side_to_move: board.current_player,
+        model: model.clone(),
+        principal_line,
+        escape_moves,
+    };
+
+    match board.result {
+        GameResult::Winner(winner) if winner == attacker => {
+            return base(ProofStatus::ForcedWin, Vec::new(), Vec::new());
+        }
+        GameResult::Winner(_) | GameResult::Draw => {
+            return base(ProofStatus::EscapeFound, Vec::new(), Vec::new());
+        }
+        GameResult::Ongoing => {}
+    }
+
+    if extensions_remaining == 0 {
+        return base(ProofStatus::Unknown, Vec::new(), Vec::new());
+    }
+
+    if board.current_player == attacker {
+        prove_attacker_forced_extension_node(board, attacker, extensions_remaining, options, base)
+    } else {
+        prove_defender_forced_extension_node(board, attacker, extensions_remaining, options, base)
+    }
+}
+
+fn prove_attacker_forced_extension_node(
+    board: &Board,
+    attacker: Color,
+    extensions_remaining: usize,
+    options: &AnalysisOptions,
+    base: impl Fn(ProofStatus, Vec<Move>, Vec<Move>) -> ProofResult,
+) -> ProofResult {
+    let immediate_wins = board.immediate_winning_moves_for(attacker);
+    if let Some(&mv) = immediate_wins.first() {
+        return base(ProofStatus::ForcedWin, vec![mv], Vec::new());
+    }
+
+    let mut saw_unknown = false;
+    for mv in forcing_moves(board, attacker) {
+        let mut next = board.clone();
+        if next.apply_move(mv).is_err() {
+            continue;
+        }
+        let proof = prove_forced_extension(&next, attacker, extensions_remaining - 1, options);
+        if proof.status == ProofStatus::ForcedWin {
+            let mut principal_line = Vec::with_capacity(proof.principal_line.len() + 1);
+            principal_line.push(mv);
+            principal_line.extend(proof.principal_line);
+            return base(ProofStatus::ForcedWin, principal_line, Vec::new());
+        }
+        if proof.status == ProofStatus::Unknown {
+            saw_unknown = true;
+        }
+    }
+
+    if saw_unknown {
+        base(ProofStatus::Unknown, Vec::new(), Vec::new())
+    } else {
+        base(ProofStatus::EscapeFound, Vec::new(), Vec::new())
+    }
+}
+
+fn prove_defender_forced_extension_node(
+    board: &Board,
+    attacker: Color,
+    extensions_remaining: usize,
+    options: &AnalysisOptions,
+    base: impl Fn(ProofStatus, Vec<Move>, Vec<Move>) -> ProofResult,
+) -> ProofResult {
+    let current_immediate_wins = board.immediate_winning_moves_for(attacker);
+    if current_immediate_wins.is_empty() {
+        return base(ProofStatus::Unknown, Vec::new(), Vec::new());
+    }
+
+    let reply_moves = forced_extension_reply_moves(board, attacker);
+    if reply_moves.is_empty() {
+        return base(ProofStatus::Unknown, Vec::new(), Vec::new());
+    }
+
+    let mut principal_line = Vec::new();
+    let mut saw_unknown = false;
+    for mv in reply_moves {
+        let mut next = board.clone();
+        if next.apply_move(mv).is_err() {
+            continue;
+        }
+        let next_immediate_wins = next.immediate_winning_moves_for(attacker);
+        if next_immediate_wins.is_empty() {
+            let proof = prove_forced_extension(&next, attacker, extensions_remaining, options);
+            match proof.status {
+                ProofStatus::ForcedWin => {
+                    if principal_line.is_empty() {
+                        principal_line.push(mv);
+                        principal_line.extend(proof.principal_line);
+                    }
+                }
+                ProofStatus::EscapeFound => {
+                    return base(ProofStatus::EscapeFound, Vec::new(), vec![mv]);
+                }
+                ProofStatus::Unknown => {
+                    saw_unknown = true;
+                }
+            }
+            continue;
+        }
+        if let Some(&winning_reply) = next_immediate_wins.first() {
+            if principal_line.is_empty() {
+                principal_line.push(mv);
+                principal_line.push(winning_reply);
+            }
+            continue;
+        }
+    }
+
+    if saw_unknown {
+        base(ProofStatus::Unknown, principal_line, Vec::new())
+    } else {
+        base(ProofStatus::ForcedWin, principal_line, Vec::new())
+    }
+}
+
+fn forcing_moves(board: &Board, attacker: Color) -> Vec<Move> {
+    if board.current_player != attacker {
+        return Vec::new();
+    }
+
+    board
+        .legal_moves()
+        .into_iter()
+        .filter(|&mv| {
+            let mut next = board.clone();
+            next.apply_move(mv).is_ok() && !next.immediate_winning_moves_for(attacker).is_empty()
+        })
+        .collect()
+}
+
+fn forced_extension_reply_moves(board: &Board, attacker: Color) -> Vec<Move> {
+    let defender = attacker.opponent();
+    let legal = board.legal_moves();
+    let mut replies = Vec::new();
+    for mv in board.immediate_winning_moves_for(attacker) {
+        if legal.contains(&mv) && !replies.contains(&mv) {
+            replies.push(mv);
+        }
+    }
+    for mv in board.immediate_winning_moves_for(defender) {
+        if legal.contains(&mv) && !replies.contains(&mv) {
+            replies.push(mv);
+        }
+    }
+    replies
+}
+
 fn defender_reply_moves(board: &Board, attacker: Color, options: &AnalysisOptions) -> Vec<Move> {
     match options.defense_policy {
-        DefensePolicy::AllLegalDefense => board.legal_moves(),
+        DefensePolicy::AllLegalDefense => {
+            tactical_first_moves(tactical_reply_moves(board, attacker), board.legal_moves())
+        }
         DefensePolicy::TacticalDefense => tactical_reply_moves(board, attacker),
         DefensePolicy::HybridDefense => {
             let tactical = tactical_reply_moves(board, attacker);
@@ -385,6 +572,21 @@ fn defender_reply_moves(board: &Board, attacker: Color, options: &AnalysisOption
             }
         }
     }
+}
+
+fn tactical_first_moves(priority: Vec<Move>, all_moves: Vec<Move>) -> Vec<Move> {
+    let mut moves = Vec::with_capacity(all_moves.len());
+    for mv in priority {
+        if all_moves.contains(&mv) && !moves.contains(&mv) {
+            moves.push(mv);
+        }
+    }
+    for mv in all_moves {
+        if !moves.contains(&mv) {
+            moves.push(mv);
+        }
+    }
+    moves
 }
 
 fn tactical_reply_moves(board: &Board, attacker: Color) -> Vec<Move> {
@@ -617,6 +819,7 @@ pub(crate) fn analysis_model(board: &Board, options: &AnalysisOptions) -> Analys
         attacker_move_policy: "all_legal_moves".to_string(),
         rule_set: rule_label(&board.config.variant).to_string(),
         max_depth: options.max_depth,
+        max_forced_extensions: options.max_forced_extensions,
         max_backward_window: options.max_backward_window,
     }
 }
@@ -725,6 +928,54 @@ mod tests {
         assert!(
             proof.principal_line.contains(&mv("G8")) || proof.principal_line.contains(&mv("L8"))
         );
+    }
+
+    #[test]
+    fn forced_extension_proves_closed_four_block_into_open_four() {
+        let board = board_from_moves(
+            Variant::Freestyle,
+            &[
+                "H8", "G8", "I8", "A1", "J8", "C1", "K6", "E1", "K7", "G1", "K8",
+            ],
+        );
+
+        let proof = prove_forced_win(
+            &board,
+            Color::Black,
+            AnalysisOptions {
+                defense_policy: DefensePolicy::AllLegalDefense,
+                max_depth: 2,
+                max_forced_extensions: 4,
+                ..AnalysisOptions::default()
+            },
+        );
+
+        assert_eq!(proof.status, ProofStatus::ForcedWin);
+        assert_eq!(proof.principal_line.first(), Some(&mv("L8")));
+        assert!(proof.principal_line.contains(&mv("K9")));
+    }
+
+    #[test]
+    fn forced_extension_budget_cutoff_stays_unknown() {
+        let board = board_from_moves(
+            Variant::Freestyle,
+            &[
+                "H8", "G8", "I8", "A1", "J8", "C1", "K6", "E1", "K7", "G1", "K8",
+            ],
+        );
+
+        let proof = prove_forced_win(
+            &board,
+            Color::Black,
+            AnalysisOptions {
+                defense_policy: DefensePolicy::AllLegalDefense,
+                max_depth: 2,
+                max_forced_extensions: 0,
+                ..AnalysisOptions::default()
+            },
+        );
+
+        assert_eq!(proof.status, ProofStatus::Unknown);
     }
 
     #[test]

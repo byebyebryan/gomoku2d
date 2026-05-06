@@ -260,6 +260,10 @@ enum Commands {
         #[arg(long, default_value_t = 2)]
         max_depth: usize,
 
+        /// Narrow forcing continuations allowed after a defender answers a direct threat
+        #[arg(long, default_value_t = 4)]
+        max_forced_extensions: usize,
+
         /// Optional number of final plies to scan backward
         #[arg(long)]
         max_backward_window: Option<usize>,
@@ -281,6 +285,10 @@ enum Commands {
         /// Maximum proof depth in plies
         #[arg(long, default_value_t = 2)]
         max_depth: usize,
+
+        /// Narrow forcing continuations allowed after a defender answers a direct threat
+        #[arg(long, default_value_t = 4)]
+        max_forced_extensions: usize,
 
         /// Optional number of final plies to scan backward unless a fixture overrides it
         #[arg(long)]
@@ -1179,6 +1187,7 @@ fn main() {
             output,
             defense_policy,
             max_depth,
+            max_forced_extensions,
             max_backward_window,
         } => {
             let json = std::fs::read_to_string(&input)
@@ -1190,6 +1199,7 @@ fn main() {
                 AnalysisOptions {
                     defense_policy: defense_policy.into(),
                     max_depth,
+                    max_forced_extensions,
                     max_backward_window,
                 },
             )
@@ -1212,11 +1222,13 @@ fn main() {
             report_html,
             defense_policy,
             max_depth,
+            max_forced_extensions,
             max_backward_window,
         } => {
             let report = run_analysis_fixtures(AnalysisOptions {
                 defense_policy: defense_policy.into(),
                 max_depth,
+                max_forced_extensions,
                 max_backward_window,
             })
             .unwrap_or_else(|err| {
@@ -1453,6 +1465,8 @@ mod tests {
             "tactical-defense",
             "--max-depth",
             "3",
+            "--max-forced-extensions",
+            "5",
             "--max-backward-window",
             "12",
         ])
@@ -1463,6 +1477,7 @@ mod tests {
             output,
             defense_policy,
             max_depth,
+            max_forced_extensions,
             max_backward_window,
         } = cli.command
         else {
@@ -1473,6 +1488,7 @@ mod tests {
         assert_eq!(output, Some(PathBuf::from("outputs/analysis.json")));
         assert_eq!(defense_policy, CliDefensePolicy::Tactical);
         assert_eq!(max_depth, 3);
+        assert_eq!(max_forced_extensions, 5);
         assert_eq!(max_backward_window, Some(12));
     }
 
@@ -1489,6 +1505,8 @@ mod tests {
             "hybrid-defense",
             "--max-depth",
             "4",
+            "--max-forced-extensions",
+            "6",
             "--max-backward-window",
             "16",
         ])
@@ -1499,6 +1517,7 @@ mod tests {
             report_html,
             defense_policy,
             max_depth,
+            max_forced_extensions,
             max_backward_window,
         } = cli.command
         else {
@@ -1515,6 +1534,7 @@ mod tests {
         );
         assert_eq!(defense_policy, CliDefensePolicy::Hybrid);
         assert_eq!(max_depth, 4);
+        assert_eq!(max_forced_extensions, 6);
         assert_eq!(max_backward_window, Some(16));
     }
 }
