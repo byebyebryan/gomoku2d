@@ -616,6 +616,15 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   and `0 failed` in about `3.9s` total elapsed time. It classified the decisive
   sample as `6` strategic losses and `1` missed defense, with `1` draw/ongoing
   entry and no decisive-game `unclear` roots.
+- A follow-up 64-game top-two validation run passed with `64 analyzed / 64
+  total` and `0 failed` in about `49s` total elapsed time. It classified the
+  decisive sample as `53` strategic losses, `5` missed defenses, and `5`
+  unclear proof-limit entries, with `1` draw/ongoing entry. All decisive games
+  found a final forced interval; only the `5` unclear decisive games carried
+  limit causes (`forced_extension_cutoff`, `attacker_child_unknown`, and
+  `defender_reply_unknown`). Treat this as model validation, not product-ready
+  copy: `strategic_loss` still means "entered the detected forced corridor"
+  rather than a full game-theoretic loss proof.
 - Before the corridor-exit pivot, the 64-game sampled checkpoint passed with
   `64 analyzed / 64 total`
   and `0 failed`: `63` proof-limit hits and `1` draw/ongoing game. Bounded
