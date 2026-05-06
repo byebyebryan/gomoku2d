@@ -209,9 +209,10 @@ against an existing tournament report before running a full matchup. The
 stratified sample is deterministic and tries to include both entrants, both
 colors where available, a draw or max-move game, and short/long games. The batch
 report includes `unclear_reason`, final forced-interval presence, prefix counts,
-per-entry elapsed time, and `unclear_context` drilldown so an `unclear` result
-distinguishes proof limits, scan-window cutoffs, games with no final forced
-interval, and the board prefixes that need inspection.
+per-entry elapsed time, limit-cause counts, and `unclear_context` drilldown so
+an `unclear` result distinguishes depth cutoffs, forced-extension cutoffs,
+defender-reply unknowns, model-scope unknowns, scan-window cutoffs, games with
+no final forced interval, and the board prefixes that need inspection.
 
 Scratch reports should stay in ignored `outputs/`. Curated reports for the
 public site live in [`reports/`](reports/); the web build copies that folder to

@@ -203,7 +203,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
     },
     AnalysisFixtureCase {
         case_id: "renju_forbidden_single_block_terminal",
-        description: "White has one winning square; Black's only block is forbidden, so the terminal threat is forced.",
+        description: "Black has an earlier legal escape, misses it, then White's terminal threat can only be blocked by a forbidden move.",
         variant: Variant::Renju,
         moves: &[
             "C3", "D4", "H6", "E5", "H7", "F6", "F8", "G7", "G8", "A15", "A14",
@@ -217,14 +217,14 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         },
         expected: AnalysisFixtureExpected {
             winner: Some(Color::White),
-            root_cause: RootCause::Unclear,
+            root_cause: RootCause::MissedDefense,
             final_forced_interval: ForcedInterval {
-                start_ply: 10,
+                start_ply: 9,
                 end_ply: 12,
             },
-            last_chance_ply: None,
-            critical_mistake_ply: None,
-            tactical_notes: &[],
+            last_chance_ply: Some(8),
+            critical_mistake_ply: Some(9),
+            tactical_notes: &[TacticalNote::AccidentalBlunder, TacticalNote::MissedWin],
             required_unknown_gaps: &[],
             required_reply_classifications: &[ReplyClassification::NoLegalBlock],
         },
@@ -966,7 +966,7 @@ mod tests {
         let json = serde_json::to_string_pretty(&report)
             .expect("analysis fixture report should serialize");
 
-        assert!(json.contains("\"schema_version\": 3"));
+        assert!(json.contains("\"schema_version\": 4"));
         assert!(json.contains("\"case_id\": \"missed_defense_closed_four\""));
         assert!(json.contains("\"expected\""));
         assert!(json.contains("\"actual\""));

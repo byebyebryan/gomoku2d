@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::path::Path;
 use std::time::Instant;
 
@@ -6,8 +7,8 @@ use rayon::prelude::*;
 use serde::Serialize;
 
 use crate::analysis::{
-    analyze_replay, AnalysisOptions, DefensePolicy, ForcedInterval, GameAnalysis, ProofStatus,
-    RootCause, TacticalNote, UnclearContext, UnclearReason, ANALYSIS_SCHEMA_VERSION,
+    analyze_replay, AnalysisOptions, DefensePolicy, ForcedInterval, GameAnalysis, ProofLimitCause,
+    ProofStatus, RootCause, TacticalNote, UnclearContext, UnclearReason, ANALYSIS_SCHEMA_VERSION,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -23,6 +24,7 @@ pub struct AnalysisBatchReport {
     pub total_elapsed_ms: u64,
     pub model: AnalysisBatchModel,
     pub summary: AnalysisBatchSummary,
+    pub limit_cause_counts: Vec<ProofLimitCauseCount>,
     pub entries: Vec<AnalysisBatchEntry>,
 }
 
@@ -45,6 +47,12 @@ pub struct AnalysisBatchSummary {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ProofLimitCauseCount {
+    pub cause: ProofLimitCause,
+    pub count: usize,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct AnalysisBatchEntry {
     pub path: String,
     pub status: AnalysisBatchEntryStatus,
@@ -62,6 +70,7 @@ pub struct AnalysisBatchEntry {
     pub unknown_gaps: Vec<usize>,
     pub unknown_gap_count: usize,
     pub unclear_context: Option<UnclearContext>,
+    pub limit_causes: Vec<ProofLimitCause>,
     pub elapsed_ms: u64,
     pub prefixes_analyzed: usize,
     pub forced_prefix_count: usize,
@@ -135,6 +144,7 @@ pub fn run_analysis_batch(
         }
     }
     let total_elapsed_ms = entries.iter().map(|entry| entry.elapsed_ms).sum();
+    let limit_cause_counts = limit_cause_counts(&entries);
 
     Ok(AnalysisBatchReport {
         schema_version: ANALYSIS_SCHEMA_VERSION,
@@ -148,6 +158,7 @@ pub fn run_analysis_batch(
         total_elapsed_ms,
         model,
         summary,
+        limit_cause_counts,
         entries,
     })
 }
@@ -197,6 +208,7 @@ pub fn run_analysis_batch_replays(
         }
     }
     let total_elapsed_ms = entries.iter().map(|entry| entry.elapsed_ms).sum();
+    let limit_cause_counts = limit_cause_counts(&entries);
 
     AnalysisBatchReport {
         schema_version: ANALYSIS_SCHEMA_VERSION,
@@ -210,6 +222,7 @@ pub fn run_analysis_batch_replays(
         total_elapsed_ms,
         model,
         summary,
+        limit_cause_counts,
         entries,
     }
 }
@@ -236,6 +249,7 @@ fn error_entry(path: String, error: String, elapsed_ms: u64) -> AnalysisBatchEnt
         unknown_gaps: Vec::new(),
         unknown_gap_count: 0,
         unclear_context: None,
+        limit_causes: Vec::new(),
         elapsed_ms,
         prefixes_analyzed: 0,
         forced_prefix_count: 0,
@@ -246,6 +260,7 @@ fn error_entry(path: String, error: String, elapsed_ms: u64) -> AnalysisBatchEnt
 }
 
 pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String {
+    let limit_summary = limit_cause_counts_label(&report.limit_cause_counts);
     let rows = report
         .entries
         .iter()
@@ -378,6 +393,7 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
   <h1>Replay Analysis Batch</h1>
   <p class="meta">{replay_dir}</p>
   <p class="meta">{model}</p>
+  <p class="meta">{limit_summary}</p>
   <section class="summary">
     <article class="card"><span>Total</span><strong>{total}</strong></article>
     <article class="card"><span>Analyzed</span><strong>{analyzed}</strong></article>
@@ -410,6 +426,7 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
             report.model.max_forced_extensions,
             report.model.max_backward_window
         )),
+        limit_summary = html_escape(&limit_summary),
         rows = rows,
     )
 }
@@ -445,6 +462,11 @@ fn entry_from_analysis(
     let forced_prefix_count = count_proof_status(&analysis, ProofStatus::ForcedWin);
     let unknown_prefix_count = count_proof_status(&analysis, ProofStatus::Unknown);
     let escape_prefix_count = count_proof_status(&analysis, ProofStatus::EscapeFound);
+    let limit_causes = analysis
+        .unclear_context
+        .as_ref()
+        .map(|context| context.previous_limit_causes.clone())
+        .unwrap_or_default();
 
     AnalysisBatchEntry {
         path,
@@ -463,6 +485,7 @@ fn entry_from_analysis(
         unknown_gaps: analysis.unknown_gaps.clone(),
         unknown_gap_count: analysis.unknown_gaps.len(),
         unclear_context: analysis.unclear_context,
+        limit_causes,
         elapsed_ms,
         prefixes_analyzed,
         forced_prefix_count,
@@ -470,6 +493,19 @@ fn entry_from_analysis(
         escape_prefix_count,
         error: None,
     }
+}
+
+fn limit_cause_counts(entries: &[AnalysisBatchEntry]) -> Vec<ProofLimitCauseCount> {
+    let mut counts = BTreeMap::<ProofLimitCause, usize>::new();
+    for entry in entries {
+        for cause in &entry.limit_causes {
+            *counts.entry(*cause).or_default() += 1;
+        }
+    }
+    counts
+        .into_iter()
+        .map(|(cause, count)| ProofLimitCauseCount { cause, count })
+        .collect()
 }
 
 fn count_proof_status(analysis: &GameAnalysis, status: ProofStatus) -> usize {
@@ -544,6 +580,7 @@ fn unclear_context_html(context: Option<&UnclearContext>) -> String {
     } else {
         context.principal_line_notation.join(" ")
     };
+    let limit_causes = proof_limit_cause_labels(&context.previous_limit_causes);
     let snapshots = context
         .snapshots
         .iter()
@@ -558,16 +595,51 @@ fn unclear_context_html(context: Option<&UnclearContext>) -> String {
         .collect::<String>();
 
     format!(
-        "<div class=\"context\"><div><strong>Prev ply</strong> {previous}</div><div>{previous_proof}; side {side}</div><div><strong>Line</strong> {line}</div><details><summary>Board snapshots</summary>{snapshots}</details></div>",
+        "<div class=\"context\"><div><strong>Prev ply</strong> {previous}</div><div>{previous_proof}; side {side}</div><div><strong>Limit causes</strong> {limit_causes}</div><div><strong>Line</strong> {line}</div><details><summary>Board snapshots</summary>{snapshots}</details></div>",
         previous = context
             .previous_prefix_ply
             .map(|ply| ply.to_string())
             .unwrap_or_else(|| "-".to_string()),
         previous_proof = html_escape(&previous_proof),
         side = html_escape(&option_debug(context.previous_side_to_move)),
+        limit_causes = html_escape(&limit_causes),
         line = html_escape(&principal_line),
         snapshots = snapshots,
     )
+}
+
+fn limit_cause_counts_label(counts: &[ProofLimitCauseCount]) -> String {
+    if counts.is_empty() {
+        return "Limit causes: none".to_string();
+    }
+    let parts = counts
+        .iter()
+        .map(|count| format!("{} {}", proof_limit_cause_label(count.cause), count.count))
+        .collect::<Vec<_>>()
+        .join(", ");
+    format!("Limit causes: {parts}")
+}
+
+fn proof_limit_cause_labels(causes: &[ProofLimitCause]) -> String {
+    if causes.is_empty() {
+        return "-".to_string();
+    }
+    causes
+        .iter()
+        .map(|cause| proof_limit_cause_label(*cause))
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
+fn proof_limit_cause_label(cause: ProofLimitCause) -> &'static str {
+    match cause {
+        ProofLimitCause::DepthCutoff => "depth cutoff",
+        ProofLimitCause::ForcedExtensionCutoff => "forced-extension cutoff",
+        ProofLimitCause::AttackerChildUnknown => "attacker child unknown",
+        ProofLimitCause::DefenderReplyUnknown => "defender reply unknown",
+        ProofLimitCause::ModelScopeUnknown => "model-scope unknown",
+        ProofLimitCause::OutsideScanWindow => "outside scan window",
+    }
 }
 
 fn interval_label(interval: Option<&ForcedInterval>) -> String {
@@ -601,7 +673,9 @@ mod tests {
         render_analysis_batch_report_html, run_analysis_batch, run_analysis_batch_replays,
         ReplayAnalysisInput,
     };
-    use crate::analysis::{AnalysisOptions, ProofStatus, RootCause, UnclearReason};
+    use crate::analysis::{
+        AnalysisOptions, ProofLimitCause, ProofStatus, RootCause, UnclearReason,
+    };
 
     fn replay_from_moves(variant: Variant, moves: &[&str]) -> Replay {
         let rules = RuleConfig {
@@ -765,6 +839,14 @@ mod tests {
         assert_eq!(context.previous_prefix_ply, Some(6));
         assert_eq!(context.previous_proof_status, Some(ProofStatus::Unknown));
         assert_eq!(context.previous_proof_limit_hit, Some(true));
+        assert!(context
+            .previous_limit_causes
+            .contains(&ProofLimitCause::DepthCutoff));
+        assert!(entry.limit_causes.contains(&ProofLimitCause::DepthCutoff));
+        assert!(report
+            .limit_cause_counts
+            .iter()
+            .any(|count| count.cause == ProofLimitCause::DepthCutoff && count.count == 1));
         assert_eq!(context.move_count, 9);
         assert!(!context.principal_line.is_empty());
         assert!(!context.principal_line_notation.is_empty());
@@ -777,5 +859,6 @@ mod tests {
         assert!(html.contains("<details"));
         assert!(html.contains("previous_prefix @ ply 6"));
         assert!(html.contains("limit hit"));
+        assert!(html.contains("depth cutoff"));
     }
 }
