@@ -2,6 +2,9 @@ use gomoku_core::{replay::ReplayResult, Board, Color, GameResult, Move, Replay, 
 use serde::Serialize;
 
 pub const ANALYSIS_SCHEMA_VERSION: u32 = 4;
+const MAX_HYBRID_LOCAL_THREAT_COUNT: usize = 2;
+const MAX_HYBRID_LOCAL_THREAT_REPLIES: usize = 8;
+const MAX_HYBRID_ATTACKER_FORCING_MOVES: usize = 4;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -421,11 +424,13 @@ struct ThreatReplySet {
     legal_cost_squares: Vec<Move>,
     illegal_cost_squares: Vec<Move>,
     defender_immediate_wins: Vec<Move>,
+    local_threat_count: usize,
+    local_threat_replies: Vec<Move>,
     reply_moves: Vec<Move>,
 }
 
 impl ThreatReplySet {
-    fn new(board: &Board, attacker: Color) -> Self {
+    fn new(board: &Board, attacker: Color, include_local_threats: bool) -> Self {
         let defender = attacker.opponent();
         let winning_squares = board.immediate_winning_moves_for(attacker);
         let raw_cost_squares = winning_squares.clone();
@@ -445,6 +450,13 @@ impl ThreatReplySet {
                 reply_moves.push(mv);
             }
         }
+        let local_threats = if include_local_threats {
+            local_threat_facts(board, attacker)
+        } else {
+            Vec::new()
+        };
+        let local_threat_count = local_threats.len();
+        let local_threat_replies = local_threat_reply_moves(board, defender, &local_threats);
 
         Self {
             attacker,
@@ -454,6 +466,8 @@ impl ThreatReplySet {
             legal_cost_squares,
             illegal_cost_squares,
             defender_immediate_wins,
+            local_threat_count,
+            local_threat_replies,
             reply_moves,
         }
     }
@@ -635,7 +649,11 @@ fn prove_defender_node(
     trace: Option<ProofTrace<'_>>,
     base: impl Fn(ProofStatus, Vec<Move>, Vec<Move>, Vec<ThreatSequenceEvidence>) -> ProofResult,
 ) -> ProofResult {
-    let threat = ThreatReplySet::new(board, attacker);
+    let threat = ThreatReplySet::new(
+        board,
+        attacker,
+        options.defense_policy == DefensePolicy::HybridDefense,
+    );
     let attribution = trace
         .map(ProofTrace::attribution)
         .unwrap_or_else(EvidenceAttribution::none);
@@ -727,13 +745,27 @@ fn prove_defender_node(
             forced_replies.push(mv);
             continue;
         }
-        let proof = prove_forced_win_inner(
-            &next,
-            attacker,
-            depth_remaining - 1,
-            options,
-            trace.and_then(|trace| trace.after_move(mv)),
-        );
+        let proof = if current_immediate_wins.is_empty()
+            && options.defense_policy == DefensePolicy::HybridDefense
+            && use_hybrid_local_threat_replies(&threat)
+            && threat.local_threat_replies.contains(&mv)
+        {
+            prove_forced_extension(
+                &next,
+                attacker,
+                options.max_forced_extensions,
+                options,
+                trace.and_then(|trace| trace.after_move(mv)),
+            )
+        } else {
+            prove_forced_win_inner(
+                &next,
+                attacker,
+                depth_remaining - 1,
+                options,
+                trace.and_then(|trace| trace.after_move(mv)),
+            )
+        };
         match proof.status {
             ProofStatus::ForcedWin => {
                 if principal_line.is_empty() {
@@ -892,7 +924,7 @@ fn prove_attacker_forced_extension_node(
 
     let mut saw_unknown = false;
     let mut child_limit_causes = Vec::new();
-    for mv in forcing_moves(board, attacker) {
+    for mv in forced_extension_attacker_moves(board, attacker, options) {
         let mut next = board.clone();
         if next.apply_move(mv).is_err() {
             continue;
@@ -946,7 +978,11 @@ fn prove_defender_forced_extension_node(
     trace: Option<ProofTrace<'_>>,
     base: impl Fn(ProofStatus, Vec<Move>, Vec<Move>, Vec<ThreatSequenceEvidence>) -> ProofResult,
 ) -> ProofResult {
-    let threat = ThreatReplySet::new(board, attacker);
+    let threat = ThreatReplySet::new(
+        board,
+        attacker,
+        options.defense_policy == DefensePolicy::HybridDefense,
+    );
     let attribution = trace
         .map(ProofTrace::attribution)
         .unwrap_or_else(EvidenceAttribution::none);
@@ -1100,6 +1136,20 @@ fn forcing_moves(board: &Board, attacker: Color) -> Vec<Move> {
         .collect()
 }
 
+fn forced_extension_attacker_moves(
+    board: &Board,
+    attacker: Color,
+    options: &AnalysisOptions,
+) -> Vec<Move> {
+    if options.defense_policy == DefensePolicy::HybridDefense {
+        let local = local_attacker_forcing_moves(board, attacker);
+        if !local.is_empty() && local.len() <= MAX_HYBRID_ATTACKER_FORCING_MOVES {
+            return local;
+        }
+    }
+    forcing_moves(board, attacker)
+}
+
 fn defender_reply_moves(
     board: &Board,
     options: &AnalysisOptions,
@@ -1111,13 +1161,167 @@ fn defender_reply_moves(
         }
         DefensePolicy::TacticalDefense => threat.reply_moves.clone(),
         DefensePolicy::HybridDefense => {
-            let tactical = threat.reply_moves.clone();
+            let mut tactical = threat.reply_moves.clone();
+            if use_hybrid_local_threat_replies(threat) {
+                for mv in threat.local_threat_replies.iter().copied() {
+                    push_unique_move(&mut tactical, mv);
+                }
+            }
             if tactical.is_empty() {
                 board.legal_moves()
             } else {
                 tactical
             }
         }
+    }
+}
+
+fn use_hybrid_local_threat_replies(threat: &ThreatReplySet) -> bool {
+    (1..=MAX_HYBRID_LOCAL_THREAT_COUNT).contains(&threat.local_threat_count)
+        && !threat.local_threat_replies.is_empty()
+        && threat.local_threat_replies.len() <= MAX_HYBRID_LOCAL_THREAT_REPLIES
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum LocalThreatKind {
+    OpenFour,
+    ClosedFour,
+    OpenThree,
+}
+
+impl LocalThreatKind {
+    fn is_forcing(self) -> bool {
+        matches!(self, Self::OpenFour | Self::ClosedFour | Self::OpenThree)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct LocalThreatFact {
+    kind: LocalThreatKind,
+    defense_squares: Vec<Move>,
+}
+
+fn local_threat_reply_moves(
+    board: &Board,
+    defender: Color,
+    local_threats: &[LocalThreatFact],
+) -> Vec<Move> {
+    let mut replies = Vec::new();
+    for fact in local_threats {
+        if !fact.kind.is_forcing() {
+            continue;
+        }
+        for mv in fact.defense_squares.iter().copied() {
+            if board.is_legal_for_color(mv, defender) {
+                push_unique_move(&mut replies, mv);
+            }
+        }
+    }
+    replies
+}
+
+fn local_attacker_forcing_moves(board: &Board, attacker: Color) -> Vec<Move> {
+    let mut moves = Vec::new();
+    for fact in local_threat_facts(board, attacker) {
+        if !fact.kind.is_forcing() {
+            continue;
+        }
+        for mv in fact.defense_squares.iter().copied() {
+            if board.is_legal_for_color(mv, attacker) {
+                push_unique_move(&mut moves, mv);
+            }
+        }
+    }
+    moves
+}
+
+fn local_threat_facts(board: &Board, player: Color) -> Vec<LocalThreatFact> {
+    let mut facts = Vec::new();
+    board.for_each_occupied_color(player, |row, col| {
+        let mv = Move { row, col };
+        for &(dr, dc) in &gomoku_core::DIRS {
+            if is_run_start(board, mv, player, dr, dc) {
+                if let Some(fact) = local_threat_fact_from_run_start(board, mv, player, dr, dc) {
+                    facts.push(fact);
+                }
+            }
+        }
+    });
+    facts
+}
+
+fn local_threat_fact_from_run_start(
+    board: &Board,
+    start: Move,
+    player: Color,
+    dr: isize,
+    dc: isize,
+) -> Option<LocalThreatFact> {
+    let mut run = Vec::new();
+    let mut row = start.row as isize;
+    let mut col = start.col as isize;
+    while in_bounds(board, row, col) && board.has_color(row as usize, col as usize, player) {
+        run.push(Move {
+            row: row as usize,
+            col: col as usize,
+        });
+        row += dr;
+        col += dc;
+    }
+
+    let before = offset_move(board, start, -dr, -dc, 1);
+    let after = in_bounds(board, row, col).then_some(Move {
+        row: row as usize,
+        col: col as usize,
+    });
+    let before_open = before.is_some_and(|mv| board.is_empty(mv.row, mv.col));
+    let after_open = after.is_some_and(|mv| board.is_empty(mv.row, mv.col));
+
+    match (run.len(), before_open, after_open) {
+        (4, true, true) => Some(LocalThreatFact {
+            kind: LocalThreatKind::OpenFour,
+            defense_squares: vec![before.expect("checked open"), after.expect("checked open")],
+        }),
+        (4, true, false) => Some(LocalThreatFact {
+            kind: LocalThreatKind::ClosedFour,
+            defense_squares: vec![before.expect("checked open")],
+        }),
+        (4, false, true) => Some(LocalThreatFact {
+            kind: LocalThreatKind::ClosedFour,
+            defense_squares: vec![after.expect("checked open")],
+        }),
+        (3, true, true) => Some(LocalThreatFact {
+            kind: LocalThreatKind::OpenThree,
+            defense_squares: vec![before.expect("checked open"), after.expect("checked open")],
+        }),
+        _ => None,
+    }
+}
+
+fn is_run_start(board: &Board, mv: Move, player: Color, dr: isize, dc: isize) -> bool {
+    let previous_row = mv.row as isize - dr;
+    let previous_col = mv.col as isize - dc;
+    !in_bounds(board, previous_row, previous_col)
+        || !board.has_color(previous_row as usize, previous_col as usize, player)
+}
+
+fn offset_move(board: &Board, mv: Move, dr: isize, dc: isize, distance: usize) -> Option<Move> {
+    let row = mv.row as isize + dr * distance as isize;
+    let col = mv.col as isize + dc * distance as isize;
+    in_bounds(board, row, col).then_some(Move {
+        row: row as usize,
+        col: col as usize,
+    })
+}
+
+fn in_bounds(board: &Board, row: isize, col: isize) -> bool {
+    let size = board.config.board_size as isize;
+    row >= 0 && row < size && col >= 0 && col < size
+}
+
+fn push_unique_move(moves: &mut Vec<Move>, mv: Move) {
+    if !moves.contains(&mv) {
+        moves.push(mv);
     }
 }
 
@@ -1537,7 +1741,7 @@ pub(crate) fn analysis_model(board: &Board, options: &AnalysisOptions) -> Analys
     AnalysisModel {
         defense_policy: options.defense_policy,
         tactical_reply_coverage: tactical_reply_coverage(options.defense_policy),
-        attacker_move_policy: "all_legal_moves".to_string(),
+        attacker_move_policy: attacker_move_policy(options.defense_policy).to_string(),
         rule_set: rule_label(&board.config.variant).to_string(),
         max_depth: options.max_depth,
         max_forced_extensions: options.max_forced_extensions,
@@ -1545,14 +1749,32 @@ pub(crate) fn analysis_model(board: &Board, options: &AnalysisOptions) -> Analys
     }
 }
 
+fn attacker_move_policy(policy: DefensePolicy) -> &'static str {
+    match policy {
+        DefensePolicy::AllLegalDefense | DefensePolicy::TacticalDefense => {
+            "all_legal_depth_search; immediate_threat_forced_extensions"
+        }
+        DefensePolicy::HybridDefense => {
+            "all_legal_depth_search; bounded_local_threat_forced_extensions"
+        }
+    }
+}
+
 fn tactical_reply_coverage(policy: DefensePolicy) -> Vec<String> {
     match policy {
         DefensePolicy::AllLegalDefense => vec!["all_legal".to_string()],
-        DefensePolicy::TacticalDefense | DefensePolicy::HybridDefense => vec![
+        DefensePolicy::TacticalDefense => vec![
             "legal_cost_replies".to_string(),
             "defender_immediate_wins".to_string(),
             "counter_threats_not_yet_covered".to_string(),
             "forbidden_cost_squares".to_string(),
+        ],
+        DefensePolicy::HybridDefense => vec![
+            "legal_cost_replies".to_string(),
+            "local_threat_replies".to_string(),
+            "defender_immediate_wins".to_string(),
+            "forbidden_cost_squares".to_string(),
+            "all_legal_fallback".to_string(),
         ],
     }
 }
@@ -1569,8 +1791,8 @@ mod tests {
     use gomoku_core::{Board, Color, Move, Replay, RuleConfig, Variant};
 
     use super::{
-        analyze_replay, prove_forced_win, AnalysisOptions, DefensePolicy, ProofStatus,
-        ReplyClassification, RootCause, TacticalNote, UnclearReason,
+        analyze_replay, prove_forced_win, AnalysisOptions, DefensePolicy, ProofLimitCause,
+        ProofStatus, ReplyClassification, RootCause, TacticalNote, UnclearReason,
     };
 
     fn mv(notation: &str) -> Move {
@@ -1771,6 +1993,35 @@ mod tests {
         assert_eq!(evidence.raw_cost_squares, vec![mv("H8")]);
         assert!(evidence.legal_cost_squares.is_empty());
         assert_eq!(evidence.illegal_cost_squares, vec![mv("H8")]);
+    }
+
+    #[test]
+    fn hybrid_defense_proves_double_open_three_with_local_replies() {
+        let board = board_from_moves(
+            Variant::Freestyle,
+            &["H8", "A1", "I8", "C2", "J6", "E3", "J7", "G4", "J8"],
+        );
+
+        let proof = prove_forced_win(
+            &board,
+            Color::Black,
+            AnalysisOptions {
+                defense_policy: DefensePolicy::HybridDefense,
+                max_depth: 2,
+                max_forced_extensions: 4,
+                ..AnalysisOptions::default()
+            },
+        );
+
+        assert_eq!(proof.status, ProofStatus::ForcedWin);
+        assert!(!proof.limit_hit);
+        assert!(proof
+            .model
+            .tactical_reply_coverage
+            .contains(&"local_threat_replies".to_string()));
+        assert!(proof.threat_evidence.iter().all(|evidence| !evidence
+            .limit_causes
+            .contains(&ProofLimitCause::ModelScopeUnknown)));
     }
 
     #[test]
