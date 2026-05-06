@@ -3,7 +3,8 @@ pub mod search;
 
 pub use random::RandomBot;
 pub use search::{
-    MoveOrdering, SafetyGate, SearchAlgorithm, SearchBot, SearchBotConfig, StaticEvaluation,
+    CandidateSource, MoveOrdering, SafetyGate, SearchAlgorithm, SearchBot, SearchBotConfig,
+    StaticEvaluation,
 };
 
 use gomoku_core::{Board, Move};

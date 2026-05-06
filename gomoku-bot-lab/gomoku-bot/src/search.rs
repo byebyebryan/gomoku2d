@@ -1450,6 +1450,68 @@ fn candidate_moves(board: &Board, radius: usize) -> Vec<Move> {
     moves
 }
 
+fn candidate_moves_from_source(board: &Board, candidate_source: CandidateSource) -> Vec<Move> {
+    match candidate_source {
+        CandidateSource::NearAll { radius } => candidate_moves(board, radius),
+        CandidateSource::NearSelfOpponent {
+            self_radius,
+            opponent_radius,
+        } => candidate_moves_from_current_and_opponent(board, self_radius, opponent_radius),
+    }
+}
+
+fn candidate_moves_from_current_and_opponent(
+    board: &Board,
+    self_radius: usize,
+    opponent_radius: usize,
+) -> Vec<Move> {
+    if self_radius == opponent_radius {
+        return candidate_moves(board, self_radius);
+    }
+    if board.result != GameResult::Ongoing {
+        return Vec::new();
+    }
+
+    let size = board.config.board_size;
+    let cell_count = size * size;
+    let mut moves = Vec::new();
+    let has_stones = if cell_count <= STACK_SEEN_CELLS {
+        let mut seen = [0u64; STACK_SEEN_WORDS];
+        let mut occupied = [0u64; STACK_SEEN_WORDS];
+        let has_stones = mark_candidate_moves_from_current_and_opponent(
+            board,
+            self_radius,
+            opponent_radius,
+            &mut seen,
+            &mut occupied,
+        );
+        collect_marked_candidates(board, &seen, &mut moves);
+        has_stones
+    } else {
+        let mut seen = vec![0u64; cell_count.div_ceil(u64::BITS as usize)];
+        let mut occupied = vec![0u64; cell_count.div_ceil(u64::BITS as usize)];
+        let has_stones = mark_candidate_moves_from_current_and_opponent(
+            board,
+            self_radius,
+            opponent_radius,
+            &mut seen,
+            &mut occupied,
+        );
+        collect_marked_candidates(board, &seen, &mut moves);
+        has_stones
+    };
+
+    if !has_stones {
+        let center = size / 2;
+        return vec![Move {
+            row: center,
+            col: center,
+        }];
+    }
+
+    moves
+}
+
 fn candidate_masks(size: usize, radius: usize) -> Option<&'static CandidateMaskSet> {
     (size == DEFAULT_BOARD_SIZE && (1..=3).contains(&radius))
         .then(|| default_candidate_masks(radius))
@@ -1541,6 +1603,51 @@ fn mark_candidate_moves(board: &Board, radius: usize, seen: &mut [u64]) -> bool 
     has_stones
 }
 
+fn mark_candidate_moves_from_current_and_opponent(
+    board: &Board,
+    self_radius: usize,
+    opponent_radius: usize,
+    seen: &mut [u64],
+    occupied: &mut [u64],
+) -> bool {
+    let size = board.config.board_size;
+    let current = board.current_player;
+    let mut has_stones = false;
+
+    board.for_each_occupied(|row, col, color| {
+        has_stones = true;
+        let idx = row * size + col;
+        mark_seen(occupied, idx);
+        let radius = if color == current {
+            self_radius
+        } else {
+            opponent_radius
+        };
+
+        if let Some(masks) = candidate_masks(size, radius) {
+            for (seen_word, mask_word) in seen.iter_mut().zip(masks.masks[idx]).take(masks.words) {
+                *seen_word |= mask_word;
+            }
+        } else {
+            let rmin = row.saturating_sub(radius);
+            let rmax = (row + radius).min(size - 1);
+            let cmin = col.saturating_sub(radius);
+            let cmax = (col + radius).min(size - 1);
+            for r in rmin..=rmax {
+                for c in cmin..=cmax {
+                    mark_seen(seen, r * size + c);
+                }
+            }
+        }
+    });
+
+    for (seen_word, occupied_word) in seen.iter_mut().zip(occupied.iter()) {
+        *seen_word &= !occupied_word;
+    }
+
+    has_stones
+}
+
 fn collect_marked_candidates(board: &Board, seen: &[u64], moves: &mut Vec<Move>) {
     let size = board.config.board_size;
     let cell_count = size * size;
@@ -1623,20 +1730,64 @@ fn candidate_moves_reference(board: &Board, radius: usize) -> Vec<Move> {
     moves
 }
 
+#[cfg(test)]
+fn candidate_moves_from_source_reference(
+    board: &Board,
+    self_radius: usize,
+    opponent_radius: usize,
+) -> Vec<Move> {
+    if board.result != GameResult::Ongoing {
+        return Vec::new();
+    }
+
+    let size = board.config.board_size;
+    let mut seen = vec![false; size * size];
+    let mut moves = Vec::new();
+    let mut has_stones = false;
+    let current = board.current_player;
+
+    for row in 0..size {
+        for col in 0..size {
+            let Some(color) = board.cell(row, col) else {
+                continue;
+            };
+            has_stones = true;
+            let radius = if color == current {
+                self_radius
+            } else {
+                opponent_radius
+            };
+
+            let rmin = row.saturating_sub(radius);
+            let rmax = (row + radius).min(size - 1);
+            let cmin = col.saturating_sub(radius);
+            let cmax = (col + radius).min(size - 1);
+            for r in rmin..=rmax {
+                for c in cmin..=cmax {
+                    let idx = r * size + c;
+                    if !seen[idx] && board.is_empty(r, c) {
+                        seen[idx] = true;
+                        moves.push(Move { row: r, col: c });
+                    }
+                }
+            }
+        }
+    }
+
+    if !has_stones {
+        let center = size / 2;
+        return vec![Move {
+            row: center,
+            col: center,
+        }];
+    }
+
+    moves
+}
+
 #[doc(hidden)]
 pub fn pipeline_bench_candidate_moves(board: &Board, radius: usize) -> Vec<Move> {
     candidate_moves(board, radius)
-}
-
-fn candidate_moves_counted(
-    board: &Board,
-    radius: usize,
-    metrics: &mut SearchMetrics,
-    phase: SearchMetricPhase,
-) -> Vec<Move> {
-    let moves = candidate_moves(board, radius);
-    metrics.record_candidates(moves.len(), phase);
-    moves
 }
 
 fn candidate_moves_from_source_counted(
@@ -1645,7 +1796,9 @@ fn candidate_moves_from_source_counted(
     metrics: &mut SearchMetrics,
     phase: SearchMetricPhase,
 ) -> Vec<Move> {
-    candidate_moves_counted(board, candidate_source.radius(), metrics, phase)
+    let moves = candidate_moves_from_source(board, candidate_source);
+    metrics.record_candidates(moves.len(), phase);
+    moves
 }
 
 fn needs_renju_legality_check(board: &Board, color: Color) -> bool {
@@ -2431,19 +2584,23 @@ fn search_root(
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CandidateSource {
-    NearAll { radius: usize },
+    NearAll {
+        radius: usize,
+    },
+    NearSelfOpponent {
+        self_radius: usize,
+        opponent_radius: usize,
+    },
 }
 
 impl CandidateSource {
-    const fn radius(self) -> usize {
-        match self {
-            CandidateSource::NearAll { radius } => radius,
-        }
-    }
-
     fn name(self) -> String {
         match self {
             CandidateSource::NearAll { radius } => format!("near_all_r{radius}"),
+            CandidateSource::NearSelfOpponent {
+                self_radius,
+                opponent_radius,
+            } => format!("near_self_r{self_radius}_opponent_r{opponent_radius}"),
         }
     }
 }
@@ -2527,6 +2684,7 @@ pub struct SearchBotConfig {
     pub time_budget_ms: Option<u64>,
     pub cpu_time_budget_ms: Option<u64>,
     pub candidate_radius: usize,
+    pub candidate_opponent_radius: Option<usize>,
     pub safety_gate: SafetyGate,
     pub move_ordering: MoveOrdering,
     pub child_limit: Option<usize>,
@@ -2541,6 +2699,7 @@ impl SearchBotConfig {
             time_budget_ms: None,
             cpu_time_budget_ms: None,
             candidate_radius: 2,
+            candidate_opponent_radius: None,
             safety_gate: SafetyGate::OpponentReplyLocalThreatProbe,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
             child_limit: None,
@@ -2555,6 +2714,7 @@ impl SearchBotConfig {
             time_budget_ms: Some(time_budget_ms),
             cpu_time_budget_ms: None,
             candidate_radius: 2,
+            candidate_opponent_radius: None,
             safety_gate: SafetyGate::OpponentReplyLocalThreatProbe,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
             child_limit: None,
@@ -2569,6 +2729,7 @@ impl SearchBotConfig {
             time_budget_ms: None,
             cpu_time_budget_ms: Some(cpu_time_budget_ms),
             candidate_radius: 2,
+            candidate_opponent_radius: None,
             safety_gate: SafetyGate::OpponentReplyLocalThreatProbe,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
             child_limit: None,
@@ -2586,8 +2747,16 @@ impl SearchBotConfig {
     }
 
     pub const fn candidate_source(self) -> CandidateSource {
-        CandidateSource::NearAll {
-            radius: self.candidate_radius,
+        match self.candidate_opponent_radius {
+            Some(opponent_radius) if opponent_radius != self.candidate_radius => {
+                CandidateSource::NearSelfOpponent {
+                    self_radius: self.candidate_radius,
+                    opponent_radius,
+                }
+            }
+            _ => CandidateSource::NearAll {
+                radius: self.candidate_radius,
+            },
         }
     }
 
@@ -2605,6 +2774,7 @@ impl SearchBotConfig {
             "time_budget_ms": self.time_budget_ms,
             "cpu_time_budget_ms": self.cpu_time_budget_ms,
             "candidate_radius": self.candidate_radius,
+            "candidate_opponent_radius": self.candidate_opponent_radius,
             "candidate_source": self.candidate_source().name(),
             "legality_gate": self.legality_gate().name(),
             "safety_gate": self.safety_gate().name(),
@@ -2976,6 +3146,38 @@ mod tests {
             candidate_moves_reference(&empty, 2),
             "empty board center candidate diverged"
         );
+    }
+
+    #[test]
+    fn asymmetric_candidates_use_current_player_and_opponent_radii() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(&mut board, &["H8", "L12", "H9"]);
+        assert_eq!(board.current_player, Color::White);
+
+        let source = CandidateSource::NearSelfOpponent {
+            self_radius: 2,
+            opponent_radius: 1,
+        };
+        let mut metrics = SearchMetrics::default();
+        let mut optimized = candidate_moves_from_source_counted(
+            &board,
+            source,
+            &mut metrics,
+            SearchMetricPhase::Root,
+        );
+        let mut reference = candidate_moves_from_source_reference(&board, 2, 1);
+        optimized.sort_by_key(|mv| (mv.row, mv.col));
+        reference.sort_by_key(|mv| (mv.row, mv.col));
+
+        assert_eq!(optimized, reference);
+        assert!(optimized.contains(&mv("J10")), "near white stone at L12");
+        assert!(optimized.contains(&mv("G7")), "near black stones at H8/H9");
+        assert!(
+            !optimized.contains(&mv("F6")),
+            "opponent radius 1 should not include radius-2 black frontier"
+        );
+        assert_eq!(metrics.root_candidate_generations, 1);
+        assert_eq!(metrics.root_candidate_moves_total as usize, optimized.len());
     }
 
     #[test]
@@ -3369,6 +3571,7 @@ mod tests {
             time_budget_ms: None,
             cpu_time_budget_ms: None,
             candidate_radius: 3,
+            candidate_opponent_radius: None,
             safety_gate: SafetyGate::None,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
             child_limit: None,
@@ -3381,6 +3584,19 @@ mod tests {
             CandidateSource::NearAll { radius: 3 }
         );
         assert_eq!(config.safety_gate, SafetyGate::None);
+
+        let asymmetric = SearchBotConfig {
+            candidate_radius: 2,
+            candidate_opponent_radius: Some(1),
+            ..SearchBotConfig::custom_depth(3)
+        };
+        assert_eq!(
+            asymmetric.candidate_source(),
+            CandidateSource::NearSelfOpponent {
+                self_radius: 2,
+                opponent_radius: 1
+            }
+        );
     }
 
     #[test]
@@ -3573,6 +3789,7 @@ mod tests {
             time_budget_ms: None,
             cpu_time_budget_ms: None,
             candidate_radius: 2,
+            candidate_opponent_radius: None,
             safety_gate: SafetyGate::None,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
             child_limit: None,
