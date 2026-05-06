@@ -19,6 +19,7 @@ pub struct AnalysisFixtureCase {
 #[derive(Debug, Clone, Default)]
 pub struct AnalysisFixtureOptions {
     pub max_depth: Option<usize>,
+    pub max_forced_extensions: Option<usize>,
     pub defense_policy: Option<DefensePolicy>,
     pub max_backward_window: Option<usize>,
 }
@@ -42,6 +43,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         moves: &["H8", "G8", "I8", "A1", "J8", "A2", "K8", "B1", "L8"],
         options: AnalysisFixtureOptions {
             max_depth: None,
+            max_forced_extensions: None,
             defense_policy: None,
             max_backward_window: Some(3),
         },
@@ -67,6 +69,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         ],
         options: AnalysisFixtureOptions {
             max_depth: None,
+            max_forced_extensions: None,
             defense_policy: None,
             max_backward_window: Some(4),
         },
@@ -96,6 +99,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         ],
         options: AnalysisFixtureOptions {
             max_depth: None,
+            max_forced_extensions: None,
             defense_policy: None,
             max_backward_window: Some(3),
         },
@@ -119,6 +123,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         moves: &["H8", "A1", "I8", "A2", "J8", "A3", "K8", "B1", "L8"],
         options: AnalysisFixtureOptions {
             max_depth: Some(1),
+            max_forced_extensions: None,
             defense_policy: None,
             max_backward_window: Some(3),
         },
@@ -136,12 +141,40 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         },
     },
     AnalysisFixtureCase {
+        case_id: "forced_chain_closed_four_to_open_four",
+        description: "Black creates a closed four, White blocks, then Black extends the new stone into an open-four win.",
+        variant: Variant::Freestyle,
+        moves: &[
+            "H8", "G8", "I8", "A1", "J8", "C1", "K6", "E1", "K7", "G1", "K8",
+            "L8", "K9", "K5", "K10",
+        ],
+        options: AnalysisFixtureOptions {
+            max_depth: Some(2),
+            max_forced_extensions: Some(4),
+            defense_policy: None,
+            max_backward_window: Some(6),
+        },
+        expected: AnalysisFixtureExpected {
+            winner: Some(Color::Black),
+            root_cause: RootCause::Unclear,
+            final_forced_interval: ForcedInterval {
+                start_ply: 10,
+                end_ply: 15,
+            },
+            last_chance_ply: None,
+            critical_mistake_ply: None,
+            tactical_notes: &[],
+            required_unknown_gaps: &[9],
+        },
+    },
+    AnalysisFixtureCase {
         case_id: "ongoing_replay_unclear",
         description: "An unfinished replay should produce a bounded summary without forced-win claims.",
         variant: Variant::Freestyle,
         moves: &["H8", "A1", "I8"],
         options: AnalysisFixtureOptions {
             max_depth: None,
+            max_forced_extensions: None,
             defense_policy: None,
             max_backward_window: None,
         },
@@ -298,6 +331,9 @@ fn fixture_options(
             .defense_policy
             .unwrap_or(base_options.defense_policy),
         max_depth: fixture_options.max_depth.unwrap_or(base_options.max_depth),
+        max_forced_extensions: fixture_options
+            .max_forced_extensions
+            .unwrap_or(base_options.max_forced_extensions),
         max_backward_window: fixture_options
             .max_backward_window
             .or(base_options.max_backward_window),
@@ -541,13 +577,14 @@ code, .moves {{ color: var(--accent); }}
   <nav class="top-links"><a href="/">Outputs</a></nav>
   <p class="eyebrow">Gomoku2D Bot Lab</p>
   <h1>Analysis Fixture Report</h1>
-  <p class="lede">Curated replay fixtures for validating bounded replay analysis before forced-chain search lands.</p>
+  <p class="lede">Curated replay fixtures for validating bounded replay analysis and narrow forced-chain search.</p>
 </header>
 <section class="summary-grid">
   <article class="summary-card"><span>Result</span><strong>{passed} passed / {total} total</strong></article>
   <article class="summary-card"><span>Failed</span><strong>{failed}</strong></article>
   <article class="summary-card"><span>Defense</span><strong>{defense:?}</strong></article>
   <article class="summary-card"><span>Depth</span><strong>{depth}</strong></article>
+  <article class="summary-card"><span>Forced Ext.</span><strong>{forced_extensions}</strong></article>
 </section>
 {cases}
 </main>
@@ -559,6 +596,7 @@ code, .moves {{ color: var(--accent); }}
         failed = report.failed,
         defense = report.base_model.defense_policy,
         depth = report.base_model.max_depth,
+        forced_extensions = report.base_model.max_forced_extensions,
         cases = cases,
     )
 }
@@ -633,9 +671,10 @@ fn render_analysis_fixture_case_html(result: &AnalysisFixtureResult) -> String {
         failures = failures,
         moves = html_escape(&result.moves.join(" ")),
         model = html_escape(&format!(
-            "{:?}, depth {}, window {:?}",
+            "{:?}, depth {}, forced extensions {}, window {:?}",
             result.actual.model.defense_policy,
             result.actual.model.max_depth,
+            result.actual.model.max_forced_extensions,
             result.actual.model.max_backward_window
         )),
         expected = expectation_table(&result.expected),
@@ -808,7 +847,7 @@ mod tests {
         let html = render_analysis_fixture_report_html(&report);
 
         assert!(html.contains("<title>Gomoku2D Analysis Fixture Report</title>"));
-        assert!(html.contains("5 passed / 5 total"));
+        assert!(html.contains("6 passed / 6 total"));
         assert!(html.contains("missed_defense_closed_four"));
         assert!(html.contains("Expected"));
         assert!(html.contains("Proof Rows"));

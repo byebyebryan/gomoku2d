@@ -99,6 +99,25 @@ Product copy must reflect the model. "Forced line" is acceptable for
 `all_legal_defense`; "forced line within tactical replies" is safer for
 `tactical_defense` until the behavior is validated.
 
+## Forced Extensions
+
+The lab analyzer now has a narrow forced-extension budget in addition to normal
+proof depth. This is not general extra depth. The extension path is only entered
+after a defender answers an immediate attacker threat and clears the direct
+winning move. From there:
+
+- attacker extension moves are limited to moves that create a new immediate
+  winning threat,
+- defender extension replies are limited to attacker cost squares plus defender
+  immediate wins,
+- a defender reply that breaks the forced continuation remains an escape,
+- exhausting the extension budget returns `unknown`.
+
+This handles simple chained threats such as "closed four, forced block, create
+open four" without pretending the analyzer has searched every quiet alternative.
+If the previous prefix was still `unknown`, the analyzer should keep the root
+cause `unclear` even when the next prefix enters a proven forced interval.
+
 ## Backward Walk
 
 For a finished game, walk backward from the final move and test prefixes. Do not
@@ -245,6 +264,9 @@ The first analyzer fixtures should include more than happy-path wins:
 - Conversion error: winner has a forced line, releases it, then wins later.
 - Missed defense: loser has an escape but plays elsewhere.
 - Missed win: player ignores an immediate or forced win.
+- Forced chain: defender blocks one immediate threat, attacker creates the next
+  immediate threat, and the analyzer proves the continuation without widening
+  the whole search.
 - Unknown: position exceeds proof limits and must not be labeled strategic.
 - Unknown gap: an earlier forced interval cannot be connected safely to the
   final forced interval.
@@ -323,14 +345,14 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
 - `gomoku-eval analysis-fixtures` runs curated replay fixtures and prints
   expected-vs-actual labels for the current analysis model.
 - The current proof engine handles immediate wins, single-threat escapes,
-  open-four style unavoidable immediate wins, proof intervals, conversion
-  notes, missed defenses, missed wins, ongoing/draw summaries, and explicit
-  `unknown` states.
+  open-four style unavoidable immediate wins, one narrow forced-chain extension,
+  proof intervals, conversion notes, missed defenses, missed wins, ongoing/draw
+  summaries, and explicit `unknown` states.
 - The fixture report currently covers missed defense, delayed conversion,
-  losing-side missed win, shallow-model unknown guard, and ongoing replay
-  behavior.
+  losing-side missed win, shallow-model unknown guard, closed-four to open-four
+  forced-chain continuation, and ongoing replay behavior.
 - Tactical-defense mode is present as a model flag and immediate-threat reply
-  subset, but it is not yet a full forced-chain search.
+  subset, but it is not yet a full threat-space search.
 
 Example:
 
@@ -339,13 +361,15 @@ cargo run -p gomoku-eval -- analyze-replay \
   --input outputs/replays/match_001.json \
   --output outputs/analysis_001.json \
   --defense-policy all-legal-defense \
-  --max-depth 2
+  --max-depth 2 \
+  --max-forced-extensions 4
 
 cargo run -p gomoku-eval -- analysis-fixtures \
   --report-json outputs/analysis_fixtures.json \
   --report-html outputs/analysis_fixtures.html \
   --defense-policy all-legal-defense \
-  --max-depth 2
+  --max-depth 2 \
+  --max-forced-extensions 4
 ```
 
 This is still a lab artifact. Do not expose it in the web replay UI until the
