@@ -368,6 +368,16 @@ Proof result records should use explicit status:
 - `escape_found`: defender has at least one model-valid escape.
 - `unknown`: search was cut off or the position exceeded analyzer scope.
 
+Unknown proof results should also carry named causes. Current lab causes are:
+
+- `depth_cutoff`: normal proof depth ran out.
+- `forced_extension_cutoff`: narrow forced-extension budget ran out.
+- `attacker_child_unknown`: at least one attacker child could not be resolved.
+- `defender_reply_unknown`: at least one defender reply could not be resolved.
+- `model_scope_unknown`: the selected proof model had no concrete reply or
+  forcing set for the position.
+- `outside_scan_window`: the previous prefix was not part of the scanned range.
+
 For `unclear` results, reports should preserve enough context to drive the next
 debugging pass without rerunning the whole tournament:
 
@@ -378,6 +388,7 @@ UnclearContext
   final_forced_interval
   previous_proof_status
   previous_proof_limit_hit
+  previous_limit_causes
   previous_side_to_move
   winner
   principal_line_notation
@@ -527,20 +538,39 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
 - Tactical-defense mode exposes legal cost replies, defender immediate wins,
   and forbidden cost squares in branch evidence, but it is still not a full
   threat-space search.
-- Batch analysis reports now include `unclear_context` for unresolved entries:
-  previous prefix status, proof-limit flag, principal-line notation, and compact
-  board snapshots. This is meant to make proof-limit and scan-window failures
-  inspectable before adding more search.
+- Batch analysis reports now include `unclear_context` and limit-cause counts
+  for unresolved entries: previous prefix status, proof-limit flag, named limit
+  causes, principal-line notation, and compact board snapshots. This is meant
+  to make proof-limit, model-scope, and scan-window failures inspectable before
+  adding more search.
 - A top-two report smoke run against
   `search-d7+tactical-cap-8+pattern-eval` vs
   `search-d5+tactical-cap-8+pattern-eval` passed with `8 analyzed / 8 total`
   and `0 failed`. It found final forced intervals in decisive games, but most
   root causes stayed `unclear` because the prefix before the final interval was
   still proof-limited or outside the scan window.
-- The matching 64-game sampled checkpoint passed with `64 analyzed / 64 total`
-  and `0 failed`: `59` proof-limit hits, `4` scan-window cutoffs, and `1`
-  draw/ongoing game. That confirms the next useful work is narrower proof
-  machinery or clearer scan strategy, not UI exposure.
+- The latest 64-game sampled checkpoint passed with `64 analyzed / 64 total`
+  and `0 failed`: `63` proof-limit hits and `1` draw/ongoing game. Bounded
+  scan expansion removed the previous scan-window cutoffs. Under
+  `all_legal_defense`, `61` decisive games hit `depth_cutoff` plus
+  `attacker_child_unknown` and `defender_reply_unknown`; the other `2` hit
+  `forced_extension_cutoff` plus the same child/reply unknowns.
+- A tactical-defense 64-game comparison also produced `63` proof-limit hits and
+  `1` draw/ongoing game. It was faster, but `61` decisive games became
+  `model_scope_unknown`, meaning the narrow tactical model did not have a
+  concrete reply/forcing set for the previous prefix. This is useful evidence
+  for future model design, not a product-safe proof.
+- Raising all-legal depth is not the next practical move. The 8-game smoke at
+  `all_legal_defense`, depth `3`, forced extensions `4` still left `7`
+  unresolved entries and took roughly `190s` wall-clock / `626s` summed
+  per-entry time, versus about `2.4s` / `7.4s` for depth `2`.
+- Increasing forced extensions alone did not help the smoke matrix. The dominant
+  issue is normal proof depth plus defender breadth, not forced-extension
+  budget.
+
+Current next target: improve the proof model around named local threats and
+hybrid reply sets. Do not expose replay analysis in the web UI yet, and do not
+try to solve this by simply raising all-legal depth.
 
 Example:
 
