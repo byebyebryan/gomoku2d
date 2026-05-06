@@ -3,7 +3,8 @@ use serde::Serialize;
 
 use crate::analysis::{
     analysis_model, analyze_replay, rule_label, AnalysisError, AnalysisModel, AnalysisOptions,
-    DefensePolicy, ForcedInterval, ProofStatus, RootCause, TacticalNote, ANALYSIS_SCHEMA_VERSION,
+    DefensePolicy, ForcedInterval, ProofStatus, ReplyClassification, RootCause, TacticalNote,
+    ANALYSIS_SCHEMA_VERSION,
 };
 
 #[derive(Debug, Clone)]
@@ -33,6 +34,7 @@ pub struct AnalysisFixtureExpected {
     pub critical_mistake_ply: Option<usize>,
     pub tactical_notes: &'static [TacticalNote],
     pub required_unknown_gaps: &'static [usize],
+    pub required_reply_classifications: &'static [ReplyClassification],
 }
 
 pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
@@ -58,6 +60,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
             critical_mistake_ply: Some(8),
             tactical_notes: &[TacticalNote::AccidentalBlunder],
             required_unknown_gaps: &[],
+            required_reply_classifications: &[],
         },
     },
     AnalysisFixtureCase {
@@ -88,6 +91,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
                 TacticalNote::MissedWin,
             ],
             required_unknown_gaps: &[],
+            required_reply_classifications: &[],
         },
     },
     AnalysisFixtureCase {
@@ -114,6 +118,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
             critical_mistake_ply: Some(10),
             tactical_notes: &[TacticalNote::MissedWin],
             required_unknown_gaps: &[],
+            required_reply_classifications: &[],
         },
     },
     AnalysisFixtureCase {
@@ -138,6 +143,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
             critical_mistake_ply: None,
             tactical_notes: &[],
             required_unknown_gaps: &[6],
+            required_reply_classifications: &[],
         },
     },
     AnalysisFixtureCase {
@@ -165,6 +171,62 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
             critical_mistake_ply: None,
             tactical_notes: &[],
             required_unknown_gaps: &[9],
+            required_reply_classifications: &[ReplyClassification::BlockedButForced],
+        },
+    },
+    AnalysisFixtureCase {
+        case_id: "tactical_counter_win_escape",
+        description: "A tactical-defense model must treat a defender immediate win as an escape, not force a block.",
+        variant: Variant::Freestyle,
+        moves: &[
+            "A1", "H8", "A2", "I8", "A3", "J8", "A4", "K8", "B1", "L8",
+        ],
+        options: AnalysisFixtureOptions {
+            max_depth: Some(2),
+            max_forced_extensions: Some(4),
+            defense_policy: Some(DefensePolicy::TacticalDefense),
+            max_backward_window: Some(2),
+        },
+        expected: AnalysisFixtureExpected {
+            winner: Some(Color::White),
+            root_cause: RootCause::MissedWin,
+            final_forced_interval: ForcedInterval {
+                start_ply: 9,
+                end_ply: 10,
+            },
+            last_chance_ply: Some(8),
+            critical_mistake_ply: Some(9),
+            tactical_notes: &[TacticalNote::MissedWin],
+            required_unknown_gaps: &[],
+            required_reply_classifications: &[ReplyClassification::Escaped],
+        },
+    },
+    AnalysisFixtureCase {
+        case_id: "renju_forbidden_single_block_terminal",
+        description: "White has one winning square; Black's only block is forbidden, so the terminal threat is forced.",
+        variant: Variant::Renju,
+        moves: &[
+            "C3", "D4", "H6", "E5", "H7", "F6", "F8", "G7", "G8", "A15", "A14",
+            "H8",
+        ],
+        options: AnalysisFixtureOptions {
+            max_depth: Some(2),
+            max_forced_extensions: Some(4),
+            defense_policy: Some(DefensePolicy::TacticalDefense),
+            max_backward_window: Some(2),
+        },
+        expected: AnalysisFixtureExpected {
+            winner: Some(Color::White),
+            root_cause: RootCause::Unclear,
+            final_forced_interval: ForcedInterval {
+                start_ply: 10,
+                end_ply: 12,
+            },
+            last_chance_ply: None,
+            critical_mistake_ply: None,
+            tactical_notes: &[],
+            required_unknown_gaps: &[],
+            required_reply_classifications: &[ReplyClassification::NoLegalBlock],
         },
     },
     AnalysisFixtureCase {
@@ -189,6 +251,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
             critical_mistake_ply: None,
             tactical_notes: &[],
             required_unknown_gaps: &[],
+            required_reply_classifications: &[],
         },
     },
 ];
@@ -226,6 +289,7 @@ pub struct AnalysisFixtureExpectationReport {
     pub critical_mistake_ply: Option<usize>,
     pub tactical_notes: Vec<TacticalNote>,
     pub required_unknown_gaps: Vec<usize>,
+    pub required_reply_classifications: Vec<ReplyClassification>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -237,6 +301,7 @@ pub struct AnalysisFixtureActualReport {
     pub critical_mistake_ply: Option<usize>,
     pub tactical_notes: Vec<TacticalNote>,
     pub unknown_gaps: Vec<usize>,
+    pub reply_classifications: Vec<ReplyClassification>,
     pub model: AnalysisModel,
 }
 
@@ -294,6 +359,12 @@ fn run_analysis_fixture(
         critical_mistake_ply: analysis.critical_mistake_ply,
         tactical_notes: analysis.tactical_notes.clone(),
         unknown_gaps: analysis.unknown_gaps.clone(),
+        reply_classifications: analysis
+            .proof_summary
+            .iter()
+            .flat_map(|proof| proof.threat_evidence.iter())
+            .map(|evidence| evidence.reply_classification)
+            .collect(),
         model: analysis.model.clone(),
     };
     let failures = fixture_failures(&expected, &actual);
@@ -373,6 +444,7 @@ fn expectation_report(expected: &AnalysisFixtureExpected) -> AnalysisFixtureExpe
         critical_mistake_ply: expected.critical_mistake_ply,
         tactical_notes: expected.tactical_notes.to_vec(),
         required_unknown_gaps: expected.required_unknown_gaps.to_vec(),
+        required_reply_classifications: expected.required_reply_classifications.to_vec(),
     }
 }
 
@@ -422,6 +494,14 @@ fn fixture_failures(
             failures.push(format!(
                 "unknown_gaps expected to contain {}, got {:?}",
                 gap, actual.unknown_gaps
+            ));
+        }
+    }
+    for classification in &expected.required_reply_classifications {
+        if !actual.reply_classifications.contains(classification) {
+            failures.push(format!(
+                "reply_classifications expected to contain {:?}, got {:?}",
+                classification, actual.reply_classifications
             ));
         }
     }
@@ -695,6 +775,10 @@ fn expectation_table(expected: &AnalysisFixtureExpectationReport) -> String {
             "Unknown Gaps",
             usize_list_label(&expected.required_unknown_gaps),
         ),
+        (
+            "Reply Classes",
+            reply_classifications_label(&expected.required_reply_classifications),
+        ),
     ])
 }
 
@@ -707,6 +791,10 @@ fn actual_table(actual: &AnalysisFixtureActualReport) -> String {
         ("Critical", option_usize(actual.critical_mistake_ply)),
         ("Notes", notes_label(&actual.tactical_notes)),
         ("Unknown Gaps", usize_list_label(&actual.unknown_gaps)),
+        (
+            "Reply Classes",
+            reply_classifications_label(&actual.reply_classifications),
+        ),
     ])
 }
 
@@ -764,6 +852,18 @@ fn usize_list_label(values: &[usize]) -> String {
     }
 }
 
+fn reply_classifications_label(classifications: &[ReplyClassification]) -> String {
+    if classifications.is_empty() {
+        "-".to_string()
+    } else {
+        classifications
+            .iter()
+            .map(|classification| format!("{classification:?}"))
+            .collect::<Vec<_>>()
+            .join(", ")
+    }
+}
+
 fn moves_label(moves: &[Move]) -> String {
     if moves.is_empty() {
         "-".to_string()
@@ -792,7 +892,9 @@ mod tests {
     use super::{
         render_analysis_fixture_report_html, run_analysis_fixtures, ANALYSIS_FIXTURE_CASES,
     };
-    use crate::analysis::{AnalysisOptions, ForcedInterval, ProofStatus, RootCause};
+    use crate::analysis::{
+        AnalysisOptions, ForcedInterval, ProofStatus, ReplyClassification, RootCause,
+    };
 
     fn mv(notation: &str) -> Move {
         Move::from_notation(notation).expect("test move notation should parse")
@@ -824,6 +926,17 @@ mod tests {
         assert!(missed_defense.proof_rows.iter().any(|row| row.ply == 7
             && row.status == ProofStatus::EscapeFound
             && row.escape_moves == vec![mv("L8")]));
+
+        let renju_terminal = report
+            .results
+            .iter()
+            .find(|result| result.case_id == "renju_forbidden_single_block_terminal")
+            .expect("renju terminal fixture should be present");
+        assert!(renju_terminal.passed);
+        assert!(renju_terminal
+            .actual
+            .reply_classifications
+            .contains(&ReplyClassification::NoLegalBlock));
     }
 
     #[test]
@@ -847,7 +960,7 @@ mod tests {
         let html = render_analysis_fixture_report_html(&report);
 
         assert!(html.contains("<title>Gomoku2D Analysis Fixture Report</title>"));
-        assert!(html.contains("6 passed / 6 total"));
+        assert!(html.contains("8 passed / 8 total"));
         assert!(html.contains("missed_defense_closed_four"));
         assert!(html.contains("Expected"));
         assert!(html.contains("Proof Rows"));
