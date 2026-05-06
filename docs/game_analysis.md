@@ -312,3 +312,30 @@ Do not let the Phaser scene or React route own analysis rules.
 5. Use analyzer summaries to annotate replay.
 6. Feed proven, cheap forced-line facts back into bot ordering or narrow search
    only after the analyzer behavior is trustworthy.
+
+## Lab MVP
+
+The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
+
+- `gomoku_eval::analysis` defines the model/result types and bounded proof
+  walker.
+- `gomoku-eval analyze-replay --input <replay.json>` emits JSON analysis.
+- The current proof engine handles immediate wins, single-threat escapes,
+  open-four style unavoidable immediate wins, proof intervals, conversion
+  notes, missed defenses, missed wins, ongoing/draw summaries, and explicit
+  `unknown` states.
+- Tactical-defense mode is present as a model flag and immediate-threat reply
+  subset, but it is not yet a full forced-chain search.
+
+Example:
+
+```bash
+cargo run -p gomoku-eval -- analyze-replay \
+  --input outputs/replays/match_001.json \
+  --output outputs/analysis_001.json \
+  --defense-policy all-legal-defense \
+  --max-depth 2
+```
+
+This is still a lab artifact. Do not expose it in the web replay UI until the
+fixture set and report output make the limits obvious enough for players.
