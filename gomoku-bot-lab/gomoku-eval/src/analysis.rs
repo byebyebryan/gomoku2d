@@ -455,7 +455,10 @@ impl ThreatReplySet {
         } else {
             Vec::new()
         };
-        let local_threat_count = local_threats.len();
+        let local_threat_count = local_threats
+            .iter()
+            .filter(|fact| fact.kind.is_forcing())
+            .count();
         let local_threat_replies = local_threat_reply_moves(board, defender, &local_threats);
 
         Self {
@@ -1186,12 +1189,26 @@ fn use_hybrid_local_threat_replies(threat: &ThreatReplySet) -> bool {
 enum LocalThreatKind {
     OpenFour,
     ClosedFour,
+    BrokenFour,
     OpenThree,
+    BrokenThree,
 }
 
 impl LocalThreatKind {
     fn is_forcing(self) -> bool {
-        matches!(self, Self::OpenFour | Self::ClosedFour | Self::OpenThree)
+        matches!(
+            self,
+            Self::OpenFour | Self::ClosedFour | Self::BrokenFour | Self::OpenThree
+        )
+    }
+
+    fn rank(self) -> u8 {
+        match self {
+            Self::OpenFour => 4,
+            Self::ClosedFour | Self::BrokenFour => 3,
+            Self::OpenThree => 2,
+            Self::BrokenThree => 1,
+        }
     }
 }
 
@@ -1242,11 +1259,18 @@ fn local_threat_facts(board: &Board, player: Color) -> Vec<LocalThreatFact> {
         for &(dr, dc) in &gomoku_core::DIRS {
             if is_run_start(board, mv, player, dr, dc) {
                 if let Some(fact) = local_threat_fact_from_run_start(board, mv, player, dr, dc) {
-                    facts.push(fact);
+                    push_unique_fact(&mut facts, fact);
                 }
+            }
+            if let Some(fact) = broken_four_fact_through_move(board, mv, player, dr, dc) {
+                push_unique_fact(&mut facts, fact);
+            }
+            if let Some(fact) = broken_three_fact_through_move(board, mv, player, dr, dc) {
+                push_unique_fact(&mut facts, fact);
             }
         }
     });
+    facts.sort_by_key(|fact| std::cmp::Reverse(fact.kind.rank()));
     facts
 }
 
@@ -1298,6 +1322,220 @@ fn local_threat_fact_from_run_start(
     }
 }
 
+fn broken_four_fact_through_move(
+    board: &Board,
+    mv: Move,
+    player: Color,
+    dr: isize,
+    dc: isize,
+) -> Option<LocalThreatFact> {
+    let completions = four_completion_squares_through_move(board, mv, player, dr, dc);
+    if completions.len() == 1
+        && contiguous_run_len_through_move(board, mv, player, dr, dc) < board.config.win_length - 1
+    {
+        Some(LocalThreatFact {
+            kind: LocalThreatKind::BrokenFour,
+            defense_squares: completions,
+        })
+    } else {
+        None
+    }
+}
+
+fn broken_three_fact_through_move(
+    board: &Board,
+    mv: Move,
+    player: Color,
+    dr: isize,
+    dc: isize,
+) -> Option<LocalThreatFact> {
+    let rest_squares = broken_three_rest_squares_through_move(board, mv, player, dr, dc);
+    (!rest_squares.is_empty()).then_some(LocalThreatFact {
+        kind: LocalThreatKind::BrokenThree,
+        defense_squares: rest_squares,
+    })
+}
+
+fn four_completion_squares_through_move(
+    board: &Board,
+    mv: Move,
+    player: Color,
+    dr: isize,
+    dc: isize,
+) -> Vec<Move> {
+    let win_len = board.config.win_length as isize;
+    let mut completions = Vec::new();
+
+    for start in -(win_len - 1)..=0 {
+        let mut player_count = 0usize;
+        let mut empty_square = None;
+        let mut blocked = false;
+
+        for offset in start..start + win_len {
+            let row = mv.row as isize + dr * offset;
+            let col = mv.col as isize + dc * offset;
+            if !in_bounds(board, row, col) {
+                blocked = true;
+                break;
+            }
+
+            let candidate = Move {
+                row: row as usize,
+                col: col as usize,
+            };
+            if board.has_color(candidate.row, candidate.col, player) {
+                player_count += 1;
+            } else if board.is_empty(candidate.row, candidate.col) && empty_square.is_none() {
+                empty_square = Some(candidate);
+            } else {
+                blocked = true;
+                break;
+            }
+        }
+
+        let Some(empty_square) = empty_square else {
+            continue;
+        };
+        if !blocked
+            && player_count == board.config.win_length.saturating_sub(1)
+            && !completions.contains(&empty_square)
+        {
+            completions.push(empty_square);
+        }
+    }
+
+    completions.sort_by_key(|mv| (mv.row, mv.col));
+    completions
+}
+
+fn broken_three_rest_squares_through_move(
+    board: &Board,
+    mv: Move,
+    player: Color,
+    dr: isize,
+    dc: isize,
+) -> Vec<Move> {
+    let mut rest_squares = Vec::new();
+    let win_len = board.config.win_length as isize;
+
+    for start in -(win_len - 1)..=0 {
+        let mut player_offsets = Vec::new();
+        let mut empty_offsets = Vec::new();
+        let mut blocked = false;
+
+        for offset in start..start + win_len {
+            let row = mv.row as isize + dr * offset;
+            let col = mv.col as isize + dc * offset;
+            if !in_bounds(board, row, col) {
+                blocked = true;
+                break;
+            }
+
+            let candidate = Move {
+                row: row as usize,
+                col: col as usize,
+            };
+            if board.has_color(candidate.row, candidate.col, player) {
+                player_offsets.push(offset);
+            } else if board.is_empty(candidate.row, candidate.col) {
+                empty_offsets.push(offset);
+            } else {
+                blocked = true;
+                break;
+            }
+        }
+
+        if blocked
+            || player_offsets.len() != board.config.win_length.saturating_sub(2)
+            || empty_offsets.len() != 2
+        {
+            continue;
+        }
+        if player_offsets.windows(2).all(|pair| pair[1] == pair[0] + 1) {
+            continue;
+        }
+
+        for offset in empty_offsets {
+            let row = mv.row as isize + dr * offset;
+            let col = mv.col as isize + dc * offset;
+            if !in_bounds(board, row, col) {
+                continue;
+            }
+
+            let rest = Move {
+                row: row as usize,
+                col: col as usize,
+            };
+            if virtual_run_len(board, rest, player, dr, dc) < board.config.win_length - 1 {
+                continue;
+            }
+            push_unique_move(&mut rest_squares, rest);
+        }
+    }
+
+    rest_squares.sort_by_key(|mv| (mv.row, mv.col));
+    rest_squares
+}
+
+fn virtual_run_len(board: &Board, rest: Move, player: Color, dr: isize, dc: isize) -> usize {
+    1 + virtual_count_in_direction(board, rest, player, dr, dc, -1)
+        + virtual_count_in_direction(board, rest, player, dr, dc, 1)
+}
+
+fn virtual_count_in_direction(
+    board: &Board,
+    rest: Move,
+    player: Color,
+    dr: isize,
+    dc: isize,
+    step: isize,
+) -> usize {
+    let mut count = 0usize;
+    let mut row = rest.row as isize + dr * step;
+    let mut col = rest.col as isize + dc * step;
+    while in_bounds(board, row, col)
+        && has_color_or_virtual_rest(board, row as usize, col as usize, player, rest)
+    {
+        count += 1;
+        row += dr * step;
+        col += dc * step;
+    }
+    count
+}
+
+fn has_color_or_virtual_rest(
+    board: &Board,
+    row: usize,
+    col: usize,
+    player: Color,
+    rest: Move,
+) -> bool {
+    (row == rest.row && col == rest.col) || board.has_color(row, col, player)
+}
+
+fn contiguous_run_len_through_move(
+    board: &Board,
+    mv: Move,
+    player: Color,
+    dr: isize,
+    dc: isize,
+) -> usize {
+    1 + count_player_from_move(board, mv, player, dr, dc)
+        + count_player_from_move(board, mv, player, -dr, -dc)
+}
+
+fn count_player_from_move(board: &Board, mv: Move, player: Color, dr: isize, dc: isize) -> usize {
+    let mut count = 0usize;
+    let mut row = mv.row as isize + dr;
+    let mut col = mv.col as isize + dc;
+    while in_bounds(board, row, col) && board.has_color(row as usize, col as usize, player) {
+        count += 1;
+        row += dr;
+        col += dc;
+    }
+    count
+}
+
 fn is_run_start(board: &Board, mv: Move, player: Color, dr: isize, dc: isize) -> bool {
     let previous_row = mv.row as isize - dr;
     let previous_col = mv.col as isize - dc;
@@ -1322,6 +1560,12 @@ fn in_bounds(board: &Board, row: isize, col: isize) -> bool {
 fn push_unique_move(moves: &mut Vec<Move>, mv: Move) {
     if !moves.contains(&mv) {
         moves.push(mv);
+    }
+}
+
+fn push_unique_fact(facts: &mut Vec<LocalThreatFact>, fact: LocalThreatFact) {
+    if !facts.contains(&fact) {
+        facts.push(fact);
     }
 }
 
@@ -1791,8 +2035,9 @@ mod tests {
     use gomoku_core::{Board, Color, Move, Replay, RuleConfig, Variant};
 
     use super::{
-        analyze_replay, prove_forced_win, AnalysisOptions, DefensePolicy, ProofLimitCause,
-        ProofStatus, ReplyClassification, RootCause, TacticalNote, UnclearReason,
+        analyze_replay, local_threat_facts, prove_forced_win, AnalysisOptions, DefensePolicy,
+        LocalThreatFact, LocalThreatKind, ProofLimitCause, ProofStatus, ReplyClassification,
+        RootCause, TacticalNote, UnclearReason,
     };
 
     fn mv(notation: &str) -> Move {
@@ -2022,6 +2267,30 @@ mod tests {
         assert!(proof.threat_evidence.iter().all(|evidence| !evidence
             .limit_causes
             .contains(&ProofLimitCause::ModelScopeUnknown)));
+    }
+
+    #[test]
+    fn local_threat_facts_report_broken_four_and_broken_three() {
+        let broken_four_board = board_from_moves(
+            Variant::Freestyle,
+            &["H8", "A1", "I8", "C1", "L8", "E1", "J8"],
+        );
+        assert!(
+            local_threat_facts(&broken_four_board, Color::Black).contains(&LocalThreatFact {
+                kind: LocalThreatKind::BrokenFour,
+                defense_squares: vec![mv("K8")],
+            })
+        );
+
+        let broken_three_board =
+            board_from_moves(Variant::Freestyle, &["H8", "A1", "K8", "C1", "J8"]);
+        assert!(
+            local_threat_facts(&broken_three_board, Color::Black).contains(&LocalThreatFact {
+                kind: LocalThreatKind::BrokenThree,
+                defense_squares: vec![mv("I8")],
+            })
+        );
+        assert!(!LocalThreatKind::BrokenThree.is_forcing());
     }
 
     #[test]
