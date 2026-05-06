@@ -610,6 +610,11 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   causes, principal-line notation, and compact board snapshots. This is meant
   to make proof-limit, model-scope, and scan-window failures inspectable before
   adding more search.
+- Batch analysis reports can opt into `--include-proof-details` for decisive
+  replay audits. This adds previous-prefix and final-forced-start proof
+  snapshots, reply classification, principal-line notation, and compact board
+  snapshots. Keep it off for normal smoke runs; turn it on when reviewing why a
+  `strategic_loss`, `missed_defense`, or decisive `unclear` label was assigned.
 - After the corridor-exit pivot, a top-two report smoke run against
   `search-d7+tactical-cap-8+pattern-eval` vs
   `search-d5+tactical-cap-8+pattern-eval` passed with `8 analyzed / 8 total`
@@ -625,6 +630,10 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   `defender_reply_unknown`). Treat this as model validation, not product-ready
   copy: `strategic_loss` still means "entered the detected forced corridor"
   rather than a full game-theoretic loss proof.
+- The same 64-game run with `--include-proof-details` produced proof details
+  for all `63` decisive entries and skipped the single draw/ongoing entry. This
+  is the current audit path for checking whether the reported root transition
+  and board prefixes are plausible before changing the proof model.
 - Before the corridor-exit pivot, the 64-game sampled checkpoint passed with
   `64 analyzed / 64 total`
   and `0 failed`: `63` proof-limit hits and `1` draw/ongoing game. Bounded
@@ -662,13 +671,13 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   issue is normal proof depth plus defender breadth, not forced-extension
   budget.
 
-Current next target: inspect the corridor-exit smoke classifications for
-readability and plausibility, then run a larger checkpoint if the report shape
-looks right. Use remaining failures or suspicious labels to decide whether the
-next slice should improve named local exits, forced-chain evidence, or report
-readability. Do not expose replay analysis in the web UI yet, and do not try to
-solve remaining unknowns by simply raising all-legal depth or widening shape
-coverage.
+Current next target: inspect the proof-detail audit output for the top-two
+64-game run, especially the `5` decisive `unclear` entries and any surprising
+`strategic_loss` labels. Use remaining failures or suspicious labels to decide
+whether the next slice should improve named local exits, forced-chain evidence,
+or report readability. Do not expose replay analysis in the web UI yet, and do
+not try to solve remaining unknowns by simply raising all-legal depth or
+widening shape coverage.
 
 Example:
 
@@ -714,7 +723,9 @@ logic. It covers both entrants, color assignments where available, draws or
 max-move games, and short/long games deterministically. Run a full 64-game
 head-to-head analysis only for checkpoint reports. `--max-backward-window 8`
 is the practical default for iteration; `24` is reserved for focused samples or
-longer runs until the proof model becomes narrower.
+longer runs until the proof model becomes narrower. Add
+`--include-proof-details` when the goal is auditability rather than a compact
+summary report.
 
 Keep generated analysis JSON/HTML under `gomoku-bot-lab/outputs/analysis/`
 while iterating. These files are ignored scratch artifacts; commit only the

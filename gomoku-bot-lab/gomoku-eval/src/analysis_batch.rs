@@ -2,13 +2,14 @@ use std::collections::BTreeMap;
 use std::path::Path;
 use std::time::Instant;
 
-use gomoku_core::{Color, Move, Replay};
+use gomoku_core::{Board, Color, Move, Replay};
 use rayon::prelude::*;
 use serde::Serialize;
 
 use crate::analysis::{
-    analyze_replay, AnalysisOptions, DefensePolicy, ForcedInterval, GameAnalysis, ProofLimitCause,
-    ProofStatus, RootCause, TacticalNote, UnclearContext, UnclearReason, ANALYSIS_SCHEMA_VERSION,
+    analyze_replay, AnalysisBoardSnapshot, AnalysisOptions, DefensePolicy, ForcedInterval,
+    GameAnalysis, ProofLimitCause, ProofResult, ProofStatus, ReplyClassification, RootCause,
+    TacticalNote, UnclearContext, UnclearReason, ANALYSIS_SCHEMA_VERSION,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -70,6 +71,8 @@ pub struct AnalysisBatchEntry {
     pub unknown_gaps: Vec<usize>,
     pub unknown_gap_count: usize,
     pub unclear_context: Option<UnclearContext>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub proof_details: Option<AnalysisBatchProofDetails>,
     pub limit_causes: Vec<ProofLimitCause>,
     pub elapsed_ms: u64,
     pub prefixes_analyzed: usize,
@@ -77,6 +80,33 @@ pub struct AnalysisBatchEntry {
     pub unknown_prefix_count: usize,
     pub escape_prefix_count: usize,
     pub error: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct AnalysisBatchProofDetails {
+    pub previous_prefix_ply: Option<usize>,
+    pub final_forced_start_ply: usize,
+    pub previous_proof: Option<AnalysisBatchProofSnapshot>,
+    pub final_start_proof: Option<AnalysisBatchProofSnapshot>,
+    pub snapshots: Vec<AnalysisBoardSnapshot>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct AnalysisBatchProofSnapshot {
+    pub prefix_ply: usize,
+    pub side_to_move: Color,
+    pub status: ProofStatus,
+    pub reply_classification: Option<ReplyClassification>,
+    pub winning_squares: Vec<Move>,
+    pub legal_cost_squares: Vec<Move>,
+    pub illegal_cost_squares: Vec<Move>,
+    pub defender_immediate_wins: Vec<Move>,
+    pub escape_replies: Vec<Move>,
+    pub forced_replies: Vec<Move>,
+    pub principal_line: Vec<Move>,
+    pub principal_line_notation: Vec<String>,
+    pub limit_hit: bool,
+    pub limit_causes: Vec<ProofLimitCause>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -92,17 +122,34 @@ pub struct ReplayAnalysisInput {
     pub replay: Replay,
 }
 
+#[derive(Debug, Clone)]
+pub struct AnalysisBatchRunOptions {
+    pub analysis: AnalysisOptions,
+    pub include_proof_details: bool,
+}
+
+impl From<AnalysisOptions> for AnalysisBatchRunOptions {
+    fn from(analysis: AnalysisOptions) -> Self {
+        Self {
+            analysis,
+            include_proof_details: false,
+        }
+    }
+}
+
 pub fn run_analysis_batch(
     replay_dir: &Path,
     options: AnalysisOptions,
 ) -> Result<AnalysisBatchReport, String> {
+    run_analysis_batch_with_options(replay_dir, options.into())
+}
+
+pub fn run_analysis_batch_with_options(
+    replay_dir: &Path,
+    options: AnalysisBatchRunOptions,
+) -> Result<AnalysisBatchReport, String> {
     let batch_started = Instant::now();
-    let model = AnalysisBatchModel {
-        defense_policy: options.defense_policy,
-        max_depth: options.max_depth,
-        max_forced_extensions: options.max_forced_extensions,
-        max_backward_window: options.max_backward_window,
-    };
+    let model = model_from_options(&options.analysis);
     let mut paths = replay_paths(replay_dir)?;
     paths.sort();
 
@@ -119,11 +166,12 @@ pub fn run_analysis_batch(
                 .unwrap_or(path)
                 .display()
                 .to_string();
-            match analyze_replay_file(path, options.clone()) {
-                Ok(analysis) => entry_from_analysis(
+            match analyze_replay_file(path, options.analysis.clone()) {
+                Ok((replay, analysis)) => entry_from_analysis(
                     relative_path,
                     analysis,
                     elapsed_millis(entry_started.elapsed()),
+                    options.include_proof_details.then_some(&replay),
                 ),
                 Err(error) => error_entry(
                     relative_path,
@@ -168,23 +216,27 @@ pub fn run_analysis_batch_replays(
     inputs: Vec<ReplayAnalysisInput>,
     options: AnalysisOptions,
 ) -> AnalysisBatchReport {
+    run_analysis_batch_replays_with_options(source, inputs, options.into())
+}
+
+pub fn run_analysis_batch_replays_with_options(
+    source: String,
+    inputs: Vec<ReplayAnalysisInput>,
+    options: AnalysisBatchRunOptions,
+) -> AnalysisBatchReport {
     let batch_started = Instant::now();
-    let model = AnalysisBatchModel {
-        defense_policy: options.defense_policy,
-        max_depth: options.max_depth,
-        max_forced_extensions: options.max_forced_extensions,
-        max_backward_window: options.max_backward_window,
-    };
+    let model = model_from_options(&options.analysis);
 
     let entries = inputs
         .par_iter()
         .map(|input| {
             let entry_started = Instant::now();
-            match analyze_replay(&input.replay, options.clone()) {
+            match analyze_replay(&input.replay, options.analysis.clone()) {
                 Ok(analysis) => entry_from_analysis(
                     input.label.clone(),
                     analysis,
                     elapsed_millis(entry_started.elapsed()),
+                    options.include_proof_details.then_some(&input.replay),
                 ),
                 Err(error) => error_entry(
                     input.label.clone(),
@@ -227,6 +279,15 @@ pub fn run_analysis_batch_replays(
     }
 }
 
+fn model_from_options(options: &AnalysisOptions) -> AnalysisBatchModel {
+    AnalysisBatchModel {
+        defense_policy: options.defense_policy,
+        max_depth: options.max_depth,
+        max_forced_extensions: options.max_forced_extensions,
+        max_backward_window: options.max_backward_window,
+    }
+}
+
 fn elapsed_millis(duration: std::time::Duration) -> u64 {
     duration.as_millis().min(u128::from(u64::MAX)) as u64
 }
@@ -249,6 +310,7 @@ fn error_entry(path: String, error: String, elapsed_ms: u64) -> AnalysisBatchEnt
         unknown_gaps: Vec::new(),
         unknown_gap_count: 0,
         unclear_context: None,
+        proof_details: None,
         limit_causes: Vec::new(),
         elapsed_ms,
         prefixes_analyzed: 0,
@@ -266,7 +328,7 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
         .iter()
         .map(|entry| {
             format!(
-                "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{} ms</td><td>{}</td><td>{}</td></tr>",
+                "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{} ms</td><td>{}</td><td>{}</td><td>{}</td></tr>",
                 html_escape(&entry.path),
                 html_escape(entry_status_label(entry.status)),
                 html_escape(&option_debug(entry.winner)),
@@ -276,6 +338,7 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
                 html_escape(&entry.unknown_gap_count.to_string()),
                 entry.elapsed_ms,
                 unclear_context_html(entry.unclear_context.as_ref()),
+                proof_details_html(entry.proof_details.as_ref()),
                 html_escape(entry.error.as_deref().unwrap_or("-")),
             )
         })
@@ -404,7 +467,7 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
   </section>
   <table>
     <thead>
-      <tr><th>Replay</th><th>Status</th><th>Winner</th><th>Root</th><th>Why unclear</th><th>Forced</th><th>Unknowns</th><th>Time</th><th>Context</th><th>Error</th></tr>
+      <tr><th>Replay</th><th>Status</th><th>Winner</th><th>Root</th><th>Why unclear</th><th>Forced</th><th>Unknowns</th><th>Time</th><th>Context</th><th>Proof details</th><th>Error</th></tr>
     </thead>
     <tbody>{rows}</tbody>
   </table>
@@ -445,23 +508,30 @@ fn replay_paths(replay_dir: &Path) -> Result<Vec<std::path::PathBuf>, String> {
     Ok(paths)
 }
 
-fn analyze_replay_file(path: &Path, options: AnalysisOptions) -> Result<GameAnalysis, String> {
+fn analyze_replay_file(
+    path: &Path,
+    options: AnalysisOptions,
+) -> Result<(Replay, GameAnalysis), String> {
     let json = std::fs::read_to_string(path)
         .map_err(|err| format!("failed to read replay JSON: {err}"))?;
     let replay =
         Replay::from_json(&json).map_err(|err| format!("failed to parse replay: {err}"))?;
-    analyze_replay(&replay, options).map_err(|err| format!("failed to analyze replay: {err}"))
+    let analysis = analyze_replay(&replay, options)
+        .map_err(|err| format!("failed to analyze replay: {err}"))?;
+    Ok((replay, analysis))
 }
 
 fn entry_from_analysis(
     path: String,
     analysis: GameAnalysis,
     elapsed_ms: u64,
+    replay: Option<&Replay>,
 ) -> AnalysisBatchEntry {
     let prefixes_analyzed = analysis.proof_summary.len();
     let forced_prefix_count = count_proof_status(&analysis, ProofStatus::ForcedWin);
     let unknown_prefix_count = count_proof_status(&analysis, ProofStatus::Unknown);
     let escape_prefix_count = count_proof_status(&analysis, ProofStatus::EscapeFound);
+    let proof_details = replay.and_then(|replay| proof_details_from_analysis(replay, &analysis));
     let limit_causes = analysis
         .unclear_context
         .as_ref()
@@ -485,6 +555,7 @@ fn entry_from_analysis(
         unknown_gaps: analysis.unknown_gaps.clone(),
         unknown_gap_count: analysis.unknown_gaps.len(),
         unclear_context: analysis.unclear_context,
+        proof_details,
         limit_causes,
         elapsed_ms,
         prefixes_analyzed,
@@ -493,6 +564,161 @@ fn entry_from_analysis(
         escape_prefix_count,
         error: None,
     }
+}
+
+fn proof_details_from_analysis(
+    replay: &Replay,
+    analysis: &GameAnalysis,
+) -> Option<AnalysisBatchProofDetails> {
+    analysis.winner?;
+    if analysis.proof_summary.is_empty() {
+        return None;
+    }
+
+    let boards = replay_prefix_boards(replay).ok()?;
+    let scan_start = boards.len().checked_sub(analysis.proof_summary.len())?;
+    let final_forced_start_ply = analysis.final_forced_interval.start_ply;
+    let previous_prefix_ply = final_forced_start_ply.checked_sub(1);
+    let previous_proof = previous_prefix_ply
+        .and_then(|ply| proof_snapshot_at(&analysis.proof_summary, scan_start, ply));
+    let final_start_proof =
+        proof_snapshot_at(&analysis.proof_summary, scan_start, final_forced_start_ply);
+    let mut snapshots = Vec::new();
+    if let Some(previous_prefix_ply) = previous_prefix_ply {
+        if let Some(board) = boards.get(previous_prefix_ply) {
+            snapshots.push(board_snapshot(
+                "previous_prefix",
+                previous_prefix_ply,
+                board,
+            ));
+        }
+    }
+    if snapshots
+        .iter()
+        .all(|snapshot| snapshot.ply != final_forced_start_ply)
+    {
+        if let Some(board) = boards.get(final_forced_start_ply) {
+            snapshots.push(board_snapshot(
+                "final_forced_start",
+                final_forced_start_ply,
+                board,
+            ));
+        }
+    }
+
+    Some(AnalysisBatchProofDetails {
+        previous_prefix_ply,
+        final_forced_start_ply,
+        previous_proof,
+        final_start_proof,
+        snapshots,
+    })
+}
+
+fn proof_snapshot_at(
+    proofs: &[ProofResult],
+    scan_start: usize,
+    prefix_ply: usize,
+) -> Option<AnalysisBatchProofSnapshot> {
+    let proof = proofs.get(prefix_ply.checked_sub(scan_start)?)?;
+    Some(proof_snapshot(prefix_ply, proof))
+}
+
+fn proof_snapshot(prefix_ply: usize, proof: &ProofResult) -> AnalysisBatchProofSnapshot {
+    let mut escape_replies = proof.escape_moves.clone();
+    extend_unique_moves(
+        &mut escape_replies,
+        proof
+            .threat_evidence
+            .iter()
+            .flat_map(|evidence| evidence.escape_replies.iter().copied()),
+    );
+
+    AnalysisBatchProofSnapshot {
+        prefix_ply,
+        side_to_move: proof.side_to_move,
+        status: proof.status,
+        reply_classification: proof
+            .threat_evidence
+            .first()
+            .map(|evidence| evidence.reply_classification),
+        winning_squares: collect_evidence_moves(proof, |evidence| &evidence.winning_squares),
+        legal_cost_squares: collect_evidence_moves(proof, |evidence| &evidence.legal_cost_squares),
+        illegal_cost_squares: collect_evidence_moves(proof, |evidence| {
+            &evidence.illegal_cost_squares
+        }),
+        defender_immediate_wins: collect_evidence_moves(proof, |evidence| {
+            &evidence.defender_immediate_wins
+        }),
+        escape_replies,
+        forced_replies: collect_evidence_moves(proof, |evidence| &evidence.forced_replies),
+        principal_line: proof.principal_line.clone(),
+        principal_line_notation: proof
+            .principal_line
+            .iter()
+            .map(|mv| mv.to_notation())
+            .collect(),
+        limit_hit: proof.limit_hit,
+        limit_causes: proof.limit_causes.clone(),
+    }
+}
+
+fn collect_evidence_moves(
+    proof: &ProofResult,
+    selector: fn(&crate::analysis::ThreatSequenceEvidence) -> &[Move],
+) -> Vec<Move> {
+    let mut moves = Vec::new();
+    extend_unique_moves(
+        &mut moves,
+        proof
+            .threat_evidence
+            .iter()
+            .flat_map(|evidence| selector(evidence).iter().copied()),
+    );
+    moves
+}
+
+fn extend_unique_moves(target: &mut Vec<Move>, moves: impl IntoIterator<Item = Move>) {
+    for mv in moves {
+        if !target.contains(&mv) {
+            target.push(mv);
+        }
+    }
+}
+
+fn replay_prefix_boards(replay: &Replay) -> Result<Vec<Board>, String> {
+    let mut board = Board::new(replay.rules.clone());
+    let mut boards = vec![board.clone()];
+    for (idx, replay_move) in replay.moves.iter().enumerate() {
+        let ply = idx + 1;
+        let mv = Move::from_notation(&replay_move.mv)
+            .map_err(|message| format!("invalid replay move at ply {ply}: {message}"))?;
+        board
+            .apply_move(mv)
+            .map_err(|err| format!("invalid replay move at ply {ply}: {err}"))?;
+        boards.push(board.clone());
+    }
+    Ok(boards)
+}
+
+fn board_snapshot(label: &str, ply: usize, board: &Board) -> AnalysisBoardSnapshot {
+    AnalysisBoardSnapshot {
+        label: label.to_string(),
+        ply,
+        side_to_move: board.current_player,
+        rows: board_rows(board),
+    }
+}
+
+fn board_rows(board: &Board) -> Vec<String> {
+    let size = board.config.board_size;
+    (0..size)
+        .map(|row| {
+            (0..size)
+                .map(|col| board.cell(row, col).map_or('.', Color::to_char))
+                .collect()
+        })
+        .collect()
 }
 
 fn limit_cause_counts(entries: &[AnalysisBatchEntry]) -> Vec<ProofLimitCauseCount> {
@@ -608,6 +834,92 @@ fn unclear_context_html(context: Option<&UnclearContext>) -> String {
     )
 }
 
+fn proof_details_html(details: Option<&AnalysisBatchProofDetails>) -> String {
+    let Some(details) = details else {
+        return "-".to_string();
+    };
+
+    let previous = details
+        .previous_proof
+        .as_ref()
+        .map(proof_snapshot_html)
+        .unwrap_or_else(|| "Previous proof: unavailable".to_string());
+    let final_start = details
+        .final_start_proof
+        .as_ref()
+        .map(proof_snapshot_html)
+        .unwrap_or_else(|| "Final proof: unavailable".to_string());
+    let snapshots = details
+        .snapshots
+        .iter()
+        .map(|snapshot| {
+            format!(
+                "<div><strong>{} @ ply {}</strong><pre>{}</pre></div>",
+                html_escape(&snapshot.label),
+                snapshot.ply,
+                html_escape(&snapshot.rows.join("\n"))
+            )
+        })
+        .collect::<String>();
+
+    format!(
+        "<div class=\"context\"><details><summary>root transition</summary><div><strong>Previous prefix</strong> {previous_ply}</div><div><strong>Final forced start</strong> {final_ply}</div>{previous}{final_start}</details><details><summary>Board snapshots</summary>{snapshots}</details></div>",
+        previous_ply = details
+            .previous_prefix_ply
+            .map(|ply| ply.to_string())
+            .unwrap_or_else(|| "-".to_string()),
+        final_ply = details.final_forced_start_ply,
+        previous = previous,
+        final_start = final_start,
+        snapshots = snapshots,
+    )
+}
+
+fn proof_snapshot_html(snapshot: &AnalysisBatchProofSnapshot) -> String {
+    format!(
+        "<div><strong>proof @ ply {ply}</strong></div><div>Status {status}; side {side}; reply {reply}</div><div>Winning {winning}; cost {cost}; escape {escape}; forced {forced}</div><div>Line {line}</div><div>Limits {limits}</div>",
+        ply = snapshot.prefix_ply,
+        status = html_escape(proof_status_label(snapshot.status)),
+        side = html_escape(&format!("{:?}", snapshot.side_to_move)),
+        reply = html_escape(snapshot.reply_classification.map(reply_classification_label).unwrap_or("-")),
+        winning = html_escape(&move_list_label(&snapshot.winning_squares)),
+        cost = html_escape(&move_list_label(&snapshot.legal_cost_squares)),
+        escape = html_escape(&move_list_label(&snapshot.escape_replies)),
+        forced = html_escape(&move_list_label(&snapshot.forced_replies)),
+        line = html_escape(&move_list_label(&snapshot.principal_line)),
+        limits = html_escape(&proof_limit_cause_labels(&snapshot.limit_causes)),
+    )
+}
+
+fn proof_status_label(status: ProofStatus) -> &'static str {
+    match status {
+        ProofStatus::ForcedWin => "forced win",
+        ProofStatus::EscapeFound => "escape found",
+        ProofStatus::Unknown => "unknown",
+    }
+}
+
+fn reply_classification_label(classification: ReplyClassification) -> &'static str {
+    match classification {
+        ReplyClassification::IgnoredSingleWin => "ignored single win",
+        ReplyClassification::BlockedButForced => "blocked but forced",
+        ReplyClassification::Escaped => "escaped",
+        ReplyClassification::NoLegalBlock => "no legal block",
+        ReplyClassification::Unknown => "unknown",
+    }
+}
+
+fn move_list_label(moves: &[Move]) -> String {
+    if moves.is_empty() {
+        return "-".to_string();
+    }
+    moves
+        .iter()
+        .map(|mv| mv.to_notation())
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
 fn limit_cause_counts_label(counts: &[ProofLimitCauseCount]) -> String {
     if counts.is_empty() {
         return "Limit causes: none".to_string();
@@ -671,9 +983,12 @@ mod tests {
 
     use super::{
         render_analysis_batch_report_html, run_analysis_batch, run_analysis_batch_replays,
-        ReplayAnalysisInput,
+        run_analysis_batch_replays_with_options, AnalysisBatchRunOptions, ReplayAnalysisInput,
     };
-    use crate::analysis::{AnalysisOptions, ProofLimitCause, RootCause, UnclearReason};
+    use crate::analysis::{
+        AnalysisOptions, ProofLimitCause, ProofStatus, ReplyClassification, RootCause,
+        UnclearReason,
+    };
 
     fn replay_from_moves(variant: Variant, moves: &[&str]) -> Replay {
         let rules = RuleConfig {
@@ -787,6 +1102,7 @@ mod tests {
         assert_eq!(report.source, "report.json:bot-a vs bot-b");
         assert_eq!(report.entries[0].path, "match_0002");
         assert_eq!(report.entries[1].path, "match_0001");
+        assert!(report.entries[0].proof_details.is_none());
         assert!(report.entries[0].final_forced_interval_found);
         assert!(
             report.entries[0].unclear_reason.is_some()
@@ -859,5 +1175,103 @@ mod tests {
         assert!(html.contains("<details"));
         assert!(html.contains("previous_prefix @ ply 7"));
         assert!(html.contains("outside scan window"));
+    }
+
+    #[test]
+    fn analysis_batch_replays_can_include_decisive_proof_details() {
+        let replay = replay_from_moves(
+            Variant::Freestyle,
+            &["H8", "G8", "I8", "A1", "J8", "A2", "K8", "B1", "L8"],
+        );
+
+        let report = run_analysis_batch_replays_with_options(
+            "report.json:bot-a vs bot-b".to_string(),
+            vec![ReplayAnalysisInput {
+                label: "missed_defense".to_string(),
+                replay,
+            }],
+            AnalysisBatchRunOptions {
+                analysis: AnalysisOptions::default(),
+                include_proof_details: true,
+            },
+        );
+
+        let entry = &report.entries[0];
+        assert_eq!(entry.root_cause, Some(RootCause::MissedDefense));
+        let details = entry
+            .proof_details
+            .as_ref()
+            .expect("opt-in proof details should be recorded for decisive entries");
+
+        assert_eq!(details.previous_prefix_ply, Some(7));
+        assert_eq!(details.final_forced_start_ply, 8);
+
+        let previous = details
+            .previous_proof
+            .as_ref()
+            .expect("previous prefix proof should be available");
+        assert_eq!(previous.prefix_ply, 7);
+        assert_eq!(previous.status, ProofStatus::EscapeFound);
+        assert_eq!(
+            previous.reply_classification,
+            Some(ReplyClassification::Escaped)
+        );
+        assert_eq!(
+            previous.escape_replies,
+            vec![Move::from_notation("L8").unwrap()]
+        );
+        assert_eq!(
+            previous.winning_squares,
+            vec![Move::from_notation("L8").unwrap()]
+        );
+
+        let final_start = details
+            .final_start_proof
+            .as_ref()
+            .expect("final forced start proof should be available");
+        assert_eq!(final_start.prefix_ply, 8);
+        assert_eq!(final_start.status, ProofStatus::ForcedWin);
+        assert_eq!(
+            final_start.principal_line,
+            vec![Move::from_notation("L8").unwrap()]
+        );
+        assert_eq!(final_start.principal_line_notation, vec!["L8".to_string()]);
+
+        assert!(details
+            .snapshots
+            .iter()
+            .any(|snapshot| snapshot.label == "previous_prefix" && snapshot.ply == 7));
+        assert!(details
+            .snapshots
+            .iter()
+            .any(|snapshot| snapshot.label == "final_forced_start" && snapshot.ply == 8));
+    }
+
+    #[test]
+    fn analysis_batch_report_renders_opt_in_proof_details() {
+        let replay = replay_from_moves(
+            Variant::Freestyle,
+            &["H8", "G8", "I8", "A1", "J8", "A2", "K8", "B1", "L8"],
+        );
+
+        let report = run_analysis_batch_replays_with_options(
+            "report.json:bot-a vs bot-b".to_string(),
+            vec![ReplayAnalysisInput {
+                label: "missed_defense".to_string(),
+                replay,
+            }],
+            AnalysisBatchRunOptions {
+                analysis: AnalysisOptions::default(),
+                include_proof_details: true,
+            },
+        );
+
+        let html = render_analysis_batch_report_html(&report);
+        assert!(html.contains("Proof details"));
+        assert!(html.contains("root transition"));
+        assert!(html.contains("previous_prefix @ ply 7"));
+        assert!(html.contains("final_forced_start @ ply 8"));
+        assert!(html.contains("escaped"));
+        assert!(html.contains("L8"));
     }
 }
