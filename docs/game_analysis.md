@@ -612,8 +612,11 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   adding more search.
 - Batch analysis reports can opt into `--include-proof-details` for decisive
   replay audits. This adds previous-prefix and final-forced-start proof
-  snapshots, reply classification, principal-line notation, and compact board
-  snapshots. Keep it off for normal smoke runs; turn it on when reviewing why a
+  snapshots, reply classification, principal-line notation, compact board
+  snapshots, and visual proof frames. The visual frames render HTML boards for
+  the root transition and principal-line steps, with marked winning squares,
+  cost/block squares, escape replies, forbidden costs, and principal-line
+  moves. Keep it off for normal smoke runs; turn it on when reviewing why a
   `strategic_loss`, `missed_defense`, or decisive `unclear` label was assigned.
 - After the corridor-exit pivot, a top-two report smoke run against
   `search-d7+tactical-cap-8+pattern-eval` vs
@@ -633,7 +636,9 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
 - The same 64-game run with `--include-proof-details` produced proof details
   for all `63` decisive entries and skipped the single draw/ongoing entry. This
   is the current audit path for checking whether the reported root transition
-  and board prefixes are plausible before changing the proof model.
+  and board prefixes are plausible before changing the proof model. The next
+  visual audit pass should use the HTML proof frames rather than the older
+  ASCII snapshots for geometry checks.
 - Before the corridor-exit pivot, the 64-game sampled checkpoint passed with
   `64 analyzed / 64 total`
   and `0 failed`: `63` proof-limit hits and `1` draw/ongoing game. Bounded
@@ -671,13 +676,13 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   issue is normal proof depth plus defender breadth, not forced-extension
   budget.
 
-Current next target: inspect the proof-detail audit output for the top-two
-64-game run, especially the `5` decisive `unclear` entries and any surprising
-`strategic_loss` labels. Use remaining failures or suspicious labels to decide
-whether the next slice should improve named local exits, forced-chain evidence,
-or report readability. Do not expose replay analysis in the web UI yet, and do
-not try to solve remaining unknowns by simply raising all-legal depth or
-widening shape coverage.
+Current next target: inspect the visual proof-frame audit output for the
+top-two 64-game run, especially the `5` decisive `unclear` entries and any
+surprising `strategic_loss` labels. Use remaining failures or suspicious labels
+to decide whether the next slice should improve named local exits, forced-chain
+evidence, or report readability. Do not expose replay analysis in the web UI
+yet, and do not try to solve remaining unknowns by simply raising all-legal
+depth or widening shape coverage.
 
 Example:
 
