@@ -310,6 +310,7 @@ pub struct AnalysisFixtureProofRow {
     pub ply: usize,
     pub side_to_move: Color,
     pub status: ProofStatus,
+    pub actual_reply: Option<Move>,
     pub principal_line: Vec<Move>,
     pub escape_moves: Vec<Move>,
     pub reply_classifications: Vec<ReplyClassification>,
@@ -387,6 +388,10 @@ fn run_analysis_fixture(
                 ply: proof_scan_start + ply,
                 side_to_move: proof.side_to_move,
                 status: proof.status,
+                actual_reply: proof
+                    .threat_evidence
+                    .iter()
+                    .find_map(|evidence| evidence.actual_reply),
                 principal_line: proof.principal_line.clone(),
                 escape_moves: proof.escape_moves.clone(),
                 reply_classifications: proof
@@ -706,10 +711,11 @@ fn render_analysis_fixture_case_html(result: &AnalysisFixtureResult) -> String {
         .iter()
         .map(|row| {
             format!(
-                "<tr><td>{}</td><td>{:?}</td><td>{:?}</td><td>{}</td><td>{}</td><td>{}</td></tr>",
+                "<tr><td>{}</td><td>{:?}</td><td>{:?}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>",
                 row.ply,
                 row.side_to_move,
                 row.status,
+                html_escape(&option_move_label(row.actual_reply)),
                 html_escape(&moves_label(&row.principal_line)),
                 html_escape(&moves_label(&row.escape_moves)),
                 html_escape(&reply_classifications_label(&row.reply_classifications))
@@ -745,7 +751,7 @@ fn render_analysis_fixture_case_html(result: &AnalysisFixtureResult) -> String {
   <div>
     <h3>Proof Rows</h3>
     <table>
-      <thead><tr><th>Ply</th><th>Side</th><th>Status</th><th>Principal</th><th>Escapes</th><th>Reply Classes</th></tr></thead>
+      <thead><tr><th>Ply</th><th>Side</th><th>Status</th><th>Actual Reply</th><th>Principal</th><th>Escapes</th><th>Reply Classes</th></tr></thead>
       <tbody>{proof_rows}</tbody>
     </table>
   </div>
@@ -828,6 +834,12 @@ fn option_debug<T: std::fmt::Debug>(value: Option<T>) -> String {
 fn option_usize(value: Option<usize>) -> String {
     value
         .map(|value| value.to_string())
+        .unwrap_or_else(|| "-".to_string())
+}
+
+fn option_move_label(value: Option<Move>) -> String {
+    value
+        .map(|value| value.to_notation())
         .unwrap_or_else(|| "-".to_string())
 }
 
@@ -932,6 +944,7 @@ mod tests {
         );
         assert!(missed_defense.proof_rows.iter().any(|row| row.ply == 7
             && row.status == ProofStatus::EscapeFound
+            && row.actual_reply == Some(mv("B1"))
             && row.escape_moves == vec![mv("L8")]));
 
         let renju_terminal = report
@@ -971,5 +984,6 @@ mod tests {
         assert!(html.contains("missed_defense_closed_four"));
         assert!(html.contains("Expected"));
         assert!(html.contains("Proof Rows"));
+        assert!(html.contains("Actual Reply"));
     }
 }

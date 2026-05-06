@@ -356,10 +356,10 @@ ThreatSequenceEvidence
   single winning square.
 - `unknown`: the analyzer cannot classify the reply within the current model.
 
-`prefix_ply` and `actual_reply` are reserved for replay-context attribution.
-The current lab proof records branch evidence for proof rows, but it does not
-yet thread exact proof-tree ply attribution through nested forced-extension
-nodes.
+`prefix_ply` and `actual_reply` are replay-context attribution fields. The lab
+proof fills them while a proof branch is still following the actual replay line.
+Once a proof branch diverges into a virtual continuation, nested evidence leaves
+these fields empty instead of pretending it maps to a real move.
 
 Proof result records should use explicit status:
 
