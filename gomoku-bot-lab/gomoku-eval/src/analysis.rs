@@ -610,7 +610,7 @@ fn color_for_ply(ply: usize) -> Option<Color> {
     }
 }
 
-fn analysis_model(board: &Board, options: &AnalysisOptions) -> AnalysisModel {
+pub(crate) fn analysis_model(board: &Board, options: &AnalysisOptions) -> AnalysisModel {
     AnalysisModel {
         defense_policy: options.defense_policy,
         tactical_reply_coverage: tactical_reply_coverage(options.defense_policy),
@@ -633,7 +633,7 @@ fn tactical_reply_coverage(policy: DefensePolicy) -> Vec<String> {
     }
 }
 
-fn rule_label(variant: &Variant) -> &'static str {
+pub(crate) fn rule_label(variant: &Variant) -> &'static str {
     match variant {
         Variant::Freestyle => "freestyle",
         Variant::Renju => "renju",

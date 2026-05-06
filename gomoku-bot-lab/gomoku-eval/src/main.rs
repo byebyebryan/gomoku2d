@@ -6,6 +6,10 @@ use std::time::Instant;
 use gomoku_bot::{RandomBot, SearchBot};
 use gomoku_core::{Color, GameResult, Move, Replay, RuleConfig, Variant};
 use gomoku_eval::analysis::{analyze_replay, AnalysisOptions, DefensePolicy};
+use gomoku_eval::analysis_fixture::{
+    render_analysis_fixture_report_html, run_analysis_fixtures, AnalysisFixtureReport,
+    AnalysisFixtureResult,
+};
 use gomoku_eval::arena::{run_match_series_with_limits, MatchEndReason, MatchLimits, MatchResult};
 use gomoku_eval::opening::{OpeningPolicy, CENTERED_SUITE_MAX_PLIES};
 use gomoku_eval::report::{
@@ -257,6 +261,28 @@ enum Commands {
         max_depth: usize,
 
         /// Optional number of final plies to scan backward
+        #[arg(long)]
+        max_backward_window: Option<usize>,
+    },
+    /// Run curated replay-analysis fixtures and emit expected-vs-actual labels
+    AnalysisFixtures {
+        /// Write reusable fixture report JSON
+        #[arg(long)]
+        report_json: Option<PathBuf>,
+
+        /// Write standalone fixture report HTML
+        #[arg(long)]
+        report_html: Option<PathBuf>,
+
+        /// Defender reply model used by the bounded proof engine
+        #[arg(long, value_enum, default_value = "all-legal-defense")]
+        defense_policy: CliDefensePolicy,
+
+        /// Maximum proof depth in plies
+        #[arg(long, default_value_t = 2)]
+        max_depth: usize,
+
+        /// Optional number of final plies to scan backward unless a fixture overrides it
         #[arg(long)]
         max_backward_window: Option<usize>,
     },
@@ -643,6 +669,55 @@ fn print_tactical_report_summary(report: &TacticalScenarioReport) {
     print_tactical_group_summary("By role", &report.role_summaries);
     print_tactical_group_summary("By layer", &report.layer_summaries);
     print_tactical_group_summary("By intent", &report.intent_summaries);
+}
+
+fn print_analysis_fixture_result(result: &AnalysisFixtureResult) {
+    let status = if result.passed { "PASS" } else { "FAIL" };
+    let notes = if result.actual.tactical_notes.is_empty() {
+        "-".to_string()
+    } else {
+        result
+            .actual
+            .tactical_notes
+            .iter()
+            .map(|note| format!("{note:?}"))
+            .collect::<Vec<_>>()
+            .join("/")
+    };
+    println!(
+        "{:<5} {:<34} winner {:<7} root {:<14} forced {:>2}..{:<2} chance {:<4} critical {:<4} notes {}",
+        status,
+        result.case_id,
+        result
+            .actual
+            .winner
+            .map(|winner| format!("{winner:?}"))
+            .unwrap_or_else(|| "-".to_string()),
+        format!("{:?}", result.actual.root_cause),
+        result.actual.final_forced_interval.start_ply,
+        result.actual.final_forced_interval.end_ply,
+        result
+            .actual
+            .last_chance_ply
+            .map(|ply| ply.to_string())
+            .unwrap_or_else(|| "-".to_string()),
+        result
+            .actual
+            .critical_mistake_ply
+            .map(|ply| ply.to_string())
+            .unwrap_or_else(|| "-".to_string()),
+        notes
+    );
+    for failure in &result.failures {
+        println!("      {failure}");
+    }
+}
+
+fn print_analysis_fixture_report_summary(report: &AnalysisFixtureReport) {
+    println!(
+        "\n--- Summary ---\n{} passed / {} total ({} failed)",
+        report.passed, report.total, report.failed
+    );
 }
 
 fn main() {
@@ -1132,6 +1207,49 @@ fn main() {
                 println!("{output_json}");
             }
         }
+        Commands::AnalysisFixtures {
+            report_json,
+            report_html,
+            defense_policy,
+            max_depth,
+            max_backward_window,
+        } => {
+            let report = run_analysis_fixtures(AnalysisOptions {
+                defense_policy: defense_policy.into(),
+                max_depth,
+                max_backward_window,
+            })
+            .unwrap_or_else(|err| {
+                exit_with_error(format!("Failed to run analysis fixtures: {err}"))
+            });
+
+            for result in &report.results {
+                print_analysis_fixture_result(result);
+            }
+            print_analysis_fixture_report_summary(&report);
+
+            if let Some(path) = report_json {
+                let json = serde_json::to_string_pretty(&report).unwrap_or_else(|err| {
+                    exit_with_error(format!(
+                        "Failed to serialize analysis fixture report: {err}"
+                    ))
+                });
+                std::fs::write(&path, json).unwrap_or_else(|err| {
+                    exit_with_error(format!("Failed to write analysis fixture report: {err}"))
+                });
+                println!("Report JSON: {}", path.display());
+            }
+            if let Some(path) = report_html {
+                let html = render_analysis_fixture_report_html(&report);
+                std::fs::write(&path, html).unwrap_or_else(|err| {
+                    exit_with_error(format!("Failed to write analysis fixture HTML: {err}"))
+                });
+                println!("Report HTML: {}", path.display());
+            }
+            if report.failed > 0 {
+                std::process::exit(1);
+            }
+        }
     }
 }
 
@@ -1356,5 +1474,47 @@ mod tests {
         assert_eq!(defense_policy, CliDefensePolicy::Tactical);
         assert_eq!(max_depth, 3);
         assert_eq!(max_backward_window, Some(12));
+    }
+
+    #[test]
+    fn analysis_fixtures_command_parses_report_and_model_limits() {
+        let cli = Cli::try_parse_from([
+            "gomoku-eval",
+            "analysis-fixtures",
+            "--report-json",
+            "outputs/analysis-fixtures.json",
+            "--report-html",
+            "outputs/analysis-fixtures.html",
+            "--defense-policy",
+            "hybrid-defense",
+            "--max-depth",
+            "4",
+            "--max-backward-window",
+            "16",
+        ])
+        .expect("analysis-fixtures command should parse");
+
+        let Commands::AnalysisFixtures {
+            report_json,
+            report_html,
+            defense_policy,
+            max_depth,
+            max_backward_window,
+        } = cli.command
+        else {
+            panic!("expected analysis-fixtures command");
+        };
+
+        assert_eq!(
+            report_json,
+            Some(PathBuf::from("outputs/analysis-fixtures.json"))
+        );
+        assert_eq!(
+            report_html,
+            Some(PathBuf::from("outputs/analysis-fixtures.html"))
+        );
+        assert_eq!(defense_policy, CliDefensePolicy::Hybrid);
+        assert_eq!(max_depth, 4);
+        assert_eq!(max_backward_window, Some(16));
     }
 }
