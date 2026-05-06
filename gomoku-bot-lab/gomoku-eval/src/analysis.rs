@@ -1,7 +1,7 @@
 use gomoku_core::{replay::ReplayResult, Board, Color, GameResult, Move, Replay, Variant};
 use serde::Serialize;
 
-pub const ANALYSIS_SCHEMA_VERSION: u32 = 2;
+pub const ANALYSIS_SCHEMA_VERSION: u32 = 3;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -185,6 +185,7 @@ pub struct GameAnalysis {
     pub proof_intervals: Vec<ForcedInterval>,
     pub unknown_gaps: Vec<usize>,
     pub unclear_reason: Option<UnclearReason>,
+    pub unclear_context: Option<UnclearContext>,
     pub last_chance_ply: Option<usize>,
     pub decisive_attack_ply: Option<usize>,
     pub critical_mistake_ply: Option<usize>,
@@ -192,6 +193,31 @@ pub struct GameAnalysis {
     pub tactical_notes: Vec<TacticalNote>,
     pub principal_line: Vec<Move>,
     pub proof_summary: Vec<ProofResult>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct UnclearContext {
+    pub reason: UnclearReason,
+    pub previous_prefix_ply: Option<usize>,
+    pub final_forced_interval: ForcedInterval,
+    pub previous_proof_status: Option<ProofStatus>,
+    pub previous_proof_limit_hit: Option<bool>,
+    pub previous_side_to_move: Option<Color>,
+    pub winner: Color,
+    pub principal_line: Vec<Move>,
+    pub principal_line_notation: Vec<String>,
+    pub scan_start_ply: usize,
+    pub scan_end_ply: Option<usize>,
+    pub move_count: usize,
+    pub snapshots: Vec<AnalysisBoardSnapshot>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct AnalysisBoardSnapshot {
+    pub label: String,
+    pub ply: usize,
+    pub side_to_move: Color,
+    pub rows: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -243,6 +269,7 @@ pub fn analyze_replay(
             proof_intervals: Vec::new(),
             unknown_gaps: Vec::new(),
             unclear_reason: Some(UnclearReason::DrawOrOngoing),
+            unclear_context: None,
             last_chance_ply: None,
             decisive_attack_ply: None,
             critical_mistake_ply: None,
@@ -338,6 +365,17 @@ pub fn analyze_replay(
         proof_summary: &proof_summary,
         scan_start,
     });
+    let unclear_context = unclear_context(UnclearContextInput {
+        root_cause,
+        unclear_reason,
+        final_forced_interval: &final_forced_interval,
+        proof_summary: &proof_summary,
+        scan_start,
+        boards: &boards,
+        winner,
+        principal_line: &principal_line,
+        move_count: replay.moves.len(),
+    });
 
     Ok(GameAnalysis {
         schema_version: ANALYSIS_SCHEMA_VERSION,
@@ -355,6 +393,7 @@ pub fn analyze_replay(
         proof_intervals,
         unknown_gaps,
         unclear_reason,
+        unclear_context,
         last_chance_ply,
         decisive_attack_ply,
         critical_mistake_ply,
@@ -1180,6 +1219,93 @@ fn proof_has_limit_hit(proof: &ProofResult) -> bool {
             .threat_evidence
             .iter()
             .any(|evidence| evidence.limit_hit)
+}
+
+struct UnclearContextInput<'a> {
+    root_cause: RootCause,
+    unclear_reason: Option<UnclearReason>,
+    final_forced_interval: &'a ForcedInterval,
+    proof_summary: &'a [ProofResult],
+    scan_start: usize,
+    boards: &'a [Board],
+    winner: Color,
+    principal_line: &'a [Move],
+    move_count: usize,
+}
+
+fn unclear_context(input: UnclearContextInput<'_>) -> Option<UnclearContext> {
+    if input.root_cause != RootCause::Unclear {
+        return None;
+    }
+    let reason = input.unclear_reason?;
+    if reason == UnclearReason::DrawOrOngoing {
+        return None;
+    }
+
+    let previous_prefix_ply = input.final_forced_interval.start_ply.checked_sub(1);
+    let previous_proof =
+        previous_prefix_ply.and_then(|ply| proof_at(input.proof_summary, input.scan_start, ply));
+    let previous_board = previous_prefix_ply.and_then(|ply| input.boards.get(ply));
+    let mut snapshots = Vec::new();
+    if let (Some(ply), Some(board)) = (previous_prefix_ply, previous_board) {
+        snapshots.push(board_snapshot("previous_prefix", ply, board));
+    }
+    if snapshots
+        .iter()
+        .all(|snapshot| snapshot.ply != input.final_forced_interval.start_ply)
+    {
+        if let Some(board) = input.boards.get(input.final_forced_interval.start_ply) {
+            snapshots.push(board_snapshot(
+                "final_forced_start",
+                input.final_forced_interval.start_ply,
+                board,
+            ));
+        }
+    }
+
+    Some(UnclearContext {
+        reason,
+        previous_prefix_ply,
+        final_forced_interval: input.final_forced_interval.clone(),
+        previous_proof_status: previous_proof.map(|proof| proof.status),
+        previous_proof_limit_hit: previous_proof.map(proof_has_limit_hit),
+        previous_side_to_move: previous_board.map(|board| board.current_player),
+        winner: input.winner,
+        principal_line: input.principal_line.to_vec(),
+        principal_line_notation: input
+            .principal_line
+            .iter()
+            .map(|mv| mv.to_notation())
+            .collect(),
+        scan_start_ply: input.scan_start,
+        scan_end_ply: if input.proof_summary.is_empty() {
+            None
+        } else {
+            Some(input.scan_start + input.proof_summary.len() - 1)
+        },
+        move_count: input.move_count,
+        snapshots,
+    })
+}
+
+fn board_snapshot(label: &str, ply: usize, board: &Board) -> AnalysisBoardSnapshot {
+    AnalysisBoardSnapshot {
+        label: label.to_string(),
+        ply,
+        side_to_move: board.current_player,
+        rows: board_rows(board),
+    }
+}
+
+fn board_rows(board: &Board) -> Vec<String> {
+    let size = board.config.board_size;
+    (0..size)
+        .map(|row| {
+            (0..size)
+                .map(|col| board.cell(row, col).map_or('.', Color::to_char))
+                .collect()
+        })
+        .collect()
 }
 
 struct TacticalNoteInput<'a> {
