@@ -474,8 +474,9 @@ Do not let the Phaser scene or React route own analysis rules.
 3. Build a CLI/lab analyzer that finds final win, proof intervals, last chance,
    and a bounded principal line for simple finished games.
 4. Add proof-tree output and report rendering for debugging.
-5. Use analyzer summaries to annotate replay.
-6. Feed proven, cheap forced-line facts back into bot ordering or narrow search
+5. Add batch replay analysis for tournament replay directories.
+6. Use analyzer summaries to annotate replay.
+7. Feed proven, cheap forced-line facts back into bot ordering or narrow search
    only after the analyzer behavior is trustworthy.
 
 ## Lab MVP
@@ -485,6 +486,8 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
 - `gomoku_eval::analysis` defines the model/result types and bounded proof
   walker.
 - `gomoku-eval analyze-replay --input <replay.json>` emits JSON analysis.
+- `gomoku-eval analyze-replay-batch --replay-dir <dir>` analyzes a replay
+  directory and emits grouped JSON/HTML reports for tournament smoke runs.
 - `gomoku-eval analysis-fixtures` runs curated replay fixtures and prints
   expected-vs-actual labels for the current analysis model.
 - The current proof engine handles immediate wins, single-threat escapes,
@@ -499,6 +502,9 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
 - Tactical-defense mode now exposes legal cost replies, defender immediate wins,
   and forbidden cost squares in schema-v2 branch evidence, but it is still not a
   full threat-space search.
+- A smoke run against two generated `search-d3` vs `random` eval replays passed
+  with `2 analyzed / 2 total`, both `unclear`. That is useful: the batch
+  workflow works, and the current analyzer is still shallow for real bot games.
 
 Example:
 
@@ -516,6 +522,15 @@ cargo run -p gomoku-eval -- analysis-fixtures \
   --defense-policy all-legal-defense \
   --max-depth 2 \
   --max-forced-extensions 4
+
+cargo run -p gomoku-eval -- analyze-replay-batch \
+  --replay-dir outputs/replays \
+  --report-json outputs/analysis_batch.json \
+  --report-html outputs/analysis_batch.html \
+  --defense-policy all-legal-defense \
+  --max-depth 2 \
+  --max-forced-extensions 4 \
+  --max-backward-window 24
 ```
 
 This is still a lab artifact. Do not expose it in the web replay UI until the

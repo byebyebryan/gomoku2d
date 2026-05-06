@@ -1,11 +1,11 @@
 use std::path::Path;
 
-use gomoku_core::{Color, Replay};
+use gomoku_core::{Color, Move, Replay};
 use serde::Serialize;
 
 use crate::analysis::{
     analyze_replay, AnalysisOptions, DefensePolicy, ForcedInterval, GameAnalysis, RootCause,
-    ANALYSIS_SCHEMA_VERSION,
+    TacticalNote, ANALYSIS_SCHEMA_VERSION,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -44,9 +44,14 @@ pub struct AnalysisBatchEntry {
     pub status: AnalysisBatchEntryStatus,
     pub winner: Option<Color>,
     pub root_cause: Option<RootCause>,
+    pub final_move: Option<Move>,
     pub final_forced_interval: Option<ForcedInterval>,
+    pub proof_intervals: Vec<ForcedInterval>,
     pub last_chance_ply: Option<usize>,
     pub critical_mistake_ply: Option<usize>,
+    pub tactical_notes: Vec<TacticalNote>,
+    pub principal_line: Vec<Move>,
+    pub unknown_gaps: Vec<usize>,
     pub unknown_gap_count: usize,
     pub error: Option<String>,
 }
@@ -96,9 +101,14 @@ pub fn run_analysis_batch(
                     status: AnalysisBatchEntryStatus::Error,
                     winner: None,
                     root_cause: None,
+                    final_move: None,
                     final_forced_interval: None,
+                    proof_intervals: Vec::new(),
                     last_chance_ply: None,
                     critical_mistake_ply: None,
+                    tactical_notes: Vec::new(),
+                    principal_line: Vec::new(),
+                    unknown_gaps: Vec::new(),
                     unknown_gap_count: 0,
                     error: Some(error),
                 });
@@ -286,9 +296,14 @@ fn entry_from_analysis(path: String, analysis: GameAnalysis) -> AnalysisBatchEnt
         status: AnalysisBatchEntryStatus::Analyzed,
         winner: analysis.winner,
         root_cause: Some(analysis.root_cause),
+        final_move: analysis.final_move,
         final_forced_interval: Some(analysis.final_forced_interval),
+        proof_intervals: analysis.proof_intervals,
         last_chance_ply: analysis.last_chance_ply,
         critical_mistake_ply: analysis.critical_mistake_ply,
+        tactical_notes: analysis.tactical_notes,
+        principal_line: analysis.principal_line,
+        unknown_gaps: analysis.unknown_gaps.clone(),
         unknown_gap_count: analysis.unknown_gaps.len(),
         error: None,
     }
