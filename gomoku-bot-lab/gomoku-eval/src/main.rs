@@ -7,8 +7,9 @@ use gomoku_bot::{RandomBot, SearchBot};
 use gomoku_core::{Color, GameResult, Move, Replay, RuleConfig, Variant};
 use gomoku_eval::analysis::{analyze_replay, AnalysisOptions, DefensePolicy};
 use gomoku_eval::analysis_batch::{
-    render_analysis_batch_report_html, run_analysis_batch, run_analysis_batch_replays,
-    AnalysisBatchReport, ReplayAnalysisInput,
+    render_analysis_batch_report_html, run_analysis_batch_replays_with_options,
+    run_analysis_batch_with_options, AnalysisBatchReport, AnalysisBatchRunOptions,
+    ReplayAnalysisInput,
 };
 use gomoku_eval::analysis_fixture::{
     render_analysis_fixture_report_html, run_analysis_fixtures, AnalysisFixtureReport,
@@ -308,6 +309,10 @@ enum Commands {
         /// Optional number of final plies to scan backward
         #[arg(long)]
         max_backward_window: Option<usize>,
+
+        /// Include proof snapshots for decisive replay analyses
+        #[arg(long)]
+        include_proof_details: bool,
     },
     /// Analyze sampled replays embedded in a tournament report
     AnalyzeReportReplays {
@@ -354,6 +359,10 @@ enum Commands {
         /// Optional number of final plies to scan backward
         #[arg(long)]
         max_backward_window: Option<usize>,
+
+        /// Include proof snapshots for decisive replay analyses
+        #[arg(long)]
+        include_proof_details: bool,
     },
     /// Run curated replay-analysis fixtures and emit expected-vs-actual labels
     AnalysisFixtures {
@@ -1365,14 +1374,18 @@ fn main() {
             max_depth,
             max_forced_extensions,
             max_backward_window,
+            include_proof_details,
         } => {
-            let report = run_analysis_batch(
+            let report = run_analysis_batch_with_options(
                 &replay_dir,
-                AnalysisOptions {
-                    defense_policy: defense_policy.into(),
-                    max_depth,
-                    max_forced_extensions,
-                    max_backward_window,
+                AnalysisBatchRunOptions {
+                    analysis: AnalysisOptions {
+                        defense_policy: defense_policy.into(),
+                        max_depth,
+                        max_forced_extensions,
+                        max_backward_window,
+                    },
+                    include_proof_details,
                 },
             )
             .unwrap_or_else(|err| {
@@ -1413,6 +1426,7 @@ fn main() {
             max_depth,
             max_forced_extensions,
             max_backward_window,
+            include_proof_details,
         } => {
             let json = std::fs::read_to_string(&report).unwrap_or_else(|err| {
                 exit_with_error(format!("Failed to read tournament report: {err}"))
@@ -1450,14 +1464,17 @@ fn main() {
                     replay,
                 });
             }
-            let batch_report = run_analysis_batch_replays(
+            let batch_report = run_analysis_batch_replays_with_options(
                 format!("{}:{} vs {}", report.display(), entrant_a, entrant_b),
                 inputs,
-                AnalysisOptions {
-                    defense_policy: defense_policy.into(),
-                    max_depth,
-                    max_forced_extensions,
-                    max_backward_window,
+                AnalysisBatchRunOptions {
+                    analysis: AnalysisOptions {
+                        defense_policy: defense_policy.into(),
+                        max_depth,
+                        max_forced_extensions,
+                        max_backward_window,
+                    },
+                    include_proof_details,
                 },
             );
 
@@ -1834,6 +1851,7 @@ mod tests {
             max_depth,
             max_forced_extensions,
             max_backward_window,
+            include_proof_details,
         } = cli.command
         else {
             panic!("expected analyze-replay-batch command");
@@ -1852,6 +1870,7 @@ mod tests {
         assert_eq!(max_depth, 3);
         assert_eq!(max_forced_extensions, 5);
         assert_eq!(max_backward_window, Some(12));
+        assert!(!include_proof_details);
     }
 
     #[test]
@@ -1881,6 +1900,7 @@ mod tests {
             "4",
             "--max-backward-window",
             "8",
+            "--include-proof-details",
         ])
         .expect("analyze-report-replays command should parse");
 
@@ -1896,6 +1916,7 @@ mod tests {
             max_depth,
             max_forced_extensions,
             max_backward_window,
+            include_proof_details,
         } = cli.command
         else {
             panic!("expected analyze-report-replays command");
@@ -1924,6 +1945,7 @@ mod tests {
         assert_eq!(max_depth, 2);
         assert_eq!(max_forced_extensions, 4);
         assert_eq!(max_backward_window, Some(8));
+        assert!(include_proof_details);
     }
 
     #[test]
