@@ -284,6 +284,12 @@ efficiency tweak for `D3 + pattern-eval`. No anchor promotion yet; the next
 bot-lab step should be a smaller survivor comparison only if we need to choose
 between efficient pattern-eval variants before player-facing setting work.
 
+The replay-analysis direction now starts in [`game_analysis.md`](game_analysis.md):
+use model-bounded forced-line proof to explain finished games, record proof
+intervals instead of assuming one monotonic turning point, and separate ideal
+play from human mistakes such as missed defenses, accidental blunders, and
+strategic losses.
+
 `0.4.3` is the earliest likely UI bridge for bot controls/settings. Expose only
 knobs that have survived lab evidence. A reasonable product-facing starting
 point is an easy/default/hard ladder backed by reports; keep raw pattern-eval,
