@@ -107,6 +107,53 @@ pub struct ThreatSequenceEvidence {
     pub limit_hit: bool,
 }
 
+#[derive(Debug, Clone, Copy)]
+struct EvidenceAttribution {
+    prefix_ply: Option<usize>,
+    actual_reply: Option<Move>,
+}
+
+struct ThreatEvidenceInput {
+    attribution: EvidenceAttribution,
+    reply_classification: ReplyClassification,
+    escape_replies: Vec<Move>,
+    forced_replies: Vec<Move>,
+    next_forcing_move: Option<Move>,
+    proof_status: ProofStatus,
+    limit_hit: bool,
+}
+
+impl EvidenceAttribution {
+    fn none() -> Self {
+        Self {
+            prefix_ply: None,
+            actual_reply: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+struct ProofTrace<'a> {
+    actual_moves: &'a [Move],
+    prefix_ply: usize,
+}
+
+impl<'a> ProofTrace<'a> {
+    fn attribution(self) -> EvidenceAttribution {
+        EvidenceAttribution {
+            prefix_ply: Some(self.prefix_ply),
+            actual_reply: self.actual_moves.get(self.prefix_ply).copied(),
+        }
+    }
+
+    fn after_move(self, mv: Move) -> Option<Self> {
+        (self.actual_moves.get(self.prefix_ply) == Some(&mv)).then_some(Self {
+            actual_moves: self.actual_moves,
+            prefix_ply: self.prefix_ply + 1,
+        })
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct ForcedInterval {
     pub start_ply: usize,
@@ -196,9 +243,19 @@ pub fn analyze_replay(
         .max_backward_window
         .map(|window| boards.len().saturating_sub(window + 1))
         .unwrap_or(0);
+    let actual_moves = replay_moves(replay)?;
     let mut proof_summary = Vec::with_capacity(boards.len() - scan_start);
-    for board in boards.iter().skip(scan_start) {
-        proof_summary.push(prove_forced_win(board, winner, options.clone()));
+    for (ply, board) in boards.iter().enumerate().skip(scan_start) {
+        proof_summary.push(prove_forced_win_inner(
+            board,
+            winner,
+            options.max_depth,
+            &options,
+            Some(ProofTrace {
+                actual_moves: &actual_moves,
+                prefix_ply: ply,
+            }),
+        ));
     }
 
     let proof_intervals = proof_intervals(&proof_summary, scan_start);
@@ -281,7 +338,7 @@ pub fn analyze_replay(
 }
 
 pub fn prove_forced_win(board: &Board, attacker: Color, options: AnalysisOptions) -> ProofResult {
-    prove_forced_win_inner(board, attacker, options.max_depth, &options)
+    prove_forced_win_inner(board, attacker, options.max_depth, &options, None)
 }
 
 struct ThreatReplySet {
@@ -329,17 +386,9 @@ impl ThreatReplySet {
         }
     }
 
-    fn evidence(
-        &self,
-        reply_classification: ReplyClassification,
-        escape_replies: Vec<Move>,
-        forced_replies: Vec<Move>,
-        next_forcing_move: Option<Move>,
-        proof_status: ProofStatus,
-        limit_hit: bool,
-    ) -> ThreatSequenceEvidence {
+    fn evidence(&self, input: ThreatEvidenceInput) -> ThreatSequenceEvidence {
         ThreatSequenceEvidence {
-            prefix_ply: None,
+            prefix_ply: input.attribution.prefix_ply,
             attacker: self.attacker,
             defender: self.defender,
             winning_squares: self.winning_squares.clone(),
@@ -347,13 +396,13 @@ impl ThreatReplySet {
             legal_cost_squares: self.legal_cost_squares.clone(),
             illegal_cost_squares: self.illegal_cost_squares.clone(),
             defender_immediate_wins: self.defender_immediate_wins.clone(),
-            actual_reply: None,
-            reply_classification,
-            escape_replies,
-            forced_replies,
-            next_forcing_move,
-            proof_status,
-            limit_hit,
+            actual_reply: input.attribution.actual_reply,
+            reply_classification: input.reply_classification,
+            escape_replies: input.escape_replies,
+            forced_replies: input.forced_replies,
+            next_forcing_move: input.next_forcing_move,
+            proof_status: input.proof_status,
+            limit_hit: input.limit_hit,
         }
     }
 }
@@ -367,6 +416,7 @@ fn prove_forced_win_inner(
     attacker: Color,
     depth_remaining: usize,
     options: &AnalysisOptions,
+    trace: Option<ProofTrace<'_>>,
 ) -> ProofResult {
     let model = analysis_model(board, options);
     let base = |status, principal_line, escape_moves, threat_evidence| ProofResult {
@@ -394,9 +444,9 @@ fn prove_forced_win_inner(
     }
 
     if board.current_player == attacker {
-        prove_attacker_node(board, attacker, depth_remaining, options, base)
+        prove_attacker_node(board, attacker, depth_remaining, options, trace, base)
     } else {
-        prove_defender_node(board, attacker, depth_remaining, options, base)
+        prove_defender_node(board, attacker, depth_remaining, options, trace, base)
     }
 }
 
@@ -405,6 +455,7 @@ fn prove_attacker_node(
     attacker: Color,
     depth_remaining: usize,
     options: &AnalysisOptions,
+    trace: Option<ProofTrace<'_>>,
     base: impl Fn(ProofStatus, Vec<Move>, Vec<Move>, Vec<ThreatSequenceEvidence>) -> ProofResult,
 ) -> ProofResult {
     let immediate_wins = board.immediate_winning_moves_for(attacker);
@@ -417,7 +468,13 @@ fn prove_attacker_node(
         if next.apply_move(mv).is_err() {
             continue;
         }
-        let proof = prove_forced_win_inner(&next, attacker, depth_remaining - 1, options);
+        let proof = prove_forced_win_inner(
+            &next,
+            attacker,
+            depth_remaining - 1,
+            options,
+            trace.and_then(|trace| trace.after_move(mv)),
+        );
         if proof.status == ProofStatus::ForcedWin {
             let mut principal_line = Vec::with_capacity(proof.principal_line.len() + 1);
             principal_line.push(mv);
@@ -439,9 +496,13 @@ fn prove_defender_node(
     attacker: Color,
     depth_remaining: usize,
     options: &AnalysisOptions,
+    trace: Option<ProofTrace<'_>>,
     base: impl Fn(ProofStatus, Vec<Move>, Vec<Move>, Vec<ThreatSequenceEvidence>) -> ProofResult,
 ) -> ProofResult {
     let threat = ThreatReplySet::new(board, attacker);
+    let attribution = trace
+        .map(ProofTrace::attribution)
+        .unwrap_or_else(EvidenceAttribution::none);
     let current_immediate_wins = threat.winning_squares.clone();
     if !current_immediate_wins.is_empty()
         && threat.legal_cost_squares.is_empty()
@@ -455,14 +516,15 @@ fn prove_defender_node(
                 .into_iter()
                 .collect(),
             Vec::new(),
-            vec![threat.evidence(
-                ReplyClassification::NoLegalBlock,
-                Vec::new(),
-                Vec::new(),
-                current_immediate_wins.first().copied(),
-                ProofStatus::ForcedWin,
-                false,
-            )],
+            vec![threat.evidence(ThreatEvidenceInput {
+                attribution,
+                reply_classification: ReplyClassification::NoLegalBlock,
+                escape_replies: Vec::new(),
+                forced_replies: Vec::new(),
+                next_forcing_move: current_immediate_wins.first().copied(),
+                proof_status: ProofStatus::ForcedWin,
+                limit_hit: false,
+            })],
         );
     }
 
@@ -481,8 +543,13 @@ fn prove_defender_node(
         }
         let next_immediate_wins = next.immediate_winning_moves_for(attacker);
         if !current_immediate_wins.is_empty() && next_immediate_wins.is_empty() {
-            let proof =
-                prove_forced_extension(&next, attacker, options.max_forced_extensions, options);
+            let proof = prove_forced_extension(
+                &next,
+                attacker,
+                options.max_forced_extensions,
+                options,
+                trace.and_then(|trace| trace.after_move(mv)),
+            );
             match proof.status {
                 ProofStatus::ForcedWin => {
                     if principal_line.is_empty() {
@@ -493,14 +560,15 @@ fn prove_defender_node(
                     continue;
                 }
                 ProofStatus::EscapeFound => {
-                    let mut evidence = vec![threat.evidence(
-                        ReplyClassification::Escaped,
-                        vec![mv],
+                    let mut evidence = vec![threat.evidence(ThreatEvidenceInput {
+                        attribution,
+                        reply_classification: ReplyClassification::Escaped,
+                        escape_replies: vec![mv],
                         forced_replies,
-                        None,
-                        ProofStatus::EscapeFound,
-                        false,
-                    )];
+                        next_forcing_move: None,
+                        proof_status: ProofStatus::EscapeFound,
+                        limit_hit: false,
+                    })];
                     evidence.extend(proof.threat_evidence);
                     return base(ProofStatus::EscapeFound, Vec::new(), vec![mv], evidence);
                 }
@@ -518,7 +586,13 @@ fn prove_defender_node(
             forced_replies.push(mv);
             continue;
         }
-        let proof = prove_forced_win_inner(&next, attacker, depth_remaining - 1, options);
+        let proof = prove_forced_win_inner(
+            &next,
+            attacker,
+            depth_remaining - 1,
+            options,
+            trace.and_then(|trace| trace.after_move(mv)),
+        );
         match proof.status {
             ProofStatus::ForcedWin => {
                 if principal_line.is_empty() {
@@ -528,14 +602,15 @@ fn prove_defender_node(
                 forced_replies.push(mv);
             }
             ProofStatus::EscapeFound => {
-                let mut evidence = vec![threat.evidence(
-                    ReplyClassification::Escaped,
-                    vec![mv],
+                let mut evidence = vec![threat.evidence(ThreatEvidenceInput {
+                    attribution,
+                    reply_classification: ReplyClassification::Escaped,
+                    escape_replies: vec![mv],
                     forced_replies,
-                    None,
-                    ProofStatus::EscapeFound,
-                    false,
-                )];
+                    next_forcing_move: None,
+                    proof_status: ProofStatus::EscapeFound,
+                    limit_hit: false,
+                })];
                 evidence.extend(proof.threat_evidence);
                 return base(ProofStatus::EscapeFound, Vec::new(), vec![mv], evidence);
             }
@@ -554,14 +629,15 @@ fn prove_defender_node(
             if current_immediate_wins.is_empty() {
                 Vec::new()
             } else {
-                vec![threat.evidence(
-                    ReplyClassification::Unknown,
-                    Vec::new(),
+                vec![threat.evidence(ThreatEvidenceInput {
+                    attribution,
+                    reply_classification: ReplyClassification::Unknown,
+                    escape_replies: Vec::new(),
                     forced_replies,
                     next_forcing_move,
-                    ProofStatus::Unknown,
-                    true,
-                )]
+                    proof_status: ProofStatus::Unknown,
+                    limit_hit: true,
+                })]
             },
         )
     } else {
@@ -573,14 +649,15 @@ fn prove_defender_node(
             if current_immediate_wins.is_empty() {
                 Vec::new()
             } else {
-                vec![threat.evidence(
-                    ReplyClassification::BlockedButForced,
-                    Vec::new(),
+                vec![threat.evidence(ThreatEvidenceInput {
+                    attribution,
+                    reply_classification: ReplyClassification::BlockedButForced,
+                    escape_replies: Vec::new(),
                     forced_replies,
                     next_forcing_move,
-                    ProofStatus::ForcedWin,
-                    false,
-                )]
+                    proof_status: ProofStatus::ForcedWin,
+                    limit_hit: false,
+                })]
             },
         )
     }
@@ -591,6 +668,7 @@ fn prove_forced_extension(
     attacker: Color,
     extensions_remaining: usize,
     options: &AnalysisOptions,
+    trace: Option<ProofTrace<'_>>,
 ) -> ProofResult {
     let model = analysis_model(board, options);
     let base = |status, principal_line, escape_moves, threat_evidence| ProofResult {
@@ -618,9 +696,23 @@ fn prove_forced_extension(
     }
 
     if board.current_player == attacker {
-        prove_attacker_forced_extension_node(board, attacker, extensions_remaining, options, base)
+        prove_attacker_forced_extension_node(
+            board,
+            attacker,
+            extensions_remaining,
+            options,
+            trace,
+            base,
+        )
     } else {
-        prove_defender_forced_extension_node(board, attacker, extensions_remaining, options, base)
+        prove_defender_forced_extension_node(
+            board,
+            attacker,
+            extensions_remaining,
+            options,
+            trace,
+            base,
+        )
     }
 }
 
@@ -629,6 +721,7 @@ fn prove_attacker_forced_extension_node(
     attacker: Color,
     extensions_remaining: usize,
     options: &AnalysisOptions,
+    trace: Option<ProofTrace<'_>>,
     base: impl Fn(ProofStatus, Vec<Move>, Vec<Move>, Vec<ThreatSequenceEvidence>) -> ProofResult,
 ) -> ProofResult {
     let immediate_wins = board.immediate_winning_moves_for(attacker);
@@ -642,7 +735,13 @@ fn prove_attacker_forced_extension_node(
         if next.apply_move(mv).is_err() {
             continue;
         }
-        let proof = prove_forced_extension(&next, attacker, extensions_remaining - 1, options);
+        let proof = prove_forced_extension(
+            &next,
+            attacker,
+            extensions_remaining - 1,
+            options,
+            trace.and_then(|trace| trace.after_move(mv)),
+        );
         if proof.status == ProofStatus::ForcedWin {
             let mut principal_line = Vec::with_capacity(proof.principal_line.len() + 1);
             principal_line.push(mv);
@@ -671,9 +770,13 @@ fn prove_defender_forced_extension_node(
     attacker: Color,
     extensions_remaining: usize,
     options: &AnalysisOptions,
+    trace: Option<ProofTrace<'_>>,
     base: impl Fn(ProofStatus, Vec<Move>, Vec<Move>, Vec<ThreatSequenceEvidence>) -> ProofResult,
 ) -> ProofResult {
     let threat = ThreatReplySet::new(board, attacker);
+    let attribution = trace
+        .map(ProofTrace::attribution)
+        .unwrap_or_else(EvidenceAttribution::none);
     let current_immediate_wins = threat.winning_squares.clone();
     if current_immediate_wins.is_empty() {
         return base(ProofStatus::Unknown, Vec::new(), Vec::new(), Vec::new());
@@ -688,14 +791,15 @@ fn prove_defender_forced_extension_node(
                 .into_iter()
                 .collect(),
             Vec::new(),
-            vec![threat.evidence(
-                ReplyClassification::NoLegalBlock,
-                Vec::new(),
-                Vec::new(),
-                current_immediate_wins.first().copied(),
-                ProofStatus::ForcedWin,
-                false,
-            )],
+            vec![threat.evidence(ThreatEvidenceInput {
+                attribution,
+                reply_classification: ReplyClassification::NoLegalBlock,
+                escape_replies: Vec::new(),
+                forced_replies: Vec::new(),
+                next_forcing_move: current_immediate_wins.first().copied(),
+                proof_status: ProofStatus::ForcedWin,
+                limit_hit: false,
+            })],
         );
     }
 
@@ -714,7 +818,13 @@ fn prove_defender_forced_extension_node(
         }
         let next_immediate_wins = next.immediate_winning_moves_for(attacker);
         if next_immediate_wins.is_empty() {
-            let proof = prove_forced_extension(&next, attacker, extensions_remaining, options);
+            let proof = prove_forced_extension(
+                &next,
+                attacker,
+                extensions_remaining,
+                options,
+                trace.and_then(|trace| trace.after_move(mv)),
+            );
             match proof.status {
                 ProofStatus::ForcedWin => {
                     if principal_line.is_empty() {
@@ -724,14 +834,15 @@ fn prove_defender_forced_extension_node(
                     forced_replies.push(mv);
                 }
                 ProofStatus::EscapeFound => {
-                    let mut evidence = vec![threat.evidence(
-                        ReplyClassification::Escaped,
-                        vec![mv],
+                    let mut evidence = vec![threat.evidence(ThreatEvidenceInput {
+                        attribution,
+                        reply_classification: ReplyClassification::Escaped,
+                        escape_replies: vec![mv],
                         forced_replies,
-                        None,
-                        ProofStatus::EscapeFound,
-                        false,
-                    )];
+                        next_forcing_move: None,
+                        proof_status: ProofStatus::EscapeFound,
+                        limit_hit: false,
+                    })];
                     evidence.extend(proof.threat_evidence);
                     return base(ProofStatus::EscapeFound, Vec::new(), vec![mv], evidence);
                 }
@@ -757,14 +868,15 @@ fn prove_defender_forced_extension_node(
             ProofStatus::Unknown,
             principal_line,
             Vec::new(),
-            vec![threat.evidence(
-                ReplyClassification::Unknown,
-                Vec::new(),
+            vec![threat.evidence(ThreatEvidenceInput {
+                attribution,
+                reply_classification: ReplyClassification::Unknown,
+                escape_replies: Vec::new(),
                 forced_replies,
                 next_forcing_move,
-                ProofStatus::Unknown,
-                true,
-            )],
+                proof_status: ProofStatus::Unknown,
+                limit_hit: true,
+            })],
         )
     } else {
         let next_forcing_move = next_attacker_move_after_defender_reply(&principal_line);
@@ -772,14 +884,15 @@ fn prove_defender_forced_extension_node(
             ProofStatus::ForcedWin,
             principal_line,
             Vec::new(),
-            vec![threat.evidence(
-                ReplyClassification::BlockedButForced,
-                Vec::new(),
+            vec![threat.evidence(ThreatEvidenceInput {
+                attribution,
+                reply_classification: ReplyClassification::BlockedButForced,
+                escape_replies: Vec::new(),
                 forced_replies,
                 next_forcing_move,
-                ProofStatus::ForcedWin,
-                false,
-            )],
+                proof_status: ProofStatus::ForcedWin,
+                limit_hit: false,
+            })],
         )
     }
 }
@@ -851,6 +964,22 @@ fn replay_prefix_boards(replay: &Replay) -> Result<Vec<Board>, AnalysisError> {
         boards.push(board.clone());
     }
     Ok(boards)
+}
+
+fn replay_moves(replay: &Replay) -> Result<Vec<Move>, AnalysisError> {
+    replay
+        .moves
+        .iter()
+        .enumerate()
+        .map(|(idx, replay_move)| {
+            Move::from_notation(&replay_move.mv).map_err(|message| {
+                AnalysisError::InvalidReplayMove {
+                    ply: idx + 1,
+                    message,
+                }
+            })
+        })
+        .collect()
 }
 
 fn replay_winner(replay: &Replay, final_board: &Board) -> Option<Color> {
@@ -1310,6 +1439,35 @@ mod tests {
         assert!(analysis
             .tactical_notes
             .contains(&TacticalNote::AccidentalBlunder));
+    }
+
+    #[test]
+    fn replay_analysis_attaches_actual_reply_to_actual_line_evidence() {
+        let replay = replay_from_moves(
+            Variant::Freestyle,
+            &["H8", "G8", "I8", "A1", "J8", "A2", "K8", "B1", "L8"],
+        );
+
+        let analysis = analyze_replay(
+            &replay,
+            AnalysisOptions {
+                defense_policy: DefensePolicy::AllLegalDefense,
+                max_depth: 2,
+                ..AnalysisOptions::default()
+            },
+        )
+        .expect("finished replay should analyze");
+
+        let proof = analysis
+            .proof_summary
+            .get(7)
+            .expect("ply 7 proof should be scanned");
+        let evidence = proof
+            .threat_evidence
+            .first()
+            .expect("ply 7 immediate threat should be explained");
+        assert_eq!(evidence.prefix_ply, Some(7));
+        assert_eq!(evidence.actual_reply, Some(mv("B1")));
     }
 
     #[test]
