@@ -1,4 +1,5 @@
 pub mod analysis;
+pub mod analysis_batch;
 pub mod analysis_fixture;
 pub mod arena;
 pub mod elo;

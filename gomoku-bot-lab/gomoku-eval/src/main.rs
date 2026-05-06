@@ -6,6 +6,9 @@ use std::time::Instant;
 use gomoku_bot::{RandomBot, SearchBot};
 use gomoku_core::{Color, GameResult, Move, Replay, RuleConfig, Variant};
 use gomoku_eval::analysis::{analyze_replay, AnalysisOptions, DefensePolicy};
+use gomoku_eval::analysis_batch::{
+    render_analysis_batch_report_html, run_analysis_batch, AnalysisBatchReport,
+};
 use gomoku_eval::analysis_fixture::{
     render_analysis_fixture_report_html, run_analysis_fixtures, AnalysisFixtureReport,
     AnalysisFixtureResult,
@@ -251,6 +254,36 @@ enum Commands {
         /// Write analysis JSON to this path instead of stdout
         #[arg(long)]
         output: Option<PathBuf>,
+
+        /// Defender reply model used by the bounded proof engine
+        #[arg(long, value_enum, default_value = "all-legal-defense")]
+        defense_policy: CliDefensePolicy,
+
+        /// Maximum proof depth in plies
+        #[arg(long, default_value_t = 2)]
+        max_depth: usize,
+
+        /// Narrow forcing continuations allowed after a defender answers a direct threat
+        #[arg(long, default_value_t = 4)]
+        max_forced_extensions: usize,
+
+        /// Optional number of final plies to scan backward
+        #[arg(long)]
+        max_backward_window: Option<usize>,
+    },
+    /// Analyze every replay JSON in a directory and emit grouped reports
+    AnalyzeReplayBatch {
+        /// Directory containing replay JSON files
+        #[arg(long)]
+        replay_dir: PathBuf,
+
+        /// Write reusable batch report JSON
+        #[arg(long)]
+        report_json: Option<PathBuf>,
+
+        /// Write standalone batch report HTML
+        #[arg(long)]
+        report_html: Option<PathBuf>,
 
         /// Defender reply model used by the bounded proof engine
         #[arg(long, value_enum, default_value = "all-legal-defense")]
@@ -725,6 +758,22 @@ fn print_analysis_fixture_report_summary(report: &AnalysisFixtureReport) {
     println!(
         "\n--- Summary ---\n{} passed / {} total ({} failed)",
         report.passed, report.total, report.failed
+    );
+}
+
+fn print_analysis_batch_report_summary(report: &AnalysisBatchReport) {
+    println!(
+        "\n--- Summary ---\n{} analyzed / {} total ({} failed)",
+        report.analyzed, report.total, report.failed
+    );
+    println!(
+        "root: strategic {}, missed defense {}, missed win {}, unclear {}, ongoing/draw {}, errors {}",
+        report.summary.strategic_loss,
+        report.summary.missed_defense,
+        report.summary.missed_win,
+        report.summary.unclear,
+        report.summary.ongoing_or_draw,
+        report.summary.analysis_error
     );
 }
 
@@ -1217,6 +1266,50 @@ fn main() {
                 println!("{output_json}");
             }
         }
+        Commands::AnalyzeReplayBatch {
+            replay_dir,
+            report_json,
+            report_html,
+            defense_policy,
+            max_depth,
+            max_forced_extensions,
+            max_backward_window,
+        } => {
+            let report = run_analysis_batch(
+                &replay_dir,
+                AnalysisOptions {
+                    defense_policy: defense_policy.into(),
+                    max_depth,
+                    max_forced_extensions,
+                    max_backward_window,
+                },
+            )
+            .unwrap_or_else(|err| {
+                exit_with_error(format!("Failed to run replay analysis batch: {err}"))
+            });
+
+            print_analysis_batch_report_summary(&report);
+
+            if let Some(path) = report_json {
+                let json = serde_json::to_string_pretty(&report).unwrap_or_else(|err| {
+                    exit_with_error(format!("Failed to serialize analysis batch report: {err}"))
+                });
+                std::fs::write(&path, json).unwrap_or_else(|err| {
+                    exit_with_error(format!("Failed to write analysis batch report: {err}"))
+                });
+                println!("Report JSON: {}", path.display());
+            }
+            if let Some(path) = report_html {
+                let html = render_analysis_batch_report_html(&report);
+                std::fs::write(&path, html).unwrap_or_else(|err| {
+                    exit_with_error(format!("Failed to write analysis batch HTML: {err}"))
+                });
+                println!("Report HTML: {}", path.display());
+            }
+            if report.failed > 0 {
+                std::process::exit(1);
+            }
+        }
         Commands::AnalysisFixtures {
             report_json,
             report_html,
@@ -1536,5 +1629,55 @@ mod tests {
         assert_eq!(max_depth, 4);
         assert_eq!(max_forced_extensions, 6);
         assert_eq!(max_backward_window, Some(16));
+    }
+
+    #[test]
+    fn analyze_replay_batch_command_parses_reports_and_model_limits() {
+        let cli = Cli::try_parse_from([
+            "gomoku-eval",
+            "analyze-replay-batch",
+            "--replay-dir",
+            "outputs/replays",
+            "--report-json",
+            "outputs/analysis-batch.json",
+            "--report-html",
+            "outputs/analysis-batch.html",
+            "--defense-policy",
+            "tactical-defense",
+            "--max-depth",
+            "3",
+            "--max-forced-extensions",
+            "5",
+            "--max-backward-window",
+            "12",
+        ])
+        .expect("analyze-replay-batch command should parse");
+
+        let Commands::AnalyzeReplayBatch {
+            replay_dir,
+            report_json,
+            report_html,
+            defense_policy,
+            max_depth,
+            max_forced_extensions,
+            max_backward_window,
+        } = cli.command
+        else {
+            panic!("expected analyze-replay-batch command");
+        };
+
+        assert_eq!(replay_dir, PathBuf::from("outputs/replays"));
+        assert_eq!(
+            report_json,
+            Some(PathBuf::from("outputs/analysis-batch.json"))
+        );
+        assert_eq!(
+            report_html,
+            Some(PathBuf::from("outputs/analysis-batch.html"))
+        );
+        assert_eq!(defense_policy, CliDefensePolicy::Tactical);
+        assert_eq!(max_depth, 3);
+        assert_eq!(max_forced_extensions, 5);
+        assert_eq!(max_backward_window, Some(12));
     }
 }
