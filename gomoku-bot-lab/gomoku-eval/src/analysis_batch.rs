@@ -7,7 +7,7 @@ use serde::Serialize;
 
 use crate::analysis::{
     analyze_replay, AnalysisOptions, DefensePolicy, ForcedInterval, GameAnalysis, ProofStatus,
-    RootCause, TacticalNote, UnclearReason, ANALYSIS_SCHEMA_VERSION,
+    RootCause, TacticalNote, UnclearContext, UnclearReason, ANALYSIS_SCHEMA_VERSION,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -61,6 +61,7 @@ pub struct AnalysisBatchEntry {
     pub principal_line: Vec<Move>,
     pub unknown_gaps: Vec<usize>,
     pub unknown_gap_count: usize,
+    pub unclear_context: Option<UnclearContext>,
     pub elapsed_ms: u64,
     pub prefixes_analyzed: usize,
     pub forced_prefix_count: usize,
@@ -234,6 +235,7 @@ fn error_entry(path: String, error: String, elapsed_ms: u64) -> AnalysisBatchEnt
         principal_line: Vec::new(),
         unknown_gaps: Vec::new(),
         unknown_gap_count: 0,
+        unclear_context: None,
         elapsed_ms,
         prefixes_analyzed: 0,
         forced_prefix_count: 0,
@@ -249,7 +251,7 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
         .iter()
         .map(|entry| {
             format!(
-                "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{} ms</td><td>{}</td></tr>",
+                "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{} ms</td><td>{}</td><td>{}</td></tr>",
                 html_escape(&entry.path),
                 html_escape(entry_status_label(entry.status)),
                 html_escape(&option_debug(entry.winner)),
@@ -258,6 +260,7 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
                 html_escape(&interval_label(entry.final_forced_interval.as_ref())),
                 html_escape(&entry.unknown_gap_count.to_string()),
                 entry.elapsed_ms,
+                unclear_context_html(entry.unclear_context.as_ref()),
                 html_escape(entry.error.as_deref().unwrap_or("-")),
             )
         })
@@ -342,6 +345,32 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       color: var(--muted);
       margin: 0;
     }}
+    .context {{
+      color: var(--muted);
+      min-width: 220px;
+    }}
+    .context strong {{
+      color: var(--text);
+    }}
+    .context div + div {{
+      margin-top: 4px;
+    }}
+    .context details {{
+      margin-top: 8px;
+    }}
+    .context summary {{
+      cursor: pointer;
+      color: var(--accent);
+    }}
+    .context pre {{
+      overflow: auto;
+      margin: 8px 0 0;
+      padding: 8px;
+      border: 1px solid var(--line);
+      background: #101419;
+      color: var(--text);
+      line-height: 1.2;
+    }}
   </style>
 </head>
 <body>
@@ -359,7 +388,7 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
   </section>
   <table>
     <thead>
-      <tr><th>Replay</th><th>Status</th><th>Winner</th><th>Root</th><th>Why unclear</th><th>Forced</th><th>Unknowns</th><th>Time</th><th>Error</th></tr>
+      <tr><th>Replay</th><th>Status</th><th>Winner</th><th>Root</th><th>Why unclear</th><th>Forced</th><th>Unknowns</th><th>Time</th><th>Context</th><th>Error</th></tr>
     </thead>
     <tbody>{rows}</tbody>
   </table>
@@ -433,6 +462,7 @@ fn entry_from_analysis(
         principal_line: analysis.principal_line,
         unknown_gaps: analysis.unknown_gaps.clone(),
         unknown_gap_count: analysis.unknown_gaps.len(),
+        unclear_context: analysis.unclear_context,
         elapsed_ms,
         prefixes_analyzed,
         forced_prefix_count,
@@ -496,6 +526,50 @@ fn unclear_reason_label(unclear_reason: Option<UnclearReason>) -> String {
         .to_string()
 }
 
+fn unclear_context_html(context: Option<&UnclearContext>) -> String {
+    let Some(context) = context else {
+        return "-".to_string();
+    };
+
+    let previous_proof = match (
+        context.previous_proof_status,
+        context.previous_proof_limit_hit,
+    ) {
+        (Some(status), Some(true)) => format!("Previous proof: {status:?} (limit hit)"),
+        (Some(status), Some(false)) => format!("Previous proof: {status:?}"),
+        _ => "Previous proof: outside scan window".to_string(),
+    };
+    let principal_line = if context.principal_line_notation.is_empty() {
+        "-".to_string()
+    } else {
+        context.principal_line_notation.join(" ")
+    };
+    let snapshots = context
+        .snapshots
+        .iter()
+        .map(|snapshot| {
+            format!(
+                "<div><strong>{} @ ply {}</strong><pre>{}</pre></div>",
+                html_escape(&snapshot.label),
+                snapshot.ply,
+                html_escape(&snapshot.rows.join("\n"))
+            )
+        })
+        .collect::<String>();
+
+    format!(
+        "<div class=\"context\"><div><strong>Prev ply</strong> {previous}</div><div>{previous_proof}; side {side}</div><div><strong>Line</strong> {line}</div><details><summary>Board snapshots</summary>{snapshots}</details></div>",
+        previous = context
+            .previous_prefix_ply
+            .map(|ply| ply.to_string())
+            .unwrap_or_else(|| "-".to_string()),
+        previous_proof = html_escape(&previous_proof),
+        side = html_escape(&option_debug(context.previous_side_to_move)),
+        line = html_escape(&principal_line),
+        snapshots = snapshots,
+    )
+}
+
 fn interval_label(interval: Option<&ForcedInterval>) -> String {
     interval
         .map(|interval| format!("{}..{}", interval.start_ply, interval.end_ply))
@@ -527,7 +601,7 @@ mod tests {
         render_analysis_batch_report_html, run_analysis_batch, run_analysis_batch_replays,
         ReplayAnalysisInput,
     };
-    use crate::analysis::{AnalysisOptions, RootCause};
+    use crate::analysis::{AnalysisOptions, ProofStatus, RootCause, UnclearReason};
 
     fn replay_from_moves(variant: Variant, moves: &[&str]) -> Replay {
         let rules = RuleConfig {
@@ -660,5 +734,48 @@ mod tests {
                 .map(|entry| entry.elapsed_ms)
                 .sum::<u64>()
         );
+    }
+
+    #[test]
+    fn analysis_batch_replays_records_unclear_drilldown_context() {
+        let replay = replay_from_moves(
+            Variant::Freestyle,
+            &["H8", "A1", "I8", "A2", "J8", "A3", "K8", "B1", "L8"],
+        );
+
+        let report = run_analysis_batch_replays(
+            "report.json:bot-a vs bot-b".to_string(),
+            vec![ReplayAnalysisInput {
+                label: "proof_limit_case".to_string(),
+                replay,
+            }],
+            AnalysisOptions {
+                max_depth: 1,
+                ..AnalysisOptions::default()
+            },
+        );
+
+        let entry = &report.entries[0];
+        let context = entry
+            .unclear_context
+            .as_ref()
+            .expect("unclear proof-limited entries should expose drilldown context");
+
+        assert_eq!(entry.unclear_reason, Some(UnclearReason::ProofLimitHit));
+        assert_eq!(context.previous_prefix_ply, Some(6));
+        assert_eq!(context.previous_proof_status, Some(ProofStatus::Unknown));
+        assert_eq!(context.previous_proof_limit_hit, Some(true));
+        assert_eq!(context.move_count, 9);
+        assert!(!context.principal_line.is_empty());
+        assert!(!context.principal_line_notation.is_empty());
+        assert!(context
+            .snapshots
+            .iter()
+            .any(|snapshot| snapshot.label == "previous_prefix" && snapshot.ply == 6));
+
+        let html = render_analysis_batch_report_html(&report);
+        assert!(html.contains("<details"));
+        assert!(html.contains("previous_prefix @ ply 6"));
+        assert!(html.contains("limit hit"));
     }
 }

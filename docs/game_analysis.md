@@ -318,6 +318,7 @@ GameAnalysis
   root_cause
   tactical_notes
   principal_line
+  unclear_context
   proof_summary
 ```
 
@@ -366,6 +367,27 @@ Proof result records should use explicit status:
 - `forced_win`: proven within the model and limits.
 - `escape_found`: defender has at least one model-valid escape.
 - `unknown`: search was cut off or the position exceeded analyzer scope.
+
+For `unclear` results, reports should preserve enough context to drive the next
+debugging pass without rerunning the whole tournament:
+
+```text
+UnclearContext
+  reason
+  previous_prefix_ply
+  final_forced_interval
+  previous_proof_status
+  previous_proof_limit_hit
+  previous_side_to_move
+  winner
+  principal_line_notation
+  scan_start_ply
+  scan_end_ply
+  snapshots
+```
+
+Snapshots are compact board rows at the previous prefix and the final forced
+interval start. They are lab-debug evidence, not a player-facing explanation.
 
 `model` should include at least:
 
@@ -502,15 +524,23 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   losing-side missed win, shallow-model unknown guard, closed-four to open-four
   forced-chain continuation, defender counter-win escape, Renju no-legal-block
   terminal behavior, and ongoing replay behavior.
-- Tactical-defense mode now exposes legal cost replies, defender immediate wins,
-  and forbidden cost squares in schema-v2 branch evidence, but it is still not a
-  full threat-space search.
+- Tactical-defense mode exposes legal cost replies, defender immediate wins,
+  and forbidden cost squares in branch evidence, but it is still not a full
+  threat-space search.
+- Batch analysis reports now include `unclear_context` for unresolved entries:
+  previous prefix status, proof-limit flag, principal-line notation, and compact
+  board snapshots. This is meant to make proof-limit and scan-window failures
+  inspectable before adding more search.
 - A top-two report smoke run against
   `search-d7+tactical-cap-8+pattern-eval` vs
   `search-d5+tactical-cap-8+pattern-eval` passed with `8 analyzed / 8 total`
   and `0 failed`. It found final forced intervals in decisive games, but most
   root causes stayed `unclear` because the prefix before the final interval was
   still proof-limited or outside the scan window.
+- The matching 64-game sampled checkpoint passed with `64 analyzed / 64 total`
+  and `0 failed`: `59` proof-limit hits, `4` scan-window cutoffs, and `1`
+  draw/ongoing game. That confirms the next useful work is narrower proof
+  machinery or clearer scan strategy, not UI exposure.
 
 Example:
 
@@ -557,6 +587,10 @@ max-move games, and short/long games deterministically. Run a full 64-game
 head-to-head analysis only for checkpoint reports. `--max-backward-window 8`
 is the practical default for iteration; `24` is reserved for focused samples or
 longer runs until the proof model becomes narrower.
+
+Keep generated analysis JSON/HTML under `gomoku-bot-lab/outputs/analysis/`
+while iterating. These files are ignored scratch artifacts; commit only the
+analyzer code, docs, and any deliberately curated reports.
 
 This is still a lab artifact. Do not expose it in the web replay UI until the
 fixture set and report output make the limits obvious enough for players.
