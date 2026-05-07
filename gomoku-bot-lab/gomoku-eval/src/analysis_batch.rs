@@ -14,6 +14,9 @@ use crate::analysis::{
 };
 use crate::report_board::{render_report_board, report_board_css, ReportBoardMarker};
 
+const TACTICAL_ERROR_MIN_CORRIDOR_SPAN: usize = 5;
+const STRATEGIC_LOSS_MIN_CORRIDOR_SPAN: usize = 9;
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct AnalysisBatchReport {
     pub schema_version: u32,
@@ -43,6 +46,8 @@ pub struct AnalysisBatchModel {
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
 pub struct AnalysisBatchSummary {
+    pub mistake: usize,
+    pub tactical_error: usize,
     pub strategic_loss: usize,
     pub missed_defense: usize,
     pub missed_win: usize,
@@ -62,6 +67,7 @@ pub struct AnalysisBatchEntry {
     pub path: String,
     pub status: AnalysisBatchEntryStatus,
     pub winner: Option<Color>,
+    pub loss_category: Option<AnalysisLossCategory>,
     pub root_cause: Option<RootCause>,
     pub unclear_reason: Option<UnclearReason>,
     pub final_move: Option<Move>,
@@ -84,6 +90,15 @@ pub struct AnalysisBatchEntry {
     pub unknown_prefix_count: usize,
     pub escape_prefix_count: usize,
     pub error: Option<String>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AnalysisLossCategory {
+    Mistake,
+    TacticalError,
+    StrategicLoss,
+    Unclear,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -356,6 +371,7 @@ fn error_entry(path: String, error: String, elapsed_ms: u64) -> AnalysisBatchEnt
         path,
         status: AnalysisBatchEntryStatus::Error,
         winner: None,
+        loss_category: None,
         root_cause: None,
         unclear_reason: None,
         final_move: None,
@@ -387,10 +403,11 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
         .iter()
         .map(|entry| {
             format!(
-                "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{} ms</td><td>{}</td><td>{}</td><td>{}</td></tr>",
+                "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{} ms</td><td>{}</td><td>{}</td><td>{}</td></tr>",
                 html_escape(&entry.path),
                 html_escape(entry_status_label(entry.status)),
                 html_escape(&option_debug(entry.winner)),
+                html_escape(&loss_category_label(entry.loss_category)),
                 html_escape(&root_cause_label(entry.root_cause)),
                 html_escape(&unclear_reason_label(entry.unclear_reason)),
                 html_escape(&interval_label(entry.final_forced_interval.as_ref())),
@@ -649,14 +666,15 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
   <section class="summary">
     <article class="card"><span>Total</span><strong>{total}</strong></article>
     <article class="card"><span>Analyzed</span><strong>{analyzed}</strong></article>
-    <article class="card"><span>Missed defense</span><strong>{missed_defense}</strong></article>
-    <article class="card"><span>Missed win</span><strong>{missed_win}</strong></article>
+    <article class="card"><span>Mistake</span><strong>{mistake}</strong></article>
+    <article class="card"><span>Tactical error</span><strong>{tactical_error}</strong></article>
+    <article class="card"><span>Strategic loss</span><strong>{strategic_loss}</strong></article>
     <article class="card"><span>Unclear</span><strong>{unclear}</strong></article>
     <article class="card"><span>Errors</span><strong>{failed}</strong></article>
   </section>
   <table>
     <thead>
-      <tr><th>Replay</th><th>Status</th><th>Winner</th><th>Root</th><th>Why unclear</th><th>Forced</th><th>Unknowns</th><th>Time</th><th>Context</th><th>Proof details</th><th>Error</th></tr>
+      <tr><th>Replay</th><th>Status</th><th>Winner</th><th>Loss</th><th>Root detail</th><th>Why unclear</th><th>Forced</th><th>Unknowns</th><th>Time</th><th>Context</th><th>Proof details</th><th>Error</th></tr>
     </thead>
     <tbody>{rows}</tbody>
   </table>
@@ -667,8 +685,9 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
         replay_dir = html_escape(&report.replay_dir),
         total = report.total,
         analyzed = report.analyzed,
-        missed_defense = report.summary.missed_defense,
-        missed_win = report.summary.missed_win,
+        mistake = report.summary.mistake,
+        tactical_error = report.summary.tactical_error,
+        strategic_loss = report.summary.strategic_loss,
         unclear = report.summary.unclear,
         failed = report.failed,
         model = html_escape(&format!(
@@ -737,6 +756,7 @@ fn entry_from_analysis(
         path,
         status: AnalysisBatchEntryStatus::Analyzed,
         winner: analysis.winner,
+        loss_category: loss_category_for_analysis(&analysis),
         root_cause: Some(analysis.root_cause),
         unclear_reason: analysis.unclear_reason,
         final_move: analysis.final_move,
@@ -1154,11 +1174,44 @@ fn increment_summary_from_entry(summary: &mut AnalysisBatchSummary, entry: &Anal
         return;
     }
 
+    match entry.loss_category {
+        Some(AnalysisLossCategory::Mistake) => summary.mistake += 1,
+        Some(AnalysisLossCategory::TacticalError) => summary.tactical_error += 1,
+        Some(AnalysisLossCategory::StrategicLoss) => summary.strategic_loss += 1,
+        Some(AnalysisLossCategory::Unclear) | None => summary.unclear += 1,
+    }
+
     match entry.root_cause {
-        Some(RootCause::StrategicLoss) => summary.strategic_loss += 1,
         Some(RootCause::MissedDefense) => summary.missed_defense += 1,
         Some(RootCause::MissedWin) => summary.missed_win += 1,
-        Some(RootCause::Unclear) | None => summary.unclear += 1,
+        Some(RootCause::StrategicLoss) | Some(RootCause::Unclear) | None => {}
+    }
+}
+
+fn loss_category_for_analysis(analysis: &GameAnalysis) -> Option<AnalysisLossCategory> {
+    analysis.winner?;
+    if analysis.root_cause == RootCause::Unclear || !analysis.final_forced_interval_found {
+        return Some(AnalysisLossCategory::Unclear);
+    }
+    if analysis.root_cause == RootCause::MissedWin {
+        return Some(AnalysisLossCategory::Mistake);
+    }
+
+    let corridor_span = analysis
+        .final_forced_interval
+        .end_ply
+        .saturating_sub(analysis.final_forced_interval.start_ply)
+        + 1;
+    Some(loss_category_for_corridor_span(corridor_span))
+}
+
+fn loss_category_for_corridor_span(corridor_span: usize) -> AnalysisLossCategory {
+    if corridor_span < TACTICAL_ERROR_MIN_CORRIDOR_SPAN {
+        AnalysisLossCategory::Mistake
+    } else if corridor_span < STRATEGIC_LOSS_MIN_CORRIDOR_SPAN {
+        AnalysisLossCategory::TacticalError
+    } else {
+        AnalysisLossCategory::StrategicLoss
     }
 }
 
@@ -1176,6 +1229,18 @@ fn root_cause_label(root_cause: Option<RootCause>) -> String {
             RootCause::MissedDefense => "missed defense",
             RootCause::MissedWin => "missed win",
             RootCause::Unclear => "unclear",
+        })
+        .unwrap_or("-")
+        .to_string()
+}
+
+fn loss_category_label(loss_category: Option<AnalysisLossCategory>) -> String {
+    loss_category
+        .map(|category| match category {
+            AnalysisLossCategory::Mistake => "mistake",
+            AnalysisLossCategory::TacticalError => "tactical error",
+            AnalysisLossCategory::StrategicLoss => "strategic loss",
+            AnalysisLossCategory::Unclear => "unclear",
         })
         .unwrap_or("-")
         .to_string()
@@ -1627,10 +1692,11 @@ mod tests {
     use gomoku_core::{Board, Color, Move, Replay, RuleConfig, Variant};
 
     use super::{
-        cell_classes, marker_label, render_analysis_batch_report_html, run_analysis_batch,
-        run_analysis_batch_replays, run_analysis_batch_replays_with_options,
-        AnalysisBatchProofFrame, AnalysisBatchProofMarker, AnalysisBatchProofMarkerKind,
-        AnalysisBatchRunOptions, ReplayAnalysisInput,
+        cell_classes, loss_category_for_corridor_span, marker_label,
+        render_analysis_batch_report_html, run_analysis_batch, run_analysis_batch_replays,
+        run_analysis_batch_replays_with_options, AnalysisBatchProofFrame, AnalysisBatchProofMarker,
+        AnalysisBatchProofMarkerKind, AnalysisBatchRunOptions, AnalysisLossCategory,
+        ReplayAnalysisInput,
     };
     use crate::analysis::{
         AnalysisOptions, DefensePolicy, ProofLimitCause, ProofStatus, ReplyClassification,
@@ -1667,6 +1733,26 @@ mod tests {
     }
 
     #[test]
+    fn analysis_loss_category_uses_inclusive_corridor_span_cutoffs() {
+        assert_eq!(
+            loss_category_for_corridor_span(4),
+            AnalysisLossCategory::Mistake
+        );
+        assert_eq!(
+            loss_category_for_corridor_span(5),
+            AnalysisLossCategory::TacticalError
+        );
+        assert_eq!(
+            loss_category_for_corridor_span(8),
+            AnalysisLossCategory::TacticalError
+        );
+        assert_eq!(
+            loss_category_for_corridor_span(9),
+            AnalysisLossCategory::StrategicLoss
+        );
+    }
+
+    #[test]
     fn analysis_batch_groups_replay_directory_by_root_cause() {
         let dir = temp_report_dir("root-cause");
         let missed_defense = replay_from_moves(
@@ -1688,7 +1774,12 @@ mod tests {
         assert_eq!(report.analyzed, 1);
         assert_eq!(report.failed, 0);
         assert_eq!(report.model.max_depth, AnalysisOptions::default().max_depth);
+        assert_eq!(report.summary.mistake, 1);
         assert_eq!(report.summary.missed_defense, 1);
+        assert_eq!(
+            report.entries[0].loss_category,
+            Some(AnalysisLossCategory::Mistake)
+        );
         assert_eq!(report.entries[0].root_cause, Some(RootCause::MissedDefense));
         assert_eq!(report.entries[0].path, "missed_defense.json");
 
@@ -1713,7 +1804,9 @@ mod tests {
         let html = render_analysis_batch_report_html(&report);
 
         assert!(html.contains("<title>Gomoku2D Analysis Batch Report</title>"));
+        assert!(html.contains("Mistake"));
         assert!(html.contains("missed defense"));
+        assert!(html.contains("Root detail"));
         assert!(html.contains("replay.json"));
 
         let _ = fs::remove_dir_all(&dir);

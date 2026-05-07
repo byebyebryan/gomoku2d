@@ -452,13 +452,26 @@ may be the losing side's previous move.
 Real games, especially human games, are not ideal games. Analysis should
 classify the actual line separately from the ideal proof.
 
-Use a two-part classification:
+Use a three-part classification:
 
-- Root cause: the main reason the final forced interval exists.
+- Loss category: player-facing severity based on proven forced-corridor length.
+- Root detail: analyzer-facing reason the final forced interval exists.
 - Tactical notes: local misses or conversion issues that happened along the
   actual line.
 
-Root-cause categories:
+Loss categories:
+
+- `mistake`: the proven forced-corridor span is shorter than `5` plies. This
+  is a near-term miss such as failing to answer a four or a short three-threat
+  conversion.
+- `tactical_error`: the proven forced-corridor span is `5` to `8` plies. The
+  loss was tactical, but it required seeing several forcing replies ahead.
+- `strategic_loss`: the proven forced-corridor span is `9` plies or longer.
+  The losing side's last viable escape was far enough back that the report
+  should frame it as a deeper strategic miss.
+- `unclear`: the bounded analyzer cannot prove enough to assign a severity.
+
+Root-detail categories:
 
 - `strategic_loss`: a move changes the position from `escape_found` to
   `forced_win` under the same model and limits. This means the move entered the
@@ -468,7 +481,7 @@ Root-cause categories:
   actual move did not play one.
 - `missed_win`: a player had an immediate or forced win, but played elsewhere
   and allowed the game to continue.
-- `unclear`: the bounded analyzer cannot prove enough to identify a root cause.
+- `unclear`: the bounded analyzer cannot prove enough to identify a root detail.
 
 If the previous prefix is `unknown`, do not label the transition as a strategic
 loss. The correct root cause is `unclear`, optionally with a tactical note that
@@ -775,15 +788,19 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   aggregate cost squares, forbidden costs, and principal-line moves stays in the
   textual proof snapshots with explicit attacker/side-to-move labels, so the
   board does not imply nested branch moves are current gameplay hints. Keep it
-  off for normal smoke runs; turn it on when reviewing why a `strategic_loss`,
-  `missed_defense`, or decisive `unclear` label was assigned.
+  off for normal smoke runs; turn it on when reviewing why a `mistake`,
+  `tactical_error`, `strategic_loss`, or decisive `unclear` label was assigned.
 - After the single-depth corridor refactor, a top-two report smoke run against
   `search-d7+tactical-cap-8+pattern-eval` vs
   `search-d5+tactical-cap-8+pattern-eval` passed with `8 analyzed / 8 total`
-  and `0 failed`. It classified the sample as `7` missed defenses and `1`
-  draw/ongoing entry, with no `strategic_loss` or `unclear` roots. This is a
-  smoke check for the cleaned CLI/report path, not a replacement for the next
-  curated 64-game checkpoint.
+  and `0 failed`. Before the loss-category pass, the root-detail split was `7`
+  missed defenses and `1` draw/ongoing entry. The report now leads with
+  corridor-length severity instead of those implementation-shaped labels.
+- After the inclusive-span loss-category pass, the same top-two 64-game audit
+  passed with `64 analyzed / 64 total` and `0 failed` in about `61s` wall time.
+  It classified the sample as `8` mistakes, `25` tactical errors, `27`
+  strategic losses, `3` unclear entries, and `1` draw/ongoing entry. Root
+  detail remained `56` missed defenses and `0` missed wins.
 - A follow-up 64-game top-two implementation snapshot passed with `64 analyzed /
   64 total` and `0 failed` in about `49s` total elapsed time. It classified the
   decisive sample as `54` strategic losses, `5` missed defenses, and `4`

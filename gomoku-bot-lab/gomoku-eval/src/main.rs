@@ -830,13 +830,17 @@ fn print_analysis_batch_report_summary(report: &AnalysisBatchReport) {
         report.analyzed, report.total, report.failed
     );
     println!(
-        "root: strategic {}, missed defense {}, missed win {}, unclear {}, ongoing/draw {}, errors {}",
+        "loss: mistake {}, tactical error {}, strategic {}, unclear {}, ongoing/draw {}, errors {}",
+        report.summary.mistake,
+        report.summary.tactical_error,
         report.summary.strategic_loss,
-        report.summary.missed_defense,
-        report.summary.missed_win,
         report.summary.unclear,
         report.summary.ongoing_or_draw,
         report.summary.analysis_error
+    );
+    println!(
+        "root detail: missed defense {}, missed win {}",
+        report.summary.missed_defense, report.summary.missed_win
     );
 }
 
