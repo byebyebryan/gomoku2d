@@ -880,44 +880,60 @@ fn imminent_defense_reply_moves(
         .into_iter()
         .filter(|fact| fact.kind.rank() == best_rank)
     {
-        for forcing_move in fact.defense_squares {
-            add_imminent_defense_replies_for_forcing_move(
-                board,
-                &attacker_turn,
-                attacker,
-                defender,
-                forcing_move,
-                &mut replies,
-            );
-        }
+        add_imminent_defense_replies_for_fact(
+            board,
+            &attacker_turn,
+            attacker,
+            defender,
+            &fact,
+            &mut replies,
+        );
     }
 
     replies
 }
 
-fn add_imminent_defense_replies_for_forcing_move(
+fn add_imminent_defense_replies_for_fact(
     board: &Board,
     attacker_turn: &Board,
     attacker: Color,
     defender: Color,
-    forcing_move: Move,
+    fact: &LocalThreatFact,
     replies: &mut Vec<Move>,
 ) {
-    if board.is_legal_for_color(forcing_move, defender) {
-        push_unique_move(replies, forcing_move);
-    }
-    if !attacker_turn.is_legal_for_color(forcing_move, attacker) {
-        return;
-    }
-
-    let mut after_forcing = attacker_turn.clone();
-    if after_forcing.apply_move(forcing_move).is_err() {
-        return;
-    }
-    for mv in after_forcing.immediate_winning_moves_for(attacker) {
+    let mut legal_forcing_moves = Vec::new();
+    for mv in fact.defense_squares.iter().copied() {
         if board.is_legal_for_color(mv, defender) {
             push_unique_move(replies, mv);
         }
+        if attacker_turn.is_legal_for_color(mv, attacker) {
+            legal_forcing_moves.push(mv);
+        }
+    }
+
+    let mut shared_cost_squares: Option<Vec<Move>> = None;
+    for forcing_move in legal_forcing_moves {
+        let mut after_forcing = attacker_turn.clone();
+        if after_forcing.apply_move(forcing_move).is_err() {
+            continue;
+        }
+        let costs = after_forcing
+            .immediate_winning_moves_for(attacker)
+            .into_iter()
+            .filter(|&mv| board.is_legal_for_color(mv, defender))
+            .collect::<Vec<_>>();
+
+        shared_cost_squares = Some(match shared_cost_squares {
+            Some(shared) => shared
+                .into_iter()
+                .filter(|mv| costs.contains(mv))
+                .collect::<Vec<_>>(),
+            None => costs,
+        });
+    }
+
+    for mv in shared_cost_squares.unwrap_or_default() {
+        push_unique_move(replies, mv);
     }
 }
 
@@ -3272,6 +3288,39 @@ mod tests {
             i11.principal_line_notation,
             i11.limit_causes
         );
+    }
+
+    #[test]
+    fn imminent_open_three_defense_excludes_outer_cost_squares() {
+        let board = board_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "I8", "H7", "I7", "H6", "H5", "I6", "I9", "G6", "J6", "G8",
+            ],
+        );
+        let options = AnalysisOptions {
+            defense_policy: DefensePolicy::AllLegalDefense,
+            max_depth: 2,
+            max_forced_extensions: 4,
+            max_backward_window: Some(8),
+        };
+        let replies =
+            analyze_defender_reply_options(&board, Color::Black, Some(mv("J5")), &options);
+
+        for notation in ["J5", "F9"] {
+            let reply = reply_for(&replies, notation);
+            assert!(
+                reply.roles.contains(&DefenderReplyRole::ImminentDefense),
+                "{notation}: roles {:?}",
+                reply.roles
+            );
+        }
+        for notation in ["E10", "K4"] {
+            assert!(
+                replies.iter().all(|reply| reply.notation != notation),
+                "{notation} should not be a direct defense to the open three"
+            );
+        }
     }
 
     fn reply_for<'a>(
