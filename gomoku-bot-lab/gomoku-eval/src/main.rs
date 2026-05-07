@@ -306,6 +306,14 @@ enum Commands {
         #[arg(long, default_value_t = 4)]
         max_forced_extensions: usize,
 
+        /// Optional deeper retry budget for unresolved proof-detail reply outcomes
+        #[arg(long)]
+        deep_retry_forced_extensions: Option<usize>,
+
+        /// Maximum number of proof-detail reply outcomes to retry per analyzed replay
+        #[arg(long, default_value_t = 1)]
+        deep_retry_limit: usize,
+
         /// Optional number of final plies to scan backward
         #[arg(long)]
         max_backward_window: Option<usize>,
@@ -355,6 +363,14 @@ enum Commands {
         /// Narrow forcing continuations allowed after a defender answers a direct threat
         #[arg(long, default_value_t = 4)]
         max_forced_extensions: usize,
+
+        /// Optional deeper retry budget for unresolved proof-detail reply outcomes
+        #[arg(long)]
+        deep_retry_forced_extensions: Option<usize>,
+
+        /// Maximum number of proof-detail reply outcomes to retry per analyzed replay
+        #[arg(long, default_value_t = 1)]
+        deep_retry_limit: usize,
 
         /// Optional number of final plies to scan backward
         #[arg(long)]
@@ -1373,6 +1389,8 @@ fn main() {
             defense_policy,
             max_depth,
             max_forced_extensions,
+            deep_retry_forced_extensions,
+            deep_retry_limit,
             max_backward_window,
             include_proof_details,
         } => {
@@ -1386,6 +1404,8 @@ fn main() {
                         max_backward_window,
                     },
                     include_proof_details,
+                    deep_retry_forced_extensions,
+                    deep_retry_limit,
                 },
             )
             .unwrap_or_else(|err| {
@@ -1425,6 +1445,8 @@ fn main() {
             defense_policy,
             max_depth,
             max_forced_extensions,
+            deep_retry_forced_extensions,
+            deep_retry_limit,
             max_backward_window,
             include_proof_details,
         } => {
@@ -1475,6 +1497,8 @@ fn main() {
                         max_backward_window,
                     },
                     include_proof_details,
+                    deep_retry_forced_extensions,
+                    deep_retry_limit,
                 },
             );
 
@@ -1838,6 +1862,10 @@ mod tests {
             "3",
             "--max-forced-extensions",
             "5",
+            "--deep-retry-forced-extensions",
+            "10",
+            "--deep-retry-limit",
+            "2",
             "--max-backward-window",
             "12",
         ])
@@ -1850,6 +1878,8 @@ mod tests {
             defense_policy,
             max_depth,
             max_forced_extensions,
+            deep_retry_forced_extensions,
+            deep_retry_limit,
             max_backward_window,
             include_proof_details,
         } = cli.command
@@ -1869,6 +1899,8 @@ mod tests {
         assert_eq!(defense_policy, CliDefensePolicy::Tactical);
         assert_eq!(max_depth, 3);
         assert_eq!(max_forced_extensions, 5);
+        assert_eq!(deep_retry_forced_extensions, Some(10));
+        assert_eq!(deep_retry_limit, 2);
         assert_eq!(max_backward_window, Some(12));
         assert!(!include_proof_details);
     }
@@ -1898,6 +1930,10 @@ mod tests {
             "2",
             "--max-forced-extensions",
             "4",
+            "--deep-retry-forced-extensions",
+            "10",
+            "--deep-retry-limit",
+            "1",
             "--max-backward-window",
             "8",
             "--include-proof-details",
@@ -1915,6 +1951,8 @@ mod tests {
             defense_policy,
             max_depth,
             max_forced_extensions,
+            deep_retry_forced_extensions,
+            deep_retry_limit,
             max_backward_window,
             include_proof_details,
         } = cli.command
@@ -1944,6 +1982,8 @@ mod tests {
         assert_eq!(defense_policy, CliDefensePolicy::AllLegal);
         assert_eq!(max_depth, 2);
         assert_eq!(max_forced_extensions, 4);
+        assert_eq!(deep_retry_forced_extensions, Some(10));
+        assert_eq!(deep_retry_limit, 1);
         assert_eq!(max_backward_window, Some(8));
         assert!(include_proof_details);
     }

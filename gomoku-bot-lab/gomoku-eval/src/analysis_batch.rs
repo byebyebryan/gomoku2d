@@ -7,10 +7,10 @@ use rayon::prelude::*;
 use serde::Serialize;
 
 use crate::analysis::{
-    analyze_defender_reply_options, analyze_replay, AnalysisBoardSnapshot, AnalysisOptions,
-    DefenderReplyAnalysis, DefenderReplyOutcome, DefenderReplyRole, DefensePolicy, ForcedInterval,
-    GameAnalysis, ProofLimitCause, ProofResult, ProofStatus, ReplyClassification, RootCause,
-    TacticalNote, UnclearContext, UnclearReason, ANALYSIS_SCHEMA_VERSION,
+    analyze_defender_reply_options_with_retry, analyze_replay, AnalysisBoardSnapshot,
+    AnalysisOptions, DefenderReplyAnalysis, DefenderReplyOutcome, DefenderReplyRole, DefensePolicy,
+    ForcedInterval, GameAnalysis, ProofLimitCause, ProofResult, ProofStatus, ReplyClassification,
+    RootCause, TacticalNote, UnclearContext, UnclearReason, ANALYSIS_SCHEMA_VERSION,
 };
 use crate::report_board::{render_report_board, report_board_css, ReportBoardMarker};
 
@@ -36,6 +36,9 @@ pub struct AnalysisBatchModel {
     pub defense_policy: DefensePolicy,
     pub max_depth: usize,
     pub max_forced_extensions: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub deep_retry_forced_extensions: Option<usize>,
+    pub deep_retry_limit: usize,
     pub max_backward_window: Option<usize>,
 }
 
@@ -142,6 +145,7 @@ pub enum AnalysisBatchProofMarkerKind {
     OffensiveCounter,
     ForcedLoss,
     Escape,
+    UnprovedEscape,
     ImmediateLoss,
     UnknownOutcome,
     Actual,
@@ -164,6 +168,8 @@ pub struct ReplayAnalysisInput {
 pub struct AnalysisBatchRunOptions {
     pub analysis: AnalysisOptions,
     pub include_proof_details: bool,
+    pub deep_retry_forced_extensions: Option<usize>,
+    pub deep_retry_limit: usize,
 }
 
 impl From<AnalysisOptions> for AnalysisBatchRunOptions {
@@ -171,6 +177,8 @@ impl From<AnalysisOptions> for AnalysisBatchRunOptions {
         Self {
             analysis,
             include_proof_details: false,
+            deep_retry_forced_extensions: None,
+            deep_retry_limit: 1,
         }
     }
 }
@@ -187,7 +195,7 @@ pub fn run_analysis_batch_with_options(
     options: AnalysisBatchRunOptions,
 ) -> Result<AnalysisBatchReport, String> {
     let batch_started = Instant::now();
-    let model = model_from_options(&options.analysis);
+    let model = model_from_options(&options);
     let mut paths = replay_paths(replay_dir)?;
     paths.sort();
 
@@ -210,6 +218,8 @@ pub fn run_analysis_batch_with_options(
                     analysis,
                     elapsed_millis(entry_started.elapsed()),
                     options.include_proof_details.then_some(&replay),
+                    options.deep_retry_forced_extensions,
+                    options.deep_retry_limit,
                 ),
                 Err(error) => error_entry(
                     relative_path,
@@ -263,7 +273,7 @@ pub fn run_analysis_batch_replays_with_options(
     options: AnalysisBatchRunOptions,
 ) -> AnalysisBatchReport {
     let batch_started = Instant::now();
-    let model = model_from_options(&options.analysis);
+    let model = model_from_options(&options);
 
     let entries = inputs
         .par_iter()
@@ -275,6 +285,8 @@ pub fn run_analysis_batch_replays_with_options(
                     analysis,
                     elapsed_millis(entry_started.elapsed()),
                     options.include_proof_details.then_some(&input.replay),
+                    options.deep_retry_forced_extensions,
+                    options.deep_retry_limit,
                 ),
                 Err(error) => error_entry(
                     input.label.clone(),
@@ -317,12 +329,24 @@ pub fn run_analysis_batch_replays_with_options(
     }
 }
 
-fn model_from_options(options: &AnalysisOptions) -> AnalysisBatchModel {
+fn model_from_options(options: &AnalysisBatchRunOptions) -> AnalysisBatchModel {
+    let deep_retry_forced_extensions =
+        if options.include_proof_details && options.deep_retry_limit > 0 {
+            options.deep_retry_forced_extensions
+        } else {
+            None
+        };
     AnalysisBatchModel {
-        defense_policy: options.defense_policy,
-        max_depth: options.max_depth,
-        max_forced_extensions: options.max_forced_extensions,
-        max_backward_window: options.max_backward_window,
+        defense_policy: options.analysis.defense_policy,
+        max_depth: options.analysis.max_depth,
+        max_forced_extensions: options.analysis.max_forced_extensions,
+        deep_retry_forced_extensions,
+        deep_retry_limit: if deep_retry_forced_extensions.is_some() {
+            options.deep_retry_limit
+        } else {
+            0
+        },
+        max_backward_window: options.analysis.max_backward_window,
     }
 }
 
@@ -535,6 +559,10 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       color: var(--green);
       text-shadow: 0 1px 0 rgba(0,0,0,0.45);
     }}
+    .marker--unproved-escape .proof-marker {{
+      color: color-mix(in srgb, var(--green) 70%, var(--muted));
+      text-shadow: 0 1px 0 rgba(0,0,0,0.45);
+    }}
     .marker--immediate-loss .proof-marker {{
       color: var(--red);
       text-shadow: 0 1px 0 rgba(0,0,0,0.45);
@@ -647,10 +675,12 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
         unclear = report.summary.unclear,
         failed = report.failed,
         model = html_escape(&format!(
-            "{:?}, depth {}, forced extensions {}, window {:?}",
+            "{:?}, depth {}, forced extensions {}, deep retry {} (limit {}), window {:?}",
             report.model.defense_policy,
             report.model.max_depth,
             report.model.max_forced_extensions,
+            option_debug(report.model.deep_retry_forced_extensions),
+            report.model.deep_retry_limit,
             report.model.max_backward_window
         )),
         limit_summary = html_escape(&limit_summary),
@@ -691,12 +721,21 @@ fn entry_from_analysis(
     analysis: GameAnalysis,
     elapsed_ms: u64,
     replay: Option<&Replay>,
+    deep_retry_forced_extensions: Option<usize>,
+    deep_retry_limit: usize,
 ) -> AnalysisBatchEntry {
     let prefixes_analyzed = analysis.proof_summary.len();
     let forced_prefix_count = count_proof_status(&analysis, ProofStatus::ForcedWin);
     let unknown_prefix_count = count_proof_status(&analysis, ProofStatus::Unknown);
     let escape_prefix_count = count_proof_status(&analysis, ProofStatus::EscapeFound);
-    let proof_details = replay.and_then(|replay| proof_details_from_analysis(replay, &analysis));
+    let proof_details = replay.and_then(|replay| {
+        proof_details_from_analysis(
+            replay,
+            &analysis,
+            deep_retry_forced_extensions,
+            deep_retry_limit,
+        )
+    });
     let limit_causes = analysis
         .unclear_context
         .as_ref()
@@ -734,6 +773,8 @@ fn entry_from_analysis(
 fn proof_details_from_analysis(
     replay: &Replay,
     analysis: &GameAnalysis,
+    deep_retry_forced_extensions: Option<usize>,
+    deep_retry_limit: usize,
 ) -> Option<AnalysisBatchProofDetails> {
     analysis.winner?;
     if analysis.proof_summary.is_empty() {
@@ -757,7 +798,7 @@ fn proof_details_from_analysis(
     if let Some(previous_prefix_ply) = previous_prefix_ply {
         if let Some(board) = boards.get(previous_prefix_ply) {
             snapshots.push(board_snapshot(
-                "before_forced_run",
+                "escape_boundary",
                 previous_prefix_ply,
                 board,
             ));
@@ -769,7 +810,7 @@ fn proof_details_from_analysis(
     {
         if let Some(board) = boards.get(final_forced_start_ply) {
             snapshots.push(board_snapshot(
-                "after_forced_entry",
+                "forced_entry",
                 final_forced_start_ply,
                 board,
             ));
@@ -780,7 +821,8 @@ fn proof_details_from_analysis(
         &boards,
         analysis,
         scan_start,
-        previous_prefix_ply,
+        deep_retry_forced_extensions,
+        deep_retry_limit,
     );
 
     Some(AnalysisBatchProofDetails {
@@ -846,14 +888,19 @@ fn proof_frames_for_actual_interval(
     boards: &[Board],
     analysis: &GameAnalysis,
     scan_start: usize,
-    previous_prefix_ply: Option<usize>,
+    deep_retry_forced_extensions: Option<usize>,
+    deep_retry_limit: usize,
 ) -> Vec<AnalysisBatchProofFrame> {
+    let mut deep_retries_remaining = if deep_retry_forced_extensions.is_some() {
+        deep_retry_limit
+    } else {
+        0
+    };
     let plys = (analysis.final_forced_interval.start_ply..=analysis.final_forced_interval.end_ply)
         .rev()
         .collect::<Vec<_>>();
 
-    let mut frames = plys
-        .into_iter()
+    plys.into_iter()
         .filter_map(|ply| {
             let board_ply = ply.checked_sub(1)?;
             let board = boards.get(board_ply)?;
@@ -861,7 +908,13 @@ fn proof_frames_for_actual_interval(
             let mut markers = Vec::new();
             add_decision_tactical_markers(&mut markers, board);
             let actual_move = actual_move_at_ply(replay, ply);
-            let reply_outcomes = defender_reply_outcomes_for_frame(board, analysis, actual_move);
+            let reply_outcomes = defender_reply_outcomes_for_frame(
+                board,
+                analysis,
+                actual_move,
+                deep_retry_forced_extensions,
+                &mut deep_retries_remaining,
+            );
             add_reply_outcome_markers(&mut markers, &reply_outcomes);
             if let Some(actual_move) = actual_move {
                 add_marker_kind(
@@ -883,37 +936,15 @@ fn proof_frames_for_actual_interval(
                 reply_outcomes,
             ))
         })
-        .collect::<Vec<_>>();
-
-    if let Some(previous_prefix_ply) = previous_prefix_ply {
-        if let Some(board) = boards.get(previous_prefix_ply) {
-            let proof = proof_result_at(&analysis.proof_summary, scan_start, previous_prefix_ply);
-            let mut markers = Vec::new();
-            add_decision_tactical_markers(&mut markers, board);
-            let reply_outcomes = defender_reply_outcomes_for_frame(board, analysis, None);
-            add_reply_outcome_markers(&mut markers, &reply_outcomes);
-            markers.sort_by_key(|marker| (marker.mv.row, marker.mv.col));
-            frames.push(proof_frame(
-                "before_forced_run",
-                previous_prefix_ply,
-                board,
-                proof
-                    .map(|proof| proof.status)
-                    .unwrap_or(ProofStatus::Unknown),
-                None,
-                markers,
-                reply_outcomes,
-            ));
-        }
-    }
-
-    frames
+        .collect::<Vec<_>>()
 }
 
 fn defender_reply_outcomes_for_frame(
     board: &Board,
     analysis: &GameAnalysis,
     actual_move: Option<Move>,
+    deep_retry_forced_extensions: Option<usize>,
+    deep_retries_remaining: &mut usize,
 ) -> Vec<DefenderReplyAnalysis> {
     let Some(attacker) = analysis.winner else {
         return Vec::new();
@@ -922,7 +953,7 @@ fn defender_reply_outcomes_for_frame(
         return Vec::new();
     }
 
-    analyze_defender_reply_options(
+    let replies = analyze_defender_reply_options_with_retry(
         board,
         attacker,
         actual_move,
@@ -932,7 +963,15 @@ fn defender_reply_outcomes_for_frame(
             max_forced_extensions: analysis.model.max_forced_extensions,
             max_backward_window: analysis.model.max_backward_window,
         },
-    )
+        deep_retry_forced_extensions,
+        *deep_retries_remaining,
+    );
+    let used = replies
+        .iter()
+        .filter(|reply| reply.deep_retry_forced_extensions.is_some())
+        .count();
+    *deep_retries_remaining = (*deep_retries_remaining).saturating_sub(used);
+    replies
 }
 
 fn actual_frame_label(ply: usize, interval: &ForcedInterval) -> String {
@@ -1002,6 +1041,7 @@ fn add_reply_outcome_markers(
         let outcome_kind = match reply.outcome {
             DefenderReplyOutcome::ForcedLoss => AnalysisBatchProofMarkerKind::ForcedLoss,
             DefenderReplyOutcome::Escape => AnalysisBatchProofMarkerKind::Escape,
+            DefenderReplyOutcome::UnprovedEscape => AnalysisBatchProofMarkerKind::UnprovedEscape,
             DefenderReplyOutcome::ImmediateLoss => AnalysisBatchProofMarkerKind::ImmediateLoss,
             DefenderReplyOutcome::Unknown => AnalysisBatchProofMarkerKind::UnknownOutcome,
         };
@@ -1230,9 +1270,8 @@ fn proof_details_html(details: Option<&AnalysisBatchProofDetails>) -> String {
         .iter()
         .map(|snapshot| {
             format!(
-                "<div><strong>{} @ ply {}</strong><pre>{}</pre></div>",
-                html_escape(&snapshot.label),
-                snapshot.ply,
+                "<div><strong>{}</strong><pre>{}</pre></div>",
+                html_escape(&snapshot_title(snapshot)),
                 html_escape(&snapshot.rows.join("\n"))
             )
         })
@@ -1240,12 +1279,12 @@ fn proof_details_html(details: Option<&AnalysisBatchProofDetails>) -> String {
     let frames = proof_frames_html(&details.proof_frames);
 
     format!(
-        "<div class=\"context\"><details><summary>root transition</summary><div><strong>Before forced run</strong> after ply {previous_ply}</div><div><strong>Forced run entry</strong> ply {final_ply}</div>{previous}{final_start}</details>{frames}<details><summary>ASCII board snapshots</summary>{snapshots}</details></div>",
+        "<div class=\"context\"><details><summary>root transition</summary><div><strong>Escape boundary</strong> {previous_ply}</div><div><strong>Forced run entry</strong> {final_ply}</div>{previous}{final_start}</details>{frames}<details><summary>ASCII board snapshots</summary>{snapshots}</details></div>",
         previous_ply = details
             .previous_prefix_ply
-            .map(|ply| ply.to_string())
+            .map(before_ply_label)
             .unwrap_or_else(|| "-".to_string()),
-        final_ply = details.final_forced_start_ply,
+        final_ply = before_ply_label(details.final_forced_start_ply),
         previous = previous,
         final_start = final_start,
         frames = frames,
@@ -1259,7 +1298,7 @@ fn proof_frames_html(frames: &[AnalysisBatchProofFrame]) -> String {
     }
     let frame_cards = frames.iter().map(proof_frame_html).collect::<String>();
     format!(
-        "<details><summary>Visual decision frames</summary><div class=\"proof-legend\"><span class=\"legend-winning\">win now</span><span class=\"legend-threat\">immediate threat</span><span class=\"legend-imminent\">defensive reply</span><span class=\"legend-offensive\">offensive reply</span><span class=\"legend-actual\">actual replay move</span><span>L forced loss</span><span>E escape</span><span>! immediate loss</span><span>? unknown</span></div><div class=\"proof-frame-grid\">{frame_cards}</div></details>"
+        "<details><summary>Visual decision frames</summary><div class=\"proof-legend\"><span class=\"legend-winning\">win now</span><span class=\"legend-threat\">immediate threat</span><span class=\"legend-imminent\">defensive reply</span><span class=\"legend-offensive\">offensive reply</span><span class=\"legend-actual\">actual replay move</span><span>L forced loss</span><span>E escape</span><span>U unproved escape</span><span>! immediate loss</span><span>? unknown</span></div><div class=\"proof-frame-grid\">{frame_cards}</div></details>"
     )
 }
 
@@ -1291,7 +1330,7 @@ fn reply_outcomes_html(frame: &AnalysisBatchProofFrame) -> String {
                 "<div class=\"reply-outcome-row\"><strong>{mv}</strong><span>{roles}</span><span>{outcome}</span><span>{line}</span></div>",
                 mv = html_escape(&reply.notation),
                 roles = html_escape(&reply_roles_label(&reply.roles)),
-                outcome = html_escape(defender_reply_outcome_label(reply.outcome)),
+                outcome = html_escape(&defender_reply_outcome_label(reply)),
                 line = html_escape(&reply_line_label(reply)),
             )
         })
@@ -1302,8 +1341,8 @@ fn reply_outcomes_html(frame: &AnalysisBatchProofFrame) -> String {
 }
 
 fn proof_frame_title(frame: &AnalysisBatchProofFrame) -> String {
-    if frame.label == "before_forced_run" {
-        return format!("before forced run / after ply {}", frame.ply);
+    if frame.label == "escape_boundary" {
+        return before_ply_label(frame.ply);
     }
     match (frame.label.as_str(), frame.move_played_notation.as_deref()) {
         ("winning_ply", Some(mv)) => {
@@ -1365,6 +1404,7 @@ fn marker_classes(
             AnalysisBatchProofMarkerKind::OffensiveCounter => "marker--offensive-counter",
             AnalysisBatchProofMarkerKind::ForcedLoss => "marker--forced-loss",
             AnalysisBatchProofMarkerKind::Escape => "marker--escape",
+            AnalysisBatchProofMarkerKind::UnprovedEscape => "marker--unproved-escape",
             AnalysisBatchProofMarkerKind::ImmediateLoss => "marker--immediate-loss",
             AnalysisBatchProofMarkerKind::UnknownOutcome => "marker--unknown-outcome",
             AnalysisBatchProofMarkerKind::Actual => "marker--actual",
@@ -1401,6 +1441,12 @@ fn marker_label(marker: &AnalysisBatchProofMarker) -> String {
     }
     if marker
         .kinds
+        .contains(&AnalysisBatchProofMarkerKind::UnprovedEscape)
+    {
+        return "U".to_string();
+    }
+    if marker
+        .kinds
         .contains(&AnalysisBatchProofMarkerKind::UnknownOutcome)
     {
         return "?".to_string();
@@ -1430,12 +1476,32 @@ fn reply_roles_label(roles: &[DefenderReplyRole]) -> String {
         .join(" + ")
 }
 
-fn defender_reply_outcome_label(outcome: DefenderReplyOutcome) -> &'static str {
-    match outcome {
+fn defender_reply_outcome_label(reply: &DefenderReplyAnalysis) -> String {
+    let outcome = match reply.outcome {
         DefenderReplyOutcome::ForcedLoss => "forced loss",
         DefenderReplyOutcome::Escape => "escape",
+        DefenderReplyOutcome::UnprovedEscape => "unproved escape",
         DefenderReplyOutcome::ImmediateLoss => "immediate loss",
         DefenderReplyOutcome::Unknown => "unknown",
+    };
+    let mut parts = Vec::new();
+    if let Some(extensions) = reply.deep_retry_forced_extensions {
+        if matches!(
+            reply.outcome,
+            DefenderReplyOutcome::Unknown | DefenderReplyOutcome::UnprovedEscape
+        ) {
+            parts.push(format!("deep {extensions} tried"));
+        } else {
+            parts.push(format!("deep {extensions}"));
+        }
+    }
+    if !reply.limit_causes.is_empty() {
+        parts.push(proof_limit_cause_labels(&reply.limit_causes));
+    }
+    if parts.is_empty() {
+        outcome.to_string()
+    } else {
+        format!("{outcome} ({})", parts.join("; "))
     }
 }
 
@@ -1452,8 +1518,8 @@ fn reply_line_label(reply: &DefenderReplyAnalysis) -> String {
 
 fn proof_snapshot_html(snapshot: &AnalysisBatchProofSnapshot) -> String {
     format!(
-        "<div><strong>proof @ after ply {ply}</strong></div><div>Status {status}; attacker {attacker}; side to move {side}; reply {reply}</div><div>Aggregate proof evidence: win squares {winning}; defender cost/block {cost}; escape {escape}; forced replies {forced}</div><div>Sample proof branch {line}</div><div>Limits {limits}</div>",
-        ply = snapshot.prefix_ply,
+        "<div><strong>proof before ply {ply}</strong></div><div>Status {status}; attacker {attacker}; side to move {side}; reply {reply}</div><div>Aggregate proof evidence: win squares {winning}; defender cost/block {cost}; escape {escape}; forced replies {forced}</div><div>Sample proof branch {line}</div><div>Limits {limits}</div>",
+        ply = snapshot.prefix_ply + 1,
         status = html_escape(proof_status_label(snapshot.status)),
         attacker = html_escape(&format!("{:?}", snapshot.attacker)),
         side = html_escape(&format!("{:?}", snapshot.side_to_move)),
@@ -1465,6 +1531,18 @@ fn proof_snapshot_html(snapshot: &AnalysisBatchProofSnapshot) -> String {
         line = html_escape(&move_list_label(&snapshot.principal_line)),
         limits = html_escape(&proof_limit_cause_labels(&snapshot.limit_causes)),
     )
+}
+
+fn snapshot_title(snapshot: &AnalysisBoardSnapshot) -> String {
+    match snapshot.label.as_str() {
+        "escape_boundary" | "previous_prefix" => before_ply_label(snapshot.ply),
+        "forced_entry" => before_ply_label(snapshot.ply),
+        label => format!("{label} @ ply {}", snapshot.ply),
+    }
+}
+
+fn before_ply_label(prefix_ply: usize) -> String {
+    format!("before ply {}", prefix_ply + 1)
 }
 
 fn proof_status_label(status: ProofStatus) -> &'static str {
@@ -1480,6 +1558,7 @@ fn reply_classification_label(classification: ReplyClassification) -> &'static s
         ReplyClassification::IgnoredSingleWin => "ignored single win",
         ReplyClassification::BlockedButForced => "blocked but forced",
         ReplyClassification::Escaped => "escaped",
+        ReplyClassification::UnprovedEscape => "unproved escape",
         ReplyClassification::NoLegalBlock => "no legal block",
         ReplyClassification::Unknown => "unknown",
     }
@@ -1523,6 +1602,7 @@ fn proof_limit_cause_label(cause: ProofLimitCause) -> &'static str {
     match cause {
         ProofLimitCause::DepthCutoff => "depth cutoff",
         ProofLimitCause::ForcedExtensionCutoff => "forced-extension cutoff",
+        ProofLimitCause::ReplyWidthCutoff => "reply-width cutoff",
         ProofLimitCause::AttackerChildUnknown => "attacker child unknown",
         ProofLimitCause::DefenderReplyUnknown => "defender reply unknown",
         ProofLimitCause::ModelScopeUnknown => "model-scope unknown",
@@ -1771,6 +1851,8 @@ mod tests {
             AnalysisBatchRunOptions {
                 analysis: AnalysisOptions::default(),
                 include_proof_details: true,
+                deep_retry_forced_extensions: None,
+                deep_retry_limit: 1,
             },
         );
 
@@ -1818,11 +1900,11 @@ mod tests {
         assert!(details
             .snapshots
             .iter()
-            .any(|snapshot| snapshot.label == "before_forced_run" && snapshot.ply == 7));
+            .any(|snapshot| snapshot.label == "escape_boundary" && snapshot.ply == 7));
         assert!(details
             .snapshots
             .iter()
-            .any(|snapshot| snapshot.label == "after_forced_entry" && snapshot.ply == 8));
+            .any(|snapshot| snapshot.label == "forced_entry" && snapshot.ply == 8));
 
         assert_eq!(
             details
@@ -1830,11 +1912,7 @@ mod tests {
                 .iter()
                 .map(|frame| (frame.label.as_str(), frame.ply))
                 .collect::<Vec<_>>(),
-            vec![
-                ("winning_ply", 9),
-                ("actual_ply_8", 8),
-                ("before_forced_run", 7)
-            ]
+            vec![("winning_ply", 9), ("actual_ply_8", 8)]
         );
         assert!(details
             .proof_frames
@@ -1849,6 +1927,7 @@ mod tests {
                             | AnalysisBatchProofMarkerKind::OffensiveCounter
                             | AnalysisBatchProofMarkerKind::ForcedLoss
                             | AnalysisBatchProofMarkerKind::Escape
+                            | AnalysisBatchProofMarkerKind::UnprovedEscape
                             | AnalysisBatchProofMarkerKind::ImmediateLoss
                             | AnalysisBatchProofMarkerKind::UnknownOutcome
                             | AnalysisBatchProofMarkerKind::Actual
@@ -1871,20 +1950,6 @@ mod tests {
         assert!(actual_l8
             .kinds
             .contains(&AnalysisBatchProofMarkerKind::Winning));
-
-        let previous_frame = details
-            .proof_frames
-            .iter()
-            .find(|frame| frame.label == "before_forced_run" && frame.ply == 7)
-            .expect("before-forced-run visual frame should be recorded");
-        let previous_l8 = previous_frame
-            .markers
-            .iter()
-            .find(|marker| marker.notation == "L8")
-            .expect("before-forced-run frame should mark the L8 losing square");
-        assert!(previous_l8
-            .kinds
-            .contains(&AnalysisBatchProofMarkerKind::Threat));
 
         let final_frame = details
             .proof_frames
@@ -1927,19 +1992,20 @@ mod tests {
             AnalysisBatchRunOptions {
                 analysis: AnalysisOptions::default(),
                 include_proof_details: true,
+                deep_retry_forced_extensions: None,
+                deep_retry_limit: 1,
             },
         );
 
         let html = render_analysis_batch_report_html(&report);
         assert!(html.contains("Proof details"));
         assert!(html.contains("root transition"));
-        assert!(html.contains("Before forced run"));
+        assert!(html.contains("Escape boundary"));
         assert!(html.contains("Forced run entry"));
-        assert!(html.contains("proof @ after ply 7"));
+        assert!(html.contains("proof before ply 8"));
         assert!(html.contains("attacker Black; side to move White"));
         assert!(html.contains("Aggregate proof evidence: win squares L8"));
         assert!(html.contains("Sample proof branch L8"));
-        assert!(html.contains("before forced run / after ply 7"));
         assert!(html.contains("before ply 8 / actual move B1"));
         assert!(html.contains("Visual decision frames"));
         assert!(html.contains("class=\"proof-board\""));
@@ -2018,6 +2084,13 @@ mod tests {
             kinds: vec![AnalysisBatchProofMarkerKind::Threat],
         };
         assert_eq!(marker_label(&threat), "L");
+
+        let unproved_escape = AnalysisBatchProofMarker {
+            mv,
+            notation: mv.to_notation(),
+            kinds: vec![AnalysisBatchProofMarkerKind::UnprovedEscape],
+        };
+        assert_eq!(marker_label(&unproved_escape), "U");
     }
 
     #[test]
@@ -2044,6 +2117,8 @@ mod tests {
                     max_backward_window: Some(8),
                 },
                 include_proof_details: true,
+                deep_retry_forced_extensions: None,
+                deep_retry_limit: 1,
             },
         );
 
@@ -2084,7 +2159,7 @@ mod tests {
             .contains(&AnalysisBatchProofMarkerKind::OffensiveCounter));
         assert!(i10
             .kinds
-            .contains(&AnalysisBatchProofMarkerKind::UnknownOutcome));
+            .contains(&AnalysisBatchProofMarkerKind::UnprovedEscape));
         assert!(cell_classes(frame, '.', Some(i10)).contains("marker--side-white"));
 
         let i11 = marker_for(frame, "I11");
@@ -2105,6 +2180,32 @@ mod tests {
         ));
         assert!(html.contains("legend-offensive"));
         assert!(html.contains(".marker--side-white .proof-marker"));
+    }
+
+    #[test]
+    fn analysis_batch_model_only_reports_deep_retry_when_proof_details_run() {
+        let replay = replay_from_moves(
+            Variant::Freestyle,
+            &["H8", "G8", "I8", "A1", "J8", "A2", "K8", "B1", "L8"],
+        );
+
+        let report = run_analysis_batch_replays_with_options(
+            "deep-retry-off".to_string(),
+            vec![ReplayAnalysisInput {
+                label: "missed_defense".to_string(),
+                replay,
+            }],
+            AnalysisBatchRunOptions {
+                analysis: AnalysisOptions::default(),
+                include_proof_details: false,
+                deep_retry_forced_extensions: Some(10),
+                deep_retry_limit: 1,
+            },
+        );
+
+        assert_eq!(report.model.deep_retry_forced_extensions, None);
+        assert_eq!(report.model.deep_retry_limit, 0);
+        assert!(report.entries[0].proof_details.is_none());
     }
 
     fn marker_for<'a>(

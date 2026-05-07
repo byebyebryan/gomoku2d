@@ -67,15 +67,20 @@ For a move list `m1..mn`:
 - `corridor_status(P_k, winner, model)` returns `forced_win`, `escape_found`,
   or `unknown`.
 
-Avoid a plain `not_proven` result. In a bounded analyzer, "not found" does not
-mean "defensible." The useful distinction is:
-
 - `forced_win`: the analyzer proved that the detected corridor reaches a win
   under the stated model and limits.
 - `escape_found`: the defender has at least one model-valid move that exits the
   detected forced corridor, or the corridor reaches a neutral state with no
   active immediate/imminent threat and no forcing continuation.
-- `unknown`: the analyzer hit depth, node, time, or model-scope limits.
+- `unknown`: the analyzer hit a model or replay guard before it could enumerate
+  a concrete legal defender alternative.
+
+Once the analyzer has a concrete legal defender reply, failure to prove that
+reply is still forced should count as an escape from the detected corridor. Keep
+the evidence honest by marking that branch as an `unproved_escape`, not as a
+confirmed tactical escape. This matches the product question: if the bounded
+model cannot prove a position is still a forced loss for the losing side, it is
+not an obvious forced loss worth presenting as decisive.
 
 Every result must carry its model and limits. A proof without those fields is
 not product-safe.
@@ -124,8 +129,10 @@ Corridor state transitions:
   immediate/imminent threat.
 - Exit the corridor when a side wins, or when all active immediate/imminent
   threats are neutralized and the attacker has no named forcing continuation.
-- Return `unknown`, not `escape_found`, when a named corridor still exists but
-  the analyzer cannot classify every corridor reply within its current limits.
+- Return `escape_found` with `unproved_escape` evidence when a named legal
+  defender reply exists but the analyzer cannot prove that reply remains forced.
+  Return `unknown` only when the model cannot enumerate a meaningful legal reply
+  or hits a structural guard before a concrete alternative exists.
 
 The analyzer should not fall back to broad normal search. If the attacker has
 latent closed threes but no active threat exists, the only attacker moves that
@@ -153,8 +160,9 @@ The core loop is:
    preserve a proof.
 5. Stop when at least one losing-side reply exits the corridor. That reply marks
    the latest possible escape. If every named reply stays forced, continue
-   walking backward. If a named corridor exists but cannot be classified, mark
-   the boundary `unknown`.
+   walking backward. If a named legal reply cannot be classified within the
+   current budget, stop as an `unproved_escape`: treat it as an escape for root
+   classification, but keep the limit causes in the report.
 
 This means the analyzer can usually skip winner-side decision points while
 walking the actual spine: the question is what the losing side could have done
@@ -176,8 +184,10 @@ only"; it is "corridor moves only."
 Conceptually, this model should not need an arbitrary search depth limit. The
 corridor itself bounds the search because every branch must be justified by an
 active immediate/imminent threat. Implementation can still keep safety guards
-for bugs, cycles in derived facts, or report runtime, but tripping such a guard
-is `unknown`. A guard must never turn an active corridor into `escape`.
+for bugs, cycles in derived facts, or report runtime. Tripping such a guard after
+a concrete legal defender reply exists is `unproved_escape`; tripping it before
+the analyzer can enumerate a meaningful reply stays `unknown`. A guard must never
+turn an active corridor into `forced`.
 
 At the final winning move `PW`, inspect the previous prefix after `PW - 1`.
 There is still at least one winning square open for the winner. The losing move
@@ -211,8 +221,11 @@ For each corridor reply candidate, classify the follow-up explicitly:
   inside a named immediate/imminent corridor all the way to terminal win.
 - `escape`: the reply neutralizes the active threats and no named attacker
   continuation can keep the corridor alive.
-- `unknown`: a named corridor still exists, but at least one corridor reply or
-  continuation cannot be classified within the model limits.
+- `unproved_escape`: a legal reply is visible, but the analyzer cannot prove that
+  the reply remains forced within the current model limits. This counts as an
+  escape for root classification, but the report must show the proof limit.
+- `unknown`: the model cannot enumerate a meaningful legal reply or hit a
+  structural guard before a concrete alternative exists.
 
 This distinction is critical for counter-threats. If the defender creates an
 immediate/imminent counter-threat, the attacker may answer it. After that answer
@@ -221,13 +234,14 @@ the analyzer must inspect the new position:
 - If the original attacker has a new active immediate/imminent threat and every
   named defender reply still loses, the counter-threat reply is `forced`.
 - If the new position has an active immediate/imminent threat but some named
-  reply is unproven, the counter-threat reply is `unknown`.
+  reply is unproven, the counter-threat reply is `unproved_escape`.
 - If no active immediate/imminent threat remains and the attacker has no named
   forcing continuation, the counter-threat reply is `escape`.
 
-Implementation budgets must not change those semantics. A reply set that is
-"too broad for this implementation" is `unknown` if it is still generated from
-named threat semantics. Only an actual neutralized corridor is `escape`.
+Implementation budgets must not turn unproven branches into forced branches. A
+reply set that is "too broad for this implementation" is an `unproved_escape`
+once legal defender alternatives are known. Only structural/model failures before
+that point stay `unknown`.
 
 If an `escape` reply exists, and it is the final escape before the forced
 interval, it becomes the last chance. If the actual move did not choose one of
@@ -246,9 +260,9 @@ still inside the detected forced sequence. The defender may have legal cost
 replies, but all model-visible replies stay inside the corridor rather than
 escaping it. Keep walking backward.
 
-If no `escape` reply exists but at least one named reply is `unknown`, stop at an
-`unknown` boundary. Do not claim the earlier prefix is forced just because this
-implementation failed to classify a corridor reply.
+If no confirmed `escape` reply exists but at least one named legal reply is
+unproven, stop at an `unproved_escape` boundary. Do not claim the earlier prefix
+is forced just because this implementation failed to classify a corridor reply.
 
 All winning squares, cost squares, and escape checks are rule-aware and
 side-specific. A forbidden Renju point is not a legal winning square or escape
@@ -261,8 +275,10 @@ This distinction is important for product copy:
 - Accidental miss: "there was one block and it was missed."
 - Forced sequence: "the block was forced, but the next threat was still
   unavoidable."
-- Unknown: "the analyzer cannot determine whether the forced line started
-  earlier."
+- Unproved escape: "the analyzer could not prove this alternate defense still
+  loses."
+- Unknown: "the analyzer could not enumerate the position cleanly enough to
+  decide."
 
 ## Corridor Search Semantics
 
@@ -274,8 +290,8 @@ Defender reply semantics must be explicit:
 - Corridor proof uses named threat semantics: immediate replies, imminent
   replies, immediate wins, and valid counter-threat replies.
 - A fixed branch cap is an execution limit, not the definition of the corridor.
-  If the named reply set exceeds a budget, the result is `unknown` unless the
-  analyzer can still prove every named reply.
+  If concrete legal replies are known but exceed a budget, the result is
+  `unproved_escape` unless the analyzer can still prove every named reply.
 
 Search semantics:
 
@@ -286,8 +302,10 @@ Search semantics:
   for the attacker.
 - Escape: a named defender reply exits the detected forced corridor, or the
   attacker has no named corridor continuation after threats are neutralized.
-- Unknown: a named corridor exists but cannot be fully classified inside model
-  limits.
+- Unproved escape: a legal defender reply exists but cannot be proven forced
+  inside model limits.
+- Unknown: the model cannot enumerate a meaningful legal reply or hits a
+  structural guard before a concrete alternative exists.
 - Principal line: one representative forced line from the proof tree.
 
 The reply set must be named and inspectable. At minimum, the implementation
@@ -354,8 +372,10 @@ forced reply. From there:
 - a defender reply that neutralizes all active threats and leaves no named
   attacker continuation is an escape,
 - a defender reply that leaves an active corridor but cannot be classified by
-  the current implementation is unknown,
-- tripping an implementation guard inside an active corridor returns `unknown`.
+  the current implementation is an `unproved_escape`,
+- tripping an implementation guard after a concrete legal defender reply exists
+  returns `unproved_escape`,
+- tripping a structural guard before a meaningful reply exists returns `unknown`.
 
 This handles chained threats such as "closed four, forced block, create open
 three, forced replies, create broken four" without pretending the analyzer has
@@ -534,7 +554,10 @@ ThreatSequenceEvidence
 - `no_legal_block`: the only apparent cost squares are illegal for the defender
   and no immediate counter-win exists, so the threat remains forced even with a
   single winning square.
-- `unknown`: the analyzer cannot classify the reply within the current model.
+- `unproved_escape`: the analyzer cannot prove a legal reply still loses within
+  the current model.
+- `unknown`: the analyzer cannot enumerate the reply cleanly enough to classify
+  it.
 
 `prefix_ply` and `actual_reply` are replay-context attribution fields. The lab
 proof fills them while a proof branch is still following the actual replay line.
@@ -545,13 +568,16 @@ Proof result records should use explicit status:
 
 - `forced_win`: detected corridor proven within the model and limits.
 - `escape_found`: defender has at least one model-valid move that exits the
-  detected forced corridor.
-- `unknown`: search was cut off or the position exceeded analyzer scope.
+  detected forced corridor. This includes `unproved_escape` branches, which are
+  escapes for root classification but carry limit causes.
+- `unknown`: the position exceeded analyzer scope before a concrete legal
+  defender reply could be evaluated.
 
-Unknown proof results should also carry named causes. Current lab causes are:
+Limit-hit proof results should carry named causes. Current lab causes are:
 
 - `depth_cutoff`: normal proof depth ran out.
 - `forced_extension_cutoff`: narrow forced-extension budget ran out.
+- `reply_width_cutoff`: a named reply set exceeded the current audit width cap.
 - `attacker_child_unknown`: at least one attacker child could not be resolved.
 - `defender_reply_unknown`: at least one defender reply could not be resolved.
 - `model_scope_unknown`: the selected proof model had no concrete reply or
@@ -623,14 +649,18 @@ The first analyzer fixtures should include more than happy-path wins:
 - Forced chain: defender blocks one immediate threat, attacker creates the next
   immediate threat, and the analyzer proves the continuation without widening
   the whole search.
-- Unknown: position exceeds proof limits and must not be labeled strategic.
+- Unproved escape: a legal reply exists but exceeds proof limits, so the
+  transition is not presented as forced.
+- Unknown: position exceeds analyzer scope before a meaningful legal reply is
+  available.
 - Unknown gap: an earlier forced interval cannot be connected safely to the
   final forced interval.
 - Renju legality edge: forbidden Black defense squares never count as escapes.
 
 These fixtures should print exact boards, expected labels, proof model, and
-limits. They should fail if an implementation silently upgrades `unknown` into
-`strategic_loss`.
+limits. They should fail if an implementation silently upgrades `unknown` into a
+forced result. An `unproved_escape` may contribute to `escape_found`, but it must
+remain visible in evidence and report copy.
 
 ## UI Direction
 
@@ -733,7 +763,8 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   snapshots, reply classification, principal-line notation, compact board
   snapshots, and visual decision frames. The visual frames render pre-move
   decision states backward from the winning ply through the final forced
-  interval, then include a `before forced run / after ply N` boundary frame.
+  interval. Do not add a separate `after ply N` boundary frame; every visual
+  frame should use the `before ply X` convention.
   They mark the side to move, the actual replay move for each ply, immediate
   win-now squares, opponent-win-next losing squares, and defender reply
   outcomes for the audited position. Defender replies use two visual layers:
@@ -741,8 +772,8 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   immediate win, bright red for an immediate losing square, pink for a defensive
   reply to an imminent threat, blue for an offensive counter-threat reply, and
   an actual-move ring for the replay move. The marker character explains what
-  happens if the defender plays it (`L` forced loss, `E` escape, `!` immediate
-  loss, `?` unknown). Proof branch evidence such as
+  happens if the defender plays it (`L` forced loss, `E` escape, `U` unproved
+  escape, `!` immediate loss, `?` unknown). Proof branch evidence such as
   aggregate cost squares, forbidden costs, and principal-line moves stays in the
   textual proof snapshots with explicit attacker/side-to-move labels, so the
   board does not imply nested branch moves are current gameplay hints. Keep it
@@ -773,15 +804,18 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   frame marks `G4`, `G7`, and `G9` as imminent-defense replies that all end in
   forced loss, with `G7` additionally marked as the actual replay move. It also
   marks offensive counter-threat replies separately. `I11` still loses because
-  Black answers at `I10` and re-enters the narrow forced line. `I10` should also
-  be a forced loss: after Black answers at `I11`, White is still locked in the
-  named `G4/G7/G9` corridor, and those replies should be provable as forced
-  losses.
-  If the implementation reports `I10` as `escape` or `unknown`, that is an
-  implementation gap in corridor proof, not the intended model. This is the
-  intended bridge between "the user sees multiple plausible choices" and "which
-  of those choices are proven escapes, forced losses, or still outside the
-  model."
+  Black answers at `I10` and re-enters the narrow forced line. `I10` is the
+  harder sibling: White occupies the square that was the actual final Black move
+  (`I10`), Black must answer at `I11`, and the proof has to rediscover a longer
+  forced line. The default corridor audit keeps `--max-forced-extensions 4` for
+  speed; use
+  selective deep retry when auditing unresolved reply outcomes. For this sample,
+  `--deep-retry-forced-extensions 10 --deep-retry-limit 1` upgrades `I10` from
+  `unproved_escape` to `forced loss` without globally widening every proof branch.
+  If it still reports as `unproved_escape`, that means the current audit budget
+  could not prove the branch forced. This is the intended bridge between "the
+  user sees multiple plausible choices" and "which of those choices are proven
+  escapes, unproved escapes, or forced losses."
 - Before the corridor-exit pivot, the 64-game sampled checkpoint passed with
   `64 analyzed / 64 total`
   and `0 failed`: `63` proof-limit hits and `1` draw/ongoing game. Bounded
@@ -864,6 +898,21 @@ cargo run --release -p gomoku-eval -- analyze-report-replays \
   --max-depth 2 \
   --max-forced-extensions 4 \
   --max-backward-window 8
+
+cargo run --release -p gomoku-eval -- analyze-report-replays \
+  --report reports/latest.json \
+  --entrant-a search-d7+tactical-cap-8+pattern-eval \
+  --entrant-b search-d5+tactical-cap-8+pattern-eval \
+  --sample-size 8 \
+  --report-json outputs/analysis/top2_audit.json \
+  --report-html outputs/analysis/top2_audit.html \
+  --defense-policy all-legal-defense \
+  --max-depth 2 \
+  --max-forced-extensions 4 \
+  --max-backward-window 8 \
+  --include-proof-details \
+  --deep-retry-forced-extensions 10 \
+  --deep-retry-limit 1
 ```
 
 Use the report-sampled 8-game smoke path while tuning analyzer output or proof
@@ -873,7 +922,10 @@ head-to-head analysis only for checkpoint reports. `--max-backward-window 8`
 is the practical default for iteration; `24` is reserved for focused samples or
 longer runs until the proof model becomes narrower. Add
 `--include-proof-details` when the goal is auditability rather than a compact
-summary report.
+summary report. Add selective deep retry only for focused proof-detail audits:
+it retries unresolved defender-reply outcomes with a higher forced-extension
+budget, capped per replay by `--deep-retry-limit`. Do not use it as a substitute
+for fixing the corridor model or as a default full-report setting.
 
 Keep generated analysis JSON/HTML under `gomoku-bot-lab/outputs/analysis/`
 while iterating. These files are ignored scratch artifacts; commit only the
