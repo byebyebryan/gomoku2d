@@ -217,9 +217,13 @@ an `unclear` result distinguishes depth cutoffs, forced-extension cutoffs,
 defender-reply unknowns, model-scope unknowns, scan-window cutoffs, games with
 no final forced interval, and the board prefixes that need inspection. Add
 `--include-proof-details` when auditing decisive replay labels; it records the
-previous-prefix and final-forced-start proof snapshots plus visual HTML board
-frames for the root transition and principal-line steps, without changing the
-default compact report shape.
+previous-prefix and final-forced-start proof snapshots plus visual HTML
+decision frames for pre-move states from the winning ply backward through the
+final forced interval, without changing the default compact report shape. These
+frames separate reply role from reply outcome: outer hints show immediate or
+imminent defensive candidates, offensive counter-threat candidates, and actual
+replay moves, while marker characters show whether that reply escapes, loses
+immediately, stays unknown, or remains a forced loss.
 
 Scratch reports should stay in ignored `outputs/`. Curated reports for the
 public site live in [`reports/`](reports/); the web build copies that folder to
