@@ -2,9 +2,9 @@ use gomoku_core::{Board, Color, Move, Replay, RuleConfig, Variant};
 use serde::Serialize;
 
 use crate::analysis::{
-    analysis_model, analyze_replay, rule_label, AnalysisError, AnalysisModel, AnalysisOptions,
-    DefensePolicy, ForcedInterval, ProofStatus, ReplyClassification, RootCause, TacticalNote,
-    ANALYSIS_SCHEMA_VERSION,
+    analyze_replay, corridor_analysis_model, rule_label, AnalysisError, AnalysisModel,
+    AnalysisOptions, DefensePolicy, ForcedInterval, ProofStatus, ReplyClassification, RootCause,
+    TacticalNote, ANALYSIS_SCHEMA_VERSION,
 };
 
 #[derive(Debug, Clone)]
@@ -20,7 +20,6 @@ pub struct AnalysisFixtureCase {
 #[derive(Debug, Clone, Default)]
 pub struct AnalysisFixtureOptions {
     pub max_depth: Option<usize>,
-    pub max_forced_extensions: Option<usize>,
     pub defense_policy: Option<DefensePolicy>,
     pub max_backward_window: Option<usize>,
 }
@@ -45,7 +44,6 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         moves: &["H8", "G8", "I8", "A1", "J8", "A2", "K8", "B1", "L8"],
         options: AnalysisFixtureOptions {
             max_depth: None,
-            max_forced_extensions: None,
             defense_policy: None,
             max_backward_window: Some(3),
         },
@@ -72,7 +70,6 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         ],
         options: AnalysisFixtureOptions {
             max_depth: None,
-            max_forced_extensions: None,
             defense_policy: None,
             max_backward_window: Some(4),
         },
@@ -103,7 +100,6 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         ],
         options: AnalysisFixtureOptions {
             max_depth: None,
-            max_forced_extensions: None,
             defense_policy: None,
             max_backward_window: Some(3),
         },
@@ -128,7 +124,6 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         moves: &["H8", "A1", "I8", "A2", "J8", "A3", "K8", "B1", "L8"],
         options: AnalysisFixtureOptions {
             max_depth: Some(1),
-            max_forced_extensions: None,
             defense_policy: None,
             max_backward_window: Some(3),
         },
@@ -155,8 +150,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
             "L8", "K9", "K5", "K10",
         ],
         options: AnalysisFixtureOptions {
-            max_depth: Some(2),
-            max_forced_extensions: Some(4),
+            max_depth: Some(4),
             defense_policy: None,
             max_backward_window: Some(6),
         },
@@ -182,8 +176,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
             "A1", "H8", "A2", "I8", "A3", "J8", "A4", "K8", "B1", "L8",
         ],
         options: AnalysisFixtureOptions {
-            max_depth: Some(2),
-            max_forced_extensions: Some(4),
+            max_depth: Some(4),
             defense_policy: Some(DefensePolicy::TacticalDefense),
             max_backward_window: Some(2),
         },
@@ -210,8 +203,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
             "H8",
         ],
         options: AnalysisFixtureOptions {
-            max_depth: Some(2),
-            max_forced_extensions: Some(4),
+            max_depth: Some(4),
             defense_policy: Some(DefensePolicy::TacticalDefense),
             max_backward_window: Some(2),
         },
@@ -236,7 +228,6 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         moves: &["H8", "A1", "I8"],
         options: AnalysisFixtureOptions {
             max_depth: None,
-            max_forced_extensions: None,
             defense_policy: None,
             max_backward_window: None,
         },
@@ -325,7 +316,7 @@ pub fn run_analysis_fixtures(
     }
     let passed = results.iter().filter(|result| result.passed).count();
     let failed = results.len() - passed;
-    let base_model = analysis_model(
+    let base_model = corridor_analysis_model(
         &Board::new(RuleConfig {
             variant: Variant::Freestyle,
             ..RuleConfig::default()
@@ -413,9 +404,6 @@ fn fixture_options(
             .defense_policy
             .unwrap_or(base_options.defense_policy),
         max_depth: fixture_options.max_depth.unwrap_or(base_options.max_depth),
-        max_forced_extensions: fixture_options
-            .max_forced_extensions
-            .unwrap_or(base_options.max_forced_extensions),
         max_backward_window: fixture_options
             .max_backward_window
             .or(base_options.max_backward_window),
@@ -674,8 +662,7 @@ code, .moves {{ color: var(--accent); }}
   <article class="summary-card"><span>Result</span><strong>{passed} passed / {total} total</strong></article>
   <article class="summary-card"><span>Failed</span><strong>{failed}</strong></article>
   <article class="summary-card"><span>Defense</span><strong>{defense:?}</strong></article>
-  <article class="summary-card"><span>Depth</span><strong>{depth}</strong></article>
-  <article class="summary-card"><span>Forced Ext.</span><strong>{forced_extensions}</strong></article>
+  <article class="summary-card"><span>Corridor Depth</span><strong>{depth}</strong></article>
 </section>
 {cases}
 </main>
@@ -687,7 +674,6 @@ code, .moves {{ color: var(--accent); }}
         failed = report.failed,
         defense = report.base_model.defense_policy,
         depth = report.base_model.max_depth,
-        forced_extensions = report.base_model.max_forced_extensions,
         cases = cases,
     )
 }
@@ -764,10 +750,9 @@ fn render_analysis_fixture_case_html(result: &AnalysisFixtureResult) -> String {
         failures = failures,
         moves = html_escape(&result.moves.join(" ")),
         model = html_escape(&format!(
-            "{:?}, depth {}, forced extensions {}, window {:?}",
+            "{:?}, corridor depth {}, window {:?}",
             result.actual.model.defense_policy,
             result.actual.model.max_depth,
-            result.actual.model.max_forced_extensions,
             result.actual.model.max_backward_window
         )),
         expected = expectation_table(&result.expected),
@@ -966,7 +951,7 @@ mod tests {
         let json = serde_json::to_string_pretty(&report)
             .expect("analysis fixture report should serialize");
 
-        assert!(json.contains("\"schema_version\": 6"));
+        assert!(json.contains("\"schema_version\": 7"));
         assert!(json.contains("\"case_id\": \"missed_defense_closed_four\""));
         assert!(json.contains("\"expected\""));
         assert!(json.contains("\"actual\""));

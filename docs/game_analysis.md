@@ -358,12 +358,13 @@ The exact shape can change in implementation, but the invariant should hold:
 rule-forbidden replies are visible as tactical facts and are excluded only when
 deciding which replies are playable.
 
-## Forced Extensions
+## Corridor Depth
 
-The proof model is corridor-bounded rather than depth-bounded. The extension
-path only follows named immediate/imminent threats and their named replies.
-Conceptually, it tests whether a reply is a true corridor exit or merely a
-forced reply. From there:
+The proof model is corridor-bounded rather than broad-search depth-bounded. A
+single `max_depth` controls how many forced-corridor continuations the analyzer
+may follow. The corridor path only follows named immediate/imminent threats and
+their named replies. Conceptually, it tests whether a reply is a true corridor
+exit or merely another forced reply. From there:
 
 - attacker extension moves are limited to legal moves that answer a defender
   threat or create a new immediate/imminent threat,
@@ -383,9 +384,9 @@ searched every quiet alternative.
 If the previous prefix was still `unknown`, the analyzer should keep the root
 cause `unclear` even when the next prefix enters a proven forced interval.
 
-The current lab CLI still exposes depth and forced-extension budgets because the
-implementation is not yet a pure corridor prover. Treat those fields as safety
-and diagnostic controls, not as the intended product proof semantics.
+The current lab CLI exposes only the corridor `--max-depth` budget for replay
+analysis. Treat it as a safety and diagnostic control, not as a broad minimax
+depth.
 
 The current MVP detects winning squares through `immediate_winning_moves_for`.
 It does not yet expose a first-class threat inventory with named shapes, cost
@@ -575,8 +576,7 @@ Proof result records should use explicit status:
 
 Limit-hit proof results should carry named causes. Current lab causes are:
 
-- `depth_cutoff`: normal proof depth ran out.
-- `forced_extension_cutoff`: narrow forced-extension budget ran out.
+- `depth_cutoff`: corridor proof depth ran out.
 - `reply_width_cutoff`: a named reply set exceeded the current audit width cap.
 - `attacker_child_unknown`: at least one attacker child could not be resolved.
 - `defender_reply_unknown`: at least one defender reply could not be resolved.
@@ -739,8 +739,6 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
 - The current replay analyzer uses corridor-exit semantics for proof summaries:
   attacker nodes follow actual corridor moves or immediate wins, while defender
   nodes classify only model-valid corridor exits before calling a prefix forced.
-  The older broad `prove_forced_win` path remains as a reference/validation
-  helper for small positions.
 - The current proof engine handles immediate wins, single-threat escapes,
   open-four style unavoidable immediate wins, one narrow forced-chain extension,
   defender immediate-win escapes, Renju forbidden-block terminals, proof
@@ -779,22 +777,21 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   board does not imply nested branch moves are current gameplay hints. Keep it
   off for normal smoke runs; turn it on when reviewing why a `strategic_loss`,
   `missed_defense`, or decisive `unclear` label was assigned.
-- After the corridor-exit pivot, a top-two report smoke run against
+- After the single-depth corridor refactor, a top-two report smoke run against
   `search-d7+tactical-cap-8+pattern-eval` vs
   `search-d5+tactical-cap-8+pattern-eval` passed with `8 analyzed / 8 total`
-  and `0 failed` in about `3.9s` total elapsed time. It classified the decisive
-  sample as `6` strategic losses and `1` missed defense, with `1` draw/ongoing
-  entry and no decisive-game `unclear` roots.
+  and `0 failed`. It classified the sample as `7` missed defenses and `1`
+  draw/ongoing entry, with no `strategic_loss` or `unclear` roots. This is a
+  smoke check for the cleaned CLI/report path, not a replacement for the next
+  curated 64-game checkpoint.
 - A follow-up 64-game top-two implementation snapshot passed with `64 analyzed /
   64 total` and `0 failed` in about `49s` total elapsed time. It classified the
   decisive sample as `54` strategic losses, `5` missed defenses, and `4`
   unclear proof-limit entries, with `1` draw/ongoing entry. All decisive games
   found a final forced interval; only the `4` unclear decisive games carried
-  limit causes (`forced_extension_cutoff`, `attacker_child_unknown`, and
-  `defender_reply_unknown`). Treat this as current telemetry, not validation of
-  the corrected corridor-only model or product-ready copy: `strategic_loss`
-  still means "entered the detected forced corridor" rather than a full
-  game-theoretic loss proof.
+  limit causes (`depth_cutoff`, `attacker_child_unknown`, and
+  `defender_reply_unknown`). Treat this as pre-refactor telemetry for
+  comparison only.
 - The same implementation snapshot with `--include-proof-details` produced
   proof details for all `63` decisive entries and skipped the single
   draw/ongoing entry. This is the current audit path for checking whether the
@@ -807,29 +804,26 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   Black answers at `I10` and re-enters the narrow forced line. `I10` is the
   harder sibling: White occupies the square that was the actual final Black move
   (`I10`), Black must answer at `I11`, and the proof has to rediscover a longer
-  forced line. The default corridor audit keeps `--max-forced-extensions 4` for
-  speed; use
-  selective deep retry when auditing unresolved reply outcomes. For this sample,
-  `--deep-retry-forced-extensions 10 --deep-retry-limit 1` upgrades `I10` from
-  `unproved_escape` to `forced loss` without globally widening every proof branch.
-  If it still reports as `unproved_escape`, that means the current audit budget
-  could not prove the branch forced. This is the intended bridge between "the
-  user sees multiple plausible choices" and "which of those choices are proven
-  escapes, unproved escapes, or forced losses."
+  forced line. The default corridor audit keeps `--max-depth 4` for speed.
+  Selective deep retry remains a focused debugging knob for unresolved reply
+  outcomes, but it can be expensive and should stay off smoke reports. This is
+  the intended bridge between "the user sees multiple plausible choices" and
+  "which of those choices are proven escapes, unproved escapes, or forced
+  losses."
 - Before the corridor-exit pivot, the 64-game sampled checkpoint passed with
   `64 analyzed / 64 total`
   and `0 failed`: `63` proof-limit hits and `1` draw/ongoing game. Bounded
   scan expansion removed the previous scan-window cutoffs. Under
   `all_legal_defense`, `61` decisive games hit `depth_cutoff` plus
   `attacker_child_unknown` and `defender_reply_unknown`; the other `2` hit
-  `forced_extension_cutoff` plus the same child/reply unknowns.
+  `depth_cutoff` plus the same child/reply unknowns.
 - A tactical-defense 64-game comparison also produced `63` proof-limit hits and
   `1` draw/ongoing game. It was faster, but `61` decisive games became
   `model_scope_unknown`, meaning the narrow tactical model did not have a
   concrete reply/forcing set for the previous prefix. This is useful evidence
   for future model design, not a product-safe proof.
 - A hybrid-defense local-threat smoke run against the same top-two matchup,
-  sampled at `8` games with depth `2`, forced extensions `4`, and backward
+  sampled at `8` games with corridor depth `4` and backward
   window `8`, found `2` missed defenses, `5` unclear proof-limit entries, and
   `1` draw/ongoing game. The useful signal is that bounded local-threat replies
   can resolve some real report samples, not only synthetic fixtures. The risk is
@@ -845,13 +839,13 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   proof-limit entries, and `1` draw/ongoing game, with roughly the same runtime.
   Temporarily treating `BrokenThree` as forcing was much slower and was narrowed
   back to diagnostic-only before checkpointing.
-- Raising all-legal depth is not the next practical move. The 8-game smoke at
-  `all_legal_defense`, depth `3`, forced extensions `4` still left `7`
+- Raising all-legal corridor depth is not the next practical move. The 8-game smoke at
+  `all_legal_defense`, corridor depth `3` still left `7`
   unresolved entries and took roughly `190s` wall-clock / `626s` summed
   per-entry time, versus about `2.4s` / `7.4s` for depth `2`.
-- Increasing forced extensions alone did not help the smoke matrix. The dominant
-  issue is normal proof depth plus defender breadth, not forced-extension
-  budget.
+- Increasing the old forced-extension-only budget did not help the smoke matrix.
+  The dominant issue was defender breadth and corridor model quality, not a
+  second independent budget.
 
 Current next target: inspect the visual decision-frame audit output for the
 top-two 64-game run, especially the `4` decisive `unclear` entries and any
@@ -868,23 +862,20 @@ cargo run -p gomoku-eval -- analyze-replay \
   --input outputs/replays/match_001.json \
   --output outputs/analysis_001.json \
   --defense-policy all-legal-defense \
-  --max-depth 2 \
-  --max-forced-extensions 4
+  --max-depth 4
 
 cargo run -p gomoku-eval -- analysis-fixtures \
   --report-json outputs/analysis_fixtures.json \
   --report-html outputs/analysis_fixtures.html \
   --defense-policy all-legal-defense \
-  --max-depth 2 \
-  --max-forced-extensions 4
+  --max-depth 4
 
 cargo run -p gomoku-eval -- analyze-replay-batch \
   --replay-dir outputs/replays \
   --report-json outputs/analysis_batch.json \
   --report-html outputs/analysis_batch.html \
   --defense-policy all-legal-defense \
-  --max-depth 2 \
-  --max-forced-extensions 4 \
+  --max-depth 4 \
   --max-backward-window 24
 
 cargo run --release -p gomoku-eval -- analyze-report-replays \
@@ -895,8 +886,7 @@ cargo run --release -p gomoku-eval -- analyze-report-replays \
   --report-json outputs/analysis/top2_smoke.json \
   --report-html outputs/analysis/top2_smoke.html \
   --defense-policy all-legal-defense \
-  --max-depth 2 \
-  --max-forced-extensions 4 \
+  --max-depth 4 \
   --max-backward-window 8
 
 cargo run --release -p gomoku-eval -- analyze-report-replays \
@@ -907,11 +897,10 @@ cargo run --release -p gomoku-eval -- analyze-report-replays \
   --report-json outputs/analysis/top2_audit.json \
   --report-html outputs/analysis/top2_audit.html \
   --defense-policy all-legal-defense \
-  --max-depth 2 \
-  --max-forced-extensions 4 \
+  --max-depth 4 \
   --max-backward-window 8 \
   --include-proof-details \
-  --deep-retry-forced-extensions 10 \
+  --deep-retry-depth 10 \
   --deep-retry-limit 1
 ```
 
@@ -923,8 +912,8 @@ is the practical default for iteration; `24` is reserved for focused samples or
 longer runs until the proof model becomes narrower. Add
 `--include-proof-details` when the goal is auditability rather than a compact
 summary report. Add selective deep retry only for focused proof-detail audits:
-it retries unresolved defender-reply outcomes with a higher forced-extension
-budget, capped per replay by `--deep-retry-limit`. Do not use it as a substitute
+it retries unresolved defender-reply outcomes with a higher corridor depth,
+capped per replay by `--deep-retry-limit`. Do not use it as a substitute
 for fixing the corridor model or as a default full-report setting.
 
 Keep generated analysis JSON/HTML under `gomoku-bot-lab/outputs/analysis/`

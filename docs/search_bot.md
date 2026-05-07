@@ -197,7 +197,7 @@ The canonical lessons are:
   budgets. A partial frontier leaf eval is cheaper, but it can overvalue recent
   local threats while ignoring older live threats elsewhere. Tactical facts
   should therefore feed ordering, must-keep child caps, safety gates, or narrow
-  forced extensions before they feed static board value.
+  corridor probes before they feed static board value.
 - `local_create_broken_three` is a diagnostic, not a target. If depth 3 already
   solves a position cleanly, making depth 2 imitate it is only useful when it is
   cheaper than reaching depth 3 normally.

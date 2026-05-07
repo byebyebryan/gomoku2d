@@ -268,13 +268,9 @@ enum Commands {
         #[arg(long, value_enum, default_value = "all-legal-defense")]
         defense_policy: CliDefensePolicy,
 
-        /// Maximum proof depth in plies
-        #[arg(long, default_value_t = 2)]
-        max_depth: usize,
-
-        /// Narrow forcing continuations allowed after a defender answers a direct threat
+        /// Maximum forced-corridor proof depth
         #[arg(long, default_value_t = 4)]
-        max_forced_extensions: usize,
+        max_depth: usize,
 
         /// Optional number of final plies to scan backward
         #[arg(long)]
@@ -298,17 +294,13 @@ enum Commands {
         #[arg(long, value_enum, default_value = "all-legal-defense")]
         defense_policy: CliDefensePolicy,
 
-        /// Maximum proof depth in plies
-        #[arg(long, default_value_t = 2)]
+        /// Maximum forced-corridor proof depth
+        #[arg(long, default_value_t = 4)]
         max_depth: usize,
 
-        /// Narrow forcing continuations allowed after a defender answers a direct threat
-        #[arg(long, default_value_t = 4)]
-        max_forced_extensions: usize,
-
-        /// Optional deeper retry budget for unresolved proof-detail reply outcomes
+        /// Optional deeper forced-corridor depth for unresolved proof-detail reply outcomes
         #[arg(long)]
-        deep_retry_forced_extensions: Option<usize>,
+        deep_retry_depth: Option<usize>,
 
         /// Maximum number of proof-detail reply outcomes to retry per analyzed replay
         #[arg(long, default_value_t = 1)]
@@ -356,17 +348,13 @@ enum Commands {
         #[arg(long, value_enum, default_value = "all-legal-defense")]
         defense_policy: CliDefensePolicy,
 
-        /// Maximum proof depth in plies
-        #[arg(long, default_value_t = 2)]
+        /// Maximum forced-corridor proof depth
+        #[arg(long, default_value_t = 4)]
         max_depth: usize,
 
-        /// Narrow forcing continuations allowed after a defender answers a direct threat
-        #[arg(long, default_value_t = 4)]
-        max_forced_extensions: usize,
-
-        /// Optional deeper retry budget for unresolved proof-detail reply outcomes
+        /// Optional deeper forced-corridor depth for unresolved proof-detail reply outcomes
         #[arg(long)]
-        deep_retry_forced_extensions: Option<usize>,
+        deep_retry_depth: Option<usize>,
 
         /// Maximum number of proof-detail reply outcomes to retry per analyzed replay
         #[arg(long, default_value_t = 1)]
@@ -394,13 +382,9 @@ enum Commands {
         #[arg(long, value_enum, default_value = "all-legal-defense")]
         defense_policy: CliDefensePolicy,
 
-        /// Maximum proof depth in plies
-        #[arg(long, default_value_t = 2)]
-        max_depth: usize,
-
-        /// Narrow forcing continuations allowed after a defender answers a direct threat
+        /// Maximum forced-corridor proof depth
         #[arg(long, default_value_t = 4)]
-        max_forced_extensions: usize,
+        max_depth: usize,
 
         /// Optional number of final plies to scan backward unless a fixture overrides it
         #[arg(long)]
@@ -1352,7 +1336,6 @@ fn main() {
             output,
             defense_policy,
             max_depth,
-            max_forced_extensions,
             max_backward_window,
         } => {
             let json = std::fs::read_to_string(&input)
@@ -1364,7 +1347,6 @@ fn main() {
                 AnalysisOptions {
                     defense_policy: defense_policy.into(),
                     max_depth,
-                    max_forced_extensions,
                     max_backward_window,
                 },
             )
@@ -1388,8 +1370,7 @@ fn main() {
             report_html,
             defense_policy,
             max_depth,
-            max_forced_extensions,
-            deep_retry_forced_extensions,
+            deep_retry_depth,
             deep_retry_limit,
             max_backward_window,
             include_proof_details,
@@ -1400,11 +1381,10 @@ fn main() {
                     analysis: AnalysisOptions {
                         defense_policy: defense_policy.into(),
                         max_depth,
-                        max_forced_extensions,
                         max_backward_window,
                     },
                     include_proof_details,
-                    deep_retry_forced_extensions,
+                    deep_retry_depth,
                     deep_retry_limit,
                 },
             )
@@ -1444,8 +1424,7 @@ fn main() {
             report_html,
             defense_policy,
             max_depth,
-            max_forced_extensions,
-            deep_retry_forced_extensions,
+            deep_retry_depth,
             deep_retry_limit,
             max_backward_window,
             include_proof_details,
@@ -1493,11 +1472,10 @@ fn main() {
                     analysis: AnalysisOptions {
                         defense_policy: defense_policy.into(),
                         max_depth,
-                        max_forced_extensions,
                         max_backward_window,
                     },
                     include_proof_details,
-                    deep_retry_forced_extensions,
+                    deep_retry_depth,
                     deep_retry_limit,
                 },
             );
@@ -1529,13 +1507,11 @@ fn main() {
             report_html,
             defense_policy,
             max_depth,
-            max_forced_extensions,
             max_backward_window,
         } => {
             let report = run_analysis_fixtures(AnalysisOptions {
                 defense_policy: defense_policy.into(),
                 max_depth,
-                max_forced_extensions,
                 max_backward_window,
             })
             .unwrap_or_else(|err| {
@@ -1772,8 +1748,6 @@ mod tests {
             "tactical-defense",
             "--max-depth",
             "3",
-            "--max-forced-extensions",
-            "5",
             "--max-backward-window",
             "12",
         ])
@@ -1784,7 +1758,6 @@ mod tests {
             output,
             defense_policy,
             max_depth,
-            max_forced_extensions,
             max_backward_window,
         } = cli.command
         else {
@@ -1795,7 +1768,6 @@ mod tests {
         assert_eq!(output, Some(PathBuf::from("outputs/analysis.json")));
         assert_eq!(defense_policy, CliDefensePolicy::Tactical);
         assert_eq!(max_depth, 3);
-        assert_eq!(max_forced_extensions, 5);
         assert_eq!(max_backward_window, Some(12));
     }
 
@@ -1812,8 +1784,6 @@ mod tests {
             "hybrid-defense",
             "--max-depth",
             "4",
-            "--max-forced-extensions",
-            "6",
             "--max-backward-window",
             "16",
         ])
@@ -1824,7 +1794,6 @@ mod tests {
             report_html,
             defense_policy,
             max_depth,
-            max_forced_extensions,
             max_backward_window,
         } = cli.command
         else {
@@ -1841,7 +1810,6 @@ mod tests {
         );
         assert_eq!(defense_policy, CliDefensePolicy::Hybrid);
         assert_eq!(max_depth, 4);
-        assert_eq!(max_forced_extensions, 6);
         assert_eq!(max_backward_window, Some(16));
     }
 
@@ -1860,9 +1828,7 @@ mod tests {
             "tactical-defense",
             "--max-depth",
             "3",
-            "--max-forced-extensions",
-            "5",
-            "--deep-retry-forced-extensions",
+            "--deep-retry-depth",
             "10",
             "--deep-retry-limit",
             "2",
@@ -1877,8 +1843,7 @@ mod tests {
             report_html,
             defense_policy,
             max_depth,
-            max_forced_extensions,
-            deep_retry_forced_extensions,
+            deep_retry_depth,
             deep_retry_limit,
             max_backward_window,
             include_proof_details,
@@ -1898,8 +1863,7 @@ mod tests {
         );
         assert_eq!(defense_policy, CliDefensePolicy::Tactical);
         assert_eq!(max_depth, 3);
-        assert_eq!(max_forced_extensions, 5);
-        assert_eq!(deep_retry_forced_extensions, Some(10));
+        assert_eq!(deep_retry_depth, Some(10));
         assert_eq!(deep_retry_limit, 2);
         assert_eq!(max_backward_window, Some(12));
         assert!(!include_proof_details);
@@ -1927,10 +1891,8 @@ mod tests {
             "--defense-policy",
             "all-legal-defense",
             "--max-depth",
-            "2",
-            "--max-forced-extensions",
             "4",
-            "--deep-retry-forced-extensions",
+            "--deep-retry-depth",
             "10",
             "--deep-retry-limit",
             "1",
@@ -1950,8 +1912,7 @@ mod tests {
             report_html,
             defense_policy,
             max_depth,
-            max_forced_extensions,
-            deep_retry_forced_extensions,
+            deep_retry_depth,
             deep_retry_limit,
             max_backward_window,
             include_proof_details,
@@ -1980,9 +1941,8 @@ mod tests {
             Some(PathBuf::from("outputs/analysis/top2-smoke.html"))
         );
         assert_eq!(defense_policy, CliDefensePolicy::AllLegal);
-        assert_eq!(max_depth, 2);
-        assert_eq!(max_forced_extensions, 4);
-        assert_eq!(deep_retry_forced_extensions, Some(10));
+        assert_eq!(max_depth, 4);
+        assert_eq!(deep_retry_depth, Some(10));
         assert_eq!(deep_retry_limit, 1);
         assert_eq!(max_backward_window, Some(8));
         assert!(include_proof_details);
