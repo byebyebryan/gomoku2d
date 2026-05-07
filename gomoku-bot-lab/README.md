@@ -213,10 +213,13 @@ analysis now uses corridor-exit semantics: it follows the actual ending
 corridor and asks whether model-valid defender replies can leave it, rather than
 trying to prove every alternate state as a game-theoretic loss. The batch report
 includes `unclear_reason`, final forced-interval presence, prefix counts,
-per-entry elapsed time, limit-cause counts, and `unclear_context` drilldown so
-an `unclear` result distinguishes corridor-depth cutoffs, defender-reply
-unknowns, model-scope unknowns, scan-window cutoffs, games with no final forced
-interval, and the board prefixes that need inspection. Add
+per-entry elapsed time, limit-cause counts, and `unclear_context` drilldown.
+Report rows lead with loss-category severity: `mistake` for forced-corridor
+spans shorter than `5` plies, `tactical_error` for spans from `5` to `8` plies,
+and `strategic_loss` for spans `9` plies or longer. The root detail remains as
+row detail so an `unclear` result can still distinguish corridor-depth cutoffs,
+defender-reply unknowns, model-scope unknowns, scan-window cutoffs, games with
+no final forced interval, and the board prefixes that need inspection. Add
 `--include-proof-details` when auditing decisive replay labels; it records the
 previous-prefix and final-forced-start proof snapshots plus visual HTML
 decision frames for pre-move states from the winning ply backward through the
