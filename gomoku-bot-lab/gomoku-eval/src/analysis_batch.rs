@@ -7,7 +7,8 @@ use rayon::prelude::*;
 use serde::Serialize;
 
 use crate::analysis::{
-    analyze_replay, AnalysisBoardSnapshot, AnalysisOptions, DefensePolicy, ForcedInterval,
+    analyze_defender_reply_options, analyze_replay, AnalysisBoardSnapshot, AnalysisOptions,
+    DefenderReplyAnalysis, DefenderReplyOutcome, DefenderReplyRole, DefensePolicy, ForcedInterval,
     GameAnalysis, ProofLimitCause, ProofResult, ProofStatus, ReplyClassification, RootCause,
     TacticalNote, UnclearContext, UnclearReason, ANALYSIS_SCHEMA_VERSION,
 };
@@ -96,6 +97,7 @@ pub struct AnalysisBatchProofDetails {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct AnalysisBatchProofSnapshot {
     pub prefix_ply: usize,
+    pub attacker: Color,
     pub side_to_move: Color,
     pub status: ProofStatus,
     pub reply_classification: Option<ReplyClassification>,
@@ -117,11 +119,11 @@ pub struct AnalysisBatchProofFrame {
     pub ply: usize,
     pub side_to_move: Color,
     pub status: ProofStatus,
-    pub line_step: Option<usize>,
     pub move_played: Option<Move>,
     pub move_played_notation: Option<String>,
     pub rows: Vec<String>,
     pub markers: Vec<AnalysisBatchProofMarker>,
+    pub reply_outcomes: Vec<DefenderReplyAnalysis>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -129,18 +131,20 @@ pub struct AnalysisBatchProofMarker {
     pub mv: Move,
     pub notation: String,
     pub kinds: Vec<AnalysisBatchProofMarkerKind>,
-    pub principal_step: Option<usize>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AnalysisBatchProofMarkerKind {
     Winning,
-    Cost,
-    IllegalCost,
+    Threat,
+    ImminentDefense,
+    OffensiveCounter,
+    ForcedLoss,
     Escape,
-    Forced,
-    Principal,
+    ImmediateLoss,
+    UnknownOutcome,
+    Actual,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -398,6 +402,8 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       --orange: #f08c4e;
       --cyan: #4ecdc4;
       --red: #ff5d5d;
+      --pink: #ff7ab6;
+      --blue: #58a6ff;
     }}
     body {{
       margin: 0;
@@ -513,28 +519,53 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
     .marker--winning {{
       box-shadow: inset 0 0 0 2px var(--green);
     }}
-    .marker--cost {{
-      background: color-mix(in srgb, var(--orange) 38%, transparent);
-    }}
-    .marker--illegal-cost {{
+    .marker--threat {{
       box-shadow: inset 0 0 0 2px var(--red);
+      background: color-mix(in srgb, var(--red) 22%, transparent);
     }}
-    .marker--escape {{
-      outline: 2px solid var(--cyan);
-      outline-offset: -4px;
+    .marker--imminent-defense {{
+      box-shadow: inset 0 0 0 2px var(--pink);
+      background: color-mix(in srgb, var(--pink) 22%, transparent);
     }}
-    .marker--forced {{
-      box-shadow: inset 0 0 0 1px var(--orange);
+    .marker--offensive-counter {{
+      box-shadow: inset 0 0 0 2px var(--blue);
+      background: color-mix(in srgb, var(--blue) 20%, transparent);
     }}
-    .marker--principal .proof-marker {{
-      background: var(--accent);
-      border-radius: 999px;
-      inset: 2px;
+    .marker--escape .proof-marker {{
+      color: var(--green);
+      text-shadow: 0 1px 0 rgba(0,0,0,0.45);
     }}
-    .marker--illegal-cost .proof-marker {{
+    .marker--immediate-loss .proof-marker {{
       color: var(--red);
-      background: transparent;
-      font-size: 13px;
+      text-shadow: 0 1px 0 rgba(0,0,0,0.45);
+    }}
+    .marker--unknown-outcome .proof-marker {{
+      color: var(--muted);
+    }}
+    .marker--actual {{
+    }}
+    .marker--actual .proof-marker {{
+      font-size: 10px;
+    }}
+    .marker--actual-black .proof-marker {{
+      color: #07090c;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.36);
+    }}
+    .marker--actual-white .proof-marker {{
+      color: #f6eed8;
+      text-shadow: 0 1px 0 #000;
+    }}
+    .proof-cell--stone-black.marker--actual .proof-marker {{
+      color: var(--text);
+      text-shadow: 0 1px 0 #000;
+    }}
+    .marker--side-black .proof-marker {{
+      color: #07090c;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.36);
+    }}
+    .marker--side-white .proof-marker {{
+      color: #f6eed8;
+      text-shadow: 0 1px 0 #000;
     }}
     .proof-legend {{
       display: flex;
@@ -554,10 +585,34 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       border: 1px solid currentColor;
     }}
     .legend-winning::before {{ color: var(--green); background: color-mix(in srgb, var(--green) 25%, transparent); }}
-    .legend-cost::before {{ color: var(--orange); background: color-mix(in srgb, var(--orange) 35%, transparent); }}
-    .legend-escape::before {{ color: var(--cyan); background: color-mix(in srgb, var(--cyan) 25%, transparent); }}
-    .legend-forbidden::before {{ color: var(--red); background: color-mix(in srgb, var(--red) 25%, transparent); }}
-    .legend-principal::before {{ color: var(--accent); background: var(--accent); }}
+    .legend-threat::before {{ color: var(--red); background: color-mix(in srgb, var(--red) 25%, transparent); }}
+    .legend-imminent::before {{ color: var(--pink); background: color-mix(in srgb, var(--pink) 25%, transparent); }}
+    .legend-offensive::before {{ color: var(--blue); background: color-mix(in srgb, var(--blue) 25%, transparent); }}
+    .legend-actual::before {{ color: var(--text); background: color-mix(in srgb, var(--text) 30%, transparent); }}
+    .reply-outcomes {{
+      margin-top: 10px;
+      border-top: 1px solid var(--line);
+      padding-top: 8px;
+      display: grid;
+      gap: 4px;
+      font-size: 11px;
+      color: var(--muted);
+    }}
+    .reply-outcome-row {{
+      display: grid;
+      grid-template-columns: 38px 104px 74px minmax(0, 1fr);
+      gap: 8px;
+      align-items: baseline;
+    }}
+    .reply-outcome-row strong {{
+      color: var(--text);
+    }}
+    .reply-outcome-row--header {{
+      color: var(--faint);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 9px;
+    }}
   </style>
 </head>
 <body>
@@ -702,7 +757,7 @@ fn proof_details_from_analysis(
     if let Some(previous_prefix_ply) = previous_prefix_ply {
         if let Some(board) = boards.get(previous_prefix_ply) {
             snapshots.push(board_snapshot(
-                "previous_prefix",
+                "before_forced_run",
                 previous_prefix_ply,
                 board,
             ));
@@ -714,31 +769,19 @@ fn proof_details_from_analysis(
     {
         if let Some(board) = boards.get(final_forced_start_ply) {
             snapshots.push(board_snapshot(
-                "final_forced_start",
+                "after_forced_entry",
                 final_forced_start_ply,
                 board,
             ));
         }
     }
-    let mut proof_frames = Vec::new();
-    if let (Some(previous_prefix_ply), Some(previous_proof_result)) =
-        (previous_prefix_ply, previous_proof_result)
-    {
-        proof_frames.extend(proof_frames_for_proof(
-            "previous_prefix",
-            previous_prefix_ply,
-            &boards,
-            previous_proof_result,
-        ));
-    }
-    if let Some(final_start_proof_result) = final_start_proof_result {
-        proof_frames.extend(proof_frames_for_proof(
-            "final_forced_start",
-            final_forced_start_ply,
-            &boards,
-            final_start_proof_result,
-        ));
-    }
+    let proof_frames = proof_frames_for_actual_interval(
+        replay,
+        &boards,
+        analysis,
+        scan_start,
+        previous_prefix_ply,
+    );
 
     Some(AnalysisBatchProofDetails {
         previous_prefix_ply,
@@ -770,6 +813,7 @@ fn proof_snapshot(prefix_ply: usize, proof: &ProofResult) -> AnalysisBatchProofS
 
     AnalysisBatchProofSnapshot {
         prefix_ply,
+        attacker: proof.attacker,
         side_to_move: proof.side_to_move,
         status: proof.status,
         reply_classification: proof
@@ -797,89 +841,124 @@ fn proof_snapshot(prefix_ply: usize, proof: &ProofResult) -> AnalysisBatchProofS
     }
 }
 
-fn proof_frames_for_proof(
-    label: &str,
-    prefix_ply: usize,
+fn proof_frames_for_actual_interval(
+    replay: &Replay,
     boards: &[Board],
-    proof: &ProofResult,
+    analysis: &GameAnalysis,
+    scan_start: usize,
+    previous_prefix_ply: Option<usize>,
 ) -> Vec<AnalysisBatchProofFrame> {
-    let Some(base_board) = boards.get(prefix_ply) else {
+    let plys = (analysis.final_forced_interval.start_ply..=analysis.final_forced_interval.end_ply)
+        .rev()
+        .collect::<Vec<_>>();
+
+    let mut frames = plys
+        .into_iter()
+        .filter_map(|ply| {
+            let board_ply = ply.checked_sub(1)?;
+            let board = boards.get(board_ply)?;
+            let proof = proof_result_at(&analysis.proof_summary, scan_start, board_ply);
+            let mut markers = Vec::new();
+            add_decision_tactical_markers(&mut markers, board);
+            let actual_move = actual_move_at_ply(replay, ply);
+            let reply_outcomes = defender_reply_outcomes_for_frame(board, analysis, actual_move);
+            add_reply_outcome_markers(&mut markers, &reply_outcomes);
+            if let Some(actual_move) = actual_move {
+                add_marker_kind(
+                    &mut markers,
+                    [actual_move],
+                    AnalysisBatchProofMarkerKind::Actual,
+                );
+            }
+            markers.sort_by_key(|marker| (marker.mv.row, marker.mv.col));
+            Some(proof_frame(
+                &actual_frame_label(ply, &analysis.final_forced_interval),
+                ply,
+                board,
+                proof
+                    .map(|proof| proof.status)
+                    .unwrap_or(ProofStatus::Unknown),
+                actual_move,
+                markers,
+                reply_outcomes,
+            ))
+        })
+        .collect::<Vec<_>>();
+
+    if let Some(previous_prefix_ply) = previous_prefix_ply {
+        if let Some(board) = boards.get(previous_prefix_ply) {
+            let proof = proof_result_at(&analysis.proof_summary, scan_start, previous_prefix_ply);
+            let mut markers = Vec::new();
+            add_decision_tactical_markers(&mut markers, board);
+            let reply_outcomes = defender_reply_outcomes_for_frame(board, analysis, None);
+            add_reply_outcome_markers(&mut markers, &reply_outcomes);
+            markers.sort_by_key(|marker| (marker.mv.row, marker.mv.col));
+            frames.push(proof_frame(
+                "before_forced_run",
+                previous_prefix_ply,
+                board,
+                proof
+                    .map(|proof| proof.status)
+                    .unwrap_or(ProofStatus::Unknown),
+                None,
+                markers,
+                reply_outcomes,
+            ));
+        }
+    }
+
+    frames
+}
+
+fn defender_reply_outcomes_for_frame(
+    board: &Board,
+    analysis: &GameAnalysis,
+    actual_move: Option<Move>,
+) -> Vec<DefenderReplyAnalysis> {
+    let Some(attacker) = analysis.winner else {
         return Vec::new();
     };
-    let mut initial_markers = Vec::new();
-    if let Some(next_move) = proof.principal_line.first().copied() {
-        add_principal_marker(&mut initial_markers, next_move, &proof.principal_line);
-        if proof.status == ProofStatus::ForcedWin && proof.principal_line.len() == 1 {
-            add_marker_kind(
-                &mut initial_markers,
-                [next_move],
-                AnalysisBatchProofMarkerKind::Winning,
-            );
-        }
-    }
-    let mut frames = vec![proof_frame(
-        label,
-        prefix_ply,
-        base_board,
-        proof.status,
-        None,
-        None,
-        initial_markers,
-    )];
-
-    let mut line_board = base_board.clone();
-    let mut played_line = Vec::new();
-    for (idx, mv) in proof.principal_line.iter().copied().enumerate() {
-        if line_board.apply_move(mv).is_err() {
-            break;
-        }
-        let step = idx + 1;
-        played_line.push(mv);
-        frames.push(proof_frame(
-            &format!("{label}_line_step_{step}"),
-            prefix_ply + step,
-            &line_board,
-            proof.status,
-            Some(step),
-            Some(mv),
-            principal_markers(&played_line, &proof.principal_line),
-        ));
+    if board.current_player != attacker.opponent() {
+        return Vec::new();
     }
 
-    for evidence in &proof.threat_evidence {
-        let evidence_ply = evidence.prefix_ply.unwrap_or(prefix_ply);
-        let Some(board) = boards.get(evidence_ply) else {
-            continue;
-        };
-        let frame_index =
-            if let Some(index) = frames.iter().position(|frame| frame.ply == evidence_ply) {
-                index
-            } else {
-                let line_step = evidence_ply
-                    .checked_sub(prefix_ply)
-                    .filter(|step| *step > 0);
-                let move_played =
-                    line_step.and_then(|step| proof.principal_line.get(step - 1).copied());
-                frames.push(proof_frame(
-                    &frame_label(label, prefix_ply, evidence_ply),
-                    evidence_ply,
-                    board,
-                    evidence.proof_status,
-                    line_step,
-                    move_played,
-                    Vec::new(),
-                ));
-                frames.len() - 1
-            };
-        add_evidence_markers(
-            &mut frames[frame_index].markers,
-            evidence,
-            &proof.principal_line,
-        );
-    }
+    analyze_defender_reply_options(
+        board,
+        attacker,
+        actual_move,
+        &AnalysisOptions {
+            defense_policy: analysis.model.defense_policy,
+            max_depth: analysis.model.max_depth,
+            max_forced_extensions: analysis.model.max_forced_extensions,
+            max_backward_window: analysis.model.max_backward_window,
+        },
+    )
+}
 
-    frames.sort_by_key(|frame| (frame.ply, frame.line_step.unwrap_or(0), frame.label.clone()));
-    frames
+fn actual_frame_label(ply: usize, interval: &ForcedInterval) -> String {
+    if ply == interval.end_ply {
+        "winning_ply".to_string()
+    } else {
+        format!("actual_ply_{ply}")
+    }
+}
+
+fn actual_move_at_ply(replay: &Replay, ply: usize) -> Option<Move> {
+    let replay_move = replay.moves.get(ply.checked_sub(1)?)?;
+    Move::from_notation(&replay_move.mv).ok()
+}
+
+fn add_decision_tactical_markers(markers: &mut Vec<AnalysisBatchProofMarker>, board: &Board) {
+    add_marker_kind(
+        markers,
+        board.immediate_winning_moves_for(board.current_player),
+        AnalysisBatchProofMarkerKind::Winning,
+    );
+    add_marker_kind(
+        markers,
+        board.immediate_winning_moves_for(board.current_player.opponent()),
+        AnalysisBatchProofMarkerKind::Threat,
+    );
 }
 
 fn proof_frame(
@@ -887,105 +966,47 @@ fn proof_frame(
     ply: usize,
     board: &Board,
     status: ProofStatus,
-    line_step: Option<usize>,
     move_played: Option<Move>,
     markers: Vec<AnalysisBatchProofMarker>,
+    reply_outcomes: Vec<DefenderReplyAnalysis>,
 ) -> AnalysisBatchProofFrame {
     AnalysisBatchProofFrame {
         label: label.to_string(),
         ply,
         side_to_move: board.current_player,
         status,
-        line_step,
         move_played,
         move_played_notation: move_played.map(Move::to_notation),
         rows: board_rows(board),
         markers,
+        reply_outcomes,
     }
 }
 
-fn frame_label(label: &str, prefix_ply: usize, evidence_ply: usize) -> String {
-    if evidence_ply == prefix_ply {
-        label.to_string()
-    } else {
-        format!("{label}_line_step_{}", evidence_ply - prefix_ply)
-    }
-}
-
-fn principal_markers(moves: &[Move], principal_line: &[Move]) -> Vec<AnalysisBatchProofMarker> {
-    let mut markers = Vec::new();
-    for mv in moves.iter().copied() {
-        add_principal_marker(&mut markers, mv, principal_line);
-    }
-    markers
-}
-
-fn add_evidence_markers(
+fn add_reply_outcome_markers(
     markers: &mut Vec<AnalysisBatchProofMarker>,
-    evidence: &crate::analysis::ThreatSequenceEvidence,
-    principal_line: &[Move],
+    replies: &[DefenderReplyAnalysis],
 ) {
-    add_marker_kind(
-        markers,
-        evidence.winning_squares.iter().copied(),
-        AnalysisBatchProofMarkerKind::Winning,
-    );
-    if evidence.proof_status == ProofStatus::ForcedWin
-        && evidence.winning_squares.is_empty()
-        && principal_line.len() == 1
-    {
-        add_marker_kind(
-            markers,
-            principal_line.iter().copied(),
-            AnalysisBatchProofMarkerKind::Winning,
-        );
+    for reply in replies {
+        for role in &reply.roles {
+            let kind = match role {
+                DefenderReplyRole::Actual => AnalysisBatchProofMarkerKind::Actual,
+                DefenderReplyRole::ImmediateDefense => AnalysisBatchProofMarkerKind::Threat,
+                DefenderReplyRole::ImminentDefense => AnalysisBatchProofMarkerKind::ImminentDefense,
+                DefenderReplyRole::OffensiveCounter => {
+                    AnalysisBatchProofMarkerKind::OffensiveCounter
+                }
+            };
+            add_marker_kind(markers, [reply.mv], kind);
+        }
+        let outcome_kind = match reply.outcome {
+            DefenderReplyOutcome::ForcedLoss => AnalysisBatchProofMarkerKind::ForcedLoss,
+            DefenderReplyOutcome::Escape => AnalysisBatchProofMarkerKind::Escape,
+            DefenderReplyOutcome::ImmediateLoss => AnalysisBatchProofMarkerKind::ImmediateLoss,
+            DefenderReplyOutcome::Unknown => AnalysisBatchProofMarkerKind::UnknownOutcome,
+        };
+        add_marker_kind(markers, [reply.mv], outcome_kind);
     }
-    add_marker_kind(
-        markers,
-        evidence.legal_cost_squares.iter().copied(),
-        AnalysisBatchProofMarkerKind::Cost,
-    );
-    add_marker_kind(
-        markers,
-        evidence.illegal_cost_squares.iter().copied(),
-        AnalysisBatchProofMarkerKind::IllegalCost,
-    );
-    add_marker_kind(
-        markers,
-        evidence.escape_replies.iter().copied(),
-        AnalysisBatchProofMarkerKind::Escape,
-    );
-    add_marker_kind(
-        markers,
-        evidence.forced_replies.iter().copied(),
-        AnalysisBatchProofMarkerKind::Forced,
-    );
-    if let Some(actual_reply) = evidence.actual_reply {
-        add_principal_marker(markers, actual_reply, principal_line);
-    }
-    if let Some(next_forcing_move) = evidence.next_forcing_move {
-        add_principal_marker(markers, next_forcing_move, principal_line);
-    }
-    markers.sort_by_key(|marker| (marker.mv.row, marker.mv.col));
-}
-
-fn add_principal_marker(
-    markers: &mut Vec<AnalysisBatchProofMarker>,
-    mv: Move,
-    principal_line: &[Move],
-) {
-    let marker = upsert_marker(markers, mv);
-    if !marker
-        .kinds
-        .contains(&AnalysisBatchProofMarkerKind::Principal)
-    {
-        marker.kinds.push(AnalysisBatchProofMarkerKind::Principal);
-    }
-    marker.principal_step = principal_line
-        .iter()
-        .position(|principal| *principal == mv)
-        .map(|idx| idx + 1)
-        .or(marker.principal_step);
 }
 
 fn add_marker_kind(
@@ -1012,7 +1033,6 @@ fn upsert_marker(
         mv,
         notation: mv.to_notation(),
         kinds: Vec::new(),
-        principal_step: None,
     });
     markers
         .last_mut()
@@ -1220,7 +1240,7 @@ fn proof_details_html(details: Option<&AnalysisBatchProofDetails>) -> String {
     let frames = proof_frames_html(&details.proof_frames);
 
     format!(
-        "<div class=\"context\"><details><summary>root transition</summary><div><strong>Previous prefix</strong> {previous_ply}</div><div><strong>Final forced start</strong> {final_ply}</div>{previous}{final_start}</details>{frames}<details><summary>ASCII board snapshots</summary>{snapshots}</details></div>",
+        "<div class=\"context\"><details><summary>root transition</summary><div><strong>Before forced run</strong> after ply {previous_ply}</div><div><strong>Forced run entry</strong> ply {final_ply}</div>{previous}{final_start}</details>{frames}<details><summary>ASCII board snapshots</summary>{snapshots}</details></div>",
         previous_ply = details
             .previous_prefix_ply
             .map(|ply| ply.to_string())
@@ -1239,26 +1259,62 @@ fn proof_frames_html(frames: &[AnalysisBatchProofFrame]) -> String {
     }
     let frame_cards = frames.iter().map(proof_frame_html).collect::<String>();
     format!(
-        "<details><summary>Visual proof frames</summary><div class=\"proof-legend\"><span class=\"legend-winning\">winning square</span><span class=\"legend-cost\">cost/block square</span><span class=\"legend-escape\">escape reply</span><span class=\"legend-forbidden\">forbidden cost</span><span class=\"legend-principal\">principal line</span></div><div class=\"proof-frame-grid\">{frame_cards}</div></details>"
+        "<details><summary>Visual decision frames</summary><div class=\"proof-legend\"><span class=\"legend-winning\">win now</span><span class=\"legend-threat\">immediate threat</span><span class=\"legend-imminent\">defensive reply</span><span class=\"legend-offensive\">offensive reply</span><span class=\"legend-actual\">actual replay move</span><span>L forced loss</span><span>E escape</span><span>! immediate loss</span><span>? unknown</span></div><div class=\"proof-frame-grid\">{frame_cards}</div></details>"
     )
 }
 
 fn proof_frame_html(frame: &AnalysisBatchProofFrame) -> String {
-    let title = match (frame.line_step, frame.move_played_notation.as_deref()) {
-        (Some(step), Some(mv)) => format!(
-            "{} @ ply {} / step {}: {}",
-            frame.label, frame.ply, step, mv
-        ),
-        _ => format!("{} @ ply {}", frame.label, frame.ply),
-    };
+    let title = proof_frame_title(frame);
     let board = proof_board_html(frame);
+    let replies = reply_outcomes_html(frame);
     format!(
-        "<article class=\"proof-frame\"><h3>{title}</h3><p>{side} to move / {status}</p>{board}</article>",
+        "<article class=\"proof-frame\" data-ply=\"{ply}\"><h3>{title}</h3><p>{side} to move / {status}</p>{board}{replies}</article>",
+        ply = frame.ply,
         title = html_escape(&title),
         side = html_escape(&format!("{:?}", frame.side_to_move)),
         status = html_escape(proof_status_label(frame.status)),
         board = board,
+        replies = replies,
     )
+}
+
+fn reply_outcomes_html(frame: &AnalysisBatchProofFrame) -> String {
+    if frame.reply_outcomes.is_empty() {
+        return String::new();
+    }
+
+    let rows = frame
+        .reply_outcomes
+        .iter()
+        .map(|reply| {
+            format!(
+                "<div class=\"reply-outcome-row\"><strong>{mv}</strong><span>{roles}</span><span>{outcome}</span><span>{line}</span></div>",
+                mv = html_escape(&reply.notation),
+                roles = html_escape(&reply_roles_label(&reply.roles)),
+                outcome = html_escape(defender_reply_outcome_label(reply.outcome)),
+                line = html_escape(&reply_line_label(reply)),
+            )
+        })
+        .collect::<String>();
+    format!(
+        "<div class=\"reply-outcomes\"><div class=\"reply-outcome-row reply-outcome-row--header\"><span>Move</span><span>Role</span><span>Outcome</span><span>Sample</span></div>{rows}</div>",
+    )
+}
+
+fn proof_frame_title(frame: &AnalysisBatchProofFrame) -> String {
+    if frame.label == "before_forced_run" {
+        return format!("before forced run / after ply {}", frame.ply);
+    }
+    match (frame.label.as_str(), frame.move_played_notation.as_deref()) {
+        ("winning_ply", Some(mv)) => {
+            format!(
+                "winning move / before ply {} / actual move {}",
+                frame.ply, mv
+            )
+        }
+        (_, Some(mv)) => format!("before ply {} / actual move {}", frame.ply, mv),
+        (_, None) => format!("{} @ ply {}", frame.label, frame.ply),
+    }
 }
 
 fn proof_board_html(frame: &AnalysisBatchProofFrame) -> String {
@@ -1266,38 +1322,91 @@ fn proof_board_html(frame: &AnalysisBatchProofFrame) -> String {
         .markers
         .iter()
         .map(|marker| {
-            ReportBoardMarker::new(marker.mv)
-                .with_classes(marker_classes(marker))
-                .with_label(marker_label(marker))
+            let mut report_marker = ReportBoardMarker::new(marker.mv)
+                .with_classes(marker_classes(frame, marker))
+                .with_label(marker_label(marker));
+            if marker.kinds.contains(&AnalysisBatchProofMarkerKind::Actual) {
+                report_marker = report_marker.with_actual_stone(frame.side_to_move);
+            }
+            report_marker
         })
         .collect::<Vec<_>>();
     render_report_board(&frame.rows, &markers)
 }
 
-fn marker_classes(marker: &AnalysisBatchProofMarker) -> Vec<&'static str> {
-    marker
-        .kinds
-        .iter()
-        .map(|kind| match kind {
+#[cfg(test)]
+fn cell_classes(
+    frame: &AnalysisBatchProofFrame,
+    stone: char,
+    marker: Option<&AnalysisBatchProofMarker>,
+) -> String {
+    let mut classes = vec!["proof-cell"];
+    match stone {
+        'B' => classes.push("proof-cell--stone-black"),
+        'W' => classes.push("proof-cell--stone-white"),
+        _ => {}
+    }
+    if let Some(marker) = marker {
+        classes.extend(marker_classes(frame, marker));
+    }
+    classes.join(" ")
+}
+
+fn marker_classes(
+    frame: &AnalysisBatchProofFrame,
+    marker: &AnalysisBatchProofMarker,
+) -> Vec<&'static str> {
+    let mut classes = Vec::new();
+    for kind in &marker.kinds {
+        classes.push(match kind {
             AnalysisBatchProofMarkerKind::Winning => "marker--winning",
-            AnalysisBatchProofMarkerKind::Cost => "marker--cost",
-            AnalysisBatchProofMarkerKind::IllegalCost => "marker--illegal-cost",
+            AnalysisBatchProofMarkerKind::Threat => "marker--threat",
+            AnalysisBatchProofMarkerKind::ImminentDefense => "marker--imminent-defense",
+            AnalysisBatchProofMarkerKind::OffensiveCounter => "marker--offensive-counter",
+            AnalysisBatchProofMarkerKind::ForcedLoss => "marker--forced-loss",
             AnalysisBatchProofMarkerKind::Escape => "marker--escape",
-            AnalysisBatchProofMarkerKind::Forced => "marker--forced",
-            AnalysisBatchProofMarkerKind::Principal => "marker--principal",
-        })
-        .collect()
+            AnalysisBatchProofMarkerKind::ImmediateLoss => "marker--immediate-loss",
+            AnalysisBatchProofMarkerKind::UnknownOutcome => "marker--unknown-outcome",
+            AnalysisBatchProofMarkerKind::Actual => "marker--actual",
+        });
+    }
+    classes.push(match frame.side_to_move {
+        Color::Black => "marker--side-black",
+        Color::White => "marker--side-white",
+    });
+    if marker.kinds.contains(&AnalysisBatchProofMarkerKind::Actual) {
+        classes.push(match frame.side_to_move {
+            Color::Black => "marker--actual-black",
+            Color::White => "marker--actual-white",
+        });
+    }
+    classes
 }
 
 fn marker_label(marker: &AnalysisBatchProofMarker) -> String {
-    if let Some(step) = marker.principal_step {
-        return step.to_string();
+    if marker
+        .kinds
+        .contains(&AnalysisBatchProofMarkerKind::ImmediateLoss)
+    {
+        return "!".to_string();
     }
     if marker
         .kinds
-        .contains(&AnalysisBatchProofMarkerKind::IllegalCost)
+        .contains(&AnalysisBatchProofMarkerKind::ForcedLoss)
     {
-        return "X".to_string();
+        return "L".to_string();
+    }
+    if marker.kinds.contains(&AnalysisBatchProofMarkerKind::Escape) {
+        return "E".to_string();
+    }
+    if marker
+        .kinds
+        .contains(&AnalysisBatchProofMarkerKind::UnknownOutcome)
+    {
+        return "?".to_string();
+    }
+    if marker.kinds.contains(&AnalysisBatchProofMarkerKind::Threat) {
+        return "L".to_string();
     }
     if marker
         .kinds
@@ -1305,23 +1414,48 @@ fn marker_label(marker: &AnalysisBatchProofMarker) -> String {
     {
         return "W".to_string();
     }
-    if marker.kinds.contains(&AnalysisBatchProofMarkerKind::Escape) {
-        return "E".to_string();
-    }
-    if marker.kinds.contains(&AnalysisBatchProofMarkerKind::Cost) {
-        return "C".to_string();
-    }
-    if marker.kinds.contains(&AnalysisBatchProofMarkerKind::Forced) {
-        return "F".to_string();
-    }
     String::new()
+}
+
+fn reply_roles_label(roles: &[DefenderReplyRole]) -> String {
+    roles
+        .iter()
+        .map(|role| match role {
+            DefenderReplyRole::Actual => "actual",
+            DefenderReplyRole::ImmediateDefense => "immediate",
+            DefenderReplyRole::ImminentDefense => "imminent",
+            DefenderReplyRole::OffensiveCounter => "offensive",
+        })
+        .collect::<Vec<_>>()
+        .join(" + ")
+}
+
+fn defender_reply_outcome_label(outcome: DefenderReplyOutcome) -> &'static str {
+    match outcome {
+        DefenderReplyOutcome::ForcedLoss => "forced loss",
+        DefenderReplyOutcome::Escape => "escape",
+        DefenderReplyOutcome::ImmediateLoss => "immediate loss",
+        DefenderReplyOutcome::Unknown => "unknown",
+    }
+}
+
+fn reply_line_label(reply: &DefenderReplyAnalysis) -> String {
+    if reply.principal_line_notation.is_empty() {
+        return "-".to_string();
+    }
+
+    let mut line = Vec::with_capacity(reply.principal_line_notation.len() + 1);
+    line.push(reply.notation.clone());
+    line.extend(reply.principal_line_notation.clone());
+    line.join(" ")
 }
 
 fn proof_snapshot_html(snapshot: &AnalysisBatchProofSnapshot) -> String {
     format!(
-        "<div><strong>proof @ ply {ply}</strong></div><div>Status {status}; side {side}; reply {reply}</div><div>Winning {winning}; cost {cost}; escape {escape}; forced {forced}</div><div>Line {line}</div><div>Limits {limits}</div>",
+        "<div><strong>proof @ after ply {ply}</strong></div><div>Status {status}; attacker {attacker}; side to move {side}; reply {reply}</div><div>Aggregate proof evidence: win squares {winning}; defender cost/block {cost}; escape {escape}; forced replies {forced}</div><div>Sample proof branch {line}</div><div>Limits {limits}</div>",
         ply = snapshot.prefix_ply,
         status = html_escape(proof_status_label(snapshot.status)),
+        attacker = html_escape(&format!("{:?}", snapshot.attacker)),
         side = html_escape(&format!("{:?}", snapshot.side_to_move)),
         reply = html_escape(snapshot.reply_classification.map(reply_classification_label).unwrap_or("-")),
         winning = html_escape(&move_list_label(&snapshot.winning_squares)),
@@ -1421,16 +1555,17 @@ fn html_escape(input: &str) -> String {
 mod tests {
     use std::fs;
 
-    use gomoku_core::{Board, Move, Replay, RuleConfig, Variant};
+    use gomoku_core::{Board, Color, Move, Replay, RuleConfig, Variant};
 
     use super::{
-        render_analysis_batch_report_html, run_analysis_batch, run_analysis_batch_replays,
-        run_analysis_batch_replays_with_options, AnalysisBatchProofMarkerKind,
+        cell_classes, marker_label, render_analysis_batch_report_html, run_analysis_batch,
+        run_analysis_batch_replays, run_analysis_batch_replays_with_options,
+        AnalysisBatchProofFrame, AnalysisBatchProofMarker, AnalysisBatchProofMarkerKind,
         AnalysisBatchRunOptions, ReplayAnalysisInput,
     };
     use crate::analysis::{
-        AnalysisOptions, ProofLimitCause, ProofStatus, ReplyClassification, RootCause,
-        UnclearReason,
+        AnalysisOptions, DefensePolicy, ProofLimitCause, ProofStatus, ReplyClassification,
+        RootCause, UnclearReason,
     };
 
     fn replay_from_moves(variant: Variant, moves: &[&str]) -> Replay {
@@ -1683,46 +1818,97 @@ mod tests {
         assert!(details
             .snapshots
             .iter()
-            .any(|snapshot| snapshot.label == "previous_prefix" && snapshot.ply == 7));
+            .any(|snapshot| snapshot.label == "before_forced_run" && snapshot.ply == 7));
         assert!(details
             .snapshots
             .iter()
-            .any(|snapshot| snapshot.label == "final_forced_start" && snapshot.ply == 8));
+            .any(|snapshot| snapshot.label == "after_forced_entry" && snapshot.ply == 8));
+
+        assert_eq!(
+            details
+                .proof_frames
+                .iter()
+                .map(|frame| (frame.label.as_str(), frame.ply))
+                .collect::<Vec<_>>(),
+            vec![
+                ("winning_ply", 9),
+                ("actual_ply_8", 8),
+                ("before_forced_run", 7)
+            ]
+        );
+        assert!(details
+            .proof_frames
+            .iter()
+            .all(
+                |frame| frame.markers.iter().all(|marker| marker.kinds.iter().all(
+                    |kind| matches!(
+                        kind,
+                        AnalysisBatchProofMarkerKind::Winning
+                            | AnalysisBatchProofMarkerKind::Threat
+                            | AnalysisBatchProofMarkerKind::ImminentDefense
+                            | AnalysisBatchProofMarkerKind::OffensiveCounter
+                            | AnalysisBatchProofMarkerKind::ForcedLoss
+                            | AnalysisBatchProofMarkerKind::Escape
+                            | AnalysisBatchProofMarkerKind::ImmediateLoss
+                            | AnalysisBatchProofMarkerKind::UnknownOutcome
+                            | AnalysisBatchProofMarkerKind::Actual
+                    )
+                ))
+            ));
+        let winning_frame = details
+            .proof_frames
+            .first()
+            .expect("winning-ply frame should be first");
+        assert_eq!(winning_frame.side_to_move, Color::Black);
+        let actual_l8 = winning_frame
+            .markers
+            .iter()
+            .find(|marker| marker.notation == "L8")
+            .expect("winning frame should mark the actual winning move");
+        assert!(actual_l8
+            .kinds
+            .contains(&AnalysisBatchProofMarkerKind::Actual));
+        assert!(actual_l8
+            .kinds
+            .contains(&AnalysisBatchProofMarkerKind::Winning));
 
         let previous_frame = details
             .proof_frames
             .iter()
-            .find(|frame| frame.label == "previous_prefix" && frame.ply == 7)
-            .expect("previous prefix visual frame should be recorded");
+            .find(|frame| frame.label == "before_forced_run" && frame.ply == 7)
+            .expect("before-forced-run visual frame should be recorded");
         let previous_l8 = previous_frame
             .markers
             .iter()
             .find(|marker| marker.notation == "L8")
-            .expect("previous frame should mark the L8 escape/winning square");
+            .expect("before-forced-run frame should mark the L8 losing square");
         assert!(previous_l8
             .kinds
-            .contains(&AnalysisBatchProofMarkerKind::Winning));
-        assert!(previous_l8
-            .kinds
-            .contains(&AnalysisBatchProofMarkerKind::Escape));
+            .contains(&AnalysisBatchProofMarkerKind::Threat));
 
         let final_frame = details
             .proof_frames
             .iter()
-            .find(|frame| frame.label == "final_forced_start" && frame.ply == 8)
-            .expect("final forced-start visual frame should be recorded");
+            .find(|frame| frame.label == "actual_ply_8" && frame.ply == 8)
+            .expect("forced-interval decision frame should be recorded");
+        assert_eq!(final_frame.side_to_move, Color::White);
+        assert_eq!(final_frame.move_played_notation.as_deref(), Some("B1"));
+        let final_actual = final_frame
+            .markers
+            .iter()
+            .find(|marker| marker.notation == "B1")
+            .expect("final frame should mark the actual replay move");
+        assert!(final_actual
+            .kinds
+            .contains(&AnalysisBatchProofMarkerKind::Actual));
         let final_l8 = final_frame
             .markers
             .iter()
             .find(|marker| marker.notation == "L8")
-            .expect("final frame should mark the L8 principal winning square");
+            .expect("final frame should mark the L8 losing square");
         assert!(final_l8
             .kinds
-            .contains(&AnalysisBatchProofMarkerKind::Winning));
-        assert!(final_l8
-            .kinds
-            .contains(&AnalysisBatchProofMarkerKind::Principal));
-        assert_eq!(final_l8.principal_step, Some(1));
+            .contains(&AnalysisBatchProofMarkerKind::Threat));
     }
 
     #[test]
@@ -1747,16 +1933,188 @@ mod tests {
         let html = render_analysis_batch_report_html(&report);
         assert!(html.contains("Proof details"));
         assert!(html.contains("root transition"));
-        assert!(html.contains("previous_prefix @ ply 7"));
-        assert!(html.contains("final_forced_start @ ply 8"));
-        assert!(html.contains("Visual proof frames"));
+        assert!(html.contains("Before forced run"));
+        assert!(html.contains("Forced run entry"));
+        assert!(html.contains("proof @ after ply 7"));
+        assert!(html.contains("attacker Black; side to move White"));
+        assert!(html.contains("Aggregate proof evidence: win squares L8"));
+        assert!(html.contains("Sample proof branch L8"));
+        assert!(html.contains("before forced run / after ply 7"));
+        assert!(html.contains("before ply 8 / actual move B1"));
+        assert!(html.contains("Visual decision frames"));
         assert!(html.contains("class=\"proof-board\""));
         assert!(html.contains("class=\"proof-stone proof-stone--black\""));
-        assert!(html.contains("marker--winning"));
-        assert!(html.contains("marker--escape"));
-        assert!(html.contains("marker--principal"));
+        assert!(html.contains("--proof-cell-size: 20px"));
+        assert!(html.contains("--proof-grid-span: 281px"));
+        assert!(html.contains("padding: 0"));
+        assert!(html.contains(".proof-board::before"));
+        assert!(html.contains("left: calc(var(--proof-cell-size) / 2)"));
+        assert!(html.contains("width: var(--proof-grid-span)"));
+        assert!(html.contains("grid-template-rows: repeat(15, var(--proof-cell-size))"));
+        assert!(html.contains("background: #d7ad63"));
+        assert!(html.contains("top: 2px"));
+        assert!(html.contains("bottom: 4px"));
+        assert!(html.contains(
+            "background: radial-gradient(circle at 35% 30%, #4d4f55 0%, #15171b 58%, #050608 100%)"
+        ));
+        assert!(html.contains(".proof-cell--stone-black.marker--actual .proof-marker"));
+        assert!(html.contains(".marker--actual-black .proof-marker"));
+        assert!(html.contains(".marker--actual-white .proof-marker"));
+        assert!(html.contains("class=\"proof-actual-stone proof-actual-stone--black\""));
+        assert!(html.contains("class=\"proof-actual-stone proof-actual-stone--white\""));
+        assert!(html.contains("marker--actual-black"));
+        assert!(html.contains("marker--actual-white"));
+        assert!(html.contains("marker--actual"));
         assert!(html.contains("data-move=\"L8\""));
+        assert!(html.contains("winning move / before ply 9 / actual move L8"));
+        assert!(html.contains("Black to move / forced win"));
+        assert!(html.contains("marker--winning"));
+        assert!(html.contains("marker--threat"));
+        assert!(html.contains("marker--imminent-defense"));
+        assert!(html.contains("reply-outcomes"));
+        assert!(html.contains("forced loss"));
+        assert!(!html.contains("marker--principal"));
+        assert!(!html.contains("marker--cost"));
+        assert!(html.contains("legend-threat"));
+        assert!(html.contains("legend-imminent"));
+        assert!(!html.contains("legend-principal"));
+        assert!(!html.contains("legend-cost"));
+        assert!(!html.contains("<span class=\"proof-marker\">1</span>"));
+        assert!(!html.contains("<span class=\"proof-marker\">2</span>"));
         assert!(html.contains("escaped"));
         assert!(html.contains("L8"));
+    }
+
+    #[test]
+    fn analysis_batch_proof_marker_labels_are_semantic_not_step_numbers() {
+        let mv = Move::from_notation("H8").unwrap();
+        let winning = AnalysisBatchProofMarker {
+            mv,
+            notation: mv.to_notation(),
+            kinds: vec![AnalysisBatchProofMarkerKind::Winning],
+        };
+        assert_eq!(marker_label(&winning), "W");
+
+        let actual_threat = AnalysisBatchProofMarker {
+            mv,
+            notation: mv.to_notation(),
+            kinds: vec![
+                AnalysisBatchProofMarkerKind::Threat,
+                AnalysisBatchProofMarkerKind::Actual,
+            ],
+        };
+        assert_eq!(marker_label(&actual_threat), "L");
+
+        let actual_only = AnalysisBatchProofMarker {
+            mv,
+            notation: mv.to_notation(),
+            kinds: vec![AnalysisBatchProofMarkerKind::Actual],
+        };
+        assert_eq!(marker_label(&actual_only), "");
+
+        let threat = AnalysisBatchProofMarker {
+            mv,
+            notation: mv.to_notation(),
+            kinds: vec![AnalysisBatchProofMarkerKind::Threat],
+        };
+        assert_eq!(marker_label(&threat), "L");
+    }
+
+    #[test]
+    fn analysis_batch_visual_frames_mark_defender_reply_roles_and_outcomes() {
+        let replay = replay_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "I8", "H7", "I7", "H6", "H5", "I6", "I9", "G6", "J6", "G8", "J5", "G5", "G7",
+                "E6", "F6", "H9", "H10", "F7", "D5", "I10",
+            ],
+        );
+
+        let report = run_analysis_batch_replays_with_options(
+            "report.json:bot-a vs bot-b".to_string(),
+            vec![ReplayAnalysisInput {
+                label: "forced_reply_options".to_string(),
+                replay,
+            }],
+            AnalysisBatchRunOptions {
+                analysis: AnalysisOptions {
+                    defense_policy: DefensePolicy::AllLegalDefense,
+                    max_depth: 2,
+                    max_forced_extensions: 4,
+                    max_backward_window: Some(8),
+                },
+                include_proof_details: true,
+            },
+        );
+
+        let frame = report.entries[0]
+            .proof_details
+            .as_ref()
+            .expect("proof details should be present")
+            .proof_frames
+            .iter()
+            .find(|frame| frame.label == "actual_ply_14")
+            .expect("ply 14 decision frame should be present");
+
+        let g4 = marker_for(frame, "G4");
+        assert!(g4
+            .kinds
+            .contains(&AnalysisBatchProofMarkerKind::ImminentDefense));
+        assert!(g4.kinds.contains(&AnalysisBatchProofMarkerKind::ForcedLoss));
+        assert!(cell_classes(frame, '.', Some(g4)).contains("marker--side-white"));
+
+        let g9 = marker_for(frame, "G9");
+        assert!(g9
+            .kinds
+            .contains(&AnalysisBatchProofMarkerKind::ImminentDefense));
+        assert!(g9.kinds.contains(&AnalysisBatchProofMarkerKind::ForcedLoss));
+        assert!(cell_classes(frame, '.', Some(g9)).contains("marker--side-white"));
+
+        let g7 = marker_for(frame, "G7");
+        assert!(g7.kinds.contains(&AnalysisBatchProofMarkerKind::Actual));
+        assert!(g7
+            .kinds
+            .contains(&AnalysisBatchProofMarkerKind::ImminentDefense));
+        assert!(g7.kinds.contains(&AnalysisBatchProofMarkerKind::ForcedLoss));
+        assert!(cell_classes(frame, '.', Some(g7)).contains("marker--side-white"));
+
+        let i10 = marker_for(frame, "I10");
+        assert!(i10
+            .kinds
+            .contains(&AnalysisBatchProofMarkerKind::OffensiveCounter));
+        assert!(i10
+            .kinds
+            .contains(&AnalysisBatchProofMarkerKind::UnknownOutcome));
+        assert!(cell_classes(frame, '.', Some(i10)).contains("marker--side-white"));
+
+        let i11 = marker_for(frame, "I11");
+        assert!(i11
+            .kinds
+            .contains(&AnalysisBatchProofMarkerKind::OffensiveCounter));
+        assert!(i11
+            .kinds
+            .contains(&AnalysisBatchProofMarkerKind::ForcedLoss));
+        assert!(cell_classes(frame, '.', Some(i11)).contains("marker--side-white"));
+
+        let html = render_analysis_batch_report_html(&report);
+        assert!(html.contains(
+            ".marker--imminent-defense {\n      box-shadow: inset 0 0 0 2px var(--pink);"
+        ));
+        assert!(html.contains(
+            ".marker--offensive-counter {\n      box-shadow: inset 0 0 0 2px var(--blue);"
+        ));
+        assert!(html.contains("legend-offensive"));
+        assert!(html.contains(".marker--side-white .proof-marker"));
+    }
+
+    fn marker_for<'a>(
+        frame: &'a AnalysisBatchProofFrame,
+        notation: &str,
+    ) -> &'a AnalysisBatchProofMarker {
+        frame
+            .markers
+            .iter()
+            .find(|marker| marker.notation == notation)
+            .unwrap_or_else(|| panic!("expected marker {notation}"))
     }
 }
