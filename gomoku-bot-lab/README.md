@@ -147,6 +147,7 @@ cargo run --release -p gomoku-eval -- tournament --schedule gauntlet --candidate
 cargo run --release -p gomoku-eval -- report-html --input outputs/gomoku-tournament.json --output outputs/gomoku-tournament.html --json-href gomoku-tournament.json
 cargo run --release -p gomoku-eval -- analyze-replay-batch --replay-dir outputs/replays --report-json outputs/analysis-batch.json --report-html outputs/analysis-batch.html --max-backward-window 24
 cargo run --release -p gomoku-eval -- analyze-report-replays --report reports/latest.json --sample-size 8 --max-backward-window 8 --report-json outputs/analysis/top2-smoke.json --report-html outputs/analysis/top2-smoke.html
+cargo run --release -p gomoku-eval -- analyze-report-replays --report reports/latest.json --sample-size 8 --max-backward-window 8 --include-proof-details --deep-retry-forced-extensions 10 --deep-retry-limit 1 --report-json outputs/analysis/top2-audit.json --report-html outputs/analysis/top2-audit.html
 ```
 
 Use the larger curated-report run from `gomoku-bot-lab/` when publishing
@@ -222,8 +223,14 @@ decision frames for pre-move states from the winning ply backward through the
 final forced interval, without changing the default compact report shape. These
 frames separate reply role from reply outcome: outer hints show immediate or
 imminent defensive candidates, offensive counter-threat candidates, and actual
-replay moves, while marker characters show whether that reply escapes, loses
-immediately, stays unknown, or remains a forced loss.
+replay moves, while marker characters show whether that reply escapes, is an
+unproved escape, loses immediately, stays unknown, or remains a forced loss.
+Selective deep retry is available for focused audits of unresolved reply outcomes:
+`--deep-retry-forced-extensions 10 --deep-retry-limit 1` keeps the default
+forced-extension model at `4`, then spends a small per-replay budget retrying
+unproved reply branches with a deeper forced-chain allowance. Keep it off compact
+smoke reports and use it when a visual decision frame needs a clearer forced-loss
+versus unproved-escape label.
 
 Scratch reports should stay in ignored `outputs/`. Curated reports for the
 public site live in [`reports/`](reports/); the web build copies that folder to

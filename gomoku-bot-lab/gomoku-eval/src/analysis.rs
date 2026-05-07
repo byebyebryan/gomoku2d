@@ -1,7 +1,7 @@
 use gomoku_core::{replay::ReplayResult, Board, Color, GameResult, Move, Replay, Variant};
 use serde::Serialize;
 
-pub const ANALYSIS_SCHEMA_VERSION: u32 = 5;
+pub const ANALYSIS_SCHEMA_VERSION: u32 = 6;
 const MAX_HYBRID_LOCAL_THREAT_COUNT: usize = 2;
 const MAX_HYBRID_LOCAL_THREAT_REPLIES: usize = 8;
 const MAX_HYBRID_ATTACKER_FORCING_MOVES: usize = 4;
@@ -46,6 +46,7 @@ pub enum UnclearReason {
 pub enum ProofLimitCause {
     DepthCutoff,
     ForcedExtensionCutoff,
+    ReplyWidthCutoff,
     AttackerChildUnknown,
     DefenderReplyUnknown,
     ModelScopeUnknown,
@@ -67,6 +68,7 @@ pub enum ReplyClassification {
     IgnoredSingleWin,
     BlockedButForced,
     Escaped,
+    UnprovedEscape,
     NoLegalBlock,
     Unknown,
 }
@@ -85,6 +87,7 @@ pub enum DefenderReplyRole {
 pub enum DefenderReplyOutcome {
     ForcedLoss,
     Escape,
+    UnprovedEscape,
     ImmediateLoss,
     Unknown,
 }
@@ -95,6 +98,8 @@ pub struct DefenderReplyAnalysis {
     pub notation: String,
     pub roles: Vec<DefenderReplyRole>,
     pub outcome: DefenderReplyOutcome,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub deep_retry_forced_extensions: Option<usize>,
     pub principal_line: Vec<Move>,
     pub principal_line_notation: Vec<String>,
     pub limit_causes: Vec<ProofLimitCause>,
@@ -451,6 +456,17 @@ pub fn analyze_defender_reply_options(
     actual_reply: Option<Move>,
     options: &AnalysisOptions,
 ) -> Vec<DefenderReplyAnalysis> {
+    analyze_defender_reply_options_with_retry(board, attacker, actual_reply, options, None, 0)
+}
+
+pub fn analyze_defender_reply_options_with_retry(
+    board: &Board,
+    attacker: Color,
+    actual_reply: Option<Move>,
+    options: &AnalysisOptions,
+    deep_retry_forced_extensions: Option<usize>,
+    max_deep_retries: usize,
+) -> Vec<DefenderReplyAnalysis> {
     if board.current_player != attacker.opponent() || board.result != GameResult::Ongoing {
         return Vec::new();
     }
@@ -472,15 +488,22 @@ pub fn analyze_defender_reply_options(
         push_reply_role(&mut replies, mv, DefenderReplyRole::Actual);
     }
 
+    let mut deep_retries_remaining = max_deep_retries;
     replies
         .into_iter()
         .map(|(mv, roles)| {
-            let proof = classify_defender_reply_for_report(board, attacker, mv, options);
+            let retry = deep_retry_forced_extensions.filter(|_| deep_retries_remaining > 0);
+            let (proof, deep_retry_forced_extensions) =
+                classify_defender_reply_with_retry_for_report(board, attacker, mv, options, retry);
+            if deep_retry_forced_extensions.is_some() {
+                deep_retries_remaining = deep_retries_remaining.saturating_sub(1);
+            }
             DefenderReplyAnalysis {
                 mv,
                 notation: mv.to_notation(),
                 roles,
                 outcome: proof.outcome,
+                deep_retry_forced_extensions,
                 principal_line_notation: proof
                     .principal_line
                     .iter()
@@ -491,6 +514,32 @@ pub fn analyze_defender_reply_options(
             }
         })
         .collect()
+}
+
+fn classify_defender_reply_with_retry_for_report(
+    board: &Board,
+    attacker: Color,
+    mv: Move,
+    options: &AnalysisOptions,
+    deep_retry_forced_extensions: Option<usize>,
+) -> (DefenderReplyProof, Option<usize>) {
+    let proof = classify_defender_reply_for_report(board, attacker, mv, options);
+    if !matches!(
+        proof.outcome,
+        DefenderReplyOutcome::Unknown | DefenderReplyOutcome::UnprovedEscape
+    ) {
+        return (proof, None);
+    }
+
+    let Some(deep_extensions) = deep_retry_forced_extensions
+        .filter(|extensions| *extensions > options.max_forced_extensions)
+    else {
+        return (proof, None);
+    };
+    let mut deep_options = options.clone();
+    deep_options.max_forced_extensions = deep_extensions;
+    let deep_proof = classify_defender_reply_for_report(board, attacker, mv, &deep_options);
+    (deep_proof, Some(deep_extensions))
 }
 
 struct DefenderReplyProof {
@@ -599,7 +648,7 @@ fn classify_defender_counter_threat_for_report(
 ) -> DefenderReplyProof {
     if counter_corridor_remaining == 0 {
         return DefenderReplyProof {
-            outcome: DefenderReplyOutcome::Unknown,
+            outcome: DefenderReplyOutcome::UnprovedEscape,
             principal_line: Vec::new(),
             limit_causes: vec![ProofLimitCause::ForcedExtensionCutoff],
         };
@@ -607,6 +656,7 @@ fn classify_defender_counter_threat_for_report(
 
     let defender = attacker.opponent();
     let mut saw_unknown = false;
+    let mut saw_unproved_escape = false;
     let mut limit_causes = Vec::new();
 
     for mv in counter_threat_answer_moves(board, defender) {
@@ -651,6 +701,10 @@ fn classify_defender_counter_threat_for_report(
                 };
             }
             DefenderReplyOutcome::Escape => {}
+            DefenderReplyOutcome::UnprovedEscape => {
+                saw_unproved_escape = true;
+                extend_limit_causes(&mut limit_causes, proof.limit_causes);
+            }
             DefenderReplyOutcome::Unknown => {
                 saw_unknown = true;
                 extend_limit_causes(&mut limit_causes, proof.limit_causes);
@@ -660,7 +714,14 @@ fn classify_defender_counter_threat_for_report(
 
     if saw_unknown {
         return DefenderReplyProof {
-            outcome: DefenderReplyOutcome::Unknown,
+            outcome: DefenderReplyOutcome::UnprovedEscape,
+            principal_line: Vec::new(),
+            limit_causes,
+        };
+    }
+    if saw_unproved_escape {
+        return DefenderReplyProof {
+            outcome: DefenderReplyOutcome::UnprovedEscape,
             principal_line: Vec::new(),
             limit_causes,
         };
@@ -681,7 +742,7 @@ fn classify_attacker_corridor_for_report(
 ) -> DefenderReplyProof {
     if counter_corridor_remaining == 0 {
         return DefenderReplyProof {
-            outcome: DefenderReplyOutcome::Unknown,
+            outcome: DefenderReplyOutcome::UnprovedEscape,
             principal_line: Vec::new(),
             limit_causes: vec![ProofLimitCause::ForcedExtensionCutoff],
         };
@@ -704,6 +765,7 @@ fn classify_attacker_corridor_for_report(
     }
 
     let mut saw_unknown = false;
+    let mut saw_unproved_escape = false;
     let mut limit_causes = Vec::new();
     for mv in materialized_attacker_corridor_moves(board, attacker) {
         let mut next = board.clone();
@@ -741,6 +803,10 @@ fn classify_attacker_corridor_for_report(
                 };
             }
             DefenderReplyOutcome::Escape => {}
+            DefenderReplyOutcome::UnprovedEscape => {
+                saw_unproved_escape = true;
+                extend_limit_causes(&mut limit_causes, proof.limit_causes);
+            }
             DefenderReplyOutcome::Unknown => {
                 saw_unknown = true;
                 extend_limit_causes(&mut limit_causes, proof.limit_causes);
@@ -750,7 +816,14 @@ fn classify_attacker_corridor_for_report(
 
     if saw_unknown {
         return DefenderReplyProof {
-            outcome: DefenderReplyOutcome::Unknown,
+            outcome: DefenderReplyOutcome::UnprovedEscape,
+            principal_line: Vec::new(),
+            limit_causes,
+        };
+    }
+    if saw_unproved_escape {
+        return DefenderReplyProof {
+            outcome: DefenderReplyOutcome::UnprovedEscape,
             principal_line: Vec::new(),
             limit_causes,
         };
@@ -778,15 +851,25 @@ fn classify_narrow_corridor_for_report(
     }
 
     let reply_moves = narrow_corridor_reply_moves(board, attacker);
-    if reply_moves.is_empty() || reply_moves.len() > MAX_HYBRID_LOCAL_THREAT_REPLIES {
+    if reply_moves.is_empty() {
         return DefenderReplyProof {
             outcome: DefenderReplyOutcome::Escape,
             principal_line: Vec::new(),
             limit_causes: Vec::new(),
         };
     }
+    if reply_moves.len() > MAX_HYBRID_LOCAL_THREAT_REPLIES {
+        return DefenderReplyProof {
+            outcome: DefenderReplyOutcome::UnprovedEscape,
+            principal_line: Vec::new(),
+            limit_causes: vec![ProofLimitCause::ReplyWidthCutoff],
+        };
+    }
 
     let mut principal_line = Vec::new();
+    let mut saw_unproved_escape = false;
+    let mut saw_unknown = false;
+    let mut limit_causes = Vec::new();
     for mv in reply_moves {
         let proof = classify_defender_reply_for_report_inner(
             board,
@@ -809,14 +892,30 @@ fn classify_narrow_corridor_for_report(
                     limit_causes: Vec::new(),
                 };
             }
+            DefenderReplyOutcome::UnprovedEscape => {
+                saw_unproved_escape = true;
+                extend_limit_causes(&mut limit_causes, proof.limit_causes);
+            }
             DefenderReplyOutcome::Unknown => {
-                return DefenderReplyProof {
-                    outcome: DefenderReplyOutcome::Unknown,
-                    principal_line: Vec::new(),
-                    limit_causes: proof.limit_causes,
-                };
+                saw_unknown = true;
+                extend_limit_causes(&mut limit_causes, proof.limit_causes);
             }
         }
+    }
+
+    if saw_unproved_escape {
+        return DefenderReplyProof {
+            outcome: DefenderReplyOutcome::UnprovedEscape,
+            principal_line: Vec::new(),
+            limit_causes,
+        };
+    }
+    if saw_unknown {
+        return DefenderReplyProof {
+            outcome: DefenderReplyOutcome::Unknown,
+            principal_line: Vec::new(),
+            limit_causes,
+        };
     }
 
     DefenderReplyProof {
@@ -1187,7 +1286,9 @@ fn prove_attacker_node(
                 proof.limit_causes,
             );
         }
-        if proof.status == ProofStatus::Unknown {
+        if proof.status == ProofStatus::Unknown
+            || (proof.status == ProofStatus::EscapeFound && proof_has_limit_hit(&proof))
+        {
             extend_limit_causes(&mut child_limit_causes, proof.limit_causes);
         }
     }
@@ -1197,7 +1298,7 @@ fn prove_attacker_node(
     }
     child_limit_causes.push(ProofLimitCause::AttackerChildUnknown);
     with_limit_causes(
-        base(ProofStatus::Unknown, Vec::new(), Vec::new(), Vec::new()),
+        base(ProofStatus::EscapeFound, Vec::new(), Vec::new(), Vec::new()),
         child_limit_causes,
     )
 }
@@ -1255,6 +1356,7 @@ fn prove_defender_node(
     let mut saw_unknown = false;
     let mut child_limit_causes = Vec::new();
     let mut forced_replies = Vec::new();
+    let mut unproved_escape_replies = Vec::new();
     for mv in reply_moves {
         let mut next = board.clone();
         if next.apply_move(mv).is_err() {
@@ -1278,6 +1380,12 @@ fn prove_defender_node(
                     forced_replies.push(mv);
                     continue;
                 }
+                ProofStatus::EscapeFound if proof_has_limit_hit(&proof) => {
+                    saw_unknown = true;
+                    unproved_escape_replies.push(mv);
+                    extend_limit_causes(&mut child_limit_causes, proof.limit_causes);
+                    continue;
+                }
                 ProofStatus::EscapeFound => {
                     let mut evidence = vec![threat.evidence(ThreatEvidenceInput {
                         attribution,
@@ -1293,6 +1401,7 @@ fn prove_defender_node(
                 }
                 ProofStatus::Unknown => {
                     saw_unknown = true;
+                    unproved_escape_replies.push(mv);
                     extend_limit_causes(&mut child_limit_causes, proof.limit_causes);
                     continue;
                 }
@@ -1335,6 +1444,11 @@ fn prove_defender_node(
                 }
                 forced_replies.push(mv);
             }
+            ProofStatus::EscapeFound if proof_has_limit_hit(&proof) => {
+                saw_unknown = true;
+                unproved_escape_replies.push(mv);
+                extend_limit_causes(&mut child_limit_causes, proof.limit_causes);
+            }
             ProofStatus::EscapeFound => {
                 let mut evidence = vec![threat.evidence(ThreatEvidenceInput {
                     attribution,
@@ -1350,6 +1464,7 @@ fn prove_defender_node(
             }
             ProofStatus::Unknown => {
                 saw_unknown = true;
+                unproved_escape_replies.push(mv);
                 extend_limit_causes(&mut child_limit_causes, proof.limit_causes);
             }
         }
@@ -1363,19 +1478,19 @@ fn prove_defender_node(
         let next_forcing_move = next_attacker_move_after_defender_reply(&principal_line);
         with_limit_causes(
             base(
-                ProofStatus::Unknown,
-                principal_line,
+                ProofStatus::EscapeFound,
                 Vec::new(),
+                unproved_escape_replies.clone(),
                 if current_immediate_wins.is_empty() {
                     Vec::new()
                 } else {
                     vec![threat.evidence(ThreatEvidenceInput {
                         attribution,
-                        reply_classification: ReplyClassification::Unknown,
-                        escape_replies: Vec::new(),
+                        reply_classification: ReplyClassification::UnprovedEscape,
+                        escape_replies: unproved_escape_replies,
                         forced_replies,
                         next_forcing_move,
-                        proof_status: ProofStatus::Unknown,
+                        proof_status: ProofStatus::EscapeFound,
                         limit_causes: vec![ProofLimitCause::DefenderReplyUnknown],
                     })]
                 },
@@ -1409,6 +1524,7 @@ fn prove_defender_node(
 enum CorridorReplyStatus {
     Forced,
     Escape,
+    UnprovedEscape,
     Unknown,
 }
 
@@ -1533,14 +1649,17 @@ fn replay_corridor_attacker_node(
                 child.limit_causes,
             )
         }
-        ProofStatus::EscapeFound => corridor_proof_result(
-            board,
-            attacker,
-            options,
-            ProofStatus::EscapeFound,
-            Vec::new(),
-            child.escape_moves,
-            child.threat_evidence,
+        ProofStatus::EscapeFound => with_limit_causes(
+            corridor_proof_result(
+                board,
+                attacker,
+                options,
+                ProofStatus::EscapeFound,
+                Vec::new(),
+                child.escape_moves,
+                child.threat_evidence,
+            ),
+            child.limit_causes,
         ),
         ProofStatus::Unknown => {
             let mut causes = child.limit_causes;
@@ -1661,6 +1780,51 @@ fn replay_corridor_defender_node(
         );
     }
 
+    let unproved_escape_replies = outcomes
+        .iter()
+        .filter_map(|outcome| {
+            (outcome.status == CorridorReplyStatus::UnprovedEscape).then_some(outcome.mv)
+        })
+        .collect::<Vec<_>>();
+    if !unproved_escape_replies.is_empty() {
+        let mut limit_causes = Vec::new();
+        for outcome in outcomes
+            .iter()
+            .filter(|outcome| outcome.status == CorridorReplyStatus::UnprovedEscape)
+        {
+            extend_limit_causes(
+                &mut limit_causes,
+                outcome.proof.limit_causes.iter().copied(),
+            );
+        }
+        extend_limit_causes(&mut limit_causes, [ProofLimitCause::DefenderReplyUnknown]);
+        let mut evidence = vec![threat.evidence(ThreatEvidenceInput {
+            attribution,
+            reply_classification: ReplyClassification::UnprovedEscape,
+            escape_replies: unproved_escape_replies.clone(),
+            forced_replies: forced_corridor_replies(&outcomes),
+            next_forcing_move: None,
+            proof_status: ProofStatus::EscapeFound,
+            limit_causes: limit_causes.clone(),
+        })];
+        evidence.extend(first_corridor_branch_evidence(
+            &outcomes,
+            CorridorReplyStatus::UnprovedEscape,
+        ));
+        return with_limit_causes(
+            corridor_proof_result(
+                board,
+                attacker,
+                options,
+                ProofStatus::EscapeFound,
+                Vec::new(),
+                unproved_escape_replies,
+                evidence,
+            ),
+            limit_causes,
+        );
+    }
+
     let mut limit_causes = Vec::new();
     for outcome in outcomes
         .iter()
@@ -1730,16 +1894,13 @@ fn classify_corridor_reply(
     board: &Board,
     attacker: Color,
     options: &AnalysisOptions,
-    prefix_ply: usize,
-    actual_moves: &[Move],
+    _prefix_ply: usize,
+    _actual_moves: &[Move],
     mv: Move,
 ) -> CorridorReplyOutcome {
-    let trace = ProofTrace {
-        actual_moves,
-        prefix_ply,
-    };
     let mut next = board.clone();
-    let proof = if next.apply_move(mv).is_err() {
+    let applied = next.apply_move(mv).is_ok();
+    let proof = if !applied {
         with_limit_causes(
             corridor_proof_result(
                 board,
@@ -1753,61 +1914,40 @@ fn classify_corridor_reply(
             [ProofLimitCause::ModelScopeUnknown],
         )
     } else {
-        match next.result {
-            GameResult::Winner(winner) if winner == attacker.opponent() => corridor_proof_result(
-                &next,
-                attacker,
-                options,
-                ProofStatus::EscapeFound,
-                Vec::new(),
-                vec![mv],
-                Vec::new(),
-            ),
-            GameResult::Winner(winner) if winner == attacker => corridor_proof_result(
-                &next,
-                attacker,
-                options,
-                ProofStatus::ForcedWin,
-                Vec::new(),
-                Vec::new(),
-                Vec::new(),
-            ),
-            GameResult::Winner(_) | GameResult::Draw => corridor_proof_result(
-                &next,
-                attacker,
-                options,
-                ProofStatus::EscapeFound,
-                Vec::new(),
-                vec![mv],
-                Vec::new(),
-            ),
-            GameResult::Ongoing => {
-                let immediate_wins = next.immediate_winning_moves_for(attacker);
-                if let Some(&winning_move) = immediate_wins.first() {
-                    corridor_proof_result(
-                        &next,
-                        attacker,
-                        options,
-                        ProofStatus::ForcedWin,
-                        vec![winning_move],
-                        Vec::new(),
-                        Vec::new(),
-                    )
-                } else {
-                    prove_forced_extension(
-                        &next,
-                        attacker,
-                        options.max_forced_extensions,
-                        options,
-                        trace.after_move(mv),
-                    )
-                }
+        let reply_proof = classify_defender_reply_for_report(board, attacker, mv, options);
+        let status = match reply_proof.outcome {
+            DefenderReplyOutcome::ForcedLoss | DefenderReplyOutcome::ImmediateLoss => {
+                ProofStatus::ForcedWin
             }
-        }
+            DefenderReplyOutcome::Escape | DefenderReplyOutcome::UnprovedEscape => {
+                ProofStatus::EscapeFound
+            }
+            DefenderReplyOutcome::Unknown => ProofStatus::Unknown,
+        };
+        let escape_moves = match reply_proof.outcome {
+            DefenderReplyOutcome::Escape | DefenderReplyOutcome::UnprovedEscape => vec![mv],
+            _ => Vec::new(),
+        };
+        with_limit_causes(
+            corridor_proof_result(
+                &next,
+                attacker,
+                options,
+                status,
+                reply_proof.principal_line,
+                escape_moves,
+                Vec::new(),
+            ),
+            reply_proof.limit_causes,
+        )
     };
     let status = match proof.status {
         ProofStatus::ForcedWin => CorridorReplyStatus::Forced,
+        ProofStatus::EscapeFound if applied && proof_has_limit_hit(&proof) => {
+            CorridorReplyStatus::UnprovedEscape
+        }
         ProofStatus::EscapeFound => CorridorReplyStatus::Escape,
+        ProofStatus::Unknown if applied => CorridorReplyStatus::UnprovedEscape,
         ProofStatus::Unknown => CorridorReplyStatus::Unknown,
     };
     CorridorReplyOutcome { mv, status, proof }
@@ -1860,6 +2000,16 @@ fn corridor_defender_reply_moves(
     }
 
     if threat.winning_squares.is_empty() {
+        for mv in imminent_defense_reply_moves(
+            board,
+            threat.attacker,
+            actual_moves.get(prefix_ply).copied(),
+        ) {
+            push_unique_move(&mut replies, mv);
+        }
+        for mv in offensive_counter_reply_moves(board, threat.attacker.opponent()) {
+            push_unique_move(&mut replies, mv);
+        }
         if options.defense_policy == DefensePolicy::HybridDefense
             && use_hybrid_local_threat_replies(threat)
         {
@@ -1876,6 +2026,9 @@ fn corridor_defender_reply_moves(
         ) {
             push_unique_move(&mut replies, mv);
         }
+    }
+    if let Some(&mv) = actual_moves.get(prefix_ply) {
+        push_unique_move(&mut replies, mv);
     }
 
     replies
@@ -2034,7 +2187,9 @@ fn prove_attacker_forced_extension_node(
                 proof.limit_causes,
             );
         }
-        if proof.status == ProofStatus::Unknown {
+        if proof.status == ProofStatus::Unknown
+            || (proof.status == ProofStatus::EscapeFound && proof_has_limit_hit(&proof))
+        {
             saw_unknown = true;
             extend_limit_causes(&mut child_limit_causes, proof.limit_causes);
         }
@@ -2046,7 +2201,7 @@ fn prove_attacker_forced_extension_node(
             [ProofLimitCause::AttackerChildUnknown],
         );
         with_limit_causes(
-            base(ProofStatus::Unknown, Vec::new(), Vec::new(), Vec::new()),
+            base(ProofStatus::EscapeFound, Vec::new(), Vec::new(), Vec::new()),
             child_limit_causes,
         )
     } else {
@@ -2111,6 +2266,7 @@ fn prove_defender_forced_extension_node(
     let mut saw_unknown = false;
     let mut child_limit_causes = Vec::new();
     let mut forced_replies = Vec::new();
+    let mut unproved_escape_replies = Vec::new();
     for mv in reply_moves {
         let mut next = board.clone();
         if next.apply_move(mv).is_err() {
@@ -2133,6 +2289,11 @@ fn prove_defender_forced_extension_node(
                     }
                     forced_replies.push(mv);
                 }
+                ProofStatus::EscapeFound if proof_has_limit_hit(&proof) => {
+                    saw_unknown = true;
+                    unproved_escape_replies.push(mv);
+                    extend_limit_causes(&mut child_limit_causes, proof.limit_causes);
+                }
                 ProofStatus::EscapeFound => {
                     let mut evidence = vec![threat.evidence(ThreatEvidenceInput {
                         attribution,
@@ -2148,6 +2309,7 @@ fn prove_defender_forced_extension_node(
                 }
                 ProofStatus::Unknown => {
                     saw_unknown = true;
+                    unproved_escape_replies.push(mv);
                     extend_limit_causes(&mut child_limit_causes, proof.limit_causes);
                 }
             }
@@ -2171,16 +2333,16 @@ fn prove_defender_forced_extension_node(
         let next_forcing_move = next_attacker_move_after_defender_reply(&principal_line);
         with_limit_causes(
             base(
-                ProofStatus::Unknown,
-                principal_line,
+                ProofStatus::EscapeFound,
                 Vec::new(),
+                unproved_escape_replies.clone(),
                 vec![threat.evidence(ThreatEvidenceInput {
                     attribution,
-                    reply_classification: ReplyClassification::Unknown,
-                    escape_replies: Vec::new(),
+                    reply_classification: ReplyClassification::UnprovedEscape,
+                    escape_replies: unproved_escape_replies,
                     forced_replies,
                     next_forcing_move,
-                    proof_status: ProofStatus::Unknown,
+                    proof_status: ProofStatus::EscapeFound,
                     limit_causes: vec![ProofLimitCause::DefenderReplyUnknown],
                 })],
             ),
@@ -3273,11 +3435,14 @@ mod tests {
         assert!(i10.roles.contains(&DefenderReplyRole::OffensiveCounter));
         assert_eq!(
             i10.outcome,
-            DefenderReplyOutcome::Unknown,
+            DefenderReplyOutcome::UnprovedEscape,
             "I10: line {:?} limits {:?}",
             i10.principal_line_notation,
             i10.limit_causes
         );
+        assert!(i10
+            .limit_causes
+            .contains(&ProofLimitCause::ForcedExtensionCutoff));
 
         let i11 = reply_for(&replies, "I11");
         assert!(i11.roles.contains(&DefenderReplyRole::OffensiveCounter));
@@ -3417,7 +3582,7 @@ mod tests {
     }
 
     #[test]
-    fn forced_extension_budget_cutoff_stays_unknown() {
+    fn forced_extension_budget_cutoff_is_unproved_escape() {
         let board = board_from_moves(
             Variant::Freestyle,
             &[
@@ -3436,8 +3601,11 @@ mod tests {
             },
         );
 
-        assert_eq!(proof.status, ProofStatus::Unknown);
+        assert_eq!(proof.status, ProofStatus::EscapeFound);
         assert!(proof.limit_hit);
+        assert!(proof
+            .limit_causes
+            .contains(&ProofLimitCause::ForcedExtensionCutoff));
     }
 
     #[test]
@@ -3577,6 +3745,45 @@ mod tests {
         assert!(analysis
             .tactical_notes
             .contains(&TacticalNote::AccidentalBlunder));
+    }
+
+    #[test]
+    fn replay_analysis_stops_at_unproved_escape_boundary() {
+        let replay = replay_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "I8", "H7", "I7", "H6", "H5", "I6", "I9", "G6", "J6", "G8", "J5", "G5", "G7",
+                "E6", "F6", "H9", "H10", "F7", "D5", "I10",
+            ],
+        );
+
+        let analysis = analyze_replay(
+            &replay,
+            AnalysisOptions {
+                defense_policy: DefensePolicy::AllLegalDefense,
+                max_depth: 2,
+                max_forced_extensions: 4,
+                max_backward_window: Some(8),
+            },
+        )
+        .expect("finished replay should analyze");
+
+        assert_eq!(analysis.winner, Some(Color::Black));
+        assert_eq!(analysis.root_cause, RootCause::MissedDefense);
+        assert_eq!(analysis.final_forced_interval.start_ply, 14);
+        assert_eq!(analysis.last_chance_ply, Some(13));
+        assert_eq!(analysis.critical_mistake_ply, Some(14));
+
+        let scan_start = replay.moves.len() + 1 - analysis.proof_summary.len();
+        let boundary = analysis
+            .proof_summary
+            .get(13 - scan_start)
+            .expect("escape boundary proof should be in the scan window");
+        assert_eq!(boundary.status, ProofStatus::EscapeFound);
+        assert!(boundary.threat_evidence.iter().any(|evidence| {
+            evidence.reply_classification == ReplyClassification::UnprovedEscape
+                && evidence.escape_replies.contains(&mv("I10"))
+        }));
     }
 
     #[test]
