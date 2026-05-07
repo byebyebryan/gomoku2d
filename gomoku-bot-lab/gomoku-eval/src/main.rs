@@ -839,7 +839,7 @@ fn print_analysis_batch_report_summary(report: &AnalysisBatchReport) {
         report.summary.analysis_error
     );
     println!(
-        "root detail: missed defense {}, missed win {}",
+        "cause: missed defense {}, missed win {}",
         report.summary.missed_defense, report.summary.missed_win
     );
 }
