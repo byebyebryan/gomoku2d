@@ -49,7 +49,7 @@ Notation:
 | `BrokenFour` | `XX.XX`, `X.XXX`, or `XXX.X` | Creates one immediate winning completion through an internal gap. | The gap/completion square. | Yes |
 | `OpenThree` | `.XXX.` | Creates a two-ended three that can become an open or closed four. | The two ends. | Yes, but can lose to stronger counter-threats |
 | `ClosedThree` | `OXXX.` or `.XXXO` | Creates a one-ended contiguous three. | The single open end. | No |
-| `BrokenThree` | `XX.X`, `X.XX`, or equivalent local gap shape | Creates a non-contiguous three that can become a four after a rest move. | Current baseline mirrors `rest_squares`; richer cost analysis can refine this later. | No |
+| `BrokenThree` | `XX.X`, `X.XX`, or equivalent local gap shape | Creates a non-contiguous three that can become a four after a rest move. | Provisional: the current baseline exposes `rest_squares` only; corridor analysis must split direct defensive cost squares from rest dependencies before treating it as active. | Provisional; yes only after named cost/rest semantics are available |
 
 ## Priority
 
@@ -58,8 +58,8 @@ The current local priority is intentionally coarse:
 1. `Five`
 2. `OpenFour`
 3. `ClosedFour` / `BrokenFour`
-4. `OpenThree`
-5. `ClosedThree` / `BrokenThree`
+4. `OpenThree` / `BrokenThree`
+5. `ClosedThree`
 
 This priority is not yet the static eval. It is a shared vocabulary for
 diagnostics, move ordering, safety gates, and later evaluation experiments.
@@ -81,7 +81,10 @@ other endpoint as a win unless the current player can win immediately or create
 a stronger counter-threat.
 
 Rest tests remain useful for weaker shapes because each `rest_square` is an
-attacker continuation square that can turn the shape into a four.
+attacker continuation square that can turn the shape into a four. For corridor
+analysis, `BrokenThree` belongs with imminent threats, but only after the
+analyzer can name its direct defensive replies and rest-square dependencies
+cleanly. Closed threes remain latent material, not active corridor threats.
 
 Examples:
 
@@ -90,25 +93,49 @@ Examples:
 - `BrokenFour`: create `J8` from `H8 I8 L8` creates completion `K8`.
 - `OpenThree`: create `J8` from `H8 I8` creates defense squares `G8` and `K8`.
 - `ClosedThree`: create `J8` from `O G8, X H8 I8` creates defense square `K8`.
-- `BrokenThree`: create `J8` from `H8 K8` creates rest/defense square `I8`.
+- `BrokenThree`: create `J8` from `H8 K8` creates provisional rest square `I8`.
+  Whether that square is also a direct defensive cost belongs to the future
+  cost/rest split.
 
 ## Renju
 
-Renju does not change the vocabulary, but it changes legality:
+Renju does not change the vocabulary, but it changes whether raw shape squares
+are legal and tactically effective:
 
-- A Black gain square can be forbidden.
-- A Black defense or completion square can be forbidden.
-- White can sometimes create threats whose natural Black answer is forbidden.
+- A Black gain square can be forbidden, so a raw freestyle shape may fail to
+  become a corridor threat.
+- A Black completion square can be forbidden, so a raw immediate win may not be
+  a legal win.
+- A Black defense square can be forbidden, so a White threat may have fewer
+  legal Black replies than its raw shape suggests.
+- White can sometimes create threats whose natural Black answers are forbidden.
 
-Those are tactical judgments, not simple legality checks. They should become
-separate Renju tactical scenarios only after the freestyle shape vocabulary is
-stable.
+Those are tactical judgments, not simple legality checks. A Renju-aware shape
+fact should preserve both the raw square and its legality result. Silent filtering
+is risky because "the only block is forbidden" is proof evidence for the
+analyzer and useful explanation for the report.
+
+Corridor-facing shape facts should eventually distinguish:
+
+- raw gain/completion/cost squares derived from line shape,
+- legal corridor squares the side can actually play,
+- forbidden Black squares with a reason such as overline, double three, or
+  double four.
+
+Renju scenarios should cover both sides of the asymmetry:
+
+- Black raw attack that is invalid because the gain or completion is forbidden.
+- Black defense that fails because every natural answer is forbidden.
+- White attack that is stronger because it places Black's answer on a forbidden
+  square.
+- White defense/counter-threat that remains freestyle-like for White but changes
+  Black's reply set.
 
 ## Current Limits
 
 - Facts are local to lines through the candidate move.
-- Closed and broken threes are non-forcing diagnostics today.
-- Broken-three defense currently mirrors rest squares; a future TSS-style pass
-  can split cost and rest more precisely.
+- Current implementation may still treat broken threes as diagnostic-only until
+  corridor reply generation can split cost and rest precisely.
+- Closed threes are non-forcing diagnostics.
 - The practice bot should consume these facts only where they improve reached
   depth, runtime, or tournament strength under the same budget.
