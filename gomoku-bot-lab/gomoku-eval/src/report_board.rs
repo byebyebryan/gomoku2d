@@ -9,6 +9,7 @@ pub struct ReportBoardMarker {
     pub classes: Vec<String>,
     pub label: Option<String>,
     pub actual_stone: Option<Color>,
+    pub hide_stone: bool,
 }
 
 impl ReportBoardMarker {
@@ -19,6 +20,7 @@ impl ReportBoardMarker {
             classes: Vec::new(),
             label: None,
             actual_stone: None,
+            hide_stone: false,
         }
     }
 
@@ -34,6 +36,11 @@ impl ReportBoardMarker {
 
     pub fn with_actual_stone(mut self, color: Color) -> Self {
         self.actual_stone = Some(color);
+        self
+    }
+
+    pub fn without_underlying_stone(mut self) -> Self {
+        self.hide_stone = true;
         self
     }
 }
@@ -84,6 +91,7 @@ pub fn report_board_css() -> &'static str {
       z-index: 1;
       border-radius: 999px;
       box-shadow: 0 1px 1px rgba(0,0,0,0.5);
+      transform: translateY(-1px);
     }
     .proof-stone--black {
       background: radial-gradient(circle at 35% 30%, #4d4f55 0%, #15171b 58%, #050608 100%);
@@ -103,6 +111,7 @@ pub fn report_board_css() -> &'static str {
       border-radius: 999px;
       background: transparent;
       box-shadow: 0 1px 1px rgba(0,0,0,0.24);
+      transform: translateY(-1px);
     }
     .proof-actual-stone--black {
       border: 2px solid #07090c;
@@ -122,7 +131,7 @@ pub fn report_board_css() -> &'static str {
       font-weight: 800;
       line-height: 1;
       pointer-events: none;
-      transform: translateY(-1px);
+      transform: translateY(-2px);
     }
 "#
 }
@@ -156,10 +165,14 @@ fn report_cell_html(markers: &[ReportBoardMarker], row: usize, col: usize, stone
     let move_attr = marker
         .map(|marker| format!(" data-move=\"{}\"", html_escape(&marker.notation)))
         .unwrap_or_default();
-    let stone_html = match stone {
-        'B' => "<span class=\"proof-stone proof-stone--black\"></span>",
-        'W' => "<span class=\"proof-stone proof-stone--white\"></span>",
-        _ => "",
+    let stone_html = if marker.is_some_and(|marker| marker.hide_stone) {
+        ""
+    } else {
+        match stone {
+            'B' => "<span class=\"proof-stone proof-stone--black\"></span>",
+            'W' => "<span class=\"proof-stone proof-stone--white\"></span>",
+            _ => "",
+        }
     };
     let actual_stone_html = marker.and_then(actual_stone_html).unwrap_or_default();
     let marker_html = marker
@@ -240,5 +253,18 @@ mod tests {
         let html = render_report_board(&rows, &[marker]);
 
         assert!(html.contains("proof-actual-stone--black"));
+    }
+
+    #[test]
+    fn report_board_can_hide_underlying_stone_for_actual_move_ring() {
+        let rows = vec!["B".to_string()];
+        let marker = ReportBoardMarker::new(Move { row: 0, col: 0 })
+            .with_actual_stone(Color::Black)
+            .without_underlying_stone();
+
+        let html = render_report_board(&rows, &[marker]);
+
+        assert!(html.contains("proof-actual-stone--black"));
+        assert!(!html.contains("proof-stone--black"));
     }
 }
