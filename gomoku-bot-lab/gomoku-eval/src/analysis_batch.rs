@@ -11,6 +11,7 @@ use crate::analysis::{
     GameAnalysis, ProofLimitCause, ProofResult, ProofStatus, ReplyClassification, RootCause,
     TacticalNote, UnclearContext, UnclearReason, ANALYSIS_SCHEMA_VERSION,
 };
+use crate::report_board::{render_report_board, report_board_css, ReportBoardMarker};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct AnalysisBatchReport {
@@ -508,48 +509,7 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       color: var(--muted);
       font-size: 11px;
     }}
-    .proof-board {{
-      display: grid;
-      gap: 1px;
-      width: max-content;
-      padding: 4px;
-      background: #303a46;
-      border: 1px solid #536171;
-    }}
-    .proof-cell {{
-      position: relative;
-      width: 18px;
-      height: 18px;
-      background: #18212a;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
-    }}
-    .proof-stone {{
-      position: absolute;
-      inset: 3px;
-      z-index: 1;
-      border-radius: 999px;
-      box-shadow: 0 1px 1px rgba(0,0,0,0.5);
-    }}
-    .proof-stone--black {{
-      background: #101214;
-      border: 1px solid #030405;
-    }}
-    .proof-stone--white {{
-      background: #ece5d1;
-      border: 1px solid #a59b84;
-    }}
-    .proof-marker {{
-      position: absolute;
-      inset: 1px;
-      z-index: 2;
-      display: grid;
-      place-items: center;
-      color: #101214;
-      font-size: 10px;
-      font-weight: 800;
-      line-height: 1;
-      pointer-events: none;
-    }}
+    {board_css}
     .marker--winning {{
       box-shadow: inset 0 0 0 2px var(--green);
     }}
@@ -639,6 +599,7 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
             report.model.max_backward_window
         )),
         limit_summary = html_escape(&limit_summary),
+        board_css = report_board_css(),
         rows = rows,
     )
 }
@@ -1301,70 +1262,31 @@ fn proof_frame_html(frame: &AnalysisBatchProofFrame) -> String {
 }
 
 fn proof_board_html(frame: &AnalysisBatchProofFrame) -> String {
-    let size = frame.rows.len();
-    let cells = frame
-        .rows
-        .iter()
-        .enumerate()
-        .flat_map(|(row, line)| {
-            line.chars()
-                .enumerate()
-                .map(move |(col, stone)| proof_cell_html(frame, row, col, stone))
-        })
-        .collect::<String>();
-    format!(
-        "<div class=\"proof-board\" style=\"grid-template-columns: repeat({size}, 18px);\">{cells}</div>",
-        size = size,
-        cells = cells,
-    )
-}
-
-fn proof_cell_html(frame: &AnalysisBatchProofFrame, row: usize, col: usize, stone: char) -> String {
-    let marker = frame
+    let markers = frame
         .markers
         .iter()
-        .find(|marker| marker.mv.row == row && marker.mv.col == col);
-    let classes = marker
-        .map(marker_classes)
-        .unwrap_or_else(|| "proof-cell".to_string());
-    let move_attr = marker
-        .map(|marker| format!(" data-move=\"{}\"", html_escape(&marker.notation)))
-        .unwrap_or_default();
-    let stone_html = match stone {
-        'B' => "<span class=\"proof-stone proof-stone--black\"></span>",
-        'W' => "<span class=\"proof-stone proof-stone--white\"></span>",
-        _ => "",
-    };
-    let marker_html = marker
         .map(|marker| {
-            format!(
-                "<span class=\"proof-marker\">{}</span>",
-                html_escape(&marker_label(marker))
-            )
+            ReportBoardMarker::new(marker.mv)
+                .with_classes(marker_classes(marker))
+                .with_label(marker_label(marker))
         })
-        .unwrap_or_default();
-    format!(
-        "<div class=\"{classes}\"{move_attr}>{stone_html}{marker_html}</div>",
-        classes = classes,
-        move_attr = move_attr,
-        stone_html = stone_html,
-        marker_html = marker_html,
-    )
+        .collect::<Vec<_>>();
+    render_report_board(&frame.rows, &markers)
 }
 
-fn marker_classes(marker: &AnalysisBatchProofMarker) -> String {
-    let mut classes = vec!["proof-cell"];
-    for kind in &marker.kinds {
-        classes.push(match kind {
+fn marker_classes(marker: &AnalysisBatchProofMarker) -> Vec<&'static str> {
+    marker
+        .kinds
+        .iter()
+        .map(|kind| match kind {
             AnalysisBatchProofMarkerKind::Winning => "marker--winning",
             AnalysisBatchProofMarkerKind::Cost => "marker--cost",
             AnalysisBatchProofMarkerKind::IllegalCost => "marker--illegal-cost",
             AnalysisBatchProofMarkerKind::Escape => "marker--escape",
             AnalysisBatchProofMarkerKind::Forced => "marker--forced",
             AnalysisBatchProofMarkerKind::Principal => "marker--principal",
-        });
-    }
-    classes.join(" ")
+        })
+        .collect()
 }
 
 fn marker_label(marker: &AnalysisBatchProofMarker) -> String {
