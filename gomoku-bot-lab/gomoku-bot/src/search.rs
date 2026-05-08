@@ -1088,11 +1088,20 @@ fn local_threat_fact_in_direction_view(
     }
 
     match (run_len, open_ends.len()) {
-        (3, 2) => Some(LocalThreatFact {
+        (3, 2) => open_three_defense_squares_view(
+            board,
+            dr,
+            dc,
+            before,
+            after,
+            open_ends[0],
+            open_ends[1],
+        )
+        .map(|defense_squares| LocalThreatFact {
             player,
             kind: LocalThreatKind::OpenThree,
             gain_square: mv,
-            defense_squares: open_ends,
+            defense_squares,
             rest_squares: Vec::new(),
         }),
         (3, 1) => Some(LocalThreatFact {
@@ -1116,6 +1125,43 @@ fn local_threat_fact_in_direction_view(
                 })
             }
         }
+    }
+}
+
+fn open_three_defense_squares_view(
+    board: &impl TacticalBoardView,
+    dr: isize,
+    dc: isize,
+    before_count: usize,
+    after_count: usize,
+    before: Move,
+    after: Move,
+) -> Option<Vec<Move>> {
+    let mut defenses = vec![before, after];
+    let before_outer = empty_offset_move_view(board, -dr, -dc, before_count + 2);
+    let after_outer = empty_offset_move_view(board, dr, dc, after_count + 2);
+
+    if before_outer.is_none() && after_outer.is_none() {
+        return None;
+    }
+
+    if before_outer.is_none() {
+        if let Some(after_outer) = after_outer {
+            push_unique_move(&mut defenses, after_outer);
+        }
+    }
+    if after_outer.is_none() {
+        if let Some(before_outer) = before_outer {
+            push_unique_move(&mut defenses, before_outer);
+        }
+    }
+
+    Some(defenses)
+}
+
+fn push_unique_move(moves: &mut Vec<Move>, mv: Move) {
+    if !moves.contains(&mv) {
+        moves.push(mv);
     }
 }
 
@@ -1322,12 +1368,13 @@ fn local_threat_fact_in_direction(
 fn analyze_shapes_through_move(board: &Board, mv: Move, player: Color) -> TacticalShapeFeatures {
     let mut features = TacticalShapeFeatures::default();
     for &(dr, dc) in &DIRS {
-        let (run_len, open_ends) = contiguous_run_through_move(board, mv, dr, dc, player);
+        let (run_len, open_ends, open_outer_ends) =
+            contiguous_run_through_move(board, mv, dr, dc, player);
         if run_len == 4 && open_ends == 2 {
             features.open_four = true;
         } else if run_len == 4 && open_ends == 1 {
             features.closed_four = true;
-        } else if run_len == 3 && open_ends == 2 {
+        } else if run_len == 3 && open_ends == 2 && open_outer_ends > 0 {
             features.open_three = true;
         }
 
@@ -1344,15 +1391,18 @@ fn contiguous_run_through_move(
     dr: isize,
     dc: isize,
     player: Color,
-) -> (usize, usize) {
+) -> (usize, usize, usize) {
     let before = count_player_in_direction(board, mv, -dr, -dc, player);
     let after = count_player_in_direction(board, mv, dr, dc, player);
     let open_before = offset_cell_is_empty(board, mv, -dr, -dc, before + 1);
     let open_after = offset_cell_is_empty(board, mv, dr, dc, after + 1);
+    let open_before_outer = offset_cell_is_empty(board, mv, -dr, -dc, before + 2);
+    let open_after_outer = offset_cell_is_empty(board, mv, dr, dc, after + 2);
 
     (
         before + 1 + after,
         usize::from(open_before) + usize::from(open_after),
+        usize::from(open_before_outer) + usize::from(open_after_outer),
     )
 }
 
@@ -3888,6 +3938,12 @@ mod tests {
         assert!(open_three.open_three);
         assert!(!open_three.broken_three);
 
+        let mut boxed_three_board = Board::new(RuleConfig::default());
+        apply_moves(&mut boxed_three_board, &["J9", "H9", "K9", "N9"]);
+
+        let boxed_three = analyze_tactical_move(&boxed_three_board, mv("L9"));
+        assert!(!boxed_three.open_three);
+
         let mut board = Board::new(RuleConfig::default());
         for mv in [
             Move { row: 7, col: 7 },
@@ -4036,6 +4092,33 @@ mod tests {
             }]
         );
         assert!(!closed_three[0].is_forcing());
+
+        let mut asym_open_three_board = Board::new(RuleConfig::default());
+        apply_moves(&mut asym_open_three_board, &["J9", "H9", "K9", "A1"]);
+
+        let asym_open_three = local_threat_facts_after_move(&asym_open_three_board, mv("L9"));
+        assert_eq!(
+            asym_open_three,
+            vec![LocalThreatFact {
+                player: Color::Black,
+                kind: LocalThreatKind::OpenThree,
+                gain_square: mv("L9"),
+                defense_squares: vec![mv("I9"), mv("M9"), mv("N9")],
+                rest_squares: vec![],
+            }]
+        );
+        assert!(asym_open_three[0].is_forcing());
+
+        let mut boxed_three_board = Board::new(RuleConfig::default());
+        apply_moves(&mut boxed_three_board, &["J9", "H9", "K9", "N9"]);
+
+        let boxed_three = local_threat_facts_after_move(&boxed_three_board, mv("L9"));
+        assert!(
+            boxed_three
+                .iter()
+                .all(|fact| fact.kind != LocalThreatKind::OpenThree),
+            "{boxed_three:?}"
+        );
 
         let mut broken_three_board = Board::new(RuleConfig::default());
         apply_moves(&mut broken_three_board, &["H8", "A1", "K8", "C1"]);

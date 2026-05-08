@@ -1934,10 +1934,51 @@ fn local_threat_fact_from_run_start(
         }),
         (3, true, true) => Some(LocalThreatFact {
             kind: LocalThreatKind::OpenThree,
-            defense_squares: vec![before.expect("checked open"), after.expect("checked open")],
+            defense_squares: open_three_defense_squares(
+                board,
+                start,
+                run.len(),
+                dr,
+                dc,
+                before.expect("checked open"),
+                after.expect("checked open"),
+            )?,
         }),
         _ => None,
     }
+}
+
+fn open_three_defense_squares(
+    board: &Board,
+    start: Move,
+    run_len: usize,
+    dr: isize,
+    dc: isize,
+    before: Move,
+    after: Move,
+) -> Option<Vec<Move>> {
+    let mut defenses = vec![before, after];
+    let before_outer = offset_move(board, start, -dr, -dc, 2);
+    let after_outer = offset_move(board, start, dr, dc, run_len + 1);
+    let before_outer_open = before_outer.is_some_and(|mv| board.is_empty(mv.row, mv.col));
+    let after_outer_open = after_outer.is_some_and(|mv| board.is_empty(mv.row, mv.col));
+
+    if !before_outer_open && !after_outer_open {
+        return None;
+    }
+
+    if !before_outer_open {
+        if let Some(after_outer) = after_outer.filter(|mv| board.is_empty(mv.row, mv.col)) {
+            push_unique_move(&mut defenses, after_outer);
+        }
+    }
+    if !after_outer_open {
+        if let Some(before_outer) = before_outer.filter(|mv| board.is_empty(mv.row, mv.col)) {
+            push_unique_move(&mut defenses, before_outer);
+        }
+    }
+
+    Some(defenses)
 }
 
 fn broken_four_fact_through_move(
@@ -2746,6 +2787,56 @@ mod tests {
             assert!(
                 replies.iter().all(|reply| reply.notation != notation),
                 "{notation} should not be a direct defense to the open three"
+            );
+        }
+    }
+
+    #[test]
+    fn open_three_with_blocked_outer_side_includes_far_defense_square() {
+        let board = board_from_moves(Variant::Renju, &["J9", "H9", "K9", "A1", "L9"]);
+        assert!(
+            local_threat_facts(&board, Color::Black).contains(&LocalThreatFact {
+                kind: LocalThreatKind::OpenThree,
+                defense_squares: vec![mv("I9"), mv("M9"), mv("N9")],
+            })
+        );
+
+        let options = AnalysisOptions {
+            defense_policy: DefensePolicy::AllLegalDefense,
+            max_depth: 4,
+            max_backward_window: Some(8),
+        };
+        let replies =
+            analyze_defender_reply_options(&board, Color::Black, Some(mv("N9")), &options);
+        let reply = reply_for(&replies, "N9");
+        assert!(reply.roles.contains(&DefenderReplyRole::ImminentDefense));
+    }
+
+    #[test]
+    fn boxed_three_is_not_a_forcing_open_three() {
+        let board = board_from_moves(Variant::Renju, &["J9", "H9", "K9", "N9", "L9"]);
+        assert!(
+            local_threat_facts(&board, Color::Black)
+                .iter()
+                .all(|fact| fact.kind != LocalThreatKind::OpenThree),
+            "{:?}",
+            local_threat_facts(&board, Color::Black)
+        );
+
+        let options = AnalysisOptions {
+            defense_policy: DefensePolicy::AllLegalDefense,
+            max_depth: 4,
+            max_backward_window: Some(8),
+        };
+        let replies = analyze_defender_reply_options(&board, Color::Black, None, &options);
+        for notation in ["I9", "M9"] {
+            assert!(
+                replies
+                    .iter()
+                    .filter(|reply| reply.notation == notation)
+                    .all(|reply| !reply.roles.contains(&DefenderReplyRole::ImminentDefense)),
+                "{notation}: {:?}",
+                replies
             );
         }
     }
