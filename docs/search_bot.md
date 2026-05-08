@@ -312,9 +312,10 @@ For now, tactical facts are consumers of the search pipeline, not a replacement
 for globally consistent board evaluation.
 
 Tactical annotation stays scan-based but cache-friendly. `Board` remains the
-source of truth; search-side annotation computes local facts into a reusable move
-annotation and now feeds both safety and the lab-only `tactical_first` ordering
-mode. It can also pair with `child_limit` to test whether ordered tactical
+source of truth; `gomoku-bot::tactical` computes shared local facts into a
+reusable move annotation and now feeds both safety and the lab-only
+`tactical_first` ordering mode. It can also pair with `child_limit` to test
+whether ordered tactical
 coverage lets alpha-beta search fewer children without changing candidate
 discovery. A full frontier model, where a `SearchPosition` tracks changed
 candidate masks and threat facts through apply/undo, is a later optimization

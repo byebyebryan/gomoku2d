@@ -318,6 +318,8 @@ The current checkpoint provides:
 
 - a corridor-based replay analyzer,
 - bot-owned corridor proof entry points under `gomoku-bot::corridor`,
+- shared local-threat facts under `gomoku-bot::tactical` consumed by both
+  `SearchBot` and corridor search,
 - lab-only `CorridorBot` aliases: `corridor-random` and `corridor-d1`,
 - proof-detail JSON and HTML report generation,
 - visual proof frames with board rendering and semantic markers,
