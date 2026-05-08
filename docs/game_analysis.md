@@ -873,12 +873,14 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   Black answers at `I10` and re-enters the narrow forced line. `I10` is the
   harder sibling: White occupies the square that was the actual final Black move
   (`I10`), Black must answer at `I11`, and the proof has to rediscover a longer
-  forced line. The default corridor audit keeps `--max-depth 4` for speed.
-  Selective deep retry remains a focused debugging knob for unresolved reply
-  outcomes, but it can be expensive and should stay off smoke reports. This is
-  the intended bridge between "the user sees multiple plausible choices" and
-  "which of those choices are proven escapes, unproved escapes, or forced
-  losses."
+  forced line. The default corridor audit keeps `--max-depth 4` for speed. A
+  decision-critical deepening experiment tried rechecking the single unproved
+  reply when all sibling replies already lost, but the cost/benefit was poor:
+  the first 8-game sample grew from about `16s` to about `62s`, `match_1729`
+  `I10` still ended as `unproved_escape`, and the 64-game run remained
+  expensive enough to interrupt. Keep proof-detail audits at base depth until
+  corridor search has better pruning, memoization, or a narrower transition
+  model.
 - After the scan-cap refactor, the top-two 64-game checkpoint with the default
   scan cap `64` passed with `64 analyzed / 64 total` and `0 failed`. It resolved
   every decisive game: `3` mistakes, `25` tactical errors, `35` strategic
@@ -924,12 +926,12 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   second independent budget.
 
 Current next target: inspect the visual decision-frame audit output for the
-top-two 64-game run, especially the `4` decisive `unclear` entries and any
-surprising `strategic_loss` labels. Use remaining failures or suspicious labels
-to decide whether the next slice should improve named local exits, forced-chain
-evidence, or report readability. Do not expose replay analysis in the web UI
-yet, and do not try to solve remaining unknowns by simply raising all-legal
-depth or widening shape coverage.
+top-two 64-game run, especially surprising `strategic_loss` labels or
+unproved defender replies that look obvious to a human. Use suspicious labels to
+decide whether the next slice should improve named local exits, forced-chain
+evidence, pruning, or report readability. Do not expose replay analysis in the
+web UI yet, and do not try to solve remaining unknowns by simply raising
+all-legal depth or widening shape coverage.
 
 Example:
 
@@ -982,10 +984,9 @@ head-to-head analysis only for checkpoint reports. `--max-scan-plies 8`
 is the practical override for fast iteration; the CLI default is `64`, which is
 the current checkpoint setting. Add
 `--include-proof-details` when the goal is auditability rather than a compact
-summary report. Add selective deep retry only for focused proof-detail audits:
-it retries unresolved defender-reply outcomes with a higher corridor depth,
-capped per replay by `--deep-retry-limit`. Do not use it as a substitute
-for fixing the corridor model or as a default full-report setting.
+summary report. Avoid ad hoc deeper proof retries in checkpoint reports; prior
+experiments found them too expensive without first improving the corridor
+search model.
 
 Keep generated analysis JSON/HTML under `gomoku-bot-lab/outputs/analysis/`
 while iterating. These files are ignored scratch artifacts; commit only the

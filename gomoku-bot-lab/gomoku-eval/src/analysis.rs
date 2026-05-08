@@ -1,7 +1,7 @@
 use gomoku_core::{replay::ReplayResult, Board, Color, GameResult, Move, Replay, Variant};
 use serde::Serialize;
 
-pub const ANALYSIS_SCHEMA_VERSION: u32 = 11;
+pub const ANALYSIS_SCHEMA_VERSION: u32 = 12;
 pub const DEFAULT_MAX_SCAN_PLIES: usize = 64;
 const MAX_HYBRID_LOCAL_THREAT_COUNT: usize = 2;
 const MAX_HYBRID_LOCAL_THREAT_REPLIES: usize = 8;
@@ -97,8 +97,6 @@ pub struct DefenderReplyAnalysis {
     pub notation: String,
     pub roles: Vec<DefenderReplyRole>,
     pub outcome: DefenderReplyOutcome,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub deep_retry_depth: Option<usize>,
     pub principal_line: Vec<Move>,
     pub principal_line_notation: Vec<String>,
     pub limit_causes: Vec<ProofLimitCause>,
@@ -428,45 +426,16 @@ pub fn analyze_defender_reply_options(
     actual_reply: Option<Move>,
     options: &AnalysisOptions,
 ) -> Vec<DefenderReplyAnalysis> {
-    analyze_defender_reply_options_with_retry(board, attacker, actual_reply, options, None, 0)
+    analyze_defender_reply_options_inner(board, attacker, actual_reply, None, options)
 }
 
-pub fn analyze_defender_reply_options_with_retry(
-    board: &Board,
-    attacker: Color,
-    actual_reply: Option<Move>,
-    options: &AnalysisOptions,
-    deep_retry_depth: Option<usize>,
-    max_deep_retries: usize,
-) -> Vec<DefenderReplyAnalysis> {
-    analyze_defender_reply_options_with_retry_inner(
-        board,
-        attacker,
-        actual_reply,
-        None,
-        options,
-        deep_retry_depth,
-        max_deep_retries,
-    )
-}
-
-pub fn analyze_alternate_defender_reply_options_with_retry(
+pub fn analyze_alternate_defender_reply_options(
     board: &Board,
     attacker: Color,
     excluded_reply: Option<Move>,
     options: &AnalysisOptions,
-    deep_retry_depth: Option<usize>,
-    max_deep_retries: usize,
 ) -> Vec<DefenderReplyAnalysis> {
-    analyze_defender_reply_options_with_retry_inner(
-        board,
-        attacker,
-        None,
-        excluded_reply,
-        options,
-        deep_retry_depth,
-        max_deep_retries,
-    )
+    analyze_defender_reply_options_inner(board, attacker, None, excluded_reply, options)
 }
 
 pub fn defender_reply_roles_for_move(
@@ -494,14 +463,12 @@ pub fn defender_reply_roles_for_move(
     roles
 }
 
-fn analyze_defender_reply_options_with_retry_inner(
+fn analyze_defender_reply_options_inner(
     board: &Board,
     attacker: Color,
     actual_reply: Option<Move>,
     excluded_reply: Option<Move>,
     options: &AnalysisOptions,
-    deep_retry_depth: Option<usize>,
-    max_deep_retries: usize,
 ) -> Vec<DefenderReplyAnalysis> {
     if board.current_player != attacker.opponent() || board.result != GameResult::Ongoing {
         return Vec::new();
@@ -527,60 +494,36 @@ fn analyze_defender_reply_options_with_retry_inner(
         replies.retain(|(mv, _)| *mv != excluded_reply);
     }
 
-    let mut deep_retries_remaining = max_deep_retries;
     replies
         .into_iter()
         .map(|(mv, roles)| {
-            let retry = deep_retry_depth.filter(|_| deep_retries_remaining > 0);
-            let (proof, deep_retry_depth) =
-                classify_defender_reply_with_retry_for_report(board, attacker, mv, options, retry);
-            if deep_retry_depth.is_some() {
-                deep_retries_remaining = deep_retries_remaining.saturating_sub(1);
-            }
-            let mut diagnostics = proof.diagnostics;
-            diagnostics.record_branch_probe();
-            DefenderReplyAnalysis {
-                mv,
-                notation: mv.to_notation(),
-                roles,
-                outcome: proof.outcome,
-                deep_retry_depth,
-                principal_line_notation: proof
-                    .principal_line
-                    .iter()
-                    .map(|mv| mv.to_notation())
-                    .collect(),
-                principal_line: proof.principal_line,
-                limit_causes: proof.limit_causes,
-                diagnostics,
-            }
+            let proof = classify_defender_reply_for_report(board, attacker, mv, options);
+            defender_reply_analysis_from_proof(mv, roles, proof)
         })
         .collect()
 }
 
-fn classify_defender_reply_with_retry_for_report(
-    board: &Board,
-    attacker: Color,
+fn defender_reply_analysis_from_proof(
     mv: Move,
-    options: &AnalysisOptions,
-    deep_retry_depth: Option<usize>,
-) -> (DefenderReplyProof, Option<usize>) {
-    let proof = classify_defender_reply_for_report(board, attacker, mv, options);
-    if !matches!(
-        proof.outcome,
-        DefenderReplyOutcome::Unknown | DefenderReplyOutcome::UnprovedEscape
-    ) {
-        return (proof, None);
+    roles: Vec<DefenderReplyRole>,
+    proof: DefenderReplyProof,
+) -> DefenderReplyAnalysis {
+    let mut diagnostics = proof.diagnostics;
+    diagnostics.record_branch_probe();
+    DefenderReplyAnalysis {
+        mv,
+        notation: mv.to_notation(),
+        roles,
+        outcome: proof.outcome,
+        principal_line_notation: proof
+            .principal_line
+            .iter()
+            .map(|mv| mv.to_notation())
+            .collect(),
+        principal_line: proof.principal_line,
+        limit_causes: proof.limit_causes,
+        diagnostics,
     }
-
-    let Some(deep_depth) = deep_retry_depth.filter(|depth| *depth > options.max_depth) else {
-        return (proof, None);
-    };
-    let mut deep_options = options.clone();
-    deep_options.max_depth = deep_depth;
-    let mut deep_proof = classify_defender_reply_for_report(board, attacker, mv, &deep_options);
-    deep_proof.diagnostics.merge(proof.diagnostics);
-    (deep_proof, Some(deep_depth))
 }
 
 struct DefenderReplyProof {

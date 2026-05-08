@@ -7,11 +7,11 @@ use rayon::prelude::*;
 use serde::Serialize;
 
 use crate::analysis::{
-    analyze_alternate_defender_reply_options_with_retry, analyze_replay,
-    defender_reply_roles_for_move, AnalysisBoardSnapshot, AnalysisOptions, DefenderReplyAnalysis,
-    DefenderReplyOutcome, DefenderReplyRole, DefensePolicy, ForcedInterval, GameAnalysis,
-    ProofLimitCause, ProofResult, ProofStatus, ReplyClassification, RootCause, SearchDiagnostics,
-    TacticalNote, UnclearContext, UnclearReason, ANALYSIS_SCHEMA_VERSION,
+    analyze_alternate_defender_reply_options, analyze_replay, defender_reply_roles_for_move,
+    AnalysisBoardSnapshot, AnalysisOptions, DefenderReplyAnalysis, DefenderReplyOutcome,
+    DefenderReplyRole, DefensePolicy, ForcedInterval, GameAnalysis, ProofLimitCause, ProofResult,
+    ProofStatus, ReplyClassification, RootCause, SearchDiagnostics, TacticalNote, UnclearContext,
+    UnclearReason, ANALYSIS_SCHEMA_VERSION,
 };
 use crate::report_board::{render_report_board, report_board_css, ReportBoardMarker};
 
@@ -39,9 +39,6 @@ pub struct AnalysisBatchReport {
 pub struct AnalysisBatchModel {
     pub defense_policy: DefensePolicy,
     pub max_depth: usize,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub deep_retry_depth: Option<usize>,
-    pub deep_retry_limit: usize,
     pub max_scan_plies: Option<usize>,
 }
 
@@ -189,8 +186,6 @@ pub struct ReplayAnalysisInput {
 pub struct AnalysisBatchRunOptions {
     pub analysis: AnalysisOptions,
     pub include_proof_details: bool,
-    pub deep_retry_depth: Option<usize>,
-    pub deep_retry_limit: usize,
 }
 
 impl From<AnalysisOptions> for AnalysisBatchRunOptions {
@@ -198,8 +193,6 @@ impl From<AnalysisOptions> for AnalysisBatchRunOptions {
         Self {
             analysis,
             include_proof_details: false,
-            deep_retry_depth: None,
-            deep_retry_limit: 1,
         }
     }
 }
@@ -240,8 +233,6 @@ pub fn run_analysis_batch_with_options(
                     replay.moves.len(),
                     elapsed_millis(entry_started.elapsed()),
                     options.include_proof_details.then_some(&replay),
-                    options.deep_retry_depth,
-                    options.deep_retry_limit,
                 ),
                 Err(error) => error_entry(
                     relative_path,
@@ -308,8 +299,6 @@ pub fn run_analysis_batch_replays_with_options(
                     input.replay.moves.len(),
                     elapsed_millis(entry_started.elapsed()),
                     options.include_proof_details.then_some(&input.replay),
-                    options.deep_retry_depth,
-                    options.deep_retry_limit,
                 ),
                 Err(error) => error_entry(
                     input.label.clone(),
@@ -353,20 +342,9 @@ pub fn run_analysis_batch_replays_with_options(
 }
 
 fn model_from_options(options: &AnalysisBatchRunOptions) -> AnalysisBatchModel {
-    let deep_retry_depth = if options.include_proof_details && options.deep_retry_limit > 0 {
-        options.deep_retry_depth
-    } else {
-        None
-    };
     AnalysisBatchModel {
         defense_policy: options.analysis.defense_policy,
         max_depth: options.analysis.max_depth,
-        deep_retry_depth,
-        deep_retry_limit: if deep_retry_depth.is_some() {
-            options.deep_retry_limit
-        } else {
-            0
-        },
         max_scan_plies: options.analysis.max_scan_plies,
     }
 }
@@ -1335,10 +1313,6 @@ fn detail_html(label: &str, value: &str) -> String {
 }
 
 fn corridor_search_config_label(report: &AnalysisBatchReport) -> String {
-    let retry = match (report.model.deep_retry_depth, report.model.deep_retry_limit) {
-        (Some(depth), limit) if limit > 0 => format!("retry depth {depth} x{limit}"),
-        _ => "retry off".to_string(),
-    };
     let scan_plies = report
         .model
         .max_scan_plies
@@ -1346,11 +1320,10 @@ fn corridor_search_config_label(report: &AnalysisBatchReport) -> String {
         .unwrap_or_else(|| "unbounded".to_string());
 
     format!(
-        "{} / depth {} / scan {} / {}",
+        "{} / depth {} / scan {}",
         defense_policy_label(report.model.defense_policy),
         report.model.max_depth,
-        scan_plies,
-        retry
+        scan_plies
     )
 }
 
@@ -1448,16 +1421,12 @@ fn entry_from_analysis(
     move_count: usize,
     elapsed_ms: u64,
     replay: Option<&Replay>,
-    deep_retry_depth: Option<usize>,
-    deep_retry_limit: usize,
 ) -> AnalysisBatchEntry {
     let prefixes_analyzed = analysis.proof_summary.len();
     let forced_prefix_count = count_proof_status(&analysis, ProofStatus::ForcedWin);
     let unknown_prefix_count = count_proof_status(&analysis, ProofStatus::Unknown);
     let escape_prefix_count = count_proof_status(&analysis, ProofStatus::EscapeFound);
-    let proof_details = replay.and_then(|replay| {
-        proof_details_from_analysis(replay, &analysis, deep_retry_depth, deep_retry_limit)
-    });
+    let proof_details = replay.and_then(|replay| proof_details_from_analysis(replay, &analysis));
     let proof_detail_diagnostics = proof_details.as_ref().map(proof_details_diagnostics);
     let limit_causes = analysis
         .unclear_context
@@ -1499,8 +1468,6 @@ fn entry_from_analysis(
 fn proof_details_from_analysis(
     replay: &Replay,
     analysis: &GameAnalysis,
-    deep_retry_depth: Option<usize>,
-    deep_retry_limit: usize,
 ) -> Option<AnalysisBatchProofDetails> {
     analysis.winner?;
     if analysis.proof_summary.is_empty() {
@@ -1542,14 +1509,7 @@ fn proof_details_from_analysis(
             ));
         }
     }
-    let proof_frames = proof_frames_for_actual_interval(
-        replay,
-        &boards,
-        analysis,
-        scan_start,
-        deep_retry_depth,
-        deep_retry_limit,
-    );
+    let proof_frames = proof_frames_for_actual_interval(replay, &boards, analysis, scan_start);
 
     Some(AnalysisBatchProofDetails {
         previous_prefix_ply,
@@ -1630,14 +1590,7 @@ fn proof_frames_for_actual_interval(
     boards: &[Board],
     analysis: &GameAnalysis,
     scan_start: usize,
-    deep_retry_depth: Option<usize>,
-    deep_retry_limit: usize,
 ) -> Vec<AnalysisBatchProofFrame> {
-    let mut deep_retries_remaining = if deep_retry_depth.is_some() {
-        deep_retry_limit
-    } else {
-        0
-    };
     let first_ply = proof_frame_start_ply(boards, analysis);
     let plys = (first_ply..=analysis.final_forced_interval.end_ply)
         .rev()
@@ -1665,13 +1618,7 @@ fn proof_frames_for_actual_interval(
                 );
             }
             let actual_move = actual_move_at_ply(replay, ply);
-            let reply_outcomes = defender_reply_outcomes_for_frame(
-                board,
-                analysis,
-                actual_move,
-                deep_retry_depth,
-                &mut deep_retries_remaining,
-            );
+            let reply_outcomes = defender_reply_outcomes_for_frame(board, analysis, actual_move);
             add_reply_outcome_markers(&mut markers, &reply_outcomes);
             add_pre_corridor_escape_marker(
                 &mut markers,
@@ -1725,8 +1672,6 @@ fn defender_reply_outcomes_for_frame(
     board: &Board,
     analysis: &GameAnalysis,
     actual_move: Option<Move>,
-    deep_retry_depth: Option<usize>,
-    deep_retries_remaining: &mut usize,
 ) -> Vec<DefenderReplyAnalysis> {
     let Some(attacker) = analysis.winner else {
         return Vec::new();
@@ -1735,7 +1680,7 @@ fn defender_reply_outcomes_for_frame(
         return Vec::new();
     }
 
-    let replies = analyze_alternate_defender_reply_options_with_retry(
+    analyze_alternate_defender_reply_options(
         board,
         attacker,
         actual_move,
@@ -1744,15 +1689,7 @@ fn defender_reply_outcomes_for_frame(
             max_depth: analysis.model.max_depth,
             max_scan_plies: analysis.model.max_scan_plies,
         },
-        deep_retry_depth,
-        *deep_retries_remaining,
-    );
-    let used = replies
-        .iter()
-        .filter(|reply| reply.deep_retry_depth.is_some())
-        .count();
-    *deep_retries_remaining = (*deep_retries_remaining).saturating_sub(used);
-    replies
+    )
 }
 
 fn actual_frame_label(ply: usize, interval: &ForcedInterval) -> String {
@@ -2576,16 +2513,6 @@ fn defender_reply_detail_label(reply: &DefenderReplyAnalysis) -> String {
     if line != "-" {
         parts.push(line);
     }
-    if let Some(depth) = reply.deep_retry_depth {
-        if matches!(
-            reply.outcome,
-            DefenderReplyOutcome::Unknown | DefenderReplyOutcome::UnprovedEscape
-        ) {
-            parts.push(format!("deep {depth} tried"));
-        } else {
-            parts.push(format!("deep {depth}"));
-        }
-    }
     if !reply.limit_causes.is_empty() {
         parts.push(proof_limit_cause_labels(&reply.limit_causes));
     }
@@ -2968,8 +2895,6 @@ mod tests {
             AnalysisBatchRunOptions {
                 analysis: AnalysisOptions::default(),
                 include_proof_details: true,
-                deep_retry_depth: None,
-                deep_retry_limit: 1,
             },
         );
 
@@ -3138,8 +3063,6 @@ mod tests {
                     max_scan_plies: Some(8),
                 },
                 include_proof_details: true,
-                deep_retry_depth: None,
-                deep_retry_limit: 0,
             },
         );
 
@@ -3188,8 +3111,6 @@ mod tests {
             AnalysisBatchRunOptions {
                 analysis: AnalysisOptions::default(),
                 include_proof_details: true,
-                deep_retry_depth: None,
-                deep_retry_limit: 1,
             },
         );
 
@@ -3284,7 +3205,6 @@ mod tests {
                 DefenderReplyRole::OffensiveCounter,
             ],
             outcome: DefenderReplyOutcome::UnprovedEscape,
-            deep_retry_depth: Some(8),
             principal_line: vec![Move::from_notation("I11").unwrap()],
             principal_line_notation: vec!["I11".to_string()],
             limit_causes: vec![ProofLimitCause::DepthCutoff],
@@ -3292,10 +3212,7 @@ mod tests {
         };
 
         assert_eq!(defender_reply_outcome_label(&reply), "unproved escape");
-        assert_eq!(
-            defender_reply_detail_label(&reply),
-            "I10 I11; deep 8 tried; depth cutoff"
-        );
+        assert_eq!(defender_reply_detail_label(&reply), "I10 I11; depth cutoff");
     }
 
     #[test]
@@ -3373,8 +3290,6 @@ mod tests {
                     max_scan_plies: Some(8),
                 },
                 include_proof_details: true,
-                deep_retry_depth: None,
-                deep_retry_limit: 1,
             },
         );
 
@@ -3467,8 +3382,6 @@ mod tests {
                     max_scan_plies: Some(8),
                 },
                 include_proof_details: true,
-                deep_retry_depth: None,
-                deep_retry_limit: 1,
             },
         );
 
@@ -3523,8 +3436,6 @@ mod tests {
                     max_scan_plies: Some(8),
                 },
                 include_proof_details: true,
-                deep_retry_depth: None,
-                deep_retry_limit: 1,
             },
         );
 
@@ -3574,8 +3485,6 @@ mod tests {
                     max_scan_plies: Some(8),
                 },
                 include_proof_details: true,
-                deep_retry_depth: None,
-                deep_retry_limit: 0,
             },
         );
 
@@ -3606,32 +3515,6 @@ mod tests {
             .kinds
             .contains(&AnalysisBatchProofMarkerKind::Forbidden));
         assert_eq!(marker_label(future_g10), "F");
-    }
-
-    #[test]
-    fn analysis_batch_model_only_reports_deep_retry_when_proof_details_run() {
-        let replay = replay_from_moves(
-            Variant::Freestyle,
-            &["H8", "G8", "I8", "A1", "J8", "A2", "K8", "B1", "L8"],
-        );
-
-        let report = run_analysis_batch_replays_with_options(
-            "deep-retry-off".to_string(),
-            vec![ReplayAnalysisInput {
-                label: "missed_defense".to_string(),
-                replay,
-            }],
-            AnalysisBatchRunOptions {
-                analysis: AnalysisOptions::default(),
-                include_proof_details: false,
-                deep_retry_depth: Some(10),
-                deep_retry_limit: 1,
-            },
-        );
-
-        assert_eq!(report.model.deep_retry_depth, None);
-        assert_eq!(report.model.deep_retry_limit, 0);
-        assert!(report.entries[0].proof_details.is_none());
     }
 
     fn marker_for<'a>(

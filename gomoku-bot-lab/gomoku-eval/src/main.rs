@@ -300,14 +300,6 @@ enum Commands {
         #[arg(long, default_value_t = 4)]
         max_depth: usize,
 
-        /// Optional deeper forced-corridor depth for unresolved proof-detail reply outcomes
-        #[arg(long)]
-        deep_retry_depth: Option<usize>,
-
-        /// Maximum number of proof-detail reply outcomes to retry per analyzed replay
-        #[arg(long, default_value_t = 1)]
-        deep_retry_limit: usize,
-
         /// Max plies to scan backward from the final board
         #[arg(long, default_value_t = DEFAULT_MAX_SCAN_PLIES)]
         max_scan_plies: usize,
@@ -353,14 +345,6 @@ enum Commands {
         /// Maximum forced-corridor proof depth
         #[arg(long, default_value_t = 4)]
         max_depth: usize,
-
-        /// Optional deeper forced-corridor depth for unresolved proof-detail reply outcomes
-        #[arg(long)]
-        deep_retry_depth: Option<usize>,
-
-        /// Maximum number of proof-detail reply outcomes to retry per analyzed replay
-        #[arg(long, default_value_t = 1)]
-        deep_retry_limit: usize,
 
         /// Max plies to scan backward from the final board
         #[arg(long, default_value_t = DEFAULT_MAX_SCAN_PLIES)]
@@ -1376,8 +1360,6 @@ fn main() {
             report_html,
             defense_policy,
             max_depth,
-            deep_retry_depth,
-            deep_retry_limit,
             max_scan_plies,
             include_proof_details,
         } => {
@@ -1390,8 +1372,6 @@ fn main() {
                         max_scan_plies: Some(max_scan_plies),
                     },
                     include_proof_details,
-                    deep_retry_depth,
-                    deep_retry_limit,
                 },
             )
             .unwrap_or_else(|err| {
@@ -1430,8 +1410,6 @@ fn main() {
             report_html,
             defense_policy,
             max_depth,
-            deep_retry_depth,
-            deep_retry_limit,
             max_scan_plies,
             include_proof_details,
         } => {
@@ -1481,8 +1459,6 @@ fn main() {
                         max_scan_plies: Some(max_scan_plies),
                     },
                     include_proof_details,
-                    deep_retry_depth,
-                    deep_retry_limit,
                 },
             );
 
@@ -1851,10 +1827,6 @@ mod tests {
             "tactical-defense",
             "--max-depth",
             "3",
-            "--deep-retry-depth",
-            "10",
-            "--deep-retry-limit",
-            "2",
             "--max-scan-plies",
             "12",
         ])
@@ -1866,8 +1838,6 @@ mod tests {
             report_html,
             defense_policy,
             max_depth,
-            deep_retry_depth,
-            deep_retry_limit,
             max_scan_plies,
             include_proof_details,
         } = cli.command
@@ -1886,8 +1856,6 @@ mod tests {
         );
         assert_eq!(defense_policy, CliDefensePolicy::Tactical);
         assert_eq!(max_depth, 3);
-        assert_eq!(deep_retry_depth, Some(10));
-        assert_eq!(deep_retry_limit, 2);
         assert_eq!(max_scan_plies, 12);
         assert!(!include_proof_details);
     }
@@ -1915,10 +1883,6 @@ mod tests {
             "all-legal-defense",
             "--max-depth",
             "4",
-            "--deep-retry-depth",
-            "10",
-            "--deep-retry-limit",
-            "1",
             "--max-scan-plies",
             "8",
             "--include-proof-details",
@@ -1935,8 +1899,6 @@ mod tests {
             report_html,
             defense_policy,
             max_depth,
-            deep_retry_depth,
-            deep_retry_limit,
             max_scan_plies,
             include_proof_details,
         } = cli.command
@@ -1965,8 +1927,6 @@ mod tests {
         );
         assert_eq!(defense_policy, CliDefensePolicy::AllLegal);
         assert_eq!(max_depth, 4);
-        assert_eq!(deep_retry_depth, Some(10));
-        assert_eq!(deep_retry_limit, 1);
         assert_eq!(max_scan_plies, 8);
         assert!(include_proof_details);
     }
