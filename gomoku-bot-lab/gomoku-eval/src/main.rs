@@ -272,9 +272,9 @@ enum Commands {
         #[arg(long, default_value_t = 4)]
         max_depth: usize,
 
-        /// Optional number of final plies to scan backward
+        /// Optional max plies to scan backward from the final board
         #[arg(long)]
-        max_backward_window: Option<usize>,
+        max_scan_plies: Option<usize>,
     },
     /// Analyze every replay JSON in a directory and emit grouped reports
     AnalyzeReplayBatch {
@@ -306,9 +306,9 @@ enum Commands {
         #[arg(long, default_value_t = 1)]
         deep_retry_limit: usize,
 
-        /// Optional number of final plies to scan backward
+        /// Optional max plies to scan backward from the final board
         #[arg(long)]
-        max_backward_window: Option<usize>,
+        max_scan_plies: Option<usize>,
 
         /// Include proof snapshots for decisive replay analyses
         #[arg(long)]
@@ -360,9 +360,9 @@ enum Commands {
         #[arg(long, default_value_t = 1)]
         deep_retry_limit: usize,
 
-        /// Optional number of final plies to scan backward
+        /// Optional max plies to scan backward from the final board
         #[arg(long)]
-        max_backward_window: Option<usize>,
+        max_scan_plies: Option<usize>,
 
         /// Include proof snapshots for decisive replay analyses
         #[arg(long)]
@@ -386,9 +386,9 @@ enum Commands {
         #[arg(long, default_value_t = 4)]
         max_depth: usize,
 
-        /// Optional number of final plies to scan backward unless a fixture overrides it
+        /// Optional max plies to scan backward from the final board unless a fixture overrides it
         #[arg(long)]
-        max_backward_window: Option<usize>,
+        max_scan_plies: Option<usize>,
     },
 }
 
@@ -1340,7 +1340,7 @@ fn main() {
             output,
             defense_policy,
             max_depth,
-            max_backward_window,
+            max_scan_plies,
         } => {
             let json = std::fs::read_to_string(&input)
                 .unwrap_or_else(|err| exit_with_error(format!("Failed to read replay: {err}")));
@@ -1351,7 +1351,7 @@ fn main() {
                 AnalysisOptions {
                     defense_policy: defense_policy.into(),
                     max_depth,
-                    max_backward_window,
+                    max_scan_plies,
                 },
             )
             .unwrap_or_else(|err| exit_with_error(format!("Failed to analyze replay: {err}")));
@@ -1376,7 +1376,7 @@ fn main() {
             max_depth,
             deep_retry_depth,
             deep_retry_limit,
-            max_backward_window,
+            max_scan_plies,
             include_proof_details,
         } => {
             let report = run_analysis_batch_with_options(
@@ -1385,7 +1385,7 @@ fn main() {
                     analysis: AnalysisOptions {
                         defense_policy: defense_policy.into(),
                         max_depth,
-                        max_backward_window,
+                        max_scan_plies,
                     },
                     include_proof_details,
                     deep_retry_depth,
@@ -1430,7 +1430,7 @@ fn main() {
             max_depth,
             deep_retry_depth,
             deep_retry_limit,
-            max_backward_window,
+            max_scan_plies,
             include_proof_details,
         } => {
             let json = std::fs::read_to_string(&report).unwrap_or_else(|err| {
@@ -1476,7 +1476,7 @@ fn main() {
                     analysis: AnalysisOptions {
                         defense_policy: defense_policy.into(),
                         max_depth,
-                        max_backward_window,
+                        max_scan_plies,
                     },
                     include_proof_details,
                     deep_retry_depth,
@@ -1511,12 +1511,12 @@ fn main() {
             report_html,
             defense_policy,
             max_depth,
-            max_backward_window,
+            max_scan_plies,
         } => {
             let report = run_analysis_fixtures(AnalysisOptions {
                 defense_policy: defense_policy.into(),
                 max_depth,
-                max_backward_window,
+                max_scan_plies,
             })
             .unwrap_or_else(|err| {
                 exit_with_error(format!("Failed to run analysis fixtures: {err}"))
@@ -1752,7 +1752,7 @@ mod tests {
             "tactical-defense",
             "--max-depth",
             "3",
-            "--max-backward-window",
+            "--max-scan-plies",
             "12",
         ])
         .expect("analyze-replay command should parse");
@@ -1762,7 +1762,7 @@ mod tests {
             output,
             defense_policy,
             max_depth,
-            max_backward_window,
+            max_scan_plies,
         } = cli.command
         else {
             panic!("expected analyze-replay command");
@@ -1772,7 +1772,7 @@ mod tests {
         assert_eq!(output, Some(PathBuf::from("outputs/analysis.json")));
         assert_eq!(defense_policy, CliDefensePolicy::Tactical);
         assert_eq!(max_depth, 3);
-        assert_eq!(max_backward_window, Some(12));
+        assert_eq!(max_scan_plies, Some(12));
     }
 
     #[test]
@@ -1788,7 +1788,7 @@ mod tests {
             "hybrid-defense",
             "--max-depth",
             "4",
-            "--max-backward-window",
+            "--max-scan-plies",
             "16",
         ])
         .expect("analysis-fixtures command should parse");
@@ -1798,7 +1798,7 @@ mod tests {
             report_html,
             defense_policy,
             max_depth,
-            max_backward_window,
+            max_scan_plies,
         } = cli.command
         else {
             panic!("expected analysis-fixtures command");
@@ -1814,7 +1814,7 @@ mod tests {
         );
         assert_eq!(defense_policy, CliDefensePolicy::Hybrid);
         assert_eq!(max_depth, 4);
-        assert_eq!(max_backward_window, Some(16));
+        assert_eq!(max_scan_plies, Some(16));
     }
 
     #[test]
@@ -1836,7 +1836,7 @@ mod tests {
             "10",
             "--deep-retry-limit",
             "2",
-            "--max-backward-window",
+            "--max-scan-plies",
             "12",
         ])
         .expect("analyze-replay-batch command should parse");
@@ -1849,7 +1849,7 @@ mod tests {
             max_depth,
             deep_retry_depth,
             deep_retry_limit,
-            max_backward_window,
+            max_scan_plies,
             include_proof_details,
         } = cli.command
         else {
@@ -1869,7 +1869,7 @@ mod tests {
         assert_eq!(max_depth, 3);
         assert_eq!(deep_retry_depth, Some(10));
         assert_eq!(deep_retry_limit, 2);
-        assert_eq!(max_backward_window, Some(12));
+        assert_eq!(max_scan_plies, Some(12));
         assert!(!include_proof_details);
     }
 
@@ -1900,7 +1900,7 @@ mod tests {
             "10",
             "--deep-retry-limit",
             "1",
-            "--max-backward-window",
+            "--max-scan-plies",
             "8",
             "--include-proof-details",
         ])
@@ -1918,7 +1918,7 @@ mod tests {
             max_depth,
             deep_retry_depth,
             deep_retry_limit,
-            max_backward_window,
+            max_scan_plies,
             include_proof_details,
         } = cli.command
         else {
@@ -1948,7 +1948,7 @@ mod tests {
         assert_eq!(max_depth, 4);
         assert_eq!(deep_retry_depth, Some(10));
         assert_eq!(deep_retry_limit, 1);
-        assert_eq!(max_backward_window, Some(8));
+        assert_eq!(max_scan_plies, Some(8));
         assert!(include_proof_details);
     }
 

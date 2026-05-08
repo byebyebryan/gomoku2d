@@ -21,7 +21,7 @@ pub struct AnalysisFixtureCase {
 pub struct AnalysisFixtureOptions {
     pub max_depth: Option<usize>,
     pub defense_policy: Option<DefensePolicy>,
-    pub max_backward_window: Option<usize>,
+    pub max_scan_plies: Option<usize>,
 }
 
 #[derive(Debug, Clone)]
@@ -45,7 +45,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         options: AnalysisFixtureOptions {
             max_depth: None,
             defense_policy: None,
-            max_backward_window: Some(3),
+            max_scan_plies: Some(3),
         },
         expected: AnalysisFixtureExpected {
             winner: Some(Color::Black),
@@ -71,7 +71,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         options: AnalysisFixtureOptions {
             max_depth: None,
             defense_policy: None,
-            max_backward_window: Some(4),
+            max_scan_plies: None,
         },
         expected: AnalysisFixtureExpected {
             winner: Some(Color::Black),
@@ -101,7 +101,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         options: AnalysisFixtureOptions {
             max_depth: None,
             defense_policy: None,
-            max_backward_window: Some(3),
+            max_scan_plies: Some(3),
         },
         expected: AnalysisFixtureExpected {
             winner: Some(Color::Black),
@@ -125,7 +125,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         options: AnalysisFixtureOptions {
             max_depth: Some(1),
             defense_policy: None,
-            max_backward_window: Some(3),
+            max_scan_plies: Some(4),
         },
         expected: AnalysisFixtureExpected {
             winner: Some(Color::Black),
@@ -152,7 +152,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         options: AnalysisFixtureOptions {
             max_depth: Some(4),
             defense_policy: None,
-            max_backward_window: Some(6),
+            max_scan_plies: Some(6),
         },
         expected: AnalysisFixtureExpected {
             winner: Some(Color::Black),
@@ -178,7 +178,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         options: AnalysisFixtureOptions {
             max_depth: Some(4),
             defense_policy: Some(DefensePolicy::TacticalDefense),
-            max_backward_window: Some(2),
+            max_scan_plies: Some(4),
         },
         expected: AnalysisFixtureExpected {
             winner: Some(Color::White),
@@ -205,7 +205,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         options: AnalysisFixtureOptions {
             max_depth: Some(4),
             defense_policy: Some(DefensePolicy::TacticalDefense),
-            max_backward_window: Some(2),
+            max_scan_plies: Some(4),
         },
         expected: AnalysisFixtureExpected {
             winner: Some(Color::White),
@@ -229,7 +229,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         options: AnalysisFixtureOptions {
             max_depth: None,
             defense_policy: None,
-            max_backward_window: None,
+            max_scan_plies: None,
         },
         expected: AnalysisFixtureExpected {
             winner: None,
@@ -404,9 +404,9 @@ fn fixture_options(
             .defense_policy
             .unwrap_or(base_options.defense_policy),
         max_depth: fixture_options.max_depth.unwrap_or(base_options.max_depth),
-        max_backward_window: fixture_options
-            .max_backward_window
-            .or(base_options.max_backward_window),
+        max_scan_plies: fixture_options
+            .max_scan_plies
+            .or(base_options.max_scan_plies),
     }
 }
 
@@ -750,10 +750,10 @@ fn render_analysis_fixture_case_html(result: &AnalysisFixtureResult) -> String {
         failures = failures,
         moves = html_escape(&result.moves.join(" ")),
         model = html_escape(&format!(
-            "{:?}, corridor depth {}, window {:?}",
+            "{:?}, corridor depth {}, scan {:?}",
             result.actual.model.defense_policy,
             result.actual.model.max_depth,
-            result.actual.model.max_backward_window
+            result.actual.model.max_scan_plies
         )),
         expected = expectation_table(&result.expected),
         actual = actual_table(&result.actual),

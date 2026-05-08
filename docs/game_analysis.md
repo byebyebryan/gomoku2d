@@ -625,7 +625,8 @@ Limit-hit proof results should carry named causes. Current lab causes are:
 - `defender_reply_unknown`: at least one defender reply could not be resolved.
 - `model_scope_unknown`: the selected proof model had no concrete reply or
   forcing set for the position.
-- `outside_scan_window`: the previous prefix was not part of the scanned range.
+- `outside_scan_window`: the previous prefix was outside the configured scan
+  range.
 
 For `unclear` results, reports should preserve enough context to drive the next
 debugging pass without rerunning the whole tournament:
@@ -659,8 +660,23 @@ interval start. They are lab-debug evidence, not a player-facing explanation.
 - attacker move policy: all legal moves, local forcing moves, or another named
   candidate source.
 - rule set: freestyle or Renju.
-- limits: depth, nodes, time, maximum proof branches, and maximum backward
-  window.
+- limits: corridor depth, nodes, time, maximum proof branches, and
+  `max_scan_plies`.
+
+Replay analysis has two scan modes:
+
+- With `max_scan_plies` unset, it scans the full replay prefix history. This is
+  useful for curated fixtures and one-off diagnostics that want older notes such
+  as conversion errors.
+- With `max_scan_plies=N`, it walks backward from the final board at most `N`
+  plies and stops early once the final forced corridor has a collected
+  non-forced prefix. This is the default shape for report work: larger caps give
+  long corridors room to resolve without forcing already-resolved short games to
+  scan extra prefixes.
+
+The backward walk is a replay-analysis wrapper only. Each prefix proof still
+uses the forward corridor solver, so the same corridor machinery can later be
+called from bot search without replay-specific assumptions.
 
 The proof tree can be stored separately from the summary so replay UI can show a
 simple explanation first and expand into branch details later.
@@ -797,7 +813,7 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
 - Batch analysis reports include `unclear_context` and limit-cause counts
   for unresolved entries: previous prefix status, proof-limit flag, named limit
   causes, principal-line notation, and compact board snapshots. This is meant
-  to make proof-limit, model-scope, and scan-window failures inspectable before
+  to make proof-limit, model-scope, and scan-cap failures inspectable before
   adding more search.
 - Batch analysis reports can opt into `--include-proof-details` for decisive
   replay audits. This adds previous-prefix and final-forced-start proof
@@ -864,24 +880,23 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   losses."
 - Before the corridor-exit pivot, the 64-game sampled checkpoint passed with
   `64 analyzed / 64 total`
-  and `0 failed`: `63` proof-limit hits and `1` draw/ongoing game. Bounded
-  scan expansion removed the previous scan-window cutoffs. Under
-  `all_legal_defense`, `61` decisive games hit `depth_cutoff` plus
-  `attacker_child_unknown` and `defender_reply_unknown`; the other `2` hit
-  `depth_cutoff` plus the same child/reply unknowns.
+  and `0 failed`: `63` proof-limit hits and `1` draw/ongoing game. The old
+  bounded-scan retry reduced scan cutoffs, but its "one chunk plus another"
+  semantics were confusing and could waste work. The current `max_scan_plies`
+  contract is a clean cap plus backward early-stop.
 - A tactical-defense 64-game comparison also produced `63` proof-limit hits and
   `1` draw/ongoing game. It was faster, but `61` decisive games became
   `model_scope_unknown`, meaning the narrow tactical model did not have a
   concrete reply/forcing set for the previous prefix. This is useful evidence
   for future model design, not a product-safe proof.
 - A hybrid-defense local-threat smoke run against the same top-two matchup,
-  sampled at `8` games with corridor depth `4` and backward
-  window `8`, found `2` missed defenses, `5` unclear proof-limit entries, and
-  `1` draw/ongoing game. The useful signal is that bounded local-threat replies
-  can resolve some real report samples, not only synthetic fixtures. The risk is
-  runtime: the slowest sampled entry took about `55s`, and summed per-entry time
-  was about `95s`. The next analyzer slice should add tighter proof budgets,
-  memoization, or better activation telemetry before widening shape coverage.
+  sampled at `8` games with corridor depth `4` and scan cap `8`, found `2`
+  missed defenses, `5` unclear proof-limit entries, and `1` draw/ongoing game.
+  The useful signal is that bounded local-threat replies can resolve some real
+  report samples, not only synthetic fixtures. The risk is runtime: the slowest
+  sampled entry took about `55s`, and summed per-entry time was about `95s`. The
+  next analyzer slice should add tighter proof budgets, memoization, or better
+  activation telemetry before widening shape coverage.
 - A stricter double-threat-only trigger was fast but did not improve the sampled
   report, while a broader one-or-two-threat trigger improved coverage but became
   expensive. Keep both facts in mind before treating local-threat replies as a
@@ -928,7 +943,7 @@ cargo run -p gomoku-eval -- analyze-replay-batch \
   --report-html outputs/analysis_batch.html \
   --defense-policy all-legal-defense \
   --max-depth 4 \
-  --max-backward-window 24
+  --max-scan-plies 24
 
 cargo run --release -p gomoku-eval -- analyze-report-replays \
   --report reports/latest.json \
@@ -939,7 +954,7 @@ cargo run --release -p gomoku-eval -- analyze-report-replays \
   --report-html outputs/analysis/top2_smoke.html \
   --defense-policy all-legal-defense \
   --max-depth 4 \
-  --max-backward-window 8
+  --max-scan-plies 8
 
 cargo run --release -p gomoku-eval -- analyze-report-replays \
   --report reports/latest.json \
@@ -950,7 +965,7 @@ cargo run --release -p gomoku-eval -- analyze-report-replays \
   --report-html outputs/analysis/top2_audit.html \
   --defense-policy all-legal-defense \
   --max-depth 4 \
-  --max-backward-window 8 \
+  --max-scan-plies 8 \
   --include-proof-details \
   --deep-retry-depth 10 \
   --deep-retry-limit 1
@@ -959,9 +974,9 @@ cargo run --release -p gomoku-eval -- analyze-report-replays \
 Use the report-sampled 8-game smoke path while tuning analyzer output or proof
 logic. It covers both entrants, color assignments where available, draws or
 max-move games, and short/long games deterministically. Run a full 64-game
-head-to-head analysis only for checkpoint reports. `--max-backward-window 8`
-is the practical default for iteration; `24` is reserved for focused samples or
-longer runs until the proof model becomes narrower. Add
+head-to-head analysis only for checkpoint reports. `--max-scan-plies 8`
+is the practical default for iteration; `24` or `32` is reserved for focused
+long-corridor samples or checkpoint runs. Add
 `--include-proof-details` when the goal is auditability rather than a compact
 summary report. Add selective deep retry only for focused proof-detail audits:
 it retries unresolved defender-reply outcomes with a higher corridor depth,
