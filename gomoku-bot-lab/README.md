@@ -97,16 +97,16 @@ Current notes live in
 [`../docs/archive/v0_4_search_bot_enhancement_plan.md`](../docs/archive/v0_4_search_bot_enhancement_plan.md).
 
 More detailed strategy notes live in [`../docs/search_bot.md`](../docs/search_bot.md).
-The active `0.4.1` direction is a tactical ladder: local threat competence
-first, casual combo play next, then bounded forced-chain search before any
-product-facing offensive/defensive bot personalities. Tactical facts are meant
-to buy effective depth through safer narrowing, ordering, and selective
-extension, not to replace alpha-beta search with broad shape scoring. The
-current tactical annotation stage is scan-based, records its own trace metrics,
-feeds the lab-only `tactical_first` ordering mode, and can be paired with the
-lab-only child frontier cap to test whether better ordering buys effective
-depth; a full incremental frontier/threat-state model is intentionally deferred
-until those metrics show caching is worth the complexity.
+The `0.4.1` tactical-ladder work established the current bot baseline: local
+threat competence first, casual combo play next, then bounded forced-chain ideas
+only when they can be measured. Tactical facts are meant to buy effective depth
+through safer narrowing, ordering, and selective extension, not to replace
+alpha-beta search with broad shape scoring. The tactical annotation stage is
+scan-based, records its own trace metrics, feeds the lab-only `tactical_first`
+ordering mode, and can be paired with the lab-only child frontier cap to test
+whether better ordering buys effective depth; a full incremental
+frontier/threat-state model is intentionally deferred until those metrics show
+caching is worth the complexity.
 
 The current clean reference report compares the depth ladder, tactical-cap
 variants, and pattern-eval variants. Its product read is conservative: D1 is an

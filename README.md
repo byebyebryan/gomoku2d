@@ -104,9 +104,10 @@ Firebase/Firestore plumbing, local-to-cloud profile promotion, private
 cloud-backed history, schema/rules hardening, and Reset Profile without putting
 sign-in in front of the game.
 
-The next product identity push is the lab-powered line: replay analysis,
-puzzles, bot personalities, and game-review features that make the Rust lab
-visible to players. For the longer-term sequencing, see
+The lab-powered line is now underway. Bot-lab reports and the first replay
+analysis report are published as lab artifacts, while player-facing replay
+analysis, puzzles, bot personalities, and game-review UI remain upcoming product
+surfaces. For the longer-term sequencing, see
 [`docs/roadmap.md`](docs/roadmap.md).
 
 ---

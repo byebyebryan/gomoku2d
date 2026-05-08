@@ -61,7 +61,6 @@ pub enum TacticalNote {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ReplyClassification {
-    IgnoredSingleWin,
     BlockedButForced,
     ConfirmedEscape,
     PossibleEscape,
@@ -1677,6 +1676,7 @@ fn classify_actual_corridor_reply(
     let status = match proof.status {
         ProofStatus::ForcedWin => CorridorReplyStatus::Forced,
         ProofStatus::EscapeFound => CorridorReplyStatus::ConfirmedEscape,
+        ProofStatus::Unknown if proof_has_limit_hit(&proof) => CorridorReplyStatus::PossibleEscape,
         ProofStatus::Unknown => CorridorReplyStatus::Unknown,
     };
     CorridorReplyOutcome { mv, status, proof }
@@ -1749,10 +1749,6 @@ fn corridor_defender_reply_moves(
             push_unique_move(&mut replies, mv);
         }
     }
-    if let Some(&mv) = actual_moves.get(prefix_ply) {
-        push_unique_move(&mut replies, mv);
-    }
-
     replies
 }
 
@@ -3287,6 +3283,60 @@ mod tests {
             .any(|evidence| evidence.actual_reply == Some(mv("B9"))
                 && evidence.reply_classification == ReplyClassification::BlockedButForced
                 && evidence.escape_replies.is_empty()));
+    }
+
+    #[test]
+    fn corridor_reply_moves_exclude_non_corridor_actual_reply() {
+        let board = board_from_moves(Variant::Freestyle, &["H8", "A1", "I8"]);
+        let actual_moves = vec![mv("H8"), mv("A1"), mv("I8"), mv("A2"), mv("J8")];
+        let threat = super::ThreatReplySet::new(&board, Color::Black);
+
+        let replies = super::corridor_defender_reply_moves(
+            &board,
+            &actual_moves,
+            3,
+            &AnalysisOptions::default(),
+            &threat,
+        );
+
+        assert!(
+            !replies.contains(&mv("A2")),
+            "non-corridor actual defender move must not become a model reply: {replies:?}"
+        );
+        assert!(
+            replies.contains(&mv("J8")),
+            "the winner's next corridor-entry square should remain visible as the escape target"
+        );
+    }
+
+    #[test]
+    fn actual_corridor_reply_limit_hit_is_possible_escape() {
+        let board = board_from_moves(Variant::Freestyle, &["H8"]);
+        let options = AnalysisOptions::default();
+        let unknown_child = super::with_limit_causes(
+            super::corridor_proof_result(
+                &board,
+                Color::Black,
+                &options,
+                ProofStatus::Unknown,
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+            ),
+            [ProofLimitCause::DepthCutoff],
+        );
+
+        let outcome = super::classify_actual_corridor_reply(
+            &board,
+            &[],
+            Color::Black,
+            &options,
+            1,
+            mv("A1"),
+            Some(&unknown_child),
+        );
+
+        assert_eq!(outcome.status, super::CorridorReplyStatus::PossibleEscape);
     }
 
     #[test]

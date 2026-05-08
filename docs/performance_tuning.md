@@ -127,12 +127,13 @@ candidate generation, legality checks, safety-gate probes, and hidden tactical
 work. Only keep a search change if it improves reached depth, average move time,
 or tournament score under the same CPU budget.
 
-For the `0.4.1` bot direction, treat tactical facts as a way to buy effective
-depth. The measurement question is not "did this shape detector make one case
-pass?" but "did local threat facts let the same budget search a narrower or
-better ordered tree without losing tactical safety?" Candidate staging, move
-ordering, and selective forced-chain extension should all report enough metrics
-to show whether breadth was reduced and reached depth improved.
+For the `0.4.1` bot direction, tactical facts were treated as a way to buy
+effective depth. That remains the right benchmark framing for future bot work:
+the measurement question is not "did this shape detector make one case pass?"
+but "did local threat facts let the same budget search a narrower or better
+ordered tree without losing tactical safety?" Candidate staging, move ordering,
+and selective forced-chain extension should all report enough metrics to show
+whether breadth was reduced and reached depth improved.
 
 Do not use partial local-threat facts as static eval unless they can be made
 globally consistent or incrementally maintained across the whole live board. A
