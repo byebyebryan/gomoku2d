@@ -350,6 +350,12 @@ pub struct StandingReport {
     pub search_nodes: u64,
     #[serde(default)]
     pub safety_nodes: u64,
+    #[serde(default)]
+    pub corridor_nodes: u64,
+    #[serde(default)]
+    pub corridor_branch_probes: u64,
+    #[serde(default)]
+    pub corridor_max_depth: u32,
     pub total_nodes: u64,
     pub avg_nodes: f64,
     #[serde(default)]
@@ -566,8 +572,17 @@ pub struct SideStatsReport {
     pub search_move_count: u32,
     pub total_time_ms: u64,
     pub avg_search_time_ms: f64,
+    #[serde(default)]
     pub search_nodes: u64,
+    #[serde(default, alias = "prefilter_nodes")]
     pub safety_nodes: u64,
+    #[serde(default)]
+    pub corridor_nodes: u64,
+    #[serde(default)]
+    pub corridor_branch_probes: u64,
+    #[serde(default)]
+    pub corridor_max_depth: u32,
+    #[serde(default)]
     pub total_nodes: u64,
     pub avg_nodes: f64,
     #[serde(default)]
@@ -678,6 +693,9 @@ struct SideStatsAccumulator {
     total_time_ms: u64,
     search_nodes: u64,
     safety_nodes: u64,
+    corridor_nodes: u64,
+    corridor_branch_probes: u64,
+    corridor_max_depth: u32,
     total_nodes: u64,
     eval_calls: u64,
     candidate_generations: u64,
@@ -738,6 +756,13 @@ impl SideStatsAccumulator {
         self.search_nodes += trace_value_u64(trace, "nodes");
         self.safety_nodes += trace_value_u64(trace, "safety_nodes");
         self.total_nodes += trace_value_u64(trace, "total_nodes");
+        if let Some(corridor) = trace.get("corridor") {
+            self.corridor_nodes += trace_value_u64(corridor, "search_nodes");
+            self.corridor_branch_probes += trace_value_u64(corridor, "branch_probes");
+            self.corridor_max_depth = self
+                .corridor_max_depth
+                .max(trace_value_u64(corridor, "max_depth_reached") as u32);
+        }
         if let Some(metrics) = trace.get("metrics") {
             self.eval_calls += trace_value_u64(metrics, "eval_calls");
             self.candidate_generations += trace_value_u64(metrics, "candidate_generations");
@@ -831,6 +856,9 @@ impl SideStatsAccumulator {
         self.total_time_ms += stats.total_time_ms;
         self.search_nodes += stats.search_nodes;
         self.safety_nodes += stats.safety_nodes;
+        self.corridor_nodes += stats.corridor_nodes;
+        self.corridor_branch_probes += stats.corridor_branch_probes;
+        self.corridor_max_depth = self.corridor_max_depth.max(stats.corridor_max_depth);
         self.total_nodes += stats.total_nodes;
         self.eval_calls += stats.eval_calls;
         self.candidate_generations += stats.candidate_generations;
@@ -928,6 +956,9 @@ impl SideStatsAccumulator {
             avg_search_time_ms,
             search_nodes: self.search_nodes,
             safety_nodes: self.safety_nodes,
+            corridor_nodes: self.corridor_nodes,
+            corridor_branch_probes: self.corridor_branch_probes,
+            corridor_max_depth: self.corridor_max_depth,
             total_nodes: self.total_nodes,
             avg_nodes,
             eval_calls: self.eval_calls,
@@ -1057,6 +1088,9 @@ fn standings(
                 avg_search_time_ms: side_stats.avg_search_time_ms,
                 search_nodes: side_stats.search_nodes,
                 safety_nodes: side_stats.safety_nodes,
+                corridor_nodes: side_stats.corridor_nodes,
+                corridor_branch_probes: side_stats.corridor_branch_probes,
+                corridor_max_depth: side_stats.corridor_max_depth,
                 total_nodes: side_stats.total_nodes,
                 avg_nodes: side_stats.avg_nodes,
                 eval_calls: side_stats.eval_calls,
@@ -1769,7 +1803,7 @@ fn opening_summary(report: &TournamentReport) -> String {
 }
 
 fn default_opening_policy() -> String {
-    "random-legal".to_string()
+    "centered-suite".to_string()
 }
 
 fn default_schedule() -> String {
@@ -3288,6 +3322,11 @@ mod tests {
             "safety_nodes": 20,
             "total_nodes": 120,
             "depth": 5,
+            "corridor": {
+                "search_nodes": 7,
+                "branch_probes": 3,
+                "max_depth_reached": 2
+            },
             "metrics": {
                 "eval_calls": 30,
                 "tactical_annotations": 9,
@@ -3319,6 +3358,9 @@ mod tests {
 
         assert_eq!(report.search_nodes, 100);
         assert_eq!(report.safety_nodes, 20);
+        assert_eq!(report.corridor_nodes, 7);
+        assert_eq!(report.corridor_branch_probes, 3);
+        assert_eq!(report.corridor_max_depth, 2);
         assert_eq!(report.tactical_annotations, 9);
         assert_eq!(report.root_tactical_annotations, 2);
         assert_eq!(report.search_tactical_annotations, 7);
@@ -3343,6 +3385,9 @@ mod tests {
         first_match.black_stats = sample_side_stats_with_search_costs();
         first_match.black_stats.search_nodes = 900;
         first_match.black_stats.safety_nodes = 100;
+        first_match.black_stats.corridor_nodes = 17;
+        first_match.black_stats.corridor_branch_probes = 9;
+        first_match.black_stats.corridor_max_depth = 2;
         first_match.black_stats.tactical_annotations = 20;
         first_match.black_stats.search_tactical_annotations = 20;
         first_match.black_stats.child_limit_applications = 10;
@@ -3372,6 +3417,9 @@ mod tests {
 
         assert_eq!(row.search_nodes, 900);
         assert_eq!(row.safety_nodes, 100);
+        assert_eq!(row.corridor_nodes, 17);
+        assert_eq!(row.corridor_branch_probes, 9);
+        assert_eq!(row.corridor_max_depth, 2);
         assert_eq!(row.tactical_annotations, 20);
         assert_eq!(row.child_limit_applications, 10);
         assert_eq!(row.child_cap_hits, 8);
@@ -3904,7 +3952,7 @@ mod tests {
               "total_time_ms": 10,
               "avg_search_time_ms": 10.0,
               "search_nodes": 100,
-              "safety_nodes": 10,
+              "prefilter_nodes": 10,
               "total_nodes": 110,
               "avg_nodes": 110.0,
               "depth_sum": 3,
@@ -3934,9 +3982,12 @@ mod tests {
         let report = TournamentReport::from_json(input).expect("report should parse");
 
         assert_eq!(report.run.schedule, "round-robin");
+        assert_eq!(report.run.opening_policy, "centered-suite");
         assert_eq!(report.standings[0].eval_calls, 0);
         assert_eq!(report.standings[0].search_candidate_generations, 0);
         assert!(report.matches[0].opening.is_none());
+        assert_eq!(report.matches[0].black_stats.safety_nodes, 10);
+        assert_eq!(report.matches[0].white_stats.safety_nodes, 10);
         assert_eq!(report.matches[0].black_stats.root_legality_checks, 0);
         assert_eq!(report.matches[0].white_stats.search_legality_checks, 0);
     }
@@ -4077,6 +4128,9 @@ mod tests {
             avg_search_time_ms: 10.0,
             search_nodes: 900,
             safety_nodes: 100,
+            corridor_nodes: 0,
+            corridor_branch_probes: 0,
+            corridor_max_depth: 0,
             total_nodes: 1000,
             avg_nodes: 200.0,
             eval_calls: 500,
@@ -4141,6 +4195,9 @@ mod tests {
             avg_search_time_ms: 10.0,
             search_nodes: 900,
             safety_nodes: 100,
+            corridor_nodes: 0,
+            corridor_branch_probes: 0,
+            corridor_max_depth: 0,
             total_nodes: 1000,
             avg_nodes: 200.0,
             eval_calls: 500,
