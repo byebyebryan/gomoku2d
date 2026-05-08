@@ -1,3 +1,4 @@
+use gomoku_bot::corridor as bot_corridor;
 use gomoku_core::{replay::ReplayResult, Board, Color, GameResult, Move, Replay, Variant};
 use serde::Serialize;
 
@@ -106,26 +107,6 @@ pub struct SearchDiagnostics {
     pub max_depth_reached: usize,
 }
 
-impl SearchDiagnostics {
-    fn node(max_depth: usize, depth_remaining: usize) -> Self {
-        Self {
-            search_nodes: 1,
-            branch_probes: 0,
-            max_depth_reached: max_depth.saturating_sub(depth_remaining),
-        }
-    }
-
-    fn record_branch_probe(&mut self) {
-        self.branch_probes += 1;
-    }
-
-    fn merge(&mut self, other: Self) {
-        self.search_nodes += other.search_nodes;
-        self.branch_probes += other.branch_probes;
-        self.max_depth_reached = self.max_depth_reached.max(other.max_depth_reached);
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct AnalysisOptions {
     pub reply_policy: ReplyPolicy,
@@ -139,6 +120,15 @@ impl Default for AnalysisOptions {
             reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 4,
             max_scan_plies: Some(DEFAULT_MAX_SCAN_PLIES),
+        }
+    }
+}
+
+impl AnalysisOptions {
+    fn corridor_options(&self) -> bot_corridor::CorridorOptions {
+        bot_corridor::CorridorOptions {
+            max_depth: self.max_depth,
+            max_reply_width: MAX_CORRIDOR_REPLY_WIDTH,
         }
     }
 }
@@ -420,7 +410,15 @@ pub fn analyze_defender_reply_options(
     actual_reply: Option<Move>,
     options: &AnalysisOptions,
 ) -> Vec<DefenderReplyAnalysis> {
-    analyze_defender_reply_options_inner(board, attacker, actual_reply, None, options)
+    bot_corridor::analyze_defender_reply_options(
+        board,
+        attacker,
+        actual_reply,
+        &options.corridor_options(),
+    )
+    .into_iter()
+    .map(map_bot_defender_reply_analysis)
+    .collect()
 }
 
 pub fn analyze_alternate_defender_reply_options(
@@ -429,7 +427,15 @@ pub fn analyze_alternate_defender_reply_options(
     excluded_reply: Option<Move>,
     options: &AnalysisOptions,
 ) -> Vec<DefenderReplyAnalysis> {
-    analyze_defender_reply_options_inner(board, attacker, None, excluded_reply, options)
+    bot_corridor::analyze_alternate_defender_reply_options(
+        board,
+        attacker,
+        excluded_reply,
+        &options.corridor_options(),
+    )
+    .into_iter()
+    .map(map_bot_defender_reply_analysis)
+    .collect()
 }
 
 pub fn defender_reply_roles_for_move(
@@ -437,86 +443,90 @@ pub fn defender_reply_roles_for_move(
     attacker: Color,
     mv: Move,
 ) -> Vec<DefenderReplyRole> {
-    if board.current_player != attacker.opponent() || board.result != GameResult::Ongoing {
-        return Vec::new();
-    }
-
-    let threat = ThreatReplySet::new(board, attacker);
-    let mut roles = Vec::new();
-    if threat.legal_cost_squares.contains(&mv) {
-        roles.push(DefenderReplyRole::ImmediateDefense);
-    }
-    if threat.winning_squares.is_empty() {
-        if imminent_defense_reply_moves(board, attacker, Some(mv)).contains(&mv) {
-            roles.push(DefenderReplyRole::ImminentDefense);
-        }
-        if offensive_counter_reply_moves(board, attacker.opponent()).contains(&mv) {
-            roles.push(DefenderReplyRole::OffensiveCounter);
-        }
-    }
-    roles
-}
-
-fn analyze_defender_reply_options_inner(
-    board: &Board,
-    attacker: Color,
-    actual_reply: Option<Move>,
-    excluded_reply: Option<Move>,
-    options: &AnalysisOptions,
-) -> Vec<DefenderReplyAnalysis> {
-    if board.current_player != attacker.opponent() || board.result != GameResult::Ongoing {
-        return Vec::new();
-    }
-
-    let threat = ThreatReplySet::new(board, attacker);
-    let mut replies = Vec::<(Move, Vec<DefenderReplyRole>)>::new();
-    for mv in threat.legal_cost_squares.iter().copied() {
-        push_reply_role(&mut replies, mv, DefenderReplyRole::ImmediateDefense);
-    }
-    if threat.winning_squares.is_empty() {
-        for mv in imminent_defense_reply_moves(board, attacker, actual_reply) {
-            push_reply_role(&mut replies, mv, DefenderReplyRole::ImminentDefense);
-        }
-        for mv in offensive_counter_reply_moves(board, attacker.opponent()) {
-            push_reply_role(&mut replies, mv, DefenderReplyRole::OffensiveCounter);
-        }
-    }
-    if let Some(mv) = actual_reply {
-        push_reply_role(&mut replies, mv, DefenderReplyRole::Actual);
-    }
-    if let Some(excluded_reply) = excluded_reply {
-        replies.retain(|(mv, _)| *mv != excluded_reply);
-    }
-
-    replies
+    bot_corridor::defender_reply_roles_for_move(board, attacker, mv)
         .into_iter()
-        .map(|(mv, roles)| {
-            let proof = classify_defender_reply_for_report(board, attacker, mv, options);
-            defender_reply_analysis_from_proof(mv, roles, proof)
-        })
+        .map(map_bot_defender_reply_role)
         .collect()
 }
 
-fn defender_reply_analysis_from_proof(
-    mv: Move,
-    roles: Vec<DefenderReplyRole>,
-    proof: DefenderReplyProof,
+fn map_bot_defender_reply_analysis(
+    reply: bot_corridor::DefenderReplyAnalysis,
 ) -> DefenderReplyAnalysis {
-    let mut diagnostics = proof.diagnostics;
-    diagnostics.record_branch_probe();
     DefenderReplyAnalysis {
-        mv,
-        notation: mv.to_notation(),
-        roles,
-        outcome: proof.outcome,
-        principal_line_notation: proof
-            .principal_line
-            .iter()
-            .map(|mv| mv.to_notation())
+        mv: reply.mv,
+        notation: reply.notation,
+        roles: reply
+            .roles
+            .into_iter()
+            .map(map_bot_defender_reply_role)
             .collect(),
+        outcome: map_bot_defender_reply_outcome(reply.outcome),
+        principal_line: reply.principal_line,
+        principal_line_notation: reply.principal_line_notation,
+        limit_causes: reply
+            .limit_causes
+            .into_iter()
+            .map(map_bot_proof_limit_cause)
+            .collect(),
+        diagnostics: map_bot_search_diagnostics(reply.diagnostics),
+    }
+}
+
+fn map_bot_defender_reply_proof(proof: bot_corridor::DefenderReplyProof) -> DefenderReplyProof {
+    DefenderReplyProof {
+        outcome: map_bot_defender_reply_outcome(proof.outcome),
         principal_line: proof.principal_line,
-        limit_causes: proof.limit_causes,
-        diagnostics,
+        limit_causes: proof
+            .limit_causes
+            .into_iter()
+            .map(map_bot_proof_limit_cause)
+            .collect(),
+    }
+}
+
+fn map_bot_defender_reply_role(role: bot_corridor::DefenderReplyRole) -> DefenderReplyRole {
+    match role {
+        bot_corridor::DefenderReplyRole::Actual => DefenderReplyRole::Actual,
+        bot_corridor::DefenderReplyRole::ImmediateDefense => DefenderReplyRole::ImmediateDefense,
+        bot_corridor::DefenderReplyRole::ImminentDefense => DefenderReplyRole::ImminentDefense,
+        bot_corridor::DefenderReplyRole::OffensiveCounter => DefenderReplyRole::OffensiveCounter,
+    }
+}
+
+fn map_bot_defender_reply_outcome(
+    outcome: bot_corridor::DefenderReplyOutcome,
+) -> DefenderReplyOutcome {
+    match outcome {
+        bot_corridor::DefenderReplyOutcome::ForcedLoss => DefenderReplyOutcome::ForcedLoss,
+        bot_corridor::DefenderReplyOutcome::ConfirmedEscape => {
+            DefenderReplyOutcome::ConfirmedEscape
+        }
+        bot_corridor::DefenderReplyOutcome::PossibleEscape => DefenderReplyOutcome::PossibleEscape,
+        bot_corridor::DefenderReplyOutcome::ImmediateLoss => DefenderReplyOutcome::ImmediateLoss,
+        bot_corridor::DefenderReplyOutcome::Unknown => DefenderReplyOutcome::Unknown,
+    }
+}
+
+fn map_bot_proof_limit_cause(cause: bot_corridor::ProofLimitCause) -> ProofLimitCause {
+    match cause {
+        bot_corridor::ProofLimitCause::DepthCutoff => ProofLimitCause::DepthCutoff,
+        bot_corridor::ProofLimitCause::ReplyWidthCutoff => ProofLimitCause::ReplyWidthCutoff,
+        bot_corridor::ProofLimitCause::AttackerChildUnknown => {
+            ProofLimitCause::AttackerChildUnknown
+        }
+        bot_corridor::ProofLimitCause::DefenderReplyUnknown => {
+            ProofLimitCause::DefenderReplyUnknown
+        }
+        bot_corridor::ProofLimitCause::ModelScopeUnknown => ProofLimitCause::ModelScopeUnknown,
+        bot_corridor::ProofLimitCause::OutsideScanWindow => ProofLimitCause::OutsideScanWindow,
+    }
+}
+
+fn map_bot_search_diagnostics(diagnostics: bot_corridor::SearchDiagnostics) -> SearchDiagnostics {
+    SearchDiagnostics {
+        search_nodes: diagnostics.search_nodes,
+        branch_probes: diagnostics.branch_probes,
+        max_depth_reached: diagnostics.max_depth_reached,
     }
 }
 
@@ -524,21 +534,6 @@ struct DefenderReplyProof {
     outcome: DefenderReplyOutcome,
     principal_line: Vec<Move>,
     limit_causes: Vec<ProofLimitCause>,
-    diagnostics: SearchDiagnostics,
-}
-
-fn push_reply_role(
-    replies: &mut Vec<(Move, Vec<DefenderReplyRole>)>,
-    mv: Move,
-    role: DefenderReplyRole,
-) {
-    if let Some((_, roles)) = replies.iter_mut().find(|(existing, _)| *existing == mv) {
-        if !roles.contains(&role) {
-            roles.push(role);
-        }
-        return;
-    }
-    replies.push((mv, vec![role]));
 }
 
 fn classify_defender_reply_for_report(
@@ -547,490 +542,12 @@ fn classify_defender_reply_for_report(
     mv: Move,
     options: &AnalysisOptions,
 ) -> DefenderReplyProof {
-    classify_defender_reply_for_report_inner(board, attacker, mv, options, options.max_depth)
-}
-
-fn classify_defender_reply_for_report_inner(
-    board: &Board,
-    attacker: Color,
-    mv: Move,
-    options: &AnalysisOptions,
-    depth_remaining: usize,
-) -> DefenderReplyProof {
-    let diagnostics = SearchDiagnostics::node(options.max_depth, depth_remaining);
-    let mut next = board.clone();
-    if next.apply_move(mv).is_err() {
-        return DefenderReplyProof {
-            outcome: DefenderReplyOutcome::Unknown,
-            principal_line: Vec::new(),
-            limit_causes: vec![ProofLimitCause::ModelScopeUnknown],
-            diagnostics,
-        };
-    }
-
-    match next.result {
-        GameResult::Winner(winner) if winner == attacker.opponent() => {
-            return DefenderReplyProof {
-                outcome: DefenderReplyOutcome::ConfirmedEscape,
-                principal_line: Vec::new(),
-                limit_causes: Vec::new(),
-                diagnostics,
-            };
-        }
-        GameResult::Winner(winner) if winner == attacker => {
-            return DefenderReplyProof {
-                outcome: DefenderReplyOutcome::ImmediateLoss,
-                principal_line: Vec::new(),
-                limit_causes: Vec::new(),
-                diagnostics,
-            };
-        }
-        GameResult::Winner(_) | GameResult::Draw => {
-            return DefenderReplyProof {
-                outcome: DefenderReplyOutcome::ConfirmedEscape,
-                principal_line: Vec::new(),
-                limit_causes: Vec::new(),
-                diagnostics,
-            };
-        }
-        GameResult::Ongoing => {}
-    }
-
-    let immediate_wins = next.immediate_winning_moves_for(attacker);
-    if let Some(&winning_move) = immediate_wins.first() {
-        return DefenderReplyProof {
-            outcome: DefenderReplyOutcome::ImmediateLoss,
-            principal_line: vec![winning_move],
-            limit_causes: Vec::new(),
-            diagnostics,
-        };
-    }
-
-    let defender = attacker.opponent();
-    if !next.immediate_winning_moves_for(defender).is_empty() {
-        let mut proof =
-            classify_defender_counter_threat_for_report(&next, attacker, options, depth_remaining);
-        proof.diagnostics.merge(diagnostics);
-        return proof;
-    }
-
-    let mut proof =
-        classify_attacker_corridor_for_report(&next, attacker, options, depth_remaining);
-    proof.diagnostics.merge(diagnostics);
-    proof
-}
-
-fn classify_defender_counter_threat_for_report(
-    board: &Board,
-    attacker: Color,
-    options: &AnalysisOptions,
-    depth_remaining: usize,
-) -> DefenderReplyProof {
-    let mut diagnostics = SearchDiagnostics::node(options.max_depth, depth_remaining);
-    if depth_remaining == 0 {
-        return DefenderReplyProof {
-            outcome: DefenderReplyOutcome::PossibleEscape,
-            principal_line: Vec::new(),
-            limit_causes: vec![ProofLimitCause::DepthCutoff],
-            diagnostics,
-        };
-    }
-
-    let defender = attacker.opponent();
-    let mut saw_unknown = false;
-    let mut saw_possible_escape = false;
-    let mut limit_causes = Vec::new();
-
-    for mv in counter_threat_answer_moves(board, defender) {
-        diagnostics.record_branch_probe();
-        let mut next = board.clone();
-        if next.apply_move(mv).is_err() {
-            continue;
-        }
-
-        match next.result {
-            GameResult::Winner(winner) if winner == attacker => {
-                return DefenderReplyProof {
-                    outcome: DefenderReplyOutcome::ForcedLoss,
-                    principal_line: vec![mv],
-                    limit_causes: Vec::new(),
-                    diagnostics,
-                };
-            }
-            GameResult::Winner(_) | GameResult::Draw => {
-                continue;
-            }
-            GameResult::Ongoing => {}
-        }
-
-        if !next.immediate_winning_moves_for(defender).is_empty() {
-            continue;
-        }
-
-        let proof =
-            classify_narrow_corridor_for_report(&next, attacker, options, depth_remaining - 1);
-        diagnostics.merge(proof.diagnostics);
-        match proof.outcome {
-            DefenderReplyOutcome::ForcedLoss | DefenderReplyOutcome::ImmediateLoss => {
-                let mut principal_line = Vec::with_capacity(proof.principal_line.len() + 1);
-                principal_line.push(mv);
-                principal_line.extend(proof.principal_line);
-                return DefenderReplyProof {
-                    outcome: DefenderReplyOutcome::ForcedLoss,
-                    principal_line,
-                    limit_causes: proof.limit_causes,
-                    diagnostics,
-                };
-            }
-            DefenderReplyOutcome::ConfirmedEscape => {}
-            DefenderReplyOutcome::PossibleEscape => {
-                saw_possible_escape = true;
-                extend_limit_causes(&mut limit_causes, proof.limit_causes);
-            }
-            DefenderReplyOutcome::Unknown => {
-                saw_unknown = true;
-                extend_limit_causes(&mut limit_causes, proof.limit_causes);
-            }
-        }
-    }
-
-    if saw_unknown {
-        return DefenderReplyProof {
-            outcome: DefenderReplyOutcome::PossibleEscape,
-            principal_line: Vec::new(),
-            limit_causes,
-            diagnostics,
-        };
-    }
-    if saw_possible_escape {
-        return DefenderReplyProof {
-            outcome: DefenderReplyOutcome::PossibleEscape,
-            principal_line: Vec::new(),
-            limit_causes,
-            diagnostics,
-        };
-    }
-
-    DefenderReplyProof {
-        outcome: DefenderReplyOutcome::ConfirmedEscape,
-        principal_line: Vec::new(),
-        limit_causes: Vec::new(),
-        diagnostics,
-    }
-}
-
-fn classify_attacker_corridor_for_report(
-    board: &Board,
-    attacker: Color,
-    options: &AnalysisOptions,
-    depth_remaining: usize,
-) -> DefenderReplyProof {
-    let mut diagnostics = SearchDiagnostics::node(options.max_depth, depth_remaining);
-    if depth_remaining == 0 {
-        return DefenderReplyProof {
-            outcome: DefenderReplyOutcome::PossibleEscape,
-            principal_line: Vec::new(),
-            limit_causes: vec![ProofLimitCause::DepthCutoff],
-            diagnostics,
-        };
-    }
-
-    if board.current_player != attacker || board.result != GameResult::Ongoing {
-        return DefenderReplyProof {
-            outcome: DefenderReplyOutcome::ConfirmedEscape,
-            principal_line: Vec::new(),
-            limit_causes: Vec::new(),
-            diagnostics,
-        };
-    }
-
-    if let Some(winning_move) = board.immediate_winning_moves_for(attacker).first().copied() {
-        return DefenderReplyProof {
-            outcome: DefenderReplyOutcome::ForcedLoss,
-            principal_line: vec![winning_move],
-            limit_causes: Vec::new(),
-            diagnostics,
-        };
-    }
-
-    let mut saw_unknown = false;
-    let mut saw_possible_escape = false;
-    let mut limit_causes = Vec::new();
-    for mv in materialized_attacker_corridor_moves(board, attacker) {
-        diagnostics.record_branch_probe();
-        let mut next = board.clone();
-        if next.apply_move(mv).is_err() {
-            continue;
-        }
-
-        match next.result {
-            GameResult::Winner(winner) if winner == attacker => {
-                return DefenderReplyProof {
-                    outcome: DefenderReplyOutcome::ForcedLoss,
-                    principal_line: vec![mv],
-                    limit_causes: Vec::new(),
-                    diagnostics,
-                };
-            }
-            GameResult::Winner(_) | GameResult::Draw => continue,
-            GameResult::Ongoing => {}
-        }
-
-        let proof =
-            classify_narrow_corridor_for_report(&next, attacker, options, depth_remaining - 1);
-        diagnostics.merge(proof.diagnostics);
-        match proof.outcome {
-            DefenderReplyOutcome::ForcedLoss | DefenderReplyOutcome::ImmediateLoss => {
-                let mut principal_line = Vec::with_capacity(proof.principal_line.len() + 1);
-                principal_line.push(mv);
-                principal_line.extend(proof.principal_line);
-                return DefenderReplyProof {
-                    outcome: DefenderReplyOutcome::ForcedLoss,
-                    principal_line,
-                    limit_causes: proof.limit_causes,
-                    diagnostics,
-                };
-            }
-            DefenderReplyOutcome::ConfirmedEscape => {}
-            DefenderReplyOutcome::PossibleEscape => {
-                saw_possible_escape = true;
-                extend_limit_causes(&mut limit_causes, proof.limit_causes);
-            }
-            DefenderReplyOutcome::Unknown => {
-                saw_unknown = true;
-                extend_limit_causes(&mut limit_causes, proof.limit_causes);
-            }
-        }
-    }
-
-    if saw_unknown {
-        return DefenderReplyProof {
-            outcome: DefenderReplyOutcome::PossibleEscape,
-            principal_line: Vec::new(),
-            limit_causes,
-            diagnostics,
-        };
-    }
-    if saw_possible_escape {
-        return DefenderReplyProof {
-            outcome: DefenderReplyOutcome::PossibleEscape,
-            principal_line: Vec::new(),
-            limit_causes,
-            diagnostics,
-        };
-    }
-
-    DefenderReplyProof {
-        outcome: DefenderReplyOutcome::ConfirmedEscape,
-        principal_line: Vec::new(),
-        limit_causes: Vec::new(),
-        diagnostics,
-    }
-}
-
-fn classify_narrow_corridor_for_report(
-    board: &Board,
-    attacker: Color,
-    options: &AnalysisOptions,
-    depth_remaining: usize,
-) -> DefenderReplyProof {
-    let mut diagnostics = SearchDiagnostics::node(options.max_depth, depth_remaining);
-    if board.current_player != attacker.opponent() || board.result != GameResult::Ongoing {
-        return DefenderReplyProof {
-            outcome: DefenderReplyOutcome::ConfirmedEscape,
-            principal_line: Vec::new(),
-            limit_causes: Vec::new(),
-            diagnostics,
-        };
-    }
-
-    let reply_moves = narrow_corridor_reply_moves(board, attacker);
-    if reply_moves.is_empty() {
-        return DefenderReplyProof {
-            outcome: DefenderReplyOutcome::ConfirmedEscape,
-            principal_line: Vec::new(),
-            limit_causes: Vec::new(),
-            diagnostics,
-        };
-    }
-    if reply_moves.len() > MAX_CORRIDOR_REPLY_WIDTH {
-        return DefenderReplyProof {
-            outcome: DefenderReplyOutcome::PossibleEscape,
-            principal_line: Vec::new(),
-            limit_causes: vec![ProofLimitCause::ReplyWidthCutoff],
-            diagnostics,
-        };
-    }
-
-    let mut principal_line = Vec::new();
-    let mut saw_possible_escape = false;
-    let mut saw_unknown = false;
-    let mut limit_causes = Vec::new();
-    for mv in reply_moves {
-        diagnostics.record_branch_probe();
-        let proof =
-            classify_defender_reply_for_report_inner(board, attacker, mv, options, depth_remaining);
-        diagnostics.merge(proof.diagnostics);
-        match proof.outcome {
-            DefenderReplyOutcome::ForcedLoss | DefenderReplyOutcome::ImmediateLoss => {
-                if principal_line.is_empty() {
-                    principal_line.push(mv);
-                    principal_line.extend(proof.principal_line);
-                }
-            }
-            DefenderReplyOutcome::ConfirmedEscape => {
-                return DefenderReplyProof {
-                    outcome: DefenderReplyOutcome::ConfirmedEscape,
-                    principal_line: Vec::new(),
-                    limit_causes: Vec::new(),
-                    diagnostics,
-                };
-            }
-            DefenderReplyOutcome::PossibleEscape => {
-                saw_possible_escape = true;
-                extend_limit_causes(&mut limit_causes, proof.limit_causes);
-            }
-            DefenderReplyOutcome::Unknown => {
-                saw_unknown = true;
-                extend_limit_causes(&mut limit_causes, proof.limit_causes);
-            }
-        }
-    }
-
-    if saw_possible_escape {
-        return DefenderReplyProof {
-            outcome: DefenderReplyOutcome::PossibleEscape,
-            principal_line: Vec::new(),
-            limit_causes,
-            diagnostics,
-        };
-    }
-    if saw_unknown {
-        return DefenderReplyProof {
-            outcome: DefenderReplyOutcome::Unknown,
-            principal_line: Vec::new(),
-            limit_causes,
-            diagnostics,
-        };
-    }
-
-    DefenderReplyProof {
-        outcome: DefenderReplyOutcome::ForcedLoss,
-        principal_line,
-        limit_causes: Vec::new(),
-        diagnostics,
-    }
-}
-
-fn narrow_corridor_reply_moves(board: &Board, attacker: Color) -> Vec<Move> {
-    let threat = ThreatReplySet::new(board, attacker);
-    if !threat.winning_squares.is_empty() {
-        return threat.reply_moves;
-    }
-
-    imminent_defense_reply_moves(board, attacker, None)
-}
-
-fn counter_threat_answer_moves(board: &Board, defender: Color) -> Vec<Move> {
-    let mut moves = Vec::new();
-    for mv in board.immediate_winning_moves_for(defender) {
-        if board.is_legal_for_color(mv, defender.opponent()) {
-            push_unique_move(&mut moves, mv);
-        }
-    }
-    moves
-}
-
-fn imminent_defense_reply_moves(
-    board: &Board,
-    attacker: Color,
-    actual_reply: Option<Move>,
-) -> Vec<Move> {
-    let defender = attacker.opponent();
-    let mut replies = Vec::new();
-
-    let mut facts = local_threat_facts(board, attacker)
-        .into_iter()
-        .filter(|fact| local_threat_is_forcing_for(board, attacker, fact))
-        .collect::<Vec<_>>();
-    if facts.is_empty() {
-        return replies;
-    }
-
-    if let Some(actual_reply) = actual_reply {
-        let actual_facts = facts
-            .iter()
-            .filter(|fact| fact.defense_squares.contains(&actual_reply))
-            .cloned()
-            .collect::<Vec<_>>();
-        if !actual_facts.is_empty() {
-            facts = actual_facts;
-        }
-    }
-
-    let best_rank = facts
-        .iter()
-        .map(|fact| fact.kind.rank())
-        .max()
-        .expect("facts are not empty");
-    for fact in facts
-        .into_iter()
-        .filter(|fact| fact.kind.rank() == best_rank)
-    {
-        add_imminent_defense_replies_for_fact(board, attacker, defender, &fact, &mut replies);
-    }
-
-    replies
-}
-
-fn add_imminent_defense_replies_for_fact(
-    board: &Board,
-    attacker: Color,
-    defender: Color,
-    fact: &LocalThreatFact,
-    replies: &mut Vec<Move>,
-) {
-    let legal_forcing_continuations = legal_forcing_continuations_for_fact(board, attacker, fact);
-    for continuation in &legal_forcing_continuations {
-        let mv = continuation.mv;
-        if board.is_legal_for_color(mv, defender) {
-            push_unique_move(replies, mv);
-        }
-    }
-
-    let mut shared_cost_squares: Option<Vec<Move>> = None;
-    for continuation in legal_forcing_continuations {
-        let costs = continuation
-            .legal_cost_squares
-            .into_iter()
-            .filter(|&mv| board.is_legal_for_color(mv, defender))
-            .collect::<Vec<_>>();
-
-        shared_cost_squares = Some(match shared_cost_squares {
-            Some(shared) => shared
-                .into_iter()
-                .filter(|mv| costs.contains(mv))
-                .collect::<Vec<_>>(),
-            None => costs,
-        });
-    }
-
-    for mv in shared_cost_squares.unwrap_or_default() {
-        push_unique_move(replies, mv);
-    }
-}
-
-fn offensive_counter_reply_moves(board: &Board, defender: Color) -> Vec<Move> {
-    board
-        .legal_moves()
-        .into_iter()
-        .filter(|&mv| {
-            let mut next = board.clone();
-            next.apply_move(mv).is_ok()
-                && next.result == GameResult::Ongoing
-                && !next.immediate_winning_moves_for(defender).is_empty()
-        })
-        .collect()
+    map_bot_defender_reply_proof(bot_corridor::classify_defender_reply(
+        board,
+        attacker,
+        mv,
+        &options.corridor_options(),
+    ))
 }
 
 struct ThreatReplySet {
@@ -1041,7 +558,6 @@ struct ThreatReplySet {
     legal_cost_squares: Vec<Move>,
     illegal_cost_squares: Vec<Move>,
     defender_immediate_wins: Vec<Move>,
-    reply_moves: Vec<Move>,
 }
 
 impl ThreatReplySet {
@@ -1059,13 +575,6 @@ impl ThreatReplySet {
             }
         }
         let defender_immediate_wins = board.immediate_winning_moves_for(defender);
-        let mut reply_moves = legal_cost_squares.clone();
-        for mv in defender_immediate_wins.iter().copied() {
-            if !reply_moves.contains(&mv) {
-                reply_moves.push(mv);
-            }
-        }
-
         Self {
             attacker,
             defender,
@@ -1074,7 +583,6 @@ impl ThreatReplySet {
             legal_cost_squares,
             illegal_cost_squares,
             defender_immediate_wins,
-            reply_moves,
         }
     }
 
@@ -1721,24 +1229,15 @@ fn corridor_defender_reply_moves(
     threat: &ThreatReplySet,
 ) -> Vec<Move> {
     let mut replies = Vec::new();
-    for mv in threat.legal_cost_squares.iter().copied() {
-        push_unique_move(&mut replies, mv);
-    }
-    for mv in threat.defender_immediate_wins.iter().copied() {
-        push_unique_move(&mut replies, mv);
+    for candidate in bot_corridor::defender_model_reply_candidates(
+        board,
+        threat.attacker,
+        actual_moves.get(prefix_ply).copied(),
+    ) {
+        push_unique_move(&mut replies, candidate.mv);
     }
 
     if threat.winning_squares.is_empty() {
-        for mv in imminent_defense_reply_moves(
-            board,
-            threat.attacker,
-            actual_moves.get(prefix_ply).copied(),
-        ) {
-            push_unique_move(&mut replies, mv);
-        }
-        for mv in offensive_counter_reply_moves(board, threat.attacker.opponent()) {
-            push_unique_move(&mut replies, mv);
-        }
         if let Some(mv) = next_actual_attacker_corridor_move(
             board,
             actual_moves,
@@ -1780,65 +1279,10 @@ fn is_corridor_attacker_move(
     mv: Move,
     _options: &AnalysisOptions,
 ) -> bool {
-    if board.current_player != attacker || !board.is_legal_for_color(mv, attacker) {
-        return false;
-    }
-    let mut next = board.clone();
-    if next.apply_move(mv).is_err() {
-        return false;
-    }
-    match next.result {
-        GameResult::Winner(winner) if winner == attacker => return true,
-        GameResult::Winner(_) | GameResult::Draw => return false,
-        GameResult::Ongoing => {}
-    }
-    if !next.immediate_winning_moves_for(attacker).is_empty() {
-        return true;
-    }
-    has_forcing_local_threat(&next, attacker)
+    bot_corridor::is_corridor_attacker_move(board, attacker, mv)
 }
 
-fn materialized_attacker_corridor_moves(board: &Board, attacker: Color) -> Vec<Move> {
-    let mut moves = board
-        .legal_moves()
-        .into_iter()
-        .filter_map(|mv| {
-            let rank = corridor_attacker_move_rank(board, attacker, mv);
-            (rank > 0).then_some((mv, rank))
-        })
-        .collect::<Vec<_>>();
-    let Some(best_rank) = moves.iter().map(|(_, rank)| *rank).max() else {
-        return Vec::new();
-    };
-    moves.retain(|(_, rank)| *rank == best_rank);
-    moves.sort_by_key(|(mv, _)| (mv.row, mv.col));
-    moves.into_iter().map(|(mv, _)| mv).collect()
-}
-
-fn corridor_attacker_move_rank(board: &Board, attacker: Color, mv: Move) -> u8 {
-    if board.current_player != attacker || !board.is_legal_for_color(mv, attacker) {
-        return 0;
-    }
-    let mut next = board.clone();
-    if next.apply_move(mv).is_err() {
-        return 0;
-    }
-    match next.result {
-        GameResult::Winner(winner) if winner == attacker => return 5,
-        GameResult::Winner(_) | GameResult::Draw => return 0,
-        GameResult::Ongoing => {}
-    }
-    if !next.immediate_winning_moves_for(attacker).is_empty() {
-        return 4;
-    }
-    local_threat_facts(&next, attacker)
-        .into_iter()
-        .filter(|fact| local_threat_is_forcing_for(&next, attacker, fact))
-        .map(|fact| fact.kind.rank())
-        .max()
-        .unwrap_or(0)
-}
-
+#[cfg(test)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum LocalThreatKind {
     OpenFour,
@@ -1848,6 +1292,7 @@ enum LocalThreatKind {
     BrokenThree,
 }
 
+#[cfg(test)]
 impl LocalThreatKind {
     fn is_forcing(self) -> bool {
         matches!(
@@ -1870,23 +1315,21 @@ impl LocalThreatKind {
     }
 }
 
+#[cfg(test)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct LocalThreatFact {
     kind: LocalThreatKind,
     defense_squares: Vec<Move>,
 }
 
+#[cfg(test)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct LocalThreatContinuation {
     mv: Move,
     legal_cost_squares: Vec<Move>,
 }
 
-fn local_threat_is_forcing_for(board: &Board, attacker: Color, fact: &LocalThreatFact) -> bool {
-    fact.kind.is_forcing()
-        && !legal_forcing_continuations_for_fact(board, attacker, fact).is_empty()
-}
-
+#[cfg(test)]
 fn legal_forcing_continuations_for_fact(
     board: &Board,
     attacker: Color,
@@ -1923,12 +1366,7 @@ fn legal_forcing_continuations_for_fact(
     continuations
 }
 
-fn has_forcing_local_threat(board: &Board, player: Color) -> bool {
-    local_threat_facts(board, player)
-        .iter()
-        .any(|fact| local_threat_is_forcing_for(board, player, fact))
-}
-
+#[cfg(test)]
 fn local_threat_facts(board: &Board, player: Color) -> Vec<LocalThreatFact> {
     let mut facts = Vec::new();
     board.for_each_occupied_color(player, |row, col| {
@@ -1951,6 +1389,7 @@ fn local_threat_facts(board: &Board, player: Color) -> Vec<LocalThreatFact> {
     facts
 }
 
+#[cfg(test)]
 fn local_threat_fact_from_run_start(
     board: &Board,
     start: Move,
@@ -2007,6 +1446,7 @@ fn local_threat_fact_from_run_start(
     }
 }
 
+#[cfg(test)]
 fn open_three_defense_squares(
     board: &Board,
     start: Move,
@@ -2040,6 +1480,7 @@ fn open_three_defense_squares(
     Some(defenses)
 }
 
+#[cfg(test)]
 fn broken_four_fact_through_move(
     board: &Board,
     mv: Move,
@@ -2060,6 +1501,7 @@ fn broken_four_fact_through_move(
     }
 }
 
+#[cfg(test)]
 fn broken_three_fact_through_move(
     board: &Board,
     mv: Move,
@@ -2074,6 +1516,7 @@ fn broken_three_fact_through_move(
     })
 }
 
+#[cfg(test)]
 fn four_completion_squares_through_move(
     board: &Board,
     mv: Move,
@@ -2126,6 +1569,7 @@ fn four_completion_squares_through_move(
     completions
 }
 
+#[cfg(test)]
 fn broken_three_rest_squares_through_move(
     board: &Board,
     mv: Move,
@@ -2195,11 +1639,13 @@ fn broken_three_rest_squares_through_move(
     rest_squares
 }
 
+#[cfg(test)]
 fn virtual_run_len(board: &Board, rest: Move, player: Color, dr: isize, dc: isize) -> usize {
     1 + virtual_count_in_direction(board, rest, player, dr, dc, -1)
         + virtual_count_in_direction(board, rest, player, dr, dc, 1)
 }
 
+#[cfg(test)]
 fn virtual_count_in_direction(
     board: &Board,
     rest: Move,
@@ -2221,6 +1667,7 @@ fn virtual_count_in_direction(
     count
 }
 
+#[cfg(test)]
 fn has_color_or_virtual_rest(
     board: &Board,
     row: usize,
@@ -2231,6 +1678,7 @@ fn has_color_or_virtual_rest(
     (row == rest.row && col == rest.col) || board.has_color(row, col, player)
 }
 
+#[cfg(test)]
 fn contiguous_run_len_through_move(
     board: &Board,
     mv: Move,
@@ -2242,6 +1690,7 @@ fn contiguous_run_len_through_move(
         + count_player_from_move(board, mv, player, -dr, -dc)
 }
 
+#[cfg(test)]
 fn count_player_from_move(board: &Board, mv: Move, player: Color, dr: isize, dc: isize) -> usize {
     let mut count = 0usize;
     let mut row = mv.row as isize + dr;
@@ -2254,6 +1703,7 @@ fn count_player_from_move(board: &Board, mv: Move, player: Color, dr: isize, dc:
     count
 }
 
+#[cfg(test)]
 fn is_run_start(board: &Board, mv: Move, player: Color, dr: isize, dc: isize) -> bool {
     let previous_row = mv.row as isize - dr;
     let previous_col = mv.col as isize - dc;
@@ -2261,6 +1711,7 @@ fn is_run_start(board: &Board, mv: Move, player: Color, dr: isize, dc: isize) ->
         || !board.has_color(previous_row as usize, previous_col as usize, player)
 }
 
+#[cfg(test)]
 fn offset_move(board: &Board, mv: Move, dr: isize, dc: isize, distance: usize) -> Option<Move> {
     let row = mv.row as isize + dr * distance as isize;
     let col = mv.col as isize + dc * distance as isize;
@@ -2270,6 +1721,7 @@ fn offset_move(board: &Board, mv: Move, dr: isize, dc: isize, distance: usize) -
     })
 }
 
+#[cfg(test)]
 fn in_bounds(board: &Board, row: isize, col: isize) -> bool {
     let size = board.config.board_size as isize;
     row >= 0 && row < size && col >= 0 && col < size
@@ -2281,6 +1733,7 @@ fn push_unique_move(moves: &mut Vec<Move>, mv: Move) {
     }
 }
 
+#[cfg(test)]
 fn push_unique_fact(facts: &mut Vec<LocalThreatFact>, fact: LocalThreatFact) {
     if !facts.contains(&fact) {
         facts.push(fact);
@@ -2756,7 +2209,7 @@ mod tests {
     use gomoku_core::{Board, Color, Move, Replay, RuleConfig, Variant};
 
     use super::{
-        analyze_defender_reply_options, analyze_replay, has_forcing_local_threat,
+        analyze_defender_reply_options, analyze_replay, bot_corridor,
         legal_forcing_continuations_for_fact, local_threat_facts, replay_moves,
         replay_prefix_boards, replay_proof_summary, AnalysisOptions, DefenderReplyOutcome,
         DefenderReplyRole, LocalThreatFact, LocalThreatKind, ProofLimitCause, ProofStatus,
@@ -2952,7 +2405,7 @@ mod tests {
                 .is_empty()
         );
         assert!(
-            !has_forcing_local_threat(&board, Color::Black),
+            !bot_corridor::has_forcing_local_threat(&board, Color::Black),
             "unexpected forcing fact remains: {facts:?}"
         );
     }
@@ -2983,7 +2436,7 @@ mod tests {
                 .collect::<Vec<_>>(),
             vec![mv("G8")]
         );
-        assert!(has_forcing_local_threat(&board, Color::Black));
+        assert!(bot_corridor::has_forcing_local_threat(&board, Color::Black));
     }
 
     fn reply_for<'a>(

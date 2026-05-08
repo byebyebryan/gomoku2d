@@ -1,6 +1,8 @@
+pub mod corridor;
 pub mod random;
 pub mod search;
 
+pub use corridor::{CorridorBot, CorridorBotFallback, CorridorOptions};
 pub use random::RandomBot;
 pub use search::{
     CandidateSource, MoveOrdering, SafetyGate, SearchAlgorithm, SearchBot, SearchBotConfig,
