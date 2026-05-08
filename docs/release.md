@@ -104,11 +104,17 @@ PLAYWRIGHT_BASE_URL=http://127.0.0.1:8001 npm run playtest:smoke
 The Vite chunk-size warning for Phaser is expected and is not currently
 release-blocking.
 
-## Bot Report Refresh
+## Bot And Analysis Report Refresh
 
 Curated bot-lab report artifacts live in `gomoku-bot-lab/reports/` and are
 published under `/bot-report/` by the web build. Scratch reports belong in the
 ignored `gomoku-bot-lab/outputs/` folder.
+
+Curated replay-analysis report artifacts live in
+`gomoku-bot-lab/analysis-reports/` and are published under
+`/analysis-report/`. The analysis report is intentionally tied to the bot report:
+it samples the head-to-head games between the current top two standings in
+`gomoku-bot-lab/reports/latest.json`.
 
 The report JSON captures git provenance when the tournament command runs, so
 refresh it only from a clean committed toolchain:
@@ -118,7 +124,10 @@ refresh it only from a clean committed toolchain:
 3. Run the curated tournament into `gomoku-bot-lab/reports/latest.json`.
 4. Render `gomoku-bot-lab/reports/index.html` from that JSON.
 5. Confirm `reports/latest.json` says `"git_dirty": false`.
-6. Commit the report artifacts as a follow-up commit.
+6. Generate the top-two analysis report into
+   `gomoku-bot-lab/analysis-reports/latest.json` and
+   `gomoku-bot-lab/analysis-reports/index.html`.
+7. Commit the report artifacts as a follow-up commit.
 
 If only the HTML report renderer changed after a clean tournament, do not rerun
 the long tournament just to update presentation. Re-render
@@ -142,6 +151,13 @@ cargo run --release -p gomoku-eval -- tournament \
   --report-json reports/latest.json
 cargo run --release -p gomoku-eval -- report-html --input reports/latest.json --output reports/index.html --json-href latest.json
 jq '.provenance | {git_commit, git_dirty}' reports/latest.json
+cargo run --release -p gomoku-eval -- analyze-report-replays \
+  --report reports/latest.json \
+  --sample-size 64 \
+  --include-proof-details \
+  --report-json analysis-reports/latest.json \
+  --report-html analysis-reports/index.html \
+  --max-depth 4
 ```
 
 ## Push And CI Baseline

@@ -49,3 +49,6 @@ with `--anchor-report reports/latest.json`, which keeps scratch comparisons
 calibrated without maintaining a separate cache file. The gauntlet command
 validates rule, opening, search budget, and match-cap compatibility before it
 uses the reference standings.
+
+The curated replay-analysis report in `../analysis-reports/` is generated from
+this `latest.json` and should explain the current top-two matchup by default.

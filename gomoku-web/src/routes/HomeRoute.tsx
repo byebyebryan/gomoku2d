@@ -29,6 +29,8 @@ export function HomeRoute() {
             <span aria-hidden="true">/</span>
             <a href={`${baseUrl}bot-report/`}>Bots</a>
             <span aria-hidden="true">/</span>
+            <a href={`${baseUrl}analysis-report/`}>Analysis</a>
+            <span aria-hidden="true">/</span>
             <a href={`${baseUrl}privacy/`}>Privacy</a>
             <span aria-hidden="true">/</span>
             <a href={`${baseUrl}terms/`}>Terms</a>

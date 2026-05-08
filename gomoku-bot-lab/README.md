@@ -147,7 +147,7 @@ cargo run --release -p gomoku-eval -- tournament --schedule gauntlet --candidate
 cargo run --release -p gomoku-eval -- report-html --input outputs/gomoku-tournament.json --output outputs/gomoku-tournament.html --json-href gomoku-tournament.json
 cargo run --release -p gomoku-eval -- analyze-replay-batch --replay-dir outputs/replays --report-json outputs/analysis-batch.json --report-html outputs/analysis-batch.html
 cargo run --release -p gomoku-eval -- analyze-report-replays --report reports/latest.json --sample-size 8 --max-scan-plies 8 --report-json outputs/analysis/top2-smoke.json --report-html outputs/analysis/top2-smoke.html
-cargo run --release -p gomoku-eval -- analyze-report-replays --report reports/latest.json --sample-size 64 --report-json outputs/analysis/top2-audit.json --report-html outputs/analysis/top2-audit.html
+cargo run --release -p gomoku-eval -- analyze-report-replays --report reports/latest.json --sample-size 64 --include-proof-details --report-json outputs/analysis/top2-audit.json --report-html outputs/analysis/top2-audit.html
 ```
 
 Use the larger curated-report run from `gomoku-bot-lab/` when publishing
@@ -238,6 +238,12 @@ Scratch reports should stay in ignored `outputs/`. Curated reports for the
 public site live in [`reports/`](reports/); the web build copies that folder to
 `/bot-report/`. To publish a selected run, write the JSON to
 `reports/latest.json` and render the HTML to `reports/index.html`.
+
+Curated replay-analysis reports for the public site live in
+[`analysis-reports/`](analysis-reports/); the web build copies that folder to
+`/analysis-report/`. The published analysis report should sample the head-to-head
+games between the current top two standings in `reports/latest.json`; omit
+explicit `--entrant-a` / `--entrant-b` so the CLI uses that default.
 
 Curated reports should be generated as a follow-up artifact commit after the
 bot/report code is already committed. Run `git status --short` first; a dirty
