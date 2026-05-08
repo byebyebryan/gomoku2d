@@ -81,9 +81,9 @@ layer:
 - `combo_*` cases test whether one move creates multiple problems for the
   opponent.
 
-The next strategic target is above these isolated fixtures: bounded forced-chain
-search. A forced chain is a sequence where a gain move creates a local threat,
-the defender's concrete reply set is known from the shape, and the attacker uses
+The next strategic target is above these isolated fixtures: bounded corridor
+search. A corridor is a sequence where a gain move creates a local threat, the
+defender's concrete reply set is known from the shape, and the attacker uses
 that forced reply to steer toward another threat. The scenario corpus should
 verify each building block, but a single diagnostic miss should not justify a
 broad leaf scan or a product-facing config knob.

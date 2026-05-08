@@ -125,7 +125,8 @@ Current checkpoint:
   clean `822045148556` provenance. It gives `0.4.1` a stable anchor for the
   depth ladder, tactical-cap hard-side candidates, and pattern-eval ablations.
 - The current release decision is whether `0.4.1` should stop here as the
-  bot-ladder/reporting checkpoint, or take one more narrow forced-chain slice.
+  bot-ladder/reporting checkpoint, or take one more narrow corridor-search
+  slice.
   Do not add another broad tactical scan, broad leaf eval, or product-facing
   bot knob before that decision is explicit.
 
@@ -145,7 +146,7 @@ Expected work:
   play candidates against stable anchors only, not candidate-vs-candidate.
 - Keep the published round-robin report as the anchor source; refresh it only
   after a candidate survives focused tests.
-- Prototype bounded forced-chain search as lab-only, using local threat facts to
+- Prototype bounded corridor search as lab-only, using local threat facts to
   derive concrete gain and defense replies instead of scanning the whole board
   at every leaf.
 - Record explicit metrics for all non-alpha-beta work so "fewer nodes" cannot
@@ -179,17 +180,54 @@ Acceptance:
 
 - The easy/default/hard ladder is either confirmed or refined with focused
   evidence.
-- Any forced-chain prototype reports its own cost and either survives focused
+- Any corridor-search prototype reports its own cost and either survives focused
   tournament checks or is removed and documented.
 - Style language remains lab-internal unless it maps to a real search-budget
   mechanism.
 - The next UI/settings slice has fewer raw knobs and clearer product presets to
   expose.
 
-## `0.4.3` — Settings And Bot Config Surface
+## `0.4.3` — Corridor-Bot Lab Pass
+
+Purpose: test corridor search inside bot behavior before turning bot work into
+product settings. `0.4.2` made corridor search a serious replay-analysis model;
+`0.4.3` should find out whether that same model can guide live bot choices.
+
+Detailed working notes live in
+[`v0_4_3_corridor_bot_plan.md`](v0_4_3_corridor_bot_plan.md).
+
+Expected work:
+
+- Stabilize shared corridor-search entry points for analyzer and bot
+  experiments.
+- Add lab-only corridor-aware bot modes, aliases, or config flags.
+- Try corridor move ordering, selective corridor extension, and escape-aware
+  defense.
+- Reinforce or optimize corridor search where integration exposes obvious cost
+  or correctness gaps.
+- Evaluate with tactical scenarios, focused tournaments, search-cost metrics,
+  and replay-analysis reports.
+- Keep all corridor knobs lab-only unless they become product language.
+
+Non-goals:
+
+- No settings page yet.
+- No player-facing corridor-search controls.
+- No full TSS/proof solver inside `SearchBot`.
+- No offensive/defensive labels unless they map to real budget allocation.
+
+Acceptance:
+
+- We know whether corridor-aware search is a useful bot primitive, a deferred
+  research thread, or mainly an analyzer feature for now.
+- Any surviving mode has strength, cost, and replay-analysis evidence against
+  current anchors.
+- The next UI/settings slice has clearer product labels and fewer raw knobs.
+
+## `0.4.4` — Settings And Bot Config Surface
 
 Purpose: make customization real once the preset vocabulary is grounded by the
-`0.4.1` and `0.4.2` reports.
+`0.4.1`, `0.4.2`, and `0.4.3` reports.
 
 Expected work:
 
@@ -224,7 +262,8 @@ Acceptance:
 ## Later `0.4.x` Exploration
 
 Pick the next slice based on what feels strongest after the bot pipeline has a
-validated ladder and the UI has a place for settings.
+validated ladder, corridor-aware bot work has been tested, and the UI has a
+place for settings if settings are still the right bridge.
 
 Likely candidates:
 
@@ -251,8 +290,8 @@ planning a large analysis suite up front.
 
 ## Implementation Notes
 
-- Keep the lab-to-product path explicit: Rust bot config -> Wasm bridge -> web
-  settings -> match metadata -> replay/analysis consumers.
+- Keep the lab-to-product path explicit: Rust bot config and analysis facts ->
+  Wasm bridge -> web settings -> match metadata -> replay/analysis consumers.
 - Do not expose a bot preset just because it sounds useful. Expose it only when
   the lab pass can demonstrate behavior or performance differences.
 - Keep casual/local and signed-in/cloud profile settings aligned, but do not

@@ -266,7 +266,7 @@ enough to justify a second measured pass, and product presets will be cleaner
 if they come from evidence rather than from raw knobs. The intended order was:
 
 - tune existing axes first: depth, child cap, candidate source, and pattern eval
-- prototype bounded forced-chain search second, using only concrete local
+- prototype bounded corridor search second, using only concrete local
   gain/defense replies with strict caps and explicit non-alpha-beta metrics
 - treat style/character last; offensive/defensive labels should emerge from
   real budget allocation, not from ad hoc eval weights
@@ -305,11 +305,30 @@ the coherent `0.4.2` checkpoint: bot sweep evidence, a presentable corridor
 analysis workbench, and a real strategic foundation for deciding what should
 become player-facing later.
 
-`0.4.3` is the earliest likely UI bridge for bot controls/settings. Expose only
-knobs that have survived lab evidence. A reasonable product-facing starting
-point is an easy/default/hard ladder backed by reports; keep raw pattern-eval,
-child-cap, and forced-chain knobs lab-only until they become product language.
-Profile should not become a dumping ground for bot/debug preferences.
+`0.4.3` should stay in the lab for one more corridor-search pass before UI
+plumbing. Corridor search is now too central to the advanced-strategy story to
+expose only as an analyzer report and then immediately jump to settings. The
+next useful question is whether the same model can improve live bot behavior in
+focused, measurable ways: better forcing move ordering, selective extension
+through narrow corridors, escape-aware defense, and cheaper corridor proofs.
+
+That release should remain lab-first:
+
+- reuse corridor-search vocabulary and tactical facts inside bot experiments
+  without turning the bot into a full solver
+- measure strength, search cost, and loss categories against the current
+  published anchors
+- reinforce or optimize corridor search where the bot integration exposes
+  obvious cost or correctness gaps
+- keep UI, settings, and product preset work out of scope unless the lab result
+  is clear enough to name
+
+`0.4.4` becomes the earliest likely UI bridge for bot controls/settings. Expose
+only knobs that have survived lab evidence. A reasonable product-facing starting
+point is still an easy/default/hard ladder backed by reports, but corridor-aware
+bot behavior may change what those labels mean. Keep raw pattern-eval,
+child-cap, and corridor-search knobs lab-only until they become product
+language. Profile should not become a dumping ground for bot/debug preferences.
 
 Later `0.4.x` slices can compete based on which lab-powered product surface
 feels strongest.

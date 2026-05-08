@@ -1,8 +1,9 @@
 # `v0.4.x` Search Bot Enhancement Plan
 
-Status: active retrospective and follow-up plan. This started as the `0.4.0`
-bot-lab work loop; it now records which experiments failed, which foundation
-pieces landed, and what the next measured search slice should be.
+Status: historical retrospective. This started as the `0.4.0` bot-lab work
+loop; it records which experiments failed, which foundation pieces landed, and
+the path that led to corridor search. The current follow-up plan lives in
+[`v0_4_3_corridor_bot_plan.md`](v0_4_3_corridor_bot_plan.md).
 
 Current progress:
 
