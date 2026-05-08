@@ -827,10 +827,10 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   win-now squares, opponent-win-next losing squares, and defender reply
   outcomes for the audited position. Defender replies use two visual layers:
   the outer hint explains why the square is shown: bright green for an
-  immediate win, bright red for an immediate losing square, pink for a defensive
-  reply to an imminent threat, blue for an offensive counter-threat reply, and
-  black/white for the winner's corridor-entry square when the escape boundary
-  sits before the active corridor starts. Actual replay moves use rings.
+  immediate win, bright red for an immediate threat, pink for an imminent
+  threat response, blue for a counter threat, and black/white for the winner's
+  corridor-entry square when the escape boundary sits before the active
+  corridor starts. Actual replay moves use rings.
   Losing-side actual moves keep their role hint boxes, but actual replay moves
   are not probed or labeled as branch outcomes in the visual frame; they are the
   path being explained. The marker

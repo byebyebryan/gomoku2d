@@ -1019,8 +1019,8 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
         unclear = report.summary.unclear,
         failed = report.failed,
         model = html_escape(model_label),
-        source = html_escape(&source_kind_label(&report.source_kind)),
-        selector = html_escape(&report.source),
+        source = html_escape(&provenance_source_label(report)),
+        selector = html_escape(&provenance_selector_label(report)),
         runtime = html_escape(&runtime_label),
         model_config = html_escape(&model_config),
         board_css = report_board_css(),
@@ -1045,8 +1045,8 @@ fn analysis_entry_card_html(entry: &AnalysisBatchEntry) -> String {
     {first_player}
     {second_player}
     <span class="loss-chip {loss_class}">{loss}</span>
-    <span class="entry-metric"><span>Forced ply</span><strong>{forced}</strong></span>
-    <span class="entry-metric"><span>Total ply</span><strong>{length}</strong></span>
+    <span class="entry-metric"><span>Forced corridor</span><strong>{forced}</strong></span>
+    <span class="entry-metric"><span>Game length</span><strong>{length}</strong></span>
   </summary>
   <div class="entry-body">
     {detail_sections}
@@ -1320,11 +1320,35 @@ fn corridor_search_config_label(report: &AnalysisBatchReport) -> String {
         .unwrap_or_else(|| "unbounded".to_string());
 
     format!(
-        "{} / depth {} / scan {}",
+        "{} / probe depth {} / traceback {}",
         defense_policy_label(report.model.defense_policy),
         report.model.max_depth,
         scan_plies
     )
+}
+
+fn provenance_source_label(report: &AnalysisBatchReport) -> String {
+    if report.source_kind == "report_replays" {
+        return report_source_and_selector(&report.source).0;
+    }
+    report.source.clone()
+}
+
+fn provenance_selector_label(report: &AnalysisBatchReport) -> String {
+    if report.source_kind == "report_replays" {
+        return report_source_and_selector(&report.source).1;
+    }
+    match report.source_kind.as_str() {
+        "replay_dir" => "all replays".to_string(),
+        _ => source_kind_label(&report.source_kind),
+    }
+}
+
+fn report_source_and_selector(source: &str) -> (String, String) {
+    let Some((report_path, selector)) = source.split_once(':') else {
+        return (source.to_string(), "all report replays".to_string());
+    };
+    (report_path.trim().to_string(), selector.trim().to_string())
 }
 
 fn source_kind_label(source_kind: &str) -> String {
@@ -1333,9 +1357,9 @@ fn source_kind_label(source_kind: &str) -> String {
 
 fn defense_policy_label(policy: DefensePolicy) -> &'static str {
     match policy {
-        DefensePolicy::AllLegalDefense => "all legal defense",
-        DefensePolicy::TacticalDefense => "tactical defense",
-        DefensePolicy::HybridDefense => "hybrid defense",
+        DefensePolicy::AllLegalDefense => "full reply probe",
+        DefensePolicy::TacticalDefense => "tactical replies",
+        DefensePolicy::HybridDefense => "hybrid replies",
     }
 }
 
@@ -2170,7 +2194,7 @@ fn proof_frames_html(frames: &[AnalysisBatchProofFrame]) -> String {
     let turn_cards = proof_decision_turns_html(frames, winner, winning_frame.ply);
 
     format!(
-        "<div class=\"proof-frames\"><div class=\"proof-legend\"><div class=\"proof-legend-row\"><span class=\"legend-role legend-winning\">immediate win</span><span class=\"legend-role legend-threat\">immediate threat</span><span class=\"legend-role legend-imminent\">defensive reply</span><span class=\"legend-role legend-offensive\">offensive reply</span><span class=\"legend-role legend-corridor-entry\">corridor entry</span></div><div class=\"proof-legend-row\"><span class=\"legend-outcome legend-immediate-loss\"><strong class=\"legend-marker legend-marker--white\">!</strong> immediate loss</span><span class=\"legend-outcome legend-forced\"><strong class=\"legend-marker legend-marker--white\">L</strong> forced loss</span><span class=\"legend-outcome legend-forbidden\"><strong class=\"legend-marker\">F</strong> forbidden</span><span class=\"legend-outcome legend-confirmed\"><strong class=\"legend-marker\">E</strong> confirmed escape</span><span class=\"legend-outcome legend-possible\"><strong class=\"legend-marker\">P</strong> possible escape</span><span class=\"legend-outcome legend-unknown\"><strong class=\"legend-marker\">?</strong> unknown</span></div></div><div class=\"proof-frame-list\">{final_card}{turn_cards}</div></div>",
+        "<div class=\"proof-frames\"><div class=\"proof-legend\"><div class=\"proof-legend-row\"><span class=\"legend-role legend-winning\">immediate win</span><span class=\"legend-role legend-threat\">immediate threat</span><span class=\"legend-role legend-imminent\">imminent threat</span><span class=\"legend-role legend-offensive\">counter threat</span><span class=\"legend-role legend-corridor-entry\">corridor entry</span></div><div class=\"proof-legend-row\"><span class=\"legend-outcome legend-immediate-loss\"><strong class=\"legend-marker legend-marker--white\">!</strong> immediate loss</span><span class=\"legend-outcome legend-forced\"><strong class=\"legend-marker legend-marker--white\">L</strong> forced loss</span><span class=\"legend-outcome legend-forbidden\"><strong class=\"legend-marker\">F</strong> forbidden</span><span class=\"legend-outcome legend-confirmed\"><strong class=\"legend-marker\">E</strong> confirmed escape</span><span class=\"legend-outcome legend-possible\"><strong class=\"legend-marker\">P</strong> possible escape</span><span class=\"legend-outcome legend-unknown\"><strong class=\"legend-marker\">?</strong> unknown</span></div></div><div class=\"proof-frame-list\">{final_card}{turn_cards}</div></div>",
         final_card = final_card,
         turn_cards = turn_cards,
     )
@@ -2724,8 +2748,11 @@ mod tests {
         assert!(html.contains("class=\"loss-chip loss-chip--mistake\""));
         assert!(html.contains("Mistake"));
         assert!(html.contains("<span>Model</span><strong>Corridor search</strong>"));
-        assert!(html.contains("<span>Source</span><strong>replay dir</strong>"));
-        assert!(html.contains("<span>Selector</span>"));
+        assert!(html.contains(&format!(
+            "<span>Source</span><strong>{}</strong>",
+            dir.display()
+        )));
+        assert!(html.contains("<span>Selector</span><strong>all replays</strong>"));
         assert!(!html.contains("<span>Replays</span>"));
         assert!(!html.contains("Forced-corridor audit"));
         assert!(!html.contains("class=\"guide\""));
@@ -2739,7 +2766,7 @@ mod tests {
         assert!(!html.contains("<span>Unknown gaps</span>"));
         assert!(!html.contains("Root detail"));
         assert!(html.contains("<span class=\"entry-match\">replay</span>"));
-        assert!(html.contains("<span>Total ply</span><strong>9 ply</strong>"));
+        assert!(html.contains("<span>Game length</span><strong>9 ply</strong>"));
         assert!(!html.contains("<span>Time</span>"));
 
         let _ = fs::remove_dir_all(&dir);
@@ -2809,6 +2836,10 @@ mod tests {
 
         assert_eq!(report.source_kind, "report_replays");
         assert_eq!(report.source, "report.json:bot-a vs bot-b");
+        let html = render_analysis_batch_report_html(&report);
+        assert!(html.contains("<span>Source</span><strong>report.json</strong>"));
+        assert!(html.contains("<span>Selector</span><strong>bot-a vs bot-b</strong>"));
+        assert!(html.contains("full reply probe / probe depth 4 / traceback 64"));
         assert_eq!(report.entries[0].path, "match_0002");
         assert_eq!(report.entries[1].path, "match_0001");
         assert!(report.entries[0].proof_details.is_none());

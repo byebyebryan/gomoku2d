@@ -229,14 +229,10 @@ decision frames for pre-move states from the winning ply backward through the
 final forced interval, without changing the default compact report shape. These
 frames separate reply role from reply outcome: outer hints show immediate or
 imminent defensive candidates, offensive counter-threat candidates, and actual
-replay moves, while marker characters show whether that reply escapes, is an
-unproved escape, loses immediately, stays unknown, or remains a forced loss.
-Selective deep retry is available for focused audits of unresolved reply
-outcomes: `--deep-retry-depth 10 --deep-retry-limit 1` keeps the default
-corridor depth at `4`, then spends a small per-replay budget retrying unproved
-reply branches with a deeper corridor allowance. Keep it off compact smoke
-reports; it can be slow and is intended only when a visual decision frame needs
-a clearer forced-loss versus unproved-escape label.
+replay moves, while marker characters show whether that reply is a confirmed
+escape, possible escape, immediate loss, unknown, or forced loss. Keep
+proof-detail audits at the base corridor depth until corridor search has better
+pruning, memoization, or a narrower transition model.
 
 Scratch reports should stay in ignored `outputs/`. Curated reports for the
 public site live in [`reports/`](reports/); the web build copies that folder to
