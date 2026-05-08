@@ -22,6 +22,7 @@ pub struct AnalysisFixtureOptions {
     pub max_depth: Option<usize>,
     pub defense_policy: Option<DefensePolicy>,
     pub max_scan_plies: Option<usize>,
+    pub full_scan: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -46,6 +47,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
             max_depth: None,
             defense_policy: None,
             max_scan_plies: Some(3),
+            full_scan: false,
         },
         expected: AnalysisFixtureExpected {
             winner: Some(Color::Black),
@@ -72,6 +74,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
             max_depth: None,
             defense_policy: None,
             max_scan_plies: None,
+            full_scan: true,
         },
         expected: AnalysisFixtureExpected {
             winner: Some(Color::Black),
@@ -102,6 +105,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
             max_depth: None,
             defense_policy: None,
             max_scan_plies: Some(3),
+            full_scan: false,
         },
         expected: AnalysisFixtureExpected {
             winner: Some(Color::Black),
@@ -126,6 +130,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
             max_depth: Some(1),
             defense_policy: None,
             max_scan_plies: Some(4),
+            full_scan: false,
         },
         expected: AnalysisFixtureExpected {
             winner: Some(Color::Black),
@@ -153,6 +158,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
             max_depth: Some(4),
             defense_policy: None,
             max_scan_plies: Some(6),
+            full_scan: false,
         },
         expected: AnalysisFixtureExpected {
             winner: Some(Color::Black),
@@ -179,6 +185,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
             max_depth: Some(4),
             defense_policy: Some(DefensePolicy::TacticalDefense),
             max_scan_plies: Some(4),
+            full_scan: false,
         },
         expected: AnalysisFixtureExpected {
             winner: Some(Color::White),
@@ -206,6 +213,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
             max_depth: Some(4),
             defense_policy: Some(DefensePolicy::TacticalDefense),
             max_scan_plies: Some(4),
+            full_scan: false,
         },
         expected: AnalysisFixtureExpected {
             winner: Some(Color::White),
@@ -230,6 +238,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
             max_depth: None,
             defense_policy: None,
             max_scan_plies: None,
+            full_scan: false,
         },
         expected: AnalysisFixtureExpected {
             winner: None,
@@ -404,9 +413,13 @@ fn fixture_options(
             .defense_policy
             .unwrap_or(base_options.defense_policy),
         max_depth: fixture_options.max_depth.unwrap_or(base_options.max_depth),
-        max_scan_plies: fixture_options
-            .max_scan_plies
-            .or(base_options.max_scan_plies),
+        max_scan_plies: if fixture_options.full_scan {
+            None
+        } else {
+            fixture_options
+                .max_scan_plies
+                .or(base_options.max_scan_plies)
+        },
     }
 }
 

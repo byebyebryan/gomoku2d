@@ -5,7 +5,9 @@ use std::time::Instant;
 
 use gomoku_bot::{RandomBot, SearchBot};
 use gomoku_core::{Color, GameResult, Move, Replay, RuleConfig, Variant};
-use gomoku_eval::analysis::{analyze_replay, AnalysisOptions, DefensePolicy};
+use gomoku_eval::analysis::{
+    analyze_replay, AnalysisOptions, DefensePolicy, DEFAULT_MAX_SCAN_PLIES,
+};
 use gomoku_eval::analysis_batch::{
     render_analysis_batch_report_html, run_analysis_batch_replays_with_options,
     run_analysis_batch_with_options, AnalysisBatchReport, AnalysisBatchRunOptions,
@@ -272,9 +274,9 @@ enum Commands {
         #[arg(long, default_value_t = 4)]
         max_depth: usize,
 
-        /// Optional max plies to scan backward from the final board
-        #[arg(long)]
-        max_scan_plies: Option<usize>,
+        /// Max plies to scan backward from the final board
+        #[arg(long, default_value_t = DEFAULT_MAX_SCAN_PLIES)]
+        max_scan_plies: usize,
     },
     /// Analyze every replay JSON in a directory and emit grouped reports
     AnalyzeReplayBatch {
@@ -306,9 +308,9 @@ enum Commands {
         #[arg(long, default_value_t = 1)]
         deep_retry_limit: usize,
 
-        /// Optional max plies to scan backward from the final board
-        #[arg(long)]
-        max_scan_plies: Option<usize>,
+        /// Max plies to scan backward from the final board
+        #[arg(long, default_value_t = DEFAULT_MAX_SCAN_PLIES)]
+        max_scan_plies: usize,
 
         /// Include proof snapshots for decisive replay analyses
         #[arg(long)]
@@ -360,9 +362,9 @@ enum Commands {
         #[arg(long, default_value_t = 1)]
         deep_retry_limit: usize,
 
-        /// Optional max plies to scan backward from the final board
-        #[arg(long)]
-        max_scan_plies: Option<usize>,
+        /// Max plies to scan backward from the final board
+        #[arg(long, default_value_t = DEFAULT_MAX_SCAN_PLIES)]
+        max_scan_plies: usize,
 
         /// Include proof snapshots for decisive replay analyses
         #[arg(long)]
@@ -386,9 +388,9 @@ enum Commands {
         #[arg(long, default_value_t = 4)]
         max_depth: usize,
 
-        /// Optional max plies to scan backward from the final board unless a fixture overrides it
-        #[arg(long)]
-        max_scan_plies: Option<usize>,
+        /// Max plies to scan backward from the final board unless a fixture overrides it
+        #[arg(long, default_value_t = DEFAULT_MAX_SCAN_PLIES)]
+        max_scan_plies: usize,
     },
 }
 
@@ -1351,7 +1353,7 @@ fn main() {
                 AnalysisOptions {
                     defense_policy: defense_policy.into(),
                     max_depth,
-                    max_scan_plies,
+                    max_scan_plies: Some(max_scan_plies),
                 },
             )
             .unwrap_or_else(|err| exit_with_error(format!("Failed to analyze replay: {err}")));
@@ -1385,7 +1387,7 @@ fn main() {
                     analysis: AnalysisOptions {
                         defense_policy: defense_policy.into(),
                         max_depth,
-                        max_scan_plies,
+                        max_scan_plies: Some(max_scan_plies),
                     },
                     include_proof_details,
                     deep_retry_depth,
@@ -1476,7 +1478,7 @@ fn main() {
                     analysis: AnalysisOptions {
                         defense_policy: defense_policy.into(),
                         max_depth,
-                        max_scan_plies,
+                        max_scan_plies: Some(max_scan_plies),
                     },
                     include_proof_details,
                     deep_retry_depth,
@@ -1516,7 +1518,7 @@ fn main() {
             let report = run_analysis_fixtures(AnalysisOptions {
                 defense_policy: defense_policy.into(),
                 max_depth,
-                max_scan_plies,
+                max_scan_plies: Some(max_scan_plies),
             })
             .unwrap_or_else(|err| {
                 exit_with_error(format!("Failed to run analysis fixtures: {err}"))
@@ -1772,7 +1774,24 @@ mod tests {
         assert_eq!(output, Some(PathBuf::from("outputs/analysis.json")));
         assert_eq!(defense_policy, CliDefensePolicy::Tactical);
         assert_eq!(max_depth, 3);
-        assert_eq!(max_scan_plies, Some(12));
+        assert_eq!(max_scan_plies, 12);
+    }
+
+    #[test]
+    fn analyze_replay_command_defaults_to_bounded_scan_cap() {
+        let cli = Cli::try_parse_from([
+            "gomoku-eval",
+            "analyze-replay",
+            "--input",
+            "replays/match.json",
+        ])
+        .expect("analyze-replay command should parse");
+
+        let Commands::AnalyzeReplay { max_scan_plies, .. } = cli.command else {
+            panic!("expected analyze-replay command");
+        };
+
+        assert_eq!(max_scan_plies, DEFAULT_MAX_SCAN_PLIES);
     }
 
     #[test]
@@ -1814,7 +1833,7 @@ mod tests {
         );
         assert_eq!(defense_policy, CliDefensePolicy::Hybrid);
         assert_eq!(max_depth, 4);
-        assert_eq!(max_scan_plies, Some(16));
+        assert_eq!(max_scan_plies, 16);
     }
 
     #[test]
@@ -1869,7 +1888,7 @@ mod tests {
         assert_eq!(max_depth, 3);
         assert_eq!(deep_retry_depth, Some(10));
         assert_eq!(deep_retry_limit, 2);
-        assert_eq!(max_scan_plies, Some(12));
+        assert_eq!(max_scan_plies, 12);
         assert!(!include_proof_details);
     }
 
@@ -1948,7 +1967,7 @@ mod tests {
         assert_eq!(max_depth, 4);
         assert_eq!(deep_retry_depth, Some(10));
         assert_eq!(deep_retry_limit, 1);
-        assert_eq!(max_scan_plies, Some(8));
+        assert_eq!(max_scan_plies, 8);
         assert!(include_proof_details);
     }
 

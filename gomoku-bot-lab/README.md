@@ -145,9 +145,9 @@ cargo run --release -p gomoku-eval -- tournament --bots search-d1,search-d3,sear
 cargo run --release -p gomoku-eval -- tournament --schedule head-to-head --bots search-d5+tactical-cap-8,search-d5+tactical-cap-8+pattern-eval --games-per-pair 64 --opening-policy centered-suite --opening-plies 4 --search-cpu-time-ms 1000 --report-json outputs/head-to-head.json
 cargo run --release -p gomoku-eval -- tournament --schedule gauntlet --candidates search-d5+tactical-cap-4,search-d5+tactical-cap-16,search-d7+tactical-cap-4,search-d7+tactical-cap-16 --anchors search-d3,search-d5+tactical-cap-8,search-d7+tactical-cap-8 --anchor-report reports/latest.json --games-per-pair 32 --opening-policy centered-suite --opening-plies 4 --search-cpu-time-ms 1000 --max-moves 120 --report-json outputs/sweep-a-gauntlet.json
 cargo run --release -p gomoku-eval -- report-html --input outputs/gomoku-tournament.json --output outputs/gomoku-tournament.html --json-href gomoku-tournament.json
-cargo run --release -p gomoku-eval -- analyze-replay-batch --replay-dir outputs/replays --report-json outputs/analysis-batch.json --report-html outputs/analysis-batch.html --max-scan-plies 40
+cargo run --release -p gomoku-eval -- analyze-replay-batch --replay-dir outputs/replays --report-json outputs/analysis-batch.json --report-html outputs/analysis-batch.html
 cargo run --release -p gomoku-eval -- analyze-report-replays --report reports/latest.json --sample-size 8 --max-scan-plies 8 --report-json outputs/analysis/top2-smoke.json --report-html outputs/analysis/top2-smoke.html
-cargo run --release -p gomoku-eval -- analyze-report-replays --report reports/latest.json --sample-size 64 --max-scan-plies 40 --report-json outputs/analysis/top2-audit.json --report-html outputs/analysis/top2-audit.html
+cargo run --release -p gomoku-eval -- analyze-report-replays --report reports/latest.json --sample-size 64 --report-json outputs/analysis/top2-audit.json --report-html outputs/analysis/top2-audit.html
 ```
 
 Use the larger curated-report run from `gomoku-bot-lab/` when publishing
@@ -214,6 +214,9 @@ corridor and asks whether model-valid defender replies can leave it, rather than
 trying to prove every alternate state as a game-theoretic loss. The batch report
 includes `unclear_reason`, final forced-interval presence, prefix counts,
 per-entry elapsed time, limit-cause counts, and `unclear_context` drilldown.
+Replay analysis defaults to a `64`-ply backward scan cap; short resolved
+corridors stop early, and smoke runs can still override with
+`--max-scan-plies 8`.
 Report rows lead with loss-category severity: `mistake` for forced-corridor
 spans shorter than `5` plies, `tactical_error` for spans from `5` to `8` plies,
 and `strategic_loss` for spans `9` plies or longer. The root detail remains as
