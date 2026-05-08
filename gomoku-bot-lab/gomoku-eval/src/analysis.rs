@@ -1,7 +1,7 @@
 use gomoku_core::{replay::ReplayResult, Board, Color, GameResult, Move, Replay, Variant};
 use serde::Serialize;
 
-pub const ANALYSIS_SCHEMA_VERSION: u32 = 9;
+pub const ANALYSIS_SCHEMA_VERSION: u32 = 10;
 const MAX_HYBRID_LOCAL_THREAT_COUNT: usize = 2;
 const MAX_HYBRID_LOCAL_THREAT_REPLIES: usize = 8;
 
@@ -427,6 +427,70 @@ pub fn analyze_defender_reply_options_with_retry(
     deep_retry_depth: Option<usize>,
     max_deep_retries: usize,
 ) -> Vec<DefenderReplyAnalysis> {
+    analyze_defender_reply_options_with_retry_inner(
+        board,
+        attacker,
+        actual_reply,
+        None,
+        options,
+        deep_retry_depth,
+        max_deep_retries,
+    )
+}
+
+pub fn analyze_alternate_defender_reply_options_with_retry(
+    board: &Board,
+    attacker: Color,
+    excluded_reply: Option<Move>,
+    options: &AnalysisOptions,
+    deep_retry_depth: Option<usize>,
+    max_deep_retries: usize,
+) -> Vec<DefenderReplyAnalysis> {
+    analyze_defender_reply_options_with_retry_inner(
+        board,
+        attacker,
+        None,
+        excluded_reply,
+        options,
+        deep_retry_depth,
+        max_deep_retries,
+    )
+}
+
+pub fn defender_reply_roles_for_move(
+    board: &Board,
+    attacker: Color,
+    mv: Move,
+) -> Vec<DefenderReplyRole> {
+    if board.current_player != attacker.opponent() || board.result != GameResult::Ongoing {
+        return Vec::new();
+    }
+
+    let threat = ThreatReplySet::new(board, attacker, true);
+    let mut roles = Vec::new();
+    if threat.legal_cost_squares.contains(&mv) {
+        roles.push(DefenderReplyRole::ImmediateDefense);
+    }
+    if threat.winning_squares.is_empty() {
+        if imminent_defense_reply_moves(board, attacker, Some(mv)).contains(&mv) {
+            roles.push(DefenderReplyRole::ImminentDefense);
+        }
+        if offensive_counter_reply_moves(board, attacker.opponent()).contains(&mv) {
+            roles.push(DefenderReplyRole::OffensiveCounter);
+        }
+    }
+    roles
+}
+
+fn analyze_defender_reply_options_with_retry_inner(
+    board: &Board,
+    attacker: Color,
+    actual_reply: Option<Move>,
+    excluded_reply: Option<Move>,
+    options: &AnalysisOptions,
+    deep_retry_depth: Option<usize>,
+    max_deep_retries: usize,
+) -> Vec<DefenderReplyAnalysis> {
     if board.current_player != attacker.opponent() || board.result != GameResult::Ongoing {
         return Vec::new();
     }
@@ -446,6 +510,9 @@ pub fn analyze_defender_reply_options_with_retry(
     }
     if let Some(mv) = actual_reply {
         push_reply_role(&mut replies, mv, DefenderReplyRole::Actual);
+    }
+    if let Some(excluded_reply) = excluded_reply {
+        replies.retain(|(mv, _)| *mv != excluded_reply);
     }
 
     let mut deep_retries_remaining = max_deep_retries;
