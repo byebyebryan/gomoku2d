@@ -1222,6 +1222,24 @@ fn replay_corridor_status(
     options: &AnalysisOptions,
     prefix_ply: usize,
 ) -> ProofResult {
+    replay_corridor_status_with_actual_child(
+        board,
+        actual_moves,
+        attacker,
+        options,
+        prefix_ply,
+        None,
+    )
+}
+
+fn replay_corridor_status_with_actual_child(
+    board: &Board,
+    actual_moves: &[Move],
+    attacker: Color,
+    options: &AnalysisOptions,
+    prefix_ply: usize,
+    actual_child: Option<&ProofResult>,
+) -> ProofResult {
     match board.result {
         GameResult::Winner(winner) if winner == attacker => {
             return corridor_proof_result(
@@ -1249,9 +1267,23 @@ fn replay_corridor_status(
     }
 
     if board.current_player == attacker {
-        replay_corridor_attacker_node(board, actual_moves, attacker, options, prefix_ply)
+        replay_corridor_attacker_node(
+            board,
+            actual_moves,
+            attacker,
+            options,
+            prefix_ply,
+            actual_child,
+        )
     } else {
-        replay_corridor_defender_node(board, actual_moves, attacker, options, prefix_ply)
+        replay_corridor_defender_node(
+            board,
+            actual_moves,
+            attacker,
+            options,
+            prefix_ply,
+            actual_child,
+        )
     }
 }
 
@@ -1261,6 +1293,7 @@ fn replay_corridor_attacker_node(
     attacker: Color,
     options: &AnalysisOptions,
     prefix_ply: usize,
+    actual_child: Option<&ProofResult>,
 ) -> ProofResult {
     let immediate_wins = board.immediate_winning_moves_for(attacker);
     if let Some(&mv) = immediate_wins.first() {
@@ -1311,7 +1344,9 @@ fn replay_corridor_attacker_node(
         );
     }
 
-    let child = replay_corridor_status(&next, actual_moves, attacker, options, prefix_ply + 1);
+    let child = actual_child.cloned().unwrap_or_else(|| {
+        replay_corridor_status(&next, actual_moves, attacker, options, prefix_ply + 1)
+    });
     match child.status {
         ProofStatus::ForcedWin => {
             let mut principal_line = Vec::with_capacity(child.principal_line.len() + 1);
@@ -1367,6 +1402,7 @@ fn replay_corridor_defender_node(
     attacker: Color,
     options: &AnalysisOptions,
     prefix_ply: usize,
+    actual_child: Option<&ProofResult>,
 ) -> ProofResult {
     let include_local_threats = options.defense_policy == DefensePolicy::HybridDefense;
     let threat = ThreatReplySet::new(board, attacker, include_local_threats);
@@ -1419,17 +1455,23 @@ fn replay_corridor_defender_node(
             [ProofLimitCause::ModelScopeUnknown],
         );
     }
-
     let mut outcomes = Vec::new();
     for mv in reply_moves {
-        outcomes.push(classify_corridor_reply(
-            board,
-            attacker,
-            options,
-            prefix_ply,
-            actual_moves,
-            mv,
-        ));
+        if Some(mv) == actual_moves.get(prefix_ply).copied() {
+            // The actual replay reply inherits the already-computed next prefix proof.
+            // Only alternate replies need fresh branch probes.
+            outcomes.push(classify_actual_corridor_reply(
+                board,
+                actual_moves,
+                attacker,
+                options,
+                prefix_ply,
+                mv,
+                actual_child,
+            ));
+        } else {
+            outcomes.push(classify_corridor_reply(board, attacker, options, mv));
+        }
     }
 
     let escape_replies = outcomes
@@ -1575,8 +1617,6 @@ fn classify_corridor_reply(
     board: &Board,
     attacker: Color,
     options: &AnalysisOptions,
-    _prefix_ply: usize,
-    _actual_moves: &[Move],
     mv: Move,
 ) -> CorridorReplyOutcome {
     let mut next = board.clone();
@@ -1629,6 +1669,46 @@ fn classify_corridor_reply(
         }
         ProofStatus::EscapeFound => CorridorReplyStatus::Escape,
         ProofStatus::Unknown if applied => CorridorReplyStatus::UnprovedEscape,
+        ProofStatus::Unknown => CorridorReplyStatus::Unknown,
+    };
+    CorridorReplyOutcome { mv, status, proof }
+}
+
+fn classify_actual_corridor_reply(
+    board: &Board,
+    actual_moves: &[Move],
+    attacker: Color,
+    options: &AnalysisOptions,
+    prefix_ply: usize,
+    mv: Move,
+    actual_child: Option<&ProofResult>,
+) -> CorridorReplyOutcome {
+    let mut next = board.clone();
+    if next.apply_move(mv).is_err() {
+        return CorridorReplyOutcome {
+            mv,
+            status: CorridorReplyStatus::Unknown,
+            proof: with_limit_causes(
+                corridor_proof_result(
+                    board,
+                    attacker,
+                    options,
+                    ProofStatus::Unknown,
+                    Vec::new(),
+                    Vec::new(),
+                    Vec::new(),
+                ),
+                [ProofLimitCause::ModelScopeUnknown],
+            ),
+        };
+    }
+
+    let proof = actual_child.cloned().unwrap_or_else(|| {
+        replay_corridor_status(&next, actual_moves, attacker, options, prefix_ply + 1)
+    });
+    let status = match proof.status {
+        ProofStatus::ForcedWin => CorridorReplyStatus::Forced,
+        ProofStatus::EscapeFound => CorridorReplyStatus::Escape,
         ProofStatus::Unknown => CorridorReplyStatus::Unknown,
     };
     CorridorReplyOutcome { mv, status, proof }
@@ -2281,15 +2361,20 @@ fn replay_proof_summary(
     scan_start: usize,
 ) -> Vec<ProofResult> {
     let mut proof_summary = Vec::with_capacity(boards.len() - scan_start);
-    for (ply, board) in boards.iter().enumerate().skip(scan_start) {
-        proof_summary.push(replay_corridor_status(
-            board,
+    let mut actual_child = None;
+    for ply in (scan_start..boards.len()).rev() {
+        let proof = replay_corridor_status_with_actual_child(
+            &boards[ply],
             actual_moves,
             winner,
             options,
             ply,
-        ));
+            actual_child.as_ref(),
+        );
+        actual_child = Some(proof.clone());
+        proof_summary.push(proof);
     }
+    proof_summary.reverse();
     proof_summary
 }
 
@@ -2670,9 +2755,10 @@ mod tests {
     use gomoku_core::{Board, Color, Move, Replay, RuleConfig, Variant};
 
     use super::{
-        analyze_defender_reply_options, analyze_replay, local_threat_facts, AnalysisOptions,
-        DefenderReplyOutcome, DefenderReplyRole, DefensePolicy, LocalThreatFact, LocalThreatKind,
-        ProofLimitCause, ProofStatus, ReplyClassification, RootCause, TacticalNote, UnclearReason,
+        analyze_defender_reply_options, analyze_replay, local_threat_facts, replay_moves,
+        replay_prefix_boards, replay_proof_summary, AnalysisOptions, DefenderReplyOutcome,
+        DefenderReplyRole, DefensePolicy, LocalThreatFact, LocalThreatKind, ProofLimitCause,
+        ProofStatus, ReplyClassification, RootCause, TacticalNote, UnclearReason,
     };
 
     fn mv(notation: &str) -> Move {
@@ -3131,6 +3217,45 @@ mod tests {
             evidence.reply_classification == ReplyClassification::UnprovedEscape
                 && evidence.escape_replies.contains(&mv("I10"))
         }));
+    }
+
+    #[test]
+    fn replay_analysis_does_not_label_actual_immediate_block_as_escape() {
+        let replay = replay_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "H7", "F8", "G9", "G8", "I8", "J9", "I7", "F7", "I10", "I9", "F6", "K9",
+                "H9", "J7", "H10", "L9", "M9", "I6", "K8", "E8", "D8", "G6", "H5", "J6", "J10",
+                "K10", "G5", "H4", "F11", "G10", "H6", "J8", "J5", "I5", "K7", "J11", "I12", "F9",
+                "H11", "D7", "C6", "E7", "C7", "E9", "E6", "D9", "C10", "C9", "B9", "D10", "C11",
+                "E11", "E10", "F12", "B8", "G13",
+            ],
+        );
+        let prefix_ply = 49;
+        let boards = replay_prefix_boards(&replay).expect("fixture replay should apply");
+        let actual_moves = replay_moves(&replay).expect("fixture replay should parse");
+        let proof_summary = replay_proof_summary(
+            &boards,
+            &actual_moves,
+            Color::Black,
+            &AnalysisOptions {
+                defense_policy: DefensePolicy::AllLegalDefense,
+                max_depth: 4,
+                max_backward_window: Some(8),
+            },
+            prefix_ply,
+        );
+        let proof = proof_summary
+            .first()
+            .expect("target prefix should be in proof summary");
+
+        assert_eq!(proof.status, ProofStatus::ForcedWin);
+        assert!(proof
+            .threat_evidence
+            .iter()
+            .any(|evidence| evidence.actual_reply == Some(mv("B9"))
+                && evidence.reply_classification == ReplyClassification::BlockedButForced
+                && evidence.escape_replies.is_empty()));
     }
 
     #[test]
