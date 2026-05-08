@@ -12,6 +12,70 @@ their own section.
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-05-08
+
+**Theme: establish corridor search as the strategic foundation for analysis and
+future bots.**
+
+`0.4.2` stays lab-facing, but it is one of the most important project
+checkpoints so far. It started as another bot-tuning pass after the `0.4.1`
+difficulty ladder, then exposed the real limit of knob turning: the current bot
+is already competent enough that obvious strength gains are expensive and hard
+to explain. The useful direction is not just "stronger bot"; it is a bot and
+analysis layer that understands why games are won or lost.
+
+That is what corridor search gives the project. It formalizes the vocabulary of
+forced sequences, escapes, missed defenses, possible escapes, tactical errors,
+and strategic losses; it gives the lab a way to inspect bot behavior; and it
+creates a direct path toward replay education, critical-move tagging, and
+eventually stronger bots that improve through explainable forcing logic instead
+of opaque tuning.
+
+### Bot lab
+
+- Added batch gauntlet workflows so groups of candidate bot configs can be
+  compared against anchored reference reports without rerunning a full
+  round-robin for every sweep.
+- Tested child-cap, pattern-eval, symmetric radius, and asymmetric
+  candidate-source sweeps against the `0.4.1` anchors; no new anchor was
+  promoted, but the results kept `+pattern-eval` and `self2/opponent1` as
+  useful lab axes.
+- Polished the bot report for larger lineups: clearer ranking/search tabs,
+  candidate-vs-anchor labeling, expandable comparisons, cleaner run metadata,
+  and a mobile-friendly table layout.
+
+### Replay analysis
+
+- Added replay-analysis fixtures, batch commands, JSON/HTML reports, and a
+  published `/analysis-report/` surface generated from the current bot report's
+  top-two head-to-head games.
+- Implemented the first solid corridor-search foundation for finished replays:
+  forced corridor detection, corridor-entry escapes, confirmed/possible escape
+  outcomes, loss severity buckets, and proof details tied to the model limits.
+- Turned replay analysis into a useful bot-lab diagnostic, not just a future UI
+  idea: tournament games can now be inspected by forced sequence, last escape,
+  and loss type instead of only by final score.
+- Added visual proof frames with reusable board rendering, threat/counter-threat
+  hints, forbidden Renju markers, actual-move rings, and compact per-turn
+  explanation rows.
+- Tightened tactical correctness around open-three defense squares, Renju
+  forbidden blocks, illegal black threat filtering, actual replay move proof
+  inheritance, and exclusion of non-corridor replay moves from model replies.
+
+### Repo and docs
+
+- Added `docs/game_analysis.md` as the canonical replay-analysis contract,
+  including the current model, known limits, CLI workflows, and report shape.
+- Added `docs/corridor_search.md` to keep the strategic corridor-search thesis
+  visible instead of burying it inside replay report mechanics.
+- Added analysis-report publishing to the web build and linked the report
+  alongside the existing bot report and asset preview surfaces so the interim
+  workbench can be reviewed like a real product artifact, not hidden as raw lab
+  output.
+- Updated roadmap, bot-lab, performance, tactical-shape, tournament, and release
+  docs around the `0.4.2` checkpoint and the next likely `0.4.3` UI/settings
+  bridge.
+
 ## [0.4.1] - 2026-05-04
 
 **Theme: turn the bot-lab foundation into a measured difficulty ladder.**
@@ -612,7 +676,8 @@ together in one canvas-driven surface. That lesson drove the `v0.2.1` rewrite.
   concerns blurred together.
 - Expressive UI language, but not scalable beyond one canvas.
 
-[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/byebyebryan/gomoku2d/compare/v0.3.3...v0.4.0
 [0.3.3]: https://github.com/byebyebryan/gomoku2d/compare/v0.3.2...v0.3.3

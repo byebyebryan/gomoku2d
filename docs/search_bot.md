@@ -316,20 +316,27 @@ behavior and improve measured hot paths. They should become configurable only
 when they represent a real tradeoff: strength versus speed, breadth versus
 depth, style, safety, or explainability.
 
-For the next bot slice, the default assumption should be restraint. `0.4.1`
-already has enough evidence to cut a bot-ladder/report checkpoint. After that,
-`0.4.2` should use the stronger harness for one more lab pass before UI:
+The `0.4.2` follow-up kept that restraint. It used the stronger harness for one
+more lab pass before UI, then pivoted toward corridor search once the sweeps
+showed that raw tuning knobs were not the most useful next product direction:
 
 1. Tune existing axes first: depth, child cap, candidate source, and pattern
    eval.
-2. Prototype bounded forced-chain search only where local facts provide concrete
-   gain and defense replies.
+2. Prototype bounded corridor/forced-chain search only where local facts
+   provide concrete gain and defense replies.
 3. Treat style/character as a later budget-allocation mechanism, not as an
    up-front label or eval-weight tweak.
 
 Tactical scenarios remain diagnostics; a change should not be kept just because
 it fixes a shallow fixture if it loses reached depth or tournament strength
 against the current depth-3 and hard-side capped baselines.
+
+The current `0.4.2` checkpoint therefore treats corridor search as the more
+important foundation: inspect why bots win or lose, explain the final forced
+sequence, and use that evidence before pushing more knobs into product settings.
+The strategic model is documented in [`corridor_search.md`](corridor_search.md);
+the replay analyzer contract is documented in
+[`game_analysis.md`](game_analysis.md).
 
 The focused tactical scenario corpus is documented in
 [`tactical_scenarios.md`](tactical_scenarios.md). It is layered into `local_*`,
@@ -375,10 +382,10 @@ Detailed numbers live in [`performance_tuning.md`](performance_tuning.md).
 
 ### `0.4.2` sweep B/C read
 
-The next `0.4.2` sweeps tested candidate-source breadth. Symmetric `r3` was too
-expensive to justify, and symmetric `r1` was too limiting as a general source.
-The more useful question was asymmetric discovery: keep radius 2 around the
-current player's stones while trimming opponent-stone discovery to radius 1
+The follow-up `0.4.2` sweeps tested candidate-source breadth. Symmetric `r3`
+was too expensive to justify, and symmetric `r1` was too limiting as a general
+source. The more useful question was asymmetric discovery: keep radius 2 around
+the current player's stones while trimming opponent-stone discovery to radius 1
 (`+near-self-r2-opponent-r1`).
 
 A full gauntlet tested `D3`, `D5 tactical-cap-8`, and `D7 tactical-cap-8`, with

@@ -261,10 +261,9 @@ pattern-eval ablations under the same Renju rule, centered opening suite, and
 That became the coherent `0.4.1` checkpoint: bot ladder, report, tactical
 pipeline, and enough evidence to stop guessing at bot labels.
 
-`0.4.2` should stay in the lab for one more bot exploration pass before UI.
-The harness is now strong enough to justify a second measured pass, and the
-product presets will be cleaner if they come from that evidence rather than
-from today's raw knobs. The order should be:
+`0.4.2` stayed in the lab for one more pass before UI. The harness was strong
+enough to justify a second measured pass, and product presets will be cleaner
+if they come from evidence rather than from raw knobs. The intended order was:
 
 - tune existing axes first: depth, child cap, candidate source, and pattern eval
 - prototype bounded forced-chain search second, using only concrete local
@@ -280,16 +279,31 @@ tactical ordering, and `self2/opponent1` mainly looks useful as an efficiency
 tweak for `D3 + pattern-eval`. No anchor promotion yet; save another bot sweep
 for when we need to choose concrete product presets.
 
-`0.4.2` then pivoted from "stronger bot right now" to replay-analysis
-foundation. The current analyzer is a lab artifact, not a replay-screen feature:
-it uses model-bounded corridor proof to explain the final forced sequence in
-finished tournament games, records proof intervals instead of assuming one
-monotonic turning point, and separates ideal play from human mistakes such as
-missed defenses, missed wins, possible escapes, tactical errors, and strategic
-losses. The current public checkpoint is the curated top-two replay analysis
-report published at `/analysis-report/`, generated from the current bot report.
-That is enough for a coherent `0.4.2` release if the remaining cleanup stays
-limited to dead-path removal, report/docs sync, and release checks.
+`0.4.2` then pivoted from "stronger bot right now" to something more important:
+[`corridor search`](corridor_search.md) as a shared strategic model for
+analysis, bot diagnostics, and future player education. The bot sweeps showed
+that obvious tuning gains are getting expensive. A better next step is to
+understand why a competent bot wins or loses, where the last escape existed,
+and which forced sequence made the position collapse.
+
+The current analyzer is still a lab artifact, not a replay-screen feature, but
+it is the first serious version of that model. It uses bounded corridor proof to
+explain the final forced sequence in finished tournament games, records proof
+intervals instead of assuming one monotonic turning point, and separates ideal
+play from human mistakes such as missed defenses, missed wins, possible
+escapes, tactical errors, and strategic losses.
+
+This matters beyond the interim report: corridor search gives replay analysis a
+concrete foundation, formalizes the project's advanced-strategy vocabulary,
+gives the lab a way to inspect bot behavior beyond Elo, can feed back into bot
+search as focused forcing logic, and points toward a product identity where
+Gomoku2D can teach the game it is playing.
+
+The current public checkpoint is the curated top-two replay analysis report
+published at `/analysis-report/`, generated from the current bot report. That is
+the coherent `0.4.2` checkpoint: bot sweep evidence, a presentable corridor
+analysis workbench, and a real strategic foundation for deciding what should
+become player-facing later.
 
 `0.4.3` is the earliest likely UI bridge for bot controls/settings. Expose only
 knobs that have survived lab evidence. A reasonable product-facing starting

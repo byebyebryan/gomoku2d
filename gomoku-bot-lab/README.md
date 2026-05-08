@@ -114,17 +114,18 @@ easy lane, D3 remains the default baseline, D5 tactical-cap is the efficient
 hard-side candidate, D7 tactical-cap is stronger but slower, and pattern eval is
 still lab-only because the score gain comes with real compute cost.
 
-After `0.4.1`, keep `0.4.2` lab-first rather than jumping straight to UI
-settings. Sweep existing knobs with head-to-heads and gauntlets, then try a
-bounded forced-chain prototype only if local facts provide concrete gain and
-defense replies. Treat offensive/defensive style as future search-budget
-allocation, not as a name pasted onto eval weights.
+The `0.4.2` lab pass kept that restraint rather than jumping straight to UI
+settings. It swept existing knobs with head-to-heads and gauntlets, then pivoted
+toward corridor search as the more useful foundation: explain why bots win or
+lose, identify final forced sequences, and use that evidence before promoting
+more product settings.
 
-The first `0.4.2` sweeps keep that direction: pattern eval remains the strongest
-lab signal, cap16 is not a clear upgrade, cap4 is a viable narrowing point when
-paired with tactical ordering, and asymmetric `self2/opponent1` candidate
-discovery is most interesting as an efficiency tweak for `D3 + pattern-eval`.
-Treat these as lab candidates, not product presets yet.
+The `0.4.2` sweeps still matter: pattern eval remains the strongest lab signal,
+cap16 is not a clear upgrade, cap4 is a viable narrowing point when paired with
+tactical ordering, and asymmetric `self2/opponent1` candidate discovery is most
+interesting as an efficiency tweak for `D3 + pattern-eval`. Treat these as lab
+candidates, not product presets yet. Corridor-search strategy is documented in
+[`../docs/corridor_search.md`](../docs/corridor_search.md).
 
 ### Eval harness
 
@@ -217,6 +218,9 @@ per-entry elapsed time, limit-cause counts, and `unclear_context` drilldown.
 Replay analysis defaults to a `64`-ply backward scan cap; short resolved
 corridors stop early, and smoke runs can still override with
 `--max-scan-plies 8`.
+The strategic model is documented in
+[`../docs/corridor_search.md`](../docs/corridor_search.md); the replay-specific
+contract lives in [`../docs/game_analysis.md`](../docs/game_analysis.md).
 Report rows lead with loss-category severity: `mistake` for forced-corridor
 spans shorter than `5` plies, `tactical_error` for spans from `5` to `8` plies,
 and `strategic_loss` for spans `9` plies or longer. The root detail remains as
