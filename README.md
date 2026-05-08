@@ -122,6 +122,8 @@ The canonical design, architecture, and release docs live in `docs/`:
 - [`docs/app_design.md`](docs/app_design.md) — current local-first routes, flows, and screen contracts
 - [`docs/ui_design.md`](docs/ui_design.md) — DOM shell visual language and styling rules
 - [`docs/game_visual.md`](docs/game_visual.md) — Phaser canvas, sprite, warning, and animation language
+- [`docs/corridor_search.md`](docs/corridor_search.md) — strategic model behind replay analysis, bot diagnostics, and future forcing logic
+- [`docs/game_analysis.md`](docs/game_analysis.md) — replay analyzer mechanics, report schema, CLI workflow, and current limits
 - [`gomoku-web/assets/README.md`](gomoku-web/assets/README.md) — source asset folders and local preview pages
 - [Live asset previews](https://gomoku2d.byebyebryan.com/assets/) — published sprite, icon, and font previews
 - [Bot lab report](https://gomoku2d.byebyebryan.com/bot-report/) — published bot-lab tournament report target
