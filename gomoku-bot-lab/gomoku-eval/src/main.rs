@@ -76,12 +76,6 @@ impl CliTournamentSchedule {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
-#[clap(rename_all = "kebab-case")]
-enum CliReportSamplePolicy {
-    Stratified,
-}
-
 #[derive(Args, Debug, Clone)]
 struct EvalOptions {
     /// Rule variant: "renju" (default) or "freestyle"
@@ -294,10 +288,6 @@ enum Commands {
         /// Number of head-to-head games to sample before analysis
         #[arg(long, default_value_t = 8)]
         sample_size: usize,
-
-        /// Sampling policy used for selecting report matches
-        #[arg(long, value_enum, default_value = "stratified")]
-        sample_policy: CliReportSamplePolicy,
 
         /// Write reusable batch report JSON
         #[arg(long)]
@@ -1378,7 +1368,6 @@ fn main() {
             entrant_a,
             entrant_b,
             sample_size,
-            sample_policy: _,
             report_json,
             report_html,
             max_depth,
@@ -1848,8 +1837,6 @@ mod tests {
             "search-d5+tactical-cap-8+pattern-eval",
             "--sample-size",
             "8",
-            "--sample-policy",
-            "stratified",
             "--report-json",
             "outputs/analysis/top2-smoke.json",
             "--report-html",
@@ -1867,7 +1854,6 @@ mod tests {
             entrant_a,
             entrant_b,
             sample_size,
-            sample_policy,
             report_json,
             report_html,
             max_depth,
@@ -1888,7 +1874,6 @@ mod tests {
             Some("search-d5+tactical-cap-8+pattern-eval")
         );
         assert_eq!(sample_size, 8);
-        assert_eq!(sample_policy, CliReportSamplePolicy::Stratified);
         assert_eq!(
             report_json,
             Some(PathBuf::from("outputs/analysis/top2-smoke.json"))

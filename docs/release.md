@@ -158,7 +158,16 @@ cargo run --release -p gomoku-eval -- analyze-report-replays \
   --report-json analysis-reports/latest.json \
   --report-html analysis-reports/index.html \
   --max-depth 4
+jq '{source, total, analyzed, failed, model, summary}' analysis-reports/latest.json
 ```
+
+For the curated analysis report, sanity-check at minimum:
+
+- `source == "reports/latest.json:Top 2 entrants"`
+- `analyzed == total` and `failed == 0`
+- `model.reply_policy == "corridor_replies"`
+- `model.max_depth == 4` and `model.max_scan_plies == 64`
+- summary counts look intentional for the current report sample
 
 ## Push And CI Baseline
 
@@ -251,6 +260,8 @@ changed surface:
 
 - Home loads from `https://gomoku2d.byebyebryan.com/`.
 - `/profile`, `/privacy/`, and `/terms/` return `200`.
+- If report publishing changed: `/bot-report/`, `/bot-report/latest.json`,
+  `/analysis-report/`, and `/analysis-report/latest.json` return `200`.
 - Local-only match/replay still works without signing in.
 - If auth/profile changed: sign in from production, refresh, sign out, sign in
   again, and confirm history/profile continuity.

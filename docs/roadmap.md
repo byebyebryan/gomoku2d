@@ -258,11 +258,8 @@ pattern-eval ablations under the same Renju rule, centered opening suite, and
 - `+pattern-eval` is promising enough to keep as a lab axis, but too expensive
   and unsettled to promote as a default product preset.
 
-That is enough for a coherent `0.4.1` release if we want this patch to be the
-"bot ladder, report, and tactical pipeline" checkpoint. One more narrow
-behavior slice is still possible, but it should be a bounded forced-chain
-prototype with concrete gain/defense replies, not another broad tactical scan or
-leaf-eval experiment.
+That became the coherent `0.4.1` checkpoint: bot ladder, report, tactical
+pipeline, and enough evidence to stop guessing at bot labels.
 
 `0.4.2` should stay in the lab for one more bot exploration pass before UI.
 The harness is now strong enough to justify a second measured pass, and the
@@ -275,20 +272,24 @@ from today's raw knobs. The order should be:
 - treat style/character last; offensive/defensive labels should emerge from
   real budget allocation, not from ad hoc eval weights
 
-The first `0.4.2` sweeps have now covered child-cap, pattern-eval, symmetric
-candidate radius, and one asymmetric candidate source. They narrowed the next
-bot question rather than closing it: pattern eval is still the strongest signal
-but remains a cost tradeoff, cap16 is not a general upgrade, cap4 is viable when
-paired with tactical ordering, and `self2/opponent1` mainly looks useful as an
-efficiency tweak for `D3 + pattern-eval`. No anchor promotion yet; the next
-bot-lab step should be a smaller survivor comparison only if we need to choose
-between efficient pattern-eval variants before player-facing setting work.
+The first `0.4.2` sweeps covered child-cap, pattern-eval, symmetric candidate
+radius, and one asymmetric candidate source. They narrowed the bot question
+rather than closing it: pattern eval is still the strongest signal but remains a
+cost tradeoff, cap16 is not a general upgrade, cap4 is viable when paired with
+tactical ordering, and `self2/opponent1` mainly looks useful as an efficiency
+tweak for `D3 + pattern-eval`. No anchor promotion yet; save another bot sweep
+for when we need to choose concrete product presets.
 
-The replay-analysis direction now starts in [`game_analysis.md`](game_analysis.md):
-use model-bounded forced-line proof to explain finished games, record proof
-intervals instead of assuming one monotonic turning point, and separate ideal
-play from human mistakes such as missed defenses, accidental blunders, and
-strategic losses.
+`0.4.2` then pivoted from "stronger bot right now" to replay-analysis
+foundation. The current analyzer is a lab artifact, not a replay-screen feature:
+it uses model-bounded corridor proof to explain the final forced sequence in
+finished tournament games, records proof intervals instead of assuming one
+monotonic turning point, and separates ideal play from human mistakes such as
+missed defenses, missed wins, possible escapes, tactical errors, and strategic
+losses. The current public checkpoint is the curated top-two replay analysis
+report published at `/analysis-report/`, generated from the current bot report.
+That is enough for a coherent `0.4.2` release if the remaining cleanup stays
+limited to dead-path removal, report/docs sync, and release checks.
 
 `0.4.3` is the earliest likely UI bridge for bot controls/settings. Expose only
 knobs that have survived lab evidence. A reasonable product-facing starting

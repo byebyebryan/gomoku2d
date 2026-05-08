@@ -418,25 +418,16 @@ The current lab CLI exposes only the corridor `--max-depth` budget for replay
 analysis. Treat it as a safety and diagnostic control, not as a broad minimax
 depth.
 
-The current MVP detects winning squares through `immediate_winning_moves_for`.
-It does not yet expose a first-class threat inventory with named shapes, cost
-squares, or all defender reply classifications. That inventory is the next
-design step before broader forced-line claims.
+The current implementation exposes a first-class corridor model rather than the
+older hybrid all-legal/tactical model: enumerate active immediate/imminent
+threats, generate named replies and counter-threats, and classify whether the
+corridor continues, exits, wins, or remains unknown. It is still model-bounded
+proof, not a general TSS solver.
 
-The next useful inventory is not a hybrid all-legal/tactical model. It is a
-first-class corridor model: enumerate active immediate/imminent threats,
-generate named replies and counter-threats, and classify whether the corridor
-continues, exits, wins, or remains unknown. It is still model-bounded proof, not
-a general TSS solver.
-
-The current implementation is behind the desired corridor model in one known
-place: `BrokenThree` may still be treated as diagnostic-only because its cost
-and rest-square semantics are not yet clean enough. Design-wise, `BrokenThree`
-belongs with imminent threats; implementation should promote it only when the
-reply generator can name the relevant defensive replies and continuations
-without falling back to broad search. Rest-square dependency graphs and
-multi-threat combinations belong in later TSS-style work once the basic corridor
-facts are validated on report samples.
+The current implementation is still narrower than full threat-space search:
+rest-square dependency graphs, multi-threat combinations, and broad quiet-move
+strategy remain out of scope. Treat those as later TSS-style work once the
+current corridor facts are validated on report samples.
 
 ## Backward Walk
 
@@ -764,19 +755,31 @@ Do not let the Phaser scene or React route own analysis rules.
 - Running expensive analysis automatically on every local move.
 - Treating bot tournament strength as the only success metric.
 
-## Implementation Slices
+## Implementation Status
 
-1. Lock terminology, proof statuses, model bounds, and output shape in this doc.
-2. Add finished-game prefix fixtures covering immediate wins, short forced
+Completed lab slices:
+
+1. Locked terminology, proof statuses, model bounds, and output shape in this
+   doc.
+2. Added finished-game prefix fixtures covering immediate wins, short forced
    lines, conversion errors, missed defenses, missed wins, unknown results, and
    Renju legality edges.
-3. Build a CLI/lab analyzer that finds final win, proof intervals, last chance,
-   and a bounded principal line for simple finished games.
-4. Add proof-tree output and report rendering for debugging.
-5. Add batch replay analysis for tournament replay directories.
-6. Use analyzer summaries to annotate replay.
-7. Feed proven, cheap forced-line facts back into bot ordering or narrow search
-   only after the analyzer behavior is trustworthy.
+3. Built a CLI/lab analyzer that finds final win, proof intervals, last chance,
+   and a bounded principal line for finished games.
+4. Added proof-detail output and visual HTML report rendering for debugging.
+5. Added batch replay analysis for replay directories and compact tournament
+   reports.
+6. Published a curated top-two analysis report from the current bot report under
+   `/analysis-report/`.
+
+Current next slices:
+
+1. Audit the visual decision-frame output against the top-two 64-game report.
+2. Remove dead paths from pre-corridor proof experiments and keep only the
+   corridor model surface.
+3. Decide whether the next product step is report polish, replay-screen
+   annotation, or feeding proven corridor facts back into bot ordering/narrow
+   search.
 
 ## Lab MVP
 
