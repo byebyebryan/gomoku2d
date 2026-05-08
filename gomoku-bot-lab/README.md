@@ -13,7 +13,7 @@ first.
 | Crate | What it does |
 |-------|--------------|
 | `gomoku-core` | Board state, rules (Freestyle + Renju), win detection, FEN, replay JSON |
-| `gomoku-bot` | `Bot` trait + implementations: `RandomBot`, `SearchBot` |
+| `gomoku-bot` | `Bot` trait + implementations: `RandomBot`, `SearchBot`, `CorridorBot` |
 | `gomoku-eval` | Self-play arena, round-robin tournaments, Elo |
 | `gomoku-cli` | Native match runner with replay export |
 | `gomoku-wasm` | `wasm-pack` bridge exposing `WasmBoard` + `WasmBot` to JS |
@@ -32,7 +32,8 @@ cargo test  --workspace
 
 ```sh
 cargo run --release -p gomoku-cli -- --black baseline --white random
-cargo run --release -p gomoku-cli -- --black balanced --white fast
+cargo run --release -p gomoku-cli -- --black search-d3 --white search-d1 --rule renju
+cargo run --release -p gomoku-cli -- --black corridor-d1 --white search-d3 --rule renju
 cargo run --release -p gomoku-cli -- --black baseline --white random --time-ms 500
 cargo run --release -p gomoku-cli -- --black baseline --white random --quiet --replay /tmp/game.json
 ```
@@ -41,8 +42,8 @@ cargo run --release -p gomoku-cli -- --black baseline --white random --quiet --r
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--black` | `baseline` | Bot for Black: `random`, `baseline`, `baseline-N`, or a lab alias (`fast`, `balanced`, `deep`) |
-| `--white` | `random`   | Bot for White: `random`, `baseline`, `baseline-N`, or a lab alias (`fast`, `balanced`, `deep`) |
+| `--black` | `baseline` | Bot for Black: `random`, `baseline`, `baseline-N`, search aliases, or corridor lab aliases |
+| `--white` | `random`   | Bot for White: `random`, `baseline`, `baseline-N`, search aliases, or corridor lab aliases |
 | `--depth` | `5`        | Fixed baseline depth for the plain `baseline` spec |
 | `--time-ms` | —        | Time budget per move for search bots, including lab aliases |
 | `--rule` | `freestyle` | Rule variant: `freestyle` or `renju` |
@@ -58,15 +59,17 @@ scores open and half-open runs of 2–4 in all four directions. It reliably beat
 `RandomBot` and is intentionally good enough for practice without trying to be a
 perfect Gomoku engine.
 
-The lab now has named baseline-search aliases. `gomoku-bot` itself exposes
-explicit `SearchBotConfig` fields; these names are lab conveniences over that
-config, not canonical product presets.
+The lab primarily uses explicit search specs. `gomoku-bot` itself exposes
+`SearchBotConfig`; the spec strings are lab conveniences over that config, not
+canonical product presets.
 
-| Alias | Config | Intent |
+| Spec | Config | Intent |
 |---|---|---|
-| `fast` | depth 2, `near_all_r2`, `opponent_reply_local_threat_probe` | cheap comparison target |
-| `balanced` | depth 3, `near_all_r2`, `opponent_reply_local_threat_probe` | current browser practice-bot depth |
-| `deep` | depth 5, `near_all_r2`, `opponent_reply_local_threat_probe` | current CLI default depth |
+| `search-d1` | depth 1, `near_all_r2`, `opponent_reply_local_threat_probe` | easy/beginner lane |
+| `search-d3` | depth 3, `near_all_r2`, `opponent_reply_local_threat_probe` | current default baseline |
+| `search-d5` | depth 5, `near_all_r2`, `opponent_reply_local_threat_probe` | uncapped depth reference |
+| `search-d5+tactical-cap-8` | depth 5, tactical ordering, non-root child cap 8 | efficient hard-side candidate |
+| `search-d7+tactical-cap-8` | depth 7, tactical ordering, non-root child cap 8 | stronger but slower hard-side candidate |
 
 Append `+near-all-r1`, `+near-all-r2`, or `+near-all-r3` to change the symmetric
 candidate source radius. Append `+near-self-rN-opponent-rM` to test asymmetric
@@ -87,8 +90,35 @@ controls how many ordered non-root children alpha-beta searches. These are
 diagnostic switches, not product presets.
 
 Legacy specs still work: plain `baseline` uses `--depth`, `baseline-N` creates a
-custom fixed-depth baseline bot, and `--time-ms` can cap search bots during CLI
-games.
+custom fixed-depth baseline bot, and the old `fast`/`balanced`/`deep` aliases
+still parse for old scripts. New reports and gauntlets should use explicit
+`search-*` specs.
+
+### Current `CorridorBot`
+
+`CorridorBot` is a lab-only bridge between the replay analyzer's corridor model
+and live bot play. It uses a shallow corridor depth (`2`) and a local radius-2
+candidate front for live move selection, then checks whether the current
+position has a direct corridor decision: take an immediate win, defend a known
+corridor by preferring confirmed or possible escapes, or enter a proven forcing
+corridor. If no corridor decision is available, it falls back to another simple
+bot.
+
+Current aliases:
+
+| Alias | Corridor step | Fallback | Intent |
+|---|---|---|---|
+| `corridor-random` | enabled | seeded `RandomBot` | isolate how much corridor proof can do by itself |
+| `corridor-d1` | enabled | depth-1 `SearchBot` | weak-but-legal fallback for corridor-first experiments |
+
+These are not product presets. They are deliberately rough probes for answering
+whether corridor search changes live choices in a way worth promoting into the
+search bot or future UI settings.
+
+`corridor-d1` keeps normal depth-1 `SearchBot` trace data when it falls back,
+including CLI/tournament search budgets. Corridor proof decisions add
+`corridor.*` trace metrics so proof work can be separated from alpha-beta search
+work in raw reports.
 
 Failed search experiments are intentionally removed instead of kept as dead lab
 suffixes. The broad shape-eval attempt fixed one depth-2 diagnostic but lost to

@@ -312,11 +312,13 @@ corridor.
 - It should not become player-facing until the lab reports are stable enough to
   explain real games cleanly.
 
-## Current `v0.4.2` Checkpoint
+## Current `v0.4.3` Checkpoint
 
 The current checkpoint provides:
 
 - a corridor-based replay analyzer,
+- bot-owned corridor proof entry points under `gomoku-bot::corridor`,
+- lab-only `CorridorBot` aliases: `corridor-random` and `corridor-d1`,
 - proof-detail JSON and HTML report generation,
 - visual proof frames with board rendering and semantic markers,
 - Renju-aware handling for forbidden black replies and illegal black threats,
@@ -331,8 +333,8 @@ Known limits:
 - `possible_escape` is common and acceptable; it means the current model cannot
   prove the branch remains in the forced corridor.
 - The report is a lab artifact, not a polished replay-screen feature.
-- Feeding corridor search into `SearchBot` is the intended next lab step, not a
-  product UI feature yet.
+- `CorridorBot` is a bridge probe, not a product preset. The next question is
+  whether these proof decisions should feed `SearchBot` ordering or extension.
 
 ## Related Docs
 

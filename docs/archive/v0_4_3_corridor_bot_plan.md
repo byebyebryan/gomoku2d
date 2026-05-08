@@ -49,6 +49,19 @@ ladder and keep corridor analysis as a replay feature.
 - Refresh bot reports and replay-analysis reports from survivor candidates, not
   every intermediate experiment.
 
+Current implementation note:
+
+- `gomoku-bot::corridor` now owns the replay-independent corridor proof and
+  defender-reply analysis entry points.
+- `gomoku-eval` keeps replay-specific traceback/report shaping, but fresh
+  alternate reply probes delegate to the bot-owned corridor engine.
+- `CorridorBot` exposes two lab aliases: `corridor-random` and `corridor-d1`.
+  They use shallow live corridor proof plus local candidate filtering, and are
+  bridge probes rather than product presets.
+- `corridor-d1` now receives the same depth-1 fallback search budget plumbing as
+  normal search aliases. Fallback search traces stay visible, while corridor
+  proof work is reported separately under `corridor.*` trace metrics.
+
 ## Corridor Reinforcement
 
 Some `0.4.3` work may naturally be corridor-search reinforcement rather than bot
