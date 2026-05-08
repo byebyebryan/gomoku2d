@@ -159,6 +159,7 @@ pub enum AnalysisBatchProofMarkerKind {
     Threat,
     ImminentDefense,
     OffensiveCounter,
+    Forbidden,
     ForcedLoss,
     Escape,
     UnprovedEscape,
@@ -905,12 +906,16 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       color: var(--muted);
     }}
     .proof-legend {{
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 12px;
+      display: grid;
+      gap: 6px;
       margin: 8px 0;
       color: var(--muted);
       font-size: 11px;
+    }}
+    .proof-legend-row {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 12px;
     }}
     .legend-role::before {{
       content: "";
@@ -925,6 +930,10 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
     .legend-threat::before {{ color: var(--red); }}
     .legend-imminent::before {{ color: var(--pink); }}
     .legend-offensive::before {{ color: var(--purple); }}
+    .legend-forbidden .legend-marker {{
+      color: #f6eed8;
+      text-shadow: 0 1px 0 #000;
+    }}
     .legend-outcome {{
       display: inline-flex;
       align-items: baseline;
@@ -1705,6 +1714,19 @@ fn proof_frames_for_actual_interval(
             let label = actual_frame_label(ply, &analysis.final_forced_interval);
             let mut markers = Vec::new();
             add_loser_tactical_hint_markers(&mut markers, board, analysis.winner);
+            add_forbidden_cost_markers(&mut markers, proof, None);
+            if analysis
+                .winner
+                .is_some_and(|winner| board.current_player == winner.opponent())
+            {
+                let actual_child =
+                    proof_result_at(&analysis.proof_summary, scan_start, board_ply + 1);
+                add_forbidden_cost_markers(
+                    &mut markers,
+                    actual_child,
+                    Some(AnalysisBatchProofMarkerKind::ImminentDefense),
+                );
+            }
             let actual_move = actual_move_at_ply(replay, ply);
             let reply_outcomes = defender_reply_outcomes_for_frame(
                 board,
@@ -1819,6 +1841,25 @@ fn add_loser_tactical_hint_markers(
         board.immediate_winning_moves_for(board.current_player.opponent()),
         AnalysisBatchProofMarkerKind::Threat,
     );
+}
+
+fn add_forbidden_cost_markers(
+    markers: &mut Vec<AnalysisBatchProofMarker>,
+    proof: Option<&ProofResult>,
+    tactical_role: Option<AnalysisBatchProofMarkerKind>,
+) {
+    let Some(proof) = proof else {
+        return;
+    };
+    let moves = proof
+        .threat_evidence
+        .iter()
+        .flat_map(|evidence| evidence.illegal_cost_squares.iter().copied())
+        .collect::<Vec<_>>();
+    if let Some(tactical_role) = tactical_role {
+        add_marker_kind(markers, moves.iter().copied(), tactical_role);
+    }
+    add_marker_kind(markers, moves, AnalysisBatchProofMarkerKind::Forbidden);
 }
 
 fn proof_frame(
@@ -2221,7 +2262,7 @@ fn proof_frames_html(frames: &[AnalysisBatchProofFrame]) -> String {
     let turn_cards = proof_decision_turns_html(frames, winner, winning_frame.ply);
 
     format!(
-        "<div class=\"proof-frames\"><h3>Proof frames</h3><div class=\"proof-legend\"><span class=\"legend-role legend-winning\">immediate win</span><span class=\"legend-role legend-threat\">immediate threat</span><span class=\"legend-role legend-imminent\">defensive reply</span><span class=\"legend-role legend-offensive\">offensive reply</span><span class=\"legend-outcome legend-immediate-loss\"><strong class=\"legend-marker legend-marker--white\">!</strong> immediate loss</span><span class=\"legend-outcome legend-forced\"><strong class=\"legend-marker legend-marker--white\">L</strong> forced loss</span><span class=\"legend-outcome legend-escape\"><strong class=\"legend-marker\">E</strong> escape</span><span class=\"legend-outcome legend-unproved\"><strong class=\"legend-marker\">U</strong> unproved escape</span><span class=\"legend-outcome legend-unknown\"><strong class=\"legend-marker\">?</strong> unknown</span></div><div class=\"proof-frame-list\">{final_card}{turn_cards}</div></div>",
+        "<div class=\"proof-frames\"><h3>Proof frames</h3><div class=\"proof-legend\"><div class=\"proof-legend-row\"><span class=\"legend-role legend-winning\">immediate win</span><span class=\"legend-role legend-threat\">immediate threat</span><span class=\"legend-role legend-imminent\">defensive reply</span><span class=\"legend-role legend-offensive\">offensive reply</span></div><div class=\"proof-legend-row\"><span class=\"legend-outcome legend-immediate-loss\"><strong class=\"legend-marker legend-marker--white\">!</strong> immediate loss</span><span class=\"legend-outcome legend-forced\"><strong class=\"legend-marker legend-marker--white\">L</strong> forced loss</span><span class=\"legend-outcome legend-forbidden\"><strong class=\"legend-marker\">F</strong> forbidden</span><span class=\"legend-outcome legend-escape\"><strong class=\"legend-marker\">E</strong> escape</span><span class=\"legend-outcome legend-unproved\"><strong class=\"legend-marker\">U</strong> unproved escape</span><span class=\"legend-outcome legend-unknown\"><strong class=\"legend-marker\">?</strong> unknown</span></div></div><div class=\"proof-frame-list\">{final_card}{turn_cards}</div></div>",
         final_card = final_card,
         turn_cards = turn_cards,
     )
@@ -2465,6 +2506,7 @@ fn marker_classes(
             AnalysisBatchProofMarkerKind::Threat => "marker--threat",
             AnalysisBatchProofMarkerKind::ImminentDefense => "marker--imminent-defense",
             AnalysisBatchProofMarkerKind::OffensiveCounter => "marker--offensive-counter",
+            AnalysisBatchProofMarkerKind::Forbidden => "marker--forbidden",
             AnalysisBatchProofMarkerKind::ForcedLoss => "marker--forced-loss",
             AnalysisBatchProofMarkerKind::Escape => "marker--escape",
             AnalysisBatchProofMarkerKind::UnprovedEscape => "marker--unproved-escape",
@@ -2489,6 +2531,12 @@ fn marker_classes(
 fn marker_label(marker: &AnalysisBatchProofMarker) -> String {
     if marker.kinds.contains(&AnalysisBatchProofMarkerKind::Actual) {
         return String::new();
+    }
+    if marker
+        .kinds
+        .contains(&AnalysisBatchProofMarkerKind::Forbidden)
+    {
+        return "F".to_string();
     }
     if marker
         .kinds
@@ -3029,6 +3077,7 @@ mod tests {
                             | AnalysisBatchProofMarkerKind::Threat
                             | AnalysisBatchProofMarkerKind::ImminentDefense
                             | AnalysisBatchProofMarkerKind::OffensiveCounter
+                            | AnalysisBatchProofMarkerKind::Forbidden
                             | AnalysisBatchProofMarkerKind::ForcedLoss
                             | AnalysisBatchProofMarkerKind::Escape
                             | AnalysisBatchProofMarkerKind::UnprovedEscape
@@ -3172,6 +3221,9 @@ mod tests {
         assert!(!html.contains("marker--cost"));
         assert!(html.contains("legend-threat"));
         assert!(html.contains("legend-imminent"));
+        assert!(html.contains("legend-forbidden"));
+        assert!(html.contains(">F</strong> forbidden"));
+        assert!(html.contains("proof-legend-row"));
         assert!(html.contains("legend-escape"));
         assert!(html.contains("legend-unproved"));
         assert!(!html.contains("legend-won"));
@@ -3242,6 +3294,16 @@ mod tests {
             kinds: vec![AnalysisBatchProofMarkerKind::Threat],
         };
         assert_eq!(marker_label(&threat), "L");
+
+        let forbidden_threat = AnalysisBatchProofMarker {
+            mv,
+            notation: mv.to_notation(),
+            kinds: vec![
+                AnalysisBatchProofMarkerKind::Threat,
+                AnalysisBatchProofMarkerKind::Forbidden,
+            ],
+        };
+        assert_eq!(marker_label(&forbidden_threat), "F");
 
         let unproved_escape = AnalysisBatchProofMarker {
             mv,
@@ -3450,6 +3512,63 @@ mod tests {
                 AnalysisBatchProofMarkerKind::Actual,
             ]
         );
+    }
+
+    #[test]
+    fn analysis_batch_visual_frames_mark_renju_forbidden_blocks() {
+        let replay = replay_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "H7", "J8", "I9", "I8", "G8", "F9", "F7", "H9", "G7", "I7", "E7", "D7", "G9",
+                "G6", "G11", "K8", "G10",
+            ],
+        );
+
+        let report = run_analysis_batch_replays_with_options(
+            "report.json:bot-a vs bot-b".to_string(),
+            vec![ReplayAnalysisInput {
+                label: "renju_forbidden_block".to_string(),
+                replay,
+            }],
+            AnalysisBatchRunOptions {
+                analysis: AnalysisOptions {
+                    defense_policy: DefensePolicy::AllLegalDefense,
+                    max_depth: 4,
+                    max_backward_window: Some(8),
+                },
+                include_proof_details: true,
+                deep_retry_depth: None,
+                deep_retry_limit: 0,
+            },
+        );
+
+        let frames = &report.entries[0]
+            .proof_details
+            .as_ref()
+            .expect("proof details should be present")
+            .proof_frames;
+        let turn_16_17 = frames
+            .iter()
+            .find(|frame| frame.label == "actual_ply_17")
+            .expect("ply 17 decision frame should be present");
+        let g10 = marker_for(turn_16_17, "G10");
+        assert!(g10.kinds.contains(&AnalysisBatchProofMarkerKind::Threat));
+        assert!(g10.kinds.contains(&AnalysisBatchProofMarkerKind::Forbidden));
+        assert_eq!(marker_label(g10), "F");
+        assert!(cell_classes(turn_16_17, '.', Some(g10)).contains("marker--forbidden"));
+
+        let turn_14_15 = frames
+            .iter()
+            .find(|frame| frame.label == "actual_ply_15")
+            .expect("ply 15 decision frame should be present");
+        let future_g10 = marker_for(turn_14_15, "G10");
+        assert!(future_g10
+            .kinds
+            .contains(&AnalysisBatchProofMarkerKind::ImminentDefense));
+        assert!(future_g10
+            .kinds
+            .contains(&AnalysisBatchProofMarkerKind::Forbidden));
+        assert_eq!(marker_label(future_g10), "F");
     }
 
     #[test]
