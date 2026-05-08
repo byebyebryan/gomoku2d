@@ -52,7 +52,10 @@ pub fn report_board_css() -> &'static str {
       position: relative;
       display: grid;
       gap: 0;
+      align-self: start;
+      justify-self: start;
       width: max-content;
+      height: max-content;
       padding: 0;
       background: #d7ad63;
       border: 1px solid #7d592f;
@@ -242,6 +245,15 @@ mod tests {
         assert!(html.contains("class=\"proof-stone proof-stone--white\""));
         assert!(html.contains("marker--winning"));
         assert!(html.contains("data-move=\"B2\""));
+    }
+
+    #[test]
+    fn report_board_css_keeps_board_square_inside_tall_detail_rows() {
+        let css = report_board_css();
+
+        assert!(css.contains("align-self: start;"));
+        assert!(css.contains("justify-self: start;"));
+        assert!(css.contains("height: max-content;"));
     }
 
     #[test]
