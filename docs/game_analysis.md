@@ -782,13 +782,16 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   the outer hint explains why the square is shown: bright green for an
   immediate win, bright red for an immediate losing square, pink for a defensive
   reply to an imminent threat, blue for an offensive counter-threat reply, and
-  an actual-move ring for the replay move. The marker character explains what
-  happens if the defender plays it (`L` forced loss, `E` escape, `U` unproved
-  escape, `!` immediate loss, `?` unknown). Proof branch evidence such as
+  an actual-move ring for the replay move. Losing-side actual moves keep their
+  role hint boxes, but actual replay moves are not probed or labeled as branch
+  outcomes in the visual frame; they are the path being explained. The marker
+  character explains what happens if the defender plays an alternate candidate
+  (`L` forced loss, `E` escape, `U` unproved escape, `!` immediate loss, `?`
+  unknown). Proof branch evidence such as
   aggregate cost squares, forbidden costs, and principal-line moves stays in the
   textual proof snapshots with explicit attacker/side-to-move labels, so the
-  board does not imply nested branch moves are current gameplay hints. Keep it
-  off for normal smoke runs; turn it on when reviewing why a `mistake`,
+  board does not imply nested branch moves are current gameplay hints.
+  Keep it off for normal smoke runs; turn it on when reviewing why a `mistake`,
   `tactical_error`, `strategic_loss`, or decisive `unclear` label was assigned.
 - After the single-depth corridor refactor, a top-two report smoke run against
   `search-d7+tactical-cap-8+pattern-eval` vs

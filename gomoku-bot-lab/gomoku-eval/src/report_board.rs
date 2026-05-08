@@ -127,7 +127,7 @@ pub fn report_board_css() -> &'static str {
       display: grid;
       place-items: center;
       color: #101214;
-      font-size: 10px;
+      font-size: 12px;
       font-weight: 800;
       line-height: 1;
       pointer-events: none;

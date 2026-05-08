@@ -7,10 +7,11 @@ use rayon::prelude::*;
 use serde::Serialize;
 
 use crate::analysis::{
-    analyze_defender_reply_options_with_retry, analyze_replay, AnalysisBoardSnapshot,
-    AnalysisOptions, DefenderReplyAnalysis, DefenderReplyOutcome, DefenderReplyRole, DefensePolicy,
-    ForcedInterval, GameAnalysis, ProofLimitCause, ProofResult, ProofStatus, ReplyClassification,
-    RootCause, TacticalNote, UnclearContext, UnclearReason, ANALYSIS_SCHEMA_VERSION,
+    analyze_alternate_defender_reply_options_with_retry, analyze_replay,
+    defender_reply_roles_for_move, AnalysisBoardSnapshot, AnalysisOptions, DefenderReplyAnalysis,
+    DefenderReplyOutcome, DefenderReplyRole, DefensePolicy, ForcedInterval, GameAnalysis,
+    ProofLimitCause, ProofResult, ProofStatus, ReplyClassification, RootCause, TacticalNote,
+    UnclearContext, UnclearReason, ANALYSIS_SCHEMA_VERSION,
 };
 use crate::report_board::{render_report_board, report_board_css, ReportBoardMarker};
 
@@ -872,9 +873,6 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
     }}
     .marker--actual {{
     }}
-    .marker--actual .proof-marker {{
-      font-size: 10px;
-    }}
     .marker--actual-black .proof-marker {{
       color: #07090c;
       text-shadow: 0 1px 0 rgba(255,255,255,0.36);
@@ -1717,18 +1715,7 @@ fn proof_frames_for_actual_interval(
             );
             add_reply_outcome_markers(&mut markers, &reply_outcomes);
             if let Some(actual_move) = actual_move {
-                if label == "winning_ply" {
-                    add_marker_kind(
-                        &mut markers,
-                        [actual_move],
-                        AnalysisBatchProofMarkerKind::Winning,
-                    );
-                }
-                add_marker_kind(
-                    &mut markers,
-                    [actual_move],
-                    AnalysisBatchProofMarkerKind::Actual,
-                );
+                add_actual_marker(&mut markers, board, analysis.winner, actual_move);
             }
             markers.sort_by_key(|marker| (marker.mv.row, marker.mv.col));
             Some(proof_frame(
@@ -1780,7 +1767,7 @@ fn defender_reply_outcomes_for_frame(
         return Vec::new();
     }
 
-    let replies = analyze_defender_reply_options_with_retry(
+    let replies = analyze_alternate_defender_reply_options_with_retry(
         board,
         attacker,
         actual_move,
@@ -1881,6 +1868,63 @@ fn add_reply_outcome_markers(
         };
         add_marker_kind(markers, [reply.mv], outcome_kind);
     }
+}
+
+fn add_actual_marker(
+    markers: &mut Vec<AnalysisBatchProofMarker>,
+    board: &Board,
+    winner: Option<Color>,
+    mv: Move,
+) {
+    add_actual_hint_markers(markers, board, winner, mv);
+    let marker = upsert_marker(markers, mv);
+    marker.kinds.retain(|kind| is_hint_marker_kind(*kind));
+    if !marker.kinds.contains(&AnalysisBatchProofMarkerKind::Actual) {
+        marker.kinds.push(AnalysisBatchProofMarkerKind::Actual);
+    }
+}
+
+fn add_actual_hint_markers(
+    markers: &mut Vec<AnalysisBatchProofMarker>,
+    board: &Board,
+    winner: Option<Color>,
+    mv: Move,
+) {
+    let Some(winner) = winner else {
+        return;
+    };
+    if board.current_player != winner.opponent() {
+        return;
+    }
+
+    for role in defender_reply_roles_for_move(board, winner, mv) {
+        match role {
+            DefenderReplyRole::Actual => {}
+            DefenderReplyRole::ImmediateDefense => {
+                add_marker_kind(markers, [mv], AnalysisBatchProofMarkerKind::Threat);
+            }
+            DefenderReplyRole::ImminentDefense => {
+                add_marker_kind(markers, [mv], AnalysisBatchProofMarkerKind::ImminentDefense);
+            }
+            DefenderReplyRole::OffensiveCounter => {
+                add_marker_kind(
+                    markers,
+                    [mv],
+                    AnalysisBatchProofMarkerKind::OffensiveCounter,
+                );
+            }
+        }
+    }
+}
+
+fn is_hint_marker_kind(kind: AnalysisBatchProofMarkerKind) -> bool {
+    matches!(
+        kind,
+        AnalysisBatchProofMarkerKind::Winning
+            | AnalysisBatchProofMarkerKind::Threat
+            | AnalysisBatchProofMarkerKind::ImminentDefense
+            | AnalysisBatchProofMarkerKind::OffensiveCounter
+    )
 }
 
 fn add_marker_kind(
@@ -2177,7 +2221,7 @@ fn proof_frames_html(frames: &[AnalysisBatchProofFrame]) -> String {
     let turn_cards = proof_decision_turns_html(frames, winner, winning_frame.ply);
 
     format!(
-        "<div class=\"proof-frames\"><h3>Proof frames</h3><div class=\"proof-legend\"><span class=\"legend-role legend-winning\">win now</span><span class=\"legend-role legend-threat\">immediate threat</span><span class=\"legend-role legend-imminent\">defensive reply</span><span class=\"legend-role legend-offensive\">offensive reply</span><span class=\"legend-outcome legend-won\"><strong class=\"legend-marker legend-marker--white\">W</strong> win</span><span class=\"legend-outcome legend-immediate-loss\"><strong class=\"legend-marker legend-marker--white\">!</strong> immediate loss</span><span class=\"legend-outcome legend-forced\"><strong class=\"legend-marker legend-marker--white\">L</strong> forced loss</span><span class=\"legend-outcome legend-escape\"><strong class=\"legend-marker\">E</strong> escape</span><span class=\"legend-outcome legend-unproved\"><strong class=\"legend-marker\">U</strong> unproved escape</span><span class=\"legend-outcome legend-unknown\"><strong class=\"legend-marker\">?</strong> unknown</span></div><div class=\"proof-frame-list\">{final_card}{turn_cards}</div></div>",
+        "<div class=\"proof-frames\"><h3>Proof frames</h3><div class=\"proof-legend\"><span class=\"legend-role legend-winning\">immediate win</span><span class=\"legend-role legend-threat\">immediate threat</span><span class=\"legend-role legend-imminent\">defensive reply</span><span class=\"legend-role legend-offensive\">offensive reply</span><span class=\"legend-outcome legend-immediate-loss\"><strong class=\"legend-marker legend-marker--white\">!</strong> immediate loss</span><span class=\"legend-outcome legend-forced\"><strong class=\"legend-marker legend-marker--white\">L</strong> forced loss</span><span class=\"legend-outcome legend-escape\"><strong class=\"legend-marker\">E</strong> escape</span><span class=\"legend-outcome legend-unproved\"><strong class=\"legend-marker\">U</strong> unproved escape</span><span class=\"legend-outcome legend-unknown\"><strong class=\"legend-marker\">?</strong> unknown</span></div><div class=\"proof-frame-list\">{final_card}{turn_cards}</div></div>",
         final_card = final_card,
         turn_cards = turn_cards,
     )
@@ -2330,9 +2374,12 @@ fn proof_board_with_extra_actual_html(
         .markers
         .iter()
         .map(|marker| {
-            let mut report_marker = ReportBoardMarker::new(marker.mv)
-                .with_classes(marker_classes(frame, marker))
-                .with_label(marker_label(marker));
+            let label = marker_label(marker);
+            let mut report_marker =
+                ReportBoardMarker::new(marker.mv).with_classes(marker_classes(frame, marker));
+            if !label.is_empty() {
+                report_marker = report_marker.with_label(label);
+            }
             if marker.kinds.contains(&AnalysisBatchProofMarkerKind::Actual) {
                 report_marker = report_marker.with_actual_stone(frame.side_to_move);
             }
@@ -2440,6 +2487,9 @@ fn marker_classes(
 }
 
 fn marker_label(marker: &AnalysisBatchProofMarker) -> String {
+    if marker.kinds.contains(&AnalysisBatchProofMarkerKind::Actual) {
+        return String::new();
+    }
     if marker
         .kinds
         .contains(&AnalysisBatchProofMarkerKind::ImmediateLoss)
@@ -2474,7 +2524,7 @@ fn marker_label(marker: &AnalysisBatchProofMarker) -> String {
         .kinds
         .contains(&AnalysisBatchProofMarkerKind::Winning)
     {
-        return "W".to_string();
+        return String::new();
     }
     String::new()
 }
@@ -3001,9 +3051,7 @@ mod tests {
         assert!(actual_l8
             .kinds
             .contains(&AnalysisBatchProofMarkerKind::Actual));
-        assert!(actual_l8
-            .kinds
-            .contains(&AnalysisBatchProofMarkerKind::Winning));
+        assert_eq!(actual_l8.kinds, vec![AnalysisBatchProofMarkerKind::Actual]);
         let actual_l8_classes = cell_classes(winning_frame, '.', Some(actual_l8));
         assert!(actual_l8_classes.contains("marker--actual"));
         assert!(!actual_l8_classes.contains("marker--winning"));
@@ -3036,6 +3084,10 @@ mod tests {
         assert!(final_actual
             .kinds
             .contains(&AnalysisBatchProofMarkerKind::Actual));
+        assert_eq!(
+            final_actual.kinds,
+            vec![AnalysisBatchProofMarkerKind::Actual]
+        );
         let final_l8 = final_frame
             .markers
             .iter()
@@ -3109,7 +3161,7 @@ mod tests {
         assert!(html.contains("marker--actual"));
         assert!(html.contains("data-move=\"L8\""));
         assert!(html.contains("Black to move / forced win"));
-        assert!(html.contains("marker--winning"));
+        assert!(html.contains("legend-winning"));
         assert!(html.contains("marker--threat"));
         assert!(html.contains("marker--imminent-defense"));
         assert!(html.contains("reply-outcomes"));
@@ -3122,6 +3174,8 @@ mod tests {
         assert!(html.contains("legend-imminent"));
         assert!(html.contains("legend-escape"));
         assert!(html.contains("legend-unproved"));
+        assert!(!html.contains("legend-won"));
+        assert!(!html.contains(">W</strong>"));
         assert!(!html.contains("actual replay move"));
         assert!(!html.contains("legend-principal"));
         assert!(!html.contains("legend-cost"));
@@ -3163,7 +3217,7 @@ mod tests {
             notation: mv.to_notation(),
             kinds: vec![AnalysisBatchProofMarkerKind::Winning],
         };
-        assert_eq!(marker_label(&winning), "W");
+        assert_eq!(marker_label(&winning), "");
 
         let actual_threat = AnalysisBatchProofMarker {
             mv,
@@ -3173,7 +3227,7 @@ mod tests {
                 AnalysisBatchProofMarkerKind::Actual,
             ],
         };
-        assert_eq!(marker_label(&actual_threat), "L");
+        assert_eq!(marker_label(&actual_threat), "");
 
         let actual_only = AnalysisBatchProofMarker {
             mv,
@@ -3249,12 +3303,17 @@ mod tests {
         assert!(cell_classes(frame, '.', Some(g9)).contains("marker--side-white"));
 
         let g7 = marker_for(frame, "G7");
-        assert!(g7.kinds.contains(&AnalysisBatchProofMarkerKind::Actual));
-        assert!(g7
-            .kinds
-            .contains(&AnalysisBatchProofMarkerKind::ImminentDefense));
-        assert!(g7.kinds.contains(&AnalysisBatchProofMarkerKind::ForcedLoss));
-        assert!(cell_classes(frame, '.', Some(g7)).contains("marker--side-white"));
+        assert_eq!(
+            g7.kinds,
+            vec![
+                AnalysisBatchProofMarkerKind::ImminentDefense,
+                AnalysisBatchProofMarkerKind::Actual,
+            ]
+        );
+        assert!(!frame
+            .reply_outcomes
+            .iter()
+            .any(|reply| reply.notation == "G7"));
 
         let i10 = marker_for(frame, "I10");
         assert!(i10
@@ -3284,6 +3343,61 @@ mod tests {
         assert!(html.contains("transform: translateY(-1px);"));
         assert!(html.contains("legend-offensive"));
         assert!(html.contains(".marker--side-white .proof-marker"));
+    }
+
+    #[test]
+    fn analysis_batch_visual_frames_exclude_actual_reply_from_branch_probes() {
+        let replay = replay_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "I8", "H6", "G7", "H7", "H9", "J7", "G4", "G5", "I7", "I5", "H5", "I6", "I9",
+                "J6", "K6", "J4", "J5", "H4", "K7", "F6", "G6", "I3", "J2", "E7",
+            ],
+        );
+
+        let report = run_analysis_batch_replays_with_options(
+            "report.json:bot-a vs bot-b".to_string(),
+            vec![ReplayAnalysisInput {
+                label: "actual_unproved_entered_forced_interval".to_string(),
+                replay,
+            }],
+            AnalysisBatchRunOptions {
+                analysis: AnalysisOptions {
+                    defense_policy: DefensePolicy::AllLegalDefense,
+                    max_depth: 4,
+                    max_backward_window: Some(8),
+                },
+                include_proof_details: true,
+                deep_retry_depth: None,
+                deep_retry_limit: 1,
+            },
+        );
+
+        let entry = &report.entries[0];
+        assert_eq!(entry.final_forced_interval.as_ref().unwrap().start_ply, 18);
+        assert_eq!(entry.critical_mistake_ply, Some(18));
+        let frame = entry
+            .proof_details
+            .as_ref()
+            .expect("proof details should be present")
+            .proof_frames
+            .iter()
+            .find(|frame| frame.label == "actual_ply_18")
+            .expect("ply 18 decision frame should be present");
+
+        assert!(!frame
+            .reply_outcomes
+            .iter()
+            .any(|reply| reply.notation == "J5"));
+
+        let marker = marker_for(frame, "J5");
+        assert_eq!(
+            marker.kinds,
+            vec![
+                AnalysisBatchProofMarkerKind::ImminentDefense,
+                AnalysisBatchProofMarkerKind::Actual,
+            ]
+        );
     }
 
     #[test]
