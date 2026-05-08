@@ -3401,6 +3401,58 @@ mod tests {
     }
 
     #[test]
+    fn analysis_batch_visual_frames_mark_actual_far_open_three_defense_hint() {
+        let replay = replay_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "H9", "J8", "I7", "I8", "G8", "I10", "F7", "K8", "L8", "J9", "L7", "J7",
+                "J10", "L9", "I6", "H7", "G6", "M10", "N11", "J6", "J5", "K9", "N9", "K10", "L11",
+                "K11", "K7", "K12",
+            ],
+        );
+
+        let report = run_analysis_batch_replays_with_options(
+            "report.json:bot-a vs bot-b".to_string(),
+            vec![ReplayAnalysisInput {
+                label: "actual_far_open_three_defense".to_string(),
+                replay,
+            }],
+            AnalysisBatchRunOptions {
+                analysis: AnalysisOptions {
+                    defense_policy: DefensePolicy::AllLegalDefense,
+                    max_depth: 4,
+                    max_backward_window: Some(8),
+                },
+                include_proof_details: true,
+                deep_retry_depth: None,
+                deep_retry_limit: 1,
+            },
+        );
+
+        let frame = report.entries[0]
+            .proof_details
+            .as_ref()
+            .expect("proof details should be present")
+            .proof_frames
+            .iter()
+            .find(|frame| frame.label == "actual_ply_24")
+            .expect("ply 24 decision frame should be present");
+
+        assert!(!frame
+            .reply_outcomes
+            .iter()
+            .any(|reply| reply.notation == "N9"));
+        let marker = marker_for(frame, "N9");
+        assert_eq!(
+            marker.kinds,
+            vec![
+                AnalysisBatchProofMarkerKind::ImminentDefense,
+                AnalysisBatchProofMarkerKind::Actual,
+            ]
+        );
+    }
+
+    #[test]
     fn analysis_batch_model_only_reports_deep_retry_when_proof_details_run() {
         let replay = replay_from_moves(
             Variant::Freestyle,

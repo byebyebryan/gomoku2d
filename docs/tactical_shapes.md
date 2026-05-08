@@ -47,7 +47,7 @@ Notation:
 | `OpenFour` | `.XXXX.` | Creates two immediate winning completions. | Both ends are completions; one block is not enough. | Yes |
 | `ClosedFour` | `OXXXX.` or `.XXXXO` | Creates one immediate winning completion from a contiguous four. | The single open completion. | Yes |
 | `BrokenFour` | `XX.XX`, `X.XXX`, or `XXX.X` | Creates one immediate winning completion through an internal gap. | The gap/completion square. | Yes |
-| `OpenThree` | `.XXX.` | Creates a two-ended three that can become an open or closed four. | The two ends. | Yes, but can lose to stronger counter-threats |
+| `OpenThree` | `..XXX..`, `O.XXX..`, or `..XXX.O` | Creates a two-ended three that can become an open or closed four. | For `..XXX..`, the two adjacent ends. For asymmetrical `O.XXX..` / `..XXX.O`, the two adjacent ends plus the far outer square on the two-space side. `O.XXX.O` is boxed and not an active corridor threat. | Yes, but can lose to stronger counter-threats |
 | `ClosedThree` | `OXXX.` or `.XXXO` | Creates a one-ended contiguous three. | The single open end. | No |
 | `BrokenThree` | `XX.X`, `X.XX`, or equivalent local gap shape | Creates a non-contiguous three that can become a four after a rest move. | Provisional: the current baseline exposes `rest_squares` only; corridor analysis must split direct defensive cost squares from rest dependencies before treating it as active. | Provisional; yes only after named cost/rest semantics are available |
 
@@ -92,6 +92,12 @@ Examples:
 - `ClosedFour`: create `K8` from `O G8, X H8 I8 J8` creates completion `L8`.
 - `BrokenFour`: create `J8` from `H8 I8 L8` creates completion `K8`.
 - `OpenThree`: create `J8` from `H8 I8` creates defense squares `G8` and `K8`.
+- Asymmetrical `OpenThree`: with `O G8, X I8 J8 K8`, `H8`, `L8`, and
+  `M8` are all valid defenses; playing `M8` keeps either Black extension to a
+  closed four instead of an open four.
+- Boxed three: with `O G8 M8, X I8 J8 K8`, `H8` and `L8` are open but the
+  outer sides are both blocked. This is not an active corridor threat because
+  either continuation only creates a closed four that can be answered next.
 - `ClosedThree`: create `J8` from `O G8, X H8 I8` creates defense square `K8`.
 - `BrokenThree`: create `J8` from `H8 K8` creates provisional rest square `I8`.
   Whether that square is also a direct defensive cost belongs to the future
