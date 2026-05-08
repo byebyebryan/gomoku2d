@@ -652,13 +652,8 @@ interval start. They are lab-debug evidence, not a player-facing explanation.
 
 `model` should include at least:
 
-- defense policy: `all_legal_defense`, `tactical_defense`, or
-  `hybrid_defense`.
-- tactical reply coverage: legal cost replies only, legal cost replies plus
-  defender immediate wins, counter-threats, forbidden-cost handling, or another
-  named set.
-- attacker move policy: all legal moves, local forcing moves, or another named
-  candidate source.
+- reply policy: currently `corridor_replies`, the single active model for
+  named corridor replies.
 - rule set: freestyle or Renju.
 - limits: corridor depth, nodes, time, maximum proof branches, and
   `max_scan_plies`.
@@ -695,9 +690,10 @@ The first analyzer fixtures should include more than happy-path wins:
   immediate counter-win, and Black's only block is forbidden.
 - Short closed-four forced line.
 - Open-four line where one block is insufficient.
-- Tactical-defense proof where only legal cost replies are considered.
-- Tactical-defense failure where a counter-win or counter-threat escapes the
-  legal local cost-reply set.
+- Counter-win escape where the defender can answer a threat by winning
+  immediately.
+- Counter-threat escape where the defender can answer a threat by creating a
+  higher-priority threat of their own.
 - Escape reply: defender has a move that both answers the current threat and
   prevents the next forced continuation.
 - Forced reply: defender answers the current threat, but every legal cost reply
@@ -808,8 +804,9 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   losing-side missed win, shallow open-four corridor detection, closed-four to
   open-four forced-chain continuation, defender counter-win escape, Renju
   no-legal-block terminal behavior, and ongoing replay behavior.
-- Tactical-defense mode exposes legal cost replies, defender immediate wins,
-  and forbidden cost squares in branch evidence, but it is still not a full
+- The active reply model exposes corridor-valid replies: direct threat
+  defenses, imminent-threat replies, defender immediate wins, counter-threats,
+  and forbidden cost squares in branch evidence. It is still not a full
   threat-space search.
 - Batch analysis reports include `unclear_context` and limit-cause counts
   for unresolved entries: previous prefix status, proof-limit flag, named limit
@@ -896,19 +893,11 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   bounded-scan retry reduced scan cutoffs, but its "one chunk plus another"
   semantics were confusing and could waste work. The current `max_scan_plies`
   contract is a clean cap plus backward early-stop.
-- A tactical-defense 64-game comparison also produced `63` proof-limit hits and
-  `1` draw/ongoing game. It was faster, but `61` decisive games became
-  `model_scope_unknown`, meaning the narrow tactical model did not have a
-  concrete reply/forcing set for the previous prefix. This is useful evidence
-  for future model design, not a product-safe proof.
-- A hybrid-defense local-threat smoke run against the same top-two matchup,
-  sampled at `8` games with corridor depth `4` and scan cap `8`, found `2`
-  missed defenses, `5` unclear proof-limit entries, and `1` draw/ongoing game.
-  The useful signal is that bounded local-threat replies can resolve some real
-  report samples, not only synthetic fixtures. The risk is runtime: the slowest
-  sampled entry took about `55s`, and summed per-entry time was about `95s`. The
-  next analyzer slice should add tighter proof budgets, memoization, or better
-  activation telemetry before widening shape coverage.
+- Retired narrow-reply experiments were either too narrow to explain real
+  replay prefixes or too expensive when they widened into local-threat scans.
+  They remain useful as design evidence, but the active analyzer intentionally
+  exposes one corridor-reply model instead of a menu of half-overlapping proof
+  policies.
 - A stricter double-threat-only trigger was fast but did not improve the sampled
   report, while a broader one-or-two-threat trigger improved coverage but became
   expensive. Keep both facts in mind before treating local-threat replies as a
@@ -918,8 +907,8 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   proof-limit entries, and `1` draw/ongoing game, with roughly the same runtime.
   Temporarily treating `BrokenThree` as forcing was much slower and was narrowed
   back to diagnostic-only before checkpointing.
-- Raising all-legal corridor depth is not the next practical move. The 8-game smoke at
-  `all_legal_defense`, corridor depth `3` still left `7`
+- Raising broad corridor depth is not the next practical move. The 8-game smoke
+  at corridor depth `3` still left `7`
   unresolved entries and took roughly `190s` wall-clock / `626s` summed
   per-entry time, versus about `2.4s` / `7.4s` for depth `2`.
 - Increasing the old forced-extension-only budget did not help the smoke matrix.
@@ -940,20 +929,17 @@ Example:
 cargo run -p gomoku-eval -- analyze-replay \
   --input outputs/replays/match_001.json \
   --output outputs/analysis_001.json \
-  --defense-policy all-legal-defense \
   --max-depth 4
 
 cargo run -p gomoku-eval -- analysis-fixtures \
   --report-json outputs/analysis_fixtures.json \
   --report-html outputs/analysis_fixtures.html \
-  --defense-policy all-legal-defense \
   --max-depth 4
 
 cargo run -p gomoku-eval -- analyze-replay-batch \
   --replay-dir outputs/replays \
   --report-json outputs/analysis_batch.json \
   --report-html outputs/analysis_batch.html \
-  --defense-policy all-legal-defense \
   --max-depth 4
 
 cargo run --release -p gomoku-eval -- analyze-report-replays \
@@ -963,7 +949,6 @@ cargo run --release -p gomoku-eval -- analyze-report-replays \
   --sample-size 8 \
   --report-json outputs/analysis/top2_smoke.json \
   --report-html outputs/analysis/top2_smoke.html \
-  --defense-policy all-legal-defense \
   --max-depth 4 \
   --max-scan-plies 8
 
@@ -974,7 +959,6 @@ cargo run --release -p gomoku-eval -- analyze-report-replays \
   --sample-size 64 \
   --report-json outputs/analysis/top2_audit.json \
   --report-html outputs/analysis/top2_audit.html \
-  --defense-policy all-legal-defense \
   --max-depth 4
 ```
 

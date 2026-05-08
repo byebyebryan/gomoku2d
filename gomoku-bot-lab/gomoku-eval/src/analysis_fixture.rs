@@ -3,8 +3,8 @@ use serde::Serialize;
 
 use crate::analysis::{
     analyze_replay, corridor_analysis_model, rule_label, AnalysisError, AnalysisModel,
-    AnalysisOptions, DefensePolicy, ForcedInterval, ProofStatus, ReplyClassification, RootCause,
-    TacticalNote, ANALYSIS_SCHEMA_VERSION,
+    AnalysisOptions, ForcedInterval, ProofStatus, ReplyClassification, RootCause, TacticalNote,
+    ANALYSIS_SCHEMA_VERSION,
 };
 
 #[derive(Debug, Clone)]
@@ -20,7 +20,6 @@ pub struct AnalysisFixtureCase {
 #[derive(Debug, Clone, Default)]
 pub struct AnalysisFixtureOptions {
     pub max_depth: Option<usize>,
-    pub defense_policy: Option<DefensePolicy>,
     pub max_scan_plies: Option<usize>,
     pub full_scan: bool,
 }
@@ -45,7 +44,6 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         moves: &["H8", "G8", "I8", "A1", "J8", "A2", "K8", "B1", "L8"],
         options: AnalysisFixtureOptions {
             max_depth: None,
-            defense_policy: None,
             max_scan_plies: Some(3),
             full_scan: false,
         },
@@ -72,7 +70,6 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         ],
         options: AnalysisFixtureOptions {
             max_depth: None,
-            defense_policy: None,
             max_scan_plies: None,
             full_scan: true,
         },
@@ -103,7 +100,6 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         ],
         options: AnalysisFixtureOptions {
             max_depth: None,
-            defense_policy: None,
             max_scan_plies: Some(3),
             full_scan: false,
         },
@@ -128,7 +124,6 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         moves: &["H8", "A1", "I8", "A2", "J8", "A3", "K8", "B1", "L8"],
         options: AnalysisFixtureOptions {
             max_depth: Some(1),
-            defense_policy: None,
             max_scan_plies: Some(4),
             full_scan: false,
         },
@@ -156,7 +151,6 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         ],
         options: AnalysisFixtureOptions {
             max_depth: Some(4),
-            defense_policy: None,
             max_scan_plies: Some(6),
             full_scan: false,
         },
@@ -176,14 +170,13 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
     },
     AnalysisFixtureCase {
         case_id: "tactical_counter_win_escape",
-        description: "A tactical-defense model must treat a defender immediate win as an escape, not force a block.",
+        description: "The corridor reply model must treat a defender immediate win as an escape, not force a block.",
         variant: Variant::Freestyle,
         moves: &[
             "A1", "H8", "A2", "I8", "A3", "J8", "A4", "K8", "B1", "L8",
         ],
         options: AnalysisFixtureOptions {
             max_depth: Some(4),
-            defense_policy: Some(DefensePolicy::TacticalDefense),
             max_scan_plies: Some(4),
             full_scan: false,
         },
@@ -211,7 +204,6 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         ],
         options: AnalysisFixtureOptions {
             max_depth: Some(4),
-            defense_policy: Some(DefensePolicy::TacticalDefense),
             max_scan_plies: Some(4),
             full_scan: false,
         },
@@ -236,7 +228,6 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
         moves: &["H8", "A1", "I8"],
         options: AnalysisFixtureOptions {
             max_depth: None,
-            defense_policy: None,
             max_scan_plies: None,
             full_scan: false,
         },
@@ -409,9 +400,7 @@ fn fixture_options(
     fixture_options: &AnalysisFixtureOptions,
 ) -> AnalysisOptions {
     AnalysisOptions {
-        defense_policy: fixture_options
-            .defense_policy
-            .unwrap_or(base_options.defense_policy),
+        reply_policy: base_options.reply_policy,
         max_depth: fixture_options.max_depth.unwrap_or(base_options.max_depth),
         max_scan_plies: if fixture_options.full_scan {
             None
@@ -674,7 +663,7 @@ code, .moves {{ color: var(--accent); }}
 <section class="summary-grid">
   <article class="summary-card"><span>Result</span><strong>{passed} passed / {total} total</strong></article>
   <article class="summary-card"><span>Failed</span><strong>{failed}</strong></article>
-  <article class="summary-card"><span>Defense</span><strong>{defense:?}</strong></article>
+  <article class="summary-card"><span>Reply Policy</span><strong>{reply_policy:?}</strong></article>
   <article class="summary-card"><span>Corridor Depth</span><strong>{depth}</strong></article>
 </section>
 {cases}
@@ -685,7 +674,7 @@ code, .moves {{ color: var(--accent); }}
         passed = report.passed,
         total = report.total,
         failed = report.failed,
-        defense = report.base_model.defense_policy,
+        reply_policy = report.base_model.reply_policy,
         depth = report.base_model.max_depth,
         cases = cases,
     )
@@ -763,8 +752,8 @@ fn render_analysis_fixture_case_html(result: &AnalysisFixtureResult) -> String {
         failures = failures,
         moves = html_escape(&result.moves.join(" ")),
         model = html_escape(&format!(
-            "{:?}, corridor depth {}, scan {:?}",
-            result.actual.model.defense_policy,
+            "{:?}, probe depth {}, traceback {:?}",
+            result.actual.model.reply_policy,
             result.actual.model.max_depth,
             result.actual.model.max_scan_plies
         )),
@@ -964,7 +953,7 @@ mod tests {
         let json = serde_json::to_string_pretty(&report)
             .expect("analysis fixture report should serialize");
 
-        assert!(json.contains("\"schema_version\": 13"));
+        assert!(json.contains("\"schema_version\": 14"));
         assert!(json.contains("\"case_id\": \"missed_defense_closed_four\""));
         assert!(json.contains("\"expected\""));
         assert!(json.contains("\"actual\""));

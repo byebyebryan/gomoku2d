@@ -9,8 +9,8 @@ use serde::Serialize;
 use crate::analysis::{
     analyze_alternate_defender_reply_options, analyze_replay, defender_reply_roles_for_move,
     AnalysisBoardSnapshot, AnalysisOptions, DefenderReplyAnalysis, DefenderReplyOutcome,
-    DefenderReplyRole, DefensePolicy, ForcedInterval, GameAnalysis, ProofLimitCause, ProofResult,
-    ProofStatus, ReplyClassification, RootCause, SearchDiagnostics, TacticalNote, UnclearContext,
+    DefenderReplyRole, ForcedInterval, GameAnalysis, ProofLimitCause, ProofResult, ProofStatus,
+    ReplyClassification, ReplyPolicy, RootCause, SearchDiagnostics, TacticalNote, UnclearContext,
     UnclearReason, ANALYSIS_SCHEMA_VERSION,
 };
 use crate::report_board::{render_report_board, report_board_css, ReportBoardMarker};
@@ -37,7 +37,7 @@ pub struct AnalysisBatchReport {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct AnalysisBatchModel {
-    pub defense_policy: DefensePolicy,
+    pub reply_policy: ReplyPolicy,
     pub max_depth: usize,
     pub max_scan_plies: Option<usize>,
 }
@@ -343,7 +343,7 @@ pub fn run_analysis_batch_replays_with_options(
 
 fn model_from_options(options: &AnalysisBatchRunOptions) -> AnalysisBatchModel {
     AnalysisBatchModel {
-        defense_policy: options.analysis.defense_policy,
+        reply_policy: options.analysis.reply_policy,
         max_depth: options.analysis.max_depth,
         max_scan_plies: options.analysis.max_scan_plies,
     }
@@ -1320,10 +1320,8 @@ fn corridor_search_config_label(report: &AnalysisBatchReport) -> String {
         .unwrap_or_else(|| "unbounded".to_string());
 
     format!(
-        "{} / probe depth {} / traceback {}",
-        defense_policy_label(report.model.defense_policy),
-        report.model.max_depth,
-        scan_plies
+        "probe depth {} / traceback {}",
+        report.model.max_depth, scan_plies
     )
 }
 
@@ -1353,14 +1351,6 @@ fn report_source_and_selector(source: &str) -> (String, String) {
 
 fn source_kind_label(source_kind: &str) -> String {
     source_kind.replace('_', " ")
-}
-
-fn defense_policy_label(policy: DefensePolicy) -> &'static str {
-    match policy {
-        DefensePolicy::AllLegalDefense => "full reply probe",
-        DefensePolicy::TacticalDefense => "tactical replies",
-        DefensePolicy::HybridDefense => "hybrid replies",
-    }
 }
 
 fn loss_category_class(loss_category: Option<AnalysisLossCategory>) -> &'static str {
@@ -1709,7 +1699,7 @@ fn defender_reply_outcomes_for_frame(
         attacker,
         actual_move,
         &AnalysisOptions {
-            defense_policy: analysis.model.defense_policy,
+            reply_policy: analysis.model.reply_policy,
             max_depth: analysis.model.max_depth,
             max_scan_plies: analysis.model.max_scan_plies,
         },
@@ -2626,7 +2616,7 @@ mod tests {
     };
     use crate::analysis::{
         AnalysisOptions, DefenderReplyAnalysis, DefenderReplyOutcome, DefenderReplyRole,
-        DefensePolicy, ProofLimitCause, ProofStatus, ReplyClassification, RootCause,
+        ProofLimitCause, ProofStatus, ReplyClassification, ReplyPolicy, RootCause,
         SearchDiagnostics, UnclearReason,
     };
 
@@ -2839,7 +2829,7 @@ mod tests {
         let html = render_analysis_batch_report_html(&report);
         assert!(html.contains("<span>Source</span><strong>report.json</strong>"));
         assert!(html.contains("<span>Selector</span><strong>bot-a vs bot-b</strong>"));
-        assert!(html.contains("full reply probe / probe depth 4 / traceback 64"));
+        assert!(html.contains("probe depth 4 / traceback 64"));
         assert_eq!(report.entries[0].path, "match_0002");
         assert_eq!(report.entries[1].path, "match_0001");
         assert!(report.entries[0].proof_details.is_none());
@@ -3096,7 +3086,7 @@ mod tests {
             }],
             AnalysisBatchRunOptions {
                 analysis: AnalysisOptions {
-                    defense_policy: DefensePolicy::AllLegalDefense,
+                    reply_policy: ReplyPolicy::CorridorReplies,
                     max_depth: 4,
                     max_scan_plies: Some(8),
                 },
@@ -3325,7 +3315,7 @@ mod tests {
             }],
             AnalysisBatchRunOptions {
                 analysis: AnalysisOptions {
-                    defense_policy: DefensePolicy::AllLegalDefense,
+                    reply_policy: ReplyPolicy::CorridorReplies,
                     max_depth: 4,
                     max_scan_plies: Some(8),
                 },
@@ -3417,7 +3407,7 @@ mod tests {
             }],
             AnalysisBatchRunOptions {
                 analysis: AnalysisOptions {
-                    defense_policy: DefensePolicy::AllLegalDefense,
+                    reply_policy: ReplyPolicy::CorridorReplies,
                     max_depth: 4,
                     max_scan_plies: Some(8),
                 },
@@ -3471,7 +3461,7 @@ mod tests {
             }],
             AnalysisBatchRunOptions {
                 analysis: AnalysisOptions {
-                    defense_policy: DefensePolicy::AllLegalDefense,
+                    reply_policy: ReplyPolicy::CorridorReplies,
                     max_depth: 4,
                     max_scan_plies: Some(8),
                 },
@@ -3520,7 +3510,7 @@ mod tests {
             }],
             AnalysisBatchRunOptions {
                 analysis: AnalysisOptions {
-                    defense_policy: DefensePolicy::AllLegalDefense,
+                    reply_policy: ReplyPolicy::CorridorReplies,
                     max_depth: 4,
                     max_scan_plies: Some(8),
                 },

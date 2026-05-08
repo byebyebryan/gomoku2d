@@ -5,9 +5,7 @@ use std::time::Instant;
 
 use gomoku_bot::{RandomBot, SearchBot};
 use gomoku_core::{Color, GameResult, Move, Replay, RuleConfig, Variant};
-use gomoku_eval::analysis::{
-    analyze_replay, AnalysisOptions, DefensePolicy, DEFAULT_MAX_SCAN_PLIES,
-};
+use gomoku_eval::analysis::{analyze_replay, AnalysisOptions, DEFAULT_MAX_SCAN_PLIES};
 use gomoku_eval::analysis_batch::{
     render_analysis_batch_report_html, run_analysis_batch_replays_with_options,
     run_analysis_batch_with_options, AnalysisBatchReport, AnalysisBatchRunOptions,
@@ -74,27 +72,6 @@ impl CliTournamentSchedule {
             CliTournamentSchedule::RoundRobin => "round-robin",
             CliTournamentSchedule::HeadToHead => "head-to-head",
             CliTournamentSchedule::Gauntlet => "gauntlet",
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
-#[clap(rename_all = "kebab-case")]
-enum CliDefensePolicy {
-    #[value(name = "all-legal-defense")]
-    AllLegal,
-    #[value(name = "tactical-defense")]
-    Tactical,
-    #[value(name = "hybrid-defense")]
-    Hybrid,
-}
-
-impl From<CliDefensePolicy> for DefensePolicy {
-    fn from(value: CliDefensePolicy) -> Self {
-        match value {
-            CliDefensePolicy::AllLegal => DefensePolicy::AllLegalDefense,
-            CliDefensePolicy::Tactical => DefensePolicy::TacticalDefense,
-            CliDefensePolicy::Hybrid => DefensePolicy::HybridDefense,
         }
     }
 }
@@ -266,10 +243,6 @@ enum Commands {
         #[arg(long)]
         output: Option<PathBuf>,
 
-        /// Defender reply model used by the bounded proof engine
-        #[arg(long, value_enum, default_value = "all-legal-defense")]
-        defense_policy: CliDefensePolicy,
-
         /// Maximum forced-corridor proof depth
         #[arg(long, default_value_t = 4)]
         max_depth: usize,
@@ -291,10 +264,6 @@ enum Commands {
         /// Write standalone batch report HTML
         #[arg(long)]
         report_html: Option<PathBuf>,
-
-        /// Defender reply model used by the bounded proof engine
-        #[arg(long, value_enum, default_value = "all-legal-defense")]
-        defense_policy: CliDefensePolicy,
 
         /// Maximum forced-corridor proof depth
         #[arg(long, default_value_t = 4)]
@@ -338,10 +307,6 @@ enum Commands {
         #[arg(long)]
         report_html: Option<PathBuf>,
 
-        /// Defender reply model used by the bounded proof engine
-        #[arg(long, value_enum, default_value = "all-legal-defense")]
-        defense_policy: CliDefensePolicy,
-
         /// Maximum forced-corridor proof depth
         #[arg(long, default_value_t = 4)]
         max_depth: usize,
@@ -363,10 +328,6 @@ enum Commands {
         /// Write standalone fixture report HTML
         #[arg(long)]
         report_html: Option<PathBuf>,
-
-        /// Defender reply model used by the bounded proof engine
-        #[arg(long, value_enum, default_value = "all-legal-defense")]
-        defense_policy: CliDefensePolicy,
 
         /// Maximum forced-corridor proof depth
         #[arg(long, default_value_t = 4)]
@@ -1324,7 +1285,6 @@ fn main() {
         Commands::AnalyzeReplay {
             input,
             output,
-            defense_policy,
             max_depth,
             max_scan_plies,
         } => {
@@ -1335,9 +1295,9 @@ fn main() {
             let analysis = analyze_replay(
                 &replay,
                 AnalysisOptions {
-                    defense_policy: defense_policy.into(),
                     max_depth,
                     max_scan_plies: Some(max_scan_plies),
+                    ..AnalysisOptions::default()
                 },
             )
             .unwrap_or_else(|err| exit_with_error(format!("Failed to analyze replay: {err}")));
@@ -1358,7 +1318,6 @@ fn main() {
             replay_dir,
             report_json,
             report_html,
-            defense_policy,
             max_depth,
             max_scan_plies,
             include_proof_details,
@@ -1367,9 +1326,9 @@ fn main() {
                 &replay_dir,
                 AnalysisBatchRunOptions {
                     analysis: AnalysisOptions {
-                        defense_policy: defense_policy.into(),
                         max_depth,
                         max_scan_plies: Some(max_scan_plies),
+                        ..AnalysisOptions::default()
                     },
                     include_proof_details,
                 },
@@ -1408,7 +1367,6 @@ fn main() {
             sample_policy: _,
             report_json,
             report_html,
-            defense_policy,
             max_depth,
             max_scan_plies,
             include_proof_details,
@@ -1454,9 +1412,9 @@ fn main() {
                 inputs,
                 AnalysisBatchRunOptions {
                     analysis: AnalysisOptions {
-                        defense_policy: defense_policy.into(),
                         max_depth,
                         max_scan_plies: Some(max_scan_plies),
+                        ..AnalysisOptions::default()
                     },
                     include_proof_details,
                 },
@@ -1487,14 +1445,13 @@ fn main() {
         Commands::AnalysisFixtures {
             report_json,
             report_html,
-            defense_policy,
             max_depth,
             max_scan_plies,
         } => {
             let report = run_analysis_fixtures(AnalysisOptions {
-                defense_policy: defense_policy.into(),
                 max_depth,
                 max_scan_plies: Some(max_scan_plies),
+                ..AnalysisOptions::default()
             })
             .unwrap_or_else(|err| {
                 exit_with_error(format!("Failed to run analysis fixtures: {err}"))
@@ -1726,8 +1683,6 @@ mod tests {
             "replays/match.json",
             "--output",
             "outputs/analysis.json",
-            "--defense-policy",
-            "tactical-defense",
             "--max-depth",
             "3",
             "--max-scan-plies",
@@ -1738,7 +1693,6 @@ mod tests {
         let Commands::AnalyzeReplay {
             input,
             output,
-            defense_policy,
             max_depth,
             max_scan_plies,
         } = cli.command
@@ -1748,7 +1702,6 @@ mod tests {
 
         assert_eq!(input, PathBuf::from("replays/match.json"));
         assert_eq!(output, Some(PathBuf::from("outputs/analysis.json")));
-        assert_eq!(defense_policy, CliDefensePolicy::Tactical);
         assert_eq!(max_depth, 3);
         assert_eq!(max_scan_plies, 12);
     }
@@ -1771,6 +1724,21 @@ mod tests {
     }
 
     #[test]
+    fn analyze_replay_command_rejects_retired_reply_policy_flag() {
+        let err = Cli::try_parse_from([
+            "gomoku-eval",
+            "analyze-replay",
+            "--input",
+            "replays/match.json",
+            "--defense-policy",
+            "all-legal-defense",
+        ])
+        .unwrap_err();
+
+        assert!(err.to_string().contains("unexpected argument"));
+    }
+
+    #[test]
     fn analysis_fixtures_command_parses_report_and_model_limits() {
         let cli = Cli::try_parse_from([
             "gomoku-eval",
@@ -1779,8 +1747,6 @@ mod tests {
             "outputs/analysis-fixtures.json",
             "--report-html",
             "outputs/analysis-fixtures.html",
-            "--defense-policy",
-            "hybrid-defense",
             "--max-depth",
             "4",
             "--max-scan-plies",
@@ -1791,7 +1757,6 @@ mod tests {
         let Commands::AnalysisFixtures {
             report_json,
             report_html,
-            defense_policy,
             max_depth,
             max_scan_plies,
         } = cli.command
@@ -1807,7 +1772,6 @@ mod tests {
             report_html,
             Some(PathBuf::from("outputs/analysis-fixtures.html"))
         );
-        assert_eq!(defense_policy, CliDefensePolicy::Hybrid);
         assert_eq!(max_depth, 4);
         assert_eq!(max_scan_plies, 16);
     }
@@ -1823,8 +1787,6 @@ mod tests {
             "outputs/analysis-batch.json",
             "--report-html",
             "outputs/analysis-batch.html",
-            "--defense-policy",
-            "tactical-defense",
             "--max-depth",
             "3",
             "--max-scan-plies",
@@ -1836,7 +1798,6 @@ mod tests {
             replay_dir,
             report_json,
             report_html,
-            defense_policy,
             max_depth,
             max_scan_plies,
             include_proof_details,
@@ -1854,7 +1815,6 @@ mod tests {
             report_html,
             Some(PathBuf::from("outputs/analysis-batch.html"))
         );
-        assert_eq!(defense_policy, CliDefensePolicy::Tactical);
         assert_eq!(max_depth, 3);
         assert_eq!(max_scan_plies, 12);
         assert!(!include_proof_details);
@@ -1879,8 +1839,6 @@ mod tests {
             "outputs/analysis/top2-smoke.json",
             "--report-html",
             "outputs/analysis/top2-smoke.html",
-            "--defense-policy",
-            "all-legal-defense",
             "--max-depth",
             "4",
             "--max-scan-plies",
@@ -1897,7 +1855,6 @@ mod tests {
             sample_policy,
             report_json,
             report_html,
-            defense_policy,
             max_depth,
             max_scan_plies,
             include_proof_details,
@@ -1925,7 +1882,6 @@ mod tests {
             report_html,
             Some(PathBuf::from("outputs/analysis/top2-smoke.html"))
         );
-        assert_eq!(defense_policy, CliDefensePolicy::AllLegal);
         assert_eq!(max_depth, 4);
         assert_eq!(max_scan_plies, 8);
         assert!(include_proof_details);
