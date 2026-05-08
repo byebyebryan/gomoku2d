@@ -18,6 +18,8 @@ surface area can agents help cover without lowering the quality bar?
 
 **Bot lab report:** https://gomoku2d.byebyebryan.com/bot-report/
 
+**Replay analysis report:** https://gomoku2d.byebyebryan.com/analysis-report/
+
 The answer so far is not "type less code and ship anything." It is closer to
 running a tiny product team through agents: implementation, review, test
 coverage, infrastructure, asset iteration, release notes, and design critique
@@ -122,6 +124,7 @@ The canonical design, architecture, and release docs live in `docs/`:
 - [`gomoku-web/assets/README.md`](gomoku-web/assets/README.md) — source asset folders and local preview pages
 - [Live asset previews](https://gomoku2d.byebyebryan.com/assets/) — published sprite, icon, and font previews
 - [Bot lab report](https://gomoku2d.byebyebryan.com/bot-report/) — published bot-lab tournament report target
+- [Replay analysis report](https://gomoku2d.byebyebryan.com/analysis-report/) — published forced-corridor analysis for the bot report's top matchup
 - [`docs/ui_screenshot_review.md`](docs/ui_screenshot_review.md) — screenshot history and UI critique
 - [`docs/backend.md`](docs/backend.md) — Firebase + Firestore + Cloud Run model for cloud, lab-powered, and online phases
 - [`docs/backend_infra.md`](docs/backend_infra.md) — live Firebase/GCP setup, rules deployment, and env checklist

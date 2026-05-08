@@ -7,6 +7,10 @@ top of React, Phaser, and the Rust/WebAssembly core.
 
 **Pixel-art previews:** https://gomoku2d.byebyebryan.com/assets/
 
+**Bot lab report:** https://gomoku2d.byebyebryan.com/bot-report/
+
+**Replay analysis report:** https://gomoku2d.byebyebryan.com/analysis-report/
+
 React owns the app shell: home, match, replay, profile, auth, and local/cloud
 history. Phaser renders the board and nothing else. The rules engine and bot
 are the same Rust code used by the native bot lab in this repo, compiled to
@@ -59,6 +63,10 @@ under `/assets/`.
 
 Curated bot-lab reports live in [`../gomoku-bot-lab/reports/`](../gomoku-bot-lab/reports/)
 and are copied into published builds under `/bot-report/`.
+
+Curated replay-analysis reports live in
+[`../gomoku-bot-lab/analysis-reports/`](../gomoku-bot-lab/analysis-reports/)
+and are copied into published builds under `/analysis-report/`.
 
 ---
 

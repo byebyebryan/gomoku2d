@@ -547,6 +547,11 @@ tournament. Keep scratch output under `gomoku-bot-lab/outputs/`; curated
 reports under `gomoku-bot-lab/reports/` are copied into the public web build as
 `/bot-report/`.
 
+Curated replay-analysis reports under `gomoku-bot-lab/analysis-reports/` are
+copied into the public web build as `/analysis-report/`. Treat that report as a
+companion to the published bot report: it should sample the head-to-head games
+between the top two standings in `reports/latest.json`.
+
 For release-quality reports, commit the bot/report implementation first, then
 generate `reports/latest.json` and `reports/index.html` from a clean worktree
 and commit those artifacts separately. The report records the git revision; if

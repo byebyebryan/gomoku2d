@@ -1,5 +1,5 @@
 use clap::{Args, Parser, Subcommand, ValueEnum};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Instant;
 
@@ -828,6 +828,20 @@ fn highest_different_standing(standing_bots: &[String], entrant: &str) -> Option
         .cloned()
 }
 
+fn report_replay_source_label(
+    report: &Path,
+    entrant_a: &str,
+    entrant_b: &str,
+    default_top_two: bool,
+) -> String {
+    let selector = if default_top_two {
+        "Top 2 entrants".to_string()
+    } else {
+        format!("{entrant_a} vs {entrant_b}")
+    };
+    format!("{}:{selector}", report.display())
+}
+
 fn main() {
     let cli = Cli::parse();
 
@@ -1371,6 +1385,7 @@ fn main() {
             max_scan_plies,
             include_proof_details,
         } => {
+            let default_top_two = entrant_a.is_none() && entrant_b.is_none();
             let json = std::fs::read_to_string(&report).unwrap_or_else(|err| {
                 exit_with_error(format!("Failed to read tournament report: {err}"))
             });
@@ -1408,7 +1423,7 @@ fn main() {
                 });
             }
             let batch_report = run_analysis_batch_replays_with_options(
-                format!("{}:{} vs {}", report.display(), entrant_a, entrant_b),
+                report_replay_source_label(&report, &entrant_a, &entrant_b, default_top_two),
                 inputs,
                 AnalysisBatchRunOptions {
                     analysis: AnalysisOptions {
@@ -1904,5 +1919,19 @@ mod tests {
 
         assert_eq!(entrant_a, "search-d5+tactical-cap-8+pattern-eval");
         assert_eq!(entrant_b, "search-d7+tactical-cap-8+pattern-eval");
+    }
+
+    #[test]
+    fn report_replay_source_label_keeps_default_selector_readable() {
+        let report = PathBuf::from("reports/latest.json");
+
+        assert_eq!(
+            report_replay_source_label(&report, "search-d7", "search-d5", true),
+            "reports/latest.json:Top 2 entrants"
+        );
+        assert_eq!(
+            report_replay_source_label(&report, "search-d7", "search-d5", false),
+            "reports/latest.json:search-d7 vs search-d5"
+        );
     }
 }

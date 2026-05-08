@@ -977,5 +977,11 @@ Keep generated analysis JSON/HTML under `gomoku-bot-lab/outputs/analysis/`
 while iterating. These files are ignored scratch artifacts; commit only the
 analyzer code, docs, and any deliberately curated reports.
 
+The deliberately curated public report lives under
+`gomoku-bot-lab/analysis-reports/` and is published as `/analysis-report/`.
+It should always be generated from `gomoku-bot-lab/reports/latest.json` without
+explicit entrants, so it explains the current published bot report's top-two
+matchup rather than an arbitrary debug sample.
+
 This is still a lab artifact. Do not expose it in the web replay UI until the
 fixture set and report output make the limits obvious enough for players.

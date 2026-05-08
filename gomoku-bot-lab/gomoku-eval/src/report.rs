@@ -1493,9 +1493,7 @@ pub fn render_tournament_report_html_with_options(
     html.push_str("<title>Gomoku2D Bot Lab Report</title>");
     html.push_str(STYLE);
     html.push_str("</head><body><main><header class=\"hero\">");
-    html.push_str(
-        "<nav class=\"top-links\"><a href=\"/\">Game</a><a href=\"/assets/\">Assets</a></nav>",
-    );
+    html.push_str("<nav class=\"top-links\"><a href=\"/\">Game</a><a href=\"/assets/\">Assets</a><a href=\"/analysis-report/\">Analysis</a></nav>");
     html.push_str("<p class=\"eyebrow\">Gomoku2D Bot Lab</p><h1>Bot Lab Report</h1>");
     html.push_str("<div class=\"run-strip\" aria-label=\"Run summary\">");
     run_chip(&mut html, "Schedule", schedule_summary(report));
@@ -2988,9 +2986,7 @@ mod tests {
         );
 
         assert!(html.contains("<div class=\"run-strip\" aria-label=\"Run summary\">"));
-        assert!(html.contains(
-            "<nav class=\"top-links\"><a href=\"/\">Game</a><a href=\"/assets/\">Assets</a></nav>"
-        ));
+        assert!(html.contains("<nav class=\"top-links\"><a href=\"/\">Game</a><a href=\"/assets/\">Assets</a><a href=\"/analysis-report/\">Analysis</a></nav>"));
         assert!(!html.contains("<section class=\"run-strip\" aria-label=\"Run summary\">"));
         assert!(!html.contains("<nav class=\"top-links\"><a href=\"/\">Game</a><a href=\"/assets/\">Assets</a><a href=\"latest.json\">Raw JSON</a></nav>"));
         assert!(html.contains("<dt>Raw JSON</dt><dd><a href=\"latest.json\">latest.json</a></dd>"));

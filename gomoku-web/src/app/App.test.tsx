@@ -43,7 +43,7 @@ describe("App", () => {
     expect(screen.getByText(/black to move/i)).toBeInTheDocument();
   });
 
-  it("surfaces asset and bot links on the home screen", () => {
+  it("surfaces lab links on the home screen", () => {
     render(
       <MemoryRouter initialEntries={["/"]}>
         <App />
@@ -57,6 +57,10 @@ describe("App", () => {
     expect(screen.getByRole("link", { name: /^bots$/i })).toHaveAttribute(
       "href",
       "/bot-report/",
+    );
+    expect(screen.getByRole("link", { name: /^analysis$/i })).toHaveAttribute(
+      "href",
+      "/analysis-report/",
     );
   });
 
@@ -79,9 +83,10 @@ describe("App", () => {
     expect(version.className).toContain("version");
     expect(within(footerLinks).getByRole("link", { name: /^assets$/i })).toBeInTheDocument();
     expect(within(footerLinks).getByRole("link", { name: /^bots$/i })).toBeInTheDocument();
+    expect(within(footerLinks).getByRole("link", { name: /^analysis$/i })).toBeInTheDocument();
     expect(within(footerLinks).getByRole("link", { name: /^privacy$/i })).toBeInTheDocument();
     expect(within(footerLinks).getByRole("link", { name: /^terms$/i })).toBeInTheDocument();
-    expect(within(footerLinks).getAllByText("/")).toHaveLength(3);
+    expect(within(footerLinks).getAllByText("/")).toHaveLength(4);
     expect(footerLinks).not.toHaveTextContent("·");
   });
 });
