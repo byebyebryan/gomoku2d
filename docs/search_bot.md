@@ -73,13 +73,15 @@ correctness-preserving core legality optimization, not a playing-style knob:
 the exact legality result is unchanged, while the measured candidate-legality
 hot path is cheaper.
 
-The lab tools define temporary aliases over these fields for experiments:
+The lab tools primarily use explicit search specs over these fields:
 
-| Alias | Max depth | Candidate source | Safety gate | Intent |
+| Spec | Max depth | Candidate source | Safety gate | Intent |
 |---|---:|---|---|---|
-| `fast` | 2 | `near_all_r2` | `opponent_reply_local_threat_probe` | cheap comparison target |
-| `balanced` | 3 | `near_all_r2` | `opponent_reply_local_threat_probe` | current browser practice-bot depth |
-| `deep` | 5 | `near_all_r2` | `opponent_reply_local_threat_probe` | current CLI default depth |
+| `search-d1` | 1 | `near_all_r2` | `opponent_reply_local_threat_probe` | easy/beginner lane |
+| `search-d3` | 3 | `near_all_r2` | `opponent_reply_local_threat_probe` | current default baseline |
+| `search-d5` | 5 | `near_all_r2` | `opponent_reply_local_threat_probe` | uncapped depth reference |
+| `search-d5+tactical-cap-8` | 5 | `near_all_r2` | `opponent_reply_local_threat_probe` | efficient hard-side candidate |
+| `search-d7+tactical-cap-8` | 7 | `near_all_r2` | `opponent_reply_local_threat_probe` | stronger but slower hard-side candidate |
 
 For lab-only ablations, append `+near-all-r1`, `+near-all-r2`, or
 `+near-all-r3` to change symmetric candidate-source radius. Append
@@ -101,9 +103,32 @@ measure one pipeline axis at a time; defaults remain `near_all_r2`,
 `opponent_reply_local_threat_probe`, `tt_first_board_order`, no child cap, and
 `line_shape_eval`.
 
-These aliases are not durable product identity, and they are not character bots
+These specs are not durable product identity, and they are not character bots
 yet. They exist so the lab can benchmark stable configs before deciding whether
-UI presets like aggressive or defensive are real enough to expose.
+UI presets like aggressive or defensive are real enough to expose. The older
+`fast`/`balanced`/`deep` aliases still parse for compatibility, but they are not
+the current anchor set.
+
+## Corridor Bridge
+
+`gomoku-bot` now owns a replay-independent corridor module alongside
+`SearchBot`. The module exposes the same defender-reply outcomes used by the
+analysis report and powers two lab-only bridge bots:
+
+| Alias | Behavior |
+|---|---|
+| `corridor-random` | shallow corridor proof with local radius-2 live candidates, otherwise fall back to `RandomBot` |
+| `corridor-d1` | shallow corridor proof with local radius-2 live candidates, otherwise fall back to depth-1 `SearchBot` |
+
+This is intentionally separate from `SearchBotConfig` for now. It tests whether
+the corridor model changes live choices cleanly before we decide whether to fold
+it into search move ordering, selective extension, or a product-facing bot
+ladder.
+
+Trace note: corridor choices report proof work under `corridor.search_nodes`,
+`corridor.branch_probes`, and `corridor.max_depth_reached`. `corridor-d1`
+fallback moves preserve the underlying depth-1 `SearchBot` trace, including any
+CLI/tournament search budget.
 
 Search traces include both the result and the config:
 
