@@ -956,11 +956,12 @@ fn imminent_defense_reply_moves(
     actual_reply: Option<Move>,
 ) -> Vec<Move> {
     let defender = attacker.opponent();
-    let mut attacker_turn = board.clone();
-    attacker_turn.current_player = attacker;
     let mut replies = Vec::new();
 
-    let mut facts = local_threat_facts(board, attacker);
+    let mut facts = local_threat_facts(board, attacker)
+        .into_iter()
+        .filter(|fact| local_threat_is_forcing_for(board, attacker, fact))
+        .collect::<Vec<_>>();
     if facts.is_empty() {
         return replies;
     }
@@ -985,14 +986,7 @@ fn imminent_defense_reply_moves(
         .into_iter()
         .filter(|fact| fact.kind.rank() == best_rank)
     {
-        add_imminent_defense_replies_for_fact(
-            board,
-            &attacker_turn,
-            attacker,
-            defender,
-            &fact,
-            &mut replies,
-        );
+        add_imminent_defense_replies_for_fact(board, attacker, defender, &fact, &mut replies);
     }
 
     replies
@@ -1000,30 +994,23 @@ fn imminent_defense_reply_moves(
 
 fn add_imminent_defense_replies_for_fact(
     board: &Board,
-    attacker_turn: &Board,
     attacker: Color,
     defender: Color,
     fact: &LocalThreatFact,
     replies: &mut Vec<Move>,
 ) {
-    let mut legal_forcing_moves = Vec::new();
-    for mv in fact.defense_squares.iter().copied() {
+    let legal_forcing_continuations = legal_forcing_continuations_for_fact(board, attacker, fact);
+    for continuation in &legal_forcing_continuations {
+        let mv = continuation.mv;
         if board.is_legal_for_color(mv, defender) {
             push_unique_move(replies, mv);
-        }
-        if attacker_turn.is_legal_for_color(mv, attacker) {
-            legal_forcing_moves.push(mv);
         }
     }
 
     let mut shared_cost_squares: Option<Vec<Move>> = None;
-    for forcing_move in legal_forcing_moves {
-        let mut after_forcing = attacker_turn.clone();
-        if after_forcing.apply_move(forcing_move).is_err() {
-            continue;
-        }
-        let costs = after_forcing
-            .immediate_winning_moves_for(attacker)
+    for continuation in legal_forcing_continuations {
+        let costs = continuation
+            .legal_cost_squares
             .into_iter()
             .filter(|&mv| board.is_legal_for_color(mv, defender))
             .collect::<Vec<_>>();
@@ -1096,7 +1083,7 @@ impl ThreatReplySet {
         };
         let local_threat_count = local_threats
             .iter()
-            .filter(|fact| fact.kind.is_forcing())
+            .filter(|fact| local_threat_is_forcing_for(board, attacker, fact))
             .count();
         let local_threat_replies = local_threat_reply_moves(board, defender, &local_threats);
 
@@ -1876,7 +1863,7 @@ fn corridor_attacker_move_rank(board: &Board, attacker: Color, mv: Move) -> u8 {
     }
     local_threat_facts(&next, attacker)
         .into_iter()
-        .filter(|fact| fact.kind.is_forcing())
+        .filter(|fact| local_threat_is_forcing_for(&next, attacker, fact))
         .map(|fact| fact.kind.rank())
         .max()
         .unwrap_or(0)
@@ -1925,17 +1912,66 @@ struct LocalThreatFact {
     defense_squares: Vec<Move>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct LocalThreatContinuation {
+    mv: Move,
+    legal_cost_squares: Vec<Move>,
+}
+
+fn local_threat_is_forcing_for(board: &Board, attacker: Color, fact: &LocalThreatFact) -> bool {
+    fact.kind.is_forcing()
+        && !legal_forcing_continuations_for_fact(board, attacker, fact).is_empty()
+}
+
+fn legal_forcing_continuations_for_fact(
+    board: &Board,
+    attacker: Color,
+    fact: &LocalThreatFact,
+) -> Vec<LocalThreatContinuation> {
+    if !fact.kind.is_forcing() {
+        return Vec::new();
+    }
+
+    let mut attacker_turn = board.clone();
+    attacker_turn.current_player = attacker;
+    let mut continuations = Vec::new();
+    for mv in fact.defense_squares.iter().copied() {
+        if !attacker_turn.is_legal_for_color(mv, attacker) {
+            continue;
+        }
+
+        let mut after_forcing = attacker_turn.clone();
+        if after_forcing.apply_move(mv).is_err() {
+            continue;
+        }
+        let legal_cost_squares = match after_forcing.result {
+            GameResult::Winner(winner) if winner == attacker => vec![mv],
+            GameResult::Winner(_) | GameResult::Draw => Vec::new(),
+            GameResult::Ongoing => after_forcing.immediate_winning_moves_for(attacker),
+        };
+        if !legal_cost_squares.is_empty() {
+            continuations.push(LocalThreatContinuation {
+                mv,
+                legal_cost_squares,
+            });
+        }
+    }
+    continuations
+}
+
 fn local_threat_reply_moves(
     board: &Board,
     defender: Color,
     local_threats: &[LocalThreatFact],
 ) -> Vec<Move> {
     let mut replies = Vec::new();
+    let attacker = defender.opponent();
     for fact in local_threats {
-        if !fact.kind.is_forcing() {
+        if !local_threat_is_forcing_for(board, attacker, fact) {
             continue;
         }
-        for mv in fact.defense_squares.iter().copied() {
+        for continuation in legal_forcing_continuations_for_fact(board, attacker, fact) {
+            let mv = continuation.mv;
             if board.is_legal_for_color(mv, defender) {
                 push_unique_move(&mut replies, mv);
             }
@@ -1947,7 +1983,7 @@ fn local_threat_reply_moves(
 fn has_forcing_local_threat(board: &Board, player: Color) -> bool {
     local_threat_facts(board, player)
         .iter()
-        .any(|fact| fact.kind.is_forcing())
+        .any(|fact| local_threat_is_forcing_for(board, player, fact))
 }
 
 fn local_threat_facts(board: &Board, player: Color) -> Vec<LocalThreatFact> {
@@ -2755,7 +2791,8 @@ mod tests {
     use gomoku_core::{Board, Color, Move, Replay, RuleConfig, Variant};
 
     use super::{
-        analyze_defender_reply_options, analyze_replay, local_threat_facts, replay_moves,
+        analyze_defender_reply_options, analyze_replay, has_forcing_local_threat,
+        legal_forcing_continuations_for_fact, local_threat_facts, replay_moves,
         replay_prefix_boards, replay_proof_summary, AnalysisOptions, DefenderReplyOutcome,
         DefenderReplyRole, DefensePolicy, LocalThreatFact, LocalThreatKind, ProofLimitCause,
         ProofStatus, ReplyClassification, RootCause, TacticalNote, UnclearReason,
@@ -2925,6 +2962,63 @@ mod tests {
                 replies
             );
         }
+    }
+
+    #[test]
+    fn renju_forbidden_only_black_local_threat_is_not_forcing() {
+        let board = board_from_moves(
+            Variant::Renju,
+            &["H8", "G8", "I8", "A1", "J8", "A2", "L8", "A3", "M8"],
+        );
+        assert!(!board.is_legal_for_color(mv("K8"), Color::Black));
+        assert!(!board
+            .immediate_winning_moves_for(Color::Black)
+            .contains(&mv("K8")));
+
+        let facts = local_threat_facts(&board, Color::Black);
+        let forbidden_gap_four = facts
+            .iter()
+            .find(|fact| {
+                fact.kind == LocalThreatKind::BrokenFour && fact.defense_squares == vec![mv("K8")]
+            })
+            .unwrap_or_else(|| panic!("expected raw forbidden broken-four fact: {facts:?}"));
+        assert!(
+            legal_forcing_continuations_for_fact(&board, Color::Black, forbidden_gap_four)
+                .is_empty()
+        );
+        assert!(
+            !has_forcing_local_threat(&board, Color::Black),
+            "unexpected forcing fact remains: {facts:?}"
+        );
+    }
+
+    #[test]
+    fn renju_mixed_black_local_threat_uses_only_legal_continuations() {
+        let board = board_from_moves(
+            Variant::Renju,
+            &["H8", "A1", "I8", "A2", "J8", "A3", "K8", "A4", "M8"],
+        );
+        assert!(board.is_legal_for_color(mv("G8"), Color::Black));
+        assert!(!board.is_legal_for_color(mv("L8"), Color::Black));
+
+        let facts = local_threat_facts(&board, Color::Black);
+        let mixed_open_four = facts
+            .iter()
+            .find(|fact| {
+                fact.kind == LocalThreatKind::OpenFour
+                    && fact.defense_squares == vec![mv("G8"), mv("L8")]
+            })
+            .unwrap_or_else(|| panic!("expected raw mixed open-four fact: {facts:?}"));
+        let continuations =
+            legal_forcing_continuations_for_fact(&board, Color::Black, mixed_open_four);
+        assert_eq!(
+            continuations
+                .iter()
+                .map(|continuation| continuation.mv)
+                .collect::<Vec<_>>(),
+            vec![mv("G8")]
+        );
+        assert!(has_forcing_local_threat(&board, Color::Black));
     }
 
     fn reply_for<'a>(

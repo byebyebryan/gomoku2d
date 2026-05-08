@@ -358,6 +358,28 @@ The exact shape can change in implementation, but the invariant should hold:
 rule-forbidden replies are visible as tactical facts and are excluded only when
 deciding which replies are playable.
 
+Presentation must keep the same distinction:
+
+- A legal/effective tactical square can use the normal proof hint language.
+- A forbidden Black square uses `F` as rule evidence.
+- If White creates a legal threat whose natural Black answer is forbidden, the
+  square may still carry a threat/defense hint box from White's perspective,
+  plus `F` from Black's perspective. The box explains why the square matters;
+  `F` explains why Black cannot use it.
+- If Black has only a raw freestyle-looking threat and the required Black
+  continuation is forbidden, do not render it as an active threat. It may appear
+  only as muted/debug forbidden evidence.
+- If Black has a mix of legal and forbidden continuations, only the legal
+  continuations contribute to corridor strength. Forbidden continuations remain
+  evidence, not threat strength.
+
+Current implementation note: analyzer corridor checks and `SearchBot` tactical
+annotations both normalize local threat facts through Renju legality for Black.
+Forbidden-only Black continuations do not enter corridor strength, attacker
+move ranking, tactical ordering, or local-threat safety credit. Mixed
+legal/forbidden threats keep only their legal continuations for active tactical
+strength while preserving forbidden squares as report evidence where available.
+
 ## Corridor Depth
 
 The proof model is corridor-bounded rather than broad-search depth-bounded. A

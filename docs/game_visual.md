@@ -77,16 +77,17 @@ covering the pointer.
 
 | Role | Visual |
 |------|--------|
-| Winning move | `warning` tinted green |
-| Threat move | `warning` tinted red |
-| Threat move also forbidden | `warning-on-forbidden` tinted red |
+| Winning move | legal immediate win: `warning` tinted green |
+| Threat move | legal immediate threat: `warning` tinted red |
 | Forbidden move | alternating `forbidden-out` and `forbidden-in` |
 | Winning line | `hover` tinted green |
 
-Forbidden and threat can overlap. In that case, the combined
-`warning-on-forbidden` animation replaces both the standalone threat warning and
-the forbidden loop. Do not introduce a new warning color unless the state has a
-genuinely new meaning.
+Forbidden cells are not active threats for Black. If a raw Black shape looks
+dangerous but the required continuation is forbidden by Renju, the live board
+should render the forbidden state, not a green/red "play here" warning. If a
+forbidden Black square matters as evidence for a White threat, show that in
+analysis/report surfaces with an explicit `F` marker rather than by upgrading the
+cell into a playable Black threat.
 
 ### Sequence Numbers
 
