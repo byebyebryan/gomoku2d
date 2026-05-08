@@ -1355,7 +1355,9 @@ fn broken_three_rest_squares_through_view(
                 row: row as usize,
                 col: col as usize,
             };
-            if virtual_run_len_view(board, dr, dc, rest, player) < 4 {
+            if four_completion_squares_after_virtual_rest_through_view(board, dr, dc, rest)
+                .is_empty()
+            {
                 continue;
             }
 
@@ -1369,39 +1371,55 @@ fn broken_three_rest_squares_through_view(
     rest_squares
 }
 
-fn virtual_run_len_view(
+fn four_completion_squares_after_virtual_rest_through_view(
     board: &impl TacticalBoardView,
     dr: isize,
     dc: isize,
     rest: Move,
-    player: Color,
-) -> usize {
-    1 + virtual_count_in_direction_view(board, dr, dc, rest, -1, player)
-        + virtual_count_in_direction_view(board, dr, dc, rest, 1, player)
-}
+) -> Vec<Move> {
+    let mv = board.mv();
+    let player = board.player();
+    let win_len = board.win_length() as isize;
+    let mut completions = Vec::new();
 
-fn virtual_count_in_direction_view(
-    board: &impl TacticalBoardView,
-    dr: isize,
-    dc: isize,
-    rest: Move,
-    step: isize,
-    player: Color,
-) -> usize {
-    let mut count = 0usize;
-    let mut row = rest.row as isize + dr * step;
-    let mut col = rest.col as isize + dc * step;
-    loop {
-        if !board.in_bounds(row, col)
-            || !board.has_color_or_extra_rest(row as usize, col as usize, player, rest)
-        {
-            break;
+    for start in -(win_len - 1)..=0 {
+        let mut player_count = 0usize;
+        let mut empty_square = None;
+        let mut blocked = false;
+
+        for offset in start..start + win_len {
+            let row = mv.row as isize + dr * offset;
+            let col = mv.col as isize + dc * offset;
+            if !board.in_bounds(row, col) {
+                blocked = true;
+                break;
+            }
+
+            let row = row as usize;
+            let col = col as usize;
+            if board.has_color_or_extra_rest(row, col, player, rest) {
+                player_count += 1;
+            } else if board.is_empty(row, col) && empty_square.is_none() {
+                empty_square = Some(Move { row, col });
+            } else {
+                blocked = true;
+                break;
+            }
         }
-        count += 1;
-        row += dr * step;
-        col += dc * step;
+
+        let Some(empty_square) = empty_square else {
+            continue;
+        };
+        if !blocked
+            && player_count == board.win_length().saturating_sub(1)
+            && !completions.contains(&empty_square)
+        {
+            completions.push(empty_square);
+        }
     }
-    count
+
+    completions.sort_by_key(|mv| (mv.row, mv.col));
+    completions
 }
 
 #[cfg_attr(not(test), allow(dead_code))]
@@ -4181,11 +4199,79 @@ mod tests {
                 player: Color::Black,
                 kind: LocalThreatKind::BrokenThree,
                 gain_square: mv("J8"),
-                defense_squares: vec![mv("I8")],
-                rest_squares: vec![mv("I8")],
+                defense_squares: vec![mv("G8"), mv("I8"), mv("L8")],
+                rest_squares: vec![mv("G8"), mv("I8"), mv("L8")],
             }]
         );
         assert!(!broken_three[0].is_forcing());
+    }
+
+    #[test]
+    fn local_threat_facts_report_split_broken_three_rest_squares() {
+        let mut split_three_board = Board::new(RuleConfig::default());
+        apply_moves(&mut split_three_board, &["H8", "A1", "J8", "C1"]);
+
+        let split_three = local_threat_facts_after_move(&split_three_board, mv("L8"));
+        assert_eq!(
+            split_three,
+            vec![LocalThreatFact {
+                player: Color::Black,
+                kind: LocalThreatKind::BrokenThree,
+                gain_square: mv("L8"),
+                defense_squares: vec![mv("I8"), mv("K8")],
+                rest_squares: vec![mv("I8"), mv("K8")],
+            }]
+        );
+        assert!(!split_three[0].is_forcing());
+
+        let mut two_gap_three_board = Board::new(RuleConfig::default());
+        apply_moves(&mut two_gap_three_board, &["H8", "A1", "K8", "C1"]);
+
+        let two_gap_three = local_threat_facts_after_move(&two_gap_three_board, mv("L8"));
+        assert_eq!(
+            two_gap_three,
+            vec![LocalThreatFact {
+                player: Color::Black,
+                kind: LocalThreatKind::BrokenThree,
+                gain_square: mv("L8"),
+                defense_squares: vec![mv("I8"), mv("J8")],
+                rest_squares: vec![mv("I8"), mv("J8")],
+            }]
+        );
+        assert!(!two_gap_three[0].is_forcing());
+    }
+
+    #[test]
+    fn local_threat_facts_report_open_three_blocked_outer_variants() {
+        let mut left_blocked_board = Board::new(RuleConfig::default());
+        apply_moves(&mut left_blocked_board, &["J9", "H9", "K9", "A1"]);
+
+        let left_blocked = local_threat_facts_after_move(&left_blocked_board, mv("L9"));
+        assert_eq!(
+            left_blocked,
+            vec![LocalThreatFact {
+                player: Color::Black,
+                kind: LocalThreatKind::OpenThree,
+                gain_square: mv("L9"),
+                defense_squares: vec![mv("I9"), mv("M9"), mv("N9")],
+                rest_squares: vec![],
+            }]
+        );
+
+        let mut right_blocked_board = Board::new(RuleConfig::default());
+        apply_moves(&mut right_blocked_board, &["J9", "N9", "K9", "A1"]);
+
+        let right_blocked = local_threat_facts_after_move(&right_blocked_board, mv("L9"));
+        assert_eq!(
+            right_blocked,
+            vec![LocalThreatFact {
+                player: Color::Black,
+                kind: LocalThreatKind::OpenThree,
+                gain_square: mv("L9"),
+                defense_squares: vec![mv("I9"), mv("M9"), mv("H9")],
+                rest_squares: vec![],
+            }]
+        );
     }
 
     #[test]
