@@ -878,6 +878,14 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   the intended bridge between "the user sees multiple plausible choices" and
   "which of those choices are proven escapes, unproved escapes, or forced
   losses."
+- After the scan-cap refactor, the top-two 64-game checkpoint with
+  `--max-scan-plies 40` passed with `64 analyzed / 64 total` and `0 failed` in
+  about `25s` wall time. It resolved every decisive game: `3` mistakes, `25`
+  tactical errors, `35` strategic losses, and `1` draw/ongoing game, with no
+  limit-cause entries. The longest corridor was `match_1735`, which needed
+  `41` analyzed prefixes to classify a forced interval from ply `53` to `92`.
+  A cap of `32` still left that one game as `outside_scan_window`, so use cap
+  `40` for checkpoint reports.
 - Before the corridor-exit pivot, the 64-game sampled checkpoint passed with
   `64 analyzed / 64 total`
   and `0 failed`: `63` proof-limit hits and `1` draw/ongoing game. The old
@@ -943,7 +951,7 @@ cargo run -p gomoku-eval -- analyze-replay-batch \
   --report-html outputs/analysis_batch.html \
   --defense-policy all-legal-defense \
   --max-depth 4 \
-  --max-scan-plies 24
+  --max-scan-plies 40
 
 cargo run --release -p gomoku-eval -- analyze-report-replays \
   --report reports/latest.json \
@@ -960,23 +968,20 @@ cargo run --release -p gomoku-eval -- analyze-report-replays \
   --report reports/latest.json \
   --entrant-a search-d7+tactical-cap-8+pattern-eval \
   --entrant-b search-d5+tactical-cap-8+pattern-eval \
-  --sample-size 8 \
+  --sample-size 64 \
   --report-json outputs/analysis/top2_audit.json \
   --report-html outputs/analysis/top2_audit.html \
   --defense-policy all-legal-defense \
   --max-depth 4 \
-  --max-scan-plies 8 \
-  --include-proof-details \
-  --deep-retry-depth 10 \
-  --deep-retry-limit 1
+  --max-scan-plies 40
 ```
 
 Use the report-sampled 8-game smoke path while tuning analyzer output or proof
 logic. It covers both entrants, color assignments where available, draws or
 max-move games, and short/long games deterministically. Run a full 64-game
 head-to-head analysis only for checkpoint reports. `--max-scan-plies 8`
-is the practical default for iteration; `24` or `32` is reserved for focused
-long-corridor samples or checkpoint runs. Add
+is the practical default for iteration; `40` is the current checkpoint default
+because it resolves the longest known top-two corridor. Add
 `--include-proof-details` when the goal is auditability rather than a compact
 summary report. Add selective deep retry only for focused proof-detail audits:
 it retries unresolved defender-reply outcomes with a higher corridor depth,
