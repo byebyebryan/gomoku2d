@@ -10,8 +10,8 @@ use crate::analysis::{
     analyze_alternate_defender_reply_options_with_retry, analyze_replay,
     defender_reply_roles_for_move, AnalysisBoardSnapshot, AnalysisOptions, DefenderReplyAnalysis,
     DefenderReplyOutcome, DefenderReplyRole, DefensePolicy, ForcedInterval, GameAnalysis,
-    ProofLimitCause, ProofResult, ProofStatus, ReplyClassification, RootCause, TacticalNote,
-    UnclearContext, UnclearReason, ANALYSIS_SCHEMA_VERSION,
+    ProofLimitCause, ProofResult, ProofStatus, ReplyClassification, RootCause, SearchDiagnostics,
+    TacticalNote, UnclearContext, UnclearReason, ANALYSIS_SCHEMA_VERSION,
 };
 use crate::report_board::{render_report_board, report_board_css, ReportBoardMarker};
 
@@ -85,6 +85,8 @@ pub struct AnalysisBatchEntry {
     pub unclear_context: Option<UnclearContext>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub proof_details: Option<AnalysisBatchProofDetails>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub proof_detail_diagnostics: Option<SearchDiagnostics>,
     pub limit_causes: Vec<ProofLimitCause>,
     pub elapsed_ms: u64,
     pub prefixes_analyzed: usize,
@@ -394,6 +396,7 @@ fn error_entry(path: String, error: String, elapsed_ms: u64) -> AnalysisBatchEnt
         unknown_gap_count: 0,
         unclear_context: None,
         proof_details: None,
+        proof_detail_diagnostics: None,
         limit_causes: Vec::new(),
         elapsed_ms,
         prefixes_analyzed: 0,
@@ -405,7 +408,6 @@ fn error_entry(path: String, error: String, elapsed_ms: u64) -> AnalysisBatchEnt
 }
 
 pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String {
-    let limit_summary = limit_cause_counts_label(&report.limit_cause_counts);
     let entries = report
         .entries
         .iter()
@@ -414,7 +416,7 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
     let model_label = "Corridor search";
     let model_config = corridor_search_config_label(report);
     let runtime_label = format!(
-        "{} wall / {} entries",
+        "{} wall / {} CPU",
         format_duration_ms(report.elapsed_ms),
         format_duration_ms(report.total_elapsed_ms)
     );
@@ -686,23 +688,6 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       gap: 14px;
       padding: 14px;
     }}
-    .detail-sections {{
-      display: grid;
-      gap: 10px;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    }}
-    .detail-section {{
-      display: grid;
-      gap: 8px;
-      align-content: start;
-    }}
-    .detail-section h3 {{
-      color: var(--accent);
-      font-size: 10px;
-      letter-spacing: .12em;
-      margin: 0;
-      text-transform: uppercase;
-    }}
     .detail-grid {{
       display: grid;
       gap: 8px;
@@ -759,39 +744,9 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       color: var(--text);
       line-height: 1.2;
     }}
-    .proof-summary-strip {{
-      display: grid;
-      gap: 8px;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      margin-bottom: 12px;
-    }}
-    .proof-summary-strip div {{
-      background: var(--surface-strong);
-      border: 1px solid var(--line);
-      padding: 8px;
-    }}
-    .proof-summary-strip span {{
-      display: block;
-      color: var(--faint);
-      font-size: 9px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }}
-    .proof-summary-strip strong {{
-      display: block;
-      margin-top: 3px;
-      overflow-wrap: anywhere;
-    }}
     .proof-frames {{
       display: grid;
       gap: 12px;
-    }}
-    .proof-frames h3 {{
-      margin: 0;
-      color: var(--accent);
-      font-size: 12px;
-      letter-spacing: .1em;
-      text-transform: uppercase;
     }}
     .proof-frame-list {{
       display: grid;
@@ -1059,10 +1014,10 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       </div>
       <div class="run-group" aria-label="Run stats">
         <div class="run-chip"><span>Runtime</span><strong>{runtime}</strong></div>
-        <div class="run-chip"><span>Limit hits</span><strong>{limit_summary}</strong></div>
       </div>
       <div class="run-group" aria-label="Analysis provenance">
         <div class="run-chip"><span>Source</span><strong>{source}</strong></div>
+        <div class="run-chip"><span>Selector</span><strong>{selector}</strong></div>
       </div>
     </div>
   </header>
@@ -1086,9 +1041,9 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
         unclear = report.summary.unclear,
         failed = report.failed,
         model = html_escape(model_label),
-        source = html_escape(&format!("{}: {}", report.source_kind, report.source)),
+        source = html_escape(&source_kind_label(&report.source_kind)),
+        selector = html_escape(&report.source),
         runtime = html_escape(&runtime_label),
-        limit_summary = html_escape(&limit_summary),
         model_config = html_escape(&model_config),
         board_css = report_board_css(),
         entries = entries,
@@ -1100,7 +1055,7 @@ fn analysis_entry_card_html(entry: &AnalysisBatchEntry) -> String {
     let loss_class = loss_category_class(entry.loss_category);
     let entry_class = loss_entry_class(entry.loss_category);
     let forced = forced_interval_label(entry.final_forced_interval.as_ref());
-    let detail_sections = analysis_entry_detail_sections_html(entry, &forced);
+    let detail_sections = analysis_entry_detail_sections_html(entry);
     let title = replay_entry_title(&entry.path);
     let (first_player, second_player) = ordered_player_columns_html(&title, entry.winner);
     let panels = analysis_entry_panels_html(entry);
@@ -1159,63 +1114,46 @@ fn analysis_entry_panels_html(entry: &AnalysisBatchEntry) -> String {
     panels.join("")
 }
 
-fn analysis_entry_detail_sections_html(entry: &AnalysisBatchEntry, forced: &str) -> String {
+fn analysis_entry_detail_sections_html(entry: &AnalysisBatchEntry) -> String {
     let cause = root_cause_label(entry.root_cause);
     let unclear_reason = unclear_reason_label(entry.unclear_reason);
-    let tactical_notes = tactical_notes_label(&entry.tactical_notes);
-    let limit_causes = proof_limit_cause_labels(&entry.limit_causes);
-    let winning_move = entry
-        .final_move
-        .map(Move::to_notation)
-        .unwrap_or_else(|| "-".to_string());
-    let prefixes = format!(
-        "{} checked / {} forced / {} escape",
-        entry.prefixes_analyzed, entry.forced_prefix_count, entry.escape_prefix_count
-    );
 
-    let mut outcome_details = vec![
-        detail_html("Status", entry_status_label(entry.status)),
-        detail_html("Cause", &cause),
-        detail_html("Notes", &tactical_notes),
-    ];
+    let mut details = vec![detail_html("Cause", &cause)];
     if unclear_reason != "-" {
-        outcome_details.push(detail_html("Unclear", &unclear_reason));
+        details.push(detail_html("Unclear", &unclear_reason));
     }
-
-    let corridor_details = vec![
-        detail_html("Forced ply", forced),
-        detail_html(
-            "Last escape",
-            &before_ply_option_label(entry.last_chance_ply),
-        ),
-        detail_html(
-            "Forced entry",
-            &entry
-                .final_forced_interval
-                .as_ref()
-                .map(|interval| before_ply_label(interval.start_ply))
-                .unwrap_or_else(|| "-".to_string()),
-        ),
-        detail_html(
-            "Critical reply",
-            &ply_option_label(entry.critical_mistake_ply),
-        ),
-        detail_html("Winning move", &winning_move),
-    ];
-
-    let search_details = vec![
-        detail_html("Prefixes", &prefixes),
-        detail_html("Unknown gaps", &entry.unknown_gap_count.to_string()),
-        detail_html("Limit hits", &limit_causes),
-        detail_html("Runtime", &format_duration_ms(entry.elapsed_ms)),
-    ];
+    if let Some(reply_probes) = proof_detail_reply_probe_count(entry) {
+        details.push(detail_html("Reply probes", &reply_probes.to_string()));
+    }
+    if let Some(search_nodes) = proof_detail_search_node_count(entry) {
+        details.push(detail_html("Search nodes", &search_nodes.to_string()));
+    }
+    details.push(detail_html(
+        "Search time",
+        &format_duration_ms(entry.elapsed_ms),
+    ));
 
     format!(
-        r#"<div class="detail-sections">{outcome}{corridor}{search}</div>"#,
-        outcome = detail_section_html("Outcome", &outcome_details),
-        corridor = detail_section_html("Corridor", &corridor_details),
-        search = detail_section_html("Search", &search_details),
+        r#"<div class="detail-grid">{details}</div>"#,
+        details = details.join("")
     )
+}
+
+fn proof_detail_reply_probe_count(entry: &AnalysisBatchEntry) -> Option<usize> {
+    entry.proof_details.as_ref().map(|details| {
+        details
+            .proof_frames
+            .iter()
+            .map(|frame| frame.reply_outcomes.len())
+            .sum::<usize>()
+    })
+}
+
+fn proof_detail_search_node_count(entry: &AnalysisBatchEntry) -> Option<usize> {
+    entry
+        .proof_detail_diagnostics
+        .as_ref()
+        .map(|diagnostics| diagnostics.search_nodes)
 }
 
 struct ReplayEntryTitle {
@@ -1396,14 +1334,6 @@ fn detail_html(label: &str, value: &str) -> String {
     )
 }
 
-fn detail_section_html(label: &str, details: &[String]) -> String {
-    format!(
-        r#"<section class="detail-section"><h3>{}</h3><div class="detail-grid">{}</div></section>"#,
-        html_escape(label),
-        details.join("")
-    )
-}
-
 fn corridor_search_config_label(report: &AnalysisBatchReport) -> String {
     let retry = match (report.model.deep_retry_depth, report.model.deep_retry_limit) {
         (Some(depth), limit) if limit > 0 => format!("retry depth {depth} x{limit}"),
@@ -1422,6 +1352,10 @@ fn corridor_search_config_label(report: &AnalysisBatchReport) -> String {
         scan_plies,
         retry
     )
+}
+
+fn source_kind_label(source_kind: &str) -> String {
+    source_kind.replace('_', " ")
 }
 
 fn defense_policy_label(policy: DefensePolicy) -> &'static str {
@@ -1463,38 +1397,10 @@ fn forced_interval_label(interval: Option<&ForcedInterval>) -> String {
     format!("{}-{} / {} ply", interval.start_ply, interval.end_ply, span)
 }
 
-fn ply_option_label(value: Option<usize>) -> String {
-    value
-        .map(|value| format!("ply {value}"))
-        .unwrap_or_else(|| "-".to_string())
-}
-
-fn before_ply_option_label(value: Option<usize>) -> String {
-    value
-        .map(before_ply_label)
-        .unwrap_or_else(|| "-".to_string())
-}
-
 fn ply_count_label(value: Option<usize>) -> String {
     value
         .map(|value| format!("{value} ply"))
         .unwrap_or_else(|| "-".to_string())
-}
-
-fn tactical_notes_label(notes: &[TacticalNote]) -> String {
-    if notes.is_empty() {
-        return "-".to_string();
-    }
-    notes
-        .iter()
-        .map(|note| match note {
-            TacticalNote::AccidentalBlunder => "accidental blunder",
-            TacticalNote::ConversionError => "conversion error",
-            TacticalNote::MissedWin => "missed win",
-            TacticalNote::StrongAttack => "strong attack",
-        })
-        .collect::<Vec<_>>()
-        .join(", ")
 }
 
 fn format_duration_ms(ms: u64) -> String {
@@ -1552,6 +1458,7 @@ fn entry_from_analysis(
     let proof_details = replay.and_then(|replay| {
         proof_details_from_analysis(replay, &analysis, deep_retry_depth, deep_retry_limit)
     });
+    let proof_detail_diagnostics = proof_details.as_ref().map(proof_details_diagnostics);
     let limit_causes = analysis
         .unclear_context
         .as_ref()
@@ -1578,6 +1485,7 @@ fn entry_from_analysis(
         unknown_gap_count: analysis.unknown_gaps.len(),
         unclear_context: analysis.unclear_context,
         proof_details,
+        proof_detail_diagnostics,
         limit_causes,
         elapsed_ms,
         prefixes_analyzed,
@@ -1651,6 +1559,22 @@ fn proof_details_from_analysis(
         snapshots,
         proof_frames,
     })
+}
+
+fn proof_details_diagnostics(details: &AnalysisBatchProofDetails) -> SearchDiagnostics {
+    let mut diagnostics = SearchDiagnostics::default();
+    for reply in details
+        .proof_frames
+        .iter()
+        .flat_map(|frame| frame.reply_outcomes.iter())
+    {
+        diagnostics.search_nodes += reply.diagnostics.search_nodes;
+        diagnostics.branch_probes += reply.diagnostics.branch_probes;
+        diagnostics.max_depth_reached = diagnostics
+            .max_depth_reached
+            .max(reply.diagnostics.max_depth_reached);
+    }
+    diagnostics
 }
 
 fn proof_result_at(
@@ -2194,13 +2118,6 @@ fn loss_category_for_corridor_span(corridor_span: usize) -> AnalysisLossCategory
     }
 }
 
-fn entry_status_label(status: AnalysisBatchEntryStatus) -> &'static str {
-    match status {
-        AnalysisBatchEntryStatus::Analyzed => "analyzed",
-        AnalysisBatchEntryStatus::Error => "error",
-    }
-}
-
 fn root_cause_label(root_cause: Option<RootCause>) -> String {
     root_cause
         .map(|root_cause| match root_cause {
@@ -2289,29 +2206,9 @@ fn proof_details_html(details: Option<&AnalysisBatchProofDetails>) -> String {
         return "-".to_string();
     };
 
-    let previous_status = details
-        .previous_proof
-        .as_ref()
-        .map(|proof| proof_status_label(proof.status))
-        .unwrap_or("-");
-    let final_status = details
-        .final_start_proof
-        .as_ref()
-        .map(|proof| proof_status_label(proof.status))
-        .unwrap_or("-");
     let frames = proof_frames_html(&details.proof_frames);
 
-    format!(
-        "<div class=\"context\"><div class=\"proof-summary-strip\"><div><span>Escape boundary</span><strong>{previous_ply}</strong></div><div><span>Forced run entry</span><strong>{final_ply}</strong></div><div><span>Proof status</span><strong>{previous_status} -> {final_status}</strong></div></div>{frames}</div>",
-        previous_ply = details
-            .previous_prefix_ply
-            .map(before_ply_label)
-            .unwrap_or_else(|| "-".to_string()),
-        final_ply = before_ply_label(details.final_forced_start_ply),
-        previous_status = html_escape(previous_status),
-        final_status = html_escape(final_status),
-        frames = frames,
-    )
+    format!("<div class=\"context\">{frames}</div>", frames = frames)
 }
 
 fn proof_frames_html(frames: &[AnalysisBatchProofFrame]) -> String {
@@ -2332,7 +2229,7 @@ fn proof_frames_html(frames: &[AnalysisBatchProofFrame]) -> String {
     let turn_cards = proof_decision_turns_html(frames, winner, winning_frame.ply);
 
     format!(
-        "<div class=\"proof-frames\"><h3>Proof frames</h3><div class=\"proof-legend\"><div class=\"proof-legend-row\"><span class=\"legend-role legend-winning\">immediate win</span><span class=\"legend-role legend-threat\">immediate threat</span><span class=\"legend-role legend-imminent\">defensive reply</span><span class=\"legend-role legend-offensive\">offensive reply</span><span class=\"legend-role legend-corridor-entry\">corridor entry</span></div><div class=\"proof-legend-row\"><span class=\"legend-outcome legend-immediate-loss\"><strong class=\"legend-marker legend-marker--white\">!</strong> immediate loss</span><span class=\"legend-outcome legend-forced\"><strong class=\"legend-marker legend-marker--white\">L</strong> forced loss</span><span class=\"legend-outcome legend-forbidden\"><strong class=\"legend-marker\">F</strong> forbidden</span><span class=\"legend-outcome legend-escape\"><strong class=\"legend-marker\">E</strong> escape</span><span class=\"legend-outcome legend-unproved\"><strong class=\"legend-marker\">U</strong> unproved escape</span><span class=\"legend-outcome legend-unknown\"><strong class=\"legend-marker\">?</strong> unknown</span></div></div><div class=\"proof-frame-list\">{final_card}{turn_cards}</div></div>",
+        "<div class=\"proof-frames\"><div class=\"proof-legend\"><div class=\"proof-legend-row\"><span class=\"legend-role legend-winning\">immediate win</span><span class=\"legend-role legend-threat\">immediate threat</span><span class=\"legend-role legend-imminent\">defensive reply</span><span class=\"legend-role legend-offensive\">offensive reply</span><span class=\"legend-role legend-corridor-entry\">corridor entry</span></div><div class=\"proof-legend-row\"><span class=\"legend-outcome legend-immediate-loss\"><strong class=\"legend-marker legend-marker--white\">!</strong> immediate loss</span><span class=\"legend-outcome legend-forced\"><strong class=\"legend-marker legend-marker--white\">L</strong> forced loss</span><span class=\"legend-outcome legend-forbidden\"><strong class=\"legend-marker\">F</strong> forbidden</span><span class=\"legend-outcome legend-escape\"><strong class=\"legend-marker\">E</strong> escape</span><span class=\"legend-outcome legend-unproved\"><strong class=\"legend-marker\">U</strong> unproved escape</span><span class=\"legend-outcome legend-unknown\"><strong class=\"legend-marker\">?</strong> unknown</span></div></div><div class=\"proof-frame-list\">{final_card}{turn_cards}</div></div>",
         final_card = final_card,
         turn_cards = turn_cards,
     )
@@ -2710,27 +2607,12 @@ fn reply_line_label(reply: &DefenderReplyAnalysis) -> String {
     line.join(" ")
 }
 
-fn before_ply_label(prefix_ply: usize) -> String {
-    format!("before ply {}", prefix_ply + 1)
-}
-
 fn proof_status_label(status: ProofStatus) -> &'static str {
     match status {
         ProofStatus::ForcedWin => "forced win",
         ProofStatus::EscapeFound => "escape found",
         ProofStatus::Unknown => "unknown",
     }
-}
-
-fn limit_cause_counts_label(counts: &[ProofLimitCauseCount]) -> String {
-    if counts.is_empty() {
-        return "none".to_string();
-    }
-    counts
-        .iter()
-        .map(|count| format!("{} {}", proof_limit_cause_label(count.cause), count.count))
-        .collect::<Vec<_>>()
-        .join(", ")
 }
 
 fn proof_limit_cause_labels(causes: &[ProofLimitCause]) -> String {
@@ -2786,7 +2668,8 @@ mod tests {
     };
     use crate::analysis::{
         AnalysisOptions, DefenderReplyAnalysis, DefenderReplyOutcome, DefenderReplyRole,
-        DefensePolicy, ProofLimitCause, ProofStatus, ReplyClassification, RootCause, UnclearReason,
+        DefensePolicy, ProofLimitCause, ProofStatus, ReplyClassification, RootCause,
+        SearchDiagnostics, UnclearReason,
     };
 
     fn replay_from_moves(variant: Variant, moves: &[&str]) -> Replay {
@@ -2899,17 +2782,27 @@ mod tests {
         assert!(html.contains("class=\"run-group\" aria-label=\"Analysis setup\""));
         assert!(html.contains("class=\"run-group\" aria-label=\"Run stats\""));
         assert!(html.contains("class=\"run-group\" aria-label=\"Analysis provenance\""));
+        assert!(html.contains(" CPU</strong>"));
+        assert!(!html.contains(" entries</strong>"));
+        assert!(!html.contains("<span>Limit hits</span>"));
         assert!(html.contains("class=\"analysis-list\" aria-label=\"Replay analysis entries\""));
         assert!(html.contains("class=\"analysis-entry analysis-entry--mistake\""));
         assert!(html.contains("class=\"loss-chip loss-chip--mistake\""));
         assert!(html.contains("Mistake"));
         assert!(html.contains("<span>Model</span><strong>Corridor search</strong>"));
-        assert!(html.contains("<span>Source</span>"));
+        assert!(html.contains("<span>Source</span><strong>replay dir</strong>"));
+        assert!(html.contains("<span>Selector</span>"));
         assert!(!html.contains("<span>Replays</span>"));
         assert!(!html.contains("Forced-corridor audit"));
         assert!(!html.contains("class=\"guide\""));
         assert!(html.contains("missed defense"));
         assert!(html.contains("<span>Cause</span><strong>missed defense</strong>"));
+        assert!(html.contains("<span>Search time</span>"));
+        assert!(!html.contains("<span>Status</span>"));
+        assert!(!html.contains("<span>Notes</span>"));
+        assert!(!html.contains("<span>Winning move</span>"));
+        assert!(!html.contains("<span>Prefixes</span>"));
+        assert!(!html.contains("<span>Unknown gaps</span>"));
         assert!(!html.contains("Root detail"));
         assert!(html.contains("<span class=\"entry-match\">replay</span>"));
         assert!(html.contains("<span>Total ply</span><strong>9 ply</strong>"));
@@ -3300,12 +3193,23 @@ mod tests {
             },
         );
 
+        let json =
+            serde_json::to_string_pretty(&report).expect("analysis batch report should serialize");
+        assert!(json.contains("\"proof_detail_diagnostics\""));
+        assert!(json.contains("\"search_nodes\""));
+        assert!(json.contains("\"branch_probes\""));
+        assert!(json.contains("\"max_depth_reached\""));
+
         let html = render_analysis_batch_report_html(&report);
         assert!(html.contains("Proof details"));
-        assert!(html.contains("Escape boundary"));
-        assert!(html.contains("Forced run entry"));
-        assert!(html.contains("Proof status"));
-        assert!(html.contains("Proof frames"));
+        assert!(html.contains("<span>Reply probes</span>"));
+        assert!(html.contains("<span>Search nodes</span>"));
+        assert!(!html.contains("<span>Branch probes</span>"));
+        assert!(!html.contains("Escape boundary"));
+        assert!(!html.contains("Forced run entry"));
+        assert!(!html.contains("Proof status"));
+        assert!(!html.contains("Proof frames"));
+        assert!(!html.contains("proof-summary-strip"));
         assert!(html.contains("Final ply 9"));
         assert!(html.contains("Winner move"));
         assert!(html.contains("9: L8"));
@@ -3384,6 +3288,7 @@ mod tests {
             principal_line: vec![Move::from_notation("I11").unwrap()],
             principal_line_notation: vec!["I11".to_string()],
             limit_causes: vec![ProofLimitCause::DepthCutoff],
+            diagnostics: SearchDiagnostics::default(),
         };
 
         assert_eq!(defender_reply_outcome_label(&reply), "unproved escape");

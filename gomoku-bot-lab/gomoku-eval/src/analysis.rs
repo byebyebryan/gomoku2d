@@ -1,7 +1,7 @@
 use gomoku_core::{replay::ReplayResult, Board, Color, GameResult, Move, Replay, Variant};
 use serde::Serialize;
 
-pub const ANALYSIS_SCHEMA_VERSION: u32 = 10;
+pub const ANALYSIS_SCHEMA_VERSION: u32 = 11;
 pub const DEFAULT_MAX_SCAN_PLIES: usize = 64;
 const MAX_HYBRID_LOCAL_THREAT_COUNT: usize = 2;
 const MAX_HYBRID_LOCAL_THREAT_REPLIES: usize = 8;
@@ -102,6 +102,34 @@ pub struct DefenderReplyAnalysis {
     pub principal_line: Vec<Move>,
     pub principal_line_notation: Vec<String>,
     pub limit_causes: Vec<ProofLimitCause>,
+    pub diagnostics: SearchDiagnostics,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
+pub struct SearchDiagnostics {
+    pub search_nodes: usize,
+    pub branch_probes: usize,
+    pub max_depth_reached: usize,
+}
+
+impl SearchDiagnostics {
+    fn node(max_depth: usize, depth_remaining: usize) -> Self {
+        Self {
+            search_nodes: 1,
+            branch_probes: 0,
+            max_depth_reached: max_depth.saturating_sub(depth_remaining),
+        }
+    }
+
+    fn record_branch_probe(&mut self) {
+        self.branch_probes += 1;
+    }
+
+    fn merge(&mut self, other: Self) {
+        self.search_nodes += other.search_nodes;
+        self.branch_probes += other.branch_probes;
+        self.max_depth_reached = self.max_depth_reached.max(other.max_depth_reached);
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -509,6 +537,8 @@ fn analyze_defender_reply_options_with_retry_inner(
             if deep_retry_depth.is_some() {
                 deep_retries_remaining = deep_retries_remaining.saturating_sub(1);
             }
+            let mut diagnostics = proof.diagnostics;
+            diagnostics.record_branch_probe();
             DefenderReplyAnalysis {
                 mv,
                 notation: mv.to_notation(),
@@ -522,6 +552,7 @@ fn analyze_defender_reply_options_with_retry_inner(
                     .collect(),
                 principal_line: proof.principal_line,
                 limit_causes: proof.limit_causes,
+                diagnostics,
             }
         })
         .collect()
@@ -547,7 +578,8 @@ fn classify_defender_reply_with_retry_for_report(
     };
     let mut deep_options = options.clone();
     deep_options.max_depth = deep_depth;
-    let deep_proof = classify_defender_reply_for_report(board, attacker, mv, &deep_options);
+    let mut deep_proof = classify_defender_reply_for_report(board, attacker, mv, &deep_options);
+    deep_proof.diagnostics.merge(proof.diagnostics);
     (deep_proof, Some(deep_depth))
 }
 
@@ -555,6 +587,7 @@ struct DefenderReplyProof {
     outcome: DefenderReplyOutcome,
     principal_line: Vec<Move>,
     limit_causes: Vec<ProofLimitCause>,
+    diagnostics: SearchDiagnostics,
 }
 
 fn push_reply_role(
@@ -587,12 +620,14 @@ fn classify_defender_reply_for_report_inner(
     options: &AnalysisOptions,
     depth_remaining: usize,
 ) -> DefenderReplyProof {
+    let diagnostics = SearchDiagnostics::node(options.max_depth, depth_remaining);
     let mut next = board.clone();
     if next.apply_move(mv).is_err() {
         return DefenderReplyProof {
             outcome: DefenderReplyOutcome::Unknown,
             principal_line: Vec::new(),
             limit_causes: vec![ProofLimitCause::ModelScopeUnknown],
+            diagnostics,
         };
     }
 
@@ -602,6 +637,7 @@ fn classify_defender_reply_for_report_inner(
                 outcome: DefenderReplyOutcome::Escape,
                 principal_line: Vec::new(),
                 limit_causes: Vec::new(),
+                diagnostics,
             };
         }
         GameResult::Winner(winner) if winner == attacker => {
@@ -609,6 +645,7 @@ fn classify_defender_reply_for_report_inner(
                 outcome: DefenderReplyOutcome::ImmediateLoss,
                 principal_line: Vec::new(),
                 limit_causes: Vec::new(),
+                diagnostics,
             };
         }
         GameResult::Winner(_) | GameResult::Draw => {
@@ -616,6 +653,7 @@ fn classify_defender_reply_for_report_inner(
                 outcome: DefenderReplyOutcome::Escape,
                 principal_line: Vec::new(),
                 limit_causes: Vec::new(),
+                diagnostics,
             };
         }
         GameResult::Ongoing => {}
@@ -627,20 +665,22 @@ fn classify_defender_reply_for_report_inner(
             outcome: DefenderReplyOutcome::ImmediateLoss,
             principal_line: vec![winning_move],
             limit_causes: Vec::new(),
+            diagnostics,
         };
     }
 
     let defender = attacker.opponent();
     if !next.immediate_winning_moves_for(defender).is_empty() {
-        return classify_defender_counter_threat_for_report(
-            &next,
-            attacker,
-            options,
-            depth_remaining,
-        );
+        let mut proof =
+            classify_defender_counter_threat_for_report(&next, attacker, options, depth_remaining);
+        proof.diagnostics.merge(diagnostics);
+        return proof;
     }
 
-    classify_attacker_corridor_for_report(&next, attacker, options, depth_remaining)
+    let mut proof =
+        classify_attacker_corridor_for_report(&next, attacker, options, depth_remaining);
+    proof.diagnostics.merge(diagnostics);
+    proof
 }
 
 fn classify_defender_counter_threat_for_report(
@@ -649,11 +689,13 @@ fn classify_defender_counter_threat_for_report(
     options: &AnalysisOptions,
     depth_remaining: usize,
 ) -> DefenderReplyProof {
+    let mut diagnostics = SearchDiagnostics::node(options.max_depth, depth_remaining);
     if depth_remaining == 0 {
         return DefenderReplyProof {
             outcome: DefenderReplyOutcome::UnprovedEscape,
             principal_line: Vec::new(),
             limit_causes: vec![ProofLimitCause::DepthCutoff],
+            diagnostics,
         };
     }
 
@@ -663,6 +705,7 @@ fn classify_defender_counter_threat_for_report(
     let mut limit_causes = Vec::new();
 
     for mv in counter_threat_answer_moves(board, defender) {
+        diagnostics.record_branch_probe();
         let mut next = board.clone();
         if next.apply_move(mv).is_err() {
             continue;
@@ -674,6 +717,7 @@ fn classify_defender_counter_threat_for_report(
                     outcome: DefenderReplyOutcome::ForcedLoss,
                     principal_line: vec![mv],
                     limit_causes: Vec::new(),
+                    diagnostics,
                 };
             }
             GameResult::Winner(_) | GameResult::Draw => {
@@ -688,6 +732,7 @@ fn classify_defender_counter_threat_for_report(
 
         let proof =
             classify_narrow_corridor_for_report(&next, attacker, options, depth_remaining - 1);
+        diagnostics.merge(proof.diagnostics);
         match proof.outcome {
             DefenderReplyOutcome::ForcedLoss | DefenderReplyOutcome::ImmediateLoss => {
                 let mut principal_line = Vec::with_capacity(proof.principal_line.len() + 1);
@@ -697,6 +742,7 @@ fn classify_defender_counter_threat_for_report(
                     outcome: DefenderReplyOutcome::ForcedLoss,
                     principal_line,
                     limit_causes: proof.limit_causes,
+                    diagnostics,
                 };
             }
             DefenderReplyOutcome::Escape => {}
@@ -716,6 +762,7 @@ fn classify_defender_counter_threat_for_report(
             outcome: DefenderReplyOutcome::UnprovedEscape,
             principal_line: Vec::new(),
             limit_causes,
+            diagnostics,
         };
     }
     if saw_unproved_escape {
@@ -723,6 +770,7 @@ fn classify_defender_counter_threat_for_report(
             outcome: DefenderReplyOutcome::UnprovedEscape,
             principal_line: Vec::new(),
             limit_causes,
+            diagnostics,
         };
     }
 
@@ -730,6 +778,7 @@ fn classify_defender_counter_threat_for_report(
         outcome: DefenderReplyOutcome::Escape,
         principal_line: Vec::new(),
         limit_causes: Vec::new(),
+        diagnostics,
     }
 }
 
@@ -739,11 +788,13 @@ fn classify_attacker_corridor_for_report(
     options: &AnalysisOptions,
     depth_remaining: usize,
 ) -> DefenderReplyProof {
+    let mut diagnostics = SearchDiagnostics::node(options.max_depth, depth_remaining);
     if depth_remaining == 0 {
         return DefenderReplyProof {
             outcome: DefenderReplyOutcome::UnprovedEscape,
             principal_line: Vec::new(),
             limit_causes: vec![ProofLimitCause::DepthCutoff],
+            diagnostics,
         };
     }
 
@@ -752,6 +803,7 @@ fn classify_attacker_corridor_for_report(
             outcome: DefenderReplyOutcome::Escape,
             principal_line: Vec::new(),
             limit_causes: Vec::new(),
+            diagnostics,
         };
     }
 
@@ -760,6 +812,7 @@ fn classify_attacker_corridor_for_report(
             outcome: DefenderReplyOutcome::ForcedLoss,
             principal_line: vec![winning_move],
             limit_causes: Vec::new(),
+            diagnostics,
         };
     }
 
@@ -767,6 +820,7 @@ fn classify_attacker_corridor_for_report(
     let mut saw_unproved_escape = false;
     let mut limit_causes = Vec::new();
     for mv in materialized_attacker_corridor_moves(board, attacker) {
+        diagnostics.record_branch_probe();
         let mut next = board.clone();
         if next.apply_move(mv).is_err() {
             continue;
@@ -778,6 +832,7 @@ fn classify_attacker_corridor_for_report(
                     outcome: DefenderReplyOutcome::ForcedLoss,
                     principal_line: vec![mv],
                     limit_causes: Vec::new(),
+                    diagnostics,
                 };
             }
             GameResult::Winner(_) | GameResult::Draw => continue,
@@ -786,6 +841,7 @@ fn classify_attacker_corridor_for_report(
 
         let proof =
             classify_narrow_corridor_for_report(&next, attacker, options, depth_remaining - 1);
+        diagnostics.merge(proof.diagnostics);
         match proof.outcome {
             DefenderReplyOutcome::ForcedLoss | DefenderReplyOutcome::ImmediateLoss => {
                 let mut principal_line = Vec::with_capacity(proof.principal_line.len() + 1);
@@ -795,6 +851,7 @@ fn classify_attacker_corridor_for_report(
                     outcome: DefenderReplyOutcome::ForcedLoss,
                     principal_line,
                     limit_causes: proof.limit_causes,
+                    diagnostics,
                 };
             }
             DefenderReplyOutcome::Escape => {}
@@ -814,6 +871,7 @@ fn classify_attacker_corridor_for_report(
             outcome: DefenderReplyOutcome::UnprovedEscape,
             principal_line: Vec::new(),
             limit_causes,
+            diagnostics,
         };
     }
     if saw_unproved_escape {
@@ -821,6 +879,7 @@ fn classify_attacker_corridor_for_report(
             outcome: DefenderReplyOutcome::UnprovedEscape,
             principal_line: Vec::new(),
             limit_causes,
+            diagnostics,
         };
     }
 
@@ -828,6 +887,7 @@ fn classify_attacker_corridor_for_report(
         outcome: DefenderReplyOutcome::Escape,
         principal_line: Vec::new(),
         limit_causes: Vec::new(),
+        diagnostics,
     }
 }
 
@@ -837,11 +897,13 @@ fn classify_narrow_corridor_for_report(
     options: &AnalysisOptions,
     depth_remaining: usize,
 ) -> DefenderReplyProof {
+    let mut diagnostics = SearchDiagnostics::node(options.max_depth, depth_remaining);
     if board.current_player != attacker.opponent() || board.result != GameResult::Ongoing {
         return DefenderReplyProof {
             outcome: DefenderReplyOutcome::Escape,
             principal_line: Vec::new(),
             limit_causes: Vec::new(),
+            diagnostics,
         };
     }
 
@@ -851,6 +913,7 @@ fn classify_narrow_corridor_for_report(
             outcome: DefenderReplyOutcome::Escape,
             principal_line: Vec::new(),
             limit_causes: Vec::new(),
+            diagnostics,
         };
     }
     if reply_moves.len() > MAX_HYBRID_LOCAL_THREAT_REPLIES {
@@ -858,6 +921,7 @@ fn classify_narrow_corridor_for_report(
             outcome: DefenderReplyOutcome::UnprovedEscape,
             principal_line: Vec::new(),
             limit_causes: vec![ProofLimitCause::ReplyWidthCutoff],
+            diagnostics,
         };
     }
 
@@ -866,8 +930,10 @@ fn classify_narrow_corridor_for_report(
     let mut saw_unknown = false;
     let mut limit_causes = Vec::new();
     for mv in reply_moves {
+        diagnostics.record_branch_probe();
         let proof =
             classify_defender_reply_for_report_inner(board, attacker, mv, options, depth_remaining);
+        diagnostics.merge(proof.diagnostics);
         match proof.outcome {
             DefenderReplyOutcome::ForcedLoss | DefenderReplyOutcome::ImmediateLoss => {
                 if principal_line.is_empty() {
@@ -880,6 +946,7 @@ fn classify_narrow_corridor_for_report(
                     outcome: DefenderReplyOutcome::Escape,
                     principal_line: Vec::new(),
                     limit_causes: Vec::new(),
+                    diagnostics,
                 };
             }
             DefenderReplyOutcome::UnprovedEscape => {
@@ -898,6 +965,7 @@ fn classify_narrow_corridor_for_report(
             outcome: DefenderReplyOutcome::UnprovedEscape,
             principal_line: Vec::new(),
             limit_causes,
+            diagnostics,
         };
     }
     if saw_unknown {
@@ -905,6 +973,7 @@ fn classify_narrow_corridor_for_report(
             outcome: DefenderReplyOutcome::Unknown,
             principal_line: Vec::new(),
             limit_causes,
+            diagnostics,
         };
     }
 
@@ -912,6 +981,7 @@ fn classify_narrow_corridor_for_report(
         outcome: DefenderReplyOutcome::ForcedLoss,
         principal_line,
         limit_causes: Vec::new(),
+        diagnostics,
     }
 }
 
