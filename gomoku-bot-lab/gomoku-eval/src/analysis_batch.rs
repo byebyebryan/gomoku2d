@@ -425,59 +425,89 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
   <style>
     :root {{
       color-scheme: dark;
-      --bg: #15191e;
-      --panel: #202731;
-      --line: #394452;
-      --text: #f5f0dc;
-      --muted: #9aa6b2;
-      --accent: #f0c75e;
-      --green: #58d68d;
+      --bg: #1e1e1e;
+      --surface: #2a2a2a;
+      --surface-strong: #333333;
+      --card: #232323;
+      --border: #575756;
+      --line: var(--border);
+      --text: #f5f5f5;
+      --text-muted: #a6a6a0;
+      --muted: var(--text-muted);
+      --accent: #fccb57;
+      --green: #5ad17a;
+      --teal: #5fc7c2;
       --orange: #f08c4e;
       --cyan: #4ecdc4;
       --red: #ff5d5d;
       --pink: #ff7ab6;
       --blue: #58a6ff;
       --purple: #b877ff;
-      --surface: rgba(32, 39, 49, 0.9);
-      --surface-strong: rgba(17, 24, 32, 0.95);
       --faint: #6f7a86;
+    }}
+    * {{
+      box-sizing: border-box;
     }}
     body {{
       margin: 0;
-      background:
-        radial-gradient(circle at top left, rgba(78, 205, 196, 0.16), transparent 28rem),
-        radial-gradient(circle at 85% 0, rgba(240, 199, 94, 0.1), transparent 24rem),
-        var(--bg);
+      background: var(--bg);
       color: var(--text);
-      font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font: 16px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }}
     main {{
-      max-width: 1260px;
+      display: grid;
+      gap: 24px;
+      max-width: 1180px;
       margin: 0 auto;
-      padding: 32px 20px 48px;
+      padding: 32px;
+    }}
+    h1, h2, h3, p {{
+      margin: 0;
+    }}
+    a {{
+      color: inherit;
+      text-decoration: none;
     }}
     .hero {{
-      border: 1px solid var(--line);
-      background: linear-gradient(135deg, rgba(32,39,49,.96), rgba(17,24,32,.92));
-      margin-bottom: 14px;
-      padding: 22px;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      display: grid;
+      gap: 16px;
+      overflow: auto;
+      padding: 20px;
+    }}
+    .top-links {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }}
+    .top-links a {{
+      background: var(--surface-strong);
+      border: 2px solid var(--border);
+      color: var(--text);
+      display: inline-block;
+      padding: 8px 12px;
+      text-transform: uppercase;
+    }}
+    .top-links a:hover,
+    .top-links a:focus {{
+      border-color: var(--teal);
+      outline: none;
     }}
     .eyebrow {{
       color: var(--accent);
-      font-size: 11px;
+      font-size: 12px;
       letter-spacing: .16em;
-      margin: 0 0 6px;
       text-transform: uppercase;
     }}
     h1 {{
-      margin: 0;
-      font-size: clamp(24px, 4vw, 40px);
-      letter-spacing: 0.03em;
+      font-size: clamp(34px, 7vw, 64px);
+      line-height: 1;
     }}
     .run-strip {{
       display: grid;
       gap: 8px;
-      margin: 0 0 20px;
+      padding: 0;
     }}
     .run-group {{
       display: flex;
@@ -485,9 +515,9 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       gap: 8px;
     }}
     .run-chip, .card {{
-      border: 1px solid var(--line);
-      background: var(--surface);
-      padding: 10px 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 7px 10px;
     }}
     .run-chip {{
       display: inline-flex;
@@ -498,18 +528,22 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
     .run-chip span, .card span, .detail span, .entry-metric span {{
       color: var(--muted);
       font-size: 11px;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
     }}
     .run-chip strong {{
-      color: var(--text);
+      color: var(--green);
+      font-size: 14px;
+      line-height: 1.2;
       overflow-wrap: anywhere;
     }}
     .summary-grid {{
+      background: var(--surface);
+      border: 2px solid var(--border);
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 12px;
-      margin: 18px 0 24px;
+      padding: 20px;
     }}
     .card strong {{
       display: block;
@@ -522,13 +556,21 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
     .card--strategic strong {{ color: var(--red); }}
     .card--unclear strong {{ color: var(--blue); }}
     .analysis-list {{
+      background: var(--surface);
+      border: 2px solid var(--border);
       display: grid;
-      gap: 10px;
+      gap: 12px;
+      padding: 20px;
     }}
     .analysis-entry {{
-      border: 1px solid var(--line);
+      border: 1px solid var(--border);
       border-left-width: 4px;
-      background: var(--surface);
+      background: var(--card);
+    }}
+    .analysis-entry:hover {{
+      border-top-color: var(--teal);
+      border-right-color: var(--teal);
+      border-bottom-color: var(--teal);
     }}
     .analysis-entry--mistake {{ border-left-color: var(--orange); }}
     .analysis-entry--tactical-error {{ border-left-color: var(--accent); }}
@@ -536,7 +578,9 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
     .analysis-entry--unclear {{ border-left-color: var(--blue); }}
     .analysis-entry--none {{ border-left-color: var(--faint); }}
     .analysis-entry[open] {{
-      border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
+      border-top-color: var(--accent);
+      border-right-color: var(--accent);
+      border-bottom-color: var(--accent);
     }}
     .analysis-entry summary {{
       cursor: pointer;
@@ -609,7 +653,7 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       text-transform: uppercase;
     }}
     .entry-metric {{
-      border-left: 1px solid var(--line);
+      border-left: 1px solid var(--border);
       font-variant-numeric: tabular-nums;
       padding-left: 10px;
       text-align: right;
@@ -633,7 +677,7 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
     .loss-chip--unclear {{ color: var(--blue); }}
     .loss-chip--none {{ color: var(--muted); }}
     .entry-body {{
-      border-top: 1px solid var(--line);
+      border-top: 1px solid var(--border);
       display: grid;
       gap: 14px;
       padding: 14px;
@@ -662,7 +706,7 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
     }}
     .detail {{
       background: var(--surface-strong);
-      border: 1px solid var(--line);
+      border: 1px solid var(--border);
       padding: 10px;
     }}
     .detail strong {{
@@ -676,7 +720,7 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
     }}
     .entry-panel {{
       background: var(--surface-strong);
-      border: 1px solid var(--line);
+      border: 1px solid var(--border);
       padding: 12px;
     }}
     .entry-panel h2 {{
@@ -706,8 +750,8 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       overflow: auto;
       margin: 8px 0 0;
       padding: 8px;
-      border: 1px solid var(--line);
-      background: #101419;
+      border: 1px solid var(--border);
+      background: var(--card);
       color: var(--text);
       line-height: 1.2;
     }}
@@ -718,7 +762,7 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       margin-bottom: 12px;
     }}
     .proof-summary-strip div {{
-      background: color-mix(in srgb, var(--surface-strong) 78%, transparent);
+      background: var(--surface-strong);
       border: 1px solid var(--line);
       padding: 8px;
     }}
@@ -752,7 +796,7 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
     }}
     .proof-frame {{
       border: 1px solid var(--line);
-      background: #111820;
+      background: var(--card);
       display: grid;
       gap: 12px;
       grid-template-columns: max-content minmax(220px, 1fr);
@@ -945,6 +989,16 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       font-size: 9px;
     }}
     @media (max-width: 920px) {{
+      main {{
+        padding: 16px;
+      }}
+      .hero, .summary-grid, .analysis-list {{
+        padding: 16px;
+      }}
+      .run-chip {{
+        justify-content: space-between;
+        width: 100%;
+      }}
       .analysis-entry summary {{
         grid-template-columns: minmax(0, 1fr) max-content;
       }}
@@ -971,24 +1025,28 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
 <body>
 <main>
   <header class="hero">
+    <nav class="top-links" aria-label="Project links">
+      <a href="/">Game</a>
+      <a href="/assets/">Assets</a>
+      <a href="/bot-report/">Bots</a>
+    </nav>
     <p class="eyebrow">Gomoku2D Bot Lab</p>
     <h1>Replay Analysis</h1>
+    <div class="run-strip" aria-label="Run summary">
+      <div class="run-group" aria-label="Analysis setup">
+        <div class="run-chip"><span>Model</span><strong>{model}</strong></div>
+        <div class="run-chip"><span>Config</span><strong>{model_config}</strong></div>
+      </div>
+      <div class="run-group" aria-label="Run stats">
+        <div class="run-chip"><span>Runtime</span><strong>{runtime}</strong></div>
+        <div class="run-chip"><span>Limit hits</span><strong>{limit_summary}</strong></div>
+      </div>
+      <div class="run-group" aria-label="Analysis provenance">
+        <div class="run-chip"><span>Source</span><strong>{source}</strong></div>
+      </div>
+    </div>
   </header>
-  <div class="run-strip" aria-label="Run summary">
-    <div class="run-group" aria-label="Analysis setup">
-      <div class="run-chip"><span>Model</span><strong>{model}</strong></div>
-      <div class="run-chip"><span>Config</span><strong>{model_config}</strong></div>
-    </div>
-    <div class="run-group" aria-label="Run stats">
-      <div class="run-chip"><span>Runtime</span><strong>{runtime}</strong></div>
-      <div class="run-chip"><span>Limit hits</span><strong>{limit_summary}</strong></div>
-    </div>
-    <div class="run-group" aria-label="Analysis provenance">
-      <div class="run-chip"><span>Source</span><strong>{source}</strong></div>
-    </div>
-  </div>
   <section class="summary-grid" aria-label="Analysis summary">
-    <article class="card"><span>Total</span><strong>{total}</strong></article>
     <article class="card"><span>Analyzed</span><strong>{analyzed}</strong></article>
     <article class="card card--mistake"><span>Mistake</span><strong>{mistake}</strong></article>
     <article class="card card--tactical"><span>Tactical error</span><strong>{tactical_error}</strong></article>
@@ -1001,7 +1059,6 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
 </body>
 </html>
 "#,
-        total = report.total,
         analyzed = report.analyzed,
         mistake = report.summary.mistake,
         tactical_error = report.summary.tactical_error,
@@ -2663,6 +2720,11 @@ mod tests {
         let html = render_analysis_batch_report_html(&report);
 
         assert!(html.contains("<title>Gomoku2D Analysis Batch Report</title>"));
+        assert!(html.contains("<nav class=\"top-links\" aria-label=\"Project links\">"));
+        assert!(html.contains("<a href=\"/bot-report/\">Bots</a>"));
+        assert!(html.contains("--bg: #1e1e1e"));
+        assert!(!html.contains("<span>Total</span>"));
+        assert!(html.contains("<span>Analyzed</span>"));
         assert!(html.contains("class=\"run-strip\" aria-label=\"Run summary\""));
         assert!(html.contains("class=\"run-group\" aria-label=\"Analysis setup\""));
         assert!(html.contains("class=\"run-group\" aria-label=\"Run stats\""));
