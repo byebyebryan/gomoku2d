@@ -3338,7 +3338,7 @@ mod tests {
         let boundary = analysis
             .proof_summary
             .get(13 - scan_start)
-            .expect("escape boundary proof should be in the scan window");
+            .expect("escape boundary proof should be within the scan cap");
         assert_eq!(boundary.status, ProofStatus::EscapeFound);
         assert!(boundary.threat_evidence.iter().any(|evidence| {
             evidence.reply_classification == ReplyClassification::UnprovedEscape

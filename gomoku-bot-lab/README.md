@@ -145,9 +145,9 @@ cargo run --release -p gomoku-eval -- tournament --bots search-d1,search-d3,sear
 cargo run --release -p gomoku-eval -- tournament --schedule head-to-head --bots search-d5+tactical-cap-8,search-d5+tactical-cap-8+pattern-eval --games-per-pair 64 --opening-policy centered-suite --opening-plies 4 --search-cpu-time-ms 1000 --report-json outputs/head-to-head.json
 cargo run --release -p gomoku-eval -- tournament --schedule gauntlet --candidates search-d5+tactical-cap-4,search-d5+tactical-cap-16,search-d7+tactical-cap-4,search-d7+tactical-cap-16 --anchors search-d3,search-d5+tactical-cap-8,search-d7+tactical-cap-8 --anchor-report reports/latest.json --games-per-pair 32 --opening-policy centered-suite --opening-plies 4 --search-cpu-time-ms 1000 --max-moves 120 --report-json outputs/sweep-a-gauntlet.json
 cargo run --release -p gomoku-eval -- report-html --input outputs/gomoku-tournament.json --output outputs/gomoku-tournament.html --json-href gomoku-tournament.json
-cargo run --release -p gomoku-eval -- analyze-replay-batch --replay-dir outputs/replays --report-json outputs/analysis-batch.json --report-html outputs/analysis-batch.html --max-scan-plies 24
+cargo run --release -p gomoku-eval -- analyze-replay-batch --replay-dir outputs/replays --report-json outputs/analysis-batch.json --report-html outputs/analysis-batch.html --max-scan-plies 40
 cargo run --release -p gomoku-eval -- analyze-report-replays --report reports/latest.json --sample-size 8 --max-scan-plies 8 --report-json outputs/analysis/top2-smoke.json --report-html outputs/analysis/top2-smoke.html
-cargo run --release -p gomoku-eval -- analyze-report-replays --report reports/latest.json --sample-size 8 --max-scan-plies 8 --include-proof-details --deep-retry-depth 10 --deep-retry-limit 1 --report-json outputs/analysis/top2-audit.json --report-html outputs/analysis/top2-audit.html
+cargo run --release -p gomoku-eval -- analyze-report-replays --report reports/latest.json --sample-size 64 --max-scan-plies 40 --report-json outputs/analysis/top2-audit.json --report-html outputs/analysis/top2-audit.html
 ```
 
 Use the larger curated-report run from `gomoku-bot-lab/` when publishing
