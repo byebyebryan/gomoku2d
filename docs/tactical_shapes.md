@@ -4,13 +4,15 @@ Purpose: define the tactical shape terms used by `SearchBot`, tactical
 scenarios, and future tactical eval work.
 
 This doc is intentionally local and practical. It does not try to be a complete
-Gomoku/Renju theory reference. It defines the facts our bot can detect cheaply
-around one candidate move.
+Gomoku/Renju theory reference. It defines the shared facts our bot can detect
+cheaply around one candidate move or an existing corridor threat.
 
 Source of truth in code:
 
-- Search shape facts: `gomoku-bot-lab/gomoku-bot/src/search.rs`
-- Corridor shape facts: `gomoku-bot-lab/gomoku-bot/src/corridor.rs`
+- Shared tactical shape facts: `gomoku-bot-lab/gomoku-bot/src/tactical.rs`
+- Search consumer: `gomoku-bot-lab/gomoku-bot/src/search.rs`
+- Corridor consumer: `gomoku-bot-lab/gomoku-bot/src/corridor.rs`
+- Replay-analysis consumer tests: `gomoku-bot-lab/gomoku-eval/src/analysis.rs`
 - Scenario boards: `gomoku-bot-lab/benchmarks/scenarios.rs`
 - Focused scenario runner: `gomoku-bot-lab/gomoku-eval/src/scenario.rs`
 
@@ -20,12 +22,16 @@ A tactical shape fact is move-centric:
 
 - `player`: the side creating the shape.
 - `kind`: the shape class.
-- `gain_square`: the move that creates the shape.
+- `origin`: either the candidate move that creates the shape or the existing
+  run stone that anchors an already-live corridor threat.
 - `defense_squares`: points the opponent should consider answering.
 - `rest_squares`: points the attacker needs later to turn a weaker shape into a
   stronger forcing shape.
 
-Create means "play the gain square and create this shape."
+Create means "play the origin square and create this shape" when the origin is
+a candidate move. Existing corridor facts use the origin only as a stable anchor
+for dedupe and diagnostics; the important tactical data is still the defense
+and rest squares.
 
 Defense squares are local shape facts, not always a scenario role. Depending on
 timing, the useful tactical question may be to prevent a stronger shape before
@@ -144,9 +150,12 @@ Renju scenarios should cover both sides of the asymmetry:
 
 ## Current Limits
 
-- Facts are local to lines through the candidate move.
-- Search and corridor shape detectors are separate implementations; keep their
-  local-threat semantics aligned with focused tests when changing either side.
-- Closed threes are non-forcing diagnostics.
+- Facts are local to lines through the candidate move or an occupied origin
+  stone.
+- Search and corridor now share one tactical module/source of truth. Their
+  forcing semantics intentionally differ: search treats broken threes as
+  non-forcing ordering material, while corridor search treats broken threes as
+  active imminent threats when they have legal forcing continuations.
+- Closed threes are non-forcing diagnostics for both consumers.
 - The practice bot should consume these facts only where they improve reached
   depth, runtime, or tournament strength under the same budget.

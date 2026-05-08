@@ -457,6 +457,8 @@ Likely layering:
 
 - `gomoku-core`: board, rules, legality, winning-line checks, compact move
   codecs, and any generic line/shape facts that are not bot-specific.
+- `gomoku-bot`: shared tactical shape facts and corridor proof primitives while
+  they remain lab-facing strategy logic.
 - `gomoku-eval` or a new lab analysis module: bounded corridor search,
   proof-tree generation, and analyzer reports while the behavior is
   experimental.
