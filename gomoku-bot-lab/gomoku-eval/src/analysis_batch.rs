@@ -159,6 +159,8 @@ pub enum AnalysisBatchProofMarkerKind {
     Threat,
     ImminentDefense,
     OffensiveCounter,
+    CorridorEntryBlack,
+    CorridorEntryWhite,
     Forbidden,
     ForcedLoss,
     Escape,
@@ -845,13 +847,17 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
     .marker--winning,
     .marker--threat,
     .marker--imminent-defense,
-    .marker--offensive-counter {{
+    .marker--offensive-counter,
+    .marker--corridor-entry-black,
+    .marker--corridor-entry-white {{
       --proof-hint-color: transparent;
     }}
     .marker--winning::after,
     .marker--threat::after,
     .marker--imminent-defense::after,
-    .marker--offensive-counter::after {{
+    .marker--offensive-counter::after,
+    .marker--corridor-entry-black::after,
+    .marker--corridor-entry-white::after {{
       content: "";
       position: absolute;
       inset: 0;
@@ -871,6 +877,12 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
     }}
     .marker--offensive-counter {{
       --proof-hint-color: var(--purple);
+    }}
+    .marker--corridor-entry-black {{
+      --proof-hint-color: #050505;
+    }}
+    .marker--corridor-entry-white {{
+      --proof-hint-color: #fff;
     }}
     .marker--actual {{
     }}
@@ -930,6 +942,7 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
     .legend-threat::before {{ color: var(--red); }}
     .legend-imminent::before {{ color: var(--pink); }}
     .legend-offensive::before {{ color: var(--purple); }}
+    .legend-corridor-entry::before {{ color: #fff; }}
     .legend-forbidden .legend-marker {{
       color: #f6eed8;
       text-shadow: 0 1px 0 #000;
@@ -1736,6 +1749,15 @@ fn proof_frames_for_actual_interval(
                 &mut deep_retries_remaining,
             );
             add_reply_outcome_markers(&mut markers, &reply_outcomes);
+            add_pre_corridor_escape_marker(
+                &mut markers,
+                replay,
+                analysis,
+                ply,
+                board,
+                proof,
+                &reply_outcomes,
+            );
             if let Some(actual_move) = actual_move {
                 add_actual_marker(&mut markers, board, analysis.winner, actual_move);
             }
@@ -1911,6 +1933,52 @@ fn add_reply_outcome_markers(
     }
 }
 
+fn add_pre_corridor_escape_marker(
+    markers: &mut Vec<AnalysisBatchProofMarker>,
+    replay: &Replay,
+    analysis: &GameAnalysis,
+    ply: usize,
+    board: &Board,
+    proof: Option<&ProofResult>,
+    reply_outcomes: &[DefenderReplyAnalysis],
+) {
+    let Some(winner) = analysis.winner else {
+        return;
+    };
+    if board.current_player != winner.opponent()
+        || ply != analysis.final_forced_interval.start_ply
+        || proof.map(|proof| proof.status) != Some(ProofStatus::EscapeFound)
+        || !reply_outcomes.is_empty()
+        || has_visible_tactical_hint(markers)
+    {
+        return;
+    }
+
+    let Some(entry_move) = actual_move_at_ply(replay, ply + 1) else {
+        return;
+    };
+    if !board.is_legal(entry_move) {
+        return;
+    }
+
+    add_marker_kind(markers, [entry_move], corridor_entry_marker_kind(winner));
+    add_marker_kind(markers, [entry_move], AnalysisBatchProofMarkerKind::Escape);
+}
+
+fn corridor_entry_marker_kind(winner: Color) -> AnalysisBatchProofMarkerKind {
+    match winner {
+        Color::Black => AnalysisBatchProofMarkerKind::CorridorEntryBlack,
+        Color::White => AnalysisBatchProofMarkerKind::CorridorEntryWhite,
+    }
+}
+
+fn has_visible_tactical_hint(markers: &[AnalysisBatchProofMarker]) -> bool {
+    markers
+        .iter()
+        .flat_map(|marker| marker.kinds.iter().copied())
+        .any(is_hint_marker_kind)
+}
+
 fn add_actual_marker(
     markers: &mut Vec<AnalysisBatchProofMarker>,
     board: &Board,
@@ -1965,6 +2033,8 @@ fn is_hint_marker_kind(kind: AnalysisBatchProofMarkerKind) -> bool {
             | AnalysisBatchProofMarkerKind::Threat
             | AnalysisBatchProofMarkerKind::ImminentDefense
             | AnalysisBatchProofMarkerKind::OffensiveCounter
+            | AnalysisBatchProofMarkerKind::CorridorEntryBlack
+            | AnalysisBatchProofMarkerKind::CorridorEntryWhite
     )
 }
 
@@ -2262,7 +2332,7 @@ fn proof_frames_html(frames: &[AnalysisBatchProofFrame]) -> String {
     let turn_cards = proof_decision_turns_html(frames, winner, winning_frame.ply);
 
     format!(
-        "<div class=\"proof-frames\"><h3>Proof frames</h3><div class=\"proof-legend\"><div class=\"proof-legend-row\"><span class=\"legend-role legend-winning\">immediate win</span><span class=\"legend-role legend-threat\">immediate threat</span><span class=\"legend-role legend-imminent\">defensive reply</span><span class=\"legend-role legend-offensive\">offensive reply</span></div><div class=\"proof-legend-row\"><span class=\"legend-outcome legend-immediate-loss\"><strong class=\"legend-marker legend-marker--white\">!</strong> immediate loss</span><span class=\"legend-outcome legend-forced\"><strong class=\"legend-marker legend-marker--white\">L</strong> forced loss</span><span class=\"legend-outcome legend-forbidden\"><strong class=\"legend-marker\">F</strong> forbidden</span><span class=\"legend-outcome legend-escape\"><strong class=\"legend-marker\">E</strong> escape</span><span class=\"legend-outcome legend-unproved\"><strong class=\"legend-marker\">U</strong> unproved escape</span><span class=\"legend-outcome legend-unknown\"><strong class=\"legend-marker\">?</strong> unknown</span></div></div><div class=\"proof-frame-list\">{final_card}{turn_cards}</div></div>",
+        "<div class=\"proof-frames\"><h3>Proof frames</h3><div class=\"proof-legend\"><div class=\"proof-legend-row\"><span class=\"legend-role legend-winning\">immediate win</span><span class=\"legend-role legend-threat\">immediate threat</span><span class=\"legend-role legend-imminent\">defensive reply</span><span class=\"legend-role legend-offensive\">offensive reply</span><span class=\"legend-role legend-corridor-entry\">corridor entry</span></div><div class=\"proof-legend-row\"><span class=\"legend-outcome legend-immediate-loss\"><strong class=\"legend-marker legend-marker--white\">!</strong> immediate loss</span><span class=\"legend-outcome legend-forced\"><strong class=\"legend-marker legend-marker--white\">L</strong> forced loss</span><span class=\"legend-outcome legend-forbidden\"><strong class=\"legend-marker\">F</strong> forbidden</span><span class=\"legend-outcome legend-escape\"><strong class=\"legend-marker\">E</strong> escape</span><span class=\"legend-outcome legend-unproved\"><strong class=\"legend-marker\">U</strong> unproved escape</span><span class=\"legend-outcome legend-unknown\"><strong class=\"legend-marker\">?</strong> unknown</span></div></div><div class=\"proof-frame-list\">{final_card}{turn_cards}</div></div>",
         final_card = final_card,
         turn_cards = turn_cards,
     )
@@ -2506,6 +2576,8 @@ fn marker_classes(
             AnalysisBatchProofMarkerKind::Threat => "marker--threat",
             AnalysisBatchProofMarkerKind::ImminentDefense => "marker--imminent-defense",
             AnalysisBatchProofMarkerKind::OffensiveCounter => "marker--offensive-counter",
+            AnalysisBatchProofMarkerKind::CorridorEntryBlack => "marker--corridor-entry-black",
+            AnalysisBatchProofMarkerKind::CorridorEntryWhite => "marker--corridor-entry-white",
             AnalysisBatchProofMarkerKind::Forbidden => "marker--forbidden",
             AnalysisBatchProofMarkerKind::ForcedLoss => "marker--forced-loss",
             AnalysisBatchProofMarkerKind::Escape => "marker--escape",
@@ -3077,6 +3149,8 @@ mod tests {
                             | AnalysisBatchProofMarkerKind::Threat
                             | AnalysisBatchProofMarkerKind::ImminentDefense
                             | AnalysisBatchProofMarkerKind::OffensiveCounter
+                            | AnalysisBatchProofMarkerKind::CorridorEntryBlack
+                            | AnalysisBatchProofMarkerKind::CorridorEntryWhite
                             | AnalysisBatchProofMarkerKind::Forbidden
                             | AnalysisBatchProofMarkerKind::ForcedLoss
                             | AnalysisBatchProofMarkerKind::Escape
@@ -3145,6 +3219,64 @@ mod tests {
         assert!(final_l8
             .kinds
             .contains(&AnalysisBatchProofMarkerKind::Threat));
+    }
+
+    #[test]
+    fn analysis_batch_marks_pre_corridor_entry_as_escape_target() {
+        let replay = replay_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "H9", "I8", "I9", "G8", "J8", "G6", "H10", "K7", "G11", "F12", "F10", "J9",
+                "H7", "E8", "F8", "F7", "H5", "C10", "D9", "G5", "G7", "H6", "E9", "D8", "G9",
+                "F9", "E7", "D6", "I11",
+            ],
+        );
+
+        let report = run_analysis_batch_replays_with_options(
+            "report.json:bot-a vs bot-b".to_string(),
+            vec![ReplayAnalysisInput {
+                label: "pre_corridor_escape".to_string(),
+                replay,
+            }],
+            AnalysisBatchRunOptions {
+                analysis: AnalysisOptions {
+                    defense_policy: DefensePolicy::AllLegalDefense,
+                    max_depth: 4,
+                    max_backward_window: Some(8),
+                },
+                include_proof_details: true,
+                deep_retry_depth: None,
+                deep_retry_limit: 0,
+            },
+        );
+
+        let details = report.entries[0]
+            .proof_details
+            .as_ref()
+            .expect("proof details should be recorded");
+        assert_eq!(details.final_forced_start_ply, 23);
+        let frame = details
+            .proof_frames
+            .iter()
+            .find(|frame| frame.label == "actual_ply_23")
+            .expect("pre-corridor escape frame should be present");
+        assert_eq!(frame.side_to_move, Color::Black);
+        assert_eq!(frame.status, ProofStatus::EscapeFound);
+        assert!(frame.reply_outcomes.is_empty());
+
+        let e9 = frame
+            .markers
+            .iter()
+            .find(|marker| marker.notation == "E9")
+            .expect("winner corridor entry should be shown as an escape target");
+        assert!(e9
+            .kinds
+            .contains(&AnalysisBatchProofMarkerKind::CorridorEntryWhite));
+        assert!(e9.kinds.contains(&AnalysisBatchProofMarkerKind::Escape));
+        assert_eq!(marker_label(e9), "E");
+        let classes = cell_classes(frame, '.', Some(e9));
+        assert!(classes.contains("marker--corridor-entry-white"));
+        assert!(classes.contains("marker--escape"));
     }
 
     #[test]

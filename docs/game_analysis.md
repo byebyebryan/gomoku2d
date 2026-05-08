@@ -181,6 +181,14 @@ next move. The board has changed, so the winner may choose any named corridor
 continuation from the alternate state. The restriction is not "actual move
 only"; it is "corridor moves only."
 
+When the latest escape boundary is before the active corridor has started, there
+may be no immediate/imminent threat to mark yet. In that case the report should
+mark the winner's next actual corridor-entry square as the losing side's escape
+target. This means "deny this shown forced line," not "prove this move saves the
+whole game." Later analyzer modes may probe whether that denial move enters a
+different forced corridor, but the basic report should keep the explanation
+focused on the actual final corridor.
+
 Conceptually, this model should not need an arbitrary search depth limit. The
 corridor itself bounds the search because every branch must be justified by an
 active immediate/imminent threat. Implementation can still keep safety guards
@@ -804,9 +812,11 @@ The first lab implementation lives in `gomoku-eval` and is intentionally narrow:
   the outer hint explains why the square is shown: bright green for an
   immediate win, bright red for an immediate losing square, pink for a defensive
   reply to an imminent threat, blue for an offensive counter-threat reply, and
-  an actual-move ring for the replay move. Losing-side actual moves keep their
-  role hint boxes, but actual replay moves are not probed or labeled as branch
-  outcomes in the visual frame; they are the path being explained. The marker
+  black/white for the winner's corridor-entry square when the escape boundary
+  sits before the active corridor starts. Actual replay moves use rings.
+  Losing-side actual moves keep their role hint boxes, but actual replay moves
+  are not probed or labeled as branch outcomes in the visual frame; they are the
+  path being explained. The marker
   character explains what happens if the defender plays an alternate candidate
   (`L` forced loss, `E` escape, `U` unproved escape, `!` immediate loss, `?`
   unknown). Proof branch evidence such as
