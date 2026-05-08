@@ -1,6 +1,7 @@
 pub mod corridor;
 pub mod random;
 pub mod search;
+pub mod tactical;
 
 pub use corridor::{CorridorBot, CorridorBotFallback, CorridorOptions};
 pub use random::RandomBot;
