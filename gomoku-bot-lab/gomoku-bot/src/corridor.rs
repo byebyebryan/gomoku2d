@@ -1453,7 +1453,11 @@ fn broken_three_rest_squares_through_move(
                 row: row as usize,
                 col: col as usize,
             };
-            if virtual_run_len(board, rest, player, dr, dc) < board.config.win_length - 1 {
+            if four_completion_squares_after_virtual_rest_through_move(
+                board, mv, player, dr, dc, rest,
+            )
+            .is_empty()
+            {
                 continue;
             }
             push_unique_move(&mut rest_squares, rest);
@@ -1464,30 +1468,57 @@ fn broken_three_rest_squares_through_move(
     rest_squares
 }
 
-fn virtual_run_len(board: &Board, rest: Move, player: Color, dr: isize, dc: isize) -> usize {
-    1 + virtual_count_in_direction(board, rest, player, dr, dc, -1)
-        + virtual_count_in_direction(board, rest, player, dr, dc, 1)
-}
-
-fn virtual_count_in_direction(
+fn four_completion_squares_after_virtual_rest_through_move(
     board: &Board,
-    rest: Move,
+    mv: Move,
     player: Color,
     dr: isize,
     dc: isize,
-    step: isize,
-) -> usize {
-    let mut count = 0usize;
-    let mut row = rest.row as isize + dr * step;
-    let mut col = rest.col as isize + dc * step;
-    while in_bounds(board, row, col)
-        && has_color_or_virtual_rest(board, row as usize, col as usize, player, rest)
-    {
-        count += 1;
-        row += dr * step;
-        col += dc * step;
+    rest: Move,
+) -> Vec<Move> {
+    let win_len = board.config.win_length as isize;
+    let mut completions = Vec::new();
+
+    for start in -(win_len - 1)..=0 {
+        let mut player_count = 0usize;
+        let mut empty_square = None;
+        let mut blocked = false;
+
+        for offset in start..start + win_len {
+            let row = mv.row as isize + dr * offset;
+            let col = mv.col as isize + dc * offset;
+            if !in_bounds(board, row, col) {
+                blocked = true;
+                break;
+            }
+
+            let candidate = Move {
+                row: row as usize,
+                col: col as usize,
+            };
+            if has_color_or_virtual_rest(board, candidate.row, candidate.col, player, rest) {
+                player_count += 1;
+            } else if board.is_empty(candidate.row, candidate.col) && empty_square.is_none() {
+                empty_square = Some(candidate);
+            } else {
+                blocked = true;
+                break;
+            }
+        }
+
+        let Some(empty_square) = empty_square else {
+            continue;
+        };
+        if !blocked
+            && player_count == board.config.win_length.saturating_sub(1)
+            && !completions.contains(&empty_square)
+        {
+            completions.push(empty_square);
+        }
     }
-    count
+
+    completions.sort_by_key(|mv| (mv.row, mv.col));
+    completions
 }
 
 fn has_color_or_virtual_rest(
@@ -1633,6 +1664,55 @@ mod tests {
     }
 
     #[test]
+    fn local_threat_facts_report_open_closed_and_broken_fours() {
+        let open_four = board_from_moves(
+            Variant::Freestyle,
+            &["H8", "A1", "I8", "A2", "J8", "A3", "K8"],
+        );
+        assert!(
+            local_threat_facts(&open_four, Color::Black).contains(&LocalThreatFact {
+                kind: LocalThreatKind::OpenFour,
+                defense_squares: vec![mv("G8"), mv("L8")],
+            })
+        );
+
+        let closed_four = board_from_moves(
+            Variant::Freestyle,
+            &["H8", "G8", "I8", "A1", "J8", "A2", "K8"],
+        );
+        assert!(
+            local_threat_facts(&closed_four, Color::Black).contains(&LocalThreatFact {
+                kind: LocalThreatKind::ClosedFour,
+                defense_squares: vec![mv("L8")],
+            })
+        );
+
+        let broken_four = board_from_moves(
+            Variant::Freestyle,
+            &["H8", "A1", "I8", "A2", "K8", "A3", "L8"],
+        );
+        assert!(
+            local_threat_facts(&broken_four, Color::Black).contains(&LocalThreatFact {
+                kind: LocalThreatKind::BrokenFour,
+                defense_squares: vec![mv("J8")],
+            })
+        );
+    }
+
+    #[test]
+    fn boxed_three_is_not_an_active_open_three() {
+        let board = board_from_moves(Variant::Freestyle, &["J9", "H9", "K9", "N9", "L9"]);
+        let facts = local_threat_facts(&board, Color::Black);
+
+        assert!(
+            facts
+                .iter()
+                .all(|fact| fact.kind != LocalThreatKind::OpenThree),
+            "{facts:?}"
+        );
+    }
+
+    #[test]
     fn open_three_with_blocked_outer_side_includes_far_defense_square() {
         let board = board_from_moves(Variant::Renju, &["J9", "H9", "K9", "A1", "L9"]);
         assert!(
@@ -1650,6 +1730,45 @@ mod tests {
         );
         let reply = reply_for(&replies, "N9");
         assert!(reply.roles.contains(&DefenderReplyRole::ImminentDefense));
+    }
+
+    #[test]
+    fn open_three_with_right_blocked_outer_side_includes_far_defense_square() {
+        let board = board_from_moves(Variant::Renju, &["J9", "N9", "K9", "A1", "L9"]);
+        assert!(
+            local_threat_facts(&board, Color::Black).contains(&LocalThreatFact {
+                kind: LocalThreatKind::OpenThree,
+                defense_squares: vec![mv("I9"), mv("M9"), mv("H9")],
+            })
+        );
+
+        let replies = analyze_defender_reply_options(
+            &board,
+            Color::Black,
+            Some(mv("I9")),
+            &Default::default(),
+        );
+        let reply = reply_for(&replies, "I9");
+        assert!(reply.roles.contains(&DefenderReplyRole::ImminentDefense));
+    }
+
+    #[test]
+    fn broken_three_facts_include_rest_moves_that_create_broken_fours() {
+        let split_three = board_from_moves(Variant::Freestyle, &["H8", "A1", "J8", "C1", "L8"]);
+        assert!(
+            local_threat_facts(&split_three, Color::Black).contains(&LocalThreatFact {
+                kind: LocalThreatKind::BrokenThree,
+                defense_squares: vec![mv("I8"), mv("K8")],
+            })
+        );
+
+        let two_gap_three = board_from_moves(Variant::Freestyle, &["H8", "A1", "K8", "C1", "L8"]);
+        assert!(
+            local_threat_facts(&two_gap_three, Color::Black).contains(&LocalThreatFact {
+                kind: LocalThreatKind::BrokenThree,
+                defense_squares: vec![mv("I8"), mv("J8")],
+            })
+        );
     }
 
     #[test]
