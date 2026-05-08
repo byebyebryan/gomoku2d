@@ -198,7 +198,7 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
             critical_mistake_ply: Some(9),
             tactical_notes: &[TacticalNote::MissedWin],
             required_unknown_gaps: &[],
-            required_reply_classifications: &[ReplyClassification::Escaped],
+            required_reply_classifications: &[ReplyClassification::ConfirmedEscape],
         },
     },
     AnalysisFixtureCase {
@@ -964,7 +964,7 @@ mod tests {
         let json = serde_json::to_string_pretty(&report)
             .expect("analysis fixture report should serialize");
 
-        assert!(json.contains("\"schema_version\": 12"));
+        assert!(json.contains("\"schema_version\": 13"));
         assert!(json.contains("\"case_id\": \"missed_defense_closed_four\""));
         assert!(json.contains("\"expected\""));
         assert!(json.contains("\"actual\""));
