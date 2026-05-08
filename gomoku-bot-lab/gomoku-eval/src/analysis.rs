@@ -1,10 +1,9 @@
 use gomoku_core::{replay::ReplayResult, Board, Color, GameResult, Move, Replay, Variant};
 use serde::Serialize;
 
-pub const ANALYSIS_SCHEMA_VERSION: u32 = 13;
+pub const ANALYSIS_SCHEMA_VERSION: u32 = 14;
 pub const DEFAULT_MAX_SCAN_PLIES: usize = 64;
-const MAX_HYBRID_LOCAL_THREAT_COUNT: usize = 2;
-const MAX_HYBRID_LOCAL_THREAT_REPLIES: usize = 8;
+const MAX_CORRIDOR_REPLY_WIDTH: usize = 8;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -16,10 +15,8 @@ pub enum ProofStatus {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
-pub enum DefensePolicy {
-    AllLegalDefense,
-    TacticalDefense,
-    HybridDefense,
+pub enum ReplyPolicy {
+    CorridorReplies,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -132,7 +129,7 @@ impl SearchDiagnostics {
 
 #[derive(Debug, Clone)]
 pub struct AnalysisOptions {
-    pub defense_policy: DefensePolicy,
+    pub reply_policy: ReplyPolicy,
     pub max_depth: usize,
     pub max_scan_plies: Option<usize>,
 }
@@ -140,7 +137,7 @@ pub struct AnalysisOptions {
 impl Default for AnalysisOptions {
     fn default() -> Self {
         Self {
-            defense_policy: DefensePolicy::AllLegalDefense,
+            reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 4,
             max_scan_plies: Some(DEFAULT_MAX_SCAN_PLIES),
         }
@@ -149,9 +146,7 @@ impl Default for AnalysisOptions {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct AnalysisModel {
-    pub defense_policy: DefensePolicy,
-    pub tactical_reply_coverage: Vec<String>,
-    pub attacker_move_policy: String,
+    pub reply_policy: ReplyPolicy,
     pub rule_set: String,
     pub max_depth: usize,
     pub max_scan_plies: Option<usize>,
@@ -447,7 +442,7 @@ pub fn defender_reply_roles_for_move(
         return Vec::new();
     }
 
-    let threat = ThreatReplySet::new(board, attacker, true);
+    let threat = ThreatReplySet::new(board, attacker);
     let mut roles = Vec::new();
     if threat.legal_cost_squares.contains(&mv) {
         roles.push(DefenderReplyRole::ImmediateDefense);
@@ -474,7 +469,7 @@ fn analyze_defender_reply_options_inner(
         return Vec::new();
     }
 
-    let threat = ThreatReplySet::new(board, attacker, true);
+    let threat = ThreatReplySet::new(board, attacker);
     let mut replies = Vec::<(Move, Vec<DefenderReplyRole>)>::new();
     for mv in threat.legal_cost_squares.iter().copied() {
         push_reply_role(&mut replies, mv, DefenderReplyRole::ImmediateDefense);
@@ -859,7 +854,7 @@ fn classify_narrow_corridor_for_report(
             diagnostics,
         };
     }
-    if reply_moves.len() > MAX_HYBRID_LOCAL_THREAT_REPLIES {
+    if reply_moves.len() > MAX_CORRIDOR_REPLY_WIDTH {
         return DefenderReplyProof {
             outcome: DefenderReplyOutcome::PossibleEscape,
             principal_line: Vec::new(),
@@ -929,7 +924,7 @@ fn classify_narrow_corridor_for_report(
 }
 
 fn narrow_corridor_reply_moves(board: &Board, attacker: Color) -> Vec<Move> {
-    let threat = ThreatReplySet::new(board, attacker, true);
+    let threat = ThreatReplySet::new(board, attacker);
     if !threat.winning_squares.is_empty() {
         return threat.reply_moves;
     }
@@ -1047,13 +1042,11 @@ struct ThreatReplySet {
     legal_cost_squares: Vec<Move>,
     illegal_cost_squares: Vec<Move>,
     defender_immediate_wins: Vec<Move>,
-    local_threat_count: usize,
-    local_threat_replies: Vec<Move>,
     reply_moves: Vec<Move>,
 }
 
 impl ThreatReplySet {
-    fn new(board: &Board, attacker: Color, include_local_threats: bool) -> Self {
+    fn new(board: &Board, attacker: Color) -> Self {
         let defender = attacker.opponent();
         let winning_squares = board.immediate_winning_moves_for(attacker);
         let raw_cost_squares = winning_squares.clone();
@@ -1073,16 +1066,6 @@ impl ThreatReplySet {
                 reply_moves.push(mv);
             }
         }
-        let local_threats = if include_local_threats {
-            local_threat_facts(board, attacker)
-        } else {
-            Vec::new()
-        };
-        let local_threat_count = local_threats
-            .iter()
-            .filter(|fact| local_threat_is_forcing_for(board, attacker, fact))
-            .count();
-        let local_threat_replies = local_threat_reply_moves(board, defender, &local_threats);
 
         Self {
             attacker,
@@ -1092,8 +1075,6 @@ impl ThreatReplySet {
             legal_cost_squares,
             illegal_cost_squares,
             defender_immediate_wins,
-            local_threat_count,
-            local_threat_replies,
             reply_moves,
         }
     }
@@ -1388,8 +1369,7 @@ fn replay_corridor_defender_node(
     prefix_ply: usize,
     actual_child: Option<&ProofResult>,
 ) -> ProofResult {
-    let include_local_threats = options.defense_policy == DefensePolicy::HybridDefense;
-    let threat = ThreatReplySet::new(board, attacker, include_local_threats);
+    let threat = ThreatReplySet::new(board, attacker);
     let attribution = EvidenceAttribution {
         prefix_ply: Some(prefix_ply),
         actual_reply: actual_moves.get(prefix_ply).copied(),
@@ -1759,13 +1739,6 @@ fn corridor_defender_reply_moves(
         for mv in offensive_counter_reply_moves(board, threat.attacker.opponent()) {
             push_unique_move(&mut replies, mv);
         }
-        if options.defense_policy == DefensePolicy::HybridDefense
-            && use_hybrid_local_threat_replies(threat)
-        {
-            for mv in threat.local_threat_replies.iter().copied() {
-                push_unique_move(&mut replies, mv);
-            }
-        }
         if let Some(mv) = next_actual_attacker_corridor_move(
             board,
             actual_moves,
@@ -1870,12 +1843,6 @@ fn corridor_attacker_move_rank(board: &Board, attacker: Color, mv: Move) -> u8 {
         .unwrap_or(0)
 }
 
-fn use_hybrid_local_threat_replies(threat: &ThreatReplySet) -> bool {
-    (1..=MAX_HYBRID_LOCAL_THREAT_COUNT).contains(&threat.local_threat_count)
-        && !threat.local_threat_replies.is_empty()
-        && threat.local_threat_replies.len() <= MAX_HYBRID_LOCAL_THREAT_REPLIES
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum LocalThreatKind {
     OpenFour,
@@ -1958,27 +1925,6 @@ fn legal_forcing_continuations_for_fact(
         }
     }
     continuations
-}
-
-fn local_threat_reply_moves(
-    board: &Board,
-    defender: Color,
-    local_threats: &[LocalThreatFact],
-) -> Vec<Move> {
-    let mut replies = Vec::new();
-    let attacker = defender.opponent();
-    for fact in local_threats {
-        if !local_threat_is_forcing_for(board, attacker, fact) {
-            continue;
-        }
-        for continuation in legal_forcing_continuations_for_fact(board, attacker, fact) {
-            let mv = continuation.mv;
-            if board.is_legal_for_color(mv, defender) {
-                push_unique_move(&mut replies, mv);
-            }
-        }
-    }
-    replies
 }
 
 fn has_forcing_local_threat(board: &Board, player: Color) -> bool {
@@ -2795,38 +2741,11 @@ fn color_for_ply(ply: usize) -> Option<Color> {
 
 pub(crate) fn corridor_analysis_model(board: &Board, options: &AnalysisOptions) -> AnalysisModel {
     AnalysisModel {
-        defense_policy: options.defense_policy,
-        tactical_reply_coverage: corridor_tactical_reply_coverage(options.defense_policy),
-        attacker_move_policy: corridor_attacker_move_policy(options.defense_policy).to_string(),
+        reply_policy: options.reply_policy,
         rule_set: rule_label(&board.config.variant).to_string(),
         max_depth: options.max_depth,
         max_scan_plies: options.max_scan_plies,
     }
-}
-
-fn corridor_attacker_move_policy(policy: DefensePolicy) -> &'static str {
-    match policy {
-        DefensePolicy::AllLegalDefense | DefensePolicy::TacticalDefense => {
-            "actual_corridor_moves; immediate_wins; local_threat_materialization; corridor_depth"
-        }
-        DefensePolicy::HybridDefense => {
-            "actual_corridor_moves; immediate_wins; local_threat_materialization; bounded_local_threats; corridor_depth"
-        }
-    }
-}
-
-fn corridor_tactical_reply_coverage(policy: DefensePolicy) -> Vec<String> {
-    let mut coverage = vec![
-        "corridor_exit_a_filter".to_string(),
-        "legal_cost_replies".to_string(),
-        "defender_immediate_wins".to_string(),
-        "next_actual_attacker_move".to_string(),
-        "forbidden_cost_squares".to_string(),
-    ];
-    if policy == DefensePolicy::HybridDefense {
-        coverage.push("local_threat_replies".to_string());
-    }
-    coverage
 }
 
 pub(crate) fn rule_label(variant: &Variant) -> &'static str {
@@ -2844,8 +2763,8 @@ mod tests {
         analyze_defender_reply_options, analyze_replay, has_forcing_local_threat,
         legal_forcing_continuations_for_fact, local_threat_facts, replay_moves,
         replay_prefix_boards, replay_proof_summary, AnalysisOptions, DefenderReplyOutcome,
-        DefenderReplyRole, DefensePolicy, LocalThreatFact, LocalThreatKind, ProofLimitCause,
-        ProofStatus, ReplyClassification, RootCause, TacticalNote, UnclearReason,
+        DefenderReplyRole, LocalThreatFact, LocalThreatKind, ProofLimitCause, ProofStatus,
+        ReplyClassification, ReplyPolicy, RootCause, TacticalNote, UnclearReason,
     };
 
     fn mv(notation: &str) -> Move {
@@ -2891,7 +2810,7 @@ mod tests {
             ],
         );
         let options = AnalysisOptions {
-            defense_policy: DefensePolicy::AllLegalDefense,
+            reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 4,
             max_scan_plies: Some(8),
         };
@@ -2941,7 +2860,7 @@ mod tests {
             ],
         );
         let options = AnalysisOptions {
-            defense_policy: DefensePolicy::AllLegalDefense,
+            reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 4,
             max_scan_plies: Some(8),
         };
@@ -2975,7 +2894,7 @@ mod tests {
         );
 
         let options = AnalysisOptions {
-            defense_policy: DefensePolicy::AllLegalDefense,
+            reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 4,
             max_scan_plies: Some(8),
         };
@@ -2997,7 +2916,7 @@ mod tests {
         );
 
         let options = AnalysisOptions {
-            defense_policy: DefensePolicy::AllLegalDefense,
+            reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 4,
             max_scan_plies: Some(8),
         };
@@ -3082,7 +3001,7 @@ mod tests {
     }
 
     #[test]
-    fn all_legal_defense_finds_escape_for_single_closed_four() {
+    fn corridor_replies_finds_escape_for_single_closed_four() {
         let board = board_from_moves(
             Variant::Freestyle,
             &["H8", "G8", "I8", "A1", "J8", "A2", "K8"],
@@ -3092,7 +3011,7 @@ mod tests {
             Color::Black,
             None,
             &AnalysisOptions {
-                defense_policy: DefensePolicy::AllLegalDefense,
+                reply_policy: ReplyPolicy::CorridorReplies,
                 max_depth: 4,
                 ..AnalysisOptions::default()
             },
@@ -3105,7 +3024,7 @@ mod tests {
     }
 
     #[test]
-    fn all_legal_defense_proves_open_four_even_if_one_end_is_blocked() {
+    fn corridor_replies_proves_open_four_even_if_one_end_is_blocked() {
         let board = board_from_moves(
             Variant::Freestyle,
             &["H8", "A1", "I8", "A2", "J8", "A3", "K8"],
@@ -3115,7 +3034,7 @@ mod tests {
             Color::Black,
             None,
             &AnalysisOptions {
-                defense_policy: DefensePolicy::AllLegalDefense,
+                reply_policy: ReplyPolicy::CorridorReplies,
                 max_depth: 4,
                 ..AnalysisOptions::default()
             },
@@ -3144,7 +3063,7 @@ mod tests {
         let analysis = analyze_replay(
             &replay,
             AnalysisOptions {
-                defense_policy: DefensePolicy::AllLegalDefense,
+                reply_policy: ReplyPolicy::CorridorReplies,
                 max_depth: 4,
                 max_scan_plies: Some(6),
             },
@@ -3176,7 +3095,7 @@ mod tests {
             Color::Black,
             Some(mv("L8")),
             &AnalysisOptions {
-                defense_policy: DefensePolicy::AllLegalDefense,
+                reply_policy: ReplyPolicy::CorridorReplies,
                 max_depth: 0,
                 ..AnalysisOptions::default()
             },
@@ -3188,7 +3107,7 @@ mod tests {
     }
 
     #[test]
-    fn tactical_defense_allows_defender_immediate_win_escape() {
+    fn corridor_replies_allow_defender_immediate_win_escape() {
         let board = board_from_moves(
             Variant::Freestyle,
             &["A1", "H8", "A2", "I8", "A3", "J8", "A4", "K8"],
@@ -3198,7 +3117,7 @@ mod tests {
             Color::White,
             Some(mv("A5")),
             &AnalysisOptions {
-                defense_policy: DefensePolicy::TacticalDefense,
+                reply_policy: ReplyPolicy::CorridorReplies,
                 max_depth: 4,
                 ..AnalysisOptions::default()
             },
@@ -3211,7 +3130,7 @@ mod tests {
     }
 
     #[test]
-    fn tactical_defense_proves_renju_single_square_with_forbidden_block() {
+    fn corridor_replies_prove_renju_single_square_with_forbidden_block() {
         let replay = replay_from_moves(
             Variant::Renju,
             &[
@@ -3222,7 +3141,7 @@ mod tests {
         let analysis = analyze_replay(
             &replay,
             AnalysisOptions {
-                defense_policy: DefensePolicy::TacticalDefense,
+                reply_policy: ReplyPolicy::CorridorReplies,
                 max_depth: 4,
                 max_scan_plies: Some(2),
             },
@@ -3239,39 +3158,6 @@ mod tests {
                     && evidence.legal_cost_squares.is_empty()
                     && evidence.illegal_cost_squares == vec![mv("H8")]
             }));
-    }
-
-    #[test]
-    fn hybrid_defense_proves_double_open_three_with_local_replies() {
-        let replay = replay_from_moves(
-            Variant::Freestyle,
-            &[
-                "H8", "A1", "I8", "C2", "J6", "E3", "J7", "G4", "J8", "H7", "K8",
-            ],
-        );
-
-        let analysis = analyze_replay(
-            &replay,
-            AnalysisOptions {
-                defense_policy: DefensePolicy::HybridDefense,
-                max_depth: 4,
-                max_scan_plies: Some(4),
-            },
-        )
-        .expect("hybrid local-threat replay should analyze");
-
-        assert!(analysis
-            .model
-            .tactical_reply_coverage
-            .contains(&"local_threat_replies".to_string()));
-        assert!(analysis
-            .proof_summary
-            .iter()
-            .all(
-                |proof| proof.threat_evidence.iter().all(|evidence| !evidence
-                    .limit_causes
-                    .contains(&ProofLimitCause::ModelScopeUnknown))
-            ));
     }
 
     #[test]
@@ -3308,7 +3194,7 @@ mod tests {
         let analysis = analyze_replay(
             &replay,
             AnalysisOptions {
-                defense_policy: DefensePolicy::AllLegalDefense,
+                reply_policy: ReplyPolicy::CorridorReplies,
                 max_depth: 2,
                 max_scan_plies: None,
             },
@@ -3338,7 +3224,7 @@ mod tests {
         let analysis = analyze_replay(
             &replay,
             AnalysisOptions {
-                defense_policy: DefensePolicy::AllLegalDefense,
+                reply_policy: ReplyPolicy::CorridorReplies,
                 max_depth: 4,
                 max_scan_plies: Some(8),
             },
@@ -3384,7 +3270,7 @@ mod tests {
             &actual_moves,
             Color::Black,
             &AnalysisOptions {
-                defense_policy: DefensePolicy::AllLegalDefense,
+                reply_policy: ReplyPolicy::CorridorReplies,
                 max_depth: 4,
                 max_scan_plies: Some(8),
             },
@@ -3413,7 +3299,7 @@ mod tests {
         let analysis = analyze_replay(
             &replay,
             AnalysisOptions {
-                defense_policy: DefensePolicy::AllLegalDefense,
+                reply_policy: ReplyPolicy::CorridorReplies,
                 max_depth: 2,
                 max_scan_plies: None,
             },
@@ -3444,7 +3330,7 @@ mod tests {
         let analysis = analyze_replay(
             &replay,
             AnalysisOptions {
-                defense_policy: DefensePolicy::AllLegalDefense,
+                reply_policy: ReplyPolicy::CorridorReplies,
                 max_depth: 2,
                 max_scan_plies: None,
             },
@@ -3471,7 +3357,7 @@ mod tests {
         let analysis = analyze_replay(
             &replay,
             AnalysisOptions {
-                defense_policy: DefensePolicy::AllLegalDefense,
+                reply_policy: ReplyPolicy::CorridorReplies,
                 max_depth: 2,
                 ..AnalysisOptions::default()
             },
@@ -3494,7 +3380,7 @@ mod tests {
         let analysis = analyze_replay(
             &replay,
             AnalysisOptions {
-                defense_policy: DefensePolicy::AllLegalDefense,
+                reply_policy: ReplyPolicy::CorridorReplies,
                 max_depth: 1,
                 max_scan_plies: Some(4),
             },
@@ -3529,21 +3415,14 @@ mod tests {
         let analysis = analyze_replay(
             &replay,
             AnalysisOptions {
-                defense_policy: DefensePolicy::TacticalDefense,
+                reply_policy: ReplyPolicy::CorridorReplies,
                 max_depth: 4,
                 ..AnalysisOptions::default()
             },
         )
         .expect("ongoing renju replay should analyze");
 
-        assert_eq!(
-            analysis.model.defense_policy,
-            DefensePolicy::TacticalDefense
-        );
+        assert_eq!(analysis.model.reply_policy, ReplyPolicy::CorridorReplies);
         assert_eq!(analysis.root_cause, RootCause::Unclear);
-        assert!(analysis
-            .model
-            .tactical_reply_coverage
-            .contains(&"forbidden_cost_squares".to_string()));
     }
 }
