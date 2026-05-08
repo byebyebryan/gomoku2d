@@ -2,6 +2,7 @@ use gomoku_core::{replay::ReplayResult, Board, Color, GameResult, Move, Replay, 
 use serde::Serialize;
 
 pub const ANALYSIS_SCHEMA_VERSION: u32 = 10;
+pub const DEFAULT_MAX_SCAN_PLIES: usize = 64;
 const MAX_HYBRID_LOCAL_THREAT_COUNT: usize = 2;
 const MAX_HYBRID_LOCAL_THREAT_REPLIES: usize = 8;
 
@@ -115,7 +116,7 @@ impl Default for AnalysisOptions {
         Self {
             defense_policy: DefensePolicy::AllLegalDefense,
             max_depth: 4,
-            max_scan_plies: None,
+            max_scan_plies: Some(DEFAULT_MAX_SCAN_PLIES),
         }
     }
 }
@@ -3292,7 +3293,7 @@ mod tests {
             AnalysisOptions {
                 defense_policy: DefensePolicy::AllLegalDefense,
                 max_depth: 2,
-                ..AnalysisOptions::default()
+                max_scan_plies: None,
             },
         )
         .expect("finished replay should analyze");
@@ -3397,7 +3398,7 @@ mod tests {
             AnalysisOptions {
                 defense_policy: DefensePolicy::AllLegalDefense,
                 max_depth: 2,
-                ..AnalysisOptions::default()
+                max_scan_plies: None,
             },
         )
         .expect("finished replay should analyze");
@@ -3428,7 +3429,7 @@ mod tests {
             AnalysisOptions {
                 defense_policy: DefensePolicy::AllLegalDefense,
                 max_depth: 2,
-                ..AnalysisOptions::default()
+                max_scan_plies: None,
             },
         )
         .expect("finished replay should analyze");
