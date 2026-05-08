@@ -36,5 +36,7 @@ during implementation but should not compete with canonical docs:
 |---|---|---|
 | `v0_3_plan.md` | Working plan for the `v0.3` cloud-backed continuity line | `docs/roadmap.md`, `docs/backend.md`, `docs/app_design.md` |
 | `v0_3_completion_plan.md` | Practical rest-of-`0.3` release slicing after the product-identity roadmap pivot | `docs/roadmap.md`, `docs/backend.md`, `docs/backend_infra.md` |
-| `v0_4_plan.md` | Working plan for the `v0.4` lab-powered product identity line, starting with bot discovery before settings UI | `docs/roadmap.md`, `docs/product.md`, `docs/backend.md` |
+| `v0_4_plan.md` | Working plan for the `v0.4` lab-powered product identity line, from bot discovery through corridor-bot work before settings UI | `docs/roadmap.md`, `docs/product.md`, `docs/backend.md` |
+| `v0_4_search_bot_enhancement_plan.md` | Historical retrospective of `0.4.0`-`0.4.2` search-bot experiments and rejected paths | `docs/search_bot.md`, `docs/corridor_search.md`, `docs/performance_tuning.md` |
 | `v0_4_2_game_analysis_impl_notes.md` | Historical implementation notes, telemetry, and rejected replay-analysis proof policies from the `v0.4.2` corridor-search pass | `docs/corridor_search.md`, `docs/game_analysis.md` |
+| `v0_4_3_corridor_bot_plan.md` | Working plan for the lab-only corridor-search-in-bot pass before UI settings | `docs/roadmap.md`, `docs/corridor_search.md`, `docs/search_bot.md` |

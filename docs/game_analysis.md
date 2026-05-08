@@ -27,7 +27,7 @@ The replay surface should produce concrete, bounded explanations:
 
 - "Move 43: point of no return."
 - "White's last chance was move 42."
-- "Black had a forced line from here."
+- "Black had a forced corridor from here."
 - "This looks like a missed defense, not a strategically lost position."
 
 Do not overclaim. If the bounded analyzer cannot prove the position, it should
@@ -50,7 +50,7 @@ it behind a single "best move" label.
 The ideal-game layer asks two related, bounded questions:
 
 - Corridor proof: from this prefix, can the eventual winner stay inside a narrow
-  modeled forced line to the actual ending?
+  modeled corridor to the actual ending?
 - Corridor exit: at a losing-side reply point, is there any legal reply that
   exits that detected corridor?
 
@@ -143,7 +143,7 @@ proof interval.
 When the latest escape boundary is before the active corridor has started, there
 may be no immediate/imminent threat to mark yet. In that case the report should
 mark the winner's next actual corridor-entry square as the losing side's escape
-target. This means "deny this shown forced line," not "prove this move saves the
+target. This means "deny this shown corridor," not "prove this move saves the
 whole game."
 
 For each corridor reply candidate, classify the follow-up explicitly:
@@ -176,12 +176,13 @@ The active replay analyzer exposes one corridor model:
   finished replay the analyzer may look for the final corridor boundary
 
 The report must keep those model settings visible. Product copy such as "forced
-line" is acceptable only when paired with the model and limits. "Detected forced
-line" or "last known escape" is safer when summarizing unresolved branches.
+corridor" is acceptable only when paired with the model and limits. "Detected
+forced corridor" or "last known escape" is safer when summarizing unresolved
+branches.
 
 Implementation-specific replay semantics:
 
-- Principal line: one representative forced line from the proof tree.
+- Principal line: one representative corridor continuation from the proof tree.
 - If the previous prefix was still `unknown`, keep the root cause `unclear` even
   when the next prefix enters a proven forced interval.
 - `possible_escape` branches count as escapes for root classification, while
@@ -423,7 +424,7 @@ Fixtures should cover more than happy-path wins:
   counter-threat escape
 - replay imperfections: missed defense, missed win, conversion error, unknown
   gap, ongoing/draw
-- corridor mechanics: short forced chain, forced reply, forbidden Black defense,
+- corridor mechanics: short forced corridor, forced reply, forbidden Black defense,
   and model-limit cutoffs
 
 Fixtures should print exact boards, expected labels, proof model, and limits.
@@ -440,7 +441,7 @@ Possible replay annotations:
 - Mark the final winning line using the existing result-screen treatment.
 - Mark the decisive attack move.
 - Mark the losing side's last chance.
-- Show the principal forced line as a branch preview.
+- Show the principal corridor continuation as a branch preview.
 - Let the user step from the actual replay into the ideal continuation.
 
 Keep this separate from general hints. A replay analyzer explains what happened;
@@ -456,7 +457,7 @@ Likely layering:
 
 - `gomoku-core`: board, rules, legality, winning-line checks, compact move
   codecs, and any generic line/shape facts that are not bot-specific.
-- `gomoku-eval` or a new lab analysis module: bounded forced-line search,
+- `gomoku-eval` or a new lab analysis module: bounded corridor search,
   proof-tree generation, and analyzer reports while the behavior is
   experimental.
 - `gomoku-wasm`: stable summary API for web replay after the model is validated.

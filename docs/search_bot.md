@@ -303,13 +303,13 @@ ladder:
    or clear four-shape reactions.
 2. Casual combo play: recognize compound threats and priority races that casual
    human players often discover through probing.
-3. Forced-chain steering: eventually spend bounded extra depth on narrow lines
+3. Corridor steering: eventually spend bounded extra depth on narrow lines
    where local threat facts provide the gain move and concrete defender replies.
 
 This keeps the bot aligned with the product. It should become more interesting
 and configurable, not just more solver-like. Offensive and defensive styles
-should eventually mean different budget allocation: own forced-chain search
-versus opponent forced-chain prevention.
+should eventually mean different budget allocation: own corridor search versus
+opponent corridor prevention.
 
 Positive search optimizations should land in place when they preserve exact
 behavior and improve measured hot paths. They should become configurable only
@@ -322,8 +322,8 @@ showed that raw tuning knobs were not the most useful next product direction:
 
 1. Tune existing axes first: depth, child cap, candidate source, and pattern
    eval.
-2. Prototype bounded corridor/forced-chain search only where local facts
-   provide concrete gain and defense replies.
+2. Prototype bounded corridor search only where local facts provide concrete
+   gain and defense replies.
 3. Treat style/character as a later budget-allocation mechanism, not as an
    up-front label or eval-weight tweak.
 
@@ -337,6 +337,14 @@ sequence, and use that evidence before pushing more knobs into product settings.
 The strategic model is documented in [`corridor_search.md`](corridor_search.md);
 the replay analyzer contract is documented in
 [`game_analysis.md`](game_analysis.md).
+
+`0.4.3` should keep that restraint and run one more lab pass before UI. The next
+search-bot question is whether corridor search can become a useful live bot
+primitive: corridor-aware move ordering, selective extension through narrow
+forcing lines, escape-aware defense, and cheaper proof/memoization paths. Treat
+all of these as lab aliases or config flags until they survive tournament,
+search-cost, and replay-analysis checks. The working plan lives in
+[`archive/v0_4_3_corridor_bot_plan.md`](archive/v0_4_3_corridor_bot_plan.md).
 
 The focused tactical scenario corpus is documented in
 [`tactical_scenarios.md`](tactical_scenarios.md). It is layered into `local_*`,

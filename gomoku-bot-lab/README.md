@@ -98,7 +98,7 @@ Current notes live in
 
 More detailed strategy notes live in [`../docs/search_bot.md`](../docs/search_bot.md).
 The `0.4.1` tactical-ladder work established the current bot baseline: local
-threat competence first, casual combo play next, then bounded forced-chain ideas
+threat competence first, casual combo play next, then bounded corridor ideas
 only when they can be measured. Tactical facts are meant to buy effective depth
 through safer narrowing, ordering, and selective extension, not to replace
 alpha-beta search with broad shape scoring. The tactical annotation stage is
@@ -126,6 +126,14 @@ tactical ordering, and asymmetric `self2/opponent1` candidate discovery is most
 interesting as an efficiency tweak for `D3 + pattern-eval`. Treat these as lab
 candidates, not product presets yet. Corridor-search strategy is documented in
 [`../docs/corridor_search.md`](../docs/corridor_search.md).
+
+The next `0.4.3` lab slice should test corridor search inside bot behavior
+before exposing more web settings. Candidate work includes corridor-aware move
+ordering, selective extension through narrow forcing lines, escape-aware
+defense, and corridor proof optimizations that make those experiments cheaper.
+Keep these as lab aliases/config flags until they survive tournament,
+search-cost, and replay-analysis checks. The working plan lives in
+[`../docs/archive/v0_4_3_corridor_bot_plan.md`](../docs/archive/v0_4_3_corridor_bot_plan.md).
 
 ### Eval harness
 

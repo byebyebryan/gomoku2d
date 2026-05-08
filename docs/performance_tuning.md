@@ -91,7 +91,7 @@ Current cases exercise the `balanced` lab config:
 
 The tactical scenario runner can also compare ad-hoc search configs while a
 slice is under development. Treat those as diagnostic probes: if a config only
-reduces counted nodes on already-passing forced-line scenarios, it is useful
+reduces counted nodes on already-passing forced-corridor scenarios, it is useful
 evidence for the mechanism but not enough to become a product-facing preset.
 Discarded experiments should be documented in the active v0.4 plan and removed
 from the live lab spec surface. The broad `shape-eval` attempt fixed the
@@ -132,7 +132,7 @@ effective depth. That remains the right benchmark framing for future bot work:
 the measurement question is not "did this shape detector make one case pass?"
 but "did local threat facts let the same budget search a narrower or better
 ordered tree without losing tactical safety?" Candidate staging, move ordering,
-and selective forced-chain extension should all report enough metrics to show
+and selective corridor extension should all report enough metrics to show
 whether breadth was reduced and reached depth improved.
 
 Do not use partial local-threat facts as static eval unless they can be made
@@ -342,8 +342,9 @@ Interpretation:
 
 This is a good release checkpoint for `0.4.1`: the lab has a current shared
 baseline and enough evidence to avoid another broad tactical experiment. The
-next behavior slice, if any, should be bounded forced-chain search using
-concrete local gain/defense replies.
+next behavior slice should be bounded corridor search using concrete local
+gain/defense replies, measured as a bot primitive rather than exposed as a UI
+knob.
 
 ## `0.4.2` sweep A gauntlet checkpoint
 

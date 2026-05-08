@@ -223,10 +223,10 @@ This is why corridor search belongs in the lab before it belongs in the UI. It
 lets bot changes be judged by the kinds of wins and losses they create, not just
 by aggregate score.
 
-## Future Bot Role
+## Bot Role
 
-Corridor search should eventually feed back into bot logic, but only in focused
-ways:
+`0.4.3` should test corridor search inside bot logic before the product exposes
+new bot settings. The integration should stay focused:
 
 - prefer moves that enter promising forcing corridors,
 - extend search through narrow forced corridors,
@@ -238,6 +238,12 @@ ways:
 The goal is not to bolt a full threat-space solver onto the current bot. The
 goal is a practical forcing layer that improves strength, explanation, and
 player education together.
+
+This work may also reinforce corridor search itself. Bot integration will put
+more pressure on proof cost, transition enumeration, memoization, and Renju
+legality filtering than replay reports alone. Those optimizations belong in the
+lab when they make corridor-aware behavior cheaper or clearer without changing
+the model's honesty about `possible_escape` and `unknown`.
 
 ## Renju Overlay
 
@@ -325,7 +331,8 @@ Known limits:
 - `possible_escape` is common and acceptable; it means the current model cannot
   prove the branch remains in the forced corridor.
 - The report is a lab artifact, not a polished replay-screen feature.
-- Feeding corridor search into `SearchBot` remains future work.
+- Feeding corridor search into `SearchBot` is the intended next lab step, not a
+  product UI feature yet.
 
 ## Related Docs
 
@@ -337,3 +344,5 @@ Known limits:
   takeaways.
 - [`performance_tuning.md`](performance_tuning.md) — benchmark and tournament
   evidence behind the current bot-lab direction.
+- [`archive/v0_4_3_corridor_bot_plan.md`](archive/v0_4_3_corridor_bot_plan.md)
+  — working plan for the corridor-aware bot lab pass.
