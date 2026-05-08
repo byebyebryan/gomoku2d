@@ -931,7 +931,12 @@ fn local_threat_facts_after_move(board: &Board, mv: Move) -> Vec<LocalThreatFact
 
 #[cfg_attr(not(test), allow(dead_code))]
 fn local_threat_facts_after_legal_move(board: &Board, mv: Move) -> Vec<LocalThreatFact> {
-    local_threat_facts_after_legal_move_virtual(board, mv)
+    let facts = local_threat_facts_after_legal_move_virtual(board, mv);
+    if board.config.variant == Variant::Renju && board.current_player == Color::Black {
+        renju_effective_black_local_threat_facts_after_legal_move(board, mv, facts)
+    } else {
+        facts
+    }
 }
 
 fn local_threat_facts_after_legal_move_virtual(board: &Board, mv: Move) -> Vec<LocalThreatFact> {
@@ -944,6 +949,52 @@ fn local_threat_facts_after_legal_move_virtual(board: &Board, mv: Move) -> Vec<L
         .collect::<Vec<_>>();
     facts.sort_by_key(|fact| std::cmp::Reverse(fact.kind.rank()));
     facts
+}
+
+fn renju_effective_black_local_threat_facts_after_legal_move(
+    board: &Board,
+    mv: Move,
+    facts: Vec<LocalThreatFact>,
+) -> Vec<LocalThreatFact> {
+    let mut after = board.clone();
+    after.apply_trusted_legal_move(mv);
+    facts
+        .into_iter()
+        .filter_map(|fact| renju_effective_black_local_threat_fact(&after, fact))
+        .collect()
+}
+
+fn renju_effective_black_local_threat_fact(
+    board_after_gain: &Board,
+    mut fact: LocalThreatFact,
+) -> Option<LocalThreatFact> {
+    if fact.player != Color::Black || !fact.is_forcing() || fact.kind == LocalThreatKind::Five {
+        return Some(fact);
+    }
+
+    fact.defense_squares
+        .retain(|&mv| renju_black_local_threat_continuation_is_effective(board_after_gain, mv));
+    (!fact.defense_squares.is_empty()).then_some(fact)
+}
+
+fn renju_black_local_threat_continuation_is_effective(board_after_gain: &Board, mv: Move) -> bool {
+    let mut attacker_turn = board_after_gain.clone();
+    attacker_turn.current_player = Color::Black;
+    if !attacker_turn.is_legal_for_color(mv, Color::Black) {
+        return false;
+    }
+
+    let mut after_forcing = attacker_turn.clone();
+    if after_forcing.apply_move(mv).is_err() {
+        return false;
+    }
+    match after_forcing.result {
+        GameResult::Winner(Color::Black) => true,
+        GameResult::Winner(_) | GameResult::Draw => false,
+        GameResult::Ongoing => !after_forcing
+            .immediate_winning_moves_for(Color::Black)
+            .is_empty(),
+    }
 }
 
 struct BoardAfterMove<'a> {
@@ -4145,6 +4196,52 @@ mod tests {
         let mut occupied = Board::new(RuleConfig::default());
         occupied.apply_move(mv("H8")).unwrap();
         assert!(local_threat_facts_after_move(&occupied, mv("H8")).is_empty());
+    }
+
+    #[test]
+    fn renju_black_forbidden_only_local_threat_gets_no_tactical_credit() {
+        let mut board = Board::new(RuleConfig {
+            variant: Variant::Renju,
+            ..RuleConfig::default()
+        });
+        apply_moves(
+            &mut board,
+            &["H8", "G8", "I8", "A1", "J8", "A2", "L8", "A3"],
+        );
+        assert!(board.is_legal(mv("M8")));
+
+        let facts = local_threat_facts_after_move(&board, mv("M8"));
+        assert!(
+            facts.iter().all(|fact| !fact.is_forcing()),
+            "forbidden-only local threat should not be forcing: {facts:?}"
+        );
+        assert!(!annotate_tactical_move(&board, mv("M8")).creates_immediate_or_multi_threat());
+    }
+
+    #[test]
+    fn renju_black_mixed_local_threat_keeps_only_legal_continuations() {
+        let mut board = Board::new(RuleConfig {
+            variant: Variant::Renju,
+            ..RuleConfig::default()
+        });
+        apply_moves(
+            &mut board,
+            &["H8", "A1", "I8", "A2", "J8", "A3", "M8", "A4"],
+        );
+        assert!(board.is_legal(mv("K8")));
+
+        let facts = local_threat_facts_after_move(&board, mv("K8"));
+        assert!(
+            facts.contains(&LocalThreatFact {
+                player: Color::Black,
+                kind: LocalThreatKind::OpenFour,
+                gain_square: mv("K8"),
+                defense_squares: vec![mv("G8")],
+                rest_squares: vec![],
+            }),
+            "{facts:?}"
+        );
+        assert!(annotate_tactical_move(&board, mv("K8")).creates_immediate_or_multi_threat());
     }
 
     #[test]

@@ -60,10 +60,13 @@ scan-based local-threat annotation object, two optional safety gates
 two move-ordering modes (`tt_first_board_order` default, `tactical_first`
 lab-only), and an optional `child_limit` lab cap. Static eval defaults to the
 global line-shape evaluator; `pattern_eval` is a lab-only alternative that
-scores five-cell windows with Renju-aware completion/extension squares. Renju
-forbidden-move checks still use exact core rules, but core first applies a cheap
-necessary-condition guard: a forbidden candidate must have at least two black
-stones on one of the four local axes before the exact detector runs.
+scores five-cell windows with Renju-aware completion/extension squares.
+Local-threat annotation also normalizes Renju Black continuations: forbidden-only
+raw shapes do not receive tactical ordering or safety-gate credit, and mixed
+legal/forbidden shapes keep only legal continuations for active threat strength.
+Renju forbidden-move checks still use exact core rules, but core first applies a
+cheap necessary-condition guard: a forbidden candidate must have at least two
+black stones on one of the four local axes before the exact detector runs.
 
 That Renju guard is deliberately not exposed as a bot component. It is a
 correctness-preserving core legality optimization, not a playing-style knob:
