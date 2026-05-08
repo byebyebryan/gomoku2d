@@ -107,7 +107,7 @@ pub struct DefenderReplyAnalysis {
 pub struct AnalysisOptions {
     pub defense_policy: DefensePolicy,
     pub max_depth: usize,
-    pub max_backward_window: Option<usize>,
+    pub max_scan_plies: Option<usize>,
 }
 
 impl Default for AnalysisOptions {
@@ -115,7 +115,7 @@ impl Default for AnalysisOptions {
         Self {
             defense_policy: DefensePolicy::AllLegalDefense,
             max_depth: 4,
-            max_backward_window: None,
+            max_scan_plies: None,
         }
     }
 }
@@ -127,7 +127,7 @@ pub struct AnalysisModel {
     pub attacker_move_policy: String,
     pub rule_set: String,
     pub max_depth: usize,
-    pub max_backward_window: Option<usize>,
+    pub max_scan_plies: Option<usize>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -296,29 +296,12 @@ pub fn analyze_replay(
     }
 
     let winner = winner.expect("checked above");
-    let mut scan_start = options
-        .max_backward_window
-        .map(|window| boards.len().saturating_sub(window + 1))
-        .unwrap_or(0);
     let actual_moves = replay_moves(replay)?;
-    let mut proof_summary =
-        replay_proof_summary(&boards, &actual_moves, winner, &options, scan_start);
-    let mut proof_intervals = proof_intervals(&proof_summary, scan_start);
-    let (mut final_forced_interval_found, mut final_forced_interval) =
+    let (scan_start, proof_summary) =
+        replay_proof_summary_until_boundary(&boards, &actual_moves, winner, &options);
+    let proof_intervals = proof_intervals(&proof_summary, scan_start);
+    let (final_forced_interval_found, final_forced_interval) =
         find_final_forced_interval(&proof_intervals, replay.moves.len());
-    if let Some(window) = options.max_backward_window {
-        if final_forced_interval_found
-            && final_forced_interval.start_ply == scan_start
-            && scan_start > 0
-        {
-            scan_start = scan_start.saturating_sub(window.max(1));
-            proof_summary =
-                replay_proof_summary(&boards, &actual_moves, winner, &options, scan_start);
-            proof_intervals = self::proof_intervals(&proof_summary, scan_start);
-            (final_forced_interval_found, final_forced_interval) =
-                find_final_forced_interval(&proof_intervals, replay.moves.len());
-        }
-    }
     let unknown_gaps = proof_summary
         .iter()
         .enumerate()
@@ -2414,6 +2397,55 @@ fn replay_proof_summary(
     proof_summary
 }
 
+fn replay_proof_summary_until_boundary(
+    boards: &[Board],
+    actual_moves: &[Move],
+    winner: Color,
+    options: &AnalysisOptions,
+) -> (usize, Vec<ProofResult>) {
+    let Some(max_scan_plies) = options.max_scan_plies else {
+        return (
+            0,
+            replay_proof_summary(boards, actual_moves, winner, options, 0),
+        );
+    };
+
+    let lower_bound = boards.len().saturating_sub(max_scan_plies + 1);
+    let mut scan_start = boards.len();
+    let mut proof_summary = Vec::new();
+    let mut actual_child = None;
+
+    for ply in (lower_bound..boards.len()).rev() {
+        let proof = replay_corridor_status_with_actual_child(
+            &boards[ply],
+            actual_moves,
+            winner,
+            options,
+            ply,
+            actual_child.as_ref(),
+        );
+        actual_child = Some(proof.clone());
+        proof_summary.insert(0, proof);
+        scan_start = ply;
+
+        if final_forced_interval_has_boundary(&proof_summary, scan_start, actual_moves.len()) {
+            break;
+        }
+    }
+
+    (scan_start, proof_summary)
+}
+
+fn final_forced_interval_has_boundary(
+    proof_summary: &[ProofResult],
+    scan_start: usize,
+    move_count: usize,
+) -> bool {
+    let proof_intervals = proof_intervals(proof_summary, scan_start);
+    let (found, interval) = find_final_forced_interval(&proof_intervals, move_count);
+    found && interval.start_ply > scan_start
+}
+
 fn find_final_forced_interval(
     proof_intervals: &[ForcedInterval],
     move_count: usize,
@@ -2750,7 +2782,7 @@ pub(crate) fn corridor_analysis_model(board: &Board, options: &AnalysisOptions) 
         attacker_move_policy: corridor_attacker_move_policy(options.defense_policy).to_string(),
         rule_set: rule_label(&board.config.variant).to_string(),
         max_depth: options.max_depth,
-        max_backward_window: options.max_backward_window,
+        max_scan_plies: options.max_scan_plies,
     }
 }
 
@@ -2843,7 +2875,7 @@ mod tests {
         let options = AnalysisOptions {
             defense_policy: DefensePolicy::AllLegalDefense,
             max_depth: 4,
-            max_backward_window: Some(8),
+            max_scan_plies: Some(8),
         };
         let replies =
             analyze_defender_reply_options(&board, Color::Black, Some(mv("G7")), &options);
@@ -2893,7 +2925,7 @@ mod tests {
         let options = AnalysisOptions {
             defense_policy: DefensePolicy::AllLegalDefense,
             max_depth: 4,
-            max_backward_window: Some(8),
+            max_scan_plies: Some(8),
         };
         let replies =
             analyze_defender_reply_options(&board, Color::Black, Some(mv("J5")), &options);
@@ -2927,7 +2959,7 @@ mod tests {
         let options = AnalysisOptions {
             defense_policy: DefensePolicy::AllLegalDefense,
             max_depth: 4,
-            max_backward_window: Some(8),
+            max_scan_plies: Some(8),
         };
         let replies =
             analyze_defender_reply_options(&board, Color::Black, Some(mv("N9")), &options);
@@ -2949,7 +2981,7 @@ mod tests {
         let options = AnalysisOptions {
             defense_policy: DefensePolicy::AllLegalDefense,
             max_depth: 4,
-            max_backward_window: Some(8),
+            max_scan_plies: Some(8),
         };
         let replies = analyze_defender_reply_options(&board, Color::Black, None, &options);
         for notation in ["I9", "M9"] {
@@ -3096,7 +3128,7 @@ mod tests {
             AnalysisOptions {
                 defense_policy: DefensePolicy::AllLegalDefense,
                 max_depth: 4,
-                max_backward_window: Some(6),
+                max_scan_plies: Some(6),
             },
         )
         .expect("forced chain replay should analyze");
@@ -3174,7 +3206,7 @@ mod tests {
             AnalysisOptions {
                 defense_policy: DefensePolicy::TacticalDefense,
                 max_depth: 4,
-                max_backward_window: Some(2),
+                max_scan_plies: Some(2),
             },
         )
         .expect("renju fixture should analyze");
@@ -3205,7 +3237,7 @@ mod tests {
             AnalysisOptions {
                 defense_policy: DefensePolicy::HybridDefense,
                 max_depth: 4,
-                max_backward_window: Some(4),
+                max_scan_plies: Some(4),
             },
         )
         .expect("hybrid local-threat replay should analyze");
@@ -3290,7 +3322,7 @@ mod tests {
             AnalysisOptions {
                 defense_policy: DefensePolicy::AllLegalDefense,
                 max_depth: 4,
-                max_backward_window: Some(8),
+                max_scan_plies: Some(8),
             },
         )
         .expect("finished replay should analyze");
@@ -3302,6 +3334,7 @@ mod tests {
         assert_eq!(analysis.critical_mistake_ply, Some(14));
 
         let scan_start = replay.moves.len() + 1 - analysis.proof_summary.len();
+        assert_eq!(scan_start, 13);
         let boundary = analysis
             .proof_summary
             .get(13 - scan_start)
@@ -3335,7 +3368,7 @@ mod tests {
             &AnalysisOptions {
                 defense_policy: DefensePolicy::AllLegalDefense,
                 max_depth: 4,
-                max_backward_window: Some(8),
+                max_scan_plies: Some(8),
             },
             prefix_ply,
         );
@@ -3445,7 +3478,7 @@ mod tests {
             AnalysisOptions {
                 defense_policy: DefensePolicy::AllLegalDefense,
                 max_depth: 1,
-                max_backward_window: Some(3),
+                max_scan_plies: Some(4),
             },
         )
         .expect("finished replay should analyze");

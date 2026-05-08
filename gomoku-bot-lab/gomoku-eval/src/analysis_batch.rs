@@ -42,7 +42,7 @@ pub struct AnalysisBatchModel {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub deep_retry_depth: Option<usize>,
     pub deep_retry_limit: usize,
-    pub max_backward_window: Option<usize>,
+    pub max_scan_plies: Option<usize>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
@@ -365,7 +365,7 @@ fn model_from_options(options: &AnalysisBatchRunOptions) -> AnalysisBatchModel {
         } else {
             0
         },
-        max_backward_window: options.analysis.max_backward_window,
+        max_scan_plies: options.analysis.max_scan_plies,
     }
 }
 
@@ -1409,17 +1409,17 @@ fn corridor_search_config_label(report: &AnalysisBatchReport) -> String {
         (Some(depth), limit) if limit > 0 => format!("retry depth {depth} x{limit}"),
         _ => "retry off".to_string(),
     };
-    let window = report
+    let scan_plies = report
         .model
-        .max_backward_window
-        .map(|window| window.to_string())
+        .max_scan_plies
+        .map(|plies| plies.to_string())
         .unwrap_or_else(|| "unbounded".to_string());
 
     format!(
-        "{} / depth {} / window {} / {}",
+        "{} / depth {} / scan {} / {}",
         defense_policy_label(report.model.defense_policy),
         report.model.max_depth,
-        window,
+        scan_plies,
         retry
     )
 }
@@ -1818,7 +1818,7 @@ fn defender_reply_outcomes_for_frame(
         &AnalysisOptions {
             defense_policy: analysis.model.defense_policy,
             max_depth: analysis.model.max_depth,
-            max_backward_window: analysis.model.max_backward_window,
+            max_scan_plies: analysis.model.max_scan_plies,
         },
         deep_retry_depth,
         *deep_retries_remaining,
@@ -2229,7 +2229,7 @@ fn unclear_reason_label(unclear_reason: Option<UnclearReason>) -> String {
     unclear_reason
         .map(|reason| match reason {
             UnclearReason::PreviousPrefixUnknown => "previous prefix unknown",
-            UnclearReason::ScanWindowCutoff => "scan window cutoff",
+            UnclearReason::ScanWindowCutoff => "scan cap cutoff",
             UnclearReason::ProofLimitHit => "proof limit hit",
             UnclearReason::NoFinalForcedInterval => "no final forced interval",
             UnclearReason::DrawOrOngoing => "draw or ongoing",
@@ -2249,7 +2249,7 @@ fn unclear_context_html(context: Option<&UnclearContext>) -> String {
     ) {
         (Some(status), Some(true)) => format!("Previous proof: {status:?} (limit hit)"),
         (Some(status), Some(false)) => format!("Previous proof: {status:?}"),
-        _ => "Previous proof: outside scan window".to_string(),
+        _ => "Previous proof: outside scan cap".to_string(),
     };
     let principal_line = if context.principal_line_notation.is_empty() {
         "-".to_string()
@@ -2751,7 +2751,7 @@ fn proof_limit_cause_label(cause: ProofLimitCause) -> &'static str {
         ProofLimitCause::AttackerChildUnknown => "attacker child unknown",
         ProofLimitCause::DefenderReplyUnknown => "defender reply unknown",
         ProofLimitCause::ModelScopeUnknown => "model-scope unknown",
-        ProofLimitCause::OutsideScanWindow => "outside scan window",
+        ProofLimitCause::OutsideScanWindow => "outside scan cap",
     }
 }
 
@@ -3007,7 +3007,7 @@ mod tests {
     }
 
     #[test]
-    fn analysis_batch_replays_records_scan_window_drilldown_context() {
+    fn analysis_batch_replays_records_scan_cap_drilldown_context() {
         let replay = replay_from_moves(
             Variant::Freestyle,
             &["H8", "A1", "I8", "A2", "J8", "A3", "K8", "B1", "L8"],
@@ -3020,7 +3020,7 @@ mod tests {
                 replay,
             }],
             AnalysisOptions {
-                max_backward_window: Some(0),
+                max_scan_plies: Some(0),
                 ..AnalysisOptions::default()
             },
         );
@@ -3029,10 +3029,10 @@ mod tests {
         let context = entry
             .unclear_context
             .as_ref()
-            .expect("scan-window-limited entries should expose drilldown context");
+            .expect("scan-cap-limited entries should expose drilldown context");
 
         assert_eq!(entry.unclear_reason, Some(UnclearReason::ScanWindowCutoff));
-        assert_eq!(context.previous_prefix_ply, Some(7));
+        assert_eq!(context.previous_prefix_ply, Some(8));
         assert_eq!(context.previous_proof_status, None);
         assert_eq!(context.previous_proof_limit_hit, None);
         assert!(context
@@ -3046,17 +3046,17 @@ mod tests {
             .iter()
             .any(|count| count.cause == ProofLimitCause::OutsideScanWindow && count.count == 1));
         assert_eq!(context.move_count, 9);
-        assert!(!context.principal_line.is_empty());
-        assert!(!context.principal_line_notation.is_empty());
+        assert!(context.principal_line.is_empty());
+        assert!(context.principal_line_notation.is_empty());
         assert!(context
             .snapshots
             .iter()
-            .any(|snapshot| snapshot.label == "previous_prefix" && snapshot.ply == 7));
+            .any(|snapshot| snapshot.label == "previous_prefix" && snapshot.ply == 8));
 
         let html = render_analysis_batch_report_html(&report);
         assert!(html.contains("<details"));
-        assert!(html.contains("previous_prefix @ ply 7"));
-        assert!(html.contains("outside scan window"));
+        assert!(html.contains("previous_prefix @ ply 8"));
+        assert!(html.contains("outside scan cap"));
     }
 
     #[test]
@@ -3242,7 +3242,7 @@ mod tests {
                 analysis: AnalysisOptions {
                     defense_policy: DefensePolicy::AllLegalDefense,
                     max_depth: 4,
-                    max_backward_window: Some(8),
+                    max_scan_plies: Some(8),
                 },
                 include_proof_details: true,
                 deep_retry_depth: None,
@@ -3465,7 +3465,7 @@ mod tests {
                 analysis: AnalysisOptions {
                     defense_policy: DefensePolicy::AllLegalDefense,
                     max_depth: 4,
-                    max_backward_window: Some(8),
+                    max_scan_plies: Some(8),
                 },
                 include_proof_details: true,
                 deep_retry_depth: None,
@@ -3559,7 +3559,7 @@ mod tests {
                 analysis: AnalysisOptions {
                     defense_policy: DefensePolicy::AllLegalDefense,
                     max_depth: 4,
-                    max_backward_window: Some(8),
+                    max_scan_plies: Some(8),
                 },
                 include_proof_details: true,
                 deep_retry_depth: None,
@@ -3615,7 +3615,7 @@ mod tests {
                 analysis: AnalysisOptions {
                     defense_policy: DefensePolicy::AllLegalDefense,
                     max_depth: 4,
-                    max_backward_window: Some(8),
+                    max_scan_plies: Some(8),
                 },
                 include_proof_details: true,
                 deep_retry_depth: None,
@@ -3666,7 +3666,7 @@ mod tests {
                 analysis: AnalysisOptions {
                     defense_policy: DefensePolicy::AllLegalDefense,
                     max_depth: 4,
-                    max_backward_window: Some(8),
+                    max_scan_plies: Some(8),
                 },
                 include_proof_details: true,
                 deep_retry_depth: None,
