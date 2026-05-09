@@ -1642,6 +1642,9 @@ fn proof_frames_for_actual_interval(
                 ply,
                 board,
                 proof,
+                board_ply.checked_sub(1).and_then(|previous| {
+                    proof_result_at(&analysis.proof_summary, scan_start, previous)
+                }),
                 &reply_outcomes,
             );
             if let Some(actual_move) = actual_move {
@@ -1821,21 +1824,22 @@ fn add_pre_corridor_escape_marker(
     ply: usize,
     board: &Board,
     proof: Option<&ProofResult>,
+    previous_proof: Option<&ProofResult>,
     reply_outcomes: &[DefenderReplyAnalysis],
 ) {
     let Some(winner) = analysis.winner else {
         return;
     };
     if board.current_player != winner.opponent()
-        || ply != analysis.final_forced_interval.start_ply
-        || proof.map(|proof| proof.status) != Some(ProofStatus::EscapeFound)
         || !reply_outcomes.is_empty()
         || has_visible_tactical_hint(markers)
     {
         return;
     }
 
-    let Some(entry_move) = actual_move_at_ply(replay, ply + 1) else {
+    let Some(entry_move) =
+        pre_corridor_escape_entry_move(replay, analysis, ply, proof, previous_proof)
+    else {
         return;
     };
     if !board.is_legal(entry_move) {
@@ -1848,6 +1852,29 @@ fn add_pre_corridor_escape_marker(
         [entry_move],
         AnalysisBatchProofMarkerKind::ConfirmedEscape,
     );
+}
+
+fn pre_corridor_escape_entry_move(
+    replay: &Replay,
+    analysis: &GameAnalysis,
+    ply: usize,
+    proof: Option<&ProofResult>,
+    previous_proof: Option<&ProofResult>,
+) -> Option<Move> {
+    if ply == analysis.final_forced_interval.start_ply
+        && proof.map(|proof| proof.status) == Some(ProofStatus::EscapeFound)
+    {
+        return actual_move_at_ply(replay, ply + 1);
+    }
+
+    if ply == analysis.final_forced_interval.start_ply + 1
+        && previous_proof.map(|proof| proof.status) == Some(ProofStatus::EscapeFound)
+        && proof.map(|proof| proof.status) == Some(ProofStatus::ForcedWin)
+    {
+        return proof.and_then(|proof| proof.principal_line.first().copied());
+    }
+
+    None
 }
 
 fn corridor_entry_marker_kind(winner: Color) -> AnalysisBatchProofMarkerKind {
@@ -3128,6 +3155,63 @@ mod tests {
         assert_eq!(marker_label(e9), "E");
         let classes = cell_classes(frame, '.', Some(e9));
         assert!(classes.contains("marker--corridor-entry-white"));
+        assert!(classes.contains("marker--confirmed-escape"));
+    }
+
+    #[test]
+    fn analysis_batch_marks_attacker_started_corridor_entry_as_escape_target() {
+        let replay = replay_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "H9", "I8", "I9", "G8", "J8", "J9", "K7", "H10", "H7", "G9", "L6", "M5",
+                "I7", "G7", "G6", "F8", "E8", "E7", "D6", "I11",
+            ],
+        );
+
+        let report = run_analysis_batch_replays_with_options(
+            "report.json:bot-a vs bot-b".to_string(),
+            vec![ReplayAnalysisInput {
+                label: "match_1731".to_string(),
+                replay,
+            }],
+            AnalysisBatchRunOptions {
+                analysis: AnalysisOptions {
+                    reply_policy: ReplyPolicy::CorridorReplies,
+                    max_depth: 4,
+                    max_scan_plies: Some(64),
+                },
+                include_proof_details: true,
+            },
+        );
+
+        let details = report.entries[0]
+            .proof_details
+            .as_ref()
+            .expect("proof details should be recorded");
+        assert_eq!(details.final_forced_start_ply, 13);
+        let frame = details
+            .proof_frames
+            .iter()
+            .find(|frame| frame.label == "actual_ply_14")
+            .expect("defender frame after attacker corridor entry should be present");
+        assert_eq!(frame.side_to_move, Color::White);
+        assert_eq!(frame.status, ProofStatus::ForcedWin);
+        assert!(frame.reply_outcomes.is_empty());
+
+        let g7 = frame
+            .markers
+            .iter()
+            .find(|marker| marker.notation == "G7")
+            .expect("winner corridor entry should be shown as an escape target");
+        assert!(g7
+            .kinds
+            .contains(&AnalysisBatchProofMarkerKind::CorridorEntryBlack));
+        assert!(g7
+            .kinds
+            .contains(&AnalysisBatchProofMarkerKind::ConfirmedEscape));
+        assert_eq!(marker_label(g7), "E");
+        let classes = cell_classes(frame, '.', Some(g7));
+        assert!(classes.contains("marker--corridor-entry-black"));
         assert!(classes.contains("marker--confirmed-escape"));
     }
 
