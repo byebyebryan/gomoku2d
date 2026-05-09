@@ -1,11 +1,10 @@
 use gomoku_core::{Board, Color, GameResult, Move};
 use serde::Serialize;
-use serde_json::{json, Value};
 
 use crate::tactical::{
     corridor_attacker_move_rank, corridor_defender_reply_moves, has_forcing_local_threat,
+    has_forcing_local_threat_at_move,
 };
-use crate::{Bot, RandomBot, SearchBot, SearchBotConfig};
 
 pub const DEFAULT_MAX_CORRIDOR_DEPTH: usize = 4;
 pub const DEFAULT_MAX_CORRIDOR_REPLY_WIDTH: usize = 8;
@@ -109,242 +108,150 @@ pub struct DefenderReplyProof {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum CorridorMoveReason {
-    ImmediateWin,
-    ConfirmedCorridorAttack,
-    DefenseConfirmedEscape,
-    DefensePossibleEscape,
-    DefenseForcedReply,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CorridorMoveChoice {
-    pub mv: Move,
-    pub reason: CorridorMoveReason,
-    pub outcome: Option<DefenderReplyOutcome>,
-    pub principal_line: Vec<Move>,
-    pub diagnostics: SearchDiagnostics,
+pub enum CorridorLeafOutcome {
+    ForcedWin,
+    ForcedLoss,
+    NoProvenCorridor,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum CorridorBotFallback {
-    Random,
-    SearchD1,
+pub struct CorridorLeafResult {
+    pub outcome: CorridorLeafOutcome,
+    pub diagnostics: SearchDiagnostics,
 }
 
-pub struct CorridorBot {
-    name: &'static str,
-    options: CorridorOptions,
-    fallback: CorridorBotFallback,
-    random: RandomBot,
-    search: SearchBot,
-    last_trace: Option<Value>,
-}
-
-impl CorridorBot {
-    pub fn with_random_fallback(seed: u64) -> Self {
-        Self::new(CorridorBotFallback::Random, seed)
-    }
-
-    pub fn with_search_d1_fallback(seed: u64) -> Self {
-        Self::new(CorridorBotFallback::SearchD1, seed)
-    }
-
-    pub fn with_search_fallback_config(seed: u64, search_config: SearchBotConfig) -> Self {
-        Self::new_with_search_config(CorridorBotFallback::SearchD1, seed, search_config)
-    }
-
-    pub fn new(fallback: CorridorBotFallback, seed: u64) -> Self {
-        Self::new_with_search_config(fallback, seed, SearchBotConfig::custom_depth(1))
-    }
-
-    fn new_with_search_config(
-        fallback: CorridorBotFallback,
-        seed: u64,
-        search_config: SearchBotConfig,
-    ) -> Self {
-        let name = match fallback {
-            CorridorBotFallback::Random => "corridor-random",
-            CorridorBotFallback::SearchD1 => "corridor-d1",
-        };
-        Self {
-            name,
-            options: CorridorOptions {
-                max_depth: 2,
-                ..CorridorOptions::default()
-            },
-            fallback,
-            random: RandomBot::seeded(seed),
-            search: SearchBot::with_config(search_config),
-            last_trace: None,
-        }
-    }
-}
-
-impl Bot for CorridorBot {
-    fn name(&self) -> &str {
-        self.name
-    }
-
-    fn choose_move(&mut self, board: &Board) -> Move {
-        if let Some(choice) = choose_corridor_move(board, &self.options) {
-            let mv = choice.mv;
-            self.last_trace = Some(corridor_choice_trace(&choice));
-            return mv;
-        }
-
-        match self.fallback {
-            CorridorBotFallback::Random => {
-                self.last_trace = None;
-                self.random.choose_move(board)
-            }
-            CorridorBotFallback::SearchD1 => {
-                let mv = self.search.choose_move(board);
-                self.last_trace = self.search.trace().map(fallback_search_trace);
-                mv
-            }
-        }
-    }
-
-    fn trace(&self) -> Option<serde_json::Value> {
-        self.last_trace.clone()
-    }
-}
-
-fn corridor_choice_trace(choice: &CorridorMoveChoice) -> Value {
-    let proof_nodes = choice.diagnostics.search_nodes as u64;
-    json!({
-        "source": "corridor",
-        "move": choice.mv.to_notation(),
-        "reason": format!("{:?}", choice.reason),
-        "outcome": choice.outcome.map(|outcome| format!("{outcome:?}")),
-        "principal_line": choice
-            .principal_line
-            .iter()
-            .map(|mv| mv.to_notation())
-            .collect::<Vec<_>>(),
-        "nodes": 0,
-        "safety_nodes": proof_nodes,
-        "total_nodes": proof_nodes,
-        "depth": choice.diagnostics.max_depth_reached,
-        "budget_exhausted": false,
-        "corridor": {
-            "search_nodes": proof_nodes,
-            "branch_probes": choice.diagnostics.branch_probes,
-            "max_depth_reached": choice.diagnostics.max_depth_reached,
-        },
-    })
-}
-
-fn fallback_search_trace(mut trace: Value) -> Value {
-    if let Some(object) = trace.as_object_mut() {
-        object.insert("source".to_string(), json!("corridor-fallback"));
-        object.insert("fallback".to_string(), json!("search-d1"));
-    }
-    trace
-}
-
-pub fn choose_corridor_move(
-    board: &Board,
-    options: &CorridorOptions,
-) -> Option<CorridorMoveChoice> {
+pub fn classify_corridor_leaf(board: &Board, options: &CorridorOptions) -> CorridorLeafResult {
+    let mut diagnostics = SearchDiagnostics::default();
     if board.result != GameResult::Ongoing {
-        return None;
+        return CorridorLeafResult {
+            outcome: CorridorLeafOutcome::NoProvenCorridor,
+            diagnostics,
+        };
     }
 
     let player = board.current_player;
-    if let Some(mv) = board.immediate_winning_moves_for(player).first().copied() {
-        return Some(CorridorMoveChoice {
-            mv,
-            reason: CorridorMoveReason::ImmediateWin,
-            outcome: None,
-            principal_line: vec![mv],
-            diagnostics: SearchDiagnostics::default(),
-        });
-    }
-
     let opponent = player.opponent();
-    if !board.immediate_winning_moves_for(opponent).is_empty()
-        || has_forcing_local_threat(board, opponent)
-    {
-        let replies = analyze_defender_reply_options(board, opponent, None, options);
-        if !replies.is_empty() {
-            if let Some(reply) =
-                first_reply_with_outcome(&replies, DefenderReplyOutcome::ConfirmedEscape)
-            {
-                return Some(choice_from_reply(
-                    reply,
-                    CorridorMoveReason::DefenseConfirmedEscape,
-                ));
-            }
-            if let Some(reply) =
-                first_reply_with_outcome(&replies, DefenderReplyOutcome::PossibleEscape)
-            {
-                return Some(choice_from_reply(
-                    reply,
-                    CorridorMoveReason::DefensePossibleEscape,
-                ));
-            }
-            if let Some(reply) = replies.iter().find(|reply| {
-                matches!(
-                    reply.outcome,
-                    DefenderReplyOutcome::ForcedLoss | DefenderReplyOutcome::ImmediateLoss
-                )
-            }) {
-                return Some(choice_from_reply(
-                    reply,
-                    CorridorMoveReason::DefenseForcedReply,
-                ));
-            }
-        }
+    if !board.immediate_winning_moves_for(player).is_empty() {
+        return CorridorLeafResult {
+            outcome: CorridorLeafOutcome::ForcedWin,
+            diagnostics,
+        };
     }
 
-    for mv in materialized_candidate_attacker_corridor_moves(board, player) {
-        let mut next = board.clone();
-        if next.apply_move(mv).is_err() {
-            continue;
-        }
-        let proof = classify_attacker_corridor(&next, player, options, options.max_depth);
+    let opponent_wins = board.immediate_winning_moves_for(opponent);
+    let player_has_threat = has_forcing_local_threat(board, player);
+    let opponent_has_threat = has_forcing_local_threat(board, opponent);
+    if opponent_wins.is_empty() && !player_has_threat && !opponent_has_threat {
+        return CorridorLeafResult {
+            outcome: CorridorLeafOutcome::NoProvenCorridor,
+            diagnostics,
+        };
+    }
+
+    if player_has_threat {
+        let proof = classify_attacker_corridor(board, player, options, options.max_depth);
+        diagnostics.merge(proof.diagnostics);
         if matches!(
             proof.outcome,
             DefenderReplyOutcome::ForcedLoss | DefenderReplyOutcome::ImmediateLoss
         ) {
-            let mut principal_line = Vec::with_capacity(proof.principal_line.len() + 1);
-            principal_line.push(mv);
-            principal_line.extend(proof.principal_line);
-            return Some(CorridorMoveChoice {
-                mv,
-                reason: CorridorMoveReason::ConfirmedCorridorAttack,
-                outcome: Some(proof.outcome),
-                principal_line,
-                diagnostics: proof.diagnostics,
-            });
+            return CorridorLeafResult {
+                outcome: CorridorLeafOutcome::ForcedWin,
+                diagnostics,
+            };
         }
     }
 
-    None
+    let mut result = classify_opponent_corridor_threat(
+        board,
+        opponent,
+        opponent_wins,
+        opponent_has_threat,
+        options,
+    );
+    result.diagnostics.merge(diagnostics);
+    result
 }
 
-fn first_reply_with_outcome(
-    replies: &[DefenderReplyAnalysis],
-    outcome: DefenderReplyOutcome,
-) -> Option<&DefenderReplyAnalysis> {
-    replies.iter().find(|reply| reply.outcome == outcome)
+pub fn classify_last_move_corridor_leaf(
+    board: &Board,
+    options: &CorridorOptions,
+) -> CorridorLeafResult {
+    if board.result != GameResult::Ongoing {
+        return CorridorLeafResult {
+            outcome: CorridorLeafOutcome::NoProvenCorridor,
+            diagnostics: SearchDiagnostics::default(),
+        };
+    }
+
+    let player = board.current_player;
+    let opponent = player.opponent();
+    let opponent_has_threat = board
+        .history
+        .last()
+        .copied()
+        .is_some_and(|mv| has_forcing_local_threat_at_move(board, opponent, mv));
+    if !opponent_has_threat {
+        return CorridorLeafResult {
+            outcome: CorridorLeafOutcome::NoProvenCorridor,
+            diagnostics: SearchDiagnostics::default(),
+        };
+    }
+
+    let opponent_wins = board.immediate_winning_moves_for(opponent);
+    classify_opponent_corridor_threat(board, opponent, opponent_wins, true, options)
 }
 
-fn choice_from_reply(
-    reply: &DefenderReplyAnalysis,
-    reason: CorridorMoveReason,
-) -> CorridorMoveChoice {
-    let mut principal_line = Vec::with_capacity(reply.principal_line.len() + 1);
-    principal_line.push(reply.mv);
-    principal_line.extend(reply.principal_line.iter().copied());
-    CorridorMoveChoice {
-        mv: reply.mv,
-        reason,
-        outcome: Some(reply.outcome),
-        principal_line,
-        diagnostics: reply.diagnostics,
+fn classify_opponent_corridor_threat(
+    board: &Board,
+    opponent: Color,
+    opponent_wins: Vec<Move>,
+    opponent_has_threat: bool,
+    options: &CorridorOptions,
+) -> CorridorLeafResult {
+    let mut diagnostics = SearchDiagnostics::default();
+    let player = board.current_player;
+
+    if !opponent_wins.is_empty() || opponent_has_threat {
+        let replies = analyze_defender_reply_options(board, opponent, None, options);
+        for reply in &replies {
+            diagnostics.merge(reply.diagnostics);
+        }
+        if !opponent_wins.is_empty()
+            && !opponent_wins
+                .iter()
+                .copied()
+                .any(|mv| board.is_legal_for_color(mv, player))
+        {
+            return CorridorLeafResult {
+                outcome: CorridorLeafOutcome::ForcedLoss,
+                diagnostics,
+            };
+        }
+        if !replies.is_empty()
+            && replies.iter().all(|reply| {
+                matches!(
+                    reply.outcome,
+                    DefenderReplyOutcome::ForcedLoss | DefenderReplyOutcome::ImmediateLoss
+                )
+            })
+        {
+            return CorridorLeafResult {
+                outcome: CorridorLeafOutcome::ForcedLoss,
+                diagnostics,
+            };
+        }
+        if !replies.is_empty() {
+            return CorridorLeafResult {
+                outcome: CorridorLeafOutcome::NoProvenCorridor,
+                diagnostics,
+            };
+        }
+    }
+
+    CorridorLeafResult {
+        outcome: CorridorLeafOutcome::NoProvenCorridor,
+        diagnostics,
     }
 }
 
@@ -936,14 +843,6 @@ pub fn materialized_attacker_corridor_moves(board: &Board, attacker: Color) -> V
     materialized_attacker_corridor_moves_from_candidates(board, attacker, board.legal_moves())
 }
 
-fn materialized_candidate_attacker_corridor_moves(board: &Board, attacker: Color) -> Vec<Move> {
-    materialized_attacker_corridor_moves_from_candidates(
-        board,
-        attacker,
-        corridor_candidate_moves(board, 2),
-    )
-}
-
 fn materialized_attacker_corridor_moves_from_candidates(
     board: &Board,
     attacker: Color,
@@ -962,47 +861,6 @@ fn materialized_attacker_corridor_moves_from_candidates(
     moves.retain(|(_, rank)| *rank == best_rank);
     moves.sort_by_key(|(mv, _)| (mv.row, mv.col));
     moves.into_iter().map(|(mv, _)| mv).collect()
-}
-
-fn corridor_candidate_moves(board: &Board, radius: usize) -> Vec<Move> {
-    if board.history.is_empty() {
-        let center = board.config.board_size / 2;
-        return vec![Move {
-            row: center,
-            col: center,
-        }];
-    }
-
-    let size = board.config.board_size;
-    let mut seen = vec![false; size * size];
-    let mut moves = Vec::new();
-    let radius = radius as isize;
-    board.for_each_occupied(|row, col, _| {
-        let row = row as isize;
-        let col = col as isize;
-        for dr in -radius..=radius {
-            for dc in -radius..=radius {
-                let r = row + dr;
-                let c = col + dc;
-                if r < 0 || r >= size as isize || c < 0 || c >= size as isize {
-                    continue;
-                }
-
-                let mv = Move {
-                    row: r as usize,
-                    col: c as usize,
-                };
-                let idx = mv.row * size + mv.col;
-                if seen[idx] || !board.is_legal(mv) {
-                    continue;
-                }
-                seen[idx] = true;
-                moves.push(mv);
-            }
-        }
-    });
-    moves.sort_by_key(|mv| (mv.row, mv.col));
-    moves
 }
 
 fn push_unique_move(moves: &mut Vec<Move>, mv: Move) {
@@ -1026,9 +884,9 @@ fn extend_limit_causes(
 #[cfg(test)]
 mod tests {
     use super::{
-        analyze_defender_reply_options, DefenderReplyOutcome, DefenderReplyRole, ProofLimitCause,
+        analyze_defender_reply_options, classify_corridor_leaf, CorridorLeafOutcome,
+        CorridorOptions, DefenderReplyOutcome, DefenderReplyRole, ProofLimitCause,
     };
-    use crate::{Bot, CorridorBot, CorridorOptions, SearchBotConfig};
     use gomoku_core::{Board, Color, Move, RuleConfig, Variant};
 
     fn mv(notation: &str) -> Move {
@@ -1114,46 +972,28 @@ mod tests {
     }
 
     #[test]
-    fn corridor_bot_takes_immediate_win_before_fallback() {
+    fn corridor_leaf_classifies_current_player_immediate_win() {
+        let board = board_from_moves(
+            Variant::Freestyle,
+            &["H8", "A1", "I8", "A2", "J8", "A3", "K8", "A4"],
+        );
+
+        let result = classify_corridor_leaf(&board, &Default::default());
+
+        assert_eq!(result.outcome, CorridorLeafOutcome::ForcedWin);
+        assert_eq!(result.diagnostics.search_nodes, 0);
+    }
+
+    #[test]
+    fn corridor_leaf_classifies_unanswered_opponent_win_as_forced_loss() {
         let board = board_from_moves(
             Variant::Freestyle,
             &["H8", "A1", "I8", "A2", "J8", "A3", "K8"],
         );
-        let mut bot = CorridorBot::with_random_fallback(7);
 
-        assert_eq!(bot.choose_move(&board), mv("G8"));
-    }
+        let result = classify_corridor_leaf(&board, &Default::default());
 
-    #[test]
-    fn corridor_bot_search_fallback_preserves_search_trace() {
-        let board = Board::new(RuleConfig::default());
-        let mut bot = CorridorBot::with_search_d1_fallback(7);
-
-        let _ = bot.choose_move(&board);
-        let trace = bot
-            .trace()
-            .expect("search fallback should expose the underlying search trace");
-
-        assert_eq!(trace["source"], "corridor-fallback");
-        assert_eq!(trace["fallback"], "search-d1");
-        assert!(trace["total_nodes"].as_u64().unwrap_or_default() > 0);
-        assert_eq!(trace["config"]["max_depth"], 1);
-    }
-
-    #[test]
-    fn corridor_bot_search_fallback_accepts_search_config() {
-        let board = Board::new(RuleConfig::default());
-        let mut config = SearchBotConfig::custom_depth(1);
-        config.cpu_time_budget_ms = Some(123);
-        let mut bot = CorridorBot::with_search_fallback_config(7, config);
-
-        let _ = bot.choose_move(&board);
-        let trace = bot
-            .trace()
-            .expect("configured search fallback should expose the underlying search trace");
-
-        assert_eq!(trace["config"]["max_depth"], 1);
-        assert_eq!(trace["config"]["cpu_time_budget_ms"], 123);
+        assert_eq!(result.outcome, CorridorLeafOutcome::ForcedLoss);
     }
 
     #[test]

@@ -3,11 +3,11 @@ pub mod random;
 pub mod search;
 pub mod tactical;
 
-pub use corridor::{CorridorBot, CorridorBotFallback, CorridorOptions};
+pub use corridor::CorridorOptions;
 pub use random::RandomBot;
 pub use search::{
-    CandidateSource, MoveOrdering, SafetyGate, SearchAlgorithm, SearchBot, SearchBotConfig,
-    StaticEvaluation,
+    CandidateSource, CorridorIntegrationMode, MoveOrdering, SafetyGate, SearchAlgorithm, SearchBot,
+    SearchBotConfig, StaticEvaluation,
 };
 
 use gomoku_core::{Board, Move};

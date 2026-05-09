@@ -82,27 +82,25 @@ cargo run --release -p gomoku-eval -- tournament \
   --report-json outputs/gauntlet.json
 ```
 
-Corridor bridge smoke run:
+Corridor quiescence smoke run:
 
 ```sh
 cargo run --release -p gomoku-eval -- tournament \
   --schedule head-to-head \
-  --bots corridor-d1,search-d3 \
+  --bots search-d3,search-d3+corridor-q \
   --games-per-pair 8 \
   --opening-policy centered-suite \
   --opening-plies 4 \
   --search-cpu-time-ms 1000 \
   --max-moves 120 \
-  --report-json outputs/corridor-d1-smoke.json
+  --report-json outputs/corridor-q-smoke.json
 ```
 
-Use `corridor-random` when the goal is to isolate corridor decisions from normal
-search. Use `corridor-d1` when the goal is to keep a weak but coherent fallback
-after the corridor model declines to move.
-
-`corridor-d1` applies the same search budget flags to its depth-1 fallback as a
-plain `search-d1` run. Corridor proof work is emitted separately under
-`corridor.*` trace metrics.
+Use `+corridor-q` when the goal is to test shallow corridor proof as alpha-beta
+leaf quiescence. It is intentionally not a separate bot; proof work is emitted
+in search metrics as corridor leaf probes, corridor search nodes, and static
+fallbacks. Use `+corridor-qdN` only for explicit depth sweeps, since deeper
+proof can dominate per-move cost.
 
 Batch gauntlet:
 

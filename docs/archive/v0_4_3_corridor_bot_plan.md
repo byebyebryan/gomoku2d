@@ -55,12 +55,12 @@ Current implementation note:
   defender-reply analysis entry points.
 - `gomoku-eval` keeps replay-specific traceback/report shaping, but fresh
   alternate reply probes delegate to the bot-owned corridor engine.
-- `CorridorBot` exposes two lab aliases: `corridor-random` and `corridor-d1`.
-  They use shallow live corridor proof plus local candidate filtering, and are
-  bridge probes rather than product presets.
-- `corridor-d1` now receives the same depth-1 fallback search budget plumbing as
-  normal search aliases. Fallback search traces stay visible, while corridor
-  proof work is reported separately under `corridor.*` trace metrics.
+- The standalone `CorridorBot` bridge has been retired. The first live
+  integration is `SearchBot` leaf quiescence through the lab-only
+  `+corridor-q` suffix, with explicit `+corridor-qdN` sweeps for deeper proof.
+- Corridor proof work is reported separately through search metrics such as
+  `corridor_leaf_probes`, `corridor_search_nodes`, and
+  `corridor_static_fallbacks`.
 
 ## Corridor Reinforcement
 

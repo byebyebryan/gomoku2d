@@ -13,7 +13,7 @@ first.
 | Crate | What it does |
 |-------|--------------|
 | `gomoku-core` | Board state, rules (Freestyle + Renju), win detection, FEN, replay JSON |
-| `gomoku-bot` | `Bot` trait + implementations: `RandomBot`, `SearchBot`, `CorridorBot` |
+| `gomoku-bot` | `Bot` trait + implementations: `RandomBot`, `SearchBot`, plus corridor proof helpers |
 | `gomoku-eval` | Self-play arena, round-robin tournaments, Elo |
 | `gomoku-cli` | Native match runner with replay export |
 | `gomoku-wasm` | `wasm-pack` bridge exposing `WasmBoard` + `WasmBot` to JS |
@@ -33,7 +33,7 @@ cargo test  --workspace
 ```sh
 cargo run --release -p gomoku-cli -- --black baseline --white random
 cargo run --release -p gomoku-cli -- --black search-d3 --white search-d1 --rule renju
-cargo run --release -p gomoku-cli -- --black corridor-d1 --white search-d3 --rule renju
+cargo run --release -p gomoku-cli -- --black search-d3+corridor-q --white search-d3 --rule renju
 cargo run --release -p gomoku-cli -- --black baseline --white random --time-ms 500
 cargo run --release -p gomoku-cli -- --black baseline --white random --quiet --replay /tmp/game.json
 ```
@@ -42,8 +42,8 @@ cargo run --release -p gomoku-cli -- --black baseline --white random --quiet --r
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--black` | `baseline` | Bot for Black: `random`, `baseline`, `baseline-N`, search aliases, or corridor lab aliases |
-| `--white` | `random`   | Bot for White: `random`, `baseline`, `baseline-N`, search aliases, or corridor lab aliases |
+| `--black` | `baseline` | Bot for Black: `random`, `baseline`, `baseline-N`, or search aliases |
+| `--white` | `random`   | Bot for White: `random`, `baseline`, `baseline-N`, or search aliases |
 | `--depth` | `5`        | Fixed baseline depth for the plain `baseline` spec |
 | `--time-ms` | —        | Time budget per move for search bots, including lab aliases |
 | `--rule` | `freestyle` | Rule variant: `freestyle` or `renju` |
@@ -86,39 +86,33 @@ generation, legality filtering, and move ordering. `+tactical-cap-N` is
 shorthand for `+tactical-first+child-cap-N` and is the preferred report-facing
 form, for example `search-d5+tactical-cap-12`. Root still considers every
 legal/safe candidate; candidate source controls discovery, while child cap
-controls how many ordered non-root children alpha-beta searches. These are
-diagnostic switches, not product presets.
+controls how many ordered non-root children alpha-beta searches. Append
+`+corridor-q` to enable shallow lab-only corridor quiescence at alpha-beta
+leaves. It penalizes proven last-move opponent corridors and falls back to
+static eval for confirmed escapes, possible escapes, unknown branches, or quiet
+positions. Use `+corridor-qdN` to explicitly try deeper leaf proof, currently
+`1..8`. These are diagnostic switches, not product presets.
 
 Legacy specs still work: plain `baseline` uses `--depth`, `baseline-N` creates a
 custom fixed-depth baseline bot, and the old `fast`/`balanced`/`deep` aliases
 still parse for old scripts. New reports and gauntlets should use explicit
 `search-*` specs.
 
-### Current `CorridorBot`
+### Current corridor integration
 
-`CorridorBot` is a lab-only bridge between the replay analyzer's corridor model
-and live bot play. It uses a shallow corridor depth (`2`) and a local radius-2
-candidate front for live move selection, then checks whether the current
-position has a direct corridor decision: take an immediate win, defend a known
-corridor by preferring confirmed or possible escapes, or enter a proven forcing
-corridor. If no corridor decision is available, it falls back to another simple
-bot.
+The earlier standalone `CorridorBot` bridge is retired. Corridor search now
+enters live bot play through `SearchBot` itself, starting with the lab-only
+`+corridor-q` suffix. This keeps alpha-beta as the real move selector while
+letting proven last-move opponent corridors resolve noisy leaf positions before
+static eval.
+The default suffix uses depth 1 because full analyzer-depth proof at every
+search leaf is too expensive for live bot evaluation. The leaf gate is also
+last-move-localized so quiet positions avoid a whole-board threat scan.
 
-Current aliases:
-
-| Alias | Corridor step | Fallback | Intent |
-|---|---|---|---|
-| `corridor-random` | enabled | seeded `RandomBot` | isolate how much corridor proof can do by itself |
-| `corridor-d1` | enabled | depth-1 `SearchBot` | weak-but-legal fallback for corridor-first experiments |
-
-These are not product presets. They are deliberately rough probes for answering
-whether corridor search changes live choices in a way worth promoting into the
-search bot or future UI settings.
-
-`corridor-d1` keeps normal depth-1 `SearchBot` trace data when it falls back,
-including CLI/tournament search budgets. Corridor proof decisions add
-`corridor.*` trace metrics so proof work can be separated from alpha-beta search
-work in raw reports.
+Trace output keeps corridor proof work separate through metrics such as
+`corridor_leaf_probes`, `corridor_search_nodes`, and
+`corridor_static_fallbacks`, and `total_nodes` includes corridor proof nodes so
+reports do not hide that cost.
 
 Failed search experiments are intentionally removed instead of kept as dead lab
 suffixes. The broad shape-eval attempt fixed one depth-2 diagnostic but lost to

@@ -1,8 +1,12 @@
 use instant::Instant;
+use serde::Serialize;
 use std::collections::HashMap;
 use std::sync::OnceLock;
 use std::time::Duration;
 
+use crate::corridor::{
+    classify_last_move_corridor_leaf, CorridorLeafOutcome, CorridorOptions, SearchDiagnostics,
+};
 use crate::tactical::{
     local_threat_facts_after_move, LocalThreatKind, SearchThreatPolicy, TacticalMoveAnnotation,
 };
@@ -436,7 +440,7 @@ fn evaluate_reference(board: &Board, color: Color) -> i32 {
     my_score - opp_score
 }
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
 pub struct SearchMetrics {
     pub eval_calls: u64,
     pub candidate_generations: u64,
@@ -478,6 +482,12 @@ pub struct SearchMetrics {
     pub tt_hits: u64,
     pub tt_cutoffs: u64,
     pub beta_cutoffs: u64,
+    pub corridor_leaf_probes: u64,
+    pub corridor_search_nodes: u64,
+    pub corridor_branch_probes: u64,
+    pub corridor_max_depth_reached: u64,
+    pub corridor_terminal_hits: u64,
+    pub corridor_static_fallbacks: u64,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -576,49 +586,22 @@ impl SearchMetrics {
         }
     }
 
+    fn record_corridor_leaf(&mut self, diagnostics: SearchDiagnostics, terminal_hit: bool) {
+        self.corridor_leaf_probes += 1;
+        self.corridor_search_nodes += diagnostics.search_nodes as u64;
+        self.corridor_branch_probes += diagnostics.branch_probes as u64;
+        self.corridor_max_depth_reached = self
+            .corridor_max_depth_reached
+            .max(diagnostics.max_depth_reached as u64);
+        if terminal_hit {
+            self.corridor_terminal_hits += 1;
+        } else {
+            self.corridor_static_fallbacks += 1;
+        }
+    }
+
     fn trace(self) -> serde_json::Value {
-        serde_json::json!({
-            "eval_calls": self.eval_calls,
-            "candidate_generations": self.candidate_generations,
-            "candidate_moves_total": self.candidate_moves_total,
-            "candidate_moves_max": self.candidate_moves_max,
-            "root_candidate_generations": self.root_candidate_generations,
-            "root_candidate_moves_total": self.root_candidate_moves_total,
-            "root_candidate_moves_max": self.root_candidate_moves_max,
-            "search_candidate_generations": self.search_candidate_generations,
-            "search_candidate_moves_total": self.search_candidate_moves_total,
-            "search_candidate_moves_max": self.search_candidate_moves_max,
-            "legality_checks": self.legality_checks,
-            "illegal_moves_skipped": self.illegal_moves_skipped,
-            "root_legality_checks": self.root_legality_checks,
-            "root_illegal_moves_skipped": self.root_illegal_moves_skipped,
-            "search_legality_checks": self.search_legality_checks,
-            "search_illegal_moves_skipped": self.search_illegal_moves_skipped,
-            "tactical_annotations": self.tactical_annotations,
-            "root_tactical_annotations": self.root_tactical_annotations,
-            "search_tactical_annotations": self.search_tactical_annotations,
-            "child_limit_applications": self.child_limit_applications,
-            "root_child_limit_applications": self.root_child_limit_applications,
-            "search_child_limit_applications": self.search_child_limit_applications,
-            "child_cap_hits": self.child_cap_hits,
-            "root_child_cap_hits": self.root_child_cap_hits,
-            "search_child_cap_hits": self.search_child_cap_hits,
-            "child_moves_before_total": self.child_moves_before_total,
-            "root_child_moves_before_total": self.root_child_moves_before_total,
-            "search_child_moves_before_total": self.search_child_moves_before_total,
-            "child_moves_before_max": self.child_moves_before_max,
-            "root_child_moves_before_max": self.root_child_moves_before_max,
-            "search_child_moves_before_max": self.search_child_moves_before_max,
-            "child_moves_after_total": self.child_moves_after_total,
-            "root_child_moves_after_total": self.root_child_moves_after_total,
-            "search_child_moves_after_total": self.search_child_moves_after_total,
-            "child_moves_after_max": self.child_moves_after_max,
-            "root_child_moves_after_max": self.root_child_moves_after_max,
-            "search_child_moves_after_max": self.search_child_moves_after_max,
-            "tt_hits": self.tt_hits,
-            "tt_cutoffs": self.tt_cutoffs,
-            "beta_cutoffs": self.beta_cutoffs,
-        })
+        serde_json::to_value(self).expect("search metrics should serialize")
     }
 }
 
@@ -630,6 +613,54 @@ fn evaluate_counted(
 ) -> i32 {
     metrics.eval_calls += 1;
     evaluate_static(board, color, static_eval)
+}
+
+const CORRIDOR_FORCED_SCORE: i32 = 900_000;
+
+fn evaluate_leaf_counted(
+    board: &Board,
+    color: Color,
+    root_color: Color,
+    static_eval: StaticEvaluation,
+    corridor_mode: CorridorIntegrationMode,
+    corridor_options: CorridorOptions,
+    metrics: &mut SearchMetrics,
+) -> i32 {
+    if board.result == GameResult::Ongoing {
+        if let Some(score) = corridor_leaf_score(board, corridor_mode, corridor_options, metrics) {
+            return score;
+        }
+    }
+
+    let sign = if color == root_color { 1 } else { -1 };
+    sign * evaluate_counted(board, root_color, static_eval, metrics)
+}
+
+fn corridor_leaf_score(
+    board: &Board,
+    corridor_mode: CorridorIntegrationMode,
+    corridor_options: CorridorOptions,
+    metrics: &mut SearchMetrics,
+) -> Option<i32> {
+    if corridor_mode != CorridorIntegrationMode::LeafQuiescence {
+        return None;
+    }
+
+    let result = classify_last_move_corridor_leaf(board, &corridor_options);
+    match result.outcome {
+        CorridorLeafOutcome::ForcedWin => {
+            metrics.record_corridor_leaf(result.diagnostics, true);
+            Some(CORRIDOR_FORCED_SCORE)
+        }
+        CorridorLeafOutcome::ForcedLoss => {
+            metrics.record_corridor_leaf(result.diagnostics, true);
+            Some(-CORRIDOR_FORCED_SCORE)
+        }
+        CorridorLeafOutcome::NoProvenCorridor => {
+            metrics.record_corridor_leaf(result.diagnostics, false);
+            None
+        }
+    }
 }
 
 #[doc(hidden)]
@@ -1710,6 +1741,8 @@ fn negamax(
     move_ordering: MoveOrdering,
     child_limit: Option<usize>,
     static_eval: StaticEvaluation,
+    corridor_mode: CorridorIntegrationMode,
+    corridor_options: CorridorOptions,
     nodes: &mut u64,
     metrics: &mut SearchMetrics,
     deadline: SearchDeadline,
@@ -1750,9 +1783,16 @@ fn negamax(
     }
 
     if depth == 0 || board.result != GameResult::Ongoing {
-        let sign = if color == root_color { 1 } else { -1 };
         return (
-            sign * evaluate_counted(board, root_color, static_eval, metrics),
+            evaluate_leaf_counted(
+                board,
+                color,
+                root_color,
+                static_eval,
+                corridor_mode,
+                corridor_options,
+                metrics,
+            ),
             None,
             false,
         );
@@ -1826,6 +1866,8 @@ fn negamax(
             move_ordering,
             child_limit,
             static_eval,
+            corridor_mode,
+            corridor_options,
             nodes,
             metrics,
             deadline,
@@ -1899,6 +1941,8 @@ fn search_root(
     move_ordering: MoveOrdering,
     child_limit: Option<usize>,
     static_eval: StaticEvaluation,
+    corridor_mode: CorridorIntegrationMode,
+    corridor_options: CorridorOptions,
     nodes: &mut u64,
     metrics: &mut SearchMetrics,
     deadline: SearchDeadline,
@@ -1952,6 +1996,8 @@ fn search_root(
             move_ordering,
             child_limit,
             static_eval,
+            corridor_mode,
+            corridor_options,
             nodes,
             metrics,
             deadline,
@@ -2109,6 +2155,21 @@ impl StaticEvaluation {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CorridorIntegrationMode {
+    Off,
+    LeafQuiescence,
+}
+
+impl CorridorIntegrationMode {
+    const fn name(self) -> &'static str {
+        match self {
+            CorridorIntegrationMode::Off => "off",
+            CorridorIntegrationMode::LeafQuiescence => "leaf_quiescence",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SearchBotConfig {
     pub max_depth: i32,
     pub time_budget_ms: Option<u64>,
@@ -2120,6 +2181,8 @@ pub struct SearchBotConfig {
     pub child_limit: Option<usize>,
     pub search_algorithm: SearchAlgorithm,
     pub static_eval: StaticEvaluation,
+    pub corridor_mode: CorridorIntegrationMode,
+    pub corridor_options: CorridorOptions,
 }
 
 impl SearchBotConfig {
@@ -2135,6 +2198,11 @@ impl SearchBotConfig {
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
+            corridor_mode: CorridorIntegrationMode::Off,
+            corridor_options: CorridorOptions {
+                max_depth: crate::corridor::DEFAULT_MAX_CORRIDOR_DEPTH,
+                max_reply_width: crate::corridor::DEFAULT_MAX_CORRIDOR_REPLY_WIDTH,
+            },
         }
     }
 
@@ -2150,6 +2218,11 @@ impl SearchBotConfig {
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
+            corridor_mode: CorridorIntegrationMode::Off,
+            corridor_options: CorridorOptions {
+                max_depth: crate::corridor::DEFAULT_MAX_CORRIDOR_DEPTH,
+                max_reply_width: crate::corridor::DEFAULT_MAX_CORRIDOR_REPLY_WIDTH,
+            },
         }
     }
 
@@ -2165,6 +2238,11 @@ impl SearchBotConfig {
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
+            corridor_mode: CorridorIntegrationMode::Off,
+            corridor_options: CorridorOptions {
+                max_depth: crate::corridor::DEFAULT_MAX_CORRIDOR_DEPTH,
+                max_reply_width: crate::corridor::DEFAULT_MAX_CORRIDOR_REPLY_WIDTH,
+            },
         }
     }
 
@@ -2212,6 +2290,9 @@ impl SearchBotConfig {
             "child_limit": self.child_limit,
             "search_algorithm": self.search_algorithm.name(),
             "static_eval": self.static_eval.name(),
+            "corridor_mode": self.corridor_mode.name(),
+            "corridor_max_depth": self.corridor_options.max_depth,
+            "corridor_reply_width": self.corridor_options.max_reply_width,
         })
     }
 }
@@ -2265,12 +2346,13 @@ impl Bot for SearchBot {
 
     fn trace(&self) -> Option<serde_json::Value> {
         self.last_info.as_ref().map(|info| {
+            let total_nodes = info.nodes + info.safety_nodes + info.metrics.corridor_search_nodes;
             serde_json::json!({
                 "config": self.config.trace(),
                 "depth": info.depth_reached,
                 "nodes": info.nodes,
                 "safety_nodes": info.safety_nodes,
-                "total_nodes": info.nodes + info.safety_nodes,
+                "total_nodes": total_nodes,
                 "metrics": info.metrics.trace(),
                 "score": info.score,
                 "budget_exhausted": info.budget_exhausted,
@@ -2348,6 +2430,8 @@ impl Bot for SearchBot {
                 move_ordering,
                 self.config.child_limit,
                 self.config.static_eval,
+                self.config.corridor_mode,
+                self.config.corridor_options,
                 &mut nodes,
                 &mut metrics,
                 deadline,
@@ -2957,6 +3041,8 @@ mod tests {
             MoveOrdering::TranspositionFirstBoardOrder,
             Some(1),
             StaticEvaluation::LineShapeEval,
+            CorridorIntegrationMode::Off,
+            CorridorOptions::default(),
             &mut nodes,
             &mut metrics,
             deadline,
@@ -2991,6 +3077,8 @@ mod tests {
             SearchAlgorithm::AlphaBetaIterativeDeepening
         );
         assert_eq!(baseline.static_eval, StaticEvaluation::LineShapeEval);
+        assert_eq!(baseline.corridor_mode, CorridorIntegrationMode::Off);
+        assert_eq!(baseline.corridor_options, CorridorOptions::default());
         assert_eq!(
             SearchBot::with_time(250).config(),
             SearchBotConfig::custom_time_budget(250)
@@ -3007,6 +3095,8 @@ mod tests {
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
+            corridor_mode: CorridorIntegrationMode::Off,
+            corridor_options: CorridorOptions::default(),
         };
         assert_eq!(SearchBot::with_config(config).config(), config);
         assert_eq!(
@@ -3066,6 +3156,9 @@ mod tests {
         assert_eq!(trace["config"]["child_limit"], serde_json::Value::Null);
         assert_eq!(trace["config"]["search_algorithm"], "alpha_beta_id");
         assert_eq!(trace["config"]["static_eval"], "line_shape_eval");
+        assert_eq!(trace["config"]["corridor_mode"], "off");
+        assert_eq!(trace["config"]["corridor_max_depth"], 4);
+        assert_eq!(trace["config"]["corridor_reply_width"], 8);
         assert!(trace["nodes"].as_u64().unwrap() > 0);
         assert!(trace["total_nodes"].as_u64().unwrap() >= trace["nodes"].as_u64().unwrap());
         assert_eq!(trace["budget_exhausted"], false);
@@ -3105,6 +3198,36 @@ mod tests {
             metrics["tactical_annotations"].as_u64().unwrap(),
             metrics["root_tactical_annotations"].as_u64().unwrap()
                 + metrics["search_tactical_annotations"].as_u64().unwrap()
+        );
+        assert_eq!(metrics["corridor_leaf_probes"], 0);
+        assert_eq!(metrics["corridor_search_nodes"], 0);
+        assert_eq!(metrics["corridor_branch_probes"], 0);
+        assert_eq!(metrics["corridor_terminal_hits"], 0);
+        assert!(metrics["corridor_static_fallbacks"].as_u64().is_some());
+    }
+
+    #[test]
+    fn corridor_quiescence_records_leaf_metrics_without_hiding_cost() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(&mut board, &["H8", "A1", "I8", "A2", "J8", "A3"]);
+        let mut config = SearchBotConfig::custom_depth(1);
+        config.safety_gate = SafetyGate::None;
+        config.corridor_mode = CorridorIntegrationMode::LeafQuiescence;
+        config.corridor_options.max_depth = 1;
+        let mut bot = SearchBot::with_config(config);
+
+        let _ = bot.choose_move(&board);
+        let trace = bot.trace().expect("expected search trace");
+        let metrics = &trace["metrics"];
+
+        assert_eq!(trace["config"]["corridor_mode"], "leaf_quiescence");
+        assert!(metrics["corridor_leaf_probes"].as_u64().unwrap() > 0);
+        assert!(metrics["corridor_search_nodes"].as_u64().unwrap() > 0);
+        assert!(
+            trace["total_nodes"].as_u64().unwrap()
+                >= trace["nodes"].as_u64().unwrap()
+                    + trace["safety_nodes"].as_u64().unwrap()
+                    + metrics["corridor_search_nodes"].as_u64().unwrap()
         );
     }
 
@@ -3225,6 +3348,8 @@ mod tests {
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
+            corridor_mode: CorridorIntegrationMode::Off,
+            corridor_options: CorridorOptions::default(),
         };
         let mut bot = SearchBot::with_config(config);
 
