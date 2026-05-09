@@ -149,6 +149,12 @@ responses are the widest local threat replies we intend to treat as still
 main cost-control signal. If a branch opens wider than the local-threat model,
 it is no longer the kind of corridor that can safely act as a search shortcut.
 
+When this lands, the report should keep `max_depth` as the nominal alpha-beta
+budget and add separate corridor reach metrics. A `search-d3` variant with
+portals is still a depth-`3` bot; the useful signal is whether corridor extra
+plies raise measured effective depth on forcing branches without hiding cost in
+unreported corridor work.
+
 This shape also defines the future optimization boundary. A rolling threat
 frontier can make entry detection and reply enumeration cheap by updating local
 threat facts as moves are applied and undone. That should be driven by the
@@ -213,6 +219,9 @@ uncapped, and all cap metrics are zero for default uncapped configs.
 Tournament reports preserve this split as generated candidate width versus
 post-ordering child width, so capped bots no longer look uncapped just because
 their candidate generator still sees the same broad board frontier.
+Future corridor-portal metrics should follow the same rule: split ordinary
+alpha-beta depth from corridor extra plies, and report effective depth as a
+derived reach metric rather than renaming the bot's nominal `max_depth`.
 Node budgets are not enforced yet; this is currently a trace and tournament
 metric.
 

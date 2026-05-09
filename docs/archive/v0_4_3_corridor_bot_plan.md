@@ -92,6 +92,25 @@ branching factor of broken and half-open three responses while excluding broad
 positions that should stay in normal search. Maximum corridor ply remains a
 diagnostic guard, not the primary definition of a corridor.
 
+Portal permission should be side-specific and root-player-relative:
+
+- `own`: allow shortcuts through corridors created by the bot's side.
+- `opponent`: allow shortcuts through corridors created by the opponent's side.
+
+This is intentionally asymmetric. It gives the lab a concrete mechanism for
+offensive and defensive styles without inventing personality weights. A more
+offensive candidate can spend extra corridor depth or budget on `own` forcing
+lines. A more defensive candidate can spend extra depth or budget on `opponent`
+forcing lines and escape checks. A balanced candidate enables both. The first
+implementation should keep the knob explicit, for example:
+
+```text
+search-d5+corridor-own-dN-w3+corridor-opponent-dN-w3
+```
+
+The exact CLI suffix can change, but the model should stay side-specific:
+enabled, max corridor depth, and max corridor width for each side.
+
 This also clarifies the implementation boundary. Replay analysis asks "can this
 reply be proven to stay in the forced corridor?" Live search asks "can this move
 shortcut through a narrow forcing line and return a useful terminal or exit
@@ -107,6 +126,16 @@ The desired corridor result shape for live search is transition-oriented:
 Only terminal results should directly override alpha-beta score. Exit results
 should resume normal search from the transformed board, with metrics recording
 the effective extra plies searched through the portal.
+
+Depth metrics must keep nominal and effective depth separate. A candidate named
+`search-d3+...` still has a depth-`3` alpha-beta budget. Corridor following
+should add explicit reach metrics instead of mutating that label:
+
+- nominal alpha-beta depth,
+- ordinary depth completed under budget,
+- corridor extra plies followed,
+- effective depth for the selected/principal branch,
+- average and max effective depth across searched root moves.
 
 The likely long-term performance fix is a rolling threat frontier. Full-board
 local-threat scans are acceptable in the analyzer and early prototypes, but live
@@ -151,6 +180,13 @@ Use multiple signals. Elo alone is not enough for this slice.
   width-rejected entries, followed corridor plies, terminal exits, width exits,
   neutral exits, guard exits, resumed normal-search states, and effective extra
   ply gained.
+- Reports should show both nominal depth and effective depth. The expected
+  improvement is not that a `d3` bot becomes labeled as a deeper bot; it is that
+  its measured effective depth rises inside narrow corridors without losing the
+  cost profile of the nominal depth.
+- Asymmetric portal experiments should report `own` and `opponent` shortcut
+  counts separately so offensive and defensive candidates can be compared by
+  actual budget allocation, not just label.
 
 Useful comparisons:
 

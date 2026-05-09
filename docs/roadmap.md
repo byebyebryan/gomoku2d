@@ -310,7 +310,8 @@ plumbing. Corridor search is now too central to the advanced-strategy story to
 expose only as an analyzer report and then immediately jump to settings. The
 next useful question is whether the same model can improve live bot behavior in
 focused, measurable ways: better forcing move ordering, selective extension
-through narrow corridors, escape-aware defense, and cheaper corridor proofs.
+through narrow corridors, escape-aware defense, asymmetric own/opponent corridor
+portal controls, and cheaper corridor proofs.
 
 That release should remain lab-first:
 
@@ -320,6 +321,8 @@ That release should remain lab-first:
   published anchors
 - reinforce or optimize corridor search where the bot integration exposes
   obvious cost or correctness gaps
+- treat offensive/defensive behavior as side-specific corridor budget allocation,
+  not as arbitrary eval personality weights
 - keep UI, settings, and product preset work out of scope unless the lab result
   is clear enough to name
 
