@@ -3,7 +3,6 @@ use serde::Serialize;
 
 use crate::tactical::{
     corridor_attacker_move_rank, corridor_defender_reply_moves, has_forcing_local_threat,
-    has_forcing_local_threat_at_move,
 };
 
 pub const DEFAULT_MAX_CORRIDOR_DEPTH: usize = 4;
@@ -105,154 +104,6 @@ pub struct DefenderReplyProof {
     pub principal_line: Vec<Move>,
     pub limit_causes: Vec<ProofLimitCause>,
     pub diagnostics: SearchDiagnostics,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum CorridorLeafOutcome {
-    ForcedWin,
-    ForcedLoss,
-    NoProvenCorridor,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct CorridorLeafResult {
-    pub outcome: CorridorLeafOutcome,
-    pub diagnostics: SearchDiagnostics,
-}
-
-pub fn classify_corridor_leaf(board: &Board, options: &CorridorOptions) -> CorridorLeafResult {
-    let mut diagnostics = SearchDiagnostics::default();
-    if board.result != GameResult::Ongoing {
-        return CorridorLeafResult {
-            outcome: CorridorLeafOutcome::NoProvenCorridor,
-            diagnostics,
-        };
-    }
-
-    let player = board.current_player;
-    let opponent = player.opponent();
-    if !board.immediate_winning_moves_for(player).is_empty() {
-        return CorridorLeafResult {
-            outcome: CorridorLeafOutcome::ForcedWin,
-            diagnostics,
-        };
-    }
-
-    let opponent_wins = board.immediate_winning_moves_for(opponent);
-    let player_has_threat = has_forcing_local_threat(board, player);
-    let opponent_has_threat = has_forcing_local_threat(board, opponent);
-    if opponent_wins.is_empty() && !player_has_threat && !opponent_has_threat {
-        return CorridorLeafResult {
-            outcome: CorridorLeafOutcome::NoProvenCorridor,
-            diagnostics,
-        };
-    }
-
-    if player_has_threat {
-        let proof = classify_attacker_corridor(board, player, options, options.max_depth);
-        diagnostics.merge(proof.diagnostics);
-        if matches!(
-            proof.outcome,
-            DefenderReplyOutcome::ForcedLoss | DefenderReplyOutcome::ImmediateLoss
-        ) {
-            return CorridorLeafResult {
-                outcome: CorridorLeafOutcome::ForcedWin,
-                diagnostics,
-            };
-        }
-    }
-
-    let mut result = classify_opponent_corridor_threat(
-        board,
-        opponent,
-        opponent_wins,
-        opponent_has_threat,
-        options,
-    );
-    result.diagnostics.merge(diagnostics);
-    result
-}
-
-pub fn classify_last_move_corridor_leaf(
-    board: &Board,
-    options: &CorridorOptions,
-) -> CorridorLeafResult {
-    if board.result != GameResult::Ongoing {
-        return CorridorLeafResult {
-            outcome: CorridorLeafOutcome::NoProvenCorridor,
-            diagnostics: SearchDiagnostics::default(),
-        };
-    }
-
-    let player = board.current_player;
-    let opponent = player.opponent();
-    let opponent_has_threat = board
-        .history
-        .last()
-        .copied()
-        .is_some_and(|mv| has_forcing_local_threat_at_move(board, opponent, mv));
-    if !opponent_has_threat {
-        return CorridorLeafResult {
-            outcome: CorridorLeafOutcome::NoProvenCorridor,
-            diagnostics: SearchDiagnostics::default(),
-        };
-    }
-
-    let opponent_wins = board.immediate_winning_moves_for(opponent);
-    classify_opponent_corridor_threat(board, opponent, opponent_wins, true, options)
-}
-
-fn classify_opponent_corridor_threat(
-    board: &Board,
-    opponent: Color,
-    opponent_wins: Vec<Move>,
-    opponent_has_threat: bool,
-    options: &CorridorOptions,
-) -> CorridorLeafResult {
-    let mut diagnostics = SearchDiagnostics::default();
-    let player = board.current_player;
-
-    if !opponent_wins.is_empty() || opponent_has_threat {
-        let replies = analyze_defender_reply_options(board, opponent, None, options);
-        for reply in &replies {
-            diagnostics.merge(reply.diagnostics);
-        }
-        if !opponent_wins.is_empty()
-            && !opponent_wins
-                .iter()
-                .copied()
-                .any(|mv| board.is_legal_for_color(mv, player))
-        {
-            return CorridorLeafResult {
-                outcome: CorridorLeafOutcome::ForcedLoss,
-                diagnostics,
-            };
-        }
-        if !replies.is_empty()
-            && replies.iter().all(|reply| {
-                matches!(
-                    reply.outcome,
-                    DefenderReplyOutcome::ForcedLoss | DefenderReplyOutcome::ImmediateLoss
-                )
-            })
-        {
-            return CorridorLeafResult {
-                outcome: CorridorLeafOutcome::ForcedLoss,
-                diagnostics,
-            };
-        }
-        if !replies.is_empty() {
-            return CorridorLeafResult {
-                outcome: CorridorLeafOutcome::NoProvenCorridor,
-                diagnostics,
-            };
-        }
-    }
-
-    CorridorLeafResult {
-        outcome: CorridorLeafOutcome::NoProvenCorridor,
-        diagnostics,
-    }
 }
 
 pub fn analyze_defender_reply_options(
@@ -884,8 +735,8 @@ fn extend_limit_causes(
 #[cfg(test)]
 mod tests {
     use super::{
-        analyze_defender_reply_options, classify_corridor_leaf, CorridorLeafOutcome,
-        CorridorOptions, DefenderReplyOutcome, DefenderReplyRole, ProofLimitCause,
+        analyze_defender_reply_options, CorridorOptions, DefenderReplyOutcome, DefenderReplyRole,
+        ProofLimitCause,
     };
     use gomoku_core::{Board, Color, Move, RuleConfig, Variant};
 
@@ -969,31 +820,6 @@ mod tests {
         );
         let reply = reply_for(&replies, "I9");
         assert!(reply.roles.contains(&DefenderReplyRole::ImminentDefense));
-    }
-
-    #[test]
-    fn corridor_leaf_classifies_current_player_immediate_win() {
-        let board = board_from_moves(
-            Variant::Freestyle,
-            &["H8", "A1", "I8", "A2", "J8", "A3", "K8", "A4"],
-        );
-
-        let result = classify_corridor_leaf(&board, &Default::default());
-
-        assert_eq!(result.outcome, CorridorLeafOutcome::ForcedWin);
-        assert_eq!(result.diagnostics.search_nodes, 0);
-    }
-
-    #[test]
-    fn corridor_leaf_classifies_unanswered_opponent_win_as_forced_loss() {
-        let board = board_from_moves(
-            Variant::Freestyle,
-            &["H8", "A1", "I8", "A2", "J8", "A3", "K8"],
-        );
-
-        let result = classify_corridor_leaf(&board, &Default::default());
-
-        assert_eq!(result.outcome, CorridorLeafOutcome::ForcedLoss);
     }
 
     #[test]

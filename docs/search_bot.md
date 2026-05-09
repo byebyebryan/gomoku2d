@@ -49,7 +49,6 @@ product presets:
 | `move_ordering` | Alpha-beta move ordering: `tt_first_board_order` or lab-only `tactical_first` |
 | `child_limit` | Optional lab-only cap on the ordered non-root child frontier searched by alpha-beta |
 | `static_eval` | Leaf board evaluator: default `line_shape_eval` or lab-only `pattern_eval` |
-| `corridor_mode` | Lab-only corridor integration: `off`, current `leaf_quiescence`, and proposed `selective_extension` |
 
 Search traces expose explicit pipeline stages: `candidate_source`,
 `legality_gate`, tactical annotation counters, `safety_gate`, and
@@ -104,13 +103,13 @@ searches fewer children. Append `+pattern-eval` to replace the default
 line-shape static eval with the lab-only pattern evaluator. These switches
 measure one pipeline axis at a time; defaults remain `near_all_r2`,
 `opponent_reply_local_threat_probe`, `tt_first_board_order`, no child cap, and
-`line_shape_eval`. Append `+corridor-q` to test shallow leaf-level corridor
-quiescence: alpha-beta still picks moves, but depth-0 ongoing positions can
-penalize proven last-move opponent corridors before falling back to static eval.
-Use `+corridor-qdN` to explicitly benchmark deeper proof. The next planned
-integration is selective corridor extension, where a child move that enters a
-narrow corridor can follow that corridor and resume normal search at the exit
-state instead of spending ordinary depth on each forced ply.
+`line_shape_eval`. Corridor search is currently not a live `SearchBot` suffix.
+The retired `+corridor-q` leaf-quiescence experiment proved the shared corridor
+module could be called from search, but it was too expensive to keep as a lab
+axis. The next planned integration is selective corridor extension, where a
+child move that enters a narrow corridor can follow that corridor and resume
+normal search at the exit state instead of spending ordinary depth on each
+forced ply.
 
 These specs are not durable product identity, and they are not character bots
 yet. They exist so the lab can benchmark stable configs before deciding whether
@@ -121,29 +120,14 @@ the current anchor set.
 ## Corridor Integration
 
 `gomoku-bot` now owns a replay-independent corridor module alongside
-`SearchBot`. The earlier standalone `CorridorBot` bridge is retired; corridor
-search now enters live play through lab-only `SearchBot` suffixes.
+`SearchBot`. The earlier standalone `CorridorBot` bridge is retired. The first
+live search integration, `+corridor-q`, is also retired: it proved the shared
+corridor module could be called from `SearchBot`, but leaf quiescence was the
+wrong cost shape and is no longer accepted by the lab spec parser.
 
-The first integration is `+corridor-q`. It probes ongoing leaf positions with a
-shallow, last-move-localized corridor engine pass. If the previous move created
-an opponent corridor and every legal reply still loses, the leaf scores as
-`-900000`; confirmed escapes, possible escapes, unknown branches, and quiet
-positions fall back to normal static eval. The general corridor module can still
-classify full current-player and opponent corridor states, but the live
-`SearchBot` suffix uses the localized defensive gate to avoid scanning the whole
-board at every leaf. The default suffix uses depth 1; `+corridor-qdN` enables
-explicit `1..8` depth sweeps.
-
-Trace note: corridor proof work is reported through metrics such as
-`corridor_leaf_probes`, `corridor_search_nodes`, `corridor_branch_probes`,
-`corridor_terminal_hits`, and `corridor_static_fallbacks`. `total_nodes`
-includes corridor proof nodes so report cost does not hide outside the normal
-alpha-beta `nodes` field.
-
-The current leaf-quiescence experiment is not the intended durable integration
-shape. It proved the shared corridor module can be called from `SearchBot`, but
-it probes many leaves that do not become useful corridor results. The next
-design target is corridor search as a selective extension or shortcut:
+The retired leaf-quiescence experiment is not the intended durable integration
+shape. It probed many leaves that did not become useful corridor results. The
+next design target is corridor search as a selective extension or shortcut:
 
 1. Alpha-beta generates and orders candidate moves normally.
 2. After a child move is applied, the bot checks whether that move creates a
@@ -185,10 +169,7 @@ Search traces include both the result and the config:
     "move_ordering": "tt_first_board_order",
     "child_limit": null,
     "search_algorithm": "alpha_beta_id",
-    "static_eval": "line_shape_eval",
-    "corridor_mode": "off",
-    "corridor_max_depth": 4,
-    "corridor_reply_width": 8
+    "static_eval": "line_shape_eval"
   },
   "depth": 3,
   "nodes": 1234,

@@ -58,12 +58,10 @@ Current implementation note:
   defender-reply analysis entry points.
 - `gomoku-eval` keeps replay-specific traceback/report shaping, but fresh
   alternate reply probes delegate to the bot-owned corridor engine.
-- The standalone `CorridorBot` bridge has been retired. The first live
-  integration is `SearchBot` leaf quiescence through the lab-only
-  `+corridor-q` suffix, with explicit `+corridor-qdN` sweeps for deeper proof.
-- Corridor proof work is reported separately through search metrics such as
-  `corridor_leaf_probes`, `corridor_search_nodes`, and
-  `corridor_static_fallbacks`.
+- The standalone `CorridorBot` bridge has been retired.
+- The first live `SearchBot` integration, leaf quiescence through `+corridor-q`
+  and `+corridor-qdN`, has also been retired because it had the wrong cost
+  shape.
 - Early gauntlet evidence showed leaf quiescence is the wrong cost shape: it
   probes too many depth-0 positions that ultimately fall back to static eval.
   The next candidate should spend corridor work only after a concrete move
