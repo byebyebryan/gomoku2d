@@ -76,6 +76,14 @@ impl CliTournamentSchedule {
     }
 }
 
+fn tournament_progress_interval(total_games: usize) -> Option<usize> {
+    if total_games == 0 {
+        None
+    } else {
+        Some((total_games / 20).max(1))
+    }
+}
+
 #[derive(Args, Debug, Clone)]
 struct EvalOptions {
     /// Rule variant: "renju" (default) or "freestyle"
@@ -1061,6 +1069,11 @@ fn main() {
             );
             let threads = threads.unwrap_or_else(default_thread_count);
             println!("Threads: {}", threads);
+            let total_games = pairs.len() * games_per_pair as usize;
+            let progress_interval = tournament_progress_interval(total_games);
+            if let Some(progress_interval) = progress_interval {
+                println!("Progress: every {progress_interval} completed game(s)");
+            }
             if let Some(ms) = search_time_ms {
                 println!("Search time budget: {ms} ms/move");
             }
@@ -1127,6 +1140,7 @@ fn main() {
                     opening_plies,
                     opening_policy,
                     threads,
+                    progress_interval,
                 },
                 |black_name, white_name, mr| {
                     match_idx += 1;

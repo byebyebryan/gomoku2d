@@ -53,6 +53,15 @@ cargo run --release -p gomoku-eval -- tournament \
   --report-json reports/latest.json
 ```
 
+Long parallel tournaments print progress to stderr as games complete, including
+elapsed time and ETA. When running in tmux, pipe both streams through `tee` if
+you want a durable progress log:
+
+```sh
+cargo run --release -p gomoku-eval -- tournament ... \
+  --report-json outputs/scratch.json 2>&1 | tee outputs/scratch.log
+```
+
 Focused head-to-head:
 
 ```sh

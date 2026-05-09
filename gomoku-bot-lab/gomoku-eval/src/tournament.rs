@@ -10,7 +10,9 @@ use gomoku_core::{Color, GameResult, Move, Replay, RuleConfig};
 use rayon::prelude::*;
 use rayon::ThreadPoolBuilder;
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::time::Instant;
 
 pub type TournamentBotFactory = Arc<dyn Fn(u64) -> Box<dyn Bot> + Send + Sync>;
 
@@ -21,6 +23,7 @@ pub struct TournamentOptions {
     pub opening_plies: usize,
     pub opening_policy: OpeningPolicy,
     pub threads: usize,
+    pub progress_interval: Option<usize>,
 }
 
 impl Default for TournamentOptions {
@@ -31,6 +34,7 @@ impl Default for TournamentOptions {
             opening_plies: 0,
             opening_policy: OpeningPolicy::default(),
             threads: default_thread_count(),
+            progress_interval: None,
         }
     }
 }
@@ -430,6 +434,15 @@ pub fn run_scheduled_pairs_parallel(
         .num_threads(threads)
         .build()
         .expect("failed to build tournament thread pool");
+    let total_jobs = jobs.len();
+    let completed_jobs = AtomicUsize::new(0);
+    let progress_interval = options
+        .progress_interval
+        .filter(|interval| total_jobs > 0 && *interval > 0);
+    let progress_start = Instant::now();
+    if progress_interval.is_some() {
+        eprintln!("Progress: 0/{total_jobs} games complete");
+    }
     let mut outcomes: Vec<TournamentOutcome> = pool.install(|| {
         jobs.par_iter()
             .map(|job| {
@@ -460,6 +473,30 @@ pub fn run_scheduled_pairs_parallel(
                         |_, _, _, _| {},
                     )
                 };
+
+                if let Some(interval) = progress_interval {
+                    let done = completed_jobs.fetch_add(1, Ordering::Relaxed) + 1;
+                    if done == total_jobs || done.is_multiple_of(interval) {
+                        let elapsed = progress_start.elapsed().as_secs_f64();
+                        let progress = done as f64 * 100.0 / total_jobs as f64;
+                        let eta_secs = if done > 0 && done < total_jobs && elapsed > 0.0 {
+                            let games_per_sec = done as f64 / elapsed;
+                            Some((total_jobs - done) as f64 / games_per_sec)
+                        } else {
+                            None
+                        };
+                        match eta_secs {
+                            Some(eta_secs) => eprintln!(
+                                "Progress: {done}/{total_jobs} games complete ({progress:.1}%, elapsed {:.0}s, ETA {:.0}s)",
+                                elapsed, eta_secs
+                            ),
+                            None => eprintln!(
+                                "Progress: {done}/{total_jobs} games complete ({progress:.1}%, elapsed {:.0}s)",
+                                elapsed
+                            ),
+                        }
+                    }
+                }
 
                 TournamentOutcome {
                     match_idx: job.match_idx,
@@ -577,6 +614,7 @@ mod tests {
                 opening_plies: 0,
                 opening_policy: OpeningPolicy::CenteredSuite,
                 threads: 2,
+                progress_interval: None,
             },
             |_, _, _| {},
         );
@@ -625,6 +663,7 @@ mod tests {
                 opening_plies: 4,
                 opening_policy: OpeningPolicy::CenteredSuite,
                 threads: 2,
+                progress_interval: None,
             },
             |_, _, _| {},
         );
@@ -700,6 +739,7 @@ mod tests {
                 opening_plies: 0,
                 opening_policy: OpeningPolicy::CenteredSuite,
                 threads: 2,
+                progress_interval: None,
             },
             |_, _, _| {},
         );
