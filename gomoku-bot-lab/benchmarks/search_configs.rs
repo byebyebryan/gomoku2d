@@ -1,14 +1,9 @@
-use gomoku_bot::{
-    CorridorIntegrationMode, CorridorOptions, MoveOrdering, SafetyGate, SearchAlgorithm,
-    SearchBotConfig, StaticEvaluation,
-};
+use gomoku_bot::{MoveOrdering, SafetyGate, SearchAlgorithm, SearchBotConfig, StaticEvaluation};
 
 pub struct LabSearchConfig {
     pub id: &'static str,
     pub config: SearchBotConfig,
 }
-
-const SEARCH_CORRIDOR_QUIESCENCE_DEPTH: usize = 1;
 
 pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
     LabSearchConfig {
@@ -24,11 +19,6 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
-            corridor_mode: CorridorIntegrationMode::Off,
-            corridor_options: CorridorOptions {
-                max_depth: gomoku_bot::corridor::DEFAULT_MAX_CORRIDOR_DEPTH,
-                max_reply_width: gomoku_bot::corridor::DEFAULT_MAX_CORRIDOR_REPLY_WIDTH,
-            },
         },
     },
     LabSearchConfig {
@@ -44,11 +34,6 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
-            corridor_mode: CorridorIntegrationMode::Off,
-            corridor_options: CorridorOptions {
-                max_depth: gomoku_bot::corridor::DEFAULT_MAX_CORRIDOR_DEPTH,
-                max_reply_width: gomoku_bot::corridor::DEFAULT_MAX_CORRIDOR_REPLY_WIDTH,
-            },
         },
     },
     LabSearchConfig {
@@ -64,11 +49,6 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
-            corridor_mode: CorridorIntegrationMode::Off,
-            corridor_options: CorridorOptions {
-                max_depth: gomoku_bot::corridor::DEFAULT_MAX_CORRIDOR_DEPTH,
-                max_reply_width: gomoku_bot::corridor::DEFAULT_MAX_CORRIDOR_REPLY_WIDTH,
-            },
         },
     },
 ];
@@ -111,11 +91,6 @@ fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchB
         return Some(config);
     }
 
-    if let Some(depth) = suffix.strip_prefix("corridor-qd") {
-        let depth = parse_corridor_depth(depth)?;
-        return Some(enable_corridor_quiescence(config, depth));
-    }
-
     match suffix {
         "near-all-r1" => {
             config.candidate_radius = 1;
@@ -152,18 +127,8 @@ fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchB
             config.static_eval = StaticEvaluation::PatternEval;
             Some(config)
         }
-        "corridor-q" => Some(enable_corridor_quiescence(
-            config,
-            SEARCH_CORRIDOR_QUIESCENCE_DEPTH,
-        )),
         _ => apply_asymmetric_candidate_source_suffix(config, suffix),
     }
-}
-
-fn enable_corridor_quiescence(mut config: SearchBotConfig, max_depth: usize) -> SearchBotConfig {
-    config.corridor_mode = CorridorIntegrationMode::LeafQuiescence;
-    config.corridor_options.max_depth = max_depth;
-    config
 }
 
 fn apply_asymmetric_candidate_source_suffix(
@@ -180,13 +145,6 @@ fn apply_asymmetric_candidate_source_suffix(
     config.candidate_radius = self_radius;
     config.candidate_opponent_radius = Some(opponent_radius);
     Some(config)
-}
-
-fn parse_corridor_depth(value: &str) -> Option<usize> {
-    match value.parse::<usize>().ok()? {
-        depth @ 1..=8 => Some(depth),
-        _ => None,
-    }
 }
 
 fn parse_candidate_radius(value: &str) -> Option<usize> {
@@ -354,44 +312,6 @@ mod tests {
     }
 
     #[test]
-    fn parses_corridor_quiescence_suffix() {
-        let config = super::search_config_from_lab_spec("search-d3+corridor-q", 5, None, None)
-            .expect("expected corridor quiescence spec to parse");
-
-        assert_eq!(
-            config.corridor_mode,
-            gomoku_bot::CorridorIntegrationMode::LeafQuiescence
-        );
-        assert_eq!(config.corridor_options.max_depth, 1);
-        assert_eq!(
-            config.corridor_options.max_reply_width,
-            gomoku_bot::corridor::DEFAULT_MAX_CORRIDOR_REPLY_WIDTH
-        );
-    }
-
-    #[test]
-    fn parses_explicit_corridor_quiescence_depth_suffix() {
-        let config = super::search_config_from_lab_spec("search-d3+corridor-qd4", 5, None, None)
-            .expect("expected explicit corridor quiescence depth spec to parse");
-
-        assert_eq!(
-            config.corridor_mode,
-            gomoku_bot::CorridorIntegrationMode::LeafQuiescence
-        );
-        assert_eq!(config.corridor_options.max_depth, 4);
-    }
-
-    #[test]
-    fn rejects_invalid_corridor_quiescence_depth_suffix() {
-        assert!(
-            super::search_config_from_lab_spec("search-d3+corridor-qd0", 5, None, None).is_none()
-        );
-        assert!(
-            super::search_config_from_lab_spec("search-d3+corridor-qd9", 5, None, None).is_none()
-        );
-    }
-
-    #[test]
     fn parses_child_cap_suffix() {
         let config = super::search_config_from_lab_spec(
             "search-d5+tactical-first+child-cap-12",
@@ -490,6 +410,12 @@ mod tests {
             super::search_config_from_lab_spec("search-d3+near-all-r4", 5, None, None).is_none()
         );
         assert!(super::search_config_from_lab_spec("search-d3+corridor", 5, None, None).is_none());
+        assert!(
+            super::search_config_from_lab_spec("search-d3+corridor-q", 5, None, None).is_none()
+        );
+        assert!(
+            super::search_config_from_lab_spec("search-d3+corridor-qd4", 5, None, None).is_none()
+        );
         assert!(super::search_config_from_lab_spec(
             "search-d3+near-self-r0-opponent-r1",
             5,

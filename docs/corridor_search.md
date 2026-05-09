@@ -275,9 +275,9 @@ separate maximum corridor ply limit is still useful as a safety guard, but it
 should not be the main cost-control lever. Width determines whether the branch
 is a corridor; depth only prevents pathological cases from running forever.
 
-This is intentionally different from the current `+corridor-q` leaf
-quiescence. Leaf quiescence asks too often and too late: many depth-0 positions
-need a corridor probe only to fall back to static eval. The shortcut model spends
+This is intentionally different from the retired `+corridor-q` leaf quiescence.
+Leaf quiescence asked too often and too late: many depth-0 positions needed a
+corridor probe only to fall back to static eval. The shortcut model spends
 corridor work only after move generation has produced a candidate that appears
 to enter or continue a forcing line.
 
@@ -378,7 +378,8 @@ The current checkpoint provides:
 - bot-owned corridor proof entry points under `gomoku-bot::corridor`,
 - shared local-threat facts and search/corridor policy views under
   `gomoku-bot::tactical` consumed by both `SearchBot` and corridor search,
-- lab-only `SearchBot` corridor quiescence via the `+corridor-q` suffix,
+- retired `SearchBot` corridor quiescence evidence from the former
+  `+corridor-q` suffix,
 - proof-detail JSON and HTML report generation,
 - visual proof frames with board rendering and semantic markers,
 - Renju-aware handling for forbidden black replies and illegal black threats,
@@ -393,9 +394,8 @@ Known limits:
 - `possible_escape` is common and acceptable; it means the current model cannot
   prove the branch remains in the forced corridor.
 - The report is a lab artifact, not a polished replay-screen feature.
-- `+corridor-q` is a shallow lab integration point, not a product preset. Deeper
-  proof is available through explicit `+corridor-qdN` sweeps, but analyzer-depth
-  proof at every search leaf is currently too expensive for live play.
+- the retired `+corridor-q` leaf integration was too expensive for live play and
+  is no longer a lab suffix.
 - The next corridor-bot direction is selective extension through narrow
   corridors, with initial reply width cap `3`, not broader proof at every leaf.
 

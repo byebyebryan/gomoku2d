@@ -82,26 +82,6 @@ cargo run --release -p gomoku-eval -- tournament \
   --report-json outputs/gauntlet.json
 ```
 
-Corridor quiescence smoke run:
-
-```sh
-cargo run --release -p gomoku-eval -- tournament \
-  --schedule head-to-head \
-  --bots search-d3,search-d3+corridor-q \
-  --games-per-pair 8 \
-  --opening-policy centered-suite \
-  --opening-plies 4 \
-  --search-cpu-time-ms 1000 \
-  --max-moves 120 \
-  --report-json outputs/corridor-q-smoke.json
-```
-
-Use `+corridor-q` when the goal is to test shallow corridor proof as alpha-beta
-leaf quiescence. It is intentionally not a separate bot; proof work is emitted
-in search metrics as corridor leaf probes, corridor search nodes, and static
-fallbacks. Use `+corridor-qdN` only for explicit depth sweeps, since deeper
-proof can dominate per-move cost.
-
 Batch gauntlet:
 
 ```sh

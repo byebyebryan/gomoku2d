@@ -33,7 +33,6 @@ cargo test  --workspace
 ```sh
 cargo run --release -p gomoku-cli -- --black baseline --white random
 cargo run --release -p gomoku-cli -- --black search-d3 --white search-d1 --rule renju
-cargo run --release -p gomoku-cli -- --black search-d3+corridor-q --white search-d3 --rule renju
 cargo run --release -p gomoku-cli -- --black baseline --white random --time-ms 500
 cargo run --release -p gomoku-cli -- --black baseline --white random --quiet --replay /tmp/game.json
 ```
@@ -86,12 +85,7 @@ generation, legality filtering, and move ordering. `+tactical-cap-N` is
 shorthand for `+tactical-first+child-cap-N` and is the preferred report-facing
 form, for example `search-d5+tactical-cap-12`. Root still considers every
 legal/safe candidate; candidate source controls discovery, while child cap
-controls how many ordered non-root children alpha-beta searches. Append
-`+corridor-q` to enable shallow lab-only corridor quiescence at alpha-beta
-leaves. It penalizes proven last-move opponent corridors and falls back to
-static eval for confirmed escapes, possible escapes, unknown branches, or quiet
-positions. Use `+corridor-qdN` to explicitly try deeper leaf proof, currently
-`1..8`. These are diagnostic switches, not product presets.
+controls how many ordered non-root children alpha-beta searches.
 
 Legacy specs still work: plain `baseline` uses `--depth`, `baseline-N` creates a
 custom fixed-depth baseline bot, and the old `fast`/`balanced`/`deep` aliases
@@ -100,24 +94,16 @@ still parse for old scripts. New reports and gauntlets should use explicit
 
 ### Current corridor integration
 
-The earlier standalone `CorridorBot` bridge is retired. Corridor search now
-enters live bot play through `SearchBot` itself, starting with the lab-only
-`+corridor-q` suffix. This keeps alpha-beta as the real move selector while
-letting proven last-move opponent corridors resolve noisy leaf positions before
-static eval.
-The default suffix uses depth 1 because full analyzer-depth proof at every
-search leaf is too expensive for live bot evaluation. The leaf gate is also
-last-move-localized so quiet positions avoid a whole-board threat scan.
-
-Trace output keeps corridor proof work separate through metrics such as
-`corridor_leaf_probes`, `corridor_search_nodes`, and
-`corridor_static_fallbacks`, and `total_nodes` includes corridor proof nodes so
-reports do not hide that cost.
+The earlier standalone `CorridorBot` bridge is retired. The first `SearchBot`
+integration, the lab-only `+corridor-q` leaf-quiescence suffix, is also retired.
+It proved the shared corridor engine can be called from search, but it spent
+too much work probing depth-0 positions that usually fell back to static eval.
 
 Failed search experiments are intentionally removed instead of kept as dead lab
 suffixes. The broad shape-eval attempt fixed one depth-2 diagnostic but lost to
 plain `search-d3`, so it is documented rather than exposed as a live lab spec.
-Current notes live in
+The corridor leaf-quiescence result follows the same rule: keep the learning,
+not the suffix. Current notes live in
 [`../docs/archive/v0_4_search_bot_enhancement_plan.md`](../docs/archive/v0_4_search_bot_enhancement_plan.md).
 
 More detailed strategy notes live in [`../docs/search_bot.md`](../docs/search_bot.md).

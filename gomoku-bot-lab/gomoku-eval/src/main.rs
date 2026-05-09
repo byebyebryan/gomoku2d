@@ -1573,20 +1573,14 @@ mod tests {
     }
 
     #[test]
-    fn make_bot_factory_accepts_corridor_quiescence_search_suffix() {
-        let factory = make_bot_factory("search-d1+corridor-q", None, Some(123))
-            .expect("corridor quiescence search spec should parse with a CPU budget");
-        let mut bot = factory(42);
-        let board = gomoku_core::Board::new(RuleConfig::default());
-
-        let _ = bot.choose_move(&board);
-        let trace = bot
-            .trace()
-            .expect("search bot should expose the search trace");
-
-        assert_eq!(trace["config"]["max_depth"], 1);
-        assert_eq!(trace["config"]["cpu_time_budget_ms"], 123);
-        assert_eq!(trace["config"]["corridor_mode"], "leaf_quiescence");
+    fn make_bot_factory_rejects_retired_corridor_quiescence_suffixes() {
+        for spec in ["search-d1+corridor-q", "search-d1+corridor-qd4"] {
+            let err = match make_bot_factory(spec, None, Some(123)) {
+                Ok(_) => panic!("retired corridor quiescence suffix should not parse: {spec}"),
+                Err(err) => err,
+            };
+            assert!(err.contains("Unknown bot"));
+        }
     }
 
     #[test]
