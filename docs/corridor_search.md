@@ -275,6 +275,19 @@ separate maximum corridor ply limit is still useful as a safety guard, but it
 should not be the main cost-control lever. Width determines whether the branch
 is a corridor; depth only prevents pathological cases from running forever.
 
+The shortcut should also be controllable by side, relative to the root player:
+
+- `own` corridor portals: follow corridors created by the bot's side.
+- `opponent` corridor portals: follow corridors created by the opponent's side.
+
+This is a simple implementation hook because the search already knows the root
+player and the player who created each child position. It is also a better style
+knob than arbitrary eval weights. Enabling or deepening `own` portals biases the
+bot toward proving attacking lines; enabling or deepening `opponent` portals
+biases it toward spotting and escaping opponent forcing lines. Balanced play can
+enable both. Aggressive and defensive variants can differ by side-specific
+portal depth, width, or budget without changing the underlying corridor model.
+
 This is intentionally different from the retired `+corridor-q` leaf quiescence.
 Leaf quiescence asked too often and too late: many depth-0 positions needed a
 corridor probe only to fall back to static eval. The shortcut model spends
@@ -285,8 +298,27 @@ The lab report should make that cost shape visible. At minimum, selective
 extension needs metrics for entries seen, entries accepted, entries rejected by
 width, corridor plies followed, terminal exits, width exits, neutral exits,
 safety-guard exits, resumed normal-search states, and effective extra ply gained.
-Those metrics should stay separate from ordinary alpha-beta nodes so a corridor
-candidate cannot look cheaper by moving work into an unreported bucket.
+Those metrics should split `own` versus `opponent` portals once asymmetric
+portal controls are active. They should stay separate from ordinary alpha-beta
+nodes so a corridor candidate cannot look cheaper by moving work into an
+unreported bucket.
+
+Depth reporting should also distinguish the configured search budget from the
+reach created by portals. A `search-d3` bot is still nominally depth `3`; a
+corridor shortcut should not pretend the base depth changed. Instead, reports
+should capture:
+
+- `nominal_depth`: the configured alpha-beta depth, such as `3` or `5`.
+- `alpha_beta_depth_reached`: the ordinary search depth completed under budget.
+- `corridor_extra_plies`: forced plies followed without spending ordinary depth.
+- `effective_depth`: ordinary depth reached plus corridor extra plies along the
+  measured branch or principal line.
+
+That is the expected success shape for the portal model. If `search-d3` with
+portals still costs like depth `3` but routinely reaches effective depth `5+`
+inside narrow forcing lines, the shortcut is doing useful work. If effective
+depth barely moves, or only rises by hiding expensive corridor nodes outside the
+main cost counters, the experiment failed.
 
 This work may also reinforce corridor search itself. Bot integration will put
 more pressure on proof cost, transition enumeration, memoization, and Renju
