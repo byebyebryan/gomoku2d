@@ -11,42 +11,173 @@ pub enum LocalThreatKind {
     BrokenThree,
 }
 
-impl LocalThreatKind {
-    pub fn search_rank(self) -> u8 {
-        match self {
-            Self::Five => 5,
-            Self::OpenFour => 4,
-            Self::ClosedFour | Self::BrokenFour => 3,
-            Self::OpenThree => 2,
-            Self::ClosedThree | Self::BrokenThree => 1,
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct SearchThreatPolicy;
+
+impl SearchThreatPolicy {
+    pub fn rank(self, kind: LocalThreatKind) -> u8 {
+        match kind {
+            LocalThreatKind::Five => 5,
+            LocalThreatKind::OpenFour => 4,
+            LocalThreatKind::ClosedFour | LocalThreatKind::BrokenFour => 3,
+            LocalThreatKind::OpenThree => 2,
+            LocalThreatKind::ClosedThree | LocalThreatKind::BrokenThree => 1,
         }
     }
 
-    pub fn corridor_rank(self) -> u8 {
-        match self {
-            Self::Five => 5,
-            Self::OpenFour => 4,
-            Self::ClosedFour | Self::BrokenFour => 3,
-            Self::OpenThree => 2,
-            Self::BrokenThree => 1,
-            Self::ClosedThree => 0,
+    pub fn ordering_score(self, kind: LocalThreatKind) -> i32 {
+        match kind {
+            LocalThreatKind::Five => 100_000,
+            LocalThreatKind::OpenFour => 80_000,
+            LocalThreatKind::ClosedFour | LocalThreatKind::BrokenFour => 70_000,
+            LocalThreatKind::OpenThree => 50_000,
+            LocalThreatKind::ClosedThree | LocalThreatKind::BrokenThree => 10_000,
         }
     }
 
-    pub fn is_search_forcing(self) -> bool {
-        !matches!(self, Self::ClosedThree | Self::BrokenThree)
-    }
-
-    pub fn is_corridor_forcing(self) -> bool {
-        matches!(
-            self,
-            Self::Five
-                | Self::OpenFour
-                | Self::ClosedFour
-                | Self::BrokenFour
-                | Self::OpenThree
-                | Self::BrokenThree
+    pub fn is_must_keep(self, fact: &LocalThreatFact) -> bool {
+        !matches!(
+            fact.kind,
+            LocalThreatKind::ClosedThree | LocalThreatKind::BrokenThree
         )
+    }
+
+    pub fn facts_after_move(self, board: &Board, mv: Move) -> Vec<LocalThreatFact> {
+        local_threat_facts_after_move(board, mv)
+    }
+
+    pub fn annotation_for_move(self, board: &Board, mv: Move) -> TacticalMoveAnnotation {
+        if !board.is_legal(mv) {
+            return TacticalMoveAnnotation {
+                player: board.current_player,
+                mv,
+                local_threats: Vec::new(),
+            };
+        }
+
+        let player = board.current_player;
+        TacticalMoveAnnotation {
+            player,
+            mv,
+            local_threats: self
+                .facts_after_move(board, mv)
+                .into_iter()
+                .filter(|fact| fact.player == player)
+                .collect(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct CorridorThreatPolicy;
+
+impl CorridorThreatPolicy {
+    pub fn rank(self, kind: LocalThreatKind) -> u8 {
+        match kind {
+            LocalThreatKind::Five => 5,
+            LocalThreatKind::OpenFour => 4,
+            LocalThreatKind::ClosedFour | LocalThreatKind::BrokenFour => 3,
+            LocalThreatKind::OpenThree => 2,
+            LocalThreatKind::BrokenThree => 1,
+            LocalThreatKind::ClosedThree => 0,
+        }
+    }
+
+    pub fn is_corridor_kind(self, kind: LocalThreatKind) -> bool {
+        matches!(
+            kind,
+            LocalThreatKind::Five
+                | LocalThreatKind::OpenFour
+                | LocalThreatKind::ClosedFour
+                | LocalThreatKind::BrokenFour
+                | LocalThreatKind::OpenThree
+                | LocalThreatKind::BrokenThree
+        )
+    }
+
+    pub fn is_active_threat(self, board: &Board, attacker: Color, fact: &LocalThreatFact) -> bool {
+        self.is_corridor_kind(fact.kind)
+            && !legal_forcing_continuations_for_fact(board, attacker, fact).is_empty()
+    }
+
+    pub fn active_threats(self, board: &Board, attacker: Color) -> Vec<LocalThreatFact> {
+        let mut facts = raw_local_threat_facts_for_player(board, attacker)
+            .into_iter()
+            .filter(|fact| self.is_active_threat(board, attacker, fact))
+            .collect::<Vec<_>>();
+        facts.sort_by_key(|fact| std::cmp::Reverse(self.rank(fact.kind)));
+        facts
+    }
+
+    pub fn has_active_threat(self, board: &Board, attacker: Color) -> bool {
+        raw_local_threat_facts_for_player(board, attacker)
+            .iter()
+            .any(|fact| self.is_active_threat(board, attacker, fact))
+    }
+
+    pub fn defender_reply_moves(
+        self,
+        board: &Board,
+        attacker: Color,
+        actual_reply: Option<Move>,
+    ) -> Vec<Move> {
+        let defender = attacker.opponent();
+        let mut replies = Vec::new();
+
+        let mut facts = self.active_threats(board, attacker);
+        if facts.is_empty() {
+            return replies;
+        }
+
+        if let Some(actual_reply) = actual_reply {
+            let actual_facts = facts
+                .iter()
+                .filter(|fact| fact.defense_squares.contains(&actual_reply))
+                .cloned()
+                .collect::<Vec<_>>();
+            if !actual_facts.is_empty() {
+                facts = actual_facts;
+            }
+        }
+
+        let best_rank = facts
+            .iter()
+            .map(|fact| self.rank(fact.kind))
+            .max()
+            .expect("facts are not empty");
+        for fact in facts
+            .into_iter()
+            .filter(|fact| self.rank(fact.kind) == best_rank)
+        {
+            add_corridor_defender_replies_for_fact(board, attacker, defender, &fact, &mut replies);
+        }
+
+        replies
+    }
+
+    pub fn attacker_move_rank(self, board: &Board, attacker: Color, mv: Move) -> u8 {
+        if board.current_player != attacker || !board.is_legal_for_color(mv, attacker) {
+            return 0;
+        }
+        let mut next = board.clone();
+        if next.apply_move(mv).is_err() {
+            return 0;
+        }
+        match next.result {
+            GameResult::Winner(winner) if winner == attacker => {
+                return self.rank(LocalThreatKind::Five)
+            }
+            GameResult::Winner(_) | GameResult::Draw => return 0,
+            GameResult::Ongoing => {}
+        }
+        if !next.immediate_winning_moves_for(attacker).is_empty() {
+            return self.rank(LocalThreatKind::OpenFour);
+        }
+        self.active_threats(&next, attacker)
+            .into_iter()
+            .map(|fact| self.rank(fact.kind))
+            .max()
+            .unwrap_or(0)
     }
 }
 
@@ -74,16 +205,41 @@ pub struct LocalThreatFact {
 }
 
 impl LocalThreatFact {
-    pub fn is_search_forcing(&self) -> bool {
-        self.kind.is_search_forcing()
-    }
-
-    pub fn is_corridor_forcing(&self) -> bool {
-        self.kind.is_corridor_forcing()
-    }
-
     pub fn origin_move(&self) -> Move {
         self.origin.mv()
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TacticalMoveAnnotation {
+    pub player: Color,
+    pub mv: Move,
+    pub local_threats: Vec<LocalThreatFact>,
+}
+
+impl TacticalMoveAnnotation {
+    pub fn creates_immediate_or_multi_threat(&self) -> bool {
+        let mut completion_squares = Vec::new();
+        for fact in self.local_threats.iter() {
+            match fact.kind {
+                LocalThreatKind::Five | LocalThreatKind::OpenFour => return true,
+                LocalThreatKind::ClosedFour | LocalThreatKind::BrokenFour => {
+                    for defense in fact.defense_squares.iter().copied() {
+                        if !completion_squares.contains(&defense) {
+                            completion_squares.push(defense);
+                        }
+                    }
+                    if completion_squares.len() >= 2 {
+                        return true;
+                    }
+                }
+                LocalThreatKind::OpenThree
+                | LocalThreatKind::ClosedThree
+                | LocalThreatKind::BrokenThree => {}
+            }
+        }
+
+        false
     }
 }
 
@@ -94,48 +250,68 @@ pub struct LocalThreatContinuation {
 }
 
 pub fn local_threat_facts_after_move(board: &Board, mv: Move) -> Vec<LocalThreatFact> {
+    search_local_threat_facts_after_move(board, mv)
+}
+
+pub fn raw_local_threat_facts_after_move(board: &Board, mv: Move) -> Vec<LocalThreatFact> {
     if !board.is_legal(mv) {
         return Vec::new();
     }
 
-    local_threat_facts_after_legal_move(board, mv)
+    local_threat_facts_after_legal_move_virtual(board, mv)
+}
+
+pub fn search_local_threat_facts_after_move(board: &Board, mv: Move) -> Vec<LocalThreatFact> {
+    if !board.is_legal(mv) {
+        return Vec::new();
+    }
+
+    let facts = local_threat_facts_after_legal_move_virtual(board, mv);
+    if board.config.variant == Variant::Renju && board.current_player == Color::Black {
+        renju_effective_black_local_threat_facts_after_legal_move(board, mv, facts)
+    } else {
+        facts
+    }
 }
 
 pub fn local_threat_facts_for_player(board: &Board, player: Color) -> Vec<LocalThreatFact> {
+    raw_local_threat_facts_for_player(board, player)
+}
+
+pub fn raw_local_threat_facts_for_player(board: &Board, player: Color) -> Vec<LocalThreatFact> {
     let mut facts = Vec::new();
     board.for_each_occupied_color(player, |row, col| {
         let mv = Move { row, col };
+        let existing = BoardExistingMove { board, mv, player };
         for &(dr, dc) in &DIRS {
-            if is_run_start(board, mv, player, dr, dc) {
-                if let Some(fact) = local_threat_fact_from_run_start(board, mv, player, dr, dc) {
-                    push_unique_fact(&mut facts, fact);
-                }
-            }
-            if let Some(fact) = broken_four_fact_through_move(board, mv, player, dr, dc) {
-                push_unique_fact(&mut facts, fact);
-            }
-            if let Some(fact) = broken_three_fact_through_move(board, mv, player, dr, dc) {
+            if let Some(fact) = local_threat_fact_in_direction_view(&existing, dr, dc) {
                 push_unique_fact(&mut facts, fact);
             }
         }
     });
-    facts.sort_by_key(|fact| std::cmp::Reverse(fact.kind.corridor_rank()));
+    let policy = CorridorThreatPolicy;
+    facts.sort_by_key(|fact| std::cmp::Reverse(policy.rank(fact.kind)));
     facts
 }
 
 pub fn has_forcing_local_threat(board: &Board, player: Color) -> bool {
-    local_threat_facts_for_player(board, player)
-        .iter()
-        .any(|fact| local_threat_is_corridor_forcing_for(board, player, fact))
+    CorridorThreatPolicy.has_active_threat(board, player)
 }
 
-pub fn local_threat_is_corridor_forcing_for(
+pub fn corridor_active_threats(board: &Board, attacker: Color) -> Vec<LocalThreatFact> {
+    CorridorThreatPolicy.active_threats(board, attacker)
+}
+
+pub fn corridor_defender_reply_moves(
     board: &Board,
     attacker: Color,
-    fact: &LocalThreatFact,
-) -> bool {
-    fact.kind.is_corridor_forcing()
-        && !legal_forcing_continuations_for_fact(board, attacker, fact).is_empty()
+    actual_reply: Option<Move>,
+) -> Vec<Move> {
+    CorridorThreatPolicy.defender_reply_moves(board, attacker, actual_reply)
+}
+
+pub fn corridor_attacker_move_rank(board: &Board, attacker: Color, mv: Move) -> u8 {
+    CorridorThreatPolicy.attacker_move_rank(board, attacker, mv)
 }
 
 pub fn legal_forcing_continuations_for_fact(
@@ -143,7 +319,7 @@ pub fn legal_forcing_continuations_for_fact(
     attacker: Color,
     fact: &LocalThreatFact,
 ) -> Vec<LocalThreatContinuation> {
-    if !fact.kind.is_corridor_forcing() {
+    if !CorridorThreatPolicy.is_corridor_kind(fact.kind) {
         return Vec::new();
     }
 
@@ -174,24 +350,53 @@ pub fn legal_forcing_continuations_for_fact(
     continuations
 }
 
-fn local_threat_facts_after_legal_move(board: &Board, mv: Move) -> Vec<LocalThreatFact> {
-    let facts = local_threat_facts_after_legal_move_virtual(board, mv);
-    if board.config.variant == Variant::Renju && board.current_player == Color::Black {
-        renju_effective_black_local_threat_facts_after_legal_move(board, mv, facts)
-    } else {
-        facts
+fn add_corridor_defender_replies_for_fact(
+    board: &Board,
+    attacker: Color,
+    defender: Color,
+    fact: &LocalThreatFact,
+    replies: &mut Vec<Move>,
+) {
+    let legal_forcing_continuations = legal_forcing_continuations_for_fact(board, attacker, fact);
+    for continuation in &legal_forcing_continuations {
+        let mv = continuation.mv;
+        if board.is_legal_for_color(mv, defender) {
+            push_unique_move(replies, mv);
+        }
+    }
+
+    let mut shared_cost_squares: Option<Vec<Move>> = None;
+    for continuation in legal_forcing_continuations {
+        let costs = continuation
+            .legal_cost_squares
+            .into_iter()
+            .filter(|&mv| board.is_legal_for_color(mv, defender))
+            .collect::<Vec<_>>();
+
+        shared_cost_squares = Some(match shared_cost_squares {
+            Some(shared) => shared
+                .into_iter()
+                .filter(|mv| costs.contains(mv))
+                .collect::<Vec<_>>(),
+            None => costs,
+        });
+    }
+
+    for mv in shared_cost_squares.unwrap_or_default() {
+        push_unique_move(replies, mv);
     }
 }
 
 fn local_threat_facts_after_legal_move_virtual(board: &Board, mv: Move) -> Vec<LocalThreatFact> {
     let player = board.current_player;
     let after = BoardAfterMove { board, mv, player };
+    let search_policy = SearchThreatPolicy;
 
     let mut facts = DIRS
         .iter()
         .filter_map(|&(dr, dc)| local_threat_fact_in_direction_view(&after, dr, dc))
         .collect::<Vec<_>>();
-    facts.sort_by_key(|fact| std::cmp::Reverse(fact.kind.search_rank()));
+    facts.sort_by_key(|fact| std::cmp::Reverse(search_policy.rank(fact.kind)));
     facts
 }
 
@@ -212,8 +417,9 @@ fn renju_effective_black_local_threat_fact(
     board_after_gain: &Board,
     mut fact: LocalThreatFact,
 ) -> Option<LocalThreatFact> {
+    let search_policy = SearchThreatPolicy;
     if fact.player != Color::Black
-        || !fact.kind.is_search_forcing()
+        || !search_policy.is_must_keep(&fact)
         || fact.kind == LocalThreatKind::Five
     {
         return Some(fact);
@@ -245,6 +451,12 @@ fn renju_black_local_threat_continuation_is_effective(board_after_gain: &Board, 
 }
 
 struct BoardAfterMove<'a> {
+    board: &'a Board,
+    mv: Move,
+    player: Color,
+}
+
+struct BoardExistingMove<'a> {
     board: &'a Board,
     mv: Move,
     player: Color,
@@ -302,6 +514,32 @@ impl TacticalBoardView for BoardAfterMove<'_> {
 
     fn is_empty(&self, row: usize, col: usize) -> bool {
         !(row == self.mv.row && col == self.mv.col) && self.board.is_empty(row, col)
+    }
+}
+
+impl TacticalBoardView for BoardExistingMove<'_> {
+    fn board(&self) -> &Board {
+        self.board
+    }
+
+    fn mv(&self) -> Move {
+        self.mv
+    }
+
+    fn player(&self) -> Color {
+        self.player
+    }
+
+    fn origin(&self) -> LocalThreatOrigin {
+        LocalThreatOrigin::Existing(self.mv)
+    }
+
+    fn has_color(&self, row: usize, col: usize, color: Color) -> bool {
+        self.board.has_color(row, col, color)
+    }
+
+    fn is_empty(&self, row: usize, col: usize) -> bool {
+        self.board.is_empty(row, col)
     }
 }
 
@@ -402,74 +640,6 @@ fn local_threat_fact_in_direction_view(
     }
 }
 
-fn local_threat_fact_from_run_start(
-    board: &Board,
-    start: Move,
-    player: Color,
-    dr: isize,
-    dc: isize,
-) -> Option<LocalThreatFact> {
-    let mut run = Vec::new();
-    let mut row = start.row as isize;
-    let mut col = start.col as isize;
-    while in_bounds(board, row, col) && board.has_color(row as usize, col as usize, player) {
-        run.push(Move {
-            row: row as usize,
-            col: col as usize,
-        });
-        row += dr;
-        col += dc;
-    }
-
-    let before = offset_move(board, start, -dr, -dc, 1);
-    let after = in_bounds(board, row, col).then_some(Move {
-        row: row as usize,
-        col: col as usize,
-    });
-    let before_open = before.is_some_and(|mv| board.is_empty(mv.row, mv.col));
-    let after_open = after.is_some_and(|mv| board.is_empty(mv.row, mv.col));
-
-    match (run.len(), before_open, after_open) {
-        (4, true, true) => Some(LocalThreatFact {
-            player,
-            kind: LocalThreatKind::OpenFour,
-            origin: LocalThreatOrigin::Existing(start),
-            defense_squares: vec![before.expect("checked open"), after.expect("checked open")],
-            rest_squares: Vec::new(),
-        }),
-        (4, true, false) => Some(LocalThreatFact {
-            player,
-            kind: LocalThreatKind::ClosedFour,
-            origin: LocalThreatOrigin::Existing(start),
-            defense_squares: vec![before.expect("checked open")],
-            rest_squares: Vec::new(),
-        }),
-        (4, false, true) => Some(LocalThreatFact {
-            player,
-            kind: LocalThreatKind::ClosedFour,
-            origin: LocalThreatOrigin::Existing(start),
-            defense_squares: vec![after.expect("checked open")],
-            rest_squares: Vec::new(),
-        }),
-        (3, true, true) => Some(LocalThreatFact {
-            player,
-            kind: LocalThreatKind::OpenThree,
-            origin: LocalThreatOrigin::Existing(start),
-            defense_squares: open_three_defense_squares(
-                board,
-                start,
-                run.len(),
-                dr,
-                dc,
-                before.expect("checked open"),
-                after.expect("checked open"),
-            )?,
-            rest_squares: Vec::new(),
-        }),
-        _ => None,
-    }
-}
-
 fn open_three_defense_squares_view(
     board: &impl TacticalBoardView,
     dr: isize,
@@ -494,39 +664,6 @@ fn open_three_defense_squares_view(
     }
     if after_outer.is_none() {
         if let Some(before_outer) = before_outer {
-            push_unique_move(&mut defenses, before_outer);
-        }
-    }
-
-    Some(defenses)
-}
-
-fn open_three_defense_squares(
-    board: &Board,
-    start: Move,
-    run_len: usize,
-    dr: isize,
-    dc: isize,
-    before: Move,
-    after: Move,
-) -> Option<Vec<Move>> {
-    let mut defenses = vec![before, after];
-    let before_outer = offset_move(board, start, -dr, -dc, 2);
-    let after_outer = offset_move(board, start, dr, dc, run_len + 1);
-    let before_outer_open = before_outer.is_some_and(|mv| board.is_empty(mv.row, mv.col));
-    let after_outer_open = after_outer.is_some_and(|mv| board.is_empty(mv.row, mv.col));
-
-    if !before_outer_open && !after_outer_open {
-        return None;
-    }
-
-    if !before_outer_open {
-        if let Some(after_outer) = after_outer.filter(|mv| board.is_empty(mv.row, mv.col)) {
-            push_unique_move(&mut defenses, after_outer);
-        }
-    }
-    if !after_outer_open {
-        if let Some(before_outer) = before_outer.filter(|mv| board.is_empty(mv.row, mv.col)) {
             push_unique_move(&mut defenses, before_outer);
         }
     }
@@ -584,58 +721,6 @@ fn four_completion_squares_through_view(
     completions
 }
 
-fn four_completion_squares_through_move(
-    board: &Board,
-    mv: Move,
-    player: Color,
-    dr: isize,
-    dc: isize,
-) -> Vec<Move> {
-    let win_len = board.config.win_length as isize;
-    let mut completions = Vec::new();
-
-    for start in -(win_len - 1)..=0 {
-        let mut player_count = 0usize;
-        let mut empty_square = None;
-        let mut blocked = false;
-
-        for offset in start..start + win_len {
-            let row = mv.row as isize + dr * offset;
-            let col = mv.col as isize + dc * offset;
-            if !in_bounds(board, row, col) {
-                blocked = true;
-                break;
-            }
-
-            let candidate = Move {
-                row: row as usize,
-                col: col as usize,
-            };
-            if board.has_color(candidate.row, candidate.col, player) {
-                player_count += 1;
-            } else if board.is_empty(candidate.row, candidate.col) && empty_square.is_none() {
-                empty_square = Some(candidate);
-            } else {
-                blocked = true;
-                break;
-            }
-        }
-
-        let Some(empty_square) = empty_square else {
-            continue;
-        };
-        if !blocked
-            && player_count == board.config.win_length.saturating_sub(1)
-            && !completions.contains(&empty_square)
-        {
-            completions.push(empty_square);
-        }
-    }
-
-    completions.sort_by_key(|mv| (mv.row, mv.col));
-    completions
-}
-
 fn count_player_in_direction_view(
     board: &impl TacticalBoardView,
     dr: isize,
@@ -671,46 +756,6 @@ fn empty_offset_move_view(
     } else {
         None
     }
-}
-
-fn broken_four_fact_through_move(
-    board: &Board,
-    mv: Move,
-    player: Color,
-    dr: isize,
-    dc: isize,
-) -> Option<LocalThreatFact> {
-    let completions = four_completion_squares_through_move(board, mv, player, dr, dc);
-    if completions.len() == 1
-        && contiguous_run_len_through_move(board, mv, player, dr, dc) < board.config.win_length - 1
-    {
-        Some(LocalThreatFact {
-            player,
-            kind: LocalThreatKind::BrokenFour,
-            origin: LocalThreatOrigin::Existing(mv),
-            defense_squares: completions,
-            rest_squares: Vec::new(),
-        })
-    } else {
-        None
-    }
-}
-
-fn broken_three_fact_through_move(
-    board: &Board,
-    mv: Move,
-    player: Color,
-    dr: isize,
-    dc: isize,
-) -> Option<LocalThreatFact> {
-    let rest_squares = broken_three_rest_squares_through_move(board, mv, player, dr, dc);
-    (!rest_squares.is_empty()).then_some(LocalThreatFact {
-        player,
-        kind: LocalThreatKind::BrokenThree,
-        origin: LocalThreatOrigin::Existing(mv),
-        defense_squares: rest_squares.clone(),
-        rest_squares,
-    })
 }
 
 fn broken_three_rest_squares_through_view(
@@ -778,79 +823,6 @@ fn broken_three_rest_squares_through_view(
     rest_squares
 }
 
-fn broken_three_rest_squares_through_move(
-    board: &Board,
-    mv: Move,
-    player: Color,
-    dr: isize,
-    dc: isize,
-) -> Vec<Move> {
-    let mut rest_squares = Vec::new();
-    let win_len = board.config.win_length as isize;
-
-    for start in -(win_len - 1)..=0 {
-        let mut player_offsets = Vec::new();
-        let mut empty_offsets = Vec::new();
-        let mut blocked = false;
-
-        for offset in start..start + win_len {
-            let row = mv.row as isize + dr * offset;
-            let col = mv.col as isize + dc * offset;
-            if !in_bounds(board, row, col) {
-                blocked = true;
-                break;
-            }
-
-            let candidate = Move {
-                row: row as usize,
-                col: col as usize,
-            };
-            if board.has_color(candidate.row, candidate.col, player) {
-                player_offsets.push(offset);
-            } else if board.is_empty(candidate.row, candidate.col) {
-                empty_offsets.push(offset);
-            } else {
-                blocked = true;
-                break;
-            }
-        }
-
-        if blocked
-            || player_offsets.len() != board.config.win_length.saturating_sub(2)
-            || empty_offsets.len() != 2
-        {
-            continue;
-        }
-        if player_offsets.windows(2).all(|pair| pair[1] == pair[0] + 1) {
-            continue;
-        }
-
-        for offset in empty_offsets {
-            let row = mv.row as isize + dr * offset;
-            let col = mv.col as isize + dc * offset;
-            if !in_bounds(board, row, col) {
-                continue;
-            }
-
-            let rest = Move {
-                row: row as usize,
-                col: col as usize,
-            };
-            if four_completion_squares_after_virtual_rest_through_move(
-                board, mv, player, dr, dc, rest,
-            )
-            .is_empty()
-            {
-                continue;
-            }
-            push_unique_move(&mut rest_squares, rest);
-        }
-    }
-
-    rest_squares.sort_by_key(|mv| (mv.row, mv.col));
-    rest_squares
-}
-
 fn four_completion_squares_after_virtual_rest_through_view(
     board: &impl TacticalBoardView,
     dr: isize,
@@ -902,108 +874,6 @@ fn four_completion_squares_after_virtual_rest_through_view(
     completions
 }
 
-fn four_completion_squares_after_virtual_rest_through_move(
-    board: &Board,
-    mv: Move,
-    player: Color,
-    dr: isize,
-    dc: isize,
-    rest: Move,
-) -> Vec<Move> {
-    let win_len = board.config.win_length as isize;
-    let mut completions = Vec::new();
-
-    for start in -(win_len - 1)..=0 {
-        let mut player_count = 0usize;
-        let mut empty_square = None;
-        let mut blocked = false;
-
-        for offset in start..start + win_len {
-            let row = mv.row as isize + dr * offset;
-            let col = mv.col as isize + dc * offset;
-            if !in_bounds(board, row, col) {
-                blocked = true;
-                break;
-            }
-
-            let candidate = Move {
-                row: row as usize,
-                col: col as usize,
-            };
-            if has_color_or_virtual_rest(board, candidate.row, candidate.col, player, rest) {
-                player_count += 1;
-            } else if board.is_empty(candidate.row, candidate.col) && empty_square.is_none() {
-                empty_square = Some(candidate);
-            } else {
-                blocked = true;
-                break;
-            }
-        }
-
-        let Some(empty_square) = empty_square else {
-            continue;
-        };
-        if !blocked
-            && player_count == board.config.win_length.saturating_sub(1)
-            && !completions.contains(&empty_square)
-        {
-            completions.push(empty_square);
-        }
-    }
-
-    completions.sort_by_key(|mv| (mv.row, mv.col));
-    completions
-}
-
-fn has_color_or_virtual_rest(
-    board: &Board,
-    row: usize,
-    col: usize,
-    player: Color,
-    rest: Move,
-) -> bool {
-    (row == rest.row && col == rest.col) || board.has_color(row, col, player)
-}
-
-fn contiguous_run_len_through_move(
-    board: &Board,
-    mv: Move,
-    player: Color,
-    dr: isize,
-    dc: isize,
-) -> usize {
-    1 + count_player_from_move(board, mv, player, dr, dc)
-        + count_player_from_move(board, mv, player, -dr, -dc)
-}
-
-fn count_player_from_move(board: &Board, mv: Move, player: Color, dr: isize, dc: isize) -> usize {
-    let mut count = 0usize;
-    let mut row = mv.row as isize + dr;
-    let mut col = mv.col as isize + dc;
-    while in_bounds(board, row, col) && board.has_color(row as usize, col as usize, player) {
-        count += 1;
-        row += dr;
-        col += dc;
-    }
-    count
-}
-
-fn is_run_start(board: &Board, mv: Move, player: Color, dr: isize, dc: isize) -> bool {
-    let previous_row = mv.row as isize - dr;
-    let previous_col = mv.col as isize - dc;
-    !in_bounds(board, previous_row, previous_col)
-        || !board.has_color(previous_row as usize, previous_col as usize, player)
-}
-
-fn offset_move(board: &Board, mv: Move, dr: isize, dc: isize, distance: usize) -> Option<Move> {
-    let row = mv.row as isize + dr * distance as isize;
-    let col = mv.col as isize + dc * distance as isize;
-    in_bounds(board, row, col).then_some(Move {
-        row: row as usize,
-        col: col as usize,
-    })
-}
-
 fn in_bounds(board: &Board, row: isize, col: isize) -> bool {
     let size = board.config.board_size as isize;
     row >= 0 && row < size && col >= 0 && col < size
@@ -1035,8 +905,9 @@ fn same_shape_fact(left: &LocalThreatFact, right: &LocalThreatFact) -> bool {
 mod tests {
     use super::{
         has_forcing_local_threat, legal_forcing_continuations_for_fact,
-        local_threat_facts_after_move, local_threat_facts_for_player, LocalThreatFact,
-        LocalThreatKind, LocalThreatOrigin,
+        local_threat_facts_after_move, local_threat_facts_for_player,
+        raw_local_threat_facts_after_move, raw_local_threat_facts_for_player, CorridorThreatPolicy,
+        LocalThreatFact, LocalThreatKind, LocalThreatOrigin, SearchThreatPolicy,
     };
     use gomoku_core::{Board, Color, Move, RuleConfig, Variant};
 
@@ -1057,6 +928,52 @@ mod tests {
         });
         apply_moves(&mut board, moves);
         board
+    }
+
+    fn assert_raw_fact_parity(
+        before_moves: &[&str],
+        gain: &str,
+        player: Color,
+        kind: LocalThreatKind,
+        defense_squares: &[&str],
+        rest_squares: &[&str],
+    ) {
+        let mut before = Board::new(RuleConfig::default());
+        apply_moves(&mut before, before_moves);
+
+        let expected_defense_squares = defense_squares
+            .iter()
+            .map(|notation| mv(notation))
+            .collect::<Vec<_>>();
+        let expected_rest_squares = rest_squares
+            .iter()
+            .map(|notation| mv(notation))
+            .collect::<Vec<_>>();
+
+        let after_move_fact = raw_local_threat_facts_after_move(&before, mv(gain))
+            .into_iter()
+            .find(|fact| {
+                fact.player == player
+                    && fact.kind == kind
+                    && fact.defense_squares == expected_defense_squares
+                    && fact.rest_squares == expected_rest_squares
+            })
+            .unwrap_or_else(|| {
+                panic!("after-move detector should see {kind:?} with expected squares")
+            });
+
+        let mut existing = before.clone();
+        existing.apply_move(mv(gain)).unwrap();
+        assert!(
+            raw_local_threat_facts_for_player(&existing, player)
+                .iter()
+                .any(|fact| {
+                    fact.kind == after_move_fact.kind
+                        && fact.defense_squares == after_move_fact.defense_squares
+                        && fact.rest_squares == after_move_fact.rest_squares
+                }),
+            "existing-board detector should produce the same raw shape as after-move detector"
+        );
     }
 
     #[test]
@@ -1303,6 +1220,72 @@ mod tests {
     }
 
     #[test]
+    fn raw_after_move_and_existing_board_facts_share_shape_logic() {
+        assert_raw_fact_parity(
+            &["H8", "A1", "I8", "A2"],
+            "J8",
+            Color::Black,
+            LocalThreatKind::OpenThree,
+            &["G8", "K8"],
+            &[],
+        );
+        assert_raw_fact_parity(
+            &["J9", "H9", "K9", "A1"],
+            "L9",
+            Color::Black,
+            LocalThreatKind::OpenThree,
+            &["I9", "M9", "N9"],
+            &[],
+        );
+        assert_raw_fact_parity(
+            &["J9", "N9", "K9", "A1"],
+            "L9",
+            Color::Black,
+            LocalThreatKind::OpenThree,
+            &["I9", "M9", "H9"],
+            &[],
+        );
+        assert_raw_fact_parity(
+            &["H8", "A1", "J8", "C1"],
+            "L8",
+            Color::Black,
+            LocalThreatKind::BrokenThree,
+            &["I8", "K8"],
+            &["I8", "K8"],
+        );
+        assert_raw_fact_parity(
+            &["H8", "A1", "K8", "C1"],
+            "L8",
+            Color::Black,
+            LocalThreatKind::BrokenThree,
+            &["I8", "J8"],
+            &["I8", "J8"],
+        );
+    }
+
+    #[test]
+    fn search_and_corridor_policies_split_broken_three_semantics() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(&mut board, &["H8", "A1", "K8", "C1"]);
+
+        let annotation = SearchThreatPolicy.annotation_for_move(&board, mv("J8"));
+        let broken_three = annotation
+            .local_threats
+            .iter()
+            .find(|fact| fact.kind == LocalThreatKind::BrokenThree)
+            .expect("search policy should retain broken-three material");
+        assert!(!SearchThreatPolicy.is_must_keep(broken_three));
+
+        let mut existing = board.clone();
+        existing.apply_move(mv("J8")).unwrap();
+        let corridor_fact = raw_local_threat_facts_for_player(&existing, Color::Black)
+            .into_iter()
+            .find(|fact| fact.kind == LocalThreatKind::BrokenThree)
+            .expect("corridor policy should see the existing broken three");
+        assert!(CorridorThreatPolicy.is_active_threat(&existing, Color::Black, &corridor_fact));
+    }
+
+    #[test]
     fn renju_black_forbidden_only_local_threat_gets_no_tactical_credit() {
         let board = board_from_moves(
             Variant::Renju,
@@ -1310,9 +1293,18 @@ mod tests {
         );
         assert!(board.is_legal_for_color(mv("M8"), Color::Black));
 
-        let facts = local_threat_facts_after_move(&board, mv("M8"));
+        let raw_facts = raw_local_threat_facts_after_move(&board, mv("M8"));
         assert!(
-            facts.iter().all(|fact| !fact.is_search_forcing()),
+            raw_facts
+                .iter()
+                .any(|fact| fact.kind == LocalThreatKind::BrokenFour),
+            "raw detector should preserve the forbidden-gap shape: {raw_facts:?}"
+        );
+
+        let facts = local_threat_facts_after_move(&board, mv("M8"));
+        let search_policy = SearchThreatPolicy;
+        assert!(
+            facts.iter().all(|fact| !search_policy.is_must_keep(fact)),
             "forbidden-only local threat should not be forcing: {facts:?}"
         );
     }

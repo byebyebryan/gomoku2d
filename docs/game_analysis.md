@@ -103,6 +103,11 @@ Replay analysis uses the corridor-search model defined in
   Black replies
 - model limits: depth/guard cutoffs must not become proof of a forced win
 
+Replay analysis consumes the same `CorridorThreatPolicy` as bot-owned corridor
+search. That policy converts raw tactical facts into active threats and named
+defender replies; the replay analyzer adds replay context, backward traceback,
+root-cause labels, and report rendering.
+
 This document only adds the replay-specific contract: start from a finished
 game, walk the actual ending backward, and explain the final detected corridor
 without claiming to solve every alternate future.

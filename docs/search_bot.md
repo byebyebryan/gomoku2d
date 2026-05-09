@@ -61,7 +61,9 @@ two move-ordering modes (`tt_first_board_order` default, `tactical_first`
 lab-only), and an optional `child_limit` lab cap. Static eval defaults to the
 global line-shape evaluator; `pattern_eval` is a lab-only alternative that
 scores five-cell windows with Renju-aware completion/extension squares.
-Local-threat annotation also normalizes Renju Black continuations: forbidden-only
+Local-threat annotation is policy-backed by `SearchThreatPolicy` in
+`gomoku-bot::tactical`: the raw detector records shape facts, while the search
+policy decides ordering score and must-keep status. Forbidden-only Renju Black
 raw shapes do not receive tactical ordering or safety-gate credit, and mixed
 legal/forbidden shapes keep only legal continuations for active threat strength.
 Renju forbidden-move checks still use exact core rules, but core first applies a
@@ -312,15 +314,15 @@ For now, tactical facts are consumers of the search pipeline, not a replacement
 for globally consistent board evaluation.
 
 Tactical annotation stays scan-based but cache-friendly. `Board` remains the
-source of truth; `gomoku-bot::tactical` computes shared local facts into a
-reusable move annotation and now feeds both safety and the lab-only
-`tactical_first` ordering mode. It can also pair with `child_limit` to test
-whether ordered tactical
-coverage lets alpha-beta search fewer children without changing candidate
-discovery. A full frontier model, where a `SearchPosition` tracks changed
-candidate masks and threat facts through apply/undo, is a later optimization
-experiment. It should wait until the fact schema and consumers are stable and
-metrics show annotation or candidate regeneration is worth making incremental.
+source of truth; `gomoku-bot::tactical` computes shared raw local facts into a
+reusable move annotation, then `SearchThreatPolicy` feeds both safety and the
+lab-only `tactical_first` ordering mode. It can also pair with `child_limit` to
+test whether ordered tactical coverage lets alpha-beta search fewer children
+without changing candidate discovery. A full frontier model, where a
+`SearchPosition` tracks changed candidate masks and threat facts through
+apply/undo, is a later optimization experiment. It should wait until the fact
+schema and consumers are stable and metrics show annotation or candidate
+regeneration is worth making incremental.
 
 For `v0.4.1`, the strategic target is a practice bot that climbs a tactical
 ladder:
