@@ -49,7 +49,7 @@ product presets:
 | `move_ordering` | Alpha-beta move ordering: `tt_first_board_order` or lab-only `tactical_first` |
 | `child_limit` | Optional lab-only cap on the ordered non-root child frontier searched by alpha-beta |
 | `static_eval` | Leaf board evaluator: default `line_shape_eval` or lab-only `pattern_eval` |
-| `corridor_mode` | Lab-only corridor integration: `off` or `leaf_quiescence` |
+| `corridor_mode` | Lab-only corridor integration: `off`, current `leaf_quiescence`, and proposed `selective_extension` |
 
 Search traces expose explicit pipeline stages: `candidate_source`,
 `legality_gate`, tactical annotation counters, `safety_gate`, and
@@ -107,7 +107,10 @@ measure one pipeline axis at a time; defaults remain `near_all_r2`,
 `line_shape_eval`. Append `+corridor-q` to test shallow leaf-level corridor
 quiescence: alpha-beta still picks moves, but depth-0 ongoing positions can
 penalize proven last-move opponent corridors before falling back to static eval.
-Use `+corridor-qdN` to explicitly benchmark deeper proof.
+Use `+corridor-qdN` to explicitly benchmark deeper proof. The next planned
+integration is selective corridor extension, where a child move that enters a
+narrow corridor can follow that corridor and resume normal search at the exit
+state instead of spending ordinary depth on each forced ply.
 
 These specs are not durable product identity, and they are not character bots
 yet. They exist so the lab can benchmark stable configs before deciding whether
@@ -136,6 +139,36 @@ Trace note: corridor proof work is reported through metrics such as
 `corridor_terminal_hits`, and `corridor_static_fallbacks`. `total_nodes`
 includes corridor proof nodes so report cost does not hide outside the normal
 alpha-beta `nodes` field.
+
+The current leaf-quiescence experiment is not the intended durable integration
+shape. It proved the shared corridor module can be called from `SearchBot`, but
+it probes many leaves that do not become useful corridor results. The next
+design target is corridor search as a selective extension or shortcut:
+
+1. Alpha-beta generates and orders candidate moves normally.
+2. After a child move is applied, the bot checks whether that move creates a
+   local immediate or imminent corridor entry.
+3. If no corridor entry exists, recursion proceeds normally with one depth
+   spent.
+4. If a corridor entry exists and the defender reply set is narrow enough, the
+   bot follows the corridor without charging ordinary search depth for each
+   forced ply.
+5. If the corridor reaches terminal win/loss, the terminal score is returned.
+6. If the corridor exits into unclear play, normal alpha-beta resumes from the
+   exit board.
+7. If the reply set is too wide, the corridor is treated as an exit and normal
+   search continues instead of trying to prove every branch.
+
+The initial corridor width cap should be `3`, because broken and half-open three
+responses are the widest local threat replies we intend to treat as still
+"narrow." A maximum corridor ply limit remains a safety guard, but width is the
+main cost-control signal. If a branch opens wider than the local-threat model,
+it is no longer the kind of corridor that can safely act as a search shortcut.
+
+This shape also defines the future optimization boundary. A rolling threat
+frontier can make entry detection and reply enumeration cheap by updating local
+threat facts as moves are applied and undone. That should be driven by the
+selective-extension queries above, not by the analyzer's broader report needs.
 
 Search traces include both the result and the config:
 

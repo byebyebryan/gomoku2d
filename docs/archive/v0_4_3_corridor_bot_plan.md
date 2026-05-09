@@ -46,6 +46,9 @@ ladder and keep corridor analysis as a replay feature.
   active corridor instead of only blocking the immediate square.
 - Capture corridor-specific cost metrics separately from normal search nodes so
   proof work cannot hide inside "fewer nodes searched."
+- Pivot the next integration from broad leaf quiescence to corridor shortcuts:
+  follow narrow forcing lines from child moves, then return terminal score or
+  resume normal search at corridor exit.
 - Refresh bot reports and replay-analysis reports from survivor candidates, not
   every intermediate experiment.
 
@@ -61,6 +64,63 @@ Current implementation note:
 - Corridor proof work is reported separately through search metrics such as
   `corridor_leaf_probes`, `corridor_search_nodes`, and
   `corridor_static_fallbacks`.
+- Early gauntlet evidence showed leaf quiescence is the wrong cost shape: it
+  probes too many depth-0 positions that ultimately fall back to static eval.
+  The next candidate should spend corridor work only after a concrete move
+  appears to enter or continue a forcing line.
+
+## Corridor Shortcut Design
+
+The next live-bot experiment should treat narrow corridors as portals in the
+search space.
+
+Normal alpha-beta still owns candidate generation, legality filtering, safety
+gates, move ordering, child caps, iterative deepening, and time-budget handling.
+After alpha-beta applies a child move, the corridor layer gets one cheap local
+entry test:
+
+- If the child move does not create an immediate or imminent threat, recurse
+  normally.
+- If the move creates a corridor and the defender reply set is at most `3`, run
+  the corridor follower.
+- If the corridor reaches a terminal win/loss, return that terminal score.
+- If the corridor neutralizes or opens wider than `3` replies, return an exit
+  board and resume normal alpha-beta from that board.
+- If the corridor hits a safety ply guard, treat it conservatively as an exit,
+  not as a proven win.
+
+Width is the key guard. The starting cap is `3` because that covers the local
+branching factor of broken and half-open three responses while excluding broad
+positions that should stay in normal search. Maximum corridor ply remains a
+diagnostic guard, not the primary definition of a corridor.
+
+This also clarifies the implementation boundary. Replay analysis asks "can this
+reply be proven to stay in the forced corridor?" Live search asks "can this move
+shortcut through a narrow forcing line and return a useful terminal or exit
+state?" Those share tactical facts and corridor transitions, but they should not
+share the analyzer's need to prove every visible alternate reply.
+
+The desired corridor result shape for live search is transition-oriented:
+
+- `NotCorridor`
+- `Terminal(score)`
+- `Exit { board, plies_followed, reason }`
+
+Only terminal results should directly override alpha-beta score. Exit results
+should resume normal search from the transformed board, with metrics recording
+the effective extra plies searched through the portal.
+
+The likely long-term performance fix is a rolling threat frontier. Full-board
+local-threat scans are acceptable in the analyzer and early prototypes, but live
+search eventually needs move-apply/move-undo updates that can cheaply answer:
+
+- did the last move create a corridor entry?
+- what active immediate/imminent threats exist near the frontier?
+- what are the defender replies for the current corridor?
+- why did the corridor exit?
+
+Do not build that cache before the shortcut API is stable. The cache should
+serve the live-search queries, not the other way around.
 
 ## Corridor Reinforcement
 
@@ -89,6 +149,10 @@ Use multiple signals. Elo alone is not enough for this slice.
 - Analysis reports inspect how candidate bots win and lose, especially whether
   they reduce local mistakes, tactical errors, or long strategic losses.
 - Search metrics must separate alpha-beta work from corridor proof work.
+- Shortcut metrics should include corridor entries seen, accepted entries,
+  width-rejected entries, followed corridor plies, terminal exits, width exits,
+  neutral exits, guard exits, resumed normal-search states, and effective extra
+  ply gained.
 
 Useful comparisons:
 

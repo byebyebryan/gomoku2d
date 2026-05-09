@@ -246,11 +246,62 @@ The goal is not to bolt a full threat-space solver onto the current bot. The
 goal is a practical forcing layer that improves strength, explanation, and
 player education together.
 
+### Corridor As Search Shortcut
+
+The preferred live-search model is corridor search as a selective shortcut
+inside alpha-beta, not as broad leaf evaluation.
+
+Think of a narrow corridor as a portal in the search space. Normal alpha-beta
+still generates, orders, and searches candidate moves. After a child move is
+applied, the bot can ask a cheap local question: did this move enter a forcing
+corridor? If not, search continues normally with one ply of depth spent. If yes,
+and the reply set is narrow, the bot can follow the corridor without spending
+the usual depth budget. The corridor either reaches a terminal win/loss or exits
+into an unclear position where normal search resumes.
+
+That makes corridor search a selective extension:
+
+- enter only after a concrete immediate or imminent threat is detected,
+- follow only while the branch remains tactically narrow,
+- return terminal score if the corridor proves a win or loss,
+- resume normal alpha-beta from the exit board if the corridor neutralizes,
+- fall back to normal search when the corridor is too wide to justify special
+  handling.
+
+Initial lab tuning should use corridor reply width as the primary guard. A cap
+of `3` is the first target because it matches the expected maximum branching
+factor for a local imminent threat such as a broken or half-open three. A
+separate maximum corridor ply limit is still useful as a safety guard, but it
+should not be the main cost-control lever. Width determines whether the branch
+is a corridor; depth only prevents pathological cases from running forever.
+
+This is intentionally different from the current `+corridor-q` leaf
+quiescence. Leaf quiescence asks too often and too late: many depth-0 positions
+need a corridor probe only to fall back to static eval. The shortcut model spends
+corridor work only after move generation has produced a candidate that appears
+to enter or continue a forcing line.
+
+The lab report should make that cost shape visible. At minimum, selective
+extension needs metrics for entries seen, entries accepted, entries rejected by
+width, corridor plies followed, terminal exits, width exits, neutral exits,
+safety-guard exits, resumed normal-search states, and effective extra ply gained.
+Those metrics should stay separate from ordinary alpha-beta nodes so a corridor
+candidate cannot look cheaper by moving work into an unreported bucket.
+
 This work may also reinforce corridor search itself. Bot integration will put
 more pressure on proof cost, transition enumeration, memoization, and Renju
 legality filtering than replay reports alone. Those optimizations belong in the
 lab when they make corridor-aware behavior cheaper or clearer without changing
 the model's honesty about `possible_escape` and `unknown`.
+
+Longer term, the cheap local question should probably be backed by a rolling
+frontier model for threat facts. Full-board threat scans are acceptable for the
+current analyzer and early lab prototypes, but they are the wrong shape for a
+hot search path. The frontier should track threat facts affected by applied and
+undone moves, then answer queries such as "did the last move enter a corridor?"
+and "what are the current defender replies?" without rescanning the whole board.
+That optimization should follow the shortcut interface, not precede it, so the
+cache is built around the queries the bot actually needs.
 
 ## Renju Overlay
 
@@ -345,6 +396,8 @@ Known limits:
 - `+corridor-q` is a shallow lab integration point, not a product preset. Deeper
   proof is available through explicit `+corridor-qdN` sweeps, but analyzer-depth
   proof at every search leaf is currently too expensive for live play.
+- The next corridor-bot direction is selective extension through narrow
+  corridors, with initial reply width cap `3`, not broader proof at every leaf.
 
 ## Related Docs
 
