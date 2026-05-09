@@ -1637,15 +1637,17 @@ fn proof_frames_for_actual_interval(
             add_reply_outcome_markers(&mut markers, &reply_outcomes);
             add_pre_corridor_escape_marker(
                 &mut markers,
-                replay,
-                analysis,
-                ply,
-                board,
-                proof,
-                board_ply.checked_sub(1).and_then(|previous| {
-                    proof_result_at(&analysis.proof_summary, scan_start, previous)
-                }),
-                &reply_outcomes,
+                PreCorridorEscapeMarkerInput {
+                    replay,
+                    analysis,
+                    ply,
+                    board,
+                    proof,
+                    previous_proof: board_ply.checked_sub(1).and_then(|previous| {
+                        proof_result_at(&analysis.proof_summary, scan_start, previous)
+                    }),
+                    reply_outcomes: &reply_outcomes,
+                },
             );
             if let Some(actual_move) = actual_move {
                 add_actual_marker(&mut markers, board, analysis.winner, actual_move);
@@ -1817,32 +1819,40 @@ fn add_reply_outcome_markers(
     }
 }
 
+struct PreCorridorEscapeMarkerInput<'a> {
+    replay: &'a Replay,
+    analysis: &'a GameAnalysis,
+    ply: usize,
+    board: &'a Board,
+    proof: Option<&'a ProofResult>,
+    previous_proof: Option<&'a ProofResult>,
+    reply_outcomes: &'a [DefenderReplyAnalysis],
+}
+
 fn add_pre_corridor_escape_marker(
     markers: &mut Vec<AnalysisBatchProofMarker>,
-    replay: &Replay,
-    analysis: &GameAnalysis,
-    ply: usize,
-    board: &Board,
-    proof: Option<&ProofResult>,
-    previous_proof: Option<&ProofResult>,
-    reply_outcomes: &[DefenderReplyAnalysis],
+    input: PreCorridorEscapeMarkerInput<'_>,
 ) {
-    let Some(winner) = analysis.winner else {
+    let Some(winner) = input.analysis.winner else {
         return;
     };
-    if board.current_player != winner.opponent()
-        || !reply_outcomes.is_empty()
+    if input.board.current_player != winner.opponent()
+        || !input.reply_outcomes.is_empty()
         || has_visible_tactical_hint(markers)
     {
         return;
     }
 
-    let Some(entry_move) =
-        pre_corridor_escape_entry_move(replay, analysis, ply, proof, previous_proof)
-    else {
+    let Some(entry_move) = pre_corridor_escape_entry_move(
+        input.replay,
+        input.analysis,
+        input.ply,
+        input.proof,
+        input.previous_proof,
+    ) else {
         return;
     };
-    if !board.is_legal(entry_move) {
+    if !input.board.is_legal(entry_move) {
         return;
     }
 
