@@ -1618,7 +1618,7 @@ fn proof_frames_for_actual_interval(
             let label = actual_frame_label(ply, &analysis.final_forced_interval);
             let mut markers = Vec::new();
             add_loser_tactical_hint_markers(&mut markers, board, analysis.winner);
-            add_forbidden_cost_markers(&mut markers, proof, None);
+            add_forbidden_cost_markers(&mut markers, board, proof, None);
             if analysis
                 .winner
                 .is_some_and(|winner| board.current_player == winner.opponent())
@@ -1627,6 +1627,7 @@ fn proof_frames_for_actual_interval(
                     proof_result_at(&analysis.proof_summary, scan_start, board_ply + 1);
                 add_forbidden_cost_markers(
                     &mut markers,
+                    board,
                     actual_child,
                     Some(AnalysisBatchProofMarkerKind::ImminentDefense),
                 );
@@ -1742,6 +1743,7 @@ fn add_loser_tactical_hint_markers(
 
 fn add_forbidden_cost_markers(
     markers: &mut Vec<AnalysisBatchProofMarker>,
+    board: &Board,
     proof: Option<&ProofResult>,
     tactical_role: Option<AnalysisBatchProofMarkerKind>,
 ) {
@@ -1751,7 +1753,11 @@ fn add_forbidden_cost_markers(
     let moves = proof
         .threat_evidence
         .iter()
-        .flat_map(|evidence| evidence.illegal_cost_squares.iter().copied())
+        .flat_map(|evidence| {
+            evidence.illegal_cost_squares.iter().copied().filter(|&mv| {
+                board.is_empty(mv.row, mv.col) && !board.is_legal_for_color(mv, evidence.defender)
+            })
+        })
         .collect::<Vec<_>>();
     if let Some(tactical_role) = tactical_role {
         add_marker_kind(markers, moves.iter().copied(), tactical_role);
@@ -3387,6 +3393,55 @@ mod tests {
         assert!(html.contains("transform: translateY(-1px);"));
         assert!(html.contains("legend-offensive"));
         assert!(html.contains(".marker--side-white .proof-marker"));
+    }
+
+    #[test]
+    fn analysis_batch_visual_frames_do_not_project_future_forbidden_costs_backwards() {
+        let replay = replay_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "I8", "H7", "I7", "H6", "H5", "I6", "G10", "J5", "G8", "G6", "J6", "F6",
+                "E6", "G7", "I9", "K4", "L3", "E5", "D4", "H9", "H10", "I5", "J4", "F8", "E9",
+                "F10", "F7", "F11", "F12", "G11", "H11", "E11", "I12", "F9", "D12", "I13", "H12",
+                "G12", "K14", "J13", "H14", "C11", "H13",
+            ],
+        );
+
+        let report = run_analysis_batch_replays_with_options(
+            "report.json:bot-a vs bot-b".to_string(),
+            vec![ReplayAnalysisInput {
+                label: "match_1729".to_string(),
+                replay,
+            }],
+            AnalysisBatchRunOptions {
+                analysis: AnalysisOptions {
+                    reply_policy: ReplyPolicy::CorridorReplies,
+                    max_depth: 4,
+                    max_scan_plies: Some(64),
+                },
+                include_proof_details: true,
+            },
+        );
+
+        let frames = &report.entries[0]
+            .proof_details
+            .as_ref()
+            .expect("proof details should be present")
+            .proof_frames;
+        for label in ["actual_ply_39", "actual_ply_41"] {
+            let frame = frames
+                .iter()
+                .find(|frame| frame.label == label)
+                .unwrap_or_else(|| panic!("{label} frame should be present"));
+            if let Some(h13) = frame.markers.iter().find(|marker| marker.notation == "H13") {
+                assert!(
+                    !h13.kinds.contains(&AnalysisBatchProofMarkerKind::ImminentDefense)
+                        && !h13.kinds.contains(&AnalysisBatchProofMarkerKind::Forbidden),
+                    "{label} must not mark future H13 proof evidence as a current forbidden/imminent reply: {:?}",
+                    h13.kinds
+                );
+            }
+        }
     }
 
     #[test]
