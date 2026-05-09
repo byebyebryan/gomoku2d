@@ -18,7 +18,7 @@ Source of truth in code:
 
 ## Model
 
-A tactical shape fact is move-centric:
+A tactical shape fact is move-centric and policy-neutral:
 
 - `player`: the side creating the shape.
 - `kind`: the shape class.
@@ -38,6 +38,21 @@ timing, the useful tactical question may be to prevent a stronger shape before
 it exists, or to react to a forcing shape after it exists. For open fours, no
 single normal reaction is sufficient because the attacker has multiple winning
 completions.
+
+The code keeps this split explicit:
+
+- Raw detector: one line-window evaluator produces `LocalThreatFact` for both
+  after-move annotations and existing-board corridor threats.
+- `SearchThreatPolicy`: ranks facts for alpha-beta ordering and decides which
+  tactical facts are "must keep" under child caps. Broken threes are material,
+  but not must-keep forcing moves.
+- `CorridorThreatPolicy`: filters raw facts into active corridor threats by
+  checking legal forcing continuations, then owns defender reply generation and
+  attacker corridor move ranking.
+
+This is intentional. SearchBot remains a broad alpha-beta engine; corridor
+search remains a narrow proof model. They share facts and tactical policy
+helpers, not proof recursion.
 
 ## Shape Definitions
 
@@ -65,11 +80,18 @@ The current local priority is intentionally coarse:
 1. `Five`
 2. `OpenFour`
 3. `ClosedFour` / `BrokenFour`
-4. `OpenThree` / `BrokenThree`
-5. `ClosedThree`
+4. `OpenThree`
+5. `BrokenThree`
+6. `ClosedThree`
 
-This priority is not yet the static eval. It is a shared vocabulary for
-diagnostics, move ordering, safety gates, and later evaluation experiments.
+This priority is not one global truth. It is interpreted by consumer policy:
+
+- Search policy ranks closed and broken threes as low-priority tactical
+  material and does not let them punch through child caps as must-keep moves.
+- Corridor policy ignores closed threes but treats broken threes as active
+  imminent threats when their rest squares have legal forcing continuations.
+- Renju filtering is policy-aware. Raw facts preserve shape squares; search
+  credit and corridor activity only use legal/effective Black continuations.
 
 ## Local Scenario Roles
 

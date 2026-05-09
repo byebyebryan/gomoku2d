@@ -3,8 +3,7 @@ use serde::Serialize;
 use serde_json::{json, Value};
 
 use crate::tactical::{
-    has_forcing_local_threat, legal_forcing_continuations_for_fact, local_threat_facts_for_player,
-    local_threat_is_corridor_forcing_for, LocalThreatFact,
+    corridor_attacker_move_rank, corridor_defender_reply_moves, has_forcing_local_threat,
 };
 use crate::{Bot, RandomBot, SearchBot, SearchBotConfig};
 
@@ -201,10 +200,7 @@ impl Bot for CorridorBot {
             }
             CorridorBotFallback::SearchD1 => {
                 let mv = self.search.choose_move(board);
-                self.last_trace = self
-                    .search
-                    .trace()
-                    .map(|trace| fallback_search_trace(trace));
+                self.last_trace = self.search.trace().map(fallback_search_trace);
                 mv
             }
         }
@@ -439,7 +435,7 @@ fn defender_reply_candidates_inner(
         push_reply_role(&mut replies, mv, DefenderReplyRole::OffensiveCounter);
     }
     if threat.winning_squares.is_empty() {
-        for mv in imminent_defense_reply_moves(board, attacker, actual_reply) {
+        for mv in corridor_defender_reply_moves(board, attacker, actual_reply) {
             push_reply_role(&mut replies, mv, DefenderReplyRole::ImminentDefense);
         }
         for mv in offensive_counter_reply_moves(board, attacker.opponent()) {
@@ -859,7 +855,7 @@ fn narrow_corridor_reply_moves(board: &Board, attacker: Color) -> Vec<Move> {
         return threat.reply_moves;
     }
 
-    imminent_defense_reply_moves(board, attacker, None)
+    corridor_defender_reply_moves(board, attacker, None)
 }
 
 fn counter_threat_answer_moves(board: &Board, defender: Color) -> Vec<Move> {
@@ -870,85 +866,6 @@ fn counter_threat_answer_moves(board: &Board, defender: Color) -> Vec<Move> {
         }
     }
     moves
-}
-
-fn imminent_defense_reply_moves(
-    board: &Board,
-    attacker: Color,
-    actual_reply: Option<Move>,
-) -> Vec<Move> {
-    let defender = attacker.opponent();
-    let mut replies = Vec::new();
-
-    let mut facts = local_threat_facts_for_player(board, attacker)
-        .into_iter()
-        .filter(|fact| local_threat_is_corridor_forcing_for(board, attacker, fact))
-        .collect::<Vec<_>>();
-    if facts.is_empty() {
-        return replies;
-    }
-
-    if let Some(actual_reply) = actual_reply {
-        let actual_facts = facts
-            .iter()
-            .filter(|fact| fact.defense_squares.contains(&actual_reply))
-            .cloned()
-            .collect::<Vec<_>>();
-        if !actual_facts.is_empty() {
-            facts = actual_facts;
-        }
-    }
-
-    let best_rank = facts
-        .iter()
-        .map(|fact| fact.kind.corridor_rank())
-        .max()
-        .expect("facts are not empty");
-    for fact in facts
-        .into_iter()
-        .filter(|fact| fact.kind.corridor_rank() == best_rank)
-    {
-        add_imminent_defense_replies_for_fact(board, attacker, defender, &fact, &mut replies);
-    }
-
-    replies
-}
-
-fn add_imminent_defense_replies_for_fact(
-    board: &Board,
-    attacker: Color,
-    defender: Color,
-    fact: &LocalThreatFact,
-    replies: &mut Vec<Move>,
-) {
-    let legal_forcing_continuations = legal_forcing_continuations_for_fact(board, attacker, fact);
-    for continuation in &legal_forcing_continuations {
-        let mv = continuation.mv;
-        if board.is_legal_for_color(mv, defender) {
-            push_unique_move(replies, mv);
-        }
-    }
-
-    let mut shared_cost_squares: Option<Vec<Move>> = None;
-    for continuation in legal_forcing_continuations {
-        let costs = continuation
-            .legal_cost_squares
-            .into_iter()
-            .filter(|&mv| board.is_legal_for_color(mv, defender))
-            .collect::<Vec<_>>();
-
-        shared_cost_squares = Some(match shared_cost_squares {
-            Some(shared) => shared
-                .into_iter()
-                .filter(|mv| costs.contains(mv))
-                .collect::<Vec<_>>(),
-            None => costs,
-        });
-    }
-
-    for mv in shared_cost_squares.unwrap_or_default() {
-        push_unique_move(replies, mv);
-    }
 }
 
 fn offensive_counter_reply_moves(board: &Board, defender: Color) -> Vec<Move> {
@@ -1086,30 +1003,6 @@ fn corridor_candidate_moves(board: &Board, radius: usize) -> Vec<Move> {
     });
     moves.sort_by_key(|mv| (mv.row, mv.col));
     moves
-}
-
-fn corridor_attacker_move_rank(board: &Board, attacker: Color, mv: Move) -> u8 {
-    if board.current_player != attacker || !board.is_legal_for_color(mv, attacker) {
-        return 0;
-    }
-    let mut next = board.clone();
-    if next.apply_move(mv).is_err() {
-        return 0;
-    }
-    match next.result {
-        GameResult::Winner(winner) if winner == attacker => return 5,
-        GameResult::Winner(_) | GameResult::Draw => return 0,
-        GameResult::Ongoing => {}
-    }
-    if !next.immediate_winning_moves_for(attacker).is_empty() {
-        return 4;
-    }
-    local_threat_facts_for_player(&next, attacker)
-        .into_iter()
-        .filter(|fact| local_threat_is_corridor_forcing_for(&next, attacker, fact))
-        .map(|fact| fact.kind.corridor_rank())
-        .max()
-        .unwrap_or(0)
 }
 
 fn push_unique_move(moves: &mut Vec<Move>, mv: Move) {

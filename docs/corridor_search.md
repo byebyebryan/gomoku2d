@@ -88,6 +88,13 @@ The shape vocabulary behind these terms lives in
 [`tactical_shapes.md`](tactical_shapes.md). Replay-specific outcome labels and
 report fields live in [`game_analysis.md`](game_analysis.md).
 
+Implementation boundary: `gomoku-bot::tactical` owns raw local-threat facts and
+`CorridorThreatPolicy` owns corridor-specific interpretation of those facts:
+active-threat filtering, legal forcing continuations, defender reply generation,
+and attacker corridor-move ranking. `gomoku-bot::corridor` owns proof recursion,
+outcomes, diagnostics, and bridge-bot fallback behavior. It should not duplicate
+shape definitions or reply-selection rules.
+
 ## Small Examples
 
 These examples use a one-line slice rather than a full board:
@@ -318,8 +325,8 @@ The current checkpoint provides:
 
 - a corridor-based replay analyzer,
 - bot-owned corridor proof entry points under `gomoku-bot::corridor`,
-- shared local-threat facts under `gomoku-bot::tactical` consumed by both
-  `SearchBot` and corridor search,
+- shared local-threat facts and search/corridor policy views under
+  `gomoku-bot::tactical` consumed by both `SearchBot` and corridor search,
 - lab-only `CorridorBot` aliases: `corridor-random` and `corridor-d1`,
 - proof-detail JSON and HTML report generation,
 - visual proof frames with board rendering and semantic markers,

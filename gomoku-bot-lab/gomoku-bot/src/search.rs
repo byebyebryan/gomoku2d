@@ -3,12 +3,14 @@ use std::collections::HashMap;
 use std::sync::OnceLock;
 use std::time::Duration;
 
-use crate::tactical::{local_threat_facts_after_move, LocalThreatFact, LocalThreatKind};
+use crate::tactical::{
+    local_threat_facts_after_move, LocalThreatKind, SearchThreatPolicy, TacticalMoveAnnotation,
+};
 use crate::Bot;
 use gomoku_core::{Board, Color, GameResult, Move, Variant, ZobristTable, DIRS};
 
 #[cfg(test)]
-use crate::tactical::LocalThreatOrigin;
+use crate::tactical::{LocalThreatFact, LocalThreatOrigin};
 
 // ZobristTable is provided by gomoku-core with a stable shared seed,
 // so hashes are consistent between the search and replay recording.
@@ -806,63 +808,13 @@ fn classify_threat_after_move(board: &Board, mv: Move) -> ThreatAfterMoveState {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(not(test), allow(dead_code))]
-struct TacticalMoveAnnotation {
-    player: Color,
-    mv: Move,
-    local_threats: Vec<LocalThreatFact>,
-}
-
-impl TacticalMoveAnnotation {
-    fn creates_immediate_or_multi_threat(&self) -> bool {
-        let mut completion_squares = Vec::new();
-        for fact in self.local_threats.iter() {
-            match fact.kind {
-                LocalThreatKind::Five | LocalThreatKind::OpenFour => return true,
-                LocalThreatKind::ClosedFour | LocalThreatKind::BrokenFour => {
-                    for defense in fact.defense_squares.iter().copied() {
-                        if !completion_squares.contains(&defense) {
-                            completion_squares.push(defense);
-                        }
-                    }
-                    if completion_squares.len() >= 2 {
-                        return true;
-                    }
-                }
-                LocalThreatKind::OpenThree
-                | LocalThreatKind::ClosedThree
-                | LocalThreatKind::BrokenThree => {}
-            }
-        }
-
-        false
-    }
-}
-
 #[cfg_attr(not(test), allow(dead_code))]
 fn annotate_tactical_move(board: &Board, mv: Move) -> TacticalMoveAnnotation {
-    if board.is_legal(mv) {
-        annotate_legal_tactical_move(board, mv)
-    } else {
-        TacticalMoveAnnotation {
-            player: board.current_player,
-            mv,
-            local_threats: Vec::new(),
-        }
-    }
+    SearchThreatPolicy.annotation_for_move(board, mv)
 }
 
 fn annotate_legal_tactical_move(board: &Board, mv: Move) -> TacticalMoveAnnotation {
-    let player = board.current_player;
-    TacticalMoveAnnotation {
-        player,
-        mv,
-        local_threats: local_threat_facts_after_move(board, mv)
-            .into_iter()
-            .filter(|fact| fact.player == player)
-            .collect(),
-    }
+    SearchThreatPolicy.annotation_for_move(board, mv)
 }
 
 fn annotate_legal_tactical_move_counted(
@@ -1687,18 +1639,12 @@ fn tactical_ordering_score(
     annotation: &TacticalMoveAnnotation,
     immediate_block: bool,
 ) -> (i32, bool) {
+    let search_policy = SearchThreatPolicy;
     let mut score = if immediate_block { 90_000 } else { 0 };
     let mut must_keep = immediate_block;
     for fact in annotation.local_threats.iter() {
-        let fact_score = match fact.kind {
-            LocalThreatKind::Five => 100_000,
-            LocalThreatKind::OpenFour => 80_000,
-            LocalThreatKind::ClosedFour | LocalThreatKind::BrokenFour => 70_000,
-            LocalThreatKind::OpenThree => 50_000,
-            LocalThreatKind::ClosedThree | LocalThreatKind::BrokenThree => 10_000,
-        };
-        score = score.max(fact_score);
-        must_keep |= fact.is_search_forcing();
+        score = score.max(search_policy.ordering_score(fact.kind));
+        must_keep |= search_policy.is_must_keep(fact);
     }
 
     (score, must_keep)
