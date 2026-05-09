@@ -190,8 +190,8 @@ impl WasmBoard {
 }
 
 enum BotInner {
-    Random(RandomBot),
-    Search(SearchBot),
+    Random(Box<RandomBot>),
+    Search(Box<SearchBot>),
 }
 
 #[wasm_bindgen]
@@ -204,14 +204,14 @@ impl WasmBot {
     #[wasm_bindgen(js_name = "createRandom")]
     pub fn create_random() -> WasmBot {
         WasmBot {
-            inner: BotInner::Random(RandomBot::new()),
+            inner: BotInner::Random(Box::new(RandomBot::new())),
         }
     }
 
     #[wasm_bindgen(js_name = "createBaseline")]
     pub fn create_baseline(depth: i32) -> WasmBot {
         WasmBot {
-            inner: BotInner::Search(SearchBot::new(depth)),
+            inner: BotInner::Search(Box::new(SearchBot::new(depth))),
         }
     }
 

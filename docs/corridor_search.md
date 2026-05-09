@@ -327,7 +327,7 @@ The current checkpoint provides:
 - bot-owned corridor proof entry points under `gomoku-bot::corridor`,
 - shared local-threat facts and search/corridor policy views under
   `gomoku-bot::tactical` consumed by both `SearchBot` and corridor search,
-- lab-only `CorridorBot` aliases: `corridor-random` and `corridor-d1`,
+- lab-only `SearchBot` corridor quiescence via the `+corridor-q` suffix,
 - proof-detail JSON and HTML report generation,
 - visual proof frames with board rendering and semantic markers,
 - Renju-aware handling for forbidden black replies and illegal black threats,
@@ -342,8 +342,9 @@ Known limits:
 - `possible_escape` is common and acceptable; it means the current model cannot
   prove the branch remains in the forced corridor.
 - The report is a lab artifact, not a polished replay-screen feature.
-- `CorridorBot` is a bridge probe, not a product preset. The next question is
-  whether these proof decisions should feed `SearchBot` ordering or extension.
+- `+corridor-q` is a shallow lab integration point, not a product preset. Deeper
+  proof is available through explicit `+corridor-qdN` sweeps, but analyzer-depth
+  proof at every search leaf is currently too expensive for live play.
 
 ## Related Docs
 

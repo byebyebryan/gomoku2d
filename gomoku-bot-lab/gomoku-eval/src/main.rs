@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Instant;
 
-use gomoku_bot::{CorridorBot, RandomBot, SearchBot};
+use gomoku_bot::{RandomBot, SearchBot};
 use gomoku_core::{Color, GameResult, Move, Replay, RuleConfig, Variant};
 use gomoku_eval::analysis::{analyze_replay, AnalysisOptions, DEFAULT_MAX_SCAN_PLIES};
 use gomoku_eval::analysis_batch::{
@@ -530,27 +530,6 @@ fn make_bot_factory(
     if spec == "random" {
         return Ok(Arc::new(|seed| Box::new(RandomBot::seeded(seed))));
     }
-    if spec == "corridor-random" {
-        return Ok(Arc::new(move |seed| {
-            Box::new(CorridorBot::with_random_fallback(seed))
-        }));
-    }
-    if spec == "corridor-d1" {
-        let fallback_config = search_configs::search_config_from_lab_spec(
-            "search-d1",
-            5,
-            search_time_ms,
-            search_cpu_time_ms,
-        )
-        .expect("search-d1 fallback spec should parse");
-        return Ok(Arc::new(move |seed| {
-            Box::new(CorridorBot::with_search_fallback_config(
-                seed,
-                fallback_config,
-            ))
-        }));
-    }
-
     if let Some(config) =
         search_configs::search_config_from_lab_spec(&spec, 5, search_time_ms, search_cpu_time_ms)
     {
@@ -558,7 +537,7 @@ fn make_bot_factory(
     }
 
     Err(format!(
-        "Unknown bot type: '{spec}'. Use random, corridor-random, corridor-d1, baseline-N, search-dN, or search-dN+suffixes."
+        "Unknown bot type: '{spec}'. Use random, baseline-N, search-dN, or search-dN+suffixes."
     ))
 }
 
@@ -1583,30 +1562,31 @@ mod tests {
     }
 
     #[test]
-    fn make_bot_factory_accepts_corridor_lab_aliases() {
+    fn make_bot_factory_rejects_retired_corridor_lab_aliases() {
         for spec in ["corridor-random", "corridor-d1"] {
-            let factory = make_bot_factory(spec, None, None)
-                .unwrap_or_else(|err| panic!("{spec} should parse: {err}"));
-            let bot = factory(42);
-            assert_eq!(bot.name(), spec);
+            let err = match make_bot_factory(spec, None, None) {
+                Ok(_) => panic!("retired corridor bot alias should not parse: {spec}"),
+                Err(err) => err,
+            };
+            assert!(err.contains("search-dN+suffixes"));
         }
     }
 
     #[test]
-    fn make_bot_factory_applies_budget_to_corridor_search_fallback() {
-        let factory = make_bot_factory("corridor-d1", None, Some(123))
-            .expect("corridor-d1 should parse with a CPU budget");
+    fn make_bot_factory_accepts_corridor_quiescence_search_suffix() {
+        let factory = make_bot_factory("search-d1+corridor-q", None, Some(123))
+            .expect("corridor quiescence search spec should parse with a CPU budget");
         let mut bot = factory(42);
         let board = gomoku_core::Board::new(RuleConfig::default());
 
         let _ = bot.choose_move(&board);
         let trace = bot
             .trace()
-            .expect("corridor-d1 fallback should preserve the search trace");
+            .expect("search bot should expose the search trace");
 
-        assert_eq!(trace["source"], "corridor-fallback");
         assert_eq!(trace["config"]["max_depth"], 1);
         assert_eq!(trace["config"]["cpu_time_budget_ms"], 123);
+        assert_eq!(trace["config"]["corridor_mode"], "leaf_quiescence");
     }
 
     #[test]

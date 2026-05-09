@@ -356,6 +356,12 @@ pub struct StandingReport {
     pub corridor_branch_probes: u64,
     #[serde(default)]
     pub corridor_max_depth: u32,
+    #[serde(default)]
+    pub corridor_leaf_probes: u64,
+    #[serde(default)]
+    pub corridor_terminal_hits: u64,
+    #[serde(default)]
+    pub corridor_static_fallbacks: u64,
     pub total_nodes: u64,
     pub avg_nodes: f64,
     #[serde(default)]
@@ -583,6 +589,12 @@ pub struct SideStatsReport {
     #[serde(default)]
     pub corridor_max_depth: u32,
     #[serde(default)]
+    pub corridor_leaf_probes: u64,
+    #[serde(default)]
+    pub corridor_terminal_hits: u64,
+    #[serde(default)]
+    pub corridor_static_fallbacks: u64,
+    #[serde(default)]
     pub total_nodes: u64,
     pub avg_nodes: f64,
     #[serde(default)]
@@ -696,6 +708,9 @@ struct SideStatsAccumulator {
     corridor_nodes: u64,
     corridor_branch_probes: u64,
     corridor_max_depth: u32,
+    corridor_leaf_probes: u64,
+    corridor_terminal_hits: u64,
+    corridor_static_fallbacks: u64,
     total_nodes: u64,
     eval_calls: u64,
     candidate_generations: u64,
@@ -765,6 +780,14 @@ impl SideStatsAccumulator {
         }
         if let Some(metrics) = trace.get("metrics") {
             self.eval_calls += trace_value_u64(metrics, "eval_calls");
+            self.corridor_leaf_probes += trace_value_u64(metrics, "corridor_leaf_probes");
+            self.corridor_nodes += trace_value_u64(metrics, "corridor_search_nodes");
+            self.corridor_branch_probes += trace_value_u64(metrics, "corridor_branch_probes");
+            self.corridor_max_depth = self
+                .corridor_max_depth
+                .max(trace_value_u64(metrics, "corridor_max_depth_reached") as u32);
+            self.corridor_terminal_hits += trace_value_u64(metrics, "corridor_terminal_hits");
+            self.corridor_static_fallbacks += trace_value_u64(metrics, "corridor_static_fallbacks");
             self.candidate_generations += trace_value_u64(metrics, "candidate_generations");
             self.candidate_moves_total += trace_value_u64(metrics, "candidate_moves_total");
             self.candidate_moves_max = self
@@ -859,6 +882,9 @@ impl SideStatsAccumulator {
         self.corridor_nodes += stats.corridor_nodes;
         self.corridor_branch_probes += stats.corridor_branch_probes;
         self.corridor_max_depth = self.corridor_max_depth.max(stats.corridor_max_depth);
+        self.corridor_leaf_probes += stats.corridor_leaf_probes;
+        self.corridor_terminal_hits += stats.corridor_terminal_hits;
+        self.corridor_static_fallbacks += stats.corridor_static_fallbacks;
         self.total_nodes += stats.total_nodes;
         self.eval_calls += stats.eval_calls;
         self.candidate_generations += stats.candidate_generations;
@@ -959,6 +985,9 @@ impl SideStatsAccumulator {
             corridor_nodes: self.corridor_nodes,
             corridor_branch_probes: self.corridor_branch_probes,
             corridor_max_depth: self.corridor_max_depth,
+            corridor_leaf_probes: self.corridor_leaf_probes,
+            corridor_terminal_hits: self.corridor_terminal_hits,
+            corridor_static_fallbacks: self.corridor_static_fallbacks,
             total_nodes: self.total_nodes,
             avg_nodes,
             eval_calls: self.eval_calls,
@@ -1091,6 +1120,9 @@ fn standings(
                 corridor_nodes: side_stats.corridor_nodes,
                 corridor_branch_probes: side_stats.corridor_branch_probes,
                 corridor_max_depth: side_stats.corridor_max_depth,
+                corridor_leaf_probes: side_stats.corridor_leaf_probes,
+                corridor_terminal_hits: side_stats.corridor_terminal_hits,
+                corridor_static_fallbacks: side_stats.corridor_static_fallbacks,
                 total_nodes: side_stats.total_nodes,
                 avg_nodes: side_stats.avg_nodes,
                 eval_calls: side_stats.eval_calls,
@@ -2166,7 +2198,7 @@ fn render_entrant_row(
         "metric-search",
         "Avg nodes",
         &compact_number_label(row.avg_nodes),
-        None,
+        corridor_probe_metric_label(row),
     );
     render_metric_cell(
         html,
@@ -2327,6 +2359,15 @@ fn breadth_metric_label(row: &StandingReport) -> (String, Option<String>) {
     } else {
         (format!("{:.1}", row.avg_candidate_moves), None)
     }
+}
+
+fn corridor_probe_metric_label(row: &StandingReport) -> Option<String> {
+    if row.corridor_leaf_probes == 0 {
+        return None;
+    }
+
+    let avg_probes = avg(row.corridor_leaf_probes as f64, row.search_move_count);
+    Some(format!("corr {avg_probes:.1} probes"))
 }
 
 fn delta_cell(label: &str, delta_class: &str, data_label: &str) -> String {
@@ -3282,6 +3323,7 @@ mod tests {
         let mut zero_tt_standing = sample_standing_with_search_costs("search-d2");
         zero_tt_standing.tt_hits = 0;
         zero_tt_standing.tt_cutoffs = 0;
+        zero_tt_standing.corridor_leaf_probes = 25;
         report.run.bots = vec!["search-d2".to_string()];
         report.standings = vec![zero_tt_standing];
         report.matches[0].black_stats = sample_side_stats_with_search_costs();
@@ -3297,6 +3339,7 @@ mod tests {
         assert!(html.contains("SearchBot_D2"));
         assert!(html.contains("Avg nodes"));
         assert!(html.contains("200"));
+        assert!(html.contains("corr 5.0 probes"));
         assert!(html.contains("Avg ms"));
         assert!(html.contains("10.0"));
         assert!(html.contains("Avg depth"));
@@ -3349,7 +3392,13 @@ mod tests {
                 "search_child_moves_after_total": 32,
                 "child_moves_after_max": 9,
                 "root_child_moves_after_max": 0,
-                "search_child_moves_after_max": 9
+                "search_child_moves_after_max": 9,
+                "corridor_leaf_probes": 11,
+                "corridor_search_nodes": 17,
+                "corridor_branch_probes": 5,
+                "corridor_max_depth_reached": 3,
+                "corridor_terminal_hits": 2,
+                "corridor_static_fallbacks": 9
             }
         });
 
@@ -3358,9 +3407,12 @@ mod tests {
 
         assert_eq!(report.search_nodes, 100);
         assert_eq!(report.safety_nodes, 20);
-        assert_eq!(report.corridor_nodes, 7);
-        assert_eq!(report.corridor_branch_probes, 3);
-        assert_eq!(report.corridor_max_depth, 2);
+        assert_eq!(report.corridor_nodes, 24);
+        assert_eq!(report.corridor_branch_probes, 8);
+        assert_eq!(report.corridor_max_depth, 3);
+        assert_eq!(report.corridor_leaf_probes, 11);
+        assert_eq!(report.corridor_terminal_hits, 2);
+        assert_eq!(report.corridor_static_fallbacks, 9);
         assert_eq!(report.tactical_annotations, 9);
         assert_eq!(report.root_tactical_annotations, 2);
         assert_eq!(report.search_tactical_annotations, 7);
@@ -3388,6 +3440,9 @@ mod tests {
         first_match.black_stats.corridor_nodes = 17;
         first_match.black_stats.corridor_branch_probes = 9;
         first_match.black_stats.corridor_max_depth = 2;
+        first_match.black_stats.corridor_leaf_probes = 33;
+        first_match.black_stats.corridor_terminal_hits = 4;
+        first_match.black_stats.corridor_static_fallbacks = 29;
         first_match.black_stats.tactical_annotations = 20;
         first_match.black_stats.search_tactical_annotations = 20;
         first_match.black_stats.child_limit_applications = 10;
@@ -3420,6 +3475,9 @@ mod tests {
         assert_eq!(row.corridor_nodes, 17);
         assert_eq!(row.corridor_branch_probes, 9);
         assert_eq!(row.corridor_max_depth, 2);
+        assert_eq!(row.corridor_leaf_probes, 33);
+        assert_eq!(row.corridor_terminal_hits, 4);
+        assert_eq!(row.corridor_static_fallbacks, 29);
         assert_eq!(row.tactical_annotations, 20);
         assert_eq!(row.child_limit_applications, 10);
         assert_eq!(row.child_cap_hits, 8);
@@ -4131,6 +4189,9 @@ mod tests {
             corridor_nodes: 0,
             corridor_branch_probes: 0,
             corridor_max_depth: 0,
+            corridor_leaf_probes: 0,
+            corridor_terminal_hits: 0,
+            corridor_static_fallbacks: 0,
             total_nodes: 1000,
             avg_nodes: 200.0,
             eval_calls: 500,
@@ -4198,6 +4259,9 @@ mod tests {
             corridor_nodes: 0,
             corridor_branch_probes: 0,
             corridor_max_depth: 0,
+            corridor_leaf_probes: 0,
+            corridor_terminal_hits: 0,
+            corridor_static_fallbacks: 0,
             total_nodes: 1000,
             avg_nodes: 200.0,
             eval_calls: 500,

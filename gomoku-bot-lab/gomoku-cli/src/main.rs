@@ -1,7 +1,7 @@
 use std::time::Instant;
 
 use clap::Parser;
-use gomoku_bot::{Bot, CorridorBot, RandomBot, SearchBot};
+use gomoku_bot::{Bot, RandomBot, SearchBot};
 use gomoku_core::{Board, Color, GameResult, Move, Replay, RuleConfig, Variant};
 
 #[path = "../../benchmarks/search_configs.rs"]
@@ -10,11 +10,11 @@ mod search_configs;
 #[derive(Parser, Debug)]
 #[command(name = "gomoku-cli", about = "Run a Gomoku match between bots")]
 struct Args {
-    /// Bot for Black: "random", corridor lab aliases, search lab aliases, or "baseline-N"
+    /// Bot for Black: "random", search lab aliases, or "baseline-N"
     #[arg(long, default_value = "baseline")]
     black: String,
 
-    /// Bot for White: "random", corridor lab aliases, search lab aliases, or "baseline-N"
+    /// Bot for White: "random", search lab aliases, or "baseline-N"
     #[arg(long, default_value = "random")]
     white: String,
 
@@ -43,15 +43,6 @@ fn make_bot(name: &str, depth: i32, time_ms: Option<u64>) -> Box<dyn Bot> {
     if name == "random" {
         return Box::new(RandomBot::new());
     }
-    if name == "corridor-random" {
-        return Box::new(CorridorBot::with_random_fallback(0));
-    }
-    if name == "corridor-d1" {
-        let config = search_configs::search_config_from_lab_spec("search-d1", depth, time_ms, None)
-            .unwrap_or_else(|| gomoku_bot::SearchBotConfig::custom_depth(1));
-        return Box::new(CorridorBot::with_search_fallback_config(0, config));
-    }
-
     if let Some(config) = search_configs::search_config_from_lab_spec(name, depth, time_ms, None) {
         return Box::new(SearchBot::with_config(config));
     }

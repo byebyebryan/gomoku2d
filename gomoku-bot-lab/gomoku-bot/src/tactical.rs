@@ -298,6 +298,19 @@ pub fn has_forcing_local_threat(board: &Board, player: Color) -> bool {
     CorridorThreatPolicy.has_active_threat(board, player)
 }
 
+pub fn has_forcing_local_threat_at_move(board: &Board, player: Color, mv: Move) -> bool {
+    if !board.has_color(mv.row, mv.col, player) {
+        return false;
+    }
+
+    let policy = CorridorThreatPolicy;
+    let existing = BoardExistingMove { board, mv, player };
+    DIRS.iter().any(|&(dr, dc)| {
+        local_threat_fact_in_direction_view(&existing, dr, dc)
+            .is_some_and(|fact| policy.is_active_threat(board, player, &fact))
+    })
+}
+
 pub fn corridor_active_threats(board: &Board, attacker: Color) -> Vec<LocalThreatFact> {
     CorridorThreatPolicy.active_threats(board, attacker)
 }
@@ -904,10 +917,11 @@ fn same_shape_fact(left: &LocalThreatFact, right: &LocalThreatFact) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        has_forcing_local_threat, legal_forcing_continuations_for_fact,
-        local_threat_facts_after_move, local_threat_facts_for_player,
-        raw_local_threat_facts_after_move, raw_local_threat_facts_for_player, CorridorThreatPolicy,
-        LocalThreatFact, LocalThreatKind, LocalThreatOrigin, SearchThreatPolicy,
+        has_forcing_local_threat, has_forcing_local_threat_at_move,
+        legal_forcing_continuations_for_fact, local_threat_facts_after_move,
+        local_threat_facts_for_player, raw_local_threat_facts_after_move,
+        raw_local_threat_facts_for_player, CorridorThreatPolicy, LocalThreatFact, LocalThreatKind,
+        LocalThreatOrigin, SearchThreatPolicy,
     };
     use gomoku_core::{Board, Color, Move, RuleConfig, Variant};
 
@@ -1383,5 +1397,29 @@ mod tests {
                 .is_empty()
         );
         assert!(!has_forcing_local_threat(&board, Color::Black));
+    }
+
+    #[test]
+    fn localized_forcing_threat_gate_checks_only_requested_move() {
+        let board = board_from_moves(
+            Variant::Freestyle,
+            &["H8", "A1", "I8", "A2", "J8", "A3", "C3"],
+        );
+
+        assert!(has_forcing_local_threat_at_move(
+            &board,
+            Color::Black,
+            mv("J8")
+        ));
+        assert!(!has_forcing_local_threat_at_move(
+            &board,
+            Color::Black,
+            mv("C3")
+        ));
+        assert!(!has_forcing_local_threat_at_move(
+            &board,
+            Color::White,
+            mv("J8")
+        ));
     }
 }
