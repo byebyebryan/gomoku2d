@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use std::sync::OnceLock;
 use std::time::Duration;
 
+use crate::corridor;
 use crate::tactical::{
     local_threat_facts_after_move, LocalThreatKind, SearchThreatPolicy, TacticalMoveAnnotation,
 };
@@ -479,6 +480,21 @@ pub struct SearchMetrics {
     pub tt_hits: u64,
     pub tt_cutoffs: u64,
     pub beta_cutoffs: u64,
+    pub corridor_entry_checks: u64,
+    pub corridor_entries_accepted: u64,
+    pub corridor_own_entries_accepted: u64,
+    pub corridor_opponent_entries_accepted: u64,
+    pub corridor_nodes: u64,
+    pub corridor_branch_probes: u64,
+    pub corridor_resume_searches: u64,
+    pub corridor_width_exits: u64,
+    pub corridor_depth_exits: u64,
+    pub corridor_neutral_exits: u64,
+    pub corridor_terminal_exits: u64,
+    pub corridor_plies_followed: u64,
+    pub corridor_own_plies_followed: u64,
+    pub corridor_opponent_plies_followed: u64,
+    pub corridor_max_depth: u32,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -575,6 +591,27 @@ impl SearchMetrics {
                 }
             }
         }
+    }
+
+    fn record_corridor_entry(&mut self, side: CorridorPortalSide) {
+        self.corridor_entries_accepted += 1;
+        match side {
+            CorridorPortalSide::Own => self.corridor_own_entries_accepted += 1,
+            CorridorPortalSide::Opponent => self.corridor_opponent_entries_accepted += 1,
+        }
+    }
+
+    fn record_corridor_ply(&mut self, side: CorridorPortalSide) {
+        self.corridor_plies_followed += 1;
+        match side {
+            CorridorPortalSide::Own => self.corridor_own_plies_followed += 1,
+            CorridorPortalSide::Opponent => self.corridor_opponent_plies_followed += 1,
+        }
+    }
+
+    fn record_corridor_node(&mut self, depth_reached: u32) {
+        self.corridor_nodes += 1;
+        self.corridor_max_depth = self.corridor_max_depth.max(depth_reached);
     }
 
     fn trace(self) -> serde_json::Value {
@@ -1663,6 +1700,369 @@ fn apply_plain_child_limit(
     moves
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct SearchOutcome {
+    score: i32,
+    best_move: Option<Move>,
+    timed_out: bool,
+    corridor_extra_plies: u32,
+}
+
+impl SearchOutcome {
+    fn new(score: i32, best_move: Option<Move>, timed_out: bool) -> Self {
+        Self {
+            score,
+            best_move,
+            timed_out,
+            corridor_extra_plies: 0,
+        }
+    }
+}
+
+fn terminal_score_for_winner(winner: Color, color: Color, root_color: Color) -> i32 {
+    let root_score = if winner == root_color {
+        2_000_000
+    } else {
+        -2_000_000
+    };
+    if color == root_color {
+        root_score
+    } else {
+        -root_score
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn search_child_after_move(
+    board: &mut Board,
+    hash: u64,
+    depth: i32,
+    alpha: i32,
+    beta: i32,
+    color: Color,
+    root_color: Color,
+    tt: &mut HashMap<u64, TTEntry>,
+    zobrist: &ZobristTable,
+    candidate_source: CandidateSource,
+    legality_gate: LegalityGate,
+    move_ordering: MoveOrdering,
+    child_limit: Option<usize>,
+    corridor_portals: CorridorPortalConfig,
+    static_eval: StaticEvaluation,
+    nodes: &mut u64,
+    metrics: &mut SearchMetrics,
+    deadline: SearchDeadline,
+    portal_side: CorridorPortalSide,
+    portal_config: CorridorPortalSideConfig,
+    corridor_entry: bool,
+) -> SearchOutcome {
+    if corridor_entry
+        && portal_config.enabled
+        && portal_config.max_depth > 0
+        && portal_config.max_reply_width > 0
+    {
+        metrics.record_corridor_entry(portal_side);
+        return corridor_portal_search(
+            board,
+            hash,
+            depth,
+            alpha,
+            beta,
+            color,
+            root_color,
+            color.opponent(),
+            portal_side,
+            portal_config,
+            0,
+            tt,
+            zobrist,
+            candidate_source,
+            legality_gate,
+            move_ordering,
+            child_limit,
+            corridor_portals,
+            static_eval,
+            nodes,
+            metrics,
+            deadline,
+        );
+    }
+
+    negamax(
+        board,
+        hash,
+        depth,
+        alpha,
+        beta,
+        color,
+        root_color,
+        tt,
+        zobrist,
+        candidate_source,
+        legality_gate,
+        move_ordering,
+        child_limit,
+        corridor_portals,
+        static_eval,
+        nodes,
+        metrics,
+        deadline,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn resume_normal_search_after_corridor(
+    board: &mut Board,
+    hash: u64,
+    depth: i32,
+    alpha: i32,
+    beta: i32,
+    color: Color,
+    root_color: Color,
+    tt: &mut HashMap<u64, TTEntry>,
+    zobrist: &ZobristTable,
+    candidate_source: CandidateSource,
+    legality_gate: LegalityGate,
+    move_ordering: MoveOrdering,
+    child_limit: Option<usize>,
+    corridor_portals: CorridorPortalConfig,
+    static_eval: StaticEvaluation,
+    nodes: &mut u64,
+    metrics: &mut SearchMetrics,
+    deadline: SearchDeadline,
+) -> SearchOutcome {
+    metrics.corridor_resume_searches += 1;
+    negamax(
+        board,
+        hash,
+        depth,
+        alpha,
+        beta,
+        color,
+        root_color,
+        tt,
+        zobrist,
+        candidate_source,
+        legality_gate,
+        move_ordering,
+        child_limit,
+        corridor_portals,
+        static_eval,
+        nodes,
+        metrics,
+        deadline,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn corridor_portal_search(
+    board: &mut Board,
+    hash: u64,
+    depth: i32,
+    mut alpha: i32,
+    beta: i32,
+    color: Color,
+    root_color: Color,
+    attacker: Color,
+    portal_side: CorridorPortalSide,
+    portal_config: CorridorPortalSideConfig,
+    portal_depth_used: usize,
+    tt: &mut HashMap<u64, TTEntry>,
+    zobrist: &ZobristTable,
+    candidate_source: CandidateSource,
+    legality_gate: LegalityGate,
+    move_ordering: MoveOrdering,
+    child_limit: Option<usize>,
+    corridor_portals: CorridorPortalConfig,
+    static_eval: StaticEvaluation,
+    nodes: &mut u64,
+    metrics: &mut SearchMetrics,
+    deadline: SearchDeadline,
+) -> SearchOutcome {
+    metrics.record_corridor_node(portal_depth_used as u32);
+
+    if deadline.expired() {
+        return SearchOutcome::new(
+            evaluate_leaf_counted(board, color, root_color, static_eval, metrics),
+            None,
+            true,
+        );
+    }
+
+    if board.result != GameResult::Ongoing {
+        metrics.corridor_terminal_exits += 1;
+        return SearchOutcome::new(
+            evaluate_leaf_counted(board, color, root_color, static_eval, metrics),
+            None,
+            false,
+        );
+    }
+
+    if portal_depth_used >= portal_config.max_depth {
+        metrics.corridor_depth_exits += 1;
+        return resume_normal_search_after_corridor(
+            board,
+            hash,
+            depth,
+            alpha,
+            beta,
+            color,
+            root_color,
+            tt,
+            zobrist,
+            candidate_source,
+            legality_gate,
+            move_ordering,
+            child_limit,
+            corridor_portals,
+            static_eval,
+            nodes,
+            metrics,
+            deadline,
+        );
+    }
+
+    let moves = if color == attacker {
+        corridor::materialized_attacker_corridor_moves(board, attacker)
+    } else {
+        let replies = corridor::narrow_corridor_reply_moves(board, attacker);
+        if replies.len() > portal_config.max_reply_width {
+            metrics.corridor_width_exits += 1;
+            return resume_normal_search_after_corridor(
+                board,
+                hash,
+                depth,
+                alpha,
+                beta,
+                color,
+                root_color,
+                tt,
+                zobrist,
+                candidate_source,
+                legality_gate,
+                move_ordering,
+                child_limit,
+                corridor_portals,
+                static_eval,
+                nodes,
+                metrics,
+                deadline,
+            );
+        }
+        if replies.is_empty() && !board.immediate_winning_moves_for(attacker).is_empty() {
+            metrics.corridor_terminal_exits += 1;
+            return SearchOutcome {
+                score: terminal_score_for_winner(attacker, color, root_color),
+                best_move: None,
+                timed_out: false,
+                corridor_extra_plies: 1,
+            };
+        }
+        replies
+    };
+
+    if moves.is_empty() {
+        metrics.corridor_neutral_exits += 1;
+        return resume_normal_search_after_corridor(
+            board,
+            hash,
+            depth,
+            alpha,
+            beta,
+            color,
+            root_color,
+            tt,
+            zobrist,
+            candidate_source,
+            legality_gate,
+            move_ordering,
+            child_limit,
+            corridor_portals,
+            static_eval,
+            nodes,
+            metrics,
+            deadline,
+        );
+    }
+
+    metrics.corridor_branch_probes += moves.len() as u64;
+    let mut best_score = i32::MIN + 1;
+    let mut best_move = None;
+    let mut best_extra_plies = 0u32;
+    let mut timed_out = false;
+
+    for mv in moves {
+        if deadline.expired() {
+            timed_out = true;
+            break;
+        }
+
+        let child_hash = hash ^ zobrist.piece(mv.row, mv.col, color) ^ zobrist.turn;
+        board.apply_trusted_legal_move(mv);
+        metrics.record_corridor_ply(portal_side);
+        let child = corridor_portal_search(
+            board,
+            child_hash,
+            depth,
+            -beta,
+            -alpha,
+            color.opponent(),
+            root_color,
+            attacker,
+            portal_side,
+            portal_config,
+            portal_depth_used + 1,
+            tt,
+            zobrist,
+            candidate_source,
+            legality_gate,
+            move_ordering,
+            child_limit,
+            corridor_portals,
+            static_eval,
+            nodes,
+            metrics,
+            deadline,
+        );
+        let score = -child.score;
+        board.undo_move(mv);
+
+        if child.timed_out {
+            timed_out = true;
+        }
+        if score > best_score {
+            best_score = score;
+            best_move = Some(mv);
+            best_extra_plies = child.corridor_extra_plies.saturating_add(1);
+        }
+        if score > alpha {
+            alpha = score;
+        }
+        if alpha >= beta {
+            metrics.beta_cutoffs += 1;
+            break;
+        }
+        if timed_out {
+            break;
+        }
+    }
+
+    if best_move.is_none() {
+        return SearchOutcome::new(
+            evaluate_leaf_counted(board, color, root_color, static_eval, metrics),
+            None,
+            timed_out,
+        );
+    }
+
+    SearchOutcome {
+        score: best_score,
+        best_move,
+        timed_out,
+        corridor_extra_plies: best_extra_plies,
+    }
+}
+
 // --- Negamax with alpha-beta (incremental Zobrist hash) ---
 
 #[allow(clippy::too_many_arguments)]
@@ -1680,17 +2080,17 @@ fn negamax(
     legality_gate: LegalityGate,
     move_ordering: MoveOrdering,
     child_limit: Option<usize>,
+    corridor_portals: CorridorPortalConfig,
     static_eval: StaticEvaluation,
     nodes: &mut u64,
     metrics: &mut SearchMetrics,
     deadline: SearchDeadline,
-) -> (i32, Option<Move>, bool) {
+) -> SearchOutcome {
     *nodes += 1;
 
     if deadline.expired() {
-        let sign = if color == root_color { 1 } else { -1 };
-        return (
-            sign * evaluate_counted(board, root_color, static_eval, metrics),
+        return SearchOutcome::new(
+            evaluate_leaf_counted(board, color, root_color, static_eval, metrics),
             None,
             true,
         );
@@ -1702,18 +2102,18 @@ fn negamax(
             match entry.flag {
                 TTFlag::Exact => {
                     metrics.tt_cutoffs += 1;
-                    return (entry.score, entry.best_move, false);
+                    return SearchOutcome::new(entry.score, entry.best_move, false);
                 }
                 TTFlag::LowerBound => {
                     if entry.score >= beta {
                         metrics.tt_cutoffs += 1;
-                        return (entry.score, entry.best_move, false);
+                        return SearchOutcome::new(entry.score, entry.best_move, false);
                     }
                 }
                 TTFlag::UpperBound => {
                     if entry.score <= alpha {
                         metrics.tt_cutoffs += 1;
-                        return (entry.score, entry.best_move, false);
+                        return SearchOutcome::new(entry.score, entry.best_move, false);
                     }
                 }
             }
@@ -1721,7 +2121,7 @@ fn negamax(
     }
 
     if depth == 0 || board.result != GameResult::Ongoing {
-        return (
+        return SearchOutcome::new(
             evaluate_leaf_counted(board, color, root_color, static_eval, metrics),
             None,
             false,
@@ -1744,9 +2144,8 @@ fn negamax(
         needs_legality_check = false;
     }
     if moves.is_empty() {
-        let sign = if color == root_color { 1 } else { -1 };
-        return (
-            sign * evaluate_counted(board, root_color, static_eval, metrics),
+        return SearchOutcome::new(
+            evaluate_leaf_counted(board, color, root_color, static_eval, metrics),
             None,
             false,
         );
@@ -1755,6 +2154,7 @@ fn negamax(
     let orig_alpha = alpha;
     let mut best_score = i32::MIN + 1;
     let mut best_move: Option<Move> = None;
+    let mut best_corridor_extra_plies = 0u32;
 
     let tt_move = tt.get(&hash).and_then(|e| e.best_move);
     let ordered = order_search_moves(
@@ -1778,10 +2178,18 @@ fn negamax(
         {
             continue;
         }
+        let portal_side = CorridorPortalSide::for_player(color, root_color);
+        let portal_config = corridor_portals.for_side(portal_side);
+        let corridor_entry = if portal_config.enabled {
+            metrics.corridor_entry_checks += 1;
+            corridor::is_corridor_attacker_move(board, color, mv)
+        } else {
+            false
+        };
         // Incrementally update hash: XOR in the placed piece and flip turn bit
         let child_hash = hash ^ zobrist.piece(mv.row, mv.col, color) ^ zobrist.turn;
         board.apply_trusted_legal_move(mv);
-        let (score, _, child_timed_out) = negamax(
+        let child_outcome = search_child_after_move(
             board,
             child_hash,
             depth - 1,
@@ -1795,20 +2203,25 @@ fn negamax(
             legality_gate,
             move_ordering,
             child_limit,
+            corridor_portals,
             static_eval,
             nodes,
             metrics,
             deadline,
+            portal_side,
+            portal_config,
+            corridor_entry,
         );
-        let score = -score;
+        let score = -child_outcome.score;
         board.undo_move(mv);
 
-        if child_timed_out {
+        if child_outcome.timed_out {
             timed_out = true;
         }
         if score > best_score {
             best_score = score;
             best_move = Some(mv);
+            best_corridor_extra_plies = child_outcome.corridor_extra_plies;
         }
         if score > alpha {
             alpha = score;
@@ -1823,16 +2236,20 @@ fn negamax(
     }
 
     if best_move.is_none() {
-        let sign = if color == root_color { 1 } else { -1 };
-        return (
-            sign * evaluate_counted(board, root_color, static_eval, metrics),
+        return SearchOutcome::new(
+            evaluate_leaf_counted(board, color, root_color, static_eval, metrics),
             None,
             timed_out,
         );
     }
 
     if timed_out {
-        return (best_score, best_move, true);
+        return SearchOutcome {
+            score: best_score,
+            best_move,
+            timed_out: true,
+            corridor_extra_plies: best_corridor_extra_plies,
+        };
     }
 
     let flag = if best_score <= orig_alpha {
@@ -1852,7 +2269,12 @@ fn negamax(
         },
     );
 
-    (best_score, best_move, false)
+    SearchOutcome {
+        score: best_score,
+        best_move,
+        timed_out: false,
+        corridor_extra_plies: best_corridor_extra_plies,
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -1868,14 +2290,15 @@ fn search_root(
     legality_gate: LegalityGate,
     move_ordering: MoveOrdering,
     child_limit: Option<usize>,
+    corridor_portals: CorridorPortalConfig,
     static_eval: StaticEvaluation,
     nodes: &mut u64,
     metrics: &mut SearchMetrics,
     deadline: SearchDeadline,
-) -> (i32, Option<Move>, bool) {
+) -> SearchOutcome {
     *nodes += 1;
     if deadline.expired() {
-        return (
+        return SearchOutcome::new(
             evaluate_counted(board, color, static_eval, metrics),
             None,
             true,
@@ -1887,6 +2310,7 @@ fn search_root(
     let orig_alpha = alpha;
     let mut best_score = i32::MIN + 1;
     let mut best_move: Option<Move> = None;
+    let mut best_corridor_extra_plies = 0u32;
 
     let tt_move = tt.get(&hash).and_then(|entry| entry.best_move);
     let ordered = order_root_moves(
@@ -1905,9 +2329,17 @@ fn search_root(
             break;
         }
 
+        let portal_side = CorridorPortalSide::Own;
+        let portal_config = corridor_portals.for_side(portal_side);
+        let corridor_entry = if portal_config.enabled {
+            metrics.corridor_entry_checks += 1;
+            corridor::is_corridor_attacker_move(board, color, mv)
+        } else {
+            false
+        };
         let child_hash = hash ^ zobrist.piece(mv.row, mv.col, color) ^ zobrist.turn;
         board.apply_trusted_legal_move(mv);
-        let (score, _, child_timed_out) = negamax(
+        let child_outcome = search_child_after_move(
             board,
             child_hash,
             depth - 1,
@@ -1921,20 +2353,25 @@ fn search_root(
             legality_gate,
             move_ordering,
             child_limit,
+            corridor_portals,
             static_eval,
             nodes,
             metrics,
             deadline,
+            portal_side,
+            portal_config,
+            corridor_entry,
         );
-        let score = -score;
+        let score = -child_outcome.score;
         board.undo_move(mv);
 
-        if child_timed_out {
+        if child_outcome.timed_out {
             timed_out = true;
         }
         if score > best_score {
             best_score = score;
             best_move = Some(mv);
+            best_corridor_extra_plies = child_outcome.corridor_extra_plies;
         }
         if score > alpha {
             alpha = score;
@@ -1949,7 +2386,7 @@ fn search_root(
     }
 
     if best_move.is_none() {
-        return (
+        return SearchOutcome::new(
             evaluate_counted(board, color, static_eval, metrics),
             None,
             timed_out,
@@ -1957,7 +2394,12 @@ fn search_root(
     }
 
     if timed_out {
-        return (best_score, best_move, true);
+        return SearchOutcome {
+            score: best_score,
+            best_move,
+            timed_out: true,
+            corridor_extra_plies: best_corridor_extra_plies,
+        };
     }
 
     let flag = if best_score <= orig_alpha {
@@ -1977,7 +2419,12 @@ fn search_root(
         },
     );
 
-    (best_score, best_move, false)
+    SearchOutcome {
+        score: best_score,
+        best_move,
+        timed_out: false,
+        corridor_extra_plies: best_corridor_extra_plies,
+    }
 }
 
 // --- SearchBot ---
@@ -2078,6 +2525,75 @@ impl StaticEvaluation {
     }
 }
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
+pub struct CorridorPortalSideConfig {
+    pub enabled: bool,
+    pub max_depth: usize,
+    pub max_reply_width: usize,
+}
+
+impl CorridorPortalSideConfig {
+    pub const DISABLED: Self = Self {
+        enabled: false,
+        max_depth: 0,
+        max_reply_width: 0,
+    };
+
+    fn trace(self) -> serde_json::Value {
+        serde_json::json!({
+            "enabled": self.enabled,
+            "max_depth": self.max_depth,
+            "max_reply_width": self.max_reply_width,
+        })
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
+pub struct CorridorPortalConfig {
+    pub own: CorridorPortalSideConfig,
+    pub opponent: CorridorPortalSideConfig,
+}
+
+impl CorridorPortalConfig {
+    pub const DISABLED: Self = Self {
+        own: CorridorPortalSideConfig::DISABLED,
+        opponent: CorridorPortalSideConfig::DISABLED,
+    };
+
+    const fn for_side(self, side: CorridorPortalSide) -> CorridorPortalSideConfig {
+        match side {
+            CorridorPortalSide::Own => self.own,
+            CorridorPortalSide::Opponent => self.opponent,
+        }
+    }
+
+    fn trace(self) -> serde_json::Value {
+        serde_json::json!({
+            "own": self.own.trace(),
+            "opponent": self.opponent.trace(),
+        })
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum CorridorPortalSide {
+    Own,
+    Opponent,
+}
+
+impl CorridorPortalSide {
+    const fn for_player(player: Color, root_color: Color) -> Self {
+        if matches!(
+            (player, root_color),
+            (Color::Black, Color::Black) | (Color::White, Color::White)
+        ) {
+            Self::Own
+        } else {
+            Self::Opponent
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SearchBotConfig {
     pub max_depth: i32,
@@ -2090,6 +2606,7 @@ pub struct SearchBotConfig {
     pub child_limit: Option<usize>,
     pub search_algorithm: SearchAlgorithm,
     pub static_eval: StaticEvaluation,
+    pub corridor_portals: CorridorPortalConfig,
 }
 
 impl SearchBotConfig {
@@ -2105,6 +2622,7 @@ impl SearchBotConfig {
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
+            corridor_portals: CorridorPortalConfig::DISABLED,
         }
     }
 
@@ -2120,6 +2638,7 @@ impl SearchBotConfig {
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
+            corridor_portals: CorridorPortalConfig::DISABLED,
         }
     }
 
@@ -2135,6 +2654,7 @@ impl SearchBotConfig {
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
+            corridor_portals: CorridorPortalConfig::DISABLED,
         }
     }
 
@@ -2182,6 +2702,7 @@ impl SearchBotConfig {
             "child_limit": self.child_limit,
             "search_algorithm": self.search_algorithm.name(),
             "static_eval": self.static_eval.name(),
+            "corridor_portals": self.corridor_portals.trace(),
         })
     }
 }
@@ -2190,6 +2711,7 @@ impl SearchBotConfig {
 pub struct SearchInfo {
     pub depth_reached: i32,
     pub nodes: u64,
+    pub corridor_extra_plies: u32,
     pub safety_nodes: u64,
     pub metrics: SearchMetrics,
     pub score: i32,
@@ -2235,12 +2757,29 @@ impl Bot for SearchBot {
 
     fn trace(&self) -> Option<serde_json::Value> {
         self.last_info.as_ref().map(|info| {
-            let total_nodes = info.nodes + info.safety_nodes;
+            let total_nodes = info.nodes + info.safety_nodes + info.metrics.corridor_nodes;
+            let effective_depth = info
+                .depth_reached
+                .saturating_add(info.corridor_extra_plies as i32);
             serde_json::json!({
                 "config": self.config.trace(),
                 "depth": info.depth_reached,
+                "nominal_depth": self.config.max_depth,
+                "effective_depth": effective_depth,
+                "corridor_extra_plies": info.corridor_extra_plies,
                 "nodes": info.nodes,
                 "safety_nodes": info.safety_nodes,
+                "corridor": {
+                    "search_nodes": info.metrics.corridor_nodes,
+                    "branch_probes": info.metrics.corridor_branch_probes,
+                    "max_depth_reached": info.metrics.corridor_max_depth,
+                    "extra_plies": info.corridor_extra_plies,
+                    "resume_searches": info.metrics.corridor_resume_searches,
+                    "width_exits": info.metrics.corridor_width_exits,
+                    "depth_exits": info.metrics.corridor_depth_exits,
+                    "neutral_exits": info.metrics.corridor_neutral_exits,
+                    "terminal_exits": info.metrics.corridor_terminal_exits,
+                },
                 "total_nodes": total_nodes,
                 "metrics": info.metrics.trace(),
                 "score": info.score,
@@ -2299,6 +2838,7 @@ impl Bot for SearchBot {
         let mut best_score = i32::MIN + 1;
         let mut depth_reached = 0;
         let mut total_nodes = 0u64;
+        let mut best_corridor_extra_plies = 0u32;
 
         for depth in 1..=self.config.max_depth {
             if deadline.expired() {
@@ -2306,7 +2846,7 @@ impl Bot for SearchBot {
                 break;
             }
             let mut nodes = 0u64;
-            let (score, mv, timed_out) = search_root(
+            let outcome = search_root(
                 &mut working,
                 root_hash,
                 depth,
@@ -2318,6 +2858,7 @@ impl Bot for SearchBot {
                 legality_gate,
                 move_ordering,
                 self.config.child_limit,
+                self.config.corridor_portals,
                 self.config.static_eval,
                 &mut nodes,
                 &mut metrics,
@@ -2325,20 +2866,22 @@ impl Bot for SearchBot {
             );
             total_nodes += nodes;
 
-            if !timed_out {
-                if let Some(m) = mv {
+            if !outcome.timed_out {
+                if let Some(m) = outcome.best_move {
                     best_move = m;
-                    best_score = score;
+                    best_score = outcome.score;
+                    best_corridor_extra_plies = outcome.corridor_extra_plies;
                 }
                 depth_reached = depth;
             } else if depth_reached == 0 {
-                if let Some(m) = mv {
+                if let Some(m) = outcome.best_move {
                     best_move = m;
-                    best_score = score;
+                    best_score = outcome.score;
+                    best_corridor_extra_plies = outcome.corridor_extra_plies;
                 }
             }
 
-            if timed_out {
+            if outcome.timed_out {
                 budget_exhausted = true;
                 break;
             }
@@ -2351,6 +2894,7 @@ impl Bot for SearchBot {
         self.last_info = Some(SearchInfo {
             depth_reached,
             nodes: total_nodes,
+            corridor_extra_plies: best_corridor_extra_plies,
             safety_nodes,
             metrics,
             score: best_score,
@@ -2913,7 +3457,7 @@ mod tests {
         let mut metrics = SearchMetrics::default();
         let deadline = SearchDeadline::new(Instant::now(), None, None, None);
 
-        let (_, best_move, _) = negamax(
+        let outcome = negamax(
             &mut board,
             hash,
             1,
@@ -2927,13 +3471,16 @@ mod tests {
             LegalityGate::ExactRules,
             MoveOrdering::TranspositionFirstBoardOrder,
             Some(1),
+            CorridorPortalConfig::default(),
             StaticEvaluation::LineShapeEval,
             &mut nodes,
             &mut metrics,
             deadline,
         );
 
-        let best_move = best_move.expect("legal moves after the illegal first candidate");
+        let best_move = outcome
+            .best_move
+            .expect("legal moves after the illegal first candidate");
         assert!(board.is_legal(best_move));
         assert_ne!(best_move, mv("B1"));
         assert_eq!(metrics.search_child_cap_hits, 1);
@@ -2953,6 +3500,7 @@ mod tests {
             baseline.safety_gate(),
             SafetyGate::OpponentReplyLocalThreatProbe
         );
+        assert_eq!(baseline.corridor_portals, CorridorPortalConfig::default());
         assert_eq!(
             baseline.move_ordering,
             MoveOrdering::TranspositionFirstBoardOrder
@@ -2978,6 +3526,7 @@ mod tests {
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
+            corridor_portals: CorridorPortalConfig::default(),
         };
         assert_eq!(SearchBot::with_config(config).config(), config);
         assert_eq!(
@@ -3037,6 +3586,21 @@ mod tests {
         assert_eq!(trace["config"]["child_limit"], serde_json::Value::Null);
         assert_eq!(trace["config"]["search_algorithm"], "alpha_beta_id");
         assert_eq!(trace["config"]["static_eval"], "line_shape_eval");
+        assert_eq!(
+            trace["config"]["corridor_portals"],
+            serde_json::json!({
+                "own": {
+                    "enabled": false,
+                    "max_depth": 0,
+                    "max_reply_width": 0,
+                },
+                "opponent": {
+                    "enabled": false,
+                    "max_depth": 0,
+                    "max_reply_width": 0,
+                },
+            })
+        );
         assert!(trace["nodes"].as_u64().unwrap() > 0);
         assert!(trace["total_nodes"].as_u64().unwrap() >= trace["nodes"].as_u64().unwrap());
         assert_eq!(trace["budget_exhausted"], false);
@@ -3077,6 +3641,112 @@ mod tests {
             metrics["root_tactical_annotations"].as_u64().unwrap()
                 + metrics["search_tactical_annotations"].as_u64().unwrap()
         );
+        assert_eq!(metrics["corridor_entry_checks"], 0);
+        assert_eq!(metrics["corridor_nodes"], 0);
+    }
+
+    #[test]
+    fn trace_records_corridor_portal_config() {
+        let board = Board::new(RuleConfig::default());
+        let mut config = SearchBotConfig::custom_depth(1);
+        config.corridor_portals.own = CorridorPortalSideConfig {
+            enabled: true,
+            max_depth: 4,
+            max_reply_width: 3,
+        };
+        config.corridor_portals.opponent = CorridorPortalSideConfig {
+            enabled: true,
+            max_depth: 2,
+            max_reply_width: 2,
+        };
+        let mut bot = SearchBot::with_config(config);
+
+        let _ = bot.choose_move(&board);
+        let trace = bot.trace().expect("expected search trace");
+
+        assert_eq!(trace["config"]["corridor_portals"]["own"]["enabled"], true);
+        assert_eq!(trace["config"]["corridor_portals"]["own"]["max_depth"], 4);
+        assert_eq!(
+            trace["config"]["corridor_portals"]["own"]["max_reply_width"],
+            3
+        );
+        assert_eq!(
+            trace["config"]["corridor_portals"]["opponent"]["enabled"],
+            true
+        );
+        assert_eq!(
+            trace["config"]["corridor_portals"]["opponent"]["max_depth"],
+            2
+        );
+        assert_eq!(
+            trace["config"]["corridor_portals"]["opponent"]["max_reply_width"],
+            2
+        );
+        assert_eq!(trace["corridor"]["search_nodes"], 0);
+        assert_eq!(trace["corridor"]["extra_plies"], 0);
+        assert_eq!(trace["corridor_extra_plies"], 0);
+        assert_eq!(trace["effective_depth"], trace["depth"]);
+    }
+
+    #[test]
+    fn corridor_portal_activates_on_root_corridor_entry() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(
+            &mut board,
+            &["H8", "A1", "I8", "A2", "J8", "A3", "K8", "A4"],
+        );
+        assert_eq!(board.current_player, Color::Black);
+
+        let mut config = SearchBotConfig::custom_depth(1);
+        config.safety_gate = SafetyGate::None;
+        config.corridor_portals.own = CorridorPortalSideConfig {
+            enabled: true,
+            max_depth: 4,
+            max_reply_width: 3,
+        };
+        let mut bot = SearchBot::with_config(config);
+
+        let _ = bot.choose_move(&board);
+        let trace = bot.trace().expect("expected search trace");
+        let metrics = &trace["metrics"];
+
+        assert!(metrics["corridor_entry_checks"].as_u64().unwrap() > 0);
+        assert!(metrics["corridor_entries_accepted"].as_u64().unwrap() > 0);
+        assert!(metrics["corridor_own_entries_accepted"].as_u64().unwrap() > 0);
+        assert!(trace["corridor"]["search_nodes"].as_u64().unwrap() > 0);
+        assert!(trace["corridor"]["terminal_exits"].as_u64().unwrap() > 0);
+    }
+
+    #[test]
+    fn corridor_portal_tracks_opponent_side_entries_below_root() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(
+            &mut board,
+            &["H8", "A1", "H9", "A2", "I8", "A3", "J10", "A4"],
+        );
+        assert_eq!(board.current_player, Color::Black);
+
+        let mut config = SearchBotConfig::custom_depth(2);
+        config.safety_gate = SafetyGate::None;
+        config.corridor_portals.opponent = CorridorPortalSideConfig {
+            enabled: true,
+            max_depth: 2,
+            max_reply_width: 3,
+        };
+        let mut bot = SearchBot::with_config(config);
+
+        let _ = bot.choose_move(&board);
+        let trace = bot.trace().expect("expected search trace");
+        let metrics = &trace["metrics"];
+
+        assert!(metrics["corridor_entry_checks"].as_u64().unwrap() > 0);
+        assert!(
+            metrics["corridor_opponent_entries_accepted"]
+                .as_u64()
+                .unwrap()
+                > 0
+        );
+        assert_eq!(metrics["corridor_own_entries_accepted"], 0);
     }
 
     #[test]
@@ -3196,6 +3866,7 @@ mod tests {
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
+            corridor_portals: CorridorPortalConfig::default(),
         };
         let mut bot = SearchBot::with_config(config);
 

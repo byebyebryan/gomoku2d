@@ -1,4 +1,7 @@
-use gomoku_bot::{MoveOrdering, SafetyGate, SearchAlgorithm, SearchBotConfig, StaticEvaluation};
+use gomoku_bot::{
+    CorridorPortalConfig, CorridorPortalSideConfig, MoveOrdering, SafetyGate, SearchAlgorithm,
+    SearchBotConfig, StaticEvaluation,
+};
 
 pub struct LabSearchConfig {
     pub id: &'static str,
@@ -19,6 +22,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
+            corridor_portals: CorridorPortalConfig::DISABLED,
         },
     },
     LabSearchConfig {
@@ -34,6 +38,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
+            corridor_portals: CorridorPortalConfig::DISABLED,
         },
     },
     LabSearchConfig {
@@ -49,6 +54,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
+            corridor_portals: CorridorPortalConfig::DISABLED,
         },
     },
 ];
@@ -91,6 +97,16 @@ fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchB
         return Some(config);
     }
 
+    if let Some(portal) = parse_corridor_portal_suffix(suffix) {
+        match portal.side {
+            CorridorPortalSideSuffix::Own => config.corridor_portals.own = portal.config,
+            CorridorPortalSideSuffix::Opponent => {
+                config.corridor_portals.opponent = portal.config;
+            }
+        }
+        return Some(config);
+    }
+
     match suffix {
         "near-all-r1" => {
             config.candidate_radius = 1;
@@ -129,6 +145,38 @@ fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchB
         }
         _ => apply_asymmetric_candidate_source_suffix(config, suffix),
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum CorridorPortalSideSuffix {
+    Own,
+    Opponent,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct CorridorPortalSuffix {
+    side: CorridorPortalSideSuffix,
+    config: CorridorPortalSideConfig,
+}
+
+fn parse_corridor_portal_suffix(suffix: &str) -> Option<CorridorPortalSuffix> {
+    let (side, suffix) = if let Some(suffix) = suffix.strip_prefix("corridor-own-d") {
+        (CorridorPortalSideSuffix::Own, suffix)
+    } else if let Some(suffix) = suffix.strip_prefix("corridor-opponent-d") {
+        (CorridorPortalSideSuffix::Opponent, suffix)
+    } else {
+        return None;
+    };
+
+    let (max_depth, max_reply_width) = suffix.split_once("-w")?;
+    Some(CorridorPortalSuffix {
+        side,
+        config: CorridorPortalSideConfig {
+            enabled: true,
+            max_depth: parse_positive_limit(max_depth)?,
+            max_reply_width: parse_positive_limit(max_reply_width)?,
+        },
+    })
 }
 
 fn apply_asymmetric_candidate_source_suffix(
@@ -389,6 +437,35 @@ mod tests {
             }
         );
         assert_eq!(config.cpu_time_budget_ms, Some(1000));
+    }
+
+    #[test]
+    fn parses_corridor_portal_suffixes() {
+        let config = super::search_config_from_lab_spec(
+            "search-d5+corridor-own-d6-w3+corridor-opponent-d4-w2",
+            3,
+            None,
+            Some(1000),
+        )
+        .expect("expected corridor portal suffixes to parse");
+
+        assert_eq!(config.max_depth, 5);
+        assert!(config.corridor_portals.own.enabled);
+        assert_eq!(config.corridor_portals.own.max_depth, 6);
+        assert_eq!(config.corridor_portals.own.max_reply_width, 3);
+        assert!(config.corridor_portals.opponent.enabled);
+        assert_eq!(config.corridor_portals.opponent.max_depth, 4);
+        assert_eq!(config.corridor_portals.opponent.max_reply_width, 2);
+        assert_eq!(config.cpu_time_budget_ms, Some(1000));
+
+        assert!(
+            super::search_config_from_lab_spec("search-d5+corridor-own-d0-w3", 3, None, None)
+                .is_none()
+        );
+        assert!(
+            super::search_config_from_lab_spec("search-d5+corridor-own-d4-w0", 3, None, None)
+                .is_none()
+        );
     }
 
     #[test]

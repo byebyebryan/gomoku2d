@@ -294,22 +294,28 @@ corridor probe only to fall back to static eval. The shortcut model spends
 corridor work only after move generation has produced a candidate that appears
 to enter or continue a forcing line.
 
-The lab report should make that cost shape visible. At minimum, selective
-extension needs metrics for entries seen, entries accepted, entries rejected by
-width, corridor plies followed, terminal exits, width exits, neutral exits,
-safety-guard exits, resumed normal-search states, and effective extra ply gained.
-Those metrics should split `own` versus `opponent` portals once asymmetric
-portal controls are active. They should stay separate from ordinary alpha-beta
-nodes so a corridor candidate cannot look cheaper by moving work into an
-unreported bucket.
+The search bot now exposes this as opt-in lab suffixes:
+
+- `+corridor-own-dN-wM`: follow narrow corridors created by the root player's
+  side.
+- `+corridor-opponent-dN-wM`: follow narrow corridors created by the opponent's
+  side.
+
+The lab report makes that cost shape visible. Selective extension records entry
+checks, accepted entries, own/opponent accepted entries, corridor plies followed,
+own/opponent followed plies, terminal exits, width exits, depth exits, neutral
+exits, resumed normal-search states, corridor branch probes, and corridor search
+nodes. Corridor nodes stay separate from ordinary alpha-beta nodes, while
+`total_nodes` includes both so a corridor candidate cannot look cheaper by
+moving work into an unreported bucket.
 
 Depth reporting should also distinguish the configured search budget from the
 reach created by portals. A `search-d3` bot is still nominally depth `3`; a
 corridor shortcut should not pretend the base depth changed. Instead, reports
-should capture:
+capture:
 
 - `nominal_depth`: the configured alpha-beta depth, such as `3` or `5`.
-- `alpha_beta_depth_reached`: the ordinary search depth completed under budget.
+- `depth`: the ordinary alpha-beta depth completed under budget.
 - `corridor_extra_plies`: forced plies followed without spending ordinary depth.
 - `effective_depth`: ordinary depth reached plus corridor extra plies along the
   measured branch or principal line.

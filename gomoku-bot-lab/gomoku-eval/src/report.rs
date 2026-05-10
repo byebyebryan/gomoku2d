@@ -356,6 +356,10 @@ pub struct StandingReport {
     pub corridor_branch_probes: u64,
     #[serde(default)]
     pub corridor_max_depth: u32,
+    #[serde(default)]
+    pub corridor_extra_plies: u64,
+    #[serde(default)]
+    pub avg_corridor_extra_plies: f64,
     pub total_nodes: u64,
     pub avg_nodes: f64,
     #[serde(default)]
@@ -452,6 +456,12 @@ pub struct StandingReport {
     pub beta_cutoffs: u64,
     pub avg_depth: f64,
     pub max_depth: u32,
+    #[serde(default)]
+    pub effective_depth_sum: u64,
+    #[serde(default)]
+    pub avg_effective_depth: f64,
+    #[serde(default)]
+    pub max_effective_depth: u32,
     #[serde(default)]
     pub depth_reached_counts: Vec<DepthCountReport>,
     pub budget_exhausted_count: u32,
@@ -583,6 +593,10 @@ pub struct SideStatsReport {
     #[serde(default)]
     pub corridor_max_depth: u32,
     #[serde(default)]
+    pub corridor_extra_plies: u64,
+    #[serde(default)]
+    pub avg_corridor_extra_plies: f64,
+    #[serde(default)]
     pub total_nodes: u64,
     pub avg_nodes: f64,
     #[serde(default)]
@@ -681,6 +695,12 @@ pub struct SideStatsReport {
     pub avg_depth: f64,
     pub max_depth: u32,
     #[serde(default)]
+    pub effective_depth_sum: u64,
+    #[serde(default)]
+    pub avg_effective_depth: f64,
+    #[serde(default)]
+    pub max_effective_depth: u32,
+    #[serde(default)]
     pub depth_reached_counts: Vec<DepthCountReport>,
     pub budget_exhausted_count: u32,
     pub budget_exhausted_rate: f64,
@@ -696,6 +716,7 @@ struct SideStatsAccumulator {
     corridor_nodes: u64,
     corridor_branch_probes: u64,
     corridor_max_depth: u32,
+    corridor_extra_plies: u64,
     total_nodes: u64,
     eval_calls: u64,
     candidate_generations: u64,
@@ -739,6 +760,8 @@ struct SideStatsAccumulator {
     beta_cutoffs: u64,
     depth_sum: u64,
     max_depth: u32,
+    effective_depth_sum: u64,
+    max_effective_depth: u32,
     depth_reached_counts: BTreeMap<u32, u32>,
     budget_exhausted_count: u32,
 }
@@ -759,6 +782,7 @@ impl SideStatsAccumulator {
         if let Some(corridor) = trace.get("corridor") {
             self.corridor_nodes += trace_value_u64(corridor, "search_nodes");
             self.corridor_branch_probes += trace_value_u64(corridor, "branch_probes");
+            self.corridor_extra_plies += trace_value_u64(corridor, "extra_plies");
             self.corridor_max_depth = self
                 .corridor_max_depth
                 .max(trace_value_u64(corridor, "max_depth_reached") as u32);
@@ -840,6 +864,12 @@ impl SideStatsAccumulator {
             self.depth_sum += depth;
             self.max_depth = self.max_depth.max(depth as u32);
             *self.depth_reached_counts.entry(depth as u32).or_insert(0) += 1;
+            let effective_depth = trace
+                .get("effective_depth")
+                .and_then(Value::as_u64)
+                .unwrap_or(depth);
+            self.effective_depth_sum += effective_depth;
+            self.max_effective_depth = self.max_effective_depth.max(effective_depth as u32);
         }
         if trace
             .get("budget_exhausted")
@@ -859,6 +889,7 @@ impl SideStatsAccumulator {
         self.corridor_nodes += stats.corridor_nodes;
         self.corridor_branch_probes += stats.corridor_branch_probes;
         self.corridor_max_depth = self.corridor_max_depth.max(stats.corridor_max_depth);
+        self.corridor_extra_plies += stats.corridor_extra_plies;
         self.total_nodes += stats.total_nodes;
         self.eval_calls += stats.eval_calls;
         self.candidate_generations += stats.candidate_generations;
@@ -916,6 +947,8 @@ impl SideStatsAccumulator {
         self.beta_cutoffs += stats.beta_cutoffs;
         self.depth_sum += stats.depth_sum;
         self.max_depth = self.max_depth.max(stats.max_depth);
+        self.effective_depth_sum += stats.effective_depth_sum;
+        self.max_effective_depth = self.max_effective_depth.max(stats.max_effective_depth);
         for count in &stats.depth_reached_counts {
             *self.depth_reached_counts.entry(count.depth).or_insert(0) += count.count;
         }
@@ -942,6 +975,9 @@ impl SideStatsAccumulator {
         );
         let avg_legality_checks = avg(self.legality_checks as f64, self.search_move_count);
         let avg_depth = avg(self.depth_sum as f64, self.search_move_count);
+        let avg_corridor_extra_plies =
+            avg(self.corridor_extra_plies as f64, self.search_move_count);
+        let avg_effective_depth = avg(self.effective_depth_sum as f64, self.search_move_count);
         let budget_exhausted_rate = avg(self.budget_exhausted_count as f64, self.search_move_count);
         let depth_reached_counts = self
             .depth_reached_counts
@@ -959,6 +995,8 @@ impl SideStatsAccumulator {
             corridor_nodes: self.corridor_nodes,
             corridor_branch_probes: self.corridor_branch_probes,
             corridor_max_depth: self.corridor_max_depth,
+            corridor_extra_plies: self.corridor_extra_plies,
+            avg_corridor_extra_plies,
             total_nodes: self.total_nodes,
             avg_nodes,
             eval_calls: self.eval_calls,
@@ -1010,6 +1048,9 @@ impl SideStatsAccumulator {
             depth_sum: self.depth_sum,
             avg_depth,
             max_depth: self.max_depth,
+            effective_depth_sum: self.effective_depth_sum,
+            avg_effective_depth,
+            max_effective_depth: self.max_effective_depth,
             depth_reached_counts,
             budget_exhausted_count: self.budget_exhausted_count,
             budget_exhausted_rate,
@@ -1091,6 +1132,8 @@ fn standings(
                 corridor_nodes: side_stats.corridor_nodes,
                 corridor_branch_probes: side_stats.corridor_branch_probes,
                 corridor_max_depth: side_stats.corridor_max_depth,
+                corridor_extra_plies: side_stats.corridor_extra_plies,
+                avg_corridor_extra_plies: side_stats.avg_corridor_extra_plies,
                 total_nodes: side_stats.total_nodes,
                 avg_nodes: side_stats.avg_nodes,
                 eval_calls: side_stats.eval_calls,
@@ -1141,6 +1184,9 @@ fn standings(
                 beta_cutoffs: side_stats.beta_cutoffs,
                 avg_depth: side_stats.avg_depth,
                 max_depth: side_stats.max_depth,
+                effective_depth_sum: side_stats.effective_depth_sum,
+                avg_effective_depth: side_stats.avg_effective_depth,
+                max_effective_depth: side_stats.max_effective_depth,
                 depth_reached_counts: side_stats.depth_reached_counts,
                 budget_exhausted_count: side_stats.budget_exhausted_count,
                 budget_exhausted_rate: side_stats.budget_exhausted_rate,
@@ -1880,6 +1926,16 @@ fn compact_searchbot_feature_label(feature: &str) -> String {
             return format!("SelfR{self_radius}OppR{opponent_radius}");
         }
     }
+    if let Some(rest) = feature.strip_prefix("corridor-own-d") {
+        if let Some((depth, width)) = rest.split_once("-w") {
+            return format!("OwnCorrD{depth}W{width}");
+        }
+    }
+    if let Some(rest) = feature.strip_prefix("corridor-opponent-d") {
+        if let Some((depth, width)) = rest.split_once("-w") {
+            return format!("OppCorrD{depth}W{width}");
+        }
+    }
 
     match feature {
         "pattern-eval" => "Pattern".to_string(),
@@ -2144,7 +2200,8 @@ fn render_entrant_row(
         "metric-results",
         "Avg depth",
         &format!("{:.2}", row.avg_depth),
-        None,
+        (row.avg_effective_depth > row.avg_depth)
+            .then(|| format!("eff {:.2}", row.avg_effective_depth)),
     );
     render_breadth_metric_cell(html, "metric-results", "Breadth", row);
     render_metric_cell(
@@ -3322,10 +3379,12 @@ mod tests {
             "safety_nodes": 20,
             "total_nodes": 120,
             "depth": 5,
+            "effective_depth": 8,
             "corridor": {
                 "search_nodes": 7,
                 "branch_probes": 3,
-                "max_depth_reached": 2
+                "max_depth_reached": 2,
+                "extra_plies": 3
             },
             "metrics": {
                 "eval_calls": 30,
@@ -3361,6 +3420,11 @@ mod tests {
         assert_eq!(report.corridor_nodes, 7);
         assert_eq!(report.corridor_branch_probes, 3);
         assert_eq!(report.corridor_max_depth, 2);
+        assert_eq!(report.corridor_extra_plies, 3);
+        assert_eq!(report.avg_corridor_extra_plies, 3.0);
+        assert_eq!(report.effective_depth_sum, 8);
+        assert_eq!(report.avg_effective_depth, 8.0);
+        assert_eq!(report.max_effective_depth, 8);
         assert_eq!(report.tactical_annotations, 9);
         assert_eq!(report.root_tactical_annotations, 2);
         assert_eq!(report.search_tactical_annotations, 7);
@@ -3388,6 +3452,11 @@ mod tests {
         first_match.black_stats.corridor_nodes = 17;
         first_match.black_stats.corridor_branch_probes = 9;
         first_match.black_stats.corridor_max_depth = 2;
+        first_match.black_stats.corridor_extra_plies = 11;
+        first_match.black_stats.avg_corridor_extra_plies = 2.2;
+        first_match.black_stats.effective_depth_sum = 36;
+        first_match.black_stats.avg_effective_depth = 7.2;
+        first_match.black_stats.max_effective_depth = 9;
         first_match.black_stats.tactical_annotations = 20;
         first_match.black_stats.search_tactical_annotations = 20;
         first_match.black_stats.child_limit_applications = 10;
@@ -3420,6 +3489,11 @@ mod tests {
         assert_eq!(row.corridor_nodes, 17);
         assert_eq!(row.corridor_branch_probes, 9);
         assert_eq!(row.corridor_max_depth, 2);
+        assert_eq!(row.corridor_extra_plies, 11);
+        assert_eq!(row.avg_corridor_extra_plies, 2.2);
+        assert_eq!(row.effective_depth_sum, 36);
+        assert_eq!(row.avg_effective_depth, 7.2);
+        assert_eq!(row.max_effective_depth, 9);
         assert_eq!(row.tactical_annotations, 20);
         assert_eq!(row.child_limit_applications, 10);
         assert_eq!(row.child_cap_hits, 8);
@@ -3518,6 +3592,13 @@ mod tests {
         assert_eq!(
             compact_bot_label(&report, "search-d5+tactical-cap-8+near-self-r2-opponent-r1"),
             "SearchBot_D5+TCap8+SelfR2OppR1"
+        );
+        assert_eq!(
+            compact_bot_label(
+                &report,
+                "search-d5+corridor-own-d6-w3+corridor-opponent-d4-w2"
+            ),
+            "SearchBot_D5+OwnCorrD6W3+OppCorrD4W2"
         );
     }
 
@@ -4131,6 +4212,8 @@ mod tests {
             corridor_nodes: 0,
             corridor_branch_probes: 0,
             corridor_max_depth: 0,
+            corridor_extra_plies: 0,
+            avg_corridor_extra_plies: 0.0,
             total_nodes: 1000,
             avg_nodes: 200.0,
             eval_calls: 500,
@@ -4181,6 +4264,9 @@ mod tests {
             beta_cutoffs: 9,
             avg_depth: 3.0,
             max_depth: 3,
+            effective_depth_sum: 15,
+            avg_effective_depth: 3.0,
+            max_effective_depth: 3,
             depth_reached_counts: vec![DepthCountReport { depth: 3, count: 5 }],
             budget_exhausted_count: 1,
             budget_exhausted_rate: 0.2,
@@ -4198,6 +4284,8 @@ mod tests {
             corridor_nodes: 0,
             corridor_branch_probes: 0,
             corridor_max_depth: 0,
+            corridor_extra_plies: 0,
+            avg_corridor_extra_plies: 0.0,
             total_nodes: 1000,
             avg_nodes: 200.0,
             eval_calls: 500,
@@ -4249,6 +4337,9 @@ mod tests {
             depth_sum: 15,
             avg_depth: 3.0,
             max_depth: 3,
+            effective_depth_sum: 15,
+            avg_effective_depth: 3.0,
+            max_effective_depth: 3,
             depth_reached_counts: vec![DepthCountReport { depth: 3, count: 5 }],
             budget_exhausted_count: 1,
             budget_exhausted_rate: 0.2,
