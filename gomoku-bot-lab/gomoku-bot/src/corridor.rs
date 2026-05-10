@@ -607,7 +607,7 @@ fn classify_narrow_corridor(
     }
 }
 
-fn narrow_corridor_reply_moves(board: &Board, attacker: Color) -> Vec<Move> {
+pub fn narrow_corridor_reply_moves(board: &Board, attacker: Color) -> Vec<Move> {
     let threat = ThreatReplySet::new(board, attacker);
     if !threat.winning_squares.is_empty() {
         return threat.reply_moves;

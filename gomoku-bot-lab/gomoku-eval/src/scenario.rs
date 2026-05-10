@@ -325,8 +325,13 @@ pub struct ScenarioSearchConfig {
 pub struct ScenarioSearchMetrics {
     pub time_ms: u64,
     pub depth_reached: i32,
+    pub effective_depth: i32,
     pub nodes: u64,
     pub safety_nodes: u64,
+    pub corridor_nodes: u64,
+    pub corridor_branch_probes: u64,
+    pub corridor_max_depth: u32,
+    pub corridor_extra_plies: u32,
     pub total_nodes: u64,
     pub eval_calls: u64,
     pub candidate_generations: u64,
@@ -460,9 +465,16 @@ pub fn run_tactical_case(
         metrics: ScenarioSearchMetrics {
             time_ms,
             depth_reached: info.depth_reached,
+            effective_depth: info
+                .depth_reached
+                .saturating_add(info.corridor_extra_plies as i32),
             nodes: info.nodes,
             safety_nodes: info.safety_nodes,
-            total_nodes: info.nodes + info.safety_nodes,
+            corridor_nodes: info.metrics.corridor_nodes,
+            corridor_branch_probes: info.metrics.corridor_branch_probes,
+            corridor_max_depth: info.metrics.corridor_max_depth,
+            corridor_extra_plies: info.corridor_extra_plies,
+            total_nodes: info.nodes + info.safety_nodes + info.metrics.corridor_nodes,
             eval_calls: info.metrics.eval_calls,
             candidate_generations: info.metrics.candidate_generations,
             candidate_moves_total: info.metrics.candidate_moves_total,
