@@ -5,8 +5,10 @@ use std::sync::OnceLock;
 use std::time::Duration;
 
 use crate::corridor;
+use crate::frontier::RollingThreatFrontier;
 use crate::tactical::{
     local_threat_facts_after_move, LocalThreatKind, SearchThreatPolicy, TacticalMoveAnnotation,
+    ThreatView,
 };
 use crate::Bot;
 use gomoku_core::{Board, Color, GameResult, Move, Variant, ZobristTable, DIRS};
@@ -495,6 +497,8 @@ pub struct SearchMetrics {
     pub corridor_own_plies_followed: u64,
     pub corridor_opponent_plies_followed: u64,
     pub corridor_max_depth: u32,
+    pub threat_view_shadow_checks: u64,
+    pub threat_view_shadow_mismatches: u64,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -617,6 +621,43 @@ impl SearchMetrics {
     fn trace(self) -> serde_json::Value {
         serde_json::to_value(self).expect("search metrics should serialize")
     }
+}
+
+fn corridor_entry_for_threat_view_mode(
+    board: &Board,
+    attacker: Color,
+    mv: Move,
+    mode: ThreatViewMode,
+    metrics: &mut SearchMetrics,
+) -> bool {
+    let scan_entry = corridor::is_corridor_attacker_move(board, attacker, mv);
+    match mode {
+        ThreatViewMode::Scan => scan_entry,
+        ThreatViewMode::RollingShadow => {
+            metrics.threat_view_shadow_checks += 1;
+            let frontier_entry = rolling_frontier_corridor_entry_after_move(board, attacker, mv);
+            if frontier_entry != scan_entry {
+                metrics.threat_view_shadow_mismatches += 1;
+            }
+            scan_entry
+        }
+    }
+}
+
+fn rolling_frontier_corridor_entry_after_move(board: &Board, attacker: Color, mv: Move) -> bool {
+    if board.current_player != attacker || !board.is_legal_for_color(mv, attacker) {
+        return false;
+    }
+    let mut next = board.clone();
+    if next.apply_move(mv).is_err() {
+        return false;
+    }
+    match next.result {
+        GameResult::Winner(winner) if winner == attacker => return true,
+        GameResult::Winner(_) | GameResult::Draw => return false,
+        GameResult::Ongoing => {}
+    }
+    RollingThreatFrontier::from_board(&next).has_move_local_corridor_entry(attacker, mv)
 }
 
 fn evaluate_counted(
@@ -1748,6 +1789,7 @@ fn search_child_after_move(
     move_ordering: MoveOrdering,
     child_limit: Option<usize>,
     corridor_portals: CorridorPortalConfig,
+    threat_view_mode: ThreatViewMode,
     static_eval: StaticEvaluation,
     nodes: &mut u64,
     metrics: &mut SearchMetrics,
@@ -1803,6 +1845,7 @@ fn search_child_after_move(
         move_ordering,
         child_limit,
         corridor_portals,
+        threat_view_mode,
         static_eval,
         nodes,
         metrics,
@@ -1848,6 +1891,7 @@ fn resume_normal_search_after_corridor(
         move_ordering,
         child_limit,
         CorridorPortalConfig::DISABLED,
+        ThreatViewMode::Scan,
         static_eval,
         nodes,
         metrics,
@@ -2082,6 +2126,7 @@ fn negamax(
     move_ordering: MoveOrdering,
     child_limit: Option<usize>,
     corridor_portals: CorridorPortalConfig,
+    threat_view_mode: ThreatViewMode,
     static_eval: StaticEvaluation,
     nodes: &mut u64,
     metrics: &mut SearchMetrics,
@@ -2183,7 +2228,7 @@ fn negamax(
         let portal_config = corridor_portals.for_side(portal_side);
         let corridor_entry = if portal_config.enabled {
             metrics.corridor_entry_checks += 1;
-            corridor::is_corridor_attacker_move(board, color, mv)
+            corridor_entry_for_threat_view_mode(board, color, mv, threat_view_mode, metrics)
         } else {
             false
         };
@@ -2205,6 +2250,7 @@ fn negamax(
             move_ordering,
             child_limit,
             corridor_portals,
+            threat_view_mode,
             static_eval,
             nodes,
             metrics,
@@ -2292,6 +2338,7 @@ fn search_root(
     move_ordering: MoveOrdering,
     child_limit: Option<usize>,
     corridor_portals: CorridorPortalConfig,
+    threat_view_mode: ThreatViewMode,
     static_eval: StaticEvaluation,
     nodes: &mut u64,
     metrics: &mut SearchMetrics,
@@ -2334,7 +2381,7 @@ fn search_root(
         let portal_config = corridor_portals.for_side(portal_side);
         let corridor_entry = if portal_config.enabled {
             metrics.corridor_entry_checks += 1;
-            corridor::is_corridor_attacker_move(board, color, mv)
+            corridor_entry_for_threat_view_mode(board, color, mv, threat_view_mode, metrics)
         } else {
             false
         };
@@ -2355,6 +2402,7 @@ fn search_root(
             move_ordering,
             child_limit,
             corridor_portals,
+            threat_view_mode,
             static_eval,
             nodes,
             metrics,
@@ -2526,6 +2574,21 @@ impl StaticEvaluation {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ThreatViewMode {
+    Scan,
+    RollingShadow,
+}
+
+impl ThreatViewMode {
+    const fn name(self) -> &'static str {
+        match self {
+            ThreatViewMode::Scan => "scan",
+            ThreatViewMode::RollingShadow => "rolling_shadow",
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
 pub struct CorridorPortalSideConfig {
     pub enabled: bool,
@@ -2608,6 +2671,7 @@ pub struct SearchBotConfig {
     pub search_algorithm: SearchAlgorithm,
     pub static_eval: StaticEvaluation,
     pub corridor_portals: CorridorPortalConfig,
+    pub threat_view_mode: ThreatViewMode,
 }
 
 impl SearchBotConfig {
@@ -2624,6 +2688,7 @@ impl SearchBotConfig {
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
             corridor_portals: CorridorPortalConfig::DISABLED,
+            threat_view_mode: ThreatViewMode::Scan,
         }
     }
 
@@ -2640,6 +2705,7 @@ impl SearchBotConfig {
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
             corridor_portals: CorridorPortalConfig::DISABLED,
+            threat_view_mode: ThreatViewMode::Scan,
         }
     }
 
@@ -2656,6 +2722,7 @@ impl SearchBotConfig {
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
             corridor_portals: CorridorPortalConfig::DISABLED,
+            threat_view_mode: ThreatViewMode::Scan,
         }
     }
 
@@ -2704,6 +2771,7 @@ impl SearchBotConfig {
             "search_algorithm": self.search_algorithm.name(),
             "static_eval": self.static_eval.name(),
             "corridor_portals": self.corridor_portals.trace(),
+            "threat_view_mode": self.threat_view_mode.name(),
         })
     }
 }
@@ -2860,6 +2928,7 @@ impl Bot for SearchBot {
                 move_ordering,
                 self.config.child_limit,
                 self.config.corridor_portals,
+                self.config.threat_view_mode,
                 self.config.static_eval,
                 &mut nodes,
                 &mut metrics,
@@ -3473,6 +3542,7 @@ mod tests {
             MoveOrdering::TranspositionFirstBoardOrder,
             Some(1),
             CorridorPortalConfig::default(),
+            ThreatViewMode::Scan,
             StaticEvaluation::LineShapeEval,
             &mut nodes,
             &mut metrics,
@@ -3528,6 +3598,7 @@ mod tests {
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
             corridor_portals: CorridorPortalConfig::default(),
+            threat_view_mode: ThreatViewMode::Scan,
         };
         assert_eq!(SearchBot::with_config(config).config(), config);
         assert_eq!(
@@ -3687,6 +3758,37 @@ mod tests {
         assert_eq!(trace["corridor"]["extra_plies"], 0);
         assert_eq!(trace["corridor_extra_plies"], 0);
         assert_eq!(trace["effective_depth"], trace["depth"]);
+    }
+
+    #[test]
+    fn threat_view_shadow_mode_reports_portal_entry_parity_checks() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(
+            &mut board,
+            &["H8", "A1", "I8", "A2", "J8", "A3", "K8", "A4"],
+        );
+
+        let mut config = SearchBotConfig::custom_depth(1);
+        config.safety_gate = SafetyGate::None;
+        config.corridor_portals.own = CorridorPortalSideConfig {
+            enabled: true,
+            max_depth: 1,
+            max_reply_width: 3,
+        };
+        config.threat_view_mode = ThreatViewMode::RollingShadow;
+        let mut bot = SearchBot::with_config(config);
+
+        let _ = bot.choose_move(&board);
+        let trace = bot.trace().expect("expected search trace");
+
+        assert_eq!(trace["config"]["threat_view_mode"], "rolling_shadow");
+        assert!(
+            trace["metrics"]["threat_view_shadow_checks"]
+                .as_u64()
+                .unwrap()
+                > 0
+        );
+        assert_eq!(trace["metrics"]["threat_view_shadow_mismatches"], 0);
     }
 
     #[test]
@@ -3969,6 +4071,7 @@ mod tests {
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
             corridor_portals: CorridorPortalConfig::default(),
+            threat_view_mode: ThreatViewMode::Scan,
         };
         let mut bot = SearchBot::with_config(config);
 

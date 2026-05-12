@@ -170,9 +170,7 @@ fn raw_local_threat_facts_for_player_by_origin(
     normalize_local_threat_facts_by_origin(facts)
 }
 
-fn normalize_local_threat_facts_by_origin(
-    facts: Vec<LocalThreatFact>,
-) -> Vec<LocalThreatFact> {
+fn normalize_local_threat_facts_by_origin(facts: Vec<LocalThreatFact>) -> Vec<LocalThreatFact> {
     let mut facts = facts
         .into_iter()
         .map(crate::tactical::normalize_local_threat_fact)
@@ -243,10 +241,7 @@ mod tests {
 
     #[test]
     fn rebuild_frontier_matches_scan_view_for_corridor_queries() {
-        let board = board_from_moves(
-            Variant::Renju,
-            &["H8", "A1", "I8", "A2", "J8", "A3", "C3"],
-        );
+        let board = board_from_moves(Variant::Renju, &["H8", "A1", "I8", "A2", "J8", "A3", "C3"]);
 
         assert_frontier_matches_scan(&board, Color::Black, mv("J8"));
         assert_frontier_matches_scan(&board, Color::Black, mv("K8"));

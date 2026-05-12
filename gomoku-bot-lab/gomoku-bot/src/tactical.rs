@@ -1031,9 +1031,9 @@ mod tests {
         has_forcing_local_threat, has_forcing_local_threat_at_move,
         legal_forcing_continuations_for_fact, local_threat_facts_after_move,
         local_threat_facts_for_player, normalize_local_threat_facts,
-        raw_local_threat_facts_after_move, raw_local_threat_facts_for_player,
-        CorridorThreatPolicy, LocalThreatFact, LocalThreatKind, LocalThreatOrigin, ScanThreatView,
-        SearchThreatPolicy, ThreatView,
+        raw_local_threat_facts_after_move, raw_local_threat_facts_for_player, CorridorThreatPolicy,
+        LocalThreatFact, LocalThreatKind, LocalThreatOrigin, ScanThreatView, SearchThreatPolicy,
+        ThreatView,
     };
     use gomoku_core::{Board, Color, Move, RuleConfig, Variant};
 
@@ -1058,7 +1058,10 @@ mod tests {
             player,
             kind,
             origin: LocalThreatOrigin::Existing(mv(origin)),
-            defense_squares: defense_squares.iter().map(|notation| mv(notation)).collect(),
+            defense_squares: defense_squares
+                .iter()
+                .map(|notation| mv(notation))
+                .collect(),
             rest_squares: rest_squares.iter().map(|notation| mv(notation)).collect(),
         }
     }
