@@ -229,3 +229,68 @@ the remaining gap is no longer global Black Renju annotation refresh. The next
 frontier work should profile whether lazy Black Renju query filtering,
 scan-backed active corridor threat lists, or apply/undo bookkeeping is the
 dominant cost.
+
+## Dirty Annotation Checkpoint
+
+The next optimization keeps raw tactical annotations cached, but stops eagerly
+refreshing them during frontier apply/undo:
+
+- apply/undo still refreshes per-origin local move facts eagerly because those
+  facts back `has_move_local_corridor_entry`;
+- search annotations now carry per-side dirty flags instead of cloned previous
+  annotation values in the undo delta;
+- apply marks affected-axis annotations dirty instead of recomputing raw
+  annotations immediately;
+- undo restores the previous dirty flags;
+- query-time lookup uses the cached raw annotation when clean, and recomputes a
+  raw annotation from the current board when dirty before applying the Black
+  Renju effectiveness filter;
+- terminal boards fall back to scan-equivalent empty annotations so a clean,
+  off-axis cached pre-terminal annotation cannot leak after a winning move.
+
+This keeps the scan/shadow safety net intact while testing whether annotation
+refresh, rather than move-fact maintenance or remaining root scans, is the real
+rolling-frontier bottleneck. The 24-game smoke result confirmed that direction:
+rolling update cost dropped from roughly `57 us/update` to roughly
+`7.3 us/update`; rolling query cost rose from roughly `1.2 us/query` to roughly
+`1.6 us/query`; and the rolling entrant moved from roughly `160 ms/move` to
+roughly `72 ms/move`, effectively matching the scan baseline for the smoke.
+Shadow mismatches and budget exhaustion stayed at zero.
+
+## Tactical-Only Frontier Checkpoint
+
+The next checkpoint split the rolling frontier into feature modes:
+
+- `Full` keeps both tactical annotations and per-origin move facts, which is
+  still required for corridor portal entry checks.
+- `TacticalOnly` keeps tactical annotations and dirty-axis tracking, but skips
+  per-origin move-fact maintenance. Normal search uses this mode when corridor
+  portals are disabled.
+- Corridor move-fact queries in `TacticalOnly` fall back to the scan reference
+  path, so the mode is safe even if a caller accidentally asks a corridor
+  question.
+- Search metrics now split frontier update/query cost into delta capture,
+  move-fact maintenance, dirty marking, clean annotation lookup, dirty
+  annotation recompute, and fallback lookup. The report aggregator carries
+  those fields through standings and side stats.
+
+The 24-game Renju smoke with `search-d3+tactical-cap-8`,
+`+rolling-frontier-shadow`, and `+rolling-frontier` at `1000 ms/move` reached
+zero shadow mismatches and zero budget exhaustion. With the safety gate enabled,
+scan averaged `71.9 ms/move`; tactical-only rolling averaged `59.1 ms/move`.
+The rolling entrant still paid `13.0s` of frontier annotation lookup time and
+`0.47s` of update time across the run, but avoided `19.8s` of repeated scan
+query time.
+
+A second 24-game smoke with the same specs plus `+no-safety` isolated the pure
+search-annotation path. Scan averaged `29.7 ms/move`; tactical-only rolling
+averaged `21.9 ms/move`. Move-fact update counts stayed at `0` in both rolling
+smokes, confirming that normal search no longer pays for corridor-specific
+facts while portals are off.
+
+This is the first rolling-frontier checkpoint that is a net speed win for
+normal tactical search. It should still remain lab-only until a larger anchor
+tournament confirms behavior parity under the full report workload. The next
+optimization question is no longer "can rolling beat scan at all?" but "can
+dirty annotation recompute and remaining root scan queries be reduced without
+reintroducing eager move-fact cost?"
