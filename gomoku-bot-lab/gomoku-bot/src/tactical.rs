@@ -258,6 +258,21 @@ pub struct LocalThreatFact {
     pub rest_squares: Vec<Move>,
 }
 
+pub fn normalize_local_threat_fact(mut fact: LocalThreatFact) -> LocalThreatFact {
+    normalize_moves(&mut fact.defense_squares);
+    normalize_moves(&mut fact.rest_squares);
+    fact
+}
+
+pub fn normalize_local_threat_facts(facts: Vec<LocalThreatFact>) -> Vec<LocalThreatFact> {
+    let mut normalized = Vec::new();
+    for fact in facts.into_iter().map(normalize_local_threat_fact) {
+        push_unique_fact(&mut normalized, fact);
+    }
+    normalized.sort_by_key(local_threat_fact_sort_key);
+    normalized
+}
+
 impl LocalThreatFact {
     pub fn origin_move(&self) -> Move {
         self.origin.mv()
@@ -312,7 +327,7 @@ pub fn raw_local_threat_facts_after_move(board: &Board, mv: Move) -> Vec<LocalTh
         return Vec::new();
     }
 
-    local_threat_facts_after_legal_move_virtual(board, mv)
+    normalize_local_threat_facts(local_threat_facts_after_legal_move_virtual(board, mv))
 }
 
 pub fn search_local_threat_facts_after_move(board: &Board, mv: Move) -> Vec<LocalThreatFact> {
@@ -321,11 +336,12 @@ pub fn search_local_threat_facts_after_move(board: &Board, mv: Move) -> Vec<Loca
     }
 
     let facts = local_threat_facts_after_legal_move_virtual(board, mv);
-    if board.config.variant == Variant::Renju && board.current_player == Color::Black {
+    let facts = if board.config.variant == Variant::Renju && board.current_player == Color::Black {
         renju_effective_black_local_threat_facts_after_legal_move(board, mv, facts)
     } else {
         facts
-    }
+    };
+    normalize_local_threat_facts(facts)
 }
 
 pub fn local_threat_facts_for_player(board: &Board, player: Color) -> Vec<LocalThreatFact> {
@@ -343,9 +359,7 @@ pub fn raw_local_threat_facts_for_player(board: &Board, player: Color) -> Vec<Lo
             }
         }
     });
-    let policy = CorridorThreatPolicy;
-    facts.sort_by_key(|fact| std::cmp::Reverse(policy.rank(fact.kind)));
-    facts
+    normalize_local_threat_facts(facts)
 }
 
 pub fn has_forcing_local_threat(board: &Board, player: Color) -> bool {
@@ -945,6 +959,11 @@ fn push_unique_move(moves: &mut Vec<Move>, mv: Move) {
     }
 }
 
+fn normalize_moves(moves: &mut Vec<Move>) {
+    moves.sort_by_key(|mv| (mv.row, mv.col));
+    moves.dedup();
+}
+
 fn push_unique_fact(facts: &mut Vec<LocalThreatFact>, fact: LocalThreatFact) {
     if !facts
         .iter()
@@ -961,15 +980,47 @@ fn same_shape_fact(left: &LocalThreatFact, right: &LocalThreatFact) -> bool {
         && left.rest_squares == right.rest_squares
 }
 
+fn local_threat_fact_sort_key(fact: &LocalThreatFact) -> (u8, u8, usize, usize, String, String) {
+    (
+        fact.player as u8,
+        local_threat_kind_sort_key(fact.kind),
+        fact.origin.mv().row,
+        fact.origin.mv().col,
+        move_list_sort_key(&fact.defense_squares),
+        move_list_sort_key(&fact.rest_squares),
+    )
+}
+
+fn local_threat_kind_sort_key(kind: LocalThreatKind) -> u8 {
+    match kind {
+        LocalThreatKind::Five => 0,
+        LocalThreatKind::OpenFour => 1,
+        LocalThreatKind::ClosedFour => 2,
+        LocalThreatKind::BrokenFour => 3,
+        LocalThreatKind::OpenThree => 4,
+        LocalThreatKind::BrokenThree => 5,
+        LocalThreatKind::ClosedThree => 6,
+    }
+}
+
+fn move_list_sort_key(moves: &[Move]) -> String {
+    moves
+        .iter()
+        .map(|mv| format!("{:02}:{:02}", mv.row, mv.col))
+        .collect::<Vec<_>>()
+        .join("|")
+}
+
 #[cfg(test)]
 mod tests {
     use super::{
         corridor_active_threats, corridor_attacker_move_rank, corridor_defender_reply_moves,
         has_forcing_local_threat, has_forcing_local_threat_at_move,
         legal_forcing_continuations_for_fact, local_threat_facts_after_move,
-        local_threat_facts_for_player, raw_local_threat_facts_after_move,
-        raw_local_threat_facts_for_player, CorridorThreatPolicy, LocalThreatFact, LocalThreatKind,
-        LocalThreatOrigin, ScanThreatView, SearchThreatPolicy, ThreatView,
+        local_threat_facts_for_player, normalize_local_threat_facts,
+        raw_local_threat_facts_after_move, raw_local_threat_facts_for_player,
+        CorridorThreatPolicy, LocalThreatFact, LocalThreatKind, LocalThreatOrigin, ScanThreatView,
+        SearchThreatPolicy, ThreatView,
     };
     use gomoku_core::{Board, Color, Move, RuleConfig, Variant};
 
@@ -983,6 +1034,22 @@ mod tests {
         }
     }
 
+    fn fact(
+        player: Color,
+        kind: LocalThreatKind,
+        origin: &str,
+        defense_squares: &[&str],
+        rest_squares: &[&str],
+    ) -> LocalThreatFact {
+        LocalThreatFact {
+            player,
+            kind,
+            origin: LocalThreatOrigin::Existing(mv(origin)),
+            defense_squares: defense_squares.iter().map(|notation| mv(notation)).collect(),
+            rest_squares: rest_squares.iter().map(|notation| mv(notation)).collect(),
+        }
+    }
+
     fn board_from_moves(variant: Variant, moves: &[&str]) -> Board {
         let mut board = Board::new(RuleConfig {
             variant,
@@ -990,6 +1057,55 @@ mod tests {
         });
         apply_moves(&mut board, moves);
         board
+    }
+
+    #[test]
+    fn normalize_local_threat_facts_sorts_inner_moves_and_dedups_shapes() {
+        let facts = vec![
+            fact(
+                Color::Black,
+                LocalThreatKind::OpenThree,
+                "J8",
+                &["L8", "H8"],
+                &["K8", "I8"],
+            ),
+            fact(
+                Color::Black,
+                LocalThreatKind::OpenThree,
+                "I8",
+                &["H8", "L8"],
+                &["I8", "K8"],
+            ),
+            fact(
+                Color::White,
+                LocalThreatKind::ClosedFour,
+                "C3",
+                &["B3"],
+                &[],
+            ),
+        ];
+
+        let normalized = normalize_local_threat_facts(facts);
+
+        assert_eq!(
+            normalized,
+            vec![
+                fact(
+                    Color::Black,
+                    LocalThreatKind::OpenThree,
+                    "J8",
+                    &["H8", "L8"],
+                    &["I8", "K8"],
+                ),
+                fact(
+                    Color::White,
+                    LocalThreatKind::ClosedFour,
+                    "C3",
+                    &["B3"],
+                    &[],
+                ),
+            ]
+        );
     }
 
     fn assert_raw_fact_parity(
@@ -1003,14 +1119,16 @@ mod tests {
         let mut before = Board::new(RuleConfig::default());
         apply_moves(&mut before, before_moves);
 
-        let expected_defense_squares = defense_squares
+        let mut expected_defense_squares = defense_squares
             .iter()
             .map(|notation| mv(notation))
             .collect::<Vec<_>>();
-        let expected_rest_squares = rest_squares
+        let mut expected_rest_squares = rest_squares
             .iter()
             .map(|notation| mv(notation))
             .collect::<Vec<_>>();
+        expected_defense_squares.sort_by_key(|mv| (mv.row, mv.col));
+        expected_rest_squares.sort_by_key(|mv| (mv.row, mv.col));
 
         let after_move_fact = raw_local_threat_facts_after_move(&before, mv(gain))
             .into_iter()
@@ -1180,7 +1298,7 @@ mod tests {
                 player: Color::Black,
                 kind: LocalThreatKind::OpenThree,
                 origin: LocalThreatOrigin::AfterMove(mv("L9")),
-                defense_squares: vec![mv("I9"), mv("M9"), mv("H9")],
+                defense_squares: vec![mv("H9"), mv("I9"), mv("M9")],
                 rest_squares: vec![],
             }]
         );
@@ -1263,7 +1381,7 @@ mod tests {
                     player: Color::Black,
                     kind: LocalThreatKind::OpenThree,
                     origin: LocalThreatOrigin::Existing(mv("J9")),
-                    defense_squares: vec![mv("I9"), mv("M9"), mv("H9")],
+                    defense_squares: vec![mv("H9"), mv("I9"), mv("M9")],
                     rest_squares: vec![],
                 }
             )
