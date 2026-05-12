@@ -142,10 +142,17 @@ The first code checkpoint intentionally favors contracts over performance:
   against scan-backed answers while scan still drives behavior.
 - `ThreatViewMode::Rolling` can drive portal entry checks as a lab-only opt-in.
 - Lab specs parse `+rolling-frontier-shadow` and `+rolling-frontier`.
-- Search traces record scan query time, frontier rebuild time, and frontier
-  query time for portal-entry checks.
+- Search traces record scan query time for portal-entry checks, plus frontier
+  rebuild/update time and frontier query time when the optional frontier is
+  enabled.
+- `SearchState` keeps the recursive search board, Zobrist hash, and optional
+  frontier synchronized through apply/undo. Plain scan mode does not maintain a
+  frontier; rolling shadow/rolling modes do.
 
 This is not the final rolling invalidation model yet. It is a safe seam for
 measuring correctness and wiring cost before replacing rebuilds with localized
 fact updates. The current frontier timing is rebuild-backed by design; it is a
 baseline for the seam, not an estimate of the eventual localized update model.
+The next frontier checkpoint is localized fact invalidation inside
+`RollingThreatFrontier`; the search-context stack is now the bridge that makes
+that work measurable in real recursion.

@@ -654,23 +654,135 @@ fn duration_ns(elapsed: Duration) -> u64 {
     u64::try_from(elapsed.as_nanos()).unwrap_or(u64::MAX).max(1)
 }
 
+#[derive(Debug, Clone)]
+struct SearchState {
+    board: Board,
+    frontier: Option<RollingThreatFrontier>,
+    hash: u64,
+    hash_stack: Vec<u64>,
+}
+
+impl SearchState {
+    #[cfg(test)]
+    fn from_board(board: Board, zobrist: &ZobristTable) -> Self {
+        Self::from_board_with_frontier(board, zobrist, true)
+    }
+
+    fn from_board_for_mode(board: Board, zobrist: &ZobristTable, mode: ThreatViewMode) -> Self {
+        Self::from_board_with_frontier(board, zobrist, mode.uses_frontier())
+    }
+
+    fn from_board_with_frontier(
+        board: Board,
+        zobrist: &ZobristTable,
+        enable_frontier: bool,
+    ) -> Self {
+        let hash = board.hash_with(zobrist);
+        let frontier = enable_frontier.then(|| RollingThreatFrontier::from_board(&board));
+        Self {
+            board,
+            frontier,
+            hash,
+            hash_stack: Vec::new(),
+        }
+    }
+
+    fn board(&self) -> &Board {
+        &self.board
+    }
+
+    fn threat_view(&self) -> &RollingThreatFrontier {
+        self.frontier
+            .as_ref()
+            .expect("search state frontier requested when disabled")
+    }
+
+    fn hash(&self) -> u64 {
+        self.hash
+    }
+
+    #[cfg(test)]
+    fn apply_trusted_legal_move(&mut self, mv: Move, zobrist: &ZobristTable) -> GameResult {
+        self.apply_trusted_legal_move_inner(mv, zobrist, None)
+    }
+
+    fn apply_trusted_legal_move_counted(
+        &mut self,
+        mv: Move,
+        zobrist: &ZobristTable,
+        metrics: &mut SearchMetrics,
+    ) -> GameResult {
+        self.apply_trusted_legal_move_inner(mv, zobrist, Some(metrics))
+    }
+
+    fn apply_trusted_legal_move_inner(
+        &mut self,
+        mv: Move,
+        zobrist: &ZobristTable,
+        metrics: Option<&mut SearchMetrics>,
+    ) -> GameResult {
+        let color = self.board.current_player;
+        self.hash_stack.push(self.hash);
+        self.hash ^= zobrist.piece(mv.row, mv.col, color) ^ zobrist.turn;
+        let board_result = self.board.apply_trusted_legal_move(mv);
+        if let Some(frontier) = &mut self.frontier {
+            let start = Instant::now();
+            let frontier_result = frontier.apply_trusted_legal_move(mv);
+            if let Some(metrics) = metrics {
+                metrics.record_threat_view_frontier_rebuild(start.elapsed());
+            }
+            debug_assert_eq!(
+                board_result, frontier_result,
+                "search state board/frontier result diverged after apply"
+            );
+        }
+        board_result
+    }
+
+    #[cfg(test)]
+    fn undo_move(&mut self, mv: Move) {
+        self.undo_move_inner(mv, None);
+    }
+
+    fn undo_move_counted(&mut self, mv: Move, metrics: &mut SearchMetrics) {
+        self.undo_move_inner(mv, Some(metrics));
+    }
+
+    fn undo_move_inner(&mut self, mv: Move, metrics: Option<&mut SearchMetrics>) {
+        self.board.undo_move(mv);
+        if let Some(frontier) = &mut self.frontier {
+            let start = Instant::now();
+            frontier.undo_move(mv);
+            if let Some(metrics) = metrics {
+                metrics.record_threat_view_frontier_rebuild(start.elapsed());
+            }
+        }
+        self.hash = self
+            .hash_stack
+            .pop()
+            .expect("search state undo_move called without matching apply");
+    }
+}
+
 fn corridor_entry_for_threat_view_mode(
-    board: &Board,
+    state: &mut SearchState,
     attacker: Color,
     mv: Move,
     mode: ThreatViewMode,
+    zobrist: &ZobristTable,
     metrics: &mut SearchMetrics,
 ) -> bool {
     match mode {
-        ThreatViewMode::Scan => scan_corridor_entry_timed(board, attacker, mv, metrics),
+        ThreatViewMode::Scan => scan_corridor_entry_timed(state.board(), attacker, mv, metrics),
         ThreatViewMode::Rolling => {
-            rolling_frontier_corridor_entry_after_move_timed(board, attacker, mv, metrics)
+            rolling_frontier_corridor_entry_after_move_timed(state, attacker, mv, zobrist, metrics)
         }
         ThreatViewMode::RollingShadow => {
             metrics.threat_view_shadow_checks += 1;
-            let scan_entry = scan_corridor_entry_timed(board, attacker, mv, metrics);
-            let frontier_entry =
-                rolling_frontier_corridor_entry_after_move_timed(board, attacker, mv, metrics);
+            let scan_entry = scan_corridor_entry_timed(state.board(), attacker, mv, metrics);
+            let frontier_entry = rolling_frontier_corridor_entry_after_move_timed(
+                state, attacker, mv, zobrist, metrics,
+            );
             if frontier_entry != scan_entry {
                 metrics.threat_view_shadow_mismatches += 1;
             }
@@ -692,30 +804,29 @@ fn scan_corridor_entry_timed(
 }
 
 fn rolling_frontier_corridor_entry_after_move_timed(
-    board: &Board,
+    state: &mut SearchState,
     attacker: Color,
     mv: Move,
+    zobrist: &ZobristTable,
     metrics: &mut SearchMetrics,
 ) -> bool {
-    if board.current_player != attacker || !board.is_legal_for_color(mv, attacker) {
+    if state.board().current_player != attacker || !state.board().is_legal_for_color(mv, attacker) {
         return false;
     }
-    let mut next = board.clone();
-    if next.apply_move(mv).is_err() {
-        return false;
-    }
-    match next.result {
-        GameResult::Winner(winner) if winner == attacker => return true,
-        GameResult::Winner(_) | GameResult::Draw => return false,
-        GameResult::Ongoing => {}
-    }
-    let rebuild_start = Instant::now();
-    let frontier = RollingThreatFrontier::from_board(&next);
-    metrics.record_threat_view_frontier_rebuild(rebuild_start.elapsed());
-
-    let query_start = Instant::now();
-    let entry = frontier.has_move_local_corridor_entry(attacker, mv);
-    metrics.record_threat_view_frontier_query(query_start.elapsed());
+    state.apply_trusted_legal_move_counted(mv, zobrist, metrics);
+    let entry = match state.board().result {
+        GameResult::Winner(winner) if winner == attacker => true,
+        GameResult::Winner(_) | GameResult::Draw => false,
+        GameResult::Ongoing => {
+            let query_start = Instant::now();
+            let entry = state
+                .threat_view()
+                .has_move_local_corridor_entry(attacker, mv);
+            metrics.record_threat_view_frontier_query(query_start.elapsed());
+            entry
+        }
+    };
+    state.undo_move_counted(mv, metrics);
     entry
 }
 
@@ -1834,8 +1945,7 @@ fn terminal_score_for_winner(winner: Color, color: Color, root_color: Color) -> 
 
 #[allow(clippy::too_many_arguments)]
 fn search_child_after_move(
-    board: &mut Board,
-    hash: u64,
+    state: &mut SearchState,
     depth: i32,
     alpha: i32,
     beta: i32,
@@ -1864,8 +1974,7 @@ fn search_child_after_move(
     {
         metrics.record_corridor_entry(portal_side);
         return corridor_portal_search(
-            board,
-            hash,
+            state,
             depth,
             alpha,
             beta,
@@ -1890,8 +1999,7 @@ fn search_child_after_move(
     }
 
     negamax(
-        board,
-        hash,
+        state,
         depth,
         alpha,
         beta,
@@ -1914,8 +2022,7 @@ fn search_child_after_move(
 
 #[allow(clippy::too_many_arguments)]
 fn resume_normal_search_after_corridor(
-    board: &mut Board,
-    hash: u64,
+    state: &mut SearchState,
     depth: i32,
     alpha: i32,
     beta: i32,
@@ -1936,8 +2043,7 @@ fn resume_normal_search_after_corridor(
     metrics.corridor_resume_searches += 1;
     let mut resume_tt = HashMap::new();
     negamax(
-        board,
-        hash,
+        state,
         depth,
         alpha,
         beta,
@@ -1960,8 +2066,7 @@ fn resume_normal_search_after_corridor(
 
 #[allow(clippy::too_many_arguments)]
 fn corridor_portal_search(
-    board: &mut Board,
-    hash: u64,
+    state: &mut SearchState,
     depth: i32,
     mut alpha: i32,
     beta: i32,
@@ -1987,16 +2092,16 @@ fn corridor_portal_search(
 
     if deadline.expired() {
         return SearchOutcome::new(
-            evaluate_leaf_counted(board, color, root_color, static_eval, metrics),
+            evaluate_leaf_counted(state.board(), color, root_color, static_eval, metrics),
             None,
             true,
         );
     }
 
-    if board.result != GameResult::Ongoing {
+    if state.board().result != GameResult::Ongoing {
         metrics.corridor_terminal_exits += 1;
         return SearchOutcome::new(
-            evaluate_leaf_counted(board, color, root_color, static_eval, metrics),
+            evaluate_leaf_counted(state.board(), color, root_color, static_eval, metrics),
             None,
             false,
         );
@@ -2005,8 +2110,7 @@ fn corridor_portal_search(
     if portal_depth_used >= portal_config.max_depth {
         metrics.corridor_depth_exits += 1;
         return resume_normal_search_after_corridor(
-            board,
-            hash,
+            state,
             depth,
             alpha,
             beta,
@@ -2027,14 +2131,13 @@ fn corridor_portal_search(
     }
 
     let moves = if color == attacker {
-        corridor::materialized_attacker_corridor_moves(board, attacker)
+        corridor::materialized_attacker_corridor_moves(state.board(), attacker)
     } else {
-        let replies = corridor::narrow_corridor_reply_moves(board, attacker);
+        let replies = corridor::narrow_corridor_reply_moves(state.board(), attacker);
         if replies.len() > portal_config.max_reply_width {
             metrics.corridor_width_exits += 1;
             return resume_normal_search_after_corridor(
-                board,
-                hash,
+                state,
                 depth,
                 alpha,
                 beta,
@@ -2053,7 +2156,12 @@ fn corridor_portal_search(
                 deadline,
             );
         }
-        if replies.is_empty() && !board.immediate_winning_moves_for(attacker).is_empty() {
+        if replies.is_empty()
+            && !state
+                .board()
+                .immediate_winning_moves_for(attacker)
+                .is_empty()
+        {
             metrics.corridor_terminal_exits += 1;
             return SearchOutcome {
                 score: terminal_score_for_winner(attacker, color, root_color),
@@ -2068,8 +2176,7 @@ fn corridor_portal_search(
     if moves.is_empty() {
         metrics.corridor_neutral_exits += 1;
         return resume_normal_search_after_corridor(
-            board,
-            hash,
+            state,
             depth,
             alpha,
             beta,
@@ -2101,12 +2208,10 @@ fn corridor_portal_search(
             break;
         }
 
-        let child_hash = hash ^ zobrist.piece(mv.row, mv.col, color) ^ zobrist.turn;
-        board.apply_trusted_legal_move(mv);
+        state.apply_trusted_legal_move_counted(mv, zobrist, metrics);
         metrics.record_corridor_ply(portal_side);
         let child = corridor_portal_search(
-            board,
-            child_hash,
+            state,
             depth,
             -beta,
             -alpha,
@@ -2129,7 +2234,7 @@ fn corridor_portal_search(
             deadline,
         );
         let score = -child.score;
-        board.undo_move(mv);
+        state.undo_move_counted(mv, metrics);
 
         if child.timed_out {
             timed_out = true;
@@ -2153,7 +2258,7 @@ fn corridor_portal_search(
 
     if best_move.is_none() {
         return SearchOutcome::new(
-            evaluate_leaf_counted(board, color, root_color, static_eval, metrics),
+            evaluate_leaf_counted(state.board(), color, root_color, static_eval, metrics),
             None,
             timed_out,
         );
@@ -2171,8 +2276,7 @@ fn corridor_portal_search(
 
 #[allow(clippy::too_many_arguments)]
 fn negamax(
-    board: &mut Board,
-    hash: u64,
+    state: &mut SearchState,
     depth: i32,
     mut alpha: i32,
     beta: i32,
@@ -2192,10 +2296,11 @@ fn negamax(
     deadline: SearchDeadline,
 ) -> SearchOutcome {
     *nodes += 1;
+    let hash = state.hash();
 
     if deadline.expired() {
         return SearchOutcome::new(
-            evaluate_leaf_counted(board, color, root_color, static_eval, metrics),
+            evaluate_leaf_counted(state.board(), color, root_color, static_eval, metrics),
             None,
             true,
         );
@@ -2225,32 +2330,38 @@ fn negamax(
         }
     }
 
-    if depth == 0 || board.result != GameResult::Ongoing {
+    if depth == 0 || state.board().result != GameResult::Ongoing {
         return SearchOutcome::new(
-            evaluate_leaf_counted(board, color, root_color, static_eval, metrics),
+            evaluate_leaf_counted(state.board(), color, root_color, static_eval, metrics),
             None,
             false,
         );
     }
 
     let mut moves = candidate_moves_from_source_counted(
-        board,
+        state.board(),
         candidate_source,
         metrics,
         SearchMetricPhase::Search,
     );
-    let mut needs_legality_check = needs_legality_gate(board, color, legality_gate);
+    let mut needs_legality_check = needs_legality_gate(state.board(), color, legality_gate);
     if (move_ordering == MoveOrdering::TacticalFirst || child_limit.is_some())
         && needs_legality_check
     {
         moves.retain(|&mv| {
-            legal_by_gate_counted(board, mv, legality_gate, metrics, SearchMetricPhase::Search)
+            legal_by_gate_counted(
+                state.board(),
+                mv,
+                legality_gate,
+                metrics,
+                SearchMetricPhase::Search,
+            )
         });
         needs_legality_check = false;
     }
     if moves.is_empty() {
         return SearchOutcome::new(
-            evaluate_leaf_counted(board, color, root_color, static_eval, metrics),
+            evaluate_leaf_counted(state.board(), color, root_color, static_eval, metrics),
             None,
             false,
         );
@@ -2263,7 +2374,7 @@ fn negamax(
 
     let tt_move = tt.get(&hash).and_then(|e| e.best_move);
     let ordered = order_search_moves(
-        board,
+        state.board(),
         moves,
         move_ordering,
         tt_move,
@@ -2279,7 +2390,13 @@ fn negamax(
             break;
         }
         if needs_legality_check
-            && !legal_by_gate_counted(board, mv, legality_gate, metrics, SearchMetricPhase::Search)
+            && !legal_by_gate_counted(
+                state.board(),
+                mv,
+                legality_gate,
+                metrics,
+                SearchMetricPhase::Search,
+            )
         {
             continue;
         }
@@ -2287,16 +2404,20 @@ fn negamax(
         let portal_config = corridor_portals.for_side(portal_side);
         let corridor_entry = if portal_config.enabled {
             metrics.corridor_entry_checks += 1;
-            corridor_entry_for_threat_view_mode(board, color, mv, threat_view_mode, metrics)
+            corridor_entry_for_threat_view_mode(
+                state,
+                color,
+                mv,
+                threat_view_mode,
+                zobrist,
+                metrics,
+            )
         } else {
             false
         };
-        // Incrementally update hash: XOR in the placed piece and flip turn bit
-        let child_hash = hash ^ zobrist.piece(mv.row, mv.col, color) ^ zobrist.turn;
-        board.apply_trusted_legal_move(mv);
+        state.apply_trusted_legal_move_counted(mv, zobrist, metrics);
         let child_outcome = search_child_after_move(
-            board,
-            child_hash,
+            state,
             depth - 1,
             -beta,
             -alpha,
@@ -2319,7 +2440,7 @@ fn negamax(
             corridor_entry,
         );
         let score = -child_outcome.score;
-        board.undo_move(mv);
+        state.undo_move_counted(mv, metrics);
 
         if child_outcome.timed_out {
             timed_out = true;
@@ -2343,7 +2464,7 @@ fn negamax(
 
     if best_move.is_none() {
         return SearchOutcome::new(
-            evaluate_leaf_counted(board, color, root_color, static_eval, metrics),
+            evaluate_leaf_counted(state.board(), color, root_color, static_eval, metrics),
             None,
             timed_out,
         );
@@ -2385,8 +2506,7 @@ fn negamax(
 
 #[allow(clippy::too_many_arguments)]
 fn search_root(
-    board: &mut Board,
-    hash: u64,
+    state: &mut SearchState,
     depth: i32,
     root_moves: &[Move],
     color: Color,
@@ -2404,9 +2524,10 @@ fn search_root(
     deadline: SearchDeadline,
 ) -> SearchOutcome {
     *nodes += 1;
+    let hash = state.hash();
     if deadline.expired() {
         return SearchOutcome::new(
-            evaluate_counted(board, color, static_eval, metrics),
+            evaluate_counted(state.board(), color, static_eval, metrics),
             None,
             true,
         );
@@ -2421,7 +2542,7 @@ fn search_root(
 
     let tt_move = tt.get(&hash).and_then(|entry| entry.best_move);
     let ordered = order_root_moves(
-        board,
+        state.board(),
         root_moves.to_vec(),
         move_ordering,
         tt_move,
@@ -2440,15 +2561,20 @@ fn search_root(
         let portal_config = corridor_portals.for_side(portal_side);
         let corridor_entry = if portal_config.enabled {
             metrics.corridor_entry_checks += 1;
-            corridor_entry_for_threat_view_mode(board, color, mv, threat_view_mode, metrics)
+            corridor_entry_for_threat_view_mode(
+                state,
+                color,
+                mv,
+                threat_view_mode,
+                zobrist,
+                metrics,
+            )
         } else {
             false
         };
-        let child_hash = hash ^ zobrist.piece(mv.row, mv.col, color) ^ zobrist.turn;
-        board.apply_trusted_legal_move(mv);
+        state.apply_trusted_legal_move_counted(mv, zobrist, metrics);
         let child_outcome = search_child_after_move(
-            board,
-            child_hash,
+            state,
             depth - 1,
             -beta,
             -alpha,
@@ -2471,7 +2597,7 @@ fn search_root(
             corridor_entry,
         );
         let score = -child_outcome.score;
-        board.undo_move(mv);
+        state.undo_move_counted(mv, metrics);
 
         if child_outcome.timed_out {
             timed_out = true;
@@ -2495,7 +2621,7 @@ fn search_root(
 
     if best_move.is_none() {
         return SearchOutcome::new(
-            evaluate_counted(board, color, static_eval, metrics),
+            evaluate_counted(state.board(), color, static_eval, metrics),
             None,
             timed_out,
         );
@@ -2647,6 +2773,10 @@ impl ThreatViewMode {
             ThreatViewMode::RollingShadow => "rolling_shadow",
             ThreatViewMode::Rolling => "rolling",
         }
+    }
+
+    const fn uses_frontier(self) -> bool {
+        !matches!(self, ThreatViewMode::Scan)
     }
 }
 
@@ -2920,15 +3050,12 @@ impl Bot for SearchBot {
 
     fn choose_move(&mut self, board: &Board) -> Move {
         let color = board.current_player;
-        let mut working = board.clone();
         let mut metrics = SearchMetrics::default();
         let start = Instant::now();
         let time_budget = self.config.time_budget();
         let cpu_time_budget = self.config.cpu_time_budget();
         let cpu_start = cpu_time_budget.and_then(|_| thread_cpu_time());
         let deadline = SearchDeadline::new(start, time_budget, cpu_start, cpu_time_budget);
-        // Compute hash once at root; children update it incrementally
-        let root_hash = board.hash_with(&self.zobrist);
         let center = board.config.board_size / 2;
         let candidate_source = self.config.candidate_source();
         let legality_gate = self.config.legality_gate();
@@ -2969,6 +3096,11 @@ impl Bot for SearchBot {
         let mut depth_reached = 0;
         let mut total_nodes = 0u64;
         let mut best_corridor_extra_plies = 0u32;
+        let mut state = SearchState::from_board_for_mode(
+            board.clone(),
+            &self.zobrist,
+            self.config.threat_view_mode,
+        );
 
         for depth in 1..=self.config.max_depth {
             if deadline.expired() {
@@ -2977,8 +3109,7 @@ impl Bot for SearchBot {
             }
             let mut nodes = 0u64;
             let outcome = search_root(
-                &mut working,
-                root_hash,
+                &mut state,
                 depth,
                 &root_moves,
                 color,
@@ -2994,6 +3125,11 @@ impl Bot for SearchBot {
                 &mut nodes,
                 &mut metrics,
                 deadline,
+            );
+            debug_assert_eq!(
+                state.hash(),
+                board.hash_with(&self.zobrist),
+                "search state hash should return to root after each depth"
             );
             total_nodes += nodes;
 
@@ -3043,6 +3179,7 @@ mod scenarios;
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tactical::ScanThreatView;
     use gomoku_core::RuleConfig;
 
     fn mv(notation: &str) -> Move {
@@ -3195,6 +3332,60 @@ mod tests {
                     scenario.id, mv
                 );
             }
+        }
+    }
+
+    #[test]
+    fn search_state_apply_undo_restores_board_hash_and_frontier() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(&mut board, &["H8", "A1", "I8", "A2", "J8", "A3"]);
+        let zobrist = ZobristTable::new(board.config.board_size);
+        let original_fen = board.to_fen();
+        let original_hash = board.hash_with(&zobrist);
+        let mut state = SearchState::from_board(board, &zobrist);
+
+        let played = mv("K8");
+        state.apply_trusted_legal_move(played, &zobrist);
+
+        assert_eq!(state.hash(), state.board().hash_with(&zobrist));
+        assert!(state
+            .threat_view()
+            .has_move_local_corridor_entry(Color::Black, played));
+
+        state.undo_move(played);
+
+        assert_eq!(state.board().to_fen(), original_fen);
+        assert_eq!(state.hash(), original_hash);
+        assert_eq!(state.hash(), state.board().hash_with(&zobrist));
+        assert_eq!(
+            state.threat_view().active_corridor_threats(Color::Black),
+            ScanThreatView::new(state.board()).active_corridor_threats(Color::Black)
+        );
+    }
+
+    #[test]
+    fn search_state_nested_apply_undo_keeps_frontier_in_sync_with_scan_view() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(&mut board, &["H8", "A1", "I8", "A2", "J8", "A3"]);
+        let zobrist = ZobristTable::new(board.config.board_size);
+        let mut state = SearchState::from_board(board, &zobrist);
+
+        for played in [mv("K8"), mv("A4"), mv("L8")] {
+            state.apply_trusted_legal_move(played, &zobrist);
+            assert_eq!(state.hash(), state.board().hash_with(&zobrist));
+            assert_eq!(
+                state.threat_view().active_corridor_threats(Color::Black),
+                ScanThreatView::new(state.board()).active_corridor_threats(Color::Black)
+            );
+        }
+
+        for played in [mv("L8"), mv("A4"), mv("K8")] {
+            state.undo_move(played);
+            assert_eq!(state.hash(), state.board().hash_with(&zobrist));
+            assert_eq!(
+                state.threat_view().active_corridor_threats(Color::Black),
+                ScanThreatView::new(state.board()).active_corridor_threats(Color::Black)
+            );
         }
     }
 
@@ -3582,15 +3773,14 @@ mod tests {
         assert_eq!(candidate_moves(&board, 2).first().copied(), Some(mv("B1")));
 
         let zobrist = ZobristTable::new(board.config.board_size);
-        let hash = board.hash_with(&zobrist);
+        let mut state = SearchState::from_board_with_frontier(board, &zobrist, false);
         let mut tt = HashMap::new();
         let mut nodes = 0;
         let mut metrics = SearchMetrics::default();
         let deadline = SearchDeadline::new(Instant::now(), None, None, None);
 
         let outcome = negamax(
-            &mut board,
-            hash,
+            &mut state,
             1,
             i32::MIN + 1,
             i32::MAX,
@@ -3613,7 +3803,7 @@ mod tests {
         let best_move = outcome
             .best_move
             .expect("legal moves after the illegal first candidate");
-        assert!(board.is_legal(best_move));
+        assert!(state.board().is_legal(best_move));
         assert_ne!(best_move, mv("B1"));
         assert_eq!(metrics.search_child_cap_hits, 1);
         assert!(metrics.search_legality_checks > 1);
@@ -3938,6 +4128,43 @@ mod tests {
     }
 
     #[test]
+    fn rolling_shadow_preserves_scan_choice_on_corridor_fixture() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(
+            &mut board,
+            &["H8", "A1", "I8", "A2", "J8", "A3", "K8", "A4"],
+        );
+
+        let mut scan_config = SearchBotConfig::custom_depth(2);
+        scan_config.safety_gate = SafetyGate::None;
+        scan_config.corridor_portals.own = CorridorPortalSideConfig {
+            enabled: true,
+            max_depth: 1,
+            max_reply_width: 3,
+        };
+
+        let mut shadow_config = scan_config;
+        shadow_config.threat_view_mode = ThreatViewMode::RollingShadow;
+
+        let mut scan_bot = SearchBot::with_config(scan_config);
+        let mut shadow_bot = SearchBot::with_config(shadow_config);
+
+        let scan_move = scan_bot.choose_move(&board);
+        let shadow_move = shadow_bot.choose_move(&board);
+
+        assert_eq!(shadow_move, scan_move);
+        assert_eq!(
+            shadow_bot
+                .last_info
+                .as_ref()
+                .unwrap()
+                .metrics
+                .threat_view_shadow_mismatches,
+            0
+        );
+    }
+
+    #[test]
     fn corridor_portal_activates_on_root_corridor_entry() {
         let mut board = Board::new(RuleConfig::default());
         apply_moves(
@@ -4011,13 +4238,12 @@ mod tests {
         };
         let mut tt = HashMap::new();
         let zobrist = ZobristTable::new(board.config.board_size);
-        let hash = board.hash_with(&zobrist);
+        let mut state = SearchState::from_board_with_frontier(board, &zobrist, false);
         let mut nodes = 0u64;
         let mut metrics = SearchMetrics::default();
 
         let _ = resume_normal_search_after_corridor(
-            &mut board,
-            hash,
+            &mut state,
             1,
             i32::MIN + 1,
             i32::MAX,
@@ -4051,6 +4277,7 @@ mod tests {
 
         let zobrist = ZobristTable::new(board.config.board_size);
         let hash = board.hash_with(&zobrist);
+        let mut state = SearchState::from_board_with_frontier(board, &zobrist, false);
         let poisoned_score = 1_234_567;
         let mut tt = HashMap::from([(
             hash,
@@ -4065,8 +4292,7 @@ mod tests {
         let mut metrics = SearchMetrics::default();
 
         let outcome = resume_normal_search_after_corridor(
-            &mut board,
-            hash,
+            &mut state,
             1,
             i32::MIN + 1,
             i32::MAX,
