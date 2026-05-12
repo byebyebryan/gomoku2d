@@ -153,6 +153,12 @@ aliases/config flags until cheaper threat facts make the portal model practical.
 The working plan lives in
 [`../docs/archive/v0_4_3_corridor_bot_plan.md`](../docs/archive/v0_4_3_corridor_bot_plan.md).
 
+`0.4.4` moves to the rolling-frontier pass: keep scan-backed behavior as the
+reference, add a derived threat index behind the `ThreatView` seam, validate it
+with fixture/random/Renju parity tests, then run it in shadow mode before any
+lab suffix uses it for behavior. The working plan lives in
+[`../docs/archive/v0_4_4_frontier_plan.md`](../docs/archive/v0_4_4_frontier_plan.md).
+
 ### Eval harness
 
 `gomoku-eval` runs head-to-head series, self-play, and multi-threaded bot
