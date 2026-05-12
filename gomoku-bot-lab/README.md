@@ -159,6 +159,15 @@ with fixture/random/Renju parity tests, then run it in shadow mode before any
 lab suffix uses it for behavior. The working plan lives in
 [`../docs/archive/v0_4_4_frontier_plan.md`](../docs/archive/v0_4_4_frontier_plan.md).
 
+Current frontier suffixes are intentionally narrow:
+
+- `+rolling-frontier-shadow`: compare rolling-backed portal-entry answers
+  against scan-backed answers and report shadow mismatch counts; behavior stays
+  scan-backed.
+- `+rolling-frontier`: use the rolling-backed portal-entry answer. The current
+  implementation is still rebuild-backed after apply/undo, so this is a
+  validation hook rather than a performance feature.
+
 ### Eval harness
 
 `gomoku-eval` runs head-to-head series, self-play, and multi-threaded bot

@@ -189,6 +189,17 @@ not as a candidate preset. The useful refactor outcome is the scan-backed
 `ThreatView` seam in `gomoku-bot::tactical`, which gives rolling-frontier work a
 stable query contract without promoting the current scan-heavy portal behavior.
 
+`0.4.4` adds the first rolling-frontier seam behind that contract. The initial
+mode is correctness-first: `RollingThreatFrontier` still rebuilds its cached
+view after apply/undo, but it gives search a stable opt-in path:
+
+- `+rolling-frontier-shadow` records scan-vs-frontier portal-entry parity while
+  scan-backed answers still drive behavior.
+- `+rolling-frontier` lets portal-entry checks use the frontier-backed answer.
+
+Both suffixes are lab-only and only cover portal entry checks right now. They
+are useful for validation and instrumentation, not promoted bot configs.
+
 This answered the first integration question negatively for the current
 scan-backed implementation: the semantics are cleaner, but the cost shape is
 not viable enough to promote. A rolling threat frontier is the future
