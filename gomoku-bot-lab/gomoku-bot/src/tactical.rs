@@ -46,25 +46,71 @@ impl SearchThreatPolicy {
         local_threat_facts_after_move(board, mv)
     }
 
-    pub fn annotation_for_move(self, board: &Board, mv: Move) -> TacticalMoveAnnotation {
-        if !board.is_legal(mv) {
+    pub fn raw_annotation_for_player(
+        self,
+        board: &Board,
+        player: Color,
+        mv: Move,
+    ) -> TacticalMoveAnnotation {
+        if !board.is_legal_for_color(mv, player) {
             return TacticalMoveAnnotation {
-                player: board.current_player,
+                player,
                 mv,
                 local_threats: Vec::new(),
             };
         }
 
-        let player = board.current_player;
         TacticalMoveAnnotation {
             player,
             mv,
-            local_threats: self
-                .facts_after_move(board, mv)
+            local_threats: raw_local_threat_facts_after_move_for_player(board, player, mv)
                 .into_iter()
                 .filter(|fact| fact.player == player)
                 .collect(),
         }
+    }
+
+    pub fn effective_annotation_from_raw(
+        self,
+        board: &Board,
+        mut annotation: TacticalMoveAnnotation,
+    ) -> TacticalMoveAnnotation {
+        if board.config.variant != Variant::Renju
+            || annotation.player != Color::Black
+            || !annotation
+                .local_threats
+                .iter()
+                .any(|fact| self.is_must_keep(fact) && fact.kind != LocalThreatKind::Five)
+        {
+            return annotation;
+        }
+        if !board.is_legal_for_color(annotation.mv, annotation.player) {
+            annotation.local_threats.clear();
+            return annotation;
+        }
+
+        annotation.local_threats = normalize_local_threat_facts(
+            renju_effective_black_local_threat_facts_after_legal_move(
+                board,
+                annotation.mv,
+                annotation.local_threats,
+            ),
+        );
+        annotation
+    }
+
+    pub fn annotation_for_player(
+        self,
+        board: &Board,
+        player: Color,
+        mv: Move,
+    ) -> TacticalMoveAnnotation {
+        let annotation = self.raw_annotation_for_player(board, player, mv);
+        self.effective_annotation_from_raw(board, annotation)
+    }
+
+    pub fn annotation_for_move(self, board: &Board, mv: Move) -> TacticalMoveAnnotation {
+        self.annotation_for_player(board, board.current_player, mv)
     }
 }
 
@@ -329,20 +375,38 @@ pub fn local_threat_facts_after_move(board: &Board, mv: Move) -> Vec<LocalThreat
 }
 
 pub fn raw_local_threat_facts_after_move(board: &Board, mv: Move) -> Vec<LocalThreatFact> {
-    if !board.is_legal(mv) {
+    raw_local_threat_facts_after_move_for_player(board, board.current_player, mv)
+}
+
+pub fn raw_local_threat_facts_after_move_for_player(
+    board: &Board,
+    player: Color,
+    mv: Move,
+) -> Vec<LocalThreatFact> {
+    if !board.is_legal_for_color(mv, player) {
         return Vec::new();
     }
 
-    normalize_local_threat_facts(local_threat_facts_after_legal_move_virtual(board, mv))
+    normalize_local_threat_facts(local_threat_facts_after_legal_move_virtual_for_player(
+        board, player, mv,
+    ))
 }
 
 pub fn search_local_threat_facts_after_move(board: &Board, mv: Move) -> Vec<LocalThreatFact> {
-    if !board.is_legal(mv) {
+    search_local_threat_facts_after_move_for_player(board, board.current_player, mv)
+}
+
+pub fn search_local_threat_facts_after_move_for_player(
+    board: &Board,
+    player: Color,
+    mv: Move,
+) -> Vec<LocalThreatFact> {
+    if !board.is_legal_for_color(mv, player) {
         return Vec::new();
     }
 
-    let facts = local_threat_facts_after_legal_move_virtual(board, mv);
-    let facts = if board.config.variant == Variant::Renju && board.current_player == Color::Black {
+    let facts = local_threat_facts_after_legal_move_virtual_for_player(board, player, mv);
+    let facts = if board.config.variant == Variant::Renju && player == Color::Black {
         renju_effective_black_local_threat_facts_after_legal_move(board, mv, facts)
     } else {
         facts
@@ -480,8 +544,11 @@ fn add_corridor_defender_replies_for_fact(
     }
 }
 
-fn local_threat_facts_after_legal_move_virtual(board: &Board, mv: Move) -> Vec<LocalThreatFact> {
-    let player = board.current_player;
+fn local_threat_facts_after_legal_move_virtual_for_player(
+    board: &Board,
+    player: Color,
+    mv: Move,
+) -> Vec<LocalThreatFact> {
     let after = BoardAfterMove { board, mv, player };
     let search_policy = SearchThreatPolicy;
 
@@ -499,6 +566,10 @@ fn renju_effective_black_local_threat_facts_after_legal_move(
     facts: Vec<LocalThreatFact>,
 ) -> Vec<LocalThreatFact> {
     let mut after = board.clone();
+    after.current_player = Color::Black;
+    if !after.is_legal_for_color(mv, Color::Black) {
+        return Vec::new();
+    }
     after.apply_trusted_legal_move(mv);
     facts
         .into_iter()
@@ -1542,6 +1613,24 @@ mod tests {
     }
 
     #[test]
+    fn player_explicit_annotation_matches_current_player_annotation() {
+        let board = board_from_moves(Variant::Renju, &["H8", "A1", "I8", "A2"]);
+        let policy = SearchThreatPolicy;
+
+        assert_eq!(
+            policy.annotation_for_player(&board, Color::Black, mv("J8")),
+            policy.annotation_for_move(&board, mv("J8"))
+        );
+
+        let mut white_turn = board.clone();
+        white_turn.current_player = Color::White;
+        assert_eq!(
+            policy.annotation_for_player(&board, Color::White, mv("B2")),
+            policy.annotation_for_move(&white_turn, mv("B2"))
+        );
+    }
+
+    #[test]
     fn scan_threat_view_matches_existing_corridor_queries() {
         let board = board_from_moves(Variant::Renju, &["H8", "A1", "I8", "A2", "J8", "A3", "C3"]);
         let view = ScanThreatView::new(&board);
@@ -1582,6 +1671,26 @@ mod tests {
                 .iter()
                 .any(|fact| fact.kind == LocalThreatKind::BrokenFour),
             "raw detector should preserve the forbidden-gap shape: {raw_facts:?}"
+        );
+
+        let raw_annotation =
+            SearchThreatPolicy.raw_annotation_for_player(&board, Color::Black, mv("M8"));
+        assert!(
+            raw_annotation
+                .local_threats
+                .iter()
+                .any(|fact| fact.kind == LocalThreatKind::BrokenFour),
+            "raw annotation should preserve the forbidden-gap shape: {raw_annotation:?}"
+        );
+
+        let effective_annotation =
+            SearchThreatPolicy.effective_annotation_from_raw(&board, raw_annotation);
+        assert!(
+            effective_annotation
+                .local_threats
+                .iter()
+                .all(|fact| !SearchThreatPolicy.is_must_keep(fact)),
+            "effective annotation should remove forbidden-only forcing threats: {effective_annotation:?}"
         );
 
         let facts = local_threat_facts_after_move(&board, mv("M8"));
