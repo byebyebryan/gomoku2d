@@ -326,12 +326,26 @@ That release should remain lab-first:
 - keep UI, settings, and product preset work out of scope unless the lab result
   is clear enough to name
 
-`0.4.4` becomes the earliest likely UI bridge for bot controls/settings. Expose
+The current recommendation is to make `0.4.4` the rolling-frontier lab pass,
+not the UI bridge. Corridor portals need cheap, reliable local threat facts
+before they can be a practical bot primitive. The `0.4.3` scan-backed portal
+suffixes now provide move-local entry semantics and useful cost metrics, but
+focused smoke checks are still slower, weaker, and budget-bound. The durable
+`0.4.3` result is therefore the scan-backed `ThreatView` seam and unified
+threat vocabulary, not a promoted corridor bot. Rolling frontier is the likely
+shape for making those facts cheap enough, but it is
+correctness-sensitive enough to deserve its own checkpoint: define the
+scan-backed `ThreatView` seam, validate an incremental implementation in shadow
+mode, and only then switch hot portal entry/reply paths if the cache is both
+equivalent and faster.
+
+`0.4.5` becomes the earliest likely UI bridge for bot controls/settings. Expose
 only knobs that have survived lab evidence. A reasonable product-facing starting
 point is still an easy/default/hard ladder backed by reports, but corridor-aware
 bot behavior may change what those labels mean. Keep raw pattern-eval,
-child-cap, and corridor-search knobs lab-only until they become product
-language. Profile should not become a dumping ground for bot/debug preferences.
+child-cap, corridor-search, and rolling-frontier knobs lab-only until they
+become product language. Profile should not become a dumping ground for
+bot/debug preferences.
 
 Later `0.4.x` slices can compete based on which lab-powered product surface
 feels strongest.

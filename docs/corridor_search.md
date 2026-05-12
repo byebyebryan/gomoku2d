@@ -326,20 +326,202 @@ inside narrow forcing lines, the shortcut is doing useful work. If effective
 depth barely moves, or only rises by hiding expensive corridor nodes outside the
 main cost counters, the experiment failed.
 
+Latest portal measurements show the first opt-in implementation has the right
+instrumentation but the wrong cost shape:
+
+- `search-d3+corridor-own-d4-w3` lost decisively to `search-d3` at `1s`, `5s`,
+  and `10s` per move. More budget raised effective depth somewhat, but it still
+  starved ordinary alpha-beta and hit the budget on most moves.
+- `search-d3+corridor-own-d1-w3` was less catastrophic, but still hit budget on
+  most moves. That means depth alone is not the root issue.
+- `search-d5+tactical-cap-8+corridor-own-d2-w3` showed a small-sample strength
+  signal against base `search-d5+tactical-cap-8`, but it hit budget on every
+  move. Treat that as a clue, not a promotion.
+
+The measured failure mode was semantic overreach plus resume churn. The first
+portal entry check asked whether the post-move board had any active forcing
+threat. In positions where a threat already existed, many unrelated moves could
+look like entries. Accepted entries then followed a corridor, hit depth or
+neutral exits, and resumed normal alpha-beta many times. The trace could show
+low ordinary search nodes while wall time was spent in repeated threat scans,
+legality checks, and resumed searches.
+
+The current cleanup tightens that model:
+
+- Portal entry is move-local: only enter when the candidate itself creates,
+  materializes, or continues the immediate/imminent threat.
+- Normal search resumed from a corridor exit disables nested portal re-entry on
+  that resumed line.
+- Reports now aggregate entry checks, acceptance rate, resume count, exit
+  reasons, and followed corridor plies so a portal candidate cannot look cheap
+  by hiding churn.
+
+Post-cleanup smoke runs still show the wrong cost shape:
+
+- `search-d3+corridor-own-d1-w3` went `7-9` against `search-d3` over `16`
+  games. It raised average effective depth from `2.74` to `3.19`, but average
+  search time was roughly `285 ms` versus `69 ms`, with `15.6%` budget
+  exhaustion and over `549k` corridor resumes.
+- `search-d3+corridor-own-d4-w3` went `6-10` against `search-d3`. It raised
+  effective depth to `3.26`, but average nominal depth collapsed to `1.34`,
+  with `86.4%` budget exhaustion and over `141k` resumes.
+- `search-d5+tactical-cap-8+corridor-own-d2-w3` went `6-10` against
+  `search-d5+tactical-cap-8`, with `80.1%` budget exhaustion.
+
+That is enough evidence to avoid another promotion sweep for the current
+scan-heavy portal implementation. Reusing tactical annotations may trim some
+cost, but the volume of entry checks, resumes, and depth exits points toward
+the rolling-frontier work in `0.4.4` rather than more `0.4.3` tuning.
+
 This work may also reinforce corridor search itself. Bot integration will put
 more pressure on proof cost, transition enumeration, memoization, and Renju
 legality filtering than replay reports alone. Those optimizations belong in the
 lab when they make corridor-aware behavior cheaper or clearer without changing
 the model's honesty about `possible_escape` and `unknown`.
 
-Longer term, the cheap local question should probably be backed by a rolling
-frontier model for threat facts. Full-board threat scans are acceptable for the
-current analyzer and early lab prototypes, but they are the wrong shape for a
-hot search path. The frontier should track threat facts affected by applied and
-undone moves, then answer queries such as "did the last move enter a corridor?"
-and "what are the current defender replies?" without rescanning the whole board.
-That optimization should follow the shortcut interface, not precede it, so the
-cache is built around the queries the bot actually needs.
+### Rolling Threat Frontier
+
+Longer term, the cheap local question should be backed by a rolling frontier
+model for threat facts. Full-board threat scans are acceptable for the analyzer
+and early lab prototypes, but they are the wrong shape for a hot search path as
+more search stages depend on threat detection.
+
+The frontier should not replace `Board` or core legality. It should be a derived
+index that stays synchronized with apply/undo and answers corridor/search
+queries cheaply:
+
+- did the last move create, materialize, or continue a corridor entry?
+- what active immediate/imminent threats exist for each side?
+- what are the legal defender replies for the current corridor?
+- which local facts changed because of the last applied or undone move?
+- did the corridor exit because threats were neutralized, became too wide, or
+  became illegal under Renju?
+
+The main design shift is from "scan the board to rediscover facts" to "update
+the small set of facts whose local lines changed." A move can only affect shape
+facts on lines crossing nearby cells along the four Gomoku axes. The frontier
+can invalidate and rebuild those local facts, while all other facts remain
+unchanged. In the successful shape, corridor search becomes close to free
+because it asks for the already-known active threat and its already-known reply
+set.
+
+Important tradeoffs:
+
+- Correctness risk is high. A stale or missing threat fact can make the bot miss
+  a forced loss, invent a fake corridor, or mishandle a Renju forbidden reply.
+- Renju makes the cache more delicate. Raw shape facts, legal continuations, and
+  forbidden black squares must stay separate because legality can change the
+  tactical meaning of a square.
+- Undo must be exact. Search applies and undoes thousands of moves; frontier
+  updates need stack discipline at least as strong as board history.
+- The cache has to serve the search API, not the analyzer UI. If we build it
+  around report frames, it will become too broad for the hot path.
+- Memory overhead is acceptable; semantic drift is not. Favor explicit,
+  testable facts over clever compact encodings until the model is stable.
+
+The safe migration path is incremental:
+
+1. Define a `ThreatView` interface for the exact queries used by search and
+   corridor search.
+2. Implement that interface with the current scan-backed logic first.
+3. Add differential tests that compare scan-backed answers after random
+   apply/undo sequences, tactical fixtures, and Renju forbidden fixtures.
+4. Add a rolling implementation behind a lab/shadow mode and compare it against
+   the scan-backed view during tests and selected eval runs.
+5. Switch only the portal entry/reply path to the rolling view after the shadow
+   mode is clean and the portal semantics are already move-local.
+
+Steps 1 and 2 are now the `0.4.3` cleanup boundary: `gomoku-bot::tactical`
+exposes a `ThreatView` contract and a `ScanThreatView` reference backed by the
+existing scanner. Rolling frontier is still likely the next structural step, but
+not the next blind rewrite. First keep the portal asking the right local
+question; then make that question incremental.
+
+#### Rolling Frontier Drilldown
+
+The design should be interrogated as a cache architecture, not as a bot feature.
+The clean split is:
+
+- `Board`: authoritative stones, turn, result, rule config, apply/undo, and
+  exact legality.
+- `ThreatView`: read-only query contract used by search and corridor logic.
+- `ScanThreatView`: current scan-backed reference implementation.
+- `RollingThreatFrontier`: optional derived index that implements the same
+  contract by updating facts on apply/undo.
+
+The frontier should own normalized tactical facts, not gameplay state:
+
+```text
+ThreatFact {
+  side,
+  kind,
+  line_id,
+  origin,
+  gain_squares,
+  cost_squares,
+  rest_squares,
+  legal_gain_squares,
+  legal_cost_squares,
+  forbidden_black_squares
+}
+```
+
+The first implementation should favor explicit facts over compact bit-packing.
+Compact storage can come later if profiling proves memory or cache locality is
+the bottleneck. The more important invariant is that raw shape facts, legal
+continuations, and forbidden Black squares are represented separately.
+
+Update model:
+
+1. Search applies a move to `Board`.
+2. The frontier receives the same move and records an undo delta.
+3. It invalidates facts along the four axes crossing the move, conservatively
+   covering cells up to four steps away.
+4. It rebuilds raw shape facts for affected anchors.
+5. It reapplies rule/effect filtering, including Renju forbidden handling.
+6. Undo pops the exact frontier delta and restores the previous fact sets.
+
+That invalidation window is intentionally conservative. It is acceptable to
+rebuild more local facts than strictly necessary. It is not acceptable to miss a
+fact or keep a stale legal/forbidden classification.
+
+The first useful queries are deliberately narrow:
+
+- `move_threat_delta(board, mv)`: what threat facts are created, materialized,
+  continued, neutralized, or made illegal by this exact move?
+- `active_threats(side)`: current immediate/imminent corridor threats for one
+  side.
+- `corridor_replies(attacker)`: legal defender replies to the current active
+  corridor threat.
+- `legal_forcing_continuations(attacker, fact)`: legal gain/completion moves
+  for one fact.
+
+Anything needed only for HTML reports should stay outside the hot frontier API.
+The analyzer can keep using scan-backed or batch-oriented helpers until the
+search-facing frontier is proven.
+
+Validation strategy:
+
+- Differential unit tests compare `ScanThreatView` and `RollingThreatFrontier`
+  on every tactical fixture.
+- Random apply/undo tests apply legal moves, compare views after each move, then
+  undo back to the start and compare again.
+- Renju-specific tests cover forbidden attacker continuations, forbidden
+  defender cost squares, and White threats whose natural Black replies are
+  forbidden.
+- Shadow eval runs compute both views while only scan-backed results affect
+  behavior, then fail fast on the first mismatch with a board dump and changed
+  fact list.
+- Only after shadow mode is clean should the portal entry/reply path switch to
+  the rolling view.
+
+The main release-boundary implication is that this is too large for the same
+checkpoint as the current portal cleanup. `0.4.3` finishes move-local portal
+semantics, report metrics, and the scan-backed `ThreatView` seam. `0.4.4`
+should be the rolling-frontier lab pass if the seam proves stable.
+Player-facing bot settings should wait until a later `0.4.x` slice, likely
+`0.4.5`, so the UI exposes product language instead of unresolved cache/search
+knobs.
 
 ## Renju Overlay
 
@@ -416,8 +598,11 @@ The current checkpoint provides:
 - bot-owned corridor proof entry points under `gomoku-bot::corridor`,
 - shared local-threat facts and search/corridor policy views under
   `gomoku-bot::tactical` consumed by both `SearchBot` and corridor search,
+- a scan-backed `ThreatView` seam for future rolling-frontier replacement,
 - retired `SearchBot` corridor quiescence evidence from the former
   `+corridor-q` suffix,
+- opt-in default-off `SearchBot` portal suffixes for selective extension:
+  `+corridor-own-dN-wM` and `+corridor-opponent-dN-wM`,
 - proof-detail JSON and HTML report generation,
 - visual proof frames with board rendering and semantic markers,
 - Renju-aware handling for forbidden black replies and illegal black threats,
@@ -432,10 +617,11 @@ Known limits:
 - `possible_escape` is common and acceptable; it means the current model cannot
   prove the branch remains in the forced corridor.
 - The report is a lab artifact, not a polished replay-screen feature.
-- the retired `+corridor-q` leaf integration was too expensive for live play and
+- The retired `+corridor-q` leaf integration was too expensive for live play and
   is no longer a lab suffix.
-- The next corridor-bot direction is selective extension through narrow
-  corridors, with initial reply width cap `3`, not broader proof at every leaf.
+- The first selective-extension implementation is measurable but not promoted
+  as a strength candidate; even after move-local/resume cleanup, smoke runs are
+  still weaker and much more budget-bound than base anchors.
 
 ## Related Docs
 

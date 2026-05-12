@@ -2,7 +2,7 @@ use gomoku_core::{Board, Color, GameResult, Move};
 use serde::Serialize;
 
 use crate::tactical::{
-    corridor_attacker_move_rank, corridor_defender_reply_moves, has_forcing_local_threat,
+    corridor_attacker_move_rank, corridor_defender_reply_moves, has_forcing_local_threat_at_move,
 };
 
 pub const DEFAULT_MAX_CORRIDOR_DEPTH: usize = 4;
@@ -684,10 +684,7 @@ pub fn is_corridor_attacker_move(board: &Board, attacker: Color, mv: Move) -> bo
         GameResult::Winner(_) | GameResult::Draw => return false,
         GameResult::Ongoing => {}
     }
-    if !next.immediate_winning_moves_for(attacker).is_empty() {
-        return true;
-    }
-    has_forcing_local_threat(&next, attacker)
+    has_forcing_local_threat_at_move(&next, attacker, mv)
 }
 
 pub fn materialized_attacker_corridor_moves(board: &Board, attacker: Color) -> Vec<Move> {
@@ -735,8 +732,8 @@ fn extend_limit_causes(
 #[cfg(test)]
 mod tests {
     use super::{
-        analyze_defender_reply_options, CorridorOptions, DefenderReplyOutcome, DefenderReplyRole,
-        ProofLimitCause,
+        analyze_defender_reply_options, is_corridor_attacker_move, CorridorOptions,
+        DefenderReplyOutcome, DefenderReplyRole, ProofLimitCause,
     };
     use gomoku_core::{Board, Color, Move, RuleConfig, Variant};
 
@@ -765,6 +762,34 @@ mod tests {
             .iter()
             .find(|reply| reply.notation == notation)
             .unwrap_or_else(|| panic!("expected reply {notation}"))
+    }
+
+    #[test]
+    fn corridor_attacker_move_is_move_local() {
+        let board = board_from_moves(
+            Variant::Renju,
+            &["H8", "A1", "I8", "A2", "J8", "A3", "K8", "A4"],
+        );
+        assert_eq!(board.current_player, Color::Black);
+        assert!(
+            !is_corridor_attacker_move(&board, Color::Black, mv("B2")),
+            "quiet moves should not enter a portal just because another black threat already exists"
+        );
+        assert!(
+            is_corridor_attacker_move(&board, Color::Black, mv("L8")),
+            "a local winning continuation should still enter a portal"
+        );
+    }
+
+    #[test]
+    fn corridor_attacker_move_accepts_new_local_threat() {
+        let board = board_from_moves(Variant::Renju, &["H8", "A1", "I8", "A2", "J8", "A3"]);
+        assert_eq!(board.current_player, Color::Black);
+
+        assert!(
+            is_corridor_attacker_move(&board, Color::Black, mv("K8")),
+            "a move creating a local forcing threat should enter a portal"
+        );
     }
 
     #[test]

@@ -209,6 +209,13 @@ Expected work:
   and replay-analysis reports.
 - Keep all corridor knobs lab-only unless they become product language.
 
+Current read: default-off selective-extension suffixes now exist and report
+their own cost, but focused smoke checks still show they are slower and weaker
+than the base anchors. `0.4.3` should treat that as a useful lab result, not as
+a reason to force another product preset. The useful cleanup result is the
+scan-backed `ThreatView` seam and unified local-threat vocabulary. The likely
+next structural pass is rolling-frontier threat facts in `0.4.4`.
+
 Non-goals:
 
 - No settings page yet.
@@ -224,10 +231,45 @@ Acceptance:
   current anchors.
 - The next UI/settings slice has clearer product labels and fewer raw knobs.
 
-## `0.4.4` — Settings And Bot Config Surface
+## `0.4.4` — Rolling Frontier Lab Pass
+
+Purpose: make corridor-aware search cheap enough to be a real bot primitive, or
+reject/defer that path with clear correctness and cost evidence.
+
+Expected work:
+
+- Use and extend the scan-backed `ThreatView` seam introduced in `0.4.3`.
+- Build a rolling threat frontier as a derived cache, not as a replacement for
+  `Board` or rule legality.
+- Track normalized threat facts with raw shape squares, legal squares, and
+  forbidden Black squares kept separate.
+- Validate the rolling view against the scan-backed reference with tactical
+  fixtures, random apply/undo tests, Renju forbidden fixtures, and selected
+  eval shadow runs.
+- Switch only the hot corridor portal entry/reply path after shadow mode proves
+  equivalence.
+- Keep rolling frontier invisible to product UI unless it changes which bot
+  modes survive later evaluation.
+
+Non-goals:
+
+- No player-facing settings page yet.
+- No rewrite of normal search around a cache that has not proven correctness.
+- No compact bitboard-style threat encoding until the explicit fact model is
+  stable.
+
+Acceptance:
+
+- We know whether rolling frontier is correct enough and fast enough to support
+  corridor portals.
+- Any behavior switch has scan-backed equivalence evidence and cost metrics.
+- If the cache is rejected or deferred, the reason is documented and the
+  scan-backed model remains the reference.
+
+## `0.4.5` — Settings And Bot Config Surface
 
 Purpose: make customization real once the preset vocabulary is grounded by the
-`0.4.1`, `0.4.2`, and `0.4.3` reports.
+`0.4.1`, `0.4.2`, `0.4.3`, and rolling-frontier evidence.
 
 Expected work:
 

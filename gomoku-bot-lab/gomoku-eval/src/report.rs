@@ -360,6 +360,32 @@ pub struct StandingReport {
     pub corridor_extra_plies: u64,
     #[serde(default)]
     pub avg_corridor_extra_plies: f64,
+    #[serde(default)]
+    pub corridor_entry_checks: u64,
+    #[serde(default)]
+    pub corridor_entries_accepted: u64,
+    #[serde(default)]
+    pub corridor_entry_acceptance_rate: f64,
+    #[serde(default)]
+    pub corridor_own_entries_accepted: u64,
+    #[serde(default)]
+    pub corridor_opponent_entries_accepted: u64,
+    #[serde(default)]
+    pub corridor_resume_searches: u64,
+    #[serde(default)]
+    pub corridor_width_exits: u64,
+    #[serde(default)]
+    pub corridor_depth_exits: u64,
+    #[serde(default)]
+    pub corridor_neutral_exits: u64,
+    #[serde(default)]
+    pub corridor_terminal_exits: u64,
+    #[serde(default)]
+    pub corridor_plies_followed: u64,
+    #[serde(default)]
+    pub corridor_own_plies_followed: u64,
+    #[serde(default)]
+    pub corridor_opponent_plies_followed: u64,
     pub total_nodes: u64,
     pub avg_nodes: f64,
     #[serde(default)]
@@ -597,6 +623,32 @@ pub struct SideStatsReport {
     #[serde(default)]
     pub avg_corridor_extra_plies: f64,
     #[serde(default)]
+    pub corridor_entry_checks: u64,
+    #[serde(default)]
+    pub corridor_entries_accepted: u64,
+    #[serde(default)]
+    pub corridor_entry_acceptance_rate: f64,
+    #[serde(default)]
+    pub corridor_own_entries_accepted: u64,
+    #[serde(default)]
+    pub corridor_opponent_entries_accepted: u64,
+    #[serde(default)]
+    pub corridor_resume_searches: u64,
+    #[serde(default)]
+    pub corridor_width_exits: u64,
+    #[serde(default)]
+    pub corridor_depth_exits: u64,
+    #[serde(default)]
+    pub corridor_neutral_exits: u64,
+    #[serde(default)]
+    pub corridor_terminal_exits: u64,
+    #[serde(default)]
+    pub corridor_plies_followed: u64,
+    #[serde(default)]
+    pub corridor_own_plies_followed: u64,
+    #[serde(default)]
+    pub corridor_opponent_plies_followed: u64,
+    #[serde(default)]
     pub total_nodes: u64,
     pub avg_nodes: f64,
     #[serde(default)]
@@ -717,6 +769,18 @@ struct SideStatsAccumulator {
     corridor_branch_probes: u64,
     corridor_max_depth: u32,
     corridor_extra_plies: u64,
+    corridor_entry_checks: u64,
+    corridor_entries_accepted: u64,
+    corridor_own_entries_accepted: u64,
+    corridor_opponent_entries_accepted: u64,
+    corridor_resume_searches: u64,
+    corridor_width_exits: u64,
+    corridor_depth_exits: u64,
+    corridor_neutral_exits: u64,
+    corridor_terminal_exits: u64,
+    corridor_plies_followed: u64,
+    corridor_own_plies_followed: u64,
+    corridor_opponent_plies_followed: u64,
     total_nodes: u64,
     eval_calls: u64,
     candidate_generations: u64,
@@ -859,6 +923,22 @@ impl SideStatsAccumulator {
             self.tt_hits += trace_value_u64(metrics, "tt_hits");
             self.tt_cutoffs += trace_value_u64(metrics, "tt_cutoffs");
             self.beta_cutoffs += trace_value_u64(metrics, "beta_cutoffs");
+            self.corridor_entry_checks += trace_value_u64(metrics, "corridor_entry_checks");
+            self.corridor_entries_accepted += trace_value_u64(metrics, "corridor_entries_accepted");
+            self.corridor_own_entries_accepted +=
+                trace_value_u64(metrics, "corridor_own_entries_accepted");
+            self.corridor_opponent_entries_accepted +=
+                trace_value_u64(metrics, "corridor_opponent_entries_accepted");
+            self.corridor_resume_searches += trace_value_u64(metrics, "corridor_resume_searches");
+            self.corridor_width_exits += trace_value_u64(metrics, "corridor_width_exits");
+            self.corridor_depth_exits += trace_value_u64(metrics, "corridor_depth_exits");
+            self.corridor_neutral_exits += trace_value_u64(metrics, "corridor_neutral_exits");
+            self.corridor_terminal_exits += trace_value_u64(metrics, "corridor_terminal_exits");
+            self.corridor_plies_followed += trace_value_u64(metrics, "corridor_plies_followed");
+            self.corridor_own_plies_followed +=
+                trace_value_u64(metrics, "corridor_own_plies_followed");
+            self.corridor_opponent_plies_followed +=
+                trace_value_u64(metrics, "corridor_opponent_plies_followed");
         }
         if let Some(depth) = trace.get("depth").and_then(Value::as_u64) {
             self.depth_sum += depth;
@@ -890,6 +970,18 @@ impl SideStatsAccumulator {
         self.corridor_branch_probes += stats.corridor_branch_probes;
         self.corridor_max_depth = self.corridor_max_depth.max(stats.corridor_max_depth);
         self.corridor_extra_plies += stats.corridor_extra_plies;
+        self.corridor_entry_checks += stats.corridor_entry_checks;
+        self.corridor_entries_accepted += stats.corridor_entries_accepted;
+        self.corridor_own_entries_accepted += stats.corridor_own_entries_accepted;
+        self.corridor_opponent_entries_accepted += stats.corridor_opponent_entries_accepted;
+        self.corridor_resume_searches += stats.corridor_resume_searches;
+        self.corridor_width_exits += stats.corridor_width_exits;
+        self.corridor_depth_exits += stats.corridor_depth_exits;
+        self.corridor_neutral_exits += stats.corridor_neutral_exits;
+        self.corridor_terminal_exits += stats.corridor_terminal_exits;
+        self.corridor_plies_followed += stats.corridor_plies_followed;
+        self.corridor_own_plies_followed += stats.corridor_own_plies_followed;
+        self.corridor_opponent_plies_followed += stats.corridor_opponent_plies_followed;
         self.total_nodes += stats.total_nodes;
         self.eval_calls += stats.eval_calls;
         self.candidate_generations += stats.candidate_generations;
@@ -977,6 +1069,8 @@ impl SideStatsAccumulator {
         let avg_depth = avg(self.depth_sum as f64, self.search_move_count);
         let avg_corridor_extra_plies =
             avg(self.corridor_extra_plies as f64, self.search_move_count);
+        let corridor_entry_acceptance_rate =
+            ratio_u64(self.corridor_entries_accepted, self.corridor_entry_checks);
         let avg_effective_depth = avg(self.effective_depth_sum as f64, self.search_move_count);
         let budget_exhausted_rate = avg(self.budget_exhausted_count as f64, self.search_move_count);
         let depth_reached_counts = self
@@ -997,6 +1091,19 @@ impl SideStatsAccumulator {
             corridor_max_depth: self.corridor_max_depth,
             corridor_extra_plies: self.corridor_extra_plies,
             avg_corridor_extra_plies,
+            corridor_entry_checks: self.corridor_entry_checks,
+            corridor_entries_accepted: self.corridor_entries_accepted,
+            corridor_entry_acceptance_rate,
+            corridor_own_entries_accepted: self.corridor_own_entries_accepted,
+            corridor_opponent_entries_accepted: self.corridor_opponent_entries_accepted,
+            corridor_resume_searches: self.corridor_resume_searches,
+            corridor_width_exits: self.corridor_width_exits,
+            corridor_depth_exits: self.corridor_depth_exits,
+            corridor_neutral_exits: self.corridor_neutral_exits,
+            corridor_terminal_exits: self.corridor_terminal_exits,
+            corridor_plies_followed: self.corridor_plies_followed,
+            corridor_own_plies_followed: self.corridor_own_plies_followed,
+            corridor_opponent_plies_followed: self.corridor_opponent_plies_followed,
             total_nodes: self.total_nodes,
             avg_nodes,
             eval_calls: self.eval_calls,
@@ -1134,6 +1241,19 @@ fn standings(
                 corridor_max_depth: side_stats.corridor_max_depth,
                 corridor_extra_plies: side_stats.corridor_extra_plies,
                 avg_corridor_extra_plies: side_stats.avg_corridor_extra_plies,
+                corridor_entry_checks: side_stats.corridor_entry_checks,
+                corridor_entries_accepted: side_stats.corridor_entries_accepted,
+                corridor_entry_acceptance_rate: side_stats.corridor_entry_acceptance_rate,
+                corridor_own_entries_accepted: side_stats.corridor_own_entries_accepted,
+                corridor_opponent_entries_accepted: side_stats.corridor_opponent_entries_accepted,
+                corridor_resume_searches: side_stats.corridor_resume_searches,
+                corridor_width_exits: side_stats.corridor_width_exits,
+                corridor_depth_exits: side_stats.corridor_depth_exits,
+                corridor_neutral_exits: side_stats.corridor_neutral_exits,
+                corridor_terminal_exits: side_stats.corridor_terminal_exits,
+                corridor_plies_followed: side_stats.corridor_plies_followed,
+                corridor_own_plies_followed: side_stats.corridor_own_plies_followed,
+                corridor_opponent_plies_followed: side_stats.corridor_opponent_plies_followed,
                 total_nodes: side_stats.total_nodes,
                 avg_nodes: side_stats.avg_nodes,
                 eval_calls: side_stats.eval_calls,
@@ -1435,6 +1555,14 @@ fn avg(total: f64, count: u32) -> f64 {
         0.0
     } else {
         total / count as f64
+    }
+}
+
+fn ratio_u64(numerator: u64, denominator: u64) -> f64 {
+    if denominator == 0 {
+        0.0
+    } else {
+        numerator as f64 / denominator as f64
     }
 }
 
@@ -2138,6 +2266,8 @@ fn render_entrant_header(html: &mut String) {
         "Cand gen",
         "Breadth",
         "Legal",
+        "Portal",
+        "Exit",
         "TT hit/cut",
     ] {
         html.push_str(&format!(
@@ -2255,6 +2385,16 @@ fn render_entrant_row(
         ),
         None,
     );
+    let (portal_primary, portal_secondary) = portal_entry_metric_label(row);
+    render_metric_cell(
+        html,
+        "metric-search",
+        "Portal",
+        &portal_primary,
+        portal_secondary,
+    );
+    let (exit_primary, exit_secondary) = portal_exit_metric_label(row);
+    render_metric_cell(html, "metric-search", "Exit", &exit_primary, exit_secondary);
     render_metric_cell(
         html,
         "metric-search",
@@ -2384,6 +2524,45 @@ fn breadth_metric_label(row: &StandingReport) -> (String, Option<String>) {
     } else {
         (format!("{:.1}", row.avg_candidate_moves), None)
     }
+}
+
+fn portal_entry_metric_label(row: &StandingReport) -> (String, Option<String>) {
+    if row.corridor_entry_checks == 0 {
+        return ("0/0".to_string(), None);
+    }
+
+    (
+        format!(
+            "{}/{}",
+            row.corridor_entries_accepted, row.corridor_entry_checks
+        ),
+        Some(format!(
+            "{:.0}% acc / {} res",
+            row.corridor_entry_acceptance_rate * 100.0,
+            row.corridor_resume_searches
+        )),
+    )
+}
+
+fn portal_exit_metric_label(row: &StandingReport) -> (String, Option<String>) {
+    let total_exits = row.corridor_width_exits
+        + row.corridor_depth_exits
+        + row.corridor_neutral_exits
+        + row.corridor_terminal_exits;
+    if total_exits == 0 {
+        return ("0".to_string(), None);
+    }
+
+    (
+        total_exits.to_string(),
+        Some(format!(
+            "w{} d{} n{} t{}",
+            row.corridor_width_exits,
+            row.corridor_depth_exits,
+            row.corridor_neutral_exits,
+            row.corridor_terminal_exits
+        )),
+    )
 }
 
 fn delta_cell(label: &str, delta_class: &str, data_label: &str) -> String {
@@ -3024,7 +3203,7 @@ main{display:grid;gap:24px;margin:0 auto;max-width:1180px;padding:32px}h1,h2,p{m
 .section-heading{display:grid}.section-heading h2{color:var(--accent);font-size:1.2rem}
 table{border-collapse:collapse;min-width:820px;width:100%}th,td{border-bottom:1px solid var(--border);padding:9px 10px;text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{color:var(--text-muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
 .view-toggle{display:flex;flex-wrap:wrap;gap:8px}.report-view-radio{height:1px;opacity:0;position:absolute;width:1px}.view-toggle label{background:var(--surface-strong);border:1px solid var(--border);cursor:pointer;padding:8px 12px;text-transform:uppercase}.view-toggle label:hover{border-color:var(--teal)}.entrant-workbench:has(#view-results:checked) label[for=view-results],.entrant-workbench:has(#view-search:checked) label[for=view-search],.entrant-workbench:has(#view-pairwise:checked) label[for=view-pairwise]{border-color:var(--accent);color:var(--accent)}
-.entrant-grid,.match-list{display:grid;gap:12px}.entrant-head,.entrant-row summary{display:grid;gap:10px;align-items:center}.entrant-workbench:has(#view-results:checked) .entrant-head,.entrant-workbench:has(#view-results:checked) .entrant-row summary{grid-template-columns:minmax(260px,1.6fr) repeat(8,minmax(82px,1fr))}.entrant-workbench:has(#view-search:checked) .entrant-head,.entrant-workbench:has(#view-search:checked) .entrant-row summary{grid-template-columns:minmax(240px,1.4fr) repeat(6,minmax(92px,1fr))}.entrant-workbench:has(#view-pairwise:checked) .entrant-head,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{grid-template-columns:minmax(280px,1.6fr) repeat(3,minmax(120px,1fr))}.entrant-head{color:var(--text-muted);font-size:12px;letter-spacing:.08em;padding:0 14px;text-transform:uppercase}.entrant-row,.opponent-row,.match{padding:0}.entrant-row summary,.opponent-row summary,.match summary{cursor:pointer;padding:12px 14px}.entrant-row summary>*,.opponent-row summary>*{min-width:0}.entrant-row summary .bot-label,.opponent-row summary strong,.match summary strong{color:var(--text);overflow-wrap:anywhere}.bot-label span,.metric span{display:block}.metric-nowrap,.metric-nowrap span{white-space:nowrap}.entrant-row summary .bot-label span:first-child{color:var(--text)}.entrant-row summary .bot-label span+span,.metric span+span{color:var(--text-muted);font-size:11px;letter-spacing:.08em;margin-top:2px}.entrant-row summary span,.opponent-row summary span,.match summary span{color:var(--text-muted)}.metric-search,.metric-pairwise{display:none}.entrant-workbench:has(#view-search:checked) .metric-results,.entrant-workbench:has(#view-search:checked) .metric-pairwise,.entrant-workbench:has(#view-pairwise:checked) .metric-results,.entrant-workbench:has(#view-pairwise:checked) .metric-search{display:none}.entrant-workbench:has(#view-search:checked) .metric-search,.entrant-workbench:has(#view-pairwise:checked) .metric-pairwise{display:block}.entrant-head .metric,.entrant-row summary .metric{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;line-height:1.22;padding-left:10px;text-align:right}.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs{display:none;gap:10px;padding:8px 18px 18px}.entrant-workbench:has(#view-results:checked) .entrant-result-comparisons,.entrant-workbench:has(#view-search:checked) .entrant-search-comparisons,.entrant-workbench:has(#view-pairwise:checked) .entrant-pairs{display:grid}.comparison-head,.comparison-row{align-items:center;display:grid;gap:12px}.entrant-result-comparisons .comparison-head,.entrant-result-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(78px,96px) minmax(92px,120px) minmax(120px,140px)}.entrant-search-comparisons .comparison-head,.entrant-search-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(78px,96px) minmax(86px,120px) minmax(96px,120px) minmax(104px,130px) minmax(96px,120px)}.comparison-head{border:1px solid transparent;color:var(--text-muted);font-size:11px;letter-spacing:.08em;padding:0 12px;text-transform:uppercase}.comparison-row{background:var(--surface-strong);border:1px solid var(--border);padding:10px 12px}.comparison-row span:not(:first-child),.comparison-head span:not(:first-child){border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.delta-good,.score-good{color:var(--green)!important}.delta-bad,.score-bad{color:#e78f85!important}.delta-neutral{color:var(--text-muted)!important}.opponent-row summary{display:grid;gap:12px;grid-template-columns:minmax(0,1fr) repeat(3,max-content);align-items:center}.opponent-row summary span{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.match summary{display:grid;gap:12px;grid-template-columns:repeat(4,minmax(82px,max-content));align-items:center}.pair-overview{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));padding:0 18px 16px}.pair-overview p{background:var(--surface-strong);border:1px solid var(--border);margin:0;padding:12px}.match-grid{display:grid;gap:12px;grid-template-columns:1fr;padding:0 14px 14px}.match-grid p{margin:0;word-break:break-word}.reference-pair-note{background:var(--surface-strong);border:1px solid var(--border);color:var(--text-muted);margin:0;padding:10px 12px}.pair-overview b,.match-grid b{color:var(--text)}.board-panel,.raw-data{grid-column:1/-1}.board-ascii,.raw-data{background:var(--surface-strong);border:1px solid var(--border)}.board-ascii{color:var(--text);font:14px/1.35 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:8px 0 0;overflow:auto;padding:12px;white-space:pre}.raw-data{padding:10px}.raw-data summary{cursor:pointer;padding:0}.raw-data p{margin:8px 0 0}
+.entrant-grid,.match-list{display:grid;gap:12px}.entrant-head,.entrant-row summary{display:grid;gap:10px;align-items:center}.entrant-workbench:has(#view-results:checked) .entrant-head,.entrant-workbench:has(#view-results:checked) .entrant-row summary{grid-template-columns:minmax(260px,1.6fr) repeat(8,minmax(82px,1fr))}.entrant-workbench:has(#view-search:checked) .entrant-head,.entrant-workbench:has(#view-search:checked) .entrant-row summary{grid-template-columns:minmax(240px,1.4fr) repeat(8,minmax(84px,1fr))}.entrant-workbench:has(#view-pairwise:checked) .entrant-head,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{grid-template-columns:minmax(280px,1.6fr) repeat(3,minmax(120px,1fr))}.entrant-head{color:var(--text-muted);font-size:12px;letter-spacing:.08em;padding:0 14px;text-transform:uppercase}.entrant-row,.opponent-row,.match{padding:0}.entrant-row summary,.opponent-row summary,.match summary{cursor:pointer;padding:12px 14px}.entrant-row summary>*,.opponent-row summary>*{min-width:0}.entrant-row summary .bot-label,.opponent-row summary strong,.match summary strong{color:var(--text);overflow-wrap:anywhere}.bot-label span,.metric span{display:block}.metric-nowrap,.metric-nowrap span{white-space:nowrap}.entrant-row summary .bot-label span:first-child{color:var(--text)}.entrant-row summary .bot-label span+span,.metric span+span{color:var(--text-muted);font-size:11px;letter-spacing:.08em;margin-top:2px}.entrant-row summary span,.opponent-row summary span,.match summary span{color:var(--text-muted)}.metric-search,.metric-pairwise{display:none}.entrant-workbench:has(#view-search:checked) .metric-results,.entrant-workbench:has(#view-search:checked) .metric-pairwise,.entrant-workbench:has(#view-pairwise:checked) .metric-results,.entrant-workbench:has(#view-pairwise:checked) .metric-search{display:none}.entrant-workbench:has(#view-search:checked) .metric-search,.entrant-workbench:has(#view-pairwise:checked) .metric-pairwise{display:block}.entrant-head .metric,.entrant-row summary .metric{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;line-height:1.22;padding-left:10px;text-align:right}.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs{display:none;gap:10px;padding:8px 18px 18px}.entrant-workbench:has(#view-results:checked) .entrant-result-comparisons,.entrant-workbench:has(#view-search:checked) .entrant-search-comparisons,.entrant-workbench:has(#view-pairwise:checked) .entrant-pairs{display:grid}.comparison-head,.comparison-row{align-items:center;display:grid;gap:12px}.entrant-result-comparisons .comparison-head,.entrant-result-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(78px,96px) minmax(92px,120px) minmax(120px,140px)}.entrant-search-comparisons .comparison-head,.entrant-search-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(78px,96px) minmax(86px,120px) minmax(96px,120px) minmax(104px,130px) minmax(96px,120px)}.comparison-head{border:1px solid transparent;color:var(--text-muted);font-size:11px;letter-spacing:.08em;padding:0 12px;text-transform:uppercase}.comparison-row{background:var(--surface-strong);border:1px solid var(--border);padding:10px 12px}.comparison-row span:not(:first-child),.comparison-head span:not(:first-child){border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.delta-good,.score-good{color:var(--green)!important}.delta-bad,.score-bad{color:#e78f85!important}.delta-neutral{color:var(--text-muted)!important}.opponent-row summary{display:grid;gap:12px;grid-template-columns:minmax(0,1fr) repeat(3,max-content);align-items:center}.opponent-row summary span{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.match summary{display:grid;gap:12px;grid-template-columns:repeat(4,minmax(82px,max-content));align-items:center}.pair-overview{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));padding:0 18px 16px}.pair-overview p{background:var(--surface-strong);border:1px solid var(--border);margin:0;padding:12px}.match-grid{display:grid;gap:12px;grid-template-columns:1fr;padding:0 14px 14px}.match-grid p{margin:0;word-break:break-word}.reference-pair-note{background:var(--surface-strong);border:1px solid var(--border);color:var(--text-muted);margin:0;padding:10px 12px}.pair-overview b,.match-grid b{color:var(--text)}.board-panel,.raw-data{grid-column:1/-1}.board-ascii,.raw-data{background:var(--surface-strong);border:1px solid var(--border)}.board-ascii{color:var(--text);font:14px/1.35 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:8px 0 0;overflow:auto;padding:12px;white-space:pre}.raw-data{padding:10px}.raw-data summary{cursor:pointer;padding:0}.raw-data p{margin:8px 0 0}
 .provenance dl{display:grid;gap:8px 18px;grid-template-columns:max-content 1fr;margin:0}.provenance dt{color:var(--text-muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase}.provenance dd{margin:0}.command{background:var(--surface-strong);border:1px solid var(--border);margin:0;overflow:auto;padding:12px}
 @media (max-width:760px){main{padding:16px}.hero,section,.run-warning{padding:16px}.run-chip{justify-content:space-between;width:100%}.entrant-head,.comparison-head{display:none}.entrant-grid,.entrant-row,.opponent-row,.match,.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs,.comparison-row{min-width:0;width:100%}.entrant-row summary,.entrant-workbench:has(#view-results:checked) .entrant-row summary,.entrant-workbench:has(#view-search:checked) .entrant-row summary,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{gap:8px 12px;grid-template-columns:repeat(2,minmax(0,1fr))}.entrant-row summary .bot-label{grid-column:1/-1}.entrant-row summary .metric{border-left:0;display:grid;gap:2px 10px;grid-template-columns:minmax(0,1fr) auto;padding:8px 0 0;text-align:right}.entrant-row summary .metric::before,.comparison-row span::before,.opponent-row summary span::before,.match summary span::before{color:var(--text-muted);content:attr(data-label);font-size:11px;letter-spacing:.08em;text-align:left;text-transform:uppercase}.entrant-row summary .metric::before{align-self:start;grid-column:1;grid-row:1/span 2}.entrant-row summary .metric span{grid-column:2}.entrant-row summary .metric-search,.entrant-row summary .metric-pairwise,.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-results,.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-pairwise,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-results,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-search{display:none}.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-search,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-pairwise{display:grid}.opponent-row summary,.match summary,.entrant-result-comparisons .comparison-row,.entrant-search-comparisons .comparison-row{grid-template-columns:1fr}.comparison-row span,.opponent-row summary span,.match summary span{border-left:0!important;display:flex;gap:12px;justify-content:space-between;min-width:0;overflow-wrap:anywhere;padding-left:0!important;text-align:right}.comparison-row span:not(:first-child),.opponent-row summary span,.match summary span{border-top:1px solid var(--border);padding-top:8px}.opponent-row summary span:first-of-type,.match summary span:first-child{border-top:0;padding-top:0}.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs{padding:4px 12px 14px}.match-grid,.term-row{grid-template-columns:1fr}.term-row{gap:4px}.board-ascii{font-size:12px}.provenance dl{grid-template-columns:1fr}table{min-width:760px}}
 @media (max-width:420px){.entrant-row summary,.entrant-workbench:has(#view-results:checked) .entrant-row summary,.entrant-workbench:has(#view-search:checked) .entrant-row summary,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{grid-template-columns:1fr}}
@@ -3278,6 +3457,8 @@ mod tests {
         assert!(html.contains("<span class=\"metric metric-search\">Cand gen</span>"));
         assert!(html.contains("<span class=\"metric metric-search\">Breadth</span>"));
         assert!(html.contains("<span class=\"metric metric-search\">Legal</span>"));
+        assert!(html.contains("<span class=\"metric metric-search\">Portal</span>"));
+        assert!(html.contains("<span class=\"metric metric-search\">Exit</span>"));
         assert!(html.contains("<span class=\"metric metric-search\">TT hit/cut</span>"));
         assert!(!html.contains("<span class=\"metric metric-search\">Child width</span>"));
         assert!(!html.contains("<span class=\"metric metric-search\">Cand width r/s</span>"));
@@ -3408,7 +3589,19 @@ mod tests {
                 "search_child_moves_after_total": 32,
                 "child_moves_after_max": 9,
                 "root_child_moves_after_max": 0,
-                "search_child_moves_after_max": 9
+                "search_child_moves_after_max": 9,
+                "corridor_entry_checks": 12,
+                "corridor_entries_accepted": 3,
+                "corridor_own_entries_accepted": 2,
+                "corridor_opponent_entries_accepted": 1,
+                "corridor_resume_searches": 4,
+                "corridor_width_exits": 5,
+                "corridor_depth_exits": 6,
+                "corridor_neutral_exits": 7,
+                "corridor_terminal_exits": 8,
+                "corridor_plies_followed": 9,
+                "corridor_own_plies_followed": 6,
+                "corridor_opponent_plies_followed": 3
             }
         });
 
@@ -3422,6 +3615,19 @@ mod tests {
         assert_eq!(report.corridor_max_depth, 2);
         assert_eq!(report.corridor_extra_plies, 3);
         assert_eq!(report.avg_corridor_extra_plies, 3.0);
+        assert_eq!(report.corridor_entry_checks, 12);
+        assert_eq!(report.corridor_entries_accepted, 3);
+        assert_eq!(report.corridor_entry_acceptance_rate, 0.25);
+        assert_eq!(report.corridor_own_entries_accepted, 2);
+        assert_eq!(report.corridor_opponent_entries_accepted, 1);
+        assert_eq!(report.corridor_resume_searches, 4);
+        assert_eq!(report.corridor_width_exits, 5);
+        assert_eq!(report.corridor_depth_exits, 6);
+        assert_eq!(report.corridor_neutral_exits, 7);
+        assert_eq!(report.corridor_terminal_exits, 8);
+        assert_eq!(report.corridor_plies_followed, 9);
+        assert_eq!(report.corridor_own_plies_followed, 6);
+        assert_eq!(report.corridor_opponent_plies_followed, 3);
         assert_eq!(report.effective_depth_sum, 8);
         assert_eq!(report.avg_effective_depth, 8.0);
         assert_eq!(report.max_effective_depth, 8);
@@ -3454,6 +3660,19 @@ mod tests {
         first_match.black_stats.corridor_max_depth = 2;
         first_match.black_stats.corridor_extra_plies = 11;
         first_match.black_stats.avg_corridor_extra_plies = 2.2;
+        first_match.black_stats.corridor_entry_checks = 40;
+        first_match.black_stats.corridor_entries_accepted = 10;
+        first_match.black_stats.corridor_entry_acceptance_rate = 0.25;
+        first_match.black_stats.corridor_own_entries_accepted = 7;
+        first_match.black_stats.corridor_opponent_entries_accepted = 3;
+        first_match.black_stats.corridor_resume_searches = 8;
+        first_match.black_stats.corridor_width_exits = 6;
+        first_match.black_stats.corridor_depth_exits = 5;
+        first_match.black_stats.corridor_neutral_exits = 4;
+        first_match.black_stats.corridor_terminal_exits = 3;
+        first_match.black_stats.corridor_plies_followed = 12;
+        first_match.black_stats.corridor_own_plies_followed = 9;
+        first_match.black_stats.corridor_opponent_plies_followed = 3;
         first_match.black_stats.effective_depth_sum = 36;
         first_match.black_stats.avg_effective_depth = 7.2;
         first_match.black_stats.max_effective_depth = 9;
@@ -3491,6 +3710,19 @@ mod tests {
         assert_eq!(row.corridor_max_depth, 2);
         assert_eq!(row.corridor_extra_plies, 11);
         assert_eq!(row.avg_corridor_extra_plies, 2.2);
+        assert_eq!(row.corridor_entry_checks, 40);
+        assert_eq!(row.corridor_entries_accepted, 10);
+        assert_eq!(row.corridor_entry_acceptance_rate, 0.25);
+        assert_eq!(row.corridor_own_entries_accepted, 7);
+        assert_eq!(row.corridor_opponent_entries_accepted, 3);
+        assert_eq!(row.corridor_resume_searches, 8);
+        assert_eq!(row.corridor_width_exits, 6);
+        assert_eq!(row.corridor_depth_exits, 5);
+        assert_eq!(row.corridor_neutral_exits, 4);
+        assert_eq!(row.corridor_terminal_exits, 3);
+        assert_eq!(row.corridor_plies_followed, 12);
+        assert_eq!(row.corridor_own_plies_followed, 9);
+        assert_eq!(row.corridor_opponent_plies_followed, 3);
         assert_eq!(row.effective_depth_sum, 36);
         assert_eq!(row.avg_effective_depth, 7.2);
         assert_eq!(row.max_effective_depth, 9);
@@ -4214,6 +4446,19 @@ mod tests {
             corridor_max_depth: 0,
             corridor_extra_plies: 0,
             avg_corridor_extra_plies: 0.0,
+            corridor_entry_checks: 0,
+            corridor_entries_accepted: 0,
+            corridor_entry_acceptance_rate: 0.0,
+            corridor_own_entries_accepted: 0,
+            corridor_opponent_entries_accepted: 0,
+            corridor_resume_searches: 0,
+            corridor_width_exits: 0,
+            corridor_depth_exits: 0,
+            corridor_neutral_exits: 0,
+            corridor_terminal_exits: 0,
+            corridor_plies_followed: 0,
+            corridor_own_plies_followed: 0,
+            corridor_opponent_plies_followed: 0,
             total_nodes: 1000,
             avg_nodes: 200.0,
             eval_calls: 500,
@@ -4286,6 +4531,19 @@ mod tests {
             corridor_max_depth: 0,
             corridor_extra_plies: 0,
             avg_corridor_extra_plies: 0.0,
+            corridor_entry_checks: 0,
+            corridor_entries_accepted: 0,
+            corridor_entry_acceptance_rate: 0.0,
+            corridor_own_entries_accepted: 0,
+            corridor_opponent_entries_accepted: 0,
+            corridor_resume_searches: 0,
+            corridor_width_exits: 0,
+            corridor_depth_exits: 0,
+            corridor_neutral_exits: 0,
+            corridor_terminal_exits: 0,
+            corridor_plies_followed: 0,
+            corridor_own_plies_followed: 0,
+            corridor_opponent_plies_followed: 0,
             total_nodes: 1000,
             avg_nodes: 200.0,
             eval_calls: 500,
