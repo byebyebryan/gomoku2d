@@ -197,12 +197,35 @@ Shadow tournament smoke with `search-d3+tactical-cap-8`,
 `+rolling-frontier-shadow`, and `+rolling-frontier` over `3 pairs x 8 games`
 with `1000 ms` CPU budget reached zero shadow mismatches.
 
-The cost shape is improved but not solved. In that 24-game smoke, rolling query
+The cost shape improved but was not solved. In that 24-game smoke, rolling query
 time stayed tiny, but frontier update time was still roughly `290s` aggregated
-for the rolling entrants because Black Renju annotations remain globally
+for the rolling entrants because Black Renju annotations remained globally
 refreshed. Budget exhaustion dropped versus the rebuild-backed checkpoint but
 was still around `25-28%`, while scan stayed near `0%`. Treat this as a
 correctness checkpoint, not a promotion candidate.
 
-Next likely step: split Black Renju continuation effectiveness out of tactical
-annotation refresh so most annotations can stay axis-local.
+## Lazy Black Renju Checkpoint
+
+The next checkpoint split Black Renju continuation effectiveness out of eager
+annotation refresh:
+
+- search annotations are cached as raw local shape facts per side;
+- both Black and White raw annotations now refresh only on affected Gomoku axes;
+- public rolling-frontier queries lazily apply the exact Black Renju
+  continuation-effectiveness filter before returning an annotation;
+- `SearchThreatPolicy` now has player-explicit raw/effective annotation helpers,
+  which removes the old clone-and-mutate-current-player path for normal
+  annotation lookup.
+
+A focused 24-game smoke with `search-d3+tactical-cap-8`,
+`+rolling-frontier-shadow`, and `+rolling-frontier` reached zero shadow
+mismatches and zero budget exhaustion. Frontier update cost dropped from roughly
+`250-280 us/update` to roughly `56-57 us/update`; query cost rose from tens of
+nanoseconds to about `1 us/query`, which is the expected tradeoff after moving
+Black Renju filtering to lookup time.
+
+Rolling is still a lab-only mode, but this checkpoint changes the bottleneck:
+the remaining gap is no longer global Black Renju annotation refresh. The next
+frontier work should profile whether lazy Black Renju query filtering,
+scan-backed active corridor threat lists, or apply/undo bookkeeping is the
+dominant cost.

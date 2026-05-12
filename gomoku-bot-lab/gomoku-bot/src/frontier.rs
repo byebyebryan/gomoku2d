@@ -1,4 +1,4 @@
-use gomoku_core::{Board, Color, GameResult, Move, MoveError, Variant, DIRS};
+use gomoku_core::{Board, Color, GameResult, Move, MoveError, DIRS};
 
 use crate::tactical::{
     raw_local_threat_facts_at_existing_move, raw_local_threat_facts_for_player,
@@ -20,8 +20,8 @@ pub struct RollingThreatFrontier {
     board: Board,
     black_move_facts_by_origin: Vec<Vec<LocalThreatFact>>,
     white_move_facts_by_origin: Vec<Vec<LocalThreatFact>>,
-    black_search_annotations: Vec<TacticalMoveAnnotation>,
-    white_search_annotations: Vec<TacticalMoveAnnotation>,
+    black_raw_search_annotations: Vec<TacticalMoveAnnotation>,
+    white_raw_search_annotations: Vec<TacticalMoveAnnotation>,
     undo_stack: Vec<FrontierDelta>,
 }
 
@@ -39,23 +39,23 @@ impl RollingThreatFrontier {
             board: board.clone(),
             black_move_facts_by_origin: move_facts_by_origin(board, Color::Black),
             white_move_facts_by_origin: move_facts_by_origin(board, Color::White),
-            black_search_annotations: search_annotations_for_player(board, Color::Black),
-            white_search_annotations: search_annotations_for_player(board, Color::White),
+            black_raw_search_annotations: raw_search_annotations_for_player(board, Color::Black),
+            white_raw_search_annotations: raw_search_annotations_for_player(board, Color::White),
             undo_stack: Vec::with_capacity(size * size),
         }
     }
 
-    fn search_annotations_for(&self, player: Color) -> &[TacticalMoveAnnotation] {
+    fn raw_search_annotations_for(&self, player: Color) -> &[TacticalMoveAnnotation] {
         match player {
-            Color::Black => &self.black_search_annotations,
-            Color::White => &self.white_search_annotations,
+            Color::Black => &self.black_raw_search_annotations,
+            Color::White => &self.white_raw_search_annotations,
         }
     }
 
-    fn search_annotations_for_mut(&mut self, player: Color) -> &mut [TacticalMoveAnnotation] {
+    fn raw_search_annotations_for_mut(&mut self, player: Color) -> &mut [TacticalMoveAnnotation] {
         match player {
-            Color::Black => &mut self.black_search_annotations,
-            Color::White => &mut self.white_search_annotations,
+            Color::Black => &mut self.black_raw_search_annotations,
+            Color::White => &mut self.white_raw_search_annotations,
         }
     }
 
@@ -89,12 +89,12 @@ impl RollingThreatFrontier {
             }
         }
         for player in [Color::Black, Color::White] {
-            for affected in affected_annotation_cells(&self.board, player, mv) {
+            for affected in affected_axis_cells(&self.board, mv) {
                 let index = cell_index(self.board.config.board_size, affected);
                 previous_annotations.push((
                     player,
                     index,
-                    self.search_annotations_for(player)[index].clone(),
+                    self.raw_search_annotations_for(player)[index].clone(),
                 ));
             }
         }
@@ -115,8 +115,8 @@ impl RollingThreatFrontier {
         }
         for &(player, index, _) in &delta.previous_annotations {
             let mv = move_from_index(size, index);
-            self.search_annotations_for_mut(player)[index] =
-                search_annotation_for_player(&self.board, player, mv);
+            self.raw_search_annotations_for_mut(player)[index] =
+                raw_search_annotation_for_player(&self.board, player, mv);
         }
     }
 
@@ -125,7 +125,7 @@ impl RollingThreatFrontier {
             self.move_facts_for_mut(player)[index] = facts;
         }
         for (player, index, annotation) in delta.previous_annotations {
-            self.search_annotations_for_mut(player)[index] = annotation;
+            self.raw_search_annotations_for_mut(player)[index] = annotation;
         }
     }
 
@@ -250,7 +250,10 @@ impl ThreatView for RollingThreatFrontier {
             return search_annotation_for_player(&self.board, self.board.current_player, mv);
         }
 
-        self.search_annotations_for(self.board.current_player)[cell_index(size, mv)].clone()
+        let annotation = self.raw_search_annotations_for(self.board.current_player)
+            [cell_index(size, mv)]
+        .clone();
+        SearchThreatPolicy.effective_annotation_from_raw(&self.board, annotation)
     }
 
     fn active_corridor_threats(&self, attacker: Color) -> Vec<LocalThreatFact> {
@@ -301,9 +304,30 @@ fn search_annotations_for_player(board: &Board, player: Color) -> Vec<TacticalMo
 }
 
 fn search_annotation_for_player(board: &Board, player: Color, mv: Move) -> TacticalMoveAnnotation {
-    let mut board = board.clone();
-    board.current_player = player;
-    SearchThreatPolicy.annotation_for_move(&board, mv)
+    SearchThreatPolicy.annotation_for_player(board, player, mv)
+}
+
+fn raw_search_annotations_for_player(board: &Board, player: Color) -> Vec<TacticalMoveAnnotation> {
+    let size = board.config.board_size;
+    let mut annotations = Vec::with_capacity(size * size);
+    for row in 0..size {
+        for col in 0..size {
+            annotations.push(raw_search_annotation_for_player(
+                board,
+                player,
+                Move { row, col },
+            ));
+        }
+    }
+    annotations
+}
+
+fn raw_search_annotation_for_player(
+    board: &Board,
+    player: Color,
+    mv: Move,
+) -> TacticalMoveAnnotation {
+    SearchThreatPolicy.raw_annotation_for_player(board, player, mv)
 }
 
 fn move_facts_by_origin(board: &Board, player: Color) -> Vec<Vec<LocalThreatFact>> {
@@ -314,18 +338,6 @@ fn move_facts_by_origin(board: &Board, player: Color) -> Vec<Vec<LocalThreatFact
         facts[cell_index(size, mv)] = raw_local_threat_facts_at_existing_move(board, player, mv);
     });
     facts
-}
-
-fn affected_annotation_cells(board: &Board, player: Color, mv: Move) -> Vec<Move> {
-    if board.config.variant == Variant::Renju && player == Color::Black {
-        // Black Renju annotations filter threat continuations through exact
-        // legality and immediate-win checks after a hypothetical continuation.
-        // Those checks can observe non-local board changes, so keep this side
-        // globally refreshed until the continuation cache is factored out.
-        all_cells(board)
-    } else {
-        affected_axis_cells(board, mv)
-    }
 }
 
 fn affected_axis_cells(board: &Board, mv: Move) -> Vec<Move> {
@@ -360,17 +372,6 @@ fn affected_axis_cells(board: &Board, mv: Move) -> Vec<Move> {
         }
     }
 
-    cells
-}
-
-fn all_cells(board: &Board) -> Vec<Move> {
-    let size = board.config.board_size;
-    let mut cells = Vec::with_capacity(size * size);
-    for row in 0..size {
-        for col in 0..size {
-            cells.push(Move { row, col });
-        }
-    }
     cells
 }
 
@@ -420,7 +421,7 @@ fn normalize_local_threat_facts_by_origin(facts: Vec<LocalThreatFact>) -> Vec<Lo
 #[cfg(test)]
 mod tests {
     use super::{RebuildThreatFrontier, RollingThreatFrontier};
-    use crate::tactical::{ScanThreatView, ThreatView};
+    use crate::tactical::{LocalThreatKind, ScanThreatView, SearchThreatPolicy, ThreatView};
     use gomoku_core::{Board, Color, Move, RuleConfig, Variant};
 
     fn mv(notation: &str) -> Move {
@@ -594,6 +595,39 @@ mod tests {
             frontier.search_annotation_for_move(probe),
             ScanThreatView::new(&board).search_annotation_for_move(probe),
             "a same-axis move outside the old local radius must invalidate the probe"
+        );
+    }
+
+    #[test]
+    fn rolling_frontier_lazily_filters_black_renju_raw_search_annotations() {
+        let board = board_from_moves(
+            Variant::Renju,
+            &["H8", "G8", "I8", "A1", "J8", "A2", "L8", "A3"],
+        );
+        let frontier = RollingThreatFrontier::from_board(&board);
+        let probe = mv("M8");
+        let raw_annotation =
+            &frontier.black_raw_search_annotations[probe.row * board.config.board_size + probe.col];
+
+        assert!(
+            raw_annotation
+                .local_threats
+                .iter()
+                .any(|fact| fact.kind == LocalThreatKind::BrokenFour),
+            "raw cache should retain the local forbidden-gap shape: {raw_annotation:?}"
+        );
+
+        let annotation = frontier.search_annotation_for_move(probe);
+        assert_eq!(
+            annotation,
+            ScanThreatView::new(&board).search_annotation_for_move(probe)
+        );
+        assert!(
+            annotation
+                .local_threats
+                .iter()
+                .all(|fact| !SearchThreatPolicy.is_must_keep(fact)),
+            "lazy effective filtering should remove forbidden-only forcing threats: {annotation:?}"
         );
     }
 
