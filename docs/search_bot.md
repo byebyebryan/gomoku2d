@@ -189,10 +189,10 @@ not as a candidate preset. The useful refactor outcome is the scan-backed
 `ThreatView` seam in `gomoku-bot::tactical`, which gives rolling-frontier work a
 stable query contract without promoting the current scan-heavy portal behavior.
 
-`0.4.4` adds the first rolling-frontier seam behind that contract. The initial
-mode is correctness-first: `RollingThreatFrontier` still rebuilds its cached
-view after apply/undo, but search now keeps board, hash, and the optional
-frontier synchronized through one recursive `SearchState`:
+`0.4.4` adds the first rolling-frontier seam behind that contract. The mode is
+correctness-first: search keeps board, hash, and the optional frontier
+synchronized through one recursive `SearchState`, and rolling modes stay
+lab-only until they are both correct and cheaper than scan:
 
 - `+rolling-frontier-shadow` records scan-vs-frontier parity for portal-entry
   checks and tactical ordering annotations while scan-backed answers still drive
@@ -202,12 +202,14 @@ frontier synchronized through one recursive `SearchState`:
   use the frontier-backed answer.
 
 Both suffixes are lab-only validation and instrumentation modes, not promoted
-bot configs. Current frontier cost is still rebuild-backed; localized rolling
-updates are a later step. Plain scan mode does not maintain the frontier, so the
-bridge does not put rebuild cost on the default bot path. Scan remains the
-reference/fallback implementation; rolling is added beside it behind the same
-`ThreatView` contract so parity checks, safe rollback, and targeted benchmarks
-stay cheap.
+bot configs. The first incremental checkpoint replaced board snapshot rebuilds
+with frontier deltas and reached zero shadow mismatches in a 24-game smoke, but
+Black Renju tactical annotations still refresh globally because their
+continuation-effectiveness filter can observe immediate wins elsewhere on the
+board. Plain scan mode does not maintain the frontier, so this cost does not
+touch the default bot path. Scan remains the reference/fallback implementation;
+rolling is added beside it behind the same `ThreatView` contract so parity
+checks, safe rollback, and targeted benchmarks stay cheap.
 
 This answered the first integration question negatively for the current
 scan-backed implementation: the semantics are cleaner, but the cost shape is
