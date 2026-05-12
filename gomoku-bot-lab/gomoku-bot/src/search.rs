@@ -499,6 +499,12 @@ pub struct SearchMetrics {
     pub corridor_max_depth: u32,
     pub threat_view_shadow_checks: u64,
     pub threat_view_shadow_mismatches: u64,
+    pub threat_view_scan_queries: u64,
+    pub threat_view_scan_ns: u64,
+    pub threat_view_frontier_rebuilds: u64,
+    pub threat_view_frontier_rebuild_ns: u64,
+    pub threat_view_frontier_queries: u64,
+    pub threat_view_frontier_query_ns: u64,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -618,9 +624,34 @@ impl SearchMetrics {
         self.corridor_max_depth = self.corridor_max_depth.max(depth_reached);
     }
 
+    fn record_threat_view_scan(&mut self, elapsed: Duration) {
+        self.threat_view_scan_queries += 1;
+        self.threat_view_scan_ns = self
+            .threat_view_scan_ns
+            .saturating_add(duration_ns(elapsed));
+    }
+
+    fn record_threat_view_frontier_rebuild(&mut self, elapsed: Duration) {
+        self.threat_view_frontier_rebuilds += 1;
+        self.threat_view_frontier_rebuild_ns = self
+            .threat_view_frontier_rebuild_ns
+            .saturating_add(duration_ns(elapsed));
+    }
+
+    fn record_threat_view_frontier_query(&mut self, elapsed: Duration) {
+        self.threat_view_frontier_queries += 1;
+        self.threat_view_frontier_query_ns = self
+            .threat_view_frontier_query_ns
+            .saturating_add(duration_ns(elapsed));
+    }
+
     fn trace(self) -> serde_json::Value {
         serde_json::to_value(self).expect("search metrics should serialize")
     }
+}
+
+fn duration_ns(elapsed: Duration) -> u64 {
+    u64::try_from(elapsed.as_nanos()).unwrap_or(u64::MAX).max(1)
 }
 
 fn corridor_entry_for_threat_view_mode(
@@ -630,13 +661,16 @@ fn corridor_entry_for_threat_view_mode(
     mode: ThreatViewMode,
     metrics: &mut SearchMetrics,
 ) -> bool {
-    let scan_entry = corridor::is_corridor_attacker_move(board, attacker, mv);
     match mode {
-        ThreatViewMode::Scan => scan_entry,
-        ThreatViewMode::Rolling => rolling_frontier_corridor_entry_after_move(board, attacker, mv),
+        ThreatViewMode::Scan => scan_corridor_entry_timed(board, attacker, mv, metrics),
+        ThreatViewMode::Rolling => {
+            rolling_frontier_corridor_entry_after_move_timed(board, attacker, mv, metrics)
+        }
         ThreatViewMode::RollingShadow => {
             metrics.threat_view_shadow_checks += 1;
-            let frontier_entry = rolling_frontier_corridor_entry_after_move(board, attacker, mv);
+            let scan_entry = scan_corridor_entry_timed(board, attacker, mv, metrics);
+            let frontier_entry =
+                rolling_frontier_corridor_entry_after_move_timed(board, attacker, mv, metrics);
             if frontier_entry != scan_entry {
                 metrics.threat_view_shadow_mismatches += 1;
             }
@@ -645,7 +679,24 @@ fn corridor_entry_for_threat_view_mode(
     }
 }
 
-fn rolling_frontier_corridor_entry_after_move(board: &Board, attacker: Color, mv: Move) -> bool {
+fn scan_corridor_entry_timed(
+    board: &Board,
+    attacker: Color,
+    mv: Move,
+    metrics: &mut SearchMetrics,
+) -> bool {
+    let start = Instant::now();
+    let entry = corridor::is_corridor_attacker_move(board, attacker, mv);
+    metrics.record_threat_view_scan(start.elapsed());
+    entry
+}
+
+fn rolling_frontier_corridor_entry_after_move_timed(
+    board: &Board,
+    attacker: Color,
+    mv: Move,
+    metrics: &mut SearchMetrics,
+) -> bool {
     if board.current_player != attacker || !board.is_legal_for_color(mv, attacker) {
         return false;
     }
@@ -658,7 +709,14 @@ fn rolling_frontier_corridor_entry_after_move(board: &Board, attacker: Color, mv
         GameResult::Winner(_) | GameResult::Draw => return false,
         GameResult::Ongoing => {}
     }
-    RollingThreatFrontier::from_board(&next).has_move_local_corridor_entry(attacker, mv)
+    let rebuild_start = Instant::now();
+    let frontier = RollingThreatFrontier::from_board(&next);
+    metrics.record_threat_view_frontier_rebuild(rebuild_start.elapsed());
+
+    let query_start = Instant::now();
+    let entry = frontier.has_move_local_corridor_entry(attacker, mv);
+    metrics.record_threat_view_frontier_query(query_start.elapsed());
+    entry
 }
 
 fn evaluate_counted(
@@ -3793,6 +3851,37 @@ mod tests {
                 > 0
         );
         assert_eq!(trace["metrics"]["threat_view_shadow_mismatches"], 0);
+        assert!(
+            trace["metrics"]["threat_view_scan_queries"]
+                .as_u64()
+                .unwrap()
+                > 0
+        );
+        assert!(trace["metrics"]["threat_view_scan_ns"].as_u64().unwrap() > 0);
+        assert!(
+            trace["metrics"]["threat_view_frontier_rebuilds"]
+                .as_u64()
+                .unwrap()
+                > 0
+        );
+        assert!(
+            trace["metrics"]["threat_view_frontier_rebuild_ns"]
+                .as_u64()
+                .unwrap()
+                > 0
+        );
+        assert!(
+            trace["metrics"]["threat_view_frontier_queries"]
+                .as_u64()
+                .unwrap()
+                > 0
+        );
+        assert!(
+            trace["metrics"]["threat_view_frontier_query_ns"]
+                .as_u64()
+                .unwrap()
+                > 0
+        );
     }
 
     #[test]
@@ -3820,6 +3909,32 @@ mod tests {
         assert!(trace["metrics"]["corridor_entry_checks"].as_u64().unwrap() > 0);
         assert_eq!(trace["metrics"]["threat_view_shadow_checks"], 0);
         assert_eq!(trace["metrics"]["threat_view_shadow_mismatches"], 0);
+        assert_eq!(trace["metrics"]["threat_view_scan_queries"], 0);
+        assert_eq!(trace["metrics"]["threat_view_scan_ns"], 0);
+        assert!(
+            trace["metrics"]["threat_view_frontier_rebuilds"]
+                .as_u64()
+                .unwrap()
+                > 0
+        );
+        assert!(
+            trace["metrics"]["threat_view_frontier_rebuild_ns"]
+                .as_u64()
+                .unwrap()
+                > 0
+        );
+        assert!(
+            trace["metrics"]["threat_view_frontier_queries"]
+                .as_u64()
+                .unwrap()
+                > 0
+        );
+        assert!(
+            trace["metrics"]["threat_view_frontier_query_ns"]
+                .as_u64()
+                .unwrap()
+                > 0
+        );
     }
 
     #[test]
