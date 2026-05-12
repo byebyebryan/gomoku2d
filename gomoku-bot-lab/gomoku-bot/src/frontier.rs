@@ -1,4 +1,4 @@
-use gomoku_core::{Board, Color, Move};
+use gomoku_core::{Board, Color, GameResult, Move, MoveError};
 
 use crate::tactical::{
     raw_local_threat_facts_at_existing_move, raw_local_threat_facts_for_player,
@@ -12,6 +12,64 @@ pub struct RebuildThreatFrontier {
     white_facts: Vec<LocalThreatFact>,
     black_move_facts: Vec<LocalThreatFact>,
     white_move_facts: Vec<LocalThreatFact>,
+}
+
+#[derive(Debug, Clone)]
+pub struct RollingThreatFrontier {
+    board: Board,
+    view: RebuildThreatFrontier,
+    undo_stack: Vec<Board>,
+}
+
+impl RollingThreatFrontier {
+    pub fn from_board(board: &Board) -> Self {
+        Self {
+            board: board.clone(),
+            view: RebuildThreatFrontier::from_board(board),
+            undo_stack: Vec::new(),
+        }
+    }
+
+    pub fn apply_move(&mut self, mv: Move) -> Result<GameResult, MoveError> {
+        self.undo_stack.push(self.board.clone());
+        match self.board.apply_move(mv) {
+            Ok(result) => {
+                self.rebuild_view();
+                Ok(result)
+            }
+            Err(err) => {
+                self.board = self
+                    .undo_stack
+                    .pop()
+                    .expect("apply failure should restore previous frontier board");
+                Err(err)
+            }
+        }
+    }
+
+    pub fn apply_trusted_legal_move(&mut self, mv: Move) -> GameResult {
+        self.undo_stack.push(self.board.clone());
+        let result = self.board.apply_trusted_legal_move(mv);
+        self.rebuild_view();
+        result
+    }
+
+    pub fn undo_move(&mut self, mv: Move) {
+        debug_assert_eq!(
+            self.board.history.last(),
+            Some(&mv),
+            "frontier undo_move called with wrong move"
+        );
+        self.board = self
+            .undo_stack
+            .pop()
+            .expect("frontier undo_move called without a matching apply");
+        self.rebuild_view();
+    }
+
+    fn rebuild_view(&mut self) {
+        self.view = RebuildThreatFrontier::from_board(&self.board);
+    }
 }
 
 impl RebuildThreatFrontier {
@@ -79,6 +137,24 @@ impl ThreatView for RebuildThreatFrontier {
     }
 }
 
+impl ThreatView for RollingThreatFrontier {
+    fn active_corridor_threats(&self, attacker: Color) -> Vec<LocalThreatFact> {
+        self.view.active_corridor_threats(attacker)
+    }
+
+    fn has_move_local_corridor_entry(&self, attacker: Color, mv: Move) -> bool {
+        self.view.has_move_local_corridor_entry(attacker, mv)
+    }
+
+    fn defender_reply_moves(&self, attacker: Color, actual_reply: Option<Move>) -> Vec<Move> {
+        self.view.defender_reply_moves(attacker, actual_reply)
+    }
+
+    fn attacker_move_rank(&self, attacker: Color, mv: Move) -> u8 {
+        self.view.attacker_move_rank(attacker, mv)
+    }
+}
+
 fn raw_local_threat_facts_for_player_by_origin(
     board: &Board,
     player: Color,
@@ -115,7 +191,7 @@ fn normalize_local_threat_facts_by_origin(
 
 #[cfg(test)]
 mod tests {
-    use super::RebuildThreatFrontier;
+    use super::{RebuildThreatFrontier, RollingThreatFrontier};
     use crate::tactical::{ScanThreatView, ThreatView};
     use gomoku_core::{Board, Color, Move, RuleConfig, Variant};
 
@@ -135,23 +211,32 @@ mod tests {
     }
 
     fn assert_frontier_matches_scan(board: &Board, attacker: Color, probe: Move) {
-        let scan = ScanThreatView::new(board);
         let frontier = RebuildThreatFrontier::from_board(board);
+        assert_view_matches_scan(board, &frontier, attacker, probe);
+    }
+
+    fn assert_view_matches_scan(
+        board: &Board,
+        view: &impl ThreatView,
+        attacker: Color,
+        probe: Move,
+    ) {
+        let scan = ScanThreatView::new(board);
 
         assert_eq!(
-            frontier.active_corridor_threats(attacker),
+            view.active_corridor_threats(attacker),
             scan.active_corridor_threats(attacker)
         );
         assert_eq!(
-            frontier.has_move_local_corridor_entry(attacker, probe),
+            view.has_move_local_corridor_entry(attacker, probe),
             scan.has_move_local_corridor_entry(attacker, probe)
         );
         assert_eq!(
-            frontier.defender_reply_moves(attacker, None),
+            view.defender_reply_moves(attacker, None),
             scan.defender_reply_moves(attacker, None)
         );
         assert_eq!(
-            frontier.attacker_move_rank(attacker, probe),
+            view.attacker_move_rank(attacker, probe),
             scan.attacker_move_rank(attacker, probe)
         );
     }
@@ -165,5 +250,66 @@ mod tests {
 
         assert_frontier_matches_scan(&board, Color::Black, mv("J8"));
         assert_frontier_matches_scan(&board, Color::Black, mv("K8"));
+    }
+
+    #[test]
+    fn rolling_frontier_matches_scan_after_apply_and_undo() {
+        let moves = ["H8", "A1", "I8", "A2", "J8", "A3", "K8", "B1", "L8"];
+        let mut board = Board::new(RuleConfig {
+            variant: Variant::Renju,
+            ..RuleConfig::default()
+        });
+        let mut frontier = RollingThreatFrontier::from_board(&board);
+
+        for notation in moves {
+            let next = mv(notation);
+            board.apply_move(next).unwrap();
+            frontier.apply_move(next).unwrap();
+            assert_view_matches_scan(&board, &frontier, Color::Black, next);
+            assert_view_matches_scan(&board, &frontier, Color::White, next);
+        }
+
+        for notation in moves.into_iter().rev() {
+            let previous = mv(notation);
+            board.undo_move(previous);
+            frontier.undo_move(previous);
+            assert_view_matches_scan(&board, &frontier, Color::Black, previous);
+            assert_view_matches_scan(&board, &frontier, Color::White, previous);
+        }
+    }
+
+    #[test]
+    fn rolling_frontier_matches_scan_through_deterministic_legal_sequence() {
+        let mut board = Board::new(RuleConfig {
+            variant: Variant::Renju,
+            ..RuleConfig::default()
+        });
+        let mut frontier = RollingThreatFrontier::from_board(&board);
+        let mut played = Vec::new();
+
+        for step in 0..28 {
+            let legal = board.legal_moves();
+            if legal.is_empty() {
+                break;
+            }
+            let next = legal[(step * 37 + 11) % legal.len()];
+            board.apply_move(next).unwrap();
+            frontier.apply_move(next).unwrap();
+            played.push(next);
+
+            assert_view_matches_scan(&board, &frontier, Color::Black, next);
+            assert_view_matches_scan(&board, &frontier, Color::White, next);
+
+            if board.result != gomoku_core::GameResult::Ongoing {
+                break;
+            }
+        }
+
+        for previous in played.into_iter().rev() {
+            board.undo_move(previous);
+            frontier.undo_move(previous);
+            assert_view_matches_scan(&board, &frontier, Color::Black, previous);
+            assert_view_matches_scan(&board, &frontier, Color::White, previous);
+        }
     }
 }
