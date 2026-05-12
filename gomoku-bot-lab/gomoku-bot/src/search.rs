@@ -633,6 +633,7 @@ fn corridor_entry_for_threat_view_mode(
     let scan_entry = corridor::is_corridor_attacker_move(board, attacker, mv);
     match mode {
         ThreatViewMode::Scan => scan_entry,
+        ThreatViewMode::Rolling => rolling_frontier_corridor_entry_after_move(board, attacker, mv),
         ThreatViewMode::RollingShadow => {
             metrics.threat_view_shadow_checks += 1;
             let frontier_entry = rolling_frontier_corridor_entry_after_move(board, attacker, mv);
@@ -2578,6 +2579,7 @@ impl StaticEvaluation {
 pub enum ThreatViewMode {
     Scan,
     RollingShadow,
+    Rolling,
 }
 
 impl ThreatViewMode {
@@ -2585,6 +2587,7 @@ impl ThreatViewMode {
         match self {
             ThreatViewMode::Scan => "scan",
             ThreatViewMode::RollingShadow => "rolling_shadow",
+            ThreatViewMode::Rolling => "rolling",
         }
     }
 }
@@ -3658,6 +3661,7 @@ mod tests {
         assert_eq!(trace["config"]["child_limit"], serde_json::Value::Null);
         assert_eq!(trace["config"]["search_algorithm"], "alpha_beta_id");
         assert_eq!(trace["config"]["static_eval"], "line_shape_eval");
+        assert_eq!(trace["config"]["threat_view_mode"], "scan");
         assert_eq!(
             trace["config"]["corridor_portals"],
             serde_json::json!({
@@ -3788,6 +3792,33 @@ mod tests {
                 .unwrap()
                 > 0
         );
+        assert_eq!(trace["metrics"]["threat_view_shadow_mismatches"], 0);
+    }
+
+    #[test]
+    fn rolling_threat_view_mode_can_drive_portal_entry_checks() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(
+            &mut board,
+            &["H8", "A1", "I8", "A2", "J8", "A3", "K8", "A4"],
+        );
+
+        let mut config = SearchBotConfig::custom_depth(1);
+        config.safety_gate = SafetyGate::None;
+        config.corridor_portals.own = CorridorPortalSideConfig {
+            enabled: true,
+            max_depth: 1,
+            max_reply_width: 3,
+        };
+        config.threat_view_mode = ThreatViewMode::Rolling;
+        let mut bot = SearchBot::with_config(config);
+
+        let _ = bot.choose_move(&board);
+        let trace = bot.trace().expect("expected search trace");
+
+        assert_eq!(trace["config"]["threat_view_mode"], "rolling");
+        assert!(trace["metrics"]["corridor_entry_checks"].as_u64().unwrap() > 0);
+        assert_eq!(trace["metrics"]["threat_view_shadow_checks"], 0);
         assert_eq!(trace["metrics"]["threat_view_shadow_mismatches"], 0);
     }
 

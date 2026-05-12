@@ -130,3 +130,19 @@ The first shadow consumers should be the current `ThreatView` queries:
 
 Stop after checkpoint 4 if parity is not exact. A wrong frontier is worse than
 a slow scan.
+
+## First Implementation Checkpoint
+
+The first code checkpoint intentionally favors contracts over performance:
+
+- `RebuildThreatFrontier` implements `ThreatView` from a snapshot board.
+- `RollingThreatFrontier` owns apply/undo discipline but currently rebuilds its
+  cached view after each move.
+- `ThreatViewMode::RollingShadow` compares rolling-backed portal entry answers
+  against scan-backed answers while scan still drives behavior.
+- `ThreatViewMode::Rolling` can drive portal entry checks as a lab-only opt-in.
+- Lab specs parse `+rolling-frontier-shadow` and `+rolling-frontier`.
+
+This is not the final rolling invalidation model yet. It is a safe seam for
+measuring correctness and wiring cost before replacing rebuilds with localized
+fact updates.

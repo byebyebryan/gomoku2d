@@ -1,6 +1,6 @@
 use gomoku_bot::{
     CorridorPortalConfig, CorridorPortalSideConfig, MoveOrdering, SafetyGate, SearchAlgorithm,
-    SearchBotConfig, StaticEvaluation,
+    SearchBotConfig, StaticEvaluation, ThreatViewMode,
 };
 
 pub struct LabSearchConfig {
@@ -23,6 +23,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
             corridor_portals: CorridorPortalConfig::DISABLED,
+            threat_view_mode: ThreatViewMode::Scan,
         },
     },
     LabSearchConfig {
@@ -39,6 +40,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
             corridor_portals: CorridorPortalConfig::DISABLED,
+            threat_view_mode: ThreatViewMode::Scan,
         },
     },
     LabSearchConfig {
@@ -55,6 +57,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
             corridor_portals: CorridorPortalConfig::DISABLED,
+            threat_view_mode: ThreatViewMode::Scan,
         },
     },
 ];
@@ -141,6 +144,14 @@ fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchB
         }
         "pattern-eval" => {
             config.static_eval = StaticEvaluation::PatternEval;
+            Some(config)
+        }
+        "rolling-frontier" => {
+            config.threat_view_mode = ThreatViewMode::Rolling;
+            Some(config)
+        }
+        "rolling-frontier-shadow" => {
+            config.threat_view_mode = ThreatViewMode::RollingShadow;
             Some(config)
         }
         _ => apply_asymmetric_candidate_source_suffix(config, suffix),
@@ -357,6 +368,22 @@ mod tests {
             .expect("expected pattern eval spec to parse");
 
         assert_eq!(config.static_eval, super::StaticEvaluation::PatternEval);
+    }
+
+    #[test]
+    fn parses_rolling_frontier_suffixes() {
+        let rolling =
+            super::search_config_from_lab_spec("search-d3+rolling-frontier", 5, None, None)
+                .expect("expected rolling frontier spec to parse");
+        assert_eq!(rolling.threat_view_mode, super::ThreatViewMode::Rolling);
+
+        let shadow =
+            super::search_config_from_lab_spec("search-d3+rolling-frontier-shadow", 5, None, None)
+                .expect("expected rolling frontier shadow spec to parse");
+        assert_eq!(
+            shadow.threat_view_mode,
+            super::ThreatViewMode::RollingShadow
+        );
     }
 
     #[test]
