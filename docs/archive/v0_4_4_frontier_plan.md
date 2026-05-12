@@ -142,7 +142,10 @@ The first code checkpoint intentionally favors contracts over performance:
   against scan-backed answers while scan still drives behavior.
 - `ThreatViewMode::Rolling` can drive portal entry checks as a lab-only opt-in.
 - Lab specs parse `+rolling-frontier-shadow` and `+rolling-frontier`.
+- Search traces record scan query time, frontier rebuild time, and frontier
+  query time for portal-entry checks.
 
 This is not the final rolling invalidation model yet. It is a safe seam for
 measuring correctness and wiring cost before replacing rebuilds with localized
-fact updates.
+fact updates. The current frontier timing is rebuild-backed by design; it is a
+baseline for the seam, not an estimate of the eventual localized update model.

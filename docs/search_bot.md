@@ -194,11 +194,14 @@ mode is correctness-first: `RollingThreatFrontier` still rebuilds its cached
 view after apply/undo, but it gives search a stable opt-in path:
 
 - `+rolling-frontier-shadow` records scan-vs-frontier portal-entry parity while
-  scan-backed answers still drive behavior.
+  scan-backed answers still drive behavior. It also records scan time,
+  frontier rebuild time, and frontier query time for those checks.
 - `+rolling-frontier` lets portal-entry checks use the frontier-backed answer.
 
 Both suffixes are lab-only and only cover portal entry checks right now. They
-are useful for validation and instrumentation, not promoted bot configs.
+are useful for validation and instrumentation, not promoted bot configs. Current
+frontier cost is still rebuild-backed; localized rolling updates are a later
+step.
 
 This answered the first integration question negatively for the current
 scan-backed implementation: the semantics are cleaner, but the cost shape is

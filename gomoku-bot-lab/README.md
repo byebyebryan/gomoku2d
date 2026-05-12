@@ -162,11 +162,11 @@ lab suffix uses it for behavior. The working plan lives in
 Current frontier suffixes are intentionally narrow:
 
 - `+rolling-frontier-shadow`: compare rolling-backed portal-entry answers
-  against scan-backed answers and report shadow mismatch counts; behavior stays
-  scan-backed.
+  against scan-backed answers, report shadow mismatch counts, and record
+  scan-vs-frontier rebuild/query timing; behavior stays scan-backed.
 - `+rolling-frontier`: use the rolling-backed portal-entry answer. The current
   implementation is still rebuild-backed after apply/undo, so this is a
-  validation hook rather than a performance feature.
+  validation and instrumentation hook rather than a performance feature.
 
 ### Eval harness
 
