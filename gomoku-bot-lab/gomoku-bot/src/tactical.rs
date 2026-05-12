@@ -181,6 +181,60 @@ impl CorridorThreatPolicy {
     }
 }
 
+pub trait ThreatView {
+    /// Active immediate/imminent corridor threats for `attacker` on this board.
+    fn active_corridor_threats(&self, attacker: Color) -> Vec<LocalThreatFact>;
+    /// True when `mv` is already occupied by `attacker` and that local move is
+    /// itself part of an active corridor threat.
+    fn has_move_local_corridor_entry(&self, attacker: Color, mv: Move) -> bool;
+    /// Legal defender replies to the strongest active corridor threat.
+    fn defender_reply_moves(&self, attacker: Color, actual_reply: Option<Move>) -> Vec<Move>;
+    /// Pre-move rank for an attacker candidate that may materialize a corridor.
+    fn attacker_move_rank(&self, attacker: Color, mv: Move) -> u8;
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct ScanThreatView<'a> {
+    board: &'a Board,
+}
+
+impl<'a> ScanThreatView<'a> {
+    pub fn new(board: &'a Board) -> Self {
+        Self { board }
+    }
+}
+
+impl ThreatView for ScanThreatView<'_> {
+    fn active_corridor_threats(&self, attacker: Color) -> Vec<LocalThreatFact> {
+        CorridorThreatPolicy.active_threats(self.board, attacker)
+    }
+
+    fn has_move_local_corridor_entry(&self, attacker: Color, mv: Move) -> bool {
+        if !self.board.has_color(mv.row, mv.col, attacker) {
+            return false;
+        }
+
+        let policy = CorridorThreatPolicy;
+        let existing = BoardExistingMove {
+            board: self.board,
+            mv,
+            player: attacker,
+        };
+        DIRS.iter().any(|&(dr, dc)| {
+            local_threat_fact_in_direction_view(&existing, dr, dc)
+                .is_some_and(|fact| policy.is_active_threat(self.board, attacker, &fact))
+        })
+    }
+
+    fn defender_reply_moves(&self, attacker: Color, actual_reply: Option<Move>) -> Vec<Move> {
+        CorridorThreatPolicy.defender_reply_moves(self.board, attacker, actual_reply)
+    }
+
+    fn attacker_move_rank(&self, attacker: Color, mv: Move) -> u8 {
+        CorridorThreatPolicy.attacker_move_rank(self.board, attacker, mv)
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LocalThreatOrigin {
     AfterMove(Move),
@@ -295,24 +349,17 @@ pub fn raw_local_threat_facts_for_player(board: &Board, player: Color) -> Vec<Lo
 }
 
 pub fn has_forcing_local_threat(board: &Board, player: Color) -> bool {
-    CorridorThreatPolicy.has_active_threat(board, player)
+    !ScanThreatView::new(board)
+        .active_corridor_threats(player)
+        .is_empty()
 }
 
 pub fn has_forcing_local_threat_at_move(board: &Board, player: Color, mv: Move) -> bool {
-    if !board.has_color(mv.row, mv.col, player) {
-        return false;
-    }
-
-    let policy = CorridorThreatPolicy;
-    let existing = BoardExistingMove { board, mv, player };
-    DIRS.iter().any(|&(dr, dc)| {
-        local_threat_fact_in_direction_view(&existing, dr, dc)
-            .is_some_and(|fact| policy.is_active_threat(board, player, &fact))
-    })
+    ScanThreatView::new(board).has_move_local_corridor_entry(player, mv)
 }
 
 pub fn corridor_active_threats(board: &Board, attacker: Color) -> Vec<LocalThreatFact> {
-    CorridorThreatPolicy.active_threats(board, attacker)
+    ScanThreatView::new(board).active_corridor_threats(attacker)
 }
 
 pub fn corridor_defender_reply_moves(
@@ -320,11 +367,11 @@ pub fn corridor_defender_reply_moves(
     attacker: Color,
     actual_reply: Option<Move>,
 ) -> Vec<Move> {
-    CorridorThreatPolicy.defender_reply_moves(board, attacker, actual_reply)
+    ScanThreatView::new(board).defender_reply_moves(attacker, actual_reply)
 }
 
 pub fn corridor_attacker_move_rank(board: &Board, attacker: Color, mv: Move) -> u8 {
-    CorridorThreatPolicy.attacker_move_rank(board, attacker, mv)
+    ScanThreatView::new(board).attacker_move_rank(attacker, mv)
 }
 
 pub fn legal_forcing_continuations_for_fact(
@@ -917,11 +964,12 @@ fn same_shape_fact(left: &LocalThreatFact, right: &LocalThreatFact) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
+        corridor_active_threats, corridor_attacker_move_rank, corridor_defender_reply_moves,
         has_forcing_local_threat, has_forcing_local_threat_at_move,
         legal_forcing_continuations_for_fact, local_threat_facts_after_move,
         local_threat_facts_for_player, raw_local_threat_facts_after_move,
         raw_local_threat_facts_for_player, CorridorThreatPolicy, LocalThreatFact, LocalThreatKind,
-        LocalThreatOrigin, SearchThreatPolicy,
+        LocalThreatOrigin, ScanThreatView, SearchThreatPolicy, ThreatView,
     };
     use gomoku_core::{Board, Color, Move, RuleConfig, Variant};
 
@@ -1351,6 +1399,33 @@ mod tests {
             .find(|fact| fact.kind == LocalThreatKind::BrokenThree)
             .expect("corridor policy should see the existing broken three");
         assert!(CorridorThreatPolicy.is_active_threat(&existing, Color::Black, &corridor_fact));
+    }
+
+    #[test]
+    fn scan_threat_view_matches_existing_corridor_queries() {
+        let board = board_from_moves(Variant::Renju, &["H8", "A1", "I8", "A2", "J8", "A3", "C3"]);
+        let view = ScanThreatView::new(&board);
+
+        assert_eq!(
+            view.active_corridor_threats(Color::Black),
+            corridor_active_threats(&board, Color::Black)
+        );
+        assert_eq!(
+            view.defender_reply_moves(Color::Black, None),
+            corridor_defender_reply_moves(&board, Color::Black, None)
+        );
+        assert_eq!(
+            view.attacker_move_rank(Color::Black, mv("K8")),
+            corridor_attacker_move_rank(&board, Color::Black, mv("K8"))
+        );
+        assert_eq!(
+            view.has_move_local_corridor_entry(Color::Black, mv("J8")),
+            has_forcing_local_threat_at_move(&board, Color::Black, mv("J8"))
+        );
+        assert!(
+            !view.has_move_local_corridor_entry(Color::Black, mv("C3")),
+            "quiet existing stones should not become corridor entries"
+        );
     }
 
     #[test]

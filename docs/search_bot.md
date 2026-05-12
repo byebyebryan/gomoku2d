@@ -103,13 +103,13 @@ searches fewer children. Append `+pattern-eval` to replace the default
 line-shape static eval with the lab-only pattern evaluator. These switches
 measure one pipeline axis at a time; defaults remain `near_all_r2`,
 `opponent_reply_local_threat_probe`, `tt_first_board_order`, no child cap, and
-`line_shape_eval`. Corridor search is currently not a live `SearchBot` suffix.
-The retired `+corridor-q` leaf-quiescence experiment proved the shared corridor
-module could be called from search, but it was too expensive to keep as a lab
-axis. The next planned integration is selective corridor extension, where a
-child move that enters a narrow corridor can follow that corridor and resume
-normal search at the exit state instead of spending ordinary depth on each
-forced ply.
+`line_shape_eval`. The retired `+corridor-q` leaf-quiescence experiment proved
+the shared corridor module could be called from search, but it was too expensive
+to keep as a lab axis. The current live corridor suffixes are opt-in and
+default-off: `+corridor-own-dN-wM` and `+corridor-opponent-dN-wM`. They test
+selective corridor extension, where a child move that enters a narrow corridor
+can follow that corridor and resume normal search at the exit state instead of
+spending ordinary depth on each forced ply.
 
 These specs are not durable product identity, and they are not character bots
 yet. They exist so the lab can benchmark stable configs before deciding whether
@@ -162,10 +162,38 @@ search-d5+corridor-opponent-d4-w3
 search-d5+corridor-own-d6-w3+corridor-opponent-d4-w3
 ```
 
+These suffixes are not promoted candidates. Focused tests showed the first
+implementation is still too expensive:
+
+- `search-d3+corridor-own-d4-w3` lost to base `search-d3` at `1s`, `5s`, and
+  `10s` per move.
+- A shallower `search-d3+corridor-own-d1-w3` still hit budget on most moves.
+- `search-d5+tactical-cap-8+corridor-own-d2-w3` showed a small-sample strength
+  signal, but still hit budget every move.
+
+The measured issue is not simply corridor depth. The first portal entry check
+was too broad: it could treat any post-move active threat as a portal entry,
+even if the move did not create or materialize that threat. Accepted entries
+then produced many corridor exits and resumed normal searches.
+
+The current cleanup makes entry detection move-local, disables nested portal
+re-entry after a corridor resume, and reports portal acceptance/resume/exit
+metrics. Follow-up 16-game smoke checks still showed the wrong shape:
+`search-d3+corridor-own-d1-w3` lost `7-9` to base `search-d3` with `15.6%`
+budget exhaustion; `search-d3+corridor-own-d4-w3` lost `6-10` with `86.4%`
+budget exhaustion; and
+`search-d5+tactical-cap-8+corridor-own-d2-w3` lost `6-10` with `80.1%`
+budget exhaustion. Treat portal search as plumbing and instrumentation for now,
+not as a candidate preset. The useful refactor outcome is the scan-backed
+`ThreatView` seam in `gomoku-bot::tactical`, which gives rolling-frontier work a
+stable query contract without promoting the current scan-heavy portal behavior.
+
 This shape also defines the future optimization boundary. A rolling threat
 frontier can make entry detection and reply enumeration cheap by updating local
 threat facts as moves are applied and undone. That should be driven by the
 selective-extension queries above, not by the analyzer's broader report needs.
+The likely sequence is scan-backed interface first, rolling implementation in
+shadow mode second, behavior switch last.
 
 Search traces include both the result and the config:
 
@@ -181,6 +209,18 @@ Search traces include both the result and the config:
     "safety_gate": "opponent_reply_local_threat_probe",
     "move_ordering": "tt_first_board_order",
     "child_limit": null,
+    "corridor_portals": {
+      "own": {
+        "enabled": false,
+        "max_depth": 0,
+        "max_reply_width": 0
+      },
+      "opponent": {
+        "enabled": false,
+        "max_depth": 0,
+        "max_reply_width": 0
+      }
+    },
     "search_algorithm": "alpha_beta_id",
     "static_eval": "line_shape_eval"
   },
@@ -404,12 +444,12 @@ The strategic model is documented in [`corridor_search.md`](corridor_search.md);
 the replay analyzer contract is documented in
 [`game_analysis.md`](game_analysis.md).
 
-`0.4.3` should keep that restraint and run one more lab pass before UI. The next
-search-bot question is whether corridor search can become a useful live bot
-primitive: corridor-aware move ordering, selective extension through narrow
-forcing lines, escape-aware defense, and cheaper proof/memoization paths. Treat
-all of these as lab aliases or config flags until they survive tournament,
-search-cost, and replay-analysis checks. The working plan lives in
+`0.4.3` keeps that restraint and stays in the lab before UI. The live-search
+attempt showed that corridor portals are not useful as-is, but it left the bot
+with shared tactical facts, honest portal metrics, and a scan-backed threat-view
+contract. Treat all corridor behavior as lab aliases or config flags until it
+survives tournament, search-cost, and replay-analysis checks. The working plan
+lives in
 [`archive/v0_4_3_corridor_bot_plan.md`](archive/v0_4_3_corridor_bot_plan.md).
 
 The focused tactical scenario corpus is documented in

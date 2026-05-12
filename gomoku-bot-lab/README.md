@@ -137,12 +137,20 @@ interesting as an efficiency tweak for `D3 + pattern-eval`. Treat these as lab
 candidates, not product presets yet. Corridor-search strategy is documented in
 [`../docs/corridor_search.md`](../docs/corridor_search.md).
 
-The next `0.4.3` lab slice should test corridor search inside bot behavior
-before exposing more web settings. Candidate work includes corridor-aware move
-ordering, selective extension through narrow forcing lines, escape-aware
-defense, and corridor proof optimizations that make those experiments cheaper.
-Keep these as lab aliases/config flags until they survive tournament,
-search-cost, and replay-analysis checks. The working plan lives in
+The current `0.4.3` lab slice is testing corridor search inside bot behavior
+before exposing more web settings. The first opt-in portal suffixes are
+default-off and are not promoted candidates yet:
+`+corridor-own-dN-wM` and `+corridor-opponent-dN-wM`. Early focused runs show
+the plumbing works, but the first implementation was too expensive because
+entry detection was too broad and accepted portals created too many resumed
+searches. The current checkpoint tightens portal entry to the candidate move,
+disables nested re-entry after a corridor resume, and surfaces portal
+acceptance/resume/exit metrics in reports. It also adds a scan-backed
+`ThreatView` seam so future rolling-frontier work can replace scans behind a
+stable query contract. Focused post-cleanup smoke runs still lost to the base
+anchors and remained budget-bound, so keep all corridor knobs as lab
+aliases/config flags until cheaper threat facts make the portal model practical.
+The working plan lives in
 [`../docs/archive/v0_4_3_corridor_bot_plan.md`](../docs/archive/v0_4_3_corridor_bot_plan.md).
 
 ### Eval harness

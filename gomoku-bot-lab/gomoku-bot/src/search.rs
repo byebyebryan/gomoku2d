@@ -1825,7 +1825,7 @@ fn resume_normal_search_after_corridor(
     legality_gate: LegalityGate,
     move_ordering: MoveOrdering,
     child_limit: Option<usize>,
-    corridor_portals: CorridorPortalConfig,
+    _corridor_portals: CorridorPortalConfig,
     static_eval: StaticEvaluation,
     nodes: &mut u64,
     metrics: &mut SearchMetrics,
@@ -1846,7 +1846,7 @@ fn resume_normal_search_after_corridor(
         legality_gate,
         move_ordering,
         child_limit,
-        corridor_portals,
+        CorridorPortalConfig::DISABLED,
         static_eval,
         nodes,
         metrics,
@@ -3720,10 +3720,7 @@ mod tests {
     #[test]
     fn corridor_portal_tracks_opponent_side_entries_below_root() {
         let mut board = Board::new(RuleConfig::default());
-        apply_moves(
-            &mut board,
-            &["H8", "A1", "H9", "A2", "I8", "A3", "J10", "A4"],
-        );
+        apply_moves(&mut board, &["A1", "H8", "A2", "I8", "A3", "J8"]);
         assert_eq!(board.current_player, Color::Black);
 
         let mut config = SearchBotConfig::custom_depth(2);
@@ -3747,6 +3744,52 @@ mod tests {
                 > 0
         );
         assert_eq!(metrics["corridor_own_entries_accepted"], 0);
+    }
+
+    #[test]
+    fn resumed_search_after_corridor_does_not_reenter_portals() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(&mut board, &["H8", "A1", "I8", "A2", "J8", "A3"]);
+        assert_eq!(board.current_player, Color::Black);
+
+        let mut portal_config = CorridorPortalConfig::default();
+        portal_config.own = CorridorPortalSideConfig {
+            enabled: true,
+            max_depth: 2,
+            max_reply_width: 3,
+        };
+        let mut tt = HashMap::new();
+        let zobrist = ZobristTable::new(board.config.board_size);
+        let hash = board.hash_with(&zobrist);
+        let mut nodes = 0u64;
+        let mut metrics = SearchMetrics::default();
+
+        let _ = resume_normal_search_after_corridor(
+            &mut board,
+            hash,
+            1,
+            i32::MIN + 1,
+            i32::MAX,
+            Color::Black,
+            Color::Black,
+            &mut tt,
+            &zobrist,
+            CandidateSource::NearAll { radius: 2 },
+            LegalityGate::ExactRules,
+            MoveOrdering::TranspositionFirstBoardOrder,
+            None,
+            portal_config,
+            StaticEvaluation::LineShapeEval,
+            &mut nodes,
+            &mut metrics,
+            SearchDeadline::new(Instant::now(), Some(Duration::from_millis(100)), None, None),
+        );
+
+        assert_eq!(metrics.corridor_resume_searches, 1);
+        assert_eq!(
+            metrics.corridor_entries_accepted, 0,
+            "resuming normal search from a corridor exit should not immediately re-enter portals"
+        );
     }
 
     #[test]
