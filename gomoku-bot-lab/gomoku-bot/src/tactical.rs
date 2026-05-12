@@ -351,15 +351,28 @@ pub fn local_threat_facts_for_player(board: &Board, player: Color) -> Vec<LocalT
 pub fn raw_local_threat_facts_for_player(board: &Board, player: Color) -> Vec<LocalThreatFact> {
     let mut facts = Vec::new();
     board.for_each_occupied_color(player, |row, col| {
-        let mv = Move { row, col };
-        let existing = BoardExistingMove { board, mv, player };
-        for &(dr, dc) in &DIRS {
-            if let Some(fact) = local_threat_fact_in_direction_view(&existing, dr, dc) {
-                push_unique_fact(&mut facts, fact);
-            }
+        for fact in raw_local_threat_facts_at_existing_move(board, player, Move { row, col }) {
+            push_unique_fact(&mut facts, fact);
         }
     });
     normalize_local_threat_facts(facts)
+}
+
+pub fn raw_local_threat_facts_at_existing_move(
+    board: &Board,
+    player: Color,
+    mv: Move,
+) -> Vec<LocalThreatFact> {
+    if !board.has_color(mv.row, mv.col, player) {
+        return Vec::new();
+    }
+
+    let existing = BoardExistingMove { board, mv, player };
+    normalize_local_threat_facts(
+        DIRS.iter()
+            .filter_map(|&(dr, dc)| local_threat_fact_in_direction_view(&existing, dr, dc))
+            .collect(),
+    )
 }
 
 pub fn has_forcing_local_threat(board: &Board, player: Color) -> bool {
