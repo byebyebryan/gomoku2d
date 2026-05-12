@@ -1819,7 +1819,7 @@ fn resume_normal_search_after_corridor(
     beta: i32,
     color: Color,
     root_color: Color,
-    tt: &mut HashMap<u64, TTEntry>,
+    _tt: &mut HashMap<u64, TTEntry>,
     zobrist: &ZobristTable,
     candidate_source: CandidateSource,
     legality_gate: LegalityGate,
@@ -1832,6 +1832,7 @@ fn resume_normal_search_after_corridor(
     deadline: SearchDeadline,
 ) -> SearchOutcome {
     metrics.corridor_resume_searches += 1;
+    let mut resume_tt = HashMap::new();
     negamax(
         board,
         hash,
@@ -1840,7 +1841,7 @@ fn resume_normal_search_after_corridor(
         beta,
         color,
         root_color,
-        tt,
+        &mut resume_tt,
         zobrist,
         candidate_source,
         legality_gate,
@@ -3790,6 +3791,62 @@ mod tests {
             metrics.corridor_entries_accepted, 0,
             "resuming normal search from a corridor exit should not immediately re-enter portals"
         );
+    }
+
+    #[test]
+    fn resumed_search_after_corridor_ignores_shared_transposition_table() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(&mut board, &["H8", "A1", "I8", "A2", "J8", "A3"]);
+        assert_eq!(board.current_player, Color::Black);
+
+        let zobrist = ZobristTable::new(board.config.board_size);
+        let hash = board.hash_with(&zobrist);
+        let poisoned_score = 1_234_567;
+        let mut tt = HashMap::from([(
+            hash,
+            TTEntry {
+                depth: 1,
+                score: poisoned_score,
+                flag: TTFlag::Exact,
+                best_move: Some(mv("H9")),
+            },
+        )]);
+        let mut nodes = 0u64;
+        let mut metrics = SearchMetrics::default();
+
+        let outcome = resume_normal_search_after_corridor(
+            &mut board,
+            hash,
+            1,
+            i32::MIN + 1,
+            i32::MAX,
+            Color::Black,
+            Color::Black,
+            &mut tt,
+            &zobrist,
+            CandidateSource::NearAll { radius: 2 },
+            LegalityGate::ExactRules,
+            MoveOrdering::TranspositionFirstBoardOrder,
+            None,
+            CorridorPortalConfig::default(),
+            StaticEvaluation::LineShapeEval,
+            &mut nodes,
+            &mut metrics,
+            SearchDeadline::new(Instant::now(), Some(Duration::from_millis(100)), None, None),
+        );
+
+        assert_ne!(
+            outcome.score, poisoned_score,
+            "resumed corridor searches must not reuse entries from the parent portal-enabled table"
+        );
+        assert_eq!(metrics.tt_hits, 0);
+        assert_eq!(metrics.tt_cutoffs, 0);
+        assert_eq!(
+            tt.len(),
+            1,
+            "resume search should not write to the shared table"
+        );
+        assert_eq!(tt.get(&hash).map(|entry| entry.score), Some(poisoned_score));
     }
 
     #[test]

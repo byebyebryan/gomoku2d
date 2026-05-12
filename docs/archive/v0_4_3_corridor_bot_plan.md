@@ -215,14 +215,17 @@ Rolling frontier is still likely the next structural step, but it should be
 treated as a correctness-sensitive cache, not as a tactical feature by itself.
 
 Target abstraction: a scan-backed `ThreatView` first, then a rolling
-implementation later. The scan-backed contract is now part of the `0.4.3`
-cleanup. Consumers should ask the view:
+implementation later. The minimal scan-backed contract is now part of the
+`0.4.3` cleanup for the current search-facing queries:
 
-- whether the last move created, materialized, or continued a corridor threat,
+- whether a specific move creates or materializes a local corridor threat,
 - the active immediate/imminent threats by side,
-- legal defender replies for the current corridor,
-- raw versus Renju-legal threat squares,
-- why the corridor exited.
+- legal defender replies for the current corridor threat,
+- attacker move rank for tactical ordering.
+
+The richer rolling-frontier contract should be added later only where a
+consumer needs it. Likely future queries include raw versus Renju-legal threat
+squares, move deltas, and corridor exit reasons.
 
 The rolling version should update only facts whose local lines changed after an
 apply/undo. It must preserve the raw/legal/forbidden split because Renju can

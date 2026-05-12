@@ -431,11 +431,19 @@ The safe migration path is incremental:
 5. Switch only the portal entry/reply path to the rolling view after the shadow
    mode is clean and the portal semantics are already move-local.
 
-Steps 1 and 2 are now the `0.4.3` cleanup boundary: `gomoku-bot::tactical`
-exposes a `ThreatView` contract and a `ScanThreatView` reference backed by the
-existing scanner. Rolling frontier is still likely the next structural step, but
-not the next blind rewrite. First keep the portal asking the right local
-question; then make that question incremental.
+Steps 1 and 2 are now the `0.4.3` cleanup boundary, but only for the minimal
+search-facing seam. `gomoku-bot::tactical` exposes a `ThreatView` contract and a
+`ScanThreatView` reference backed by the existing scanner for the queries the
+current portal code actually uses:
+
+- current active immediate/imminent corridor threats,
+- whether a specific move creates or materializes a local corridor entry,
+- defender replies to one active threat,
+- attacker move rank for tactical ordering.
+
+Rolling frontier is still likely the next structural step, but not the next
+blind rewrite. First keep the portal asking the right local question; then make
+that question incremental.
 
 #### Rolling Frontier Drilldown
 
@@ -485,7 +493,8 @@ That invalidation window is intentionally conservative. It is acceptable to
 rebuild more local facts than strictly necessary. It is not acceptable to miss a
 fact or keep a stale legal/forbidden classification.
 
-The first useful queries are deliberately narrow:
+The current `ThreatView` is intentionally smaller than the final frontier API.
+The future rolling contract should grow only when a consumer needs more detail:
 
 - `move_threat_delta(board, mv)`: what threat facts are created, materialized,
   continued, neutralized, or made illegal by this exact move?
