@@ -3753,11 +3753,13 @@ mod tests {
         apply_moves(&mut board, &["H8", "A1", "I8", "A2", "J8", "A3"]);
         assert_eq!(board.current_player, Color::Black);
 
-        let mut portal_config = CorridorPortalConfig::default();
-        portal_config.own = CorridorPortalSideConfig {
-            enabled: true,
-            max_depth: 2,
-            max_reply_width: 3,
+        let portal_config = CorridorPortalConfig {
+            own: CorridorPortalSideConfig {
+                enabled: true,
+                max_depth: 2,
+                max_reply_width: 3,
+            },
+            ..Default::default()
         };
         let mut tt = HashMap::new();
         let zobrist = ZobristTable::new(board.config.board_size);

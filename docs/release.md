@@ -56,7 +56,7 @@ If screenshots or recordings should show the upcoming version, bump the web
 package version before capturing:
 
 ```sh
-VERSION=0.4.2
+VERSION=0.4.3
 scripts/set-web-version.sh "$VERSION"
 ```
 
@@ -194,7 +194,7 @@ gh run view <run-id> --log-failed
 After reviewing `git status` and the diff, finalize the prepared release:
 
 ```sh
-VERSION=0.4.2
+VERSION=0.4.3
 scripts/release.sh --check "$VERSION"
 scripts/release.sh "$VERSION"
 ```
