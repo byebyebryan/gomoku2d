@@ -327,18 +327,28 @@ That release remains lab-first:
 - keep UI, settings, and product preset work out of scope unless the lab result
   is clear enough to name
 
-The current recommendation is to make `0.4.4` the rolling-frontier lab pass,
-not the UI bridge. Corridor portals need cheap, reliable local threat facts
-before they can be a practical bot primitive. The `0.4.3` scan-backed portal
-suffixes now provide move-local entry semantics and useful cost metrics, but
-focused smoke checks are still slower, weaker, and budget-bound. The durable
-`0.4.3` result is therefore the scan-backed `ThreatView` seam and unified
-threat vocabulary, not a promoted corridor bot. Rolling frontier is the likely
-shape for making those facts cheap enough, but it is
-correctness-sensitive enough to deserve its own checkpoint: define the
-scan-backed `ThreatView` seam, validate an incremental implementation in shadow
-mode, and only then switch hot portal entry/reply paths if the cache is both
-equivalent and faster.
+`0.4.4` is the rolling-frontier lab pass, not the UI bridge. Corridor portals
+need cheap, reliable local threat facts before they can be a practical bot
+primitive. The `0.4.3` scan-backed portal suffixes now provide move-local entry
+semantics and useful cost metrics, but focused smoke checks are still slower,
+weaker, and budget-bound. The durable `0.4.3` result is therefore the
+scan-backed `ThreatView` seam and unified threat vocabulary, not a promoted
+corridor bot.
+
+The `0.4.4` checkpoint should treat rolling frontier as a correctness-sensitive
+cache architecture:
+
+- keep `Board` as the authority for stones, turn, result, and exact legality;
+- normalize tactical facts so scan-backed and cached views can be compared
+  exactly;
+- add a rolling `ThreatView` implementation that updates alongside apply/undo;
+- validate it against `ScanThreatView` on tactical fixtures, random sequences,
+  and Renju forbidden cases;
+- run it in shadow mode before any hot path uses it for behavior;
+- switch only a narrow lab path, such as corridor portal entry/reply queries,
+  after parity and cost metrics are clean.
+
+The working plan lives in `docs/archive/v0_4_4_frontier_plan.md`.
 
 `0.4.5` becomes the earliest likely UI bridge for bot controls/settings. Expose
 only knobs that have survived lab evidence. A reasonable product-facing starting

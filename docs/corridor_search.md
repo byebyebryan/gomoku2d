@@ -528,6 +528,9 @@ The main release-boundary implication is that this is too large for the same
 checkpoint as the current portal cleanup. `0.4.3` finishes move-local portal
 semantics, report metrics, and the scan-backed `ThreatView` seam. `0.4.4`
 should be the rolling-frontier lab pass if the seam proves stable.
+
+The `0.4.4` working plan lives in
+[`archive/v0_4_4_frontier_plan.md`](archive/v0_4_4_frontier_plan.md).
 Player-facing bot settings should wait until a later `0.4.x` slice, likely
 `0.4.5`, so the UI exposes product language instead of unresolved cache/search
 knobs.
