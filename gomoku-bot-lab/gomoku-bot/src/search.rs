@@ -5,7 +5,9 @@ use std::sync::OnceLock;
 use std::time::Duration;
 
 use crate::corridor;
-use crate::frontier::RollingThreatFrontier;
+use crate::frontier::{
+    FrontierAnnotationSource, FrontierUpdateTimings, RollingFrontierFeatures, RollingThreatFrontier,
+};
 use crate::tactical::{
     local_threat_facts_after_move, LocalThreatKind, ScanThreatView, SearchThreatPolicy,
     TacticalMoveAnnotation, ThreatView,
@@ -505,6 +507,18 @@ pub struct SearchMetrics {
     pub threat_view_frontier_rebuild_ns: u64,
     pub threat_view_frontier_queries: u64,
     pub threat_view_frontier_query_ns: u64,
+    pub threat_view_frontier_delta_captures: u64,
+    pub threat_view_frontier_delta_capture_ns: u64,
+    pub threat_view_frontier_move_fact_updates: u64,
+    pub threat_view_frontier_move_fact_update_ns: u64,
+    pub threat_view_frontier_annotation_dirty_marks: u64,
+    pub threat_view_frontier_annotation_dirty_mark_ns: u64,
+    pub threat_view_frontier_clean_annotation_queries: u64,
+    pub threat_view_frontier_clean_annotation_query_ns: u64,
+    pub threat_view_frontier_dirty_annotation_queries: u64,
+    pub threat_view_frontier_dirty_annotation_query_ns: u64,
+    pub threat_view_frontier_fallback_annotation_queries: u64,
+    pub threat_view_frontier_fallback_annotation_query_ns: u64,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -645,6 +659,55 @@ impl SearchMetrics {
             .saturating_add(duration_ns(elapsed));
     }
 
+    fn record_threat_view_frontier_update_parts(&mut self, timings: FrontierUpdateTimings) {
+        if let Some(elapsed) = timings.delta_capture {
+            self.threat_view_frontier_delta_captures += 1;
+            self.threat_view_frontier_delta_capture_ns = self
+                .threat_view_frontier_delta_capture_ns
+                .saturating_add(duration_ns(elapsed));
+        }
+        if let Some(elapsed) = timings.move_fact_update {
+            self.threat_view_frontier_move_fact_updates += 1;
+            self.threat_view_frontier_move_fact_update_ns = self
+                .threat_view_frontier_move_fact_update_ns
+                .saturating_add(duration_ns(elapsed));
+        }
+        if let Some(elapsed) = timings.annotation_dirty_mark {
+            self.threat_view_frontier_annotation_dirty_marks += 1;
+            self.threat_view_frontier_annotation_dirty_mark_ns = self
+                .threat_view_frontier_annotation_dirty_mark_ns
+                .saturating_add(duration_ns(elapsed));
+        }
+    }
+
+    fn record_threat_view_frontier_annotation_query(
+        &mut self,
+        elapsed: Duration,
+        source: FrontierAnnotationSource,
+    ) {
+        self.record_threat_view_frontier_query(elapsed);
+        match source {
+            FrontierAnnotationSource::CleanCache => {
+                self.threat_view_frontier_clean_annotation_queries += 1;
+                self.threat_view_frontier_clean_annotation_query_ns = self
+                    .threat_view_frontier_clean_annotation_query_ns
+                    .saturating_add(duration_ns(elapsed));
+            }
+            FrontierAnnotationSource::DirtyRecompute => {
+                self.threat_view_frontier_dirty_annotation_queries += 1;
+                self.threat_view_frontier_dirty_annotation_query_ns = self
+                    .threat_view_frontier_dirty_annotation_query_ns
+                    .saturating_add(duration_ns(elapsed));
+            }
+            FrontierAnnotationSource::Fallback => {
+                self.threat_view_frontier_fallback_annotation_queries += 1;
+                self.threat_view_frontier_fallback_annotation_query_ns = self
+                    .threat_view_frontier_fallback_annotation_query_ns
+                    .saturating_add(duration_ns(elapsed));
+            }
+        }
+    }
+
     fn trace(self) -> serde_json::Value {
         serde_json::to_value(self).expect("search metrics should serialize")
     }
@@ -668,17 +731,40 @@ impl SearchState {
         Self::from_board_with_frontier(board, zobrist, true)
     }
 
-    fn from_board_for_mode(board: Board, zobrist: &ZobristTable, mode: ThreatViewMode) -> Self {
-        Self::from_board_with_frontier(board, zobrist, mode.uses_frontier())
+    fn from_board_for_config(
+        board: Board,
+        zobrist: &ZobristTable,
+        mode: ThreatViewMode,
+        corridor_portals: CorridorPortalConfig,
+    ) -> Self {
+        Self::from_board_with_frontier_features(
+            board,
+            zobrist,
+            frontier_features_for_search(mode, corridor_portals),
+        )
     }
 
+    #[cfg(test)]
     fn from_board_with_frontier(
         board: Board,
         zobrist: &ZobristTable,
         enable_frontier: bool,
     ) -> Self {
+        Self::from_board_with_frontier_features(
+            board,
+            zobrist,
+            enable_frontier.then_some(RollingFrontierFeatures::Full),
+        )
+    }
+
+    fn from_board_with_frontier_features(
+        board: Board,
+        zobrist: &ZobristTable,
+        frontier_features: Option<RollingFrontierFeatures>,
+    ) -> Self {
         let hash = board.hash_with(zobrist);
-        let frontier = enable_frontier.then(|| RollingThreatFrontier::from_board(&board));
+        let frontier = frontier_features
+            .map(|features| RollingThreatFrontier::from_board_with_features(&board, features));
         Self {
             board,
             frontier,
@@ -727,9 +813,10 @@ impl SearchState {
         let board_result = self.board.apply_trusted_legal_move(mv);
         if let Some(frontier) = &mut self.frontier {
             let start = Instant::now();
-            let frontier_result = frontier.apply_trusted_legal_move(mv);
+            let (frontier_result, timings) = frontier.apply_trusted_legal_move_profiled(mv);
             if let Some(metrics) = metrics {
                 metrics.record_threat_view_frontier_rebuild(start.elapsed());
+                metrics.record_threat_view_frontier_update_parts(timings);
             }
             debug_assert_eq!(
                 board_result, frontier_result,
@@ -752,15 +839,30 @@ impl SearchState {
         self.board.undo_move(mv);
         if let Some(frontier) = &mut self.frontier {
             let start = Instant::now();
-            frontier.undo_move(mv);
+            let timings = frontier.undo_move_profiled(mv);
             if let Some(metrics) = metrics {
                 metrics.record_threat_view_frontier_rebuild(start.elapsed());
+                metrics.record_threat_view_frontier_update_parts(timings);
             }
         }
         self.hash = self
             .hash_stack
             .pop()
             .expect("search state undo_move called without matching apply");
+    }
+}
+
+fn frontier_features_for_search(
+    mode: ThreatViewMode,
+    corridor_portals: CorridorPortalConfig,
+) -> Option<RollingFrontierFeatures> {
+    if !mode.uses_frontier() {
+        return None;
+    }
+    if corridor_portals == CorridorPortalConfig::DISABLED {
+        Some(RollingFrontierFeatures::TacticalOnly)
+    } else {
+        Some(RollingFrontierFeatures::Full)
     }
 }
 
@@ -1081,8 +1183,10 @@ fn rolling_frontier_tactical_annotation_timed(
     metrics: &mut SearchMetrics,
 ) -> TacticalMoveAnnotation {
     let start = Instant::now();
-    let annotation = state.threat_view().search_annotation_for_move(mv);
-    metrics.record_threat_view_frontier_query(start.elapsed());
+    let (annotation, source) = state
+        .threat_view()
+        .search_annotation_for_move_with_source(mv);
+    metrics.record_threat_view_frontier_annotation_query(start.elapsed(), source);
     annotation
 }
 
@@ -3151,10 +3255,11 @@ impl Bot for SearchBot {
         let mut depth_reached = 0;
         let mut total_nodes = 0u64;
         let mut best_corridor_extra_plies = 0u32;
-        let mut state = SearchState::from_board_for_mode(
+        let mut state = SearchState::from_board_for_config(
             board.clone(),
             &self.zobrist,
             self.config.threat_view_mode,
+            self.config.corridor_portals,
         );
 
         for depth in 1..=self.config.max_depth {
@@ -4230,6 +4335,16 @@ mod tests {
         );
         assert!(
             trace["metrics"]["threat_view_frontier_queries"]
+                .as_u64()
+                .unwrap()
+                > 0
+        );
+        assert_eq!(
+            trace["metrics"]["threat_view_frontier_move_fact_updates"], 0,
+            "tactical-only rolling should not maintain corridor move facts when portals are disabled"
+        );
+        assert!(
+            trace["metrics"]["threat_view_frontier_annotation_dirty_marks"]
                 .as_u64()
                 .unwrap()
                 > 0

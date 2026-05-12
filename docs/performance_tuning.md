@@ -451,6 +451,53 @@ Interpretation:
   sources as a lab axis and run a clean survivor comparison only if we need to
   choose between efficient pattern-eval variants.
 
+## `0.4.4` rolling frontier checkpoint
+
+Date: `2026-05-12`
+
+Rolling frontier now has two feature modes:
+
+- `Full` keeps tactical annotations and per-origin move facts for corridor
+  portal entry checks.
+- `TacticalOnly` keeps tactical annotations and dirty-axis tracking, but skips
+  move-fact maintenance. Normal search uses this mode when corridor portals are
+  disabled.
+
+Search metrics now split rolling-frontier cost into delta capture, move-fact
+maintenance, dirty annotation marking, clean annotation lookup, dirty annotation
+recompute, and fallback lookup. The split matters because the earlier rolling
+versions looked bad in aggregate but mixed several different costs together.
+
+Focused Renju smoke, `3` entrants x `8` games per pair, centered-suite
+openings, `4` opening plies, `1000 ms/move`, `120` max moves:
+
+| Config | Avg move time | Scan query time | Frontier query time | Frontier update time | Shadow mismatches |
+|---|---:|---:|---:|---:|---:|
+| `search-d3+tactical-cap-8` | `71.9 ms` | `27.2s` | `0s` | `0s` | `0` |
+| `search-d3+tactical-cap-8+rolling-frontier-shadow` | `100.5 ms` | `27.2s` | `12.2s` | `0.47s` | `0` |
+| `search-d3+tactical-cap-8+rolling-frontier` | `59.1 ms` | `7.4s` | `13.0s` | `0.47s` | `0` |
+
+The same smoke with `+no-safety` isolates the search-annotation path:
+
+| Config | Avg move time | Scan query time | Frontier query time | Frontier update time | Shadow mismatches |
+|---|---:|---:|---:|---:|---:|
+| `search-d3+tactical-cap-8+no-safety` | `29.7 ms` | `4.5s` | `0s` | `0s` | `0` |
+| `search-d3+tactical-cap-8+no-safety+rolling-frontier-shadow` | `45.6 ms` | `4.5s` | `2.6s` | `0.14s` | `0` |
+| `search-d3+tactical-cap-8+no-safety+rolling-frontier` | `21.9 ms` | `0s` | `2.8s` | `0.14s` | `0` |
+
+Interpretation:
+
+- Tactical-only rolling is now a net speed win for normal search in these
+  smokes: about `18%` faster with the safety gate and about `26%` faster without
+  it.
+- Shadow mode is expectedly slower because it runs both scan and rolling.
+- Move-fact update counts are `0` in tactical-only rolling, which confirms
+  normal search no longer pays corridor-specific maintenance cost when portals
+  are off.
+- Root safety and any still-scan-backed queries remain visible in the scan
+  counters, so larger anchor runs should still be used before promoting rolling
+  as a default.
+
 ## Benchmark suites
 
 ### Core
@@ -616,6 +663,9 @@ From code inspection before the first benchmark pass:
     masks instead of scanning local squares around every stone (`2026-05-04`)
 12. Replace clone/apply local-threat annotation with a virtual board-after-move
     view while preserving the same tactical facts (`2026-05-04`)
+13. Split rolling frontier into full and tactical-only feature modes so normal
+    search can cache tactical annotations without maintaining corridor
+    move-fact indexes while portals are disabled (`2026-05-12`)
 
 ### Future work
 
