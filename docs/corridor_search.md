@@ -428,8 +428,10 @@ The safe migration path is incremental:
    apply/undo sequences, tactical fixtures, and Renju forbidden fixtures.
 4. Add a rolling implementation behind a lab/shadow mode and compare it against
    the scan-backed view during tests and selected eval runs.
-5. Switch only the portal entry/reply path to the rolling view after the shadow
-   mode is clean and the portal semantics are already move-local.
+5. Validate normal-search tactical ordering through the same seam first, because
+   it is easier to compare against scan behavior than corridor recursion.
+6. Switch corridor entry/reply queries to the rolling view only after normal
+   search parity and the portal semantics are already stable.
 
 Steps 1 and 2 are now the `0.4.3` cleanup boundary, but only for the minimal
 search-facing seam. `gomoku-bot::tactical` exposes a `ThreatView` contract and a
@@ -439,11 +441,12 @@ current portal code actually uses:
 - current active immediate/imminent corridor threats,
 - whether a specific move creates or materializes a local corridor entry,
 - defender replies to one active threat,
-- attacker move rank for tactical ordering.
+- attacker move rank for tactical ordering,
+- search-ordering tactical annotation for a candidate before it is played.
 
 Rolling frontier is still likely the next structural step, but not the next
-blind rewrite. First keep the portal asking the right local question; then make
-that question incremental.
+blind rewrite. First keep normal search and the portal asking the same local
+questions through the same seam; then make those questions incremental.
 
 #### Rolling Frontier Drilldown
 
@@ -498,6 +501,8 @@ The future rolling contract should grow only when a consumer needs more detail:
 
 - `move_threat_delta(board, mv)`: what threat facts are created, materialized,
   continued, neutralized, or made illegal by this exact move?
+- `search_annotation_for_move(mv)`: search-ordering facts for a candidate
+  before it is played.
 - `active_threats(side)`: current immediate/imminent corridor threats for one
   side.
 - `corridor_replies(attacker)`: legal defender replies to the current active
@@ -521,8 +526,8 @@ Validation strategy:
 - Shadow eval runs compute both views while only scan-backed results affect
   behavior, then fail fast on the first mismatch with a board dump and changed
   fact list.
-- Only after shadow mode is clean should the portal entry/reply path switch to
-  the rolling view.
+- Only after normal-search shadow mode is clean should corridor entry/reply
+  paths become the next rolling consumer.
 
 The main release-boundary implication is that this is too large for the same
 checkpoint as the current portal cleanup. `0.4.3` finishes move-local portal

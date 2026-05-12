@@ -194,18 +194,20 @@ mode is correctness-first: `RollingThreatFrontier` still rebuilds its cached
 view after apply/undo, but search now keeps board, hash, and the optional
 frontier synchronized through one recursive `SearchState`:
 
-- `+rolling-frontier-shadow` records scan-vs-frontier portal-entry parity while
-  scan-backed answers still drive behavior. It also records scan time for those
-  checks plus frontier rebuild/update time and frontier query time.
-- `+rolling-frontier` lets portal-entry checks use the frontier-backed answer.
+- `+rolling-frontier-shadow` records scan-vs-frontier parity for portal-entry
+  checks and tactical ordering annotations while scan-backed answers still drive
+  behavior. It also records scan time, frontier rebuild/update time, and
+  frontier query time for those checks.
+- `+rolling-frontier` lets portal-entry checks and tactical ordering annotations
+  use the frontier-backed answer.
 
-Both suffixes are lab-only and only cover portal entry checks right now. They
-are useful for validation and instrumentation, not promoted bot configs. Current
-frontier cost is still rebuild-backed; localized rolling updates are a later
-step. Plain scan mode does not maintain the frontier, so the bridge does not
-put rebuild cost on the default bot path. Scan remains the reference/fallback
-implementation; rolling is added beside it behind the same `ThreatView` contract
-so parity checks, safe rollback, and targeted benchmarks stay cheap.
+Both suffixes are lab-only validation and instrumentation modes, not promoted
+bot configs. Current frontier cost is still rebuild-backed; localized rolling
+updates are a later step. Plain scan mode does not maintain the frontier, so the
+bridge does not put rebuild cost on the default bot path. Scan remains the
+reference/fallback implementation; rolling is added beside it behind the same
+`ThreatView` contract so parity checks, safe rollback, and targeted benchmarks
+stay cheap.
 
 This answered the first integration question negatively for the current
 scan-backed implementation: the semantics are cleaner, but the cost shape is
@@ -438,20 +440,22 @@ extend only narrow forcing branches with concrete replies.
 Static eval is intentionally still the global line-shape evaluator. The rejected
 local-threat eval experiments showed the risk on both sides: broad local-threat
 leaf scoring preserves global coverage but consumes too much compute, while a
-recent-frontier-only leaf score is cheaper but can create tactical tunnel vision.
-For now, tactical facts are consumers of the search pipeline, not a replacement
-for globally consistent board evaluation.
+recent-frontier-only leaf score is cheaper but can create tactical tunnel
+vision. For now, tactical facts are consumers of the search pipeline, not a
+replacement for globally consistent board evaluation. Partial/recent-frontier
+leaf scoring is retired until a full-board rolling model can prove equivalent
+coverage.
 
-Tactical annotation stays scan-based but cache-friendly. `Board` remains the
-source of truth; `gomoku-bot::tactical` computes shared raw local facts into a
-reusable move annotation, then `SearchThreatPolicy` feeds both safety and the
-lab-only `tactical_first` ordering mode. It can also pair with `child_limit` to
-test whether ordered tactical coverage lets alpha-beta search fewer children
-without changing candidate discovery. A full frontier model, where a
-`SearchPosition` tracks changed candidate masks and threat facts through
-apply/undo, is a later optimization experiment. It should wait until the fact
-schema and consumers are stable and metrics show annotation or candidate
-regeneration is worth making incremental.
+Tactical annotation is now routed through the same `ThreatView` seam as corridor
+entry checks. In normal scan mode, `Board` remains the source of truth and
+`ScanThreatView` computes the annotation directly. In rolling shadow mode, the
+scan-backed annotation still drives behavior while the frontier-backed answer is
+checked for parity. In rolling mode, tactical ordering can consume the
+frontier-backed annotation as a lab-only validation path. It can still pair with
+`child_limit` to test whether ordered tactical coverage lets alpha-beta search
+fewer children without changing candidate discovery. A full incremental
+frontier, where changed candidate masks and threat facts are updated through
+apply/undo, remains the next optimization step after parity is stable.
 
 For `v0.4.1`, the strategic target is a practice bot that climbs a tactical
 ladder:
