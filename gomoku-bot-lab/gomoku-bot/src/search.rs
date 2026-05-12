@@ -519,6 +519,8 @@ pub struct SearchMetrics {
     pub threat_view_frontier_dirty_annotation_query_ns: u64,
     pub threat_view_frontier_fallback_annotation_queries: u64,
     pub threat_view_frontier_fallback_annotation_query_ns: u64,
+    pub threat_view_frontier_memo_annotation_queries: u64,
+    pub threat_view_frontier_memo_annotation_query_ns: u64,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -708,6 +710,13 @@ impl SearchMetrics {
         }
     }
 
+    fn record_threat_view_frontier_memo_annotation_query(&mut self, elapsed: Duration) {
+        self.threat_view_frontier_memo_annotation_queries += 1;
+        self.threat_view_frontier_memo_annotation_query_ns = self
+            .threat_view_frontier_memo_annotation_query_ns
+            .saturating_add(duration_ns(elapsed));
+    }
+
     fn trace(self) -> serde_json::Value {
         serde_json::to_value(self).expect("search metrics should serialize")
     }
@@ -721,8 +730,17 @@ fn duration_ns(elapsed: Duration) -> u64 {
 struct SearchState {
     board: Board,
     frontier: Option<RollingThreatFrontier>,
+    frontier_annotation_memo: HashMap<FrontierAnnotationMemoKey, TacticalMoveAnnotation>,
     hash: u64,
     hash_stack: Vec<u64>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+struct FrontierAnnotationMemoKey {
+    hash: u64,
+    player: u8,
+    row: usize,
+    col: usize,
 }
 
 impl SearchState {
@@ -768,6 +786,7 @@ impl SearchState {
         Self {
             board,
             frontier,
+            frontier_annotation_memo: HashMap::new(),
             hash,
             hash_stack: Vec::new(),
         }
@@ -785,6 +804,15 @@ impl SearchState {
 
     fn hash(&self) -> u64 {
         self.hash
+    }
+
+    fn frontier_annotation_memo_key(&self, mv: Move) -> FrontierAnnotationMemoKey {
+        FrontierAnnotationMemoKey {
+            hash: self.hash,
+            player: self.board.current_player as u8,
+            row: mv.row,
+            col: mv.col,
+        }
     }
 
     #[cfg(test)]
@@ -1135,7 +1163,7 @@ fn annotate_tactical_move(board: &Board, mv: Move) -> TacticalMoveAnnotation {
 }
 
 fn annotate_legal_tactical_move_counted(
-    state: &SearchState,
+    state: &mut SearchState,
     mv: Move,
     threat_view_mode: ThreatViewMode,
     metrics: &mut SearchMetrics,
@@ -1146,7 +1174,7 @@ fn annotate_legal_tactical_move_counted(
 }
 
 fn tactical_annotation_for_threat_view_mode(
-    state: &SearchState,
+    state: &mut SearchState,
     mv: Move,
     mode: ThreatViewMode,
     metrics: &mut SearchMetrics,
@@ -1178,15 +1206,27 @@ fn scan_tactical_annotation_timed(
 }
 
 fn rolling_frontier_tactical_annotation_timed(
-    state: &SearchState,
+    state: &mut SearchState,
     mv: Move,
     metrics: &mut SearchMetrics,
 ) -> TacticalMoveAnnotation {
     let start = Instant::now();
-    let (annotation, source) = state
-        .threat_view()
-        .search_annotation_for_move_with_source(mv);
+    let key = state.frontier_annotation_memo_key(mv);
+    if let Some(annotation) = state.frontier_annotation_memo.get(&key).cloned() {
+        metrics.record_threat_view_frontier_memo_annotation_query(start.elapsed());
+        return annotation;
+    }
+
+    let (annotation, source) = {
+        let frontier = state.threat_view();
+        frontier.search_annotation_for_move_with_source(mv)
+    };
     metrics.record_threat_view_frontier_annotation_query(start.elapsed(), source);
+    if source == FrontierAnnotationSource::DirtyRecompute {
+        state
+            .frontier_annotation_memo
+            .insert(key, annotation.clone());
+    }
     annotation
 }
 
@@ -1914,7 +1954,7 @@ struct OrderedMove {
 }
 
 fn order_root_moves(
-    state: &SearchState,
+    state: &mut SearchState,
     moves: Vec<Move>,
     move_ordering: MoveOrdering,
     tt_move: Option<Move>,
@@ -1938,7 +1978,7 @@ fn order_root_moves(
 }
 
 fn order_search_moves(
-    state: &SearchState,
+    state: &mut SearchState,
     moves: Vec<Move>,
     move_ordering: MoveOrdering,
     tt_move: Option<Move>,
@@ -1981,15 +2021,15 @@ fn order_tt_first(mut moves: Vec<Move>, tt_move: Option<Move>) -> Vec<Move> {
 }
 
 fn order_moves_tactical_first(
-    state: &SearchState,
+    state: &mut SearchState,
     moves: Vec<Move>,
     tt_move: Option<Move>,
     threat_view_mode: ThreatViewMode,
     metrics: &mut SearchMetrics,
     phase: SearchMetricPhase,
 ) -> Vec<OrderedMove> {
-    let board = state.board();
-    let opponent_wins = board.immediate_winning_moves_for(board.current_player.opponent());
+    let opponent = state.board().current_player.opponent();
+    let opponent_wins = state.board().immediate_winning_moves_for(opponent);
     let mut scored = moves
         .into_iter()
         .enumerate()
@@ -3859,9 +3899,9 @@ mod tests {
         );
         let mut metrics = SearchMetrics::default();
         let zobrist = ZobristTable::new(win_board.config.board_size);
-        let state = SearchState::from_board_with_frontier(win_board, &zobrist, false);
+        let mut state = SearchState::from_board_with_frontier(win_board, &zobrist, false);
         let ordered = order_moves_tactical_first(
-            &state,
+            &mut state,
             vec![mv("B2"), mv("E1"), mv("L8")],
             None,
             ThreatViewMode::Scan,
@@ -3882,9 +3922,9 @@ mod tests {
         );
         let mut metrics = SearchMetrics::default();
         let zobrist = ZobristTable::new(shape_board.config.board_size);
-        let state = SearchState::from_board_with_frontier(shape_board, &zobrist, false);
+        let mut state = SearchState::from_board_with_frontier(shape_board, &zobrist, false);
         let ordered = order_moves_tactical_first(
-            &state,
+            &mut state,
             vec![mv("B2"), mv("K8"), mv("E1")],
             None,
             ThreatViewMode::Scan,
@@ -4382,6 +4422,39 @@ mod tests {
                 .unwrap()
                 > 0
         );
+    }
+
+    #[test]
+    fn rolling_threat_view_memoizes_dirty_tactical_annotations_per_state() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(&mut board, &["B8", "A1", "C8", "A2", "D8"]);
+        let zobrist = ZobristTable::new(board.config.board_size);
+        let mut state = SearchState::from_board_for_config(
+            board,
+            &zobrist,
+            ThreatViewMode::Rolling,
+            CorridorPortalConfig::DISABLED,
+        );
+
+        state.apply_trusted_legal_move(mv("E8"), &zobrist);
+
+        let mut metrics = SearchMetrics::default();
+        let first = tactical_annotation_for_threat_view_mode(
+            &mut state,
+            mv("A8"),
+            ThreatViewMode::Rolling,
+            &mut metrics,
+        );
+        let second = tactical_annotation_for_threat_view_mode(
+            &mut state,
+            mv("A8"),
+            ThreatViewMode::Rolling,
+            &mut metrics,
+        );
+
+        assert_eq!(first, second);
+        assert_eq!(metrics.threat_view_frontier_dirty_annotation_queries, 1);
+        assert_eq!(metrics.threat_view_frontier_queries, 1);
     }
 
     #[test]

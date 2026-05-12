@@ -498,6 +498,22 @@ Interpretation:
   counters, so larger anchor runs should still be used before promoting rolling
   as a default.
 
+Follow-up memo checkpoint:
+
+- Directly writing dirty recomputes back into the rolling frontier is unsafe
+  unless undo restores previous raw annotations, so dirty recompute results are
+  memoized in `SearchState` by board hash, player, and move instead.
+- D3 safety-enabled paired smoke improved to rolling `39.9 ms/move` versus scan
+  `49.3 ms/move`.
+- D3 no-safety paired smoke improved to rolling `18.8 ms/move` versus scan
+  `26.7 ms/move`.
+- D5 cap8 paired smoke was roughly tied on time, rolling `159.5 ms/move` versus
+  scan `159.7 ms/move`, but rolling searched more nodes and had no budget
+  exhaustion in that small sample.
+- Remaining scan cost is now mostly the root safety gate. It should become
+  frontier-backed rather than disabled; the current blocker is that safety runs
+  before the root `SearchState` exists.
+
 ## Benchmark suites
 
 ### Core
