@@ -12,6 +12,55 @@ their own section.
 
 ## [Unreleased]
 
+## [0.4.3] - 2026-05-12
+
+**Theme: unify corridor search with live bot experiments, then draw the line
+before the next frontier rewrite.**
+
+`0.4.3` stays in the Rust lab. It started from the question left by `0.4.2`:
+can the replay analyzer's corridor model improve live bot search directly? The
+answer for the current scan-backed implementation is "not yet." Portal-style
+selective extension is semantically promising, but the current cost shape is
+too expensive to promote as a stronger bot preset.
+
+The value of the release is the foundation it leaves behind: shared tactical
+threat semantics, move-local corridor entry detection, side-specific portal
+controls, and enough instrumentation to make the next performance bottleneck
+visible. That sets up the next serious lab pass around rolling threat-frontier
+data instead of more blind knob turning.
+
+### Bot lab
+
+- Moved corridor logic closer to the bot side so replay analysis and live search
+  share the same tactical vocabulary instead of carrying parallel detectors.
+- Retired the standalone corridor-bot spike and the earlier leaf-quiescence
+  integration shape after they proved useful for plumbing, but wrong for
+  shipped behavior.
+- Added opt-in corridor portal suffixes for live search experiments, including
+  side-specific own/opponent controls, corridor depth and width bounds, resume
+  handling, and portal cost metrics.
+- Tightened portal semantics so entries are move-local, resumed normal searches
+  cannot immediately re-enter portals, and resumed searches do not reuse or
+  contaminate the parent transposition table.
+- Unified tactical and corridor threat handling around a scan-backed
+  `ThreatView` seam, keeping the current scanner as the reference while
+  preparing for a future rolling threat frontier.
+- Validated that scan-backed portals remain lab-only for now: focused smoke
+  checks showed cleaner behavior and better observability, but not a promotable
+  strength/cost tradeoff.
+
+### Repo and docs
+
+- Updated `docs/search_bot.md`, `docs/corridor_search.md`, roadmap notes, and
+  the `v0.4.3` archive plan to frame corridor portals as infrastructure and
+  evidence, not a new difficulty preset.
+- Captured the rolling-frontier decision frame: exact apply/undo discipline,
+  raw versus Renju-legal threat facts, shadow validation, and a conservative
+  `0.4.4` boundary before any behavior switch.
+- Extended bot-report metrics so future portal and frontier experiments can
+  expose accepted entries, followed corridor plies, resume searches, and exit
+  reasons instead of hiding the work inside ordinary alpha-beta cost.
+
 ## [0.4.2] - 2026-05-08
 
 **Theme: establish corridor search as the strategic foundation for analysis and
@@ -676,7 +725,8 @@ together in one canvas-driven surface. That lesson drove the `v0.2.1` rewrite.
   concerns blurred together.
 - Expressive UI language, but not scalable beyond one canvas.
 
-[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.3...HEAD
+[0.4.3]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/byebyebryan/gomoku2d/compare/v0.3.3...v0.4.0
