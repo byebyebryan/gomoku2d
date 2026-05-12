@@ -49,6 +49,14 @@ The split should stay explicit:
 - `ScanThreatView`: reference implementation backed by current scanners.
 - `RollingThreatFrontier`: derived cache synchronized with board apply/undo.
 
+Design decision: rolling stays alongside scan instead of replacing it. Scan is
+the semantic reference, the safe fallback, and the simplest way to diagnose a
+rolling mismatch. Rolling is an alternate implementation behind the same
+`ThreatView` contract, enabled only by explicit lab/config flags until it proves
+both parity and useful cost shape. This keeps a little extra plumbing around,
+but it pays for itself by making future frontier work reversible, shadowable,
+and benchmarkable.
+
 The frontier stores normalized tactical facts, not gameplay state. A useful
 fact should carry enough information to compare, filter, and update without
 re-reading report-specific structures:

@@ -203,7 +203,9 @@ Both suffixes are lab-only and only cover portal entry checks right now. They
 are useful for validation and instrumentation, not promoted bot configs. Current
 frontier cost is still rebuild-backed; localized rolling updates are a later
 step. Plain scan mode does not maintain the frontier, so the bridge does not
-put rebuild cost on the default bot path.
+put rebuild cost on the default bot path. Scan remains the reference/fallback
+implementation; rolling is added beside it behind the same `ThreatView` contract
+so parity checks, safe rollback, and targeted benchmarks stay cheap.
 
 This answered the first integration question negatively for the current
 scan-backed implementation: the semantics are cleaner, but the cost shape is
