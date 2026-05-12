@@ -168,6 +168,10 @@ Current frontier suffixes are intentionally narrow:
   implementation is still rebuild-backed after apply/undo, so this is a
   validation and instrumentation hook rather than a performance feature.
 
+Search now threads an optional frontier through recursive apply/undo with the
+board and hash. The default scan mode leaves that frontier disabled; the rolling
+suffixes enable it for parity and cost measurement.
+
 ### Eval harness
 
 `gomoku-eval` runs head-to-head series, self-play, and multi-threaded bot
