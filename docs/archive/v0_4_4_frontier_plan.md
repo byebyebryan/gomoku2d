@@ -294,3 +294,38 @@ tournament confirms behavior parity under the full report workload. The next
 optimization question is no longer "can rolling beat scan at all?" but "can
 dirty annotation recompute and remaining root scan queries be reduced without
 reintroducing eager move-fact cost?"
+
+## Search-State Memo Checkpoint
+
+Dirty annotation write-back is not safe as a direct frontier-cache mutation
+unless undo also restores the previous raw annotation value. A child search can
+dirty, recompute, and clean an annotation, then undo back to a parent state that
+would incorrectly see the child annotation as clean. To avoid reintroducing that
+apply/undo burden, the next checkpoint caches dirty recompute results in
+`SearchState` instead:
+
+- memo key: current incremental board hash, current player, and candidate move;
+- memo value: effective tactical annotation for that exact state;
+- only dirty recomputes are memoized, because clean frontier lookups are already
+  cheap;
+- apply/undo does not need to restore memo entries because the board hash is
+  part of the key;
+- report metrics now include memo annotation query count/time so repeated dirty
+  recomputes are visible.
+
+Focused smoke results stayed behavior-neutral and showed a real cost drop:
+
+- D3 safety-enabled paired smoke: rolling averaged `39.9 ms/move` versus scan at
+  `49.3 ms/move`. Rolling still paid `2.49s` of scan-backed root safety checks,
+  but dirty recompute dropped to `1.89s` plus `0.018s` of memo-hit time.
+- D3 no-safety paired smoke: rolling averaged `18.8 ms/move` versus scan at
+  `26.7 ms/move`.
+- D5 cap8 paired smoke: rolling averaged `159.5 ms/move`, essentially tied with
+  scan at `159.7 ms/move`, while searching more nodes and avoiding budget
+  exhaustion in the small sample.
+
+The next obvious frontier target is the root safety gate. Turning safety off is
+only a diagnostic; the endpoint should be a safety probe that can use the same
+rolling frontier / annotation memo path as normal tactical ordering. Today the
+root safety pass runs before `SearchState` exists, so it still asks scan-backed
+annotation questions over a cloned board.

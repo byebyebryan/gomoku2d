@@ -475,6 +475,10 @@ pub struct StandingReport {
     #[serde(default)]
     pub threat_view_frontier_fallback_annotation_query_ns: u64,
     #[serde(default)]
+    pub threat_view_frontier_memo_annotation_queries: u64,
+    #[serde(default)]
+    pub threat_view_frontier_memo_annotation_query_ns: u64,
+    #[serde(default)]
     pub child_limit_applications: u64,
     #[serde(default)]
     pub root_child_limit_applications: u64,
@@ -778,6 +782,10 @@ pub struct SideStatsReport {
     #[serde(default)]
     pub threat_view_frontier_fallback_annotation_query_ns: u64,
     #[serde(default)]
+    pub threat_view_frontier_memo_annotation_queries: u64,
+    #[serde(default)]
+    pub threat_view_frontier_memo_annotation_query_ns: u64,
+    #[serde(default)]
     pub child_limit_applications: u64,
     #[serde(default)]
     pub root_child_limit_applications: u64,
@@ -901,6 +909,8 @@ struct SideStatsAccumulator {
     threat_view_frontier_dirty_annotation_query_ns: u64,
     threat_view_frontier_fallback_annotation_queries: u64,
     threat_view_frontier_fallback_annotation_query_ns: u64,
+    threat_view_frontier_memo_annotation_queries: u64,
+    threat_view_frontier_memo_annotation_query_ns: u64,
     child_limit_applications: u64,
     root_child_limit_applications: u64,
     search_child_limit_applications: u64,
@@ -1021,6 +1031,10 @@ impl SideStatsAccumulator {
                 trace_value_u64(metrics, "threat_view_frontier_fallback_annotation_queries");
             self.threat_view_frontier_fallback_annotation_query_ns +=
                 trace_value_u64(metrics, "threat_view_frontier_fallback_annotation_query_ns");
+            self.threat_view_frontier_memo_annotation_queries +=
+                trace_value_u64(metrics, "threat_view_frontier_memo_annotation_queries");
+            self.threat_view_frontier_memo_annotation_query_ns +=
+                trace_value_u64(metrics, "threat_view_frontier_memo_annotation_query_ns");
             self.child_limit_applications += trace_value_u64(metrics, "child_limit_applications");
             self.root_child_limit_applications +=
                 trace_value_u64(metrics, "root_child_limit_applications");
@@ -1172,6 +1186,10 @@ impl SideStatsAccumulator {
             stats.threat_view_frontier_fallback_annotation_queries;
         self.threat_view_frontier_fallback_annotation_query_ns +=
             stats.threat_view_frontier_fallback_annotation_query_ns;
+        self.threat_view_frontier_memo_annotation_queries +=
+            stats.threat_view_frontier_memo_annotation_queries;
+        self.threat_view_frontier_memo_annotation_query_ns +=
+            stats.threat_view_frontier_memo_annotation_query_ns;
         self.child_limit_applications += stats.child_limit_applications;
         self.root_child_limit_applications += stats.root_child_limit_applications;
         self.search_child_limit_applications += stats.search_child_limit_applications;
@@ -1323,6 +1341,10 @@ impl SideStatsAccumulator {
                 .threat_view_frontier_fallback_annotation_queries,
             threat_view_frontier_fallback_annotation_query_ns: self
                 .threat_view_frontier_fallback_annotation_query_ns,
+            threat_view_frontier_memo_annotation_queries: self
+                .threat_view_frontier_memo_annotation_queries,
+            threat_view_frontier_memo_annotation_query_ns: self
+                .threat_view_frontier_memo_annotation_query_ns,
             child_limit_applications: self.child_limit_applications,
             root_child_limit_applications: self.root_child_limit_applications,
             search_child_limit_applications: self.search_child_limit_applications,
@@ -1504,6 +1526,10 @@ fn standings(
                     .threat_view_frontier_fallback_annotation_queries,
                 threat_view_frontier_fallback_annotation_query_ns: side_stats
                     .threat_view_frontier_fallback_annotation_query_ns,
+                threat_view_frontier_memo_annotation_queries: side_stats
+                    .threat_view_frontier_memo_annotation_queries,
+                threat_view_frontier_memo_annotation_query_ns: side_stats
+                    .threat_view_frontier_memo_annotation_query_ns,
                 child_limit_applications: side_stats.child_limit_applications,
                 root_child_limit_applications: side_stats.root_child_limit_applications,
                 search_child_limit_applications: side_stats.search_child_limit_applications,
@@ -3898,7 +3924,9 @@ mod tests {
                 "threat_view_frontier_dirty_annotation_queries": 15,
                 "threat_view_frontier_dirty_annotation_query_ns": 3500,
                 "threat_view_frontier_fallback_annotation_queries": 16,
-                "threat_view_frontier_fallback_annotation_query_ns": 3600
+                "threat_view_frontier_fallback_annotation_query_ns": 3600,
+                "threat_view_frontier_memo_annotation_queries": 17,
+                "threat_view_frontier_memo_annotation_query_ns": 3700
             }
         });
 
@@ -3928,6 +3956,8 @@ mod tests {
             report.threat_view_frontier_fallback_annotation_query_ns,
             3600
         );
+        assert_eq!(report.threat_view_frontier_memo_annotation_queries, 17);
+        assert_eq!(report.threat_view_frontier_memo_annotation_query_ns, 3700);
     }
 
     #[test]
@@ -4802,6 +4832,8 @@ mod tests {
             threat_view_frontier_dirty_annotation_query_ns: 0,
             threat_view_frontier_fallback_annotation_queries: 0,
             threat_view_frontier_fallback_annotation_query_ns: 0,
+            threat_view_frontier_memo_annotation_queries: 0,
+            threat_view_frontier_memo_annotation_query_ns: 0,
             child_limit_applications: 4,
             root_child_limit_applications: 0,
             search_child_limit_applications: 4,
@@ -4907,6 +4939,8 @@ mod tests {
             threat_view_frontier_dirty_annotation_query_ns: 0,
             threat_view_frontier_fallback_annotation_queries: 0,
             threat_view_frontier_fallback_annotation_query_ns: 0,
+            threat_view_frontier_memo_annotation_queries: 0,
+            threat_view_frontier_memo_annotation_query_ns: 0,
             child_limit_applications: 4,
             root_child_limit_applications: 0,
             search_child_limit_applications: 4,
