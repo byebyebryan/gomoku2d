@@ -305,15 +305,16 @@ the coherent `0.4.2` checkpoint: bot sweep evidence, a presentable corridor
 analysis workbench, and a real strategic foundation for deciding what should
 become player-facing later.
 
-`0.4.3` should stay in the lab for one more corridor-search pass before UI
-plumbing. Corridor search is now too central to the advanced-strategy story to
-expose only as an analyzer report and then immediately jump to settings. The
-next useful question is whether the same model can improve live bot behavior in
-focused, measurable ways: better forcing move ordering, selective extension
-through narrow corridors, escape-aware defense, asymmetric own/opponent corridor
-portal controls, and cheaper corridor proofs.
+`0.4.3` stayed in the lab for one more corridor-search pass before UI plumbing.
+Corridor search is now too central to the advanced-strategy story to expose only
+as an analyzer report and then immediately jump to settings. The checkpoint
+answered the first live-bot integration question: scan-backed corridor portals
+are useful plumbing and instrumentation, but not yet a promotable strength
+feature. The durable output is unified tactical/corridor threat semantics,
+move-local portal entry detection, asymmetric own/opponent portal controls, and
+metrics that make the next cost problem visible.
 
-That release should remain lab-first:
+That release remains lab-first:
 
 - reuse corridor-search vocabulary and tactical facts inside bot experiments
   without turning the bot into a full solver

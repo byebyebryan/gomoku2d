@@ -127,7 +127,8 @@ wrong cost shape and is no longer accepted by the lab spec parser.
 
 The retired leaf-quiescence experiment is not the intended durable integration
 shape. It probed many leaves that did not become useful corridor results. The
-next design target is corridor search as a selective extension or shortcut:
+`0.4.3` lab target moved to corridor search as a selective extension or
+shortcut:
 
 1. Alpha-beta generates and orders candidate moves normally.
 2. After a child move is applied, the bot checks whether that move creates a
@@ -188,14 +189,16 @@ not as a candidate preset. The useful refactor outcome is the scan-backed
 `ThreatView` seam in `gomoku-bot::tactical`, which gives rolling-frontier work a
 stable query contract without promoting the current scan-heavy portal behavior.
 
-This shape also defines the future optimization boundary. A rolling threat
-frontier can make entry detection and reply enumeration cheap by updating local
-threat facts as moves are applied and undone. That should be driven by the
-selective-extension queries above, not by the analyzer's broader report needs.
-The likely sequence is scan-backed interface first, rolling implementation in
-shadow mode second, behavior switch last.
+This answered the first integration question negatively for the current
+scan-backed implementation: the semantics are cleaner, but the cost shape is
+not viable enough to promote. A rolling threat frontier is the future
+optimization boundary because it can make entry detection and reply enumeration
+cheap by updating local threat facts as moves are applied and undone. That
+should be driven by the selective-extension queries above, not by the analyzer's
+broader report needs. The likely sequence is scan-backed interface first,
+rolling implementation in shadow mode second, behavior switch last.
 
-Search traces include both the result and the config:
+Search traces include both the result and the config. Abridged example:
 
 ```json
 {
@@ -204,6 +207,7 @@ Search traces include both the result and the config:
     "time_budget_ms": null,
     "cpu_time_budget_ms": null,
     "candidate_radius": 2,
+    "candidate_opponent_radius": null,
     "candidate_source": "near_all_r2",
     "legality_gate": "exact_rules",
     "safety_gate": "opponent_reply_local_threat_probe",
@@ -225,8 +229,22 @@ Search traces include both the result and the config:
     "static_eval": "line_shape_eval"
   },
   "depth": 3,
+  "nominal_depth": 3,
+  "effective_depth": 3,
+  "corridor_extra_plies": 0,
   "nodes": 1234,
   "safety_nodes": 56,
+  "corridor": {
+    "search_nodes": 0,
+    "branch_probes": 0,
+    "max_depth_reached": 0,
+    "extra_plies": 0,
+    "resume_searches": 0,
+    "width_exits": 0,
+    "depth_exits": 0,
+    "neutral_exits": 0,
+    "terminal_exits": 0
+  },
   "total_nodes": 1290,
   "metrics": {
     "root_candidate_generations": 1,
@@ -244,7 +262,22 @@ Search traces include both the result and the config:
     "root_child_moves_before_total": 0,
     "search_child_moves_before_total": 0,
     "root_child_moves_after_total": 0,
-    "search_child_moves_after_total": 0
+    "search_child_moves_after_total": 0,
+    "corridor_entry_checks": 0,
+    "corridor_entries_accepted": 0,
+    "corridor_own_entries_accepted": 0,
+    "corridor_opponent_entries_accepted": 0,
+    "corridor_nodes": 0,
+    "corridor_branch_probes": 0,
+    "corridor_resume_searches": 0,
+    "corridor_width_exits": 0,
+    "corridor_depth_exits": 0,
+    "corridor_neutral_exits": 0,
+    "corridor_terminal_exits": 0,
+    "corridor_plies_followed": 0,
+    "corridor_own_plies_followed": 0,
+    "corridor_opponent_plies_followed": 0,
+    "corridor_max_depth": 0
   },
   "score": 200,
   "budget_exhausted": false
