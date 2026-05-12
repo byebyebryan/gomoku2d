@@ -435,6 +435,22 @@ pub struct StandingReport {
     #[serde(default)]
     pub search_tactical_annotations: u64,
     #[serde(default)]
+    pub threat_view_shadow_checks: u64,
+    #[serde(default)]
+    pub threat_view_shadow_mismatches: u64,
+    #[serde(default)]
+    pub threat_view_scan_queries: u64,
+    #[serde(default)]
+    pub threat_view_scan_ns: u64,
+    #[serde(default)]
+    pub threat_view_frontier_rebuilds: u64,
+    #[serde(default)]
+    pub threat_view_frontier_rebuild_ns: u64,
+    #[serde(default)]
+    pub threat_view_frontier_queries: u64,
+    #[serde(default)]
+    pub threat_view_frontier_query_ns: u64,
+    #[serde(default)]
     pub child_limit_applications: u64,
     #[serde(default)]
     pub root_child_limit_applications: u64,
@@ -698,6 +714,22 @@ pub struct SideStatsReport {
     #[serde(default)]
     pub search_tactical_annotations: u64,
     #[serde(default)]
+    pub threat_view_shadow_checks: u64,
+    #[serde(default)]
+    pub threat_view_shadow_mismatches: u64,
+    #[serde(default)]
+    pub threat_view_scan_queries: u64,
+    #[serde(default)]
+    pub threat_view_scan_ns: u64,
+    #[serde(default)]
+    pub threat_view_frontier_rebuilds: u64,
+    #[serde(default)]
+    pub threat_view_frontier_rebuild_ns: u64,
+    #[serde(default)]
+    pub threat_view_frontier_queries: u64,
+    #[serde(default)]
+    pub threat_view_frontier_query_ns: u64,
+    #[serde(default)]
     pub child_limit_applications: u64,
     #[serde(default)]
     pub root_child_limit_applications: u64,
@@ -801,6 +833,14 @@ struct SideStatsAccumulator {
     tactical_annotations: u64,
     root_tactical_annotations: u64,
     search_tactical_annotations: u64,
+    threat_view_shadow_checks: u64,
+    threat_view_shadow_mismatches: u64,
+    threat_view_scan_queries: u64,
+    threat_view_scan_ns: u64,
+    threat_view_frontier_rebuilds: u64,
+    threat_view_frontier_rebuild_ns: u64,
+    threat_view_frontier_queries: u64,
+    threat_view_frontier_query_ns: u64,
     child_limit_applications: u64,
     root_child_limit_applications: u64,
     search_child_limit_applications: u64,
@@ -884,6 +924,19 @@ impl SideStatsAccumulator {
             self.root_tactical_annotations += trace_value_u64(metrics, "root_tactical_annotations");
             self.search_tactical_annotations +=
                 trace_value_u64(metrics, "search_tactical_annotations");
+            self.threat_view_shadow_checks += trace_value_u64(metrics, "threat_view_shadow_checks");
+            self.threat_view_shadow_mismatches +=
+                trace_value_u64(metrics, "threat_view_shadow_mismatches");
+            self.threat_view_scan_queries += trace_value_u64(metrics, "threat_view_scan_queries");
+            self.threat_view_scan_ns += trace_value_u64(metrics, "threat_view_scan_ns");
+            self.threat_view_frontier_rebuilds +=
+                trace_value_u64(metrics, "threat_view_frontier_rebuilds");
+            self.threat_view_frontier_rebuild_ns +=
+                trace_value_u64(metrics, "threat_view_frontier_rebuild_ns");
+            self.threat_view_frontier_queries +=
+                trace_value_u64(metrics, "threat_view_frontier_queries");
+            self.threat_view_frontier_query_ns +=
+                trace_value_u64(metrics, "threat_view_frontier_query_ns");
             self.child_limit_applications += trace_value_u64(metrics, "child_limit_applications");
             self.root_child_limit_applications +=
                 trace_value_u64(metrics, "root_child_limit_applications");
@@ -1006,6 +1059,14 @@ impl SideStatsAccumulator {
         self.tactical_annotations += stats.tactical_annotations;
         self.root_tactical_annotations += stats.root_tactical_annotations;
         self.search_tactical_annotations += stats.search_tactical_annotations;
+        self.threat_view_shadow_checks += stats.threat_view_shadow_checks;
+        self.threat_view_shadow_mismatches += stats.threat_view_shadow_mismatches;
+        self.threat_view_scan_queries += stats.threat_view_scan_queries;
+        self.threat_view_scan_ns += stats.threat_view_scan_ns;
+        self.threat_view_frontier_rebuilds += stats.threat_view_frontier_rebuilds;
+        self.threat_view_frontier_rebuild_ns += stats.threat_view_frontier_rebuild_ns;
+        self.threat_view_frontier_queries += stats.threat_view_frontier_queries;
+        self.threat_view_frontier_query_ns += stats.threat_view_frontier_query_ns;
         self.child_limit_applications += stats.child_limit_applications;
         self.root_child_limit_applications += stats.root_child_limit_applications;
         self.search_child_limit_applications += stats.search_child_limit_applications;
@@ -1129,6 +1190,14 @@ impl SideStatsAccumulator {
             tactical_annotations: self.tactical_annotations,
             root_tactical_annotations: self.root_tactical_annotations,
             search_tactical_annotations: self.search_tactical_annotations,
+            threat_view_shadow_checks: self.threat_view_shadow_checks,
+            threat_view_shadow_mismatches: self.threat_view_shadow_mismatches,
+            threat_view_scan_queries: self.threat_view_scan_queries,
+            threat_view_scan_ns: self.threat_view_scan_ns,
+            threat_view_frontier_rebuilds: self.threat_view_frontier_rebuilds,
+            threat_view_frontier_rebuild_ns: self.threat_view_frontier_rebuild_ns,
+            threat_view_frontier_queries: self.threat_view_frontier_queries,
+            threat_view_frontier_query_ns: self.threat_view_frontier_query_ns,
             child_limit_applications: self.child_limit_applications,
             root_child_limit_applications: self.root_child_limit_applications,
             search_child_limit_applications: self.search_child_limit_applications,
@@ -1279,6 +1348,14 @@ fn standings(
                 tactical_annotations: side_stats.tactical_annotations,
                 root_tactical_annotations: side_stats.root_tactical_annotations,
                 search_tactical_annotations: side_stats.search_tactical_annotations,
+                threat_view_shadow_checks: side_stats.threat_view_shadow_checks,
+                threat_view_shadow_mismatches: side_stats.threat_view_shadow_mismatches,
+                threat_view_scan_queries: side_stats.threat_view_scan_queries,
+                threat_view_scan_ns: side_stats.threat_view_scan_ns,
+                threat_view_frontier_rebuilds: side_stats.threat_view_frontier_rebuilds,
+                threat_view_frontier_rebuild_ns: side_stats.threat_view_frontier_rebuild_ns,
+                threat_view_frontier_queries: side_stats.threat_view_frontier_queries,
+                threat_view_frontier_query_ns: side_stats.threat_view_frontier_query_ns,
                 child_limit_applications: side_stats.child_limit_applications,
                 root_child_limit_applications: side_stats.root_child_limit_applications,
                 search_child_limit_applications: side_stats.search_child_limit_applications,
@@ -3555,6 +3632,42 @@ mod tests {
     #[test]
     fn side_stats_capture_child_caps_tactical_annotations_and_depth_distribution() {
         let mut stats = SideStatsAccumulator::default();
+        let metrics = serde_json::json!({
+            "eval_calls": 30,
+            "tactical_annotations": 9,
+            "root_tactical_annotations": 2,
+            "search_tactical_annotations": 7,
+            "child_limit_applications": 4,
+            "root_child_limit_applications": 0,
+            "search_child_limit_applications": 4,
+            "child_cap_hits": 3,
+            "root_child_cap_hits": 0,
+            "search_child_cap_hits": 3,
+            "child_moves_before_total": 48,
+            "root_child_moves_before_total": 0,
+            "search_child_moves_before_total": 48,
+            "child_moves_before_max": 14,
+            "root_child_moves_before_max": 0,
+            "search_child_moves_before_max": 14,
+            "child_moves_after_total": 32,
+            "root_child_moves_after_total": 0,
+            "search_child_moves_after_total": 32,
+            "child_moves_after_max": 9,
+            "root_child_moves_after_max": 0,
+            "search_child_moves_after_max": 9,
+            "corridor_entry_checks": 12,
+            "corridor_entries_accepted": 3,
+            "corridor_own_entries_accepted": 2,
+            "corridor_opponent_entries_accepted": 1,
+            "corridor_resume_searches": 4,
+            "corridor_width_exits": 5,
+            "corridor_depth_exits": 6,
+            "corridor_neutral_exits": 7,
+            "corridor_terminal_exits": 8,
+            "corridor_plies_followed": 9,
+            "corridor_own_plies_followed": 6,
+            "corridor_opponent_plies_followed": 3
+        });
         let trace = serde_json::json!({
             "nodes": 100,
             "safety_nodes": 20,
@@ -3567,42 +3680,7 @@ mod tests {
                 "max_depth_reached": 2,
                 "extra_plies": 3
             },
-            "metrics": {
-                "eval_calls": 30,
-                "tactical_annotations": 9,
-                "root_tactical_annotations": 2,
-                "search_tactical_annotations": 7,
-                "child_limit_applications": 4,
-                "root_child_limit_applications": 0,
-                "search_child_limit_applications": 4,
-                "child_cap_hits": 3,
-                "root_child_cap_hits": 0,
-                "search_child_cap_hits": 3,
-                "child_moves_before_total": 48,
-                "root_child_moves_before_total": 0,
-                "search_child_moves_before_total": 48,
-                "child_moves_before_max": 14,
-                "root_child_moves_before_max": 0,
-                "search_child_moves_before_max": 14,
-                "child_moves_after_total": 32,
-                "root_child_moves_after_total": 0,
-                "search_child_moves_after_total": 32,
-                "child_moves_after_max": 9,
-                "root_child_moves_after_max": 0,
-                "search_child_moves_after_max": 9,
-                "corridor_entry_checks": 12,
-                "corridor_entries_accepted": 3,
-                "corridor_own_entries_accepted": 2,
-                "corridor_opponent_entries_accepted": 1,
-                "corridor_resume_searches": 4,
-                "corridor_width_exits": 5,
-                "corridor_depth_exits": 6,
-                "corridor_neutral_exits": 7,
-                "corridor_terminal_exits": 8,
-                "corridor_plies_followed": 9,
-                "corridor_own_plies_followed": 6,
-                "corridor_opponent_plies_followed": 3
-            }
+            "metrics": metrics
         });
 
         stats.record_move(11, Some(&trace));
@@ -3649,6 +3727,35 @@ mod tests {
     }
 
     #[test]
+    fn side_stats_capture_threat_view_metrics() {
+        let mut stats = SideStatsAccumulator::default();
+        let trace = serde_json::json!({
+            "metrics": {
+                "threat_view_shadow_checks": 11,
+                "threat_view_shadow_mismatches": 1,
+                "threat_view_scan_queries": 13,
+                "threat_view_scan_ns": 1700,
+                "threat_view_frontier_rebuilds": 5,
+                "threat_view_frontier_rebuild_ns": 2300,
+                "threat_view_frontier_queries": 19,
+                "threat_view_frontier_query_ns": 2900
+            }
+        });
+
+        stats.record_move(11, Some(&trace));
+        let report = stats.finish();
+
+        assert_eq!(report.threat_view_shadow_checks, 11);
+        assert_eq!(report.threat_view_shadow_mismatches, 1);
+        assert_eq!(report.threat_view_scan_queries, 13);
+        assert_eq!(report.threat_view_scan_ns, 1700);
+        assert_eq!(report.threat_view_frontier_rebuilds, 5);
+        assert_eq!(report.threat_view_frontier_rebuild_ns, 2300);
+        assert_eq!(report.threat_view_frontier_queries, 19);
+        assert_eq!(report.threat_view_frontier_query_ns, 2900);
+    }
+
+    #[test]
     fn standings_preserve_search_node_split_and_child_cap_metrics() {
         let mut report = sample_report();
         let mut first_match = sample_match(1, "search-d5+tactical-cap-8", "search-d3", None);
@@ -3678,6 +3785,14 @@ mod tests {
         first_match.black_stats.max_effective_depth = 9;
         first_match.black_stats.tactical_annotations = 20;
         first_match.black_stats.search_tactical_annotations = 20;
+        first_match.black_stats.threat_view_shadow_checks = 30;
+        first_match.black_stats.threat_view_shadow_mismatches = 2;
+        first_match.black_stats.threat_view_scan_queries = 40;
+        first_match.black_stats.threat_view_scan_ns = 5000;
+        first_match.black_stats.threat_view_frontier_rebuilds = 6;
+        first_match.black_stats.threat_view_frontier_rebuild_ns = 7000;
+        first_match.black_stats.threat_view_frontier_queries = 80;
+        first_match.black_stats.threat_view_frontier_query_ns = 9000;
         first_match.black_stats.child_limit_applications = 10;
         first_match.black_stats.search_child_limit_applications = 10;
         first_match.black_stats.child_cap_hits = 8;
@@ -3727,6 +3842,14 @@ mod tests {
         assert_eq!(row.avg_effective_depth, 7.2);
         assert_eq!(row.max_effective_depth, 9);
         assert_eq!(row.tactical_annotations, 20);
+        assert_eq!(row.threat_view_shadow_checks, 30);
+        assert_eq!(row.threat_view_shadow_mismatches, 2);
+        assert_eq!(row.threat_view_scan_queries, 40);
+        assert_eq!(row.threat_view_scan_ns, 5000);
+        assert_eq!(row.threat_view_frontier_rebuilds, 6);
+        assert_eq!(row.threat_view_frontier_rebuild_ns, 7000);
+        assert_eq!(row.threat_view_frontier_queries, 80);
+        assert_eq!(row.threat_view_frontier_query_ns, 9000);
         assert_eq!(row.child_limit_applications, 10);
         assert_eq!(row.child_cap_hits, 8);
         assert_eq!(row.child_moves_before_total, 120);
@@ -4484,6 +4607,14 @@ mod tests {
             tactical_annotations: 8,
             root_tactical_annotations: 2,
             search_tactical_annotations: 6,
+            threat_view_shadow_checks: 0,
+            threat_view_shadow_mismatches: 0,
+            threat_view_scan_queries: 0,
+            threat_view_scan_ns: 0,
+            threat_view_frontier_rebuilds: 0,
+            threat_view_frontier_rebuild_ns: 0,
+            threat_view_frontier_queries: 0,
+            threat_view_frontier_query_ns: 0,
             child_limit_applications: 4,
             root_child_limit_applications: 0,
             search_child_limit_applications: 4,
@@ -4569,6 +4700,14 @@ mod tests {
             tactical_annotations: 8,
             root_tactical_annotations: 2,
             search_tactical_annotations: 6,
+            threat_view_shadow_checks: 0,
+            threat_view_shadow_mismatches: 0,
+            threat_view_scan_queries: 0,
+            threat_view_scan_ns: 0,
+            threat_view_frontier_rebuilds: 0,
+            threat_view_frontier_rebuild_ns: 0,
+            threat_view_frontier_queries: 0,
+            threat_view_frontier_query_ns: 0,
             child_limit_applications: 4,
             root_child_limit_applications: 0,
             search_child_limit_applications: 4,
