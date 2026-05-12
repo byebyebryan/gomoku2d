@@ -92,10 +92,13 @@ The safe path is incremental:
 6. Only after shadow mode is clean, add explicit lab flags that let normal
    search tactical ordering and then corridor queries use the rolling view.
 
-Conservative invalidation is acceptable. Missing or stale facts are not. A move
-can only affect local facts on the four axes crossing nearby cells, so the first
-rolling pass can invalidate anchors up to four points away on those axes and
-rebuild affected facts.
+Conservative invalidation is acceptable. Missing or stale facts are not. Most
+local shape facts are axis-local: a move can only affect shape facts and simple
+annotations on the four Gomoku axes crossing that move. Renju Black tactical
+annotations are broader because continuation filtering asks whether a
+hypothetical forcing continuation leads to an immediate Black win elsewhere, so
+the first safe rolling pass keeps Black Renju annotations globally refreshed
+until that continuation cache is split out.
 
 ## Renju Rules
 
@@ -161,11 +164,45 @@ The first code checkpoint intentionally favors contracts over performance:
   frontier synchronized through apply/undo. Plain scan mode does not maintain a
   frontier; rolling shadow/rolling modes do.
 
-This is not the final rolling invalidation model yet. It is a safe seam for
+This was not the final rolling invalidation model yet. It was a safe seam for
 measuring correctness and wiring cost before replacing rebuilds with localized
-fact updates. The current frontier timing is rebuild-backed by design; it is a
-baseline for the seam, not an estimate of the eventual localized update model.
+fact updates. The frontier timing at this checkpoint was rebuild-backed by
+design; it was a baseline for the seam, not an estimate of the eventual
+localized update model.
 The next frontier checkpoint is full-parity localized fact invalidation inside
 `RollingThreatFrontier`; the search-context stack is now the bridge that makes
 that work measurable in real recursion. Partial/recent-frontier shortcuts stay
 out of scope until the full rolling model matches scan behavior.
+
+## Incremental Checkpoint
+
+The second code checkpoint replaces the full board snapshot undo stack with
+frontier deltas:
+
+- `RollingThreatFrontier` now applies and undoes the same move as `Board`
+  instead of cloning a previous board snapshot.
+- Per-origin local threat facts are refreshed along the four full Gomoku axes
+  crossing the changed move.
+- Tactical annotations are cached per side so turn changes do not invalidate the
+  whole cache by themselves.
+- White annotations and non-Renju/simple annotations are refreshed on affected
+  axes; Black Renju annotations are still globally refreshed for correctness.
+- Global active-threat lists remain scan-backed because the per-origin cache and
+  canonical global threat list intentionally deduplicate at different
+  granularities.
+
+Focused parity tests cover apply/undo, deterministic Renju sequences, full
+annotation comparisons, per-origin entry checks, and same-axis invalidation.
+Shadow tournament smoke with `search-d3+tactical-cap-8`,
+`+rolling-frontier-shadow`, and `+rolling-frontier` over `3 pairs x 8 games`
+with `1000 ms` CPU budget reached zero shadow mismatches.
+
+The cost shape is improved but not solved. In that 24-game smoke, rolling query
+time stayed tiny, but frontier update time was still roughly `290s` aggregated
+for the rolling entrants because Black Renju annotations remain globally
+refreshed. Budget exhaustion dropped versus the rebuild-backed checkpoint but
+was still around `25-28%`, while scan stayed near `0%`. Treat this as a
+correctness checkpoint, not a promotion candidate.
+
+Next likely step: split Black Renju continuation effectiveness out of tactical
+annotation refresh so most annotations can stay axis-local.

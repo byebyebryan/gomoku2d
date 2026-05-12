@@ -163,14 +163,17 @@ Current frontier suffixes are intentionally narrow:
 
 - `+rolling-frontier-shadow`: compare rolling-backed portal-entry answers
   against scan-backed answers, report shadow mismatch counts, and record
-  scan-vs-frontier rebuild/query timing; behavior stays scan-backed.
-- `+rolling-frontier`: use the rolling-backed portal-entry answer. The current
-  implementation is still rebuild-backed after apply/undo, so this is a
-  validation and instrumentation hook rather than a performance feature.
+  scan-vs-frontier update/query timing; behavior stays scan-backed.
+- `+rolling-frontier`: use the rolling-backed portal-entry answer and tactical
+  annotations. The current implementation is delta-backed, but Black Renju
+  tactical annotations still refresh globally for correctness, so this remains
+  a validation and instrumentation hook rather than a performance feature.
 
 Search now threads an optional frontier through recursive apply/undo with the
 board and hash. The default scan mode leaves that frontier disabled; the rolling
-suffixes enable it for parity and cost measurement.
+suffixes enable it for parity and cost measurement. Current smoke data reached
+zero shadow mismatches, but the rolling modes are still slower than scan under
+Renju because annotation refresh is not fully local yet.
 
 ### Eval harness
 

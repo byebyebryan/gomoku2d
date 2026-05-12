@@ -398,20 +398,21 @@ queries cheaply:
   became illegal under Renju?
 
 The main design shift is from "scan the board to rediscover facts" to "update
-the small set of facts whose local lines changed." A move can only affect shape
-facts on lines crossing nearby cells along the four Gomoku axes. The frontier
-can invalidate and rebuild those local facts, while all other facts remain
-unchanged. In the successful shape, corridor search becomes close to free
-because it asks for the already-known active threat and its already-known reply
-set.
+the small set of facts whose relevant lines changed." Shape facts are axis-local:
+a move affects facts on the four Gomoku axes crossing that move. Renju tactical
+annotations add one broader dependency for Black continuation effectiveness, so
+the current safe frontier refreshes those annotations globally until that logic
+is split into its own cache. In the successful shape, corridor search becomes
+close to free because it asks for the already-known active threat and its
+already-known reply set.
 
 Important tradeoffs:
 
 - Correctness risk is high. A stale or missing threat fact can make the bot miss
   a forced loss, invent a fake corridor, or mishandle a Renju forbidden reply.
-- Renju makes the cache more delicate. Raw shape facts, legal continuations, and
-  forbidden black squares must stay separate because legality can change the
-  tactical meaning of a square.
+- Renju makes the cache more delicate. Raw shape facts, legal continuations,
+  immediate-win checks, and forbidden black squares must stay separate because
+  legality can change the tactical meaning of a square.
 - Undo must be exact. Search applies and undoes thousands of moves; frontier
   updates need stack discipline at least as strong as board history.
 - The cache has to serve the search API, not the analyzer UI. If we build it

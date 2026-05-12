@@ -3392,7 +3392,10 @@ mod tests {
 
     #[test]
     fn search_state_apply_undo_restores_board_hash_and_frontier() {
-        let mut board = Board::new(RuleConfig::default());
+        let mut board = Board::new(RuleConfig {
+            variant: Variant::Renju,
+            ..RuleConfig::default()
+        });
         apply_moves(&mut board, &["H8", "A1", "I8", "A2", "J8", "A3"]);
         let zobrist = ZobristTable::new(board.config.board_size);
         let original_fen = board.to_fen();
