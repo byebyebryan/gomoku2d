@@ -2,7 +2,7 @@ use gomoku_core::{Board, Color, GameResult, Move, MoveError};
 
 use crate::tactical::{
     raw_local_threat_facts_at_existing_move, raw_local_threat_facts_for_player,
-    CorridorThreatPolicy, LocalThreatFact, ThreatView,
+    CorridorThreatPolicy, LocalThreatFact, SearchThreatPolicy, TacticalMoveAnnotation, ThreatView,
 };
 
 #[derive(Debug, Clone)]
@@ -12,6 +12,7 @@ pub struct RebuildThreatFrontier {
     white_facts: Vec<LocalThreatFact>,
     black_move_facts: Vec<LocalThreatFact>,
     white_move_facts: Vec<LocalThreatFact>,
+    search_annotations: Vec<TacticalMoveAnnotation>,
 }
 
 #[derive(Debug, Clone)]
@@ -80,6 +81,7 @@ impl RebuildThreatFrontier {
             white_facts: raw_local_threat_facts_for_player(board, Color::White),
             black_move_facts: raw_local_threat_facts_for_player_by_origin(board, Color::Black),
             white_move_facts: raw_local_threat_facts_for_player_by_origin(board, Color::White),
+            search_annotations: search_annotations_for_board(board),
         }
     }
 
@@ -99,6 +101,15 @@ impl RebuildThreatFrontier {
 }
 
 impl ThreatView for RebuildThreatFrontier {
+    fn search_annotation_for_move(&self, mv: Move) -> TacticalMoveAnnotation {
+        let size = self.board.config.board_size;
+        if mv.row >= size || mv.col >= size {
+            return SearchThreatPolicy.annotation_for_move(&self.board, mv);
+        }
+
+        self.search_annotations[mv.row * size + mv.col].clone()
+    }
+
     fn active_corridor_threats(&self, attacker: Color) -> Vec<LocalThreatFact> {
         let policy = CorridorThreatPolicy;
         let mut facts = self
@@ -138,6 +149,10 @@ impl ThreatView for RebuildThreatFrontier {
 }
 
 impl ThreatView for RollingThreatFrontier {
+    fn search_annotation_for_move(&self, mv: Move) -> TacticalMoveAnnotation {
+        self.view.search_annotation_for_move(mv)
+    }
+
     fn active_corridor_threats(&self, attacker: Color) -> Vec<LocalThreatFact> {
         self.view.active_corridor_threats(attacker)
     }
@@ -153,6 +168,18 @@ impl ThreatView for RollingThreatFrontier {
     fn attacker_move_rank(&self, attacker: Color, mv: Move) -> u8 {
         self.view.attacker_move_rank(attacker, mv)
     }
+}
+
+fn search_annotations_for_board(board: &Board) -> Vec<TacticalMoveAnnotation> {
+    let size = board.config.board_size;
+    let policy = SearchThreatPolicy;
+    let mut annotations = Vec::with_capacity(size * size);
+    for row in 0..size {
+        for col in 0..size {
+            annotations.push(policy.annotation_for_move(board, Move { row, col }));
+        }
+    }
+    annotations
 }
 
 fn raw_local_threat_facts_for_player_by_origin(
@@ -221,6 +248,10 @@ mod tests {
     ) {
         let scan = ScanThreatView::new(board);
 
+        assert_eq!(
+            view.search_annotation_for_move(probe),
+            scan.search_annotation_for_move(probe)
+        );
         assert_eq!(
             view.active_corridor_threats(attacker),
             scan.active_corridor_threats(attacker)

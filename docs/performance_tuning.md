@@ -138,16 +138,17 @@ whether breadth was reduced and reached depth improved.
 Do not use partial local-threat facts as static eval unless they can be made
 globally consistent or incrementally maintained across the whole live board. A
 partial leaf score can reward the last local fight while missing older threats
-elsewhere; that is worse than the crude but consistent global line eval. Partial
-tactical facts are safer as ordering/filtering/extension hints because they
-change which branches are searched first, not the final board-value semantics.
-The pattern-eval branch is the current test of the "globally consistent" side
-of that rule. It should be judged by match strength per CPU budget, not by one
-tactical scenario pass count.
+elsewhere; that is worse than the crude but consistent global line eval.
+Partial/recent-frontier leaf scoring is retired for now. Tactical facts are
+safer as ordering/filtering/extension hints because they change which branches
+are searched first, not the final board-value semantics. The pattern-eval branch
+is the current test of the "globally consistent" side of that rule. It should be
+judged by match strength per CPU budget, not by one tactical scenario pass
+count.
 
-Do not optimize tactical facts into a full incremental frontier model until the
-scan-based annotation semantics are stable. The frontier experiment should have
-a clear before/after target:
+Do not optimize tactical facts into partial shortcuts before the full scan-vs-
+rolling frontier contract is stable. The frontier experiment should have a clear
+before/after target:
 
 - same tactical behavior and scenario pass/fail set
 - lower annotation, candidate generation, or reply-generation cost

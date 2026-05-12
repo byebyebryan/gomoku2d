@@ -89,8 +89,8 @@ The safe path is incremental:
    every apply and after every undo.
 5. Add search shadow mode that computes both answers and fails fast on mismatch
    while still using scan answers for behavior.
-6. Only after shadow mode is clean, add an explicit lab flag that lets one hot
-   path use the rolling view.
+6. Only after shadow mode is clean, add explicit lab flags that let normal
+   search tactical ordering and then corridor queries use the rolling view.
 
 Conservative invalidation is acceptable. Missing or stale facts are not. A move
 can only affect local facts on the four axes crossing nearby cells, so the first
@@ -122,6 +122,7 @@ Shadow mode is the main safety guard:
 
 The first shadow consumers should be the current `ThreatView` queries:
 
+- `search_annotation_for_move(mv)`;
 - `active_corridor_threats(attacker)`;
 - `has_move_local_corridor_entry(attacker, mv)`;
 - `defender_reply_moves(attacker, actual_reply)`;
@@ -134,7 +135,8 @@ The first shadow consumers should be the current `ThreatView` queries:
 3. Full-rebuild frontier plus fixture parity tests.
 4. Rolling apply/undo frontier plus random sequence parity tests.
 5. Search shadow mode plus metrics.
-6. Optional opt-in rolling consumer for corridor portal entry/reply paths.
+6. Optional opt-in rolling consumer for normal tactical ordering.
+7. Optional opt-in rolling consumer for corridor portal entry/reply paths.
 
 Stop after checkpoint 4 if parity is not exact. A wrong frontier is worse than
 a slow scan.
@@ -146,13 +148,15 @@ The first code checkpoint intentionally favors contracts over performance:
 - `RebuildThreatFrontier` implements `ThreatView` from a snapshot board.
 - `RollingThreatFrontier` owns apply/undo discipline but currently rebuilds its
   cached view after each move.
-- `ThreatViewMode::RollingShadow` compares rolling-backed portal entry answers
-  against scan-backed answers while scan still drives behavior.
-- `ThreatViewMode::Rolling` can drive portal entry checks as a lab-only opt-in.
+- `ThreatViewMode::RollingShadow` compares rolling-backed portal entry and
+  tactical ordering answers against scan-backed answers while scan still drives
+  behavior.
+- `ThreatViewMode::Rolling` can drive portal entry checks and tactical ordering
+  as a lab-only opt-in.
 - Lab specs parse `+rolling-frontier-shadow` and `+rolling-frontier`.
-- Search traces record scan query time for portal-entry checks, plus frontier
-  rebuild/update time and frontier query time when the optional frontier is
-  enabled.
+- Search traces record scan query time, frontier rebuild/update time, and
+  frontier query time for the threat-view checks that are active in the selected
+  mode.
 - `SearchState` keeps the recursive search board, Zobrist hash, and optional
   frontier synchronized through apply/undo. Plain scan mode does not maintain a
   frontier; rolling shadow/rolling modes do.
@@ -161,6 +165,7 @@ This is not the final rolling invalidation model yet. It is a safe seam for
 measuring correctness and wiring cost before replacing rebuilds with localized
 fact updates. The current frontier timing is rebuild-backed by design; it is a
 baseline for the seam, not an estimate of the eventual localized update model.
-The next frontier checkpoint is localized fact invalidation inside
+The next frontier checkpoint is full-parity localized fact invalidation inside
 `RollingThreatFrontier`; the search-context stack is now the bridge that makes
-that work measurable in real recursion.
+that work measurable in real recursion. Partial/recent-frontier shortcuts stay
+out of scope until the full rolling model matches scan behavior.
