@@ -158,7 +158,10 @@ the plumbing works, but the first implementation was too expensive because
 entry detection was too broad and accepted portals created too many resumed
 searches. The current checkpoint tightens portal entry to the candidate move,
 disables nested re-entry after a corridor resume, and surfaces portal
-acceptance/resume/exit metrics in reports. It also adds a scan-backed
+acceptance/resume/exit metrics in reports. The next probe is
+`+corridor-proof-only`, which only uses a corridor when it proves a terminal
+win/loss; non-terminal exits fall back to the original child search instead of
+resuming from inside the corridor. It also adds a scan-backed
 `ThreatView` seam so future rolling-frontier work can replace scans behind a
 stable query contract. Focused post-cleanup smoke runs still lost to the base
 anchors and remained budget-bound, so keep all corridor knobs as lab

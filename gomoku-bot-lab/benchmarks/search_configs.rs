@@ -139,6 +139,11 @@ fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchB
         return Some(config);
     }
 
+    if suffix == "corridor-proof-only" {
+        config.corridor_portals.depth_exit_mode = CorridorDepthExitMode::ProofOnly;
+        return Some(config);
+    }
+
     match suffix {
         "near-all-r1" => {
             config.candidate_radius = 1;
@@ -616,6 +621,18 @@ mod tests {
         assert_eq!(
             default.corridor_portals.depth_exit_mode,
             super::CorridorDepthExitMode::ResumeSearch
+        );
+
+        let proof_only = super::search_config_from_lab_spec(
+            "search-d5+corridor-own-d1-w3+corridor-proof-only",
+            3,
+            None,
+            None,
+        )
+        .expect("expected proof-only corridor portal spec to parse");
+        assert_eq!(
+            proof_only.corridor_portals.depth_exit_mode,
+            super::CorridorDepthExitMode::ProofOnly
         );
     }
 

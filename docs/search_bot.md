@@ -211,6 +211,12 @@ not as a candidate preset. The useful refactor outcome is the `ThreatView` seam
 in `gomoku-bot::tactical`, which gives rolling-frontier work a stable query
 contract without promoting the current portal behavior.
 
+The current follow-up experiment is `+corridor-proof-only`. It keeps the same
+entry gates, but a corridor can only replace normal search when it reaches a
+terminal proof. Depth, width, and neutral exits increment exit/fallback metrics
+and then run the original child search once, avoiding the resume churn that made
+the first portal shape distort scores.
+
 `0.4.4` promotes the rolling-frontier implementation behind that contract as the
 default threat-view backend after focused scan-vs-rolling controls and shadow
 parity checks. Search keeps board, hash, and the optional frontier synchronized
