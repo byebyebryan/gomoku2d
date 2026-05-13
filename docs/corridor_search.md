@@ -257,14 +257,18 @@ applied, the bot can ask a cheap local question: did this move enter a forcing
 corridor? If not, search continues normally with one ply of depth spent. If yes,
 and the reply set is narrow, the bot can follow the corridor without spending
 the usual depth budget. The corridor either reaches a terminal win/loss or exits
-into an unclear position where normal search resumes.
+into an unclear position. The first portal implementation resumed normal search
+from that exit board, but measurements showed that shape multiplied work and
+distorted scores. The current `+corridor-proof-only` probe is stricter: terminal
+proofs may replace the child score, while non-terminal exits fall back to the
+original child search once.
 
 That makes corridor search a selective extension:
 
 - enter only after a concrete immediate or imminent threat is detected,
 - follow only while the branch remains tactically narrow,
 - return terminal score if the corridor proves a win or loss,
-- resume normal alpha-beta from the exit board if the corridor neutralizes,
+- treat non-terminal exits as "no proof" in proof-only mode,
 - fall back to normal search when the corridor is too wide to justify special
   handling.
 
@@ -621,6 +625,8 @@ The current checkpoint provides:
   `+corridor-q` suffix,
 - opt-in default-off `SearchBot` portal suffixes for selective extension:
   `+corridor-own-dN-wM` and `+corridor-opponent-dN-wM`,
+- `+corridor-proof-only` to test terminal-proof shortcuts without resuming from
+  corridor exits,
 - proof-detail JSON and HTML report generation,
 - visual proof frames with board rendering and semantic markers,
 - Renju-aware handling for forbidden black replies and illegal black threats,
