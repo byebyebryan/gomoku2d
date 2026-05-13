@@ -2342,10 +2342,13 @@ fn corridor_portal_search(
             );
         }
         if replies.is_empty()
-            && !state
-                .board()
-                .immediate_winning_moves_for(attacker)
-                .is_empty()
+            && !immediate_winning_moves_for_threat_view_mode(
+                state,
+                attacker,
+                threat_view_mode,
+                metrics,
+            )
+            .is_empty()
         {
             metrics.corridor_terminal_exits += 1;
             return SearchOutcome {
@@ -2595,6 +2598,63 @@ fn narrow_corridor_reply_moves_for_threat_view_mode(
     }
 }
 
+fn immediate_winning_moves_for_threat_view_mode(
+    state: &mut SearchState,
+    player: Color,
+    mode: ThreatViewMode,
+    metrics: &mut SearchMetrics,
+) -> Vec<Move> {
+    match mode {
+        ThreatViewMode::Scan => scan_immediate_winning_moves_timed(state.board(), player, metrics),
+        ThreatViewMode::Rolling => rolling_immediate_winning_moves(state, player, metrics),
+        ThreatViewMode::RollingShadow => {
+            metrics.threat_view_shadow_checks += 1;
+            let scan = scan_immediate_winning_moves_timed(state.board(), player, metrics);
+            let rolling = rolling_immediate_winning_moves(state, player, metrics);
+            if rolling != scan {
+                metrics.threat_view_shadow_mismatches += 1;
+            }
+            scan
+        }
+    }
+}
+
+fn scan_immediate_winning_moves_timed(
+    board: &Board,
+    player: Color,
+    metrics: &mut SearchMetrics,
+) -> Vec<Move> {
+    let start = Instant::now();
+    let moves = board.immediate_winning_moves_for(player);
+    metrics.record_threat_view_scan(start.elapsed());
+    moves
+}
+
+fn rolling_immediate_winning_moves(
+    state: &mut SearchState,
+    player: Color,
+    metrics: &mut SearchMetrics,
+) -> Vec<Move> {
+    let start = Instant::now();
+    let board = state.board();
+    let size = board.config.board_size;
+    let mut moves = Vec::new();
+    for row in 0..size {
+        for col in 0..size {
+            if !board.is_empty(row, col) {
+                continue;
+            }
+            let mv = Move { row, col };
+            if creates_immediate_win(&state.threat_view().search_annotation_for_player(player, mv))
+            {
+                moves.push(mv);
+            }
+        }
+    }
+    metrics.record_threat_view_frontier_query(start.elapsed());
+    moves
+}
+
 fn scan_narrow_corridor_reply_moves_timed(
     board: &Board,
     attacker: Color,
@@ -2611,17 +2671,16 @@ fn rolling_narrow_corridor_reply_moves(
     attacker: Color,
     metrics: &mut SearchMetrics,
 ) -> Vec<Move> {
-    let board = state.board();
     let defender = attacker.opponent();
-    let winning_squares = board.immediate_winning_moves_for(attacker);
+    let winning_squares = rolling_immediate_winning_moves(state, attacker, metrics);
     if !winning_squares.is_empty() {
         let mut replies = Vec::new();
         for mv in winning_squares {
-            if board.is_legal_for_color(mv, defender) {
+            if state.board().is_legal_for_color(mv, defender) {
                 push_unique_move(&mut replies, mv);
             }
         }
-        for mv in board.immediate_winning_moves_for(defender) {
+        for mv in rolling_immediate_winning_moves(state, defender, metrics) {
             push_unique_move(&mut replies, mv);
         }
         return replies;
