@@ -76,6 +76,24 @@ impl SearchThreatPolicy {
         }
     }
 
+    pub fn raw_annotation_for_legal_player(
+        self,
+        board: &Board,
+        player: Color,
+        mv: Move,
+    ) -> TacticalMoveAnnotation {
+        TacticalMoveAnnotation {
+            player,
+            mv,
+            local_threats: normalize_local_threat_facts(
+                local_threat_facts_after_legal_move_virtual_for_player(board, player, mv),
+            )
+            .into_iter()
+            .filter(|fact| fact.player == player)
+            .collect(),
+        }
+    }
+
     pub fn effective_annotation_from_raw(
         self,
         board: &Board,
@@ -132,6 +150,16 @@ impl SearchThreatPolicy {
         }
 
         self.ordering_summary(&self.effective_annotation_from_raw(board, annotation.clone()))
+    }
+
+    pub fn ordering_summary_for_legal_player(
+        self,
+        board: &Board,
+        player: Color,
+        mv: Move,
+    ) -> TacticalOrderingSummary {
+        let annotation = self.raw_annotation_for_legal_player(board, player, mv);
+        self.effective_ordering_summary_from_raw(board, &annotation)
     }
 
     fn needs_renju_effective_filter(
@@ -1706,6 +1734,35 @@ mod tests {
             policy.annotation_for_player(&board, Color::White, mv("B2")),
             policy.annotation_for_move(&white_turn, mv("B2"))
         );
+    }
+
+    #[test]
+    fn known_legal_ordering_summary_matches_full_annotation_summary() {
+        let policy = SearchThreatPolicy;
+
+        let freestyle = board_from_moves(Variant::Freestyle, &["H8", "A1", "I8", "A2"]);
+        let renju_white = board_from_moves(Variant::Renju, &["H8", "A1", "I8"]);
+        let renju_forbidden_gap = board_from_moves(
+            Variant::Renju,
+            &["H8", "G8", "I8", "A1", "J8", "A2", "L8", "A3"],
+        );
+
+        let cases = [
+            (&freestyle, Color::Black, mv("J8")),
+            (&freestyle, Color::Black, mv("B2")),
+            (&renju_white, Color::White, mv("B2")),
+            (&renju_forbidden_gap, Color::Black, mv("M8")),
+        ];
+
+        for (board, player, probe) in cases {
+            assert!(board.is_legal_for_color(probe, player));
+            let annotation = policy.annotation_for_player(board, player, probe);
+            assert_eq!(
+                policy.ordering_summary_for_legal_player(board, player, probe),
+                policy.ordering_summary(&annotation),
+                "{player:?} {probe:?}"
+            );
+        }
     }
 
     #[test]

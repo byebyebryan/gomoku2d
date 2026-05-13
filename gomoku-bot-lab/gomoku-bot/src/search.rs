@@ -1231,8 +1231,7 @@ fn scan_tactical_ordering_summary_for_player_timed(
     metrics: &mut SearchMetrics,
 ) -> TacticalOrderingSummary {
     let start = Instant::now();
-    let annotation = ScanThreatView::new(board).search_annotation_for_player(player, mv);
-    let summary = SearchThreatPolicy.ordering_summary(&annotation);
+    let summary = SearchThreatPolicy.ordering_summary_for_legal_player(board, player, mv);
     metrics.record_threat_view_scan(start.elapsed());
     summary
 }
