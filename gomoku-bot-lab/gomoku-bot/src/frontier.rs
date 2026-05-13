@@ -54,6 +54,8 @@ pub struct RollingThreatFrontier {
     white_raw_search_annotations: Vec<TacticalMoveAnnotation>,
     black_raw_search_annotation_dirty: Vec<bool>,
     white_raw_search_annotation_dirty: Vec<bool>,
+    black_immediate_wins: Vec<bool>,
+    white_immediate_wins: Vec<bool>,
     undo_stack: Vec<FrontierDelta>,
 }
 
@@ -62,6 +64,7 @@ struct FrontierDelta {
     mv: Move,
     previous_move_facts: Vec<(Color, usize, Vec<LocalThreatFact>)>,
     previous_annotation_dirty: Vec<(Color, usize, bool)>,
+    previous_immediate_wins: Vec<(Color, usize, bool)>,
 }
 
 impl RollingThreatFrontier {
@@ -84,6 +87,8 @@ impl RollingThreatFrontier {
             white_raw_search_annotations: raw_search_annotations_for_player(board, Color::White),
             black_raw_search_annotation_dirty: vec![false; size * size],
             white_raw_search_annotation_dirty: vec![false; size * size],
+            black_immediate_wins: immediate_wins_for_player(board, Color::Black),
+            white_immediate_wins: immediate_wins_for_player(board, Color::White),
             undo_stack: Vec::with_capacity(size * size),
         }
     }
@@ -127,11 +132,26 @@ impl RollingThreatFrontier {
         }
     }
 
+    fn immediate_wins_for(&self, player: Color) -> &[bool] {
+        match player {
+            Color::Black => &self.black_immediate_wins,
+            Color::White => &self.white_immediate_wins,
+        }
+    }
+
+    fn immediate_wins_for_mut(&mut self, player: Color) -> &mut [bool] {
+        match player {
+            Color::Black => &mut self.black_immediate_wins,
+            Color::White => &mut self.white_immediate_wins,
+        }
+    }
+
     fn capture_delta(&self, mv: Move) -> (FrontierDelta, Duration) {
         let start = Instant::now();
         let affected_cells = affected_axis_cells(&self.board, mv);
         let mut previous_move_facts = Vec::with_capacity(affected_cells.len() * 2);
         let mut previous_annotation_dirty = Vec::with_capacity(affected_cells.len() * 2);
+        let mut previous_immediate_wins = Vec::with_capacity(affected_cells.len() * 2);
 
         for affected in affected_cells {
             let index = cell_index(self.board.config.board_size, affected);
@@ -144,6 +164,11 @@ impl RollingThreatFrontier {
                     index,
                     self.raw_search_annotation_dirty_for(player)[index],
                 ));
+                previous_immediate_wins.push((
+                    player,
+                    index,
+                    self.immediate_wins_for(player)[index],
+                ));
             }
         }
 
@@ -152,6 +177,7 @@ impl RollingThreatFrontier {
                 mv,
                 previous_move_facts,
                 previous_annotation_dirty,
+                previous_immediate_wins,
             },
             start.elapsed(),
         )
@@ -183,6 +209,12 @@ impl RollingThreatFrontier {
             Some(start.elapsed())
         };
 
+        for &(player, index, _) in &delta.previous_immediate_wins {
+            let mv = move_from_index(size, index);
+            let is_win = is_immediate_win_for_player(&self.board, player, mv);
+            self.immediate_wins_for_mut(player)[index] = is_win;
+        }
+
         FrontierUpdateTimings {
             delta_capture: None,
             move_fact_update,
@@ -212,6 +244,10 @@ impl RollingThreatFrontier {
             }
             Some(start.elapsed())
         };
+
+        for (player, index, is_win) in delta.previous_immediate_wins {
+            self.immediate_wins_for_mut(player)[index] = is_win;
+        }
 
         FrontierUpdateTimings {
             delta_capture: None,
@@ -407,17 +443,14 @@ impl ThreatView for RebuildThreatFrontier {
 
 impl ThreatView for RollingThreatFrontier {
     fn immediate_winning_moves_for(&self, player: Color) -> Vec<Move> {
+        if self.board.result != GameResult::Ongoing {
+            return Vec::new();
+        }
         let size = self.board.config.board_size;
         let mut moves = Vec::new();
-        for row in 0..size {
-            for col in 0..size {
-                if !self.board.is_empty(row, col) {
-                    continue;
-                }
-                let mv = Move { row, col };
-                if creates_immediate_win(&self.search_annotation_for_player(player, mv)) {
-                    moves.push(mv);
-                }
+        for (index, is_win) in self.immediate_wins_for(player).iter().copied().enumerate() {
+            if is_win {
+                moves.push(move_from_index(size, index));
             }
         }
         moves
@@ -507,6 +540,32 @@ fn search_annotations_for_player(board: &Board, player: Color) -> Vec<TacticalMo
 
 fn search_annotation_for_player(board: &Board, player: Color, mv: Move) -> TacticalMoveAnnotation {
     SearchThreatPolicy.annotation_for_player(board, player, mv)
+}
+
+fn immediate_wins_for_player(board: &Board, player: Color) -> Vec<bool> {
+    let size = board.config.board_size;
+    let mut wins = vec![false; size * size];
+    if board.result != GameResult::Ongoing {
+        return wins;
+    }
+    for row in 0..size {
+        for col in 0..size {
+            let mv = Move { row, col };
+            wins[cell_index(size, mv)] = is_immediate_win_for_player(board, player, mv);
+        }
+    }
+    wins
+}
+
+fn is_immediate_win_for_player(board: &Board, player: Color, mv: Move) -> bool {
+    if mv.row >= board.config.board_size
+        || mv.col >= board.config.board_size
+        || !board.is_empty(mv.row, mv.col)
+        || board.result != GameResult::Ongoing
+    {
+        return false;
+    }
+    creates_immediate_win(&SearchThreatPolicy.annotation_for_player(board, player, mv))
 }
 
 fn creates_immediate_win(annotation: &TacticalMoveAnnotation) -> bool {
@@ -915,6 +974,33 @@ mod tests {
     }
 
     #[test]
+    fn rolling_frontier_immediate_wins_do_not_depend_on_annotation_cache() {
+        let board = board_from_moves(
+            Variant::Renju,
+            &["H8", "A1", "I8", "A2", "J8", "A3", "K8", "A4"],
+        );
+        let mut frontier = RollingThreatFrontier::from_board(&board);
+        let winning_moves = vec![mv("G8"), mv("L8")];
+
+        assert_eq!(
+            ScanThreatView::new(&board).immediate_winning_moves_for(Color::Black),
+            winning_moves
+        );
+        for winning_move in &winning_moves {
+            let winning_index = cell_index(board.config.board_size, *winning_move);
+            frontier.black_raw_search_annotations[winning_index]
+                .local_threats
+                .clear();
+        }
+
+        assert_eq!(
+            frontier.immediate_winning_moves_for(Color::Black),
+            winning_moves,
+            "immediate wins should come from their own frontier index, not raw annotation cache"
+        );
+    }
+
+    #[test]
     fn tactical_only_frontier_skips_move_facts_but_preserves_query_semantics() {
         let mut board = board_from_moves(Variant::Renju, &["H8", "A1", "I8", "A2", "J8"]);
         let mut frontier = RollingThreatFrontier::from_board_with_features(
@@ -938,6 +1024,58 @@ mod tests {
             ScanThreatView::new(&board).has_move_local_corridor_entry(Color::Black, mv("J8")),
             "tactical-only mode should fall back to scan for corridor-entry queries"
         );
+    }
+
+    #[test]
+    fn tactical_only_frontier_tracks_immediate_wins_through_apply_and_undo() {
+        let mut board = board_from_moves(
+            Variant::Renju,
+            &["H8", "A1", "I8", "A2", "J8", "A3", "K8", "A4"],
+        );
+        let mut frontier = RollingThreatFrontier::from_board_with_features(
+            &board,
+            RollingFrontierFeatures::TacticalOnly,
+        );
+
+        assert_eq!(
+            frontier.immediate_winning_moves_for(Color::Black),
+            ScanThreatView::new(&board).immediate_winning_moves_for(Color::Black)
+        );
+
+        let terminal = mv("L8");
+        board.apply_move(terminal).unwrap();
+        frontier.apply_move(terminal).unwrap();
+
+        assert_eq!(board.result, GameResult::Winner(Color::Black));
+        assert!(frontier
+            .immediate_winning_moves_for(Color::White)
+            .is_empty());
+
+        board.undo_move(terminal);
+        frontier.undo_move(terminal);
+
+        assert_eq!(
+            frontier.immediate_winning_moves_for(Color::Black),
+            ScanThreatView::new(&board).immediate_winning_moves_for(Color::Black)
+        );
+    }
+
+    #[test]
+    fn rolling_frontier_filters_renju_forbidden_immediate_wins() {
+        let board = board_from_moves(
+            Variant::Renju,
+            &["H8", "A1", "I8", "A2", "J8", "A3", "L8", "A4", "M8"],
+        );
+        let frontier = RollingThreatFrontier::from_board(&board);
+        let forbidden_overline = mv("K8");
+
+        assert_eq!(
+            frontier.immediate_winning_moves_for(Color::Black),
+            ScanThreatView::new(&board).immediate_winning_moves_for(Color::Black)
+        );
+        assert!(!frontier
+            .immediate_winning_moves_for(Color::Black)
+            .contains(&forbidden_overline));
     }
 
     #[test]
