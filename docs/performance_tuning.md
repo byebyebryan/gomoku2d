@@ -584,6 +584,34 @@ Interpretation:
 - The next useful optimization should focus on remaining dirty recompute cost
   or shared line/annotation work, not another clean summary cache.
 
+Priority ordering checkpoint:
+
+Date: `2026-05-13`
+
+Priority ordering is a lab-only cheaper sibling of full tactical ordering. It
+keeps current-state hard tactics through immediate win/block masks, then orders
+quiet moves by TT move, center bias, and local density. It deliberately does not
+scan candidate-created threats.
+
+Focused Renju smokes, centered-suite openings, `4` opening plies,
+`1000 ms/move`:
+
+| Smoke | Result | Avg move time | Notes |
+|---|---|---:|---|
+| D5 cap8 ladder, `8` games/pair | tactical `14-0-2`, priority `8-0-8`, child `2-0-14` | tactical `178.65 ms`, priority `42.56 ms`, child `13.63 ms` | priority sits between plain cap and full tactical in both strength and cost |
+| D3 cap8 priority vs tactical, `16` games | tactical wins `10-0-6` | tactical `12.42 ms`, priority `4.09 ms` | priority is about `3x` cheaper but still weaker |
+| D5 no-cap priority vs plain, `8` games | priority wins `5-2-1` | priority `562.21 ms`, plain `779.67 ms` | no-cap remains budget-sensitive, but priority improves ordering without tactical scans |
+| D5 priority rolling-shadow, `8` games | exact `4-0-4` | shadow `37.27 ms`, scan `26.50 ms` | zero shadow mismatches |
+
+Interpretation:
+
+- The optimization landed in the intended middle ground: materially stronger
+  than plain child cap, materially cheaper than full tactical cap.
+- It is not a replacement for full tactical ordering yet. Full tactical still
+  wins the focused cap8 comparisons.
+- The next sweep should test priority cap4/cap8/cap16/no-cap against tactical
+  cap lanes before assuming the old cap8 optimum still holds.
+
 ## Benchmark suites
 
 ### Core
@@ -757,12 +785,17 @@ From code inspection before the first benchmark pass:
     (`2026-05-12`)
 15. Route root win/block checks through explicit-player `ThreatView`
     annotations (`2026-05-12`)
+16. Add lab-only priority ordering as a cheaper alternative to full tactical
+    ordering: hard-keep immediate wins/blocks, then order quiet moves by TT,
+    center, and local density (`2026-05-13`)
 
 ### Future work
 
 1. More incremental or localized evaluation
-2. Incremental candidate frontier maintenance
-3. Bitboard-aware helpers for any remaining full-cell-scan callers that become
+2. Re-sweep priority versus tactical ordering across cap4/cap8/cap16/no-cap
+   lanes before treating cap8 as the durable optimum
+3. Incremental candidate frontier maintenance
+4. Bitboard-aware helpers for any remaining full-cell-scan callers that become
    hot under profiling
 
 ## Baseline snapshot

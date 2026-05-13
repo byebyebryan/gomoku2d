@@ -1958,10 +1958,11 @@ fn order_root_moves(
 ) -> Vec<Move> {
     match move_ordering {
         MoveOrdering::TranspositionFirstBoardOrder => order_tt_first(moves, tt_move),
-        MoveOrdering::TacticalFirst => order_moves_tactical_first(
+        MoveOrdering::TacticalFirst | MoveOrdering::PriorityFirst => order_moves_with_ordering(
             state,
             moves,
             tt_move,
+            move_ordering,
             threat_view_mode,
             metrics,
             SearchMetricPhase::Root,
@@ -1996,6 +1997,43 @@ fn order_search_moves(
                 SearchMetricPhase::Search,
             );
             apply_child_limit(ordered, child_limit, metrics, SearchMetricPhase::Search)
+        }
+        MoveOrdering::PriorityFirst => {
+            let ordered = order_moves_priority_first(
+                state,
+                moves,
+                tt_move,
+                threat_view_mode,
+                metrics,
+                SearchMetricPhase::Search,
+            );
+            apply_child_limit(ordered, child_limit, metrics, SearchMetricPhase::Search)
+        }
+    }
+}
+
+fn order_moves_with_ordering(
+    state: &mut SearchState,
+    moves: Vec<Move>,
+    tt_move: Option<Move>,
+    move_ordering: MoveOrdering,
+    threat_view_mode: ThreatViewMode,
+    metrics: &mut SearchMetrics,
+    phase: SearchMetricPhase,
+) -> Vec<OrderedMove> {
+    match move_ordering {
+        MoveOrdering::TranspositionFirstBoardOrder => order_tt_first(moves, tt_move)
+            .into_iter()
+            .map(|mv| OrderedMove {
+                mv,
+                must_keep: false,
+            })
+            .collect(),
+        MoveOrdering::TacticalFirst => {
+            order_moves_tactical_first(state, moves, tt_move, threat_view_mode, metrics, phase)
+        }
+        MoveOrdering::PriorityFirst => {
+            order_moves_priority_first(state, moves, tt_move, threat_view_mode, metrics, phase)
         }
     }
 }
@@ -2056,6 +2094,93 @@ fn order_moves_tactical_first(
         .into_iter()
         .map(|(_, mv, _, must_keep, _)| OrderedMove { mv, must_keep })
         .collect()
+}
+
+fn order_moves_priority_first(
+    state: &mut SearchState,
+    moves: Vec<Move>,
+    tt_move: Option<Move>,
+    threat_view_mode: ThreatViewMode,
+    metrics: &mut SearchMetrics,
+    _phase: SearchMetricPhase,
+) -> Vec<OrderedMove> {
+    if moves.is_empty() {
+        return Vec::new();
+    }
+
+    let board_size = state.board().config.board_size;
+    let player = state.board().current_player;
+    let opponent = player.opponent();
+    let own_immediate_wins =
+        immediate_winning_move_mask_for_threat_view_mode(state, player, threat_view_mode, metrics);
+    let opponent_immediate_wins = immediate_winning_move_mask_for_threat_view_mode(
+        state,
+        opponent,
+        threat_view_mode,
+        metrics,
+    );
+
+    let mut scored = moves
+        .into_iter()
+        .enumerate()
+        .map(|(index, mv)| {
+            let own_win = move_mask_contains(&own_immediate_wins, board_size, mv);
+            let immediate_block = move_mask_contains(&opponent_immediate_wins, board_size, mv);
+            let (base_score, must_keep) = if own_win {
+                (100_000, true)
+            } else if immediate_block {
+                (90_000, true)
+            } else {
+                (0, false)
+            };
+            let tt_bonus = if Some(mv) == tt_move { 1_000 } else { 0 };
+            let density_bonus = 20 * local_density_score(state.board(), mv, 2);
+            let center_bonus = center_score(state.board().config.board_size, mv);
+
+            (
+                index,
+                mv,
+                base_score + tt_bonus + density_bonus + center_bonus,
+                must_keep,
+            )
+        })
+        .collect::<Vec<_>>();
+
+    scored.sort_by(|a, b| b.2.cmp(&a.2).then_with(|| a.0.cmp(&b.0)));
+    scored
+        .into_iter()
+        .map(|(_, mv, _, must_keep)| OrderedMove { mv, must_keep })
+        .collect()
+}
+
+fn local_density_score(board: &Board, mv: Move, radius: usize) -> i32 {
+    let size = board.config.board_size;
+    if size == 0 || mv.row >= size || mv.col >= size {
+        return 0;
+    }
+
+    let rmin = mv.row.saturating_sub(radius);
+    let rmax = (mv.row + radius).min(size - 1);
+    let cmin = mv.col.saturating_sub(radius);
+    let cmax = (mv.col + radius).min(size - 1);
+    let mut count = 0;
+    for row in rmin..=rmax {
+        for col in cmin..=cmax {
+            if row == mv.row && col == mv.col {
+                continue;
+            }
+            if !board.is_empty(row, col) {
+                count += 1;
+            }
+        }
+    }
+    count
+}
+
+fn center_score(board_size: usize, mv: Move) -> i32 {
+    let center = board_size / 2;
+    let distance = mv.row.abs_diff(center) + mv.col.abs_diff(center);
+    board_size as i32 - distance as i32
 }
 
 fn immediate_winning_move_mask_for_threat_view_mode(
@@ -2820,7 +2945,10 @@ fn negamax(
         SearchMetricPhase::Search,
     );
     let mut needs_legality_check = needs_legality_gate(state.board(), color, legality_gate);
-    if (move_ordering == MoveOrdering::TacticalFirst || child_limit.is_some())
+    if (matches!(
+        move_ordering,
+        MoveOrdering::TacticalFirst | MoveOrdering::PriorityFirst
+    ) || child_limit.is_some())
         && needs_legality_check
     {
         moves.retain(|&mv| {
@@ -3193,6 +3321,7 @@ impl SafetyGate {
 pub enum MoveOrdering {
     TranspositionFirstBoardOrder,
     TacticalFirst,
+    PriorityFirst,
 }
 
 impl MoveOrdering {
@@ -3200,6 +3329,7 @@ impl MoveOrdering {
         match self {
             MoveOrdering::TranspositionFirstBoardOrder => "tt_first_board_order",
             MoveOrdering::TacticalFirst => "tactical_first",
+            MoveOrdering::PriorityFirst => "priority_first",
         }
     }
 }
@@ -4357,6 +4487,80 @@ mod tests {
     }
 
     #[test]
+    fn priority_ordering_keeps_wins_and_blocks_without_tactical_annotations() {
+        let mut win_board = Board::new(RuleConfig::default());
+        apply_moves(
+            &mut win_board,
+            &["H8", "A1", "I8", "B1", "J8", "C1", "K8", "D1"],
+        );
+        let zobrist = ZobristTable::new(win_board.config.board_size);
+        let mut win_state = SearchState::from_board_with_frontier(win_board, &zobrist, false);
+        let mut metrics = SearchMetrics::default();
+        let ordered = order_moves_priority_first(
+            &mut win_state,
+            vec![mv("B2"), mv("E1"), mv("L8")],
+            None,
+            ThreatViewMode::Scan,
+            &mut metrics,
+            SearchMetricPhase::Search,
+        );
+        let capped = apply_child_limit(ordered, Some(1), &mut metrics, SearchMetricPhase::Search);
+        assert_eq!(capped.first().copied(), Some(mv("L8")));
+        assert!(capped.contains(&mv("L8")));
+        assert_eq!(metrics.search_tactical_annotations, 0);
+
+        let mut block_board = Board::new(RuleConfig::default());
+        apply_moves(
+            &mut block_board,
+            &["H8", "A1", "I8", "B1", "J8", "C1", "O15", "D1"],
+        );
+        let zobrist = ZobristTable::new(block_board.config.board_size);
+        let mut block_state = SearchState::from_board_with_frontier(block_board, &zobrist, false);
+        let mut metrics = SearchMetrics::default();
+        let ordered = order_moves_priority_first(
+            &mut block_state,
+            vec![mv("B2"), mv("K8"), mv("E1")],
+            None,
+            ThreatViewMode::Scan,
+            &mut metrics,
+            SearchMetricPhase::Search,
+        );
+        let capped = apply_child_limit(ordered, Some(1), &mut metrics, SearchMetricPhase::Search);
+        assert_eq!(capped.first().copied(), Some(mv("E1")));
+        assert!(capped.contains(&mv("E1")));
+        assert_eq!(metrics.search_tactical_annotations, 0);
+    }
+
+    #[test]
+    fn priority_ordering_no_cap_preserves_move_set() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(
+            &mut board,
+            &["H8", "A1", "I8", "B1", "J8", "C1", "O15", "D1"],
+        );
+        let moves = vec![mv("B2"), mv("K8"), mv("E1"), mv("H9")];
+        let zobrist = ZobristTable::new(board.config.board_size);
+        let mut state = SearchState::from_board_with_frontier(board, &zobrist, false);
+        let mut metrics = SearchMetrics::default();
+
+        let ordered = order_moves_priority_first(
+            &mut state,
+            moves.clone(),
+            None,
+            ThreatViewMode::Scan,
+            &mut metrics,
+            SearchMetricPhase::Search,
+        );
+        let mut ordered_moves = ordered.iter().map(|ordered| ordered.mv).collect::<Vec<_>>();
+        let mut expected = moves;
+        ordered_moves.sort_by_key(|mv| (mv.row, mv.col));
+        expected.sort_by_key(|mv| (mv.row, mv.col));
+
+        assert_eq!(ordered_moves, expected);
+        assert_eq!(metrics.search_tactical_annotations, 0);
+    }
+
+    #[test]
     fn tactical_ordering_summary_matches_full_annotation_score() {
         let mut forcing_board = Board::new(RuleConfig::default());
         apply_moves(&mut forcing_board, &["H8", "A1", "I8", "B1", "J8", "C1"]);
@@ -5344,6 +5548,29 @@ mod tests {
         assert_eq!(trace["config"]["move_ordering"], "tactical_first");
         assert!(metrics["root_tactical_annotations"].as_u64().unwrap() > 0);
         assert!(metrics["search_tactical_annotations"].as_u64().unwrap() > 0);
+    }
+
+    #[test]
+    fn trace_records_priority_ordering_without_tactical_annotations() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(
+            &mut board,
+            &["H8", "A1", "I8", "B1", "J8", "C1", "O15", "D1"],
+        );
+        let mut config = SearchBotConfig::custom_depth(2);
+        config.safety_gate = SafetyGate::None;
+        config.move_ordering = MoveOrdering::PriorityFirst;
+        config.child_limit = Some(4);
+        let mut bot = SearchBot::with_config(config);
+
+        let _ = bot.choose_move(&board);
+        let trace = bot.trace().expect("expected search trace");
+        let metrics = &trace["metrics"];
+
+        assert_eq!(trace["config"]["move_ordering"], "priority_first");
+        assert_eq!(metrics["root_tactical_annotations"], 0);
+        assert_eq!(metrics["search_tactical_annotations"], 0);
+        assert!(metrics["child_cap_hits"].as_u64().unwrap() > 0);
     }
 
     #[test]

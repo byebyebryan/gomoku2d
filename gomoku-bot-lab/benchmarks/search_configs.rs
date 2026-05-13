@@ -100,6 +100,13 @@ fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchB
         return Some(config);
     }
 
+    if let Some(limit) = suffix.strip_prefix("priority-cap-") {
+        let limit = parse_positive_limit(limit)?;
+        config.move_ordering = MoveOrdering::PriorityFirst;
+        config.child_limit = Some(limit);
+        return Some(config);
+    }
+
     if let Some(portal) = parse_corridor_portal_suffix(suffix) {
         match portal.side {
             CorridorPortalSideSuffix::Own => config.corridor_portals.own = portal.config,
@@ -132,6 +139,10 @@ fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchB
         }
         "tactical-first" => {
             config.move_ordering = MoveOrdering::TacticalFirst;
+            Some(config)
+        }
+        "priority-first" => {
+            config.move_ordering = MoveOrdering::PriorityFirst;
             Some(config)
         }
         "pattern-eval" => {
@@ -399,6 +410,25 @@ mod tests {
         assert_eq!(config.child_limit, Some(8));
         assert!(
             super::search_config_from_lab_spec("search-d7+tactical-cap-0", 3, None, None).is_none()
+        );
+    }
+
+    #[test]
+    fn parses_priority_ordering_suffixes() {
+        let priority =
+            super::search_config_from_lab_spec("search-d5+priority-first", 3, None, None)
+                .expect("expected priority ordering spec to parse");
+        assert_eq!(priority.max_depth, 5);
+        assert_eq!(priority.move_ordering, super::MoveOrdering::PriorityFirst);
+        assert_eq!(priority.child_limit, None);
+
+        let capped = super::search_config_from_lab_spec("search-d7+priority-cap-8", 3, None, None)
+            .expect("expected priority cap shorthand spec to parse");
+        assert_eq!(capped.max_depth, 7);
+        assert_eq!(capped.move_ordering, super::MoveOrdering::PriorityFirst);
+        assert_eq!(capped.child_limit, Some(8));
+        assert!(
+            super::search_config_from_lab_spec("search-d7+priority-cap-0", 3, None, None).is_none()
         );
     }
 
