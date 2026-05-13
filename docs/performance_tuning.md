@@ -581,6 +581,13 @@ Interpretation:
   move time in this smoke (`9.91 ms`, `128.77 ms`, `274.53 ms` for D3/D5/D7
   rolling after the cache, versus `9.89 ms`, `125.70 ms`, `272.99 ms` with the
   simpler direct path).
+- A Renju-Black fast path that first computed a direct four-axis summary and
+  only fell back for forcing non-five threats was also tried and removed. It
+  preserved shadow parity, but the focused smokes were neutral to worse: D5
+  rolling dirty annotation time rose from `5.99s` to about `6.13s`, and
+  tactical-lite dirty rank time was essentially flat (`2.58s` to `2.59s`).
+  The extra branch/fallback machinery is not worth carrying without a clearer
+  win.
 - The next useful optimization should focus on remaining dirty recompute cost
   or shared line/annotation work, not another clean summary cache.
 
