@@ -370,6 +370,8 @@ pub struct StandingReport {
     #[serde(default)]
     pub corridor_entry_checks: u64,
     #[serde(default)]
+    pub corridor_entry_skipped_by_top_n: u64,
+    #[serde(default)]
     pub corridor_entries_accepted: u64,
     #[serde(default)]
     pub corridor_entry_acceptance_rate: f64,
@@ -702,6 +704,8 @@ pub struct SideStatsReport {
     #[serde(default)]
     pub corridor_entry_checks: u64,
     #[serde(default)]
+    pub corridor_entry_skipped_by_top_n: u64,
+    #[serde(default)]
     pub corridor_entries_accepted: u64,
     #[serde(default)]
     pub corridor_entry_acceptance_rate: f64,
@@ -917,6 +921,7 @@ struct SideStatsAccumulator {
     corridor_max_depth: u32,
     corridor_extra_plies: u64,
     corridor_entry_checks: u64,
+    corridor_entry_skipped_by_top_n: u64,
     corridor_entries_accepted: u64,
     corridor_own_entries_accepted: u64,
     corridor_opponent_entries_accepted: u64,
@@ -1173,6 +1178,8 @@ impl SideStatsAccumulator {
             self.tt_cutoffs += trace_value_u64(metrics, "tt_cutoffs");
             self.beta_cutoffs += trace_value_u64(metrics, "beta_cutoffs");
             self.corridor_entry_checks += trace_value_u64(metrics, "corridor_entry_checks");
+            self.corridor_entry_skipped_by_top_n +=
+                trace_value_u64(metrics, "corridor_entry_skipped_by_top_n");
             self.corridor_entries_accepted += trace_value_u64(metrics, "corridor_entries_accepted");
             self.corridor_own_entries_accepted +=
                 trace_value_u64(metrics, "corridor_own_entries_accepted");
@@ -1220,6 +1227,7 @@ impl SideStatsAccumulator {
         self.corridor_max_depth = self.corridor_max_depth.max(stats.corridor_max_depth);
         self.corridor_extra_plies += stats.corridor_extra_plies;
         self.corridor_entry_checks += stats.corridor_entry_checks;
+        self.corridor_entry_skipped_by_top_n += stats.corridor_entry_skipped_by_top_n;
         self.corridor_entries_accepted += stats.corridor_entries_accepted;
         self.corridor_own_entries_accepted += stats.corridor_own_entries_accepted;
         self.corridor_opponent_entries_accepted += stats.corridor_opponent_entries_accepted;
@@ -1394,6 +1402,7 @@ impl SideStatsAccumulator {
             corridor_extra_plies: self.corridor_extra_plies,
             avg_corridor_extra_plies,
             corridor_entry_checks: self.corridor_entry_checks,
+            corridor_entry_skipped_by_top_n: self.corridor_entry_skipped_by_top_n,
             corridor_entries_accepted: self.corridor_entries_accepted,
             corridor_entry_acceptance_rate,
             corridor_own_entries_accepted: self.corridor_own_entries_accepted,
@@ -1594,6 +1603,7 @@ fn standings(
                 corridor_extra_plies: side_stats.corridor_extra_plies,
                 avg_corridor_extra_plies: side_stats.avg_corridor_extra_plies,
                 corridor_entry_checks: side_stats.corridor_entry_checks,
+                corridor_entry_skipped_by_top_n: side_stats.corridor_entry_skipped_by_top_n,
                 corridor_entries_accepted: side_stats.corridor_entries_accepted,
                 corridor_entry_acceptance_rate: side_stats.corridor_entry_acceptance_rate,
                 corridor_own_entries_accepted: side_stats.corridor_own_entries_accepted,
@@ -2716,6 +2726,9 @@ fn compact_searchbot_feature_label(feature: &str) -> String {
     }
     if let Some(rank) = feature.strip_prefix("corridor-min-rank-") {
         return format!("CorrMinR{rank}");
+    }
+    if let Some(limit) = feature.strip_prefix("corridor-top-n-") {
+        return format!("CorrTopN{limit}");
     }
 
     match feature {
@@ -4340,6 +4353,7 @@ mod tests {
             "root_child_moves_after_max": 0,
             "search_child_moves_after_max": 9,
             "corridor_entry_checks": 12,
+            "corridor_entry_skipped_by_top_n": 4,
             "corridor_entries_accepted": 3,
             "corridor_own_entries_accepted": 2,
             "corridor_opponent_entries_accepted": 1,
@@ -4386,6 +4400,7 @@ mod tests {
         assert_eq!(report.corridor_extra_plies, 3);
         assert_eq!(report.avg_corridor_extra_plies, 3.0);
         assert_eq!(report.corridor_entry_checks, 12);
+        assert_eq!(report.corridor_entry_skipped_by_top_n, 4);
         assert_eq!(report.corridor_entries_accepted, 3);
         assert_eq!(report.corridor_entry_acceptance_rate, 0.25);
         assert_eq!(report.corridor_own_entries_accepted, 2);
@@ -4712,9 +4727,9 @@ mod tests {
         assert_eq!(
             compact_bot_label(
                 &report,
-                "search-d5+tactical-cap-8+corridor-own-d1-w3+corridor-min-rank-3+corridor-depth-static"
+                "search-d5+tactical-cap-8+corridor-own-d1-w3+corridor-min-rank-3+corridor-top-n-2+corridor-depth-static"
             ),
-            "SearchBot_D5+TCap8+OwnCorrD1W3+CorrMinR3+CorrStatic"
+            "SearchBot_D5+TCap8+OwnCorrD1W3+CorrMinR3+CorrTopN2+CorrStatic"
         );
     }
 
@@ -5331,6 +5346,7 @@ mod tests {
             corridor_extra_plies: 0,
             avg_corridor_extra_plies: 0.0,
             corridor_entry_checks: 0,
+            corridor_entry_skipped_by_top_n: 0,
             corridor_entries_accepted: 0,
             corridor_entry_acceptance_rate: 0.0,
             corridor_own_entries_accepted: 0,
@@ -5451,6 +5467,7 @@ mod tests {
             corridor_extra_plies: 0,
             avg_corridor_extra_plies: 0.0,
             corridor_entry_checks: 0,
+            corridor_entry_skipped_by_top_n: 0,
             corridor_entries_accepted: 0,
             corridor_entry_acceptance_rate: 0.0,
             corridor_own_entries_accepted: 0,
