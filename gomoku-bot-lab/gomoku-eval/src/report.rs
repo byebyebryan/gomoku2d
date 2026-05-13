@@ -2561,6 +2561,9 @@ fn compact_searchbot_feature_label(feature: &str) -> String {
     if let Some(cap) = feature.strip_prefix("tactical-cap-") {
         return format!("TCap{cap}");
     }
+    if let Some(cap) = feature.strip_prefix("priority-cap-") {
+        return format!("PriorityCap{cap}");
+    }
     if let Some(cap) = feature.strip_prefix("child-cap-") {
         return format!("Cap{cap}");
     }
@@ -2588,6 +2591,7 @@ fn compact_searchbot_feature_label(feature: &str) -> String {
         "rolling-frontier" => "Rolling".to_string(),
         "rolling-frontier-shadow" => "RollingShadow".to_string(),
         "tactical-first" => "Tactical".to_string(),
+        "priority-first" => "Priority".to_string(),
         "no-safety" => "NoSafety".to_string(),
         "opponent-reply-search-probe" => "SearchProbe".to_string(),
         "opponent-reply-local-threat-probe" => "LocalThreat".to_string(),
@@ -4517,6 +4521,14 @@ mod tests {
         assert_eq!(
             compact_bot_label(&report, "search-d5+tactical-cap-8"),
             "SearchBot_D5+TCap8"
+        );
+        assert_eq!(
+            compact_bot_label(&report, "search-d5+priority-cap-8"),
+            "SearchBot_D5+PriorityCap8"
+        );
+        assert_eq!(
+            compact_bot_label(&report, "search-d5+priority-first"),
+            "SearchBot_D5+Priority"
         );
         assert_eq!(
             compact_bot_label(&report, "search-d5+tactical-cap-8+pattern-eval"),

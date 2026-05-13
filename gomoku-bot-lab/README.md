@@ -79,13 +79,19 @@ but uses a radius-1 candidate source and no root safety gate. The default
 `current_obligation` safety gate only filters already-generated legal root
 candidates against immediate wins, direct immediate blocks, and direct or
 counter-four replies to imminent threats. Append `+tactical-first` to try
-local-threat move ordering before alpha-beta search.
+full local-threat move ordering before alpha-beta search. Append
+`+priority-first` to try cheaper hard-tactical ordering: immediate wins,
+immediate blocks, TT move, center bias, and local density without scanning
+candidate-created threats.
 Append `+child-cap-N` to cap the ordered non-root child frontier after candidate
 generation, legality filtering, and move ordering. `+tactical-cap-N` is
 shorthand for `+tactical-first+child-cap-N` and is the preferred report-facing
-form, for example `search-d5+tactical-cap-12`. Root still considers every
-legal/safe candidate; candidate source controls discovery, while child cap
-controls how many ordered non-root children alpha-beta searches.
+form for full tactical ordering, for example `search-d5+tactical-cap-12`.
+`+priority-cap-N` is the cheaper shorthand for
+`+priority-first+child-cap-N`, for example `search-d5+priority-cap-8`. Root
+still considers every legal/safe candidate; candidate source controls
+discovery, while child cap controls how many ordered non-root children
+alpha-beta searches.
 
 Legacy specs still work: plain `baseline` uses `--depth`, `baseline-N` creates a
 custom fixed-depth baseline bot, and the old `fast`/`balanced`/`deep` aliases

@@ -46,7 +46,7 @@ product presets:
 | `candidate_radius` | Distance around existing stones used to generate candidate moves, or current-player stones for asymmetric candidate sources |
 | `candidate_opponent_radius` | Optional opponent-stone radius for asymmetric candidate sources |
 | `safety_gate` | Root safety gate: `current_obligation` or `none` |
-| `move_ordering` | Alpha-beta move ordering: `tt_first_board_order` or lab-only `tactical_first` |
+| `move_ordering` | Alpha-beta move ordering: `tt_first_board_order`, lab-only `tactical_first`, or lab-only `priority_first` |
 | `child_limit` | Optional lab-only cap on the ordered non-root child frontier searched by alpha-beta |
 | `static_eval` | Leaf board evaluator: default `line_shape_eval` or lab-only `pattern_eval` |
 | `corridor_portals` | Optional corridor-extension controls, disabled by default |
@@ -58,8 +58,9 @@ Search traces expose explicit pipeline stages: `candidate_source`,
 (`near_all_rN`) and lab-only asymmetric current-player/opponent radii
 (`near_self_rN_opponent_rM`). There is one legality gate (`exact_rules`), one
 shared local-threat view, one root safety gate (`current_obligation`, or `none`
-for ablations), two move-ordering modes (`tt_first_board_order` default,
-`tactical_first` lab-only), and an optional `child_limit` lab cap. Static eval
+for ablations), three move-ordering modes (`tt_first_board_order` default,
+`tactical_first` lab-only, `priority_first` lab-only), and an optional
+`child_limit` lab cap. Static eval
 defaults to the
 global line-shape evaluator; `pattern_eval` is a lab-only alternative that
 scores five-cell windows with Renju-aware completion/extension squares.
@@ -92,15 +93,20 @@ For lab-only ablations, append `+near-all-r1`, `+near-all-r2`, or
 `+near-self-rN-opponent-rM` to test an asymmetric source, for example
 `+near-self-r2-opponent-r1`. Append `+no-safety` to disable the root
 current-obligation safety gate for ablation runs. Append `+tactical-first` to
-use local-threat facts for ordering before alpha-beta visits candidate moves, for example
-`search-d5+tactical-first`. Append `+child-cap-N` to limit the ordered non-root
+use full local-threat facts for ordering before alpha-beta visits candidate
+moves, for example `search-d5+tactical-first`. Append `+priority-first` to use
+the cheaper hard-tactical orderer: immediate wins, immediate blocks, TT move,
+center bias, and local density, without scanning candidate-created threats.
+Append `+child-cap-N` to limit the ordered non-root
 child frontier after candidate generation, legality filtering, and move
 ordering. Use `+tactical-cap-N` as shorthand for `+tactical-first+child-cap-N`
-in reports and tournament specs, for example `search-d5+tactical-cap-12`. Root
-still considers every legal/safe candidate. Candidate source and child cap are
-intentionally separate: source defines the discovery boundary, while child cap
-tests whether ordering can keep useful deeper-node coverage while alpha-beta
-searches fewer children. Append `+pattern-eval` to replace the default
+in reports and tournament specs, for example `search-d5+tactical-cap-12`. Use
+`+priority-cap-N` as shorthand for `+priority-first+child-cap-N`, for example
+`search-d5+priority-cap-8`. Root still considers every legal/safe candidate.
+Candidate source and child cap are intentionally separate: source defines the
+discovery boundary, while child cap tests whether ordering can keep useful
+deeper-node coverage while alpha-beta searches fewer children. Append
+`+pattern-eval` to replace the default
 line-shape static eval with the lab-only pattern evaluator. These switches
 measure one pipeline axis at a time; defaults remain `near_all_r2`,
 `current_obligation`, `tt_first_board_order`, no child cap, and
@@ -460,15 +466,17 @@ entry checks. In normal scan mode, `Board` remains the source of truth and
 `ScanThreatView` computes the annotation directly. In rolling shadow mode, the
 scan-backed annotation still drives behavior while the frontier-backed answer is
 checked for parity. In rolling mode, tactical ordering can consume the
-frontier-backed annotation as a lab-only validation path. It can still pair with
-`child_limit` to test whether ordered tactical coverage lets alpha-beta search
-fewer children without changing candidate discovery. The frontier now updates
-through apply/undo. Root tactical checks now use per-player threat-view
+frontier-backed annotation as a lab-only validation path. Priority ordering is a
+cheaper sibling: it asks the threat view only for current immediate-win/block
+sets, then orders quiet moves by deterministic heuristics. Both ordering modes
+can pair with `child_limit` to test whether ordered coverage lets alpha-beta
+search fewer children without changing candidate discovery. The frontier now
+updates through apply/undo. Root tactical checks now use per-player threat-view
 annotations for immediate wins/blocks, and corridor continuation/reply queries
 use the same threat-view contract for immediate win checks and local corridor
 facts instead of a pre-move attacker-rank scan surface. The next optimization
-boundary is broader candidate-frontier maintenance and larger reference
-validation, not another eager full-board scan replacement.
+boundary is comparing full tactical ordering against priority ordering across
+cap4/cap8/cap16/no-cap lanes before doing more candidate-frontier maintenance.
 
 For `v0.4.1`, the strategic target is a practice bot that climbs a tactical
 ladder:
