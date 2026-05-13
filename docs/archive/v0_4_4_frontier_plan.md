@@ -400,6 +400,9 @@ Known remaining edges:
   materialized local entries and defender replies. The old pre-move
   `attacker_move_rank` helper remains as scan/reference logic outside the
   `ThreatView` trait, but rolling search no longer exposes that scan surface.
+- Root safety and tactical ordering now ask `ThreatView` for explicit-player
+  annotations, so immediate win/block checks can be answered by the rolling
+  frontier instead of direct board threat scans.
 - Non-shadow rolling search should keep `threat_view_scan_queries == 0`.
   Reintroduced scan-backed threat queries should be confined to scan mode,
   rolling-shadow comparison, tests, replay/report analysis, or explicit
