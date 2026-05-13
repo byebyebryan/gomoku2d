@@ -3658,7 +3658,7 @@ impl SearchBotConfig {
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
             corridor_portals: CorridorPortalConfig::DISABLED,
-            threat_view_mode: ThreatViewMode::Scan,
+            threat_view_mode: ThreatViewMode::Rolling,
         }
     }
 
@@ -3675,7 +3675,7 @@ impl SearchBotConfig {
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
             corridor_portals: CorridorPortalConfig::DISABLED,
-            threat_view_mode: ThreatViewMode::Scan,
+            threat_view_mode: ThreatViewMode::Rolling,
         }
     }
 
@@ -3692,7 +3692,7 @@ impl SearchBotConfig {
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
             corridor_portals: CorridorPortalConfig::DISABLED,
-            threat_view_mode: ThreatViewMode::Scan,
+            threat_view_mode: ThreatViewMode::Rolling,
         }
     }
 
@@ -4949,7 +4949,7 @@ mod tests {
     }
 
     #[test]
-    fn explicit_config_constructors_preserve_legacy_defaults() {
+    fn explicit_config_constructors_preserve_current_defaults() {
         let baseline = SearchBotConfig::custom_depth(3);
         assert_eq!(SearchBot::new(3).config(), baseline);
         assert_eq!(
@@ -5042,7 +5042,7 @@ mod tests {
         assert_eq!(trace["config"]["child_limit"], serde_json::Value::Null);
         assert_eq!(trace["config"]["search_algorithm"], "alpha_beta_id");
         assert_eq!(trace["config"]["static_eval"], "line_shape_eval");
-        assert_eq!(trace["config"]["threat_view_mode"], "scan");
+        assert_eq!(trace["config"]["threat_view_mode"], "rolling");
         assert_eq!(
             trace["config"]["corridor_portals"],
             serde_json::json!({
@@ -5891,12 +5891,14 @@ mod tests {
                 .unwrap()
                 > 0
         );
-        assert!(metrics["tactical_lite_rank_scan_queries"].as_u64().unwrap() > 0);
+        assert_eq!(metrics["tactical_lite_rank_scan_queries"], 0);
         assert!(
-            metrics["tactical_lite_rank_scan_ns"].as_u64().unwrap() > 0,
-            "scan tactical-lite rank queries should record dedicated timing"
+            metrics["tactical_lite_rank_frontier_dirty_queries"]
+                .as_u64()
+                .unwrap()
+                > 0,
+            "default tactical-lite rank queries should use the rolling frontier"
         );
-        assert_eq!(metrics["tactical_lite_rank_frontier_clean_queries"], 0);
         assert!(metrics["child_cap_hits"].as_u64().unwrap() > 0);
     }
 

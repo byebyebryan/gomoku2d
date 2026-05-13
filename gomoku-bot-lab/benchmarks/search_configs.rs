@@ -23,7 +23,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
             corridor_portals: CorridorPortalConfig::DISABLED,
-            threat_view_mode: ThreatViewMode::Scan,
+            threat_view_mode: ThreatViewMode::Rolling,
         },
     },
     LabSearchConfig {
@@ -40,7 +40,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
             corridor_portals: CorridorPortalConfig::DISABLED,
-            threat_view_mode: ThreatViewMode::Scan,
+            threat_view_mode: ThreatViewMode::Rolling,
         },
     },
     LabSearchConfig {
@@ -57,7 +57,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
             corridor_portals: CorridorPortalConfig::DISABLED,
-            threat_view_mode: ThreatViewMode::Scan,
+            threat_view_mode: ThreatViewMode::Rolling,
         },
     },
 ];
@@ -158,6 +158,10 @@ fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchB
         }
         "pattern-eval" => {
             config.static_eval = StaticEvaluation::PatternEval;
+            Some(config)
+        }
+        "scan-threat-view" => {
+            config.threat_view_mode = ThreatViewMode::Scan;
             Some(config)
         }
         "rolling-frontier" => {
@@ -303,6 +307,7 @@ mod tests {
         assert_eq!(config.cpu_time_budget_ms, None);
         assert_eq!(config.candidate_radius, 2);
         assert_eq!(config.safety_gate, super::SafetyGate::CurrentObligation);
+        assert_eq!(config.threat_view_mode, super::ThreatViewMode::Rolling);
     }
 
     #[test]
@@ -379,7 +384,15 @@ mod tests {
     }
 
     #[test]
-    fn parses_rolling_frontier_suffixes() {
+    fn parses_threat_view_suffixes() {
+        let default = super::search_config_from_lab_spec("search-d3", 5, None, None)
+            .expect("expected default search spec to parse");
+        assert_eq!(default.threat_view_mode, super::ThreatViewMode::Rolling);
+
+        let scan = super::search_config_from_lab_spec("search-d3+scan-threat-view", 5, None, None)
+            .expect("expected scan threat-view spec to parse");
+        assert_eq!(scan.threat_view_mode, super::ThreatViewMode::Scan);
+
         let rolling =
             super::search_config_from_lab_spec("search-d3+rolling-frontier", 5, None, None)
                 .expect("expected rolling frontier spec to parse");

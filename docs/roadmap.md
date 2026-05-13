@@ -344,11 +344,10 @@ architecture:
 - add a rolling `ThreatView` implementation that updates alongside apply/undo;
 - validate it against `ScanThreatView` on tactical fixtures, random sequences,
   and Renju forbidden cases;
-- run it in shadow mode before any hot path uses it for behavior;
-- use rolling-backed tactical ordering and current-obligation safety only behind
-  explicit lab suffixes after parity and focused smoke metrics are clean;
-- keep the default bot path scan-backed until a clean full reference tournament
-  and companion top-two analysis confirm the new baseline;
+- run it in shadow mode before promoting hot-path behavior;
+- promote rolling-backed tactical ordering and current-obligation safety as the
+  default threat-view backend after focused parity and smoke metrics are clean;
+- keep scan-backed threat view as an explicit fallback/comparison suffix;
 - treat relaxed/no-budget scan-vs-rolling runs as the semantic parity check, and
   normal-budget runs as budget-interaction/cost evidence.
 
@@ -358,7 +357,7 @@ The working plan lives in `docs/archive/v0_4_4_frontier_plan.md`.
 only knobs that have survived lab evidence. A reasonable product-facing starting
 point is still an easy/default/hard ladder backed by reports, but corridor-aware
 bot behavior may change what those labels mean. Keep raw pattern-eval,
-child-cap, corridor-search, and rolling-frontier knobs lab-only until they
+child-cap, corridor-search, and shadow/scan diagnostic knobs lab-only until they
 become product language. Profile should not become a dumping ground for
 bot/debug preferences.
 

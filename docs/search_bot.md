@@ -50,7 +50,7 @@ product presets:
 | `child_limit` | Optional lab-only cap on the ordered non-root child frontier searched by alpha-beta |
 | `static_eval` | Leaf board evaluator: default `line_shape_eval` or lab-only `pattern_eval` |
 | `corridor_portals` | Optional corridor-extension controls, disabled by default |
-| `threat_view_mode` | Threat-view backend: `scan`, `rolling_shadow`, or `rolling` |
+| `threat_view_mode` | Threat-view backend: default `rolling`, validation-only `rolling_shadow`, or fallback `scan` |
 
 Search traces expose explicit pipeline stages: `candidate_source`,
 `legality_gate`, tactical annotation counters, `safety_gate`, and
@@ -112,10 +112,14 @@ Candidate source and child cap are intentionally separate: source defines the
 discovery boundary, while child cap tests whether ordering can keep useful
 deeper-node coverage while alpha-beta searches fewer children. Append
 `+pattern-eval` to replace the default
-line-shape static eval with the lab-only pattern evaluator. These switches
-measure one pipeline axis at a time; defaults remain `near_all_r2`,
-`current_obligation`, `tt_first_board_order`, no child cap, and
-`line_shape_eval`. The retired opponent-reply safety probes are intentionally no
+line-shape static eval with the lab-only pattern evaluator. Append
+`+scan-threat-view` to force the older scan-backed threat view for fallback
+comparisons. `+rolling-frontier` is accepted as an explicit no-op for the
+default rolling backend, and `+rolling-frontier-shadow` enables validation-only
+scan-vs-rolling parity checks. These switches measure one pipeline axis at a
+time; defaults remain `near_all_r2`, `current_obligation`,
+`tt_first_board_order`, no child cap, `line_shape_eval`, and `rolling`
+threat view. The retired opponent-reply safety probes are intentionally no
 longer accepted as lab suffixes; the current safety gate only filters the legal
 root candidates by obligations already present on the board. It preserves own
 immediate wins first, then direct replies to opponent immediate wins, then
@@ -207,34 +211,33 @@ not as a candidate preset. The useful refactor outcome is the `ThreatView` seam
 in `gomoku-bot::tactical`, which gives rolling-frontier work a stable query
 contract without promoting the current portal behavior.
 
-`0.4.4` adds the first rolling-frontier implementation behind that contract. The
-mode is correctness-first: search keeps board, hash, and the optional frontier
-synchronized through one recursive `SearchState`, and rolling modes stay
-lab-only until they are correct under the full reference workload:
+`0.4.4` promotes the rolling-frontier implementation behind that contract as the
+default threat-view backend after focused scan-vs-rolling controls and shadow
+parity checks. Search keeps board, hash, and the optional frontier synchronized
+through one recursive `SearchState`; scan remains available through
+`+scan-threat-view` for fallback and comparisons:
 
 - `+rolling-frontier-shadow` records scan-vs-frontier parity for portal-entry
   checks, tactical ordering annotations, and current-obligation root safety
   while scan-backed answers still drive behavior. It also records scan time,
   frontier rebuild/update time, and frontier query time for those checks.
-- `+rolling-frontier` lets portal-entry checks, corridor continuation/reply
-  queries, root win/block checks, and tactical ordering annotations use the
-  frontier-backed answer. Current-obligation safety also uses a root-only full
-  frontier in this mode because it needs active existing-threat facts before
-  recursive search state exists.
+- `+rolling-frontier` explicitly selects the default frontier-backed answer for
+  portal-entry checks, corridor continuation/reply queries, root win/block
+  checks, and tactical ordering annotations.
+- `+scan-threat-view` forces the scan-backed threat view for fallback and
+  comparison runs.
 
-Both suffixes are lab-only validation and instrumentation modes, not promoted
-bot configs. Incremental frontier deltas, lazy Renju filtering, per-state dirty
+The shadow suffix is a validation and instrumentation mode, not a promoted bot
+config. Incremental frontier deltas, lazy Renju filtering, per-state dirty
 annotation memoization, indexed immediate-win lookup, and the simplified
 `current_obligation` safety gate moved focused smoke results from "useful but
-slower" to a net rolling speed win for normal tactical search. The default bot
-path remains scan-backed until a clean full reference tournament and companion
-top-two analysis establish the current baseline. Scan-vs-rolling controls should
-judge parity with relaxed or no per-move budget; normal `1000 ms/move` runs are
-cost/strength samples and may shift because iterative deepening completes
-different work under the clock. Scan remains the reference/fallback
-implementation; rolling is added beside it behind the same `ThreatView` contract
-so parity checks, safe rollback, and targeted benchmarks stay cheap. Non-shadow
-rolling search is expected to keep
+slower" to a net rolling speed win for normal tactical search. Scan-vs-rolling
+controls should judge parity with relaxed or no per-move budget; normal
+`1000 ms/move` runs are cost/strength samples and may shift because iterative
+deepening completes different work under the clock. Scan remains the fallback
+implementation behind the same `ThreatView` contract, so parity checks, safe
+rollback, and targeted benchmarks stay cheap. Non-shadow rolling search is
+expected to keep
 `threat_view_scan_queries == 0`; scan queries in rolling work should be limited
 to shadow comparison, tests, report/replay analysis, or explicit fallback paths.
 

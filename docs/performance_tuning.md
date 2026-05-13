@@ -638,9 +638,35 @@ Interpretation:
   queries and a modest cost win in the focused head-to-head. The shadow lane is
   intentionally much slower because it runs both scan and rolling.
 - Do not add latent-potential tactical-lite ranking until the first-order rank
-  path is a clear cost win. The better next target is making rolling the default
-  backend for validated tactical queries, then deciding whether second-order
-  potential can be derived from frontier facts cheaply.
+  path is a clear cost win. After rolling promotion, the better next target is
+  deciding whether second-order potential can be derived from frontier facts
+  cheaply.
+
+Rolling promotion gate:
+
+Date: `2026-05-13`
+
+The promotion gate used focused scan-vs-rolling controls before flipping the
+default backend. Tactical scenarios kept the existing split: all
+`hard_safety_gate` cases passed, while diagnostic shape cases still reflected
+known bot-quality gaps. Those diagnostics are not rolling-specific blockers.
+
+Focused head-to-heads, centered-suite openings, `4` opening plies:
+
+| Lane | Normal `1000 ms/move` | Relaxed `5000 ms/move` | Read |
+|---|---|---|---|
+| D3 cap8 | rolling `8-0-8`, `10.60 ms` vs scan `14.95 ms` | rolling `4-0-4`, `9.68 ms` vs scan `13.56 ms` | parity, faster rolling |
+| D5 cap8 | rolling `8-0-8`, `80.45 ms` vs scan `122.58 ms` | rolling `4-0-4`, `76.41 ms` vs scan `115.39 ms` | parity, faster rolling |
+| D7 cap8 | rolling `6-0-10`, `321.84 ms` vs scan `409.95 ms` | rolling `4-0-4`, `327.09 ms` vs scan `511.83 ms` | normal-budget result is budget interaction; relaxed parity holds |
+| D5 cap8 pattern | rolling `9-0-7`, `119.07 ms` vs scan `160.55 ms` | rolling `4-0-4`, `115.65 ms` vs scan `167.67 ms` | parity/favorable, faster rolling |
+
+Shadow validation over D3 cap8, D5 cap8, D7 cap8, and D5 cap8 pattern exited
+successfully with `0` shadow mismatches. Non-shadow rolling rows in the focused
+reports had `threat_view_scan_queries == 0`.
+
+Decision: promote rolling frontier as the default threat-view backend, keep
+`+scan-threat-view` as the fallback/comparison suffix, and keep
+`+rolling-frontier-shadow` as validation-only.
 
 ## Benchmark suites
 
