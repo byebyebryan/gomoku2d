@@ -4,7 +4,7 @@ use gomoku_core::{Board, Color, GameResult, Move, MoveError, DIRS};
 
 use crate::tactical::{
     raw_local_threat_facts_at_existing_move, raw_local_threat_facts_for_player,
-    CorridorThreatPolicy, LocalThreatFact, ScanThreatView, SearchThreatPolicy,
+    CorridorThreatPolicy, LocalThreatFact, LocalThreatKind, ScanThreatView, SearchThreatPolicy,
     TacticalMoveAnnotation, ThreatView,
 };
 
@@ -351,6 +351,10 @@ impl RebuildThreatFrontier {
 }
 
 impl ThreatView for RebuildThreatFrontier {
+    fn immediate_winning_moves_for(&self, player: Color) -> Vec<Move> {
+        self.board.immediate_winning_moves_for(player)
+    }
+
     fn search_annotation_for_move(&self, mv: Move) -> TacticalMoveAnnotation {
         self.search_annotation_for_player(self.board.current_player, mv)
     }
@@ -402,6 +406,23 @@ impl ThreatView for RebuildThreatFrontier {
 }
 
 impl ThreatView for RollingThreatFrontier {
+    fn immediate_winning_moves_for(&self, player: Color) -> Vec<Move> {
+        let size = self.board.config.board_size;
+        let mut moves = Vec::new();
+        for row in 0..size {
+            for col in 0..size {
+                if !self.board.is_empty(row, col) {
+                    continue;
+                }
+                let mv = Move { row, col };
+                if creates_immediate_win(&self.search_annotation_for_player(player, mv)) {
+                    moves.push(mv);
+                }
+            }
+        }
+        moves
+    }
+
     fn search_annotation_for_move(&self, mv: Move) -> TacticalMoveAnnotation {
         self.search_annotation_for_move_with_source(mv).0
     }
@@ -486,6 +507,13 @@ fn search_annotations_for_player(board: &Board, player: Color) -> Vec<TacticalMo
 
 fn search_annotation_for_player(board: &Board, player: Color, mv: Move) -> TacticalMoveAnnotation {
     SearchThreatPolicy.annotation_for_player(board, player, mv)
+}
+
+fn creates_immediate_win(annotation: &TacticalMoveAnnotation) -> bool {
+    annotation
+        .local_threats
+        .iter()
+        .any(|fact| fact.kind == LocalThreatKind::Five)
 }
 
 fn local_corridor_entry_rank_from_facts<'a>(
@@ -681,6 +709,14 @@ mod tests {
             view.defender_reply_moves(attacker, None),
             scan.defender_reply_moves(attacker, None)
         );
+        for player in [Color::Black, Color::White] {
+            assert_eq!(
+                view.immediate_winning_moves_for(player),
+                scan.immediate_winning_moves_for(player),
+                "immediate win mismatch for {:?}",
+                player
+            );
+        }
     }
 
     fn assert_all_search_annotations_match_scan(board: &Board, view: &impl ThreatView) {

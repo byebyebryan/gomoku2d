@@ -259,6 +259,8 @@ impl CorridorThreatPolicy {
 }
 
 pub trait ThreatView {
+    /// Legal immediate winning moves for `player` on this board.
+    fn immediate_winning_moves_for(&self, player: Color) -> Vec<Move>;
     /// Search-ordering tactical annotation for a candidate before it is played.
     fn search_annotation_for_move(&self, mv: Move) -> TacticalMoveAnnotation;
     /// Search-ordering tactical annotation for an explicit side before it is played.
@@ -286,6 +288,10 @@ impl<'a> ScanThreatView<'a> {
 }
 
 impl ThreatView for ScanThreatView<'_> {
+    fn immediate_winning_moves_for(&self, player: Color) -> Vec<Move> {
+        self.board.immediate_winning_moves_for(player)
+    }
+
     fn search_annotation_for_move(&self, mv: Move) -> TacticalMoveAnnotation {
         SearchThreatPolicy.annotation_for_move(self.board, mv)
     }
