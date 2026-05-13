@@ -96,7 +96,9 @@ form for full tactical ordering, for example `search-d5+tactical-cap-12`.
 `+priority-first+child-cap-N`, for example `search-d5+priority-cap-8`. Root
 still considers every legal/safe candidate; candidate source controls
 discovery, while child cap controls how many ordered non-root children
-alpha-beta searches.
+alpha-beta searches. Rolling frontier is the default threat-view backend;
+append `+scan-threat-view` to force the older scan-backed view for fallback
+comparisons, or `+rolling-frontier-shadow` to run scan-vs-rolling parity checks.
 
 Legacy specs still work: plain `baseline` uses `--depth`, `baseline-N` creates a
 custom fixed-depth baseline bot, and the old `fast`/`balanced`/`deep` aliases
@@ -164,10 +166,9 @@ aliases/config flags until cheaper threat facts make the portal model practical.
 The working plan lives in
 [`../docs/archive/v0_4_3_corridor_bot_plan.md`](../docs/archive/v0_4_3_corridor_bot_plan.md).
 
-`0.4.4` moves to the rolling-frontier pass: keep scan-backed behavior as the
-reference, add a derived threat index behind the `ThreatView` seam, validate it
-with fixture/random/Renju parity tests, then use explicit lab suffixes for
-behavior only after focused parity and cost checks. The working plan lives in
+`0.4.4` promotes the rolling-frontier pass after focused scan-vs-rolling and
+shadow parity checks. Scan remains available as an explicit fallback behind the
+same `ThreatView` seam, while shadow remains validation-only. The working plan lives in
 [`../docs/archive/v0_4_4_frontier_plan.md`](../docs/archive/v0_4_4_frontier_plan.md).
 
 Current frontier suffixes are intentionally narrow:
@@ -176,19 +177,20 @@ Current frontier suffixes are intentionally narrow:
   tactical annotations, and current-obligation safety against scan-backed
   answers, report shadow mismatch counts, and record scan-vs-frontier
   update/query timing; behavior stays scan-backed.
-- `+rolling-frontier`: use the rolling-backed portal-entry answer, corridor
+- `+rolling-frontier`: explicitly use the default rolling-backed portal-entry answer, corridor
   continuation/reply queries, indexed immediate-win checks, root win/block
   checks, and tactical annotations. Current-obligation safety also uses a
   root-only full frontier in this mode.
+- `+scan-threat-view`: force the scan-backed threat view for fallback and
+  comparison runs.
 
 Search now threads an optional frontier through recursive apply/undo with the
-board and hash. The default scan mode leaves that frontier disabled; the rolling
-suffixes enable it for parity and cost measurement. Immediate wins now have a
+board and hash. The default rolling mode enables it for normal search, while
+scan disables it and shadow runs both paths for parity. Immediate wins now have a
 dedicated per-player rolling index, so `TacticalOnly` mode can answer win/block
 queries without maintaining full corridor move facts. Current smoke data reached
-zero shadow mismatches, and the latest focused smoke makes rolling faster than
-scan for `search-d3+tactical-cap-8`. Keep it lab-only until a clean full
-reference tournament and companion analysis report confirm the baseline.
+zero shadow mismatches, and focused promotion smokes make rolling faster than
+scan while preserving relaxed-budget parity.
 Non-shadow rolling search should keep threat-view scan counters at zero; scan
 queries are expected only in scan mode, rolling-shadow comparison, or explicit
 fallback diagnostics.
