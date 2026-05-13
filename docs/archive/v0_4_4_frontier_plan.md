@@ -397,9 +397,10 @@ Known remaining edges:
 - Current-obligation safety still builds a root-only full frontier in rolling
   mode because that pass runs before recursive `SearchState` exists.
 - Corridor portal continuations now ask the selected `ThreatView` for
-  materialized local entries and defender replies. The old pre-move
-  `attacker_move_rank` helper remains as scan/reference logic outside the
-  `ThreatView` trait, but rolling search no longer exposes that scan surface.
+  materialized local entries, immediate win checks, and defender replies. The
+  old pre-move `attacker_move_rank` helper remains as scan/reference logic
+  outside the `ThreatView` trait, but rolling search no longer exposes that scan
+  surface.
 - Root safety and tactical ordering now ask `ThreatView` for explicit-player
   annotations, so immediate win/block checks can be answered by the rolling
   frontier instead of direct board threat scans.

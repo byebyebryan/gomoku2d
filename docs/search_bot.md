@@ -464,10 +464,10 @@ frontier-backed annotation as a lab-only validation path. It can still pair with
 fewer children without changing candidate discovery. The frontier now updates
 through apply/undo. Root tactical checks now use per-player threat-view
 annotations for immediate wins/blocks, and corridor continuation/reply queries
-use the same threat-view contract instead of a pre-move attacker-rank scan
-surface. The next optimization boundary is broader candidate-frontier
-maintenance and larger reference validation, not another eager full-board scan
-replacement.
+use the same threat-view contract for immediate win checks and local corridor
+facts instead of a pre-move attacker-rank scan surface. The next optimization
+boundary is broader candidate-frontier maintenance and larger reference
+validation, not another eager full-board scan replacement.
 
 For `v0.4.1`, the strategic target is a practice bot that climbs a tactical
 ladder:

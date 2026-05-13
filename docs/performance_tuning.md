@@ -516,9 +516,9 @@ Follow-up memo checkpoint:
   full frontier because current obligations need active existing-threat facts.
   The older opponent-reply probes are retired rather than kept as lab suffixes.
 - Corridor portal continuation now uses the selected threat view for
-  materialized attacker entries and defender replies. In non-shadow rolling mode,
-  this keeps the search-owned threat-view scan counter at zero; shadow mode still
-  runs both scan and rolling answers for parity.
+  materialized attacker entries, immediate win checks, and defender replies. In
+  non-shadow rolling mode, this keeps the search-owned threat-view scan counter
+  at zero; shadow mode still runs both scan and rolling answers for parity.
 - Root win/block checks now use explicit-player threat-view annotations, which
   lets rolling mode answer those checks from the frontier instead of direct board
   threat scans.
