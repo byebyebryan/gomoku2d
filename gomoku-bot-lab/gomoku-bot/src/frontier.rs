@@ -366,15 +366,16 @@ impl ThreatView for RebuildThreatFrontier {
     }
 
     fn has_move_local_corridor_entry(&self, attacker: Color, mv: Move) -> bool {
-        if !self.board.has_color(mv.row, mv.col, attacker) {
-            return false;
-        }
+        self.local_corridor_entry_rank(attacker, mv) > 0
+    }
 
-        let policy = CorridorThreatPolicy;
-        self.move_facts_for(attacker)
-            .iter()
-            .filter(|fact| fact.origin.mv() == mv)
-            .any(|fact| policy.is_active_threat(&self.board, attacker, fact))
+    fn local_corridor_entry_rank(&self, attacker: Color, mv: Move) -> u8 {
+        local_corridor_entry_rank_from_facts(
+            &self.board,
+            attacker,
+            mv,
+            self.move_facts_for(attacker).iter(),
+        )
     }
 
     fn defender_reply_moves(&self, attacker: Color, actual_reply: Option<Move>) -> Vec<Move> {
@@ -382,12 +383,6 @@ impl ThreatView for RebuildThreatFrontier {
         // already owns the active facts; reply-set extraction becomes the first
         // target after fixture parity proves the fact index.
         CorridorThreatPolicy.defender_reply_moves(&self.board, attacker, actual_reply)
-    }
-
-    fn attacker_move_rank(&self, attacker: Color, mv: Move) -> u8 {
-        // Ranking a hypothetical move still needs a post-move view. The rolling
-        // frontier should optimize this once apply/undo deltas exist.
-        CorridorThreatPolicy.attacker_move_rank(&self.board, attacker, mv)
     }
 }
 
@@ -410,19 +405,25 @@ impl ThreatView for RollingThreatFrontier {
     }
 
     fn has_move_local_corridor_entry(&self, attacker: Color, mv: Move) -> bool {
+        self.local_corridor_entry_rank(attacker, mv) > 0
+    }
+
+    fn local_corridor_entry_rank(&self, attacker: Color, mv: Move) -> u8 {
         let size = self.board.config.board_size;
         if mv.row >= size || mv.col >= size || !self.board.has_color(mv.row, mv.col, attacker) {
-            return false;
+            return 0;
         }
 
         let Some(facts_by_origin) = self.move_facts_for(attacker) else {
-            return ScanThreatView::new(&self.board).has_move_local_corridor_entry(attacker, mv);
+            return ScanThreatView::new(&self.board).local_corridor_entry_rank(attacker, mv);
         };
 
-        let policy = CorridorThreatPolicy;
-        facts_by_origin[cell_index(size, mv)]
-            .iter()
-            .any(|fact| policy.is_active_threat(&self.board, attacker, fact))
+        local_corridor_entry_rank_from_facts(
+            &self.board,
+            attacker,
+            mv,
+            facts_by_origin[cell_index(size, mv)].iter(),
+        )
     }
 
     fn defender_reply_moves(&self, attacker: Color, actual_reply: Option<Move>) -> Vec<Move> {
@@ -442,10 +443,6 @@ impl ThreatView for RollingThreatFrontier {
             active,
             actual_reply,
         )
-    }
-
-    fn attacker_move_rank(&self, attacker: Color, mv: Move) -> u8 {
-        CorridorThreatPolicy.attacker_move_rank(&self.board, attacker, mv)
     }
 }
 
@@ -470,6 +467,27 @@ fn search_annotations_for_player(board: &Board, player: Color) -> Vec<TacticalMo
 
 fn search_annotation_for_player(board: &Board, player: Color, mv: Move) -> TacticalMoveAnnotation {
     SearchThreatPolicy.annotation_for_player(board, player, mv)
+}
+
+fn local_corridor_entry_rank_from_facts<'a>(
+    board: &Board,
+    attacker: Color,
+    mv: Move,
+    facts: impl IntoIterator<Item = &'a LocalThreatFact>,
+) -> u8 {
+    if !board.has_color(mv.row, mv.col, attacker) {
+        return 0;
+    }
+
+    let policy = CorridorThreatPolicy;
+    facts
+        .into_iter()
+        .filter(|fact| fact.player == attacker)
+        .filter(|fact| fact.origin.mv() == mv)
+        .filter(|fact| policy.is_active_threat(board, attacker, fact))
+        .map(|fact| policy.rank(fact.kind))
+        .max()
+        .unwrap_or(0)
 }
 
 fn raw_search_annotations_for_player(board: &Board, player: Color) -> Vec<TacticalMoveAnnotation> {
@@ -635,10 +653,6 @@ mod tests {
             view.defender_reply_moves(attacker, None),
             scan.defender_reply_moves(attacker, None)
         );
-        assert_eq!(
-            view.attacker_move_rank(attacker, probe),
-            scan.attacker_move_rank(attacker, probe)
-        );
     }
 
     fn assert_all_search_annotations_match_scan(board: &Board, view: &impl ThreatView) {
@@ -665,6 +679,13 @@ mod tests {
                 view.has_move_local_corridor_entry(color, probe),
                 scan.has_move_local_corridor_entry(color, probe),
                 "local entry mismatch at {} for {:?}",
+                probe.to_notation(),
+                color
+            );
+            assert_eq!(
+                view.local_corridor_entry_rank(color, probe),
+                scan.local_corridor_entry_rank(color, probe),
+                "local entry rank mismatch at {} for {:?}",
                 probe.to_notation(),
                 color
             );

@@ -266,10 +266,10 @@ pub trait ThreatView {
     /// True when `mv` is already occupied by `attacker` and that local move is
     /// itself part of an active corridor threat.
     fn has_move_local_corridor_entry(&self, attacker: Color, mv: Move) -> bool;
+    /// Rank for an already-occupied attacker move that materialized a local corridor.
+    fn local_corridor_entry_rank(&self, attacker: Color, mv: Move) -> u8;
     /// Legal defender replies to the strongest active corridor threat.
     fn defender_reply_moves(&self, attacker: Color, actual_reply: Option<Move>) -> Vec<Move>;
-    /// Pre-move rank for an attacker candidate that may materialize a corridor.
-    fn attacker_move_rank(&self, attacker: Color, mv: Move) -> u8;
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -293,8 +293,12 @@ impl ThreatView for ScanThreatView<'_> {
     }
 
     fn has_move_local_corridor_entry(&self, attacker: Color, mv: Move) -> bool {
+        self.local_corridor_entry_rank(attacker, mv) > 0
+    }
+
+    fn local_corridor_entry_rank(&self, attacker: Color, mv: Move) -> u8 {
         if !self.board.has_color(mv.row, mv.col, attacker) {
-            return false;
+            return 0;
         }
 
         let policy = CorridorThreatPolicy;
@@ -303,18 +307,16 @@ impl ThreatView for ScanThreatView<'_> {
             mv,
             player: attacker,
         };
-        DIRS.iter().any(|&(dr, dc)| {
-            local_threat_fact_in_direction_view(&existing, dr, dc)
-                .is_some_and(|fact| policy.is_active_threat(self.board, attacker, &fact))
-        })
+        DIRS.iter()
+            .filter_map(|&(dr, dc)| local_threat_fact_in_direction_view(&existing, dr, dc))
+            .filter(|fact| policy.is_active_threat(self.board, attacker, fact))
+            .map(|fact| policy.rank(fact.kind))
+            .max()
+            .unwrap_or(0)
     }
 
     fn defender_reply_moves(&self, attacker: Color, actual_reply: Option<Move>) -> Vec<Move> {
         CorridorThreatPolicy.defender_reply_moves(self.board, attacker, actual_reply)
-    }
-
-    fn attacker_move_rank(&self, attacker: Color, mv: Move) -> u8 {
-        CorridorThreatPolicy.attacker_move_rank(self.board, attacker, mv)
     }
 }
 
@@ -499,7 +501,7 @@ pub fn corridor_defender_reply_moves(
 }
 
 pub fn corridor_attacker_move_rank(board: &Board, attacker: Color, mv: Move) -> u8 {
-    ScanThreatView::new(board).attacker_move_rank(attacker, mv)
+    CorridorThreatPolicy.attacker_move_rank(board, attacker, mv)
 }
 
 pub fn legal_forcing_continuations_for_fact(
@@ -1135,10 +1137,9 @@ fn move_list_sort_key(moves: &[Move]) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        corridor_active_threats, corridor_attacker_move_rank, corridor_defender_reply_moves,
-        has_forcing_local_threat, has_forcing_local_threat_at_move,
-        legal_forcing_continuations_for_fact, local_threat_facts_after_move,
-        local_threat_facts_for_player, normalize_local_threat_facts,
+        corridor_active_threats, corridor_defender_reply_moves, has_forcing_local_threat,
+        has_forcing_local_threat_at_move, legal_forcing_continuations_for_fact,
+        local_threat_facts_after_move, local_threat_facts_for_player, normalize_local_threat_facts,
         raw_local_threat_facts_after_move, raw_local_threat_facts_for_player, CorridorThreatPolicy,
         LocalThreatFact, LocalThreatKind, LocalThreatOrigin, ScanThreatView, SearchThreatPolicy,
         ThreatView,
@@ -1675,11 +1676,11 @@ mod tests {
             corridor_defender_reply_moves(&board, Color::Black, None)
         );
         assert_eq!(
-            view.attacker_move_rank(Color::Black, mv("K8")),
-            corridor_attacker_move_rank(&board, Color::Black, mv("K8"))
+            view.has_move_local_corridor_entry(Color::Black, mv("J8")),
+            has_forcing_local_threat_at_move(&board, Color::Black, mv("J8"))
         );
         assert_eq!(
-            view.has_move_local_corridor_entry(Color::Black, mv("J8")),
+            view.local_corridor_entry_rank(Color::Black, mv("J8")) > 0,
             has_forcing_local_threat_at_move(&board, Color::Black, mv("J8"))
         );
         assert!(

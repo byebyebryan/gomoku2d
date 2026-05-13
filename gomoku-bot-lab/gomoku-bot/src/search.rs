@@ -2259,9 +2259,20 @@ fn corridor_portal_search(
     }
 
     let moves = if color == attacker {
-        corridor::materialized_attacker_corridor_moves(state.board(), attacker)
+        materialized_attacker_corridor_moves_for_threat_view_mode(
+            state,
+            attacker,
+            threat_view_mode,
+            zobrist,
+            metrics,
+        )
     } else {
-        let replies = corridor::narrow_corridor_reply_moves(state.board(), attacker);
+        let replies = narrow_corridor_reply_moves_for_threat_view_mode(
+            state,
+            attacker,
+            threat_view_mode,
+            metrics,
+        );
         if replies.len() > portal_config.max_reply_width {
             metrics.corridor_width_exits += 1;
             return resume_normal_search_after_corridor(
@@ -2400,6 +2411,186 @@ fn corridor_portal_search(
         best_move,
         timed_out,
         corridor_extra_plies: best_extra_plies,
+    }
+}
+
+fn materialized_attacker_corridor_moves_for_threat_view_mode(
+    state: &mut SearchState,
+    attacker: Color,
+    mode: ThreatViewMode,
+    zobrist: &ZobristTable,
+    metrics: &mut SearchMetrics,
+) -> Vec<Move> {
+    match mode {
+        ThreatViewMode::Scan => {
+            scan_materialized_attacker_corridor_moves_timed(state.board(), attacker, metrics)
+        }
+        ThreatViewMode::Rolling => {
+            rolling_materialized_attacker_corridor_moves(state, attacker, zobrist, metrics)
+        }
+        ThreatViewMode::RollingShadow => {
+            metrics.threat_view_shadow_checks += 1;
+            let scan =
+                scan_materialized_attacker_corridor_moves_timed(state.board(), attacker, metrics);
+            let rolling =
+                rolling_materialized_attacker_corridor_moves(state, attacker, zobrist, metrics);
+            if rolling != scan {
+                metrics.threat_view_shadow_mismatches += 1;
+            }
+            scan
+        }
+    }
+}
+
+fn scan_materialized_attacker_corridor_moves_timed(
+    board: &Board,
+    attacker: Color,
+    metrics: &mut SearchMetrics,
+) -> Vec<Move> {
+    let start = Instant::now();
+    let moves = scan_materialized_attacker_corridor_moves(board, attacker);
+    metrics.record_threat_view_scan(start.elapsed());
+    moves
+}
+
+fn scan_materialized_attacker_corridor_moves(board: &Board, attacker: Color) -> Vec<Move> {
+    if board.current_player != attacker || board.result != GameResult::Ongoing {
+        return Vec::new();
+    }
+
+    let mut ranked = Vec::new();
+    for mv in board.legal_moves() {
+        let mut next = board.clone();
+        if next.apply_move(mv).is_err() {
+            continue;
+        }
+        let rank = match next.result {
+            GameResult::Winner(winner) if winner == attacker => {
+                CorridorThreatPolicy.rank(LocalThreatKind::Five)
+            }
+            GameResult::Winner(_) | GameResult::Draw => 0,
+            GameResult::Ongoing => {
+                ScanThreatView::new(&next).local_corridor_entry_rank(attacker, mv)
+            }
+        };
+
+        if rank > 0 {
+            ranked.push((mv, rank));
+        }
+    }
+
+    highest_ranked_moves(ranked)
+}
+
+fn rolling_materialized_attacker_corridor_moves(
+    state: &mut SearchState,
+    attacker: Color,
+    zobrist: &ZobristTable,
+    metrics: &mut SearchMetrics,
+) -> Vec<Move> {
+    if state.board().current_player != attacker || state.board().result != GameResult::Ongoing {
+        return Vec::new();
+    }
+
+    let candidates = state.board().legal_moves();
+    let mut ranked = Vec::new();
+    for mv in candidates {
+        let result = state.apply_trusted_legal_move_counted(mv, zobrist, metrics);
+        let rank = match result {
+            GameResult::Winner(winner) if winner == attacker => {
+                CorridorThreatPolicy.rank(LocalThreatKind::Five)
+            }
+            GameResult::Winner(_) | GameResult::Draw => 0,
+            GameResult::Ongoing => {
+                let start = Instant::now();
+                let rank = state.threat_view().local_corridor_entry_rank(attacker, mv);
+                metrics.record_threat_view_frontier_query(start.elapsed());
+                rank
+            }
+        };
+        state.undo_move_counted(mv, metrics);
+
+        if rank > 0 {
+            ranked.push((mv, rank));
+        }
+    }
+
+    highest_ranked_moves(ranked)
+}
+
+fn highest_ranked_moves(mut ranked: Vec<(Move, u8)>) -> Vec<Move> {
+    let Some(best_rank) = ranked.iter().map(|(_, rank)| *rank).max() else {
+        return Vec::new();
+    };
+    ranked.retain(|(_, rank)| *rank == best_rank);
+    ranked.sort_by_key(|(mv, _)| (mv.row, mv.col));
+    ranked.into_iter().map(|(mv, _)| mv).collect()
+}
+
+fn narrow_corridor_reply_moves_for_threat_view_mode(
+    state: &mut SearchState,
+    attacker: Color,
+    mode: ThreatViewMode,
+    metrics: &mut SearchMetrics,
+) -> Vec<Move> {
+    match mode {
+        ThreatViewMode::Scan => {
+            scan_narrow_corridor_reply_moves_timed(state.board(), attacker, metrics)
+        }
+        ThreatViewMode::Rolling => rolling_narrow_corridor_reply_moves(state, attacker, metrics),
+        ThreatViewMode::RollingShadow => {
+            metrics.threat_view_shadow_checks += 1;
+            let scan = scan_narrow_corridor_reply_moves_timed(state.board(), attacker, metrics);
+            let rolling = rolling_narrow_corridor_reply_moves(state, attacker, metrics);
+            if rolling != scan {
+                metrics.threat_view_shadow_mismatches += 1;
+            }
+            scan
+        }
+    }
+}
+
+fn scan_narrow_corridor_reply_moves_timed(
+    board: &Board,
+    attacker: Color,
+    metrics: &mut SearchMetrics,
+) -> Vec<Move> {
+    let start = Instant::now();
+    let moves = corridor::narrow_corridor_reply_moves(board, attacker);
+    metrics.record_threat_view_scan(start.elapsed());
+    moves
+}
+
+fn rolling_narrow_corridor_reply_moves(
+    state: &mut SearchState,
+    attacker: Color,
+    metrics: &mut SearchMetrics,
+) -> Vec<Move> {
+    let board = state.board();
+    let defender = attacker.opponent();
+    let winning_squares = board.immediate_winning_moves_for(attacker);
+    if !winning_squares.is_empty() {
+        let mut replies = Vec::new();
+        for mv in winning_squares {
+            if board.is_legal_for_color(mv, defender) {
+                push_unique_move(&mut replies, mv);
+            }
+        }
+        for mv in board.immediate_winning_moves_for(defender) {
+            push_unique_move(&mut replies, mv);
+        }
+        return replies;
+    }
+
+    let start = Instant::now();
+    let replies = state.threat_view().defender_reply_moves(attacker, None);
+    metrics.record_threat_view_frontier_query(start.elapsed());
+    replies
+}
+
+fn push_unique_move(moves: &mut Vec<Move>, mv: Move) {
+    if !moves.contains(&mv) {
+        moves.push(mv);
     }
 }
 
