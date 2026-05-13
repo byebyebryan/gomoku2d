@@ -45,20 +45,22 @@ product presets:
 | `cpu_time_budget_ms` | Optional per-move Linux thread CPU-time budget |
 | `candidate_radius` | Distance around existing stones used to generate candidate moves, or current-player stones for asymmetric candidate sources |
 | `candidate_opponent_radius` | Optional opponent-stone radius for asymmetric candidate sources |
-| `safety_gate` | Root safety gate: `opponent_reply_search_probe`, `opponent_reply_local_threat_probe`, or `none` |
+| `safety_gate` | Root safety gate: `current_obligation` or `none` |
 | `move_ordering` | Alpha-beta move ordering: `tt_first_board_order` or lab-only `tactical_first` |
 | `child_limit` | Optional lab-only cap on the ordered non-root child frontier searched by alpha-beta |
 | `static_eval` | Leaf board evaluator: default `line_shape_eval` or lab-only `pattern_eval` |
+| `corridor_portals` | Optional corridor-extension controls, disabled by default |
+| `threat_view_mode` | Threat-view backend: `scan`, `rolling_shadow`, or `rolling` |
 
 Search traces expose explicit pipeline stages: `candidate_source`,
 `legality_gate`, tactical annotation counters, `safety_gate`, and
 `move_ordering`. Candidate sources currently cover symmetric near-all radii
 (`near_all_rN`) and lab-only asymmetric current-player/opponent radii
 (`near_self_rN_opponent_rM`). There is one legality gate (`exact_rules`), one
-scan-based local-threat annotation object, two optional safety gates
-(`opponent_reply_search_probe`, `opponent_reply_local_threat_probe`, or `none`),
-two move-ordering modes (`tt_first_board_order` default, `tactical_first`
-lab-only), and an optional `child_limit` lab cap. Static eval defaults to the
+shared local-threat view, one root safety gate (`current_obligation`, or `none`
+for ablations), two move-ordering modes (`tt_first_board_order` default,
+`tactical_first` lab-only), and an optional `child_limit` lab cap. Static eval
+defaults to the
 global line-shape evaluator; `pattern_eval` is a lab-only alternative that
 scores five-cell windows with Renju-aware completion/extension squares.
 Local-threat annotation is policy-backed by `SearchThreatPolicy` in
@@ -79,19 +81,18 @@ The lab tools primarily use explicit search specs over these fields:
 
 | Spec | Max depth | Candidate source | Safety gate | Intent |
 |---|---:|---|---|---|
-| `search-d1` | 1 | `near_all_r2` | `opponent_reply_local_threat_probe` | easy/beginner lane |
-| `search-d3` | 3 | `near_all_r2` | `opponent_reply_local_threat_probe` | current default baseline |
-| `search-d5` | 5 | `near_all_r2` | `opponent_reply_local_threat_probe` | uncapped depth reference |
-| `search-d5+tactical-cap-8` | 5 | `near_all_r2` | `opponent_reply_local_threat_probe` | efficient hard-side candidate |
-| `search-d7+tactical-cap-8` | 7 | `near_all_r2` | `opponent_reply_local_threat_probe` | stronger but slower hard-side candidate |
+| `search-d1` | 1 | `near_all_r2` | `current_obligation` | easy/beginner lane |
+| `search-d3` | 3 | `near_all_r2` | `current_obligation` | current default baseline |
+| `search-d5` | 5 | `near_all_r2` | `current_obligation` | uncapped depth reference |
+| `search-d5+tactical-cap-8` | 5 | `near_all_r2` | `current_obligation` | efficient hard-side candidate |
+| `search-d7+tactical-cap-8` | 7 | `near_all_r2` | `current_obligation` | stronger but slower hard-side candidate |
 
 For lab-only ablations, append `+near-all-r1`, `+near-all-r2`, or
 `+near-all-r3` to change symmetric candidate-source radius. Append
 `+near-self-rN-opponent-rM` to test an asymmetric source, for example
-`+near-self-r2-opponent-r1`. Append `+no-safety`,
-`+opponent-reply-search-probe`, or `+opponent-reply-local-threat-probe` to choose
-the safety gate. Append `+tactical-first` to use local-threat facts for ordering
-before alpha-beta visits candidate moves, for example
+`+near-self-r2-opponent-r1`. Append `+no-safety` to disable the root
+current-obligation safety gate for ablation runs. Append `+tactical-first` to
+use local-threat facts for ordering before alpha-beta visits candidate moves, for example
 `search-d5+tactical-first`. Append `+child-cap-N` to limit the ordered non-root
 child frontier after candidate generation, legality filtering, and move
 ordering. Use `+tactical-cap-N` as shorthand for `+tactical-first+child-cap-N`
@@ -102,14 +103,20 @@ tests whether ordering can keep useful deeper-node coverage while alpha-beta
 searches fewer children. Append `+pattern-eval` to replace the default
 line-shape static eval with the lab-only pattern evaluator. These switches
 measure one pipeline axis at a time; defaults remain `near_all_r2`,
-`opponent_reply_local_threat_probe`, `tt_first_board_order`, no child cap, and
-`line_shape_eval`. The retired `+corridor-q` leaf-quiescence experiment proved
-the shared corridor module could be called from search, but it was too expensive
-to keep as a lab axis. The current live corridor suffixes are opt-in and
-default-off: `+corridor-own-dN-wM` and `+corridor-opponent-dN-wM`. They test
-selective corridor extension, where a child move that enters a narrow corridor
-can follow that corridor and resume normal search at the exit state instead of
-spending ordinary depth on each forced ply.
+`current_obligation`, `tt_first_board_order`, no child cap, and
+`line_shape_eval`. The retired opponent-reply safety probes are intentionally no
+longer accepted as lab suffixes; the current safety gate only filters the legal
+root candidates by obligations already present on the board. It preserves own
+immediate wins first, then direct replies to opponent immediate wins, then
+direct replies or counter-fours against opponent imminent threats. It does not
+generate candidates, run opponent-reply search, reorder moves, or cap the root.
+The retired `+corridor-q` leaf-quiescence experiment proved the shared corridor
+module could be called from search, but it was too expensive to keep as a lab
+axis. The current live corridor suffixes are opt-in and default-off:
+`+corridor-own-dN-wM` and `+corridor-opponent-dN-wM`. They test selective
+corridor extension, where a child move that enters a narrow corridor can follow
+that corridor and resume normal search at the exit state instead of spending
+ordinary depth on each forced ply.
 
 These specs are not durable product identity, and they are not character bots
 yet. They exist so the lab can benchmark stable configs before deciding whether
@@ -232,7 +239,7 @@ Search traces include both the result and the config. Abridged example:
     "candidate_opponent_radius": null,
     "candidate_source": "near_all_r2",
     "legality_gate": "exact_rules",
-    "safety_gate": "opponent_reply_local_threat_probe",
+    "safety_gate": "current_obligation",
     "move_ordering": "tt_first_board_order",
     "child_limit": null,
     "corridor_portals": {
@@ -306,15 +313,15 @@ Search traces include both the result and the config. Abridged example:
 }
 ```
 
-`nodes` counts alpha-beta search nodes. `safety_nodes` counts the optional root
-safety-gate probe. For `opponent_reply_search_probe`, that is shallow
-search-like reply work. For `opponent_reply_local_threat_probe`, it is inspected
-root candidates and opponent replies classified through local threat facts, so
-compare it as safety-gate work rather than as alpha-beta-equivalent nodes.
-`total_nodes` is the aggregate used by eval reporting. Root/search candidate and
-legality metrics are split so pipeline-stage costs can be compared
-independently. Tactical annotation metrics count reusable local-threat
-classification work separately from candidate generation and alpha-beta nodes.
+`nodes` counts alpha-beta search nodes. `safety_nodes` counts root
+current-obligation filtering work, not alpha-beta-equivalent nodes. The safety
+gate is first-order: it inspects the already-generated legal root candidates
+against current immediate and imminent obligations, optionally using the rolling
+frontier in `rolling` or `rolling_shadow` threat-view mode. `total_nodes` is the
+aggregate used by eval reporting. Root/search candidate and legality metrics
+are split so pipeline-stage costs can be compared independently. Tactical
+annotation metrics count reusable local-threat classification work separately
+from candidate generation and alpha-beta nodes.
 Child-cap metrics count ordered non-root frontier size before and after the
 optional `child_limit`; root cap metrics stay zero because root is intentionally
 uncapped, and all cap metrics are zero for default uncapped configs.

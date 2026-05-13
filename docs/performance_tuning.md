@@ -510,9 +510,11 @@ Follow-up memo checkpoint:
 - D5 cap8 paired smoke was roughly tied on time, rolling `159.5 ms/move` versus
   scan `159.7 ms/move`, but rolling searched more nodes and had no budget
   exhaustion in that small sample.
-- Remaining scan cost is now mostly the root safety gate. It should become
-  frontier-backed rather than disabled; the current blocker is that safety runs
-  before the root `SearchState` exists.
+- The root safety gate has since been simplified to a `current_obligation`
+  filter over already-generated legal root candidates. It now supports scan,
+  rolling, and rolling-shadow threat views directly; rolling uses a root-only
+  full frontier because current obligations need active existing-threat facts.
+  The older opponent-reply probes are retired rather than kept as lab suffixes.
 
 ## Benchmark suites
 

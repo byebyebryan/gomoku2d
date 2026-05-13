@@ -155,6 +155,23 @@ impl CorridorThreatPolicy {
         facts
     }
 
+    pub fn active_threats_from_facts(
+        self,
+        board: &Board,
+        attacker: Color,
+        facts: impl IntoIterator<Item = LocalThreatFact>,
+    ) -> Vec<LocalThreatFact> {
+        let mut facts = normalize_local_threat_facts(
+            facts
+                .into_iter()
+                .filter(|fact| fact.player == attacker)
+                .filter(|fact| self.is_active_threat(board, attacker, fact))
+                .collect(),
+        );
+        facts.sort_by_key(|fact| std::cmp::Reverse(self.rank(fact.kind)));
+        facts
+    }
+
     pub fn has_active_threat(self, board: &Board, attacker: Color) -> bool {
         raw_local_threat_facts_for_player(board, attacker)
             .iter()
@@ -167,10 +184,24 @@ impl CorridorThreatPolicy {
         attacker: Color,
         actual_reply: Option<Move>,
     ) -> Vec<Move> {
+        self.defender_reply_moves_for_active_threats(
+            board,
+            attacker,
+            self.active_threats(board, attacker),
+            actual_reply,
+        )
+    }
+
+    pub fn defender_reply_moves_for_active_threats(
+        self,
+        board: &Board,
+        attacker: Color,
+        mut facts: Vec<LocalThreatFact>,
+        actual_reply: Option<Move>,
+    ) -> Vec<Move> {
         let defender = attacker.opponent();
         let mut replies = Vec::new();
 
-        let mut facts = self.active_threats(board, attacker);
         if facts.is_empty() {
             return replies;
         }

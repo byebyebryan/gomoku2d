@@ -187,8 +187,8 @@ re-running the tournament:
 - each match stores compact `cell_index_v1` moves plus opening metadata
 - centered-suite openings store opening index, suite index, base template, and
   transform index
-- standings and per-side match stats split alpha-beta nodes from safety-gate
-  nodes
+- standings and per-side match stats split alpha-beta nodes from root
+  safety-gate work
 - candidate width is reported separately from child width after ordering and
   optional caps
 - tactical annotation, legality, transposition-table, beta-cut, and reached

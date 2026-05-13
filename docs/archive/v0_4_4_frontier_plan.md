@@ -324,8 +324,10 @@ Focused smoke results stayed behavior-neutral and showed a real cost drop:
   scan at `159.7 ms/move`, while searching more nodes and avoiding budget
   exhaustion in the small sample.
 
-The next obvious frontier target is the root safety gate. Turning safety off is
-only a diagnostic; the endpoint should be a safety probe that can use the same
-rolling frontier / annotation memo path as normal tactical ordering. Today the
-root safety pass runs before `SearchState` exists, so it still asks scan-backed
-annotation questions over a cloned board.
+The root safety target is now the `current_obligation` gate. Turning safety off
+stays a diagnostic; the endpoint is a cheap first-order filter that can use
+scan, rolling, or rolling-shadow threat views. Because the safety pass runs
+before the root `SearchState` exists and needs active existing-threat facts,
+rolling safety builds a root-only full frontier instead of reusing the
+tactical-only search frontier. The retired opponent-reply probes should stay out
+of the parser unless a future experiment reintroduces them under a new name.
