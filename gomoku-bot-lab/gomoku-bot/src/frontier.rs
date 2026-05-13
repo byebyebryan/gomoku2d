@@ -288,15 +288,22 @@ impl RollingThreatFrontier {
         &self,
         mv: Move,
     ) -> (TacticalMoveAnnotation, FrontierAnnotationSource) {
+        self.search_annotation_for_player_with_source(self.board.current_player, mv)
+    }
+
+    pub fn search_annotation_for_player_with_source(
+        &self,
+        player: Color,
+        mv: Move,
+    ) -> (TacticalMoveAnnotation, FrontierAnnotationSource) {
         let size = self.board.config.board_size;
         if mv.row >= size || mv.col >= size || self.board.result != GameResult::Ongoing {
             return (
-                search_annotation_for_player(&self.board, self.board.current_player, mv),
+                search_annotation_for_player(&self.board, player, mv),
                 FrontierAnnotationSource::Fallback,
             );
         }
 
-        let player = self.board.current_player;
         let index = cell_index(size, mv);
         let (annotation, source) = if self.raw_search_annotation_dirty_for(player)[index] {
             (
@@ -345,12 +352,20 @@ impl RebuildThreatFrontier {
 
 impl ThreatView for RebuildThreatFrontier {
     fn search_annotation_for_move(&self, mv: Move) -> TacticalMoveAnnotation {
+        self.search_annotation_for_player(self.board.current_player, mv)
+    }
+
+    fn search_annotation_for_player(&self, player: Color, mv: Move) -> TacticalMoveAnnotation {
         let size = self.board.config.board_size;
         if mv.row >= size || mv.col >= size {
-            return SearchThreatPolicy.annotation_for_move(&self.board, mv);
+            return SearchThreatPolicy.annotation_for_player(&self.board, player, mv);
         }
 
-        self.search_annotations[mv.row * size + mv.col].clone()
+        if player == self.board.current_player {
+            self.search_annotations[mv.row * size + mv.col].clone()
+        } else {
+            SearchThreatPolicy.annotation_for_player(&self.board, player, mv)
+        }
     }
 
     fn active_corridor_threats(&self, attacker: Color) -> Vec<LocalThreatFact> {
@@ -389,6 +404,10 @@ impl ThreatView for RebuildThreatFrontier {
 impl ThreatView for RollingThreatFrontier {
     fn search_annotation_for_move(&self, mv: Move) -> TacticalMoveAnnotation {
         self.search_annotation_for_move_with_source(mv).0
+    }
+
+    fn search_annotation_for_player(&self, player: Color, mv: Move) -> TacticalMoveAnnotation {
+        self.search_annotation_for_player_with_source(player, mv).0
     }
 
     fn active_corridor_threats(&self, attacker: Color) -> Vec<LocalThreatFact> {
@@ -641,6 +660,15 @@ mod tests {
             view.search_annotation_for_move(probe),
             scan.search_annotation_for_move(probe)
         );
+        for player in [Color::Black, Color::White] {
+            assert_eq!(
+                view.search_annotation_for_player(player, probe),
+                scan.search_annotation_for_player(player, probe),
+                "player annotation mismatch at {} for {:?}",
+                probe.to_notation(),
+                player
+            );
+        }
         assert_eq!(
             view.active_corridor_threats(attacker),
             scan.active_corridor_threats(attacker)
@@ -667,6 +695,15 @@ mod tests {
                     "annotation mismatch at {}",
                     probe.to_notation()
                 );
+                for player in [Color::Black, Color::White] {
+                    assert_eq!(
+                        view.search_annotation_for_player(player, probe),
+                        scan.search_annotation_for_player(player, probe),
+                        "annotation mismatch at {} for {:?}",
+                        probe.to_notation(),
+                        player
+                    );
+                }
             }
         }
     }
