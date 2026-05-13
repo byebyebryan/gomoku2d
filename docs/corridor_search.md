@@ -232,156 +232,57 @@ by aggregate score.
 
 ## Bot Role
 
-`0.4.3` should test corridor search inside bot logic before the product exposes
-new bot settings. The integration should stay focused:
+`0.4.3` and `0.4.4` tested whether corridor search could become a live
+`SearchBot` shortcut before the product exposes bot settings. The result is
+negative for the current compute budget. Corridor search remains important for
+replay analysis, shared tactical vocabulary, and test fixtures, but corridor
+portals are not a candidate bot feature.
 
-- prefer moves that enter promising forcing corridors,
-- extend search through narrow forced corridors,
-- order defensive replies that escape known corridors,
-- avoid illegal or fake Renju threats before they distort evaluation,
-- expose offensive/defensive style as budget allocation over forcing and
-  prevention, not as arbitrary eval weights.
+### Retired Corridor Portal Experiment
 
-The goal is not to bolt a full threat-space solver onto the current bot. The
-goal is a practical forcing layer that improves strength, explanation, and
-player education together.
+The portal idea treated a narrow corridor as a shortcut inside alpha-beta:
+after a child move, the bot checked whether that move entered an immediate or
+imminent threat corridor, followed the bounded replies, and tried to use the
+result as a deeper child score.
 
-### Corridor As Search Shortcut
+The implementation improved over several passes:
 
-The preferred live-search model is corridor search as a selective shortcut
-inside alpha-beta, not as broad leaf evaluation.
+- `+corridor-q` proved the shared corridor module could be called from search,
+  but leaf quiescence asked too often and too late.
+- `+corridor-own-dN-wM` and `+corridor-opponent-dN-wM` moved the probe to child
+  moves and added side-specific portal controls.
+- Move-local entry checks, nested re-entry guards, ordered-rank gates, and
+  top-N gates reduced obvious over-acceptance.
+- `+corridor-proof-only` removed resume churn by accepting only terminal
+  corridor proofs and falling back to the original child search on non-terminal
+  exits.
 
-Think of a narrow corridor as a portal in the search space. Normal alpha-beta
-still generates, orders, and searches candidate moves. After a child move is
-applied, the bot can ask a cheap local question: did this move enter a forcing
-corridor? If not, search continues normally with one ply of depth spent. If yes,
-and the reply set is narrow, the bot can follow the corridor without spending
-the usual depth budget. The corridor either reaches a terminal win/loss or exits
-into an unclear position. The first portal implementation resumed normal search
-from that exit board, but measurements showed that shape multiplied work and
-distorted scores. The current `+corridor-proof-only` probe is stricter: terminal
-proofs may replace the child score, while non-terminal exits fall back to the
-original child search once.
+Those changes made the measurements honest, but they did not produce a useful
+bot knob:
 
-That makes corridor search a selective extension:
+- Resume-from-exit portals distorted scores and multiplied normal searches from
+  corridor exits.
+- Proof-only portals were safer, but still paid hundreds of branch probes and
+  fallbacks per move for too few terminal proofs.
+- A `32` game D3 proof-only head-to-head at `1s/move` lost `13-19` to base
+  `search-d3` while costing about `176 ms/move` versus `60 ms/move`.
+- A `32` game D5+tactical-cap8 proof-only head-to-head lost `15-17` to base
+  `search-d5+tactical-cap-8` while costing about `175 ms/move` versus
+  `116 ms/move`.
 
-- enter only after a concrete immediate or imminent threat is detected,
-- follow only while the branch remains tactically narrow,
-- return terminal score if the corridor proves a win or loss,
-- treat non-terminal exits as "no proof" in proof-only mode,
-- fall back to normal search when the corridor is too wide to justify special
-  handling.
+The conclusion is that portal search is not useful in this bounded-compute
+shape. Keep the implementation disabled by default and lab-only so old reports
+can be reproduced and future ideas can be compared against the failed shape, but
+do not include portal variants in anchor tournaments, difficulty ladders,
+settings UI, or product copy. If a future experiment revisits this direction,
+start from `+corridor-proof-only`; the resume and static-exit modes are
+historical controls, not recommended candidates.
 
-Initial lab tuning should use corridor reply width as the primary guard. A cap
-of `3` is the first target because it matches the expected maximum branching
-factor for a local imminent threat such as a broken or half-open three. A
-separate maximum corridor ply limit is still useful as a safety guard, but it
-should not be the main cost-control lever. Width determines whether the branch
-is a corridor; depth only prevents pathological cases from running forever.
-
-The shortcut should also be controllable by side, relative to the root player:
-
-- `own` corridor portals: follow corridors created by the bot's side.
-- `opponent` corridor portals: follow corridors created by the opponent's side.
-
-This is a simple implementation hook because the search already knows the root
-player and the player who created each child position. It is also a better style
-knob than arbitrary eval weights. Enabling or deepening `own` portals biases the
-bot toward proving attacking lines; enabling or deepening `opponent` portals
-biases it toward spotting and escaping opponent forcing lines. Balanced play can
-enable both. Aggressive and defensive variants can differ by side-specific
-portal depth, width, or budget without changing the underlying corridor model.
-
-This is intentionally different from the retired `+corridor-q` leaf quiescence.
-Leaf quiescence asked too often and too late: many depth-0 positions needed a
-corridor probe only to fall back to static eval. The shortcut model spends
-corridor work only after move generation has produced a candidate that appears
-to enter or continue a forcing line.
-
-The search bot now exposes this as opt-in lab suffixes:
-
-- `+corridor-own-dN-wM`: follow narrow corridors created by the root player's
-  side.
-- `+corridor-opponent-dN-wM`: follow narrow corridors created by the opponent's
-  side.
-
-The lab report makes that cost shape visible. Selective extension records entry
-checks, accepted entries, own/opponent accepted entries, corridor plies followed,
-own/opponent followed plies, terminal exits, width exits, depth exits, neutral
-exits, resumed normal-search states, corridor branch probes, and corridor search
-nodes. Corridor nodes stay separate from ordinary alpha-beta nodes, while
-`total_nodes` includes both so a corridor candidate cannot look cheaper by
-moving work into an unreported bucket.
-
-Depth reporting should also distinguish the configured search budget from the
-reach created by portals. A `search-d3` bot is still nominally depth `3`; a
-corridor shortcut should not pretend the base depth changed. Instead, reports
-capture:
-
-- `nominal_depth`: the configured alpha-beta depth, such as `3` or `5`.
-- `depth`: the ordinary alpha-beta depth completed under budget.
-- `corridor_extra_plies`: forced plies followed without spending ordinary depth.
-- `effective_depth`: ordinary depth reached plus corridor extra plies along the
-  measured branch or principal line.
-
-That is the expected success shape for the portal model. If `search-d3` with
-portals still costs like depth `3` but routinely reaches effective depth `5+`
-inside narrow forcing lines, the shortcut is doing useful work. If effective
-depth barely moves, or only rises by hiding expensive corridor nodes outside the
-main cost counters, the experiment failed.
-
-Latest portal measurements show the first opt-in implementation has the right
-instrumentation but the wrong cost shape:
-
-- `search-d3+corridor-own-d4-w3` lost decisively to `search-d3` at `1s`, `5s`,
-  and `10s` per move. More budget raised effective depth somewhat, but it still
-  starved ordinary alpha-beta and hit the budget on most moves.
-- `search-d3+corridor-own-d1-w3` was less catastrophic, but still hit budget on
-  most moves. That means depth alone is not the root issue.
-- `search-d5+tactical-cap-8+corridor-own-d2-w3` showed a small-sample strength
-  signal against base `search-d5+tactical-cap-8`, but it hit budget on every
-  move. Treat that as a clue, not a promotion.
-
-The measured failure mode was semantic overreach plus resume churn. The first
-portal entry check asked whether the post-move board had any active forcing
-threat. In positions where a threat already existed, many unrelated moves could
-look like entries. Accepted entries then followed a corridor, hit depth or
-neutral exits, and resumed normal alpha-beta many times. The trace could show
-low ordinary search nodes while wall time was spent in repeated threat scans,
-legality checks, and resumed searches.
-
-The current cleanup tightens that model:
-
-- Portal entry is move-local: only enter when the candidate itself creates,
-  materializes, or continues the immediate/imminent threat.
-- Normal search resumed from a corridor exit disables nested portal re-entry on
-  that resumed line.
-- Reports now aggregate entry checks, acceptance rate, resume count, exit
-  reasons, and followed corridor plies so a portal candidate cannot look cheap
-  by hiding churn.
-
-Post-cleanup smoke runs still show the wrong cost shape:
-
-- `search-d3+corridor-own-d1-w3` went `7-9` against `search-d3` over `16`
-  games. It raised average effective depth from `2.74` to `3.19`, but average
-  search time was roughly `285 ms` versus `69 ms`, with `15.6%` budget
-  exhaustion and over `549k` corridor resumes.
-- `search-d3+corridor-own-d4-w3` went `6-10` against `search-d3`. It raised
-  effective depth to `3.26`, but average nominal depth collapsed to `1.34`,
-  with `86.4%` budget exhaustion and over `141k` resumes.
-- `search-d5+tactical-cap-8+corridor-own-d2-w3` went `6-10` against
-  `search-d5+tactical-cap-8`, with `80.1%` budget exhaustion.
-
-That is enough evidence to avoid another promotion sweep for the current
-scan-heavy portal implementation. Reusing tactical annotations may trim some
-cost, but the volume of entry checks, resumes, and depth exits points toward
-the rolling-frontier work in `0.4.4` rather than more `0.4.3` tuning.
-
-This work may also reinforce corridor search itself. Bot integration will put
-more pressure on proof cost, transition enumeration, memoization, and Renju
-legality filtering than replay reports alone. Those optimizations belong in the
-lab when they make corridor-aware behavior cheaper or clearer without changing
-the model's honesty about `possible_escape` and `unknown`.
+The durable output from the portal work is not a stronger bot. It is the shared
+`ThreatView` seam, unified search/corridor tactical facts, and report metrics
+that make corridor cost visible. Future bot work should focus on cheaper threat
+facts, better ordering, and explicit analysis-first corridor proofing rather
+than adding more portal tuning knobs.
 
 ### Rolling Threat Frontier
 
@@ -623,10 +524,10 @@ The current checkpoint provides:
 - a scan-backed `ThreatView` seam for future rolling-frontier replacement,
 - retired `SearchBot` corridor quiescence evidence from the former
   `+corridor-q` suffix,
-- opt-in default-off `SearchBot` portal suffixes for selective extension:
-  `+corridor-own-dN-wM` and `+corridor-opponent-dN-wM`,
-- `+corridor-proof-only` to test terminal-proof shortcuts without resuming from
-  corridor exits,
+- retired default-off `SearchBot` portal suffixes kept only for lab
+  reproduction, including `+corridor-own-dN-wM`,
+  `+corridor-opponent-dN-wM`, and the safer diagnostic
+  `+corridor-proof-only`,
 - proof-detail JSON and HTML report generation,
 - visual proof frames with board rendering and semantic markers,
 - Renju-aware handling for forbidden black replies and illegal black threats,
