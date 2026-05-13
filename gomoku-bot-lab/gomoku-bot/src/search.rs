@@ -497,6 +497,7 @@ pub struct SearchMetrics {
     pub tt_cutoffs: u64,
     pub beta_cutoffs: u64,
     pub corridor_entry_checks: u64,
+    pub corridor_entry_skipped_by_top_n: u64,
     pub corridor_entries_accepted: u64,
     pub corridor_own_entries_accepted: u64,
     pub corridor_opponent_entries_accepted: u64,
@@ -683,6 +684,10 @@ impl SearchMetrics {
             CorridorPortalSide::Own => self.corridor_own_entries_accepted += 1,
             CorridorPortalSide::Opponent => self.corridor_opponent_entries_accepted += 1,
         }
+    }
+
+    fn record_corridor_entry_skipped_by_top_n(&mut self) {
+        self.corridor_entry_skipped_by_top_n += 1;
     }
 
     fn record_corridor_ply(&mut self, side: CorridorPortalSide) {
@@ -1042,6 +1047,20 @@ fn rolling_frontier_corridor_entry_rank_after_move_timed(
     };
     state.undo_move_counted(mv, metrics);
     rank
+}
+
+fn corridor_top_n_allows_entry(
+    corridor_portals: CorridorPortalConfig,
+    ordered_index: usize,
+    metrics: &mut SearchMetrics,
+) -> bool {
+    match corridor_portals.entry_top_n {
+        Some(limit) if ordered_index >= limit => {
+            metrics.record_corridor_entry_skipped_by_top_n();
+            false
+        }
+        _ => true,
+    }
 }
 
 fn evaluate_counted(
@@ -3180,7 +3199,7 @@ fn negamax(
     );
 
     let mut timed_out = false;
-    for mv in ordered {
+    for (ordered_index, mv) in ordered.into_iter().enumerate() {
         if deadline.expired() {
             timed_out = true;
             break;
@@ -3198,7 +3217,9 @@ fn negamax(
         }
         let portal_side = CorridorPortalSide::for_player(color, root_color);
         let portal_config = corridor_portals.for_side(portal_side);
-        let corridor_entry = if portal_config.enabled {
+        let corridor_entry = if portal_config.enabled
+            && corridor_top_n_allows_entry(corridor_portals, ordered_index, metrics)
+        {
             metrics.corridor_entry_checks += 1;
             corridor_entry_rank_for_threat_view_mode(
                 state,
@@ -3347,7 +3368,7 @@ fn search_root(
     );
 
     let mut timed_out = false;
-    for mv in ordered {
+    for (ordered_index, mv) in ordered.into_iter().enumerate() {
         if deadline.expired() {
             timed_out = true;
             break;
@@ -3355,7 +3376,9 @@ fn search_root(
 
         let portal_side = CorridorPortalSide::Own;
         let portal_config = corridor_portals.for_side(portal_side);
-        let corridor_entry = if portal_config.enabled {
+        let corridor_entry = if portal_config.enabled
+            && corridor_top_n_allows_entry(corridor_portals, ordered_index, metrics)
+        {
             metrics.corridor_entry_checks += 1;
             corridor_entry_rank_for_threat_view_mode(
                 state,
@@ -3621,6 +3644,7 @@ pub struct CorridorPortalConfig {
     pub own: CorridorPortalSideConfig,
     pub opponent: CorridorPortalSideConfig,
     pub entry_min_rank: u8,
+    pub entry_top_n: Option<usize>,
     pub depth_exit_mode: CorridorDepthExitMode,
 }
 
@@ -3635,6 +3659,7 @@ impl CorridorPortalConfig {
         own: CorridorPortalSideConfig::DISABLED,
         opponent: CorridorPortalSideConfig::DISABLED,
         entry_min_rank: 1,
+        entry_top_n: None,
         depth_exit_mode: CorridorDepthExitMode::ResumeSearch,
     };
 
@@ -3648,6 +3673,7 @@ impl CorridorPortalConfig {
     fn trace(self) -> serde_json::Value {
         serde_json::json!({
             "entry_min_rank": self.entry_min_rank,
+            "entry_top_n": self.entry_top_n,
             "depth_exit_mode": self.depth_exit_mode.name(),
             "own": self.own.trace(),
             "opponent": self.opponent.trace(),
@@ -5093,6 +5119,7 @@ mod tests {
             trace["config"]["corridor_portals"],
             serde_json::json!({
                 "entry_min_rank": 1,
+                "entry_top_n": null,
                 "depth_exit_mode": "resume_search",
                 "own": {
                     "enabled": false,
@@ -5165,6 +5192,7 @@ mod tests {
             max_reply_width: 2,
         };
         config.corridor_portals.entry_min_rank = 3;
+        config.corridor_portals.entry_top_n = Some(2);
         config.corridor_portals.depth_exit_mode = CorridorDepthExitMode::StaticEval;
         let mut bot = SearchBot::with_config(config);
 
@@ -5190,6 +5218,7 @@ mod tests {
             2
         );
         assert_eq!(trace["config"]["corridor_portals"]["entry_min_rank"], 3);
+        assert_eq!(trace["config"]["corridor_portals"]["entry_top_n"], 2);
         assert_eq!(
             trace["config"]["corridor_portals"]["depth_exit_mode"],
             "static_eval"
@@ -5669,6 +5698,37 @@ mod tests {
         assert!(metrics["corridor_own_entries_accepted"].as_u64().unwrap() > 0);
         assert!(trace["corridor"]["search_nodes"].as_u64().unwrap() > 0);
         assert!(trace["corridor"]["terminal_exits"].as_u64().unwrap() > 0);
+    }
+
+    #[test]
+    fn corridor_top_n_skips_portal_entry_checks_outside_order_window() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(
+            &mut board,
+            &["H8", "A1", "I8", "A2", "J8", "A3", "K8", "A4"],
+        );
+        assert_eq!(board.current_player, Color::Black);
+
+        let mut config = SearchBotConfig::custom_depth(1);
+        config.safety_gate = SafetyGate::None;
+        config.corridor_portals.own = CorridorPortalSideConfig {
+            enabled: true,
+            max_depth: 4,
+            max_reply_width: 3,
+        };
+        config.corridor_portals.entry_top_n = Some(1);
+        let mut bot = SearchBot::with_config(config);
+
+        let _ = bot.choose_move(&board);
+        let trace = bot.trace().expect("expected search trace");
+        let metrics = &trace["metrics"];
+
+        assert_eq!(metrics["corridor_entry_checks"], 1);
+        assert!(metrics["corridor_entry_skipped_by_top_n"].as_u64().unwrap() > 0);
+        assert!(
+            metrics["root_candidate_moves_total"].as_u64().unwrap()
+                > metrics["corridor_entry_checks"].as_u64().unwrap()
+        );
     }
 
     #[test]
