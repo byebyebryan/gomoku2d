@@ -261,6 +261,8 @@ impl CorridorThreatPolicy {
 pub trait ThreatView {
     /// Search-ordering tactical annotation for a candidate before it is played.
     fn search_annotation_for_move(&self, mv: Move) -> TacticalMoveAnnotation;
+    /// Search-ordering tactical annotation for an explicit side before it is played.
+    fn search_annotation_for_player(&self, player: Color, mv: Move) -> TacticalMoveAnnotation;
     /// Active immediate/imminent corridor threats for `attacker` on this board.
     fn active_corridor_threats(&self, attacker: Color) -> Vec<LocalThreatFact>;
     /// True when `mv` is already occupied by `attacker` and that local move is
@@ -286,6 +288,10 @@ impl<'a> ScanThreatView<'a> {
 impl ThreatView for ScanThreatView<'_> {
     fn search_annotation_for_move(&self, mv: Move) -> TacticalMoveAnnotation {
         SearchThreatPolicy.annotation_for_move(self.board, mv)
+    }
+
+    fn search_annotation_for_player(&self, player: Color, mv: Move) -> TacticalMoveAnnotation {
+        SearchThreatPolicy.annotation_for_player(self.board, player, mv)
     }
 
     fn active_corridor_threats(&self, attacker: Color) -> Vec<LocalThreatFact> {

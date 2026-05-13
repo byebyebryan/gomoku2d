@@ -806,10 +806,10 @@ impl SearchState {
         self.hash
     }
 
-    fn frontier_annotation_memo_key(&self, mv: Move) -> FrontierAnnotationMemoKey {
+    fn frontier_annotation_memo_key(&self, player: Color, mv: Move) -> FrontierAnnotationMemoKey {
         FrontierAnnotationMemoKey {
             hash: self.hash,
-            player: self.board.current_player as u8,
+            player: player as u8,
             row: mv.row,
             col: mv.col,
         }
@@ -1179,13 +1179,35 @@ fn tactical_annotation_for_threat_view_mode(
     mode: ThreatViewMode,
     metrics: &mut SearchMetrics,
 ) -> TacticalMoveAnnotation {
+    tactical_annotation_for_player_threat_view_mode(
+        state,
+        state.board().current_player,
+        mv,
+        mode,
+        metrics,
+    )
+}
+
+fn tactical_annotation_for_player_threat_view_mode(
+    state: &mut SearchState,
+    player: Color,
+    mv: Move,
+    mode: ThreatViewMode,
+    metrics: &mut SearchMetrics,
+) -> TacticalMoveAnnotation {
     match mode {
-        ThreatViewMode::Scan => scan_tactical_annotation_timed(state.board(), mv, metrics),
-        ThreatViewMode::Rolling => rolling_frontier_tactical_annotation_timed(state, mv, metrics),
+        ThreatViewMode::Scan => {
+            scan_tactical_annotation_for_player_timed(state.board(), player, mv, metrics)
+        }
+        ThreatViewMode::Rolling => {
+            rolling_frontier_tactical_annotation_for_player_timed(state, player, mv, metrics)
+        }
         ThreatViewMode::RollingShadow => {
             metrics.threat_view_shadow_checks += 1;
-            let scan = scan_tactical_annotation_timed(state.board(), mv, metrics);
-            let frontier = rolling_frontier_tactical_annotation_timed(state, mv, metrics);
+            let scan =
+                scan_tactical_annotation_for_player_timed(state.board(), player, mv, metrics);
+            let frontier =
+                rolling_frontier_tactical_annotation_for_player_timed(state, player, mv, metrics);
             if frontier != scan {
                 metrics.threat_view_shadow_mismatches += 1;
             }
@@ -1194,24 +1216,26 @@ fn tactical_annotation_for_threat_view_mode(
     }
 }
 
-fn scan_tactical_annotation_timed(
+fn scan_tactical_annotation_for_player_timed(
     board: &Board,
+    player: Color,
     mv: Move,
     metrics: &mut SearchMetrics,
 ) -> TacticalMoveAnnotation {
     let start = Instant::now();
-    let annotation = ScanThreatView::new(board).search_annotation_for_move(mv);
+    let annotation = ScanThreatView::new(board).search_annotation_for_player(player, mv);
     metrics.record_threat_view_scan(start.elapsed());
     annotation
 }
 
-fn rolling_frontier_tactical_annotation_timed(
+fn rolling_frontier_tactical_annotation_for_player_timed(
     state: &mut SearchState,
+    player: Color,
     mv: Move,
     metrics: &mut SearchMetrics,
 ) -> TacticalMoveAnnotation {
     let start = Instant::now();
-    let key = state.frontier_annotation_memo_key(mv);
+    let key = state.frontier_annotation_memo_key(player, mv);
     if let Some(annotation) = state.frontier_annotation_memo.get(&key).cloned() {
         metrics.record_threat_view_frontier_memo_annotation_query(start.elapsed());
         return annotation;
@@ -1219,7 +1243,7 @@ fn rolling_frontier_tactical_annotation_timed(
 
     let (annotation, source) = {
         let frontier = state.threat_view();
-        frontier.search_annotation_for_move_with_source(mv)
+        frontier.search_annotation_for_player_with_source(player, mv)
     };
     metrics.record_threat_view_frontier_annotation_query(start.elapsed(), source);
     if source == FrontierAnnotationSource::DirtyRecompute {
@@ -1783,7 +1807,11 @@ fn current_obligation_safety_policy(
     view: &impl ThreatView,
 ) -> SafetyFilterOutcome {
     let current = board.current_player;
-    let own_wins = board.immediate_winning_moves_for(current);
+    let own_wins = moves
+        .iter()
+        .copied()
+        .filter(|&mv| creates_immediate_win(&view.search_annotation_for_player(current, mv)))
+        .collect::<Vec<_>>();
     if !own_wins.is_empty() {
         return SafetyFilterOutcome {
             moves: filtered_or_original(moves, moves_in_set(moves, &own_wins)),
@@ -1792,7 +1820,11 @@ fn current_obligation_safety_policy(
     }
 
     let opponent = current.opponent();
-    let opponent_wins = board.immediate_winning_moves_for(opponent);
+    let opponent_wins = moves
+        .iter()
+        .copied()
+        .filter(|&mv| creates_immediate_win(&view.search_annotation_for_player(opponent, mv)))
+        .collect::<Vec<_>>();
     if !opponent_wins.is_empty() {
         return SafetyFilterOutcome {
             moves: filtered_or_original(moves, moves_in_set(moves, &opponent_wins)),
@@ -1870,6 +1902,13 @@ fn creates_counter_four(annotation: TacticalMoveAnnotation) -> bool {
                 | LocalThreatKind::BrokenFour
         )
     })
+}
+
+fn creates_immediate_win(annotation: &TacticalMoveAnnotation) -> bool {
+    annotation
+        .local_threats
+        .iter()
+        .any(|fact| fact.kind == LocalThreatKind::Five)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1954,15 +1993,21 @@ fn order_moves_tactical_first(
     phase: SearchMetricPhase,
 ) -> Vec<OrderedMove> {
     let opponent = state.board().current_player.opponent();
-    let opponent_wins = state.board().immediate_winning_moves_for(opponent);
     let mut scored = moves
         .into_iter()
         .enumerate()
         .map(|(index, mv)| {
             let annotation =
                 annotate_legal_tactical_move_counted(state, mv, threat_view_mode, metrics, phase);
+            let opponent_annotation = tactical_annotation_for_player_threat_view_mode(
+                state,
+                opponent,
+                mv,
+                threat_view_mode,
+                metrics,
+            );
             let (score, must_keep) =
-                tactical_ordering_score(&annotation, opponent_wins.contains(&mv));
+                tactical_ordering_score(&annotation, creates_immediate_win(&opponent_annotation));
             (index, mv, score, must_keep, Some(mv) == tt_move)
         })
         .collect::<Vec<_>>();
