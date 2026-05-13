@@ -166,7 +166,7 @@ impl RollingThreatFrontier {
 
     fn capture_delta(&self, mv: Move) -> (FrontierDelta, Duration) {
         let start = Instant::now();
-        let affected_cells = affected_axis_cells(&self.board, mv);
+        let affected_cells = affected_local_axis_cells(&self.board, mv);
         let mut previous_move_facts = Vec::with_capacity(affected_cells.len() * 2);
         let mut previous_annotation_dirty = Vec::with_capacity(affected_cells.len() * 2);
         let mut previous_immediate_wins = Vec::with_capacity(affected_cells.len() * 2);
@@ -669,34 +669,31 @@ fn move_facts_by_origin(board: &Board, player: Color) -> Vec<Vec<LocalThreatFact
     facts
 }
 
-fn affected_axis_cells(board: &Board, mv: Move) -> Vec<Move> {
+fn affected_local_axis_cells(board: &Board, mv: Move) -> Vec<Move> {
     let size = board.config.board_size;
     if size == 0 || mv.row >= size || mv.col >= size {
         return Vec::new();
     }
 
+    let radius = board.config.win_length.saturating_add(1) as isize;
     let mut seen = vec![false; size * size];
     let mut cells = Vec::new();
 
     for (dr, dc) in DIRS {
-        for direction in [-1isize, 1] {
-            let mut row = mv.row as isize;
-            let mut col = mv.col as isize;
-            loop {
-                if row < 0 || col < 0 || row >= size as isize || col >= size as isize {
-                    break;
-                }
-                let affected = Move {
-                    row: row as usize,
-                    col: col as usize,
-                };
-                let index = cell_index(size, affected);
-                if !seen[index] {
-                    seen[index] = true;
-                    cells.push(affected);
-                }
-                row += dr * direction;
-                col += dc * direction;
+        for step in -radius..=radius {
+            let row = mv.row as isize + dr * step;
+            let col = mv.col as isize + dc * step;
+            if row < 0 || col < 0 || row >= size as isize || col >= size as isize {
+                continue;
+            }
+            let affected = Move {
+                row: row as usize,
+                col: col as usize,
+            };
+            let index = cell_index(size, affected);
+            if !seen[index] {
+                seen[index] = true;
+                cells.push(affected);
             }
         }
     }
@@ -1001,6 +998,33 @@ mod tests {
         assert_eq!(
             frontier.search_annotation_for_move(probe),
             ScanThreatView::new(&board).search_annotation_for_move(probe)
+        );
+    }
+
+    #[test]
+    fn rolling_frontier_dirties_only_local_search_annotation_cells() {
+        let mut board = Board::new(RuleConfig::default());
+        let mut frontier = RollingThreatFrontier::from_board(&board);
+        let near_probe = mv("K8");
+        let far_probe = mv("H8");
+        let near_index = cell_index(board.config.board_size, near_probe);
+        let far_index = cell_index(board.config.board_size, far_probe);
+
+        let played = mv("O8");
+        board.apply_move(played).unwrap();
+        frontier.apply_move(played).unwrap();
+
+        assert!(
+            frontier.black_raw_search_annotation_dirty[near_index],
+            "nearby same-axis annotations should be dirtied"
+        );
+        assert!(
+            !frontier.black_raw_search_annotation_dirty[far_index],
+            "same-axis annotations beyond the local threat radius should stay clean"
+        );
+        assert_eq!(
+            frontier.search_annotation_for_move(far_probe),
+            ScanThreatView::new(&board).search_annotation_for_move(far_probe)
         );
     }
 
