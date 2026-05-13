@@ -83,8 +83,9 @@ full local-threat move ordering before alpha-beta search. Append
 `+priority-first` to try cheaper hard-tactical ordering: immediate wins,
 immediate blocks, TT move, center bias, and local density without scanning
 candidate-created threats. Append `+tactical-lite` to try the middle tier:
-the same hard win/block checks, plus candidate corridor-entry rank, before the
-quiet TT/center/density heuristics.
+the same hard win/block checks, plus compact candidate tactical-lite rank
+(currently corridor-entry strength), before the quiet TT/center/density
+heuristics.
 Append `+child-cap-N` to cap the ordered non-root child frontier after candidate
 generation, legality filtering, and move ordering. `+tactical-cap-N` is
 shorthand for `+tactical-first+child-cap-N` and is the preferred report-facing

@@ -10,7 +10,8 @@ use crate::frontier::{
 };
 use crate::tactical::{
     local_threat_facts_after_move, CorridorThreatPolicy, LocalThreatKind, ScanThreatView,
-    SearchThreatPolicy, TacticalMoveAnnotation, TacticalOrderingSummary, ThreatView,
+    SearchThreatPolicy, TacticalLiteRank, TacticalMoveAnnotation, TacticalOrderingSummary,
+    ThreatView,
 };
 use crate::Bot;
 use gomoku_core::{Board, Color, GameResult, Move, Variant, ZobristTable, DIRS};
@@ -466,6 +467,14 @@ pub struct SearchMetrics {
     pub tactical_lite_entry_rank_queries: u64,
     pub root_tactical_lite_entry_rank_queries: u64,
     pub search_tactical_lite_entry_rank_queries: u64,
+    pub tactical_lite_rank_scan_queries: u64,
+    pub tactical_lite_rank_scan_ns: u64,
+    pub tactical_lite_rank_frontier_clean_queries: u64,
+    pub tactical_lite_rank_frontier_clean_ns: u64,
+    pub tactical_lite_rank_frontier_dirty_queries: u64,
+    pub tactical_lite_rank_frontier_dirty_ns: u64,
+    pub tactical_lite_rank_frontier_fallback_queries: u64,
+    pub tactical_lite_rank_frontier_fallback_ns: u64,
     pub child_limit_applications: u64,
     pub root_child_limit_applications: u64,
     pub search_child_limit_applications: u64,
@@ -592,6 +601,42 @@ impl SearchMetrics {
         match phase {
             SearchMetricPhase::Root => self.root_tactical_lite_entry_rank_queries += 1,
             SearchMetricPhase::Search => self.search_tactical_lite_entry_rank_queries += 1,
+        }
+    }
+
+    fn record_tactical_lite_rank_scan(&mut self, elapsed: Duration) {
+        let ns = duration_ns(elapsed);
+        self.tactical_lite_rank_scan_queries += 1;
+        self.tactical_lite_rank_scan_ns = self.tactical_lite_rank_scan_ns.saturating_add(ns);
+        self.threat_view_scan_queries += 1;
+        self.threat_view_scan_ns = self.threat_view_scan_ns.saturating_add(ns);
+    }
+
+    fn record_tactical_lite_rank_frontier(
+        &mut self,
+        elapsed: Duration,
+        source: FrontierAnnotationSource,
+    ) {
+        let ns = duration_ns(elapsed);
+        self.threat_view_frontier_queries += 1;
+        self.threat_view_frontier_query_ns = self.threat_view_frontier_query_ns.saturating_add(ns);
+        match source {
+            FrontierAnnotationSource::CleanCache => {
+                self.tactical_lite_rank_frontier_clean_queries += 1;
+                self.tactical_lite_rank_frontier_clean_ns =
+                    self.tactical_lite_rank_frontier_clean_ns.saturating_add(ns);
+            }
+            FrontierAnnotationSource::DirtyRecompute => {
+                self.tactical_lite_rank_frontier_dirty_queries += 1;
+                self.tactical_lite_rank_frontier_dirty_ns =
+                    self.tactical_lite_rank_frontier_dirty_ns.saturating_add(ns);
+            }
+            FrontierAnnotationSource::Fallback => {
+                self.tactical_lite_rank_frontier_fallback_queries += 1;
+                self.tactical_lite_rank_frontier_fallback_ns = self
+                    .tactical_lite_rank_frontier_fallback_ns
+                    .saturating_add(ns);
+            }
         }
     }
 
@@ -2215,20 +2260,9 @@ fn order_moves_tactical_lite(
             } else if immediate_block {
                 (90_000, true)
             } else {
-                let entry_rank = tactical_lite_entry_rank_counted(
-                    state,
-                    player,
-                    mv,
-                    threat_view_mode,
-                    metrics,
-                    phase,
-                );
-                let entry_score = if entry_rank > 0 {
-                    60_000 + i32::from(entry_rank) * 1_000
-                } else {
-                    0
-                };
-                (entry_score, false)
+                let tactical_rank =
+                    tactical_lite_rank_counted(state, player, mv, threat_view_mode, metrics, phase);
+                (tactical_rank.ordering_score(), false)
             };
             let tt_bonus = if Some(mv) == tt_move { 1_000 } else { 0 };
             let density_bonus = 20 * local_density_score(state.board(), mv, 2);
@@ -2250,41 +2284,41 @@ fn order_moves_tactical_lite(
         .collect()
 }
 
-fn tactical_lite_entry_rank_counted(
+fn tactical_lite_rank_counted(
     state: &mut SearchState,
     player: Color,
     mv: Move,
     mode: ThreatViewMode,
     metrics: &mut SearchMetrics,
     phase: SearchMetricPhase,
-) -> u8 {
+) -> TacticalLiteRank {
     metrics.record_tactical_lite_entry_rank_query(phase);
     match mode {
         ThreatViewMode::Scan => {
             let start = Instant::now();
-            let rank = ScanThreatView::new(state.board()).candidate_corridor_entry_rank(player, mv);
-            metrics.record_threat_view_scan(start.elapsed());
+            let rank = ScanThreatView::new(state.board()).candidate_tactical_lite_rank(player, mv);
+            metrics.record_tactical_lite_rank_scan(start.elapsed());
             rank
         }
         ThreatViewMode::Rolling => {
             let start = Instant::now();
-            let rank = state
+            let (rank, source) = state
                 .threat_view()
-                .candidate_corridor_entry_rank(player, mv);
-            metrics.record_threat_view_frontier_query(start.elapsed());
+                .tactical_lite_rank_for_player_with_source(player, mv);
+            metrics.record_tactical_lite_rank_frontier(start.elapsed(), source);
             rank
         }
         ThreatViewMode::RollingShadow => {
             metrics.threat_view_shadow_checks += 1;
             let scan_start = Instant::now();
-            let scan = ScanThreatView::new(state.board()).candidate_corridor_entry_rank(player, mv);
-            metrics.record_threat_view_scan(scan_start.elapsed());
+            let scan = ScanThreatView::new(state.board()).candidate_tactical_lite_rank(player, mv);
+            metrics.record_tactical_lite_rank_scan(scan_start.elapsed());
 
             let frontier_start = Instant::now();
-            let frontier = state
+            let (frontier, source) = state
                 .threat_view()
-                .candidate_corridor_entry_rank(player, mv);
-            metrics.record_threat_view_frontier_query(frontier_start.elapsed());
+                .tactical_lite_rank_for_player_with_source(player, mv);
+            metrics.record_tactical_lite_rank_frontier(frontier_start.elapsed(), source);
             if frontier != scan {
                 metrics.threat_view_shadow_mismatches += 1;
             }
@@ -5857,7 +5891,57 @@ mod tests {
                 .unwrap()
                 > 0
         );
+        assert!(metrics["tactical_lite_rank_scan_queries"].as_u64().unwrap() > 0);
+        assert!(
+            metrics["tactical_lite_rank_scan_ns"].as_u64().unwrap() > 0,
+            "scan tactical-lite rank queries should record dedicated timing"
+        );
+        assert_eq!(metrics["tactical_lite_rank_frontier_clean_queries"], 0);
         assert!(metrics["child_cap_hits"].as_u64().unwrap() > 0);
+    }
+
+    #[test]
+    fn rolling_threat_view_mode_records_tactical_lite_rank_sources() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(
+            &mut board,
+            &["H8", "A1", "I8", "B1", "J8", "C1", "O15", "D1"],
+        );
+        let mut config = SearchBotConfig::custom_depth(1);
+        config.safety_gate = SafetyGate::None;
+        config.move_ordering = MoveOrdering::TacticalLite;
+        config.corridor_portals = CorridorPortalConfig::DISABLED;
+        config.threat_view_mode = ThreatViewMode::Rolling;
+        let mut bot = SearchBot::with_config(config);
+
+        let _ = bot.choose_move(&board);
+        let trace = bot.trace().expect("expected search trace");
+        let metrics = &trace["metrics"];
+
+        assert_eq!(trace["config"]["threat_view_mode"], "rolling");
+        assert_eq!(trace["config"]["move_ordering"], "tactical_lite");
+        assert_eq!(metrics["root_tactical_annotations"], 0);
+        assert_eq!(metrics["search_tactical_annotations"], 0);
+        assert!(
+            metrics["root_tactical_lite_entry_rank_queries"]
+                .as_u64()
+                .unwrap()
+                > 0
+        );
+        assert_eq!(metrics["tactical_lite_rank_scan_queries"], 0);
+        assert!(
+            metrics["tactical_lite_rank_frontier_clean_queries"]
+                .as_u64()
+                .unwrap()
+                > 0
+        );
+        assert!(
+            metrics["tactical_lite_rank_frontier_clean_ns"]
+                .as_u64()
+                .unwrap()
+                > 0
+        );
+        assert_eq!(metrics["threat_view_shadow_mismatches"], 0);
     }
 
     #[test]
