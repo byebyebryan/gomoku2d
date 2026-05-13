@@ -548,6 +548,42 @@ Interpretation:
   cap8, D5 cap8, D7 cap8, and one pattern-eval lane, with normal-budget and
   relaxed/no-budget controls plus `--fail-on-shadow-mismatch` shadow smokes.
 
+Known-legal tactical summary checkpoint:
+
+Date: `2026-05-13`
+
+Tactical ordering now avoids rebuilding full move annotations when the caller
+already has a legal candidate. The retained path is:
+
+1. normal scan mode calls the known-legal summary scanner directly;
+2. rolling mode uses the same known-legal summary path for dirty fallback
+   recomputes;
+3. rolling clean lookups still derive from cached raw annotations, without an
+   extra raw-summary cache.
+
+Focused scan-vs-rolling smoke, `8` games, centered-suite openings, `4` opening
+plies, seed `17`, `1000 ms/move`:
+
+| Lane | Before scan | Before rolling | Current scan | Current rolling | Current rolling gain |
+|---|---:|---:|---:|---:|---:|
+| D3 cap8 | `25.25 ms` | `17.46 ms` | `13.61 ms` | `9.89 ms` | `27.4%` |
+| D5 cap8 | `383.55 ms` | `199.68 ms` | `180.30 ms` | `125.70 ms` | `30.3%` |
+| D7 cap8 | `530.70 ms` | `456.68 ms` | `315.35 ms` | `272.99 ms` | `13.4%` |
+
+Interpretation:
+
+- The direct known-legal summary path is a broad hot-path win for both scan and
+  rolling. Scan improved roughly `40-53%` in this smoke; rolling improved
+  roughly `37-43%`.
+- The retained rolling advantage is smaller than before because the scan path
+  benefited more, but rolling still remains faster in all three focused lanes.
+- A per-cell raw summary cache was tried and removed. It did not improve average
+  move time in this smoke (`9.91 ms`, `128.77 ms`, `274.53 ms` for D3/D5/D7
+  rolling after the cache, versus `9.89 ms`, `125.70 ms`, `272.99 ms` with the
+  simpler direct path).
+- The next useful optimization should focus on remaining dirty recompute cost
+  or shared line/annotation work, not another clean summary cache.
+
 ## Benchmark suites
 
 ### Core

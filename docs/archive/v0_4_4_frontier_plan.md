@@ -417,3 +417,22 @@ Known remaining edges:
 The CLI now supports `--fail-on-shadow-mismatch` for tournament smokes. It
 writes the report first, then exits nonzero if the aggregated tournament report
 contains any rolling-frontier shadow mismatches.
+
+## Known-Legal Tactical Summary Checkpoint
+
+The next hot-path pass kept the rolling-vs-scan seam intact but reduced the cost
+of tactical ordering summaries. Search callers already know root and child
+candidates are legal by the time ordering runs, so the summary path no longer
+needs to build full annotations for those candidates.
+
+Outcome:
+
+- Scan mode now has a direct known-legal tactical summary scanner.
+- Rolling mode uses the same known-legal summary path for dirty fallback
+  recomputes.
+- A separate clean raw-summary cache was tested and removed because it did not
+  improve average move time over the simpler direct path.
+- Focused D3/D5/D7 scan-vs-rolling smokes still show rolling faster, but the
+  bigger durable win is that both paths are much cheaper. The next frontier
+  optimization should target dirty recompute and shared line/annotation work
+  before adding more cache layers.
