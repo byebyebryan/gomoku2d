@@ -2115,6 +2115,7 @@ fn search_child_after_move(
             move_ordering,
             child_limit,
             corridor_portals,
+            threat_view_mode,
             static_eval,
             nodes,
             metrics,
@@ -2159,6 +2160,7 @@ fn resume_normal_search_after_corridor(
     move_ordering: MoveOrdering,
     child_limit: Option<usize>,
     _corridor_portals: CorridorPortalConfig,
+    threat_view_mode: ThreatViewMode,
     static_eval: StaticEvaluation,
     nodes: &mut u64,
     metrics: &mut SearchMetrics,
@@ -2180,7 +2182,7 @@ fn resume_normal_search_after_corridor(
         move_ordering,
         child_limit,
         CorridorPortalConfig::DISABLED,
-        ThreatViewMode::Scan,
+        threat_view_mode,
         static_eval,
         nodes,
         metrics,
@@ -2207,6 +2209,7 @@ fn corridor_portal_search(
     move_ordering: MoveOrdering,
     child_limit: Option<usize>,
     corridor_portals: CorridorPortalConfig,
+    threat_view_mode: ThreatViewMode,
     static_eval: StaticEvaluation,
     nodes: &mut u64,
     metrics: &mut SearchMetrics,
@@ -2247,6 +2250,7 @@ fn corridor_portal_search(
             move_ordering,
             child_limit,
             corridor_portals,
+            threat_view_mode,
             static_eval,
             nodes,
             metrics,
@@ -2274,6 +2278,7 @@ fn corridor_portal_search(
                 move_ordering,
                 child_limit,
                 corridor_portals,
+                threat_view_mode,
                 static_eval,
                 nodes,
                 metrics,
@@ -2313,6 +2318,7 @@ fn corridor_portal_search(
             move_ordering,
             child_limit,
             corridor_portals,
+            threat_view_mode,
             static_eval,
             nodes,
             metrics,
@@ -2352,6 +2358,7 @@ fn corridor_portal_search(
             move_ordering,
             child_limit,
             corridor_portals,
+            threat_view_mode,
             static_eval,
             nodes,
             metrics,
@@ -4650,6 +4657,7 @@ mod tests {
             MoveOrdering::TranspositionFirstBoardOrder,
             None,
             portal_config,
+            ThreatViewMode::Scan,
             StaticEvaluation::LineShapeEval,
             &mut nodes,
             &mut metrics,
@@ -4660,6 +4668,57 @@ mod tests {
         assert_eq!(
             metrics.corridor_entries_accepted, 0,
             "resuming normal search from a corridor exit should not immediately re-enter portals"
+        );
+    }
+
+    #[test]
+    fn rolling_resumed_search_after_corridor_stays_scan_clean() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(&mut board, &["H8", "A1", "I8", "A2", "J8", "A3"]);
+        assert_eq!(board.current_player, Color::Black);
+
+        let zobrist = ZobristTable::new(board.config.board_size);
+        let mut state = SearchState::from_board_for_config(
+            board,
+            &zobrist,
+            ThreatViewMode::Rolling,
+            CorridorPortalConfig::DISABLED,
+        );
+        let mut tt = HashMap::new();
+        let mut nodes = 0u64;
+        let mut metrics = SearchMetrics::default();
+
+        let _ = resume_normal_search_after_corridor(
+            &mut state,
+            1,
+            i32::MIN + 1,
+            i32::MAX,
+            Color::Black,
+            Color::Black,
+            &mut tt,
+            &zobrist,
+            CandidateSource::NearAll { radius: 2 },
+            LegalityGate::ExactRules,
+            MoveOrdering::TacticalFirst,
+            Some(4),
+            CorridorPortalConfig::default(),
+            ThreatViewMode::Rolling,
+            StaticEvaluation::LineShapeEval,
+            &mut nodes,
+            &mut metrics,
+            SearchDeadline::new(Instant::now(), Some(Duration::from_millis(100)), None, None),
+        );
+
+        assert_eq!(metrics.corridor_resume_searches, 1);
+        assert_eq!(metrics.threat_view_shadow_checks, 0);
+        assert_eq!(metrics.threat_view_shadow_mismatches, 0);
+        assert_eq!(
+            metrics.threat_view_scan_queries, 0,
+            "rolling resume should not switch the resumed normal search back to scan mode"
+        );
+        assert!(
+            metrics.threat_view_frontier_queries > 0,
+            "resumed tactical ordering should query the rolling frontier"
         );
     }
 
@@ -4699,6 +4758,7 @@ mod tests {
             MoveOrdering::TranspositionFirstBoardOrder,
             None,
             CorridorPortalConfig::default(),
+            ThreatViewMode::Scan,
             StaticEvaluation::LineShapeEval,
             &mut nodes,
             &mut metrics,
