@@ -507,6 +507,8 @@ pub struct SearchMetrics {
     pub threat_view_frontier_rebuild_ns: u64,
     pub threat_view_frontier_queries: u64,
     pub threat_view_frontier_query_ns: u64,
+    pub threat_view_frontier_immediate_win_queries: u64,
+    pub threat_view_frontier_immediate_win_query_ns: u64,
     pub threat_view_frontier_delta_captures: u64,
     pub threat_view_frontier_delta_capture_ns: u64,
     pub threat_view_frontier_move_fact_updates: u64,
@@ -658,6 +660,14 @@ impl SearchMetrics {
         self.threat_view_frontier_queries += 1;
         self.threat_view_frontier_query_ns = self
             .threat_view_frontier_query_ns
+            .saturating_add(duration_ns(elapsed));
+    }
+
+    fn record_threat_view_frontier_immediate_win_query(&mut self, elapsed: Duration) {
+        self.record_threat_view_frontier_query(elapsed);
+        self.threat_view_frontier_immediate_win_queries += 1;
+        self.threat_view_frontier_immediate_win_query_ns = self
+            .threat_view_frontier_immediate_win_query_ns
             .saturating_add(duration_ns(elapsed));
     }
 
@@ -2629,7 +2639,7 @@ fn rolling_immediate_winning_moves_timed(
 ) -> Vec<Move> {
     let start = Instant::now();
     let moves = state.threat_view().immediate_winning_moves_for(player);
-    metrics.record_threat_view_frontier_query(start.elapsed());
+    metrics.record_threat_view_frontier_immediate_win_query(start.elapsed());
     moves
 }
 
@@ -4799,6 +4809,35 @@ mod tests {
         assert_eq!(first, second);
         assert_eq!(metrics.threat_view_frontier_dirty_annotation_queries, 1);
         assert_eq!(metrics.threat_view_frontier_queries, 1);
+    }
+
+    #[test]
+    fn rolling_immediate_win_query_records_dedicated_metrics() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(
+            &mut board,
+            &["H8", "A1", "I8", "A2", "J8", "A3", "K8", "A4"],
+        );
+        let zobrist = ZobristTable::new(board.config.board_size);
+        let mut state = SearchState::from_board_for_config(
+            board,
+            &zobrist,
+            ThreatViewMode::Rolling,
+            CorridorPortalConfig::DISABLED,
+        );
+        let mut metrics = SearchMetrics::default();
+
+        let wins = immediate_winning_moves_for_threat_view_mode(
+            &mut state,
+            Color::Black,
+            ThreatViewMode::Rolling,
+            &mut metrics,
+        );
+
+        assert_eq!(wins, vec![mv("G8"), mv("L8")]);
+        assert_eq!(metrics.threat_view_frontier_queries, 1);
+        assert_eq!(metrics.threat_view_frontier_immediate_win_queries, 1);
+        assert!(metrics.threat_view_frontier_immediate_win_query_ns > 0);
     }
 
     #[test]
