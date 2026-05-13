@@ -5,7 +5,7 @@ use gomoku_core::{Board, Color, GameResult, Move, MoveError, DIRS};
 use crate::tactical::{
     raw_local_threat_facts_at_existing_move, raw_local_threat_facts_for_player,
     CorridorThreatPolicy, LocalThreatFact, ScanThreatView, SearchThreatPolicy,
-    TacticalMoveAnnotation, ThreatView,
+    TacticalMoveAnnotation, TacticalOrderingSummary, ThreatView,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -407,6 +407,39 @@ impl RollingThreatFrontier {
             SearchThreatPolicy.effective_annotation_from_raw(&self.board, annotation),
             source,
         )
+    }
+
+    pub fn search_ordering_summary_for_player_with_source(
+        &self,
+        player: Color,
+        mv: Move,
+    ) -> (TacticalOrderingSummary, FrontierAnnotationSource) {
+        let size = self.board.config.board_size;
+        let policy = SearchThreatPolicy;
+        if mv.row >= size || mv.col >= size || self.board.result != GameResult::Ongoing {
+            let annotation = search_annotation_for_player(&self.board, player, mv);
+            return (
+                policy.ordering_summary(&annotation),
+                FrontierAnnotationSource::Fallback,
+            );
+        }
+
+        let index = cell_index(size, mv);
+        if self.raw_search_annotation_dirty_for(player)[index] {
+            let annotation = raw_search_annotation_for_player(&self.board, player, mv);
+            (
+                policy.effective_ordering_summary_from_raw(&self.board, &annotation),
+                FrontierAnnotationSource::DirtyRecompute,
+            )
+        } else {
+            (
+                policy.effective_ordering_summary_from_raw(
+                    &self.board,
+                    &self.raw_search_annotations_for(player)[index],
+                ),
+                FrontierAnnotationSource::CleanCache,
+            )
+        }
     }
 }
 

@@ -10,7 +10,7 @@ use crate::frontier::{
 };
 use crate::tactical::{
     local_threat_facts_after_move, CorridorThreatPolicy, LocalThreatKind, ScanThreatView,
-    SearchThreatPolicy, TacticalMoveAnnotation, ThreatView,
+    SearchThreatPolicy, TacticalMoveAnnotation, TacticalOrderingSummary, ThreatView,
 };
 use crate::Bot;
 use gomoku_core::{Board, Color, GameResult, Move, Variant, ZobristTable, DIRS};
@@ -740,7 +740,7 @@ fn duration_ns(elapsed: Duration) -> u64 {
 struct SearchState {
     board: Board,
     frontier: Option<RollingThreatFrontier>,
-    frontier_annotation_memo: HashMap<FrontierAnnotationMemoKey, TacticalMoveAnnotation>,
+    frontier_ordering_summary_memo: HashMap<FrontierAnnotationMemoKey, TacticalOrderingSummary>,
     hash: u64,
     hash_stack: Vec<u64>,
 }
@@ -796,7 +796,7 @@ impl SearchState {
         Self {
             board,
             frontier,
-            frontier_annotation_memo: HashMap::new(),
+            frontier_ordering_summary_memo: HashMap::new(),
             hash,
             hash_stack: Vec::new(),
         }
@@ -1178,52 +1178,44 @@ fn annotate_tactical_move(board: &Board, mv: Move) -> TacticalMoveAnnotation {
     SearchThreatPolicy.annotation_for_move(board, mv)
 }
 
-fn annotate_legal_tactical_move_counted(
+fn tactical_ordering_summary_counted(
     state: &mut SearchState,
     mv: Move,
     threat_view_mode: ThreatViewMode,
     metrics: &mut SearchMetrics,
     phase: SearchMetricPhase,
-) -> TacticalMoveAnnotation {
+) -> TacticalOrderingSummary {
     metrics.record_tactical_annotation(phase);
-    tactical_annotation_for_threat_view_mode(state, mv, threat_view_mode, metrics)
-}
-
-fn tactical_annotation_for_threat_view_mode(
-    state: &mut SearchState,
-    mv: Move,
-    mode: ThreatViewMode,
-    metrics: &mut SearchMetrics,
-) -> TacticalMoveAnnotation {
-    tactical_annotation_for_player_threat_view_mode(
+    tactical_ordering_summary_for_threat_view_mode(
         state,
         state.board().current_player,
         mv,
-        mode,
+        threat_view_mode,
         metrics,
     )
 }
 
-fn tactical_annotation_for_player_threat_view_mode(
+fn tactical_ordering_summary_for_threat_view_mode(
     state: &mut SearchState,
     player: Color,
     mv: Move,
     mode: ThreatViewMode,
     metrics: &mut SearchMetrics,
-) -> TacticalMoveAnnotation {
+) -> TacticalOrderingSummary {
     match mode {
         ThreatViewMode::Scan => {
-            scan_tactical_annotation_for_player_timed(state.board(), player, mv, metrics)
+            scan_tactical_ordering_summary_for_player_timed(state.board(), player, mv, metrics)
         }
         ThreatViewMode::Rolling => {
-            rolling_frontier_tactical_annotation_for_player_timed(state, player, mv, metrics)
+            rolling_frontier_tactical_ordering_summary_for_player_timed(state, player, mv, metrics)
         }
         ThreatViewMode::RollingShadow => {
             metrics.threat_view_shadow_checks += 1;
             let scan =
-                scan_tactical_annotation_for_player_timed(state.board(), player, mv, metrics);
-            let frontier =
-                rolling_frontier_tactical_annotation_for_player_timed(state, player, mv, metrics);
+                scan_tactical_ordering_summary_for_player_timed(state.board(), player, mv, metrics);
+            let frontier = rolling_frontier_tactical_ordering_summary_for_player_timed(
+                state, player, mv, metrics,
+            );
             if frontier != scan {
                 metrics.threat_view_shadow_mismatches += 1;
             }
@@ -1232,42 +1224,41 @@ fn tactical_annotation_for_player_threat_view_mode(
     }
 }
 
-fn scan_tactical_annotation_for_player_timed(
+fn scan_tactical_ordering_summary_for_player_timed(
     board: &Board,
     player: Color,
     mv: Move,
     metrics: &mut SearchMetrics,
-) -> TacticalMoveAnnotation {
+) -> TacticalOrderingSummary {
     let start = Instant::now();
     let annotation = ScanThreatView::new(board).search_annotation_for_player(player, mv);
+    let summary = SearchThreatPolicy.ordering_summary(&annotation);
     metrics.record_threat_view_scan(start.elapsed());
-    annotation
+    summary
 }
 
-fn rolling_frontier_tactical_annotation_for_player_timed(
+fn rolling_frontier_tactical_ordering_summary_for_player_timed(
     state: &mut SearchState,
     player: Color,
     mv: Move,
     metrics: &mut SearchMetrics,
-) -> TacticalMoveAnnotation {
+) -> TacticalOrderingSummary {
     let start = Instant::now();
     let key = state.frontier_annotation_memo_key(player, mv);
-    if let Some(annotation) = state.frontier_annotation_memo.get(&key).cloned() {
+    if let Some(summary) = state.frontier_ordering_summary_memo.get(&key).copied() {
         metrics.record_threat_view_frontier_memo_annotation_query(start.elapsed());
-        return annotation;
+        return summary;
     }
 
-    let (annotation, source) = {
+    let (summary, source) = {
         let frontier = state.threat_view();
-        frontier.search_annotation_for_player_with_source(player, mv)
+        frontier.search_ordering_summary_for_player_with_source(player, mv)
     };
     metrics.record_threat_view_frontier_annotation_query(start.elapsed(), source);
     if source == FrontierAnnotationSource::DirtyRecompute {
-        state
-            .frontier_annotation_memo
-            .insert(key, annotation.clone());
+        state.frontier_ordering_summary_memo.insert(key, summary);
     }
-    annotation
+    summary
 }
 
 fn in_bounds(board: &Board, row: isize, col: isize) -> bool {
@@ -2049,10 +2040,10 @@ fn order_moves_tactical_first(
         .into_iter()
         .enumerate()
         .map(|(index, mv)| {
-            let annotation =
-                annotate_legal_tactical_move_counted(state, mv, threat_view_mode, metrics, phase);
+            let summary =
+                tactical_ordering_summary_counted(state, mv, threat_view_mode, metrics, phase);
             let immediate_block = move_mask_contains(&opponent_immediate_wins, board_size, mv);
-            let (score, must_keep) = tactical_ordering_score(&annotation, immediate_block);
+            let (score, must_keep) = tactical_ordering_score_from_summary(summary, immediate_block);
             (index, mv, score, must_keep, Some(mv) == tt_move)
         })
         .collect::<Vec<_>>();
@@ -2086,17 +2077,25 @@ fn move_mask_contains(mask: &[bool], board_size: usize, mv: Move) -> bool {
     mv.row < board_size && mv.col < board_size && mask[mv.row * board_size + mv.col]
 }
 
+#[cfg(test)]
 fn tactical_ordering_score(
     annotation: &TacticalMoveAnnotation,
     immediate_block: bool,
 ) -> (i32, bool) {
-    let search_policy = SearchThreatPolicy;
-    let mut score = if immediate_block { 90_000 } else { 0 };
-    let mut must_keep = immediate_block;
-    for fact in annotation.local_threats.iter() {
-        score = score.max(search_policy.ordering_score(fact.kind));
-        must_keep |= search_policy.is_must_keep(fact);
-    }
+    let summary = SearchThreatPolicy.ordering_summary(annotation);
+    tactical_ordering_score_from_summary(summary, immediate_block)
+}
+
+fn tactical_ordering_score_from_summary(
+    summary: TacticalOrderingSummary,
+    immediate_block: bool,
+) -> (i32, bool) {
+    let score = if immediate_block {
+        summary.score.max(90_000)
+    } else {
+        summary.score
+    };
+    let must_keep = summary.must_keep || immediate_block;
 
     (score, must_keep)
 }
@@ -4359,6 +4358,59 @@ mod tests {
     }
 
     #[test]
+    fn tactical_ordering_summary_matches_full_annotation_score() {
+        let mut forcing_board = Board::new(RuleConfig::default());
+        apply_moves(&mut forcing_board, &["H8", "A1", "I8", "B1", "J8", "C1"]);
+
+        let renju_board = {
+            let mut board = Board::new(RuleConfig {
+                variant: Variant::Renju,
+                ..RuleConfig::default()
+            });
+            apply_moves(
+                &mut board,
+                &["H8", "G8", "I8", "A1", "J8", "A2", "L8", "A3"],
+            );
+            board
+        };
+
+        let cases = [
+            (forcing_board.clone(), Color::Black, mv("K8")),
+            (forcing_board, Color::Black, mv("B2")),
+            (renju_board, Color::Black, mv("M8")),
+        ];
+
+        for (board, player, probe) in cases {
+            let annotation = SearchThreatPolicy.annotation_for_player(&board, player, probe);
+            let expected = tactical_ordering_score(&annotation, false);
+            let zobrist = ZobristTable::new(board.config.board_size);
+
+            let mut scan_metrics = SearchMetrics::default();
+            let mut scan_state =
+                SearchState::from_board_with_frontier(board.clone(), &zobrist, false);
+            let scan_summary = tactical_ordering_summary_for_threat_view_mode(
+                &mut scan_state,
+                player,
+                probe,
+                ThreatViewMode::Scan,
+                &mut scan_metrics,
+            );
+            assert_eq!((scan_summary.score, scan_summary.must_keep), expected);
+
+            let mut rolling_metrics = SearchMetrics::default();
+            let mut rolling_state = SearchState::from_board_with_frontier(board, &zobrist, true);
+            let rolling_summary = tactical_ordering_summary_for_threat_view_mode(
+                &mut rolling_state,
+                player,
+                probe,
+                ThreatViewMode::Rolling,
+                &mut rolling_metrics,
+            );
+            assert_eq!((rolling_summary.score, rolling_summary.must_keep), expected);
+        }
+    }
+
+    #[test]
     fn child_limit_preserves_must_keep_moves_after_nominal_cap() {
         let ordered = vec![
             OrderedMove {
@@ -4911,7 +4963,7 @@ mod tests {
     }
 
     #[test]
-    fn rolling_threat_view_memoizes_dirty_tactical_annotations_per_state() {
+    fn rolling_threat_view_memoizes_dirty_ordering_summaries_per_state() {
         let mut board = Board::new(RuleConfig::default());
         apply_moves(&mut board, &["B8", "A1", "C8", "A2", "D8"]);
         let zobrist = ZobristTable::new(board.config.board_size);
@@ -4925,14 +4977,17 @@ mod tests {
         state.apply_trusted_legal_move(mv("E8"), &zobrist);
 
         let mut metrics = SearchMetrics::default();
-        let first = tactical_annotation_for_threat_view_mode(
+        let player = state.board().current_player;
+        let first = tactical_ordering_summary_for_threat_view_mode(
             &mut state,
+            player,
             mv("A8"),
             ThreatViewMode::Rolling,
             &mut metrics,
         );
-        let second = tactical_annotation_for_threat_view_mode(
+        let second = tactical_ordering_summary_for_threat_view_mode(
             &mut state,
+            player,
             mv("A8"),
             ThreatViewMode::Rolling,
             &mut metrics,

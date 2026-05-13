@@ -14,6 +14,12 @@ pub enum LocalThreatKind {
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct SearchThreatPolicy;
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct TacticalOrderingSummary {
+    pub score: i32,
+    pub must_keep: bool,
+}
+
 impl SearchThreatPolicy {
     pub fn rank(self, kind: LocalThreatKind) -> u8 {
         match kind {
@@ -75,13 +81,7 @@ impl SearchThreatPolicy {
         board: &Board,
         mut annotation: TacticalMoveAnnotation,
     ) -> TacticalMoveAnnotation {
-        if board.config.variant != Variant::Renju
-            || annotation.player != Color::Black
-            || !annotation
-                .local_threats
-                .iter()
-                .any(|fact| self.is_must_keep(fact) && fact.kind != LocalThreatKind::Five)
-        {
+        if !self.needs_renju_effective_filter(board, &annotation) {
             return annotation;
         }
         if !board.is_legal_for_color(annotation.mv, annotation.player) {
@@ -111,6 +111,40 @@ impl SearchThreatPolicy {
 
     pub fn annotation_for_move(self, board: &Board, mv: Move) -> TacticalMoveAnnotation {
         self.annotation_for_player(board, board.current_player, mv)
+    }
+
+    pub fn ordering_summary(self, annotation: &TacticalMoveAnnotation) -> TacticalOrderingSummary {
+        let mut summary = TacticalOrderingSummary::default();
+        for fact in &annotation.local_threats {
+            summary.score = summary.score.max(self.ordering_score(fact.kind));
+            summary.must_keep |= self.is_must_keep(fact);
+        }
+        summary
+    }
+
+    pub fn effective_ordering_summary_from_raw(
+        self,
+        board: &Board,
+        annotation: &TacticalMoveAnnotation,
+    ) -> TacticalOrderingSummary {
+        if !self.needs_renju_effective_filter(board, annotation) {
+            return self.ordering_summary(annotation);
+        }
+
+        self.ordering_summary(&self.effective_annotation_from_raw(board, annotation.clone()))
+    }
+
+    fn needs_renju_effective_filter(
+        self,
+        board: &Board,
+        annotation: &TacticalMoveAnnotation,
+    ) -> bool {
+        board.config.variant == Variant::Renju
+            && annotation.player == Color::Black
+            && annotation
+                .local_threats
+                .iter()
+                .any(|fact| self.is_must_keep(fact) && fact.kind != LocalThreatKind::Five)
     }
 }
 
