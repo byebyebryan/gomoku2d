@@ -441,6 +441,38 @@ impl RollingThreatFrontier {
             )
         }
     }
+
+    pub fn search_ordering_summary_for_legal_player_with_source(
+        &self,
+        player: Color,
+        mv: Move,
+    ) -> (TacticalOrderingSummary, FrontierAnnotationSource) {
+        let size = self.board.config.board_size;
+        let policy = SearchThreatPolicy;
+        if mv.row >= size || mv.col >= size || self.board.result != GameResult::Ongoing {
+            let annotation = search_annotation_for_player(&self.board, player, mv);
+            return (
+                policy.ordering_summary(&annotation),
+                FrontierAnnotationSource::Fallback,
+            );
+        }
+
+        let index = cell_index(size, mv);
+        if self.raw_search_annotation_dirty_for(player)[index] {
+            (
+                policy.ordering_summary_for_legal_player(&self.board, player, mv),
+                FrontierAnnotationSource::DirtyRecompute,
+            )
+        } else {
+            (
+                policy.effective_ordering_summary_from_raw(
+                    &self.board,
+                    &self.raw_search_annotations_for(player)[index],
+                ),
+                FrontierAnnotationSource::CleanCache,
+            )
+        }
+    }
 }
 
 impl RebuildThreatFrontier {
@@ -812,7 +844,8 @@ fn normalize_local_threat_facts_by_origin(facts: Vec<LocalThreatFact>) -> Vec<Lo
 #[cfg(test)]
 mod tests {
     use super::{
-        cell_index, RebuildThreatFrontier, RollingFrontierFeatures, RollingThreatFrontier,
+        cell_index, FrontierAnnotationSource, RebuildThreatFrontier, RollingFrontierFeatures,
+        RollingThreatFrontier,
     };
     use crate::tactical::{LocalThreatKind, ScanThreatView, SearchThreatPolicy, ThreatView};
     use gomoku_core::{Board, Color, GameResult, Move, RuleConfig, Variant};
@@ -1058,6 +1091,33 @@ mod tests {
         assert_eq!(
             frontier.search_annotation_for_move(far_probe),
             ScanThreatView::new(&board).search_annotation_for_move(far_probe)
+        );
+    }
+
+    #[test]
+    fn rolling_frontier_can_summarize_known_legal_dirty_annotations() {
+        let mut board = board_from_moves(Variant::Freestyle, &["H8", "A1", "I8", "A2"]);
+        let mut frontier = RollingThreatFrontier::from_board(&board);
+
+        let played = mv("J8");
+        board.apply_move(played).unwrap();
+        frontier.apply_move(played).unwrap();
+
+        let probe = mv("K8");
+        let probe_index = cell_index(board.config.board_size, probe);
+        assert!(board.is_legal_for_color(probe, Color::White));
+        assert!(
+            frontier.white_raw_search_annotation_dirty[probe_index],
+            "same-axis white ordering summary should be dirty after black occupies J8"
+        );
+
+        let (summary, source) =
+            frontier.search_ordering_summary_for_legal_player_with_source(Color::White, probe);
+
+        assert_eq!(source, FrontierAnnotationSource::DirtyRecompute);
+        assert_eq!(
+            summary,
+            SearchThreatPolicy.ordering_summary_for_legal_player(&board, Color::White, probe)
         );
     }
 

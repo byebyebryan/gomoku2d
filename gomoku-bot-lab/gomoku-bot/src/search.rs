@@ -1251,7 +1251,7 @@ fn rolling_frontier_tactical_ordering_summary_for_player_timed(
 
     let (summary, source) = {
         let frontier = state.threat_view();
-        frontier.search_ordering_summary_for_player_with_source(player, mv)
+        frontier.search_ordering_summary_for_legal_player_with_source(player, mv)
     };
     metrics.record_threat_view_frontier_annotation_query(start.elapsed(), source);
     if source == FrontierAnnotationSource::DirtyRecompute {
