@@ -213,16 +213,17 @@ lab-only until they are correct under the full reference workload:
 
 Both suffixes are lab-only validation and instrumentation modes, not promoted
 bot configs. Incremental frontier deltas, lazy Renju filtering, per-state dirty
-annotation memoization, and the simplified `current_obligation` safety gate moved
-focused smoke results from "useful but slower" to a net rolling speed win for
-normal tactical search. The default bot path remains scan-backed until a clean
-full reference tournament and companion top-two analysis establish the current
-baseline. Scan-vs-rolling controls should judge parity with relaxed or no
-per-move budget; normal `1000 ms/move` runs are cost/strength samples and may
-shift because iterative deepening completes different work under the clock. Scan
-remains the reference/fallback implementation; rolling is added beside it behind
-the same `ThreatView` contract so parity checks, safe rollback, and targeted
-benchmarks stay cheap. Non-shadow rolling search is expected to keep
+annotation memoization, indexed immediate-win lookup, and the simplified
+`current_obligation` safety gate moved focused smoke results from "useful but
+slower" to a net rolling speed win for normal tactical search. The default bot
+path remains scan-backed until a clean full reference tournament and companion
+top-two analysis establish the current baseline. Scan-vs-rolling controls should
+judge parity with relaxed or no per-move budget; normal `1000 ms/move` runs are
+cost/strength samples and may shift because iterative deepening completes
+different work under the clock. Scan remains the reference/fallback
+implementation; rolling is added beside it behind the same `ThreatView` contract
+so parity checks, safe rollback, and targeted benchmarks stay cheap. Non-shadow
+rolling search is expected to keep
 `threat_view_scan_queries == 0`; scan queries in rolling work should be limited
 to shadow comparison, tests, report/replay analysis, or explicit fallback paths.
 

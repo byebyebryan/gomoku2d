@@ -519,9 +519,10 @@ Follow-up memo checkpoint:
   materialized attacker entries, immediate win checks, and defender replies. In
   non-shadow rolling mode, this keeps the search-owned threat-view scan counter
   at zero; shadow mode still runs both scan and rolling answers for parity.
-- Root win/block checks now use explicit-player threat-view annotations, which
-  lets rolling mode answer those checks from the frontier instead of direct board
-  threat scans.
+- Root win/block checks now use `ThreatView` for explicit-player annotations
+  and immediate-win sets. Rolling mode answers immediate wins from a per-player
+  index maintained through apply/undo, including `TacticalOnly` frontier mode,
+  so the root checks no longer need a board-cell scan.
 
 Current-obligation safety checkpoint:
 
