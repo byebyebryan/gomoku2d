@@ -2714,9 +2714,13 @@ fn compact_searchbot_feature_label(feature: &str) -> String {
             return format!("OppCorrD{depth}W{width}");
         }
     }
+    if let Some(rank) = feature.strip_prefix("corridor-min-rank-") {
+        return format!("CorrMinR{rank}");
+    }
 
     match feature {
         "pattern-eval" => "Pattern".to_string(),
+        "corridor-depth-static" => "CorrStatic".to_string(),
         "rolling-frontier" => "Rolling".to_string(),
         "rolling-frontier-shadow" => "RollingShadow".to_string(),
         "tactical-first" => "Tactical".to_string(),
@@ -4704,6 +4708,13 @@ mod tests {
                 "search-d5+corridor-own-d6-w3+corridor-opponent-d4-w2"
             ),
             "SearchBot_D5+OwnCorrD6W3+OppCorrD4W2"
+        );
+        assert_eq!(
+            compact_bot_label(
+                &report,
+                "search-d5+tactical-cap-8+corridor-own-d1-w3+corridor-min-rank-3+corridor-depth-static"
+            ),
+            "SearchBot_D5+TCap8+OwnCorrD1W3+CorrMinR3+CorrStatic"
         );
     }
 
