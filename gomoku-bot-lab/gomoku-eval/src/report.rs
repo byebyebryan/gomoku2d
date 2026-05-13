@@ -309,6 +309,13 @@ impl TournamentReport {
         serde_json::to_string_pretty(self)
     }
 
+    pub fn shadow_mismatch_count(&self) -> u64 {
+        self.standings
+            .iter()
+            .map(|row| row.threat_view_shadow_mismatches)
+            .sum()
+    }
+
     pub fn from_json(input: &str) -> Result<Self, String> {
         let report: Self = serde_json::from_str(input).map_err(|err| err.to_string())?;
         report.validate()?;
@@ -1926,6 +1933,7 @@ pub fn render_tournament_report_html(report: &TournamentReport) -> String {
 #[derive(Debug, Clone, Default)]
 pub struct ReportRenderOptions {
     pub raw_json_href: Option<String>,
+    pub include_rolling_health: bool,
 }
 
 pub fn render_tournament_report_html_with_options(
@@ -1977,6 +1985,9 @@ pub fn render_tournament_report_html_with_options(
     }
 
     render_reference_anchors_section(&mut html, report);
+    if options.include_rolling_health {
+        render_threat_view_health_section(&mut html, report);
+    }
 
     render_entrant_workbench(&mut html, report);
     render_how_to_read_section(&mut html);
@@ -2080,6 +2091,229 @@ fn render_reference_anchors_section(html: &mut String, report: &TournamentReport
         ));
     }
     html.push_str("</tbody></table></section>");
+}
+
+#[derive(Debug, Default)]
+struct ThreatViewHealthTotals {
+    shadow_checks: u64,
+    shadow_mismatches: u64,
+    scan_queries: u64,
+    scan_ns: u64,
+    frontier_rebuilds: u64,
+    frontier_rebuild_ns: u64,
+    frontier_queries: u64,
+    frontier_query_ns: u64,
+    frontier_delta_captures: u64,
+    frontier_delta_capture_ns: u64,
+    frontier_move_fact_updates: u64,
+    frontier_move_fact_update_ns: u64,
+    frontier_annotation_dirty_marks: u64,
+    frontier_annotation_dirty_mark_ns: u64,
+    frontier_clean_annotation_queries: u64,
+    frontier_clean_annotation_query_ns: u64,
+    frontier_dirty_annotation_queries: u64,
+    frontier_dirty_annotation_query_ns: u64,
+    frontier_fallback_annotation_queries: u64,
+    frontier_fallback_annotation_query_ns: u64,
+    frontier_memo_annotation_queries: u64,
+    frontier_memo_annotation_query_ns: u64,
+}
+
+impl ThreatViewHealthTotals {
+    fn from_report(report: &TournamentReport) -> Self {
+        let mut totals = Self::default();
+        for row in &report.standings {
+            totals.shadow_checks += row.threat_view_shadow_checks;
+            totals.shadow_mismatches += row.threat_view_shadow_mismatches;
+            totals.scan_queries += row.threat_view_scan_queries;
+            totals.scan_ns += row.threat_view_scan_ns;
+            totals.frontier_rebuilds += row.threat_view_frontier_rebuilds;
+            totals.frontier_rebuild_ns += row.threat_view_frontier_rebuild_ns;
+            totals.frontier_queries += row.threat_view_frontier_queries;
+            totals.frontier_query_ns += row.threat_view_frontier_query_ns;
+            totals.frontier_delta_captures += row.threat_view_frontier_delta_captures;
+            totals.frontier_delta_capture_ns += row.threat_view_frontier_delta_capture_ns;
+            totals.frontier_move_fact_updates += row.threat_view_frontier_move_fact_updates;
+            totals.frontier_move_fact_update_ns += row.threat_view_frontier_move_fact_update_ns;
+            totals.frontier_annotation_dirty_marks +=
+                row.threat_view_frontier_annotation_dirty_marks;
+            totals.frontier_annotation_dirty_mark_ns +=
+                row.threat_view_frontier_annotation_dirty_mark_ns;
+            totals.frontier_clean_annotation_queries +=
+                row.threat_view_frontier_clean_annotation_queries;
+            totals.frontier_clean_annotation_query_ns +=
+                row.threat_view_frontier_clean_annotation_query_ns;
+            totals.frontier_dirty_annotation_queries +=
+                row.threat_view_frontier_dirty_annotation_queries;
+            totals.frontier_dirty_annotation_query_ns +=
+                row.threat_view_frontier_dirty_annotation_query_ns;
+            totals.frontier_fallback_annotation_queries +=
+                row.threat_view_frontier_fallback_annotation_queries;
+            totals.frontier_fallback_annotation_query_ns +=
+                row.threat_view_frontier_fallback_annotation_query_ns;
+            totals.frontier_memo_annotation_queries +=
+                row.threat_view_frontier_memo_annotation_queries;
+            totals.frontier_memo_annotation_query_ns +=
+                row.threat_view_frontier_memo_annotation_query_ns;
+        }
+        totals
+    }
+
+    fn has_threat_view_metrics(&self) -> bool {
+        self.shadow_checks
+            + self.scan_queries
+            + self.frontier_rebuilds
+            + self.frontier_queries
+            + self.frontier_memo_annotation_queries
+            > 0
+    }
+
+    fn frontier_update_ns(&self) -> u64 {
+        self.frontier_rebuild_ns
+            + self.frontier_delta_capture_ns
+            + self.frontier_move_fact_update_ns
+            + self.frontier_annotation_dirty_mark_ns
+    }
+
+    fn frontier_annotation_query_ns(&self) -> u64 {
+        self.frontier_clean_annotation_query_ns
+            + self.frontier_dirty_annotation_query_ns
+            + self.frontier_fallback_annotation_query_ns
+            + self.frontier_memo_annotation_query_ns
+    }
+}
+
+fn render_threat_view_health_section(html: &mut String, report: &TournamentReport) {
+    let totals = ThreatViewHealthTotals::from_report(report);
+    if !totals.has_threat_view_metrics() {
+        return;
+    }
+
+    html.push_str("<details class=\"threat-health diagnostic-panel\"><summary><h2>Rolling Health</h2><span>Diagnostics</span></summary>");
+    html.push_str("<div class=\"health-grid\">");
+    let shadow_secondary = if totals.shadow_checks == 0 {
+        "not active".to_string()
+    } else {
+        format!(
+            "{:.2}% mismatch rate",
+            ratio_u64(totals.shadow_mismatches, totals.shadow_checks) * 100.0
+        )
+    };
+    health_card(
+        html,
+        "Shadow",
+        &format!(
+            "{} mismatches / {} checks",
+            totals.shadow_mismatches, totals.shadow_checks
+        ),
+        &shadow_secondary,
+    );
+    health_card(
+        html,
+        "Scan",
+        &duration_ns_label(totals.scan_ns),
+        &format!("{} queries", compact_u64_label(totals.scan_queries)),
+    );
+    health_card(
+        html,
+        "Frontier",
+        &duration_ns_label(totals.frontier_query_ns),
+        &format!(
+            "{} queries / {} update",
+            compact_u64_label(totals.frontier_queries),
+            duration_ns_label(totals.frontier_update_ns())
+        ),
+    );
+    health_card(
+        html,
+        "Annotation",
+        &format!(
+            "{} clean / {} dirty",
+            compact_u64_label(totals.frontier_clean_annotation_queries),
+            compact_u64_label(totals.frontier_dirty_annotation_queries)
+        ),
+        &format!(
+            "{} memo / {} fallback / {}",
+            compact_u64_label(totals.frontier_memo_annotation_queries),
+            compact_u64_label(totals.frontier_fallback_annotation_queries),
+            duration_ns_label(totals.frontier_annotation_query_ns())
+        ),
+    );
+    html.push_str("</div>");
+
+    let comparisons = rolling_cost_comparisons(report);
+    if !comparisons.is_empty() {
+        html.push_str("<div class=\"rolling-comparison-list\">");
+        for comparison in comparisons {
+            html.push_str(&format!(
+                "<p><b>{}</b><span>{}</span><span>{}</span></p>",
+                html_escape(&comparison.bot_label),
+                html_escape(&comparison.time_label),
+                html_escape(&comparison.node_label)
+            ));
+        }
+        html.push_str("</div>");
+    }
+    html.push_str("</details>");
+}
+
+fn health_card(html: &mut String, label: &str, primary: &str, secondary: &str) {
+    html.push_str(&format!(
+        "<article class=\"health-card\"><span>{}</span><strong>{}</strong><em>{}</em></article>",
+        html_escape(label),
+        html_escape(primary),
+        html_escape(secondary),
+    ));
+}
+
+struct RollingCostComparison {
+    bot_label: String,
+    time_label: String,
+    node_label: String,
+}
+
+fn rolling_cost_comparisons(report: &TournamentReport) -> Vec<RollingCostComparison> {
+    let standings = report
+        .standings
+        .iter()
+        .map(|row| (row.bot.as_str(), row))
+        .collect::<HashMap<_, _>>();
+    let mut comparisons = Vec::new();
+
+    for row in &report.standings {
+        let Some(base_bot) = rolling_base_bot(&row.bot) else {
+            continue;
+        };
+        let Some(base) = standings.get(base_bot.as_str()) else {
+            continue;
+        };
+
+        comparisons.push(RollingCostComparison {
+            bot_label: format!("{} vs scan", compact_bot_label(report, &row.bot)),
+            time_label: format!(
+                "{} vs {} ({})",
+                ms_label(row.avg_search_time_ms),
+                ms_label(base.avg_search_time_ms),
+                signed_percent_delta_label(row.avg_search_time_ms, base.avg_search_time_ms)
+            ),
+            node_label: format!(
+                "{} vs {}",
+                nodes_label(row.avg_nodes),
+                nodes_label(base.avg_nodes)
+            ),
+        });
+    }
+
+    comparisons
+}
+
+fn rolling_base_bot(bot: &str) -> Option<String> {
+    if let Some(base) = bot.strip_suffix("+rolling-frontier-shadow") {
+        Some(base.to_string())
+    } else {
+        bot.strip_suffix("+rolling-frontier")
+            .map(|base| base.to_string())
+    }
 }
 
 fn anchor_reference_revision(source: &AnchorReferenceSource) -> String {
@@ -2318,6 +2552,8 @@ fn compact_searchbot_feature_label(feature: &str) -> String {
 
     match feature {
         "pattern-eval" => "Pattern".to_string(),
+        "rolling-frontier" => "Rolling".to_string(),
+        "rolling-frontier-shadow" => "RollingShadow".to_string(),
         "tactical-first" => "Tactical".to_string(),
         "no-safety" => "NoSafety".to_string(),
         "opponent-reply-search-probe" => "SearchProbe".to_string(),
@@ -2339,6 +2575,39 @@ fn format_duration_ms(value: Option<u64>) -> String {
         let seconds = (ms % 60_000) as f64 / 1_000.0;
         format!("{minutes}m {seconds:.1}s")
     }
+}
+
+fn duration_ns_label(ns: u64) -> String {
+    if ns == 0 {
+        "0 ms".to_string()
+    } else if ns < 1_000 {
+        format!("{ns} ns")
+    } else if ns < 1_000_000 {
+        format!("{:.1} us", ns as f64 / 1_000.0)
+    } else if ns < 1_000_000_000 {
+        format!("{:.1} ms", ns as f64 / 1_000_000.0)
+    } else {
+        format!("{:.2} s", ns as f64 / 1_000_000_000.0)
+    }
+}
+
+fn compact_u64_label(value: u64) -> String {
+    if value < 1_000 {
+        value.to_string()
+    } else if value < 1_000_000 {
+        format!("{:.1}k", value as f64 / 1_000.0)
+    } else {
+        format!("{:.1}M", value as f64 / 1_000_000.0)
+    }
+}
+
+fn signed_percent_delta_label(value: f64, baseline: f64) -> String {
+    if baseline == 0.0 {
+        return "n/a".to_string();
+    }
+
+    let delta = ((value - baseline) / baseline) * 100.0;
+    format!("{delta:+.1}%")
 }
 
 fn host_cpu_summary(report: &TournamentReport) -> String {
@@ -3446,9 +3715,10 @@ const STYLE: &str = r#"
 :root{color-scheme:dark;--bg:#1e1e1e;--surface:#2a2a2a;--surface-strong:#333333;--card:#232323;--border:#575756;--text:#f5f5f5;--text-muted:#a6a6a0;--accent:#fccb57;--green:#5ad17a;--teal:#5fc7c2}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 main{display:grid;gap:24px;margin:0 auto;max-width:1180px;padding:32px}h1,h2,p{margin:0}a{color:inherit;text-decoration:none}code{color:var(--accent)}
-.hero,section,.run-warning{background:var(--surface);border:2px solid var(--border);display:grid;gap:16px;padding:20px;overflow:auto}.run-warning{border-color:var(--accent);color:var(--accent)}.top-links{display:flex;flex-wrap:wrap;gap:8px}.top-links a{background:var(--surface-strong);border:2px solid var(--border);color:var(--text);display:inline-block;padding:8px 12px;text-transform:uppercase}.top-links a:hover,.top-links a:focus{border-color:var(--teal);outline:none}
+.hero,section,.run-warning,.diagnostic-panel{background:var(--surface);border:2px solid var(--border);display:grid;gap:16px;padding:20px;overflow:auto}.run-warning{border-color:var(--accent);color:var(--accent)}.diagnostic-panel summary{align-items:center;cursor:pointer;display:flex;gap:16px;justify-content:space-between;list-style:none}.diagnostic-panel summary::-webkit-details-marker{display:none}.diagnostic-panel summary span{color:var(--text-muted);font-size:12px;letter-spacing:.1em;text-transform:uppercase}.top-links{display:flex;flex-wrap:wrap;gap:8px}.top-links a{background:var(--surface-strong);border:2px solid var(--border);color:var(--text);display:inline-block;padding:8px 12px;text-transform:uppercase}.top-links a:hover,.top-links a:focus{border-color:var(--teal);outline:none}
 .eyebrow{color:var(--accent);font-size:12px;letter-spacing:.16em;text-transform:uppercase}h1{font-size:clamp(34px,7vw,64px);line-height:1}.match summary span,.match-grid,.note{color:var(--text-muted)}
 .run-strip{display:flex;flex-wrap:wrap;gap:8px;padding:0}.run-chip{background:var(--card);border:1px solid var(--border);display:inline-flex;gap:8px;align-items:baseline;min-width:0;padding:7px 10px}.run-chip span{color:var(--text-muted);font-size:11px;letter-spacing:.1em;text-transform:uppercase}.run-chip strong{color:var(--green);font-size:14px;line-height:1.2}.entrant-row,.opponent-row,.match{background:var(--card);border:1px solid var(--border);display:grid;gap:10px;padding:16px}.entrant-row:hover,.opponent-row:hover,.match:hover{border-color:var(--teal)}
+.health-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}.health-card{background:var(--surface-strong);border:1px solid var(--border);display:grid;gap:4px;padding:12px}.health-card span{color:var(--text-muted);font-size:11px;letter-spacing:.1em;text-transform:uppercase}.health-card strong{color:var(--green);font-size:18px;line-height:1.15}.health-card em{color:var(--text-muted);font-style:normal}.rolling-comparison-list{display:grid;gap:8px;margin-top:12px}.rolling-comparison-list p{background:var(--surface-strong);border:1px solid var(--border);display:grid;gap:8px;grid-template-columns:minmax(180px,1fr) minmax(130px,max-content) minmax(130px,max-content);margin:0;padding:10px 12px}.rolling-comparison-list b{color:var(--text);overflow-wrap:anywhere}.rolling-comparison-list span{color:var(--text-muted);font-variant-numeric:tabular-nums;text-align:right}
 .entrant-row.role-candidate{border-left:4px solid var(--green)}.entrant-row.role-anchor{border-left:4px solid var(--border);opacity:.86}.role-badge{border:1px solid var(--border);display:inline-block!important;font-size:10px!important;letter-spacing:.1em!important;line-height:1;margin-top:6px!important;padding:4px 6px;text-transform:uppercase;width:max-content}.role-badge-candidate{border-color:rgba(90,209,122,.5);color:var(--green)!important}.role-badge-anchor{color:var(--text-muted)!important}
 .term-list{display:grid;gap:0;margin:0}.term-row{border-top:1px solid var(--border);display:grid;gap:18px;grid-template-columns:minmax(140px,.28fr) 1fr;padding:10px 0}.term-row:first-child{border-top:0;padding-top:0}.term-row:last-child{padding-bottom:0}.term-row dt{color:var(--green);font-size:13px;letter-spacing:.08em;text-transform:uppercase}.term-row dd{color:var(--text-muted);margin:0;max-width:86ch}.term-row code{color:var(--accent)}
 .section-heading{display:grid}.section-heading h2{color:var(--accent);font-size:1.2rem}
@@ -3456,7 +3726,7 @@ table{border-collapse:collapse;min-width:820px;width:100%}th,td{border-bottom:1p
 .view-toggle{display:flex;flex-wrap:wrap;gap:8px}.report-view-radio{height:1px;opacity:0;position:absolute;width:1px}.view-toggle label{background:var(--surface-strong);border:1px solid var(--border);cursor:pointer;padding:8px 12px;text-transform:uppercase}.view-toggle label:hover{border-color:var(--teal)}.entrant-workbench:has(#view-results:checked) label[for=view-results],.entrant-workbench:has(#view-search:checked) label[for=view-search],.entrant-workbench:has(#view-pairwise:checked) label[for=view-pairwise]{border-color:var(--accent);color:var(--accent)}
 .entrant-grid,.match-list{display:grid;gap:12px}.entrant-head,.entrant-row summary{display:grid;gap:10px;align-items:center}.entrant-workbench:has(#view-results:checked) .entrant-head,.entrant-workbench:has(#view-results:checked) .entrant-row summary{grid-template-columns:minmax(260px,1.6fr) repeat(8,minmax(82px,1fr))}.entrant-workbench:has(#view-search:checked) .entrant-head,.entrant-workbench:has(#view-search:checked) .entrant-row summary{grid-template-columns:minmax(240px,1.4fr) repeat(8,minmax(84px,1fr))}.entrant-workbench:has(#view-pairwise:checked) .entrant-head,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{grid-template-columns:minmax(280px,1.6fr) repeat(3,minmax(120px,1fr))}.entrant-head{color:var(--text-muted);font-size:12px;letter-spacing:.08em;padding:0 14px;text-transform:uppercase}.entrant-row,.opponent-row,.match{padding:0}.entrant-row summary,.opponent-row summary,.match summary{cursor:pointer;padding:12px 14px}.entrant-row summary>*,.opponent-row summary>*{min-width:0}.entrant-row summary .bot-label,.opponent-row summary strong,.match summary strong{color:var(--text);overflow-wrap:anywhere}.bot-label span,.metric span{display:block}.metric-nowrap,.metric-nowrap span{white-space:nowrap}.entrant-row summary .bot-label span:first-child{color:var(--text)}.entrant-row summary .bot-label span+span,.metric span+span{color:var(--text-muted);font-size:11px;letter-spacing:.08em;margin-top:2px}.entrant-row summary span,.opponent-row summary span,.match summary span{color:var(--text-muted)}.metric-search,.metric-pairwise{display:none}.entrant-workbench:has(#view-search:checked) .metric-results,.entrant-workbench:has(#view-search:checked) .metric-pairwise,.entrant-workbench:has(#view-pairwise:checked) .metric-results,.entrant-workbench:has(#view-pairwise:checked) .metric-search{display:none}.entrant-workbench:has(#view-search:checked) .metric-search,.entrant-workbench:has(#view-pairwise:checked) .metric-pairwise{display:block}.entrant-head .metric,.entrant-row summary .metric{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;line-height:1.22;padding-left:10px;text-align:right}.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs{display:none;gap:10px;padding:8px 18px 18px}.entrant-workbench:has(#view-results:checked) .entrant-result-comparisons,.entrant-workbench:has(#view-search:checked) .entrant-search-comparisons,.entrant-workbench:has(#view-pairwise:checked) .entrant-pairs{display:grid}.comparison-head,.comparison-row{align-items:center;display:grid;gap:12px}.entrant-result-comparisons .comparison-head,.entrant-result-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(78px,96px) minmax(92px,120px) minmax(120px,140px)}.entrant-search-comparisons .comparison-head,.entrant-search-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(78px,96px) minmax(86px,120px) minmax(96px,120px) minmax(104px,130px) minmax(96px,120px)}.comparison-head{border:1px solid transparent;color:var(--text-muted);font-size:11px;letter-spacing:.08em;padding:0 12px;text-transform:uppercase}.comparison-row{background:var(--surface-strong);border:1px solid var(--border);padding:10px 12px}.comparison-row span:not(:first-child),.comparison-head span:not(:first-child){border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.delta-good,.score-good{color:var(--green)!important}.delta-bad,.score-bad{color:#e78f85!important}.delta-neutral{color:var(--text-muted)!important}.opponent-row summary{display:grid;gap:12px;grid-template-columns:minmax(0,1fr) repeat(3,max-content);align-items:center}.opponent-row summary span{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.match summary{display:grid;gap:12px;grid-template-columns:repeat(4,minmax(82px,max-content));align-items:center}.pair-overview{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));padding:0 18px 16px}.pair-overview p{background:var(--surface-strong);border:1px solid var(--border);margin:0;padding:12px}.match-grid{display:grid;gap:12px;grid-template-columns:1fr;padding:0 14px 14px}.match-grid p{margin:0;word-break:break-word}.reference-pair-note{background:var(--surface-strong);border:1px solid var(--border);color:var(--text-muted);margin:0;padding:10px 12px}.pair-overview b,.match-grid b{color:var(--text)}.board-panel,.raw-data{grid-column:1/-1}.board-ascii,.raw-data{background:var(--surface-strong);border:1px solid var(--border)}.board-ascii{color:var(--text);font:14px/1.35 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:8px 0 0;overflow:auto;padding:12px;white-space:pre}.raw-data{padding:10px}.raw-data summary{cursor:pointer;padding:0}.raw-data p{margin:8px 0 0}
 .provenance dl{display:grid;gap:8px 18px;grid-template-columns:max-content 1fr;margin:0}.provenance dt{color:var(--text-muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase}.provenance dd{margin:0}.command{background:var(--surface-strong);border:1px solid var(--border);margin:0;overflow:auto;padding:12px}
-@media (max-width:760px){main{padding:16px}.hero,section,.run-warning{padding:16px}.run-chip{justify-content:space-between;width:100%}.entrant-head,.comparison-head{display:none}.entrant-grid,.entrant-row,.opponent-row,.match,.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs,.comparison-row{min-width:0;width:100%}.entrant-row summary,.entrant-workbench:has(#view-results:checked) .entrant-row summary,.entrant-workbench:has(#view-search:checked) .entrant-row summary,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{gap:8px 12px;grid-template-columns:repeat(2,minmax(0,1fr))}.entrant-row summary .bot-label{grid-column:1/-1}.entrant-row summary .metric{border-left:0;display:grid;gap:2px 10px;grid-template-columns:minmax(0,1fr) auto;padding:8px 0 0;text-align:right}.entrant-row summary .metric::before,.comparison-row span::before,.opponent-row summary span::before,.match summary span::before{color:var(--text-muted);content:attr(data-label);font-size:11px;letter-spacing:.08em;text-align:left;text-transform:uppercase}.entrant-row summary .metric::before{align-self:start;grid-column:1;grid-row:1/span 2}.entrant-row summary .metric span{grid-column:2}.entrant-row summary .metric-search,.entrant-row summary .metric-pairwise,.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-results,.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-pairwise,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-results,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-search{display:none}.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-search,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-pairwise{display:grid}.opponent-row summary,.match summary,.entrant-result-comparisons .comparison-row,.entrant-search-comparisons .comparison-row{grid-template-columns:1fr}.comparison-row span,.opponent-row summary span,.match summary span{border-left:0!important;display:flex;gap:12px;justify-content:space-between;min-width:0;overflow-wrap:anywhere;padding-left:0!important;text-align:right}.comparison-row span:not(:first-child),.opponent-row summary span,.match summary span{border-top:1px solid var(--border);padding-top:8px}.opponent-row summary span:first-of-type,.match summary span:first-child{border-top:0;padding-top:0}.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs{padding:4px 12px 14px}.match-grid,.term-row{grid-template-columns:1fr}.term-row{gap:4px}.board-ascii{font-size:12px}.provenance dl{grid-template-columns:1fr}table{min-width:760px}}
+@media (max-width:760px){main{padding:16px}.hero,section,.run-warning{padding:16px}.run-chip{justify-content:space-between;width:100%}.rolling-comparison-list p{grid-template-columns:1fr}.rolling-comparison-list span{text-align:left}.entrant-head,.comparison-head{display:none}.entrant-grid,.entrant-row,.opponent-row,.match,.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs,.comparison-row{min-width:0;width:100%}.entrant-row summary,.entrant-workbench:has(#view-results:checked) .entrant-row summary,.entrant-workbench:has(#view-search:checked) .entrant-row summary,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{gap:8px 12px;grid-template-columns:repeat(2,minmax(0,1fr))}.entrant-row summary .bot-label{grid-column:1/-1}.entrant-row summary .metric{border-left:0;display:grid;gap:2px 10px;grid-template-columns:minmax(0,1fr) auto;padding:8px 0 0;text-align:right}.entrant-row summary .metric::before,.comparison-row span::before,.opponent-row summary span::before,.match summary span::before{color:var(--text-muted);content:attr(data-label);font-size:11px;letter-spacing:.08em;text-align:left;text-transform:uppercase}.entrant-row summary .metric::before{align-self:start;grid-column:1;grid-row:1/span 2}.entrant-row summary .metric span{grid-column:2}.entrant-row summary .metric-search,.entrant-row summary .metric-pairwise,.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-results,.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-pairwise,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-results,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-search{display:none}.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-search,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-pairwise{display:grid}.opponent-row summary,.match summary,.entrant-result-comparisons .comparison-row,.entrant-search-comparisons .comparison-row{grid-template-columns:1fr}.comparison-row span,.opponent-row summary span,.match summary span{border-left:0!important;display:flex;gap:12px;justify-content:space-between;min-width:0;overflow-wrap:anywhere;padding-left:0!important;text-align:right}.comparison-row span:not(:first-child),.opponent-row summary span,.match summary span{border-top:1px solid var(--border);padding-top:8px}.opponent-row summary span:first-of-type,.match summary span:first-child{border-top:0;padding-top:0}.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs{padding:4px 12px 14px}.match-grid,.term-row{grid-template-columns:1fr}.term-row{gap:4px}.board-ascii{font-size:12px}.provenance dl{grid-template-columns:1fr}table{min-width:760px}}
 @media (max-width:420px){.entrant-row summary,.entrant-workbench:has(#view-results:checked) .entrant-row summary,.entrant-workbench:has(#view-search:checked) .entrant-row summary,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{grid-template-columns:1fr}}
 </style>
 "#;
@@ -3503,6 +3773,7 @@ mod tests {
             &report,
             &ReportRenderOptions {
                 raw_json_href: Some("latest.json".to_string()),
+                include_rolling_health: false,
             },
         );
 
@@ -3543,6 +3814,66 @@ mod tests {
         assert!(html.contains("<div class=\"term-row\"><dt>Search Cost</dt><dd>"));
         assert!(!html.contains("<div class=\"term-grid\">"));
         assert!(!html.contains("<article class=\"term\">"));
+    }
+
+    #[test]
+    fn html_report_surfaces_rolling_frontier_health() {
+        let mut report = sample_report();
+        let mut scan = sample_standing_with_search_costs("search-d7+tactical-cap-8");
+        scan.avg_search_time_ms = 100.0;
+        scan.avg_nodes = 2000.0;
+        scan.threat_view_scan_queries = 50;
+        scan.threat_view_scan_ns = 2_000_000;
+
+        let mut rolling =
+            sample_standing_with_search_costs("search-d7+tactical-cap-8+rolling-frontier");
+        rolling.avg_search_time_ms = 75.0;
+        rolling.avg_nodes = 1800.0;
+        rolling.threat_view_frontier_queries = 40;
+        rolling.threat_view_frontier_query_ns = 900_000;
+        rolling.threat_view_frontier_delta_captures = 20;
+        rolling.threat_view_frontier_delta_capture_ns = 100_000;
+        rolling.threat_view_frontier_annotation_dirty_marks = 20;
+        rolling.threat_view_frontier_annotation_dirty_mark_ns = 150_000;
+        rolling.threat_view_frontier_clean_annotation_queries = 15;
+        rolling.threat_view_frontier_dirty_annotation_queries = 8;
+        rolling.threat_view_frontier_memo_annotation_queries = 7;
+        rolling.threat_view_frontier_fallback_annotation_queries = 0;
+
+        report.run.bots = vec![scan.bot.clone(), rolling.bot.clone()];
+        report.standings = vec![scan, rolling];
+        let html = render_tournament_report_html(&report);
+        assert!(!html.contains("<details class=\"threat-health diagnostic-panel\">"));
+
+        let html = render_tournament_report_html_with_options(
+            &report,
+            &ReportRenderOptions {
+                raw_json_href: None,
+                include_rolling_health: true,
+            },
+        );
+
+        assert!(html.contains("<details class=\"threat-health diagnostic-panel\">"));
+        assert!(html.contains("<summary><h2>Rolling Health</h2><span>Diagnostics</span></summary>"));
+        assert!(html.contains("0 mismatches / 0 checks"));
+        assert!(html.contains("<article class=\"health-card\"><span>Scan</span>"));
+        assert!(html.contains("<article class=\"health-card\"><span>Frontier</span>"));
+        assert!(html.contains("<article class=\"health-card\"><span>Annotation</span>"));
+        assert!(html.contains("<b>SearchBot_D7+TCap8+Rolling vs scan</b>"));
+        assert!(html.contains("75.0 ms vs 100.0 ms (-25.0%)"));
+        assert!(html.contains("1.8k nodes vs 2.0k nodes"));
+    }
+
+    #[test]
+    fn report_sums_shadow_mismatches_from_standings() {
+        let mut report = sample_report();
+        let mut first = sample_standing_with_search_costs("search-d3+rolling-frontier-shadow");
+        first.threat_view_shadow_mismatches = 2;
+        let mut second = sample_standing_with_search_costs("search-d5+rolling-frontier-shadow");
+        second.threat_view_shadow_mismatches = 3;
+        report.standings = vec![first, second];
+
+        assert_eq!(report.shadow_mismatch_count(), 5);
     }
 
     #[test]

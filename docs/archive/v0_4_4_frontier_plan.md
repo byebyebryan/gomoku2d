@@ -354,3 +354,53 @@ companion top-two replay-analysis report from that clean tournament. The point
 is to capture the current baseline while provenance is clean, then make any
 next optimization compare against that artifact rather than against scattered
 scratch smokes.
+
+## Scan-vs-Rolling Gap-Closure Checkpoint
+
+The next boundary is not to make rolling smarter. It is to prove the rolling
+cache does not change search semantics when budget pressure is removed, while
+making the hot threat-query path cheaper.
+
+Focused scan-vs-rolling head-to-head checks showed the right shape:
+
+- D3 cap8 with `1000 ms/move`: exact `31-2-31` result, rolling around `27%`
+  faster on average.
+- D5 cap8 with `1000 ms/move`: rolling won a small `34-30` sample while cutting
+  average move time from roughly `238 ms` to `165 ms`.
+- D7 cap8 with `1000 ms/move`: scan won `35-29`, but both sides were
+  budget-sensitive (`30.0%` versus `26.1%` budget exhaustion).
+- D7 cap8 with `5000 ms/move`: scan only narrowly led `33-1-30` and budget
+  exhaustion mostly disappeared.
+- D7 cap8 with no per-move CPU budget over the full `64` game centered-suite
+  sample: exact `31-2-31`, identical average nodes/depth, rolling faster
+  (`544 ms` versus `737 ms`).
+
+Interpretation: rolling frontier is currently a semantics-preserving cache under
+relaxed/no-budget controls, not a strength feature. Fixed-budget tournaments may
+still differ because iterative deepening completes different work under the same
+clock. Treat those differences as budget interaction unless shadow mode or
+no-budget controls show a parity problem.
+
+The acceptance gate for promoting rolling to the default lab baseline:
+
+1. Run scan-vs-rolling for D3 cap8, D5 cap8, D7 cap8, and one pattern-eval lane.
+2. Run each lane once under normal `1000 ms/move` budget and once under relaxed
+   or no per-move budget.
+3. Require zero shadow mismatches in the shadow smoke.
+4. Require no-budget or relaxed-budget runs to be symmetric or effectively tied
+   with matching average nodes/depth.
+5. Require reports to show scan time, frontier update/query time, clean/dirty
+   annotation lookups, memo hits, fallback lookups, and shadow mismatches.
+
+Known remaining edges:
+
+- Current-obligation safety still builds a root-only full frontier in rolling
+  mode because that pass runs before recursive `SearchState` exists.
+- `attacker_move_rank` still delegates to scan-backed corridor logic. This is
+  acceptable while corridor portals remain off by default.
+- `TacticalOnly` still carries safe fallback behavior for corridor queries; any
+  unexpected fallback count should be visible in reports before promotion.
+
+The CLI now supports `--fail-on-shadow-mismatch` for tournament smokes. It
+writes the report first, then exits nonzero if the aggregated tournament report
+contains any rolling-frontier shadow mismatches.

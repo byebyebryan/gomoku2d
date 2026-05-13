@@ -216,9 +216,12 @@ annotation memoization, and the simplified `current_obligation` safety gate move
 focused smoke results from "useful but slower" to a net rolling speed win for
 normal tactical search. The default bot path remains scan-backed until a clean
 full reference tournament and companion top-two analysis establish the current
-baseline. Scan remains the reference/fallback implementation; rolling is added
-beside it behind the same `ThreatView` contract so parity checks, safe rollback,
-and targeted benchmarks stay cheap.
+baseline. Scan-vs-rolling controls should judge parity with relaxed or no
+per-move budget; normal `1000 ms/move` runs are cost/strength samples and may
+shift because iterative deepening completes different work under the clock. Scan
+remains the reference/fallback implementation; rolling is added beside it behind
+the same `ThreatView` contract so parity checks, safe rollback, and targeted
+benchmarks stay cheap.
 
 Search traces include both the result and the config. Abridged example:
 
