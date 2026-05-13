@@ -1778,10 +1778,7 @@ fn current_obligation_root_candidates(
                 RollingFrontierFeatures::Full,
             );
             metrics.record_threat_view_frontier_rebuild(start.elapsed());
-            let start = Instant::now();
-            let outcome = current_obligation_safety_policy(board, &moves, &frontier);
-            metrics.record_threat_view_frontier_query(start.elapsed());
-            outcome
+            rolling_current_obligation_safety_policy(board, &moves, &frontier, metrics)
         }
         ThreatViewMode::RollingShadow => {
             metrics.threat_view_shadow_checks += 1;
@@ -1797,9 +1794,8 @@ fn current_obligation_root_candidates(
                 RollingFrontierFeatures::Full,
             );
             metrics.record_threat_view_frontier_rebuild(start.elapsed());
-            let start = Instant::now();
-            let rolling = current_obligation_safety_policy(board, &moves, &frontier);
-            metrics.record_threat_view_frontier_query(start.elapsed());
+            let rolling =
+                rolling_current_obligation_safety_policy(board, &moves, &frontier, metrics);
 
             if scan.moves != rolling.moves {
                 metrics.threat_view_shadow_mismatches += 1;
@@ -1817,23 +1813,67 @@ fn current_obligation_safety_policy(
     view: &impl ThreatView,
 ) -> SafetyFilterOutcome {
     let current = board.current_player;
-    let own_wins = moves_in_set(moves, &view.immediate_winning_moves_for(current));
-    if !own_wins.is_empty() {
-        return SafetyFilterOutcome {
-            moves: filtered_or_original(moves, own_wins),
-            work_units: moves.len() as u64,
-        };
+    if let Some(outcome) =
+        immediate_win_safety_outcome(moves, view.immediate_winning_moves_for(current))
+    {
+        return outcome;
     }
 
     let opponent = current.opponent();
-    let opponent_wins = moves_in_set(moves, &view.immediate_winning_moves_for(opponent));
-    if !opponent_wins.is_empty() {
-        return SafetyFilterOutcome {
-            moves: filtered_or_original(moves, opponent_wins),
-            work_units: moves.len() as u64,
-        };
+    if let Some(outcome) =
+        immediate_win_safety_outcome(moves, view.immediate_winning_moves_for(opponent))
+    {
+        return outcome;
     }
 
+    current_obligation_safety_policy_after_immediate(board, moves, view)
+}
+
+fn rolling_current_obligation_safety_policy(
+    board: &Board,
+    moves: &[Move],
+    view: &RollingThreatFrontier,
+    metrics: &mut SearchMetrics,
+) -> SafetyFilterOutcome {
+    let current = board.current_player;
+    let start = Instant::now();
+    let own_wins = view.immediate_winning_moves_for(current);
+    metrics.record_threat_view_frontier_immediate_win_query(start.elapsed());
+    if let Some(outcome) = immediate_win_safety_outcome(moves, own_wins) {
+        return outcome;
+    }
+
+    let opponent = current.opponent();
+    let start = Instant::now();
+    let opponent_wins = view.immediate_winning_moves_for(opponent);
+    metrics.record_threat_view_frontier_immediate_win_query(start.elapsed());
+    if let Some(outcome) = immediate_win_safety_outcome(moves, opponent_wins) {
+        return outcome;
+    }
+
+    let start = Instant::now();
+    let outcome = current_obligation_safety_policy_after_immediate(board, moves, view);
+    metrics.record_threat_view_frontier_query(start.elapsed());
+    outcome
+}
+
+fn immediate_win_safety_outcome(
+    moves: &[Move],
+    winning_moves: Vec<Move>,
+) -> Option<SafetyFilterOutcome> {
+    let wins = moves_in_set(moves, &winning_moves);
+    (!wins.is_empty()).then(|| SafetyFilterOutcome {
+        moves: filtered_or_original(moves, wins),
+        work_units: moves.len() as u64,
+    })
+}
+
+fn current_obligation_safety_policy_after_immediate(
+    board: &Board,
+    moves: &[Move],
+    view: &impl ThreatView,
+) -> SafetyFilterOutcome {
+    let opponent = board.current_player.opponent();
     let active_imminent_threats = view
         .active_corridor_threats(opponent)
         .into_iter()
@@ -4709,6 +4749,12 @@ mod tests {
                 .unwrap()
                 > 0
         );
+        assert!(
+            trace["metrics"]["threat_view_frontier_immediate_win_queries"]
+                .as_u64()
+                .unwrap()
+                > 0
+        );
     }
 
     #[test]
@@ -4737,6 +4783,12 @@ mod tests {
         );
         assert!(
             trace["metrics"]["threat_view_frontier_queries"]
+                .as_u64()
+                .unwrap()
+                > 0
+        );
+        assert!(
+            trace["metrics"]["threat_view_frontier_immediate_win_queries"]
                 .as_u64()
                 .unwrap()
                 > 0
