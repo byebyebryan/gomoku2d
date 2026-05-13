@@ -128,8 +128,8 @@ The first shadow consumers should be the current `ThreatView` queries:
 - `search_annotation_for_move(mv)`;
 - `active_corridor_threats(attacker)`;
 - `has_move_local_corridor_entry(attacker, mv)`;
-- `defender_reply_moves(attacker, actual_reply)`;
-- `attacker_move_rank(attacker, mv)`.
+- `local_corridor_entry_rank(attacker, mv)`;
+- `defender_reply_moves(attacker, actual_reply)`.
 
 ## Checkpoints
 
@@ -396,10 +396,17 @@ Known remaining edges:
 
 - Current-obligation safety still builds a root-only full frontier in rolling
   mode because that pass runs before recursive `SearchState` exists.
-- `attacker_move_rank` still delegates to scan-backed corridor logic. This is
-  acceptable while corridor portals remain off by default.
-- `TacticalOnly` still carries safe fallback behavior for corridor queries; any
-  unexpected fallback count should be visible in reports before promotion.
+- Corridor portal continuations now ask the selected `ThreatView` for
+  materialized local entries and defender replies. The old pre-move
+  `attacker_move_rank` helper remains as scan/reference logic outside the
+  `ThreatView` trait, but rolling search no longer exposes that scan surface.
+- Non-shadow rolling search should keep `threat_view_scan_queries == 0`.
+  Reintroduced scan-backed threat queries should be confined to scan mode,
+  rolling-shadow comparison, tests, replay/report analysis, or explicit
+  fallback diagnostics.
+- `TacticalOnly` still carries safe fallback behavior for corridor queries, but
+  portal-enabled rolling uses full frontier facts. Any unexpected fallback count
+  should be visible in reports before promotion.
 
 The CLI now supports `--fail-on-shadow-mismatch` for tournament smokes. It
 writes the report first, then exits nonzero if the aggregated tournament report

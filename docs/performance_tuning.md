@@ -515,6 +515,10 @@ Follow-up memo checkpoint:
   rolling, and rolling-shadow threat views directly; rolling uses a root-only
   full frontier because current obligations need active existing-threat facts.
   The older opponent-reply probes are retired rather than kept as lab suffixes.
+- Corridor portal continuation now uses the selected threat view for
+  materialized attacker entries and defender replies. In non-shadow rolling mode,
+  this keeps the search-owned threat-view scan counter at zero; shadow mode still
+  runs both scan and rolling answers for parity.
 
 Current-obligation safety checkpoint:
 
@@ -708,6 +712,9 @@ From code inspection before the first benchmark pass:
 13. Split rolling frontier into full and tactical-only feature modes so normal
     search can cache tactical annotations without maintaining corridor
     move-fact indexes while portals are disabled (`2026-05-12`)
+14. Route corridor continuation/reply queries through `ThreatView` and remove
+    the pre-move attacker-rank scan surface from the rolling trait
+    (`2026-05-12`)
 
 ### Future work
 
