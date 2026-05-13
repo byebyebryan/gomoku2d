@@ -335,8 +335,8 @@ weaker, and budget-bound. The durable `0.4.3` result is therefore the
 scan-backed `ThreatView` seam and unified threat vocabulary, not a promoted
 corridor bot.
 
-The `0.4.4` checkpoint should treat rolling frontier as a correctness-sensitive
-cache architecture:
+The `0.4.4` checkpoint treats rolling frontier as a correctness-sensitive cache
+architecture:
 
 - keep `Board` as the authority for stones, turn, result, and exact legality;
 - normalize tactical facts so scan-backed and cached views can be compared
@@ -345,8 +345,10 @@ cache architecture:
 - validate it against `ScanThreatView` on tactical fixtures, random sequences,
   and Renju forbidden cases;
 - run it in shadow mode before any hot path uses it for behavior;
-- switch only a narrow lab path, such as corridor portal entry/reply queries,
-  after parity and cost metrics are clean.
+- use rolling-backed tactical ordering and current-obligation safety only behind
+  explicit lab suffixes after parity and focused smoke metrics are clean;
+- keep the default bot path scan-backed until a clean full reference tournament
+  and companion top-two analysis confirm the new baseline.
 
 The working plan lives in `docs/archive/v0_4_4_frontier_plan.md`.
 

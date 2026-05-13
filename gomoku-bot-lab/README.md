@@ -155,25 +155,26 @@ The working plan lives in
 
 `0.4.4` moves to the rolling-frontier pass: keep scan-backed behavior as the
 reference, add a derived threat index behind the `ThreatView` seam, validate it
-with fixture/random/Renju parity tests, then run it in shadow mode before any
-lab suffix uses it for behavior. The working plan lives in
+with fixture/random/Renju parity tests, then use explicit lab suffixes for
+behavior only after focused parity and cost checks. The working plan lives in
 [`../docs/archive/v0_4_4_frontier_plan.md`](../docs/archive/v0_4_4_frontier_plan.md).
 
 Current frontier suffixes are intentionally narrow:
 
-- `+rolling-frontier-shadow`: compare rolling-backed portal-entry answers
-  against scan-backed answers, report shadow mismatch counts, and record
-  scan-vs-frontier update/query timing; behavior stays scan-backed.
+- `+rolling-frontier-shadow`: compare rolling-backed portal-entry answers,
+  tactical annotations, and current-obligation safety against scan-backed
+  answers, report shadow mismatch counts, and record scan-vs-frontier
+  update/query timing; behavior stays scan-backed.
 - `+rolling-frontier`: use the rolling-backed portal-entry answer and tactical
-  annotations. The current implementation is delta-backed, but Black Renju
-  tactical annotations still refresh globally for correctness, so this remains
-  a validation and instrumentation hook rather than a performance feature.
+  annotations. Current-obligation safety also uses a root-only full frontier in
+  this mode.
 
 Search now threads an optional frontier through recursive apply/undo with the
 board and hash. The default scan mode leaves that frontier disabled; the rolling
 suffixes enable it for parity and cost measurement. Current smoke data reached
-zero shadow mismatches, but the rolling modes are still slower than scan under
-Renju because annotation refresh is not fully local yet.
+zero shadow mismatches, and the latest focused smoke makes rolling faster than
+scan for `search-d3+tactical-cap-8`. Keep it lab-only until a clean full
+reference tournament and companion analysis report confirm the baseline.
 
 ### Eval harness
 
