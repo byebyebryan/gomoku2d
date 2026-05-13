@@ -20,6 +20,13 @@ pub struct TacticalOrderingSummary {
     pub must_keep: bool,
 }
 
+impl TacticalOrderingSummary {
+    fn include_fact(&mut self, policy: SearchThreatPolicy, fact: &LocalThreatFact) {
+        self.score = self.score.max(policy.ordering_score(fact.kind));
+        self.must_keep |= policy.is_must_keep(fact);
+    }
+}
+
 impl SearchThreatPolicy {
     pub fn rank(self, kind: LocalThreatKind) -> u8 {
         match kind {
@@ -94,6 +101,24 @@ impl SearchThreatPolicy {
         }
     }
 
+    pub fn raw_ordering_summary_for_legal_player(
+        self,
+        board: &Board,
+        player: Color,
+        mv: Move,
+    ) -> TacticalOrderingSummary {
+        let after = BoardAfterMove { board, mv, player };
+        let mut summary = TacticalOrderingSummary::default();
+        for &(dr, dc) in &DIRS {
+            if let Some(fact) = local_threat_fact_in_direction_view(&after, dr, dc) {
+                if fact.player == player {
+                    summary.include_fact(self, &fact);
+                }
+            }
+        }
+        summary
+    }
+
     pub fn effective_annotation_from_raw(
         self,
         board: &Board,
@@ -134,8 +159,7 @@ impl SearchThreatPolicy {
     pub fn ordering_summary(self, annotation: &TacticalMoveAnnotation) -> TacticalOrderingSummary {
         let mut summary = TacticalOrderingSummary::default();
         for fact in &annotation.local_threats {
-            summary.score = summary.score.max(self.ordering_score(fact.kind));
-            summary.must_keep |= self.is_must_keep(fact);
+            summary.include_fact(self, fact);
         }
         summary
     }
@@ -158,6 +182,10 @@ impl SearchThreatPolicy {
         player: Color,
         mv: Move,
     ) -> TacticalOrderingSummary {
+        if board.config.variant != Variant::Renju || player != Color::Black {
+            return self.raw_ordering_summary_for_legal_player(board, player, mv);
+        }
+
         let annotation = self.raw_annotation_for_legal_player(board, player, mv);
         self.effective_ordering_summary_from_raw(board, &annotation)
     }
@@ -1760,6 +1788,31 @@ mod tests {
             assert_eq!(
                 policy.ordering_summary_for_legal_player(board, player, probe),
                 policy.ordering_summary(&annotation),
+                "{player:?} {probe:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn raw_known_legal_ordering_summary_matches_raw_annotation_summary() {
+        let policy = SearchThreatPolicy;
+
+        let freestyle = board_from_moves(Variant::Freestyle, &["H8", "A1", "I8", "A2"]);
+        let renju_black_raw = board_from_moves(
+            Variant::Renju,
+            &["H8", "G8", "I8", "A1", "J8", "A2", "L8", "A3"],
+        );
+
+        for (board, player, probe) in [
+            (&freestyle, Color::Black, mv("J8")),
+            (&freestyle, Color::Black, mv("B2")),
+            (&renju_black_raw, Color::Black, mv("M8")),
+        ] {
+            assert!(board.is_legal_for_color(probe, player));
+            let raw_annotation = policy.raw_annotation_for_legal_player(board, player, probe);
+            assert_eq!(
+                policy.raw_ordering_summary_for_legal_player(board, player, probe),
+                policy.ordering_summary(&raw_annotation),
                 "{player:?} {probe:?}"
             );
         }
