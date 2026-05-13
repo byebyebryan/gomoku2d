@@ -100,6 +100,13 @@ fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchB
         return Some(config);
     }
 
+    if let Some(limit) = suffix.strip_prefix("tactical-lite-cap-") {
+        let limit = parse_positive_limit(limit)?;
+        config.move_ordering = MoveOrdering::TacticalLite;
+        config.child_limit = Some(limit);
+        return Some(config);
+    }
+
     if let Some(limit) = suffix.strip_prefix("priority-cap-") {
         let limit = parse_positive_limit(limit)?;
         config.move_ordering = MoveOrdering::PriorityFirst;
@@ -139,6 +146,10 @@ fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchB
         }
         "tactical-first" => {
             config.move_ordering = MoveOrdering::TacticalFirst;
+            Some(config)
+        }
+        "tactical-lite" => {
+            config.move_ordering = MoveOrdering::TacticalLite;
             Some(config)
         }
         "priority-first" => {
@@ -429,6 +440,30 @@ mod tests {
         assert_eq!(capped.child_limit, Some(8));
         assert!(
             super::search_config_from_lab_spec("search-d7+priority-cap-0", 3, None, None).is_none()
+        );
+    }
+
+    #[test]
+    fn parses_tactical_lite_ordering_suffixes() {
+        let tactical_lite =
+            super::search_config_from_lab_spec("search-d5+tactical-lite", 3, None, None)
+                .expect("expected tactical-lite ordering spec to parse");
+        assert_eq!(tactical_lite.max_depth, 5);
+        assert_eq!(
+            tactical_lite.move_ordering,
+            super::MoveOrdering::TacticalLite
+        );
+        assert_eq!(tactical_lite.child_limit, None);
+
+        let capped =
+            super::search_config_from_lab_spec("search-d7+tactical-lite-cap-8", 3, None, None)
+                .expect("expected tactical-lite cap shorthand spec to parse");
+        assert_eq!(capped.max_depth, 7);
+        assert_eq!(capped.move_ordering, super::MoveOrdering::TacticalLite);
+        assert_eq!(capped.child_limit, Some(8));
+        assert!(
+            super::search_config_from_lab_spec("search-d7+tactical-lite-cap-0", 3, None, None)
+                .is_none()
         );
     }
 

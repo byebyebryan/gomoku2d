@@ -82,11 +82,15 @@ counter-four replies to imminent threats. Append `+tactical-first` to try
 full local-threat move ordering before alpha-beta search. Append
 `+priority-first` to try cheaper hard-tactical ordering: immediate wins,
 immediate blocks, TT move, center bias, and local density without scanning
-candidate-created threats.
+candidate-created threats. Append `+tactical-lite` to try the middle tier:
+the same hard win/block checks, plus candidate corridor-entry rank, before the
+quiet TT/center/density heuristics.
 Append `+child-cap-N` to cap the ordered non-root child frontier after candidate
 generation, legality filtering, and move ordering. `+tactical-cap-N` is
 shorthand for `+tactical-first+child-cap-N` and is the preferred report-facing
 form for full tactical ordering, for example `search-d5+tactical-cap-12`.
+`+tactical-lite-cap-N` is shorthand for
+`+tactical-lite+child-cap-N`, for example `search-d5+tactical-lite-cap-8`.
 `+priority-cap-N` is the cheaper shorthand for
 `+priority-first+child-cap-N`, for example `search-d5+priority-cap-8`. Root
 still considers every legal/safe candidate; candidate source controls

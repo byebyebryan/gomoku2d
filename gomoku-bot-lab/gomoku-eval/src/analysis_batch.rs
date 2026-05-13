@@ -1282,6 +1282,9 @@ fn compact_searchbot_feature_label(feature: &str) -> String {
     if let Some(cap) = feature.strip_prefix("tactical-cap-") {
         return format!("TCap{cap}");
     }
+    if let Some(cap) = feature.strip_prefix("tactical-lite-cap-") {
+        return format!("TLiteCap{cap}");
+    }
     if let Some(cap) = feature.strip_prefix("priority-cap-") {
         return format!("PriorityCap{cap}");
     }
@@ -1300,6 +1303,7 @@ fn compact_searchbot_feature_label(feature: &str) -> String {
     match feature {
         "pattern-eval" => "Pattern".to_string(),
         "tactical-first" => "Tactical".to_string(),
+        "tactical-lite" => "TLite".to_string(),
         "priority-first" => "Priority".to_string(),
         "no-safety" => "NoSafety".to_string(),
         "opponent-reply-search-probe" => "SearchProbe".to_string(),
