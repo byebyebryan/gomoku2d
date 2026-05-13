@@ -812,6 +812,12 @@ impl SearchState {
             .expect("search state frontier requested when disabled")
     }
 
+    fn threat_view_mut(&mut self) -> &mut RollingThreatFrontier {
+        self.frontier
+            .as_mut()
+            .expect("search state frontier requested when disabled")
+    }
+
     fn hash(&self) -> u64 {
         self.hash
     }
@@ -1773,12 +1779,12 @@ fn current_obligation_root_candidates(
         }
         ThreatViewMode::Rolling => {
             let start = Instant::now();
-            let frontier = RollingThreatFrontier::from_board_with_features(
+            let mut frontier = RollingThreatFrontier::from_board_with_features(
                 board,
                 RollingFrontierFeatures::Full,
             );
             metrics.record_threat_view_frontier_rebuild(start.elapsed());
-            rolling_current_obligation_safety_policy(board, &moves, &frontier, metrics)
+            rolling_current_obligation_safety_policy(board, &moves, &mut frontier, metrics)
         }
         ThreatViewMode::RollingShadow => {
             metrics.threat_view_shadow_checks += 1;
@@ -1789,13 +1795,13 @@ fn current_obligation_root_candidates(
             metrics.record_threat_view_scan(start.elapsed());
 
             let start = Instant::now();
-            let frontier = RollingThreatFrontier::from_board_with_features(
+            let mut frontier = RollingThreatFrontier::from_board_with_features(
                 board,
                 RollingFrontierFeatures::Full,
             );
             metrics.record_threat_view_frontier_rebuild(start.elapsed());
             let rolling =
-                rolling_current_obligation_safety_policy(board, &moves, &frontier, metrics);
+                rolling_current_obligation_safety_policy(board, &moves, &mut frontier, metrics);
 
             if scan.moves != rolling.moves {
                 metrics.threat_view_shadow_mismatches += 1;
@@ -1832,12 +1838,12 @@ fn current_obligation_safety_policy(
 fn rolling_current_obligation_safety_policy(
     board: &Board,
     moves: &[Move],
-    view: &RollingThreatFrontier,
+    view: &mut RollingThreatFrontier,
     metrics: &mut SearchMetrics,
 ) -> SafetyFilterOutcome {
     let current = board.current_player;
     let start = Instant::now();
-    let own_wins = view.immediate_winning_moves_for(current);
+    let own_wins = view.immediate_winning_moves_for_cached(current);
     metrics.record_threat_view_frontier_immediate_win_query(start.elapsed());
     if let Some(outcome) = immediate_win_safety_outcome(moves, own_wins) {
         return outcome;
@@ -1845,7 +1851,7 @@ fn rolling_current_obligation_safety_policy(
 
     let opponent = current.opponent();
     let start = Instant::now();
-    let opponent_wins = view.immediate_winning_moves_for(opponent);
+    let opponent_wins = view.immediate_winning_moves_for_cached(opponent);
     metrics.record_threat_view_frontier_immediate_win_query(start.elapsed());
     if let Some(outcome) = immediate_win_safety_outcome(moves, opponent_wins) {
         return outcome;
@@ -2678,7 +2684,9 @@ fn rolling_immediate_winning_moves_timed(
     metrics: &mut SearchMetrics,
 ) -> Vec<Move> {
     let start = Instant::now();
-    let moves = state.threat_view().immediate_winning_moves_for(player);
+    let moves = state
+        .threat_view_mut()
+        .immediate_winning_moves_for_cached(player);
     metrics.record_threat_view_frontier_immediate_win_query(start.elapsed());
     moves
 }

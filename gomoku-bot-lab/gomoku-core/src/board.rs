@@ -267,6 +267,10 @@ impl Board {
         wins
     }
 
+    pub fn is_immediate_winning_move_for(&self, mv: Move, color: Color) -> bool {
+        self.probe_immediate_winning_move(mv, color)
+    }
+
     pub fn has_multiple_immediate_winning_moves_for(&self, color: Color) -> bool {
         if self.result != GameResult::Ongoing {
             return false;
@@ -1076,6 +1080,20 @@ mod tests {
     }
 
     #[test]
+    fn single_move_immediate_win_probe_matches_immediate_win_list() {
+        let mut b = default_board();
+        setup(
+            &mut b,
+            &[(7, 3), W[0], (7, 4), W[1], (7, 5), W[2], (7, 6), W[3]],
+        );
+
+        assert!(b.is_immediate_winning_move_for(Move { row: 7, col: 2 }, Color::Black));
+        assert!(b.is_immediate_winning_move_for(Move { row: 7, col: 7 }, Color::Black));
+        assert!(!b.is_immediate_winning_move_for(Move { row: 7, col: 8 }, Color::Black));
+        assert!(!b.is_immediate_winning_move_for(Move { row: 7, col: 3 }, Color::Black));
+    }
+
+    #[test]
     fn detects_multiple_immediate_winning_moves_for_player() {
         let mut fork = default_board();
         setup(
@@ -1405,6 +1423,7 @@ mod tests {
         assert!(!b
             .immediate_winning_moves_for(Color::Black)
             .contains(&Move { row: 0, col: 4 }));
+        assert!(!b.is_immediate_winning_move_for(Move { row: 0, col: 4 }, Color::Black));
     }
 
     #[test]
