@@ -519,6 +519,9 @@ Follow-up memo checkpoint:
   materialized attacker entries and defender replies. In non-shadow rolling mode,
   this keeps the search-owned threat-view scan counter at zero; shadow mode still
   runs both scan and rolling answers for parity.
+- Root win/block checks now use explicit-player threat-view annotations, which
+  lets rolling mode answer those checks from the frontier instead of direct board
+  threat scans.
 
 Current-obligation safety checkpoint:
 
@@ -715,6 +718,8 @@ From code inspection before the first benchmark pass:
 14. Route corridor continuation/reply queries through `ThreatView` and remove
     the pre-move attacker-rank scan surface from the rolling trait
     (`2026-05-12`)
+15. Route root win/block checks through explicit-player `ThreatView`
+    annotations (`2026-05-12`)
 
 ### Future work
 

@@ -166,8 +166,8 @@ Current frontier suffixes are intentionally narrow:
   answers, report shadow mismatch counts, and record scan-vs-frontier
   update/query timing; behavior stays scan-backed.
 - `+rolling-frontier`: use the rolling-backed portal-entry answer, corridor
-  continuation/reply queries, and tactical annotations. Current-obligation
-  safety also uses a root-only full frontier in this mode.
+  continuation/reply queries, root win/block checks, and tactical annotations.
+  Current-obligation safety also uses a root-only full frontier in this mode.
 
 Search now threads an optional frontier through recursive apply/undo with the
 board and hash. The default scan mode leaves that frontier disabled; the rolling

@@ -206,10 +206,10 @@ lab-only until they are correct under the full reference workload:
   while scan-backed answers still drive behavior. It also records scan time,
   frontier rebuild/update time, and frontier query time for those checks.
 - `+rolling-frontier` lets portal-entry checks, corridor continuation/reply
-  queries, and tactical ordering annotations use the frontier-backed answer.
-  Current-obligation safety also uses a root-only full frontier in this mode
-  because it needs active existing-threat facts before recursive search state
-  exists.
+  queries, root win/block checks, and tactical ordering annotations use the
+  frontier-backed answer. Current-obligation safety also uses a root-only full
+  frontier in this mode because it needs active existing-threat facts before
+  recursive search state exists.
 
 Both suffixes are lab-only validation and instrumentation modes, not promoted
 bot configs. Incremental frontier deltas, lazy Renju filtering, per-state dirty
@@ -462,10 +462,12 @@ checked for parity. In rolling mode, tactical ordering can consume the
 frontier-backed annotation as a lab-only validation path. It can still pair with
 `child_limit` to test whether ordered tactical coverage lets alpha-beta search
 fewer children without changing candidate discovery. The frontier now updates
-through apply/undo, and corridor continuation/reply queries now use the same
-threat-view contract instead of a pre-move attacker-rank scan surface. The next
-optimization boundary is broader candidate-frontier maintenance and larger
-reference validation, not another eager full-board scan replacement.
+through apply/undo. Root tactical checks now use per-player threat-view
+annotations for immediate wins/blocks, and corridor continuation/reply queries
+use the same threat-view contract instead of a pre-move attacker-rank scan
+surface. The next optimization boundary is broader candidate-frontier
+maintenance and larger reference validation, not another eager full-board scan
+replacement.
 
 For `v0.4.1`, the strategic target is a practice bot that climbs a tactical
 ladder:
