@@ -150,7 +150,7 @@ Do not optimize tactical facts into partial shortcuts before the full scan-vs-
 rolling frontier contract is stable. The frontier experiment should have a clear
 before/after target:
 
-- same tactical behavior and scenario pass/fail set
+- same tactical behavior and scenario hard-gate plus diagnostic hit/miss set
 - lower annotation, candidate generation, or reply-generation cost
 - better reached depth or lower move time under the same CPU budget
 - no hidden apply/undo correctness risk from stale threat facts

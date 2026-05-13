@@ -128,7 +128,7 @@ pub static SCENARIOS: &[BenchScenario] = &[
         tags: &["tactical", "local", "create", "open-four", "freestyle"],
         description: "Black can create an open four from a contiguous three.",
         probe_move: "K8",
-        moves: &["H8", "A1", "I8", "C1", "J8", "E1"],
+        moves: &["H8", "A1", "I8", "O1", "J8", "A15"],
     },
     BenchScenario {
         id: "local_create_closed_four",
@@ -137,7 +137,7 @@ pub static SCENARIOS: &[BenchScenario] = &[
         tags: &["tactical", "local", "create", "closed-four", "freestyle"],
         description: "Black can create a closed four with one completion square.",
         probe_move: "K8",
-        moves: &["H8", "G8", "I8", "A1", "J8", "C1"],
+        moves: &["H8", "G8", "I8", "A1", "J8", "O15"],
     },
     BenchScenario {
         id: "local_react_closed_four",
@@ -155,7 +155,7 @@ pub static SCENARIOS: &[BenchScenario] = &[
         tags: &["tactical", "local", "create", "broken-four", "freestyle"],
         description: "Black can create a broken four with one internal completion square.",
         probe_move: "J8",
-        moves: &["H8", "A1", "I8", "C1", "L8", "E1"],
+        moves: &["H8", "A1", "I8", "O1", "L8", "A15"],
     },
     BenchScenario {
         id: "local_react_broken_four",
@@ -182,7 +182,7 @@ pub static SCENARIOS: &[BenchScenario] = &[
         tags: &["tactical", "local", "create", "open-three", "freestyle"],
         description: "Black can create an open three with two extension squares.",
         probe_move: "J8",
-        moves: &["H8", "A1", "I8", "C1"],
+        moves: &["H8", "A1", "I8", "O1"],
     },
     BenchScenario {
         id: "local_prevent_open_four_from_open_three",
@@ -191,7 +191,7 @@ pub static SCENARIOS: &[BenchScenario] = &[
         tags: &["tactical", "local", "prevent", "open-four", "open-three", "freestyle"],
         description: "White can prevent Black's open three from becoming an open four.",
         probe_move: "G8",
-        moves: &["H8", "A1", "I8", "C1", "J8"],
+        moves: &["H8", "A1", "I8", "O1", "J8"],
     },
     BenchScenario {
         id: "local_create_closed_three",
@@ -218,7 +218,7 @@ pub static SCENARIOS: &[BenchScenario] = &[
         tags: &["tactical", "local", "create", "broken-three", "freestyle"],
         description: "Black can create a broken three with one rest square.",
         probe_move: "J8",
-        moves: &["H8", "A1", "K8", "C1"],
+        moves: &["H8", "A1", "K8", "O1"],
     },
     BenchScenario {
         id: "local_prevent_broken_four_from_broken_three",

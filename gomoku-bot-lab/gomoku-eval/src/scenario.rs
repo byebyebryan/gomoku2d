@@ -88,15 +88,43 @@ impl TacticalScenarioShape {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum TacticalScenarioOutcome {
-    PassedExpectedMove,
-    FailedExpectedMove,
+    MatchedExpectedMove,
+    MissedExpectedMove,
 }
 
 impl TacticalScenarioOutcome {
     const fn as_str(self) -> &'static str {
         match self {
-            TacticalScenarioOutcome::PassedExpectedMove => "passed_expected_move",
-            TacticalScenarioOutcome::FailedExpectedMove => "failed_expected_move",
+            TacticalScenarioOutcome::MatchedExpectedMove => "matched_expected_move",
+            TacticalScenarioOutcome::MissedExpectedMove => "missed_expected_move",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TacticalScenarioStatus {
+    Pass,
+    Fail,
+    Hit,
+    Miss,
+}
+
+impl TacticalScenarioStatus {
+    const fn for_result(role: TacticalScenarioRole, matched_expected: bool) -> Self {
+        match (role, matched_expected) {
+            (TacticalScenarioRole::HardSafetyGate, true) => TacticalScenarioStatus::Pass,
+            (TacticalScenarioRole::HardSafetyGate, false) => TacticalScenarioStatus::Fail,
+            (TacticalScenarioRole::Diagnostic, true) => TacticalScenarioStatus::Hit,
+            (TacticalScenarioRole::Diagnostic, false) => TacticalScenarioStatus::Miss,
+        }
+    }
+
+    const fn as_str(self) -> &'static str {
+        match self {
+            TacticalScenarioStatus::Pass => "pass",
+            TacticalScenarioStatus::Fail => "fail",
+            TacticalScenarioStatus::Hit => "hit",
+            TacticalScenarioStatus::Miss => "miss",
         }
     }
 }
@@ -380,7 +408,8 @@ pub struct TacticalScenarioResult {
     pub description: &'static str,
     pub expected_moves: Vec<String>,
     pub actual_move: String,
-    pub passed: bool,
+    pub matched_expected: bool,
+    pub status: &'static str,
     pub outcome: &'static str,
     pub metrics: ScenarioSearchMetrics,
 }
@@ -389,8 +418,9 @@ pub struct TacticalScenarioResult {
 pub struct TacticalScenarioGroupSummary {
     pub key: String,
     pub total: usize,
-    pub passed: usize,
-    pub failed: usize,
+    pub matched: usize,
+    pub missed: usize,
+    pub hard_failures: usize,
     pub budget_exhausted: usize,
     pub avg_time_ms: f64,
     pub avg_depth_reached: f64,
@@ -405,8 +435,12 @@ pub struct TacticalScenarioReport {
     pub schema_version: u32,
     pub configs: Vec<String>,
     pub total: usize,
-    pub passed: usize,
-    pub failed: usize,
+    pub hard_total: usize,
+    pub hard_passed: usize,
+    pub hard_failed: usize,
+    pub diagnostic_total: usize,
+    pub diagnostic_hits: usize,
+    pub diagnostic_misses: usize,
     pub role_summaries: Vec<TacticalScenarioGroupSummary>,
     pub layer_summaries: Vec<TacticalScenarioGroupSummary>,
     pub intent_summaries: Vec<TacticalScenarioGroupSummary>,
@@ -435,11 +469,12 @@ pub fn run_tactical_case(
         .last_info
         .as_ref()
         .expect("SearchBot should record search info after choose_move");
-    let passed = expected_moves.contains(&actual_move);
-    let outcome = if passed {
-        TacticalScenarioOutcome::PassedExpectedMove
+    let matched_expected = expected_moves.contains(&actual_move);
+    let status = TacticalScenarioStatus::for_result(case.role, matched_expected);
+    let outcome = if matched_expected {
+        TacticalScenarioOutcome::MatchedExpectedMove
     } else {
-        TacticalScenarioOutcome::FailedExpectedMove
+        TacticalScenarioOutcome::MissedExpectedMove
     };
 
     TacticalScenarioResult {
@@ -460,7 +495,8 @@ pub fn run_tactical_case(
             .map(Move::to_notation)
             .collect(),
         actual_move: actual_move.to_notation(),
-        passed,
+        matched_expected,
+        status: status.as_str(),
         outcome: outcome.as_str(),
         metrics: ScenarioSearchMetrics {
             time_ms,
@@ -538,7 +574,14 @@ fn summarize_group(
 ) -> TacticalScenarioGroupSummary {
     let total = results.len();
     let total_f64 = total as f64;
-    let passed = results.iter().filter(|result| result.passed).count();
+    let matched = results
+        .iter()
+        .filter(|result| result.matched_expected)
+        .count();
+    let hard_failures = results
+        .iter()
+        .filter(|result| result.status == TacticalScenarioStatus::Fail.as_str())
+        .count();
     let budget_exhausted = results
         .iter()
         .filter(|result| result.metrics.budget_exhausted)
@@ -547,8 +590,9 @@ fn summarize_group(
     TacticalScenarioGroupSummary {
         key,
         total,
-        passed,
-        failed: total - passed,
+        matched,
+        missed: total - matched,
+        hard_failures,
         budget_exhausted,
         avg_time_ms: results
             .iter()
@@ -594,15 +638,34 @@ pub fn run_tactical_scenarios(
         }
     }
 
-    let passed = results.iter().filter(|result| result.passed).count();
     let total = results.len();
+    let hard_total = results
+        .iter()
+        .filter(|result| result.role == TacticalScenarioRole::HardSafetyGate.as_str())
+        .count();
+    let hard_failed = results
+        .iter()
+        .filter(|result| result.status == TacticalScenarioStatus::Fail.as_str())
+        .count();
+    let diagnostic_total = results
+        .iter()
+        .filter(|result| result.role == TacticalScenarioRole::Diagnostic.as_str())
+        .count();
+    let diagnostic_hits = results
+        .iter()
+        .filter(|result| result.status == TacticalScenarioStatus::Hit.as_str())
+        .count();
 
     TacticalScenarioReport {
-        schema_version: 3,
+        schema_version: 4,
         configs: configs.iter().map(|config| config.id.clone()).collect(),
         total,
-        passed,
-        failed: total - passed,
+        hard_total,
+        hard_passed: hard_total - hard_failed,
+        hard_failed,
+        diagnostic_total,
+        diagnostic_hits,
+        diagnostic_misses: diagnostic_total - diagnostic_hits,
         role_summaries: summarize_by(&results, |result| result.role),
         layer_summaries: summarize_by(&results, |result| result.layer),
         intent_summaries: summarize_by(&results, |result| result.intent),
@@ -612,12 +675,13 @@ pub fn run_tactical_scenarios(
 
 #[cfg(test)]
 mod tests {
+    use gomoku_bot::tactical::corridor_active_threats;
     use gomoku_bot::SearchBotConfig;
     use gomoku_core::{Board, GameResult, Move, Variant};
 
     use super::{
-        run_tactical_case, run_tactical_scenarios, ScenarioSearchConfig, TacticalScenarioIntent,
-        TacticalScenarioLayer, TacticalScenarioRole, TacticalScenarioShape,
+        run_tactical_case, run_tactical_scenarios, ScenarioSearchConfig, TacticalScenarioCase,
+        TacticalScenarioIntent, TacticalScenarioLayer, TacticalScenarioRole, TacticalScenarioShape,
         TACTICAL_SCENARIO_CASES,
     };
 
@@ -630,14 +694,15 @@ mod tests {
 
         let result = run_tactical_case(case, "search-d3", SearchBotConfig::custom_depth(3));
 
-        assert!(result.passed);
+        assert!(result.matched_expected);
         assert_eq!(result.case_id, "local_complete_open_four");
         assert_eq!(result.config_id, "search-d3");
         assert_eq!(result.role, "hard_safety_gate");
         assert_eq!(result.layer, "local");
         assert_eq!(result.intent, "complete");
         assert_eq!(result.shape, Some("open_four"));
-        assert_eq!(result.outcome, "passed_expected_move");
+        assert_eq!(result.status, "pass");
+        assert_eq!(result.outcome, "matched_expected_move");
         assert_eq!(result.variant, Variant::Freestyle);
         assert!(result.expected_moves.contains(&result.actual_move));
         assert!(result.metrics.nodes > 0);
@@ -650,6 +715,50 @@ mod tests {
             result.metrics.legality_checks,
             result.metrics.root_legality_checks + result.metrics.search_legality_checks
         );
+    }
+
+    #[test]
+    fn tactical_status_splits_hard_failures_from_diagnostic_misses() {
+        let diagnostic_miss_case = TACTICAL_SCENARIO_CASES
+            .iter()
+            .find(|case| case.id == "local_create_broken_three")
+            .expect("expected tactical case");
+
+        let diagnostic_miss = run_tactical_case(
+            diagnostic_miss_case,
+            "search-d1",
+            SearchBotConfig::custom_depth(1),
+        );
+
+        assert!(!diagnostic_miss.matched_expected);
+        assert_eq!(diagnostic_miss.status, "miss");
+        assert_eq!(diagnostic_miss.outcome, "missed_expected_move");
+
+        let hard_miss_case = TacticalScenarioCase {
+            role: TacticalScenarioRole::HardSafetyGate,
+            ..*diagnostic_miss_case
+        };
+        let hard_miss = run_tactical_case(
+            &hard_miss_case,
+            "search-d1",
+            SearchBotConfig::custom_depth(1),
+        );
+
+        assert!(!hard_miss.matched_expected);
+        assert_eq!(hard_miss.status, "fail");
+
+        let diagnostic_hit_case = TACTICAL_SCENARIO_CASES
+            .iter()
+            .find(|case| case.id == "local_create_open_four")
+            .expect("expected tactical case");
+        let diagnostic_hit = run_tactical_case(
+            diagnostic_hit_case,
+            "search-d1",
+            SearchBotConfig::custom_depth(1),
+        );
+
+        assert!(diagnostic_hit.matched_expected);
+        assert_eq!(diagnostic_hit.status, "hit");
     }
 
     #[test]
@@ -687,14 +796,20 @@ mod tests {
 
         let report = run_tactical_scenarios(&configs, cases);
 
-        assert_eq!(report.schema_version, 3);
+        assert_eq!(report.schema_version, 4);
         assert_eq!(report.configs, vec!["search-d2", "search-d3"]);
         assert_eq!(report.results.len(), configs.len() * cases.len());
         assert_eq!(report.total, 4);
-        assert_eq!(report.passed + report.failed, report.total);
+        assert_eq!(report.hard_total, 4);
+        assert_eq!(report.hard_passed + report.hard_failed, report.hard_total);
+        assert_eq!(report.diagnostic_total, 0);
         assert_eq!(report.role_summaries.len(), 1);
         assert_eq!(report.role_summaries[0].key, "hard_safety_gate");
         assert_eq!(report.role_summaries[0].total, 4);
+        assert_eq!(
+            report.role_summaries[0].matched + report.role_summaries[0].missed,
+            report.role_summaries[0].total
+        );
         assert!(report.role_summaries[0].avg_candidate_moves_total > 0.0);
         assert_eq!(report.layer_summaries.len(), 1);
         assert_eq!(report.layer_summaries[0].key, "local");
@@ -707,6 +822,59 @@ mod tests {
             .intent_summaries
             .iter()
             .any(|summary| summary.key == "react" && summary.total == 2));
+    }
+
+    #[test]
+    fn tactical_report_summarizes_hard_gates_separately_from_diagnostics() {
+        let configs = [ScenarioSearchConfig {
+            id: "search-d1".to_string(),
+            config: SearchBotConfig::custom_depth(1),
+        }];
+        let cases = [
+            TACTICAL_SCENARIO_CASES
+                .iter()
+                .find(|case| case.id == "local_complete_open_four")
+                .copied()
+                .expect("expected hard tactical case"),
+            TACTICAL_SCENARIO_CASES
+                .iter()
+                .find(|case| case.id == "local_create_broken_three")
+                .copied()
+                .expect("expected diagnostic tactical case"),
+        ];
+
+        let report = run_tactical_scenarios(&configs, &cases);
+
+        assert_eq!(report.schema_version, 4);
+        assert_eq!(report.hard_total, 1);
+        assert_eq!(report.hard_passed, 1);
+        assert_eq!(report.hard_failed, 0);
+        assert_eq!(report.diagnostic_total, 1);
+        assert_eq!(report.diagnostic_hits, 0);
+        assert_eq!(report.diagnostic_misses, 1);
+        assert_eq!(report.role_summaries[0].matched, 1);
+        assert_eq!(report.role_summaries[1].missed, 1);
+        assert_eq!(report.role_summaries[1].hard_failures, 0);
+    }
+
+    #[test]
+    fn local_create_diagnostics_do_not_start_with_opponent_corridor_threats() {
+        for case in TACTICAL_SCENARIO_CASES.iter().filter(|case| {
+            case.role == TacticalScenarioRole::Diagnostic
+                && case.layer == TacticalScenarioLayer::Local
+                && case.intent == TacticalScenarioIntent::Create
+        }) {
+            let board = case.scenario().board();
+            let opponent = board.current_player.opponent();
+            let opponent_threats = corridor_active_threats(&board, opponent);
+
+            assert!(
+                opponent_threats.is_empty(),
+                "local create fixture '{}' should not start with opponent corridor threats: {:?}",
+                case.id,
+                opponent_threats
+            );
+        }
     }
 
     #[test]

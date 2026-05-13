@@ -344,7 +344,8 @@ Run the baseline tactical sweep from `gomoku-bot-lab/`:
 cargo run -p gomoku-eval -- tactical-scenarios --bots search-d1,search-d3,search-d5,search-d5+tactical-cap-8,search-d7+tactical-cap-8 --search-cpu-time-ms 1000
 ```
 
-The command reports pass/fail, rule variant, side to move, case role, chosen
+The command reports `PASS`/`FAIL` for hard safety gates and `HIT`/`MISS` for
+diagnostic probes, followed by rule variant, side to move, case role, chosen
 move, expected move sets, layer, intent, shape, depth reached, nodes, root
 safety-gate work (`safety_nodes`), root/search candidate and legality costs,
 time, and budget exhaustion. To capture reusable JSON:
@@ -354,12 +355,11 @@ mkdir -p outputs
 cargo run -p gomoku-eval -- tactical-scenarios --bots search-d1,search-d3,search-d5,search-d5+tactical-cap-8,search-d7+tactical-cap-8 --search-cpu-time-ms 1000 --report-json outputs/tactical-scenarios.json
 ```
 
-Treat this as diagnostic coverage, not a ranking system. If a baseline config
-already passes a scenario, that fixture becomes a regression guard. New search
-logic should be driven by scenarios that expose real gaps, then confirmed with
-tournament ablation. The rejected broad threat-extension and broad shape-eval
-experiments are recorded in the v0.4 search plan rather than exposed as current
-lab specs.
+Treat this as diagnostic coverage, not a ranking system. Hard-gate failures are
+regressions; diagnostic misses are active behavior gaps. New search logic should
+be driven by diagnostics that expose real gaps, then confirmed with tournament
+ablation. The rejected broad threat-extension and broad shape-eval experiments
+are recorded in the v0.4 search plan rather than exposed as current lab specs.
 
 ## Replay format
 

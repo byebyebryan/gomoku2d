@@ -662,7 +662,13 @@ fn parse_search_config_specs(
 }
 
 fn print_tactical_scenario_result(result: &TacticalScenarioResult) {
-    let status = if result.passed { "PASS" } else { "FAIL" };
+    let status = match result.status {
+        "pass" => "PASS",
+        "fail" => "FAIL",
+        "hit" => "HIT",
+        "miss" => "MISS",
+        other => other,
+    };
     let expected = if result.expected_moves.is_empty() {
         "-".to_string()
     } else {
@@ -704,11 +710,12 @@ fn print_tactical_group_summary(title: &str, summaries: &[TacticalScenarioGroupS
     println!("\n{title}");
     for summary in summaries {
         println!(
-            "  {:<16} {:>3}/{:<3} passed, {:>3} failed, avg depth {:>4.1}, avg total nodes {:>8.0}, avg safety {:>7.0}, avg time {:>5.1}ms",
+            "  {:<16} {:>3}/{:<3} matched, {:>3} missed, {:>3} hard fail, avg depth {:>4.1}, avg total nodes {:>8.0}, avg safety {:>7.0}, avg time {:>5.1}ms",
             summary.key,
-            summary.passed,
+            summary.matched,
             summary.total,
-            summary.failed,
+            summary.missed,
+            summary.hard_failures,
             summary.avg_depth_reached,
             summary.avg_total_nodes,
             summary.avg_safety_nodes,
@@ -719,8 +726,13 @@ fn print_tactical_group_summary(title: &str, summaries: &[TacticalScenarioGroupS
 
 fn print_tactical_report_summary(report: &TacticalScenarioReport) {
     println!(
-        "\n--- Summary ---\n{} passed / {} total ({} failed)",
-        report.passed, report.total, report.failed
+        "\n--- Summary ---\nHard gates: {}/{} passed, {} failed\nDiagnostic probes: {}/{} hit, {} missed",
+        report.hard_passed,
+        report.hard_total,
+        report.hard_failed,
+        report.diagnostic_hits,
+        report.diagnostic_total,
+        report.diagnostic_misses
     );
     print_tactical_group_summary("By role", &report.role_summaries);
     print_tactical_group_summary("By layer", &report.layer_summaries);
@@ -1318,6 +1330,10 @@ fn main() {
                     exit_with_error(format!("Failed to write tactical report: {err}"))
                 });
                 println!("Report JSON: {}", path.display());
+            }
+
+            if report.hard_failed > 0 {
+                std::process::exit(1);
             }
         }
         Commands::AnalyzeReplay {
