@@ -1,6 +1,6 @@
 use std::time::{Duration, Instant};
 
-use gomoku_core::{Board, Color, GameResult, Move, MoveError, DIRS};
+use gomoku_core::{Board, Color, GameResult, Move, MoveError, Variant, DIRS};
 
 use crate::tactical::{
     raw_local_threat_facts_at_existing_move, raw_local_threat_facts_for_player,
@@ -52,6 +52,8 @@ pub struct RollingThreatFrontier {
     white_move_facts_by_origin: Option<Vec<Vec<LocalThreatFact>>>,
     black_raw_search_annotations: Vec<TacticalMoveAnnotation>,
     white_raw_search_annotations: Vec<TacticalMoveAnnotation>,
+    black_raw_ordering_summaries: Vec<TacticalOrderingSummary>,
+    white_raw_ordering_summaries: Vec<TacticalOrderingSummary>,
     black_raw_search_annotation_dirty: Vec<bool>,
     white_raw_search_annotation_dirty: Vec<bool>,
     black_immediate_wins: Vec<bool>,
@@ -76,6 +78,12 @@ impl RollingThreatFrontier {
 
     pub fn from_board_with_features(board: &Board, features: RollingFrontierFeatures) -> Self {
         let size = board.config.board_size;
+        let black_raw_search_annotations = raw_search_annotations_for_player(board, Color::Black);
+        let white_raw_search_annotations = raw_search_annotations_for_player(board, Color::White);
+        let black_raw_ordering_summaries =
+            raw_ordering_summaries_from_annotations(&black_raw_search_annotations);
+        let white_raw_ordering_summaries =
+            raw_ordering_summaries_from_annotations(&white_raw_search_annotations);
         Self {
             board: board.clone(),
             features,
@@ -85,8 +93,10 @@ impl RollingThreatFrontier {
             white_move_facts_by_origin: features
                 .maintains_move_facts()
                 .then(|| move_facts_by_origin(board, Color::White)),
-            black_raw_search_annotations: raw_search_annotations_for_player(board, Color::Black),
-            white_raw_search_annotations: raw_search_annotations_for_player(board, Color::White),
+            black_raw_search_annotations,
+            white_raw_search_annotations,
+            black_raw_ordering_summaries,
+            white_raw_ordering_summaries,
             black_raw_search_annotation_dirty: vec![false; size * size],
             white_raw_search_annotation_dirty: vec![false; size * size],
             black_immediate_wins: immediate_wins_for_player(board, Color::Black),
@@ -105,6 +115,13 @@ impl RollingThreatFrontier {
         match player {
             Color::Black => &self.black_raw_search_annotations,
             Color::White => &self.white_raw_search_annotations,
+        }
+    }
+
+    fn raw_ordering_summaries_for(&self, player: Color) -> &[TacticalOrderingSummary] {
+        match player {
+            Color::Black => &self.black_raw_ordering_summaries,
+            Color::White => &self.white_raw_ordering_summaries,
         }
     }
 
@@ -463,6 +480,11 @@ impl RollingThreatFrontier {
                 policy.ordering_summary_for_legal_player(&self.board, player, mv),
                 FrontierAnnotationSource::DirtyRecompute,
             )
+        } else if self.board.config.variant != Variant::Renju || player != Color::Black {
+            (
+                self.raw_ordering_summaries_for(player)[index],
+                FrontierAnnotationSource::CleanCache,
+            )
         } else {
             (
                 policy.effective_ordering_summary_from_raw(
@@ -714,6 +736,16 @@ fn raw_search_annotations_for_player(board: &Board, player: Color) -> Vec<Tactic
         }
     }
     annotations
+}
+
+fn raw_ordering_summaries_from_annotations(
+    annotations: &[TacticalMoveAnnotation],
+) -> Vec<TacticalOrderingSummary> {
+    let policy = SearchThreatPolicy;
+    annotations
+        .iter()
+        .map(|annotation| policy.ordering_summary(annotation))
+        .collect()
 }
 
 fn raw_search_annotation_for_player(
@@ -1118,6 +1150,27 @@ mod tests {
         assert_eq!(
             summary,
             SearchThreatPolicy.ordering_summary_for_legal_player(&board, Color::White, probe)
+        );
+    }
+
+    #[test]
+    fn rolling_frontier_caches_raw_ordering_summaries_for_clean_lookup() {
+        let board = board_from_moves(Variant::Freestyle, &["H8", "A1", "I8", "A2"]);
+        let frontier = RollingThreatFrontier::from_board(&board);
+        let probe = mv("J8");
+        let probe_index = cell_index(board.config.board_size, probe);
+
+        assert!(!frontier.black_raw_search_annotation_dirty[probe_index]);
+        assert_eq!(
+            frontier.black_raw_ordering_summaries[probe_index],
+            SearchThreatPolicy.raw_ordering_summary_for_legal_player(&board, Color::Black, probe)
+        );
+        assert_eq!(
+            frontier.search_ordering_summary_for_legal_player_with_source(Color::Black, probe),
+            (
+                frontier.black_raw_ordering_summaries[probe_index],
+                FrontierAnnotationSource::CleanCache,
+            )
         );
     }
 
