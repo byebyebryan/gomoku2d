@@ -1807,27 +1807,19 @@ fn current_obligation_safety_policy(
     view: &impl ThreatView,
 ) -> SafetyFilterOutcome {
     let current = board.current_player;
-    let own_wins = moves
-        .iter()
-        .copied()
-        .filter(|&mv| creates_immediate_win(&view.search_annotation_for_player(current, mv)))
-        .collect::<Vec<_>>();
+    let own_wins = moves_in_set(moves, &view.immediate_winning_moves_for(current));
     if !own_wins.is_empty() {
         return SafetyFilterOutcome {
-            moves: filtered_or_original(moves, moves_in_set(moves, &own_wins)),
+            moves: filtered_or_original(moves, own_wins),
             work_units: moves.len() as u64,
         };
     }
 
     let opponent = current.opponent();
-    let opponent_wins = moves
-        .iter()
-        .copied()
-        .filter(|&mv| creates_immediate_win(&view.search_annotation_for_player(opponent, mv)))
-        .collect::<Vec<_>>();
+    let opponent_wins = moves_in_set(moves, &view.immediate_winning_moves_for(opponent));
     if !opponent_wins.is_empty() {
         return SafetyFilterOutcome {
-            moves: filtered_or_original(moves, moves_in_set(moves, &opponent_wins)),
+            moves: filtered_or_original(moves, opponent_wins),
             work_units: moves.len() as u64,
         };
     }
@@ -2606,11 +2598,11 @@ fn immediate_winning_moves_for_threat_view_mode(
 ) -> Vec<Move> {
     match mode {
         ThreatViewMode::Scan => scan_immediate_winning_moves_timed(state.board(), player, metrics),
-        ThreatViewMode::Rolling => rolling_immediate_winning_moves(state, player, metrics),
+        ThreatViewMode::Rolling => rolling_immediate_winning_moves_timed(state, player, metrics),
         ThreatViewMode::RollingShadow => {
             metrics.threat_view_shadow_checks += 1;
             let scan = scan_immediate_winning_moves_timed(state.board(), player, metrics);
-            let rolling = rolling_immediate_winning_moves(state, player, metrics);
+            let rolling = rolling_immediate_winning_moves_timed(state, player, metrics);
             if rolling != scan {
                 metrics.threat_view_shadow_mismatches += 1;
             }
@@ -2630,27 +2622,13 @@ fn scan_immediate_winning_moves_timed(
     moves
 }
 
-fn rolling_immediate_winning_moves(
+fn rolling_immediate_winning_moves_timed(
     state: &mut SearchState,
     player: Color,
     metrics: &mut SearchMetrics,
 ) -> Vec<Move> {
     let start = Instant::now();
-    let board = state.board();
-    let size = board.config.board_size;
-    let mut moves = Vec::new();
-    for row in 0..size {
-        for col in 0..size {
-            if !board.is_empty(row, col) {
-                continue;
-            }
-            let mv = Move { row, col };
-            if creates_immediate_win(&state.threat_view().search_annotation_for_player(player, mv))
-            {
-                moves.push(mv);
-            }
-        }
-    }
+    let moves = state.threat_view().immediate_winning_moves_for(player);
     metrics.record_threat_view_frontier_query(start.elapsed());
     moves
 }
@@ -2672,7 +2650,7 @@ fn rolling_narrow_corridor_reply_moves(
     metrics: &mut SearchMetrics,
 ) -> Vec<Move> {
     let defender = attacker.opponent();
-    let winning_squares = rolling_immediate_winning_moves(state, attacker, metrics);
+    let winning_squares = rolling_immediate_winning_moves_timed(state, attacker, metrics);
     if !winning_squares.is_empty() {
         let mut replies = Vec::new();
         for mv in winning_squares {
@@ -2680,7 +2658,7 @@ fn rolling_narrow_corridor_reply_moves(
                 push_unique_move(&mut replies, mv);
             }
         }
-        for mv in rolling_immediate_winning_moves(state, defender, metrics) {
+        for mv in rolling_immediate_winning_moves_timed(state, defender, metrics) {
             push_unique_move(&mut replies, mv);
         }
         return replies;
