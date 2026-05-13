@@ -516,6 +516,23 @@ Follow-up memo checkpoint:
   full frontier because current obligations need active existing-threat facts.
   The older opponent-reply probes are retired rather than kept as lab suffixes.
 
+Current-obligation safety checkpoint:
+
+| Config | Avg move time | Scan query time | Frontier query time | Frontier update/rebuild time | Shadow mismatches |
+|---|---:|---:|---:|---:|---:|
+| `search-d3+tactical-cap-8` | `21.5 ms` | `4.68s` | `0s` | `0s` | `0` |
+| `search-d3+tactical-cap-8+rolling-frontier-shadow` | `32.0 ms` | `4.52s` | `2.35s` | `0.40s` | `0` |
+| `search-d3+tactical-cap-8+rolling-frontier` | `15.5 ms` | `0s` | `2.59s` | `0.41s` | `0` |
+
+Interpretation:
+
+- The simplified safety gate removed the remaining scan-backed root tax from
+  rolling mode in this smoke.
+- Rolling mode is now a clear focused-smoke speed win for D3 cap8, but this is
+  still a lab suffix and not a product/default promotion.
+- The next durable checkpoint should be a clean full anchor tournament plus the
+  top-two replay-analysis report generated from that tournament.
+
 ## Benchmark suites
 
 ### Core

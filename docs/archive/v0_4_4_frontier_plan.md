@@ -331,3 +331,26 @@ before the root `SearchState` exists and needs active existing-threat facts,
 rolling safety builds a root-only full frontier instead of reusing the
 tactical-only search frontier. The retired opponent-reply probes should stay out
 of the parser unless a future experiment reintroduces them under a new name.
+
+## Current-Obligation Safety Checkpoint
+
+Replacing the old root safety probes with `current_obligation` moved the latest
+focused smoke from "rolling is promising but still paying scan tax" to "rolling
+is faster in the tested D3 cap8 lane":
+
+| Config | Avg move time | Scan query time | Frontier query time | Frontier update/rebuild time | Shadow mismatches |
+|---|---:|---:|---:|---:|---:|
+| `search-d3+tactical-cap-8` | `21.5 ms` | `4.68s` | `0s` | `0s` | `0` |
+| `search-d3+tactical-cap-8+rolling-frontier-shadow` | `32.0 ms` | `4.52s` | `2.35s` | `0.40s` | `0` |
+| `search-d3+tactical-cap-8+rolling-frontier` | `15.5 ms` | `0s` | `2.59s` | `0.41s` | `0` |
+
+The same tactical diagnostic sweep improved from `47/64` to `54/64` while
+keeping hard safety-gate cases at `16/16`. That is not enough to promote rolling
+as the default, but it is enough to justify freezing this checkpoint as the next
+baseline candidate.
+
+Before more `0.4.4` changes, generate a clean full anchor tournament and the
+companion top-two replay-analysis report from that clean tournament. The point
+is to capture the current baseline while provenance is clean, then make any
+next optimization compare against that artifact rather than against scattered
+scratch smokes.

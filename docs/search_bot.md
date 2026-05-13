@@ -196,36 +196,29 @@ not as a candidate preset. The useful refactor outcome is the scan-backed
 `ThreatView` seam in `gomoku-bot::tactical`, which gives rolling-frontier work a
 stable query contract without promoting the current scan-heavy portal behavior.
 
-`0.4.4` adds the first rolling-frontier seam behind that contract. The mode is
-correctness-first: search keeps board, hash, and the optional frontier
+`0.4.4` adds the first rolling-frontier implementation behind that contract. The
+mode is correctness-first: search keeps board, hash, and the optional frontier
 synchronized through one recursive `SearchState`, and rolling modes stay
-lab-only until they are both correct and cheaper than scan:
+lab-only until they are correct under the full reference workload:
 
 - `+rolling-frontier-shadow` records scan-vs-frontier parity for portal-entry
-  checks and tactical ordering annotations while scan-backed answers still drive
-  behavior. It also records scan time, frontier rebuild/update time, and
-  frontier query time for those checks.
+  checks, tactical ordering annotations, and current-obligation root safety
+  while scan-backed answers still drive behavior. It also records scan time,
+  frontier rebuild/update time, and frontier query time for those checks.
 - `+rolling-frontier` lets portal-entry checks and tactical ordering annotations
-  use the frontier-backed answer.
+  use the frontier-backed answer. Current-obligation safety also uses a
+  root-only full frontier in this mode because it needs active existing-threat
+  facts before recursive search state exists.
 
 Both suffixes are lab-only validation and instrumentation modes, not promoted
-bot configs. The first incremental checkpoint replaced board snapshot rebuilds
-with frontier deltas and reached zero shadow mismatches in a 24-game smoke, but
-Black Renju tactical annotations still refresh globally because their
-continuation-effectiveness filter can observe immediate wins elsewhere on the
-board. Plain scan mode does not maintain the frontier, so this cost does not
-touch the default bot path. Scan remains the reference/fallback implementation;
-rolling is added beside it behind the same `ThreatView` contract so parity
-checks, safe rollback, and targeted benchmarks stay cheap.
-
-This answered the first integration question negatively for the current
-scan-backed implementation: the semantics are cleaner, but the cost shape is
-not viable enough to promote. A rolling threat frontier is the future
-optimization boundary because it can make entry detection and reply enumeration
-cheap by updating local threat facts as moves are applied and undone. That
-should be driven by the selective-extension queries above, not by the analyzer's
-broader report needs. The likely sequence is scan-backed interface first,
-rolling implementation in shadow mode second, behavior switch last.
+bot configs. Incremental frontier deltas, lazy Renju filtering, per-state dirty
+annotation memoization, and the simplified `current_obligation` safety gate moved
+focused smoke results from "useful but slower" to a net rolling speed win for
+normal tactical search. The default bot path remains scan-backed until a clean
+full reference tournament and companion top-two analysis establish the current
+baseline. Scan remains the reference/fallback implementation; rolling is added
+beside it behind the same `ThreatView` contract so parity checks, safe rollback,
+and targeted benchmarks stay cheap.
 
 Search traces include both the result and the config. Abridged example:
 
@@ -462,9 +455,10 @@ scan-backed annotation still drives behavior while the frontier-backed answer is
 checked for parity. In rolling mode, tactical ordering can consume the
 frontier-backed annotation as a lab-only validation path. It can still pair with
 `child_limit` to test whether ordered tactical coverage lets alpha-beta search
-fewer children without changing candidate discovery. A full incremental
-frontier, where changed candidate masks and threat facts are updated through
-apply/undo, remains the next optimization step after parity is stable.
+fewer children without changing candidate discovery. The frontier now updates
+through apply/undo; the next optimization boundary is broader candidate-frontier
+maintenance and larger reference validation, not another eager full-board scan
+replacement.
 
 For `v0.4.1`, the strategic target is a practice bot that climbs a tactical
 ladder:
