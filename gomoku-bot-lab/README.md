@@ -165,9 +165,9 @@ Current frontier suffixes are intentionally narrow:
   tactical annotations, and current-obligation safety against scan-backed
   answers, report shadow mismatch counts, and record scan-vs-frontier
   update/query timing; behavior stays scan-backed.
-- `+rolling-frontier`: use the rolling-backed portal-entry answer and tactical
-  annotations. Current-obligation safety also uses a root-only full frontier in
-  this mode.
+- `+rolling-frontier`: use the rolling-backed portal-entry answer, corridor
+  continuation/reply queries, and tactical annotations. Current-obligation
+  safety also uses a root-only full frontier in this mode.
 
 Search now threads an optional frontier through recursive apply/undo with the
 board and hash. The default scan mode leaves that frontier disabled; the rolling
@@ -175,6 +175,9 @@ suffixes enable it for parity and cost measurement. Current smoke data reached
 zero shadow mismatches, and the latest focused smoke makes rolling faster than
 scan for `search-d3+tactical-cap-8`. Keep it lab-only until a clean full
 reference tournament and companion analysis report confirm the baseline.
+Non-shadow rolling search should keep threat-view scan counters at zero; scan
+queries are expected only in scan mode, rolling-shadow comparison, or explicit
+fallback diagnostics.
 
 ### Eval harness
 

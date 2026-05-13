@@ -192,9 +192,9 @@ budget exhaustion; `search-d3+corridor-own-d4-w3` lost `6-10` with `86.4%`
 budget exhaustion; and
 `search-d5+tactical-cap-8+corridor-own-d2-w3` lost `6-10` with `80.1%`
 budget exhaustion. Treat portal search as plumbing and instrumentation for now,
-not as a candidate preset. The useful refactor outcome is the scan-backed
-`ThreatView` seam in `gomoku-bot::tactical`, which gives rolling-frontier work a
-stable query contract without promoting the current scan-heavy portal behavior.
+not as a candidate preset. The useful refactor outcome is the `ThreatView` seam
+in `gomoku-bot::tactical`, which gives rolling-frontier work a stable query
+contract without promoting the current portal behavior.
 
 `0.4.4` adds the first rolling-frontier implementation behind that contract. The
 mode is correctness-first: search keeps board, hash, and the optional frontier
@@ -205,10 +205,11 @@ lab-only until they are correct under the full reference workload:
   checks, tactical ordering annotations, and current-obligation root safety
   while scan-backed answers still drive behavior. It also records scan time,
   frontier rebuild/update time, and frontier query time for those checks.
-- `+rolling-frontier` lets portal-entry checks and tactical ordering annotations
-  use the frontier-backed answer. Current-obligation safety also uses a
-  root-only full frontier in this mode because it needs active existing-threat
-  facts before recursive search state exists.
+- `+rolling-frontier` lets portal-entry checks, corridor continuation/reply
+  queries, and tactical ordering annotations use the frontier-backed answer.
+  Current-obligation safety also uses a root-only full frontier in this mode
+  because it needs active existing-threat facts before recursive search state
+  exists.
 
 Both suffixes are lab-only validation and instrumentation modes, not promoted
 bot configs. Incremental frontier deltas, lazy Renju filtering, per-state dirty
@@ -221,7 +222,9 @@ per-move budget; normal `1000 ms/move` runs are cost/strength samples and may
 shift because iterative deepening completes different work under the clock. Scan
 remains the reference/fallback implementation; rolling is added beside it behind
 the same `ThreatView` contract so parity checks, safe rollback, and targeted
-benchmarks stay cheap.
+benchmarks stay cheap. Non-shadow rolling search is expected to keep
+`threat_view_scan_queries == 0`; scan queries in rolling work should be limited
+to shadow comparison, tests, report/replay analysis, or explicit fallback paths.
 
 Search traces include both the result and the config. Abridged example:
 
@@ -459,9 +462,10 @@ checked for parity. In rolling mode, tactical ordering can consume the
 frontier-backed annotation as a lab-only validation path. It can still pair with
 `child_limit` to test whether ordered tactical coverage lets alpha-beta search
 fewer children without changing candidate discovery. The frontier now updates
-through apply/undo; the next optimization boundary is broader candidate-frontier
-maintenance and larger reference validation, not another eager full-board scan
-replacement.
+through apply/undo, and corridor continuation/reply queries now use the same
+threat-view contract instead of a pre-move attacker-rank scan surface. The next
+optimization boundary is broader candidate-frontier maintenance and larger
+reference validation, not another eager full-board scan replacement.
 
 For `v0.4.1`, the strategic target is a practice bot that climbs a tactical
 ladder:
@@ -507,10 +511,9 @@ the replay analyzer contract is documented in
 
 `0.4.3` keeps that restraint and stays in the lab before UI. The live-search
 attempt showed that corridor portals are not useful as-is, but it left the bot
-with shared tactical facts, honest portal metrics, and a scan-backed threat-view
-contract. Treat all corridor behavior as lab aliases or config flags until it
-survives tournament, search-cost, and replay-analysis checks. The working plan
-lives in
+with shared tactical facts, honest portal metrics, and a threat-view contract.
+Treat all corridor behavior as lab aliases or config flags until it survives
+tournament, search-cost, and replay-analysis checks. The working plan lives in
 [`archive/v0_4_3_corridor_bot_plan.md`](archive/v0_4_3_corridor_bot_plan.md).
 
 The focused tactical scenario corpus is documented in
