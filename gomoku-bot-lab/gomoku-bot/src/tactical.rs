@@ -346,6 +346,17 @@ impl CorridorThreatPolicy {
             .max()
             .unwrap_or(0)
     }
+
+    pub fn candidate_entry_rank(self, annotation: &TacticalMoveAnnotation) -> u8 {
+        annotation
+            .local_threats
+            .iter()
+            .filter(|fact| fact.player == annotation.player)
+            .filter(|fact| self.is_corridor_kind(fact.kind))
+            .map(|fact| self.rank(fact.kind))
+            .max()
+            .unwrap_or(0)
+    }
 }
 
 pub trait ThreatView {
@@ -355,6 +366,8 @@ pub trait ThreatView {
     fn search_annotation_for_move(&self, mv: Move) -> TacticalMoveAnnotation;
     /// Search-ordering tactical annotation for an explicit side before it is played.
     fn search_annotation_for_player(&self, player: Color, mv: Move) -> TacticalMoveAnnotation;
+    /// Rank for the local corridor entry a candidate would create before it is played.
+    fn candidate_corridor_entry_rank(&self, attacker: Color, mv: Move) -> u8;
     /// Active immediate/imminent corridor threats for `attacker` on this board.
     fn active_corridor_threats(&self, attacker: Color) -> Vec<LocalThreatFact>;
     /// True when `mv` is already occupied by `attacker` and that local move is
@@ -388,6 +401,11 @@ impl ThreatView for ScanThreatView<'_> {
 
     fn search_annotation_for_player(&self, player: Color, mv: Move) -> TacticalMoveAnnotation {
         SearchThreatPolicy.annotation_for_player(self.board, player, mv)
+    }
+
+    fn candidate_corridor_entry_rank(&self, attacker: Color, mv: Move) -> u8 {
+        let annotation = SearchThreatPolicy.annotation_for_player(self.board, attacker, mv);
+        CorridorThreatPolicy.candidate_entry_rank(&annotation)
     }
 
     fn active_corridor_threats(&self, attacker: Color) -> Vec<LocalThreatFact> {

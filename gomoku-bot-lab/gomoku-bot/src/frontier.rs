@@ -524,6 +524,11 @@ impl ThreatView for RebuildThreatFrontier {
         }
     }
 
+    fn candidate_corridor_entry_rank(&self, attacker: Color, mv: Move) -> u8 {
+        let annotation = self.search_annotation_for_player(attacker, mv);
+        CorridorThreatPolicy.candidate_entry_rank(&annotation)
+    }
+
     fn active_corridor_threats(&self, attacker: Color) -> Vec<LocalThreatFact> {
         let policy = CorridorThreatPolicy;
         let mut facts = self
@@ -584,6 +589,13 @@ impl ThreatView for RollingThreatFrontier {
 
     fn search_annotation_for_player(&self, player: Color, mv: Move) -> TacticalMoveAnnotation {
         self.search_annotation_for_player_with_source(player, mv).0
+    }
+
+    fn candidate_corridor_entry_rank(&self, attacker: Color, mv: Move) -> u8 {
+        let annotation = self
+            .search_annotation_for_player_with_source(attacker, mv)
+            .0;
+        CorridorThreatPolicy.candidate_entry_rank(&annotation)
     }
 
     fn active_corridor_threats(&self, attacker: Color) -> Vec<LocalThreatFact> {
@@ -890,6 +902,13 @@ mod tests {
                 probe.to_notation(),
                 player
             );
+            assert_eq!(
+                view.candidate_corridor_entry_rank(player, probe),
+                scan.candidate_corridor_entry_rank(player, probe),
+                "candidate entry rank mismatch at {} for {:?}",
+                probe.to_notation(),
+                player
+            );
         }
         assert_eq!(
             view.active_corridor_threats(attacker),
@@ -930,6 +949,13 @@ mod tests {
                         view.search_annotation_for_player(player, probe),
                         scan.search_annotation_for_player(player, probe),
                         "annotation mismatch at {} for {:?}",
+                        probe.to_notation(),
+                        player
+                    );
+                    assert_eq!(
+                        view.candidate_corridor_entry_rank(player, probe),
+                        scan.candidate_corridor_entry_rank(player, probe),
+                        "candidate entry rank mismatch at {} for {:?}",
                         probe.to_notation(),
                         player
                     );

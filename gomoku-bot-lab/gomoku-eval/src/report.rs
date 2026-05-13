@@ -442,6 +442,12 @@ pub struct StandingReport {
     #[serde(default)]
     pub search_tactical_annotations: u64,
     #[serde(default)]
+    pub tactical_lite_entry_rank_queries: u64,
+    #[serde(default)]
+    pub root_tactical_lite_entry_rank_queries: u64,
+    #[serde(default)]
+    pub search_tactical_lite_entry_rank_queries: u64,
+    #[serde(default)]
     pub threat_view_shadow_checks: u64,
     #[serde(default)]
     pub threat_view_shadow_mismatches: u64,
@@ -753,6 +759,12 @@ pub struct SideStatsReport {
     #[serde(default)]
     pub search_tactical_annotations: u64,
     #[serde(default)]
+    pub tactical_lite_entry_rank_queries: u64,
+    #[serde(default)]
+    pub root_tactical_lite_entry_rank_queries: u64,
+    #[serde(default)]
+    pub search_tactical_lite_entry_rank_queries: u64,
+    #[serde(default)]
     pub threat_view_shadow_checks: u64,
     #[serde(default)]
     pub threat_view_shadow_mismatches: u64,
@@ -904,6 +916,9 @@ struct SideStatsAccumulator {
     tactical_annotations: u64,
     root_tactical_annotations: u64,
     search_tactical_annotations: u64,
+    tactical_lite_entry_rank_queries: u64,
+    root_tactical_lite_entry_rank_queries: u64,
+    search_tactical_lite_entry_rank_queries: u64,
     threat_view_shadow_checks: u64,
     threat_view_shadow_mismatches: u64,
     threat_view_scan_queries: u64,
@@ -1011,6 +1026,12 @@ impl SideStatsAccumulator {
             self.root_tactical_annotations += trace_value_u64(metrics, "root_tactical_annotations");
             self.search_tactical_annotations +=
                 trace_value_u64(metrics, "search_tactical_annotations");
+            self.tactical_lite_entry_rank_queries +=
+                trace_value_u64(metrics, "tactical_lite_entry_rank_queries");
+            self.root_tactical_lite_entry_rank_queries +=
+                trace_value_u64(metrics, "root_tactical_lite_entry_rank_queries");
+            self.search_tactical_lite_entry_rank_queries +=
+                trace_value_u64(metrics, "search_tactical_lite_entry_rank_queries");
             self.threat_view_shadow_checks += trace_value_u64(metrics, "threat_view_shadow_checks");
             self.threat_view_shadow_mismatches +=
                 trace_value_u64(metrics, "threat_view_shadow_mismatches");
@@ -1178,6 +1199,10 @@ impl SideStatsAccumulator {
         self.tactical_annotations += stats.tactical_annotations;
         self.root_tactical_annotations += stats.root_tactical_annotations;
         self.search_tactical_annotations += stats.search_tactical_annotations;
+        self.tactical_lite_entry_rank_queries += stats.tactical_lite_entry_rank_queries;
+        self.root_tactical_lite_entry_rank_queries += stats.root_tactical_lite_entry_rank_queries;
+        self.search_tactical_lite_entry_rank_queries +=
+            stats.search_tactical_lite_entry_rank_queries;
         self.threat_view_shadow_checks += stats.threat_view_shadow_checks;
         self.threat_view_shadow_mismatches += stats.threat_view_shadow_mismatches;
         self.threat_view_scan_queries += stats.threat_view_scan_queries;
@@ -1338,6 +1363,9 @@ impl SideStatsAccumulator {
             tactical_annotations: self.tactical_annotations,
             root_tactical_annotations: self.root_tactical_annotations,
             search_tactical_annotations: self.search_tactical_annotations,
+            tactical_lite_entry_rank_queries: self.tactical_lite_entry_rank_queries,
+            root_tactical_lite_entry_rank_queries: self.root_tactical_lite_entry_rank_queries,
+            search_tactical_lite_entry_rank_queries: self.search_tactical_lite_entry_rank_queries,
             threat_view_shadow_checks: self.threat_view_shadow_checks,
             threat_view_shadow_mismatches: self.threat_view_shadow_mismatches,
             threat_view_scan_queries: self.threat_view_scan_queries,
@@ -1524,6 +1552,11 @@ fn standings(
                 tactical_annotations: side_stats.tactical_annotations,
                 root_tactical_annotations: side_stats.root_tactical_annotations,
                 search_tactical_annotations: side_stats.search_tactical_annotations,
+                tactical_lite_entry_rank_queries: side_stats.tactical_lite_entry_rank_queries,
+                root_tactical_lite_entry_rank_queries: side_stats
+                    .root_tactical_lite_entry_rank_queries,
+                search_tactical_lite_entry_rank_queries: side_stats
+                    .search_tactical_lite_entry_rank_queries,
                 threat_view_shadow_checks: side_stats.threat_view_shadow_checks,
                 threat_view_shadow_mismatches: side_stats.threat_view_shadow_mismatches,
                 threat_view_scan_queries: side_stats.threat_view_scan_queries,
@@ -2561,6 +2594,9 @@ fn compact_searchbot_feature_label(feature: &str) -> String {
     if let Some(cap) = feature.strip_prefix("tactical-cap-") {
         return format!("TCap{cap}");
     }
+    if let Some(cap) = feature.strip_prefix("tactical-lite-cap-") {
+        return format!("TLiteCap{cap}");
+    }
     if let Some(cap) = feature.strip_prefix("priority-cap-") {
         return format!("PriorityCap{cap}");
     }
@@ -2591,6 +2627,7 @@ fn compact_searchbot_feature_label(feature: &str) -> String {
         "rolling-frontier" => "Rolling".to_string(),
         "rolling-frontier-shadow" => "RollingShadow".to_string(),
         "tactical-first" => "Tactical".to_string(),
+        "tactical-lite" => "TLite".to_string(),
         "priority-first" => "Priority".to_string(),
         "no-safety" => "NoSafety".to_string(),
         "opponent-reply-search-probe" => "SearchProbe".to_string(),
@@ -4184,6 +4221,9 @@ mod tests {
             "tactical_annotations": 9,
             "root_tactical_annotations": 2,
             "search_tactical_annotations": 7,
+            "tactical_lite_entry_rank_queries": 11,
+            "root_tactical_lite_entry_rank_queries": 3,
+            "search_tactical_lite_entry_rank_queries": 8,
             "child_limit_applications": 4,
             "root_child_limit_applications": 0,
             "search_child_limit_applications": 4,
@@ -4259,6 +4299,9 @@ mod tests {
         assert_eq!(report.tactical_annotations, 9);
         assert_eq!(report.root_tactical_annotations, 2);
         assert_eq!(report.search_tactical_annotations, 7);
+        assert_eq!(report.tactical_lite_entry_rank_queries, 11);
+        assert_eq!(report.root_tactical_lite_entry_rank_queries, 3);
+        assert_eq!(report.search_tactical_lite_entry_rank_queries, 8);
         assert_eq!(report.child_limit_applications, 4);
         assert_eq!(report.search_child_limit_applications, 4);
         assert_eq!(report.child_cap_hits, 3);
@@ -4529,6 +4572,14 @@ mod tests {
         assert_eq!(
             compact_bot_label(&report, "search-d5+priority-first"),
             "SearchBot_D5+Priority"
+        );
+        assert_eq!(
+            compact_bot_label(&report, "search-d5+tactical-lite-cap-8"),
+            "SearchBot_D5+TLiteCap8"
+        );
+        assert_eq!(
+            compact_bot_label(&report, "search-d5+tactical-lite"),
+            "SearchBot_D5+TLite"
         );
         assert_eq!(
             compact_bot_label(&report, "search-d5+tactical-cap-8+pattern-eval"),
@@ -5197,6 +5248,9 @@ mod tests {
             tactical_annotations: 8,
             root_tactical_annotations: 2,
             search_tactical_annotations: 6,
+            tactical_lite_entry_rank_queries: 0,
+            root_tactical_lite_entry_rank_queries: 0,
+            search_tactical_lite_entry_rank_queries: 0,
             threat_view_shadow_checks: 0,
             threat_view_shadow_mismatches: 0,
             threat_view_scan_queries: 0,
@@ -5306,6 +5360,9 @@ mod tests {
             tactical_annotations: 8,
             root_tactical_annotations: 2,
             search_tactical_annotations: 6,
+            tactical_lite_entry_rank_queries: 0,
+            root_tactical_lite_entry_rank_queries: 0,
+            search_tactical_lite_entry_rank_queries: 0,
             threat_view_shadow_checks: 0,
             threat_view_shadow_mismatches: 0,
             threat_view_scan_queries: 0,

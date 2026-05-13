@@ -584,14 +584,16 @@ Interpretation:
 - The next useful optimization should focus on remaining dirty recompute cost
   or shared line/annotation work, not another clean summary cache.
 
-Priority ordering checkpoint:
+Priority and tactical-lite ordering checkpoint:
 
 Date: `2026-05-13`
 
 Priority ordering is a lab-only cheaper sibling of full tactical ordering. It
 keeps current-state hard tactics through immediate win/block masks, then orders
 quiet moves by TT move, center bias, and local density. It deliberately does not
-scan candidate-created threats.
+scan candidate-created threats. Tactical-lite is the middle tier: it keeps the
+same immediate win/block masks, asks the threat-view seam for candidate
+corridor-entry rank, then falls back to the same quiet heuristics.
 
 Focused Renju smokes, centered-suite openings, `4` opening plies,
 `1000 ms/move`:
@@ -602,6 +604,9 @@ Focused Renju smokes, centered-suite openings, `4` opening plies,
 | D3 cap8 priority vs tactical, `16` games | tactical wins `10-0-6` | tactical `12.42 ms`, priority `4.09 ms` | priority is about `3x` cheaper but still weaker |
 | D5 no-cap priority vs plain, `8` games | priority wins `5-2-1` | priority `562.21 ms`, plain `779.67 ms` | no-cap remains budget-sensitive, but priority improves ordering without tactical scans |
 | D5 priority rolling-shadow, `8` games | exact `4-0-4` | shadow `37.27 ms`, scan `26.50 ms` | zero shadow mismatches |
+| D3 priority/tactical-lite/tactical, `8` games/pair | all lanes `8-0-8` | priority `16.54 ms`, tactical-lite `45.73 ms`, tactical `48.01 ms` | D3 ordering is behavior-neutral in this smoke; tactical-lite costs close to full tactical |
+| D5 cap8 priority/tactical-lite/tactical, `8` games/pair | tactical `9-0-7`, tactical-lite `8-0-8`, priority `7-0-9` | priority `37.22 ms`, tactical-lite `150.92 ms`, tactical `149.74 ms` | tactical-lite lands between priority and tactical on result, but not on cost |
+| D5 tactical-lite rolling-shadow, `8` games | exact `4-0-4` | shadow `329.61 ms`, scan `77.84 ms` | zero shadow mismatches; shadow remains diagnostic-only |
 
 Interpretation:
 
@@ -609,8 +614,13 @@ Interpretation:
   than plain child cap, materially cheaper than full tactical cap.
 - It is not a replacement for full tactical ordering yet. Full tactical still
   wins the focused cap8 comparisons.
-- The next sweep should test priority cap4/cap8/cap16/no-cap against tactical
-  cap lanes before assuming the old cap8 optimum still holds.
+- Tactical-lite is validated as a behavior surface and rolling parity check, but
+  it is not a cost win yet. In scan mode its corridor-entry rank query still
+  does enough threat-view work that it sits near full tactical cost in the small
+  smokes.
+- The next sweep should test priority, tactical-lite, and full tactical
+  cap4/cap8/cap16/no-cap lanes before assuming the old cap8 optimum still
+  holds.
 
 ## Benchmark suites
 
@@ -788,12 +798,15 @@ From code inspection before the first benchmark pass:
 16. Add lab-only priority ordering as a cheaper alternative to full tactical
     ordering: hard-keep immediate wins/blocks, then order quiet moves by TT,
     center, and local density (`2026-05-13`)
+17. Add lab-only tactical-lite ordering as the middle tier: hard-keep immediate
+    wins/blocks, rank candidate corridor entries, then fall back to TT, center,
+    and local density (`2026-05-13`)
 
 ### Future work
 
 1. More incremental or localized evaluation
-2. Re-sweep priority versus tactical ordering across cap4/cap8/cap16/no-cap
-   lanes before treating cap8 as the durable optimum
+2. Re-sweep priority, tactical-lite, and full tactical ordering across
+   cap4/cap8/cap16/no-cap lanes before treating cap8 as the durable optimum
 3. Incremental candidate frontier maintenance
 4. Bitboard-aware helpers for any remaining full-cell-scan callers that become
    hot under profiling
