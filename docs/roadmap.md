@@ -309,10 +309,9 @@ become player-facing later.
 Corridor search is now too central to the advanced-strategy story to expose only
 as an analyzer report and then immediately jump to settings. The checkpoint
 answered the first live-bot integration question: scan-backed corridor portals
-are useful plumbing and instrumentation, but not yet a promotable strength
-feature. The durable output is unified tactical/corridor threat semantics,
-move-local portal entry detection, asymmetric own/opponent portal controls, and
-metrics that make the next cost problem visible.
+are not useful under the current bounded search budget. The durable output is
+unified tactical/corridor threat semantics, move-local portal entry detection,
+and metrics that make the cost problem visible.
 
 That release remains lab-first:
 
@@ -322,18 +321,16 @@ That release remains lab-first:
   published anchors
 - reinforce or optimize corridor search where the bot integration exposes
   obvious cost or correctness gaps
-- treat offensive/defensive behavior as side-specific corridor budget allocation,
-  not as arbitrary eval personality weights
+- treat offensive/defensive behavior as an analysis and ordering question, not
+  as another corridor-portal budget knob
 - keep UI, settings, and product preset work out of scope unless the lab result
   is clear enough to name
 
-`0.4.4` is the rolling-frontier lab pass, not the UI bridge. Corridor portals
-need cheap, reliable local threat facts before they can be a practical bot
-primitive. The `0.4.3` scan-backed portal suffixes now provide move-local entry
-semantics and useful cost metrics, but focused smoke checks are still slower,
-weaker, and budget-bound. The durable `0.4.3` result is therefore the
-scan-backed `ThreatView` seam and unified threat vocabulary, not a promoted
-corridor bot.
+`0.4.4` is the rolling-frontier lab pass, not the UI bridge. The portal line is
+retired as a candidate bot primitive for now: resume portals distorted scores,
+and proof-only portals were safer but still too expensive for too few terminal
+proofs. The durable `0.4.3` result is therefore the scan-backed `ThreatView`
+seam and unified threat vocabulary, not a promoted corridor bot.
 
 The `0.4.4` checkpoint treats rolling frontier as a correctness-sensitive cache
 architecture:

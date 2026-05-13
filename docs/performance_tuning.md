@@ -457,11 +457,11 @@ Date: `2026-05-12`
 
 Rolling frontier now has two feature modes:
 
-- `Full` keeps tactical annotations and per-origin move facts for corridor
-  portal entry checks.
+- `Full` keeps tactical annotations and per-origin move facts for retired
+  corridor portal diagnostics.
 - `TacticalOnly` keeps tactical annotations and dirty-axis tracking, but skips
-  move-fact maintenance. Normal search uses this mode when corridor portals are
-  disabled.
+  move-fact maintenance. Normal search uses this mode while the portal path is
+  retired.
 
 Search metrics now split rolling-frontier cost into delta capture, move-fact
 maintenance, dirty annotation marking, clean annotation lookup, dirty annotation
@@ -492,8 +492,8 @@ Interpretation:
   it.
 - Shadow mode is expectedly slower because it runs both scan and rolling.
 - Move-fact update counts are `0` in tactical-only rolling, which confirms
-  normal search no longer pays corridor-specific maintenance cost when portals
-  are off.
+  normal search no longer pays corridor-specific maintenance cost while the
+  portal path is retired.
 - Root safety and any still-scan-backed queries remain visible in the scan
   counters, so larger anchor runs should still be used before promoting rolling
   as a default.
@@ -516,9 +516,10 @@ Follow-up memo checkpoint:
   full frontier because current obligations need active existing-threat facts.
   The older opponent-reply probes are retired rather than kept as lab suffixes.
 - Corridor portal continuation now uses the selected threat view for
-  materialized attacker entries, immediate win checks, and defender replies. In
-  non-shadow rolling mode, this keeps the search-owned threat-view scan counter
-  at zero; shadow mode still runs both scan and rolling answers for parity.
+  materialized attacker entries, immediate win checks, and defender replies. The
+  path is retained only as lab diagnostics; in non-shadow rolling mode, it keeps
+  the search-owned threat-view scan counter at zero. Shadow mode still runs both
+  scan and rolling answers for parity.
 - Root win/block checks now use `ThreatView` for explicit-player annotations
   and immediate-win sets. Rolling mode answers immediate wins from a per-player
   index maintained through apply/undo, including `TacticalOnly` frontier mode,
@@ -835,7 +836,7 @@ From code inspection before the first benchmark pass:
     view while preserving the same tactical facts (`2026-05-04`)
 13. Split rolling frontier into full and tactical-only feature modes so normal
     search can cache tactical annotations without maintaining corridor
-    move-fact indexes while portals are disabled (`2026-05-12`)
+    move-fact indexes while the portal path is retired (`2026-05-12`)
 14. Route corridor continuation/reply queries through `ThreatView` and remove
     the pre-move attacker-rank scan surface from the rolling trait
     (`2026-05-12`)

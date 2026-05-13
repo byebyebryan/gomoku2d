@@ -12,7 +12,9 @@ problem is now structural: the bot asks more and more local-threat questions,
 while the implementation still rediscovers those facts through scans.
 
 `0.4.4` should not start by tuning another portal suffix. It should build the
-derived threat index that makes those suffixes plausible later.
+derived threat index that makes tactical ordering, safety checks, and future
+analysis-driven experiments cheaper. Corridor portals are now treated as retired
+lab evidence unless a later design supplies a meaningfully cheaper proof model.
 
 ## Goal
 
@@ -139,7 +141,8 @@ The first shadow consumers should be the current `ThreatView` queries:
 4. Rolling apply/undo frontier plus random sequence parity tests.
 5. Search shadow mode plus metrics.
 6. Optional opt-in rolling consumer for normal tactical ordering.
-7. Optional opt-in rolling consumer for corridor portal entry/reply paths.
+7. Optional opt-in rolling consumer for remaining corridor-query diagnostics,
+   without promoting portal variants as candidate bots.
 
 Stop after checkpoint 4 if parity is not exact. A wrong frontier is worse than
 a slow scan.
@@ -262,7 +265,7 @@ Shadow mismatches and budget exhaustion stayed at zero.
 The next checkpoint split the rolling frontier into feature modes:
 
 - `Full` keeps both tactical annotations and per-origin move facts, which is
-  still required for corridor portal entry checks.
+  still required only for retired corridor portal diagnostics.
 - `TacticalOnly` keeps tactical annotations and dirty-axis tracking, but skips
   per-origin move-fact maintenance. Normal search uses this mode when corridor
   portals are disabled.
@@ -411,8 +414,8 @@ Known remaining edges:
   fallback diagnostics.
 - `TacticalOnly` still carries safe fallback behavior for corridor queries, but
   portal-enabled rolling uses full frontier facts. Any unexpected fallback count,
-  immediate-win query cost, or shadow mismatch should be visible in reports
-  before promotion.
+  immediate-win query cost, or shadow mismatch should remain visible in reports
+  for diagnostics; it is not a promotion path by itself.
 
 The CLI now supports `--fail-on-shadow-mismatch` for tournament smokes. It
 writes the report first, then exits nonzero if the aggregated tournament report

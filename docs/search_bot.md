@@ -127,11 +127,9 @@ direct replies or counter-fours against opponent imminent threats. It does not
 generate candidates, run opponent-reply search, reorder moves, or cap the root.
 The retired `+corridor-q` leaf-quiescence experiment proved the shared corridor
 module could be called from search, but it was too expensive to keep as a lab
-axis. The current live corridor suffixes are opt-in and default-off:
-`+corridor-own-dN-wM` and `+corridor-opponent-dN-wM`. They test selective
-corridor extension, where a child move that enters a narrow corridor can follow
-that corridor and resume normal search at the exit state instead of spending
-ordinary depth on each forced ply.
+axis. The later portal suffixes are also retired as candidate bot knobs. They
+remain disabled by default and parseable only so old reports and focused
+diagnostics can be reproduced.
 
 These specs are not durable product identity, and they are not character bots
 yet. They exist so the lab can benchmark stable configs before deciding whether
@@ -142,94 +140,46 @@ the current anchor set.
 ## Corridor Integration
 
 `gomoku-bot` now owns a replay-independent corridor module alongside
-`SearchBot`. The earlier standalone `CorridorBot` bridge is retired. The first
-live search integration, `+corridor-q`, is also retired: it proved the shared
-corridor module could be called from `SearchBot`, but leaf quiescence was the
-wrong cost shape and is no longer accepted by the lab spec parser.
+`SearchBot`. The earlier standalone `CorridorBot` bridge is retired. The live
+search integrations are also retired as candidate presets:
 
-The retired leaf-quiescence experiment is not the intended durable integration
-shape. It probed many leaves that did not become useful corridor results. The
-`0.4.3` lab target moved to corridor search as a selective extension or
-shortcut:
+- `+corridor-q` was leaf quiescence. It probed too many leaves that fell back to
+  ordinary static evaluation.
+- `+corridor-own-dN-wM` and `+corridor-opponent-dN-wM` tested selective
+  child-move portal extension, including side-specific attacking and defensive
+  controls.
+- `+corridor-min-rank-N` and `+corridor-top-n-N` tried to restrict portal work
+  to ordered high-value candidates.
+- `+corridor-proof-only` avoided resume churn by using only terminal corridor
+  proofs and falling back to the original child search on non-terminal exits.
 
-1. Alpha-beta generates and orders candidate moves normally.
-2. After a child move is applied, the bot checks whether that move creates a
-   local immediate or imminent corridor entry.
-3. If no corridor entry exists, recursion proceeds normally with one depth
-   spent.
-4. If a corridor entry exists and the defender reply set is narrow enough, the
-   bot follows the corridor without charging ordinary search depth for each
-   forced ply.
-5. If the corridor reaches terminal win/loss, the terminal score is returned.
-6. If the corridor exits into unclear play, normal alpha-beta resumes from the
-   exit board.
-7. If the reply set is too wide, the corridor is treated as an exit and normal
-   search continues instead of trying to prove every branch.
+These passes produced useful instrumentation, but not a useful bot knob. Resume
+portals multiplied normal searches from corridor exits and distorted scores.
+Proof-only portals were safer, but still spent hundreds of branch probes and
+fallbacks per move for too few terminal proofs. In the latest `32` game
+head-to-head checks, D3 proof-only lost `13-19` to base D3 while costing roughly
+`176 ms/move` versus `60 ms/move`; D5+tactical-cap8 proof-only lost `15-17` to
+base D5+tactical-cap8 while costing roughly `175 ms/move` versus `116 ms/move`.
 
-The initial corridor width cap should be `3`, because broken and half-open three
-responses are the widest local threat replies we intend to treat as still
-"narrow." A maximum corridor ply limit remains a safety guard, but width is the
-main cost-control signal. If a branch opens wider than the local-threat model,
-it is no longer the kind of corridor that can safely act as a search shortcut.
+Keep these suffixes as disabled lab evidence only. Do not include portal
+variants in anchors, sweeps, product difficulty ladders, or settings UI. If a
+future diagnostic needs to rerun the path, use `+corridor-proof-only` first; the
+resume and static-exit modes are historical controls.
 
-The report keeps `max_depth` as the nominal alpha-beta budget and adds separate
-corridor reach metrics. A `search-d3` variant with portals is still a depth-`3`
-bot; the useful signal is whether corridor extra plies raise measured effective
-depth on forcing branches without hiding cost in unreported corridor work.
+`0.4.4` promotes the rolling-frontier implementation behind the `ThreatView`
+contract as the default threat-view backend after focused scan-vs-rolling
+controls and shadow parity checks. Search keeps board, hash, and the optional
+frontier synchronized through one recursive `SearchState`; scan remains
+available through `+scan-threat-view` for fallback and comparisons:
 
-Lab specs can enable each side independently:
-
-```text
-search-d5+corridor-own-d6-w3
-search-d5+corridor-opponent-d4-w3
-search-d5+corridor-own-d6-w3+corridor-opponent-d4-w3
-```
-
-These suffixes are not promoted candidates. Focused tests showed the first
-implementation is still too expensive:
-
-- `search-d3+corridor-own-d4-w3` lost to base `search-d3` at `1s`, `5s`, and
-  `10s` per move.
-- A shallower `search-d3+corridor-own-d1-w3` still hit budget on most moves.
-- `search-d5+tactical-cap-8+corridor-own-d2-w3` showed a small-sample strength
-  signal, but still hit budget every move.
-
-The measured issue is not simply corridor depth. The first portal entry check
-was too broad: it could treat any post-move active threat as a portal entry,
-even if the move did not create or materialize that threat. Accepted entries
-then produced many corridor exits and resumed normal searches.
-
-The current cleanup makes entry detection move-local, disables nested portal
-re-entry after a corridor resume, and reports portal acceptance/resume/exit
-metrics. Follow-up 16-game smoke checks still showed the wrong shape:
-`search-d3+corridor-own-d1-w3` lost `7-9` to base `search-d3` with `15.6%`
-budget exhaustion; `search-d3+corridor-own-d4-w3` lost `6-10` with `86.4%`
-budget exhaustion; and
-`search-d5+tactical-cap-8+corridor-own-d2-w3` lost `6-10` with `80.1%`
-budget exhaustion. Treat portal search as plumbing and instrumentation for now,
-not as a candidate preset. The useful refactor outcome is the `ThreatView` seam
-in `gomoku-bot::tactical`, which gives rolling-frontier work a stable query
-contract without promoting the current portal behavior.
-
-The current follow-up experiment is `+corridor-proof-only`. It keeps the same
-entry gates, but a corridor can only replace normal search when it reaches a
-terminal proof. Depth, width, and neutral exits increment exit/fallback metrics
-and then run the original child search once, avoiding the resume churn that made
-the first portal shape distort scores.
-
-`0.4.4` promotes the rolling-frontier implementation behind that contract as the
-default threat-view backend after focused scan-vs-rolling controls and shadow
-parity checks. Search keeps board, hash, and the optional frontier synchronized
-through one recursive `SearchState`; scan remains available through
-`+scan-threat-view` for fallback and comparisons:
-
-- `+rolling-frontier-shadow` records scan-vs-frontier parity for portal-entry
-  checks, tactical ordering annotations, and current-obligation root safety
-  while scan-backed answers still drive behavior. It also records scan time,
-  frontier rebuild/update time, and frontier query time for those checks.
+- `+rolling-frontier-shadow` records scan-vs-frontier parity for tactical
+  ordering annotations, current-obligation root safety, and any remaining
+  corridor diagnostic queries while scan-backed answers still drive behavior. It
+  also records scan time, frontier rebuild/update time, and frontier query time
+  for those checks.
 - `+rolling-frontier` explicitly selects the default frontier-backed answer for
-  portal-entry checks, corridor continuation/reply queries, root win/block
-  checks, and tactical ordering annotations.
+  tactical ordering annotations, root win/block checks, and any remaining
+  corridor diagnostic queries.
 - `+scan-threat-view` forces the scan-backed threat view for fallback and
   comparison runs.
 

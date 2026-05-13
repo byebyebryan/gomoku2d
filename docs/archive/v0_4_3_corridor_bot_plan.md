@@ -66,8 +66,8 @@ Current implementation note:
   probes too many depth-0 positions that ultimately fall back to static eval.
 - The next candidate became default-off portal suffixes that spend corridor
   work only after a concrete move appears to enter or continue a forcing line.
-  That shape is still correct, but the first implementation over-accepts portal
-  entries and needs cleanup before promotion.
+  Later cleanup made the measurements honest, but the shape still did not
+  survive cost/strength checks.
 
 ## Corridor Shortcut Design
 
@@ -347,3 +347,17 @@ Useful comparisons:
 
 In all cases, the eventual UI slice should have fewer raw knobs and clearer
 product language than it would have had immediately after `0.4.2`.
+
+## Final Outcome
+
+The accepted outcome is rejection/deferment of corridor portals as a live bot
+feature under the current bounded search budget. The portal work remains useful
+as lab evidence and as pressure that produced shared tactical facts,
+move-local corridor semantics, the `ThreatView` seam, and honest cost metrics.
+It should not be promoted into anchors, product presets, or UI settings.
+
+The least misleading retained diagnostic shape is `+corridor-proof-only`, which
+uses only terminal corridor proofs and falls back to the original child search
+for non-terminal exits. Even that shape stayed slower and did not outperform
+the base anchors in focused head-to-head runs. Treat resume/static portal modes
+as historical controls only.

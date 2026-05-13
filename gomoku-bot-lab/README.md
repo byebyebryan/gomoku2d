@@ -150,22 +150,18 @@ interesting as an efficiency tweak for `D3 + pattern-eval`. Treat these as lab
 candidates, not product presets yet. Corridor-search strategy is documented in
 [`../docs/corridor_search.md`](../docs/corridor_search.md).
 
-The current `0.4.3` lab slice is testing corridor search inside bot behavior
-before exposing more web settings. The first opt-in portal suffixes are
-default-off and are not promoted candidates yet:
-`+corridor-own-dN-wM` and `+corridor-opponent-dN-wM`. Early focused runs show
-the plumbing works, but the first implementation was too expensive because
-entry detection was too broad and accepted portals created too many resumed
-searches. The current checkpoint tightens portal entry to the candidate move,
-disables nested re-entry after a corridor resume, and surfaces portal
-acceptance/resume/exit metrics in reports. The next probe is
-`+corridor-proof-only`, which only uses a corridor when it proves a terminal
-win/loss; non-terminal exits fall back to the original child search instead of
-resuming from inside the corridor. It also adds a scan-backed
-`ThreatView` seam so future rolling-frontier work can replace scans behind a
-stable query contract. Focused post-cleanup smoke runs still lost to the base
-anchors and remained budget-bound, so keep all corridor knobs as lab
-aliases/config flags until cheaper threat facts make the portal model practical.
+The `0.4.3` lab slice tested corridor search inside bot behavior before
+exposing more web settings. The result is useful evidence but not a candidate
+bot direction. `+corridor-own-dN-wM`, `+corridor-opponent-dN-wM`,
+rank/top-N gates, and `+corridor-proof-only` remain disabled lab suffixes for
+reproducing old runs, but focused checks stayed slower or weaker than the base
+anchors. Proof-only avoided the worst resume churn, yet still paid hundreds of
+branch probes and fallbacks per move for too few terminal proofs. Keep corridor
+portals out of anchors, sweeps, difficulty ladders, and UI work.
+
+The durable output is the scan-backed `ThreatView` seam, unified tactical facts,
+and honest portal metrics. Those pieces let future rolling-frontier work replace
+scans behind a stable query contract without promoting the failed portal shape.
 The working plan lives in
 [`../docs/archive/v0_4_3_corridor_bot_plan.md`](../docs/archive/v0_4_3_corridor_bot_plan.md).
 
@@ -176,13 +172,13 @@ same `ThreatView` seam, while shadow remains validation-only. The working plan l
 
 Current frontier suffixes are intentionally narrow:
 
-- `+rolling-frontier-shadow`: compare rolling-backed portal-entry answers,
-  tactical annotations, and current-obligation safety against scan-backed
-  answers, report shadow mismatch counts, and record scan-vs-frontier
-  update/query timing; behavior stays scan-backed.
-- `+rolling-frontier`: explicitly use the default rolling-backed portal-entry answer, corridor
-  continuation/reply queries, indexed immediate-win checks, root win/block
-  checks, and tactical annotations. Current-obligation safety also uses a
+- `+rolling-frontier-shadow`: compare rolling-backed tactical annotations,
+  current-obligation safety, and any remaining corridor diagnostic queries
+  against scan-backed answers, report shadow mismatch counts, and record
+  scan-vs-frontier update/query timing; behavior stays scan-backed.
+- `+rolling-frontier`: explicitly use the default rolling-backed tactical
+  annotations, indexed immediate-win checks, root win/block checks, and any
+  remaining corridor diagnostic queries. Current-obligation safety also uses a
   root-only full frontier in this mode.
 - `+scan-threat-view`: force the scan-backed threat view for fallback and
   comparison runs.
