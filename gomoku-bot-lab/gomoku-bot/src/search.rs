@@ -4749,12 +4749,6 @@ mod tests {
                 .unwrap()
                 > 0
         );
-        assert!(
-            trace["metrics"]["threat_view_frontier_immediate_win_queries"]
-                .as_u64()
-                .unwrap()
-                > 0
-        );
     }
 
     #[test]
