@@ -30,8 +30,10 @@ solves it cheaply.
 
 ## Expected Moves
 
-Each active case defines an expected move set. A config passes the case only when
-the chosen move is in that set.
+Each active case defines an expected move set. A hard-gate case passes only when
+the chosen move is in that set. A diagnostic case records a hit or miss against
+the same expected set, but a miss is a bot-behavior signal rather than a test
+failure.
 
 Renju legality-only positions are intentionally not active tactical gates. They
 belong in core/search legality coverage unless they test a real tactical
@@ -47,9 +49,11 @@ metadata explains what the case is trying to measure:
 - `shape`: the primary expected-move shape when the case has one. Priority
   cases may contain other competing shapes on the board.
 
-The JSON report uses schema version `3`. Each result records those metadata
-fields, and the report includes grouped summaries by role, layer, and intent so
-hard-gate failures do not get buried inside diagnostic misses.
+The JSON report uses schema version `4`. Each result records those metadata
+fields, `matched_expected`, and a role-aware `status`: `pass`, `fail`, `hit`, or
+`miss`. Top-level summaries split hard-gate pass/fail counts from diagnostic
+hit/miss counts so hard-gate failures do not get buried inside diagnostic
+misses.
 
 ## Tactical Layers
 
@@ -260,7 +264,7 @@ Exact board prints are included in the case list below.
 
 ```text
     A B C D E F G H I J K L M N O
-15  . . . . . . . . . . . . . . .  15
+15  W . . . . . . . . . . . . . .  15
 14  . . . . . . . . . . . . . . .  14
 13  . . . . . . . . . . . . . . .  13
 12  . . . . . . . . . . . . . . .  12
@@ -274,7 +278,7 @@ Exact board prints are included in the case list below.
  4  . . . . . . . . . . . . . . .  4
  3  . . . . . . . . . . . . . . .  3
  2  . . . . . . . . . . . . . . .  2
- 1  W . W . W . . . . . . . . . .  1
+ 1  W . . . . . . . . . . . . . W  1
     A B C D E F G H I J K L M N O
 ```
 
@@ -289,7 +293,7 @@ Exact board prints are included in the case list below.
 
 ```text
     A B C D E F G H I J K L M N O
-15  . . . . . . . . . . . . . . .  15
+15  . . . . . . . . . . . . . . W  15
 14  . . . . . . . . . . . . . . .  14
 13  . . . . . . . . . . . . . . .  13
 12  . . . . . . . . . . . . . . .  12
@@ -303,7 +307,7 @@ Exact board prints are included in the case list below.
  4  . . . . . . . . . . . . . . .  4
  3  . . . . . . . . . . . . . . .  3
  2  . . . . . . . . . . . . . . .  2
- 1  W . W . . . . . . . . . . . .  1
+ 1  W . . . . . . . . . . . . . .  1
     A B C D E F G H I J K L M N O
 ```
 
@@ -347,7 +351,7 @@ Exact board prints are included in the case list below.
 
 ```text
     A B C D E F G H I J K L M N O
-15  . . . . . . . . . . . . . . .  15
+15  W . . . . . . . . . . . . . .  15
 14  . . . . . . . . . . . . . . .  14
 13  . . . . . . . . . . . . . . .  13
 12  . . . . . . . . . . . . . . .  12
@@ -361,7 +365,7 @@ Exact board prints are included in the case list below.
  4  . . . . . . . . . . . . . . .  4
  3  . . . . . . . . . . . . . . .  3
  2  . . . . . . . . . . . . . . .  2
- 1  W . W . W . . . . . . . . . .  1
+ 1  W . . . . . . . . . . . . . W  1
     A B C D E F G H I J K L M N O
 ```
 
@@ -419,7 +423,7 @@ Exact board prints are included in the case list below.
  4  . . . . . . . . . . . . . . .  4
  3  . . . . . . . . . . . . . . .  3
  2  . . . . . . . . . . . . . . .  2
- 1  W . W . . . . . . . . . . . .  1
+ 1  W . . . . . . . . . . . . . W  1
     A B C D E F G H I J K L M N O
 ```
 
@@ -448,7 +452,7 @@ Exact board prints are included in the case list below.
  4  . . . . . . . . . . . . . . .  4
  3  . . . . . . . . . . . . . . .  3
  2  . . . . . . . . . . . . . . .  2
- 1  W . W . . . . . . . . . . . .  1
+ 1  W . . . . . . . . . . . . . W  1
     A B C D E F G H I J K L M N O
 ```
 
@@ -535,7 +539,7 @@ Exact board prints are included in the case list below.
  4  . . . . . . . . . . . . . . .  4
  3  . . . . . . . . . . . . . . .  3
  2  . . . . . . . . . . . . . . .  2
- 1  W . W . . . . . . . . . . . .  1
+ 1  W . . . . . . . . . . . . . W  1
     A B C D E F G H I J K L M N O
 ```
 
