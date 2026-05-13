@@ -2201,10 +2201,10 @@ impl ThreatViewHealthTotals {
     }
 
     fn frontier_update_ns(&self) -> u64 {
+        // `frontier_rebuild_ns` is the total frontier construction/apply/undo
+        // timing recorded by search; the delta/move-fact/dirty timings below
+        // are subparts of apply/undo work, not additive.
         self.frontier_rebuild_ns
-            + self.frontier_delta_capture_ns
-            + self.frontier_move_fact_update_ns
-            + self.frontier_annotation_dirty_mark_ns
     }
 
     fn frontier_annotation_query_ns(&self) -> u64 {
@@ -3862,6 +3862,8 @@ mod tests {
             sample_standing_with_search_costs("search-d7+tactical-cap-8+rolling-frontier");
         rolling.avg_search_time_ms = 75.0;
         rolling.avg_nodes = 1800.0;
+        rolling.threat_view_frontier_rebuilds = 20;
+        rolling.threat_view_frontier_rebuild_ns = 900_000;
         rolling.threat_view_frontier_queries = 40;
         rolling.threat_view_frontier_query_ns = 900_000;
         rolling.threat_view_frontier_immediate_win_queries = 6;
@@ -3893,7 +3895,7 @@ mod tests {
         assert!(html.contains("0 mismatches / 0 checks"));
         assert!(html.contains("<article class=\"health-card\"><span>Scan</span>"));
         assert!(html.contains("<article class=\"health-card\"><span>Frontier</span>"));
-        assert!(html.contains("40 queries / 6 wins /"));
+        assert!(html.contains("40 queries / 6 wins / 900.0 us update"));
         assert!(html.contains("<article class=\"health-card\"><span>Annotation</span>"));
         assert!(html.contains("<b>SearchBot_D7+TCap8+Rolling vs scan</b>"));
         assert!(html.contains("75.0 ms vs 100.0 ms (-25.0%)"));

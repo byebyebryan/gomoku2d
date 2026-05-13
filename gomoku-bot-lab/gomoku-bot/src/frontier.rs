@@ -4,7 +4,7 @@ use gomoku_core::{Board, Color, GameResult, Move, MoveError, DIRS};
 
 use crate::tactical::{
     raw_local_threat_facts_at_existing_move, raw_local_threat_facts_for_player,
-    CorridorThreatPolicy, LocalThreatFact, LocalThreatKind, ScanThreatView, SearchThreatPolicy,
+    CorridorThreatPolicy, LocalThreatFact, ScanThreatView, SearchThreatPolicy,
     TacticalMoveAnnotation, ThreatView,
 };
 
@@ -56,6 +56,8 @@ pub struct RollingThreatFrontier {
     white_raw_search_annotation_dirty: Vec<bool>,
     black_immediate_wins: Vec<bool>,
     white_immediate_wins: Vec<bool>,
+    black_immediate_win_dirty: Vec<bool>,
+    white_immediate_win_dirty: Vec<bool>,
     undo_stack: Vec<FrontierDelta>,
 }
 
@@ -64,7 +66,7 @@ struct FrontierDelta {
     mv: Move,
     previous_move_facts: Vec<(Color, usize, Vec<LocalThreatFact>)>,
     previous_annotation_dirty: Vec<(Color, usize, bool)>,
-    previous_immediate_wins: Vec<(Color, usize, bool)>,
+    previous_immediate_wins: Vec<(Color, usize, bool, bool)>,
 }
 
 impl RollingThreatFrontier {
@@ -89,6 +91,8 @@ impl RollingThreatFrontier {
             white_raw_search_annotation_dirty: vec![false; size * size],
             black_immediate_wins: immediate_wins_for_player(board, Color::Black),
             white_immediate_wins: immediate_wins_for_player(board, Color::White),
+            black_immediate_win_dirty: vec![false; size * size],
+            white_immediate_win_dirty: vec![false; size * size],
             undo_stack: Vec::with_capacity(size * size),
         }
     }
@@ -146,6 +150,20 @@ impl RollingThreatFrontier {
         }
     }
 
+    fn immediate_win_dirty_for(&self, player: Color) -> &[bool] {
+        match player {
+            Color::Black => &self.black_immediate_win_dirty,
+            Color::White => &self.white_immediate_win_dirty,
+        }
+    }
+
+    fn immediate_win_dirty_for_mut(&mut self, player: Color) -> &mut [bool] {
+        match player {
+            Color::Black => &mut self.black_immediate_win_dirty,
+            Color::White => &mut self.white_immediate_win_dirty,
+        }
+    }
+
     fn capture_delta(&self, mv: Move) -> (FrontierDelta, Duration) {
         let start = Instant::now();
         let affected_cells = affected_axis_cells(&self.board, mv);
@@ -164,11 +182,15 @@ impl RollingThreatFrontier {
                     index,
                     self.raw_search_annotation_dirty_for(player)[index],
                 ));
-                previous_immediate_wins.push((
-                    player,
-                    index,
-                    self.immediate_wins_for(player)[index],
-                ));
+            }
+        }
+
+        for affected in affected_immediate_win_cells(&self.board, mv) {
+            let index = cell_index(self.board.config.board_size, affected);
+            for player in [Color::Black, Color::White] {
+                let wins = self.immediate_wins_for(player);
+                let dirty = self.immediate_win_dirty_for(player);
+                previous_immediate_wins.push((player, index, wins[index], dirty[index]));
             }
         }
 
@@ -209,10 +231,8 @@ impl RollingThreatFrontier {
             Some(start.elapsed())
         };
 
-        for &(player, index, _) in &delta.previous_immediate_wins {
-            let mv = move_from_index(size, index);
-            let is_win = is_immediate_win_for_player(&self.board, player, mv);
-            self.immediate_wins_for_mut(player)[index] = is_win;
+        for &(player, index, _, _) in &delta.previous_immediate_wins {
+            self.immediate_win_dirty_for_mut(player)[index] = true;
         }
 
         FrontierUpdateTimings {
@@ -245,8 +265,9 @@ impl RollingThreatFrontier {
             Some(start.elapsed())
         };
 
-        for (player, index, is_win) in delta.previous_immediate_wins {
+        for (player, index, is_win, was_dirty) in delta.previous_immediate_wins.into_iter().rev() {
             self.immediate_wins_for_mut(player)[index] = is_win;
+            self.immediate_win_dirty_for_mut(player)[index] = was_dirty;
         }
 
         FrontierUpdateTimings {
@@ -318,6 +339,36 @@ impl RollingThreatFrontier {
 
     pub fn undo_move(&mut self, mv: Move) {
         let _ = self.undo_move_profiled(mv);
+    }
+
+    pub(crate) fn immediate_winning_moves_for_cached(&mut self, player: Color) -> Vec<Move> {
+        if self.board.result != GameResult::Ongoing {
+            return Vec::new();
+        }
+        let size = self.board.config.board_size;
+        let mut moves = Vec::new();
+        for index in 0..size * size {
+            let is_win = if self.immediate_win_dirty_for(player)[index] {
+                let mv = move_from_index(size, index);
+                let old_win = self.immediate_wins_for(player)[index];
+                let old_dirty = self.immediate_win_dirty_for(player)[index];
+                let is_win = is_immediate_win_for_player(&self.board, player, mv);
+                if let Some(delta) = self.undo_stack.last_mut() {
+                    delta
+                        .previous_immediate_wins
+                        .push((player, index, old_win, old_dirty));
+                }
+                self.immediate_wins_for_mut(player)[index] = is_win;
+                self.immediate_win_dirty_for_mut(player)[index] = false;
+                is_win
+            } else {
+                self.immediate_wins_for(player)[index]
+            };
+            if is_win {
+                moves.push(move_from_index(size, index));
+            }
+        }
+        moves
     }
 
     pub fn search_annotation_for_move_with_source(
@@ -448,7 +499,13 @@ impl ThreatView for RollingThreatFrontier {
         }
         let size = self.board.config.board_size;
         let mut moves = Vec::new();
-        for (index, is_win) in self.immediate_wins_for(player).iter().copied().enumerate() {
+        for index in 0..size * size {
+            let is_win = if self.immediate_win_dirty_for(player)[index] {
+                let mv = move_from_index(size, index);
+                is_immediate_win_for_player(&self.board, player, mv)
+            } else {
+                self.immediate_wins_for(player)[index]
+            };
             if is_win {
                 moves.push(move_from_index(size, index));
             }
@@ -548,31 +605,14 @@ fn immediate_wins_for_player(board: &Board, player: Color) -> Vec<bool> {
     if board.result != GameResult::Ongoing {
         return wins;
     }
-    for row in 0..size {
-        for col in 0..size {
-            let mv = Move { row, col };
-            wins[cell_index(size, mv)] = is_immediate_win_for_player(board, player, mv);
-        }
+    for mv in board.immediate_winning_moves_for(player) {
+        wins[cell_index(size, mv)] = true;
     }
     wins
 }
 
 fn is_immediate_win_for_player(board: &Board, player: Color, mv: Move) -> bool {
-    if mv.row >= board.config.board_size
-        || mv.col >= board.config.board_size
-        || !board.is_empty(mv.row, mv.col)
-        || board.result != GameResult::Ongoing
-    {
-        return false;
-    }
-    creates_immediate_win(&SearchThreatPolicy.annotation_for_player(board, player, mv))
-}
-
-fn creates_immediate_win(annotation: &TacticalMoveAnnotation) -> bool {
-    annotation
-        .local_threats
-        .iter()
-        .any(|fact| fact.kind == LocalThreatKind::Five)
+    board.is_immediate_winning_move_for(mv, player)
 }
 
 fn local_corridor_entry_rank_from_facts<'a>(
@@ -657,6 +697,38 @@ fn affected_axis_cells(board: &Board, mv: Move) -> Vec<Move> {
                 }
                 row += dr * direction;
                 col += dc * direction;
+            }
+        }
+    }
+
+    cells
+}
+
+fn affected_immediate_win_cells(board: &Board, mv: Move) -> Vec<Move> {
+    let size = board.config.board_size;
+    if size == 0 || mv.row >= size || mv.col >= size {
+        return Vec::new();
+    }
+
+    let radius = board.config.win_length as isize;
+    let mut seen = vec![false; size * size];
+    let mut cells = Vec::new();
+
+    for (dr, dc) in DIRS {
+        for step in -radius..=radius {
+            let row = mv.row as isize + dr * step;
+            let col = mv.col as isize + dc * step;
+            if row < 0 || col < 0 || row >= size as isize || col >= size as isize {
+                continue;
+            }
+            let affected = Move {
+                row: row as usize,
+                col: col as usize,
+            };
+            let index = cell_index(size, affected);
+            if !seen[index] {
+                seen[index] = true;
+                cells.push(affected);
             }
         }
     }
@@ -1053,6 +1125,63 @@ mod tests {
 
         board.undo_move(terminal);
         frontier.undo_move(terminal);
+
+        assert_eq!(
+            frontier.immediate_winning_moves_for(Color::Black),
+            ScanThreatView::new(&board).immediate_winning_moves_for(Color::Black)
+        );
+    }
+
+    #[test]
+    fn immediate_win_cache_recomputes_dirty_cells_lazily() {
+        let mut board = board_from_moves(Variant::Renju, &["H8", "A1", "I8", "A2", "J8", "A3"]);
+        let mut frontier = RollingThreatFrontier::from_board_with_features(
+            &board,
+            RollingFrontierFeatures::TacticalOnly,
+        );
+        let played = mv("K8");
+        let winning_probe = mv("L8");
+        let winning_index = cell_index(board.config.board_size, winning_probe);
+
+        board.apply_move(played).unwrap();
+        frontier.apply_move(played).unwrap();
+
+        assert!(
+            frontier.black_immediate_win_dirty[winning_index],
+            "apply should mark affected immediate-win cache entries dirty instead of recomputing eagerly"
+        );
+
+        let white_reply = mv("A4");
+        board.apply_move(white_reply).unwrap();
+        frontier.apply_move(white_reply).unwrap();
+
+        assert_eq!(
+            frontier.immediate_winning_moves_for_cached(Color::Black),
+            ScanThreatView::new(&board).immediate_winning_moves_for(Color::Black)
+        );
+        assert!(
+            !frontier.black_immediate_win_dirty[winning_index],
+            "query should refresh and clean dirty immediate-win entries"
+        );
+
+        board.undo_move(white_reply);
+        frontier.undo_move(white_reply);
+        assert!(
+            frontier.black_immediate_win_dirty[winning_index],
+            "undo should restore dirty state inherited from the parent node"
+        );
+
+        assert_eq!(
+            frontier.immediate_winning_moves_for_cached(Color::Black),
+            ScanThreatView::new(&board).immediate_winning_moves_for(Color::Black)
+        );
+        assert!(
+            !frontier.black_immediate_win_dirty[winning_index],
+            "parent node query should be able to refresh the restored dirty entry"
+        );
+
+        board.undo_move(played);
+        frontier.undo_move(played);
 
         assert_eq!(
             frontier.immediate_winning_moves_for(Color::Black),
