@@ -1952,13 +1952,6 @@ fn creates_counter_four(annotation: TacticalMoveAnnotation) -> bool {
     })
 }
 
-fn creates_immediate_win(annotation: &TacticalMoveAnnotation) -> bool {
-    annotation
-        .local_threats
-        .iter()
-        .any(|fact| fact.kind == LocalThreatKind::Five)
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct OrderedMove {
     mv: Move,
@@ -2040,22 +2033,26 @@ fn order_moves_tactical_first(
     metrics: &mut SearchMetrics,
     phase: SearchMetricPhase,
 ) -> Vec<OrderedMove> {
+    if moves.is_empty() {
+        return Vec::new();
+    }
+
+    let board_size = state.board().config.board_size;
     let opponent = state.board().current_player.opponent();
+    let opponent_immediate_wins = immediate_winning_move_mask_for_threat_view_mode(
+        state,
+        opponent,
+        threat_view_mode,
+        metrics,
+    );
     let mut scored = moves
         .into_iter()
         .enumerate()
         .map(|(index, mv)| {
             let annotation =
                 annotate_legal_tactical_move_counted(state, mv, threat_view_mode, metrics, phase);
-            let opponent_annotation = tactical_annotation_for_player_threat_view_mode(
-                state,
-                opponent,
-                mv,
-                threat_view_mode,
-                metrics,
-            );
-            let (score, must_keep) =
-                tactical_ordering_score(&annotation, creates_immediate_win(&opponent_annotation));
+            let immediate_block = move_mask_contains(&opponent_immediate_wins, board_size, mv);
+            let (score, must_keep) = tactical_ordering_score(&annotation, immediate_block);
             (index, mv, score, must_keep, Some(mv) == tt_move)
         })
         .collect::<Vec<_>>();
@@ -2069,6 +2066,24 @@ fn order_moves_tactical_first(
         .into_iter()
         .map(|(_, mv, _, must_keep, _)| OrderedMove { mv, must_keep })
         .collect()
+}
+
+fn immediate_winning_move_mask_for_threat_view_mode(
+    state: &mut SearchState,
+    player: Color,
+    mode: ThreatViewMode,
+    metrics: &mut SearchMetrics,
+) -> Vec<bool> {
+    let size = state.board().config.board_size;
+    let mut mask = vec![false; size * size];
+    for mv in immediate_winning_moves_for_threat_view_mode(state, player, mode, metrics) {
+        mask[mv.row * size + mv.col] = true;
+    }
+    mask
+}
+
+fn move_mask_contains(mask: &[bool], board_size: usize, mv: Move) -> bool {
+    mv.row < board_size && mv.col < board_size && mask[mv.row * board_size + mv.col]
 }
 
 fn tactical_ordering_score(
@@ -4278,6 +4293,69 @@ mod tests {
             vec![mv("E1"), mv("K8"), mv("B2")]
         );
         assert_eq!(metrics.search_tactical_annotations, 3);
+    }
+
+    #[test]
+    fn tactical_ordering_uses_one_opponent_win_query_for_blocks() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(
+            &mut board,
+            &["H8", "A1", "I8", "B1", "J8", "C1", "O15", "D1"],
+        );
+
+        let moves = vec![mv("B2"), mv("K8"), mv("E1")];
+        let zobrist = ZobristTable::new(board.config.board_size);
+
+        let mut scan_metrics = SearchMetrics::default();
+        let mut scan_state = SearchState::from_board_with_frontier(board.clone(), &zobrist, false);
+        let scan_ordered = order_moves_tactical_first(
+            &mut scan_state,
+            moves.clone(),
+            None,
+            ThreatViewMode::Scan,
+            &mut scan_metrics,
+            SearchMetricPhase::Search,
+        );
+
+        assert_eq!(
+            scan_ordered
+                .iter()
+                .map(|ordered| ordered.mv)
+                .collect::<Vec<_>>(),
+            vec![mv("E1"), mv("K8"), mv("B2")]
+        );
+        assert_eq!(scan_metrics.search_tactical_annotations, moves.len() as u64);
+        assert_eq!(
+            scan_metrics.threat_view_scan_queries,
+            moves.len() as u64 + 1,
+            "scan ordering should query own annotations once per move and opponent wins once per ordering pass"
+        );
+
+        let mut rolling_metrics = SearchMetrics::default();
+        let mut rolling_state = SearchState::from_board_with_frontier(board, &zobrist, true);
+        let rolling_ordered = order_moves_tactical_first(
+            &mut rolling_state,
+            moves.clone(),
+            None,
+            ThreatViewMode::Rolling,
+            &mut rolling_metrics,
+            SearchMetricPhase::Search,
+        );
+
+        assert_eq!(rolling_ordered, scan_ordered);
+        assert_eq!(
+            rolling_metrics.search_tactical_annotations,
+            moves.len() as u64
+        );
+        assert_eq!(
+            rolling_metrics.threat_view_frontier_immediate_win_queries,
+            1
+        );
+        assert_eq!(
+            rolling_metrics.threat_view_frontier_queries,
+            moves.len() as u64 + 1,
+            "rolling ordering should query own annotations once per move and opponent wins once per ordering pass"
+        );
     }
 
     #[test]
