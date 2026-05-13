@@ -166,12 +166,15 @@ Current frontier suffixes are intentionally narrow:
   answers, report shadow mismatch counts, and record scan-vs-frontier
   update/query timing; behavior stays scan-backed.
 - `+rolling-frontier`: use the rolling-backed portal-entry answer, corridor
-  continuation/reply queries, root win/block checks, and tactical annotations.
-  Current-obligation safety also uses a root-only full frontier in this mode.
+  continuation/reply queries, indexed immediate-win checks, root win/block
+  checks, and tactical annotations. Current-obligation safety also uses a
+  root-only full frontier in this mode.
 
 Search now threads an optional frontier through recursive apply/undo with the
 board and hash. The default scan mode leaves that frontier disabled; the rolling
-suffixes enable it for parity and cost measurement. Current smoke data reached
+suffixes enable it for parity and cost measurement. Immediate wins now have a
+dedicated per-player rolling index, so `TacticalOnly` mode can answer win/block
+queries without maintaining full corridor move facts. Current smoke data reached
 zero shadow mismatches, and the latest focused smoke makes rolling faster than
 scan for `search-d3+tactical-cap-8`. Keep it lab-only until a clean full
 reference tournament and companion analysis report confirm the baseline.

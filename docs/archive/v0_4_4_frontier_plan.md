@@ -402,15 +402,17 @@ Known remaining edges:
   outside the `ThreatView` trait, but rolling search no longer exposes that scan
   surface.
 - Root safety and tactical ordering now ask `ThreatView` for explicit-player
-  annotations, so immediate win/block checks can be answered by the rolling
-  frontier instead of direct board threat scans.
+  annotations and immediate-win sets. Rolling mode answers immediate wins from a
+  per-player index maintained through apply/undo, including `TacticalOnly`
+  frontier mode, so root win/block checks no longer need a board-cell scan.
 - Non-shadow rolling search should keep `threat_view_scan_queries == 0`.
   Reintroduced scan-backed threat queries should be confined to scan mode,
   rolling-shadow comparison, tests, replay/report analysis, or explicit
   fallback diagnostics.
 - `TacticalOnly` still carries safe fallback behavior for corridor queries, but
-  portal-enabled rolling uses full frontier facts. Any unexpected fallback count
-  should be visible in reports before promotion.
+  portal-enabled rolling uses full frontier facts. Any unexpected fallback count,
+  immediate-win query cost, or shadow mismatch should be visible in reports
+  before promotion.
 
 The CLI now supports `--fail-on-shadow-mismatch` for tournament smokes. It
 writes the report first, then exits nonzero if the aggregated tournament report
