@@ -17,7 +17,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             cpu_time_budget_ms: None,
             candidate_radius: 2,
             candidate_opponent_radius: None,
-            safety_gate: SafetyGate::OpponentReplyLocalThreatProbe,
+            safety_gate: SafetyGate::CurrentObligation,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
@@ -34,7 +34,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             cpu_time_budget_ms: None,
             candidate_radius: 2,
             candidate_opponent_radius: None,
-            safety_gate: SafetyGate::OpponentReplyLocalThreatProbe,
+            safety_gate: SafetyGate::CurrentObligation,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
@@ -51,7 +51,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             cpu_time_budget_ms: None,
             candidate_radius: 2,
             candidate_opponent_radius: None,
-            safety_gate: SafetyGate::OpponentReplyLocalThreatProbe,
+            safety_gate: SafetyGate::CurrentObligation,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
@@ -128,14 +128,6 @@ fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchB
         }
         "no-safety" => {
             config.safety_gate = SafetyGate::None;
-            Some(config)
-        }
-        "opponent-reply-search-probe" => {
-            config.safety_gate = SafetyGate::OpponentReplySearchProbe;
-            Some(config)
-        }
-        "opponent-reply-local-threat-probe" => {
-            config.safety_gate = SafetyGate::OpponentReplyLocalThreatProbe;
             Some(config)
         }
         "tactical-first" => {
@@ -288,10 +280,7 @@ mod tests {
         assert_eq!(config.time_budget_ms, Some(1000));
         assert_eq!(config.cpu_time_budget_ms, None);
         assert_eq!(config.candidate_radius, 2);
-        assert_eq!(
-            config.safety_gate,
-            super::SafetyGate::OpponentReplyLocalThreatProbe
-        );
+        assert_eq!(config.safety_gate, super::SafetyGate::CurrentObligation);
     }
 
     #[test]
@@ -324,34 +313,31 @@ mod tests {
         assert_eq!(alias.cpu_time_budget_ms, Some(250));
         assert_eq!(alias.safety_gate, super::SafetyGate::None);
 
-        let explicit = super::search_config_from_lab_spec(
+        assert!(super::search_config_from_lab_spec(
             "balanced+no-safety+opponent-reply-search-probe",
             5,
             None,
             None,
         )
-        .expect("expected explicit safety gate suffix to parse");
-        assert_eq!(explicit.max_depth, 3);
-        assert_eq!(
-            explicit.safety_gate,
-            super::SafetyGate::OpponentReplySearchProbe
-        );
+        .is_none());
     }
 
     #[test]
-    fn parses_lab_local_threat_safety_suffix() {
-        let config = super::search_config_from_lab_spec(
+    fn rejects_retired_opponent_reply_safety_suffixes() {
+        assert!(super::search_config_from_lab_spec(
             "search-d3+opponent-reply-local-threat-probe",
             5,
             None,
             None,
         )
-        .expect("expected local-threat safety spec to parse");
-
-        assert_eq!(
-            config.safety_gate,
-            super::SafetyGate::OpponentReplyLocalThreatProbe
-        );
+        .is_none());
+        assert!(super::search_config_from_lab_spec(
+            "search-d3+opponent-reply-search-probe",
+            5,
+            None,
+            None,
+        )
+        .is_none());
     }
 
     #[test]
@@ -423,10 +409,7 @@ mod tests {
         assert_eq!(r1.max_depth, 3);
         assert_eq!(r1.candidate_radius, 1);
         assert_eq!(r1.candidate_opponent_radius, None);
-        assert_eq!(
-            r1.safety_gate,
-            super::SafetyGate::OpponentReplyLocalThreatProbe
-        );
+        assert_eq!(r1.safety_gate, super::SafetyGate::CurrentObligation);
 
         let r3 = super::search_config_from_lab_spec(
             "balanced+near-all-r3+no-safety",

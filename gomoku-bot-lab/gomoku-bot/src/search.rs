@@ -9,8 +9,8 @@ use crate::frontier::{
     FrontierAnnotationSource, FrontierUpdateTimings, RollingFrontierFeatures, RollingThreatFrontier,
 };
 use crate::tactical::{
-    local_threat_facts_after_move, LocalThreatKind, ScanThreatView, SearchThreatPolicy,
-    TacticalMoveAnnotation, ThreatView,
+    local_threat_facts_after_move, CorridorThreatPolicy, LocalThreatKind, ScanThreatView,
+    SearchThreatPolicy, TacticalMoveAnnotation, ThreatView,
 };
 use crate::Bot;
 use gomoku_core::{Board, Color, GameResult, Move, Variant, ZobristTable, DIRS};
@@ -1662,78 +1662,12 @@ fn legal_by_gate_counted(
     }
 }
 
-fn allows_opponent_forcing_reply(
-    board: &mut Board,
-    mv: Move,
-    candidate_source: CandidateSource,
-    legality_gate: LegalityGate,
-    deadline: SearchDeadline,
-    safety_nodes: &mut u64,
-    metrics: &mut SearchMetrics,
-) -> Option<bool> {
-    let current = board.current_player;
-
-    if deadline.expired() {
-        return None;
-    }
-    *safety_nodes += 1;
-
-    let opponent = current.opponent();
-    // Root moves are legality-filtered before the safety gate; only opponent
-    // replies need fresh legality checks here.
-    board.apply_trusted_legal_move(mv);
-
-    let mut dangerous = false;
-    let mut timed_out = false;
-    if !matches!(board.result, GameResult::Winner(winner) if winner == current) {
-        for reply in candidate_moves_from_source_counted(
-            board,
-            candidate_source,
-            metrics,
-            SearchMetricPhase::Root,
-        ) {
-            if deadline.expired() {
-                timed_out = true;
-                break;
-            }
-            if needs_legality_gate(board, opponent, legality_gate)
-                && !legal_by_gate_counted(
-                    board,
-                    reply,
-                    legality_gate,
-                    metrics,
-                    SearchMetricPhase::Root,
-                )
-            {
-                continue;
-            }
-
-            *safety_nodes += 1;
-            board.apply_trusted_legal_move(reply);
-            let forcing = matches!(board.result, GameResult::Winner(winner) if winner == opponent)
-                || board.has_multiple_immediate_winning_moves_for(opponent);
-            board.undo_move(reply);
-            if forcing {
-                dangerous = true;
-                break;
-            }
-        }
-    }
-
-    board.undo_move(mv);
-
-    if timed_out {
-        None
-    } else {
-        Some(dangerous)
-    }
-}
-
 fn root_candidate_moves_with_metrics(
     board: &Board,
     candidate_source: CandidateSource,
     legality_gate: LegalityGate,
     safety_gate: SafetyGate,
+    threat_view_mode: ThreatViewMode,
     deadline: SearchDeadline,
     metrics: &mut SearchMetrics,
 ) -> (Vec<Move>, u64, bool) {
@@ -1752,9 +1686,8 @@ fn root_candidate_moves_with_metrics(
     apply_safety_gate_to_root_candidates(
         board,
         moves,
-        candidate_source,
-        legality_gate,
         safety_gate,
+        threat_view_mode,
         deadline,
         metrics,
     )
@@ -1763,188 +1696,180 @@ fn root_candidate_moves_with_metrics(
 fn apply_safety_gate_to_root_candidates(
     board: &Board,
     moves: Vec<Move>,
-    candidate_source: CandidateSource,
-    legality_gate: LegalityGate,
     safety_gate: SafetyGate,
+    threat_view_mode: ThreatViewMode,
     deadline: SearchDeadline,
     metrics: &mut SearchMetrics,
 ) -> (Vec<Move>, u64, bool) {
     match safety_gate {
         SafetyGate::None => (moves, 0, false),
-        SafetyGate::OpponentReplySearchProbe => opponent_reply_search_probe_root_candidates(
-            board,
-            moves,
-            candidate_source,
-            legality_gate,
-            deadline,
-            metrics,
-        ),
-        SafetyGate::OpponentReplyLocalThreatProbe => {
-            opponent_reply_local_threat_probe_root_candidates(
-                board,
-                moves,
-                candidate_source,
-                legality_gate,
-                deadline,
-                metrics,
-            )
+        SafetyGate::CurrentObligation => {
+            current_obligation_root_candidates(board, moves, threat_view_mode, deadline, metrics)
         }
     }
 }
 
-fn opponent_reply_search_probe_root_candidates(
+#[derive(Debug, Clone)]
+struct SafetyFilterOutcome {
+    moves: Vec<Move>,
+    work_units: u64,
+}
+
+fn current_obligation_root_candidates(
     board: &Board,
     moves: Vec<Move>,
-    candidate_source: CandidateSource,
-    legality_gate: LegalityGate,
+    threat_view_mode: ThreatViewMode,
     deadline: SearchDeadline,
     metrics: &mut SearchMetrics,
 ) -> (Vec<Move>, u64, bool) {
     if moves.is_empty() {
         return (moves, 0, false);
     }
-
-    let mut working = board.clone();
-    let mut safe_moves: Vec<Move> = Vec::with_capacity(moves.len());
-    let mut safety_nodes = 0u64;
-    for mv in moves.iter().copied() {
-        if deadline.expired() {
-            return (moves, safety_nodes, true);
-        }
-
-        match allows_opponent_forcing_reply(
-            &mut working,
-            mv,
-            candidate_source,
-            legality_gate,
-            deadline,
-            &mut safety_nodes,
-            metrics,
-        ) {
-            Some(false) => safe_moves.push(mv),
-            Some(true) => {}
-            None => return (moves, safety_nodes, true),
-        }
+    if deadline.expired() {
+        return (moves, 0, true);
     }
 
-    if safe_moves.is_empty() {
-        (moves, safety_nodes, false)
-    } else {
-        (safe_moves, safety_nodes, false)
-    }
+    let outcome = match threat_view_mode {
+        ThreatViewMode::Scan => {
+            let view = ScanThreatView::new(board);
+            let start = Instant::now();
+            let outcome = current_obligation_safety_policy(board, &moves, &view);
+            metrics.record_threat_view_scan(start.elapsed());
+            outcome
+        }
+        ThreatViewMode::Rolling => {
+            let start = Instant::now();
+            let frontier = RollingThreatFrontier::from_board_with_features(
+                board,
+                RollingFrontierFeatures::Full,
+            );
+            metrics.record_threat_view_frontier_rebuild(start.elapsed());
+            let start = Instant::now();
+            let outcome = current_obligation_safety_policy(board, &moves, &frontier);
+            metrics.record_threat_view_frontier_query(start.elapsed());
+            outcome
+        }
+        ThreatViewMode::RollingShadow => {
+            metrics.threat_view_shadow_checks += 1;
+
+            let scan_view = ScanThreatView::new(board);
+            let start = Instant::now();
+            let scan = current_obligation_safety_policy(board, &moves, &scan_view);
+            metrics.record_threat_view_scan(start.elapsed());
+
+            let start = Instant::now();
+            let frontier = RollingThreatFrontier::from_board_with_features(
+                board,
+                RollingFrontierFeatures::Full,
+            );
+            metrics.record_threat_view_frontier_rebuild(start.elapsed());
+            let start = Instant::now();
+            let rolling = current_obligation_safety_policy(board, &moves, &frontier);
+            metrics.record_threat_view_frontier_query(start.elapsed());
+
+            if scan.moves != rolling.moves {
+                metrics.threat_view_shadow_mismatches += 1;
+            }
+            scan
+        }
+    };
+
+    (outcome.moves, outcome.work_units, false)
 }
 
-fn allows_opponent_local_forcing_reply(
-    board: &mut Board,
-    mv: Move,
-    candidate_source: CandidateSource,
-    legality_gate: LegalityGate,
-    deadline: SearchDeadline,
-    safety_nodes: &mut u64,
-    metrics: &mut SearchMetrics,
-) -> Option<bool> {
+fn current_obligation_safety_policy(
+    board: &Board,
+    moves: &[Move],
+    view: &impl ThreatView,
+) -> SafetyFilterOutcome {
     let current = board.current_player;
-
-    if deadline.expired() {
-        return None;
+    let own_wins = board.immediate_winning_moves_for(current);
+    if !own_wins.is_empty() {
+        return SafetyFilterOutcome {
+            moves: filtered_or_original(moves, moves_in_set(moves, &own_wins)),
+            work_units: moves.len() as u64,
+        };
     }
-    *safety_nodes += 1;
 
     let opponent = current.opponent();
-    board.apply_trusted_legal_move(mv);
-
-    let mut dangerous = false;
-    let mut timed_out = false;
-    if !matches!(board.result, GameResult::Winner(winner) if winner == current) {
-        for reply in candidate_moves_from_source_counted(
-            board,
-            candidate_source,
-            metrics,
-            SearchMetricPhase::Root,
-        ) {
-            if deadline.expired() {
-                timed_out = true;
-                break;
-            }
-            if needs_legality_gate(board, opponent, legality_gate)
-                && !legal_by_gate_counted(
-                    board,
-                    reply,
-                    legality_gate,
-                    metrics,
-                    SearchMetricPhase::Root,
-                )
-            {
-                continue;
-            }
-
-            *safety_nodes += 1;
-            debug_assert_eq!(board.current_player, opponent);
-            if local_reply_creates_immediate_or_multi_threat(board, reply, metrics) {
-                dangerous = true;
-                break;
-            }
-        }
+    let opponent_wins = board.immediate_winning_moves_for(opponent);
+    if !opponent_wins.is_empty() {
+        return SafetyFilterOutcome {
+            moves: filtered_or_original(moves, moves_in_set(moves, &opponent_wins)),
+            work_units: moves.len() as u64,
+        };
     }
 
-    board.undo_move(mv);
+    let active_imminent_threats = view
+        .active_corridor_threats(opponent)
+        .into_iter()
+        .filter(|fact| is_imminent_obligation_kind(fact.kind))
+        .collect::<Vec<_>>();
+    if active_imminent_threats.is_empty() {
+        return SafetyFilterOutcome {
+            moves: moves.to_vec(),
+            work_units: 0,
+        };
+    }
 
-    if timed_out {
-        None
-    } else {
-        Some(dangerous)
+    let replies = CorridorThreatPolicy.defender_reply_moves_for_active_threats(
+        board,
+        opponent,
+        active_imminent_threats,
+        None,
+    );
+    let mut work_units = moves.len() as u64;
+    let filtered = moves
+        .iter()
+        .copied()
+        .filter(|&mv| {
+            if replies.contains(&mv) {
+                return true;
+            }
+            work_units += 1;
+            creates_counter_four(view.search_annotation_for_move(mv))
+        })
+        .collect::<Vec<_>>();
+
+    SafetyFilterOutcome {
+        moves: filtered_or_original(moves, filtered),
+        work_units,
     }
 }
 
-fn local_reply_creates_immediate_or_multi_threat(
-    board: &Board,
-    reply: Move,
-    metrics: &mut SearchMetrics,
-) -> bool {
-    metrics.record_tactical_annotation(SearchMetricPhase::Root);
-    scan_tactical_annotation_timed(board, reply, metrics).creates_immediate_or_multi_threat()
+fn moves_in_set(moves: &[Move], set: &[Move]) -> Vec<Move> {
+    moves
+        .iter()
+        .copied()
+        .filter(|mv| set.contains(mv))
+        .collect()
 }
 
-fn opponent_reply_local_threat_probe_root_candidates(
-    board: &Board,
-    moves: Vec<Move>,
-    candidate_source: CandidateSource,
-    legality_gate: LegalityGate,
-    deadline: SearchDeadline,
-    metrics: &mut SearchMetrics,
-) -> (Vec<Move>, u64, bool) {
-    if moves.is_empty() {
-        return (moves, 0, false);
-    }
-
-    let mut working = board.clone();
-    let mut safe_moves: Vec<Move> = Vec::with_capacity(moves.len());
-    let mut safety_nodes = 0u64;
-    for mv in moves.iter().copied() {
-        if deadline.expired() {
-            return (moves, safety_nodes, true);
-        }
-
-        match allows_opponent_local_forcing_reply(
-            &mut working,
-            mv,
-            candidate_source,
-            legality_gate,
-            deadline,
-            &mut safety_nodes,
-            metrics,
-        ) {
-            Some(false) => safe_moves.push(mv),
-            Some(true) => {}
-            None => return (moves, safety_nodes, true),
-        }
-    }
-
-    if safe_moves.is_empty() {
-        (moves, safety_nodes, false)
+fn filtered_or_original(original: &[Move], filtered: Vec<Move>) -> Vec<Move> {
+    if filtered.is_empty() {
+        original.to_vec()
     } else {
-        (safe_moves, safety_nodes, false)
+        filtered
     }
+}
+
+fn is_imminent_obligation_kind(kind: LocalThreatKind) -> bool {
+    matches!(
+        kind,
+        LocalThreatKind::OpenThree | LocalThreatKind::BrokenThree
+    )
+}
+
+fn creates_counter_four(annotation: TacticalMoveAnnotation) -> bool {
+    annotation.local_threats.into_iter().any(|fact| {
+        matches!(
+            fact.kind,
+            LocalThreatKind::Five
+                | LocalThreatKind::OpenFour
+                | LocalThreatKind::ClosedFour
+                | LocalThreatKind::BrokenFour
+        )
+    })
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -2901,16 +2826,14 @@ impl LegalityGate {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SafetyGate {
     None,
-    OpponentReplySearchProbe,
-    OpponentReplyLocalThreatProbe,
+    CurrentObligation,
 }
 
 impl SafetyGate {
     const fn name(self) -> &'static str {
         match self {
             SafetyGate::None => "none",
-            SafetyGate::OpponentReplySearchProbe => "opponent_reply_search_probe",
-            SafetyGate::OpponentReplyLocalThreatProbe => "opponent_reply_local_threat_probe",
+            SafetyGate::CurrentObligation => "current_obligation",
         }
     }
 }
@@ -3072,7 +2995,7 @@ impl SearchBotConfig {
             cpu_time_budget_ms: None,
             candidate_radius: 2,
             candidate_opponent_radius: None,
-            safety_gate: SafetyGate::OpponentReplyLocalThreatProbe,
+            safety_gate: SafetyGate::CurrentObligation,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
@@ -3089,7 +3012,7 @@ impl SearchBotConfig {
             cpu_time_budget_ms: None,
             candidate_radius: 2,
             candidate_opponent_radius: None,
-            safety_gate: SafetyGate::OpponentReplyLocalThreatProbe,
+            safety_gate: SafetyGate::CurrentObligation,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
@@ -3106,7 +3029,7 @@ impl SearchBotConfig {
             cpu_time_budget_ms: Some(cpu_time_budget_ms),
             candidate_radius: 2,
             candidate_opponent_radius: None,
-            safety_gate: SafetyGate::OpponentReplyLocalThreatProbe,
+            safety_gate: SafetyGate::CurrentObligation,
             move_ordering: MoveOrdering::TranspositionFirstBoardOrder,
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
@@ -3271,6 +3194,7 @@ impl Bot for SearchBot {
             candidate_source,
             legality_gate,
             safety_gate,
+            self.config.threat_view_mode,
             safety_deadline,
             &mut metrics,
         );
@@ -3765,7 +3689,7 @@ mod tests {
     }
 
     #[test]
-    fn safety_gate_reply_probe_falls_back_to_unfiltered_moves_when_deadline_has_elapsed() {
+    fn safety_gate_current_obligation_falls_back_to_unfiltered_moves_when_deadline_has_elapsed() {
         let mut board = Board::new(RuleConfig::default());
         for mv in [
             Move { row: 7, col: 7 },
@@ -3787,7 +3711,8 @@ mod tests {
             &board,
             CandidateSource::NearAll { radius: 2 },
             LegalityGate::ExactRules,
-            SafetyGate::OpponentReplySearchProbe,
+            SafetyGate::CurrentObligation,
+            ThreatViewMode::Scan,
             SearchDeadline::new(
                 Instant::now() - Duration::from_millis(2),
                 Some(Duration::from_millis(1)),
@@ -3803,7 +3728,7 @@ mod tests {
     }
 
     #[test]
-    fn safety_gate_none_skips_opponent_reply_probe() {
+    fn safety_gate_none_skips_current_obligation_filter() {
         let mut board = Board::new(RuleConfig::default());
         for mv in [
             Move { row: 7, col: 7 },
@@ -3826,6 +3751,7 @@ mod tests {
             CandidateSource::NearAll { radius: 2 },
             LegalityGate::ExactRules,
             SafetyGate::None,
+            ThreatViewMode::Scan,
             SearchDeadline::new(Instant::now(), Some(Duration::from_millis(100)), None, None),
             &mut metrics,
         );
@@ -3836,7 +3762,7 @@ mod tests {
     }
 
     #[test]
-    fn safety_gate_local_threat_probe_filters_open_three_blunders() {
+    fn safety_gate_current_obligation_filters_existing_open_three_obligations() {
         let mut board = Board::new(RuleConfig::default());
         for mv in [
             Move { row: 7, col: 7 },
@@ -3853,7 +3779,8 @@ mod tests {
             &board,
             CandidateSource::NearAll { radius: 2 },
             LegalityGate::ExactRules,
-            SafetyGate::OpponentReplyLocalThreatProbe,
+            SafetyGate::CurrentObligation,
+            ThreatViewMode::Scan,
             SearchDeadline::new(Instant::now(), Some(Duration::from_millis(100)), None, None),
             &mut metrics,
         );
@@ -3862,6 +3789,82 @@ mod tests {
         assert!(moves.contains(&Move { row: 7, col: 10 }));
         assert!(!moves.contains(&Move { row: 4, col: 4 }));
         assert!(safety_nodes > 0);
+        assert!(!timed_out);
+    }
+
+    #[test]
+    fn safety_gate_current_obligation_prefers_own_win_over_defense() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(
+            &mut board,
+            &["H8", "A1", "I8", "B1", "J8", "C1", "K8", "D1"],
+        );
+        assert_eq!(board.current_player, Color::Black);
+
+        let mut metrics = SearchMetrics::default();
+        let (moves, safety_nodes, timed_out) = root_candidate_moves_with_metrics(
+            &board,
+            CandidateSource::NearAll { radius: 2 },
+            LegalityGate::ExactRules,
+            SafetyGate::CurrentObligation,
+            ThreatViewMode::Scan,
+            SearchDeadline::new(Instant::now(), Some(Duration::from_millis(100)), None, None),
+            &mut metrics,
+        );
+
+        assert_eq!(moves, vec![mv("G8"), mv("L8")]);
+        assert!(safety_nodes > 0);
+        assert!(!timed_out);
+    }
+
+    #[test]
+    fn safety_gate_current_obligation_allows_counter_fours_against_imminent_threat() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(&mut board, &["H8", "C4", "I8", "D4", "J8", "E4", "A15"]);
+        assert_eq!(board.current_player, Color::White);
+
+        let mut metrics = SearchMetrics::default();
+        let (moves, safety_nodes, timed_out) = root_candidate_moves_with_metrics(
+            &board,
+            CandidateSource::NearAll { radius: 2 },
+            LegalityGate::ExactRules,
+            SafetyGate::CurrentObligation,
+            ThreatViewMode::Scan,
+            SearchDeadline::new(Instant::now(), Some(Duration::from_millis(100)), None, None),
+            &mut metrics,
+        );
+
+        assert!(moves.contains(&mv("G8")));
+        assert!(moves.contains(&mv("K8")));
+        assert!(moves.contains(&mv("B4")));
+        assert!(moves.contains(&mv("F4")));
+        assert!(!moves.contains(&mv("A14")));
+        assert!(safety_nodes > 0);
+        assert!(!timed_out);
+    }
+
+    #[test]
+    fn safety_gate_current_obligation_leaves_quiet_root_candidates_unchanged() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(&mut board, &["H8", "H7", "G8", "I8"]);
+        let expected: Vec<Move> = candidate_moves(&board, 2)
+            .into_iter()
+            .filter(|&mv| board.is_legal(mv))
+            .collect();
+
+        let mut metrics = SearchMetrics::default();
+        let (moves, safety_nodes, timed_out) = root_candidate_moves_with_metrics(
+            &board,
+            CandidateSource::NearAll { radius: 2 },
+            LegalityGate::ExactRules,
+            SafetyGate::CurrentObligation,
+            ThreatViewMode::Scan,
+            SearchDeadline::new(Instant::now(), Some(Duration::from_millis(100)), None, None),
+            &mut metrics,
+        );
+
+        assert_eq!(moves, expected);
+        assert_eq!(safety_nodes, 0);
         assert!(!timed_out);
     }
 
@@ -4027,10 +4030,7 @@ mod tests {
             CandidateSource::NearAll { radius: 2 }
         );
         assert_eq!(baseline.legality_gate(), LegalityGate::ExactRules);
-        assert_eq!(
-            baseline.safety_gate(),
-            SafetyGate::OpponentReplyLocalThreatProbe
-        );
+        assert_eq!(baseline.safety_gate(), SafetyGate::CurrentObligation);
         assert_eq!(baseline.corridor_portals, CorridorPortalConfig::default());
         assert_eq!(
             baseline.move_ordering,
@@ -4110,10 +4110,7 @@ mod tests {
         assert_eq!(trace["config"]["candidate_radius"], 2);
         assert_eq!(trace["config"]["candidate_source"], "near_all_r2");
         assert_eq!(trace["config"]["legality_gate"], "exact_rules");
-        assert_eq!(
-            trace["config"]["safety_gate"],
-            "opponent_reply_local_threat_probe"
-        );
+        assert_eq!(trace["config"]["safety_gate"], "current_obligation");
         assert_eq!(trace["config"]["move_ordering"], "tt_first_board_order");
         assert_eq!(trace["config"]["child_limit"], serde_json::Value::Null);
         assert_eq!(trace["config"]["search_algorithm"], "alpha_beta_id");
@@ -4416,6 +4413,73 @@ mod tests {
         assert_eq!(trace["metrics"]["threat_view_shadow_checks"], 0);
         assert_eq!(trace["metrics"]["threat_view_shadow_mismatches"], 0);
         assert_eq!(trace["metrics"]["threat_view_scan_queries"], 0);
+        assert!(
+            trace["metrics"]["threat_view_frontier_queries"]
+                .as_u64()
+                .unwrap()
+                > 0
+        );
+    }
+
+    #[test]
+    fn rolling_threat_view_mode_can_drive_current_obligation_safety() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(&mut board, &["H8", "A1", "I8", "B1", "J8"]);
+
+        let mut config = SearchBotConfig::custom_depth(1);
+        config.safety_gate = SafetyGate::CurrentObligation;
+        config.threat_view_mode = ThreatViewMode::Rolling;
+        let mut bot = SearchBot::with_config(config);
+
+        let chosen = bot.choose_move(&board);
+        let trace = bot.trace().expect("expected search trace");
+
+        assert!(chosen == mv("G8") || chosen == mv("K8"));
+        assert_eq!(trace["config"]["safety_gate"], "current_obligation");
+        assert_eq!(trace["config"]["threat_view_mode"], "rolling");
+        assert!(trace["safety_nodes"].as_u64().unwrap() > 0);
+        assert_eq!(trace["metrics"]["threat_view_scan_queries"], 0);
+        assert!(
+            trace["metrics"]["threat_view_frontier_rebuilds"]
+                .as_u64()
+                .unwrap()
+                > 0
+        );
+        assert!(
+            trace["metrics"]["threat_view_frontier_queries"]
+                .as_u64()
+                .unwrap()
+                > 0
+        );
+    }
+
+    #[test]
+    fn rolling_shadow_current_obligation_safety_preserves_scan_choice() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(&mut board, &["H8", "A1", "I8", "B1", "J8"]);
+
+        let mut config = SearchBotConfig::custom_depth(1);
+        config.safety_gate = SafetyGate::CurrentObligation;
+        config.threat_view_mode = ThreatViewMode::RollingShadow;
+        let mut bot = SearchBot::with_config(config);
+
+        let chosen = bot.choose_move(&board);
+        let trace = bot.trace().expect("expected search trace");
+
+        assert!(chosen == mv("G8") || chosen == mv("K8"));
+        assert_eq!(trace["metrics"]["threat_view_shadow_mismatches"], 0);
+        assert!(
+            trace["metrics"]["threat_view_shadow_checks"]
+                .as_u64()
+                .unwrap()
+                > 0
+        );
+        assert!(
+            trace["metrics"]["threat_view_scan_queries"]
+                .as_u64()
+                .unwrap()
+                > 0
+        );
         assert!(
             trace["metrics"]["threat_view_frontier_queries"]
                 .as_u64()

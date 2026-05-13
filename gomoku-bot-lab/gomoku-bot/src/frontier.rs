@@ -397,10 +397,16 @@ impl ThreatView for RollingThreatFrontier {
     }
 
     fn active_corridor_threats(&self, attacker: Color) -> Vec<LocalThreatFact> {
-        // The global active-threat list is canonicalized differently from the
-        // per-origin cache used by `has_move_local_corridor_entry`. Keep this
-        // path scan-backed until the frontier owns a canonical threat index.
-        CorridorThreatPolicy.active_threats(&self.board, attacker)
+        let Some(facts_by_origin) = self.move_facts_for(attacker) else {
+            return ScanThreatView::new(&self.board).active_corridor_threats(attacker);
+        };
+        CorridorThreatPolicy.active_threats_from_facts(
+            &self.board,
+            attacker,
+            facts_by_origin
+                .iter()
+                .flat_map(|facts| facts.iter().cloned()),
+        )
     }
 
     fn has_move_local_corridor_entry(&self, attacker: Color, mv: Move) -> bool {
@@ -420,7 +426,22 @@ impl ThreatView for RollingThreatFrontier {
     }
 
     fn defender_reply_moves(&self, attacker: Color, actual_reply: Option<Move>) -> Vec<Move> {
-        CorridorThreatPolicy.defender_reply_moves(&self.board, attacker, actual_reply)
+        let Some(facts_by_origin) = self.move_facts_for(attacker) else {
+            return ScanThreatView::new(&self.board).defender_reply_moves(attacker, actual_reply);
+        };
+        let active = CorridorThreatPolicy.active_threats_from_facts(
+            &self.board,
+            attacker,
+            facts_by_origin
+                .iter()
+                .flat_map(|facts| facts.iter().cloned()),
+        );
+        CorridorThreatPolicy.defender_reply_moves_for_active_threats(
+            &self.board,
+            attacker,
+            active,
+            actual_reply,
+        )
     }
 
     fn attacker_move_rank(&self, attacker: Color, mv: Move) -> u8 {
