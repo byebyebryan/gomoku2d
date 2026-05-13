@@ -4,7 +4,7 @@ use gomoku_core::{Board, Color, GameResult, Move, MoveError, DIRS};
 
 use crate::tactical::{
     raw_local_threat_facts_at_existing_move, raw_local_threat_facts_for_player,
-    CorridorThreatPolicy, LocalThreatFact, ScanThreatView, SearchThreatPolicy,
+    CorridorThreatPolicy, LocalThreatFact, ScanThreatView, SearchThreatPolicy, TacticalLiteRank,
     TacticalMoveAnnotation, TacticalOrderingSummary, ThreatView,
 };
 
@@ -473,6 +473,38 @@ impl RollingThreatFrontier {
             )
         }
     }
+
+    pub fn tactical_lite_rank_for_player_with_source(
+        &self,
+        player: Color,
+        mv: Move,
+    ) -> (TacticalLiteRank, FrontierAnnotationSource) {
+        let size = self.board.config.board_size;
+        let policy = SearchThreatPolicy;
+        if mv.row >= size || mv.col >= size || self.board.result != GameResult::Ongoing {
+            return (
+                policy.tactical_lite_rank_for_player(&self.board, player, mv),
+                FrontierAnnotationSource::Fallback,
+            );
+        }
+
+        let index = cell_index(size, mv);
+        if self.raw_search_annotation_dirty_for(player)[index] {
+            (
+                policy.tactical_lite_rank_for_player(&self.board, player, mv),
+                FrontierAnnotationSource::DirtyRecompute,
+            )
+        } else {
+            let annotation = policy.effective_annotation_from_raw(
+                &self.board,
+                self.raw_search_annotations_for(player)[index].clone(),
+            );
+            (
+                TacticalLiteRank::from_annotation(CorridorThreatPolicy, &annotation),
+                FrontierAnnotationSource::CleanCache,
+            )
+        }
+    }
 }
 
 impl RebuildThreatFrontier {
@@ -524,9 +556,9 @@ impl ThreatView for RebuildThreatFrontier {
         }
     }
 
-    fn candidate_corridor_entry_rank(&self, attacker: Color, mv: Move) -> u8 {
+    fn candidate_tactical_lite_rank(&self, attacker: Color, mv: Move) -> TacticalLiteRank {
         let annotation = self.search_annotation_for_player(attacker, mv);
-        CorridorThreatPolicy.candidate_entry_rank(&annotation)
+        TacticalLiteRank::from_annotation(CorridorThreatPolicy, &annotation)
     }
 
     fn active_corridor_threats(&self, attacker: Color) -> Vec<LocalThreatFact> {
@@ -591,11 +623,9 @@ impl ThreatView for RollingThreatFrontier {
         self.search_annotation_for_player_with_source(player, mv).0
     }
 
-    fn candidate_corridor_entry_rank(&self, attacker: Color, mv: Move) -> u8 {
-        let annotation = self
-            .search_annotation_for_player_with_source(attacker, mv)
-            .0;
-        CorridorThreatPolicy.candidate_entry_rank(&annotation)
+    fn candidate_tactical_lite_rank(&self, attacker: Color, mv: Move) -> TacticalLiteRank {
+        self.tactical_lite_rank_for_player_with_source(attacker, mv)
+            .0
     }
 
     fn active_corridor_threats(&self, attacker: Color) -> Vec<LocalThreatFact> {

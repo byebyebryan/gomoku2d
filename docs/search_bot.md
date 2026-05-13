@@ -98,7 +98,8 @@ moves, for example `search-d5+tactical-first`. Append `+priority-first` to use
 the cheaper hard-tactical orderer: immediate wins, immediate blocks, TT move,
 center bias, and local density, without scanning candidate-created threats.
 Append `+tactical-lite` to use the middle tier: immediate wins/blocks plus
-candidate corridor-entry rank, then the same quiet TT/center/density heuristics.
+candidate tactical-lite rank, currently first-order corridor-entry rank only,
+then the same quiet TT/center/density heuristics.
 Append `+child-cap-N` to limit the ordered non-root
 child frontier after candidate generation, legality filtering, and move
 ordering. Use `+tactical-cap-N` as shorthand for `+tactical-first+child-cap-N`
@@ -471,18 +472,21 @@ entry checks. In normal scan mode, `Board` remains the source of truth and
 scan-backed annotation still drives behavior while the frontier-backed answer is
 checked for parity. In rolling mode, tactical ordering can consume the
 frontier-backed annotation as a lab-only validation path. Tactical-lite is the
-middle tier: it asks the same threat-view seam for candidate corridor-entry
-rank, but does not run full tactical ordering summaries. Priority ordering is
-the cheaper sibling: it asks the threat view only for current immediate-win/block
-sets, then orders quiet moves by deterministic heuristics. All ordering modes
-can pair with `child_limit` to test whether ordered coverage lets alpha-beta
-search fewer children without changing candidate discovery. The frontier now
-updates through apply/undo. Root tactical checks now use per-player threat-view
-annotations for immediate wins/blocks, and corridor continuation/reply queries
-use the same threat-view contract for immediate win checks and local corridor
-facts instead of a pre-move attacker-rank scan surface. The next optimization
-boundary is comparing full tactical, tactical-lite, and priority ordering across
-cap4/cap8/cap16/no-cap lanes before doing more candidate-frontier maintenance.
+middle tier: it asks the same threat-view seam for a compact candidate
+tactical-lite rank, but does not run full tactical ordering summaries. Today
+that rank only contains first-order corridor-entry strength; latent
+second-order potential is intentionally deferred until the first-order rank path
+is a clear cost win. Priority ordering is the cheaper sibling: it asks the
+threat view only for current immediate-win/block sets, then orders quiet moves
+by deterministic heuristics. All ordering modes can pair with `child_limit` to
+test whether ordered coverage lets alpha-beta search fewer children without
+changing candidate discovery. The frontier now updates through apply/undo. Root
+tactical checks now use per-player threat-view annotations for immediate
+wins/blocks, and corridor continuation/reply queries use the same threat-view
+contract for immediate win checks and local corridor facts instead of a pre-move
+attacker-rank scan surface. The next optimization boundary is validating
+rolling-backed tactical-lite and full tactical queries against the anchor set
+before doing more candidate-frontier maintenance.
 
 For `v0.4.1`, the strategic target is a practice bot that climbs a tactical
 ladder:

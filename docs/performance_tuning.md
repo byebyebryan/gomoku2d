@@ -608,19 +608,32 @@ Focused Renju smokes, centered-suite openings, `4` opening plies,
 | D5 cap8 priority/tactical-lite/tactical, `8` games/pair | tactical `9-0-7`, tactical-lite `8-0-8`, priority `7-0-9` | priority `37.22 ms`, tactical-lite `150.92 ms`, tactical `149.74 ms` | tactical-lite lands between priority and tactical on result, but not on cost |
 | D5 tactical-lite rolling-shadow, `8` games | exact `4-0-4` | shadow `329.61 ms`, scan `77.84 ms` | zero shadow mismatches; shadow remains diagnostic-only |
 
+Follow-up tactical-lite rank instrumentation replaced the search call site with
+a compact rank query and split tactical-lite rank cost by scan/frontier source.
+It did not justify adding a second-order latent-potential tier yet:
+
+| Smoke | Result | Avg move time | Notes |
+|---|---|---:|---|
+| D3 priority/tactical-lite/tactical, `8` games/pair, seed `43` | all lanes `8-0-8` | priority `15.73 ms`, tactical-lite `44.51 ms`, tactical `47.81 ms` | scan tactical-lite is still near full tactical cost |
+| D5 cap8 priority/tactical-lite/tactical, `8` games/pair, seed `47` | tactical `9-0-7`, tactical-lite `8-0-8`, priority `7-0-9` | priority `36.28 ms`, tactical-lite `151.99 ms`, tactical `148.12 ms` | compact rank did not improve the scan-mode D5 cap8 cost shape |
+| D5 tactical-lite rolling-shadow, `8` games, seed `53` | exact `4-0-4` | shadow `327.91 ms`, scan `76.48 ms` | zero shadow mismatches; shadow still only validates parity |
+| D5 tactical-lite rolling vs scan, `8` games, seed `59` | exact `4-0-4` | rolling `73.83 ms`, scan `86.35 ms` | pure rolling tactical-lite avoids scan rank queries and is cheaper in this small sample |
+
 Interpretation:
 
-- The optimization landed in the intended middle ground: materially stronger
-  than plain child cap, materially cheaper than full tactical cap.
-- It is not a replacement for full tactical ordering yet. Full tactical still
-  wins the focused cap8 comparisons.
+- Priority ordering is the current cheap hard-tactical lane. It is materially
+  cheaper than full tactical, but weaker in focused cap8 comparisons.
 - Tactical-lite is validated as a behavior surface and rolling parity check, but
   it is not a cost win yet. In scan mode its corridor-entry rank query still
   does enough threat-view work that it sits near full tactical cost in the small
   smokes.
-- The next sweep should test priority, tactical-lite, and full tactical
-  cap4/cap8/cap16/no-cap lanes before assuming the old cap8 optimum still
-  holds.
+- Pure rolling tactical-lite shows the expected source split: no scan rank
+  queries and a modest cost win in the focused head-to-head. The shadow lane is
+  intentionally much slower because it runs both scan and rolling.
+- Do not add latent-potential tactical-lite ranking until the first-order rank
+  path is a clear cost win. The better next target is making rolling the default
+  backend for validated tactical queries, then deciding whether second-order
+  potential can be derived from frontier facts cheaply.
 
 ## Benchmark suites
 
@@ -801,12 +814,15 @@ From code inspection before the first benchmark pass:
 17. Add lab-only tactical-lite ordering as the middle tier: hard-keep immediate
     wins/blocks, rank candidate corridor entries, then fall back to TT, center,
     and local density (`2026-05-13`)
+18. Add compact tactical-lite rank/source metrics so scan and rolling rank cost
+    can be measured separately before adding more tactical-lite tiers
+    (`2026-05-13`)
 
 ### Future work
 
 1. More incremental or localized evaluation
-2. Re-sweep priority, tactical-lite, and full tactical ordering across
-   cap4/cap8/cap16/no-cap lanes before treating cap8 as the durable optimum
+2. Validate rolling tactical-lite against the full anchor set before promoting
+   it beyond lab-only mode
 3. Incremental candidate frontier maintenance
 4. Bitboard-aware helpers for any remaining full-cell-scan callers that become
    hot under profiling
