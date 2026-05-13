@@ -348,7 +348,9 @@ architecture:
 - use rolling-backed tactical ordering and current-obligation safety only behind
   explicit lab suffixes after parity and focused smoke metrics are clean;
 - keep the default bot path scan-backed until a clean full reference tournament
-  and companion top-two analysis confirm the new baseline.
+  and companion top-two analysis confirm the new baseline;
+- treat relaxed/no-budget scan-vs-rolling runs as the semantic parity check, and
+  normal-budget runs as budget-interaction/cost evidence.
 
 The working plan lives in `docs/archive/v0_4_4_frontier_plan.md`.
 

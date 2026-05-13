@@ -164,6 +164,10 @@ enum Commands {
         /// Link to the raw JSON from the rendered HTML; defaults to the input file name
         #[arg(long)]
         json_href: Option<String>,
+
+        /// Include rolling frontier diagnostic cards in the rendered HTML
+        #[arg(long)]
+        include_rolling_health: bool,
     },
     /// Run a round-robin tournament among a list of bots
     Tournament {
@@ -216,6 +220,10 @@ enum Commands {
         /// Worker threads used to run tournament games
         #[arg(long)]
         threads: Option<usize>,
+
+        /// Exit nonzero after writing the report if rolling-frontier shadow checks mismatch
+        #[arg(long)]
+        fail_on_shadow_mismatch: bool,
     },
     /// Run focused one-move tactical diagnostics against search configs
     TacticalScenarios {
@@ -1015,6 +1023,7 @@ fn main() {
             opening_plies,
             opening_policy,
             threads,
+            fail_on_shadow_mismatch,
         } => {
             let EvalContext {
                 config,
@@ -1231,11 +1240,20 @@ fn main() {
             for reason in &report.end_reasons {
                 println!("{:<15} {}", reason.key, reason.count);
             }
+
+            let shadow_mismatches = report.shadow_mismatch_count();
+            if fail_on_shadow_mismatch && shadow_mismatches > 0 {
+                eprintln!(
+                    "Rolling frontier shadow guard failed: {shadow_mismatches} mismatch(es)."
+                );
+                std::process::exit(1);
+            }
         }
         Commands::ReportHtml {
             input,
             output,
             json_href,
+            include_rolling_health,
         } => {
             let json = std::fs::read_to_string(&input)
                 .unwrap_or_else(|err| exit_with_error(format!("Failed to read report: {err}")));
@@ -1249,7 +1267,10 @@ fn main() {
             });
             let html = render_tournament_report_html_with_options(
                 &report,
-                &ReportRenderOptions { raw_json_href },
+                &ReportRenderOptions {
+                    raw_json_href,
+                    include_rolling_health,
+                },
             );
             std::fs::write(&output, html).unwrap_or_else(|err| {
                 exit_with_error(format!("Failed to write HTML report: {err}"))
@@ -1711,6 +1732,52 @@ mod tests {
         .unwrap_err();
 
         assert!(err.contains("--anchor-report"));
+    }
+
+    #[test]
+    fn tournament_command_parses_shadow_mismatch_guard() {
+        let cli = Cli::try_parse_from([
+            "gomoku-eval",
+            "tournament",
+            "--bots",
+            "search-d3,search-d3+rolling-frontier-shadow",
+            "--fail-on-shadow-mismatch",
+        ])
+        .expect("tournament command should parse");
+
+        let Commands::Tournament {
+            fail_on_shadow_mismatch,
+            ..
+        } = cli.command
+        else {
+            panic!("expected tournament command");
+        };
+
+        assert!(fail_on_shadow_mismatch);
+    }
+
+    #[test]
+    fn report_html_command_parses_rolling_health_flag() {
+        let cli = Cli::try_parse_from([
+            "gomoku-eval",
+            "report-html",
+            "--input",
+            "outputs/report.json",
+            "--output",
+            "outputs/report.html",
+            "--include-rolling-health",
+        ])
+        .expect("report-html command should parse");
+
+        let Commands::ReportHtml {
+            include_rolling_health,
+            ..
+        } = cli.command
+        else {
+            panic!("expected report-html command");
+        };
+
+        assert!(include_rolling_health);
     }
 
     #[test]

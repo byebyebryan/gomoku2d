@@ -530,8 +530,15 @@ Interpretation:
   rolling mode in this smoke.
 - Rolling mode is now a clear focused-smoke speed win for D3 cap8, but this is
   still a lab suffix and not a product/default promotion.
-- The next durable checkpoint should be a clean full anchor tournament plus the
-  top-two replay-analysis report generated from that tournament.
+- Scan-vs-rolling controls are now the correct promotion gate. D7 cap8 is the
+  important cautionary case: at `1000 ms/move`, scan won `35-29` while both
+  sides were budget-sensitive; at no per-move CPU budget, the same full `64`
+  game centered-suite sample was exactly `31-2-31` with matching average
+  nodes/depth and faster rolling time. That points to budget interaction, not a
+  rolling semantic regression.
+- The next durable checkpoint should be a clean scan-vs-rolling matrix for D3
+  cap8, D5 cap8, D7 cap8, and one pattern-eval lane, with normal-budget and
+  relaxed/no-budget controls plus `--fail-on-shadow-mismatch` shadow smokes.
 
 ## Benchmark suites
 
