@@ -394,6 +394,100 @@ exits, and produced `7` winning terminal root overrides. All `7` were move
 confirmations, not move changes, so the proof pass still mostly confirms wins
 the normal search already chose.
 
+### Candidate-Proof Corridor Pass
+
+The next refinement changes the role of corridor search again. Normal search
+should rank moves first. Corridor search should then act as a proof pass over a
+small selected set of normal-search candidates, not as another evaluator that
+re-enters the whole root search.
+
+The contract is:
+
+1. Run normal iterative deepening with corridor proof disabled.
+2. Only start proof if normal search completes the configured max depth and the
+   shared wall/CPU deadline still has budget remaining.
+3. Capture the deepest completed root candidates and scores.
+4. Prove the normal best move first, then selected candidates from the
+   normal-search ranking.
+5. For each candidate, apply the candidate root move and run corridor proof from
+   that resulting position.
+6. Proof returns only `ProvenWin`, `ProvenLoss`, or `Unknown`.
+7. `Unknown` never outranks normal-search score by itself.
+
+This keeps normal search safe: if proof times out, exits the corridor, or cannot
+prove a terminal result, the bot keeps the normal-search answer. Proven terminal
+information can still change the move:
+
+- If normal best is `ProvenWin`, keep it and count a confirmation.
+- If another checked candidate is `ProvenWin` while normal best is not, switch
+  to it and count a move change.
+- If normal best is `ProvenLoss`, switch to the best checked candidate that is
+  not proven loss.
+
+The default proof selection is intentionally small: best move first, then
+within `50,000` score points, up to `3` candidates. Three lab-only suffixes make
+that policy explicit for sweeps:
+
+- `+leaf-proof-cN` sets the root proof candidate cap.
+- `+leaf-proof-any-score` removes the score cutoff and uses the top `N`
+  normal-search candidates.
+- `+leaf-proof-margin-N` replaces the default score cutoff.
+
+The goal is to spend leftover budget on decisive questions instead of
+multiplying broad search work. This does not make `+leaf-corridor-dM-wW` a
+product knob; it remains a lab-only experiment until it produces move changes
+at acceptable cost.
+
+Initial sweeps changed the status of this path from purely diagnostic to
+promising. The old default shape, `d4-w3` with three close-scoring candidates,
+mostly confirmed rank-1 normal-search wins. Widening candidates at proof depth
+`4` checked deeper ranks but still produced no move changes. The useful jump
+came from proof depth `8` and a power-of-two candidate cap:
+
+- `search-d3+leaf-corridor-d8-w3+leaf-proof-c16+leaf-proof-any-score` beat
+  `search-d3` by `42-22` in a 64-game head-to-head.
+- It averaged about `91 ms/move` against base D3's `51 ms/move`, with `0.1%`
+  budget exhaustion under a `1000 ms/move` CPU budget.
+- It checked `4363` proof candidates, found `167` proven wins and `87` proven
+  losses, produced `31` proof-driven move changes, and confirmed `136` normal
+  best moves.
+- Proven wins were not only rank-1 confirmations: average proven-win rank was
+  `1.62`, with a max rank of `14`.
+
+The broader 8-anchor gauntlet showed the limits of corridor proof by itself.
+`search-d3+leaf-corridor-d8-w3+leaf-proof-c16+leaf-proof-any-score` beat
+`search-d1` and `search-d3`, but lost to every stronger anchor and finished
+`211-301` overall at about `115 ms/move`. Adding pattern eval made the shape
+competitive with the lower anchor tier:
+
+- `search-d3+pattern-eval+leaf-corridor-d8-w3+leaf-proof-c16+leaf-proof-any-score`
+  finished `302-210` across the same 8-anchor gauntlet.
+- It beat `search-d3+pattern-eval` by `36-28`, beat plain `search-d5` by
+  `40-24`, tied `search-d5+tactical-cap-8` at `32-32`, and stayed close to
+  `search-d7+tactical-cap-8` at `30-34`.
+- The cost rose to about `264 ms/move` with `7.6%` budget exhaustion.
+
+Direct same-config head-to-heads are the cleanest read so far:
+
+| Base config | Corridor result | Cost read |
+| --- | ---: | --- |
+| `search-d1` | `43-21` | strong uplift, still cheap enough |
+| `search-d3` | `42-22` | strong uplift, about 2x move cost |
+| `search-d5` | `32-32` | no benefit; uncapped D5 is already budget-bound |
+| `search-d5+tactical-cap-8` | `30-34` | slight regression |
+| `search-d7+tactical-cap-8` | `36-28` | uplift, but already budget-heavy |
+| `search-d3+pattern-eval` | `37-27` | useful uplift |
+| `search-d5+tactical-cap-8+pattern-eval` | `38-26` | best current signal |
+| `search-d7+tactical-cap-8+pattern-eval` | `34-28-2` | uplift, but high budget pressure |
+
+That suggests the candidate-proof model can catch moves normal search misses
+when it has enough depth and a broad enough root candidate set, especially when
+paired with pattern eval. Proof depth `16` and `32` were much more expensive in
+small smokes and started hitting the budget hard, while widening corridor reply
+width beyond `3` did not materially improve the result. The most promising
+next branch is `D5 tactical-cap-8 + pattern-eval + c16/d8/w3`, not plain
+non-pattern corridor proof.
+
 ### Rolling Threat Frontier
 
 Longer term, the cheap local question should be backed by a rolling frontier

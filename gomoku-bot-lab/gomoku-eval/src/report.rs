@@ -423,6 +423,32 @@ pub struct StandingReport {
     pub leaf_corridor_terminal_root_move_changes: u64,
     #[serde(default)]
     pub leaf_corridor_terminal_root_move_confirmations: u64,
+    #[serde(default)]
+    pub leaf_corridor_proof_candidates_considered: u64,
+    #[serde(default)]
+    pub leaf_corridor_proof_wins: u64,
+    #[serde(default)]
+    pub leaf_corridor_proof_losses: u64,
+    #[serde(default)]
+    pub leaf_corridor_proof_unknown: u64,
+    #[serde(default)]
+    pub leaf_corridor_proof_deadline_skips: u64,
+    #[serde(default)]
+    pub leaf_corridor_proof_move_changes: u64,
+    #[serde(default)]
+    pub leaf_corridor_proof_move_confirmations: u64,
+    #[serde(default)]
+    pub leaf_corridor_proof_candidate_rank_total: u64,
+    #[serde(default)]
+    pub leaf_corridor_proof_candidate_rank_max: u64,
+    #[serde(default)]
+    pub leaf_corridor_proof_candidate_score_gap_total: u64,
+    #[serde(default)]
+    pub leaf_corridor_proof_candidate_score_gap_max: u64,
+    #[serde(default)]
+    pub leaf_corridor_proof_win_candidate_rank_total: u64,
+    #[serde(default)]
+    pub leaf_corridor_proof_win_candidate_rank_max: u64,
     pub total_nodes: u64,
     pub avg_nodes: f64,
     #[serde(default)]
@@ -786,6 +812,32 @@ pub struct SideStatsReport {
     #[serde(default)]
     pub leaf_corridor_terminal_root_move_confirmations: u64,
     #[serde(default)]
+    pub leaf_corridor_proof_candidates_considered: u64,
+    #[serde(default)]
+    pub leaf_corridor_proof_wins: u64,
+    #[serde(default)]
+    pub leaf_corridor_proof_losses: u64,
+    #[serde(default)]
+    pub leaf_corridor_proof_unknown: u64,
+    #[serde(default)]
+    pub leaf_corridor_proof_deadline_skips: u64,
+    #[serde(default)]
+    pub leaf_corridor_proof_move_changes: u64,
+    #[serde(default)]
+    pub leaf_corridor_proof_move_confirmations: u64,
+    #[serde(default)]
+    pub leaf_corridor_proof_candidate_rank_total: u64,
+    #[serde(default)]
+    pub leaf_corridor_proof_candidate_rank_max: u64,
+    #[serde(default)]
+    pub leaf_corridor_proof_candidate_score_gap_total: u64,
+    #[serde(default)]
+    pub leaf_corridor_proof_candidate_score_gap_max: u64,
+    #[serde(default)]
+    pub leaf_corridor_proof_win_candidate_rank_total: u64,
+    #[serde(default)]
+    pub leaf_corridor_proof_win_candidate_rank_max: u64,
+    #[serde(default)]
     pub total_nodes: u64,
     pub avg_nodes: f64,
     #[serde(default)]
@@ -1003,6 +1055,19 @@ struct SideStatsAccumulator {
     leaf_corridor_terminal_root_overrides: u64,
     leaf_corridor_terminal_root_move_changes: u64,
     leaf_corridor_terminal_root_move_confirmations: u64,
+    leaf_corridor_proof_candidates_considered: u64,
+    leaf_corridor_proof_wins: u64,
+    leaf_corridor_proof_losses: u64,
+    leaf_corridor_proof_unknown: u64,
+    leaf_corridor_proof_deadline_skips: u64,
+    leaf_corridor_proof_move_changes: u64,
+    leaf_corridor_proof_move_confirmations: u64,
+    leaf_corridor_proof_candidate_rank_total: u64,
+    leaf_corridor_proof_candidate_rank_max: u64,
+    leaf_corridor_proof_candidate_score_gap_total: u64,
+    leaf_corridor_proof_candidate_score_gap_max: u64,
+    leaf_corridor_proof_win_candidate_rank_total: u64,
+    leaf_corridor_proof_win_candidate_rank_max: u64,
     total_nodes: u64,
     eval_calls: u64,
     candidate_generations: u64,
@@ -1287,6 +1352,43 @@ impl SideStatsAccumulator {
                 trace_value_u64(metrics, "leaf_corridor_terminal_root_move_changes");
             self.leaf_corridor_terminal_root_move_confirmations +=
                 trace_value_u64(metrics, "leaf_corridor_terminal_root_move_confirmations");
+            self.leaf_corridor_proof_candidates_considered +=
+                trace_value_u64(metrics, "leaf_corridor_proof_candidates_considered");
+            self.leaf_corridor_proof_wins += trace_value_u64(metrics, "leaf_corridor_proof_wins");
+            self.leaf_corridor_proof_losses +=
+                trace_value_u64(metrics, "leaf_corridor_proof_losses");
+            self.leaf_corridor_proof_unknown +=
+                trace_value_u64(metrics, "leaf_corridor_proof_unknown");
+            self.leaf_corridor_proof_deadline_skips +=
+                trace_value_u64(metrics, "leaf_corridor_proof_deadline_skips");
+            self.leaf_corridor_proof_move_changes +=
+                trace_value_u64(metrics, "leaf_corridor_proof_move_changes");
+            self.leaf_corridor_proof_move_confirmations +=
+                trace_value_u64(metrics, "leaf_corridor_proof_move_confirmations");
+            self.leaf_corridor_proof_candidate_rank_total +=
+                trace_value_u64(metrics, "leaf_corridor_proof_candidate_rank_total");
+            self.leaf_corridor_proof_candidate_rank_max = self
+                .leaf_corridor_proof_candidate_rank_max
+                .max(trace_value_u64(
+                    metrics,
+                    "leaf_corridor_proof_candidate_rank_max",
+                ));
+            self.leaf_corridor_proof_candidate_score_gap_total +=
+                trace_value_u64(metrics, "leaf_corridor_proof_candidate_score_gap_total");
+            self.leaf_corridor_proof_candidate_score_gap_max = self
+                .leaf_corridor_proof_candidate_score_gap_max
+                .max(trace_value_u64(
+                    metrics,
+                    "leaf_corridor_proof_candidate_score_gap_max",
+                ));
+            self.leaf_corridor_proof_win_candidate_rank_total +=
+                trace_value_u64(metrics, "leaf_corridor_proof_win_candidate_rank_total");
+            self.leaf_corridor_proof_win_candidate_rank_max = self
+                .leaf_corridor_proof_win_candidate_rank_max
+                .max(trace_value_u64(
+                    metrics,
+                    "leaf_corridor_proof_win_candidate_rank_max",
+                ));
         }
         if let Some(depth) = trace.get("depth").and_then(Value::as_u64) {
             self.depth_sum += depth;
@@ -1349,6 +1451,29 @@ impl SideStatsAccumulator {
             stats.leaf_corridor_terminal_root_move_changes;
         self.leaf_corridor_terminal_root_move_confirmations +=
             stats.leaf_corridor_terminal_root_move_confirmations;
+        self.leaf_corridor_proof_candidates_considered +=
+            stats.leaf_corridor_proof_candidates_considered;
+        self.leaf_corridor_proof_wins += stats.leaf_corridor_proof_wins;
+        self.leaf_corridor_proof_losses += stats.leaf_corridor_proof_losses;
+        self.leaf_corridor_proof_unknown += stats.leaf_corridor_proof_unknown;
+        self.leaf_corridor_proof_deadline_skips += stats.leaf_corridor_proof_deadline_skips;
+        self.leaf_corridor_proof_move_changes += stats.leaf_corridor_proof_move_changes;
+        self.leaf_corridor_proof_move_confirmations += stats.leaf_corridor_proof_move_confirmations;
+        self.leaf_corridor_proof_candidate_rank_total +=
+            stats.leaf_corridor_proof_candidate_rank_total;
+        self.leaf_corridor_proof_candidate_rank_max = self
+            .leaf_corridor_proof_candidate_rank_max
+            .max(stats.leaf_corridor_proof_candidate_rank_max);
+        self.leaf_corridor_proof_candidate_score_gap_total +=
+            stats.leaf_corridor_proof_candidate_score_gap_total;
+        self.leaf_corridor_proof_candidate_score_gap_max = self
+            .leaf_corridor_proof_candidate_score_gap_max
+            .max(stats.leaf_corridor_proof_candidate_score_gap_max);
+        self.leaf_corridor_proof_win_candidate_rank_total +=
+            stats.leaf_corridor_proof_win_candidate_rank_total;
+        self.leaf_corridor_proof_win_candidate_rank_max = self
+            .leaf_corridor_proof_win_candidate_rank_max
+            .max(stats.leaf_corridor_proof_win_candidate_rank_max);
         self.total_nodes += stats.total_nodes;
         self.eval_calls += stats.eval_calls;
         self.candidate_generations += stats.candidate_generations;
@@ -1542,6 +1667,24 @@ impl SideStatsAccumulator {
             leaf_corridor_terminal_root_move_changes: self.leaf_corridor_terminal_root_move_changes,
             leaf_corridor_terminal_root_move_confirmations: self
                 .leaf_corridor_terminal_root_move_confirmations,
+            leaf_corridor_proof_candidates_considered: self
+                .leaf_corridor_proof_candidates_considered,
+            leaf_corridor_proof_wins: self.leaf_corridor_proof_wins,
+            leaf_corridor_proof_losses: self.leaf_corridor_proof_losses,
+            leaf_corridor_proof_unknown: self.leaf_corridor_proof_unknown,
+            leaf_corridor_proof_deadline_skips: self.leaf_corridor_proof_deadline_skips,
+            leaf_corridor_proof_move_changes: self.leaf_corridor_proof_move_changes,
+            leaf_corridor_proof_move_confirmations: self.leaf_corridor_proof_move_confirmations,
+            leaf_corridor_proof_candidate_rank_total: self.leaf_corridor_proof_candidate_rank_total,
+            leaf_corridor_proof_candidate_rank_max: self.leaf_corridor_proof_candidate_rank_max,
+            leaf_corridor_proof_candidate_score_gap_total: self
+                .leaf_corridor_proof_candidate_score_gap_total,
+            leaf_corridor_proof_candidate_score_gap_max: self
+                .leaf_corridor_proof_candidate_score_gap_max,
+            leaf_corridor_proof_win_candidate_rank_total: self
+                .leaf_corridor_proof_win_candidate_rank_total,
+            leaf_corridor_proof_win_candidate_rank_max: self
+                .leaf_corridor_proof_win_candidate_rank_max,
             total_nodes: self.total_nodes,
             avg_nodes,
             eval_calls: self.eval_calls,
@@ -1763,6 +1906,27 @@ fn standings(
                     .leaf_corridor_terminal_root_move_changes,
                 leaf_corridor_terminal_root_move_confirmations: side_stats
                     .leaf_corridor_terminal_root_move_confirmations,
+                leaf_corridor_proof_candidates_considered: side_stats
+                    .leaf_corridor_proof_candidates_considered,
+                leaf_corridor_proof_wins: side_stats.leaf_corridor_proof_wins,
+                leaf_corridor_proof_losses: side_stats.leaf_corridor_proof_losses,
+                leaf_corridor_proof_unknown: side_stats.leaf_corridor_proof_unknown,
+                leaf_corridor_proof_deadline_skips: side_stats.leaf_corridor_proof_deadline_skips,
+                leaf_corridor_proof_move_changes: side_stats.leaf_corridor_proof_move_changes,
+                leaf_corridor_proof_move_confirmations: side_stats
+                    .leaf_corridor_proof_move_confirmations,
+                leaf_corridor_proof_candidate_rank_total: side_stats
+                    .leaf_corridor_proof_candidate_rank_total,
+                leaf_corridor_proof_candidate_rank_max: side_stats
+                    .leaf_corridor_proof_candidate_rank_max,
+                leaf_corridor_proof_candidate_score_gap_total: side_stats
+                    .leaf_corridor_proof_candidate_score_gap_total,
+                leaf_corridor_proof_candidate_score_gap_max: side_stats
+                    .leaf_corridor_proof_candidate_score_gap_max,
+                leaf_corridor_proof_win_candidate_rank_total: side_stats
+                    .leaf_corridor_proof_win_candidate_rank_total,
+                leaf_corridor_proof_win_candidate_rank_max: side_stats
+                    .leaf_corridor_proof_win_candidate_rank_max,
                 total_nodes: side_stats.total_nodes,
                 avg_nodes: side_stats.avg_nodes,
                 eval_calls: side_stats.eval_calls,
@@ -2876,8 +3040,15 @@ fn compact_searchbot_feature_label(feature: &str) -> String {
             return format!("LeafCorrD{depth}W{width}");
         }
     }
+    if let Some(count) = feature.strip_prefix("leaf-proof-c") {
+        return format!("ProofC{count}");
+    }
+    if let Some(margin) = feature.strip_prefix("leaf-proof-margin-") {
+        return format!("ProofM{margin}");
+    }
     match feature {
         "pattern-eval" => "Pattern".to_string(),
+        "leaf-proof-any-score" => "ProofAnyScore".to_string(),
         "rolling-frontier" => "Rolling".to_string(),
         "rolling-frontier-shadow" => "RollingShadow".to_string(),
         "tactical-first" => "Tactical".to_string(),
@@ -4524,6 +4695,19 @@ mod tests {
         metrics["leaf_corridor_terminal_root_overrides"] = serde_json::json!(22);
         metrics["leaf_corridor_terminal_root_move_changes"] = serde_json::json!(23);
         metrics["leaf_corridor_terminal_root_move_confirmations"] = serde_json::json!(24);
+        metrics["leaf_corridor_proof_candidates_considered"] = serde_json::json!(25);
+        metrics["leaf_corridor_proof_wins"] = serde_json::json!(26);
+        metrics["leaf_corridor_proof_losses"] = serde_json::json!(27);
+        metrics["leaf_corridor_proof_unknown"] = serde_json::json!(28);
+        metrics["leaf_corridor_proof_deadline_skips"] = serde_json::json!(29);
+        metrics["leaf_corridor_proof_move_changes"] = serde_json::json!(30);
+        metrics["leaf_corridor_proof_move_confirmations"] = serde_json::json!(31);
+        metrics["leaf_corridor_proof_candidate_rank_total"] = serde_json::json!(32);
+        metrics["leaf_corridor_proof_candidate_rank_max"] = serde_json::json!(6);
+        metrics["leaf_corridor_proof_candidate_score_gap_total"] = serde_json::json!(123_456);
+        metrics["leaf_corridor_proof_candidate_score_gap_max"] = serde_json::json!(50_000);
+        metrics["leaf_corridor_proof_win_candidate_rank_total"] = serde_json::json!(7);
+        metrics["leaf_corridor_proof_win_candidate_rank_max"] = serde_json::json!(2);
         metrics["tactical_lite_rank_scan_queries"] = serde_json::json!(5);
         metrics["tactical_lite_rank_scan_ns"] = serde_json::json!(50);
         metrics["tactical_lite_rank_frontier_clean_queries"] = serde_json::json!(6);
@@ -4585,6 +4769,22 @@ mod tests {
         assert_eq!(report.leaf_corridor_terminal_root_overrides, 22);
         assert_eq!(report.leaf_corridor_terminal_root_move_changes, 23);
         assert_eq!(report.leaf_corridor_terminal_root_move_confirmations, 24);
+        assert_eq!(report.leaf_corridor_proof_candidates_considered, 25);
+        assert_eq!(report.leaf_corridor_proof_wins, 26);
+        assert_eq!(report.leaf_corridor_proof_losses, 27);
+        assert_eq!(report.leaf_corridor_proof_unknown, 28);
+        assert_eq!(report.leaf_corridor_proof_deadline_skips, 29);
+        assert_eq!(report.leaf_corridor_proof_move_changes, 30);
+        assert_eq!(report.leaf_corridor_proof_move_confirmations, 31);
+        assert_eq!(report.leaf_corridor_proof_candidate_rank_total, 32);
+        assert_eq!(report.leaf_corridor_proof_candidate_rank_max, 6);
+        assert_eq!(
+            report.leaf_corridor_proof_candidate_score_gap_total,
+            123_456
+        );
+        assert_eq!(report.leaf_corridor_proof_candidate_score_gap_max, 50_000);
+        assert_eq!(report.leaf_corridor_proof_win_candidate_rank_total, 7);
+        assert_eq!(report.leaf_corridor_proof_win_candidate_rank_max, 2);
         assert_eq!(report.effective_depth_sum, 8);
         assert_eq!(report.avg_effective_depth, 8.0);
         assert_eq!(report.max_effective_depth, 8);
@@ -4724,6 +4924,35 @@ mod tests {
         first_match
             .black_stats
             .leaf_corridor_terminal_root_move_confirmations = 1;
+        first_match
+            .black_stats
+            .leaf_corridor_proof_candidates_considered = 9;
+        first_match.black_stats.leaf_corridor_proof_wins = 4;
+        first_match.black_stats.leaf_corridor_proof_losses = 3;
+        first_match.black_stats.leaf_corridor_proof_unknown = 2;
+        first_match.black_stats.leaf_corridor_proof_deadline_skips = 1;
+        first_match.black_stats.leaf_corridor_proof_move_changes = 1;
+        first_match
+            .black_stats
+            .leaf_corridor_proof_move_confirmations = 1;
+        first_match
+            .black_stats
+            .leaf_corridor_proof_candidate_rank_total = 12;
+        first_match
+            .black_stats
+            .leaf_corridor_proof_candidate_rank_max = 4;
+        first_match
+            .black_stats
+            .leaf_corridor_proof_candidate_score_gap_total = 75_000;
+        first_match
+            .black_stats
+            .leaf_corridor_proof_candidate_score_gap_max = 50_000;
+        first_match
+            .black_stats
+            .leaf_corridor_proof_win_candidate_rank_total = 3;
+        first_match
+            .black_stats
+            .leaf_corridor_proof_win_candidate_rank_max = 2;
         first_match.black_stats.effective_depth_sum = 36;
         first_match.black_stats.avg_effective_depth = 7.2;
         first_match.black_stats.max_effective_depth = 9;
@@ -4789,6 +5018,19 @@ mod tests {
         assert_eq!(row.leaf_corridor_terminal_root_overrides, 2);
         assert_eq!(row.leaf_corridor_terminal_root_move_changes, 1);
         assert_eq!(row.leaf_corridor_terminal_root_move_confirmations, 1);
+        assert_eq!(row.leaf_corridor_proof_candidates_considered, 9);
+        assert_eq!(row.leaf_corridor_proof_wins, 4);
+        assert_eq!(row.leaf_corridor_proof_losses, 3);
+        assert_eq!(row.leaf_corridor_proof_unknown, 2);
+        assert_eq!(row.leaf_corridor_proof_deadline_skips, 1);
+        assert_eq!(row.leaf_corridor_proof_move_changes, 1);
+        assert_eq!(row.leaf_corridor_proof_move_confirmations, 1);
+        assert_eq!(row.leaf_corridor_proof_candidate_rank_total, 12);
+        assert_eq!(row.leaf_corridor_proof_candidate_rank_max, 4);
+        assert_eq!(row.leaf_corridor_proof_candidate_score_gap_total, 75_000);
+        assert_eq!(row.leaf_corridor_proof_candidate_score_gap_max, 50_000);
+        assert_eq!(row.leaf_corridor_proof_win_candidate_rank_total, 3);
+        assert_eq!(row.leaf_corridor_proof_win_candidate_rank_max, 2);
         assert_eq!(row.effective_depth_sum, 36);
         assert_eq!(row.avg_effective_depth, 7.2);
         assert_eq!(row.max_effective_depth, 9);
@@ -4929,6 +5171,13 @@ mod tests {
         assert_eq!(
             compact_bot_label(&report, "search-d5+leaf-corridor-d8-w3"),
             "SearchBot_D5+LeafCorrD8W3"
+        );
+        assert_eq!(
+            compact_bot_label(
+                &report,
+                "search-d5+leaf-corridor-d8-w3+leaf-proof-c6+leaf-proof-any-score"
+            ),
+            "SearchBot_D5+LeafCorrD8W3+ProofC6+ProofAnyScore"
         );
     }
 
@@ -5572,6 +5821,19 @@ mod tests {
             leaf_corridor_terminal_root_overrides: 0,
             leaf_corridor_terminal_root_move_changes: 0,
             leaf_corridor_terminal_root_move_confirmations: 0,
+            leaf_corridor_proof_candidates_considered: 0,
+            leaf_corridor_proof_wins: 0,
+            leaf_corridor_proof_losses: 0,
+            leaf_corridor_proof_unknown: 0,
+            leaf_corridor_proof_deadline_skips: 0,
+            leaf_corridor_proof_move_changes: 0,
+            leaf_corridor_proof_move_confirmations: 0,
+            leaf_corridor_proof_candidate_rank_total: 0,
+            leaf_corridor_proof_candidate_rank_max: 0,
+            leaf_corridor_proof_candidate_score_gap_total: 0,
+            leaf_corridor_proof_candidate_score_gap_max: 0,
+            leaf_corridor_proof_win_candidate_rank_total: 0,
+            leaf_corridor_proof_win_candidate_rank_max: 0,
             total_nodes: 1000,
             avg_nodes: 200.0,
             eval_calls: 500,
@@ -5707,6 +5969,19 @@ mod tests {
             leaf_corridor_terminal_root_overrides: 0,
             leaf_corridor_terminal_root_move_changes: 0,
             leaf_corridor_terminal_root_move_confirmations: 0,
+            leaf_corridor_proof_candidates_considered: 0,
+            leaf_corridor_proof_wins: 0,
+            leaf_corridor_proof_losses: 0,
+            leaf_corridor_proof_unknown: 0,
+            leaf_corridor_proof_deadline_skips: 0,
+            leaf_corridor_proof_move_changes: 0,
+            leaf_corridor_proof_move_confirmations: 0,
+            leaf_corridor_proof_candidate_rank_total: 0,
+            leaf_corridor_proof_candidate_rank_max: 0,
+            leaf_corridor_proof_candidate_score_gap_total: 0,
+            leaf_corridor_proof_candidate_score_gap_max: 0,
+            leaf_corridor_proof_win_candidate_rank_total: 0,
+            leaf_corridor_proof_win_candidate_rank_max: 0,
             total_nodes: 1000,
             avg_nodes: 200.0,
             eval_calls: 500,
