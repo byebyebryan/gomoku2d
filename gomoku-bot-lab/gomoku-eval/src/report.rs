@@ -393,6 +393,36 @@ pub struct StandingReport {
     pub corridor_own_plies_followed: u64,
     #[serde(default)]
     pub corridor_opponent_plies_followed: u64,
+    #[serde(default)]
+    pub leaf_corridor_passes: u64,
+    #[serde(default)]
+    pub leaf_corridor_completed: u64,
+    #[serde(default)]
+    pub leaf_corridor_checks: u64,
+    #[serde(default)]
+    pub leaf_corridor_active: u64,
+    #[serde(default)]
+    pub leaf_corridor_quiet: u64,
+    #[serde(default)]
+    pub leaf_corridor_static_exits: u64,
+    #[serde(default)]
+    pub leaf_corridor_depth_exits: u64,
+    #[serde(default)]
+    pub leaf_corridor_deadline_exits: u64,
+    #[serde(default)]
+    pub leaf_corridor_terminal_exits: u64,
+    #[serde(default)]
+    pub leaf_corridor_terminal_root_candidates: u64,
+    #[serde(default)]
+    pub leaf_corridor_terminal_root_winning_candidates: u64,
+    #[serde(default)]
+    pub leaf_corridor_terminal_root_losing_candidates: u64,
+    #[serde(default)]
+    pub leaf_corridor_terminal_root_overrides: u64,
+    #[serde(default)]
+    pub leaf_corridor_terminal_root_move_changes: u64,
+    #[serde(default)]
+    pub leaf_corridor_terminal_root_move_confirmations: u64,
     pub total_nodes: u64,
     pub avg_nodes: f64,
     #[serde(default)]
@@ -726,6 +756,36 @@ pub struct SideStatsReport {
     #[serde(default)]
     pub corridor_opponent_plies_followed: u64,
     #[serde(default)]
+    pub leaf_corridor_passes: u64,
+    #[serde(default)]
+    pub leaf_corridor_completed: u64,
+    #[serde(default)]
+    pub leaf_corridor_checks: u64,
+    #[serde(default)]
+    pub leaf_corridor_active: u64,
+    #[serde(default)]
+    pub leaf_corridor_quiet: u64,
+    #[serde(default)]
+    pub leaf_corridor_static_exits: u64,
+    #[serde(default)]
+    pub leaf_corridor_depth_exits: u64,
+    #[serde(default)]
+    pub leaf_corridor_deadline_exits: u64,
+    #[serde(default)]
+    pub leaf_corridor_terminal_exits: u64,
+    #[serde(default)]
+    pub leaf_corridor_terminal_root_candidates: u64,
+    #[serde(default)]
+    pub leaf_corridor_terminal_root_winning_candidates: u64,
+    #[serde(default)]
+    pub leaf_corridor_terminal_root_losing_candidates: u64,
+    #[serde(default)]
+    pub leaf_corridor_terminal_root_overrides: u64,
+    #[serde(default)]
+    pub leaf_corridor_terminal_root_move_changes: u64,
+    #[serde(default)]
+    pub leaf_corridor_terminal_root_move_confirmations: u64,
+    #[serde(default)]
     pub total_nodes: u64,
     pub avg_nodes: f64,
     #[serde(default)]
@@ -928,6 +988,21 @@ struct SideStatsAccumulator {
     corridor_plies_followed: u64,
     corridor_own_plies_followed: u64,
     corridor_opponent_plies_followed: u64,
+    leaf_corridor_passes: u64,
+    leaf_corridor_completed: u64,
+    leaf_corridor_checks: u64,
+    leaf_corridor_active: u64,
+    leaf_corridor_quiet: u64,
+    leaf_corridor_static_exits: u64,
+    leaf_corridor_depth_exits: u64,
+    leaf_corridor_deadline_exits: u64,
+    leaf_corridor_terminal_exits: u64,
+    leaf_corridor_terminal_root_candidates: u64,
+    leaf_corridor_terminal_root_winning_candidates: u64,
+    leaf_corridor_terminal_root_losing_candidates: u64,
+    leaf_corridor_terminal_root_overrides: u64,
+    leaf_corridor_terminal_root_move_changes: u64,
+    leaf_corridor_terminal_root_move_confirmations: u64,
     total_nodes: u64,
     eval_calls: u64,
     candidate_generations: u64,
@@ -1188,6 +1263,30 @@ impl SideStatsAccumulator {
                 trace_value_u64(metrics, "corridor_own_plies_followed");
             self.corridor_opponent_plies_followed +=
                 trace_value_u64(metrics, "corridor_opponent_plies_followed");
+            self.leaf_corridor_passes += trace_value_u64(metrics, "leaf_corridor_passes");
+            self.leaf_corridor_completed += trace_value_u64(metrics, "leaf_corridor_completed");
+            self.leaf_corridor_checks += trace_value_u64(metrics, "leaf_corridor_checks");
+            self.leaf_corridor_active += trace_value_u64(metrics, "leaf_corridor_active");
+            self.leaf_corridor_quiet += trace_value_u64(metrics, "leaf_corridor_quiet");
+            self.leaf_corridor_static_exits +=
+                trace_value_u64(metrics, "leaf_corridor_static_exits");
+            self.leaf_corridor_depth_exits += trace_value_u64(metrics, "leaf_corridor_depth_exits");
+            self.leaf_corridor_deadline_exits +=
+                trace_value_u64(metrics, "leaf_corridor_deadline_exits");
+            self.leaf_corridor_terminal_exits +=
+                trace_value_u64(metrics, "leaf_corridor_terminal_exits");
+            self.leaf_corridor_terminal_root_candidates +=
+                trace_value_u64(metrics, "leaf_corridor_terminal_root_candidates");
+            self.leaf_corridor_terminal_root_winning_candidates +=
+                trace_value_u64(metrics, "leaf_corridor_terminal_root_winning_candidates");
+            self.leaf_corridor_terminal_root_losing_candidates +=
+                trace_value_u64(metrics, "leaf_corridor_terminal_root_losing_candidates");
+            self.leaf_corridor_terminal_root_overrides +=
+                trace_value_u64(metrics, "leaf_corridor_terminal_root_overrides");
+            self.leaf_corridor_terminal_root_move_changes +=
+                trace_value_u64(metrics, "leaf_corridor_terminal_root_move_changes");
+            self.leaf_corridor_terminal_root_move_confirmations +=
+                trace_value_u64(metrics, "leaf_corridor_terminal_root_move_confirmations");
         }
         if let Some(depth) = trace.get("depth").and_then(Value::as_u64) {
             self.depth_sum += depth;
@@ -1231,6 +1330,25 @@ impl SideStatsAccumulator {
         self.corridor_plies_followed += stats.corridor_plies_followed;
         self.corridor_own_plies_followed += stats.corridor_own_plies_followed;
         self.corridor_opponent_plies_followed += stats.corridor_opponent_plies_followed;
+        self.leaf_corridor_passes += stats.leaf_corridor_passes;
+        self.leaf_corridor_completed += stats.leaf_corridor_completed;
+        self.leaf_corridor_checks += stats.leaf_corridor_checks;
+        self.leaf_corridor_active += stats.leaf_corridor_active;
+        self.leaf_corridor_quiet += stats.leaf_corridor_quiet;
+        self.leaf_corridor_static_exits += stats.leaf_corridor_static_exits;
+        self.leaf_corridor_depth_exits += stats.leaf_corridor_depth_exits;
+        self.leaf_corridor_deadline_exits += stats.leaf_corridor_deadline_exits;
+        self.leaf_corridor_terminal_exits += stats.leaf_corridor_terminal_exits;
+        self.leaf_corridor_terminal_root_candidates += stats.leaf_corridor_terminal_root_candidates;
+        self.leaf_corridor_terminal_root_winning_candidates +=
+            stats.leaf_corridor_terminal_root_winning_candidates;
+        self.leaf_corridor_terminal_root_losing_candidates +=
+            stats.leaf_corridor_terminal_root_losing_candidates;
+        self.leaf_corridor_terminal_root_overrides += stats.leaf_corridor_terminal_root_overrides;
+        self.leaf_corridor_terminal_root_move_changes +=
+            stats.leaf_corridor_terminal_root_move_changes;
+        self.leaf_corridor_terminal_root_move_confirmations +=
+            stats.leaf_corridor_terminal_root_move_confirmations;
         self.total_nodes += stats.total_nodes;
         self.eval_calls += stats.eval_calls;
         self.candidate_generations += stats.candidate_generations;
@@ -1406,6 +1524,24 @@ impl SideStatsAccumulator {
             corridor_plies_followed: self.corridor_plies_followed,
             corridor_own_plies_followed: self.corridor_own_plies_followed,
             corridor_opponent_plies_followed: self.corridor_opponent_plies_followed,
+            leaf_corridor_passes: self.leaf_corridor_passes,
+            leaf_corridor_completed: self.leaf_corridor_completed,
+            leaf_corridor_checks: self.leaf_corridor_checks,
+            leaf_corridor_active: self.leaf_corridor_active,
+            leaf_corridor_quiet: self.leaf_corridor_quiet,
+            leaf_corridor_static_exits: self.leaf_corridor_static_exits,
+            leaf_corridor_depth_exits: self.leaf_corridor_depth_exits,
+            leaf_corridor_deadline_exits: self.leaf_corridor_deadline_exits,
+            leaf_corridor_terminal_exits: self.leaf_corridor_terminal_exits,
+            leaf_corridor_terminal_root_candidates: self.leaf_corridor_terminal_root_candidates,
+            leaf_corridor_terminal_root_winning_candidates: self
+                .leaf_corridor_terminal_root_winning_candidates,
+            leaf_corridor_terminal_root_losing_candidates: self
+                .leaf_corridor_terminal_root_losing_candidates,
+            leaf_corridor_terminal_root_overrides: self.leaf_corridor_terminal_root_overrides,
+            leaf_corridor_terminal_root_move_changes: self.leaf_corridor_terminal_root_move_changes,
+            leaf_corridor_terminal_root_move_confirmations: self
+                .leaf_corridor_terminal_root_move_confirmations,
             total_nodes: self.total_nodes,
             avg_nodes,
             eval_calls: self.eval_calls,
@@ -1606,6 +1742,27 @@ fn standings(
                 corridor_plies_followed: side_stats.corridor_plies_followed,
                 corridor_own_plies_followed: side_stats.corridor_own_plies_followed,
                 corridor_opponent_plies_followed: side_stats.corridor_opponent_plies_followed,
+                leaf_corridor_passes: side_stats.leaf_corridor_passes,
+                leaf_corridor_completed: side_stats.leaf_corridor_completed,
+                leaf_corridor_checks: side_stats.leaf_corridor_checks,
+                leaf_corridor_active: side_stats.leaf_corridor_active,
+                leaf_corridor_quiet: side_stats.leaf_corridor_quiet,
+                leaf_corridor_static_exits: side_stats.leaf_corridor_static_exits,
+                leaf_corridor_depth_exits: side_stats.leaf_corridor_depth_exits,
+                leaf_corridor_deadline_exits: side_stats.leaf_corridor_deadline_exits,
+                leaf_corridor_terminal_exits: side_stats.leaf_corridor_terminal_exits,
+                leaf_corridor_terminal_root_candidates: side_stats
+                    .leaf_corridor_terminal_root_candidates,
+                leaf_corridor_terminal_root_winning_candidates: side_stats
+                    .leaf_corridor_terminal_root_winning_candidates,
+                leaf_corridor_terminal_root_losing_candidates: side_stats
+                    .leaf_corridor_terminal_root_losing_candidates,
+                leaf_corridor_terminal_root_overrides: side_stats
+                    .leaf_corridor_terminal_root_overrides,
+                leaf_corridor_terminal_root_move_changes: side_stats
+                    .leaf_corridor_terminal_root_move_changes,
+                leaf_corridor_terminal_root_move_confirmations: side_stats
+                    .leaf_corridor_terminal_root_move_confirmations,
                 total_nodes: side_stats.total_nodes,
                 avg_nodes: side_stats.avg_nodes,
                 eval_calls: side_stats.eval_calls,
@@ -2712,6 +2869,11 @@ fn compact_searchbot_feature_label(feature: &str) -> String {
     if let Some(rest) = feature.strip_prefix("corridor-opponent-d") {
         if let Some((depth, width)) = rest.split_once("-w") {
             return format!("OppCorrD{depth}W{width}");
+        }
+    }
+    if let Some(rest) = feature.strip_prefix("leaf-corridor-d") {
+        if let Some((depth, width)) = rest.split_once("-w") {
+            return format!("LeafCorrD{depth}W{width}");
         }
     }
     match feature {
@@ -4347,6 +4509,21 @@ mod tests {
             "corridor_own_plies_followed": 6,
             "corridor_opponent_plies_followed": 3
         });
+        metrics["leaf_corridor_passes"] = serde_json::json!(10);
+        metrics["leaf_corridor_completed"] = serde_json::json!(11);
+        metrics["leaf_corridor_checks"] = serde_json::json!(12);
+        metrics["leaf_corridor_active"] = serde_json::json!(13);
+        metrics["leaf_corridor_quiet"] = serde_json::json!(14);
+        metrics["leaf_corridor_static_exits"] = serde_json::json!(15);
+        metrics["leaf_corridor_depth_exits"] = serde_json::json!(16);
+        metrics["leaf_corridor_deadline_exits"] = serde_json::json!(17);
+        metrics["leaf_corridor_terminal_exits"] = serde_json::json!(18);
+        metrics["leaf_corridor_terminal_root_candidates"] = serde_json::json!(19);
+        metrics["leaf_corridor_terminal_root_winning_candidates"] = serde_json::json!(20);
+        metrics["leaf_corridor_terminal_root_losing_candidates"] = serde_json::json!(21);
+        metrics["leaf_corridor_terminal_root_overrides"] = serde_json::json!(22);
+        metrics["leaf_corridor_terminal_root_move_changes"] = serde_json::json!(23);
+        metrics["leaf_corridor_terminal_root_move_confirmations"] = serde_json::json!(24);
         metrics["tactical_lite_rank_scan_queries"] = serde_json::json!(5);
         metrics["tactical_lite_rank_scan_ns"] = serde_json::json!(50);
         metrics["tactical_lite_rank_frontier_clean_queries"] = serde_json::json!(6);
@@ -4393,6 +4570,21 @@ mod tests {
         assert_eq!(report.corridor_plies_followed, 9);
         assert_eq!(report.corridor_own_plies_followed, 6);
         assert_eq!(report.corridor_opponent_plies_followed, 3);
+        assert_eq!(report.leaf_corridor_passes, 10);
+        assert_eq!(report.leaf_corridor_completed, 11);
+        assert_eq!(report.leaf_corridor_checks, 12);
+        assert_eq!(report.leaf_corridor_active, 13);
+        assert_eq!(report.leaf_corridor_quiet, 14);
+        assert_eq!(report.leaf_corridor_static_exits, 15);
+        assert_eq!(report.leaf_corridor_depth_exits, 16);
+        assert_eq!(report.leaf_corridor_deadline_exits, 17);
+        assert_eq!(report.leaf_corridor_terminal_exits, 18);
+        assert_eq!(report.leaf_corridor_terminal_root_candidates, 19);
+        assert_eq!(report.leaf_corridor_terminal_root_winning_candidates, 20);
+        assert_eq!(report.leaf_corridor_terminal_root_losing_candidates, 21);
+        assert_eq!(report.leaf_corridor_terminal_root_overrides, 22);
+        assert_eq!(report.leaf_corridor_terminal_root_move_changes, 23);
+        assert_eq!(report.leaf_corridor_terminal_root_move_confirmations, 24);
         assert_eq!(report.effective_depth_sum, 8);
         assert_eq!(report.avg_effective_depth, 8.0);
         assert_eq!(report.max_effective_depth, 8);
@@ -4513,6 +4705,25 @@ mod tests {
         first_match.black_stats.corridor_plies_followed = 12;
         first_match.black_stats.corridor_own_plies_followed = 9;
         first_match.black_stats.corridor_opponent_plies_followed = 3;
+        first_match.black_stats.leaf_corridor_terminal_exits = 13;
+        first_match
+            .black_stats
+            .leaf_corridor_terminal_root_candidates = 7;
+        first_match
+            .black_stats
+            .leaf_corridor_terminal_root_winning_candidates = 5;
+        first_match
+            .black_stats
+            .leaf_corridor_terminal_root_losing_candidates = 2;
+        first_match
+            .black_stats
+            .leaf_corridor_terminal_root_overrides = 2;
+        first_match
+            .black_stats
+            .leaf_corridor_terminal_root_move_changes = 1;
+        first_match
+            .black_stats
+            .leaf_corridor_terminal_root_move_confirmations = 1;
         first_match.black_stats.effective_depth_sum = 36;
         first_match.black_stats.avg_effective_depth = 7.2;
         first_match.black_stats.max_effective_depth = 9;
@@ -4571,6 +4782,13 @@ mod tests {
         assert_eq!(row.corridor_plies_followed, 12);
         assert_eq!(row.corridor_own_plies_followed, 9);
         assert_eq!(row.corridor_opponent_plies_followed, 3);
+        assert_eq!(row.leaf_corridor_terminal_exits, 13);
+        assert_eq!(row.leaf_corridor_terminal_root_candidates, 7);
+        assert_eq!(row.leaf_corridor_terminal_root_winning_candidates, 5);
+        assert_eq!(row.leaf_corridor_terminal_root_losing_candidates, 2);
+        assert_eq!(row.leaf_corridor_terminal_root_overrides, 2);
+        assert_eq!(row.leaf_corridor_terminal_root_move_changes, 1);
+        assert_eq!(row.leaf_corridor_terminal_root_move_confirmations, 1);
         assert_eq!(row.effective_depth_sum, 36);
         assert_eq!(row.avg_effective_depth, 7.2);
         assert_eq!(row.max_effective_depth, 9);
@@ -4707,6 +4925,10 @@ mod tests {
         assert_eq!(
             compact_bot_label(&report, "search-d5+tactical-cap-8+corridor-own-d1-w3"),
             "SearchBot_D5+TCap8+OwnCorrD1W3"
+        );
+        assert_eq!(
+            compact_bot_label(&report, "search-d5+leaf-corridor-d8-w3"),
+            "SearchBot_D5+LeafCorrD8W3"
         );
     }
 
@@ -5335,6 +5557,21 @@ mod tests {
             corridor_plies_followed: 0,
             corridor_own_plies_followed: 0,
             corridor_opponent_plies_followed: 0,
+            leaf_corridor_passes: 0,
+            leaf_corridor_completed: 0,
+            leaf_corridor_checks: 0,
+            leaf_corridor_active: 0,
+            leaf_corridor_quiet: 0,
+            leaf_corridor_static_exits: 0,
+            leaf_corridor_depth_exits: 0,
+            leaf_corridor_deadline_exits: 0,
+            leaf_corridor_terminal_exits: 0,
+            leaf_corridor_terminal_root_candidates: 0,
+            leaf_corridor_terminal_root_winning_candidates: 0,
+            leaf_corridor_terminal_root_losing_candidates: 0,
+            leaf_corridor_terminal_root_overrides: 0,
+            leaf_corridor_terminal_root_move_changes: 0,
+            leaf_corridor_terminal_root_move_confirmations: 0,
             total_nodes: 1000,
             avg_nodes: 200.0,
             eval_calls: 500,
@@ -5455,6 +5692,21 @@ mod tests {
             corridor_plies_followed: 0,
             corridor_own_plies_followed: 0,
             corridor_opponent_plies_followed: 0,
+            leaf_corridor_passes: 0,
+            leaf_corridor_completed: 0,
+            leaf_corridor_checks: 0,
+            leaf_corridor_active: 0,
+            leaf_corridor_quiet: 0,
+            leaf_corridor_static_exits: 0,
+            leaf_corridor_depth_exits: 0,
+            leaf_corridor_deadline_exits: 0,
+            leaf_corridor_terminal_exits: 0,
+            leaf_corridor_terminal_root_candidates: 0,
+            leaf_corridor_terminal_root_winning_candidates: 0,
+            leaf_corridor_terminal_root_losing_candidates: 0,
+            leaf_corridor_terminal_root_overrides: 0,
+            leaf_corridor_terminal_root_move_changes: 0,
+            leaf_corridor_terminal_root_move_confirmations: 0,
             total_nodes: 1000,
             avg_nodes: 200.0,
             eval_calls: 500,

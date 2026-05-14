@@ -7,8 +7,9 @@ pub mod tactical;
 pub use corridor::CorridorOptions;
 pub use random::RandomBot;
 pub use search::{
-    CandidateSource, CorridorPortalConfig, CorridorPortalSideConfig, MoveOrdering, SafetyGate,
-    SearchAlgorithm, SearchBot, SearchBotConfig, StaticEvaluation, ThreatViewMode,
+    CandidateSource, CorridorPortalConfig, CorridorPortalSideConfig, LeafCorridorConfig,
+    MoveOrdering, SafetyGate, SearchAlgorithm, SearchBot, SearchBotConfig, StaticEvaluation,
+    ThreatViewMode,
 };
 
 use gomoku_core::{Board, Move};

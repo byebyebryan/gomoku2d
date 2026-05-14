@@ -127,9 +127,11 @@ direct replies or counter-fours against opponent imminent threats. It does not
 generate candidates, run opponent-reply search, reorder moves, or cap the root.
 The retired `+corridor-q` leaf-quiescence experiment proved the shared corridor
 module could be called from search, but it was too expensive to keep as a lab
-axis. The later portal suffixes are also retired as candidate bot knobs. They
-remain disabled by default and parseable only so old reports and focused
-diagnostics can be reproduced.
+axis. The later portal suffixes are also retired as candidate bot knobs. Only
+the base disabled `+corridor-own-dN-wM` and `+corridor-opponent-dN-wM` suffixes
+remain parseable for direct comparison against the failed portal shape; the
+rank/top-N, proof-only, and static-exit suffixes are historical report evidence
+only.
 
 These specs are not durable product identity, and they are not character bots
 yet. They exist so the lab can benchmark stable configs before deciding whether
@@ -166,6 +168,22 @@ suffixes as disabled lab evidence. Do not include portal variants in anchors,
 sweeps, product difficulty ladders, or settings UI. The rank/top-N, proof-only,
 and static-exit suffixes are historical controls from old reports, not current
 parser surface.
+
+The next corridor-in-search experiment, if pursued, should be leaf corridor
+extension rather than another portal variant. Run normal iterative deepening
+first, keep that result as the safe fallback, then spend remaining budget on a
+corridor-enhanced final pass that only extends non-quiet leaves. Partial
+enhanced results must not directly replace the normal result unless the pass
+proves a winning terminal result for a root move; incomplete probes and
+non-terminal/static exits are diagnostics and future ordering data. The design
+is captured in [`corridor_search.md`](corridor_search.md#leaf-corridor-extension-candidate).
+The first smoke implementations were too expensive to keep as a default axis:
+the static-exit variant could hurt play, while the terminal-only variant removed
+that obvious risk but still burned most of a 1s/move budget without producing
+meaningful move changes. Switching attacker materialization to cached candidate
+potential reduced the cost, but the best smoke still split `4-4` against base
+D3 and only confirmed normal-search moves. Treat this path as diagnostic until
+leaf selection is much more targeted.
 
 `0.4.4` promotes the rolling-frontier implementation behind the `ThreatView`
 contract as the default threat-view backend after focused scan-vs-rolling

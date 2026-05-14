@@ -284,6 +284,116 @@ that make corridor cost visible. Future bot work should focus on cheaper threat
 facts, better ordering, and explicit analysis-first corridor proofing rather
 than adding more portal tuning knobs.
 
+### Leaf Corridor Extension Candidate
+
+The next bot-facing corridor experiment should not revive portals. A cleaner
+shape is leaf corridor extension: run normal iterative deepening first, then
+use any remaining budget on a corridor-enhanced pass that only extends
+non-quiet leaf nodes.
+
+The goal is narrower than portal search. Portal search asked whether a child
+move could shortcut into a deeper score. Leaf extension asks whether normal
+search stopped in the middle of an active tactical corridor. That makes it a
+better fit for horizon-effect repair:
+
+1. Run the normal `SearchBot` search exactly as today and keep its best move as
+   the safe fallback.
+2. If the normal search reaches its configured depth before the compute budget
+   expires, run a corridor-enhanced pass with the same root candidates and
+   baseline principal-variation ordering.
+3. At `depth == 0`, classify the leaf as quiet or non-quiet.
+4. Quiet leaves use normal static eval.
+5. Non-quiet leaves follow only named corridor moves up to max corridor depth,
+   terminal state, corridor exit, or deadline.
+6. Terminal corridor results can override immediately. Non-terminal exits must
+   not replace the normal-search result in the current terminal-only variant.
+7. If the enhanced pass does not finish a comparable root search, keep the
+   normal-search result and use partial corridor data only for diagnostics and
+   future ordering.
+
+This pass needs a separate transposition-table namespace, or a fresh table,
+because changing leaf evaluation changes the meaning of cached scores. Reusing
+normal-search TT entries for cutoffs would mix scores produced by different
+evaluators. Reusing the normal principal variation for move ordering is safe and
+desirable.
+
+Partial results should be tiered:
+
+- Proven terminal win for a root branch: safe decisive override.
+- Completed enhanced root search without a terminal win: diagnostics only.
+- Incomplete corridor probes: useful for metrics and next-pass ordering only.
+- Mixed enhanced/static scores from only some leaves: unsafe as a direct move
+  decision because explored leaves received deeper tactical treatment than
+  unexplored leaves.
+
+Leaf extension also needs explicit ordering so it spends leftover budget on
+meaningful corridors first:
+
+- Prioritize leaves on or near the normal-search principal variation.
+- Prioritize leaves with immediate wins or immediate defensive obligations.
+- Then prioritize imminent-threat leaves with narrow reply sets.
+- Then prioritize leaves whose static score is close enough to affect the root
+  choice.
+- Inside a corridor, order immediate wins, forced blocks, imminent-threat
+  replies, counter-threats, local threat rank, then stable board order.
+
+The first lab shape should be explicit and conservative, for example
+`search-dN+leaf-corridor-dM-w3`: normal depth `N`, max leaf corridor depth `M`,
+and reply width `3`. Required metrics:
+
+- leaf corridor checks,
+- active leaf hits,
+- terminal hits,
+- static exit evals,
+- max-depth exits,
+- deadline exits,
+- corridor nodes,
+- average extra plies,
+- enhanced pass completion rate,
+- terminal exits reached inside corridor probes,
+- terminal root candidates split by winning versus losing proof,
+- decisive winning terminal overrides,
+- budget exhausted rate.
+
+The first decision to test is not "does this make the bot stronger?" It is
+"does this cheaply identify and repair horizon-effect leaves often enough to
+justify a second pass?" If not, keep corridor search as analysis infrastructure
+and do not add another bot knob.
+
+Initial smoke result: the first static-exit implementation did not meet that
+bar. Against plain `search-d3` with a 1s/move budget,
+`search-d3+leaf-corridor-d1-w3` lost `1-7` while spending about `749 ms/move`
+and exhausting budget on about `53%` of moves;
+`search-d3+leaf-corridor-d2-w3` and `search-d3+leaf-corridor-d4-w3` both split
+`4-4` while spending about `922-937 ms/move` and exhausting budget on about
+`90-93%` of moves. A relaxed 5s smoke for `d2-w3` showed a small `3-1` signal,
+but still spent about `4.3 s/move` and exhausted budget on about `70%` of
+moves. The current shape is therefore diagnostic only: it extends too many
+leaves and mostly converts leftover budget into depth/static exits rather than
+cheap decisive proofs.
+
+The follow-up terminal-only conversion fixed the obvious correctness risk:
+non-terminal/static corridor work no longer overrides the normal-search move.
+That made the shallow smoke safer, but not cheaper. `d1-w3` moved from `1-7`
+to `4-4` against plain `search-d3`, while still spending about `759 ms/move`
+and exhausting budget on about `60%` of moves. It reached `13,031` terminal
+corridor exits, but produced no winning root overrides in the first smoke.
+`d2-w3` also split `4-4`, spending about `921 ms/move` and exhausting budget
+on about `89%` of moves; it reached `4,454` terminal corridor exits and found
+`2` winning terminal root candidates, both of which became root overrides.
+That confirms the terminal-only path can surface real decisive proofs, but it
+is still too expensive and too rare to promote without better leaf selection.
+
+Replacing attacker-side apply/undo materialization with cached candidate
+potential was a clear cost improvement, but not enough to promote the feature.
+`d1-w3` still split `4-4`, dropped to about `628 ms/move`, exhausted budget on
+about `33%` of moves, reached `27,695` terminal corridor exits, and produced no
+root overrides. `d2-w3` still split `4-4`, dropped to about `817 ms/move`,
+exhausted budget on about `66%` of moves, reached `20,866` terminal corridor
+exits, and produced `7` winning terminal root overrides. All `7` were move
+confirmations, not move changes, so the proof pass still mostly confirms wins
+the normal search already chose.
+
 ### Rolling Threat Frontier
 
 Longer term, the cheap local question should be backed by a rolling frontier
