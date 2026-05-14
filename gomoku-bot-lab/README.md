@@ -224,7 +224,7 @@ bot-lab results:
 ```sh
 mkdir -p reports
 cargo run --release -p gomoku-eval -- tournament \
-  --bots search-d1,search-d3,search-d5,search-d5+tactical-cap-8,search-d7+tactical-cap-8,search-d3+pattern-eval,search-d5+tactical-cap-8+pattern-eval,search-d7+tactical-cap-8+pattern-eval \
+  --bots search-d1,search-d3,search-d3+pattern-eval,search-d5+tactical-cap-8+pattern-eval,search-d7+tactical-cap-8+pattern-eval,search-d3+pattern-eval+corridor-proof-c16-d8-w4,search-d5+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4,search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4 \
   --games-per-pair 64 \
   --opening-policy centered-suite \
   --opening-plies 4 \
