@@ -401,8 +401,12 @@ same-depth signal so far is a 64-game Renju head-to-head where
 searched far fewer nodes, and reached more completed depth under the same
 `1000 ms` CPU budget. A follow-up D9 `tactical-first + child-cap-4` variant
 reached deeper on average than D7 cap8 but lost the head-to-head, suggesting
-cap4 cuts too much breadth. That makes the cap a useful lab axis for
-harder/slower search variants, but not yet a product default.
+cap4 cuts too much breadth. Later D9 cap8 gauntlets were also negative: at
+`1000 ms/move`, D9 cap8 variants still averaged only about depth `5.7`, and a
+relaxed `3000 ms/move` budget reduced budget hits without producing meaningful
+effective depth. That makes the cap a useful lab axis for harder/slower search
+variants, but nominal depth should not be raised further without cheaper
+ordering/eval or better forced-branch handling.
 
 A wider 64-games-per-pair Renju tournament with the centered opening suite
 across `search-d1`, `search-d3`, `search-d5+tactical-cap-8`, and
