@@ -179,7 +179,9 @@ corridor proof depth, and `wW` is max reply width. The suffix intentionally
 checks the top `N` candidates regardless of normal-search score. Proof returns
 only proven win, proven loss, or unknown. Unknown proof cannot outrank
 normal-search score; only terminal proof can confirm, replace, or reject a
-normal-search candidate. The design is captured in
+normal-search candidate. The current lab baseline is
+`+corridor-proof-c16-d8-w4`: sixteen root candidates, proof depth eight, and
+reply width four. The design is captured in
 [`corridor_search.md`](corridor_search.md#candidate-proof-corridor-pass).
 
 The earlier broad leaf-extension experiments remain useful negative evidence.
@@ -192,8 +194,10 @@ same-config H2H sweep showed the strongest signal when candidate proof is
 paired with pattern eval: `D5 tactical-cap-8 + pattern-eval +
 corridor-proof-c16-d8-w3` beat its base `38-26`, while plain capped D5
 slightly regressed. Treat candidate proof as a promising lab branch, not a
-product default; proof depth `16/32` was much more expensive, and widening
-reply width past `3` did not add clear value.
+product default. A later D5 width sweep over `w3/w4/w5/w8` locked `w4` as the
+recommended shape: `w4` preserves the useful corridor-proof signal, keeps the
+config power-of-two, and avoids `w8`'s extra cost without a clear strength
+gain. Proof depth `16/32` was much more expensive.
 
 `0.4.4` promotes the rolling-frontier implementation behind the `ThreatView`
 contract as the default threat-view backend after focused scan-vs-rolling
