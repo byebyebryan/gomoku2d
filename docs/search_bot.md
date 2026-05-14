@@ -161,10 +161,11 @@ head-to-head checks, D3 proof-only lost `13-19` to base D3 while costing roughly
 `176 ms/move` versus `60 ms/move`; D5+tactical-cap8 proof-only lost `15-17` to
 base D5+tactical-cap8 while costing roughly `175 ms/move` versus `116 ms/move`.
 
-Keep these suffixes as disabled lab evidence only. Do not include portal
-variants in anchors, sweeps, product difficulty ladders, or settings UI. If a
-future diagnostic needs to rerun the path, use `+corridor-proof-only` first; the
-resume and static-exit modes are historical controls.
+Keep only the base `+corridor-own-dN-wM` and `+corridor-opponent-dN-wM`
+suffixes as disabled lab evidence. Do not include portal variants in anchors,
+sweeps, product difficulty ladders, or settings UI. The rank/top-N, proof-only,
+and static-exit suffixes are historical controls from old reports, not current
+parser surface.
 
 `0.4.4` promotes the rolling-frontier implementation behind the `ThreatView`
 contract as the default threat-view backend after focused scan-vs-rolling

@@ -356,8 +356,8 @@ as lab evidence and as pressure that produced shared tactical facts,
 move-local corridor semantics, the `ThreatView` seam, and honest cost metrics.
 It should not be promoted into anchors, product presets, or UI settings.
 
-The least misleading retained diagnostic shape is `+corridor-proof-only`, which
-uses only terminal corridor proofs and falls back to the original child search
-for non-terminal exits. Even that shape stayed slower and did not outperform
-the base anchors in focused head-to-head runs. Treat resume/static portal modes
-as historical controls only.
+The least misleading diagnostic shape we tried was proof-only portal search:
+use only terminal corridor proofs and fall back to the original child search for
+non-terminal exits. Even that shape stayed slower and did not outperform the
+base anchors in focused head-to-head runs. Treat proof-only, rank/top-N, and
+resume/static portal modes as historical controls only.

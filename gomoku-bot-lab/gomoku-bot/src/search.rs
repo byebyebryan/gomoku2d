@@ -497,7 +497,6 @@ pub struct SearchMetrics {
     pub tt_cutoffs: u64,
     pub beta_cutoffs: u64,
     pub corridor_entry_checks: u64,
-    pub corridor_entry_skipped_by_top_n: u64,
     pub corridor_entries_accepted: u64,
     pub corridor_own_entries_accepted: u64,
     pub corridor_opponent_entries_accepted: u64,
@@ -508,7 +507,6 @@ pub struct SearchMetrics {
     pub corridor_depth_exits: u64,
     pub corridor_neutral_exits: u64,
     pub corridor_terminal_exits: u64,
-    pub corridor_proof_fallbacks: u64,
     pub corridor_plies_followed: u64,
     pub corridor_own_plies_followed: u64,
     pub corridor_opponent_plies_followed: u64,
@@ -685,14 +683,6 @@ impl SearchMetrics {
             CorridorPortalSide::Own => self.corridor_own_entries_accepted += 1,
             CorridorPortalSide::Opponent => self.corridor_opponent_entries_accepted += 1,
         }
-    }
-
-    fn record_corridor_entry_skipped_by_top_n(&mut self) {
-        self.corridor_entry_skipped_by_top_n += 1;
-    }
-
-    fn record_corridor_proof_fallback(&mut self) {
-        self.corridor_proof_fallbacks += 1;
     }
 
     fn record_corridor_ply(&mut self, side: CorridorPortalSide) {
@@ -1052,20 +1042,6 @@ fn rolling_frontier_corridor_entry_rank_after_move_timed(
     };
     state.undo_move_counted(mv, metrics);
     rank
-}
-
-fn corridor_top_n_allows_entry(
-    corridor_portals: CorridorPortalConfig,
-    ordered_index: usize,
-    metrics: &mut SearchMetrics,
-) -> bool {
-    match corridor_portals.entry_top_n {
-        Some(limit) if ordered_index >= limit => {
-            metrics.record_corridor_entry_skipped_by_top_n();
-            false
-        }
-        _ => true,
-    }
 }
 
 fn evaluate_counted(
@@ -2538,7 +2514,7 @@ fn search_child_after_move(
         && portal_config.max_reply_width > 0
     {
         metrics.record_corridor_entry(portal_side);
-        if let Some(outcome) = corridor_portal_search(
+        return corridor_portal_search(
             state,
             depth,
             alpha,
@@ -2561,10 +2537,7 @@ fn search_child_after_move(
             nodes,
             metrics,
             deadline,
-        ) {
-            return outcome;
-        }
-        metrics.record_corridor_proof_fallback();
+        );
     }
 
     negamax(
@@ -2658,43 +2631,29 @@ fn corridor_portal_search(
     nodes: &mut u64,
     metrics: &mut SearchMetrics,
     deadline: SearchDeadline,
-) -> Option<SearchOutcome> {
+) -> SearchOutcome {
     metrics.record_corridor_node(portal_depth_used as u32);
 
     if deadline.expired() {
-        if corridor_portals.depth_exit_mode == CorridorDepthExitMode::ProofOnly {
-            return None;
-        }
-        return Some(SearchOutcome::new(
+        return SearchOutcome::new(
             evaluate_leaf_counted(state.board(), color, root_color, static_eval, metrics),
             None,
             true,
-        ));
+        );
     }
 
     if state.board().result != GameResult::Ongoing {
         metrics.corridor_terminal_exits += 1;
-        return Some(SearchOutcome::new(
+        return SearchOutcome::new(
             evaluate_leaf_counted(state.board(), color, root_color, static_eval, metrics),
             None,
             false,
-        ));
+        );
     }
 
     if portal_depth_used >= portal_config.max_depth {
         metrics.corridor_depth_exits += 1;
-        match corridor_portals.depth_exit_mode {
-            CorridorDepthExitMode::ProofOnly => return None,
-            CorridorDepthExitMode::StaticEval => {
-                return Some(SearchOutcome::new(
-                    evaluate_leaf_counted(state.board(), color, root_color, static_eval, metrics),
-                    None,
-                    false,
-                ));
-            }
-            CorridorDepthExitMode::ResumeSearch => {}
-        }
-        return Some(resume_normal_search_after_corridor(
+        return resume_normal_search_after_corridor(
             state,
             depth,
             alpha,
@@ -2713,7 +2672,7 @@ fn corridor_portal_search(
             nodes,
             metrics,
             deadline,
-        ));
+        );
     }
 
     let moves = if color == attacker {
@@ -2733,10 +2692,7 @@ fn corridor_portal_search(
         );
         if replies.len() > portal_config.max_reply_width {
             metrics.corridor_width_exits += 1;
-            if corridor_portals.depth_exit_mode == CorridorDepthExitMode::ProofOnly {
-                return None;
-            }
-            return Some(resume_normal_search_after_corridor(
+            return resume_normal_search_after_corridor(
                 state,
                 depth,
                 alpha,
@@ -2755,7 +2711,7 @@ fn corridor_portal_search(
                 nodes,
                 metrics,
                 deadline,
-            ));
+            );
         }
         if replies.is_empty()
             && !immediate_winning_moves_for_threat_view_mode(
@@ -2767,22 +2723,19 @@ fn corridor_portal_search(
             .is_empty()
         {
             metrics.corridor_terminal_exits += 1;
-            return Some(SearchOutcome {
+            return SearchOutcome {
                 score: terminal_score_for_winner(attacker, color, root_color),
                 best_move: None,
                 timed_out: false,
                 corridor_extra_plies: 1,
-            });
+            };
         }
         replies
     };
 
     if moves.is_empty() {
         metrics.corridor_neutral_exits += 1;
-        if corridor_portals.depth_exit_mode == CorridorDepthExitMode::ProofOnly {
-            return None;
-        }
-        return Some(resume_normal_search_after_corridor(
+        return resume_normal_search_after_corridor(
             state,
             depth,
             alpha,
@@ -2801,7 +2754,7 @@ fn corridor_portal_search(
             nodes,
             metrics,
             deadline,
-        ));
+        );
     }
 
     metrics.corridor_branch_probes += moves.len() as u64;
@@ -2809,7 +2762,6 @@ fn corridor_portal_search(
     let mut best_move = None;
     let mut best_extra_plies = 0u32;
     let mut timed_out = false;
-    let mut saw_unknown_attacker_option = false;
 
     for mv in moves {
         if deadline.expired() {
@@ -2845,16 +2797,6 @@ fn corridor_portal_search(
         );
         state.undo_move_counted(mv, metrics);
 
-        let Some(child) = child else {
-            if corridor_portals.depth_exit_mode == CorridorDepthExitMode::ProofOnly
-                && color == attacker
-            {
-                saw_unknown_attacker_option = true;
-                continue;
-            }
-            return None;
-        };
-
         let score = -child.score;
 
         if child.timed_out {
@@ -2877,31 +2819,20 @@ fn corridor_portal_search(
         }
     }
 
-    if corridor_portals.depth_exit_mode == CorridorDepthExitMode::ProofOnly
-        && color == attacker
-        && saw_unknown_attacker_option
-        && best_score < 1_000_000
-    {
-        return None;
-    }
-
     if best_move.is_none() {
-        if corridor_portals.depth_exit_mode == CorridorDepthExitMode::ProofOnly {
-            return None;
-        }
-        return Some(SearchOutcome::new(
+        return SearchOutcome::new(
             evaluate_leaf_counted(state.board(), color, root_color, static_eval, metrics),
             None,
             timed_out,
-        ));
+        );
     }
 
-    Some(SearchOutcome {
+    SearchOutcome {
         score: best_score,
         best_move,
         timed_out,
         corridor_extra_plies: best_extra_plies,
-    })
+    }
 }
 
 fn materialized_attacker_corridor_moves_for_threat_view_mode(
@@ -3243,7 +3174,7 @@ fn negamax(
     );
 
     let mut timed_out = false;
-    for (ordered_index, mv) in ordered.into_iter().enumerate() {
+    for mv in ordered {
         if deadline.expired() {
             timed_out = true;
             break;
@@ -3261,9 +3192,7 @@ fn negamax(
         }
         let portal_side = CorridorPortalSide::for_player(color, root_color);
         let portal_config = corridor_portals.for_side(portal_side);
-        let corridor_entry = if portal_config.enabled
-            && corridor_top_n_allows_entry(corridor_portals, ordered_index, metrics)
-        {
+        let corridor_entry = if portal_config.enabled {
             metrics.corridor_entry_checks += 1;
             corridor_entry_rank_for_threat_view_mode(
                 state,
@@ -3272,7 +3201,7 @@ fn negamax(
                 threat_view_mode,
                 zobrist,
                 metrics,
-            ) >= corridor_portals.entry_min_rank
+            ) > 0
         } else {
             false
         };
@@ -3412,7 +3341,7 @@ fn search_root(
     );
 
     let mut timed_out = false;
-    for (ordered_index, mv) in ordered.into_iter().enumerate() {
+    for mv in ordered {
         if deadline.expired() {
             timed_out = true;
             break;
@@ -3420,9 +3349,7 @@ fn search_root(
 
         let portal_side = CorridorPortalSide::Own;
         let portal_config = corridor_portals.for_side(portal_side);
-        let corridor_entry = if portal_config.enabled
-            && corridor_top_n_allows_entry(corridor_portals, ordered_index, metrics)
-        {
+        let corridor_entry = if portal_config.enabled {
             metrics.corridor_entry_checks += 1;
             corridor_entry_rank_for_threat_view_mode(
                 state,
@@ -3431,7 +3358,7 @@ fn search_root(
                 threat_view_mode,
                 zobrist,
                 metrics,
-            ) >= corridor_portals.entry_min_rank
+            ) > 0
         } else {
             false
         };
@@ -3645,23 +3572,6 @@ impl ThreatViewMode {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
-pub enum CorridorDepthExitMode {
-    ResumeSearch,
-    StaticEval,
-    ProofOnly,
-}
-
-impl CorridorDepthExitMode {
-    const fn name(self) -> &'static str {
-        match self {
-            CorridorDepthExitMode::ResumeSearch => "resume_search",
-            CorridorDepthExitMode::StaticEval => "static_eval",
-            CorridorDepthExitMode::ProofOnly => "proof_only",
-        }
-    }
-}
-
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
 pub struct CorridorPortalSideConfig {
     pub enabled: bool,
@@ -3689,9 +3599,6 @@ impl CorridorPortalSideConfig {
 pub struct CorridorPortalConfig {
     pub own: CorridorPortalSideConfig,
     pub opponent: CorridorPortalSideConfig,
-    pub entry_min_rank: u8,
-    pub entry_top_n: Option<usize>,
-    pub depth_exit_mode: CorridorDepthExitMode,
 }
 
 impl Default for CorridorPortalConfig {
@@ -3704,9 +3611,6 @@ impl CorridorPortalConfig {
     pub const DISABLED: Self = Self {
         own: CorridorPortalSideConfig::DISABLED,
         opponent: CorridorPortalSideConfig::DISABLED,
-        entry_min_rank: 1,
-        entry_top_n: None,
-        depth_exit_mode: CorridorDepthExitMode::ResumeSearch,
     };
 
     const fn for_side(self, side: CorridorPortalSide) -> CorridorPortalSideConfig {
@@ -3718,9 +3622,6 @@ impl CorridorPortalConfig {
 
     fn trace(self) -> serde_json::Value {
         serde_json::json!({
-            "entry_min_rank": self.entry_min_rank,
-            "entry_top_n": self.entry_top_n,
-            "depth_exit_mode": self.depth_exit_mode.name(),
             "own": self.own.trace(),
             "opponent": self.opponent.trace(),
         })
@@ -5164,9 +5065,6 @@ mod tests {
         assert_eq!(
             trace["config"]["corridor_portals"],
             serde_json::json!({
-                "entry_min_rank": 1,
-                "entry_top_n": null,
-                "depth_exit_mode": "resume_search",
                 "own": {
                     "enabled": false,
                     "max_depth": 0,
@@ -5237,9 +5135,6 @@ mod tests {
             max_depth: 2,
             max_reply_width: 2,
         };
-        config.corridor_portals.entry_min_rank = 3;
-        config.corridor_portals.entry_top_n = Some(2);
-        config.corridor_portals.depth_exit_mode = CorridorDepthExitMode::StaticEval;
         let mut bot = SearchBot::with_config(config);
 
         let _ = bot.choose_move(&board);
@@ -5263,76 +5158,10 @@ mod tests {
             trace["config"]["corridor_portals"]["opponent"]["max_reply_width"],
             2
         );
-        assert_eq!(trace["config"]["corridor_portals"]["entry_min_rank"], 3);
-        assert_eq!(trace["config"]["corridor_portals"]["entry_top_n"], 2);
-        assert_eq!(
-            trace["config"]["corridor_portals"]["depth_exit_mode"],
-            "static_eval"
-        );
         assert_eq!(trace["corridor"]["search_nodes"], 0);
         assert_eq!(trace["corridor"]["extra_plies"], 0);
         assert_eq!(trace["corridor_extra_plies"], 0);
         assert_eq!(trace["effective_depth"], trace["depth"]);
-    }
-
-    #[test]
-    fn corridor_depth_static_exits_without_resuming_normal_search() {
-        let mut board = Board::new(RuleConfig::default());
-        apply_moves(&mut board, &["H8", "A1", "I8", "A2"]);
-        assert_eq!(board.current_player, Color::Black);
-
-        let mut config = SearchBotConfig::custom_depth(2);
-        config.safety_gate = SafetyGate::None;
-        config.corridor_portals.own = CorridorPortalSideConfig {
-            enabled: true,
-            max_depth: 1,
-            max_reply_width: 3,
-        };
-        config.corridor_portals.depth_exit_mode = CorridorDepthExitMode::StaticEval;
-        let mut bot = SearchBot::with_config(config);
-
-        let _ = bot.choose_move(&board);
-        let trace = bot.trace().expect("expected search trace");
-        let metrics = &trace["metrics"];
-
-        assert!(metrics["corridor_entries_accepted"].as_u64().unwrap() > 0);
-        assert!(metrics["corridor_depth_exits"].as_u64().unwrap() > 0);
-        assert_eq!(
-            metrics["corridor_resume_searches"], 0,
-            "static depth exits should not resume normal alpha-beta"
-        );
-    }
-
-    #[test]
-    fn corridor_proof_only_exits_fall_back_without_resuming_from_corridor() {
-        let mut board = Board::new(RuleConfig::default());
-        apply_moves(&mut board, &["H8", "A1", "I8", "A2"]);
-        assert_eq!(board.current_player, Color::Black);
-
-        let mut config = SearchBotConfig::custom_depth(2);
-        config.safety_gate = SafetyGate::None;
-        config.corridor_portals.own = CorridorPortalSideConfig {
-            enabled: true,
-            max_depth: 1,
-            max_reply_width: 3,
-        };
-        config.corridor_portals.depth_exit_mode = CorridorDepthExitMode::ProofOnly;
-        let mut bot = SearchBot::with_config(config);
-
-        let _ = bot.choose_move(&board);
-        let trace = bot.trace().expect("expected search trace");
-        let metrics = &trace["metrics"];
-
-        assert!(metrics["corridor_entries_accepted"].as_u64().unwrap() > 0);
-        assert!(metrics["corridor_depth_exits"].as_u64().unwrap() > 0);
-        assert!(
-            metrics["corridor_proof_fallbacks"].as_u64().unwrap() > 0,
-            "proof-only non-terminal exits should fall back to the original child search"
-        );
-        assert_eq!(
-            metrics["corridor_resume_searches"], 0,
-            "proof-only exits must not resume normal alpha-beta from inside the corridor"
-        );
     }
 
     #[test]
@@ -5776,37 +5605,6 @@ mod tests {
         assert!(metrics["corridor_own_entries_accepted"].as_u64().unwrap() > 0);
         assert!(trace["corridor"]["search_nodes"].as_u64().unwrap() > 0);
         assert!(trace["corridor"]["terminal_exits"].as_u64().unwrap() > 0);
-    }
-
-    #[test]
-    fn corridor_top_n_skips_portal_entry_checks_outside_order_window() {
-        let mut board = Board::new(RuleConfig::default());
-        apply_moves(
-            &mut board,
-            &["H8", "A1", "I8", "A2", "J8", "A3", "K8", "A4"],
-        );
-        assert_eq!(board.current_player, Color::Black);
-
-        let mut config = SearchBotConfig::custom_depth(1);
-        config.safety_gate = SafetyGate::None;
-        config.corridor_portals.own = CorridorPortalSideConfig {
-            enabled: true,
-            max_depth: 4,
-            max_reply_width: 3,
-        };
-        config.corridor_portals.entry_top_n = Some(1);
-        let mut bot = SearchBot::with_config(config);
-
-        let _ = bot.choose_move(&board);
-        let trace = bot.trace().expect("expected search trace");
-        let metrics = &trace["metrics"];
-
-        assert_eq!(metrics["corridor_entry_checks"], 1);
-        assert!(metrics["corridor_entry_skipped_by_top_n"].as_u64().unwrap() > 0);
-        assert!(
-            metrics["root_candidate_moves_total"].as_u64().unwrap()
-                > metrics["corridor_entry_checks"].as_u64().unwrap()
-        );
     }
 
     #[test]
