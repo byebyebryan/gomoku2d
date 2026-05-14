@@ -1,6 +1,6 @@
 use gomoku_bot::{
-    CorridorPortalConfig, CorridorPortalSideConfig, MoveOrdering, SafetyGate, SearchAlgorithm,
-    SearchBotConfig, StaticEvaluation, ThreatViewMode,
+    CorridorPortalConfig, CorridorPortalSideConfig, LeafCorridorConfig, MoveOrdering, SafetyGate,
+    SearchAlgorithm, SearchBotConfig, StaticEvaluation, ThreatViewMode,
 };
 
 pub struct LabSearchConfig {
@@ -23,6 +23,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
             corridor_portals: CorridorPortalConfig::DISABLED,
+            leaf_corridor: LeafCorridorConfig::DISABLED,
             threat_view_mode: ThreatViewMode::Rolling,
         },
     },
@@ -40,6 +41,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
             corridor_portals: CorridorPortalConfig::DISABLED,
+            leaf_corridor: LeafCorridorConfig::DISABLED,
             threat_view_mode: ThreatViewMode::Rolling,
         },
     },
@@ -57,6 +59,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
             corridor_portals: CorridorPortalConfig::DISABLED,
+            leaf_corridor: LeafCorridorConfig::DISABLED,
             threat_view_mode: ThreatViewMode::Rolling,
         },
     },
@@ -121,6 +124,11 @@ fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchB
                 config.corridor_portals.opponent = portal.config;
             }
         }
+        return Some(config);
+    }
+
+    if let Some(leaf_corridor) = parse_leaf_corridor_suffix(suffix) {
+        config.leaf_corridor = leaf_corridor;
         return Some(config);
     }
 
@@ -205,6 +213,16 @@ fn parse_corridor_portal_suffix(suffix: &str) -> Option<CorridorPortalSuffix> {
             max_depth: parse_positive_limit(max_depth)?,
             max_reply_width: parse_positive_limit(max_reply_width)?,
         },
+    })
+}
+
+fn parse_leaf_corridor_suffix(suffix: &str) -> Option<LeafCorridorConfig> {
+    let suffix = suffix.strip_prefix("leaf-corridor-d")?;
+    let (max_depth, max_reply_width) = suffix.split_once("-w")?;
+    Some(LeafCorridorConfig {
+        enabled: true,
+        max_depth: parse_positive_limit(max_depth)?,
+        max_reply_width: parse_positive_limit(max_reply_width)?,
     })
 }
 
@@ -552,6 +570,36 @@ mod tests {
         );
         assert!(
             super::search_config_from_lab_spec("search-d5+corridor-own-d4-w0", 3, None, None)
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn parses_leaf_corridor_suffixes() {
+        let config = super::search_config_from_lab_spec(
+            "search-d5+leaf-corridor-d8-w3",
+            3,
+            None,
+            Some(1000),
+        )
+        .expect("expected leaf corridor spec to parse");
+
+        assert_eq!(
+            config.leaf_corridor,
+            super::LeafCorridorConfig {
+                enabled: true,
+                max_depth: 8,
+                max_reply_width: 3,
+            }
+        );
+        assert_eq!(config.cpu_time_budget_ms, Some(1000));
+
+        assert!(
+            super::search_config_from_lab_spec("search-d5+leaf-corridor-d0-w3", 3, None, None)
+                .is_none()
+        );
+        assert!(
+            super::search_config_from_lab_spec("search-d5+leaf-corridor-d4-w0", 3, None, None)
                 .is_none()
         );
     }
