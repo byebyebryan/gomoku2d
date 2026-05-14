@@ -500,8 +500,10 @@ all proof widths beat base. `w4` and `w5` both beat base `40-24`; `w3` and
 `w8` beat base `38-26`. Direct width-vs-width pairings were effectively flat,
 with most pairs splitting `32-32`; `w5` edged `w3` by `33-31`. `w8` added no
 meaningful strength and cost more than the narrower lanes. Use
-`D5 tactical-cap-8 + pattern-eval + corridor-proof-c16-d8-w4` as the next
-candidate-proof branch, not plain non-pattern corridor proof.
+`D5 tactical-cap-8 + pattern-eval + corridor-proof-c16-d8-w4` was the first
+useful candidate-proof branch, not plain non-pattern corridor proof. The latest
+anchor refresh promotes that D5 proof lane to tactical-cap-16 after focused
+head-to-head checks showed the wider cap was a better D5 control.
 
 ### Rolling Threat Frontier
 

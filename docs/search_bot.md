@@ -432,24 +432,28 @@ across D3, D5 cap8, and D7 cap8.
 The current curated anchor report promotes the pattern and candidate-proof lanes
 instead of keeping old line-eval middle anchors. The run used Renju, the
 centered opening suite, `64` games per pair, `1000 ms` Linux CPU time per move,
-and clean `3ada1a7c1c63` report provenance. Its standings were:
+and clean `0c7657e47994` report provenance. The latest refresh promotes D5
+from tactical-cap-8 to tactical-cap-16 for both its pattern and
+pattern+corridor-proof lanes. Its standings were:
 
 | Rank | Bot | W-D-L | Read |
 |---:|---|---:|---|
-| 1 | `search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4` | `288-1-159` | strongest average rating, but high budget pressure |
-| 2 | `search-d7+tactical-cap-8+pattern-eval` | `289-2-157` | essentially tied with proof at lower cost |
-| 3 | `search-d5+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4` | `281-0-167` | strongest efficient proof lane |
-| 4 | `search-d5+tactical-cap-8+pattern-eval` | `266-0-182` | efficient hard-side non-proof control |
-| 5 | `search-d3+pattern-eval+corridor-proof-c16-d8-w4` | `255-0-193` | proof helps D3, but with visible cost |
-| 6 | `search-d3+pattern-eval` | `240-0-208` | useful mid-strength pattern control |
-| 7 | `search-d3` | `143-1-304` | stable default baseline |
-| 8 | `search-d1` | `28-0-420` | easy/beginner lane, not competitive |
+| 1 | `search-d5+tactical-cap-16+pattern-eval+corridor-proof-c16-d8-w4` | `274-2-172` | current strongest anchor; high-cost hard proof lane |
+| 2 | `search-d3+pattern-eval+corridor-proof-c16-d8-w4` | `274-0-174` | unusually competitive lower-depth proof control |
+| 3 | `search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4` | `271-3-174` | close hard proof lane; slightly cheaper than D5 proof |
+| 4 | `search-d7+tactical-cap-8+pattern-eval` | `269-3-176` | close non-proof hard control |
+| 5 | `search-d5+tactical-cap-16+pattern-eval` | `261-2-185` | promoted D5 non-proof control |
+| 6 | `search-d3+pattern-eval` | `248-1-199` | useful mid-strength pattern control |
+| 7 | `search-d3` | `149-3-296` | stable default baseline |
+| 8 | `search-d1` | `39-0-409` | easy/beginner lane |
 
 The report makes candidate proof a serious lab branch but not a product default.
-Proof improves the D3/D5 pattern lanes and slightly leads the D7 pair by average
-rating, but the direct D7 head-to-head was only `33-1-30` for proof while
-costing more. Keep corridor proof in anchors so future sweeps measure against
-it directly; do not expose it as a user-facing bot label yet.
+D5 cap16 proof tops the current report, D7 proof remains close, and D3 pattern
+proof is strong enough to stay as a lower-depth strategic control. Keep corridor
+proof in anchors so future sweeps measure against it directly; do not expose it
+as a user-facing bot label yet. Reports render `corridor-proof-c16-d8-w4` as
+`Corridor Proof`, while raw JSON and docs commands keep the full spelling for
+reproducibility.
 
 The key assumption is that depth remains the mechanism for seeing long play.
 Non-tactical alpha-beta should find winning combinations if it can search deep
