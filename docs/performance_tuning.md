@@ -669,6 +669,36 @@ Decision: promote rolling frontier as the default threat-view backend, keep
 `+scan-threat-view` as the fallback/comparison suffix, and keep
 `+rolling-frontier-shadow` as validation-only.
 
+Pattern-frame promotion gate:
+
+Date: `2026-05-14`
+
+The original `+pattern-eval` path scanned every five-cell window at every
+static-eval leaf. Rolling-backed pattern eval now uses a cached `PatternFrame`
+that stores per-window scores, keeps black Renju legality synchronized for
+affected axes, and updates alongside search apply/undo. `+scan-threat-view`
+currently also forces the full pattern scan path for fallback and comparison;
+an explicit `+pattern-eval-scan` suffix would make that axis cleaner later.
+
+Focused `64` game head-to-head controls compared scan pattern eval against the
+rolling cached frame under the same bot config, Renju rule, centered openings,
+`1000 ms` CPU/move, and `80` max moves:
+
+| Config | H2H score | Scan ms/move | Rolling ms/move | Savings | Budget hits |
+|---|---:|---:|---:|---:|---:|
+| `D3 + pattern` | `33.5-30.5` scan edge | `106.0` | `70.3` | `33.7%` | `0.6%` -> `0.2%` |
+| `D5 + tactical-cap16 + pattern` | `33.5-30.5` scan edge | `285.5` | `203.9` | `28.6%` | `5.0%` -> `1.1%` |
+| `D7 + tactical-cap8 + pattern` | `32.0-32.0` tie | `381.8` | `267.2` | `30.0%` | `18.7%` -> `7.5%` |
+
+The result is a performance promotion, not a new strength claim. The small H2H
+score edge for scan in two rows is inside expected tournament noise, while the
+time and budget-hit reductions are consistent. Correctness evidence comes from
+fixed-depth scan-vs-cache parity on benchmark scenarios plus a debug
+head-to-head smoke with `156,214` pattern-frame shadow checks and `0`
+mismatches. Release reports do not run those shadow checks, so `0` release
+mismatches must not be treated as validation unless the shadow-check count is
+also nonzero.
+
 Deep tactical-cap sweep:
 
 Date: `2026-05-14`

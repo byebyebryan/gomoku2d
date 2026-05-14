@@ -8,6 +8,7 @@ use crate::corridor;
 use crate::frontier::{
     FrontierAnnotationSource, FrontierUpdateTimings, RollingFrontierFeatures, RollingThreatFrontier,
 };
+use crate::pattern::{evaluate_pattern_scan, PatternFrame};
 use crate::tactical::{
     local_threat_facts_after_move, CorridorThreatPolicy, LocalThreatKind, ScanThreatView,
     SearchThreatPolicy, TacticalLiteRank, TacticalMoveAnnotation, TacticalOrderingSummary,
@@ -123,7 +124,7 @@ fn score_line(counts: &[i32; 6], open_ends: &[i32; 6]) -> i32 {
 fn evaluate_static(board: &Board, color: Color, static_eval: StaticEvaluation) -> i32 {
     match static_eval {
         StaticEvaluation::LineShapeEval => evaluate(board, color),
-        StaticEvaluation::PatternEval => evaluate_pattern(board, color),
+        StaticEvaluation::PatternEval => evaluate_pattern_scan(board, color),
     }
 }
 
@@ -220,133 +221,6 @@ fn evaluate(board: &Board, color: Color) -> i32 {
     }
 
     score_line(&counts[0], &open_ends[0]) - score_line(&counts[1], &open_ends[1])
-}
-
-fn evaluate_pattern(board: &Board, color: Color) -> i32 {
-    if let GameResult::Winner(w) = &board.result {
-        return if *w == color { 2_000_000 } else { -2_000_000 };
-    }
-    if board.result == GameResult::Draw {
-        return 0;
-    }
-
-    let scores = pattern_scores(board);
-    match color {
-        Color::Black => scores.black - scores.white,
-        Color::White => scores.white - scores.black,
-    }
-}
-
-#[derive(Default)]
-struct PatternScores {
-    black: i32,
-    white: i32,
-}
-
-fn pattern_scores(board: &Board) -> PatternScores {
-    let size = board.config.board_size as isize;
-    let mut scores = PatternScores::default();
-    let mut legality_cache = PatternLegalityCache::new(board);
-
-    for &(dr, dc) in &DIRS {
-        for row in 0..size {
-            for col in 0..size {
-                let end_row = row + dr * 4;
-                let end_col = col + dc * 4;
-                if !in_bounds(board, end_row, end_col) {
-                    continue;
-                }
-
-                let mut black_count = 0usize;
-                let mut white_count = 0usize;
-                let mut empty_moves = [Move { row: 0, col: 0 }; 5];
-                let mut empty_count = 0usize;
-                for offset in 0..5isize {
-                    let r = (row + dr * offset) as usize;
-                    let c = (col + dc * offset) as usize;
-                    match board.cell(r, c) {
-                        Some(Color::Black) => black_count += 1,
-                        Some(Color::White) => white_count += 1,
-                        None => {
-                            empty_moves[empty_count] = Move { row: r, col: c };
-                            empty_count += 1;
-                        }
-                    }
-                }
-
-                if black_count > 0 && white_count > 0 {
-                    continue;
-                }
-
-                if black_count >= 2 {
-                    scores.black += score_pattern_window(
-                        black_count,
-                        legality_cache.count_legal_black_moves(board, &empty_moves[..empty_count]),
-                    );
-                } else if white_count >= 2 {
-                    scores.white += score_pattern_window(white_count, empty_count as i32);
-                }
-            }
-        }
-    }
-
-    scores
-}
-
-fn score_pattern_window(player_count: usize, legal_empty_count: i32) -> i32 {
-    if player_count >= 5 {
-        return 1_000_000;
-    }
-    if legal_empty_count == 0 {
-        return 0;
-    }
-
-    match player_count {
-        4 => 12_000 * legal_empty_count,
-        3 => 1_000 * legal_empty_count,
-        2 => 80 * legal_empty_count,
-        _ => 0,
-    }
-}
-
-struct PatternLegalityCache {
-    board_size: usize,
-    renju_black: Option<Vec<Option<bool>>>,
-}
-
-impl PatternLegalityCache {
-    fn new(board: &Board) -> Self {
-        let needs_exact_renju_black = board.config.variant == Variant::Renju;
-        let renju_black = needs_exact_renju_black
-            .then(|| vec![None; board.config.board_size * board.config.board_size]);
-
-        Self {
-            board_size: board.config.board_size,
-            renju_black,
-        }
-    }
-
-    fn count_legal_black_moves(&mut self, board: &Board, moves: &[Move]) -> i32 {
-        moves
-            .iter()
-            .filter(|&&mv| self.is_legal_black_move(board, mv))
-            .count() as i32
-    }
-
-    fn is_legal_black_move(&mut self, board: &Board, mv: Move) -> bool {
-        let Some(cache) = &mut self.renju_black else {
-            return true;
-        };
-
-        let index = mv.row * self.board_size + mv.col;
-        if let Some(is_legal) = cache[index] {
-            return is_legal;
-        }
-
-        let is_legal = board.is_legal_for_color(mv, Color::Black);
-        cache[index] = Some(is_legal);
-        is_legal
-    }
 }
 
 #[cfg(test)]
@@ -451,6 +325,12 @@ pub struct SearchMetrics {
     pub line_shape_eval_ns: u64,
     pub pattern_eval_calls: u64,
     pub pattern_eval_ns: u64,
+    pub pattern_frame_queries: u64,
+    pub pattern_frame_query_ns: u64,
+    pub pattern_frame_updates: u64,
+    pub pattern_frame_update_ns: u64,
+    pub pattern_frame_shadow_checks: u64,
+    pub pattern_frame_shadow_mismatches: u64,
     pub candidate_generations: u64,
     pub candidate_moves_total: u64,
     pub candidate_moves_max: u64,
@@ -590,6 +470,20 @@ impl SearchMetrics {
                 self.pattern_eval_ns = self.pattern_eval_ns.saturating_add(ns);
             }
         }
+    }
+
+    fn record_pattern_frame_query(&mut self, elapsed: Duration) {
+        self.pattern_frame_queries += 1;
+        self.pattern_frame_query_ns = self
+            .pattern_frame_query_ns
+            .saturating_add(duration_ns(elapsed));
+    }
+
+    fn record_pattern_frame_update(&mut self, elapsed: Duration) {
+        self.pattern_frame_updates += 1;
+        self.pattern_frame_update_ns = self
+            .pattern_frame_update_ns
+            .saturating_add(duration_ns(elapsed));
     }
 
     fn record_candidates(&mut self, count: usize, phase: SearchMetricPhase) {
@@ -853,6 +747,7 @@ fn duration_ns(elapsed: Duration) -> u64 {
 struct SearchState {
     board: Board,
     frontier: Option<RollingThreatFrontier>,
+    pattern_frame: Option<PatternFrame>,
     frontier_ordering_summary_memo: HashMap<FrontierAnnotationMemoKey, TacticalOrderingSummary>,
     hash: u64,
     hash_stack: Vec<u64>,
@@ -876,6 +771,7 @@ impl SearchState {
         board: Board,
         zobrist: &ZobristTable,
         mode: ThreatViewMode,
+        static_eval: StaticEvaluation,
         corridor_portals: CorridorPortalConfig,
         leaf_corridor: LeafCorridorConfig,
     ) -> Self {
@@ -883,6 +779,7 @@ impl SearchState {
             board,
             zobrist,
             frontier_features_for_search(mode, corridor_portals, leaf_corridor),
+            pattern_frame_for_search(mode, static_eval),
         )
     }
 
@@ -896,6 +793,7 @@ impl SearchState {
             board,
             zobrist,
             enable_frontier.then_some(RollingFrontierFeatures::Full),
+            false,
         )
     }
 
@@ -903,13 +801,16 @@ impl SearchState {
         board: Board,
         zobrist: &ZobristTable,
         frontier_features: Option<RollingFrontierFeatures>,
+        enable_pattern_frame: bool,
     ) -> Self {
         let hash = board.hash_with(zobrist);
         let frontier = frontier_features
             .map(|features| RollingThreatFrontier::from_board_with_features(&board, features));
+        let pattern_frame = enable_pattern_frame.then(|| PatternFrame::from_board(&board));
         Self {
             board,
             frontier,
+            pattern_frame,
             frontier_ordering_summary_memo: HashMap::new(),
             hash,
             hash_stack: Vec::new(),
@@ -969,16 +870,28 @@ impl SearchState {
         self.hash_stack.push(self.hash);
         self.hash ^= zobrist.piece(mv.row, mv.col, color) ^ zobrist.turn;
         let board_result = self.board.apply_trusted_legal_move(mv);
+        let mut metrics = metrics;
         if let Some(frontier) = &mut self.frontier {
             let start = Instant::now();
             let (frontier_result, timings) = frontier.apply_trusted_legal_move_profiled(mv);
-            if let Some(metrics) = metrics {
+            if let Some(metrics) = metrics.as_mut() {
                 metrics.record_threat_view_frontier_rebuild(start.elapsed());
                 metrics.record_threat_view_frontier_update_parts(timings);
             }
             debug_assert_eq!(
                 board_result, frontier_result,
                 "search state board/frontier result diverged after apply"
+            );
+        }
+        if let Some(pattern_frame) = &mut self.pattern_frame {
+            let start = Instant::now();
+            let pattern_result = pattern_frame.apply_trusted_legal_move(mv);
+            if let Some(metrics) = metrics.as_mut() {
+                metrics.record_pattern_frame_update(start.elapsed());
+            }
+            debug_assert_eq!(
+                board_result, pattern_result,
+                "search state board/pattern-frame result diverged after apply"
             );
         }
         board_result
@@ -995,12 +908,20 @@ impl SearchState {
 
     fn undo_move_inner(&mut self, mv: Move, metrics: Option<&mut SearchMetrics>) {
         self.board.undo_move(mv);
+        let mut metrics = metrics;
         if let Some(frontier) = &mut self.frontier {
             let start = Instant::now();
             let timings = frontier.undo_move_profiled(mv);
-            if let Some(metrics) = metrics {
+            if let Some(metrics) = metrics.as_mut() {
                 metrics.record_threat_view_frontier_rebuild(start.elapsed());
                 metrics.record_threat_view_frontier_update_parts(timings);
+            }
+        }
+        if let Some(pattern_frame) = &mut self.pattern_frame {
+            let start = Instant::now();
+            pattern_frame.undo_move(mv);
+            if let Some(metrics) = metrics.as_mut() {
+                metrics.record_pattern_frame_update(start.elapsed());
             }
         }
         self.hash = self
@@ -1008,6 +929,10 @@ impl SearchState {
             .pop()
             .expect("search state undo_move called without matching apply");
     }
+}
+
+fn pattern_frame_for_search(mode: ThreatViewMode, static_eval: StaticEvaluation) -> bool {
+    mode.uses_frontier() && static_eval == StaticEvaluation::PatternEval
 }
 
 fn frontier_features_for_search(
@@ -1115,15 +1040,49 @@ fn evaluate_counted(
     score
 }
 
+fn evaluate_state_counted(
+    state: &SearchState,
+    color: Color,
+    static_eval: StaticEvaluation,
+    metrics: &mut SearchMetrics,
+) -> i32 {
+    if static_eval == StaticEvaluation::PatternEval {
+        if let Some(pattern_frame) = &state.pattern_frame {
+            let start = Instant::now();
+            let score = pattern_frame.score_for(color);
+            let elapsed = start.elapsed();
+            metrics.record_static_eval(static_eval, elapsed);
+            metrics.record_pattern_frame_query(elapsed);
+
+            #[cfg(any(test, debug_assertions))]
+            {
+                metrics.pattern_frame_shadow_checks += 1;
+                let scan_score = evaluate_pattern_scan(state.board(), color);
+                if scan_score != score {
+                    metrics.pattern_frame_shadow_mismatches += 1;
+                }
+                debug_assert_eq!(
+                    score, scan_score,
+                    "cached pattern frame diverged from scan pattern eval"
+                );
+            }
+
+            return score;
+        }
+    }
+
+    evaluate_counted(state.board(), color, static_eval, metrics)
+}
+
 fn evaluate_leaf_counted(
-    board: &Board,
+    state: &SearchState,
     color: Color,
     root_color: Color,
     static_eval: StaticEvaluation,
     metrics: &mut SearchMetrics,
 ) -> i32 {
     let sign = if color == root_color { 1 } else { -1 };
-    sign * evaluate_counted(board, root_color, static_eval, metrics)
+    sign * evaluate_state_counted(state, root_color, static_eval, metrics)
 }
 
 #[doc(hidden)]
@@ -1389,6 +1348,7 @@ fn rolling_frontier_tactical_ordering_summary_for_player_timed(
     summary
 }
 
+#[cfg_attr(not(test), allow(dead_code))]
 fn in_bounds(board: &Board, row: isize, col: isize) -> bool {
     let size = board.config.board_size as isize;
     row >= 0 && row < size && col >= 0 && col < size
@@ -2709,7 +2669,7 @@ fn evaluate_leaf_with_corridor_extension(
     if !leaf_corridor.enabled || leaf_corridor.max_depth == 0 || leaf_corridor.max_reply_width == 0
     {
         return SearchOutcome::new(
-            evaluate_leaf_counted(state.board(), color, root_color, static_eval, metrics),
+            evaluate_leaf_counted(state, color, root_color, static_eval, metrics),
             None,
             false,
         );
@@ -2720,7 +2680,7 @@ fn evaluate_leaf_with_corridor_extension(
 
     let Some(attacker) = attacker else {
         return SearchOutcome::new(
-            evaluate_leaf_counted(state.board(), color, root_color, static_eval, metrics),
+            evaluate_leaf_counted(state, color, root_color, static_eval, metrics),
             None,
             false,
         );
@@ -2796,7 +2756,7 @@ fn leaf_corridor_search(
     if deadline.expired() {
         metrics.leaf_corridor_deadline_exits += 1;
         return SearchOutcome::new(
-            evaluate_leaf_counted(state.board(), color, root_color, static_eval, metrics),
+            evaluate_leaf_counted(state, color, root_color, static_eval, metrics),
             None,
             true,
         );
@@ -2806,7 +2766,7 @@ fn leaf_corridor_search(
         metrics.corridor_terminal_exits += 1;
         metrics.leaf_corridor_terminal_exits += 1;
         return SearchOutcome::terminal(
-            evaluate_leaf_counted(state.board(), color, root_color, static_eval, metrics),
+            evaluate_leaf_counted(state, color, root_color, static_eval, metrics),
             None,
             0,
         );
@@ -2816,7 +2776,7 @@ fn leaf_corridor_search(
         metrics.corridor_depth_exits += 1;
         metrics.leaf_corridor_depth_exits += 1;
         return SearchOutcome::new(
-            evaluate_leaf_counted(state.board(), color, root_color, static_eval, metrics),
+            evaluate_leaf_counted(state, color, root_color, static_eval, metrics),
             None,
             false,
         );
@@ -2840,7 +2800,7 @@ fn leaf_corridor_search(
             metrics.corridor_width_exits += 1;
             metrics.leaf_corridor_static_exits += 1;
             return SearchOutcome::new(
-                evaluate_leaf_counted(state.board(), color, root_color, static_eval, metrics),
+                evaluate_leaf_counted(state, color, root_color, static_eval, metrics),
                 None,
                 false,
             );
@@ -2869,7 +2829,7 @@ fn leaf_corridor_search(
         metrics.corridor_neutral_exits += 1;
         metrics.leaf_corridor_static_exits += 1;
         return SearchOutcome::new(
-            evaluate_leaf_counted(state.board(), color, root_color, static_eval, metrics),
+            evaluate_leaf_counted(state, color, root_color, static_eval, metrics),
             None,
             false,
         );
@@ -2934,7 +2894,7 @@ fn leaf_corridor_search(
     if best_move.is_none() {
         metrics.leaf_corridor_static_exits += 1;
         return SearchOutcome::new(
-            evaluate_leaf_counted(state.board(), color, root_color, static_eval, metrics),
+            evaluate_leaf_counted(state, color, root_color, static_eval, metrics),
             None,
             timed_out,
         );
@@ -3039,6 +2999,7 @@ fn prove_leaf_corridor_candidate(
         board.clone(),
         zobrist,
         threat_view_mode,
+        StaticEvaluation::LineShapeEval,
         CorridorPortalConfig::DISABLED,
         leaf_corridor,
     );
@@ -3399,7 +3360,7 @@ fn corridor_portal_search(
 
     if deadline.expired() {
         return SearchOutcome::new(
-            evaluate_leaf_counted(state.board(), color, root_color, static_eval, metrics),
+            evaluate_leaf_counted(state, color, root_color, static_eval, metrics),
             None,
             true,
         );
@@ -3408,7 +3369,7 @@ fn corridor_portal_search(
     if state.board().result != GameResult::Ongoing {
         metrics.corridor_terminal_exits += 1;
         return SearchOutcome::new(
-            evaluate_leaf_counted(state.board(), color, root_color, static_eval, metrics),
+            evaluate_leaf_counted(state, color, root_color, static_eval, metrics),
             None,
             false,
         );
@@ -3584,7 +3545,7 @@ fn corridor_portal_search(
 
     if best_move.is_none() {
         return SearchOutcome::new(
-            evaluate_leaf_counted(state.board(), color, root_color, static_eval, metrics),
+            evaluate_leaf_counted(state, color, root_color, static_eval, metrics),
             None,
             timed_out,
         );
@@ -3838,7 +3799,7 @@ fn negamax(
 
     if deadline.expired() {
         return SearchOutcome::new(
-            evaluate_leaf_counted(state.board(), color, root_color, static_eval, metrics),
+            evaluate_leaf_counted(state, color, root_color, static_eval, metrics),
             None,
             true,
         );
@@ -3872,7 +3833,7 @@ fn negamax(
 
     if state.board().result != GameResult::Ongoing {
         return SearchOutcome::new(
-            evaluate_leaf_counted(state.board(), color, root_color, static_eval, metrics),
+            evaluate_leaf_counted(state, color, root_color, static_eval, metrics),
             None,
             false,
         );
@@ -3918,7 +3879,7 @@ fn negamax(
     }
     if moves.is_empty() {
         return SearchOutcome::new(
-            evaluate_leaf_counted(state.board(), color, root_color, static_eval, metrics),
+            evaluate_leaf_counted(state, color, root_color, static_eval, metrics),
             None,
             false,
         );
@@ -4024,7 +3985,7 @@ fn negamax(
 
     if best_move.is_none() {
         return SearchOutcome::new(
-            evaluate_leaf_counted(state.board(), color, root_color, static_eval, metrics),
+            evaluate_leaf_counted(state, color, root_color, static_eval, metrics),
             None,
             timed_out,
         );
@@ -4092,7 +4053,7 @@ fn search_root(
     let hash = state.hash();
     if deadline.expired() {
         return SearchOutcome::new(
-            evaluate_counted(state.board(), color, static_eval, metrics),
+            evaluate_state_counted(state, color, static_eval, metrics),
             None,
             true,
         );
@@ -4208,7 +4169,7 @@ fn search_root(
 
     if best_move.is_none() {
         return SearchOutcome::new(
-            evaluate_counted(state.board(), color, static_eval, metrics),
+            evaluate_state_counted(state, color, static_eval, metrics),
             None,
             timed_out,
         );
@@ -4733,6 +4694,7 @@ impl Bot for SearchBot {
             board.clone(),
             &self.zobrist,
             self.config.threat_view_mode,
+            self.config.static_eval,
             self.config.corridor_portals,
             LeafCorridorConfig::DISABLED,
         );
@@ -6683,6 +6645,7 @@ mod tests {
             board,
             &zobrist,
             ThreatViewMode::Rolling,
+            StaticEvaluation::LineShapeEval,
             CorridorPortalConfig::DISABLED,
             LeafCorridorConfig::DISABLED,
         );
@@ -6723,6 +6686,7 @@ mod tests {
             board,
             &zobrist,
             ThreatViewMode::Rolling,
+            StaticEvaluation::LineShapeEval,
             CorridorPortalConfig::DISABLED,
             LeafCorridorConfig::DISABLED,
         );
@@ -6895,6 +6859,7 @@ mod tests {
             board,
             &zobrist,
             ThreatViewMode::Rolling,
+            StaticEvaluation::LineShapeEval,
             CorridorPortalConfig::DISABLED,
             LeafCorridorConfig::DISABLED,
         );
@@ -6953,6 +6918,7 @@ mod tests {
             board,
             &zobrist,
             ThreatViewMode::Rolling,
+            StaticEvaluation::LineShapeEval,
             CorridorPortalConfig::DISABLED,
             LeafCorridorConfig {
                 enabled: true,
@@ -6988,6 +6954,7 @@ mod tests {
                 board,
                 &zobrist,
                 ThreatViewMode::Rolling,
+                StaticEvaluation::LineShapeEval,
                 CorridorPortalConfig::DISABLED,
                 LeafCorridorConfig {
                     enabled: true,
@@ -7087,6 +7054,90 @@ mod tests {
             trace["metrics"]["pattern_eval_ns"].as_u64().unwrap() > 0,
             "pattern eval timing should be recorded separately from generic eval calls"
         );
+    }
+
+    #[test]
+    fn rolling_pattern_eval_uses_pattern_frame_cache() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(&mut board, &["H8", "G8", "H9", "G9"]);
+        let mut config = SearchBotConfig::custom_depth(2);
+        config.static_eval = StaticEvaluation::PatternEval;
+        config.threat_view_mode = ThreatViewMode::Rolling;
+        let mut bot = SearchBot::with_config(config);
+
+        let _ = bot.choose_move(&board);
+        let trace = bot.trace().expect("expected search trace");
+        let metrics = &trace["metrics"];
+
+        assert_eq!(trace["config"]["static_eval"], "pattern_eval");
+        assert_eq!(trace["config"]["threat_view_mode"], "rolling");
+        assert!(
+            metrics["pattern_frame_queries"].as_u64().unwrap() > 0,
+            "rolling pattern eval should query the cached pattern frame"
+        );
+        assert!(
+            metrics["pattern_frame_query_ns"].as_u64().unwrap() > 0,
+            "cached pattern frame query timing should be recorded"
+        );
+        assert!(
+            metrics["pattern_frame_updates"].as_u64().unwrap() > 0,
+            "search state move updates should keep the pattern frame in sync"
+        );
+        assert_eq!(
+            metrics["pattern_frame_shadow_mismatches"], 0,
+            "cached pattern eval should match scan eval in test/debug shadow checks"
+        );
+    }
+
+    #[test]
+    fn pattern_eval_scan_and_rolling_cache_choose_same_moves_on_benchmark_scenarios() {
+        for scenario in scenarios::SCENARIOS {
+            let board = scenario.board();
+            if board.result != GameResult::Ongoing {
+                continue;
+            }
+
+            let mut scan_config = SearchBotConfig::custom_depth(2);
+            scan_config.static_eval = StaticEvaluation::PatternEval;
+            scan_config.threat_view_mode = ThreatViewMode::Scan;
+
+            let mut rolling_config = scan_config;
+            rolling_config.threat_view_mode = ThreatViewMode::Rolling;
+
+            let mut scan_bot = SearchBot::with_config(scan_config);
+            let mut rolling_bot = SearchBot::with_config(rolling_config);
+
+            let scan_move = scan_bot.choose_move(&board);
+            let rolling_move = rolling_bot.choose_move(&board);
+
+            assert_eq!(
+                rolling_move, scan_move,
+                "rolling cached pattern eval should preserve scan pattern eval choice on scenario '{}'",
+                scenario.id
+            );
+
+            let scan_trace = scan_bot.trace().expect("expected scan search trace");
+            assert_eq!(
+                scan_trace["metrics"]["pattern_frame_queries"], 0,
+                "scan mode should not use the rolling pattern frame on scenario '{}'",
+                scenario.id
+            );
+
+            let rolling_trace = rolling_bot.trace().expect("expected rolling search trace");
+            assert!(
+                rolling_trace["metrics"]["pattern_frame_queries"]
+                    .as_u64()
+                    .unwrap()
+                    > 0,
+                "rolling mode should use the pattern frame on scenario '{}'",
+                scenario.id
+            );
+            assert_eq!(
+                rolling_trace["metrics"]["pattern_frame_shadow_mismatches"], 0,
+                "rolling cached pattern eval should match scan eval on scenario '{}'",
+                scenario.id
+            );
+        }
     }
 
     #[test]
