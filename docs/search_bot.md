@@ -172,28 +172,28 @@ parser surface.
 The next corridor-in-search shape is candidate proof rather than leaf
 extension. Normal iterative deepening runs first with corridor proof disabled
 and keeps the safe fallback move. If that normal search completes max depth with
-budget remaining, the lab suffix `+leaf-corridor-dM-wW` now proves selected
+budget remaining, the lab suffix `+corridor-proof-cN-dM-wW` proves selected
 normal-search root candidates: normal best first, then more candidates from the
-normal-search ranking. The default is up to `3` candidates within `50,000`
-score points, and sweeps can override that with `+leaf-proof-cN`,
-`+leaf-proof-any-score`, or `+leaf-proof-margin-N`. Proof returns only proven
-win, proven loss, or unknown. Unknown proof cannot outrank normal-search score;
-only terminal proof can confirm, replace, or reject a normal-search candidate.
-The design is captured in
+normal-search ranking. `cN` is the root proof candidate cap, `dM` is max
+corridor proof depth, and `wW` is max reply width. The suffix intentionally
+checks the top `N` candidates regardless of normal-search score. Proof returns
+only proven win, proven loss, or unknown. Unknown proof cannot outrank
+normal-search score; only terminal proof can confirm, replace, or reject a
+normal-search candidate. The design is captured in
 [`corridor_search.md`](corridor_search.md#candidate-proof-corridor-pass).
 
 The earlier broad leaf-extension experiments remain useful negative evidence.
 Static exit could hurt play; terminal-only extension removed that obvious risk
 but still burned most of a 1s/move budget without producing meaningful move
 changes. Candidate proof is the first shape that produced stronger play:
-`search-d3+leaf-corridor-d8-w3+leaf-proof-c16+leaf-proof-any-score` beat base
-`search-d3` by `42-22` in a 64-game head-to-head while producing `31`
-proof-driven move changes. A same-config H2H sweep showed the strongest signal
-when candidate proof is paired with pattern eval: `D5 tactical-cap-8 +
-pattern-eval + c16/d8/w3` beat its base `38-26`, while plain capped D5 slightly
-regressed. Treat candidate proof as a promising lab branch, not a product
-default; proof depth `16/32` was much more expensive, and widening reply width
-past `3` did not add clear value.
+`search-d3+corridor-proof-c16-d8-w3` beat base `search-d3` by `42-22` in a
+64-game head-to-head while producing `31` proof-driven move changes. A
+same-config H2H sweep showed the strongest signal when candidate proof is
+paired with pattern eval: `D5 tactical-cap-8 + pattern-eval +
+corridor-proof-c16-d8-w3` beat its base `38-26`, while plain capped D5
+slightly regressed. Treat candidate proof as a promising lab branch, not a
+product default; proof depth `16/32` was much more expensive, and widening
+reply width past `3` did not add clear value.
 
 `0.4.4` promotes the rolling-frontier implementation behind the `ThreatView`
 contract as the default threat-view backend after focused scan-vs-rolling

@@ -2568,7 +2568,6 @@ struct LeafCorridorProofDecision {
 fn select_leaf_corridor_proof_candidates(
     root_results: &[RootCandidateResult],
     best_move: Move,
-    score_margin: Option<i32>,
     max_candidates: usize,
 ) -> Vec<LeafCorridorProofCandidate> {
     if max_candidates == 0 {
@@ -2609,11 +2608,6 @@ fn select_leaf_corridor_proof_candidates(
             continue;
         }
         let candidate = to_candidate(index + 1, result);
-        if let Some(score_margin) = score_margin {
-            if candidate.score_gap > score_margin.max(0) as u64 {
-                continue;
-            }
-        }
         if selected.len() >= max_candidates {
             break;
         }
@@ -2949,7 +2943,6 @@ fn run_leaf_corridor_candidate_proof_pass(
     let candidates = select_leaf_corridor_proof_candidates(
         root_results,
         normal_best,
-        leaf_corridor.proof_score_margin,
         leaf_corridor.proof_candidate_limit,
     );
     let mut proofs = Vec::with_capacity(candidates.len());
@@ -4420,19 +4413,16 @@ pub struct LeafCorridorConfig {
     pub max_depth: usize,
     pub max_reply_width: usize,
     pub proof_candidate_limit: usize,
-    pub proof_score_margin: Option<i32>,
 }
 
 impl LeafCorridorConfig {
     pub const DEFAULT_PROOF_CANDIDATE_LIMIT: usize = 3;
-    pub const DEFAULT_PROOF_SCORE_MARGIN: i32 = 50_000;
 
     pub const DISABLED: Self = Self {
         enabled: false,
         max_depth: 0,
         max_reply_width: 0,
         proof_candidate_limit: 0,
-        proof_score_margin: Some(Self::DEFAULT_PROOF_SCORE_MARGIN),
     };
 
     fn trace(self) -> serde_json::Value {
@@ -4441,7 +4431,6 @@ impl LeafCorridorConfig {
             "max_depth": self.max_depth,
             "max_reply_width": self.max_reply_width,
             "proof_candidate_limit": self.proof_candidate_limit,
-            "proof_score_margin": self.proof_score_margin,
         })
     }
 }
@@ -6075,7 +6064,6 @@ mod tests {
             max_depth: 4,
             max_reply_width: 3,
             proof_candidate_limit: LeafCorridorConfig::DEFAULT_PROOF_CANDIDATE_LIMIT,
-            proof_score_margin: Some(LeafCorridorConfig::DEFAULT_PROOF_SCORE_MARGIN),
         };
         let mut bot = SearchBot::with_config(config);
 
@@ -6161,7 +6149,6 @@ mod tests {
             max_depth: 1,
             max_reply_width: 3,
             proof_candidate_limit: LeafCorridorConfig::DEFAULT_PROOF_CANDIDATE_LIMIT,
-            proof_score_margin: Some(LeafCorridorConfig::DEFAULT_PROOF_SCORE_MARGIN),
         };
         let mut leaf_bot = SearchBot::with_config(config);
         let leaf_move = leaf_bot.choose_move(&board);
@@ -6192,7 +6179,6 @@ mod tests {
             max_depth: 4,
             max_reply_width: 3,
             proof_candidate_limit: LeafCorridorConfig::DEFAULT_PROOF_CANDIDATE_LIMIT,
-            proof_score_margin: Some(LeafCorridorConfig::DEFAULT_PROOF_SCORE_MARGIN),
         };
         let mut bot = SearchBot::with_config(config);
 
@@ -6208,7 +6194,7 @@ mod tests {
     }
 
     #[test]
-    fn leaf_corridor_selects_normal_best_then_margin_candidates() {
+    fn leaf_corridor_selects_normal_best_then_ranked_candidates() {
         let best = mv("H8");
         let close = mv("H9");
         let also_close = mv("H10");
@@ -6232,12 +6218,12 @@ mod tests {
             },
         ];
 
-        let selected = select_leaf_corridor_proof_candidates(&results, best, Some(50_000), 3)
+        let selected = select_leaf_corridor_proof_candidates(&results, best, 4)
             .into_iter()
             .map(|candidate| candidate.mv)
             .collect::<Vec<_>>();
 
-        assert_eq!(selected, vec![best, close, also_close]);
+        assert_eq!(selected, vec![best, close, also_close, too_far]);
     }
 
     #[test]
@@ -6265,7 +6251,7 @@ mod tests {
             },
         ];
 
-        let selected = select_leaf_corridor_proof_candidates(&results, best, None, 4);
+        let selected = select_leaf_corridor_proof_candidates(&results, best, 4);
 
         assert_eq!(
             selected
@@ -6952,7 +6938,6 @@ mod tests {
                 max_depth: 2,
                 max_reply_width: 3,
                 proof_candidate_limit: LeafCorridorConfig::DEFAULT_PROOF_CANDIDATE_LIMIT,
-                proof_score_margin: Some(LeafCorridorConfig::DEFAULT_PROOF_SCORE_MARGIN),
             },
         );
         let mut metrics = SearchMetrics::default();
@@ -6988,7 +6973,6 @@ mod tests {
                     max_depth: 2,
                     max_reply_width: 3,
                     proof_candidate_limit: LeafCorridorConfig::DEFAULT_PROOF_CANDIDATE_LIMIT,
-                    proof_score_margin: Some(LeafCorridorConfig::DEFAULT_PROOF_SCORE_MARGIN),
                 },
             );
             let mut metrics = SearchMetrics::default();
