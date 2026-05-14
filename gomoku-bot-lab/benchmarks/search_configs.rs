@@ -1,6 +1,6 @@
 use gomoku_bot::{
-    CorridorDepthExitMode, CorridorPortalConfig, CorridorPortalSideConfig, MoveOrdering,
-    SafetyGate, SearchAlgorithm, SearchBotConfig, StaticEvaluation, ThreatViewMode,
+    CorridorPortalConfig, CorridorPortalSideConfig, MoveOrdering, SafetyGate, SearchAlgorithm,
+    SearchBotConfig, StaticEvaluation, ThreatViewMode,
 };
 
 pub struct LabSearchConfig {
@@ -124,26 +124,6 @@ fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchB
         return Some(config);
     }
 
-    if let Some(rank) = parse_corridor_min_rank_suffix(suffix) {
-        config.corridor_portals.entry_min_rank = rank;
-        return Some(config);
-    }
-
-    if let Some(limit) = parse_corridor_top_n_suffix(suffix) {
-        config.corridor_portals.entry_top_n = Some(limit);
-        return Some(config);
-    }
-
-    if suffix == "corridor-depth-static" {
-        config.corridor_portals.depth_exit_mode = CorridorDepthExitMode::StaticEval;
-        return Some(config);
-    }
-
-    if suffix == "corridor-proof-only" {
-        config.corridor_portals.depth_exit_mode = CorridorDepthExitMode::ProofOnly;
-        return Some(config);
-    }
-
     match suffix {
         "near-all-r1" => {
             config.candidate_radius = 1;
@@ -226,19 +206,6 @@ fn parse_corridor_portal_suffix(suffix: &str) -> Option<CorridorPortalSuffix> {
             max_reply_width: parse_positive_limit(max_reply_width)?,
         },
     })
-}
-
-fn parse_corridor_min_rank_suffix(suffix: &str) -> Option<u8> {
-    let rank = suffix.strip_prefix("corridor-min-rank-")?;
-    match rank.parse::<u8>().ok()? {
-        rank @ 1..=5 => Some(rank),
-        _ => None,
-    }
-}
-
-fn parse_corridor_top_n_suffix(suffix: &str) -> Option<usize> {
-    let limit = suffix.strip_prefix("corridor-top-n-")?;
-    parse_positive_limit(limit)
 }
 
 fn apply_asymmetric_candidate_source_suffix(
@@ -563,7 +530,7 @@ mod tests {
     #[test]
     fn parses_corridor_portal_suffixes() {
         let config = super::search_config_from_lab_spec(
-            "search-d5+corridor-own-d6-w3+corridor-opponent-d4-w2+corridor-min-rank-3+corridor-top-n-2+corridor-depth-static",
+            "search-d5+corridor-own-d6-w3+corridor-opponent-d4-w2",
             3,
             None,
             Some(1000),
@@ -577,12 +544,6 @@ mod tests {
         assert!(config.corridor_portals.opponent.enabled);
         assert_eq!(config.corridor_portals.opponent.max_depth, 4);
         assert_eq!(config.corridor_portals.opponent.max_reply_width, 2);
-        assert_eq!(config.corridor_portals.entry_min_rank, 3);
-        assert_eq!(config.corridor_portals.entry_top_n, Some(2));
-        assert_eq!(
-            config.corridor_portals.depth_exit_mode,
-            super::CorridorDepthExitMode::StaticEval
-        );
         assert_eq!(config.cpu_time_budget_ms, Some(1000));
 
         assert!(
@@ -593,47 +554,57 @@ mod tests {
             super::search_config_from_lab_spec("search-d5+corridor-own-d4-w0", 3, None, None)
                 .is_none()
         );
+    }
+
+    #[test]
+    fn rejects_retired_corridor_portal_tuning_suffixes() {
         assert!(
-            super::search_config_from_lab_spec("search-d5+corridor-min-rank-0", 3, None, None)
-                .is_none()
-        );
-        assert!(
-            super::search_config_from_lab_spec("search-d5+corridor-min-rank-6", 3, None, None)
-                .is_none()
-        );
-        assert!(
-            super::search_config_from_lab_spec("search-d5+corridor-top-n-0", 3, None, None)
+            super::search_config_from_lab_spec("search-d5+corridor-min-rank-3", 3, None, None)
                 .is_none()
         );
         assert!(super::search_config_from_lab_spec(
-            "search-d5+corridor-depth-resume",
+            "search-d5+corridor-own-d1-w3+corridor-min-rank-3",
             3,
             None,
             None
         )
         .is_none());
-
-        let default =
-            super::search_config_from_lab_spec("search-d5+corridor-own-d1-w3", 3, None, None)
-                .expect("expected default corridor portal spec to parse");
-        assert_eq!(default.corridor_portals.entry_min_rank, 1);
-        assert_eq!(default.corridor_portals.entry_top_n, None);
-        assert_eq!(
-            default.corridor_portals.depth_exit_mode,
-            super::CorridorDepthExitMode::ResumeSearch
+        assert!(
+            super::search_config_from_lab_spec("search-d5+corridor-top-n-2", 3, None, None)
+                .is_none()
         );
-
-        let proof_only = super::search_config_from_lab_spec(
+        assert!(super::search_config_from_lab_spec(
+            "search-d5+corridor-own-d1-w3+corridor-top-n-2",
+            3,
+            None,
+            None
+        )
+        .is_none());
+        assert!(super::search_config_from_lab_spec(
+            "search-d5+corridor-depth-static",
+            3,
+            None,
+            None
+        )
+        .is_none());
+        assert!(super::search_config_from_lab_spec(
+            "search-d5+corridor-own-d1-w3+corridor-depth-static",
+            3,
+            None,
+            None
+        )
+        .is_none());
+        assert!(
+            super::search_config_from_lab_spec("search-d5+corridor-proof-only", 3, None, None)
+                .is_none()
+        );
+        assert!(super::search_config_from_lab_spec(
             "search-d5+corridor-own-d1-w3+corridor-proof-only",
             3,
             None,
-            None,
+            None
         )
-        .expect("expected proof-only corridor portal spec to parse");
-        assert_eq!(
-            proof_only.corridor_portals.depth_exit_mode,
-            super::CorridorDepthExitMode::ProofOnly
-        );
+        .is_none());
     }
 
     #[test]

@@ -370,8 +370,6 @@ pub struct StandingReport {
     #[serde(default)]
     pub corridor_entry_checks: u64,
     #[serde(default)]
-    pub corridor_entry_skipped_by_top_n: u64,
-    #[serde(default)]
     pub corridor_entries_accepted: u64,
     #[serde(default)]
     pub corridor_entry_acceptance_rate: f64,
@@ -389,8 +387,6 @@ pub struct StandingReport {
     pub corridor_neutral_exits: u64,
     #[serde(default)]
     pub corridor_terminal_exits: u64,
-    #[serde(default)]
-    pub corridor_proof_fallbacks: u64,
     #[serde(default)]
     pub corridor_plies_followed: u64,
     #[serde(default)]
@@ -706,8 +702,6 @@ pub struct SideStatsReport {
     #[serde(default)]
     pub corridor_entry_checks: u64,
     #[serde(default)]
-    pub corridor_entry_skipped_by_top_n: u64,
-    #[serde(default)]
     pub corridor_entries_accepted: u64,
     #[serde(default)]
     pub corridor_entry_acceptance_rate: f64,
@@ -725,8 +719,6 @@ pub struct SideStatsReport {
     pub corridor_neutral_exits: u64,
     #[serde(default)]
     pub corridor_terminal_exits: u64,
-    #[serde(default)]
-    pub corridor_proof_fallbacks: u64,
     #[serde(default)]
     pub corridor_plies_followed: u64,
     #[serde(default)]
@@ -925,7 +917,6 @@ struct SideStatsAccumulator {
     corridor_max_depth: u32,
     corridor_extra_plies: u64,
     corridor_entry_checks: u64,
-    corridor_entry_skipped_by_top_n: u64,
     corridor_entries_accepted: u64,
     corridor_own_entries_accepted: u64,
     corridor_opponent_entries_accepted: u64,
@@ -934,7 +925,6 @@ struct SideStatsAccumulator {
     corridor_depth_exits: u64,
     corridor_neutral_exits: u64,
     corridor_terminal_exits: u64,
-    corridor_proof_fallbacks: u64,
     corridor_plies_followed: u64,
     corridor_own_plies_followed: u64,
     corridor_opponent_plies_followed: u64,
@@ -1183,8 +1173,6 @@ impl SideStatsAccumulator {
             self.tt_cutoffs += trace_value_u64(metrics, "tt_cutoffs");
             self.beta_cutoffs += trace_value_u64(metrics, "beta_cutoffs");
             self.corridor_entry_checks += trace_value_u64(metrics, "corridor_entry_checks");
-            self.corridor_entry_skipped_by_top_n +=
-                trace_value_u64(metrics, "corridor_entry_skipped_by_top_n");
             self.corridor_entries_accepted += trace_value_u64(metrics, "corridor_entries_accepted");
             self.corridor_own_entries_accepted +=
                 trace_value_u64(metrics, "corridor_own_entries_accepted");
@@ -1195,7 +1183,6 @@ impl SideStatsAccumulator {
             self.corridor_depth_exits += trace_value_u64(metrics, "corridor_depth_exits");
             self.corridor_neutral_exits += trace_value_u64(metrics, "corridor_neutral_exits");
             self.corridor_terminal_exits += trace_value_u64(metrics, "corridor_terminal_exits");
-            self.corridor_proof_fallbacks += trace_value_u64(metrics, "corridor_proof_fallbacks");
             self.corridor_plies_followed += trace_value_u64(metrics, "corridor_plies_followed");
             self.corridor_own_plies_followed +=
                 trace_value_u64(metrics, "corridor_own_plies_followed");
@@ -1233,7 +1220,6 @@ impl SideStatsAccumulator {
         self.corridor_max_depth = self.corridor_max_depth.max(stats.corridor_max_depth);
         self.corridor_extra_plies += stats.corridor_extra_plies;
         self.corridor_entry_checks += stats.corridor_entry_checks;
-        self.corridor_entry_skipped_by_top_n += stats.corridor_entry_skipped_by_top_n;
         self.corridor_entries_accepted += stats.corridor_entries_accepted;
         self.corridor_own_entries_accepted += stats.corridor_own_entries_accepted;
         self.corridor_opponent_entries_accepted += stats.corridor_opponent_entries_accepted;
@@ -1242,7 +1228,6 @@ impl SideStatsAccumulator {
         self.corridor_depth_exits += stats.corridor_depth_exits;
         self.corridor_neutral_exits += stats.corridor_neutral_exits;
         self.corridor_terminal_exits += stats.corridor_terminal_exits;
-        self.corridor_proof_fallbacks += stats.corridor_proof_fallbacks;
         self.corridor_plies_followed += stats.corridor_plies_followed;
         self.corridor_own_plies_followed += stats.corridor_own_plies_followed;
         self.corridor_opponent_plies_followed += stats.corridor_opponent_plies_followed;
@@ -1409,7 +1394,6 @@ impl SideStatsAccumulator {
             corridor_extra_plies: self.corridor_extra_plies,
             avg_corridor_extra_plies,
             corridor_entry_checks: self.corridor_entry_checks,
-            corridor_entry_skipped_by_top_n: self.corridor_entry_skipped_by_top_n,
             corridor_entries_accepted: self.corridor_entries_accepted,
             corridor_entry_acceptance_rate,
             corridor_own_entries_accepted: self.corridor_own_entries_accepted,
@@ -1419,7 +1403,6 @@ impl SideStatsAccumulator {
             corridor_depth_exits: self.corridor_depth_exits,
             corridor_neutral_exits: self.corridor_neutral_exits,
             corridor_terminal_exits: self.corridor_terminal_exits,
-            corridor_proof_fallbacks: self.corridor_proof_fallbacks,
             corridor_plies_followed: self.corridor_plies_followed,
             corridor_own_plies_followed: self.corridor_own_plies_followed,
             corridor_opponent_plies_followed: self.corridor_opponent_plies_followed,
@@ -1611,7 +1594,6 @@ fn standings(
                 corridor_extra_plies: side_stats.corridor_extra_plies,
                 avg_corridor_extra_plies: side_stats.avg_corridor_extra_plies,
                 corridor_entry_checks: side_stats.corridor_entry_checks,
-                corridor_entry_skipped_by_top_n: side_stats.corridor_entry_skipped_by_top_n,
                 corridor_entries_accepted: side_stats.corridor_entries_accepted,
                 corridor_entry_acceptance_rate: side_stats.corridor_entry_acceptance_rate,
                 corridor_own_entries_accepted: side_stats.corridor_own_entries_accepted,
@@ -1621,7 +1603,6 @@ fn standings(
                 corridor_depth_exits: side_stats.corridor_depth_exits,
                 corridor_neutral_exits: side_stats.corridor_neutral_exits,
                 corridor_terminal_exits: side_stats.corridor_terminal_exits,
-                corridor_proof_fallbacks: side_stats.corridor_proof_fallbacks,
                 corridor_plies_followed: side_stats.corridor_plies_followed,
                 corridor_own_plies_followed: side_stats.corridor_own_plies_followed,
                 corridor_opponent_plies_followed: side_stats.corridor_opponent_plies_followed,
@@ -2733,17 +2714,8 @@ fn compact_searchbot_feature_label(feature: &str) -> String {
             return format!("OppCorrD{depth}W{width}");
         }
     }
-    if let Some(rank) = feature.strip_prefix("corridor-min-rank-") {
-        return format!("CorrMinR{rank}");
-    }
-    if let Some(limit) = feature.strip_prefix("corridor-top-n-") {
-        return format!("CorrTopN{limit}");
-    }
-
     match feature {
         "pattern-eval" => "Pattern".to_string(),
-        "corridor-depth-static" => "CorrStatic".to_string(),
-        "corridor-proof-only" => "CorrProof".to_string(),
         "rolling-frontier" => "Rolling".to_string(),
         "rolling-frontier-shadow" => "RollingShadow".to_string(),
         "tactical-first" => "Tactical".to_string(),
@@ -3251,10 +3223,9 @@ fn portal_entry_metric_label(row: &StandingReport) -> (String, Option<String>) {
             row.corridor_entries_accepted, row.corridor_entry_checks
         ),
         Some(format!(
-            "{:.0}% acc / {} res / {} fb",
+            "{:.0}% acc / {} res",
             row.corridor_entry_acceptance_rate * 100.0,
-            row.corridor_resume_searches,
-            row.corridor_proof_fallbacks
+            row.corridor_resume_searches
         )),
     )
 }
@@ -4364,7 +4335,6 @@ mod tests {
             "root_child_moves_after_max": 0,
             "search_child_moves_after_max": 9,
             "corridor_entry_checks": 12,
-            "corridor_entry_skipped_by_top_n": 4,
             "corridor_entries_accepted": 3,
             "corridor_own_entries_accepted": 2,
             "corridor_opponent_entries_accepted": 1,
@@ -4373,7 +4343,6 @@ mod tests {
             "corridor_depth_exits": 6,
             "corridor_neutral_exits": 7,
             "corridor_terminal_exits": 8,
-            "corridor_proof_fallbacks": 10,
             "corridor_plies_followed": 9,
             "corridor_own_plies_followed": 6,
             "corridor_opponent_plies_followed": 3
@@ -4412,7 +4381,6 @@ mod tests {
         assert_eq!(report.corridor_extra_plies, 3);
         assert_eq!(report.avg_corridor_extra_plies, 3.0);
         assert_eq!(report.corridor_entry_checks, 12);
-        assert_eq!(report.corridor_entry_skipped_by_top_n, 4);
         assert_eq!(report.corridor_entries_accepted, 3);
         assert_eq!(report.corridor_entry_acceptance_rate, 0.25);
         assert_eq!(report.corridor_own_entries_accepted, 2);
@@ -4422,7 +4390,6 @@ mod tests {
         assert_eq!(report.corridor_depth_exits, 6);
         assert_eq!(report.corridor_neutral_exits, 7);
         assert_eq!(report.corridor_terminal_exits, 8);
-        assert_eq!(report.corridor_proof_fallbacks, 10);
         assert_eq!(report.corridor_plies_followed, 9);
         assert_eq!(report.corridor_own_plies_followed, 6);
         assert_eq!(report.corridor_opponent_plies_followed, 3);
@@ -4543,7 +4510,6 @@ mod tests {
         first_match.black_stats.corridor_depth_exits = 5;
         first_match.black_stats.corridor_neutral_exits = 4;
         first_match.black_stats.corridor_terminal_exits = 3;
-        first_match.black_stats.corridor_proof_fallbacks = 2;
         first_match.black_stats.corridor_plies_followed = 12;
         first_match.black_stats.corridor_own_plies_followed = 9;
         first_match.black_stats.corridor_opponent_plies_followed = 3;
@@ -4602,7 +4568,6 @@ mod tests {
         assert_eq!(row.corridor_depth_exits, 5);
         assert_eq!(row.corridor_neutral_exits, 4);
         assert_eq!(row.corridor_terminal_exits, 3);
-        assert_eq!(row.corridor_proof_fallbacks, 2);
         assert_eq!(row.corridor_plies_followed, 12);
         assert_eq!(row.corridor_own_plies_followed, 9);
         assert_eq!(row.corridor_opponent_plies_followed, 3);
@@ -4740,18 +4705,8 @@ mod tests {
             "SearchBot_D5+OwnCorrD6W3+OppCorrD4W2"
         );
         assert_eq!(
-            compact_bot_label(
-                &report,
-                "search-d5+tactical-cap-8+corridor-own-d1-w3+corridor-min-rank-3+corridor-top-n-2+corridor-depth-static"
-            ),
-            "SearchBot_D5+TCap8+OwnCorrD1W3+CorrMinR3+CorrTopN2+CorrStatic"
-        );
-        assert_eq!(
-            compact_bot_label(
-                &report,
-                "search-d5+tactical-cap-8+corridor-own-d1-w3+corridor-min-rank-3+corridor-top-n-2+corridor-proof-only"
-            ),
-            "SearchBot_D5+TCap8+OwnCorrD1W3+CorrMinR3+CorrTopN2+CorrProof"
+            compact_bot_label(&report, "search-d5+tactical-cap-8+corridor-own-d1-w3"),
+            "SearchBot_D5+TCap8+OwnCorrD1W3"
         );
     }
 
@@ -5368,7 +5323,6 @@ mod tests {
             corridor_extra_plies: 0,
             avg_corridor_extra_plies: 0.0,
             corridor_entry_checks: 0,
-            corridor_entry_skipped_by_top_n: 0,
             corridor_entries_accepted: 0,
             corridor_entry_acceptance_rate: 0.0,
             corridor_own_entries_accepted: 0,
@@ -5378,7 +5332,6 @@ mod tests {
             corridor_depth_exits: 0,
             corridor_neutral_exits: 0,
             corridor_terminal_exits: 0,
-            corridor_proof_fallbacks: 0,
             corridor_plies_followed: 0,
             corridor_own_plies_followed: 0,
             corridor_opponent_plies_followed: 0,
@@ -5490,7 +5443,6 @@ mod tests {
             corridor_extra_plies: 0,
             avg_corridor_extra_plies: 0.0,
             corridor_entry_checks: 0,
-            corridor_entry_skipped_by_top_n: 0,
             corridor_entries_accepted: 0,
             corridor_entry_acceptance_rate: 0.0,
             corridor_own_entries_accepted: 0,
@@ -5500,7 +5452,6 @@ mod tests {
             corridor_depth_exits: 0,
             corridor_neutral_exits: 0,
             corridor_terminal_exits: 0,
-            corridor_proof_fallbacks: 0,
             corridor_plies_followed: 0,
             corridor_own_plies_followed: 0,
             corridor_opponent_plies_followed: 0,

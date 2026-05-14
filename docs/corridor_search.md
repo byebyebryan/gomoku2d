@@ -251,19 +251,19 @@ The implementation improved over several passes:
   but leaf quiescence asked too often and too late.
 - `+corridor-own-dN-wM` and `+corridor-opponent-dN-wM` moved the probe to child
   moves and added side-specific portal controls.
-- Move-local entry checks, nested re-entry guards, ordered-rank gates, and
-  top-N gates reduced obvious over-acceptance.
-- `+corridor-proof-only` removed resume churn by accepting only terminal
-  corridor proofs and falling back to the original child search on non-terminal
-  exits.
+- Move-local entry checks and nested re-entry guards reduced obvious
+  over-acceptance.
+- Rank/top-N gates, static exits, and proof-only mode were tested as additional
+  tuning controls, then removed because they added parser/report surface without
+  producing a candidate bot direction.
 
 Those changes made the measurements honest, but they did not produce a useful
 bot knob:
 
 - Resume-from-exit portals distorted scores and multiplied normal searches from
   corridor exits.
-- Proof-only portals were safer, but still paid hundreds of branch probes and
-  fallbacks per move for too few terminal proofs.
+- Proof-only portals were safer than resume-from-exit portals, but still paid
+  hundreds of branch probes per move for too few terminal proofs.
 - A `32` game D3 proof-only head-to-head at `1s/move` lost `13-19` to base
   `search-d3` while costing about `176 ms/move` versus `60 ms/move`.
 - A `32` game D5+tactical-cap8 proof-only head-to-head lost `15-17` to base
@@ -271,12 +271,12 @@ bot knob:
   `116 ms/move`.
 
 The conclusion is that portal search is not useful in this bounded-compute
-shape. Keep the implementation disabled by default and lab-only so old reports
-can be reproduced and future ideas can be compared against the failed shape, but
-do not include portal variants in anchor tournaments, difficulty ladders,
-settings UI, or product copy. If a future experiment revisits this direction,
-start from `+corridor-proof-only`; the resume and static-exit modes are
-historical controls, not recommended candidates.
+shape. Keep only the base disabled lab-only portal controls
+`+corridor-own-dN-wM` and `+corridor-opponent-dN-wM` for comparison against the
+failed shape, but do not include portal variants in anchor tournaments,
+difficulty ladders, settings UI, or product copy. The rank/top-N, proof-only,
+and static-exit controls are historical report evidence, not current parser
+surface.
 
 The durable output from the portal work is not a stronger bot. It is the shared
 `ThreatView` seam, unified search/corridor tactical facts, and report metrics
@@ -524,10 +524,8 @@ The current checkpoint provides:
 - a scan-backed `ThreatView` seam for future rolling-frontier replacement,
 - retired `SearchBot` corridor quiescence evidence from the former
   `+corridor-q` suffix,
-- retired default-off `SearchBot` portal suffixes kept only for lab
-  reproduction, including `+corridor-own-dN-wM`,
-  `+corridor-opponent-dN-wM`, and the safer diagnostic
-  `+corridor-proof-only`,
+- retired default-off `SearchBot` portal suffixes kept only for lab comparison:
+  `+corridor-own-dN-wM` and `+corridor-opponent-dN-wM`,
 - proof-detail JSON and HTML report generation,
 - visual proof frames with board rendering and semantic markers,
 - Renju-aware handling for forbidden black replies and illegal black threats,
