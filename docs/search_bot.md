@@ -169,21 +169,31 @@ sweeps, product difficulty ladders, or settings UI. The rank/top-N, proof-only,
 and static-exit suffixes are historical controls from old reports, not current
 parser surface.
 
-The next corridor-in-search experiment, if pursued, should be leaf corridor
-extension rather than another portal variant. Run normal iterative deepening
-first, keep that result as the safe fallback, then spend remaining budget on a
-corridor-enhanced final pass that only extends non-quiet leaves. Partial
-enhanced results must not directly replace the normal result unless the pass
-proves a winning terminal result for a root move; incomplete probes and
-non-terminal/static exits are diagnostics and future ordering data. The design
-is captured in [`corridor_search.md`](corridor_search.md#leaf-corridor-extension-candidate).
-The first smoke implementations were too expensive to keep as a default axis:
-the static-exit variant could hurt play, while the terminal-only variant removed
-that obvious risk but still burned most of a 1s/move budget without producing
-meaningful move changes. Switching attacker materialization to cached candidate
-potential reduced the cost, but the best smoke still split `4-4` against base
-D3 and only confirmed normal-search moves. Treat this path as diagnostic until
-leaf selection is much more targeted.
+The next corridor-in-search shape is candidate proof rather than leaf
+extension. Normal iterative deepening runs first with corridor proof disabled
+and keeps the safe fallback move. If that normal search completes max depth with
+budget remaining, the lab suffix `+leaf-corridor-dM-wW` now proves selected
+normal-search root candidates: normal best first, then more candidates from the
+normal-search ranking. The default is up to `3` candidates within `50,000`
+score points, and sweeps can override that with `+leaf-proof-cN`,
+`+leaf-proof-any-score`, or `+leaf-proof-margin-N`. Proof returns only proven
+win, proven loss, or unknown. Unknown proof cannot outrank normal-search score;
+only terminal proof can confirm, replace, or reject a normal-search candidate.
+The design is captured in
+[`corridor_search.md`](corridor_search.md#candidate-proof-corridor-pass).
+
+The earlier broad leaf-extension experiments remain useful negative evidence.
+Static exit could hurt play; terminal-only extension removed that obvious risk
+but still burned most of a 1s/move budget without producing meaningful move
+changes. Candidate proof is the first shape that produced stronger play:
+`search-d3+leaf-corridor-d8-w3+leaf-proof-c16+leaf-proof-any-score` beat base
+`search-d3` by `42-22` in a 64-game head-to-head while producing `31`
+proof-driven move changes. A same-config H2H sweep showed the strongest signal
+when candidate proof is paired with pattern eval: `D5 tactical-cap-8 +
+pattern-eval + c16/d8/w3` beat its base `38-26`, while plain capped D5 slightly
+regressed. Treat candidate proof as a promising lab branch, not a product
+default; proof depth `16/32` was much more expensive, and widening reply width
+past `3` did not add clear value.
 
 `0.4.4` promotes the rolling-frontier implementation behind the `ThreatView`
 contract as the default threat-view backend after focused scan-vs-rolling

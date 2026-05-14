@@ -527,6 +527,19 @@ pub struct SearchMetrics {
     pub leaf_corridor_terminal_root_overrides: u64,
     pub leaf_corridor_terminal_root_move_changes: u64,
     pub leaf_corridor_terminal_root_move_confirmations: u64,
+    pub leaf_corridor_proof_candidates_considered: u64,
+    pub leaf_corridor_proof_wins: u64,
+    pub leaf_corridor_proof_losses: u64,
+    pub leaf_corridor_proof_unknown: u64,
+    pub leaf_corridor_proof_deadline_skips: u64,
+    pub leaf_corridor_proof_move_changes: u64,
+    pub leaf_corridor_proof_move_confirmations: u64,
+    pub leaf_corridor_proof_candidate_rank_total: u64,
+    pub leaf_corridor_proof_candidate_rank_max: u64,
+    pub leaf_corridor_proof_candidate_score_gap_total: u64,
+    pub leaf_corridor_proof_candidate_score_gap_max: u64,
+    pub leaf_corridor_proof_win_candidate_rank_total: u64,
+    pub leaf_corridor_proof_win_candidate_rank_max: u64,
     pub threat_view_shadow_checks: u64,
     pub threat_view_shadow_mismatches: u64,
     pub threat_view_scan_queries: u64,
@@ -2510,6 +2523,149 @@ impl SearchOutcome {
     }
 }
 
+const TERMINAL_SCORE_THRESHOLD: i32 = 1_000_000;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct RootCandidateResult {
+    mv: Move,
+    score: i32,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct LeafCorridorProofCandidate {
+    mv: Move,
+    rank: usize,
+    score_gap: u64,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum CandidateProofOutcome {
+    ProvenWin,
+    ProvenLoss,
+    Unknown,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct LeafCorridorCandidateProof {
+    mv: Move,
+    outcome: CandidateProofOutcome,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum LeafCorridorProofDecisionReason {
+    NoChange,
+    ConfirmedWin,
+    ChangedToWin,
+    AvoidedLoss,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct LeafCorridorProofDecision {
+    best_move: Move,
+    reason: LeafCorridorProofDecisionReason,
+}
+
+fn select_leaf_corridor_proof_candidates(
+    root_results: &[RootCandidateResult],
+    best_move: Move,
+    score_margin: Option<i32>,
+    max_candidates: usize,
+) -> Vec<LeafCorridorProofCandidate> {
+    if max_candidates == 0 {
+        return Vec::new();
+    }
+
+    let mut ranked = root_results.to_vec();
+    ranked.sort_by_key(|result| std::cmp::Reverse(result.score));
+
+    let Some(best_score) = ranked
+        .iter()
+        .find(|result| result.mv == best_move)
+        .map(|result| result.score)
+    else {
+        return Vec::new();
+    };
+
+    let to_candidate = |rank: usize, result: RootCandidateResult| LeafCorridorProofCandidate {
+        mv: result.mv,
+        rank,
+        score_gap: best_score.saturating_sub(result.score).max(0) as u64,
+    };
+
+    let Some(best_candidate) = ranked
+        .iter()
+        .copied()
+        .enumerate()
+        .find(|(_, result)| result.mv == best_move)
+        .map(|(index, result)| to_candidate(index + 1, result))
+    else {
+        return Vec::new();
+    };
+
+    let mut selected = Vec::with_capacity(max_candidates.min(root_results.len()));
+    selected.push(best_candidate);
+    for (index, result) in ranked.into_iter().enumerate() {
+        if result.mv == best_move {
+            continue;
+        }
+        let candidate = to_candidate(index + 1, result);
+        if let Some(score_margin) = score_margin {
+            if candidate.score_gap > score_margin.max(0) as u64 {
+                continue;
+            }
+        }
+        if selected.len() >= max_candidates {
+            break;
+        }
+        selected.push(candidate);
+    }
+    selected
+}
+
+fn resolve_leaf_corridor_candidate_proofs(
+    normal_best: Move,
+    proofs: &[LeafCorridorCandidateProof],
+) -> LeafCorridorProofDecision {
+    if proofs
+        .iter()
+        .any(|proof| proof.mv == normal_best && proof.outcome == CandidateProofOutcome::ProvenWin)
+    {
+        return LeafCorridorProofDecision {
+            best_move: normal_best,
+            reason: LeafCorridorProofDecisionReason::ConfirmedWin,
+        };
+    }
+
+    if let Some(proof) = proofs
+        .iter()
+        .find(|proof| proof.outcome == CandidateProofOutcome::ProvenWin)
+    {
+        return LeafCorridorProofDecision {
+            best_move: proof.mv,
+            reason: LeafCorridorProofDecisionReason::ChangedToWin,
+        };
+    }
+
+    let normal_best_is_loss = proofs
+        .iter()
+        .any(|proof| proof.mv == normal_best && proof.outcome == CandidateProofOutcome::ProvenLoss);
+    if normal_best_is_loss {
+        if let Some(proof) = proofs.iter().find(|proof| {
+            proof.mv != normal_best && proof.outcome != CandidateProofOutcome::ProvenLoss
+        }) {
+            return LeafCorridorProofDecision {
+                best_move: proof.mv,
+                reason: LeafCorridorProofDecisionReason::AvoidedLoss,
+            };
+        }
+    }
+
+    LeafCorridorProofDecision {
+        best_move: normal_best,
+        reason: LeafCorridorProofDecisionReason::NoChange,
+    }
+}
+
 fn terminal_score_for_winner(winner: Color, color: Color, root_color: Color) -> i32 {
     let root_score = if winner == root_color {
         2_000_000
@@ -2775,6 +2931,302 @@ fn leaf_corridor_search(
         timed_out,
         corridor_extra_plies: best_extra_plies,
         terminal_proof: best_terminal_proof && !timed_out,
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn run_leaf_corridor_candidate_proof_pass(
+    board: &Board,
+    root_color: Color,
+    normal_best: Move,
+    root_results: &[RootCandidateResult],
+    leaf_corridor: LeafCorridorConfig,
+    threat_view_mode: ThreatViewMode,
+    zobrist: &ZobristTable,
+    metrics: &mut SearchMetrics,
+    deadline: SearchDeadline,
+) -> LeafCorridorProofDecision {
+    let candidates = select_leaf_corridor_proof_candidates(
+        root_results,
+        normal_best,
+        leaf_corridor.proof_score_margin,
+        leaf_corridor.proof_candidate_limit,
+    );
+    let mut proofs = Vec::with_capacity(candidates.len());
+
+    for candidate in candidates {
+        if deadline.expired() {
+            metrics.leaf_corridor_proof_deadline_skips += 1;
+            metrics.leaf_corridor_deadline_exits += 1;
+            break;
+        }
+
+        let mv = candidate.mv;
+        metrics.leaf_corridor_proof_candidates_considered += 1;
+        metrics.leaf_corridor_proof_candidate_rank_total += candidate.rank as u64;
+        metrics.leaf_corridor_proof_candidate_rank_max = metrics
+            .leaf_corridor_proof_candidate_rank_max
+            .max(candidate.rank as u64);
+        metrics.leaf_corridor_proof_candidate_score_gap_total += candidate.score_gap;
+        metrics.leaf_corridor_proof_candidate_score_gap_max = metrics
+            .leaf_corridor_proof_candidate_score_gap_max
+            .max(candidate.score_gap);
+        let outcome = prove_leaf_corridor_candidate(
+            board,
+            root_color,
+            mv,
+            leaf_corridor,
+            threat_view_mode,
+            zobrist,
+            metrics,
+            deadline,
+        );
+        match outcome {
+            CandidateProofOutcome::ProvenWin => {
+                metrics.leaf_corridor_proof_wins += 1;
+                metrics.leaf_corridor_proof_win_candidate_rank_total += candidate.rank as u64;
+                metrics.leaf_corridor_proof_win_candidate_rank_max = metrics
+                    .leaf_corridor_proof_win_candidate_rank_max
+                    .max(candidate.rank as u64);
+                metrics.leaf_corridor_terminal_root_candidates += 1;
+                metrics.leaf_corridor_terminal_root_winning_candidates += 1;
+            }
+            CandidateProofOutcome::ProvenLoss => {
+                metrics.leaf_corridor_proof_losses += 1;
+                metrics.leaf_corridor_terminal_root_candidates += 1;
+                metrics.leaf_corridor_terminal_root_losing_candidates += 1;
+            }
+            CandidateProofOutcome::Unknown => {
+                metrics.leaf_corridor_proof_unknown += 1;
+            }
+        }
+
+        proofs.push(LeafCorridorCandidateProof { mv, outcome });
+        if outcome == CandidateProofOutcome::ProvenWin {
+            break;
+        }
+    }
+
+    resolve_leaf_corridor_candidate_proofs(normal_best, &proofs)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn prove_leaf_corridor_candidate(
+    board: &Board,
+    root_color: Color,
+    mv: Move,
+    leaf_corridor: LeafCorridorConfig,
+    threat_view_mode: ThreatViewMode,
+    zobrist: &ZobristTable,
+    metrics: &mut SearchMetrics,
+    deadline: SearchDeadline,
+) -> CandidateProofOutcome {
+    let mut state = SearchState::from_board_for_config(
+        board.clone(),
+        zobrist,
+        threat_view_mode,
+        CorridorPortalConfig::DISABLED,
+        leaf_corridor,
+    );
+    let result = state.apply_trusted_legal_move_counted(mv, zobrist, metrics);
+    let outcome = match result {
+        GameResult::Winner(winner) if winner == root_color => CandidateProofOutcome::ProvenWin,
+        GameResult::Winner(_) => CandidateProofOutcome::ProvenLoss,
+        GameResult::Draw => CandidateProofOutcome::Unknown,
+        GameResult::Ongoing => {
+            let color = state.board().current_player;
+            if let Some(attacker) =
+                leaf_corridor_proof_attacker(&mut state, color, threat_view_mode, metrics)
+            {
+                metrics.record_leaf_corridor_check(true);
+                let winner = prove_corridor_for_attacker(
+                    &mut state,
+                    color,
+                    attacker,
+                    CorridorPortalSide::for_player(attacker, root_color),
+                    leaf_corridor,
+                    0,
+                    threat_view_mode,
+                    zobrist,
+                    metrics,
+                    deadline,
+                );
+                match winner {
+                    Some(winner) if winner == root_color => CandidateProofOutcome::ProvenWin,
+                    Some(_) => CandidateProofOutcome::ProvenLoss,
+                    None => CandidateProofOutcome::Unknown,
+                }
+            } else {
+                metrics.record_leaf_corridor_check(false);
+                CandidateProofOutcome::Unknown
+            }
+        }
+    };
+    state.undo_move_counted(mv, metrics);
+    outcome
+}
+
+fn leaf_corridor_proof_attacker(
+    state: &mut SearchState,
+    color: Color,
+    threat_view_mode: ThreatViewMode,
+    metrics: &mut SearchMetrics,
+) -> Option<Color> {
+    let opponent = color.opponent();
+    if !immediate_winning_moves_for_threat_view_mode(state, color, threat_view_mode, metrics)
+        .is_empty()
+    {
+        return Some(color);
+    }
+    if !immediate_winning_moves_for_threat_view_mode(state, opponent, threat_view_mode, metrics)
+        .is_empty()
+    {
+        return Some(opponent);
+    }
+    if !narrow_corridor_reply_moves_for_threat_view_mode(state, opponent, threat_view_mode, metrics)
+        .is_empty()
+    {
+        return Some(opponent);
+    }
+    if !narrow_corridor_reply_moves_for_threat_view_mode(state, color, threat_view_mode, metrics)
+        .is_empty()
+    {
+        return Some(color);
+    }
+    None
+}
+
+#[allow(clippy::too_many_arguments)]
+fn prove_corridor_for_attacker(
+    state: &mut SearchState,
+    color: Color,
+    attacker: Color,
+    side: CorridorPortalSide,
+    leaf_corridor: LeafCorridorConfig,
+    depth_used: usize,
+    threat_view_mode: ThreatViewMode,
+    zobrist: &ZobristTable,
+    metrics: &mut SearchMetrics,
+    deadline: SearchDeadline,
+) -> Option<Color> {
+    metrics.record_corridor_node(depth_used as u32);
+
+    if deadline.expired() {
+        metrics.leaf_corridor_deadline_exits += 1;
+        return None;
+    }
+
+    if let GameResult::Winner(winner) = state.board().result {
+        metrics.corridor_terminal_exits += 1;
+        metrics.leaf_corridor_terminal_exits += 1;
+        return Some(winner);
+    }
+    if state.board().result == GameResult::Draw {
+        metrics.corridor_neutral_exits += 1;
+        metrics.leaf_corridor_static_exits += 1;
+        return None;
+    }
+
+    if depth_used >= leaf_corridor.max_depth {
+        metrics.corridor_depth_exits += 1;
+        metrics.leaf_corridor_depth_exits += 1;
+        return None;
+    }
+
+    let moves = if color == attacker {
+        materialized_attacker_corridor_moves_for_threat_view_mode(
+            state,
+            attacker,
+            threat_view_mode,
+            metrics,
+        )
+    } else {
+        let replies = narrow_corridor_reply_moves_for_threat_view_mode(
+            state,
+            attacker,
+            threat_view_mode,
+            metrics,
+        );
+        if replies.len() > leaf_corridor.max_reply_width {
+            metrics.corridor_width_exits += 1;
+            metrics.leaf_corridor_static_exits += 1;
+            return None;
+        }
+        if replies.is_empty()
+            && !immediate_winning_moves_for_threat_view_mode(
+                state,
+                attacker,
+                threat_view_mode,
+                metrics,
+            )
+            .is_empty()
+        {
+            metrics.corridor_terminal_exits += 1;
+            metrics.leaf_corridor_terminal_exits += 1;
+            return Some(attacker);
+        }
+        replies
+    };
+
+    if moves.is_empty() {
+        metrics.corridor_neutral_exits += 1;
+        metrics.leaf_corridor_static_exits += 1;
+        return None;
+    }
+
+    metrics.corridor_branch_probes += moves.len() as u64;
+    if color == attacker {
+        for mv in moves {
+            if deadline.expired() {
+                metrics.leaf_corridor_deadline_exits += 1;
+                return None;
+            }
+            state.apply_trusted_legal_move_counted(mv, zobrist, metrics);
+            metrics.record_corridor_ply(side);
+            let winner = prove_corridor_for_attacker(
+                state,
+                color.opponent(),
+                attacker,
+                side,
+                leaf_corridor,
+                depth_used + 1,
+                threat_view_mode,
+                zobrist,
+                metrics,
+                deadline,
+            );
+            state.undo_move_counted(mv, metrics);
+            if winner == Some(attacker) {
+                return Some(attacker);
+            }
+        }
+        None
+    } else {
+        for mv in moves {
+            if deadline.expired() {
+                metrics.leaf_corridor_deadline_exits += 1;
+                return None;
+            }
+            state.apply_trusted_legal_move_counted(mv, zobrist, metrics);
+            metrics.record_corridor_ply(side);
+            let winner = prove_corridor_for_attacker(
+                state,
+                color.opponent(),
+                attacker,
+                side,
+                leaf_corridor,
+                depth_used + 1,
+                threat_view_mode,
+                zobrist,
+                metrics,
+                deadline,
+            );
+            state.undo_move_counted(mv, metrics);
+            if winner != Some(attacker) {
+                return None;
+            }
+        }
+        Some(attacker)
     }
 }
 
@@ -3620,6 +4072,7 @@ fn search_root(
     nodes: &mut u64,
     metrics: &mut SearchMetrics,
     deadline: SearchDeadline,
+    mut root_results: Option<&mut Vec<RootCandidateResult>>,
 ) -> SearchOutcome {
     *nodes += 1;
     let hash = state.hash();
@@ -3700,6 +4153,10 @@ fn search_root(
         let terminal_candidate = child_outcome.terminal_proof && score.abs() >= 1_000_000;
         state.undo_move_counted(mv, metrics);
 
+        if let Some(results) = root_results.as_deref_mut() {
+            results.push(RootCandidateResult { mv, score });
+        }
+
         if leaf_corridor.enabled && terminal_candidate && !child_outcome.timed_out {
             metrics.leaf_corridor_terminal_root_candidates += 1;
             if score > 0 {
@@ -3777,13 +4234,6 @@ fn search_root(
         timed_out: false,
         corridor_extra_plies: best_corridor_extra_plies,
         terminal_proof: best_terminal_proof,
-    }
-}
-
-fn move_preferred_root_to_front(moves: &mut Vec<Move>, preferred: Move) {
-    if let Some(index) = moves.iter().position(|&mv| mv == preferred) {
-        let mv = moves.remove(index);
-        moves.insert(0, mv);
     }
 }
 
@@ -3969,13 +4419,20 @@ pub struct LeafCorridorConfig {
     pub enabled: bool,
     pub max_depth: usize,
     pub max_reply_width: usize,
+    pub proof_candidate_limit: usize,
+    pub proof_score_margin: Option<i32>,
 }
 
 impl LeafCorridorConfig {
+    pub const DEFAULT_PROOF_CANDIDATE_LIMIT: usize = 3;
+    pub const DEFAULT_PROOF_SCORE_MARGIN: i32 = 50_000;
+
     pub const DISABLED: Self = Self {
         enabled: false,
         max_depth: 0,
         max_reply_width: 0,
+        proof_candidate_limit: 0,
+        proof_score_margin: Some(Self::DEFAULT_PROOF_SCORE_MARGIN),
     };
 
     fn trace(self) -> serde_json::Value {
@@ -3983,6 +4440,8 @@ impl LeafCorridorConfig {
             "enabled": self.enabled,
             "max_depth": self.max_depth,
             "max_reply_width": self.max_reply_width,
+            "proof_candidate_limit": self.proof_candidate_limit,
+            "proof_score_margin": self.proof_score_margin,
         })
     }
 }
@@ -4259,6 +4718,7 @@ impl Bot for SearchBot {
         let mut depth_reached = 0;
         let mut total_nodes = 0u64;
         let mut best_corridor_extra_plies = 0u32;
+        let mut completed_root_results = Vec::new();
         let mut state = SearchState::from_board_for_config(
             board.clone(),
             &self.zobrist,
@@ -4273,6 +4733,7 @@ impl Bot for SearchBot {
                 break;
             }
             let mut nodes = 0u64;
+            let mut iteration_root_results = Vec::new();
             let outcome = search_root(
                 &mut state,
                 depth,
@@ -4291,6 +4752,7 @@ impl Bot for SearchBot {
                 &mut nodes,
                 &mut metrics,
                 deadline,
+                Some(&mut iteration_root_results),
             );
             debug_assert_eq!(
                 state.hash(),
@@ -4306,6 +4768,7 @@ impl Bot for SearchBot {
                     best_corridor_extra_plies = outcome.corridor_extra_plies;
                 }
                 depth_reached = depth;
+                completed_root_results = iteration_root_results;
             } else if depth_reached == 0 {
                 if let Some(m) = outcome.best_move {
                     best_move = m;
@@ -4319,7 +4782,7 @@ impl Bot for SearchBot {
                 break;
             }
             // Early exit on forced win/loss
-            if best_score.abs() >= 1_000_000 {
+            if best_score.abs() >= TERMINAL_SCORE_THRESHOLD {
                 break;
             }
         }
@@ -4330,60 +4793,52 @@ impl Bot for SearchBot {
             && board.result == GameResult::Ongoing
         {
             metrics.leaf_corridor_passes += 1;
-            let mut enhanced_root_moves = root_moves.clone();
-            move_preferred_root_to_front(&mut enhanced_root_moves, best_move);
-            let mut enhanced_state = SearchState::from_board_for_config(
-                board.clone(),
-                &self.zobrist,
-                self.config.threat_view_mode,
-                self.config.corridor_portals,
-                self.config.leaf_corridor,
-            );
-            let mut enhanced_tt = HashMap::new();
-            let mut nodes = 0u64;
-            let outcome = search_root(
-                &mut enhanced_state,
-                self.config.max_depth,
-                &enhanced_root_moves,
+            let decision = run_leaf_corridor_candidate_proof_pass(
+                board,
                 color,
-                &mut enhanced_tt,
-                &self.zobrist,
-                candidate_source,
-                legality_gate,
-                move_ordering,
-                self.config.child_limit,
-                self.config.corridor_portals,
+                best_move,
+                &completed_root_results,
                 self.config.leaf_corridor,
                 self.config.threat_view_mode,
-                self.config.static_eval,
-                &mut nodes,
+                &self.zobrist,
                 &mut metrics,
                 deadline,
             );
-            debug_assert_eq!(
-                enhanced_state.hash(),
-                board.hash_with(&self.zobrist),
-                "enhanced search state hash should return to root"
-            );
-            total_nodes += nodes;
 
-            if outcome.timed_out {
-                budget_exhausted = true;
-            } else {
-                metrics.leaf_corridor_completed += 1;
-                if outcome.terminal_proof && outcome.score >= 1_000_000 {
+            match decision.reason {
+                LeafCorridorProofDecisionReason::NoChange => {}
+                LeafCorridorProofDecisionReason::ConfirmedWin => {
+                    metrics.leaf_corridor_completed += 1;
+                    metrics.leaf_corridor_proof_move_confirmations += 1;
                     metrics.leaf_corridor_terminal_root_overrides += 1;
-                    if let Some(m) = outcome.best_move {
-                        if m == best_move {
-                            metrics.leaf_corridor_terminal_root_move_confirmations += 1;
-                        } else {
-                            metrics.leaf_corridor_terminal_root_move_changes += 1;
-                        }
-                        best_move = m;
-                        best_score = outcome.score;
-                        best_corridor_extra_plies = outcome.corridor_extra_plies;
+                    metrics.leaf_corridor_terminal_root_move_confirmations += 1;
+                    best_score = terminal_score_for_winner(color, color, color);
+                }
+                LeafCorridorProofDecisionReason::ChangedToWin => {
+                    metrics.leaf_corridor_completed += 1;
+                    metrics.leaf_corridor_proof_move_changes += 1;
+                    metrics.leaf_corridor_terminal_root_overrides += 1;
+                    metrics.leaf_corridor_terminal_root_move_changes += 1;
+                    best_move = decision.best_move;
+                    best_score = terminal_score_for_winner(color, color, color);
+                }
+                LeafCorridorProofDecisionReason::AvoidedLoss => {
+                    metrics.leaf_corridor_completed += 1;
+                    metrics.leaf_corridor_proof_move_changes += 1;
+                    best_move = decision.best_move;
+                    if let Some(result) = completed_root_results
+                        .iter()
+                        .find(|result| result.mv == best_move)
+                    {
+                        best_score = result.score;
                     }
                 }
+            }
+
+            if deadline.expired() {
+                budget_exhausted = true;
+            } else if decision.reason == LeafCorridorProofDecisionReason::NoChange {
+                metrics.leaf_corridor_completed += 1;
             }
         }
 
@@ -5619,6 +6074,8 @@ mod tests {
             enabled: true,
             max_depth: 4,
             max_reply_width: 3,
+            proof_candidate_limit: LeafCorridorConfig::DEFAULT_PROOF_CANDIDATE_LIMIT,
+            proof_score_margin: Some(LeafCorridorConfig::DEFAULT_PROOF_SCORE_MARGIN),
         };
         let mut bot = SearchBot::with_config(config);
 
@@ -5661,6 +6118,27 @@ mod tests {
                 .as_u64()
                 .is_some()
         );
+        assert!(
+            trace["metrics"]["leaf_corridor_proof_candidates_considered"]
+                .as_u64()
+                .unwrap()
+                > 0
+        );
+        assert!(trace["metrics"]["leaf_corridor_proof_wins"]
+            .as_u64()
+            .is_some());
+        assert!(trace["metrics"]["leaf_corridor_proof_losses"]
+            .as_u64()
+            .is_some());
+        assert!(trace["metrics"]["leaf_corridor_proof_unknown"]
+            .as_u64()
+            .is_some());
+        assert!(trace["metrics"]["leaf_corridor_proof_move_changes"]
+            .as_u64()
+            .is_some());
+        assert!(trace["metrics"]["leaf_corridor_proof_move_confirmations"]
+            .as_u64()
+            .is_some());
         assert!(trace["corridor"]["search_nodes"].as_u64().unwrap() > 0);
     }
 
@@ -5682,6 +6160,8 @@ mod tests {
             enabled: true,
             max_depth: 1,
             max_reply_width: 3,
+            proof_candidate_limit: LeafCorridorConfig::DEFAULT_PROOF_CANDIDATE_LIMIT,
+            proof_score_margin: Some(LeafCorridorConfig::DEFAULT_PROOF_SCORE_MARGIN),
         };
         let mut leaf_bot = SearchBot::with_config(config);
         let leaf_move = leaf_bot.choose_move(&board);
@@ -5698,6 +6178,180 @@ mod tests {
         assert_eq!(
             leaf_move, normal_move,
             "non-terminal leaf corridor work should not override normal move"
+        );
+    }
+
+    #[test]
+    fn leaf_corridor_proof_does_not_run_without_completed_normal_depth() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(&mut board, &["H8", "A1", "I8", "A2"]);
+
+        let mut config = SearchBotConfig::custom_time_budget(0);
+        config.leaf_corridor = LeafCorridorConfig {
+            enabled: true,
+            max_depth: 4,
+            max_reply_width: 3,
+            proof_candidate_limit: LeafCorridorConfig::DEFAULT_PROOF_CANDIDATE_LIMIT,
+            proof_score_margin: Some(LeafCorridorConfig::DEFAULT_PROOF_SCORE_MARGIN),
+        };
+        let mut bot = SearchBot::with_config(config);
+
+        let _ = bot.choose_move(&board);
+        let trace = bot.trace().expect("expected search trace");
+
+        assert_eq!(trace["depth"], 0);
+        assert_eq!(trace["metrics"]["leaf_corridor_passes"], 0);
+        assert_eq!(
+            trace["metrics"]["leaf_corridor_proof_candidates_considered"],
+            0
+        );
+    }
+
+    #[test]
+    fn leaf_corridor_selects_normal_best_then_margin_candidates() {
+        let best = mv("H8");
+        let close = mv("H9");
+        let also_close = mv("H10");
+        let too_far = mv("H11");
+        let results = vec![
+            RootCandidateResult {
+                mv: close,
+                score: 960_000,
+            },
+            RootCandidateResult {
+                mv: best,
+                score: 1_000_000,
+            },
+            RootCandidateResult {
+                mv: too_far,
+                score: 900_000,
+            },
+            RootCandidateResult {
+                mv: also_close,
+                score: 955_000,
+            },
+        ];
+
+        let selected = select_leaf_corridor_proof_candidates(&results, best, Some(50_000), 3)
+            .into_iter()
+            .map(|candidate| candidate.mv)
+            .collect::<Vec<_>>();
+
+        assert_eq!(selected, vec![best, close, also_close]);
+    }
+
+    #[test]
+    fn leaf_corridor_selects_top_candidates_without_score_margin() {
+        let best = mv("H8");
+        let second = mv("H9");
+        let third = mv("H10");
+        let fourth = mv("H11");
+        let results = vec![
+            RootCandidateResult {
+                mv: fourth,
+                score: -250_000,
+            },
+            RootCandidateResult {
+                mv: best,
+                score: 1_000_000,
+            },
+            RootCandidateResult {
+                mv: third,
+                score: 100_000,
+            },
+            RootCandidateResult {
+                mv: second,
+                score: 200_000,
+            },
+        ];
+
+        let selected = select_leaf_corridor_proof_candidates(&results, best, None, 4);
+
+        assert_eq!(
+            selected
+                .iter()
+                .map(|candidate| candidate.mv)
+                .collect::<Vec<_>>(),
+            vec![best, second, third, fourth]
+        );
+        assert_eq!(
+            selected
+                .iter()
+                .map(|candidate| candidate.rank)
+                .collect::<Vec<_>>(),
+            vec![1, 2, 3, 4]
+        );
+        assert_eq!(
+            selected
+                .iter()
+                .map(|candidate| candidate.score_gap)
+                .collect::<Vec<_>>(),
+            vec![0, 800_000, 900_000, 1_250_000]
+        );
+    }
+
+    #[test]
+    fn leaf_corridor_proof_resolution_confirms_normal_best_win() {
+        let best = mv("H8");
+        let proof = LeafCorridorCandidateProof {
+            mv: best,
+            outcome: CandidateProofOutcome::ProvenWin,
+        };
+
+        let decision = resolve_leaf_corridor_candidate_proofs(best, &[proof]);
+
+        assert_eq!(decision.best_move, best);
+        assert_eq!(
+            decision.reason,
+            LeafCorridorProofDecisionReason::ConfirmedWin
+        );
+    }
+
+    #[test]
+    fn leaf_corridor_proof_resolution_switches_to_proven_win() {
+        let best = mv("H8");
+        let proven = mv("J8");
+        let proofs = vec![
+            LeafCorridorCandidateProof {
+                mv: best,
+                outcome: CandidateProofOutcome::Unknown,
+            },
+            LeafCorridorCandidateProof {
+                mv: proven,
+                outcome: CandidateProofOutcome::ProvenWin,
+            },
+        ];
+
+        let decision = resolve_leaf_corridor_candidate_proofs(best, &proofs);
+
+        assert_eq!(decision.best_move, proven);
+        assert_eq!(
+            decision.reason,
+            LeafCorridorProofDecisionReason::ChangedToWin
+        );
+    }
+
+    #[test]
+    fn leaf_corridor_proof_resolution_escapes_proven_loss_to_unknown() {
+        let best = mv("H8");
+        let fallback = mv("J8");
+        let proofs = vec![
+            LeafCorridorCandidateProof {
+                mv: best,
+                outcome: CandidateProofOutcome::ProvenLoss,
+            },
+            LeafCorridorCandidateProof {
+                mv: fallback,
+                outcome: CandidateProofOutcome::Unknown,
+            },
+        ];
+
+        let decision = resolve_leaf_corridor_candidate_proofs(best, &proofs);
+
+        assert_eq!(decision.best_move, fallback);
+        assert_eq!(
+            decision.reason,
+            LeafCorridorProofDecisionReason::AvoidedLoss
         );
     }
 
@@ -6297,6 +6951,8 @@ mod tests {
                 enabled: true,
                 max_depth: 2,
                 max_reply_width: 3,
+                proof_candidate_limit: LeafCorridorConfig::DEFAULT_PROOF_CANDIDATE_LIMIT,
+                proof_score_margin: Some(LeafCorridorConfig::DEFAULT_PROOF_SCORE_MARGIN),
             },
         );
         let mut metrics = SearchMetrics::default();
@@ -6331,6 +6987,8 @@ mod tests {
                     enabled: true,
                     max_depth: 2,
                     max_reply_width: 3,
+                    proof_candidate_limit: LeafCorridorConfig::DEFAULT_PROOF_CANDIDATE_LIMIT,
+                    proof_score_margin: Some(LeafCorridorConfig::DEFAULT_PROOF_SCORE_MARGIN),
                 },
             );
             let mut metrics = SearchMetrics::default();
