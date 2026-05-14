@@ -183,6 +183,8 @@ normal-search candidate. The current lab baseline is
 `+corridor-proof-c16-d8-w4`: sixteen root candidates, proof depth eight, and
 reply width four. The design is captured in
 [`corridor_search.md`](corridor_search.md#candidate-proof-corridor-pass).
+Reports render this suffix as `Corridor Proof`; the full CLI spelling remains
+in raw JSON and docs commands for reproducibility.
 
 The earlier broad leaf-extension experiments remain useful negative evidence.
 Static exit could hurt play; terminal-only extension removed that obvious risk

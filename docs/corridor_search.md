@@ -432,6 +432,10 @@ score gap." Score-gap filtering is intentionally not a config axis because it
 lets normal-search confidence suppress the proof pass that is supposed to
 challenge normal-search ranking.
 
+Reports display the current baseline suffix as `Corridor Proof` to keep the
+UI readable. The full `c16-d8-w4` spelling remains in commands and raw report
+JSON so experiments stay reproducible.
+
 The older split suffixes `+leaf-corridor-dM-wW` and `+leaf-proof-cN` remain
 historical/parser compatibility names for old reports. New experiments should
 use the single `+corridor-proof-cN-dM-wW` suffix so the report label reads as
