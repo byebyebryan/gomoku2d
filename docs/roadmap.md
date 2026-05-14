@@ -354,7 +354,7 @@ the old line-eval middle anchors (`search-d5`, `search-d5+tactical-cap-8`,
 pattern+corridor-proof lanes:
 
 - `search-d3+pattern-eval+corridor-proof-c16-d8-w4`
-- `search-d5+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4`
+- `search-d5+tactical-cap-16+pattern-eval+corridor-proof-c16-d8-w4`
 - `search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4`
 
 That keeps the report at eight entrants while making future sweeps compare

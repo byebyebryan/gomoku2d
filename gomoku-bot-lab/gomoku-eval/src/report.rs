@@ -3035,12 +3035,8 @@ fn compact_searchbot_feature_label(feature: &str) -> String {
             return format!("OppCorrD{depth}W{width}");
         }
     }
-    if let Some(rest) = feature.strip_prefix("corridor-proof-c") {
-        if let Some((count, rest)) = rest.split_once("-d") {
-            if let Some((depth, rest)) = rest.split_once("-w") {
-                return format!("CorrProofC{count}D{depth}W{rest}");
-            }
-        }
+    if feature.starts_with("corridor-proof-") {
+        return "Corridor Proof".to_string();
     }
     if let Some(rest) = feature.strip_prefix("leaf-corridor-d") {
         if let Some((depth, width)) = rest.split_once("-w") {
@@ -5191,7 +5187,7 @@ mod tests {
                 &report,
                 "search-d5+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w3"
             ),
-            "SearchBot_D5+TCap8+Pattern+CorrProofC16D8W3"
+            "SearchBot_D5+TCap8+Pattern+Corridor Proof"
         );
     }
 

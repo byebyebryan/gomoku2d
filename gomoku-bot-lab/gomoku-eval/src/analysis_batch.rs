@@ -1299,6 +1299,9 @@ fn compact_searchbot_feature_label(feature: &str) -> String {
             return format!("SelfR{self_radius}OppR{opponent_radius}");
         }
     }
+    if feature.starts_with("corridor-proof-") {
+        return "Corridor Proof".to_string();
+    }
 
     match feature {
         "pattern-eval" => "Pattern".to_string(),
