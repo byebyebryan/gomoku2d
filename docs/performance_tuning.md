@@ -745,10 +745,10 @@ Interpretation:
 
 Date: `2026-05-14`
 
-The current clean curated report was generated from git commit `3ada1a7c1c63`
+The current clean curated report was generated from git commit `0c7657e47994`
 with `"git_dirty": false`. It keeps the anchor set at `8` entrants while
-dropping the old line-eval middle anchors and adding the pattern+corridor-proof
-lanes. It used:
+promoting D5 from tactical-cap-8 to tactical-cap-16 for both its pattern and
+pattern+corridor-proof lanes. It used:
 
 - Renju rules
 - centered-suite openings with `4` opening plies
@@ -756,34 +756,39 @@ lanes. It used:
 - `1000 ms` Linux thread CPU time per move
 - `120` max moves
 - `22` worker threads on an AMD Ryzen 9 7900X host
-- `520605 ms` total wall time
+- `701786 ms` total wall time
 
 Standings:
 
 | Rank | Bot | W-D-L | Avg depth | Avg move time | Budget hit |
 |---:|---|---:|---:|---:|---:|
-| 1 | `search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4` | `288-1-159` | `5.36` | `422.4 ms` | `21%` |
-| 2 | `search-d7+tactical-cap-8+pattern-eval` | `289-2-157` | `5.37` | `390.6 ms` | `18%` |
-| 3 | `search-d5+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4` | `281-0-167` | `4.45` | `220.8 ms` | `3%` |
-| 4 | `search-d5+tactical-cap-8+pattern-eval` | `266-0-182` | `4.49` | `185.9 ms` | `2%` |
-| 5 | `search-d3+pattern-eval+corridor-proof-c16-d8-w4` | `255-0-193` | `2.81` | `272.3 ms` | `8%` |
-| 6 | `search-d3+pattern-eval` | `240-0-208` | `2.83` | `226.1 ms` | `6%` |
-| 7 | `search-d3` | `143-1-304` | `2.90` | `60.0 ms` | `0%` |
-| 8 | `search-d1` | `28-0-420` | `1.00` | `0.9 ms` | `0%` |
+| 1 | `search-d5+tactical-cap-16+pattern-eval+corridor-proof-c16-d8-w4` | `274-2-172` | `4.36` | `425.6 ms` | `21%` |
+| 2 | `search-d3+pattern-eval+corridor-proof-c16-d8-w4` | `274-0-174` | `2.82` | `262.6 ms` | `8%` |
+| 3 | `search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4` | `271-3-174` | `5.46` | `413.4 ms` | `21%` |
+| 4 | `search-d7+tactical-cap-8+pattern-eval` | `269-3-176` | `5.48` | `382.2 ms` | `17%` |
+| 5 | `search-d5+tactical-cap-16+pattern-eval` | `261-2-185` | `4.40` | `383.1 ms` | `17%` |
+| 6 | `search-d3+pattern-eval` | `248-1-199` | `2.83` | `224.2 ms` | `6%` |
+| 7 | `search-d3` | `149-3-296` | `2.90` | `65.2 ms` | `0%` |
+| 8 | `search-d1` | `39-0-409` | `1.00` | `1.0 ms` | `0%` |
 
 Interpretation:
 
-- Corridor proof remains a lab branch, but it is now strong enough to include in
-  the anchor set. Future sweeps should beat or justify themselves against these
-  proof lanes, not only against older line-eval anchors.
-- The D7 proof lane tops shuffled/average rating, but its same-depth H2H against
-  non-proof D7 pattern was narrow: `33-1-30` for proof. That is evidence to keep
-  measuring, not evidence to ship a product preset.
-- The D5 proof lane is more convincing as an efficient hard-side lab candidate:
-  it beat its non-proof D5 pattern counterpart `39-25` while keeping budget hits
-  around `3%`.
-- D3 pattern proof also improved over D3 pattern (`37-27`), but its average move
-  time and budget pressure are high for a mid-strength lane.
+- D5 tactical-cap-16 is now the stronger D5 lane. The proof variant beat its
+  non-proof counterpart `33-1-30`, beat D7 cap8 pattern `34-30`, and beat D7
+  cap8 pattern proof `35-29`.
+- D7 cap8 remains close and cheaper than the top D5 proof lane. Its proof
+  variant beat non-proof D7 `34-2-28`, but did not top D5 cap16 proof in the
+  full anchor report.
+- D3 pattern proof remains unusually competitive. It tied D7 proof `32-32` and
+  only lost to D5 cap16 proof `30-34`, so it stays useful as a lower-depth
+  strategic control.
+- The stronger D5 cap16 lanes raise total report wall time and budget pressure.
+  This is acceptable for the hard-side lab anchor, but it is not yet evidence
+  for raising the product default time budget.
+- The paired top-two analysis report sampled `64` games from this clean report
+  and completed all `64` without failures: `1` mistake, `49` tactical errors,
+  `14` strategic losses, and `38` missed-defense roots. That keeps the analysis
+  report aligned with the same D5 cap16 proof vs D3 pattern proof anchor pair.
 
 ## Benchmark suites
 
