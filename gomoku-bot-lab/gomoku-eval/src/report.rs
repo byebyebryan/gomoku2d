@@ -456,6 +456,18 @@ pub struct StandingReport {
     #[serde(default)]
     pub avg_eval_calls: f64,
     #[serde(default)]
+    pub line_shape_eval_calls: u64,
+    #[serde(default)]
+    pub line_shape_eval_ns: u64,
+    #[serde(default)]
+    pub avg_line_shape_eval_ns: f64,
+    #[serde(default)]
+    pub pattern_eval_calls: u64,
+    #[serde(default)]
+    pub pattern_eval_ns: u64,
+    #[serde(default)]
+    pub avg_pattern_eval_ns: f64,
+    #[serde(default)]
     pub candidate_generations: u64,
     #[serde(default)]
     pub avg_candidate_generations: f64,
@@ -845,6 +857,18 @@ pub struct SideStatsReport {
     #[serde(default)]
     pub avg_eval_calls: f64,
     #[serde(default)]
+    pub line_shape_eval_calls: u64,
+    #[serde(default)]
+    pub line_shape_eval_ns: u64,
+    #[serde(default)]
+    pub avg_line_shape_eval_ns: f64,
+    #[serde(default)]
+    pub pattern_eval_calls: u64,
+    #[serde(default)]
+    pub pattern_eval_ns: u64,
+    #[serde(default)]
+    pub avg_pattern_eval_ns: f64,
+    #[serde(default)]
     pub candidate_generations: u64,
     #[serde(default)]
     pub avg_candidate_generations: f64,
@@ -1070,6 +1094,10 @@ struct SideStatsAccumulator {
     leaf_corridor_proof_win_candidate_rank_max: u64,
     total_nodes: u64,
     eval_calls: u64,
+    line_shape_eval_calls: u64,
+    line_shape_eval_ns: u64,
+    pattern_eval_calls: u64,
+    pattern_eval_ns: u64,
     candidate_generations: u64,
     candidate_moves_total: u64,
     candidate_moves_max: u64,
@@ -1175,6 +1203,10 @@ impl SideStatsAccumulator {
         }
         if let Some(metrics) = trace.get("metrics") {
             self.eval_calls += trace_value_u64(metrics, "eval_calls");
+            self.line_shape_eval_calls += trace_value_u64(metrics, "line_shape_eval_calls");
+            self.line_shape_eval_ns += trace_value_u64(metrics, "line_shape_eval_ns");
+            self.pattern_eval_calls += trace_value_u64(metrics, "pattern_eval_calls");
+            self.pattern_eval_ns += trace_value_u64(metrics, "pattern_eval_ns");
             self.candidate_generations += trace_value_u64(metrics, "candidate_generations");
             self.candidate_moves_total += trace_value_u64(metrics, "candidate_moves_total");
             self.candidate_moves_max = self
@@ -1476,6 +1508,10 @@ impl SideStatsAccumulator {
             .max(stats.leaf_corridor_proof_win_candidate_rank_max);
         self.total_nodes += stats.total_nodes;
         self.eval_calls += stats.eval_calls;
+        self.line_shape_eval_calls += stats.line_shape_eval_calls;
+        self.line_shape_eval_ns += stats.line_shape_eval_ns;
+        self.pattern_eval_calls += stats.pattern_eval_calls;
+        self.pattern_eval_ns += stats.pattern_eval_ns;
         self.candidate_generations += stats.candidate_generations;
         self.candidate_moves_total += stats.candidate_moves_total;
         self.candidate_moves_max = self.candidate_moves_max.max(stats.candidate_moves_max);
@@ -1596,6 +1632,11 @@ impl SideStatsAccumulator {
         let avg_search_time_ms = avg(self.total_time_ms as f64, self.search_move_count);
         let avg_nodes = avg(self.total_nodes as f64, self.search_move_count);
         let avg_eval_calls = avg(self.eval_calls as f64, self.search_move_count);
+        let avg_line_shape_eval_ns = avg(
+            self.line_shape_eval_ns as f64,
+            self.line_shape_eval_calls as u32,
+        );
+        let avg_pattern_eval_ns = avg(self.pattern_eval_ns as f64, self.pattern_eval_calls as u32);
         let avg_candidate_generations =
             avg(self.candidate_generations as f64, self.search_move_count);
         let avg_candidate_moves = avg(
@@ -1689,6 +1730,12 @@ impl SideStatsAccumulator {
             avg_nodes,
             eval_calls: self.eval_calls,
             avg_eval_calls,
+            line_shape_eval_calls: self.line_shape_eval_calls,
+            line_shape_eval_ns: self.line_shape_eval_ns,
+            avg_line_shape_eval_ns,
+            pattern_eval_calls: self.pattern_eval_calls,
+            pattern_eval_ns: self.pattern_eval_ns,
+            avg_pattern_eval_ns,
             candidate_generations: self.candidate_generations,
             avg_candidate_generations,
             candidate_moves_total: self.candidate_moves_total,
@@ -1931,6 +1978,12 @@ fn standings(
                 avg_nodes: side_stats.avg_nodes,
                 eval_calls: side_stats.eval_calls,
                 avg_eval_calls: side_stats.avg_eval_calls,
+                line_shape_eval_calls: side_stats.line_shape_eval_calls,
+                line_shape_eval_ns: side_stats.line_shape_eval_ns,
+                avg_line_shape_eval_ns: side_stats.avg_line_shape_eval_ns,
+                pattern_eval_calls: side_stats.pattern_eval_calls,
+                pattern_eval_ns: side_stats.pattern_eval_ns,
+                avg_pattern_eval_ns: side_stats.avg_pattern_eval_ns,
                 candidate_generations: side_stats.candidate_generations,
                 avg_candidate_generations: side_stats.avg_candidate_generations,
                 candidate_moves_total: side_stats.candidate_moves_total,
@@ -3089,6 +3142,30 @@ fn duration_ns_label(ns: u64) -> String {
     }
 }
 
+fn static_eval_cost_label(row: &StandingReport) -> (String, Option<String>) {
+    match (row.line_shape_eval_calls > 0, row.pattern_eval_calls > 0) {
+        (true, false) => (
+            duration_ns_label(row.avg_line_shape_eval_ns.round() as u64),
+            Some("Line eval".to_string()),
+        ),
+        (false, true) => (
+            duration_ns_label(row.avg_pattern_eval_ns.round() as u64),
+            Some("Pattern eval".to_string()),
+        ),
+        (true, true) => (
+            duration_ns_label(
+                avg(
+                    (row.line_shape_eval_ns + row.pattern_eval_ns) as f64,
+                    (row.line_shape_eval_calls + row.pattern_eval_calls) as u32,
+                )
+                .round() as u64,
+            ),
+            Some("Mixed eval".to_string()),
+        ),
+        (false, false) => ("n/a".to_string(), None),
+    }
+}
+
 fn compact_u64_label(value: u64) -> String {
     if value < 1_000 {
         value.to_string()
@@ -3281,6 +3358,7 @@ fn render_entrant_header(html: &mut String) {
     for head in [
         "Avg nodes",
         "Eval",
+        "Eval cost",
         "Cand gen",
         "Breadth",
         "Legal",
@@ -3379,6 +3457,14 @@ fn render_entrant_row(
         "Eval",
         &format!("{:.0}", row.avg_eval_calls),
         None,
+    );
+    let (eval_cost, eval_cost_detail) = static_eval_cost_label(row);
+    render_metric_cell(
+        html,
+        "metric-search",
+        "Eval cost",
+        &eval_cost,
+        eval_cost_detail,
     );
     render_metric_cell(
         html,
@@ -4222,7 +4308,7 @@ main{display:grid;gap:24px;margin:0 auto;max-width:1180px;padding:32px}h1,h2,p{m
 .section-heading{display:grid}.section-heading h2{color:var(--accent);font-size:1.2rem}
 table{border-collapse:collapse;min-width:820px;width:100%}th,td{border-bottom:1px solid var(--border);padding:9px 10px;text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{color:var(--text-muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
 .view-toggle{display:flex;flex-wrap:wrap;gap:8px}.report-view-radio{height:1px;opacity:0;position:absolute;width:1px}.view-toggle label{background:var(--surface-strong);border:1px solid var(--border);cursor:pointer;padding:8px 12px;text-transform:uppercase}.view-toggle label:hover{border-color:var(--teal)}.entrant-workbench:has(#view-results:checked) label[for=view-results],.entrant-workbench:has(#view-search:checked) label[for=view-search],.entrant-workbench:has(#view-pairwise:checked) label[for=view-pairwise]{border-color:var(--accent);color:var(--accent)}
-.entrant-grid,.match-list{display:grid;gap:12px}.entrant-head,.entrant-row summary{display:grid;gap:10px;align-items:center}.entrant-workbench:has(#view-results:checked) .entrant-head,.entrant-workbench:has(#view-results:checked) .entrant-row summary{grid-template-columns:minmax(260px,1.6fr) repeat(8,minmax(82px,1fr))}.entrant-workbench:has(#view-search:checked) .entrant-head,.entrant-workbench:has(#view-search:checked) .entrant-row summary{grid-template-columns:minmax(240px,1.4fr) repeat(8,minmax(84px,1fr))}.entrant-workbench:has(#view-pairwise:checked) .entrant-head,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{grid-template-columns:minmax(280px,1.6fr) repeat(3,minmax(120px,1fr))}.entrant-head{color:var(--text-muted);font-size:12px;letter-spacing:.08em;padding:0 14px;text-transform:uppercase}.entrant-row,.opponent-row,.match{padding:0}.entrant-row summary,.opponent-row summary,.match summary{cursor:pointer;padding:12px 14px}.entrant-row summary>*,.opponent-row summary>*{min-width:0}.entrant-row summary .bot-label,.opponent-row summary strong,.match summary strong{color:var(--text);overflow-wrap:anywhere}.bot-label span,.metric span{display:block}.metric-nowrap,.metric-nowrap span{white-space:nowrap}.entrant-row summary .bot-label span:first-child{color:var(--text)}.entrant-row summary .bot-label span+span,.metric span+span{color:var(--text-muted);font-size:11px;letter-spacing:.08em;margin-top:2px}.entrant-row summary span,.opponent-row summary span,.match summary span{color:var(--text-muted)}.metric-search,.metric-pairwise{display:none}.entrant-workbench:has(#view-search:checked) .metric-results,.entrant-workbench:has(#view-search:checked) .metric-pairwise,.entrant-workbench:has(#view-pairwise:checked) .metric-results,.entrant-workbench:has(#view-pairwise:checked) .metric-search{display:none}.entrant-workbench:has(#view-search:checked) .metric-search,.entrant-workbench:has(#view-pairwise:checked) .metric-pairwise{display:block}.entrant-head .metric,.entrant-row summary .metric{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;line-height:1.22;padding-left:10px;text-align:right}.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs{display:none;gap:10px;padding:8px 18px 18px}.entrant-workbench:has(#view-results:checked) .entrant-result-comparisons,.entrant-workbench:has(#view-search:checked) .entrant-search-comparisons,.entrant-workbench:has(#view-pairwise:checked) .entrant-pairs{display:grid}.comparison-head,.comparison-row{align-items:center;display:grid;gap:12px}.entrant-result-comparisons .comparison-head,.entrant-result-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(78px,96px) minmax(92px,120px) minmax(120px,140px)}.entrant-search-comparisons .comparison-head,.entrant-search-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(78px,96px) minmax(86px,120px) minmax(96px,120px) minmax(104px,130px) minmax(96px,120px)}.comparison-head{border:1px solid transparent;color:var(--text-muted);font-size:11px;letter-spacing:.08em;padding:0 12px;text-transform:uppercase}.comparison-row{background:var(--surface-strong);border:1px solid var(--border);padding:10px 12px}.comparison-row span:not(:first-child),.comparison-head span:not(:first-child){border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.delta-good,.score-good{color:var(--green)!important}.delta-bad,.score-bad{color:#e78f85!important}.delta-neutral{color:var(--text-muted)!important}.opponent-row summary{display:grid;gap:12px;grid-template-columns:minmax(0,1fr) repeat(3,max-content);align-items:center}.opponent-row summary span{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.match summary{display:grid;gap:12px;grid-template-columns:repeat(4,minmax(82px,max-content));align-items:center}.pair-overview{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));padding:0 18px 16px}.pair-overview p{background:var(--surface-strong);border:1px solid var(--border);margin:0;padding:12px}.match-grid{display:grid;gap:12px;grid-template-columns:1fr;padding:0 14px 14px}.match-grid p{margin:0;word-break:break-word}.reference-pair-note{background:var(--surface-strong);border:1px solid var(--border);color:var(--text-muted);margin:0;padding:10px 12px}.pair-overview b,.match-grid b{color:var(--text)}.board-panel,.raw-data{grid-column:1/-1}.board-ascii,.raw-data{background:var(--surface-strong);border:1px solid var(--border)}.board-ascii{color:var(--text);font:14px/1.35 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:8px 0 0;overflow:auto;padding:12px;white-space:pre}.raw-data{padding:10px}.raw-data summary{cursor:pointer;padding:0}.raw-data p{margin:8px 0 0}
+.entrant-grid,.match-list{display:grid;gap:12px}.entrant-head,.entrant-row summary{display:grid;gap:10px;align-items:center}.entrant-workbench:has(#view-results:checked) .entrant-head,.entrant-workbench:has(#view-results:checked) .entrant-row summary{grid-template-columns:minmax(260px,1.6fr) repeat(8,minmax(82px,1fr))}.entrant-workbench:has(#view-search:checked) .entrant-head,.entrant-workbench:has(#view-search:checked) .entrant-row summary{grid-template-columns:minmax(240px,1.4fr) repeat(9,minmax(84px,1fr))}.entrant-workbench:has(#view-pairwise:checked) .entrant-head,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{grid-template-columns:minmax(280px,1.6fr) repeat(3,minmax(120px,1fr))}.entrant-head{color:var(--text-muted);font-size:12px;letter-spacing:.08em;padding:0 14px;text-transform:uppercase}.entrant-row,.opponent-row,.match{padding:0}.entrant-row summary,.opponent-row summary,.match summary{cursor:pointer;padding:12px 14px}.entrant-row summary>*,.opponent-row summary>*{min-width:0}.entrant-row summary .bot-label,.opponent-row summary strong,.match summary strong{color:var(--text);overflow-wrap:anywhere}.bot-label span,.metric span{display:block}.metric-nowrap,.metric-nowrap span{white-space:nowrap}.entrant-row summary .bot-label span:first-child{color:var(--text)}.entrant-row summary .bot-label span+span,.metric span+span{color:var(--text-muted);font-size:11px;letter-spacing:.08em;margin-top:2px}.entrant-row summary span,.opponent-row summary span,.match summary span{color:var(--text-muted)}.metric-search,.metric-pairwise{display:none}.entrant-workbench:has(#view-search:checked) .metric-results,.entrant-workbench:has(#view-search:checked) .metric-pairwise,.entrant-workbench:has(#view-pairwise:checked) .metric-results,.entrant-workbench:has(#view-pairwise:checked) .metric-search{display:none}.entrant-workbench:has(#view-search:checked) .metric-search,.entrant-workbench:has(#view-pairwise:checked) .metric-pairwise{display:block}.entrant-head .metric,.entrant-row summary .metric{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;line-height:1.22;padding-left:10px;text-align:right}.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs{display:none;gap:10px;padding:8px 18px 18px}.entrant-workbench:has(#view-results:checked) .entrant-result-comparisons,.entrant-workbench:has(#view-search:checked) .entrant-search-comparisons,.entrant-workbench:has(#view-pairwise:checked) .entrant-pairs{display:grid}.comparison-head,.comparison-row{align-items:center;display:grid;gap:12px}.entrant-result-comparisons .comparison-head,.entrant-result-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(78px,96px) minmax(92px,120px) minmax(120px,140px)}.entrant-search-comparisons .comparison-head,.entrant-search-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(78px,96px) minmax(86px,120px) minmax(96px,120px) minmax(104px,130px) minmax(96px,120px)}.comparison-head{border:1px solid transparent;color:var(--text-muted);font-size:11px;letter-spacing:.08em;padding:0 12px;text-transform:uppercase}.comparison-row{background:var(--surface-strong);border:1px solid var(--border);padding:10px 12px}.comparison-row span:not(:first-child),.comparison-head span:not(:first-child){border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.delta-good,.score-good{color:var(--green)!important}.delta-bad,.score-bad{color:#e78f85!important}.delta-neutral{color:var(--text-muted)!important}.opponent-row summary{display:grid;gap:12px;grid-template-columns:minmax(0,1fr) repeat(3,max-content);align-items:center}.opponent-row summary span{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.match summary{display:grid;gap:12px;grid-template-columns:repeat(4,minmax(82px,max-content));align-items:center}.pair-overview{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));padding:0 18px 16px}.pair-overview p{background:var(--surface-strong);border:1px solid var(--border);margin:0;padding:12px}.match-grid{display:grid;gap:12px;grid-template-columns:1fr;padding:0 14px 14px}.match-grid p{margin:0;word-break:break-word}.reference-pair-note{background:var(--surface-strong);border:1px solid var(--border);color:var(--text-muted);margin:0;padding:10px 12px}.pair-overview b,.match-grid b{color:var(--text)}.board-panel,.raw-data{grid-column:1/-1}.board-ascii,.raw-data{background:var(--surface-strong);border:1px solid var(--border)}.board-ascii{color:var(--text);font:14px/1.35 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:8px 0 0;overflow:auto;padding:12px;white-space:pre}.raw-data{padding:10px}.raw-data summary{cursor:pointer;padding:0}.raw-data p{margin:8px 0 0}
 .provenance dl{display:grid;gap:8px 18px;grid-template-columns:max-content 1fr;margin:0}.provenance dt{color:var(--text-muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase}.provenance dd{margin:0}.command{background:var(--surface-strong);border:1px solid var(--border);margin:0;overflow:auto;padding:12px}
 @media (max-width:760px){main{padding:16px}.hero,section,.run-warning{padding:16px}.run-chip{justify-content:space-between;width:100%}.rolling-comparison-list p{grid-template-columns:1fr}.rolling-comparison-list span{text-align:left}.entrant-head,.comparison-head{display:none}.entrant-grid,.entrant-row,.opponent-row,.match,.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs,.comparison-row{min-width:0;width:100%}.entrant-row summary,.entrant-workbench:has(#view-results:checked) .entrant-row summary,.entrant-workbench:has(#view-search:checked) .entrant-row summary,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{gap:8px 12px;grid-template-columns:repeat(2,minmax(0,1fr))}.entrant-row summary .bot-label{grid-column:1/-1}.entrant-row summary .metric{border-left:0;display:grid;gap:2px 10px;grid-template-columns:minmax(0,1fr) auto;padding:8px 0 0;text-align:right}.entrant-row summary .metric::before,.comparison-row span::before,.opponent-row summary span::before,.match summary span::before{color:var(--text-muted);content:attr(data-label);font-size:11px;letter-spacing:.08em;text-align:left;text-transform:uppercase}.entrant-row summary .metric::before{align-self:start;grid-column:1;grid-row:1/span 2}.entrant-row summary .metric span{grid-column:2}.entrant-row summary .metric-search,.entrant-row summary .metric-pairwise,.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-results,.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-pairwise,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-results,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-search{display:none}.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-search,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-pairwise{display:grid}.opponent-row summary,.match summary,.entrant-result-comparisons .comparison-row,.entrant-search-comparisons .comparison-row{grid-template-columns:1fr}.comparison-row span,.opponent-row summary span,.match summary span{border-left:0!important;display:flex;gap:12px;justify-content:space-between;min-width:0;overflow-wrap:anywhere;padding-left:0!important;text-align:right}.comparison-row span:not(:first-child),.opponent-row summary span,.match summary span{border-top:1px solid var(--border);padding-top:8px}.opponent-row summary span:first-of-type,.match summary span:first-child{border-top:0;padding-top:0}.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs{padding:4px 12px 14px}.match-grid,.term-row{grid-template-columns:1fr}.term-row{gap:4px}.board-ascii{font-size:12px}.provenance dl{grid-template-columns:1fr}table{min-width:760px}}
 @media (max-width:420px){.entrant-row summary,.entrant-workbench:has(#view-results:checked) .entrant-row summary,.entrant-workbench:has(#view-search:checked) .entrant-row summary,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{grid-template-columns:1fr}}
@@ -4619,6 +4705,9 @@ mod tests {
         assert!(!html.contains("<h2>Search Cost</h2>"));
         assert!(html.contains("SearchBot_D2"));
         assert!(html.contains("Avg nodes"));
+        assert!(html.contains("Eval cost"));
+        assert!(html.contains("2.0 us"));
+        assert!(html.contains("Pattern eval"));
         assert!(html.contains("200"));
         assert!(html.contains("Avg ms"));
         assert!(html.contains("10.0"));
@@ -4642,6 +4731,10 @@ mod tests {
         let mut stats = SideStatsAccumulator::default();
         let mut metrics = serde_json::json!({
             "eval_calls": 30,
+            "line_shape_eval_calls": 10,
+            "line_shape_eval_ns": 1000,
+            "pattern_eval_calls": 20,
+            "pattern_eval_ns": 8000,
             "tactical_annotations": 9,
             "root_tactical_annotations": 2,
             "search_tactical_annotations": 7,
@@ -4784,6 +4877,14 @@ mod tests {
         assert_eq!(report.leaf_corridor_proof_candidate_score_gap_max, 50_000);
         assert_eq!(report.leaf_corridor_proof_win_candidate_rank_total, 7);
         assert_eq!(report.leaf_corridor_proof_win_candidate_rank_max, 2);
+        assert_eq!(report.eval_calls, 30);
+        assert_eq!(report.avg_eval_calls, 30.0);
+        assert_eq!(report.line_shape_eval_calls, 10);
+        assert_eq!(report.line_shape_eval_ns, 1000);
+        assert_eq!(report.avg_line_shape_eval_ns, 100.0);
+        assert_eq!(report.pattern_eval_calls, 20);
+        assert_eq!(report.pattern_eval_ns, 8000);
+        assert_eq!(report.avg_pattern_eval_ns, 400.0);
         assert_eq!(report.effective_depth_sum, 8);
         assert_eq!(report.avg_effective_depth, 8.0);
         assert_eq!(report.max_effective_depth, 8);
@@ -5848,6 +5949,12 @@ mod tests {
             avg_nodes: 200.0,
             eval_calls: 500,
             avg_eval_calls: 100.0,
+            line_shape_eval_calls: 0,
+            line_shape_eval_ns: 0,
+            avg_line_shape_eval_ns: 0.0,
+            pattern_eval_calls: 500,
+            pattern_eval_ns: 1_000_000,
+            avg_pattern_eval_ns: 2000.0,
             candidate_generations: 25,
             avg_candidate_generations: 5.0,
             candidate_moves_total: 2500,
@@ -5996,6 +6103,12 @@ mod tests {
             avg_nodes: 200.0,
             eval_calls: 500,
             avg_eval_calls: 100.0,
+            line_shape_eval_calls: 0,
+            line_shape_eval_ns: 0,
+            avg_line_shape_eval_ns: 0.0,
+            pattern_eval_calls: 500,
+            pattern_eval_ns: 1_000_000,
+            avg_pattern_eval_ns: 2000.0,
             candidate_generations: 25,
             avg_candidate_generations: 5.0,
             candidate_moves_total: 2500,

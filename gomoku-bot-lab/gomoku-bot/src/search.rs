@@ -447,6 +447,10 @@ fn evaluate_reference(board: &Board, color: Color) -> i32 {
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
 pub struct SearchMetrics {
     pub eval_calls: u64,
+    pub line_shape_eval_calls: u64,
+    pub line_shape_eval_ns: u64,
+    pub pattern_eval_calls: u64,
+    pub pattern_eval_ns: u64,
     pub candidate_generations: u64,
     pub candidate_moves_total: u64,
     pub candidate_moves_max: u64,
@@ -573,6 +577,21 @@ enum SearchMetricPhase {
 }
 
 impl SearchMetrics {
+    fn record_static_eval(&mut self, static_eval: StaticEvaluation, elapsed: Duration) {
+        self.eval_calls += 1;
+        let ns = duration_ns(elapsed);
+        match static_eval {
+            StaticEvaluation::LineShapeEval => {
+                self.line_shape_eval_calls += 1;
+                self.line_shape_eval_ns = self.line_shape_eval_ns.saturating_add(ns);
+            }
+            StaticEvaluation::PatternEval => {
+                self.pattern_eval_calls += 1;
+                self.pattern_eval_ns = self.pattern_eval_ns.saturating_add(ns);
+            }
+        }
+    }
+
     fn record_candidates(&mut self, count: usize, phase: SearchMetricPhase) {
         let count = count as u64;
         self.candidate_generations += 1;
@@ -1090,8 +1109,10 @@ fn evaluate_counted(
     static_eval: StaticEvaluation,
     metrics: &mut SearchMetrics,
 ) -> i32 {
-    metrics.eval_calls += 1;
-    evaluate_static(board, color, static_eval)
+    let start = Instant::now();
+    let score = evaluate_static(board, color, static_eval);
+    metrics.record_static_eval(static_eval, start.elapsed());
+    score
 }
 
 fn evaluate_leaf_counted(
@@ -7057,6 +7078,15 @@ mod tests {
         let trace = bot.trace().expect("expected search trace");
 
         assert_eq!(trace["config"]["static_eval"], "pattern_eval");
+        assert_eq!(
+            trace["metrics"]["eval_calls"],
+            trace["metrics"]["pattern_eval_calls"]
+        );
+        assert_eq!(trace["metrics"]["line_shape_eval_calls"], 0);
+        assert!(
+            trace["metrics"]["pattern_eval_ns"].as_u64().unwrap() > 0,
+            "pattern eval timing should be recorded separately from generic eval calls"
+        );
     }
 
     #[test]
