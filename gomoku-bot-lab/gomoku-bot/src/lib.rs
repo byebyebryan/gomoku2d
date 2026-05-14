@@ -1,5 +1,6 @@
 pub mod corridor;
 pub mod frontier;
+mod pattern;
 pub mod random;
 pub mod search;
 pub mod tactical;

@@ -344,6 +344,10 @@ architecture:
 - run it in shadow mode before promoting hot-path behavior;
 - promote rolling-backed tactical ordering and current-obligation safety as the
   default threat-view backend after focused parity and smoke metrics are clean;
+- promote rolling-backed `+pattern-eval` from repeated full-window scans to a
+  cached pattern frame after fixed-depth parity, debug shadow checks, and
+  scan-vs-rolling H2H controls show lower cost without clear strength
+  regression;
 - keep scan-backed threat view as an explicit fallback/comparison suffix;
 - treat relaxed/no-budget scan-vs-rolling runs as the semantic parity check, and
   normal-budget runs as budget-interaction/cost evidence.

@@ -468,6 +468,22 @@ pub struct StandingReport {
     #[serde(default)]
     pub avg_pattern_eval_ns: f64,
     #[serde(default)]
+    pub pattern_frame_queries: u64,
+    #[serde(default)]
+    pub pattern_frame_query_ns: u64,
+    #[serde(default)]
+    pub avg_pattern_frame_query_ns: f64,
+    #[serde(default)]
+    pub pattern_frame_updates: u64,
+    #[serde(default)]
+    pub pattern_frame_update_ns: u64,
+    #[serde(default)]
+    pub avg_pattern_frame_update_ns: f64,
+    #[serde(default)]
+    pub pattern_frame_shadow_checks: u64,
+    #[serde(default)]
+    pub pattern_frame_shadow_mismatches: u64,
+    #[serde(default)]
     pub candidate_generations: u64,
     #[serde(default)]
     pub avg_candidate_generations: f64,
@@ -869,6 +885,22 @@ pub struct SideStatsReport {
     #[serde(default)]
     pub avg_pattern_eval_ns: f64,
     #[serde(default)]
+    pub pattern_frame_queries: u64,
+    #[serde(default)]
+    pub pattern_frame_query_ns: u64,
+    #[serde(default)]
+    pub avg_pattern_frame_query_ns: f64,
+    #[serde(default)]
+    pub pattern_frame_updates: u64,
+    #[serde(default)]
+    pub pattern_frame_update_ns: u64,
+    #[serde(default)]
+    pub avg_pattern_frame_update_ns: f64,
+    #[serde(default)]
+    pub pattern_frame_shadow_checks: u64,
+    #[serde(default)]
+    pub pattern_frame_shadow_mismatches: u64,
+    #[serde(default)]
     pub candidate_generations: u64,
     #[serde(default)]
     pub avg_candidate_generations: f64,
@@ -1098,6 +1130,12 @@ struct SideStatsAccumulator {
     line_shape_eval_ns: u64,
     pattern_eval_calls: u64,
     pattern_eval_ns: u64,
+    pattern_frame_queries: u64,
+    pattern_frame_query_ns: u64,
+    pattern_frame_updates: u64,
+    pattern_frame_update_ns: u64,
+    pattern_frame_shadow_checks: u64,
+    pattern_frame_shadow_mismatches: u64,
     candidate_generations: u64,
     candidate_moves_total: u64,
     candidate_moves_max: u64,
@@ -1207,6 +1245,14 @@ impl SideStatsAccumulator {
             self.line_shape_eval_ns += trace_value_u64(metrics, "line_shape_eval_ns");
             self.pattern_eval_calls += trace_value_u64(metrics, "pattern_eval_calls");
             self.pattern_eval_ns += trace_value_u64(metrics, "pattern_eval_ns");
+            self.pattern_frame_queries += trace_value_u64(metrics, "pattern_frame_queries");
+            self.pattern_frame_query_ns += trace_value_u64(metrics, "pattern_frame_query_ns");
+            self.pattern_frame_updates += trace_value_u64(metrics, "pattern_frame_updates");
+            self.pattern_frame_update_ns += trace_value_u64(metrics, "pattern_frame_update_ns");
+            self.pattern_frame_shadow_checks +=
+                trace_value_u64(metrics, "pattern_frame_shadow_checks");
+            self.pattern_frame_shadow_mismatches +=
+                trace_value_u64(metrics, "pattern_frame_shadow_mismatches");
             self.candidate_generations += trace_value_u64(metrics, "candidate_generations");
             self.candidate_moves_total += trace_value_u64(metrics, "candidate_moves_total");
             self.candidate_moves_max = self
@@ -1512,6 +1558,12 @@ impl SideStatsAccumulator {
         self.line_shape_eval_ns += stats.line_shape_eval_ns;
         self.pattern_eval_calls += stats.pattern_eval_calls;
         self.pattern_eval_ns += stats.pattern_eval_ns;
+        self.pattern_frame_queries += stats.pattern_frame_queries;
+        self.pattern_frame_query_ns += stats.pattern_frame_query_ns;
+        self.pattern_frame_updates += stats.pattern_frame_updates;
+        self.pattern_frame_update_ns += stats.pattern_frame_update_ns;
+        self.pattern_frame_shadow_checks += stats.pattern_frame_shadow_checks;
+        self.pattern_frame_shadow_mismatches += stats.pattern_frame_shadow_mismatches;
         self.candidate_generations += stats.candidate_generations;
         self.candidate_moves_total += stats.candidate_moves_total;
         self.candidate_moves_max = self.candidate_moves_max.max(stats.candidate_moves_max);
@@ -1637,6 +1689,14 @@ impl SideStatsAccumulator {
             self.line_shape_eval_calls as u32,
         );
         let avg_pattern_eval_ns = avg(self.pattern_eval_ns as f64, self.pattern_eval_calls as u32);
+        let avg_pattern_frame_query_ns = avg(
+            self.pattern_frame_query_ns as f64,
+            self.pattern_frame_queries as u32,
+        );
+        let avg_pattern_frame_update_ns = avg(
+            self.pattern_frame_update_ns as f64,
+            self.pattern_frame_updates as u32,
+        );
         let avg_candidate_generations =
             avg(self.candidate_generations as f64, self.search_move_count);
         let avg_candidate_moves = avg(
@@ -1736,6 +1796,14 @@ impl SideStatsAccumulator {
             pattern_eval_calls: self.pattern_eval_calls,
             pattern_eval_ns: self.pattern_eval_ns,
             avg_pattern_eval_ns,
+            pattern_frame_queries: self.pattern_frame_queries,
+            pattern_frame_query_ns: self.pattern_frame_query_ns,
+            avg_pattern_frame_query_ns,
+            pattern_frame_updates: self.pattern_frame_updates,
+            pattern_frame_update_ns: self.pattern_frame_update_ns,
+            avg_pattern_frame_update_ns,
+            pattern_frame_shadow_checks: self.pattern_frame_shadow_checks,
+            pattern_frame_shadow_mismatches: self.pattern_frame_shadow_mismatches,
             candidate_generations: self.candidate_generations,
             avg_candidate_generations,
             candidate_moves_total: self.candidate_moves_total,
@@ -1984,6 +2052,14 @@ fn standings(
                 pattern_eval_calls: side_stats.pattern_eval_calls,
                 pattern_eval_ns: side_stats.pattern_eval_ns,
                 avg_pattern_eval_ns: side_stats.avg_pattern_eval_ns,
+                pattern_frame_queries: side_stats.pattern_frame_queries,
+                pattern_frame_query_ns: side_stats.pattern_frame_query_ns,
+                avg_pattern_frame_query_ns: side_stats.avg_pattern_frame_query_ns,
+                pattern_frame_updates: side_stats.pattern_frame_updates,
+                pattern_frame_update_ns: side_stats.pattern_frame_update_ns,
+                avg_pattern_frame_update_ns: side_stats.avg_pattern_frame_update_ns,
+                pattern_frame_shadow_checks: side_stats.pattern_frame_shadow_checks,
+                pattern_frame_shadow_mismatches: side_stats.pattern_frame_shadow_mismatches,
                 candidate_generations: side_stats.candidate_generations,
                 avg_candidate_generations: side_stats.avg_candidate_generations,
                 candidate_moves_total: side_stats.candidate_moves_total,
@@ -3150,7 +3226,14 @@ fn static_eval_cost_label(row: &StandingReport) -> (String, Option<String>) {
         ),
         (false, true) => (
             duration_ns_label(row.avg_pattern_eval_ns.round() as u64),
-            Some("Pattern eval".to_string()),
+            Some(
+                if row.pattern_frame_queries > 0 {
+                    "Pattern frame"
+                } else {
+                    "Pattern scan"
+                }
+                .to_string(),
+            ),
         ),
         (true, true) => (
             duration_ns_label(
@@ -4707,7 +4790,7 @@ mod tests {
         assert!(html.contains("Avg nodes"));
         assert!(html.contains("Eval cost"));
         assert!(html.contains("2.0 us"));
-        assert!(html.contains("Pattern eval"));
+        assert!(html.contains("Pattern scan"));
         assert!(html.contains("200"));
         assert!(html.contains("Avg ms"));
         assert!(html.contains("10.0"));
@@ -4800,6 +4883,12 @@ mod tests {
         metrics["leaf_corridor_proof_candidate_score_gap_max"] = serde_json::json!(50_000);
         metrics["leaf_corridor_proof_win_candidate_rank_total"] = serde_json::json!(7);
         metrics["leaf_corridor_proof_win_candidate_rank_max"] = serde_json::json!(2);
+        metrics["pattern_frame_queries"] = serde_json::json!(15);
+        metrics["pattern_frame_query_ns"] = serde_json::json!(150);
+        metrics["pattern_frame_updates"] = serde_json::json!(8);
+        metrics["pattern_frame_update_ns"] = serde_json::json!(800);
+        metrics["pattern_frame_shadow_checks"] = serde_json::json!(15);
+        metrics["pattern_frame_shadow_mismatches"] = serde_json::json!(0);
         metrics["tactical_lite_rank_scan_queries"] = serde_json::json!(5);
         metrics["tactical_lite_rank_scan_ns"] = serde_json::json!(50);
         metrics["tactical_lite_rank_frontier_clean_queries"] = serde_json::json!(6);
@@ -4885,6 +4974,14 @@ mod tests {
         assert_eq!(report.pattern_eval_calls, 20);
         assert_eq!(report.pattern_eval_ns, 8000);
         assert_eq!(report.avg_pattern_eval_ns, 400.0);
+        assert_eq!(report.pattern_frame_queries, 15);
+        assert_eq!(report.pattern_frame_query_ns, 150);
+        assert_eq!(report.avg_pattern_frame_query_ns, 10.0);
+        assert_eq!(report.pattern_frame_updates, 8);
+        assert_eq!(report.pattern_frame_update_ns, 800);
+        assert_eq!(report.avg_pattern_frame_update_ns, 100.0);
+        assert_eq!(report.pattern_frame_shadow_checks, 15);
+        assert_eq!(report.pattern_frame_shadow_mismatches, 0);
         assert_eq!(report.effective_depth_sum, 8);
         assert_eq!(report.avg_effective_depth, 8.0);
         assert_eq!(report.max_effective_depth, 8);
@@ -5955,6 +6052,14 @@ mod tests {
             pattern_eval_calls: 500,
             pattern_eval_ns: 1_000_000,
             avg_pattern_eval_ns: 2000.0,
+            pattern_frame_queries: 0,
+            pattern_frame_query_ns: 0,
+            avg_pattern_frame_query_ns: 0.0,
+            pattern_frame_updates: 0,
+            pattern_frame_update_ns: 0,
+            avg_pattern_frame_update_ns: 0.0,
+            pattern_frame_shadow_checks: 0,
+            pattern_frame_shadow_mismatches: 0,
             candidate_generations: 25,
             avg_candidate_generations: 5.0,
             candidate_moves_total: 2500,
@@ -6109,6 +6214,14 @@ mod tests {
             pattern_eval_calls: 500,
             pattern_eval_ns: 1_000_000,
             avg_pattern_eval_ns: 2000.0,
+            pattern_frame_queries: 0,
+            pattern_frame_query_ns: 0,
+            avg_pattern_frame_query_ns: 0.0,
+            pattern_frame_updates: 0,
+            pattern_frame_update_ns: 0,
+            avg_pattern_frame_update_ns: 0.0,
+            pattern_frame_shadow_checks: 0,
+            pattern_frame_shadow_mismatches: 0,
             candidate_generations: 25,
             avg_candidate_generations: 5.0,
             candidate_moves_total: 2500,

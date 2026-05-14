@@ -88,41 +88,41 @@ The lab tools primarily use explicit search specs over these fields:
 | `search-d5+tactical-cap-8` | 5 | `near_all_r2` | `current_obligation` | efficient hard-side candidate |
 | `search-d7+tactical-cap-8` | 7 | `near_all_r2` | `current_obligation` | stronger but slower hard-side candidate |
 
-For lab-only ablations, append `+near-all-r1`, `+near-all-r2`, or
-`+near-all-r3` to change symmetric candidate-source radius. Append
-`+near-self-rN-opponent-rM` to test an asymmetric source, for example
-`+near-self-r2-opponent-r1`. Append `+no-safety` to disable the root
-current-obligation safety gate for ablation runs. Append `+tactical-first` to
-use full local-threat facts for ordering before alpha-beta visits candidate
-moves, for example `search-d5+tactical-first`. Append `+priority-first` to use
-the cheaper hard-tactical orderer: immediate wins, immediate blocks, TT move,
-center bias, and local density, without scanning candidate-created threats.
-Append `+tactical-lite` to use the middle tier: immediate wins/blocks plus
-candidate tactical-lite rank, currently first-order corridor-entry rank only,
-then the same quiet TT/center/density heuristics.
-Append `+child-cap-N` to limit the ordered non-root
-child frontier after candidate generation, legality filtering, and move
-ordering. Use `+tactical-cap-N` as shorthand for `+tactical-first+child-cap-N`
-in reports and tournament specs, for example `search-d5+tactical-cap-12`. Use
-`+tactical-lite-cap-N` as shorthand for `+tactical-lite+child-cap-N`, for
-example `search-d5+tactical-lite-cap-8`. Use
-`+priority-cap-N` as shorthand for `+priority-first+child-cap-N`, for example
-`search-d5+priority-cap-8`. Root still considers every legal/safe candidate.
-Candidate source and child cap are intentionally separate: source defines the
-discovery boundary, while child cap tests whether ordering can keep useful
-deeper-node coverage while alpha-beta searches fewer children. Append
-`+pattern-eval` to replace the default
-line-shape static eval with the lab-only pattern evaluator. Append
-`+scan-threat-view` to force the older scan-backed threat view for fallback
-comparisons. `+rolling-frontier` is accepted as an explicit no-op for the
-default rolling backend, and `+rolling-frontier-shadow` enables validation-only
-scan-vs-rolling parity checks. These switches measure one pipeline axis at a
-time; defaults remain `near_all_r2`, `current_obligation`,
-`tt_first_board_order`, no child cap, `line_shape_eval`, and `rolling`
-threat view. The retired opponent-reply safety probes are intentionally no
-longer accepted as lab suffixes; the current safety gate only filters the legal
-root candidates by obligations already present on the board. It preserves own
-immediate wins first, then direct replies to opponent immediate wins, then
+### Config axes
+
+Lab specs are additive: `search-d5+tactical-cap-16+pattern-eval` starts from
+depth `5`, then changes move ordering/child cap, then changes static eval.
+The important point is that similarly named suffixes can belong to different
+pipeline axes.
+
+| Axis | Default | Suffixes / controls | What it changes |
+|---|---|---|---|
+| Search budget | fixed depth from `search-dN` | CLI `--search-time-ms`, `--search-cpu-time-ms` | Iterative-deepening stopping condition. |
+| Candidate source | `near_all_r2` | `+near-all-r1`, `+near-all-r2`, `+near-all-r3`, `+near-self-rN-opponent-rM` | Which empty cells enter the search before root safety or child ordering. |
+| Legality gate | `exact_rules` | no suffix | Exact core legality filtering, including Renju forbidden moves. |
+| Root safety gate | `current_obligation` | `+no-safety` | Filters legal root candidates against immediate/imminent obligations already on the board. |
+| Move ordering | `tt_first_board_order` | `+tactical-first`, `+priority-first`, `+tactical-lite` | How legal child moves are ordered before alpha-beta explores them. |
+| Child width | uncapped | `+child-cap-N`, `+tactical-cap-N`, `+tactical-lite-cap-N`, `+priority-cap-N` | Caps non-root children after ordering; root still considers every legal/safe candidate. |
+| Static eval | `line_shape_eval` | `+pattern-eval` | How leaf board positions are scored. |
+| Threat view | `rolling` | `+rolling-frontier`, `+rolling-frontier-shadow`, `+scan-threat-view` | How tactical facts are answered for safety, ordering, win/block checks, and corridor queries. |
+| Corridor proof | disabled | `+corridor-proof-cN-dM-wW`, legacy `+leaf-corridor-dM-wW`, `+leaf-proof-cN` | Optional after-search corridor proof over selected root candidates. |
+| Corridor portal | disabled | `+corridor-own-dN-wM`, `+corridor-opponent-dN-wM` | Retired portal experiment; kept only for direct historical comparison. |
+
+The current suffix list does **not** include `+pattern-eval-scan`. Conceptually
+that would be a static-eval implementation backend, separate from threat view.
+Today, `+pattern-eval` uses the cached `PatternFrame` when the search is on the
+rolling threat-view path; forcing `+scan-threat-view` also forces the older full
+pattern scan as an implementation consequence. That coupling is why
+`pattern-eval` versus `pattern-eval+scan-threat-view` can behave the same in
+fixed-depth parity tests while reading like different features in report names.
+If scan-vs-frame pattern comparisons remain common, the next cleanup should add
+an explicit `+pattern-eval-scan` suffix rather than overloading
+`+scan-threat-view`.
+
+The retired opponent-reply safety probes are intentionally no longer accepted
+as lab suffixes; the current safety gate only filters the legal root candidates
+by obligations already present on the board. It preserves own immediate wins
+first, then direct replies to opponent immediate wins, then
 direct replies or counter-fours against opponent imminent threats. It does not
 generate candidates, run opponent-reply search, reorder moves, or cap the root.
 The retired `+corridor-q` leaf-quiescence experiment proved the shared corridor
@@ -692,8 +692,9 @@ scored color. That means black Renju overline/double-three/double-four
 completion squares are discounted through core legality, without changing the
 board's current player during static eval.
 
-Current evidence is mixed but still useful. In 64-game Renju head-to-heads at
-`1000 ms` CPU/move with the centered opening suite:
+Current evidence is mixed but still useful. Earlier 64-game Renju
+head-to-heads at `1000 ms` CPU/move with the centered opening suite showed the
+strength signal but also the scan cost:
 
 | Pair | Pattern result | Avg move time tradeoff | Budget signal |
 |---|---:|---|---|
@@ -701,13 +702,28 @@ Current evidence is mixed but still useful. In 64-game Renju head-to-heads at
 | `search-d5+tactical-cap-8` vs same `+pattern-eval` | `39-0-25` | `250 ms` vs `181 ms` | pattern exhausted budget on `1.2%` of moves |
 | `search-d7+tactical-cap-8` vs same `+pattern-eval` | `35-3-26` | `581 ms` vs `429 ms` | both spent budget; pattern exhausted `40.9%` |
 
-This is enough to keep `+pattern-eval` as an active lab axis, but not enough to
-promote it as the default. The D3 and D5-cap8 results show a match-strength
-signal; D7-cap8 is now slightly positive too, but still spends too much budget
-to treat as a clean default candidate. The next question is whether the
-five-cell window taxonomy can become more selective without giving up the global
-board-value semantics that made this attempt more stable than partial frontier
-eval.
+`0.4.4` keeps `+pattern-eval` as a lab axis, but promotes the implementation
+path for rolling-backed pattern eval from full scan to a cached `PatternFrame`.
+The frame stores the five-cell window scores and updates affected windows
+alongside search apply/undo. Until an explicit `+pattern-eval-scan` suffix
+exists, `+scan-threat-view` is also the practical way to force the legacy full
+pattern scan for fallback and comparison.
+
+Focused scan-vs-rolling controls over `64` games per pair show the cache is a
+performance win without a clear strength regression:
+
+| Pair | H2H score | Scan ms/move | Rolling ms/move | Budget signal |
+|---|---:|---:|---:|---|
+| `search-d3+pattern-eval` scan vs rolling | `33.5-30.5` | `106.0` | `70.3` | `0.6%` -> `0.2%` |
+| `search-d5+tactical-cap-16+pattern-eval` scan vs rolling | `33.5-30.5` | `285.5` | `203.9` | `5.0%` -> `1.1%` |
+| `search-d7+tactical-cap-8+pattern-eval` scan vs rolling | `32.0-32.0` | `381.8` | `267.2` | `18.7%` -> `7.5%` |
+
+The small score edges are treated as noise. Fixed-depth parity tests keep scan
+and rolling cache choices identical on benchmark scenarios, and a debug
+head-to-head smoke recorded `156,214` pattern-frame shadow checks with `0`
+mismatches. This is enough to use the cached frame as the normal rolling
+implementation. It is not, by itself, a reason to promote `+pattern-eval` as the
+product default.
 
 ---
 
