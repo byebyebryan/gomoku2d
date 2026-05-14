@@ -348,6 +348,20 @@ architecture:
 - treat relaxed/no-budget scan-vs-rolling runs as the semantic parity check, and
   normal-budget runs as budget-interaction/cost evidence.
 
+The current published anchor report now reflects that lab direction. It drops
+the old line-eval middle anchors (`search-d5`, `search-d5+tactical-cap-8`,
+`search-d7+tactical-cap-8`) and replaces them with the active
+pattern+corridor-proof lanes:
+
+- `search-d3+pattern-eval+corridor-proof-c16-d8-w4`
+- `search-d5+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4`
+- `search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4`
+
+That keeps the report at eight entrants while making future sweeps compare
+against the current strategic branch, not only against older line-eval controls.
+The report still keeps `search-d1`, `search-d3`, and `search-d3+pattern-eval`
+as low/mid controls.
+
 The working plan lives in `docs/archive/v0_4_4_frontier_plan.md`.
 
 `0.4.5` becomes the earliest likely UI bridge for bot controls/settings. Expose

@@ -80,8 +80,8 @@ Candidate gauntlet:
 ```sh
 cargo run --release -p gomoku-eval -- tournament \
   --schedule gauntlet \
-  --candidate search-d7+tactical-cap-8+pattern-eval \
-  --anchors search-d3,search-d5+tactical-cap-8,search-d7+tactical-cap-8 \
+  --candidate search-d5+tactical-cap-4+pattern-eval \
+  --anchors search-d3,search-d5+tactical-cap-8+pattern-eval,search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4 \
   --anchor-report reports/latest.json \
   --games-per-pair 64 \
   --opening-policy centered-suite \
@@ -96,8 +96,8 @@ Batch gauntlet:
 ```sh
 cargo run --release -p gomoku-eval -- tournament \
   --schedule gauntlet \
-  --candidates search-d5+tactical-cap-4,search-d5+tactical-cap-16,search-d7+tactical-cap-4,search-d7+tactical-cap-16 \
-  --anchors search-d3,search-d5+tactical-cap-8,search-d7+tactical-cap-8 \
+  --candidates search-d5+tactical-cap-4+pattern-eval,search-d5+tactical-cap-16+pattern-eval,search-d7+tactical-cap-4+pattern-eval,search-d7+tactical-cap-16+pattern-eval \
+  --anchors search-d3,search-d5+tactical-cap-8+pattern-eval,search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4 \
   --anchor-report reports/latest.json \
   --games-per-pair 32 \
   --opening-policy centered-suite \

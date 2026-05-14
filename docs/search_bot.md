@@ -422,28 +422,32 @@ side. Pairwise results were D1/D3 `3-0-61`, D1/D5-cap8 `3-0-61`, D1/D7-cap8
 more budget than D5 cap8. Treat D5 cap8 as the efficient hard bot and D7 cap8 as
 the slower hard-side variant.
 
-A refreshed 8-entrant reference report now adds uncapped D5 and the active
-pattern-eval variants to that ladder. The run used Renju, the centered opening
-suite, `64` games per pair, `1000 ms` Linux CPU time per move, and a clean
-`822045148556` report provenance. Its standings were:
+A later 8-entrant reference report added uncapped D5 and the active pattern-eval
+variants to that ladder. It proved the useful line-eval conclusions: uncapped D5
+is not worth its budget cost, and pattern eval has a real match-strength signal
+across D3, D5 cap8, and D7 cap8.
+
+The current curated anchor report promotes the pattern and candidate-proof lanes
+instead of keeping old line-eval middle anchors. The run used Renju, the
+centered opening suite, `64` games per pair, `1000 ms` Linux CPU time per move,
+and clean `3ada1a7c1c63` report provenance. Its standings were:
 
 | Rank | Bot | W-D-L | Read |
 |---:|---|---:|---|
-| 1 | `search-d7+tactical-cap-8+pattern-eval` | `303-6-139` | strongest sample, but high budget pressure |
-| 2 | `search-d5+tactical-cap-8+pattern-eval` | `285-2-161` | strongest efficient pattern-eval result |
-| 3 | `search-d7+tactical-cap-8` | `280-3-165` | stronger hard-side line-eval bot |
-| 4 | `search-d3+pattern-eval` | `277-3-168` | surprisingly strong, but much slower than D3 |
-| 5 | `search-d5+tactical-cap-8` | `227-2-219` | efficient hard-side product candidate |
-| 6 | `search-d5` | `218-9-221` | expensive uncapped depth without enough return |
-| 7 | `search-d3` | `170-1-277` | stable default baseline |
-| 8 | `search-d1` | `17-4-427` | easy/beginner lane, not competitive |
+| 1 | `search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4` | `288-1-159` | strongest average rating, but high budget pressure |
+| 2 | `search-d7+tactical-cap-8+pattern-eval` | `289-2-157` | essentially tied with proof at lower cost |
+| 3 | `search-d5+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4` | `281-0-167` | strongest efficient proof lane |
+| 4 | `search-d5+tactical-cap-8+pattern-eval` | `266-0-182` | efficient hard-side non-proof control |
+| 5 | `search-d3+pattern-eval+corridor-proof-c16-d8-w4` | `255-0-193` | proof helps D3, but with visible cost |
+| 6 | `search-d3+pattern-eval` | `240-0-208` | useful mid-strength pattern control |
+| 7 | `search-d3` | `143-1-304` | stable default baseline |
+| 8 | `search-d1` | `28-0-420` | easy/beginner lane, not competitive |
 
-The report strengthens two conclusions. First, uncapped D5 is not the useful
-hard path: it spends far more budget than D5 cap8 while ranking below it.
-Second, pattern eval has a real match-strength signal across D3, D5 cap8, and
-D7 cap8, but it remains a lab axis because the extra leaf cost is still the
-central tradeoff. Do not make pattern eval the default until it can win on
-strength per budget, not just raw match score.
+The report makes candidate proof a serious lab branch but not a product default.
+Proof improves the D3/D5 pattern lanes and slightly leads the D7 pair by average
+rating, but the direct D7 head-to-head was only `33-1-30` for proof while
+costing more. Keep corridor proof in anchors so future sweeps measure against
+it directly; do not expose it as a user-facing bot label yet.
 
 The key assumption is that depth remains the mechanism for seeing long play.
 Non-tactical alpha-beta should find winning combinations if it can search deep
