@@ -669,6 +669,46 @@ Decision: promote rolling frontier as the default threat-view backend, keep
 `+scan-threat-view` as the fallback/comparison suffix, and keep
 `+rolling-frontier-shadow` as validation-only.
 
+Deep tactical-cap sweep:
+
+Date: `2026-05-14`
+
+`D9 + tactical-cap-8` and `D9 + tactical-cap-8 + pattern-eval` were tested as a
+limit-finding sweep against the current 8 anchor configs. The goal was to see
+whether the rolling-frontier headroom made nominal depth 9 a viable harder lane.
+
+At the standard `1000 ms/move` budget, both D9 variants were still budget-bound
+and reached only about depth `5.7` on average:
+
+| Config | Gauntlet W-D-L | Score | Avg move time | Budget hit | Avg depth |
+|---|---:|---:|---:|---:|---:|
+| `search-d9+tactical-cap-8` | `300-3-209` | `58.9%` | `476 ms` | `28%` | `5.72` |
+| `search-d9+tactical-cap-8+pattern-eval` | `331-0-181` | `64.6%` | `494 ms` | `29%` | `5.70` |
+
+At a relaxed `3000 ms/move` budget, budget hits dropped to about `9%`, but
+effective depth still did not move much:
+
+| Config | Gauntlet W-D-L | Score | Avg move time | Budget hit | Avg depth |
+|---|---:|---:|---:|---:|---:|
+| `search-d9+tactical-cap-8` | `303-6-203` | `59.8%` | `772 ms` | `9%` | `5.98` |
+| `search-d9+tactical-cap-8+pattern-eval` | `278-0-234` | `54.3%` | `784 ms` | `9%` | `5.87` |
+
+Interpretation:
+
+- Nominal D9 is too ambitious for the current search shape. Extra budget reduced
+  budget hits, but it did not unlock meaningful effective depth.
+- Pattern eval looked promising at `1000 ms/move`, but the signal did not hold
+  at `3000 ms/move`; the pattern D9 lane also struggled against the current
+  `D3 + pattern-eval` anchor in the relaxed run.
+- Do not promote D9 variants or add them to the anchor set. The next useful
+  work is cheaper ordering/eval or better forced-branch handling, not raising
+  max depth further under the same broad search shape.
+- Raw artifacts are under `gomoku-bot-lab/outputs/d9-sweep/`. The `3000
+  ms/move` run intentionally did not reuse `reports/latest.json` as an anchor
+  report because anchor-context validation rejects mismatched
+  `search_cpu_time_ms`; the pairwise gauntlet result is still valid for this
+  relaxed-budget check.
+
 ## Benchmark suites
 
 ### Core
