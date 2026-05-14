@@ -426,10 +426,11 @@ information can still change the move:
 
 The current lab spelling is `+corridor-proof-cN-dM-wW`: `cN` sets the root
 candidate cap, `dM` sets max corridor proof depth, and `wW` sets max reply
-width. This spelling intentionally means "prove the top `N` normal-search
-candidates regardless of score gap." Score-gap filtering is intentionally not a
-config axis because it lets normal-search confidence suppress the proof pass
-that is supposed to challenge normal-search ranking.
+width. The current baseline shape is `+corridor-proof-c16-d8-w4`. This spelling
+intentionally means "prove the top `N` normal-search candidates regardless of
+score gap." Score-gap filtering is intentionally not a config axis because it
+lets normal-search confidence suppress the proof pass that is supposed to
+challenge normal-search ranking.
 
 The older split suffixes `+leaf-corridor-dM-wW` and `+leaf-proof-cN` remain
 historical/parser compatibility names for old reports. New experiments should
@@ -486,10 +487,17 @@ Direct same-config head-to-heads are the cleanest read so far:
 That suggests the candidate-proof model can catch moves normal search misses
 when it has enough depth and a broad enough root candidate set, especially when
 paired with pattern eval. Proof depth `16` and `32` were much more expensive in
-small smokes and started hitting the budget hard, while widening corridor reply
-width beyond `3` did not materially improve the result. The most promising
-next branch is `D5 tactical-cap-8 + pattern-eval + corridor-proof-c16-d8-w3`,
-not plain non-pattern corridor proof.
+small smokes and started hitting the budget hard.
+
+The reply-width sweep locked the current baseline to `w4`, mostly for cleaner
+power-of-two config semantics rather than a large strength gap. In a 640-game
+D5+tactical-cap8+pattern round-robin over base, `w3`, `w4`, `w5`, and `w8`,
+all proof widths beat base. `w4` and `w5` both beat base `40-24`; `w3` and
+`w8` beat base `38-26`. Direct width-vs-width pairings were effectively flat,
+with most pairs splitting `32-32`; `w5` edged `w3` by `33-31`. `w8` added no
+meaningful strength and cost more than the narrower lanes. Use
+`D5 tactical-cap-8 + pattern-eval + corridor-proof-c16-d8-w4` as the next
+candidate-proof branch, not plain non-pattern corridor proof.
 
 ### Rolling Threat Frontier
 

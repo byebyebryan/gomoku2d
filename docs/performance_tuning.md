@@ -709,6 +709,38 @@ Interpretation:
   `search_cpu_time_ms`; the pairwise gauntlet result is still valid for this
   relaxed-budget check.
 
+### Corridor proof width sweep
+
+Date: `2026-05-14`
+
+Focused Renju round-robin, centered-suite openings, `4` opening plies,
+`1000 ms/move` CPU budget, `64` games per pair. Entrants were
+`D5 + tactical-cap-8 + pattern-eval` base plus corridor proof variants
+`c16-d8-w3`, `c16-d8-w4`, `c16-d8-w5`, and `c16-d8-w8`.
+
+Raw artifacts:
+
+- `gomoku-bot-lab/outputs/corridor-proof-width/d5-pattern-proof-width-sweep-w3-w4-w5-w8.json`
+- `gomoku-bot-lab/outputs/corridor-proof-width/d5-pattern-proof-width-sweep-w3-w4-w5-w8.html`
+
+| Variant | Total W-D-L | Vs base | Avg move time | Budget hit | Proof move changes |
+|---|---:|---:|---:|---:|---:|
+| `c16-d8-w5` | `137-0-119` | `40-24` | `201 ms` | `3.1%` | `83` |
+| `c16-d8-w4` | `136-0-120` | `40-24` | `216 ms` | `3.9%` | `81` |
+| `c16-d8-w8` | `134-0-122` | `38-26` | `215 ms` | `3.5%` | `86` |
+| `c16-d8-w3` | `133-0-123` | `38-26` | `208 ms` | `3.2%` | `80` |
+| base | `100-0-156` | n/a | `163 ms` | `2.2%` | `0` |
+
+Interpretation:
+
+- The useful reply-width band is narrow. `w3`, `w4`, and `w5` were effectively
+  tied head-to-head; most direct width pairings split `32-32`, with only `w5`
+  edging `w3` by `33-31`.
+- `w8` added no clear strength and cost more than the narrower lanes.
+- Lock the lab baseline to `c16-d8-w4`: it keeps the current strength signal,
+  uses a power-of-two reply width, and avoids treating the slightly stronger
+  but arbitrary `w5` sample as a durable default.
+
 ## Benchmark suites
 
 ### Core
