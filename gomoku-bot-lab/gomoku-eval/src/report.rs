@@ -3035,6 +3035,13 @@ fn compact_searchbot_feature_label(feature: &str) -> String {
             return format!("OppCorrD{depth}W{width}");
         }
     }
+    if let Some(rest) = feature.strip_prefix("corridor-proof-c") {
+        if let Some((count, rest)) = rest.split_once("-d") {
+            if let Some((depth, rest)) = rest.split_once("-w") {
+                return format!("CorrProofC{count}D{depth}W{rest}");
+            }
+        }
+    }
     if let Some(rest) = feature.strip_prefix("leaf-corridor-d") {
         if let Some((depth, width)) = rest.split_once("-w") {
             return format!("LeafCorrD{depth}W{width}");
@@ -3043,12 +3050,8 @@ fn compact_searchbot_feature_label(feature: &str) -> String {
     if let Some(count) = feature.strip_prefix("leaf-proof-c") {
         return format!("ProofC{count}");
     }
-    if let Some(margin) = feature.strip_prefix("leaf-proof-margin-") {
-        return format!("ProofM{margin}");
-    }
     match feature {
         "pattern-eval" => "Pattern".to_string(),
-        "leaf-proof-any-score" => "ProofAnyScore".to_string(),
         "rolling-frontier" => "Rolling".to_string(),
         "rolling-frontier-shadow" => "RollingShadow".to_string(),
         "tactical-first" => "Tactical".to_string(),
@@ -5173,11 +5176,22 @@ mod tests {
             "SearchBot_D5+LeafCorrD8W3"
         );
         assert_eq!(
+            compact_bot_label(&report, "search-d5+leaf-corridor-d8-w3+leaf-proof-c6"),
+            "SearchBot_D5+LeafCorrD8W3+ProofC6"
+        );
+        assert_eq!(
             compact_bot_label(
                 &report,
-                "search-d5+leaf-corridor-d8-w3+leaf-proof-c6+leaf-proof-any-score"
+                "search-d5+leaf-corridor-d8-w3+leaf-proof-any-score"
             ),
-            "SearchBot_D5+LeafCorrD8W3+ProofC6+ProofAnyScore"
+            "SearchBot_D5+LeafCorrD8W3+leaf-proof-any-score"
+        );
+        assert_eq!(
+            compact_bot_label(
+                &report,
+                "search-d5+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w3"
+            ),
+            "SearchBot_D5+TCap8+Pattern+CorrProofC16D8W3"
         );
     }
 

@@ -219,18 +219,12 @@ fn apply_leaf_corridor_suffix(
     mut config: SearchBotConfig,
     suffix: &str,
 ) -> Option<SearchBotConfig> {
+    if let Some(config) = apply_corridor_proof_suffix(config, suffix) {
+        return Some(config);
+    }
+
     if let Some(limit) = suffix.strip_prefix("leaf-proof-c") {
         config.leaf_corridor.proof_candidate_limit = parse_positive_limit(limit)?;
-        return Some(config);
-    }
-
-    if suffix == "leaf-proof-any-score" {
-        config.leaf_corridor.proof_score_margin = None;
-        return Some(config);
-    }
-
-    if let Some(margin) = suffix.strip_prefix("leaf-proof-margin-") {
-        config.leaf_corridor.proof_score_margin = Some(parse_non_negative_i32(margin)?);
         return Some(config);
     }
 
@@ -246,9 +240,20 @@ fn apply_leaf_corridor_suffix(
     Some(config)
 }
 
-fn parse_non_negative_i32(value: &str) -> Option<i32> {
-    let value = value.parse::<i32>().ok()?;
-    (value >= 0).then_some(value)
+fn apply_corridor_proof_suffix(
+    mut config: SearchBotConfig,
+    suffix: &str,
+) -> Option<SearchBotConfig> {
+    let suffix = suffix.strip_prefix("corridor-proof-c")?;
+    let (proof_candidate_limit, suffix) = suffix.split_once("-d")?;
+    let (max_depth, suffix) = suffix.split_once("-w")?;
+    let max_reply_width = suffix;
+
+    config.leaf_corridor.enabled = true;
+    config.leaf_corridor.proof_candidate_limit = parse_positive_limit(proof_candidate_limit)?;
+    config.leaf_corridor.max_depth = parse_positive_limit(max_depth)?;
+    config.leaf_corridor.max_reply_width = parse_positive_limit(max_reply_width)?;
+    Some(config)
 }
 
 fn apply_asymmetric_candidate_source_suffix(
@@ -616,7 +621,6 @@ mod tests {
                 max_depth: 8,
                 max_reply_width: 3,
                 proof_candidate_limit: 3,
-                proof_score_margin: Some(50_000),
             }
         );
         assert_eq!(config.cpu_time_budget_ms, Some(1000));
@@ -634,12 +638,12 @@ mod tests {
     #[test]
     fn parses_leaf_corridor_proof_candidate_suffixes_order_independently() {
         let config = super::search_config_from_lab_spec(
-            "search-d5+leaf-proof-c6+leaf-proof-any-score+leaf-corridor-d16-w4",
+            "search-d5+leaf-proof-c6+leaf-corridor-d16-w4",
             3,
             None,
             Some(1000),
         )
-        .expect("expected leaf proof suffixes to parse before corridor suffix");
+        .expect("expected legacy leaf proof suffix to parse before corridor suffix");
 
         assert_eq!(
             config.leaf_corridor,
@@ -648,28 +652,79 @@ mod tests {
                 max_depth: 16,
                 max_reply_width: 4,
                 proof_candidate_limit: 6,
-                proof_score_margin: None,
             }
         );
-
-        let config = super::search_config_from_lab_spec(
-            "search-d5+leaf-corridor-d8-w3+leaf-proof-c12+leaf-proof-margin-25000",
-            3,
-            None,
-            Some(1000),
-        )
-        .expect("expected leaf proof suffixes to parse after corridor suffix");
-
-        assert_eq!(config.leaf_corridor.max_depth, 8);
-        assert_eq!(config.leaf_corridor.max_reply_width, 3);
-        assert_eq!(config.leaf_corridor.proof_candidate_limit, 12);
-        assert_eq!(config.leaf_corridor.proof_score_margin, Some(25_000));
 
         assert!(
             super::search_config_from_lab_spec("search-d5+leaf-proof-c0", 3, None, None).is_none()
         );
         assert!(super::search_config_from_lab_spec(
+            "search-d5+leaf-corridor-d8-w3+leaf-proof-any-score",
+            3,
+            None,
+            None
+        )
+        .is_none());
+        assert!(super::search_config_from_lab_spec(
             "search-d5+leaf-proof-margin--1",
+            3,
+            None,
+            None
+        )
+        .is_none());
+        assert!(super::search_config_from_lab_spec(
+            "search-d5+leaf-corridor-d8-w3+leaf-proof-margin-25000",
+            3,
+            None,
+            None
+        )
+        .is_none());
+    }
+
+    #[test]
+    fn parses_corridor_proof_suffix() {
+        let config = super::search_config_from_lab_spec(
+            "search-d5+corridor-proof-c16-d8-w3",
+            3,
+            None,
+            Some(1000),
+        )
+        .expect("expected corridor proof suffix to parse");
+
+        assert_eq!(
+            config.leaf_corridor,
+            super::LeafCorridorConfig {
+                enabled: true,
+                max_depth: 8,
+                max_reply_width: 3,
+                proof_candidate_limit: 16,
+            }
+        );
+        assert_eq!(config.cpu_time_budget_ms, Some(1000));
+
+        assert!(super::search_config_from_lab_spec(
+            "search-d5+corridor-proof-c0-d8-w3",
+            3,
+            None,
+            None
+        )
+        .is_none());
+        assert!(super::search_config_from_lab_spec(
+            "search-d5+corridor-proof-c16-d0-w3",
+            3,
+            None,
+            None
+        )
+        .is_none());
+        assert!(super::search_config_from_lab_spec(
+            "search-d5+corridor-proof-c16-d8-w0",
+            3,
+            None,
+            None
+        )
+        .is_none());
+        assert!(super::search_config_from_lab_spec(
+            "search-d5+corridor-proof-c16-d8-w3-margin-50000",
             3,
             None,
             None

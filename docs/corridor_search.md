@@ -424,19 +424,22 @@ information can still change the move:
 - If normal best is `ProvenLoss`, switch to the best checked candidate that is
   not proven loss.
 
-The default proof selection is intentionally small: best move first, then
-within `50,000` score points, up to `3` candidates. Three lab-only suffixes make
-that policy explicit for sweeps:
+The current lab spelling is `+corridor-proof-cN-dM-wW`: `cN` sets the root
+candidate cap, `dM` sets max corridor proof depth, and `wW` sets max reply
+width. This spelling intentionally means "prove the top `N` normal-search
+candidates regardless of score gap." Score-gap filtering is intentionally not a
+config axis because it lets normal-search confidence suppress the proof pass
+that is supposed to challenge normal-search ranking.
 
-- `+leaf-proof-cN` sets the root proof candidate cap.
-- `+leaf-proof-any-score` removes the score cutoff and uses the top `N`
-  normal-search candidates.
-- `+leaf-proof-margin-N` replaces the default score cutoff.
+The older split suffixes `+leaf-corridor-dM-wW` and `+leaf-proof-cN` remain
+historical/parser compatibility names for old reports. New experiments should
+use the single `+corridor-proof-cN-dM-wW` suffix so the report label reads as
+one concept.
 
 The goal is to spend leftover budget on decisive questions instead of
-multiplying broad search work. This does not make `+leaf-corridor-dM-wW` a
-product knob; it remains a lab-only experiment until it produces move changes
-at acceptable cost.
+multiplying broad search work. This does not make corridor proof a product knob;
+it remains a lab-only experiment until it produces move changes at acceptable
+cost.
 
 Initial sweeps changed the status of this path from purely diagnostic to
 promising. The old default shape, `d4-w3` with three close-scoring candidates,
@@ -444,8 +447,8 @@ mostly confirmed rank-1 normal-search wins. Widening candidates at proof depth
 `4` checked deeper ranks but still produced no move changes. The useful jump
 came from proof depth `8` and a power-of-two candidate cap:
 
-- `search-d3+leaf-corridor-d8-w3+leaf-proof-c16+leaf-proof-any-score` beat
-  `search-d3` by `42-22` in a 64-game head-to-head.
+- `search-d3+corridor-proof-c16-d8-w3` beat `search-d3` by `42-22` in a
+  64-game head-to-head.
 - It averaged about `91 ms/move` against base D3's `51 ms/move`, with `0.1%`
   budget exhaustion under a `1000 ms/move` CPU budget.
 - It checked `4363` proof candidates, found `167` proven wins and `87` proven
@@ -455,13 +458,13 @@ came from proof depth `8` and a power-of-two candidate cap:
   `1.62`, with a max rank of `14`.
 
 The broader 8-anchor gauntlet showed the limits of corridor proof by itself.
-`search-d3+leaf-corridor-d8-w3+leaf-proof-c16+leaf-proof-any-score` beat
-`search-d1` and `search-d3`, but lost to every stronger anchor and finished
-`211-301` overall at about `115 ms/move`. Adding pattern eval made the shape
-competitive with the lower anchor tier:
+`search-d3+corridor-proof-c16-d8-w3` beat `search-d1` and `search-d3`, but
+lost to every stronger anchor and finished `211-301` overall at about
+`115 ms/move`. Adding pattern eval made the shape competitive with the lower
+anchor tier:
 
-- `search-d3+pattern-eval+leaf-corridor-d8-w3+leaf-proof-c16+leaf-proof-any-score`
-  finished `302-210` across the same 8-anchor gauntlet.
+- `search-d3+pattern-eval+corridor-proof-c16-d8-w3` finished `302-210` across
+  the same 8-anchor gauntlet.
 - It beat `search-d3+pattern-eval` by `36-28`, beat plain `search-d5` by
   `40-24`, tied `search-d5+tactical-cap-8` at `32-32`, and stayed close to
   `search-d7+tactical-cap-8` at `30-34`.
@@ -485,8 +488,8 @@ when it has enough depth and a broad enough root candidate set, especially when
 paired with pattern eval. Proof depth `16` and `32` were much more expensive in
 small smokes and started hitting the budget hard, while widening corridor reply
 width beyond `3` did not materially improve the result. The most promising
-next branch is `D5 tactical-cap-8 + pattern-eval + c16/d8/w3`, not plain
-non-pattern corridor proof.
+next branch is `D5 tactical-cap-8 + pattern-eval + corridor-proof-c16-d8-w3`,
+not plain non-pattern corridor proof.
 
 ### Rolling Threat Frontier
 
