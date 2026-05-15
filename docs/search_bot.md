@@ -46,7 +46,7 @@ product presets:
 | `candidate_radius` | Distance around existing stones used to generate candidate moves, or current-player stones for asymmetric candidate sources |
 | `candidate_opponent_radius` | Optional opponent-stone radius for asymmetric candidate sources |
 | `safety_gate` | Root safety gate: `current_obligation` or `none` |
-| `move_ordering` | Alpha-beta move ordering: `tt_first_board_order`, lab-only `tactical_first`, `tactical_lite`, or `priority_first` |
+| `move_ordering` | Alpha-beta move ordering: `tt_first_board_order`, current `tactical`, or lab-only `tactical_full` |
 | `child_limit` | Optional lab-only cap on the ordered non-root child frontier searched by alpha-beta |
 | `static_eval` | Leaf board evaluator: default `line_shape_eval` or lab-only `pattern_eval` |
 | `corridor_portals` | Optional corridor-extension controls, disabled by default |
@@ -58,9 +58,9 @@ Search traces expose explicit pipeline stages: `candidate_source`,
 (`near_all_rN`) and lab-only asymmetric current-player/opponent radii
 (`near_self_rN_opponent_rM`). There is one legality gate (`exact_rules`), one
 shared local-threat view, one root safety gate (`current_obligation`, or `none`
-for ablations), four move-ordering modes (`tt_first_board_order` default,
-`tactical_first`, `tactical_lite`, and `priority_first` lab-only), and an optional
-`child_limit` lab cap. Static eval
+for ablations), the default `tt_first_board_order`, the current
+local-potential `tactical` ordering, the older `tactical_full` comparison path,
+and an optional `child_limit` lab cap. Static eval
 defaults to the
 global line-shape evaluator; `pattern_eval` is a lab-only alternative that
 scores five-cell windows with Renju-aware completion/extension squares.
@@ -101,8 +101,8 @@ pipeline axes.
 | Candidate source | `near_all_r2` | `+near-all-r1`, `+near-all-r2`, `+near-all-r3`, `+near-self-rN-opponent-rM` | Which empty cells enter the search before root safety or child ordering. |
 | Legality gate | `exact_rules` | no suffix | Exact core legality filtering, including Renju forbidden moves. |
 | Root safety gate | `current_obligation` | `+no-safety` | Filters legal root candidates against immediate/imminent obligations already on the board. |
-| Move ordering | `tt_first_board_order` | `+tactical-first`, `+priority-first`, `+tactical-lite` | How legal child moves are ordered before alpha-beta explores them. |
-| Child width | uncapped | `+child-cap-N`, `+tactical-cap-N`, `+tactical-lite-cap-N`, `+priority-cap-N` | Caps non-root children after ordering; root still considers every legal/safe candidate. |
+| Move ordering | `tt_first_board_order` | `+tactical-full` for old full annotation; `+tactical-cap-N` selects current tactical ordering with a cap | How legal child moves are ordered before alpha-beta explores them. |
+| Child width | uncapped | `+child-cap-N`, `+tactical-cap-N`, `+tactical-full-cap-N` | Caps non-root children after ordering; root still considers every legal/safe candidate. |
 | Static eval | `line_shape_eval` | `+pattern-eval` | How leaf board positions are scored. |
 | Threat view | `rolling` | `+rolling-frontier`, `+rolling-frontier-shadow`, `+scan-threat-view` | How tactical facts are answered for safety, ordering, win/block checks, and corridor queries. |
 | Corridor proof | disabled | `+corridor-proof-cN-dM-wW`, legacy `+leaf-corridor-dM-wW`, `+leaf-proof-cN` | Optional after-search corridor proof over selected root candidates. |
@@ -398,14 +398,14 @@ casual-but-less-soft bot, and D3 the stable baseline.
 
 `child_limit` is currently a lab knob, not a default. Early tests show it is
 most useful when paired with tactical ordering: pre-cleanup tests showed that a
-cap without ordering dropped too much important coverage, while tactical-first
-ordering with `child_limit` creates a real breadth-for-depth tradeoff. With root
-uncapped, the D5 and D7 `tactical-first + child-cap-8` variants both beat
-uncapped `search-d3` in a focused Renju tournament, and D7 beat D5. The clearest
+cap without ordering dropped too much important coverage, while full tactical
+ordering with `child_limit` created a real breadth-for-depth tradeoff. With root
+uncapped, the D5 and D7 capped full-tactical variants both beat uncapped
+`search-d3` in a focused Renju tournament, and D7 beat D5. The clearest
 same-depth signal so far is a 64-game Renju head-to-head where
 `search-d5+tactical-cap-8` beat uncapped `search-d5` by `44-1-19`,
 searched far fewer nodes, and reached more completed depth under the same
-`1000 ms` CPU budget. A follow-up D9 `tactical-first + child-cap-4` variant
+`1000 ms` CPU budget. A follow-up D9 full-tactical cap4 variant
 reached deeper on average than D7 cap8 but lost the head-to-head, suggesting
 cap4 cuts too much breadth. Later D9 cap8 gauntlets were also negative: at
 `1000 ms/move`, D9 cap8 variants still averaged only about depth `5.7`, and a
@@ -476,23 +476,18 @@ Tactical annotation is now routed through the same `ThreatView` seam as corridor
 entry checks. In normal scan mode, `Board` remains the source of truth and
 `ScanThreatView` computes the annotation directly. In rolling shadow mode, the
 scan-backed annotation still drives behavior while the frontier-backed answer is
-checked for parity. In rolling mode, tactical ordering can consume the
-frontier-backed annotation as a lab-only validation path. Tactical-lite is the
-middle tier: it asks the same threat-view seam for a compact candidate
-tactical-lite rank, but does not run full tactical ordering summaries. Today
-that rank only contains first-order corridor-entry strength; latent
-second-order potential is intentionally deferred until the first-order rank path
-is a clear cost win. Priority ordering is the cheaper sibling: it asks the
-threat view only for current immediate-win/block sets, then orders quiet moves
-by deterministic heuristics. All ordering modes can pair with `child_limit` to
-test whether ordered coverage lets alpha-beta search fewer children without
-changing candidate discovery. The frontier now updates through apply/undo. Root
-tactical checks now use per-player threat-view annotations for immediate
-wins/blocks, and corridor continuation/reply queries use the same threat-view
-contract for immediate win checks and local corridor facts instead of a pre-move
-attacker-rank scan surface. The next optimization boundary is validating
-rolling-backed tactical-lite and full tactical queries against the anchor set
-before doing more candidate-frontier maintenance.
+checked for parity. In rolling mode, tactical ordering consumes the
+frontier-backed annotation. The current `tactical` path keeps immediate
+win/block checks global, then fully annotates only local-potential moves before
+applying the child cap. Without a child cap it falls back to `tactical_full`.
+The old priority and tactical-lite public suffixes are retired: priority was too
+weak, and tactical-lite did not create enough cost separation from full tactical.
+Their internal helpers remain only as historical diagnostics and implementation
+building blocks. The frontier now updates through apply/undo. Root tactical
+checks use per-player threat-view annotations for immediate wins/blocks, and
+corridor continuation/reply queries use the same threat-view contract for
+immediate win checks and local corridor facts instead of a pre-move
+attacker-rank scan surface.
 
 For `v0.4.1`, the strategic target is a practice bot that climbs a tactical
 ladder:
@@ -724,6 +719,45 @@ head-to-head smoke recorded `156,214` pattern-frame shadow checks with `0`
 mismatches. This is enough to use the cached frame as the normal rolling
 implementation. It is not, by itself, a reason to promote `+pattern-eval` as the
 product default.
+
+## Tactical Ordering Cost Gate
+
+The latest tactical-ordering profile showed that full tactical ordering spends
+most of its time annotating candidate-created threats for children that are then
+dropped by `child_limit`. In the current anchor report, D5/D7 tactical lanes
+annotate roughly `85-88` children before keeping `8` or `16`, and tactical
+annotation accounts for about `58-68%` of total search time.
+
+`+tactical-cap-N` is now the targeted cost-reduction path. It keeps immediate
+win/block checks global, then runs full tactical annotation only for moves that
+pass a cheap local tactical-potential gate: a candidate-inclusive five-cell line
+must contain the candidate plus at least two existing friendly stones and no
+opponent stones. Root ordering and uncapped tactical ordering still fall back to
+full tactical so root tactics are not hidden. The older full-annotation path is
+available as `+tactical-full` / `+tactical-full-cap-N` for direct comparisons.
+
+Focused same-config H2H at `1000 ms` CPU/move, centered-suite openings, `64`
+games per pair, seed `79`:
+
+| Pair | Result for tactical | Avg move time | Annotation query change |
+|---|---:|---:|---:|
+| D5 `tactical-cap-16+pattern` vs D5 `tactical-full-cap-16+pattern` | `33-1-30` | `194 ms` vs `215 ms` | `41M` vs `171M` |
+| D5 `tactical-cap-16+pattern+corridor-proof` vs D5 `tactical-full-cap-16+pattern+corridor-proof` | `32-0-32` | `236 ms` vs `263 ms` | `27M` vs `129M` |
+| D7 `tactical-cap-8+pattern` vs D7 `tactical-full-cap-8+pattern` | `34-1-29` | `275 ms` vs `320 ms` | `72M` vs `332M` |
+| D7 `tactical-cap-8+pattern+corridor-proof` vs D7 `tactical-full-cap-8+pattern+corridor-proof` | `35-0-29` | `308 ms` vs `348 ms` | `61M` vs `284M` |
+
+The tactical cost gate hits the intended mechanism: fewer full tactical annotations and
+lower move time. The current local-potential gate is also behaviorally credible
+in the focused H2H set: the gated tactical path won two same-config pairs, tied
+one, and only traded evenly in D5 proof while still being faster. It is still a
+lab candidate until it survives a full anchor tournament.
+
+Rejected intermediate: a broad tactical-potential gate with priority quiet
+scoring was tested and reverted. It also reduced annotation count, but it was
+too broad and changed quiet ordering enough to search more nodes, so it lost all
+four same-config H2Hs against full tactical. The current tactical version avoids
+that by keeping full tactical tie semantics for unannotated quiet moves and by
+guarding benchmark candidates against false negatives.
 
 ---
 

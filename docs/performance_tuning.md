@@ -247,8 +247,8 @@ Verification:
   clone/apply reference on five, open-four, closed-four, and broken-three cases
 - reran local-threat and tactical unit tests
 - reran focused tactical scenarios for `search-d3`,
-  `search-d5+tactical-first+child-cap-8`, and
-  `search-d7+tactical-first+child-cap-8`; all hard safety gates passed
+  `search-d5+tactical-full-cap-8`, and
+  `search-d7+tactical-full-cap-8`; all hard safety gates passed
 
 Focused `choose_move` benchmark, compared against the previous Criterion
 snapshot:
@@ -272,7 +272,7 @@ Command shape:
 
 ```sh
 cargo run --release -p gomoku-eval -- tournament \
-  --bots search-d1,search-d3,search-d5+tactical-first+child-cap-8,search-d7+tactical-first+child-cap-8 \
+  --bots search-d1,search-d3,search-d5+tactical-full-cap-8,search-d7+tactical-full-cap-8 \
   --games-per-pair 8 \
   --opening-policy centered-suite \
   --opening-plies 4 \
@@ -284,8 +284,8 @@ cargo run --release -p gomoku-eval -- tournament \
 |---|---:|---:|---:|
 | `search-d1` | `7.62ms` | `6.74ms` | about `-12%` |
 | `search-d3` | `59.52ms` | `60.16ms` | about `+1%` |
-| `search-d5+tactical-first+child-cap-8` | `184.66ms` | `174.33ms` | about `-6%` |
-| `search-d7+tactical-first+child-cap-8` | `419.92ms` | `397.60ms` | about `-5%` |
+| `search-d5+tactical-full-cap-8` | `184.66ms` | `174.33ms` | about `-6%` |
+| `search-d7+tactical-full-cap-8` | `419.92ms` | `397.60ms` | about `-5%` |
 
 Tournament outcomes were unchanged: same `W-D-L`, same pairwise results, and
 all `48` games ended naturally. Overall tournament wall time improved from
@@ -1391,3 +1391,135 @@ cargo bench -p gomoku-bot --bench search_perf -- "balanced/(renju_forbidden_cros
   has already paid off; the remaining wins are likely from higher-level search
   structure, candidate ordering, or localized eval rather than more storage
   plumbing.
+
+## Tactical ordering cost-gate snapshot
+
+Date: `2026-05-14`
+
+The latest anchor report made tactical annotation volume the clearest remaining
+hot path: D5/D7 full tactical lanes were annotating about `85-88` children before
+keeping `8` or `16`, and tactical annotation was roughly `58-68%` of aggregate
+search time. Focused Criterion checks showed dirty rolling annotation is not
+individually catastrophic after the benchmark teardown was fixed; the problem is
+query volume.
+
+Change:
+
+- Added the current `tactical` move ordering and `+tactical-cap-N` shorthand.
+- Renamed the older full-annotation path to `+tactical-full` and
+  `+tactical-full-cap-N` for direct comparison.
+- With a child cap, tactical ordering keeps immediate win/block checks global,
+  fully annotates only local tactical-potential moves, then applies the normal
+  child cap.
+- The local tactical-potential gate is intentionally cheap and first-order: a
+  candidate-inclusive five-cell line must contain the candidate plus at least
+  two existing friendly stones and no opponent stones. Benchmark-scenario tests
+  assert that this gate keeps every candidate that full tactical would score or
+  hard-keep in the current scenario set.
+- Without a child cap, tactical ordering falls back to full tactical ordering.
+
+Initial tactical cost-gate smoke command:
+
+```sh
+cargo run --release -p gomoku-eval -- tournament \
+  --schedule gauntlet \
+  --candidates search-d5+tactical-cap-16+pattern-eval+corridor-proof-c16-d8-w4,search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4 \
+  --anchors search-d5+tactical-full-cap-16+pattern-eval+corridor-proof-c16-d8-w4,search-d7+tactical-full-cap-8+pattern-eval+corridor-proof-c16-d8-w4 \
+  --anchor-report reports/latest.json \
+  --games-per-pair 16 \
+  --opening-policy centered-suite \
+  --opening-plies 4 \
+  --search-cpu-time-ms 1000 \
+  --max-moves 120 \
+  --seed 73 \
+  --threads 12 \
+  --report-json outputs/tactical/tactical-vs-full-smoke.json
+```
+
+### Initial tactical cost-gate smoke result
+
+| Bot | W-D-L | Avg move time | Budget hit | Annotation queries |
+|---|---:|---:|---:|---:|
+| D5 `tactical-cap-16+pattern+corridor-proof` | `24-0-8` | `196 ms` | `1.2%` | `26M` |
+| D5 `tactical-full-cap-16+pattern+corridor-proof` | `13-0-19` | `265 ms` | `6.3%` | `86M` |
+| D7 `tactical-cap-8+pattern+corridor-proof` | `15-0-17` | `231 ms` | `5.5%` | `29M` |
+| D7 `tactical-full-cap-8+pattern+corridor-proof` | `12-0-20` | `281 ms` | `8.2%` | `118M` |
+
+Pairwise:
+
+- D5 tactical beat D5 full tactical `11-0-5`.
+- D7 tactical lost narrowly to D7 full tactical `7-0-9`.
+- D5 tactical beat D7 full tactical `13-0-3`.
+- D7 tactical split D5 full tactical `8-0-8`.
+
+Initial interpretation:
+
+- The local-potential gate attacks the correct cost center: full tactical
+  annotation volume.
+- The smoke is too small to promote tactical as default. D5 tactical is
+  strong enough to include in the next full gauntlet; D7 tactical needs broader
+  validation because the speed win came with a small direct strength loss.
+- The main correctness risk was tactical `must_keep` in the unannotated tail.
+  The priority-window implementation deliberately preserved immediate win/block
+  keeps globally, but candidate-created tactical keeps only existed inside the
+  staged annotation window.
+
+Historical priority-window follow-up, before the `tactical` rename, ran `64`
+same-config H2H games at `1000 ms` CPU/move with centered-suite openings and
+seed `79`:
+
+| Pair | Result for staged | Staged avg | Full avg | Staged budget | Full budget | Annotation queries |
+|---|---:|---:|---:|---:|---:|---:|
+| D5 `pattern` staged vs full | `38-0-26` | `183 ms` | `231 ms` | `0.2%` | `2.7%` | `51M` vs `150M` |
+| D5 `pattern+corridor-proof` staged vs full | `38-0-26` | `228 ms` | `235 ms` | `0.5%` | `2.7%` | `47M` vs `112M` |
+| D7 `pattern` staged vs full | `21-0-43` | `219 ms` | `230 ms` | `4.3%` | `6.0%` | `55M` vs `210M` |
+| D7 `pattern+corridor-proof` staged vs full | `30-0-34` | `237 ms` | `253 ms` | `6.0%` | `7.8%` | `47M` vs `188M` |
+
+Updated interpretation:
+
+- Staged tactical is a real cost win: annotation queries dropped roughly
+  `58-76%`, and average move time dropped in every same-config H2H.
+- Strength is depth/cap dependent. D5 cap16 staged was clearly positive in both
+  non-proof and proof lanes; D7 cap8 staged was cheaper but weaker, especially
+  without corridor proof.
+- Do not promote priority-window staged tactical globally. The next useful experiment is a
+  wider staged window for D7, or D7 staged with cap16, to test whether the D7
+  loss is caused by too small an annotation window rather than by the staging
+  idea itself.
+
+Rejected follow-up: replacing the priority window with a broad tactical
+potential filter while retaining quiet priority scoring. The filter hard-kept
+immediate wins/blocks, then annotated every move with any five-cell line
+containing at least two existing own stones. In the same `64` game H2H shape,
+that version lost D5 pattern `23-41`, lost D7 pattern `29-35`, lost D5 proof
+`31-33`, and lost D7 proof `31-33`. It still reduced annotation query counts,
+but average move time was tied or worse because it searched more nodes and
+polluted quiet ordering.
+
+Current follow-up: keep the same first-order local-potential annotation gate,
+but make tactical ordering match full tactical semantics for quiet moves. Hard
+immediate wins/blocks are preserved globally; tactical candidates get full
+summary scoring; all unannotated quiet candidates stay at score `0` and sort by
+TT hit then original candidate order, just like full tactical would if their
+summary were zero.
+
+Same `64` game H2H shape:
+
+| Pair | Result for tactical | Tactical avg | Full avg | Tactical budget | Full budget | Annotation queries |
+|---|---:|---:|---:|---:|---:|---:|
+| D5 `tactical-cap-16+pattern` vs `tactical-full-cap-16+pattern` | `33-1-30` | `194 ms` | `215 ms` | `1.0%` | `1.6%` | `41M` vs `171M` |
+| D5 `tactical-cap-16+pattern+corridor-proof` vs `tactical-full-cap-16+pattern+corridor-proof` | `32-0-32` | `236 ms` | `263 ms` | `3.4%` | `3.9%` | `27M` vs `129M` |
+| D7 `tactical-cap-8+pattern` vs `tactical-full-cap-8+pattern` | `34-1-29` | `275 ms` | `320 ms` | `8.5%` | `12.1%` | `72M` vs `332M` |
+| D7 `tactical-cap-8+pattern+corridor-proof` vs `tactical-full-cap-8+pattern+corridor-proof` | `35-0-29` | `308 ms` | `348 ms` | `11.9%` | `14.7%` | `61M` vs `284M` |
+
+Updated interpretation:
+
+- Clean local-potential tactical ordering is now the strongest tactical cap
+  shape so far. It cut annotation queries by roughly `76-80%`, lowered average
+  move time in every same-config H2H, and did not show the D7 weakness of the
+  priority-window version.
+- The important lesson is not "filter everything that might someday matter";
+  it is "skip annotation only when the candidate cannot receive first-order
+  tactical credit, and preserve full tactical quiet tie behavior."
+- Next validation should be a full anchor tournament before promoting tactical
+  cost-gating into the published anchor set.
