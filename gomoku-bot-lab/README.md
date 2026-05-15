@@ -73,11 +73,13 @@ canonical product presets.
 Append `+near-all-r1`, `+near-all-r2`, or `+near-all-r3` to change the symmetric
 candidate source radius. Append `+near-self-rN-opponent-rM` to test asymmetric
 current-player versus opponent-stone frontiers, for example
-`+near-self-r2-opponent-r1`. Append `+no-safety` to disable the root safety
-gate. For example, `search-d3+near-all-r1+no-safety` keeps the depth-3 search
-but uses a radius-1 candidate source and no root safety gate. The default
-`current_obligation` safety gate only filters already-generated legal root
-candidates against immediate wins, direct immediate blocks, and direct or
+`+near-self-r2-opponent-r1`. Append `+null-cull` to remove generated cells that
+cannot make five for either color in any direction; it is an experimental
+candidate-filter axis, disabled by default. Append `+no-safety` to disable the
+root safety gate. For example, `search-d3+near-all-r1+no-safety` keeps the
+depth-3 search but uses a radius-1 candidate source and no root safety gate. The
+default `current_obligation` safety gate only filters already-generated legal
+root candidates against immediate wins, direct immediate blocks, and direct or
 counter-four replies to imminent threats. Append `+tactical-full` to try the
 older full local-threat move ordering before alpha-beta search.
 Append `+child-cap-N` to cap the ordered non-root child frontier after candidate
@@ -375,6 +377,7 @@ that replay format directly.
           "cpu_time_budget_ms": null,
           "candidate_radius": 2,
           "candidate_source": "near_all_r2",
+          "null_cell_culling": "disabled",
           "legality_gate": "exact_rules",
           "safety_gate": "current_obligation",
           "move_ordering": "tt_first_board_order",
@@ -389,6 +392,8 @@ that replay format directly.
         "metrics": {
           "root_candidate_generations": 1,
           "search_candidate_generations": 12,
+          "null_cell_cull_checks": 0,
+          "null_cells_culled": 0,
           "root_legality_checks": 4,
           "search_legality_checks": 80,
           "root_tactical_annotations": 4,

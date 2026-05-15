@@ -1,6 +1,7 @@
 use gomoku_bot::{
-    CorridorPortalConfig, CorridorPortalSideConfig, LeafCorridorConfig, MoveOrdering, SafetyGate,
-    SearchAlgorithm, SearchBotConfig, StaticEvaluation, ThreatViewMode,
+    CorridorPortalConfig, CorridorPortalSideConfig, LeafCorridorConfig, MoveOrdering,
+    NullCellCulling, SafetyGate, SearchAlgorithm, SearchBotConfig, StaticEvaluation,
+    ThreatViewMode,
 };
 
 pub struct LabSearchConfig {
@@ -25,6 +26,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             corridor_portals: CorridorPortalConfig::DISABLED,
             leaf_corridor: LeafCorridorConfig::DISABLED,
             threat_view_mode: ThreatViewMode::Rolling,
+            null_cell_culling: NullCellCulling::Disabled,
         },
     },
     LabSearchConfig {
@@ -43,6 +45,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             corridor_portals: CorridorPortalConfig::DISABLED,
             leaf_corridor: LeafCorridorConfig::DISABLED,
             threat_view_mode: ThreatViewMode::Rolling,
+            null_cell_culling: NullCellCulling::Disabled,
         },
     },
     LabSearchConfig {
@@ -61,6 +64,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             corridor_portals: CorridorPortalConfig::DISABLED,
             leaf_corridor: LeafCorridorConfig::DISABLED,
             threat_view_mode: ThreatViewMode::Rolling,
+            null_cell_culling: NullCellCulling::Disabled,
         },
     },
 ];
@@ -150,6 +154,10 @@ fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchB
         }
         "pattern-eval" => {
             config.static_eval = StaticEvaluation::PatternEval;
+            Some(config)
+        }
+        "null-cull" => {
+            config.null_cell_culling = NullCellCulling::Enabled;
             Some(config)
         }
         "scan-threat-view" => {
@@ -425,6 +433,14 @@ mod tests {
             .expect("expected pattern eval spec to parse");
 
         assert_eq!(config.static_eval, super::StaticEvaluation::PatternEval);
+    }
+
+    #[test]
+    fn parses_null_cell_culling_suffix() {
+        let config = super::search_config_from_lab_spec("search-d3+null-cull", 5, None, None)
+            .expect("expected null-cull spec to parse");
+
+        assert_eq!(config.null_cell_culling, super::NullCellCulling::Enabled);
     }
 
     #[test]

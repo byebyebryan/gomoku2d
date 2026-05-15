@@ -7,6 +7,7 @@ use crate::tactical::{
     CorridorThreatPolicy, LocalThreatFact, ScanThreatView, SearchThreatPolicy, TacticalLiteRank,
     TacticalMoveAnnotation, TacticalOrderingSummary, ThreatView,
 };
+use crate::viability::scan_cell_null;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RollingFrontierFeatures {
@@ -58,6 +59,7 @@ pub struct RollingThreatFrontier {
     white_immediate_wins: Vec<bool>,
     black_immediate_win_dirty: Vec<bool>,
     white_immediate_win_dirty: Vec<bool>,
+    null_cells: Vec<bool>,
     undo_stack: Vec<FrontierDelta>,
 }
 
@@ -67,6 +69,7 @@ struct FrontierDelta {
     previous_move_facts: Vec<(Color, usize, Vec<LocalThreatFact>)>,
     previous_annotation_dirty: Vec<(Color, usize, bool)>,
     previous_immediate_wins: Vec<(Color, usize, bool, bool)>,
+    previous_null_cells: Vec<(usize, bool)>,
 }
 
 impl RollingThreatFrontier {
@@ -93,6 +96,7 @@ impl RollingThreatFrontier {
             white_immediate_wins: immediate_wins_for_player(board, Color::White),
             black_immediate_win_dirty: vec![false; size * size],
             white_immediate_win_dirty: vec![false; size * size],
+            null_cells: null_cells_for_board(board),
             undo_stack: Vec::with_capacity(size * size),
         }
     }
@@ -170,9 +174,11 @@ impl RollingThreatFrontier {
         let mut previous_move_facts = Vec::with_capacity(affected_cells.len() * 2);
         let mut previous_annotation_dirty = Vec::with_capacity(affected_cells.len() * 2);
         let mut previous_immediate_wins = Vec::with_capacity(affected_cells.len() * 2);
+        let mut previous_null_cells = Vec::with_capacity(affected_cells.len());
 
         for affected in affected_cells {
             let index = cell_index(self.board.config.board_size, affected);
+            previous_null_cells.push((index, self.null_cells[index]));
             for player in [Color::Black, Color::White] {
                 if let Some(facts) = self.move_facts_for(player) {
                     previous_move_facts.push((player, index, facts[index].clone()));
@@ -200,6 +206,7 @@ impl RollingThreatFrontier {
                 previous_move_facts,
                 previous_annotation_dirty,
                 previous_immediate_wins,
+                previous_null_cells,
             },
             start.elapsed(),
         )
@@ -207,6 +214,10 @@ impl RollingThreatFrontier {
 
     fn refresh_delta_cells(&mut self, delta: &FrontierDelta) -> FrontierUpdateTimings {
         let size = self.board.config.board_size;
+        for &(index, _) in &delta.previous_null_cells {
+            self.null_cells[index] = scan_cell_null(&self.board, move_from_index(size, index));
+        }
+
         let move_fact_update = if delta.previous_move_facts.is_empty() {
             None
         } else {
@@ -243,6 +254,10 @@ impl RollingThreatFrontier {
     }
 
     fn restore_delta_cells(&mut self, delta: FrontierDelta) -> FrontierUpdateTimings {
+        for (index, was_null) in &delta.previous_null_cells {
+            self.null_cells[*index] = *was_null;
+        }
+
         let move_fact_update = if delta.previous_move_facts.is_empty() {
             None
         } else {
@@ -339,6 +354,11 @@ impl RollingThreatFrontier {
 
     pub fn undo_move(&mut self, mv: Move) {
         let _ = self.undo_move_profiled(mv);
+    }
+
+    pub(crate) fn is_null_cell(&self, mv: Move) -> bool {
+        let size = self.board.config.board_size;
+        mv.row < size && mv.col < size && self.null_cells[cell_index(size, mv)]
     }
 
     pub(crate) fn immediate_winning_moves_for_cached(&mut self, player: Color) -> Vec<Move> {
@@ -718,6 +738,17 @@ fn immediate_wins_for_player(board: &Board, player: Color) -> Vec<bool> {
     wins
 }
 
+fn null_cells_for_board(board: &Board) -> Vec<bool> {
+    let size = board.config.board_size;
+    let mut null_cells = Vec::with_capacity(size * size);
+    for row in 0..size {
+        for col in 0..size {
+            null_cells.push(scan_cell_null(board, Move { row, col }));
+        }
+    }
+    null_cells
+}
+
 fn is_immediate_win_for_player(board: &Board, player: Color, mv: Move) -> bool {
     board.is_immediate_winning_move_for(mv, player)
 }
@@ -890,6 +921,7 @@ mod tests {
         RollingThreatFrontier,
     };
     use crate::tactical::{LocalThreatKind, ScanThreatView, SearchThreatPolicy, ThreatView};
+    use crate::viability::scan_cell_null;
     use gomoku_core::{Board, Color, GameResult, Move, RuleConfig, Variant};
 
     fn mv(notation: &str) -> Move {
@@ -1013,6 +1045,21 @@ mod tests {
                 color
             );
         });
+    }
+
+    fn assert_null_cells_match_scan(board: &Board, frontier: &RollingThreatFrontier) {
+        let size = board.config.board_size;
+        for row in 0..size {
+            for col in 0..size {
+                let probe = Move { row, col };
+                assert_eq!(
+                    frontier.is_null_cell(probe),
+                    scan_cell_null(board, probe),
+                    "null-cell mismatch at {}",
+                    probe.to_notation()
+                );
+            }
+        }
     }
 
     #[test]
@@ -1303,6 +1350,52 @@ mod tests {
             frontier.immediate_winning_moves_for(Color::Black),
             ScanThreatView::new(&board).immediate_winning_moves_for(Color::Black)
         );
+    }
+
+    #[test]
+    fn rolling_frontier_tracks_null_cells_through_apply_and_undo() {
+        let mut board = Board::new(RuleConfig {
+            variant: Variant::Renju,
+            ..RuleConfig::default()
+        });
+        let mut frontier = RollingThreatFrontier::from_board(&board);
+        let mut played = Vec::new();
+
+        assert_null_cells_match_scan(&board, &frontier);
+
+        for notation in [
+            "G8", "D8", "L8", "I8", "H7", "H4", "H12", "H9", "G7", "D4", "L12", "I9",
+        ] {
+            let next = mv(notation);
+            board.apply_move(next).unwrap();
+            frontier.apply_move(next).unwrap();
+            played.push(next);
+            assert_null_cells_match_scan(&board, &frontier);
+        }
+
+        for previous in played.into_iter().rev() {
+            board.undo_move(previous);
+            frontier.undo_move(previous);
+            assert_null_cells_match_scan(&board, &frontier);
+        }
+    }
+
+    #[test]
+    fn tactical_only_frontier_tracks_null_cells() {
+        let mut board = board_from_moves(Variant::Freestyle, &["G8", "D8", "L8", "I8"]);
+        let mut frontier = RollingThreatFrontier::from_board_with_features(
+            &board,
+            RollingFrontierFeatures::TacticalOnly,
+        );
+
+        assert_null_cells_match_scan(&board, &frontier);
+
+        for notation in ["H7", "H4", "H12", "H9"] {
+            let next = mv(notation);
+            board.apply_move(next).unwrap();
+            frontier.apply_move(next).unwrap();
+            assert_null_cells_match_scan(&board, &frontier);
+        }
     }
 
     #[test]
