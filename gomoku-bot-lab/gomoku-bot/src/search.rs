@@ -82,6 +82,24 @@ impl SearchDeadline {
     }
 }
 
+#[derive(Clone, Copy)]
+struct RootCandidateOptions {
+    candidate_source: CandidateSource,
+    null_cell_culling: NullCellCulling,
+    legality_gate: LegalityGate,
+    safety_gate: SafetyGate,
+    threat_view_mode: ThreatViewMode,
+    deadline: SearchDeadline,
+}
+
+#[derive(Clone, Copy)]
+struct MoveOrderingOptions {
+    move_ordering: MoveOrdering,
+    child_limit: Option<usize>,
+    threat_view_mode: ThreatViewMode,
+    phase: SearchMetricPhase,
+}
+
 // --- Transposition table ---
 
 #[derive(Clone, Copy)]
@@ -1949,17 +1967,12 @@ fn legal_by_gate_counted(
 
 fn root_candidate_moves_with_metrics(
     board: &Board,
-    candidate_source: CandidateSource,
-    null_cell_culling: NullCellCulling,
-    legality_gate: LegalityGate,
-    safety_gate: SafetyGate,
-    threat_view_mode: ThreatViewMode,
-    deadline: SearchDeadline,
+    options: RootCandidateOptions,
     metrics: &mut SearchMetrics,
 ) -> (Vec<Move>, u64, bool) {
     let mut moves = candidate_moves_from_source_counted(
         board,
-        candidate_source,
+        options.candidate_source,
         metrics,
         SearchMetricPhase::Root,
     );
@@ -1967,23 +1980,29 @@ fn root_candidate_moves_with_metrics(
         board,
         None,
         moves,
-        null_cell_culling,
-        threat_view_mode,
+        options.null_cell_culling,
+        options.threat_view_mode,
         metrics,
         SearchMetricPhase::Root,
     );
-    if needs_legality_gate(board, board.current_player, legality_gate) {
+    if needs_legality_gate(board, board.current_player, options.legality_gate) {
         moves.retain(|&mv| {
-            legal_by_gate_counted(board, mv, legality_gate, metrics, SearchMetricPhase::Root)
+            legal_by_gate_counted(
+                board,
+                mv,
+                options.legality_gate,
+                metrics,
+                SearchMetricPhase::Root,
+            )
         });
     }
 
     apply_safety_gate_to_root_candidates(
         board,
         moves,
-        safety_gate,
-        threat_view_mode,
-        deadline,
+        options.safety_gate,
+        options.threat_view_mode,
+        options.deadline,
         metrics,
     )
 }
@@ -2232,11 +2251,13 @@ fn order_root_moves(
             state,
             moves,
             tt_move,
-            move_ordering,
-            None,
-            threat_view_mode,
+            MoveOrderingOptions {
+                move_ordering,
+                child_limit: None,
+                threat_view_mode,
+                phase: SearchMetricPhase::Root,
+            },
             metrics,
-            SearchMetricPhase::Root,
         )
         .into_iter()
         .map(|ordered| ordered.mv)
@@ -2316,13 +2337,10 @@ fn order_moves_with_ordering(
     state: &mut SearchState,
     moves: Vec<Move>,
     tt_move: Option<Move>,
-    move_ordering: MoveOrdering,
-    child_limit: Option<usize>,
-    threat_view_mode: ThreatViewMode,
+    options: MoveOrderingOptions,
     metrics: &mut SearchMetrics,
-    phase: SearchMetricPhase,
 ) -> Vec<OrderedMove> {
-    match move_ordering {
+    match options.move_ordering {
         MoveOrdering::TranspositionFirstBoardOrder => order_tt_first(moves, tt_move)
             .into_iter()
             .map(|mv| OrderedMove {
@@ -2330,23 +2348,38 @@ fn order_moves_with_ordering(
                 must_keep: false,
             })
             .collect(),
-        MoveOrdering::TacticalFull => {
-            order_moves_tactical_full(state, moves, tt_move, threat_view_mode, metrics, phase)
-        }
-        MoveOrdering::PriorityFirst => {
-            order_moves_priority_first(state, moves, tt_move, threat_view_mode, metrics, phase)
-        }
-        MoveOrdering::TacticalLite => {
-            order_moves_tactical_lite(state, moves, tt_move, threat_view_mode, metrics, phase)
-        }
+        MoveOrdering::TacticalFull => order_moves_tactical_full(
+            state,
+            moves,
+            tt_move,
+            options.threat_view_mode,
+            metrics,
+            options.phase,
+        ),
+        MoveOrdering::PriorityFirst => order_moves_priority_first(
+            state,
+            moves,
+            tt_move,
+            options.threat_view_mode,
+            metrics,
+            options.phase,
+        ),
+        MoveOrdering::TacticalLite => order_moves_tactical_lite(
+            state,
+            moves,
+            tt_move,
+            options.threat_view_mode,
+            metrics,
+            options.phase,
+        ),
         MoveOrdering::Tactical => order_moves_tactical(
             state,
             moves,
             tt_move,
-            child_limit,
-            threat_view_mode,
+            options.child_limit,
+            options.threat_view_mode,
             metrics,
-            phase,
+            options.phase,
         ),
     }
 }
@@ -5151,12 +5184,14 @@ impl Bot for SearchBot {
         );
         let (root_moves, safety_nodes, mut budget_exhausted) = root_candidate_moves_with_metrics(
             board,
-            candidate_source,
-            null_cell_culling,
-            legality_gate,
-            safety_gate,
-            self.config.threat_view_mode,
-            safety_deadline,
+            RootCandidateOptions {
+                candidate_source,
+                null_cell_culling,
+                legality_gate,
+                safety_gate,
+                threat_view_mode: self.config.threat_view_mode,
+                deadline: safety_deadline,
+            },
             &mut metrics,
         );
         let mut best_move = root_moves
@@ -5356,6 +5391,20 @@ mod tests {
                     col: cell % size,
                 })
                 .unwrap();
+        }
+    }
+
+    fn root_candidate_test_options(
+        safety_gate: SafetyGate,
+        deadline: SearchDeadline,
+    ) -> RootCandidateOptions {
+        RootCandidateOptions {
+            candidate_source: CandidateSource::NearAll { radius: 2 },
+            null_cell_culling: NullCellCulling::Disabled,
+            legality_gate: LegalityGate::ExactRules,
+            safety_gate,
+            threat_view_mode: ThreatViewMode::Scan,
+            deadline,
         }
     }
 
@@ -5752,16 +5801,14 @@ mod tests {
         let mut metrics = SearchMetrics::default();
         let moves = root_candidate_moves_with_metrics(
             &board,
-            CandidateSource::NearAll { radius: 2 },
-            NullCellCulling::Disabled,
-            LegalityGate::ExactRules,
-            SafetyGate::CurrentObligation,
-            ThreatViewMode::Scan,
-            SearchDeadline::new(
-                Instant::now() - Duration::from_millis(2),
-                Some(Duration::from_millis(1)),
-                None,
-                None,
+            root_candidate_test_options(
+                SafetyGate::CurrentObligation,
+                SearchDeadline::new(
+                    Instant::now() - Duration::from_millis(2),
+                    Some(Duration::from_millis(1)),
+                    None,
+                    None,
+                ),
             ),
             &mut metrics,
         );
@@ -5792,12 +5839,10 @@ mod tests {
         let mut metrics = SearchMetrics::default();
         let (moves, safety_nodes, timed_out) = root_candidate_moves_with_metrics(
             &board,
-            CandidateSource::NearAll { radius: 2 },
-            NullCellCulling::Disabled,
-            LegalityGate::ExactRules,
-            SafetyGate::None,
-            ThreatViewMode::Scan,
-            SearchDeadline::new(Instant::now(), Some(Duration::from_millis(100)), None, None),
+            root_candidate_test_options(
+                SafetyGate::None,
+                SearchDeadline::new(Instant::now(), Some(Duration::from_millis(100)), None, None),
+            ),
             &mut metrics,
         );
 
@@ -5822,12 +5867,10 @@ mod tests {
         let mut metrics = SearchMetrics::default();
         let (moves, safety_nodes, timed_out) = root_candidate_moves_with_metrics(
             &board,
-            CandidateSource::NearAll { radius: 2 },
-            NullCellCulling::Disabled,
-            LegalityGate::ExactRules,
-            SafetyGate::CurrentObligation,
-            ThreatViewMode::Scan,
-            SearchDeadline::new(Instant::now(), Some(Duration::from_millis(100)), None, None),
+            root_candidate_test_options(
+                SafetyGate::CurrentObligation,
+                SearchDeadline::new(Instant::now(), Some(Duration::from_millis(100)), None, None),
+            ),
             &mut metrics,
         );
 
@@ -5850,12 +5893,10 @@ mod tests {
         let mut metrics = SearchMetrics::default();
         let (moves, safety_nodes, timed_out) = root_candidate_moves_with_metrics(
             &board,
-            CandidateSource::NearAll { radius: 2 },
-            NullCellCulling::Disabled,
-            LegalityGate::ExactRules,
-            SafetyGate::CurrentObligation,
-            ThreatViewMode::Scan,
-            SearchDeadline::new(Instant::now(), Some(Duration::from_millis(100)), None, None),
+            root_candidate_test_options(
+                SafetyGate::CurrentObligation,
+                SearchDeadline::new(Instant::now(), Some(Duration::from_millis(100)), None, None),
+            ),
             &mut metrics,
         );
 
@@ -5873,12 +5914,10 @@ mod tests {
         let mut metrics = SearchMetrics::default();
         let (moves, safety_nodes, timed_out) = root_candidate_moves_with_metrics(
             &board,
-            CandidateSource::NearAll { radius: 2 },
-            NullCellCulling::Disabled,
-            LegalityGate::ExactRules,
-            SafetyGate::CurrentObligation,
-            ThreatViewMode::Scan,
-            SearchDeadline::new(Instant::now(), Some(Duration::from_millis(100)), None, None),
+            root_candidate_test_options(
+                SafetyGate::CurrentObligation,
+                SearchDeadline::new(Instant::now(), Some(Duration::from_millis(100)), None, None),
+            ),
             &mut metrics,
         );
 
@@ -5903,12 +5942,10 @@ mod tests {
         let mut metrics = SearchMetrics::default();
         let (moves, safety_nodes, timed_out) = root_candidate_moves_with_metrics(
             &board,
-            CandidateSource::NearAll { radius: 2 },
-            NullCellCulling::Disabled,
-            LegalityGate::ExactRules,
-            SafetyGate::CurrentObligation,
-            ThreatViewMode::Scan,
-            SearchDeadline::new(Instant::now(), Some(Duration::from_millis(100)), None, None),
+            root_candidate_test_options(
+                SafetyGate::CurrentObligation,
+                SearchDeadline::new(Instant::now(), Some(Duration::from_millis(100)), None, None),
+            ),
             &mut metrics,
         );
 

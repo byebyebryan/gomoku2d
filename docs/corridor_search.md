@@ -284,12 +284,12 @@ that make corridor cost visible. Future bot work should focus on cheaper threat
 facts, better ordering, and explicit analysis-first corridor proofing rather
 than adding more portal tuning knobs.
 
-### Leaf Corridor Extension Candidate
+### Retired Leaf Corridor Extension Candidate
 
-The next bot-facing corridor experiment should not revive portals. A cleaner
-shape is leaf corridor extension: run normal iterative deepening first, then
-use any remaining budget on a corridor-enhanced pass that only extends
-non-quiet leaf nodes.
+After rejecting portals, the next bot-facing corridor experiment did not revive
+the portal model. It tested leaf corridor extension: run normal iterative
+deepening first, then use any remaining budget on a corridor-enhanced pass that
+only extends non-quiet leaf nodes.
 
 The goal is narrower than portal search. Portal search asked whether a child
 move could shortcut into a deeper score. Leaf extension asks whether normal
@@ -571,9 +571,10 @@ current portal code actually uses:
 - attacker move rank for tactical ordering,
 - search-ordering tactical annotation for a candidate before it is played.
 
-Rolling frontier is still likely the next structural step, but not the next
-blind rewrite. First keep normal search and the portal asking the same local
-questions through the same seam; then make those questions incremental.
+This seam became the bridge into the `0.4.4` rolling-frontier pass. Normal
+search, corridor proof, and diagnostic portal code now ask the same local
+questions through `ThreatView`; rolling mode answers the hot normal-search
+queries by default, while scan remains the fallback and comparison path.
 
 #### Rolling Frontier Drilldown
 
@@ -656,10 +657,10 @@ Validation strategy:
 - Only after normal-search shadow mode is clean should corridor entry/reply
   paths become the next rolling consumer.
 
-The main release-boundary implication is that this is too large for the same
-checkpoint as the current portal cleanup. `0.4.3` finishes move-local portal
-semantics, report metrics, and the scan-backed `ThreatView` seam. `0.4.4`
-should be the rolling-frontier lab pass if the seam proves stable.
+The release-boundary implication has already played out: `0.4.3` finished
+move-local portal semantics, report metrics, and the scan-backed `ThreatView`
+seam; `0.4.4` promotes rolling frontier as the default normal-search backend
+after parity checks and focused scan-vs-rolling runs.
 
 The `0.4.4` working plan lives in
 [`archive/v0_4_4_frontier_plan.md`](archive/v0_4_4_frontier_plan.md).
@@ -734,7 +735,7 @@ corridor.
 - It should not become player-facing until the lab reports are stable enough to
   explain real games cleanly.
 
-## Current `v0.4.3` Checkpoint
+## Current `v0.4.4` Checkpoint
 
 The current checkpoint provides:
 
@@ -742,7 +743,8 @@ The current checkpoint provides:
 - bot-owned corridor proof entry points under `gomoku-bot::corridor`,
 - shared local-threat facts and search/corridor policy views under
   `gomoku-bot::tactical` consumed by both `SearchBot` and corridor search,
-- a scan-backed `ThreatView` seam for future rolling-frontier replacement,
+- rolling-backed `ThreatView` as the default normal-search backend, with
+  scan-backed `ThreatView` retained for fallback and comparisons,
 - retired `SearchBot` corridor quiescence evidence from the former
   `+corridor-q` suffix,
 - retired default-off `SearchBot` portal suffixes kept only for lab comparison:

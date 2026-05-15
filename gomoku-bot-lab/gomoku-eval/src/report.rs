@@ -3721,11 +3721,11 @@ fn render_stage_time_metric_cell(
     stage_ns: u64,
     row: &StandingReport,
 ) {
-    let total_ns = row.total_time_ms.saturating_mul(1_000_000);
-    let pct = if total_ns == 0 {
+    let denominator_ns = stage_time_denominator_ns(row);
+    let pct = if denominator_ns == 0 {
         0.0
     } else {
-        stage_ns as f64 * 100.0 / total_ns as f64
+        stage_ns as f64 * 100.0 / denominator_ns as f64
     };
     render_metric_cell(
         html,
@@ -3745,15 +3745,23 @@ fn stage_avg_ms_label(stage_ns: u64, search_move_count: u32) -> String {
     }
 }
 
-fn stage_other_ns(row: &StandingReport) -> u64 {
-    let total_ns = row.total_time_ms.saturating_mul(1_000_000);
-    let known_ns = row
-        .stage_move_gen_ns
+fn stage_known_ns(row: &StandingReport) -> u64 {
+    row.stage_move_gen_ns
         .saturating_add(row.stage_ordering_ns)
         .saturating_add(row.stage_eval_ns)
         .saturating_add(row.stage_threat_ns)
-        .saturating_add(row.stage_proof_ns);
-    total_ns.saturating_sub(known_ns)
+        .saturating_add(row.stage_proof_ns)
+}
+
+fn stage_time_denominator_ns(row: &StandingReport) -> u64 {
+    let wall_ns = row.total_time_ms.saturating_mul(1_000_000);
+    wall_ns.max(stage_known_ns(row))
+}
+
+fn stage_other_ns(row: &StandingReport) -> u64 {
+    let denominator_ns = stage_time_denominator_ns(row);
+    let known_ns = stage_known_ns(row);
+    denominator_ns.saturating_sub(known_ns)
 }
 
 fn delta_cell(label: &str, delta_class: &str, data_label: &str) -> String {
@@ -4853,6 +4861,33 @@ mod tests {
         assert!(!html.contains("0.0 / 0.0"));
         assert!(html.contains("<dt>Search Cost</dt>"));
         assert!(html.contains("Comparisons above 50% are marked green."));
+    }
+
+    #[test]
+    fn html_report_normalizes_stage_time_when_instrumented_time_exceeds_wall_time() {
+        let mut report = sample_report();
+        let mut standing = sample_standing_with_search_costs("search-d2");
+        standing.total_time_ms = 10;
+        report.run.bots = vec!["search-d2".to_string()];
+        report.standings = vec![standing];
+
+        let html = render_tournament_report_html(&report);
+
+        assert!(html.contains(
+            "<span class=\"metric metric-search\" data-label=\"Move gen\"><span>15%</span><span>1.0 ms</span></span>"
+        ));
+        assert!(html.contains(
+            "<span class=\"metric metric-search\" data-label=\"Ordering\"><span>31%</span><span>2.0 ms</span></span>"
+        ));
+        assert!(html.contains(
+            "<span class=\"metric metric-search\" data-label=\"Scoring\"><span>46%</span><span>3.0 ms</span></span>"
+        ));
+        assert!(html.contains(
+            "<span class=\"metric metric-search\" data-label=\"Threat detection\"><span>8%</span><span>0.5 ms</span></span>"
+        ));
+        assert!(html.contains(
+            "<span class=\"metric metric-search\" data-label=\"Other\"><span>0%</span><span>0 ms</span></span>"
+        ));
     }
 
     #[test]
