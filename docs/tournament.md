@@ -47,6 +47,8 @@ cargo run --release -p gomoku-eval -- tournament \
   --opening-policy centered-suite \
   --opening-plies 4 \
   --search-cpu-time-ms 1000 \
+  --search-budget-mode pooled \
+  --search-cpu-reserve-ms 4000 \
   --max-moves 120 \
   --seed 63 \
   --threads 22 \
@@ -195,8 +197,9 @@ re-running the tournament:
   depth counters are preserved for later report rendering
 
 Generated candidate width can stay high for capped bots because the cap applies
-after candidate generation, legality filtering, and ordering. Use `Child width`
-in the report to see the actual searched non-root frontier.
+after candidate generation, legality filtering, and ordering. Use `Width` in
+the report to see the actual searched non-root frontier, with pre-cap context
+shown when relevant.
 
 ## Report Process
 

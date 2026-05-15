@@ -18,11 +18,11 @@ tournament runs, the published report will show a `_dirty` revision and a
 development-run warning. That is useful for scratch reports, but release-quality
 curated reports should come from a clean committed toolchain.
 
-The command below keeps the strict `1000 ms` CPU-per-move policy for maximum
-continuity with older reports. If the published report is intentionally being
-refreshed as the product-like hard-bot benchmark, add
-`--search-budget-mode pooled --search-cpu-reserve-ms 4000` and regenerate the
-analysis report from that same `latest.json`.
+The curated published report uses pooled CPU budgeting: each move starts with a
+`1000 ms` base budget, cheaper moves bank unused time, and the reserve is capped
+at `4000 ms`. This is closer to product-like hard-bot behavior than the older
+strict-per-move report while keeping the run bounded. Use strict mode only for
+focused continuity checks against older reports.
 
 ```sh
 git status --short
@@ -33,6 +33,8 @@ cargo run --release -p gomoku-eval -- tournament \
   --opening-policy centered-suite \
   --opening-plies 4 \
   --search-cpu-time-ms 1000 \
+  --search-budget-mode pooled \
+  --search-cpu-reserve-ms 4000 \
   --max-moves 120 \
   --seed 63 \
   --threads 22 \
