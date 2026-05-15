@@ -8,14 +8,17 @@ import {
   ensureLocalMatchSession,
 } from "../game/local_match_session";
 import { emptyLocalMatchHistory, localProfileStore } from "../profile/local_profile_store";
+import { uiPreferencesStore } from "../profile/ui_preferences_store";
 
 import { LocalMatchRoute } from "./LocalMatchRoute";
+import { Board } from "../components/Board/Board";
 
 vi.mock("../components/Board/Board", () => ({
-  Board: () => <div data-testid="mock-board" />,
+  Board: vi.fn(() => <div data-testid="mock-board" />),
 }));
 
 const initialLocalProfileState = localProfileStore.getState();
+const initialUiPreferencesState = uiPreferencesStore.getState();
 const localProfile = {
   avatarUrl: null,
   createdAt: "2026-05-15T00:00:00.000Z",
@@ -30,6 +33,15 @@ const noOpBotRunner = {
   configure: () => undefined,
   dispose: () => undefined,
 };
+const mockedBoard = vi.mocked(Board);
+
+function mockCompactTouchDevice(matches: boolean) {
+  vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({
+    addEventListener: vi.fn(),
+    matches,
+    removeEventListener: vi.fn(),
+  }));
+}
 
 function renderLocalMatchRoute() {
   render(
@@ -44,6 +56,9 @@ describe("LocalMatchRoute", () => {
     cleanup();
     disposeLocalMatchSession();
     localProfileStore.setState(initialLocalProfileState, true);
+    uiPreferencesStore.setState(initialUiPreferencesState, true);
+    vi.unstubAllGlobals();
+    mockedBoard.mockClear();
   });
 
   beforeEach(() => {
@@ -63,5 +78,18 @@ describe("LocalMatchRoute", () => {
     expect(within(botValue).getByText("Normal")).toBeInTheDocument();
     expect(within(botValue).getByText("D3 · full · threat")).toBeInTheDocument();
     expect(screen.queryByText("Freestyle · Normal")).not.toBeInTheDocument();
+  });
+
+  it("passes the selected touch control mode to compact mobile boards", () => {
+    mockCompactTouchDevice(true);
+    uiPreferencesStore.getState().setTouchControl("pointer");
+
+    renderLocalMatchRoute();
+
+    const latestBoardProps = mockedBoard.mock.calls[mockedBoard.mock.calls.length - 1]?.[0];
+
+    expect(latestBoardProps).toMatchObject({
+      touchControlMode: "pointer",
+    });
   });
 });

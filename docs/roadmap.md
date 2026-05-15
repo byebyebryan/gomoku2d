@@ -64,7 +64,7 @@ Move from proof-of-concept to a proper frontend product surface.
 - local match history and replay viewer
 - replay branching back into local practice
 - board-first desktop and mobile match layouts
-- mobile touch-pad placement mode for cramped boards
+- mobile pointer/touchpad placement modes for cramped boards
 - asset previews, screenshot/reference assets, release hygiene
 - dependency/runtime maintenance after `v0.2.4` without cutting another product
   release

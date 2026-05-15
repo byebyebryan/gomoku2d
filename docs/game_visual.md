@@ -59,7 +59,9 @@ The pointer is the current actionable target.
 
 - tint follows the current player
 - it sits above surface warnings and below stones
-- on mobile, touch input moves the pointer like a touchpad
+- on mobile, pointer mode jumps to the touched cell and keeps tracking direct
+  drag; touchpad mode moves the pointer relatively; both modes still use an
+  explicit Place confirmation
 - blocked pointer state is used for occupied mobile targets and forbidden cells
 
 Pointer modes:

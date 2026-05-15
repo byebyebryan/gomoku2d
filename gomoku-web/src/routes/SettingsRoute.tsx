@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useStore } from "zustand";
 
@@ -18,6 +18,7 @@ import {
   startLocalMatchWithSavedSetup,
 } from "../game/local_match_session";
 import { localProfileStore } from "../profile/local_profile_store";
+import { uiPreferencesStore } from "../profile/ui_preferences_store";
 import { variantLabel } from "../replay/local_replay";
 import { Icon } from "../ui/Icon";
 
@@ -26,6 +27,9 @@ import styles from "./SettingsRoute.module.css";
 const PRESET_IDS: PracticeBotPresetId[] = ["easy", "normal", "hard"];
 const DEPTHS: PracticeBotDepth[] = [1, 3, 5, 7];
 const WIDTHS: PracticeBotWidth[] = ["none", 8, 16];
+const COMPACT_SETTINGS_QUERY = "(max-width: 760px)";
+const MOBILE_TOUCH_QUERY =
+  "(max-width: 720px) and (orientation: portrait) and (hover: none) and (pointer: coarse)";
 
 function setupSummary(config: PracticeBotConfig): string {
   return practiceBotConfigSummary(config);
@@ -37,7 +41,10 @@ function settingsEqual(left: PracticeBotConfig, right: PracticeBotConfig): boole
 
 export function SettingsRoute() {
   const navigate = useNavigate();
+  const [compactSettingsLayout, setCompactSettingsLayout] = useState(false);
+  const [showTouchControls, setShowTouchControls] = useState(false);
   const settings = useStore(localProfileStore, (state) => state.settings);
+  const touchControl = useStore(uiPreferencesStore, (state) => state.touchControl);
   const matchStore = useStore(localMatchSessionStore, (state) => state.matchStore);
   const activeMatch = matchStore?.getState() ?? null;
   const custom = customConfigForPracticeBot(settings.practiceBot);
@@ -53,6 +60,26 @@ export function SettingsRoute() {
 
   useEffect(() => {
     localProfileStore.getState().ensureLocalProfile();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return undefined;
+    }
+
+    const compactQuery = window.matchMedia(COMPACT_SETTINGS_QUERY);
+    const mediaQuery = window.matchMedia(MOBILE_TOUCH_QUERY);
+    const syncCompact = () => setCompactSettingsLayout(compactQuery.matches);
+    const syncTouch = () => setShowTouchControls(mediaQuery.matches);
+
+    syncCompact();
+    syncTouch();
+    compactQuery.addEventListener("change", syncCompact);
+    mediaQuery.addEventListener("change", syncTouch);
+    return () => {
+      compactQuery.removeEventListener("change", syncCompact);
+      mediaQuery.removeEventListener("change", syncTouch);
+    };
   }, []);
 
   const updateSetup = (patch: Partial<typeof settings>) => {
@@ -72,6 +99,8 @@ export function SettingsRoute() {
       version: 1,
     });
   };
+  const showCurrentSummary = !compactSettingsLayout;
+  const showSummaryPanel = showCurrentSummary || activeSetupDiffers;
 
   return (
     <main className={styles.page}>
@@ -97,44 +126,50 @@ export function SettingsRoute() {
       </header>
 
       <section className={styles.layout}>
-        <aside className={styles.summaryPanel}>
-          <p className="uiSectionLabel">Current settings</p>
-          <div className={styles.summaryStack} aria-label={`${currentVariantLabel} ${currentBotLabel}`} role="group">
-            <section className={styles.summaryGroup}>
-              <p className={styles.summaryKicker}>Game</p>
-              <h2 className={styles.summaryTitle}>{currentVariantLabel}</h2>
-            </section>
-            <section className={styles.summaryGroup}>
-              <p className={styles.summaryKicker}>Bot</p>
-              <h2 className={styles.summaryTitle}>{currentBotLabel}</h2>
-              <p className={styles.summaryText}>{setupSummary(settings.practiceBot)}</p>
-            </section>
-          </div>
-
-          {activeSetupDiffers ? (
-            <div className={styles.applyPanel}>
-              <p className={styles.applyTitle}>Saved settings apply next game.</p>
-              <p className={styles.applyText}>
-                Keep playing the current game, or start fresh with this setup now.
-              </p>
-              <div className={styles.applyActions}>
-                <Link className="uiAction uiActionPrimary" to="/match/local">
-                  <span className="uiActionLabel">Back to Game</span>
-                </Link>
-                <button
-                  className="uiAction uiActionAccent"
-                  onClick={() => {
-                    startLocalMatchWithSavedSetup();
-                    navigate("/match/local");
-                  }}
-                  type="button"
-                >
-                  <span className="uiActionLabel">Start New Game</span>
-                </button>
+        {showSummaryPanel ? (
+          <aside className={styles.summaryPanel}>
+            {showCurrentSummary ? (
+              <div className={styles.summaryCurrent}>
+                <p className="uiSectionLabel">Current settings</p>
+                <div className={styles.summaryStack} aria-label={`${currentVariantLabel} ${currentBotLabel}`} role="group">
+                  <section className={styles.summaryGroup}>
+                    <p className={styles.summaryKicker}>Game</p>
+                    <h2 className={styles.summaryTitle}>{currentVariantLabel}</h2>
+                  </section>
+                  <section className={styles.summaryGroup}>
+                    <p className={styles.summaryKicker}>Bot</p>
+                    <h2 className={styles.summaryTitle}>{currentBotLabel}</h2>
+                    <p className={styles.summaryText}>{setupSummary(settings.practiceBot)}</p>
+                  </section>
+                </div>
               </div>
-            </div>
-          ) : null}
-        </aside>
+            ) : null}
+
+            {activeSetupDiffers ? (
+              <div className={styles.applyPanel}>
+                <p className={styles.applyTitle}>Saved settings apply next game.</p>
+                <p className={styles.applyText}>
+                  Keep playing the current game, or start fresh with this setup now.
+                </p>
+                <div className={styles.applyActions}>
+                  <Link className="uiAction uiActionPrimary" to="/match/local">
+                    <span className="uiActionLabel">Back to Game</span>
+                  </Link>
+                  <button
+                    className="uiAction uiActionAccent"
+                    onClick={() => {
+                      startLocalMatchWithSavedSetup();
+                      navigate("/match/local");
+                    }}
+                    type="button"
+                  >
+                    <span className="uiActionLabel">Start New Game</span>
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </aside>
+        ) : null}
 
         <section className={styles.controlsPanel}>
           <section className={styles.controlSection}>
@@ -162,6 +197,40 @@ export function SettingsRoute() {
           </section>
 
           <div className="uiDivider" />
+
+          {showTouchControls ? (
+            <>
+              <section className={styles.controlSection}>
+                <div className={styles.sectionHeader}>
+                  <p className="uiSectionLabel">Controls</p>
+                </div>
+                <div className={styles.labRow}>
+                  <div className={styles.labCopy}>
+                    <p className={styles.labLabel}>Touch control</p>
+                    <p className={styles.labHint}>How mobile taps move the board cursor.</p>
+                  </div>
+                  <div className={styles.segmentGrid}>
+                    <button
+                      className={touchControl === "pointer" ? "uiSegment uiSegmentActive" : "uiSegment"}
+                      onClick={() => uiPreferencesStore.getState().setTouchControl("pointer")}
+                      type="button"
+                    >
+                      Pointer
+                    </button>
+                    <button
+                      className={touchControl === "touchpad" ? "uiSegment uiSegmentActive" : "uiSegment"}
+                      onClick={() => uiPreferencesStore.getState().setTouchControl("touchpad")}
+                      type="button"
+                    >
+                      Touchpad
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+              <div className="uiDivider" />
+            </>
+          ) : null}
 
           <section className={styles.controlSection}>
             <div className={styles.sectionHeader}>
