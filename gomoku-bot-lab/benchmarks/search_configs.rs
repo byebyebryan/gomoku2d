@@ -98,21 +98,14 @@ fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchB
 
     if let Some(limit) = suffix.strip_prefix("tactical-cap-") {
         let limit = parse_positive_limit(limit)?;
-        config.move_ordering = MoveOrdering::TacticalFirst;
+        config.move_ordering = MoveOrdering::Tactical;
         config.child_limit = Some(limit);
         return Some(config);
     }
 
-    if let Some(limit) = suffix.strip_prefix("tactical-lite-cap-") {
+    if let Some(limit) = suffix.strip_prefix("tactical-full-cap-") {
         let limit = parse_positive_limit(limit)?;
-        config.move_ordering = MoveOrdering::TacticalLite;
-        config.child_limit = Some(limit);
-        return Some(config);
-    }
-
-    if let Some(limit) = suffix.strip_prefix("priority-cap-") {
-        let limit = parse_positive_limit(limit)?;
-        config.move_ordering = MoveOrdering::PriorityFirst;
+        config.move_ordering = MoveOrdering::TacticalFull;
         config.child_limit = Some(limit);
         return Some(config);
     }
@@ -151,16 +144,8 @@ fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchB
             config.safety_gate = SafetyGate::None;
             Some(config)
         }
-        "tactical-first" => {
-            config.move_ordering = MoveOrdering::TacticalFirst;
-            Some(config)
-        }
-        "tactical-lite" => {
-            config.move_ordering = MoveOrdering::TacticalLite;
-            Some(config)
-        }
-        "priority-first" => {
-            config.move_ordering = MoveOrdering::PriorityFirst;
+        "tactical-full" => {
+            config.move_ordering = MoveOrdering::TacticalFull;
             Some(config)
         }
         "pattern-eval" => {
@@ -416,11 +401,22 @@ mod tests {
     }
 
     #[test]
-    fn parses_tactical_move_ordering_suffix() {
-        let config = super::search_config_from_lab_spec("search-d3+tactical-first", 5, None, None)
-            .expect("expected tactical ordering spec to parse");
+    fn parses_tactical_full_ordering_suffixes() {
+        let config = super::search_config_from_lab_spec("search-d3+tactical-full", 5, None, None)
+            .expect("expected tactical-full ordering spec to parse");
 
-        assert_eq!(config.move_ordering, super::MoveOrdering::TacticalFirst);
+        assert_eq!(config.move_ordering, super::MoveOrdering::TacticalFull);
+
+        let capped =
+            super::search_config_from_lab_spec("search-d7+tactical-full-cap-8", 3, None, None)
+                .expect("expected tactical-full cap shorthand spec to parse");
+        assert_eq!(capped.max_depth, 7);
+        assert_eq!(capped.move_ordering, super::MoveOrdering::TacticalFull);
+        assert_eq!(capped.child_limit, Some(8));
+        assert!(
+            super::search_config_from_lab_spec("search-d7+tactical-full-cap-0", 3, None, None)
+                .is_none()
+        );
     }
 
     #[test]
@@ -458,7 +454,7 @@ mod tests {
     #[test]
     fn parses_child_cap_suffix() {
         let config = super::search_config_from_lab_spec(
-            "search-d5+tactical-first+child-cap-12",
+            "search-d5+tactical-full+child-cap-12",
             3,
             None,
             None,
@@ -466,7 +462,7 @@ mod tests {
         .expect("expected child cap spec to parse");
 
         assert_eq!(config.child_limit, Some(12));
-        assert_eq!(config.move_ordering, super::MoveOrdering::TacticalFirst);
+        assert_eq!(config.move_ordering, super::MoveOrdering::TacticalFull);
         assert!(
             super::search_config_from_lab_spec("search-d5+child-cap-0", 3, None, None).is_none()
         );
@@ -478,7 +474,7 @@ mod tests {
             .expect("expected tactical cap shorthand spec to parse");
 
         assert_eq!(config.max_depth, 7);
-        assert_eq!(config.move_ordering, super::MoveOrdering::TacticalFirst);
+        assert_eq!(config.move_ordering, super::MoveOrdering::Tactical);
         assert_eq!(config.child_limit, Some(8));
         assert!(
             super::search_config_from_lab_spec("search-d7+tactical-cap-0", 3, None, None).is_none()
@@ -486,46 +482,21 @@ mod tests {
     }
 
     #[test]
-    fn parses_priority_ordering_suffixes() {
-        let priority =
-            super::search_config_from_lab_spec("search-d5+priority-first", 3, None, None)
-                .expect("expected priority ordering spec to parse");
-        assert_eq!(priority.max_depth, 5);
-        assert_eq!(priority.move_ordering, super::MoveOrdering::PriorityFirst);
-        assert_eq!(priority.child_limit, None);
-
-        let capped = super::search_config_from_lab_spec("search-d7+priority-cap-8", 3, None, None)
-            .expect("expected priority cap shorthand spec to parse");
-        assert_eq!(capped.max_depth, 7);
-        assert_eq!(capped.move_ordering, super::MoveOrdering::PriorityFirst);
-        assert_eq!(capped.child_limit, Some(8));
-        assert!(
-            super::search_config_from_lab_spec("search-d7+priority-cap-0", 3, None, None).is_none()
-        );
-    }
-
-    #[test]
-    fn parses_tactical_lite_ordering_suffixes() {
-        let tactical_lite =
-            super::search_config_from_lab_spec("search-d5+tactical-lite", 3, None, None)
-                .expect("expected tactical-lite ordering spec to parse");
-        assert_eq!(tactical_lite.max_depth, 5);
-        assert_eq!(
-            tactical_lite.move_ordering,
-            super::MoveOrdering::TacticalLite
-        );
-        assert_eq!(tactical_lite.child_limit, None);
-
-        let capped =
-            super::search_config_from_lab_spec("search-d7+tactical-lite-cap-8", 3, None, None)
-                .expect("expected tactical-lite cap shorthand spec to parse");
-        assert_eq!(capped.max_depth, 7);
-        assert_eq!(capped.move_ordering, super::MoveOrdering::TacticalLite);
-        assert_eq!(capped.child_limit, Some(8));
-        assert!(
-            super::search_config_from_lab_spec("search-d7+tactical-lite-cap-0", 3, None, None)
-                .is_none()
-        );
+    fn rejects_retired_ordering_suffixes() {
+        for spec in [
+            "search-d3+tactical-first",
+            "search-d3+staged-tactical",
+            "search-d7+staged-tactical-cap-8",
+            "search-d5+priority-first",
+            "search-d7+priority-cap-8",
+            "search-d5+tactical-lite",
+            "search-d7+tactical-lite-cap-8",
+        ] {
+            assert!(
+                super::search_config_from_lab_spec(spec, 3, None, None).is_none(),
+                "expected retired spec '{spec}' to be rejected"
+            );
+        }
     }
 
     #[test]

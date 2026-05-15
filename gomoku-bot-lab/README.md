@@ -78,25 +78,17 @@ gate. For example, `search-d3+near-all-r1+no-safety` keeps the depth-3 search
 but uses a radius-1 candidate source and no root safety gate. The default
 `current_obligation` safety gate only filters already-generated legal root
 candidates against immediate wins, direct immediate blocks, and direct or
-counter-four replies to imminent threats. Append `+tactical-first` to try
-full local-threat move ordering before alpha-beta search. Append
-`+priority-first` to try cheaper hard-tactical ordering: immediate wins,
-immediate blocks, TT move, center bias, and local density without scanning
-candidate-created threats. Append `+tactical-lite` to try the middle tier:
-the same hard win/block checks, plus compact candidate tactical-lite rank
-(currently corridor-entry strength), before the quiet TT/center/density
-heuristics.
+counter-four replies to imminent threats. Append `+tactical-full` to try the
+older full local-threat move ordering before alpha-beta search.
 Append `+child-cap-N` to cap the ordered non-root child frontier after candidate
 generation, legality filtering, and move ordering. `+tactical-cap-N` is
-shorthand for `+tactical-first+child-cap-N` and is the preferred report-facing
-form for full tactical ordering, for example `search-d5+tactical-cap-12`.
-`+tactical-lite-cap-N` is shorthand for
-`+tactical-lite+child-cap-N`, for example `search-d5+tactical-lite-cap-8`.
-`+priority-cap-N` is the cheaper shorthand for
-`+priority-first+child-cap-N`, for example `search-d5+priority-cap-8`. Root
-still considers every legal/safe candidate; candidate source controls
-discovery, while child cap controls how many ordered non-root children
-alpha-beta searches. Rolling frontier is the default threat-view backend;
+shorthand for the current tactical ordering plus `+child-cap-N`: immediate
+win/block checks stay global, then full tactical annotation runs only for moves
+that can plausibly create local tactical shapes. `+tactical-full-cap-N` keeps
+the older full-annotation path for direct comparisons. Root still considers
+every legal/safe candidate; candidate source controls discovery, while child
+cap controls how many ordered non-root children alpha-beta searches. Rolling
+frontier is the default threat-view backend;
 append `+scan-threat-view` to force the older scan-backed view for fallback
 comparisons, or `+rolling-frontier-shadow` to run scan-vs-rolling parity checks.
 
@@ -124,10 +116,9 @@ The `0.4.1` tactical-ladder work established the current bot baseline: local
 threat competence first, casual combo play next, then bounded corridor ideas
 only when they can be measured. Tactical facts are meant to buy effective depth
 through safer narrowing, ordering, and selective extension, not to replace
-alpha-beta search with broad shape scoring. The tactical annotation stage is
-scan-based, records its own trace metrics, feeds the lab-only `tactical_first`
-ordering mode, and can be paired with the lab-only child frontier cap to test
-whether better ordering buys effective depth; a full incremental
+alpha-beta search with broad shape scoring. The tactical annotation stage
+records its own trace metrics and can be paired with the lab-only child frontier
+cap to test whether better ordering buys effective depth; a full incremental
 frontier/threat-state model is intentionally deferred until those metrics show
 caching is worth the complexity.
 
