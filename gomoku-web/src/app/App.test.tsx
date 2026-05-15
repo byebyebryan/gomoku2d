@@ -19,6 +19,16 @@ vi.mock("../routes/LocalMatchRoute", () => ({
   ),
 }));
 
+vi.mock("../routes/SettingsRoute", () => ({
+  SettingsRoute: () => (
+    <main>
+      <h1>Game Settings</h1>
+      <p>Rule</p>
+      <p>Bot</p>
+    </main>
+  ),
+}));
+
 describe("App", () => {
   afterEach(() => {
     cleanup();
@@ -62,6 +72,42 @@ describe("App", () => {
       "href",
       "/analysis-report/",
     );
+  });
+
+  it("routes to game settings", async () => {
+    render(
+      <MemoryRouter initialEntries={["/settings"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: /game settings/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/^rule$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^bot$/i)).toBeInTheDocument();
+  });
+
+  it("orders home actions as play, profile, settings", () => {
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    const play = screen.getByRole("link", { name: /^play$/i });
+    const settings = screen.getByRole("link", { name: /^settings$/i });
+    const profile = screen.getByRole("link", { name: /^profile$/i });
+
+    expect(settings).toHaveAttribute("href", "/settings");
+    expect(
+      play.compareDocumentPosition(profile)
+        & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      profile.compareDocumentPosition(settings)
+        & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("groups the version above a single footer link row", () => {

@@ -140,6 +140,15 @@ describe("ProfileRoute cloud state", () => {
     });
   });
 
+  it("keeps game setup controls out of the profile page", () => {
+    renderProfileRoute();
+
+    expect(screen.getByRole("heading", { name: /^profile$/i })).toBeInTheDocument();
+    expect(screen.queryByText(/default rule/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /freestyle/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /renju/i })).not.toBeInTheDocument();
+  });
+
   it("keeps local profile usable when cloud auth is not configured", () => {
     renderProfileRoute();
 
@@ -147,7 +156,7 @@ describe("ProfileRoute cloud state", () => {
     expect(screen.getByText("Local profile")).toBeInTheDocument();
     expect(screen.getByText("Cloud sync unavailable.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign in" })).toBeDisabled();
-    expect(screen.getByText("Default rule")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute("href", "/settings");
     expect(screen.getByText("Matches")).toBeInTheDocument();
     expect(screen.getByLabelText("Name")).toHaveValue("Guest");
   });
@@ -850,7 +859,7 @@ describe("ProfileRoute cloud state", () => {
     await waitFor(() => {
       expect(screen.getByLabelText("Name")).toHaveValue("Later Name");
     });
-    fireEvent.click(screen.getByRole("button", { name: "Renju" }));
+    localProfileStore.getState().updateSettings({ preferredVariant: "renju" });
     await Promise.resolve();
 
     expect(promote).toHaveBeenCalledTimes(1);

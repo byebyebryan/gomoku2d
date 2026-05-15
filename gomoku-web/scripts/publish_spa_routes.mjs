@@ -9,6 +9,7 @@ const indexPath = join(distRoot, "index.html");
 const staticRoutes = [
   "match/local",
   "profile",
+  "settings",
 ];
 
 async function copyIndexToRoute(route) {

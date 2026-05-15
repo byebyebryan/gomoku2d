@@ -6,6 +6,7 @@ import type { BotSpec, GameVariant } from "../core/bot_protocol";
 import {
   DEFAULT_PRACTICE_BOT_CONFIG,
   resolvePracticeBotConfig,
+  sanitizePracticeBotConfig,
   type PracticeBotConfig,
 } from "../core/practice_bot_config";
 import { WasmBoard } from "../core/wasm_bridge";
@@ -29,13 +30,16 @@ interface FinishedLocalMatch {
 export interface LocalMatchState {
   cells: CellStone[][];
   currentPlayer: 1 | 2;
+  currentPracticeBot: PracticeBotConfig;
   currentVariant: GameVariant;
   forbiddenMoves: CellPosition[];
   lastMove: CellPosition | null;
   moves: MatchMove[];
   pendingBotMove: boolean;
   players: [MatchPlayer, MatchPlayer];
+  selectedPracticeBot: PracticeBotConfig;
   selectedVariant: GameVariant;
+  selectPracticeBot: (practiceBot: PracticeBotConfig) => void;
   selectVariant: (variant: GameVariant) => void;
   startNewMatch: () => void;
   startNextRound: () => void;
@@ -207,10 +211,18 @@ function snapshotState(
   players: [MatchPlayer, MatchPlayer],
   currentVariant: GameVariant,
   selectedVariant: GameVariant,
+  currentPracticeBot: PracticeBotConfig,
+  selectedPracticeBot: PracticeBotConfig,
   undoFloor: number,
 ): Omit<
   LocalMatchState,
-  "dispose" | "placeHumanMove" | "selectVariant" | "startNewMatch" | "startNextRound" | "undoLastTurn"
+  | "dispose"
+  | "placeHumanMove"
+  | "selectPracticeBot"
+  | "selectVariant"
+  | "startNewMatch"
+  | "startNextRound"
+  | "undoLastTurn"
 > {
   const lastMove = moves.length > 0 ? moves[moves.length - 1] : null;
   const status = statusFromResult(board.result());
@@ -219,12 +231,14 @@ function snapshotState(
   return {
     cells: cellsFromBoard(board),
     currentPlayer: board.currentPlayer() as 1 | 2,
+    currentPracticeBot,
     currentVariant,
     forbiddenMoves: hints.forbiddenMoves,
     lastMove,
     moves,
     pendingBotMove,
     players,
+    selectedPracticeBot,
     selectedVariant,
     status,
     threatMoves: hints.threatMoves,
@@ -242,7 +256,7 @@ function snapshotFinishedMatch(
   variant: GameVariant,
   undoFloor: number,
 ): FinishedLocalMatch | null {
-  const snapshot = snapshotState(board, moves, false, players, variant, variant, undoFloor);
+  const snapshot = snapshotState(board, moves, false, players, variant, variant, practiceBot, practiceBot, undoFloor);
   if (snapshot.status === "playing") {
     return null;
   }
@@ -270,10 +284,8 @@ export function createLocalMatchStore(
     : null;
   let currentVariant = initialResumeState?.variant ?? options.variant ?? "freestyle";
   let selectedVariant = currentVariant;
-  const practiceBot = options.practiceBot ?? DEFAULT_PRACTICE_BOT_CONFIG;
-  const botSpec = options.botDepth === undefined
-    ? resolvePracticeBotConfig(practiceBot)
-    : { kind: "baseline", depth: options.botDepth } satisfies BotSpec;
+  let currentPracticeBot = sanitizePracticeBotConfig(options.practiceBot);
+  let selectedPracticeBot = currentPracticeBot;
   const boardFactory = options.boardFactory ?? WasmBoard.createWithVariant;
   const botRunner = options.botRunner ?? new BotRunner();
   let players = initialResumeState
@@ -298,6 +310,10 @@ export function createLocalMatchStore(
     };
 
     const configureBots = (): void => {
+      const botSpec = options.botDepth === undefined
+        ? resolvePracticeBotConfig(currentPracticeBot)
+        : { kind: "baseline", depth: options.botDepth } satisfies BotSpec;
+
       botRunner.configure(
         players.map((player) =>
           player.kind === "human"
@@ -308,7 +324,17 @@ export function createLocalMatchStore(
     };
 
     const updateState = (nextMoves: MatchMove[], pendingBotMove: boolean): void => {
-      set(snapshotState(board, nextMoves, pendingBotMove, players, currentVariant, selectedVariant, undoFloor));
+      set(snapshotState(
+        board,
+        nextMoves,
+        pendingBotMove,
+        players,
+        currentVariant,
+        selectedVariant,
+        currentPracticeBot,
+        selectedPracticeBot,
+        undoFloor,
+      ));
     };
 
     const currentPlayerSlot = (): 0 | 1 => ((board.currentPlayer() as 1 | 2) - 1) as 0 | 1;
@@ -332,7 +358,14 @@ export function createLocalMatchStore(
 
       updateState(nextMoves, false);
 
-      const finishedMatch = snapshotFinishedMatch(board, nextMoves, players, practiceBot, currentVariant, undoFloor);
+      const finishedMatch = snapshotFinishedMatch(
+        board,
+        nextMoves,
+        players,
+        currentPracticeBot,
+        currentVariant,
+        undoFloor,
+      );
       if (finishedMatch) {
         options.onMatchFinished?.(finishedMatch);
       }
@@ -382,10 +415,15 @@ export function createLocalMatchStore(
     const minimumRetainedMoveCount = (): number =>
       Math.max(undoFloor, players[0].kind === "bot" ? 1 : 0);
 
-    const resetMatch = (nextPlayers: [MatchPlayer, MatchPlayer], nextVariant = selectedVariant): void => {
+    const resetMatch = (
+      nextPlayers: [MatchPlayer, MatchPlayer],
+      nextVariant = selectedVariant,
+      nextPracticeBot = selectedPracticeBot,
+    ): void => {
       interruptBotRequests();
       board.free();
       currentVariant = nextVariant;
+      currentPracticeBot = nextPracticeBot;
       board = boardFactory(currentVariant);
       players = clonePlayers(nextPlayers);
       undoFloor = 0;
@@ -397,7 +435,17 @@ export function createLocalMatchStore(
     configureBots();
 
     return {
-      ...snapshotState(board, seededMoves, false, players, currentVariant, selectedVariant, undoFloor),
+      ...snapshotState(
+        board,
+        seededMoves,
+        false,
+        players,
+        currentVariant,
+        selectedVariant,
+        currentPracticeBot,
+        selectedPracticeBot,
+        undoFloor,
+      ),
       dispose: () => {
         interruptBotRequests();
         botRunner.dispose();
@@ -428,6 +476,16 @@ export function createLocalMatchStore(
 
         if (get().moves.length === 0) {
           resetMatch(players, variant);
+          return;
+        }
+
+        updateState(get().moves, get().pendingBotMove);
+      },
+      selectPracticeBot: (practiceBot) => {
+        selectedPracticeBot = sanitizePracticeBotConfig(practiceBot);
+
+        if (get().moves.length === 0) {
+          resetMatch(players, selectedVariant, selectedPracticeBot);
           return;
         }
 

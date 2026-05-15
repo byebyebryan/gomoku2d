@@ -21,6 +21,10 @@ export function HomeRoute() {
             <Icon className="uiIconDesktop" name="profile" />
             <span className="uiActionLabel">Profile</span>
           </Link>
+          <Link className="uiAction uiActionSecondary" to="/settings">
+            <Icon className="uiIconDesktop" name="settings" />
+            <span className="uiActionLabel">Settings</span>
+          </Link>
         </div>
         <div className={styles.footer}>
           <p className={styles.version}>{APP_VERSION}</p>

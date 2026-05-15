@@ -14,6 +14,9 @@ const ProfileRoute = lazy(async () => ({
 const ReplayRoute = lazy(async () => ({
   default: (await import("../routes/ReplayRoute")).ReplayRoute,
 }));
+const SettingsRoute = lazy(async () => ({
+  default: (await import("../routes/SettingsRoute")).SettingsRoute,
+}));
 
 export function App() {
   return (
@@ -25,6 +28,14 @@ export function App() {
           element={
             <Suspense fallback={<main className={styles.loading}>Loading match…</main>}>
               <LocalMatchRoute />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <Suspense fallback={<main className={styles.loading}>Loading settings…</main>}>
+              <SettingsRoute />
             </Suspense>
           }
         />
