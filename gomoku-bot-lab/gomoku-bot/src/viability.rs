@@ -1,14 +1,56 @@
 use gomoku_core::{Board, Color, Move, DIRS};
 
 pub const ALL_DIRECTIONS_DEAD: u8 = 0;
+pub const ALL_DIRECTIONS_MASK: u8 = (1u8 << DIRS.len()) - 1;
 
-pub fn scan_cell_null(board: &Board, mv: Move) -> bool {
-    if !is_empty_board_cell(board, mv) {
-        return false;
+pub const fn direction_bit(direction_index: usize) -> u8 {
+    1 << direction_index
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct CellViability {
+    pub black_direction_mask: u8,
+    pub white_direction_mask: u8,
+}
+
+impl CellViability {
+    pub const fn mask_for(self, player: Color) -> u8 {
+        match player {
+            Color::Black => self.black_direction_mask,
+            Color::White => self.white_direction_mask,
+        }
     }
 
-    scan_viable_direction_mask(board, Color::Black, mv) == ALL_DIRECTIONS_DEAD
-        && scan_viable_direction_mask(board, Color::White, mv) == ALL_DIRECTIONS_DEAD
+    pub const fn has_any_for(self, player: Color) -> bool {
+        self.mask_for(player) != ALL_DIRECTIONS_DEAD
+    }
+
+    pub const fn is_dead_for(self, player: Color) -> bool {
+        self.mask_for(player) == ALL_DIRECTIONS_DEAD
+    }
+
+    pub const fn is_null(self) -> bool {
+        self.black_direction_mask == ALL_DIRECTIONS_DEAD
+            && self.white_direction_mask == ALL_DIRECTIONS_DEAD
+    }
+}
+
+pub fn scan_cell_null(board: &Board, mv: Move) -> bool {
+    scan_cell_viability(board, mv).is_null()
+}
+
+pub fn scan_cell_viability(board: &Board, mv: Move) -> CellViability {
+    if !is_empty_board_cell(board, mv) {
+        return CellViability {
+            black_direction_mask: ALL_DIRECTIONS_MASK,
+            white_direction_mask: ALL_DIRECTIONS_MASK,
+        };
+    }
+
+    CellViability {
+        black_direction_mask: scan_viable_direction_mask(board, Color::Black, mv),
+        white_direction_mask: scan_viable_direction_mask(board, Color::White, mv),
+    }
 }
 
 pub fn scan_viable_direction_mask(board: &Board, player: Color, mv: Move) -> u8 {
@@ -20,7 +62,7 @@ pub fn scan_viable_direction_mask(board: &Board, player: Color, mv: Move) -> u8 
         .enumerate()
         .fold(0u8, |mask, (direction_index, &direction)| {
             if scan_direction_viable(board, player, mv, direction) {
-                mask | (1 << direction_index)
+                mask | direction_bit(direction_index)
             } else {
                 mask
             }
@@ -133,5 +175,45 @@ mod tests {
         let board = board_from_color_moves(&["H8"], &["A1"]);
 
         assert!(!super::scan_cell_null(&board, mv("H8")));
+    }
+
+    #[test]
+    fn scan_cell_viability_exposes_per_side_masks() {
+        let board = board_from_color_moves(&["H8", "M8"], &["A1", "A2"]);
+        let probe = mv("J8");
+
+        let viability = super::scan_cell_viability(&board, probe);
+
+        assert_eq!(
+            viability.mask_for(Color::Black),
+            super::scan_viable_direction_mask(&board, Color::Black, probe)
+        );
+        assert_eq!(
+            viability.mask_for(Color::White),
+            super::scan_viable_direction_mask(&board, Color::White, probe)
+        );
+        assert!(viability.has_any_for(Color::Black));
+        assert!(viability.has_any_for(Color::White));
+        assert_ne!(
+            viability.mask_for(Color::Black),
+            viability.mask_for(Color::White)
+        );
+        assert!(!viability.is_null());
+    }
+
+    #[test]
+    fn scan_cell_viability_derives_null_from_both_sides() {
+        let board = board_from_color_moves(
+            &["G8", "L8", "H7", "H12", "G7", "L12", "G9", "L4"],
+            &["D8", "I8", "H4", "H9", "D4", "I9", "D12", "I7"],
+        );
+
+        let viability = super::scan_cell_viability(&board, mv("H8"));
+
+        assert_eq!(viability.black_direction_mask, 0);
+        assert_eq!(viability.white_direction_mask, 0);
+        assert!(viability.is_dead_for(Color::Black));
+        assert!(viability.is_dead_for(Color::White));
+        assert!(viability.is_null());
     }
 }
