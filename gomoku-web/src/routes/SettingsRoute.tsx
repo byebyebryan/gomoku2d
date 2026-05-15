@@ -4,8 +4,9 @@ import { useStore } from "zustand";
 
 import {
   customConfigForPracticeBot,
-  labSpecForPracticeBot,
+  practiceBotConfigSummary,
   practiceBotLabel,
+  practiceBotPlayerName,
   type PracticeBotConfig,
   type PracticeBotDepth,
   type PracticeBotPresetId,
@@ -27,13 +28,7 @@ const DEPTHS: PracticeBotDepth[] = [1, 3, 5, 7];
 const WIDTHS: PracticeBotWidth[] = ["none", 8, 16];
 
 function setupSummary(config: PracticeBotConfig): string {
-  const custom = customConfigForPracticeBot(config);
-  return [
-    `D${custom.depth}`,
-    custom.width === "none" ? "full width" : `width ${custom.width}`,
-    custom.patternScoring ? "pattern" : "line",
-    custom.corridorProof ? "proof" : null,
-  ].filter(Boolean).join(" · ");
+  return practiceBotConfigSummary(config);
 }
 
 function settingsEqual(left: PracticeBotConfig, right: PracticeBotConfig): boolean {
@@ -46,6 +41,8 @@ export function SettingsRoute() {
   const matchStore = useStore(localMatchSessionStore, (state) => state.matchStore);
   const activeMatch = matchStore?.getState() ?? null;
   const custom = customConfigForPracticeBot(settings.practiceBot);
+  const currentBotLabel = practiceBotPlayerName(settings.practiceBot);
+  const currentVariantLabel = variantLabel(settings.preferredVariant);
   const activeSetupDiffers = Boolean(
     activeMatch
       && (
@@ -80,8 +77,8 @@ export function SettingsRoute() {
     <main className={styles.page}>
       <header className={styles.header}>
         <div className={styles.headerCopy}>
-          <p className="uiPageEyebrow">Saved settings</p>
-          <h1 className={styles.title}>Game Settings</h1>
+          <p className="uiPageEyebrow">Play setup</p>
+          <h1 className={styles.title}>Settings</h1>
         </div>
         <div className={styles.headerActions}>
           <Link className="uiAction uiActionPrimary" to="/match/local">
@@ -102,11 +99,17 @@ export function SettingsRoute() {
       <section className={styles.layout}>
         <aside className={styles.summaryPanel}>
           <p className="uiSectionLabel">Current settings</p>
-          <h2 className={styles.summaryTitle}>
-            {variantLabel(settings.preferredVariant)} · {practiceBotLabel(settings.practiceBot)}
-          </h2>
-          <p className={styles.summaryText}>{setupSummary(settings.practiceBot)}</p>
-          <p className={styles.labSpec}>{labSpecForPracticeBot(settings.practiceBot)}</p>
+          <div className={styles.summaryStack} aria-label={`${currentVariantLabel} ${currentBotLabel}`} role="group">
+            <section className={styles.summaryGroup}>
+              <p className={styles.summaryKicker}>Game</p>
+              <h2 className={styles.summaryTitle}>{currentVariantLabel}</h2>
+            </section>
+            <section className={styles.summaryGroup}>
+              <p className={styles.summaryKicker}>Bot</p>
+              <h2 className={styles.summaryTitle}>{currentBotLabel}</h2>
+              <p className={styles.summaryText}>{setupSummary(settings.practiceBot)}</p>
+            </section>
+          </div>
 
           {activeSetupDiffers ? (
             <div className={styles.applyPanel}>
@@ -115,11 +118,11 @@ export function SettingsRoute() {
                 Keep playing the current game, or start fresh with this setup now.
               </p>
               <div className={styles.applyActions}>
-                <Link className="uiAction uiActionSecondary" to="/match/local">
+                <Link className="uiAction uiActionPrimary" to="/match/local">
                   <span className="uiActionLabel">Back to Game</span>
                 </Link>
                 <button
-                  className="uiAction uiActionPrimary"
+                  className="uiAction uiActionAccent"
                   onClick={() => {
                     startLocalMatchWithSavedSetup();
                     navigate("/match/local");
@@ -135,6 +138,9 @@ export function SettingsRoute() {
 
         <section className={styles.controlsPanel}>
           <section className={styles.controlSection}>
+            <div className={styles.sectionHeader}>
+              <p className="uiSectionLabel">Game</p>
+            </div>
             <div className={styles.labRow}>
               <div className={styles.labCopy}>
                 <p className={styles.labLabel}>Rule</p>
@@ -160,7 +166,6 @@ export function SettingsRoute() {
           <section className={styles.controlSection}>
             <div className={styles.sectionHeader}>
               <p className="uiSectionLabel">Bot</p>
-              <p className={styles.sectionValue}>{practiceBotLabel(settings.practiceBot)}</p>
             </div>
             <div className={styles.presetGrid}>
               {PRESET_IDS.map((preset) => {
@@ -204,8 +209,7 @@ export function SettingsRoute() {
 
           <section className={`${styles.controlSection} ${styles.labSection}`}>
             <div className={styles.sectionHeader}>
-              <p className="uiSectionLabel">Lab Controls</p>
-              <p className={styles.sectionValue}>Custom bot</p>
+              <p className="uiSectionLabel">Advanced Controls</p>
             </div>
 
             <div className={styles.labRows}>
@@ -241,7 +245,7 @@ export function SettingsRoute() {
                       onClick={() => updateCustomBot({ width })}
                       type="button"
                     >
-                      {width === "none" ? "Full" : `W${width}`}
+                      {width === "none" ? "full" : `W${width}`}
                     </button>
                   ))}
                 </div>
@@ -258,14 +262,14 @@ export function SettingsRoute() {
                     onClick={() => updateCustomBot({ patternScoring: false })}
                     type="button"
                   >
-                    Simple geometry
+                    Simple
                   </button>
                   <button
                     className={custom.patternScoring ? "uiSegment uiSegmentActive" : "uiSegment"}
                     onClick={() => updateCustomBot({ patternScoring: true })}
                     type="button"
                   >
-                    Threat pattern
+                    Threat
                   </button>
                 </div>
               </div>

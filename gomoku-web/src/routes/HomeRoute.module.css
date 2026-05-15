@@ -42,14 +42,19 @@
 }
 
 .footerLinks {
-  display: flex;
-  gap: 8px;
+  display: grid;
+  gap: 6px;
   color: var(--text-soft);
   font-family: var(--font-display);
   font-size: var(--type-quiet);
   letter-spacing: 0.1em;
   opacity: 0.86;
   text-transform: uppercase;
+}
+
+.footerLinkGroup {
+  display: flex;
+  gap: 8px;
 }
 
 .footerLinks a:hover,
@@ -75,7 +80,15 @@
     gap: 24px;
   }
 
+  .actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
   .actions :global(.uiAction) {
-    flex: 1 1 0;
+    width: 100%;
+    min-width: 0;
+    padding-inline: 4px;
   }
 }

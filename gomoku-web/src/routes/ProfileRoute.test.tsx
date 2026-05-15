@@ -187,7 +187,7 @@ describe("ProfileRoute cloud state", () => {
     renderProfileRoute();
 
     expect(screen.getByText("Win")).toBeInTheDocument();
-    expect(screen.getByText("vs Practice Bot")).toBeInTheDocument();
+    expect(screen.getByText("vs Normal Bot")).toBeInTheDocument();
     expect(screen.getByText("Black")).toBeInTheDocument();
     expect(screen.getByText("Moves 9")).toBeInTheDocument();
   });

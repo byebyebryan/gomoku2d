@@ -51,8 +51,30 @@
   padding: 16px;
 }
 
+.summaryStack {
+  display: grid;
+  gap: 16px;
+}
+
+.summaryGroup {
+  display: grid;
+  gap: 4px;
+}
+
+.summaryKicker,
 .summaryTitle {
   margin: 0;
+}
+
+.summaryKicker {
+  color: var(--text-muted);
+  font-size: var(--type-meta);
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.summaryTitle {
   color: var(--accent-strong);
   font-family: var(--font-display);
   font-size: 2.1rem;
@@ -61,10 +83,9 @@
 }
 
 .summaryText,
-.labSpec,
+.summaryKicker,
 .applyTitle,
 .applyText,
-.sectionValue,
 .labLabel,
 .labHint {
   margin: 0;
@@ -74,14 +95,6 @@
   color: var(--text);
   font-size: var(--type-body);
   line-height: 1.24;
-}
-
-.labSpec {
-  color: var(--text-muted);
-  font-family: var(--font-display);
-  font-size: var(--type-meta);
-  line-height: 1.2;
-  overflow-wrap: anywhere;
 }
 
 .applyPanel {
@@ -135,12 +148,9 @@
   gap: 12px;
 }
 
-.sectionValue {
-  color: var(--text-soft);
-  font-family: var(--font-display);
-  font-size: var(--type-meta);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.sectionHeader :global(.uiSectionLabel) {
+  color: var(--accent-strong);
+  opacity: 0.94;
 }
 
 .segmentGrid,
@@ -193,12 +203,26 @@
   box-shadow: inset 0 0 0 2px rgba(213, 171, 81, 0.16);
 }
 
-.presetName,
-.labLabel {
-  color: var(--text-strong);
+.presetName {
+  color: var(--text);
   font-family: var(--font-display);
   font-size: var(--type-body);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.28);
+  text-transform: uppercase;
+}
+
+.presetCardActive .presetName {
+  color: var(--accent-strong);
+}
+
+.labLabel {
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--type-meta);
+  letter-spacing: 0.08em;
+  opacity: 0.92;
   text-transform: uppercase;
 }
 
@@ -267,6 +291,11 @@
     padding: 0;
   }
 
+  .summaryPanel {
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
   .layout,
   .controlsPanel {
     gap: 16px;
@@ -325,6 +354,10 @@
 
   .summaryTitle {
     font-size: 1.5rem;
+  }
+
+  .summaryPanel {
+    padding-bottom: 14px;
   }
 
   .segmentGridFour {

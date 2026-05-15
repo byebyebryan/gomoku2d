@@ -177,21 +177,19 @@
   line-height: 1.2;
 }
 
-.currentSetupText,
-.labSpec {
+.botValue {
+  display: grid;
+  gap: 2px;
+  justify-items: end;
+  min-width: 0;
+}
+
+.botSpec {
   margin: 0;
-  line-height: 1.2;
-}
-
-.currentSetupText {
-  color: var(--text-muted);
-  font-size: var(--type-meta);
-}
-
-.labSpec {
   color: var(--text-soft);
   font-family: var(--font-display);
   font-size: var(--type-meta);
+  line-height: 1.2;
   overflow-wrap: anywhere;
   text-transform: uppercase;
 }
@@ -357,8 +355,7 @@
     width: 100%;
   }
 
-  .pendingText,
-  .currentSetupText {
+  .pendingText {
     font-size: 1.08rem;
   }
 

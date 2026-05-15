@@ -29,6 +29,7 @@ describe("saved match bot identity", () => {
       practiceBot: { mode: "preset", preset: "hard", version: 1 },
     });
 
+    expect(match.player_white.display_name).toBe("Hard Bot");
     expect(match.player_white.bot).toEqual({
       config: {
         mode: "preset",

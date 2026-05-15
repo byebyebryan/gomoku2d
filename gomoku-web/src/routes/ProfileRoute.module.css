@@ -507,6 +507,15 @@
     flex: 1 1 0;
   }
 
+  .sidePanel {
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .recordPanel {
+    padding-top: 2px;
+  }
+
   .summaryGrid {
     gap: 8px;
   }
@@ -615,6 +624,7 @@
 
   .sidePanel {
     gap: 8px;
+    padding-bottom: 14px;
   }
 
   .sidePanel :global(.uiDivider) {
