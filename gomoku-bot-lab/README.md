@@ -118,17 +118,17 @@ The `0.4.1` tactical-ladder work established the current bot baseline: local
 threat competence first, casual combo play next, then bounded corridor ideas
 only when they can be measured. Tactical facts are meant to buy effective depth
 through safer narrowing, ordering, and selective extension, not to replace
-alpha-beta search with broad shape scoring. The tactical annotation stage
-records its own trace metrics and can be paired with the lab-only child frontier
-cap to test whether better ordering buys effective depth; a full incremental
-frontier/threat-state model is intentionally deferred until those metrics show
-caching is worth the complexity.
+alpha-beta search with broad shape scoring. At that checkpoint, the tactical
+annotation stage recorded its own trace metrics and could be paired with the
+lab-only child frontier cap to test whether better ordering bought effective
+depth; the later `0.4.4` rolling-frontier pass promoted that caching model after
+the metrics justified it.
 
-The current clean reference report compares the depth ladder, tactical-cap
-variants, and pattern-eval variants. Its product read is conservative: D1 is an
-easy lane, D3 remains the default baseline, D5 tactical-cap is the efficient
-hard-side candidate, D7 tactical-cap is stronger but slower, and pattern eval is
-still lab-only because the score gain comes with real compute cost.
+The `0.4.1` reference report compared the depth ladder, tactical-cap variants,
+and pattern-eval variants. Its product read was conservative: D1 was an easy
+lane, D3 remained the default baseline, D5 tactical-cap was the efficient
+hard-side candidate, D7 tactical-cap was stronger but slower, and pattern eval
+was still lab-only because the score gain came with real compute cost.
 
 The `0.4.2` lab pass kept that restraint rather than jumping straight to UI
 settings. It swept existing knobs with head-to-heads and gauntlets, then pivoted
@@ -152,9 +152,10 @@ exit controls were removed from the current parser and remain only as historical
 report evidence. Keep corridor portals out of anchors, sweeps, difficulty
 ladders, and UI work.
 
-The durable output is the scan-backed `ThreatView` seam, unified tactical facts,
-and honest portal metrics. Those pieces let future rolling-frontier work replace
-scans behind a stable query contract without promoting the failed portal shape.
+The durable output was the scan-backed `ThreatView` seam, unified tactical
+facts, and honest portal metrics. Those pieces set up the `0.4.4`
+rolling-frontier pass to replace hot-path scans behind a stable query contract
+without promoting the failed portal shape.
 The working plan lives in
 [`../docs/archive/v0_4_3_corridor_bot_plan.md`](../docs/archive/v0_4_3_corridor_bot_plan.md).
 
@@ -228,6 +229,8 @@ cargo run --release -p gomoku-eval -- tournament \
   --opening-policy centered-suite \
   --opening-plies 4 \
   --search-cpu-time-ms 1000 \
+  --search-budget-mode pooled \
+  --search-cpu-reserve-ms 4000 \
   --max-moves 120 \
   --seed 63 \
   --threads 22 \

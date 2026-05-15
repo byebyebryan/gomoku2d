@@ -898,6 +898,8 @@ cargo run --release -p gomoku-eval -- tournament \
   --opening-policy centered-suite \
   --opening-plies 4 \
   --search-cpu-time-ms 1000 \
+  --search-budget-mode pooled \
+  --search-cpu-reserve-ms 4000 \
   --max-moves 120 \
   --seed 63 \
   --threads 22 \
