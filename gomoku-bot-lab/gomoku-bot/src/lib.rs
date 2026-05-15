@@ -9,9 +9,8 @@ pub mod viability;
 pub use corridor::CorridorOptions;
 pub use random::RandomBot;
 pub use search::{
-    CandidateSource, CorridorPortalConfig, CorridorPortalSideConfig, LeafCorridorConfig,
-    MoveOrdering, NullCellCulling, SafetyGate, SearchAlgorithm, SearchBot, SearchBotConfig,
-    StaticEvaluation, ThreatViewMode,
+    CandidateSource, LeafCorridorConfig, MoveOrdering, NullCellCulling, SafetyGate,
+    SearchAlgorithm, SearchBot, SearchBotConfig, StaticEvaluation, ThreatViewMode,
 };
 
 use gomoku_core::{Board, Move};

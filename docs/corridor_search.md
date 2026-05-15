@@ -271,12 +271,11 @@ bot knob:
   `116 ms/move`.
 
 The conclusion is that portal search is not useful in this bounded-compute
-shape. Keep only the base disabled lab-only portal controls
-`+corridor-own-dN-wM` and `+corridor-opponent-dN-wM` for comparison against the
-failed shape, but do not include portal variants in anchor tournaments,
-difficulty ladders, settings UI, or product copy. The rank/top-N, proof-only,
-and static-exit controls are historical report evidence, not current parser
-surface.
+shape. The current parser no longer accepts portal suffixes. Treat
+`+corridor-own-dN-wM`, `+corridor-opponent-dN-wM`, and the later rank/top-N,
+proof-only, and static-exit controls as historical report evidence only. Do not
+include portal variants in anchor tournaments, difficulty ladders, settings UI,
+or product copy.
 
 The durable output from the portal work is not a stronger bot. It is the shared
 `ThreatView` seam, unified search/corridor tactical facts, and report metrics
@@ -557,24 +556,23 @@ The safe migration path is incremental:
    the scan-backed view during tests and selected eval runs.
 5. Validate normal-search tactical ordering through the same seam first, because
    it is easier to compare against scan behavior than corridor recursion.
-6. Switch corridor entry/reply queries to the rolling view only after normal
-   search parity and the portal semantics are already stable.
+6. Switch corridor proof and analysis queries to the rolling view only after
+   normal search parity is stable.
 
-Steps 1 and 2 are now the `0.4.3` cleanup boundary, but only for the minimal
+Steps 1 and 2 became the `0.4.3` cleanup boundary, but only for the minimal
 search-facing seam. `gomoku-bot::tactical` exposes a `ThreatView` contract and a
-`ScanThreatView` reference backed by the existing scanner for the queries the
-current portal code actually uses:
+`ScanThreatView` reference backed by the existing scanner for the queries search,
+corridor proof, and analysis actually use:
 
 - current active immediate/imminent corridor threats,
-- whether a specific move creates or materializes a local corridor entry,
 - defender replies to one active threat,
 - attacker move rank for tactical ordering,
 - search-ordering tactical annotation for a candidate before it is played.
 
 This seam became the bridge into the `0.4.4` rolling-frontier pass. Normal
-search, corridor proof, and diagnostic portal code now ask the same local
-questions through `ThreatView`; rolling mode answers the hot normal-search
-queries by default, while scan remains the fallback and comparison path.
+search and corridor proof now ask the same local questions through
+`ThreatView`; rolling mode answers the hot normal-search queries by default,
+while scan remains the fallback and comparison path.
 
 #### Rolling Frontier Drilldown
 
@@ -657,10 +655,10 @@ Validation strategy:
 - Only after normal-search shadow mode is clean should corridor entry/reply
   paths become the next rolling consumer.
 
-The release-boundary implication has already played out: `0.4.3` finished
-move-local portal semantics, report metrics, and the scan-backed `ThreatView`
-seam; `0.4.4` promotes rolling frontier as the default normal-search backend
-after parity checks and focused scan-vs-rolling runs.
+The release-boundary implication has already played out: `0.4.3` finished the
+shared tactical vocabulary, corridor cost metrics, and the scan-backed
+`ThreatView` seam; `0.4.4` promotes rolling frontier as the default
+normal-search backend after parity checks and focused scan-vs-rolling runs.
 
 The `0.4.4` working plan lives in
 [`archive/v0_4_4_frontier_plan.md`](archive/v0_4_4_frontier_plan.md).
@@ -747,8 +745,9 @@ The current checkpoint provides:
   scan-backed `ThreatView` retained for fallback and comparisons,
 - retired `SearchBot` corridor quiescence evidence from the former
   `+corridor-q` suffix,
-- retired default-off `SearchBot` portal suffixes kept only for lab comparison:
-  `+corridor-own-dN-wM` and `+corridor-opponent-dN-wM`,
+- retired `SearchBot` portal evidence from former suffixes such as
+  `+corridor-own-dN-wM` and `+corridor-opponent-dN-wM`, which are no longer
+  accepted by the current parser,
 - proof-detail JSON and HTML report generation,
 - visual proof frames with board rendering and semantic markers,
 - Renju-aware handling for forbidden black replies and illegal black threats,

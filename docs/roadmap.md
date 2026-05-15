@@ -310,8 +310,8 @@ Corridor search is now too central to the advanced-strategy story to expose only
 as an analyzer report and then immediately jump to settings. The checkpoint
 answered the first live-bot integration question: scan-backed corridor portals
 are not useful under the current bounded search budget. The durable output is
-unified tactical/corridor threat semantics, move-local portal entry detection,
-and metrics that make the cost problem visible.
+unified tactical/corridor threat semantics and metrics that make the cost
+problem visible.
 
 That release remains lab-first:
 
@@ -322,15 +322,16 @@ That release remains lab-first:
 - reinforce or optimize corridor search where the bot integration exposes
   obvious cost or correctness gaps
 - treat offensive/defensive behavior as an analysis and ordering question, not
-  as another corridor-portal budget knob
+  as another corridor budget knob
 - keep UI, settings, and product preset work out of scope unless the lab result
   is clear enough to name
 
 `0.4.4` is the rolling-frontier lab pass, not the UI bridge. The portal line is
 retired as a candidate bot primitive for now: resume portals distorted scores,
 and proof-only portals were safer but still too expensive for too few terminal
-proofs. The durable `0.4.3` result is therefore the scan-backed `ThreatView`
-seam and unified threat vocabulary, not a promoted corridor bot.
+proofs. The current parser/code path no longer carries portal controls. The
+durable `0.4.3` result is therefore the scan-backed `ThreatView` seam and
+unified threat vocabulary, not a promoted corridor bot.
 
 The `0.4.4` checkpoint treats rolling frontier as a correctness-sensitive cache
 architecture:

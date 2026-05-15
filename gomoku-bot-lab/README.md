@@ -145,15 +145,13 @@ candidates, not product presets yet. Corridor-search strategy is documented in
 
 The `0.4.3` lab slice tested corridor search inside bot behavior before
 exposing more web settings. The result is useful evidence but not a candidate
-bot direction. `+corridor-own-dN-wM`, `+corridor-opponent-dN-wM`,
-remain as disabled lab suffixes for base comparison, but focused checks stayed
-slower or weaker than the base anchors. The rank/top-N, proof-only, and static
-exit controls were removed from the current parser and remain only as historical
-report evidence. Keep corridor portals out of anchors, sweeps, difficulty
-ladders, and UI work.
+bot direction. `+corridor-own-dN-wM` and `+corridor-opponent-dN-wM` are now
+historical report evidence, not current parser surface. Focused checks stayed
+slower or weaker than the base anchors, so keep corridor portals out of anchors,
+sweeps, difficulty ladders, and UI work.
 
 The durable output was the scan-backed `ThreatView` seam, unified tactical
-facts, and honest portal metrics. Those pieces set up the `0.4.4`
+facts, and honest corridor cost metrics. Those pieces set up the `0.4.4`
 rolling-frontier pass to replace hot-path scans behind a stable query contract
 without promoting the failed portal shape.
 The working plan lives in
