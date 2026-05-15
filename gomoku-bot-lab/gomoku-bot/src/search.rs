@@ -14,7 +14,7 @@ use crate::tactical::{
     SearchThreatPolicy, TacticalLiteRank, TacticalMoveAnnotation, TacticalOrderingSummary,
     ThreatView,
 };
-use crate::viability::scan_cell_null;
+use crate::viability::{direction_bit, scan_cell_null, scan_cell_viability};
 use crate::Bot;
 use gomoku_core::{Board, Color, GameResult, Move, Variant, ZobristTable, DIRS};
 
@@ -2460,8 +2460,14 @@ fn order_moves_tactical(
             let own_win = move_mask_contains(&own_immediate_wins, board_size, mv);
             let immediate_block = move_mask_contains(&opponent_immediate_wins, board_size, mv);
             let (hard_score, hard_keep) = hard_tactical_ordering_score(own_win, immediate_block);
-            let should_annotate =
-                hard_keep || has_tactical_annotation_potential(state.board(), player, mv);
+            let should_annotate = hard_keep
+                || has_tactical_annotation_potential_for_mode(
+                    state,
+                    player,
+                    mv,
+                    threat_view_mode,
+                    metrics,
+                );
             (
                 index,
                 mv,
@@ -2546,6 +2552,65 @@ fn has_tactical_annotation_potential(board: &Board, player: Color, mv: Move) -> 
 
     DIRS.iter()
         .any(|&(dr, dc)| axis_has_tactical_annotation_potential(board, player, mv, dr, dc))
+}
+
+fn has_tactical_annotation_potential_for_mode(
+    state: &SearchState,
+    player: Color,
+    mv: Move,
+    mode: ThreatViewMode,
+    metrics: &mut SearchMetrics,
+) -> bool {
+    let board = state.board();
+    match mode {
+        ThreatViewMode::Scan => has_tactical_annotation_potential(board, player, mv),
+        ThreatViewMode::Rolling => {
+            let viability_mask = state
+                .frontier
+                .as_ref()
+                .map(|frontier| frontier.viability_for(mv).mask_for(player))
+                .unwrap_or_else(|| scan_cell_viability(board, mv).mask_for(player));
+            has_tactical_annotation_potential_with_mask(board, player, mv, viability_mask)
+        }
+        ThreatViewMode::RollingShadow => {
+            let scan = has_tactical_annotation_potential(board, player, mv);
+            if let Some(frontier) = state.frontier.as_ref() {
+                metrics.threat_view_shadow_checks += 1;
+                let rolling = has_tactical_annotation_potential_with_mask(
+                    board,
+                    player,
+                    mv,
+                    frontier.viability_for(mv).mask_for(player),
+                );
+                if scan != rolling {
+                    metrics.threat_view_shadow_mismatches += 1;
+                }
+            }
+            scan
+        }
+    }
+}
+
+fn has_tactical_annotation_potential_with_mask(
+    board: &Board,
+    player: Color,
+    mv: Move,
+    viability_mask: u8,
+) -> bool {
+    let size = board.config.board_size;
+    if viability_mask == 0
+        || size == 0
+        || mv.row >= size
+        || mv.col >= size
+        || !board.is_empty(mv.row, mv.col)
+    {
+        return false;
+    }
+
+    DIRS.iter()
+        .enumerate()
+        .filter(|(direction_index, _)| viability_mask & direction_bit(*direction_index) != 0)
+        .any(|(_, &(dr, dc))| axis_has_tactical_annotation_potential(board, player, mv, dr, dc))
 }
 
 fn axis_has_tactical_annotation_potential(
@@ -6144,6 +6209,25 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn tactical_annotation_potential_respects_viability_mask() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(&mut board, &["H8", "A1", "I8", "B1"]);
+        let probe = mv("J8");
+
+        assert!(has_tactical_annotation_potential(
+            &board,
+            Color::Black,
+            probe
+        ));
+        assert!(!has_tactical_annotation_potential_with_mask(
+            &board,
+            Color::Black,
+            probe,
+            0
+        ));
     }
 
     #[test]

@@ -1523,3 +1523,20 @@ Updated interpretation:
   tactical credit, and preserve full tactical quiet tie behavior."
 - Next validation should be a full anchor tournament before promoting tactical
   cost-gating into the published anchor set.
+
+Null-space viability follow-up:
+
+- The rolling frontier now caches per-side direction viability for each cell.
+  Null-cell culling still derives from the same facts, but the cache can also
+  answer which directions remain geometrically capable of participating in a
+  five-cell line.
+- Safe use: in rolling mode, the tactical annotation prefilter can skip
+  direction scans that are geometrically dead for the moving side. The
+  benchmark-corpus guard still found no false negatives for moves that would
+  receive full tactical credit.
+- Rejected use: full tactical annotation itself cannot blindly prune by
+  viability masks yet. Frontier parity tests caught edge closed-three
+  annotations near the board boundary that the current tactical model still
+  reports even though the geometric five-window viability mask treats the axis
+  as dead. Until those semantics are deliberately changed, viability remains a
+  coarse cost gate, not a replacement source of tactical facts.
