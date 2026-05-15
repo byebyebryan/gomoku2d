@@ -154,6 +154,62 @@ UI presets like aggressive or defensive are real enough to expose. The older
 `fast`/`balanced`/`deep` aliases still parse for compatibility, but they are not
 the current anchor set.
 
+### Product Control Surface
+
+`0.4.5` should expose the bot lab through product controls, not raw parser
+surface. The intent is two layers:
+
+- tested presets for normal play;
+- advanced Bot Lab controls for players who want to inspect and shape the bot.
+
+Presets should resolve to explicit lab specs, but the UI label should describe
+the player experience:
+
+| Product layer | Example UI label | Backing concept |
+|---|---|---|
+| Preset | `Easy` | shallow search with the current safety gate |
+| Preset | `Normal` | everyday bot with stronger board-shape scoring |
+| Preset | `Hard` | deeper/capped tactical search backed by the anchor report |
+| Advanced | `Depth` | `search-dN` |
+| Advanced | `Width` | child frontier cap such as `tactical-cap-N` |
+| Advanced | `Pattern scoring` | `+pattern-eval` |
+| Advanced | `Corridor proof` | fixed `+corridor-proof-c16-d8-w4` profile in v1 |
+| Transparency | `Generated lab spec` | exact reproducible parser string |
+
+Persist advanced config as product state, not as a raw lab spec string. The v1
+custom shape is intentionally narrow: depth `1/3/5/7`, width `none/8/16`,
+pattern scoring on/off, and corridor proof on/off. If future lab work changes
+what these fields mean, bump the config version instead of silently changing old
+settings.
+
+Avoid exposing implementation and validation axes as normal user choices:
+
+- `+rolling-frontier-shadow`
+- `+scan-threat-view`
+- `+no-safety`
+- retired corridor portal / leaf-extension suffixes
+- tournament-only CPU budget controls
+- candidate radius/source
+- raw thinking budget
+
+The advanced layer can show the generated lab spec for reproducibility, but the
+primary copy should be human-scale. For example, show `Hard + Pattern +
+Corridor Proof` first, then show
+`search-d5+tactical-cap-16+pattern-eval+corridor-proof-c16-d8-w4` as the
+secondary lab spec.
+
+The initial `0.4.5` preset candidates from the `v0.4.4` report are:
+
+- `Easy`: `search-d1`
+- `Normal`: `search-d3+pattern-eval`
+- `Hard`: `search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4`
+
+Keep `search-d5+tactical-cap-16+pattern-eval+corridor-proof-c16-d8-w4` as an
+advanced/reference lane rather than a fourth default preset for now. It is
+strong and slightly cheaper than the top D7 corridor lane, but the D5/D7
+corridor pair is close enough that exposing both as a clean difficulty ladder
+would overstate the report evidence.
+
 ## Corridor Integration
 
 `gomoku-bot` now owns a replay-independent corridor module alongside

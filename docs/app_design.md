@@ -74,8 +74,9 @@ Current canonical surfaces:
 | `/replay/:matchId` | Saved match replay viewer |
 | `/profile` | Local player record, defaults, and history |
 
-Future dedicated cloud or online routes can be added later. They are not part
-of the default local-play contract.
+Future dedicated bot settings, cloud, or online routes can be added later. They
+are not part of the default local-play contract unless they preserve one-click
+play.
 
 ## Persistent local model
 
@@ -264,6 +265,35 @@ Rules:
 - no placeholder settings that do nothing
 - summary stays fixed and visible while history can scroll independently
 - recent matches should show only the metadata needed to open the right replay
+
+### Bot controls
+
+Bot controls are practice configuration, not profile administration. They should
+not be buried inside the Profile record screen.
+
+The first player-facing shape should have two layers:
+
+- tested presets for normal players, selected with plain product copy
+- an advanced Bot Lab layer for explicit bot configuration
+
+The preset layer should answer "who am I practicing against?" The advanced
+layer should answer "how does this bot think?" without turning the match HUD
+into a debug panel.
+
+Likely entry points:
+
+- Home: passive current-opponent summary plus a compact configure action
+- Local Match: next-game bot config change, similar to next-game rule changes
+- Dedicated route or panel: full preset and advanced Bot Lab controls
+
+Rules:
+
+- `Play` still starts immediately with the current bot preset
+- advanced config is opt-in and visibly experimental
+- raw lab specs can be shown for transparency, but not as primary labels or
+  persisted settings
+- Profile remains focused on player identity, cloud state, stats, and history
+- replay analysis controls stay out of the first bot-controls slice
 
 ## Shared interaction rules
 
