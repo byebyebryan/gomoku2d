@@ -66,9 +66,10 @@ export async function flushCloudProfileSync(
     replayMatches,
     summaryMatches: summaryState.summaryMatches,
   };
+  const nextSettings = cloudSettingsForVariant(settings.preferredVariant, settings.practiceBot);
   const historyChanged = JSON.stringify(nextMatchHistory) !== JSON.stringify(cloudState.profile.matchHistory);
   const profileChanged =
-    cloudState.profile.settings.defaultRules.ruleset !== settings.preferredVariant
+    JSON.stringify(cloudState.profile.settings) !== JSON.stringify(nextSettings)
     || (
       localProfile.displayName.trim()
       && localProfile.displayName !== DEFAULT_LOCAL_DISPLAY_NAME
@@ -98,7 +99,7 @@ export async function flushCloudProfileSync(
   const syncedAt = new Date().toISOString();
   const profilePatch: Partial<CloudProfile> = {
     matchHistory: nextMatchHistory,
-    settings: cloudSettingsForVariant(settings.preferredVariant),
+    settings: nextSettings,
     updatedAt: syncedAt,
   };
 

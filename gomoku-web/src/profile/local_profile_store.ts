@@ -11,6 +11,11 @@ import {
   type CloudMatchSummaryV1,
 } from "../cloud/cloud_profile";
 import type { GameVariant } from "../core/bot_protocol";
+import {
+  DEFAULT_PRACTICE_BOT_CONFIG,
+  sanitizePracticeBotConfig,
+  type PracticeBotConfig,
+} from "../core/practice_bot_config";
 import type { MatchMove, MatchPlayer } from "../game/types";
 import {
   createLocalSavedMatch,
@@ -36,6 +41,7 @@ export interface LocalProfileIdentity {
 }
 
 export interface LocalProfileSettings {
+  practiceBot: PracticeBotConfig;
   preferredVariant: GameVariant;
 }
 
@@ -51,6 +57,7 @@ export interface FinishedLocalMatchInput {
   mode: "bot";
   moves: MatchMove[];
   players: [MatchPlayer, MatchPlayer];
+  practiceBot?: PracticeBotConfig;
   status: SavedMatchStatus;
   undoFloor?: number;
   variant: GameVariant;
@@ -72,12 +79,14 @@ export interface LocalProfileStoreOptions {
   storage?: LocalProfileStorage;
 }
 
-const STORAGE_KEY = "gomoku2d.local-profile.v3";
-const STORAGE_SCHEMA_VERSION = 3;
+const LEGACY_STORAGE_KEY_V3 = "gomoku2d.local-profile.v3";
+const STORAGE_KEY = "gomoku2d.local-profile.v4";
+const STORAGE_SCHEMA_VERSION = 4;
 export const DEFAULT_LOCAL_DISPLAY_NAME = "Guest";
 
 function createDefaultSettings(): LocalProfileSettings {
   return {
+    practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
     preferredVariant: "freestyle",
   };
 }
@@ -113,6 +122,7 @@ function isLocalProfileIdentity(value: unknown): value is LocalProfileIdentity {
 function settingsFromRaw(value: unknown): LocalProfileSettings {
   const candidate = value as Partial<LocalProfileSettings> | null;
   return {
+    practiceBot: sanitizePracticeBotConfig(candidate?.practiceBot),
     preferredVariant: candidate?.preferredVariant === "renju" ? "renju" : "freestyle",
   };
 }
@@ -218,23 +228,32 @@ function matchHistoryFromPersisted(persisted: PersistedLocalProfileState): Local
 function validatedLocalProfileStorage(storage: LocalProfileStorage): LocalProfileStorage {
   return {
     getItem: (name) => {
-      const raw = storage.getItem(name);
       if (name !== STORAGE_KEY) {
-        return raw;
+        return storage.getItem(name);
       }
 
+      const raw = storage.getItem(name);
+      const legacyRaw = raw ? null : storage.getItem(LEGACY_STORAGE_KEY_V3);
       const persisted = persistedStateFromRaw(raw);
-      if (!persisted) {
+      const legacyPersisted = persisted ? null : persistedStateFromRaw(legacyRaw);
+      const activePersisted = persisted ?? legacyPersisted;
+      if (!activePersisted) {
         return null;
       }
 
       const sanitized: Pick<LocalProfileState, "matchHistory" | "profile" | "settings"> = {
-        matchHistory: matchHistoryFromPersisted(persisted),
-        profile: persisted.profile,
-        settings: persisted.settings,
+        matchHistory: matchHistoryFromPersisted(activePersisted),
+        profile: activePersisted.profile,
+        settings: activePersisted.settings,
       };
+      const sanitizedRaw = JSON.stringify({ state: sanitized, version: STORAGE_SCHEMA_VERSION });
 
-      return JSON.stringify({ state: sanitized, version: STORAGE_SCHEMA_VERSION });
+      if (!raw && legacyPersisted) {
+        storage.setItem(STORAGE_KEY, sanitizedRaw);
+        storage.removeItem(LEGACY_STORAGE_KEY_V3);
+      }
+
+      return sanitizedRaw;
     },
     removeItem: (name) => {
       storage.removeItem(name);
@@ -288,6 +307,7 @@ export function createLocalProfileStore(
             localProfileId: profile.id,
             moves: match.moves,
             players: match.players,
+            practiceBot: match.practiceBot ?? get().settings.practiceBot,
             savedAt,
             status: match.status,
             undoFloor: match.undoFloor,
@@ -321,7 +341,7 @@ export function createLocalProfileStore(
         },
         settings: createDefaultSettings(),
         updateSettings: (patch) => {
-          const nextSettings = { ...get().settings, ...patch };
+          const nextSettings = settingsFromRaw({ ...get().settings, ...patch });
           set({ settings: nextSettings });
         },
       }),

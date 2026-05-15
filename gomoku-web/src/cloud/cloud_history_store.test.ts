@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { createLocalSavedMatch } from "../match/saved_match";
+import { DEFAULT_PRACTICE_BOT_CONFIG } from "../core/practice_bot_config";
 import type { LocalProfileStorage } from "../profile/local_profile_store";
 
 import type { CloudAuthUser } from "./auth_store";
@@ -76,6 +77,7 @@ function cloudProfile(overrides: Partial<CloudProfile> = {}): CloudProfile {
         opening: "standard",
         ruleset: "freestyle",
       },
+      practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
     },
     uid: "uid-1",
     updatedAt: "2026-04-28T00:00:00.000Z",

@@ -67,6 +67,24 @@ function emptyMatchHistory(): Record<string, unknown> {
   };
 }
 
+function defaultPracticeBot(): Record<string, unknown> {
+  return {
+    mode: "preset",
+    preset: "normal",
+    version: 1,
+  };
+}
+
+function defaultSettings(ruleset = "freestyle"): Record<string, unknown> {
+  return {
+    default_rules: {
+      opening: "standard",
+      ruleset,
+    },
+    practice_bot: defaultPracticeBot(),
+  };
+}
+
 function profileDocument(uid: string, overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     auth: {
@@ -82,13 +100,8 @@ function profileDocument(uid: string, overrides: Record<string, unknown> = {}): 
     display_name: "Bryan",
     match_history: emptyMatchHistory(),
     reset_at: null,
-    schema_version: 3,
-    settings: {
-      default_rules: {
-        opening: "standard",
-        ruleset: "freestyle",
-      },
-    },
+    schema_version: 4,
+    settings: defaultSettings(),
     uid,
     updated_at: timestamp("2020-01-01T00:00:00.000Z"),
     username: null,
@@ -250,9 +263,50 @@ describe("Firestore profile rules", () => {
             summary_matches: [{ id: "match-1" }],
           },
           settings: {
+            ...defaultSettings("renju"),
+          },
+        }),
+      ),
+    );
+  });
+
+  it("rejects profile writes with loose/raw practice bot config", async () => {
+    await assertFails(
+      ownerDb().doc("profiles/uid-1").set(
+        profileCreateDocument("uid-1", {
+          settings: {
             default_rules: {
               opening: "standard",
-              ruleset: "renju",
+              ruleset: "freestyle",
+            },
+            practice_bot: {
+              lab_spec: "search-d999+no-safety",
+              mode: "preset",
+              preset: "normal",
+              version: 1,
+            },
+          },
+        }),
+      ),
+    );
+  });
+
+  it("allows profile writes with strict custom practice bot config", async () => {
+    await assertSucceeds(
+      ownerDb().doc("profiles/uid-1").set(
+        profileCreateDocument("uid-1", {
+          settings: {
+            default_rules: {
+              opening: "standard",
+              ruleset: "freestyle",
+            },
+            practice_bot: {
+              corridorProof: true,
+              depth: 7,
+              mode: "custom",
+              patternScoring: true,
+              version: 1,
+              width: 16,
             },
           },
         }),

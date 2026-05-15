@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { DEFAULT_PRACTICE_BOT_CONFIG } from "../core/practice_bot_config";
 import type { CloudAuthUser } from "./auth_store";
 import { createCloudPromotionStore } from "./cloud_promotion_store";
 import {
@@ -27,6 +28,7 @@ const localProfile: LocalProfileIdentity = {
 };
 
 const settings: LocalProfileSettings = {
+  practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
   preferredVariant: "freestyle",
 };
 
@@ -78,6 +80,7 @@ describe("createCloudPromotionStore", () => {
           opening: "standard",
           ruleset: "freestyle",
         },
+        practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
       },
     });
     await store.getState().promote({
@@ -87,6 +90,7 @@ describe("createCloudPromotionStore", () => {
           opening: "standard",
           ruleset: "renju",
         },
+        practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
       },
     });
 

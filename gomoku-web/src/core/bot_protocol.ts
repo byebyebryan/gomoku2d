@@ -1,8 +1,21 @@
 export type GameVariant = "freestyle" | "renju";
 
+export interface CorridorProofSpec {
+  candidateLimit: number;
+  depth: number;
+  width: number;
+}
+
 export type BotSpec =
   | { kind: "human" }
-  | { kind: "baseline"; depth: number };
+  | { kind: "baseline"; depth: number }
+  | {
+    childLimit: number | null;
+    corridorProof: CorridorProofSpec | null;
+    depth: number;
+    kind: "search";
+    patternEval: boolean;
+  };
 
 export interface BotMove {
   row: number;

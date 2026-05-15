@@ -9,7 +9,6 @@ import {
   CLOUD_MATCH_SOURCE_CLOUD_SAVED,
   CLOUD_MATCH_TRUST_CLIENT_UPLOADED,
   PRACTICE_BOT_CONFIG_VERSION,
-  PRACTICE_BOT_DEPTH,
   PRACTICE_BOT_ENGINE,
   PRACTICE_BOT_ID,
   createCloudSavedMatch,
@@ -64,13 +63,16 @@ describe("cloud match serialization", () => {
       player_white: {
         bot: {
           config: {
-            depth: PRACTICE_BOT_DEPTH,
-            kind: "baseline",
+            mode: "preset",
+            preset: "normal",
+            version: 1,
           },
           config_version: PRACTICE_BOT_CONFIG_VERSION,
           engine: PRACTICE_BOT_ENGINE,
           id: PRACTICE_BOT_ID,
-          version: 1,
+          lab_spec: "search-d3+pattern-eval",
+          label: "Normal",
+          version: 2,
         },
         display_name: "Practice Bot",
         kind: "bot",

@@ -12,7 +12,21 @@ function postMessage(message: BotWorkerResponse): void {
 }
 
 function buildBot(spec: BotSpec): WasmBot | null {
-  return spec.kind === "human" ? null : WasmBot.createBaseline(spec.depth);
+  switch (spec.kind) {
+    case "human":
+      return null;
+    case "baseline":
+      return WasmBot.createBaseline(spec.depth);
+    case "search":
+      return WasmBot.createSearch(
+        spec.depth,
+        spec.childLimit ?? 0,
+        spec.patternEval,
+        spec.corridorProof?.depth ?? 0,
+        spec.corridorProof?.width ?? 0,
+        spec.corridorProof?.candidateLimit ?? 0,
+      );
+  }
 }
 
 function configure(specs: [BotSpec, BotSpec]): void {

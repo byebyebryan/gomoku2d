@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { DEFAULT_PRACTICE_BOT_CONFIG } from "../core/practice_bot_config";
 import { WasmBoard } from "../core/wasm_bridge";
 
 import type { LocalMatchState } from "./local_match_store";
@@ -60,6 +61,35 @@ describe("createLocalMatchStore", () => {
 
     expect(state.currentVariant).toBe("renju");
     expect(state.selectedVariant).toBe("renju");
+  });
+
+  it("configures bot runners from the selected practice bot config", () => {
+    const configureCalls: unknown[] = [];
+    createLocalMatchStore({
+      botRunner: {
+        chooseMove: async () => null,
+        configure: (specs) => {
+          configureCalls.push(specs);
+        },
+        dispose: () => undefined,
+      },
+      practiceBot: { mode: "preset", preset: "hard", version: 1 },
+    });
+
+    expect(configureCalls[0]).toEqual([
+      { kind: "human" },
+      {
+        childLimit: 8,
+        corridorProof: {
+          candidateLimit: 16,
+          depth: 8,
+          width: 4,
+        },
+        depth: 7,
+        kind: "search",
+        patternEval: true,
+      },
+    ]);
   });
 
   it("applies a rules change immediately before the first move", () => {
@@ -557,6 +587,7 @@ describe("createLocalMatchStore", () => {
 
     const finishedMatches: Array<{
       players: LocalMatchState["players"];
+      practiceBot: unknown;
       status: LocalMatchState["status"];
       undoFloor: number;
       variant: "freestyle" | "renju";
@@ -573,6 +604,7 @@ describe("createLocalMatchStore", () => {
       onMatchFinished: (match) => {
         finishedMatches.push({
           players: match.players,
+          practiceBot: match.practiceBot,
           status: match.status,
           undoFloor: match.undoFloor,
           variant: match.variant,
@@ -590,6 +622,7 @@ describe("createLocalMatchStore", () => {
           expect.objectContaining({ kind: "human", stone: "black" }),
           expect.objectContaining({ kind: "bot", stone: "white" }),
         ],
+        practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
         status: "black_won",
         undoFloor: 0,
         variant: "renju",

@@ -9,6 +9,13 @@ import {
 
 import type { GameVariant } from "../core/bot_protocol";
 import {
+  DEFAULT_PRACTICE_BOT_CONFIG,
+  isPracticeBotConfig,
+  sanitizePracticeBotConfig,
+  type PracticeBotConfig,
+} from "../core/practice_bot_config";
+import {
+  LEGACY_PRACTICE_BOT_ENGINE,
   isSavedMatchV1,
   savedMatchIsAfterReset,
   savedMatchPlayers,
@@ -22,7 +29,7 @@ import type { CloudAuthUser } from "./auth_store";
 import { createCloudSavedMatch } from "./cloud_match";
 import { getFirebaseClients } from "./firebase";
 
-export const CLOUD_PROFILE_SCHEMA_VERSION = 3;
+export const CLOUD_PROFILE_SCHEMA_VERSION = 4;
 export const CLOUD_REPLAY_MATCHES_LIMIT = 128;
 export const CLOUD_SUMMARY_MATCHES_LIMIT = 1024;
 export const CLOUD_MATCH_SUMMARY_SCHEMA_VERSION = 1;
@@ -49,6 +56,7 @@ export interface CloudDefaultRules {
 
 export interface CloudProfileSettings {
   defaultRules: CloudDefaultRules;
+  practiceBot: PracticeBotConfig;
 }
 
 export type CloudMatchSummaryOutcome = "draw" | "loss" | "win";
@@ -266,12 +274,16 @@ function authEqual(left: CloudProfileAuth, right: CloudProfileAuth): boolean {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
-export function cloudSettingsForVariant(variant: GameVariant): CloudProfileSettings {
+export function cloudSettingsForVariant(
+  variant: GameVariant,
+  practiceBot: PracticeBotConfig = DEFAULT_PRACTICE_BOT_CONFIG,
+): CloudProfileSettings {
   return {
     defaultRules: {
       opening: CLOUD_DEFAULT_RULE_OPENING,
       ruleset: variant,
     },
+    practiceBot,
   };
 }
 
@@ -281,6 +293,7 @@ function settingsFromDocument(value: unknown, fallbackVariant: GameVariant): Clo
       opening?: unknown;
       ruleset?: unknown;
     };
+    practice_bot?: unknown;
   } | null;
   const ruleset = validVariant(candidate?.default_rules?.ruleset) ?? fallbackVariant;
 
@@ -289,6 +302,7 @@ function settingsFromDocument(value: unknown, fallbackVariant: GameVariant): Clo
       opening: CLOUD_DEFAULT_RULE_OPENING,
       ruleset,
     },
+    practiceBot: sanitizePracticeBotConfig(candidate?.practice_bot),
   };
 }
 
@@ -298,11 +312,28 @@ export function cloudSettingsDocument(settings: CloudProfileSettings) {
       opening: settings.defaultRules.opening,
       ruleset: settings.defaultRules.ruleset,
     },
+    practice_bot: settings.practiceBot,
   };
 }
 
 function settingsEqual(left: CloudProfileSettings, right: CloudProfileSettings): boolean {
   return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function isSettingsDocument(value: unknown): boolean {
+  const candidate = value as {
+    default_rules?: {
+      opening?: unknown;
+      ruleset?: unknown;
+    };
+    practice_bot?: unknown;
+  } | null;
+
+  return Boolean(candidate)
+    && typeof candidate === "object"
+    && candidate?.default_rules?.opening === CLOUD_DEFAULT_RULE_OPENING
+    && validVariant(candidate?.default_rules?.ruleset) !== null
+    && isPracticeBotConfig(candidate?.practice_bot);
 }
 
 function sortReplayMatches(matches: SavedMatchV1[]): SavedMatchV1[] {
@@ -537,9 +568,16 @@ function botKeyForPlayer(player: SavedMatchPlayer): string | null {
     return null;
   }
 
+  if (player.bot.engine === LEGACY_PRACTICE_BOT_ENGINE) {
+    return [
+      `${player.bot.id}@${player.bot.version}`,
+      `${player.bot.engine}/${player.bot.config.kind}:d${player.bot.config.depth}`,
+    ].join(":");
+  }
+
   return [
     `${player.bot.id}@${player.bot.version}`,
-    `${player.bot.engine}/${player.bot.config.kind}:d${player.bot.config.depth}`,
+    `${player.bot.engine}/${player.bot.lab_spec}`,
   ].join(":");
 }
 
@@ -814,7 +852,7 @@ export function existingCloudProfileUpdate(
     patch.schema_version = CLOUD_PROFILE_SCHEMA_VERSION;
   }
 
-  if (!document || !hasOwnField(document, "settings")) {
+  if (!document || !hasOwnField(document, "settings") || !isSettingsDocument(document.settings)) {
     patch.settings = cloudSettingsDocument(settingsFromDocument(document?.settings, fallbackVariant));
   }
 
@@ -843,6 +881,22 @@ export function existingCloudProfileUpdate(
   };
 }
 
+export function existingCloudProfileLoadUpdate(
+  user: CloudAuthUser,
+  document: CloudProfileDocument,
+  fallbackVariant: GameVariant = "freestyle",
+): Record<string, unknown> | null {
+  if (
+    document.schema_version !== CLOUD_PROFILE_SCHEMA_VERSION
+    || !hasOwnField(document, "settings")
+    || !isSettingsDocument(document.settings)
+  ) {
+    return null;
+  }
+
+  return existingCloudProfileUpdate(user, document, fallbackVariant);
+}
+
 export function resetCloudProfileUpdate(user: CloudAuthUser, preferredVariant: GameVariant) {
   const now = serverTimestamp();
   const settings = cloudSettingsForVariant(preferredVariant);
@@ -863,11 +917,12 @@ export function resetCloudProfileUpdate(user: CloudAuthUser, preferredVariant: G
 export function cloudProfileSnapshotUpdate(input: {
   displayName: string;
   matchHistory: CloudMatchHistory;
+  practiceBot?: PracticeBotConfig;
   preferredVariant: GameVariant;
   user: CloudAuthUser;
 }): Record<string, unknown> {
   const now = serverTimestamp();
-  const settings = cloudSettingsForVariant(input.preferredVariant);
+  const settings = cloudSettingsForVariant(input.preferredVariant, input.practiceBot);
   const update: Record<string, unknown> = {
     auth: authDocument(authForUser(input.user)),
     display_name: input.displayName,
@@ -907,9 +962,10 @@ export function cloudProfileNeedsSnapshotSync(input: {
   cloudSettings: CloudProfileSettings;
   displayName: string;
   matchHistory: CloudMatchHistory;
+  practiceBot?: PracticeBotConfig;
   preferredVariant: GameVariant;
 }): boolean {
-  const settings = cloudSettingsForVariant(input.preferredVariant);
+  const settings = cloudSettingsForVariant(input.preferredVariant, input.practiceBot);
 
   return input.cloudDisplayName !== input.displayName
     || !settingsEqual(input.cloudSettings, settings)
@@ -931,7 +987,7 @@ export async function ensureCloudProfile(
 
   if (snapshot.exists()) {
     const data = snapshot.data() as CloudProfileDocument;
-    const update = existingCloudProfileUpdate(user, data, preferredVariant);
+    const update = existingCloudProfileLoadUpdate(user, data, preferredVariant);
     if (!update) {
       return cloudProfileFromDocument(user, preferredVariant, data);
     }

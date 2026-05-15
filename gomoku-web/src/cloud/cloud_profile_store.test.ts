@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { DEFAULT_PRACTICE_BOT_CONFIG } from "../core/practice_bot_config";
+
 import type { CloudAuthUser } from "./auth_store";
 import { emptyCloudMatchHistory, type CloudProfile } from "./cloud_profile";
 import { createCloudProfileStore } from "./cloud_profile_store";
@@ -31,6 +33,7 @@ const profile: CloudProfile = {
       opening: "standard",
       ruleset: "freestyle",
     },
+    practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
   },
   uid: "uid-1",
   updatedAt: null,
@@ -86,6 +89,7 @@ describe("createCloudProfileStore", () => {
           opening: "standard",
           ruleset: "renju",
         },
+        practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
       },
     });
 
@@ -95,6 +99,7 @@ describe("createCloudProfileStore", () => {
         defaultRules: {
           ruleset: "renju",
         },
+        practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
       },
     });
   });

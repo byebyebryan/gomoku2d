@@ -6,6 +6,7 @@ import {
 } from "firebase/firestore";
 
 import type { GameVariant } from "../core/bot_protocol";
+import type { PracticeBotConfig } from "../core/practice_bot_config";
 import { savedMatchIsAfterReset, type SavedMatchV1 } from "../match/saved_match";
 
 import type { CloudAuthUser } from "./auth_store";
@@ -89,6 +90,7 @@ export async function saveCloudHistorySnapshot(
     cloudProfile: CloudProfile;
     displayName: string;
     matches: SavedMatchV1[];
+    practiceBot?: PracticeBotConfig;
     preferredVariant: GameVariant;
   },
   options: CloudHistoryOptions = {},
@@ -111,6 +113,7 @@ export async function saveCloudHistorySnapshot(
   const patch = cloudProfileSnapshotUpdate({
     displayName: input.displayName,
     matchHistory,
+    practiceBot: input.practiceBot,
     preferredVariant: input.preferredVariant,
     user,
   });
@@ -124,7 +127,7 @@ export async function saveCloudHistorySnapshot(
       ...input.cloudProfile,
       displayName: input.displayName,
       matchHistory,
-      settings: cloudSettingsForVariant(input.preferredVariant),
+      settings: cloudSettingsForVariant(input.preferredVariant, input.practiceBot),
       updatedAt: syncedAt,
     },
   };

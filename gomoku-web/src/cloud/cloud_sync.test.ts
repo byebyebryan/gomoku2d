@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CloudAuthUser } from "./auth_store";
+import { DEFAULT_PRACTICE_BOT_CONFIG } from "../core/practice_bot_config";
 import { emptyCloudMatchHistory, type CloudProfile } from "./cloud_profile";
 import { cloudProfileStore } from "./cloud_profile_store";
 import { cloudPromotionStore } from "./cloud_promotion_store";
@@ -45,6 +46,7 @@ const cloudProfile: CloudProfile = {
       opening: "standard",
       ruleset: "freestyle",
     },
+    practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
   },
   uid: "uid-1",
   updatedAt: null,
@@ -72,7 +74,7 @@ describe("flushCloudProfileSync", () => {
     localProfileStore.setState({
       matchHistory: emptyLocalMatchHistory(),
       profile: localProfile,
-      settings: { preferredVariant: "renju" },
+      settings: { practiceBot: DEFAULT_PRACTICE_BOT_CONFIG, preferredVariant: "renju" },
     });
   });
 
@@ -103,11 +105,12 @@ describe("flushCloudProfileSync", () => {
           opening: "standard",
           ruleset: "freestyle",
         },
+        practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
       },
       localMatchHistory: emptyLocalMatchHistory(),
       localProfile,
       resetAt: null,
-      settings: { preferredVariant: "renju" },
+      settings: { practiceBot: DEFAULT_PRACTICE_BOT_CONFIG, preferredVariant: "renju" },
       user,
     });
     expect(result).toMatchObject({
@@ -116,6 +119,7 @@ describe("flushCloudProfileSync", () => {
         defaultRules: {
           ruleset: "renju",
         },
+        practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
       },
     });
   });
