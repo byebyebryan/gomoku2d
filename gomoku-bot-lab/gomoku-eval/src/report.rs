@@ -536,6 +536,16 @@ pub struct StandingReport {
     #[serde(default)]
     pub search_illegal_moves_skipped: u64,
     #[serde(default)]
+    pub stage_move_gen_ns: u64,
+    #[serde(default)]
+    pub stage_ordering_ns: u64,
+    #[serde(default)]
+    pub stage_eval_ns: u64,
+    #[serde(default)]
+    pub stage_threat_ns: u64,
+    #[serde(default)]
+    pub stage_proof_ns: u64,
+    #[serde(default)]
     pub tactical_annotations: u64,
     #[serde(default)]
     pub root_tactical_annotations: u64,
@@ -953,6 +963,16 @@ pub struct SideStatsReport {
     #[serde(default)]
     pub search_illegal_moves_skipped: u64,
     #[serde(default)]
+    pub stage_move_gen_ns: u64,
+    #[serde(default)]
+    pub stage_ordering_ns: u64,
+    #[serde(default)]
+    pub stage_eval_ns: u64,
+    #[serde(default)]
+    pub stage_threat_ns: u64,
+    #[serde(default)]
+    pub stage_proof_ns: u64,
+    #[serde(default)]
     pub tactical_annotations: u64,
     #[serde(default)]
     pub root_tactical_annotations: u64,
@@ -1167,6 +1187,11 @@ struct SideStatsAccumulator {
     root_illegal_moves_skipped: u64,
     search_legality_checks: u64,
     search_illegal_moves_skipped: u64,
+    stage_move_gen_ns: u64,
+    stage_ordering_ns: u64,
+    stage_eval_ns: u64,
+    stage_threat_ns: u64,
+    stage_proof_ns: u64,
     tactical_annotations: u64,
     root_tactical_annotations: u64,
     search_tactical_annotations: u64,
@@ -1296,6 +1321,11 @@ impl SideStatsAccumulator {
             self.search_legality_checks += trace_value_u64(metrics, "search_legality_checks");
             self.search_illegal_moves_skipped +=
                 trace_value_u64(metrics, "search_illegal_moves_skipped");
+            self.stage_move_gen_ns += trace_value_u64(metrics, "stage_move_gen_ns");
+            self.stage_ordering_ns += trace_value_u64(metrics, "stage_ordering_ns");
+            self.stage_eval_ns += trace_value_u64(metrics, "stage_eval_ns");
+            self.stage_threat_ns += trace_value_u64(metrics, "stage_threat_ns");
+            self.stage_proof_ns += trace_value_u64(metrics, "stage_proof_ns");
             self.tactical_annotations += trace_value_u64(metrics, "tactical_annotations");
             self.root_tactical_annotations += trace_value_u64(metrics, "root_tactical_annotations");
             self.search_tactical_annotations +=
@@ -1599,6 +1629,11 @@ impl SideStatsAccumulator {
         self.root_illegal_moves_skipped += stats.root_illegal_moves_skipped;
         self.search_legality_checks += stats.search_legality_checks;
         self.search_illegal_moves_skipped += stats.search_illegal_moves_skipped;
+        self.stage_move_gen_ns += stats.stage_move_gen_ns;
+        self.stage_ordering_ns += stats.stage_ordering_ns;
+        self.stage_eval_ns += stats.stage_eval_ns;
+        self.stage_threat_ns += stats.stage_threat_ns;
+        self.stage_proof_ns += stats.stage_proof_ns;
         self.tactical_annotations += stats.tactical_annotations;
         self.root_tactical_annotations += stats.root_tactical_annotations;
         self.search_tactical_annotations += stats.search_tactical_annotations;
@@ -1838,6 +1873,11 @@ impl SideStatsAccumulator {
             root_illegal_moves_skipped: self.root_illegal_moves_skipped,
             search_legality_checks: self.search_legality_checks,
             search_illegal_moves_skipped: self.search_illegal_moves_skipped,
+            stage_move_gen_ns: self.stage_move_gen_ns,
+            stage_ordering_ns: self.stage_ordering_ns,
+            stage_eval_ns: self.stage_eval_ns,
+            stage_threat_ns: self.stage_threat_ns,
+            stage_proof_ns: self.stage_proof_ns,
             tactical_annotations: self.tactical_annotations,
             root_tactical_annotations: self.root_tactical_annotations,
             search_tactical_annotations: self.search_tactical_annotations,
@@ -2094,6 +2134,11 @@ fn standings(
                 root_illegal_moves_skipped: side_stats.root_illegal_moves_skipped,
                 search_legality_checks: side_stats.search_legality_checks,
                 search_illegal_moves_skipped: side_stats.search_illegal_moves_skipped,
+                stage_move_gen_ns: side_stats.stage_move_gen_ns,
+                stage_ordering_ns: side_stats.stage_ordering_ns,
+                stage_eval_ns: side_stats.stage_eval_ns,
+                stage_threat_ns: side_stats.stage_threat_ns,
+                stage_proof_ns: side_stats.stage_proof_ns,
                 tactical_annotations: side_stats.tactical_annotations,
                 root_tactical_annotations: side_stats.root_tactical_annotations,
                 search_tactical_annotations: side_stats.search_tactical_annotations,
@@ -3249,37 +3294,6 @@ fn duration_ns_label(ns: u64) -> String {
     }
 }
 
-fn static_eval_cost_label(row: &StandingReport) -> (String, Option<String>) {
-    match (row.line_shape_eval_calls > 0, row.pattern_eval_calls > 0) {
-        (true, false) => (
-            duration_ns_label(row.avg_line_shape_eval_ns.round() as u64),
-            Some("Line eval".to_string()),
-        ),
-        (false, true) => (
-            duration_ns_label(row.avg_pattern_eval_ns.round() as u64),
-            Some(
-                if row.pattern_frame_queries > 0 {
-                    "Pattern frame"
-                } else {
-                    "Pattern scan"
-                }
-                .to_string(),
-            ),
-        ),
-        (true, true) => (
-            duration_ns_label(
-                avg(
-                    (row.line_shape_eval_ns + row.pattern_eval_ns) as f64,
-                    (row.line_shape_eval_calls + row.pattern_eval_calls) as u32,
-                )
-                .round() as u64,
-            ),
-            Some("Mixed eval".to_string()),
-        ),
-        (false, false) => ("n/a".to_string(), None),
-    }
-}
-
 fn compact_u64_label(value: u64) -> String {
     if value < 1_000 {
         value.to_string()
@@ -3406,27 +3420,27 @@ fn render_how_to_read_section(html: &mut String) {
     term_row(
         html,
         "Run Shape",
-        "Workflow names the pairing mode. Schedule shows played pair count, games per pair, and total matches. Opening shows the seeded legal moves before bots take over.",
+        "Schedule shows the pairing count, games per pair, and total matches. Opening shows the seeded legal moves before bots take over.",
     );
     term_row(
         html,
         "Elo",
-        "Relative rating for this report only. Shuffled Elo averages repeated Elo passes over shuffled match orders to reduce run-order noise.",
+        "Relative rating within this report only. Shuffled Elo averages repeated Elo passes over randomized match order to reduce run-order noise.",
     );
     term_row(
         html,
         "Score",
-        "Score % is wins plus half draws over games. W-D-L is entrant wins, draws, then losses. Ranking comparisons mark scores above 50% green.",
+        "Score % counts wins plus half draws. W-D-L is wins, draws, then losses. Comparisons above 50% are marked green.",
     );
     term_row(
         html,
         "Budget Exhausted",
-        "Share of searched moves that reached the CPU-time limit before search naturally finished.",
+        "Share of searched moves that hit the per-move CPU cap before search finished naturally.",
     );
     term_row(
         html,
         "Search Cost",
-        "Breadth is the effective searched width. Capped bots show post-cap width with pre-cap context; uncapped bots show generated candidate width. Search diagnostics use root / search pairs when a metric differs by phase.",
+        "Width is the average number of moves searched. The Search tab splits measured time into move generation, ordering, scoring, threat detection, corridor proof, and uncategorized search overhead.",
     );
     html.push_str("</dl></section>");
 }
@@ -3457,8 +3471,8 @@ fn render_entrant_header(html: &mut String) {
         "Score %",
         "W-D-L",
         "Shuffled Elo",
-        "Avg depth",
-        "Breadth",
+        "Depth",
+        "Width",
         "Avg ms",
         "Budget exhausted",
     ] {
@@ -3470,15 +3484,14 @@ fn render_entrant_header(html: &mut String) {
         html.push_str(&format!("<span class=\"{metric_class}\">{head}</span>"));
     }
     for head in [
-        "Avg nodes",
-        "Eval",
-        "Eval cost",
-        "Cand gen",
-        "Breadth",
-        "Legal",
-        "Portal",
-        "Exit",
-        "TT hit/cut",
+        "Nodes",
+        "Move gen",
+        "Ordering",
+        "Scoring",
+        "Threat detection",
+        "Proof",
+        "Other",
+        "TT",
     ] {
         html.push_str(&format!(
             "<span class=\"metric metric-search\">{head}</span>"
@@ -3538,12 +3551,12 @@ fn render_entrant_row(
     render_metric_cell(
         html,
         "metric-results",
-        "Avg depth",
+        "Depth",
         &format!("{:.2}", row.avg_depth),
         (row.avg_effective_depth > row.avg_depth)
             .then(|| format!("eff {:.2}", row.avg_effective_depth)),
     );
-    render_breadth_metric_cell(html, "metric-results", "Breadth", row);
+    render_width_metric_cell(html, "metric-results", "Width", row);
     render_metric_cell(
         html,
         "metric-results",
@@ -3561,62 +3574,20 @@ fn render_entrant_row(
     render_metric_cell(
         html,
         "metric-search",
-        "Avg nodes",
+        "Nodes",
         &compact_number_label(row.avg_nodes),
         None,
     );
+    render_stage_time_metric_cell(html, "Move gen", row.stage_move_gen_ns, row);
+    render_stage_time_metric_cell(html, "Ordering", row.stage_ordering_ns, row);
+    render_stage_time_metric_cell(html, "Scoring", row.stage_eval_ns, row);
+    render_stage_time_metric_cell(html, "Threat detection", row.stage_threat_ns, row);
+    render_stage_time_metric_cell(html, "Proof", row.stage_proof_ns, row);
+    render_stage_time_metric_cell(html, "Other", stage_other_ns(row), row);
     render_metric_cell(
         html,
         "metric-search",
-        "Eval",
-        &format!("{:.0}", row.avg_eval_calls),
-        None,
-    );
-    let (eval_cost, eval_cost_detail) = static_eval_cost_label(row);
-    render_metric_cell(
-        html,
-        "metric-search",
-        "Eval cost",
-        &eval_cost,
-        eval_cost_detail,
-    );
-    render_metric_cell(
-        html,
-        "metric-search",
-        "Cand gen",
-        &phase_average_label(
-            row.root_candidate_generations,
-            row.search_candidate_generations,
-            row.search_move_count,
-        ),
-        None,
-    );
-    render_breadth_metric_cell(html, "metric-search", "Breadth", row);
-    render_metric_cell(
-        html,
-        "metric-search",
-        "Legal",
-        &phase_average_label(
-            row.root_legality_checks,
-            row.search_legality_checks,
-            row.search_move_count,
-        ),
-        None,
-    );
-    let (portal_primary, portal_secondary) = portal_entry_metric_label(row);
-    render_metric_cell(
-        html,
-        "metric-search",
-        "Portal",
-        &portal_primary,
-        portal_secondary,
-    );
-    let (exit_primary, exit_secondary) = portal_exit_metric_label(row);
-    render_metric_cell(html, "metric-search", "Exit", &exit_primary, exit_secondary);
-    render_metric_cell(
-        html,
-        "metric-search",
-        "TT hit/cut",
+        "TT",
         &phase_average_label(row.tt_hits, row.tt_cutoffs, row.search_move_count),
         None,
     );
@@ -3723,17 +3694,17 @@ fn render_metric_cell(
     html.push_str("</span>");
 }
 
-fn render_breadth_metric_cell(
+fn render_width_metric_cell(
     html: &mut String,
     metric_class: &str,
     label: &str,
     row: &StandingReport,
 ) {
-    let (primary, secondary) = breadth_metric_label(row);
+    let (primary, secondary) = width_metric_label(row);
     render_metric_cell(html, metric_class, label, &primary, secondary);
 }
 
-fn breadth_metric_label(row: &StandingReport) -> (String, Option<String>) {
+fn width_metric_label(row: &StandingReport) -> (String, Option<String>) {
     if row.child_limit_applications > 0 {
         (
             format!("{:.1}", row.avg_child_moves_after),
@@ -3744,43 +3715,45 @@ fn breadth_metric_label(row: &StandingReport) -> (String, Option<String>) {
     }
 }
 
-fn portal_entry_metric_label(row: &StandingReport) -> (String, Option<String>) {
-    if row.corridor_entry_checks == 0 {
-        return ("0/0".to_string(), None);
-    }
-
-    (
-        format!(
-            "{}/{}",
-            row.corridor_entries_accepted, row.corridor_entry_checks
-        ),
-        Some(format!(
-            "{:.0}% acc / {} res",
-            row.corridor_entry_acceptance_rate * 100.0,
-            row.corridor_resume_searches
-        )),
-    )
+fn render_stage_time_metric_cell(
+    html: &mut String,
+    label: &str,
+    stage_ns: u64,
+    row: &StandingReport,
+) {
+    let total_ns = row.total_time_ms.saturating_mul(1_000_000);
+    let pct = if total_ns == 0 {
+        0.0
+    } else {
+        stage_ns as f64 * 100.0 / total_ns as f64
+    };
+    render_metric_cell(
+        html,
+        "metric-search",
+        label,
+        &format!("{:.0}%", pct),
+        Some(stage_avg_ms_label(stage_ns, row.search_move_count)),
+    );
 }
 
-fn portal_exit_metric_label(row: &StandingReport) -> (String, Option<String>) {
-    let total_exits = row.corridor_width_exits
-        + row.corridor_depth_exits
-        + row.corridor_neutral_exits
-        + row.corridor_terminal_exits;
-    if total_exits == 0 {
-        return ("0".to_string(), None);
+fn stage_avg_ms_label(stage_ns: u64, search_move_count: u32) -> String {
+    let avg_ms = avg(stage_ns as f64 / 1_000_000.0, search_move_count);
+    if avg_ms < 0.05 {
+        "0 ms".to_string()
+    } else {
+        format!("{avg_ms:.1} ms")
     }
+}
 
-    (
-        total_exits.to_string(),
-        Some(format!(
-            "w{} d{} n{} t{}",
-            row.corridor_width_exits,
-            row.corridor_depth_exits,
-            row.corridor_neutral_exits,
-            row.corridor_terminal_exits
-        )),
-    )
+fn stage_other_ns(row: &StandingReport) -> u64 {
+    let total_ns = row.total_time_ms.saturating_mul(1_000_000);
+    let known_ns = row
+        .stage_move_gen_ns
+        .saturating_add(row.stage_ordering_ns)
+        .saturating_add(row.stage_eval_ns)
+        .saturating_add(row.stage_threat_ns)
+        .saturating_add(row.stage_proof_ns);
+    total_ns.saturating_sub(known_ns)
 }
 
 fn delta_cell(label: &str, delta_class: &str, data_label: &str) -> String {
@@ -4422,7 +4395,7 @@ main{display:grid;gap:24px;margin:0 auto;max-width:1180px;padding:32px}h1,h2,p{m
 .section-heading{display:grid}.section-heading h2{color:var(--accent);font-size:1.2rem}
 table{border-collapse:collapse;min-width:820px;width:100%}th,td{border-bottom:1px solid var(--border);padding:9px 10px;text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{color:var(--text-muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
 .view-toggle{display:flex;flex-wrap:wrap;gap:8px}.report-view-radio{height:1px;opacity:0;position:absolute;width:1px}.view-toggle label{background:var(--surface-strong);border:1px solid var(--border);cursor:pointer;padding:8px 12px;text-transform:uppercase}.view-toggle label:hover{border-color:var(--teal)}.entrant-workbench:has(#view-results:checked) label[for=view-results],.entrant-workbench:has(#view-search:checked) label[for=view-search],.entrant-workbench:has(#view-pairwise:checked) label[for=view-pairwise]{border-color:var(--accent);color:var(--accent)}
-.entrant-grid,.match-list{display:grid;gap:12px}.entrant-head,.entrant-row summary{display:grid;gap:10px;align-items:center}.entrant-workbench:has(#view-results:checked) .entrant-head,.entrant-workbench:has(#view-results:checked) .entrant-row summary{grid-template-columns:minmax(260px,1.6fr) repeat(8,minmax(82px,1fr))}.entrant-workbench:has(#view-search:checked) .entrant-head,.entrant-workbench:has(#view-search:checked) .entrant-row summary{grid-template-columns:minmax(240px,1.4fr) repeat(9,minmax(84px,1fr))}.entrant-workbench:has(#view-pairwise:checked) .entrant-head,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{grid-template-columns:minmax(280px,1.6fr) repeat(3,minmax(120px,1fr))}.entrant-head{color:var(--text-muted);font-size:12px;letter-spacing:.08em;padding:0 14px;text-transform:uppercase}.entrant-row,.opponent-row,.match{padding:0}.entrant-row summary,.opponent-row summary,.match summary{cursor:pointer;padding:12px 14px}.entrant-row summary>*,.opponent-row summary>*{min-width:0}.entrant-row summary .bot-label,.opponent-row summary strong,.match summary strong{color:var(--text);overflow-wrap:anywhere}.bot-label span,.metric span{display:block}.metric-nowrap,.metric-nowrap span{white-space:nowrap}.entrant-row summary .bot-label span:first-child{color:var(--text)}.entrant-row summary .bot-label span+span,.metric span+span{color:var(--text-muted);font-size:11px;letter-spacing:.08em;margin-top:2px}.entrant-row summary span,.opponent-row summary span,.match summary span{color:var(--text-muted)}.metric-search,.metric-pairwise{display:none}.entrant-workbench:has(#view-search:checked) .metric-results,.entrant-workbench:has(#view-search:checked) .metric-pairwise,.entrant-workbench:has(#view-pairwise:checked) .metric-results,.entrant-workbench:has(#view-pairwise:checked) .metric-search{display:none}.entrant-workbench:has(#view-search:checked) .metric-search,.entrant-workbench:has(#view-pairwise:checked) .metric-pairwise{display:block}.entrant-head .metric,.entrant-row summary .metric{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;line-height:1.22;padding-left:10px;text-align:right}.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs{display:none;gap:10px;padding:8px 18px 18px}.entrant-workbench:has(#view-results:checked) .entrant-result-comparisons,.entrant-workbench:has(#view-search:checked) .entrant-search-comparisons,.entrant-workbench:has(#view-pairwise:checked) .entrant-pairs{display:grid}.comparison-head,.comparison-row{align-items:center;display:grid;gap:12px}.entrant-result-comparisons .comparison-head,.entrant-result-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(78px,96px) minmax(92px,120px) minmax(120px,140px)}.entrant-search-comparisons .comparison-head,.entrant-search-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(78px,96px) minmax(86px,120px) minmax(96px,120px) minmax(104px,130px) minmax(96px,120px)}.comparison-head{border:1px solid transparent;color:var(--text-muted);font-size:11px;letter-spacing:.08em;padding:0 12px;text-transform:uppercase}.comparison-row{background:var(--surface-strong);border:1px solid var(--border);padding:10px 12px}.comparison-row span:not(:first-child),.comparison-head span:not(:first-child){border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.delta-good,.score-good{color:var(--green)!important}.delta-bad,.score-bad{color:#e78f85!important}.delta-neutral{color:var(--text-muted)!important}.opponent-row summary{display:grid;gap:12px;grid-template-columns:minmax(0,1fr) repeat(3,max-content);align-items:center}.opponent-row summary span{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.match summary{display:grid;gap:12px;grid-template-columns:repeat(4,minmax(82px,max-content));align-items:center}.pair-overview{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));padding:0 18px 16px}.pair-overview p{background:var(--surface-strong);border:1px solid var(--border);margin:0;padding:12px}.match-grid{display:grid;gap:12px;grid-template-columns:1fr;padding:0 14px 14px}.match-grid p{margin:0;word-break:break-word}.reference-pair-note{background:var(--surface-strong);border:1px solid var(--border);color:var(--text-muted);margin:0;padding:10px 12px}.pair-overview b,.match-grid b{color:var(--text)}.board-panel,.raw-data{grid-column:1/-1}.board-ascii,.raw-data{background:var(--surface-strong);border:1px solid var(--border)}.board-ascii{color:var(--text);font:14px/1.35 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:8px 0 0;overflow:auto;padding:12px;white-space:pre}.raw-data{padding:10px}.raw-data summary{cursor:pointer;padding:0}.raw-data p{margin:8px 0 0}
+.entrant-grid,.match-list{display:grid;gap:12px}.entrant-head,.entrant-row summary{display:grid;gap:10px;align-items:center}.entrant-workbench:has(#view-results:checked) .entrant-head,.entrant-workbench:has(#view-results:checked) .entrant-row summary{grid-template-columns:minmax(260px,1.6fr) repeat(8,minmax(82px,1fr))}.entrant-workbench:has(#view-search:checked) .entrant-head,.entrant-workbench:has(#view-search:checked) .entrant-row summary{grid-template-columns:minmax(240px,1.4fr) repeat(8,minmax(84px,1fr))}.entrant-workbench:has(#view-pairwise:checked) .entrant-head,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{grid-template-columns:minmax(280px,1.6fr) repeat(3,minmax(120px,1fr))}.entrant-head{color:var(--text-muted);font-size:12px;letter-spacing:.08em;padding:0 14px;text-transform:uppercase}.entrant-row,.opponent-row,.match{padding:0}.entrant-row summary,.opponent-row summary,.match summary{cursor:pointer;padding:12px 14px}.entrant-row summary>*,.opponent-row summary>*{min-width:0}.entrant-row summary .bot-label,.opponent-row summary strong,.match summary strong{color:var(--text);overflow-wrap:anywhere}.bot-label span,.metric span{display:block}.metric-nowrap,.metric-nowrap span{white-space:nowrap}.entrant-row summary .bot-label span:first-child{color:var(--text)}.entrant-row summary .bot-label span+span,.metric span+span{color:var(--text-muted);font-size:11px;letter-spacing:.08em;margin-top:2px}.entrant-row summary span,.opponent-row summary span,.match summary span{color:var(--text-muted)}.metric-search,.metric-pairwise{display:none}.entrant-workbench:has(#view-search:checked) .metric-results,.entrant-workbench:has(#view-search:checked) .metric-pairwise,.entrant-workbench:has(#view-pairwise:checked) .metric-results,.entrant-workbench:has(#view-pairwise:checked) .metric-search{display:none}.entrant-workbench:has(#view-search:checked) .metric-search,.entrant-workbench:has(#view-pairwise:checked) .metric-pairwise{display:block}.entrant-head .metric,.entrant-row summary .metric{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;line-height:1.22;padding-left:10px;text-align:right}.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs{display:none;gap:10px;padding:8px 18px 18px}.entrant-workbench:has(#view-results:checked) .entrant-result-comparisons,.entrant-workbench:has(#view-search:checked) .entrant-search-comparisons,.entrant-workbench:has(#view-pairwise:checked) .entrant-pairs{display:grid}.comparison-head,.comparison-row{align-items:center;display:grid;gap:12px}.entrant-result-comparisons .comparison-head,.entrant-result-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(78px,96px) minmax(92px,120px) minmax(120px,140px)}.entrant-search-comparisons .comparison-head,.entrant-search-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(78px,96px) minmax(86px,120px) minmax(96px,120px) minmax(104px,130px) minmax(96px,120px)}.comparison-head{border:1px solid transparent;color:var(--text-muted);font-size:11px;letter-spacing:.08em;padding:0 12px;text-transform:uppercase}.comparison-row{background:var(--surface-strong);border:1px solid var(--border);padding:10px 12px}.comparison-row span:not(:first-child),.comparison-head span:not(:first-child){border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.delta-good,.score-good{color:var(--green)!important}.delta-bad,.score-bad{color:#e78f85!important}.delta-neutral{color:var(--text-muted)!important}.opponent-row summary{display:grid;gap:12px;grid-template-columns:minmax(0,1fr) repeat(3,max-content);align-items:center}.opponent-row summary span{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.match summary{display:grid;gap:12px;grid-template-columns:repeat(4,minmax(82px,max-content));align-items:center}.pair-overview{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));padding:0 18px 16px}.pair-overview p{background:var(--surface-strong);border:1px solid var(--border);margin:0;padding:12px}.match-grid{display:grid;gap:12px;grid-template-columns:1fr;padding:0 14px 14px}.match-grid p{margin:0;word-break:break-word}.reference-pair-note{background:var(--surface-strong);border:1px solid var(--border);color:var(--text-muted);margin:0;padding:10px 12px}.pair-overview b,.match-grid b{color:var(--text)}.board-panel,.raw-data{grid-column:1/-1}.board-ascii,.raw-data{background:var(--surface-strong);border:1px solid var(--border)}.board-ascii{color:var(--text);font:14px/1.35 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:8px 0 0;overflow:auto;padding:12px;white-space:pre}.raw-data{padding:10px}.raw-data summary{cursor:pointer;padding:0}.raw-data p{margin:8px 0 0}
 .provenance dl{display:grid;gap:8px 18px;grid-template-columns:max-content 1fr;margin:0}.provenance dt{color:var(--text-muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase}.provenance dd{margin:0}.command{background:var(--surface-strong);border:1px solid var(--border);margin:0;overflow:auto;padding:12px}
 @media (max-width:760px){main{padding:16px}.hero,section,.run-warning{padding:16px}.run-chip{justify-content:space-between;width:100%}.rolling-comparison-list p{grid-template-columns:1fr}.rolling-comparison-list span{text-align:left}.entrant-head,.comparison-head{display:none}.entrant-grid,.entrant-row,.opponent-row,.match,.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs,.comparison-row{min-width:0;width:100%}.entrant-row summary,.entrant-workbench:has(#view-results:checked) .entrant-row summary,.entrant-workbench:has(#view-search:checked) .entrant-row summary,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{gap:8px 12px;grid-template-columns:repeat(2,minmax(0,1fr))}.entrant-row summary .bot-label{grid-column:1/-1}.entrant-row summary .metric{border-left:0;display:grid;gap:2px 10px;grid-template-columns:minmax(0,1fr) auto;padding:8px 0 0;text-align:right}.entrant-row summary .metric::before,.comparison-row span::before,.opponent-row summary span::before,.match summary span::before{color:var(--text-muted);content:attr(data-label);font-size:11px;letter-spacing:.08em;text-align:left;text-transform:uppercase}.entrant-row summary .metric::before{align-self:start;grid-column:1;grid-row:1/span 2}.entrant-row summary .metric span{grid-column:2}.entrant-row summary .metric-search,.entrant-row summary .metric-pairwise,.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-results,.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-pairwise,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-results,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-search{display:none}.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-search,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-pairwise{display:grid}.opponent-row summary,.match summary,.entrant-result-comparisons .comparison-row,.entrant-search-comparisons .comparison-row{grid-template-columns:1fr}.comparison-row span,.opponent-row summary span,.match summary span{border-left:0!important;display:flex;gap:12px;justify-content:space-between;min-width:0;overflow-wrap:anywhere;padding-left:0!important;text-align:right}.comparison-row span:not(:first-child),.opponent-row summary span,.match summary span{border-top:1px solid var(--border);padding-top:8px}.opponent-row summary span:first-of-type,.match summary span:first-child{border-top:0;padding-top:0}.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs{padding:4px 12px 14px}.match-grid,.term-row{grid-template-columns:1fr}.term-row{gap:4px}.board-ascii{font-size:12px}.provenance dl{grid-template-columns:1fr}table{min-width:760px}}
 @media (max-width:420px){.entrant-row summary,.entrant-workbench:has(#view-results:checked) .entrant-row summary,.entrant-workbench:has(#view-search:checked) .entrant-row summary,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{grid-template-columns:1fr}}
@@ -4708,15 +4681,17 @@ mod tests {
         assert!(html.contains(
             "<span class=\"metric metric-results metric-nowrap\" data-label=\"W-D-L\"><span>1-0-1</span></span>"
         ));
-        assert!(html.contains("<span class=\"metric metric-results\">Avg depth</span>"));
-        assert!(html.contains("<span class=\"metric metric-results\">Breadth</span>"));
+        assert!(html.contains("<span class=\"metric metric-results\">Depth</span>"));
+        assert!(html.contains("<span class=\"metric metric-results\">Width</span>"));
         assert!(html.contains("<span class=\"metric metric-results\">Avg ms</span>"));
         assert!(html.contains("<span class=\"metric metric-results\">Budget exhausted</span>"));
+        assert!(!html.contains("<span class=\"metric metric-results\">Avg depth</span>"));
+        assert!(!html.contains("<span class=\"metric metric-results\">Breadth</span>"));
         assert!(!html.contains("<span class=\"metric metric-results\">Budget hit</span>"));
         assert!(!html.contains("<span class=\"metric metric-results\">Best</span>"));
         assert!(!html.contains("<span class=\"metric metric-results\">Worst</span>"));
         assert!(html.contains(
-            "<span class=\"metric metric-results\" data-label=\"Breadth\"><span>8.0</span><span>pre 12.0</span></span>"
+            "<span class=\"metric metric-results\" data-label=\"Width\"><span>8.0</span><span>pre 12.0</span></span>"
         ));
         assert!(html.contains("id=\"view-pairwise\""));
         assert!(!html.contains("event.preventDefault()"));
@@ -4750,14 +4725,22 @@ mod tests {
             ".entrant-search-comparisons .comparison-head,.entrant-search-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) repeat(4,minmax(90px,max-content))}"
         ));
 
-        assert!(html.contains("<span class=\"metric metric-search\">Avg nodes</span>"));
-        assert!(html.contains("<span class=\"metric metric-search\">Eval</span>"));
-        assert!(html.contains("<span class=\"metric metric-search\">Cand gen</span>"));
-        assert!(html.contains("<span class=\"metric metric-search\">Breadth</span>"));
-        assert!(html.contains("<span class=\"metric metric-search\">Legal</span>"));
-        assert!(html.contains("<span class=\"metric metric-search\">Portal</span>"));
-        assert!(html.contains("<span class=\"metric metric-search\">Exit</span>"));
-        assert!(html.contains("<span class=\"metric metric-search\">TT hit/cut</span>"));
+        assert!(html.contains("<span class=\"metric metric-search\">Nodes</span>"));
+        assert!(html.contains("<span class=\"metric metric-search\">Move gen</span>"));
+        assert!(html.contains("<span class=\"metric metric-search\">Ordering</span>"));
+        assert!(html.contains("<span class=\"metric metric-search\">Scoring</span>"));
+        assert!(html.contains("<span class=\"metric metric-search\">Threat detection</span>"));
+        assert!(html.contains("<span class=\"metric metric-search\">Proof</span>"));
+        assert!(html.contains("<span class=\"metric metric-search\">Other</span>"));
+        assert!(html.contains("<span class=\"metric metric-search\">TT</span>"));
+        assert!(!html.contains("<span class=\"metric metric-search\">Avg nodes</span>"));
+        assert!(!html.contains("<span class=\"metric metric-search\">Eval cost</span>"));
+        assert!(!html.contains("<span class=\"metric metric-search\">Cand gen</span>"));
+        assert!(!html.contains("<span class=\"metric metric-search\">Breadth</span>"));
+        assert!(!html.contains("<span class=\"metric metric-search\">Legal</span>"));
+        assert!(!html.contains("<span class=\"metric metric-search\">Portal</span>"));
+        assert!(!html.contains("<span class=\"metric metric-search\">Exit</span>"));
+        assert!(!html.contains("<span class=\"metric metric-search\">TT hit/cut</span>"));
         assert!(!html.contains("<span class=\"metric metric-search\">Child width</span>"));
         assert!(!html.contains("<span class=\"metric metric-search\">Cand width r/s</span>"));
         assert!(!html.contains("<span class=\"metric metric-search\">Tactical ann r/s</span>"));
@@ -4831,26 +4814,45 @@ mod tests {
         assert!(html.contains("<label for=\"view-pairwise\">Pairwise</label>"));
         assert!(!html.contains("<h2>Search Cost</h2>"));
         assert!(html.contains("SearchBot_D2"));
-        assert!(html.contains("Avg nodes"));
-        assert!(html.contains("Eval cost"));
-        assert!(html.contains("2.0 us"));
-        assert!(html.contains("Pattern scan"));
+        assert!(html.contains("Nodes"));
+        assert!(html.contains("Move gen"));
+        assert!(html.contains("Ordering"));
+        assert!(html.contains("Threat detection"));
+        assert!(html.contains("Proof"));
+        assert!(html.contains("Other"));
+        assert!(!html.contains("Eval cost"));
+        assert!(!html.contains("Pattern scan"));
         assert!(html.contains("200"));
         assert!(html.contains("Avg ms"));
         assert!(html.contains("10.0"));
-        assert!(html.contains("Avg depth"));
+        assert!(html.contains("Depth"));
         assert!(html.contains("3.00"));
-        assert!(html.contains("Breadth"));
+        assert!(html.contains("Width"));
         assert!(html.contains("8.0"));
         assert!(html.contains("pre 12.0"));
         assert!(!html.contains("Child width"));
+        assert!(html.contains(
+            "<span class=\"metric metric-search\" data-label=\"Move gen\"><span>10%</span><span>1.0 ms</span></span>"
+        ));
+        assert!(html.contains(
+            "<span class=\"metric metric-search\" data-label=\"Ordering\"><span>20%</span><span>2.0 ms</span></span>"
+        ));
+        assert!(html.contains(
+            "<span class=\"metric metric-search\" data-label=\"Scoring\"><span>30%</span><span>3.0 ms</span></span>"
+        ));
+        assert!(html.contains(
+            "<span class=\"metric metric-search\" data-label=\"Proof\"><span>0%</span><span>0 ms</span></span>"
+        ));
+        assert!(html.contains(
+            "<span class=\"metric metric-search\" data-label=\"Other\"><span>35%</span><span>3.5 ms</span></span>"
+        ));
         assert!(html.contains("Budget exhausted"));
         assert!(html.contains("Share of searched moves"));
         assert!(html.contains("20%"));
-        assert!(html.contains("TT hit/cut"));
+        assert!(html.contains("TT"));
         assert!(!html.contains("0.0 / 0.0"));
         assert!(html.contains("<dt>Search Cost</dt>"));
-        assert!(html.contains("Ranking comparisons mark scores above 50% green."));
+        assert!(html.contains("Comparisons above 50% are marked green."));
     }
 
     #[test]
@@ -4899,6 +4901,11 @@ mod tests {
             "corridor_own_plies_followed": 6,
             "corridor_opponent_plies_followed": 3
         });
+        metrics["stage_move_gen_ns"] = serde_json::json!(100);
+        metrics["stage_ordering_ns"] = serde_json::json!(200);
+        metrics["stage_eval_ns"] = serde_json::json!(300);
+        metrics["stage_threat_ns"] = serde_json::json!(400);
+        metrics["stage_proof_ns"] = serde_json::json!(500);
         metrics["leaf_corridor_passes"] = serde_json::json!(10);
         metrics["leaf_corridor_completed"] = serde_json::json!(11);
         metrics["leaf_corridor_checks"] = serde_json::json!(12);
@@ -5026,6 +5033,11 @@ mod tests {
         assert_eq!(report.avg_pattern_frame_update_ns, 100.0);
         assert_eq!(report.pattern_frame_shadow_checks, 15);
         assert_eq!(report.pattern_frame_shadow_mismatches, 0);
+        assert_eq!(report.stage_move_gen_ns, 100);
+        assert_eq!(report.stage_ordering_ns, 200);
+        assert_eq!(report.stage_eval_ns, 300);
+        assert_eq!(report.stage_threat_ns, 400);
+        assert_eq!(report.stage_proof_ns, 500);
         assert_eq!(report.effective_depth_sum, 8);
         assert_eq!(report.avg_effective_depth, 8.0);
         assert_eq!(report.max_effective_depth, 8);
@@ -6134,6 +6146,11 @@ mod tests {
             root_illegal_moves_skipped: 1,
             search_legality_checks: 20,
             search_illegal_moves_skipped: 1,
+            stage_move_gen_ns: 5_000_000,
+            stage_ordering_ns: 10_000_000,
+            stage_eval_ns: 15_000_000,
+            stage_threat_ns: 2_500_000,
+            stage_proof_ns: 0,
             tactical_annotations: 8,
             root_tactical_annotations: 2,
             search_tactical_annotations: 6,
@@ -6296,6 +6313,11 @@ mod tests {
             root_illegal_moves_skipped: 1,
             search_legality_checks: 20,
             search_illegal_moves_skipped: 1,
+            stage_move_gen_ns: 5_000_000,
+            stage_ordering_ns: 10_000_000,
+            stage_eval_ns: 15_000_000,
+            stage_threat_ns: 2_500_000,
+            stage_proof_ns: 0,
             tactical_annotations: 8,
             root_tactical_annotations: 2,
             search_tactical_annotations: 6,

@@ -356,6 +356,11 @@ pub struct SearchMetrics {
     pub root_illegal_moves_skipped: u64,
     pub search_legality_checks: u64,
     pub search_illegal_moves_skipped: u64,
+    pub stage_move_gen_ns: u64,
+    pub stage_ordering_ns: u64,
+    pub stage_eval_ns: u64,
+    pub stage_threat_ns: u64,
+    pub stage_proof_ns: u64,
     pub tactical_annotations: u64,
     pub root_tactical_annotations: u64,
     pub search_tactical_annotations: u64,
@@ -466,10 +471,55 @@ enum SearchMetricPhase {
     Search,
 }
 
+#[derive(Debug, Clone, Copy, Default)]
+struct SearchStageSnapshot {
+    move_gen_ns: u64,
+    ordering_ns: u64,
+    eval_ns: u64,
+    threat_ns: u64,
+    proof_ns: u64,
+}
+
 impl SearchMetrics {
+    fn stage_snapshot(&self) -> SearchStageSnapshot {
+        SearchStageSnapshot {
+            move_gen_ns: self.stage_move_gen_ns,
+            ordering_ns: self.stage_ordering_ns,
+            eval_ns: self.stage_eval_ns,
+            threat_ns: self.stage_threat_ns,
+            proof_ns: self.stage_proof_ns,
+        }
+    }
+
+    fn stage_delta_since(&self, before: SearchStageSnapshot) -> u64 {
+        self.stage_move_gen_ns
+            .saturating_sub(before.move_gen_ns)
+            .saturating_add(self.stage_ordering_ns.saturating_sub(before.ordering_ns))
+            .saturating_add(self.stage_eval_ns.saturating_sub(before.eval_ns))
+            .saturating_add(self.stage_threat_ns.saturating_sub(before.threat_ns))
+            .saturating_add(self.stage_proof_ns.saturating_sub(before.proof_ns))
+    }
+
+    fn record_ordering_scope(&mut self, elapsed: Duration, before: SearchStageSnapshot) {
+        let elapsed_ns = duration_ns(elapsed);
+        let nested_ns = self.stage_delta_since(before);
+        self.stage_ordering_ns = self
+            .stage_ordering_ns
+            .saturating_add(elapsed_ns.saturating_sub(nested_ns));
+    }
+
+    fn record_proof_scope(&mut self, elapsed: Duration, before: SearchStageSnapshot) {
+        let elapsed_ns = duration_ns(elapsed);
+        let nested_ns = self.stage_delta_since(before);
+        self.stage_proof_ns = self
+            .stage_proof_ns
+            .saturating_add(elapsed_ns.saturating_sub(nested_ns));
+    }
+
     fn record_static_eval(&mut self, static_eval: StaticEvaluation, elapsed: Duration) {
         self.eval_calls += 1;
         let ns = duration_ns(elapsed);
+        self.stage_eval_ns = self.stage_eval_ns.saturating_add(ns);
         match static_eval {
             StaticEvaluation::LineShapeEval => {
                 self.line_shape_eval_calls += 1;
@@ -490,14 +540,15 @@ impl SearchMetrics {
     }
 
     fn record_pattern_frame_update(&mut self, elapsed: Duration) {
+        let ns = duration_ns(elapsed);
         self.pattern_frame_updates += 1;
-        self.pattern_frame_update_ns = self
-            .pattern_frame_update_ns
-            .saturating_add(duration_ns(elapsed));
+        self.pattern_frame_update_ns = self.pattern_frame_update_ns.saturating_add(ns);
+        self.stage_eval_ns = self.stage_eval_ns.saturating_add(ns);
     }
 
-    fn record_candidates(&mut self, count: usize, phase: SearchMetricPhase) {
+    fn record_candidates(&mut self, count: usize, elapsed: Duration, phase: SearchMetricPhase) {
         let count = count as u64;
+        self.stage_move_gen_ns = self.stage_move_gen_ns.saturating_add(duration_ns(elapsed));
         self.candidate_generations += 1;
         self.candidate_moves_total += count;
         self.candidate_moves_max = self.candidate_moves_max.max(count);
@@ -526,6 +577,7 @@ impl SearchMetrics {
         let checks = checks as u64;
         let culled = culled as u64;
         let ns = duration_ns(elapsed);
+        self.stage_move_gen_ns = self.stage_move_gen_ns.saturating_add(ns);
         self.null_cell_cull_checks += checks;
         self.null_cell_cull_ns = self.null_cell_cull_ns.saturating_add(ns);
         self.null_cells_culled += culled;
@@ -544,7 +596,13 @@ impl SearchMetrics {
         }
     }
 
-    fn record_legality(&mut self, legal: bool, phase: SearchMetricPhase) -> bool {
+    fn record_legality(
+        &mut self,
+        legal: bool,
+        elapsed: Duration,
+        phase: SearchMetricPhase,
+    ) -> bool {
+        self.stage_move_gen_ns = self.stage_move_gen_ns.saturating_add(duration_ns(elapsed));
         self.legality_checks += 1;
         if !legal {
             self.illegal_moves_skipped += 1;
@@ -590,6 +648,7 @@ impl SearchMetrics {
         self.tactical_lite_rank_scan_ns = self.tactical_lite_rank_scan_ns.saturating_add(ns);
         self.threat_view_scan_queries += 1;
         self.threat_view_scan_ns = self.threat_view_scan_ns.saturating_add(ns);
+        self.stage_threat_ns = self.stage_threat_ns.saturating_add(ns);
     }
 
     fn record_tactical_lite_rank_frontier(
@@ -600,6 +659,7 @@ impl SearchMetrics {
         let ns = duration_ns(elapsed);
         self.threat_view_frontier_queries += 1;
         self.threat_view_frontier_query_ns = self.threat_view_frontier_query_ns.saturating_add(ns);
+        self.stage_threat_ns = self.stage_threat_ns.saturating_add(ns);
         match source {
             FrontierAnnotationSource::CleanCache => {
                 self.tactical_lite_rank_frontier_clean_queries += 1;
@@ -688,24 +748,25 @@ impl SearchMetrics {
     }
 
     fn record_threat_view_scan(&mut self, elapsed: Duration) {
+        let ns = duration_ns(elapsed);
         self.threat_view_scan_queries += 1;
-        self.threat_view_scan_ns = self
-            .threat_view_scan_ns
-            .saturating_add(duration_ns(elapsed));
+        self.threat_view_scan_ns = self.threat_view_scan_ns.saturating_add(ns);
+        self.stage_threat_ns = self.stage_threat_ns.saturating_add(ns);
     }
 
     fn record_threat_view_frontier_rebuild(&mut self, elapsed: Duration) {
+        let ns = duration_ns(elapsed);
         self.threat_view_frontier_rebuilds += 1;
-        self.threat_view_frontier_rebuild_ns = self
-            .threat_view_frontier_rebuild_ns
-            .saturating_add(duration_ns(elapsed));
+        self.threat_view_frontier_rebuild_ns =
+            self.threat_view_frontier_rebuild_ns.saturating_add(ns);
+        self.stage_threat_ns = self.stage_threat_ns.saturating_add(ns);
     }
 
     fn record_threat_view_frontier_query(&mut self, elapsed: Duration) {
+        let ns = duration_ns(elapsed);
         self.threat_view_frontier_queries += 1;
-        self.threat_view_frontier_query_ns = self
-            .threat_view_frontier_query_ns
-            .saturating_add(duration_ns(elapsed));
+        self.threat_view_frontier_query_ns = self.threat_view_frontier_query_ns.saturating_add(ns);
+        self.stage_threat_ns = self.stage_threat_ns.saturating_add(ns);
     }
 
     fn record_threat_view_frontier_immediate_win_query(&mut self, elapsed: Duration) {
@@ -718,22 +779,28 @@ impl SearchMetrics {
 
     fn record_threat_view_frontier_update_parts(&mut self, timings: FrontierUpdateTimings) {
         if let Some(elapsed) = timings.delta_capture {
+            let ns = duration_ns(elapsed);
             self.threat_view_frontier_delta_captures += 1;
             self.threat_view_frontier_delta_capture_ns = self
                 .threat_view_frontier_delta_capture_ns
-                .saturating_add(duration_ns(elapsed));
+                .saturating_add(ns);
+            self.stage_threat_ns = self.stage_threat_ns.saturating_add(ns);
         }
         if let Some(elapsed) = timings.move_fact_update {
+            let ns = duration_ns(elapsed);
             self.threat_view_frontier_move_fact_updates += 1;
             self.threat_view_frontier_move_fact_update_ns = self
                 .threat_view_frontier_move_fact_update_ns
-                .saturating_add(duration_ns(elapsed));
+                .saturating_add(ns);
+            self.stage_threat_ns = self.stage_threat_ns.saturating_add(ns);
         }
         if let Some(elapsed) = timings.annotation_dirty_mark {
+            let ns = duration_ns(elapsed);
             self.threat_view_frontier_annotation_dirty_marks += 1;
             self.threat_view_frontier_annotation_dirty_mark_ns = self
                 .threat_view_frontier_annotation_dirty_mark_ns
-                .saturating_add(duration_ns(elapsed));
+                .saturating_add(ns);
+            self.stage_threat_ns = self.stage_threat_ns.saturating_add(ns);
         }
     }
 
@@ -766,10 +833,12 @@ impl SearchMetrics {
     }
 
     fn record_threat_view_frontier_memo_annotation_query(&mut self, elapsed: Duration) {
+        let ns = duration_ns(elapsed);
         self.threat_view_frontier_memo_annotation_queries += 1;
         self.threat_view_frontier_memo_annotation_query_ns = self
             .threat_view_frontier_memo_annotation_query_ns
-            .saturating_add(duration_ns(elapsed));
+            .saturating_add(ns);
+        self.stage_threat_ns = self.stage_threat_ns.saturating_add(ns);
     }
 
     fn trace(self) -> serde_json::Value {
@@ -1792,8 +1861,9 @@ fn candidate_moves_from_source_counted(
     metrics: &mut SearchMetrics,
     phase: SearchMetricPhase,
 ) -> Vec<Move> {
+    let start = Instant::now();
     let moves = candidate_moves_from_source(board, candidate_source);
-    metrics.record_candidates(moves.len(), phase);
+    metrics.record_candidates(moves.len(), start.elapsed(), phase);
     moves
 }
 
@@ -1869,7 +1939,11 @@ fn legal_by_gate_counted(
     phase: SearchMetricPhase,
 ) -> bool {
     match legality_gate {
-        LegalityGate::ExactRules => metrics.record_legality(board.is_legal(mv), phase),
+        LegalityGate::ExactRules => {
+            let start = Instant::now();
+            let legal = board.is_legal(mv);
+            metrics.record_legality(legal, start.elapsed(), phase)
+        }
     }
 }
 
@@ -2147,7 +2221,9 @@ fn order_root_moves(
     threat_view_mode: ThreatViewMode,
     metrics: &mut SearchMetrics,
 ) -> Vec<Move> {
-    match move_ordering {
+    let stage_before = metrics.stage_snapshot();
+    let start = Instant::now();
+    let ordered = match move_ordering {
         MoveOrdering::TranspositionFirstBoardOrder => order_tt_first(moves, tt_move),
         MoveOrdering::TacticalFull
         | MoveOrdering::PriorityFirst
@@ -2165,7 +2241,9 @@ fn order_root_moves(
         .into_iter()
         .map(|ordered| ordered.mv)
         .collect(),
-    }
+    };
+    metrics.record_ordering_scope(start.elapsed(), stage_before);
+    ordered
 }
 
 fn order_search_moves(
@@ -2177,7 +2255,9 @@ fn order_search_moves(
     threat_view_mode: ThreatViewMode,
     metrics: &mut SearchMetrics,
 ) -> Vec<Move> {
-    match move_ordering {
+    let stage_before = metrics.stage_snapshot();
+    let start = Instant::now();
+    let ordered = match move_ordering {
         MoveOrdering::TranspositionFirstBoardOrder => {
             let moves = order_tt_first(moves, tt_move);
             apply_plain_child_limit(moves, child_limit, metrics, SearchMetricPhase::Search)
@@ -2227,7 +2307,9 @@ fn order_search_moves(
             );
             apply_child_limit(ordered, child_limit, metrics, SearchMetricPhase::Search)
         }
-    }
+    };
+    metrics.record_ordering_scope(start.elapsed(), stage_before);
+    ordered
 }
 
 fn order_moves_with_ordering(
@@ -5175,6 +5257,8 @@ impl Bot for SearchBot {
             && board.result == GameResult::Ongoing
         {
             metrics.leaf_corridor_passes += 1;
+            let stage_before = metrics.stage_snapshot();
+            let proof_start = Instant::now();
             let decision = run_leaf_corridor_candidate_proof_pass(
                 board,
                 color,
@@ -5186,6 +5270,7 @@ impl Bot for SearchBot {
                 &mut metrics,
                 deadline,
             );
+            metrics.record_proof_scope(proof_start.elapsed(), stage_before);
 
             match decision.reason {
                 LeafCorridorProofDecisionReason::NoChange => {}
@@ -7641,6 +7726,28 @@ mod tests {
             metrics["pattern_frame_shadow_mismatches"], 0,
             "cached pattern eval should match scan eval in test/debug shadow checks"
         );
+    }
+
+    #[test]
+    fn trace_records_aggregate_stage_timings() {
+        let mut board = Board::new(RuleConfig::default());
+        apply_moves(&mut board, &["H8", "G8", "H9", "G9"]);
+        let mut config = SearchBotConfig::custom_depth(2);
+        config.static_eval = StaticEvaluation::PatternEval;
+        config.threat_view_mode = ThreatViewMode::Rolling;
+        config.move_ordering = MoveOrdering::Tactical;
+        config.child_limit = Some(8);
+        let mut bot = SearchBot::with_config(config);
+
+        let _ = bot.choose_move(&board);
+        let trace = bot.trace().expect("expected search trace");
+        let metrics = &trace["metrics"];
+
+        assert!(metrics["stage_move_gen_ns"].as_u64().unwrap() > 0);
+        assert!(metrics["stage_ordering_ns"].as_u64().unwrap() > 0);
+        assert!(metrics["stage_eval_ns"].as_u64().unwrap() > 0);
+        assert!(metrics["stage_threat_ns"].as_u64().unwrap() > 0);
+        assert_eq!(metrics["stage_proof_ns"].as_u64().unwrap(), 0);
     }
 
     #[test]
