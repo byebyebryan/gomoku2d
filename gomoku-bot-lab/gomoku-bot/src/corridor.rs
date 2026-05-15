@@ -773,11 +773,11 @@ mod tests {
         assert_eq!(board.current_player, Color::Black);
         assert!(
             !is_corridor_attacker_move(&board, Color::Black, mv("B2")),
-            "quiet moves should not enter a portal just because another black threat already exists"
+            "quiet moves should not enter a corridor just because another black threat already exists"
         );
         assert!(
             is_corridor_attacker_move(&board, Color::Black, mv("L8")),
-            "a local winning continuation should still enter a portal"
+            "a local winning continuation should still enter a corridor"
         );
     }
 
@@ -788,7 +788,7 @@ mod tests {
 
         assert!(
             is_corridor_attacker_move(&board, Color::Black, mv("K8")),
-            "a move creating a local forcing threat should enter a portal"
+            "a move creating a local forcing threat should enter a corridor"
         );
     }
 

@@ -56,7 +56,6 @@ product presets:
 | `move_ordering` | Alpha-beta move ordering: `tt_first_board_order`, current `tactical`, or lab-only `tactical_full` |
 | `child_limit` | Optional lab-only cap on the ordered non-root child frontier searched by alpha-beta |
 | `static_eval` | Leaf board evaluator: default `line_shape_eval` or lab-only `pattern_eval` |
-| `corridor_portals` | Optional corridor-extension controls, disabled by default |
 | `threat_view_mode` | Threat-view backend: default `rolling`, validation-only `rolling_shadow`, or fallback `scan` |
 
 Search traces expose explicit pipeline stages: `candidate_source`,
@@ -117,7 +116,6 @@ pipeline axes.
 | Static eval | `line_shape_eval` | `+pattern-eval` | How leaf board positions are scored. |
 | Threat view | `rolling` | `+rolling-frontier`, `+rolling-frontier-shadow`, `+scan-threat-view` | How tactical facts are answered for safety, ordering, win/block checks, and corridor queries. |
 | Corridor proof | disabled | `+corridor-proof-cN-dM-wW`, legacy `+leaf-corridor-dM-wW`, `+leaf-proof-cN` | Optional after-search corridor proof over selected root candidates. |
-| Corridor portal | disabled | `+corridor-own-dN-wM`, `+corridor-opponent-dN-wM` | Retired portal experiment; kept only for direct historical comparison. |
 
 The current suffix list does **not** include `+pattern-eval-scan`. Conceptually
 that would be a static-eval implementation backend, separate from threat view.
@@ -145,11 +143,10 @@ direct replies or counter-fours against opponent imminent threats. It does not
 generate candidates, run opponent-reply search, reorder moves, or cap the root.
 The retired `+corridor-q` leaf-quiescence experiment proved the shared corridor
 module could be called from search, but it was too expensive to keep as a lab
-axis. The later portal suffixes are also retired as candidate bot knobs. Only
-the base disabled `+corridor-own-dN-wM` and `+corridor-opponent-dN-wM` suffixes
-remain parseable for direct comparison against the failed portal shape; the
-rank/top-N, proof-only, and static-exit suffixes are historical report evidence
-only.
+axis. The later portal suffixes are also retired as candidate bot knobs and are
+no longer parser surface. Portal variants remain historical report evidence
+only; use `+corridor-proof-cN-dM-wW` for the current after-search corridor
+proof experiment.
 
 These specs are not durable product identity, and they are not character bots
 yet. They exist so the lab can benchmark stable configs before deciding whether
@@ -167,7 +164,7 @@ search integrations are also retired as candidate presets:
   ordinary static evaluation.
 - `+corridor-own-dN-wM` and `+corridor-opponent-dN-wM` tested selective
   child-move portal extension, including side-specific attacking and defensive
-  controls.
+  controls. They are now removed from the current parser.
 - `+corridor-min-rank-N` and `+corridor-top-n-N` tried to restrict portal work
   to ordered high-value candidates.
 - `+corridor-proof-only` avoided resume churn by using only terminal corridor
@@ -181,10 +178,9 @@ head-to-head checks, D3 proof-only lost `13-19` to base D3 while costing roughly
 `176 ms/move` versus `60 ms/move`; D5+tactical-cap8 proof-only lost `15-17` to
 base D5+tactical-cap8 while costing roughly `175 ms/move` versus `116 ms/move`.
 
-Keep only the base `+corridor-own-dN-wM` and `+corridor-opponent-dN-wM`
-suffixes as disabled lab evidence. Do not include portal variants in anchors,
-sweeps, product difficulty ladders, or settings UI. The rank/top-N, proof-only,
-and static-exit suffixes are historical controls from old reports, not current
+Do not include portal variants in anchors, sweeps, product difficulty ladders,
+or settings UI. The base portal suffixes and their rank/top-N, proof-only, and
+static-exit variants are historical controls from old reports, not current
 parser surface.
 
 The next corridor-in-search shape is candidate proof rather than leaf
@@ -265,18 +261,6 @@ Search traces include both the result and the config. Abridged example:
     "safety_gate": "current_obligation",
     "move_ordering": "tt_first_board_order",
     "child_limit": null,
-    "corridor_portals": {
-      "own": {
-        "enabled": false,
-        "max_depth": 0,
-        "max_reply_width": 0
-      },
-      "opponent": {
-        "enabled": false,
-        "max_depth": 0,
-        "max_reply_width": 0
-      }
-    },
     "search_algorithm": "alpha_beta_id",
     "static_eval": "line_shape_eval"
   },
@@ -291,7 +275,6 @@ Search traces include both the result and the config. Abridged example:
     "branch_probes": 0,
     "max_depth_reached": 0,
     "extra_plies": 0,
-    "resume_searches": 0,
     "width_exits": 0,
     "depth_exits": 0,
     "neutral_exits": 0,
@@ -315,13 +298,8 @@ Search traces include both the result and the config. Abridged example:
     "search_child_moves_before_total": 0,
     "root_child_moves_after_total": 0,
     "search_child_moves_after_total": 0,
-    "corridor_entry_checks": 0,
-    "corridor_entries_accepted": 0,
-    "corridor_own_entries_accepted": 0,
-    "corridor_opponent_entries_accepted": 0,
     "corridor_nodes": 0,
     "corridor_branch_probes": 0,
-    "corridor_resume_searches": 0,
     "corridor_width_exits": 0,
     "corridor_depth_exits": 0,
     "corridor_neutral_exits": 0,
@@ -351,7 +329,7 @@ uncapped, and all cap metrics are zero for default uncapped configs.
 Tournament reports preserve this split as generated candidate width versus
 post-ordering child width, so capped bots no longer look uncapped just because
 their candidate generator still sees the same broad board frontier.
-Corridor-portal metrics follow the same rule: split ordinary alpha-beta depth
+Corridor-proof metrics follow the same rule: split ordinary alpha-beta depth
 from corridor extra plies, and report effective depth as a derived reach metric
 rather than renaming the bot's nominal `max_depth`.
 Node budgets are not enforced yet; this is currently a trace and tournament
@@ -551,7 +529,7 @@ the replay analyzer contract is documented in
 
 `0.4.3` keeps that restraint and stays in the lab before UI. The live-search
 attempt showed that corridor portals are not useful as-is, but it left the bot
-with shared tactical facts, honest portal metrics, and a threat-view contract.
+with shared tactical facts, honest cost metrics, and a threat-view contract.
 Treat all corridor behavior as lab aliases or config flags until it survives
 tournament, search-cost, and replay-analysis checks. The working plan lives in
 [`archive/v0_4_3_corridor_bot_plan.md`](archive/v0_4_3_corridor_bot_plan.md).

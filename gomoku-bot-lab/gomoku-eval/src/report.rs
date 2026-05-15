@@ -384,18 +384,6 @@ pub struct StandingReport {
     #[serde(default)]
     pub avg_corridor_extra_plies: f64,
     #[serde(default)]
-    pub corridor_entry_checks: u64,
-    #[serde(default)]
-    pub corridor_entries_accepted: u64,
-    #[serde(default)]
-    pub corridor_entry_acceptance_rate: f64,
-    #[serde(default)]
-    pub corridor_own_entries_accepted: u64,
-    #[serde(default)]
-    pub corridor_opponent_entries_accepted: u64,
-    #[serde(default)]
-    pub corridor_resume_searches: u64,
-    #[serde(default)]
     pub corridor_width_exits: u64,
     #[serde(default)]
     pub corridor_depth_exits: u64,
@@ -828,18 +816,6 @@ pub struct SideStatsReport {
     #[serde(default)]
     pub avg_corridor_extra_plies: f64,
     #[serde(default)]
-    pub corridor_entry_checks: u64,
-    #[serde(default)]
-    pub corridor_entries_accepted: u64,
-    #[serde(default)]
-    pub corridor_entry_acceptance_rate: f64,
-    #[serde(default)]
-    pub corridor_own_entries_accepted: u64,
-    #[serde(default)]
-    pub corridor_opponent_entries_accepted: u64,
-    #[serde(default)]
-    pub corridor_resume_searches: u64,
-    #[serde(default)]
     pub corridor_width_exits: u64,
     #[serde(default)]
     pub corridor_depth_exits: u64,
@@ -1156,11 +1132,6 @@ struct SideStatsAccumulator {
     corridor_branch_probes: u64,
     corridor_max_depth: u32,
     corridor_extra_plies: u64,
-    corridor_entry_checks: u64,
-    corridor_entries_accepted: u64,
-    corridor_own_entries_accepted: u64,
-    corridor_opponent_entries_accepted: u64,
-    corridor_resume_searches: u64,
     corridor_width_exits: u64,
     corridor_depth_exits: u64,
     corridor_neutral_exits: u64,
@@ -1479,13 +1450,6 @@ impl SideStatsAccumulator {
             self.tt_hits += trace_value_u64(metrics, "tt_hits");
             self.tt_cutoffs += trace_value_u64(metrics, "tt_cutoffs");
             self.beta_cutoffs += trace_value_u64(metrics, "beta_cutoffs");
-            self.corridor_entry_checks += trace_value_u64(metrics, "corridor_entry_checks");
-            self.corridor_entries_accepted += trace_value_u64(metrics, "corridor_entries_accepted");
-            self.corridor_own_entries_accepted +=
-                trace_value_u64(metrics, "corridor_own_entries_accepted");
-            self.corridor_opponent_entries_accepted +=
-                trace_value_u64(metrics, "corridor_opponent_entries_accepted");
-            self.corridor_resume_searches += trace_value_u64(metrics, "corridor_resume_searches");
             self.corridor_width_exits += trace_value_u64(metrics, "corridor_width_exits");
             self.corridor_depth_exits += trace_value_u64(metrics, "corridor_depth_exits");
             self.corridor_neutral_exits += trace_value_u64(metrics, "corridor_neutral_exits");
@@ -1613,11 +1577,6 @@ impl SideStatsAccumulator {
         self.corridor_branch_probes += stats.corridor_branch_probes;
         self.corridor_max_depth = self.corridor_max_depth.max(stats.corridor_max_depth);
         self.corridor_extra_plies += stats.corridor_extra_plies;
-        self.corridor_entry_checks += stats.corridor_entry_checks;
-        self.corridor_entries_accepted += stats.corridor_entries_accepted;
-        self.corridor_own_entries_accepted += stats.corridor_own_entries_accepted;
-        self.corridor_opponent_entries_accepted += stats.corridor_opponent_entries_accepted;
-        self.corridor_resume_searches += stats.corridor_resume_searches;
         self.corridor_width_exits += stats.corridor_width_exits;
         self.corridor_depth_exits += stats.corridor_depth_exits;
         self.corridor_neutral_exits += stats.corridor_neutral_exits;
@@ -1855,8 +1814,6 @@ impl SideStatsAccumulator {
         let avg_depth = avg(self.depth_sum as f64, self.search_move_count);
         let avg_corridor_extra_plies =
             avg(self.corridor_extra_plies as f64, self.search_move_count);
-        let corridor_entry_acceptance_rate =
-            ratio_u64(self.corridor_entries_accepted, self.corridor_entry_checks);
         let avg_effective_depth = avg(self.effective_depth_sum as f64, self.search_move_count);
         let budget_exhausted_rate = avg(self.budget_exhausted_count as f64, self.search_move_count);
         let pooled_budget_over_base_rate = avg(
@@ -1893,12 +1850,6 @@ impl SideStatsAccumulator {
             corridor_max_depth: self.corridor_max_depth,
             corridor_extra_plies: self.corridor_extra_plies,
             avg_corridor_extra_plies,
-            corridor_entry_checks: self.corridor_entry_checks,
-            corridor_entries_accepted: self.corridor_entries_accepted,
-            corridor_entry_acceptance_rate,
-            corridor_own_entries_accepted: self.corridor_own_entries_accepted,
-            corridor_opponent_entries_accepted: self.corridor_opponent_entries_accepted,
-            corridor_resume_searches: self.corridor_resume_searches,
             corridor_width_exits: self.corridor_width_exits,
             corridor_depth_exits: self.corridor_depth_exits,
             corridor_neutral_exits: self.corridor_neutral_exits,
@@ -2159,12 +2110,6 @@ fn standings(
                 corridor_max_depth: side_stats.corridor_max_depth,
                 corridor_extra_plies: side_stats.corridor_extra_plies,
                 avg_corridor_extra_plies: side_stats.avg_corridor_extra_plies,
-                corridor_entry_checks: side_stats.corridor_entry_checks,
-                corridor_entries_accepted: side_stats.corridor_entries_accepted,
-                corridor_entry_acceptance_rate: side_stats.corridor_entry_acceptance_rate,
-                corridor_own_entries_accepted: side_stats.corridor_own_entries_accepted,
-                corridor_opponent_entries_accepted: side_stats.corridor_opponent_entries_accepted,
-                corridor_resume_searches: side_stats.corridor_resume_searches,
                 corridor_width_exits: side_stats.corridor_width_exits,
                 corridor_depth_exits: side_stats.corridor_depth_exits,
                 corridor_neutral_exits: side_stats.corridor_neutral_exits,
@@ -3357,16 +3302,6 @@ fn compact_searchbot_feature_label(feature: &str) -> String {
     if let Some(rest) = feature.strip_prefix("near-self-r") {
         if let Some((self_radius, opponent_radius)) = rest.split_once("-opponent-r") {
             return format!("SelfR{self_radius}OppR{opponent_radius}");
-        }
-    }
-    if let Some(rest) = feature.strip_prefix("corridor-own-d") {
-        if let Some((depth, width)) = rest.split_once("-w") {
-            return format!("OwnCorrD{depth}W{width}");
-        }
-    }
-    if let Some(rest) = feature.strip_prefix("corridor-opponent-d") {
-        if let Some((depth, width)) = rest.split_once("-w") {
-            return format!("OppCorrD{depth}W{width}");
         }
     }
     if feature.starts_with("corridor-proof-") {
@@ -5102,11 +5037,6 @@ mod tests {
             "child_moves_after_max": 9,
             "root_child_moves_after_max": 0,
             "search_child_moves_after_max": 9,
-            "corridor_entry_checks": 12,
-            "corridor_entries_accepted": 3,
-            "corridor_own_entries_accepted": 2,
-            "corridor_opponent_entries_accepted": 1,
-            "corridor_resume_searches": 4,
             "corridor_width_exits": 5,
             "corridor_depth_exits": 6,
             "corridor_neutral_exits": 7,
@@ -5197,12 +5127,6 @@ mod tests {
         assert_eq!(report.corridor_max_depth, 2);
         assert_eq!(report.corridor_extra_plies, 3);
         assert_eq!(report.avg_corridor_extra_plies, 3.0);
-        assert_eq!(report.corridor_entry_checks, 12);
-        assert_eq!(report.corridor_entries_accepted, 3);
-        assert_eq!(report.corridor_entry_acceptance_rate, 0.25);
-        assert_eq!(report.corridor_own_entries_accepted, 2);
-        assert_eq!(report.corridor_opponent_entries_accepted, 1);
-        assert_eq!(report.corridor_resume_searches, 4);
         assert_eq!(report.corridor_width_exits, 5);
         assert_eq!(report.corridor_depth_exits, 6);
         assert_eq!(report.corridor_neutral_exits, 7);
@@ -5378,12 +5302,6 @@ mod tests {
         first_match.black_stats.corridor_max_depth = 2;
         first_match.black_stats.corridor_extra_plies = 11;
         first_match.black_stats.avg_corridor_extra_plies = 2.2;
-        first_match.black_stats.corridor_entry_checks = 40;
-        first_match.black_stats.corridor_entries_accepted = 10;
-        first_match.black_stats.corridor_entry_acceptance_rate = 0.25;
-        first_match.black_stats.corridor_own_entries_accepted = 7;
-        first_match.black_stats.corridor_opponent_entries_accepted = 3;
-        first_match.black_stats.corridor_resume_searches = 8;
         first_match.black_stats.corridor_width_exits = 6;
         first_match.black_stats.corridor_depth_exits = 5;
         first_match.black_stats.corridor_neutral_exits = 4;
@@ -5484,12 +5402,6 @@ mod tests {
         assert_eq!(row.corridor_max_depth, 2);
         assert_eq!(row.corridor_extra_plies, 11);
         assert_eq!(row.avg_corridor_extra_plies, 2.2);
-        assert_eq!(row.corridor_entry_checks, 40);
-        assert_eq!(row.corridor_entries_accepted, 10);
-        assert_eq!(row.corridor_entry_acceptance_rate, 0.25);
-        assert_eq!(row.corridor_own_entries_accepted, 7);
-        assert_eq!(row.corridor_opponent_entries_accepted, 3);
-        assert_eq!(row.corridor_resume_searches, 8);
         assert_eq!(row.corridor_width_exits, 6);
         assert_eq!(row.corridor_depth_exits, 5);
         assert_eq!(row.corridor_neutral_exits, 4);
@@ -5636,17 +5548,6 @@ mod tests {
         assert_eq!(
             compact_bot_label(&report, "search-d5+tactical-cap-8+near-self-r2-opponent-r1"),
             "SearchBot_D5+TCap8+SelfR2OppR1"
-        );
-        assert_eq!(
-            compact_bot_label(
-                &report,
-                "search-d5+corridor-own-d6-w3+corridor-opponent-d4-w2"
-            ),
-            "SearchBot_D5+OwnCorrD6W3+OppCorrD4W2"
-        );
-        assert_eq!(
-            compact_bot_label(&report, "search-d5+tactical-cap-8+corridor-own-d1-w3"),
-            "SearchBot_D5+TCap8+OwnCorrD1W3"
         );
         assert_eq!(
             compact_bot_label(&report, "search-d5+leaf-corridor-d8-w3"),
@@ -6302,12 +6203,6 @@ mod tests {
             corridor_max_depth: 0,
             corridor_extra_plies: 0,
             avg_corridor_extra_plies: 0.0,
-            corridor_entry_checks: 0,
-            corridor_entries_accepted: 0,
-            corridor_entry_acceptance_rate: 0.0,
-            corridor_own_entries_accepted: 0,
-            corridor_opponent_entries_accepted: 0,
-            corridor_resume_searches: 0,
             corridor_width_exits: 0,
             corridor_depth_exits: 0,
             corridor_neutral_exits: 0,
@@ -6478,12 +6373,6 @@ mod tests {
             corridor_max_depth: 0,
             corridor_extra_plies: 0,
             avg_corridor_extra_plies: 0.0,
-            corridor_entry_checks: 0,
-            corridor_entries_accepted: 0,
-            corridor_entry_acceptance_rate: 0.0,
-            corridor_own_entries_accepted: 0,
-            corridor_opponent_entries_accepted: 0,
-            corridor_resume_searches: 0,
             corridor_width_exits: 0,
             corridor_depth_exits: 0,
             corridor_neutral_exits: 0,
