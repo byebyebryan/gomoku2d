@@ -12,6 +12,54 @@ their own section.
 
 ## [Unreleased]
 
+## [0.4.4] - 2026-05-14
+
+**Theme: replace hot tactical scans with a rolling threat frontier, then spend
+the new headroom on measured bot quality.**
+
+`0.4.4` is still a lab release, but it closes the loop opened by `0.4.3`. The
+corridor-portal idea did not survive bounded search budgets, so this release
+removes that dead path and focuses on the useful foundation it exposed: shared
+threat facts, a scan/rolling `ThreatView` seam, explicit search-stage metrics,
+and a faster default tactical pipeline. The result is not a player-facing
+settings UI yet. It is a cleaner, stronger bot-lab baseline for deciding which
+settings deserve to become product controls.
+
+### Bot lab
+
+- Promoted rolling frontier as the default threat-view backend for normal
+  search, while keeping scan and rolling-shadow modes available for fallback and
+  parity checks.
+- Added rolling-backed pattern evaluation so `+pattern-eval` uses a cached
+  pattern frame instead of repeated full-window scans in rolling mode.
+- Simplified the root safety gate into a first-order current-obligation filter
+  over already-generated legal candidates, with scan and rolling implementations
+  behind the same `ThreatView` contract.
+- Added pooled CPU-budget tournament mode so lab runs stay bounded while more
+  closely matching the product expectation that a harder bot can spend longer
+  on difficult moves.
+- Kept candidate-proof corridor search as a lab axis, but removed the retired
+  portal integration path and parser/report surface after repeated negative
+  strength/cost results.
+- Tightened tactical ordering around staged annotations, null-space culling,
+  viability facts, and rolling-frontier metrics, then refreshed the anchor set
+  around D1, D3, D5/D7 pattern variants, and corridor-proof variants.
+
+### Reports
+
+- Refreshed the published bot report with pooled-budget anchors, stage timing,
+  rolling-frontier health, and cleaned-up search-cost presentation.
+- Refreshed the published analysis report from the current top-two bot matchup
+  so corridor-search examples match the latest tournament.
+
+### Repo and docs
+
+- Updated `docs/search_bot.md`, `docs/corridor_search.md`,
+  `docs/performance_tuning.md`, `docs/tournament.md`, and the `0.4.4` archive
+  plan around the rolling-frontier checkpoint and the failed portal line.
+- Clarified that `0.4.5` is now the earliest likely UI/settings bridge, with
+  `0.4.4` serving as the performance and threat-model foundation for that work.
+
 ## [0.4.3] - 2026-05-12
 
 **Theme: unify corridor search with live bot experiments, then draw the line
@@ -725,7 +773,8 @@ together in one canvas-driven surface. That lesson drove the `v0.2.1` rewrite.
   concerns blurred together.
 - Expressive UI language, but not scalable beyond one canvas.
 
-[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.3...HEAD
+[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.4...HEAD
+[0.4.4]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.0...v0.4.1
