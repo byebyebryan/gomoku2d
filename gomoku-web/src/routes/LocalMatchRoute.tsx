@@ -5,10 +5,15 @@ import { createStore } from "zustand/vanilla";
 
 import { Board } from "../components/Board/Board";
 import { cloudAuthStore } from "../cloud/auth_store";
-import { cloudHistoryStore } from "../cloud/cloud_history_store";
-import { flushCloudProfileSync } from "../cloud/cloud_sync";
-import { cloudMatchHistoryHasMatch } from "../cloud/cloud_profile";
-import { createLocalMatchStore } from "../game/local_match_store";
+import {
+  labSpecForPracticeBot,
+  practiceBotLabel,
+} from "../core/practice_bot_config";
+import {
+  clearLocalMatchLatestReplay,
+  ensureLocalMatchSession,
+  localMatchSessionStore,
+} from "../game/local_match_session";
 import type { LocalMatchResumeSeed, LocalMatchState } from "../game/local_match_store";
 import type { CellPosition } from "../game/types";
 import { localProfileStore } from "../profile/local_profile_store";
@@ -27,6 +32,7 @@ function loadingCells(): LocalMatchState["cells"] {
 const loadingMatchStore = createStore<LocalMatchState>(() => ({
   cells: loadingCells(),
   currentPlayer: 1,
+  currentPracticeBot: { mode: "preset", preset: "normal", version: 1 },
   currentVariant: "freestyle",
   forbiddenMoves: [],
   lastMove: null,
@@ -37,7 +43,9 @@ const loadingMatchStore = createStore<LocalMatchState>(() => ({
     { kind: "human", name: "Guest", stone: "black" },
     { kind: "bot", name: "Practice Bot", stone: "white" },
   ],
+  selectedPracticeBot: { mode: "preset", preset: "normal", version: 1 },
   selectedVariant: "freestyle",
+  selectPracticeBot: () => undefined,
   selectVariant: () => undefined,
   startNewMatch: () => undefined,
   startNextRound: () => undefined,
@@ -79,18 +87,39 @@ function moveCountLabel(moveCount: number): string {
   return `Move ${moveCount}`;
 }
 
+function setupChanged(state: Pick<
+  LocalMatchState,
+  "currentPracticeBot" | "currentVariant" | "selectedPracticeBot" | "selectedVariant"
+>): boolean {
+  return state.currentVariant !== state.selectedVariant
+    || JSON.stringify(state.currentPracticeBot) !== JSON.stringify(state.selectedPracticeBot);
+}
+
+function setupLabel(
+  state: Pick<LocalMatchState, "currentPracticeBot" | "currentVariant">,
+): string {
+  return `${variantLabel(state.currentVariant)} · ${practiceBotLabel(state.currentPracticeBot)}`;
+}
+
+function nextSetupLabel(
+  state: Pick<LocalMatchState, "selectedPracticeBot" | "selectedVariant">,
+): string {
+  return `${variantLabel(state.selectedVariant)} · ${practiceBotLabel(state.selectedPracticeBot)}`;
+}
+
 export function LocalMatchRoute() {
   const location = useLocation();
-  const storeRef = useRef<ReturnType<typeof createLocalMatchStore> | null>(null);
+  const appliedResumeSeedKeyRef = useRef<string | null>(null);
   const [compactTouchMode, setCompactTouchMode] = useState(false);
-  const [latestReplayId, setLatestReplayId] = useState<string | null>(null);
-  const [storeReady, setStoreReady] = useState(false);
   const [touchCandidate, setTouchCandidate] = useState<CellPosition | null>(null);
   const [touchCandidatePlaceable, setTouchCandidatePlaceable] = useState(false);
   const [touchCandidateResetVersion, setTouchCandidateResetVersion] = useState(0);
   const profile = useStore(localProfileStore, (snapshot) => snapshot.profile);
-  const state = useStore(storeRef.current ?? loadingMatchStore, (snapshot) => snapshot);
+  const matchStore = useStore(localMatchSessionStore, (snapshot) => snapshot.matchStore);
+  const latestReplayId = useStore(localMatchSessionStore, (snapshot) => snapshot.latestReplayId);
+  const state = useStore(matchStore ?? loadingMatchStore, (snapshot) => snapshot);
   const resumeSeed = (location.state as { resumeSeed?: LocalMatchResumeSeed } | null)?.resumeSeed ?? null;
+  const resumeSeedKey = resumeSeed ? JSON.stringify(resumeSeed) : null;
 
   useEffect(() => {
     localProfileStore.getState().ensureLocalProfile();
@@ -120,54 +149,24 @@ export function LocalMatchRoute() {
   }, []);
 
   useEffect(() => {
-    if (!profile || storeRef.current) {
+    if (!profile) {
       return;
     }
 
-    storeRef.current = createLocalMatchStore({
-      humanDisplayName: profile.displayName,
-      onMatchFinished: (match) => {
-        const replayId = localProfileStore.getState().recordFinishedMatch(match);
-        const localMatchHistory = localProfileStore.getState().matchHistory;
-        const savedMatch = localMatchHistory.replayMatches.find((entry) => entry.id === replayId);
-        const cloudAuth = cloudAuthStore.getState();
-        if (savedMatch && cloudAuth.status === "signed_in" && cloudAuth.user) {
-          const signedInUser = cloudAuth.user;
-          void flushCloudProfileSync(signedInUser, { localMatchHistory }).then((cloudProfile) => {
-            if (!cloudProfile) {
-              void cloudHistoryStore.getState().syncMatchForUser(signedInUser, savedMatch);
-              return;
-            }
+    if (resumeSeed && appliedResumeSeedKeyRef.current !== resumeSeedKey) {
+      ensureLocalMatchSession({ resumeState: resumeSeed });
+      appliedResumeSeedKeyRef.current = resumeSeedKey;
+      return;
+    }
 
-            cloudHistoryStore.getState().loadFromProfile(signedInUser, cloudProfile);
-            if (!cloudMatchHistoryHasMatch(cloudProfile.matchHistory, savedMatch.id)) {
-              void cloudHistoryStore.getState().syncMatchForUser(
-                signedInUser,
-                savedMatch,
-                cloudProfile.resetAt,
-              );
-            }
-          });
-        }
-        setLatestReplayId(replayId);
-      },
-      resumeState: resumeSeed ?? undefined,
-      practiceBot: localProfileStore.getState().settings.practiceBot,
-      variant: resumeSeed?.variant ?? localProfileStore.getState().settings.preferredVariant,
-    });
-    setStoreReady(true);
-  }, [profile, resumeSeed]);
-
-  useEffect(() => {
-    return () => {
-      storeRef.current?.getState().dispose();
-      storeRef.current = null;
-    };
-  }, []);
+    if (!matchStore) {
+      ensureLocalMatchSession();
+    }
+  }, [matchStore, profile, resumeSeed, resumeSeedKey]);
 
   useEffect(() => {
     if (state.status === "playing" && latestReplayId) {
-      setLatestReplayId(null);
+      clearLocalMatchLatestReplay();
     }
   }, [latestReplayId, state.status]);
 
@@ -180,7 +179,7 @@ export function LocalMatchRoute() {
     setTouchCandidatePlaceable(false);
   }, [compactTouchMode]);
 
-  if (!storeReady || !storeRef.current) {
+  if (!matchStore) {
     return <main className={styles.page}>Loading match…</main>;
   }
 
@@ -228,6 +227,10 @@ export function LocalMatchRoute() {
           <Link aria-label="Profile" className="uiAction uiActionSecondary" to="/profile">
             <Icon className="uiIconDesktop" name="profile" />
             <span className="uiActionLabel">Profile</span>
+          </Link>
+          <Link aria-label="Settings" className="uiAction uiActionSecondary" to="/settings">
+            <Icon className="uiIconDesktop" name="settings" />
+            <span className="uiActionLabel">Settings</span>
           </Link>
           <Link aria-label="Home" className="uiAction uiActionNeutral" to="/">
             <Icon className="uiIconDesktop" name="home" />
@@ -285,43 +288,26 @@ export function LocalMatchRoute() {
           <section className={`${styles.hudSection} ${styles.matchSection}`}>
             <p className={`uiSectionLabel ${styles.matchLabel}`}>Match</p>
             <div className={styles.metaRows}>
-              <div className={`${styles.metaRow} ${styles.metaRowControls} ${styles.ruleRow}`}>
-                <div className={styles.ruleControlCopy}>
-                  <span className={styles.metaLabel}>Rule</span>
-                  <p
-                    aria-hidden={state.selectedVariant === state.currentVariant}
-                    className={styles.pendingText}
-                    data-active={state.selectedVariant !== state.currentVariant}
-                  >
-                    Applies next game.
-                  </p>
-                </div>
-                <div className={styles.variantButtons}>
-                  {(["freestyle", "renju"] as const).map((variant) => (
-                    <button
-                      className={state.selectedVariant === variant ? "uiSegment uiSegmentActive" : "uiSegment"}
-                      data-testid={
-                        state.currentVariant === variant
-                          ? "match-rule"
-                          : state.selectedVariant !== state.currentVariant && state.selectedVariant === variant
-                            ? "match-next-rule"
-                            : undefined
-                      }
-                      key={variant}
-                      onClick={() => {
-                        if (state.moves.length === 0) {
-                          resetTouchCandidate();
-                        }
-                        localProfileStore.getState().updateSettings({ preferredVariant: variant });
-                        state.selectVariant(variant);
-                      }}
-                      type="button"
-                    >
-                      {variantLabel(variant)}
-                    </button>
-                  ))}
-                </div>
+              <div className={styles.metaRow}>
+                <span className={styles.metaLabel}>Rule</span>
+                <span className={styles.metaValue} data-testid="match-rule">
+                  {variantLabel(state.currentVariant)}
+                </span>
               </div>
+              <div className={styles.metaRow}>
+                <span className={styles.metaLabel}>Bot</span>
+                <span className={styles.metaValue} data-testid="match-bot">
+                  {practiceBotLabel(state.currentPracticeBot)}
+                </span>
+              </div>
+              {setupChanged(state) ? (
+                <p className={styles.pendingText}>
+                  Next: {nextSetupLabel(state)}
+                </p>
+              ) : (
+                <p className={styles.currentSetupText}>{setupLabel(state)}</p>
+              )}
+              <p className={styles.labSpec}>{labSpecForPracticeBot(state.currentPracticeBot)}</p>
               <div className={`${styles.metaRow} ${styles.moveRow}`}>
                 <span className={styles.metaLabel}>Move</span>
                 <span className={styles.metaValue} data-testid="match-move-count">

@@ -14,6 +14,7 @@ import pauseSvgRaw from "../../assets/icons/pause.svg?raw";
 import profileSvgRaw from "../../assets/icons/profile.svg?raw";
 import replaySvgRaw from "../../assets/icons/replay.svg?raw";
 import resetSvgRaw from "../../assets/icons/reset.svg?raw";
+import settingsSvgRaw from "../../assets/icons/settings.svg?raw";
 import undoSvgRaw from "../../assets/icons/undo.svg?raw";
 
 function sanitize(svg: string): string {
@@ -37,6 +38,7 @@ export const iconSvg = {
   profile: sanitize(profileSvgRaw),
   replay: sanitize(replaySvgRaw),
   reset: sanitize(resetSvgRaw),
+  settings: sanitize(settingsSvgRaw),
   undo: sanitize(undoSvgRaw),
 } as const;
 

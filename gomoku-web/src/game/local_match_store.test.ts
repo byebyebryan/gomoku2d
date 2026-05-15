@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { DEFAULT_PRACTICE_BOT_CONFIG } from "../core/practice_bot_config";
+import {
+  DEFAULT_PRACTICE_BOT_CONFIG,
+  type PracticeBotConfig,
+} from "../core/practice_bot_config";
 import { WasmBoard } from "../core/wasm_bridge";
 
 import type { LocalMatchState } from "./local_match_store";
@@ -63,6 +66,21 @@ describe("createLocalMatchStore", () => {
     expect(state.selectedVariant).toBe("renju");
   });
 
+  it("tracks the active and selected practice bot config", () => {
+    const practiceBot: PracticeBotConfig = { mode: "preset", preset: "hard", version: 1 };
+    const store = createLocalMatchStore({
+      botRunner: {
+        chooseMove: async () => null,
+        configure: () => undefined,
+        dispose: () => undefined,
+      },
+      practiceBot,
+    });
+
+    expect(store.getState().currentPracticeBot).toEqual(practiceBot);
+    expect(store.getState().selectedPracticeBot).toEqual(practiceBot);
+  });
+
   it("configures bot runners from the selected practice bot config", () => {
     const configureCalls: unknown[] = [];
     createLocalMatchStore({
@@ -118,6 +136,43 @@ describe("createLocalMatchStore", () => {
     });
   });
 
+  it("applies a practice bot change immediately before the first move", () => {
+    const configureCalls: unknown[] = [];
+    const store = createLocalMatchStore({
+      botRunner: {
+        chooseMove: async () => null,
+        configure: (specs) => {
+          configureCalls.push(specs);
+        },
+        dispose: () => undefined,
+      },
+    });
+    const hard: PracticeBotConfig = { mode: "preset", preset: "hard", version: 1 };
+
+    store.getState().selectPracticeBot(hard);
+
+    expect(store.getState()).toMatchObject({
+      currentPracticeBot: hard,
+      moves: [],
+      selectedPracticeBot: hard,
+      status: "playing",
+    });
+    expect(configureCalls[configureCalls.length - 1]).toEqual([
+      { kind: "human" },
+      {
+        childLimit: 8,
+        corridorProof: {
+          candidateLimit: 16,
+          depth: 8,
+          width: 4,
+        },
+        depth: 7,
+        kind: "search",
+        patternEval: true,
+      },
+    ]);
+  });
+
   it("defers a rules change until the next game once moves exist", () => {
     const store = createLocalMatchStore({
       botRunner: {
@@ -140,6 +195,26 @@ describe("createLocalMatchStore", () => {
     expect(store.getState()).toMatchObject({
       currentVariant: "freestyle",
       selectedVariant: "renju",
+    });
+    expect(store.getState().moves).toHaveLength(1);
+  });
+
+  it("defers a practice bot change until the next game once moves exist", () => {
+    const store = createLocalMatchStore({
+      botRunner: {
+        chooseMove: async () => null,
+        configure: () => undefined,
+        dispose: () => undefined,
+      },
+    });
+    const hard: PracticeBotConfig = { mode: "preset", preset: "hard", version: 1 };
+
+    expect(store.getState().placeHumanMove(7, 7)).toBe(true);
+    store.getState().selectPracticeBot(hard);
+
+    expect(store.getState()).toMatchObject({
+      currentPracticeBot: DEFAULT_PRACTICE_BOT_CONFIG,
+      selectedPracticeBot: hard,
     });
     expect(store.getState().moves).toHaveLength(1);
   });
@@ -171,6 +246,45 @@ describe("createLocalMatchStore", () => {
       selectedVariant: "renju",
       status: "playing",
     });
+  });
+
+  it("starts a new match with the selected practice bot config", () => {
+    const configureCalls: unknown[] = [];
+    const store = createLocalMatchStore({
+      botRunner: {
+        chooseMove: async () => null,
+        configure: (specs) => {
+          configureCalls.push(specs);
+        },
+        dispose: () => undefined,
+      },
+    });
+    const hard: PracticeBotConfig = { mode: "preset", preset: "hard", version: 1 };
+
+    expect(store.getState().placeHumanMove(7, 7)).toBe(true);
+    store.getState().selectPracticeBot(hard);
+    store.getState().startNewMatch();
+
+    expect(store.getState()).toMatchObject({
+      currentPracticeBot: hard,
+      moves: [],
+      selectedPracticeBot: hard,
+      status: "playing",
+    });
+    expect(configureCalls[configureCalls.length - 1]).toEqual([
+      { kind: "human" },
+      {
+        childLimit: 8,
+        corridorProof: {
+          candidateLimit: 16,
+          depth: 8,
+          width: 4,
+        },
+        depth: 7,
+        kind: "search",
+        patternEval: true,
+      },
+    ]);
   });
 
   it("seeds a resumed local match and keeps the replay variant", () => {

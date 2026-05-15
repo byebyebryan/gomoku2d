@@ -394,7 +394,6 @@ export function ProfileRoute() {
   const localMatchHistory = useStore(localProfileStore, (state) => state.matchHistory);
   const localHistory = localMatchHistory.replayMatches;
   const profile = useStore(localProfileStore, (state) => state.profile);
-  const settings = useStore(localProfileStore, (state) => state.settings);
 
   useEffect(() => {
     localProfileStore.getState().ensureLocalProfile();
@@ -686,6 +685,10 @@ export function ProfileRoute() {
             <Icon className="uiIconDesktop" name="play" />
             <span className="uiActionLabel">Play</span>
           </Link>
+          <Link aria-label="Settings" className="uiAction uiActionSecondary" to="/settings">
+            <Icon className="uiIconDesktop" name="settings" />
+            <span className="uiActionLabel">Settings</span>
+          </Link>
           <Link aria-label="Home" className="uiAction uiActionNeutral" to="/">
             <Icon className="uiIconDesktop" name="home" />
             <span className="uiActionLabel">Home</span>
@@ -742,30 +745,6 @@ export function ProfileRoute() {
                   </span>
                 </button>
               )}
-            </div>
-          </section>
-
-          <div className="uiDivider" />
-
-          <section className={`${styles.sideSection} ${styles.rulesSection}`}>
-            <p className="uiSectionLabel">Default rule</p>
-            <div className={styles.variantButtons}>
-              {(["freestyle", "renju"] as const).map((variant) => (
-                <button
-                  className={
-                    settings.preferredVariant === variant
-                      ? "uiSegment uiSegmentActive"
-                      : "uiSegment"
-                  }
-                  key={variant}
-                  onClick={() => {
-                    localProfileStore.getState().updateSettings({ preferredVariant: variant });
-                  }}
-                  type="button"
-                >
-                  {variantLabel(variant)}
-                </button>
-              ))}
             </div>
           </section>
 
