@@ -200,6 +200,12 @@ fixed-depth eval for ranking confidence. Eval defaults to Renju because bot
 rankings are easier to compare when first-player advantage is constrained; pass
 `--rule freestyle` for freestyle-specific product checks.
 
+Strict per-move budgets remain the default because they make anchor reports easy
+to compare. For product-shaped checks, `--search-budget-mode pooled` uses the
+same CPU budget as a per-game average: cheap moves bank CPU reserve, hard moves
+can spend it, and `--search-cpu-reserve-ms` caps how much burst time a side can
+carry.
+
 ```sh
 mkdir -p outputs
 cargo run --release -p gomoku-eval -- tournament --bots search-d1,search-d3,search-d5 --games-per-pair 10 --opening-policy centered-suite --opening-plies 4 --search-cpu-time-ms 100 --max-game-ms 10000 --seed 42 --report-json outputs/gomoku-tournament.json
@@ -242,6 +248,8 @@ Useful eval flags:
 | `--rule` | Rule variant: `renju` by default, or `freestyle` |
 | `--search-time-ms` | Applies a per-move budget to search bots, including lab aliases |
 | `--search-cpu-time-ms` | Applies a Linux thread CPU-time budget to search bots |
+| `--search-budget-mode` | Budget policy: `strict` per move by default, or `pooled` CPU reserve mode |
+| `--search-cpu-reserve-ms` | CPU reserve cap for pooled mode; defaults to `4000` |
 | `--max-game-ms` | Records a still-running game as a draw after this wall-clock cap |
 | `--max-moves` | Records a still-running game as a draw after this move count |
 | `--seed` | Base seed for reproducible random bots and tournament opening-suite rotation |
@@ -258,8 +266,9 @@ Useful eval flags:
 The default centered opening suite gives every bot pair the same local 4-ply
 openings, with both color assignments, so rankings are less dominated by random
 whole-board stones. Wall-clock budgets are practical but noisy under
-multi-threaded load. CPU-time budgets are better for Linux ranking eval, while
-fixed-depth configs remain the most reproducible option. Tournament reports
+multi-threaded load. CPU-time budgets are better for Linux ranking eval, pooled
+CPU budgets are closer to hard-bot product use, and fixed-depth configs remain
+the most reproducible option. Tournament reports
 include pairwise records, color splits, shuffled-order Elo averages,
 depth/budget stats, opening IDs, generated candidate width, post-ordering child
 width, and compact `move_cells` using the same `row * 15 + col` codec as saved

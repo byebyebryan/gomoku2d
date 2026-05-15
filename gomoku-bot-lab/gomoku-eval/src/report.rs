@@ -26,6 +26,10 @@ pub struct TournamentRunReport {
     pub threads: usize,
     pub search_time_ms: Option<u64>,
     pub search_cpu_time_ms: Option<u64>,
+    #[serde(default = "default_search_budget_mode")]
+    pub search_budget_mode: String,
+    #[serde(default)]
+    pub search_cpu_reserve_ms: Option<u64>,
     pub max_moves: Option<usize>,
     pub max_game_ms: Option<u64>,
     #[serde(default)]
@@ -93,6 +97,10 @@ pub struct AnchorReferenceSource {
     pub seed: u64,
     pub search_time_ms: Option<u64>,
     pub search_cpu_time_ms: Option<u64>,
+    #[serde(default = "default_search_budget_mode")]
+    pub search_budget_mode: String,
+    #[serde(default)]
+    pub search_cpu_reserve_ms: Option<u64>,
     #[serde(default)]
     pub max_moves: Option<usize>,
     #[serde(default)]
@@ -212,6 +220,8 @@ impl AnchorReferenceReport {
                 seed: source_report.run.seed,
                 search_time_ms: source_report.run.search_time_ms,
                 search_cpu_time_ms: source_report.run.search_cpu_time_ms,
+                search_budget_mode: source_report.run.search_budget_mode.clone(),
+                search_cpu_reserve_ms: source_report.run.search_cpu_reserve_ms,
                 max_moves: source_report.run.max_moves,
                 max_game_ms: source_report.run.max_game_ms,
             },
@@ -242,6 +252,12 @@ impl AnchorReferenceReport {
         }
         if source.search_cpu_time_ms != run.search_cpu_time_ms {
             mismatches.push("search_cpu_time_ms".to_string());
+        }
+        if source.search_budget_mode != run.search_budget_mode {
+            mismatches.push("search_budget_mode".to_string());
+        }
+        if source.search_cpu_reserve_ms != run.search_cpu_reserve_ms {
+            mismatches.push("search_cpu_reserve_ms".to_string());
         }
         if source.max_moves != run.max_moves {
             mismatches.push("max_moves".to_string());
@@ -2938,13 +2954,21 @@ fn anchor_reference_revision(source: &AnchorReferenceSource) -> String {
 }
 
 fn anchor_budget_label(source: &AnchorReferenceSource) -> String {
-    match (source.search_cpu_time_ms, source.search_time_ms) {
+    let base = match (source.search_cpu_time_ms, source.search_time_ms) {
         (Some(cpu_ms), Some(wall_ms)) => {
             format!("CPU {cpu_ms} ms/move, wall {wall_ms} ms/move")
         }
         (Some(cpu_ms), None) => format!("CPU {cpu_ms} ms/move"),
         (None, Some(wall_ms)) => format!("Wall {wall_ms} ms/move"),
         (None, None) => "no per-move budget".to_string(),
+    };
+    if source.search_budget_mode == "pooled" {
+        match source.search_cpu_reserve_ms {
+            Some(reserve_ms) => format!("{base}, pooled reserve {reserve_ms} ms"),
+            None => format!("{base}, pooled"),
+        }
+    } else {
+        base
     }
 }
 
@@ -2977,13 +3001,21 @@ fn git_revision_label(provenance: &ReportProvenance) -> String {
 }
 
 fn budget_label(run: &TournamentRunReport) -> String {
-    match (run.search_cpu_time_ms, run.search_time_ms) {
+    let base = match (run.search_cpu_time_ms, run.search_time_ms) {
         (Some(cpu_ms), Some(wall_ms)) => {
             format!("CPU {cpu_ms} ms/move, wall {wall_ms} ms/move")
         }
         (Some(cpu_ms), None) => format!("CPU {cpu_ms} ms/move"),
         (None, Some(wall_ms)) => format!("Wall {wall_ms} ms/move"),
         (None, None) => "no per-move budget".to_string(),
+    };
+    if run.search_budget_mode == "pooled" {
+        match run.search_cpu_reserve_ms {
+            Some(reserve_ms) => format!("{base}, pooled reserve {reserve_ms} ms"),
+            None => format!("{base}, pooled"),
+        }
+    } else {
+        base
     }
 }
 
@@ -3072,6 +3104,10 @@ fn opening_summary(report: &TournamentReport) -> String {
 
 fn default_opening_policy() -> String {
     "centered-suite".to_string()
+}
+
+fn default_search_budget_mode() -> String {
+    "strict".to_string()
 }
 
 fn default_schedule() -> String {
@@ -4466,6 +4502,17 @@ mod tests {
     }
 
     #[test]
+    fn html_report_labels_pooled_search_budget() {
+        let mut report = sample_report();
+        report.run.search_budget_mode = "pooled".to_string();
+        report.run.search_cpu_reserve_ms = Some(4_000);
+
+        let html = render_tournament_report_html(&report);
+
+        assert!(html.contains("CPU 1000 ms/move, pooled reserve 4000 ms"));
+    }
+
+    #[test]
     fn html_report_renders_how_to_read_as_quiet_glossary() {
         let report = sample_report();
         let html = render_tournament_report_html(&report);
@@ -4559,6 +4606,8 @@ mod tests {
                 seed: 63,
                 search_time_ms: None,
                 search_cpu_time_ms: Some(1000),
+                search_budget_mode: "strict".to_string(),
+                search_cpu_reserve_ms: None,
                 max_moves: Some(120),
                 max_game_ms: None,
             },
@@ -5285,6 +5334,8 @@ mod tests {
                 seed: 63,
                 search_time_ms: None,
                 search_cpu_time_ms: Some(1000),
+                search_budget_mode: "strict".to_string(),
+                search_cpu_reserve_ms: None,
                 max_moves: Some(120),
                 max_game_ms: None,
             },
@@ -5497,6 +5548,14 @@ mod tests {
         let err = reference.validate_compatible_run(&run).unwrap_err();
 
         assert!(err.contains("search_cpu_time_ms"));
+
+        let mut run = source.run.clone();
+        run.search_budget_mode = "pooled".to_string();
+        run.search_cpu_reserve_ms = Some(4_000);
+        let err = reference.validate_compatible_run(&run).unwrap_err();
+
+        assert!(err.contains("search_budget_mode"));
+        assert!(err.contains("search_cpu_reserve_ms"));
     }
 
     #[test]
@@ -5516,6 +5575,8 @@ mod tests {
                 seed: 48,
                 search_time_ms: None,
                 search_cpu_time_ms: Some(1000),
+                search_budget_mode: "strict".to_string(),
+                search_cpu_reserve_ms: None,
                 max_moves: Some(120),
                 max_game_ms: None,
             },
@@ -5565,6 +5626,8 @@ mod tests {
                 seed: 48,
                 search_time_ms: None,
                 search_cpu_time_ms: Some(1000),
+                search_budget_mode: "strict".to_string(),
+                search_cpu_reserve_ms: None,
                 max_moves: Some(120),
                 max_game_ms: None,
             },
@@ -5625,6 +5688,8 @@ mod tests {
                 seed: 48,
                 search_time_ms: None,
                 search_cpu_time_ms: Some(1000),
+                search_budget_mode: "strict".to_string(),
+                search_cpu_reserve_ms: None,
                 max_moves: Some(120),
                 max_game_ms: None,
             },
@@ -5838,6 +5903,8 @@ mod tests {
 
         assert_eq!(report.run.schedule, "round-robin");
         assert_eq!(report.run.opening_policy, "centered-suite");
+        assert_eq!(report.run.search_budget_mode, "strict");
+        assert_eq!(report.run.search_cpu_reserve_ms, None);
         assert_eq!(report.standings[0].eval_calls, 0);
         assert_eq!(report.standings[0].search_candidate_generations, 0);
         assert!(report.matches[0].opening.is_none());
@@ -5902,6 +5969,8 @@ mod tests {
                 threads: 1,
                 search_time_ms: None,
                 search_cpu_time_ms: Some(1000),
+                search_budget_mode: "strict".to_string(),
+                search_cpu_reserve_ms: None,
                 max_moves: Some(120),
                 max_game_ms: None,
                 total_wall_time_ms: Some(100),
