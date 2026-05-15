@@ -4,13 +4,14 @@ mod pattern;
 pub mod random;
 pub mod search;
 pub mod tactical;
+pub mod viability;
 
 pub use corridor::CorridorOptions;
 pub use random::RandomBot;
 pub use search::{
     CandidateSource, CorridorPortalConfig, CorridorPortalSideConfig, LeafCorridorConfig,
-    MoveOrdering, SafetyGate, SearchAlgorithm, SearchBot, SearchBotConfig, StaticEvaluation,
-    ThreatViewMode,
+    MoveOrdering, NullCellCulling, SafetyGate, SearchAlgorithm, SearchBot, SearchBotConfig,
+    StaticEvaluation, ThreatViewMode,
 };
 
 use gomoku_core::{Board, Move};

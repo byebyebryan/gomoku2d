@@ -45,6 +45,7 @@ product presets:
 | `cpu_time_budget_ms` | Optional per-move Linux thread CPU-time budget |
 | `candidate_radius` | Distance around existing stones used to generate candidate moves, or current-player stones for asymmetric candidate sources |
 | `candidate_opponent_radius` | Optional opponent-stone radius for asymmetric candidate sources |
+| `null_cell_culling` | Optional lab filter for generated candidates that cannot make five for either side in any direction |
 | `safety_gate` | Root safety gate: `current_obligation` or `none` |
 | `move_ordering` | Alpha-beta move ordering: `tt_first_board_order`, current `tactical`, or lab-only `tactical_full` |
 | `child_limit` | Optional lab-only cap on the ordered non-root child frontier searched by alpha-beta |
@@ -53,14 +54,17 @@ product presets:
 | `threat_view_mode` | Threat-view backend: default `rolling`, validation-only `rolling_shadow`, or fallback `scan` |
 
 Search traces expose explicit pipeline stages: `candidate_source`,
-`legality_gate`, tactical annotation counters, `safety_gate`, and
-`move_ordering`. Candidate sources currently cover symmetric near-all radii
-(`near_all_rN`) and lab-only asymmetric current-player/opponent radii
-(`near_self_rN_opponent_rM`). There is one legality gate (`exact_rules`), one
-shared local-threat view, one root safety gate (`current_obligation`, or `none`
-for ablations), the default `tt_first_board_order`, the current
-local-potential `tactical` ordering, the older `tactical_full` comparison path,
-and an optional `child_limit` lab cap. Static eval
+`null_cell_culling`, `legality_gate`, tactical annotation counters,
+`safety_gate`, and `move_ordering`. Candidate sources currently cover symmetric
+near-all radii (`near_all_rN`) and lab-only asymmetric current-player/opponent
+radii (`near_self_rN_opponent_rM`). Optional null-cell culling runs after
+candidate generation and removes geometric dead cells that cannot participate
+in any five-cell line for either color. There is one legality gate
+(`exact_rules`), one shared local-threat view, one root safety gate
+(`current_obligation`, or `none` for ablations), the default
+`tt_first_board_order`, the current local-potential `tactical` ordering, the
+older `tactical_full` comparison path, and an optional `child_limit` lab cap.
+Static eval
 defaults to the
 global line-shape evaluator; `pattern_eval` is a lab-only alternative that
 scores five-cell windows with Renju-aware completion/extension squares.
@@ -99,6 +103,7 @@ pipeline axes.
 |---|---|---|---|
 | Search budget | fixed depth from `search-dN` | CLI `--search-time-ms`, `--search-cpu-time-ms` | Iterative-deepening stopping condition. |
 | Candidate source | `near_all_r2` | `+near-all-r1`, `+near-all-r2`, `+near-all-r3`, `+near-self-rN-opponent-rM` | Which empty cells enter the search before root safety or child ordering. |
+| Null-cell cull | disabled | `+null-cull` | Optional post-generation filter for cells boxed out from every possible five for both colors. |
 | Legality gate | `exact_rules` | no suffix | Exact core legality filtering, including Renju forbidden moves. |
 | Root safety gate | `current_obligation` | `+no-safety` | Filters legal root candidates against immediate/imminent obligations already on the board. |
 | Move ordering | `tt_first_board_order` | `+tactical-full` for old full annotation; `+tactical-cap-N` selects current tactical ordering with a cap | How legal child moves are ordered before alpha-beta explores them. |
@@ -118,6 +123,13 @@ fixed-depth parity tests while reading like different features in report names.
 If scan-vs-frame pattern comparisons remain common, the next cleanup should add
 an explicit `+pattern-eval-scan` suffix rather than overloading
 `+scan-threat-view`.
+
+`+null-cull` is intentionally a lab axis, not a default. It is safe in the
+geometric sense: a culled cell has no direction where either side could form a
+five-cell line through that point. The rolling frontier caches the same fact for
+search nodes; scan mode recomputes it from the board. The trace metrics split
+root/search checks and culled counts so sweeps can tell whether the filter is
+actually reducing useful breadth or just adding overhead.
 
 The retired opponent-reply safety probes are intentionally no longer accepted
 as lab suffixes; the current safety gate only filters the legal root candidates

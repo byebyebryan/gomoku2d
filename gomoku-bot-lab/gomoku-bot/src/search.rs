@@ -14,6 +14,7 @@ use crate::tactical::{
     SearchThreatPolicy, TacticalLiteRank, TacticalMoveAnnotation, TacticalOrderingSummary,
     ThreatView,
 };
+use crate::viability::scan_cell_null;
 use crate::Bot;
 use gomoku_core::{Board, Color, GameResult, Move, Variant, ZobristTable, DIRS};
 
@@ -340,6 +341,15 @@ pub struct SearchMetrics {
     pub search_candidate_generations: u64,
     pub search_candidate_moves_total: u64,
     pub search_candidate_moves_max: u64,
+    pub null_cell_cull_checks: u64,
+    pub null_cell_cull_ns: u64,
+    pub null_cells_culled: u64,
+    pub root_null_cell_cull_checks: u64,
+    pub root_null_cell_cull_ns: u64,
+    pub root_null_cells_culled: u64,
+    pub search_null_cell_cull_checks: u64,
+    pub search_null_cell_cull_ns: u64,
+    pub search_null_cells_culled: u64,
     pub legality_checks: u64,
     pub illegal_moves_skipped: u64,
     pub root_legality_checks: u64,
@@ -502,6 +512,34 @@ impl SearchMetrics {
                 self.search_candidate_generations += 1;
                 self.search_candidate_moves_total += count;
                 self.search_candidate_moves_max = self.search_candidate_moves_max.max(count);
+            }
+        }
+    }
+
+    fn record_null_cell_cull(
+        &mut self,
+        checks: usize,
+        culled: usize,
+        elapsed: Duration,
+        phase: SearchMetricPhase,
+    ) {
+        let checks = checks as u64;
+        let culled = culled as u64;
+        let ns = duration_ns(elapsed);
+        self.null_cell_cull_checks += checks;
+        self.null_cell_cull_ns = self.null_cell_cull_ns.saturating_add(ns);
+        self.null_cells_culled += culled;
+
+        match phase {
+            SearchMetricPhase::Root => {
+                self.root_null_cell_cull_checks += checks;
+                self.root_null_cell_cull_ns = self.root_null_cell_cull_ns.saturating_add(ns);
+                self.root_null_cells_culled += culled;
+            }
+            SearchMetricPhase::Search => {
+                self.search_null_cell_cull_checks += checks;
+                self.search_null_cell_cull_ns = self.search_null_cell_cull_ns.saturating_add(ns);
+                self.search_null_cells_culled += culled;
             }
         }
     }
@@ -1759,6 +1797,60 @@ fn candidate_moves_from_source_counted(
     moves
 }
 
+fn cull_null_cells_counted(
+    board: &Board,
+    frontier: Option<&RollingThreatFrontier>,
+    moves: Vec<Move>,
+    null_cell_culling: NullCellCulling,
+    threat_view_mode: ThreatViewMode,
+    metrics: &mut SearchMetrics,
+    phase: SearchMetricPhase,
+) -> Vec<Move> {
+    if !null_cell_culling.enabled() || moves.is_empty() {
+        return moves;
+    }
+
+    let start = Instant::now();
+    let mut kept = Vec::with_capacity(moves.len());
+    let mut culled = 0usize;
+    for mv in moves {
+        if is_null_cell_for_mode(board, frontier, mv, threat_view_mode, metrics) {
+            culled += 1;
+        } else {
+            kept.push(mv);
+        }
+    }
+    let checks = kept.len() + culled;
+    metrics.record_null_cell_cull(checks, culled, start.elapsed(), phase);
+    kept
+}
+
+fn is_null_cell_for_mode(
+    board: &Board,
+    frontier: Option<&RollingThreatFrontier>,
+    mv: Move,
+    threat_view_mode: ThreatViewMode,
+    metrics: &mut SearchMetrics,
+) -> bool {
+    match threat_view_mode {
+        ThreatViewMode::Scan => scan_cell_null(board, mv),
+        ThreatViewMode::Rolling => frontier
+            .map(|frontier| frontier.is_null_cell(mv))
+            .unwrap_or_else(|| scan_cell_null(board, mv)),
+        ThreatViewMode::RollingShadow => {
+            let scan = scan_cell_null(board, mv);
+            if let Some(frontier) = frontier {
+                metrics.threat_view_shadow_checks += 1;
+                let rolling = frontier.is_null_cell(mv);
+                if scan != rolling {
+                    metrics.threat_view_shadow_mismatches += 1;
+                }
+            }
+            scan
+        }
+    }
+}
+
 fn needs_renju_legality_check(board: &Board, color: Color) -> bool {
     board.config.variant == Variant::Renju && color == Color::Black
 }
@@ -1784,6 +1876,7 @@ fn legal_by_gate_counted(
 fn root_candidate_moves_with_metrics(
     board: &Board,
     candidate_source: CandidateSource,
+    null_cell_culling: NullCellCulling,
     legality_gate: LegalityGate,
     safety_gate: SafetyGate,
     threat_view_mode: ThreatViewMode,
@@ -1793,6 +1886,15 @@ fn root_candidate_moves_with_metrics(
     let mut moves = candidate_moves_from_source_counted(
         board,
         candidate_source,
+        metrics,
+        SearchMetricPhase::Root,
+    );
+    moves = cull_null_cells_counted(
+        board,
+        None,
+        moves,
+        null_cell_culling,
+        threat_view_mode,
         metrics,
         SearchMetricPhase::Root,
     );
@@ -3391,6 +3493,7 @@ fn search_child_after_move(
     tt: &mut HashMap<u64, TTEntry>,
     zobrist: &ZobristTable,
     candidate_source: CandidateSource,
+    null_cell_culling: NullCellCulling,
     legality_gate: LegalityGate,
     move_ordering: MoveOrdering,
     child_limit: Option<usize>,
@@ -3425,6 +3528,7 @@ fn search_child_after_move(
             tt,
             zobrist,
             candidate_source,
+            null_cell_culling,
             legality_gate,
             move_ordering,
             child_limit,
@@ -3447,6 +3551,7 @@ fn search_child_after_move(
         tt,
         zobrist,
         candidate_source,
+        null_cell_culling,
         legality_gate,
         move_ordering,
         child_limit,
@@ -3471,6 +3576,7 @@ fn resume_normal_search_after_corridor(
     _tt: &mut HashMap<u64, TTEntry>,
     zobrist: &ZobristTable,
     candidate_source: CandidateSource,
+    null_cell_culling: NullCellCulling,
     legality_gate: LegalityGate,
     move_ordering: MoveOrdering,
     child_limit: Option<usize>,
@@ -3493,6 +3599,7 @@ fn resume_normal_search_after_corridor(
         &mut resume_tt,
         zobrist,
         candidate_source,
+        null_cell_culling,
         legality_gate,
         move_ordering,
         child_limit,
@@ -3521,6 +3628,7 @@ fn corridor_portal_search(
     tt: &mut HashMap<u64, TTEntry>,
     zobrist: &ZobristTable,
     candidate_source: CandidateSource,
+    null_cell_culling: NullCellCulling,
     legality_gate: LegalityGate,
     move_ordering: MoveOrdering,
     child_limit: Option<usize>,
@@ -3562,6 +3670,7 @@ fn corridor_portal_search(
             tt,
             zobrist,
             candidate_source,
+            null_cell_culling,
             legality_gate,
             move_ordering,
             child_limit,
@@ -3600,6 +3709,7 @@ fn corridor_portal_search(
                 tt,
                 zobrist,
                 candidate_source,
+                null_cell_culling,
                 legality_gate,
                 move_ordering,
                 child_limit,
@@ -3642,6 +3752,7 @@ fn corridor_portal_search(
             tt,
             zobrist,
             candidate_source,
+            null_cell_culling,
             legality_gate,
             move_ordering,
             child_limit,
@@ -3683,6 +3794,7 @@ fn corridor_portal_search(
             tt,
             zobrist,
             candidate_source,
+            null_cell_culling,
             legality_gate,
             move_ordering,
             child_limit,
@@ -3958,6 +4070,7 @@ fn negamax(
     tt: &mut HashMap<u64, TTEntry>,
     zobrist: &ZobristTable,
     candidate_source: CandidateSource,
+    null_cell_culling: NullCellCulling,
     legality_gate: LegalityGate,
     move_ordering: MoveOrdering,
     child_limit: Option<usize>,
@@ -4031,6 +4144,15 @@ fn negamax(
     let mut moves = candidate_moves_from_source_counted(
         state.board(),
         candidate_source,
+        metrics,
+        SearchMetricPhase::Search,
+    );
+    moves = cull_null_cells_counted(
+        state.board(),
+        state.frontier.as_ref(),
+        moves,
+        null_cell_culling,
+        threat_view_mode,
         metrics,
         SearchMetricPhase::Search,
     );
@@ -4123,6 +4245,7 @@ fn negamax(
             tt,
             zobrist,
             candidate_source,
+            null_cell_culling,
             legality_gate,
             move_ordering,
             child_limit,
@@ -4215,6 +4338,7 @@ fn search_root(
     tt: &mut HashMap<u64, TTEntry>,
     zobrist: &ZobristTable,
     candidate_source: CandidateSource,
+    null_cell_culling: NullCellCulling,
     legality_gate: LegalityGate,
     move_ordering: MoveOrdering,
     child_limit: Option<usize>,
@@ -4288,6 +4412,7 @@ fn search_root(
             tt,
             zobrist,
             candidate_source,
+            null_cell_culling,
             legality_gate,
             move_ordering,
             child_limit,
@@ -4513,6 +4638,25 @@ impl ThreatViewMode {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NullCellCulling {
+    Disabled,
+    Enabled,
+}
+
+impl NullCellCulling {
+    const fn name(self) -> &'static str {
+        match self {
+            NullCellCulling::Disabled => "disabled",
+            NullCellCulling::Enabled => "enabled",
+        }
+    }
+
+    const fn enabled(self) -> bool {
+        matches!(self, NullCellCulling::Enabled)
+    }
+}
+
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
 pub struct CorridorPortalSideConfig {
     pub enabled: bool,
@@ -4631,6 +4775,7 @@ pub struct SearchBotConfig {
     pub corridor_portals: CorridorPortalConfig,
     pub leaf_corridor: LeafCorridorConfig,
     pub threat_view_mode: ThreatViewMode,
+    pub null_cell_culling: NullCellCulling,
 }
 
 impl SearchBotConfig {
@@ -4649,6 +4794,7 @@ impl SearchBotConfig {
             corridor_portals: CorridorPortalConfig::DISABLED,
             leaf_corridor: LeafCorridorConfig::DISABLED,
             threat_view_mode: ThreatViewMode::Rolling,
+            null_cell_culling: NullCellCulling::Disabled,
         }
     }
 
@@ -4667,6 +4813,7 @@ impl SearchBotConfig {
             corridor_portals: CorridorPortalConfig::DISABLED,
             leaf_corridor: LeafCorridorConfig::DISABLED,
             threat_view_mode: ThreatViewMode::Rolling,
+            null_cell_culling: NullCellCulling::Disabled,
         }
     }
 
@@ -4685,6 +4832,7 @@ impl SearchBotConfig {
             corridor_portals: CorridorPortalConfig::DISABLED,
             leaf_corridor: LeafCorridorConfig::DISABLED,
             threat_view_mode: ThreatViewMode::Rolling,
+            null_cell_culling: NullCellCulling::Disabled,
         }
     }
 
@@ -4735,6 +4883,7 @@ impl SearchBotConfig {
             "corridor_portals": self.corridor_portals.trace(),
             "leaf_corridor": self.leaf_corridor.trace(),
             "threat_view_mode": self.threat_view_mode.name(),
+            "null_cell_culling": self.null_cell_culling.name(),
         })
     }
 }
@@ -4830,6 +4979,7 @@ impl Bot for SearchBot {
         let deadline = SearchDeadline::new(start, time_budget, cpu_start, cpu_time_budget);
         let center = board.config.board_size / 2;
         let candidate_source = self.config.candidate_source();
+        let null_cell_culling = self.config.null_cell_culling;
         let legality_gate = self.config.legality_gate();
         let safety_gate = self.config.safety_gate();
         let move_ordering = self.config.move_ordering;
@@ -4842,6 +4992,7 @@ impl Bot for SearchBot {
         let (root_moves, safety_nodes, mut budget_exhausted) = root_candidate_moves_with_metrics(
             board,
             candidate_source,
+            null_cell_culling,
             legality_gate,
             safety_gate,
             self.config.threat_view_mode,
@@ -4894,6 +5045,7 @@ impl Bot for SearchBot {
                 &mut self.tt,
                 &self.zobrist,
                 candidate_source,
+                null_cell_culling,
                 legality_gate,
                 move_ordering,
                 self.config.child_limit,
@@ -5434,6 +5586,7 @@ mod tests {
         let moves = root_candidate_moves_with_metrics(
             &board,
             CandidateSource::NearAll { radius: 2 },
+            NullCellCulling::Disabled,
             LegalityGate::ExactRules,
             SafetyGate::CurrentObligation,
             ThreatViewMode::Scan,
@@ -5473,6 +5626,7 @@ mod tests {
         let (moves, safety_nodes, timed_out) = root_candidate_moves_with_metrics(
             &board,
             CandidateSource::NearAll { radius: 2 },
+            NullCellCulling::Disabled,
             LegalityGate::ExactRules,
             SafetyGate::None,
             ThreatViewMode::Scan,
@@ -5502,6 +5656,7 @@ mod tests {
         let (moves, safety_nodes, timed_out) = root_candidate_moves_with_metrics(
             &board,
             CandidateSource::NearAll { radius: 2 },
+            NullCellCulling::Disabled,
             LegalityGate::ExactRules,
             SafetyGate::CurrentObligation,
             ThreatViewMode::Scan,
@@ -5529,6 +5684,7 @@ mod tests {
         let (moves, safety_nodes, timed_out) = root_candidate_moves_with_metrics(
             &board,
             CandidateSource::NearAll { radius: 2 },
+            NullCellCulling::Disabled,
             LegalityGate::ExactRules,
             SafetyGate::CurrentObligation,
             ThreatViewMode::Scan,
@@ -5551,6 +5707,7 @@ mod tests {
         let (moves, safety_nodes, timed_out) = root_candidate_moves_with_metrics(
             &board,
             CandidateSource::NearAll { radius: 2 },
+            NullCellCulling::Disabled,
             LegalityGate::ExactRules,
             SafetyGate::CurrentObligation,
             ThreatViewMode::Scan,
@@ -5580,6 +5737,7 @@ mod tests {
         let (moves, safety_nodes, timed_out) = root_candidate_moves_with_metrics(
             &board,
             CandidateSource::NearAll { radius: 2 },
+            NullCellCulling::Disabled,
             LegalityGate::ExactRules,
             SafetyGate::CurrentObligation,
             ThreatViewMode::Scan,
@@ -6100,6 +6258,7 @@ mod tests {
             &mut tt,
             &zobrist,
             CandidateSource::NearAll { radius: 2 },
+            NullCellCulling::Disabled,
             LegalityGate::ExactRules,
             MoveOrdering::TranspositionFirstBoardOrder,
             Some(1),
@@ -6131,6 +6290,7 @@ mod tests {
         );
         assert_eq!(baseline.legality_gate(), LegalityGate::ExactRules);
         assert_eq!(baseline.safety_gate(), SafetyGate::CurrentObligation);
+        assert_eq!(baseline.null_cell_culling, NullCellCulling::Disabled);
         assert_eq!(baseline.corridor_portals, CorridorPortalConfig::default());
         assert_eq!(
             baseline.move_ordering,
@@ -6160,6 +6320,7 @@ mod tests {
             corridor_portals: CorridorPortalConfig::default(),
             leaf_corridor: LeafCorridorConfig::DISABLED,
             threat_view_mode: ThreatViewMode::Scan,
+            null_cell_culling: NullCellCulling::Enabled,
         };
         assert_eq!(SearchBot::with_config(config).config(), config);
         assert_eq!(
@@ -6167,6 +6328,7 @@ mod tests {
             CandidateSource::NearAll { radius: 3 }
         );
         assert_eq!(config.safety_gate, SafetyGate::None);
+        assert_eq!(config.null_cell_culling, NullCellCulling::Enabled);
 
         let asymmetric = SearchBotConfig {
             candidate_radius: 2,
@@ -6217,6 +6379,7 @@ mod tests {
         assert_eq!(trace["config"]["search_algorithm"], "alpha_beta_id");
         assert_eq!(trace["config"]["static_eval"], "line_shape_eval");
         assert_eq!(trace["config"]["threat_view_mode"], "rolling");
+        assert_eq!(trace["config"]["null_cell_culling"], "disabled");
         assert_eq!(
             trace["config"]["corridor_portals"],
             serde_json::json!({
@@ -6254,6 +6417,8 @@ mod tests {
             metrics["root_candidate_moves_total"].as_u64().unwrap()
                 + metrics["search_candidate_moves_total"].as_u64().unwrap()
         );
+        assert_eq!(metrics["null_cell_cull_checks"], 0);
+        assert_eq!(metrics["null_cells_culled"], 0);
         assert!(metrics["legality_checks"].as_u64().unwrap() > 0);
         assert_eq!(
             metrics["legality_checks"].as_u64().unwrap(),
@@ -7115,6 +7280,7 @@ mod tests {
             &mut tt,
             &zobrist,
             CandidateSource::NearAll { radius: 2 },
+            NullCellCulling::Disabled,
             LegalityGate::ExactRules,
             MoveOrdering::TranspositionFirstBoardOrder,
             None,
@@ -7162,6 +7328,7 @@ mod tests {
             &mut tt,
             &zobrist,
             CandidateSource::NearAll { radius: 2 },
+            NullCellCulling::Disabled,
             LegalityGate::ExactRules,
             MoveOrdering::TacticalFull,
             Some(4),
@@ -7294,6 +7461,7 @@ mod tests {
             &mut tt,
             &zobrist,
             CandidateSource::NearAll { radius: 2 },
+            NullCellCulling::Disabled,
             LegalityGate::ExactRules,
             MoveOrdering::TranspositionFirstBoardOrder,
             None,
@@ -7458,6 +7626,72 @@ mod tests {
             pattern_score < line_score,
             "expected pattern eval to discount forbidden completion: line={line_score}, pattern={pattern_score}"
         );
+    }
+
+    #[test]
+    fn null_cell_culling_filters_dead_root_candidates() {
+        let mut board = Board::new(RuleConfig {
+            variant: Variant::Freestyle,
+            ..Default::default()
+        });
+        apply_moves(
+            &mut board,
+            &[
+                "G8", "D8", "L8", "I8", "H7", "H4", "H12", "H9", "G7", "D4", "L12", "I9", "G9",
+                "D12", "L4", "I7",
+            ],
+        );
+        assert!(candidate_moves(&board, 2).contains(&mv("H8")));
+
+        let mut config = SearchBotConfig::custom_depth(1);
+        config.safety_gate = SafetyGate::None;
+        config.null_cell_culling = NullCellCulling::Enabled;
+        let mut bot = SearchBot::with_config(config);
+
+        let _ = bot.choose_move(&board);
+        let trace = bot.trace().expect("expected search trace");
+        let metrics = &trace["metrics"];
+
+        assert_eq!(trace["config"]["null_cell_culling"], "enabled");
+        assert!(metrics["root_null_cell_cull_checks"].as_u64().unwrap() > 0);
+        assert!(metrics["root_null_cells_culled"].as_u64().unwrap() > 0);
+
+        let zobrist = ZobristTable::new(board.config.board_size);
+        let mut state = SearchState::from_board_for_config(
+            board,
+            &zobrist,
+            ThreatViewMode::Rolling,
+            StaticEvaluation::LineShapeEval,
+            CorridorPortalConfig::DISABLED,
+            LeafCorridorConfig::DISABLED,
+        );
+        let mut tt = HashMap::new();
+        let mut nodes = 0;
+        let mut metrics = SearchMetrics::default();
+        let _ = negamax(
+            &mut state,
+            1,
+            i32::MIN + 1,
+            i32::MAX,
+            Color::Black,
+            Color::Black,
+            &mut tt,
+            &zobrist,
+            CandidateSource::NearAll { radius: 2 },
+            NullCellCulling::Enabled,
+            LegalityGate::ExactRules,
+            MoveOrdering::TranspositionFirstBoardOrder,
+            None,
+            CorridorPortalConfig::DISABLED,
+            LeafCorridorConfig::DISABLED,
+            ThreatViewMode::Rolling,
+            StaticEvaluation::LineShapeEval,
+            &mut nodes,
+            &mut metrics,
+            SearchDeadline::new(Instant::now(), None, None, None),
+        );
+        assert!(metrics.search_null_cell_cull_checks > 0);
+        assert!(metrics.search_null_cells_culled > 0);
     }
 
     #[test]
@@ -7636,6 +7870,7 @@ mod tests {
             corridor_portals: CorridorPortalConfig::default(),
             leaf_corridor: LeafCorridorConfig::DISABLED,
             threat_view_mode: ThreatViewMode::Scan,
+            null_cell_culling: NullCellCulling::Disabled,
         };
         let mut bot = SearchBot::with_config(config);
 
