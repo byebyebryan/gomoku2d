@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { CloudAuthUser } from "./auth_store";
+import { DEFAULT_PRACTICE_BOT_CONFIG } from "../core/practice_bot_config";
 import {
   CLOUD_PROFILE_SCHEMA_VERSION,
   CLOUD_REPLAY_MATCHES_LIMIT,
@@ -9,6 +10,7 @@ import {
   cloudProfileSyncDue,
   emptyCloudArchivedMatchStats,
   emptyCloudMatchHistory,
+  existingCloudProfileLoadUpdate,
   existingCloudProfileUpdate,
   mergeCloudMatchSummaryState,
   mergeCloudReplayMatches,
@@ -100,6 +102,7 @@ describe("cloudProfileFromDocument", () => {
           opening: "standard",
           ruleset: "renju",
         },
+        practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
       },
       uid: "uid-1",
       updatedAt: null,
@@ -136,6 +139,7 @@ describe("cloudProfileFromDocument", () => {
           opening: "standard",
           ruleset: "freestyle",
         },
+        practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
       },
       username: null,
     });
@@ -176,6 +180,7 @@ describe("cloud profile writes", () => {
           opening: "standard",
           ruleset: "renju",
         },
+        practice_bot: DEFAULT_PRACTICE_BOT_CONFIG,
       },
       uid: "uid-1",
       username: null,
@@ -201,6 +206,7 @@ describe("cloud profile writes", () => {
           opening: "standard",
           ruleset: "freestyle",
         },
+        practice_bot: DEFAULT_PRACTICE_BOT_CONFIG,
       },
       uid: "uid-1",
     });
@@ -229,6 +235,7 @@ describe("cloud profile writes", () => {
             opening: "standard",
             ruleset: "freestyle",
           },
+          practice_bot: DEFAULT_PRACTICE_BOT_CONFIG,
         },
         uid: "uid-1",
       }),
@@ -255,10 +262,81 @@ describe("cloud profile writes", () => {
             opening: "standard",
             ruleset: "freestyle",
           },
+          practice_bot: DEFAULT_PRACTICE_BOT_CONFIG,
         },
         uid: "uid-1",
       }, "renju"),
     ).toBeNull();
+  });
+
+  it("patches stale settings documents to the current schema", () => {
+    expect(
+      existingCloudProfileUpdate(authUser, {
+        auth: {
+          providers: [
+            {
+              avatar_url: authUser.avatarUrl,
+              display_name: authUser.displayName,
+              provider: "google.com",
+            },
+          ],
+        },
+        match_history: emptyMatchHistoryDocument(),
+        reset_at: null,
+        schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
+        settings: {
+          default_rules: {
+            opening: "legacy",
+            ruleset: "renju",
+          },
+        },
+        uid: "uid-1",
+      }),
+    ).toMatchObject({
+      settings: {
+        default_rules: {
+          opening: "standard",
+          ruleset: "renju",
+        },
+        practice_bot: DEFAULT_PRACTICE_BOT_CONFIG,
+      },
+    });
+  });
+
+  it("defers schema-only profile repair during load so cooldown cannot block sign-in", () => {
+    const legacyDocument = {
+      auth: {
+        providers: [
+          {
+            avatar_url: authUser.avatarUrl,
+            display_name: authUser.displayName,
+            provider: "google.com",
+          },
+        ],
+      },
+      match_history: emptyMatchHistoryDocument(),
+      reset_at: null,
+      schema_version: 3,
+      settings: {
+        default_rules: {
+          opening: "standard",
+          ruleset: "renju",
+        },
+      },
+      uid: "uid-1",
+    };
+
+    expect(existingCloudProfileUpdate(authUser, legacyDocument)).toMatchObject({
+      schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
+      settings: {
+        default_rules: {
+          opening: "standard",
+          ruleset: "renju",
+        },
+        practice_bot: DEFAULT_PRACTICE_BOT_CONFIG,
+      },
+    });
+    expect(existingCloudProfileLoadUpdate(authUser, legacyDocument)).toBeNull();
   });
 
   it("keeps existing profile updates narrow when one auth field changes", () => {
@@ -280,6 +358,7 @@ describe("cloud profile writes", () => {
           opening: "standard",
           ruleset: "freestyle",
         },
+        practice_bot: DEFAULT_PRACTICE_BOT_CONFIG,
       },
       uid: "uid-1",
     });

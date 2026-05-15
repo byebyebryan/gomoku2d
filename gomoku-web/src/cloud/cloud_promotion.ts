@@ -66,7 +66,7 @@ export function cloudProfilePromotionUpdate(input: LocalProfilePromotionInput): 
   const baseUpdate = input.cloudSettings ? null : existingCloudProfileUpdate(input.user);
   const update: Record<string, unknown> = baseUpdate ? { ...baseUpdate } : {};
   const customLocal = customLocalDisplayName(input.localProfile);
-  const nextSettings = cloudSettingsForVariant(input.settings.preferredVariant);
+  const nextSettings = cloudSettingsForVariant(input.settings.preferredVariant, input.settings.practiceBot);
 
   if (!input.cloudSettings || JSON.stringify(input.cloudSettings) !== JSON.stringify(nextSettings)) {
     update.settings = cloudSettingsDocument(nextSettings);
@@ -119,7 +119,7 @@ export function promotionInputKey(input: LocalProfilePromotionInput): string {
     cloudHistory: input.cloudMatchHistory ?? null,
     reset: input.resetAt ?? null,
     profile: [input.localProfile.id, input.localProfile.displayName],
-    rule: input.settings.preferredVariant,
+    settings: input.settings,
     uid: input.user.uid,
   });
 }
@@ -163,13 +163,14 @@ export async function promoteLocalProfileToCloud(
   const displayName = typeof profileUpdate?.display_name === "string"
     ? profileUpdate.display_name
     : input.cloudDisplayName ?? input.user.displayName;
-  const nextSettings = cloudSettingsForVariant(input.settings.preferredVariant);
+  const nextSettings = cloudSettingsForVariant(input.settings.preferredVariant, input.settings.practiceBot);
   const needsSnapshotSync = cloudProfileNeedsSnapshotSync({
     cloudDisplayName: input.cloudDisplayName ?? input.user.displayName,
     cloudMatchHistory,
     cloudSettings: input.cloudSettings ?? nextSettings,
     displayName,
     matchHistory,
+    practiceBot: input.settings.practiceBot,
     preferredVariant: input.settings.preferredVariant,
   });
 
@@ -177,6 +178,7 @@ export async function promoteLocalProfileToCloud(
     const snapshotUpdate = cloudProfileSnapshotUpdate({
       displayName,
       matchHistory,
+      practiceBot: input.settings.practiceBot,
       preferredVariant: input.settings.preferredVariant,
       user: input.user,
     });

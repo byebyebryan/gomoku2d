@@ -152,6 +152,7 @@ export function LocalMatchRoute() {
         setLatestReplayId(replayId);
       },
       resumeState: resumeSeed ?? undefined,
+      practiceBot: localProfileStore.getState().settings.practiceBot,
       variant: resumeSeed?.variant ?? localProfileStore.getState().settings.preferredVariant,
     });
     setStoreReady(true);

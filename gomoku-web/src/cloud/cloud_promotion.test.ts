@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { createLocalSavedMatch } from "../match/saved_match";
+import { DEFAULT_PRACTICE_BOT_CONFIG } from "../core/practice_bot_config";
 import {
   emptyLocalMatchHistory,
   type LocalProfileIdentity,
@@ -36,6 +37,7 @@ const localProfile: LocalProfileIdentity = {
 };
 
 const settings: LocalProfileSettings = {
+  practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
   preferredVariant: "renju",
 };
 
@@ -88,6 +90,7 @@ describe("cloudProfilePromotionUpdate", () => {
           opening: "standard",
           ruleset: "renju",
         },
+        practice_bot: DEFAULT_PRACTICE_BOT_CONFIG,
       },
       uid: "uid-1",
     });
@@ -115,6 +118,7 @@ describe("cloudProfilePromotionUpdate", () => {
             opening: "standard",
             ruleset: "renju",
           },
+          practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
         },
         localMatchHistory: localMatchHistory(),
         localProfile: { ...localProfile, displayName: "Guest" },
@@ -133,6 +137,7 @@ describe("cloudProfilePromotionUpdate", () => {
           opening: "standard",
           ruleset: "freestyle",
         },
+        practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
       },
       localMatchHistory: localMatchHistory(),
       localProfile: { ...localProfile, displayName: "Guest" },
@@ -146,6 +151,7 @@ describe("cloudProfilePromotionUpdate", () => {
           opening: "standard",
           ruleset: "renju",
         },
+        practice_bot: DEFAULT_PRACTICE_BOT_CONFIG,
       },
     });
     expect(update).not.toHaveProperty("display_name");
@@ -200,6 +206,7 @@ describe("promoteLocalProfileToCloud", () => {
           opening: "standard",
           ruleset: "renju",
         },
+        practice_bot: DEFAULT_PRACTICE_BOT_CONFIG,
       },
     });
     expect(result).toEqual({
@@ -243,6 +250,7 @@ describe("promoteLocalProfileToCloud", () => {
             opening: "standard",
             ruleset: "renju",
           },
+          practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
         },
         localMatchHistory: localMatchHistory([match]),
         localProfile: { ...localProfile, displayName: "Guest" },

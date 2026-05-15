@@ -3,6 +3,11 @@ import { createStore, type StoreApi } from "zustand/vanilla";
 import { BOARD_SIZE } from "../board/constants";
 import { BotRunner } from "../core/bot_runner";
 import type { BotSpec, GameVariant } from "../core/bot_protocol";
+import {
+  DEFAULT_PRACTICE_BOT_CONFIG,
+  resolvePracticeBotConfig,
+  type PracticeBotConfig,
+} from "../core/practice_bot_config";
 import { WasmBoard } from "../core/wasm_bridge";
 
 import type { CellPosition, CellStone, MatchMove, MatchPlayer, MatchStatus } from "./types";
@@ -14,6 +19,7 @@ interface FinishedLocalMatch {
   mode: "bot";
   moves: MatchMove[];
   players: [MatchPlayer, MatchPlayer];
+  practiceBot: PracticeBotConfig;
   status: Exclude<MatchStatus, "playing">;
   undoFloor: number;
   variant: GameVariant;
@@ -49,6 +55,7 @@ export interface LocalMatchStoreOptions {
   boardFactory?: (variant: GameVariant) => WasmBoard;
   humanDisplayName?: string;
   onMatchFinished?: (match: FinishedLocalMatch) => void;
+  practiceBot?: PracticeBotConfig;
   resumeState?: LocalMatchResumeSeed;
   variant?: GameVariant;
 }
@@ -231,6 +238,7 @@ function snapshotFinishedMatch(
   board: WasmBoard,
   moves: MatchMove[],
   players: [MatchPlayer, MatchPlayer],
+  practiceBot: PracticeBotConfig,
   variant: GameVariant,
   undoFloor: number,
 ): FinishedLocalMatch | null {
@@ -243,6 +251,7 @@ function snapshotFinishedMatch(
     mode: "bot",
     moves,
     players,
+    practiceBot,
     status: snapshot.status,
     undoFloor,
     variant,
@@ -261,7 +270,10 @@ export function createLocalMatchStore(
     : null;
   let currentVariant = initialResumeState?.variant ?? options.variant ?? "freestyle";
   let selectedVariant = currentVariant;
-  const botDepth = options.botDepth ?? 3;
+  const practiceBot = options.practiceBot ?? DEFAULT_PRACTICE_BOT_CONFIG;
+  const botSpec = options.botDepth === undefined
+    ? resolvePracticeBotConfig(practiceBot)
+    : { kind: "baseline", depth: options.botDepth } satisfies BotSpec;
   const boardFactory = options.boardFactory ?? WasmBoard.createWithVariant;
   const botRunner = options.botRunner ?? new BotRunner();
   let players = initialResumeState
@@ -290,7 +302,7 @@ export function createLocalMatchStore(
         players.map((player) =>
           player.kind === "human"
             ? { kind: "human" }
-            : { kind: "baseline", depth: botDepth },
+            : botSpec,
         ) as [BotSpec, BotSpec],
       );
     };
@@ -320,7 +332,7 @@ export function createLocalMatchStore(
 
       updateState(nextMoves, false);
 
-      const finishedMatch = snapshotFinishedMatch(board, nextMoves, players, currentVariant, undoFloor);
+      const finishedMatch = snapshotFinishedMatch(board, nextMoves, players, practiceBot, currentVariant, undoFloor);
       if (finishedMatch) {
         options.onMatchFinished?.(finishedMatch);
       }

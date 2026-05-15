@@ -9,7 +9,10 @@ use js_sys::Object;
 use js_sys::Reflect;
 use wasm_bindgen::prelude::*;
 
-use gomoku_bot::{Bot, RandomBot, SearchBot};
+use gomoku_bot::{
+    Bot, LeafCorridorConfig, MoveOrdering, RandomBot, SearchBot, SearchBotConfig,
+    StaticEvaluation,
+};
 use gomoku_core::rules::Variant;
 use gomoku_core::{Board, Color, GameResult, Move, RuleConfig};
 
@@ -212,6 +215,37 @@ impl WasmBot {
     pub fn create_baseline(depth: i32) -> WasmBot {
         WasmBot {
             inner: BotInner::Search(Box::new(SearchBot::new(depth))),
+        }
+    }
+
+    #[wasm_bindgen(js_name = "createSearch")]
+    pub fn create_search(
+        depth: i32,
+        child_limit: i32,
+        pattern_eval: bool,
+        corridor_proof_depth: i32,
+        corridor_proof_width: i32,
+        corridor_proof_candidate_limit: i32,
+    ) -> WasmBot {
+        let mut config = SearchBotConfig::custom_depth(depth);
+        if child_limit > 0 {
+            config.move_ordering = MoveOrdering::Tactical;
+            config.child_limit = Some(child_limit as usize);
+        }
+        if pattern_eval {
+            config.static_eval = StaticEvaluation::PatternEval;
+        }
+        if corridor_proof_depth > 0 && corridor_proof_width > 0 && corridor_proof_candidate_limit > 0 {
+            config.leaf_corridor = LeafCorridorConfig {
+                enabled: true,
+                max_depth: corridor_proof_depth as usize,
+                max_reply_width: corridor_proof_width as usize,
+                proof_candidate_limit: corridor_proof_candidate_limit as usize,
+            };
+        }
+
+        WasmBot {
+            inner: BotInner::Search(Box::new(SearchBot::with_config(config))),
         }
     }
 

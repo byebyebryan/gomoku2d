@@ -9,6 +9,7 @@ import { createCloudSavedMatch } from "../cloud/cloud_match";
 import { emptyCloudMatchHistory, type CloudProfile } from "../cloud/cloud_profile";
 import { cloudProfileStore } from "../cloud/cloud_profile_store";
 import { cloudPromotionStore } from "../cloud/cloud_promotion_store";
+import { DEFAULT_PRACTICE_BOT_CONFIG } from "../core/practice_bot_config";
 import { createLocalSavedMatch } from "../match/saved_match";
 import { emptyLocalMatchHistory, localProfileStore, type LocalProfileSavedMatch } from "../profile/local_profile_store";
 
@@ -41,6 +42,7 @@ const cloudProfile: CloudProfile = {
       opening: "standard",
       ruleset: "freestyle",
     },
+    practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
   },
   uid: "uid-1",
   updatedAt: null,
@@ -97,7 +99,7 @@ describe("ProfileRoute cloud state", () => {
     localProfileStore.setState({
       matchHistory: emptyLocalMatchHistory(),
       profile: null,
-      settings: { preferredVariant: "freestyle" },
+      settings: { practiceBot: DEFAULT_PRACTICE_BOT_CONFIG, preferredVariant: "freestyle" },
     });
     cloudAuthStore.setState({
       errorMessage: null,
@@ -801,7 +803,7 @@ describe("ProfileRoute cloud state", () => {
           id: localProfile.id,
         }),
         resetAt: null,
-        settings: { preferredVariant: "freestyle" },
+        settings: { practiceBot: DEFAULT_PRACTICE_BOT_CONFIG, preferredVariant: "freestyle" },
         user: cloudUser,
       });
     }, { timeout: 3_000 });
@@ -904,7 +906,7 @@ describe("ProfileRoute cloud state", () => {
           id: localProfile.id,
         }),
         resetAt: null,
-        settings: { preferredVariant: "freestyle" },
+        settings: { practiceBot: DEFAULT_PRACTICE_BOT_CONFIG, preferredVariant: "freestyle" },
         user: cloudUser,
       });
     }, { timeout: 3_000 });

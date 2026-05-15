@@ -1,13 +1,24 @@
 import { BOARD_SIZE } from "../board/constants";
 import type { GameVariant } from "../core/bot_protocol";
+import {
+  DEFAULT_PRACTICE_BOT_CONFIG,
+  isPracticeBotConfig,
+  labSpecForPracticeBot,
+  practiceBotLabel,
+  sanitizePracticeBotConfig,
+  type PracticeBotConfig,
+} from "../core/practice_bot_config";
 import type { CellPosition, MatchMove, MatchPlayer } from "../game/types";
 
 export const SAVED_MATCH_SCHEMA_VERSION = 1;
 export const SAVED_MATCH_BOARD_SIZE = BOARD_SIZE;
 export const PRACTICE_BOT_ID = "practice_bot";
-export const PRACTICE_BOT_VERSION = 1;
-export const PRACTICE_BOT_ENGINE = "baseline_search";
-export const PRACTICE_BOT_CONFIG_VERSION = 1;
+export const PRACTICE_BOT_VERSION = 2;
+export const PRACTICE_BOT_ENGINE = "search_bot";
+export const PRACTICE_BOT_CONFIG_VERSION = 2;
+export const LEGACY_PRACTICE_BOT_VERSION = 1;
+export const LEGACY_PRACTICE_BOT_ENGINE = "baseline_search";
+export const LEGACY_PRACTICE_BOT_CONFIG_VERSION = 1;
 export const PRACTICE_BOT_DEPTH = 3;
 
 export type SavedMatchSource = "local_history" | "cloud_saved";
@@ -16,16 +27,28 @@ export type SavedMatchKind = "local_vs_bot" | "local_pvp" | "online_pvp" | "puzz
 export type SavedMatchStatus = "black_won" | "white_won" | "draw";
 export type SavedMatchSide = "black" | "white";
 
-export interface SavedMatchBotIdentity {
+export interface SavedMatchLegacyBotIdentity {
   config: {
     depth: typeof PRACTICE_BOT_DEPTH;
     kind: "baseline";
   };
+  config_version: typeof LEGACY_PRACTICE_BOT_CONFIG_VERSION;
+  engine: typeof LEGACY_PRACTICE_BOT_ENGINE;
+  id: typeof PRACTICE_BOT_ID;
+  version: typeof LEGACY_PRACTICE_BOT_VERSION;
+}
+
+export interface SavedMatchPracticeBotIdentity {
+  config: PracticeBotConfig;
   config_version: typeof PRACTICE_BOT_CONFIG_VERSION;
   engine: typeof PRACTICE_BOT_ENGINE;
   id: typeof PRACTICE_BOT_ID;
+  label: string;
+  lab_spec: string;
   version: typeof PRACTICE_BOT_VERSION;
 }
+
+export type SavedMatchBotIdentity = SavedMatchLegacyBotIdentity | SavedMatchPracticeBotIdentity;
 
 export interface SavedMatchPlayer {
   bot: SavedMatchBotIdentity | null;
@@ -65,6 +88,7 @@ export interface CreateLocalSavedMatchInput {
   savedAt: string;
   status: SavedMatchStatus;
   undoFloor?: number;
+  practiceBot?: PracticeBotConfig;
   variant: GameVariant;
 }
 
@@ -103,8 +127,23 @@ function isSavedMatchVariant(value: unknown): value is GameVariant {
 
 function isSavedMatchBotIdentity(value: unknown): value is SavedMatchBotIdentity {
   const candidate = value as Partial<SavedMatchBotIdentity> | null;
-  const config = candidate?.config as Partial<SavedMatchBotIdentity["config"]> | undefined;
+  const legacyConfig = candidate?.config as Partial<SavedMatchLegacyBotIdentity["config"]> | undefined;
 
+  const legacy = (
+    candidate !== null
+    && typeof candidate === "object"
+    && candidate.id === PRACTICE_BOT_ID
+    && candidate.version === LEGACY_PRACTICE_BOT_VERSION
+    && candidate.engine === LEGACY_PRACTICE_BOT_ENGINE
+    && candidate.config_version === LEGACY_PRACTICE_BOT_CONFIG_VERSION
+    && legacyConfig?.kind === "baseline"
+    && legacyConfig.depth === PRACTICE_BOT_DEPTH
+  );
+  if (legacy) {
+    return true;
+  }
+
+  const practiceConfig = candidate?.config;
   return (
     candidate !== null
     && typeof candidate === "object"
@@ -112,8 +151,11 @@ function isSavedMatchBotIdentity(value: unknown): value is SavedMatchBotIdentity
     && candidate.version === PRACTICE_BOT_VERSION
     && candidate.engine === PRACTICE_BOT_ENGINE
     && candidate.config_version === PRACTICE_BOT_CONFIG_VERSION
-    && config?.kind === "baseline"
-    && config.depth === PRACTICE_BOT_DEPTH
+    && isPracticeBotConfig(practiceConfig)
+    && isString(candidate.label)
+    && candidate.label.trim().length > 0
+    && isString(candidate.lab_spec)
+    && candidate.lab_spec.trim().length > 0
   );
 }
 
@@ -179,15 +221,18 @@ export function isLocalSavedMatchV1(value: unknown): value is LocalSavedMatchV1 
   return isSavedMatchV1(value) && value.source === "local_history" && value.trust === "local_only";
 }
 
-export function practiceBotIdentity(): SavedMatchBotIdentity {
+export function practiceBotIdentity(
+  practiceBot: PracticeBotConfig = DEFAULT_PRACTICE_BOT_CONFIG,
+): SavedMatchPracticeBotIdentity {
+  const config = sanitizePracticeBotConfig(practiceBot);
+
   return {
-    config: {
-      depth: PRACTICE_BOT_DEPTH,
-      kind: "baseline",
-    },
+    config,
     config_version: PRACTICE_BOT_CONFIG_VERSION,
     engine: PRACTICE_BOT_ENGINE,
     id: PRACTICE_BOT_ID,
+    label: practiceBotLabel(config),
+    lab_spec: labSpecForPracticeBot(config),
     version: PRACTICE_BOT_VERSION,
   };
 }
@@ -248,6 +293,7 @@ export function movesFromMoveCells(moveCells: number[]): MatchMove[] {
 function savedMatchPlayer(
   player: MatchPlayer,
   localProfileId: string,
+  practiceBot: PracticeBotConfig,
 ): SavedMatchPlayer {
   if (player.kind === "human") {
     return {
@@ -260,7 +306,7 @@ function savedMatchPlayer(
   }
 
   return {
-    bot: practiceBotIdentity(),
+    bot: practiceBotIdentity(practiceBot),
     display_name: player.name,
     kind: "bot",
     local_profile_id: null,
@@ -271,6 +317,7 @@ function savedMatchPlayer(
 function sidePlayers(
   players: [MatchPlayer, MatchPlayer],
   localProfileId: string,
+  practiceBot: PracticeBotConfig,
 ): Pick<SavedMatchV1, "player_black" | "player_white"> {
   const black = players.find((player) => sideForPlayer(player) === "black");
   const white = players.find((player) => sideForPlayer(player) === "white");
@@ -280,13 +327,17 @@ function sidePlayers(
   }
 
   return {
-    player_black: savedMatchPlayer(black, localProfileId),
-    player_white: savedMatchPlayer(white, localProfileId),
+    player_black: savedMatchPlayer(black, localProfileId, practiceBot),
+    player_white: savedMatchPlayer(white, localProfileId, practiceBot),
   };
 }
 
 export function createLocalSavedMatch(input: CreateLocalSavedMatchInput): LocalSavedMatchV1 {
-  const players = sidePlayers(input.players, input.localProfileId);
+  const players = sidePlayers(
+    input.players,
+    input.localProfileId,
+    input.practiceBot ?? DEFAULT_PRACTICE_BOT_CONFIG,
+  );
   const moveCells = encodeMoveCells(input.moves);
 
   return {

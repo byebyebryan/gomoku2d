@@ -508,6 +508,7 @@ export function createCloudHistoryStore(
               cloudProfile: profile,
               displayName: localProfile.profile?.displayName ?? profile.displayName,
               matches: candidateMatches,
+              practiceBot: localProfile.settings.practiceBot,
               preferredVariant: localProfile.settings.preferredVariant,
             });
 
