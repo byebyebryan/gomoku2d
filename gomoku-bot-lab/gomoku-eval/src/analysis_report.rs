@@ -185,6 +185,8 @@ mod tests {
                 threads: 1,
                 search_time_ms: None,
                 search_cpu_time_ms: Some(1000),
+                search_budget_mode: "strict".to_string(),
+                search_cpu_reserve_ms: None,
                 max_moves: Some(120),
                 max_game_ms: None,
                 total_wall_time_ms: None,

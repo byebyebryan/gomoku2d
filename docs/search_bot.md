@@ -15,6 +15,12 @@ time budget is exhausted or a forced win/loss is detected. Time-budgeted search
 checks the deadline inside the alpha-beta loop, so eval tournaments can compare
 fixed-depth configs with a practical per-move cap.
 
+The web game currently runs fixed-depth Wasm search without a product-side time
+cap. Lab tournaments keep explicit timing policies: strict CPU-per-move for
+stable anchor comparisons, and pooled CPU budgeting when we want a closer
+approximation of a hard bot that can spend longer on difficult positions while
+keeping average cost bounded.
+
 ```
 for depth in 1..=max_depth:
     (score, move) = negamax(board, depth, -∞, +∞)

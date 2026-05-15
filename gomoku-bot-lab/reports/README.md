@@ -18,6 +18,12 @@ tournament runs, the published report will show a `_dirty` revision and a
 development-run warning. That is useful for scratch reports, but release-quality
 curated reports should come from a clean committed toolchain.
 
+The command below keeps the strict `1000 ms` CPU-per-move policy for maximum
+continuity with older reports. If the published report is intentionally being
+refreshed as the product-like hard-bot benchmark, add
+`--search-budget-mode pooled --search-cpu-reserve-ms 4000` and regenerate the
+analysis report from that same `latest.json`.
+
 ```sh
 git status --short
 mkdir -p reports

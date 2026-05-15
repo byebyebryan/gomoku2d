@@ -4962,6 +4962,8 @@ pub struct SearchInfo {
     pub metrics: SearchMetrics,
     pub score: i32,
     pub budget_exhausted: bool,
+    pub elapsed_ms: u64,
+    pub cpu_time_ms: Option<u64>,
 }
 
 pub struct SearchBot {
@@ -4993,6 +4995,15 @@ impl SearchBot {
 
     pub fn config(&self) -> SearchBotConfig {
         self.config
+    }
+
+    pub fn set_time_budgets(
+        &mut self,
+        time_budget_ms: Option<u64>,
+        cpu_time_budget_ms: Option<u64>,
+    ) {
+        self.config.time_budget_ms = time_budget_ms;
+        self.config.cpu_time_budget_ms = cpu_time_budget_ms;
     }
 }
 
@@ -5030,6 +5041,8 @@ impl Bot for SearchBot {
                 "metrics": info.metrics.trace(),
                 "score": info.score,
                 "budget_exhausted": info.budget_exhausted,
+                "elapsed_ms": info.elapsed_ms,
+                "cpu_time_ms": info.cpu_time_ms,
             })
         })
     }
@@ -5219,6 +5232,10 @@ impl Bot for SearchBot {
             metrics,
             score: best_score,
             budget_exhausted,
+            elapsed_ms: start.elapsed().as_millis() as u64,
+            cpu_time_ms: cpu_start.and_then(|start| {
+                thread_cpu_time().map(|now| now.saturating_sub(start).as_millis() as u64)
+            }),
         });
 
         best_move

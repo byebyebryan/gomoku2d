@@ -912,9 +912,12 @@ coverage. Tournament games run multi-threaded by default and use a seeded
 centered opening suite so deterministic bots see varied local positions without
 random whole-board scatter. For Linux ranking eval, prefer
 `--search-cpu-time-ms` over wall-clock `--search-time-ms`; fixed-depth configs
-are still the cleanest reproducibility baseline. The reusable JSON report is the
-source of truth for ranking analysis; the HTML report is a derived view that can
-be regenerated without rerunning the
+are still the cleanest reproducibility baseline. Product-shaped hard-bot checks
+can use `--search-budget-mode pooled` with a capped CPU reserve, which keeps the
+average budget bounded while allowing hard tactical positions to spend time
+saved by cheaper moves. The reusable JSON report is the source of truth for
+ranking analysis; the HTML report is a derived view that can be regenerated
+without rerunning the
 tournament. Keep scratch output under `gomoku-bot-lab/outputs/`; curated
 reports under `gomoku-bot-lab/reports/` are copied into the public web build as
 `/bot-report/`.
