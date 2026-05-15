@@ -17,9 +17,9 @@ fixed-depth configs with a practical per-move cap.
 
 The web game currently runs fixed-depth Wasm search without a product-side time
 cap. Lab tournaments keep explicit timing policies: strict CPU-per-move for
-stable anchor comparisons, and pooled CPU budgeting when we want a closer
-approximation of a hard bot that can spend longer on difficult positions while
-keeping average cost bounded.
+focused continuity checks, and pooled CPU budgeting for curated published
+reports that should better approximate a hard bot spending longer on difficult
+positions while keeping average cost bounded.
 
 ```
 for depth in 1..=max_depth:
