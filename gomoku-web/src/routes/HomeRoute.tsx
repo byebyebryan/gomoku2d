@@ -29,15 +29,18 @@ export function HomeRoute() {
         <div className={styles.footer}>
           <p className={styles.version}>{APP_VERSION}</p>
           <nav className={styles.footerLinks} aria-label="Footer links">
-            <a href={`${baseUrl}assets/`}>Assets</a>
-            <span aria-hidden="true">/</span>
-            <a href={`${baseUrl}bot-report/`}>Bots</a>
-            <span aria-hidden="true">/</span>
-            <a href={`${baseUrl}analysis-report/`}>Analysis</a>
-            <span aria-hidden="true">/</span>
-            <a href={`${baseUrl}privacy/`}>Privacy</a>
-            <span aria-hidden="true">/</span>
-            <a href={`${baseUrl}terms/`}>Terms</a>
+            <span className={styles.footerLinkGroup}>
+              <a href={`${baseUrl}assets/`}>Assets</a>
+              <span aria-hidden="true">/</span>
+              <a href={`${baseUrl}bot-report/`}>Bots</a>
+              <span aria-hidden="true">/</span>
+              <a href={`${baseUrl}analysis-report/`}>Analysis</a>
+            </span>
+            <span className={styles.footerLinkGroup}>
+              <a href={`${baseUrl}privacy/`}>Privacy</a>
+              <span aria-hidden="true">/</span>
+              <a href={`${baseUrl}terms/`}>Terms</a>
+            </span>
           </nav>
         </div>
       </section>

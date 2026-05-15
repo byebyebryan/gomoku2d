@@ -155,6 +155,16 @@ export function labSpecForPracticeBot(config: PracticeBotConfig): string {
   return [`search-d${custom.depth}`, ...suffixes].join("+");
 }
 
+export function practiceBotConfigSummary(config: PracticeBotConfig): string {
+  const custom = customConfigForPracticeBot(config);
+  return [
+    `D${custom.depth}`,
+    custom.width === "none" ? "full" : `W${custom.width}`,
+    custom.patternScoring ? "threat" : "simple",
+    custom.corridorProof ? "proof" : null,
+  ].filter(Boolean).join(" · ");
+}
+
 export function practiceBotLabel(config: PracticeBotConfig): string {
   if (config.mode === "preset") {
     switch (config.preset) {
@@ -168,4 +178,8 @@ export function practiceBotLabel(config: PracticeBotConfig): string {
   }
 
   return "Custom";
+}
+
+export function practiceBotPlayerName(config: PracticeBotConfig): string {
+  return `${practiceBotLabel(sanitizePracticeBotConfig(config))} Bot`;
 }

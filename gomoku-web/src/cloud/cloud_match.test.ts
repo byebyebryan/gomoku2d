@@ -74,7 +74,7 @@ describe("cloud match serialization", () => {
           label: "Normal",
           version: 2,
         },
-        display_name: "Practice Bot",
+        display_name: "Normal Bot",
         kind: "bot",
         local_profile_id: null,
         profile_uid: null,

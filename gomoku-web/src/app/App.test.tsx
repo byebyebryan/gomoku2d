@@ -22,7 +22,7 @@ vi.mock("../routes/LocalMatchRoute", () => ({
 vi.mock("../routes/SettingsRoute", () => ({
   SettingsRoute: () => (
     <main>
-      <h1>Game Settings</h1>
+      <h1>Settings</h1>
       <p>Rule</p>
       <p>Bot</p>
     </main>
@@ -74,7 +74,7 @@ describe("App", () => {
     );
   });
 
-  it("routes to game settings", async () => {
+  it("routes to settings", async () => {
     render(
       <MemoryRouter initialEntries={["/settings"]}>
         <App />
@@ -82,7 +82,7 @@ describe("App", () => {
     );
 
     expect(
-      await screen.findByRole("heading", { name: /game settings/i }),
+      await screen.findByRole("heading", { name: /^settings$/i }),
     ).toBeInTheDocument();
     expect(screen.getByText(/^rule$/i)).toBeInTheDocument();
     expect(screen.getByText(/^bot$/i)).toBeInTheDocument();
@@ -110,7 +110,7 @@ describe("App", () => {
     ).toBeTruthy();
   });
 
-  it("groups the version above a single footer link row", () => {
+  it("groups the version above controlled footer link rows", () => {
     render(
       <MemoryRouter initialEntries={["/"]}>
         <App />
@@ -132,7 +132,7 @@ describe("App", () => {
     expect(within(footerLinks).getByRole("link", { name: /^analysis$/i })).toBeInTheDocument();
     expect(within(footerLinks).getByRole("link", { name: /^privacy$/i })).toBeInTheDocument();
     expect(within(footerLinks).getByRole("link", { name: /^terms$/i })).toBeInTheDocument();
-    expect(within(footerLinks).getAllByText("/")).toHaveLength(4);
+    expect(within(footerLinks).getAllByText("/")).toHaveLength(3);
     expect(footerLinks).not.toHaveTextContent("·");
   });
 });

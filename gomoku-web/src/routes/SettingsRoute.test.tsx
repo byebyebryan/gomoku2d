@@ -60,12 +60,15 @@ describe("SettingsRoute", () => {
       practiceBot: { mode: "preset", preset: "hard", version: 1 },
       preferredVariant: "renju",
     });
-    expect(screen.getByText(/renju · hard/i)).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: /renju hard bot/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Renju" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Hard Bot" })).toBeInTheDocument();
   });
 
   it("shows rule selection as a compact setting row", () => {
     renderSettingsRoute();
 
+    expect(screen.getAllByText(/^Game$/)).toHaveLength(2);
     expect(screen.getByText(/^Rule$/)).toBeInTheDocument();
     expect(screen.getByText(/^Ruleset for new games.$/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Freestyle" })).toBeInTheDocument();
@@ -75,9 +78,11 @@ describe("SettingsRoute", () => {
   it("shows lab controls as setting labels with option segments", () => {
     renderSettingsRoute();
 
+    expect(screen.getByText(/^Advanced Controls$/)).toBeInTheDocument();
+    expect(screen.queryByText(/^Lab Controls$/)).not.toBeInTheDocument();
     expect(screen.getByText(/^Scoring$/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Simple geometry" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Threat pattern" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Simple" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Threat" })).toBeInTheDocument();
     expect(screen.getByText(/^Extra pass$/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "None" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Corridor proof" })).toBeInTheDocument();
@@ -86,7 +91,7 @@ describe("SettingsRoute", () => {
   it("persists lab control option selections", () => {
     renderSettingsRoute();
 
-    fireEvent.click(screen.getByRole("button", { name: "Simple geometry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Simple" }));
     fireEvent.click(screen.getByRole("button", { name: "Corridor proof" }));
 
     expect(localProfileStore.getState().settings.practiceBot).toMatchObject({

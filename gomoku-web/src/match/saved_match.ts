@@ -5,6 +5,7 @@ import {
   isPracticeBotConfig,
   labSpecForPracticeBot,
   practiceBotLabel,
+  practiceBotPlayerName,
   sanitizePracticeBotConfig,
   type PracticeBotConfig,
 } from "../core/practice_bot_config";
@@ -307,7 +308,7 @@ function savedMatchPlayer(
 
   return {
     bot: practiceBotIdentity(practiceBot),
-    display_name: player.name,
+    display_name: practiceBotPlayerName(practiceBot),
     kind: "bot",
     local_profile_id: null,
     profile_uid: null,

@@ -5,6 +5,7 @@ import { BotRunner } from "../core/bot_runner";
 import type { BotSpec, GameVariant } from "../core/bot_protocol";
 import {
   DEFAULT_PRACTICE_BOT_CONFIG,
+  practiceBotPlayerName,
   resolvePracticeBotConfig,
   sanitizePracticeBotConfig,
   type PracticeBotConfig,
@@ -71,10 +72,24 @@ export interface LocalMatchResumeSeed {
   variant: GameVariant;
 }
 
-function defaultPlayers(humanDisplayName = "You"): [MatchPlayer, MatchPlayer] {
+function withBotPlayerNames(
+  players: [MatchPlayer, MatchPlayer],
+  practiceBot: PracticeBotConfig,
+): [MatchPlayer, MatchPlayer] {
+  return players.map((player) =>
+    player.kind === "bot"
+      ? { ...player, name: practiceBotPlayerName(practiceBot) }
+      : { ...player },
+  ) as [MatchPlayer, MatchPlayer];
+}
+
+function defaultPlayers(
+  humanDisplayName = "You",
+  practiceBot: PracticeBotConfig = DEFAULT_PRACTICE_BOT_CONFIG,
+): [MatchPlayer, MatchPlayer] {
   return [
     { kind: "human", name: humanDisplayName, stone: "black" },
-    { kind: "bot", name: "Practice Bot", stone: "white" },
+    { kind: "bot", name: practiceBotPlayerName(practiceBot), stone: "white" },
   ];
 }
 
@@ -111,8 +126,9 @@ function emptyCells(): CellStone[][] {
 function resumedPlayers(
   currentPlayer: 1 | 2,
   humanDisplayName = "You",
+  practiceBot: PracticeBotConfig = DEFAULT_PRACTICE_BOT_CONFIG,
 ): [MatchPlayer, MatchPlayer] {
-  const base = defaultPlayers(humanDisplayName);
+  const base = defaultPlayers(humanDisplayName, practiceBot);
   return currentPlayer === 1 ? base : swapPlayers(base);
 }
 
@@ -289,8 +305,8 @@ export function createLocalMatchStore(
   const boardFactory = options.boardFactory ?? WasmBoard.createWithVariant;
   const botRunner = options.botRunner ?? new BotRunner();
   let players = initialResumeState
-    ? resumedPlayers(initialResumeState.currentPlayer, options.humanDisplayName)
-    : defaultPlayers(options.humanDisplayName);
+    ? resumedPlayers(initialResumeState.currentPlayer, options.humanDisplayName, currentPracticeBot)
+    : defaultPlayers(options.humanDisplayName, currentPracticeBot);
 
   let board = boardFactory(currentVariant);
   const seededMoves = initialResumeState && seedBoard(board, initialResumeState.moves) ? initialResumeState.moves : [];
@@ -298,7 +314,7 @@ export function createLocalMatchStore(
   if (initialResumeState && seededMoves.length !== initialResumeState.moves.length) {
     board.free();
     board = boardFactory(currentVariant);
-    players = defaultPlayers(options.humanDisplayName);
+    players = defaultPlayers(options.humanDisplayName, currentPracticeBot);
     undoFloor = 0;
   }
   let requestToken = 0;
@@ -425,7 +441,7 @@ export function createLocalMatchStore(
       currentVariant = nextVariant;
       currentPracticeBot = nextPracticeBot;
       board = boardFactory(currentVariant);
-      players = clonePlayers(nextPlayers);
+      players = withBotPlayerNames(clonePlayers(nextPlayers), currentPracticeBot);
       undoFloor = 0;
       configureBots();
       updateState([], false);

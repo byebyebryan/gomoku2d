@@ -6,7 +6,8 @@ import { createStore } from "zustand/vanilla";
 import { Board } from "../components/Board/Board";
 import { cloudAuthStore } from "../cloud/auth_store";
 import {
-  labSpecForPracticeBot,
+  practiceBotConfigSummary,
+  practiceBotPlayerName,
   practiceBotLabel,
 } from "../core/practice_bot_config";
 import {
@@ -41,7 +42,7 @@ const loadingMatchStore = createStore<LocalMatchState>(() => ({
   placeHumanMove: () => false,
   players: [
     { kind: "human", name: "Guest", stone: "black" },
-    { kind: "bot", name: "Practice Bot", stone: "white" },
+    { kind: "bot", name: practiceBotPlayerName({ mode: "preset", preset: "normal", version: 1 }), stone: "white" },
   ],
   selectedPracticeBot: { mode: "preset", preset: "normal", version: 1 },
   selectedVariant: "freestyle",
@@ -93,12 +94,6 @@ function setupChanged(state: Pick<
 >): boolean {
   return state.currentVariant !== state.selectedVariant
     || JSON.stringify(state.currentPracticeBot) !== JSON.stringify(state.selectedPracticeBot);
-}
-
-function setupLabel(
-  state: Pick<LocalMatchState, "currentPracticeBot" | "currentVariant">,
-): string {
-  return `${variantLabel(state.currentVariant)} · ${practiceBotLabel(state.currentPracticeBot)}`;
 }
 
 function nextSetupLabel(
@@ -296,18 +291,16 @@ export function LocalMatchRoute() {
               </div>
               <div className={styles.metaRow}>
                 <span className={styles.metaLabel}>Bot</span>
-                <span className={styles.metaValue} data-testid="match-bot">
-                  {practiceBotLabel(state.currentPracticeBot)}
+                <span className={`${styles.metaValue} ${styles.botValue}`} data-testid="match-bot">
+                  <span>{practiceBotLabel(state.currentPracticeBot)}</span>
+                  <span className={styles.botSpec}>{practiceBotConfigSummary(state.currentPracticeBot)}</span>
                 </span>
               </div>
               {setupChanged(state) ? (
                 <p className={styles.pendingText}>
                   Next: {nextSetupLabel(state)}
                 </p>
-              ) : (
-                <p className={styles.currentSetupText}>{setupLabel(state)}</p>
-              )}
-              <p className={styles.labSpec}>{labSpecForPracticeBot(state.currentPracticeBot)}</p>
+              ) : null}
               <div className={`${styles.metaRow} ${styles.moveRow}`}>
                 <span className={styles.metaLabel}>Move</span>
                 <span className={styles.metaValue} data-testid="match-move-count">

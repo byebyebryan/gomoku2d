@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULT_PRACTICE_BOT_CONFIG,
   labSpecForPracticeBot,
+  practiceBotConfigSummary,
+  practiceBotPlayerName,
   resolvePracticeBotConfig,
   sanitizePracticeBotConfig,
 } from "./practice_bot_config";
@@ -15,6 +17,21 @@ describe("practice bot config", () => {
       version: 1,
     });
     expect(labSpecForPracticeBot(DEFAULT_PRACTICE_BOT_CONFIG)).toBe("search-d3+pattern-eval");
+    expect(practiceBotConfigSummary(DEFAULT_PRACTICE_BOT_CONFIG)).toBe("D3 · full · threat");
+    expect(practiceBotPlayerName(DEFAULT_PRACTICE_BOT_CONFIG)).toBe("Normal Bot");
+  });
+
+  it("formats practice bot configs as player names", () => {
+    expect(practiceBotPlayerName({ mode: "preset", preset: "easy", version: 1 })).toBe("Easy Bot");
+    expect(practiceBotPlayerName({ mode: "preset", preset: "hard", version: 1 })).toBe("Hard Bot");
+    expect(practiceBotPlayerName({
+      corridorProof: true,
+      depth: 5,
+      mode: "custom",
+      patternScoring: true,
+      version: 1,
+      width: 16,
+    })).toBe("Custom Bot");
   });
 
   it("resolves the report-backed presets to structured worker specs", () => {
@@ -60,6 +77,7 @@ describe("practice bot config", () => {
     expect(labSpecForPracticeBot(config)).toBe(
       "search-d5+tactical-cap-16+pattern-eval+corridor-proof-c16-d8-w4",
     );
+    expect(practiceBotConfigSummary(config)).toBe("D5 · W16 · threat · proof");
   });
 
   it("sanitizes unknown persisted values to Normal", () => {
