@@ -51,6 +51,11 @@
   padding: 16px;
 }
 
+.summaryCurrent {
+  display: grid;
+  gap: 12px;
+}
+
 .summaryStack {
   display: grid;
   gap: 16px;

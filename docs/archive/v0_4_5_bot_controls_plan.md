@@ -41,6 +41,7 @@ differently.
 - advanced/explicit bot configuration;
 - persistence for the chosen bot config;
 - clear copy that connects the controls to the bot lab;
+- device-local touch control for mobile pointer placement;
 - local match plumbing so the selected config actually drives the practice bot;
 - saved-match identity snapshots that preserve which bot config was used.
 
@@ -429,6 +430,7 @@ The advanced layer needs a modest warning:
 - players can choose a tested bot preset before or between local bot matches;
 - advanced users can inspect and adjust the main bot dimensions;
 - the selected config persists locally and drives the actual practice bot;
+- mobile players can choose pointer-style or touchpad-style cursor movement;
 - saved matches record the bot config used;
 - the UI connects back to the bot-lab identity without exposing report-only
   diagnostics;

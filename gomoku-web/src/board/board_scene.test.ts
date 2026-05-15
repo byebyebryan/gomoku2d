@@ -16,6 +16,7 @@ import {
 import {
   canPlaceTouchCandidate,
   moveTouchCandidateFromDrag,
+  moveTouchCandidateFromPointerMove,
   pointerCueForCandidate,
   resetSpriteToFrame,
   sequenceNumberFontSize,
@@ -27,6 +28,8 @@ import {
   shouldRestartPointerCycle,
   shouldStopStoneIdleCycle,
   touchDragSteps,
+  usesTouchCandidate,
+  usesTouchpadDrag,
   warningAnimationForOverlay,
   warningSpriteForOverlay,
 } from "./board_scene_logic";
@@ -239,6 +242,42 @@ describe("moveTouchCandidateFromDrag", () => {
       row: 14,
       col: 14,
     });
+  });
+});
+
+describe("touch control modes", () => {
+  it("uses the touch candidate flow for pointer and touchpad mobile controls", () => {
+    expect(usesTouchCandidate("none")).toBe(false);
+    expect(usesTouchCandidate("pointer")).toBe(true);
+    expect(usesTouchCandidate("touchpad")).toBe(true);
+  });
+
+  it("only enables drag-relative movement in touchpad mode", () => {
+    expect(usesTouchpadDrag("none")).toBe(false);
+    expect(usesTouchpadDrag("pointer")).toBe(false);
+    expect(usesTouchpadDrag("touchpad")).toBe(true);
+  });
+
+  it("moves pointer mode directly to the dragged-over cell", () => {
+    expect(moveTouchCandidateFromPointerMove(
+      "pointer",
+      { row: 7, col: 7 },
+      { row: 3, col: 11 },
+      80,
+      -80,
+      40,
+    )).toEqual({ row: 3, col: 11 });
+  });
+
+  it("keeps touchpad mode relative to the drag origin", () => {
+    expect(moveTouchCandidateFromPointerMove(
+      "touchpad",
+      { row: 7, col: 7 },
+      { row: 3, col: 11 },
+      80,
+      -80,
+      40,
+    )).toEqual({ row: 5, col: 9 });
   });
 });
 

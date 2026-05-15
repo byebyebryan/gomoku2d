@@ -10,6 +10,7 @@ const SEQUENCE_FONT_DESKTOP_SIZE = 16;
 
 export type WarningOverlayRole = "forbidden" | "threatMove" | "winningMove" | "winningLine";
 export type PointerCue = "blocked" | "hidden" | "normal" | "preferred";
+export type BoardTouchControlMode = "none" | "pointer" | "touchpad";
 
 export type SpriteFrameTarget = {
   frame: number;
@@ -179,6 +180,34 @@ export function moveTouchCandidateFromDrag(
     row: clamp(origin.row + touchDragSteps(deltaY, cellSize)),
     col: clamp(origin.col + touchDragSteps(deltaX, cellSize)),
   };
+}
+
+export function moveTouchCandidateFromPointerMove(
+  mode: BoardTouchControlMode,
+  origin: CellPosition,
+  pointerCell: CellPosition | null,
+  deltaX: number,
+  deltaY: number,
+  cellSize: number,
+  boardSize = DEFAULT_BOARD_SIZE,
+): CellPosition | null {
+  if (mode === "pointer") {
+    return pointerCell;
+  }
+
+  if (mode === "touchpad") {
+    return moveTouchCandidateFromDrag(origin, deltaX, deltaY, cellSize, boardSize);
+  }
+
+  return null;
+}
+
+export function usesTouchCandidate(mode: BoardTouchControlMode): boolean {
+  return mode !== "none";
+}
+
+export function usesTouchpadDrag(mode: BoardTouchControlMode): boolean {
+  return mode === "touchpad";
 }
 
 export function canPlaceTouchCandidate(

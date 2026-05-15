@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 
 import { DEFAULT_PRACTICE_BOT_CONFIG } from "../core/practice_bot_config";
@@ -8,10 +8,12 @@ import {
   ensureLocalMatchSession,
 } from "../game/local_match_session";
 import { emptyLocalMatchHistory, localProfileStore } from "../profile/local_profile_store";
+import { uiPreferencesStore } from "../profile/ui_preferences_store";
 
 import { SettingsRoute } from "./SettingsRoute";
 
 const initialLocalProfileState = localProfileStore.getState();
+const initialUiPreferencesState = uiPreferencesStore.getState();
 const localProfile = {
   avatarUrl: null,
   createdAt: "2026-05-15T00:00:00.000Z",
@@ -35,11 +37,27 @@ function renderSettingsRoute() {
   );
 }
 
+function mockSettingsMedia(options: { compact?: boolean; touch?: boolean }) {
+  vi.stubGlobal("matchMedia", vi.fn((query: string) => ({
+    addEventListener: vi.fn(),
+    matches: query.includes("pointer: coarse")
+      ? Boolean(options.touch)
+      : query.includes("max-width: 760px") && Boolean(options.compact),
+    removeEventListener: vi.fn(),
+  })));
+}
+
+function mockCompactTouchDevice(matches: boolean) {
+  mockSettingsMedia({ compact: matches, touch: matches });
+}
+
 describe("SettingsRoute", () => {
   afterEach(() => {
     cleanup();
     disposeLocalMatchSession();
     localProfileStore.setState(initialLocalProfileState, true);
+    uiPreferencesStore.setState(initialUiPreferencesState, true);
+    vi.unstubAllGlobals();
   });
 
   beforeEach(() => {
@@ -73,6 +91,61 @@ describe("SettingsRoute", () => {
     expect(screen.getByText(/^Ruleset for new games.$/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Freestyle" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Renju" })).toBeInTheDocument();
+  });
+
+  it("hides touch control on non-mobile settings screens", () => {
+    renderSettingsRoute();
+
+    expect(screen.queryByText(/^Controls$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Touch control$/)).not.toBeInTheDocument();
+  });
+
+  it("hides the current settings summary on compact settings screens", async () => {
+    mockSettingsMedia({ compact: true });
+    renderSettingsRoute();
+
+    await waitFor(() => {
+      expect(screen.queryByText(/^Current settings$/)).not.toBeInTheDocument();
+      expect(screen.queryByRole("group", { name: /freestyle normal bot/i })).not.toBeInTheDocument();
+    });
+  });
+
+  it("keeps the apply-next-game panel visible on compact settings screens", async () => {
+    mockSettingsMedia({ compact: true });
+    const matchStore = ensureLocalMatchSession({ botRunner: noOpBotRunner });
+    expect(matchStore.getState().placeHumanMove(7, 7)).toBe(true);
+
+    renderSettingsRoute();
+
+    fireEvent.click(screen.getByRole("button", { name: /renju/i }));
+
+    expect(await screen.findByText(/saved settings apply next game/i)).toBeInTheDocument();
+    expect(screen.queryByText(/^Current settings$/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: /renju normal bot/i })).not.toBeInTheDocument();
+  });
+
+  it("shows touch control as a device-local control on compact touch screens", () => {
+    mockCompactTouchDevice(true);
+    renderSettingsRoute();
+
+    expect(screen.getByText(/^Controls$/)).toBeInTheDocument();
+    expect(screen.getByText(/^Touch control$/)).toBeInTheDocument();
+    expect(screen.getByText(/^How mobile taps move the board cursor.$/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Pointer" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Touchpad" })).toBeInTheDocument();
+  });
+
+  it("persists touch control as a UI preference", () => {
+    mockCompactTouchDevice(true);
+    renderSettingsRoute();
+
+    fireEvent.click(screen.getByRole("button", { name: "Pointer" }));
+
+    expect(uiPreferencesStore.getState().touchControl).toBe("pointer");
+    expect(localProfileStore.getState().settings).toEqual({
+      practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
+      preferredVariant: "freestyle",
+    });
   });
 
   it("shows lab controls as setting labels with option segments", () => {

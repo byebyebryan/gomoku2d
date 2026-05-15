@@ -17,7 +17,7 @@ import { BoardRenderer } from "./board_renderer";
 import { SEQUENCE_FONT_FAMILY } from "./sequence_font";
 import {
   canPlaceTouchCandidate,
-  moveTouchCandidateFromDrag,
+  moveTouchCandidateFromPointerMove,
   pointerCueForCandidate,
   resetSpriteToFrame,
   sequenceNumberFontSize,
@@ -28,12 +28,14 @@ import {
   shouldSyncOverlaySprites,
   shouldStopStoneCycleBeforeStoneRemoval,
   shouldStopStoneIdleCycle,
+  usesTouchCandidate,
+  usesTouchpadDrag,
   warningAnimationForOverlay,
   warningSpriteForOverlay,
 } from "./board_scene_logic";
 
 import type { CellPosition, CellStone, MatchMove, MatchStatus } from "../game/types";
-import type { PointerCue } from "./board_scene_logic";
+import type { BoardTouchControlMode, PointerCue } from "./board_scene_logic";
 
 const STONE_IDLE_ANIMS = [
   STONE_ANIMS.IDLE_1,
@@ -246,8 +248,8 @@ export interface BoardSceneState {
   onAdvanceRound: () => void;
   onPlace: (row: number, col: number) => void;
   onTouchCandidateChange: (candidate: CellPosition | null, canPlace: boolean) => void;
+  touchControlMode: BoardTouchControlMode;
   touchCandidateResetVersion: number;
-  mobileTouchPlacement: boolean;
   showSequenceNumbers: boolean;
   status: MatchStatus;
   threatMoves: CellPosition[];
@@ -263,11 +265,11 @@ const DEFAULT_STATE: BoardSceneState = {
   forbiddenMoves: [],
   interactive: false,
   lastMove: null,
-  mobileTouchPlacement: false,
   moves: [],
   onAdvanceRound: () => undefined,
   onPlace: () => undefined,
   onTouchCandidateChange: () => undefined,
+  touchControlMode: "none",
   touchCandidateResetVersion: 0,
   showSequenceNumbers: false,
   status: "playing",
@@ -587,7 +589,7 @@ export class BoardScene extends Phaser.Scene {
       .setScale(this.currentCellSize / FRAME_SIZE)
       .setTint(this.boardState.currentPlayer === 1 ? COLOR.STONE_BLACK : COLOR.STONE_WHITE);
 
-    if (!this.boardState.mobileTouchPlacement) {
+    if (!usesTouchCandidate(this.boardState.touchControlMode)) {
       this.clearTouchCandidate();
       return;
     }
@@ -742,7 +744,7 @@ export class BoardScene extends Phaser.Scene {
   }
 
   private setTouchCandidate(candidate: CellPosition | null): void {
-    if (!this.boardState.mobileTouchPlacement) {
+    if (!usesTouchCandidate(this.boardState.touchControlMode)) {
       return;
     }
 
@@ -769,16 +771,25 @@ export class BoardScene extends Phaser.Scene {
       return;
     }
 
-    if (this.boardState.mobileTouchPlacement) {
-      if (!this.touchDragOrigin) {
+    if (usesTouchCandidate(this.boardState.touchControlMode)) {
+      const pointerCell = this.board.pixelToCell(pointer.x, pointer.y);
+
+      if (usesTouchpadDrag(this.boardState.touchControlMode) && !this.touchDragOrigin) {
+        return;
+      }
+
+      const origin = this.touchDragOrigin?.candidate ?? pointerCell;
+      if (!origin) {
         return;
       }
 
       this.setTouchCandidate(
-        moveTouchCandidateFromDrag(
-          this.touchDragOrigin.candidate,
-          pointer.x - this.touchDragOrigin.x,
-          pointer.y - this.touchDragOrigin.y,
+        moveTouchCandidateFromPointerMove(
+          this.boardState.touchControlMode,
+          origin,
+          pointerCell,
+          pointer.x - (this.touchDragOrigin?.x ?? pointer.x),
+          pointer.y - (this.touchDragOrigin?.y ?? pointer.y),
           this.currentCellSize,
         ),
       );
@@ -802,8 +813,15 @@ export class BoardScene extends Phaser.Scene {
       return;
     }
 
-    if (this.boardState.mobileTouchPlacement) {
-      const originCandidate = this.touchCandidate ?? this.board.pixelToCell(pointer.x, pointer.y);
+    if (usesTouchCandidate(this.boardState.touchControlMode)) {
+      const tappedCandidate = this.board.pixelToCell(pointer.x, pointer.y);
+
+      if (!usesTouchpadDrag(this.boardState.touchControlMode)) {
+        this.setTouchCandidate(tappedCandidate);
+        return;
+      }
+
+      const originCandidate = this.touchCandidate ?? tappedCandidate;
       if (!originCandidate) {
         return;
       }
@@ -841,7 +859,7 @@ export class BoardScene extends Phaser.Scene {
       return;
     }
 
-    if (this.boardState.mobileTouchPlacement) {
+    if (usesTouchCandidate(this.boardState.touchControlMode)) {
       this.touchDragOrigin = null;
       return;
     }
@@ -873,7 +891,7 @@ export class BoardScene extends Phaser.Scene {
   }
 
   private handlePointerOut(pointer: Phaser.Input.Pointer): void {
-    if (this.boardState.mobileTouchPlacement) {
+    if (usesTouchCandidate(this.boardState.touchControlMode)) {
       return;
     }
 
@@ -918,7 +936,7 @@ export class BoardScene extends Phaser.Scene {
       .setTint(this.boardState.currentPlayer === 1 ? COLOR.STONE_BLACK : COLOR.STONE_WHITE)
       .setVisible(true);
     this.pointerCellKey = cellKey;
-    if (this.boardState.mobileTouchPlacement) {
+    if (usesTouchCandidate(this.boardState.touchControlMode)) {
       this.reportTouchCandidate(candidate);
     }
 

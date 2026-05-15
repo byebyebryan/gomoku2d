@@ -106,7 +106,7 @@ interface BoardProps {
   forbiddenMoves: Move[];
   lastMove?: Move;
   interactive: boolean;
-  mobileTouchPlacement: boolean;
+  touchControlMode: 'none' | 'pointer' | 'touchpad';
   showSequenceNumbers: boolean;
   status: MatchStatus;
   threatMoves: Move[];

@@ -18,6 +18,7 @@ import {
 import type { LocalMatchResumeSeed, LocalMatchState } from "../game/local_match_store";
 import type { CellPosition } from "../game/types";
 import { localProfileStore } from "../profile/local_profile_store";
+import { uiPreferencesStore } from "../profile/ui_preferences_store";
 import { variantLabel } from "../replay/local_replay";
 import { Icon } from "../ui/Icon";
 
@@ -113,6 +114,7 @@ export function LocalMatchRoute() {
   const matchStore = useStore(localMatchSessionStore, (snapshot) => snapshot.matchStore);
   const latestReplayId = useStore(localMatchSessionStore, (snapshot) => snapshot.latestReplayId);
   const state = useStore(matchStore ?? loadingMatchStore, (snapshot) => snapshot);
+  const touchControl = useStore(uiPreferencesStore, (snapshot) => snapshot.touchControl);
   const resumeSeed = (location.state as { resumeSeed?: LocalMatchResumeSeed } | null)?.resumeSeed ?? null;
   const resumeSeedKey = resumeSeed ? JSON.stringify(resumeSeed) : null;
 
@@ -242,7 +244,6 @@ export function LocalMatchRoute() {
             forbiddenMoves={state.forbiddenMoves}
             interactive={humanToMove}
             lastMove={state.lastMove}
-            mobileTouchPlacement={compactTouchMode}
             moves={state.moves}
             onAdvanceRound={state.startNextRound}
             onPlace={state.placeHumanMove}
@@ -261,6 +262,7 @@ export function LocalMatchRoute() {
                 previous === canPlace ? previous : canPlace
               ));
             }}
+            touchControlMode={compactTouchMode ? touchControl : "none"}
             touchCandidateResetVersion={touchCandidateResetVersion}
             showSequenceNumbers
             status={state.status}
