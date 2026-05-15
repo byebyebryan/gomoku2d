@@ -369,19 +369,38 @@ as low/mid controls.
 
 The working plan lives in `docs/archive/v0_4_4_frontier_plan.md`.
 
-`0.4.5` becomes the earliest likely UI bridge for bot controls/settings. Expose
-only knobs that have survived lab evidence. A reasonable product-facing starting
-point is still an easy/default/hard ladder backed by reports, but corridor-aware
-bot behavior may change what those labels mean. Keep raw pattern-eval,
-child-cap, corridor-search, and shadow/scan diagnostic knobs lab-only until they
-become product language. Profile should not become a dumping ground for
-bot/debug preferences.
+`0.4.5` becomes the bot-controls UI bridge, with analysis explicitly deferred.
+The goal is not simply to say the bot became stronger or faster. The more
+distinctive product story is that the practice bot is configurable and
+inspectable because there is a real Rust bot lab behind it.
+
+Use two layers:
+
+- tested presets for normal players, e.g. easy/default/hard practice lanes
+  backed by current anchor reports;
+- an advanced Bot Lab layer that exposes the main tuning dimensions in product
+  language: search depth, search width, pattern scoring, corridor proof, and
+  generated lab spec.
+
+Keep report-only diagnostics and retired lab axes out of the UI:
+`rolling-frontier-shadow`, `scan-threat-view`, safety ablations, retired
+portal/leaf-extension suffixes, and tournament-only CPU budget controls. Raw
+pattern-eval, child-cap, and corridor-proof spelling can appear as a generated
+spec for transparency, but the primary UI should describe what the setting
+means. Profile should not become a dumping ground for bot/debug preferences.
+
+The working plan lives in `docs/archive/v0_4_5_bot_controls_plan.md`.
 
 Later `0.4.x` slices can compete based on which lab-powered product surface
 feels strongest.
 
 ### Possible Work
 
+- bot preset selection with report-backed labels
+- advanced Bot Lab controls for explicit practice-bot configuration
+- local persistence and saved-match snapshots for selected bot configs
+- profile schema v4 for practice-bot settings, with deprecated local-profile
+  v3 import
 - replay analysis with critical-moment tagging
 - better-move suggestions and opponent best-reply previews
 - generated puzzles from real games or curated positions
