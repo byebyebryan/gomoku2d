@@ -853,6 +853,9 @@ pub fn defender_hint_reply_candidates_from_view<V: ThreatView + ?Sized>(
             push_reply_role(&mut replies, mv, DefenderReplyRole::ImmediateDefense);
         }
     }
+    if !winning_squares.is_empty() {
+        return replies;
+    }
 
     let imminent_facts = view
         .active_corridor_threats(attacker)
@@ -878,7 +881,7 @@ pub fn defender_hint_reply_candidates_from_view<V: ThreatView + ?Sized>(
             .roles
             .contains(&DefenderReplyRole::ImminentDefense)
     });
-    if winning_squares.is_empty() && has_imminent_reply {
+    if has_imminent_reply {
         for mv in offensive_counter_reply_moves(board, defender) {
             push_reply_role(&mut replies, mv, DefenderReplyRole::OffensiveCounter);
         }
@@ -1951,7 +1954,7 @@ mod tests {
     }
 
     #[test]
-    fn defender_hint_candidates_show_combo_immediate_and_imminent_replies() {
+    fn defender_hint_candidates_prioritize_immediate_replies_over_imminent_replies() {
         let board = board_from_moves(
             Variant::Freestyle,
             &[
@@ -1972,16 +1975,12 @@ mod tests {
             "L8",
             DefenderReplyRole::ImmediateDefense
         ));
-        assert!(has_reply_role(
-            &candidates,
-            "E6",
-            DefenderReplyRole::ImminentDefense
-        ));
-        assert!(has_reply_role(
-            &candidates,
-            "I6",
-            DefenderReplyRole::ImminentDefense
-        ));
+        assert!(
+            candidates.iter().all(|candidate| !candidate
+                .roles
+                .contains(&DefenderReplyRole::ImminentDefense)),
+            "imminent replies should be suppressed while immediate replies exist: {candidates:?}"
+        );
     }
 
     #[test]
