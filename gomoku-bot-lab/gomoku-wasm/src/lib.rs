@@ -11,7 +11,7 @@ use wasm_bindgen::prelude::*;
 
 use gomoku_bot::{
     frontier::RollingThreatFrontier,
-    tactical::{DefenderReplyRole, ThreatView},
+    tactical::{defender_hint_reply_candidates_from_view, DefenderReplyRole, ThreatView},
     Bot, LeafCorridorConfig, MoveOrdering, RandomBot, SearchBot, SearchBotConfig, StaticEvaluation,
 };
 use gomoku_core::rules::Variant;
@@ -171,7 +171,8 @@ impl WasmBoard {
             .collect::<Vec<_>>();
         blocked.extend(immediate_threat_moves.iter().copied());
 
-        let reply_candidates = self.threat_view.defender_reply_candidates(opponent, None);
+        let reply_candidates =
+            defender_hint_reply_candidates_from_view(&self.inner, &self.threat_view, opponent);
         let mut imminent_threat_moves = Vec::new();
         for candidate in &reply_candidates {
             if blocked.contains(&candidate.mv) {

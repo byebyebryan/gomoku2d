@@ -353,6 +353,18 @@ impl CorridorThreatPolicy {
             .any(|fact| self.is_active_threat(board, attacker, fact))
     }
 
+    pub fn is_visible_imminent_hint(
+        self,
+        board: &Board,
+        attacker: Color,
+        fact: &LocalThreatFact,
+    ) -> bool {
+        matches!(
+            fact.kind,
+            LocalThreatKind::OpenThree | LocalThreatKind::BrokenThree
+        ) && self.is_active_threat(board, attacker, fact)
+    }
+
     pub fn defender_reply_moves(
         self,
         board: &Board,
@@ -731,6 +743,13 @@ pub fn defender_reply_candidates(
     ScanThreatView::new(board).defender_reply_candidates(attacker, actual_reply)
 }
 
+pub fn defender_hint_reply_candidates(
+    board: &Board,
+    attacker: Color,
+) -> Vec<DefenderReplyCandidate> {
+    defender_hint_reply_candidates_from_view(board, &ScanThreatView::new(board), attacker)
+}
+
 pub fn corridor_attacker_move_rank(board: &Board, attacker: Color, mv: Move) -> u8 {
     CorridorThreatPolicy.attacker_move_rank(board, attacker, mv)
 }
@@ -803,6 +822,59 @@ pub(crate) fn defender_reply_candidates_from_view<V: ThreatView + ?Sized>(
     }
     if let Some(mv) = actual_reply {
         push_reply_role(&mut replies, mv, DefenderReplyRole::Actual);
+    }
+
+    replies
+}
+
+pub fn defender_hint_reply_candidates_from_view<V: ThreatView + ?Sized>(
+    board: &Board,
+    view: &V,
+    attacker: Color,
+) -> Vec<DefenderReplyCandidate> {
+    if board.current_player != attacker.opponent() || board.result != GameResult::Ongoing {
+        return Vec::new();
+    }
+
+    let defender = attacker.opponent();
+    let policy = CorridorThreatPolicy;
+    let mut replies = Vec::<DefenderReplyCandidate>::new();
+
+    let winning_squares = view.immediate_winning_moves_for(attacker);
+    for mv in winning_squares.iter().copied() {
+        if board.is_legal_for_color(mv, defender) {
+            push_reply_role(&mut replies, mv, DefenderReplyRole::ImmediateDefense);
+        }
+    }
+
+    let imminent_facts = view
+        .active_corridor_threats(attacker)
+        .into_iter()
+        .filter(|fact| policy.is_visible_imminent_hint(board, attacker, fact))
+        .collect::<Vec<_>>();
+    let mut imminent_reply_moves = Vec::new();
+    for fact in &imminent_facts {
+        add_corridor_defender_replies_for_fact(
+            board,
+            attacker,
+            defender,
+            fact,
+            &mut imminent_reply_moves,
+        );
+    }
+    for mv in imminent_reply_moves {
+        push_reply_role(&mut replies, mv, DefenderReplyRole::ImminentDefense);
+    }
+
+    let has_imminent_reply = replies.iter().any(|candidate| {
+        candidate
+            .roles
+            .contains(&DefenderReplyRole::ImminentDefense)
+    });
+    if winning_squares.is_empty() && has_imminent_reply {
+        for mv in offensive_counter_reply_moves(board, defender) {
+            push_reply_role(&mut replies, mv, DefenderReplyRole::OffensiveCounter);
+        }
     }
 
     replies
@@ -1289,7 +1361,6 @@ fn broken_three_rest_squares_through_view(
         if player_offsets.windows(2).all(|pair| pair[1] == pair[0] + 1) {
             continue;
         }
-
         for offset in empty_offsets {
             let row = mv.row as isize + dr * offset;
             let col = mv.col as isize + dc * offset;
@@ -1431,12 +1502,13 @@ fn move_list_sort_key(moves: &[Move]) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        corridor_active_threats, corridor_defender_reply_moves, has_forcing_local_threat,
-        has_forcing_local_threat_at_move, legal_forcing_continuations_for_fact,
-        local_threat_facts_after_move, local_threat_facts_for_player, normalize_local_threat_facts,
+        corridor_active_threats, corridor_defender_reply_moves, defender_hint_reply_candidates,
+        has_forcing_local_threat, has_forcing_local_threat_at_move,
+        legal_forcing_continuations_for_fact, local_threat_facts_after_move,
+        local_threat_facts_for_player, normalize_local_threat_facts,
         raw_local_threat_facts_after_move, raw_local_threat_facts_for_player, CorridorThreatPolicy,
-        LocalThreatFact, LocalThreatKind, LocalThreatOrigin, ScanThreatView, SearchThreatPolicy,
-        ThreatView,
+        DefenderReplyCandidate, DefenderReplyRole, LocalThreatFact, LocalThreatKind,
+        LocalThreatOrigin, ScanThreatView, SearchThreatPolicy, ThreatView,
     };
     use gomoku_core::{Board, Color, Move, RuleConfig, Variant};
 
@@ -1476,6 +1548,17 @@ mod tests {
         });
         apply_moves(&mut board, moves);
         board
+    }
+
+    fn has_reply_role(
+        candidates: &[DefenderReplyCandidate],
+        notation: &str,
+        role: DefenderReplyRole,
+    ) -> bool {
+        let mv = mv(notation);
+        candidates
+            .iter()
+            .any(|candidate| candidate.mv == mv && candidate.roles.contains(&role))
     }
 
     #[test]
@@ -1870,6 +1953,55 @@ mod tests {
                 "H13 is not an immediate white win at this prefix"
             );
         }
+    }
+
+    #[test]
+    fn defender_hint_candidates_require_imminent_threat_for_counter() {
+        let board = board_from_moves(Variant::Freestyle, &["H8", "A1", "I8", "O1", "J8", "A15"]);
+        assert_eq!(board.current_player, Color::Black);
+
+        let candidates = defender_hint_reply_candidates(&board, Color::White);
+
+        assert!(
+            candidates.iter().all(|candidate| !candidate
+                .roles
+                .contains(&DefenderReplyRole::OffensiveCounter)),
+            "quiet positions should not expose offensive counters as UI hints: {candidates:?}"
+        );
+    }
+
+    #[test]
+    fn defender_hint_candidates_show_combo_immediate_and_imminent_replies() {
+        let board = board_from_moves(
+            Variant::Freestyle,
+            &[
+                "A1", "H8", "C2", "I8", "E3", "J8", "G4", "K8", "I5", "F6", "K6", "G6", "M7", "H6",
+            ],
+        );
+        assert_eq!(board.current_player, Color::Black);
+
+        let candidates = defender_hint_reply_candidates(&board, Color::White);
+
+        assert!(has_reply_role(
+            &candidates,
+            "G8",
+            DefenderReplyRole::ImmediateDefense
+        ));
+        assert!(has_reply_role(
+            &candidates,
+            "L8",
+            DefenderReplyRole::ImmediateDefense
+        ));
+        assert!(has_reply_role(
+            &candidates,
+            "E6",
+            DefenderReplyRole::ImminentDefense
+        ));
+        assert!(has_reply_role(
+            &candidates,
+            "I6",
+            DefenderReplyRole::ImminentDefense
+        ));
     }
 
     #[test]
