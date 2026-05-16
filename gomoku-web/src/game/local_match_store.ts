@@ -40,6 +40,7 @@ export interface LocalMatchState {
   moves: MatchMove[];
   pendingBotMove: boolean;
   players: [MatchPlayer, MatchPlayer];
+  playerClockMs: [number, number];
   selectedPracticeBot: PracticeBotConfig;
   selectedVariant: GameVariant;
   selectPracticeBot: (practiceBot: PracticeBotConfig) => void;
@@ -48,6 +49,7 @@ export interface LocalMatchState {
   startNextRound: () => void;
   status: MatchStatus;
   threatMoves: CellPosition[];
+  turnStartedAtMs: number;
   undoFloor: number;
   undoLastTurn: () => boolean;
   placeHumanMove: (row: number, col: number) => boolean;
@@ -69,6 +71,7 @@ export interface LocalMatchStoreOptions {
   botRunner?: MatchBotRunner;
   boardFactory?: (variant: GameVariant) => WasmBoard;
   humanDisplayName?: string;
+  nowMs?: () => number;
   onMatchFinished?: (match: FinishedLocalMatch) => void;
   practiceBot?: PracticeBotConfig;
   resumeState?: LocalMatchResumeSeed;
@@ -239,6 +242,8 @@ function snapshotState(
   selectedVariant: GameVariant,
   currentPracticeBot: PracticeBotConfig,
   selectedPracticeBot: PracticeBotConfig,
+  playerClockMs: [number, number],
+  turnStartedAtMs: number,
   undoFloor: number,
 ): Omit<
   LocalMatchState,
@@ -266,10 +271,12 @@ function snapshotState(
     moves,
     pendingBotMove,
     players,
+    playerClockMs: [...playerClockMs],
     selectedPracticeBot,
     selectedVariant,
     status,
     threatMoves: hints.threatMoves,
+    turnStartedAtMs,
     undoFloor,
     winningMoves: hints.winningMoves,
     winningCells: normalizeMoves(board.winningCells() as Array<{ row: number; col: number }>),
@@ -284,7 +291,19 @@ function snapshotFinishedMatch(
   variant: GameVariant,
   undoFloor: number,
 ): FinishedLocalMatch | null {
-  const snapshot = snapshotState(board, moves, false, players, variant, variant, practiceBot, practiceBot, undoFloor);
+  const snapshot = snapshotState(
+    board,
+    moves,
+    false,
+    players,
+    variant,
+    variant,
+    practiceBot,
+    practiceBot,
+    [0, 0],
+    0,
+    undoFloor,
+  );
   if (snapshot.status === "playing") {
     return null;
   }
@@ -316,6 +335,7 @@ export function createLocalMatchStore(
   let selectedPracticeBot = currentPracticeBot;
   const boardFactory = options.boardFactory ?? WasmBoard.createWithVariant;
   const botRunner = options.botRunner ?? new BotRunner();
+  const nowMs = options.nowMs ?? (() => Date.now());
   let players = initialResumeState
     ? resumedPlayers(initialResumeState.currentPlayer, options.humanDisplayName, currentPracticeBot)
     : defaultPlayers(options.humanDisplayName, currentPracticeBot);
@@ -329,6 +349,9 @@ export function createLocalMatchStore(
     players = defaultPlayers(options.humanDisplayName, currentPracticeBot);
     undoFloor = 0;
   }
+  let playerClockMs: [number, number] = [0, 0];
+  let moveClockMs: number[] = seededMoves.map(() => 0);
+  let turnStartedAtMs = nowMs();
   let requestToken = 0;
 
   const store = createStore<LocalMatchState>((set, get) => {
@@ -361,11 +384,43 @@ export function createLocalMatchStore(
         selectedVariant,
         currentPracticeBot,
         selectedPracticeBot,
+        playerClockMs,
+        turnStartedAtMs,
         undoFloor,
       ));
     };
 
     const currentPlayerSlot = (): 0 | 1 => ((board.currentPlayer() as 1 | 2) - 1) as 0 | 1;
+
+    const resetClocks = (): void => {
+      playerClockMs = [0, 0];
+      moveClockMs = [];
+      turnStartedAtMs = nowMs();
+    };
+
+    const settleMoveClock = (player: 1 | 2): void => {
+      const nextNow = nowMs();
+      const elapsedMs = Math.max(0, Math.floor(nextNow - turnStartedAtMs));
+      const slot = (player - 1) as 0 | 1;
+      playerClockMs = playerClockMs.map((value, index) =>
+        index === slot ? value + elapsedMs : value,
+      ) as [number, number];
+      moveClockMs = [...moveClockMs, elapsedMs];
+      turnStartedAtMs = nextNow;
+    };
+
+    const undoMoveClock = (move: MatchMove | undefined): void => {
+      if (!move) {
+        return;
+      }
+
+      const elapsedMs = moveClockMs[moveClockMs.length - 1] ?? 0;
+      const slot = (move.player - 1) as 0 | 1;
+      moveClockMs = moveClockMs.slice(0, -1);
+      playerClockMs = playerClockMs.map((value, index) =>
+        index === slot ? Math.max(0, value - elapsedMs) : value,
+      ) as [number, number];
+    };
 
     const applyMove = (row: number, col: number, player: 1 | 2): boolean => {
       const result = board.applyMove(row, col) as { error?: unknown };
@@ -373,6 +428,8 @@ export function createLocalMatchStore(
       if (result?.error) {
         return false;
       }
+
+      settleMoveClock(player);
 
       const nextMoves = [
         ...get().moves,
@@ -455,6 +512,7 @@ export function createLocalMatchStore(
       board = boardFactory(currentVariant);
       players = withBotPlayerNames(clonePlayers(nextPlayers), currentPracticeBot);
       undoFloor = 0;
+      resetClocks();
       configureBots();
       updateState([], false);
       maybeQueueBotMove();
@@ -472,6 +530,8 @@ export function createLocalMatchStore(
         selectedVariant,
         currentPracticeBot,
         selectedPracticeBot,
+        playerClockMs,
+        turnStartedAtMs,
         undoFloor,
       ),
       dispose: () => {
@@ -537,12 +597,13 @@ export function createLocalMatchStore(
         const nextMoves = [...state.moves];
         do {
           board.undoLastMove();
-          nextMoves.pop();
+          undoMoveClock(nextMoves.pop());
         } while (
           nextMoves.length > minimumMoves &&
           players[((board.currentPlayer() as 1 | 2) - 1) as 0 | 1]?.kind === "bot"
         );
 
+        turnStartedAtMs = nowMs();
         updateState(nextMoves, false);
         return true;
       },
