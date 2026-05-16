@@ -414,9 +414,12 @@ version = "0.1.0"
 dependencies = [
  "console_error_panic_hook",
  "getrandom",
+ "gomoku-analysis",
  "gomoku-bot",
  "gomoku-core",
  "js-sys",
+ "serde",
+ "serde_json",
  "wasm-bindgen",
 ]
 
