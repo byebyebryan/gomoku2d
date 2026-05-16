@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 use gomoku_core::{Board, Color, GameResult, Move, Variant, DIRS};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -46,6 +48,21 @@ impl TacticalLiteRank {
             0
         }
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DefenderReplyRole {
+    Actual,
+    ImmediateDefense,
+    ImminentDefense,
+    OffensiveCounter,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DefenderReplyCandidate {
+    pub mv: Move,
+    pub roles: Vec<DefenderReplyRole>,
 }
 
 impl TacticalOrderingSummary {
@@ -450,6 +467,12 @@ pub trait ThreatView {
     fn local_corridor_entry_rank(&self, attacker: Color, mv: Move) -> u8;
     /// Legal defender replies to the strongest active corridor threat.
     fn defender_reply_moves(&self, attacker: Color, actual_reply: Option<Move>) -> Vec<Move>;
+    /// Legal defender replies annotated by why they matter.
+    fn defender_reply_candidates(
+        &self,
+        attacker: Color,
+        actual_reply: Option<Move>,
+    ) -> Vec<DefenderReplyCandidate>;
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -509,6 +532,14 @@ impl ThreatView for ScanThreatView<'_> {
 
     fn defender_reply_moves(&self, attacker: Color, actual_reply: Option<Move>) -> Vec<Move> {
         CorridorThreatPolicy.defender_reply_moves(self.board, attacker, actual_reply)
+    }
+
+    fn defender_reply_candidates(
+        &self,
+        attacker: Color,
+        actual_reply: Option<Move>,
+    ) -> Vec<DefenderReplyCandidate> {
+        defender_reply_candidates_from_view(self.board, self, attacker, actual_reply)
     }
 }
 
@@ -692,6 +723,14 @@ pub fn corridor_defender_reply_moves(
     ScanThreatView::new(board).defender_reply_moves(attacker, actual_reply)
 }
 
+pub fn defender_reply_candidates(
+    board: &Board,
+    attacker: Color,
+    actual_reply: Option<Move>,
+) -> Vec<DefenderReplyCandidate> {
+    ScanThreatView::new(board).defender_reply_candidates(attacker, actual_reply)
+}
+
 pub fn corridor_attacker_move_rank(board: &Board, attacker: Color, mv: Move) -> u8 {
     CorridorThreatPolicy.attacker_move_rank(board, attacker, mv)
 }
@@ -730,6 +769,69 @@ pub fn legal_forcing_continuations_for_fact(
         }
     }
     continuations
+}
+
+pub(crate) fn defender_reply_candidates_from_view<V: ThreatView + ?Sized>(
+    board: &Board,
+    view: &V,
+    attacker: Color,
+    actual_reply: Option<Move>,
+) -> Vec<DefenderReplyCandidate> {
+    if board.current_player != attacker.opponent() || board.result != GameResult::Ongoing {
+        return Vec::new();
+    }
+
+    let defender = attacker.opponent();
+    let winning_squares = view.immediate_winning_moves_for(attacker);
+    let mut replies = Vec::<DefenderReplyCandidate>::new();
+
+    for mv in winning_squares.iter().copied() {
+        if board.is_legal_for_color(mv, defender) {
+            push_reply_role(&mut replies, mv, DefenderReplyRole::ImmediateDefense);
+        }
+    }
+    for mv in view.immediate_winning_moves_for(defender) {
+        push_reply_role(&mut replies, mv, DefenderReplyRole::OffensiveCounter);
+    }
+    if winning_squares.is_empty() {
+        for mv in view.defender_reply_moves(attacker, actual_reply) {
+            push_reply_role(&mut replies, mv, DefenderReplyRole::ImminentDefense);
+        }
+        for mv in offensive_counter_reply_moves(board, defender) {
+            push_reply_role(&mut replies, mv, DefenderReplyRole::OffensiveCounter);
+        }
+    }
+    if let Some(mv) = actual_reply {
+        push_reply_role(&mut replies, mv, DefenderReplyRole::Actual);
+    }
+
+    replies
+}
+
+fn offensive_counter_reply_moves(board: &Board, defender: Color) -> Vec<Move> {
+    board
+        .legal_moves()
+        .into_iter()
+        .filter(|&mv| {
+            let mut next = board.clone();
+            next.apply_move(mv).is_ok()
+                && next.result == GameResult::Ongoing
+                && !next.immediate_winning_moves_for(defender).is_empty()
+        })
+        .collect()
+}
+
+fn push_reply_role(replies: &mut Vec<DefenderReplyCandidate>, mv: Move, role: DefenderReplyRole) {
+    if let Some(reply) = replies.iter_mut().find(|reply| reply.mv == mv) {
+        if !reply.roles.contains(&role) {
+            reply.roles.push(role);
+        }
+        return;
+    }
+    replies.push(DefenderReplyCandidate {
+        mv,
+        roles: vec![role],
+    });
 }
 
 fn add_corridor_defender_replies_for_fact(

@@ -40,7 +40,9 @@ const emptyCells = (): CellStone[][] => Array.from({ length: 15 }, () =>
 
 const overlayState = (overrides: Partial<Parameters<typeof shouldSyncOverlaySprites>[1]> = {}) => ({
   cells: emptyCells(),
+  counterThreatMoves: [{ row: 12, col: 12 }],
   forbiddenMoves: [{ row: 8, col: 8 }],
+  imminentThreatMoves: [{ row: 11, col: 11 }],
   moves: [{ row: 7, col: 7, moveNumber: 1, player: 1 as const }],
   showSequenceNumbers: true,
   status: "playing" as const,
@@ -185,6 +187,20 @@ describe("shouldSyncOverlaySprites", () => {
     )).toBe(true);
   });
 
+  it("syncs overlays when imminent threat reply cells change", () => {
+    expect(shouldSyncOverlaySprites(
+      overlayState(),
+      overlayState({ imminentThreatMoves: [{ row: 11, col: 10 }] }),
+    )).toBe(true);
+  });
+
+  it("syncs overlays when counter-threat cells change", () => {
+    expect(shouldSyncOverlaySprites(
+      overlayState(),
+      overlayState({ counterThreatMoves: [{ row: 12, col: 10 }] }),
+    )).toBe(true);
+  });
+
   it("syncs overlays when result sequence labels can change", () => {
     expect(shouldSyncOverlaySprites(
       overlayState({ status: "playing" }),
@@ -306,6 +322,8 @@ describe("warningAnimationForOverlay", () => {
     expect(warningAnimationForOverlay("winningLine")).toBe("hover");
     expect(warningAnimationForOverlay("winningMove")).toBe("warning");
     expect(warningAnimationForOverlay("threatMove")).toBe("warning");
+    expect(warningAnimationForOverlay("imminentThreatMove")).toBe("warning");
+    expect(warningAnimationForOverlay("counterThreatMove")).toBe("warning");
     expect(warningAnimationForOverlay("threatMove", true)).toBe("warning-on-forbidden");
     expect(warningAnimationForOverlay("forbidden")).toBe("forbidden-out");
   });
@@ -319,6 +337,8 @@ describe("warningSpriteForOverlay", () => {
   it("uses the warning sheet for tactical and forbidden warnings", () => {
     expect(warningSpriteForOverlay("winningMove")).toBe(SPRITE.WARNING);
     expect(warningSpriteForOverlay("threatMove")).toBe(SPRITE.WARNING);
+    expect(warningSpriteForOverlay("imminentThreatMove")).toBe(SPRITE.WARNING);
+    expect(warningSpriteForOverlay("counterThreatMove")).toBe(SPRITE.WARNING);
     expect(warningSpriteForOverlay("forbidden")).toBe(SPRITE.WARNING);
   });
 });

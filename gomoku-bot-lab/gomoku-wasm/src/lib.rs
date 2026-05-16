@@ -5,13 +5,14 @@
 //! All authoritative behaviour lives in `gomoku-core` and `gomoku-bot`;
 //! `gomoku-wasm` just exposes it across the Wasm boundary.
 
-use js_sys::Object;
 use js_sys::Reflect;
+use js_sys::{Array, Object};
 use wasm_bindgen::prelude::*;
 
 use gomoku_bot::{
-    Bot, LeafCorridorConfig, MoveOrdering, RandomBot, SearchBot, SearchBotConfig,
-    StaticEvaluation,
+    frontier::RollingThreatFrontier,
+    tactical::{DefenderReplyRole, ThreatView},
+    Bot, LeafCorridorConfig, MoveOrdering, RandomBot, SearchBot, SearchBotConfig, StaticEvaluation,
 };
 use gomoku_core::rules::Variant;
 use gomoku_core::{Board, Color, GameResult, Move, RuleConfig};
@@ -28,6 +29,29 @@ fn moves_to_js(moves: Vec<Move>) -> Vec<JsValue> {
         .collect()
 }
 
+fn moves_to_js_array(moves: Vec<Move>) -> Array {
+    let arr = Array::new();
+    for mv in moves_to_js(moves) {
+        arr.push(&mv);
+    }
+    arr
+}
+
+fn set_moves(obj: &Object, key: &str, moves: Vec<Move>) {
+    let _ = Reflect::set(obj, &key.into(), &moves_to_js_array(moves).into());
+}
+
+fn push_unique_move(moves: &mut Vec<Move>, mv: Move) {
+    if !moves.contains(&mv) {
+        moves.push(mv);
+    }
+}
+
+fn wasm_board_from_inner(inner: Board) -> WasmBoard {
+    let threat_view = RollingThreatFrontier::from_board(&inner);
+    WasmBoard { inner, threat_view }
+}
+
 #[wasm_bindgen(start)]
 pub fn init() {
     console_error_panic_hook::set_once();
@@ -36,6 +60,7 @@ pub fn init() {
 #[wasm_bindgen]
 pub struct WasmBoard {
     inner: Board,
+    threat_view: RollingThreatFrontier,
 }
 
 impl Default for WasmBoard {
@@ -48,9 +73,7 @@ impl Default for WasmBoard {
 impl WasmBoard {
     #[wasm_bindgen(constructor)]
     pub fn new() -> WasmBoard {
-        WasmBoard {
-            inner: Board::new(RuleConfig::default()),
-        }
+        wasm_board_from_inner(Board::new(RuleConfig::default()))
     }
 
     #[wasm_bindgen(js_name = "createWithVariant")]
@@ -59,12 +82,10 @@ impl WasmBoard {
             "renju" => Variant::Renju,
             _ => Variant::Freestyle,
         };
-        WasmBoard {
-            inner: Board::new(RuleConfig {
-                variant: v,
-                ..RuleConfig::default()
-            }),
-        }
+        wasm_board_from_inner(Board::new(RuleConfig {
+            variant: v,
+            ..RuleConfig::default()
+        }))
     }
 
     #[wasm_bindgen(js_name = "applyMove")]
@@ -74,6 +95,9 @@ impl WasmBoard {
         let obj = Object::new();
         match result {
             Ok(game_result) => {
+                if self.threat_view.apply_move(mv).is_err() {
+                    self.threat_view = RollingThreatFrontier::from_board(&self.inner);
+                }
                 let result_str = match game_result {
                     GameResult::Ongoing => "ongoing",
                     GameResult::Winner(Color::Black) => "black",
@@ -131,20 +155,62 @@ impl WasmBoard {
         moves_to_js(self.inner.legal_moves())
     }
 
-    #[wasm_bindgen(js_name = "immediateWinningMovesFor")]
-    pub fn immediate_winning_moves_for(&self, player: u8) -> Vec<JsValue> {
-        let color = match player {
-            1 => Color::Black,
-            2 => Color::White,
-            _ => return vec![],
-        };
+    #[wasm_bindgen(js_name = "threatSnapshot")]
+    pub fn threat_snapshot(&self) -> JsValue {
+        let current = self.inner.current_player;
+        let opponent = current.opponent();
 
-        moves_to_js(self.inner.immediate_winning_moves_for(color))
-    }
+        let winning_moves = self.threat_view.immediate_winning_moves_for(current);
+        let mut blocked = winning_moves.clone();
 
-    #[wasm_bindgen(js_name = "forbiddenMovesForCurrentPlayer")]
-    pub fn forbidden_moves_for_current_player(&self) -> Vec<JsValue> {
-        moves_to_js(self.inner.forbidden_moves_for_current_player())
+        let immediate_threat_moves = self
+            .threat_view
+            .immediate_winning_moves_for(opponent)
+            .into_iter()
+            .filter(|mv| !blocked.contains(mv))
+            .collect::<Vec<_>>();
+        blocked.extend(immediate_threat_moves.iter().copied());
+
+        let reply_candidates = self.threat_view.defender_reply_candidates(opponent, None);
+        let mut imminent_threat_moves = Vec::new();
+        for candidate in &reply_candidates {
+            if blocked.contains(&candidate.mv) {
+                continue;
+            }
+            if candidate
+                .roles
+                .contains(&DefenderReplyRole::ImminentDefense)
+            {
+                push_unique_move(&mut imminent_threat_moves, candidate.mv);
+                blocked.push(candidate.mv);
+            }
+        }
+
+        let mut counter_threat_moves = Vec::new();
+        for candidate in &reply_candidates {
+            if blocked.contains(&candidate.mv) {
+                continue;
+            }
+            if candidate
+                .roles
+                .contains(&DefenderReplyRole::OffensiveCounter)
+            {
+                push_unique_move(&mut counter_threat_moves, candidate.mv);
+                blocked.push(candidate.mv);
+            }
+        }
+
+        let obj = Object::new();
+        set_moves(&obj, "winningMoves", winning_moves);
+        set_moves(&obj, "immediateThreatMoves", immediate_threat_moves);
+        set_moves(&obj, "imminentThreatMoves", imminent_threat_moves);
+        set_moves(&obj, "counterThreatMoves", counter_threat_moves);
+        set_moves(
+            &obj,
+            "forbiddenMoves",
+            self.inner.forbidden_moves_for_current_player(),
+        );
+        obj.into()
     }
 
     #[wasm_bindgen(js_name = "winningCells")]
@@ -156,6 +222,7 @@ impl WasmBoard {
     pub fn undo_last_move(&mut self) {
         if let Some(mv) = self.inner.history.last().copied() {
             self.inner.undo_move(mv);
+            self.threat_view = RollingThreatFrontier::from_board(&self.inner);
         }
     }
 
@@ -167,7 +234,7 @@ impl WasmBoard {
     #[wasm_bindgen(js_name = "fromFen")]
     pub fn from_fen(fen: &str) -> Result<WasmBoard, JsValue> {
         Board::from_fen(fen)
-            .map(|inner| WasmBoard { inner })
+            .map(wasm_board_from_inner)
             .map_err(|e| JsValue::from_str(&e))
     }
 
@@ -179,16 +246,14 @@ impl WasmBoard {
                     "renju" => Variant::Renju,
                     _ => Variant::Freestyle,
                 };
-                WasmBoard { inner }
+                wasm_board_from_inner(inner)
             })
             .map_err(|e| JsValue::from_str(&e))
     }
 
     #[wasm_bindgen(js_name = "cloneBoard")]
     pub fn clone_board(&self) -> WasmBoard {
-        WasmBoard {
-            inner: self.inner.clone(),
-        }
+        wasm_board_from_inner(self.inner.clone())
     }
 }
 
@@ -235,7 +300,10 @@ impl WasmBot {
         if pattern_eval {
             config.static_eval = StaticEvaluation::PatternEval;
         }
-        if corridor_proof_depth > 0 && corridor_proof_width > 0 && corridor_proof_candidate_limit > 0 {
+        if corridor_proof_depth > 0
+            && corridor_proof_width > 0
+            && corridor_proof_candidate_limit > 0
+        {
             config.leaf_corridor = LeafCorridorConfig {
                 enabled: true,
                 max_depth: corridor_proof_depth as usize,

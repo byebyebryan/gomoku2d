@@ -9,8 +9,10 @@ import styles from "./Board.module.css";
 
 export interface BoardProps {
   cells: CellStone[][];
+  counterThreatMoves: CellPosition[];
   currentPlayer: 1 | 2;
   forbiddenMoves: CellPosition[];
+  imminentThreatMoves: CellPosition[];
   interactive: boolean;
   lastMove: CellPosition | null;
   moves: MatchMove[];

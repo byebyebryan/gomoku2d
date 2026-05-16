@@ -240,8 +240,10 @@ class SequenceAnimationCycle {
 
 export interface BoardSceneState {
   cells: CellStone[][];
+  counterThreatMoves: CellPosition[];
   currentPlayer: 1 | 2;
   forbiddenMoves: CellPosition[];
+  imminentThreatMoves: CellPosition[];
   interactive: boolean;
   lastMove: CellPosition | null;
   moves: MatchMove[];
@@ -261,6 +263,7 @@ const DEFAULT_STATE: BoardSceneState = {
   cells: Array.from({ length: BOARD_SIZE }, () =>
     Array.from({ length: BOARD_SIZE }, () => null),
   ),
+  counterThreatMoves: [],
   currentPlayer: 1,
   forbiddenMoves: [],
   interactive: false,
@@ -273,6 +276,7 @@ const DEFAULT_STATE: BoardSceneState = {
   touchCandidateResetVersion: 0,
   showSequenceNumbers: false,
   status: "playing",
+  imminentThreatMoves: [],
   threatMoves: [],
   winningMoves: [],
   winningCells: [],
@@ -652,6 +656,30 @@ export class BoardScene extends Phaser.Scene {
       );
     }
 
+    for (const cell of this.boardState.imminentThreatMoves) {
+      const point = this.board.cellToPixel(cell.row, cell.col);
+      this.hintSprites.push(
+        this.createWarnSprite(
+          point.x,
+          point.y,
+          COLOR.IMMINENT_THREAT,
+          warningAnimationForOverlay("imminentThreatMove"),
+        ),
+      );
+    }
+
+    for (const cell of this.boardState.counterThreatMoves) {
+      const point = this.board.cellToPixel(cell.row, cell.col);
+      this.hintSprites.push(
+        this.createWarnSprite(
+          point.x,
+          point.y,
+          COLOR.COUNTER_THREAT,
+          warningAnimationForOverlay("counterThreatMove"),
+        ),
+      );
+    }
+
     if (this.boardState.showSequenceNumbers && this.boardState.status !== "playing") {
       for (const move of this.boardState.moves) {
         const cell = this.boardState.cells[move.row][move.col];
@@ -912,7 +940,12 @@ export class BoardScene extends Phaser.Scene {
     const cue = pointerCueForCandidate(
       this.boardState.cells,
       this.boardState.forbiddenMoves,
-      [...this.boardState.winningMoves, ...this.boardState.threatMoves],
+      [
+        ...this.boardState.winningMoves,
+        ...this.boardState.threatMoves,
+        ...this.boardState.imminentThreatMoves,
+        ...this.boardState.counterThreatMoves,
+      ],
       candidate,
       showBlockedOccupied,
     );

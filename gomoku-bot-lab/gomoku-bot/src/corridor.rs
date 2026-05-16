@@ -2,8 +2,12 @@ use gomoku_core::{Board, Color, GameResult, Move};
 use serde::Serialize;
 
 use crate::tactical::{
-    corridor_attacker_move_rank, corridor_defender_reply_moves, has_forcing_local_threat_at_move,
+    corridor_attacker_move_rank, corridor_defender_reply_moves,
+    defender_reply_candidates as tactical_defender_reply_candidates,
+    has_forcing_local_threat_at_move,
 };
+
+pub use crate::tactical::{DefenderReplyCandidate, DefenderReplyRole};
 
 pub const DEFAULT_MAX_CORRIDOR_DEPTH: usize = 4;
 pub const DEFAULT_MAX_CORRIDOR_REPLY_WIDTH: usize = 8;
@@ -32,15 +36,6 @@ pub enum ProofLimitCause {
     DefenderReplyUnknown,
     ModelScopeUnknown,
     OutsideScanWindow,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum DefenderReplyRole {
-    Actual,
-    ImmediateDefense,
-    ImminentDefense,
-    OffensiveCounter,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -93,12 +88,6 @@ pub struct DefenderReplyAnalysis {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct DefenderReplyCandidate {
-    pub mv: Move,
-    pub roles: Vec<DefenderReplyRole>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DefenderReplyProof {
     pub outcome: DefenderReplyOutcome,
     pub principal_line: Vec<Move>,
@@ -129,10 +118,7 @@ pub fn defender_reply_candidates(
     attacker: Color,
     actual_reply: Option<Move>,
 ) -> Vec<DefenderReplyCandidate> {
-    defender_reply_candidates_inner(board, attacker, actual_reply, None)
-        .into_iter()
-        .map(|(mv, roles)| DefenderReplyCandidate { mv, roles })
-        .collect()
+    tactical_defender_reply_candidates(board, attacker, actual_reply)
 }
 
 pub fn defender_model_reply_candidates(
@@ -140,10 +126,14 @@ pub fn defender_model_reply_candidates(
     attacker: Color,
     actual_reply: Option<Move>,
 ) -> Vec<DefenderReplyCandidate> {
-    defender_reply_candidates_inner(board, attacker, actual_reply, None)
+    defender_reply_candidates(board, attacker, actual_reply)
         .into_iter()
-        .filter(|(_, roles)| !roles.iter().all(|role| *role == DefenderReplyRole::Actual))
-        .map(|(mv, roles)| DefenderReplyCandidate { mv, roles })
+        .filter(|candidate| {
+            !candidate
+                .roles
+                .iter()
+                .all(|role| *role == DefenderReplyRole::Actual)
+        })
         .collect()
 }
 
@@ -152,9 +142,9 @@ pub fn defender_reply_roles_for_move(
     attacker: Color,
     mv: Move,
 ) -> Vec<DefenderReplyRole> {
-    defender_reply_candidates_inner(board, attacker, None, None)
+    defender_reply_candidates(board, attacker, None)
         .into_iter()
-        .find_map(|(candidate, roles)| (candidate == mv).then_some(roles))
+        .find_map(|candidate| (candidate.mv == mv).then_some(candidate.roles))
         .unwrap_or_default()
 }
 
@@ -165,49 +155,14 @@ fn analyze_defender_reply_options_inner(
     excluded_reply: Option<Move>,
     options: &CorridorOptions,
 ) -> Vec<DefenderReplyAnalysis> {
-    defender_reply_candidates_inner(board, attacker, actual_reply, excluded_reply)
+    defender_reply_candidates(board, attacker, actual_reply)
         .into_iter()
-        .map(|(mv, roles)| {
-            let proof = classify_defender_reply(board, attacker, mv, options);
-            defender_reply_analysis_from_proof(mv, roles, proof)
+        .filter(|candidate| excluded_reply != Some(candidate.mv))
+        .map(|candidate| {
+            let proof = classify_defender_reply(board, attacker, candidate.mv, options);
+            defender_reply_analysis_from_proof(candidate.mv, candidate.roles, proof)
         })
         .collect()
-}
-
-fn defender_reply_candidates_inner(
-    board: &Board,
-    attacker: Color,
-    actual_reply: Option<Move>,
-    excluded_reply: Option<Move>,
-) -> Vec<(Move, Vec<DefenderReplyRole>)> {
-    if board.current_player != attacker.opponent() || board.result != GameResult::Ongoing {
-        return Vec::new();
-    }
-
-    let threat = ThreatReplySet::new(board, attacker);
-    let mut replies = Vec::<(Move, Vec<DefenderReplyRole>)>::new();
-    for mv in threat.legal_cost_squares.iter().copied() {
-        push_reply_role(&mut replies, mv, DefenderReplyRole::ImmediateDefense);
-    }
-    for mv in threat.defender_immediate_wins.iter().copied() {
-        push_reply_role(&mut replies, mv, DefenderReplyRole::OffensiveCounter);
-    }
-    if threat.winning_squares.is_empty() {
-        for mv in corridor_defender_reply_moves(board, attacker, actual_reply) {
-            push_reply_role(&mut replies, mv, DefenderReplyRole::ImminentDefense);
-        }
-        for mv in offensive_counter_reply_moves(board, attacker.opponent()) {
-            push_reply_role(&mut replies, mv, DefenderReplyRole::OffensiveCounter);
-        }
-    }
-    if let Some(mv) = actual_reply {
-        push_reply_role(&mut replies, mv, DefenderReplyRole::Actual);
-    }
-    if let Some(excluded_reply) = excluded_reply {
-        replies.retain(|(mv, _)| *mv != excluded_reply);
-    }
-
-    replies
 }
 
 fn defender_reply_analysis_from_proof(
@@ -231,20 +186,6 @@ fn defender_reply_analysis_from_proof(
         limit_causes: proof.limit_causes,
         diagnostics,
     }
-}
-
-fn push_reply_role(
-    replies: &mut Vec<(Move, Vec<DefenderReplyRole>)>,
-    mv: Move,
-    role: DefenderReplyRole,
-) {
-    if let Some((_, roles)) = replies.iter_mut().find(|(existing, _)| *existing == mv) {
-        if !roles.contains(&role) {
-            roles.push(role);
-        }
-        return;
-    }
-    replies.push((mv, vec![role]));
 }
 
 pub fn classify_defender_reply(
@@ -626,23 +567,8 @@ fn counter_threat_answer_moves(board: &Board, defender: Color) -> Vec<Move> {
     moves
 }
 
-fn offensive_counter_reply_moves(board: &Board, defender: Color) -> Vec<Move> {
-    board
-        .legal_moves()
-        .into_iter()
-        .filter(|&mv| {
-            let mut next = board.clone();
-            next.apply_move(mv).is_ok()
-                && next.result == GameResult::Ongoing
-                && !next.immediate_winning_moves_for(defender).is_empty()
-        })
-        .collect()
-}
-
 struct ThreatReplySet {
     winning_squares: Vec<Move>,
-    legal_cost_squares: Vec<Move>,
-    defender_immediate_wins: Vec<Move>,
     reply_moves: Vec<Move>,
 }
 
@@ -664,8 +590,6 @@ impl ThreatReplySet {
 
         Self {
             winning_squares,
-            legal_cost_squares,
-            defender_immediate_wins,
             reply_moves,
         }
     }

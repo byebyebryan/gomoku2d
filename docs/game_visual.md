@@ -81,6 +81,8 @@ covering the pointer.
 |------|--------|
 | Winning move | legal immediate win: `warning` tinted green |
 | Threat move | legal immediate threat: `warning` tinted red |
+| Imminent threat move | defensive reply to an opponent open/broken three: `warning` tinted pink |
+| Counter-threat move | counter-threat reply that can defer defense: `warning` tinted purple |
 | Forbidden move | alternating `forbidden-out` and `forbidden-in` |
 | Winning line | `hover` tinted green |
 
@@ -164,8 +166,9 @@ state from React and emit intent events back up.
 Game logic still belongs below the scene:
 
 - win detection in `gomoku-core` / `gomoku-wasm`
-- immediate winning/threat move sets in core/wasm
-- forbidden move sets in core/wasm
+- rolling-frontier threat snapshots in `gomoku-bot` / `gomoku-wasm`
+- immediate win, immediate threat, imminent reply, counter-threat, and forbidden
+  move sets from that snapshot
 
 The canvas should render those facts. It should not rediscover rules by
 duplicating game logic in the scene.

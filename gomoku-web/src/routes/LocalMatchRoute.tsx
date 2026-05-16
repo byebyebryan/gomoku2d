@@ -33,10 +33,12 @@ function loadingCells(): LocalMatchState["cells"] {
 
 const loadingMatchStore = createStore<LocalMatchState>(() => ({
   cells: loadingCells(),
+  counterThreatMoves: [],
   currentPlayer: 1,
   currentPracticeBot: { mode: "preset", preset: "normal", version: 1 },
   currentVariant: "freestyle",
   forbiddenMoves: [],
+  imminentThreatMoves: [],
   lastMove: null,
   moves: [],
   pendingBotMove: false,
@@ -240,8 +242,10 @@ export function LocalMatchRoute() {
         <div className={styles.boardPanel}>
           <Board
             cells={state.cells}
+            counterThreatMoves={state.counterThreatMoves}
             currentPlayer={state.currentPlayer}
             forbiddenMoves={state.forbiddenMoves}
+            imminentThreatMoves={state.imminentThreatMoves}
             interactive={humanToMove}
             lastMove={state.lastMove}
             moves={state.moves}

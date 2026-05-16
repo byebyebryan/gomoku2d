@@ -8,7 +8,13 @@ const SEQUENCE_FONT_DESKTOP_CELL_SIZE = 40;
 const SEQUENCE_FONT_MOBILE_SIZE = 8;
 const SEQUENCE_FONT_DESKTOP_SIZE = 16;
 
-export type WarningOverlayRole = "forbidden" | "threatMove" | "winningMove" | "winningLine";
+export type WarningOverlayRole =
+  | "counterThreatMove"
+  | "forbidden"
+  | "imminentThreatMove"
+  | "threatMove"
+  | "winningMove"
+  | "winningLine";
 export type PointerCue = "blocked" | "hidden" | "normal" | "preferred";
 export type BoardTouchControlMode = "none" | "pointer" | "touchpad";
 
@@ -28,7 +34,9 @@ export type ResettableSprite = {
 
 export type BoardOverlayState = {
   cells: CellStone[][];
+  counterThreatMoves: CellPosition[];
   forbiddenMoves: CellPosition[];
+  imminentThreatMoves: CellPosition[];
   moves: MatchMove[];
   showSequenceNumbers: boolean;
   status: MatchStatus;
@@ -74,8 +82,12 @@ function cellsEqual(a: CellStone[][], b: CellStone[][]): boolean {
 
 export function warningAnimationForOverlay(role: WarningOverlayRole, isForbidden = false): string {
   switch (role) {
+    case "counterThreatMove":
+      return WARNING_ANIMS.WARNING.key;
     case "forbidden":
       return WARNING_ANIMS.FORBIDDEN_OUT.key;
+    case "imminentThreatMove":
+      return WARNING_ANIMS.WARNING.key;
     case "threatMove":
       return isForbidden ? WARNING_ANIMS.WARNING_ON_FORBIDDEN.key : WARNING_ANIMS.WARNING.key;
     case "winningMove":
@@ -140,8 +152,10 @@ export function shouldSyncOverlaySprites(
     previous.showSequenceNumbers !== next.showSequenceNumbers ||
     previous.status !== next.status ||
     !cellsEqual(previous.cells, next.cells) ||
+    !cellPositionsEqual(previous.counterThreatMoves, next.counterThreatMoves) ||
     !movesEqual(previous.moves, next.moves) ||
     !cellPositionsEqual(previous.forbiddenMoves, next.forbiddenMoves) ||
+    !cellPositionsEqual(previous.imminentThreatMoves, next.imminentThreatMoves) ||
     !cellPositionsEqual(previous.threatMoves, next.threatMoves) ||
     !cellPositionsEqual(previous.winningMoves, next.winningMoves) ||
     !cellPositionsEqual(previous.winningCells, next.winningCells)
