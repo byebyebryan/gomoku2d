@@ -10,6 +10,7 @@ path = "src/main.rs"
 [dependencies]
 gomoku-core = { path = "../gomoku-core" }
 gomoku-bot = { path = "../gomoku-bot" }
+gomoku-analysis = { path = "../gomoku-analysis" }
 clap = { version = "4", features = ["derive"] }
 rayon = "1"
 serde = { version = "1", features = ["derive"] }

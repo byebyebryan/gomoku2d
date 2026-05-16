@@ -356,6 +356,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "gomoku-analysis"
+version = "0.1.0"
+dependencies = [
+ "gomoku-bot",
+ "gomoku-core",
+ "serde",
+]
+
+[[package]]
 name = "gomoku-bot"
 version = "0.1.0"
 dependencies = [
@@ -391,6 +400,7 @@ name = "gomoku-eval"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "gomoku-analysis",
  "gomoku-bot",
  "gomoku-core",
  "rayon",
