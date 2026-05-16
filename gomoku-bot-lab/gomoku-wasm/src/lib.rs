@@ -11,7 +11,10 @@ use serde::Serialize;
 use serde_json::Value;
 use wasm_bindgen::prelude::*;
 
-use gomoku_analysis::{analyze_replay, AnalysisOptions, GameAnalysis, ReplyPolicy, RootCause};
+use gomoku_analysis::{
+    AnalysisOptions, GameAnalysis, ReplayAnalysisCounters, ReplayAnalysisSession,
+    ReplayAnalysisStepStatus, ReplayFrameAnnotations, ReplyPolicy,
+};
 use gomoku_bot::{
     frontier::RollingThreatFrontier,
     tactical::{defender_hint_reply_candidates_from_view, DefenderReplyRole, ThreatView},
@@ -22,9 +25,10 @@ use gomoku_core::{Board, Color, GameResult, Move, Replay, RuleConfig};
 
 #[cfg(test)]
 mod replay_analysis_tests {
-    use super::{analysis_options_from_json, replay_analysis_step_json, ReplayAnalysisStatus};
+    use super::{analysis_options_from_json, WasmReplayAnalyzer};
     use gomoku_analysis::DEFAULT_MAX_SCAN_PLIES;
     use gomoku_core::{Board, Move, Replay, RuleConfig};
+    use serde_json::Value;
 
     fn mv(notation: &str) -> Move {
         Move::from_notation(notation).expect("test move notation should parse")
@@ -62,38 +66,65 @@ mod replay_analysis_tests {
         assert_eq!(options.max_scan_plies, None);
     }
 
+    fn step_value(analyzer: &mut WasmReplayAnalyzer, max_work_units: usize) -> Value {
+        serde_json::from_str(&analyzer.step(max_work_units))
+            .expect("analysis step result should be valid JSON")
+    }
+
     #[test]
-    fn replay_analysis_step_json_reports_resolved_finished_game() {
-        let result = replay_analysis_step_json(
+    fn replay_analysis_step_json_reports_running_then_resolved_finished_game() {
+        let mut analyzer = WasmReplayAnalyzer::create_from_replay_json(
             &replay_json(&["H8", "A1", "I8", "A2", "J8", "A3", "K8", "B1", "L8"]),
             "{}",
         );
 
-        assert_eq!(result.status, ReplayAnalysisStatus::Resolved);
-        assert!(result.done);
-        assert!(result.analysis.is_some());
-        assert!(result.error.is_none());
-        assert!(result.counters.prefixes_analyzed > 0);
+        let first = step_value(&mut analyzer, 1);
+        assert_eq!(first["status"], "running");
+        assert_eq!(first["done"], false);
+        assert!(first["analysis"].is_null());
+        assert!(first["error"].is_null());
+        assert_eq!(first["annotations"].as_array().unwrap().len(), 1);
+        assert_eq!(first["counters"]["prefixes_analyzed"], 1);
+
+        let mut final_step = first;
+        for _ in 0..16 {
+            if final_step["done"] == true {
+                break;
+            }
+            final_step = step_value(&mut analyzer, 1);
+        }
+
+        assert_eq!(final_step["status"], "resolved");
+        assert_eq!(final_step["done"], true);
+        assert!(!final_step["analysis"].is_null());
+        assert!(final_step["error"].is_null());
+        assert!(final_step["current_ply"].is_null());
     }
 
     #[test]
     fn replay_analysis_step_json_reports_unsupported_ongoing_game() {
-        let result = replay_analysis_step_json(&replay_json(&["H8", "A1", "I8"]), "{}");
+        let mut analyzer =
+            WasmReplayAnalyzer::create_from_replay_json(&replay_json(&["H8", "A1", "I8"]), "{}");
+        let result = step_value(&mut analyzer, 1);
 
-        assert_eq!(result.status, ReplayAnalysisStatus::Unsupported);
-        assert!(result.done);
-        assert!(result.analysis.is_some());
-        assert!(result.error.is_none());
+        assert_eq!(result["status"], "unsupported");
+        assert_eq!(result["done"], true);
+        assert!(!result["analysis"].is_null());
+        assert!(result["error"].is_null());
     }
 
     #[test]
     fn replay_analysis_step_json_reports_invalid_replay_error() {
-        let result = replay_analysis_step_json("{not json", "{}");
+        let mut analyzer = WasmReplayAnalyzer::create_from_replay_json("{not json", "{}");
+        let result = step_value(&mut analyzer, 1);
 
-        assert_eq!(result.status, ReplayAnalysisStatus::Error);
-        assert!(result.done);
-        assert!(result.analysis.is_none());
-        assert!(result.error.unwrap().contains("invalid replay json"));
+        assert_eq!(result["status"], "error");
+        assert_eq!(result["done"], true);
+        assert!(result["analysis"].is_null());
+        assert!(result["error"]
+            .as_str()
+            .expect("error should be a string")
+            .contains("invalid replay json"));
     }
 }
 
@@ -154,17 +185,11 @@ const REPLAY_ANALYZER_STEP_SCHEMA_VERSION: u32 = 1;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 enum ReplayAnalysisStatus {
+    Running,
     Resolved,
     Unclear,
     Unsupported,
     Error,
-}
-
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
-struct ReplayAnalysisCounters {
-    prefixes_analyzed: usize,
-    branch_roots: usize,
-    proof_nodes: usize,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -173,6 +198,7 @@ struct ReplayAnalysisStepResult {
     status: ReplayAnalysisStatus,
     done: bool,
     current_ply: Option<usize>,
+    annotations: Vec<ReplayFrameAnnotations>,
     analysis: Option<GameAnalysis>,
     error: Option<String>,
     counters: ReplayAnalysisCounters,
@@ -184,6 +210,7 @@ fn replay_analysis_error(message: impl Into<String>) -> ReplayAnalysisStepResult
         status: ReplayAnalysisStatus::Error,
         done: true,
         current_ply: None,
+        annotations: Vec::new(),
         analysis: None,
         error: Some(message.into()),
         counters: ReplayAnalysisCounters::default(),
@@ -225,99 +252,89 @@ fn analysis_options_from_json(options_json: &str) -> Result<AnalysisOptions, Str
     Ok(options)
 }
 
-fn replay_analysis_status(analysis: &GameAnalysis) -> ReplayAnalysisStatus {
-    if analysis.winner.is_none() {
-        return ReplayAnalysisStatus::Unsupported;
-    }
-
-    if analysis.root_cause == RootCause::Unclear || !analysis.final_forced_interval_found {
-        return ReplayAnalysisStatus::Unclear;
-    }
-
-    ReplayAnalysisStatus::Resolved
-}
-
-fn replay_analysis_counters(analysis: &GameAnalysis) -> ReplayAnalysisCounters {
-    ReplayAnalysisCounters {
-        prefixes_analyzed: analysis.proof_summary.len(),
-        branch_roots: analysis
-            .proof_summary
-            .iter()
-            .map(|proof| proof.threat_evidence.len())
-            .sum(),
-        proof_nodes: analysis
-            .proof_summary
-            .iter()
-            .map(|proof| proof.principal_line.len())
-            .sum(),
-    }
-}
-
-fn replay_analysis_step_json(replay_json: &str, options_json: &str) -> ReplayAnalysisStepResult {
-    let replay = match Replay::from_json(replay_json) {
-        Ok(replay) => replay,
-        Err(err) => return replay_analysis_error(format!("invalid replay json: {err}")),
-    };
-    let options = match analysis_options_from_json(options_json) {
-        Ok(options) => options,
-        Err(err) => return replay_analysis_error(err),
-    };
-    let analysis = match analyze_replay(&replay, options) {
-        Ok(analysis) => analysis,
-        Err(err) => return replay_analysis_error(err.to_string()),
-    };
-    let counters = replay_analysis_counters(&analysis);
-
-    ReplayAnalysisStepResult {
-        schema_version: REPLAY_ANALYZER_STEP_SCHEMA_VERSION,
-        status: replay_analysis_status(&analysis),
-        done: true,
-        current_ply: None,
-        analysis: Some(analysis),
-        error: None,
-        counters,
+fn replay_analysis_status(status: ReplayAnalysisStepStatus) -> ReplayAnalysisStatus {
+    match status {
+        ReplayAnalysisStepStatus::Running => ReplayAnalysisStatus::Running,
+        ReplayAnalysisStepStatus::Resolved => ReplayAnalysisStatus::Resolved,
+        ReplayAnalysisStepStatus::Unclear => ReplayAnalysisStatus::Unclear,
+        ReplayAnalysisStepStatus::Unsupported => ReplayAnalysisStatus::Unsupported,
     }
 }
 
 #[wasm_bindgen]
 pub struct WasmReplayAnalyzer {
     completed_json: Option<String>,
-    options_json: String,
-    replay_json: String,
+    init_error: Option<String>,
+    session: Option<ReplayAnalysisSession>,
 }
 
 #[wasm_bindgen]
 impl WasmReplayAnalyzer {
     #[wasm_bindgen(js_name = "createFromReplayJson")]
     pub fn create_from_replay_json(replay_json: &str, options_json: &str) -> WasmReplayAnalyzer {
+        let session = Replay::from_json(replay_json)
+            .map_err(|err| format!("invalid replay json: {err}"))
+            .and_then(|replay| {
+                analysis_options_from_json(options_json)
+                    .map(|options| (replay, options))
+                    .map_err(|err| err.to_string())
+            })
+            .and_then(|(replay, options)| {
+                ReplayAnalysisSession::new(replay, options).map_err(|err| err.to_string())
+            });
+
+        let (session, init_error) = match session {
+            Ok(session) => (Some(session), None),
+            Err(err) => (None, Some(err)),
+        };
+
         WasmReplayAnalyzer {
             completed_json: None,
-            options_json: options_json.to_string(),
-            replay_json: replay_json.to_string(),
+            init_error,
+            session,
         }
     }
 
     pub fn step(&mut self, max_work_units: usize) -> String {
-        let _ = max_work_units;
         if let Some(completed_json) = &self.completed_json {
             return completed_json.clone();
         }
 
-        let result = replay_analysis_step_json(&self.replay_json, &self.options_json);
+        let result = if let Some(init_error) = self.init_error.take() {
+            replay_analysis_error(init_error)
+        } else if let Some(session) = self.session.as_mut() {
+            let step = session.step(max_work_units);
+            ReplayAnalysisStepResult {
+                schema_version: REPLAY_ANALYZER_STEP_SCHEMA_VERSION,
+                status: replay_analysis_status(step.status),
+                done: step.done,
+                current_ply: step.current_ply,
+                annotations: step.annotations,
+                analysis: step.analysis,
+                error: None,
+                counters: step.counters,
+            }
+        } else {
+            replay_analysis_error("analysis session is not available")
+        };
+
         let json = serde_json::to_string(&result).unwrap_or_else(|err| {
             serde_json::to_string(&replay_analysis_error(format!(
                 "failed to serialize analysis result: {err}"
             )))
             .expect("error analysis result should serialize")
         });
-        self.completed_json = Some(json.clone());
+        if result.done {
+            self.completed_json = Some(json.clone());
+            self.session = None;
+        }
         json
     }
 
     pub fn dispose(&mut self) {
         self.completed_json = None;
-        self.options_json.clear();
-        self.replay_json.clear();
+        self.init_error = None;
+        self.session = None;
     }
 }
 
