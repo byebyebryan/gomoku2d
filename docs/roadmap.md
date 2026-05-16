@@ -401,17 +401,20 @@ The working plan lives in `docs/archive/v0_4_5_bot_controls_plan.md`.
 corridor analyzer from a static report artifact into something the Replay page
 can use directly.
 
-The first implementation checkpoint is plumbing, not final UI:
+The first implementation checkpoints are plumbing, not final UI:
 
 - `gomoku-analysis` is now the shared Rust analyzer crate;
+- `gomoku-analysis` also exposes a stepped `ReplayAnalysisSession` with frame
+  annotations and progress counters;
 - `gomoku-eval` keeps the CLI/report workflows by consuming that shared crate;
-- `gomoku-wasm` exposes a replay analyzer bridge and exact replay hash helper;
-- `gomoku-web` converts saved matches into core replay JSON and can construct
-  the analyzer from local/cloud match history.
+- `gomoku-wasm` exposes a session-backed replay analyzer bridge and exact replay
+  hash helper;
+- `gomoku-web` converts saved matches into core replay JSON and now has a
+  cancellable replay-analysis worker/runner protocol.
 
-The remaining `0.4.6` work is the actual player-facing layer: worker scheduling,
-replay-route state, compact analysis copy, and board annotations that use the
-new marker/highlighter sprite vocabulary without exposing lab report internals.
+The remaining `0.4.6` work is the actual player-facing layer: replay-route
+state, compact analysis copy, and board annotations that use the new
+marker/highlighter sprite vocabulary without exposing lab report internals.
 
 Later `0.4.x` slices can compete based on which lab-powered product surface
 feels strongest.
