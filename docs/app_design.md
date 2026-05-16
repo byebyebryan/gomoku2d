@@ -290,6 +290,8 @@ Rules:
 
 - `Play` still starts immediately with the current bot preset
 - advanced config is opt-in and visibly experimental
+- advanced custom configs are browser-safe, not raw lab access: D5 disables full
+  width, and D7 only allows W8
 - raw lab specs can be shown for transparency, but not as primary labels or
   persisted settings
 - Profile remains focused on player identity, cloud state, stats, and history

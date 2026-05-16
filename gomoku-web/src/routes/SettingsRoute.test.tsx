@@ -200,6 +200,36 @@ describe("SettingsRoute", () => {
     });
   });
 
+  it("disables and clamps custom bot widths that are too slow for browser play", () => {
+    renderSettingsRoute();
+
+    fireEvent.click(screen.getByRole("button", { name: /custom/i }));
+    fireEvent.click(screen.getByRole("button", { name: "D5" }));
+
+    expect(screen.getByRole("button", { name: "full" })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "D7" }));
+
+    expect(screen.getByRole("button", { name: "W16" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "full" })).toBeDisabled();
+    expect(localProfileStore.getState().settings.practiceBot).toMatchObject({
+      depth: 7,
+      mode: "custom",
+      width: 8,
+    });
+  });
+
+  it("orders custom bot width options from narrow to wide", () => {
+    renderSettingsRoute();
+
+    const w8 = screen.getByRole("button", { name: "W8" });
+    const w16 = screen.getByRole("button", { name: "W16" });
+    const full = screen.getByRole("button", { name: "full" });
+
+    expect(w8.compareDocumentPosition(w16) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(w16.compareDocumentPosition(full) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it("shows active-game apply actions when saved setup differs from current setup", () => {
     const matchStore = ensureLocalMatchSession({ botRunner: noOpBotRunner });
     expect(matchStore.getState().placeHumanMove(7, 7)).toBe(true);

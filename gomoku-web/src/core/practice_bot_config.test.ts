@@ -80,6 +80,31 @@ describe("practice bot config", () => {
     expect(practiceBotConfigSummary(config)).toBe("D5 · W16 · threat · proof");
   });
 
+  it("clamps custom widths that are too expensive for browser play", () => {
+    expect(sanitizePracticeBotConfig({
+      corridorProof: false,
+      depth: 5,
+      mode: "custom",
+      patternScoring: true,
+      version: 1,
+      width: "none",
+    })).toMatchObject({
+      depth: 5,
+      width: 16,
+    });
+    expect(sanitizePracticeBotConfig({
+      corridorProof: false,
+      depth: 7,
+      mode: "custom",
+      patternScoring: true,
+      version: 1,
+      width: 16,
+    })).toMatchObject({
+      depth: 7,
+      width: 8,
+    });
+  });
+
   it("sanitizes unknown persisted values to Normal", () => {
     expect(sanitizePracticeBotConfig(null)).toEqual(DEFAULT_PRACTICE_BOT_CONFIG);
     expect(sanitizePracticeBotConfig({ mode: "preset", preset: "deep", version: 1 })).toEqual(

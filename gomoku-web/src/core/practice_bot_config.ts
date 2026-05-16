@@ -77,6 +77,26 @@ function isWidth(value: unknown): value is PracticeBotWidth {
   return value === "none" || value === 8 || value === 16;
 }
 
+export function isPracticeBotWidthAllowed(depth: PracticeBotDepth, width: PracticeBotWidth): boolean {
+  if (depth === 7) {
+    return width === 8;
+  }
+
+  if (depth === 5) {
+    return width !== "none";
+  }
+
+  return true;
+}
+
+export function clampPracticeBotWidth(depth: PracticeBotDepth, width: PracticeBotWidth): PracticeBotWidth {
+  if (isPracticeBotWidthAllowed(depth, width)) {
+    return width;
+  }
+
+  return depth === 7 ? 8 : 16;
+}
+
 export function isPracticeBotConfig(value: unknown): value is PracticeBotConfig {
   if (!isRecord(value) || value.version !== 1) {
     return false;
@@ -122,7 +142,7 @@ export function sanitizePracticeBotConfig(value: unknown): PracticeBotConfig {
       mode: "custom",
       patternScoring: value.patternScoring,
       version: 1,
-      width: value.width,
+      width: clampPracticeBotWidth(value.depth, value.width),
     };
   }
 
