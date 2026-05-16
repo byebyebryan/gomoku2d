@@ -10,8 +10,11 @@ crate-type = ["cdylib", "rlib"]
 wasm-bindgen = "0.2"
 gomoku-core = { path = "../gomoku-core" }
 gomoku-bot = { path = "../gomoku-bot" }
+gomoku-analysis = { path = "../gomoku-analysis" }
 js-sys = "0.3"
 console_error_panic_hook = "0.1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 getrandom = { version = "0.4", features = ["wasm_js"] }
