@@ -71,7 +71,7 @@ Notation:
 | `BrokenFour` | `XX.XX`, `X.XXX`, or `XXX.X` | Creates one immediate winning completion through an internal gap. | The gap/completion square. | Yes |
 | `OpenThree` | `..XXX..`, `O.XXX..`, or `..XXX.O` | Creates a two-ended three that can become an open or closed four. | For `..XXX..`, the two adjacent ends. For asymmetrical `O.XXX..` / `..XXX.O`, the two adjacent ends plus the far outer square on the two-space side. Direct adjacent replies are listed before the far outer reply. `O.XXX.O` is boxed and not an active corridor threat. | Yes, but can lose to stronger counter-threats |
 | `ClosedThree` | `OXXX.` or `.XXXO` | Creates a one-ended contiguous three. | The single open end. | No |
-| `BrokenThree` | Any unblocked five-cell window with exactly three `X`, two `.`, and at least one gap, such as `XX.X.`, `X.XX.`, `X.X.X`, or `X..XX` | Creates a non-contiguous three where at least one empty rest square would create an immediate four-completion threat. | Rest/defense squares are the empty points in that five-cell window that would create a closed or broken four if the attacker played there next. | Yes for corridor reply generation; non-forcing for search ordering |
+| `BrokenThree` | A sliding four-cell core with one internal gap and both immediate outside endpoints open: `.XX.X.` or `.X.XX.`. Fixed five-cell forms such as `X.X.X`, `XX..X`, and `X..XX` are not active broken threes. One-side-blocked forms such as `OXX.X.`, `.XX.XO`, `OX.XX.`, and `.X.XXO` are not active broken threes. | Creates a non-contiguous three that can become an open or two-answer four threat by filling the internal gap. | The attacker rest square is the internal gap. Defender reply squares are the internal gap plus both outside endpoints. | Yes, when both outside endpoints are open/legal |
 
 ## Priority
 
@@ -86,9 +86,10 @@ The current local priority is intentionally coarse:
 
 This priority is not one global truth. It is interpreted by consumer policy:
 
-- Search policy ranks closed and broken threes as low-priority tactical
-  material and does not let them punch through child caps as must-keep moves.
-- Corridor policy ignores closed threes but treats broken threes as active
+- Search policy ranks valid broken threes below open threes but treats them as
+  forcing material that can punch through child caps. Closed threes remain
+  low-priority non-forcing material.
+- Corridor policy ignores closed threes but treats valid broken threes as active
   imminent threats when their rest squares have legal forcing continuations.
 - Renju filtering is policy-aware. Raw facts preserve shape squares; search
   credit and corridor activity only use legal/effective Black continuations.
@@ -110,11 +111,10 @@ other endpoint as a win unless the current player can win immediately or create
 a stronger counter-threat.
 
 Rest tests remain useful for weaker shapes because each `rest_square` is an
-attacker continuation square that can turn the shape into a four. For corridor
-analysis, `BrokenThree` belongs with imminent threats when those rest squares
-exist. For search ordering, broken threes are still non-forcing material so
-they do not override immediate safety. Closed threes remain latent material,
-not active corridor threats.
+attacker continuation square that can turn the shape into a four. For a valid
+`BrokenThree`, the rest square is the internal gap; defender replies include
+that gap plus both outside endpoints. Closed threes remain latent material, not
+active corridor threats.
 
 Examples:
 
@@ -129,12 +129,12 @@ Examples:
   outer sides are both blocked. This is not an active corridor threat because
   either continuation only creates a closed four that can be answered next.
 - `ClosedThree`: create `J8` from `O G8, X H8 I8` creates defense square `K8`.
-- `BrokenThree`: create `J8` from `H8 K8` creates rest/defense squares `G8`,
-  `I8`, and `L8`; each attacker continuation creates a four-completion threat.
-- Split `BrokenThree`: create `L8` from `H8 J8` creates rest/defense squares
-  `I8` and `K8`.
-- Two-gap `BrokenThree`: create `L8` from `H8 K8` creates rest/defense squares
-  `I8` and `J8`.
+- `BrokenThree`: create `K8` from `H8 I8` creates the `.XX.X.` shape. The
+  attacker rest square is `J8`; defender replies are `G8`, `J8`, and `L8`.
+- Mirror `BrokenThree`: create `L8` from `I8 K8` creates `.X.XX.`. The
+  attacker rest square is `J8`; defender replies are `H8`, `J8`, and `M8`.
+- Fixed-window broken material such as `H8 J8 L8`, `H8 I8 L8`, or `H8 K8 L8`
+  is non-forcing and should not be emitted as `BrokenThree`.
 
 ## Renju
 
@@ -174,10 +174,9 @@ Renju scenarios should cover both sides of the asymmetry:
 
 - Facts are local to lines through the candidate move or an occupied origin
   stone.
-- Search and corridor now share one tactical module/source of truth. Their
-  forcing semantics intentionally differ: search treats broken threes as
-  non-forcing ordering material, while corridor search treats broken threes as
-  active imminent threats when they have legal forcing continuations.
+- Search, corridor analysis, and UI hints now share one tactical module/source
+  of truth. Valid broken threes are forcing for all consumers; fixed-window and
+  one-side-blocked broken material should not be emitted as `BrokenThree`.
 - Closed threes are non-forcing diagnostics for both consumers.
 - The practice bot should consume these facts only where they improve reached
   depth, runtime, or tournament strength under the same budget.

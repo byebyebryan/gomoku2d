@@ -121,7 +121,7 @@ Exact board prints are included in the case list below.
 | `local_create_closed_three` | diagnostic | local | create | `ClosedThree` | Black | `J8` |
 | `local_prevent_closed_four_from_closed_three` | diagnostic | local | prevent | `ClosedThree` | White | `K8` |
 | `local_create_broken_three` | diagnostic | local | create | `BrokenThree` | Black | `I8` or `J8` |
-| `local_prevent_broken_four_from_broken_three` | diagnostic | local | prevent | `BrokenThree` | White | `I8` |
+| `local_prevent_broken_four_from_broken_three` | diagnostic | local | prevent | `BrokenThree` | White | `G8`, `I8`, or `L8` |
 | `combo_create_double_threat` | diagnostic | combo | double threat | - | Black | `J8` |
 
 ## Board Legend
@@ -548,9 +548,9 @@ Exact board prints are included in the case list below.
 - Role: `diagnostic`
 - Rule: freestyle
 - Side to move: White
-- Expected: `I8`
-- Intent: local prevent fixture; White can occupy the current rest square before
-  Black turns the broken three into a broken four.
+- Expected: `G8`, `I8`, or `L8`
+- Intent: local prevent fixture; White can occupy the current rest square or
+  either outside endpoint before Black turns the broken three into a four threat.
 
 ```text
     A B C D E F G H I J K L M N O
