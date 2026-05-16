@@ -97,6 +97,23 @@ mod replay_analysis_tests {
     }
 }
 
+#[cfg(test)]
+mod wasm_board_tests {
+    use super::WasmBoard;
+    use gomoku_core::Move;
+
+    #[test]
+    fn hash_string_exports_exact_unsigned_hash() {
+        let mut board = WasmBoard::create_with_variant("freestyle");
+
+        board.inner.apply_move(Move { row: 7, col: 7 }).unwrap();
+
+        let hash = board.hash_string();
+        assert!(hash.parse::<u64>().is_ok());
+        assert_eq!(hash, board.inner.hash().to_string());
+    }
+}
+
 fn moves_to_js(moves: Vec<Move>) -> Vec<JsValue> {
     moves
         .into_iter()
@@ -280,7 +297,8 @@ impl WasmReplayAnalyzer {
         }
     }
 
-    pub fn step(&mut self, _max_work_units: usize) -> String {
+    pub fn step(&mut self, max_work_units: usize) -> String {
+        let _ = max_work_units;
         if let Some(completed_json) = &self.completed_json {
             return completed_json.clone();
         }
@@ -399,6 +417,11 @@ impl WasmBoard {
     #[wasm_bindgen(js_name = "moveCount")]
     pub fn move_count(&self) -> usize {
         self.inner.history.len()
+    }
+
+    #[wasm_bindgen(js_name = "hashString")]
+    pub fn hash_string(&self) -> String {
+        self.inner.hash().to_string()
     }
 
     #[wasm_bindgen(js_name = "legalMoves")]
