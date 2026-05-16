@@ -14,12 +14,14 @@ first.
 |-------|--------------|
 | `gomoku-core` | Board state, rules (Freestyle + Renju), win detection, FEN, replay JSON |
 | `gomoku-bot` | `Bot` trait + implementations: `RandomBot`, `SearchBot`, plus corridor proof helpers |
+| `gomoku-analysis` | Shared replay-analysis model and bounded corridor traceback |
 | `gomoku-eval` | Self-play arena, round-robin tournaments, Elo |
 | `gomoku-cli` | Native match runner with replay export |
-| `gomoku-wasm` | `wasm-pack` bridge exposing `WasmBoard` + `WasmBot` to JS |
+| `gomoku-wasm` | `wasm-pack` bridge exposing `WasmBoard`, `WasmBot`, and replay analysis to JS |
 
-Dependency shape: `core` has zero deps; `bot` / `eval` / `cli` / `wasm` all
-depend on `core`; `cli` / `eval` / `wasm` depend on `bot`.
+Dependency shape: `core` has zero deps; `bot` / `analysis` / `eval` / `cli` /
+`wasm` all depend on `core`; `analysis`, `cli`, `eval`, and `wasm` depend on
+`bot`; `eval` and `wasm` consume `analysis`.
 
 ## Build and test
 

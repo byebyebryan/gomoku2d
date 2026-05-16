@@ -72,18 +72,18 @@ Current canonical surfaces:
 | `/` | Home / title screen |
 | `/match/local` | Local match against the current local bot preset |
 | `/replay/:matchId` | Saved match replay viewer |
-| `/profile` | Local player record, defaults, and history |
+| `/settings` | Saved game, bot, hint, and touch-control settings |
+| `/profile` | Local/cloud identity, reset/delete actions, stats, and history |
 
-Future dedicated bot settings, cloud, or online routes can be added later. They
-are not part of the default local-play contract unless they preserve one-click
-play.
+Future dedicated cloud or online routes can be added later. They are not part
+of the default local-play contract unless they preserve one-click play.
 
 ## Persistent local model
 
 The local-first model should stay simple and visible in the UI:
 
 - a local profile is created on first meaningful interaction
-- preferred rules are persisted locally
+- current rule, bot config, touch control, and hint preferences are persisted
 - finished local matches are persisted locally
 - replay reads from saved local match history
 

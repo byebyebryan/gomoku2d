@@ -205,9 +205,10 @@ JS and this package calls it through a Web Worker.
 gomoku-web                     — this package
 gomoku-bot-lab/gomoku-core     — board, rules, Renju enforcement, replay format
 gomoku-bot-lab/gomoku-bot      — Bot trait + implementations (RandomBot, SearchBot, …)
+gomoku-bot-lab/gomoku-analysis — shared replay-analysis model and corridor traceback
 gomoku-bot-lab/gomoku-eval     — self-play arena, tournaments, Elo
 gomoku-bot-lab/gomoku-cli      — CLI match runner with replay export
-gomoku-bot-lab/gomoku-wasm     — wasm-pack bridge: WasmBoard + WasmBot for JS
+gomoku-bot-lab/gomoku-wasm     — wasm-pack bridge: WasmBoard + WasmBot + replay analyzer for JS
 ```
 
 The local-first `v0.2` product pass is complete. `P1` proved Rust + Wasm +

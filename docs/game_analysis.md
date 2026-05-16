@@ -454,21 +454,24 @@ it should not constantly interrupt live play.
 
 ## Engine Boundary
 
-The analyzer should start in the Rust lab where reports and CLI inspection are
-cheap. Once behavior is stable, expose a compact version through core/wasm for
-the web replay UI.
+The analyzer started in the Rust lab where reports and CLI inspection were
+cheap. It now has a shared boundary that can feed both lab reports and the web
+replay UI without moving analysis rules into React or Phaser.
 
-Likely layering:
+Current layering:
 
 - `gomoku-core`: board, rules, legality, winning-line checks, compact move
   codecs, and any generic line/shape facts that are not bot-specific.
 - `gomoku-bot`: shared tactical shape facts and corridor proof primitives while
   they remain lab-facing strategy logic.
-- `gomoku-eval` or a new lab analysis module: bounded corridor search,
-  proof-tree generation, and analyzer reports while the behavior is
-  experimental.
-- `gomoku-wasm`: stable summary API for web replay after the model is validated.
-- `gomoku-web`: presentation only.
+- `gomoku-analysis`: bounded corridor traceback, proof summaries, and
+  product-safe analysis result records.
+- `gomoku-eval`: CLI/report shell, fixture runner, and HTML/JSON report
+  rendering around `gomoku-analysis`.
+- `gomoku-wasm`: browser bridge for `WasmReplayAnalyzer` and exact replay hash
+  helpers needed by web-side replay conversion.
+- `gomoku-web`: saved-match-to-core-replay adapter, worker/UI orchestration, and
+  presentation only.
 
 Avoid coupling product analysis directly to `SearchBot` internals. SearchBot can
 reuse proven analysis facts later, but replay analysis should not inherit
@@ -487,10 +490,11 @@ Do not let the Phaser scene or React route own analysis rules.
 
 ## Current Implementation
 
-The `v0.4.2` implementation lives in `gomoku-eval` and is still a lab artifact:
+The analyzer model now lives in `gomoku-analysis`, with `gomoku-eval` kept as
+the lab/report shell and `gomoku-wasm` as the browser bridge:
 
-- `gomoku_eval::analysis` defines the model/result types and bounded corridor
-  proof walker.
+- `gomoku_analysis` defines the model/result types and bounded corridor proof
+  walker.
 - `analyze-replay` analyzes one replay JSON file.
 - `analyze-replay-batch` analyzes a replay directory.
 - `analyze-report-replays` samples compact tournament-report matches and
@@ -498,6 +502,13 @@ The `v0.4.2` implementation lives in `gomoku-eval` and is still a lab artifact:
 - `analysis-fixtures` runs curated replay fixtures against the current model.
 - `--include-proof-details` adds previous-prefix/final-start proof snapshots and
   visual decision frames for audit runs.
+- `WasmReplayAnalyzer.createFromReplayJson(...).step(...)` exposes the same
+  model to browser code. The first web bridge is blocking internally but uses a
+  step-shaped API so the replay page can move to chunked/progressive execution
+  without changing route-level callers.
+- `gomoku-web/src/replay/replay_analysis_core.ts` converts `SavedMatchV2`
+  records into core replay JSON with exact wasm-generated position hashes, then
+  constructs the analyzer.
 
 The curated public report lives under `gomoku-bot-lab/analysis-reports/` and is
 published as `/analysis-report/`. It should be generated from
@@ -549,7 +560,7 @@ cargo run --release -p gomoku-eval -- analyze-report-replays \
 Keep scratch output under `gomoku-bot-lab/outputs/analysis/`. Commit only
 analyzer code, docs, and deliberately curated report artifacts.
 
-Next product decision: keep the analyzer in the lab until the proof-frame output
-is clear enough for players, then choose between replay-screen annotation,
-critical-moment tagging, or feeding corridor facts back into bot
-ordering/narrow search.
+Next product decision: wire the web bridge through a worker and replay-screen
+annotations. Keep analysis derived from saved replay data; do not persist it in
+local/cloud profile schema unless repeated runtime cost becomes a real product
+problem.
