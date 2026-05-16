@@ -4,14 +4,16 @@ import {
   BOARD_RENDER_DEPTHS,
   BOARD_RENDER_LAYER_ORDER,
   BOARD_SIZE,
+  CAUTION_ANIMS,
   COLOR,
   FRAME_SIZE,
+  HIGHLIGHTER_ANIMS,
   HOVER_ANIMS,
+  MARKER_ANIMS,
   POINTER_ANIMS,
   SPRITE,
   STONE_ANIMS,
   TRANSFORM_ANIMS,
-  WARNING_ANIMS,
 } from "./constants";
 import { BoardRenderer } from "./board_renderer";
 import { SEQUENCE_FONT_FAMILY } from "./sequence_font";
@@ -30,8 +32,8 @@ import {
   shouldStopStoneIdleCycle,
   usesTouchCandidate,
   usesTouchpadDrag,
-  warningAnimationForOverlay,
-  warningSpriteForOverlay,
+  overlayAnimationForRole,
+  overlaySpriteForRole,
 } from "./board_scene_logic";
 
 import type { CellPosition, CellStone, MatchMove, MatchStatus } from "../game/types";
@@ -44,11 +46,13 @@ const STONE_IDLE_ANIMS = [
   STONE_ANIMS.IDLE_4,
 ] as const;
 const ASSET_URLS = {
+  caution: new URL("../../assets/sprites/caution.png", import.meta.url).toString(),
+  highlighter: new URL("../../assets/sprites/highlighter.png", import.meta.url).toString(),
   hover: new URL("../../assets/sprites/hover.png", import.meta.url).toString(),
+  marker: new URL("../../assets/sprites/marker.png", import.meta.url).toString(),
   pointer: new URL("../../assets/sprites/pointer.png", import.meta.url).toString(),
   stone: new URL("../../assets/sprites/stone.png", import.meta.url).toString(),
   transform: new URL("../../assets/sprites/transform.png", import.meta.url).toString(),
-  warning: new URL("../../assets/sprites/warning.png", import.meta.url).toString(),
 } as const;
 
 type AnimationRange = {
@@ -87,8 +91,8 @@ const POINTER_BLOCKED_STEPS: readonly SequenceStep[] = [
 ] as const;
 
 const FORBIDDEN_STEPS: readonly SequenceStep[] = [
-  { kind: "animation", key: WARNING_ANIMS.FORBIDDEN_OUT.key },
-  { kind: "animation", key: WARNING_ANIMS.FORBIDDEN_IN.key },
+  { kind: "animation", key: CAUTION_ANIMS.FORBIDDEN_OUT.key },
+  { kind: "animation", key: CAUTION_ANIMS.FORBIDDEN_IN.key },
 ] as const;
 
 function cssColor(color: number): string {
@@ -306,7 +310,7 @@ export class BoardScene extends Phaser.Scene {
   private touchCandidate: CellPosition | null = null;
   private touchDragOrigin: { x: number; y: number; candidate: CellPosition } | null = null;
   private forbiddenCycles: SequenceAnimationCycle[] = [];
-  private warningLayer: Phaser.GameObjects.Container | null = null;
+  private overlayLayer: Phaser.GameObjects.Container | null = null;
   private winSprites: Phaser.GameObjects.Sprite[] = [];
 
   constructor() {
@@ -314,10 +318,12 @@ export class BoardScene extends Phaser.Scene {
   }
 
   preload(): void {
+    this.preloadSpritesheet(SPRITE.CAUTION, ASSET_URLS.caution);
+    this.preloadSpritesheet(SPRITE.HIGHLIGHTER, ASSET_URLS.highlighter);
     this.preloadSpritesheet(SPRITE.STONE, ASSET_URLS.stone);
     this.preloadSpritesheet(SPRITE.POINTER, ASSET_URLS.pointer);
     this.preloadSpritesheet(SPRITE.HOVER, ASSET_URLS.hover);
-    this.preloadSpritesheet(SPRITE.WARNING, ASSET_URLS.warning);
+    this.preloadSpritesheet(SPRITE.MARKER, ASSET_URLS.marker);
     this.preloadSpritesheet(SPRITE.TRANSFORM, ASSET_URLS.transform);
   }
 
@@ -352,7 +358,7 @@ export class BoardScene extends Phaser.Scene {
     this.pointerLayer = null;
     this.sequenceLayer = null;
     this.stoneLayer = null;
-    this.warningLayer = null;
+    this.overlayLayer = null;
     this.reportTouchCandidate(null);
     this.stoneSprites.clear();
     this.touchCandidate = null;
@@ -407,13 +413,30 @@ export class BoardScene extends Phaser.Scene {
     this.ensureRangeAnimation(SPRITE.HOVER, HOVER_ANIMS.HOVER);
 
     for (const anim of [
-      WARNING_ANIMS.WARNING,
-      WARNING_ANIMS.WARNING_ON_FORBIDDEN,
-      WARNING_ANIMS.FORBIDDEN_OUT,
-      WARNING_ANIMS.FORBIDDEN_IN,
-      WARNING_ANIMS.HIGHLIGHT,
+      CAUTION_ANIMS.FORBIDDEN_WARNING,
+      CAUTION_ANIMS.FORBIDDEN_OUT,
+      CAUTION_ANIMS.FORBIDDEN_IN,
     ]) {
-      this.ensureRangeAnimation(SPRITE.WARNING, anim);
+      this.ensureRangeAnimation(SPRITE.CAUTION, anim);
+    }
+
+    for (const anim of [
+      HIGHLIGHTER_ANIMS.STRONG,
+      HIGHLIGHTER_ANIMS.SOFT,
+      HIGHLIGHTER_ANIMS.ENTRY,
+    ]) {
+      this.ensureRangeAnimation(SPRITE.HIGHLIGHTER, anim);
+    }
+
+    for (const anim of [
+      MARKER_ANIMS.WARNING,
+      MARKER_ANIMS.QUESTION,
+      MARKER_ANIMS.L,
+      MARKER_ANIMS.F,
+      MARKER_ANIMS.E,
+      MARKER_ANIMS.P,
+    ]) {
+      this.ensureRangeAnimation(SPRITE.MARKER, anim);
     }
   }
 
@@ -436,7 +459,7 @@ export class BoardScene extends Phaser.Scene {
   private createSceneGraph(): void {
     this.root = this.add.container(0, 0);
     this.boardLayer = this.add.container(0, 0);
-    this.warningLayer = this.add.container(0, 0);
+    this.overlayLayer = this.add.container(0, 0);
     this.pointerLayer = this.add.container(0, 0);
     this.stoneLayer = this.add.container(0, 0);
     this.sequenceLayer = this.add.container(0, 0);
@@ -447,7 +470,7 @@ export class BoardScene extends Phaser.Scene {
       POINTER: this.pointerLayer,
       SEQUENCE_NUMBER: this.sequenceLayer,
       STONE: this.stoneLayer,
-      WARNING: this.warningLayer,
+      OVERLAY: this.overlayLayer,
     } satisfies Record<(typeof BOARD_RENDER_LAYER_ORDER)[number], Phaser.GameObjects.Container>;
     this.root.add(BOARD_RENDER_LAYER_ORDER.map((layer) => layers[layer]));
   }
@@ -456,7 +479,7 @@ export class BoardScene extends Phaser.Scene {
     this.renderVersion += 1;
     if (
       !this.boardLayer ||
-      !this.warningLayer ||
+      !this.overlayLayer ||
       !this.pointerLayer ||
       !this.stoneLayer ||
       !this.sequenceLayer ||
@@ -469,7 +492,7 @@ export class BoardScene extends Phaser.Scene {
     this.stoneCycle?.stop();
     this.stopForbiddenCycles();
     this.boardLayer.removeAll(true);
-    this.warningLayer.removeAll(true);
+    this.overlayLayer.removeAll(true);
     this.pointerLayer.removeAll(true);
     this.stoneLayer.removeAll(true);
     this.sequenceLayer.removeAll(true);
@@ -608,7 +631,7 @@ export class BoardScene extends Phaser.Scene {
   }
 
   private syncOverlaySprites(): void {
-    if (!this.board || !this.warningLayer || !this.sequenceLayer || !this.hoverLayer) {
+    if (!this.board || !this.overlayLayer || !this.sequenceLayer || !this.hoverLayer) {
       return;
     }
 
@@ -639,7 +662,14 @@ export class BoardScene extends Phaser.Scene {
     for (const cell of this.boardState.winningMoves) {
       const point = this.board.cellToPixel(cell.row, cell.col);
       this.hintSprites.push(
-        this.createWarnSprite(point.x, point.y, COLOR.WIN_MOVE, warningAnimationForOverlay("winningMove")),
+        this.createOverlaySprite(
+          point.x,
+          point.y,
+          COLOR.WIN_MOVE,
+          overlayAnimationForRole("winningMove"),
+          BOARD_RENDER_DEPTHS.OVERLAY_SURFACE,
+          overlaySpriteForRole("winningMove"),
+        ),
       );
     }
 
@@ -647,11 +677,13 @@ export class BoardScene extends Phaser.Scene {
       const point = this.board.cellToPixel(cell.row, cell.col);
       const isForbidden = forbiddenKeys.has(this.cellKey(cell.row, cell.col));
       this.hintSprites.push(
-        this.createWarnSprite(
+        this.createOverlaySprite(
           point.x,
           point.y,
           COLOR.THREAT,
-          warningAnimationForOverlay("threatMove", isForbidden),
+          overlayAnimationForRole("threatMove", isForbidden),
+          BOARD_RENDER_DEPTHS.OVERLAY_SURFACE,
+          overlaySpriteForRole("threatMove", isForbidden),
         ),
       );
     }
@@ -659,11 +691,13 @@ export class BoardScene extends Phaser.Scene {
     for (const cell of this.boardState.imminentThreatMoves) {
       const point = this.board.cellToPixel(cell.row, cell.col);
       this.hintSprites.push(
-        this.createWarnSprite(
+        this.createOverlaySprite(
           point.x,
           point.y,
           COLOR.IMMINENT_THREAT,
-          warningAnimationForOverlay("imminentThreatMove"),
+          overlayAnimationForRole("imminentThreatMove"),
+          BOARD_RENDER_DEPTHS.OVERLAY_SURFACE,
+          overlaySpriteForRole("imminentThreatMove"),
         ),
       );
     }
@@ -671,11 +705,13 @@ export class BoardScene extends Phaser.Scene {
     for (const cell of this.boardState.counterThreatMoves) {
       const point = this.board.cellToPixel(cell.row, cell.col);
       this.hintSprites.push(
-        this.createWarnSprite(
+        this.createOverlaySprite(
           point.x,
           point.y,
           COLOR.COUNTER_THREAT,
-          warningAnimationForOverlay("counterThreatMove"),
+          overlayAnimationForRole("counterThreatMove"),
+          BOARD_RENDER_DEPTHS.OVERLAY_SURFACE,
+          overlaySpriteForRole("counterThreatMove"),
         ),
       );
     }
@@ -704,42 +740,42 @@ export class BoardScene extends Phaser.Scene {
     for (const cell of this.boardState.winningCells) {
       const point = this.board.cellToPixel(cell.row, cell.col);
       this.winSprites.push(
-        this.createWarnSprite(
+        this.createOverlaySprite(
           point.x,
           point.y,
           COLOR.WIN_CELLS,
-          warningAnimationForOverlay("winningLine"),
-          BOARD_RENDER_DEPTHS.WARNING_HOVER,
-          warningSpriteForOverlay("winningLine"),
+          overlayAnimationForRole("winningLine"),
+          BOARD_RENDER_DEPTHS.OVERLAY_HOVER,
+          overlaySpriteForRole("winningLine"),
         ),
       );
     }
   }
 
-  private createWarnSprite(
+  private createOverlaySprite(
     x: number,
     y: number,
     tint: number,
     animKey: string,
-    depth: number = BOARD_RENDER_DEPTHS.WARNING_SURFACE,
-    texture: string = SPRITE.WARNING,
+    depth: number = BOARD_RENDER_DEPTHS.OVERLAY_SURFACE,
+    texture: string = SPRITE.MARKER,
   ): Phaser.GameObjects.Sprite {
     const sprite = this.add.sprite(x, y, texture, 0);
     sprite.setScale(this.currentCellSize / FRAME_SIZE);
     sprite.setDepth(depth);
     sprite.setTint(tint);
     sprite.play({ key: animKey, repeat: -1 });
-    const layer = texture === SPRITE.HOVER ? this.hoverLayer : this.warningLayer;
+    const layer = texture === SPRITE.HOVER ? this.hoverLayer : this.overlayLayer;
     layer?.add(sprite);
     return sprite;
   }
 
   private createForbiddenSprite(x: number, y: number): Phaser.GameObjects.Sprite {
-    const sprite = this.add.sprite(x, y, SPRITE.WARNING, WARNING_ANIMS.FORBIDDEN_OUT.start);
+    const sprite = this.add.sprite(x, y, SPRITE.CAUTION, CAUTION_ANIMS.FORBIDDEN_OUT.start);
     sprite.setScale(this.currentCellSize / FRAME_SIZE);
-    sprite.setDepth(BOARD_RENDER_DEPTHS.WARNING_BLOCKED);
+    sprite.setDepth(BOARD_RENDER_DEPTHS.OVERLAY_BLOCKED);
     sprite.setTint(COLOR.FORBIDDEN);
-    this.warningLayer?.add(sprite);
+    this.overlayLayer?.add(sprite);
 
     const cycle = new SequenceAnimationCycle(this, FORBIDDEN_STEPS);
     cycle.start(sprite);

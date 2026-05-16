@@ -57,8 +57,8 @@ In scope for `0.4.6`:
 - reuse the existing analysis vocabulary: forced corridor, last escape,
   confirmed escape, possible escape, forbidden reply, immediate threat, imminent
   threat, counter-threat;
-- replace the legacy `warning.png` board-overlay dependency with the new split
-  sprite sheets as part of the replay-annotation visual pass.
+- keep live board overlays on the same split sprite vocabulary replay analysis
+  will use.
 
 Out of scope:
 
@@ -171,15 +171,16 @@ Cell context outlines:
 
 Proof markers:
 
-- `!`: immediate loss if ignored;
+- `L`: forced loss;
+- `F`: forbidden Renju reply;
 - `E`: confirmed escape;
-- `?`: possible escape;
-- `F`: forbidden Renju reply.
+- `P`: possible escape;
+- `?`: unknown;
+- `!`: immediate loss if ignored;
 
-Avoid showing forced-loss letters as a default product marker. A move on the
-actual losing line already led to the shown result; the useful information is
-where the player had alternatives. If a detail mode later needs forced-loss
-markers, it can add them without crowding the MVP.
+Avoid showing forced-loss letters as a default product marker. `L` exists for
+detail/report surfaces, but a move on the actual losing line already led to the
+shown result; the useful information is where the player had alternatives.
 
 ## Sprite Intake
 
@@ -189,24 +190,56 @@ New source sprites were added under `gomoku-web/assets/sprites/`:
 |---|---:|---|---|
 | `caution.png` | 96x48 | 6 cols x 3 rows | Live tactical caution and forbidden-style loops |
 | `highlighter.png` | 96x48 | 6 cols x 3 rows | Board-cell highlight outlines for replay/hint contexts |
-| `marker.png` | 96x96 | 6 cols x 6 rows | Proof/result markers for replay-analysis annotations |
+| `marker.png` | 96x96 | 6 cols x 6 rows | Warning and proof/result markers |
 
-These should replace the overloaded `warning.png` sheet. The old sheet mixed
-marker-shaped frames, caution/forbidden frames, and a reserved highlighter row.
-The new split is cleaner:
+These replace the overloaded legacy board-overlay sheet. The old sheet mixed
+marker-shaped frames, caution/forbidden frames, and a reserved highlighter row;
+the split is cleaner:
 
-- `caution` should own warning/forbidden caution loops;
-- `highlighter` should own soft board-cell context highlights;
-- `marker` should own symbolic proof/result markers.
+- `caution` should own forbidden and forbidden-warning caution loops;
+- `highlighter` should own board-cell context highlights;
+- `marker` should own warning and symbolic proof/result markers.
+
+Caution animation names should distinguish the combined and standalone
+forbidden surfaces:
+
+- `caution-forbidden-warning`
+- `caution-forbidden-out`
+- `caution-forbidden-in`
+
+Marker animation names should follow the proof letters:
+
+- `marker-warning`
+- `marker-question`
+- `marker-L`
+- `marker-F`
+- `marker-E`
+- `marker-P`
+
+Color contract:
+
+- `highlight-strong`: immediate threat/loss/win; red for danger, green for win.
+- `highlight-soft`: imminent or counter-threat; pink for imminent, purple for
+  counter-threat.
+- `highlight-entry`: corridor entry or critical-point context; per-side or
+  neutral, with white as the preview default.
+- `marker-warning`: red for immediate loss/threat, green for immediate win.
+- `marker-question`: gray.
+- `marker-L`: red.
+- `marker-F`: red.
+- `marker-E`: green.
+- `marker-P`: teal.
 
 Implementation rules:
 
 - keep source and `public/assets/sprites/` copies in sync;
-- update the sprite README and preview before runtime migration;
+- update the sprite README and preview when frame layout changes;
 - add `SPRITE.CAUTION`, `SPRITE.HIGHLIGHTER`, and `SPRITE.MARKER`;
-- migrate live hints off `SPRITE.WARNING` without changing hint semantics;
+- keep live hints on `SPRITE.MARKER` / `SPRITE.CAUTION` without changing hint
+  semantics;
 - use the new highlighter/marker sheets for replay analysis;
-- remove `warning.png` only after no runtime or preview references remain.
+- keep the legacy overlay sheet removed once no runtime or preview references
+  remain.
 
 ## Data And Caching
 

@@ -2,10 +2,12 @@
 // Loaded in boot scene via spritesheet configs.
 
 export const SPRITE = {
+  CAUTION: "caution",
+  HIGHLIGHTER: "highlighter",
   STONE: "stone",
   POINTER: "pointer",
   HOVER: "hover",
-  WARNING: "warning",
+  MARKER: "marker",
   TRANSFORM: "transform",
 } as const;
 
@@ -13,18 +15,18 @@ export const FRAME_SIZE = 16;
 
 export const BOARD_RENDER_DEPTHS = {
   BOARD: 0,
-  WARNING_SURFACE: 0.25,
-  WARNING_BLOCKED: 0.25,
+  OVERLAY_SURFACE: 0.25,
+  OVERLAY_BLOCKED: 0.25,
   POINTER: 0.5,
   STONE: 1,
   SEQUENCE_NUMBER: 1.5,
-  WARNING_HOVER: 2,
+  OVERLAY_HOVER: 2,
   INPUT_ZONE: 3,
 } as const;
 
 export const BOARD_RENDER_LAYER_ORDER = [
   "BOARD",
-  "WARNING",
+  "OVERLAY",
   "POINTER",
   "STONE",
   "SEQUENCE_NUMBER",
@@ -32,10 +34,12 @@ export const BOARD_RENDER_LAYER_ORDER = [
 ] as const;
 
 export const SPRITESHEET_CONFIG = {
+  [SPRITE.CAUTION]: { url: "assets/sprites/caution.png", end: 17 },
+  [SPRITE.HIGHLIGHTER]: { url: "assets/sprites/highlighter.png", end: 17 },
   [SPRITE.STONE]: { url: "assets/sprites/stone.png", end: 23 },
   [SPRITE.POINTER]: { url: "assets/sprites/pointer.png", end: 19 },
   [SPRITE.HOVER]: { url: "assets/sprites/hover.png", end: 5 },
-  [SPRITE.WARNING]: { url: "assets/sprites/warning.png", end: 29 },
+  [SPRITE.MARKER]: { url: "assets/sprites/marker.png", end: 35 },
   [SPRITE.TRANSFORM]: { url: "assets/sprites/transform.png", end: 9 },
 } as const;
 
@@ -60,12 +64,25 @@ export const HOVER_ANIMS = {
   HOVER: { start: 0, end: 5, frameRate: 12, key: "hover" },
 } as const;
 
-export const WARNING_ANIMS = {
-  WARNING: { start: 0, end: 5, frameRate: 12, key: "warning" },
-  WARNING_ON_FORBIDDEN: { start: 6, end: 11, frameRate: 12, key: "warning-on-forbidden" },
-  FORBIDDEN_OUT: { start: 12, end: 17, frameRate: 12, key: "forbidden-out" },
-  FORBIDDEN_IN: { start: 18, end: 23, frameRate: 12, key: "forbidden-in" },
-  HIGHLIGHT: { start: 24, end: 29, frameRate: 12, key: "highlight" },
+export const CAUTION_ANIMS = {
+  FORBIDDEN_WARNING: { start: 0, end: 5, frameRate: 12, key: "caution-forbidden-warning" },
+  FORBIDDEN_OUT: { start: 6, end: 11, frameRate: 12, key: "caution-forbidden-out" },
+  FORBIDDEN_IN: { start: 12, end: 17, frameRate: 12, key: "caution-forbidden-in" },
+} as const;
+
+export const HIGHLIGHTER_ANIMS = {
+  STRONG: { start: 0, end: 5, frameRate: 12, key: "highlight-strong" },
+  SOFT: { start: 6, end: 11, frameRate: 12, key: "highlight-soft" },
+  ENTRY: { start: 12, end: 17, frameRate: 12, key: "highlight-entry" },
+} as const;
+
+export const MARKER_ANIMS = {
+  WARNING: { start: 0, end: 5, frameRate: 12, key: "marker-warning" },
+  QUESTION: { start: 6, end: 11, frameRate: 12, key: "marker-question" },
+  L: { start: 12, end: 17, frameRate: 12, key: "marker-L" },
+  F: { start: 18, end: 23, frameRate: 12, key: "marker-F" },
+  E: { start: 24, end: 29, frameRate: 12, key: "marker-E" },
+  P: { start: 30, end: 35, frameRate: 12, key: "marker-P" },
 } as const;
 
 export const TRANSFORM_ANIMS = {

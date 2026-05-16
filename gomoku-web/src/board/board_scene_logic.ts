@@ -1,6 +1,6 @@
 import type { CellPosition, CellStone, MatchMove, MatchStatus } from "../game/types";
 
-import { HOVER_ANIMS, SPRITE, WARNING_ANIMS } from "./constants";
+import { CAUTION_ANIMS, HOVER_ANIMS, MARKER_ANIMS, SPRITE } from "./constants";
 
 const TOUCH_DRAG_SENSITIVITY = 1.0;
 const DEFAULT_BOARD_SIZE = 15;
@@ -8,7 +8,7 @@ const SEQUENCE_FONT_DESKTOP_CELL_SIZE = 40;
 const SEQUENCE_FONT_MOBILE_SIZE = 8;
 const SEQUENCE_FONT_DESKTOP_SIZE = 16;
 
-export type WarningOverlayRole =
+export type BoardOverlayRole =
   | "counterThreatMove"
   | "forbidden"
   | "imminentThreatMove"
@@ -80,25 +80,33 @@ function cellsEqual(a: CellStone[][], b: CellStone[][]): boolean {
   });
 }
 
-export function warningAnimationForOverlay(role: WarningOverlayRole, isForbidden = false): string {
+export function overlayAnimationForRole(role: BoardOverlayRole, isForbidden = false): string {
   switch (role) {
     case "counterThreatMove":
-      return WARNING_ANIMS.WARNING.key;
+      return MARKER_ANIMS.WARNING.key;
     case "forbidden":
-      return WARNING_ANIMS.FORBIDDEN_OUT.key;
+      return CAUTION_ANIMS.FORBIDDEN_OUT.key;
     case "imminentThreatMove":
-      return WARNING_ANIMS.WARNING.key;
+      return MARKER_ANIMS.WARNING.key;
     case "threatMove":
-      return isForbidden ? WARNING_ANIMS.WARNING_ON_FORBIDDEN.key : WARNING_ANIMS.WARNING.key;
+      return isForbidden ? CAUTION_ANIMS.FORBIDDEN_WARNING.key : MARKER_ANIMS.WARNING.key;
     case "winningMove":
-      return WARNING_ANIMS.WARNING.key;
+      return MARKER_ANIMS.WARNING.key;
     case "winningLine":
       return HOVER_ANIMS.HOVER.key;
   }
 }
 
-export function warningSpriteForOverlay(role: WarningOverlayRole): string {
-  return role === "winningLine" ? SPRITE.HOVER : SPRITE.WARNING;
+export function overlaySpriteForRole(role: BoardOverlayRole, isForbidden = false): string {
+  if (role === "winningLine") {
+    return SPRITE.HOVER;
+  }
+
+  if (role === "forbidden" || (role === "threatMove" && isForbidden)) {
+    return SPRITE.CAUTION;
+  }
+
+  return SPRITE.MARKER;
 }
 
 export function shouldRenderStandaloneForbiddenOverlay(
