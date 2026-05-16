@@ -611,7 +611,7 @@ describe("createLocalMatchStore", () => {
     expect(state.counterThreatMoves).toEqual([]);
   });
 
-  it("shows both immediate and imminent replies for opponent combo threats", () => {
+  it("prioritizes immediate replies over imminent replies for opponent combo threats", () => {
     const board = WasmBoard.createWithVariant("freestyle");
     const moves: Array<[number, number]> = [
       [0, 0],
@@ -652,12 +652,7 @@ describe("createLocalMatchStore", () => {
         { row: 7, col: 11 },
       ]),
     );
-    expect(state.imminentThreatMoves).toEqual(
-      expect.arrayContaining([
-        { row: 5, col: 4 },
-        { row: 5, col: 8 },
-      ]),
-    );
+    expect(state.imminentThreatMoves).toEqual([]);
   });
 
   it("does not show closed broken threes as imminent threat hints", () => {
