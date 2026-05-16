@@ -198,6 +198,31 @@ Implementation-specific replay semantics:
 The general corridor state machine, Renju overlay, and model-limit invariants
 are defined in [`corridor_search.md`](corridor_search.md).
 
+## Browser Integration Contract
+
+The browser uses the same analyzer as the static report path; it does not
+reimplement corridor search in React or Phaser.
+
+- `gomoku-web` converts a saved match into exact `gomoku-core` replay JSON using
+  `WasmBoard` hashes.
+- `gomoku-wasm` owns `WasmReplayAnalyzer.createFromReplayJson(...).step(...)`.
+- `gomoku-analysis` owns `ReplayAnalysisSession`, which walks backward from the
+  ending and returns frame annotations before final analysis is ready.
+- `gomoku-web` runs the analyzer inside a cancellable web worker. Replay
+  playback and route changes must remain responsive while analysis progresses.
+
+The step result schema intentionally separates progress from final summary:
+
+- `status`: `running`, `resolved`, `unclear`, `unsupported`, or `error`;
+- `annotations`: per-ply highlights and markers produced during this step;
+- `current_ply`: the next prefix to analyze, or `null` when finished;
+- `analysis`: final `GameAnalysis` only when the analyzer is done;
+- `counters`: searched prefixes, branch roots, and proof nodes.
+
+Route/UI code should merge annotations by `ply` and render only the current
+replay frame's markers. Analysis output is transient product state in `0.4.6`;
+do not store it in local or cloud profile documents.
+
 ## Backward Walk
 
 For a finished game, walk backward from the final move and test prefixes. Do not

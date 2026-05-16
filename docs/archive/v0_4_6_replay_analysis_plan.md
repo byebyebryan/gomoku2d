@@ -99,14 +99,18 @@ facts; they do not rediscover Gomoku/Renju strategy.
 Implementation checkpoint:
 
 - `gomoku-analysis` has been split out as the shared Rust analyzer crate.
+- `gomoku-analysis` exposes `ReplayAnalysisSession`, a stepped backward
+  traceback API that returns per-frame annotations and cumulative counters.
 - `gomoku-eval` re-exports and consumes `gomoku-analysis` for the existing CLI
   and static report flows.
 - `gomoku-wasm` exposes `WasmReplayAnalyzer.createFromReplayJson(...).step(...)`
-  and `WasmBoard.hashString()`.
+  as a session-backed API, plus `WasmBoard.hashString()`.
 - `gomoku-web` can convert a `SavedMatchV2` into exact core replay JSON and
   create the wasm analyzer from that saved match.
-- The worker, progressive scheduling, replay-route state, and board annotations
-  are still the remaining product slice.
+- `gomoku-web` has a cancellable replay-analysis worker/runner protocol for
+  progress, completion, cancellation, and worker failure.
+- Replay-route state, analysis copy, and board annotations are still the
+  remaining product slice.
 
 ## Progressive Analyzer API
 
@@ -121,9 +125,10 @@ WasmReplayAnalyzer.step(max_work_units) -> AnalyzerStepResult
 WasmReplayAnalyzer.dispose()
 ```
 
-The current bridge is step-shaped but still blocking internally. That is
-intentional for the first plumbing slice: it validates the Rust/wasm/web data
-boundary before adding worker scheduling and true progressive chunks.
+The bridge now advances a real Rust session. Each `step(max_work_units)` analyzes
+one or more replay prefixes from the ending backward, returns frame annotations
+for those prefixes, and withholds final analysis until the session resolves,
+becomes unclear/unsupported, or reaches its scan bound.
 
 The step result should include:
 
@@ -134,9 +139,9 @@ The step result should include:
 - counters for searched prefixes, branch roots, and proof nodes;
 - model metadata: rule set, probe depth, traceback limit, analyzer version.
 
-The worker should schedule chunks with small time slices. Route changes and
-match changes cancel the analyzer. Worker or Wasm failure must degrade to
-"Analysis unavailable" while replay playback continues normally.
+The worker schedules chunks with small time slices. Route changes and match
+changes cancel the analyzer. Worker or Wasm failure must degrade to "Analysis
+unavailable" while replay playback continues normally.
 
 ## Replay UI
 

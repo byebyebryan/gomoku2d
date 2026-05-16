@@ -140,8 +140,9 @@ One rules implementation, reused everywhere:
   in `package.json`. Vite's wasm plugin handles the load.
 - **Replay analysis:** `gomoku-analysis` owns bounded corridor traceback.
   `gomoku-eval` uses it for fixture/report generation; `gomoku-wasm` exposes a
-  browser-safe analyzer bridge; `gomoku-web` converts saved matches to core
-  replay JSON and renders the result.
+  session-backed browser analyzer bridge; `gomoku-web` converts saved matches
+  to core replay JSON and schedules progressive analysis in a cancellable web
+  worker before rendering annotations.
 - **Server (future):** `gomoku-api` depends on `gomoku-core` as a Cargo path
   dependency. Same Rust code, native target.
 - **CLI / eval tools:** already using `gomoku-core` via path deps.
