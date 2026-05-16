@@ -78,7 +78,7 @@ describe("LocalMatchRoute", () => {
     const botValue = screen.getByTestId("match-bot");
 
     expect(within(botValue).getByText("Normal")).toBeInTheDocument();
-    expect(within(botValue).getByText("D3 · full · threat")).toBeInTheDocument();
+    expect(within(botValue).getByText("D3 · full · pattern")).toBeInTheDocument();
     expect(screen.queryByText("Freestyle · Normal")).not.toBeInTheDocument();
   });
 

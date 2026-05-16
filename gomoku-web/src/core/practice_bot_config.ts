@@ -180,7 +180,7 @@ export function practiceBotConfigSummary(config: PracticeBotConfig): string {
   return [
     `D${custom.depth}`,
     custom.width === "none" ? "full" : `W${custom.width}`,
-    custom.patternScoring ? "threat" : "simple",
+    custom.patternScoring ? "pattern" : "simple",
     custom.corridorProof ? "proof" : null,
   ].filter(Boolean).join(" · ");
 }
