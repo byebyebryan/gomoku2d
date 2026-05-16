@@ -80,4 +80,37 @@ describe("local match session", () => {
       selectedVariant: "renju",
     });
   });
+
+  it("resumes replay branches with the current bot config and replay rule", () => {
+    const hard: PracticeBotConfig = { mode: "preset", preset: "hard", version: 1 };
+    localProfileStore.setState({
+      matchHistory: emptyLocalMatchHistory(),
+      profile: localProfile,
+      settings: { practiceBot: hard, preferredVariant: "freestyle" },
+    });
+
+    const store = ensureLocalMatchSession({
+      botRunner: noOpBotRunner,
+      resumeState: {
+        currentPlayer: 1,
+        moves: [
+          { col: 7, moveNumber: 1, player: 1, row: 7 },
+          { col: 8, moveNumber: 2, player: 2, row: 7 },
+        ],
+        variant: "renju",
+      },
+    });
+
+    expect(store.getState()).toMatchObject({
+      currentPracticeBot: hard,
+      currentVariant: "renju",
+      selectedPracticeBot: hard,
+      selectedVariant: "renju",
+    });
+    expect(store.getState().players[1]).toMatchObject({
+      kind: "bot",
+      name: "Hard Bot",
+      stone: "white",
+    });
+  });
 });
