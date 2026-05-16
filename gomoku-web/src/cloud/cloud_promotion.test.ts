@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { createLocalSavedMatch } from "../match/saved_match";
-import { DEFAULT_PRACTICE_BOT_CONFIG } from "../core/practice_bot_config";
+import { DEFAULT_BOT_CONFIG } from "../core/bot_config";
+import { createDefaultProfileSettings } from "../profile/profile_settings";
 import {
   emptyLocalMatchHistory,
   type LocalProfileIdentity,
@@ -37,8 +38,11 @@ const localProfile: LocalProfileIdentity = {
 };
 
 const settings: LocalProfileSettings = {
-  practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
-  preferredVariant: "renju",
+  ...createDefaultProfileSettings(),
+  gameConfig: {
+    opening: "standard",
+    ruleset: "renju",
+  },
 };
 
 const match: LocalProfileSavedMatch = createLocalSavedMatch({
@@ -51,7 +55,7 @@ const match: LocalProfileSavedMatch = createLocalSavedMatch({
   ],
   savedAt: "2026-04-27T01:02:03.000Z",
   status: "draw",
-  variant: "freestyle",
+  ruleset: "freestyle",
 });
 
 function createBackend() {
@@ -86,11 +90,11 @@ describe("cloudProfilePromotionUpdate", () => {
     ).toMatchObject({
       display_name: "ByeByeBryan",
       settings: {
-        default_rules: {
+        game_config: {
           opening: "standard",
           ruleset: "renju",
         },
-        practice_bot: DEFAULT_PRACTICE_BOT_CONFIG,
+        bot_config: DEFAULT_BOT_CONFIG,
       },
       uid: "uid-1",
     });
@@ -114,11 +118,7 @@ describe("cloudProfilePromotionUpdate", () => {
         cloudDisplayName: user.displayName,
         cloudMatchHistory: emptyCloudMatchHistory(),
         cloudSettings: {
-          defaultRules: {
-            opening: "standard",
-            ruleset: "renju",
-          },
-          practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
+          ...settings,
         },
         localMatchHistory: localMatchHistory(),
         localProfile: { ...localProfile, displayName: "Guest" },
@@ -133,11 +133,11 @@ describe("cloudProfilePromotionUpdate", () => {
       cloudDisplayName: user.displayName,
       cloudMatchHistory: emptyCloudMatchHistory(),
       cloudSettings: {
-        defaultRules: {
+        ...settings,
+        gameConfig: {
           opening: "standard",
           ruleset: "freestyle",
         },
-        practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
       },
       localMatchHistory: localMatchHistory(),
       localProfile: { ...localProfile, displayName: "Guest" },
@@ -147,11 +147,11 @@ describe("cloudProfilePromotionUpdate", () => {
 
     expect(update).toMatchObject({
       settings: {
-        default_rules: {
+        game_config: {
           opening: "standard",
           ruleset: "renju",
         },
-        practice_bot: DEFAULT_PRACTICE_BOT_CONFIG,
+        bot_config: DEFAULT_BOT_CONFIG,
       },
     });
     expect(update).not.toHaveProperty("display_name");
@@ -202,11 +202,11 @@ describe("promoteLocalProfileToCloud", () => {
         summary_matches: [],
       },
       settings: {
-        default_rules: {
+        game_config: {
           opening: "standard",
           ruleset: "renju",
         },
-        practice_bot: DEFAULT_PRACTICE_BOT_CONFIG,
+        bot_config: DEFAULT_BOT_CONFIG,
       },
     });
     expect(result).toEqual({
@@ -246,11 +246,7 @@ describe("promoteLocalProfileToCloud", () => {
         cloudDisplayName: user.displayName,
         cloudMatchHistory,
         cloudSettings: {
-          defaultRules: {
-            opening: "standard",
-            ruleset: "renju",
-          },
-          practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
+          ...settings,
         },
         localMatchHistory: localMatchHistory([match]),
         localProfile: { ...localProfile, displayName: "Guest" },

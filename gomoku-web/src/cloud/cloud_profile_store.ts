@@ -1,6 +1,6 @@
 import { createStore, type StoreApi } from "zustand/vanilla";
 
-import type { GameVariant } from "../core/bot_protocol";
+import type { ProfileSettings } from "../profile/profile_settings";
 
 import type { CloudAuthUser } from "./auth_store";
 import { deleteCloudProfile, ensureCloudProfile, resetCloudProfile, type CloudProfile } from "./cloud_profile";
@@ -11,17 +11,17 @@ export interface CloudProfileState {
   applyLocalPatch: (patch: Partial<CloudProfile>) => void;
   deleteForUser: (user: CloudAuthUser) => Promise<void>;
   errorMessage: string | null;
-  loadForUser: (user: CloudAuthUser, preferredVariant: GameVariant) => Promise<void>;
+  loadForUser: (user: CloudAuthUser, settings: ProfileSettings) => Promise<void>;
   profile: CloudProfile | null;
   reset: () => void;
-  resetForUser: (user: CloudAuthUser, preferredVariant: GameVariant) => Promise<void>;
+  resetForUser: (user: CloudAuthUser, settings: ProfileSettings) => Promise<void>;
   status: CloudProfileStatus;
 }
 
 export interface CloudProfileStoreOptions {
   deleteProfile?: (user: CloudAuthUser) => Promise<void>;
-  loadProfile?: (user: CloudAuthUser, preferredVariant: GameVariant) => Promise<CloudProfile>;
-  resetProfile?: (user: CloudAuthUser, preferredVariant: GameVariant) => Promise<CloudProfile>;
+  loadProfile?: (user: CloudAuthUser, settings: ProfileSettings) => Promise<CloudProfile>;
+  resetProfile?: (user: CloudAuthUser, settings: ProfileSettings) => Promise<CloudProfile>;
 }
 
 function errorMessageFor(error: unknown): string {
@@ -76,7 +76,7 @@ export function createCloudProfileStore(
       }
     },
     errorMessage: null,
-    loadForUser: async (user, preferredVariant) => {
+    loadForUser: async (user, settings) => {
       const currentRequestId = requestId + 1;
       requestId = currentRequestId;
 
@@ -86,7 +86,7 @@ export function createCloudProfileStore(
       });
 
       try {
-        const profile = await loadProfile(user, preferredVariant);
+        const profile = await loadProfile(user, settings);
         if (requestId !== currentRequestId) {
           return;
         }
@@ -116,7 +116,7 @@ export function createCloudProfileStore(
         status: "idle",
       });
     },
-    resetForUser: async (user, preferredVariant) => {
+    resetForUser: async (user, settings) => {
       const currentRequestId = requestId + 1;
       requestId = currentRequestId;
 
@@ -126,7 +126,7 @@ export function createCloudProfileStore(
       });
 
       try {
-        const profile = await resetProfile(user, preferredVariant);
+        const profile = await resetProfile(user, settings);
         if (requestId !== currentRequestId) {
           return;
         }

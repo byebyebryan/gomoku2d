@@ -8,9 +8,9 @@ import {
   CLOUD_MATCH_SCHEMA_VERSION,
   CLOUD_MATCH_SOURCE_CLOUD_SAVED,
   CLOUD_MATCH_TRUST_CLIENT_UPLOADED,
-  PRACTICE_BOT_CONFIG_VERSION,
-  PRACTICE_BOT_ENGINE,
-  PRACTICE_BOT_ID,
+  BOT_CONFIG_VERSION,
+  BOT_ENGINE,
+  BOT_ID,
   createCloudSavedMatch,
 } from "./cloud_match";
 
@@ -36,7 +36,7 @@ const match: LocalProfileSavedMatch = createLocalSavedMatch({
   savedAt: "2026-04-27T01:02:03.000Z",
   status: "black_won",
   undoFloor: 99,
-  variant: "renju",
+  ruleset: "renju",
 });
 
 describe("cloud match serialization", () => {
@@ -67,12 +67,12 @@ describe("cloud match serialization", () => {
             preset: "normal",
             version: 1,
           },
-          config_version: PRACTICE_BOT_CONFIG_VERSION,
-          engine: PRACTICE_BOT_ENGINE,
-          id: PRACTICE_BOT_ID,
+          config_version: BOT_CONFIG_VERSION,
+          engine: BOT_ENGINE,
+          id: BOT_ID,
           lab_spec: "search-d3+pattern-eval",
           label: "Normal",
-          version: 2,
+          version: 1,
         },
         display_name: "Normal Bot",
         kind: "bot",
@@ -85,7 +85,7 @@ describe("cloud match serialization", () => {
       status: "black_won",
       trust: CLOUD_MATCH_TRUST_CLIENT_UPLOADED,
       undo_floor: 2,
-      variant: "renju",
+      ruleset: "renju",
     });
   });
 

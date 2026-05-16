@@ -2,14 +2,13 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 
-import { DEFAULT_PRACTICE_BOT_CONFIG } from "../core/practice_bot_config";
 import {
   disposeLocalMatchSession,
   ensureLocalMatchSession,
   localMatchSessionStore,
 } from "../game/local_match_session";
 import { emptyLocalMatchHistory, localProfileStore } from "../profile/local_profile_store";
-import { uiPreferencesStore } from "../profile/ui_preferences_store";
+import { createDefaultProfileSettings } from "../profile/profile_settings";
 
 import { LocalMatchRoute } from "./LocalMatchRoute";
 import { Board } from "../components/Board/Board";
@@ -19,7 +18,7 @@ vi.mock("../components/Board/Board", () => ({
 }));
 
 const initialLocalProfileState = localProfileStore.getState();
-const initialUiPreferencesState = uiPreferencesStore.getState();
+const defaultSettings = createDefaultProfileSettings();
 const localProfile = {
   avatarUrl: null,
   createdAt: "2026-05-15T00:00:00.000Z",
@@ -57,7 +56,6 @@ describe("LocalMatchRoute", () => {
     cleanup();
     disposeLocalMatchSession();
     localProfileStore.setState(initialLocalProfileState, true);
-    uiPreferencesStore.setState(initialUiPreferencesState, true);
     vi.useRealTimers();
     vi.unstubAllGlobals();
     mockedBoard.mockClear();
@@ -67,7 +65,7 @@ describe("LocalMatchRoute", () => {
     localProfileStore.setState({
       matchHistory: emptyLocalMatchHistory(),
       profile: localProfile,
-      settings: { practiceBot: DEFAULT_PRACTICE_BOT_CONFIG, preferredVariant: "freestyle" },
+      settings: defaultSettings,
     });
     ensureLocalMatchSession({ botRunner: noOpBotRunner });
   });
@@ -84,7 +82,7 @@ describe("LocalMatchRoute", () => {
 
   it("passes the selected touch control mode to compact mobile boards", () => {
     mockCompactTouchDevice(true);
-    uiPreferencesStore.getState().setTouchControl("pointer");
+    localProfileStore.getState().updateSettings({ touchControl: "pointer" });
 
     renderLocalMatchRoute();
 
@@ -104,7 +102,7 @@ describe("LocalMatchRoute", () => {
       threatMoves: [{ row: 8, col: 8 }],
       winningMoves: [{ row: 1, col: 1 }],
     });
-    uiPreferencesStore.setState({
+    localProfileStore.getState().updateSettings({
       boardHints: {
         immediate: "win",
         imminent: "off",

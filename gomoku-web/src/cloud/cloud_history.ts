@@ -5,16 +5,15 @@ import {
   type Firestore,
 } from "firebase/firestore";
 
-import type { GameVariant } from "../core/bot_protocol";
-import type { PracticeBotConfig } from "../core/practice_bot_config";
-import { savedMatchIsAfterReset, type SavedMatchV1 } from "../match/saved_match";
+import { savedMatchIsAfterReset, type SavedMatchV2 } from "../match/saved_match";
+import type { ProfileSettings } from "../profile/profile_settings";
 
 import type { CloudAuthUser } from "./auth_store";
 import {
   CLOUD_REPLAY_MATCHES_LIMIT,
   cloudProfileFromDocument,
   cloudProfileSnapshotUpdate,
-  cloudSettingsForVariant,
+  cloudSettingsFromProfileSettings,
   mergeCloudMatchSummaryState,
   mergeCloudReplayMatches,
   type CloudMatchHistory,
@@ -36,7 +35,7 @@ export interface CloudHistoryOptions {
 }
 
 export interface CloudSaveHistoryResult {
-  matches: SavedMatchV1[];
+  matches: SavedMatchV2[];
   profile: CloudProfile;
 }
 
@@ -70,17 +69,17 @@ function resolveCloudHistoryBackend(user: CloudAuthUser, options: CloudHistoryOp
 export function cloudHistoryFromProfile(
   profile: Pick<CloudProfile, "matchHistory" | "resetAt">,
   historyResetAt: string | null | undefined = profile.resetAt,
-): SavedMatchV1[] {
+): SavedMatchV2[] {
   return profile.matchHistory.replayMatches.filter((match) => savedMatchIsAfterReset(match, historyResetAt));
 }
 
 export async function loadCloudHistory(
   user: CloudAuthUser,
   options: CloudHistoryOptions & { historyResetAt?: string | null } = {},
-): Promise<SavedMatchV1[]> {
+): Promise<SavedMatchV2[]> {
   const backend = resolveCloudHistoryBackend(user, options);
   const document = await backend.loadProfile();
-  const profile = cloudProfileFromDocument(user, "freestyle", document);
+  const profile = cloudProfileFromDocument(user, undefined, document);
   return cloudHistoryFromProfile(profile, options.historyResetAt);
 }
 
@@ -89,9 +88,8 @@ export async function saveCloudHistorySnapshot(
   input: {
     cloudProfile: CloudProfile;
     displayName: string;
-    matches: SavedMatchV1[];
-    practiceBot?: PracticeBotConfig;
-    preferredVariant: GameVariant;
+    matches: SavedMatchV2[];
+    settings: ProfileSettings;
   },
   options: CloudHistoryOptions = {},
 ): Promise<CloudSaveHistoryResult> {
@@ -113,8 +111,7 @@ export async function saveCloudHistorySnapshot(
   const patch = cloudProfileSnapshotUpdate({
     displayName: input.displayName,
     matchHistory,
-    practiceBot: input.practiceBot,
-    preferredVariant: input.preferredVariant,
+    settings: input.settings,
     user,
   });
 
@@ -127,7 +124,7 @@ export async function saveCloudHistorySnapshot(
       ...input.cloudProfile,
       displayName: input.displayName,
       matchHistory,
-      settings: cloudSettingsForVariant(input.preferredVariant, input.practiceBot),
+      settings: cloudSettingsFromProfileSettings(input.settings),
       updatedAt: syncedAt,
     },
   };

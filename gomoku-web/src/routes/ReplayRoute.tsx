@@ -59,7 +59,7 @@ export function ReplayRoute() {
 
   useEffect(() => {
     if (cloudAuth.status === "signed_in" && cloudAuth.user) {
-      void cloudProfileStore.getState().loadForUser(cloudAuth.user, localProfileStore.getState().settings.preferredVariant);
+      void cloudProfileStore.getState().loadForUser(cloudAuth.user, localProfileStore.getState().settings);
     } else {
       cloudProfileStore.getState().reset();
     }
@@ -150,7 +150,7 @@ export function ReplayRoute() {
     currentPlayer: frame.currentPlayer,
     moves: frame.moves.map((move) => ({ ...move })),
     undoFloor: replayResumeUndoFloor(match, frame),
-    variant: match.variant,
+    variant: match.ruleset,
   };
 
   return (
@@ -212,7 +212,7 @@ export function ReplayRoute() {
               <div className={`${styles.metaRow} ${styles.ruleRow}`}>
                 <span className={styles.metaLabel}>Rule</span>
                 <span className={styles.metaValue} data-testid="replay-rule">
-                  {variantLabel(match.variant)}
+                  {variantLabel(match.ruleset)}
                 </span>
               </div>
               <div className={`${styles.metaRow} ${styles.moveRow}`}>

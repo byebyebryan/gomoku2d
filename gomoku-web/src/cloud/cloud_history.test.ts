@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { createLocalSavedMatch } from "../match/saved_match";
-import { DEFAULT_PRACTICE_BOT_CONFIG } from "../core/practice_bot_config";
+import { createDefaultProfileSettings } from "../profile/profile_settings";
 
 import type { CloudAuthUser } from "./auth_store";
 import {
@@ -24,6 +24,8 @@ const user: CloudAuthUser = {
   uid: "uid-1",
 };
 
+const defaultSettings = createDefaultProfileSettings();
+
 const match = createLocalSavedMatch({
   id: "match-1",
   localProfileId: "local-1",
@@ -34,7 +36,7 @@ const match = createLocalSavedMatch({
   ],
   savedAt: "2026-04-28T01:02:03.000Z",
   status: "draw",
-  variant: "freestyle",
+  ruleset: "freestyle",
 });
 
 function localMatch(id: string, savedAt: string) {
@@ -48,7 +50,7 @@ function localMatch(id: string, savedAt: string) {
     ],
     savedAt,
     status: "draw",
-    variant: "freestyle",
+    ruleset: "freestyle",
   });
 }
 
@@ -67,13 +69,7 @@ function cloudProfile(overrides: Partial<CloudProfile> = {}): CloudProfile {
     displayName: "Bryan",
     matchHistory: emptyCloudMatchHistory(),
     resetAt: null,
-    settings: {
-      defaultRules: {
-        opening: "standard",
-        ruleset: "freestyle",
-      },
-      practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
-    },
+    settings: defaultSettings,
     uid: "uid-1",
     updatedAt: "2026-04-28T00:00:00.000Z",
     username: null,
@@ -126,7 +122,13 @@ describe("cloud history", () => {
         cloudProfile: profile,
         displayName: "Bryan",
         matches: [match],
-        preferredVariant: "renju",
+        settings: {
+          ...defaultSettings,
+          gameConfig: {
+            opening: "standard",
+            ruleset: "renju",
+          },
+        },
       },
       { backend },
     );
@@ -146,7 +148,7 @@ describe("cloud history", () => {
         summary_matches: [],
       },
       settings: {
-        default_rules: {
+        game_config: {
           opening: "standard",
           ruleset: "renju",
         },
@@ -171,7 +173,7 @@ describe("cloud history", () => {
         cloudProfile: cloudProfile(),
         displayName: "Bryan",
         matches,
-        preferredVariant: "freestyle",
+        settings: defaultSettings,
       },
       { backend },
     );
@@ -205,7 +207,7 @@ describe("cloud history", () => {
         cloudProfile: profile,
         displayName: "Bryan",
         matches: [],
-        preferredVariant: "freestyle",
+        settings: defaultSettings,
       },
       { backend },
     );

@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { createLocalSavedMatch } from "../match/saved_match";
-import { DEFAULT_PRACTICE_BOT_CONFIG } from "../core/practice_bot_config";
 import type { LocalProfileStorage } from "../profile/local_profile_store";
+import { createDefaultProfileSettings } from "../profile/profile_settings";
 
 import type { CloudAuthUser } from "./auth_store";
 import { emptyCloudMatchHistory, type CloudProfile } from "./cloud_profile";
@@ -30,6 +30,8 @@ const user: CloudAuthUser = {
   uid: "uid-1",
 };
 
+const defaultSettings = createDefaultProfileSettings();
+
 const match = createLocalSavedMatch({
   id: "match-1",
   localProfileId: "local-1",
@@ -40,7 +42,7 @@ const match = createLocalSavedMatch({
   ],
   savedAt: "2026-04-28T01:02:03.000Z",
   status: "draw",
-  variant: "freestyle",
+  ruleset: "freestyle",
 });
 
 const cloudMatch = {
@@ -72,13 +74,7 @@ function cloudProfile(overrides: Partial<CloudProfile> = {}): CloudProfile {
       replayMatches: [cloudMatch],
     },
     resetAt: null,
-    settings: {
-      defaultRules: {
-        opening: "standard",
-        ruleset: "freestyle",
-      },
-      practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
-    },
+    settings: defaultSettings,
     uid: "uid-1",
     updatedAt: "2026-04-28T00:00:00.000Z",
     username: null,
@@ -160,7 +156,7 @@ describe("createCloudHistoryStore", () => {
 
     await store.getState().syncMatchForUser(user, match);
 
-    expect(refreshCloudProfileForUser).toHaveBeenCalledWith(user, "freestyle");
+    expect(refreshCloudProfileForUser).toHaveBeenCalledWith(user, defaultSettings);
     expect(saveHistory).not.toHaveBeenCalled();
     expect(store.getState()).toMatchObject({
       errorMessage: null,
@@ -186,7 +182,7 @@ describe("createCloudHistoryStore", () => {
 
     await store.getState().syncMatchForUser(user, match);
 
-    expect(refreshCloudProfileForUser).toHaveBeenCalledWith(user, "freestyle");
+    expect(refreshCloudProfileForUser).toHaveBeenCalledWith(user, defaultSettings);
     expect(saveHistory).not.toHaveBeenCalled();
     expect(store.getState()).toMatchObject({
       errorMessage: null,

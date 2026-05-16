@@ -18,7 +18,7 @@ import {
   savedMatchPlayerForSide,
   savedMatchPlayers,
   savedMatchWinningSide,
-  type SavedMatchV1,
+  type SavedMatchV2,
   type SavedMatchSide,
 } from "../match/saved_match";
 import { resolveActiveHistory } from "../profile/active_history";
@@ -27,6 +27,7 @@ import {
   localProfileStore,
   type LocalProfileMatchHistory,
 } from "../profile/local_profile_store";
+import { createDefaultProfileSettings } from "../profile/profile_settings";
 import { replayPlayerName, variantLabel } from "../replay/local_replay";
 import { Icon } from "../ui/Icon";
 
@@ -70,7 +71,7 @@ function syncCloudHistoryForUser(user: CloudAuthUser, historyResetAt: string | n
   });
 }
 
-function historyLocalSide(match: SavedMatchV1, identity: HistoryIdentity): SavedMatchSide | null {
+function historyLocalSide(match: SavedMatchV2, identity: HistoryIdentity): SavedMatchSide | null {
   const localSide = matchUserSide(match, identity);
   if (localSide) {
     return localSide;
@@ -80,7 +81,7 @@ function historyLocalSide(match: SavedMatchV1, identity: HistoryIdentity): Saved
 }
 
 function historyResultLabel(
-  match: SavedMatchV1,
+  match: SavedMatchV2,
   identity: HistoryIdentity,
 ): "Win" | "Loss" | "Draw" {
   if (match.status === "draw") {
@@ -106,7 +107,7 @@ function addHistoryStats(target: HistoryStats, source: HistoryStats): void {
   target.wins += source.wins;
 }
 
-function statsFromReplayMatches(matches: SavedMatchV1[], identity: HistoryIdentity): HistoryStats {
+function statsFromReplayMatches(matches: SavedMatchV2[], identity: HistoryIdentity): HistoryStats {
   const stats = emptyHistoryStats();
 
   for (const match of matches) {
@@ -159,7 +160,7 @@ function statsFromArchive(archive: CloudArchivedMatchStatsV1): HistoryStats {
 
 function statsFromMatchHistory(input: {
   identity: HistoryIdentity;
-  replayHistory: SavedMatchV1[];
+  replayHistory: SavedMatchV2[];
   sourceHistory: CloudMatchHistory | LocalProfileMatchHistory | null;
 }): HistoryStats {
   const stats = statsFromReplayMatches(input.replayHistory, input.identity);
@@ -174,7 +175,7 @@ function statsFromMatchHistory(input: {
 }
 
 function historyOpponentLabel(
-  match: SavedMatchV1,
+  match: SavedMatchV2,
   identity: HistoryIdentity,
   localDisplayName: string,
 ): string {
@@ -415,7 +416,7 @@ export function ProfileRoute() {
     if (cloudAuth.status === "signed_in" && cloudAuth.user) {
       void cloudProfileStore.getState().loadForUser(
         cloudAuth.user,
-        localProfileStore.getState().settings.preferredVariant,
+        localProfileStore.getState().settings,
       );
       return;
     }
@@ -623,8 +624,7 @@ export function ProfileRoute() {
     }
 
     const user = cloudAuth.user;
-    const defaultVariant = "freestyle" as const;
-    await cloudProfileStore.getState().resetForUser(user, defaultVariant);
+    await cloudProfileStore.getState().resetForUser(user, createDefaultProfileSettings());
 
     await cloudHistoryStore.getState().clearForUser(user);
     cloudHistoryStore.getState().resetUserCache(user.uid);
@@ -889,7 +889,7 @@ export function ProfileRoute() {
                           {historySideLabel(localSide)}
                         </p>
                         <p className={`${styles.historyField} ${styles.historyRule}`} data-label="Rule">
-                          {variantLabel(match.variant)}
+                          {variantLabel(match.ruleset)}
                         </p>
                         <p className={`${styles.historyField} ${styles.historyMoves}`} data-label="Moves">
                           {`Moves ${match.move_count}`}

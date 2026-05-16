@@ -252,7 +252,7 @@ pattern-eval ablations under the same Renju rule, centered opening suite, and
 
 - `search-d1` is now a plausible easy/beginner lane because the safety gate
   covers hard local threats even at shallow depth.
-- `search-d3` remains the stable default practice-bot baseline.
+- `search-d3` remains the stable default bot baseline.
 - `search-d5+tactical-cap-8` is the efficient hard-side candidate.
 - `search-d7+tactical-cap-8` is stronger, but spends more budget.
 - `+pattern-eval` is promising enough to keep as a lab axis, but too expensive
@@ -371,12 +371,12 @@ The working plan lives in `docs/archive/v0_4_4_frontier_plan.md`.
 
 `0.4.5` becomes the bot-controls UI bridge, with analysis explicitly deferred.
 The goal is not simply to say the bot became stronger or faster. The more
-distinctive product story is that the practice bot is configurable and
+distinctive product story is that the bot is configurable and
 inspectable because there is a real Rust bot lab behind it.
 
 Use two layers:
 
-- tested presets for normal players, e.g. easy/default/hard practice lanes
+- tested presets for normal players, e.g. easy/normal/hard bot lanes
   backed by current anchor reports;
 - an advanced Bot Lab layer that exposes the main tuning dimensions in product
   language: search depth, search width, pattern scoring, corridor proof, and
@@ -385,7 +385,8 @@ Use two layers:
 - defensive board hints for human turns, using the same tactical vocabulary to
   mark opponent imminent threats and counter-threat replies before they become
   one-move losses. Tactical hints should be device-local immediate/imminent
-  mode controls; Renju forbidden moves stay always-on as legality feedback.
+  profile-synced immediate/imminent mode controls; Renju forbidden moves stay
+  always-on as legality feedback.
 
 Keep report-only diagnostics and retired lab axes out of the UI:
 `rolling-frontier-shadow`, `scan-threat-view`, safety ablations, retired
@@ -402,17 +403,17 @@ feels strongest.
 ### Possible Work
 
 - bot preset selection with report-backed labels
-- advanced Bot Lab controls for explicit practice-bot configuration
+- advanced Bot Lab controls for explicit bot configuration
 - human-only configurable tactical hints with compact immediate/imminent modes,
   including replies for opponent open/broken threes
 - local persistence and saved-match snapshots for selected bot configs
-- profile schema v4 for practice-bot settings, with deprecated local-profile
-  v3 import
+- profile schema v5 for game, bot, hint, and touch settings, with a clean alpha
+  local-storage break
 - replay analysis with critical-moment tagging
 - better-move suggestions and opponent best-reply previews
 - generated puzzles from real games or curated positions
 - "save this game" challenges from losing positions
-- bot personalities or customizable practice bot settings
+- bot personalities or customizable bot settings
 - benchmark-backed bot presets that feel meaningfully different
 - stronger bot endpoint only if browser-side wasm is not enough for the chosen
   product surface

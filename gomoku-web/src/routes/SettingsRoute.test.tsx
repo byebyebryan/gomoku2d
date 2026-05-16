@@ -2,18 +2,17 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 
-import { DEFAULT_PRACTICE_BOT_CONFIG } from "../core/practice_bot_config";
 import {
   disposeLocalMatchSession,
   ensureLocalMatchSession,
 } from "../game/local_match_session";
 import { emptyLocalMatchHistory, localProfileStore } from "../profile/local_profile_store";
-import { uiPreferencesStore } from "../profile/ui_preferences_store";
+import { createDefaultProfileSettings } from "../profile/profile_settings";
 
 import { SettingsRoute } from "./SettingsRoute";
 
 const initialLocalProfileState = localProfileStore.getState();
-const initialUiPreferencesState = uiPreferencesStore.getState();
+const defaultSettings = createDefaultProfileSettings();
 const localProfile = {
   avatarUrl: null,
   createdAt: "2026-05-15T00:00:00.000Z",
@@ -56,7 +55,6 @@ describe("SettingsRoute", () => {
     cleanup();
     disposeLocalMatchSession();
     localProfileStore.setState(initialLocalProfileState, true);
-    uiPreferencesStore.setState(initialUiPreferencesState, true);
     vi.unstubAllGlobals();
   });
 
@@ -64,7 +62,7 @@ describe("SettingsRoute", () => {
     localProfileStore.setState({
       matchHistory: emptyLocalMatchHistory(),
       profile: localProfile,
-      settings: { practiceBot: DEFAULT_PRACTICE_BOT_CONFIG, preferredVariant: "freestyle" },
+      settings: defaultSettings,
     });
   });
 
@@ -75,8 +73,12 @@ describe("SettingsRoute", () => {
     fireEvent.click(screen.getByRole("button", { name: /hard/i }));
 
     expect(localProfileStore.getState().settings).toEqual({
-      practiceBot: { mode: "preset", preset: "hard", version: 1 },
-      preferredVariant: "renju",
+      ...defaultSettings,
+      botConfig: { mode: "preset", preset: "hard", version: 1 },
+      gameConfig: {
+        opening: "standard",
+        ruleset: "renju",
+      },
     });
     expect(screen.getByRole("group", { name: /renju hard bot/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Renju" })).toBeInTheDocument();
@@ -124,7 +126,7 @@ describe("SettingsRoute", () => {
     expect(screen.queryByRole("group", { name: /renju normal bot/i })).not.toBeInTheDocument();
   });
 
-  it("shows touch control as a device-local control on compact touch screens", () => {
+  it("shows touch control on compact touch screens", () => {
     mockCompactTouchDevice(true);
     renderSettingsRoute();
 
@@ -135,20 +137,16 @@ describe("SettingsRoute", () => {
     expect(screen.getByRole("button", { name: "Touchpad" })).toBeInTheDocument();
   });
 
-  it("persists touch control as a UI preference", () => {
+  it("persists touch control in profile settings", () => {
     mockCompactTouchDevice(true);
     renderSettingsRoute();
 
     fireEvent.click(screen.getByRole("button", { name: "Pointer" }));
 
-    expect(uiPreferencesStore.getState().touchControl).toBe("pointer");
-    expect(localProfileStore.getState().settings).toEqual({
-      practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
-      preferredVariant: "freestyle",
-    });
+    expect(localProfileStore.getState().settings.touchControl).toBe("pointer");
   });
 
-  it("shows compact board hint mode controls as device-local preferences", () => {
+  it("shows compact board hint mode controls", () => {
     renderSettingsRoute();
 
     expect(screen.getByText(/^Hints$/)).toBeInTheDocument();
@@ -163,13 +161,9 @@ describe("SettingsRoute", () => {
     const immediate = screen.getByRole("group", { name: "Immediate hints" });
     fireEvent.click(within(immediate).getByRole("button", { name: "Win" }));
 
-    expect(uiPreferencesStore.getState().boardHints).toMatchObject({
+    expect(localProfileStore.getState().settings.boardHints).toMatchObject({
       immediate: "win",
       imminent: "threat_counter",
-    });
-    expect(localProfileStore.getState().settings).toEqual({
-      practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
-      preferredVariant: "freestyle",
     });
   });
 
@@ -192,10 +186,10 @@ describe("SettingsRoute", () => {
     fireEvent.click(screen.getByRole("button", { name: "Simple" }));
     fireEvent.click(screen.getByRole("button", { name: "Corridor proof" }));
 
-    expect(localProfileStore.getState().settings.practiceBot).toMatchObject({
-      corridorProof: true,
+    expect(localProfileStore.getState().settings.botConfig).toMatchObject({
+      extraPass: "corridor_proof",
       mode: "custom",
-      patternScoring: false,
+      scoring: "simple",
       version: 1,
     });
   });
@@ -212,7 +206,7 @@ describe("SettingsRoute", () => {
 
     expect(screen.getByRole("button", { name: "W16" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "full" })).toBeDisabled();
-    expect(localProfileStore.getState().settings.practiceBot).toMatchObject({
+    expect(localProfileStore.getState().settings.botConfig).toMatchObject({
       depth: 7,
       mode: "custom",
       width: 8,

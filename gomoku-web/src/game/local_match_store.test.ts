@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  DEFAULT_PRACTICE_BOT_CONFIG,
-  type PracticeBotConfig,
-} from "../core/practice_bot_config";
+  DEFAULT_BOT_CONFIG,
+  type BotConfig,
+} from "../core/bot_config";
 import { WasmBoard } from "../core/wasm_bridge";
 
 import type { LocalMatchState } from "./local_match_store";
@@ -67,19 +67,19 @@ describe("createLocalMatchStore", () => {
     expect(state.selectedVariant).toBe("renju");
   });
 
-  it("tracks the active and selected practice bot config", () => {
-    const practiceBot: PracticeBotConfig = { mode: "preset", preset: "hard", version: 1 };
+  it("tracks the active and selected bot config", () => {
+    const botConfig: BotConfig = { mode: "preset", preset: "hard", version: 1 };
     const store = createLocalMatchStore({
       botRunner: {
         chooseMove: async () => null,
         configure: () => undefined,
         dispose: () => undefined,
       },
-      practiceBot,
+      botConfig,
     });
 
-    expect(store.getState().currentPracticeBot).toEqual(practiceBot);
-    expect(store.getState().selectedPracticeBot).toEqual(practiceBot);
+    expect(store.getState().currentBotConfig).toEqual(botConfig);
+    expect(store.getState().selectedBotConfig).toEqual(botConfig);
     expect(store.getState().players[1]).toMatchObject({
       kind: "bot",
       name: "Hard Bot",
@@ -87,7 +87,7 @@ describe("createLocalMatchStore", () => {
     });
   });
 
-  it("configures bot runners from the selected practice bot config", () => {
+  it("configures bot runners from the selected bot config", () => {
     const configureCalls: unknown[] = [];
     createLocalMatchStore({
       botRunner: {
@@ -97,7 +97,7 @@ describe("createLocalMatchStore", () => {
         },
         dispose: () => undefined,
       },
-      practiceBot: { mode: "preset", preset: "hard", version: 1 },
+      botConfig: { mode: "preset", preset: "hard", version: 1 },
     });
 
     expect(configureCalls[0]).toEqual([
@@ -142,7 +142,7 @@ describe("createLocalMatchStore", () => {
     });
   });
 
-  it("applies a practice bot change immediately before the first move", () => {
+  it("applies a bot change immediately before the first move", () => {
     const configureCalls: unknown[] = [];
     const store = createLocalMatchStore({
       botRunner: {
@@ -153,14 +153,14 @@ describe("createLocalMatchStore", () => {
         dispose: () => undefined,
       },
     });
-    const hard: PracticeBotConfig = { mode: "preset", preset: "hard", version: 1 };
+    const hard: BotConfig = { mode: "preset", preset: "hard", version: 1 };
 
-    store.getState().selectPracticeBot(hard);
+    store.getState().selectBotConfig(hard);
 
     expect(store.getState()).toMatchObject({
-      currentPracticeBot: hard,
+      currentBotConfig: hard,
       moves: [],
-      selectedPracticeBot: hard,
+      selectedBotConfig: hard,
       status: "playing",
     });
     expect(store.getState().players[1]).toMatchObject({
@@ -210,7 +210,7 @@ describe("createLocalMatchStore", () => {
     expect(store.getState().moves).toHaveLength(1);
   });
 
-  it("defers a practice bot change until the next game once moves exist", () => {
+  it("defers a bot change until the next game once moves exist", () => {
     const store = createLocalMatchStore({
       botRunner: {
         chooseMove: async () => null,
@@ -218,14 +218,14 @@ describe("createLocalMatchStore", () => {
         dispose: () => undefined,
       },
     });
-    const hard: PracticeBotConfig = { mode: "preset", preset: "hard", version: 1 };
+    const hard: BotConfig = { mode: "preset", preset: "hard", version: 1 };
 
     expect(store.getState().placeHumanMove(7, 7)).toBe(true);
-    store.getState().selectPracticeBot(hard);
+    store.getState().selectBotConfig(hard);
 
     expect(store.getState()).toMatchObject({
-      currentPracticeBot: DEFAULT_PRACTICE_BOT_CONFIG,
-      selectedPracticeBot: hard,
+      currentBotConfig: DEFAULT_BOT_CONFIG,
+      selectedBotConfig: hard,
     });
     expect(store.getState().moves).toHaveLength(1);
   });
@@ -330,7 +330,7 @@ describe("createLocalMatchStore", () => {
     });
   });
 
-  it("starts a new match with the selected practice bot config", () => {
+  it("starts a new match with the selected bot config", () => {
     const configureCalls: unknown[] = [];
     const store = createLocalMatchStore({
       botRunner: {
@@ -341,16 +341,16 @@ describe("createLocalMatchStore", () => {
         dispose: () => undefined,
       },
     });
-    const hard: PracticeBotConfig = { mode: "preset", preset: "hard", version: 1 };
+    const hard: BotConfig = { mode: "preset", preset: "hard", version: 1 };
 
     expect(store.getState().placeHumanMove(7, 7)).toBe(true);
-    store.getState().selectPracticeBot(hard);
+    store.getState().selectBotConfig(hard);
     store.getState().startNewMatch();
 
     expect(store.getState()).toMatchObject({
-      currentPracticeBot: hard,
+      currentBotConfig: hard,
       moves: [],
-      selectedPracticeBot: hard,
+      selectedBotConfig: hard,
       status: "playing",
     });
     expect(store.getState().players[1]).toMatchObject({
@@ -881,7 +881,7 @@ describe("createLocalMatchStore", () => {
 
     const finishedMatches: Array<{
       players: LocalMatchState["players"];
-      practiceBot: unknown;
+      botConfig: unknown;
       status: LocalMatchState["status"];
       undoFloor: number;
       variant: "freestyle" | "renju";
@@ -898,7 +898,7 @@ describe("createLocalMatchStore", () => {
       onMatchFinished: (match) => {
         finishedMatches.push({
           players: match.players,
-          practiceBot: match.practiceBot,
+          botConfig: match.botConfig,
           status: match.status,
           undoFloor: match.undoFloor,
           variant: match.variant,
@@ -916,7 +916,7 @@ describe("createLocalMatchStore", () => {
           expect.objectContaining({ kind: "human", stone: "black" }),
           expect.objectContaining({ kind: "bot", stone: "white" }),
         ],
-        practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
+        botConfig: DEFAULT_BOT_CONFIG,
         status: "black_won",
         undoFloor: 0,
         variant: "renju",

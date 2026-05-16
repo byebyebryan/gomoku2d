@@ -47,22 +47,44 @@ type CloudProfileDocument = {
   created_at: Timestamp;
   display_name: string;
   match_history: {
-    replay_matches: SavedMatchV1[]; // newest first, capped at 128
+    replay_matches: SavedMatchV2[]; // newest first, capped at 128
     summary_matches: CloudMatchSummaryV1[]; // next tier, capped at 1024
     archived_stats: CloudArchivedMatchStatsV1;
   };
   reset_at: Timestamp | null;
-  schema_version: 3;
+  schema_version: 5;
   settings: {
-    default_rules: {
+    board_hints: {
+      immediate: "off" | "win" | "win_threat";
+      imminent: "off" | "threat" | "threat_counter";
+    };
+    bot_config: BotConfigDocumentV1;
+    game_config: {
       ruleset: "freestyle" | "renju";
       opening: "standard"; // future-safe slot for openings such as swap2
     };
+    touch_control: "pointer" | "touchpad";
   };
   uid: string;
   updated_at: Timestamp;
   username: string | null;
 };
+```
+
+Cloud bot config is the Firestore representation of product bot settings. The
+browser app maps `extra_pass` to its camelCase in-memory model.
+
+```ts
+type BotConfigDocumentV1 =
+  | { version: 1; mode: "preset"; preset: "easy" | "normal" | "hard" }
+  | {
+      version: 1;
+      mode: "custom";
+      depth: 1 | 3 | 5 | 7;
+      width: "full" | 8 | 16;
+      scoring: "simple" | "pattern";
+      extra_pass: "none" | "corridor_proof";
+    };
 ```
 
 Rules:
@@ -71,13 +93,16 @@ Rules:
 - `created_at` and `username` are app-owned after creation.
 - `auth.providers` stores provider-sourced display/avatar metadata without
   copying email into the app profile document.
-- `settings.default_rules.ruleset` is the user's default casual rule set.
-  `settings.default_rules.opening` is currently always `standard` and exists so
+- `settings.game_config.ruleset` is the user's saved casual rule set.
+  `settings.game_config.opening` is currently always `standard` and exists so
   later rule/opening combinations can be added without another top-level field.
+- `settings.bot_config` is the saved browser bot preset/custom config.
+- `settings.board_hints` and `settings.touch_control` are profile preferences,
+  not device-only UI cache, so they sync with the rest of the profile.
 - `reset_at` is a reset barrier. When present, local promotion, direct
   sync retry, cloud history load, and active-history resolution ignore matches
   with `saved_at <= reset_at`.
-- `schema_version` is always `3`; increments require a writer + rules + reader
+- `schema_version` is always `5`; increments require a writer + rules + reader
   update in the same slice.
 - `match_history` is one embedded private-history container, not a set of
   independent record stores. The browser writes a merged snapshot, not one
@@ -106,7 +131,7 @@ Rules:
   Reset-barrier writes can bypass the normal edit cooldown only when they clear
   history and advance `reset_at` inside the constrained reset shape.
 - Reset Profile while signed in writes `reset_at`, resets cloud profile
-  display/default-rule fields to provider/default values, clears every
+  display/settings fields to provider/default values, clears every
   `match_history` tier, and clears this device's local/cloud caches.
 - Delete Cloud while signed in deletes `profiles/{uid}`, clears this device's
   cloud cache for that user, and signs out. Local browser profile and local
@@ -114,7 +139,7 @@ Rules:
 
 ### Match History Tiers
 
-`match_history.replay_matches` contains `SavedMatchV1` records. It is the only
+`match_history.replay_matches` contains `SavedMatchV2` records. It is the only
 cloud tier that can power replay playback directly.
 
 `match_history.summary_matches` contains private, compact summary records
@@ -174,23 +199,23 @@ The old `profiles/{uid}/matches/{matchId}` casual subcollection path is closed
 in rules for `v0.3.3`; keep that namespace reserved for future
 server-verified/shareable records rather than private browser snapshots.
 
-### Saved Match v1
+### Saved Match v2
 
-Current `schema_version: 1` is shared by browser-local history and private
+Current `schema_version: 2` is shared by browser-local history and private
 cloud history. Cloud records diverge only in source-specific fields; the core
 replay payload and player shape stay aligned across all sources.
 
 ```ts
-type SavedMatchV1 = {
+type SavedMatchV2 = {
   id: string;
-  schema_version: 1;
+  schema_version: 2;
   board_size: 15;
 
   source: "local_history" | "cloud_saved";
   trust: "local_only" | "client_uploaded" | "server_verified";
 
   match_kind: "local_vs_bot" | "local_pvp" | "online_pvp" | "puzzle_challenge";
-  variant: "freestyle" | "renju";
+  ruleset: "freestyle" | "renju";
   status: "black_won" | "white_won" | "draw";
 
   move_count: number;
@@ -207,7 +232,7 @@ type SavedMatchV1 = {
 **`cloud_saved`** — local match included in the signed-in profile snapshot:
 
 ```ts
-type CloudDirectSavedMatchV1 = SavedMatchV1 & {
+type CloudDirectSavedMatchV2 = SavedMatchV2 & {
   id: string; // same as the local match UUID
   source: "cloud_saved";
   trust: "client_uploaded";
@@ -246,14 +271,13 @@ Bot participants are not fake users. They carry a bot identity snapshot:
 
 ```ts
 type SavedMatchBotIdentityV1 = {
-  id: "practice_bot";
+  id: "bot";
   version: 1;
-  engine: "baseline_search";
+  engine: "search_bot";
   config_version: 1;
-  config: {
-    kind: "baseline";
-    depth: 3;
-  };
+  config: BotConfigV1;
+  label: string;
+  lab_spec: string;
 };
 ```
 
@@ -296,7 +320,7 @@ client-uploaded continuity records; Firestore rules validate the top-level
 profile snapshot shape and cap rather than every nested replay field.
 
 The 128 full-replay cap plus 1024 summary cap leaves practical room under
-Firestore's 1 MiB document limit. Current `SavedMatchV1` sizing estimates put
+Firestore's 1 MiB document limit. Current `SavedMatchV2` sizing estimates put
 128 typical 60-move matches around 160 KiB and 128 full-board 225-move matches
 around 330 KiB before future schema growth; the summary tier is intentionally
 metadata-only so stats can retain a longer window without storing moves.
@@ -312,11 +336,11 @@ profile history fields.
 ## Local Profile History
 
 Current local history lives in browser `localStorage` under
-`gomoku2d.local-profile.v3`. The local profile uses the same replay, summary,
+`gomoku2d.local-profile.v5`. The local profile uses the same replay, summary,
 and archived-stats retention tiers as the cloud profile:
 
 ```ts
-type LocalProfileV3 = {
+type LocalProfileV5 = {
   matchHistory: {
     replayMatches: LocalProfileSavedMatch[]; // newest first, capped at 128
     summaryMatches: CloudMatchSummaryV1[]; // next tier, capped at 1024
@@ -327,29 +351,30 @@ type LocalProfileV3 = {
 };
 ```
 
-Finished local matches use `SavedMatchV1` with:
+Finished local matches use `SavedMatchV2` with:
 
 - `source: "local_history"`
 - `trust: "local_only"`
 - `id` equal to the browser-local match ID
 
 ```ts
-type LocalProfileSavedMatch = SavedMatchV1 & {
+type LocalProfileSavedMatch = SavedMatchV2 & {
   id: string;
   source: "local_history";
   trust: "local_only";
 };
 ```
 
-`gomoku2d.local-profile.v3` is a clean-break key. Older
-`gomoku2d.guest-profile.*` keys are intentionally ignored instead of migrated;
-this is acceptable during the alpha period because no real user data needs to be
-preserved yet. If the new key is missing or malformed, the browser starts a new
-local profile and empty local history.
+`gomoku2d.local-profile.v5` is a clean-break key. Older
+`gomoku2d.guest-profile.*` and `gomoku2d.local-profile.v*` keys are
+intentionally ignored instead of migrated; this is acceptable during the alpha
+period because no real user data needs to be preserved yet. If the new key is
+missing or malformed, the browser starts a new local profile and empty local
+history.
 
-The signed-in cloud-history cache lives under `gomoku2d.cloud-history.v3`.
+The signed-in cloud-history cache lives under `gomoku2d.cloud-history.v5`.
 It is a disposable per-user cache/pending-sync queue, not a canonical data
-source. The v3 key intentionally drops older cached cloud-history state so old
+source. The v5 key intentionally drops older cached cloud-history state so old
 pre-profile-snapshot records cannot reappear after the schema pivot.
 
 Cloud profile sync turns canonical local replay records into embedded
@@ -361,17 +386,14 @@ and cannot be safely deduped against an existing cloud archive.
 
 ## Migration Notes
 
-The profile-v3 pivot stores casual cloud history directly in
-`profiles/{uid}.match_history`, moves rule preferences into `settings`, moves
-provider metadata into `auth.providers`, splits private history into
-`replay_matches`, `summary_matches`, and `archived_stats` tiers, removes copied
-email from app-owned profile data, and standardizes the profile reset barrier as
-`reset_at`. This is a clean alpha break: the app no longer imports old v2
-profile fields such as `recent_matches`, `preferred_variant`, or
-`history_reset_at`. Existing alpha Firestore v2 profile documents were test
-data and were cleared before deploying the matching v3 rules, rather than
-carrying a long-lived client-side migration layer. Future schema versions should
-either:
+The profile-v5 pivot is a clean alpha break. It keeps casual cloud history
+directly in `profiles/{uid}.match_history`, promotes touch controls and board
+hints into synced profile settings, renames `settings.default_rules` to
+`settings.game_config`, standardizes saved bot settings as `bot_config`, and bumps
+saved matches from v1 to v2 by replacing `variant` with `ruleset` and storing a
+resolved SearchBot identity snapshot. Existing alpha Firestore data is safe to
+clear/reset instead of migrating, and old local-storage keys are ignored. Future
+schema versions should either:
 
 - keep readers backward-compatible for existing versions, or
 - run a one-time migration and record it here.

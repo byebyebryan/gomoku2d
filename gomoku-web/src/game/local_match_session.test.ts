@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { DEFAULT_PRACTICE_BOT_CONFIG, type PracticeBotConfig } from "../core/practice_bot_config";
+import { DEFAULT_BOT_CONFIG, type BotConfig } from "../core/bot_config";
 import { emptyLocalMatchHistory, localProfileStore } from "../profile/local_profile_store";
+import { createDefaultProfileSettings } from "../profile/profile_settings";
 
 import {
   applySavedLocalMatchSetup,
@@ -26,6 +27,19 @@ const noOpBotRunner = {
   dispose: () => undefined,
 };
 
+const defaultSettings = createDefaultProfileSettings();
+
+function settingsWith(ruleset: "freestyle" | "renju", botConfig: BotConfig = DEFAULT_BOT_CONFIG) {
+  return {
+    ...defaultSettings,
+    botConfig,
+    gameConfig: {
+      opening: "standard" as const,
+      ruleset,
+    },
+  };
+}
+
 describe("local match session", () => {
   afterEach(() => {
     disposeLocalMatchSession();
@@ -36,7 +50,7 @@ describe("local match session", () => {
     localProfileStore.setState({
       matchHistory: emptyLocalMatchHistory(),
       profile: localProfile,
-      settings: { practiceBot: DEFAULT_PRACTICE_BOT_CONFIG, preferredVariant: "freestyle" },
+      settings: settingsWith("freestyle"),
     });
 
     const first = ensureLocalMatchSession({ botRunner: noOpBotRunner });
@@ -50,43 +64,49 @@ describe("local match session", () => {
   });
 
   it("applies saved setup to the selected next game without mutating a game in progress", () => {
-    const hard: PracticeBotConfig = { mode: "preset", preset: "hard", version: 1 };
+    const hard: BotConfig = { mode: "preset", preset: "hard", version: 1 };
     localProfileStore.setState({
       matchHistory: emptyLocalMatchHistory(),
       profile: localProfile,
-      settings: { practiceBot: DEFAULT_PRACTICE_BOT_CONFIG, preferredVariant: "freestyle" },
+      settings: settingsWith("freestyle"),
     });
 
     const store = ensureLocalMatchSession({ botRunner: noOpBotRunner });
     expect(store.getState().placeHumanMove(7, 7)).toBe(true);
 
-    localProfileStore.getState().updateSettings({ practiceBot: hard, preferredVariant: "renju" });
+    localProfileStore.getState().updateSettings({
+      botConfig: hard,
+      gameConfig: {
+        opening: "standard",
+        ruleset: "renju",
+      },
+    });
     applySavedLocalMatchSetup();
 
     expect(store.getState()).toMatchObject({
-      currentPracticeBot: DEFAULT_PRACTICE_BOT_CONFIG,
+      currentBotConfig: DEFAULT_BOT_CONFIG,
       currentVariant: "freestyle",
-      selectedPracticeBot: hard,
+      selectedBotConfig: hard,
       selectedVariant: "renju",
     });
 
     startLocalMatchWithSavedSetup();
 
     expect(store.getState()).toMatchObject({
-      currentPracticeBot: hard,
+      currentBotConfig: hard,
       currentVariant: "renju",
       moves: [],
-      selectedPracticeBot: hard,
+      selectedBotConfig: hard,
       selectedVariant: "renju",
     });
   });
 
   it("resumes replay branches with the current bot config and replay rule", () => {
-    const hard: PracticeBotConfig = { mode: "preset", preset: "hard", version: 1 };
+    const hard: BotConfig = { mode: "preset", preset: "hard", version: 1 };
     localProfileStore.setState({
       matchHistory: emptyLocalMatchHistory(),
       profile: localProfile,
-      settings: { practiceBot: hard, preferredVariant: "freestyle" },
+      settings: settingsWith("freestyle", hard),
     });
 
     const store = ensureLocalMatchSession({
@@ -102,9 +122,9 @@ describe("local match session", () => {
     });
 
     expect(store.getState()).toMatchObject({
-      currentPracticeBot: hard,
+      currentBotConfig: hard,
       currentVariant: "renju",
-      selectedPracticeBot: hard,
+      selectedBotConfig: hard,
       selectedVariant: "renju",
     });
     expect(store.getState().players[1]).toMatchObject({

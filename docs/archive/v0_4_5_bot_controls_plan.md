@@ -44,7 +44,7 @@ differently.
 - device-local touch control for mobile pointer placement;
 - compact device-local tactical hint modes for immediate and imminent hint
   families;
-- local match plumbing so the selected config actually drives the practice bot;
+- local match plumbing so the selected config actually drives the bot;
 - saved-match identity snapshots that preserve which bot config was used.
 
 Replay analysis, critical-moment tagging, puzzle generation, and explanation
@@ -62,7 +62,7 @@ feedback.
 
 ### 1. Config Model
 
-Create a web-facing practice-bot config model before building UI on top of it.
+Create a web-facing bot config model before building UI on top of it.
 
 - Define preset IDs and advanced config fields in TypeScript.
 - Resolve presets and advanced controls into one runtime bot spec.
@@ -74,8 +74,8 @@ Create a web-facing practice-bot config model before building UI on top of it.
 Make the selected config durable and auditable.
 
 - Add bot config to local profile settings.
-- Keep the first slice local-only unless cloud profile settings are deliberately
-  expanded later.
+- Sync bot config with the rest of profile settings instead of keeping it as
+  device-local UI state.
 - Update saved-match bot identity snapshots so replays/history preserve which
   bot config was used.
 - Keep older saved-match hydration compatible enough for existing local test
@@ -93,7 +93,7 @@ Let the selected config drive actual bot play.
 
 ### 4. UI Surface
 
-Build a dedicated practice-bot control surface.
+Build a dedicated bot control surface.
 
 - Add a compact entry point from Home near `Play`.
 - Add a compact next-game entry from Local Match.
@@ -173,15 +173,15 @@ Do not keep this loose. Advanced config should be versioned and deliberately
 small so old profiles remain understandable later:
 
 ```ts
-type PracticeBotConfigV1 =
+type BotConfigV1 =
   | { version: 1; mode: "preset"; preset: "easy" | "normal" | "hard" }
   | {
       version: 1;
       mode: "custom";
       depth: 1 | 3 | 5 | 7;
-      width: "none" | 8 | 16;
-      patternScoring: boolean;
-      corridorProof: boolean;
+      width: "full" | 8 | 16;
+      scoring: "simple" | "pattern";
+      extraPass: "none" | "corridor_proof";
     };
 ```
 
@@ -197,7 +197,7 @@ lab spec:
 Persisted custom settings must be sanitized through the same rule so old local
 or cloud settings cannot revive an intentionally disabled slow config.
 
-`corridorProof: true` resolves to the current report-backed
+`extraPass: "corridor_proof"` resolves to the current report-backed
 `corridor-proof-c16-d8-w4` profile. If that underlying profile needs to change
 as product behavior, bump the config version instead of silently changing old
 saved settings.
@@ -230,7 +230,7 @@ history screen. Bot controls are match setup / practice configuration.
 
 Reasonable surfaces:
 
-- a dedicated settings or practice-bot route;
+- a dedicated settings route;
 - a compact entry point from Home near the Play action;
 - a compact entry point from Local Match for "next game" bot changes;
 - a passive current-opponent summary on Home and Local Match.
@@ -261,10 +261,10 @@ history layers know how to resolve it.
 
 ### Target Shape
 
-Add a web-owned practice bot config model with two product modes:
+Add a web-owned bot config model with two product modes:
 
 - `preset`: one of `easy`, `normal`, or `hard`;
-- `custom`: the constrained `PracticeBotConfigV1` advanced shape.
+- `custom`: the constrained `BotConfigV1` advanced shape.
 
 The web model should resolve to a runtime bot spec and to a lab spec string.
 The lab spec is transparency/provenance, not the storage source of truth.
@@ -295,22 +295,22 @@ modes, candidate radius/source, raw thinking budget, or raw parser suffixes.
 Use clean schema bumps. There are no real online users yet, but local test
 profiles exist and should not be silently broken.
 
-- Local profile becomes `gomoku2d.local-profile.v4`.
-- Local v4 imports deprecated `gomoku2d.local-profile.v3` once, preserving name,
-  rules, stats, and match history while defaulting bot config to `normal`.
-- The app stops writing v3 after import; if the storage API is available, remove
-  the v3 key after a successful v4 write to avoid repeated imports.
+- Local profile becomes `gomoku2d.local-profile.v5`.
+- Local v5 is a clean alpha break. Deprecated local keys are ignored instead of
+  migrated because there are no real users yet.
 - Unknown or invalid bot config sanitizes to `normal`.
-- Cloud profile becomes schema v4 with `settings.practice_bot`.
-- Existing cloud v3 documents are tolerated and upgraded on next profile write.
+- Cloud profile becomes schema v5 with `settings.game_config`,
+  `settings.bot_config`, `settings.board_hints`, and `settings.touch_control`.
+- Existing cloud documents are test data and can be reset/cleared instead of
+  carrying another migration layer.
 - Cloud writes still use the current coalesced sync cadence; changing bot config
   must not add per-click Firestore writes.
 - Profile settings store the product config only; they do not store generated
   lab specs.
 - Saved matches use a new bot identity snapshot that records the resolved bot
   config and generated lab spec.
-- Legacy saved-match bot identity remains readable and maps to the old depth-3
-  baseline for local history compatibility.
+- Saved matches are a clean v2 break: `variant` becomes `ruleset`, and legacy
+  baseline bot identities are no longer kept as active compatibility paths.
 
 ### Code Slices
 
@@ -318,14 +318,14 @@ profiles exist and should not be silently broken.
 
    Files:
 
-   - create `gomoku-web/src/core/practice_bot_config.ts`
-   - create `gomoku-web/src/core/practice_bot_config.test.ts`
+   - create `gomoku-web/src/core/bot_config.ts`
+   - create `gomoku-web/src/core/bot_config.test.ts`
    - modify `gomoku-web/src/core/bot_protocol.ts`
 
    Responsibilities:
 
    - define preset IDs and custom config types;
-   - provide `DEFAULT_PRACTICE_BOT_CONFIG`;
+   - provide `DEFAULT_BOT_CONFIG`;
    - sanitize unknown persisted values to `normal`;
    - reject loose/raw lab-spec persistence;
    - resolve product config to worker `BotSpec`;
@@ -355,9 +355,8 @@ profiles exist and should not be silently broken.
 
    Responsibilities:
 
-   - add `settings.practiceBot`;
-   - migrate deprecated local v3 storage into v4;
-   - preserve existing v1 saved matches during migration;
+   - add `settings.botConfig`;
+   - use the clean-break local v5 key;
    - default missing bot config to `normal`.
 
 4. Bump saved-match bot identity.
@@ -365,14 +364,14 @@ profiles exist and should not be silently broken.
    Files:
 
    - modify `gomoku-web/src/match/saved_match.ts`
-   - update cloud/local saved-match tests that import practice-bot constants
+   - update cloud/local saved-match tests that import bot constants
 
    Responsibilities:
 
-   - add a new resolved practice-bot identity snapshot;
+   - add a new resolved bot identity snapshot;
    - snapshot preset ID, UI label, engine/config version, structured config, and
      generated lab spec;
-   - keep legacy depth-3 identity readable for old local history.
+   - use SavedMatch v2 with `ruleset` and current SearchBot identity.
 
 5. Bump cloud profile schema and rules.
 
@@ -385,9 +384,10 @@ profiles exist and should not be silently broken.
 
    Responsibilities:
 
-   - add `settings.practice_bot`;
-   - accept/upgrade schema v3 to v4 in app code;
-   - validate exactly the constrained `PracticeBotConfigV1` shape in Firestore
+   - add `settings.game_config`, `settings.bot_config`,
+     `settings.board_hints`, and `settings.touch_control`;
+   - use schema v5 as a clean alpha break;
+   - validate exactly the constrained `BotConfigV1` shape in Firestore
      rules;
    - keep cloud sync cost-neutral by using existing deferred writes.
 
@@ -409,7 +409,7 @@ profiles exist and should not be silently broken.
 
 Run targeted checks before UI work starts:
 
-- `npm --prefix gomoku-web test -- practice_bot_config local_profile_store saved_match cloud_profile cloud_match cloud_promotion`
+- `npm --prefix gomoku-web test -- bot_config local_profile_store saved_match cloud_profile cloud_match cloud_promotion`
 - `npm --prefix gomoku-web run test:rules`
 - `npm --prefix gomoku-web run typecheck`
 - `cargo test --manifest-path gomoku-bot-lab/Cargo.toml -p gomoku-wasm`
@@ -451,7 +451,7 @@ The advanced layer needs a modest warning:
 
 - players can choose a tested bot preset before or between local bot matches;
 - advanced users can inspect and adjust the main bot dimensions;
-- the selected config persists locally and drives the actual practice bot;
+- the selected config persists locally and drives the actual bot;
 - mobile players can choose pointer-style or touchpad-style cursor movement;
 - player cards show current-game timing: settled totals plus an active
   `+current move` timer for the side to move;

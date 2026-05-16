@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CloudAuthUser } from "./auth_store";
-import { DEFAULT_PRACTICE_BOT_CONFIG } from "../core/practice_bot_config";
 import { emptyCloudMatchHistory, type CloudProfile } from "./cloud_profile";
 import { cloudProfileStore } from "./cloud_profile_store";
 import { cloudPromotionStore } from "./cloud_promotion_store";
 import { flushCloudProfileSync } from "./cloud_sync";
 import type { LocalProfilePromotionInput, LocalProfilePromotionResult } from "./cloud_promotion";
 import { emptyLocalMatchHistory, localProfileStore, type LocalProfileIdentity } from "../profile/local_profile_store";
+import { createDefaultProfileSettings } from "../profile/profile_settings";
 
 const user: CloudAuthUser = {
   avatarUrl: null,
@@ -27,6 +27,15 @@ const localProfile: LocalProfileIdentity = {
   username: null,
 };
 
+const defaultSettings = createDefaultProfileSettings();
+const renjuSettings = {
+  ...defaultSettings,
+  gameConfig: {
+    opening: "standard" as const,
+    ruleset: "renju" as const,
+  },
+};
+
 const cloudProfile: CloudProfile = {
   auth: {
     providers: [
@@ -41,13 +50,7 @@ const cloudProfile: CloudProfile = {
   displayName: "Bryan",
   matchHistory: emptyCloudMatchHistory(),
   resetAt: null,
-  settings: {
-    defaultRules: {
-      opening: "standard",
-      ruleset: "freestyle",
-    },
-    practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
-  },
+  settings: defaultSettings,
   uid: "uid-1",
   updatedAt: null,
   username: null,
@@ -74,7 +77,7 @@ describe("flushCloudProfileSync", () => {
     localProfileStore.setState({
       matchHistory: emptyLocalMatchHistory(),
       profile: localProfile,
-      settings: { practiceBot: DEFAULT_PRACTICE_BOT_CONFIG, preferredVariant: "renju" },
+      settings: renjuSettings,
     });
   });
 
@@ -100,26 +103,19 @@ describe("flushCloudProfileSync", () => {
     expect(promote).toHaveBeenCalledWith({
       cloudDisplayName: "Bryan",
       cloudMatchHistory: emptyCloudMatchHistory(),
-      cloudSettings: {
-        defaultRules: {
-          opening: "standard",
-          ruleset: "freestyle",
-        },
-        practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
-      },
+      cloudSettings: defaultSettings,
       localMatchHistory: emptyLocalMatchHistory(),
       localProfile,
       resetAt: null,
-      settings: { practiceBot: DEFAULT_PRACTICE_BOT_CONFIG, preferredVariant: "renju" },
+      settings: renjuSettings,
       user,
     });
     expect(result).toMatchObject({
       displayName: "ByeByeBryan",
       settings: {
-        defaultRules: {
+        gameConfig: {
           ruleset: "renju",
         },
-        practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
       },
     });
   });
@@ -151,7 +147,7 @@ describe("flushCloudProfileSync", () => {
 
     await flushCloudProfileSync(user);
 
-    expect(loadForUser).toHaveBeenCalledWith(user, "renju");
+    expect(loadForUser).toHaveBeenCalledWith(user, renjuSettings);
     expect(promote).toHaveBeenCalledTimes(1);
   });
 });

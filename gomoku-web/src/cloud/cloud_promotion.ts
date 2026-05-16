@@ -1,6 +1,6 @@
 import { doc, setDoc, type Firestore } from "firebase/firestore";
 
-import { savedMatchIsAfterReset, type SavedMatchV1 } from "../match/saved_match";
+import { savedMatchIsAfterReset, type SavedMatchV2 } from "../match/saved_match";
 import {
   DEFAULT_LOCAL_DISPLAY_NAME,
   type LocalProfileMatchHistory,
@@ -13,7 +13,7 @@ import {
   cloudProfileNeedsSnapshotSync,
   cloudProfileSnapshotUpdate,
   cloudSettingsDocument,
-  cloudSettingsForVariant,
+  cloudSettingsFromProfileSettings,
   cloudMatchHistoryIsEmpty,
   existingCloudProfileUpdate,
   emptyCloudMatchHistory,
@@ -66,7 +66,7 @@ export function cloudProfilePromotionUpdate(input: LocalProfilePromotionInput): 
   const baseUpdate = input.cloudSettings ? null : existingCloudProfileUpdate(input.user);
   const update: Record<string, unknown> = baseUpdate ? { ...baseUpdate } : {};
   const customLocal = customLocalDisplayName(input.localProfile);
-  const nextSettings = cloudSettingsForVariant(input.settings.preferredVariant, input.settings.practiceBot);
+  const nextSettings = cloudSettingsFromProfileSettings(input.settings);
 
   if (!input.cloudSettings || JSON.stringify(input.cloudSettings) !== JSON.stringify(nextSettings)) {
     update.settings = cloudSettingsDocument(nextSettings);
@@ -163,23 +163,21 @@ export async function promoteLocalProfileToCloud(
   const displayName = typeof profileUpdate?.display_name === "string"
     ? profileUpdate.display_name
     : input.cloudDisplayName ?? input.user.displayName;
-  const nextSettings = cloudSettingsForVariant(input.settings.preferredVariant, input.settings.practiceBot);
+  const nextSettings = cloudSettingsFromProfileSettings(input.settings);
   const needsSnapshotSync = cloudProfileNeedsSnapshotSync({
     cloudDisplayName: input.cloudDisplayName ?? input.user.displayName,
     cloudMatchHistory,
     cloudSettings: input.cloudSettings ?? nextSettings,
     displayName,
     matchHistory,
-    practiceBot: input.settings.practiceBot,
-    preferredVariant: input.settings.preferredVariant,
+    settings: input.settings,
   });
 
   if (needsSnapshotSync || profileUpdate) {
     const snapshotUpdate = cloudProfileSnapshotUpdate({
       displayName,
       matchHistory,
-      practiceBot: input.settings.practiceBot,
-      preferredVariant: input.settings.preferredVariant,
+      settings: input.settings,
       user: input.user,
     });
 

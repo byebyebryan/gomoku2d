@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import { CLOUD_REPLAY_MATCHES_LIMIT } from "../cloud/cloud_profile";
-import { DEFAULT_PRACTICE_BOT_CONFIG } from "../core/practice_bot_config";
-import { createLocalSavedMatch } from "../match/saved_match";
+import { DEFAULT_BOT_CONFIG } from "../core/bot_config";
+import type { BotConfig } from "../core/bot_config";
+import { createDefaultProfileSettings } from "./profile_settings";
 
 import type { LocalProfileStorage } from "./local_profile_store";
 import { createLocalProfileStore } from "./local_profile_store";
@@ -20,6 +21,16 @@ function createMemoryStorage(): LocalProfileStorage {
     },
   };
 }
+
+const defaultSettings = createDefaultProfileSettings();
+const customBotConfig: BotConfig = {
+  depth: 5,
+  extraPass: "corridor_proof",
+  mode: "custom" as const,
+  scoring: "pattern" as const,
+  version: 1 as const,
+  width: 16 as const,
+};
 
 describe("createLocalProfileStore", () => {
   it("creates a local profile on first meaningful interaction and persists edits", () => {
@@ -40,92 +51,80 @@ describe("createLocalProfileStore", () => {
       id: profile.id,
       kind: "local",
     });
-    expect(reloadedStore.getState().settings).toEqual({
-      practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
-      preferredVariant: "freestyle",
-    });
+    expect(reloadedStore.getState().settings).toEqual(defaultSettings);
   });
 
-  it("persists the preferred rules variant", () => {
-    const storage = createMemoryStorage();
-    const store = createLocalProfileStore({ storage });
-
-    store.getState().updateSettings({ preferredVariant: "renju" });
-
-    const reloadedStore = createLocalProfileStore({ storage });
-    expect(reloadedStore.getState().settings.preferredVariant).toBe("renju");
-  });
-
-  it("persists practice bot settings", () => {
+  it("persists game settings", () => {
     const storage = createMemoryStorage();
     const store = createLocalProfileStore({ storage });
 
     store.getState().updateSettings({
-      practiceBot: {
-        corridorProof: true,
-        depth: 5,
-        mode: "custom",
-        patternScoring: true,
-        version: 1,
-        width: 16,
+      gameConfig: {
+        opening: "standard",
+        ruleset: "renju",
       },
     });
 
     const reloadedStore = createLocalProfileStore({ storage });
-    expect(reloadedStore.getState().settings.practiceBot).toEqual({
-      corridorProof: true,
-      depth: 5,
-      mode: "custom",
-      patternScoring: true,
-      version: 1,
-      width: 16,
-    });
+    expect(reloadedStore.getState().settings.gameConfig.ruleset).toBe("renju");
   });
 
-  it("sanitizes invalid practice bot settings at the store boundary", () => {
+  it("persists bot settings", () => {
     const storage = createMemoryStorage();
     const store = createLocalProfileStore({ storage });
 
     store.getState().updateSettings({
-      practiceBot: {
-        corridorProof: true,
+      botConfig: customBotConfig,
+    });
+
+    const reloadedStore = createLocalProfileStore({ storage });
+    expect(reloadedStore.getState().settings.botConfig).toEqual(customBotConfig);
+  });
+
+  it("sanitizes invalid bot settings at the store boundary", () => {
+    const storage = createMemoryStorage();
+    const store = createLocalProfileStore({ storage });
+
+    store.getState().updateSettings({
+      botConfig: {
         depth: 99,
+        extraPass: "corridor_proof",
         mode: "custom",
-        patternScoring: true,
+        scoring: "pattern",
         version: 1,
         width: 16,
       } as never,
     });
 
-    expect(store.getState().settings.practiceBot).toEqual(DEFAULT_PRACTICE_BOT_CONFIG);
+    expect(store.getState().settings.botConfig).toEqual(DEFAULT_BOT_CONFIG);
   });
 
-  it("clamps browser-expensive practice bot settings at the store boundary", () => {
+  it("clamps browser-expensive bot settings at the store boundary", () => {
     const storage = createMemoryStorage();
     const store = createLocalProfileStore({ storage });
 
     store.getState().updateSettings({
-      practiceBot: {
-        corridorProof: true,
+      botConfig: {
         depth: 7,
+        extraPass: "corridor_proof",
         mode: "custom",
-        patternScoring: true,
+        scoring: "pattern",
         version: 1,
-        width: "none",
+        width: "full",
       },
     });
 
-    expect(store.getState().settings.practiceBot).toMatchObject({
+    expect(store.getState().settings.botConfig).toMatchObject({
       depth: 7,
       mode: "custom",
       width: 8,
     });
   });
 
-  it("imports deprecated local-profile v3 once into local v4 with default bot config", () => {
+  it("ignores deprecated local-profile v4 instead of migrating it into local v5", () => {
     const storage = createMemoryStorage();
     storage.setItem(
-      "gomoku2d.local-profile.v3",
+      "gomoku2d.local-profile.v4",
       JSON.stringify({
         state: {
           matchHistory: {
@@ -143,22 +142,17 @@ describe("createLocalProfileStore", () => {
           },
           settings: { preferredVariant: "renju" },
         },
-        version: 3,
+        version: 4,
       }),
     );
 
     const store = createLocalProfileStore({ storage });
 
-    expect(store.getState().profile).toMatchObject({
-      displayName: "Bryan v3",
-      id: "local-v3",
-    });
-    expect(store.getState().settings).toEqual({
-      practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
-      preferredVariant: "renju",
-    });
-    expect(storage.getItem("gomoku2d.local-profile.v3")).toBeNull();
     expect(storage.getItem("gomoku2d.local-profile.v4")).not.toBeNull();
+    expect(storage.getItem("gomoku2d.local-profile.v5")).toBeNull();
+    expect(store.getState().profile).toBeNull();
+    expect(store.getState().matchHistory.replayMatches).toEqual([]);
+    expect(store.getState().settings).toEqual(defaultSettings);
   });
 
   it("records finished local matches and keeps newest history first", () => {
@@ -208,7 +202,7 @@ describe("createLocalProfileStore", () => {
       move_cells: [112],
       move_count: 1,
       player_black: {
-        bot: expect.objectContaining({ id: "practice_bot" }),
+        bot: expect.objectContaining({ id: "bot" }),
         kind: "bot",
       },
       player_white: {
@@ -229,7 +223,7 @@ describe("createLocalProfileStore", () => {
       player_white: {
         bot: expect.objectContaining({
           engine: "search_bot",
-          id: "practice_bot",
+          id: "bot",
           lab_spec: "search-d3+pattern-eval",
           label: "Normal",
         }),
@@ -240,18 +234,11 @@ describe("createLocalProfileStore", () => {
     });
   });
 
-  it("snapshots the selected practice bot config into finished local matches", () => {
+  it("snapshots the selected bot config into finished local matches", () => {
     const store = createLocalProfileStore({ storage: createMemoryStorage() });
     store.getState().ensureLocalProfile();
     store.getState().updateSettings({
-      practiceBot: {
-        corridorProof: true,
-        depth: 5,
-        mode: "custom",
-        patternScoring: true,
-        version: 1,
-        width: 16,
-      },
+      botConfig: customBotConfig,
     });
 
     store.getState().recordFinishedMatch({
@@ -268,10 +255,10 @@ describe("createLocalProfileStore", () => {
 
     expect(store.getState().matchHistory.replayMatches[0]?.player_white.bot).toMatchObject({
       config: {
-        corridorProof: true,
         depth: 5,
+        extraPass: "corridor_proof",
         mode: "custom",
-        patternScoring: true,
+        scoring: "pattern",
         version: 1,
         width: 16,
       },
@@ -309,7 +296,7 @@ describe("createLocalProfileStore", () => {
     });
   });
 
-  it("ignores legacy local-profile keys instead of migrating them into local v3", () => {
+  it("ignores legacy local-profile keys instead of migrating them into local v5", () => {
     const storage = createMemoryStorage();
     storage.setItem(
       "gomoku2d.guest-profile.v2",
@@ -334,7 +321,7 @@ describe("createLocalProfileStore", () => {
     const store = createLocalProfileStore({ storage });
 
     expect(storage.getItem("gomoku2d.guest-profile.v2")).not.toBeNull();
-    expect(storage.getItem("gomoku2d.local-profile.v4")).toBeNull();
+    expect(storage.getItem("gomoku2d.local-profile.v5")).toBeNull();
     expect(store.getState().profile).toBeNull();
     expect(store.getState().matchHistory.replayMatches).toEqual([]);
   });
@@ -345,7 +332,12 @@ describe("createLocalProfileStore", () => {
 
     store.getState().ensureLocalProfile();
     store.getState().renameDisplayName("Bryan Local");
-    store.getState().updateSettings({ preferredVariant: "renju" });
+    store.getState().updateSettings({
+      gameConfig: {
+        opening: "standard",
+        ruleset: "renju",
+      },
+    });
     store.getState().recordFinishedMatch({
       mode: "bot",
       moves: [{ col: 7, moveNumber: 1, player: 1, row: 7 }],
@@ -363,9 +355,6 @@ describe("createLocalProfileStore", () => {
     const resetState = store.getState();
     expect(resetState.matchHistory.replayMatches).toEqual([]);
     expect(resetState.profile).toBeNull();
-    expect(resetState.settings).toEqual({
-      practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
-      preferredVariant: "freestyle",
-    });
+    expect(resetState.settings).toEqual(defaultSettings);
   });
 });

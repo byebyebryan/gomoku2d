@@ -15,7 +15,7 @@ function localMatch(id: string, savedAt: string) {
     ],
     savedAt,
     status: "draw",
-    variant: "freestyle",
+    ruleset: "freestyle",
   });
 }
 

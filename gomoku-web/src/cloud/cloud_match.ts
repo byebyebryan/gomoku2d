@@ -1,12 +1,11 @@
 import {
-  PRACTICE_BOT_CONFIG_VERSION,
-  PRACTICE_BOT_DEPTH,
-  PRACTICE_BOT_ENGINE,
-  PRACTICE_BOT_ID,
+  BOT_CONFIG_VERSION,
+  BOT_ENGINE,
+  BOT_ID,
   SAVED_MATCH_SCHEMA_VERSION,
   decodeMoveCell,
   type SavedMatchPlayer,
-  type SavedMatchV1,
+  type SavedMatchV2,
 } from "../match/saved_match";
 
 import type { CloudAuthUser } from "./auth_store";
@@ -15,24 +14,23 @@ export const CLOUD_MATCH_SCHEMA_VERSION = SAVED_MATCH_SCHEMA_VERSION;
 export const CLOUD_MATCH_SOURCE_CLOUD_SAVED = "cloud_saved";
 export const CLOUD_MATCH_TRUST_CLIENT_UPLOADED = "client_uploaded";
 export {
-  PRACTICE_BOT_CONFIG_VERSION,
-  PRACTICE_BOT_DEPTH,
-  PRACTICE_BOT_ENGINE,
-  PRACTICE_BOT_ID,
+  BOT_CONFIG_VERSION,
+  BOT_ENGINE,
+  BOT_ID,
 };
 
-export type CloudSavedMatch = SavedMatchV1 & {
+export type CloudSavedMatch = SavedMatchV2 & {
   source: typeof CLOUD_MATCH_SOURCE_CLOUD_SAVED;
   trust: typeof CLOUD_MATCH_TRUST_CLIENT_UPLOADED;
 };
 
-function assertFinishedMatch(match: Pick<SavedMatchV1, "status">): void {
+function assertFinishedMatch(match: Pick<SavedMatchV2, "status">): void {
   if (match.status !== "black_won" && match.status !== "white_won" && match.status !== "draw") {
     throw new Error("Cloud history sync only supports finished matches.");
   }
 }
 
-function assertValidMovePayload(match: Pick<SavedMatchV1, "move_count" | "move_cells">): void {
+function assertValidMovePayload(match: Pick<SavedMatchV2, "move_count" | "move_cells">): void {
   if (match.move_count !== match.move_cells.length) {
     throw new Error("Cloud history sync requires move_count to match move_cells.");
   }
@@ -42,19 +40,19 @@ function assertValidMovePayload(match: Pick<SavedMatchV1, "move_count" | "move_c
   }
 }
 
-function assertValidSavedAt(match: Pick<SavedMatchV1, "saved_at">): void {
+function assertValidSavedAt(match: Pick<SavedMatchV2, "saved_at">): void {
   if (!Number.isFinite(Date.parse(match.saved_at))) {
     throw new Error("Cloud history sync requires a valid saved_at timestamp.");
   }
 }
 
-function assertLocalHistoryMatch(match: Pick<SavedMatchV1, "source" | "trust">): void {
+function assertLocalHistoryMatch(match: Pick<SavedMatchV2, "source" | "trust">): void {
   if (match.source !== "local_history" || match.trust !== "local_only") {
     throw new Error("Cloud history sync only supports local history records.");
   }
 }
 
-function assertLocalVsBotPlayers(match: Pick<SavedMatchV1, "match_kind" | "player_black" | "player_white">): void {
+function assertLocalVsBotPlayers(match: Pick<SavedMatchV2, "match_kind" | "player_black" | "player_white">): void {
   const humanCount = [match.player_black, match.player_white].filter((player) => player.kind === "human").length;
   const botCount = [match.player_black, match.player_white].filter((player) => player.kind === "bot").length;
 
@@ -87,7 +85,7 @@ function cloudSavedPlayer(
 
 export function createCloudSavedMatch(
   user: Pick<CloudAuthUser, "uid">,
-  match: SavedMatchV1,
+  match: SavedMatchV2,
 ): CloudSavedMatch {
   assertLocalHistoryMatch(match);
   assertFinishedMatch(match);

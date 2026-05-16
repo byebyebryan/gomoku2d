@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { DEFAULT_PRACTICE_BOT_CONFIG } from "../core/practice_bot_config";
 import type { CloudAuthUser } from "./auth_store";
 import { createCloudPromotionStore } from "./cloud_promotion_store";
 import {
@@ -8,6 +7,7 @@ import {
   type LocalProfileIdentity,
   type LocalProfileSettings,
 } from "../profile/local_profile_store";
+import { createDefaultProfileSettings } from "../profile/profile_settings";
 
 const user: CloudAuthUser = {
   avatarUrl: null,
@@ -27,10 +27,7 @@ const localProfile: LocalProfileIdentity = {
   username: null,
 };
 
-const settings: LocalProfileSettings = {
-  practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
-  preferredVariant: "freestyle",
-};
+const settings: LocalProfileSettings = createDefaultProfileSettings();
 
 describe("createCloudPromotionStore", () => {
   const promotionResult = {
@@ -75,22 +72,16 @@ describe("createCloudPromotionStore", () => {
 
     await store.getState().promote({
       ...input,
-      cloudSettings: {
-        defaultRules: {
-          opening: "standard",
-          ruleset: "freestyle",
-        },
-        practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
-      },
+      cloudSettings: createDefaultProfileSettings(),
     });
     await store.getState().promote({
       ...input,
       cloudSettings: {
-        defaultRules: {
+        ...createDefaultProfileSettings(),
+        gameConfig: {
           opening: "standard",
           ruleset: "renju",
         },
-        practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
       },
     });
 

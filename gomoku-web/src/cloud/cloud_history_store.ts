@@ -1,9 +1,9 @@
 import { createJSONStorage, persist, type StateStorage } from "zustand/middleware";
 import { createStore, type StoreApi } from "zustand/vanilla";
 
-import type { GameVariant } from "../core/bot_protocol";
-import { savedMatchIsAfterReset, type SavedMatchV1 } from "../match/saved_match";
+import { savedMatchIsAfterReset, type SavedMatchV2 } from "../match/saved_match";
 import { localProfileStore } from "../profile/local_profile_store";
+import type { ProfileSettings } from "../profile/profile_settings";
 
 import type { CloudAuthUser } from "./auth_store";
 import { saveCloudHistorySnapshot } from "./cloud_history";
@@ -28,9 +28,9 @@ export interface CloudMatchSyncMeta {
 }
 
 export interface CloudHistoryUserCache {
-  cachedMatches: SavedMatchV1[];
+  cachedMatches: SavedMatchV2[];
   loadedAt: string | null;
-  pendingMatches: Record<string, SavedMatchV1>;
+  pendingMatches: Record<string, SavedMatchV2>;
   sync: Record<string, CloudMatchSyncMeta>;
 }
 
@@ -41,7 +41,7 @@ export interface CloudHistoryState {
   loadFromProfile: (user: CloudAuthUser, profile: CloudProfile, historyResetAt?: string | null) => void;
   loadStatus: CloudHistoryLoadStatus;
   resetUserCache: (uid: string) => void;
-  syncMatchForUser: (user: CloudAuthUser, match: SavedMatchV1, historyResetAt?: string | null) => Promise<void>;
+  syncMatchForUser: (user: CloudAuthUser, match: SavedMatchV2, historyResetAt?: string | null) => Promise<void>;
   syncPendingForUser: (user: CloudAuthUser, historyResetAt?: string | null) => Promise<void>;
   syncStatus: CloudHistorySyncStatus;
   users: Record<string, CloudHistoryUserCache>;
@@ -50,22 +50,22 @@ export interface CloudHistoryState {
 export interface CloudHistoryStoreOptions {
   cloudProfileForUser?: (uid: string) => CloudProfile | null;
   historyResetAtForUser?: (uid: string) => string | null | undefined;
-  loadHistory?: (user: CloudAuthUser, historyResetAt?: string | null) => Promise<SavedMatchV1[]>;
+  loadHistory?: (user: CloudAuthUser, historyResetAt?: string | null) => Promise<SavedMatchV2[]>;
   now?: () => string;
-  refreshCloudProfileForUser?: (user: CloudAuthUser, preferredVariant: GameVariant) => Promise<CloudProfile | null>;
+  refreshCloudProfileForUser?: (user: CloudAuthUser, settings: ProfileSettings) => Promise<CloudProfile | null>;
   saveHistory?: (
     user: CloudAuthUser,
     input: {
       cloudProfile: CloudProfile;
       displayName: string;
-      matches: SavedMatchV1[];
-      preferredVariant: GameVariant;
+      matches: SavedMatchV2[];
+      settings: ProfileSettings;
     },
-  ) => Promise<{ matches: SavedMatchV1[]; profile: CloudProfile }>;
+  ) => Promise<{ matches: SavedMatchV2[]; profile: CloudProfile }>;
   storage?: StateStorage;
 }
 
-const STORAGE_KEY = "gomoku2d.cloud-history.v3";
+const STORAGE_KEY = "gomoku2d.cloud-history.v5";
 
 function errorMessageFor(error: unknown): string {
   return error instanceof Error ? error.message : "Cloud history sync failed.";
@@ -80,7 +80,7 @@ function defaultUserCache(): CloudHistoryUserCache {
   };
 }
 
-function sortMatches(matches: SavedMatchV1[]): SavedMatchV1[] {
+function sortMatches(matches: SavedMatchV2[]): SavedMatchV2[] {
   return [...matches].sort((left, right) => right.saved_at.localeCompare(left.saved_at));
 }
 
@@ -112,7 +112,7 @@ function newerResetAt(
 
 function cacheWithPendingMatch(
   cache: CloudHistoryUserCache,
-  match: SavedMatchV1,
+  match: SavedMatchV2,
   status: CloudMatchSyncStatus,
   errorMessage: string | null,
   updatedAt: string,
@@ -149,7 +149,7 @@ function cacheWithoutMatch(cache: CloudHistoryUserCache, matchId: string): Cloud
 
 function cacheWithSyncedMatches(
   cache: CloudHistoryUserCache,
-  matches: SavedMatchV1[],
+  matches: SavedMatchV2[],
   syncedMatchIds: Set<string>,
 ): CloudHistoryUserCache {
   const pendingMatches = Object.fromEntries(
@@ -170,7 +170,7 @@ function cacheWithSyncedMatches(
 
 function cacheWithLoadedMatches(
   cache: CloudHistoryUserCache,
-  matches: SavedMatchV1[],
+  matches: SavedMatchV2[],
   historyResetAt: string | null | undefined,
   loadedAt: string,
 ): CloudHistoryUserCache {
@@ -292,12 +292,12 @@ export function createCloudHistoryStore(
     const profile = cloudProfileStore.getState().profile;
     return profile?.uid === uid ? profile : null;
   });
-  const refreshCloudProfileForUser = options.refreshCloudProfileForUser ?? (async (user, preferredVariant) => {
+  const refreshCloudProfileForUser = options.refreshCloudProfileForUser ?? (async (user, settings) => {
     if (options.cloudProfileForUser) {
       return cloudProfileForUser(user.uid);
     }
 
-    await cloudProfileStore.getState().loadForUser(user, preferredVariant);
+    await cloudProfileStore.getState().loadForUser(user, settings);
     const profile = cloudProfileStore.getState().profile;
     return profile?.uid === user.uid ? profile : null;
   });
@@ -458,7 +458,7 @@ export function createCloudHistoryStore(
           }
 
           const localProfile = localProfileStore.getState();
-          const refreshedProfile = await refreshCloudProfileForUser(user, localProfile.settings.preferredVariant);
+          const refreshedProfile = await refreshCloudProfileForUser(user, localProfile.settings);
           profile = refreshedProfile ?? cloudProfileForUser(user.uid);
           if (profile) {
             const activeProfile = profile;
@@ -508,8 +508,7 @@ export function createCloudHistoryStore(
               cloudProfile: profile,
               displayName: localProfile.profile?.displayName ?? profile.displayName,
               matches: candidateMatches,
-              practiceBot: localProfile.settings.practiceBot,
-              preferredVariant: localProfile.settings.preferredVariant,
+              settings: localProfile.settings,
             });
 
             cloudProfileStore.getState().applyLocalPatch({
@@ -537,7 +536,7 @@ export function createCloudHistoryStore(
             let handledAsRace = false;
 
             try {
-              const refreshedProfile = await refreshCloudProfileForUser(user, localProfile.settings.preferredVariant);
+              const refreshedProfile = await refreshCloudProfileForUser(user, localProfile.settings);
               const latestProfile = refreshedProfile ?? cloudProfileForUser(user.uid);
               if (latestProfile) {
                 const activeProfile = latestProfile;

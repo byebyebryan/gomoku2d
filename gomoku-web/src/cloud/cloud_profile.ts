@@ -9,33 +9,43 @@ import {
 
 import type { GameVariant } from "../core/bot_protocol";
 import {
-  DEFAULT_PRACTICE_BOT_CONFIG,
-  isPracticeBotConfig,
-  sanitizePracticeBotConfig,
-  type PracticeBotConfig,
-} from "../core/practice_bot_config";
+  isBotConfig,
+  sanitizeBotConfig,
+  type BotConfig,
+} from "../core/bot_config";
 import {
-  LEGACY_PRACTICE_BOT_ENGINE,
-  isSavedMatchV1,
+  isSavedMatchV2,
   savedMatchIsAfterReset,
   savedMatchPlayers,
   savedMatchWinningSide,
   type SavedMatchPlayer,
   type SavedMatchSide,
-  type SavedMatchV1,
+  type SavedMatchV2,
 } from "../match/saved_match";
+import {
+  DEFAULT_RULE_OPENING,
+  createDefaultProfileSettings,
+  sanitizeBoardHints,
+  sanitizeGameConfig,
+  sanitizeProfileSettings,
+  sanitizeTouchControl,
+  type BoardHintSettings,
+  type GameConfig,
+  type ProfileSettings,
+  type TouchControlMode,
+} from "../profile/profile_settings";
 
 import type { CloudAuthUser } from "./auth_store";
 import { createCloudSavedMatch } from "./cloud_match";
 import { getFirebaseClients } from "./firebase";
 
-export const CLOUD_PROFILE_SCHEMA_VERSION = 4;
+export const CLOUD_PROFILE_SCHEMA_VERSION = 5;
 export const CLOUD_REPLAY_MATCHES_LIMIT = 128;
 export const CLOUD_SUMMARY_MATCHES_LIMIT = 1024;
 export const CLOUD_MATCH_SUMMARY_SCHEMA_VERSION = 1;
 export const CLOUD_ARCHIVED_MATCH_STATS_SCHEMA_VERSION = 1;
 export const CLOUD_PROFILE_SYNC_INTERVAL_MS = 5 * 60 * 1000;
-export const CLOUD_DEFAULT_RULE_OPENING = "standard";
+export const CLOUD_DEFAULT_RULE_OPENING = DEFAULT_RULE_OPENING;
 
 export type CloudAuthProviderId = "github.com" | "google.com";
 
@@ -49,15 +59,8 @@ export interface CloudProfileAuth {
   providers: CloudAuthProvider[];
 }
 
-export interface CloudDefaultRules {
-  opening: typeof CLOUD_DEFAULT_RULE_OPENING;
-  ruleset: GameVariant;
-}
-
-export interface CloudProfileSettings {
-  defaultRules: CloudDefaultRules;
-  practiceBot: PracticeBotConfig;
-}
+export type CloudGameConfig = GameConfig;
+export type CloudProfileSettings = ProfileSettings;
 
 export type CloudMatchSummaryOutcome = "draw" | "loss" | "win";
 export type CloudMatchSummaryOpponentKind = "bot" | "human";
@@ -71,7 +74,7 @@ export interface CloudMatchSummaryOpponent {
 
 export interface CloudMatchSummaryV1 {
   id: string;
-  match_kind: SavedMatchV1["match_kind"];
+  match_kind: SavedMatchV2["match_kind"];
   move_count: number;
   opening: typeof CLOUD_DEFAULT_RULE_OPENING;
   opponent: CloudMatchSummaryOpponent;
@@ -80,7 +83,7 @@ export interface CloudMatchSummaryV1 {
   saved_at: string;
   schema_version: typeof CLOUD_MATCH_SUMMARY_SCHEMA_VERSION;
   side: SavedMatchSide;
-  trust: SavedMatchV1["trust"];
+  trust: SavedMatchV2["trust"];
 }
 
 export interface CloudMatchStatsCounter {
@@ -103,7 +106,7 @@ export interface CloudArchivedMatchStatsV1 {
 
 export interface CloudMatchHistory {
   archivedStats: CloudArchivedMatchStatsV1;
-  replayMatches: SavedMatchV1[];
+  replayMatches: SavedMatchV2[];
   summaryMatches: CloudMatchSummaryV1[];
 }
 
@@ -274,45 +277,89 @@ function authEqual(left: CloudProfileAuth, right: CloudProfileAuth): boolean {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
-export function cloudSettingsForVariant(
-  variant: GameVariant,
-  practiceBot: PracticeBotConfig = DEFAULT_PRACTICE_BOT_CONFIG,
-): CloudProfileSettings {
+function botConfigFromDocument(value: unknown): BotConfig {
+  const candidate = value as Record<string, unknown> | null;
+  if (candidate?.mode === "custom") {
+    return sanitizeBotConfig({
+      depth: candidate.depth,
+      extraPass: candidate.extra_pass,
+      mode: candidate.mode,
+      scoring: candidate.scoring,
+      version: candidate.version,
+      width: candidate.width,
+    });
+  }
+
+  return sanitizeBotConfig(value);
+}
+
+function isBotConfigDocument(value: unknown): boolean {
+  const candidate = value as Record<string, unknown> | null;
+  if (!candidate || typeof candidate !== "object") {
+    return false;
+  }
+
+  if (candidate.mode === "preset") {
+    return isBotConfig(candidate);
+  }
+
+  return isBotConfig({
+    depth: candidate.depth,
+    extraPass: candidate.extra_pass,
+    mode: candidate.mode,
+    scoring: candidate.scoring,
+    version: candidate.version,
+    width: candidate.width,
+  });
+}
+
+function botConfigDocument(botConfig: BotConfig) {
+  if (botConfig.mode === "preset") {
+    return botConfig;
+  }
+
   return {
-    defaultRules: {
-      opening: CLOUD_DEFAULT_RULE_OPENING,
-      ruleset: variant,
-    },
-    practiceBot,
+    depth: botConfig.depth,
+    extra_pass: botConfig.extraPass,
+    mode: botConfig.mode,
+    scoring: botConfig.scoring,
+    version: botConfig.version,
+    width: botConfig.width,
   };
 }
 
-function settingsFromDocument(value: unknown, fallbackVariant: GameVariant): CloudProfileSettings {
+function settingsFromDocument(value: unknown): CloudProfileSettings {
   const candidate = value as {
-    default_rules?: {
-      opening?: unknown;
-      ruleset?: unknown;
-    };
-    practice_bot?: unknown;
+    board_hints?: unknown;
+    bot_config?: unknown;
+    game_config?: unknown;
+    touch_control?: unknown;
   } | null;
-  const ruleset = validVariant(candidate?.default_rules?.ruleset) ?? fallbackVariant;
 
-  return {
-    defaultRules: {
-      opening: CLOUD_DEFAULT_RULE_OPENING,
-      ruleset,
-    },
-    practiceBot: sanitizePracticeBotConfig(candidate?.practice_bot),
-  };
+  return sanitizeProfileSettings({
+    boardHints: sanitizeBoardHints(candidate?.board_hints),
+    botConfig: botConfigFromDocument(candidate?.bot_config),
+    gameConfig: sanitizeGameConfig(candidate?.game_config),
+    touchControl: sanitizeTouchControl(candidate?.touch_control),
+  });
+}
+
+export function cloudSettingsFromProfileSettings(settings: ProfileSettings): CloudProfileSettings {
+  return sanitizeProfileSettings(settings);
 }
 
 export function cloudSettingsDocument(settings: CloudProfileSettings) {
   return {
-    default_rules: {
-      opening: settings.defaultRules.opening,
-      ruleset: settings.defaultRules.ruleset,
+    board_hints: {
+      immediate: settings.boardHints.immediate,
+      imminent: settings.boardHints.imminent,
     },
-    practice_bot: settings.practiceBot,
+    bot_config: botConfigDocument(settings.botConfig),
+    game_config: {
+      opening: settings.gameConfig.opening,
+      ruleset: settings.gameConfig.ruleset,
+    },
+    touch_control: settings.touchControl,
   };
 }
 
@@ -322,32 +369,45 @@ function settingsEqual(left: CloudProfileSettings, right: CloudProfileSettings):
 
 function isSettingsDocument(value: unknown): boolean {
   const candidate = value as {
-    default_rules?: {
+    board_hints?: Partial<BoardHintSettings>;
+    bot_config?: unknown;
+    game_config?: {
       opening?: unknown;
       ruleset?: unknown;
     };
-    practice_bot?: unknown;
+    touch_control?: unknown;
   } | null;
 
   return Boolean(candidate)
     && typeof candidate === "object"
-    && candidate?.default_rules?.opening === CLOUD_DEFAULT_RULE_OPENING
-    && validVariant(candidate?.default_rules?.ruleset) !== null
-    && isPracticeBotConfig(candidate?.practice_bot);
+    && candidate?.game_config?.opening === CLOUD_DEFAULT_RULE_OPENING
+    && validVariant(candidate?.game_config?.ruleset) !== null
+    && isBotConfigDocument(candidate?.bot_config)
+    && (candidate?.touch_control === "pointer" || candidate?.touch_control === "touchpad")
+    && (
+      candidate?.board_hints?.immediate === "off"
+      || candidate?.board_hints?.immediate === "win"
+      || candidate?.board_hints?.immediate === "win_threat"
+    )
+    && (
+      candidate?.board_hints?.imminent === "off"
+      || candidate?.board_hints?.imminent === "threat"
+      || candidate?.board_hints?.imminent === "threat_counter"
+    );
 }
 
-function sortReplayMatches(matches: SavedMatchV1[]): SavedMatchV1[] {
+function sortReplayMatches(matches: SavedMatchV2[]): SavedMatchV2[] {
   return [...matches].sort((left, right) => right.saved_at.localeCompare(left.saved_at));
 }
 
 function replayMatchesFromDocument(
   matchHistoryValue: unknown,
   resetAt: string | null,
-): SavedMatchV1[] {
+): SavedMatchV2[] {
   const candidate = matchHistoryValue as { replay_matches?: unknown } | null;
   const rawMatches = Array.isArray(candidate?.replay_matches) ? candidate.replay_matches : [];
   const matches = rawMatches
-    .filter(isSavedMatchV1)
+    .filter(isSavedMatchV2)
     .filter((match) => savedMatchIsAfterReset(match, resetAt));
 
   return sortReplayMatches(matches).slice(0, CLOUD_REPLAY_MATCHES_LIMIT);
@@ -355,10 +415,10 @@ function replayMatchesFromDocument(
 
 export function mergeCloudSavedMatches(
   user: Pick<CloudAuthUser, "uid">,
-  matches: SavedMatchV1[],
+  matches: SavedMatchV2[],
   resetAt: string | null | undefined = null,
-): SavedMatchV1[] {
-  const byId = new Map<string, SavedMatchV1>();
+): SavedMatchV2[] {
+  const byId = new Map<string, SavedMatchV2>();
 
   for (const match of matches) {
     if (!savedMatchIsAfterReset(match, resetAt)) {
@@ -380,13 +440,13 @@ export function mergeCloudSavedMatches(
 
 export function mergeCloudReplayMatches(
   user: Pick<CloudAuthUser, "uid">,
-  matches: SavedMatchV1[],
+  matches: SavedMatchV2[],
   resetAt: string | null | undefined = null,
-): SavedMatchV1[] {
+): SavedMatchV2[] {
   return mergeCloudSavedMatches(user, matches, resetAt).slice(0, CLOUD_REPLAY_MATCHES_LIMIT);
 }
 
-function replayMatchesEqual(left: SavedMatchV1[], right: SavedMatchV1[]): boolean {
+function replayMatchesEqual(left: SavedMatchV2[], right: SavedMatchV2[]): boolean {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
@@ -568,13 +628,6 @@ function botKeyForPlayer(player: SavedMatchPlayer): string | null {
     return null;
   }
 
-  if (player.bot.engine === LEGACY_PRACTICE_BOT_ENGINE) {
-    return [
-      `${player.bot.id}@${player.bot.version}`,
-      `${player.bot.engine}/${player.bot.config.kind}:d${player.bot.config.depth}`,
-    ].join(":");
-  }
-
   return [
     `${player.bot.id}@${player.bot.version}`,
     `${player.bot.engine}/${player.bot.lab_spec}`,
@@ -583,7 +636,7 @@ function botKeyForPlayer(player: SavedMatchPlayer): string | null {
 
 export function cloudMatchSummaryForMatch(
   identity: CloudMatchSummaryIdentity,
-  match: SavedMatchV1,
+  match: SavedMatchV2,
 ): CloudMatchSummaryV1 {
   const players = savedMatchPlayers(match);
   const local = players.find(({ player }) => identity.profileUid && player.profile_uid === identity.profileUid)
@@ -605,7 +658,7 @@ export function cloudMatchSummaryForMatch(
       profile_uid: opponent.profile_uid,
     },
     outcome: winningSide === null ? "draw" : winningSide === local.side ? "win" : "loss",
-    ruleset: match.variant,
+    ruleset: match.ruleset,
     saved_at: match.saved_at,
     schema_version: CLOUD_MATCH_SUMMARY_SCHEMA_VERSION,
     side: local.side,
@@ -669,8 +722,8 @@ export function mergeCloudMatchSummaryState(input: {
   archivedStats: CloudArchivedMatchStatsV1;
   convertLocalMatches?: boolean;
   identity?: CloudMatchSummaryIdentity;
-  matches: SavedMatchV1[];
-  replayMatches: SavedMatchV1[];
+  matches: SavedMatchV2[];
+  replayMatches: SavedMatchV2[];
   resetAt?: string | null;
   summaries: CloudMatchSummaryV1[];
   user?: Pick<CloudAuthUser, "uid">;
@@ -789,12 +842,14 @@ function hasOwnField(document: CloudProfileDocument, field: keyof CloudProfileDo
 
 export function cloudProfileFromDocument(
   user: CloudAuthUser,
-  fallbackVariant: GameVariant,
+  fallbackSettings: ProfileSettings = createDefaultProfileSettings(),
   document: CloudProfileDocument | null,
 ): CloudProfile {
   const fallbackAuth = authForUser(user);
   const resetAt = timestampIsoOrNull(document?.reset_at);
-  const settings = settingsFromDocument(document?.settings, fallbackVariant);
+  const settings = hasOwnField(document ?? {}, "settings")
+    ? settingsFromDocument(document?.settings)
+    : cloudSettingsFromProfileSettings(fallbackSettings);
   const matchHistory = matchHistoryFromDocument(document, resetAt, user);
 
   return {
@@ -810,9 +865,12 @@ export function cloudProfileFromDocument(
   };
 }
 
-export function newCloudProfileWrite(user: CloudAuthUser, preferredVariant: GameVariant) {
+export function newCloudProfileWrite(
+  user: CloudAuthUser,
+  settings: ProfileSettings = createDefaultProfileSettings(),
+) {
   const now = serverTimestamp();
-  const settings = cloudSettingsForVariant(preferredVariant);
+  const nextSettings = cloudSettingsFromProfileSettings(settings);
 
   return {
     auth: authDocument(authForUser(user)),
@@ -821,7 +879,7 @@ export function newCloudProfileWrite(user: CloudAuthUser, preferredVariant: Game
     match_history: matchHistoryDocument(emptyCloudMatchHistory()),
     reset_at: null,
     schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
-    settings: cloudSettingsDocument(settings),
+    settings: cloudSettingsDocument(nextSettings),
     uid: user.uid,
     updated_at: now,
     username: null,
@@ -834,12 +892,12 @@ export function existingCloudProfileUpdate(
 export function existingCloudProfileUpdate(
   user: CloudAuthUser,
   document: CloudProfileDocument,
-  fallbackVariant?: GameVariant,
+  fallbackSettings?: ProfileSettings,
 ): Record<string, unknown> | null;
 export function existingCloudProfileUpdate(
   user: CloudAuthUser,
   document?: CloudProfileDocument,
-  fallbackVariant: GameVariant = "freestyle",
+  fallbackSettings: ProfileSettings = createDefaultProfileSettings(),
 ): Record<string, unknown> | null {
   const patch: Record<string, unknown> = {};
   const expectedAuth = authForUser(user);
@@ -853,7 +911,7 @@ export function existingCloudProfileUpdate(
   }
 
   if (!document || !hasOwnField(document, "settings") || !isSettingsDocument(document.settings)) {
-    patch.settings = cloudSettingsDocument(settingsFromDocument(document?.settings, fallbackVariant));
+    patch.settings = cloudSettingsDocument(cloudSettingsFromProfileSettings(fallbackSettings));
   }
 
   if (!document || !hasOwnField(document, "reset_at")) {
@@ -884,7 +942,7 @@ export function existingCloudProfileUpdate(
 export function existingCloudProfileLoadUpdate(
   user: CloudAuthUser,
   document: CloudProfileDocument,
-  fallbackVariant: GameVariant = "freestyle",
+  fallbackSettings: ProfileSettings = createDefaultProfileSettings(),
 ): Record<string, unknown> | null {
   if (
     document.schema_version !== CLOUD_PROFILE_SCHEMA_VERSION
@@ -894,19 +952,22 @@ export function existingCloudProfileLoadUpdate(
     return null;
   }
 
-  return existingCloudProfileUpdate(user, document, fallbackVariant);
+  return existingCloudProfileUpdate(user, document, fallbackSettings);
 }
 
-export function resetCloudProfileUpdate(user: CloudAuthUser, preferredVariant: GameVariant) {
+export function resetCloudProfileUpdate(
+  user: CloudAuthUser,
+  settings: ProfileSettings = createDefaultProfileSettings(),
+) {
   const now = serverTimestamp();
-  const settings = cloudSettingsForVariant(preferredVariant);
+  const nextSettings = cloudSettingsFromProfileSettings(settings);
   const update: Record<string, unknown> = {
     auth: authDocument(authForUser(user)),
     display_name: user.displayName,
     match_history: matchHistoryDocument(emptyCloudMatchHistory()),
     reset_at: now,
     schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
-    settings: cloudSettingsDocument(settings),
+    settings: cloudSettingsDocument(nextSettings),
     uid: user.uid,
     updated_at: now,
   };
@@ -917,12 +978,11 @@ export function resetCloudProfileUpdate(user: CloudAuthUser, preferredVariant: G
 export function cloudProfileSnapshotUpdate(input: {
   displayName: string;
   matchHistory: CloudMatchHistory;
-  practiceBot?: PracticeBotConfig;
-  preferredVariant: GameVariant;
+  settings: ProfileSettings;
   user: CloudAuthUser;
 }): Record<string, unknown> {
   const now = serverTimestamp();
-  const settings = cloudSettingsForVariant(input.preferredVariant, input.practiceBot);
+  const settings = cloudSettingsFromProfileSettings(input.settings);
   const update: Record<string, unknown> = {
     auth: authDocument(authForUser(input.user)),
     display_name: input.displayName,
@@ -962,10 +1022,9 @@ export function cloudProfileNeedsSnapshotSync(input: {
   cloudSettings: CloudProfileSettings;
   displayName: string;
   matchHistory: CloudMatchHistory;
-  practiceBot?: PracticeBotConfig;
-  preferredVariant: GameVariant;
+  settings: ProfileSettings;
 }): boolean {
-  const settings = cloudSettingsForVariant(input.preferredVariant, input.practiceBot);
+  const settings = cloudSettingsFromProfileSettings(input.settings);
 
   return input.cloudDisplayName !== input.displayName
     || !settingsEqual(input.cloudSettings, settings)
@@ -974,7 +1033,7 @@ export function cloudProfileNeedsSnapshotSync(input: {
 
 export async function ensureCloudProfile(
   user: CloudAuthUser,
-  preferredVariant: GameVariant,
+  settings: ProfileSettings = createDefaultProfileSettings(),
   options: EnsureCloudProfileOptions = {},
 ): Promise<CloudProfile> {
   const firestore = options.firestore ?? getFirebaseClients()?.firestore;
@@ -987,23 +1046,23 @@ export async function ensureCloudProfile(
 
   if (snapshot.exists()) {
     const data = snapshot.data() as CloudProfileDocument;
-    const update = existingCloudProfileLoadUpdate(user, data, preferredVariant);
+    const update = existingCloudProfileLoadUpdate(user, data, settings);
     if (!update) {
-      return cloudProfileFromDocument(user, preferredVariant, data);
+      return cloudProfileFromDocument(user, settings, data);
     }
 
     await setDoc(profileRef, update, { merge: true });
-    return cloudProfileFromDocument(user, preferredVariant, { ...data, ...update });
+    return cloudProfileFromDocument(user, settings, { ...data, ...update });
   }
 
-  const profile = newCloudProfileWrite(user, preferredVariant);
+  const profile = newCloudProfileWrite(user, settings);
   await setDoc(profileRef, profile);
-  return cloudProfileFromDocument(user, preferredVariant, profile);
+  return cloudProfileFromDocument(user, settings, profile);
 }
 
 export async function resetCloudProfile(
   user: CloudAuthUser,
-  preferredVariant: GameVariant,
+  settings: ProfileSettings = createDefaultProfileSettings(),
   options: EnsureCloudProfileOptions = {},
 ): Promise<CloudProfile> {
   const firestore = options.firestore ?? getFirebaseClients()?.firestore;
@@ -1015,19 +1074,19 @@ export async function resetCloudProfile(
   const snapshot = await getDoc(profileRef);
   if (!snapshot.exists()) {
     const profile = {
-      ...newCloudProfileWrite(user, preferredVariant),
+      ...newCloudProfileWrite(user, settings),
       reset_at: serverTimestamp(),
     };
     await setDoc(profileRef, profile);
     const refreshed = await getDoc(profileRef);
     return cloudProfileFromDocument(
       user,
-      preferredVariant,
+      settings,
       refreshed.exists() ? (refreshed.data() as CloudProfileDocument) : profile,
     );
   }
 
-  const update = resetCloudProfileUpdate(user, preferredVariant);
+  const update = resetCloudProfileUpdate(user, settings);
   await setDoc(profileRef, update, { merge: true });
   const refreshed = await getDoc(profileRef);
   const fallback = {
@@ -1037,7 +1096,7 @@ export async function resetCloudProfile(
 
   return cloudProfileFromDocument(
     user,
-    preferredVariant,
+    settings,
     refreshed.exists() ? (refreshed.data() as CloudProfileDocument) : fallback,
   );
 }
