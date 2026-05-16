@@ -100,6 +100,28 @@ describe("createLocalProfileStore", () => {
     expect(store.getState().settings.practiceBot).toEqual(DEFAULT_PRACTICE_BOT_CONFIG);
   });
 
+  it("clamps browser-expensive practice bot settings at the store boundary", () => {
+    const storage = createMemoryStorage();
+    const store = createLocalProfileStore({ storage });
+
+    store.getState().updateSettings({
+      practiceBot: {
+        corridorProof: true,
+        depth: 7,
+        mode: "custom",
+        patternScoring: true,
+        version: 1,
+        width: "none",
+      },
+    });
+
+    expect(store.getState().settings.practiceBot).toMatchObject({
+      depth: 7,
+      mode: "custom",
+      width: 8,
+    });
+  });
+
   it("imports deprecated local-profile v3 once into local v4 with default bot config", () => {
     const storage = createMemoryStorage();
     storage.setItem(

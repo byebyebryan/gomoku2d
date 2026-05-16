@@ -185,6 +185,18 @@ type PracticeBotConfigV1 =
     };
 ```
 
+Browser play does not enforce a native-style per-move CPU budget, and Wasm can
+run notably slower than the lab binary. The custom UI should therefore clamp
+expensive depth/width combinations instead of exposing every syntactically valid
+lab spec:
+
+- D1/D3 may use full width, W8, or W16;
+- D5 may use W8 or W16, but not full width;
+- D7 may use W8 only.
+
+Persisted custom settings must be sanitized through the same rule so old local
+or cloud settings cannot revive an intentionally disabled slow config.
+
 `corridorProof: true` resolves to the current report-backed
 `corridor-proof-c16-d8-w4` profile. If that underlying profile needs to change
 as product behavior, bump the config version instead of silently changing old
@@ -272,6 +284,7 @@ state:
 - width: `none`, `8`, or `16`;
 - pattern scoring on/off;
 - corridor proof on/off, using the report-backed `c16-d8-w4` profile.
+- browser-safe depth/width clamps: D5 disables full width, and D7 only allows W8.
 
 Do not expose report/debug axes in the product config: rolling shadow,
 scan-threat-view, safety ablations, retired portal/leaf experiments, CPU budget

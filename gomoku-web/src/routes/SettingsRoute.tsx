@@ -4,6 +4,7 @@ import { useStore } from "zustand";
 
 import {
   customConfigForPracticeBot,
+  isPracticeBotWidthAllowed,
   practiceBotConfigSummary,
   practiceBotLabel,
   practiceBotPlayerName,
@@ -30,7 +31,7 @@ import styles from "./SettingsRoute.module.css";
 
 const PRESET_IDS: PracticeBotPresetId[] = ["easy", "normal", "hard"];
 const DEPTHS: PracticeBotDepth[] = [1, 3, 5, 7];
-const WIDTHS: PracticeBotWidth[] = ["none", 8, 16];
+const WIDTHS: PracticeBotWidth[] = [8, 16, "none"];
 const COMPACT_SETTINGS_QUERY = "(max-width: 760px)";
 const MOBILE_TOUCH_QUERY =
   "(max-width: 720px) and (orientation: portrait) and (hover: none) and (pointer: coarse)";
@@ -386,6 +387,7 @@ export function SettingsRoute() {
                   {WIDTHS.map((width) => (
                     <button
                       className={custom.width === width ? "uiSegment uiSegmentActive" : "uiSegment"}
+                      disabled={!isPracticeBotWidthAllowed(custom.depth, width)}
                       key={width}
                       onClick={() => updateCustomBot({ width })}
                       type="button"

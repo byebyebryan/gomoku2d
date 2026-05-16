@@ -380,7 +380,8 @@ Use two layers:
   backed by current anchor reports;
 - an advanced Bot Lab layer that exposes the main tuning dimensions in product
   language: search depth, search width, pattern scoring, corridor proof, and
-  generated lab spec.
+  generated lab spec, with browser-safe depth/width limits rather than every raw
+  lab combination.
 - defensive board hints for human turns, using the same tactical vocabulary to
   mark opponent imminent threats and counter-threat replies before they become
   one-move losses. Tactical hints should be device-local immediate/imminent

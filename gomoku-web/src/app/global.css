@@ -342,6 +342,11 @@ select:focus-visible {
     0 0 0 1px rgba(0, 0, 0, 0.18);
 }
 
+.uiSegment:disabled {
+  cursor: default;
+  opacity: 0.42;
+}
+
 @media (min-width: 721px) {
   .uiIconDesktop {
     display: inline-flex;
