@@ -328,7 +328,7 @@ pub static TACTICAL_SCENARIO_CASES: &[TacticalScenarioCase] = &[
         intent: TacticalScenarioIntent::Prevent,
         shape: Some(TacticalScenarioShape::BrokenThree),
         description: "Current player should prevent the opponent's broken three from becoming a broken four.",
-        expected_moves: &["I8"],
+        expected_moves: &["G8", "I8", "L8"],
     },
     TacticalScenarioCase {
         id: "combo_create_double_threat",

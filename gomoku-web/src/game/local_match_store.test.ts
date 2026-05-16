@@ -660,6 +660,36 @@ describe("createLocalMatchStore", () => {
     );
   });
 
+  it("does not show closed broken threes as imminent threat hints", () => {
+    const board = WasmBoard.createWithVariant("freestyle");
+    const moves: Array<[number, number]> = [
+      [0, 0],
+      [7, 7],
+      [7, 11],
+      [7, 9],
+      [2, 0],
+      [7, 10],
+    ];
+
+    for (const [row, col] of moves) {
+      board.applyMove(row, col);
+    }
+
+    const store = createLocalMatchStore({
+      boardFactory: () => board,
+      botRunner: {
+        chooseMove: async () => null,
+        configure: () => undefined,
+        dispose: () => undefined,
+      },
+    });
+
+    const state = store.getState();
+
+    expect(state.currentPlayer).toBe(1);
+    expect(state.imminentThreatMoves).toEqual([]);
+  });
+
   it("derives counter-threat replies from the unified wasm threat snapshot", () => {
     const moves = [
       [7, 7],
