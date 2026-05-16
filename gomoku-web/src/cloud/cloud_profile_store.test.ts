@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { DEFAULT_PRACTICE_BOT_CONFIG } from "../core/practice_bot_config";
+import { createDefaultProfileSettings } from "../profile/profile_settings";
 
 import type { CloudAuthUser } from "./auth_store";
 import { emptyCloudMatchHistory, type CloudProfile } from "./cloud_profile";
@@ -13,6 +13,8 @@ const authUser: CloudAuthUser = {
   providerIds: ["google.com"],
   uid: "uid-1",
 };
+
+const defaultSettings = createDefaultProfileSettings();
 
 const profile: CloudProfile = {
   auth: {
@@ -28,13 +30,7 @@ const profile: CloudProfile = {
   displayName: "Bryan",
   matchHistory: emptyCloudMatchHistory(),
   resetAt: null,
-  settings: {
-    defaultRules: {
-      opening: "standard",
-      ruleset: "freestyle",
-    },
-    practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
-  },
+  settings: defaultSettings,
   uid: "uid-1",
   updatedAt: null,
   username: null,
@@ -45,11 +41,11 @@ describe("createCloudProfileStore", () => {
     const loadProfile = vi.fn().mockResolvedValue(profile);
     const store = createCloudProfileStore({ loadProfile });
 
-    const promise = store.getState().loadForUser(authUser, "freestyle");
+    const promise = store.getState().loadForUser(authUser, defaultSettings);
     expect(store.getState().status).toBe("loading");
     await promise;
 
-    expect(loadProfile).toHaveBeenCalledWith(authUser, "freestyle");
+    expect(loadProfile).toHaveBeenCalledWith(authUser, defaultSettings);
     expect(store.getState()).toMatchObject({
       errorMessage: null,
       profile,
@@ -62,7 +58,13 @@ describe("createCloudProfileStore", () => {
       loadProfile: vi.fn().mockRejectedValue(new Error("permission denied")),
     });
 
-    await store.getState().loadForUser(authUser, "renju");
+    await store.getState().loadForUser(authUser, {
+      ...defaultSettings,
+      gameConfig: {
+        opening: "standard",
+        ruleset: "renju",
+      },
+    });
     expect(store.getState()).toMatchObject({
       errorMessage: "permission denied",
       status: "error",
@@ -81,25 +83,24 @@ describe("createCloudProfileStore", () => {
       loadProfile: vi.fn().mockResolvedValue(profile),
     });
 
-    await store.getState().loadForUser(authUser, "freestyle");
+    await store.getState().loadForUser(authUser, defaultSettings);
     store.getState().applyLocalPatch({
       displayName: "ByeByeBryan",
       settings: {
-        defaultRules: {
+        ...defaultSettings,
+        gameConfig: {
           opening: "standard",
           ruleset: "renju",
         },
-        practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
       },
     });
 
     expect(store.getState().profile).toMatchObject({
       displayName: "ByeByeBryan",
       settings: {
-        defaultRules: {
+        gameConfig: {
           ruleset: "renju",
         },
-        practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
       },
     });
   });
@@ -111,11 +112,11 @@ describe("createCloudProfileStore", () => {
     });
     const store = createCloudProfileStore({ resetProfile });
 
-    const promise = store.getState().resetForUser(authUser, "freestyle");
+    const promise = store.getState().resetForUser(authUser, defaultSettings);
     expect(store.getState().status).toBe("loading");
     await promise;
 
-    expect(resetProfile).toHaveBeenCalledWith(authUser, "freestyle");
+    expect(resetProfile).toHaveBeenCalledWith(authUser, defaultSettings);
     expect(store.getState()).toMatchObject({
       errorMessage: null,
       profile: {
@@ -130,7 +131,7 @@ describe("createCloudProfileStore", () => {
       resetProfile: vi.fn().mockRejectedValue(new Error("permission denied")),
     });
 
-    await expect(store.getState().resetForUser(authUser, "freestyle")).rejects.toThrow("permission denied");
+    await expect(store.getState().resetForUser(authUser, defaultSettings)).rejects.toThrow("permission denied");
     expect(store.getState()).toMatchObject({
       errorMessage: "permission denied",
       status: "error",
@@ -144,7 +145,7 @@ describe("createCloudProfileStore", () => {
       loadProfile: vi.fn().mockResolvedValue(profile),
     });
 
-    await store.getState().loadForUser(authUser, "freestyle");
+    await store.getState().loadForUser(authUser, defaultSettings);
     const promise = store.getState().deleteForUser(authUser);
     expect(store.getState().status).toBe("loading");
     await promise;

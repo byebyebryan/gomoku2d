@@ -9,9 +9,9 @@ import { createCloudSavedMatch } from "../cloud/cloud_match";
 import { emptyCloudMatchHistory, type CloudProfile } from "../cloud/cloud_profile";
 import { cloudProfileStore } from "../cloud/cloud_profile_store";
 import { cloudPromotionStore } from "../cloud/cloud_promotion_store";
-import { DEFAULT_PRACTICE_BOT_CONFIG } from "../core/practice_bot_config";
 import { createLocalSavedMatch } from "../match/saved_match";
 import { emptyLocalMatchHistory, localProfileStore, type LocalProfileSavedMatch } from "../profile/local_profile_store";
+import { createDefaultProfileSettings } from "../profile/profile_settings";
 
 import { ProfileRoute } from "./ProfileRoute";
 
@@ -22,6 +22,8 @@ const cloudUser: CloudAuthUser = {
   providerIds: ["google.com"],
   uid: "uid-1",
 };
+
+const defaultSettings = createDefaultProfileSettings();
 
 const cloudProfile: CloudProfile = {
   auth: {
@@ -37,13 +39,7 @@ const cloudProfile: CloudProfile = {
   displayName: "Bryan",
   matchHistory: emptyCloudMatchHistory(),
   resetAt: null,
-  settings: {
-    defaultRules: {
-      opening: "standard",
-      ruleset: "freestyle",
-    },
-    practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
-  },
+  settings: defaultSettings,
   uid: "uid-1",
   updatedAt: null,
   username: null,
@@ -81,7 +77,7 @@ function localSavedMatch(id: string, localProfileId: string, minuteOffset = 0): 
     ],
     savedAt: new Date(Date.UTC(2026, 3, 28, 1, minuteOffset, 0)).toISOString(),
     status: "draw",
-    variant: "freestyle",
+    ruleset: "freestyle",
   });
 }
 
@@ -99,7 +95,7 @@ describe("ProfileRoute cloud state", () => {
     localProfileStore.setState({
       matchHistory: emptyLocalMatchHistory(),
       profile: null,
-      settings: { practiceBot: DEFAULT_PRACTICE_BOT_CONFIG, preferredVariant: "freestyle" },
+      settings: defaultSettings,
     });
     cloudAuthStore.setState({
       errorMessage: null,
@@ -289,7 +285,7 @@ describe("ProfileRoute cloud state", () => {
       ],
       savedAt: "2026-04-28T01:00:00.000Z",
       status: "draw",
-      variant: "freestyle",
+      ruleset: "freestyle",
     });
 
     cloudAuthStore.setState({
@@ -541,7 +537,7 @@ describe("ProfileRoute cloud state", () => {
       ],
       savedAt: "2026-04-28T01:00:00.000Z",
       status: "black_won",
-      variant: "freestyle",
+      ruleset: "freestyle",
     });
     const cloudMatch = createCloudSavedMatch(cloudUser, localMatch);
 
@@ -613,7 +609,7 @@ describe("ProfileRoute cloud state", () => {
       ],
       savedAt: "2026-04-28T01:00:00.000Z",
       status: "draw",
-      variant: "freestyle",
+      ruleset: "freestyle",
     });
 
     localProfileStore.setState({ matchHistory: localMatchHistoryWith([localMatch]) });
@@ -649,7 +645,7 @@ describe("ProfileRoute cloud state", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reset" }));
 
     await waitFor(() => {
-      expect(resetForUser).toHaveBeenCalledWith(cloudUser, "freestyle");
+      expect(resetForUser).toHaveBeenCalledWith(cloudUser, defaultSettings);
     });
     expect(clearForUser).toHaveBeenCalledWith(cloudUser);
     expect(resetUserCache).toHaveBeenCalledWith("uid-1");
@@ -728,7 +724,7 @@ describe("ProfileRoute cloud state", () => {
       ],
       savedAt: "2026-04-28T01:00:00.000Z",
       status: "draw",
-      variant: "freestyle",
+      ruleset: "freestyle",
     });
 
     localProfileStore.setState({ matchHistory: localMatchHistoryWith([localMatch]) });
@@ -812,7 +808,7 @@ describe("ProfileRoute cloud state", () => {
           id: localProfile.id,
         }),
         resetAt: null,
-        settings: { practiceBot: DEFAULT_PRACTICE_BOT_CONFIG, preferredVariant: "freestyle" },
+        settings: defaultSettings,
         user: cloudUser,
       });
     }, { timeout: 3_000 });
@@ -859,7 +855,12 @@ describe("ProfileRoute cloud state", () => {
     await waitFor(() => {
       expect(screen.getByLabelText("Name")).toHaveValue("Later Name");
     });
-    localProfileStore.getState().updateSettings({ preferredVariant: "renju" });
+    localProfileStore.getState().updateSettings({
+      gameConfig: {
+        opening: "standard",
+        ruleset: "renju",
+      },
+    });
     await Promise.resolve();
 
     expect(promote).toHaveBeenCalledTimes(1);
@@ -915,7 +916,7 @@ describe("ProfileRoute cloud state", () => {
           id: localProfile.id,
         }),
         resetAt: null,
-        settings: { practiceBot: DEFAULT_PRACTICE_BOT_CONFIG, preferredVariant: "freestyle" },
+        settings: defaultSettings,
         user: cloudUser,
       });
     }, { timeout: 3_000 });

@@ -1,18 +1,18 @@
-import { savedMatchIsAfterReset, type SavedMatchV1 } from "../match/saved_match";
+import { savedMatchIsAfterReset, type SavedMatchV2 } from "../match/saved_match";
 
 type HistoryPriority = 1 | 3;
 
 export interface ResolveActiveHistoryInput {
-  cloudHistory: SavedMatchV1[];
+  cloudHistory: SavedMatchV2[];
   historyResetAt?: string | null;
-  localHistory: SavedMatchV1[];
+  localHistory: SavedMatchV2[];
 }
 
-function dedupeKey(match: SavedMatchV1): string {
+function dedupeKey(match: SavedMatchV2): string {
   return match.id;
 }
 
-function priority(match: SavedMatchV1): HistoryPriority {
+function priority(match: SavedMatchV2): HistoryPriority {
   if (match.source === "cloud_saved") {
     return 3;
   }
@@ -20,7 +20,7 @@ function priority(match: SavedMatchV1): HistoryPriority {
   return 1;
 }
 
-function shouldReplaceActiveMatch(existing: SavedMatchV1, candidate: SavedMatchV1): boolean {
+function shouldReplaceActiveMatch(existing: SavedMatchV2, candidate: SavedMatchV2): boolean {
   const existingPriority = priority(existing);
   const candidatePriority = priority(candidate);
 
@@ -31,8 +31,8 @@ function shouldReplaceActiveMatch(existing: SavedMatchV1, candidate: SavedMatchV
   return candidate.saved_at >= existing.saved_at;
 }
 
-export function resolveActiveHistory(input: ResolveActiveHistoryInput): SavedMatchV1[] {
-  const byKey = new Map<string, SavedMatchV1>();
+export function resolveActiveHistory(input: ResolveActiveHistoryInput): SavedMatchV2[] {
+  const byKey = new Map<string, SavedMatchV2>();
 
   for (const match of [...input.localHistory, ...input.cloudHistory]) {
     if (!savedMatchIsAfterReset(match, input.historyResetAt)) {

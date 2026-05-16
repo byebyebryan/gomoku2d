@@ -11,18 +11,19 @@ import {
   type CloudMatchSummaryV1,
 } from "../cloud/cloud_profile";
 import type { GameVariant } from "../core/bot_protocol";
-import {
-  DEFAULT_PRACTICE_BOT_CONFIG,
-  sanitizePracticeBotConfig,
-  type PracticeBotConfig,
-} from "../core/practice_bot_config";
+import type { BotConfig } from "../core/bot_config";
 import type { MatchMove, MatchPlayer } from "../game/types";
 import {
   createLocalSavedMatch,
-  isLocalSavedMatchV1,
-  type LocalSavedMatchV1,
+  isLocalSavedMatchV2,
+  type LocalSavedMatchV2,
   type SavedMatchStatus,
 } from "../match/saved_match";
+import {
+  createDefaultProfileSettings,
+  sanitizeProfileSettings,
+  type ProfileSettings,
+} from "./profile_settings";
 
 export interface LocalProfileStorage {
   getItem: (name: string) => string | null;
@@ -40,12 +41,9 @@ export interface LocalProfileIdentity {
   username: null;
 }
 
-export interface LocalProfileSettings {
-  practiceBot: PracticeBotConfig;
-  preferredVariant: GameVariant;
-}
+export type LocalProfileSettings = ProfileSettings;
 
-export type LocalProfileSavedMatch = LocalSavedMatchV1;
+export type LocalProfileSavedMatch = LocalSavedMatchV2;
 
 export interface LocalProfileMatchHistory {
   archivedStats: CloudArchivedMatchStatsV1;
@@ -57,7 +55,7 @@ export interface FinishedLocalMatchInput {
   mode: "bot";
   moves: MatchMove[];
   players: [MatchPlayer, MatchPlayer];
-  practiceBot?: PracticeBotConfig;
+  botConfig?: BotConfig;
   status: SavedMatchStatus;
   undoFloor?: number;
   variant: GameVariant;
@@ -79,16 +77,12 @@ export interface LocalProfileStoreOptions {
   storage?: LocalProfileStorage;
 }
 
-const LEGACY_STORAGE_KEY_V3 = "gomoku2d.local-profile.v3";
-const STORAGE_KEY = "gomoku2d.local-profile.v4";
-const STORAGE_SCHEMA_VERSION = 4;
+const STORAGE_KEY = "gomoku2d.local-profile.v5";
+const STORAGE_SCHEMA_VERSION = 5;
 export const DEFAULT_LOCAL_DISPLAY_NAME = "Guest";
 
 function createDefaultSettings(): LocalProfileSettings {
-  return {
-    practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
-    preferredVariant: "freestyle",
-  };
+  return createDefaultProfileSettings();
 }
 
 function nowIso(): string {
@@ -120,11 +114,7 @@ function isLocalProfileIdentity(value: unknown): value is LocalProfileIdentity {
 }
 
 function settingsFromRaw(value: unknown): LocalProfileSettings {
-  const candidate = value as Partial<LocalProfileSettings> | null;
-  return {
-    practiceBot: sanitizePracticeBotConfig(candidate?.practiceBot),
-    preferredVariant: candidate?.preferredVariant === "renju" ? "renju" : "freestyle",
-  };
+  return sanitizeProfileSettings(value);
 }
 
 function persistedStateFromRaw(raw: string | null): PersistedLocalProfileState | null {
@@ -203,7 +193,7 @@ function localSummaryMatchesFromRaw(value: unknown): CloudMatchSummaryV1[] {
 function localReplayMatchesFromRaw(value: unknown): LocalProfileSavedMatch[] {
   return Array.isArray(value)
     ? value
-      .filter(isLocalSavedMatchV1)
+      .filter(isLocalSavedMatchV2)
       .sort((left, right) => right.saved_at.localeCompare(left.saved_at))
       .slice(0, CLOUD_REPLAY_MATCHES_LIMIT)
     : [];
@@ -233,25 +223,17 @@ function validatedLocalProfileStorage(storage: LocalProfileStorage): LocalProfil
       }
 
       const raw = storage.getItem(name);
-      const legacyRaw = raw ? null : storage.getItem(LEGACY_STORAGE_KEY_V3);
       const persisted = persistedStateFromRaw(raw);
-      const legacyPersisted = persisted ? null : persistedStateFromRaw(legacyRaw);
-      const activePersisted = persisted ?? legacyPersisted;
-      if (!activePersisted) {
+      if (!persisted) {
         return null;
       }
 
       const sanitized: Pick<LocalProfileState, "matchHistory" | "profile" | "settings"> = {
-        matchHistory: matchHistoryFromPersisted(activePersisted),
-        profile: activePersisted.profile,
-        settings: activePersisted.settings,
+        matchHistory: matchHistoryFromPersisted(persisted),
+        profile: persisted.profile,
+        settings: persisted.settings,
       };
       const sanitizedRaw = JSON.stringify({ state: sanitized, version: STORAGE_SCHEMA_VERSION });
-
-      if (!raw && legacyPersisted) {
-        storage.setItem(STORAGE_KEY, sanitizedRaw);
-        storage.removeItem(LEGACY_STORAGE_KEY_V3);
-      }
 
       return sanitizedRaw;
     },
@@ -307,11 +289,11 @@ export function createLocalProfileStore(
             localProfileId: profile.id,
             moves: match.moves,
             players: match.players,
-            practiceBot: match.practiceBot ?? get().settings.practiceBot,
+            botConfig: match.botConfig ?? get().settings.botConfig,
             savedAt,
             status: match.status,
             undoFloor: match.undoFloor,
-            variant: match.variant,
+            ruleset: match.variant,
           });
 
           set((state) => ({

@@ -6,10 +6,10 @@ import { createStore } from "zustand/vanilla";
 import { Board } from "../components/Board/Board";
 import { cloudAuthStore } from "../cloud/auth_store";
 import {
-  practiceBotConfigSummary,
-  practiceBotPlayerName,
-  practiceBotLabel,
-} from "../core/practice_bot_config";
+  botConfigSummary,
+  botPlayerName,
+  botLabel,
+} from "../core/bot_config";
 import {
   clearLocalMatchLatestReplay,
   ensureLocalMatchSession,
@@ -18,7 +18,7 @@ import {
 import type { LocalMatchResumeSeed, LocalMatchState } from "../game/local_match_store";
 import type { CellPosition } from "../game/types";
 import { localProfileStore } from "../profile/local_profile_store";
-import { uiPreferencesStore, type BoardHintSettings } from "../profile/ui_preferences_store";
+import type { BoardHintSettings } from "../profile/profile_settings";
 import { variantLabel } from "../replay/local_replay";
 import { Icon } from "../ui/Icon";
 
@@ -35,7 +35,7 @@ const loadingMatchStore = createStore<LocalMatchState>(() => ({
   cells: loadingCells(),
   counterThreatMoves: [],
   currentPlayer: 1,
-  currentPracticeBot: { mode: "preset", preset: "normal", version: 1 },
+  currentBotConfig: { mode: "preset", preset: "normal", version: 1 },
   currentVariant: "freestyle",
   forbiddenMoves: [],
   imminentThreatMoves: [],
@@ -45,12 +45,12 @@ const loadingMatchStore = createStore<LocalMatchState>(() => ({
   placeHumanMove: () => false,
   players: [
     { kind: "human", name: "Guest", stone: "black" },
-    { kind: "bot", name: practiceBotPlayerName({ mode: "preset", preset: "normal", version: 1 }), stone: "white" },
+    { kind: "bot", name: botPlayerName({ mode: "preset", preset: "normal", version: 1 }), stone: "white" },
   ],
   playerClockMs: [0, 0],
-  selectedPracticeBot: { mode: "preset", preset: "normal", version: 1 },
+  selectedBotConfig: { mode: "preset", preset: "normal", version: 1 },
   selectedVariant: "freestyle",
-  selectPracticeBot: () => undefined,
+  selectBotConfig: () => undefined,
   selectVariant: () => undefined,
   startNewMatch: () => undefined,
   startNextRound: () => undefined,
@@ -107,16 +107,16 @@ function clockLabel(ms: number): string {
 
 function setupChanged(state: Pick<
   LocalMatchState,
-  "currentPracticeBot" | "currentVariant" | "selectedPracticeBot" | "selectedVariant"
+  "currentBotConfig" | "currentVariant" | "selectedBotConfig" | "selectedVariant"
 >): boolean {
   return state.currentVariant !== state.selectedVariant
-    || JSON.stringify(state.currentPracticeBot) !== JSON.stringify(state.selectedPracticeBot);
+    || JSON.stringify(state.currentBotConfig) !== JSON.stringify(state.selectedBotConfig);
 }
 
 function nextSetupLabel(
-  state: Pick<LocalMatchState, "selectedPracticeBot" | "selectedVariant">,
+  state: Pick<LocalMatchState, "selectedBotConfig" | "selectedVariant">,
 ): string {
-  return `${variantLabel(state.selectedVariant)} · ${practiceBotLabel(state.selectedPracticeBot)}`;
+  return `${variantLabel(state.selectedVariant)} · ${botLabel(state.selectedBotConfig)}`;
 }
 
 function visibleBoardHints(
@@ -148,12 +148,11 @@ export function LocalMatchRoute() {
   const profile = useStore(localProfileStore, (snapshot) => snapshot.profile);
   const matchStore = useStore(localMatchSessionStore, (snapshot) => snapshot.matchStore);
   const latestReplayId = useStore(localMatchSessionStore, (snapshot) => snapshot.latestReplayId);
+  const settings = useStore(localProfileStore, (snapshot) => snapshot.settings);
   const state = useStore(matchStore ?? loadingMatchStore, (snapshot) => snapshot);
-  const boardHints = useStore(uiPreferencesStore, (snapshot) => snapshot.boardHints);
-  const touchControl = useStore(uiPreferencesStore, (snapshot) => snapshot.touchControl);
   const resumeSeed = (location.state as { resumeSeed?: LocalMatchResumeSeed } | null)?.resumeSeed ?? null;
   const resumeSeedKey = resumeSeed ? JSON.stringify(resumeSeed) : null;
-  const visibleHints = visibleBoardHints(state, boardHints);
+  const visibleHints = visibleBoardHints(state, settings.boardHints);
 
   useEffect(() => {
     localProfileStore.getState().ensureLocalProfile();
@@ -316,7 +315,7 @@ export function LocalMatchRoute() {
                 previous === canPlace ? previous : canPlace
               ));
             }}
-            touchControlMode={compactTouchMode ? touchControl : "none"}
+            touchControlMode={compactTouchMode ? settings.touchControl : "none"}
             touchCandidateResetVersion={touchCandidateResetVersion}
             showSequenceNumbers
             status={state.status}
@@ -348,8 +347,8 @@ export function LocalMatchRoute() {
               <div className={styles.metaRow}>
                 <span className={styles.metaLabel}>Bot</span>
                 <span className={`${styles.metaValue} ${styles.botValue}`} data-testid="match-bot">
-                  <span>{practiceBotLabel(state.currentPracticeBot)}</span>
-                  <span className={styles.botSpec}>{practiceBotConfigSummary(state.currentPracticeBot)}</span>
+                  <span>{botLabel(state.currentBotConfig)}</span>
+                  <span className={styles.botSpec}>{botConfigSummary(state.currentBotConfig)}</span>
                 </span>
               </div>
               {setupChanged(state) ? (

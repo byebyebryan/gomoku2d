@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import type { CloudAuthUser } from "./auth_store";
-import { DEFAULT_PRACTICE_BOT_CONFIG } from "../core/practice_bot_config";
+import { DEFAULT_BOT_CONFIG } from "../core/bot_config";
+import { createDefaultProfileSettings, type ProfileSettings } from "../profile/profile_settings";
 import {
   CLOUD_PROFILE_SCHEMA_VERSION,
   CLOUD_REPLAY_MATCHES_LIMIT,
@@ -27,6 +28,31 @@ const authUser: CloudAuthUser = {
   uid: "uid-1",
 };
 
+function settingsFor(ruleset: "freestyle" | "renju" = "freestyle"): ProfileSettings {
+  return {
+    ...createDefaultProfileSettings(),
+    gameConfig: {
+      opening: "standard",
+      ruleset,
+    },
+  };
+}
+
+function settingsDocumentFor(ruleset: "freestyle" | "renju" = "freestyle") {
+  return {
+    board_hints: {
+      immediate: "win_threat",
+      imminent: "threat_counter",
+    },
+    bot_config: DEFAULT_BOT_CONFIG,
+    game_config: {
+      opening: "standard",
+      ruleset,
+    },
+    touch_control: "touchpad",
+  };
+}
+
 function emptyMatchHistoryDocument() {
   return {
     archived_stats: emptyCloudArchivedMatchStats(),
@@ -46,14 +72,14 @@ function localMatch(id: string, savedAt: string) {
     ],
     savedAt,
     status: "draw",
-    variant: "freestyle",
+    ruleset: "freestyle",
   });
 }
 
 describe("cloudProfileFromDocument", () => {
   it("maps existing Firestore profile data and preserves app-owned fields", () => {
     expect(
-      cloudProfileFromDocument(authUser, "freestyle", {
+      cloudProfileFromDocument(authUser, settingsFor("freestyle"), {
         auth: {
           providers: [
             {
@@ -70,12 +96,7 @@ describe("cloudProfileFromDocument", () => {
         },
         display_name: "ByeByeBryan",
         match_history: emptyMatchHistoryDocument(),
-        settings: {
-          default_rules: {
-            opening: "standard",
-            ruleset: "renju",
-          },
-        },
+        settings: settingsDocumentFor("renju"),
         username: "byebyebryan",
       }),
     ).toEqual({
@@ -97,13 +118,7 @@ describe("cloudProfileFromDocument", () => {
       displayName: "ByeByeBryan",
       matchHistory: emptyCloudMatchHistory(),
       resetAt: null,
-      settings: {
-        defaultRules: {
-          opening: "standard",
-          ruleset: "renju",
-        },
-        practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
-      },
+      settings: settingsFor("renju"),
       uid: "uid-1",
       updatedAt: null,
       username: "byebyebryan",
@@ -112,10 +127,11 @@ describe("cloudProfileFromDocument", () => {
 
   it("falls back to auth user data for missing or invalid fields", () => {
     expect(
-      cloudProfileFromDocument(authUser, "freestyle", {
+      cloudProfileFromDocument(authUser, settingsFor("freestyle"), {
         display_name: "",
         settings: {
-          default_rules: {
+          ...settingsDocumentFor("freestyle"),
+          game_config: {
             opening: "standard",
             ruleset: "unknown",
           },
@@ -134,20 +150,14 @@ describe("cloudProfileFromDocument", () => {
       displayName: authUser.displayName,
       matchHistory: emptyCloudMatchHistory(),
       resetAt: null,
-      settings: {
-        defaultRules: {
-          opening: "standard",
-          ruleset: "freestyle",
-        },
-        practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
-      },
+      settings: settingsFor("freestyle"),
       username: null,
     });
   });
 
   it("maps Firestore reset timestamps to stable ISO strings", () => {
     expect(
-      cloudProfileFromDocument(authUser, "freestyle", {
+      cloudProfileFromDocument(authUser, settingsFor("freestyle"), {
         reset_at: {
           nanoseconds: 123_000_000,
           seconds: 1_777_363_200,
@@ -161,7 +171,7 @@ describe("cloudProfileFromDocument", () => {
 
 describe("cloud profile writes", () => {
   it("creates a complete profile document for first sign-in", () => {
-    expect(newCloudProfileWrite(authUser, "renju")).toMatchObject({
+    expect(newCloudProfileWrite(authUser, settingsFor("renju"))).toMatchObject({
       auth: {
         providers: [
           {
@@ -175,13 +185,7 @@ describe("cloud profile writes", () => {
       match_history: emptyMatchHistoryDocument(),
       reset_at: null,
       schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
-      settings: {
-        default_rules: {
-          opening: "standard",
-          ruleset: "renju",
-        },
-        practice_bot: DEFAULT_PRACTICE_BOT_CONFIG,
-      },
+      settings: settingsDocumentFor("renju"),
       uid: "uid-1",
       username: null,
     });
@@ -201,13 +205,7 @@ describe("cloud profile writes", () => {
       match_history: emptyMatchHistoryDocument(),
       reset_at: null,
       schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
-      settings: {
-        default_rules: {
-          opening: "standard",
-          ruleset: "freestyle",
-        },
-        practice_bot: DEFAULT_PRACTICE_BOT_CONFIG,
-      },
+      settings: settingsDocumentFor("freestyle"),
       uid: "uid-1",
     });
     expect(existingCloudProfileUpdate(authUser)).not.toHaveProperty("display_name");
@@ -230,13 +228,7 @@ describe("cloud profile writes", () => {
         match_history: emptyMatchHistoryDocument(),
         reset_at: null,
         schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
-        settings: {
-          default_rules: {
-            opening: "standard",
-            ruleset: "freestyle",
-          },
-          practice_bot: DEFAULT_PRACTICE_BOT_CONFIG,
-        },
+        settings: settingsDocumentFor("freestyle"),
         uid: "uid-1",
       }),
     ).toBeNull();
@@ -257,15 +249,9 @@ describe("cloud profile writes", () => {
         match_history: emptyMatchHistoryDocument(),
         reset_at: null,
         schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
-        settings: {
-          default_rules: {
-            opening: "standard",
-            ruleset: "freestyle",
-          },
-          practice_bot: DEFAULT_PRACTICE_BOT_CONFIG,
-        },
+        settings: settingsDocumentFor("freestyle"),
         uid: "uid-1",
-      }, "renju"),
+      }, settingsFor("renju")),
     ).toBeNull();
   });
 
@@ -285,7 +271,8 @@ describe("cloud profile writes", () => {
         reset_at: null,
         schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
         settings: {
-          default_rules: {
+          ...settingsDocumentFor("renju"),
+          game_config: {
             opening: "legacy",
             ruleset: "renju",
           },
@@ -294,11 +281,11 @@ describe("cloud profile writes", () => {
       }),
     ).toMatchObject({
       settings: {
-        default_rules: {
+        game_config: {
           opening: "standard",
-          ruleset: "renju",
+          ruleset: "freestyle",
         },
-        practice_bot: DEFAULT_PRACTICE_BOT_CONFIG,
+        bot_config: DEFAULT_BOT_CONFIG,
       },
     });
   });
@@ -317,24 +304,12 @@ describe("cloud profile writes", () => {
       match_history: emptyMatchHistoryDocument(),
       reset_at: null,
       schema_version: 3,
-      settings: {
-        default_rules: {
-          opening: "standard",
-          ruleset: "renju",
-        },
-      },
+      settings: settingsDocumentFor("renju"),
       uid: "uid-1",
     };
 
     expect(existingCloudProfileUpdate(authUser, legacyDocument)).toMatchObject({
       schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
-      settings: {
-        default_rules: {
-          opening: "standard",
-          ruleset: "renju",
-        },
-        practice_bot: DEFAULT_PRACTICE_BOT_CONFIG,
-      },
     });
     expect(existingCloudProfileLoadUpdate(authUser, legacyDocument)).toBeNull();
   });
@@ -353,13 +328,7 @@ describe("cloud profile writes", () => {
       match_history: emptyMatchHistoryDocument(),
       reset_at: null,
       schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
-      settings: {
-        default_rules: {
-          opening: "standard",
-          ruleset: "freestyle",
-        },
-        practice_bot: DEFAULT_PRACTICE_BOT_CONFIG,
-      },
+      settings: settingsDocumentFor("freestyle"),
       uid: "uid-1",
     });
 
@@ -376,7 +345,7 @@ describe("cloud profile writes", () => {
   });
 
   it("resets profile-owned fields and writes a history reset barrier", () => {
-    expect(resetCloudProfileUpdate(authUser, "freestyle")).toMatchObject({
+    expect(resetCloudProfileUpdate(authUser, settingsFor("freestyle"))).toMatchObject({
       auth: {
         providers: [
           {
@@ -390,16 +359,16 @@ describe("cloud profile writes", () => {
       match_history: emptyMatchHistoryDocument(),
       schema_version: CLOUD_PROFILE_SCHEMA_VERSION,
       settings: {
-        default_rules: {
+        game_config: {
           opening: "standard",
           ruleset: "freestyle",
         },
       },
       uid: "uid-1",
     });
-    expect(resetCloudProfileUpdate(authUser, "freestyle")).toHaveProperty("reset_at");
-    expect(resetCloudProfileUpdate(authUser, "freestyle")).not.toHaveProperty("email");
-    expect(resetCloudProfileUpdate(authUser, "freestyle")).not.toHaveProperty("username");
+    expect(resetCloudProfileUpdate(authUser, settingsFor("freestyle"))).toHaveProperty("reset_at");
+    expect(resetCloudProfileUpdate(authUser, settingsFor("freestyle"))).not.toHaveProperty("email");
+    expect(resetCloudProfileUpdate(authUser, settingsFor("freestyle"))).not.toHaveProperty("username");
   });
 
   it("uses a 5-minute sync interval for settled profile snapshots", () => {

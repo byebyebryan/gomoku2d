@@ -1,26 +1,22 @@
 import { BOARD_SIZE } from "../board/constants";
 import type { GameVariant } from "../core/bot_protocol";
 import {
-  DEFAULT_PRACTICE_BOT_CONFIG,
-  isPracticeBotConfig,
-  labSpecForPracticeBot,
-  practiceBotLabel,
-  practiceBotPlayerName,
-  sanitizePracticeBotConfig,
-  type PracticeBotConfig,
-} from "../core/practice_bot_config";
+  DEFAULT_BOT_CONFIG,
+  botLabel,
+  botPlayerName,
+  isBotConfig,
+  labSpecForBot,
+  sanitizeBotConfig,
+  type BotConfig,
+} from "../core/bot_config";
 import type { CellPosition, MatchMove, MatchPlayer } from "../game/types";
 
-export const SAVED_MATCH_SCHEMA_VERSION = 1;
+export const SAVED_MATCH_SCHEMA_VERSION = 2;
 export const SAVED_MATCH_BOARD_SIZE = BOARD_SIZE;
-export const PRACTICE_BOT_ID = "practice_bot";
-export const PRACTICE_BOT_VERSION = 2;
-export const PRACTICE_BOT_ENGINE = "search_bot";
-export const PRACTICE_BOT_CONFIG_VERSION = 2;
-export const LEGACY_PRACTICE_BOT_VERSION = 1;
-export const LEGACY_PRACTICE_BOT_ENGINE = "baseline_search";
-export const LEGACY_PRACTICE_BOT_CONFIG_VERSION = 1;
-export const PRACTICE_BOT_DEPTH = 3;
+export const BOT_ID = "bot";
+export const BOT_VERSION = 1;
+export const BOT_ENGINE = "search_bot";
+export const BOT_CONFIG_VERSION = 1;
 
 export type SavedMatchSource = "local_history" | "cloud_saved";
 export type SavedMatchTrust = "local_only" | "client_uploaded" | "server_verified";
@@ -28,28 +24,15 @@ export type SavedMatchKind = "local_vs_bot" | "local_pvp" | "online_pvp" | "puzz
 export type SavedMatchStatus = "black_won" | "white_won" | "draw";
 export type SavedMatchSide = "black" | "white";
 
-export interface SavedMatchLegacyBotIdentity {
-  config: {
-    depth: typeof PRACTICE_BOT_DEPTH;
-    kind: "baseline";
-  };
-  config_version: typeof LEGACY_PRACTICE_BOT_CONFIG_VERSION;
-  engine: typeof LEGACY_PRACTICE_BOT_ENGINE;
-  id: typeof PRACTICE_BOT_ID;
-  version: typeof LEGACY_PRACTICE_BOT_VERSION;
-}
-
-export interface SavedMatchPracticeBotIdentity {
-  config: PracticeBotConfig;
-  config_version: typeof PRACTICE_BOT_CONFIG_VERSION;
-  engine: typeof PRACTICE_BOT_ENGINE;
-  id: typeof PRACTICE_BOT_ID;
+export interface SavedMatchBotIdentity {
+  config: BotConfig;
+  config_version: typeof BOT_CONFIG_VERSION;
+  engine: typeof BOT_ENGINE;
+  id: typeof BOT_ID;
   label: string;
   lab_spec: string;
-  version: typeof PRACTICE_BOT_VERSION;
+  version: typeof BOT_VERSION;
 }
-
-export type SavedMatchBotIdentity = SavedMatchLegacyBotIdentity | SavedMatchPracticeBotIdentity;
 
 export interface SavedMatchPlayer {
   bot: SavedMatchBotIdentity | null;
@@ -59,7 +42,7 @@ export interface SavedMatchPlayer {
   profile_uid: string | null;
 }
 
-export interface SavedMatchV1 {
+export interface SavedMatchV2 {
   board_size: typeof SAVED_MATCH_BOARD_SIZE;
   id: string;
   match_kind: SavedMatchKind;
@@ -73,10 +56,10 @@ export interface SavedMatchV1 {
   status: SavedMatchStatus;
   trust: SavedMatchTrust;
   undo_floor: number;
-  variant: GameVariant;
+  ruleset: GameVariant;
 }
 
-export type LocalSavedMatchV1 = SavedMatchV1 & {
+export type LocalSavedMatchV2 = SavedMatchV2 & {
   source: "local_history";
   trust: "local_only";
 };
@@ -89,8 +72,8 @@ export interface CreateLocalSavedMatchInput {
   savedAt: string;
   status: SavedMatchStatus;
   undoFloor?: number;
-  practiceBot?: PracticeBotConfig;
-  variant: GameVariant;
+  botConfig?: BotConfig;
+  ruleset: GameVariant;
 }
 
 function isString(value: unknown): value is string {
@@ -122,37 +105,20 @@ function isSavedMatchStatus(value: unknown): value is SavedMatchStatus {
   return value === "black_won" || value === "white_won" || value === "draw";
 }
 
-function isSavedMatchVariant(value: unknown): value is GameVariant {
+function isSavedMatchRuleset(value: unknown): value is GameVariant {
   return value === "freestyle" || value === "renju";
 }
 
 function isSavedMatchBotIdentity(value: unknown): value is SavedMatchBotIdentity {
   const candidate = value as Partial<SavedMatchBotIdentity> | null;
-  const legacyConfig = candidate?.config as Partial<SavedMatchLegacyBotIdentity["config"]> | undefined;
-
-  const legacy = (
-    candidate !== null
-    && typeof candidate === "object"
-    && candidate.id === PRACTICE_BOT_ID
-    && candidate.version === LEGACY_PRACTICE_BOT_VERSION
-    && candidate.engine === LEGACY_PRACTICE_BOT_ENGINE
-    && candidate.config_version === LEGACY_PRACTICE_BOT_CONFIG_VERSION
-    && legacyConfig?.kind === "baseline"
-    && legacyConfig.depth === PRACTICE_BOT_DEPTH
-  );
-  if (legacy) {
-    return true;
-  }
-
-  const practiceConfig = candidate?.config;
   return (
     candidate !== null
     && typeof candidate === "object"
-    && candidate.id === PRACTICE_BOT_ID
-    && candidate.version === PRACTICE_BOT_VERSION
-    && candidate.engine === PRACTICE_BOT_ENGINE
-    && candidate.config_version === PRACTICE_BOT_CONFIG_VERSION
-    && isPracticeBotConfig(practiceConfig)
+    && candidate.id === BOT_ID
+    && candidate.version === BOT_VERSION
+    && candidate.engine === BOT_ENGINE
+    && candidate.config_version === BOT_CONFIG_VERSION
+    && isBotConfig(candidate.config)
     && isString(candidate.label)
     && candidate.label.trim().length > 0
     && isString(candidate.lab_spec)
@@ -189,8 +155,8 @@ function isValidMoveCell(cell: unknown): cell is number {
   );
 }
 
-export function isSavedMatchV1(value: unknown): value is SavedMatchV1 {
-  const candidate = value as Partial<SavedMatchV1> | null;
+export function isSavedMatchV2(value: unknown): value is SavedMatchV2 {
+  const candidate = value as Partial<SavedMatchV2> | null;
   return (
     candidate !== null
     && typeof candidate === "object"
@@ -214,27 +180,27 @@ export function isSavedMatchV1(value: unknown): value is SavedMatchV1 {
     && Number.isInteger(candidate.undo_floor)
     && candidate.undo_floor >= 0
     && candidate.undo_floor <= candidate.move_count
-    && isSavedMatchVariant(candidate.variant)
+    && isSavedMatchRuleset(candidate.ruleset)
   );
 }
 
-export function isLocalSavedMatchV1(value: unknown): value is LocalSavedMatchV1 {
-  return isSavedMatchV1(value) && value.source === "local_history" && value.trust === "local_only";
+export function isLocalSavedMatchV2(value: unknown): value is LocalSavedMatchV2 {
+  return isSavedMatchV2(value) && value.source === "local_history" && value.trust === "local_only";
 }
 
-export function practiceBotIdentity(
-  practiceBot: PracticeBotConfig = DEFAULT_PRACTICE_BOT_CONFIG,
-): SavedMatchPracticeBotIdentity {
-  const config = sanitizePracticeBotConfig(practiceBot);
+export function botConfigIdentity(
+  botConfig: BotConfig = DEFAULT_BOT_CONFIG,
+): SavedMatchBotIdentity {
+  const config = sanitizeBotConfig(botConfig);
 
   return {
     config,
-    config_version: PRACTICE_BOT_CONFIG_VERSION,
-    engine: PRACTICE_BOT_ENGINE,
-    id: PRACTICE_BOT_ID,
-    label: practiceBotLabel(config),
-    lab_spec: labSpecForPracticeBot(config),
-    version: PRACTICE_BOT_VERSION,
+    config_version: BOT_CONFIG_VERSION,
+    engine: BOT_ENGINE,
+    id: BOT_ID,
+    label: botLabel(config),
+    lab_spec: labSpecForBot(config),
+    version: BOT_VERSION,
   };
 }
 
@@ -294,7 +260,7 @@ export function movesFromMoveCells(moveCells: number[]): MatchMove[] {
 function savedMatchPlayer(
   player: MatchPlayer,
   localProfileId: string,
-  practiceBot: PracticeBotConfig,
+  botConfig: BotConfig,
 ): SavedMatchPlayer {
   if (player.kind === "human") {
     return {
@@ -307,8 +273,8 @@ function savedMatchPlayer(
   }
 
   return {
-    bot: practiceBotIdentity(practiceBot),
-    display_name: practiceBotPlayerName(practiceBot),
+    bot: botConfigIdentity(botConfig),
+    display_name: botPlayerName(botConfig),
     kind: "bot",
     local_profile_id: null,
     profile_uid: null,
@@ -318,8 +284,8 @@ function savedMatchPlayer(
 function sidePlayers(
   players: [MatchPlayer, MatchPlayer],
   localProfileId: string,
-  practiceBot: PracticeBotConfig,
-): Pick<SavedMatchV1, "player_black" | "player_white"> {
+  botConfig: BotConfig,
+): Pick<SavedMatchV2, "player_black" | "player_white"> {
   const black = players.find((player) => sideForPlayer(player) === "black");
   const white = players.find((player) => sideForPlayer(player) === "white");
 
@@ -328,16 +294,16 @@ function sidePlayers(
   }
 
   return {
-    player_black: savedMatchPlayer(black, localProfileId, practiceBot),
-    player_white: savedMatchPlayer(white, localProfileId, practiceBot),
+    player_black: savedMatchPlayer(black, localProfileId, botConfig),
+    player_white: savedMatchPlayer(white, localProfileId, botConfig),
   };
 }
 
-export function createLocalSavedMatch(input: CreateLocalSavedMatchInput): LocalSavedMatchV1 {
+export function createLocalSavedMatch(input: CreateLocalSavedMatchInput): LocalSavedMatchV2 {
   const players = sidePlayers(
     input.players,
     input.localProfileId,
-    input.practiceBot ?? DEFAULT_PRACTICE_BOT_CONFIG,
+    input.botConfig ?? DEFAULT_BOT_CONFIG,
   );
   const moveCells = encodeMoveCells(input.moves);
 
@@ -355,16 +321,16 @@ export function createLocalSavedMatch(input: CreateLocalSavedMatchInput): LocalS
     status: input.status,
     trust: "local_only",
     undo_floor: normalizeUndoFloor(input.undoFloor, moveCells.length),
-    variant: input.variant,
+    ruleset: input.ruleset,
   };
 }
 
-export function savedMatchPlayerForSide(match: SavedMatchV1, side: SavedMatchSide): SavedMatchPlayer {
+export function savedMatchPlayerForSide(match: SavedMatchV2, side: SavedMatchSide): SavedMatchPlayer {
   return side === "black" ? match.player_black : match.player_white;
 }
 
 export function savedMatchPlayers(
-  match: SavedMatchV1,
+  match: SavedMatchV2,
 ): Array<{ player: SavedMatchPlayer; side: SavedMatchSide }> {
   return [
     { player: match.player_black, side: "black" },
@@ -373,7 +339,7 @@ export function savedMatchPlayers(
 }
 
 export function savedMatchLocalSide(
-  match: SavedMatchV1,
+  match: SavedMatchV2,
   localProfileId: string | null | undefined,
 ): SavedMatchSide | null {
   if (!localProfileId) {
@@ -397,7 +363,7 @@ export function savedMatchLocalSide(
  * local_profile_id (works for local-only records).
  */
 export function matchUserSide(
-  match: SavedMatchV1,
+  match: SavedMatchV2,
   opts: { localProfileId?: string | null; profileUid?: string | null },
 ): SavedMatchSide | null {
   const { localProfileId, profileUid } = opts;
@@ -414,7 +380,7 @@ export function matchUserSide(
   return savedMatchLocalSide(match, localProfileId);
 }
 
-export function savedMatchWinningSide(match: Pick<SavedMatchV1, "status">): SavedMatchSide | null {
+export function savedMatchWinningSide(match: Pick<SavedMatchV2, "status">): SavedMatchSide | null {
   if (match.status === "black_won") {
     return "black";
   }
@@ -427,7 +393,7 @@ export function savedMatchWinningSide(match: Pick<SavedMatchV1, "status">): Save
 }
 
 export function savedMatchIsAfterReset(
-  match: Pick<SavedMatchV1, "saved_at">,
+  match: Pick<SavedMatchV2, "saved_at">,
   historyResetAt: string | null | undefined,
 ): boolean {
   return !historyResetAt || match.saved_at > historyResetAt;

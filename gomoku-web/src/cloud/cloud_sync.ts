@@ -1,7 +1,7 @@
 import type { CloudAuthUser } from "./auth_store";
 import {
   cloudProfileSyncDue,
-  cloudSettingsForVariant,
+  cloudSettingsFromProfileSettings,
   cloudMatchHistoryIsEmpty,
   mergeCloudArchivedMatchStats,
   mergeCloudMatchSummaryState,
@@ -26,7 +26,7 @@ export async function flushCloudProfileSync(
   let cloudState = cloudProfileStore.getState();
 
   if (cloudState.profile?.uid !== user.uid || cloudState.status !== "ready") {
-    await cloudState.loadForUser(user, settings.preferredVariant);
+    await cloudState.loadForUser(user, settings);
     cloudState = cloudProfileStore.getState();
   }
 
@@ -66,7 +66,7 @@ export async function flushCloudProfileSync(
     replayMatches,
     summaryMatches: summaryState.summaryMatches,
   };
-  const nextSettings = cloudSettingsForVariant(settings.preferredVariant, settings.practiceBot);
+  const nextSettings = cloudSettingsFromProfileSettings(settings);
   const historyChanged = JSON.stringify(nextMatchHistory) !== JSON.stringify(cloudState.profile.matchHistory);
   const profileChanged =
     JSON.stringify(cloudState.profile.settings) !== JSON.stringify(nextSettings)

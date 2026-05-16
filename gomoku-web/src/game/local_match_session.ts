@@ -21,7 +21,7 @@ interface LocalMatchSessionState {
 export interface LocalMatchSessionOptions
   extends Omit<
     LocalMatchStoreOptions,
-    "humanDisplayName" | "onMatchFinished" | "practiceBot" | "resumeState" | "variant"
+    "humanDisplayName" | "onMatchFinished" | "botConfig" | "resumeState" | "variant"
   > {
   resumeState?: LocalMatchResumeSeed;
 }
@@ -65,9 +65,9 @@ function createSessionMatchStore(options: LocalMatchSessionOptions = {}): StoreA
 
       localMatchSessionStore.setState({ latestReplayId: replayId });
     },
-    practiceBot: settings.practiceBot,
+    botConfig: settings.botConfig,
     resumeState: options.resumeState,
-    variant: options.resumeState?.variant ?? settings.preferredVariant,
+    variant: options.resumeState?.variant ?? settings.gameConfig.ruleset,
   });
 }
 
@@ -104,8 +104,8 @@ export function applySavedLocalMatchSetup(): void {
   }
 
   const settings = localProfileStore.getState().settings;
-  matchStore.getState().selectVariant(settings.preferredVariant);
-  matchStore.getState().selectPracticeBot(settings.practiceBot);
+  matchStore.getState().selectVariant(settings.gameConfig.ruleset);
+  matchStore.getState().selectBotConfig(settings.botConfig);
 }
 
 export function startLocalMatchWithSavedSetup(): StoreApi<LocalMatchState> {

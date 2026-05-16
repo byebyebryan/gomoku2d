@@ -3,16 +3,16 @@ import { Link, useNavigate } from "react-router-dom";
 import { useStore } from "zustand";
 
 import {
-  customConfigForPracticeBot,
-  isPracticeBotWidthAllowed,
-  practiceBotConfigSummary,
-  practiceBotLabel,
-  practiceBotPlayerName,
-  type PracticeBotConfig,
-  type PracticeBotDepth,
-  type PracticeBotPresetId,
-  type PracticeBotWidth,
-} from "../core/practice_bot_config";
+  customConfigForBot,
+  isBotWidthAllowed,
+  botConfigSummary,
+  botLabel,
+  botPlayerName,
+  type BotConfig,
+  type BotDepth,
+  type BotPresetId,
+  type BotWidth,
+} from "../core/bot_config";
 import {
   applySavedLocalMatchSetup,
   localMatchSessionStore,
@@ -20,27 +20,26 @@ import {
 } from "../game/local_match_session";
 import { localProfileStore } from "../profile/local_profile_store";
 import {
-  uiPreferencesStore,
   type ImmediateHintMode,
   type ImminentHintMode,
-} from "../profile/ui_preferences_store";
+} from "../profile/profile_settings";
 import { variantLabel } from "../replay/local_replay";
 import { Icon } from "../ui/Icon";
 
 import styles from "./SettingsRoute.module.css";
 
-const PRESET_IDS: PracticeBotPresetId[] = ["easy", "normal", "hard"];
-const DEPTHS: PracticeBotDepth[] = [1, 3, 5, 7];
-const WIDTHS: PracticeBotWidth[] = [8, 16, "none"];
+const PRESET_IDS: BotPresetId[] = ["easy", "normal", "hard"];
+const DEPTHS: BotDepth[] = [1, 3, 5, 7];
+const WIDTHS: BotWidth[] = [8, 16, "full"];
 const COMPACT_SETTINGS_QUERY = "(max-width: 760px)";
 const MOBILE_TOUCH_QUERY =
   "(max-width: 720px) and (orientation: portrait) and (hover: none) and (pointer: coarse)";
 
-function setupSummary(config: PracticeBotConfig): string {
-  return practiceBotConfigSummary(config);
+function setupSummary(config: BotConfig): string {
+  return botConfigSummary(config);
 }
 
-function settingsEqual(left: PracticeBotConfig, right: PracticeBotConfig): boolean {
+function settingsEqual(left: BotConfig, right: BotConfig): boolean {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
@@ -96,18 +95,16 @@ export function SettingsRoute() {
   const [compactSettingsLayout, setCompactSettingsLayout] = useState(false);
   const [showTouchControls, setShowTouchControls] = useState(false);
   const settings = useStore(localProfileStore, (state) => state.settings);
-  const boardHints = useStore(uiPreferencesStore, (state) => state.boardHints);
-  const touchControl = useStore(uiPreferencesStore, (state) => state.touchControl);
   const matchStore = useStore(localMatchSessionStore, (state) => state.matchStore);
   const activeMatch = matchStore?.getState() ?? null;
-  const custom = customConfigForPracticeBot(settings.practiceBot);
-  const currentBotLabel = practiceBotPlayerName(settings.practiceBot);
-  const currentVariantLabel = variantLabel(settings.preferredVariant);
+  const custom = customConfigForBot(settings.botConfig);
+  const currentBotLabel = botPlayerName(settings.botConfig);
+  const currentVariantLabel = variantLabel(settings.gameConfig.ruleset);
   const activeSetupDiffers = Boolean(
     activeMatch
       && (
-        activeMatch.currentVariant !== settings.preferredVariant
-        || !settingsEqual(activeMatch.currentPracticeBot, settings.practiceBot)
+        activeMatch.currentVariant !== settings.gameConfig.ruleset
+        || !settingsEqual(activeMatch.currentBotConfig, settings.botConfig)
       ),
   );
 
@@ -140,17 +137,23 @@ export function SettingsRoute() {
     applySavedLocalMatchSetup();
   };
 
-  const updateBot = (practiceBot: PracticeBotConfig) => {
-    updateSetup({ practiceBot });
+  const updateBot = (botConfig: BotConfig) => {
+    updateSetup({ botConfig });
   };
 
-  const updateCustomBot = (patch: Partial<Omit<ReturnType<typeof customConfigForPracticeBot>, "mode" | "version">>) => {
+  const updateCustomBot = (patch: Partial<Omit<ReturnType<typeof customConfigForBot>, "mode" | "version">>) => {
     updateBot({
       ...custom,
       ...patch,
       mode: "custom",
       version: 1,
     });
+  };
+  const updateGameRuleset = (ruleset: typeof settings.gameConfig.ruleset) => {
+    updateSetup({ gameConfig: { ...settings.gameConfig, ruleset } });
+  };
+  const updateBoardHints = (boardHints: Partial<typeof settings.boardHints>) => {
+    updateSetup({ boardHints: { ...settings.boardHints, ...boardHints } });
   };
   const showCurrentSummary = !compactSettingsLayout;
   const showSummaryPanel = showCurrentSummary || activeSetupDiffers;
@@ -192,7 +195,7 @@ export function SettingsRoute() {
                   <section className={styles.summaryGroup}>
                     <p className={styles.summaryKicker}>Bot</p>
                     <h2 className={styles.summaryTitle}>{currentBotLabel}</h2>
-                    <p className={styles.summaryText}>{setupSummary(settings.practiceBot)}</p>
+                    <p className={styles.summaryText}>{setupSummary(settings.botConfig)}</p>
                   </section>
                 </div>
               </div>
@@ -237,9 +240,9 @@ export function SettingsRoute() {
               <div className={styles.segmentGrid}>
                 {(["freestyle", "renju"] as const).map((variant) => (
                   <button
-                    className={settings.preferredVariant === variant ? "uiSegment uiSegmentActive" : "uiSegment"}
+                    className={settings.gameConfig.ruleset === variant ? "uiSegment uiSegmentActive" : "uiSegment"}
                     key={variant}
-                    onClick={() => updateSetup({ preferredVariant: variant })}
+                    onClick={() => updateGameRuleset(variant)}
                     type="button"
                   >
                     {variantLabel(variant)}
@@ -264,15 +267,15 @@ export function SettingsRoute() {
                   </div>
                   <div className={styles.segmentGrid}>
                     <button
-                      className={touchControl === "pointer" ? "uiSegment uiSegmentActive" : "uiSegment"}
-                      onClick={() => uiPreferencesStore.getState().setTouchControl("pointer")}
+                      className={settings.touchControl === "pointer" ? "uiSegment uiSegmentActive" : "uiSegment"}
+                      onClick={() => updateSetup({ touchControl: "pointer" })}
                       type="button"
                     >
                       Pointer
                     </button>
                     <button
-                      className={touchControl === "touchpad" ? "uiSegment uiSegmentActive" : "uiSegment"}
-                      onClick={() => uiPreferencesStore.getState().setTouchControl("touchpad")}
+                      className={settings.touchControl === "touchpad" ? "uiSegment uiSegmentActive" : "uiSegment"}
+                      onClick={() => updateSetup({ touchControl: "touchpad" })}
                       type="button"
                     >
                       Touchpad
@@ -293,16 +296,16 @@ export function SettingsRoute() {
               <HintModeRow
                 hint="One-move wins and urgent blocks."
                 label="Immediate"
-                onSelect={(immediate) => uiPreferencesStore.getState().setBoardHints({ immediate })}
+                onSelect={(immediate) => updateBoardHints({ immediate })}
                 options={IMMEDIATE_HINT_OPTIONS}
-                selected={boardHints.immediate}
+                selected={settings.boardHints.immediate}
               />
               <HintModeRow
                 hint="Open/broken-three replies and counter threats."
                 label="Imminent"
-                onSelect={(imminent) => uiPreferencesStore.getState().setBoardHints({ imminent })}
+                onSelect={(imminent) => updateBoardHints({ imminent })}
                 options={IMMINENT_HINT_OPTIONS}
-                selected={boardHints.imminent}
+                selected={settings.boardHints.imminent}
               />
             </div>
           </section>
@@ -315,11 +318,11 @@ export function SettingsRoute() {
             </div>
             <div className={styles.presetGrid}>
               {PRESET_IDS.map((preset) => {
-                const config: PracticeBotConfig = { mode: "preset", preset, version: 1 };
+                const config: BotConfig = { mode: "preset", preset, version: 1 };
                 return (
                   <button
                     className={
-                      settings.practiceBot.mode === "preset" && settings.practiceBot.preset === preset
+                      settings.botConfig.mode === "preset" && settings.botConfig.preset === preset
                         ? `${styles.presetCard} ${styles.presetCardActive}`
                         : styles.presetCard
                     }
@@ -327,14 +330,14 @@ export function SettingsRoute() {
                     onClick={() => updateBot(config)}
                     type="button"
                   >
-                    <span className={styles.presetName}>{practiceBotLabel(config)}</span>
+                    <span className={styles.presetName}>{botLabel(config)}</span>
                     <span className={styles.presetDetails}>{setupSummary(config)}</span>
                   </button>
                 );
               })}
               <button
                 className={
-                  settings.practiceBot.mode === "custom"
+                  settings.botConfig.mode === "custom"
                     ? `${styles.presetCard} ${styles.presetCardActive}`
                     : styles.presetCard
                 }
@@ -387,12 +390,12 @@ export function SettingsRoute() {
                   {WIDTHS.map((width) => (
                     <button
                       className={custom.width === width ? "uiSegment uiSegmentActive" : "uiSegment"}
-                      disabled={!isPracticeBotWidthAllowed(custom.depth, width)}
+                      disabled={!isBotWidthAllowed(custom.depth, width)}
                       key={width}
                       onClick={() => updateCustomBot({ width })}
                       type="button"
                     >
-                      {width === "none" ? "full" : `W${width}`}
+                      {width === "full" ? "full" : `W${width}`}
                     </button>
                   ))}
                 </div>
@@ -405,15 +408,15 @@ export function SettingsRoute() {
                 </div>
                 <div className={styles.segmentGrid}>
                   <button
-                    className={!custom.patternScoring ? "uiSegment uiSegmentActive" : "uiSegment"}
-                    onClick={() => updateCustomBot({ patternScoring: false })}
+                    className={custom.scoring === "simple" ? "uiSegment uiSegmentActive" : "uiSegment"}
+                    onClick={() => updateCustomBot({ scoring: "simple" })}
                     type="button"
                   >
                     Simple
                   </button>
                   <button
-                    className={custom.patternScoring ? "uiSegment uiSegmentActive" : "uiSegment"}
-                    onClick={() => updateCustomBot({ patternScoring: true })}
+                    className={custom.scoring === "pattern" ? "uiSegment uiSegmentActive" : "uiSegment"}
+                    onClick={() => updateCustomBot({ scoring: "pattern" })}
                     type="button"
                   >
                     Pattern
@@ -428,15 +431,15 @@ export function SettingsRoute() {
                 </div>
                 <div className={styles.segmentGrid}>
                   <button
-                    className={!custom.corridorProof ? "uiSegment uiSegmentActive" : "uiSegment"}
-                    onClick={() => updateCustomBot({ corridorProof: false })}
+                    className={custom.extraPass === "none" ? "uiSegment uiSegmentActive" : "uiSegment"}
+                    onClick={() => updateCustomBot({ extraPass: "none" })}
                     type="button"
                   >
                     None
                   </button>
                   <button
-                    className={custom.corridorProof ? "uiSegment uiSegmentActive" : "uiSegment"}
-                    onClick={() => updateCustomBot({ corridorProof: true })}
+                    className={custom.extraPass === "corridor_proof" ? "uiSegment uiSegmentActive" : "uiSegment"}
+                    onClick={() => updateCustomBot({ extraPass: "corridor_proof" })}
                     type="button"
                   >
                     Corridor proof

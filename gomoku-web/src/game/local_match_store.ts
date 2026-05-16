@@ -4,12 +4,12 @@ import { BOARD_SIZE } from "../board/constants";
 import { BotRunner } from "../core/bot_runner";
 import type { BotSpec, GameVariant } from "../core/bot_protocol";
 import {
-  DEFAULT_PRACTICE_BOT_CONFIG,
-  practiceBotPlayerName,
-  resolvePracticeBotConfig,
-  sanitizePracticeBotConfig,
-  type PracticeBotConfig,
-} from "../core/practice_bot_config";
+  DEFAULT_BOT_CONFIG,
+  botPlayerName,
+  resolveBotConfig,
+  sanitizeBotConfig,
+  type BotConfig,
+} from "../core/bot_config";
 import { WasmBoard } from "../core/wasm_bridge";
 
 import type { CellPosition, CellStone, MatchMove, MatchPlayer, MatchStatus } from "./types";
@@ -21,7 +21,7 @@ interface FinishedLocalMatch {
   mode: "bot";
   moves: MatchMove[];
   players: [MatchPlayer, MatchPlayer];
-  practiceBot: PracticeBotConfig;
+  botConfig: BotConfig;
   status: Exclude<MatchStatus, "playing">;
   undoFloor: number;
   variant: GameVariant;
@@ -32,7 +32,7 @@ export interface LocalMatchState {
   cells: CellStone[][];
   counterThreatMoves: CellPosition[];
   currentPlayer: 1 | 2;
-  currentPracticeBot: PracticeBotConfig;
+  currentBotConfig: BotConfig;
   currentVariant: GameVariant;
   forbiddenMoves: CellPosition[];
   imminentThreatMoves: CellPosition[];
@@ -41,9 +41,9 @@ export interface LocalMatchState {
   pendingBotMove: boolean;
   players: [MatchPlayer, MatchPlayer];
   playerClockMs: [number, number];
-  selectedPracticeBot: PracticeBotConfig;
+  selectedBotConfig: BotConfig;
   selectedVariant: GameVariant;
-  selectPracticeBot: (practiceBot: PracticeBotConfig) => void;
+  selectBotConfig: (botConfig: BotConfig) => void;
   selectVariant: (variant: GameVariant) => void;
   startNewMatch: () => void;
   startNextRound: () => void;
@@ -73,7 +73,7 @@ export interface LocalMatchStoreOptions {
   humanDisplayName?: string;
   nowMs?: () => number;
   onMatchFinished?: (match: FinishedLocalMatch) => void;
-  practiceBot?: PracticeBotConfig;
+  botConfig?: BotConfig;
   resumeState?: LocalMatchResumeSeed;
   variant?: GameVariant;
 }
@@ -87,22 +87,22 @@ export interface LocalMatchResumeSeed {
 
 function withBotPlayerNames(
   players: [MatchPlayer, MatchPlayer],
-  practiceBot: PracticeBotConfig,
+  botConfig: BotConfig,
 ): [MatchPlayer, MatchPlayer] {
   return players.map((player) =>
     player.kind === "bot"
-      ? { ...player, name: practiceBotPlayerName(practiceBot) }
+      ? { ...player, name: botPlayerName(botConfig) }
       : { ...player },
   ) as [MatchPlayer, MatchPlayer];
 }
 
 function defaultPlayers(
   humanDisplayName = "You",
-  practiceBot: PracticeBotConfig = DEFAULT_PRACTICE_BOT_CONFIG,
+  botConfig: BotConfig = DEFAULT_BOT_CONFIG,
 ): [MatchPlayer, MatchPlayer] {
   return [
     { kind: "human", name: humanDisplayName, stone: "black" },
-    { kind: "bot", name: practiceBotPlayerName(practiceBot), stone: "white" },
+    { kind: "bot", name: botPlayerName(botConfig), stone: "white" },
   ];
 }
 
@@ -139,9 +139,9 @@ function emptyCells(): CellStone[][] {
 function resumedPlayers(
   currentPlayer: 1 | 2,
   humanDisplayName = "You",
-  practiceBot: PracticeBotConfig = DEFAULT_PRACTICE_BOT_CONFIG,
+  botConfig: BotConfig = DEFAULT_BOT_CONFIG,
 ): [MatchPlayer, MatchPlayer] {
-  const base = defaultPlayers(humanDisplayName, practiceBot);
+  const base = defaultPlayers(humanDisplayName, botConfig);
   return currentPlayer === 1 ? base : swapPlayers(base);
 }
 
@@ -240,8 +240,8 @@ function snapshotState(
   players: [MatchPlayer, MatchPlayer],
   currentVariant: GameVariant,
   selectedVariant: GameVariant,
-  currentPracticeBot: PracticeBotConfig,
-  selectedPracticeBot: PracticeBotConfig,
+  currentBotConfig: BotConfig,
+  selectedBotConfig: BotConfig,
   playerClockMs: [number, number],
   turnStartedAtMs: number,
   undoFloor: number,
@@ -249,7 +249,7 @@ function snapshotState(
   LocalMatchState,
   | "dispose"
   | "placeHumanMove"
-  | "selectPracticeBot"
+  | "selectBotConfig"
   | "selectVariant"
   | "startNewMatch"
   | "startNextRound"
@@ -263,7 +263,7 @@ function snapshotState(
     cells: cellsFromBoard(board),
     counterThreatMoves: hints.counterThreatMoves,
     currentPlayer: board.currentPlayer() as 1 | 2,
-    currentPracticeBot,
+    currentBotConfig,
     currentVariant,
     forbiddenMoves: hints.forbiddenMoves,
     imminentThreatMoves: hints.imminentThreatMoves,
@@ -272,7 +272,7 @@ function snapshotState(
     pendingBotMove,
     players,
     playerClockMs: [...playerClockMs],
-    selectedPracticeBot,
+    selectedBotConfig,
     selectedVariant,
     status,
     threatMoves: hints.threatMoves,
@@ -287,7 +287,7 @@ function snapshotFinishedMatch(
   board: WasmBoard,
   moves: MatchMove[],
   players: [MatchPlayer, MatchPlayer],
-  practiceBot: PracticeBotConfig,
+  botConfig: BotConfig,
   variant: GameVariant,
   undoFloor: number,
 ): FinishedLocalMatch | null {
@@ -298,8 +298,8 @@ function snapshotFinishedMatch(
     players,
     variant,
     variant,
-    practiceBot,
-    practiceBot,
+    botConfig,
+    botConfig,
     [0, 0],
     0,
     undoFloor,
@@ -312,7 +312,7 @@ function snapshotFinishedMatch(
     mode: "bot",
     moves,
     players,
-    practiceBot,
+    botConfig,
     status: snapshot.status,
     undoFloor,
     variant,
@@ -331,14 +331,14 @@ export function createLocalMatchStore(
     : null;
   let currentVariant = initialResumeState?.variant ?? options.variant ?? "freestyle";
   let selectedVariant = currentVariant;
-  let currentPracticeBot = sanitizePracticeBotConfig(options.practiceBot);
-  let selectedPracticeBot = currentPracticeBot;
+  let currentBotConfig = sanitizeBotConfig(options.botConfig);
+  let selectedBotConfig = currentBotConfig;
   const boardFactory = options.boardFactory ?? WasmBoard.createWithVariant;
   const botRunner = options.botRunner ?? new BotRunner();
   const nowMs = options.nowMs ?? (() => Date.now());
   let players = initialResumeState
-    ? resumedPlayers(initialResumeState.currentPlayer, options.humanDisplayName, currentPracticeBot)
-    : defaultPlayers(options.humanDisplayName, currentPracticeBot);
+    ? resumedPlayers(initialResumeState.currentPlayer, options.humanDisplayName, currentBotConfig)
+    : defaultPlayers(options.humanDisplayName, currentBotConfig);
 
   let board = boardFactory(currentVariant);
   const seededMoves = initialResumeState && seedBoard(board, initialResumeState.moves) ? initialResumeState.moves : [];
@@ -346,7 +346,7 @@ export function createLocalMatchStore(
   if (initialResumeState && seededMoves.length !== initialResumeState.moves.length) {
     board.free();
     board = boardFactory(currentVariant);
-    players = defaultPlayers(options.humanDisplayName, currentPracticeBot);
+    players = defaultPlayers(options.humanDisplayName, currentBotConfig);
     undoFloor = 0;
   }
   let playerClockMs: [number, number] = [0, 0];
@@ -362,7 +362,7 @@ export function createLocalMatchStore(
 
     const configureBots = (): void => {
       const botSpec = options.botDepth === undefined
-        ? resolvePracticeBotConfig(currentPracticeBot)
+        ? resolveBotConfig(currentBotConfig)
         : { kind: "baseline", depth: options.botDepth } satisfies BotSpec;
 
       botRunner.configure(
@@ -382,8 +382,8 @@ export function createLocalMatchStore(
         players,
         currentVariant,
         selectedVariant,
-        currentPracticeBot,
-        selectedPracticeBot,
+        currentBotConfig,
+        selectedBotConfig,
         playerClockMs,
         turnStartedAtMs,
         undoFloor,
@@ -447,7 +447,7 @@ export function createLocalMatchStore(
         board,
         nextMoves,
         players,
-        currentPracticeBot,
+        currentBotConfig,
         currentVariant,
         undoFloor,
       );
@@ -503,14 +503,14 @@ export function createLocalMatchStore(
     const resetMatch = (
       nextPlayers: [MatchPlayer, MatchPlayer],
       nextVariant = selectedVariant,
-      nextPracticeBot = selectedPracticeBot,
+      nextBot = selectedBotConfig,
     ): void => {
       interruptBotRequests();
       board.free();
       currentVariant = nextVariant;
-      currentPracticeBot = nextPracticeBot;
+      currentBotConfig = nextBot;
       board = boardFactory(currentVariant);
-      players = withBotPlayerNames(clonePlayers(nextPlayers), currentPracticeBot);
+      players = withBotPlayerNames(clonePlayers(nextPlayers), currentBotConfig);
       undoFloor = 0;
       resetClocks();
       configureBots();
@@ -528,8 +528,8 @@ export function createLocalMatchStore(
         players,
         currentVariant,
         selectedVariant,
-        currentPracticeBot,
-        selectedPracticeBot,
+        currentBotConfig,
+        selectedBotConfig,
         playerClockMs,
         turnStartedAtMs,
         undoFloor,
@@ -569,11 +569,11 @@ export function createLocalMatchStore(
 
         updateState(get().moves, get().pendingBotMove);
       },
-      selectPracticeBot: (practiceBot) => {
-        selectedPracticeBot = sanitizePracticeBotConfig(practiceBot);
+      selectBotConfig: (botConfig) => {
+        selectedBotConfig = sanitizeBotConfig(botConfig);
 
         if (get().moves.length === 0) {
-          resetMatch(players, selectedVariant, selectedPracticeBot);
+          resetMatch(players, selectedVariant, selectedBotConfig);
           return;
         }
 

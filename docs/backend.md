@@ -122,14 +122,20 @@ type Profile = {
     }>;
   };
   settings: {
-    default_rules: {
+    board_hints: {
+      immediate: "off" | "win" | "win_threat";
+      imminent: "off" | "threat" | "threat_counter";
+    };
+    bot_config: BotConfigDocumentV1;
+    game_config: {
       ruleset: "freestyle" | "renju";
       opening: "standard";
     };
+    touch_control: "pointer" | "touchpad";
   };
   reset_at: Timestamp | null;
   match_history: {
-    replay_matches: SavedMatchV1[];
+    replay_matches: SavedMatchV2[];
     summary_matches: CloudMatchSummaryV1[];
     archived_stats: CloudArchivedMatchStatsV1;
   };

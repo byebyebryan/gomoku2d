@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   createLocalSavedMatch,
-  isLocalSavedMatchV1,
+  isLocalSavedMatchV2,
   type CreateLocalSavedMatchInput,
 } from "./saved_match";
 
@@ -19,14 +19,14 @@ const baseInput: CreateLocalSavedMatchInput = {
   ],
   savedAt: "2026-05-15T12:00:00.000Z",
   status: "black_won" as const,
-  variant: "renju" as const,
+  ruleset: "renju" as const,
 };
 
 describe("saved match bot identity", () => {
-  it("snapshots the selected practice bot config into new local matches", () => {
+  it("snapshots the selected bot config into new local matches", () => {
     const match = createLocalSavedMatch({
       ...baseInput,
-      practiceBot: { mode: "preset", preset: "hard", version: 1 },
+      botConfig: { mode: "preset", preset: "hard", version: 1 },
     });
 
     expect(match.player_white.display_name).toBe("Hard Bot");
@@ -36,57 +36,33 @@ describe("saved match bot identity", () => {
         preset: "hard",
         version: 1,
       },
-      config_version: 2,
+      config_version: 1,
       engine: "search_bot",
-      id: "practice_bot",
+      id: "bot",
       label: "Hard",
       lab_spec: "search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4",
-      version: 2,
+      version: 1,
     });
-    expect(isLocalSavedMatchV1(match)).toBe(true);
+    expect(isLocalSavedMatchV2(match)).toBe(true);
   });
 
-  it("continues to read legacy baseline depth-3 bot identity records", () => {
-    const legacyMatch = {
-      ...createLocalSavedMatch(baseInput),
-      player_white: {
-        bot: {
-          config: {
-            depth: 3,
-            kind: "baseline",
-          },
-          config_version: 1,
-          engine: "baseline_search",
-          id: "practice_bot",
-          version: 1,
-        },
-        display_name: "Practice Bot",
-        kind: "bot",
-        local_profile_id: null,
-        profile_uid: null,
-      },
-    };
-
-    expect(isLocalSavedMatchV1(legacyMatch)).toBe(true);
-  });
-
-  it("keeps historical practice bot snapshots readable if labels or lab specs change", () => {
+  it("keeps historical bot snapshots readable if labels or lab specs change", () => {
     const baseMatch = createLocalSavedMatch({
       ...baseInput,
-      practiceBot: { mode: "preset", preset: "hard", version: 1 },
+      botConfig: { mode: "preset", preset: "hard", version: 1 },
     });
     const historicalMatch = {
       ...baseMatch,
       player_white: {
         ...baseMatch.player_white,
         bot: {
-          ...baseMatch.player_white.bot,
+          ...baseMatch.player_white.bot!,
           lab_spec: "older-hard-spec",
           label: "Older Hard",
         },
       },
     };
 
-    expect(isLocalSavedMatchV1(historicalMatch)).toBe(true);
+    expect(isLocalSavedMatchV2(historicalMatch)).toBe(true);
   });
 });

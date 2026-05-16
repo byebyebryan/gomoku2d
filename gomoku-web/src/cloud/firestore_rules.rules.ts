@@ -67,7 +67,7 @@ function emptyMatchHistory(): Record<string, unknown> {
   };
 }
 
-function defaultPracticeBot(): Record<string, unknown> {
+function defaultBot(): Record<string, unknown> {
   return {
     mode: "preset",
     preset: "normal",
@@ -77,11 +77,16 @@ function defaultPracticeBot(): Record<string, unknown> {
 
 function defaultSettings(ruleset = "freestyle"): Record<string, unknown> {
   return {
-    default_rules: {
+    board_hints: {
+      immediate: "win_threat",
+      imminent: "threat_counter",
+    },
+    bot_config: defaultBot(),
+    game_config: {
       opening: "standard",
       ruleset,
     },
-    practice_bot: defaultPracticeBot(),
+    touch_control: "touchpad",
   };
 }
 
@@ -100,7 +105,7 @@ function profileDocument(uid: string, overrides: Record<string, unknown> = {}): 
     display_name: "Bryan",
     match_history: emptyMatchHistory(),
     reset_at: null,
-    schema_version: 4,
+    schema_version: 5,
     settings: defaultSettings(),
     uid,
     updated_at: timestamp("2020-01-01T00:00:00.000Z"),
@@ -162,7 +167,7 @@ describe("Firestore profile rules", () => {
     await assertFails(testEnv.unauthenticatedContext().firestore().doc("profiles/uid-1").get());
   });
 
-  it("rejects legacy auth provider fields in profile schema v3 writes", async () => {
+  it("rejects legacy auth provider fields in profile schema v5 writes", async () => {
     await assertFails(
       ownerDb().doc("profiles/uid-1").set(
         profileCreateDocument("uid-1", {
@@ -270,16 +275,17 @@ describe("Firestore profile rules", () => {
     );
   });
 
-  it("rejects profile writes with loose/raw practice bot config", async () => {
+  it("rejects profile writes with loose/raw bot config", async () => {
     await assertFails(
       ownerDb().doc("profiles/uid-1").set(
         profileCreateDocument("uid-1", {
           settings: {
-            default_rules: {
+            ...defaultSettings(),
+            game_config: {
               opening: "standard",
               ruleset: "freestyle",
             },
-            practice_bot: {
+            bot_config: {
               lab_spec: "search-d999+no-safety",
               mode: "preset",
               preset: "normal",
@@ -291,22 +297,23 @@ describe("Firestore profile rules", () => {
     );
   });
 
-  it("allows profile writes with strict custom practice bot config", async () => {
+  it("allows profile writes with strict custom bot config", async () => {
     await assertSucceeds(
       ownerDb().doc("profiles/uid-1").set(
         profileCreateDocument("uid-1", {
           settings: {
-            default_rules: {
+            ...defaultSettings(),
+            game_config: {
               opening: "standard",
               ruleset: "freestyle",
             },
-            practice_bot: {
-              corridorProof: true,
+            bot_config: {
               depth: 7,
+              extra_pass: "corridor_proof",
               mode: "custom",
-              patternScoring: true,
+              scoring: "pattern",
               version: 1,
-              width: 16,
+              width: 8,
             },
           },
         }),
@@ -438,7 +445,36 @@ describe("Firestore profile rules", () => {
     );
   });
 
-  it("rejects the legacy recent_matches field in profile schema v3 writes", async () => {
+  it("rejects malformed board hint settings", async () => {
+    await assertFails(
+      ownerDb().doc("profiles/uid-1").set(
+        profileCreateDocument("uid-1", {
+          settings: {
+            ...defaultSettings(),
+            board_hints: {
+              immediate: "maybe",
+              imminent: "threat_counter",
+            },
+          },
+        }),
+      ),
+    );
+  });
+
+  it("rejects malformed touch control settings", async () => {
+    await assertFails(
+      ownerDb().doc("profiles/uid-1").set(
+        profileCreateDocument("uid-1", {
+          settings: {
+            ...defaultSettings(),
+            touch_control: "mouse",
+          },
+        }),
+      ),
+    );
+  });
+
+  it("rejects the legacy recent_matches field in profile schema v5 writes", async () => {
     await seedProfile("uid-1");
 
     await assertFails(
@@ -464,7 +500,7 @@ describe("Firestore profile rules", () => {
 });
 
 describe("Firestore private match subcollection rules", () => {
-  it("rejects private match subcollection creates after the profile-v3 pivot", async () => {
+  it("rejects private match subcollection creates after the embedded-history pivot", async () => {
     await seedProfile("uid-1");
 
     await assertFails(
