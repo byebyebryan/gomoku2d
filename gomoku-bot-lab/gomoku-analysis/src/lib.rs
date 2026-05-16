@@ -221,6 +221,77 @@ pub struct GameAnalysis {
     pub proof_summary: Vec<ProofResult>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ReplayAnalysisStepStatus {
+    Running,
+    Resolved,
+    Unclear,
+    Unsupported,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
+pub struct ReplayAnalysisCounters {
+    pub prefixes_analyzed: usize,
+    pub branch_roots: usize,
+    pub proof_nodes: usize,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ReplayFrameHighlightRole {
+    ImmediateWin,
+    ImmediateThreat,
+    ImminentThreat,
+    CounterThreat,
+    CorridorEntry,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ReplayFrameMarkerRole {
+    ConfirmedEscape,
+    PossibleEscape,
+    ForcedLoss,
+    ImmediateLoss,
+    Forbidden,
+    Unknown,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ReplayFrameHighlight {
+    pub role: ReplayFrameHighlightRole,
+    pub mv: Move,
+    pub notation: String,
+    pub side: Color,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ReplayFrameMarker {
+    pub role: ReplayFrameMarkerRole,
+    pub mv: Move,
+    pub notation: String,
+    pub side: Color,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ReplayFrameAnnotations {
+    pub ply: usize,
+    pub side_to_move: Color,
+    pub highlights: Vec<ReplayFrameHighlight>,
+    pub markers: Vec<ReplayFrameMarker>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ReplayAnalysisStep {
+    pub status: ReplayAnalysisStepStatus,
+    pub done: bool,
+    pub current_ply: Option<usize>,
+    pub annotations: Vec<ReplayFrameAnnotations>,
+    pub analysis: Option<GameAnalysis>,
+    pub counters: ReplayAnalysisCounters,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct UnclearContext {
     pub reason: UnclearReason,
@@ -264,53 +335,336 @@ impl std::fmt::Display for AnalysisError {
 
 impl std::error::Error for AnalysisError {}
 
+pub struct ReplayAnalysisSession {
+    replay: Replay,
+    options: AnalysisOptions,
+    boards: Vec<Board>,
+    actual_moves: Vec<Move>,
+    winner: Option<Color>,
+    model: AnalysisModel,
+    lower_bound: usize,
+    next_ply: Option<usize>,
+    actual_child: Option<ProofResult>,
+    scan_start: usize,
+    proof_summary: Vec<ProofResult>,
+    final_analysis: Option<GameAnalysis>,
+}
+
+impl ReplayAnalysisSession {
+    pub fn new(replay: Replay, options: AnalysisOptions) -> Result<Self, AnalysisError> {
+        let boards = replay_prefix_boards(&replay)?;
+        let final_board = boards
+            .last()
+            .expect("replay prefixes include initial board");
+        let winner = replay_winner(&replay, final_board);
+        let model = corridor_analysis_model(final_board, &options);
+        let final_analysis = winner
+            .is_none()
+            .then(|| no_winner_analysis(&replay, final_board, model.clone()));
+        let actual_moves = if winner.is_some() {
+            replay_moves(&replay)?
+        } else {
+            Vec::new()
+        };
+        let lower_bound = options
+            .max_scan_plies
+            .map(|max_scan_plies| boards.len().saturating_sub(max_scan_plies + 1))
+            .unwrap_or(0);
+        let next_ply = winner.map(|_| boards.len().saturating_sub(1));
+        let scan_start = boards.len();
+
+        Ok(Self {
+            replay,
+            options,
+            boards,
+            actual_moves,
+            winner,
+            model,
+            lower_bound,
+            next_ply,
+            actual_child: None,
+            scan_start,
+            proof_summary: Vec::new(),
+            final_analysis,
+        })
+    }
+
+    pub fn step(&mut self, max_work_units: usize) -> ReplayAnalysisStep {
+        let mut annotations = Vec::new();
+        let work_units = max_work_units.max(1);
+
+        if self.final_analysis.is_none() {
+            for _ in 0..work_units {
+                let Some(ply) = self.next_ply else {
+                    self.finalize();
+                    break;
+                };
+                let Some(winner) = self.winner else {
+                    self.finalize();
+                    break;
+                };
+
+                let proof = replay_corridor_status_with_actual_child(
+                    &self.boards[ply],
+                    &self.actual_moves,
+                    winner,
+                    &self.options,
+                    ply,
+                    self.actual_child.as_ref(),
+                );
+                self.actual_child = Some(proof.clone());
+                self.proof_summary.insert(0, proof.clone());
+                self.scan_start = ply;
+                annotations.push(replay_frame_annotations_from_proof(ply, &proof));
+
+                let boundary_found = final_forced_interval_has_boundary(
+                    &self.proof_summary,
+                    self.scan_start,
+                    self.actual_moves.len(),
+                );
+                let bounded_scan_reached_boundary =
+                    self.options.max_scan_plies.is_some() && boundary_found;
+                if bounded_scan_reached_boundary || ply == self.lower_bound {
+                    self.finalize();
+                    break;
+                }
+
+                self.next_ply = ply.checked_sub(1);
+            }
+        }
+
+        let done = self.final_analysis.is_some();
+        ReplayAnalysisStep {
+            status: self.step_status(done),
+            done,
+            current_ply: if done { None } else { self.next_ply },
+            annotations,
+            analysis: if done {
+                self.final_analysis.clone()
+            } else {
+                None
+            },
+            counters: replay_analysis_counters(&self.proof_summary),
+        }
+    }
+
+    fn finalize(&mut self) {
+        if self.final_analysis.is_some() {
+            return;
+        }
+        let Some(winner) = self.winner else {
+            let final_board = self
+                .boards
+                .last()
+                .expect("replay prefixes include initial board");
+            self.final_analysis = Some(no_winner_analysis(
+                &self.replay,
+                final_board,
+                self.model.clone(),
+            ));
+            return;
+        };
+        self.final_analysis = Some(finalize_replay_analysis(
+            &self.replay,
+            &self.boards,
+            winner,
+            self.model.clone(),
+            self.scan_start,
+            self.proof_summary.clone(),
+        ));
+        self.next_ply = None;
+    }
+
+    fn step_status(&self, done: bool) -> ReplayAnalysisStepStatus {
+        if !done {
+            return ReplayAnalysisStepStatus::Running;
+        }
+        let Some(analysis) = &self.final_analysis else {
+            return ReplayAnalysisStepStatus::Running;
+        };
+        replay_analysis_step_status(analysis)
+    }
+}
+
+fn replay_analysis_step_status(analysis: &GameAnalysis) -> ReplayAnalysisStepStatus {
+    if analysis.winner.is_none() {
+        return ReplayAnalysisStepStatus::Unsupported;
+    }
+    if analysis.root_cause == RootCause::Unclear || !analysis.final_forced_interval_found {
+        return ReplayAnalysisStepStatus::Unclear;
+    }
+    ReplayAnalysisStepStatus::Resolved
+}
+
+fn replay_analysis_counters(proof_summary: &[ProofResult]) -> ReplayAnalysisCounters {
+    ReplayAnalysisCounters {
+        prefixes_analyzed: proof_summary.len(),
+        branch_roots: proof_summary
+            .iter()
+            .map(|proof| proof.threat_evidence.len())
+            .sum(),
+        proof_nodes: proof_summary
+            .iter()
+            .map(|proof| proof.principal_line.len())
+            .sum(),
+    }
+}
+
+fn replay_frame_annotations_from_proof(ply: usize, proof: &ProofResult) -> ReplayFrameAnnotations {
+    let mut frame = ReplayFrameAnnotations {
+        ply,
+        side_to_move: proof.side_to_move,
+        highlights: Vec::new(),
+        markers: Vec::new(),
+    };
+
+    for evidence in &proof.threat_evidence {
+        for mv in &evidence.defender_immediate_wins {
+            push_replay_highlight(
+                &mut frame.highlights,
+                ReplayFrameHighlightRole::ImmediateWin,
+                *mv,
+                evidence.defender,
+            );
+        }
+        for mv in &evidence.raw_cost_squares {
+            push_replay_highlight(
+                &mut frame.highlights,
+                ReplayFrameHighlightRole::ImmediateThreat,
+                *mv,
+                evidence.attacker,
+            );
+        }
+        for mv in &evidence.illegal_cost_squares {
+            push_replay_marker(
+                &mut frame.markers,
+                ReplayFrameMarkerRole::Forbidden,
+                *mv,
+                evidence.defender,
+            );
+        }
+        for mv in &evidence.escape_replies {
+            let role = match evidence.reply_classification {
+                ReplyClassification::ConfirmedEscape => ReplayFrameMarkerRole::ConfirmedEscape,
+                ReplyClassification::PossibleEscape => ReplayFrameMarkerRole::PossibleEscape,
+                _ => ReplayFrameMarkerRole::Unknown,
+            };
+            push_replay_marker(&mut frame.markers, role, *mv, evidence.defender);
+        }
+        for mv in &evidence.forced_replies {
+            push_replay_marker(
+                &mut frame.markers,
+                ReplayFrameMarkerRole::ForcedLoss,
+                *mv,
+                evidence.defender,
+            );
+        }
+        if let Some(mv) = evidence.next_forcing_move {
+            push_replay_highlight(
+                &mut frame.highlights,
+                ReplayFrameHighlightRole::CorridorEntry,
+                mv,
+                evidence.attacker,
+            );
+        }
+    }
+
+    frame
+}
+
+fn push_replay_highlight(
+    highlights: &mut Vec<ReplayFrameHighlight>,
+    role: ReplayFrameHighlightRole,
+    mv: Move,
+    side: Color,
+) {
+    let highlight = ReplayFrameHighlight {
+        role,
+        mv,
+        notation: mv.to_notation(),
+        side,
+    };
+    if !highlights.contains(&highlight) {
+        highlights.push(highlight);
+    }
+}
+
+fn push_replay_marker(
+    markers: &mut Vec<ReplayFrameMarker>,
+    role: ReplayFrameMarkerRole,
+    mv: Move,
+    side: Color,
+) {
+    let marker = ReplayFrameMarker {
+        role,
+        mv,
+        notation: mv.to_notation(),
+        side,
+    };
+    if !markers.contains(&marker) {
+        markers.push(marker);
+    }
+}
+
 pub fn analyze_replay(
     replay: &Replay,
     options: AnalysisOptions,
 ) -> Result<GameAnalysis, AnalysisError> {
-    let boards = replay_prefix_boards(replay)?;
+    let mut session = ReplayAnalysisSession::new(replay.clone(), options)?;
+    loop {
+        let step = session.step(usize::MAX);
+        if step.done {
+            return Ok(step
+                .analysis
+                .expect("completed replay analysis step includes final analysis"));
+        }
+    }
+}
+
+fn no_winner_analysis(replay: &Replay, final_board: &Board, model: AnalysisModel) -> GameAnalysis {
+    let winner = replay_winner(replay, final_board);
+    GameAnalysis {
+        schema_version: ANALYSIS_SCHEMA_VERSION,
+        rule_set: rule_label(&replay.rules.variant).to_string(),
+        winner,
+        loser: winner.map(Color::opponent),
+        final_move: replay
+            .moves
+            .last()
+            .and_then(|mv| Move::from_notation(&mv.mv).ok()),
+        final_winning_line: Vec::new(),
+        model,
+        final_forced_interval_found: false,
+        final_forced_interval: ForcedInterval {
+            start_ply: 0,
+            end_ply: 0,
+        },
+        proof_intervals: Vec::new(),
+        unknown_gaps: Vec::new(),
+        unclear_reason: Some(UnclearReason::DrawOrOngoing),
+        unclear_context: None,
+        last_chance_ply: None,
+        decisive_attack_ply: None,
+        critical_mistake_ply: None,
+        root_cause: RootCause::Unclear,
+        tactical_notes: Vec::new(),
+        principal_line: Vec::new(),
+        proof_summary: Vec::new(),
+    }
+}
+
+fn finalize_replay_analysis(
+    replay: &Replay,
+    boards: &[Board],
+    winner: Color,
+    model: AnalysisModel,
+    scan_start: usize,
+    proof_summary: Vec<ProofResult>,
+) -> GameAnalysis {
     let final_board = boards
         .last()
         .expect("replay prefixes include initial board");
-    let winner = replay_winner(replay, final_board);
-    let loser = winner.map(Color::opponent);
-    let model = corridor_analysis_model(final_board, &options);
-
-    if winner.is_none() {
-        return Ok(GameAnalysis {
-            schema_version: ANALYSIS_SCHEMA_VERSION,
-            rule_set: rule_label(&replay.rules.variant).to_string(),
-            winner,
-            loser,
-            final_move: replay
-                .moves
-                .last()
-                .and_then(|mv| Move::from_notation(&mv.mv).ok()),
-            final_winning_line: Vec::new(),
-            model,
-            final_forced_interval_found: false,
-            final_forced_interval: ForcedInterval {
-                start_ply: 0,
-                end_ply: 0,
-            },
-            proof_intervals: Vec::new(),
-            unknown_gaps: Vec::new(),
-            unclear_reason: Some(UnclearReason::DrawOrOngoing),
-            unclear_context: None,
-            last_chance_ply: None,
-            decisive_attack_ply: None,
-            critical_mistake_ply: None,
-            root_cause: RootCause::Unclear,
-            tactical_notes: Vec::new(),
-            principal_line: Vec::new(),
-            proof_summary: Vec::new(),
-        });
-    }
-
-    let winner = winner.expect("checked above");
-    let actual_moves = replay_moves(replay)?;
-    let (scan_start, proof_summary) =
-        replay_proof_summary_until_boundary(&boards, &actual_moves, winner, &options);
+    let loser = Some(winner.opponent());
     let proof_intervals = proof_intervals(&proof_summary, scan_start);
     let (final_forced_interval_found, final_forced_interval) =
         find_final_forced_interval(&proof_intervals, replay.moves.len());
@@ -378,7 +732,7 @@ pub fn analyze_replay(
         move_count: replay.moves.len(),
     });
 
-    Ok(GameAnalysis {
+    GameAnalysis {
         schema_version: ANALYSIS_SCHEMA_VERSION,
         rule_set: rule_label(&replay.rules.variant).to_string(),
         winner: Some(winner),
@@ -402,7 +756,7 @@ pub fn analyze_replay(
         tactical_notes,
         principal_line,
         proof_summary,
-    })
+    }
 }
 
 pub fn analyze_defender_reply_options(
@@ -1384,6 +1738,7 @@ fn replay_winner(replay: &Replay, final_board: &Board) -> Option<Color> {
     }
 }
 
+#[cfg(test)]
 fn replay_proof_summary(
     boards: &[Board],
     actual_moves: &[Move],
@@ -1407,45 +1762,6 @@ fn replay_proof_summary(
     }
     proof_summary.reverse();
     proof_summary
-}
-
-fn replay_proof_summary_until_boundary(
-    boards: &[Board],
-    actual_moves: &[Move],
-    winner: Color,
-    options: &AnalysisOptions,
-) -> (usize, Vec<ProofResult>) {
-    let Some(max_scan_plies) = options.max_scan_plies else {
-        return (
-            0,
-            replay_proof_summary(boards, actual_moves, winner, options, 0),
-        );
-    };
-
-    let lower_bound = boards.len().saturating_sub(max_scan_plies + 1);
-    let mut scan_start = boards.len();
-    let mut proof_summary = Vec::new();
-    let mut actual_child = None;
-
-    for ply in (lower_bound..boards.len()).rev() {
-        let proof = replay_corridor_status_with_actual_child(
-            &boards[ply],
-            actual_moves,
-            winner,
-            options,
-            ply,
-            actual_child.as_ref(),
-        );
-        actual_child = Some(proof.clone());
-        proof_summary.insert(0, proof);
-        scan_start = ply;
-
-        if final_forced_interval_has_boundary(&proof_summary, scan_start, actual_moves.len()) {
-            break;
-        }
-    }
-
-    (scan_start, proof_summary)
 }
 
 fn final_forced_interval_has_boundary(
@@ -1815,8 +2131,8 @@ mod tests {
     use super::{
         analyze_defender_reply_options, analyze_replay, replay_moves, replay_prefix_boards,
         replay_proof_summary, AnalysisOptions, DefenderReplyOutcome, DefenderReplyRole,
-        ProofLimitCause, ProofStatus, ReplyClassification, ReplyPolicy, RootCause, TacticalNote,
-        UnclearReason,
+        ProofLimitCause, ProofStatus, ReplayAnalysisSession, ReplayFrameMarkerRole,
+        ReplyClassification, ReplyPolicy, RootCause, TacticalNote, UnclearReason,
     };
 
     fn mv(notation: &str) -> Move {
@@ -2278,6 +2594,104 @@ mod tests {
         assert!(boundary.threat_evidence.iter().any(|evidence| {
             evidence.reply_classification == ReplyClassification::PossibleEscape
                 && evidence.escape_replies.contains(&mv("I10"))
+        }));
+    }
+
+    #[test]
+    fn replay_analysis_session_matches_blocking_analysis() {
+        let replay = replay_from_moves(
+            Variant::Freestyle,
+            &["H8", "G8", "I8", "A1", "J8", "A2", "K8", "B1", "L8"],
+        );
+        let options = AnalysisOptions {
+            reply_policy: ReplyPolicy::CorridorReplies,
+            max_depth: 2,
+            max_scan_plies: Some(8),
+        };
+        let expected =
+            analyze_replay(&replay, options.clone()).expect("blocking analysis should run");
+        let mut session =
+            ReplayAnalysisSession::new(replay, options).expect("session should initialize");
+        let mut observed_plys = Vec::new();
+        let mut final_analysis = None;
+
+        while final_analysis.is_none() {
+            let step = session.step(1);
+            observed_plys.extend(step.annotations.iter().map(|frame| frame.ply));
+            if step.done {
+                final_analysis = step.analysis;
+            }
+        }
+
+        assert_eq!(final_analysis, Some(expected));
+        assert_eq!(observed_plys, vec![9, 8, 7]);
+    }
+
+    #[test]
+    fn replay_analysis_session_clamps_zero_work_to_one_prefix() {
+        let replay = replay_from_moves(
+            Variant::Freestyle,
+            &["H8", "G8", "I8", "A1", "J8", "A2", "K8", "B1", "L8"],
+        );
+        let mut session = ReplayAnalysisSession::new(
+            replay,
+            AnalysisOptions {
+                reply_policy: ReplyPolicy::CorridorReplies,
+                max_depth: 2,
+                max_scan_plies: None,
+            },
+        )
+        .expect("session should initialize");
+
+        let step = session.step(0);
+
+        assert!(!step.done);
+        assert_eq!(step.counters.prefixes_analyzed, 1);
+        assert_eq!(
+            step.annotations
+                .iter()
+                .map(|frame| frame.ply)
+                .collect::<Vec<_>>(),
+            vec![9]
+        );
+    }
+
+    #[test]
+    fn replay_analysis_session_emits_possible_escape_marker_annotations() {
+        let replay = replay_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "I8", "H7", "I7", "H6", "H5", "I6", "I9", "G6", "J6", "G8", "J5", "G5", "G7",
+                "E6", "F6", "H9", "H10", "F7", "D5", "I10",
+            ],
+        );
+        let mut session = ReplayAnalysisSession::new(
+            replay,
+            AnalysisOptions {
+                reply_policy: ReplyPolicy::CorridorReplies,
+                max_depth: 4,
+                max_scan_plies: Some(8),
+            },
+        )
+        .expect("session should initialize");
+        let mut annotations = Vec::new();
+        loop {
+            let step = session.step(2);
+            annotations.extend(step.annotations);
+            if step.done {
+                break;
+            }
+        }
+
+        let boundary = annotations
+            .iter()
+            .find(|frame| frame.ply == 13)
+            .expect("escape boundary frame should be annotated");
+
+        assert!(boundary.markers.iter().any(|marker| {
+            marker.role == ReplayFrameMarkerRole::PossibleEscape
+                && marker.mv == mv("I10")
+                && marker.side == Color::White
         }));
     }
 
