@@ -580,6 +580,86 @@ describe("createLocalMatchStore", () => {
     ]);
   });
 
+  it("does not show counter-threat hints without an opponent imminent threat", () => {
+    const board = WasmBoard.createWithVariant("freestyle");
+    const moves: Array<[number, number]> = [
+      [7, 7],
+      [0, 0],
+      [7, 8],
+      [0, 14],
+      [7, 9],
+      [14, 0],
+    ];
+
+    for (const [row, col] of moves) {
+      board.applyMove(row, col);
+    }
+
+    const store = createLocalMatchStore({
+      boardFactory: () => board,
+      botRunner: {
+        chooseMove: async () => null,
+        configure: () => undefined,
+        dispose: () => undefined,
+      },
+    });
+
+    const state = store.getState();
+
+    expect(state.currentPlayer).toBe(1);
+    expect(state.imminentThreatMoves).toEqual([]);
+    expect(state.counterThreatMoves).toEqual([]);
+  });
+
+  it("shows both immediate and imminent replies for opponent combo threats", () => {
+    const board = WasmBoard.createWithVariant("freestyle");
+    const moves: Array<[number, number]> = [
+      [0, 0],
+      [7, 7],
+      [1, 2],
+      [7, 8],
+      [2, 4],
+      [7, 9],
+      [3, 6],
+      [7, 10],
+      [4, 8],
+      [5, 5],
+      [5, 10],
+      [5, 6],
+      [6, 12],
+      [5, 7],
+    ];
+
+    for (const [row, col] of moves) {
+      board.applyMove(row, col);
+    }
+
+    const store = createLocalMatchStore({
+      boardFactory: () => board,
+      botRunner: {
+        chooseMove: async () => null,
+        configure: () => undefined,
+        dispose: () => undefined,
+      },
+    });
+
+    const state = store.getState();
+
+    expect(state.currentPlayer).toBe(1);
+    expect(state.threatMoves).toEqual(
+      expect.arrayContaining([
+        { row: 7, col: 6 },
+        { row: 7, col: 11 },
+      ]),
+    );
+    expect(state.imminentThreatMoves).toEqual(
+      expect.arrayContaining([
+        { row: 5, col: 4 },
+        { row: 5, col: 8 },
+      ]),
+    );
+  });
+
   it("derives counter-threat replies from the unified wasm threat snapshot", () => {
     const moves = [
       [7, 7],
