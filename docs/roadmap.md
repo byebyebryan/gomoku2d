@@ -384,9 +384,9 @@ Use two layers:
   lab combination.
 - defensive board hints for human turns, using the same tactical vocabulary to
   mark opponent imminent threats and counter-threat replies before they become
-  one-move losses. Tactical hints should be device-local immediate/imminent
-  profile-synced immediate/imminent mode controls; Renju forbidden moves stay
-  always-on as legality feedback.
+  one-move losses. Tactical hints are profile-synced immediate/imminent mode
+  controls; immediate wins/losses take display priority over imminent/counter
+  hints, and Renju forbidden moves stay always-on as legality feedback.
 
 Keep report-only diagnostics and retired lab axes out of the UI:
 `rolling-frontier-shadow`, `scan-threat-view`, safety ablations, retired

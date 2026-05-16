@@ -41,8 +41,8 @@ differently.
 - advanced/explicit bot configuration;
 - persistence for the chosen bot config;
 - clear copy that connects the controls to the bot lab;
-- device-local touch control for mobile pointer placement;
-- compact device-local tactical hint modes for immediate and imminent hint
+- profile-synced touch control for mobile pointer placement;
+- compact profile-synced tactical hint modes for immediate and imminent hint
   families;
 - local match plumbing so the selected config actually drives the bot;
 - saved-match identity snapshots that preserve which bot config was used.
@@ -54,7 +54,9 @@ Configurable tactical hints are in scope because they reuse the same tactical
 vocabulary as the bot lab while staying inside the existing board hint surface.
 The UI keeps this compact: immediate hints can show nothing, wins, or wins plus
 immediate losses; imminent hints can show nothing, threat replies, or threat
-replies plus counter-threats.
+replies plus counter-threats. Immediate hints take display priority, so
+imminent and counter-threat hints are suppressed while there is an immediate
+win/loss to answer.
 Renju forbidden moves are not configurable here; they remain always-on legality
 feedback.
 
