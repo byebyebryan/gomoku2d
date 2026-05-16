@@ -383,7 +383,8 @@ Use two layers:
   generated lab spec.
 - defensive board hints for human turns, using the same tactical vocabulary to
   mark opponent imminent threats and counter-threat replies before they become
-  one-move losses.
+  one-move losses. Tactical hints should be device-local immediate/imminent
+  mode controls; Renju forbidden moves stay always-on as legality feedback.
 
 Keep report-only diagnostics and retired lab axes out of the UI:
 `rolling-frontier-shadow`, `scan-threat-view`, safety ablations, retired
@@ -401,8 +402,8 @@ feels strongest.
 
 - bot preset selection with report-backed labels
 - advanced Bot Lab controls for explicit practice-bot configuration
-- human-only imminent-threat and counter-threat hints for opponent open/broken
-  threes
+- human-only configurable tactical hints with compact immediate/imminent modes,
+  including replies for opponent open/broken threes
 - local persistence and saved-match snapshots for selected bot configs
 - profile schema v4 for practice-bot settings, with deprecated local-profile
   v3 import

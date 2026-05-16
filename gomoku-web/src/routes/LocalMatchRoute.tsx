@@ -18,7 +18,7 @@ import {
 import type { LocalMatchResumeSeed, LocalMatchState } from "../game/local_match_store";
 import type { CellPosition } from "../game/types";
 import { localProfileStore } from "../profile/local_profile_store";
-import { uiPreferencesStore } from "../profile/ui_preferences_store";
+import { uiPreferencesStore, type BoardHintSettings } from "../profile/ui_preferences_store";
 import { variantLabel } from "../replay/local_replay";
 import { Icon } from "../ui/Icon";
 
@@ -105,6 +105,24 @@ function nextSetupLabel(
   return `${variantLabel(state.selectedVariant)} · ${practiceBotLabel(state.selectedPracticeBot)}`;
 }
 
+function visibleBoardHints(
+  state: Pick<
+    LocalMatchState,
+    "counterThreatMoves" | "imminentThreatMoves" | "threatMoves" | "winningMoves"
+  >,
+  settings: BoardHintSettings,
+): Pick<
+  LocalMatchState,
+  "counterThreatMoves" | "imminentThreatMoves" | "threatMoves" | "winningMoves"
+> {
+  return {
+    counterThreatMoves: settings.imminent === "threat_counter" ? state.counterThreatMoves : [],
+    imminentThreatMoves: settings.imminent === "off" ? [] : state.imminentThreatMoves,
+    threatMoves: settings.immediate === "win_threat" ? state.threatMoves : [],
+    winningMoves: settings.immediate === "off" ? [] : state.winningMoves,
+  };
+}
+
 export function LocalMatchRoute() {
   const location = useLocation();
   const appliedResumeSeedKeyRef = useRef<string | null>(null);
@@ -116,9 +134,11 @@ export function LocalMatchRoute() {
   const matchStore = useStore(localMatchSessionStore, (snapshot) => snapshot.matchStore);
   const latestReplayId = useStore(localMatchSessionStore, (snapshot) => snapshot.latestReplayId);
   const state = useStore(matchStore ?? loadingMatchStore, (snapshot) => snapshot);
+  const boardHints = useStore(uiPreferencesStore, (snapshot) => snapshot.boardHints);
   const touchControl = useStore(uiPreferencesStore, (snapshot) => snapshot.touchControl);
   const resumeSeed = (location.state as { resumeSeed?: LocalMatchResumeSeed } | null)?.resumeSeed ?? null;
   const resumeSeedKey = resumeSeed ? JSON.stringify(resumeSeed) : null;
+  const visibleHints = visibleBoardHints(state, boardHints);
 
   useEffect(() => {
     localProfileStore.getState().ensureLocalProfile();
@@ -242,10 +262,10 @@ export function LocalMatchRoute() {
         <div className={styles.boardPanel}>
           <Board
             cells={state.cells}
-            counterThreatMoves={state.counterThreatMoves}
+            counterThreatMoves={visibleHints.counterThreatMoves}
             currentPlayer={state.currentPlayer}
             forbiddenMoves={state.forbiddenMoves}
-            imminentThreatMoves={state.imminentThreatMoves}
+            imminentThreatMoves={visibleHints.imminentThreatMoves}
             interactive={humanToMove}
             lastMove={state.lastMove}
             moves={state.moves}
@@ -270,8 +290,8 @@ export function LocalMatchRoute() {
             touchCandidateResetVersion={touchCandidateResetVersion}
             showSequenceNumbers
             status={state.status}
-            threatMoves={state.threatMoves}
-            winningMoves={state.winningMoves}
+            threatMoves={visibleHints.threatMoves}
+            winningMoves={visibleHints.winningMoves}
             winningCells={state.winningCells}
           />
         </div>

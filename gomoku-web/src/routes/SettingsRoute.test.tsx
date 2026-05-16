@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 
@@ -148,6 +148,31 @@ describe("SettingsRoute", () => {
     });
   });
 
+  it("shows compact board hint mode controls as device-local preferences", () => {
+    renderSettingsRoute();
+
+    expect(screen.getByText(/^Hints$/)).toBeInTheDocument();
+    expect(screen.getByText(/^Immediate$/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Win" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "+ Lose" })).toBeInTheDocument();
+    expect(screen.getByText(/^Imminent$/)).toBeInTheDocument();
+    const imminent = screen.getByRole("group", { name: "Imminent hints" });
+    expect(within(imminent).getByRole("button", { name: "Threat" })).toBeInTheDocument();
+    expect(within(imminent).getByRole("button", { name: "+ Counter" })).toBeInTheDocument();
+
+    const immediate = screen.getByRole("group", { name: "Immediate hints" });
+    fireEvent.click(within(immediate).getByRole("button", { name: "Win" }));
+
+    expect(uiPreferencesStore.getState().boardHints).toMatchObject({
+      immediate: "win",
+      imminent: "threat_counter",
+    });
+    expect(localProfileStore.getState().settings).toEqual({
+      practiceBot: DEFAULT_PRACTICE_BOT_CONFIG,
+      preferredVariant: "freestyle",
+    });
+  });
+
   it("shows lab controls as setting labels with option segments", () => {
     renderSettingsRoute();
 
@@ -155,7 +180,7 @@ describe("SettingsRoute", () => {
     expect(screen.queryByText(/^Lab Controls$/)).not.toBeInTheDocument();
     expect(screen.getByText(/^Scoring$/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Simple" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Threat" })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Threat" }).length).toBeGreaterThan(0);
     expect(screen.getByText(/^Extra pass$/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "None" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Corridor proof" })).toBeInTheDocument();

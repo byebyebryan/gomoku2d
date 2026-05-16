@@ -22,6 +22,10 @@ describe("createUiPreferencesStore", () => {
     const store = createUiPreferencesStore({ storage: createMemoryStorage() });
 
     expect(store.getState().touchControl).toBe("touchpad");
+    expect(store.getState().boardHints).toEqual({
+      immediate: "win_threat",
+      imminent: "threat_counter",
+    });
   });
 
   it("persists the selected touch control mode locally", () => {
@@ -44,5 +48,43 @@ describe("createUiPreferencesStore", () => {
     const store = createUiPreferencesStore({ storage });
 
     expect(store.getState().touchControl).toBe("touchpad");
+  });
+
+  it("persists selected board hint modes locally", () => {
+    const storage = createMemoryStorage();
+    const store = createUiPreferencesStore({ storage });
+
+    store.getState().setBoardHints({
+      immediate: "win",
+      imminent: "off",
+    });
+
+    const reloadedStore = createUiPreferencesStore({ storage });
+    expect(reloadedStore.getState().boardHints).toEqual({
+      immediate: "win",
+      imminent: "off",
+    });
+  });
+
+  it("sanitizes invalid persisted board hint values", () => {
+    const storage = createMemoryStorage();
+    storage.setItem("gomoku2d.ui-preferences.v1", JSON.stringify({
+      state: {
+        boardHints: {
+          immediate: "win",
+          imminent: "invalid",
+        },
+        touchControl: "pointer",
+      },
+      version: 1,
+    }));
+
+    const store = createUiPreferencesStore({ storage });
+
+    expect(store.getState().touchControl).toBe("pointer");
+    expect(store.getState().boardHints).toEqual({
+      immediate: "win",
+      imminent: "threat_counter",
+    });
   });
 });

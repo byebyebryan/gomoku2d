@@ -6,6 +6,7 @@ import { DEFAULT_PRACTICE_BOT_CONFIG } from "../core/practice_bot_config";
 import {
   disposeLocalMatchSession,
   ensureLocalMatchSession,
+  localMatchSessionStore,
 } from "../game/local_match_session";
 import { emptyLocalMatchHistory, localProfileStore } from "../profile/local_profile_store";
 import { uiPreferencesStore } from "../profile/ui_preferences_store";
@@ -90,6 +91,35 @@ describe("LocalMatchRoute", () => {
 
     expect(latestBoardProps).toMatchObject({
       touchControlMode: "pointer",
+    });
+  });
+
+  it("filters optional board hints while keeping overlapping forbidden moves visible", () => {
+    const matchStore = localMatchSessionStore.getState().matchStore;
+    matchStore?.setState({
+      counterThreatMoves: [{ row: 4, col: 4 }],
+      forbiddenMoves: [{ row: 8, col: 8 }],
+      imminentThreatMoves: [{ row: 3, col: 3 }],
+      threatMoves: [{ row: 8, col: 8 }],
+      winningMoves: [{ row: 1, col: 1 }],
+    });
+    uiPreferencesStore.setState({
+      boardHints: {
+        immediate: "win",
+        imminent: "off",
+      },
+    });
+
+    renderLocalMatchRoute();
+
+    const latestBoardProps = mockedBoard.mock.calls[mockedBoard.mock.calls.length - 1]?.[0];
+
+    expect(latestBoardProps).toMatchObject({
+      counterThreatMoves: [],
+      forbiddenMoves: [{ row: 8, col: 8 }],
+      imminentThreatMoves: [],
+      threatMoves: [],
+      winningMoves: [{ row: 1, col: 1 }],
     });
   });
 });
