@@ -17,7 +17,7 @@ describe("practice bot config", () => {
       version: 1,
     });
     expect(labSpecForPracticeBot(DEFAULT_PRACTICE_BOT_CONFIG)).toBe("search-d3+pattern-eval");
-    expect(practiceBotConfigSummary(DEFAULT_PRACTICE_BOT_CONFIG)).toBe("D3 · full · threat");
+    expect(practiceBotConfigSummary(DEFAULT_PRACTICE_BOT_CONFIG)).toBe("D3 · full · pattern");
     expect(practiceBotPlayerName(DEFAULT_PRACTICE_BOT_CONFIG)).toBe("Normal Bot");
   });
 
@@ -77,7 +77,7 @@ describe("practice bot config", () => {
     expect(labSpecForPracticeBot(config)).toBe(
       "search-d5+tactical-cap-16+pattern-eval+corridor-proof-c16-d8-w4",
     );
-    expect(practiceBotConfigSummary(config)).toBe("D5 · W16 · threat · proof");
+    expect(practiceBotConfigSummary(config)).toBe("D5 · W16 · pattern · proof");
   });
 
   it("clamps custom widths that are too expensive for browser play", () => {

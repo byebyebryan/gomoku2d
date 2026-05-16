@@ -82,7 +82,7 @@ function HintModeRow<TMode extends string>({
 const IMMEDIATE_HINT_OPTIONS: Array<{ label: string; value: ImmediateHintMode }> = [
   { label: "Off", value: "off" },
   { label: "Win", value: "win" },
-  { label: "+ Lose", value: "win_threat" },
+  { label: "+ Block", value: "win_threat" },
 ];
 
 const IMMINENT_HINT_OPTIONS: Array<{ label: string; value: ImminentHintMode }> = [
@@ -381,7 +381,7 @@ export function SettingsRoute() {
               <div className={styles.labRow}>
                 <div className={styles.labCopy}>
                   <p className={styles.labLabel}>Width</p>
-                  <p className={styles.labHint}>Cap searched child moves after tactical ordering.</p>
+                  <p className={styles.labHint}>How many candidate moves the bot keeps.</p>
                 </div>
                 <div className={styles.segmentGridThree}>
                   {WIDTHS.map((width) => (
@@ -416,7 +416,7 @@ export function SettingsRoute() {
                     onClick={() => updateCustomBot({ patternScoring: true })}
                     type="button"
                   >
-                    Threat
+                    Pattern
                   </button>
                 </div>
               </div>

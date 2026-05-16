@@ -64,18 +64,30 @@ test("home boot and local bot match smoke flow", async ({ page }) => {
 
   await waitForBotReply(page);
 
+  await page.getByRole("link", { name: "Settings" }).click();
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
   await page.getByRole("button", { name: "Renju" }).click();
-  await expect(page.getByTestId("match-rule")).toHaveText("Freestyle");
-  await expect(page.getByTestId("match-next-rule")).toHaveText("Renju");
+  await expect(page.getByText("Saved settings apply next game.")).toBeVisible();
 
-  await page.getByRole("button", { name: "New Game" }).click();
+  await page.getByRole("link", { name: "Back to Game" }).first().click();
+  await expect(page.getByRole("heading", { name: "Local Match" })).toBeVisible();
+  await expect(page.getByTestId("match-rule")).toHaveText("Freestyle");
+  await expect(page.getByText("Next: Renju · Normal")).toBeVisible();
+
+  await page.getByRole("link", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Start New Game" }).click();
   await expect(page.getByTestId("match-move-count")).toHaveText("Move 0");
   await expect(page.getByTestId("match-rule")).toHaveText("Renju");
 
+  const renjuBox = await canvas.boundingBox();
+  if (!renjuBox) {
+    throw new Error("board canvas did not report a bounding box after settings restart");
+  }
+
   await canvas.click({
     position: {
-      x: box.width / 2,
-      y: box.height / 2,
+      x: renjuBox.width / 2,
+      y: renjuBox.height / 2,
     },
   });
 
@@ -213,16 +225,12 @@ test("portrait local match keeps the board frame tight while allowing page scrol
     const boardPanel = document.querySelector('[class*="boardPanel"]');
     const playerRows = document.querySelector('[class*="playerRows"]');
     const matchActions = document.querySelector('[class*="matchActions"]');
-    const ruleRow = document.querySelector('[class*="ruleRow"]');
     const statusSection = document.querySelector('[class*="statusSection"]');
     const matchLabel = document.querySelector('[class*="matchLabel"]');
     const headerActions = document.querySelector('[class*="headerActions"]');
     const frame = document.querySelector('[class*="frame"]');
     const viewport = document.querySelector('[class*="viewport"]');
     const canvas = document.querySelector("canvas");
-    const ruleButtons = Array.from(
-      document.querySelectorAll('[class*="variantButtons"] button'),
-    ) as HTMLElement[];
 
     if (
       !header ||
@@ -230,7 +238,6 @@ test("portrait local match keeps the board frame tight while allowing page scrol
       !boardPanel ||
       !playerRows ||
       !matchActions ||
-      !ruleRow ||
       !statusSection ||
       !matchLabel ||
       !headerActions ||
@@ -245,7 +252,6 @@ test("portrait local match keeps the board frame tight while allowing page scrol
     const boardPanelBox = boardPanel.getBoundingClientRect();
     const playerRowsBox = playerRows.getBoundingClientRect();
     const matchActionsBox = matchActions.getBoundingClientRect();
-    const ruleRowBox = ruleRow.getBoundingClientRect();
     const headerBox = header.getBoundingClientRect();
     const actionButtons = Array.from(headerActions.querySelectorAll("a,button"));
     const headerLabels = Array.from(headerActions.querySelectorAll('[class*="uiActionLabel"]'));
@@ -267,7 +273,6 @@ test("portrait local match keeps the board frame tight while allowing page scrol
       playerRowsGap: boardPanelBox.top - playerRowsBox.bottom,
       playerRowsFitLayout: playerRowsBox.right <= layoutBox.right + 1,
       actionGap: matchActionsBox.top - boardPanelBox.bottom,
-      ruleGap: ruleRowBox.top - matchActionsBox.bottom,
       pageScrollRange: document.documentElement.scrollHeight - document.documentElement.clientHeight,
       statusHidden: window.getComputedStyle(statusSection).display === "none",
       canvasToFrame: Math.min(
@@ -278,10 +283,6 @@ test("portrait local match keeps the board frame tight while allowing page scrol
         viewportBox.width / frameBox.width,
         viewportBox.height / frameBox.height,
       ),
-      minRuleButtonHeight:
-        ruleButtons.length > 0
-          ? Math.min(...ruleButtons.map((button) => button.getBoundingClientRect().height))
-          : 0,
       squareDelta: Math.abs(canvasBox.width - canvasBox.height),
     };
   });
@@ -298,12 +299,10 @@ test("portrait local match keeps the board frame tight while allowing page scrol
   expect(ratios!.playerRowsGap).toBeGreaterThanOrEqual(8);
   expect(ratios!.playerRowsFitLayout).toBe(true);
   expect(ratios!.actionGap).toBeGreaterThanOrEqual(8);
-  expect(ratios!.ruleGap).toBeGreaterThanOrEqual(8);
   expect(ratios!.pageScrollRange).toBeGreaterThanOrEqual(0);
   expect(ratios!.statusHidden).toBe(true);
   expect(ratios!.canvasToFrame).toBeGreaterThan(0.9);
   expect(ratios!.viewportToFrame).toBeGreaterThan(0.9);
-  expect(ratios!.minRuleButtonHeight).toBeGreaterThanOrEqual(44);
   expect(ratios!.squareDelta).toBeLessThanOrEqual(1);
 
   await page.evaluate(() => window.scrollTo(0, 200));

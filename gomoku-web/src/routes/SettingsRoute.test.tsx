@@ -154,7 +154,7 @@ describe("SettingsRoute", () => {
     expect(screen.getByText(/^Hints$/)).toBeInTheDocument();
     expect(screen.getByText(/^Immediate$/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Win" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "+ Lose" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "+ Block" })).toBeInTheDocument();
     expect(screen.getByText(/^Imminent$/)).toBeInTheDocument();
     const imminent = screen.getByRole("group", { name: "Imminent hints" });
     expect(within(imminent).getByRole("button", { name: "Threat" })).toBeInTheDocument();
@@ -180,7 +180,7 @@ describe("SettingsRoute", () => {
     expect(screen.queryByText(/^Lab Controls$/)).not.toBeInTheDocument();
     expect(screen.getByText(/^Scoring$/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Simple" })).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "Threat" }).length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: "Pattern" })).toBeInTheDocument();
     expect(screen.getByText(/^Extra pass$/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "None" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Corridor proof" })).toBeInTheDocument();
