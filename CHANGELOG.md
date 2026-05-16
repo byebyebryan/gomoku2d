@@ -12,6 +12,53 @@ their own section.
 
 ## [Unreleased]
 
+## [0.4.5] - 2026-05-16
+
+**Theme: turn the bot lab into player-facing settings without exposing every
+lab knob.**
+
+`0.4.5` is the UI bridge that the earlier `0.4.x` lab releases were preparing
+for. The app now has a dedicated Settings route for game and bot configuration,
+tested bot presets for normal play, and a controlled advanced layer for players
+who want to see the Rust search knobs directly. It also brings the tactical
+vocabulary back into the live board through configurable defensive hints.
+
+### Web
+
+- Added a dedicated Settings route and moved rule/bot configuration out of
+  Profile so Profile can stay focused on identity and match history.
+- Added Easy / Normal / Hard bot presets plus a Custom bot layer for search
+  depth, search width, pattern scoring, and corridor-proof controls.
+- Persisted game, bot, hint, and touch-control settings through profile schema
+  v5 so local and signed-in profiles keep the same product settings shape.
+- Added mobile touch-control settings for touchpad-style cursor movement versus
+  tap-to-move cursor placement.
+- Added compact board-hint controls for immediate wins/blocks and imminent
+  open/broken-three replies, with Renju forbidden-move feedback still always on.
+- Added per-player game timers and active-move timing so slower hard/custom bot
+  turns are visible instead of feeling like the app stalled.
+- Kept replay "play from here" on the current saved rule while letting the
+  current Settings bot drive the resumed game.
+
+### Bot lab and rules
+
+- Exposed the unified tactical threat snapshot through the Wasm bridge so the
+  web board uses the same immediate/imminent/counter-threat facts as the lab.
+- Tightened broken-three semantics, open-three reply coverage, immediate-over-
+  imminent hint priority, and Renju-forbidden threat filtering after screenshot
+  and analysis-report review exposed bad hint cases.
+- Refreshed bot and analysis reports after the threat-model fixes so published
+  lab artifacts match the current rules behavior.
+
+### Repo and docs
+
+- Updated `docs/ui_screenshot_review.md` with the `v0.4.5` desktop/mobile
+  screenshot set, including the new Settings route and fixed-height mobile
+  viewport captures.
+- Updated roadmap, visual, data-model, backend, and `0.4.5` planning docs
+  around profile-synced settings, compact hint controls, and the settings UI
+  boundary.
+
 ## [0.4.4] - 2026-05-14
 
 **Theme: replace hot tactical scans with a rolling threat frontier, then spend
@@ -773,7 +820,8 @@ together in one canvas-driven surface. That lesson drove the `v0.2.1` rewrite.
   concerns blurred together.
 - Expressive UI language, but not scalable beyond one canvas.
 
-[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.4...HEAD
+[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.5...HEAD
+[0.4.5]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.1...v0.4.2

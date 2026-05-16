@@ -320,6 +320,107 @@ not the mobile layout or control model.
 - the shell should stay effectively frozen for the rest of `0.2.x` unless a
   real bug or release-blocking polish issue appears
 
+## v0.4.5
+
+### References
+
+These captures use the `v0.4.5` web package version and a seeded local replay.
+Mobile references are viewport captures at `390 x 844`, not full-page scroll
+captures, so they show the same review frame across screens.
+
+#### Desktop
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="assets/screenshot_v0_4_5_home_desktop.png" alt="v0.4.5 home screen on desktop" width="100%">
+      <br>
+      <sub>Home / Desktop</sub>
+    </td>
+    <td width="50%">
+      <img src="assets/screenshot_v0_4_5_match_desktop.png" alt="v0.4.5 match screen on desktop" width="100%">
+      <br>
+      <sub>Match / Desktop</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="assets/screenshot_v0_4_5_replay_desktop.png" alt="v0.4.5 replay screen on desktop" width="100%">
+      <br>
+      <sub>Replay / Desktop</sub>
+    </td>
+    <td width="50%">
+      <img src="assets/screenshot_v0_4_5_profile_desktop.png" alt="v0.4.5 profile screen on desktop" width="100%">
+      <br>
+      <sub>Profile / Desktop</sub>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2">
+      <img src="assets/screenshot_v0_4_5_settings_desktop.png" alt="v0.4.5 settings screen on desktop" width="100%">
+      <br>
+      <sub>Settings / Desktop</sub>
+    </td>
+  </tr>
+</table>
+
+#### Mobile
+
+<table>
+  <tr>
+    <td width="20%">
+      <img src="assets/screenshot_v0_4_5_home_mobile.png" alt="v0.4.5 home screen on mobile" width="100%">
+      <br>
+      <sub>Home / Mobile</sub>
+    </td>
+    <td width="20%">
+      <img src="assets/screenshot_v0_4_5_match_mobile.png" alt="v0.4.5 match screen on mobile" width="100%">
+      <br>
+      <sub>Match / Mobile</sub>
+    </td>
+    <td width="20%">
+      <img src="assets/screenshot_v0_4_5_settings_mobile.png" alt="v0.4.5 settings screen on mobile" width="100%">
+      <br>
+      <sub>Settings / Mobile</sub>
+    </td>
+    <td width="20%">
+      <img src="assets/screenshot_v0_4_5_replay_mobile.png" alt="v0.4.5 replay screen on mobile" width="100%">
+      <br>
+      <sub>Replay / Mobile</sub>
+    </td>
+    <td width="20%">
+      <img src="assets/screenshot_v0_4_5_profile_mobile.png" alt="v0.4.5 profile screen on mobile" width="100%">
+      <br>
+      <sub>Profile / Mobile</sub>
+    </td>
+  </tr>
+</table>
+
+### What v0.4.5 improved
+
+- Settings is now a first-class route instead of Profile carrying rule and bot
+  configuration.
+- The app has an explicit bot-control surface: tested presets, advanced depth /
+  width / scoring / proof controls, and compact generated config summaries.
+- Human tactical hints are now configurable in compact immediate/imminent rows
+  without making Renju forbidden-move legality optional.
+- Home keeps the release version and static links compact while adding routes
+  to the lab artifacts.
+- Match and replay now share the newer navigation order and retain board-first
+  weight after the settings split.
+
+### Remaining watch points
+
+- Mobile Settings is intentionally scroll-heavy. The first viewport reads
+  cleanly, but later advanced controls should stay compact and avoid adding
+  explanatory copy inside the form.
+- The Custom bot path is visible and useful, but it is also the densest part of
+  the product UI. Keep future bot-lab knobs behind the same controlled layer
+  rather than spreading them into Match or Profile.
+- Profile is cleaner after losing rule/bot settings, but local/cloud identity,
+  reset, and history still make it the most sensitive screen for future
+  additions.
+
 ## Design takeaway
 
 - keep v0.1's retro punch and board-first confidence
@@ -327,5 +428,6 @@ not the mobile layout or control model.
 - keep v0.2.2's flatter shell and clearer button-role language
 - keep v0.2.3's intentional mobile layouts and tighter transport language
 - keep v0.2.4's tighter icon scale, profile density, and documented asset set
+- keep v0.4.5's dedicated settings route and controlled bot-lab layer
 - avoid reintroducing v0.1's scene-bound UI
 - avoid rebuilding dense sidebars or over-explained controls as the shell grows
