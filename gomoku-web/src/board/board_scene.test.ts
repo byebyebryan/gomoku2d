@@ -5,13 +5,15 @@ import type { CellStone } from "../game/types";
 import {
   BOARD_RENDER_DEPTHS,
   BOARD_RENDER_LAYER_ORDER,
+  CAUTION_ANIMS,
+  HIGHLIGHTER_ANIMS,
   HOVER_ANIMS,
+  MARKER_ANIMS,
   POINTER_ANIMS,
   SPRITE,
   SPRITESHEET_CONFIG,
   STONE_ANIMS,
   TRANSFORM_ANIMS,
-  WARNING_ANIMS,
 } from "./constants";
 import {
   canPlaceTouchCandidate,
@@ -30,8 +32,8 @@ import {
   touchDragSteps,
   usesTouchCandidate,
   usesTouchpadDrag,
-  warningAnimationForOverlay,
-  warningSpriteForOverlay,
+  overlayAnimationForRole,
+  overlaySpriteForRole,
 } from "./board_scene_logic";
 
 const emptyCells = (): CellStone[][] => Array.from({ length: 15 }, () =>
@@ -55,10 +57,12 @@ const overlayState = (overrides: Partial<Parameters<typeof shouldSyncOverlaySpri
 describe("animation sheet inventory", () => {
   it("maps the row-based sprite sheets to frame ranges", () => {
     expect(SPRITESHEET_CONFIG).toEqual({
+      [SPRITE.CAUTION]: { url: "assets/sprites/caution.png", end: 17 },
+      [SPRITE.HIGHLIGHTER]: { url: "assets/sprites/highlighter.png", end: 17 },
       [SPRITE.STONE]: { url: "assets/sprites/stone.png", end: 23 },
       [SPRITE.POINTER]: { url: "assets/sprites/pointer.png", end: 19 },
       [SPRITE.HOVER]: { url: "assets/sprites/hover.png", end: 5 },
-      [SPRITE.WARNING]: { url: "assets/sprites/warning.png", end: 29 },
+      [SPRITE.MARKER]: { url: "assets/sprites/marker.png", end: 35 },
       [SPRITE.TRANSFORM]: { url: "assets/sprites/transform.png", end: 9 },
     });
 
@@ -80,12 +84,25 @@ describe("animation sheet inventory", () => {
       HOVER: { start: 0, end: 5, frameRate: 12, key: "hover" },
     });
 
-    expect(WARNING_ANIMS).toMatchObject({
-      WARNING: { start: 0, end: 5, frameRate: 12, key: "warning" },
-      WARNING_ON_FORBIDDEN: { start: 6, end: 11, frameRate: 12, key: "warning-on-forbidden" },
-      FORBIDDEN_OUT: { start: 12, end: 17, frameRate: 12, key: "forbidden-out" },
-      FORBIDDEN_IN: { start: 18, end: 23, frameRate: 12, key: "forbidden-in" },
-      HIGHLIGHT: { start: 24, end: 29, frameRate: 12, key: "highlight" },
+    expect(CAUTION_ANIMS).toMatchObject({
+      FORBIDDEN_WARNING: { start: 0, end: 5, frameRate: 12, key: "caution-forbidden-warning" },
+      FORBIDDEN_OUT: { start: 6, end: 11, frameRate: 12, key: "caution-forbidden-out" },
+      FORBIDDEN_IN: { start: 12, end: 17, frameRate: 12, key: "caution-forbidden-in" },
+    });
+
+    expect(HIGHLIGHTER_ANIMS).toMatchObject({
+      STRONG: { start: 0, end: 5, frameRate: 12, key: "highlight-strong" },
+      SOFT: { start: 6, end: 11, frameRate: 12, key: "highlight-soft" },
+      ENTRY: { start: 12, end: 17, frameRate: 12, key: "highlight-entry" },
+    });
+
+    expect(MARKER_ANIMS).toMatchObject({
+      WARNING: { start: 0, end: 5, frameRate: 12, key: "marker-warning" },
+      QUESTION: { start: 6, end: 11, frameRate: 12, key: "marker-question" },
+      L: { start: 12, end: 17, frameRate: 12, key: "marker-L" },
+      F: { start: 18, end: 23, frameRate: 12, key: "marker-F" },
+      E: { start: 24, end: 29, frameRate: 12, key: "marker-E" },
+      P: { start: 30, end: 35, frameRate: 12, key: "marker-P" },
     });
 
     expect(TRANSFORM_ANIMS).toMatchObject({
@@ -96,10 +113,10 @@ describe("animation sheet inventory", () => {
 });
 
 describe("board render depths", () => {
-  it("keeps render containers ordered from board surface up to hover warnings", () => {
+  it("keeps render containers ordered from board surface up to hover overlays", () => {
     expect(BOARD_RENDER_LAYER_ORDER).toEqual([
       "BOARD",
-      "WARNING",
+      "OVERLAY",
       "POINTER",
       "STONE",
       "SEQUENCE_NUMBER",
@@ -107,16 +124,16 @@ describe("board render depths", () => {
     ]);
   });
 
-  it("keeps warning surfaces below the pointer and hover warnings above result labels", () => {
+  it("keeps board overlays below the pointer and hover overlays above result labels", () => {
     const depths = BOARD_RENDER_DEPTHS as Record<string, number>;
 
-    expect(depths.BOARD).toBeLessThan(depths.WARNING_SURFACE);
-    expect(depths.BOARD).toBeLessThan(depths.WARNING_BLOCKED);
-    expect(depths.WARNING_SURFACE).toBeLessThan(depths.POINTER);
-    expect(depths.WARNING_BLOCKED).toBeLessThan(depths.POINTER);
+    expect(depths.BOARD).toBeLessThan(depths.OVERLAY_SURFACE);
+    expect(depths.BOARD).toBeLessThan(depths.OVERLAY_BLOCKED);
+    expect(depths.OVERLAY_SURFACE).toBeLessThan(depths.POINTER);
+    expect(depths.OVERLAY_BLOCKED).toBeLessThan(depths.POINTER);
     expect(depths.POINTER).toBeLessThan(depths.STONE);
     expect(depths.STONE).toBeLessThan(depths.SEQUENCE_NUMBER);
-    expect(depths.SEQUENCE_NUMBER).toBeLessThan(depths.WARNING_HOVER);
+    expect(depths.SEQUENCE_NUMBER).toBeLessThan(depths.OVERLAY_HOVER);
   });
 });
 
@@ -167,7 +184,7 @@ describe("shouldSyncOverlaySprites", () => {
     expect(shouldSyncOverlaySprites(undefined, overlayState())).toBe(true);
   });
 
-  it("keeps warning animations alive when overlay data is unchanged across pointer-only rerenders", () => {
+  it("keeps overlay animations alive when overlay data is unchanged across pointer-only rerenders", () => {
     const previous = overlayState();
     const next = overlayState({
       cells: emptyCells(),
@@ -180,7 +197,7 @@ describe("shouldSyncOverlaySprites", () => {
     expect(shouldSyncOverlaySprites(previous, next)).toBe(false);
   });
 
-  it("syncs overlays when tactical warning cells change", () => {
+  it("syncs overlays when tactical hint cells change", () => {
     expect(shouldSyncOverlaySprites(
       overlayState(),
       overlayState({ threatMoves: [{ row: 9, col: 10 }] }),
@@ -317,34 +334,35 @@ describe("canPlaceTouchCandidate", () => {
   });
 });
 
-describe("warningAnimationForOverlay", () => {
-  it("maps board warnings to the intended overlay language", () => {
-    expect(warningAnimationForOverlay("winningLine")).toBe("hover");
-    expect(warningAnimationForOverlay("winningMove")).toBe("warning");
-    expect(warningAnimationForOverlay("threatMove")).toBe("warning");
-    expect(warningAnimationForOverlay("imminentThreatMove")).toBe("warning");
-    expect(warningAnimationForOverlay("counterThreatMove")).toBe("warning");
-    expect(warningAnimationForOverlay("threatMove", true)).toBe("warning-on-forbidden");
-    expect(warningAnimationForOverlay("forbidden")).toBe("forbidden-out");
+describe("overlayAnimationForRole", () => {
+  it("maps board overlays to the intended sprite language", () => {
+    expect(overlayAnimationForRole("winningLine")).toBe("hover");
+    expect(overlayAnimationForRole("winningMove")).toBe("marker-warning");
+    expect(overlayAnimationForRole("threatMove")).toBe("marker-warning");
+    expect(overlayAnimationForRole("imminentThreatMove")).toBe("marker-warning");
+    expect(overlayAnimationForRole("counterThreatMove")).toBe("marker-warning");
+    expect(overlayAnimationForRole("threatMove", true)).toBe("caution-forbidden-warning");
+    expect(overlayAnimationForRole("forbidden")).toBe("caution-forbidden-out");
   });
 });
 
-describe("warningSpriteForOverlay", () => {
-  it("uses the dedicated hover sheet for winning-line hover warnings", () => {
-    expect(warningSpriteForOverlay("winningLine")).toBe(SPRITE.HOVER);
+describe("overlaySpriteForRole", () => {
+  it("uses the dedicated hover sheet for winning-line hover overlays", () => {
+    expect(overlaySpriteForRole("winningLine")).toBe(SPRITE.HOVER);
   });
 
-  it("uses the warning sheet for tactical and forbidden warnings", () => {
-    expect(warningSpriteForOverlay("winningMove")).toBe(SPRITE.WARNING);
-    expect(warningSpriteForOverlay("threatMove")).toBe(SPRITE.WARNING);
-    expect(warningSpriteForOverlay("imminentThreatMove")).toBe(SPRITE.WARNING);
-    expect(warningSpriteForOverlay("counterThreatMove")).toBe(SPRITE.WARNING);
-    expect(warningSpriteForOverlay("forbidden")).toBe(SPRITE.WARNING);
+  it("uses marker and caution sheets for tactical and forbidden overlays", () => {
+    expect(overlaySpriteForRole("winningMove")).toBe(SPRITE.MARKER);
+    expect(overlaySpriteForRole("threatMove")).toBe(SPRITE.MARKER);
+    expect(overlaySpriteForRole("imminentThreatMove")).toBe(SPRITE.MARKER);
+    expect(overlaySpriteForRole("counterThreatMove")).toBe(SPRITE.MARKER);
+    expect(overlaySpriteForRole("threatMove", true)).toBe(SPRITE.CAUTION);
+    expect(overlaySpriteForRole("forbidden")).toBe(SPRITE.CAUTION);
   });
 });
 
 describe("shouldRenderStandaloneForbiddenOverlay", () => {
-  it("replaces forbidden animation with the combined warning-on-forbidden overlay on threat cells", () => {
+  it("replaces forbidden animation with the combined caution overlay on threat cells", () => {
     const threatMoves = [{ row: 8, col: 8 }];
 
     expect(shouldRenderStandaloneForbiddenOverlay({ row: 8, col: 8 }, threatMoves)).toBe(false);

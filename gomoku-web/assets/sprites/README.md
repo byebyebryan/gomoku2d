@@ -12,14 +12,39 @@ For a visual inspection page, open [preview.html](./preview.html).
 
 | File | Size | Layout | Description |
 |------|------|--------|-------------|
-| `caution.png` | 96x48 | 6 cols x 3 rows | Staged replacement for tactical caution and forbidden overlays |
-| `highlighter.png` | 96x48 | 6 cols x 3 rows | Staged board-cell highlighter variants for hints and replay analysis |
+| `caution.png` | 96x48 | 6 cols x 3 rows | Tactical caution and forbidden overlays |
+| `highlighter.png` | 96x48 | 6 cols x 3 rows | Board-cell highlight variants for hints and replay analysis |
 | `hover.png` | 96x16 | 6 cols x 1 row | Winning-line hover overlay |
-| `marker.png` | 96x96 | 6 cols x 6 rows | Staged proof/result marker variants for replay analysis |
+| `marker.png` | 96x96 | 6 cols x 6 rows | Warning and proof/result marker variants |
 | `pointer.png` | 160x32 | 10 cols x 2 rows | Touch/mouse pointer idle cues |
 | `stone.png` | 96x64 | 6 cols x 4 rows | Stone destroy and idle loops |
-| `warning.png` | 96x80 | 6 cols x 5 rows | Tactical warning and forbidden overlays |
 | `transform.png` | 160x16 | 10 cols x 1 row | Form transform used by stone placement |
+
+## Z-Order
+
+`caution.png`, `highlighter.png`, and `marker.png` are board-surface features.
+They sit above the board/grid and below pointer, stone, sequence, and hover
+layers.
+
+Surface sub-order:
+
+1. marker / caution
+2. highlighter
+3. board / grid
+
+## Color Language
+
+| Role | Tint |
+|---|---|
+| `highlight-strong` | Red for immediate threat/loss, green for immediate win; preview uses red |
+| `highlight-soft` | Pink for imminent threat, purple for counter-threat; preview uses pink |
+| `highlight-entry` | Per-side or neutral corridor-entry context; preview uses white |
+| `marker-warning` | Red for immediate loss/threat, green for immediate win; preview uses red |
+| `marker-question` | Gray |
+| `marker-L` | Red |
+| `marker-F` | Red |
+| `marker-E` | Green |
+| `marker-P` | Teal |
 
 ## Frame Layout
 
@@ -29,17 +54,17 @@ Frame numbers are row-major.
 
 | Frames | Animation | FPS | Runtime use |
 |--------|-----------|-----|-------------|
-| 0-5 | `caution` | 12 | Staged tactical caution loop for winning/threat cells |
-| 6-11 | `forbidden-out` | 12 | Staged forbidden move loop half |
-| 12-17 | `forbidden-in` | 12 | Staged forbidden move loop half |
+| 0-5 | `caution-forbidden-warning` | 12 | Combined forbidden + warning caution loop |
+| 6-11 | `caution-forbidden-out` | 12 | Forbidden move loop half |
+| 12-17 | `caution-forbidden-in` | 12 | Forbidden move loop half |
 
 ### `highlighter.png`
 
 | Frames | Animation | FPS | Runtime use |
 |--------|-----------|-----|-------------|
-| 0-5 | `highlight-soft` | 12 | Staged soft board-cell highlight |
-| 6-11 | `highlight-outline` | 12 | Staged outline board-cell highlight |
-| 12-17 | `highlight-strong` | 12 | Staged stronger board-cell highlight |
+| 0-5 | `highlight-strong` | 12 | Strong board-cell highlight |
+| 6-11 | `highlight-soft` | 12 | Subtle board-cell highlight |
+| 12-17 | `highlight-entry` | 12 | Corridor-entry or critical-point highlight |
 
 ### `hover.png`
 
@@ -51,12 +76,12 @@ Frame numbers are row-major.
 
 | Frames | Animation | FPS | Runtime use |
 |--------|-----------|-----|-------------|
-| 0-5 | `marker-1` | 12 | Staged replay-analysis proof/result marker variant |
-| 6-11 | `marker-2` | 12 | Staged replay-analysis proof/result marker variant |
-| 12-17 | `marker-3` | 12 | Staged replay-analysis proof/result marker variant |
-| 18-23 | `marker-4` | 12 | Staged replay-analysis proof/result marker variant |
-| 24-29 | `marker-5` | 12 | Staged replay-analysis proof/result marker variant |
-| 30-35 | `marker-6` | 12 | Staged replay-analysis proof/result marker variant |
+| 0-5 | `marker-warning` | 12 | Immediate-loss marker |
+| 6-11 | `marker-question` | 12 | Unknown marker |
+| 12-17 | `marker-L` | 12 | Forced-loss marker |
+| 18-23 | `marker-F` | 12 | Forbidden-reply marker |
+| 24-29 | `marker-E` | 12 | Confirmed-escape marker |
+| 30-35 | `marker-P` | 12 | Possible-escape marker |
 
 ### `pointer.png`
 
@@ -77,16 +102,6 @@ Frame numbers are row-major.
 | 12-17 | `stone-idle-3` | 6 | Last placed stone idle variant |
 | 18-23 | `stone-idle-4` | 6 | Last placed stone idle variant |
 | 0 | static | - | Normal resting stone frame |
-
-### `warning.png`
-
-| Frames | Animation | FPS | Runtime use |
-|--------|-----------|-----|-------------|
-| 0-5 | `warning` | 12 | Winning move green, threat move red |
-| 6-11 | `warning-on-forbidden` | 12 | Threat move red when the cell is also forbidden |
-| 12-17 | `forbidden-out` | 12 | Forbidden move loop |
-| 18-23 | `forbidden-in` | 12 | Forbidden move loop |
-| 24-29 | `highlight` | 12 | Reserved; not used by runtime yet |
 
 ### `transform.png`
 

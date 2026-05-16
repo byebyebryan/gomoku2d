@@ -184,6 +184,22 @@
       filter: url("#tint-red");
     }
 
+    [data-tint="gray"] {
+      filter: url("#tint-gray");
+    }
+
+    [data-tint="pink"] {
+      filter: url("#tint-pink");
+    }
+
+    [data-tint="purple"] {
+      filter: url("#tint-purple");
+    }
+
+    [data-tint="teal"] {
+      filter: url("#tint-teal");
+    }
+
     .cardHeader {
       display: grid;
       gap: 4px;
@@ -240,31 +256,31 @@
       font-weight: 700;
       line-height: 1;
       transform: translate(-50%, -50%);
-      z-index: 4;
+      z-index: 5;
     }
 
-    .zWarning {
+    .zHighlight {
       z-index: 1;
     }
 
-    .zWinningWarning {
-      z-index: 1;
-    }
-
-    .zPointer {
+    .zSurface {
       z-index: 2;
     }
 
-    .zStone {
+    .zPointer {
       z-index: 3;
+    }
+
+    .zStone {
+      z-index: 4;
     }
 
     .zWhiteStone {
-      z-index: 3;
+      z-index: 4;
     }
 
     .zHover {
-      z-index: 5;
+      z-index: 6;
     }
 
     .layerList {
@@ -325,6 +341,50 @@
         "
       />
     </filter>
+    <filter id="tint-gray" color-interpolation-filters="sRGB">
+      <feColorMatrix
+        type="matrix"
+        values="
+          0.1134 0.3814 0.0385 0 0
+          0.1134 0.3814 0.0385 0 0
+          0.1134 0.3814 0.0385 0 0
+          0      0      0      1 0
+        "
+      />
+    </filter>
+    <filter id="tint-pink" color-interpolation-filters="sRGB">
+      <feColorMatrix
+        type="matrix"
+        values="
+          0.2126 0.7152 0.0722 0 0
+          0.1016 0.3418 0.0345 0 0
+          0.1518 0.5108 0.0515 0 0
+          0      0      0      1 0
+        "
+      />
+    </filter>
+    <filter id="tint-purple" color-interpolation-filters="sRGB">
+      <feColorMatrix
+        type="matrix"
+        values="
+          0.1535 0.5165 0.0521 0 0
+          0.0993 0.3339 0.0337 0 0
+          0.2126 0.7152 0.0722 0 0
+          0      0      0      1 0
+        "
+      />
+    </filter>
+    <filter id="tint-teal" color-interpolation-filters="sRGB">
+      <feColorMatrix
+        type="matrix"
+        values="
+          0.0793 0.2667 0.0269 0 0
+          0.1659 0.5576 0.0563 0 0
+          0.1618 0.5442 0.0549 0 0
+          0      0      0      1 0
+        "
+      />
+    </filter>
   </svg>
   <main>
     <section class="panel">
@@ -367,7 +427,7 @@
       <div>
         <h2>Static poses</h2>
         <p class="note">
-          Rest frames used by runtime state resets. Warning-style sheets use the
+          Rest frames used by runtime state resets. Surface-feature sheets use the
           first frame of their animation range as the static pose.
         </p>
       </div>
@@ -386,7 +446,7 @@
       <div>
         <h2>Z-order cases</h2>
         <p class="note">
-          Representative board-cell stacks for pointer, warning, forbidden,
+          Representative board-cell stacks for pointer, surface features,
           stone, sequence, and win-line overlap.
         </p>
       </div>
@@ -396,8 +456,9 @@
         <li>sequence number</li>
         <li>stone</li>
         <li>pointer</li>
-        <li>warning surface / forbidden warning</li>
-        <li>board</li>
+        <li>marker / caution surface</li>
+        <li>highlight surface</li>
+        <li>board / grid</li>
       </ol>
     </section>
   </main>
@@ -406,13 +467,12 @@
     const FRAME_SIZE = 16;
 
     const sheets = [
-      { file: "caution.png", cols: 6, rows: 3, label: "staged tactical caution and forbidden overlays" },
-      { file: "highlighter.png", cols: 6, rows: 3, label: "staged board-cell highlighter variants" },
+      { file: "caution.png", cols: 6, rows: 3, label: "tactical caution and forbidden overlays" },
+      { file: "highlighter.png", cols: 6, rows: 3, label: "board-cell highlight variants" },
       { file: "hover.png", cols: 6, rows: 1, label: "winning-line hover overlay" },
-      { file: "marker.png", cols: 6, rows: 6, label: "staged replay-analysis proof/result markers" },
+      { file: "marker.png", cols: 6, rows: 6, label: "replay-analysis proof/result markers" },
       { file: "pointer.png", cols: 10, rows: 2, label: "touch/mouse pointer cues" },
       { file: "stone.png", cols: 6, rows: 4, label: "stone destroy and idle loops" },
-      { file: "warning.png", cols: 6, rows: 5, label: "tactical warning and forbidden overlays" },
       { file: "transform.png", cols: 10, rows: 1, label: "stone placement transform" },
     ];
 
@@ -422,16 +482,15 @@
       { group: "Stone", name: "stone-static / white", role: "white resting stone", file: "stone.png", cols: 6, rows: 4, frame: 0 },
       { group: "Stone", name: "stone-static / black", role: "black resting stone", file: "stone.png", cols: 6, rows: 4, frame: 0, tint: "black" },
       { group: "Hover", name: "hover static", role: "winning-line hover rest pose", file: "hover.png", cols: 6, rows: 1, frame: 0, tint: "green" },
-      { group: "Warning", name: "warning static / win", role: "winning move rest pose", file: "warning.png", cols: 6, rows: 5, frame: 0, tint: "green" },
-      { group: "Warning", name: "warning static / threat", role: "threat move rest pose", file: "warning.png", cols: 6, rows: 5, frame: 0, tint: "red" },
-      { group: "Warning", name: "warning-on-forbidden static", role: "threat-on-forbidden rest pose", file: "warning.png", cols: 6, rows: 5, frame: 6, tint: "red" },
-      { group: "Warning", name: "forbidden static", role: "forbidden move rest pose", file: "warning.png", cols: 6, rows: 5, frame: 12, tint: "red" },
-      { group: "Warning", name: "highlight static", role: "reserved highlight rest pose", file: "warning.png", cols: 6, rows: 5, frame: 24 },
-      { group: "Caution", name: "caution static", role: "staged tactical caution rest pose", file: "caution.png", cols: 6, rows: 3, frame: 0, tint: "red" },
-      { group: "Highlighter", name: "highlight-soft static", role: "staged soft highlighter rest pose", file: "highlighter.png", cols: 6, rows: 3, frame: 0 },
-      { group: "Highlighter", name: "highlight-outline static", role: "staged outline highlighter rest pose", file: "highlighter.png", cols: 6, rows: 3, frame: 6 },
-      { group: "Highlighter", name: "highlight-strong static", role: "staged strong highlighter rest pose", file: "highlighter.png", cols: 6, rows: 3, frame: 12 },
-      { group: "Marker", name: "marker static", role: "staged replay-analysis marker rest pose", file: "marker.png", cols: 6, rows: 6, frame: 0 },
+      { group: "Caution", name: "caution-forbidden static", role: "forbidden caution rest pose", file: "caution.png", cols: 6, rows: 3, frame: 6, tint: "red" },
+      { group: "Caution", name: "caution-forbidden-warning static", role: "combined forbidden + warning caution rest pose", file: "caution.png", cols: 6, rows: 3, frame: 0, tint: "red" },
+      { group: "Highlight", name: "highlight static", role: "board-cell highlight rest pose", file: "highlighter.png", cols: 6, rows: 3, frame: 0 },
+      { group: "Marker", name: "marker-warning static", role: "immediate-loss marker rest pose", file: "marker.png", cols: 6, rows: 6, frame: 3, tint: "red" },
+      { group: "Marker", name: "marker-question static", role: "unknown marker rest pose", file: "marker.png", cols: 6, rows: 6, frame: 9, tint: "gray" },
+      { group: "Marker", name: "marker-L static", role: "forced-loss marker rest pose", file: "marker.png", cols: 6, rows: 6, frame: 15, tint: "red" },
+      { group: "Marker", name: "marker-F static", role: "forbidden-reply marker rest pose", file: "marker.png", cols: 6, rows: 6, frame: 21, tint: "red" },
+      { group: "Marker", name: "marker-E static", role: "confirmed-escape marker rest pose", file: "marker.png", cols: 6, rows: 6, frame: 27, tint: "green" },
+      { group: "Marker", name: "marker-P static", role: "possible-escape marker rest pose", file: "marker.png", cols: 6, rows: 6, frame: 33, tint: "teal" },
     ];
 
     const animations = [
@@ -444,45 +503,56 @@
       { group: "Stone", name: "stone-idle-2", role: "last stone idle variant", file: "stone.png", cols: 6, rows: 4, start: 6, end: 11, fps: 6 },
       { group: "Stone", name: "stone-idle-3", role: "last stone idle variant", file: "stone.png", cols: 6, rows: 4, start: 12, end: 17, fps: 6 },
       { group: "Stone", name: "stone-idle-4", role: "last stone idle variant", file: "stone.png", cols: 6, rows: 4, start: 18, end: 23, fps: 6 },
-      { group: "Warning", name: "warning / win", role: "winning move, green tint", file: "warning.png", cols: 6, rows: 5, start: 0, end: 5, fps: 12, tint: "green" },
-      { group: "Warning", name: "warning / threat", role: "threat move, red tint", file: "warning.png", cols: 6, rows: 5, start: 0, end: 5, fps: 12, tint: "red" },
-      { group: "Warning", name: "warning-on-forbidden", role: "threat move on forbidden cell", file: "warning.png", cols: 6, rows: 5, start: 6, end: 11, fps: 12, tint: "red" },
-      { group: "Warning", name: "forbidden-out", role: "forbidden move loop half", file: "warning.png", cols: 6, rows: 5, start: 12, end: 17, fps: 12, tint: "red" },
-      { group: "Warning", name: "forbidden-in", role: "forbidden move loop half", file: "warning.png", cols: 6, rows: 5, start: 18, end: 23, fps: 12, tint: "red" },
-      { group: "Warning", name: "forbidden loop", role: "runtime alternating out + in", file: "warning.png", cols: 6, rows: 5, start: 12, end: 23, fps: 12, tint: "red" },
-      { group: "Warning", name: "highlight", role: "reserved, currently unused", file: "warning.png", cols: 6, rows: 5, start: 24, end: 29, fps: 12 },
-      { group: "Caution", name: "caution", role: "staged tactical caution loop", file: "caution.png", cols: 6, rows: 3, start: 0, end: 5, fps: 12, tint: "red" },
-      { group: "Caution", name: "forbidden-out", role: "staged forbidden move loop half", file: "caution.png", cols: 6, rows: 3, start: 6, end: 11, fps: 12, tint: "red" },
-      { group: "Caution", name: "forbidden-in", role: "staged forbidden move loop half", file: "caution.png", cols: 6, rows: 3, start: 12, end: 17, fps: 12, tint: "red" },
-      { group: "Highlighter", name: "highlight-soft", role: "staged soft board-cell highlight", file: "highlighter.png", cols: 6, rows: 3, start: 0, end: 5, fps: 12 },
-      { group: "Highlighter", name: "highlight-outline", role: "staged outline board-cell highlight", file: "highlighter.png", cols: 6, rows: 3, start: 6, end: 11, fps: 12 },
-      { group: "Highlighter", name: "highlight-strong", role: "staged stronger board-cell highlight", file: "highlighter.png", cols: 6, rows: 3, start: 12, end: 17, fps: 12 },
-      { group: "Marker", name: "marker-1", role: "staged replay-analysis marker variant", file: "marker.png", cols: 6, rows: 6, start: 0, end: 5, fps: 12 },
-      { group: "Marker", name: "marker-2", role: "staged replay-analysis marker variant", file: "marker.png", cols: 6, rows: 6, start: 6, end: 11, fps: 12 },
-      { group: "Marker", name: "marker-3", role: "staged replay-analysis marker variant", file: "marker.png", cols: 6, rows: 6, start: 12, end: 17, fps: 12 },
-      { group: "Marker", name: "marker-4", role: "staged replay-analysis marker variant", file: "marker.png", cols: 6, rows: 6, start: 18, end: 23, fps: 12 },
-      { group: "Marker", name: "marker-5", role: "staged replay-analysis marker variant", file: "marker.png", cols: 6, rows: 6, start: 24, end: 29, fps: 12 },
-      { group: "Marker", name: "marker-6", role: "staged replay-analysis marker variant", file: "marker.png", cols: 6, rows: 6, start: 30, end: 35, fps: 12 },
+      { group: "Caution", name: "caution-forbidden-warning", role: "combined forbidden + warning caution loop", file: "caution.png", cols: 6, rows: 3, start: 0, end: 5, fps: 12, tint: "red" },
+      { group: "Caution", name: "caution-forbidden-out", role: "forbidden move loop half", file: "caution.png", cols: 6, rows: 3, start: 6, end: 11, fps: 12, tint: "red" },
+      { group: "Caution", name: "caution-forbidden-in", role: "forbidden move loop half", file: "caution.png", cols: 6, rows: 3, start: 12, end: 17, fps: 12, tint: "red" },
+      { group: "Highlight", name: "highlight-strong", role: "strong board-cell highlight, immediate threat/loss/win", file: "highlighter.png", cols: 6, rows: 3, start: 0, end: 5, fps: 12, tint: "red" },
+      { group: "Highlight", name: "highlight-soft", role: "subtle board-cell highlight, imminent or counter-threat", file: "highlighter.png", cols: 6, rows: 3, start: 6, end: 11, fps: 12, tint: "pink" },
+      { group: "Highlight", name: "highlight-entry", role: "corridor-entry or critical-point highlight", file: "highlighter.png", cols: 6, rows: 3, start: 12, end: 17, fps: 12 },
+      { group: "Marker", name: "marker-warning", role: "immediate-loss marker", file: "marker.png", cols: 6, rows: 6, start: 0, end: 5, fps: 12, tint: "red" },
+      { group: "Marker", name: "marker-question", role: "unknown marker", file: "marker.png", cols: 6, rows: 6, start: 6, end: 11, fps: 12, tint: "gray" },
+      { group: "Marker", name: "marker-L", role: "forced-loss marker", file: "marker.png", cols: 6, rows: 6, start: 12, end: 17, fps: 12, tint: "red" },
+      { group: "Marker", name: "marker-F", role: "forbidden-reply marker", file: "marker.png", cols: 6, rows: 6, start: 18, end: 23, fps: 12, tint: "red" },
+      { group: "Marker", name: "marker-E", role: "confirmed-escape marker", file: "marker.png", cols: 6, rows: 6, start: 24, end: 29, fps: 12, tint: "green" },
+      { group: "Marker", name: "marker-P", role: "possible-escape marker", file: "marker.png", cols: 6, rows: 6, start: 30, end: 35, fps: 12, tint: "teal" },
       { group: "Hover", name: "hover", role: "winning line, green tint", file: "hover.png", cols: 6, rows: 1, start: 0, end: 5, fps: 12, tint: "green" },
     ];
 
     const zCases = [
       {
-        name: "preferred-pointer-over-warning",
+        name: "preferred-pointer-over-marker",
         title: "Preferred target",
-        note: "A legal winning or threat-response cell: warning context stays below the pointer.",
+        note: "A legal winning or threat-response cell uses the warning marker below the pointer.",
         layers: [
-          { className: "zWinningWarning", name: "warning", file: "warning.png", cols: 6, rows: 5, start: 0, end: 5, fps: 12, tint: "green" },
+          { className: "zSurface", name: "marker-warning", file: "marker.png", cols: 6, rows: 6, start: 0, end: 5, fps: 12, tint: "red" },
           { className: "zPointer", name: "pointer-idle-preferred", file: "pointer.png", cols: 10, rows: 2, start: 10, end: 19, fps: 12 },
         ],
       },
       {
-        name: "threat-over-forbidden",
-        title: "Threat + forbidden",
-        note: "A threat cell that black cannot legally play: warning-on-forbidden replaces both the standalone threat warning and forbidden loop.",
+        name: "forbidden-caution-under-pointer",
+        title: "Forbidden caution",
+        note: "A forbidden or dangerous target is a surface cue; the blocked pointer still reads above it.",
         layers: [
-          { className: "zWarning", name: "warning-on-forbidden", file: "warning.png", cols: 6, rows: 5, start: 6, end: 11, fps: 12, tint: "red" },
+          { className: "zSurface", name: "caution-forbidden-warning", file: "caution.png", cols: 6, rows: 3, start: 0, end: 5, fps: 12, tint: "red" },
           { className: "zPointer", name: "pointer-idle-blocked / black", file: "pointer.png", cols: 10, rows: 2, start: 0, end: 5, fps: 12, tint: "black" },
+        ],
+      },
+      {
+        name: "analysis-highlight-marker",
+        title: "Analysis marker",
+        note: "Replay proof can combine a context highlight with a letter marker on the same surface layer.",
+        layers: [
+          { className: "zHighlight", name: "highlight-entry", file: "highlighter.png", cols: 6, rows: 3, start: 12, end: 17, fps: 12 },
+          { className: "zSurface", name: "marker-E", file: "marker.png", cols: 6, rows: 6, start: 24, end: 29, fps: 12, tint: "green" },
+        ],
+      },
+      {
+        name: "analysis-highlight-actual-move",
+        title: "Actual move",
+        note: "When the analyzed square has a committed stone, the highlight stays below the stone focus.",
+        layers: [
+          { className: "zHighlight", name: "highlight-entry", file: "highlighter.png", cols: 6, rows: 3, start: 12, end: 17, fps: 12 },
+          { className: "zWhiteStone", name: "stone-static / white", file: "stone.png", cols: 6, rows: 4, frame: 0 },
         ],
       },
       {

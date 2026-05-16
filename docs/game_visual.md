@@ -58,7 +58,7 @@ should own the idle cycle at a time.
 The pointer is the current actionable target.
 
 - tint follows the current player
-- it sits above surface warnings and below stones
+- it sits above board overlays and below stones
 - on mobile, pointer mode jumps to the touched cell and keeps tracking direct
   drag; touchpad mode moves the pointer relatively; both modes still use an
   explicit Place confirmation
@@ -72,18 +72,19 @@ Pointer modes:
 | `preferred` | legal winning or threat-response cell | `pointer-idle-preferred`, then static delay |
 | `blocked` | occupied mobile target or forbidden open cell | `pointer-idle-blocked`, then static delay |
 
-### Warnings
+### Board Overlays
 
-Warnings are board-cell context. They should inform the player without
+Board overlays are board-cell context. They should inform the player without
 covering the pointer.
 
 | Role | Visual |
 |------|--------|
-| Winning move | legal immediate win: `warning` tinted green |
-| Threat move | legal immediate threat: `warning` tinted red |
-| Imminent threat move | defensive reply to an opponent open/broken three: `warning` tinted pink |
-| Counter-threat move | counter-threat reply that can defer defense: `warning` tinted purple |
-| Forbidden move | alternating `forbidden-out` and `forbidden-in` |
+| Winning move | legal immediate win: `marker-warning` tinted green |
+| Threat move | legal immediate threat: `marker-warning` tinted red |
+| Threat move on forbidden cell | combined `caution-forbidden-warning` tinted red |
+| Imminent threat move | defensive reply to an opponent open/broken three: `marker-warning` tinted pink |
+| Counter-threat move | counter-threat reply that can defer defense: `marker-warning` tinted purple |
+| Forbidden move | alternating `caution-forbidden-out` and `caution-forbidden-in` |
 | Winning line | `hover` tinted green |
 
 Winning, immediate-threat, imminent-threat, and counter-threat hints are
@@ -98,8 +99,8 @@ Forbidden cells are not active threats for Black. If a raw Black shape looks
 dangerous but the required continuation is forbidden by Renju, the live board
 should render the forbidden state, not a green/red "play here" warning. If a
 forbidden Black square matters as evidence for a White threat, show that in
-analysis/report surfaces with an explicit `F` marker rather than by upgrading the
-cell into a playable Black threat.
+analysis/report surfaces with an explicit `marker-F` marker rather than by
+upgrading the cell into a playable Black threat.
 
 ### Sequence Numbers
 
@@ -118,10 +119,10 @@ Top to bottom:
 2. sequence number
 3. stone
 4. pointer
-5. warning surface and forbidden warning
+5. marker/caution/highlighter surface
 6. board
 
-This order is intentional. The pointer is the actionable target, while warning
+This order is intentional. The pointer is the actionable target, while overlay
 surfaces are context below it. Stones remain stronger than the pointer because
 they are committed board state.
 
@@ -135,7 +136,7 @@ Use animation for:
 - stone removal
 - last placed stone focus
 - current pointer target
-- tactical warning cells
+- tactical overlay cells
 - forbidden cells
 - winning-line result emphasis
 
@@ -146,7 +147,7 @@ Avoid animation for:
 - every stone at once
 - states that already read clearly as static objects
 
-Pointer movement should not reset unrelated warning or forbidden loops. Board
+Pointer movement should not reset unrelated marker/caution loops. Board
 state changes may rebuild overlays; pointer-only movement should not.
 
 ## Asset Pipeline
@@ -189,7 +190,7 @@ Future board themes should mostly swap canvas assets:
 - grid and marks
 - stones
 - pointer
-- warning and result effects
+- overlay and result effects
 
 The DOM shell should not need a redesign for each board theme. The shell is the
 cabinet; the board theme is the cartridge.
