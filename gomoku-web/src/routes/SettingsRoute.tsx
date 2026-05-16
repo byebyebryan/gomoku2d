@@ -18,7 +18,11 @@ import {
   startLocalMatchWithSavedSetup,
 } from "../game/local_match_session";
 import { localProfileStore } from "../profile/local_profile_store";
-import { uiPreferencesStore } from "../profile/ui_preferences_store";
+import {
+  uiPreferencesStore,
+  type ImmediateHintMode,
+  type ImminentHintMode,
+} from "../profile/ui_preferences_store";
 import { variantLabel } from "../replay/local_replay";
 import { Icon } from "../ui/Icon";
 
@@ -39,11 +43,59 @@ function settingsEqual(left: PracticeBotConfig, right: PracticeBotConfig): boole
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
+function HintModeRow<TMode extends string>({
+  hint,
+  label,
+  onSelect,
+  options,
+  selected,
+}: {
+  hint: string;
+  label: string;
+  onSelect: (value: TMode) => void;
+  options: Array<{ label: string; value: TMode }>;
+  selected: TMode;
+}) {
+  return (
+    <div className={styles.labRow}>
+      <div className={styles.labCopy}>
+        <p className={styles.labLabel}>{label}</p>
+        <p className={styles.labHint}>{hint}</p>
+      </div>
+      <div aria-label={`${label} hints`} className={styles.segmentGridThree} role="group">
+        {options.map((option) => (
+          <button
+            className={selected === option.value ? "uiSegment uiSegmentActive" : "uiSegment"}
+            key={option.value}
+            onClick={() => onSelect(option.value)}
+            type="button"
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const IMMEDIATE_HINT_OPTIONS: Array<{ label: string; value: ImmediateHintMode }> = [
+  { label: "Off", value: "off" },
+  { label: "Win", value: "win" },
+  { label: "+ Lose", value: "win_threat" },
+];
+
+const IMMINENT_HINT_OPTIONS: Array<{ label: string; value: ImminentHintMode }> = [
+  { label: "Off", value: "off" },
+  { label: "Threat", value: "threat" },
+  { label: "+ Counter", value: "threat_counter" },
+];
+
 export function SettingsRoute() {
   const navigate = useNavigate();
   const [compactSettingsLayout, setCompactSettingsLayout] = useState(false);
   const [showTouchControls, setShowTouchControls] = useState(false);
   const settings = useStore(localProfileStore, (state) => state.settings);
+  const boardHints = useStore(uiPreferencesStore, (state) => state.boardHints);
   const touchControl = useStore(uiPreferencesStore, (state) => state.touchControl);
   const matchStore = useStore(localMatchSessionStore, (state) => state.matchStore);
   const activeMatch = matchStore?.getState() ?? null;
@@ -231,6 +283,30 @@ export function SettingsRoute() {
               <div className="uiDivider" />
             </>
           ) : null}
+
+          <section className={styles.controlSection}>
+            <div className={styles.sectionHeader}>
+              <p className="uiSectionLabel">Hints</p>
+            </div>
+            <div className={styles.labRows}>
+              <HintModeRow
+                hint="One-move wins and urgent blocks."
+                label="Immediate"
+                onSelect={(immediate) => uiPreferencesStore.getState().setBoardHints({ immediate })}
+                options={IMMEDIATE_HINT_OPTIONS}
+                selected={boardHints.immediate}
+              />
+              <HintModeRow
+                hint="Open/broken-three replies and counter threats."
+                label="Imminent"
+                onSelect={(imminent) => uiPreferencesStore.getState().setBoardHints({ imminent })}
+                options={IMMINENT_HINT_OPTIONS}
+                selected={boardHints.imminent}
+              />
+            </div>
+          </section>
+
+          <div className="uiDivider" />
 
           <section className={styles.controlSection}>
             <div className={styles.sectionHeader}>

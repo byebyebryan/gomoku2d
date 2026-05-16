@@ -148,7 +148,9 @@ depend on rules semantics also live below the UI layer. The browser keeps a
 rolling-frontier-backed `WasmBoard` and reads one threat snapshot for immediate
 wins, immediate threats, imminent replies, counter-threat replies, and Renju
 forbidden moves. The canonical winning line remains a separate result
-visualization query.
+visualization query. Rule-legality feedback such as Renju forbidden moves stays
+always on; tactical assistance categories are filtered by device-local UI
+preferences before they reach the board renderer.
 
 ## Data flow
 

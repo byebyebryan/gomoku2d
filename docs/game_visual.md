@@ -86,6 +86,12 @@ covering the pointer.
 | Forbidden move | alternating `forbidden-out` and `forbidden-in` |
 | Winning line | `hover` tinted green |
 
+Winning, immediate-threat, imminent-threat, and counter-threat hints are
+device-local assistive overlays controlled by two Settings rows: immediate hints
+can be off, wins only, or wins plus immediate losses; imminent hints can be off, threat
+replies only, or threat replies plus counter-threats. Forbidden move overlays
+are rule-legality feedback and remain always on.
+
 Forbidden cells are not active threats for Black. If a raw Black shape looks
 dangerous but the required continuation is forbidden by Renju, the live board
 should render the forbidden state, not a green/red "play here" warning. If a
