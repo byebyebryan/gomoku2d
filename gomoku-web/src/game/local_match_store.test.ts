@@ -230,6 +230,77 @@ describe("createLocalMatchStore", () => {
     expect(store.getState().moves).toHaveLength(1);
   });
 
+  it("tracks settled player time and the active turn start", async () => {
+    let now = 1_000;
+    let resolveMove!: (move: { row: number; col: number }) => void;
+    const store = createLocalMatchStore({
+      botRunner: {
+        chooseMove: () => new Promise((resolve) => {
+          resolveMove = resolve;
+        }),
+        configure: () => undefined,
+        dispose: () => undefined,
+      },
+      nowMs: () => now,
+    });
+
+    now = 2_500;
+    expect(store.getState().placeHumanMove(7, 7)).toBe(true);
+
+    expect(store.getState()).toMatchObject({
+      playerClockMs: [1_500, 0],
+      turnStartedAtMs: 2_500,
+    });
+
+    now = 4_800;
+    resolveMove({ row: 7, col: 8 });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(store.getState()).toMatchObject({
+      currentPlayer: 1,
+      playerClockMs: [1_500, 2_300],
+      turnStartedAtMs: 4_800,
+    });
+  });
+
+  it("resets player clocks for new games and removes undone move time", async () => {
+    let now = 0;
+    const store = createLocalMatchStore({
+      botRunner: {
+        chooseMove: async () => {
+          now = 2_300;
+          return { row: 7, col: 8 };
+        },
+        configure: () => undefined,
+        dispose: () => undefined,
+      },
+      nowMs: () => now,
+    });
+
+    now = 1_200;
+    expect(store.getState().placeHumanMove(7, 7)).toBe(true);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(store.getState().playerClockMs).toEqual([1_200, 1_100]);
+
+    now = 3_000;
+    expect(store.getState().undoLastTurn()).toBe(true);
+
+    expect(store.getState()).toMatchObject({
+      moves: [],
+      playerClockMs: [0, 0],
+      turnStartedAtMs: 3_000,
+    });
+
+    now = 4_000;
+    store.getState().startNewMatch();
+
+    expect(store.getState()).toMatchObject({
+      playerClockMs: [0, 0],
+      turnStartedAtMs: 4_000,
+    });
+  });
+
   it("starts a new match with the selected rules variant", () => {
     const store = createLocalMatchStore({
       botRunner: {

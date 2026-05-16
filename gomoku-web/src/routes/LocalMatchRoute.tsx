@@ -47,6 +47,7 @@ const loadingMatchStore = createStore<LocalMatchState>(() => ({
     { kind: "human", name: "Guest", stone: "black" },
     { kind: "bot", name: practiceBotPlayerName({ mode: "preset", preset: "normal", version: 1 }), stone: "white" },
   ],
+  playerClockMs: [0, 0],
   selectedPracticeBot: { mode: "preset", preset: "normal", version: 1 },
   selectedVariant: "freestyle",
   selectPracticeBot: () => undefined,
@@ -55,6 +56,7 @@ const loadingMatchStore = createStore<LocalMatchState>(() => ({
   startNextRound: () => undefined,
   status: "playing",
   threatMoves: [],
+  turnStartedAtMs: Date.now(),
   undoFloor: 0,
   undoLastTurn: () => false,
   dispose: () => undefined,
@@ -89,6 +91,18 @@ function canUndo(
 
 function moveCountLabel(moveCount: number): string {
   return `Move ${moveCount}`;
+}
+
+function clockLabel(ms: number): string {
+  const safeMs = Math.max(0, Math.floor(ms));
+  if (safeMs < 60_000) {
+    return `${(safeMs / 1000).toFixed(1)}s`;
+  }
+
+  const totalSeconds = Math.floor(safeMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
 function setupChanged(state: Pick<
@@ -127,6 +141,7 @@ export function LocalMatchRoute() {
   const location = useLocation();
   const appliedResumeSeedKeyRef = useRef<string | null>(null);
   const [compactTouchMode, setCompactTouchMode] = useState(false);
+  const [clockNowMs, setClockNowMs] = useState(() => Date.now());
   const [touchCandidate, setTouchCandidate] = useState<CellPosition | null>(null);
   const [touchCandidatePlaceable, setTouchCandidatePlaceable] = useState(false);
   const [touchCandidateResetVersion, setTouchCandidateResetVersion] = useState(0);
@@ -166,6 +181,21 @@ export function LocalMatchRoute() {
       mediaQuery.removeEventListener("change", sync);
     };
   }, []);
+
+  useEffect(() => {
+    if (state.status !== "playing") {
+      return undefined;
+    }
+
+    setClockNowMs(Date.now());
+    const timer = window.setInterval(() => {
+      setClockNowMs(Date.now());
+    }, 100);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [state.currentPlayer, state.status, state.turnStartedAtMs]);
 
   useEffect(() => {
     if (!profile) {
@@ -363,6 +393,14 @@ export function LocalMatchRoute() {
                           <Icon name={player.kind === "human" ? "human" : "bot"} />
                         </span>
                       </div>
+                      <p className={styles.playerClock} data-testid={`player-clock-${player.stone}`}>
+                        <span>{clockLabel(state.playerClockMs[index] ?? 0)}</span>
+                        {state.status === "playing" && state.currentPlayer === index + 1 ? (
+                          <span className={styles.playerTurnClock}>
+                            +{clockLabel(clockNowMs - state.turnStartedAtMs)}
+                          </span>
+                        ) : null}
+                      </p>
                     </div>
                   </article>
                 );

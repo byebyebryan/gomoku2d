@@ -58,6 +58,7 @@ describe("LocalMatchRoute", () => {
     disposeLocalMatchSession();
     localProfileStore.setState(initialLocalProfileState, true);
     uiPreferencesStore.setState(initialUiPreferencesState, true);
+    vi.useRealTimers();
     vi.unstubAllGlobals();
     mockedBoard.mockClear();
   });
@@ -121,5 +122,28 @@ describe("LocalMatchRoute", () => {
       threatMoves: [],
       winningMoves: [{ row: 1, col: 1 }],
     });
+  });
+
+  it("shows compact player totals and the active move timer in player cards", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(5_000);
+    const matchStore = localMatchSessionStore.getState().matchStore;
+    matchStore?.setState({
+      currentPlayer: 2,
+      pendingBotMove: true,
+      playerClockMs: [12_300, 38_000],
+      status: "playing",
+      turnStartedAtMs: 2_600,
+    });
+
+    renderLocalMatchRoute();
+
+    const black = screen.getByTestId("player-row-black");
+    const white = screen.getByTestId("player-row-white");
+
+    expect(within(black).getByText("12.3s")).toBeInTheDocument();
+    expect(within(black).queryByText(/^\+/)).not.toBeInTheDocument();
+    expect(within(white).getByText("38.0s")).toBeInTheDocument();
+    expect(within(white).getByText("+2.4s")).toBeInTheDocument();
   });
 });

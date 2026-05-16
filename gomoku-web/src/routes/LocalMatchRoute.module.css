@@ -154,6 +154,23 @@
   font-size: 1.55rem;
 }
 
+.playerClock {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 4px 0 0;
+  color: var(--text-soft);
+  font-family: var(--font-display);
+  font-size: var(--type-meta);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.playerTurnClock {
+  color: var(--accent-strong);
+}
+
 .playerKindIcon {
   display: inline-flex;
   align-items: center;
@@ -165,6 +182,14 @@
 
 .playerRowWhite .playerName {
   color: #1f1f1f;
+}
+
+.playerRowWhite .playerClock {
+  color: rgba(31, 31, 31, 0.68);
+}
+
+.playerRowWhite .playerTurnClock {
+  color: #8a4f00;
 }
 
 .pendingText {
@@ -410,6 +435,13 @@
 
   .playerName {
     font-size: 1.2rem;
+  }
+
+  .playerClock {
+    display: flex;
+    gap: 8px;
+    font-size: 0.82rem;
+    justify-content: space-between;
   }
 
   .playerKindIcon {

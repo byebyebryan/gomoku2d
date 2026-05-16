@@ -453,6 +453,8 @@ The advanced layer needs a modest warning:
 - advanced users can inspect and adjust the main bot dimensions;
 - the selected config persists locally and drives the actual practice bot;
 - mobile players can choose pointer-style or touchpad-style cursor movement;
+- player cards show current-game timing: settled totals plus an active
+  `+current move` timer for the side to move;
 - saved matches record the bot config used;
 - the UI connects back to the bot-lab identity without exposing report-only
   diagnostics;

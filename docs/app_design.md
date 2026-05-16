@@ -294,6 +294,9 @@ Rules:
   width, and D7 only allows W8
 - raw lab specs can be shown for transparency, but not as primary labels or
   persisted settings
+- Local Match shows current-game timing only: player cards include each side's
+  settled total, and the active side shows a `+current move` timer that folds
+  into the total when a move lands
 - Profile remains focused on player identity, cloud state, stats, and history
 - replay analysis controls stay out of the first bot-controls slice
 
