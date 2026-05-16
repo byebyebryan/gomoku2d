@@ -44,8 +44,8 @@ The code keeps this split explicit:
 - Raw detector: one line-window evaluator produces `LocalThreatFact` for both
   after-move annotations and existing-board corridor threats.
 - `SearchThreatPolicy`: ranks facts for alpha-beta ordering and decides which
-  tactical facts are "must keep" under child caps. Broken threes are material,
-  but not must-keep forcing moves.
+  tactical facts are "must keep" under child caps. Valid broken threes are
+  forcing material; closed threes remain low-priority diagnostics.
 - `CorridorThreatPolicy`: filters raw facts into active corridor threats by
   checking legal forcing continuations, then owns defender reply generation and
   attacker corridor move ranking.

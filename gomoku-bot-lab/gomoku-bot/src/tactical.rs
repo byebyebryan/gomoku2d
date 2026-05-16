@@ -765,7 +765,7 @@ pub fn legal_forcing_continuations_for_fact(
     let mut attacker_turn = board.clone();
     attacker_turn.current_player = attacker;
     let mut continuations = Vec::new();
-    for mv in fact.defense_squares.iter().copied() {
+    for mv in forcing_continuation_squares(fact).iter().copied() {
         if !attacker_turn.is_legal_for_color(mv, attacker) {
             continue;
         }
@@ -787,6 +787,14 @@ pub fn legal_forcing_continuations_for_fact(
         }
     }
     continuations
+}
+
+fn forcing_continuation_squares(fact: &LocalThreatFact) -> &[Move] {
+    if fact.rest_squares.is_empty() {
+        &fact.defense_squares
+    } else {
+        &fact.rest_squares
+    }
 }
 
 pub(crate) fn defender_reply_candidates_from_view<V: ThreatView + ?Sized>(
@@ -987,9 +995,15 @@ fn renju_effective_black_local_threat_fact(
         return Some(fact);
     }
 
-    fact.defense_squares
-        .retain(|&mv| renju_black_local_threat_continuation_is_effective(board_after_gain, mv));
-    (!fact.defense_squares.is_empty()).then_some(fact)
+    if fact.rest_squares.is_empty() {
+        fact.defense_squares
+            .retain(|&mv| renju_black_local_threat_continuation_is_effective(board_after_gain, mv));
+        (!fact.defense_squares.is_empty()).then_some(fact)
+    } else {
+        fact.rest_squares
+            .retain(|&mv| renju_black_local_threat_continuation_is_effective(board_after_gain, mv));
+        (!fact.rest_squares.is_empty()).then_some(fact)
+    }
 }
 
 fn renju_black_local_threat_continuation_is_effective(board_after_gain: &Board, mv: Move) -> bool {
@@ -2034,6 +2048,23 @@ mod tests {
             .find(|fact| fact.kind == LocalThreatKind::BrokenThree)
             .expect("corridor policy should see the existing broken three");
         assert!(CorridorThreatPolicy.is_active_threat(&existing, Color::Black, &corridor_fact));
+        let continuations =
+            legal_forcing_continuations_for_fact(&existing, Color::Black, &corridor_fact);
+        assert_eq!(
+            continuations
+                .iter()
+                .map(|continuation| continuation.mv)
+                .collect::<Vec<_>>(),
+            vec![mv("I8")]
+        );
+        assert_eq!(
+            continuations[0].legal_cost_squares,
+            vec![mv("G8"), mv("L8")]
+        );
+        assert_eq!(
+            corridor_defender_reply_moves(&existing, Color::Black, None),
+            vec![mv("I8"), mv("G8"), mv("L8")]
+        );
     }
 
     #[test]
