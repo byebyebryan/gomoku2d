@@ -406,7 +406,10 @@
     const FRAME_SIZE = 16;
 
     const sheets = [
+      { file: "caution.png", cols: 6, rows: 3, label: "staged tactical caution and forbidden overlays" },
+      { file: "highlighter.png", cols: 6, rows: 3, label: "staged board-cell highlighter variants" },
       { file: "hover.png", cols: 6, rows: 1, label: "winning-line hover overlay" },
+      { file: "marker.png", cols: 6, rows: 6, label: "staged replay-analysis proof/result markers" },
       { file: "pointer.png", cols: 10, rows: 2, label: "touch/mouse pointer cues" },
       { file: "stone.png", cols: 6, rows: 4, label: "stone destroy and idle loops" },
       { file: "warning.png", cols: 6, rows: 5, label: "tactical warning and forbidden overlays" },
@@ -424,6 +427,11 @@
       { group: "Warning", name: "warning-on-forbidden static", role: "threat-on-forbidden rest pose", file: "warning.png", cols: 6, rows: 5, frame: 6, tint: "red" },
       { group: "Warning", name: "forbidden static", role: "forbidden move rest pose", file: "warning.png", cols: 6, rows: 5, frame: 12, tint: "red" },
       { group: "Warning", name: "highlight static", role: "reserved highlight rest pose", file: "warning.png", cols: 6, rows: 5, frame: 24 },
+      { group: "Caution", name: "caution static", role: "staged tactical caution rest pose", file: "caution.png", cols: 6, rows: 3, frame: 0, tint: "red" },
+      { group: "Highlighter", name: "highlight-soft static", role: "staged soft highlighter rest pose", file: "highlighter.png", cols: 6, rows: 3, frame: 0 },
+      { group: "Highlighter", name: "highlight-outline static", role: "staged outline highlighter rest pose", file: "highlighter.png", cols: 6, rows: 3, frame: 6 },
+      { group: "Highlighter", name: "highlight-strong static", role: "staged strong highlighter rest pose", file: "highlighter.png", cols: 6, rows: 3, frame: 12 },
+      { group: "Marker", name: "marker static", role: "staged replay-analysis marker rest pose", file: "marker.png", cols: 6, rows: 6, frame: 0 },
     ];
 
     const animations = [
@@ -443,6 +451,18 @@
       { group: "Warning", name: "forbidden-in", role: "forbidden move loop half", file: "warning.png", cols: 6, rows: 5, start: 18, end: 23, fps: 12, tint: "red" },
       { group: "Warning", name: "forbidden loop", role: "runtime alternating out + in", file: "warning.png", cols: 6, rows: 5, start: 12, end: 23, fps: 12, tint: "red" },
       { group: "Warning", name: "highlight", role: "reserved, currently unused", file: "warning.png", cols: 6, rows: 5, start: 24, end: 29, fps: 12 },
+      { group: "Caution", name: "caution", role: "staged tactical caution loop", file: "caution.png", cols: 6, rows: 3, start: 0, end: 5, fps: 12, tint: "red" },
+      { group: "Caution", name: "forbidden-out", role: "staged forbidden move loop half", file: "caution.png", cols: 6, rows: 3, start: 6, end: 11, fps: 12, tint: "red" },
+      { group: "Caution", name: "forbidden-in", role: "staged forbidden move loop half", file: "caution.png", cols: 6, rows: 3, start: 12, end: 17, fps: 12, tint: "red" },
+      { group: "Highlighter", name: "highlight-soft", role: "staged soft board-cell highlight", file: "highlighter.png", cols: 6, rows: 3, start: 0, end: 5, fps: 12 },
+      { group: "Highlighter", name: "highlight-outline", role: "staged outline board-cell highlight", file: "highlighter.png", cols: 6, rows: 3, start: 6, end: 11, fps: 12 },
+      { group: "Highlighter", name: "highlight-strong", role: "staged stronger board-cell highlight", file: "highlighter.png", cols: 6, rows: 3, start: 12, end: 17, fps: 12 },
+      { group: "Marker", name: "marker-1", role: "staged replay-analysis marker variant", file: "marker.png", cols: 6, rows: 6, start: 0, end: 5, fps: 12 },
+      { group: "Marker", name: "marker-2", role: "staged replay-analysis marker variant", file: "marker.png", cols: 6, rows: 6, start: 6, end: 11, fps: 12 },
+      { group: "Marker", name: "marker-3", role: "staged replay-analysis marker variant", file: "marker.png", cols: 6, rows: 6, start: 12, end: 17, fps: 12 },
+      { group: "Marker", name: "marker-4", role: "staged replay-analysis marker variant", file: "marker.png", cols: 6, rows: 6, start: 18, end: 23, fps: 12 },
+      { group: "Marker", name: "marker-5", role: "staged replay-analysis marker variant", file: "marker.png", cols: 6, rows: 6, start: 24, end: 29, fps: 12 },
+      { group: "Marker", name: "marker-6", role: "staged replay-analysis marker variant", file: "marker.png", cols: 6, rows: 6, start: 30, end: 35, fps: 12 },
       { group: "Hover", name: "hover", role: "winning line, green tint", file: "hover.png", cols: 6, rows: 1, start: 0, end: 5, fps: 12, tint: "green" },
     ];
 

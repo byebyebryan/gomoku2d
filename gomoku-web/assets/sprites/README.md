@@ -12,7 +12,10 @@ For a visual inspection page, open [preview.html](./preview.html).
 
 | File | Size | Layout | Description |
 |------|------|--------|-------------|
+| `caution.png` | 96x48 | 6 cols x 3 rows | Staged replacement for tactical caution and forbidden overlays |
+| `highlighter.png` | 96x48 | 6 cols x 3 rows | Staged board-cell highlighter variants for hints and replay analysis |
 | `hover.png` | 96x16 | 6 cols x 1 row | Winning-line hover overlay |
+| `marker.png` | 96x96 | 6 cols x 6 rows | Staged proof/result marker variants for replay analysis |
 | `pointer.png` | 160x32 | 10 cols x 2 rows | Touch/mouse pointer idle cues |
 | `stone.png` | 96x64 | 6 cols x 4 rows | Stone destroy and idle loops |
 | `warning.png` | 96x80 | 6 cols x 5 rows | Tactical warning and forbidden overlays |
@@ -22,11 +25,38 @@ For a visual inspection page, open [preview.html](./preview.html).
 
 Frame numbers are row-major.
 
+### `caution.png`
+
+| Frames | Animation | FPS | Runtime use |
+|--------|-----------|-----|-------------|
+| 0-5 | `caution` | 12 | Staged tactical caution loop for winning/threat cells |
+| 6-11 | `forbidden-out` | 12 | Staged forbidden move loop half |
+| 12-17 | `forbidden-in` | 12 | Staged forbidden move loop half |
+
+### `highlighter.png`
+
+| Frames | Animation | FPS | Runtime use |
+|--------|-----------|-----|-------------|
+| 0-5 | `highlight-soft` | 12 | Staged soft board-cell highlight |
+| 6-11 | `highlight-outline` | 12 | Staged outline board-cell highlight |
+| 12-17 | `highlight-strong` | 12 | Staged stronger board-cell highlight |
+
 ### `hover.png`
 
 | Frames | Animation | FPS | Runtime use |
 |--------|-----------|-----|-------------|
 | 0-5 | `hover` | 12 | Winning line, tinted green |
+
+### `marker.png`
+
+| Frames | Animation | FPS | Runtime use |
+|--------|-----------|-----|-------------|
+| 0-5 | `marker-1` | 12 | Staged replay-analysis proof/result marker variant |
+| 6-11 | `marker-2` | 12 | Staged replay-analysis proof/result marker variant |
+| 12-17 | `marker-3` | 12 | Staged replay-analysis proof/result marker variant |
+| 18-23 | `marker-4` | 12 | Staged replay-analysis proof/result marker variant |
+| 24-29 | `marker-5` | 12 | Staged replay-analysis proof/result marker variant |
+| 30-35 | `marker-6` | 12 | Staged replay-analysis proof/result marker variant |
 
 ### `pointer.png`
 
