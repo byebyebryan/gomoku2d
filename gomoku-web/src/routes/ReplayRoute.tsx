@@ -176,8 +176,10 @@ export function ReplayRoute() {
         <div className={styles.boardPanel}>
           <Board
             cells={frame.cells}
+            counterThreatMoves={[]}
             currentPlayer={frame.currentPlayer}
             forbiddenMoves={[]}
+            imminentThreatMoves={[]}
             interactive={false}
             lastMove={frame.lastMove}
             moves={frame.moves}

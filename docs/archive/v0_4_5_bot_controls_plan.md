@@ -42,12 +42,17 @@ differently.
 - persistence for the chosen bot config;
 - clear copy that connects the controls to the bot lab;
 - device-local touch control for mobile pointer placement;
+- human-only defensive hints for opponent imminent threats and counter-threat
+  replies;
 - local match plumbing so the selected config actually drives the practice bot;
 - saved-match identity snapshots that preserve which bot config was used.
 
 Replay analysis, critical-moment tagging, puzzle generation, and explanation
 overlays stay out of this slice. They can build on the selected bot configs
 later, but they should not compete with the settings/control surface now.
+Defensive imminent-threat and counter-threat hints are in scope because they
+reuse the same tactical vocabulary as the bot lab while staying inside the
+existing board hint surface.
 
 ## Rough Work Plan
 

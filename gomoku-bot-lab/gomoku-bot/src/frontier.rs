@@ -4,9 +4,11 @@ use std::time::Duration;
 use gomoku_core::{Board, Color, GameResult, Move, MoveError, DIRS};
 
 use crate::tactical::{
+    defender_reply_candidates, defender_reply_candidates_from_view,
     raw_local_threat_facts_at_existing_move, raw_local_threat_facts_for_player,
-    CorridorThreatPolicy, LocalThreatFact, ScanThreatView, SearchThreatPolicy, TacticalLiteRank,
-    TacticalMoveAnnotation, TacticalOrderingSummary, ThreatView,
+    CorridorThreatPolicy, DefenderReplyCandidate, LocalThreatFact, ScanThreatView,
+    SearchThreatPolicy, TacticalLiteRank, TacticalMoveAnnotation, TacticalOrderingSummary,
+    ThreatView,
 };
 use crate::viability::{scan_cell_viability, CellViability};
 
@@ -623,6 +625,14 @@ impl ThreatView for RebuildThreatFrontier {
         // target after fixture parity proves the fact index.
         CorridorThreatPolicy.defender_reply_moves(&self.board, attacker, actual_reply)
     }
+
+    fn defender_reply_candidates(
+        &self,
+        attacker: Color,
+        actual_reply: Option<Move>,
+    ) -> Vec<DefenderReplyCandidate> {
+        defender_reply_candidates(&self.board, attacker, actual_reply)
+    }
 }
 
 impl ThreatView for RollingThreatFrontier {
@@ -711,6 +721,14 @@ impl ThreatView for RollingThreatFrontier {
             active,
             actual_reply,
         )
+    }
+
+    fn defender_reply_candidates(
+        &self,
+        attacker: Color,
+        actual_reply: Option<Move>,
+    ) -> Vec<DefenderReplyCandidate> {
+        defender_reply_candidates_from_view(&self.board, self, attacker, actual_reply)
     }
 }
 

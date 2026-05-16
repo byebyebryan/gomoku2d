@@ -381,6 +381,9 @@ Use two layers:
 - an advanced Bot Lab layer that exposes the main tuning dimensions in product
   language: search depth, search width, pattern scoring, corridor proof, and
   generated lab spec.
+- defensive board hints for human turns, using the same tactical vocabulary to
+  mark opponent imminent threats and counter-threat replies before they become
+  one-move losses.
 
 Keep report-only diagnostics and retired lab axes out of the UI:
 `rolling-frontier-shadow`, `scan-threat-view`, safety ablations, retired
@@ -398,6 +401,8 @@ feels strongest.
 
 - bot preset selection with report-backed labels
 - advanced Bot Lab controls for explicit practice-bot configuration
+- human-only imminent-threat and counter-threat hints for opponent open/broken
+  threes
 - local persistence and saved-match snapshots for selected bot configs
 - profile schema v4 for practice-bot settings, with deprecated local-profile
   v3 import

@@ -30,10 +30,12 @@ interface FinishedLocalMatch {
 
 export interface LocalMatchState {
   cells: CellStone[][];
+  counterThreatMoves: CellPosition[];
   currentPlayer: 1 | 2;
   currentPracticeBot: PracticeBotConfig;
   currentVariant: GameVariant;
   forbiddenMoves: CellPosition[];
+  imminentThreatMoves: CellPosition[];
   lastMove: CellPosition | null;
   moves: MatchMove[];
   pendingBotMove: boolean;
@@ -52,6 +54,14 @@ export interface LocalMatchState {
   dispose: () => void;
   winningMoves: CellPosition[];
   winningCells: CellPosition[];
+}
+
+interface WasmThreatSnapshot {
+  counterThreatMoves: Array<{ row: number; col: number }>;
+  forbiddenMoves: Array<{ row: number; col: number }>;
+  immediateThreatMoves: Array<{ row: number; col: number }>;
+  imminentThreatMoves: Array<{ row: number; col: number }>;
+  winningMoves: Array<{ row: number; col: number }>;
 }
 
 export interface LocalMatchStoreOptions {
@@ -182,10 +192,15 @@ function deriveHumanHints(
   pendingBotMove: boolean,
   players: [MatchPlayer, MatchPlayer],
   status: MatchStatus,
-): Pick<LocalMatchState, "forbiddenMoves" | "threatMoves" | "winningMoves"> {
+): Pick<
+  LocalMatchState,
+  "counterThreatMoves" | "forbiddenMoves" | "imminentThreatMoves" | "threatMoves" | "winningMoves"
+> {
   if (status !== "playing" || pendingBotMove) {
     return {
+      counterThreatMoves: [],
       forbiddenMoves: [],
+      imminentThreatMoves: [],
       threatMoves: [],
       winningMoves: [],
     };
@@ -196,27 +211,22 @@ function deriveHumanHints(
 
   if (players[currentIndex].kind !== "human") {
     return {
+      counterThreatMoves: [],
       forbiddenMoves: [],
+      imminentThreatMoves: [],
       threatMoves: [],
       winningMoves: [],
     };
   }
 
-  const winningMoves = normalizeMoves(
-    board.immediateWinningMovesFor(currentPlayer) as Array<{ row: number; col: number }>,
-  );
-  const winningKeys = new Set(winningMoves.map((move) => `${move.row},${move.col}`));
-  const opponent = currentPlayer === 1 ? 2 : 1;
-  const threatMoves = normalizeMoves(
-    board.immediateWinningMovesFor(opponent) as Array<{ row: number; col: number }>,
-  ).filter((move) => !winningKeys.has(`${move.row},${move.col}`));
+  const threatSnapshot = board.threatSnapshot() as WasmThreatSnapshot;
 
   return {
-    forbiddenMoves: normalizeMoves(
-      board.forbiddenMovesForCurrentPlayer() as Array<{ row: number; col: number }>,
-    ),
-    threatMoves,
-    winningMoves,
+    counterThreatMoves: normalizeMoves(threatSnapshot.counterThreatMoves),
+    forbiddenMoves: normalizeMoves(threatSnapshot.forbiddenMoves),
+    imminentThreatMoves: normalizeMoves(threatSnapshot.imminentThreatMoves),
+    threatMoves: normalizeMoves(threatSnapshot.immediateThreatMoves),
+    winningMoves: normalizeMoves(threatSnapshot.winningMoves),
   };
 }
 
@@ -246,10 +256,12 @@ function snapshotState(
 
   return {
     cells: cellsFromBoard(board),
+    counterThreatMoves: hints.counterThreatMoves,
     currentPlayer: board.currentPlayer() as 1 | 2,
     currentPracticeBot,
     currentVariant,
     forbiddenMoves: hints.forbiddenMoves,
+    imminentThreatMoves: hints.imminentThreatMoves,
     lastMove,
     moves,
     pendingBotMove,

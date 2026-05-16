@@ -28,6 +28,7 @@ describe("createLocalMatchStore", () => {
     expect(state.forbiddenMoves).toEqual([]);
     expect(state.winningMoves).toEqual([]);
     expect(state.threatMoves).toEqual([]);
+    expect(state.imminentThreatMoves).toEqual([]);
   });
 
   it("uses the provided human display name for the local player", () => {
@@ -466,6 +467,99 @@ describe("createLocalMatchStore", () => {
       ]),
     );
     expect(state.threatMoves).toEqual([{ row: 0, col: 4 }]);
+    expect(state.imminentThreatMoves).toEqual([]);
+  });
+
+  it("derives defensive replies to opponent imminent threats from the wasm board", () => {
+    const board = WasmBoard.createWithVariant("freestyle");
+    const moves: Array<[number, number]> = [
+      [0, 0],
+      [7, 7],
+      [0, 2],
+      [7, 8],
+      [0, 4],
+      [7, 9],
+    ];
+
+    for (const [row, col] of moves) {
+      board.applyMove(row, col);
+    }
+
+    const store = createLocalMatchStore({
+      boardFactory: () => board,
+      botRunner: {
+        chooseMove: async () => null,
+        configure: () => undefined,
+        dispose: () => undefined,
+      },
+    });
+
+    const state = store.getState();
+
+    expect(state.currentPlayer).toBe(1);
+    expect(state.winningMoves).toEqual([]);
+    expect(state.threatMoves).toEqual([]);
+    expect(state.imminentThreatMoves).toEqual([
+      { row: 7, col: 6 },
+      { row: 7, col: 10 },
+    ]);
+    expect(state.counterThreatMoves).toEqual([
+      { row: 0, col: 1 },
+      { row: 0, col: 3 },
+    ]);
+  });
+
+  it("derives counter-threat replies from the unified wasm threat snapshot", () => {
+    const moves = [
+      [7, 7],
+      [7, 8],
+      [6, 7],
+      [6, 8],
+      [5, 7],
+      [4, 7],
+      [5, 8],
+      [8, 8],
+      [5, 6],
+      [5, 9],
+      [7, 6],
+      [4, 9],
+      [4, 6],
+    ].map(([row, col], index) => ({
+      col,
+      moveNumber: index + 1,
+      player: (index % 2 === 0 ? 1 : 2) as 1 | 2,
+      row,
+    }));
+
+    const store = createLocalMatchStore({
+      botRunner: {
+        chooseMove: async () => null,
+        configure: () => undefined,
+        dispose: () => undefined,
+      },
+      resumeState: {
+        currentPlayer: 2,
+        moves,
+        variant: "renju",
+      },
+    });
+
+    const state = store.getState();
+
+    expect(state.currentPlayer).toBe(2);
+    expect(state.imminentThreatMoves).toEqual(
+      expect.arrayContaining([
+        { row: 3, col: 6 },
+        { row: 6, col: 6 },
+        { row: 8, col: 6 },
+      ]),
+    );
+    expect(state.counterThreatMoves).toEqual(
+      expect.arrayContaining([
+        { row: 9, col: 8 },
+        { row: 10, col: 8 },
+      ]),
+    );
   });
 
   it("exposes canonical winning cells from the wasm board", () => {

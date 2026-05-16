@@ -102,6 +102,7 @@ modals, auth UI, and any future cloud/online shell surfaces.
 // React → Phaser: simplified declarative board state
 interface BoardProps {
   cells: Cell[][];
+  counterThreatMoves: Move[];
   currentPlayer: 1 | 2;
   forbiddenMoves: Move[];
   lastMove?: Move;
@@ -109,6 +110,7 @@ interface BoardProps {
   touchControlMode: 'none' | 'pointer' | 'touchpad';
   showSequenceNumbers: boolean;
   status: MatchStatus;
+  imminentThreatMoves: Move[];
   threatMoves: Move[];
   winningMoves: Move[];
   winningCells: Move[];
@@ -141,10 +143,12 @@ One rules implementation, reused everywhere:
 - **CLI / eval tools:** already using `gomoku-core` via path deps.
 
 This means "is this move legal?" and "did this player win?" have exactly
-one answer, regardless of where the question is asked. Tactical queries that
-depend on rules semantics also live below the UI layer: immediate winning
-moves, Renju forbidden moves, and the canonical winning line are exposed from
-`gomoku-core` through `gomoku-wasm` and rendered by the web shell.
+one answer, regardless of where the question is asked. Tactical hint facts that
+depend on rules semantics also live below the UI layer. The browser keeps a
+rolling-frontier-backed `WasmBoard` and reads one threat snapshot for immediate
+wins, immediate threats, imminent replies, counter-threat replies, and Renju
+forbidden moves. The canonical winning line remains a separate result
+visualization query.
 
 ## Data flow
 
