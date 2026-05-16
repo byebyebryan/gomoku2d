@@ -2,6 +2,7 @@ use std::collections::BTreeMap;
 use std::path::Path;
 use std::time::Instant;
 
+use gomoku_bot::tactical::{corridor_active_threats, LocalThreatKind};
 use gomoku_core::{Board, Color, Move, Replay};
 use rayon::prelude::*;
 use serde::Serialize;
@@ -1736,7 +1737,10 @@ fn add_loser_tactical_hint_markers(
     board: &Board,
     winner: Option<Color>,
 ) {
-    if !winner.is_some_and(|winner| board.current_player == winner.opponent()) {
+    let Some(winner) = winner else {
+        return;
+    };
+    if board.current_player != winner.opponent() {
         return;
     }
 
@@ -1750,6 +1754,48 @@ fn add_loser_tactical_hint_markers(
         board.immediate_winning_moves_for(board.current_player.opponent()),
         AnalysisBatchProofMarkerKind::Threat,
     );
+    if has_immediate_tactical_hint(markers) {
+        return;
+    }
+    add_current_imminent_response_markers(markers, board, winner);
+}
+
+fn has_immediate_tactical_hint(markers: &[AnalysisBatchProofMarker]) -> bool {
+    markers.iter().any(|marker| {
+        marker.kinds.iter().any(|kind| {
+            matches!(
+                kind,
+                AnalysisBatchProofMarkerKind::Winning | AnalysisBatchProofMarkerKind::Threat
+            )
+        })
+    })
+}
+
+fn add_current_imminent_response_markers(
+    markers: &mut Vec<AnalysisBatchProofMarker>,
+    board: &Board,
+    attacker: Color,
+) {
+    let defender = attacker.opponent();
+    for fact in corridor_active_threats(board, attacker)
+        .into_iter()
+        .filter(|fact| {
+            matches!(
+                fact.kind,
+                LocalThreatKind::OpenThree | LocalThreatKind::BrokenThree
+            )
+        })
+    {
+        for mv in fact.defense_squares.iter().copied() {
+            if !board.is_empty(mv.row, mv.col) {
+                continue;
+            }
+            add_marker_kind(markers, [mv], AnalysisBatchProofMarkerKind::ImminentDefense);
+            if !board.is_legal_for_color(mv, defender) {
+                add_marker_kind(markers, [mv], AnalysisBatchProofMarkerKind::Forbidden);
+            }
+        }
+    }
 }
 
 fn add_forbidden_cost_markers(
@@ -3644,6 +3690,108 @@ mod tests {
                 AnalysisBatchProofMarkerKind::ImminentDefense,
                 AnalysisBatchProofMarkerKind::Actual,
             ]
+        );
+    }
+
+    #[test]
+    fn analysis_batch_visual_frames_mark_both_forbidden_open_three_responses() {
+        let replay = replay_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "G7", "H9", "J8", "H7", "H6", "I7", "F8", "E9", "H10", "I5", "G9", "E7",
+                "I9", "K7", "G10", "G11", "I11", "J12", "G6", "G8", "F6", "L7", "J7", "J6", "E6",
+                "D6", "I6",
+            ],
+        );
+
+        let report = run_analysis_batch_replays_with_options(
+            "report.json:bot-a vs bot-b".to_string(),
+            vec![ReplayAnalysisInput {
+                label: "renju_forbidden_open_three_responses".to_string(),
+                replay,
+            }],
+            AnalysisBatchRunOptions {
+                analysis: AnalysisOptions {
+                    reply_policy: ReplyPolicy::CorridorReplies,
+                    max_depth: 4,
+                    max_scan_plies: Some(64),
+                },
+                include_proof_details: true,
+            },
+        );
+
+        let frame = report.entries[0]
+            .proof_details
+            .as_ref()
+            .expect("proof details should be present")
+            .proof_frames
+            .iter()
+            .find(|frame| frame.label == "actual_ply_25")
+            .expect("ply 25 decision frame should be present");
+
+        for notation in ["E6", "I6"] {
+            let marker = marker_for(frame, notation);
+            assert!(
+                marker
+                    .kinds
+                    .contains(&AnalysisBatchProofMarkerKind::ImminentDefense),
+                "{notation} should be marked as an imminent open-three response: {:?}",
+                marker.kinds
+            );
+            assert!(
+                marker
+                    .kinds
+                    .contains(&AnalysisBatchProofMarkerKind::Forbidden),
+                "{notation} should be marked forbidden for Black under Renju: {:?}",
+                marker.kinds
+            );
+        }
+    }
+
+    #[test]
+    fn analysis_batch_visual_frames_prioritize_immediate_threats_over_imminent_responses() {
+        let replay = replay_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "I8", "H7", "I7", "H6", "H5", "I6", "I9", "G6", "J6", "G8", "J5", "E6", "F6",
+                "H9", "H10", "F7", "I10", "D5",
+            ],
+        );
+
+        let report = run_analysis_batch_replays_with_options(
+            "report.json:bot-a vs bot-b".to_string(),
+            vec![ReplayAnalysisInput {
+                label: "immediate_response_preempts_imminent_responses".to_string(),
+                replay,
+            }],
+            AnalysisBatchRunOptions {
+                analysis: AnalysisOptions {
+                    reply_policy: ReplyPolicy::CorridorReplies,
+                    max_depth: 4,
+                    max_scan_plies: Some(64),
+                },
+                include_proof_details: true,
+            },
+        );
+
+        let frame = report.entries[0]
+            .proof_details
+            .as_ref()
+            .expect("proof details should be present")
+            .proof_frames
+            .iter()
+            .find(|frame| frame.label == "actual_ply_16")
+            .expect("ply 16 decision frame should be present");
+
+        let h10 = marker_for(frame, "H10");
+        assert!(h10.kinds.contains(&AnalysisBatchProofMarkerKind::Threat));
+        assert!(h10.kinds.contains(&AnalysisBatchProofMarkerKind::Actual));
+        assert!(
+            !frame.markers.iter().any(|marker| marker
+                .kinds
+                .contains(&AnalysisBatchProofMarkerKind::ImminentDefense)),
+            "imminent responses should be suppressed while an immediate threat response exists: {:?}",
+            frame.markers
         );
     }
 
