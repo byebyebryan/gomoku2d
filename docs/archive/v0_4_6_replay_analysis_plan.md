@@ -96,6 +96,18 @@ Recommended shape:
 This keeps the same rule as the rest of the project: React and Phaser render
 facts; they do not rediscover Gomoku/Renju strategy.
 
+Implementation checkpoint:
+
+- `gomoku-analysis` has been split out as the shared Rust analyzer crate.
+- `gomoku-eval` re-exports and consumes `gomoku-analysis` for the existing CLI
+  and static report flows.
+- `gomoku-wasm` exposes `WasmReplayAnalyzer.createFromReplayJson(...).step(...)`
+  and `WasmBoard.hashString()`.
+- `gomoku-web` can convert a `SavedMatchV2` into exact core replay JSON and
+  create the wasm analyzer from that saved match.
+- The worker, progressive scheduling, replay-route state, and board annotations
+  are still the remaining product slice.
+
 ## Progressive Analyzer API
 
 A single blocking `analyzeReplay()` call is the wrong browser API. The replay
@@ -104,10 +116,14 @@ page needs incremental updates so it can remain responsive and show progress.
 Target shape:
 
 ```text
-WasmReplayAnalyzer.create(saved_match_json, options_json)
+WasmReplayAnalyzer.createFromReplayJson(replay_json, options_json)
 WasmReplayAnalyzer.step(max_work_units) -> AnalyzerStepResult
 WasmReplayAnalyzer.dispose()
 ```
+
+The current bridge is step-shaped but still blocking internally. That is
+intentional for the first plumbing slice: it validates the Rust/wasm/web data
+boundary before adding worker scheduling and true progressive chunks.
 
 The step result should include:
 

@@ -138,6 +138,10 @@ One rules implementation, reused everywhere:
 - **Browser:** `gomoku-bot-lab/gomoku-wasm` compiles `gomoku-core` to wasm.
   Web imports it via `gomoku-wasm = "file:../gomoku-bot-lab/gomoku-wasm/pkg"`
   in `package.json`. Vite's wasm plugin handles the load.
+- **Replay analysis:** `gomoku-analysis` owns bounded corridor traceback.
+  `gomoku-eval` uses it for fixture/report generation; `gomoku-wasm` exposes a
+  browser-safe analyzer bridge; `gomoku-web` converts saved matches to core
+  replay JSON and renders the result.
 - **Server (future):** `gomoku-api` depends on `gomoku-core` as a Cargo path
   dependency. Same Rust code, native target.
 - **CLI / eval tools:** already using `gomoku-core` via path deps.
