@@ -1,4 +1,5 @@
 use gomoku_bot::corridor as bot_corridor;
+use gomoku_bot::tactical::corridor_active_threats;
 use gomoku_core::{replay::ReplayResult, Board, Color, GameResult, Move, Replay, Variant};
 use serde::Serialize;
 
@@ -791,7 +792,9 @@ fn replay_corridor_attacker_node(
             Vec::new(),
         );
     };
-    if !is_corridor_attacker_move(board, attacker, actual_move, options) {
+    let actual_move_enters_corridor =
+        is_corridor_attacker_move(board, attacker, actual_move, options);
+    if !actual_move_enters_corridor && corridor_active_threats(board, attacker).is_empty() {
         return corridor_proof_result(
             board,
             attacker,
@@ -819,6 +822,17 @@ fn replay_corridor_attacker_node(
     let child = actual_child.cloned().unwrap_or_else(|| {
         replay_corridor_status(&next, actual_moves, attacker, options, prefix_ply + 1)
     });
+    if !actual_move_enters_corridor && child.status != ProofStatus::ForcedWin {
+        return corridor_proof_result(
+            board,
+            attacker,
+            options,
+            ProofStatus::EscapeFound,
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+        );
+    }
     match child.status {
         ProofStatus::ForcedWin => {
             let mut principal_line = Vec::with_capacity(child.principal_line.len() + 1);
@@ -913,6 +927,43 @@ fn replay_corridor_defender_node(
     let reply_moves =
         corridor_defender_reply_moves(board, actual_moves, prefix_ply, options, &threat);
     if reply_moves.is_empty() {
+        if !corridor_active_threats(board, attacker).is_empty() {
+            if let Some(child) = actual_child.filter(|proof| proof.status == ProofStatus::ForcedWin)
+            {
+                let mut principal_line = actual_moves
+                    .get(prefix_ply)
+                    .copied()
+                    .into_iter()
+                    .collect::<Vec<_>>();
+                principal_line.extend(child.principal_line.clone());
+                let mut evidence = vec![threat.evidence(ThreatEvidenceInput {
+                    attribution,
+                    reply_classification: ReplyClassification::NoLegalBlock,
+                    escape_replies: Vec::new(),
+                    forced_replies: actual_moves
+                        .get(prefix_ply)
+                        .copied()
+                        .into_iter()
+                        .collect::<Vec<_>>(),
+                    next_forcing_move: next_attacker_move_after_defender_reply(&principal_line),
+                    proof_status: ProofStatus::ForcedWin,
+                    limit_causes: Vec::new(),
+                })];
+                evidence.extend(child.threat_evidence.clone());
+                return with_limit_causes(
+                    corridor_proof_result(
+                        board,
+                        attacker,
+                        options,
+                        ProofStatus::ForcedWin,
+                        principal_line,
+                        Vec::new(),
+                        evidence,
+                    ),
+                    child.limit_causes.clone(),
+                );
+            }
+        }
         return with_limit_causes(
             corridor_proof_result(
                 board,
@@ -2267,6 +2318,34 @@ mod tests {
             .any(|evidence| evidence.actual_reply == Some(mv("B9"))
                 && evidence.reply_classification == ReplyClassification::BlockedButForced
                 && evidence.escape_replies.is_empty()));
+    }
+
+    #[test]
+    fn replay_analysis_extends_forced_corridor_through_forbidden_renju_defenses() {
+        let replay = replay_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "G7", "H9", "J8", "H7", "H6", "I7", "F8", "E9", "H10", "I5", "G9", "E7",
+                "I9", "K7", "G10", "G11", "I11", "J12", "G6", "G8", "F6", "L7", "J7", "J6", "E6",
+                "D6", "I6",
+            ],
+        );
+
+        let analysis = analyze_replay(
+            &replay,
+            AnalysisOptions {
+                reply_policy: ReplyPolicy::CorridorReplies,
+                max_depth: 4,
+                max_scan_plies: Some(64),
+            },
+        )
+        .expect("finished replay should analyze");
+
+        assert_eq!(analysis.root_cause, RootCause::MissedDefense);
+        assert_eq!(analysis.final_forced_interval.start_ply, 23);
+        assert_eq!(analysis.critical_mistake_ply, Some(23));
+        assert_eq!(analysis.unclear_reason, None);
+        assert!(analysis.unknown_gaps.is_empty());
     }
 
     #[test]
