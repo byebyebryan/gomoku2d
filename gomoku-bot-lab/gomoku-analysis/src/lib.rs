@@ -1,5 +1,5 @@
 use gomoku_bot::corridor as bot_corridor;
-use gomoku_bot::tactical::corridor_active_threats;
+use gomoku_bot::tactical::{corridor_active_threats, LocalThreatKind};
 use gomoku_core::{replay::ReplayResult, Board, Color, GameResult, Move, Replay, Variant};
 use serde::Serialize;
 
@@ -348,10 +348,20 @@ pub struct ReplayAnalysisSession {
     scan_start: usize,
     proof_summary: Vec<ProofResult>,
     final_analysis: Option<GameAnalysis>,
+    final_annotations_emitted: bool,
+    emit_annotations: bool,
 }
 
 impl ReplayAnalysisSession {
     pub fn new(replay: Replay, options: AnalysisOptions) -> Result<Self, AnalysisError> {
+        Self::new_with_annotation_mode(replay, options, true)
+    }
+
+    fn new_with_annotation_mode(
+        replay: Replay,
+        options: AnalysisOptions,
+        emit_annotations: bool,
+    ) -> Result<Self, AnalysisError> {
         let boards = replay_prefix_boards(&replay)?;
         let final_board = boards
             .last()
@@ -386,6 +396,8 @@ impl ReplayAnalysisSession {
             scan_start,
             proof_summary: Vec::new(),
             final_analysis,
+            final_annotations_emitted: false,
+            emit_annotations,
         })
     }
 
@@ -404,18 +416,29 @@ impl ReplayAnalysisSession {
                     break;
                 };
 
+                let actual_child = self.actual_child.clone();
                 let proof = replay_corridor_status_with_actual_child(
                     &self.boards[ply],
                     &self.actual_moves,
                     winner,
                     &self.options,
                     ply,
-                    self.actual_child.as_ref(),
+                    actual_child.as_ref(),
                 );
                 self.actual_child = Some(proof.clone());
                 self.proof_summary.insert(0, proof.clone());
                 self.scan_start = ply;
-                annotations.push(replay_frame_annotations_from_proof(ply, &proof));
+                if self.emit_annotations {
+                    annotations.push(replay_frame_annotations_from_proof(
+                        ply,
+                        &self.boards[ply],
+                        winner,
+                        &proof,
+                        actual_child.as_ref(),
+                        self.actual_moves.get(ply).copied(),
+                        &self.options,
+                    ));
+                }
 
                 let boundary_found = final_forced_interval_has_boundary(
                     &self.proof_summary,
@@ -434,6 +457,16 @@ impl ReplayAnalysisSession {
         }
 
         let done = self.final_analysis.is_some();
+        if self.emit_annotations && done && !self.final_annotations_emitted {
+            if let Some(analysis) = &self.final_analysis {
+                annotations.extend(replay_frame_annotations_for_analysis_with_boards(
+                    &self.replay,
+                    &self.boards,
+                    analysis,
+                ));
+            }
+            self.final_annotations_emitted = true;
+        }
         ReplayAnalysisStep {
             status: self.step_status(done),
             done,
@@ -510,7 +543,15 @@ fn replay_analysis_counters(proof_summary: &[ProofResult]) -> ReplayAnalysisCoun
     }
 }
 
-fn replay_frame_annotations_from_proof(ply: usize, proof: &ProofResult) -> ReplayFrameAnnotations {
+fn replay_frame_annotations_from_proof(
+    ply: usize,
+    board: &Board,
+    winner: Color,
+    proof: &ProofResult,
+    actual_child: Option<&ProofResult>,
+    actual_reply: Option<Move>,
+    options: &AnalysisOptions,
+) -> ReplayFrameAnnotations {
     let mut frame = ReplayFrameAnnotations {
         ply,
         side_to_move: proof.side_to_move,
@@ -518,58 +559,375 @@ fn replay_frame_annotations_from_proof(ply: usize, proof: &ProofResult) -> Repla
         markers: Vec::new(),
     };
 
-    for evidence in &proof.threat_evidence {
-        for mv in &evidence.defender_immediate_wins {
-            push_replay_highlight(
-                &mut frame.highlights,
-                ReplayFrameHighlightRole::ImmediateWin,
-                *mv,
-                evidence.defender,
+    push_current_loser_tactical_annotations(&mut frame, board, winner);
+    push_forbidden_cost_annotations(&mut frame, board, proof, ply, None);
+
+    if board.current_player == winner.opponent() {
+        if let Some(actual_child) = actual_child {
+            push_forbidden_cost_annotations(
+                &mut frame,
+                board,
+                actual_child,
+                ply + 1,
+                Some(ReplayFrameHighlightRole::ImminentThreat),
             );
         }
-        for mv in &evidence.raw_cost_squares {
-            push_replay_highlight(
-                &mut frame.highlights,
-                ReplayFrameHighlightRole::ImmediateThreat,
-                *mv,
-                evidence.attacker,
-            );
+        let replies =
+            analyze_alternate_defender_reply_options(board, winner, actual_reply, options);
+        if let Some(actual_reply) = actual_reply {
+            push_actual_reply_hint_annotations(&mut frame, board, winner, actual_reply);
         }
-        for mv in &evidence.illegal_cost_squares {
+        push_reply_outcome_annotations(&mut frame, winner, &replies);
+    }
+
+    frame
+}
+
+pub fn replay_frame_annotations_for_analysis(
+    replay: &Replay,
+    analysis: &GameAnalysis,
+) -> Result<Vec<ReplayFrameAnnotations>, AnalysisError> {
+    let boards = replay_prefix_boards(replay)?;
+    Ok(replay_frame_annotations_for_analysis_with_boards(
+        replay, &boards, analysis,
+    ))
+}
+
+fn replay_frame_annotations_for_analysis_with_boards(
+    replay: &Replay,
+    boards: &[Board],
+    analysis: &GameAnalysis,
+) -> Vec<ReplayFrameAnnotations> {
+    let Some(winner) = analysis.winner else {
+        return Vec::new();
+    };
+    if analysis.proof_summary.is_empty() {
+        return Vec::new();
+    }
+
+    let Some(scan_start) = boards.len().checked_sub(analysis.proof_summary.len()) else {
+        return Vec::new();
+    };
+    let first_actual_ply = replay_annotation_start_actual_ply(boards, analysis);
+    let mut frames = Vec::new();
+    for actual_ply in (first_actual_ply..=analysis.final_forced_interval.end_ply).rev() {
+        let Some(prefix_ply) = actual_ply.checked_sub(1) else {
+            continue;
+        };
+        let Some(board) = boards.get(prefix_ply) else {
+            continue;
+        };
+        let Some(proof) = proof_result_at(&analysis.proof_summary, scan_start, prefix_ply) else {
+            continue;
+        };
+        let actual_child = proof_result_at(
+            &analysis.proof_summary,
+            scan_start,
+            prefix_ply.saturating_add(1),
+        );
+        let previous_proof = prefix_ply
+            .checked_sub(1)
+            .and_then(|previous| proof_result_at(&analysis.proof_summary, scan_start, previous));
+        let actual_reply = actual_move_at_prefix(replay, prefix_ply);
+        let mut frame = replay_frame_annotations_from_proof(
+            prefix_ply,
+            board,
+            winner,
+            proof,
+            actual_child,
+            actual_reply,
+            &AnalysisOptions {
+                reply_policy: analysis.model.reply_policy,
+                max_depth: analysis.model.max_depth,
+                max_scan_plies: analysis.model.max_scan_plies,
+            },
+        );
+        push_pre_corridor_escape_annotation(
+            &mut frame,
+            replay,
+            analysis,
+            actual_ply,
+            board,
+            proof,
+            previous_proof,
+        );
+        frames.push(frame);
+    }
+    frames
+}
+
+fn replay_annotation_start_actual_ply(boards: &[Board], analysis: &GameAnalysis) -> usize {
+    let start_ply = analysis.final_forced_interval.start_ply;
+    let Some(winner) = analysis.winner else {
+        return start_ply;
+    };
+    if start_ply <= 1 {
+        return start_ply;
+    }
+
+    let start_board_ply = start_ply.saturating_sub(1);
+    if boards
+        .get(start_board_ply)
+        .is_some_and(|board| board.current_player == winner.opponent())
+    {
+        start_ply - 1
+    } else {
+        start_ply
+    }
+}
+
+fn proof_result_at(
+    proofs: &[ProofResult],
+    scan_start: usize,
+    prefix_ply: usize,
+) -> Option<&ProofResult> {
+    proofs.get(prefix_ply.checked_sub(scan_start)?)
+}
+
+fn actual_move_at_prefix(replay: &Replay, prefix_ply: usize) -> Option<Move> {
+    let replay_move = replay.moves.get(prefix_ply)?;
+    Move::from_notation(&replay_move.mv).ok()
+}
+
+fn push_current_loser_tactical_annotations(
+    frame: &mut ReplayFrameAnnotations,
+    board: &Board,
+    winner: Color,
+) {
+    let defender = winner.opponent();
+    if board.current_player != defender {
+        return;
+    }
+
+    let defender_wins = board.immediate_winning_moves_for(defender);
+    let attacker_wins = board.immediate_winning_moves_for(winner);
+
+    for mv in defender_wins.iter().copied() {
+        push_replay_highlight(
+            &mut frame.highlights,
+            ReplayFrameHighlightRole::ImmediateWin,
+            mv,
+            defender,
+        );
+    }
+    for mv in attacker_wins.iter().copied() {
+        push_replay_highlight(
+            &mut frame.highlights,
+            ReplayFrameHighlightRole::ImmediateThreat,
+            mv,
+            winner,
+        );
+        if !board.is_legal_for_color(mv, defender) {
             push_replay_marker(
                 &mut frame.markers,
                 ReplayFrameMarkerRole::Forbidden,
-                *mv,
-                evidence.defender,
-            );
-        }
-        for mv in &evidence.escape_replies {
-            let role = match evidence.reply_classification {
-                ReplyClassification::ConfirmedEscape => ReplayFrameMarkerRole::ConfirmedEscape,
-                ReplyClassification::PossibleEscape => ReplayFrameMarkerRole::PossibleEscape,
-                _ => ReplayFrameMarkerRole::Unknown,
-            };
-            push_replay_marker(&mut frame.markers, role, *mv, evidence.defender);
-        }
-        for mv in &evidence.forced_replies {
-            push_replay_marker(
-                &mut frame.markers,
-                ReplayFrameMarkerRole::ForcedLoss,
-                *mv,
-                evidence.defender,
-            );
-        }
-        if let Some(mv) = evidence.next_forcing_move {
-            push_replay_highlight(
-                &mut frame.highlights,
-                ReplayFrameHighlightRole::CorridorEntry,
                 mv,
-                evidence.attacker,
+                defender,
             );
         }
     }
 
-    frame
+    if !defender_wins.is_empty() || !attacker_wins.is_empty() {
+        return;
+    }
+
+    for fact in corridor_active_threats(board, winner)
+        .into_iter()
+        .filter(|fact| {
+            matches!(
+                fact.kind,
+                LocalThreatKind::OpenThree | LocalThreatKind::BrokenThree
+            )
+        })
+    {
+        for mv in fact.defense_squares.iter().copied() {
+            if !board.is_empty(mv.row, mv.col) {
+                continue;
+            }
+            push_replay_highlight(
+                &mut frame.highlights,
+                ReplayFrameHighlightRole::ImminentThreat,
+                mv,
+                winner,
+            );
+            if !board.is_legal_for_color(mv, defender) {
+                push_replay_marker(
+                    &mut frame.markers,
+                    ReplayFrameMarkerRole::Forbidden,
+                    mv,
+                    defender,
+                );
+            }
+        }
+    }
+}
+
+fn push_forbidden_cost_annotations(
+    frame: &mut ReplayFrameAnnotations,
+    board: &Board,
+    proof: &ProofResult,
+    prefix_ply: usize,
+    tactical_role: Option<ReplayFrameHighlightRole>,
+) {
+    for evidence in proof
+        .threat_evidence
+        .iter()
+        .filter(|evidence| evidence.prefix_ply == Some(prefix_ply))
+    {
+        for mv in evidence.illegal_cost_squares.iter().copied().filter(|mv| {
+            board.is_empty(mv.row, mv.col) && !board.is_legal_for_color(*mv, evidence.defender)
+        }) {
+            if let Some(tactical_role) = tactical_role {
+                push_replay_highlight(&mut frame.highlights, tactical_role, mv, evidence.attacker);
+            }
+            push_replay_marker(
+                &mut frame.markers,
+                ReplayFrameMarkerRole::Forbidden,
+                mv,
+                evidence.defender,
+            );
+        }
+    }
+}
+
+fn push_reply_outcome_annotations(
+    frame: &mut ReplayFrameAnnotations,
+    attacker: Color,
+    replies: &[DefenderReplyAnalysis],
+) {
+    let defender = attacker.opponent();
+    for reply in replies {
+        for role in &reply.roles {
+            match role {
+                DefenderReplyRole::Actual => {}
+                DefenderReplyRole::ImmediateDefense => push_replay_highlight(
+                    &mut frame.highlights,
+                    ReplayFrameHighlightRole::ImmediateThreat,
+                    reply.mv,
+                    attacker,
+                ),
+                DefenderReplyRole::ImminentDefense => push_replay_highlight(
+                    &mut frame.highlights,
+                    ReplayFrameHighlightRole::ImminentThreat,
+                    reply.mv,
+                    attacker,
+                ),
+                DefenderReplyRole::OffensiveCounter => push_replay_highlight(
+                    &mut frame.highlights,
+                    ReplayFrameHighlightRole::CounterThreat,
+                    reply.mv,
+                    defender,
+                ),
+            }
+        }
+
+        let marker_role = match reply.outcome {
+            DefenderReplyOutcome::ForcedLoss => ReplayFrameMarkerRole::ForcedLoss,
+            DefenderReplyOutcome::ConfirmedEscape => ReplayFrameMarkerRole::ConfirmedEscape,
+            DefenderReplyOutcome::PossibleEscape => ReplayFrameMarkerRole::PossibleEscape,
+            DefenderReplyOutcome::ImmediateLoss => ReplayFrameMarkerRole::ImmediateLoss,
+            DefenderReplyOutcome::Unknown => ReplayFrameMarkerRole::Unknown,
+        };
+        push_replay_marker(&mut frame.markers, marker_role, reply.mv, defender);
+    }
+}
+
+fn push_actual_reply_hint_annotations(
+    frame: &mut ReplayFrameAnnotations,
+    board: &Board,
+    attacker: Color,
+    mv: Move,
+) {
+    let defender = attacker.opponent();
+    if board.current_player != defender {
+        return;
+    }
+
+    for role in defender_reply_roles_for_move(board, attacker, mv) {
+        match role {
+            DefenderReplyRole::Actual => {}
+            DefenderReplyRole::ImmediateDefense => push_replay_highlight(
+                &mut frame.highlights,
+                ReplayFrameHighlightRole::ImmediateThreat,
+                mv,
+                attacker,
+            ),
+            DefenderReplyRole::ImminentDefense => push_replay_highlight(
+                &mut frame.highlights,
+                ReplayFrameHighlightRole::ImminentThreat,
+                mv,
+                attacker,
+            ),
+            DefenderReplyRole::OffensiveCounter => push_replay_highlight(
+                &mut frame.highlights,
+                ReplayFrameHighlightRole::CounterThreat,
+                mv,
+                defender,
+            ),
+        }
+    }
+}
+
+fn push_pre_corridor_escape_annotation(
+    frame: &mut ReplayFrameAnnotations,
+    replay: &Replay,
+    analysis: &GameAnalysis,
+    actual_ply: usize,
+    board: &Board,
+    proof: &ProofResult,
+    previous_proof: Option<&ProofResult>,
+) {
+    let Some(winner) = analysis.winner else {
+        return;
+    };
+    if board.current_player != winner.opponent() || !frame.highlights.is_empty() {
+        return;
+    }
+
+    let Some(entry_move) =
+        pre_corridor_escape_entry_move(replay, analysis, actual_ply, proof, previous_proof)
+    else {
+        return;
+    };
+    if !board.is_legal(entry_move) {
+        return;
+    }
+
+    push_replay_highlight(
+        &mut frame.highlights,
+        ReplayFrameHighlightRole::CorridorEntry,
+        entry_move,
+        winner,
+    );
+    push_replay_marker(
+        &mut frame.markers,
+        ReplayFrameMarkerRole::ConfirmedEscape,
+        entry_move,
+        winner.opponent(),
+    );
+}
+
+fn pre_corridor_escape_entry_move(
+    replay: &Replay,
+    analysis: &GameAnalysis,
+    actual_ply: usize,
+    proof: &ProofResult,
+    previous_proof: Option<&ProofResult>,
+) -> Option<Move> {
+    if actual_ply == analysis.final_forced_interval.start_ply
+        && proof.status == ProofStatus::EscapeFound
+    {
+        return actual_move_at_prefix(replay, actual_ply);
+    }
+
+    if actual_ply == analysis.final_forced_interval.start_ply + 1
+        && previous_proof.map(|proof| proof.status) == Some(ProofStatus::EscapeFound)
+        && proof.status == ProofStatus::ForcedWin
+    {
+        return proof.principal_line.first().copied();
+    }
+
+    None
 }
 
 fn push_replay_highlight(
@@ -610,7 +968,8 @@ pub fn analyze_replay(
     replay: &Replay,
     options: AnalysisOptions,
 ) -> Result<GameAnalysis, AnalysisError> {
-    let mut session = ReplayAnalysisSession::new(replay.clone(), options)?;
+    let mut session =
+        ReplayAnalysisSession::new_with_annotation_mode(replay.clone(), options, false)?;
     loop {
         let step = session.step(usize::MAX);
         if step.done {
@@ -2131,8 +2490,9 @@ mod tests {
     use super::{
         analyze_defender_reply_options, analyze_replay, replay_moves, replay_prefix_boards,
         replay_proof_summary, AnalysisOptions, DefenderReplyOutcome, DefenderReplyRole,
-        ProofLimitCause, ProofStatus, ReplayAnalysisSession, ReplayFrameMarkerRole,
-        ReplyClassification, ReplyPolicy, RootCause, TacticalNote, UnclearReason,
+        ProofLimitCause, ProofStatus, ReplayAnalysisSession, ReplayFrameHighlightRole,
+        ReplayFrameMarkerRole, ReplyClassification, ReplyPolicy, RootCause, TacticalNote,
+        UnclearReason,
     };
 
     fn mv(notation: &str) -> Move {
@@ -2624,7 +2984,8 @@ mod tests {
         }
 
         assert_eq!(final_analysis, Some(expected));
-        assert_eq!(observed_plys, vec![9, 8, 7]);
+        assert_eq!(&observed_plys[..3], [9, 8, 7]);
+        assert_eq!(&observed_plys[3..], [8, 7]);
     }
 
     #[test]
@@ -2691,6 +3052,209 @@ mod tests {
         assert!(boundary.markers.iter().any(|marker| {
             marker.role == ReplayFrameMarkerRole::PossibleEscape
                 && marker.mv == mv("I10")
+                && marker.side == Color::White
+        }));
+    }
+
+    #[test]
+    fn replay_analysis_session_emits_current_imminent_and_counter_highlights() {
+        let replay = replay_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "I8", "H7", "I7", "H6", "H5", "I6", "I9", "G6", "J6", "G8", "J5", "G5", "G7",
+                "E6", "F6", "H9", "H10", "F7", "D5", "I10",
+            ],
+        );
+        let mut session = ReplayAnalysisSession::new(
+            replay,
+            AnalysisOptions {
+                reply_policy: ReplyPolicy::CorridorReplies,
+                max_depth: 4,
+                max_scan_plies: Some(8),
+            },
+        )
+        .expect("session should initialize");
+        let mut annotations = Vec::new();
+        loop {
+            let step = session.step(2);
+            annotations.extend(step.annotations);
+            if step.done {
+                break;
+            }
+        }
+
+        let boundary = annotations
+            .iter()
+            .find(|frame| frame.ply == 13)
+            .expect("escape boundary frame should be annotated");
+
+        for notation in ["G4", "G7", "G9"] {
+            let mv = mv(notation);
+            assert!(
+                boundary.highlights.iter().any(|highlight| {
+                    highlight.role == ReplayFrameHighlightRole::ImminentThreat
+                        && highlight.mv == mv
+                        && highlight.side == Color::Black
+                }),
+                "{notation} should be highlighted as a current imminent-threat response: {:?}",
+                boundary.highlights
+            );
+        }
+
+        for notation in ["I10", "I11"] {
+            let mv = mv(notation);
+            assert!(
+                boundary.highlights.iter().any(|highlight| {
+                    highlight.role == ReplayFrameHighlightRole::CounterThreat
+                        && highlight.mv == mv
+                        && highlight.side == Color::White
+                }),
+                "{notation} should be highlighted as a current counter-threat response: {:?}",
+                boundary.highlights
+            );
+        }
+    }
+
+    #[test]
+    fn replay_analysis_session_marks_actual_counter_threat_hint() {
+        let replay = replay_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "G7", "H6", "H7", "I7", "F7", "G5", "F4", "J8", "K9", "I8", "G8", "I6", "I9",
+                "H9", "F6", "F5", "G9", "G10", "E7", "D7", "J7", "I5", "I4", "H5", "E5", "J5",
+            ],
+        );
+        let mut session = ReplayAnalysisSession::new(
+            replay,
+            AnalysisOptions {
+                reply_policy: ReplyPolicy::CorridorReplies,
+                max_depth: 4,
+                max_scan_plies: Some(64),
+            },
+        )
+        .expect("session should initialize");
+        let mut annotations = Vec::new();
+        loop {
+            let step = session.step(2);
+            annotations.extend(step.annotations);
+            if step.done {
+                break;
+            }
+        }
+
+        let frame = annotations
+            .iter()
+            .rev()
+            .find(|frame| frame.ply == 19)
+            .expect("move 19 frame should be annotated");
+
+        assert_eq!(frame.side_to_move, Color::White);
+        assert!(
+            frame.highlights.iter().any(|highlight| {
+                highlight.role == ReplayFrameHighlightRole::CounterThreat
+                    && highlight.mv == mv("E7")
+                    && highlight.side == Color::White
+            }),
+            "White's actual E7 reply should be highlighted as a counter threat: {:?}",
+            frame.highlights
+        );
+    }
+
+    #[test]
+    fn replay_analysis_session_marks_next_corridor_entry_on_escape_boundary() {
+        let replay = replay_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "H9", "J8", "I7", "I8", "G8", "I10", "L7", "K7", "I9", "J9", "H7", "J7",
+                "J10", "H11", "F13", "I6", "F9", "J6", "J5", "L8", "K8", "I5", "H4", "M9",
+            ],
+        );
+        let mut session = ReplayAnalysisSession::new(
+            replay,
+            AnalysisOptions {
+                reply_policy: ReplyPolicy::CorridorReplies,
+                max_depth: 4,
+                max_scan_plies: Some(64),
+            },
+        )
+        .expect("session should initialize");
+        let mut annotations = Vec::new();
+        loop {
+            let step = session.step(2);
+            annotations.extend(step.annotations);
+            if step.done {
+                break;
+            }
+        }
+
+        let frame = annotations
+            .iter()
+            .rev()
+            .find(|frame| frame.ply == 17)
+            .expect("escape boundary frame should be annotated");
+
+        assert_eq!(frame.side_to_move, Color::White);
+        assert!(frame.highlights.iter().any(|highlight| {
+            highlight.role == ReplayFrameHighlightRole::CorridorEntry
+                && highlight.mv == mv("J6")
+                && highlight.side == Color::Black
+        }));
+        assert!(frame.markers.iter().any(|marker| {
+            marker.role == ReplayFrameMarkerRole::ConfirmedEscape
+                && marker.mv == mv("J6")
+                && marker.side == Color::White
+        }));
+        assert!(
+            frame
+                .highlights
+                .iter()
+                .all(|highlight| highlight.mv != mv("F9")),
+            "the escape boundary should point at the next corridor-entry move, not the current actual reply: {:?}",
+            frame.highlights
+        );
+    }
+
+    #[test]
+    fn replay_analysis_session_emits_corridor_entry_escape_boundary() {
+        let replay = replay_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "H9", "I8", "I9", "G8", "J8", "J9", "K7", "H10", "H7", "G9", "L6", "M5",
+                "I7", "G7", "G6", "F8", "E8", "E7", "D6", "I11",
+            ],
+        );
+        let mut session = ReplayAnalysisSession::new(
+            replay,
+            AnalysisOptions {
+                reply_policy: ReplyPolicy::CorridorReplies,
+                max_depth: 4,
+                max_scan_plies: Some(64),
+            },
+        )
+        .expect("session should initialize");
+        let mut annotations = Vec::new();
+
+        loop {
+            let step = session.step(2);
+            annotations.extend(step.annotations);
+            if step.done {
+                break;
+            }
+        }
+
+        let boundary = annotations
+            .iter()
+            .rev()
+            .find(|frame| frame.ply == 13)
+            .expect("attacker-started corridor boundary should be annotated");
+        assert!(boundary.highlights.iter().any(|highlight| {
+            highlight.role == ReplayFrameHighlightRole::CorridorEntry
+                && highlight.mv == mv("G7")
+                && highlight.side == Color::Black
+        }));
+        assert!(boundary.markers.iter().any(|marker| {
+            marker.role == ReplayFrameMarkerRole::ConfirmedEscape
+                && marker.mv == mv("G7")
                 && marker.side == Color::White
         }));
     }

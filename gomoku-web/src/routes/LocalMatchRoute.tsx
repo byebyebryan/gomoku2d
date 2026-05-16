@@ -290,6 +290,7 @@ export function LocalMatchRoute() {
       <section className={styles.layout}>
         <div className={styles.boardPanel}>
           <Board
+            analysisOverlays={[]}
             cells={state.cells}
             counterThreatMoves={visibleHints.counterThreatMoves}
             currentPlayer={state.currentPlayer}
@@ -298,6 +299,7 @@ export function LocalMatchRoute() {
             interactive={humanToMove}
             lastMove={state.lastMove}
             moves={state.moves}
+            nextReplayMove={null}
             onAdvanceRound={state.startNextRound}
             onPlace={state.placeHumanMove}
             onTouchCandidateChange={(candidate, canPlace) => {

@@ -2,12 +2,13 @@ import { useEffect, useRef } from "react";
 import * as Phaser from "phaser";
 
 import { BoardScene } from "../../board/board_scene";
-import type { BoardTouchControlMode } from "../../board/board_scene_logic";
+import type { BoardAnalysisOverlay, BoardTouchControlMode } from "../../board/board_scene_logic";
 import type { CellPosition, CellStone, MatchMove, MatchStatus } from "../../game/types";
 
 import styles from "./Board.module.css";
 
 export interface BoardProps {
+  analysisOverlays: BoardAnalysisOverlay[];
   cells: CellStone[][];
   counterThreatMoves: CellPosition[];
   currentPlayer: 1 | 2;
@@ -16,6 +17,7 @@ export interface BoardProps {
   interactive: boolean;
   lastMove: CellPosition | null;
   moves: MatchMove[];
+  nextReplayMove: CellPosition | null;
   onAdvanceRound: () => void;
   onPlace: (row: number, col: number) => void;
   onTouchCandidateChange: (candidate: CellPosition | null, canPlace: boolean) => void;

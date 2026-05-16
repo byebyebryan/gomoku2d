@@ -38,7 +38,7 @@ Surface sub-order:
 |---|---|
 | `highlight-strong` | Red for immediate threat/loss, green for immediate win; preview uses red |
 | `highlight-soft` | Pink for imminent threat, purple for counter-threat; preview uses pink |
-| `highlight-entry` | Per-side or neutral corridor-entry context; preview uses white |
+| `highlight-entry` | Per-side corridor-entry context; preview uses white |
 | `marker-warning` | Red for immediate loss/threat, green for immediate win; preview uses red |
 | `marker-question` | Gray |
 | `marker-L` | Red |
