@@ -18,6 +18,10 @@ import {
 import { BoardRenderer } from "./board_renderer";
 import { SEQUENCE_FONT_FAMILY } from "./sequence_font";
 import {
+  analysisHighlightAnimationForRole,
+  analysisHighlightTintForRole,
+  analysisMarkerAnimationForRole,
+  analysisMarkerTintForRole,
   canPlaceTouchCandidate,
   moveTouchCandidateFromPointerMove,
   pointerCueForCandidate,
@@ -37,7 +41,7 @@ import {
 } from "./board_scene_logic";
 
 import type { CellPosition, CellStone, MatchMove, MatchStatus } from "../game/types";
-import type { BoardTouchControlMode, PointerCue } from "./board_scene_logic";
+import type { BoardAnalysisOverlay, BoardTouchControlMode, PointerCue } from "./board_scene_logic";
 
 const STONE_IDLE_ANIMS = [
   STONE_ANIMS.IDLE_1,
@@ -243,6 +247,7 @@ class SequenceAnimationCycle {
 }
 
 export interface BoardSceneState {
+  analysisOverlays: BoardAnalysisOverlay[];
   cells: CellStone[][];
   counterThreatMoves: CellPosition[];
   currentPlayer: 1 | 2;
@@ -251,6 +256,7 @@ export interface BoardSceneState {
   interactive: boolean;
   lastMove: CellPosition | null;
   moves: MatchMove[];
+  nextReplayMove: CellPosition | null;
   onAdvanceRound: () => void;
   onPlace: (row: number, col: number) => void;
   onTouchCandidateChange: (candidate: CellPosition | null, canPlace: boolean) => void;
@@ -264,6 +270,7 @@ export interface BoardSceneState {
 }
 
 const DEFAULT_STATE: BoardSceneState = {
+  analysisOverlays: [],
   cells: Array.from({ length: BOARD_SIZE }, () =>
     Array.from({ length: BOARD_SIZE }, () => null),
   ),
@@ -273,6 +280,7 @@ const DEFAULT_STATE: BoardSceneState = {
   interactive: false,
   lastMove: null,
   moves: [],
+  nextReplayMove: null,
   onAdvanceRound: () => undefined,
   onPlace: () => undefined,
   onTouchCandidateChange: () => undefined,
@@ -291,6 +299,7 @@ export class BoardScene extends Phaser.Scene {
   private board: BoardRenderer | null = null;
   private boardLayer: Phaser.GameObjects.Container | null = null;
   private currentCellSize = 0;
+  private analysisSprites: Phaser.GameObjects.Sprite[] = [];
   private forbiddenSprites: Phaser.GameObjects.Sprite[] = [];
   private hintSprites: Phaser.GameObjects.Sprite[] = [];
   private hoverLayer: Phaser.GameObjects.Container | null = null;
@@ -499,6 +508,7 @@ export class BoardScene extends Phaser.Scene {
     this.hoverLayer.removeAll(true);
     this.stoneSprites.clear();
     this.forbiddenSprites = [];
+    this.analysisSprites = [];
     this.forbiddenCycles = [];
     this.hintSprites = [];
     this.pointerCellKey = null;
@@ -640,7 +650,9 @@ export class BoardScene extends Phaser.Scene {
     this.hintSprites.forEach((sprite) => sprite.destroy());
     this.sequenceLabels.forEach((label) => label.destroy());
     this.winSprites.forEach((sprite) => sprite.destroy());
+    this.analysisSprites.forEach((sprite) => sprite.destroy());
     this.forbiddenSprites = [];
+    this.analysisSprites = [];
     this.hintSprites = [];
     this.sequenceLabels = [];
     this.winSprites = [];
@@ -712,6 +724,59 @@ export class BoardScene extends Phaser.Scene {
           overlayAnimationForRole("counterThreatMove"),
           BOARD_RENDER_DEPTHS.OVERLAY_SURFACE,
           overlaySpriteForRole("counterThreatMove"),
+        ),
+      );
+    }
+
+    for (const overlay of this.boardState.analysisOverlays) {
+      if (!overlay.highlight) {
+        continue;
+      }
+
+      const point = this.board.cellToPixel(overlay.row, overlay.col);
+      this.analysisSprites.push(
+        this.createOverlaySprite(
+          point.x,
+          point.y,
+          analysisHighlightTintForRole(overlay.highlight, overlay.side),
+          analysisHighlightAnimationForRole(overlay.highlight),
+          BOARD_RENDER_DEPTHS.OVERLAY_SURFACE,
+          SPRITE.HIGHLIGHTER,
+        ),
+      );
+    }
+
+    for (const overlay of this.boardState.analysisOverlays) {
+      if (!overlay.marker) {
+        continue;
+      }
+
+      const point = this.board.cellToPixel(overlay.row, overlay.col);
+      this.analysisSprites.push(
+        this.createOverlaySprite(
+          point.x,
+          point.y,
+          analysisMarkerTintForRole(overlay.marker),
+          analysisMarkerAnimationForRole(overlay.marker),
+          BOARD_RENDER_DEPTHS.OVERLAY_SURFACE,
+          SPRITE.MARKER,
+        ),
+      );
+    }
+
+    if (this.boardState.nextReplayMove !== null) {
+      const point = this.board.cellToPixel(
+        this.boardState.nextReplayMove.row,
+        this.boardState.nextReplayMove.col,
+      );
+      this.analysisSprites.push(
+        this.createOverlaySprite(
+          point.x,
+          point.y,
+          this.boardState.currentPlayer === 1 ? COLOR.STONE_BLACK : COLOR.STONE_WHITE,
+          HOVER_ANIMS.HOVER.key,
+          BOARD_RENDER_DEPTHS.OVERLAY_HOVER,
+          SPRITE.HOVER,
         ),
       );
     }

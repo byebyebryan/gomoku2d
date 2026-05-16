@@ -1625,7 +1625,7 @@ fn proof_frames_for_actual_interval(
             let label = actual_frame_label(ply, &analysis.final_forced_interval);
             let mut markers = Vec::new();
             add_loser_tactical_hint_markers(&mut markers, board, analysis.winner);
-            add_forbidden_cost_markers(&mut markers, board, proof, None);
+            add_forbidden_cost_markers(&mut markers, board, proof, board_ply, None);
             if analysis
                 .winner
                 .is_some_and(|winner| board.current_player == winner.opponent())
@@ -1636,6 +1636,7 @@ fn proof_frames_for_actual_interval(
                     &mut markers,
                     board,
                     actual_child,
+                    board_ply + 1,
                     Some(AnalysisBatchProofMarkerKind::ImminentDefense),
                 );
             }
@@ -1802,6 +1803,7 @@ fn add_forbidden_cost_markers(
     markers: &mut Vec<AnalysisBatchProofMarker>,
     board: &Board,
     proof: Option<&ProofResult>,
+    prefix_ply: usize,
     tactical_role: Option<AnalysisBatchProofMarkerKind>,
 ) {
     let Some(proof) = proof else {
@@ -1810,6 +1812,7 @@ fn add_forbidden_cost_markers(
     let moves = proof
         .threat_evidence
         .iter()
+        .filter(|evidence| evidence.prefix_ply == Some(prefix_ply))
         .flat_map(|evidence| {
             evidence.illegal_cost_squares.iter().copied().filter(|&mv| {
                 board.is_empty(mv.row, mv.col) && !board.is_legal_for_color(mv, evidence.defender)
@@ -2710,9 +2713,10 @@ mod tests {
         AnalysisBatchRunOptions, AnalysisLossCategory, ReplayAnalysisInput,
     };
     use crate::analysis::{
-        AnalysisOptions, DefenderReplyAnalysis, DefenderReplyOutcome, DefenderReplyRole,
-        ProofLimitCause, ProofStatus, ReplyClassification, ReplyPolicy, RootCause,
-        SearchDiagnostics, UnclearReason,
+        analyze_replay, replay_frame_annotations_for_analysis, AnalysisOptions,
+        DefenderReplyAnalysis, DefenderReplyOutcome, DefenderReplyRole, ProofLimitCause,
+        ProofStatus, ReplayAnalysisSession, ReplayFrameHighlightRole, ReplayFrameMarkerRole,
+        ReplyClassification, ReplyPolicy, RootCause, SearchDiagnostics, UnclearReason,
     };
 
     fn replay_from_moves(variant: Variant, moves: &[&str]) -> Replay {
@@ -3278,6 +3282,104 @@ mod tests {
     }
 
     #[test]
+    fn shared_replay_annotations_match_report_corridor_entry_boundary() {
+        let replay = replay_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "H9", "I8", "I9", "G8", "J8", "J9", "K7", "H10", "H7", "G9", "L6", "M5",
+                "I7", "G7", "G6", "F8", "E8", "E7", "D6", "I11",
+            ],
+        );
+        let options = AnalysisOptions {
+            reply_policy: ReplyPolicy::CorridorReplies,
+            max_depth: 4,
+            max_scan_plies: Some(64),
+        };
+        let analysis = analyze_replay(&replay, options).expect("analysis should run");
+        let annotations = replay_frame_annotations_for_analysis(&replay, &analysis)
+            .expect("shared replay annotations should build");
+
+        let boundary = annotations
+            .iter()
+            .find(|frame| frame.ply == 13)
+            .expect("shared annotation should include the report corridor-entry boundary");
+        assert!(boundary.highlights.iter().any(|highlight| {
+            highlight.role == ReplayFrameHighlightRole::CorridorEntry
+                && highlight.notation == "G7"
+                && highlight.side == Color::Black
+        }));
+        assert!(boundary.markers.iter().any(|marker| {
+            marker.role == ReplayFrameMarkerRole::ConfirmedEscape
+                && marker.notation == "G7"
+                && marker.side == Color::White
+        }));
+    }
+
+    #[test]
+    fn shared_stepping_annotations_match_report_actual_counter_hint() {
+        let replay = replay_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "G7", "H6", "H7", "I7", "F7", "G5", "F4", "J8", "K9", "I8", "G8", "I6", "I9",
+                "H9", "F6", "F5", "G9", "G10", "E7", "D7", "J7", "I5", "I4", "H5", "E5", "J5",
+            ],
+        );
+        let options = AnalysisOptions {
+            reply_policy: ReplyPolicy::CorridorReplies,
+            max_depth: 4,
+            max_scan_plies: Some(64),
+        };
+
+        let report = run_analysis_batch_replays_with_options(
+            "local-history".to_string(),
+            vec![ReplayAnalysisInput {
+                label: "local-1778966398568-bcq0z38s".to_string(),
+                replay: replay.clone(),
+            }],
+            AnalysisBatchRunOptions {
+                analysis: options.clone(),
+                include_proof_details: true,
+            },
+        );
+        let proof_frame = report.entries[0]
+            .proof_details
+            .as_ref()
+            .expect("proof details should be present")
+            .proof_frames
+            .iter()
+            .find(|frame| frame.ply == 20)
+            .expect("report frame should show the actual E7 reply");
+        let report_marker = marker_for(proof_frame, "E7");
+        assert!(report_marker
+            .kinds
+            .contains(&AnalysisBatchProofMarkerKind::OffensiveCounter));
+        assert!(report_marker
+            .kinds
+            .contains(&AnalysisBatchProofMarkerKind::Actual));
+
+        let mut session =
+            ReplayAnalysisSession::new(replay, options).expect("session should initialize");
+        let mut annotations = Vec::new();
+        loop {
+            let step = session.step(2);
+            annotations.extend(step.annotations);
+            if step.done {
+                break;
+            }
+        }
+        let step_frame = annotations
+            .iter()
+            .rev()
+            .find(|frame| frame.ply == 19)
+            .expect("stepping annotations should use prefix-ply coordinates for UI frames");
+        assert!(step_frame.highlights.iter().any(|highlight| {
+            highlight.role == ReplayFrameHighlightRole::CounterThreat
+                && highlight.notation == "E7"
+                && highlight.side == Color::White
+        }));
+    }
+
+    #[test]
     fn analysis_batch_report_renders_opt_in_proof_details() {
         let replay = replay_from_moves(
             Variant::Freestyle,
@@ -3585,6 +3687,53 @@ mod tests {
                         && !h13.kinds.contains(&AnalysisBatchProofMarkerKind::Forbidden),
                     "{label} must not mark future H13 proof evidence as a current forbidden/imminent reply: {:?}",
                     h13.kinds
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn analysis_batch_visual_frames_filter_forbidden_costs_to_current_prefix() {
+        let replay = replay_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "G7", "H9", "J8", "H7", "H6", "I7", "F8", "E9", "H10", "I5", "G9",
+                "E7", "I9", "K7", "G10", "G11", "I11", "J12", "G6", "G8", "F6", "L7", "J7",
+                "J6", "E6", "D6", "I6",
+            ],
+        );
+
+        let report = run_analysis_batch_replays_with_options(
+            "report.json:bot-a vs bot-b".to_string(),
+            vec![ReplayAnalysisInput {
+                label: "match_1584".to_string(),
+                replay,
+            }],
+            AnalysisBatchRunOptions {
+                analysis: AnalysisOptions {
+                    reply_policy: ReplyPolicy::CorridorReplies,
+                    max_depth: 4,
+                    max_scan_plies: Some(64),
+                },
+                include_proof_details: true,
+            },
+        );
+
+        let frames = &report.entries[0]
+            .proof_details
+            .as_ref()
+            .expect("proof details should be present")
+            .proof_frames;
+        for label in ["actual_ply_24", "actual_ply_26"] {
+            let frame = frames
+                .iter()
+                .find(|frame| frame.label == label)
+                .unwrap_or_else(|| panic!("{label} frame should be present"));
+            if let Some(i6) = frame.markers.iter().find(|marker| marker.notation == "I6") {
+                assert!(
+                    !i6.kinds.contains(&AnalysisBatchProofMarkerKind::Forbidden),
+                    "{label} must not mark I6 using future forbidden-cost evidence: {:?}",
+                    i6.kinds
                 );
             }
         }

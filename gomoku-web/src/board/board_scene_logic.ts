@@ -1,6 +1,6 @@
 import type { CellPosition, CellStone, MatchMove, MatchStatus } from "../game/types";
 
-import { CAUTION_ANIMS, HOVER_ANIMS, MARKER_ANIMS, SPRITE } from "./constants";
+import { CAUTION_ANIMS, COLOR, HIGHLIGHTER_ANIMS, HOVER_ANIMS, MARKER_ANIMS, SPRITE } from "./constants";
 
 const TOUCH_DRAG_SENSITIVITY = 1.0;
 const DEFAULT_BOARD_SIZE = 15;
@@ -17,6 +17,27 @@ export type BoardOverlayRole =
   | "winningLine";
 export type PointerCue = "blocked" | "hidden" | "normal" | "preferred";
 export type BoardTouchControlMode = "none" | "pointer" | "touchpad";
+export type BoardAnalysisHighlightRole =
+  | "counterThreat"
+  | "corridorEntry"
+  | "immediateThreat"
+  | "immediateWin"
+  | "imminentThreat";
+export type BoardAnalysisMarkerRole =
+  | "confirmedEscape"
+  | "forbidden"
+  | "forcedLoss"
+  | "immediateLoss"
+  | "possibleEscape"
+  | "unknown";
+
+export type BoardAnalysisOverlay = {
+  col: number;
+  highlight?: BoardAnalysisHighlightRole;
+  marker?: BoardAnalysisMarkerRole;
+  row: number;
+  side?: "black" | "white";
+};
 
 export type SpriteFrameTarget = {
   frame: number;
@@ -33,11 +54,13 @@ export type ResettableSprite = {
 };
 
 export type BoardOverlayState = {
+  analysisOverlays: BoardAnalysisOverlay[];
   cells: CellStone[][];
   counterThreatMoves: CellPosition[];
   forbiddenMoves: CellPosition[];
   imminentThreatMoves: CellPosition[];
   moves: MatchMove[];
+  nextReplayMove: CellPosition | null;
   showSequenceNumbers: boolean;
   status: MatchStatus;
   threatMoves: CellPosition[];
@@ -51,6 +74,31 @@ function cellPositionsEqual(a: CellPosition[], b: CellPosition[]): boolean {
   }
 
   return a.every((cell, index) => cell.row === b[index]?.row && cell.col === b[index]?.col);
+}
+
+function nullableCellPositionEqual(a: CellPosition | null, b: CellPosition | null): boolean {
+  return a?.row === b?.row && a?.col === b?.col;
+}
+
+function analysisOverlaysEqual(a: BoardAnalysisOverlay[], b: BoardAnalysisOverlay[]): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  return a.every((overlay, index) => {
+    const other = b[index];
+    if (!other) {
+      return false;
+    }
+
+    return (
+      overlay.row === other.row &&
+      overlay.col === other.col &&
+      overlay.highlight === other.highlight &&
+      overlay.marker === other.marker &&
+      overlay.side === other.side
+    );
+  });
 }
 
 function movesEqual(a: MatchMove[], b: MatchMove[]): boolean {
@@ -109,6 +157,69 @@ export function overlaySpriteForRole(role: BoardOverlayRole, isForbidden = false
   return SPRITE.MARKER;
 }
 
+export function analysisHighlightAnimationForRole(role: BoardAnalysisHighlightRole): string {
+  switch (role) {
+    case "counterThreat":
+    case "imminentThreat":
+      return HIGHLIGHTER_ANIMS.SOFT.key;
+    case "corridorEntry":
+      return HIGHLIGHTER_ANIMS.ENTRY.key;
+    case "immediateThreat":
+    case "immediateWin":
+      return HIGHLIGHTER_ANIMS.STRONG.key;
+  }
+}
+
+export function analysisHighlightTintForRole(
+  role: BoardAnalysisHighlightRole,
+  side?: BoardAnalysisOverlay["side"],
+): number {
+  switch (role) {
+    case "counterThreat":
+      return COLOR.COUNTER_THREAT;
+    case "corridorEntry":
+      return side === "black" ? COLOR.STONE_BLACK : COLOR.STONE_WHITE;
+    case "immediateThreat":
+      return COLOR.THREAT;
+    case "immediateWin":
+      return COLOR.WIN_MOVE;
+    case "imminentThreat":
+      return COLOR.IMMINENT_THREAT;
+  }
+}
+
+export function analysisMarkerAnimationForRole(role: BoardAnalysisMarkerRole): string {
+  switch (role) {
+    case "confirmedEscape":
+      return MARKER_ANIMS.E.key;
+    case "forbidden":
+      return MARKER_ANIMS.F.key;
+    case "forcedLoss":
+      return MARKER_ANIMS.L.key;
+    case "immediateLoss":
+      return MARKER_ANIMS.WARNING.key;
+    case "possibleEscape":
+      return MARKER_ANIMS.P.key;
+    case "unknown":
+      return MARKER_ANIMS.QUESTION.key;
+  }
+}
+
+export function analysisMarkerTintForRole(role: BoardAnalysisMarkerRole): number {
+  switch (role) {
+    case "confirmedEscape":
+      return COLOR.WIN_MOVE;
+    case "forbidden":
+    case "forcedLoss":
+    case "immediateLoss":
+      return COLOR.THREAT;
+    case "possibleEscape":
+      return COLOR.ANALYSIS_POSSIBLE_ESCAPE;
+    case "unknown":
+      return COLOR.SUBTEXT;
+  }
+}
+
 export function shouldRenderStandaloneForbiddenOverlay(
   forbiddenCell: CellPosition,
   threatMoves: CellPosition[],
@@ -159,9 +270,11 @@ export function shouldSyncOverlaySprites(
   return (
     previous.showSequenceNumbers !== next.showSequenceNumbers ||
     previous.status !== next.status ||
+    !analysisOverlaysEqual(previous.analysisOverlays, next.analysisOverlays) ||
     !cellsEqual(previous.cells, next.cells) ||
     !cellPositionsEqual(previous.counterThreatMoves, next.counterThreatMoves) ||
     !movesEqual(previous.moves, next.moves) ||
+    !nullableCellPositionEqual(previous.nextReplayMove, next.nextReplayMove) ||
     !cellPositionsEqual(previous.forbiddenMoves, next.forbiddenMoves) ||
     !cellPositionsEqual(previous.imminentThreatMoves, next.imminentThreatMoves) ||
     !cellPositionsEqual(previous.threatMoves, next.threatMoves) ||

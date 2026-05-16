@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useStore } from "zustand";
 
@@ -23,6 +23,13 @@ import {
   shouldShowReplaySequenceNumbers,
   variantLabel,
 } from "../replay/local_replay";
+import {
+  analysisOverlaysForFrame,
+  mergeReplayAnalysisAnnotations,
+  nextReplayMove,
+  type ReplayAnalysisAnnotationsByPly,
+} from "../replay/replay_analysis_overlays";
+import { ReplayAnalysisRunner } from "../replay/replay_analysis_runner";
 import { Icon } from "../ui/Icon";
 
 import styles from "./ReplayRoute.module.css";
@@ -43,7 +50,9 @@ export function ReplayRoute() {
   const localProfile = useStore(localProfileStore, (state) => state.profile);
   const [moveIndex, setMoveIndex] = useState(defaultReplayMoveIndex(0));
   const [autoplaying, setAutoplaying] = useState(false);
+  const [analysisAnnotations, setAnalysisAnnotations] = useState<ReplayAnalysisAnnotationsByPly>({});
   const [coreWinningCells, setCoreWinningCells] = useState<CellPosition[]>([]);
+  const analysisRunnerRef = useRef<ReplayAnalysisRunner | null>(null);
 
   useEffect(() => {
     localProfileStore.getState().ensureLocalProfile();
@@ -87,8 +96,56 @@ export function ReplayRoute() {
   useEffect(() => {
     setMoveIndex(defaultReplayMoveIndex(match?.move_count ?? 0, replayFloor));
     setAutoplaying(false);
+    setAnalysisAnnotations({});
     setCoreWinningCells([]);
   }, [match?.move_count, matchId, replayFloor]);
+
+  useEffect(() => {
+    return () => {
+      analysisRunnerRef.current?.cancel();
+      analysisRunnerRef.current?.dispose();
+      analysisRunnerRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!match) {
+      analysisRunnerRef.current?.cancel();
+      setAnalysisAnnotations({});
+      return undefined;
+    }
+
+    const mergeStep = (step: Parameters<typeof mergeReplayAnalysisAnnotations>[1]) => {
+      setAnalysisAnnotations((current) => mergeReplayAnalysisAnnotations(current, step));
+    };
+
+    try {
+      let runner = analysisRunnerRef.current;
+      if (!runner) {
+        runner = new ReplayAnalysisRunner();
+        analysisRunnerRef.current = runner;
+      }
+
+      runner.analyze(
+        match,
+        {
+          onComplete: mergeStep,
+          onError: () => {
+            setAnalysisAnnotations({});
+          },
+          onProgress: mergeStep,
+        },
+        { maxDepth: 4, maxScanPlies: 64 },
+        1,
+      );
+    } catch {
+      setAnalysisAnnotations({});
+    }
+
+    return () => {
+      analysisRunnerRef.current?.cancel();
+    };
+  }, [match]);
 
   useEffect(() => {
     if (!match || !autoplaying) {
@@ -146,6 +203,8 @@ export function ReplayRoute() {
   }
 
   const frame = buildLocalReplayFrame(match, moveIndex, () => coreWinningCells);
+  const analysisOverlays = analysisOverlaysForFrame(analysisAnnotations, match, frame.moveIndex);
+  const replayMovePreview = nextReplayMove(match, frame.moveIndex);
   const resumeSeed: LocalMatchResumeSeed = {
     currentPlayer: frame.currentPlayer,
     moves: frame.moves.map((move) => ({ ...move })),
@@ -175,6 +234,7 @@ export function ReplayRoute() {
       <section className={styles.layout}>
         <div className={styles.boardPanel}>
           <Board
+            analysisOverlays={analysisOverlays}
             cells={frame.cells}
             counterThreatMoves={[]}
             currentPlayer={frame.currentPlayer}
@@ -183,6 +243,7 @@ export function ReplayRoute() {
             interactive={false}
             lastMove={frame.lastMove}
             moves={frame.moves}
+            nextReplayMove={replayMovePreview}
             onAdvanceRound={() => undefined}
             onPlace={() => undefined}
             onTouchCandidateChange={() => undefined}

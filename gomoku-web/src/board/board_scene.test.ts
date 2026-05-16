@@ -6,6 +6,7 @@ import {
   BOARD_RENDER_DEPTHS,
   BOARD_RENDER_LAYER_ORDER,
   CAUTION_ANIMS,
+  COLOR,
   HIGHLIGHTER_ANIMS,
   HOVER_ANIMS,
   MARKER_ANIMS,
@@ -16,6 +17,10 @@ import {
   TRANSFORM_ANIMS,
 } from "./constants";
 import {
+  analysisHighlightAnimationForRole,
+  analysisHighlightTintForRole,
+  analysisMarkerAnimationForRole,
+  analysisMarkerTintForRole,
   canPlaceTouchCandidate,
   moveTouchCandidateFromDrag,
   moveTouchCandidateFromPointerMove,
@@ -41,11 +46,13 @@ const emptyCells = (): CellStone[][] => Array.from({ length: 15 }, () =>
 );
 
 const overlayState = (overrides: Partial<Parameters<typeof shouldSyncOverlaySprites>[1]> = {}) => ({
+  analysisOverlays: [],
   cells: emptyCells(),
   counterThreatMoves: [{ row: 12, col: 12 }],
   forbiddenMoves: [{ row: 8, col: 8 }],
   imminentThreatMoves: [{ row: 11, col: 11 }],
   moves: [{ row: 7, col: 7, moveNumber: 1, player: 1 as const }],
+  nextReplayMove: null,
   showSequenceNumbers: true,
   status: "playing" as const,
   threatMoves: [{ row: 9, col: 9 }],
@@ -218,6 +225,20 @@ describe("shouldSyncOverlaySprites", () => {
     )).toBe(true);
   });
 
+  it("syncs overlays when replay analysis overlays change", () => {
+    expect(shouldSyncOverlaySprites(
+      overlayState(),
+      overlayState({ analysisOverlays: [{ row: 6, col: 7, marker: "forcedLoss" }] }),
+    )).toBe(true);
+  });
+
+  it("syncs overlays when the next replay move preview changes", () => {
+    expect(shouldSyncOverlaySprites(
+      overlayState({ nextReplayMove: { row: 7, col: 7 } }),
+      overlayState({ nextReplayMove: { row: 7, col: 8 } }),
+    )).toBe(true);
+  });
+
   it("syncs overlays when result sequence labels can change", () => {
     expect(shouldSyncOverlaySprites(
       overlayState({ status: "playing" }),
@@ -343,6 +364,36 @@ describe("overlayAnimationForRole", () => {
     expect(overlayAnimationForRole("counterThreatMove")).toBe("marker-warning");
     expect(overlayAnimationForRole("threatMove", true)).toBe("caution-forbidden-warning");
     expect(overlayAnimationForRole("forbidden")).toBe("caution-forbidden-out");
+  });
+});
+
+describe("analysis overlay visual mapping", () => {
+  it("uses highlighter animations for analyzer highlights", () => {
+    expect(analysisHighlightAnimationForRole("immediateWin")).toBe(HIGHLIGHTER_ANIMS.STRONG.key);
+    expect(analysisHighlightAnimationForRole("immediateThreat")).toBe(HIGHLIGHTER_ANIMS.STRONG.key);
+    expect(analysisHighlightAnimationForRole("imminentThreat")).toBe(HIGHLIGHTER_ANIMS.SOFT.key);
+    expect(analysisHighlightAnimationForRole("counterThreat")).toBe(HIGHLIGHTER_ANIMS.SOFT.key);
+    expect(analysisHighlightAnimationForRole("corridorEntry")).toBe(HIGHLIGHTER_ANIMS.ENTRY.key);
+  });
+
+  it("uses marker animations and red forced-loss/forbidden markers", () => {
+    expect(analysisMarkerAnimationForRole("forcedLoss")).toBe(MARKER_ANIMS.L.key);
+    expect(analysisMarkerAnimationForRole("forbidden")).toBe(MARKER_ANIMS.F.key);
+    expect(analysisMarkerAnimationForRole("confirmedEscape")).toBe(MARKER_ANIMS.E.key);
+    expect(analysisMarkerAnimationForRole("possibleEscape")).toBe(MARKER_ANIMS.P.key);
+    expect(analysisMarkerAnimationForRole("immediateLoss")).toBe(MARKER_ANIMS.WARNING.key);
+    expect(analysisMarkerAnimationForRole("unknown")).toBe(MARKER_ANIMS.QUESTION.key);
+    expect(analysisMarkerTintForRole("forcedLoss")).toBe(COLOR.THREAT);
+    expect(analysisMarkerTintForRole("forbidden")).toBe(COLOR.THREAT);
+  });
+
+  it("uses semantic highlighter colors for analyzer highlights", () => {
+    expect(analysisHighlightTintForRole("immediateWin")).toBe(COLOR.WIN_MOVE);
+    expect(analysisHighlightTintForRole("immediateThreat")).toBe(COLOR.THREAT);
+    expect(analysisHighlightTintForRole("imminentThreat")).toBe(COLOR.IMMINENT_THREAT);
+    expect(analysisHighlightTintForRole("counterThreat")).toBe(COLOR.COUNTER_THREAT);
+    expect(analysisHighlightTintForRole("corridorEntry", "black")).toBe(COLOR.STONE_BLACK);
+    expect(analysisHighlightTintForRole("corridorEntry", "white")).toBe(COLOR.STONE_WHITE);
   });
 });
 
