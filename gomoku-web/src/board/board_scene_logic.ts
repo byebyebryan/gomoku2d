@@ -68,6 +68,16 @@ export type BoardOverlayState = {
   winningMoves: CellPosition[];
 };
 
+export function replayLastMoveFocusKey(
+  state: { interactive: boolean; lastMove: CellPosition | null; status?: MatchStatus },
+): string | null {
+  if (state.interactive || state.lastMove === null || (state.status !== undefined && state.status !== "playing")) {
+    return null;
+  }
+
+  return `${state.lastMove.row},${state.lastMove.col}`;
+}
+
 function cellPositionsEqual(a: CellPosition[], b: CellPosition[]): boolean {
   if (a.length !== b.length) {
     return false;
@@ -193,28 +203,31 @@ export function analysisMarkerAnimationForRole(role: BoardAnalysisMarkerRole): s
     case "confirmedEscape":
       return MARKER_ANIMS.E.key;
     case "forbidden":
-      return MARKER_ANIMS.F.key;
+      return CAUTION_ANIMS.FORBIDDEN_OUT.key;
     case "forcedLoss":
       return MARKER_ANIMS.L.key;
     case "immediateLoss":
       return MARKER_ANIMS.WARNING.key;
     case "possibleEscape":
-      return MARKER_ANIMS.P.key;
+      return MARKER_ANIMS.E.key;
     case "unknown":
       return MARKER_ANIMS.QUESTION.key;
   }
 }
 
+export function analysisMarkerSpriteForRole(role: BoardAnalysisMarkerRole): string {
+  return role === "forbidden" ? SPRITE.CAUTION : SPRITE.MARKER;
+}
+
 export function analysisMarkerTintForRole(role: BoardAnalysisMarkerRole): number {
   switch (role) {
     case "confirmedEscape":
+    case "possibleEscape":
       return COLOR.WIN_MOVE;
     case "forbidden":
     case "forcedLoss":
     case "immediateLoss":
       return COLOR.THREAT;
-    case "possibleEscape":
-      return COLOR.ANALYSIS_POSSIBLE_ESCAPE;
     case "unknown":
       return COLOR.SUBTEXT;
   }

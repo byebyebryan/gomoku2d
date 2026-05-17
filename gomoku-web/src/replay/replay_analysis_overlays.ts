@@ -43,9 +43,10 @@ function highlightRole(role: ReplayFrameHighlightRole): BoardAnalysisOverlay["hi
   }
 }
 
-function markerRole(role: ReplayFrameMarkerRole): BoardAnalysisOverlay["marker"] {
+function markerRole(role: ReplayFrameMarkerRole): BoardAnalysisOverlay["marker"] | null {
   switch (role) {
     case "confirmed_escape":
+    case "possible_escape":
       return "confirmedEscape";
     case "forbidden":
       return "forbidden";
@@ -53,10 +54,8 @@ function markerRole(role: ReplayFrameMarkerRole): BoardAnalysisOverlay["marker"]
       return "forcedLoss";
     case "immediate_loss":
       return "immediateLoss";
-    case "possible_escape":
-      return "possibleEscape";
     case "unknown":
-      return "unknown";
+      return null;
   }
 }
 
@@ -94,11 +93,18 @@ export function analysisOverlaysForFrame(
       row: highlight.mv.row,
       side: overlaySide(highlight.side),
     })),
-    ...annotation.markers.map((marker) => ({
-      col: marker.mv.col,
-      marker: markerRole(marker.role),
-      row: marker.mv.row,
-    })),
+    ...annotation.markers.flatMap((marker) => {
+      const role = markerRole(marker.role);
+      if (!role) {
+        return [];
+      }
+
+      return [{
+        col: marker.mv.col,
+        marker: role,
+        row: marker.mv.row,
+      }];
+    }),
   ];
 }
 

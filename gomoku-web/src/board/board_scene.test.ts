@@ -20,6 +20,7 @@ import {
   analysisHighlightAnimationForRole,
   analysisHighlightTintForRole,
   analysisMarkerAnimationForRole,
+  analysisMarkerSpriteForRole,
   analysisMarkerTintForRole,
   canPlaceTouchCandidate,
   moveTouchCandidateFromDrag,
@@ -39,6 +40,7 @@ import {
   usesTouchpadDrag,
   overlayAnimationForRole,
   overlaySpriteForRole,
+  replayLastMoveFocusKey,
 } from "./board_scene_logic";
 
 const emptyCells = (): CellStone[][] => Array.from({ length: 15 }, () =>
@@ -172,6 +174,24 @@ describe("shouldStopStoneIdleCycle", () => {
     expect(shouldStopStoneIdleCycle("playing", "playing")).toBe(false);
     expect(shouldStopStoneIdleCycle("white_won", "white_won")).toBe(false);
     expect(shouldStopStoneIdleCycle("black_won", "playing")).toBe(false);
+  });
+});
+
+describe("replayLastMoveFocusKey", () => {
+  it("focuses the last move only on non-interactive replay boards", () => {
+    expect(replayLastMoveFocusKey({ interactive: false, lastMove: { row: 7, col: 8 } })).toBe("7,8");
+    expect(replayLastMoveFocusKey({ interactive: true, lastMove: { row: 7, col: 8 } })).toBeNull();
+    expect(replayLastMoveFocusKey({ interactive: false, lastMove: null })).toBeNull();
+  });
+
+  it("does not focus the last move after the replay has reached a result", () => {
+    const finishedReplayBoard = {
+      interactive: false,
+      lastMove: { row: 7, col: 8 },
+      status: "black_won" as const,
+    };
+
+    expect(replayLastMoveFocusKey(finishedReplayBoard)).toBeNull();
   });
 });
 
@@ -376,15 +396,18 @@ describe("analysis overlay visual mapping", () => {
     expect(analysisHighlightAnimationForRole("corridorEntry")).toBe(HIGHLIGHTER_ANIMS.ENTRY.key);
   });
 
-  it("uses marker animations and red forced-loss/forbidden markers", () => {
+  it("uses simplified analysis marker visuals for replay overlays", () => {
     expect(analysisMarkerAnimationForRole("forcedLoss")).toBe(MARKER_ANIMS.L.key);
-    expect(analysisMarkerAnimationForRole("forbidden")).toBe(MARKER_ANIMS.F.key);
+    expect(analysisMarkerAnimationForRole("forbidden")).toBe(CAUTION_ANIMS.FORBIDDEN_OUT.key);
     expect(analysisMarkerAnimationForRole("confirmedEscape")).toBe(MARKER_ANIMS.E.key);
-    expect(analysisMarkerAnimationForRole("possibleEscape")).toBe(MARKER_ANIMS.P.key);
+    expect(analysisMarkerAnimationForRole("possibleEscape")).toBe(MARKER_ANIMS.E.key);
     expect(analysisMarkerAnimationForRole("immediateLoss")).toBe(MARKER_ANIMS.WARNING.key);
     expect(analysisMarkerAnimationForRole("unknown")).toBe(MARKER_ANIMS.QUESTION.key);
+    expect(analysisMarkerSpriteForRole("forbidden")).toBe(SPRITE.CAUTION);
+    expect(analysisMarkerSpriteForRole("forcedLoss")).toBe(SPRITE.MARKER);
     expect(analysisMarkerTintForRole("forcedLoss")).toBe(COLOR.THREAT);
     expect(analysisMarkerTintForRole("forbidden")).toBe(COLOR.THREAT);
+    expect(analysisMarkerTintForRole("possibleEscape")).toBe(COLOR.WIN_MOVE);
   });
 
   it("uses semantic highlighter colors for analyzer highlights", () => {

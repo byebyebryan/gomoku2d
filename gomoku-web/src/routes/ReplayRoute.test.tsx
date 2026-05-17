@@ -1,6 +1,10 @@
-import { act, cleanup, render } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import doubleNextSvgRaw from "../../assets/icons/double_next.svg?raw";
+import doublePrevSvgRaw from "../../assets/icons/double_prev.svg?raw";
+import nextSvgRaw from "../../assets/icons/next.svg?raw";
+import prevSvgRaw from "../../assets/icons/prev.svg?raw";
 
 import { Board } from "../components/Board/Board";
 import { createLocalSavedMatch } from "../match/saved_match";
@@ -37,6 +41,10 @@ vi.mock("../replay/replay_analysis_runner", () => ({
     runnerMock.instances.push(instance);
     return instance;
   }),
+}));
+
+vi.mock("../replay/local_replay_core", () => ({
+  winningCellsFromCore: vi.fn(() => []),
 }));
 
 const mockedBoard = vi.mocked(Board);
@@ -93,6 +101,18 @@ function latestBoardProps() {
   return mockedBoard.mock.calls[mockedBoard.mock.calls.length - 1]?.[0];
 }
 
+function rectSignatureFromSvg(svg: string): string[] {
+  return [...svg.matchAll(/<rect x="([^"]+)" y="([^"]+)" width="([^"]+)" height="([^"]+)"/g)].map(
+    (match) => `${match[1]},${match[2]},${match[3]},${match[4]}`,
+  );
+}
+
+function rectSignatureFromButton(button: HTMLElement): string[] {
+  return [...button.querySelectorAll("rect")].map((rect) => (
+    `${rect.getAttribute("x")},${rect.getAttribute("y")},${rect.getAttribute("width")},${rect.getAttribute("height")}`
+  ));
+}
+
 describe("ReplayRoute analysis overlays", () => {
   afterEach(() => {
     cleanup();
@@ -123,9 +143,43 @@ describe("ReplayRoute analysis overlays", () => {
       { maxDepth: 4, maxScanPlies: 64 },
       1,
     );
+    expect(screen.getByTestId("replay-move-count")).toHaveTextContent("Move 9 / 9");
     expect(latestBoardProps()).toMatchObject({
-      nextReplayMove: { row: 7, col: 7 },
+      nextReplayMove: null,
+      status: "black_won",
     });
+  });
+
+  it("uses outer replay controls for turn stepping", () => {
+    renderReplayRoute();
+
+    fireEvent.click(screen.getByRole("button", { name: "Previous turn" }));
+    expect(screen.getByTestId("replay-move-count")).toHaveTextContent("Move 7 / 9");
+    expect(latestBoardProps()).toMatchObject({
+      currentPlayer: 2,
+      nextReplayMove: { row: 0, col: 3 },
+      status: "playing",
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Next turn" }));
+    expect(screen.getByTestId("replay-move-count")).toHaveTextContent("Move 9 / 9");
+  });
+
+  it("uses double arrows for turn stepping and single arrows for move stepping", () => {
+    renderReplayRoute();
+
+    expect(rectSignatureFromButton(screen.getByRole("button", { name: "Previous turn" }))).toEqual(
+      rectSignatureFromSvg(doublePrevSvgRaw),
+    );
+    expect(rectSignatureFromButton(screen.getByRole("button", { name: "Previous move" }))).toEqual(
+      rectSignatureFromSvg(prevSvgRaw),
+    );
+    expect(rectSignatureFromButton(screen.getByRole("button", { name: "Next move" }))).toEqual(
+      rectSignatureFromSvg(nextSvgRaw),
+    );
+    expect(rectSignatureFromButton(screen.getByRole("button", { name: "Next turn" }))).toEqual(
+      rectSignatureFromSvg(doubleNextSvgRaw),
+    );
   });
 
   it("adds loser-frame analysis overlays from worker progress", () => {
@@ -152,7 +206,7 @@ describe("ReplayRoute analysis overlays", () => {
                 side: "White",
               },
             ],
-            ply: 4,
+            ply: 9,
             side_to_move: "White",
           },
           {

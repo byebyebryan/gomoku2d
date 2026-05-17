@@ -7,8 +7,9 @@ import {
   buildLocalReplayFrame,
   canResumeReplay,
   defaultReplayMoveIndex,
+  nextReplayTurnMoveIndex,
+  previousReplayTurnMoveIndex,
   replayResumeUndoFloor,
-  replayStartMoveIndex,
   shouldShowReplaySequenceNumbers,
 } from "./local_replay";
 import { winningCellsFromCore } from "./local_replay_core";
@@ -87,13 +88,17 @@ describe("buildLocalReplayFrame", () => {
     );
   });
 
-  it("starts replay a few moves in but keeps Start on the first move", () => {
+  it("starts replay at the finished board", () => {
     expect(defaultReplayMoveIndex(0)).toBe(0);
     expect(defaultReplayMoveIndex(2)).toBe(2);
-    expect(defaultReplayMoveIndex(8)).toBe(4);
-    expect(defaultReplayMoveIndex(8, 5)).toBe(5);
-    expect(replayStartMoveIndex(0)).toBe(0);
-    expect(replayStartMoveIndex(8)).toBe(1);
+    expect(defaultReplayMoveIndex(8)).toBe(8);
+  });
+
+  it("steps replay turns by two plies while preserving side-to-move perspective", () => {
+    expect(previousReplayTurnMoveIndex(9)).toBe(7);
+    expect(previousReplayTurnMoveIndex(1)).toBe(0);
+    expect(nextReplayTurnMoveIndex(7, 9)).toBe(9);
+    expect(nextReplayTurnMoveIndex(8, 9)).toBe(9);
   });
 
   it("only enables replay resume once the frame is deep enough and still playing", () => {

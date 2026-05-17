@@ -1,5 +1,7 @@
 import backSvgRaw from "../../assets/icons/back.svg?raw";
 import botSvgRaw from "../../assets/icons/bot.svg?raw";
+import doubleNextSvgRaw from "../../assets/icons/double_next.svg?raw";
+import doublePrevSvgRaw from "../../assets/icons/double_prev.svg?raw";
 import fastForwardSvgRaw from "../../assets/icons/fast_forward.svg?raw";
 import fastRewindSvgRaw from "../../assets/icons/fast_rewind.svg?raw";
 import firstSvgRaw from "../../assets/icons/first.svg?raw";
@@ -24,6 +26,8 @@ function sanitize(svg: string): string {
 export const iconSvg = {
   back: sanitize(backSvgRaw),
   bot: sanitize(botSvgRaw),
+  doubleNext: sanitize(doubleNextSvgRaw),
+  doublePrev: sanitize(doublePrevSvgRaw),
   fastForward: sanitize(fastForwardSvgRaw),
   fastRewind: sanitize(fastRewindSvgRaw),
   first: sanitize(firstSvgRaw),
