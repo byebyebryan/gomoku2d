@@ -76,7 +76,7 @@ function statusLabel(
     return "Draw";
   }
   if (state.pendingBotMove) {
-    return `${state.players[state.currentPlayer - 1]?.name ?? "Bot"} is thinking...`;
+    return "Thinking";
   }
 
   return `${state.players[state.currentPlayer - 1]?.name ?? "Unknown"} to move`;

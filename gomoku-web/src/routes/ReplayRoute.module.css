@@ -58,21 +58,22 @@
 .statusText {
   margin: 0;
   color: var(--accent-strong);
-  display: flex;
   font-family: var(--font-display);
-  font-size: 2.15rem;
-  line-height: 1.05;
-  min-height: 2.1em;
-  align-items: flex-start;
+  font-size: clamp(1.78rem, 2.35vw, 2.05rem);
+  line-height: 1;
+  min-height: 1em;
+  overflow: hidden;
+  text-overflow: ellipsis;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .statusDetail {
-  margin: -4px 0 0;
-  color: var(--text-muted);
+  margin: -8px 0 0;
+  color: var(--text);
   font-family: var(--font-display);
-  font-size: var(--type-quiet);
-  letter-spacing: 0.08em;
+  font-size: var(--type-value);
+  line-height: 1;
   text-transform: uppercase;
 }
 
@@ -192,6 +193,10 @@
 }
 
 .timeline {
+  --timeline-input-height: 28px;
+  --timeline-track-height: 10px;
+  --timeline-thumb-height: 22px;
+  --timeline-track-top: 13px;
   display: grid;
   gap: 8px;
   position: relative;
@@ -202,7 +207,7 @@
   z-index: 2;
   width: 100%;
   appearance: none;
-  height: 28px;
+  height: var(--timeline-input-height);
   padding: 0;
   background: transparent;
   cursor: pointer;
@@ -211,10 +216,10 @@
 .timelineTrack {
   position: absolute;
   z-index: 1;
-  top: 9px;
+  top: var(--timeline-track-top);
   left: 0;
   right: 0;
-  height: 10px;
+  height: var(--timeline-track-height);
   border: 2px solid var(--border-strong);
   background: var(--surface-muted);
   pointer-events: none;
@@ -245,36 +250,37 @@
 }
 
 .timelineInput::-webkit-slider-runnable-track {
-  height: 10px;
+  height: var(--timeline-track-height);
   border: 2px solid transparent;
   background: transparent;
 }
 
 .timelineInput::-webkit-slider-thumb {
   appearance: none;
+  -webkit-appearance: none;
   width: 18px;
-  height: 22px;
-  margin-top: -8px;
+  height: var(--timeline-thumb-height);
+  margin-top: calc((var(--timeline-track-height) - var(--timeline-thumb-height)) / 2);
   border: 2px solid var(--border-strong);
   background: var(--surface);
   box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.18);
 }
 
 .timelineInput::-moz-range-track {
-  height: 10px;
+  height: var(--timeline-track-height);
   border: 2px solid transparent;
   background: transparent;
 }
 
 .timelineInput::-moz-range-progress {
-  height: 10px;
+  height: var(--timeline-track-height);
   border: 2px solid transparent;
   background: transparent;
 }
 
 .timelineInput::-moz-range-thumb {
   width: 18px;
-  height: 22px;
+  height: var(--timeline-thumb-height);
   border: 2px solid var(--border-strong);
   border-radius: 0;
   background: var(--surface);
@@ -360,7 +366,7 @@
   }
 
   .statusText {
-    font-size: 1.7rem;
+    font-size: 1.6rem;
   }
 }
 
@@ -470,6 +476,7 @@
   }
 
   .timeline {
+    --timeline-track-top: 19px;
     grid-row: 4;
     gap: 0;
     padding-top: 6px;
