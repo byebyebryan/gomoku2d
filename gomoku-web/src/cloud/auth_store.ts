@@ -65,6 +65,7 @@ export interface FirebaseAuthBackendOptions {
   getRedirectResult?: typeof firebaseGetRedirectResult;
   prefersRedirectSignIn?: () => boolean;
   popupErrorShouldFallbackToRedirect?: (error: unknown) => boolean;
+  redirectSignInSupported?: () => boolean;
   signInWithPopup?: typeof firebaseSignInWithPopup;
   signInWithRedirect?: typeof firebaseSignInWithRedirect;
 }
@@ -126,6 +127,24 @@ export function shouldPreferRedirectSignIn(
     || (environment.maxTouchPoints > 0 && environment.pointerCoarse);
 }
 
+export function redirectSignInSupported(
+  authDomain: string,
+  locationLike: Pick<Location, "hostname"> | null = typeof window === "undefined" ? null : window.location,
+): boolean {
+  const currentHost = locationLike?.hostname.trim().toLowerCase();
+  const configuredAuthHost = authDomain.trim().toLowerCase();
+
+  if (!currentHost || !configuredAuthHost) {
+    return false;
+  }
+
+  if (currentHost === configuredAuthHost) {
+    return true;
+  }
+
+  return currentHost === "localhost" || currentHost === "127.0.0.1" || currentHost === "::1";
+}
+
 function authErrorCode(error: unknown): string | null {
   if (typeof error !== "object" || error === null || !("code" in error)) {
     return null;
@@ -149,12 +168,15 @@ export function createFirebaseAuthBackend(
   const getRedirectResult = options.getRedirectResult ?? firebaseGetRedirectResult;
   const prefersRedirectSignIn = options.prefersRedirectSignIn ?? shouldPreferRedirectSignIn;
   const popupShouldFallbackToRedirect = options.popupErrorShouldFallbackToRedirect ?? popupErrorShouldFallbackToRedirect;
+  const redirectSupported = options.redirectSignInSupported ?? (() => redirectSignInSupported(clients.authDomain));
   const signInWithPopup = options.signInWithPopup ?? firebaseSignInWithPopup;
   const signInWithRedirect = options.signInWithRedirect ?? firebaseSignInWithRedirect;
 
   return {
     completeRedirectSignIn: async () => {
-      await getRedirectResult(clients.auth);
+      if (redirectSupported()) {
+        await getRedirectResult(clients.auth);
+      }
     },
     onAuthStateChanged: (onUser, onError) =>
       onAuthStateChanged(
@@ -165,7 +187,9 @@ export function createFirebaseAuthBackend(
         onError,
       ),
     signInWithGoogle: async () => {
-      if (prefersRedirectSignIn()) {
+      const canUseRedirect = redirectSupported();
+
+      if (canUseRedirect && prefersRedirectSignIn()) {
         await signInWithRedirect(clients.auth, clients.providers.google);
         return;
       }
@@ -173,7 +197,7 @@ export function createFirebaseAuthBackend(
       try {
         await signInWithPopup(clients.auth, clients.providers.google);
       } catch (error) {
-        if (!popupShouldFallbackToRedirect(error)) {
+        if (!canUseRedirect || !popupShouldFallbackToRedirect(error)) {
           throw error;
         }
 

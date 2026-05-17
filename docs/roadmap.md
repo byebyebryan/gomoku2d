@@ -137,9 +137,9 @@ wrap-up state:
   private match history
 - Google Auth provider configured through the Firebase Auth / Identity Toolkit
   path
-- Firebase Auth popup/redirect handling: desktop tries popup first, mobile and
-  embedded contexts use redirect, and popup-blocked/unsupported errors fall back
-  to redirect without retrying intentional popup closes
+- Firebase Auth popup/redirect handling: top-level contexts, including mobile,
+  try popup first; redirect is gated to hosts that can safely complete the
+  Firebase Auth helper flow
 - Profile sign-in/sign-out UI
 - cloud profile create/load at `profiles/{uid}`
 - local profile-to-cloud profile/settings promotion after sign-in
