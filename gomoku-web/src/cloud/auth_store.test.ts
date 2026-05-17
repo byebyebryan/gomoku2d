@@ -5,6 +5,7 @@ import {
   createCloudAuthStore,
   createFirebaseAuthBackend,
   popupErrorShouldFallbackToRedirect,
+  redirectSignInSupported,
   shouldPreferRedirectSignIn,
 } from "./auth_store";
 import type { FirebaseClients } from "./firebase";
@@ -50,6 +51,7 @@ function fakeFirebaseClients(): FirebaseClients {
   return {
     app: {},
     auth: {},
+    authDomain: "gomoku2d.firebaseapp.com",
     firestore: {},
     providers: {
       github: {},
@@ -139,7 +141,19 @@ describe("createCloudAuthStore", () => {
 });
 
 describe("Firebase auth sign-in strategy", () => {
-  it("prefers redirect sign-in for embedded, mobile, or coarse touch environments", () => {
+  it("only treats redirect sign-in as safe on same-origin auth helpers or local development", () => {
+    expect(redirectSignInSupported("gomoku2d.byebyebryan.com", {
+      hostname: "gomoku2d.byebyebryan.com",
+    })).toBe(true);
+    expect(redirectSignInSupported("gomoku2d.firebaseapp.com", {
+      hostname: "gomoku2d.byebyebryan.com",
+    })).toBe(false);
+    expect(redirectSignInSupported("gomoku2d.firebaseapp.com", {
+      hostname: "localhost",
+    })).toBe(true);
+  });
+
+  it("identifies environments that would prefer redirect when redirect support is safe", () => {
     expect(shouldPreferRedirectSignIn({
       embedded: true,
       maxTouchPoints: 0,
@@ -182,6 +196,7 @@ describe("Firebase auth sign-in strategy", () => {
     const backend = createFirebaseAuthBackend(fakeFirebaseClients(), {
       getRedirectResult: vi.fn().mockResolvedValue(null) as FirebaseAuthBackendOptions["getRedirectResult"],
       prefersRedirectSignIn: () => true,
+      redirectSignInSupported: () => true,
       signInWithPopup: signInWithPopup as FirebaseAuthBackendOptions["signInWithPopup"],
       signInWithRedirect: signInWithRedirect as FirebaseAuthBackendOptions["signInWithRedirect"],
     });
@@ -192,12 +207,42 @@ describe("Firebase auth sign-in strategy", () => {
     expect(signInWithRedirect).toHaveBeenCalledTimes(1);
   });
 
+  it("uses popup first when redirect is not safe for the current host", async () => {
+    const signInWithPopup = vi.fn().mockResolvedValue(undefined);
+    const signInWithRedirect = vi.fn().mockResolvedValue(undefined);
+    const backend = createFirebaseAuthBackend(fakeFirebaseClients(), {
+      getRedirectResult: vi.fn().mockResolvedValue(null) as FirebaseAuthBackendOptions["getRedirectResult"],
+      prefersRedirectSignIn: () => true,
+      redirectSignInSupported: () => false,
+      signInWithPopup: signInWithPopup as FirebaseAuthBackendOptions["signInWithPopup"],
+      signInWithRedirect: signInWithRedirect as FirebaseAuthBackendOptions["signInWithRedirect"],
+    });
+
+    await backend.signInWithGoogle();
+
+    expect(signInWithPopup).toHaveBeenCalledTimes(1);
+    expect(signInWithRedirect).not.toHaveBeenCalled();
+  });
+
+  it("skips redirect completion when redirect is not safe for the current host", async () => {
+    const getRedirectResult = vi.fn().mockResolvedValue(null);
+    const backend = createFirebaseAuthBackend(fakeFirebaseClients(), {
+      getRedirectResult: getRedirectResult as FirebaseAuthBackendOptions["getRedirectResult"],
+      redirectSignInSupported: () => false,
+    });
+
+    await backend.completeRedirectSignIn?.();
+
+    expect(getRedirectResult).not.toHaveBeenCalled();
+  });
+
   it("falls back to redirect when popup is blocked", async () => {
     const signInWithPopup = vi.fn().mockRejectedValue({ code: "auth/popup-blocked" });
     const signInWithRedirect = vi.fn().mockResolvedValue(undefined);
     const backend = createFirebaseAuthBackend(fakeFirebaseClients(), {
       getRedirectResult: vi.fn().mockResolvedValue(null) as FirebaseAuthBackendOptions["getRedirectResult"],
       prefersRedirectSignIn: () => false,
+      redirectSignInSupported: () => true,
       signInWithPopup: signInWithPopup as FirebaseAuthBackendOptions["signInWithPopup"],
       signInWithRedirect: signInWithRedirect as FirebaseAuthBackendOptions["signInWithRedirect"],
     });
@@ -208,6 +253,24 @@ describe("Firebase auth sign-in strategy", () => {
     expect(signInWithRedirect).toHaveBeenCalledTimes(1);
   });
 
+  it("does not redirect after popup failure when redirect is not safe for the current host", async () => {
+    const popupError = { code: "auth/popup-blocked" };
+    const signInWithPopup = vi.fn().mockRejectedValue(popupError);
+    const signInWithRedirect = vi.fn().mockResolvedValue(undefined);
+    const backend = createFirebaseAuthBackend(fakeFirebaseClients(), {
+      getRedirectResult: vi.fn().mockResolvedValue(null) as FirebaseAuthBackendOptions["getRedirectResult"],
+      prefersRedirectSignIn: () => false,
+      redirectSignInSupported: () => false,
+      signInWithPopup: signInWithPopup as FirebaseAuthBackendOptions["signInWithPopup"],
+      signInWithRedirect: signInWithRedirect as FirebaseAuthBackendOptions["signInWithRedirect"],
+    });
+
+    await expect(backend.signInWithGoogle()).rejects.toBe(popupError);
+
+    expect(signInWithPopup).toHaveBeenCalledTimes(1);
+    expect(signInWithRedirect).not.toHaveBeenCalled();
+  });
+
   it("does not redirect after an intentional popup close", async () => {
     const popupError = { code: "auth/popup-closed-by-user" };
     const signInWithPopup = vi.fn().mockRejectedValue(popupError);
@@ -215,6 +278,7 @@ describe("Firebase auth sign-in strategy", () => {
     const backend = createFirebaseAuthBackend(fakeFirebaseClients(), {
       getRedirectResult: vi.fn().mockResolvedValue(null) as FirebaseAuthBackendOptions["getRedirectResult"],
       prefersRedirectSignIn: () => false,
+      redirectSignInSupported: () => true,
       signInWithPopup: signInWithPopup as FirebaseAuthBackendOptions["signInWithPopup"],
       signInWithRedirect: signInWithRedirect as FirebaseAuthBackendOptions["signInWithRedirect"],
     });

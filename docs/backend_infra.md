@@ -239,16 +239,19 @@ details can trigger brand verification.
 
 The web app uses Firebase Auth directly, with two browser sign-in paths:
 
-- desktop/top-level browsing contexts try `signInWithPopup` first
-- mobile, coarse-pointer, or embedded contexts use `signInWithRedirect`
+- top-level browsing contexts try `signInWithPopup` first, including mobile
+  browsers
+- redirect sign-in is only used when the current host can safely serve the
+  Firebase Auth helper, or as a fallback in that same safe-host configuration
 
-If the desktop popup is blocked or unsupported in the current environment, the
-client falls back to redirect. If the user intentionally closes the popup, the
-client does not redirect behind their back.
+If the popup is blocked or unsupported and redirect is not safe for the current
+host, the client surfaces the popup error instead of sending the user through a
+redirect flow that cannot complete. If the user intentionally closes the popup,
+the client does not redirect behind their back.
 
 At startup, the auth store calls `getRedirectResult` so returning from a
 redirect sign-in can complete before the normal profile/cloud load path
-continues.
+continues, but only when redirect sign-in is safe for the current host.
 
 In Chrome, the Firebase SDK may still log
 `Cross-Origin-Opener-Policy policy would block the window.closed call` while it
@@ -263,12 +266,16 @@ For local development, Vite dev/preview responses set:
 Google Identity Services recommends `same-origin-allow-popups` for popup flows
 when FedCM is disabled. GitHub Pages cannot set custom response headers, so the
 deployed GitHub Pages build may still show the popup warning even when sign-in
-works. Redirect sign-in is the production-safe fallback for environments where
-the popup path is unreliable.
+works.
 
-Redirect sign-in depends on the Firebase Auth handler route. Keep the Google
-OAuth Web client redirect URIs in sync with the entries documented in the Auth
-setup section above.
+Redirect sign-in depends on the Firebase Auth handler route. Because production
+is currently served from GitHub Pages at `gomoku2d.byebyebryan.com` while the
+configured Firebase `authDomain` is `gomoku2d.firebaseapp.com`, redirect is not
+treated as production-safe. Modern mobile/Safari-style storage partitioning can
+prevent that cross-origin redirect result from completing. To make redirect the
+primary mobile path later, either move the app to Firebase Hosting with the
+custom domain as `authDomain`, proxy `/__/auth/` to Firebase, or self-host the
+Firebase Auth helper files under the app domain.
 
 ## Firebase Web Config
 

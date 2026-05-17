@@ -14,6 +14,7 @@ export interface FirebaseConfigEnv {
 export interface FirebaseClients {
   app: FirebaseApp;
   auth: Auth;
+  authDomain: string;
   firestore: Firestore;
   providers: {
     github: GithubAuthProvider;
@@ -67,6 +68,7 @@ export function getFirebaseClients(): FirebaseClients | null {
   cachedClients = {
     app,
     auth: getAuth(app),
+    authDomain: config.authDomain ?? "",
     firestore: getFirestore(app),
     providers: {
       github: new GithubAuthProvider(),
