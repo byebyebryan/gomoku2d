@@ -21,10 +21,12 @@ import {
   analysisHighlightAnimationForRole,
   analysisHighlightTintForRole,
   analysisMarkerAnimationForRole,
+  analysisMarkerSpriteForRole,
   analysisMarkerTintForRole,
   canPlaceTouchCandidate,
   moveTouchCandidateFromPointerMove,
   pointerCueForCandidate,
+  replayLastMoveFocusKey,
   resetSpriteToFrame,
   sequenceNumberFontSize,
   sequenceNumberPosition,
@@ -307,6 +309,7 @@ export class BoardScene extends Phaser.Scene {
   private pointerCellKey: string | null = null;
   private pointerCycle: SequenceAnimationCycle | null = null;
   private pointerLayer: Phaser.GameObjects.Container | null = null;
+  private replayFocusedStoneKey: string | null = null;
   private renderVersion = 0;
   private reportedTouchCandidateKey: string | null = null;
   private reportedTouchCanPlace = false;
@@ -369,6 +372,7 @@ export class BoardScene extends Phaser.Scene {
     this.stoneLayer = null;
     this.overlayLayer = null;
     this.reportTouchCandidate(null);
+    this.replayFocusedStoneKey = null;
     this.stoneSprites.clear();
     this.touchCandidate = null;
     this.touchDragOrigin = null;
@@ -507,6 +511,7 @@ export class BoardScene extends Phaser.Scene {
     this.sequenceLayer.removeAll(true);
     this.hoverLayer.removeAll(true);
     this.stoneSprites.clear();
+    this.replayFocusedStoneKey = null;
     this.forbiddenSprites = [];
     this.analysisSprites = [];
     this.forbiddenCycles = [];
@@ -535,6 +540,7 @@ export class BoardScene extends Phaser.Scene {
     }
 
     this.syncStoneSprites(previousState, animateNewStones);
+    this.syncReplayLastMoveFocus();
     this.syncPointerBaseState();
     if (shouldSyncOverlaySprites(previousState, this.boardState)) {
       this.syncOverlaySprites();
@@ -609,6 +615,43 @@ export class BoardScene extends Phaser.Scene {
       }
       this.stoneSprites.delete(key);
     }
+  }
+
+  private clearReplayLastMoveFocus(): void {
+    if (!this.replayFocusedStoneKey) {
+      return;
+    }
+
+    const stone = this.stoneSprites.get(this.replayFocusedStoneKey);
+    if (stone?.active && stone.scene) {
+      stone.removeAllListeners(Phaser.Animations.Events.ANIMATION_COMPLETE);
+      stone.stop();
+      resetSpriteToFrame(stone, STONE_STATIC_FRAME);
+    }
+    this.replayFocusedStoneKey = null;
+  }
+
+  private syncReplayLastMoveFocus(): void {
+    const focusKey = replayLastMoveFocusKey(this.boardState);
+    if (!focusKey) {
+      this.clearReplayLastMoveFocus();
+      return;
+    }
+
+    if (focusKey === this.replayFocusedStoneKey) {
+      return;
+    }
+
+    this.clearReplayLastMoveFocus();
+    const stone = this.stoneSprites.get(focusKey);
+    if (!stone?.active || !stone.scene) {
+      return;
+    }
+
+    this.stoneCycle?.stop();
+    stone.removeAllListeners(Phaser.Animations.Events.ANIMATION_COMPLETE);
+    stone.play({ key: STONE_ANIMS.IDLE_1.key, repeat: -1 });
+    this.replayFocusedStoneKey = focusKey;
   }
 
   private syncPointerBaseState(): void {
@@ -759,7 +802,7 @@ export class BoardScene extends Phaser.Scene {
           analysisMarkerTintForRole(overlay.marker),
           analysisMarkerAnimationForRole(overlay.marker),
           BOARD_RENDER_DEPTHS.OVERLAY_SURFACE,
-          SPRITE.MARKER,
+          analysisMarkerSpriteForRole(overlay.marker),
         ),
       );
     }

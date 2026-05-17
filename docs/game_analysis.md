@@ -223,6 +223,18 @@ Route/UI code should merge annotations by `ply` and render only the current
 replay frame's markers. Analysis output is transient product state in `0.4.6`;
 do not store it in local or cloud profile documents.
 
+The replay UI may simplify raw proof roles for readability: `possible_escape`
+and `confirmed_escape` both display as escape (`E`), forbidden replies reuse the
+forbidden/caution visual, immediate loss uses the existing warning marker, and
+unknown markers can stay hidden. Reports/debug data should keep the raw roles.
+
+Replay navigation uses one surface instead of a separate analysis mode. The page
+opens on the finished board, turn controls step backward or forward by two plies
+to preserve side-to-move perspective, and the slider remains available for raw
+move scrubbing. Each frame should show the opponent's last actual move as the
+focused stone and the current side's next actual move as the hover target; loser
+side analysis overlays then add alternate replies and `L` / `E` outcomes.
+
 ## Backward Walk
 
 For a finished game, walk backward from the final move and test prefixes. Do not

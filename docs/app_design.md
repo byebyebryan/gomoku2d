@@ -217,11 +217,11 @@ Short, high-signal summary:
 
 Transport is the main secondary UI on the page.
 
-- jump to start
-- previous
+- previous turn
+- previous move
 - auto play / pause
-- next
-- jump to end
+- next move
+- next turn
 - `Play From Here` once the replay is far enough in to form a meaningful branch
 
 #### C. Timeline
@@ -235,8 +235,8 @@ Rules:
 - no extra side chronology surface
 - board remains the hero
 - metadata stays compact and quiet
-- starting a replay slightly in is acceptable if the player can still scrub back
-  to the beginning
+- replay opens on the finished board; the scrubber remains the path to any raw
+  move index, while the outer transport buttons move by whole turns
 - branching from replay should preserve the current board position and rule set,
   but it becomes a new local match with undo capped at the branch point
 

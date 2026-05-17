@@ -15,11 +15,12 @@ import {
   buildLocalReplayFrame,
   canResumeReplay,
   defaultReplayMoveIndex,
+  nextReplayTurnMoveIndex,
+  previousReplayTurnMoveIndex,
   replayResumeUndoFloor,
   replayUndoFloor,
   replayPlayerName,
   replayWinnerLabel,
-  replayStartMoveIndex,
   shouldShowReplaySequenceNumbers,
   variantLabel,
 } from "../replay/local_replay";
@@ -94,11 +95,11 @@ export function ReplayRoute() {
   const replayFloor = match ? replayUndoFloor(match) : 0;
 
   useEffect(() => {
-    setMoveIndex(defaultReplayMoveIndex(match?.move_count ?? 0, replayFloor));
+    setMoveIndex(defaultReplayMoveIndex(match?.move_count ?? 0));
     setAutoplaying(false);
     setAnalysisAnnotations({});
     setCoreWinningCells([]);
-  }, [match?.move_count, matchId, replayFloor]);
+  }, [match?.move_count, matchId]);
 
   useEffect(() => {
     return () => {
@@ -176,11 +177,17 @@ export function ReplayRoute() {
       };
     }
 
-    void import("../replay/local_replay_core").then(({ winningCellsFromCore }) => {
-      if (!cancelled) {
-        setCoreWinningCells(winningCellsFromCore(match));
-      }
-    });
+    void import("../replay/local_replay_core")
+      .then(({ winningCellsFromCore }) => {
+        if (!cancelled) {
+          setCoreWinningCells(winningCellsFromCore(match));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCoreWinningCells([]);
+        }
+      });
 
     return () => {
       cancelled = true;
@@ -345,15 +352,15 @@ export function ReplayRoute() {
 
             <div className={styles.controlsRow} data-testid="replay-step-controls">
               <button
-                aria-label="Start"
+                aria-label="Previous turn"
                 className="uiAction uiActionNeutral uiActionIconOnly"
                 onClick={() => {
                   setAutoplaying(false);
-                  setMoveIndex(replayStartMoveIndex(match.move_count));
+                  setMoveIndex((current) => previousReplayTurnMoveIndex(current));
                 }}
                 type="button"
               >
-                <Icon name="first" />
+                <Icon name="doublePrev" />
               </button>
               <button
                 aria-label="Previous move"
@@ -364,7 +371,7 @@ export function ReplayRoute() {
                 }}
                 type="button"
               >
-                <Icon name="fastRewind" />
+                <Icon name="prev" />
               </button>
               <button
                 aria-label={autoplaying ? "Pause" : "Auto play"}
@@ -385,18 +392,18 @@ export function ReplayRoute() {
                 }}
                 type="button"
               >
-                <Icon name="fastForward" />
+                <Icon name="next" />
               </button>
               <button
-                aria-label="End"
+                aria-label="Next turn"
                 className="uiAction uiActionNeutral uiActionIconOnly"
                 onClick={() => {
                   setAutoplaying(false);
-                  setMoveIndex(match.move_count);
+                  setMoveIndex((current) => nextReplayTurnMoveIndex(current, match.move_count));
                 }}
                 type="button"
               >
-                <Icon name="last" />
+                <Icon name="doubleNext" />
               </button>
             </div>
 

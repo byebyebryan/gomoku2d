@@ -38,12 +38,16 @@ export function replayUndoFloor(match: Pick<SavedMatchV2, "move_count" | "undo_f
   return normalizeUndoFloor(match.undo_floor, match.move_count);
 }
 
-export function defaultReplayMoveIndex(totalMoves: number, undoFloor = 0): number {
-  return Math.min(totalMoves, Math.max(REPLAY_RESUME_MIN_MOVE_INDEX, normalizeUndoFloor(undoFloor, totalMoves)));
+export function defaultReplayMoveIndex(totalMoves: number): number {
+  return Math.max(0, Math.min(totalMoves, Math.floor(totalMoves)));
 }
 
-export function replayStartMoveIndex(totalMoves: number): number {
-  return totalMoves > 0 ? 1 : 0;
+export function previousReplayTurnMoveIndex(moveIndex: number): number {
+  return Math.max(0, Math.floor(moveIndex) - 2);
+}
+
+export function nextReplayTurnMoveIndex(moveIndex: number, totalMoves: number): number {
+  return Math.min(Math.max(0, Math.floor(totalMoves)), Math.floor(moveIndex) + 2);
 }
 
 export function canResumeReplay(

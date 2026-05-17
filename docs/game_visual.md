@@ -48,6 +48,8 @@ Stones are the most important persistent objects on the board.
 - newly placed stones use `transform-form`
 - removed stones use `stone-destroy`
 - the last placed stone may idle while the match is still playing
+- replay boards use `stone-idle-1` on the last actual move so each frame reads
+  as "opponent just played here"
 - result/replay sequence numbers sit above stones only when chronology matters
 
 The idle loop is a focus cue, not a constant board-wide effect. Only one stone
@@ -99,8 +101,17 @@ Forbidden cells are not active threats for Black. If a raw Black shape looks
 dangerous but the required continuation is forbidden by Renju, the live board
 should render the forbidden state, not a green/red "play here" warning. If a
 forbidden Black square matters as evidence for a White threat, show that in
-analysis/report surfaces with an explicit `marker-F` marker rather than by
-upgrading the cell into a playable Black threat.
+analysis surfaces with the forbidden/caution visual rather than by upgrading the
+cell into a playable Black threat.
+
+Replay analysis uses the same board-space grammar but keeps the product marker
+set intentionally smaller than the raw analyzer output. `confirmed_escape` and
+`possible_escape` both render as `marker-E`, because both mean "this reply exits
+the detected corridor" from the replay user's perspective. Forbidden analysis
+evidence renders with the caution sprite, immediate loss renders with the red
+warning marker, and unknown proof markers are suppressed in the replay UI.
+The current side's next actual replay move uses the hover surface, matching the
+"this is where I will play" reading without adding another marker type.
 
 ### Sequence Numbers
 

@@ -695,9 +695,11 @@ Side-specific implications:
   strong specifically because they may force Black toward forbidden answers.
 
 The presentation rule follows the same split. A square can carry a normal threat
-or defense hint from one side's perspective and an `F` marker from Black's
-perspective. The hint explains why the square matters; `F` explains why Black
-cannot use it.
+or defense hint from one side's perspective and forbidden evidence from Black's
+perspective. The hint explains why the square matters; the forbidden/caution
+visual explains why Black cannot use it. Internal reports may still expose the
+raw `forbidden` role explicitly, while the product replay UI should reuse the
+existing forbidden visual language.
 
 ## Model Limits
 

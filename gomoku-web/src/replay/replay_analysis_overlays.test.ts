@@ -127,6 +127,38 @@ describe("analysisOverlaysForFrame", () => {
       expect.objectContaining({ marker: "forcedLoss", row: 7, col: 8 }),
     ]);
   });
+
+  it("simplifies proof markers for the replay UI", () => {
+    const frame = annotation(4, "White");
+    frame.highlights = [];
+    frame.markers = [
+      {
+        mv: { col: 8, row: 7 },
+        notation: "I8",
+        role: "possible_escape",
+        side: "White",
+      },
+      {
+        mv: { col: 9, row: 7 },
+        notation: "J8",
+        role: "forbidden",
+        side: "Black",
+      },
+      {
+        mv: { col: 10, row: 7 },
+        notation: "K8",
+        role: "unknown",
+        side: "White",
+      },
+    ];
+
+    const annotations = mergeReplayAnalysisAnnotations({}, step(frame));
+
+    expect(analysisOverlaysForFrame(annotations, match("black_won"), 4)).toEqual([
+      expect.objectContaining({ marker: "confirmedEscape", row: 7, col: 8 }),
+      expect.objectContaining({ marker: "forbidden", row: 7, col: 9 }),
+    ]);
+  });
 });
 
 describe("nextReplayMove", () => {

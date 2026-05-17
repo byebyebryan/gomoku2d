@@ -101,7 +101,6 @@ const P = {
   GOLD:   0xffcc66,
   PINK:   0xff7ab6,
   PURPLE: 0xb877ff,
-  TEAL:   0x44d6d6,
   BLACK:  0x000000,
   GREEN:       0x22aa44,
   GREEN_BRIGHT: 0x44dd44,
@@ -161,7 +160,6 @@ export const COLOR = {
   THREAT:       P.RED_BRIGHT,
   WIN_MOVE:     P.GREEN_BRIGHT,
   WIN_CELLS:    P.GREEN_BRIGHT,
-  ANALYSIS_POSSIBLE_ESCAPE: P.TEAL,
 
   SEQ_ON_BLACK: P.WHITE,
   SEQ_ON_WHITE: P.DARK,
