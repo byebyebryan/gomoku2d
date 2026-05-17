@@ -238,6 +238,63 @@ describe("ReplayRoute analysis overlays", () => {
     ]);
   });
 
+  it("shows analysis status and corridor timeline markers", () => {
+    renderReplayRoute();
+
+    expect(screen.getByText("Status")).toBeInTheDocument();
+    expect(screen.getByTestId("replay-analysis-status")).toHaveTextContent("Analyzing replay");
+
+    act(() => {
+      runnerMock.callbacks?.onProgress?.({
+        analysis: null,
+        annotations: [
+          {
+            highlights: [],
+            markers: [
+              {
+                mv: { col: 8, row: 7 },
+                notation: "I8",
+                role: "forced_loss",
+                side: "White",
+              },
+            ],
+            ply: 7,
+            side_to_move: "White",
+          },
+          {
+            highlights: [],
+            markers: [
+              {
+                mv: { col: 6, row: 7 },
+                notation: "G8",
+                role: "confirmed_escape",
+                side: "White",
+              },
+            ],
+            ply: 5,
+            side_to_move: "White",
+          },
+        ],
+        counters: { branch_roots: 2, prefixes_analyzed: 3, proof_nodes: 321 },
+        current_ply: 5,
+        done: false,
+        error: null,
+        schema_version: 1,
+        status: "running",
+      });
+    });
+
+    expect(screen.getByTestId("replay-analysis-status")).toHaveTextContent("Analyzing replay");
+    expect(screen.getByTestId("replay-analysis-detail")).toHaveTextContent("Move 5 · 321 nodes");
+    expect(screen.getByTestId("replay-timeline")).toHaveStyle({
+      "--timeline-corridor-end": "100%",
+      "--timeline-corridor-start": "55.55555555555556%",
+      "--timeline-escape": "55.55555555555556%",
+    });
+    expect(screen.getByTestId("replay-timeline-corridor")).toBeInTheDocument();
+    expect(screen.getByTestId("replay-timeline-escape")).toBeInTheDocument();
+  });
+
   it("cancels analysis when leaving the replay", () => {
     const { unmount } = render(
       <MemoryRouter initialEntries={["/replay/match-1"]}>

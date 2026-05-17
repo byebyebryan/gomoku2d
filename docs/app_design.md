@@ -205,13 +205,18 @@ Replay is the dedicated chronology surface, but it should still stay sparse.
 
 Primary structure:
 
-#### A. Result strip
+#### A. Status strip
 
 Short, high-signal summary:
 
-- winner/result
+- analysis status
+- compact analysis detail, e.g. current traceback move or proof node count
 - move position, e.g. `Move 8 / 23`
 - rule set
+
+After analysis resolves, status should become frame-aware: winner frame, winner
+inside corridor, loser locked in, last escape, or ordinary side-to-move outside
+the corridor.
 
 #### B. Transport controls
 
@@ -237,6 +242,8 @@ Rules:
 - metadata stays compact and quiet
 - replay opens on the finished board; the scrubber remains the path to any raw
   move index, while the outer transport buttons move by whole turns
+- timeline fill is analysis-first: neutral by default, red for the searched
+  forced corridor, and a green point marker for the latest detected escape
 - branching from replay should preserve the current board position and rule set,
   but it becomes a new local match with undo capped at the branch point
 

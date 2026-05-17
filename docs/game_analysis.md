@@ -235,6 +235,19 @@ move scrubbing. Each frame should show the opponent's last actual move as the
 focused stone and the current side's next actual move as the hover target; loser
 side analysis overlays then add alternate replies and `L` / `E` outcomes.
 
+The replay timeline is an analysis surface, not a normal media progress bar.
+The base track stays neutral, the searched forced corridor fills backward in
+red from the ending, and the latest escape is shown as a green point marker.
+The deck should label this area as `Status`, using the analyzer's progressive
+state and counters rather than repeating the final match result.
+
+Once analysis resolves, the status should describe the current frame rather than
+only the whole replay. The terminal frame can show `Black won` or `White won`
+with corridor length when known. Winner-side frames inside the corridor can read
+`Black can force a win`; loser-side frames can read `White is locked in`; the
+latest escape frame can read `White's last escape`. Frames outside the analyzed
+corridor should fall back to normal turn language such as `Black to move`.
+
 ## Backward Walk
 
 For a finished game, walk backward from the final move and test prefixes. Do not
