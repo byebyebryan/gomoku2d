@@ -20,7 +20,6 @@ import {
   replayResumeUndoFloor,
   replayUndoFloor,
   replayPlayerName,
-  replayWinnerLabel,
   shouldShowReplaySequenceNumbers,
   variantLabel,
 } from "../replay/local_replay";
@@ -28,8 +27,11 @@ import {
   analysisOverlaysForFrame,
   mergeReplayAnalysisAnnotations,
   nextReplayMove,
+  replayAnalysisStatusSummary,
+  replayTimelineAnalysis,
   type ReplayAnalysisAnnotationsByPly,
 } from "../replay/replay_analysis_overlays";
+import type { ReplayAnalysisStepResult } from "../replay/replay_analysis_protocol";
 import { ReplayAnalysisRunner } from "../replay/replay_analysis_runner";
 import { Icon } from "../ui/Icon";
 
@@ -52,6 +54,7 @@ export function ReplayRoute() {
   const [moveIndex, setMoveIndex] = useState(defaultReplayMoveIndex(0));
   const [autoplaying, setAutoplaying] = useState(false);
   const [analysisAnnotations, setAnalysisAnnotations] = useState<ReplayAnalysisAnnotationsByPly>({});
+  const [analysisStep, setAnalysisStep] = useState<ReplayAnalysisStepResult | null>(null);
   const [coreWinningCells, setCoreWinningCells] = useState<CellPosition[]>([]);
   const analysisRunnerRef = useRef<ReplayAnalysisRunner | null>(null);
 
@@ -98,6 +101,7 @@ export function ReplayRoute() {
     setMoveIndex(defaultReplayMoveIndex(match?.move_count ?? 0));
     setAutoplaying(false);
     setAnalysisAnnotations({});
+    setAnalysisStep(null);
     setCoreWinningCells([]);
   }, [match?.move_count, matchId]);
 
@@ -113,10 +117,12 @@ export function ReplayRoute() {
     if (!match) {
       analysisRunnerRef.current?.cancel();
       setAnalysisAnnotations({});
+      setAnalysisStep(null);
       return undefined;
     }
 
-    const mergeStep = (step: Parameters<typeof mergeReplayAnalysisAnnotations>[1]) => {
+    const mergeStep = (step: ReplayAnalysisStepResult) => {
+      setAnalysisStep(step);
       setAnalysisAnnotations((current) => mergeReplayAnalysisAnnotations(current, step));
     };
 
@@ -131,8 +137,18 @@ export function ReplayRoute() {
         match,
         {
           onComplete: mergeStep,
-          onError: () => {
+          onError: (error) => {
             setAnalysisAnnotations({});
+            setAnalysisStep({
+              analysis: null,
+              annotations: [],
+              counters: { branch_roots: 0, prefixes_analyzed: 0, proof_nodes: 0 },
+              current_ply: null,
+              done: true,
+              error: error.message,
+              schema_version: 1,
+              status: "error",
+            });
           },
           onProgress: mergeStep,
         },
@@ -141,6 +157,16 @@ export function ReplayRoute() {
       );
     } catch {
       setAnalysisAnnotations({});
+      setAnalysisStep({
+        analysis: null,
+        annotations: [],
+        counters: { branch_roots: 0, prefixes_analyzed: 0, proof_nodes: 0 },
+        current_ply: null,
+        done: true,
+        error: "Replay analyzer could not start",
+        schema_version: 1,
+        status: "error",
+      });
     }
 
     return () => {
@@ -211,6 +237,13 @@ export function ReplayRoute() {
 
   const frame = buildLocalReplayFrame(match, moveIndex, () => coreWinningCells);
   const analysisOverlays = analysisOverlaysForFrame(analysisAnnotations, match, frame.moveIndex);
+  const analysisStatus = replayAnalysisStatusSummary(analysisStep, analysisAnnotations, match, frame);
+  const timelineAnalysis = replayTimelineAnalysis(analysisAnnotations, match.move_count);
+  const timelineStyle = {
+    "--timeline-corridor-end": timelineAnalysis.corridorEndPercent ?? "0%",
+    "--timeline-corridor-start": timelineAnalysis.corridorStartPercent ?? "0%",
+    "--timeline-escape": timelineAnalysis.escapePercent ?? "0%",
+  } as React.CSSProperties;
   const replayMovePreview = nextReplayMove(match, frame.moveIndex);
   const resumeSeed: LocalMatchResumeSeed = {
     currentPlayer: frame.currentPlayer,
@@ -265,10 +298,13 @@ export function ReplayRoute() {
         </div>
 
         <aside className={styles.deck}>
-          <section className={`${styles.deckSection} ${styles.resultSection}`}>
-            <p className="uiSectionLabel">Result</p>
-            <p className={styles.statusText} data-testid="replay-result">
-              {replayWinnerLabel(match, localDisplayName)}
+          <section className={`${styles.deckSection} ${styles.statusSection}`}>
+            <p className="uiSectionLabel">Status</p>
+            <p className={styles.statusText} data-testid="replay-analysis-status">
+              {analysisStatus.label}
+            </p>
+            <p className={styles.statusDetail} data-testid="replay-analysis-detail">
+              {analysisStatus.detail}
             </p>
           </section>
 
@@ -329,7 +365,15 @@ export function ReplayRoute() {
               <p className={`uiSectionLabel ${styles.playbackLabel}`}>Playback</p>
             </div>
 
-            <div className={styles.timeline}>
+            <div className={styles.timeline} data-testid="replay-timeline" style={timelineStyle}>
+              <div aria-hidden="true" className={styles.timelineTrack}>
+                {timelineAnalysis.corridorStartPercent && timelineAnalysis.corridorEndPercent ? (
+                  <span className={styles.timelineCorridor} data-testid="replay-timeline-corridor" />
+                ) : null}
+                {timelineAnalysis.escapePercent ? (
+                  <span className={styles.timelineEscape} data-testid="replay-timeline-escape" />
+                ) : null}
+              </div>
               <input
                 aria-label="Replay timeline"
                 className={styles.timelineInput}
@@ -339,12 +383,6 @@ export function ReplayRoute() {
                   setAutoplaying(false);
                   setMoveIndex(Number(event.target.value));
                 }}
-                style={
-                  {
-                    "--timeline-progress":
-                      match.move_count === 0 ? "0%" : `${(frame.moveIndex / match.move_count) * 100}%`,
-                  } as React.CSSProperties
-                }
                 type="range"
                 value={frame.moveIndex}
               />

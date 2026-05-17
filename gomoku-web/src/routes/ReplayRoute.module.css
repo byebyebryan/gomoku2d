@@ -67,6 +67,15 @@
   text-transform: uppercase;
 }
 
+.statusDetail {
+  margin: -4px 0 0;
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: var(--type-quiet);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .metaRows {
   display: grid;
   gap: 8px;
@@ -185,9 +194,12 @@
 .timeline {
   display: grid;
   gap: 8px;
+  position: relative;
 }
 
 .timelineInput {
+  position: relative;
+  z-index: 2;
   width: 100%;
   appearance: none;
   height: 28px;
@@ -196,20 +208,46 @@
   cursor: pointer;
 }
 
+.timelineTrack {
+  position: absolute;
+  z-index: 1;
+  top: 9px;
+  left: 0;
+  right: 0;
+  height: 10px;
+  border: 2px solid var(--border-strong);
+  background: var(--surface-muted);
+  pointer-events: none;
+}
+
+.timelineCorridor {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--timeline-corridor-start, 0%);
+  right: calc(100% - var(--timeline-corridor-end, 0%));
+  background: var(--danger);
+}
+
+.timelineEscape {
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  left: var(--timeline-escape, 0%);
+  width: 8px;
+  border: 2px solid var(--border-strong);
+  background: var(--success);
+  transform: translateX(-50%);
+}
+
 .timelineInput:focus {
   outline: none;
 }
 
 .timelineInput::-webkit-slider-runnable-track {
   height: 10px;
-  border: 2px solid var(--border-strong);
-  background: linear-gradient(
-    90deg,
-    var(--info) 0,
-    var(--info) var(--timeline-progress, 0%),
-    var(--surface-muted) var(--timeline-progress, 0%),
-    var(--surface-muted) 100%
-  );
+  border: 2px solid transparent;
+  background: transparent;
 }
 
 .timelineInput::-webkit-slider-thumb {
@@ -224,14 +262,14 @@
 
 .timelineInput::-moz-range-track {
   height: 10px;
-  border: 2px solid var(--border-strong);
-  background: var(--surface-muted);
+  border: 2px solid transparent;
+  background: transparent;
 }
 
 .timelineInput::-moz-range-progress {
   height: 10px;
-  border: 2px solid var(--border-strong);
-  background: var(--info);
+  border: 2px solid transparent;
+  background: transparent;
 }
 
 .timelineInput::-moz-range-thumb {
@@ -403,7 +441,7 @@
     display: none;
   }
 
-  .resultSection {
+  .statusSection {
     display: none;
   }
 

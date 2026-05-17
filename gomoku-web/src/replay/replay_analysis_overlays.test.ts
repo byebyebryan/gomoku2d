@@ -8,6 +8,8 @@ import {
   analysisOverlaysForFrame,
   mergeReplayAnalysisAnnotations,
   nextReplayMove,
+  replayAnalysisStatusSummary,
+  replayTimelineAnalysis,
 } from "./replay_analysis_overlays";
 
 const MOVES: MatchMove[] = [
@@ -18,11 +20,23 @@ const MOVES: MatchMove[] = [
   { col: 7, moveNumber: 5, player: 1, row: 7 },
 ];
 
-function match(status: "black_won" | "white_won" | "draw" = "black_won") {
+const TEN_MOVES: MatchMove[] = [
+  ...MOVES,
+  { col: 2, moveNumber: 6, player: 2, row: 0 },
+  { col: 8, moveNumber: 7, player: 1, row: 7 },
+  { col: 3, moveNumber: 8, player: 2, row: 0 },
+  { col: 9, moveNumber: 9, player: 1, row: 7 },
+  { col: 4, moveNumber: 10, player: 2, row: 0 },
+];
+
+function match(
+  status: "black_won" | "white_won" | "draw" = "black_won",
+  moves: MatchMove[] = MOVES,
+) {
   return createLocalSavedMatch({
     id: "match-1",
     localProfileId: "local-1",
-    moves: MOVES,
+    moves,
     players: [
       { kind: "human", name: "Black", stone: "black" },
       { kind: "bot", name: "White", stone: "white" },
@@ -31,6 +45,10 @@ function match(status: "black_won" | "white_won" | "draw" = "black_won") {
     savedAt: "2026-05-16T12:00:00.000Z",
     status,
   });
+}
+
+function tenMoveMatch(status: "black_won" | "white_won" | "draw" = "black_won") {
+  return match(status, TEN_MOVES);
 }
 
 function annotation(ply: number, sideToMove: "Black" | "White"): ReplayFrameAnnotations {
@@ -79,6 +97,123 @@ describe("mergeReplayAnalysisAnnotations", () => {
 
     expect(Object.keys(merged)).toEqual(["4", "5"]);
     expect(merged[4].markers).toEqual([expect.objectContaining({ role: "confirmed_escape" })]);
+  });
+});
+
+describe("replayTimelineAnalysis", () => {
+  it("marks the searched corridor range and escape point", () => {
+    const escapeFrame = annotation(4, "White");
+    escapeFrame.markers = [{ ...escapeFrame.markers[0], role: "possible_escape" }];
+    const annotations = mergeReplayAnalysisAnnotations(
+      {},
+      step(annotation(8, "White"), escapeFrame, annotation(6, "White")),
+    );
+
+    expect(replayTimelineAnalysis(annotations, 10)).toEqual({
+      corridorEndPercent: "100%",
+      corridorEndPly: 10,
+      corridorStartPercent: "40%",
+      corridorStartPly: 4,
+      escapePercent: "40%",
+      escapePly: 4,
+    });
+  });
+
+  it("omits timeline analysis when no frame annotations are available", () => {
+    expect(replayTimelineAnalysis({}, 10)).toEqual({
+      corridorEndPercent: null,
+      corridorEndPly: null,
+      corridorStartPercent: null,
+      corridorStartPly: null,
+      escapePercent: null,
+      escapePly: null,
+    });
+  });
+});
+
+describe("replayAnalysisStatusSummary", () => {
+  it("summarizes running analysis with search counters", () => {
+    const running = {
+      ...step(annotation(8, "White")),
+      counters: { branch_roots: 3, prefixes_analyzed: 2, proof_nodes: 144 },
+      current_ply: 8,
+      status: "running" as const,
+    };
+
+    expect(replayAnalysisStatusSummary(running, {}, match(), {
+      currentPlayer: 1,
+      moveIndex: 10,
+      status: "black_won",
+    })).toEqual({
+      detail: "Move 8 · 144 nodes",
+      label: "Analyzing replay",
+    });
+  });
+
+  it("summarizes the terminal frame with the winner and corridor length", () => {
+    const escapeFrame = annotation(4, "White");
+    escapeFrame.markers = [{ ...escapeFrame.markers[0], role: "confirmed_escape" }];
+    const annotations = mergeReplayAnalysisAnnotations({}, step(escapeFrame, annotation(8, "White")));
+    const resolved = {
+      ...step(escapeFrame),
+      counters: { branch_roots: 1, prefixes_analyzed: 6, proof_nodes: 2048 },
+      done: true,
+      status: "resolved" as const,
+    };
+
+    expect(replayAnalysisStatusSummary(resolved, annotations, tenMoveMatch("black_won"), {
+      currentPlayer: 2,
+      moveIndex: 10,
+      status: "black_won",
+    })).toEqual({
+      detail: "6-ply forced corridor",
+      label: "Black won",
+    });
+  });
+
+  it("summarizes the current frame inside and outside the forced corridor", () => {
+    const escapeFrame = annotation(4, "White");
+    escapeFrame.markers = [{ ...escapeFrame.markers[0], role: "confirmed_escape" }];
+    const annotations = mergeReplayAnalysisAnnotations({}, step(escapeFrame, annotation(6, "White"), annotation(8, "White")));
+    const resolved = {
+      ...step(escapeFrame),
+      counters: { branch_roots: 1, prefixes_analyzed: 6, proof_nodes: 2048 },
+      done: true,
+      status: "resolved" as const,
+    };
+
+    expect(replayAnalysisStatusSummary(resolved, annotations, tenMoveMatch("black_won"), {
+      currentPlayer: 2,
+      moveIndex: 4,
+      status: "playing",
+    })).toEqual({
+      detail: "Last chance before move 5",
+      label: "White's last escape",
+    });
+    expect(replayAnalysisStatusSummary(resolved, annotations, tenMoveMatch("black_won"), {
+      currentPlayer: 1,
+      moveIndex: 7,
+      status: "playing",
+    })).toEqual({
+      detail: "Corridor: moves 5-10",
+      label: "Black can force a win",
+    });
+    expect(replayAnalysisStatusSummary(resolved, annotations, tenMoveMatch("black_won"), {
+      currentPlayer: 2,
+      moveIndex: 8,
+      status: "playing",
+    })).toEqual({
+      detail: "No viable escape found",
+      label: "White is locked in",
+    });
+    expect(replayAnalysisStatusSummary(resolved, annotations, tenMoveMatch("black_won"), {
+      currentPlayer: 1,
+      moveIndex: 2,
+      status: "playing",
+    })).toEqual({
+      detail: "Outside the forced corridor",
+      label: "Black to move",
+    });
   });
 });
 
