@@ -23,15 +23,16 @@ freezing the UI.
 
 Single-player, local-first:
 
-- Start a match from Home with one click — opponent is the Practice Bot
-- Switch between Freestyle and Renju rules; changes mid-game queue for the next
-  round
+- Start a match from Home with one click against the saved bot setup
+- Tune rule, bot, hints, and touch controls from Settings; changes mid-game can
+  queue for the next round or start a new game
 - Live forbidden-move warnings when playing Black under Renju
+- Optional tactical hints for immediate and imminent threats
 - Undo the last turn during a live match
-- Finish a match, open the replay, scrub move by move, then branch off at any
-  point to play the rest against the bot yourself without undoing before the
-  branch point
-- Local guest profile: display name, preferred rule, recent-match history —
+- Finish a match, open the replay, step through turns with browser-side corridor
+  analysis, then branch off at any point to play the rest against the current bot
+  setup without undoing before the branch point
+- Local guest profile: display name and recent-match history —
   persisted in browser storage, no sign-in required
 - Optional Google sign-in for private cloud-backed profile/history continuity
   across browsers
@@ -95,13 +96,13 @@ Styling is CSS Modules (`*.module.css`) with a shared token layer in
 ```
 src/
 ├── app/            React entry (App.tsx, routes, global tokens)
-├── routes/         Home, LocalMatch, Profile, Replay
+├── routes/         Home, LocalMatch, Profile, Replay, Settings
 ├── components/     Reusable UI (Board wrapper around Phaser)
 ├── board/          Phaser scene, renderer, board constants
 ├── cloud/          Firebase config/bootstrap for cloud-backed v0.3 surfaces
 ├── game/           Local match Zustand store + shared types
 ├── profile/        Local profile Zustand store (persisted to localStorage)
-├── replay/         Replay frame derivation from saved matches
+├── replay/         Replay frames, core conversion, and browser analysis runner
 ├── core/           Wasm bridge + bot worker protocol/runner
 └── ui/             Icon component + icon registry
 ```
@@ -109,9 +110,10 @@ src/
 Routes:
 
 - `/` — title screen, single `Play` CTA
-- `/match/local` — live match vs Practice Bot
-- `/replay/:matchId` — replay viewer for a saved match
-- `/profile` — local player record, preferred rule, history
+- `/match/local` — live match vs the configured bot
+- `/replay/:matchId` — replay viewer with browser-side corridor analysis for decisive saved matches
+- `/profile` — local/cloud player record and history
+- `/settings` — rule, bot, hint, and touch-control setup
 - `/privacy/` and `/terms/` — static info-page-template policy pages for the public app
 
 ---
@@ -211,13 +213,12 @@ gomoku-bot-lab/gomoku-cli      — CLI match runner with replay export
 gomoku-bot-lab/gomoku-wasm     — wasm-pack bridge: WasmBoard + WasmBot + replay analyzer for JS
 ```
 
-The local-first `v0.2` product pass is complete. `P1` proved Rust + Wasm +
-browser play; `P2` landed the paired desktop/mobile shell in
-`v0.2.3` and the final `v0.2.4` polish/reference set on top of it. The `v0.3`
-backend-continuity line now has optional Firebase config, Google sign-in, cloud
-profile create/load, local-to-cloud profile promotion, embedded private
-cloud-backed history, cloud replay loading, auth fallback hardening, and reset
-barrier hardening. Lab-powered product features, skins, published replays, and
-online play stay sequenced in later phases — see
+The local-first `v0.2` product pass is complete. The `v0.3` backend-continuity
+line added optional Firebase config, Google sign-in, cloud profile/history
+continuity, cloud replay loading, auth fallback hardening, and reset/delete
+barriers. The `v0.4` lab-powered line now has published bot and analysis
+reports, configurable bot settings, tactical hints, and the first browser replay
+analysis surface. Skins, published replays, richer review UI, and online play
+stay sequenced in later phases — see
 [`../docs/roadmap.md`](../docs/roadmap.md) for sequencing and
 [`../docs/architecture.md`](../docs/architecture.md) for the runtime boundary.

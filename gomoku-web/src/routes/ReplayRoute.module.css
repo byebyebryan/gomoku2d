@@ -291,7 +291,6 @@
   border: 0;
 }
 
-.emptyState,
 .notFoundText {
   color: var(--text-muted);
 }

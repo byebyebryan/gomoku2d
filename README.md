@@ -49,10 +49,12 @@ all stay in the loop.
 ## What works today
 
 - Start a practice match immediately, no account required.
-- Play Freestyle or Renju against the Practice Bot, with Renju forbidden-move
-  feedback and mobile-friendly placement controls.
+- Play Freestyle or Renju against configurable Easy / Normal / Hard bots, with
+  Renju forbidden-move feedback and mobile-friendly placement controls.
 - Review local replays, scrub the timeline, and branch from a replay position
   into a fresh practice game.
+- Let the browser analyzer mark the final forced corridor and latest escape in
+  finished decisive replays.
 - Keep guest-local history by default, or sign in with Google for private
   cloud-backed history across browsers.
 - Use the same board-first app on desktop and portrait mobile.
@@ -75,6 +77,7 @@ gomoku2d/
 ├── gomoku-bot-lab/     ← the Rust side
 │   ├── gomoku-core/      rules + board
 │   ├── gomoku-bot/       Bot trait + implementations
+│   ├── gomoku-analysis/  forced-corridor replay analysis
 │   ├── gomoku-eval/      self-play arena, tournaments, Elo
 │   ├── gomoku-cli/       native match runner
 │   └── gomoku-wasm/      wasm-pack bridge the game imports
@@ -85,6 +88,7 @@ gomoku2d/
 |-------|--------------|
 | `gomoku-core` | Board state, rules (Freestyle + Renju), win detection, FEN, replay JSON |
 | `gomoku-bot` | `Bot` trait + implementations: `RandomBot`, `SearchBot` (negamax + α-β + iterative deepening + transposition table) |
+| `gomoku-analysis` | Shared forced-corridor replay analyzer used by reports and the browser |
 | `gomoku-cli` | Run one match: pick the bots, print the board, optionally save a replay |
 | `gomoku-eval` | Run many matches: self-play arena, round-robin tournaments, Elo ratings |
 | `gomoku-wasm` | `wasm-pack` bridge — exports the core + bots to the web game |
@@ -104,10 +108,11 @@ Firebase/Firestore plumbing, local-to-cloud profile promotion, private
 cloud-backed history, schema/rules hardening, and Reset Profile without putting
 sign-in in front of the game.
 
-The lab-powered line is now underway. Bot-lab reports and the first replay
-analysis report are published as lab artifacts, while player-facing replay
-analysis, puzzles, bot personalities, and game-review UI remain upcoming product
-surfaces. For the longer-term sequencing, see
+The lab-powered line is now underway. Bot-lab reports, the static replay
+analysis report, configurable bot settings, tactical hints, and the first
+in-product replay-analysis surface are now live. The next product questions are
+how much explanation to add around replay analysis, then puzzles, bot
+personalities, and broader game-review UI. For the longer-term sequencing, see
 [`docs/roadmap.md`](docs/roadmap.md).
 
 ---

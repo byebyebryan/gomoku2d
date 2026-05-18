@@ -121,6 +121,9 @@ export function ReplayRoute() {
       return undefined;
     }
 
+    setAnalysisAnnotations({});
+    setAnalysisStep(null);
+
     const mergeStep = (step: ReplayAnalysisStepResult) => {
       setAnalysisStep(step);
       setAnalysisAnnotations((current) => mergeReplayAnalysisAnnotations(current, step));

@@ -1,4 +1,4 @@
-import { WasmBoard, WasmReplayAnalyzer } from "../core/wasm_bridge";
+import { WasmBoard } from "../core/wasm_bridge";
 import { movesFromMoveCells, type SavedMatchStatus, type SavedMatchV2 } from "../match/saved_match";
 
 const CORE_REPLAY_SCHEMA_VERSION = 1;
@@ -130,14 +130,4 @@ export function replayAnalysisOptionsJson(options: ReplayAnalysisOptions = {}): 
     ...(options.maxDepth === undefined ? {} : { max_depth: options.maxDepth }),
     ...(options.maxScanPlies === undefined ? {} : { max_scan_plies: options.maxScanPlies }),
   });
-}
-
-export function createReplayAnalyzer(
-  match: SavedMatchV2,
-  options: ReplayAnalysisOptions = {},
-): WasmReplayAnalyzer {
-  return WasmReplayAnalyzer.createFromReplayJson(
-    savedMatchToReplayJson(match),
-    replayAnalysisOptionsJson(options),
-  );
 }

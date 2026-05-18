@@ -3,9 +3,6 @@ import type { GameVariant } from "../core/bot_protocol";
 import type { CellPosition, CellStone, MatchMove, MatchStatus } from "../game/types";
 import {
   movesFromMoveCells,
-  savedMatchPlayerForSide,
-  savedMatchPlayers,
-  savedMatchWinningSide,
   type SavedMatchPlayer,
   type SavedMatchV2,
 } from "../match/saved_match";
@@ -86,24 +83,6 @@ export function replayPlayerName(player: SavedMatchPlayer, localDisplayName: str
 
 export function variantLabel(variant: GameVariant): string {
   return variant === "renju" ? "Renju" : "Freestyle";
-}
-
-export function replayPlayerLabel(match: SavedMatchV2, localDisplayName: string): string {
-  return savedMatchPlayers(match)
-    .map(({ player, side }) => `${replayPlayerName(player, localDisplayName)} (${side})`)
-    .join(" vs ");
-}
-
-export function replayWinnerLabel(match: SavedMatchV2, localDisplayName: string): string {
-  if (match.status === "draw") {
-    return "Draw";
-  }
-
-  const winningSide = savedMatchWinningSide(match);
-  const winner = winningSide ? savedMatchPlayerForSide(match, winningSide) : null;
-  const winnerName = winner ? replayPlayerName(winner, localDisplayName) : winningSide;
-
-  return `${winnerName} wins`;
 }
 
 export function buildLocalReplayFrame(
