@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::path::Path;
 use std::time::Instant;
 
-use gomoku_bot::tactical::{corridor_active_threats, LocalThreatKind};
+use gomoku_bot::tactical::{corridor_active_threats, LethalThreatKind, LocalThreatKind};
 use gomoku_core::{Board, Color, Move, Replay};
 use rayon::prelude::*;
 use serde::Serialize;
@@ -11,8 +11,9 @@ use crate::analysis::{
     analyze_alternate_defender_reply_options, analyze_replay, defender_reply_candidates,
     defender_reply_roles_for_move, AnalysisBoardSnapshot, AnalysisOptions, DefenderReplyAnalysis,
     DefenderReplyCandidate, DefenderReplyOutcome, DefenderReplyRole, ForcedInterval, GameAnalysis,
-    ProofLimitCause, ProofResult, ProofStatus, ReplyClassification, ReplyPolicy, RootCause,
-    SearchDiagnostics, TacticalNote, UnclearContext, UnclearReason, ANALYSIS_SCHEMA_VERSION,
+    LethalOnset, ProofLimitCause, ProofResult, ProofStatus, ReplyClassification, ReplyPolicy,
+    RootCause, SearchDiagnostics, TacticalNote, UnclearContext, UnclearReason,
+    ANALYSIS_SCHEMA_VERSION,
 };
 use crate::report_board::{render_report_board, report_board_css, ReportBoardMarker};
 
@@ -71,6 +72,7 @@ pub struct AnalysisBatchEntry {
     pub root_cause: Option<RootCause>,
     pub unclear_reason: Option<UnclearReason>,
     pub final_move: Option<Move>,
+    pub lethal_onset: Option<LethalOnset>,
     pub final_forced_interval_found: bool,
     pub final_forced_interval: Option<ForcedInterval>,
     pub proof_intervals: Vec<ForcedInterval>,
@@ -364,6 +366,7 @@ fn error_entry(path: String, error: String, elapsed_ms: u64) -> AnalysisBatchEnt
         root_cause: None,
         unclear_reason: None,
         final_move: None,
+        lethal_onset: None,
         final_forced_interval_found: false,
         final_forced_interval: None,
         proof_intervals: Vec::new(),
@@ -571,7 +574,7 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       cursor: pointer;
       display: grid;
       gap: 10px;
-      grid-template-columns: minmax(68px, max-content) minmax(210px, 1.25fr) minmax(210px, 1.25fr) minmax(118px, max-content) repeat(2, minmax(86px, 1fr));
+      grid-template-columns: minmax(68px, max-content) minmax(210px, 1.25fr) minmax(210px, 1.25fr) minmax(118px, max-content) repeat(3, minmax(86px, 1fr));
       align-items: center;
       padding: 12px 14px;
     }}
@@ -1033,6 +1036,7 @@ fn analysis_entry_card_html(entry: &AnalysisBatchEntry) -> String {
     let loss_label = loss_category_label(entry.loss_category);
     let loss_class = loss_category_class(entry.loss_category);
     let entry_class = loss_entry_class(entry.loss_category);
+    let lethal = lethal_onset_label(entry.lethal_onset.as_ref());
     let forced = forced_interval_label(entry.final_forced_interval.as_ref());
     let detail_sections = analysis_entry_detail_sections_html(entry);
     let title = replay_entry_title(&entry.path);
@@ -1046,6 +1050,7 @@ fn analysis_entry_card_html(entry: &AnalysisBatchEntry) -> String {
     {first_player}
     {second_player}
     <span class="loss-chip {loss_class}">{loss}</span>
+    <span class="entry-metric"><span>Lethal onset</span><strong>{lethal}</strong></span>
     <span class="entry-metric"><span>Forced corridor</span><strong>{forced}</strong></span>
     <span class="entry-metric"><span>Game length</span><strong>{length}</strong></span>
   </summary>
@@ -1060,6 +1065,7 @@ fn analysis_entry_card_html(entry: &AnalysisBatchEntry) -> String {
         first_player = first_player,
         second_player = second_player,
         loss = html_escape(&loss_label),
+        lethal = html_escape(&lethal),
         forced = html_escape(&forced),
         length = html_escape(&ply_count_label(entry.move_count)),
         detail_sections = detail_sections,
@@ -1098,6 +1104,9 @@ fn analysis_entry_detail_sections_html(entry: &AnalysisBatchEntry) -> String {
     let unclear_reason = unclear_reason_label(entry.unclear_reason);
 
     let mut details = vec![detail_html("Cause", &cause)];
+    if let Some(onset) = entry.lethal_onset.as_ref() {
+        details.push(detail_html("Lethal", &lethal_onset_detail_label(onset)));
+    }
     if unclear_reason != "-" {
         details.push(detail_html("Unclear", &unclear_reason));
     }
@@ -1391,6 +1400,53 @@ fn forced_interval_label(interval: Option<&ForcedInterval>) -> String {
     format!("{}-{} / {} ply", interval.start_ply, interval.end_ply, span)
 }
 
+fn lethal_onset_label(onset: Option<&LethalOnset>) -> String {
+    onset
+        .map(|onset| {
+            format!(
+                "{} / {}",
+                onset.prefix_ply,
+                lethal_threat_kind_label(onset.kind)
+            )
+        })
+        .unwrap_or_else(|| "-".to_string())
+}
+
+fn lethal_onset_detail_label(onset: &LethalOnset) -> String {
+    let targets = move_list_label(&onset.terminal_targets);
+    let replies = match onset.kind {
+        LethalThreatKind::TerminalCoverage => {
+            format!("covers {targets}")
+        }
+        LethalThreatKind::OneStepCoverage => {
+            format!("covers {targets}; {} replies", onset.one_step_replies.len())
+        }
+    };
+    format!(
+        "{} at {}; {replies}",
+        lethal_threat_kind_label(onset.kind),
+        onset.prefix_ply
+    )
+}
+
+fn lethal_threat_kind_label(kind: LethalThreatKind) -> &'static str {
+    match kind {
+        LethalThreatKind::TerminalCoverage => "terminal",
+        LethalThreatKind::OneStepCoverage => "one-step",
+    }
+}
+
+fn move_list_label(moves: &[Move]) -> String {
+    if moves.is_empty() {
+        return "-".to_string();
+    }
+    moves
+        .iter()
+        .map(|mv| mv.to_notation())
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
 fn ply_count_label(value: Option<usize>) -> String {
     value
         .map(|value| format!("{value} ply"))
@@ -1464,6 +1520,7 @@ fn entry_from_analysis(
         root_cause: Some(analysis.root_cause),
         unclear_reason: analysis.unclear_reason,
         final_move: analysis.final_move,
+        lethal_onset: analysis.lethal_onset,
         final_forced_interval_found: analysis.final_forced_interval_found,
         final_forced_interval: Some(analysis.final_forced_interval),
         proof_intervals: analysis.proof_intervals,
@@ -2792,6 +2849,7 @@ mod tests {
                 max_depth,
                 max_scan_plies: Some(64),
             },
+            lethal_onset: None,
             final_forced_interval_found: false,
             final_forced_interval: ForcedInterval {
                 start_ply: 0,

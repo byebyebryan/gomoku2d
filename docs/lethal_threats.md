@@ -398,8 +398,10 @@ Board legend:
     A B C D E F G H I J K L M N O
 ```
 
-Future slices should wire the classifier into replay analysis first, then
-consider search integration after reports prove the evidence is reliable.
+Replay analysis now records `lethal_onset` in `GameAnalysis` and exposes it in
+analysis batch report entries. The field stores the prefix ply, attacker,
+defender, threat kind, terminal targets, and one-step reply evidence when the
+final suffix first becomes lethal.
 
 ## Search And Analysis Use
 
@@ -412,5 +414,6 @@ are:
 - cause boundary: the earlier last escape or forced-corridor entry.
 
 Search integration remains experimental. A proven lethal state can eventually
-act like a terminal tactical leaf, but the classifier should be validated in
-reports first because false positives would be damaging inside bot search.
+act like a terminal tactical leaf, but the classifier should keep being
+validated in reports first because false positives would be damaging inside bot
+search.

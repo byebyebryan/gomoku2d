@@ -900,6 +900,7 @@ mod tests {
     };
     use crate::analysis::{
         AnalysisOptions, ForcedInterval, ProofStatus, ReplyClassification, RootCause,
+        ANALYSIS_SCHEMA_VERSION,
     };
 
     fn mv(notation: &str) -> Move {
@@ -953,7 +954,7 @@ mod tests {
         let json = serde_json::to_string_pretty(&report)
             .expect("analysis fixture report should serialize");
 
-        assert!(json.contains("\"schema_version\": 14"));
+        assert!(json.contains(&format!("\"schema_version\": {ANALYSIS_SCHEMA_VERSION}")));
         assert!(json.contains("\"case_id\": \"missed_defense_closed_four\""));
         assert!(json.contains("\"expected\""));
         assert!(json.contains("\"actual\""));
