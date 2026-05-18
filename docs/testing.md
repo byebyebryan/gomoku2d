@@ -1,0 +1,35 @@
+# Testing Guidelines
+
+Tests in this repo should protect durable behavior, not the temporary path used
+to debug a bug.
+
+Keep tests when they define one of these contracts:
+
+- Core Gomoku/Renju rules and legality.
+- Search behavior that a player or report depends on.
+- Scan/rolling parity for optimized implementations.
+- Wasm/public API shape.
+- Replay analysis outcomes and annotation contracts.
+- Saved profile, replay, and report schema behavior.
+
+Prefer table-driven scenario coverage over one-off bug fixtures. A regression
+test that starts as a narrow bug reproduction should be consolidated into the
+nearest scenario table or behavior contract before commit whenever possible.
+
+Avoid tests that only lock internal implementation details:
+
+- Helper names or private call paths.
+- Exact intermediate candidate counts, unless the count is a report contract.
+- Exact timing or metric values, instead of metric presence/invariants.
+- Retired experiment names or compatibility paths we intentionally broke.
+- Long replay fixtures when a smaller shape/scenario demonstrates the same
+  behavior.
+
+Before committing test changes, do a test hygiene pass:
+
+- Classify new tests as `contract`, `scenario`, `regression-to-merge`, or
+  `temporary scaffold`.
+- Merge `regression-to-merge` cases into scenario coverage when practical.
+- Remove `temporary scaffold` tests.
+- Keep slow integration tests only when they protect behavior that cannot be
+  covered by a smaller unit/scenario test.

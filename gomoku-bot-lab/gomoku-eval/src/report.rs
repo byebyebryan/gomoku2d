@@ -1379,7 +1379,8 @@ impl SideStatsAccumulator {
             self.corridor_proof_quiet += trace_value_u64(metrics, "corridor_proof_quiet");
             self.corridor_proof_static_exits +=
                 trace_value_u64(metrics, "corridor_proof_static_exits");
-            self.corridor_proof_depth_exits += trace_value_u64(metrics, "corridor_proof_depth_exits");
+            self.corridor_proof_depth_exits +=
+                trace_value_u64(metrics, "corridor_proof_depth_exits");
             self.corridor_proof_deadline_exits +=
                 trace_value_u64(metrics, "corridor_proof_deadline_exits");
             self.corridor_proof_terminal_exits +=
@@ -1399,10 +1400,8 @@ impl SideStatsAccumulator {
             self.corridor_proof_candidates_considered +=
                 trace_value_u64(metrics, "corridor_proof_candidates_considered");
             self.corridor_proof_wins += trace_value_u64(metrics, "corridor_proof_wins");
-            self.corridor_proof_losses +=
-                trace_value_u64(metrics, "corridor_proof_losses");
-            self.corridor_proof_unknown +=
-                trace_value_u64(metrics, "corridor_proof_unknown");
+            self.corridor_proof_losses += trace_value_u64(metrics, "corridor_proof_losses");
+            self.corridor_proof_unknown += trace_value_u64(metrics, "corridor_proof_unknown");
             self.corridor_proof_deadline_skips +=
                 trace_value_u64(metrics, "corridor_proof_deadline_skips");
             self.corridor_proof_move_changes +=
@@ -1411,12 +1410,9 @@ impl SideStatsAccumulator {
                 trace_value_u64(metrics, "corridor_proof_move_confirmations");
             self.corridor_proof_candidate_rank_total +=
                 trace_value_u64(metrics, "corridor_proof_candidate_rank_total");
-            self.corridor_proof_candidate_rank_max = self
-                .corridor_proof_candidate_rank_max
-                .max(trace_value_u64(
-                    metrics,
-                    "corridor_proof_candidate_rank_max",
-                ));
+            self.corridor_proof_candidate_rank_max = self.corridor_proof_candidate_rank_max.max(
+                trace_value_u64(metrics, "corridor_proof_candidate_rank_max"),
+            );
             self.corridor_proof_candidate_score_gap_total +=
                 trace_value_u64(metrics, "corridor_proof_candidate_score_gap_total");
             self.corridor_proof_candidate_score_gap_max = self
@@ -1505,7 +1501,8 @@ impl SideStatsAccumulator {
         self.corridor_proof_depth_exits += stats.corridor_proof_depth_exits;
         self.corridor_proof_deadline_exits += stats.corridor_proof_deadline_exits;
         self.corridor_proof_terminal_exits += stats.corridor_proof_terminal_exits;
-        self.corridor_proof_terminal_root_candidates += stats.corridor_proof_terminal_root_candidates;
+        self.corridor_proof_terminal_root_candidates +=
+            stats.corridor_proof_terminal_root_candidates;
         self.corridor_proof_terminal_root_winning_candidates +=
             stats.corridor_proof_terminal_root_winning_candidates;
         self.corridor_proof_terminal_root_losing_candidates +=
@@ -1515,16 +1512,14 @@ impl SideStatsAccumulator {
             stats.corridor_proof_terminal_root_move_changes;
         self.corridor_proof_terminal_root_move_confirmations +=
             stats.corridor_proof_terminal_root_move_confirmations;
-        self.corridor_proof_candidates_considered +=
-            stats.corridor_proof_candidates_considered;
+        self.corridor_proof_candidates_considered += stats.corridor_proof_candidates_considered;
         self.corridor_proof_wins += stats.corridor_proof_wins;
         self.corridor_proof_losses += stats.corridor_proof_losses;
         self.corridor_proof_unknown += stats.corridor_proof_unknown;
         self.corridor_proof_deadline_skips += stats.corridor_proof_deadline_skips;
         self.corridor_proof_move_changes += stats.corridor_proof_move_changes;
         self.corridor_proof_move_confirmations += stats.corridor_proof_move_confirmations;
-        self.corridor_proof_candidate_rank_total +=
-            stats.corridor_proof_candidate_rank_total;
+        self.corridor_proof_candidate_rank_total += stats.corridor_proof_candidate_rank_total;
         self.corridor_proof_candidate_rank_max = self
             .corridor_proof_candidate_rank_max
             .max(stats.corridor_proof_candidate_rank_max);
@@ -1764,11 +1759,11 @@ impl SideStatsAccumulator {
             corridor_proof_terminal_root_losing_candidates: self
                 .corridor_proof_terminal_root_losing_candidates,
             corridor_proof_terminal_root_overrides: self.corridor_proof_terminal_root_overrides,
-            corridor_proof_terminal_root_move_changes: self.corridor_proof_terminal_root_move_changes,
+            corridor_proof_terminal_root_move_changes: self
+                .corridor_proof_terminal_root_move_changes,
             corridor_proof_terminal_root_move_confirmations: self
                 .corridor_proof_terminal_root_move_confirmations,
-            corridor_proof_candidates_considered: self
-                .corridor_proof_candidates_considered,
+            corridor_proof_candidates_considered: self.corridor_proof_candidates_considered,
             corridor_proof_wins: self.corridor_proof_wins,
             corridor_proof_losses: self.corridor_proof_losses,
             corridor_proof_unknown: self.corridor_proof_unknown,
@@ -1777,14 +1772,10 @@ impl SideStatsAccumulator {
             corridor_proof_move_confirmations: self.corridor_proof_move_confirmations,
             corridor_proof_candidate_rank_total: self.corridor_proof_candidate_rank_total,
             corridor_proof_candidate_rank_max: self.corridor_proof_candidate_rank_max,
-            corridor_proof_candidate_score_gap_total: self
-                .corridor_proof_candidate_score_gap_total,
-            corridor_proof_candidate_score_gap_max: self
-                .corridor_proof_candidate_score_gap_max,
-            corridor_proof_win_candidate_rank_total: self
-                .corridor_proof_win_candidate_rank_total,
-            corridor_proof_win_candidate_rank_max: self
-                .corridor_proof_win_candidate_rank_max,
+            corridor_proof_candidate_score_gap_total: self.corridor_proof_candidate_score_gap_total,
+            corridor_proof_candidate_score_gap_max: self.corridor_proof_candidate_score_gap_max,
+            corridor_proof_win_candidate_rank_total: self.corridor_proof_win_candidate_rank_total,
+            corridor_proof_win_candidate_rank_max: self.corridor_proof_win_candidate_rank_max,
             total_nodes: self.total_nodes,
             avg_nodes,
             eval_calls: self.eval_calls,
@@ -2021,12 +2012,9 @@ fn standings(
                 corridor_proof_unknown: side_stats.corridor_proof_unknown,
                 corridor_proof_deadline_skips: side_stats.corridor_proof_deadline_skips,
                 corridor_proof_move_changes: side_stats.corridor_proof_move_changes,
-                corridor_proof_move_confirmations: side_stats
-                    .corridor_proof_move_confirmations,
-                corridor_proof_candidate_rank_total: side_stats
-                    .corridor_proof_candidate_rank_total,
-                corridor_proof_candidate_rank_max: side_stats
-                    .corridor_proof_candidate_rank_max,
+                corridor_proof_move_confirmations: side_stats.corridor_proof_move_confirmations,
+                corridor_proof_candidate_rank_total: side_stats.corridor_proof_candidate_rank_total,
+                corridor_proof_candidate_rank_max: side_stats.corridor_proof_candidate_rank_max,
                 corridor_proof_candidate_score_gap_total: side_stats
                     .corridor_proof_candidate_score_gap_total,
                 corridor_proof_candidate_score_gap_max: side_stats
@@ -4994,10 +4982,7 @@ mod tests {
         assert_eq!(report.corridor_proof_move_confirmations, 31);
         assert_eq!(report.corridor_proof_candidate_rank_total, 32);
         assert_eq!(report.corridor_proof_candidate_rank_max, 6);
-        assert_eq!(
-            report.corridor_proof_candidate_score_gap_total,
-            123_456
-        );
+        assert_eq!(report.corridor_proof_candidate_score_gap_total, 123_456);
         assert_eq!(report.corridor_proof_candidate_score_gap_max, 50_000);
         assert_eq!(report.corridor_proof_win_candidate_rank_total, 7);
         assert_eq!(report.corridor_proof_win_candidate_rank_max, 2);
@@ -5151,23 +5136,15 @@ mod tests {
         first_match
             .black_stats
             .corridor_proof_terminal_root_move_confirmations = 1;
-        first_match
-            .black_stats
-            .corridor_proof_candidates_considered = 9;
+        first_match.black_stats.corridor_proof_candidates_considered = 9;
         first_match.black_stats.corridor_proof_wins = 4;
         first_match.black_stats.corridor_proof_losses = 3;
         first_match.black_stats.corridor_proof_unknown = 2;
         first_match.black_stats.corridor_proof_deadline_skips = 1;
         first_match.black_stats.corridor_proof_move_changes = 1;
-        first_match
-            .black_stats
-            .corridor_proof_move_confirmations = 1;
-        first_match
-            .black_stats
-            .corridor_proof_candidate_rank_total = 12;
-        first_match
-            .black_stats
-            .corridor_proof_candidate_rank_max = 4;
+        first_match.black_stats.corridor_proof_move_confirmations = 1;
+        first_match.black_stats.corridor_proof_candidate_rank_total = 12;
+        first_match.black_stats.corridor_proof_candidate_rank_max = 4;
         first_match
             .black_stats
             .corridor_proof_candidate_score_gap_total = 75_000;
