@@ -3,6 +3,11 @@ use gomoku_bot::tactical::{corridor_active_threats, LocalThreatKind};
 use gomoku_core::{replay::ReplayResult, Board, Color, GameResult, Move, Replay, Variant};
 use serde::Serialize;
 
+pub use gomoku_bot::corridor::{
+    DefenderReplyAnalysis, DefenderReplyOutcome, DefenderReplyRole, ProofLimitCause,
+    SearchDiagnostics,
+};
+
 pub const ANALYSIS_SCHEMA_VERSION: u32 = 14;
 pub const DEFAULT_MAX_SCAN_PLIES: usize = 64;
 const MAX_CORRIDOR_REPLY_WIDTH: usize = 8;
@@ -40,17 +45,6 @@ pub enum UnclearReason {
     DrawOrOngoing,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum ProofLimitCause {
-    DepthCutoff,
-    ReplyWidthCutoff,
-    AttackerChildUnknown,
-    DefenderReplyUnknown,
-    ModelScopeUnknown,
-    OutsideScanWindow,
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum TacticalNote {
@@ -70,49 +64,11 @@ pub enum ReplyClassification {
     Unknown,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum DefenderReplyRole {
-    Actual,
-    ImmediateDefense,
-    ImminentDefense,
-    OffensiveCounter,
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct DefenderReplyCandidate {
     pub mv: Move,
     pub notation: String,
     pub roles: Vec<DefenderReplyRole>,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum DefenderReplyOutcome {
-    ForcedLoss,
-    ConfirmedEscape,
-    PossibleEscape,
-    ImmediateLoss,
-    Unknown,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub struct DefenderReplyAnalysis {
-    pub mv: Move,
-    pub notation: String,
-    pub roles: Vec<DefenderReplyRole>,
-    pub outcome: DefenderReplyOutcome,
-    pub principal_line: Vec<Move>,
-    pub principal_line_notation: Vec<String>,
-    pub limit_causes: Vec<ProofLimitCause>,
-    pub diagnostics: SearchDiagnostics,
-}
-
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
-pub struct SearchDiagnostics {
-    pub search_nodes: usize,
-    pub branch_probes: usize,
-    pub max_depth_reached: usize,
 }
 
 #[derive(Debug, Clone)]
@@ -784,27 +740,7 @@ fn push_current_loser_candidate_annotations(
 
     for candidate in candidates {
         for role in &candidate.roles {
-            match role {
-                DefenderReplyRole::Actual => {}
-                DefenderReplyRole::ImmediateDefense => push_replay_highlight(
-                    &mut frame.highlights,
-                    ReplayFrameHighlightRole::ImmediateThreat,
-                    candidate.mv,
-                    winner,
-                ),
-                DefenderReplyRole::ImminentDefense => push_replay_highlight(
-                    &mut frame.highlights,
-                    ReplayFrameHighlightRole::ImminentThreat,
-                    candidate.mv,
-                    winner,
-                ),
-                DefenderReplyRole::OffensiveCounter => push_replay_highlight(
-                    &mut frame.highlights,
-                    ReplayFrameHighlightRole::CounterThreat,
-                    candidate.mv,
-                    defender,
-                ),
-            }
+            push_defender_reply_role_highlight(frame, *role, candidate.mv, winner);
         }
         if !board.is_legal_for_color(candidate.mv, defender) {
             push_replay_marker(
@@ -825,37 +761,15 @@ fn push_reply_outcome_annotations(
     let defender = attacker.opponent();
     for reply in replies {
         for role in &reply.roles {
-            match role {
-                DefenderReplyRole::Actual => {}
-                DefenderReplyRole::ImmediateDefense => push_replay_highlight(
-                    &mut frame.highlights,
-                    ReplayFrameHighlightRole::ImmediateThreat,
-                    reply.mv,
-                    attacker,
-                ),
-                DefenderReplyRole::ImminentDefense => push_replay_highlight(
-                    &mut frame.highlights,
-                    ReplayFrameHighlightRole::ImminentThreat,
-                    reply.mv,
-                    attacker,
-                ),
-                DefenderReplyRole::OffensiveCounter => push_replay_highlight(
-                    &mut frame.highlights,
-                    ReplayFrameHighlightRole::CounterThreat,
-                    reply.mv,
-                    defender,
-                ),
-            }
+            push_defender_reply_role_highlight(frame, *role, reply.mv, attacker);
         }
 
-        let marker_role = match reply.outcome {
-            DefenderReplyOutcome::ForcedLoss => ReplayFrameMarkerRole::ForcedLoss,
-            DefenderReplyOutcome::ConfirmedEscape => ReplayFrameMarkerRole::ConfirmedEscape,
-            DefenderReplyOutcome::PossibleEscape => ReplayFrameMarkerRole::PossibleEscape,
-            DefenderReplyOutcome::ImmediateLoss => ReplayFrameMarkerRole::ImmediateLoss,
-            DefenderReplyOutcome::Unknown => ReplayFrameMarkerRole::Unknown,
-        };
-        push_replay_marker(&mut frame.markers, marker_role, reply.mv, defender);
+        push_replay_marker(
+            &mut frame.markers,
+            replay_marker_role_for_defender_reply_outcome(reply.outcome),
+            reply.mv,
+            defender,
+        );
     }
 }
 
@@ -871,27 +785,50 @@ fn push_actual_reply_hint_annotations(
     }
 
     for role in defender_reply_roles_for_move(board, attacker, mv) {
-        match role {
-            DefenderReplyRole::Actual => {}
-            DefenderReplyRole::ImmediateDefense => push_replay_highlight(
-                &mut frame.highlights,
-                ReplayFrameHighlightRole::ImmediateThreat,
-                mv,
-                attacker,
-            ),
-            DefenderReplyRole::ImminentDefense => push_replay_highlight(
-                &mut frame.highlights,
-                ReplayFrameHighlightRole::ImminentThreat,
-                mv,
-                attacker,
-            ),
-            DefenderReplyRole::OffensiveCounter => push_replay_highlight(
-                &mut frame.highlights,
-                ReplayFrameHighlightRole::CounterThreat,
-                mv,
-                defender,
-            ),
+        push_defender_reply_role_highlight(frame, role, mv, attacker);
+    }
+}
+
+fn push_defender_reply_role_highlight(
+    frame: &mut ReplayFrameAnnotations,
+    role: DefenderReplyRole,
+    mv: Move,
+    attacker: Color,
+) {
+    let Some((highlight_role, side)) = replay_highlight_for_defender_reply_role(role, attacker)
+    else {
+        return;
+    };
+    push_replay_highlight(&mut frame.highlights, highlight_role, mv, side);
+}
+
+fn replay_highlight_for_defender_reply_role(
+    role: DefenderReplyRole,
+    attacker: Color,
+) -> Option<(ReplayFrameHighlightRole, Color)> {
+    match role {
+        DefenderReplyRole::Actual => None,
+        DefenderReplyRole::ImmediateDefense => {
+            Some((ReplayFrameHighlightRole::ImmediateThreat, attacker))
         }
+        DefenderReplyRole::ImminentDefense => {
+            Some((ReplayFrameHighlightRole::ImminentThreat, attacker))
+        }
+        DefenderReplyRole::OffensiveCounter => {
+            Some((ReplayFrameHighlightRole::CounterThreat, attacker.opponent()))
+        }
+    }
+}
+
+fn replay_marker_role_for_defender_reply_outcome(
+    outcome: DefenderReplyOutcome,
+) -> ReplayFrameMarkerRole {
+    match outcome {
+        DefenderReplyOutcome::ForcedLoss => ReplayFrameMarkerRole::ForcedLoss,
+        DefenderReplyOutcome::ConfirmedEscape => ReplayFrameMarkerRole::ConfirmedEscape,
+        DefenderReplyOutcome::PossibleEscape => ReplayFrameMarkerRole::PossibleEscape,
+        DefenderReplyOutcome::ImmediateLoss => ReplayFrameMarkerRole::ImmediateLoss,
+        DefenderReplyOutcome::Unknown => ReplayFrameMarkerRole::Unknown,
     }
 }
 
@@ -1157,9 +1094,6 @@ pub fn analyze_defender_reply_options(
         actual_reply,
         &options.corridor_options(),
     )
-    .into_iter()
-    .map(map_bot_defender_reply_analysis)
-    .collect()
 }
 
 pub fn analyze_alternate_defender_reply_options(
@@ -1174,9 +1108,6 @@ pub fn analyze_alternate_defender_reply_options(
         excluded_reply,
         &options.corridor_options(),
     )
-    .into_iter()
-    .map(map_bot_defender_reply_analysis)
-    .collect()
 }
 
 pub fn defender_reply_candidates(
@@ -1186,7 +1117,7 @@ pub fn defender_reply_candidates(
 ) -> Vec<DefenderReplyCandidate> {
     bot_corridor::defender_reply_candidates(board, attacker, actual_reply)
         .into_iter()
-        .map(map_bot_defender_reply_candidate)
+        .map(defender_reply_candidate_with_notation)
         .collect()
 }
 
@@ -1196,111 +1127,19 @@ pub fn defender_reply_roles_for_move(
     mv: Move,
 ) -> Vec<DefenderReplyRole> {
     bot_corridor::defender_reply_roles_for_move(board, attacker, mv)
-        .into_iter()
-        .map(map_bot_defender_reply_role)
-        .collect()
 }
 
-fn map_bot_defender_reply_candidate(
+fn defender_reply_candidate_with_notation(
     candidate: bot_corridor::DefenderReplyCandidate,
 ) -> DefenderReplyCandidate {
     DefenderReplyCandidate {
         mv: candidate.mv,
         notation: candidate.mv.to_notation(),
-        roles: candidate
-            .roles
-            .into_iter()
-            .map(map_bot_defender_reply_role)
-            .collect(),
+        roles: candidate.roles,
     }
 }
 
-fn map_bot_defender_reply_analysis(
-    reply: bot_corridor::DefenderReplyAnalysis,
-) -> DefenderReplyAnalysis {
-    DefenderReplyAnalysis {
-        mv: reply.mv,
-        notation: reply.notation,
-        roles: reply
-            .roles
-            .into_iter()
-            .map(map_bot_defender_reply_role)
-            .collect(),
-        outcome: map_bot_defender_reply_outcome(reply.outcome),
-        principal_line: reply.principal_line,
-        principal_line_notation: reply.principal_line_notation,
-        limit_causes: reply
-            .limit_causes
-            .into_iter()
-            .map(map_bot_proof_limit_cause)
-            .collect(),
-        diagnostics: map_bot_search_diagnostics(reply.diagnostics),
-    }
-}
-
-fn map_bot_defender_reply_proof(proof: bot_corridor::DefenderReplyProof) -> DefenderReplyProof {
-    DefenderReplyProof {
-        outcome: map_bot_defender_reply_outcome(proof.outcome),
-        principal_line: proof.principal_line,
-        limit_causes: proof
-            .limit_causes
-            .into_iter()
-            .map(map_bot_proof_limit_cause)
-            .collect(),
-    }
-}
-
-fn map_bot_defender_reply_role(role: bot_corridor::DefenderReplyRole) -> DefenderReplyRole {
-    match role {
-        bot_corridor::DefenderReplyRole::Actual => DefenderReplyRole::Actual,
-        bot_corridor::DefenderReplyRole::ImmediateDefense => DefenderReplyRole::ImmediateDefense,
-        bot_corridor::DefenderReplyRole::ImminentDefense => DefenderReplyRole::ImminentDefense,
-        bot_corridor::DefenderReplyRole::OffensiveCounter => DefenderReplyRole::OffensiveCounter,
-    }
-}
-
-fn map_bot_defender_reply_outcome(
-    outcome: bot_corridor::DefenderReplyOutcome,
-) -> DefenderReplyOutcome {
-    match outcome {
-        bot_corridor::DefenderReplyOutcome::ForcedLoss => DefenderReplyOutcome::ForcedLoss,
-        bot_corridor::DefenderReplyOutcome::ConfirmedEscape => {
-            DefenderReplyOutcome::ConfirmedEscape
-        }
-        bot_corridor::DefenderReplyOutcome::PossibleEscape => DefenderReplyOutcome::PossibleEscape,
-        bot_corridor::DefenderReplyOutcome::ImmediateLoss => DefenderReplyOutcome::ImmediateLoss,
-        bot_corridor::DefenderReplyOutcome::Unknown => DefenderReplyOutcome::Unknown,
-    }
-}
-
-fn map_bot_proof_limit_cause(cause: bot_corridor::ProofLimitCause) -> ProofLimitCause {
-    match cause {
-        bot_corridor::ProofLimitCause::DepthCutoff => ProofLimitCause::DepthCutoff,
-        bot_corridor::ProofLimitCause::ReplyWidthCutoff => ProofLimitCause::ReplyWidthCutoff,
-        bot_corridor::ProofLimitCause::AttackerChildUnknown => {
-            ProofLimitCause::AttackerChildUnknown
-        }
-        bot_corridor::ProofLimitCause::DefenderReplyUnknown => {
-            ProofLimitCause::DefenderReplyUnknown
-        }
-        bot_corridor::ProofLimitCause::ModelScopeUnknown => ProofLimitCause::ModelScopeUnknown,
-        bot_corridor::ProofLimitCause::OutsideScanWindow => ProofLimitCause::OutsideScanWindow,
-    }
-}
-
-fn map_bot_search_diagnostics(diagnostics: bot_corridor::SearchDiagnostics) -> SearchDiagnostics {
-    SearchDiagnostics {
-        search_nodes: diagnostics.search_nodes,
-        branch_probes: diagnostics.branch_probes,
-        max_depth_reached: diagnostics.max_depth_reached,
-    }
-}
-
-struct DefenderReplyProof {
-    outcome: DefenderReplyOutcome,
-    principal_line: Vec<Move>,
-    limit_causes: Vec<ProofLimitCause>,
-}
+type DefenderReplyProof = bot_corridor::DefenderReplyProof;
 
 fn classify_defender_reply_for_report(
     board: &Board,
@@ -1308,12 +1147,7 @@ fn classify_defender_reply_for_report(
     mv: Move,
     options: &AnalysisOptions,
 ) -> DefenderReplyProof {
-    map_bot_defender_reply_proof(bot_corridor::classify_defender_reply(
-        board,
-        attacker,
-        mv,
-        &options.corridor_options(),
-    ))
+    bot_corridor::classify_defender_reply(board, attacker, mv, &options.corridor_options())
 }
 
 struct ThreatReplySet {

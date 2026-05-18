@@ -3,15 +3,15 @@ import { Link, useNavigate } from "react-router-dom";
 import { useStore } from "zustand";
 
 import {
+  BOT_DEPTHS,
+  BOT_PRESET_IDS,
+  BOT_WIDTHS,
   customConfigForBot,
   isBotWidthAllowed,
   botConfigSummary,
   botLabel,
   botPlayerName,
   type BotConfig,
-  type BotDepth,
-  type BotPresetId,
-  type BotWidth,
 } from "../core/bot_config";
 import {
   applySavedLocalMatchSetup,
@@ -28,9 +28,6 @@ import { Icon } from "../ui/Icon";
 
 import styles from "./SettingsRoute.module.css";
 
-const PRESET_IDS: BotPresetId[] = ["easy", "normal", "hard"];
-const DEPTHS: BotDepth[] = [1, 3, 5, 7];
-const WIDTHS: BotWidth[] = [8, 16, "full"];
 const COMPACT_SETTINGS_QUERY = "(max-width: 760px)";
 const MOBILE_TOUCH_QUERY =
   "(max-width: 720px) and (orientation: portrait) and (hover: none) and (pointer: coarse)";
@@ -317,7 +314,7 @@ export function SettingsRoute() {
               <p className="uiSectionLabel">Bot</p>
             </div>
             <div className={styles.presetGrid}>
-              {PRESET_IDS.map((preset) => {
+              {BOT_PRESET_IDS.map((preset) => {
                 const config: BotConfig = { mode: "preset", preset, version: 1 };
                 return (
                   <button
@@ -368,7 +365,7 @@ export function SettingsRoute() {
                   <p className={styles.labHint}>How far the bot searches before scoring a position.</p>
                 </div>
                 <div className={styles.segmentGridFour}>
-                  {DEPTHS.map((depth) => (
+                  {BOT_DEPTHS.map((depth) => (
                     <button
                       className={custom.depth === depth ? "uiSegment uiSegmentActive" : "uiSegment"}
                       key={depth}
@@ -387,7 +384,7 @@ export function SettingsRoute() {
                   <p className={styles.labHint}>How many candidate moves the bot keeps.</p>
                 </div>
                 <div className={styles.segmentGridThree}>
-                  {WIDTHS.map((width) => (
+                  {BOT_WIDTHS.map((width) => (
                     <button
                       className={custom.width === width ? "uiSegment uiSegmentActive" : "uiSegment"}
                       disabled={!isBotWidthAllowed(custom.depth, width)}

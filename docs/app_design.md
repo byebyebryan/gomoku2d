@@ -166,17 +166,18 @@ Rules:
 - on narrow/tall-constrained mobile screens, allow the page to flow rather
   than letting controls overlap the board
 
-#### Rules switching during a match
+#### Settings during a match
 
-Rules stay accessible in the live HUD, but should not mutate an active game in
-surprising ways.
+Rules and bot settings live on the Settings page, not in the live HUD. Changing
+settings during an active game should not mutate that game in surprising ways.
 
-- if the board is empty, switching rules applies immediately
-- if a game is already underway, switching rules queues the new rules for the
+- if the board is empty, applying settings can start from that setup immediately
+- if a game is already underway, changed settings become the saved setup for the
   next game
-- the UI should make that pending state explicit, e.g. `Next game: Renju`
+- the UI should make that pending state explicit and offer both resume-current
+  and start-new-game paths
 
-This same interaction also updates the local preferred default.
+This same interaction updates the saved local/cloud profile settings.
 
 ### Match end state
 
@@ -290,11 +291,12 @@ The preset layer should answer "who am I practicing against?" The advanced
 layer should answer "how does this bot think?" without turning the match HUD
 into a debug panel.
 
-Likely entry points:
+Current entry points:
 
-- Home: passive current-opponent summary plus a compact configure action
-- Local Match: next-game bot config change, similar to next-game rule changes
-- Dedicated route or panel: full preset and advanced Bot Lab controls
+- Home: direct Settings link beside Play/Profile
+- Local Match: current setup summary and pending next-game state
+- Settings: full preset, advanced Bot Lab controls, rules, tactical hints, and
+  touch controls
 
 Rules:
 
@@ -320,15 +322,14 @@ Live play should not expose move-by-move notation by default.
 - no replay move list
 - prefer move count, transport, and board state over dense logs
 
-### Defaults and quick overrides
+### Saved setup
 
-There is one persistent local rules default.
+There is one persistent saved setup for casual local play.
 
-- Home and Profile can both edit it
-- Local Match can temporarily queue the next game rule while a game is in
-  progress
-- once that next game starts, the persisted default should match the selected
-  rule
+- Settings owns game rule, bot config, tactical hints, and touch controls
+- Profile stays focused on identity and match history
+- Local Match can continue the current game or start a new game with the saved
+  setup
 
 ### Future cloud extension
 

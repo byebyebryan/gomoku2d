@@ -286,12 +286,11 @@ that obvious tuning gains are getting expensive. A better next step is to
 understand why a competent bot wins or loses, where the last escape existed,
 and which forced sequence made the position collapse.
 
-The current analyzer is still a lab artifact, not a replay-screen feature, but
-it is the first serious version of that model. It uses bounded corridor proof to
-explain the final forced sequence in finished tournament games, records proof
-intervals instead of assuming one monotonic turning point, and separates ideal
-play from human mistakes such as missed defenses, missed wins, possible
-escapes, tactical errors, and strategic losses.
+The analyzer has moved from lab artifact into the replay screen. It uses
+bounded corridor proof to explain the final forced sequence in finished games,
+records proof intervals instead of assuming one monotonic turning point, and
+separates ideal play from human mistakes such as missed defenses, missed wins,
+possible escapes, tactical errors, and strategic losses.
 
 This matters beyond the interim report: corridor search gives replay analysis a
 concrete foundation, formalizes the project's advanced-strategy vocabulary,
@@ -428,19 +427,15 @@ before moving to the next product phase.
 
 ### Possible Work
 
-- bot preset selection with report-backed labels
-- advanced Bot Lab controls for explicit bot configuration
-- human-only configurable tactical hints with compact immediate/imminent modes,
-  including replies for opponent open/broken threes
-- local persistence and saved-match snapshots for selected bot configs
-- profile schema v5 for game, bot, hint, and touch settings, with a clean alpha
-  local-storage break
+- replay-analysis copy and marker readability polish
+- screenshot/mobile review for the settings and replay surfaces
+- test/doc cleanup after the 0.4 lab-to-product pivot
+- measured analyzer follow-up if replay-screen usage exposes confusing cases
 - replay analysis with critical-moment tagging
 - better-move suggestions and opponent best-reply previews
 - generated puzzles from real games or curated positions
 - "save this game" challenges from losing positions
-- bot personalities or customizable bot settings
-- benchmark-backed bot presets that feel meaningfully different
+- bot personalities that build on the configurable bot settings
 - stronger bot endpoint only if browser-side wasm is not enough for the chosen
   product surface
 

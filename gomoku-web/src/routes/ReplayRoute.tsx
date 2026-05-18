@@ -31,7 +31,10 @@ import {
   replayTimelineAnalysis,
   type ReplayAnalysisAnnotationsByPly,
 } from "../replay/replay_analysis_overlays";
-import type { ReplayAnalysisStepResult } from "../replay/replay_analysis_protocol";
+import {
+  replayAnalysisErrorResult,
+  type ReplayAnalysisStepResult,
+} from "../replay/replay_analysis_protocol";
 import { ReplayAnalysisRunner } from "../replay/replay_analysis_runner";
 import { Icon } from "../ui/Icon";
 
@@ -142,16 +145,7 @@ export function ReplayRoute() {
           onComplete: mergeStep,
           onError: (error) => {
             setAnalysisAnnotations({});
-            setAnalysisStep({
-              analysis: null,
-              annotations: [],
-              counters: { branch_roots: 0, prefixes_analyzed: 0, proof_nodes: 0 },
-              current_ply: null,
-              done: true,
-              error: error.message,
-              schema_version: 1,
-              status: "error",
-            });
+            setAnalysisStep(replayAnalysisErrorResult(error.message));
           },
           onProgress: mergeStep,
         },
@@ -160,16 +154,7 @@ export function ReplayRoute() {
       );
     } catch {
       setAnalysisAnnotations({});
-      setAnalysisStep({
-        analysis: null,
-        annotations: [],
-        counters: { branch_roots: 0, prefixes_analyzed: 0, proof_nodes: 0 },
-        current_ply: null,
-        done: true,
-        error: "Replay analyzer could not start",
-        schema_version: 1,
-        status: "error",
-      });
+      setAnalysisStep(replayAnalysisErrorResult("Replay analyzer could not start"));
     }
 
     return () => {

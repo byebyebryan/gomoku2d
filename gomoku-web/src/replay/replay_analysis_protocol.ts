@@ -59,6 +59,19 @@ export interface ReplayAnalysisStepResult {
   status: ReplayAnalysisStatus;
 }
 
+export function replayAnalysisErrorResult(error: string): ReplayAnalysisStepResult {
+  return {
+    analysis: null,
+    annotations: [],
+    counters: { branch_roots: 0, prefixes_analyzed: 0, proof_nodes: 0 },
+    current_ply: null,
+    done: true,
+    error,
+    schema_version: 1,
+    status: "error",
+  };
+}
+
 export type ReplayAnalysisWorkerRequest =
   | {
       optionsJson: string;

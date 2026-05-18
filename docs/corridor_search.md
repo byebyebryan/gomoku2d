@@ -758,14 +758,15 @@ corridor.
 - It is not generic broad best-move analysis.
 - It is not a replacement for the existing alpha-beta bot.
 - It should not overclaim certainty without exposing model limits.
-- It should not become player-facing until the lab reports are stable enough to
-  explain real games cleanly.
+- Player-facing uses should stay bounded to explainable replay annotations until
+  the model can support broader claims cleanly.
 
-## Current `v0.4.4` Checkpoint
+## Current Implementation Checkpoint
 
 The current checkpoint provides:
 
 - a corridor-based replay analyzer,
+- worker-backed replay-screen annotations for saved local/cloud replays,
 - bot-owned corridor proof entry points under `gomoku-bot::corridor`,
 - shared local-threat facts and search/corridor policy views under
   `gomoku-bot::tactical` consumed by both `SearchBot` and corridor search,
