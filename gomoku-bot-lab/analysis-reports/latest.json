@@ -6,8 +6,8 @@
   "total": 64,
   "analyzed": 64,
   "failed": 0,
-  "elapsed_ms": 34039,
-  "total_elapsed_ms": 222720,
+  "elapsed_ms": 37704,
+  "total_elapsed_ms": 233466,
   "model": {
     "reply_policy": "corridor_replies",
     "max_depth": 4,
@@ -107,10 +107,6 @@
           ],
           "forced_replies": [
             {
-              "row": 4,
-              "col": 9
-            },
-            {
               "row": 8,
               "col": 5
             },
@@ -136,7 +132,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 5,
@@ -188,10 +184,6 @@
             {
               "row": 4,
               "col": 3
-            },
-            {
-              "row": 9,
-              "col": 8
             }
           ],
           "principal_line": [
@@ -889,7 +881,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 865,
+      "elapsed_ms": 837,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -978,10 +970,6 @@
           ],
           "forced_replies": [
             {
-              "row": 4,
-              "col": 9
-            },
-            {
               "row": 8,
               "col": 5
             },
@@ -1007,7 +995,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 5,
@@ -1059,10 +1047,6 @@
             {
               "row": 4,
               "col": 3
-            },
-            {
-              "row": 9,
-              "col": 8
             }
           ],
           "principal_line": [
@@ -1760,7 +1744,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 865,
+      "elapsed_ms": 837,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -1826,11 +1810,11 @@
         },
         {
           "row": 5,
-          "col": 5
+          "col": 10
         },
         {
           "row": 5,
-          "col": 10
+          "col": 5
         }
       ],
       "unknown_gaps": [],
@@ -1865,10 +1849,6 @@
           ],
           "forced_replies": [
             {
-              "row": 9,
-              "col": 5
-            },
-            {
               "row": 5,
               "col": 6
             }
@@ -1886,7 +1866,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 4,
@@ -1949,10 +1929,6 @@
             },
             {
               "row": 5,
-              "col": 5
-            },
-            {
-              "row": 5,
               "col": 10
             }
           ],
@@ -1987,11 +1963,11 @@
             },
             {
               "row": 5,
-              "col": 5
+              "col": 10
             },
             {
               "row": 5,
-              "col": 10
+              "col": 5
             }
           ],
           "principal_line_notation": [
@@ -2002,8 +1978,8 @@
             "J6",
             "K5",
             "I6",
-            "F6",
-            "K6"
+            "K6",
+            "F6"
           ],
           "limit_hit": false,
           "limit_causes": []
@@ -2654,7 +2630,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 5517,
+      "elapsed_ms": 5287,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -2775,10 +2751,6 @@
           ],
           "forced_replies": [
             {
-              "row": 9,
-              "col": 5
-            },
-            {
               "row": 5,
               "col": 6
             }
@@ -2796,7 +2768,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 4,
@@ -2828,10 +2800,6 @@
             {
               "row": 4,
               "col": 12
-            },
-            {
-              "row": 5,
-              "col": 11
             },
             {
               "row": 9,
@@ -3707,8 +3675,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 88,
-                  "branch_probes": 60,
+                  "search_nodes": 1210,
+                  "branch_probes": 810,
                   "max_depth_reached": 4
                 }
               }
@@ -4110,8 +4078,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 82,
-                  "branch_probes": 56,
+                  "search_nodes": 1204,
+                  "branch_probes": 806,
                   "max_depth_reached": 4
                 }
               },
@@ -4490,12 +4458,12 @@
         ]
       },
       "proof_detail_diagnostics": {
-        "search_nodes": 8508,
-        "branch_probes": 5687,
+        "search_nodes": 10752,
+        "branch_probes": 7187,
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 7388,
+      "elapsed_ms": 8438,
       "prefixes_analyzed": 17,
       "forced_prefix_count": 16,
       "unknown_prefix_count": 0,
@@ -4608,10 +4576,6 @@
           ],
           "forced_replies": [
             {
-              "row": 8,
-              "col": 8
-            },
-            {
               "row": 9,
               "col": 7
             }
@@ -4639,10 +4603,6 @@
             {
               "row": 6,
               "col": 4
-            },
-            {
-              "row": 10,
-              "col": 8
             },
             {
               "row": 8,
@@ -5597,7 +5557,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 8965,
+      "elapsed_ms": 9120,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -5710,10 +5670,6 @@
           ],
           "forced_replies": [
             {
-              "row": 8,
-              "col": 8
-            },
-            {
               "row": 9,
               "col": 7
             }
@@ -5741,10 +5697,6 @@
             {
               "row": 6,
               "col": 4
-            },
-            {
-              "row": 10,
-              "col": 8
             },
             {
               "row": 8,
@@ -6699,7 +6651,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 9512,
+      "elapsed_ms": 9674,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -6756,12 +6708,12 @@
           "col": 8
         },
         {
-          "row": 3,
-          "col": 7
-        },
-        {
           "row": 8,
           "col": 12
+        },
+        {
+          "row": 3,
+          "col": 7
         }
       ],
       "unknown_gaps": [],
@@ -6797,7 +6749,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 4,
@@ -6847,10 +6799,6 @@
               "col": 10
             },
             {
-              "row": 3,
-              "col": 7
-            },
-            {
               "row": 8,
               "col": 12
             }
@@ -6877,12 +6825,12 @@
               "col": 8
             },
             {
-              "row": 3,
-              "col": 7
-            },
-            {
               "row": 8,
               "col": 12
+            },
+            {
+              "row": 3,
+              "col": 7
             }
           ],
           "principal_line_notation": [
@@ -6891,8 +6839,8 @@
             "L8",
             "K8",
             "I5",
-            "H4",
-            "M9"
+            "M9",
+            "H4"
           ],
           "limit_hit": false,
           "limit_causes": []
@@ -7373,7 +7321,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 29,
+      "elapsed_ms": 31,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -7430,12 +7378,12 @@
           "col": 8
         },
         {
-          "row": 3,
-          "col": 7
-        },
-        {
           "row": 8,
           "col": 12
+        },
+        {
+          "row": 3,
+          "col": 7
         }
       ],
       "unknown_gaps": [],
@@ -7471,7 +7419,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 4,
@@ -7521,10 +7469,6 @@
               "col": 10
             },
             {
-              "row": 3,
-              "col": 7
-            },
-            {
               "row": 8,
               "col": 12
             }
@@ -7551,12 +7495,12 @@
               "col": 8
             },
             {
-              "row": 3,
-              "col": 7
-            },
-            {
               "row": 8,
               "col": 12
+            },
+            {
+              "row": 3,
+              "col": 7
             }
           ],
           "principal_line_notation": [
@@ -7565,8 +7509,8 @@
             "L8",
             "K8",
             "I5",
-            "H4",
-            "M9"
+            "M9",
+            "H4"
           ],
           "limit_hit": false,
           "limit_causes": []
@@ -8152,10 +8096,6 @@
               "col": 5
             },
             {
-              "row": 11,
-              "col": 9
-            },
-            {
               "row": 12,
               "col": 10
             },
@@ -8177,7 +8117,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 11,
@@ -8241,10 +8181,6 @@
             {
               "row": 10,
               "col": 4
-            },
-            {
-              "row": 10,
-              "col": 9
             }
           ],
           "principal_line": [
@@ -9057,7 +8993,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 1791,
+      "elapsed_ms": 1884,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -9162,10 +9098,6 @@
               "col": 5
             },
             {
-              "row": 11,
-              "col": 9
-            },
-            {
               "row": 12,
               "col": 10
             },
@@ -9187,7 +9119,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 11,
@@ -9251,10 +9183,6 @@
             {
               "row": 10,
               "col": 4
-            },
-            {
-              "row": 10,
-              "col": 9
             }
           ],
           "principal_line": [
@@ -10067,7 +9995,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 1758,
+      "elapsed_ms": 1885,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -10113,11 +10041,11 @@
         },
         {
           "row": 9,
-          "col": 7
+          "col": 8
         },
         {
           "row": 9,
-          "col": 8
+          "col": 7
         },
         {
           "row": 10,
@@ -10207,10 +10135,6 @@
             {
               "row": 7,
               "col": 3
-            },
-            {
-              "row": 7,
-              "col": 4
             }
           ],
           "principal_line": [
@@ -10224,11 +10148,11 @@
             },
             {
               "row": 9,
-              "col": 7
+              "col": 8
             },
             {
               "row": 9,
-              "col": 8
+              "col": 7
             },
             {
               "row": 10,
@@ -10254,8 +10178,8 @@
           "principal_line_notation": [
             "E10",
             "D10",
-            "H10",
             "I10",
+            "H10",
             "F11",
             "C8",
             "H9",
@@ -10509,7 +10433,8 @@
                 },
                 "notation": "J7",
                 "kinds": [
-                  "imminent_defense"
+                  "imminent_defense",
+                  "forced_loss"
                 ]
               },
               {
@@ -10530,7 +10455,8 @@
                 },
                 "notation": "H9",
                 "kinds": [
-                  "imminent_defense"
+                  "imminent_defense",
+                  "forced_loss"
                 ]
               },
               {
@@ -10540,7 +10466,8 @@
                 },
                 "notation": "E12",
                 "kinds": [
-                  "imminent_defense"
+                  "imminent_defense",
+                  "forced_loss"
                 ]
               },
               {
@@ -10597,8 +10524,206 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 38,
-                  "branch_probes": 25,
+                  "search_nodes": 44,
+                  "branch_probes": 28,
+                  "max_depth_reached": 4
+                }
+              },
+              {
+                "mv": {
+                  "row": 8,
+                  "col": 7
+                },
+                "notation": "H9",
+                "roles": [
+                  "imminent_defense"
+                ],
+                "outcome": "forced_loss",
+                "principal_line": [
+                  {
+                    "row": 6,
+                    "col": 1
+                  },
+                  {
+                    "row": 7,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 7
+                  },
+                  {
+                    "row": 10,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 6
+                  },
+                  {
+                    "row": 8,
+                    "col": 4
+                  },
+                  {
+                    "row": 6,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 7
+                  }
+                ],
+                "principal_line_notation": [
+                  "B7",
+                  "C8",
+                  "G12",
+                  "H13",
+                  "G11",
+                  "G13",
+                  "E9",
+                  "C7",
+                  "H12"
+                ],
+                "limit_causes": [],
+                "diagnostics": {
+                  "search_nodes": 64,
+                  "branch_probes": 43,
+                  "max_depth_reached": 4
+                }
+              },
+              {
+                "mv": {
+                  "row": 6,
+                  "col": 9
+                },
+                "notation": "J7",
+                "roles": [
+                  "imminent_defense"
+                ],
+                "outcome": "forced_loss",
+                "principal_line": [
+                  {
+                    "row": 6,
+                    "col": 1
+                  },
+                  {
+                    "row": 7,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 7
+                  },
+                  {
+                    "row": 10,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 6
+                  },
+                  {
+                    "row": 8,
+                    "col": 4
+                  },
+                  {
+                    "row": 6,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 7
+                  }
+                ],
+                "principal_line_notation": [
+                  "B7",
+                  "C8",
+                  "G12",
+                  "H13",
+                  "G11",
+                  "G13",
+                  "E9",
+                  "C7",
+                  "H12"
+                ],
+                "limit_causes": [],
+                "diagnostics": {
+                  "search_nodes": 286,
+                  "branch_probes": 192,
+                  "max_depth_reached": 4
+                }
+              },
+              {
+                "mv": {
+                  "row": 11,
+                  "col": 4
+                },
+                "notation": "E12",
+                "roles": [
+                  "imminent_defense"
+                ],
+                "outcome": "forced_loss",
+                "principal_line": [
+                  {
+                    "row": 6,
+                    "col": 1
+                  },
+                  {
+                    "row": 7,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 7
+                  },
+                  {
+                    "row": 10,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 6
+                  },
+                  {
+                    "row": 8,
+                    "col": 4
+                  },
+                  {
+                    "row": 6,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 7
+                  }
+                ],
+                "principal_line_notation": [
+                  "B7",
+                  "C8",
+                  "G12",
+                  "H13",
+                  "G11",
+                  "G13",
+                  "E9",
+                  "C7",
+                  "H12"
+                ],
+                "limit_causes": [],
+                "diagnostics": {
+                  "search_nodes": 250,
+                  "branch_probes": 168,
                   "max_depth_reached": 4
                 }
               }
@@ -10702,7 +10827,8 @@
                 },
                 "notation": "J7",
                 "kinds": [
-                  "imminent_defense"
+                  "imminent_defense",
+                  "forced_loss"
                 ]
               },
               {
@@ -10723,7 +10849,8 @@
                 },
                 "notation": "H9",
                 "kinds": [
-                  "imminent_defense"
+                  "imminent_defense",
+                  "forced_loss"
                 ]
               },
               {
@@ -10733,7 +10860,8 @@
                 },
                 "notation": "E12",
                 "kinds": [
-                  "imminent_defense"
+                  "imminent_defense",
+                  "forced_loss"
                 ]
               },
               {
@@ -10810,8 +10938,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 61,
-                  "branch_probes": 41,
+                  "search_nodes": 67,
+                  "branch_probes": 44,
                   "max_depth_reached": 4
                 }
               },
@@ -10856,8 +10984,206 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 38,
-                  "branch_probes": 25,
+                  "search_nodes": 44,
+                  "branch_probes": 28,
+                  "max_depth_reached": 4
+                }
+              },
+              {
+                "mv": {
+                  "row": 8,
+                  "col": 7
+                },
+                "notation": "H9",
+                "roles": [
+                  "imminent_defense"
+                ],
+                "outcome": "forced_loss",
+                "principal_line": [
+                  {
+                    "row": 6,
+                    "col": 1
+                  },
+                  {
+                    "row": 7,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 7
+                  },
+                  {
+                    "row": 10,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 6
+                  },
+                  {
+                    "row": 8,
+                    "col": 4
+                  },
+                  {
+                    "row": 6,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 7
+                  }
+                ],
+                "principal_line_notation": [
+                  "B7",
+                  "C8",
+                  "G12",
+                  "H13",
+                  "G11",
+                  "G13",
+                  "E9",
+                  "C7",
+                  "H12"
+                ],
+                "limit_causes": [],
+                "diagnostics": {
+                  "search_nodes": 64,
+                  "branch_probes": 43,
+                  "max_depth_reached": 4
+                }
+              },
+              {
+                "mv": {
+                  "row": 6,
+                  "col": 9
+                },
+                "notation": "J7",
+                "roles": [
+                  "imminent_defense"
+                ],
+                "outcome": "forced_loss",
+                "principal_line": [
+                  {
+                    "row": 6,
+                    "col": 1
+                  },
+                  {
+                    "row": 7,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 7
+                  },
+                  {
+                    "row": 10,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 6
+                  },
+                  {
+                    "row": 8,
+                    "col": 4
+                  },
+                  {
+                    "row": 6,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 7
+                  }
+                ],
+                "principal_line_notation": [
+                  "B7",
+                  "C8",
+                  "G12",
+                  "H13",
+                  "G11",
+                  "G13",
+                  "E9",
+                  "C7",
+                  "H12"
+                ],
+                "limit_causes": [],
+                "diagnostics": {
+                  "search_nodes": 286,
+                  "branch_probes": 192,
+                  "max_depth_reached": 4
+                }
+              },
+              {
+                "mv": {
+                  "row": 11,
+                  "col": 4
+                },
+                "notation": "E12",
+                "roles": [
+                  "imminent_defense"
+                ],
+                "outcome": "forced_loss",
+                "principal_line": [
+                  {
+                    "row": 6,
+                    "col": 1
+                  },
+                  {
+                    "row": 7,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 7
+                  },
+                  {
+                    "row": 10,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 6
+                  },
+                  {
+                    "row": 8,
+                    "col": 4
+                  },
+                  {
+                    "row": 6,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 7
+                  }
+                ],
+                "principal_line_notation": [
+                  "B7",
+                  "C8",
+                  "G12",
+                  "H13",
+                  "G11",
+                  "G13",
+                  "E9",
+                  "C7",
+                  "H12"
+                ],
+                "limit_causes": [],
+                "diagnostics": {
+                  "search_nodes": 250,
+                  "branch_probes": 168,
                   "max_depth_reached": 4
                 }
               },
@@ -10902,8 +11228,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 65,
-                  "branch_probes": 45,
+                  "search_nodes": 342,
+                  "branch_probes": 232,
                   "max_depth_reached": 4
                 }
               }
@@ -11018,7 +11344,8 @@
                 },
                 "notation": "J7",
                 "kinds": [
-                  "imminent_defense"
+                  "imminent_defense",
+                  "forced_loss"
                 ]
               },
               {
@@ -11039,7 +11366,8 @@
                 },
                 "notation": "H9",
                 "kinds": [
-                  "imminent_defense"
+                  "imminent_defense",
+                  "forced_loss"
                 ]
               },
               {
@@ -11049,7 +11377,8 @@
                 },
                 "notation": "E12",
                 "kinds": [
-                  "imminent_defense"
+                  "imminent_defense",
+                  "forced_loss"
                 ]
               },
               {
@@ -11126,8 +11455,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 59,
-                  "branch_probes": 43,
+                  "search_nodes": 65,
+                  "branch_probes": 46,
                   "max_depth_reached": 4
                 }
               },
@@ -11172,8 +11501,206 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 37,
-                  "branch_probes": 26,
+                  "search_nodes": 43,
+                  "branch_probes": 29,
+                  "max_depth_reached": 4
+                }
+              },
+              {
+                "mv": {
+                  "row": 8,
+                  "col": 7
+                },
+                "notation": "H9",
+                "roles": [
+                  "imminent_defense"
+                ],
+                "outcome": "forced_loss",
+                "principal_line": [
+                  {
+                    "row": 6,
+                    "col": 1
+                  },
+                  {
+                    "row": 7,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 7
+                  },
+                  {
+                    "row": 10,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 6
+                  },
+                  {
+                    "row": 8,
+                    "col": 4
+                  },
+                  {
+                    "row": 6,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 7
+                  }
+                ],
+                "principal_line_notation": [
+                  "B7",
+                  "C8",
+                  "G12",
+                  "H13",
+                  "G11",
+                  "G13",
+                  "E9",
+                  "C7",
+                  "H12"
+                ],
+                "limit_causes": [],
+                "diagnostics": {
+                  "search_nodes": 62,
+                  "branch_probes": 45,
+                  "max_depth_reached": 4
+                }
+              },
+              {
+                "mv": {
+                  "row": 6,
+                  "col": 9
+                },
+                "notation": "J7",
+                "roles": [
+                  "imminent_defense"
+                ],
+                "outcome": "forced_loss",
+                "principal_line": [
+                  {
+                    "row": 6,
+                    "col": 1
+                  },
+                  {
+                    "row": 7,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 7
+                  },
+                  {
+                    "row": 10,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 6
+                  },
+                  {
+                    "row": 8,
+                    "col": 4
+                  },
+                  {
+                    "row": 6,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 7
+                  }
+                ],
+                "principal_line_notation": [
+                  "B7",
+                  "C8",
+                  "G12",
+                  "H13",
+                  "G11",
+                  "G13",
+                  "E9",
+                  "C7",
+                  "H12"
+                ],
+                "limit_causes": [],
+                "diagnostics": {
+                  "search_nodes": 284,
+                  "branch_probes": 194,
+                  "max_depth_reached": 4
+                }
+              },
+              {
+                "mv": {
+                  "row": 11,
+                  "col": 4
+                },
+                "notation": "E12",
+                "roles": [
+                  "imminent_defense"
+                ],
+                "outcome": "forced_loss",
+                "principal_line": [
+                  {
+                    "row": 6,
+                    "col": 1
+                  },
+                  {
+                    "row": 7,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 7
+                  },
+                  {
+                    "row": 10,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 6
+                  },
+                  {
+                    "row": 8,
+                    "col": 4
+                  },
+                  {
+                    "row": 6,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 7
+                  }
+                ],
+                "principal_line_notation": [
+                  "B7",
+                  "C8",
+                  "G12",
+                  "H13",
+                  "G11",
+                  "G13",
+                  "E9",
+                  "C7",
+                  "H12"
+                ],
+                "limit_causes": [],
+                "diagnostics": {
+                  "search_nodes": 248,
+                  "branch_probes": 170,
                   "max_depth_reached": 4
                 }
               },
@@ -11218,8 +11745,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 64,
-                  "branch_probes": 46,
+                  "search_nodes": 340,
+                  "branch_probes": 234,
                   "max_depth_reached": 4
                 }
               },
@@ -11264,8 +11791,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 64,
-                  "branch_probes": 46,
+                  "search_nodes": 340,
+                  "branch_probes": 234,
                   "max_depth_reached": 4
                 }
               }
@@ -11391,7 +11918,8 @@
                 },
                 "notation": "J7",
                 "kinds": [
-                  "imminent_defense"
+                  "imminent_defense",
+                  "forced_loss"
                 ]
               },
               {
@@ -11412,7 +11940,8 @@
                 },
                 "notation": "H9",
                 "kinds": [
-                  "imminent_defense"
+                  "imminent_defense",
+                  "forced_loss"
                 ]
               },
               {
@@ -11422,7 +11951,8 @@
                 },
                 "notation": "E12",
                 "kinds": [
-                  "imminent_defense"
+                  "imminent_defense",
+                  "forced_loss"
                 ]
               },
               {
@@ -11499,8 +12029,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 61,
-                  "branch_probes": 44,
+                  "search_nodes": 67,
+                  "branch_probes": 47,
                   "max_depth_reached": 4
                 }
               },
@@ -11545,8 +12075,206 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 39,
-                  "branch_probes": 27,
+                  "search_nodes": 45,
+                  "branch_probes": 30,
+                  "max_depth_reached": 4
+                }
+              },
+              {
+                "mv": {
+                  "row": 8,
+                  "col": 7
+                },
+                "notation": "H9",
+                "roles": [
+                  "imminent_defense"
+                ],
+                "outcome": "forced_loss",
+                "principal_line": [
+                  {
+                    "row": 6,
+                    "col": 1
+                  },
+                  {
+                    "row": 7,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 7
+                  },
+                  {
+                    "row": 10,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 6
+                  },
+                  {
+                    "row": 8,
+                    "col": 4
+                  },
+                  {
+                    "row": 6,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 7
+                  }
+                ],
+                "principal_line_notation": [
+                  "B7",
+                  "C8",
+                  "G12",
+                  "H13",
+                  "G11",
+                  "G13",
+                  "E9",
+                  "C7",
+                  "H12"
+                ],
+                "limit_causes": [],
+                "diagnostics": {
+                  "search_nodes": 62,
+                  "branch_probes": 45,
+                  "max_depth_reached": 4
+                }
+              },
+              {
+                "mv": {
+                  "row": 6,
+                  "col": 9
+                },
+                "notation": "J7",
+                "roles": [
+                  "imminent_defense"
+                ],
+                "outcome": "forced_loss",
+                "principal_line": [
+                  {
+                    "row": 6,
+                    "col": 1
+                  },
+                  {
+                    "row": 7,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 7
+                  },
+                  {
+                    "row": 10,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 6
+                  },
+                  {
+                    "row": 8,
+                    "col": 4
+                  },
+                  {
+                    "row": 6,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 7
+                  }
+                ],
+                "principal_line_notation": [
+                  "B7",
+                  "C8",
+                  "G12",
+                  "H13",
+                  "G11",
+                  "G13",
+                  "E9",
+                  "C7",
+                  "H12"
+                ],
+                "limit_causes": [],
+                "diagnostics": {
+                  "search_nodes": 284,
+                  "branch_probes": 194,
+                  "max_depth_reached": 4
+                }
+              },
+              {
+                "mv": {
+                  "row": 11,
+                  "col": 4
+                },
+                "notation": "E12",
+                "roles": [
+                  "imminent_defense"
+                ],
+                "outcome": "forced_loss",
+                "principal_line": [
+                  {
+                    "row": 6,
+                    "col": 1
+                  },
+                  {
+                    "row": 7,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 7
+                  },
+                  {
+                    "row": 10,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 6
+                  },
+                  {
+                    "row": 8,
+                    "col": 4
+                  },
+                  {
+                    "row": 6,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 7
+                  }
+                ],
+                "principal_line_notation": [
+                  "B7",
+                  "C8",
+                  "G12",
+                  "H13",
+                  "G11",
+                  "G13",
+                  "E9",
+                  "C7",
+                  "H12"
+                ],
+                "limit_causes": [],
+                "diagnostics": {
+                  "search_nodes": 248,
+                  "branch_probes": 170,
                   "max_depth_reached": 4
                 }
               },
@@ -11591,8 +12319,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 64,
-                  "branch_probes": 46,
+                  "search_nodes": 340,
+                  "branch_probes": 234,
                   "max_depth_reached": 4
                 }
               },
@@ -11637,8 +12365,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 64,
-                  "branch_probes": 46,
+                  "search_nodes": 340,
+                  "branch_probes": 234,
                   "max_depth_reached": 4
                 }
               },
@@ -11683,8 +12411,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 64,
-                  "branch_probes": 46,
+                  "search_nodes": 340,
+                  "branch_probes": 234,
                   "max_depth_reached": 4
                 }
               }
@@ -11878,8 +12606,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 195,
-                  "branch_probes": 125,
+                  "search_nodes": 279,
+                  "branch_probes": 179,
                   "max_depth_reached": 4
                 }
               },
@@ -11904,11 +12632,11 @@
                   },
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -11934,8 +12662,8 @@
                 "principal_line_notation": [
                   "H5",
                   "D10",
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -11944,8 +12672,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 161,
-                  "branch_probes": 108,
+                  "search_nodes": 311,
+                  "branch_probes": 214,
                   "max_depth_reached": 4
                 }
               },
@@ -11970,11 +12698,11 @@
                   },
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -12000,8 +12728,8 @@
                 "principal_line_notation": [
                   "F6",
                   "D10",
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -12010,8 +12738,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 195,
-                  "branch_probes": 130,
+                  "search_nodes": 362,
+                  "branch_probes": 247,
                   "max_depth_reached": 4
                 }
               },
@@ -12036,11 +12764,11 @@
                   },
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -12066,8 +12794,8 @@
                 "principal_line_notation": [
                   "I4",
                   "D10",
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -12076,8 +12804,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 161,
-                  "branch_probes": 108,
+                  "search_nodes": 311,
+                  "branch_probes": 214,
                   "max_depth_reached": 4
                 }
               },
@@ -12102,11 +12830,11 @@
                   },
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -12132,8 +12860,8 @@
                 "principal_line_notation": [
                   "F5",
                   "D10",
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -12142,8 +12870,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 161,
-                  "branch_probes": 108,
+                  "search_nodes": 311,
+                  "branch_probes": 214,
                   "max_depth_reached": 4
                 }
               }
@@ -12321,11 +13049,11 @@
                 "principal_line": [
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -12349,8 +13077,8 @@
                   }
                 ],
                 "principal_line_notation": [
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -12359,8 +13087,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 167,
-                  "branch_probes": 110,
+                  "search_nodes": 604,
+                  "branch_probes": 382,
                   "max_depth_reached": 4
                 }
               },
@@ -12415,8 +13143,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 176,
-                  "branch_probes": 114,
+                  "search_nodes": 260,
+                  "branch_probes": 168,
                   "max_depth_reached": 4
                 }
               },
@@ -12441,11 +13169,11 @@
                   },
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -12471,8 +13199,8 @@
                 "principal_line_notation": [
                   "H5",
                   "D10",
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -12481,8 +13209,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 161,
-                  "branch_probes": 108,
+                  "search_nodes": 311,
+                  "branch_probes": 214,
                   "max_depth_reached": 4
                 }
               },
@@ -12507,11 +13235,11 @@
                   },
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -12537,8 +13265,8 @@
                 "principal_line_notation": [
                   "C6",
                   "D10",
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -12547,8 +13275,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 173,
-                  "branch_probes": 116,
+                  "search_nodes": 323,
+                  "branch_probes": 222,
                   "max_depth_reached": 4
                 }
               },
@@ -12573,11 +13301,11 @@
                   },
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -12603,8 +13331,8 @@
                 "principal_line_notation": [
                   "F6",
                   "D10",
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -12613,8 +13341,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 195,
-                  "branch_probes": 130,
+                  "search_nodes": 362,
+                  "branch_probes": 247,
                   "max_depth_reached": 4
                 }
               },
@@ -12639,11 +13367,11 @@
                   },
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -12669,8 +13397,8 @@
                 "principal_line_notation": [
                   "I4",
                   "D10",
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -12679,8 +13407,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 161,
-                  "branch_probes": 108,
+                  "search_nodes": 311,
+                  "branch_probes": 214,
                   "max_depth_reached": 4
                 }
               },
@@ -12705,11 +13433,11 @@
                   },
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -12735,8 +13463,8 @@
                 "principal_line_notation": [
                   "F5",
                   "D10",
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -12745,8 +13473,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 161,
-                  "branch_probes": 108,
+                  "search_nodes": 311,
+                  "branch_probes": 214,
                   "max_depth_reached": 4
                 }
               }
@@ -12902,11 +13630,11 @@
                 "principal_line": [
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -12930,8 +13658,8 @@
                   }
                 ],
                 "principal_line_notation": [
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -12940,8 +13668,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 72,
-                  "branch_probes": 52,
+                  "search_nodes": 350,
+                  "branch_probes": 231,
                   "max_depth_reached": 4
                 }
               },
@@ -12996,8 +13724,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 88,
-                  "branch_probes": 60,
+                  "search_nodes": 148,
+                  "branch_probes": 102,
                   "max_depth_reached": 4
                 }
               },
@@ -13022,11 +13750,11 @@
                   },
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -13052,8 +13780,8 @@
                 "principal_line_notation": [
                   "F6",
                   "D10",
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -13062,8 +13790,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 127,
-                  "branch_probes": 86,
+                  "search_nodes": 260,
+                  "branch_probes": 181,
                   "max_depth_reached": 4
                 }
               },
@@ -13088,11 +13816,11 @@
                   },
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -13118,8 +13846,8 @@
                 "principal_line_notation": [
                   "F5",
                   "D10",
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -13128,8 +13856,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 127,
-                  "branch_probes": 86,
+                  "search_nodes": 260,
+                  "branch_probes": 181,
                   "max_depth_reached": 4
                 }
               },
@@ -13154,11 +13882,11 @@
                   },
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -13184,8 +13912,8 @@
                 "principal_line_notation": [
                   "E8",
                   "D10",
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -13194,8 +13922,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 210,
-                  "branch_probes": 138,
+                  "search_nodes": 372,
+                  "branch_probes": 250,
                   "max_depth_reached": 4
                 }
               }
@@ -13388,12 +14116,12 @@
         ]
       },
       "proof_detail_diagnostics": {
-        "search_nodes": 3416,
-        "branch_probes": 2306,
+        "search_nodes": 10258,
+        "branch_probes": 6957,
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 2395,
+      "elapsed_ms": 6012,
       "prefixes_analyzed": 19,
       "forced_prefix_count": 18,
       "unknown_prefix_count": 0,
@@ -13439,11 +14167,11 @@
         },
         {
           "row": 9,
-          "col": 7
+          "col": 8
         },
         {
           "row": 9,
-          "col": 8
+          "col": 7
         },
         {
           "row": 10,
@@ -13533,10 +14261,6 @@
             {
               "row": 7,
               "col": 3
-            },
-            {
-              "row": 7,
-              "col": 4
             }
           ],
           "principal_line": [
@@ -13550,11 +14274,11 @@
             },
             {
               "row": 9,
-              "col": 7
+              "col": 8
             },
             {
               "row": 9,
-              "col": 8
+              "col": 7
             },
             {
               "row": 10,
@@ -13580,8 +14304,8 @@
           "principal_line_notation": [
             "E10",
             "D10",
-            "H10",
             "I10",
+            "H10",
             "F11",
             "C8",
             "H9",
@@ -13835,7 +14559,8 @@
                 },
                 "notation": "J7",
                 "kinds": [
-                  "imminent_defense"
+                  "imminent_defense",
+                  "forced_loss"
                 ]
               },
               {
@@ -13856,7 +14581,8 @@
                 },
                 "notation": "H9",
                 "kinds": [
-                  "imminent_defense"
+                  "imminent_defense",
+                  "forced_loss"
                 ]
               },
               {
@@ -13866,7 +14592,8 @@
                 },
                 "notation": "E12",
                 "kinds": [
-                  "imminent_defense"
+                  "imminent_defense",
+                  "forced_loss"
                 ]
               },
               {
@@ -13923,8 +14650,206 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 38,
-                  "branch_probes": 25,
+                  "search_nodes": 44,
+                  "branch_probes": 28,
+                  "max_depth_reached": 4
+                }
+              },
+              {
+                "mv": {
+                  "row": 8,
+                  "col": 7
+                },
+                "notation": "H9",
+                "roles": [
+                  "imminent_defense"
+                ],
+                "outcome": "forced_loss",
+                "principal_line": [
+                  {
+                    "row": 6,
+                    "col": 1
+                  },
+                  {
+                    "row": 7,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 7
+                  },
+                  {
+                    "row": 10,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 6
+                  },
+                  {
+                    "row": 8,
+                    "col": 4
+                  },
+                  {
+                    "row": 6,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 7
+                  }
+                ],
+                "principal_line_notation": [
+                  "B7",
+                  "C8",
+                  "G12",
+                  "H13",
+                  "G11",
+                  "G13",
+                  "E9",
+                  "C7",
+                  "H12"
+                ],
+                "limit_causes": [],
+                "diagnostics": {
+                  "search_nodes": 64,
+                  "branch_probes": 43,
+                  "max_depth_reached": 4
+                }
+              },
+              {
+                "mv": {
+                  "row": 6,
+                  "col": 9
+                },
+                "notation": "J7",
+                "roles": [
+                  "imminent_defense"
+                ],
+                "outcome": "forced_loss",
+                "principal_line": [
+                  {
+                    "row": 6,
+                    "col": 1
+                  },
+                  {
+                    "row": 7,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 7
+                  },
+                  {
+                    "row": 10,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 6
+                  },
+                  {
+                    "row": 8,
+                    "col": 4
+                  },
+                  {
+                    "row": 6,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 7
+                  }
+                ],
+                "principal_line_notation": [
+                  "B7",
+                  "C8",
+                  "G12",
+                  "H13",
+                  "G11",
+                  "G13",
+                  "E9",
+                  "C7",
+                  "H12"
+                ],
+                "limit_causes": [],
+                "diagnostics": {
+                  "search_nodes": 286,
+                  "branch_probes": 192,
+                  "max_depth_reached": 4
+                }
+              },
+              {
+                "mv": {
+                  "row": 11,
+                  "col": 4
+                },
+                "notation": "E12",
+                "roles": [
+                  "imminent_defense"
+                ],
+                "outcome": "forced_loss",
+                "principal_line": [
+                  {
+                    "row": 6,
+                    "col": 1
+                  },
+                  {
+                    "row": 7,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 7
+                  },
+                  {
+                    "row": 10,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 6
+                  },
+                  {
+                    "row": 8,
+                    "col": 4
+                  },
+                  {
+                    "row": 6,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 7
+                  }
+                ],
+                "principal_line_notation": [
+                  "B7",
+                  "C8",
+                  "G12",
+                  "H13",
+                  "G11",
+                  "G13",
+                  "E9",
+                  "C7",
+                  "H12"
+                ],
+                "limit_causes": [],
+                "diagnostics": {
+                  "search_nodes": 250,
+                  "branch_probes": 168,
                   "max_depth_reached": 4
                 }
               }
@@ -14028,7 +14953,8 @@
                 },
                 "notation": "J7",
                 "kinds": [
-                  "imminent_defense"
+                  "imminent_defense",
+                  "forced_loss"
                 ]
               },
               {
@@ -14049,7 +14975,8 @@
                 },
                 "notation": "H9",
                 "kinds": [
-                  "imminent_defense"
+                  "imminent_defense",
+                  "forced_loss"
                 ]
               },
               {
@@ -14059,7 +14986,8 @@
                 },
                 "notation": "E12",
                 "kinds": [
-                  "imminent_defense"
+                  "imminent_defense",
+                  "forced_loss"
                 ]
               },
               {
@@ -14136,8 +15064,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 61,
-                  "branch_probes": 41,
+                  "search_nodes": 67,
+                  "branch_probes": 44,
                   "max_depth_reached": 4
                 }
               },
@@ -14182,8 +15110,206 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 38,
-                  "branch_probes": 25,
+                  "search_nodes": 44,
+                  "branch_probes": 28,
+                  "max_depth_reached": 4
+                }
+              },
+              {
+                "mv": {
+                  "row": 8,
+                  "col": 7
+                },
+                "notation": "H9",
+                "roles": [
+                  "imminent_defense"
+                ],
+                "outcome": "forced_loss",
+                "principal_line": [
+                  {
+                    "row": 6,
+                    "col": 1
+                  },
+                  {
+                    "row": 7,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 7
+                  },
+                  {
+                    "row": 10,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 6
+                  },
+                  {
+                    "row": 8,
+                    "col": 4
+                  },
+                  {
+                    "row": 6,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 7
+                  }
+                ],
+                "principal_line_notation": [
+                  "B7",
+                  "C8",
+                  "G12",
+                  "H13",
+                  "G11",
+                  "G13",
+                  "E9",
+                  "C7",
+                  "H12"
+                ],
+                "limit_causes": [],
+                "diagnostics": {
+                  "search_nodes": 64,
+                  "branch_probes": 43,
+                  "max_depth_reached": 4
+                }
+              },
+              {
+                "mv": {
+                  "row": 6,
+                  "col": 9
+                },
+                "notation": "J7",
+                "roles": [
+                  "imminent_defense"
+                ],
+                "outcome": "forced_loss",
+                "principal_line": [
+                  {
+                    "row": 6,
+                    "col": 1
+                  },
+                  {
+                    "row": 7,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 7
+                  },
+                  {
+                    "row": 10,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 6
+                  },
+                  {
+                    "row": 8,
+                    "col": 4
+                  },
+                  {
+                    "row": 6,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 7
+                  }
+                ],
+                "principal_line_notation": [
+                  "B7",
+                  "C8",
+                  "G12",
+                  "H13",
+                  "G11",
+                  "G13",
+                  "E9",
+                  "C7",
+                  "H12"
+                ],
+                "limit_causes": [],
+                "diagnostics": {
+                  "search_nodes": 286,
+                  "branch_probes": 192,
+                  "max_depth_reached": 4
+                }
+              },
+              {
+                "mv": {
+                  "row": 11,
+                  "col": 4
+                },
+                "notation": "E12",
+                "roles": [
+                  "imminent_defense"
+                ],
+                "outcome": "forced_loss",
+                "principal_line": [
+                  {
+                    "row": 6,
+                    "col": 1
+                  },
+                  {
+                    "row": 7,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 7
+                  },
+                  {
+                    "row": 10,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 6
+                  },
+                  {
+                    "row": 8,
+                    "col": 4
+                  },
+                  {
+                    "row": 6,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 7
+                  }
+                ],
+                "principal_line_notation": [
+                  "B7",
+                  "C8",
+                  "G12",
+                  "H13",
+                  "G11",
+                  "G13",
+                  "E9",
+                  "C7",
+                  "H12"
+                ],
+                "limit_causes": [],
+                "diagnostics": {
+                  "search_nodes": 250,
+                  "branch_probes": 168,
                   "max_depth_reached": 4
                 }
               },
@@ -14228,8 +15354,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 65,
-                  "branch_probes": 45,
+                  "search_nodes": 342,
+                  "branch_probes": 232,
                   "max_depth_reached": 4
                 }
               }
@@ -14344,7 +15470,8 @@
                 },
                 "notation": "J7",
                 "kinds": [
-                  "imminent_defense"
+                  "imminent_defense",
+                  "forced_loss"
                 ]
               },
               {
@@ -14365,7 +15492,8 @@
                 },
                 "notation": "H9",
                 "kinds": [
-                  "imminent_defense"
+                  "imminent_defense",
+                  "forced_loss"
                 ]
               },
               {
@@ -14375,7 +15503,8 @@
                 },
                 "notation": "E12",
                 "kinds": [
-                  "imminent_defense"
+                  "imminent_defense",
+                  "forced_loss"
                 ]
               },
               {
@@ -14452,8 +15581,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 59,
-                  "branch_probes": 43,
+                  "search_nodes": 65,
+                  "branch_probes": 46,
                   "max_depth_reached": 4
                 }
               },
@@ -14498,8 +15627,206 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 37,
-                  "branch_probes": 26,
+                  "search_nodes": 43,
+                  "branch_probes": 29,
+                  "max_depth_reached": 4
+                }
+              },
+              {
+                "mv": {
+                  "row": 8,
+                  "col": 7
+                },
+                "notation": "H9",
+                "roles": [
+                  "imminent_defense"
+                ],
+                "outcome": "forced_loss",
+                "principal_line": [
+                  {
+                    "row": 6,
+                    "col": 1
+                  },
+                  {
+                    "row": 7,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 7
+                  },
+                  {
+                    "row": 10,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 6
+                  },
+                  {
+                    "row": 8,
+                    "col": 4
+                  },
+                  {
+                    "row": 6,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 7
+                  }
+                ],
+                "principal_line_notation": [
+                  "B7",
+                  "C8",
+                  "G12",
+                  "H13",
+                  "G11",
+                  "G13",
+                  "E9",
+                  "C7",
+                  "H12"
+                ],
+                "limit_causes": [],
+                "diagnostics": {
+                  "search_nodes": 62,
+                  "branch_probes": 45,
+                  "max_depth_reached": 4
+                }
+              },
+              {
+                "mv": {
+                  "row": 6,
+                  "col": 9
+                },
+                "notation": "J7",
+                "roles": [
+                  "imminent_defense"
+                ],
+                "outcome": "forced_loss",
+                "principal_line": [
+                  {
+                    "row": 6,
+                    "col": 1
+                  },
+                  {
+                    "row": 7,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 7
+                  },
+                  {
+                    "row": 10,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 6
+                  },
+                  {
+                    "row": 8,
+                    "col": 4
+                  },
+                  {
+                    "row": 6,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 7
+                  }
+                ],
+                "principal_line_notation": [
+                  "B7",
+                  "C8",
+                  "G12",
+                  "H13",
+                  "G11",
+                  "G13",
+                  "E9",
+                  "C7",
+                  "H12"
+                ],
+                "limit_causes": [],
+                "diagnostics": {
+                  "search_nodes": 284,
+                  "branch_probes": 194,
+                  "max_depth_reached": 4
+                }
+              },
+              {
+                "mv": {
+                  "row": 11,
+                  "col": 4
+                },
+                "notation": "E12",
+                "roles": [
+                  "imminent_defense"
+                ],
+                "outcome": "forced_loss",
+                "principal_line": [
+                  {
+                    "row": 6,
+                    "col": 1
+                  },
+                  {
+                    "row": 7,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 7
+                  },
+                  {
+                    "row": 10,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 6
+                  },
+                  {
+                    "row": 8,
+                    "col": 4
+                  },
+                  {
+                    "row": 6,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 7
+                  }
+                ],
+                "principal_line_notation": [
+                  "B7",
+                  "C8",
+                  "G12",
+                  "H13",
+                  "G11",
+                  "G13",
+                  "E9",
+                  "C7",
+                  "H12"
+                ],
+                "limit_causes": [],
+                "diagnostics": {
+                  "search_nodes": 248,
+                  "branch_probes": 170,
                   "max_depth_reached": 4
                 }
               },
@@ -14544,8 +15871,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 64,
-                  "branch_probes": 46,
+                  "search_nodes": 340,
+                  "branch_probes": 234,
                   "max_depth_reached": 4
                 }
               },
@@ -14590,8 +15917,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 64,
-                  "branch_probes": 46,
+                  "search_nodes": 340,
+                  "branch_probes": 234,
                   "max_depth_reached": 4
                 }
               }
@@ -14717,7 +16044,8 @@
                 },
                 "notation": "J7",
                 "kinds": [
-                  "imminent_defense"
+                  "imminent_defense",
+                  "forced_loss"
                 ]
               },
               {
@@ -14738,7 +16066,8 @@
                 },
                 "notation": "H9",
                 "kinds": [
-                  "imminent_defense"
+                  "imminent_defense",
+                  "forced_loss"
                 ]
               },
               {
@@ -14748,7 +16077,8 @@
                 },
                 "notation": "E12",
                 "kinds": [
-                  "imminent_defense"
+                  "imminent_defense",
+                  "forced_loss"
                 ]
               },
               {
@@ -14825,8 +16155,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 61,
-                  "branch_probes": 44,
+                  "search_nodes": 67,
+                  "branch_probes": 47,
                   "max_depth_reached": 4
                 }
               },
@@ -14871,8 +16201,206 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 39,
-                  "branch_probes": 27,
+                  "search_nodes": 45,
+                  "branch_probes": 30,
+                  "max_depth_reached": 4
+                }
+              },
+              {
+                "mv": {
+                  "row": 8,
+                  "col": 7
+                },
+                "notation": "H9",
+                "roles": [
+                  "imminent_defense"
+                ],
+                "outcome": "forced_loss",
+                "principal_line": [
+                  {
+                    "row": 6,
+                    "col": 1
+                  },
+                  {
+                    "row": 7,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 7
+                  },
+                  {
+                    "row": 10,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 6
+                  },
+                  {
+                    "row": 8,
+                    "col": 4
+                  },
+                  {
+                    "row": 6,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 7
+                  }
+                ],
+                "principal_line_notation": [
+                  "B7",
+                  "C8",
+                  "G12",
+                  "H13",
+                  "G11",
+                  "G13",
+                  "E9",
+                  "C7",
+                  "H12"
+                ],
+                "limit_causes": [],
+                "diagnostics": {
+                  "search_nodes": 62,
+                  "branch_probes": 45,
+                  "max_depth_reached": 4
+                }
+              },
+              {
+                "mv": {
+                  "row": 6,
+                  "col": 9
+                },
+                "notation": "J7",
+                "roles": [
+                  "imminent_defense"
+                ],
+                "outcome": "forced_loss",
+                "principal_line": [
+                  {
+                    "row": 6,
+                    "col": 1
+                  },
+                  {
+                    "row": 7,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 7
+                  },
+                  {
+                    "row": 10,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 6
+                  },
+                  {
+                    "row": 8,
+                    "col": 4
+                  },
+                  {
+                    "row": 6,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 7
+                  }
+                ],
+                "principal_line_notation": [
+                  "B7",
+                  "C8",
+                  "G12",
+                  "H13",
+                  "G11",
+                  "G13",
+                  "E9",
+                  "C7",
+                  "H12"
+                ],
+                "limit_causes": [],
+                "diagnostics": {
+                  "search_nodes": 284,
+                  "branch_probes": 194,
+                  "max_depth_reached": 4
+                }
+              },
+              {
+                "mv": {
+                  "row": 11,
+                  "col": 4
+                },
+                "notation": "E12",
+                "roles": [
+                  "imminent_defense"
+                ],
+                "outcome": "forced_loss",
+                "principal_line": [
+                  {
+                    "row": 6,
+                    "col": 1
+                  },
+                  {
+                    "row": 7,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 7
+                  },
+                  {
+                    "row": 10,
+                    "col": 6
+                  },
+                  {
+                    "row": 12,
+                    "col": 6
+                  },
+                  {
+                    "row": 8,
+                    "col": 4
+                  },
+                  {
+                    "row": 6,
+                    "col": 2
+                  },
+                  {
+                    "row": 11,
+                    "col": 7
+                  }
+                ],
+                "principal_line_notation": [
+                  "B7",
+                  "C8",
+                  "G12",
+                  "H13",
+                  "G11",
+                  "G13",
+                  "E9",
+                  "C7",
+                  "H12"
+                ],
+                "limit_causes": [],
+                "diagnostics": {
+                  "search_nodes": 248,
+                  "branch_probes": 170,
                   "max_depth_reached": 4
                 }
               },
@@ -14917,8 +16445,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 64,
-                  "branch_probes": 46,
+                  "search_nodes": 340,
+                  "branch_probes": 234,
                   "max_depth_reached": 4
                 }
               },
@@ -14963,8 +16491,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 64,
-                  "branch_probes": 46,
+                  "search_nodes": 340,
+                  "branch_probes": 234,
                   "max_depth_reached": 4
                 }
               },
@@ -15009,8 +16537,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 64,
-                  "branch_probes": 46,
+                  "search_nodes": 340,
+                  "branch_probes": 234,
                   "max_depth_reached": 4
                 }
               }
@@ -15204,8 +16732,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 195,
-                  "branch_probes": 125,
+                  "search_nodes": 279,
+                  "branch_probes": 179,
                   "max_depth_reached": 4
                 }
               },
@@ -15230,11 +16758,11 @@
                   },
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -15260,8 +16788,8 @@
                 "principal_line_notation": [
                   "H5",
                   "D10",
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -15270,8 +16798,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 161,
-                  "branch_probes": 108,
+                  "search_nodes": 311,
+                  "branch_probes": 214,
                   "max_depth_reached": 4
                 }
               },
@@ -15296,11 +16824,11 @@
                   },
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -15326,8 +16854,8 @@
                 "principal_line_notation": [
                   "F6",
                   "D10",
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -15336,8 +16864,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 195,
-                  "branch_probes": 130,
+                  "search_nodes": 362,
+                  "branch_probes": 247,
                   "max_depth_reached": 4
                 }
               },
@@ -15362,11 +16890,11 @@
                   },
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -15392,8 +16920,8 @@
                 "principal_line_notation": [
                   "I4",
                   "D10",
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -15402,8 +16930,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 161,
-                  "branch_probes": 108,
+                  "search_nodes": 311,
+                  "branch_probes": 214,
                   "max_depth_reached": 4
                 }
               },
@@ -15428,11 +16956,11 @@
                   },
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -15458,8 +16986,8 @@
                 "principal_line_notation": [
                   "F5",
                   "D10",
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -15468,8 +16996,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 161,
-                  "branch_probes": 108,
+                  "search_nodes": 311,
+                  "branch_probes": 214,
                   "max_depth_reached": 4
                 }
               }
@@ -15647,11 +17175,11 @@
                 "principal_line": [
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -15675,8 +17203,8 @@
                   }
                 ],
                 "principal_line_notation": [
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -15685,8 +17213,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 167,
-                  "branch_probes": 110,
+                  "search_nodes": 604,
+                  "branch_probes": 382,
                   "max_depth_reached": 4
                 }
               },
@@ -15741,8 +17269,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 176,
-                  "branch_probes": 114,
+                  "search_nodes": 260,
+                  "branch_probes": 168,
                   "max_depth_reached": 4
                 }
               },
@@ -15767,11 +17295,11 @@
                   },
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -15797,8 +17325,8 @@
                 "principal_line_notation": [
                   "H5",
                   "D10",
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -15807,8 +17335,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 161,
-                  "branch_probes": 108,
+                  "search_nodes": 311,
+                  "branch_probes": 214,
                   "max_depth_reached": 4
                 }
               },
@@ -15833,11 +17361,11 @@
                   },
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -15863,8 +17391,8 @@
                 "principal_line_notation": [
                   "C6",
                   "D10",
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -15873,8 +17401,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 173,
-                  "branch_probes": 116,
+                  "search_nodes": 323,
+                  "branch_probes": 222,
                   "max_depth_reached": 4
                 }
               },
@@ -15899,11 +17427,11 @@
                   },
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -15929,8 +17457,8 @@
                 "principal_line_notation": [
                   "F6",
                   "D10",
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -15939,8 +17467,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 195,
-                  "branch_probes": 130,
+                  "search_nodes": 362,
+                  "branch_probes": 247,
                   "max_depth_reached": 4
                 }
               },
@@ -15965,11 +17493,11 @@
                   },
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -15995,8 +17523,8 @@
                 "principal_line_notation": [
                   "I4",
                   "D10",
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -16005,8 +17533,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 161,
-                  "branch_probes": 108,
+                  "search_nodes": 311,
+                  "branch_probes": 214,
                   "max_depth_reached": 4
                 }
               },
@@ -16031,11 +17559,11 @@
                   },
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -16061,8 +17589,8 @@
                 "principal_line_notation": [
                   "F5",
                   "D10",
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -16071,8 +17599,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 161,
-                  "branch_probes": 108,
+                  "search_nodes": 311,
+                  "branch_probes": 214,
                   "max_depth_reached": 4
                 }
               }
@@ -16228,11 +17756,11 @@
                 "principal_line": [
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -16256,8 +17784,8 @@
                   }
                 ],
                 "principal_line_notation": [
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -16266,8 +17794,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 72,
-                  "branch_probes": 52,
+                  "search_nodes": 350,
+                  "branch_probes": 231,
                   "max_depth_reached": 4
                 }
               },
@@ -16322,8 +17850,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 88,
-                  "branch_probes": 60,
+                  "search_nodes": 148,
+                  "branch_probes": 102,
                   "max_depth_reached": 4
                 }
               },
@@ -16348,11 +17876,11 @@
                   },
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -16378,8 +17906,8 @@
                 "principal_line_notation": [
                   "F6",
                   "D10",
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -16388,8 +17916,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 127,
-                  "branch_probes": 86,
+                  "search_nodes": 260,
+                  "branch_probes": 181,
                   "max_depth_reached": 4
                 }
               },
@@ -16414,11 +17942,11 @@
                   },
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -16444,8 +17972,8 @@
                 "principal_line_notation": [
                   "F5",
                   "D10",
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -16454,8 +17982,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 127,
-                  "branch_probes": 86,
+                  "search_nodes": 260,
+                  "branch_probes": 181,
                   "max_depth_reached": 4
                 }
               },
@@ -16480,11 +18008,11 @@
                   },
                   {
                     "row": 9,
-                    "col": 7
+                    "col": 8
                   },
                   {
                     "row": 9,
-                    "col": 8
+                    "col": 7
                   },
                   {
                     "row": 10,
@@ -16510,8 +18038,8 @@
                 "principal_line_notation": [
                   "E8",
                   "D10",
-                  "H10",
                   "I10",
+                  "H10",
                   "F11",
                   "C8",
                   "H9",
@@ -16520,8 +18048,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 210,
-                  "branch_probes": 138,
+                  "search_nodes": 372,
+                  "branch_probes": 250,
                   "max_depth_reached": 4
                 }
               }
@@ -16714,12 +18242,12 @@
         ]
       },
       "proof_detail_diagnostics": {
-        "search_nodes": 3416,
-        "branch_probes": 2306,
+        "search_nodes": 10258,
+        "branch_probes": 6957,
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 2429,
+      "elapsed_ms": 6016,
       "prefixes_analyzed": 19,
       "forced_prefix_count": 18,
       "unknown_prefix_count": 0,
@@ -16832,10 +18360,6 @@
           ],
           "forced_replies": [
             {
-              "row": 8,
-              "col": 5
-            },
-            {
               "row": 4,
               "col": 8
             }
@@ -16871,10 +18395,6 @@
             {
               "row": 6,
               "col": 8
-            },
-            {
-              "row": 10,
-              "col": 5
             },
             {
               "row": 11,
@@ -17569,8 +19089,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 63,
-                  "branch_probes": 44,
+                  "search_nodes": 477,
+                  "branch_probes": 328,
                   "max_depth_reached": 4
                 }
               }
@@ -18564,12 +20084,12 @@
         ]
       },
       "proof_detail_diagnostics": {
-        "search_nodes": 5754,
-        "branch_probes": 3847,
+        "search_nodes": 6168,
+        "branch_probes": 4131,
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 5679,
+      "elapsed_ms": 6367,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -18626,11 +20146,11 @@
           "col": 4
         },
         {
-          "row": 4,
+          "row": 9,
           "col": 4
         },
         {
-          "row": 9,
+          "row": 4,
           "col": 4
         }
       ],
@@ -18662,10 +20182,6 @@
           ],
           "forced_replies": [
             {
-              "row": 10,
-              "col": 7
-            },
-            {
               "row": 4,
               "col": 6
             }
@@ -18683,7 +20199,7 @@
           "attacker": "White",
           "side_to_move": "White",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 5,
@@ -18733,10 +20249,6 @@
               "col": 2
             },
             {
-              "row": 4,
-              "col": 4
-            },
-            {
               "row": 9,
               "col": 4
             }
@@ -18763,11 +20275,11 @@
               "col": 4
             },
             {
-              "row": 4,
+              "row": 9,
               "col": 4
             },
             {
-              "row": 9,
+              "row": 4,
               "col": 4
             }
           ],
@@ -18777,8 +20289,8 @@
             "E7",
             "C7",
             "E9",
-            "E5",
-            "E10"
+            "E10",
+            "E5"
           ],
           "limit_hit": false,
           "limit_causes": []
@@ -19381,7 +20893,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 731,
+      "elapsed_ms": 770,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -19502,10 +21014,6 @@
           ],
           "forced_replies": [
             {
-              "row": 5,
-              "col": 8
-            },
-            {
               "row": 9,
               "col": 2
             }
@@ -19523,7 +21031,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 10,
@@ -19571,10 +21079,6 @@
             {
               "row": 4,
               "col": 11
-            },
-            {
-              "row": 5,
-              "col": 10
             }
           ],
           "principal_line": [
@@ -21609,7 +23113,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 6179,
+      "elapsed_ms": 6300,
       "prefixes_analyzed": 19,
       "forced_prefix_count": 18,
       "unknown_prefix_count": 0,
@@ -21730,10 +23234,6 @@
           ],
           "forced_replies": [
             {
-              "row": 5,
-              "col": 8
-            },
-            {
               "row": 9,
               "col": 2
             }
@@ -21751,7 +23251,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 10,
@@ -21799,10 +23299,6 @@
             {
               "row": 4,
               "col": 11
-            },
-            {
-              "row": 5,
-              "col": 10
             }
           ],
           "principal_line": [
@@ -23837,7 +25333,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 6132,
+      "elapsed_ms": 6017,
       "prefixes_analyzed": 19,
       "forced_prefix_count": 18,
       "unknown_prefix_count": 0,
@@ -23895,11 +25391,11 @@
         },
         {
           "row": 3,
-          "col": 4
+          "col": 9
         },
         {
           "row": 3,
-          "col": 9
+          "col": 4
         }
       ],
       "unknown_gaps": [],
@@ -23926,10 +25422,6 @@
           ],
           "forced_replies": [
             {
-              "row": 8,
-              "col": 10
-            },
-            {
               "row": 3,
               "col": 5
             }
@@ -23947,7 +25439,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 4,
@@ -23998,10 +25490,6 @@
             },
             {
               "row": 3,
-              "col": 4
-            },
-            {
-              "row": 3,
               "col": 9
             }
           ],
@@ -24028,11 +25516,11 @@
             },
             {
               "row": 3,
-              "col": 4
+              "col": 9
             },
             {
               "row": 3,
-              "col": 9
+              "col": 4
             }
           ],
           "principal_line_notation": [
@@ -24041,8 +25529,8 @@
             "I4",
             "I5",
             "H4",
-            "E4",
-            "J4"
+            "J4",
+            "E4"
           ],
           "limit_hit": false,
           "limit_causes": []
@@ -24546,7 +26034,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 514,
+      "elapsed_ms": 524,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -24604,11 +26092,11 @@
         },
         {
           "row": 3,
-          "col": 4
+          "col": 9
         },
         {
           "row": 3,
-          "col": 9
+          "col": 4
         }
       ],
       "unknown_gaps": [],
@@ -24635,10 +26123,6 @@
           ],
           "forced_replies": [
             {
-              "row": 8,
-              "col": 10
-            },
-            {
               "row": 3,
               "col": 5
             }
@@ -24656,7 +26140,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 4,
@@ -24707,10 +26191,6 @@
             },
             {
               "row": 3,
-              "col": 4
-            },
-            {
-              "row": 3,
               "col": 9
             }
           ],
@@ -24737,11 +26217,11 @@
             },
             {
               "row": 3,
-              "col": 4
+              "col": 9
             },
             {
               "row": 3,
-              "col": 9
+              "col": 4
             }
           ],
           "principal_line_notation": [
@@ -24750,8 +26230,8 @@
             "I4",
             "I5",
             "H4",
-            "E4",
-            "J4"
+            "J4",
+            "E4"
           ],
           "limit_hit": false,
           "limit_causes": []
@@ -25255,7 +26735,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 576,
+      "elapsed_ms": 499,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -25412,10 +26892,6 @@
             {
               "row": 12,
               "col": 4
-            },
-            {
-              "row": 4,
-              "col": 2
             },
             {
               "row": 5,
@@ -27939,7 +29415,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 2243,
+      "elapsed_ms": 2155,
       "prefixes_analyzed": 15,
       "forced_prefix_count": 14,
       "unknown_prefix_count": 0,
@@ -28676,10 +30152,6 @@
           ],
           "forced_replies": [
             {
-              "row": 6,
-              "col": 5
-            },
-            {
               "row": 4,
               "col": 7
             }
@@ -28715,10 +30187,6 @@
             {
               "row": 4,
               "col": 9
-            },
-            {
-              "row": 9,
-              "col": 4
             },
             {
               "row": 10,
@@ -29817,7 +31285,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 2883,
+      "elapsed_ms": 3096,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -30841,7 +32309,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 1505,
+      "elapsed_ms": 1467,
       "prefixes_analyzed": 12,
       "forced_prefix_count": 11,
       "unknown_prefix_count": 0,
@@ -32085,7 +33553,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 863,
+      "elapsed_ms": 915,
       "prefixes_analyzed": 18,
       "forced_prefix_count": 17,
       "unknown_prefix_count": 0,
@@ -32150,12 +33618,12 @@
           "col": 4
         },
         {
-          "row": 2,
-          "col": 8
-        },
-        {
           "row": 7,
           "col": 3
+        },
+        {
+          "row": 2,
+          "col": 8
         }
       ],
       "unknown_gaps": [],
@@ -32186,10 +33654,6 @@
           ],
           "forced_replies": [
             {
-              "row": 8,
-              "col": 7
-            },
-            {
               "row": 4,
               "col": 6
             }
@@ -32207,7 +33671,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 3,
@@ -32269,10 +33733,6 @@
               "col": 7
             },
             {
-              "row": 2,
-              "col": 8
-            },
-            {
               "row": 7,
               "col": 3
             }
@@ -32307,12 +33767,12 @@
               "col": 4
             },
             {
-              "row": 2,
-              "col": 8
-            },
-            {
               "row": 7,
               "col": 3
+            },
+            {
+              "row": 2,
+              "col": 8
             }
           ],
           "principal_line_notation": [
@@ -32323,8 +33783,8 @@
             "H4",
             "H5",
             "E7",
-            "I3",
-            "D8"
+            "D8",
+            "I3"
           ],
           "limit_hit": false,
           "limit_causes": []
@@ -32943,7 +34403,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 3083,
+      "elapsed_ms": 3155,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -33072,10 +34532,6 @@
           ],
           "forced_replies": [
             {
-              "row": 10,
-              "col": 6
-            },
-            {
               "row": 9,
               "col": 9
             }
@@ -33093,7 +34549,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 10,
@@ -33132,10 +34588,6 @@
             },
             {
               "row": 8,
-              "col": 5
-            },
-            {
-              "row": 9,
               "col": 5
             }
           ],
@@ -34866,7 +36318,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 6384,
+      "elapsed_ms": 6560,
       "prefixes_analyzed": 17,
       "forced_prefix_count": 16,
       "unknown_prefix_count": 0,
@@ -34995,10 +36447,6 @@
           ],
           "forced_replies": [
             {
-              "row": 10,
-              "col": 6
-            },
-            {
               "row": 9,
               "col": 9
             }
@@ -35016,7 +36464,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 10,
@@ -35055,10 +36503,6 @@
             },
             {
               "row": 8,
-              "col": 5
-            },
-            {
-              "row": 9,
               "col": 5
             }
           ],
@@ -36628,7 +38072,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 6402,
+      "elapsed_ms": 6621,
       "prefixes_analyzed": 15,
       "forced_prefix_count": 14,
       "unknown_prefix_count": 0,
@@ -36765,10 +38209,6 @@
           ],
           "forced_replies": [
             {
-              "row": 4,
-              "col": 6
-            },
-            {
               "row": 9,
               "col": 5
             }
@@ -36786,7 +38226,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 10,
@@ -36842,10 +38282,6 @@
             {
               "row": 2,
               "col": 10
-            },
-            {
-              "row": 3,
-              "col": 9
             }
           ],
           "principal_line": [
@@ -38145,7 +39581,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 2962,
+      "elapsed_ms": 2866,
       "prefixes_analyzed": 17,
       "forced_prefix_count": 16,
       "unknown_prefix_count": 0,
@@ -38210,12 +39646,12 @@
           "col": 6
         },
         {
-          "row": 2,
-          "col": 7
-        },
-        {
           "row": 7,
           "col": 2
+        },
+        {
+          "row": 2,
+          "col": 7
         }
       ],
       "unknown_gaps": [],
@@ -38250,10 +39686,6 @@
               "col": 3
             },
             {
-              "row": 8,
-              "col": 7
-            },
-            {
               "row": 6,
               "col": 2
             }
@@ -38271,7 +39703,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 5,
@@ -38333,10 +39765,6 @@
               "col": 5
             },
             {
-              "row": 2,
-              "col": 7
-            },
-            {
               "row": 7,
               "col": 2
             }
@@ -38371,12 +39799,12 @@
               "col": 6
             },
             {
-              "row": 2,
-              "col": 7
-            },
-            {
               "row": 7,
               "col": 2
+            },
+            {
+              "row": 2,
+              "col": 7
             }
           ],
           "principal_line_notation": [
@@ -38387,8 +39815,8 @@
             "F5",
             "F4",
             "G4",
-            "H3",
-            "C8"
+            "C8",
+            "H3"
           ],
           "limit_hit": false,
           "limit_causes": []
@@ -39084,7 +40512,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 3893,
+      "elapsed_ms": 4161,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -39125,8 +40553,16 @@
           "col": 7
         },
         {
-          "row": 4,
+          "row": 1,
           "col": 7
+        },
+        {
+          "row": 0,
+          "col": 4
+        },
+        {
+          "row": 1,
+          "col": 5
         },
         {
           "row": 2,
@@ -39177,10 +40613,6 @@
           ],
           "forced_replies": [
             {
-              "row": 5,
-              "col": 9
-            },
-            {
               "row": 2,
               "col": 7
             }
@@ -39199,42 +40631,12 @@
           "side_to_move": "Black",
           "status": "forced_win",
           "reply_classification": "blocked_but_forced",
-          "winning_squares": [
-            {
-              "row": 1,
-              "col": 9
-            },
-            {
-              "row": 2,
-              "col": 4
-            },
-            {
-              "row": 2,
-              "col": 9
-            }
-          ],
-          "legal_cost_squares": [
-            {
-              "row": 1,
-              "col": 9
-            },
-            {
-              "row": 2,
-              "col": 4
-            },
-            {
-              "row": 2,
-              "col": 9
-            }
-          ],
+          "winning_squares": [],
+          "legal_cost_squares": [],
           "illegal_cost_squares": [],
           "defender_immediate_wins": [],
           "escape_replies": [],
           "forced_replies": [
-            {
-              "row": 4,
-              "col": 7
-            },
             {
               "row": 1,
               "col": 7
@@ -39242,18 +40644,6 @@
             {
               "row": 2,
               "col": 8
-            },
-            {
-              "row": 1,
-              "col": 9
-            },
-            {
-              "row": 2,
-              "col": 4
-            },
-            {
-              "row": 2,
-              "col": 9
             }
           ],
           "principal_line": [
@@ -39262,8 +40652,16 @@
               "col": 7
             },
             {
-              "row": 4,
+              "row": 1,
               "col": 7
+            },
+            {
+              "row": 0,
+              "col": 4
+            },
+            {
+              "row": 1,
+              "col": 5
             },
             {
               "row": 2,
@@ -39288,7 +40686,9 @@
           ],
           "principal_line_notation": [
             "H3",
-            "H5",
+            "H2",
+            "E1",
+            "F2",
             "I3",
             "J2",
             "F3",
@@ -39639,16 +41039,6 @@
                   "imminent_defense",
                   "actual"
                 ]
-              },
-              {
-                "mv": {
-                  "row": 6,
-                  "col": 7
-                },
-                "notation": "H7",
-                "kinds": [
-                  "imminent_defense"
-                ]
               }
             ],
             "reply_outcomes": [
@@ -39907,7 +41297,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 17819,
+      "elapsed_ms": 17678,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -39948,8 +41338,16 @@
           "col": 7
         },
         {
-          "row": 4,
+          "row": 1,
           "col": 7
+        },
+        {
+          "row": 0,
+          "col": 4
+        },
+        {
+          "row": 1,
+          "col": 5
         },
         {
           "row": 2,
@@ -40000,10 +41398,6 @@
           ],
           "forced_replies": [
             {
-              "row": 5,
-              "col": 9
-            },
-            {
               "row": 2,
               "col": 7
             }
@@ -40022,42 +41416,12 @@
           "side_to_move": "Black",
           "status": "forced_win",
           "reply_classification": "blocked_but_forced",
-          "winning_squares": [
-            {
-              "row": 1,
-              "col": 9
-            },
-            {
-              "row": 2,
-              "col": 4
-            },
-            {
-              "row": 2,
-              "col": 9
-            }
-          ],
-          "legal_cost_squares": [
-            {
-              "row": 1,
-              "col": 9
-            },
-            {
-              "row": 2,
-              "col": 4
-            },
-            {
-              "row": 2,
-              "col": 9
-            }
-          ],
+          "winning_squares": [],
+          "legal_cost_squares": [],
           "illegal_cost_squares": [],
           "defender_immediate_wins": [],
           "escape_replies": [],
           "forced_replies": [
-            {
-              "row": 4,
-              "col": 7
-            },
             {
               "row": 1,
               "col": 7
@@ -40065,18 +41429,6 @@
             {
               "row": 2,
               "col": 8
-            },
-            {
-              "row": 1,
-              "col": 9
-            },
-            {
-              "row": 2,
-              "col": 4
-            },
-            {
-              "row": 2,
-              "col": 9
             }
           ],
           "principal_line": [
@@ -40085,8 +41437,16 @@
               "col": 7
             },
             {
-              "row": 4,
+              "row": 1,
               "col": 7
+            },
+            {
+              "row": 0,
+              "col": 4
+            },
+            {
+              "row": 1,
+              "col": 5
             },
             {
               "row": 2,
@@ -40111,7 +41471,9 @@
           ],
           "principal_line_notation": [
             "H3",
-            "H5",
+            "H2",
+            "E1",
+            "F2",
             "I3",
             "J2",
             "F3",
@@ -40462,16 +41824,6 @@
                   "imminent_defense",
                   "actual"
                 ]
-              },
-              {
-                "mv": {
-                  "row": 6,
-                  "col": 7
-                },
-                "notation": "H7",
-                "kinds": [
-                  "imminent_defense"
-                ]
               }
             ],
             "reply_outcomes": [
@@ -40730,7 +42082,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 15289,
+      "elapsed_ms": 14791,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -40795,12 +42147,12 @@
           "col": 10
         },
         {
-          "row": 2,
-          "col": 6
-        },
-        {
           "row": 7,
           "col": 11
+        },
+        {
+          "row": 2,
+          "col": 6
         }
       ],
       "unknown_gaps": [],
@@ -40831,10 +42183,6 @@
           ],
           "forced_replies": [
             {
-              "row": 8,
-              "col": 7
-            },
-            {
               "row": 4,
               "col": 8
             }
@@ -40852,7 +42200,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 3,
@@ -40914,10 +42262,6 @@
               "col": 7
             },
             {
-              "row": 2,
-              "col": 6
-            },
-            {
               "row": 7,
               "col": 11
             }
@@ -40952,12 +42296,12 @@
               "col": 10
             },
             {
-              "row": 2,
-              "col": 6
-            },
-            {
               "row": 7,
               "col": 11
+            },
+            {
+              "row": 2,
+              "col": 6
             }
           ],
           "principal_line_notation": [
@@ -40968,8 +42312,8 @@
             "H4",
             "H5",
             "K7",
-            "G3",
-            "L8"
+            "L8",
+            "G3"
           ],
           "limit_hit": false,
           "limit_causes": []
@@ -41588,7 +42932,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 3181,
+      "elapsed_ms": 3306,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -41653,12 +42997,12 @@
           "col": 10
         },
         {
-          "row": 2,
-          "col": 6
-        },
-        {
           "row": 7,
           "col": 11
+        },
+        {
+          "row": 2,
+          "col": 6
         }
       ],
       "unknown_gaps": [],
@@ -41689,10 +43033,6 @@
           ],
           "forced_replies": [
             {
-              "row": 8,
-              "col": 7
-            },
-            {
               "row": 4,
               "col": 8
             }
@@ -41710,7 +43050,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 3,
@@ -41772,10 +43112,6 @@
               "col": 7
             },
             {
-              "row": 2,
-              "col": 6
-            },
-            {
               "row": 7,
               "col": 11
             }
@@ -41810,12 +43146,12 @@
               "col": 10
             },
             {
-              "row": 2,
-              "col": 6
-            },
-            {
               "row": 7,
               "col": 11
+            },
+            {
+              "row": 2,
+              "col": 6
             }
           ],
           "principal_line_notation": [
@@ -41826,8 +43162,8 @@
             "H4",
             "H5",
             "K7",
-            "G3",
-            "L8"
+            "L8",
+            "G3"
           ],
           "limit_hit": false,
           "limit_causes": []
@@ -42446,7 +43782,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 2581,
+      "elapsed_ms": 3295,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -42551,10 +43887,6 @@
           ],
           "forced_replies": [
             {
-              "row": 6,
-              "col": 12
-            },
-            {
               "row": 5,
               "col": 10
             }
@@ -42582,10 +43914,6 @@
             {
               "row": 4,
               "col": 11
-            },
-            {
-              "row": 8,
-              "col": 7
             },
             {
               "row": 10,
@@ -43397,7 +44725,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 3304,
+      "elapsed_ms": 3500,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -43462,12 +44790,12 @@
           "col": 8
         },
         {
-          "row": 2,
-          "col": 7
-        },
-        {
           "row": 7,
           "col": 12
+        },
+        {
+          "row": 2,
+          "col": 7
         }
       ],
       "unknown_gaps": [],
@@ -43502,10 +44830,6 @@
               "col": 11
             },
             {
-              "row": 8,
-              "col": 7
-            },
-            {
               "row": 6,
               "col": 12
             }
@@ -43523,7 +44847,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 5,
@@ -43585,10 +44909,6 @@
               "col": 9
             },
             {
-              "row": 2,
-              "col": 7
-            },
-            {
               "row": 7,
               "col": 12
             }
@@ -43623,12 +44943,12 @@
               "col": 8
             },
             {
-              "row": 2,
-              "col": 7
-            },
-            {
               "row": 7,
               "col": 12
+            },
+            {
+              "row": 2,
+              "col": 7
             }
           ],
           "principal_line_notation": [
@@ -43639,8 +44959,8 @@
             "J5",
             "J4",
             "I4",
-            "H3",
-            "M8"
+            "M8",
+            "H3"
           ],
           "limit_hit": false,
           "limit_causes": []
@@ -44336,7 +45656,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 3620,
+      "elapsed_ms": 3437,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -44449,10 +45769,6 @@
               "col": 3
             },
             {
-              "row": 11,
-              "col": 7
-            },
-            {
               "row": 7,
               "col": 5
             }
@@ -44488,10 +45804,6 @@
             {
               "row": 4,
               "col": 12
-            },
-            {
-              "row": 6,
-              "col": 10
             }
           ],
           "principal_line": [
@@ -45557,7 +46869,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 8659,
+      "elapsed_ms": 9217,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -45670,10 +46982,6 @@
           ],
           "forced_replies": [
             {
-              "row": 9,
-              "col": 4
-            },
-            {
               "row": 10,
               "col": 7
             }
@@ -45713,10 +47021,6 @@
             {
               "row": 4,
               "col": 12
-            },
-            {
-              "row": 6,
-              "col": 10
             }
           ],
           "principal_line": [
@@ -46841,7 +48145,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 2640,
+      "elapsed_ms": 2683,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -46882,6 +48186,14 @@
           "col": 7
         },
         {
+          "row": 6,
+          "col": 10
+        },
+        {
+          "row": 1,
+          "col": 5
+        },
+        {
           "row": 2,
           "col": 6
         },
@@ -46939,10 +48251,6 @@
           "forced_replies": [
             {
               "row": 3,
-              "col": 8
-            },
-            {
-              "row": 3,
               "col": 7
             }
           ],
@@ -46960,50 +48268,12 @@
           "side_to_move": "Black",
           "status": "forced_win",
           "reply_classification": "blocked_but_forced",
-          "winning_squares": [
-            {
-              "row": 8,
-              "col": 8
-            },
-            {
-              "row": 8,
-              "col": 10
-            },
-            {
-              "row": 7,
-              "col": 6
-            },
-            {
-              "row": 7,
-              "col": 11
-            }
-          ],
-          "legal_cost_squares": [
-            {
-              "row": 8,
-              "col": 8
-            },
-            {
-              "row": 8,
-              "col": 10
-            },
-            {
-              "row": 7,
-              "col": 6
-            },
-            {
-              "row": 7,
-              "col": 11
-            }
-          ],
+          "winning_squares": [],
+          "legal_cost_squares": [],
           "illegal_cost_squares": [],
           "defender_immediate_wins": [],
           "escape_replies": [],
           "forced_replies": [
-            {
-              "row": 2,
-              "col": 6
-            },
             {
               "row": 6,
               "col": 10
@@ -47011,28 +48281,20 @@
             {
               "row": 7,
               "col": 8
-            },
-            {
-              "row": 8,
-              "col": 8
-            },
-            {
-              "row": 8,
-              "col": 10
-            },
-            {
-              "row": 7,
-              "col": 6
-            },
-            {
-              "row": 7,
-              "col": 11
             }
           ],
           "principal_line": [
             {
               "row": 3,
               "col": 7
+            },
+            {
+              "row": 6,
+              "col": 10
+            },
+            {
+              "row": 1,
+              "col": 5
             },
             {
               "row": 2,
@@ -47069,6 +48331,8 @@
           ],
           "principal_line_notation": [
             "H4",
+            "K7",
+            "F2",
             "G3",
             "I8",
             "I9",
@@ -47741,7 +49005,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 3633,
+      "elapsed_ms": 3728,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -47782,6 +49046,14 @@
           "col": 7
         },
         {
+          "row": 6,
+          "col": 10
+        },
+        {
+          "row": 1,
+          "col": 5
+        },
+        {
           "row": 2,
           "col": 6
         },
@@ -47839,10 +49111,6 @@
           "forced_replies": [
             {
               "row": 3,
-              "col": 8
-            },
-            {
-              "row": 3,
               "col": 7
             }
           ],
@@ -47860,50 +49128,12 @@
           "side_to_move": "Black",
           "status": "forced_win",
           "reply_classification": "blocked_but_forced",
-          "winning_squares": [
-            {
-              "row": 8,
-              "col": 8
-            },
-            {
-              "row": 8,
-              "col": 10
-            },
-            {
-              "row": 7,
-              "col": 6
-            },
-            {
-              "row": 7,
-              "col": 11
-            }
-          ],
-          "legal_cost_squares": [
-            {
-              "row": 8,
-              "col": 8
-            },
-            {
-              "row": 8,
-              "col": 10
-            },
-            {
-              "row": 7,
-              "col": 6
-            },
-            {
-              "row": 7,
-              "col": 11
-            }
-          ],
+          "winning_squares": [],
+          "legal_cost_squares": [],
           "illegal_cost_squares": [],
           "defender_immediate_wins": [],
           "escape_replies": [],
           "forced_replies": [
-            {
-              "row": 2,
-              "col": 6
-            },
             {
               "row": 6,
               "col": 10
@@ -47911,28 +49141,20 @@
             {
               "row": 7,
               "col": 8
-            },
-            {
-              "row": 8,
-              "col": 8
-            },
-            {
-              "row": 8,
-              "col": 10
-            },
-            {
-              "row": 7,
-              "col": 6
-            },
-            {
-              "row": 7,
-              "col": 11
             }
           ],
           "principal_line": [
             {
               "row": 3,
               "col": 7
+            },
+            {
+              "row": 6,
+              "col": 10
+            },
+            {
+              "row": 1,
+              "col": 5
             },
             {
               "row": 2,
@@ -47969,6 +49191,8 @@
           ],
           "principal_line_notation": [
             "H4",
+            "K7",
+            "F2",
             "G3",
             "I8",
             "I9",
@@ -48641,7 +49865,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 3544,
+      "elapsed_ms": 3574,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -48707,11 +49931,11 @@
         },
         {
           "row": 10,
-          "col": 4
+          "col": 9
         },
         {
           "row": 10,
-          "col": 9
+          "col": 4
         }
       ],
       "unknown_gaps": [],
@@ -48738,10 +49962,6 @@
           ],
           "forced_replies": [
             {
-              "row": 5,
-              "col": 6
-            },
-            {
               "row": 10,
               "col": 6
             },
@@ -48763,7 +49983,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 11,
@@ -48826,10 +50046,6 @@
             },
             {
               "row": 10,
-              "col": 4
-            },
-            {
-              "row": 10,
               "col": 9
             }
           ],
@@ -48864,11 +50080,11 @@
             },
             {
               "row": 10,
-              "col": 4
+              "col": 9
             },
             {
               "row": 10,
-              "col": 9
+              "col": 4
             }
           ],
           "principal_line_notation": [
@@ -48879,8 +50095,8 @@
             "H11",
             "H12",
             "I11",
-            "E11",
-            "J11"
+            "J11",
+            "E11"
           ],
           "limit_hit": false,
           "limit_causes": []
@@ -49544,7 +50760,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 1047,
+      "elapsed_ms": 1022,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -49610,11 +50826,11 @@
         },
         {
           "row": 10,
-          "col": 4
+          "col": 9
         },
         {
           "row": 10,
-          "col": 9
+          "col": 4
         }
       ],
       "unknown_gaps": [],
@@ -49641,10 +50857,6 @@
           ],
           "forced_replies": [
             {
-              "row": 5,
-              "col": 6
-            },
-            {
               "row": 10,
               "col": 6
             },
@@ -49666,7 +50878,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 11,
@@ -49729,10 +50941,6 @@
             },
             {
               "row": 10,
-              "col": 4
-            },
-            {
-              "row": 10,
               "col": 9
             }
           ],
@@ -49767,11 +50975,11 @@
             },
             {
               "row": 10,
-              "col": 4
+              "col": 9
             },
             {
               "row": 10,
-              "col": 9
+              "col": 4
             }
           ],
           "principal_line_notation": [
@@ -49782,8 +50990,8 @@
             "H11",
             "H12",
             "I11",
-            "E11",
-            "J11"
+            "J11",
+            "E11"
           ],
           "limit_hit": false,
           "limit_causes": []
@@ -50447,7 +51655,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 1024,
+      "elapsed_ms": 986,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -50560,10 +51768,6 @@
           ],
           "forced_replies": [
             {
-              "row": 11,
-              "col": 7
-            },
-            {
               "row": 5,
               "col": 2
             },
@@ -50603,10 +51807,6 @@
             {
               "row": 11,
               "col": 9
-            },
-            {
-              "row": 5,
-              "col": 2
             },
             {
               "row": 6,
@@ -51290,8 +52490,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 435,
-                  "branch_probes": 292,
+                  "search_nodes": 731,
+                  "branch_probes": 492,
                   "max_depth_reached": 4
                 }
               }
@@ -51739,8 +52939,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 435,
-                  "branch_probes": 292,
+                  "search_nodes": 731,
+                  "branch_probes": 492,
                   "max_depth_reached": 4
                 }
               }
@@ -52132,8 +53332,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 587,
-                  "branch_probes": 392,
+                  "search_nodes": 1118,
+                  "branch_probes": 748,
                   "max_depth_reached": 4
                 }
               },
@@ -52481,8 +53681,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 101,
-                  "branch_probes": 68,
+                  "search_nodes": 233,
+                  "branch_probes": 154,
                   "max_depth_reached": 4
                 }
               },
@@ -52502,8 +53702,8 @@
                   "depth_cutoff"
                 ],
                 "diagnostics": {
-                  "search_nodes": 261,
-                  "branch_probes": 163,
+                  "search_nodes": 285,
+                  "branch_probes": 175,
                   "max_depth_reached": 4
                 }
               }
@@ -52553,12 +53753,12 @@
         ]
       },
       "proof_detail_diagnostics": {
-        "search_nodes": 10694,
-        "branch_probes": 7113,
+        "search_nodes": 11973,
+        "branch_probes": 7967,
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 4539,
+      "elapsed_ms": 5510,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -52671,10 +53871,6 @@
           ],
           "forced_replies": [
             {
-              "row": 11,
-              "col": 7
-            },
-            {
               "row": 5,
               "col": 2
             },
@@ -52714,10 +53910,6 @@
             {
               "row": 11,
               "col": 9
-            },
-            {
-              "row": 5,
-              "col": 2
             },
             {
               "row": 6,
@@ -53401,8 +54593,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 435,
-                  "branch_probes": 292,
+                  "search_nodes": 731,
+                  "branch_probes": 492,
                   "max_depth_reached": 4
                 }
               }
@@ -53850,8 +55042,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 435,
-                  "branch_probes": 292,
+                  "search_nodes": 731,
+                  "branch_probes": 492,
                   "max_depth_reached": 4
                 }
               }
@@ -54243,8 +55435,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 587,
-                  "branch_probes": 392,
+                  "search_nodes": 1118,
+                  "branch_probes": 748,
                   "max_depth_reached": 4
                 }
               },
@@ -54592,8 +55784,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 101,
-                  "branch_probes": 68,
+                  "search_nodes": 233,
+                  "branch_probes": 154,
                   "max_depth_reached": 4
                 }
               },
@@ -54613,8 +55805,8 @@
                   "depth_cutoff"
                 ],
                 "diagnostics": {
-                  "search_nodes": 261,
-                  "branch_probes": 163,
+                  "search_nodes": 285,
+                  "branch_probes": 175,
                   "max_depth_reached": 4
                 }
               }
@@ -54664,12 +55856,12 @@
         ]
       },
       "proof_detail_diagnostics": {
-        "search_nodes": 10694,
-        "branch_probes": 7113,
+        "search_nodes": 11973,
+        "branch_probes": 7967,
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 4490,
+      "elapsed_ms": 5508,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -54710,24 +55902,16 @@
           "col": 8
         },
         {
+          "row": 5,
+          "col": 8
+        },
+        {
           "row": 7,
           "col": 8
         },
         {
-          "row": 9,
-          "col": 6
-        },
-        {
-          "row": 9,
-          "col": 5
-        },
-        {
-          "row": 9,
-          "col": 9
-        },
-        {
-          "row": 9,
-          "col": 10
+          "row": 10,
+          "col": 8
         },
         {
           "row": 10,
@@ -54738,7 +55922,7 @@
           "col": 5
         },
         {
-          "row": 11,
+          "row": 9,
           "col": 6
         },
         {
@@ -54746,8 +55930,16 @@
           "col": 6
         },
         {
-          "row": 12,
-          "col": 6
+          "row": 9,
+          "col": 5
+        },
+        {
+          "row": 9,
+          "col": 4
+        },
+        {
+          "row": 9,
+          "col": 9
         }
       ],
       "unknown_gaps": [],
@@ -54774,10 +55966,6 @@
           ],
           "forced_replies": [
             {
-              "row": 6,
-              "col": 10
-            },
-            {
               "row": 9,
               "col": 8
             }
@@ -54803,10 +55991,6 @@
           "escape_replies": [],
           "forced_replies": [
             {
-              "row": 7,
-              "col": 8
-            },
-            {
               "row": 5,
               "col": 8
             },
@@ -54817,18 +56001,6 @@
             {
               "row": 9,
               "col": 6
-            },
-            {
-              "row": 9,
-              "col": 5
-            },
-            {
-              "row": 9,
-              "col": 9
-            },
-            {
-              "row": 10,
-              "col": 6
             }
           ],
           "principal_line": [
@@ -54837,24 +56009,16 @@
               "col": 8
             },
             {
+              "row": 5,
+              "col": 8
+            },
+            {
               "row": 7,
               "col": 8
             },
             {
-              "row": 9,
-              "col": 6
-            },
-            {
-              "row": 9,
-              "col": 5
-            },
-            {
-              "row": 9,
-              "col": 9
-            },
-            {
-              "row": 9,
-              "col": 10
+              "row": 10,
+              "col": 8
             },
             {
               "row": 10,
@@ -54865,7 +56029,7 @@
               "col": 5
             },
             {
-              "row": 11,
+              "row": 9,
               "col": 6
             },
             {
@@ -54873,22 +56037,30 @@
               "col": 6
             },
             {
-              "row": 12,
-              "col": 6
+              "row": 9,
+              "col": 5
+            },
+            {
+              "row": 9,
+              "col": 4
+            },
+            {
+              "row": 9,
+              "col": 9
             }
           ],
           "principal_line_notation": [
             "I10",
+            "I6",
             "I8",
-            "G10",
-            "F10",
-            "J10",
-            "K10",
+            "I11",
             "G11",
             "F12",
-            "G12",
+            "G10",
             "G8",
-            "G13"
+            "F10",
+            "E10",
+            "J10"
           ],
           "limit_hit": false,
           "limit_causes": []
@@ -55698,7 +56870,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 551,
+      "elapsed_ms": 547,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -55739,24 +56911,16 @@
           "col": 8
         },
         {
+          "row": 5,
+          "col": 8
+        },
+        {
           "row": 7,
           "col": 8
         },
         {
-          "row": 9,
-          "col": 6
-        },
-        {
-          "row": 9,
-          "col": 5
-        },
-        {
-          "row": 9,
-          "col": 9
-        },
-        {
-          "row": 9,
-          "col": 10
+          "row": 10,
+          "col": 8
         },
         {
           "row": 10,
@@ -55767,7 +56931,7 @@
           "col": 5
         },
         {
-          "row": 11,
+          "row": 9,
           "col": 6
         },
         {
@@ -55775,8 +56939,16 @@
           "col": 6
         },
         {
-          "row": 12,
-          "col": 6
+          "row": 9,
+          "col": 5
+        },
+        {
+          "row": 9,
+          "col": 4
+        },
+        {
+          "row": 9,
+          "col": 9
         }
       ],
       "unknown_gaps": [],
@@ -55803,10 +56975,6 @@
           ],
           "forced_replies": [
             {
-              "row": 6,
-              "col": 10
-            },
-            {
               "row": 9,
               "col": 8
             }
@@ -55832,10 +57000,6 @@
           "escape_replies": [],
           "forced_replies": [
             {
-              "row": 7,
-              "col": 8
-            },
-            {
               "row": 5,
               "col": 8
             },
@@ -55846,18 +57010,6 @@
             {
               "row": 9,
               "col": 6
-            },
-            {
-              "row": 9,
-              "col": 5
-            },
-            {
-              "row": 9,
-              "col": 9
-            },
-            {
-              "row": 10,
-              "col": 6
             }
           ],
           "principal_line": [
@@ -55866,24 +57018,16 @@
               "col": 8
             },
             {
+              "row": 5,
+              "col": 8
+            },
+            {
               "row": 7,
               "col": 8
             },
             {
-              "row": 9,
-              "col": 6
-            },
-            {
-              "row": 9,
-              "col": 5
-            },
-            {
-              "row": 9,
-              "col": 9
-            },
-            {
-              "row": 9,
-              "col": 10
+              "row": 10,
+              "col": 8
             },
             {
               "row": 10,
@@ -55894,7 +57038,7 @@
               "col": 5
             },
             {
-              "row": 11,
+              "row": 9,
               "col": 6
             },
             {
@@ -55902,22 +57046,30 @@
               "col": 6
             },
             {
-              "row": 12,
-              "col": 6
+              "row": 9,
+              "col": 5
+            },
+            {
+              "row": 9,
+              "col": 4
+            },
+            {
+              "row": 9,
+              "col": 9
             }
           ],
           "principal_line_notation": [
             "I10",
+            "I6",
             "I8",
-            "G10",
-            "F10",
-            "J10",
-            "K10",
+            "I11",
             "G11",
             "F12",
-            "G12",
+            "G10",
             "G8",
-            "G13"
+            "F10",
+            "E10",
+            "J10"
           ],
           "limit_hit": false,
           "limit_causes": []
@@ -56727,7 +57879,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 550,
+      "elapsed_ms": 544,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -56776,12 +57928,12 @@
           "col": 7
         },
         {
-          "row": 2,
-          "col": 6
-        },
-        {
           "row": 7,
           "col": 11
+        },
+        {
+          "row": 2,
+          "col": 6
         }
       ],
       "unknown_gaps": [],
@@ -56820,7 +57972,7 @@
           "attacker": "White",
           "side_to_move": "White",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 5,
@@ -56858,10 +58010,6 @@
               "col": 11
             },
             {
-              "row": 2,
-              "col": 6
-            },
-            {
               "row": 7,
               "col": 11
             }
@@ -56880,20 +58028,20 @@
               "col": 7
             },
             {
-              "row": 2,
-              "col": 6
-            },
-            {
               "row": 7,
               "col": 11
+            },
+            {
+              "row": 2,
+              "col": 6
             }
           ],
           "principal_line_notation": [
             "K7",
             "L6",
             "H4",
-            "G3",
-            "L8"
+            "L8",
+            "G3"
           ],
           "limit_hit": false,
           "limit_causes": []
@@ -57291,7 +58439,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 986,
+      "elapsed_ms": 950,
       "prefixes_analyzed": 7,
       "forced_prefix_count": 6,
       "unknown_prefix_count": 0,
@@ -58643,7 +59791,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 532,
+      "elapsed_ms": 534,
       "prefixes_analyzed": 12,
       "forced_prefix_count": 11,
       "unknown_prefix_count": 0,
@@ -58753,10 +59901,6 @@
             },
             {
               "row": 10,
-              "col": 6
-            },
-            {
-              "row": 10,
               "col": 8
             }
           ],
@@ -58773,7 +59917,7 @@
           "attacker": "White",
           "side_to_move": "White",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 11,
@@ -58824,10 +59968,6 @@
             },
             {
               "row": 9,
-              "col": 9
-            },
-            {
-              "row": 6,
               "col": 9
             },
             {
@@ -59766,8 +60906,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 108,
-                  "branch_probes": 73,
+                  "search_nodes": 120,
+                  "branch_probes": 79,
                   "max_depth_reached": 4
                 }
               }
@@ -60234,8 +61374,8 @@
                   "depth_cutoff"
                 ],
                 "diagnostics": {
-                  "search_nodes": 465,
-                  "branch_probes": 287,
+                  "search_nodes": 481,
+                  "branch_probes": 295,
                   "max_depth_reached": 4
                 }
               }
@@ -60285,12 +61425,12 @@
         ]
       },
       "proof_detail_diagnostics": {
-        "search_nodes": 2111,
-        "branch_probes": 1359,
+        "search_nodes": 2139,
+        "branch_probes": 1373,
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 1222,
+      "elapsed_ms": 1328,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -60369,12 +61509,7 @@
               "col": 9
             }
           ],
-          "forced_replies": [
-            {
-              "row": 6,
-              "col": 11
-            }
-          ],
+          "forced_replies": [],
           "principal_line": [],
           "principal_line_notation": [],
           "limit_hit": false,
@@ -60630,16 +61765,6 @@
                 "kinds": [
                   "actual"
                 ]
-              },
-              {
-                "mv": {
-                  "row": 5,
-                  "col": 8
-                },
-                "notation": "I6",
-                "kinds": [
-                  "forbidden"
-                ]
               }
             ],
             "reply_outcomes": []
@@ -60735,16 +61860,6 @@
               "..............."
             ],
             "markers": [
-              {
-                "mv": {
-                  "row": 5,
-                  "col": 8
-                },
-                "notation": "I6",
-                "kinds": [
-                  "forbidden"
-                ]
-              },
               {
                 "mv": {
                   "row": 6,
@@ -60902,7 +62017,7 @@
         "max_depth_reached": 1
       },
       "limit_causes": [],
-      "elapsed_ms": 13,
+      "elapsed_ms": 14,
       "prefixes_analyzed": 7,
       "forced_prefix_count": 6,
       "unknown_prefix_count": 0,
@@ -61007,10 +62122,6 @@
           ],
           "forced_replies": [
             {
-              "row": 7,
-              "col": 6
-            },
-            {
               "row": 11,
               "col": 6
             },
@@ -61066,10 +62177,6 @@
             {
               "row": 7,
               "col": 2
-            },
-            {
-              "row": 7,
-              "col": 4
             }
           ],
           "principal_line": [
@@ -63553,8 +64660,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 184,
-                  "branch_probes": 124,
+                  "search_nodes": 400,
+                  "branch_probes": 270,
                   "max_depth_reached": 4
                 }
               },
@@ -63625,12 +64732,12 @@
         ]
       },
       "proof_detail_diagnostics": {
-        "search_nodes": 10156,
-        "branch_probes": 6801,
+        "search_nodes": 10372,
+        "branch_probes": 6947,
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 7982,
+      "elapsed_ms": 7955,
       "prefixes_analyzed": 17,
       "forced_prefix_count": 16,
       "unknown_prefix_count": 0,
@@ -63735,10 +64842,6 @@
           ],
           "forced_replies": [
             {
-              "row": 7,
-              "col": 6
-            },
-            {
               "row": 11,
               "col": 6
             },
@@ -63794,10 +64897,6 @@
             {
               "row": 7,
               "col": 2
-            },
-            {
-              "row": 7,
-              "col": 4
             }
           ],
           "principal_line": [
@@ -66281,8 +67380,8 @@
                 ],
                 "limit_causes": [],
                 "diagnostics": {
-                  "search_nodes": 184,
-                  "branch_probes": 124,
+                  "search_nodes": 400,
+                  "branch_probes": 270,
                   "max_depth_reached": 4
                 }
               },
@@ -66353,12 +67452,12 @@
         ]
       },
       "proof_detail_diagnostics": {
-        "search_nodes": 10156,
-        "branch_probes": 6801,
+        "search_nodes": 10372,
+        "branch_probes": 6947,
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 5234,
+      "elapsed_ms": 5684,
       "prefixes_analyzed": 17,
       "forced_prefix_count": 16,
       "unknown_prefix_count": 0,
@@ -66423,11 +67522,11 @@
           "col": 12
         },
         {
-          "row": 6,
+          "row": 11,
           "col": 12
         },
         {
-          "row": 11,
+          "row": 6,
           "col": 12
         }
       ],
@@ -66467,7 +67566,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 7,
@@ -66529,10 +67628,6 @@
               "col": 11
             },
             {
-              "row": 6,
-              "col": 12
-            },
-            {
               "row": 11,
               "col": 12
             }
@@ -66567,11 +67662,11 @@
               "col": 12
             },
             {
-              "row": 6,
+              "row": 11,
               "col": 12
             },
             {
-              "row": 11,
+              "row": 6,
               "col": 12
             }
           ],
@@ -66583,8 +67678,8 @@
             "M11",
             "L10",
             "M10",
-            "M7",
-            "M12"
+            "M12",
+            "M7"
           ],
           "limit_hit": false,
           "limit_causes": []
@@ -67148,7 +68243,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 3039,
+      "elapsed_ms": 3089,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -67213,11 +68308,11 @@
           "col": 12
         },
         {
-          "row": 6,
+          "row": 11,
           "col": 12
         },
         {
-          "row": 11,
+          "row": 6,
           "col": 12
         }
       ],
@@ -67257,7 +68352,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 7,
@@ -67319,10 +68414,6 @@
               "col": 11
             },
             {
-              "row": 6,
-              "col": 12
-            },
-            {
               "row": 11,
               "col": 12
             }
@@ -67357,11 +68448,11 @@
               "col": 12
             },
             {
-              "row": 6,
+              "row": 11,
               "col": 12
             },
             {
-              "row": 11,
+              "row": 6,
               "col": 12
             }
           ],
@@ -67373,8 +68464,8 @@
             "M11",
             "L10",
             "M10",
-            "M7",
-            "M12"
+            "M12",
+            "M7"
           ],
           "limit_hit": false,
           "limit_causes": []
@@ -67938,7 +69029,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 2959,
+      "elapsed_ms": 2890,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -69238,7 +70329,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 234,
+      "elapsed_ms": 250,
       "prefixes_analyzed": 10,
       "forced_prefix_count": 9,
       "unknown_prefix_count": 0,
@@ -69327,10 +70418,6 @@
           ],
           "forced_replies": [
             {
-              "row": 5,
-              "col": 9
-            },
-            {
               "row": 9,
               "col": 5
             },
@@ -69356,7 +70443,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 6,
@@ -69408,10 +70495,6 @@
             {
               "row": 5,
               "col": 3
-            },
-            {
-              "row": 10,
-              "col": 8
             }
           ],
           "principal_line": [
@@ -70109,7 +71192,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 856,
+      "elapsed_ms": 931,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -70198,10 +71281,6 @@
           ],
           "forced_replies": [
             {
-              "row": 5,
-              "col": 9
-            },
-            {
               "row": 9,
               "col": 5
             },
@@ -70227,7 +71306,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 6,
@@ -70279,10 +71358,6 @@
             {
               "row": 5,
               "col": 3
-            },
-            {
-              "row": 10,
-              "col": 8
             }
           ],
           "principal_line": [
@@ -70980,7 +72055,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 852,
+      "elapsed_ms": 945,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -71046,11 +72121,11 @@
         },
         {
           "row": 4,
-          "col": 2
+          "col": 7
         },
         {
           "row": 4,
-          "col": 7
+          "col": 2
         }
       ],
       "unknown_gaps": [],
@@ -71103,7 +72178,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 3,
@@ -71166,10 +72241,6 @@
             },
             {
               "row": 4,
-              "col": 2
-            },
-            {
-              "row": 4,
               "col": 7
             }
           ],
@@ -71204,11 +72275,11 @@
             },
             {
               "row": 4,
-              "col": 2
+              "col": 7
             },
             {
               "row": 4,
-              "col": 7
+              "col": 2
             }
           ],
           "principal_line_notation": [
@@ -71219,8 +72290,8 @@
             "F5",
             "F6",
             "G5",
-            "C5",
-            "H5"
+            "H5",
+            "C5"
           ],
           "limit_hit": false,
           "limit_causes": []
@@ -71894,7 +72965,7 @@
         "max_depth_reached": 1
       },
       "limit_causes": [],
-      "elapsed_ms": 374,
+      "elapsed_ms": 371,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -71960,11 +73031,11 @@
         },
         {
           "row": 4,
-          "col": 2
+          "col": 7
         },
         {
           "row": 4,
-          "col": 7
+          "col": 2
         }
       ],
       "unknown_gaps": [],
@@ -72017,7 +73088,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 3,
@@ -72080,10 +73151,6 @@
             },
             {
               "row": 4,
-              "col": 2
-            },
-            {
-              "row": 4,
               "col": 7
             }
           ],
@@ -72118,11 +73185,11 @@
             },
             {
               "row": 4,
-              "col": 2
+              "col": 7
             },
             {
               "row": 4,
-              "col": 7
+              "col": 2
             }
           ],
           "principal_line_notation": [
@@ -72133,8 +73200,8 @@
             "F5",
             "F6",
             "G5",
-            "C5",
-            "H5"
+            "H5",
+            "C5"
           ],
           "limit_hit": false,
           "limit_causes": []
@@ -72808,7 +73875,7 @@
         "max_depth_reached": 1
       },
       "limit_causes": [],
-      "elapsed_ms": 375,
+      "elapsed_ms": 370,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -72897,10 +73964,6 @@
           ],
           "forced_replies": [
             {
-              "row": 4,
-              "col": 5
-            },
-            {
               "row": 8,
               "col": 9
             },
@@ -72926,7 +73989,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 5,
@@ -72978,10 +74041,6 @@
             {
               "row": 4,
               "col": 11
-            },
-            {
-              "row": 9,
-              "col": 6
             }
           ],
           "principal_line": [
@@ -73679,7 +74738,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 854,
+      "elapsed_ms": 840,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -73768,10 +74827,6 @@
           ],
           "forced_replies": [
             {
-              "row": 4,
-              "col": 5
-            },
-            {
               "row": 8,
               "col": 9
             },
@@ -73797,7 +74852,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 5,
@@ -73849,10 +74904,6 @@
             {
               "row": 4,
               "col": 11
-            },
-            {
-              "row": 9,
-              "col": 6
             }
           ],
           "principal_line": [
@@ -74550,7 +75601,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 866,
+      "elapsed_ms": 826,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -74644,10 +75695,6 @@
             },
             {
               "row": 4,
-              "col": 9
-            },
-            {
-              "row": 4,
               "col": 10
             },
             {
@@ -74680,7 +75727,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 8,
@@ -74732,10 +75779,6 @@
             {
               "row": 7,
               "col": 4
-            },
-            {
-              "row": 12,
-              "col": 9
             }
           ],
           "principal_line": [
@@ -75664,7 +76707,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 14248,
+      "elapsed_ms": 12326,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -75758,10 +76801,6 @@
             },
             {
               "row": 4,
-              "col": 9
-            },
-            {
-              "row": 4,
               "col": 10
             },
             {
@@ -75794,7 +76833,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 8,
@@ -75846,10 +76885,6 @@
             {
               "row": 7,
               "col": 4
-            },
-            {
-              "row": 12,
-              "col": 9
             }
           ],
           "principal_line": [
@@ -76778,7 +77813,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 12046,
+      "elapsed_ms": 11223,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -76867,10 +77902,6 @@
           ],
           "forced_replies": [
             {
-              "row": 5,
-              "col": 5
-            },
-            {
               "row": 9,
               "col": 9
             },
@@ -76896,7 +77927,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 6,
@@ -76948,10 +77979,6 @@
             {
               "row": 5,
               "col": 11
-            },
-            {
-              "row": 10,
-              "col": 6
             }
           ],
           "principal_line": [
@@ -77649,7 +78676,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 834,
+      "elapsed_ms": 897,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -77738,10 +78765,6 @@
           ],
           "forced_replies": [
             {
-              "row": 5,
-              "col": 5
-            },
-            {
               "row": 9,
               "col": 9
             },
@@ -77767,7 +78790,7 @@
           "attacker": "Black",
           "side_to_move": "Black",
           "status": "forced_win",
-          "reply_classification": "blocked_but_forced",
+          "reply_classification": "no_legal_block",
           "winning_squares": [
             {
               "row": 6,
@@ -77819,10 +78842,6 @@
             {
               "row": 5,
               "col": 11
-            },
-            {
-              "row": 10,
-              "col": 6
             }
           ],
           "principal_line": [
@@ -78520,7 +79539,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 872,
+      "elapsed_ms": 895,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
