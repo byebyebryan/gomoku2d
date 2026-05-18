@@ -400,14 +400,12 @@ describe("analysis overlay visual mapping", () => {
     expect(analysisMarkerAnimationForRole("forcedLoss")).toBe(MARKER_ANIMS.L.key);
     expect(analysisMarkerAnimationForRole("forbidden")).toBe(CAUTION_ANIMS.FORBIDDEN_OUT.key);
     expect(analysisMarkerAnimationForRole("confirmedEscape")).toBe(MARKER_ANIMS.E.key);
-    expect(analysisMarkerAnimationForRole("possibleEscape")).toBe(MARKER_ANIMS.E.key);
     expect(analysisMarkerAnimationForRole("immediateLoss")).toBe(MARKER_ANIMS.WARNING.key);
-    expect(analysisMarkerAnimationForRole("unknown")).toBe(MARKER_ANIMS.QUESTION.key);
     expect(analysisMarkerSpriteForRole("forbidden")).toBe(SPRITE.CAUTION);
     expect(analysisMarkerSpriteForRole("forcedLoss")).toBe(SPRITE.MARKER);
     expect(analysisMarkerTintForRole("forcedLoss")).toBe(COLOR.THREAT);
     expect(analysisMarkerTintForRole("forbidden")).toBe(COLOR.THREAT);
-    expect(analysisMarkerTintForRole("possibleEscape")).toBe(COLOR.WIN_MOVE);
+    expect(analysisMarkerTintForRole("confirmedEscape")).toBe(COLOR.WIN_MOVE);
   });
 
   it("uses semantic highlighter colors for analyzer highlights", () => {

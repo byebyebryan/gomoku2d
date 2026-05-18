@@ -801,7 +801,7 @@ export class BoardScene extends Phaser.Scene {
           point.y,
           analysisMarkerTintForRole(overlay.marker),
           analysisMarkerAnimationForRole(overlay.marker),
-          BOARD_RENDER_DEPTHS.OVERLAY_SURFACE,
+          BOARD_RENDER_DEPTHS.OVERLAY_MARKER,
           analysisMarkerSpriteForRole(overlay.marker),
         ),
       );
