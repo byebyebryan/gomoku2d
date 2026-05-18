@@ -16,6 +16,11 @@ Prefer table-driven scenario coverage over one-off bug fixtures. A regression
 test that starts as a narrow bug reproduction should be consolidated into the
 nearest scenario table or behavior contract before commit whenever possible.
 
+When several consumers need the same tactical or analysis semantics, keep one
+owned mapping/helper below the UI or report layer and test the consumers as thin
+adapters. Avoid copying role/outcome switch statements into every route, report,
+and bridge path; that makes later tactical wording changes drift-prone.
+
 Avoid tests that only lock internal implementation details:
 
 - Helper names or private call paths.

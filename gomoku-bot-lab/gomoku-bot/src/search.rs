@@ -2005,7 +2005,7 @@ fn current_obligation_safety_policy_after_immediate(
     let active_imminent_threats = view
         .active_corridor_threats(opponent)
         .into_iter()
-        .filter(|fact| is_imminent_obligation_kind(fact.kind))
+        .filter(|fact| CorridorThreatPolicy.is_visible_imminent_hint(board, opponent, fact))
         .collect::<Vec<_>>();
     if active_imminent_threats.is_empty() {
         return SafetyFilterOutcome {
@@ -2053,13 +2053,6 @@ fn filtered_or_original(original: &[Move], filtered: Vec<Move>) -> Vec<Move> {
     } else {
         filtered
     }
-}
-
-fn is_imminent_obligation_kind(kind: LocalThreatKind) -> bool {
-    matches!(
-        kind,
-        LocalThreatKind::OpenThree | LocalThreatKind::BrokenThree
-    )
 }
 
 fn creates_counter_four(annotation: TacticalMoveAnnotation) -> bool {

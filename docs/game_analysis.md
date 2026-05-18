@@ -560,9 +560,10 @@ the lab/report shell and `gomoku-wasm` as the browser bridge:
 - `--include-proof-details` adds previous-prefix/final-start proof snapshots and
   visual decision frames for audit runs.
 - `WasmReplayAnalyzer.createFromReplayJson(...).step(...)` exposes the same
-  model to browser code. The first web bridge is blocking internally but uses a
-  step-shaped API so the replay page can move to chunked/progressive execution
-  without changing route-level callers.
+  model to browser code.
+- `ReplayAnalysisRunner` runs that wasm analyzer in a web worker and streams
+  step results back to the replay page, so route-level callers receive the same
+  progressive shape as the lab report path.
 - `gomoku-web/src/replay/replay_analysis_core.ts` converts `SavedMatchV2`
   records into core replay JSON with exact wasm-generated position hashes, then
   constructs the analyzer.
@@ -573,15 +574,15 @@ published as `/analysis-report/`. It should be generated from
 the current published bot report's top-two matchup rather than an arbitrary
 debug sample.
 
-The current `v0.4.2` checkpoint:
+The current analyzer checkpoint:
 
 - uses `reply_policy = corridor_replies`,
 - uses corridor proof depth `4`,
 - uses `max_scan_plies = 64`,
-- resolves the current top-two 64-game sample with `64 analyzed / 64 total` and
-  `0 failed`,
-- classifies the sample as `3` mistakes, `25` tactical errors, `35` strategic
-  losses, and `1` draw/ongoing game.
+- generates the curated 64-game top-two report under
+  `gomoku-bot-lab/analysis-reports/`,
+- powers replay-screen highlights and markers from saved replay data without
+  persisting analysis results in local/cloud profile schema.
 
 Historical implementation notes, older telemetry, rejected proof policies, and
 debugging details are archived in
@@ -617,7 +618,5 @@ cargo run --release -p gomoku-eval -- analyze-report-replays \
 Keep scratch output under `gomoku-bot-lab/outputs/analysis/`. Commit only
 analyzer code, docs, and deliberately curated report artifacts.
 
-Next product decision: wire the web bridge through a worker and replay-screen
-annotations. Keep analysis derived from saved replay data; do not persist it in
-local/cloud profile schema unless repeated runtime cost becomes a real product
-problem.
+Keep analysis derived from saved replay data; do not persist it in local/cloud
+profile schema unless repeated runtime cost becomes a real product problem.

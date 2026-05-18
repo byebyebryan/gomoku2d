@@ -67,7 +67,7 @@ function markerRole(role: ReplayFrameMarkerRole): BoardAnalysisOverlay["marker"]
   switch (role) {
     case "confirmed_escape":
     case "possible_escape":
-      return "confirmedEscape";
+      return "escape";
     case "forbidden":
       return "forbidden";
     case "forced_loss":

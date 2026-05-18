@@ -6,6 +6,7 @@ import { createStore } from "zustand/vanilla";
 import { Board } from "../components/Board/Board";
 import { cloudAuthStore } from "../cloud/auth_store";
 import {
+  DEFAULT_BOT_CONFIG,
   botConfigSummary,
   botPlayerName,
   botLabel,
@@ -35,7 +36,7 @@ const loadingMatchStore = createStore<LocalMatchState>(() => ({
   cells: loadingCells(),
   counterThreatMoves: [],
   currentPlayer: 1,
-  currentBotConfig: { mode: "preset", preset: "normal", version: 1 },
+  currentBotConfig: DEFAULT_BOT_CONFIG,
   currentVariant: "freestyle",
   forbiddenMoves: [],
   imminentThreatMoves: [],
@@ -45,10 +46,10 @@ const loadingMatchStore = createStore<LocalMatchState>(() => ({
   placeHumanMove: () => false,
   players: [
     { kind: "human", name: "Guest", stone: "black" },
-    { kind: "bot", name: botPlayerName({ mode: "preset", preset: "normal", version: 1 }), stone: "white" },
+    { kind: "bot", name: botPlayerName(DEFAULT_BOT_CONFIG), stone: "white" },
   ],
   playerClockMs: [0, 0],
-  selectedBotConfig: { mode: "preset", preset: "normal", version: 1 },
+  selectedBotConfig: DEFAULT_BOT_CONFIG,
   selectedVariant: "freestyle",
   selectBotConfig: () => undefined,
   selectVariant: () => undefined,

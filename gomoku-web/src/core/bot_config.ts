@@ -6,6 +6,10 @@ export type BotWidth = "full" | 8 | 16;
 export type BotScoring = "pattern" | "simple";
 export type BotExtraPass = "corridor_proof" | "none";
 
+export const BOT_PRESET_IDS: BotPresetId[] = ["easy", "normal", "hard"];
+export const BOT_DEPTHS: BotDepth[] = [1, 3, 5, 7];
+export const BOT_WIDTHS: BotWidth[] = [8, 16, "full"];
+
 export interface BotPresetConfigV1 {
   mode: "preset";
   preset: BotPresetId;

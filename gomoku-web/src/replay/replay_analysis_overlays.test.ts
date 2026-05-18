@@ -290,7 +290,7 @@ describe("analysisOverlaysForFrame", () => {
     const annotations = mergeReplayAnalysisAnnotations({}, step(frame));
 
     expect(analysisOverlaysForFrame(annotations, match("black_won"), 4)).toEqual([
-      expect.objectContaining({ marker: "confirmedEscape", row: 7, col: 8 }),
+      expect.objectContaining({ marker: "escape", row: 7, col: 8 }),
       expect.objectContaining({ marker: "forbidden", row: 7, col: 9 }),
     ]);
   });

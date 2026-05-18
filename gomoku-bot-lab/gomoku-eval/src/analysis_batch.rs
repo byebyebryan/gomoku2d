@@ -1788,29 +1788,8 @@ fn add_loser_candidate_markers(
     let defender = winner.opponent();
     for candidate in candidates {
         for role in &candidate.roles {
-            match role {
-                DefenderReplyRole::Actual => {}
-                DefenderReplyRole::ImmediateDefense => {
-                    add_marker_kind(
-                        markers,
-                        [candidate.mv],
-                        AnalysisBatchProofMarkerKind::Threat,
-                    );
-                }
-                DefenderReplyRole::ImminentDefense => {
-                    add_marker_kind(
-                        markers,
-                        [candidate.mv],
-                        AnalysisBatchProofMarkerKind::ImminentDefense,
-                    );
-                }
-                DefenderReplyRole::OffensiveCounter => {
-                    add_marker_kind(
-                        markers,
-                        [candidate.mv],
-                        AnalysisBatchProofMarkerKind::OffensiveCounter,
-                    );
-                }
+            if let Some(kind) = marker_kind_for_defender_reply_role(*role, None) {
+                add_marker_kind(markers, [candidate.mv], kind);
             }
         }
         if !board.is_legal_for_color(candidate.mv, defender) {
@@ -1889,24 +1868,18 @@ fn add_reply_outcome_markers(
 ) {
     for reply in replies {
         for role in &reply.roles {
-            let kind = match role {
-                DefenderReplyRole::Actual => AnalysisBatchProofMarkerKind::Actual,
-                DefenderReplyRole::ImmediateDefense => AnalysisBatchProofMarkerKind::Threat,
-                DefenderReplyRole::ImminentDefense => AnalysisBatchProofMarkerKind::ImminentDefense,
-                DefenderReplyRole::OffensiveCounter => {
-                    AnalysisBatchProofMarkerKind::OffensiveCounter
-                }
-            };
-            add_marker_kind(markers, [reply.mv], kind);
+            if let Some(kind) = marker_kind_for_defender_reply_role(
+                *role,
+                Some(AnalysisBatchProofMarkerKind::Actual),
+            ) {
+                add_marker_kind(markers, [reply.mv], kind);
+            }
         }
-        let outcome_kind = match reply.outcome {
-            DefenderReplyOutcome::ForcedLoss => AnalysisBatchProofMarkerKind::ForcedLoss,
-            DefenderReplyOutcome::ConfirmedEscape => AnalysisBatchProofMarkerKind::ConfirmedEscape,
-            DefenderReplyOutcome::PossibleEscape => AnalysisBatchProofMarkerKind::PossibleEscape,
-            DefenderReplyOutcome::ImmediateLoss => AnalysisBatchProofMarkerKind::ImmediateLoss,
-            DefenderReplyOutcome::Unknown => AnalysisBatchProofMarkerKind::UnknownOutcome,
-        };
-        add_marker_kind(markers, [reply.mv], outcome_kind);
+        add_marker_kind(
+            markers,
+            [reply.mv],
+            marker_kind_for_defender_reply_outcome(reply.outcome),
+        );
     }
 }
 
@@ -2020,22 +1993,33 @@ fn add_actual_hint_markers(
     }
 
     for role in defender_reply_roles_for_move(board, winner, mv) {
-        match role {
-            DefenderReplyRole::Actual => {}
-            DefenderReplyRole::ImmediateDefense => {
-                add_marker_kind(markers, [mv], AnalysisBatchProofMarkerKind::Threat);
-            }
-            DefenderReplyRole::ImminentDefense => {
-                add_marker_kind(markers, [mv], AnalysisBatchProofMarkerKind::ImminentDefense);
-            }
-            DefenderReplyRole::OffensiveCounter => {
-                add_marker_kind(
-                    markers,
-                    [mv],
-                    AnalysisBatchProofMarkerKind::OffensiveCounter,
-                );
-            }
+        if let Some(kind) = marker_kind_for_defender_reply_role(role, None) {
+            add_marker_kind(markers, [mv], kind);
         }
+    }
+}
+
+fn marker_kind_for_defender_reply_role(
+    role: DefenderReplyRole,
+    actual_kind: Option<AnalysisBatchProofMarkerKind>,
+) -> Option<AnalysisBatchProofMarkerKind> {
+    match role {
+        DefenderReplyRole::Actual => actual_kind,
+        DefenderReplyRole::ImmediateDefense => Some(AnalysisBatchProofMarkerKind::Threat),
+        DefenderReplyRole::ImminentDefense => Some(AnalysisBatchProofMarkerKind::ImminentDefense),
+        DefenderReplyRole::OffensiveCounter => Some(AnalysisBatchProofMarkerKind::OffensiveCounter),
+    }
+}
+
+fn marker_kind_for_defender_reply_outcome(
+    outcome: DefenderReplyOutcome,
+) -> AnalysisBatchProofMarkerKind {
+    match outcome {
+        DefenderReplyOutcome::ForcedLoss => AnalysisBatchProofMarkerKind::ForcedLoss,
+        DefenderReplyOutcome::ConfirmedEscape => AnalysisBatchProofMarkerKind::ConfirmedEscape,
+        DefenderReplyOutcome::PossibleEscape => AnalysisBatchProofMarkerKind::PossibleEscape,
+        DefenderReplyOutcome::ImmediateLoss => AnalysisBatchProofMarkerKind::ImmediateLoss,
+        DefenderReplyOutcome::Unknown => AnalysisBatchProofMarkerKind::UnknownOutcome,
     }
 }
 
