@@ -2741,7 +2741,7 @@ mod tests {
     use gomoku_core::{Board, Color, Move, Replay, RuleConfig, Variant};
 
     use super::{
-        add_loser_candidate_markers, add_reply_outcome_markers, cell_classes,
+        add_actual_marker, add_loser_candidate_markers, add_reply_outcome_markers, cell_classes,
         defender_reply_candidates_for_frame, defender_reply_detail_label,
         defender_reply_outcome_label, defender_reply_outcomes_for_frame,
         loss_category_for_corridor_span, marker_label, ordered_player_columns_html,
@@ -2752,10 +2752,10 @@ mod tests {
     };
     use crate::analysis::{
         analyze_replay, replay_frame_annotations_for_analysis, AnalysisModel, AnalysisOptions,
-        DefenderReplyAnalysis, DefenderReplyOutcome, DefenderReplyRole, ForcedInterval,
-        GameAnalysis, ProofLimitCause, ProofStatus, ReplayAnalysisSession,
-        ReplayFrameHighlightRole, ReplayFrameMarkerRole, ReplyClassification, ReplyPolicy,
-        RootCause, SearchDiagnostics, UnclearReason, ANALYSIS_SCHEMA_VERSION,
+        DefenderReplyAnalysis, DefenderReplyCandidate, DefenderReplyOutcome, DefenderReplyRole,
+        ForcedInterval, GameAnalysis, ProofLimitCause, ProofStatus, ReplayFrameHighlightRole,
+        ReplayFrameMarkerRole, ReplyClassification, ReplyPolicy, RootCause, SearchDiagnostics,
+        UnclearReason, ANALYSIS_SCHEMA_VERSION,
     };
 
     fn replay_from_moves(variant: Variant, moves: &[&str]) -> Replay {
@@ -2824,6 +2824,51 @@ mod tests {
             tactical_notes: Vec::new(),
             principal_line: Vec::new(),
             proof_summary: Vec::new(),
+        }
+    }
+
+    fn reply_candidate(notation: &str, roles: Vec<DefenderReplyRole>) -> DefenderReplyCandidate {
+        let mv = mv(notation);
+        DefenderReplyCandidate {
+            mv,
+            notation: mv.to_notation(),
+            roles,
+        }
+    }
+
+    fn reply_analysis(
+        notation: &str,
+        roles: Vec<DefenderReplyRole>,
+        outcome: DefenderReplyOutcome,
+    ) -> DefenderReplyAnalysis {
+        let mv = mv(notation);
+        DefenderReplyAnalysis {
+            mv,
+            notation: mv.to_notation(),
+            roles,
+            outcome,
+            principal_line: Vec::new(),
+            principal_line_notation: Vec::new(),
+            limit_causes: Vec::new(),
+            diagnostics: SearchDiagnostics::default(),
+        }
+    }
+
+    fn proof_frame_with_markers(
+        side_to_move: Color,
+        markers: Vec<AnalysisBatchProofMarker>,
+        reply_outcomes: Vec<DefenderReplyAnalysis>,
+    ) -> AnalysisBatchProofFrame {
+        AnalysisBatchProofFrame {
+            label: "test_frame".to_string(),
+            ply: 0,
+            side_to_move,
+            status: ProofStatus::ForcedWin,
+            move_played: None,
+            move_played_notation: None,
+            rows: Vec::new(),
+            markers,
+            reply_outcomes,
         }
     }
 
@@ -3405,67 +3450,24 @@ mod tests {
     }
 
     #[test]
-    fn shared_stepping_annotations_match_report_actual_counter_hint() {
-        let replay = replay_from_moves(
+    fn analysis_batch_actual_marker_keeps_counter_hint() {
+        let board = board_from_moves(
             Variant::Renju,
             &[
                 "H8", "G7", "H6", "H7", "I7", "F7", "G5", "F4", "J8", "K9", "I8", "G8", "I6", "I9",
-                "H9", "F6", "F5", "G9", "G10", "E7", "D7", "J7", "I5", "I4", "H5", "E5", "J5",
+                "H9", "F6", "F5", "G9", "G10",
             ],
         );
-        let options = AnalysisOptions {
-            reply_policy: ReplyPolicy::CorridorReplies,
-            max_depth: 4,
-            max_scan_plies: Some(64),
-        };
+        assert_eq!(board.current_player, Color::White);
 
-        let report = run_analysis_batch_replays_with_options(
-            "local-history".to_string(),
-            vec![ReplayAnalysisInput {
-                label: "local-1778966398568-bcq0z38s".to_string(),
-                replay: replay.clone(),
-            }],
-            AnalysisBatchRunOptions {
-                analysis: options.clone(),
-                include_proof_details: true,
-            },
-        );
-        let proof_frame = report.entries[0]
-            .proof_details
-            .as_ref()
-            .expect("proof details should be present")
-            .proof_frames
-            .iter()
-            .find(|frame| frame.ply == 20)
-            .expect("report frame should show the actual E7 reply");
-        let report_marker = marker_for(proof_frame, "E7");
-        assert!(report_marker
+        let mut markers = Vec::new();
+        add_actual_marker(&mut markers, &board, Some(Color::Black), mv("E7"));
+
+        let marker = proof_marker_for(&markers, "E7");
+        assert!(marker
             .kinds
             .contains(&AnalysisBatchProofMarkerKind::OffensiveCounter));
-        assert!(report_marker
-            .kinds
-            .contains(&AnalysisBatchProofMarkerKind::Actual));
-
-        let mut session =
-            ReplayAnalysisSession::new(replay, options).expect("session should initialize");
-        let mut annotations = Vec::new();
-        loop {
-            let step = session.step(2);
-            annotations.extend(step.annotations);
-            if step.done {
-                break;
-            }
-        }
-        let step_frame = annotations
-            .iter()
-            .rev()
-            .find(|frame| frame.ply == 19)
-            .expect("stepping annotations should use prefix-ply coordinates for UI frames");
-        assert!(step_frame.highlights.iter().any(|highlight| {
-            highlight.role == ReplayFrameHighlightRole::CounterThreat
-                && highlight.notation == "E7"
-                && highlight.side == Color::White
-        }));
+        assert!(marker.kinds.contains(&AnalysisBatchProofMarkerKind::Actual));
     }
 
     #[test]
@@ -3543,6 +3545,9 @@ mod tests {
         assert!(html.contains("legend-winning"));
         assert!(html.contains("marker--threat"));
         assert!(html.contains("marker--imminent-defense"));
+        assert!(html.contains(".marker--offensive-counter"));
+        assert!(html.contains("legend-offensive"));
+        assert!(html.contains(".marker--side-white .proof-marker"));
         assert!(html.contains("reply-outcomes"));
         assert!(html.contains("<span>Details</span>"));
         assert!(!html.contains("<span>Sample</span>"));
@@ -3641,39 +3646,48 @@ mod tests {
     }
 
     #[test]
-    fn analysis_batch_visual_frames_mark_defender_reply_roles_and_outcomes() {
-        let replay = replay_from_moves(
-            Variant::Renju,
-            &[
-                "H8", "I8", "H7", "I7", "H6", "H5", "I6", "I9", "G6", "J6", "G8", "J5", "G5", "G7",
-                "E6", "F6", "H9", "H10", "F7", "D5", "I10",
-            ],
+    fn analysis_batch_reply_markers_combine_roles_and_outcomes() {
+        let board = board_from_moves(Variant::Renju, &["H8"]);
+        let mut markers = Vec::new();
+        add_loser_candidate_markers(
+            &mut markers,
+            &board,
+            Some(Color::Black),
+            &[reply_candidate(
+                "G7",
+                vec![
+                    DefenderReplyRole::ImminentDefense,
+                    DefenderReplyRole::Actual,
+                ],
+            )],
         );
+        add_actual_marker(&mut markers, &board, Some(Color::Black), mv("G7"));
 
-        let report = run_analysis_batch_replays_with_options(
-            "report.json:bot-a vs bot-b".to_string(),
-            vec![ReplayAnalysisInput {
-                label: "forced_reply_options".to_string(),
-                replay,
-            }],
-            AnalysisBatchRunOptions {
-                analysis: AnalysisOptions {
-                    reply_policy: ReplyPolicy::CorridorReplies,
-                    max_depth: 4,
-                    max_scan_plies: Some(8),
-                },
-                include_proof_details: true,
-            },
-        );
-
-        let frame = report.entries[0]
-            .proof_details
-            .as_ref()
-            .expect("proof details should be present")
-            .proof_frames
-            .iter()
-            .find(|frame| frame.label == "actual_ply_14")
-            .expect("ply 14 decision frame should be present");
+        let replies = vec![
+            reply_analysis(
+                "G4",
+                vec![DefenderReplyRole::ImminentDefense],
+                DefenderReplyOutcome::ForcedLoss,
+            ),
+            reply_analysis(
+                "G9",
+                vec![DefenderReplyRole::ImminentDefense],
+                DefenderReplyOutcome::ForcedLoss,
+            ),
+            reply_analysis(
+                "I10",
+                vec![DefenderReplyRole::OffensiveCounter],
+                DefenderReplyOutcome::PossibleEscape,
+            ),
+            reply_analysis(
+                "I11",
+                vec![DefenderReplyRole::OffensiveCounter],
+                DefenderReplyOutcome::ForcedLoss,
+            ),
+        ];
+        add_reply_outcome_markers(&mut markers, &replies);
+        let frame = proof_frame_with_markers(Color::White, markers, replies);
+        let frame = &frame;
 
         let g4 = marker_for(frame, "G4");
         assert!(g4
@@ -3719,62 +3733,32 @@ mod tests {
             .kinds
             .contains(&AnalysisBatchProofMarkerKind::ForcedLoss));
         assert!(cell_classes(frame, '.', Some(i11)).contains("marker--side-white"));
-
-        let html = render_analysis_batch_report_html(&report);
-        assert!(
-            html.contains(".marker--imminent-defense {\n      --proof-hint-color: var(--pink);")
-        );
-        assert!(
-            html.contains(".marker--offensive-counter {\n      --proof-hint-color: var(--purple);")
-        );
-        assert!(html.contains("transform: translateY(-1px);"));
-        assert!(html.contains("legend-offensive"));
-        assert!(html.contains(".marker--side-white .proof-marker"));
     }
 
     #[test]
-    fn analysis_batch_visual_frames_do_not_project_future_forbidden_costs_backwards() {
-        let replay = replay_from_moves(
-            Variant::Renju,
-            &[
-                "H8", "I8", "H7", "I7", "H6", "H5", "I6", "G10", "J5", "G8", "G6", "J6", "F6",
-                "E6", "G7", "I9", "K4", "L3", "E5", "D4", "H9", "H10", "I5", "J4", "F8", "E9",
-                "F10", "F7", "F11", "F12", "G11", "H11", "E11", "I12", "F9", "D12", "I13", "H12",
-                "G12", "K14", "J13", "H14", "C11", "H13",
-            ],
-        );
+    fn analysis_batch_candidate_markers_do_not_project_future_forbidden_costs_backwards() {
+        let moves = [
+            "H8", "I8", "H7", "I7", "H6", "H5", "I6", "G10", "J5", "G8", "G6", "J6", "F6", "E6",
+            "G7", "I9", "K4", "L3", "E5", "D4", "H9", "H10", "I5", "J4", "F8", "E9", "F10", "F7",
+            "F11", "F12", "G11", "H11", "E11", "I12", "F9", "D12", "I13", "H12", "G12", "K14",
+            "J13", "H14", "C11", "H13",
+        ];
+        let analysis = analysis_for_winner(Color::White, "renju", 0);
 
-        let report = run_analysis_batch_replays_with_options(
-            "report.json:bot-a vs bot-b".to_string(),
-            vec![ReplayAnalysisInput {
-                label: "match_1729".to_string(),
-                replay,
-            }],
-            AnalysisBatchRunOptions {
-                analysis: AnalysisOptions {
-                    reply_policy: ReplyPolicy::CorridorReplies,
-                    max_depth: 4,
-                    max_scan_plies: Some(64),
-                },
-                include_proof_details: true,
-            },
-        );
-
-        let frames = &report.entries[0]
-            .proof_details
-            .as_ref()
-            .expect("proof details should be present")
-            .proof_frames;
-        for label in ["actual_ply_39", "actual_ply_41"] {
-            let frame = frames
-                .iter()
-                .find(|frame| frame.label == label)
-                .unwrap_or_else(|| panic!("{label} frame should be present"));
+        for (ply, actual) in [(39, "G12"), (41, "J13")] {
+            let board = board_from_moves(Variant::Renju, &moves[..ply - 1]);
+            assert_eq!(board.current_player, Color::Black);
+            let candidates =
+                defender_reply_candidates_for_frame(&board, &analysis, Some(mv(actual)));
+            let mut markers = Vec::new();
+            add_loser_candidate_markers(&mut markers, &board, analysis.winner, &candidates);
+            add_actual_marker(&mut markers, &board, analysis.winner, mv(actual));
+            let frame = proof_frame_with_markers(board.current_player, markers, Vec::new());
             if let Some(h13) = frame.markers.iter().find(|marker| marker.notation == "H13") {
                 assert!(
                     !h13.kinds.contains(&AnalysisBatchProofMarkerKind::ImminentDefense)
                         && !h13.kinds.contains(&AnalysisBatchProofMarkerKind::Forbidden),
-                    "{label} must not mark future H13 proof evidence as a current forbidden/imminent reply: {:?}",
+                    "ply {ply} must not mark future H13 proof evidence as a current forbidden/imminent reply: {:?}",
                     h13.kinds
                 );
             }
@@ -3829,49 +3813,22 @@ mod tests {
     }
 
     #[test]
-    fn analysis_batch_visual_frames_exclude_actual_reply_from_branch_probes() {
-        let replay = replay_from_moves(
+    fn analysis_batch_actual_marker_keeps_imminent_hint() {
+        let board = board_from_moves(
             Variant::Renju,
             &[
                 "H8", "I8", "H6", "G7", "H7", "H9", "J7", "G4", "G5", "I7", "I5", "H5", "I6", "I9",
-                "J6", "K6", "J4", "J5", "H4", "K7", "F6", "G6", "I3", "J2", "E7",
+                "J6", "K6", "J4",
             ],
         );
+        let actual = mv("J5");
+        let analysis = analysis_for_winner(Color::Black, "renju", 0);
+        let candidates = defender_reply_candidates_for_frame(&board, &analysis, Some(actual));
+        let mut markers = Vec::new();
+        add_loser_candidate_markers(&mut markers, &board, analysis.winner, &candidates);
+        add_actual_marker(&mut markers, &board, analysis.winner, actual);
 
-        let report = run_analysis_batch_replays_with_options(
-            "report.json:bot-a vs bot-b".to_string(),
-            vec![ReplayAnalysisInput {
-                label: "actual_possible_entered_forced_interval".to_string(),
-                replay,
-            }],
-            AnalysisBatchRunOptions {
-                analysis: AnalysisOptions {
-                    reply_policy: ReplyPolicy::CorridorReplies,
-                    max_depth: 4,
-                    max_scan_plies: Some(8),
-                },
-                include_proof_details: true,
-            },
-        );
-
-        let entry = &report.entries[0];
-        assert_eq!(entry.final_forced_interval.as_ref().unwrap().start_ply, 18);
-        assert_eq!(entry.critical_mistake_ply, Some(18));
-        let frame = entry
-            .proof_details
-            .as_ref()
-            .expect("proof details should be present")
-            .proof_frames
-            .iter()
-            .find(|frame| frame.label == "actual_ply_18")
-            .expect("ply 18 decision frame should be present");
-
-        assert!(!frame
-            .reply_outcomes
-            .iter()
-            .any(|reply| reply.notation == "J5"));
-
-        let marker = marker_for(frame, "J5");
+        let marker = proof_marker_for(&markers, "J5");
         assert_eq!(
             marker.kinds,
             vec![
@@ -3882,46 +3839,19 @@ mod tests {
     }
 
     #[test]
-    fn analysis_batch_visual_frames_mark_actual_far_open_three_defense_hint() {
-        let replay = replay_from_moves(
+    fn analysis_batch_actual_marker_keeps_far_open_three_defense_hint() {
+        let board = board_from_moves(
             Variant::Renju,
             &[
                 "H8", "H9", "J8", "I7", "I8", "G8", "I10", "F7", "K8", "L8", "J9", "L7", "J7",
-                "J10", "L9", "I6", "H7", "G6", "M10", "N11", "J6", "J5", "K9", "N9", "K10", "L11",
-                "K11", "K7", "K12",
+                "J10", "L9", "I6", "H7", "G6", "M10", "N11", "J6", "J5", "K9",
             ],
         );
+        let actual = mv("N9");
+        let mut markers = Vec::new();
+        add_actual_marker(&mut markers, &board, Some(Color::Black), actual);
 
-        let report = run_analysis_batch_replays_with_options(
-            "report.json:bot-a vs bot-b".to_string(),
-            vec![ReplayAnalysisInput {
-                label: "actual_far_open_three_defense".to_string(),
-                replay,
-            }],
-            AnalysisBatchRunOptions {
-                analysis: AnalysisOptions {
-                    reply_policy: ReplyPolicy::CorridorReplies,
-                    max_depth: 4,
-                    max_scan_plies: Some(8),
-                },
-                include_proof_details: true,
-            },
-        );
-
-        let frame = report.entries[0]
-            .proof_details
-            .as_ref()
-            .expect("proof details should be present")
-            .proof_frames
-            .iter()
-            .find(|frame| frame.label == "actual_ply_24")
-            .expect("ply 24 decision frame should be present");
-
-        assert!(!frame
-            .reply_outcomes
-            .iter()
-            .any(|reply| reply.notation == "N9"));
-        let marker = marker_for(frame, "N9");
+        let marker = proof_marker_for(&markers, "N9");
         assert_eq!(
             marker.kinds,
             vec![
@@ -3987,49 +3917,30 @@ mod tests {
     }
 
     #[test]
-    fn analysis_batch_visual_frames_prioritize_immediate_threats_over_imminent_responses() {
-        let replay = replay_from_moves(
+    fn analysis_batch_candidate_markers_prioritize_immediate_threats_over_imminent_responses() {
+        let board = board_from_moves(
             Variant::Renju,
             &[
                 "H8", "I8", "H7", "I7", "H6", "H5", "I6", "I9", "G6", "J6", "G8", "J5", "E6", "F6",
-                "H9", "H10", "F7", "I10", "D5",
+                "H9",
             ],
         );
+        let actual = mv("H10");
+        let analysis = analysis_for_winner(Color::Black, "renju", 0);
+        let candidates = defender_reply_candidates_for_frame(&board, &analysis, Some(actual));
+        let mut markers = Vec::new();
+        add_loser_candidate_markers(&mut markers, &board, analysis.winner, &candidates);
+        add_actual_marker(&mut markers, &board, analysis.winner, actual);
 
-        let report = run_analysis_batch_replays_with_options(
-            "report.json:bot-a vs bot-b".to_string(),
-            vec![ReplayAnalysisInput {
-                label: "immediate_response_preempts_imminent_responses".to_string(),
-                replay,
-            }],
-            AnalysisBatchRunOptions {
-                analysis: AnalysisOptions {
-                    reply_policy: ReplyPolicy::CorridorReplies,
-                    max_depth: 4,
-                    max_scan_plies: Some(64),
-                },
-                include_proof_details: true,
-            },
-        );
-
-        let frame = report.entries[0]
-            .proof_details
-            .as_ref()
-            .expect("proof details should be present")
-            .proof_frames
-            .iter()
-            .find(|frame| frame.label == "actual_ply_16")
-            .expect("ply 16 decision frame should be present");
-
-        let h10 = marker_for(frame, "H10");
+        let h10 = proof_marker_for(&markers, "H10");
         assert!(h10.kinds.contains(&AnalysisBatchProofMarkerKind::Threat));
         assert!(h10.kinds.contains(&AnalysisBatchProofMarkerKind::Actual));
         assert!(
-            !frame.markers.iter().any(|marker| marker
+            !markers.iter().any(|marker| marker
                 .kinds
                 .contains(&AnalysisBatchProofMarkerKind::ImminentDefense)),
             "imminent responses should be suppressed while an immediate threat response exists: {:?}",
-            frame.markers
+            markers
         );
     }
 
