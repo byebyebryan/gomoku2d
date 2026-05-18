@@ -18,7 +18,8 @@ use gomoku_analysis::{
 use gomoku_bot::{
     frontier::RollingThreatFrontier,
     tactical::{defender_hint_reply_candidates_from_view, DefenderReplyRole, ThreatView},
-    Bot, LeafCorridorConfig, MoveOrdering, RandomBot, SearchBot, SearchBotConfig, StaticEvaluation,
+    Bot, CorridorProofConfig, MoveOrdering, RandomBot, SearchBot, SearchBotConfig,
+    StaticEvaluation,
 };
 use gomoku_core::rules::Variant;
 use gomoku_core::{Board, Color, GameResult, Move, Replay, RuleConfig};
@@ -596,7 +597,7 @@ impl WasmBot {
             && corridor_proof_width > 0
             && corridor_proof_candidate_limit > 0
         {
-            config.leaf_corridor = LeafCorridorConfig {
+            config.corridor_proof = CorridorProofConfig {
                 enabled: true,
                 max_depth: corridor_proof_depth as usize,
                 max_reply_width: corridor_proof_width as usize,
