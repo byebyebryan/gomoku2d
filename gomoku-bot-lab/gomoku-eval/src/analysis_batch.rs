@@ -43,9 +43,6 @@ pub struct AnalysisBatchModel {
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
 pub struct AnalysisBatchSummary {
-    pub corridor_entry: usize,
-    pub missed_defense: usize,
-    pub missed_win: usize,
     pub unclear: usize,
     pub ongoing_or_draw: usize,
     pub analysis_error: usize,
@@ -500,7 +497,7 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       align-items: baseline;
       min-width: 0;
     }}
-    .run-chip span, .card span, .detail span, .entry-metric span {{
+    .run-chip span, .detail span, .entry-metric span {{
       color: var(--muted);
       font-size: 11px;
       letter-spacing: 0.1em;
@@ -512,24 +509,6 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       line-height: 1.2;
       overflow-wrap: anywhere;
     }}
-    .summary-grid {{
-      background: var(--surface);
-      border: 2px solid var(--border);
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 12px;
-      padding: 20px;
-    }}
-    .card strong {{
-      display: block;
-      margin-top: 4px;
-      color: var(--accent);
-      font-size: 20px;
-    }}
-    .card--corridor strong {{ color: var(--accent); }}
-    .card--missed-defense strong {{ color: var(--orange); }}
-    .card--missed-win strong {{ color: var(--green); }}
-    .card--unclear strong {{ color: var(--blue); }}
     .analysis-list {{
       background: var(--surface);
       border: 2px solid var(--border);
@@ -539,7 +518,6 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
     }}
     .analysis-entry {{
       border: 1px solid var(--border);
-      border-left-width: 4px;
       background: var(--card);
     }}
     .analysis-entry:hover {{
@@ -547,11 +525,6 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       border-right-color: var(--teal);
       border-bottom-color: var(--teal);
     }}
-    .analysis-entry--corridor-entry {{ border-left-color: var(--accent); }}
-    .analysis-entry--missed-defense {{ border-left-color: var(--orange); }}
-    .analysis-entry--missed-win {{ border-left-color: var(--green); }}
-    .analysis-entry--unclear {{ border-left-color: var(--blue); }}
-    .analysis-entry--none {{ border-left-color: var(--faint); }}
     .analysis-entry[open] {{
       border-top-color: var(--accent);
       border-right-color: var(--accent);
@@ -561,7 +534,7 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       cursor: pointer;
       display: grid;
       gap: 10px;
-      grid-template-columns: minmax(68px, max-content) minmax(210px, 1.25fr) minmax(210px, 1.25fr) minmax(118px, max-content) repeat(3, minmax(86px, 1fr));
+      grid-template-columns: minmax(68px, max-content) minmax(210px, 1.25fr) minmax(210px, 1.25fr) repeat(4, minmax(82px, 1fr));
       align-items: center;
       padding: 12px 14px;
     }}
@@ -633,24 +606,14 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       padding-left: 10px;
       text-align: right;
     }}
+    .entry-metric span {{
+      white-space: nowrap;
+    }}
     .entry-metric strong {{
       color: var(--text);
       display: block;
       overflow-wrap: anywhere;
     }}
-    .cause-chip {{
-      border: 1px solid currentColor;
-      display: inline-flex;
-      justify-content: center;
-      padding: 4px 8px;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }}
-    .cause-chip--corridor-entry {{ color: var(--accent); }}
-    .cause-chip--missed-defense {{ color: var(--orange); }}
-    .cause-chip--missed-win {{ color: var(--green); }}
-    .cause-chip--unclear {{ color: var(--blue); }}
-    .cause-chip--none {{ color: var(--muted); }}
     .entry-body {{
       border-top: 1px solid var(--border);
       display: grid;
@@ -936,7 +899,7 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       main {{
         padding: 16px;
       }}
-      .hero, .summary-grid, .analysis-list {{
+      .hero, .analysis-list {{
         padding: 16px;
       }}
       .run-chip {{
@@ -982,6 +945,9 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
         <div class="run-chip"><span>Config</span><strong>{model_config}</strong></div>
       </div>
       <div class="run-group" aria-label="Run stats">
+        <div class="run-chip"><span>Total</span><strong>{total}</strong></div>
+        <div class="run-chip"><span>Unclear</span><strong>{unclear}</strong></div>
+        <div class="run-chip"><span>Errors</span><strong>{failed}</strong></div>
         <div class="run-chip"><span>Runtime</span><strong>{runtime}</strong></div>
       </div>
       <div class="run-group" aria-label="Analysis provenance">
@@ -990,23 +956,12 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       </div>
     </div>
   </header>
-  <section class="summary-grid" aria-label="Analysis summary">
-    <article class="card"><span>Analyzed</span><strong>{analyzed}</strong></article>
-    <article class="card card--corridor"><span>Corridor entry</span><strong>{corridor_entry}</strong></article>
-    <article class="card card--missed-defense"><span>Missed defense</span><strong>{missed_defense}</strong></article>
-    <article class="card card--missed-win"><span>Missed win</span><strong>{missed_win}</strong></article>
-    <article class="card card--unclear"><span>Unclear</span><strong>{unclear}</strong></article>
-    <article class="card"><span>Errors</span><strong>{failed}</strong></article>
-  </section>
   <section class="analysis-list" aria-label="Replay analysis entries">{entries}</section>
 </main>
 </body>
 </html>
 "#,
-        analyzed = report.analyzed,
-        corridor_entry = report.summary.corridor_entry,
-        missed_defense = report.summary.missed_defense,
-        missed_win = report.summary.missed_win,
+        total = report.total,
         unclear = report.summary.unclear,
         failed = report.failed,
         model = html_escape(model_label),
@@ -1020,40 +975,36 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
 }
 
 fn analysis_entry_card_html(entry: &AnalysisBatchEntry) -> String {
-    let cause_label = root_cause_label(entry.root_cause);
-    let cause_class = root_cause_class(entry.root_cause);
-    let entry_class = root_cause_entry_class(entry.root_cause);
     let lethal = lethal_onset_label(entry.lethal_onset.as_ref());
-    let setup = forced_interval_label(entry.setup_corridor.as_ref());
+    let setup_range = forced_interval_range_label(entry.setup_corridor.as_ref());
+    let setup_length = forced_interval_length_label(entry.setup_corridor.as_ref());
     let detail_sections = analysis_entry_detail_sections_html(entry);
     let title = replay_entry_title(&entry.path);
     let (first_player, second_player) = ordered_player_columns_html(&title, entry.winner);
     let panels = analysis_entry_panels_html(entry);
 
     format!(
-        r#"<details class="analysis-entry {entry_class}">
+        r#"<details class="analysis-entry">
   <summary>
     <strong class="entry-title"><span class="entry-match">{match_label}</span></strong>
     {first_player}
     {second_player}
-    <span class="cause-chip {cause_class}">{cause}</span>
     <span class="entry-metric"><span>Lethal onset</span><strong>{lethal}</strong></span>
-    <span class="entry-metric"><span>Setup corridor</span><strong>{setup}</strong></span>
-    <span class="entry-metric"><span>Game length</span><strong>{length}</strong></span>
+    <span class="entry-metric"><span>Setup corridor</span><strong>{setup_range}</strong></span>
+    <span class="entry-metric"><span>Corridor len</span><strong>{setup_length}</strong></span>
+    <span class="entry-metric"><span>Game len</span><strong>{length}</strong></span>
   </summary>
   <div class="entry-body">
     {detail_sections}
     <div class="entry-panels">{panels}</div>
   </div>
 </details>"#,
-        entry_class = entry_class,
-        cause_class = cause_class,
         match_label = html_escape(&title.match_label),
         first_player = first_player,
         second_player = second_player,
-        cause = html_escape(&cause_label),
         lethal = html_escape(&lethal),
-        setup = html_escape(&setup),
+        setup_range = html_escape(&setup_range),
+        setup_length = html_escape(&setup_length),
         length = html_escape(&ply_count_label(entry.move_count)),
         detail_sections = detail_sections,
         panels = panels,
@@ -1087,10 +1038,9 @@ fn analysis_entry_panels_html(entry: &AnalysisBatchEntry) -> String {
 }
 
 fn analysis_entry_detail_sections_html(entry: &AnalysisBatchEntry) -> String {
-    let cause = root_cause_label(entry.root_cause);
     let unclear_reason = unclear_reason_label(entry.unclear_reason);
 
-    let mut details = vec![detail_html("Cause", &cause)];
+    let mut details = Vec::new();
     if unclear_reason != "-" {
         details.push(detail_html("Unclear", &unclear_reason));
     }
@@ -1353,15 +1303,23 @@ fn source_kind_label(source_kind: &str) -> String {
     source_kind.replace('_', " ")
 }
 
-fn forced_interval_label(interval: Option<&ForcedInterval>) -> String {
+fn forced_interval_range_label(interval: Option<&ForcedInterval>) -> String {
     let Some(interval) = interval else {
         return "-".to_string();
     };
-    let span = interval
-        .end_ply
-        .saturating_sub(interval.start_ply)
-        .saturating_add(1);
-    format!("{}-{} / {} ply", interval.start_ply, interval.end_ply, span)
+    format!("{}-{}", interval.start_ply, interval.end_ply)
+}
+
+fn forced_interval_length_label(interval: Option<&ForcedInterval>) -> String {
+    let Some(interval) = interval else {
+        return "-".to_string();
+    };
+    ply_count_label(Some(
+        interval
+            .end_ply
+            .saturating_sub(interval.start_ply)
+            .saturating_add(1),
+    ))
 }
 
 fn lethal_onset_label(onset: Option<&LethalOnset>) -> String {
@@ -2141,43 +2099,8 @@ fn increment_summary_from_entry(summary: &mut AnalysisBatchSummary, entry: &Anal
         return;
     }
 
-    match entry.root_cause {
-        Some(RootCause::CorridorEntry) => summary.corridor_entry += 1,
-        Some(RootCause::MissedDefense) => summary.missed_defense += 1,
-        Some(RootCause::MissedWin) => summary.missed_win += 1,
-        Some(RootCause::Unclear) | None => summary.unclear += 1,
-    }
-}
-
-fn root_cause_label(root_cause: Option<RootCause>) -> String {
-    root_cause
-        .map(|root_cause| match root_cause {
-            RootCause::CorridorEntry => "corridor entry",
-            RootCause::MissedDefense => "missed defense",
-            RootCause::MissedWin => "missed win",
-            RootCause::Unclear => "unclear",
-        })
-        .unwrap_or("-")
-        .to_string()
-}
-
-fn root_cause_class(root_cause: Option<RootCause>) -> &'static str {
-    match root_cause {
-        Some(RootCause::CorridorEntry) => "cause-chip--corridor-entry",
-        Some(RootCause::MissedDefense) => "cause-chip--missed-defense",
-        Some(RootCause::MissedWin) => "cause-chip--missed-win",
-        Some(RootCause::Unclear) => "cause-chip--unclear",
-        None => "cause-chip--none",
-    }
-}
-
-fn root_cause_entry_class(root_cause: Option<RootCause>) -> &'static str {
-    match root_cause {
-        Some(RootCause::CorridorEntry) => "analysis-entry--corridor-entry",
-        Some(RootCause::MissedDefense) => "analysis-entry--missed-defense",
-        Some(RootCause::MissedWin) => "analysis-entry--missed-win",
-        Some(RootCause::Unclear) => "analysis-entry--unclear",
-        None => "analysis-entry--none",
+    if matches!(entry.root_cause, Some(RootCause::Unclear) | None) {
+        summary.unclear += 1;
     }
 }
 
@@ -2874,8 +2797,7 @@ mod tests {
         assert_eq!(report.analyzed, 1);
         assert_eq!(report.failed, 0);
         assert_eq!(report.model.max_depth, AnalysisOptions::default().max_depth);
-        assert_eq!(report.summary.corridor_entry, 0);
-        assert_eq!(report.summary.missed_defense, 1);
+        assert_eq!(report.summary.unclear, 0);
         assert_eq!(report.entries[0].root_cause, Some(RootCause::MissedDefense));
         assert_eq!(report.entries[0].path, "missed_defense.json");
 
@@ -2903,8 +2825,8 @@ mod tests {
         assert!(html.contains("<nav class=\"top-links\" aria-label=\"Project links\">"));
         assert!(html.contains("<a href=\"/bot-report/\">Bots</a>"));
         assert!(html.contains("--bg: #1e1e1e"));
-        assert!(!html.contains("<span>Total</span>"));
-        assert!(html.contains("<span>Analyzed</span>"));
+        assert!(html.contains("<span>Total</span><strong>1</strong>"));
+        assert!(!html.contains("<span>Analyzed</span>"));
         assert!(html.contains("class=\"run-strip\" aria-label=\"Run summary\""));
         assert!(html.contains("class=\"run-group\" aria-label=\"Analysis setup\""));
         assert!(html.contains("class=\"run-group\" aria-label=\"Run stats\""));
@@ -2912,10 +2834,12 @@ mod tests {
         assert!(html.contains(" CPU</strong>"));
         assert!(!html.contains(" entries</strong>"));
         assert!(!html.contains("<span>Limit hits</span>"));
+        assert!(!html.contains("class=\"summary-grid\""));
         assert!(html.contains("class=\"analysis-list\" aria-label=\"Replay analysis entries\""));
-        assert!(html.contains("class=\"analysis-entry analysis-entry--missed-defense\""));
-        assert!(html.contains("class=\"cause-chip cause-chip--missed-defense\""));
-        assert!(html.contains("Missed defense"));
+        assert!(html.contains("class=\"analysis-entry\""));
+        assert!(!html.contains("analysis-entry--missed-defense"));
+        assert!(!html.contains("cause-chip"));
+        assert!(!html.contains("Missed defense"));
         assert!(!html.contains("class=\"loss-chip"));
         assert!(!html.contains("Tactical error"));
         assert!(!html.contains("Strategic loss"));
@@ -2928,8 +2852,7 @@ mod tests {
         assert!(!html.contains("<span>Replays</span>"));
         assert!(!html.contains("Forced-corridor audit"));
         assert!(!html.contains("class=\"guide\""));
-        assert!(html.contains("missed defense"));
-        assert!(html.contains("<span>Cause</span><strong>missed defense</strong>"));
+        assert!(!html.contains("<span>Cause</span>"));
         assert!(html.contains("<span>Search time</span>"));
         assert!(!html.contains("<span>Status</span>"));
         assert!(!html.contains("<span>Notes</span>"));
@@ -2938,7 +2861,9 @@ mod tests {
         assert!(!html.contains("<span>Unknown gaps</span>"));
         assert!(!html.contains("Root detail"));
         assert!(html.contains("<span class=\"entry-match\">replay</span>"));
-        assert!(html.contains("<span>Game length</span><strong>9 ply</strong>"));
+        assert!(html.contains("<span>Setup corridor</span><strong>"));
+        assert!(html.contains("<span>Corridor len</span><strong>"));
+        assert!(html.contains("<span>Game len</span><strong>9 ply</strong>"));
         assert!(!html.contains("<span>Time</span>"));
 
         let _ = fs::remove_dir_all(&dir);
@@ -3299,6 +3224,7 @@ mod tests {
         let html = render_analysis_batch_report_html(&report);
         assert!(html.contains("<span>Lethal onset</span><strong>11</strong>"));
         assert!(html.contains("<span>Setup corridor</span><strong>"));
+        assert!(html.contains("<span>Corridor len</span><strong>"));
         assert!(!html.contains("<span>Forced corridor</span>"));
         assert!(!html.contains("11 / one-step"));
         assert!(html.contains("White to respond / guaranteed loss"));

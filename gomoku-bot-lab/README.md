@@ -293,12 +293,11 @@ corridors stop early, and smoke runs can still override with
 The strategic model is documented in
 [`../docs/corridor_search.md`](../docs/corridor_search.md); the replay-specific
 contract lives in [`../docs/game_analysis.md`](../docs/game_analysis.md).
-Report rows now lead with neutral root causes such as corridor entry, missed
-defense, missed win, or unclear. The analyzer no longer assigns severity from
-forced-corridor length; an `unclear` result can still distinguish
-corridor-depth cutoffs, defender-reply unknowns, model-scope unknowns, scan-cap
-cutoffs, games with no final forced interval, and the board prefixes that need
-inspection. Add
+Report rows intentionally avoid a category/severity label. The header keeps
+only compact total, unclear, and error counts; expanded rows focus on proof
+diagnostics such as reply probes, searched nodes, search time, unclear context,
+and visual decision frames. The analyzer no longer assigns severity from
+forced-corridor length. Add
 `--include-proof-details` when auditing decisive replay labels; it records the
 previous-prefix and final-forced-start proof snapshots plus visual HTML
 decision frames for pre-move states from the winning ply backward through the

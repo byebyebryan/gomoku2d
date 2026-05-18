@@ -907,10 +907,8 @@ fn print_analysis_batch_report_summary(report: &AnalysisBatchReport) {
         report.analyzed, report.total, report.failed
     );
     println!(
-        "cause: corridor entry {}, missed defense {}, missed win {}, unclear {}, ongoing/draw {}, errors {}",
-        report.summary.corridor_entry,
-        report.summary.missed_defense,
-        report.summary.missed_win,
+        "summary: total {}, unclear {}, ongoing/draw {}, errors {}",
+        report.total,
         report.summary.unclear,
         report.summary.ongoing_or_draw,
         report.summary.analysis_error
