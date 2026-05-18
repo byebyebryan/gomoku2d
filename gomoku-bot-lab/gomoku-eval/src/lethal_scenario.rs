@@ -109,6 +109,8 @@ pub struct LethalScenarioResult {
     pub attacker: Color,
     pub defender: Color,
     pub description: &'static str,
+    pub moves: Vec<String>,
+    pub board_ascii: String,
     pub expected_lethal: bool,
     pub actual_lethal: bool,
     pub expected_terminal_targets: Vec<String>,
@@ -138,7 +140,7 @@ impl LethalScenarioReport {
 pub fn run_lethal_scenario(case: &LethalScenarioCase) -> LethalScenarioResult {
     let board = case.board();
     let analysis = terminal_lethal_threat_analysis(&board, case.attacker);
-    lethal_scenario_result(case, analysis)
+    lethal_scenario_result(case, &board, analysis)
 }
 
 pub fn run_lethal_scenarios(cases: &[LethalScenarioCase]) -> LethalScenarioReport {
@@ -156,6 +158,7 @@ pub fn run_lethal_scenarios(cases: &[LethalScenarioCase]) -> LethalScenarioRepor
 
 fn lethal_scenario_result(
     case: &LethalScenarioCase,
+    board: &Board,
     analysis: TerminalLethalThreatAnalysis,
 ) -> LethalScenarioResult {
     let expected_terminal_targets = notation_list_from_strs(case.expected_terminal_targets);
@@ -177,6 +180,8 @@ fn lethal_scenario_result(
         attacker: case.attacker,
         defender: case.attacker.opponent(),
         description: case.description,
+        moves: case.moves.iter().map(|mv| (*mv).to_string()).collect(),
+        board_ascii: board_ascii(board),
         expected_lethal: case.expected_lethal,
         actual_lethal,
         expected_terminal_targets,
@@ -204,6 +209,47 @@ fn notation_list_from_strs(moves: &[&str]) -> Vec<String> {
     notation_list(&moves)
 }
 
+fn board_ascii(board: &Board) -> String {
+    let size = board.config.board_size;
+    let mut output = String::new();
+
+    output.push_str("    ");
+    for col in 0..size {
+        if col > 0 {
+            output.push(' ');
+        }
+        output.push(column_label(col));
+    }
+    output.push('\n');
+
+    for row in (0..size).rev() {
+        output.push_str(&format!("{:>2}  ", row + 1));
+        for col in 0..size {
+            if col > 0 {
+                output.push(' ');
+            }
+            output.push(board.cell(row, col).map_or('.', Color::to_char));
+        }
+        output.push_str(&format!("  {}", row + 1));
+        output.push('\n');
+    }
+
+    output.push_str("    ");
+    for col in 0..size {
+        if col > 0 {
+            output.push(' ');
+        }
+        output.push(column_label(col));
+    }
+
+    output
+}
+
+fn column_label(col: usize) -> char {
+    let col = u8::try_from(col).expect("board column should fit in u8");
+    char::from(b'A' + col)
+}
+
 #[cfg(test)]
 mod tests {
     use super::{run_lethal_scenarios, LETHAL_SCENARIO_CASES};
@@ -220,5 +266,16 @@ mod tests {
         let json = report.to_json().expect("report should serialize");
         assert!(json.contains("\"schema_version\": 1"));
         assert!(json.contains("lethal_freestyle_open_four"));
+        assert!(json.contains("\"board_ascii\""));
+    }
+
+    #[test]
+    fn lethal_scenario_board_ascii_uses_printed_board_orientation() {
+        let report = run_lethal_scenarios(&LETHAL_SCENARIO_CASES[..1]);
+        let board = &report.results[0].board_ascii;
+
+        assert!(board.starts_with("    A B C D E F G H I J K L M N O\n"));
+        assert!(board.contains(" 8  . . . . . . . B B B B . . . .  8"));
+        assert!(board.ends_with("    A B C D E F G H I J K L M N O"));
     }
 }

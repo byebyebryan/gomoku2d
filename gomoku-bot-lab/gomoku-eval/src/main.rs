@@ -278,6 +278,10 @@ enum Commands {
         /// Write reusable lethal scenario report JSON
         #[arg(long)]
         report_json: Option<PathBuf>,
+
+        /// Print exact scenario boards after each result
+        #[arg(long)]
+        show_boards: bool,
     },
     /// Analyze a saved replay and emit bounded proof/classification JSON
     AnalyzeReplay {
@@ -820,6 +824,11 @@ fn print_lethal_scenario_result(result: &LethalScenarioResult) {
         display_move_list(&result.actual_covering_replies),
         display_move_list(&result.actual_defender_immediate_wins)
     );
+}
+
+fn print_lethal_scenario_board(result: &LethalScenarioResult) {
+    println!();
+    println!("{}", result.board_ascii);
 }
 
 fn print_lethal_report_summary(report: &LethalScenarioReport) {
@@ -1476,7 +1485,10 @@ fn main() {
                 std::process::exit(1);
             }
         }
-        Commands::LethalScenarios { report_json } => {
+        Commands::LethalScenarios {
+            report_json,
+            show_boards,
+        } => {
             println!("--- Lethal Scenarios ---");
             println!("Cases: {}", LETHAL_SCENARIO_CASES.len());
             println!();
@@ -1484,6 +1496,10 @@ fn main() {
             let report = run_lethal_scenarios(LETHAL_SCENARIO_CASES);
             for result in &report.results {
                 print_lethal_scenario_result(result);
+                if show_boards {
+                    print_lethal_scenario_board(result);
+                    println!();
+                }
             }
 
             print_lethal_report_summary(&report);
