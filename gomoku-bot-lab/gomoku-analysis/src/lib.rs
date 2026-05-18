@@ -1,5 +1,7 @@
 use gomoku_bot::corridor as bot_corridor;
-use gomoku_bot::tactical::{corridor_active_threats, LocalThreatKind};
+use gomoku_bot::tactical::{
+    corridor_active_threats, lethal_threat, LethalThreat, LethalThreatKind, LocalThreatKind,
+};
 use gomoku_core::{replay::ReplayResult, Board, Color, GameResult, Move, Replay, Variant};
 use serde::Serialize;
 
@@ -8,7 +10,7 @@ pub use gomoku_bot::corridor::{
     SearchDiagnostics,
 };
 
-pub const ANALYSIS_SCHEMA_VERSION: u32 = 14;
+pub const ANALYSIS_SCHEMA_VERSION: u32 = 15;
 pub const DEFAULT_MAX_SCAN_PLIES: usize = 64;
 const MAX_CORRIDOR_REPLY_WIDTH: usize = 8;
 
@@ -161,6 +163,29 @@ pub struct ForcedInterval {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct LethalOnsetEntry {
+    pub mv: Move,
+    pub terminal_targets: Vec<Move>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct LethalOnsetReply {
+    pub reply: Move,
+    pub lethal_entries: Vec<LethalOnsetEntry>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct LethalOnset {
+    pub prefix_ply: usize,
+    pub attacker: Color,
+    pub defender: Color,
+    pub kind: LethalThreatKind,
+    pub terminal_targets: Vec<Move>,
+    pub covering_replies: Vec<Move>,
+    pub one_step_replies: Vec<LethalOnsetReply>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct GameAnalysis {
     pub schema_version: u32,
     pub rule_set: String,
@@ -169,6 +194,7 @@ pub struct GameAnalysis {
     pub final_move: Option<Move>,
     pub final_winning_line: Vec<Move>,
     pub model: AnalysisModel,
+    pub lethal_onset: Option<LethalOnset>,
     pub final_forced_interval_found: bool,
     pub final_forced_interval: ForcedInterval,
     pub proof_intervals: Vec<ForcedInterval>,
@@ -957,6 +983,7 @@ fn no_winner_analysis(replay: &Replay, final_board: &Board, model: AnalysisModel
             .and_then(|mv| Move::from_notation(&mv.mv).ok()),
         final_winning_line: Vec::new(),
         model,
+        lethal_onset: None,
         final_forced_interval_found: false,
         final_forced_interval: ForcedInterval {
             start_ply: 0,
@@ -991,6 +1018,17 @@ fn finalize_replay_analysis(
     let proof_intervals = proof_intervals(&proof_summary, scan_start);
     let (final_forced_interval_found, final_forced_interval) =
         find_final_forced_interval(&proof_intervals, replay.moves.len());
+    let lethal_scan_start = if final_forced_interval_found {
+        final_forced_interval.start_ply
+    } else {
+        scan_start
+    };
+    let lethal_onset = find_lethal_onset(
+        boards,
+        winner,
+        lethal_scan_start,
+        final_forced_interval.end_ply,
+    );
     let unknown_gaps = proof_summary
         .iter()
         .enumerate()
@@ -1066,6 +1104,7 @@ fn finalize_replay_analysis(
             .and_then(|mv| Move::from_notation(&mv.mv).ok()),
         final_winning_line: final_board.winning_line(),
         model,
+        lethal_onset,
         final_forced_interval_found,
         final_forced_interval,
         proof_intervals,
@@ -2080,6 +2119,60 @@ fn find_last_chance(
     })
 }
 
+fn find_lethal_onset(
+    boards: &[Board],
+    attacker: Color,
+    scan_start: usize,
+    scan_end: usize,
+) -> Option<LethalOnset> {
+    let defender = attacker.opponent();
+    let mut onset = None;
+    let mut found_final_suffix = false;
+    let scan_end = scan_end.min(boards.len().saturating_sub(1));
+
+    for prefix_ply in (scan_start..=scan_end).rev() {
+        let board = &boards[prefix_ply];
+        if board.current_player != defender {
+            continue;
+        }
+
+        if let Some(threat) = lethal_threat(board, attacker) {
+            onset = Some(lethal_onset_from_threat(prefix_ply, threat));
+            found_final_suffix = true;
+        } else if found_final_suffix {
+            break;
+        }
+    }
+
+    onset
+}
+
+fn lethal_onset_from_threat(prefix_ply: usize, threat: LethalThreat) -> LethalOnset {
+    LethalOnset {
+        prefix_ply,
+        attacker: threat.attacker,
+        defender: threat.defender,
+        kind: threat.kind,
+        terminal_targets: threat.terminal_targets,
+        covering_replies: threat.covering_replies,
+        one_step_replies: threat
+            .one_step_replies
+            .into_iter()
+            .map(|reply| LethalOnsetReply {
+                reply: reply.reply,
+                lethal_entries: reply
+                    .lethal_entries
+                    .into_iter()
+                    .map(|entry| LethalOnsetEntry {
+                        mv: entry.mv,
+                        terminal_targets: entry.terminal_targets,
+                    })
+                    .collect(),
+            })
+            .collect(),
+    }
+}
+
 fn classify_root_cause(
     previous_status: Option<ProofStatus>,
     move_color: Option<Color>,
@@ -2368,8 +2461,8 @@ pub fn rule_label(variant: &Variant) -> &'static str {
 mod tests {
     use gomoku_bot::tactical::{
         has_forcing_local_threat, legal_forcing_continuations_for_fact,
-        local_threat_facts_for_player as local_threat_facts, LocalThreatFact, LocalThreatKind,
-        LocalThreatOrigin,
+        local_threat_facts_for_player as local_threat_facts, LethalThreatKind, LocalThreatFact,
+        LocalThreatKind, LocalThreatOrigin,
     };
     use gomoku_core::{Board, Color, Move, Replay, RuleConfig, Variant};
 
@@ -2817,6 +2910,64 @@ mod tests {
         assert!(analysis
             .tactical_notes
             .contains(&TacticalNote::AccidentalBlunder));
+    }
+
+    #[test]
+    fn replay_analysis_records_terminal_lethal_onset() {
+        let replay = replay_from_moves(
+            Variant::Freestyle,
+            &["H8", "A1", "I8", "A2", "J8", "A3", "K8", "A4", "G8"],
+        );
+
+        let analysis = analyze_replay(&replay, AnalysisOptions::default())
+            .expect("finished replay should analyze");
+
+        let onset = analysis
+            .lethal_onset
+            .as_ref()
+            .expect("open four should be a lethal onset");
+        assert_eq!(onset.prefix_ply, 7);
+        assert_eq!(onset.attacker, Color::Black);
+        assert_eq!(onset.defender, Color::White);
+        assert_eq!(onset.kind, LethalThreatKind::TerminalCoverage);
+        assert_eq!(onset.terminal_targets, vec![mv("G8"), mv("L8")]);
+        assert!(onset.covering_replies.is_empty());
+        assert!(onset.one_step_replies.is_empty());
+    }
+
+    #[test]
+    fn replay_analysis_records_one_step_lethal_onset_before_terminal_coverage() {
+        let replay = replay_from_moves(
+            Variant::Freestyle,
+            &[
+                "H8", "G8", "I8", "A1", "J8", "O1", "K8", "A15", "I7", "O15", "I9", "L8", "I6",
+                "A14", "I10",
+            ],
+        );
+
+        let analysis = analyze_replay(&replay, AnalysisOptions::default())
+            .expect("finished replay should analyze");
+
+        let onset = analysis
+            .lethal_onset
+            .as_ref()
+            .expect("4+3 should be a one-step lethal onset");
+        assert_eq!(onset.prefix_ply, 11);
+        assert_eq!(onset.kind, LethalThreatKind::OneStepCoverage);
+        assert_eq!(onset.terminal_targets, vec![mv("L8")]);
+        assert_eq!(onset.one_step_replies.len(), 1);
+        assert_eq!(onset.one_step_replies[0].reply, mv("L8"));
+        assert_eq!(
+            onset.one_step_replies[0]
+                .lethal_entries
+                .iter()
+                .map(|entry| (entry.mv, entry.terminal_targets.clone()))
+                .collect::<Vec<_>>(),
+            vec![
+                (mv("I6"), vec![mv("I5"), mv("I10")]),
+                (mv("I10"), vec![mv("I6"), mv("I11")]),
+            ]
+        );
     }
 
     #[test]

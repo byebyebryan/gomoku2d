@@ -390,6 +390,7 @@ GameAnalysis
   final_move
   final_winning_line
   model
+  lethal_onset
   limits
   final_forced_interval
   last_chance_ply

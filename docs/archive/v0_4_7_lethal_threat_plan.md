@@ -182,6 +182,12 @@ Implementation shape:
   the in-game replay UI;
 - leave search behavior unchanged.
 
+Status: landed the first data/report slice. `GameAnalysis` now records
+`lethal_onset`, analysis batch entries preserve it, and report cards surface the
+prefix ply plus terminal/one-step kind. The in-game replay UI still uses the
+existing corridor annotations; lethal-specific replay overlays remain a later
+polish pass.
+
 This keeps the first product value in analysis, where false positives are easy
 to inspect and correct. Search integration can come later once report evidence
 shows the classifier is reliable.
