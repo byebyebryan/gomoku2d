@@ -115,9 +115,25 @@ without claiming to solve every alternate future.
 ## Corridor-Only Replay Flow
 
 The replay analyzer assumes a finished decisive game ends inside a threat
-corridor. The final winning move provides the terminal endpoint. The goal is not
-to solve the whole game; it is to walk backward and find the latest losing-side
-decision that could have escaped the final detected corridor.
+corridor. The final winning move provides the terminal endpoint, but the
+interesting explanation should usually stop earlier: at the point where the
+loser first faced a lethal threat and the rest of the game became conversion.
+The goal is not to solve the whole game; it is to walk backward and find the
+latest losing-side decision that could have escaped the final detected corridor
+before that lethal onset.
+
+That gives the analysis three useful boundaries:
+
+- Terminal move: the actual five was played.
+- Lethal onset: the earlier frame where the loser no longer had a legal reply
+  that avoids the attacker's terminal or known-lethal continuation.
+- Cause boundary: the earlier frame where the loser still had an escape, or
+  where the forced corridor began.
+
+The terminal-to-lethal segment is often obvious. The lethal-to-cause segment is
+where the analyzer should spend explanation effort: did the loser get locked
+into the lethal state by a forced corridor, or did they simply miss an earlier
+reply?
 
 The core loop is:
 
@@ -127,8 +143,8 @@ The core loop is:
    immediate wins, and valid counter-threats.
 4. For each alternative, follow only corridor continuations. The winner may
    complete an immediate win, answer a threat, or materialize a new
-   immediate/imminent threat; it may not use broad quiet search to preserve a
-   proof.
+   immediate/imminent/lethal threat; it may not use broad quiet search to
+   preserve a proof.
 5. Stop when at least one losing-side reply exits the corridor. That reply is
    the latest escape. If every named reply stays forced, keep walking backward.
    If a legal reply cannot be classified within the model budget, stop as a
@@ -144,6 +160,10 @@ does not complete an immediate win, answer an active defender threat, or
 materialize a new immediate/imminent threat, the actual line accidentally exited
 the corridor. Later play may enter a new corridor, but it is no longer the same
 proof interval.
+
+When lethal detection is available, a winning-side actual move that creates a
+proven lethal threat also counts as a valid corridor continuation and can become
+the analysis endpoint for the final conversion segment.
 
 When the latest escape boundary is before the active corridor has started, there
 may be no immediate/imminent threat to mark yet. In that case the report should

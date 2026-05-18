@@ -44,9 +44,11 @@ A threat corridor is a bounded forcing sequence created by active tactical
 threats. It is semantic, not a hard branch cap.
 
 The corridor exists when one side creates an immediate or imminent threat that
-must be answered. It stays active while replies create or answer more immediate
-or imminent threats. It exits when a side wins, or when active threats are
-neutralized and the attacker has no named forcing continuation.
+must be answered. Those threats are non-lethal obligations: the defender must
+respond, but at least one legal response may still neutralize the danger. It
+stays active while replies create or answer more immediate or imminent threats.
+It exits when a side wins, when a lethal threat is proven, or when active
+threats are neutralized and the attacker has no named forcing continuation.
 
 The search should never fall back to broad quiet-move search. If a move does not
 answer an active threat, win immediately, or create a new immediate/imminent
@@ -57,8 +59,10 @@ Corridor state transitions:
 - Enter a corridor when either side creates an immediate or imminent threat.
 - Stay locked in the corridor while each reply creates or answers another
   immediate/imminent threat.
-- Exit the corridor when a side wins, or when all active immediate/imminent
-  threats are neutralized and the attacker has no named forcing continuation.
+- End the corridor as proven when a side wins or creates a lethal threat.
+- Exit the corridor as unresolved/safe-for-this-model when all active
+  immediate/imminent threats are neutralized and the attacker has no named
+  forcing continuation.
 - Return a possible escape when a named legal defender reply exists but the
   model cannot prove that reply remains forced.
 - Return unknown only when the model cannot enumerate a meaningful legal reply
@@ -75,7 +79,7 @@ inside a forced corridor for the attacker to claim a forced win.
 |------|---------|
 | Immediate threat | A four threat that wins next turn unless answered, such as a closed four or broken four. |
 | Imminent threat | A three threat that can become a four and creates a bounded reply set, such as an open three. |
-| Lethal threat | A threat that is effectively terminal in this layer, such as an open four with two winning squares. |
+| Lethal threat | A position-level threat where the defender has no legal single reply that avoids the attacker's terminal or already-known lethal continuation. |
 | Corridor entry | The move that starts the active forced corridor being analyzed. |
 | Corridor reply | A named move that keeps play inside the threat corridor by answering or creating an active threat. |
 | Forced reply | A defender corridor reply that answers the current threat but still leaves the attacker a forced continuation. |
@@ -94,6 +98,64 @@ active-threat filtering, legal forcing continuations, defender reply generation,
 and attacker corridor-move ranking. `gomoku-bot::corridor` owns proof recursion,
 outcomes, diagnostics, and bridge-bot fallback behavior. It should not duplicate
 shape definitions or reply-selection rules.
+
+## Lethal Threats
+
+`Lethal` should be treated as a proof result over a position, not merely a
+shape name. A local shape can suggest a lethal threat, but the model still has
+to ask whether one legal defender move can cover the whole danger.
+
+Definition:
+
+1. The attacker has one or more legal terminal continuations, or one or more
+   legal continuations that create a known lethal threat.
+2. The defender has no legal reply that neutralizes all of those continuations.
+3. A defender immediate win takes priority; if the defender can win now, the
+   attacker's threat is not lethal in this position.
+
+This is a reply-coverage test. The model must not count raw threat shapes and
+declare lethal without checking overlap. Two threats that share one covering
+reply may still be non-lethal. A `4+3` may be non-lethal if the only four block
+also kills the three. A `3+3` may be non-lethal if one reply prevents both
+future open fours.
+
+Freestyle baseline:
+
+- `OpenFour` is lethal when its two winning endpoints are distinct and no
+  defender immediate win exists.
+- `4+4` is lethal only when no single defender reply covers all immediate
+  winning endpoints.
+- `4+3` is lethal only when every direct four defense still leaves the attacker
+  a legal open four or another known lethal continuation.
+- `3+3` is lethal only when every defender reply to the active threes still
+  leaves at least one legal continuation into a lethal threat.
+
+Immediate and imminent reply generation can remain tiered for normal corridor
+search, but lethal detection cannot blindly suppress lower tiers. If the
+question is "what must the defender answer this move?", immediate threats can
+suppress imminent threats. If the question is "is this already winning?", the
+model must consider how immediate and imminent facts combine.
+
+The primary value is analysis and cleaner tactical semantics, but search
+integration is still worth testing. Lethal detection can compress proof depth:
+an open four saves roughly one ply of "play either endpoint," while a `3+3`
+combo may save roughly two plies before the open-four endpoint. That is limited
+per branch, and tactical ordering should already put those continuations near
+the front, so we should not expect it to magically transform broad search cost.
+However, because the compression happens at leaves and forcing frontiers, the
+aggregate savings or effective-depth gain may still be meaningful if detection
+is cheap and legality-correct.
+
+The search experiment should therefore be judged on practical outcomes:
+stronger or more stable tactical play under the same budget, cleaner terminal
+handling for forcing leaves, and measurable cost improvements where they
+actually appear. Raw node savings are useful evidence, but not the primary
+reason to add the concept.
+
+For replay analysis, the benefit is clearer. Once the loser is already facing a
+lethal threat, the remaining moves are usually the obvious conversion. The more
+useful explanation is to locate the earlier lethal onset, then ask how the
+loser entered that state.
 
 ## Small Examples
 
@@ -719,6 +781,34 @@ Side-specific implications:
   explain why an apparently obvious block is unavailable.
 - White defender: White has no forbidden moves, but White counter-threats can be
   strong specifically because they may force Black toward forbidden answers.
+
+Renju makes lethal detection especially easy to get wrong. The right rule is
+still reply coverage, but both sides see different legal move sets:
+
+- White attacker: terminal continuations are ordinary five-in-a-row moves.
+  Black forbidden replies shrink the defender coverage set. A White closed or
+  broken four can become lethal if its only natural Black block is forbidden.
+  White `4+4`, `4+3`, and `3+3` threats should be judged by whether any legal
+  Black reply covers every terminal or known-lethal continuation.
+- Black attacker: every Black gain, completion, or next lethal continuation must
+  pass the Renju legality layer. Under the current core rule model, Black
+  exactly-five winning moves are not forbidden, while overlines are forbidden.
+  Black double-three or double-four gain moves cannot create active lethal
+  strength even if their raw freestyle shape looks decisive. A legal Black open
+  four is still lethal by reply coverage: White can cover only one legal
+  winning endpoint unless White can win immediately.
+- Black defender: a raw blocking square only covers a White continuation if the
+  move is legal for Black and actually removes the continuation. A forbidden
+  block remains visible proof evidence, but it is not a branch.
+- White defender: White has no forbidden moves, so White coverage mostly follows
+  freestyle, except that a White counter-threat may be stronger because Black's
+  next reply can be forbidden.
+
+Do not encode a Renju shortcut such as "Black lethal equals only `4+3`." That is
+too shape-name driven and will drift from the rules engine. The durable model is
+legality-aware coverage: enumerate legal attacker terminal/lethal
+continuations, enumerate legal defender replies, and ask whether any defender
+reply covers all continuations or wins immediately.
 
 The presentation rule follows the same split. A square can carry a normal threat
 or defense hint from one side's perspective and forbidden evidence from Black's
