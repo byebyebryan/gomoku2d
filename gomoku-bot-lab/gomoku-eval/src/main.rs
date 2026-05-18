@@ -866,7 +866,7 @@ fn print_analysis_fixture_result(result: &AnalysisFixtureResult) {
             .join("/")
     };
     println!(
-        "{:<5} {:<34} winner {:<7} root {:<14} forced {:>2}..{:<2} chance {:<4} critical {:<4} notes {}",
+        "{:<5} {:<34} winner {:<7} root {:<14} forced {:>2}..{:<2} chance {:<4} loser {:<4} notes {}",
         status,
         result.case_id,
         result
@@ -884,7 +884,7 @@ fn print_analysis_fixture_result(result: &AnalysisFixtureResult) {
             .unwrap_or_else(|| "-".to_string()),
         result
             .actual
-            .critical_mistake_ply
+            .critical_loser_ply
             .map(|ply| ply.to_string())
             .unwrap_or_else(|| "-".to_string()),
         notes
@@ -907,17 +907,13 @@ fn print_analysis_batch_report_summary(report: &AnalysisBatchReport) {
         report.analyzed, report.total, report.failed
     );
     println!(
-        "loss: mistake {}, tactical error {}, strategic {}, unclear {}, ongoing/draw {}, errors {}",
-        report.summary.mistake,
-        report.summary.tactical_error,
-        report.summary.strategic_loss,
+        "cause: corridor entry {}, missed defense {}, missed win {}, unclear {}, ongoing/draw {}, errors {}",
+        report.summary.corridor_entry,
+        report.summary.missed_defense,
+        report.summary.missed_win,
         report.summary.unclear,
         report.summary.ongoing_or_draw,
         report.summary.analysis_error
-    );
-    println!(
-        "cause: missed defense {}, missed win {}",
-        report.summary.missed_defense, report.summary.missed_win
     );
 }
 

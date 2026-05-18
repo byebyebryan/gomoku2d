@@ -815,9 +815,9 @@ Interpretation:
   This is acceptable for the hard-side lab anchor, but it is not yet evidence
   for raising the product default time budget.
 - The paired top-two analysis report sampled `64` games from this clean report
-  and completed all `64` without failures: `1` mistake, `49` tactical errors,
-  `14` strategic losses, and `38` missed-defense roots. That keeps the analysis
-  report aligned with the same D5 cap16 proof vs D3 pattern proof anchor pair.
+  and completed all `64` without failures, with neutral root-cause counts such
+  as corridor entries and missed-defense roots. That keeps the analysis report
+  aligned with the same D5 cap16 proof vs D3 pattern proof anchor pair.
 
 ## Benchmark suites
 

@@ -290,7 +290,7 @@ The analyzer has moved from lab artifact into the replay screen. It uses
 bounded corridor proof to explain the final forced sequence in finished games,
 records proof intervals instead of assuming one monotonic turning point, and
 separates ideal play from human mistakes such as missed defenses, missed wins,
-possible escapes, tactical errors, and strategic losses.
+possible escapes, corridor entries, and unclear proof boundaries.
 
 This matters beyond the interim report: corridor search gives replay analysis a
 concrete foundation, formalizes the project's advanced-strategy vocabulary,

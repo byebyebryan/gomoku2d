@@ -217,11 +217,11 @@ to explain. The useful direction is not just "stronger bot"; it is a bot and
 analysis layer that understands why games are won or lost.
 
 That is what corridor search gives the project. It formalizes the vocabulary of
-forced sequences, escapes, missed defenses, possible escapes, tactical errors,
-and strategic losses; it gives the lab a way to inspect bot behavior; and it
-creates a direct path toward replay education, critical-move tagging, and
-eventually stronger bots that improve through explainable forcing logic instead
-of opaque tuning.
+forced sequences, escapes, missed defenses, possible escapes, and corridor
+entries; it gives the lab a way to inspect bot behavior; and it creates a
+direct path toward replay education, critical-move tagging, and eventually
+stronger bots that improve through explainable forcing logic instead of opaque
+tuning.
 
 ### Bot lab
 
