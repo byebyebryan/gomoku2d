@@ -12,7 +12,7 @@ quickly become tradeoffs between strength, runtime, and opacity.
 
 Corridor search is the more important direction. It asks why a game collapsed:
 what forced sequence existed, what replies were available, where the last escape
-was, and whether the loss was a local mistake or a deeper strategic failure.
+was, and whether the loss came from a missed reply or a longer forcing plan.
 That makes it useful in three ways:
 
 - It gives replay analysis a concrete foundation instead of a vague "AI review"
@@ -91,8 +91,7 @@ inside the modeled corridor for the attacker to claim a forced win.
 | Forced reply | A defender corridor reply that answers the current threat but still leaves the attacker a forced continuation. |
 | Escape reply | A legal defender move that exits the detected corridor. It does not prove the defender survives the rest of the game. |
 | Possible escape | A legal defender reply the bounded model cannot prove is still losing. Treat it as an escape from the current corridor, but keep the limit evidence. |
-| Tactical error | A loss where the setup corridor is visible within a short forced sequence. |
-| Strategic loss | A loss where the setup corridor reaches far enough back that the loser failed to anticipate a longer forcing plan. |
+| Root cause | The neutral reason the analyzer found the final corridor, such as a corridor entry, missed defense, missed win, or unclear boundary. |
 
 The shape vocabulary behind these terms lives in
 [`tactical_shapes.md`](tactical_shapes.md). Replay-specific outcome labels and
@@ -186,7 +185,7 @@ XXXX_
 job: play the empty point now, unless the defender has an immediate counter-win.
 This is an immediate corridor: the next reply is narrow and easy to explain.
 
-If the defender ignores it, the loss is usually a local mistake. If the defender
+If the defender ignores it, the reply miss is local and direct. If the defender
 plays the block but `X` still has another forcing continuation elsewhere, the
 block is a forced reply, not an escape.
 
@@ -318,7 +317,7 @@ Tournament score tells us which bot won. Corridor analysis can tell us more:
 
 - Did the loser miss a short forced defense?
 - Did the winner create a longer forcing corridor?
-- Did a bot appear strong because the opponent made a local mistake?
+- Did a bot appear strong because the opponent missed a local reply?
 - Did a bot lose despite reasonable search cost because it failed to see a
   forcing plan?
 

@@ -10,7 +10,7 @@ pub use gomoku_bot::corridor::{
     SearchDiagnostics,
 };
 
-pub const ANALYSIS_SCHEMA_VERSION: u32 = 16;
+pub const ANALYSIS_SCHEMA_VERSION: u32 = 17;
 pub const DEFAULT_MAX_SCAN_PLIES: usize = 64;
 const MAX_CORRIDOR_REPLY_WIDTH: usize = 8;
 
@@ -31,7 +31,7 @@ pub enum ReplyPolicy {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum RootCause {
-    StrategicLoss,
+    CorridorEntry,
     MissedDefense,
     MissedWin,
     Unclear,
@@ -50,7 +50,6 @@ pub enum UnclearReason {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum TacticalNote {
-    AccidentalBlunder,
     ConversionError,
     MissedWin,
     StrongAttack,
@@ -204,7 +203,7 @@ pub struct GameAnalysis {
     pub unclear_context: Option<UnclearContext>,
     pub last_chance_ply: Option<usize>,
     pub decisive_attack_ply: Option<usize>,
-    pub critical_mistake_ply: Option<usize>,
+    pub critical_loser_ply: Option<usize>,
     pub root_cause: RootCause,
     pub tactical_notes: Vec<TacticalNote>,
     pub principal_line: Vec<Move>,
@@ -997,7 +996,7 @@ fn no_winner_analysis(replay: &Replay, final_board: &Board, model: AnalysisModel
         unclear_context: None,
         last_chance_ply: None,
         decisive_attack_ply: None,
-        critical_mistake_ply: None,
+        critical_loser_ply: None,
         root_cause: RootCause::Unclear,
         tactical_notes: Vec::new(),
         principal_line: Vec::new(),
@@ -1061,7 +1060,7 @@ fn finalize_replay_analysis(
         final_forced_interval.start_ply,
         loser,
     );
-    let critical_mistake_ply = match root_cause {
+    let critical_loser_ply = match root_cause {
         RootCause::MissedDefense | RootCause::MissedWin => Some(final_forced_interval.start_ply),
         _ => None,
     };
@@ -1121,7 +1120,7 @@ fn finalize_replay_analysis(
         unclear_context,
         last_chance_ply,
         decisive_attack_ply,
-        critical_mistake_ply,
+        critical_loser_ply,
         root_cause,
         tactical_notes,
         principal_line,
@@ -2217,7 +2216,7 @@ fn classify_root_cause(
             RootCause::MissedDefense
         }
         (Some(ProofStatus::EscapeFound), Some(color)) if color == winner => {
-            RootCause::StrategicLoss
+            RootCause::CorridorEntry
         }
         _ => RootCause::Unclear,
     }
@@ -2364,9 +2363,6 @@ struct TacticalNoteInput<'a> {
 
 fn tactical_notes(input: TacticalNoteInput<'_>) -> Vec<TacticalNote> {
     let mut notes = Vec::new();
-    if input.root_cause == RootCause::MissedDefense {
-        push_note(&mut notes, TacticalNote::AccidentalBlunder);
-    }
     if input.root_cause == RootCause::MissedWin {
         push_note(&mut notes, TacticalNote::MissedWin);
     }
@@ -2386,7 +2382,7 @@ fn tactical_notes(input: TacticalNoteInput<'_>) -> Vec<TacticalNote> {
     ) {
         push_note(&mut notes, TacticalNote::MissedWin);
     }
-    if input.root_cause == RootCause::StrategicLoss {
+    if input.root_cause == RootCause::CorridorEntry {
         push_note(&mut notes, TacticalNote::StrongAttack);
     }
     notes
@@ -2935,11 +2931,9 @@ mod tests {
         assert_eq!(analysis.winner, Some(Color::Black));
         assert_eq!(analysis.final_forced_interval.start_ply, 8);
         assert_eq!(analysis.last_chance_ply, Some(7));
-        assert_eq!(analysis.critical_mistake_ply, Some(8));
+        assert_eq!(analysis.critical_loser_ply, Some(8));
         assert_eq!(analysis.root_cause, RootCause::MissedDefense);
-        assert!(analysis
-            .tactical_notes
-            .contains(&TacticalNote::AccidentalBlunder));
+        assert!(analysis.tactical_notes.is_empty());
     }
 
     #[test]
@@ -3038,7 +3032,7 @@ mod tests {
         assert_eq!(analysis.root_cause, RootCause::MissedDefense);
         assert_eq!(analysis.final_forced_interval.start_ply, 14);
         assert_eq!(analysis.last_chance_ply, Some(13));
-        assert_eq!(analysis.critical_mistake_ply, Some(14));
+        assert_eq!(analysis.critical_loser_ply, Some(14));
 
         let scan_start = replay.moves.len() + 1 - analysis.proof_summary.len();
         assert_eq!(scan_start, 13);
@@ -3464,7 +3458,7 @@ mod tests {
 
         assert_eq!(analysis.root_cause, RootCause::MissedDefense);
         assert_eq!(analysis.final_forced_interval.start_ply, 23);
-        assert_eq!(analysis.critical_mistake_ply, Some(23));
+        assert_eq!(analysis.critical_loser_ply, Some(23));
         assert_eq!(analysis.unclear_reason, None);
         assert!(analysis.unknown_gaps.is_empty());
     }
@@ -3600,7 +3594,7 @@ mod tests {
 
         assert_eq!(analysis.winner, Some(Color::Black));
         assert_eq!(analysis.root_cause, RootCause::MissedWin);
-        assert_eq!(analysis.critical_mistake_ply, Some(10));
+        assert_eq!(analysis.critical_loser_ply, Some(10));
         assert!(analysis.tactical_notes.contains(&TacticalNote::MissedWin));
     }
 

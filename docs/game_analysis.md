@@ -20,15 +20,15 @@ Given a finished match, the analyzer should answer:
 - When did the winner have a forced win?
 - What was the losing side's last real chance to escape?
 - Which move was the decisive attack?
-- Which move was the critical mistake?
-- Was the loss strategic, accidental, or unclear within the analyzer limits?
+- Which losing-side move became critical?
+- Which neutral root cause explains the final corridor within analyzer limits?
 
 The replay surface should produce concrete, bounded explanations:
 
 - "Move 43: point of no return."
 - "White's last chance was move 42."
 - "Black had a setup corridor from here."
-- "This looks like a missed defense, not a strategically lost position."
+- "This looks like a missed defense, not a general position evaluation."
 
 Do not overclaim. If the bounded analyzer cannot prove the position, it should
 say so.
@@ -202,7 +202,7 @@ markers because they explain why no branch was searched.
 Transition labels follow the same proof-status rules everywhere:
 
 - `escape_found -> forced_win` caused by the losing side: `missed_defense`.
-- `escape_found -> forced_win` caused by the winning side: `strategic_loss`.
+- `escape_found -> forced_win` caused by the winning side: `corridor_entry`.
 - `unknown -> forced_win`: `unclear`, even if the current forced sequence is
   proven.
 
@@ -295,7 +295,7 @@ A player can:
 
 - create a forced win,
 - miss the conversion and release it,
-- regain a forced win later after another mistake.
+- regain a forced win later after another reply miss.
 
 The analyzer should therefore record proof intervals rather than only one point:
 
@@ -308,7 +308,7 @@ The analyzer should therefore record proof intervals rather than only one point:
 - `last_chance_ply`: last losing-side turn before a proof interval where an
   escape exists.
 - `decisive_attack_ply`: winner move that creates or enters the proof interval.
-- `critical_mistake_ply`: losing move that allows the decisive attack or misses
+- `critical_loser_ply`: losing-side move that allows the decisive attack or misses
   the last escape.
 
 Important labels:
@@ -321,40 +321,35 @@ Important labels:
 - Point of no return: the start of the setup corridor.
 - Last chance: the final escape opportunity before that interval.
 - Decisive attack: the winner's forcing move.
-- Critical mistake: the losing move that made the attack possible or failed to
+- Critical loser move: the losing-side move that made the attack possible or failed to
   escape it.
 
-The decisive attack and critical mistake are related but not always the same
-move. A strong attack may be the winner's achievement, while the root mistake
-may be the losing side's previous move.
+The decisive attack and critical loser move are related but not always the same
+move. A strong attack may be the winner's achievement, while the losing-side
+boundary may be the previous move.
 
 ## Human Imperfection Layer
 
 Real games, especially human games, are not ideal games. Analysis should
 classify the actual line separately from the ideal proof.
 
-Use a three-part classification:
+Keep the layers separate:
 
-- Loss category: player-facing severity based on proven setup-corridor length.
-- Root detail: analyzer-facing reason the final forced interval exists.
+- Corridor evidence: where the setup corridor starts, where lethal onset begins,
+  and which replies were considered at each losing-side decision.
+- Root detail: analyzer-facing reason the final forced interval exists. This is
+  not a player-facing severity grade.
 - Tactical notes: local misses or conversion issues that happened along the
   actual line.
 
-Loss categories:
-
-- `mistake`: the proven setup-corridor span is shorter than `5` plies. This
-  is a near-term miss such as failing to answer a four or a short three-threat
-  conversion.
-- `tactical_error`: the proven setup-corridor span is `5` to `8` plies. The
-  loss was tactical, but it required seeing several forcing replies ahead.
-- `strategic_loss`: the proven setup-corridor span is `9` plies or longer.
-  The losing side's last viable escape was far enough back that the report
-  should frame it as a deeper strategic miss.
-- `unclear`: the bounded analyzer cannot prove enough to assign a severity.
+Do not infer mistake severity directly from setup-corridor length. We may
+reintroduce mistake/tactical/strategic labels later, but they should be based on
+the type of missed opportunity and player-facing explanation, not a simple span
+threshold.
 
 Root-detail categories:
 
-- `strategic_loss`: a move changes the position from `escape_found` to
+- `corridor_entry`: a move changes the position from `escape_found` to
   `forced_win` under the same model and limits. This means the move entered the
   detected setup corridor; it does not claim the previous position was a
   game-theoretic draw or win for the loser.
@@ -364,26 +359,20 @@ Root-detail categories:
   and allowed the game to continue.
 - `unclear`: the bounded analyzer cannot prove enough to identify a root detail.
 
-If the previous prefix is `unknown`, do not label the transition as a strategic
-loss. The correct root cause is `unclear`, optionally with a tactical note that
+If the previous prefix is `unknown`, do not label the transition as a corridor
+entry. The correct root cause is `unclear`, optionally with a tactical note that
 the move entered a proven forced interval.
 
 Tactical notes:
 
-- `accidental_blunder`: the actual move allows a simpler or immediate tactic
-  that was locally avoidable.
 - `conversion_error`: the winning side had a forced win, played a move that
-  released it, then later won after another mistake.
+  released it, then later won after another reply miss.
 - `strong_attack`: the decisive move created a forcing line even though the
   previous position was not clearly lost.
 
-This split avoids overlap. For example, one move can be a `missed_defense` root
-cause and also carry an `accidental_blunder` note if it missed an obvious local
-block.
-
-"Accidental" and "strategic" are product labels, not judgments of player skill.
-They mean "local tactical oversight" versus "the position became lost under the
-analysis model."
+This split avoids overlap. For example, a `missed_defense` root cause already
+explains the missed local block, so it should not also receive a separate
+mistake-style tactical note.
 
 The replay UI should prefer concrete language over blame:
 
@@ -409,7 +398,7 @@ GameAnalysis
   final_forced_interval
   last_chance_ply
   decisive_attack_ply
-  critical_mistake_ply
+  critical_loser_ply
   root_cause
   tactical_notes
   principal_line

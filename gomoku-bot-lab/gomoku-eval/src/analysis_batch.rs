@@ -17,9 +17,6 @@ use crate::analysis::{
 };
 use crate::report_board::{render_report_board, report_board_css, ReportBoardMarker};
 
-const TACTICAL_ERROR_MIN_CORRIDOR_SPAN: usize = 5;
-const STRATEGIC_LOSS_MIN_CORRIDOR_SPAN: usize = 9;
-
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct AnalysisBatchReport {
     pub schema_version: u32,
@@ -46,9 +43,7 @@ pub struct AnalysisBatchModel {
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
 pub struct AnalysisBatchSummary {
-    pub mistake: usize,
-    pub tactical_error: usize,
-    pub strategic_loss: usize,
+    pub corridor_entry: usize,
     pub missed_defense: usize,
     pub missed_win: usize,
     pub unclear: usize,
@@ -68,7 +63,6 @@ pub struct AnalysisBatchEntry {
     pub status: AnalysisBatchEntryStatus,
     pub winner: Option<Color>,
     pub move_count: Option<usize>,
-    pub loss_category: Option<AnalysisLossCategory>,
     pub root_cause: Option<RootCause>,
     pub unclear_reason: Option<UnclearReason>,
     pub final_move: Option<Move>,
@@ -78,7 +72,7 @@ pub struct AnalysisBatchEntry {
     pub final_forced_interval: Option<ForcedInterval>,
     pub proof_intervals: Vec<ForcedInterval>,
     pub last_chance_ply: Option<usize>,
-    pub critical_mistake_ply: Option<usize>,
+    pub critical_loser_ply: Option<usize>,
     pub tactical_notes: Vec<TacticalNote>,
     pub principal_line: Vec<Move>,
     pub unknown_gaps: Vec<usize>,
@@ -95,15 +89,6 @@ pub struct AnalysisBatchEntry {
     pub unknown_prefix_count: usize,
     pub escape_prefix_count: usize,
     pub error: Option<String>,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum AnalysisLossCategory {
-    Mistake,
-    TacticalError,
-    StrategicLoss,
-    Unclear,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -364,7 +349,6 @@ fn error_entry(path: String, error: String, elapsed_ms: u64) -> AnalysisBatchEnt
         status: AnalysisBatchEntryStatus::Error,
         winner: None,
         move_count: None,
-        loss_category: None,
         root_cause: None,
         unclear_reason: None,
         final_move: None,
@@ -374,7 +358,7 @@ fn error_entry(path: String, error: String, elapsed_ms: u64) -> AnalysisBatchEnt
         final_forced_interval: None,
         proof_intervals: Vec::new(),
         last_chance_ply: None,
-        critical_mistake_ply: None,
+        critical_loser_ply: None,
         tactical_notes: Vec::new(),
         principal_line: Vec::new(),
         unknown_gaps: Vec::new(),
@@ -542,9 +526,9 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       color: var(--accent);
       font-size: 20px;
     }}
-    .card--mistake strong {{ color: var(--orange); }}
-    .card--tactical strong {{ color: var(--accent); }}
-    .card--strategic strong {{ color: var(--red); }}
+    .card--corridor strong {{ color: var(--accent); }}
+    .card--missed-defense strong {{ color: var(--orange); }}
+    .card--missed-win strong {{ color: var(--green); }}
     .card--unclear strong {{ color: var(--blue); }}
     .analysis-list {{
       background: var(--surface);
@@ -563,9 +547,9 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       border-right-color: var(--teal);
       border-bottom-color: var(--teal);
     }}
-    .analysis-entry--mistake {{ border-left-color: var(--orange); }}
-    .analysis-entry--tactical-error {{ border-left-color: var(--accent); }}
-    .analysis-entry--strategic-loss {{ border-left-color: var(--red); }}
+    .analysis-entry--corridor-entry {{ border-left-color: var(--accent); }}
+    .analysis-entry--missed-defense {{ border-left-color: var(--orange); }}
+    .analysis-entry--missed-win {{ border-left-color: var(--green); }}
     .analysis-entry--unclear {{ border-left-color: var(--blue); }}
     .analysis-entry--none {{ border-left-color: var(--faint); }}
     .analysis-entry[open] {{
@@ -654,7 +638,7 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       display: block;
       overflow-wrap: anywhere;
     }}
-    .loss-chip {{
+    .cause-chip {{
       border: 1px solid currentColor;
       display: inline-flex;
       justify-content: center;
@@ -662,11 +646,11 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       text-transform: uppercase;
       white-space: nowrap;
     }}
-    .loss-chip--mistake {{ color: var(--orange); }}
-    .loss-chip--tactical-error {{ color: var(--accent); }}
-    .loss-chip--strategic-loss {{ color: var(--red); }}
-    .loss-chip--unclear {{ color: var(--blue); }}
-    .loss-chip--none {{ color: var(--muted); }}
+    .cause-chip--corridor-entry {{ color: var(--accent); }}
+    .cause-chip--missed-defense {{ color: var(--orange); }}
+    .cause-chip--missed-win {{ color: var(--green); }}
+    .cause-chip--unclear {{ color: var(--blue); }}
+    .cause-chip--none {{ color: var(--muted); }}
     .entry-body {{
       border-top: 1px solid var(--border);
       display: grid;
@@ -1008,9 +992,9 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
   </header>
   <section class="summary-grid" aria-label="Analysis summary">
     <article class="card"><span>Analyzed</span><strong>{analyzed}</strong></article>
-    <article class="card card--mistake"><span>Mistake</span><strong>{mistake}</strong></article>
-    <article class="card card--tactical"><span>Tactical error</span><strong>{tactical_error}</strong></article>
-    <article class="card card--strategic"><span>Strategic loss</span><strong>{strategic_loss}</strong></article>
+    <article class="card card--corridor"><span>Corridor entry</span><strong>{corridor_entry}</strong></article>
+    <article class="card card--missed-defense"><span>Missed defense</span><strong>{missed_defense}</strong></article>
+    <article class="card card--missed-win"><span>Missed win</span><strong>{missed_win}</strong></article>
     <article class="card card--unclear"><span>Unclear</span><strong>{unclear}</strong></article>
     <article class="card"><span>Errors</span><strong>{failed}</strong></article>
   </section>
@@ -1020,9 +1004,9 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
 </html>
 "#,
         analyzed = report.analyzed,
-        mistake = report.summary.mistake,
-        tactical_error = report.summary.tactical_error,
-        strategic_loss = report.summary.strategic_loss,
+        corridor_entry = report.summary.corridor_entry,
+        missed_defense = report.summary.missed_defense,
+        missed_win = report.summary.missed_win,
         unclear = report.summary.unclear,
         failed = report.failed,
         model = html_escape(model_label),
@@ -1036,9 +1020,9 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
 }
 
 fn analysis_entry_card_html(entry: &AnalysisBatchEntry) -> String {
-    let loss_label = loss_category_label(entry.loss_category);
-    let loss_class = loss_category_class(entry.loss_category);
-    let entry_class = loss_entry_class(entry.loss_category);
+    let cause_label = root_cause_label(entry.root_cause);
+    let cause_class = root_cause_class(entry.root_cause);
+    let entry_class = root_cause_entry_class(entry.root_cause);
     let lethal = lethal_onset_label(entry.lethal_onset.as_ref());
     let setup = forced_interval_label(entry.setup_corridor.as_ref());
     let detail_sections = analysis_entry_detail_sections_html(entry);
@@ -1052,7 +1036,7 @@ fn analysis_entry_card_html(entry: &AnalysisBatchEntry) -> String {
     <strong class="entry-title"><span class="entry-match">{match_label}</span></strong>
     {first_player}
     {second_player}
-    <span class="loss-chip {loss_class}">{loss}</span>
+    <span class="cause-chip {cause_class}">{cause}</span>
     <span class="entry-metric"><span>Lethal onset</span><strong>{lethal}</strong></span>
     <span class="entry-metric"><span>Setup corridor</span><strong>{setup}</strong></span>
     <span class="entry-metric"><span>Game length</span><strong>{length}</strong></span>
@@ -1063,11 +1047,11 @@ fn analysis_entry_card_html(entry: &AnalysisBatchEntry) -> String {
   </div>
 </details>"#,
         entry_class = entry_class,
-        loss_class = loss_class,
+        cause_class = cause_class,
         match_label = html_escape(&title.match_label),
         first_player = first_player,
         second_player = second_player,
-        loss = html_escape(&loss_label),
+        cause = html_escape(&cause_label),
         lethal = html_escape(&lethal),
         setup = html_escape(&setup),
         length = html_escape(&ply_count_label(entry.move_count)),
@@ -1369,26 +1353,6 @@ fn source_kind_label(source_kind: &str) -> String {
     source_kind.replace('_', " ")
 }
 
-fn loss_category_class(loss_category: Option<AnalysisLossCategory>) -> &'static str {
-    match loss_category {
-        Some(AnalysisLossCategory::Mistake) => "loss-chip--mistake",
-        Some(AnalysisLossCategory::TacticalError) => "loss-chip--tactical-error",
-        Some(AnalysisLossCategory::StrategicLoss) => "loss-chip--strategic-loss",
-        Some(AnalysisLossCategory::Unclear) => "loss-chip--unclear",
-        None => "loss-chip--none",
-    }
-}
-
-fn loss_entry_class(loss_category: Option<AnalysisLossCategory>) -> &'static str {
-    match loss_category {
-        Some(AnalysisLossCategory::Mistake) => "analysis-entry--mistake",
-        Some(AnalysisLossCategory::TacticalError) => "analysis-entry--tactical-error",
-        Some(AnalysisLossCategory::StrategicLoss) => "analysis-entry--strategic-loss",
-        Some(AnalysisLossCategory::Unclear) => "analysis-entry--unclear",
-        None => "analysis-entry--none",
-    }
-}
-
 fn forced_interval_label(interval: Option<&ForcedInterval>) -> String {
     let Some(interval) = interval else {
         return "-".to_string();
@@ -1475,7 +1439,6 @@ fn entry_from_analysis(
         status: AnalysisBatchEntryStatus::Analyzed,
         winner: analysis.winner,
         move_count: Some(move_count),
-        loss_category: loss_category_for_analysis(&analysis),
         root_cause: Some(analysis.root_cause),
         unclear_reason: analysis.unclear_reason,
         final_move: analysis.final_move,
@@ -1485,7 +1448,7 @@ fn entry_from_analysis(
         final_forced_interval: Some(analysis.final_forced_interval),
         proof_intervals: analysis.proof_intervals,
         last_chance_ply: analysis.last_chance_ply,
-        critical_mistake_ply: analysis.critical_mistake_ply,
+        critical_loser_ply: analysis.critical_loser_ply,
         tactical_notes: analysis.tactical_notes,
         principal_line: analysis.principal_line,
         unknown_gaps: analysis.unknown_gaps.clone(),
@@ -2178,54 +2141,18 @@ fn increment_summary_from_entry(summary: &mut AnalysisBatchSummary, entry: &Anal
         return;
     }
 
-    match entry.loss_category {
-        Some(AnalysisLossCategory::Mistake) => summary.mistake += 1,
-        Some(AnalysisLossCategory::TacticalError) => summary.tactical_error += 1,
-        Some(AnalysisLossCategory::StrategicLoss) => summary.strategic_loss += 1,
-        Some(AnalysisLossCategory::Unclear) | None => summary.unclear += 1,
-    }
-
     match entry.root_cause {
+        Some(RootCause::CorridorEntry) => summary.corridor_entry += 1,
         Some(RootCause::MissedDefense) => summary.missed_defense += 1,
         Some(RootCause::MissedWin) => summary.missed_win += 1,
-        Some(RootCause::StrategicLoss) | Some(RootCause::Unclear) | None => {}
-    }
-}
-
-fn loss_category_for_analysis(analysis: &GameAnalysis) -> Option<AnalysisLossCategory> {
-    analysis.winner?;
-    if analysis.root_cause == RootCause::Unclear || !analysis.final_forced_interval_found {
-        return Some(AnalysisLossCategory::Unclear);
-    }
-    if analysis.root_cause == RootCause::MissedWin {
-        return Some(AnalysisLossCategory::Mistake);
-    }
-
-    let loss_interval = analysis
-        .setup_corridor
-        .as_ref()
-        .unwrap_or(&analysis.final_forced_interval);
-    let corridor_span = loss_interval
-        .end_ply
-        .saturating_sub(loss_interval.start_ply)
-        + 1;
-    Some(loss_category_for_corridor_span(corridor_span))
-}
-
-fn loss_category_for_corridor_span(corridor_span: usize) -> AnalysisLossCategory {
-    if corridor_span < TACTICAL_ERROR_MIN_CORRIDOR_SPAN {
-        AnalysisLossCategory::Mistake
-    } else if corridor_span < STRATEGIC_LOSS_MIN_CORRIDOR_SPAN {
-        AnalysisLossCategory::TacticalError
-    } else {
-        AnalysisLossCategory::StrategicLoss
+        Some(RootCause::Unclear) | None => summary.unclear += 1,
     }
 }
 
 fn root_cause_label(root_cause: Option<RootCause>) -> String {
     root_cause
         .map(|root_cause| match root_cause {
-            RootCause::StrategicLoss => "strategic loss",
+            RootCause::CorridorEntry => "corridor entry",
             RootCause::MissedDefense => "missed defense",
             RootCause::MissedWin => "missed win",
             RootCause::Unclear => "unclear",
@@ -2234,16 +2161,24 @@ fn root_cause_label(root_cause: Option<RootCause>) -> String {
         .to_string()
 }
 
-fn loss_category_label(loss_category: Option<AnalysisLossCategory>) -> String {
-    loss_category
-        .map(|category| match category {
-            AnalysisLossCategory::Mistake => "mistake",
-            AnalysisLossCategory::TacticalError => "tactical error",
-            AnalysisLossCategory::StrategicLoss => "strategic loss",
-            AnalysisLossCategory::Unclear => "unclear",
-        })
-        .unwrap_or("-")
-        .to_string()
+fn root_cause_class(root_cause: Option<RootCause>) -> &'static str {
+    match root_cause {
+        Some(RootCause::CorridorEntry) => "cause-chip--corridor-entry",
+        Some(RootCause::MissedDefense) => "cause-chip--missed-defense",
+        Some(RootCause::MissedWin) => "cause-chip--missed-win",
+        Some(RootCause::Unclear) => "cause-chip--unclear",
+        None => "cause-chip--none",
+    }
+}
+
+fn root_cause_entry_class(root_cause: Option<RootCause>) -> &'static str {
+    match root_cause {
+        Some(RootCause::CorridorEntry) => "analysis-entry--corridor-entry",
+        Some(RootCause::MissedDefense) => "analysis-entry--missed-defense",
+        Some(RootCause::MissedWin) => "analysis-entry--missed-win",
+        Some(RootCause::Unclear) => "analysis-entry--unclear",
+        None => "analysis-entry--none",
+    }
 }
 
 fn unclear_reason_label(unclear_reason: Option<UnclearReason>) -> String {
@@ -2775,13 +2710,12 @@ mod tests {
     use super::{
         add_actual_marker, add_loser_candidate_markers, add_reply_outcome_markers, cell_classes,
         defender_reply_candidates_for_frame, defender_reply_detail_label,
-        defender_reply_outcome_label, defender_reply_outcomes_for_frame,
-        loss_category_for_analysis, loss_category_for_corridor_span, marker_label,
+        defender_reply_outcome_label, defender_reply_outcomes_for_frame, marker_label,
         ordered_player_columns_html, perspective_proof_status_label,
         render_analysis_batch_report_html, replay_entry_title, run_analysis_batch,
         run_analysis_batch_replays, run_analysis_batch_replays_with_options,
         AnalysisBatchProofFrame, AnalysisBatchProofMarker, AnalysisBatchProofMarkerKind,
-        AnalysisBatchRunOptions, AnalysisLossCategory, ReplayAnalysisInput,
+        AnalysisBatchRunOptions, ReplayAnalysisInput,
     };
     use crate::analysis::{
         analyze_replay, replay_frame_annotations_for_analysis, AnalysisModel, AnalysisOptions,
@@ -2854,7 +2788,7 @@ mod tests {
             unclear_context: None,
             last_chance_ply: None,
             decisive_attack_ply: None,
-            critical_mistake_ply: None,
+            critical_loser_ply: None,
             root_cause: RootCause::Unclear,
             tactical_notes: Vec::new(),
             principal_line: Vec::new(),
@@ -2919,46 +2853,6 @@ mod tests {
     }
 
     #[test]
-    fn analysis_loss_category_uses_inclusive_corridor_span_cutoffs() {
-        assert_eq!(
-            loss_category_for_corridor_span(4),
-            AnalysisLossCategory::Mistake
-        );
-        assert_eq!(
-            loss_category_for_corridor_span(5),
-            AnalysisLossCategory::TacticalError
-        );
-        assert_eq!(
-            loss_category_for_corridor_span(8),
-            AnalysisLossCategory::TacticalError
-        );
-        assert_eq!(
-            loss_category_for_corridor_span(9),
-            AnalysisLossCategory::StrategicLoss
-        );
-    }
-
-    #[test]
-    fn analysis_loss_category_prefers_setup_corridor_span() {
-        let mut analysis = analysis_for_winner(Color::Black, "freestyle", 4);
-        analysis.final_forced_interval_found = true;
-        analysis.root_cause = RootCause::StrategicLoss;
-        analysis.final_forced_interval = ForcedInterval {
-            start_ply: 2,
-            end_ply: 18,
-        };
-        analysis.setup_corridor = Some(ForcedInterval {
-            start_ply: 2,
-            end_ply: 6,
-        });
-
-        assert_eq!(
-            loss_category_for_analysis(&analysis),
-            Some(AnalysisLossCategory::TacticalError)
-        );
-    }
-
-    #[test]
     fn analysis_batch_groups_replay_directory_by_root_cause() {
         let dir = temp_report_dir("root-cause");
         let missed_defense = replay_from_moves(
@@ -2980,12 +2874,8 @@ mod tests {
         assert_eq!(report.analyzed, 1);
         assert_eq!(report.failed, 0);
         assert_eq!(report.model.max_depth, AnalysisOptions::default().max_depth);
-        assert_eq!(report.summary.mistake, 1);
+        assert_eq!(report.summary.corridor_entry, 0);
         assert_eq!(report.summary.missed_defense, 1);
-        assert_eq!(
-            report.entries[0].loss_category,
-            Some(AnalysisLossCategory::Mistake)
-        );
         assert_eq!(report.entries[0].root_cause, Some(RootCause::MissedDefense));
         assert_eq!(report.entries[0].path, "missed_defense.json");
 
@@ -3023,9 +2913,12 @@ mod tests {
         assert!(!html.contains(" entries</strong>"));
         assert!(!html.contains("<span>Limit hits</span>"));
         assert!(html.contains("class=\"analysis-list\" aria-label=\"Replay analysis entries\""));
-        assert!(html.contains("class=\"analysis-entry analysis-entry--mistake\""));
-        assert!(html.contains("class=\"loss-chip loss-chip--mistake\""));
-        assert!(html.contains("Mistake"));
+        assert!(html.contains("class=\"analysis-entry analysis-entry--missed-defense\""));
+        assert!(html.contains("class=\"cause-chip cause-chip--missed-defense\""));
+        assert!(html.contains("Missed defense"));
+        assert!(!html.contains("class=\"loss-chip"));
+        assert!(!html.contains("Tactical error"));
+        assert!(!html.contains("Strategic loss"));
         assert!(html.contains("<span>Model</span><strong>Corridor search</strong>"));
         assert!(html.contains(&format!(
             "<span>Source</span><strong>{}</strong>",
