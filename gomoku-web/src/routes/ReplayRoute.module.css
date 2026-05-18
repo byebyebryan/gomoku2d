@@ -225,12 +225,12 @@
   pointer-events: none;
 }
 
-.timelineCorridor {
+.timelineSetup {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: var(--timeline-corridor-start, 0%);
-  right: calc(100% - var(--timeline-corridor-end, 0%));
+  left: var(--timeline-setup-start, 0%);
+  right: calc(100% - var(--timeline-setup-end, 0%));
   background: var(--danger);
 }
 

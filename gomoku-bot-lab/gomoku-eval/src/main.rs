@@ -293,7 +293,7 @@ enum Commands {
         #[arg(long)]
         output: Option<PathBuf>,
 
-        /// Maximum forced-corridor proof depth
+        /// Maximum corridor proof depth
         #[arg(long, default_value_t = 4)]
         max_depth: usize,
 
@@ -315,7 +315,7 @@ enum Commands {
         #[arg(long)]
         report_html: Option<PathBuf>,
 
-        /// Maximum forced-corridor proof depth
+        /// Maximum corridor proof depth
         #[arg(long, default_value_t = 4)]
         max_depth: usize,
 
@@ -353,7 +353,7 @@ enum Commands {
         #[arg(long)]
         report_html: Option<PathBuf>,
 
-        /// Maximum forced-corridor proof depth
+        /// Maximum corridor proof depth
         #[arg(long, default_value_t = 4)]
         max_depth: usize,
 
@@ -375,7 +375,7 @@ enum Commands {
         #[arg(long)]
         report_html: Option<PathBuf>,
 
-        /// Maximum forced-corridor proof depth
+        /// Maximum corridor proof depth
         #[arg(long, default_value_t = 4)]
         max_depth: usize,
 

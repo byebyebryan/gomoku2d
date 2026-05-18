@@ -73,6 +73,7 @@ pub struct AnalysisBatchEntry {
     pub unclear_reason: Option<UnclearReason>,
     pub final_move: Option<Move>,
     pub lethal_onset: Option<LethalOnset>,
+    pub setup_corridor: Option<ForcedInterval>,
     pub final_forced_interval_found: bool,
     pub final_forced_interval: Option<ForcedInterval>,
     pub proof_intervals: Vec<ForcedInterval>,
@@ -368,6 +369,7 @@ fn error_entry(path: String, error: String, elapsed_ms: u64) -> AnalysisBatchEnt
         unclear_reason: None,
         final_move: None,
         lethal_onset: None,
+        setup_corridor: None,
         final_forced_interval_found: false,
         final_forced_interval: None,
         proof_intervals: Vec::new(),
@@ -1038,7 +1040,7 @@ fn analysis_entry_card_html(entry: &AnalysisBatchEntry) -> String {
     let loss_class = loss_category_class(entry.loss_category);
     let entry_class = loss_entry_class(entry.loss_category);
     let lethal = lethal_onset_label(entry.lethal_onset.as_ref());
-    let forced = forced_interval_label(entry.final_forced_interval.as_ref());
+    let setup = forced_interval_label(entry.setup_corridor.as_ref());
     let detail_sections = analysis_entry_detail_sections_html(entry);
     let title = replay_entry_title(&entry.path);
     let (first_player, second_player) = ordered_player_columns_html(&title, entry.winner);
@@ -1052,7 +1054,7 @@ fn analysis_entry_card_html(entry: &AnalysisBatchEntry) -> String {
     {second_player}
     <span class="loss-chip {loss_class}">{loss}</span>
     <span class="entry-metric"><span>Lethal onset</span><strong>{lethal}</strong></span>
-    <span class="entry-metric"><span>Forced corridor</span><strong>{forced}</strong></span>
+    <span class="entry-metric"><span>Setup corridor</span><strong>{setup}</strong></span>
     <span class="entry-metric"><span>Game length</span><strong>{length}</strong></span>
   </summary>
   <div class="entry-body">
@@ -1067,7 +1069,7 @@ fn analysis_entry_card_html(entry: &AnalysisBatchEntry) -> String {
         second_player = second_player,
         loss = html_escape(&loss_label),
         lethal = html_escape(&lethal),
-        forced = html_escape(&forced),
+        setup = html_escape(&setup),
         length = html_escape(&ply_count_label(entry.move_count)),
         detail_sections = detail_sections,
         panels = panels,
@@ -1478,6 +1480,7 @@ fn entry_from_analysis(
         unclear_reason: analysis.unclear_reason,
         final_move: analysis.final_move,
         lethal_onset: analysis.lethal_onset,
+        setup_corridor: analysis.setup_corridor,
         final_forced_interval_found: analysis.final_forced_interval_found,
         final_forced_interval: Some(analysis.final_forced_interval),
         proof_intervals: analysis.proof_intervals,
@@ -2198,10 +2201,13 @@ fn loss_category_for_analysis(analysis: &GameAnalysis) -> Option<AnalysisLossCat
         return Some(AnalysisLossCategory::Mistake);
     }
 
-    let corridor_span = analysis
-        .final_forced_interval
+    let loss_interval = analysis
+        .setup_corridor
+        .as_ref()
+        .unwrap_or(&analysis.final_forced_interval);
+    let corridor_span = loss_interval
         .end_ply
-        .saturating_sub(analysis.final_forced_interval.start_ply)
+        .saturating_sub(loss_interval.start_ply)
         + 1;
     Some(loss_category_for_corridor_span(corridor_span))
 }
@@ -2770,9 +2776,10 @@ mod tests {
         add_actual_marker, add_loser_candidate_markers, add_reply_outcome_markers, cell_classes,
         defender_reply_candidates_for_frame, defender_reply_detail_label,
         defender_reply_outcome_label, defender_reply_outcomes_for_frame,
-        loss_category_for_corridor_span, marker_label, ordered_player_columns_html,
-        perspective_proof_status_label, render_analysis_batch_report_html, replay_entry_title,
-        run_analysis_batch, run_analysis_batch_replays, run_analysis_batch_replays_with_options,
+        loss_category_for_analysis, loss_category_for_corridor_span, marker_label,
+        ordered_player_columns_html, perspective_proof_status_label,
+        render_analysis_batch_report_html, replay_entry_title, run_analysis_batch,
+        run_analysis_batch_replays, run_analysis_batch_replays_with_options,
         AnalysisBatchProofFrame, AnalysisBatchProofMarker, AnalysisBatchProofMarkerKind,
         AnalysisBatchRunOptions, AnalysisLossCategory, ReplayAnalysisInput,
     };
@@ -2835,6 +2842,7 @@ mod tests {
                 max_scan_plies: Some(64),
             },
             lethal_onset: None,
+            setup_corridor: None,
             final_forced_interval_found: false,
             final_forced_interval: ForcedInterval {
                 start_ply: 0,
@@ -2927,6 +2935,26 @@ mod tests {
         assert_eq!(
             loss_category_for_corridor_span(9),
             AnalysisLossCategory::StrategicLoss
+        );
+    }
+
+    #[test]
+    fn analysis_loss_category_prefers_setup_corridor_span() {
+        let mut analysis = analysis_for_winner(Color::Black, "freestyle", 4);
+        analysis.final_forced_interval_found = true;
+        analysis.root_cause = RootCause::StrategicLoss;
+        analysis.final_forced_interval = ForcedInterval {
+            start_ply: 2,
+            end_ply: 18,
+        };
+        analysis.setup_corridor = Some(ForcedInterval {
+            start_ply: 2,
+            end_ply: 6,
+        });
+
+        assert_eq!(
+            loss_category_for_analysis(&analysis),
+            Some(AnalysisLossCategory::TacticalError)
         );
     }
 
@@ -3357,6 +3385,11 @@ mod tests {
             .expect("analysis entry should carry lethal onset evidence");
         assert_eq!(onset.prefix_ply, 11);
         assert_eq!(onset.kind, LethalThreatKind::OneStepCoverage);
+        let setup_corridor = entry
+            .setup_corridor
+            .as_ref()
+            .expect("analysis entry should carry setup corridor evidence");
+        assert_eq!(setup_corridor.end_ply, onset.prefix_ply);
 
         let details = entry
             .proof_details
@@ -3372,6 +3405,8 @@ mod tests {
 
         let html = render_analysis_batch_report_html(&report);
         assert!(html.contains("<span>Lethal onset</span><strong>11</strong>"));
+        assert!(html.contains("<span>Setup corridor</span><strong>"));
+        assert!(!html.contains("<span>Forced corridor</span>"));
         assert!(!html.contains("11 / one-step"));
         assert!(html.contains("White to respond / guaranteed loss"));
         assert!(!html.contains("<span>Lethal</span>"));

@@ -247,8 +247,9 @@ Rules:
 - metadata stays compact and quiet
 - replay opens on the finished board; the scrubber remains the path to any raw
   move index, while the outer transport buttons move by whole turns
-- timeline fill is analysis-first: neutral by default, red for the searched
-  forced corridor, and a green point marker for the latest detected escape
+- timeline fill is analysis-first: neutral by default, red for the setup
+  corridor up to lethal onset, and a green point marker for the latest detected
+  escape
 - branching from replay should preserve the current board position and rule set,
   but it becomes a new local match with undo capped at the branch point
 

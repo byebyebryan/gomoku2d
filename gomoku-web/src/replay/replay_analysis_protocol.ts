@@ -48,8 +48,19 @@ export interface ReplayAnalysisCounters {
   proof_nodes: number;
 }
 
+export interface ReplayAnalysisInterval {
+  end_ply: number;
+  start_ply: number;
+}
+
+export interface ReplayAnalysisSummary {
+  final_forced_interval?: ReplayAnalysisInterval | null;
+  schema_version?: number;
+  setup_corridor?: ReplayAnalysisInterval | null;
+}
+
 export interface ReplayAnalysisStepResult {
-  analysis: unknown | null;
+  analysis: ReplayAnalysisSummary | null;
   annotations: ReplayFrameAnnotations[];
   counters: ReplayAnalysisCounters;
   current_ply: number | null;

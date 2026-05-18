@@ -226,10 +226,10 @@ export function ReplayRoute() {
   const frame = buildLocalReplayFrame(match, moveIndex, () => coreWinningCells);
   const analysisOverlays = analysisOverlaysForFrame(analysisAnnotations, match, frame.moveIndex);
   const analysisStatus = replayAnalysisStatusSummary(analysisStep, analysisAnnotations, match, frame);
-  const timelineAnalysis = replayTimelineAnalysis(analysisAnnotations, match.move_count);
+  const timelineAnalysis = replayTimelineAnalysis(analysisAnnotations, match.move_count, analysisStep?.analysis ?? null);
   const timelineStyle = {
-    "--timeline-corridor-end": timelineAnalysis.corridorEndPercent ?? "0%",
-    "--timeline-corridor-start": timelineAnalysis.corridorStartPercent ?? "0%",
+    "--timeline-setup-end": timelineAnalysis.setupEndPercent ?? "0%",
+    "--timeline-setup-start": timelineAnalysis.setupStartPercent ?? "0%",
     "--timeline-escape": timelineAnalysis.escapePercent ?? "0%",
   } as React.CSSProperties;
   const replayMovePreview = nextReplayMove(match, frame.moveIndex);
@@ -355,8 +355,8 @@ export function ReplayRoute() {
 
             <div className={styles.timeline} data-testid="replay-timeline" style={timelineStyle}>
               <div aria-hidden="true" className={styles.timelineTrack}>
-                {timelineAnalysis.corridorStartPercent && timelineAnalysis.corridorEndPercent ? (
-                  <span className={styles.timelineCorridor} data-testid="replay-timeline-corridor" />
+                {timelineAnalysis.setupStartPercent && timelineAnalysis.setupEndPercent ? (
+                  <span className={styles.timelineSetup} data-testid="replay-timeline-setup-corridor" />
                 ) : null}
                 {timelineAnalysis.escapePercent ? (
                   <span className={styles.timelineEscape} data-testid="replay-timeline-escape" />

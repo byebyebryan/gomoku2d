@@ -450,7 +450,7 @@ replay after browser-side analysis has resolved to the last-escape frame.
   instead of sending users to a separate static report.
 - The page opens on the finished board, then supports whole-turn navigation for
   walking backward through the decisive sequence.
-- The timeline now reads as an analysis timeline: red for the forced corridor
+- The timeline now reads as an analysis timeline: red for the setup corridor
   and green for the last detected escape.
 - Board annotations use the split highlighter/marker/caution vocabulary without
   adding another control surface.

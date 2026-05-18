@@ -53,7 +53,7 @@ all stay in the loop.
   Renju forbidden-move feedback and mobile-friendly placement controls.
 - Review local replays, scrub the timeline, and branch from a replay position
   into a fresh practice game.
-- Let the browser analyzer mark the final forced corridor and latest escape in
+- Let the browser analyzer mark the setup corridor and latest escape in
   finished decisive replays.
 - Keep guest-local history by default, or sign in with Google for private
   cloud-backed history across browsers.
@@ -77,7 +77,7 @@ gomoku2d/
 ├── gomoku-bot-lab/     ← the Rust side
 │   ├── gomoku-core/      rules + board
 │   ├── gomoku-bot/       Bot trait + implementations
-│   ├── gomoku-analysis/  forced-corridor replay analysis
+│   ├── gomoku-analysis/  setup-corridor replay analysis
 │   ├── gomoku-eval/      self-play arena, tournaments, Elo
 │   ├── gomoku-cli/       native match runner
 │   └── gomoku-wasm/      wasm-pack bridge the game imports
@@ -88,7 +88,7 @@ gomoku2d/
 |-------|--------------|
 | `gomoku-core` | Board state, rules (Freestyle + Renju), win detection, FEN, replay JSON |
 | `gomoku-bot` | `Bot` trait + implementations: `RandomBot`, `SearchBot` (negamax + α-β + iterative deepening + transposition table) |
-| `gomoku-analysis` | Shared forced-corridor replay analyzer used by reports and the browser |
+| `gomoku-analysis` | Shared setup-corridor replay analyzer used by reports and the browser |
 | `gomoku-cli` | Run one match: pick the bots, print the board, optionally save a replay |
 | `gomoku-eval` | Run many matches: self-play arena, round-robin tournaments, Elo ratings |
 | `gomoku-wasm` | `wasm-pack` bridge — exports the core + bots to the web game |
@@ -132,7 +132,7 @@ The canonical design, architecture, and release docs live in `docs/`:
 - [`gomoku-web/assets/README.md`](gomoku-web/assets/README.md) — source asset folders and local preview pages
 - [Live asset previews](https://gomoku2d.byebyebryan.com/assets/) — published sprite, icon, and font previews
 - [Bot lab report](https://gomoku2d.byebyebryan.com/bot-report/) — published bot-lab tournament report target
-- [Replay analysis report](https://gomoku2d.byebyebryan.com/analysis-report/) — published forced-corridor analysis for the bot report's top matchup
+- [Replay analysis report](https://gomoku2d.byebyebryan.com/analysis-report/) — published setup-corridor analysis for the bot report's top matchup
 - [`docs/ui_screenshot_review.md`](docs/ui_screenshot_review.md) — screenshot history and UI critique
 - [`docs/backend.md`](docs/backend.md) — Firebase + Firestore + Cloud Run model for cloud, lab-powered, and online phases
 - [`docs/backend_infra.md`](docs/backend_infra.md) — live Firebase/GCP setup, rules deployment, and env checklist

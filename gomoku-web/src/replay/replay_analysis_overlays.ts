@@ -9,6 +9,7 @@ import {
 import type {
   ReplayAnalysisSide,
   ReplayAnalysisStepResult,
+  ReplayAnalysisSummary,
   ReplayFrameAnnotations,
   ReplayFrameHighlightRole,
   ReplayFrameMarkerRole,
@@ -17,10 +18,10 @@ import type {
 export type ReplayAnalysisAnnotationsByPly = Record<number, ReplayFrameAnnotations>;
 
 export type ReplayTimelineAnalysis = {
-  corridorEndPercent: string | null;
-  corridorEndPly: number | null;
-  corridorStartPercent: string | null;
-  corridorStartPly: number | null;
+  setupEndPercent: string | null;
+  setupEndPly: number | null;
+  setupStartPercent: string | null;
+  setupStartPly: number | null;
   escapePercent: string | null;
   escapePly: number | null;
 };
@@ -118,42 +119,57 @@ function winningSideName(match: Pick<SavedMatchV2, "status">): ReplayAnalysisSid
   return null;
 }
 
-function corridorDetail(timeline: ReplayTimelineAnalysis, totalMoves: number): string {
-  if (timeline.corridorStartPly === null || timeline.corridorEndPly === null) {
-    return "No forced corridor found";
+function setupCorridorDetail(timeline: ReplayTimelineAnalysis, totalMoves: number): string {
+  if (timeline.setupStartPly === null || timeline.setupEndPly === null) {
+    return "No setup corridor found";
   }
 
-  const startMove = Math.min(totalMoves, timeline.corridorStartPly + 1);
-  const endMove = Math.min(totalMoves, timeline.corridorEndPly);
-  return `Corridor: moves ${startMove}-${endMove}`;
+  const startMove = Math.min(totalMoves, timeline.setupStartPly + 1);
+  const endMove = Math.min(totalMoves, timeline.setupEndPly);
+  return `Setup corridor: moves ${startMove}-${endMove}`;
+}
+
+function setupCorridorFromAnalysis(analysis: ReplayAnalysisSummary | null | undefined) {
+  const setup = analysis?.setup_corridor ?? null;
+  if (
+    setup &&
+    Number.isFinite(setup.start_ply) &&
+    Number.isFinite(setup.end_ply) &&
+    setup.end_ply >= setup.start_ply
+  ) {
+    return setup;
+  }
+  return null;
 }
 
 export function replayTimelineAnalysis(
   annotationsByPly: ReplayAnalysisAnnotationsByPly,
   totalMoves: number,
+  analysis?: ReplayAnalysisSummary | null,
 ): ReplayTimelineAnalysis {
   const plies = annotatedPlies(annotationsByPly);
-  if (plies.length === 0) {
+  const setupCorridor = setupCorridorFromAnalysis(analysis);
+  if (plies.length === 0 && !setupCorridor) {
     return {
-      corridorEndPercent: null,
-      corridorEndPly: null,
-      corridorStartPercent: null,
-      corridorStartPly: null,
+      setupEndPercent: null,
+      setupEndPly: null,
+      setupStartPercent: null,
+      setupStartPly: null,
       escapePercent: null,
       escapePly: null,
     };
   }
 
-  const corridorStartPly = Math.min(...plies);
-  const corridorEndPly = Math.max(totalMoves, ...plies);
+  const setupStartPly = setupCorridor ? setupCorridor.start_ply : Math.min(...plies);
+  const setupEndPly = setupCorridor ? setupCorridor.end_ply : Math.max(totalMoves, ...plies);
   const escapes = escapePlies(annotationsByPly);
   const escapePly = escapes.length > 0 ? Math.min(...escapes) : null;
 
   return {
-    corridorEndPercent: percentForPly(corridorEndPly, totalMoves),
-    corridorEndPly,
-    corridorStartPercent: percentForPly(corridorStartPly, totalMoves),
-    corridorStartPly,
+    setupEndPercent: percentForPly(setupEndPly, totalMoves),
+    setupEndPly,
+    setupStartPercent: percentForPly(setupStartPly, totalMoves),
+    setupStartPly,
     escapePercent: escapePly === null ? null : percentForPly(escapePly, totalMoves),
     escapePly,
   };
@@ -183,21 +199,25 @@ export function replayAnalysisStatusSummary(
   }
 
   if (step.status === "resolved") {
-    const timeline = replayTimelineAnalysis(annotationsByPly, totalMoves);
+    const timeline = replayTimelineAnalysis(annotationsByPly, totalMoves, step.analysis);
     const winner = winningSideName(match);
     const loser = loserSideToMove(match);
     const currentSide = sideNameForPlayer(frame.currentPlayer);
-    const insideCorridor = (
-      timeline.corridorStartPly !== null &&
-      timeline.corridorEndPly !== null &&
-      frame.moveIndex >= timeline.corridorStartPly &&
-      frame.moveIndex <= timeline.corridorEndPly
+    const insideSetupCorridor = (
+      timeline.setupStartPly !== null &&
+      timeline.setupEndPly !== null &&
+      frame.moveIndex >= timeline.setupStartPly &&
+      frame.moveIndex <= timeline.setupEndPly
+    );
+    const afterSetupCorridor = (
+      timeline.setupEndPly !== null &&
+      frame.moveIndex > timeline.setupEndPly
     );
 
     if (winner && frame.status !== "playing") {
-      if (timeline.corridorStartPly !== null && timeline.corridorEndPly !== null) {
+      if (timeline.setupStartPly !== null && timeline.setupEndPly !== null) {
         return {
-          detail: `${Math.max(1, timeline.corridorEndPly - timeline.corridorStartPly)}-ply forced corridor`,
+          detail: `${Math.max(1, timeline.setupEndPly - timeline.setupStartPly + 1)}-ply setup corridor`,
           label: `${winner} won`,
         };
       }
@@ -208,9 +228,16 @@ export function replayAnalysisStatusSummary(
       };
     }
 
-    if (!insideCorridor) {
+    if (!insideSetupCorridor) {
+      if (winner && afterSetupCorridor) {
+        return {
+          detail: "After lethal onset",
+          label: `${winner} has a guaranteed win`,
+        };
+      }
+
       return {
-        detail: "Outside the forced corridor",
+        detail: "Outside the setup corridor",
         label: `${currentSide} to move`,
       };
     }
@@ -225,7 +252,7 @@ export function replayAnalysisStatusSummary(
 
       if (winner && currentSide === winner) {
         return {
-          detail: corridorDetail(timeline, totalMoves),
+          detail: setupCorridorDetail(timeline, totalMoves),
           label: `${winner} can force a win`,
         };
       }
@@ -243,15 +270,15 @@ export function replayAnalysisStatusSummary(
       };
     }
 
-    if (timeline.corridorStartPly !== null) {
+    if (timeline.setupStartPly !== null) {
       return {
-        detail: `From move ${Math.min(totalMoves, timeline.corridorStartPly + 1)} · ${nodeDetail(step)}`,
-        label: "Forced corridor found",
+        detail: `From move ${Math.min(totalMoves, timeline.setupStartPly + 1)} · ${nodeDetail(step)}`,
+        label: "Setup corridor found",
       };
     }
 
     return {
-      detail: "Outside the forced corridor",
+      detail: "Outside the setup corridor",
       label: `${currentSide} to move`,
     };
   }
