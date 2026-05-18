@@ -389,11 +389,12 @@ mkdir -p outputs
 cargo run -p gomoku-eval -- lethal-scenarios --report-json outputs/lethal-scenarios.json
 ```
 
-The current harness covers terminal coverage only: freestyle open four,
-blockable single four, defender immediate-win race, Renju forbidden block, and
-Renju Black illegal-completion caveat. One-step lethal coverage such as `4+3`
-and `3+3` should be added here before it is wired into replay analysis or bot
-search.
+The current harness covers terminal coverage and one-step coverage: freestyle
+open four, blockable single four, defender immediate-win race, Renju forbidden
+block, Renju Black illegal-completion caveat, crossed `4+3`, crossed `3+3`, a
+non-lethal crossed broken-three pair with a shared block, and a non-lethal
+single open three. Replay analysis should consume this harness before lethal
+classification is used in bot search.
 
 ## Replay format
 

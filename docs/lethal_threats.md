@@ -35,7 +35,7 @@ themselves, especially under Renju.
 
 ## Terminal Coverage
 
-The first implemented classifier is terminal coverage:
+The first classifier layer is terminal coverage:
 
 ```text
 terminal lethal =
@@ -71,7 +71,7 @@ immediate wins, and legal covering replies.
 
 ## One-Step Lethal Coverage
 
-The next classifier layer should answer:
+The second classifier layer answers:
 
 ```text
 one-step lethal =
@@ -86,6 +86,18 @@ already lost before an open four appears on the board.
 Conservative rule: if any legal defender reply avoids terminal coverage, or
 creates an immediate defender win/counter-threat that the attacker cannot prove
 through, the position is not proven lethal.
+
+The current API mirrors terminal coverage:
+
+```text
+one_step_lethal_threat(board, attacker) -> Option<LethalThreat>
+one_step_lethal_threat_analysis(board, attacker) -> OneStepLethalThreatAnalysis
+lethal_threat(board, attacker) -> Option<LethalThreat>
+```
+
+`lethal_threat` checks terminal coverage first, then one-step coverage. The
+one-step analysis records the defender replies considered, the attacker entries
+that create terminal coverage after each reply, and any escaping replies.
 
 ## Renju Rules
 
@@ -110,13 +122,17 @@ position.
 `gomoku-eval lethal-scenarios` validates state classification directly. It is
 separate from `gomoku-eval tactical-scenarios`, which tests bot move choice.
 
-The current terminal-coverage cases are:
+The current cases are:
 
 - `lethal_freestyle_open_four`;
 - `nonlethal_blockable_closed_four`;
 - `nonlethal_defender_immediate_win`;
 - `lethal_renju_forbidden_block`;
-- `nonlethal_renju_black_open_four_overline_completion`.
+- `nonlethal_renju_black_open_four_overline_completion`;
+- `lethal_freestyle_four_three`;
+- `lethal_freestyle_double_open_three`;
+- `nonlethal_crossed_broken_threes_shared_block`;
+- `nonlethal_single_open_three`.
 
 Each JSON result includes `board_ascii`, and the CLI can print boards directly:
 
@@ -268,8 +284,122 @@ Board legend:
     A B C D E F G H I J K L M N O
 ```
 
-Slice 2 should add one-step `4+3` and `3+3` cases to the same harness before
-the classifier is wired into replay analysis or search.
+### lethal_freestyle_four_three
+
+- Rule: freestyle
+- Attacker: Black
+- Defender to move: White
+- Expected: one-step lethal. The four and three cross at `I8`. White can cover
+  the immediate `L8` target, but Black can then play `I6` or `I10` to create
+  terminal open-four coverage on the vertical line.
+
+```text
+    A B C D E F G H I J K L M N O
+15  W . . . . . . . . . . . . . W  15
+14  . . . . . . . . . . . . . . .  14
+13  . . . . . . . . . . . . . . .  13
+12  . . . . . . . . . . . . . . .  12
+11  . . . . . . . . . . . . . . .  11
+10  . . . . . . . . . . . . . . .  10
+ 9  . . . . . . . . B . . . . . .  9
+ 8  . . . . . . W B B B B . . . .  8
+ 7  . . . . . . . . B . . . . . .  7
+ 6  . . . . . . . . . . . . . . .  6
+ 5  . . . . . . . . . . . . . . .  5
+ 4  . . . . . . . . . . . . . . .  4
+ 3  . . . . . . . . . . . . . . .  3
+ 2  . . . . . . . . . . . . . . .  2
+ 1  W . . . . . . . . . . . . . W  1
+    A B C D E F G H I J K L M N O
+```
+
+### lethal_freestyle_double_open_three
+
+- Rule: freestyle
+- Attacker: Black
+- Defender to move: White
+- Expected: one-step lethal. Two open threes cross at `I8`. Every direct reply
+  to one open three lets Black turn the other open three into terminal
+  open-four coverage.
+
+```text
+    A B C D E F G H I J K L M N O
+15  W . . . . . . . . . . . . . W  15
+14  . . . . . . . . . . . . . . .  14
+13  . . . . . . . . . . . . . . .  13
+12  . . . . . . . . . . . . . . .  12
+11  . . . . . . . . . . . . . . .  11
+10  . . . . . . . . . . . . . . .  10
+ 9  . . . . . . . . B . . . . . .  9
+ 8  . . . . . . . B B B . . . . .  8
+ 7  . . . . . . . . B . . . . . .  7
+ 6  . . . . . . . . . . . . . . .  6
+ 5  . . . . . . . . . . . . . . .  5
+ 4  . . . . . . . . . . . . . . .  4
+ 3  . . . . . . . . . . . . . . .  3
+ 2  . . . . . . . . . . . . . . .  2
+ 1  W . . . . . . . . . . . . . W  1
+    A B C D E F G H I J K L M N O
+```
+
+### nonlethal_crossed_broken_threes_shared_block
+
+- Rule: freestyle
+- Attacker: Black
+- Defender to move: White
+- Expected: non-lethal. Two broken threes cross at the open `I8` point; White
+  can play that shared crossing point to block both threats.
+
+```text
+    A B C D E F G H I J K L M N O
+15  W . . . . . . . . . . . . . W  15
+14  . . . . . . . . . . . . . . .  14
+13  . . . . . . . . . . . . . . .  13
+12  . . . . . . . . . . . . . . .  12
+11  . . . . . . . . . . . . . . .  11
+10  . . . . . . . . . . . . . . .  10
+ 9  . . . . . . . . B . . . . . .  9
+ 8  . . . . . . B B . B . . . . .  8
+ 7  . . . . . . . . B . . . . . .  7
+ 6  . . . . . . . . B . . . . . .  6
+ 5  . . . . . . . . . . . . . . .  5
+ 4  . . . . . . . . . . . . . . .  4
+ 3  . . W . . . . . . . . . . . .  3
+ 2  . . . . . . . . . . . . . . .  2
+ 1  W . . . . . . . . . . . . . W  1
+    A B C D E F G H I J K L M N O
+```
+
+### nonlethal_single_open_three
+
+- Rule: freestyle
+- Attacker: Black
+- Defender to move: White
+- Expected: non-lethal. White can reply at `G8` or `K8`, and both replies
+  escape terminal coverage.
+
+```text
+    A B C D E F G H I J K L M N O
+15  . . . . . . . . . . . . . . .  15
+14  . . . . . . . . . . . . . . .  14
+13  . . . . . . . . . . . . . . .  13
+12  . . . . . . . . . . . . . . .  12
+11  . . . . . . . . . . . . . . .  11
+10  . . . . . . . . . . . . . . .  10
+ 9  . . . . . . . . . . . . . . .  9
+ 8  . . . . . . . B B B . . . . .  8
+ 7  . . . . . . . . . . . . . . .  7
+ 6  . . . . . . . . . . . . . . .  6
+ 5  . . . . . . . . . . . . . . .  5
+ 4  . . . . . . . . . . . . . . .  4
+ 3  . . . . . . . . . . . . . . .  3
+ 2  . . . . . . . . . . . . . . .  2
+ 1  W . W . . . . . . . . . . . .  1
+    A B C D E F G H I J K L M N O
+```
+
+Future slices should wire the classifier into replay analysis first, then
+consider search integration after reports prove the evidence is reliable.
 
 ## Search And Analysis Use
 

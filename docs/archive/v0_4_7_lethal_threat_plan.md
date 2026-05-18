@@ -120,6 +120,17 @@ Evidence should distinguish:
 - defender replies that cover or escape;
 - forbidden replies excluded by Renju legality.
 
+Implementation checkpoint:
+
+- `gomoku_bot::tactical::lethal_threat` checks terminal coverage first, then
+  one-step coverage.
+- `gomoku_bot::tactical::one_step_lethal_threat_analysis` records each defender
+  reply, the attacker entries that create terminal coverage after that reply,
+  defender immediate wins, and escaping replies.
+- The lethal scenario harness now validates crossed `4+3`, crossed `3+3`, a
+  non-lethal crossed broken-three pair with a shared block, and a non-lethal
+  single open three alongside the terminal-coverage cases.
+
 ## Why Slice 2 Exists
 
 Slice 1 is necessary but incomplete. It can only recognize positions where the

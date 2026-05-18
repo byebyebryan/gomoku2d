@@ -69,15 +69,19 @@ pub struct DefenderReplyCandidate {
 #[serde(rename_all = "snake_case")]
 pub enum LethalThreatKind {
     TerminalCoverage,
+    OneStepCoverage,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub struct LethalThreat {
-    pub attacker: Color,
-    pub defender: Color,
-    pub kind: LethalThreatKind,
+pub struct OneStepLethalEntry {
+    pub mv: Move,
     pub terminal_targets: Vec<Move>,
-    pub covering_replies: Vec<Move>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct OneStepDefenderReplyAnalysis {
+    pub reply: Move,
+    pub lethal_entries: Vec<OneStepLethalEntry>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -87,6 +91,26 @@ pub struct TerminalLethalThreatAnalysis {
     pub terminal_targets: Vec<Move>,
     pub defender_immediate_wins: Vec<Move>,
     pub covering_replies: Vec<Move>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct OneStepLethalThreatAnalysis {
+    pub attacker: Color,
+    pub defender: Color,
+    pub terminal: TerminalLethalThreatAnalysis,
+    pub defender_immediate_wins: Vec<Move>,
+    pub defender_replies: Vec<OneStepDefenderReplyAnalysis>,
+    pub escaping_replies: Vec<Move>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct LethalThreat {
+    pub attacker: Color,
+    pub defender: Color,
+    pub kind: LethalThreatKind,
+    pub terminal_targets: Vec<Move>,
+    pub covering_replies: Vec<Move>,
+    pub one_step_replies: Vec<OneStepDefenderReplyAnalysis>,
 }
 
 impl TerminalLethalThreatAnalysis {
@@ -104,6 +128,32 @@ impl TerminalLethalThreatAnalysis {
             kind: LethalThreatKind::TerminalCoverage,
             terminal_targets: self.terminal_targets.clone(),
             covering_replies: self.covering_replies.clone(),
+            one_step_replies: Vec::new(),
+        })
+    }
+}
+
+impl OneStepLethalThreatAnalysis {
+    pub fn lethal_threat(&self) -> Option<LethalThreat> {
+        if self.terminal.lethal_threat().is_some()
+            || !self.defender_immediate_wins.is_empty()
+            || self.defender_replies.is_empty()
+            || !self.escaping_replies.is_empty()
+            || self
+                .defender_replies
+                .iter()
+                .any(|reply| reply.lethal_entries.is_empty())
+        {
+            return None;
+        }
+
+        Some(LethalThreat {
+            attacker: self.attacker,
+            defender: self.defender,
+            kind: LethalThreatKind::OneStepCoverage,
+            terminal_targets: self.terminal.terminal_targets.clone(),
+            covering_replies: Vec::new(),
+            one_step_replies: self.defender_replies.clone(),
         })
     }
 }
@@ -520,6 +570,17 @@ pub fn terminal_lethal_threat(board: &Board, attacker: Color) -> Option<LethalTh
     terminal_lethal_threat_analysis(board, attacker).lethal_threat()
 }
 
+pub fn lethal_threat(board: &Board, attacker: Color) -> Option<LethalThreat> {
+    let terminal = terminal_lethal_threat_analysis(board, attacker);
+    terminal.lethal_threat().or_else(|| {
+        one_step_lethal_threat_analysis_with_terminal(board, attacker, terminal).lethal_threat()
+    })
+}
+
+pub fn one_step_lethal_threat(board: &Board, attacker: Color) -> Option<LethalThreat> {
+    one_step_lethal_threat_analysis(board, attacker).lethal_threat()
+}
+
 pub fn terminal_lethal_threat_analysis(
     board: &Board,
     attacker: Color,
@@ -551,6 +612,77 @@ pub fn terminal_lethal_threat_analysis(
 
     analysis.covering_replies = terminal_threat_covering_replies(board, attacker);
     normalize_moves(&mut analysis.covering_replies);
+    analysis
+}
+
+pub fn one_step_lethal_threat_analysis(
+    board: &Board,
+    attacker: Color,
+) -> OneStepLethalThreatAnalysis {
+    let terminal = terminal_lethal_threat_analysis(board, attacker);
+    one_step_lethal_threat_analysis_with_terminal(board, attacker, terminal)
+}
+
+fn one_step_lethal_threat_analysis_with_terminal(
+    board: &Board,
+    attacker: Color,
+    terminal: TerminalLethalThreatAnalysis,
+) -> OneStepLethalThreatAnalysis {
+    let defender = attacker.opponent();
+    let mut analysis = OneStepLethalThreatAnalysis {
+        attacker,
+        defender,
+        terminal,
+        defender_immediate_wins: Vec::new(),
+        defender_replies: Vec::new(),
+        escaping_replies: Vec::new(),
+    };
+
+    if board.result != GameResult::Ongoing || board.current_player != defender {
+        return analysis;
+    }
+    if analysis.terminal.lethal_threat().is_some() {
+        return analysis;
+    }
+
+    analysis.defender_immediate_wins = board.immediate_winning_moves_for(defender);
+    normalize_moves(&mut analysis.defender_immediate_wins);
+    if !analysis.defender_immediate_wins.is_empty() {
+        return analysis;
+    }
+
+    let replies = one_step_defender_reply_moves(board, attacker, &analysis.terminal);
+    if replies.is_empty() {
+        return analysis;
+    }
+
+    for reply in replies {
+        let mut after_reply = board.clone();
+        if after_reply.apply_move(reply).is_err() {
+            continue;
+        }
+
+        let lethal_entries = match after_reply.result {
+            GameResult::Winner(winner) if winner == defender => Vec::new(),
+            GameResult::Winner(_) | GameResult::Draw => Vec::new(),
+            GameResult::Ongoing => one_step_lethal_entries(&after_reply, attacker),
+        };
+
+        if lethal_entries.is_empty() {
+            push_unique_move(&mut analysis.escaping_replies, reply);
+        }
+        analysis
+            .defender_replies
+            .push(OneStepDefenderReplyAnalysis {
+                reply,
+                lethal_entries,
+            });
+    }
+
+    analysis
+        .defender_replies
+        .sort_by_key(|reply| (reply.reply.row, reply.reply.col));
+    normalize_moves(&mut analysis.escaping_replies);
     analysis
 }
 
@@ -995,6 +1127,66 @@ fn terminal_threat_covering_replies(board: &Board, attacker: Color) -> Vec<Move>
             }
         })
         .collect()
+}
+
+fn one_step_defender_reply_moves(
+    board: &Board,
+    attacker: Color,
+    terminal: &TerminalLethalThreatAnalysis,
+) -> Vec<Move> {
+    let defender = attacker.opponent();
+    let mut replies = if !terminal.terminal_targets.is_empty() {
+        terminal.covering_replies.clone()
+    } else {
+        defender_reply_candidates(board, attacker, None)
+            .into_iter()
+            .map(|candidate| candidate.mv)
+            .filter(|&mv| board.is_legal_for_color(mv, defender))
+            .collect::<Vec<_>>()
+    };
+    normalize_moves(&mut replies);
+    replies
+}
+
+fn one_step_lethal_entries(
+    board_after_defender_reply: &Board,
+    attacker: Color,
+) -> Vec<OneStepLethalEntry> {
+    let mut attacker_turn = board_after_defender_reply.clone();
+    attacker_turn.current_player = attacker;
+    let mut entries = Vec::new();
+
+    for mv in attacker_turn.legal_moves() {
+        let mut after_entry = attacker_turn.clone();
+        if after_entry.apply_move(mv).is_err() {
+            continue;
+        }
+
+        let mut terminal_targets = match after_entry.result {
+            GameResult::Winner(winner) if winner == attacker => vec![mv],
+            GameResult::Winner(_) | GameResult::Draw => Vec::new(),
+            GameResult::Ongoing => {
+                let terminal = terminal_lethal_threat_analysis(&after_entry, attacker);
+                if terminal.lethal_threat().is_some() {
+                    terminal.terminal_targets
+                } else {
+                    Vec::new()
+                }
+            }
+        };
+        if terminal_targets.is_empty() {
+            continue;
+        }
+
+        normalize_moves(&mut terminal_targets);
+        entries.push(OneStepLethalEntry {
+            mv,
+            terminal_targets,
+        });
+    }
+
+    entries.sort_by_key(|entry| (entry.mv.row, entry.mv.col));
+    entries
 }
 
 fn push_reply_role(replies: &mut Vec<DefenderReplyCandidate>, mv: Move, role: DefenderReplyRole) {
@@ -1619,12 +1811,13 @@ mod tests {
     use super::{
         corridor_active_threats, corridor_defender_reply_moves, defender_hint_reply_candidates,
         defender_reply_candidates, has_forcing_local_threat, has_forcing_local_threat_at_move,
-        legal_forcing_continuations_for_fact, local_threat_facts_after_move,
-        local_threat_facts_for_player, normalize_local_threat_facts,
-        raw_local_threat_facts_after_move, raw_local_threat_facts_for_player,
-        terminal_lethal_threat, terminal_lethal_threat_analysis, CorridorThreatPolicy,
-        DefenderReplyCandidate, DefenderReplyRole, LocalThreatFact, LocalThreatKind,
-        LocalThreatOrigin, ScanThreatView, SearchThreatPolicy, ThreatView,
+        legal_forcing_continuations_for_fact, lethal_threat, local_threat_facts_after_move,
+        local_threat_facts_for_player, normalize_local_threat_facts, one_step_lethal_threat,
+        one_step_lethal_threat_analysis, raw_local_threat_facts_after_move,
+        raw_local_threat_facts_for_player, terminal_lethal_threat, terminal_lethal_threat_analysis,
+        CorridorThreatPolicy, DefenderReplyCandidate, DefenderReplyRole, LethalThreatKind,
+        LocalThreatFact, LocalThreatKind, LocalThreatOrigin, ScanThreatView, SearchThreatPolicy,
+        ThreatView,
     };
     use gomoku_core::{Board, Color, Move, RuleConfig, Variant};
 
@@ -1668,6 +1861,25 @@ mod tests {
 
     fn notation_list(moves: &[Move]) -> Vec<String> {
         moves.iter().map(|mv| mv.to_notation()).collect()
+    }
+
+    fn one_step_reply_entries(
+        analysis: &super::OneStepLethalThreatAnalysis,
+    ) -> Vec<(String, Vec<String>)> {
+        analysis
+            .defender_replies
+            .iter()
+            .map(|reply| {
+                (
+                    reply.reply.to_notation(),
+                    reply
+                        .lethal_entries
+                        .iter()
+                        .map(|entry| entry.mv.to_notation())
+                        .collect(),
+                )
+            })
+            .collect()
     }
 
     fn has_reply_role(
@@ -1755,6 +1967,118 @@ mod tests {
             analysis.covering_replies
         );
         assert!(terminal_lethal_threat(&board, Color::White).is_some());
+    }
+
+    #[test]
+    fn one_step_lethal_threat_detects_four_three_coverage() {
+        let board = board_from_moves(
+            Variant::Freestyle,
+            &[
+                "H8", "G8", "I8", "A1", "J8", "O1", "K8", "A15", "I7", "O15", "I9",
+            ],
+        );
+        assert_eq!(board.current_player, Color::White);
+
+        let analysis = one_step_lethal_threat_analysis(&board, Color::Black);
+
+        assert_eq!(
+            notation_list(&analysis.terminal.terminal_targets),
+            vec!["L8"]
+        );
+        assert_eq!(
+            notation_list(&analysis.terminal.covering_replies),
+            vec!["L8"]
+        );
+        assert!(
+            analysis.escaping_replies.is_empty(),
+            "unexpected escapes: {:?}; replies: {:?}",
+            notation_list(&analysis.escaping_replies),
+            one_step_reply_entries(&analysis)
+        );
+        assert_eq!(
+            one_step_reply_entries(&analysis),
+            vec![("L8".to_string(), vec!["I6".to_string(), "I10".to_string()])]
+        );
+        assert_eq!(
+            one_step_lethal_threat(&board, Color::Black)
+                .expect("4+3 should be one-step lethal")
+                .kind,
+            LethalThreatKind::OneStepCoverage
+        );
+        assert_eq!(
+            lethal_threat(&board, Color::Black)
+                .expect("general classifier should find 4+3 lethal")
+                .kind,
+            LethalThreatKind::OneStepCoverage
+        );
+    }
+
+    #[test]
+    fn one_step_lethal_threat_detects_double_three_coverage() {
+        let board = board_from_moves(
+            Variant::Freestyle,
+            &["H8", "A1", "I8", "O1", "J8", "A15", "I7", "O15", "I9"],
+        );
+        assert_eq!(board.current_player, Color::White);
+
+        let analysis = one_step_lethal_threat_analysis(&board, Color::Black);
+
+        assert!(analysis.terminal.terminal_targets.is_empty());
+        assert!(
+            analysis.escaping_replies.is_empty(),
+            "unexpected escapes: {:?}; replies: {:?}",
+            notation_list(&analysis.escaping_replies),
+            one_step_reply_entries(&analysis)
+        );
+        assert_eq!(
+            one_step_reply_entries(&analysis),
+            vec![
+                ("I6".to_string(), vec!["G8".to_string(), "K8".to_string()]),
+                ("G8".to_string(), vec!["I6".to_string(), "I10".to_string()]),
+                ("K8".to_string(), vec!["I6".to_string(), "I10".to_string()]),
+                ("I10".to_string(), vec!["G8".to_string(), "K8".to_string()]),
+            ]
+        );
+        assert_eq!(
+            one_step_lethal_threat(&board, Color::Black)
+                .expect("3+3 should be one-step lethal")
+                .kind,
+            LethalThreatKind::OneStepCoverage
+        );
+    }
+
+    #[test]
+    fn one_step_lethal_threat_rejects_open_cross_shared_block() {
+        let board = board_from_moves(
+            Variant::Freestyle,
+            &[
+                "G8", "A1", "H8", "O1", "J8", "A15", "I6", "O15", "I7", "C3", "I9",
+            ],
+        );
+        assert_eq!(board.current_player, Color::White);
+
+        let analysis = one_step_lethal_threat_analysis(&board, Color::Black);
+
+        assert!(
+            notation_list(&analysis.escaping_replies).contains(&"I8".to_string()),
+            "the open crossing point should be a shared escape: {:?}; replies: {:?}",
+            notation_list(&analysis.escaping_replies),
+            one_step_reply_entries(&analysis)
+        );
+        assert!(one_step_lethal_threat(&board, Color::Black).is_none());
+        assert!(lethal_threat(&board, Color::Black).is_none());
+    }
+
+    #[test]
+    fn one_step_lethal_threat_rejects_single_open_three() {
+        let board = board_from_moves(Variant::Freestyle, &["H8", "A1", "I8", "C1", "J8"]);
+        assert_eq!(board.current_player, Color::White);
+
+        let analysis = one_step_lethal_threat_analysis(&board, Color::Black);
+
+        assert_eq!(notation_list(&analysis.escaping_replies), vec!["G8", "K8"]);
+        assert!(one_step_lethal_threat(&board, Color::Black).is_none());
+        assert!(lethal_threat(&board, Color::Black).is_none());
     }
 
     #[test]
