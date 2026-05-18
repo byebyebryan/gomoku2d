@@ -10,7 +10,7 @@ pub use gomoku_bot::corridor::{
     SearchDiagnostics,
 };
 
-pub const ANALYSIS_SCHEMA_VERSION: u32 = 17;
+pub const ANALYSIS_SCHEMA_VERSION: u32 = 18;
 pub const DEFAULT_MAX_SCAN_PLIES: usize = 64;
 const MAX_CORRIDOR_REPLY_WIDTH: usize = 8;
 
