@@ -323,19 +323,23 @@ Search traces include both the result and the config. Abridged example:
     "move_ordering": "tt_first_board_order",
     "child_limit": null,
     "search_algorithm": "alpha_beta_id",
-    "static_eval": "line_shape_eval"
+    "static_eval": "line_shape_eval",
+    "corridor_proof": {
+      "enabled": false,
+      "max_depth": 0,
+      "max_reply_width": 0,
+      "proof_candidate_limit": 0
+    }
   },
   "depth": 3,
   "nominal_depth": 3,
   "effective_depth": 3,
-  "corridor_extra_plies": 0,
   "nodes": 1234,
   "safety_nodes": 56,
   "corridor": {
     "search_nodes": 0,
     "branch_probes": 0,
     "max_depth_reached": 0,
-    "extra_plies": 0,
     "width_exits": 0,
     "depth_exits": 0,
     "neutral_exits": 0,

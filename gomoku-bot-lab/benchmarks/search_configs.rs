@@ -1,5 +1,5 @@
 use gomoku_bot::{
-    LeafCorridorConfig, MoveOrdering, NullCellCulling, SafetyGate, SearchAlgorithm,
+    CorridorProofConfig, MoveOrdering, NullCellCulling, SafetyGate, SearchAlgorithm,
     SearchBotConfig, StaticEvaluation, ThreatViewMode,
 };
 
@@ -22,7 +22,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
-            leaf_corridor: LeafCorridorConfig::DISABLED,
+            corridor_proof: CorridorProofConfig::DISABLED,
             threat_view_mode: ThreatViewMode::Rolling,
             null_cell_culling: NullCellCulling::Disabled,
         },
@@ -40,7 +40,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
-            leaf_corridor: LeafCorridorConfig::DISABLED,
+            corridor_proof: CorridorProofConfig::DISABLED,
             threat_view_mode: ThreatViewMode::Rolling,
             null_cell_culling: NullCellCulling::Disabled,
         },
@@ -58,7 +58,7 @@ pub const LAB_SEARCH_CONFIGS: &[LabSearchConfig] = &[
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
-            leaf_corridor: LeafCorridorConfig::DISABLED,
+            corridor_proof: CorridorProofConfig::DISABLED,
             threat_view_mode: ThreatViewMode::Rolling,
             null_cell_culling: NullCellCulling::Disabled,
         },
@@ -171,10 +171,10 @@ fn apply_corridor_proof_suffix(
     let (max_depth, suffix) = suffix.split_once("-w")?;
     let max_reply_width = suffix;
 
-    config.leaf_corridor.enabled = true;
-    config.leaf_corridor.proof_candidate_limit = parse_positive_limit(proof_candidate_limit)?;
-    config.leaf_corridor.max_depth = parse_positive_limit(max_depth)?;
-    config.leaf_corridor.max_reply_width = parse_positive_limit(max_reply_width)?;
+    config.corridor_proof.enabled = true;
+    config.corridor_proof.proof_candidate_limit = parse_positive_limit(proof_candidate_limit)?;
+    config.corridor_proof.max_depth = parse_positive_limit(max_depth)?;
+    config.corridor_proof.max_reply_width = parse_positive_limit(max_reply_width)?;
     Some(config)
 }
 
@@ -535,8 +535,8 @@ mod tests {
         .expect("expected corridor proof suffix to parse");
 
         assert_eq!(
-            config.leaf_corridor,
-            super::LeafCorridorConfig {
+            config.corridor_proof,
+            super::CorridorProofConfig {
                 enabled: true,
                 max_depth: 8,
                 max_reply_width: 3,
