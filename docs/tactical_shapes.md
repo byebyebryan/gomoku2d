@@ -73,6 +73,25 @@ Notation:
 | `ClosedThree` | `OXXX.` or `.XXXO` | Creates a one-ended contiguous three. | The single open end. | No |
 | `BrokenThree` | A sliding four-cell core with one internal gap and both immediate outside endpoints open: `.XX.X.` or `.X.XX.`. Fixed five-cell forms such as `X.X.X`, `XX..X`, and `X..XX` are not active broken threes. One-side-blocked forms such as `OXX.X.`, `.XX.XO`, `OX.XX.`, and `.X.XXO` are not active broken threes. | Creates a non-contiguous three that can become an open or two-answer four threat by filling the internal gap. | The attacker rest square is the internal gap. Defender reply squares are the internal gap plus both outside endpoints. | Yes, when both outside endpoints are open/legal |
 
+## Lethal Threats
+
+`Lethal` is not a separate `LocalThreatKind`. It is a corridor/search
+interpretation over one or more local facts.
+
+An `OpenFour` is the simplest local fact that usually becomes lethal: the
+attacker has two winning completions and the defender normally cannot cover both
+with one move. Compound threats such as `4+4`, `4+3`, and `3+3` are not single
+line-window facts at all; they are position-level combinations of multiple
+facts whose defender reply sets do not overlap enough.
+
+The implementation implication is important: the raw detector should keep
+emitting local facts, while corridor/search policy decides whether the legal
+reply coverage has collapsed into a lethal position. Renju legality can
+downgrade a raw Black continuation to no threat, or upgrade a White threat when
+Black's only natural answer is forbidden. Search can still experiment with
+treating lethal positions as terminal tactical leaves, but the first reason to
+formalize the term is shared correctness and analysis clarity.
+
 ## Priority
 
 The current local priority is intentionally coarse:
