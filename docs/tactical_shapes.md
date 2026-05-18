@@ -75,22 +75,15 @@ Notation:
 
 ## Lethal Threats
 
-`Lethal` is not a separate `LocalThreatKind`. It is a corridor/search
-interpretation over one or more local facts.
+`Lethal` is a higher tactical layer, not a separate `LocalThreatKind`.
 
-An `OpenFour` is the simplest local fact that usually becomes lethal: the
-attacker has two winning completions and the defender normally cannot cover both
-with one move. Compound threats such as `4+4`, `4+3`, and `3+3` are not single
-line-window facts at all; they are position-level combinations of multiple
-facts whose defender reply sets do not overlap enough.
+Local shapes can provide lethal evidence. Freestyle `OpenFour` is the common
+local example because both endpoints are legal terminal completions, but Renju
+means shape names cannot prove lethality by themselves. Black completions may be
+illegal, and White single-threat blocks may be forbidden for Black.
 
-The implementation implication is important: the raw detector should keep
-emitting local facts, while corridor/search policy decides whether the legal
-reply coverage has collapsed into a lethal position. Renju legality can
-downgrade a raw Black continuation to no threat, or upgrade a White threat when
-Black's only natural answer is forbidden. Search can still experiment with
-treating lethal positions as terminal tactical leaves, but the first reason to
-formalize the term is shared correctness and analysis clarity.
+See [`lethal_threats.md`](lethal_threats.md) for the coverage model, Renju
+caveats, and the dedicated `gomoku-eval lethal-scenarios` safety harness.
 
 ## Priority
 

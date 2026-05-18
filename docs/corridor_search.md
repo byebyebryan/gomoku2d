@@ -101,6 +101,10 @@ shape definitions or reply-selection rules.
 
 ## Lethal Threats
 
+The dedicated lethal-threat model and safety harness live in
+[`lethal_threats.md`](lethal_threats.md). This section keeps the corridor-search
+interpretation because corridors need to know where proof can terminate early.
+
 `Lethal` should be treated as a proof result over a position, not merely a
 shape name. A local shape can suggest a lethal threat, but the model still has
 to ask whether one legal defender move can cover the whole danger.

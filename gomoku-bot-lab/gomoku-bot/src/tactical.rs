@@ -65,6 +65,49 @@ pub struct DefenderReplyCandidate {
     pub roles: Vec<DefenderReplyRole>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum LethalThreatKind {
+    TerminalCoverage,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct LethalThreat {
+    pub attacker: Color,
+    pub defender: Color,
+    pub kind: LethalThreatKind,
+    pub terminal_targets: Vec<Move>,
+    pub covering_replies: Vec<Move>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct TerminalLethalThreatAnalysis {
+    pub attacker: Color,
+    pub defender: Color,
+    pub terminal_targets: Vec<Move>,
+    pub defender_immediate_wins: Vec<Move>,
+    pub covering_replies: Vec<Move>,
+}
+
+impl TerminalLethalThreatAnalysis {
+    pub fn lethal_threat(&self) -> Option<LethalThreat> {
+        if self.terminal_targets.is_empty()
+            || !self.defender_immediate_wins.is_empty()
+            || !self.covering_replies.is_empty()
+        {
+            return None;
+        }
+
+        Some(LethalThreat {
+            attacker: self.attacker,
+            defender: self.defender,
+            kind: LethalThreatKind::TerminalCoverage,
+            terminal_targets: self.terminal_targets.clone(),
+            covering_replies: self.covering_replies.clone(),
+        })
+    }
+}
+
 impl TacticalOrderingSummary {
     fn include_fact(&mut self, policy: SearchThreatPolicy, fact: &LocalThreatFact) {
         self.score = self.score.max(policy.ordering_score(fact.kind));
@@ -471,6 +514,44 @@ impl<'a> ScanThreatView<'a> {
     pub fn new(board: &'a Board) -> Self {
         Self { board }
     }
+}
+
+pub fn terminal_lethal_threat(board: &Board, attacker: Color) -> Option<LethalThreat> {
+    terminal_lethal_threat_analysis(board, attacker).lethal_threat()
+}
+
+pub fn terminal_lethal_threat_analysis(
+    board: &Board,
+    attacker: Color,
+) -> TerminalLethalThreatAnalysis {
+    let defender = attacker.opponent();
+    let mut analysis = TerminalLethalThreatAnalysis {
+        attacker,
+        defender,
+        terminal_targets: Vec::new(),
+        defender_immediate_wins: Vec::new(),
+        covering_replies: Vec::new(),
+    };
+
+    if board.result != GameResult::Ongoing || board.current_player != defender {
+        return analysis;
+    }
+
+    analysis.terminal_targets = board.immediate_winning_moves_for(attacker);
+    normalize_moves(&mut analysis.terminal_targets);
+    if analysis.terminal_targets.is_empty() {
+        return analysis;
+    }
+
+    analysis.defender_immediate_wins = board.immediate_winning_moves_for(defender);
+    normalize_moves(&mut analysis.defender_immediate_wins);
+    if !analysis.defender_immediate_wins.is_empty() {
+        return analysis;
+    }
+
+    analysis.covering_replies = terminal_threat_covering_replies(board, attacker);
+    normalize_moves(&mut analysis.covering_replies);
+    analysis
 }
 
 impl ThreatView for ScanThreatView<'_> {
@@ -892,6 +973,26 @@ fn offensive_counter_reply_moves(board: &Board, defender: Color) -> Vec<Move> {
             next.apply_move(mv).is_ok()
                 && next.result == GameResult::Ongoing
                 && !next.immediate_winning_moves_for(defender).is_empty()
+        })
+        .collect()
+}
+
+fn terminal_threat_covering_replies(board: &Board, attacker: Color) -> Vec<Move> {
+    let defender = attacker.opponent();
+    board
+        .legal_moves()
+        .into_iter()
+        .filter(|&mv| {
+            let mut next = board.clone();
+            if next.apply_move(mv).is_err() {
+                return false;
+            }
+            match next.result {
+                GameResult::Winner(winner) if winner == defender => true,
+                GameResult::Winner(_) => false,
+                GameResult::Draw => true,
+                GameResult::Ongoing => next.immediate_winning_moves_for(attacker).is_empty(),
+            }
         })
         .collect()
 }
@@ -1520,7 +1621,8 @@ mod tests {
         defender_reply_candidates, has_forcing_local_threat, has_forcing_local_threat_at_move,
         legal_forcing_continuations_for_fact, local_threat_facts_after_move,
         local_threat_facts_for_player, normalize_local_threat_facts,
-        raw_local_threat_facts_after_move, raw_local_threat_facts_for_player, CorridorThreatPolicy,
+        raw_local_threat_facts_after_move, raw_local_threat_facts_for_player,
+        terminal_lethal_threat, terminal_lethal_threat_analysis, CorridorThreatPolicy,
         DefenderReplyCandidate, DefenderReplyRole, LocalThreatFact, LocalThreatKind,
         LocalThreatOrigin, ScanThreatView, SearchThreatPolicy, ThreatView,
     };
@@ -1564,6 +1666,10 @@ mod tests {
         board
     }
 
+    fn notation_list(moves: &[Move]) -> Vec<String> {
+        moves.iter().map(|mv| mv.to_notation()).collect()
+    }
+
     fn has_reply_role(
         candidates: &[DefenderReplyCandidate],
         notation: &str,
@@ -1573,6 +1679,82 @@ mod tests {
         candidates
             .iter()
             .any(|candidate| candidate.mv == mv && candidate.roles.contains(&role))
+    }
+
+    #[test]
+    fn terminal_lethal_threat_detects_open_four_coverage() {
+        let board = board_from_moves(
+            Variant::Freestyle,
+            &["H8", "A1", "I8", "A2", "J8", "A3", "K8"],
+        );
+        assert_eq!(board.current_player, Color::White);
+
+        let analysis = terminal_lethal_threat_analysis(&board, Color::Black);
+
+        assert_eq!(notation_list(&analysis.terminal_targets), vec!["G8", "L8"]);
+        assert!(analysis.defender_immediate_wins.is_empty());
+        assert!(analysis.covering_replies.is_empty());
+        assert_eq!(
+            terminal_lethal_threat(&board, Color::Black)
+                .expect("open four should be terminal lethal")
+                .terminal_targets,
+            vec![mv("G8"), mv("L8")]
+        );
+    }
+
+    #[test]
+    fn terminal_lethal_threat_rejects_single_blockable_four() {
+        let board = board_from_moves(
+            Variant::Freestyle,
+            &["H8", "G8", "I8", "A1", "J8", "A2", "K8"],
+        );
+        assert_eq!(board.current_player, Color::White);
+
+        let analysis = terminal_lethal_threat_analysis(&board, Color::Black);
+
+        assert_eq!(notation_list(&analysis.terminal_targets), vec!["L8"]);
+        assert_eq!(notation_list(&analysis.covering_replies), vec!["L8"]);
+        assert!(terminal_lethal_threat(&board, Color::Black).is_none());
+    }
+
+    #[test]
+    fn terminal_lethal_threat_rejects_when_defender_can_win_now() {
+        let board = board_from_moves(
+            Variant::Freestyle,
+            &["B1", "H8", "B2", "I8", "B3", "J8", "B4", "K8"],
+        );
+        assert_eq!(board.current_player, Color::Black);
+
+        let analysis = terminal_lethal_threat_analysis(&board, Color::White);
+
+        assert_eq!(notation_list(&analysis.terminal_targets), vec!["G8", "L8"]);
+        assert_eq!(notation_list(&analysis.defender_immediate_wins), vec!["B5"]);
+        assert!(analysis.covering_replies.is_empty());
+        assert!(terminal_lethal_threat(&board, Color::White).is_none());
+    }
+
+    #[test]
+    fn terminal_lethal_threat_uses_renju_forbidden_replies_as_missing_coverage() {
+        let board = board_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "H7", "J8", "I9", "I8", "G8", "F9", "F7", "H9", "G7", "I7", "E7", "D7", "G9",
+                "G6", "G11",
+            ],
+        );
+        assert_eq!(board.current_player, Color::Black);
+        assert!(!board.is_legal_for_color(mv("G10"), Color::Black));
+
+        let analysis = terminal_lethal_threat_analysis(&board, Color::White);
+
+        assert_eq!(notation_list(&analysis.terminal_targets), vec!["G10"]);
+        assert!(analysis.defender_immediate_wins.is_empty());
+        assert!(
+            analysis.covering_replies.is_empty(),
+            "forbidden direct blocks should not count as legal coverage: {:?}",
+            analysis.covering_replies
+        );
+        assert!(terminal_lethal_threat(&board, Color::White).is_some());
     }
 
     #[test]

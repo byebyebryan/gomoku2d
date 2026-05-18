@@ -5,6 +5,7 @@ pub mod analysis_report;
 pub mod arena;
 pub mod budget;
 pub mod elo;
+pub mod lethal_scenario;
 pub mod opening;
 pub mod report;
 pub mod report_board;
