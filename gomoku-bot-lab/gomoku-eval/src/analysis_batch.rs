@@ -8,11 +8,11 @@ use rayon::prelude::*;
 use serde::Serialize;
 
 use crate::analysis::{
-    analyze_alternate_defender_reply_options, analyze_replay, defender_reply_roles_for_move,
-    AnalysisBoardSnapshot, AnalysisOptions, DefenderReplyAnalysis, DefenderReplyOutcome,
-    DefenderReplyRole, ForcedInterval, GameAnalysis, ProofLimitCause, ProofResult, ProofStatus,
-    ReplyClassification, ReplyPolicy, RootCause, SearchDiagnostics, TacticalNote, UnclearContext,
-    UnclearReason, ANALYSIS_SCHEMA_VERSION,
+    analyze_alternate_defender_reply_options, analyze_replay, defender_reply_candidates,
+    defender_reply_roles_for_move, AnalysisBoardSnapshot, AnalysisOptions, DefenderReplyAnalysis,
+    DefenderReplyCandidate, DefenderReplyOutcome, DefenderReplyRole, ForcedInterval, GameAnalysis,
+    ProofLimitCause, ProofResult, ProofStatus, ReplyClassification, ReplyPolicy, RootCause,
+    SearchDiagnostics, TacticalNote, UnclearContext, UnclearReason, ANALYSIS_SCHEMA_VERSION,
 };
 use crate::report_board::{render_report_board, report_board_css, ReportBoardMarker};
 
@@ -1624,24 +1624,20 @@ fn proof_frames_for_actual_interval(
             let proof = proof_result_at(&analysis.proof_summary, scan_start, board_ply);
             let label = actual_frame_label(ply, &analysis.final_forced_interval);
             let mut markers = Vec::new();
-            add_loser_tactical_hint_markers(&mut markers, board, analysis.winner);
-            add_forbidden_cost_markers(&mut markers, board, proof, board_ply, None);
-            if analysis
-                .winner
-                .is_some_and(|winner| board.current_player == winner.opponent())
-            {
-                let actual_child =
-                    proof_result_at(&analysis.proof_summary, scan_start, board_ply + 1);
-                add_forbidden_cost_markers(
+            let actual_move = actual_move_at_ply(replay, ply);
+            let reply_candidates =
+                defender_reply_candidates_for_frame(board, analysis, actual_move);
+            let reply_outcomes = defender_reply_outcomes_for_frame(board, analysis, actual_move);
+            if reply_candidates.is_empty() {
+                add_loser_tactical_hint_markers(&mut markers, board, analysis.winner);
+            } else {
+                add_loser_candidate_markers(
                     &mut markers,
                     board,
-                    actual_child,
-                    board_ply + 1,
-                    Some(AnalysisBatchProofMarkerKind::ImminentDefense),
+                    analysis.winner,
+                    &reply_candidates,
                 );
             }
-            let actual_move = actual_move_at_ply(replay, ply);
-            let reply_outcomes = defender_reply_outcomes_for_frame(board, analysis, actual_move);
             add_reply_outcome_markers(&mut markers, &reply_outcomes);
             add_pre_corridor_escape_marker(
                 &mut markers,
@@ -1720,6 +1716,21 @@ fn defender_reply_outcomes_for_frame(
     )
 }
 
+fn defender_reply_candidates_for_frame(
+    board: &Board,
+    analysis: &GameAnalysis,
+    actual_move: Option<Move>,
+) -> Vec<DefenderReplyCandidate> {
+    let Some(attacker) = analysis.winner else {
+        return Vec::new();
+    };
+    if board.current_player != attacker.opponent() {
+        return Vec::new();
+    }
+
+    defender_reply_candidates(board, attacker, actual_move)
+}
+
 fn actual_frame_label(ply: usize, interval: &ForcedInterval) -> String {
     if ply == interval.end_ply {
         "winning_ply".to_string()
@@ -1761,6 +1772,57 @@ fn add_loser_tactical_hint_markers(
     add_current_imminent_response_markers(markers, board, winner);
 }
 
+fn add_loser_candidate_markers(
+    markers: &mut Vec<AnalysisBatchProofMarker>,
+    board: &Board,
+    winner: Option<Color>,
+    candidates: &[DefenderReplyCandidate],
+) {
+    let Some(winner) = winner else {
+        return;
+    };
+    if board.current_player != winner.opponent() {
+        return;
+    }
+
+    let defender = winner.opponent();
+    for candidate in candidates {
+        for role in &candidate.roles {
+            match role {
+                DefenderReplyRole::Actual => {}
+                DefenderReplyRole::ImmediateDefense => {
+                    add_marker_kind(
+                        markers,
+                        [candidate.mv],
+                        AnalysisBatchProofMarkerKind::Threat,
+                    );
+                }
+                DefenderReplyRole::ImminentDefense => {
+                    add_marker_kind(
+                        markers,
+                        [candidate.mv],
+                        AnalysisBatchProofMarkerKind::ImminentDefense,
+                    );
+                }
+                DefenderReplyRole::OffensiveCounter => {
+                    add_marker_kind(
+                        markers,
+                        [candidate.mv],
+                        AnalysisBatchProofMarkerKind::OffensiveCounter,
+                    );
+                }
+            }
+        }
+        if !board.is_legal_for_color(candidate.mv, defender) {
+            add_marker_kind(
+                markers,
+                [candidate.mv],
+                AnalysisBatchProofMarkerKind::Forbidden,
+            );
+        }
+    }
+}
+
 fn has_immediate_tactical_hint(markers: &[AnalysisBatchProofMarker]) -> bool {
     markers.iter().any(|marker| {
         marker.kinds.iter().any(|kind| {
@@ -1797,32 +1859,6 @@ fn add_current_imminent_response_markers(
             }
         }
     }
-}
-
-fn add_forbidden_cost_markers(
-    markers: &mut Vec<AnalysisBatchProofMarker>,
-    board: &Board,
-    proof: Option<&ProofResult>,
-    prefix_ply: usize,
-    tactical_role: Option<AnalysisBatchProofMarkerKind>,
-) {
-    let Some(proof) = proof else {
-        return;
-    };
-    let moves = proof
-        .threat_evidence
-        .iter()
-        .filter(|evidence| evidence.prefix_ply == Some(prefix_ply))
-        .flat_map(|evidence| {
-            evidence.illegal_cost_squares.iter().copied().filter(|&mv| {
-                board.is_empty(mv.row, mv.col) && !board.is_legal_for_color(mv, evidence.defender)
-            })
-        })
-        .collect::<Vec<_>>();
-    if let Some(tactical_role) = tactical_role {
-        add_marker_kind(markers, moves.iter().copied(), tactical_role);
-    }
-    add_marker_kind(markers, moves, AnalysisBatchProofMarkerKind::Forbidden);
 }
 
 fn proof_frame(
@@ -2705,7 +2741,9 @@ mod tests {
     use gomoku_core::{Board, Color, Move, Replay, RuleConfig, Variant};
 
     use super::{
-        cell_classes, defender_reply_detail_label, defender_reply_outcome_label,
+        add_loser_candidate_markers, add_reply_outcome_markers, cell_classes,
+        defender_reply_candidates_for_frame, defender_reply_detail_label,
+        defender_reply_outcome_label, defender_reply_outcomes_for_frame,
         loss_category_for_corridor_span, marker_label, ordered_player_columns_html,
         render_analysis_batch_report_html, replay_entry_title, run_analysis_batch,
         run_analysis_batch_replays, run_analysis_batch_replays_with_options,
@@ -2713,10 +2751,11 @@ mod tests {
         AnalysisBatchRunOptions, AnalysisLossCategory, ReplayAnalysisInput,
     };
     use crate::analysis::{
-        analyze_replay, replay_frame_annotations_for_analysis, AnalysisOptions,
-        DefenderReplyAnalysis, DefenderReplyOutcome, DefenderReplyRole, ProofLimitCause,
-        ProofStatus, ReplayAnalysisSession, ReplayFrameHighlightRole, ReplayFrameMarkerRole,
-        ReplyClassification, ReplyPolicy, RootCause, SearchDiagnostics, UnclearReason,
+        analyze_replay, replay_frame_annotations_for_analysis, AnalysisModel, AnalysisOptions,
+        DefenderReplyAnalysis, DefenderReplyOutcome, DefenderReplyRole, ForcedInterval,
+        GameAnalysis, ProofLimitCause, ProofStatus, ReplayAnalysisSession,
+        ReplayFrameHighlightRole, ReplayFrameMarkerRole, ReplyClassification, ReplyPolicy,
+        RootCause, SearchDiagnostics, UnclearReason, ANALYSIS_SCHEMA_VERSION,
     };
 
     fn replay_from_moves(variant: Variant, moves: &[&str]) -> Replay {
@@ -2736,6 +2775,56 @@ mod tests {
         }
         replay.finish(&board.result, Some(0));
         replay
+    }
+
+    fn mv(notation: &str) -> Move {
+        Move::from_notation(notation).expect("test move notation should parse")
+    }
+
+    fn board_from_moves(variant: Variant, moves: &[&str]) -> Board {
+        let mut board = Board::new(RuleConfig {
+            variant,
+            ..RuleConfig::default()
+        });
+        for notation in moves {
+            board
+                .apply_move(mv(notation))
+                .expect("test board move should be legal");
+        }
+        board
+    }
+
+    fn analysis_for_winner(winner: Color, rule_set: &str, max_depth: usize) -> GameAnalysis {
+        GameAnalysis {
+            schema_version: ANALYSIS_SCHEMA_VERSION,
+            rule_set: rule_set.to_string(),
+            winner: Some(winner),
+            loser: Some(winner.opponent()),
+            final_move: None,
+            final_winning_line: Vec::new(),
+            model: AnalysisModel {
+                reply_policy: ReplyPolicy::CorridorReplies,
+                rule_set: rule_set.to_string(),
+                max_depth,
+                max_scan_plies: Some(64),
+            },
+            final_forced_interval_found: false,
+            final_forced_interval: ForcedInterval {
+                start_ply: 0,
+                end_ply: 0,
+            },
+            proof_intervals: Vec::new(),
+            unknown_gaps: Vec::new(),
+            unclear_reason: None,
+            unclear_context: None,
+            last_chance_ply: None,
+            decisive_attack_ply: None,
+            critical_mistake_ply: None,
+            root_cause: RootCause::Unclear,
+            tactical_notes: Vec::new(),
+            principal_line: Vec::new(),
+            proof_summary: Vec::new(),
+        }
     }
 
     fn temp_report_dir(name: &str) -> std::path::PathBuf {
@@ -3697,9 +3786,9 @@ mod tests {
         let replay = replay_from_moves(
             Variant::Renju,
             &[
-                "H8", "G7", "H9", "J8", "H7", "H6", "I7", "F8", "E9", "H10", "I5", "G9",
-                "E7", "I9", "K7", "G10", "G11", "I11", "J12", "G6", "G8", "F6", "L7", "J7",
-                "J6", "E6", "D6", "I6",
+                "H8", "G7", "H9", "J8", "H7", "H6", "I7", "F8", "E9", "H10", "I5", "G9", "E7",
+                "I9", "K7", "G10", "G11", "I11", "J12", "G6", "G8", "F6", "L7", "J7", "J6", "E6",
+                "D6", "I6",
             ],
         );
 
@@ -3945,6 +4034,110 @@ mod tests {
     }
 
     #[test]
+    fn analysis_batch_visual_frames_probe_all_imminent_combo_replies() {
+        let board = board_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "H7", "F8", "G9", "G8", "I8", "G6", "D9", "F9", "F10", "D7", "G10", "F7",
+                "E10", "E8", "D8", "C6", "B5", "D10", "F11", "F6", "F5", "D6", "E6", "H5", "I4",
+            ],
+        );
+        assert_eq!(board.current_player, Color::Black);
+
+        let analysis = analysis_for_winner(Color::White, "renju", 0);
+
+        let reply_outcomes = defender_reply_outcomes_for_frame(&board, &analysis, Some(mv("C8")));
+        for notation in ["J7", "H9", "E12", "G12"] {
+            assert!(
+                reply_outcomes
+                    .iter()
+                    .any(|reply| reply.notation == notation),
+                "{notation} should be probed as a non-actual 3+3 reply: {:?}",
+                reply_outcomes
+            );
+        }
+        assert!(
+            !reply_outcomes.iter().any(|reply| reply.notation == "C8"),
+            "the actual replay move is inherited from replay context, not re-probed: {:?}",
+            reply_outcomes
+        );
+
+        let mut markers = Vec::new();
+        add_reply_outcome_markers(&mut markers, &reply_outcomes);
+        for notation in ["J7", "H9", "E12"] {
+            let marker = proof_marker_for(&markers, notation);
+            assert!(
+                marker
+                    .kinds
+                    .contains(&AnalysisBatchProofMarkerKind::ImminentDefense),
+                "{notation} should keep its imminent-response hint box: {:?}",
+                marker.kinds
+            );
+            assert!(
+                marker.kinds.iter().any(|kind| matches!(
+                    kind,
+                    AnalysisBatchProofMarkerKind::ForcedLoss
+                        | AnalysisBatchProofMarkerKind::ConfirmedEscape
+                        | AnalysisBatchProofMarkerKind::PossibleEscape
+                        | AnalysisBatchProofMarkerKind::ImmediateLoss
+                        | AnalysisBatchProofMarkerKind::UnknownOutcome
+                )),
+                "{notation} should carry a proof outcome marker: {:?}",
+                marker.kinds
+            );
+        }
+        assert!(
+            markers.iter().all(|marker| marker.notation != "C8"),
+            "actual replay move should not be re-probed: {markers:?}"
+        );
+    }
+
+    #[test]
+    fn analysis_batch_visual_frames_do_not_show_lower_tier_forbidden_replies_during_immediate_threats(
+    ) {
+        let board = board_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "I8", "H10", "G9", "H9", "H7", "J9", "G12", "G10", "I10", "H11", "H12",
+                "I12", "F9", "I6", "E10", "J11", "C12", "D11", "D9", "H13", "E9", "C9", "F11",
+                "C8", "K10", "C7", "C10", "J10", "J8", "I9", "K11", "K9", "L9", "L8", "M7", "F6",
+                "G7", "H6", "G6", "F7", "E12", "C5", "C6", "J12", "J13", "F15", "G14", "E8", "F12",
+                "D12", "F10",
+            ],
+        );
+        assert_eq!(board.current_player, Color::Black);
+        let analysis = analysis_for_winner(Color::White, "renju", 0);
+        let reply_outcomes = defender_reply_outcomes_for_frame(&board, &analysis, Some(mv("F8")));
+        assert!(
+            reply_outcomes
+                .iter()
+                .any(|reply| reply.notation == "F13"
+                    && reply.roles.contains(&DefenderReplyRole::ImmediateDefense)),
+            "the active proof candidate should be the immediate-threat response: {reply_outcomes:?}"
+        );
+        assert!(
+            reply_outcomes.iter().all(|reply| reply.notation != "D8"),
+            "lower-tier forbidden imminent replies should not be probed: {reply_outcomes:?}"
+        );
+
+        let reply_candidates =
+            defender_reply_candidates_for_frame(&board, &analysis, Some(mv("F8")));
+        let mut markers = Vec::new();
+        add_loser_candidate_markers(&mut markers, &board, analysis.winner, &reply_candidates);
+        add_reply_outcome_markers(&mut markers, &reply_outcomes);
+
+        assert!(
+            markers.iter().all(|marker| marker.notation != "D8"),
+            "lower-tier forbidden imminent replies should not be marked while immediate threats are active: {markers:?}"
+        );
+        let f13 = proof_marker_for(&markers, "F13");
+        assert!(f13.kinds.contains(&AnalysisBatchProofMarkerKind::Threat));
+        assert!(f13
+            .kinds
+            .contains(&AnalysisBatchProofMarkerKind::ImmediateLoss));
+    }
+
+    #[test]
     fn analysis_batch_visual_frames_mark_renju_forbidden_blocks() {
         let replay = replay_from_moves(
             Variant::Renju,
@@ -4005,6 +4198,16 @@ mod tests {
     ) -> &'a AnalysisBatchProofMarker {
         frame
             .markers
+            .iter()
+            .find(|marker| marker.notation == notation)
+            .unwrap_or_else(|| panic!("expected marker {notation}"))
+    }
+
+    fn proof_marker_for<'a>(
+        markers: &'a [AnalysisBatchProofMarker],
+        notation: &str,
+    ) -> &'a AnalysisBatchProofMarker {
+        markers
             .iter()
             .find(|marker| marker.notation == notation)
             .unwrap_or_else(|| panic!("expected marker {notation}"))

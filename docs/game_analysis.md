@@ -163,6 +163,13 @@ For each corridor reply candidate, classify the follow-up explicitly:
 - `unknown`: the model cannot enumerate a meaningful legal reply or hit a
   structural guard before a concrete alternative exists.
 
+Reply candidates use the same contract in the static report and browser replay
+UI. Generate immediate replies first, generate imminent replies only if there is
+no immediate tier, render every surviving candidate box, then filter out actual
+and forbidden moves before proof search. The report list contains only legal
+non-actual alternatives; actual and forbidden candidates stay on the board as
+markers because they explain why no branch was searched.
+
 Transition labels follow the same proof-status rules everywhere:
 
 - `escape_found -> forced_win` caused by the losing side: `missed_defense`.
