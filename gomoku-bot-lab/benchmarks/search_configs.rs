@@ -110,7 +110,7 @@ fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchB
         return Some(config);
     }
 
-    if let Some(config) = apply_leaf_corridor_suffix(config, suffix) {
+    if let Some(config) = apply_corridor_proof_suffix(config, suffix) {
         return Some(config);
     }
 
@@ -160,31 +160,6 @@ fn apply_lab_suffix(mut config: SearchBotConfig, suffix: &str) -> Option<SearchB
         }
         _ => apply_asymmetric_candidate_source_suffix(config, suffix),
     }
-}
-
-fn apply_leaf_corridor_suffix(
-    mut config: SearchBotConfig,
-    suffix: &str,
-) -> Option<SearchBotConfig> {
-    if let Some(config) = apply_corridor_proof_suffix(config, suffix) {
-        return Some(config);
-    }
-
-    if let Some(limit) = suffix.strip_prefix("leaf-proof-c") {
-        config.leaf_corridor.proof_candidate_limit = parse_positive_limit(limit)?;
-        return Some(config);
-    }
-
-    let suffix = suffix.strip_prefix("leaf-corridor-d")?;
-    let (max_depth, max_reply_width) = suffix.split_once("-w")?;
-    config.leaf_corridor.enabled = true;
-    config.leaf_corridor.max_depth = parse_positive_limit(max_depth)?;
-    config.leaf_corridor.max_reply_width = parse_positive_limit(max_reply_width)?;
-    if config.leaf_corridor.proof_candidate_limit == 0 {
-        config.leaf_corridor.proof_candidate_limit =
-            LeafCorridorConfig::DEFAULT_PROOF_CANDIDATE_LIMIT;
-    }
-    Some(config)
 }
 
 fn apply_corridor_proof_suffix(
@@ -531,80 +506,22 @@ mod tests {
     }
 
     #[test]
-    fn parses_leaf_corridor_suffixes() {
-        let config = super::search_config_from_lab_spec(
+    fn rejects_legacy_leaf_corridor_suffixes() {
+        for spec in [
             "search-d5+leaf-corridor-d8-w3",
-            3,
-            None,
-            Some(1000),
-        )
-        .expect("expected leaf corridor spec to parse");
-
-        assert_eq!(
-            config.leaf_corridor,
-            super::LeafCorridorConfig {
-                enabled: true,
-                max_depth: 8,
-                max_reply_width: 3,
-                proof_candidate_limit: 3,
-            }
-        );
-        assert_eq!(config.cpu_time_budget_ms, Some(1000));
-
-        assert!(
-            super::search_config_from_lab_spec("search-d5+leaf-corridor-d0-w3", 3, None, None)
-                .is_none()
-        );
-        assert!(
-            super::search_config_from_lab_spec("search-d5+leaf-corridor-d4-w0", 3, None, None)
-                .is_none()
-        );
-    }
-
-    #[test]
-    fn parses_leaf_corridor_proof_candidate_suffixes_order_independently() {
-        let config = super::search_config_from_lab_spec(
+            "search-d5+leaf-corridor-d0-w3",
+            "search-d5+leaf-corridor-d4-w0",
             "search-d5+leaf-proof-c6+leaf-corridor-d16-w4",
-            3,
-            None,
-            Some(1000),
-        )
-        .expect("expected legacy leaf proof suffix to parse before corridor suffix");
-
-        assert_eq!(
-            config.leaf_corridor,
-            super::LeafCorridorConfig {
-                enabled: true,
-                max_depth: 16,
-                max_reply_width: 4,
-                proof_candidate_limit: 6,
-            }
-        );
-
-        assert!(
-            super::search_config_from_lab_spec("search-d5+leaf-proof-c0", 3, None, None).is_none()
-        );
-        assert!(super::search_config_from_lab_spec(
+            "search-d5+leaf-proof-c0",
             "search-d5+leaf-corridor-d8-w3+leaf-proof-any-score",
-            3,
-            None,
-            None
-        )
-        .is_none());
-        assert!(super::search_config_from_lab_spec(
             "search-d5+leaf-proof-margin--1",
-            3,
-            None,
-            None
-        )
-        .is_none());
-        assert!(super::search_config_from_lab_spec(
             "search-d5+leaf-corridor-d8-w3+leaf-proof-margin-25000",
-            3,
-            None,
-            None
-        )
-        .is_none());
+        ] {
+            assert!(
+                super::search_config_from_lab_spec(spec, 3, None, None).is_none(),
+                "{spec} should be retired"
+            );
+        }
     }
 
     #[test]

@@ -540,28 +540,6 @@ pub struct StandingReport {
     #[serde(default)]
     pub search_tactical_annotations: u64,
     #[serde(default)]
-    pub tactical_lite_entry_rank_queries: u64,
-    #[serde(default)]
-    pub root_tactical_lite_entry_rank_queries: u64,
-    #[serde(default)]
-    pub search_tactical_lite_entry_rank_queries: u64,
-    #[serde(default)]
-    pub tactical_lite_rank_scan_queries: u64,
-    #[serde(default)]
-    pub tactical_lite_rank_scan_ns: u64,
-    #[serde(default)]
-    pub tactical_lite_rank_frontier_clean_queries: u64,
-    #[serde(default)]
-    pub tactical_lite_rank_frontier_clean_ns: u64,
-    #[serde(default)]
-    pub tactical_lite_rank_frontier_dirty_queries: u64,
-    #[serde(default)]
-    pub tactical_lite_rank_frontier_dirty_ns: u64,
-    #[serde(default)]
-    pub tactical_lite_rank_frontier_fallback_queries: u64,
-    #[serde(default)]
-    pub tactical_lite_rank_frontier_fallback_ns: u64,
-    #[serde(default)]
     pub threat_view_shadow_checks: u64,
     #[serde(default)]
     pub threat_view_shadow_mismatches: u64,
@@ -973,28 +951,6 @@ pub struct SideStatsReport {
     #[serde(default)]
     pub search_tactical_annotations: u64,
     #[serde(default)]
-    pub tactical_lite_entry_rank_queries: u64,
-    #[serde(default)]
-    pub root_tactical_lite_entry_rank_queries: u64,
-    #[serde(default)]
-    pub search_tactical_lite_entry_rank_queries: u64,
-    #[serde(default)]
-    pub tactical_lite_rank_scan_queries: u64,
-    #[serde(default)]
-    pub tactical_lite_rank_scan_ns: u64,
-    #[serde(default)]
-    pub tactical_lite_rank_frontier_clean_queries: u64,
-    #[serde(default)]
-    pub tactical_lite_rank_frontier_clean_ns: u64,
-    #[serde(default)]
-    pub tactical_lite_rank_frontier_dirty_queries: u64,
-    #[serde(default)]
-    pub tactical_lite_rank_frontier_dirty_ns: u64,
-    #[serde(default)]
-    pub tactical_lite_rank_frontier_fallback_queries: u64,
-    #[serde(default)]
-    pub tactical_lite_rank_frontier_fallback_ns: u64,
-    #[serde(default)]
     pub threat_view_shadow_checks: u64,
     #[serde(default)]
     pub threat_view_shadow_mismatches: u64,
@@ -1202,17 +1158,6 @@ struct SideStatsAccumulator {
     tactical_annotations: u64,
     root_tactical_annotations: u64,
     search_tactical_annotations: u64,
-    tactical_lite_entry_rank_queries: u64,
-    root_tactical_lite_entry_rank_queries: u64,
-    search_tactical_lite_entry_rank_queries: u64,
-    tactical_lite_rank_scan_queries: u64,
-    tactical_lite_rank_scan_ns: u64,
-    tactical_lite_rank_frontier_clean_queries: u64,
-    tactical_lite_rank_frontier_clean_ns: u64,
-    tactical_lite_rank_frontier_dirty_queries: u64,
-    tactical_lite_rank_frontier_dirty_ns: u64,
-    tactical_lite_rank_frontier_fallback_queries: u64,
-    tactical_lite_rank_frontier_fallback_ns: u64,
     threat_view_shadow_checks: u64,
     threat_view_shadow_mismatches: u64,
     threat_view_scan_queries: u64,
@@ -1344,28 +1289,6 @@ impl SideStatsAccumulator {
             self.root_tactical_annotations += trace_value_u64(metrics, "root_tactical_annotations");
             self.search_tactical_annotations +=
                 trace_value_u64(metrics, "search_tactical_annotations");
-            self.tactical_lite_entry_rank_queries +=
-                trace_value_u64(metrics, "tactical_lite_entry_rank_queries");
-            self.root_tactical_lite_entry_rank_queries +=
-                trace_value_u64(metrics, "root_tactical_lite_entry_rank_queries");
-            self.search_tactical_lite_entry_rank_queries +=
-                trace_value_u64(metrics, "search_tactical_lite_entry_rank_queries");
-            self.tactical_lite_rank_scan_queries +=
-                trace_value_u64(metrics, "tactical_lite_rank_scan_queries");
-            self.tactical_lite_rank_scan_ns +=
-                trace_value_u64(metrics, "tactical_lite_rank_scan_ns");
-            self.tactical_lite_rank_frontier_clean_queries +=
-                trace_value_u64(metrics, "tactical_lite_rank_frontier_clean_queries");
-            self.tactical_lite_rank_frontier_clean_ns +=
-                trace_value_u64(metrics, "tactical_lite_rank_frontier_clean_ns");
-            self.tactical_lite_rank_frontier_dirty_queries +=
-                trace_value_u64(metrics, "tactical_lite_rank_frontier_dirty_queries");
-            self.tactical_lite_rank_frontier_dirty_ns +=
-                trace_value_u64(metrics, "tactical_lite_rank_frontier_dirty_ns");
-            self.tactical_lite_rank_frontier_fallback_queries +=
-                trace_value_u64(metrics, "tactical_lite_rank_frontier_fallback_queries");
-            self.tactical_lite_rank_frontier_fallback_ns +=
-                trace_value_u64(metrics, "tactical_lite_rank_frontier_fallback_ns");
             self.threat_view_shadow_checks += trace_value_u64(metrics, "threat_view_shadow_checks");
             self.threat_view_shadow_mismatches +=
                 trace_value_u64(metrics, "threat_view_shadow_mismatches");
@@ -1665,22 +1588,6 @@ impl SideStatsAccumulator {
         self.tactical_annotations += stats.tactical_annotations;
         self.root_tactical_annotations += stats.root_tactical_annotations;
         self.search_tactical_annotations += stats.search_tactical_annotations;
-        self.tactical_lite_entry_rank_queries += stats.tactical_lite_entry_rank_queries;
-        self.root_tactical_lite_entry_rank_queries += stats.root_tactical_lite_entry_rank_queries;
-        self.search_tactical_lite_entry_rank_queries +=
-            stats.search_tactical_lite_entry_rank_queries;
-        self.tactical_lite_rank_scan_queries += stats.tactical_lite_rank_scan_queries;
-        self.tactical_lite_rank_scan_ns += stats.tactical_lite_rank_scan_ns;
-        self.tactical_lite_rank_frontier_clean_queries +=
-            stats.tactical_lite_rank_frontier_clean_queries;
-        self.tactical_lite_rank_frontier_clean_ns += stats.tactical_lite_rank_frontier_clean_ns;
-        self.tactical_lite_rank_frontier_dirty_queries +=
-            stats.tactical_lite_rank_frontier_dirty_queries;
-        self.tactical_lite_rank_frontier_dirty_ns += stats.tactical_lite_rank_frontier_dirty_ns;
-        self.tactical_lite_rank_frontier_fallback_queries +=
-            stats.tactical_lite_rank_frontier_fallback_queries;
-        self.tactical_lite_rank_frontier_fallback_ns +=
-            stats.tactical_lite_rank_frontier_fallback_ns;
         self.threat_view_shadow_checks += stats.threat_view_shadow_checks;
         self.threat_view_shadow_mismatches += stats.threat_view_shadow_mismatches;
         self.threat_view_scan_queries += stats.threat_view_scan_queries;
@@ -1937,20 +1844,6 @@ impl SideStatsAccumulator {
             tactical_annotations: self.tactical_annotations,
             root_tactical_annotations: self.root_tactical_annotations,
             search_tactical_annotations: self.search_tactical_annotations,
-            tactical_lite_entry_rank_queries: self.tactical_lite_entry_rank_queries,
-            root_tactical_lite_entry_rank_queries: self.root_tactical_lite_entry_rank_queries,
-            search_tactical_lite_entry_rank_queries: self.search_tactical_lite_entry_rank_queries,
-            tactical_lite_rank_scan_queries: self.tactical_lite_rank_scan_queries,
-            tactical_lite_rank_scan_ns: self.tactical_lite_rank_scan_ns,
-            tactical_lite_rank_frontier_clean_queries: self
-                .tactical_lite_rank_frontier_clean_queries,
-            tactical_lite_rank_frontier_clean_ns: self.tactical_lite_rank_frontier_clean_ns,
-            tactical_lite_rank_frontier_dirty_queries: self
-                .tactical_lite_rank_frontier_dirty_queries,
-            tactical_lite_rank_frontier_dirty_ns: self.tactical_lite_rank_frontier_dirty_ns,
-            tactical_lite_rank_frontier_fallback_queries: self
-                .tactical_lite_rank_frontier_fallback_queries,
-            tactical_lite_rank_frontier_fallback_ns: self.tactical_lite_rank_frontier_fallback_ns,
             threat_view_shadow_checks: self.threat_view_shadow_checks,
             threat_view_shadow_mismatches: self.threat_view_shadow_mismatches,
             threat_view_scan_queries: self.threat_view_scan_queries,
@@ -2203,25 +2096,6 @@ fn standings(
                 tactical_annotations: side_stats.tactical_annotations,
                 root_tactical_annotations: side_stats.root_tactical_annotations,
                 search_tactical_annotations: side_stats.search_tactical_annotations,
-                tactical_lite_entry_rank_queries: side_stats.tactical_lite_entry_rank_queries,
-                root_tactical_lite_entry_rank_queries: side_stats
-                    .root_tactical_lite_entry_rank_queries,
-                search_tactical_lite_entry_rank_queries: side_stats
-                    .search_tactical_lite_entry_rank_queries,
-                tactical_lite_rank_scan_queries: side_stats.tactical_lite_rank_scan_queries,
-                tactical_lite_rank_scan_ns: side_stats.tactical_lite_rank_scan_ns,
-                tactical_lite_rank_frontier_clean_queries: side_stats
-                    .tactical_lite_rank_frontier_clean_queries,
-                tactical_lite_rank_frontier_clean_ns: side_stats
-                    .tactical_lite_rank_frontier_clean_ns,
-                tactical_lite_rank_frontier_dirty_queries: side_stats
-                    .tactical_lite_rank_frontier_dirty_queries,
-                tactical_lite_rank_frontier_dirty_ns: side_stats
-                    .tactical_lite_rank_frontier_dirty_ns,
-                tactical_lite_rank_frontier_fallback_queries: side_stats
-                    .tactical_lite_rank_frontier_fallback_queries,
-                tactical_lite_rank_frontier_fallback_ns: side_stats
-                    .tactical_lite_rank_frontier_fallback_ns,
                 threat_view_shadow_checks: side_stats.threat_view_shadow_checks,
                 threat_view_shadow_mismatches: side_stats.threat_view_shadow_mismatches,
                 threat_view_scan_queries: side_stats.threat_view_scan_queries,
@@ -3306,14 +3180,6 @@ fn compact_searchbot_feature_label(feature: &str) -> String {
     }
     if feature.starts_with("corridor-proof-") {
         return "Corridor Proof".to_string();
-    }
-    if let Some(rest) = feature.strip_prefix("leaf-corridor-d") {
-        if let Some((depth, width)) = rest.split_once("-w") {
-            return format!("LeafCorrD{depth}W{width}");
-        }
-    }
-    if let Some(count) = feature.strip_prefix("leaf-proof-c") {
-        return format!("ProofC{count}");
     }
     match feature {
         "pattern-eval" => "Pattern".to_string(),
@@ -5016,9 +4882,6 @@ mod tests {
             "tactical_annotations": 9,
             "root_tactical_annotations": 2,
             "search_tactical_annotations": 7,
-            "tactical_lite_entry_rank_queries": 11,
-            "root_tactical_lite_entry_rank_queries": 3,
-            "search_tactical_lite_entry_rank_queries": 8,
             "child_limit_applications": 4,
             "root_child_limit_applications": 0,
             "search_child_limit_applications": 4,
@@ -5084,14 +4947,6 @@ mod tests {
         metrics["pattern_frame_update_ns"] = serde_json::json!(800);
         metrics["pattern_frame_shadow_checks"] = serde_json::json!(15);
         metrics["pattern_frame_shadow_mismatches"] = serde_json::json!(0);
-        metrics["tactical_lite_rank_scan_queries"] = serde_json::json!(5);
-        metrics["tactical_lite_rank_scan_ns"] = serde_json::json!(50);
-        metrics["tactical_lite_rank_frontier_clean_queries"] = serde_json::json!(6);
-        metrics["tactical_lite_rank_frontier_clean_ns"] = serde_json::json!(60);
-        metrics["tactical_lite_rank_frontier_dirty_queries"] = serde_json::json!(7);
-        metrics["tactical_lite_rank_frontier_dirty_ns"] = serde_json::json!(70);
-        metrics["tactical_lite_rank_frontier_fallback_queries"] = serde_json::json!(8);
-        metrics["tactical_lite_rank_frontier_fallback_ns"] = serde_json::json!(80);
         let trace = serde_json::json!({
             "nodes": 100,
             "safety_nodes": 20,
@@ -5192,17 +5047,6 @@ mod tests {
         assert_eq!(report.tactical_annotations, 9);
         assert_eq!(report.root_tactical_annotations, 2);
         assert_eq!(report.search_tactical_annotations, 7);
-        assert_eq!(report.tactical_lite_entry_rank_queries, 11);
-        assert_eq!(report.root_tactical_lite_entry_rank_queries, 3);
-        assert_eq!(report.search_tactical_lite_entry_rank_queries, 8);
-        assert_eq!(report.tactical_lite_rank_scan_queries, 5);
-        assert_eq!(report.tactical_lite_rank_scan_ns, 50);
-        assert_eq!(report.tactical_lite_rank_frontier_clean_queries, 6);
-        assert_eq!(report.tactical_lite_rank_frontier_clean_ns, 60);
-        assert_eq!(report.tactical_lite_rank_frontier_dirty_queries, 7);
-        assert_eq!(report.tactical_lite_rank_frontier_dirty_ns, 70);
-        assert_eq!(report.tactical_lite_rank_frontier_fallback_queries, 8);
-        assert_eq!(report.tactical_lite_rank_frontier_fallback_ns, 80);
         assert_eq!(report.child_limit_applications, 4);
         assert_eq!(report.search_child_limit_applications, 4);
         assert_eq!(report.child_cap_hits, 3);
@@ -5548,21 +5392,6 @@ mod tests {
         assert_eq!(
             compact_bot_label(&report, "search-d5+tactical-cap-8+near-self-r2-opponent-r1"),
             "SearchBot_D5+TCap8+SelfR2OppR1"
-        );
-        assert_eq!(
-            compact_bot_label(&report, "search-d5+leaf-corridor-d8-w3"),
-            "SearchBot_D5+LeafCorrD8W3"
-        );
-        assert_eq!(
-            compact_bot_label(&report, "search-d5+leaf-corridor-d8-w3+leaf-proof-c6"),
-            "SearchBot_D5+LeafCorrD8W3+ProofC6"
-        );
-        assert_eq!(
-            compact_bot_label(
-                &report,
-                "search-d5+leaf-corridor-d8-w3+leaf-proof-any-score"
-            ),
-            "SearchBot_D5+LeafCorrD8W3+leaf-proof-any-score"
         );
         assert_eq!(
             compact_bot_label(
@@ -6282,17 +6111,6 @@ mod tests {
             tactical_annotations: 8,
             root_tactical_annotations: 2,
             search_tactical_annotations: 6,
-            tactical_lite_entry_rank_queries: 0,
-            root_tactical_lite_entry_rank_queries: 0,
-            search_tactical_lite_entry_rank_queries: 0,
-            tactical_lite_rank_scan_queries: 0,
-            tactical_lite_rank_scan_ns: 0,
-            tactical_lite_rank_frontier_clean_queries: 0,
-            tactical_lite_rank_frontier_clean_ns: 0,
-            tactical_lite_rank_frontier_dirty_queries: 0,
-            tactical_lite_rank_frontier_dirty_ns: 0,
-            tactical_lite_rank_frontier_fallback_queries: 0,
-            tactical_lite_rank_frontier_fallback_ns: 0,
             threat_view_shadow_checks: 0,
             threat_view_shadow_mismatches: 0,
             threat_view_scan_queries: 0,
@@ -6452,17 +6270,6 @@ mod tests {
             tactical_annotations: 8,
             root_tactical_annotations: 2,
             search_tactical_annotations: 6,
-            tactical_lite_entry_rank_queries: 0,
-            root_tactical_lite_entry_rank_queries: 0,
-            search_tactical_lite_entry_rank_queries: 0,
-            tactical_lite_rank_scan_queries: 0,
-            tactical_lite_rank_scan_ns: 0,
-            tactical_lite_rank_frontier_clean_queries: 0,
-            tactical_lite_rank_frontier_clean_ns: 0,
-            tactical_lite_rank_frontier_dirty_queries: 0,
-            tactical_lite_rank_frontier_dirty_ns: 0,
-            tactical_lite_rank_frontier_fallback_queries: 0,
-            tactical_lite_rank_frontier_fallback_ns: 0,
             threat_view_shadow_checks: 0,
             threat_view_shadow_mismatches: 0,
             threat_view_scan_queries: 0,
