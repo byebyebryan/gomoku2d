@@ -5,10 +5,9 @@ use gomoku_core::{Board, Color, GameResult, Move, MoveError, DIRS};
 
 use crate::tactical::{
     defender_reply_candidates, defender_reply_candidates_from_view,
-    raw_local_threat_facts_at_existing_move, raw_local_threat_facts_for_player,
-    CorridorEntryRank, CorridorThreatPolicy, DefenderReplyCandidate, LocalThreatFact,
-    ScanThreatView, SearchThreatPolicy, TacticalMoveAnnotation, TacticalOrderingSummary,
-    ThreatView,
+    raw_local_threat_facts_at_existing_move, raw_local_threat_facts_for_player, CorridorEntryRank,
+    CorridorThreatPolicy, DefenderReplyCandidate, LocalThreatFact, ScanThreatView,
+    SearchThreatPolicy, TacticalMoveAnnotation, TacticalOrderingSummary, ThreatView,
 };
 use crate::viability::{scan_cell_viability, CellViability};
 

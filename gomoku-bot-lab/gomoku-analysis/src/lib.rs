@@ -3085,75 +3085,35 @@ mod tests {
     }
 
     #[test]
-    fn replay_analysis_session_emits_possible_escape_marker_annotations() {
-        let replay = replay_from_moves(
+    fn replay_frame_annotations_emit_escape_boundary_candidates() {
+        let board = board_from_moves(
             Variant::Renju,
             &[
-                "H8", "I8", "H7", "I7", "H6", "H5", "I6", "I9", "G6", "J6", "G8", "J5", "G5", "G7",
-                "E6", "F6", "H9", "H10", "F7", "D5", "I10",
+                "H8", "I8", "H7", "I7", "H6", "H5", "I6", "I9", "G6", "J6", "G8", "J5", "G5",
             ],
         );
-        let mut session = ReplayAnalysisSession::new(
-            replay,
-            AnalysisOptions {
-                reply_policy: ReplyPolicy::CorridorReplies,
-                max_depth: 4,
-                max_scan_plies: Some(8),
-            },
-        )
-        .expect("session should initialize");
-        let mut annotations = Vec::new();
-        loop {
-            let step = session.step(2);
-            annotations.extend(step.annotations);
-            if step.done {
-                break;
-            }
-        }
+        let options = AnalysisOptions {
+            reply_policy: ReplyPolicy::CorridorReplies,
+            max_depth: 4,
+            max_scan_plies: Some(8),
+        };
+        let proof = proof_for_board(&board, Color::Black, &options);
+        let boundary = replay_frame_annotations_from_proof(
+            13,
+            &board,
+            Color::Black,
+            &proof,
+            None,
+            Some(mv("G7")),
+            &options,
+        );
 
-        let boundary = annotations
-            .iter()
-            .find(|frame| frame.ply == 13)
-            .expect("escape boundary frame should be annotated");
-
+        assert_eq!(boundary.side_to_move, Color::White);
         assert!(boundary.markers.iter().any(|marker| {
             marker.role == ReplayFrameMarkerRole::PossibleEscape
                 && marker.mv == mv("I10")
                 && marker.side == Color::White
         }));
-    }
-
-    #[test]
-    fn replay_analysis_session_emits_current_imminent_and_counter_highlights() {
-        let replay = replay_from_moves(
-            Variant::Renju,
-            &[
-                "H8", "I8", "H7", "I7", "H6", "H5", "I6", "I9", "G6", "J6", "G8", "J5", "G5", "G7",
-                "E6", "F6", "H9", "H10", "F7", "D5", "I10",
-            ],
-        );
-        let mut session = ReplayAnalysisSession::new(
-            replay,
-            AnalysisOptions {
-                reply_policy: ReplyPolicy::CorridorReplies,
-                max_depth: 4,
-                max_scan_plies: Some(8),
-            },
-        )
-        .expect("session should initialize");
-        let mut annotations = Vec::new();
-        loop {
-            let step = session.step(2);
-            annotations.extend(step.annotations);
-            if step.done {
-                break;
-            }
-        }
-
-        let boundary = annotations
-            .iter()
-            .find(|frame| frame.ply == 13)
-            .expect("escape boundary frame should be annotated");
 
         for notation in ["G4", "G7", "G9"] {
             let mv = mv(notation);

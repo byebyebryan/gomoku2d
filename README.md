@@ -142,6 +142,7 @@ The canonical design, architecture, and release docs live in `docs/`:
 - [`docs/search_bot.md`](docs/search_bot.md) — configurable `SearchBot` strategy, pipeline, and experiment takeaways
 - [`docs/tactical_shapes.md`](docs/tactical_shapes.md) — canonical bot shape vocabulary for tactical facts and eval work
 - [`docs/tactical_scenarios.md`](docs/tactical_scenarios.md) — focused bot tactical cases with board prints and expected moves
+- [`docs/testing.md`](docs/testing.md) — test hygiene rules for durable contracts versus temporary scaffolding
 - [`gomoku-web/README.md`](gomoku-web/README.md) — web game stack, local dev, deploy/runtime details
 - [`gomoku-bot-lab/README.md`](gomoku-bot-lab/README.md) — bot-lab build/test, CLI usage, replay format, bot notes
 
