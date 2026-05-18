@@ -115,7 +115,7 @@ pipeline axes.
 | Child width | uncapped | `+child-cap-N`, `+tactical-cap-N`, `+tactical-full-cap-N` | Caps non-root children after ordering; root still considers every legal/safe candidate. |
 | Static eval | `line_shape_eval` | `+pattern-eval` | How leaf board positions are scored. |
 | Threat view | `rolling` | `+rolling-frontier`, `+rolling-frontier-shadow`, `+scan-threat-view` | How tactical facts are answered for safety, ordering, win/block checks, and corridor queries. |
-| Corridor proof | disabled | `+corridor-proof-cN-dM-wW`, legacy `+leaf-corridor-dM-wW`, `+leaf-proof-cN` | Optional after-search corridor proof over selected root candidates. |
+| Corridor proof | disabled | `+corridor-proof-cN-dM-wW` | Optional after-search corridor proof over selected root candidates. |
 
 The current suffix list does **not** include `+pattern-eval-scan`. Conceptually
 that would be a static-eval implementation backend, separate from threat view.
@@ -147,6 +147,11 @@ axis. The later portal suffixes are also retired as candidate bot knobs and are
 no longer parser surface. Portal variants remain historical report evidence
 only; use `+corridor-proof-cN-dM-wW` for the current after-search corridor
 proof experiment.
+
+The old split corridor suffixes `+leaf-corridor-dM-wW` and `+leaf-proof-cN`
+are also retired and no longer accepted by the lab parser. Historical reports
+may still contain those names, but new runs must use the single
+`+corridor-proof-cN-dM-wW` suffix.
 
 These specs are not durable product identity, and they are not character bots
 yet. They exist so the lab can benchmark stable configs before deciding whether

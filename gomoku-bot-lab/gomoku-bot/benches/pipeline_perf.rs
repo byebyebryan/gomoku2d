@@ -203,13 +203,13 @@ fn bench_tactical_ordering_summary(c: &mut Criterion) {
         );
 
         group.bench_with_input(
-            BenchmarkId::new("rolling_lite_clean", scenario.id),
+            BenchmarkId::new("rolling_corridor_entry_clean", scenario.id),
             &(RollingThreatFrontier::from_board(&board), player, probe),
             |b, (frontier, player, probe)| {
                 b.iter(|| {
                     black_box(
                         frontier
-                            .tactical_lite_rank_for_player_with_source(*player, *probe)
+                            .corridor_entry_rank_for_player_with_source(*player, *probe)
                             .0,
                     )
                 })
@@ -217,7 +217,7 @@ fn bench_tactical_ordering_summary(c: &mut Criterion) {
         );
 
         group.bench_with_input(
-            BenchmarkId::new("rolling_lite_dirty", scenario.id),
+            BenchmarkId::new("rolling_corridor_entry_dirty", scenario.id),
             &dirty,
             |b, dirty| {
                 b.iter_batched_ref(
@@ -229,7 +229,7 @@ fn bench_tactical_ordering_summary(c: &mut Criterion) {
                     |frontier| {
                         black_box(
                             frontier
-                                .tactical_lite_rank_for_player_with_source(
+                                .corridor_entry_rank_for_player_with_source(
                                     dirty.player,
                                     dirty.probe,
                                 )

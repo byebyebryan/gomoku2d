@@ -23,12 +23,12 @@ pub struct TacticalOrderingSummary {
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
-pub struct TacticalLiteRank {
+pub struct CorridorEntryRank {
     pub corridor_entry_rank: u8,
     pub latent_potential_rank: u8,
 }
 
-impl TacticalLiteRank {
+impl CorridorEntryRank {
     pub fn from_annotation(
         policy: CorridorThreatPolicy,
         annotation: &TacticalMoveAnnotation,
@@ -234,28 +234,28 @@ impl SearchThreatPolicy {
         self.effective_ordering_summary_from_raw(board, &annotation)
     }
 
-    pub fn tactical_lite_rank_for_player(
+    pub fn corridor_entry_rank_for_player(
         self,
         board: &Board,
         player: Color,
         mv: Move,
-    ) -> TacticalLiteRank {
+    ) -> CorridorEntryRank {
         if !board.is_legal_for_color(mv, player) {
-            return TacticalLiteRank::default();
+            return CorridorEntryRank::default();
         }
-        self.tactical_lite_rank_for_legal_player(board, player, mv)
+        self.corridor_entry_rank_for_legal_player(board, player, mv)
     }
 
-    pub fn tactical_lite_rank_for_legal_player(
+    pub fn corridor_entry_rank_for_legal_player(
         self,
         board: &Board,
         player: Color,
         mv: Move,
-    ) -> TacticalLiteRank {
+    ) -> CorridorEntryRank {
         if board.config.variant == Variant::Renju && player == Color::Black {
             let annotation = self.raw_annotation_for_legal_player(board, player, mv);
             let annotation = self.effective_annotation_from_raw(board, annotation);
-            return TacticalLiteRank::from_annotation(CorridorThreatPolicy, &annotation);
+            return CorridorEntryRank::from_annotation(CorridorThreatPolicy, &annotation);
         }
 
         let policy = CorridorThreatPolicy;
@@ -268,7 +268,7 @@ impl SearchThreatPolicy {
                 }
             }
         }
-        TacticalLiteRank {
+        CorridorEntryRank {
             corridor_entry_rank: rank,
             latent_potential_rank: 0,
         }
@@ -443,13 +443,8 @@ pub trait ThreatView {
     fn search_annotation_for_move(&self, mv: Move) -> TacticalMoveAnnotation;
     /// Search-ordering tactical annotation for an explicit side before it is played.
     fn search_annotation_for_player(&self, player: Color, mv: Move) -> TacticalMoveAnnotation;
-    /// Compact tactical-lite rank for a candidate before it is played.
-    fn candidate_tactical_lite_rank(&self, attacker: Color, mv: Move) -> TacticalLiteRank;
     /// Rank for the local corridor entry a candidate would create before it is played.
-    fn candidate_corridor_entry_rank(&self, attacker: Color, mv: Move) -> u8 {
-        self.candidate_tactical_lite_rank(attacker, mv)
-            .corridor_entry_rank
-    }
+    fn candidate_corridor_entry_rank(&self, attacker: Color, mv: Move) -> u8;
     /// Active immediate/imminent corridor threats for `attacker` on this board.
     fn active_corridor_threats(&self, attacker: Color) -> Vec<LocalThreatFact>;
     /// True when `mv` is already occupied by `attacker` and that local move is
@@ -491,8 +486,10 @@ impl ThreatView for ScanThreatView<'_> {
         SearchThreatPolicy.annotation_for_player(self.board, player, mv)
     }
 
-    fn candidate_tactical_lite_rank(&self, attacker: Color, mv: Move) -> TacticalLiteRank {
-        SearchThreatPolicy.tactical_lite_rank_for_player(self.board, attacker, mv)
+    fn candidate_corridor_entry_rank(&self, attacker: Color, mv: Move) -> u8 {
+        SearchThreatPolicy
+            .corridor_entry_rank_for_player(self.board, attacker, mv)
+            .corridor_entry_rank
     }
 
     fn active_corridor_threats(&self, attacker: Color) -> Vec<LocalThreatFact> {

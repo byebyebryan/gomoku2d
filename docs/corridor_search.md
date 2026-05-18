@@ -360,9 +360,10 @@ meaningful corridors first:
 - Inside a corridor, order immediate wins, forced blocks, imminent-threat
   replies, counter-threats, local threat rank, then stable board order.
 
-The first lab shape should be explicit and conservative, for example
+The first retired lab shape was explicit and conservative, for example
 `search-dN+leaf-corridor-dM-w3`: normal depth `N`, max leaf corridor depth `M`,
-and reply width `3`. Required metrics:
+and reply width `3`. That spelling is historical only and is no longer accepted
+by the lab parser. Required metrics at the time were:
 
 - leaf corridor checks,
 - active leaf hits,
@@ -459,8 +460,9 @@ Reports display the current baseline suffix as `Corridor Proof` to keep the
 UI readable. The full `c16-d8-w4` spelling remains in commands and raw report
 JSON so experiments stay reproducible.
 
-The older split suffixes `+leaf-corridor-dM-wW` and `+leaf-proof-cN` remain
-historical/parser compatibility names for old reports. New experiments should
+The older split suffixes `+leaf-corridor-dM-wW` and `+leaf-proof-cN` are
+retired and no longer accepted by the parser or compact report-label helpers.
+Historical reports may still contain those raw names, but new experiments must
 use the single `+corridor-proof-cN-dM-wW` suffix so the report label reads as
 one concept.
 

@@ -11,8 +11,7 @@ use crate::frontier::{
 use crate::pattern::{evaluate_pattern_scan, PatternFrame};
 use crate::tactical::{
     local_threat_facts_after_move, CorridorThreatPolicy, LocalThreatKind, ScanThreatView,
-    SearchThreatPolicy, TacticalLiteRank, TacticalMoveAnnotation, TacticalOrderingSummary,
-    ThreatView,
+    SearchThreatPolicy, TacticalMoveAnnotation, TacticalOrderingSummary, ThreatView,
 };
 use crate::viability::{direction_bit, scan_cell_null, scan_cell_viability};
 use crate::Bot;
@@ -382,17 +381,6 @@ pub struct SearchMetrics {
     pub tactical_annotations: u64,
     pub root_tactical_annotations: u64,
     pub search_tactical_annotations: u64,
-    pub tactical_lite_entry_rank_queries: u64,
-    pub root_tactical_lite_entry_rank_queries: u64,
-    pub search_tactical_lite_entry_rank_queries: u64,
-    pub tactical_lite_rank_scan_queries: u64,
-    pub tactical_lite_rank_scan_ns: u64,
-    pub tactical_lite_rank_frontier_clean_queries: u64,
-    pub tactical_lite_rank_frontier_clean_ns: u64,
-    pub tactical_lite_rank_frontier_dirty_queries: u64,
-    pub tactical_lite_rank_frontier_dirty_ns: u64,
-    pub tactical_lite_rank_frontier_fallback_queries: u64,
-    pub tactical_lite_rank_frontier_fallback_ns: u64,
     pub child_limit_applications: u64,
     pub root_child_limit_applications: u64,
     pub search_child_limit_applications: u64,
@@ -644,52 +632,6 @@ impl SearchMetrics {
         match phase {
             SearchMetricPhase::Root => self.root_tactical_annotations += 1,
             SearchMetricPhase::Search => self.search_tactical_annotations += 1,
-        }
-    }
-
-    fn record_tactical_lite_entry_rank_query(&mut self, phase: SearchMetricPhase) {
-        self.tactical_lite_entry_rank_queries += 1;
-        match phase {
-            SearchMetricPhase::Root => self.root_tactical_lite_entry_rank_queries += 1,
-            SearchMetricPhase::Search => self.search_tactical_lite_entry_rank_queries += 1,
-        }
-    }
-
-    fn record_tactical_lite_rank_scan(&mut self, elapsed: Duration) {
-        let ns = duration_ns(elapsed);
-        self.tactical_lite_rank_scan_queries += 1;
-        self.tactical_lite_rank_scan_ns = self.tactical_lite_rank_scan_ns.saturating_add(ns);
-        self.threat_view_scan_queries += 1;
-        self.threat_view_scan_ns = self.threat_view_scan_ns.saturating_add(ns);
-        self.stage_threat_ns = self.stage_threat_ns.saturating_add(ns);
-    }
-
-    fn record_tactical_lite_rank_frontier(
-        &mut self,
-        elapsed: Duration,
-        source: FrontierAnnotationSource,
-    ) {
-        let ns = duration_ns(elapsed);
-        self.threat_view_frontier_queries += 1;
-        self.threat_view_frontier_query_ns = self.threat_view_frontier_query_ns.saturating_add(ns);
-        self.stage_threat_ns = self.stage_threat_ns.saturating_add(ns);
-        match source {
-            FrontierAnnotationSource::CleanCache => {
-                self.tactical_lite_rank_frontier_clean_queries += 1;
-                self.tactical_lite_rank_frontier_clean_ns =
-                    self.tactical_lite_rank_frontier_clean_ns.saturating_add(ns);
-            }
-            FrontierAnnotationSource::DirtyRecompute => {
-                self.tactical_lite_rank_frontier_dirty_queries += 1;
-                self.tactical_lite_rank_frontier_dirty_ns =
-                    self.tactical_lite_rank_frontier_dirty_ns.saturating_add(ns);
-            }
-            FrontierAnnotationSource::Fallback => {
-                self.tactical_lite_rank_frontier_fallback_queries += 1;
-                self.tactical_lite_rank_frontier_fallback_ns = self
-                    .tactical_lite_rank_frontier_fallback_ns
-                    .saturating_add(ns);
-            }
         }
     }
 
@@ -2151,10 +2093,7 @@ fn order_root_moves(
     let start = Instant::now();
     let ordered = match move_ordering {
         MoveOrdering::TranspositionFirstBoardOrder => order_tt_first(moves, tt_move),
-        MoveOrdering::TacticalFull
-        | MoveOrdering::PriorityFirst
-        | MoveOrdering::TacticalLite
-        | MoveOrdering::Tactical => order_moves_with_ordering(
+        MoveOrdering::TacticalFull | MoveOrdering::Tactical => order_moves_with_ordering(
             state,
             moves,
             tt_move,
@@ -2201,28 +2140,6 @@ fn order_search_moves(
             );
             apply_child_limit(ordered, child_limit, metrics, SearchMetricPhase::Search)
         }
-        MoveOrdering::PriorityFirst => {
-            let ordered = order_moves_priority_first(
-                state,
-                moves,
-                tt_move,
-                threat_view_mode,
-                metrics,
-                SearchMetricPhase::Search,
-            );
-            apply_child_limit(ordered, child_limit, metrics, SearchMetricPhase::Search)
-        }
-        MoveOrdering::TacticalLite => {
-            let ordered = order_moves_tactical_lite(
-                state,
-                moves,
-                tt_move,
-                threat_view_mode,
-                metrics,
-                SearchMetricPhase::Search,
-            );
-            apply_child_limit(ordered, child_limit, metrics, SearchMetricPhase::Search)
-        }
         MoveOrdering::Tactical => {
             let ordered = order_moves_tactical(
                 state,
@@ -2256,22 +2173,6 @@ fn order_moves_with_ordering(
             })
             .collect(),
         MoveOrdering::TacticalFull => order_moves_tactical_full(
-            state,
-            moves,
-            tt_move,
-            options.threat_view_mode,
-            metrics,
-            options.phase,
-        ),
-        MoveOrdering::PriorityFirst => order_moves_priority_first(
-            state,
-            moves,
-            tt_move,
-            options.threat_view_mode,
-            metrics,
-            options.phase,
-        ),
-        MoveOrdering::TacticalLite => order_moves_tactical_lite(
             state,
             moves,
             tt_move,
@@ -2346,103 +2247,6 @@ fn order_moves_tactical_full(
     scored
         .into_iter()
         .map(|(_, mv, _, must_keep, _)| OrderedMove { mv, must_keep })
-        .collect()
-}
-
-fn order_moves_priority_first(
-    state: &mut SearchState,
-    moves: Vec<Move>,
-    tt_move: Option<Move>,
-    threat_view_mode: ThreatViewMode,
-    metrics: &mut SearchMetrics,
-    _phase: SearchMetricPhase,
-) -> Vec<OrderedMove> {
-    if moves.is_empty() {
-        return Vec::new();
-    }
-
-    let board_size = state.board().config.board_size;
-    let player = state.board().current_player;
-    let opponent = player.opponent();
-    let own_immediate_wins =
-        immediate_winning_move_mask_for_threat_view_mode(state, player, threat_view_mode, metrics);
-    let opponent_immediate_wins = immediate_winning_move_mask_for_threat_view_mode(
-        state,
-        opponent,
-        threat_view_mode,
-        metrics,
-    );
-
-    let mut scored = moves
-        .into_iter()
-        .enumerate()
-        .map(|(index, mv)| {
-            let own_win = move_mask_contains(&own_immediate_wins, board_size, mv);
-            let immediate_block = move_mask_contains(&opponent_immediate_wins, board_size, mv);
-            let (score, must_keep) =
-                priority_ordering_score(state.board(), mv, tt_move, own_win, immediate_block);
-
-            (index, mv, score, must_keep)
-        })
-        .collect::<Vec<_>>();
-
-    scored.sort_by(|a, b| b.2.cmp(&a.2).then_with(|| a.0.cmp(&b.0)));
-    scored
-        .into_iter()
-        .map(|(_, mv, _, must_keep)| OrderedMove { mv, must_keep })
-        .collect()
-}
-
-fn order_moves_tactical_lite(
-    state: &mut SearchState,
-    moves: Vec<Move>,
-    tt_move: Option<Move>,
-    threat_view_mode: ThreatViewMode,
-    metrics: &mut SearchMetrics,
-    phase: SearchMetricPhase,
-) -> Vec<OrderedMove> {
-    if moves.is_empty() {
-        return Vec::new();
-    }
-
-    let board_size = state.board().config.board_size;
-    let player = state.board().current_player;
-    let opponent = player.opponent();
-    let own_immediate_wins =
-        immediate_winning_move_mask_for_threat_view_mode(state, player, threat_view_mode, metrics);
-    let opponent_immediate_wins = immediate_winning_move_mask_for_threat_view_mode(
-        state,
-        opponent,
-        threat_view_mode,
-        metrics,
-    );
-
-    let mut scored = moves
-        .into_iter()
-        .enumerate()
-        .map(|(index, mv)| {
-            let own_win = move_mask_contains(&own_immediate_wins, board_size, mv);
-            let immediate_block = move_mask_contains(&opponent_immediate_wins, board_size, mv);
-            let (base_score, must_keep) = if own_win {
-                (100_000, true)
-            } else if immediate_block {
-                (90_000, true)
-            } else {
-                let tactical_rank =
-                    tactical_lite_rank_counted(state, player, mv, threat_view_mode, metrics, phase);
-                (tactical_rank.ordering_score(), false)
-            };
-            let (priority_score, _) =
-                priority_ordering_score(state.board(), mv, tt_move, false, false);
-
-            (index, mv, base_score + priority_score, must_keep)
-        })
-        .collect::<Vec<_>>();
-
-    scored.sort_by(|a, b| b.2.cmp(&a.2).then_with(|| a.0.cmp(&b.0)));
-    scored
-        .into_iter()
-        .map(|(_, mv, _, must_keep)| OrderedMove { mv, must_keep })
         .collect()
 }
 
@@ -2541,29 +2345,6 @@ fn hard_tactical_ordering_score(own_win: bool, immediate_block: bool) -> (i32, b
     } else {
         (0, false)
     }
-}
-
-fn priority_ordering_score(
-    board: &Board,
-    mv: Move,
-    tt_move: Option<Move>,
-    own_win: bool,
-    immediate_block: bool,
-) -> (i32, bool) {
-    let (base_score, must_keep) = hard_tactical_ordering_score(own_win, immediate_block);
-
-    (
-        base_score + quiet_ordering_score(board, mv, tt_move),
-        must_keep,
-    )
-}
-
-fn quiet_ordering_score(board: &Board, mv: Move, tt_move: Option<Move>) -> i32 {
-    let tt_bonus = if Some(mv) == tt_move { 1_000 } else { 0 };
-    let density_bonus = 20 * local_density_score(board, mv, 2);
-    let center_bonus = center_score(board.config.board_size, mv);
-
-    tt_bonus + density_bonus + center_bonus
 }
 
 fn has_tactical_annotation_potential(board: &Board, player: Color, mv: Move) -> bool {
@@ -2679,79 +2460,6 @@ fn axis_has_tactical_annotation_potential(
     }
 
     false
-}
-
-fn tactical_lite_rank_counted(
-    state: &mut SearchState,
-    player: Color,
-    mv: Move,
-    mode: ThreatViewMode,
-    metrics: &mut SearchMetrics,
-    phase: SearchMetricPhase,
-) -> TacticalLiteRank {
-    metrics.record_tactical_lite_entry_rank_query(phase);
-    match mode {
-        ThreatViewMode::Scan => {
-            let start = Instant::now();
-            let rank = ScanThreatView::new(state.board()).candidate_tactical_lite_rank(player, mv);
-            metrics.record_tactical_lite_rank_scan(start.elapsed());
-            rank
-        }
-        ThreatViewMode::Rolling => {
-            let start = Instant::now();
-            let (rank, source) = state
-                .threat_view()
-                .tactical_lite_rank_for_player_with_source(player, mv);
-            metrics.record_tactical_lite_rank_frontier(start.elapsed(), source);
-            rank
-        }
-        ThreatViewMode::RollingShadow => {
-            metrics.threat_view_shadow_checks += 1;
-            let scan_start = Instant::now();
-            let scan = ScanThreatView::new(state.board()).candidate_tactical_lite_rank(player, mv);
-            metrics.record_tactical_lite_rank_scan(scan_start.elapsed());
-
-            let frontier_start = Instant::now();
-            let (frontier, source) = state
-                .threat_view()
-                .tactical_lite_rank_for_player_with_source(player, mv);
-            metrics.record_tactical_lite_rank_frontier(frontier_start.elapsed(), source);
-            if frontier != scan {
-                metrics.threat_view_shadow_mismatches += 1;
-            }
-            scan
-        }
-    }
-}
-
-fn local_density_score(board: &Board, mv: Move, radius: usize) -> i32 {
-    let size = board.config.board_size;
-    if size == 0 || mv.row >= size || mv.col >= size {
-        return 0;
-    }
-
-    let rmin = mv.row.saturating_sub(radius);
-    let rmax = (mv.row + radius).min(size - 1);
-    let cmin = mv.col.saturating_sub(radius);
-    let cmax = (mv.col + radius).min(size - 1);
-    let mut count = 0;
-    for row in rmin..=rmax {
-        for col in cmin..=cmax {
-            if row == mv.row && col == mv.col {
-                continue;
-            }
-            if !board.is_empty(row, col) {
-                count += 1;
-            }
-        }
-    }
-    count
-}
-
-fn center_score(board_size: usize, mv: Move) -> i32 {
-    let center = board_size / 2;
-    let distance = mv.row.abs_diff(center) + mv.col.abs_diff(center);
-    board_size as i32 - distance as i32
 }
 
 fn immediate_winning_move_mask_for_threat_view_mode(
@@ -3879,10 +3587,7 @@ fn negamax(
     let mut needs_legality_check = needs_legality_gate(state.board(), color, legality_gate);
     if (matches!(
         move_ordering,
-        MoveOrdering::TacticalFull
-            | MoveOrdering::PriorityFirst
-            | MoveOrdering::TacticalLite
-            | MoveOrdering::Tactical
+        MoveOrdering::TacticalFull | MoveOrdering::Tactical
     ) || child_limit.is_some())
         && needs_legality_check
     {
@@ -4253,8 +3958,6 @@ impl SafetyGate {
 pub enum MoveOrdering {
     TranspositionFirstBoardOrder,
     TacticalFull,
-    PriorityFirst,
-    TacticalLite,
     Tactical,
 }
 
@@ -4263,8 +3966,6 @@ impl MoveOrdering {
         match self {
             MoveOrdering::TranspositionFirstBoardOrder => "tt_first_board_order",
             MoveOrdering::TacticalFull => "tactical_full",
-            MoveOrdering::PriorityFirst => "priority_first",
-            MoveOrdering::TacticalLite => "tactical_lite",
             MoveOrdering::Tactical => "tactical",
         }
     }
@@ -5529,160 +5230,6 @@ mod tests {
     }
 
     #[test]
-    fn priority_ordering_keeps_wins_and_blocks_without_tactical_annotations() {
-        let mut win_board = Board::new(RuleConfig::default());
-        apply_moves(
-            &mut win_board,
-            &["H8", "A1", "I8", "B1", "J8", "C1", "K8", "D1"],
-        );
-        let zobrist = ZobristTable::new(win_board.config.board_size);
-        let mut win_state = SearchState::from_board_with_frontier(win_board, &zobrist, false);
-        let mut metrics = SearchMetrics::default();
-        let ordered = order_moves_priority_first(
-            &mut win_state,
-            vec![mv("B2"), mv("E1"), mv("L8")],
-            None,
-            ThreatViewMode::Scan,
-            &mut metrics,
-            SearchMetricPhase::Search,
-        );
-        let capped = apply_child_limit(ordered, Some(1), &mut metrics, SearchMetricPhase::Search);
-        assert_eq!(capped.first().copied(), Some(mv("L8")));
-        assert!(capped.contains(&mv("L8")));
-        assert_eq!(metrics.search_tactical_annotations, 0);
-
-        let mut block_board = Board::new(RuleConfig::default());
-        apply_moves(
-            &mut block_board,
-            &["H8", "A1", "I8", "B1", "J8", "C1", "O15", "D1"],
-        );
-        let zobrist = ZobristTable::new(block_board.config.board_size);
-        let mut block_state = SearchState::from_board_with_frontier(block_board, &zobrist, false);
-        let mut metrics = SearchMetrics::default();
-        let ordered = order_moves_priority_first(
-            &mut block_state,
-            vec![mv("B2"), mv("K8"), mv("E1")],
-            None,
-            ThreatViewMode::Scan,
-            &mut metrics,
-            SearchMetricPhase::Search,
-        );
-        let capped = apply_child_limit(ordered, Some(1), &mut metrics, SearchMetricPhase::Search);
-        assert_eq!(capped.first().copied(), Some(mv("E1")));
-        assert!(capped.contains(&mv("E1")));
-        assert_eq!(metrics.search_tactical_annotations, 0);
-    }
-
-    #[test]
-    fn priority_ordering_no_cap_preserves_move_set() {
-        let mut board = Board::new(RuleConfig::default());
-        apply_moves(
-            &mut board,
-            &["H8", "A1", "I8", "B1", "J8", "C1", "O15", "D1"],
-        );
-        let moves = vec![mv("B2"), mv("K8"), mv("E1"), mv("H9")];
-        let zobrist = ZobristTable::new(board.config.board_size);
-        let mut state = SearchState::from_board_with_frontier(board, &zobrist, false);
-        let mut metrics = SearchMetrics::default();
-
-        let ordered = order_moves_priority_first(
-            &mut state,
-            moves.clone(),
-            None,
-            ThreatViewMode::Scan,
-            &mut metrics,
-            SearchMetricPhase::Search,
-        );
-        let mut ordered_moves = ordered.iter().map(|ordered| ordered.mv).collect::<Vec<_>>();
-        let mut expected = moves;
-        ordered_moves.sort_by_key(|mv| (mv.row, mv.col));
-        expected.sort_by_key(|mv| (mv.row, mv.col));
-
-        assert_eq!(ordered_moves, expected);
-        assert_eq!(metrics.search_tactical_annotations, 0);
-    }
-
-    #[test]
-    fn tactical_lite_ordering_bubbles_corridor_entries_without_full_annotations() {
-        let mut board = Board::new(RuleConfig::default());
-        apply_moves(
-            &mut board,
-            &["H8", "A1", "I8", "B1", "J8", "C1", "O15", "D1"],
-        );
-        let moves = vec![mv("B2"), mv("K8"), mv("H9")];
-        let zobrist = ZobristTable::new(board.config.board_size);
-        let mut state = SearchState::from_board_with_frontier(board, &zobrist, false);
-        let mut metrics = SearchMetrics::default();
-
-        let ordered = order_moves_tactical_lite(
-            &mut state,
-            moves,
-            None,
-            ThreatViewMode::Scan,
-            &mut metrics,
-            SearchMetricPhase::Search,
-        );
-
-        assert_eq!(ordered.first().map(|ordered| ordered.mv), Some(mv("K8")));
-        assert_eq!(metrics.search_tactical_annotations, 0);
-        assert!(metrics.search_tactical_lite_entry_rank_queries > 0);
-    }
-
-    #[test]
-    fn tactical_lite_ordering_keeps_wins_and_blocks() {
-        let mut board = Board::new(RuleConfig::default());
-        apply_moves(
-            &mut board,
-            &["H8", "A1", "I8", "B1", "J8", "C1", "O15", "D1"],
-        );
-        let zobrist = ZobristTable::new(board.config.board_size);
-        let mut state = SearchState::from_board_with_frontier(board, &zobrist, false);
-        let mut metrics = SearchMetrics::default();
-        let ordered = order_moves_tactical_lite(
-            &mut state,
-            vec![mv("B2"), mv("K8"), mv("E1")],
-            None,
-            ThreatViewMode::Scan,
-            &mut metrics,
-            SearchMetricPhase::Search,
-        );
-        let capped = apply_child_limit(ordered, Some(1), &mut metrics, SearchMetricPhase::Search);
-
-        assert_eq!(capped.first().copied(), Some(mv("E1")));
-        assert!(capped.contains(&mv("E1")));
-        assert_eq!(metrics.search_tactical_annotations, 0);
-    }
-
-    #[test]
-    fn tactical_lite_ordering_no_cap_preserves_move_set() {
-        let mut board = Board::new(RuleConfig::default());
-        apply_moves(
-            &mut board,
-            &["H8", "A1", "I8", "B1", "J8", "C1", "O15", "D1"],
-        );
-        let moves = vec![mv("B2"), mv("K8"), mv("E1"), mv("H9")];
-        let zobrist = ZobristTable::new(board.config.board_size);
-        let mut state = SearchState::from_board_with_frontier(board, &zobrist, false);
-        let mut metrics = SearchMetrics::default();
-
-        let ordered = order_moves_tactical_lite(
-            &mut state,
-            moves.clone(),
-            None,
-            ThreatViewMode::Scan,
-            &mut metrics,
-            SearchMetricPhase::Search,
-        );
-        let mut ordered_moves = ordered.iter().map(|ordered| ordered.mv).collect::<Vec<_>>();
-        let mut expected = moves;
-        ordered_moves.sort_by_key(|mv| (mv.row, mv.col));
-        expected.sort_by_key(|mv| (mv.row, mv.col));
-
-        assert_eq!(ordered_moves, expected);
-        assert_eq!(metrics.search_tactical_annotations, 0);
-    }
-
-    #[test]
     fn tactical_without_child_cap_matches_full_tactical_ordering() {
         let mut board = Board::new(RuleConfig::default());
         apply_moves(
@@ -6459,41 +6006,6 @@ mod tests {
     }
 
     #[test]
-    fn rolling_shadow_threat_view_mode_can_drive_tactical_lite_ordering() {
-        let mut board = Board::new(RuleConfig::default());
-        apply_moves(
-            &mut board,
-            &["H8", "A1", "I8", "B1", "J8", "C1", "O15", "D1"],
-        );
-
-        let mut config = SearchBotConfig::custom_depth(1);
-        config.safety_gate = SafetyGate::None;
-        config.move_ordering = MoveOrdering::TacticalLite;
-        config.threat_view_mode = ThreatViewMode::RollingShadow;
-        let mut bot = SearchBot::with_config(config);
-
-        let _ = bot.choose_move(&board);
-        let trace = bot.trace().expect("expected search trace");
-
-        assert_eq!(trace["config"]["threat_view_mode"], "rolling_shadow");
-        assert_eq!(trace["config"]["move_ordering"], "tactical_lite");
-        assert_eq!(trace["metrics"]["root_tactical_annotations"], 0);
-        assert!(
-            trace["metrics"]["root_tactical_lite_entry_rank_queries"]
-                .as_u64()
-                .unwrap()
-                > 0
-        );
-        assert!(
-            trace["metrics"]["threat_view_shadow_checks"]
-                .as_u64()
-                .unwrap()
-                > 0
-        );
-        assert_eq!(trace["metrics"]["threat_view_shadow_mismatches"], 0);
-    }
-
-    #[test]
     fn rolling_threat_view_mode_can_drive_current_obligation_safety() {
         let mut board = Board::new(RuleConfig::default());
         apply_moves(&mut board, &["H8", "A1", "I8", "B1", "J8"]);
@@ -6952,109 +6464,6 @@ mod tests {
         assert_eq!(trace["config"]["move_ordering"], "tactical_full");
         assert!(metrics["root_tactical_annotations"].as_u64().unwrap() > 0);
         assert!(metrics["search_tactical_annotations"].as_u64().unwrap() > 0);
-    }
-
-    #[test]
-    fn trace_records_priority_ordering_without_tactical_annotations() {
-        let mut board = Board::new(RuleConfig::default());
-        apply_moves(
-            &mut board,
-            &["H8", "A1", "I8", "B1", "J8", "C1", "O15", "D1"],
-        );
-        let mut config = SearchBotConfig::custom_depth(2);
-        config.safety_gate = SafetyGate::None;
-        config.move_ordering = MoveOrdering::PriorityFirst;
-        config.child_limit = Some(4);
-        let mut bot = SearchBot::with_config(config);
-
-        let _ = bot.choose_move(&board);
-        let trace = bot.trace().expect("expected search trace");
-        let metrics = &trace["metrics"];
-
-        assert_eq!(trace["config"]["move_ordering"], "priority_first");
-        assert_eq!(metrics["root_tactical_annotations"], 0);
-        assert_eq!(metrics["search_tactical_annotations"], 0);
-        assert!(metrics["child_cap_hits"].as_u64().unwrap() > 0);
-    }
-
-    #[test]
-    fn trace_records_tactical_lite_entry_rank_metrics() {
-        let mut board = Board::new(RuleConfig::default());
-        apply_moves(
-            &mut board,
-            &["H8", "A1", "I8", "B1", "J8", "C1", "O15", "D1"],
-        );
-        let mut config = SearchBotConfig::custom_depth(2);
-        config.safety_gate = SafetyGate::None;
-        config.move_ordering = MoveOrdering::TacticalLite;
-        config.child_limit = Some(4);
-        let mut bot = SearchBot::with_config(config);
-
-        let _ = bot.choose_move(&board);
-        let trace = bot.trace().expect("expected search trace");
-        let metrics = &trace["metrics"];
-
-        assert_eq!(trace["config"]["move_ordering"], "tactical_lite");
-        assert_eq!(metrics["root_tactical_annotations"], 0);
-        assert_eq!(metrics["search_tactical_annotations"], 0);
-        assert!(
-            metrics["search_tactical_lite_entry_rank_queries"]
-                .as_u64()
-                .unwrap()
-                > 0
-        );
-        assert_eq!(metrics["tactical_lite_rank_scan_queries"], 0);
-        assert!(
-            metrics["tactical_lite_rank_frontier_dirty_queries"]
-                .as_u64()
-                .unwrap()
-                > 0,
-            "default tactical-lite rank queries should use the rolling frontier"
-        );
-        assert!(metrics["child_cap_hits"].as_u64().unwrap() > 0);
-    }
-
-    #[test]
-    fn rolling_threat_view_mode_records_tactical_lite_rank_sources() {
-        let mut board = Board::new(RuleConfig::default());
-        apply_moves(
-            &mut board,
-            &["H8", "A1", "I8", "B1", "J8", "C1", "O15", "D1"],
-        );
-        let mut config = SearchBotConfig::custom_depth(1);
-        config.safety_gate = SafetyGate::None;
-        config.move_ordering = MoveOrdering::TacticalLite;
-        config.threat_view_mode = ThreatViewMode::Rolling;
-        let mut bot = SearchBot::with_config(config);
-
-        let _ = bot.choose_move(&board);
-        let trace = bot.trace().expect("expected search trace");
-        let metrics = &trace["metrics"];
-
-        assert_eq!(trace["config"]["threat_view_mode"], "rolling");
-        assert_eq!(trace["config"]["move_ordering"], "tactical_lite");
-        assert_eq!(metrics["root_tactical_annotations"], 0);
-        assert_eq!(metrics["search_tactical_annotations"], 0);
-        assert!(
-            metrics["root_tactical_lite_entry_rank_queries"]
-                .as_u64()
-                .unwrap()
-                > 0
-        );
-        assert_eq!(metrics["tactical_lite_rank_scan_queries"], 0);
-        assert!(
-            metrics["tactical_lite_rank_frontier_clean_queries"]
-                .as_u64()
-                .unwrap()
-                > 0
-        );
-        assert!(
-            metrics["tactical_lite_rank_frontier_clean_ns"]
-                .as_u64()
-                .unwrap()
-                > 0
-        );
-        assert_eq!(metrics["threat_view_shadow_mismatches"], 0);
     }
 
     #[test]
