@@ -9,7 +9,7 @@ pub mod viability;
 pub use corridor::CorridorOptions;
 pub use random::RandomBot;
 pub use search::{
-    CandidateSource, LeafCorridorConfig, MoveOrdering, NullCellCulling, SafetyGate,
+    CandidateSource, CorridorProofConfig, MoveOrdering, NullCellCulling, SafetyGate,
     SearchAlgorithm, SearchBot, SearchBotConfig, StaticEvaluation, ThreatViewMode,
 };
 

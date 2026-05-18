@@ -114,7 +114,6 @@ struct TTEntry {
     score: i32,
     flag: TTFlag,
     best_move: Option<Move>,
-    terminal_proof: bool,
 }
 
 // --- Static evaluation ---
@@ -412,34 +411,34 @@ pub struct SearchMetrics {
     pub corridor_own_plies_followed: u64,
     pub corridor_opponent_plies_followed: u64,
     pub corridor_max_depth: u32,
-    pub leaf_corridor_passes: u64,
-    pub leaf_corridor_completed: u64,
-    pub leaf_corridor_checks: u64,
-    pub leaf_corridor_active: u64,
-    pub leaf_corridor_quiet: u64,
-    pub leaf_corridor_static_exits: u64,
-    pub leaf_corridor_depth_exits: u64,
-    pub leaf_corridor_deadline_exits: u64,
-    pub leaf_corridor_terminal_exits: u64,
-    pub leaf_corridor_terminal_root_candidates: u64,
-    pub leaf_corridor_terminal_root_winning_candidates: u64,
-    pub leaf_corridor_terminal_root_losing_candidates: u64,
-    pub leaf_corridor_terminal_root_overrides: u64,
-    pub leaf_corridor_terminal_root_move_changes: u64,
-    pub leaf_corridor_terminal_root_move_confirmations: u64,
-    pub leaf_corridor_proof_candidates_considered: u64,
-    pub leaf_corridor_proof_wins: u64,
-    pub leaf_corridor_proof_losses: u64,
-    pub leaf_corridor_proof_unknown: u64,
-    pub leaf_corridor_proof_deadline_skips: u64,
-    pub leaf_corridor_proof_move_changes: u64,
-    pub leaf_corridor_proof_move_confirmations: u64,
-    pub leaf_corridor_proof_candidate_rank_total: u64,
-    pub leaf_corridor_proof_candidate_rank_max: u64,
-    pub leaf_corridor_proof_candidate_score_gap_total: u64,
-    pub leaf_corridor_proof_candidate_score_gap_max: u64,
-    pub leaf_corridor_proof_win_candidate_rank_total: u64,
-    pub leaf_corridor_proof_win_candidate_rank_max: u64,
+    pub corridor_proof_passes: u64,
+    pub corridor_proof_completed: u64,
+    pub corridor_proof_checks: u64,
+    pub corridor_proof_active: u64,
+    pub corridor_proof_quiet: u64,
+    pub corridor_proof_static_exits: u64,
+    pub corridor_proof_depth_exits: u64,
+    pub corridor_proof_deadline_exits: u64,
+    pub corridor_proof_terminal_exits: u64,
+    pub corridor_proof_terminal_root_candidates: u64,
+    pub corridor_proof_terminal_root_winning_candidates: u64,
+    pub corridor_proof_terminal_root_losing_candidates: u64,
+    pub corridor_proof_terminal_root_overrides: u64,
+    pub corridor_proof_terminal_root_move_changes: u64,
+    pub corridor_proof_terminal_root_move_confirmations: u64,
+    pub corridor_proof_candidates_considered: u64,
+    pub corridor_proof_wins: u64,
+    pub corridor_proof_losses: u64,
+    pub corridor_proof_unknown: u64,
+    pub corridor_proof_deadline_skips: u64,
+    pub corridor_proof_move_changes: u64,
+    pub corridor_proof_move_confirmations: u64,
+    pub corridor_proof_candidate_rank_total: u64,
+    pub corridor_proof_candidate_rank_max: u64,
+    pub corridor_proof_candidate_score_gap_total: u64,
+    pub corridor_proof_candidate_score_gap_max: u64,
+    pub corridor_proof_win_candidate_rank_total: u64,
+    pub corridor_proof_win_candidate_rank_max: u64,
     pub threat_view_shadow_checks: u64,
     pub threat_view_shadow_mismatches: u64,
     pub threat_view_scan_queries: u64,
@@ -685,12 +684,12 @@ impl SearchMetrics {
         self.corridor_max_depth = self.corridor_max_depth.max(depth_reached);
     }
 
-    fn record_leaf_corridor_check(&mut self, active: bool) {
-        self.leaf_corridor_checks += 1;
+    fn record_corridor_proof_check(&mut self, active: bool) {
+        self.corridor_proof_checks += 1;
         if active {
-            self.leaf_corridor_active += 1;
+            self.corridor_proof_active += 1;
         } else {
-            self.leaf_corridor_quiet += 1;
+            self.corridor_proof_quiet += 1;
         }
     }
 
@@ -826,12 +825,12 @@ impl SearchState {
         zobrist: &ZobristTable,
         mode: ThreatViewMode,
         static_eval: StaticEvaluation,
-        leaf_corridor: LeafCorridorConfig,
+        corridor_proof: CorridorProofConfig,
     ) -> Self {
         Self::from_board_with_frontier_features(
             board,
             zobrist,
-            frontier_features_for_search(mode, leaf_corridor),
+            frontier_features_for_search(mode, corridor_proof),
             pattern_frame_for_search(mode, static_eval),
         )
     }
@@ -990,12 +989,12 @@ fn pattern_frame_for_search(mode: ThreatViewMode, static_eval: StaticEvaluation)
 
 fn frontier_features_for_search(
     mode: ThreatViewMode,
-    leaf_corridor: LeafCorridorConfig,
+    corridor_proof: CorridorProofConfig,
 ) -> Option<RollingFrontierFeatures> {
     if !mode.uses_frontier() {
         return None;
     }
-    if !leaf_corridor.enabled {
+    if !corridor_proof.enabled {
         Some(RollingFrontierFeatures::TacticalOnly)
     } else {
         Some(RollingFrontierFeatures::Full)
@@ -2550,8 +2549,6 @@ struct SearchOutcome {
     score: i32,
     best_move: Option<Move>,
     timed_out: bool,
-    corridor_extra_plies: u32,
-    terminal_proof: bool,
 }
 
 impl SearchOutcome {
@@ -2560,18 +2557,6 @@ impl SearchOutcome {
             score,
             best_move,
             timed_out,
-            corridor_extra_plies: 0,
-            terminal_proof: false,
-        }
-    }
-
-    fn terminal(score: i32, best_move: Option<Move>, corridor_extra_plies: u32) -> Self {
-        Self {
-            score,
-            best_move,
-            timed_out: false,
-            corridor_extra_plies,
-            terminal_proof: true,
         }
     }
 }
@@ -2585,7 +2570,7 @@ struct RootCandidateResult {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct LeafCorridorProofCandidate {
+struct CorridorProofCandidate {
     mv: Move,
     rank: usize,
     score_gap: u64,
@@ -2599,13 +2584,13 @@ enum CandidateProofOutcome {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct LeafCorridorCandidateProof {
+struct CorridorProofCandidateResult {
     mv: Move,
     outcome: CandidateProofOutcome,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum LeafCorridorProofDecisionReason {
+enum CorridorProofDecisionReason {
     NoChange,
     ConfirmedWin,
     ChangedToWin,
@@ -2613,16 +2598,16 @@ enum LeafCorridorProofDecisionReason {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct LeafCorridorProofDecision {
+struct CorridorProofDecision {
     best_move: Move,
-    reason: LeafCorridorProofDecisionReason,
+    reason: CorridorProofDecisionReason,
 }
 
-fn select_leaf_corridor_proof_candidates(
+fn select_corridor_proof_candidates(
     root_results: &[RootCandidateResult],
     best_move: Move,
     max_candidates: usize,
-) -> Vec<LeafCorridorProofCandidate> {
+) -> Vec<CorridorProofCandidate> {
     if max_candidates == 0 {
         return Vec::new();
     }
@@ -2638,7 +2623,7 @@ fn select_leaf_corridor_proof_candidates(
         return Vec::new();
     };
 
-    let to_candidate = |rank: usize, result: RootCandidateResult| LeafCorridorProofCandidate {
+    let to_candidate = |rank: usize, result: RootCandidateResult| CorridorProofCandidate {
         mv: result.mv,
         rank,
         score_gap: best_score.saturating_sub(result.score).max(0) as u64,
@@ -2669,17 +2654,17 @@ fn select_leaf_corridor_proof_candidates(
     selected
 }
 
-fn resolve_leaf_corridor_candidate_proofs(
+fn resolve_corridor_proof_candidates(
     normal_best: Move,
-    proofs: &[LeafCorridorCandidateProof],
-) -> LeafCorridorProofDecision {
+    proofs: &[CorridorProofCandidateResult],
+) -> CorridorProofDecision {
     if proofs
         .iter()
         .any(|proof| proof.mv == normal_best && proof.outcome == CandidateProofOutcome::ProvenWin)
     {
-        return LeafCorridorProofDecision {
+        return CorridorProofDecision {
             best_move: normal_best,
-            reason: LeafCorridorProofDecisionReason::ConfirmedWin,
+            reason: CorridorProofDecisionReason::ConfirmedWin,
         };
     }
 
@@ -2687,9 +2672,9 @@ fn resolve_leaf_corridor_candidate_proofs(
         .iter()
         .find(|proof| proof.outcome == CandidateProofOutcome::ProvenWin)
     {
-        return LeafCorridorProofDecision {
+        return CorridorProofDecision {
             best_move: proof.mv,
-            reason: LeafCorridorProofDecisionReason::ChangedToWin,
+            reason: CorridorProofDecisionReason::ChangedToWin,
         };
     }
 
@@ -2700,16 +2685,16 @@ fn resolve_leaf_corridor_candidate_proofs(
         if let Some(proof) = proofs.iter().find(|proof| {
             proof.mv != normal_best && proof.outcome != CandidateProofOutcome::ProvenLoss
         }) {
-            return LeafCorridorProofDecision {
+            return CorridorProofDecision {
                 best_move: proof.mv,
-                reason: LeafCorridorProofDecisionReason::AvoidedLoss,
+                reason: CorridorProofDecisionReason::AvoidedLoss,
             };
         }
     }
 
-    LeafCorridorProofDecision {
+    CorridorProofDecision {
         best_move: normal_best,
-        reason: LeafCorridorProofDecisionReason::NoChange,
+        reason: CorridorProofDecisionReason::NoChange,
     }
 }
 
@@ -2727,301 +2712,46 @@ fn terminal_score_for_winner(winner: Color, color: Color, root_color: Color) -> 
 }
 
 #[allow(clippy::too_many_arguments)]
-fn evaluate_leaf_with_corridor_extension(
-    state: &mut SearchState,
-    color: Color,
-    root_color: Color,
-    leaf_corridor: LeafCorridorConfig,
-    threat_view_mode: ThreatViewMode,
-    static_eval: StaticEvaluation,
-    zobrist: &ZobristTable,
-    metrics: &mut SearchMetrics,
-    deadline: SearchDeadline,
-) -> SearchOutcome {
-    if !leaf_corridor.enabled || leaf_corridor.max_depth == 0 || leaf_corridor.max_reply_width == 0
-    {
-        return SearchOutcome::new(
-            evaluate_leaf_counted(state, color, root_color, static_eval, metrics),
-            None,
-            false,
-        );
-    }
-
-    let attacker = leaf_corridor_attacker(state, color, threat_view_mode, metrics);
-    metrics.record_leaf_corridor_check(attacker.is_some());
-
-    let Some(attacker) = attacker else {
-        return SearchOutcome::new(
-            evaluate_leaf_counted(state, color, root_color, static_eval, metrics),
-            None,
-            false,
-        );
-    };
-
-    let side = CorridorSide::for_player(attacker, root_color);
-    leaf_corridor_search(
-        state,
-        color,
-        root_color,
-        attacker,
-        side,
-        leaf_corridor,
-        0,
-        threat_view_mode,
-        static_eval,
-        zobrist,
-        metrics,
-        deadline,
-    )
-}
-
-fn leaf_corridor_attacker(
-    state: &mut SearchState,
-    color: Color,
-    threat_view_mode: ThreatViewMode,
-    metrics: &mut SearchMetrics,
-) -> Option<Color> {
-    let opponent = color.opponent();
-    if leaf_has_active_corridor_for_attacker(state, opponent, threat_view_mode, metrics) {
-        return Some(opponent);
-    }
-    if leaf_has_active_corridor_for_attacker(state, color, threat_view_mode, metrics) {
-        return Some(color);
-    }
-    None
-}
-
-fn leaf_has_active_corridor_for_attacker(
-    state: &mut SearchState,
-    attacker: Color,
-    threat_view_mode: ThreatViewMode,
-    metrics: &mut SearchMetrics,
-) -> bool {
-    !immediate_winning_moves_for_threat_view_mode(state, attacker, threat_view_mode, metrics)
-        .is_empty()
-        || !narrow_corridor_reply_moves_for_threat_view_mode(
-            state,
-            attacker,
-            threat_view_mode,
-            metrics,
-        )
-        .is_empty()
-}
-
-#[allow(clippy::too_many_arguments)]
-fn leaf_corridor_search(
-    state: &mut SearchState,
-    color: Color,
-    root_color: Color,
-    attacker: Color,
-    side: CorridorSide,
-    leaf_corridor: LeafCorridorConfig,
-    depth_used: usize,
-    threat_view_mode: ThreatViewMode,
-    static_eval: StaticEvaluation,
-    zobrist: &ZobristTable,
-    metrics: &mut SearchMetrics,
-    deadline: SearchDeadline,
-) -> SearchOutcome {
-    metrics.record_corridor_node(depth_used as u32);
-
-    if deadline.expired() {
-        metrics.leaf_corridor_deadline_exits += 1;
-        return SearchOutcome::new(
-            evaluate_leaf_counted(state, color, root_color, static_eval, metrics),
-            None,
-            true,
-        );
-    }
-
-    if state.board().result != GameResult::Ongoing {
-        metrics.corridor_terminal_exits += 1;
-        metrics.leaf_corridor_terminal_exits += 1;
-        return SearchOutcome::terminal(
-            evaluate_leaf_counted(state, color, root_color, static_eval, metrics),
-            None,
-            0,
-        );
-    }
-
-    if depth_used >= leaf_corridor.max_depth {
-        metrics.corridor_depth_exits += 1;
-        metrics.leaf_corridor_depth_exits += 1;
-        return SearchOutcome::new(
-            evaluate_leaf_counted(state, color, root_color, static_eval, metrics),
-            None,
-            false,
-        );
-    }
-
-    let moves = if color == attacker {
-        materialized_attacker_corridor_moves_for_threat_view_mode(
-            state,
-            attacker,
-            threat_view_mode,
-            metrics,
-        )
-    } else {
-        let replies = narrow_corridor_reply_moves_for_threat_view_mode(
-            state,
-            attacker,
-            threat_view_mode,
-            metrics,
-        );
-        if replies.len() > leaf_corridor.max_reply_width {
-            metrics.corridor_width_exits += 1;
-            metrics.leaf_corridor_static_exits += 1;
-            return SearchOutcome::new(
-                evaluate_leaf_counted(state, color, root_color, static_eval, metrics),
-                None,
-                false,
-            );
-        }
-        if replies.is_empty()
-            && !immediate_winning_moves_for_threat_view_mode(
-                state,
-                attacker,
-                threat_view_mode,
-                metrics,
-            )
-            .is_empty()
-        {
-            metrics.corridor_terminal_exits += 1;
-            metrics.leaf_corridor_terminal_exits += 1;
-            return SearchOutcome::terminal(
-                terminal_score_for_winner(attacker, color, root_color),
-                None,
-                1,
-            );
-        }
-        replies
-    };
-
-    if moves.is_empty() {
-        metrics.corridor_neutral_exits += 1;
-        metrics.leaf_corridor_static_exits += 1;
-        return SearchOutcome::new(
-            evaluate_leaf_counted(state, color, root_color, static_eval, metrics),
-            None,
-            false,
-        );
-    }
-
-    metrics.corridor_branch_probes += moves.len() as u64;
-    let mut best_score = i32::MIN + 1;
-    let mut best_move = None;
-    let mut best_extra_plies = 0u32;
-    let mut best_terminal_proof = false;
-    let mut timed_out = false;
-    let mut alpha = i32::MIN + 1;
-    let beta = i32::MAX;
-
-    for mv in moves {
-        if deadline.expired() {
-            timed_out = true;
-            metrics.leaf_corridor_deadline_exits += 1;
-            break;
-        }
-
-        state.apply_trusted_legal_move_counted(mv, zobrist, metrics);
-        metrics.record_corridor_ply(side);
-        let child = leaf_corridor_search(
-            state,
-            color.opponent(),
-            root_color,
-            attacker,
-            side,
-            leaf_corridor,
-            depth_used + 1,
-            threat_view_mode,
-            static_eval,
-            zobrist,
-            metrics,
-            deadline,
-        );
-        state.undo_move_counted(mv, metrics);
-
-        let score = -child.score;
-        if child.timed_out {
-            timed_out = true;
-        }
-        if score > best_score {
-            best_score = score;
-            best_move = Some(mv);
-            best_extra_plies = child.corridor_extra_plies.saturating_add(1);
-            best_terminal_proof = child.terminal_proof;
-        }
-        if score > alpha {
-            alpha = score;
-        }
-        if alpha >= beta {
-            metrics.beta_cutoffs += 1;
-            break;
-        }
-        if timed_out {
-            break;
-        }
-    }
-
-    if best_move.is_none() {
-        metrics.leaf_corridor_static_exits += 1;
-        return SearchOutcome::new(
-            evaluate_leaf_counted(state, color, root_color, static_eval, metrics),
-            None,
-            timed_out,
-        );
-    }
-
-    SearchOutcome {
-        score: best_score,
-        best_move,
-        timed_out,
-        corridor_extra_plies: best_extra_plies,
-        terminal_proof: best_terminal_proof && !timed_out,
-    }
-}
-
-#[allow(clippy::too_many_arguments)]
-fn run_leaf_corridor_candidate_proof_pass(
+fn run_corridor_proof_pass(
     board: &Board,
     root_color: Color,
     normal_best: Move,
     root_results: &[RootCandidateResult],
-    leaf_corridor: LeafCorridorConfig,
+    corridor_proof: CorridorProofConfig,
     threat_view_mode: ThreatViewMode,
     zobrist: &ZobristTable,
     metrics: &mut SearchMetrics,
     deadline: SearchDeadline,
-) -> LeafCorridorProofDecision {
-    let candidates = select_leaf_corridor_proof_candidates(
+) -> CorridorProofDecision {
+    let candidates = select_corridor_proof_candidates(
         root_results,
         normal_best,
-        leaf_corridor.proof_candidate_limit,
+        corridor_proof.proof_candidate_limit,
     );
     let mut proofs = Vec::with_capacity(candidates.len());
 
     for candidate in candidates {
         if deadline.expired() {
-            metrics.leaf_corridor_proof_deadline_skips += 1;
-            metrics.leaf_corridor_deadline_exits += 1;
+            metrics.corridor_proof_deadline_skips += 1;
+            metrics.corridor_proof_deadline_exits += 1;
             break;
         }
 
         let mv = candidate.mv;
-        metrics.leaf_corridor_proof_candidates_considered += 1;
-        metrics.leaf_corridor_proof_candidate_rank_total += candidate.rank as u64;
-        metrics.leaf_corridor_proof_candidate_rank_max = metrics
-            .leaf_corridor_proof_candidate_rank_max
+        metrics.corridor_proof_candidates_considered += 1;
+        metrics.corridor_proof_candidate_rank_total += candidate.rank as u64;
+        metrics.corridor_proof_candidate_rank_max = metrics
+            .corridor_proof_candidate_rank_max
             .max(candidate.rank as u64);
-        metrics.leaf_corridor_proof_candidate_score_gap_total += candidate.score_gap;
-        metrics.leaf_corridor_proof_candidate_score_gap_max = metrics
-            .leaf_corridor_proof_candidate_score_gap_max
+        metrics.corridor_proof_candidate_score_gap_total += candidate.score_gap;
+        metrics.corridor_proof_candidate_score_gap_max = metrics
+            .corridor_proof_candidate_score_gap_max
             .max(candidate.score_gap);
-        let outcome = prove_leaf_corridor_candidate(
+        let outcome = prove_corridor_candidate(
             board,
             root_color,
             mv,
-            leaf_corridor,
+            corridor_proof,
             threat_view_mode,
             zobrist,
             metrics,
@@ -3029,39 +2759,39 @@ fn run_leaf_corridor_candidate_proof_pass(
         );
         match outcome {
             CandidateProofOutcome::ProvenWin => {
-                metrics.leaf_corridor_proof_wins += 1;
-                metrics.leaf_corridor_proof_win_candidate_rank_total += candidate.rank as u64;
-                metrics.leaf_corridor_proof_win_candidate_rank_max = metrics
-                    .leaf_corridor_proof_win_candidate_rank_max
+                metrics.corridor_proof_wins += 1;
+                metrics.corridor_proof_win_candidate_rank_total += candidate.rank as u64;
+                metrics.corridor_proof_win_candidate_rank_max = metrics
+                    .corridor_proof_win_candidate_rank_max
                     .max(candidate.rank as u64);
-                metrics.leaf_corridor_terminal_root_candidates += 1;
-                metrics.leaf_corridor_terminal_root_winning_candidates += 1;
+                metrics.corridor_proof_terminal_root_candidates += 1;
+                metrics.corridor_proof_terminal_root_winning_candidates += 1;
             }
             CandidateProofOutcome::ProvenLoss => {
-                metrics.leaf_corridor_proof_losses += 1;
-                metrics.leaf_corridor_terminal_root_candidates += 1;
-                metrics.leaf_corridor_terminal_root_losing_candidates += 1;
+                metrics.corridor_proof_losses += 1;
+                metrics.corridor_proof_terminal_root_candidates += 1;
+                metrics.corridor_proof_terminal_root_losing_candidates += 1;
             }
             CandidateProofOutcome::Unknown => {
-                metrics.leaf_corridor_proof_unknown += 1;
+                metrics.corridor_proof_unknown += 1;
             }
         }
 
-        proofs.push(LeafCorridorCandidateProof { mv, outcome });
+        proofs.push(CorridorProofCandidateResult { mv, outcome });
         if outcome == CandidateProofOutcome::ProvenWin {
             break;
         }
     }
 
-    resolve_leaf_corridor_candidate_proofs(normal_best, &proofs)
+    resolve_corridor_proof_candidates(normal_best, &proofs)
 }
 
 #[allow(clippy::too_many_arguments)]
-fn prove_leaf_corridor_candidate(
+fn prove_corridor_candidate(
     board: &Board,
     root_color: Color,
     mv: Move,
-    leaf_corridor: LeafCorridorConfig,
+    corridor_proof: CorridorProofConfig,
     threat_view_mode: ThreatViewMode,
     zobrist: &ZobristTable,
     metrics: &mut SearchMetrics,
@@ -3072,7 +2802,7 @@ fn prove_leaf_corridor_candidate(
         zobrist,
         threat_view_mode,
         StaticEvaluation::LineShapeEval,
-        leaf_corridor,
+        corridor_proof,
     );
     let result = state.apply_trusted_legal_move_counted(mv, zobrist, metrics);
     let outcome = match result {
@@ -3082,15 +2812,15 @@ fn prove_leaf_corridor_candidate(
         GameResult::Ongoing => {
             let color = state.board().current_player;
             if let Some(attacker) =
-                leaf_corridor_proof_attacker(&mut state, color, threat_view_mode, metrics)
+                corridor_proof_attacker(&mut state, color, threat_view_mode, metrics)
             {
-                metrics.record_leaf_corridor_check(true);
+                metrics.record_corridor_proof_check(true);
                 let winner = prove_corridor_for_attacker(
                     &mut state,
                     color,
                     attacker,
                     CorridorSide::for_player(attacker, root_color),
-                    leaf_corridor,
+                    corridor_proof,
                     0,
                     threat_view_mode,
                     zobrist,
@@ -3103,7 +2833,7 @@ fn prove_leaf_corridor_candidate(
                     None => CandidateProofOutcome::Unknown,
                 }
             } else {
-                metrics.record_leaf_corridor_check(false);
+                metrics.record_corridor_proof_check(false);
                 CandidateProofOutcome::Unknown
             }
         }
@@ -3112,7 +2842,7 @@ fn prove_leaf_corridor_candidate(
     outcome
 }
 
-fn leaf_corridor_proof_attacker(
+fn corridor_proof_attacker(
     state: &mut SearchState,
     color: Color,
     threat_view_mode: ThreatViewMode,
@@ -3148,7 +2878,7 @@ fn prove_corridor_for_attacker(
     color: Color,
     attacker: Color,
     side: CorridorSide,
-    leaf_corridor: LeafCorridorConfig,
+    corridor_proof: CorridorProofConfig,
     depth_used: usize,
     threat_view_mode: ThreatViewMode,
     zobrist: &ZobristTable,
@@ -3158,24 +2888,24 @@ fn prove_corridor_for_attacker(
     metrics.record_corridor_node(depth_used as u32);
 
     if deadline.expired() {
-        metrics.leaf_corridor_deadline_exits += 1;
+        metrics.corridor_proof_deadline_exits += 1;
         return None;
     }
 
     if let GameResult::Winner(winner) = state.board().result {
         metrics.corridor_terminal_exits += 1;
-        metrics.leaf_corridor_terminal_exits += 1;
+        metrics.corridor_proof_terminal_exits += 1;
         return Some(winner);
     }
     if state.board().result == GameResult::Draw {
         metrics.corridor_neutral_exits += 1;
-        metrics.leaf_corridor_static_exits += 1;
+        metrics.corridor_proof_static_exits += 1;
         return None;
     }
 
-    if depth_used >= leaf_corridor.max_depth {
+    if depth_used >= corridor_proof.max_depth {
         metrics.corridor_depth_exits += 1;
-        metrics.leaf_corridor_depth_exits += 1;
+        metrics.corridor_proof_depth_exits += 1;
         return None;
     }
 
@@ -3193,9 +2923,9 @@ fn prove_corridor_for_attacker(
             threat_view_mode,
             metrics,
         );
-        if replies.len() > leaf_corridor.max_reply_width {
+        if replies.len() > corridor_proof.max_reply_width {
             metrics.corridor_width_exits += 1;
-            metrics.leaf_corridor_static_exits += 1;
+            metrics.corridor_proof_static_exits += 1;
             return None;
         }
         if replies.is_empty()
@@ -3208,7 +2938,7 @@ fn prove_corridor_for_attacker(
             .is_empty()
         {
             metrics.corridor_terminal_exits += 1;
-            metrics.leaf_corridor_terminal_exits += 1;
+            metrics.corridor_proof_terminal_exits += 1;
             return Some(attacker);
         }
         replies
@@ -3216,7 +2946,7 @@ fn prove_corridor_for_attacker(
 
     if moves.is_empty() {
         metrics.corridor_neutral_exits += 1;
-        metrics.leaf_corridor_static_exits += 1;
+        metrics.corridor_proof_static_exits += 1;
         return None;
     }
 
@@ -3224,7 +2954,7 @@ fn prove_corridor_for_attacker(
     if color == attacker {
         for mv in moves {
             if deadline.expired() {
-                metrics.leaf_corridor_deadline_exits += 1;
+                metrics.corridor_proof_deadline_exits += 1;
                 return None;
             }
             state.apply_trusted_legal_move_counted(mv, zobrist, metrics);
@@ -3234,7 +2964,7 @@ fn prove_corridor_for_attacker(
                 color.opponent(),
                 attacker,
                 side,
-                leaf_corridor,
+                corridor_proof,
                 depth_used + 1,
                 threat_view_mode,
                 zobrist,
@@ -3250,7 +2980,7 @@ fn prove_corridor_for_attacker(
     } else {
         for mv in moves {
             if deadline.expired() {
-                metrics.leaf_corridor_deadline_exits += 1;
+                metrics.corridor_proof_deadline_exits += 1;
                 return None;
             }
             state.apply_trusted_legal_move_counted(mv, zobrist, metrics);
@@ -3260,7 +2990,7 @@ fn prove_corridor_for_attacker(
                 color.opponent(),
                 attacker,
                 side,
-                leaf_corridor,
+                corridor_proof,
                 depth_used + 1,
                 threat_view_mode,
                 zobrist,
@@ -3503,7 +3233,6 @@ fn negamax(
     legality_gate: LegalityGate,
     move_ordering: MoveOrdering,
     child_limit: Option<usize>,
-    leaf_corridor: LeafCorridorConfig,
     threat_view_mode: ThreatViewMode,
     static_eval: StaticEvaluation,
     nodes: &mut u64,
@@ -3527,9 +3256,7 @@ fn negamax(
             match entry.flag {
                 TTFlag::Exact => {
                     metrics.tt_cutoffs += 1;
-                    let mut outcome = SearchOutcome::new(entry.score, entry.best_move, false);
-                    outcome.terminal_proof = entry.terminal_proof;
-                    return outcome;
+                    return SearchOutcome::new(entry.score, entry.best_move, false);
                 }
                 TTFlag::LowerBound => {
                     if entry.score >= beta {
@@ -3556,16 +3283,10 @@ fn negamax(
     }
 
     if depth == 0 {
-        return evaluate_leaf_with_corridor_extension(
-            state,
-            color,
-            root_color,
-            leaf_corridor,
-            threat_view_mode,
-            static_eval,
-            zobrist,
-            metrics,
-            deadline,
+        return SearchOutcome::new(
+            evaluate_leaf_counted(state, color, root_color, static_eval, metrics),
+            None,
+            false,
         );
     }
 
@@ -3613,8 +3334,6 @@ fn negamax(
     let orig_alpha = alpha;
     let mut best_score = i32::MIN + 1;
     let mut best_move: Option<Move> = None;
-    let mut best_corridor_extra_plies = 0u32;
-    let mut best_terminal_proof = false;
 
     let tt_move = tt.get(&hash).and_then(|e| e.best_move);
     let ordered = order_search_moves(
@@ -3659,7 +3378,6 @@ fn negamax(
             legality_gate,
             move_ordering,
             child_limit,
-            leaf_corridor,
             threat_view_mode,
             static_eval,
             nodes,
@@ -3675,8 +3393,6 @@ fn negamax(
         if score > best_score {
             best_score = score;
             best_move = Some(mv);
-            best_corridor_extra_plies = child_outcome.corridor_extra_plies;
-            best_terminal_proof = child_outcome.terminal_proof;
         }
         if score > alpha {
             alpha = score;
@@ -3703,8 +3419,6 @@ fn negamax(
             score: best_score,
             best_move,
             timed_out: true,
-            corridor_extra_plies: best_corridor_extra_plies,
-            terminal_proof: false,
         };
     }
 
@@ -3722,7 +3436,6 @@ fn negamax(
             score: best_score,
             flag,
             best_move,
-            terminal_proof: matches!(flag, TTFlag::Exact) && best_terminal_proof,
         },
     );
 
@@ -3730,8 +3443,6 @@ fn negamax(
         score: best_score,
         best_move,
         timed_out: false,
-        corridor_extra_plies: best_corridor_extra_plies,
-        terminal_proof: best_terminal_proof,
     }
 }
 
@@ -3748,7 +3459,6 @@ fn search_root(
     legality_gate: LegalityGate,
     move_ordering: MoveOrdering,
     child_limit: Option<usize>,
-    leaf_corridor: LeafCorridorConfig,
     threat_view_mode: ThreatViewMode,
     static_eval: StaticEvaluation,
     nodes: &mut u64,
@@ -3771,8 +3481,6 @@ fn search_root(
     let orig_alpha = alpha;
     let mut best_score = i32::MIN + 1;
     let mut best_move: Option<Move> = None;
-    let mut best_corridor_extra_plies = 0u32;
-    let mut best_terminal_proof = false;
 
     let tt_move = tt.get(&hash).and_then(|entry| entry.best_move);
     let ordered = order_root_moves(
@@ -3806,7 +3514,6 @@ fn search_root(
             legality_gate,
             move_ordering,
             child_limit,
-            leaf_corridor,
             threat_view_mode,
             static_eval,
             nodes,
@@ -3814,25 +3521,10 @@ fn search_root(
             deadline,
         );
         let score = -child_outcome.score;
-        let terminal_candidate = child_outcome.terminal_proof && score.abs() >= 1_000_000;
         state.undo_move_counted(mv, metrics);
 
         if let Some(results) = root_results.as_deref_mut() {
             results.push(RootCandidateResult { mv, score });
-        }
-
-        if leaf_corridor.enabled && terminal_candidate && !child_outcome.timed_out {
-            metrics.leaf_corridor_terminal_root_candidates += 1;
-            if score > 0 {
-                metrics.leaf_corridor_terminal_root_winning_candidates += 1;
-                return SearchOutcome::terminal(
-                    score,
-                    Some(mv),
-                    child_outcome.corridor_extra_plies,
-                );
-            } else {
-                metrics.leaf_corridor_terminal_root_losing_candidates += 1;
-            }
         }
 
         if child_outcome.timed_out {
@@ -3841,8 +3533,6 @@ fn search_root(
         if score > best_score {
             best_score = score;
             best_move = Some(mv);
-            best_corridor_extra_plies = child_outcome.corridor_extra_plies;
-            best_terminal_proof = terminal_candidate;
         }
         if score > alpha {
             alpha = score;
@@ -3869,8 +3559,6 @@ fn search_root(
             score: best_score,
             best_move,
             timed_out: true,
-            corridor_extra_plies: best_corridor_extra_plies,
-            terminal_proof: false,
         };
     }
 
@@ -3888,7 +3576,6 @@ fn search_root(
             score: best_score,
             flag,
             best_move,
-            terminal_proof: matches!(flag, TTFlag::Exact) && best_terminal_proof,
         },
     );
 
@@ -3896,8 +3583,6 @@ fn search_root(
         score: best_score,
         best_move,
         timed_out: false,
-        corridor_extra_plies: best_corridor_extra_plies,
-        terminal_proof: best_terminal_proof,
     }
 }
 
@@ -4040,14 +3725,14 @@ impl NullCellCulling {
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
-pub struct LeafCorridorConfig {
+pub struct CorridorProofConfig {
     pub enabled: bool,
     pub max_depth: usize,
     pub max_reply_width: usize,
     pub proof_candidate_limit: usize,
 }
 
-impl LeafCorridorConfig {
+impl CorridorProofConfig {
     pub const DEFAULT_PROOF_CANDIDATE_LIMIT: usize = 3;
 
     pub const DISABLED: Self = Self {
@@ -4098,7 +3783,7 @@ pub struct SearchBotConfig {
     pub child_limit: Option<usize>,
     pub search_algorithm: SearchAlgorithm,
     pub static_eval: StaticEvaluation,
-    pub leaf_corridor: LeafCorridorConfig,
+    pub corridor_proof: CorridorProofConfig,
     pub threat_view_mode: ThreatViewMode,
     pub null_cell_culling: NullCellCulling,
 }
@@ -4116,7 +3801,7 @@ impl SearchBotConfig {
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
-            leaf_corridor: LeafCorridorConfig::DISABLED,
+            corridor_proof: CorridorProofConfig::DISABLED,
             threat_view_mode: ThreatViewMode::Rolling,
             null_cell_culling: NullCellCulling::Disabled,
         }
@@ -4134,7 +3819,7 @@ impl SearchBotConfig {
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
-            leaf_corridor: LeafCorridorConfig::DISABLED,
+            corridor_proof: CorridorProofConfig::DISABLED,
             threat_view_mode: ThreatViewMode::Rolling,
             null_cell_culling: NullCellCulling::Disabled,
         }
@@ -4152,7 +3837,7 @@ impl SearchBotConfig {
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
-            leaf_corridor: LeafCorridorConfig::DISABLED,
+            corridor_proof: CorridorProofConfig::DISABLED,
             threat_view_mode: ThreatViewMode::Rolling,
             null_cell_culling: NullCellCulling::Disabled,
         }
@@ -4202,7 +3887,7 @@ impl SearchBotConfig {
             "child_limit": self.child_limit,
             "search_algorithm": self.search_algorithm.name(),
             "static_eval": self.static_eval.name(),
-            "leaf_corridor": self.leaf_corridor.trace(),
+            "corridor_proof": self.corridor_proof.trace(),
             "threat_view_mode": self.threat_view_mode.name(),
             "null_cell_culling": self.null_cell_culling.name(),
         })
@@ -4213,7 +3898,6 @@ impl SearchBotConfig {
 pub struct SearchInfo {
     pub depth_reached: i32,
     pub nodes: u64,
-    pub corridor_extra_plies: u32,
     pub safety_nodes: u64,
     pub metrics: SearchMetrics,
     pub score: i32,
@@ -4271,22 +3955,17 @@ impl Bot for SearchBot {
     fn trace(&self) -> Option<serde_json::Value> {
         self.last_info.as_ref().map(|info| {
             let total_nodes = info.nodes + info.safety_nodes + info.metrics.corridor_nodes;
-            let effective_depth = info
-                .depth_reached
-                .saturating_add(info.corridor_extra_plies as i32);
             serde_json::json!({
                 "config": self.config.trace(),
                 "depth": info.depth_reached,
                 "nominal_depth": self.config.max_depth,
-                "effective_depth": effective_depth,
-                "corridor_extra_plies": info.corridor_extra_plies,
+                "effective_depth": info.depth_reached,
                 "nodes": info.nodes,
                 "safety_nodes": info.safety_nodes,
                 "corridor": {
                     "search_nodes": info.metrics.corridor_nodes,
                     "branch_probes": info.metrics.corridor_branch_probes,
                     "max_depth_reached": info.metrics.corridor_max_depth,
-                    "extra_plies": info.corridor_extra_plies,
                     "width_exits": info.metrics.corridor_width_exits,
                     "depth_exits": info.metrics.corridor_depth_exits,
                     "neutral_exits": info.metrics.corridor_neutral_exits,
@@ -4354,14 +4033,13 @@ impl Bot for SearchBot {
         let mut best_score = i32::MIN + 1;
         let mut depth_reached = 0;
         let mut total_nodes = 0u64;
-        let mut best_corridor_extra_plies = 0u32;
         let mut completed_root_results = Vec::new();
         let mut state = SearchState::from_board_for_config(
             board.clone(),
             &self.zobrist,
             self.config.threat_view_mode,
             self.config.static_eval,
-            LeafCorridorConfig::DISABLED,
+            CorridorProofConfig::DISABLED,
         );
 
         for depth in 1..=self.config.max_depth {
@@ -4383,7 +4061,6 @@ impl Bot for SearchBot {
                 legality_gate,
                 move_ordering,
                 self.config.child_limit,
-                LeafCorridorConfig::DISABLED,
                 self.config.threat_view_mode,
                 self.config.static_eval,
                 &mut nodes,
@@ -4402,7 +4079,6 @@ impl Bot for SearchBot {
                 if let Some(m) = outcome.best_move {
                     best_move = m;
                     best_score = outcome.score;
-                    best_corridor_extra_plies = outcome.corridor_extra_plies;
                 }
                 depth_reached = depth;
                 completed_root_results = iteration_root_results;
@@ -4410,7 +4086,6 @@ impl Bot for SearchBot {
                 if let Some(m) = outcome.best_move {
                     best_move = m;
                     best_score = outcome.score;
-                    best_corridor_extra_plies = outcome.corridor_extra_plies;
                 }
             }
 
@@ -4424,20 +4099,20 @@ impl Bot for SearchBot {
             }
         }
 
-        if self.config.leaf_corridor.enabled
+        if self.config.corridor_proof.enabled
             && depth_reached == self.config.max_depth
             && !deadline.expired()
             && board.result == GameResult::Ongoing
         {
-            metrics.leaf_corridor_passes += 1;
+            metrics.corridor_proof_passes += 1;
             let stage_before = metrics.stage_snapshot();
             let proof_start = Instant::now();
-            let decision = run_leaf_corridor_candidate_proof_pass(
+            let decision = run_corridor_proof_pass(
                 board,
                 color,
                 best_move,
                 &completed_root_results,
-                self.config.leaf_corridor,
+                self.config.corridor_proof,
                 self.config.threat_view_mode,
                 &self.zobrist,
                 &mut metrics,
@@ -4446,25 +4121,25 @@ impl Bot for SearchBot {
             metrics.record_proof_scope(proof_start.elapsed(), stage_before);
 
             match decision.reason {
-                LeafCorridorProofDecisionReason::NoChange => {}
-                LeafCorridorProofDecisionReason::ConfirmedWin => {
-                    metrics.leaf_corridor_completed += 1;
-                    metrics.leaf_corridor_proof_move_confirmations += 1;
-                    metrics.leaf_corridor_terminal_root_overrides += 1;
-                    metrics.leaf_corridor_terminal_root_move_confirmations += 1;
+                CorridorProofDecisionReason::NoChange => {}
+                CorridorProofDecisionReason::ConfirmedWin => {
+                    metrics.corridor_proof_completed += 1;
+                    metrics.corridor_proof_move_confirmations += 1;
+                    metrics.corridor_proof_terminal_root_overrides += 1;
+                    metrics.corridor_proof_terminal_root_move_confirmations += 1;
                     best_score = terminal_score_for_winner(color, color, color);
                 }
-                LeafCorridorProofDecisionReason::ChangedToWin => {
-                    metrics.leaf_corridor_completed += 1;
-                    metrics.leaf_corridor_proof_move_changes += 1;
-                    metrics.leaf_corridor_terminal_root_overrides += 1;
-                    metrics.leaf_corridor_terminal_root_move_changes += 1;
+                CorridorProofDecisionReason::ChangedToWin => {
+                    metrics.corridor_proof_completed += 1;
+                    metrics.corridor_proof_move_changes += 1;
+                    metrics.corridor_proof_terminal_root_overrides += 1;
+                    metrics.corridor_proof_terminal_root_move_changes += 1;
                     best_move = decision.best_move;
                     best_score = terminal_score_for_winner(color, color, color);
                 }
-                LeafCorridorProofDecisionReason::AvoidedLoss => {
-                    metrics.leaf_corridor_completed += 1;
-                    metrics.leaf_corridor_proof_move_changes += 1;
+                CorridorProofDecisionReason::AvoidedLoss => {
+                    metrics.corridor_proof_completed += 1;
+                    metrics.corridor_proof_move_changes += 1;
                     best_move = decision.best_move;
                     if let Some(result) = completed_root_results
                         .iter()
@@ -4477,15 +4152,14 @@ impl Bot for SearchBot {
 
             if deadline.expired() {
                 budget_exhausted = true;
-            } else if decision.reason == LeafCorridorProofDecisionReason::NoChange {
-                metrics.leaf_corridor_completed += 1;
+            } else if decision.reason == CorridorProofDecisionReason::NoChange {
+                metrics.corridor_proof_completed += 1;
             }
         }
 
         self.last_info = Some(SearchInfo {
             depth_reached,
             nodes: total_nodes,
-            corridor_extra_plies: best_corridor_extra_plies,
             safety_nodes,
             metrics,
             score: best_score,
@@ -5469,7 +5143,6 @@ mod tests {
             LegalityGate::ExactRules,
             MoveOrdering::TranspositionFirstBoardOrder,
             Some(1),
-            LeafCorridorConfig::DISABLED,
             ThreatViewMode::Scan,
             StaticEvaluation::LineShapeEval,
             &mut nodes,
@@ -5522,7 +5195,7 @@ mod tests {
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
-            leaf_corridor: LeafCorridorConfig::DISABLED,
+            corridor_proof: CorridorProofConfig::DISABLED,
             threat_view_mode: ThreatViewMode::Scan,
             null_cell_culling: NullCellCulling::Enabled,
         };
@@ -5630,86 +5303,86 @@ mod tests {
     }
 
     #[test]
-    fn trace_records_leaf_corridor_config_and_metrics() {
+    fn trace_records_corridor_proof_config_and_metrics() {
         let mut board = Board::new(RuleConfig::default());
         apply_moves(&mut board, &["H8", "A1", "I8", "A2", "J8"]);
         assert_eq!(board.current_player, Color::White);
 
         let mut config = SearchBotConfig::custom_depth(1);
         config.safety_gate = SafetyGate::None;
-        config.leaf_corridor = LeafCorridorConfig {
+        config.corridor_proof = CorridorProofConfig {
             enabled: true,
             max_depth: 4,
             max_reply_width: 3,
-            proof_candidate_limit: LeafCorridorConfig::DEFAULT_PROOF_CANDIDATE_LIMIT,
+            proof_candidate_limit: CorridorProofConfig::DEFAULT_PROOF_CANDIDATE_LIMIT,
         };
         let mut bot = SearchBot::with_config(config);
 
         let _ = bot.choose_move(&board);
         let trace = bot.trace().expect("expected search trace");
 
-        assert_eq!(trace["config"]["leaf_corridor"]["enabled"], true);
-        assert_eq!(trace["config"]["leaf_corridor"]["max_depth"], 4);
-        assert_eq!(trace["config"]["leaf_corridor"]["max_reply_width"], 3);
-        assert_eq!(trace["metrics"]["leaf_corridor_passes"], 1);
-        assert!(trace["metrics"]["leaf_corridor_checks"].as_u64().unwrap() > 0);
-        assert!(trace["metrics"]["leaf_corridor_active"].as_u64().unwrap() > 0);
+        assert_eq!(trace["config"]["corridor_proof"]["enabled"], true);
+        assert_eq!(trace["config"]["corridor_proof"]["max_depth"], 4);
+        assert_eq!(trace["config"]["corridor_proof"]["max_reply_width"], 3);
+        assert_eq!(trace["metrics"]["corridor_proof_passes"], 1);
+        assert!(trace["metrics"]["corridor_proof_checks"].as_u64().unwrap() > 0);
+        assert!(trace["metrics"]["corridor_proof_active"].as_u64().unwrap() > 0);
         assert!(
-            trace["metrics"]["leaf_corridor_terminal_exits"]
+            trace["metrics"]["corridor_proof_terminal_exits"]
                 .as_u64()
                 .unwrap()
                 > 0
         );
-        assert!(trace["metrics"]["leaf_corridor_terminal_root_candidates"]
+        assert!(trace["metrics"]["corridor_proof_terminal_root_candidates"]
             .as_u64()
             .is_some());
         assert!(
-            trace["metrics"]["leaf_corridor_terminal_root_winning_candidates"]
+            trace["metrics"]["corridor_proof_terminal_root_winning_candidates"]
                 .as_u64()
                 .is_some()
         );
         assert!(
-            trace["metrics"]["leaf_corridor_terminal_root_losing_candidates"]
+            trace["metrics"]["corridor_proof_terminal_root_losing_candidates"]
                 .as_u64()
                 .is_some()
         );
-        assert!(trace["metrics"]["leaf_corridor_terminal_root_overrides"]
+        assert!(trace["metrics"]["corridor_proof_terminal_root_overrides"]
             .as_u64()
             .is_some());
-        assert!(trace["metrics"]["leaf_corridor_terminal_root_move_changes"]
+        assert!(trace["metrics"]["corridor_proof_terminal_root_move_changes"]
             .as_u64()
             .is_some());
         assert!(
-            trace["metrics"]["leaf_corridor_terminal_root_move_confirmations"]
+            trace["metrics"]["corridor_proof_terminal_root_move_confirmations"]
                 .as_u64()
                 .is_some()
         );
         assert!(
-            trace["metrics"]["leaf_corridor_proof_candidates_considered"]
+            trace["metrics"]["corridor_proof_candidates_considered"]
                 .as_u64()
                 .unwrap()
                 > 0
         );
-        assert!(trace["metrics"]["leaf_corridor_proof_wins"]
+        assert!(trace["metrics"]["corridor_proof_wins"]
             .as_u64()
             .is_some());
-        assert!(trace["metrics"]["leaf_corridor_proof_losses"]
+        assert!(trace["metrics"]["corridor_proof_losses"]
             .as_u64()
             .is_some());
-        assert!(trace["metrics"]["leaf_corridor_proof_unknown"]
+        assert!(trace["metrics"]["corridor_proof_unknown"]
             .as_u64()
             .is_some());
-        assert!(trace["metrics"]["leaf_corridor_proof_move_changes"]
+        assert!(trace["metrics"]["corridor_proof_move_changes"]
             .as_u64()
             .is_some());
-        assert!(trace["metrics"]["leaf_corridor_proof_move_confirmations"]
+        assert!(trace["metrics"]["corridor_proof_move_confirmations"]
             .as_u64()
             .is_some());
         assert!(trace["corridor"]["search_nodes"].as_u64().unwrap() > 0);
     }
 
     #[test]
-    fn leaf_corridor_non_terminal_work_keeps_normal_search_move() {
+    fn corridor_proof_non_terminal_work_keeps_normal_search_move() {
         let recorded_leaf_loss = [
             112, 111, 127, 126, 97, 142, 113, 141, 82, 67, 96, 110, 94, 156, 171, 95, 128, 80, 65,
             140, 125, 139, 143, 138,
@@ -5722,41 +5395,41 @@ mod tests {
         let normal_move = normal_bot.choose_move(&board);
 
         let mut config = SearchBotConfig::custom_depth(3);
-        config.leaf_corridor = LeafCorridorConfig {
+        config.corridor_proof = CorridorProofConfig {
             enabled: true,
             max_depth: 1,
             max_reply_width: 3,
-            proof_candidate_limit: LeafCorridorConfig::DEFAULT_PROOF_CANDIDATE_LIMIT,
+            proof_candidate_limit: CorridorProofConfig::DEFAULT_PROOF_CANDIDATE_LIMIT,
         };
         let mut leaf_bot = SearchBot::with_config(config);
         let leaf_move = leaf_bot.choose_move(&board);
         let trace = leaf_bot.trace().expect("expected search trace");
         let metrics = &trace["metrics"];
 
-        assert!(metrics["leaf_corridor_active"].as_u64().unwrap() > 0);
+        assert!(metrics["corridor_proof_active"].as_u64().unwrap() > 0);
         assert_eq!(
-            metrics["leaf_corridor_terminal_root_overrides"]
+            metrics["corridor_proof_terminal_root_overrides"]
                 .as_u64()
                 .unwrap(),
             0
         );
         assert_eq!(
             leaf_move, normal_move,
-            "non-terminal leaf corridor work should not override normal move"
+            "non-terminal corridor proof work should not override normal move"
         );
     }
 
     #[test]
-    fn leaf_corridor_proof_does_not_run_without_completed_normal_depth() {
+    fn corridor_proof_does_not_run_without_completed_normal_depth() {
         let mut board = Board::new(RuleConfig::default());
         apply_moves(&mut board, &["H8", "A1", "I8", "A2"]);
 
         let mut config = SearchBotConfig::custom_time_budget(0);
-        config.leaf_corridor = LeafCorridorConfig {
+        config.corridor_proof = CorridorProofConfig {
             enabled: true,
             max_depth: 4,
             max_reply_width: 3,
-            proof_candidate_limit: LeafCorridorConfig::DEFAULT_PROOF_CANDIDATE_LIMIT,
+            proof_candidate_limit: CorridorProofConfig::DEFAULT_PROOF_CANDIDATE_LIMIT,
         };
         let mut bot = SearchBot::with_config(config);
 
@@ -5764,15 +5437,15 @@ mod tests {
         let trace = bot.trace().expect("expected search trace");
 
         assert_eq!(trace["depth"], 0);
-        assert_eq!(trace["metrics"]["leaf_corridor_passes"], 0);
+        assert_eq!(trace["metrics"]["corridor_proof_passes"], 0);
         assert_eq!(
-            trace["metrics"]["leaf_corridor_proof_candidates_considered"],
+            trace["metrics"]["corridor_proof_candidates_considered"],
             0
         );
     }
 
     #[test]
-    fn leaf_corridor_selects_normal_best_then_ranked_candidates() {
+    fn corridor_proof_selects_normal_best_then_ranked_candidates() {
         let best = mv("H8");
         let close = mv("H9");
         let also_close = mv("H10");
@@ -5796,7 +5469,7 @@ mod tests {
             },
         ];
 
-        let selected = select_leaf_corridor_proof_candidates(&results, best, 4)
+        let selected = select_corridor_proof_candidates(&results, best, 4)
             .into_iter()
             .map(|candidate| candidate.mv)
             .collect::<Vec<_>>();
@@ -5805,7 +5478,7 @@ mod tests {
     }
 
     #[test]
-    fn leaf_corridor_selects_top_candidates_without_score_margin() {
+    fn corridor_proof_selects_top_candidates_without_score_margin() {
         let best = mv("H8");
         let second = mv("H9");
         let third = mv("H10");
@@ -5829,7 +5502,7 @@ mod tests {
             },
         ];
 
-        let selected = select_leaf_corridor_proof_candidates(&results, best, 4);
+        let selected = select_corridor_proof_candidates(&results, best, 4);
 
         assert_eq!(
             selected
@@ -5855,67 +5528,67 @@ mod tests {
     }
 
     #[test]
-    fn leaf_corridor_proof_resolution_confirms_normal_best_win() {
+    fn corridor_proof_resolution_confirms_normal_best_win() {
         let best = mv("H8");
-        let proof = LeafCorridorCandidateProof {
+        let proof = CorridorProofCandidateResult {
             mv: best,
             outcome: CandidateProofOutcome::ProvenWin,
         };
 
-        let decision = resolve_leaf_corridor_candidate_proofs(best, &[proof]);
+        let decision = resolve_corridor_proof_candidates(best, &[proof]);
 
         assert_eq!(decision.best_move, best);
         assert_eq!(
             decision.reason,
-            LeafCorridorProofDecisionReason::ConfirmedWin
+            CorridorProofDecisionReason::ConfirmedWin
         );
     }
 
     #[test]
-    fn leaf_corridor_proof_resolution_switches_to_proven_win() {
+    fn corridor_proof_resolution_switches_to_proven_win() {
         let best = mv("H8");
         let proven = mv("J8");
         let proofs = vec![
-            LeafCorridorCandidateProof {
+            CorridorProofCandidateResult {
                 mv: best,
                 outcome: CandidateProofOutcome::Unknown,
             },
-            LeafCorridorCandidateProof {
+            CorridorProofCandidateResult {
                 mv: proven,
                 outcome: CandidateProofOutcome::ProvenWin,
             },
         ];
 
-        let decision = resolve_leaf_corridor_candidate_proofs(best, &proofs);
+        let decision = resolve_corridor_proof_candidates(best, &proofs);
 
         assert_eq!(decision.best_move, proven);
         assert_eq!(
             decision.reason,
-            LeafCorridorProofDecisionReason::ChangedToWin
+            CorridorProofDecisionReason::ChangedToWin
         );
     }
 
     #[test]
-    fn leaf_corridor_proof_resolution_escapes_proven_loss_to_unknown() {
+    fn corridor_proof_resolution_escapes_proven_loss_to_unknown() {
         let best = mv("H8");
         let fallback = mv("J8");
         let proofs = vec![
-            LeafCorridorCandidateProof {
+            CorridorProofCandidateResult {
                 mv: best,
                 outcome: CandidateProofOutcome::ProvenLoss,
             },
-            LeafCorridorCandidateProof {
+            CorridorProofCandidateResult {
                 mv: fallback,
                 outcome: CandidateProofOutcome::Unknown,
             },
         ];
 
-        let decision = resolve_leaf_corridor_candidate_proofs(best, &proofs);
+        let decision = resolve_corridor_proof_candidates(best, &proofs);
 
         assert_eq!(decision.best_move, fallback);
         assert_eq!(
             decision.reason,
-            LeafCorridorProofDecisionReason::AvoidedLoss
+            CorridorProofDecisionReason::AvoidedLoss
         );
     }
 
@@ -6088,7 +5761,7 @@ mod tests {
             &zobrist,
             ThreatViewMode::Rolling,
             StaticEvaluation::LineShapeEval,
-            LeafCorridorConfig::DISABLED,
+            CorridorProofConfig::DISABLED,
         );
 
         state.apply_trusted_legal_move(mv("E8"), &zobrist);
@@ -6128,7 +5801,7 @@ mod tests {
             &zobrist,
             ThreatViewMode::Rolling,
             StaticEvaluation::LineShapeEval,
-            LeafCorridorConfig::DISABLED,
+            CorridorProofConfig::DISABLED,
         );
         let mut metrics = SearchMetrics::default();
 
@@ -6163,11 +5836,11 @@ mod tests {
             &zobrist,
             ThreatViewMode::Rolling,
             StaticEvaluation::LineShapeEval,
-            LeafCorridorConfig {
+            CorridorProofConfig {
                 enabled: true,
                 max_depth: 2,
                 max_reply_width: 3,
-                proof_candidate_limit: LeafCorridorConfig::DEFAULT_PROOF_CANDIDATE_LIMIT,
+                proof_candidate_limit: CorridorProofConfig::DEFAULT_PROOF_CANDIDATE_LIMIT,
             },
         );
         let mut metrics = SearchMetrics::default();
@@ -6198,11 +5871,11 @@ mod tests {
                 &zobrist,
                 ThreatViewMode::Rolling,
                 StaticEvaluation::LineShapeEval,
-                LeafCorridorConfig {
+                CorridorProofConfig {
                     enabled: true,
                     max_depth: 2,
                     max_reply_width: 3,
-                    proof_candidate_limit: LeafCorridorConfig::DEFAULT_PROOF_CANDIDATE_LIMIT,
+                    proof_candidate_limit: CorridorProofConfig::DEFAULT_PROOF_CANDIDATE_LIMIT,
                 },
             );
             let mut metrics = SearchMetrics::default();
@@ -6415,7 +6088,7 @@ mod tests {
             &zobrist,
             ThreatViewMode::Rolling,
             StaticEvaluation::LineShapeEval,
-            LeafCorridorConfig::DISABLED,
+            CorridorProofConfig::DISABLED,
         );
         let mut tt = HashMap::new();
         let mut nodes = 0;
@@ -6434,7 +6107,6 @@ mod tests {
             LegalityGate::ExactRules,
             MoveOrdering::TranspositionFirstBoardOrder,
             None,
-            LeafCorridorConfig::DISABLED,
             ThreatViewMode::Rolling,
             StaticEvaluation::LineShapeEval,
             &mut nodes,
@@ -6514,7 +6186,7 @@ mod tests {
             child_limit: None,
             search_algorithm: SearchAlgorithm::AlphaBetaIterativeDeepening,
             static_eval: StaticEvaluation::LineShapeEval,
-            leaf_corridor: LeafCorridorConfig::DISABLED,
+            corridor_proof: CorridorProofConfig::DISABLED,
             threat_view_mode: ThreatViewMode::Scan,
             null_cell_culling: NullCellCulling::Disabled,
         };
