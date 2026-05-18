@@ -27,7 +27,7 @@ The replay surface should produce concrete, bounded explanations:
 
 - "Move 43: point of no return."
 - "White's last chance was move 42."
-- "Black had a forced corridor from here."
+- "Black had a setup corridor from here."
 - "This looks like a missed defense, not a strategically lost position."
 
 Do not overclaim. If the bounded analyzer cannot prove the position, it should
@@ -55,10 +55,10 @@ The ideal-game layer asks two related, bounded questions:
   exits that detected corridor?
 
 For replay analysis, "force" is intentionally model-bounded. The first product
-goal is to explain the detected forced corridor near the end of the actual game,
-not to prove that every alternate state is a game-theoretic loss under perfect
-play. An escape reply can leave the detected corridor even if the defender might
-still lose later.
+goal is to explain the setup corridor near the end of the actual game, not to
+prove that every alternate state is a game-theoretic loss under perfect play. An
+escape reply can leave the detected corridor even if the defender might still
+lose later.
 
 This is proof-oriented analysis, not generic best-move analysis or full solver
 analysis.
@@ -75,7 +75,7 @@ For a move list `m1..mn`:
 - `forced_win`: the analyzer proved that the detected corridor reaches a win
   under the stated model and limits.
 - `escape_found`: the defender has at least one model-valid move that exits the
-  detected forced corridor, or the corridor reaches a neutral state with no
+  detected setup corridor, or the corridor reaches a neutral state with no
   active immediate/imminent threat and no forcing continuation.
 - `unknown`: the analyzer hit a model or replay guard before it could enumerate
   a concrete legal defender alternative.
@@ -109,7 +109,7 @@ defender replies; the replay analyzer adds replay context, backward traceback,
 root-cause labels, and report rendering.
 
 This document only adds the replay-specific contract: start from a finished
-game, walk the actual ending backward, and explain the final detected corridor
+game, walk the actual ending backward, and explain the setup corridor
 without claiming to solve every alternate future.
 
 ## Corridor-Only Replay Flow
@@ -119,25 +119,34 @@ corridor. The final winning move provides the terminal endpoint, but the
 interesting explanation should usually stop earlier: at the point where the
 loser first faced a lethal threat and the rest of the game became conversion.
 The goal is not to solve the whole game; it is to walk backward and find the
-latest losing-side decision that could have escaped the final detected corridor
-before that lethal onset.
+latest losing-side decision that could have escaped the setup corridor before
+lethal onset.
 
-That gives the analysis three useful boundaries:
+That gives the analysis useful boundaries and spans:
 
 - Terminal move: the actual five was played.
 - Lethal onset: the earlier frame where the loser no longer had a legal reply
   that avoids the attacker's terminal or known-lethal continuation.
 - Cause boundary: the earlier frame where the loser still had an escape, or
-  where the forced corridor began.
+  where the setup corridor began.
+- Setup corridor: the cause boundary through lethal onset. This is the
+  player-facing corridor: how the loser was forced into the already-lost state.
+- Lethal tail: lethal onset through terminal move. This proves conversion, but
+  is usually less explanatory than the setup corridor.
 
-The terminal-to-lethal segment is often obvious. The lethal-to-cause segment is
-where the analyzer should spend explanation effort: did the loser get locked
-into the lethal state by a forced corridor, or did they simply miss an earlier
-reply?
+The lethal tail is often obvious. The setup corridor is where the analyzer
+should spend explanation effort: did the loser get locked into the lethal state
+by forcing replies, or did they simply miss an earlier reply?
+
+Implementation note: `final_forced_interval` remains the full proof suffix from
+forced start through terminal because the recursive proof model needs that
+complete evidence. Reports and replay UI derive `setup_corridor` as
+`final_forced_interval.start_ply..lethal_onset.prefix_ply` when lethal onset is
+known.
 
 The core loop is:
 
-1. Start at the final winning move and identify the final threat corridor.
+1. Start at the final winning move and identify the full final forced interval.
 2. Walk backward along the actual replay through losing-side decision points.
 3. At each losing-side turn, enumerate named corridor replies: direct defenses,
    immediate wins, and valid counter-threats.
@@ -207,10 +216,10 @@ The active replay analyzer exposes one corridor model:
 - scan budget: `--max-scan-plies`, interpreted as how far backward through the
   finished replay the analyzer may look for the final corridor boundary
 
-The report must keep those model settings visible. Product copy such as "forced
-corridor" is acceptable only when paired with the model and limits. "Detected
-forced corridor" or "last known escape" is safer when summarizing unresolved
-branches.
+The report must keep those model settings visible. Product copy should prefer
+"setup corridor" for the player-facing cause span and reserve "full forced
+interval" for implementation/proof evidence. "Detected setup corridor" or "last
+known escape" is safer when summarizing unresolved branches.
 
 Implementation-specific replay semantics:
 
@@ -263,16 +272,18 @@ focused stone and the current side's next actual move as the hover target; loser
 side analysis overlays then add alternate replies and `L` / `E` outcomes.
 
 The replay timeline is an analysis surface, not a normal media progress bar.
-The base track stays neutral, the searched forced corridor fills backward in
-red from the ending, and the latest escape is shown as a green point marker.
-The deck should label this area as `Status`, using the analyzer's progressive
-state and counters rather than repeating the final match result.
+The base track stays neutral, the setup corridor fills in red from the latest
+escape/cause boundary through lethal onset, and the latest escape is shown as a
+green point marker. The deck should label this area as `Status`, using the
+analyzer's progressive state and counters rather than repeating the final match
+result.
 
 Once analysis resolves, the status should describe the current frame rather than
 only the whole replay. The terminal frame can show `Black won` or `White won`
-with corridor length when known. Winner-side frames inside the corridor can read
-`Black can force a win`; loser-side frames can read `White is locked in`; the
-latest escape frame can read `White's last escape`. Frames outside the analyzed
+with setup-corridor length when known. Winner-side frames inside the setup
+corridor can read `Black can force a win`; loser-side frames can read `White is
+locked in`; the latest escape frame can read `White's last escape`. Frames after
+lethal onset should read as guaranteed conversion, while frames before the setup
 corridor should fall back to normal turn language such as `Black to move`.
 
 ## Backward Walk
@@ -303,8 +314,11 @@ The analyzer should therefore record proof intervals rather than only one point:
 Important labels:
 
 - Final win: the actual ending move and winning line.
-- Forced interval: a contiguous range of prefixes where the winner has a proof.
-- Point of no return: the start of the final unreleased forced interval.
+- Full forced interval: a contiguous range of prefixes where the winner has a
+  proof through terminal.
+- Setup corridor: the replay-facing subset from forced start through lethal
+  onset.
+- Point of no return: the start of the setup corridor.
 - Last chance: the final escape opportunity before that interval.
 - Decisive attack: the winner's forcing move.
 - Critical mistake: the losing move that made the attack possible or failed to
@@ -321,19 +335,19 @@ classify the actual line separately from the ideal proof.
 
 Use a three-part classification:
 
-- Loss category: player-facing severity based on proven forced-corridor length.
+- Loss category: player-facing severity based on proven setup-corridor length.
 - Root detail: analyzer-facing reason the final forced interval exists.
 - Tactical notes: local misses or conversion issues that happened along the
   actual line.
 
 Loss categories:
 
-- `mistake`: the proven forced-corridor span is shorter than `5` plies. This
+- `mistake`: the proven setup-corridor span is shorter than `5` plies. This
   is a near-term miss such as failing to answer a four or a short three-threat
   conversion.
-- `tactical_error`: the proven forced-corridor span is `5` to `8` plies. The
+- `tactical_error`: the proven setup-corridor span is `5` to `8` plies. The
   loss was tactical, but it required seeing several forcing replies ahead.
-- `strategic_loss`: the proven forced-corridor span is `9` plies or longer.
+- `strategic_loss`: the proven setup-corridor span is `9` plies or longer.
   The losing side's last viable escape was far enough back that the report
   should frame it as a deeper strategic miss.
 - `unclear`: the bounded analyzer cannot prove enough to assign a severity.
@@ -342,7 +356,7 @@ Root-detail categories:
 
 - `strategic_loss`: a move changes the position from `escape_found` to
   `forced_win` under the same model and limits. This means the move entered the
-  detected forced corridor; it does not claim the previous position was a
+  detected setup corridor; it does not claim the previous position was a
   game-theoretic draw or win for the loser.
 - `missed_defense`: the losing side had at least one escape move, but the
   actual move did not play one.
@@ -429,7 +443,7 @@ ThreatSequenceEvidence
 Current `reply_classification` values:
 
 - `blocked_but_forced`: the reply answered the current threat but all modeled
-  continuations stay inside the detected forced corridor.
+  continuations stay inside the detected setup corridor or lethal tail.
 - `confirmed_escape`: the reply wins immediately, breaks the threat, or avoids
   the next forced continuation.
 - `no_legal_block`: the only apparent cost squares are illegal for the defender
@@ -449,7 +463,7 @@ Proof result statuses:
 
 - `forced_win`: detected corridor proven within the model and limits.
 - `escape_found`: defender has at least one model-valid move that exits the
-  detected forced corridor. This includes `possible_escape` branches, which are
+  detected setup corridor. This includes `possible_escape` branches, which are
   escapes for root classification but carry limit causes.
 - `unknown`: the position exceeded analyzer scope before a concrete legal
   defender reply could be evaluated.
@@ -487,7 +501,7 @@ Replay analysis has two scan modes:
   is reserved for curated fixtures and one-off diagnostics that want older notes
   such as conversion errors.
 - With `max_scan_plies=N`, it walks backward from the final board at most `N`
-  plies and stops early once the final forced corridor has a collected
+  plies and stops early once the full final forced interval has a collected
   non-forced prefix.
 
 The backward walk is a replay-analysis wrapper only. Each prefix proof still
@@ -507,8 +521,8 @@ Fixtures should cover more than happy-path wins:
   counter-threat escape
 - replay imperfections: missed defense, missed win, conversion error, unknown
   gap, ongoing/draw
-- corridor mechanics: short forced corridor, forced reply, forbidden Black defense,
-  and model-limit cutoffs
+- corridor mechanics: short setup corridor, forced reply, forbidden Black
+  defense, and model-limit cutoffs
 
 Fixtures should print exact boards, expected labels, proof model, and limits.
 They must fail if an implementation silently upgrades `unknown` into a forced

@@ -101,7 +101,7 @@ describe("mergeReplayAnalysisAnnotations", () => {
 });
 
 describe("replayTimelineAnalysis", () => {
-  it("marks the searched corridor range and escape point", () => {
+  it("marks the setup corridor range and escape point", () => {
     const escapeFrame = annotation(4, "White");
     escapeFrame.markers = [{ ...escapeFrame.markers[0], role: "possible_escape" }];
     const annotations = mergeReplayAnalysisAnnotations(
@@ -110,21 +110,39 @@ describe("replayTimelineAnalysis", () => {
     );
 
     expect(replayTimelineAnalysis(annotations, 10)).toEqual({
-      corridorEndPercent: "100%",
-      corridorEndPly: 10,
-      corridorStartPercent: "40%",
-      corridorStartPly: 4,
+      setupEndPercent: "100%",
+      setupEndPly: 10,
+      setupStartPercent: "40%",
+      setupStartPly: 4,
       escapePercent: "40%",
       escapePly: 4,
     });
   });
 
+  it("uses the analyzer setup corridor when resolved analysis is available", () => {
+    const annotations = mergeReplayAnalysisAnnotations(
+      {},
+      step(annotation(8, "White"), annotation(10, "White")),
+    );
+
+    expect(replayTimelineAnalysis(annotations, 10, {
+      setup_corridor: { start_ply: 4, end_ply: 7 },
+    })).toEqual({
+      setupEndPercent: "70%",
+      setupEndPly: 7,
+      setupStartPercent: "40%",
+      setupStartPly: 4,
+      escapePercent: null,
+      escapePly: null,
+    });
+  });
+
   it("omits timeline analysis when no frame annotations are available", () => {
     expect(replayTimelineAnalysis({}, 10)).toEqual({
-      corridorEndPercent: null,
-      corridorEndPly: null,
-      corridorStartPercent: null,
-      corridorStartPly: null,
+      setupEndPercent: null,
+      setupEndPly: null,
+      setupStartPercent: null,
+      setupStartPly: null,
       escapePercent: null,
       escapePly: null,
     });
@@ -150,12 +168,13 @@ describe("replayAnalysisStatusSummary", () => {
     });
   });
 
-  it("summarizes the terminal frame with the winner and corridor length", () => {
+  it("summarizes the terminal frame with the winner and setup corridor length", () => {
     const escapeFrame = annotation(4, "White");
     escapeFrame.markers = [{ ...escapeFrame.markers[0], role: "confirmed_escape" }];
     const annotations = mergeReplayAnalysisAnnotations({}, step(escapeFrame, annotation(8, "White")));
     const resolved = {
       ...step(escapeFrame),
+      analysis: { setup_corridor: { start_ply: 4, end_ply: 8 } },
       counters: { branch_roots: 1, prefixes_analyzed: 6, proof_nodes: 2048 },
       done: true,
       status: "resolved" as const,
@@ -166,17 +185,18 @@ describe("replayAnalysisStatusSummary", () => {
       moveIndex: 10,
       status: "black_won",
     })).toEqual({
-      detail: "6-ply forced corridor",
+      detail: "5-ply setup corridor",
       label: "Black won",
     });
   });
 
-  it("summarizes the current frame inside and outside the forced corridor", () => {
+  it("summarizes the current frame inside and outside the setup corridor", () => {
     const escapeFrame = annotation(4, "White");
     escapeFrame.markers = [{ ...escapeFrame.markers[0], role: "confirmed_escape" }];
     const annotations = mergeReplayAnalysisAnnotations({}, step(escapeFrame, annotation(6, "White"), annotation(8, "White")));
     const resolved = {
       ...step(escapeFrame),
+      analysis: { setup_corridor: { start_ply: 4, end_ply: 8 } },
       counters: { branch_roots: 1, prefixes_analyzed: 6, proof_nodes: 2048 },
       done: true,
       status: "resolved" as const,
@@ -195,7 +215,7 @@ describe("replayAnalysisStatusSummary", () => {
       moveIndex: 7,
       status: "playing",
     })).toEqual({
-      detail: "Corridor: moves 5-10",
+      detail: "Setup corridor: moves 5-8",
       label: "Black can force a win",
     });
     expect(replayAnalysisStatusSummary(resolved, annotations, tenMoveMatch("black_won"), {
@@ -211,8 +231,16 @@ describe("replayAnalysisStatusSummary", () => {
       moveIndex: 2,
       status: "playing",
     })).toEqual({
-      detail: "Outside the forced corridor",
+      detail: "Outside the setup corridor",
       label: "Black to move",
+    });
+    expect(replayAnalysisStatusSummary(resolved, annotations, tenMoveMatch("black_won"), {
+      currentPlayer: 2,
+      moveIndex: 9,
+      status: "playing",
+    })).toEqual({
+      detail: "After lethal onset",
+      label: "Black has a guaranteed win",
     });
   });
 });

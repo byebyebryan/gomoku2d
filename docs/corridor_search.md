@@ -47,8 +47,11 @@ The corridor exists when one side creates an immediate or imminent threat that
 must be answered. Those threats are non-lethal obligations: the defender must
 respond, but at least one legal response may still neutralize the danger. It
 stays active while replies create or answer more immediate or imminent threats.
-It exits when a side wins, when a lethal threat is proven, or when active
-threats are neutralized and the attacker has no named forcing continuation.
+For proof recursion, the full forced interval can continue all the way to the
+terminal move. For replay explanation, the useful setup corridor stops at
+lethal onset: the point where the defender no longer has a legal reply that
+avoids terminal or known-lethal continuation. The remaining moves are the
+lethal tail, usually conversion rather than the cause of the loss.
 
 The search should never fall back to broad quiet-move search. If a move does not
 answer an active threat, win immediately, or create a new immediate/imminent
@@ -71,7 +74,7 @@ Corridor state transitions:
 The attacker is the side we are proving a forced win for, even if that side is
 not currently to move. At attacker nodes, one named corridor move is enough to
 continue the proof. At defender nodes, every named corridor reply must remain
-inside a forced corridor for the attacker to claim a forced win.
+inside the modeled corridor for the attacker to claim a forced win.
 
 ## Vocabulary
 
@@ -80,13 +83,16 @@ inside a forced corridor for the attacker to claim a forced win.
 | Immediate threat | A four threat that wins next turn unless answered, such as a closed four or broken four. |
 | Imminent threat | A three threat that can become a four and creates a bounded reply set, such as an open three. |
 | Lethal threat | A position-level threat where the defender has no legal single reply that avoids the attacker's terminal or already-known lethal continuation. |
-| Corridor entry | The move that starts the active forced corridor being analyzed. |
+| Corridor entry | The move that starts the active corridor being analyzed. |
+| Full forced interval | The implementation/proof span from the detected forced start through the terminal move. Code keeps this as `final_forced_interval` because proof recursion still needs the full suffix. |
+| Setup corridor | The replay-facing span from the forced start through lethal onset. It explains how the loser was forced into the already-lost state. |
+| Lethal tail | The suffix after lethal onset through terminal conversion. It is useful evidence, but it is not the main strategic explanation. |
 | Corridor reply | A named move that keeps play inside the threat corridor by answering or creating an active threat. |
 | Forced reply | A defender corridor reply that answers the current threat but still leaves the attacker a forced continuation. |
 | Escape reply | A legal defender move that exits the detected corridor. It does not prove the defender survives the rest of the game. |
 | Possible escape | A legal defender reply the bounded model cannot prove is still losing. Treat it as an escape from the current corridor, but keep the limit evidence. |
-| Tactical error | A loss where the decisive corridor is visible within a short forced sequence. |
-| Strategic loss | A loss where the decisive corridor reaches far enough back that the loser failed to anticipate a longer forcing plan. |
+| Tactical error | A loss where the setup corridor is visible within a short forced sequence. |
+| Strategic loss | A loss where the setup corridor reaches far enough back that the loser failed to anticipate a longer forcing plan. |
 
 The shape vocabulary behind these terms lives in
 [`tactical_shapes.md`](tactical_shapes.md). Replay-specific outcome labels and
@@ -294,8 +300,8 @@ tiering.
 For finished games, corridor search works backward from the winning move. The
 question is not "what is the best move in this position?" The question is:
 
-> Where was the latest losing-side decision that could have escaped the final
-> forced corridor?
+> Where was the latest losing-side decision that could have escaped the setup
+> corridor before lethal onset?
 
 The analyzer follows the actual ending, checks losing-side decision points, and
 classifies alternate corridor replies as forced loss, confirmed escape, possible
@@ -883,7 +889,7 @@ Known limits:
 
 - The analyzer is still model-bounded and intentionally conservative.
 - `possible_escape` is common and acceptable; it means the current model cannot
-  prove the branch remains in the forced corridor.
+  prove the branch remains inside the setup corridor or lethal tail.
 - The report is a lab artifact, not a polished replay-screen feature.
 - The retired `+corridor-q` leaf integration was too expensive for live play and
   is no longer a lab suffix.

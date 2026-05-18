@@ -10,7 +10,7 @@ pub use gomoku_bot::corridor::{
     SearchDiagnostics,
 };
 
-pub const ANALYSIS_SCHEMA_VERSION: u32 = 15;
+pub const ANALYSIS_SCHEMA_VERSION: u32 = 16;
 pub const DEFAULT_MAX_SCAN_PLIES: usize = 64;
 const MAX_CORRIDOR_REPLY_WIDTH: usize = 8;
 
@@ -195,6 +195,7 @@ pub struct GameAnalysis {
     pub final_winning_line: Vec<Move>,
     pub model: AnalysisModel,
     pub lethal_onset: Option<LethalOnset>,
+    pub setup_corridor: Option<ForcedInterval>,
     pub final_forced_interval_found: bool,
     pub final_forced_interval: ForcedInterval,
     pub proof_intervals: Vec<ForcedInterval>,
@@ -984,6 +985,7 @@ fn no_winner_analysis(replay: &Replay, final_board: &Board, model: AnalysisModel
         final_winning_line: Vec::new(),
         model,
         lethal_onset: None,
+        setup_corridor: None,
         final_forced_interval_found: false,
         final_forced_interval: ForcedInterval {
             start_ply: 0,
@@ -1028,6 +1030,11 @@ fn finalize_replay_analysis(
         winner,
         lethal_scan_start,
         final_forced_interval.end_ply,
+    );
+    let setup_corridor = setup_corridor_interval(
+        final_forced_interval_found,
+        &final_forced_interval,
+        lethal_onset.as_ref(),
     );
     let unknown_gaps = proof_summary
         .iter()
@@ -1105,6 +1112,7 @@ fn finalize_replay_analysis(
         final_winning_line: final_board.winning_line(),
         model,
         lethal_onset,
+        setup_corridor,
         final_forced_interval_found,
         final_forced_interval,
         proof_intervals,
@@ -2077,6 +2085,28 @@ fn find_final_forced_interval(
     (found, interval)
 }
 
+fn setup_corridor_interval(
+    final_forced_interval_found: bool,
+    final_forced_interval: &ForcedInterval,
+    lethal_onset: Option<&LethalOnset>,
+) -> Option<ForcedInterval> {
+    if !final_forced_interval_found {
+        return None;
+    }
+
+    let onset = lethal_onset?;
+    if onset.prefix_ply < final_forced_interval.start_ply
+        || onset.prefix_ply > final_forced_interval.end_ply
+    {
+        return None;
+    }
+
+    Some(ForcedInterval {
+        start_ply: final_forced_interval.start_ply,
+        end_ply: onset.prefix_ply,
+    })
+}
+
 fn proof_intervals(proofs: &[ProofResult], scan_start: usize) -> Vec<ForcedInterval> {
     let mut intervals = Vec::new();
     let mut current_start = None;
@@ -2933,6 +2963,13 @@ mod tests {
         assert_eq!(onset.terminal_targets, vec![mv("G8"), mv("L8")]);
         assert!(onset.covering_replies.is_empty());
         assert!(onset.one_step_replies.is_empty());
+        assert_eq!(
+            analysis
+                .setup_corridor
+                .as_ref()
+                .map(|interval| interval.end_ply),
+            Some(onset.prefix_ply)
+        );
     }
 
     #[test]
@@ -2957,6 +2994,13 @@ mod tests {
         assert_eq!(onset.terminal_targets, vec![mv("L8")]);
         assert_eq!(onset.one_step_replies.len(), 1);
         assert_eq!(onset.one_step_replies[0].reply, mv("L8"));
+        assert_eq!(
+            analysis
+                .setup_corridor
+                .as_ref()
+                .map(|interval| interval.end_ply),
+            Some(onset.prefix_ply)
+        );
         assert_eq!(
             onset.one_step_replies[0]
                 .lethal_entries

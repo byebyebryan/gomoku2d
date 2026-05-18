@@ -238,7 +238,7 @@ describe("ReplayRoute analysis overlays", () => {
     ]);
   });
 
-  it("shows analysis status and corridor timeline markers", () => {
+  it("shows analysis status and setup-corridor timeline markers", () => {
     renderReplayRoute();
 
     expect(screen.getByText("Status")).toBeInTheDocument();
@@ -287,11 +287,11 @@ describe("ReplayRoute analysis overlays", () => {
     expect(screen.getByTestId("replay-analysis-status")).toHaveTextContent("Analyzing replay");
     expect(screen.getByTestId("replay-analysis-detail")).toHaveTextContent("Move 5 · 321 nodes");
     expect(screen.getByTestId("replay-timeline")).toHaveStyle({
-      "--timeline-corridor-end": "100%",
-      "--timeline-corridor-start": "55.55555555555556%",
+      "--timeline-setup-end": "100%",
+      "--timeline-setup-start": "55.55555555555556%",
       "--timeline-escape": "55.55555555555556%",
     });
-    expect(screen.getByTestId("replay-timeline-corridor")).toBeInTheDocument();
+    expect(screen.getByTestId("replay-timeline-setup-corridor")).toBeInTheDocument();
     expect(screen.getByTestId("replay-timeline-escape")).toBeInTheDocument();
   });
 

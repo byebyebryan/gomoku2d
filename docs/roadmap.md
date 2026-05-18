@@ -411,8 +411,8 @@ The release lands the full foundation slice:
 - `gomoku-web` converts saved matches into core replay JSON and runs analysis in
   a cancellable worker;
 - Replay opens on the final board, then uses turn-based navigation, a
-  forced-corridor timeline, compact frame-aware status copy, and board
-  annotations to show the final forced corridor and latest escape;
+  setup-corridor timeline, compact frame-aware status copy, and board
+  annotations to show the setup corridor, lethal onset, and latest escape;
 - the split caution/highlighter/marker sprite vocabulary now supports both live
   hints and replay analysis overlays.
 

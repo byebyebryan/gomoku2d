@@ -411,7 +411,9 @@ are:
 - terminal move: the actual five;
 - lethal onset: the earliest frame in the final suffix where the loser has no
   legal reply avoiding terminal or known-lethal continuation;
-- cause boundary: the earlier last escape or forced-corridor entry.
+- setup corridor: the cause boundary through lethal onset, explaining how the
+  loser was forced into the already-lethal state;
+- lethal tail: lethal onset through terminal conversion.
 
 Search integration remains experimental. A proven lethal state can eventually
 act like a terminal tactical leaf, but the classifier should keep being
