@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::path::Path;
 use std::time::Instant;
 
-use gomoku_bot::tactical::{corridor_active_threats, LethalThreatKind, LocalThreatKind};
+use gomoku_bot::tactical::{corridor_active_threats, LocalThreatKind};
 use gomoku_core::{Board, Color, Move, Replay};
 use rayon::prelude::*;
 use serde::Serialize;
@@ -142,6 +142,7 @@ pub struct AnalysisBatchProofFrame {
     pub status: ProofStatus,
     pub move_played: Option<Move>,
     pub move_played_notation: Option<String>,
+    pub lethal_onset_reached: bool,
     pub rows: Vec<String>,
     pub markers: Vec<AnalysisBatchProofMarker>,
     pub reply_outcomes: Vec<DefenderReplyAnalysis>,
@@ -1104,9 +1105,6 @@ fn analysis_entry_detail_sections_html(entry: &AnalysisBatchEntry) -> String {
     let unclear_reason = unclear_reason_label(entry.unclear_reason);
 
     let mut details = vec![detail_html("Cause", &cause)];
-    if let Some(onset) = entry.lethal_onset.as_ref() {
-        details.push(detail_html("Lethal", &lethal_onset_detail_label(onset)));
-    }
     if unclear_reason != "-" {
         details.push(detail_html("Unclear", &unclear_reason));
     }
@@ -1402,49 +1400,8 @@ fn forced_interval_label(interval: Option<&ForcedInterval>) -> String {
 
 fn lethal_onset_label(onset: Option<&LethalOnset>) -> String {
     onset
-        .map(|onset| {
-            format!(
-                "{} / {}",
-                onset.prefix_ply,
-                lethal_threat_kind_label(onset.kind)
-            )
-        })
+        .map(|onset| onset.prefix_ply.to_string())
         .unwrap_or_else(|| "-".to_string())
-}
-
-fn lethal_onset_detail_label(onset: &LethalOnset) -> String {
-    let targets = move_list_label(&onset.terminal_targets);
-    let replies = match onset.kind {
-        LethalThreatKind::TerminalCoverage => {
-            format!("covers {targets}")
-        }
-        LethalThreatKind::OneStepCoverage => {
-            format!("covers {targets}; {} replies", onset.one_step_replies.len())
-        }
-    };
-    format!(
-        "{} at {}; {replies}",
-        lethal_threat_kind_label(onset.kind),
-        onset.prefix_ply
-    )
-}
-
-fn lethal_threat_kind_label(kind: LethalThreatKind) -> &'static str {
-    match kind {
-        LethalThreatKind::TerminalCoverage => "terminal",
-        LethalThreatKind::OneStepCoverage => "one-step",
-    }
-}
-
-fn move_list_label(moves: &[Move]) -> String {
-    if moves.is_empty() {
-        return "-".to_string();
-    }
-    moves
-        .iter()
-        .map(|mv| mv.to_notation())
-        .collect::<Vec<_>>()
-        .join(" ")
 }
 
 fn ply_count_label(value: Option<usize>) -> String {
@@ -1682,6 +1639,7 @@ fn proof_frames_for_actual_interval(
             let label = actual_frame_label(ply, &analysis.final_forced_interval);
             let mut markers = Vec::new();
             let actual_move = actual_move_at_ply(replay, ply);
+            let lethal_onset_reached = lethal_onset_reached_for_frame(analysis, board_ply);
             let reply_candidates =
                 defender_reply_candidates_for_frame(board, analysis, actual_move);
             let reply_outcomes = defender_reply_outcomes_for_frame(board, analysis, actual_move);
@@ -1722,6 +1680,7 @@ fn proof_frames_for_actual_interval(
                     .map(|proof| proof.status)
                     .unwrap_or(ProofStatus::Unknown),
                 actual_move,
+                lethal_onset_reached,
                 markers,
                 reply_outcomes,
             ))
@@ -1903,6 +1862,7 @@ fn proof_frame(
     board: &Board,
     status: ProofStatus,
     move_played: Option<Move>,
+    lethal_onset_reached: bool,
     markers: Vec<AnalysisBatchProofMarker>,
     reply_outcomes: Vec<DefenderReplyAnalysis>,
 ) -> AnalysisBatchProofFrame {
@@ -1913,10 +1873,18 @@ fn proof_frame(
         status,
         move_played,
         move_played_notation: move_played.map(Move::to_notation),
+        lethal_onset_reached,
         rows: board_rows(board),
         markers,
         reply_outcomes,
     }
+}
+
+fn lethal_onset_reached_for_frame(analysis: &GameAnalysis, board_ply: usize) -> bool {
+    analysis
+        .lethal_onset
+        .as_ref()
+        .is_some_and(|onset| board_ply >= onset.prefix_ply)
 }
 
 fn add_reply_outcome_markers(
@@ -2374,14 +2342,7 @@ fn proof_winning_frame_html(frame: &AnalysisBatchProofFrame) -> String {
         None,
         &[
             ("Winner move", format!("{}: {move_label}", frame.ply)),
-            (
-                "Side",
-                format!(
-                    "{:?} to move / {}",
-                    frame.side_to_move,
-                    proof_status_label(frame.status)
-                ),
-            ),
+            ("Result", format!("{:?} won", frame.side_to_move)),
         ],
         "",
     )
@@ -2401,7 +2362,7 @@ fn proof_decision_turns_html(
                     .iter()
                     .find(|frame| frame.ply == attacker_ply && frame.side_to_move == winner)
             });
-            proof_decision_turn_html(defender_frame, attacker_frame)
+            proof_decision_turn_html(defender_frame, attacker_frame, winner)
         })
         .collect::<String>()
 }
@@ -2409,6 +2370,7 @@ fn proof_decision_turns_html(
 fn proof_decision_turn_html(
     defender_frame: &AnalysisBatchProofFrame,
     attacker_frame: Option<&AnalysisBatchProofFrame>,
+    winner: Color,
 ) -> String {
     let title = attacker_frame
         .map(|attacker| format!("Turn {}-{}", attacker.ply, defender_frame.ply))
@@ -2429,26 +2391,56 @@ fn proof_decision_turn_html(
     let extra_actual =
         attacker_frame.and_then(|frame| frame.move_played.map(|mv| (mv, frame.side_to_move)));
     let replies = reply_outcomes_html(defender_frame);
+    let lines = vec![
+        ("Winner move", attacker_move),
+        ("Loser reply", defender_move),
+        (
+            "Decision",
+            format!(
+                "{:?} to respond / {}",
+                defender_frame.side_to_move,
+                perspective_proof_status_label(defender_frame, winner)
+            ),
+        ),
+    ];
 
     proof_frame_row_html(
         defender_frame.ply,
         &title,
         defender_frame,
         extra_actual,
-        &[
-            ("Winner move", attacker_move),
-            ("Loser reply", defender_move),
-            (
-                "Decision",
-                format!(
-                    "{:?} to respond / {}",
-                    defender_frame.side_to_move,
-                    proof_status_label(defender_frame.status)
-                ),
-            ),
-        ],
+        &lines,
         &replies,
     )
+}
+
+fn perspective_proof_status_label(
+    frame: &AnalysisBatchProofFrame,
+    attacker: Color,
+) -> &'static str {
+    match frame.status {
+        ProofStatus::ForcedWin => {
+            if frame.side_to_move == attacker {
+                if frame.lethal_onset_reached {
+                    "guaranteed win"
+                } else {
+                    "forced win"
+                }
+            } else if frame.lethal_onset_reached {
+                "guaranteed loss"
+            } else {
+                "forced loss"
+            }
+        }
+        ProofStatus::EscapeFound => {
+            if frame.side_to_move == attacker {
+                "win not forced"
+            } else {
+                "can escape"
+            }
+        }
+        ProofStatus::Unknown => "unknown",
+    }
 }
 
 fn proof_frame_row_html(
@@ -2730,14 +2722,6 @@ fn reply_line_label(reply: &DefenderReplyAnalysis) -> String {
     line.join(" ")
 }
 
-fn proof_status_label(status: ProofStatus) -> &'static str {
-    match status {
-        ProofStatus::ForcedWin => "forced win",
-        ProofStatus::EscapeFound => "escape found",
-        ProofStatus::Unknown => "unknown",
-    }
-}
-
 fn proof_limit_cause_labels(causes: &[ProofLimitCause]) -> String {
     if causes.is_empty() {
         return "-".to_string();
@@ -2779,6 +2763,7 @@ fn html_escape(input: &str) -> String {
 mod tests {
     use std::fs;
 
+    use gomoku_bot::tactical::LethalThreatKind;
     use gomoku_core::{Board, Color, Move, Replay, RuleConfig, Variant};
 
     use super::{
@@ -2786,8 +2771,8 @@ mod tests {
         defender_reply_candidates_for_frame, defender_reply_detail_label,
         defender_reply_outcome_label, defender_reply_outcomes_for_frame,
         loss_category_for_corridor_span, marker_label, ordered_player_columns_html,
-        render_analysis_batch_report_html, replay_entry_title, run_analysis_batch,
-        run_analysis_batch_replays, run_analysis_batch_replays_with_options,
+        perspective_proof_status_label, render_analysis_batch_report_html, replay_entry_title,
+        run_analysis_batch, run_analysis_batch_replays, run_analysis_batch_replays_with_options,
         AnalysisBatchProofFrame, AnalysisBatchProofMarker, AnalysisBatchProofMarkerKind,
         AnalysisBatchRunOptions, AnalysisLossCategory, ReplayAnalysisInput,
     };
@@ -2908,6 +2893,7 @@ mod tests {
             status: ProofStatus::ForcedWin,
             move_played: None,
             move_played_notation: None,
+            lethal_onset_reached: false,
             rows: Vec::new(),
             markers,
             reply_outcomes,
@@ -3343,6 +3329,80 @@ mod tests {
     }
 
     #[test]
+    fn analysis_batch_report_uses_perspective_status_after_lethal_onset() {
+        let replay = replay_from_moves(
+            Variant::Freestyle,
+            &[
+                "H8", "G8", "I8", "A1", "J8", "O1", "K8", "A15", "I7", "O15", "I9", "L8", "I6",
+                "A14", "I10",
+            ],
+        );
+
+        let report = run_analysis_batch_replays_with_options(
+            "report.json:bot-a vs bot-b".to_string(),
+            vec![ReplayAnalysisInput {
+                label: "lethal_onset".to_string(),
+                replay,
+            }],
+            AnalysisBatchRunOptions {
+                analysis: AnalysisOptions::default(),
+                include_proof_details: true,
+            },
+        );
+
+        let entry = &report.entries[0];
+        let onset = entry
+            .lethal_onset
+            .as_ref()
+            .expect("analysis entry should carry lethal onset evidence");
+        assert_eq!(onset.prefix_ply, 11);
+        assert_eq!(onset.kind, LethalThreatKind::OneStepCoverage);
+
+        let details = entry
+            .proof_details
+            .as_ref()
+            .expect("proof details should be recorded");
+        let onset_frame = details
+            .proof_frames
+            .iter()
+            .find(|frame| frame.ply == 12)
+            .expect("onset frame should be recorded");
+        assert_eq!(onset_frame.ply, 12);
+        assert!(onset_frame.lethal_onset_reached);
+
+        let html = render_analysis_batch_report_html(&report);
+        assert!(html.contains("<span>Lethal onset</span><strong>11</strong>"));
+        assert!(!html.contains("11 / one-step"));
+        assert!(html.contains("White to respond / guaranteed loss"));
+        assert!(!html.contains("<span>Lethal</span>"));
+        assert!(!html.contains("legend-lethal-onset"));
+        assert!(!html.contains("marker--lethal-onset"));
+    }
+
+    #[test]
+    fn proof_status_copy_uses_side_to_move_perspective() {
+        let mut frame = proof_frame_with_markers(Color::White, Vec::new(), Vec::new());
+        frame.status = ProofStatus::ForcedWin;
+        frame.lethal_onset_reached = false;
+        assert_eq!(
+            perspective_proof_status_label(&frame, Color::Black),
+            "forced loss"
+        );
+
+        frame.lethal_onset_reached = true;
+        assert_eq!(
+            perspective_proof_status_label(&frame, Color::Black),
+            "guaranteed loss"
+        );
+
+        frame.side_to_move = Color::Black;
+        assert_eq!(
+            perspective_proof_status_label(&frame, Color::Black),
+            "guaranteed win"
+        );
+    }
+
+    #[test]
     fn analysis_batch_marks_pre_corridor_entry_as_escape_target() {
         let replay = replay_from_moves(
             Variant::Renju,
@@ -3583,7 +3643,7 @@ mod tests {
         assert!(html.contains("marker--actual-white"));
         assert!(html.contains("marker--actual"));
         assert!(html.contains("data-move=\"L8\""));
-        assert!(html.contains("Black to move / forced win"));
+        assert!(html.contains("Black won"));
         assert!(html.contains("legend-winning"));
         assert!(html.contains("marker--threat"));
         assert!(html.contains("marker--imminent-defense"));
