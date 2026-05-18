@@ -3,8 +3,9 @@
 Purpose: turn the corridor-search analyzer from a lab report artifact into a
 first player-facing replay feature.
 
-This is an ad-hoc working plan. Canonical concepts remain in
-`docs/game_analysis.md`, `docs/corridor_search.md`, and `docs/game_visual.md`.
+This is an ad-hoc working plan. It now records the `0.4.6` implementation
+checkpoint. Canonical concepts remain in `docs/game_analysis.md`,
+`docs/corridor_search.md`, and `docs/game_visual.md`.
 
 ## Context
 
@@ -20,8 +21,8 @@ games:
 - it gives the product a vocabulary for tactics beyond "the bot searched
   deeper."
 
-`0.4.5` exposed bot controls and live tactical hints. `0.4.6` should now expose
-the analyzer on the Replay page, not as another separate report site.
+`0.4.5` exposed bot controls and live tactical hints. `0.4.6` exposes the
+analyzer on the Replay page, not as another separate report site.
 
 ## Product Goal
 
@@ -47,7 +48,7 @@ a lab dashboard. The default player flow is:
 
 ## Scope
 
-In scope for `0.4.6`:
+In scope for `0.4.6`, now implemented:
 
 - run replay analysis in the browser through Wasm;
 - keep the work off the main UI thread with a web worker;
@@ -109,8 +110,8 @@ Implementation checkpoint:
   create the wasm analyzer from that saved match.
 - `gomoku-web` has a cancellable replay-analysis worker/runner protocol for
   progress, completion, cancellation, and worker failure.
-- Replay-route state, analysis copy, and board annotations are still the
-  remaining product slice.
+- Replay-route state, analysis copy, timeline treatment, turn navigation, and
+  board annotations are now wired into the product Replay page.
 
 ## Progressive Analyzer API
 
@@ -145,7 +146,7 @@ unavailable" while replay playback continues normally.
 
 ## Replay UI
 
-The Replay page should absorb analysis in place.
+The Replay page absorbs analysis in place.
 
 Board panel:
 
@@ -156,26 +157,31 @@ Board panel:
 
 Replay deck:
 
-- add a compact analysis section below result/match metadata or near playback;
-- show status while running: `Analyzing from the final move...`;
-- show result when available: `Forced corridor: move 43-51`,
-  `Last escape: move 42`, `Possible escape found`;
-- show model copy only as secondary detail: `Corridor search, depth 4,
-  traceback 64`.
+- show compact status copy on desktop;
+- show status while running with the current traceback move and proof-node
+  count;
+- show frame-aware resolved copy: winner frame, winner can force, loser locked
+  in, last escape, or ordinary turn text outside the corridor;
+- keep model copy in the static report and docs instead of putting debug
+  settings into the player-facing deck.
 
 Timeline/playback:
 
-- add small markers for analyzed moments, the forced interval, and last escape;
-- add next/previous analysis moment controls;
-- keep normal scrubbing usable while analysis is running.
+- use a neutral base track;
+- fill the detected forced corridor in red;
+- mark the latest detected escape in green;
+- keep normal scrubbing usable while analysis is running;
+- use whole-turn buttons as the primary review navigation, with raw ply buttons
+  still available.
 
 Mobile:
 
 - keep board-first layout;
 - avoid a large proof panel above the board;
-- collapse analysis copy into a short row/card below playback controls;
-- keep next/previous analysis moment buttons reachable without forcing a long
-  scroll.
+- hide verbose analysis status copy in the first portrait layout;
+- keep player cards, board, timeline, controls, and `Play From Here` in normal
+  document flow so controls follow the board rather than sticking to the
+  viewport bottom.
 
 ## Annotation Language
 
@@ -195,13 +201,15 @@ Proof markers:
 - `L`: forced loss;
 - `F`: forbidden Renju reply;
 - `E`: confirmed escape;
-- `P`: possible escape;
-- `?`: unknown;
 - `!`: immediate loss if ignored;
 
 Avoid showing forced-loss letters as a default product marker. `L` exists for
 detail/report surfaces, but a move on the actual losing line already led to the
 shown result; the useful information is where the player had alternatives.
+
+The product UI intentionally simplifies this set: confirmed and possible
+escapes both render as `E`, forbidden replies use the caution sprite, unknown
+proof markers stay hidden, and winning-side frames suppress analysis overlays.
 
 ## Sprite Intake
 
@@ -302,7 +310,7 @@ Manual:
 
 ## Release Story
 
-`0.4.6` should be framed as the first player-facing version of corridor-search
+`0.4.6` is framed as the first player-facing version of corridor-search
 analysis:
 
 - `0.4.2` proved the analyzer in reports;

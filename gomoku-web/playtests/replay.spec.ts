@@ -27,7 +27,7 @@ async function openFinishedReplay(page: Page) {
   });
 
   await page.goto("/profile");
-  await expect(page.getByText("vs Practice Bot")).toBeVisible();
+  await expect(page.getByText("vs Normal Bot")).toBeVisible();
   await page.getByRole("button", { name: "Replay" }).first().click();
   await expect(page.getByRole("heading", { name: "Replay" })).toBeVisible();
   await expect(page).toHaveURL(/\/replay\/fixture-replay-match$/);
@@ -45,33 +45,33 @@ test("replay route uses the clean URL and old local route falls through", async 
 
 test("local replay opens from profile history and supports stepping plus autoplay", async ({ page }) => {
   await openFinishedReplay(page);
-  await expect(page.getByTestId("replay-result")).toHaveText("Practice Bot wins");
+  await expect(page.getByTestId("replay-analysis-status")).toBeVisible();
   await expect(page.getByText("Replay timeline")).toHaveCount(0);
-  await expect(page.getByTestId("replay-move-count")).toHaveText("Move 4 / 10");
+  await expect(page.getByTestId("replay-move-count")).toHaveText("Move 10 / 10");
   await expect(page.getByTestId("replay-rule")).toHaveText("Renju");
   await expect(page.getByTestId("replay-player-row-black")).toContainText("Bryan Guest");
-  await expect(page.getByTestId("replay-player-row-white")).toContainText("Practice Bot");
+  await expect(page.getByTestId("replay-player-row-white")).toContainText("Normal Bot");
   await expect(page.getByTestId("replay-player-row-black").getByRole("img", { name: "Player" })).toBeVisible();
   await expect(page.getByTestId("replay-player-row-white").getByRole("img", { name: "Bot" })).toBeVisible();
-  await expect(page.getByTestId("replay-player-row-black")).toHaveCSS("box-shadow", /rgb/);
-  await expect(page.getByRole("button", { name: "Play From Here" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Play From Here" })).toBeDisabled();
   await expect(page.locator('[data-testid="replay-step-controls"] button')).toHaveCount(5);
-  await expect(page.getByRole("button", { name: "Start" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Previous turn" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Previous move" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Auto play" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Next move" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "End" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Next turn" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Start" }).click();
-  await expect(page.getByTestId("replay-move-count")).toHaveText("Move 1 / 10");
-  await expect(page.getByRole("button", { name: "Play From Here" })).toBeDisabled();
-  await expect(page.getByTestId("replay-player-row-white")).toHaveCSS("box-shadow", /rgb/);
-  await page.getByRole("button", { name: "End" }).click();
-  await expect(page.getByTestId("replay-result")).toHaveText("Practice Bot wins");
+  await page.getByRole("button", { name: "Previous turn" }).click();
+  await expect(page.getByTestId("replay-move-count")).toHaveText("Move 8 / 10");
+  await expect(page.getByRole("button", { name: "Play From Here" })).toBeEnabled();
+  await expect(page.getByTestId("replay-player-row-black")).toHaveCSS("box-shadow", /rgb/);
+  await page.getByRole("button", { name: "Next turn" }).click();
   await expect(page.getByTestId("replay-move-count")).toHaveText("Move 10 / 10");
   await expect(page.getByRole("button", { name: "Play From Here" })).toBeDisabled();
-  await page.getByRole("button", { name: "Start" }).click();
-  await expect(page.getByTestId("replay-move-count")).toHaveText("Move 1 / 10");
+  await page.getByRole("button", { name: "Previous turn" }).click();
+  await page.getByRole("button", { name: "Previous turn" }).click();
+  await page.getByRole("button", { name: "Previous turn" }).click();
+  await expect(page.getByTestId("replay-move-count")).toHaveText("Move 4 / 10");
 
   await page.setViewportSize({ width: 430, height: 932 });
   const portraitMetrics = await page.evaluate(() => {
@@ -83,7 +83,7 @@ test("local replay opens from profile history and supports stepping plus autopla
     const controlsRow = document.querySelector('[class*="controlsRow"]');
     const resumeAction = document.querySelector('[class*="resumeAction"]');
     const metaRows = document.querySelector('[class*="metaRows"]');
-    const resultSection = document.querySelector('[class*="resultSection"]');
+    const statusSection = document.querySelector('[class*="statusSection"]');
     const headerLabels = Array.from(document.querySelectorAll('[class*="headerActions"] [class*="uiActionLabel"]'));
     const frame = document.querySelector('[class*="frame"]');
     const canvas = document.querySelector("canvas");
@@ -97,7 +97,7 @@ test("local replay opens from profile history and supports stepping plus autopla
       !controlsRow ||
       !resumeAction ||
       !metaRows ||
-      !resultSection ||
+      !statusSection ||
       !frame ||
       !canvas
     ) {
@@ -125,7 +125,7 @@ test("local replay opens from profile history and supports stepping plus autopla
       metaGap: metaRowsBox.top - resumeActionBox.bottom,
       layoutOverflowY: window.getComputedStyle(layout).overflowY,
       pageScrollRange: document.documentElement.scrollHeight - document.documentElement.clientHeight,
-      resultHidden: window.getComputedStyle(resultSection).display === "none",
+      statusHidden: window.getComputedStyle(statusSection).display === "none",
       canvasToFrame: Math.min(
         canvasBox.width / frameBox.width,
         canvasBox.height / frameBox.height,
@@ -144,7 +144,7 @@ test("local replay opens from profile history and supports stepping plus autopla
   expect(portraitMetrics!.metaGap).toBeGreaterThanOrEqual(8);
   expect(portraitMetrics!.layoutOverflowY).toBe("visible");
   expect(portraitMetrics!.pageScrollRange).toBeGreaterThanOrEqual(0);
-  expect(portraitMetrics!.resultHidden).toBe(true);
+  expect(portraitMetrics!.statusHidden).toBe(true);
   expect(portraitMetrics!.canvasToFrame).toBeGreaterThan(0.98);
 
   await page.getByRole("button", { name: "Auto play" }).click();
@@ -152,36 +152,36 @@ test("local replay opens from profile history and supports stepping plus autopla
   await expect
     .poll(async () => page.getByTestId("replay-move-count").textContent(), { timeout: 15_000 })
     .toBe("Move 10 / 10");
-  await expect(page.getByTestId("replay-result")).toHaveText("Practice Bot wins");
   await expect(page.getByRole("button", { name: "Auto play" })).toBeVisible();
 });
 
 test("local replay can start a new local match from the current replay frame", async ({ page }) => {
   await openFinishedReplay(page);
 
-  await page.getByRole("button", { name: "Next move" }).click();
-  await expect(page.getByTestId("replay-move-count")).toHaveText("Move 5 / 10");
-  await expect(page.getByTestId("replay-player-row-white")).toHaveCSS("box-shadow", /rgb/);
+  await page.getByRole("button", { name: "Previous turn" }).click();
+  await page.getByRole("button", { name: "Previous turn" }).click();
+  await expect(page.getByTestId("replay-move-count")).toHaveText("Move 6 / 10");
+  await expect(page.getByTestId("replay-player-row-black")).toHaveCSS("box-shadow", /rgb/);
   await expect(page.getByRole("button", { name: "Play From Here" })).toBeEnabled();
 
   await page.getByRole("button", { name: "Play From Here" }).click();
 
   await expect(page.getByRole("heading", { name: "Local Match" })).toBeVisible();
   await expect(page.getByTestId("match-rule")).toHaveText("Renju");
-  await expect(page.getByTestId("match-move-count")).toHaveText("Move 5");
+  await expect(page.getByTestId("match-move-count")).toHaveText("Move 6");
   await expect(page.getByTestId("match-status")).toHaveText("Bryan Guest to move");
-  await expect(page.getByTestId("player-row-black")).toContainText("Practice Bot");
-  await expect(page.getByTestId("player-row-white")).toContainText("Bryan Guest");
-  await expect(page.getByTestId("player-row-black").getByRole("img", { name: "Bot" })).toBeVisible();
-  await expect(page.getByTestId("player-row-white").getByRole("img", { name: "Player" })).toBeVisible();
-  await expect(page.getByTestId("player-row-white")).toHaveCSS("box-shadow", /rgb/);
+  await expect(page.getByTestId("player-row-black")).toContainText("Bryan Guest");
+  await expect(page.getByTestId("player-row-white")).toContainText("Normal Bot");
+  await expect(page.getByTestId("player-row-black").getByRole("img", { name: "Player" })).toBeVisible();
+  await expect(page.getByTestId("player-row-white").getByRole("img", { name: "Bot" })).toBeVisible();
+  await expect(page.getByTestId("player-row-black")).toHaveCSS("box-shadow", /rgb/);
 });
 
 test("desktop replay rail keeps compact transport and player spacing", async ({ page }) => {
   await openFinishedReplay(page);
 
   const metrics = await page.evaluate(() => {
-    const resultSection = document.querySelector('[class*="resultSection"]');
+    const statusSection = document.querySelector('[class*="statusSection"]');
     const matchSection = document.querySelector('[class*="matchSection"]');
     const playbackSection = document.querySelector('[class*="playbackSection"]');
     const metaRows = document.querySelector('[class*="metaRows"]');
@@ -193,7 +193,7 @@ test("desktop replay rail keeps compact transport and player spacing", async ({ 
     const controlsIcon = controlsRow?.querySelector('.uiIcon');
 
     if (
-      !resultSection ||
+      !statusSection ||
       !matchSection ||
       !playbackSection ||
       !metaRows ||
@@ -207,7 +207,7 @@ test("desktop replay rail keeps compact transport and player spacing", async ({ 
       return null;
     }
 
-    const resultStyle = window.getComputedStyle(resultSection);
+    const statusStyle = window.getComputedStyle(statusSection);
     const matchStyle = window.getComputedStyle(matchSection);
     const playbackStyle = window.getComputedStyle(playbackSection);
     const metaRowsStyle = window.getComputedStyle(metaRows);
@@ -230,15 +230,15 @@ test("desktop replay rail keeps compact transport and player spacing", async ({ 
       playerRowPaddingTop: playerRowStyle.paddingTop,
       playerRowsGap: playerRowsStyle.gap,
       playerRowsPaddingTop: playerRowsStyle.paddingTop,
-      resultSectionGap: resultStyle.gap,
-      resultSectionPaddingTop: resultStyle.paddingTop,
+      statusSectionGap: statusStyle.gap,
+      statusSectionPaddingTop: statusStyle.paddingTop,
       timelineGap: timelineStyle.gap,
     };
   });
 
   expect(metrics).not.toBeNull();
-  expect(metrics!.resultSectionGap).toBe("12px");
-  expect(metrics!.resultSectionPaddingTop).toBe("16px");
+  expect(metrics!.statusSectionGap).toBe("12px");
+  expect(metrics!.statusSectionPaddingTop).toBe("16px");
   expect(metrics!.matchSectionGap).toBe("12px");
   expect(metrics!.matchSectionPaddingTop).toBe("16px");
   expect(metrics!.metaRowsGap).toBe("8px");

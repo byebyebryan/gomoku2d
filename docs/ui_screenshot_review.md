@@ -421,6 +421,52 @@ captures, so they show the same review frame across screens.
   reset, and history still make it the most sensitive screen for future
   additions.
 
+## v0.4.6
+
+### References
+
+These captures are replay-focused because `v0.4.6` concentrates on the Replay
+route. They use the `v0.4.6` web package version and a seeded decisive Renju
+replay after browser-side analysis has resolved to the last-escape frame.
+
+<table>
+  <tr>
+    <td width="60%">
+      <img src="assets/screenshot_v0_4_6_replay_desktop.png" alt="v0.4.6 analyzed replay screen on desktop" width="100%">
+      <br>
+      <sub>Analyzed Replay / Desktop</sub>
+    </td>
+    <td width="40%">
+      <img src="assets/screenshot_v0_4_6_replay_mobile.png" alt="v0.4.6 analyzed replay screen on mobile" width="100%">
+      <br>
+      <sub>Analyzed Replay / Mobile</sub>
+    </td>
+  </tr>
+</table>
+
+### What v0.4.6 improved
+
+- Replay now carries the corridor analyzer directly in the product surface
+  instead of sending users to a separate static report.
+- The page opens on the finished board, then supports whole-turn navigation for
+  walking backward through the decisive sequence.
+- The timeline now reads as an analysis timeline: red for the forced corridor
+  and green for the last detected escape.
+- Board annotations use the split highlighter/marker/caution vocabulary without
+  adding another control surface.
+- Mobile keeps the board, timeline, transport, and branch action in the primary
+  flow instead of pinning controls or adding explanatory chrome.
+
+### Remaining watch points
+
+- Replay analysis is readable now, but the explanation layer is still thin.
+  `v0.4.7` should decide how much legend/status copy belongs in the product UI.
+- Mobile intentionally hides verbose analysis status copy in the first viewport.
+  That protects the board, but it also means the board markers must stay
+  self-explanatory.
+- The marker set should remain restrained. More proof symbols will make the
+  replay page feel like the internal analysis report again.
+
 ## Design takeaway
 
 - keep v0.1's retro punch and board-first confidence
@@ -429,5 +475,7 @@ captures, so they show the same review frame across screens.
 - keep v0.2.3's intentional mobile layouts and tighter transport language
 - keep v0.2.4's tighter icon scale, profile density, and documented asset set
 - keep v0.4.5's dedicated settings route and controlled bot-lab layer
+- keep v0.4.6's replay-analysis foundation while deferring explanation polish
+  to a focused follow-up
 - avoid reintroducing v0.1's scene-bound UI
 - avoid rebuilding dense sidebars or over-explained controls as the shell grows

@@ -135,7 +135,9 @@ Top to bottom:
 
 This order is intentional. The pointer is the actionable target, while overlay
 surfaces are context below it. Stones remain stronger than the pointer because
-they are committed board state.
+they are committed board state. Within the overlay surface, highlighters sit
+below marker and caution sprites so symbolic proof/legality state remains
+legible.
 
 ## Animation Semantics
 
