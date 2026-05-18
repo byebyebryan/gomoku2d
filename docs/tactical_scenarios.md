@@ -79,9 +79,8 @@ reply that avoids terminal or known-lethal coverage?"
 
 Use `gomoku-eval lethal-scenarios` for lethal state classification. It is a
 separate pass/fail harness over the shared lethal classifier, not a bot
-move-choice sweep. The current lethal harness covers the terminal-coverage
-boundary: freestyle open four, blockable single four, defender immediate-win
-race, Renju forbidden block, and Renju Black illegal-completion caveat. See
+move-choice sweep. The current lethal harness covers terminal coverage plus
+crossed one-step `4+3` / `3+3` coverage and non-lethal escape cases. See
 [`lethal_threats.md`](lethal_threats.md) for the model and case list.
 
 ## How This Maps To Bot Strategy

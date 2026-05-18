@@ -811,18 +811,24 @@ fn print_tactical_report_summary(report: &TacticalScenarioReport) {
 
 fn print_lethal_scenario_result(result: &LethalScenarioResult) {
     let status = if result.passed { "PASS" } else { "FAIL" };
+    let kind = result
+        .actual_kind
+        .map(|kind| format!("{kind:?}"))
+        .unwrap_or_else(|| "-".to_string());
     println!(
-        "{:<5} {:?} attacker {:?} defender {:?} {:<52} lethal {} expect {} targets {:<8} cover {:<8} defender-win {}",
+        "{:<5} {:?} attacker {:?} defender {:?} {:<52} kind {:<16} lethal {} expect {} targets {:<8} cover {:<8} defender-win {} escape {}",
         status,
         result.variant,
         result.attacker,
         result.defender,
         result.case_id,
+        kind,
         result.actual_lethal,
         result.expected_lethal,
         display_move_list(&result.actual_terminal_targets),
         display_move_list(&result.actual_covering_replies),
-        display_move_list(&result.actual_defender_immediate_wins)
+        display_move_list(&result.actual_defender_immediate_wins),
+        display_move_list(&result.actual_escaping_replies)
     );
 }
 
