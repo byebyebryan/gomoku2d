@@ -382,8 +382,8 @@ impl CorridorThreatPolicy {
         self,
         board: &Board,
         attacker: Color,
-        mut facts: Vec<LocalThreatFact>,
-        actual_reply: Option<Move>,
+        facts: Vec<LocalThreatFact>,
+        _actual_reply: Option<Move>,
     ) -> Vec<Move> {
         let defender = attacker.opponent();
         let mut replies = Vec::new();
@@ -392,26 +392,7 @@ impl CorridorThreatPolicy {
             return replies;
         }
 
-        if let Some(actual_reply) = actual_reply {
-            let actual_facts = facts
-                .iter()
-                .filter(|fact| fact.defense_squares.contains(&actual_reply))
-                .cloned()
-                .collect::<Vec<_>>();
-            if !actual_facts.is_empty() {
-                facts = actual_facts;
-            }
-        }
-
-        let best_rank = facts
-            .iter()
-            .map(|fact| self.rank(fact.kind))
-            .max()
-            .expect("facts are not empty");
-        for fact in facts
-            .into_iter()
-            .filter(|fact| self.rank(fact.kind) == best_rank)
-        {
+        for fact in facts {
             add_corridor_defender_replies_for_fact(board, attacker, defender, &fact, &mut replies);
         }
 
@@ -476,7 +457,7 @@ pub trait ThreatView {
     fn has_move_local_corridor_entry(&self, attacker: Color, mv: Move) -> bool;
     /// Rank for an already-occupied attacker move that materialized a local corridor.
     fn local_corridor_entry_rank(&self, attacker: Color, mv: Move) -> u8;
-    /// Legal defender replies to the strongest active corridor threat.
+    /// Legal defender replies to all active corridor threats.
     fn defender_reply_moves(&self, attacker: Color, actual_reply: Option<Move>) -> Vec<Move>;
     /// Legal defender replies annotated by why they matter.
     fn defender_reply_candidates(
@@ -807,20 +788,35 @@ pub(crate) fn defender_reply_candidates_from_view<V: ThreatView + ?Sized>(
         return Vec::new();
     }
 
-    let defender = attacker.opponent();
     let winning_squares = view.immediate_winning_moves_for(attacker);
+    let defender = attacker.opponent();
+    let defender_wins = view.immediate_winning_moves_for(defender);
     let mut replies = Vec::<DefenderReplyCandidate>::new();
 
     for mv in winning_squares.iter().copied() {
-        if board.is_legal_for_color(mv, defender) {
-            push_reply_role(&mut replies, mv, DefenderReplyRole::ImmediateDefense);
-        }
+        push_reply_role(&mut replies, mv, DefenderReplyRole::ImmediateDefense);
     }
-    for mv in view.immediate_winning_moves_for(defender) {
+    for mv in defender_wins {
         push_reply_role(&mut replies, mv, DefenderReplyRole::OffensiveCounter);
     }
-    if winning_squares.is_empty() {
-        for mv in view.defender_reply_moves(attacker, actual_reply) {
+    if winning_squares.is_empty() && replies.is_empty() {
+        let policy = CorridorThreatPolicy;
+        let imminent_facts = view
+            .active_corridor_threats(attacker)
+            .into_iter()
+            .filter(|fact| policy.is_visible_imminent_hint(board, attacker, fact))
+            .collect::<Vec<_>>();
+        let mut imminent_reply_moves = Vec::new();
+        for fact in &imminent_facts {
+            add_corridor_defender_candidate_replies_for_fact(
+                board,
+                attacker,
+                defender,
+                fact,
+                &mut imminent_reply_moves,
+            );
+        }
+        for mv in imminent_reply_moves {
             push_reply_role(&mut replies, mv, DefenderReplyRole::ImminentDefense);
         }
         for mv in offensive_counter_reply_moves(board, defender) {
@@ -937,6 +933,43 @@ fn add_corridor_defender_replies_for_fact(
             .legal_cost_squares
             .into_iter()
             .filter(|&mv| board.is_legal_for_color(mv, defender))
+            .collect::<Vec<_>>();
+
+        shared_cost_squares = Some(match shared_cost_squares {
+            Some(shared) => shared
+                .into_iter()
+                .filter(|mv| costs.contains(mv))
+                .collect::<Vec<_>>(),
+            None => costs,
+        });
+    }
+
+    for mv in shared_cost_squares.unwrap_or_default() {
+        push_unique_move(replies, mv);
+    }
+}
+
+fn add_corridor_defender_candidate_replies_for_fact(
+    board: &Board,
+    attacker: Color,
+    _defender: Color,
+    fact: &LocalThreatFact,
+    replies: &mut Vec<Move>,
+) {
+    let legal_forcing_continuations = legal_forcing_continuations_for_fact(board, attacker, fact);
+    for continuation in &legal_forcing_continuations {
+        let mv = continuation.mv;
+        if board.is_empty(mv.row, mv.col) {
+            push_unique_move(replies, mv);
+        }
+    }
+
+    let mut shared_cost_squares: Option<Vec<Move>> = None;
+    for continuation in legal_forcing_continuations {
+        let costs = continuation
+            .legal_cost_squares
+            .into_iter()
+            .filter(|&mv| board.is_empty(mv.row, mv.col))
             .collect::<Vec<_>>();
 
         shared_cost_squares = Some(match shared_cost_squares {
@@ -1487,7 +1520,7 @@ fn move_list_sort_key(moves: &[Move]) -> String {
 mod tests {
     use super::{
         corridor_active_threats, corridor_defender_reply_moves, defender_hint_reply_candidates,
-        has_forcing_local_threat, has_forcing_local_threat_at_move,
+        defender_reply_candidates, has_forcing_local_threat, has_forcing_local_threat_at_move,
         legal_forcing_continuations_for_fact, local_threat_facts_after_move,
         local_threat_facts_for_player, normalize_local_threat_facts,
         raw_local_threat_facts_after_move, raw_local_threat_facts_for_player, CorridorThreatPolicy,
@@ -1981,6 +2014,63 @@ mod tests {
                 .contains(&DefenderReplyRole::ImminentDefense)),
             "imminent replies should be suppressed while immediate replies exist: {candidates:?}"
         );
+    }
+
+    #[test]
+    fn defender_reply_candidates_prioritize_immediate_replies_over_imminent_replies() {
+        let board = board_from_moves(
+            Variant::Freestyle,
+            &[
+                "A1", "H8", "C2", "I8", "E3", "J8", "G4", "K8", "I5", "F6", "K6", "G6", "M7", "H6",
+            ],
+        );
+        assert_eq!(board.current_player, Color::Black);
+
+        let candidates = defender_reply_candidates(&board, Color::White, None);
+
+        assert!(has_reply_role(
+            &candidates,
+            "G8",
+            DefenderReplyRole::ImmediateDefense
+        ));
+        assert!(has_reply_role(
+            &candidates,
+            "L8",
+            DefenderReplyRole::ImmediateDefense
+        ));
+        assert!(
+            candidates.iter().all(|candidate| !candidate
+                .roles
+                .contains(&DefenderReplyRole::ImminentDefense)),
+            "4+3 combos should probe the immediate 4 blocks, not lower-priority 3 replies: {candidates:?}"
+        );
+    }
+
+    #[test]
+    fn defender_reply_candidates_cover_all_imminent_combo_threats() {
+        let board = board_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "H7", "F8", "G9", "G8", "I8", "G6", "D9", "F9", "F10", "D7", "G10", "F7",
+                "E10", "E8", "D8", "C6", "B5", "D10", "F11", "F6", "F5", "D6", "E6", "H5", "I4",
+            ],
+        );
+        assert_eq!(board.current_player, Color::Black);
+
+        let candidates = defender_reply_candidates(&board, Color::White, Some(mv("C8")));
+
+        for notation in ["J7", "H9", "E12", "G12"] {
+            assert!(
+                has_reply_role(&candidates, notation, DefenderReplyRole::ImminentDefense),
+                "{notation} should be probed as a response to the 3+3 corridor: {candidates:?}"
+            );
+        }
+        assert!(has_reply_role(
+            &candidates,
+            "C8",
+            DefenderReplyRole::ImminentDefense
+        ));
+        assert!(has_reply_role(&candidates, "C8", DefenderReplyRole::Actual));
     }
 
     #[test]

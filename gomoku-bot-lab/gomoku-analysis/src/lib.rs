@@ -79,6 +79,13 @@ pub enum DefenderReplyRole {
     OffensiveCounter,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct DefenderReplyCandidate {
+    pub mv: Move,
+    pub notation: String,
+    pub roles: Vec<DefenderReplyRole>,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DefenderReplyOutcome {
@@ -548,7 +555,7 @@ fn replay_frame_annotations_from_proof(
     board: &Board,
     winner: Color,
     proof: &ProofResult,
-    actual_child: Option<&ProofResult>,
+    _actual_child: Option<&ProofResult>,
     actual_reply: Option<Move>,
     options: &AnalysisOptions,
 ) -> ReplayFrameAnnotations {
@@ -559,21 +566,23 @@ fn replay_frame_annotations_from_proof(
         markers: Vec::new(),
     };
 
-    push_current_loser_tactical_annotations(&mut frame, board, winner);
-    push_forbidden_cost_annotations(&mut frame, board, proof, ply, None);
+    let candidates = if board.current_player == winner.opponent() {
+        defender_reply_candidates(board, winner, actual_reply)
+    } else {
+        Vec::new()
+    };
+    let replies = if board.current_player == winner.opponent() {
+        analyze_alternate_defender_reply_options(board, winner, actual_reply, options)
+    } else {
+        Vec::new()
+    };
+    if candidates.is_empty() {
+        push_current_loser_tactical_annotations(&mut frame, board, winner);
+    } else {
+        push_current_loser_candidate_annotations(&mut frame, board, winner, &candidates);
+    }
 
     if board.current_player == winner.opponent() {
-        if let Some(actual_child) = actual_child {
-            push_forbidden_cost_annotations(
-                &mut frame,
-                board,
-                actual_child,
-                ply + 1,
-                Some(ReplayFrameHighlightRole::ImminentThreat),
-            );
-        }
-        let replies =
-            analyze_alternate_defender_reply_options(board, winner, actual_reply, options);
         if let Some(actual_reply) = actual_reply {
             push_actual_reply_hint_annotations(&mut frame, board, winner, actual_reply);
         }
@@ -762,29 +771,47 @@ fn push_current_loser_tactical_annotations(
     }
 }
 
-fn push_forbidden_cost_annotations(
+fn push_current_loser_candidate_annotations(
     frame: &mut ReplayFrameAnnotations,
     board: &Board,
-    proof: &ProofResult,
-    prefix_ply: usize,
-    tactical_role: Option<ReplayFrameHighlightRole>,
+    winner: Color,
+    candidates: &[DefenderReplyCandidate],
 ) {
-    for evidence in proof
-        .threat_evidence
-        .iter()
-        .filter(|evidence| evidence.prefix_ply == Some(prefix_ply))
-    {
-        for mv in evidence.illegal_cost_squares.iter().copied().filter(|mv| {
-            board.is_empty(mv.row, mv.col) && !board.is_legal_for_color(*mv, evidence.defender)
-        }) {
-            if let Some(tactical_role) = tactical_role {
-                push_replay_highlight(&mut frame.highlights, tactical_role, mv, evidence.attacker);
+    let defender = winner.opponent();
+    if board.current_player != defender {
+        return;
+    }
+
+    for candidate in candidates {
+        for role in &candidate.roles {
+            match role {
+                DefenderReplyRole::Actual => {}
+                DefenderReplyRole::ImmediateDefense => push_replay_highlight(
+                    &mut frame.highlights,
+                    ReplayFrameHighlightRole::ImmediateThreat,
+                    candidate.mv,
+                    winner,
+                ),
+                DefenderReplyRole::ImminentDefense => push_replay_highlight(
+                    &mut frame.highlights,
+                    ReplayFrameHighlightRole::ImminentThreat,
+                    candidate.mv,
+                    winner,
+                ),
+                DefenderReplyRole::OffensiveCounter => push_replay_highlight(
+                    &mut frame.highlights,
+                    ReplayFrameHighlightRole::CounterThreat,
+                    candidate.mv,
+                    defender,
+                ),
             }
+        }
+        if !board.is_legal_for_color(candidate.mv, defender) {
             push_replay_marker(
                 &mut frame.markers,
                 ReplayFrameMarkerRole::Forbidden,
-                mv,
-                evidence.defender,
+                candidate.mv,
+                defender,
             );
         }
     }
@@ -1042,11 +1069,11 @@ fn finalize_replay_analysis(
         .map(|proof| proof.status);
     let move_color = color_for_ply(final_forced_interval.start_ply);
     let missed_win_root = loser.is_some_and(|loser| {
-        losing_side_missed_immediate_win(replay, &boards, final_forced_interval.start_ply, loser)
+        losing_side_missed_immediate_win(replay, boards, final_forced_interval.start_ply, loser)
     });
     let root_cause = classify_root_cause(previous_status, move_color, winner, missed_win_root);
     let last_chance_ply = find_last_chance(
-        &boards,
+        boards,
         &proof_summary,
         scan_start,
         final_forced_interval.start_ply,
@@ -1060,7 +1087,7 @@ fn finalize_replay_analysis(
         (move_color == Some(winner)).then_some(final_forced_interval.start_ply);
     let tactical_notes = tactical_notes(TacticalNoteInput {
         replay,
-        boards: &boards,
+        boards,
         proofs: &proof_summary,
         scan_start,
         proof_intervals: &proof_intervals,
@@ -1085,7 +1112,7 @@ fn finalize_replay_analysis(
         final_forced_interval: &final_forced_interval,
         proof_summary: &proof_summary,
         scan_start,
-        boards: &boards,
+        boards,
         winner,
         principal_line: &principal_line,
         move_count: replay.moves.len(),
@@ -1152,6 +1179,17 @@ pub fn analyze_alternate_defender_reply_options(
     .collect()
 }
 
+pub fn defender_reply_candidates(
+    board: &Board,
+    attacker: Color,
+    actual_reply: Option<Move>,
+) -> Vec<DefenderReplyCandidate> {
+    bot_corridor::defender_reply_candidates(board, attacker, actual_reply)
+        .into_iter()
+        .map(map_bot_defender_reply_candidate)
+        .collect()
+}
+
 pub fn defender_reply_roles_for_move(
     board: &Board,
     attacker: Color,
@@ -1161,6 +1199,20 @@ pub fn defender_reply_roles_for_move(
         .into_iter()
         .map(map_bot_defender_reply_role)
         .collect()
+}
+
+fn map_bot_defender_reply_candidate(
+    candidate: bot_corridor::DefenderReplyCandidate,
+) -> DefenderReplyCandidate {
+    DefenderReplyCandidate {
+        mv: candidate.mv,
+        notation: candidate.mv.to_notation(),
+        roles: candidate
+            .roles
+            .into_iter()
+            .map(map_bot_defender_reply_role)
+            .collect(),
+    }
 }
 
 fn map_bot_defender_reply_analysis(
@@ -2488,11 +2540,12 @@ mod tests {
     use gomoku_core::{Board, Color, Move, Replay, RuleConfig, Variant};
 
     use super::{
-        analyze_defender_reply_options, analyze_replay, replay_moves, replay_prefix_boards,
-        replay_proof_summary, AnalysisOptions, DefenderReplyOutcome, DefenderReplyRole,
-        ProofLimitCause, ProofStatus, ReplayAnalysisSession, ReplayFrameHighlightRole,
-        ReplayFrameMarkerRole, ReplyClassification, ReplyPolicy, RootCause, TacticalNote,
-        UnclearReason,
+        analyze_alternate_defender_reply_options, analyze_defender_reply_options, analyze_replay,
+        corridor_analysis_model, replay_frame_annotations_from_proof, replay_moves,
+        replay_prefix_boards, replay_proof_summary, AnalysisOptions, DefenderReplyOutcome,
+        DefenderReplyRole, ProofLimitCause, ProofResult, ProofStatus, ReplayAnalysisSession,
+        ReplayFrameHighlightRole, ReplayFrameMarkerRole, ReplyClassification, ReplyPolicy,
+        RootCause, TacticalNote, UnclearReason,
     };
 
     fn mv(notation: &str) -> Move {
@@ -2527,6 +2580,20 @@ mod tests {
                 .expect("fixture move should apply");
         }
         board
+    }
+
+    fn proof_for_board(board: &Board, winner: Color, options: &AnalysisOptions) -> ProofResult {
+        ProofResult {
+            status: ProofStatus::ForcedWin,
+            attacker: winner,
+            side_to_move: board.current_player,
+            model: corridor_analysis_model(board, options),
+            principal_line: Vec::new(),
+            escape_moves: Vec::new(),
+            threat_evidence: Vec::new(),
+            limit_hit: false,
+            limit_causes: Vec::new(),
+        }
     }
 
     #[test]
@@ -3161,6 +3228,89 @@ mod tests {
     }
 
     #[test]
+    fn replay_analysis_probes_all_imminent_combo_reply_outcomes() {
+        let board = board_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "H7", "F8", "G9", "G8", "I8", "G6", "D9", "F9", "F10", "D7", "G10", "F7",
+                "E10", "E8", "D8", "C6", "B5", "D10", "F11", "F6", "F5", "D6", "E6", "H5", "I4",
+            ],
+        );
+        assert_eq!(board.current_player, Color::Black);
+
+        let replies = analyze_alternate_defender_reply_options(
+            &board,
+            Color::White,
+            Some(mv("C8")),
+            &AnalysisOptions {
+                reply_policy: ReplyPolicy::CorridorReplies,
+                max_depth: 0,
+                max_scan_plies: Some(64),
+            },
+        );
+
+        for notation in ["J7", "H9", "E12", "G12"] {
+            let reply = reply_for(&replies, notation);
+            assert!(
+                reply.roles.contains(&DefenderReplyRole::ImminentDefense),
+                "{notation} should be probed as a response to the 3+3 corridor: {replies:?}"
+            );
+        }
+        assert!(
+            replies.iter().all(|reply| reply.notation != "C8"),
+            "the actual replay move is inherited from replay context, not re-probed: {replies:?}"
+        );
+    }
+
+    #[test]
+    fn replay_annotations_do_not_show_lower_tier_forbidden_replies_during_immediate_threats() {
+        let board = board_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "I8", "H10", "G9", "H9", "H7", "J9", "G12", "G10", "I10", "H11", "H12",
+                "I12", "F9", "I6", "E10", "J11", "C12", "D11", "D9", "H13", "E9", "C9", "F11",
+                "C8", "K10", "C7", "C10", "J10", "J8", "I9", "K11", "K9", "L9", "L8", "M7", "F6",
+                "G7", "H6", "G6", "F7", "E12", "C5", "C6", "J12", "J13", "F15", "G14", "E8", "F12",
+                "D12", "F10",
+            ],
+        );
+        assert_eq!(board.current_player, Color::Black);
+        let options = AnalysisOptions {
+            reply_policy: ReplyPolicy::CorridorReplies,
+            max_depth: 0,
+            max_scan_plies: Some(64),
+        };
+        let proof = proof_for_board(&board, Color::White, &options);
+
+        let frame = replay_frame_annotations_from_proof(
+            52,
+            &board,
+            Color::White,
+            &proof,
+            None,
+            Some(mv("F8")),
+            &options,
+        );
+
+        assert!(
+            frame
+                .highlights
+                .iter()
+                .all(|highlight| highlight.mv != mv("D8")),
+            "lower-tier forbidden imminent replies should not be highlighted while immediate threats are active: {:?}",
+            frame.highlights
+        );
+        assert!(
+            frame.markers.iter().all(|marker| marker.mv != mv("D8")),
+            "lower-tier forbidden imminent replies should not be marked while immediate threats are active: {:?}",
+            frame.markers
+        );
+        assert!(frame.highlights.iter().any(|highlight| {
+            highlight.role == ReplayFrameHighlightRole::ImmediateThreat && highlight.mv == mv("F13")
+        }));
+    }
+
+    #[test]
     fn replay_analysis_session_marks_next_corridor_entry_on_escape_boundary() {
         let replay = replay_from_moves(
             Variant::Renju,
@@ -3293,9 +3443,13 @@ mod tests {
         assert!(proof
             .threat_evidence
             .iter()
-            .any(|evidence| evidence.actual_reply == Some(mv("B9"))
-                && evidence.reply_classification == ReplyClassification::BlockedButForced
-                && evidence.escape_replies.is_empty()));
+            .all(|evidence| evidence.actual_reply != Some(mv("B9"))
+                || evidence.reply_classification != ReplyClassification::ConfirmedEscape));
+        assert!(proof
+            .threat_evidence
+            .iter()
+            .flat_map(|evidence| evidence.escape_replies.iter())
+            .all(|&reply| reply != mv("B9")));
     }
 
     #[test]

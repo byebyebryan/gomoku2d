@@ -199,6 +199,30 @@ report should show why the square matters tactically and mark it as forbidden
 for Black. If every natural Black reply is forbidden, the threat may remain
 forced even with only one visible winning square.
 
+### Reply Candidate Contract
+
+Corridor reply generation is tiered before any proof search runs:
+
+1. Collect immediate replies first: direct blocks to the attacker's immediate
+   wins, plus defender immediate wins.
+2. Collect imminent replies only when there are no immediate replies: direct
+   replies to active open/broken-three threats, plus legal counter-threats that
+   create an immediate threat for the defender.
+3. Keep only the highest non-empty tier. Immediate replies suppress imminent
+   replies; multiple threats in the surviving tier all remain visible.
+4. Render every surviving reply as a tactical box. Actual replay moves and
+   Renju-forbidden Black replies are still visible markers, but they are not
+   proof branches.
+5. Probe only legal, non-actual surviving replies. These are the alternatives
+   listed in report proof details.
+6. If no legal non-actual reply remains, the replay analyzer keeps walking
+   backward through the actual line.
+
+This split keeps presentation and proof aligned. The report should not invent
+extra forbidden markers from lower-tier or future proof evidence; a forbidden
+marker is meaningful only when the square survived the current reply-candidate
+tiering.
+
 ## Replay Analysis Role
 
 For finished games, corridor search works backward from the winning move. The
