@@ -379,6 +379,9 @@ Run the lethal safety harness from `gomoku-bot-lab/`:
 cargo run -p gomoku-eval -- lethal-scenarios
 ```
 
+Add `--show-boards` when reviewing the exact fixture positions in the terminal.
+The JSON report always includes each case's `board_ascii` field.
+
 To capture reusable JSON:
 
 ```sh

@@ -118,6 +118,156 @@ The current terminal-coverage cases are:
 - `lethal_renju_forbidden_block`;
 - `nonlethal_renju_black_open_four_overline_completion`.
 
+Each JSON result includes `board_ascii`, and the CLI can print boards directly:
+
+```sh
+cargo run -p gomoku-eval -- lethal-scenarios --show-boards
+```
+
+Board legend:
+
+- `B`: black stone
+- `W`: white stone
+- `.`: empty point
+- Coordinates use `A1` through `O15`.
+- Boards are shown with row 15 at the top, matching printed-board convention.
+
+### lethal_freestyle_open_four
+
+- Rule: freestyle
+- Attacker: Black
+- Defender to move: White
+- Expected: lethal, terminal targets `G8` and `L8`
+
+```text
+    A B C D E F G H I J K L M N O
+15  . . . . . . . . . . . . . . .  15
+14  . . . . . . . . . . . . . . .  14
+13  . . . . . . . . . . . . . . .  13
+12  . . . . . . . . . . . . . . .  12
+11  . . . . . . . . . . . . . . .  11
+10  . . . . . . . . . . . . . . .  10
+ 9  . . . . . . . . . . . . . . .  9
+ 8  . . . . . . . B B B B . . . .  8
+ 7  . . . . . . . . . . . . . . .  7
+ 6  . . . . . . . . . . . . . . .  6
+ 5  . . . . . . . . . . . . . . .  5
+ 4  . . . . . . . . . . . . . . .  4
+ 3  W . . . . . . . . . . . . . .  3
+ 2  W . . . . . . . . . . . . . .  2
+ 1  W . . . . . . . . . . . . . .  1
+    A B C D E F G H I J K L M N O
+```
+
+### nonlethal_blockable_closed_four
+
+- Rule: freestyle
+- Attacker: Black
+- Defender to move: White
+- Expected: non-lethal, terminal target `L8`, covering reply `L8`
+
+```text
+    A B C D E F G H I J K L M N O
+15  . . . . . . . . . . . . . . .  15
+14  . . . . . . . . . . . . . . .  14
+13  . . . . . . . . . . . . . . .  13
+12  . . . . . . . . . . . . . . .  12
+11  . . . . . . . . . . . . . . .  11
+10  . . . . . . . . . . . . . . .  10
+ 9  . . . . . . . . . . . . . . .  9
+ 8  . . . . . . W B B B B . . . .  8
+ 7  . . . . . . . . . . . . . . .  7
+ 6  . . . . . . . . . . . . . . .  6
+ 5  . . . . . . . . . . . . . . .  5
+ 4  . . . . . . . . . . . . . . .  4
+ 3  . . . . . . . . . . . . . . .  3
+ 2  W . . . . . . . . . . . . . .  2
+ 1  W . . . . . . . . . . . . . .  1
+    A B C D E F G H I J K L M N O
+```
+
+### nonlethal_defender_immediate_win
+
+- Rule: freestyle
+- Attacker: White
+- Defender to move: Black
+- Expected: non-lethal because Black can win immediately at `B5`
+
+```text
+    A B C D E F G H I J K L M N O
+15  . . . . . . . . . . . . . . .  15
+14  . . . . . . . . . . . . . . .  14
+13  . . . . . . . . . . . . . . .  13
+12  . . . . . . . . . . . . . . .  12
+11  . . . . . . . . . . . . . . .  11
+10  . . . . . . . . . . . . . . .  10
+ 9  . . . . . . . . . . . . . . .  9
+ 8  . . . . . . . W W W W . . . .  8
+ 7  . . . . . . . . . . . . . . .  7
+ 6  . . . . . . . . . . . . . . .  6
+ 5  . . . . . . . . . . . . . . .  5
+ 4  . B . . . . . . . . . . . . .  4
+ 3  . B . . . . . . . . . . . . .  3
+ 2  . B . . . . . . . . . . . . .  2
+ 1  . B . . . . . . . . . . . . .  1
+    A B C D E F G H I J K L M N O
+```
+
+### lethal_renju_forbidden_block
+
+- Rule: Renju
+- Attacker: White
+- Defender to move: Black
+- Expected: lethal, terminal target `G10`, no legal Black covering reply
+
+```text
+    A B C D E F G H I J K L M N O
+15  . . . . . . . . . . . . . . .  15
+14  . . . . . . . . . . . . . . .  14
+13  . . . . . . . . . . . . . . .  13
+12  . . . . . . . . . . . . . . .  12
+11  . . . . . . W . . . . . . . .  11
+10  . . . . . . . . . . . . . . .  10
+ 9  . . . . . B W B W . . . . . .  9
+ 8  . . . . . . W B B B . . . . .  8
+ 7  . . . B W W W W B . . . . . .  7
+ 6  . . . . . . B . . . . . . . .  6
+ 5  . . . . . . . . . . . . . . .  5
+ 4  . . . . . . . . . . . . . . .  4
+ 3  . . . . . . . . . . . . . . .  3
+ 2  . . . . . . . . . . . . . . .  2
+ 1  . . . . . . . . . . . . . . .  1
+    A B C D E F G H I J K L M N O
+```
+
+### nonlethal_renju_black_open_four_overline_completion
+
+- Rule: Renju
+- Attacker: Black
+- Defender to move: White
+- Expected: non-lethal, target `G8`, covering reply `G8`; `L8` is not a legal
+  Black terminal target because it would overline.
+
+```text
+    A B C D E F G H I J K L M N O
+15  . . . . . . . . . . . . . . .  15
+14  . . . . . . . . . . . . . . .  14
+13  . . . . . . . . . . . . . . .  13
+12  . . . . . . . . . . . . . . .  12
+11  . . . . . . . . . . . . . . .  11
+10  . . . . . . . . . . . . . . .  10
+ 9  . . . . . . . . . . . . . . .  9
+ 8  . . . . . . . B B B B . B . .  8
+ 7  . . . . . . . . . . . . . . .  7
+ 6  . . . . . . . . . . . . . . .  6
+ 5  . . . . . . . . . . . . . . .  5
+ 4  . . . . . . . . . . . . . . .  4
+ 3  . . . . . . . . . . . . . . .  3
+ 2  . . . . . . . . . . . . . . .  2
+ 1  W . W . W . W . . . . . . . .  1
+    A B C D E F G H I J K L M N O
+```
+
 Slice 2 should add one-step `4+3` and `3+3` cases to the same harness before
 the classifier is wired into replay analysis or search.
 
