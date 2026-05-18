@@ -72,6 +72,18 @@ the other completion. The useful open-four cases are completing one, creating
 one, preventing one before it exists, or prioritizing a race against another
 threat.
 
+Lethal-threat coverage is adjacent to this corpus but not part of
+`gomoku-eval tactical-scenarios`. This runner asks "which move did this bot
+choose?", while lethal classification asks "does the defender have any legal
+reply that avoids terminal or known-lethal coverage?"
+
+Use `gomoku-eval lethal-scenarios` for lethal state classification. It is a
+separate pass/fail harness over the shared lethal classifier, not a bot
+move-choice sweep. The current lethal harness covers the terminal-coverage
+boundary: freestyle open four, blockable single four, defender immediate-win
+race, Renju forbidden block, and Renju Black illegal-completion caveat. See
+[`lethal_threats.md`](lethal_threats.md) for the model and case list.
+
 ## How This Maps To Bot Strategy
 
 The scenario corpus should drive the next search work, but only at the right

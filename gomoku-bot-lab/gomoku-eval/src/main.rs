@@ -18,6 +18,9 @@ use gomoku_eval::analysis_fixture::{
 use gomoku_eval::analysis_report::{report_match_to_replay, select_report_matches};
 use gomoku_eval::arena::{run_match_series_with_limits, MatchEndReason, MatchLimits, MatchResult};
 use gomoku_eval::budget::{PooledCpuBudgetConfig, PooledSearchBot};
+use gomoku_eval::lethal_scenario::{
+    run_lethal_scenarios, LethalScenarioReport, LethalScenarioResult, LETHAL_SCENARIO_CASES,
+};
 use gomoku_eval::opening::{OpeningPolicy, CENTERED_SUITE_MAX_PLIES};
 use gomoku_eval::report::{
     render_tournament_report_html_with_options, AnchorReferenceReport, ReportRenderOptions,
@@ -267,6 +270,12 @@ enum Commands {
         search_cpu_time_ms: Option<u64>,
 
         /// Write reusable tactical scenario report JSON
+        #[arg(long)]
+        report_json: Option<PathBuf>,
+    },
+    /// Run lethal-threat classifier scenarios
+    LethalScenarios {
+        /// Write reusable lethal scenario report JSON
         #[arg(long)]
         report_json: Option<PathBuf>,
     },
@@ -794,6 +803,38 @@ fn print_tactical_report_summary(report: &TacticalScenarioReport) {
     print_tactical_group_summary("By role", &report.role_summaries);
     print_tactical_group_summary("By layer", &report.layer_summaries);
     print_tactical_group_summary("By intent", &report.intent_summaries);
+}
+
+fn print_lethal_scenario_result(result: &LethalScenarioResult) {
+    let status = if result.passed { "PASS" } else { "FAIL" };
+    println!(
+        "{:<5} {:?} attacker {:?} defender {:?} {:<52} lethal {} expect {} targets {:<8} cover {:<8} defender-win {}",
+        status,
+        result.variant,
+        result.attacker,
+        result.defender,
+        result.case_id,
+        result.actual_lethal,
+        result.expected_lethal,
+        display_move_list(&result.actual_terminal_targets),
+        display_move_list(&result.actual_covering_replies),
+        display_move_list(&result.actual_defender_immediate_wins)
+    );
+}
+
+fn print_lethal_report_summary(report: &LethalScenarioReport) {
+    println!(
+        "\n--- Summary ---\nLethal scenarios: {}/{} passed, {} failed",
+        report.passed, report.total, report.failed
+    );
+}
+
+fn display_move_list(moves: &[String]) -> String {
+    if moves.is_empty() {
+        "-".to_string()
+    } else {
+        moves.join("/")
+    }
 }
 
 fn print_analysis_fixture_result(result: &AnalysisFixtureResult) {
@@ -1432,6 +1473,32 @@ fn main() {
             }
 
             if report.hard_failed > 0 {
+                std::process::exit(1);
+            }
+        }
+        Commands::LethalScenarios { report_json } => {
+            println!("--- Lethal Scenarios ---");
+            println!("Cases: {}", LETHAL_SCENARIO_CASES.len());
+            println!();
+
+            let report = run_lethal_scenarios(LETHAL_SCENARIO_CASES);
+            for result in &report.results {
+                print_lethal_scenario_result(result);
+            }
+
+            print_lethal_report_summary(&report);
+
+            if let Some(path) = &report_json {
+                let json = report.to_json().unwrap_or_else(|err| {
+                    exit_with_error(format!("Failed to serialize lethal report: {err}"))
+                });
+                std::fs::write(path, json).unwrap_or_else(|err| {
+                    exit_with_error(format!("Failed to write lethal report: {err}"))
+                });
+                println!("Report JSON: {}", path.display());
+            }
+
+            if report.failed > 0 {
                 std::process::exit(1);
             }
         }

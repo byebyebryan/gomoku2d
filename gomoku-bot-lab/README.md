@@ -365,6 +365,33 @@ be driven by diagnostics that expose real gaps, then confirmed with tournament
 ablation. The rejected broad threat-extension and broad shape-eval experiments
 are recorded in the v0.4 search plan rather than exposed as current lab specs.
 
+### Lethal scenario diagnostics
+
+Lethal scenarios answer a different question from tactical scenarios:
+"does this position already leave the defender without legal coverage?" They
+validate the shared lethal classifier directly rather than asking a bot to pick
+a move. The model and current case list live in
+[`../docs/lethal_threats.md`](../docs/lethal_threats.md).
+
+Run the lethal safety harness from `gomoku-bot-lab/`:
+
+```sh
+cargo run -p gomoku-eval -- lethal-scenarios
+```
+
+To capture reusable JSON:
+
+```sh
+mkdir -p outputs
+cargo run -p gomoku-eval -- lethal-scenarios --report-json outputs/lethal-scenarios.json
+```
+
+The current harness covers terminal coverage only: freestyle open four,
+blockable single four, defender immediate-win race, Renju forbidden block, and
+Renju Black illegal-completion caveat. One-step lethal coverage such as `4+3`
+and `3+3` should be added here before it is wired into replay analysis or bot
+search.
+
 ## Replay format
 
 Both `gomoku-cli` and `gomoku-eval` write the same JSON. The web game consumes
