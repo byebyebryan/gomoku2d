@@ -14,10 +14,13 @@ test("guest profile persists locally and renders saved local matches", async ({ 
   await displayName.fill("Bryan Guest");
   await page.reload();
   await expect(displayName).toHaveValue("Bryan Guest");
-  await expect(page.getByText("Default rule")).toBeVisible();
+
+  await expect(page.getByText("Default rule")).toHaveCount(0);
+  await page.getByRole("link", { name: "Settings" }).click();
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
   await page.getByRole("button", { name: "Renju" }).click();
 
-  await page.getByRole("link", { name: "Play" }).click();
+  await page.getByRole("link", { name: "Back to Game" }).click();
   await expect(page.getByRole("heading", { name: "Local Match" })).toBeVisible();
   await expect(page.getByText("Bryan Guest to move")).toBeVisible();
   await expect(page.getByTestId("match-rule")).toHaveText("Renju");
@@ -45,7 +48,7 @@ test("guest profile persists locally and renders saved local matches", async ({ 
   await expect(page.getByText("Wins", { exact: true })).toBeVisible();
   await expect(page.getByText("Losses", { exact: true })).toBeVisible();
   await expect(page.getByText("Draws", { exact: true })).toBeVisible();
-  await expect(page.getByText("vs Practice Bot")).toBeVisible();
+  await expect(page.getByText("vs Normal Bot")).toBeVisible();
   await expect(page.locator("ol li").first()).toContainText("Renju");
   const overflowMetrics = await page.evaluate(() => {
     const historyBody = document.querySelector('[class*="historyBody"]');
@@ -75,7 +78,7 @@ test("profile history keeps summary pinned while the history list scrolls", asyn
   await page.goto("/profile");
 
   await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
-  await expect(page.getByText("Finished", { exact: true })).toBeVisible();
+  await expect(page.getByText("Matches", { exact: true })).toBeVisible();
   await expect(page.getByText("Wins", { exact: true })).toBeVisible();
   await expect(page.getByText("Losses", { exact: true })).toBeVisible();
   await expect(page.getByText("Draws", { exact: true })).toBeVisible();

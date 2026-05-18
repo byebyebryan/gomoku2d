@@ -1,13 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import { WasmReplayAnalyzer } from "../core/wasm_bridge";
 import { createLocalSavedMatch } from "../match/saved_match";
 import type { LocalProfileSavedMatch } from "../profile/local_profile_store";
 
-import {
-  createReplayAnalyzer,
-  replayAnalysisOptionsJson,
-  savedMatchToReplayJson,
-} from "./replay_analysis_core";
+import { replayAnalysisOptionsJson, savedMatchToReplayJson } from "./replay_analysis_core";
 
 const WINNING_MOVES = [
   { col: 5, moveNumber: 1, player: 1 as const, row: 7 },
@@ -73,9 +70,12 @@ describe("savedMatchToReplayJson", () => {
   });
 });
 
-describe("createReplayAnalyzer", () => {
+describe("WasmReplayAnalyzer replay input", () => {
   it("creates a wasm analyzer that can analyze the converted saved match", () => {
-    const analyzer = createReplayAnalyzer(localMatch(), { maxDepth: 4, maxScanPlies: 64 });
+    const analyzer = WasmReplayAnalyzer.createFromReplayJson(
+      savedMatchToReplayJson(localMatch()),
+      replayAnalysisOptionsJson({ maxDepth: 4, maxScanPlies: 64 }),
+    );
 
     try {
       const result = JSON.parse(analyzer.step(128)) as { analysis: unknown; done: boolean; status: string };

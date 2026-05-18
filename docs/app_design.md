@@ -50,7 +50,7 @@ The board is the center of gravity on match and replay screens.
 The app should already feel complete as a local game.
 
 - `Profile` is really the player's local record screen.
-- Stats, preferred rules, and recent matches all work without sign-in.
+- Stats, saved game settings, and recent matches all work without sign-in.
 - Cloud-backed identity extends this record when the player signs in; it should
   not redefine the local game.
 
@@ -106,8 +106,8 @@ Primary elements:
 
 Optional lightweight context:
 
-- current opponent label, e.g. `Practice Bot`
-- current preferred rule, if it is worth surfacing as passive context
+- current opponent label, e.g. `Normal Bot`
+- current rule, if it is worth surfacing as passive context
 
 Rules:
 
@@ -132,8 +132,8 @@ This is the loudest text after the board itself.
 Examples:
 
 - `YOUR MOVE`
-- `PRACTICE BOT THINKING`
-- `PRACTICE BOT WINS`
+- `THINKING`
+- `NORMAL BOT WINS`
 
 Use player-based language where possible instead of stone-only language.
 
@@ -261,7 +261,6 @@ Primary elements:
 - optional linked cloud identity
 - cloud promotion/import status when signed in
 - summary stats strip
-- preferred rules control
 - recent local matches
 - clear replay entry points from history
 

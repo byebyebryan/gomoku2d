@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { seedLocalSavedMatch } from "./helpers/local_history";
+
 function moveCount(value: string | null): number {
   const match = value?.match(/\d+/);
   return match ? Number(match[0]) : NaN;
@@ -19,8 +21,33 @@ function boardClickPosition(box: { width: number; height: number }, row: number,
 }
 
 test("finished board click advances to the next round with swapped colors", async ({ page }) => {
-  await page.goto("/");
-  await page.getByRole("link", { name: "Play" }).click();
+  await page.goto("/profile");
+  await seedLocalSavedMatch(page, {
+    displayName: "Guest",
+    id: "fixture-next-round-source",
+    moves: [
+      { col: 7, row: 7 },
+      { col: 0, row: 0 },
+      { col: 8, row: 7 },
+      { col: 0, row: 1 },
+      { col: 9, row: 7 },
+      { col: 0, row: 2 },
+      { col: 10, row: 7 },
+      { col: 0, row: 3 },
+      { col: 11, row: 7 },
+    ],
+    preferredVariant: "freestyle",
+    savedAt: "2026-05-18T05:00:00.000Z",
+    status: "black_won",
+    variant: "freestyle",
+  });
+
+  await page.goto("/replay/fixture-next-round-source");
+  await expect(page.getByRole("heading", { name: "Replay" })).toBeVisible();
+  await page.getByRole("button", { name: "Previous move" }).click();
+  await expect(page.getByTestId("replay-move-count")).toHaveText("Move 8 / 9");
+  await page.getByRole("button", { name: "Play From Here" }).click();
+  await expect(page.getByRole("heading", { name: "Local Match" })).toBeVisible();
 
   const canvas = page.locator("canvas").first();
   await expect(canvas).toBeVisible();
@@ -30,30 +57,18 @@ test("finished board click advances to the next round with swapped colors", asyn
     throw new Error("board canvas did not report a bounding box");
   }
 
-  const losingMoves: Array<[number, number]> = [
-    [0, 0],
-    [2, 0],
-    [4, 0],
-    [6, 0],
-    [8, 0],
-    [10, 0],
-  ];
-
-  for (const [row, col] of losingMoves) {
-    const beforeCount = moveCount(await page.getByTestId("match-move-count").textContent());
-    await canvas.click({ position: boardClickPosition(box, row, col) });
-    await expect
-      .poll(async () => moveCount(await page.getByTestId("match-move-count").textContent()), {
-        timeout: 15_000,
-      })
-      .toBeGreaterThan(beforeCount);
-  }
-
-  await expect(page.getByText("Practice Bot wins")).toBeVisible();
+  const beforeCount = moveCount(await page.getByTestId("match-move-count").textContent());
+  await canvas.click({ position: boardClickPosition(box, 7, 11) });
+  await expect
+    .poll(async () => moveCount(await page.getByTestId("match-move-count").textContent()), {
+      timeout: 15_000,
+    })
+    .toBeGreaterThan(beforeCount);
+  await expect(page.getByTestId("match-status")).toHaveText("Guest wins");
 
   await canvas.click({ position: boardClickPosition(box, 7, 7) });
 
-  await expect(page.getByTestId("player-row-black")).toContainText("Practice Bot");
+  await expect(page.getByTestId("player-row-black")).toContainText("Normal Bot");
   await expect(page.getByTestId("player-row-white")).toContainText("Guest");
   await expect(page.getByTestId("player-row-black").getByRole("img", { name: "Bot" })).toBeVisible();
   await expect(page.getByTestId("player-row-white").getByRole("img", { name: "Player" })).toBeVisible();
