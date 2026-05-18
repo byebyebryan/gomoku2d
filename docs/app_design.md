@@ -218,6 +218,10 @@ After analysis resolves, status should become frame-aware: winner frame, winner
 inside corridor, loser locked in, last escape, or ordinary side-to-move outside
 the corridor.
 
+On portrait mobile, verbose analysis status copy may be suppressed in the first
+viewport so the player cards, board, timeline, transport, and branch action stay
+in the primary flow.
+
 #### B. Transport controls
 
 Transport is the main secondary UI on the page.

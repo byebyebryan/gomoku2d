@@ -12,6 +12,54 @@ their own section.
 
 ## [Unreleased]
 
+## [0.4.6] - 2026-05-17
+
+**Theme: bring corridor-search replay analysis into the playable web app.**
+
+`0.4.6` turns the analysis report workbench into the first player-facing replay
+analysis surface. The analyzer still has bounded-model limits, but saved replays
+now explain the final forced corridor directly in the Replay page instead of
+requiring a separate static report.
+
+### Web
+
+- Added browser-side replay analysis through a cancellable worker-backed Wasm
+  session so saved decisive games are analyzed progressively from the ending
+  backward.
+- Added frame-aware replay status, analysis timeline fill, last-escape marker,
+  and board-space annotations for forced losses, escapes, forbidden replies,
+  immediate threats, imminent replies, counter-threats, and corridor entries.
+- Reworked replay navigation around the finished-game review flow: the page
+  opens at the final board, turn buttons step by whole turns, move buttons still
+  step raw plies, and the current side's next actual move is shown as a hover
+  target.
+- Kept mobile replay board-first by hiding verbose analysis copy in portrait,
+  removing unused top spacing, and keeping transport controls directly after the
+  board instead of pinning them to the viewport.
+- Replaced the overloaded warning overlay sheet with split caution,
+  highlighter, and marker sprite roles, then aligned live hints and replay
+  analysis overlays on the same board-space vocabulary.
+
+### Bot lab and analysis
+
+- Split the replay analyzer into the shared `gomoku-analysis` crate so
+  `gomoku-eval` and `gomoku-wasm` consume the same corridor traceback engine.
+- Added the stepped `ReplayAnalysisSession` API with per-frame annotations,
+  progress counters, and final analysis output for both report generation and
+  browser replay use.
+- Tightened corridor reply candidate handling so report and web annotations use
+  the same immediate-over-imminent tiering, actual-move filtering, forbidden
+  markers, and legal alternative probes.
+
+### Repo and docs
+
+- Added the replay-analysis browser integration contract to
+  `docs/game_analysis.md` and updated the `0.4.6` plan around the shipped
+  player-facing surface.
+- Refreshed the published analysis report after corridor-candidate fixes so the
+  static report remains the reference artifact for browser annotation parity.
+- Added focused `v0.4.6` replay screenshots to the screenshot-review record.
+
 ## [0.4.5] - 2026-05-16
 
 **Theme: turn the bot lab into player-facing settings without exposing every
@@ -820,7 +868,8 @@ together in one canvas-driven surface. That lesson drove the `v0.2.1` rewrite.
   concerns blurred together.
 - Expressive UI language, but not scalable beyond one canvas.
 
-[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.5...HEAD
+[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.6...HEAD
+[0.4.6]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.5...v0.4.6
 [0.4.5]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.2...v0.4.3

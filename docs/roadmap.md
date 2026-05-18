@@ -397,27 +397,34 @@ means. Profile should not become a dumping ground for bot/debug preferences.
 
 The working plan lives in `docs/archive/v0_4_5_bot_controls_plan.md`.
 
-`0.4.6` is the first replay-analysis product bridge. The goal is to turn the
-corridor analyzer from a static report artifact into something the Replay page
-can use directly.
+`0.4.6` is the first replay-analysis product bridge. It turns the corridor
+analyzer from a static report artifact into something the Replay page can use
+directly.
 
-The first implementation checkpoints are plumbing, not final UI:
+The release lands the full foundation slice:
 
 - `gomoku-analysis` is now the shared Rust analyzer crate;
-- `gomoku-analysis` also exposes a stepped `ReplayAnalysisSession` with frame
+- `gomoku-analysis` exposes a stepped `ReplayAnalysisSession` with frame
   annotations and progress counters;
 - `gomoku-eval` keeps the CLI/report workflows by consuming that shared crate;
 - `gomoku-wasm` exposes a session-backed replay analyzer bridge and exact replay
   hash helper;
-- `gomoku-web` converts saved matches into core replay JSON and now has a
-  cancellable replay-analysis worker/runner protocol.
+- `gomoku-web` converts saved matches into core replay JSON and runs analysis in
+  a cancellable worker;
+- Replay opens on the final board, then uses turn-based navigation, a
+  forced-corridor timeline, compact frame-aware status copy, and board
+  annotations to show the final forced corridor and latest escape;
+- the split caution/highlighter/marker sprite vocabulary now supports both live
+  hints and replay analysis overlays.
 
-The remaining `0.4.6` work is the actual player-facing layer: replay-route
-state, compact analysis copy, and board annotations that use the new
-marker/highlighter sprite vocabulary without exposing lab report internals.
+Keep the claim bounded: this is not a solver and not a full proof-tree browser.
+It is the first in-product version of corridor search: saved replays can explain
+the final forced sequence and the last visible escape.
 
-Later `0.4.x` slices can compete based on which lab-powered product surface
-feels strongest.
+`0.4.7` should be the polish/wrap-up pass for the `0.4` line rather than another
+large lab pivot. Candidate work: clearer replay-analysis explanation, timeline
+and marker readability, screenshot/mobile polish, and release-quality cleanup
+before moving to the next product phase.
 
 ### Possible Work
 
