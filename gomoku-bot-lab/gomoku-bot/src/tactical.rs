@@ -1,6 +1,76 @@
 use serde::Serialize;
+use std::cell::Cell as MetricCell;
 
 use gomoku_core::{Board, Color, GameResult, Move, Variant, DIRS};
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct TacticalMetrics {
+    pub renju_effective_filter_calls: u64,
+    pub renju_effective_filter_ns: u64,
+    pub renju_effective_filter_continuation_checks: u64,
+    pub renju_effective_filter_continuation_ns: u64,
+}
+
+thread_local! {
+    static TACTICAL_METRICS: MetricCell<TacticalMetrics> = const { MetricCell::new(TacticalMetrics {
+        renju_effective_filter_calls: 0,
+        renju_effective_filter_ns: 0,
+        renju_effective_filter_continuation_checks: 0,
+        renju_effective_filter_continuation_ns: 0,
+    }) };
+}
+
+pub fn tactical_metrics_snapshot() -> TacticalMetrics {
+    TACTICAL_METRICS.with(MetricCell::get)
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn record_renju_effective_filter(elapsed: std::time::Duration) {
+    TACTICAL_METRICS.with(|metrics| {
+        let mut current = metrics.get();
+        current.renju_effective_filter_calls =
+            current.renju_effective_filter_calls.saturating_add(1);
+        current.renju_effective_filter_ns = current
+            .renju_effective_filter_ns
+            .saturating_add(u64::try_from(elapsed.as_nanos()).unwrap_or(u64::MAX).max(1));
+        metrics.set(current);
+    });
+}
+
+#[cfg(target_arch = "wasm32")]
+fn record_renju_effective_filter() {
+    TACTICAL_METRICS.with(|metrics| {
+        let mut current = metrics.get();
+        current.renju_effective_filter_calls =
+            current.renju_effective_filter_calls.saturating_add(1);
+        metrics.set(current);
+    });
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn record_renju_effective_filter_continuation(elapsed: std::time::Duration) {
+    TACTICAL_METRICS.with(|metrics| {
+        let mut current = metrics.get();
+        current.renju_effective_filter_continuation_checks = current
+            .renju_effective_filter_continuation_checks
+            .saturating_add(1);
+        current.renju_effective_filter_continuation_ns = current
+            .renju_effective_filter_continuation_ns
+            .saturating_add(u64::try_from(elapsed.as_nanos()).unwrap_or(u64::MAX).max(1));
+        metrics.set(current);
+    });
+}
+
+#[cfg(target_arch = "wasm32")]
+fn record_renju_effective_filter_continuation() {
+    TACTICAL_METRICS.with(|metrics| {
+        let mut current = metrics.get();
+        current.renju_effective_filter_continuation_checks = current
+            .renju_effective_filter_continuation_checks
+            .saturating_add(1);
+        metrics.set(current);
+    });
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LocalThreatKind {
@@ -264,8 +334,14 @@ impl SearchThreatPolicy {
         if !self.needs_renju_effective_filter(board, &annotation) {
             return annotation;
         }
+        #[cfg(not(target_arch = "wasm32"))]
+        let start = std::time::Instant::now();
         if !board.is_legal_for_color(annotation.mv, annotation.player) {
             annotation.local_threats.clear();
+            #[cfg(not(target_arch = "wasm32"))]
+            record_renju_effective_filter(start.elapsed());
+            #[cfg(target_arch = "wasm32")]
+            record_renju_effective_filter();
             return annotation;
         }
 
@@ -276,6 +352,10 @@ impl SearchThreatPolicy {
                 annotation.local_threats,
             ),
         );
+        #[cfg(not(target_arch = "wasm32"))]
+        record_renju_effective_filter(start.elapsed());
+        #[cfg(target_arch = "wasm32")]
+        record_renju_effective_filter();
         annotation
     }
 
@@ -1333,6 +1413,20 @@ fn renju_effective_black_local_threat_fact(
 }
 
 fn renju_black_local_threat_continuation_is_effective(board_after_gain: &Board, mv: Move) -> bool {
+    #[cfg(not(target_arch = "wasm32"))]
+    let start = std::time::Instant::now();
+    let result = renju_black_local_threat_continuation_is_effective_inner(board_after_gain, mv);
+    #[cfg(not(target_arch = "wasm32"))]
+    record_renju_effective_filter_continuation(start.elapsed());
+    #[cfg(target_arch = "wasm32")]
+    record_renju_effective_filter_continuation();
+    result
+}
+
+fn renju_black_local_threat_continuation_is_effective_inner(
+    board_after_gain: &Board,
+    mv: Move,
+) -> bool {
     let mut attacker_turn = board_after_gain.clone();
     attacker_turn.current_player = Color::Black;
     if !attacker_turn.is_legal_for_color(mv, Color::Black) {

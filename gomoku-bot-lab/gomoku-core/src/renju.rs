@@ -3,13 +3,20 @@ use std::cell::Cell as MetricCell;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct RenjuForbiddenMetrics {
+    pub prefilter_checks: u64,
+    pub prefilter_ns: u64,
     pub checks: u64,
     pub ns: u64,
 }
 
 thread_local! {
     static RENJU_FORBIDDEN_METRICS: MetricCell<RenjuForbiddenMetrics> =
-        const { MetricCell::new(RenjuForbiddenMetrics { checks: 0, ns: 0 }) };
+        const { MetricCell::new(RenjuForbiddenMetrics {
+            prefilter_checks: 0,
+            prefilter_ns: 0,
+            checks: 0,
+            ns: 0,
+        }) };
 }
 
 pub fn renju_forbidden_metrics_snapshot() -> RenjuForbiddenMetrics {
@@ -51,6 +58,17 @@ pub(crate) fn forbidden_reason(board: &Board, mv: Move) -> Option<ForbiddenReaso
 }
 
 pub(crate) fn could_be_forbidden(board: &Board, mv: Move) -> bool {
+    #[cfg(not(target_arch = "wasm32"))]
+    let start = std::time::Instant::now();
+    let result = could_be_forbidden_inner(board, mv);
+    #[cfg(not(target_arch = "wasm32"))]
+    record_renju_forbidden_prefilter_check(start.elapsed());
+    #[cfg(target_arch = "wasm32")]
+    record_renju_forbidden_prefilter_check();
+    result
+}
+
+fn could_be_forbidden_inner(board: &Board, mv: Move) -> bool {
     if mv.row >= board.config.board_size
         || mv.col >= board.config.board_size
         || board.cell(mv.row, mv.col).is_some()
@@ -63,6 +81,27 @@ pub(crate) fn could_be_forbidden(board: &Board, mv: Move) -> bool {
     };
 
     !creates_exact_five(&view, mv) && could_be_forbidden_non_winning(&view, mv)
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn record_renju_forbidden_prefilter_check(elapsed: std::time::Duration) {
+    RENJU_FORBIDDEN_METRICS.with(|metrics| {
+        let mut current = metrics.get();
+        current.prefilter_checks = current.prefilter_checks.saturating_add(1);
+        current.prefilter_ns = current
+            .prefilter_ns
+            .saturating_add(u64::try_from(elapsed.as_nanos()).unwrap_or(u64::MAX).max(1));
+        metrics.set(current);
+    });
+}
+
+#[cfg(target_arch = "wasm32")]
+fn record_renju_forbidden_prefilter_check() {
+    RENJU_FORBIDDEN_METRICS.with(|metrics| {
+        let mut current = metrics.get();
+        current.prefilter_checks = current.prefilter_checks.saturating_add(1);
+        metrics.set(current);
+    });
 }
 
 #[derive(Clone, Copy)]
