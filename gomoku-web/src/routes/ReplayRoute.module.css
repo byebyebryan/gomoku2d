@@ -225,23 +225,57 @@
   pointer-events: none;
 }
 
+.timelineAnalyzed {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  bottom: 0;
+  left: var(--timeline-analyzed-start, 0%);
+  right: calc(100% - var(--timeline-analyzed-end, 0%));
+  background: rgba(245, 245, 245, 0.22);
+}
+
 .timelineSetup {
   position: absolute;
+  z-index: 2;
   top: 0;
   bottom: 0;
   left: var(--timeline-setup-start, 0%);
   right: calc(100% - var(--timeline-setup-end, 0%));
+  background: linear-gradient(90deg, var(--success) 0%, #d9783a 48%, var(--danger) 100%);
+}
+
+.timelineLethalTail {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  bottom: 0;
+  left: var(--timeline-lethal-tail-start, 0%);
+  right: calc(100% - var(--timeline-lethal-tail-end, 0%));
   background: var(--danger);
 }
 
 .timelineEscape {
   position: absolute;
+  z-index: 4;
   top: -6px;
   bottom: -6px;
   left: var(--timeline-escape, 0%);
   width: 8px;
   border: 2px solid var(--border-strong);
   background: var(--success);
+  transform: translateX(-50%);
+}
+
+.timelineLethalOnset {
+  position: absolute;
+  z-index: 4;
+  top: -6px;
+  bottom: -6px;
+  left: var(--timeline-lethal-onset, 0%);
+  width: 8px;
+  border: 2px solid var(--border-strong);
+  background: var(--danger);
   transform: translateX(-50%);
 }
 

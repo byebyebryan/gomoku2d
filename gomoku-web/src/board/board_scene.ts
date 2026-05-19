@@ -78,8 +78,22 @@ type SequenceStep =
   | { frame: SpriteFrameRef; kind: "delay"; max: number; min: number }
   | { keys: readonly string[]; kind: "randomAnimation" };
 
+type AnimationCompleteHandler = () => void;
+
 const STONE_STATIC_FRAME: SpriteFrameRef = { texture: SPRITE.STONE, frame: STONE_ANIMS.STATIC.frame };
 const POINTER_STATIC_FRAME: SpriteFrameRef = { texture: SPRITE.POINTER, frame: POINTER_ANIMS.STATIC.frame };
+const REPLAY_LAST_MOVE_STATIC_DELAY_MS =
+  ((STONE_ANIMS.IDLE_1.end - STONE_ANIMS.IDLE_1.start + 1) / STONE_ANIMS.IDLE_1.frameRate) * 1000;
+
+const REPLAY_LAST_MOVE_STEPS: readonly SequenceStep[] = [
+  { kind: "animation", key: STONE_ANIMS.IDLE_1.key },
+  {
+    kind: "delay",
+    frame: STONE_STATIC_FRAME,
+    min: REPLAY_LAST_MOVE_STATIC_DELAY_MS,
+    max: REPLAY_LAST_MOVE_STATIC_DELAY_MS,
+  },
+] as const;
 
 const POINTER_NORMAL_STEPS: readonly SequenceStep[] = [
   { kind: "animation", key: POINTER_ANIMS.OPEN.key },
@@ -105,6 +119,10 @@ function cssColor(color: number): string {
   return `#${color.toString(16).padStart(6, "0")}`;
 }
 
+function animationCompleteEvent(key: string): string {
+  return `${Phaser.Animations.Events.ANIMATION_COMPLETE_KEY}${key}`;
+}
+
 class RandomAnimationCycle {
   private readonly scene: Phaser.Scene;
   private readonly anims: readonly { key: string }[];
@@ -112,6 +130,8 @@ class RandomAnimationCycle {
   private readonly delayMin: number;
   private readonly resetFrame: SpriteFrameRef | null;
   private active = false;
+  private animationCompleteEventName: string | null = null;
+  private animationCompleteHandler: AnimationCompleteHandler | null = null;
   private sprite: Phaser.GameObjects.Sprite | null = null;
   private timer: Phaser.Time.TimerEvent | null = null;
 
@@ -140,16 +160,24 @@ class RandomAnimationCycle {
     this.active = false;
     this.timer?.destroy();
     this.timer = null;
+    this.clearAnimationCompleteHandler();
 
     if (!this.sprite) {
       return;
     }
 
-    this.sprite.removeAllListeners(Phaser.Animations.Events.ANIMATION_COMPLETE);
     if (this.resetFrame !== null) {
       resetSpriteToFrame(this.sprite, this.resetFrame);
     }
     this.sprite = null;
+  }
+
+  private clearAnimationCompleteHandler(): void {
+    if (this.sprite && this.animationCompleteEventName && this.animationCompleteHandler) {
+      this.sprite.off(this.animationCompleteEventName, this.animationCompleteHandler);
+    }
+    this.animationCompleteEventName = null;
+    this.animationCompleteHandler = null;
   }
 
   private scheduleNext(): void {
@@ -166,7 +194,10 @@ class RandomAnimationCycle {
 
       const anim = this.anims[Math.floor(Math.random() * this.anims.length)];
       sprite.play(anim.key);
-      sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+      const completeEvent = animationCompleteEvent(anim.key);
+      const onComplete = () => {
+        this.animationCompleteEventName = null;
+        this.animationCompleteHandler = null;
         if (!this.active || !this.sprite || !this.sprite.active || !this.sprite.scene) {
           return;
         }
@@ -175,7 +206,10 @@ class RandomAnimationCycle {
           resetSpriteToFrame(this.sprite, this.resetFrame);
         }
         this.scheduleNext();
-      });
+      };
+      this.animationCompleteEventName = completeEvent;
+      this.animationCompleteHandler = onComplete;
+      sprite.once(completeEvent, onComplete);
     });
   }
 }
@@ -184,6 +218,8 @@ class SequenceAnimationCycle {
   private readonly scene: Phaser.Scene;
   private readonly steps: readonly SequenceStep[];
   private active = false;
+  private animationCompleteEventName: string | null = null;
+  private animationCompleteHandler: AnimationCompleteHandler | null = null;
   private sprite: Phaser.GameObjects.Sprite | null = null;
   private stepIndex = 0;
   private timer: Phaser.Time.TimerEvent | null = null;
@@ -205,13 +241,21 @@ class SequenceAnimationCycle {
     this.active = false;
     this.timer?.destroy();
     this.timer = null;
+    this.clearAnimationCompleteHandler();
 
     if (!this.sprite) {
       return;
     }
 
-    this.sprite.removeAllListeners(Phaser.Animations.Events.ANIMATION_COMPLETE);
     this.sprite = null;
+  }
+
+  private clearAnimationCompleteHandler(): void {
+    if (this.sprite && this.animationCompleteEventName && this.animationCompleteHandler) {
+      this.sprite.off(this.animationCompleteEventName, this.animationCompleteHandler);
+    }
+    this.animationCompleteEventName = null;
+    this.animationCompleteHandler = null;
   }
 
   private runNextStep(): void {
@@ -235,16 +279,32 @@ class SequenceAnimationCycle {
     if (step.kind === "randomAnimation") {
       const key = step.keys[Math.floor(Math.random() * step.keys.length)];
       sprite.play(key);
-      sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+      this.onceAnimationComplete(sprite, key, () => {
         this.runNextStep();
       });
       return;
     }
 
     sprite.play(step.key);
-    sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+    this.onceAnimationComplete(sprite, step.key, () => {
       this.runNextStep();
     });
+  }
+
+  private onceAnimationComplete(
+    sprite: Phaser.GameObjects.Sprite,
+    key: string,
+    onComplete: AnimationCompleteHandler,
+  ): void {
+    const completeEvent = animationCompleteEvent(key);
+    const handler = () => {
+      this.animationCompleteEventName = null;
+      this.animationCompleteHandler = null;
+      onComplete();
+    };
+    this.animationCompleteEventName = completeEvent;
+    this.animationCompleteHandler = handler;
+    sprite.once(completeEvent, handler);
   }
 }
 
@@ -310,6 +370,7 @@ export class BoardScene extends Phaser.Scene {
   private pointerCycle: SequenceAnimationCycle | null = null;
   private pointerLayer: Phaser.GameObjects.Container | null = null;
   private replayFocusedStoneKey: string | null = null;
+  private replayStoneCycle: SequenceAnimationCycle | null = null;
   private renderVersion = 0;
   private reportedTouchCandidateKey: string | null = null;
   private reportedTouchCanPlace = false;
@@ -342,6 +403,7 @@ export class BoardScene extends Phaser.Scene {
   create(): void {
     this.ensureAnimations();
     this.stoneCycle = new RandomAnimationCycle(this, STONE_IDLE_ANIMS, 700, 2200, STONE_STATIC_FRAME);
+    this.replayStoneCycle = new SequenceAnimationCycle(this, REPLAY_LAST_MOVE_STEPS);
     this.createSceneGraph();
     this.scale.on(Phaser.Scale.Events.RESIZE, this.renderBoard, this);
     this.input.on("pointermove", this.handlePointerMove, this);
@@ -354,6 +416,7 @@ export class BoardScene extends Phaser.Scene {
   shutdown(): void {
     this.stopPointerCycle();
     this.stoneCycle?.stop();
+    this.replayStoneCycle?.stop();
     this.stopForbiddenCycles();
     this.scale?.off?.(Phaser.Scale.Events.RESIZE, this.renderBoard, this);
     this.input?.off?.("pointermove", this.handlePointerMove, this);
@@ -368,6 +431,7 @@ export class BoardScene extends Phaser.Scene {
     this.pointer = null;
     this.pointerCellKey = null;
     this.pointerLayer = null;
+    this.replayStoneCycle = null;
     this.sequenceLayer = null;
     this.stoneLayer = null;
     this.overlayLayer = null;
@@ -503,6 +567,7 @@ export class BoardScene extends Phaser.Scene {
 
     this.stopPointerCycle();
     this.stoneCycle?.stop();
+    this.replayStoneCycle?.stop();
     this.stopForbiddenCycles();
     this.boardLayer.removeAll(true);
     this.overlayLayer.removeAll(true);
@@ -579,7 +644,7 @@ export class BoardScene extends Phaser.Scene {
 
         if (shouldAnimatePlacedStone(isNewStone, animateNewStones, this.boardState.status)) {
           stone.play(TRANSFORM_ANIMS.FORM.key);
-          stone.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+          stone.once(animationCompleteEvent(TRANSFORM_ANIMS.FORM.key), () => {
             if (
               renderVersion !== this.renderVersion ||
               !stone.active ||
@@ -604,10 +669,13 @@ export class BoardScene extends Phaser.Scene {
 
     for (const key of existingKeys) {
       const stone = this.stoneSprites.get(key);
+      if (key === this.replayFocusedStoneKey) {
+        this.replayStoneCycle?.stop();
+        this.replayFocusedStoneKey = null;
+      }
       if (stone?.active && stone.scene) {
-        stone.removeAllListeners(Phaser.Animations.Events.ANIMATION_COMPLETE);
         stone.play(STONE_ANIMS.DESTROY.key);
-        stone.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+        stone.once(animationCompleteEvent(STONE_ANIMS.DESTROY.key), () => {
           stone.destroy();
         });
       } else {
@@ -618,13 +686,14 @@ export class BoardScene extends Phaser.Scene {
   }
 
   private clearReplayLastMoveFocus(): void {
+    this.replayStoneCycle?.stop();
+
     if (!this.replayFocusedStoneKey) {
       return;
     }
 
     const stone = this.stoneSprites.get(this.replayFocusedStoneKey);
     if (stone?.active && stone.scene) {
-      stone.removeAllListeners(Phaser.Animations.Events.ANIMATION_COMPLETE);
       stone.stop();
       resetSpriteToFrame(stone, STONE_STATIC_FRAME);
     }
@@ -649,8 +718,8 @@ export class BoardScene extends Phaser.Scene {
     }
 
     this.stoneCycle?.stop();
-    stone.removeAllListeners(Phaser.Animations.Events.ANIMATION_COMPLETE);
-    stone.play({ key: STONE_ANIMS.IDLE_1.key, repeat: -1 });
+    stone.stop();
+    this.replayStoneCycle?.start(stone);
     this.replayFocusedStoneKey = focusKey;
   }
 
