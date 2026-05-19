@@ -1033,31 +1033,66 @@ pub fn legal_forcing_continuations_for_fact(
         return Vec::new();
     }
 
-    let mut attacker_turn = board.clone();
-    attacker_turn.current_player = attacker;
     let mut continuations = Vec::new();
     for mv in forcing_continuation_squares(fact).iter().copied() {
-        if !attacker_turn.is_legal_for_color(mv, attacker) {
-            continue;
-        }
-
-        let mut after_forcing = attacker_turn.clone();
-        if after_forcing.apply_move(mv).is_err() {
-            continue;
-        }
-        let legal_cost_squares = match after_forcing.result {
-            GameResult::Winner(winner) if winner == attacker => vec![mv],
-            GameResult::Winner(_) | GameResult::Draw => Vec::new(),
-            GameResult::Ongoing => after_forcing.immediate_winning_moves_for(attacker),
-        };
-        if !legal_cost_squares.is_empty() {
-            continuations.push(LocalThreatContinuation {
-                mv,
-                legal_cost_squares,
-            });
+        if let Some(continuation) = local_forcing_continuation(board, attacker, mv) {
+            continuations.push(continuation);
         }
     }
     continuations
+}
+
+fn local_forcing_continuation(
+    board: &Board,
+    attacker: Color,
+    mv: Move,
+) -> Option<LocalThreatContinuation> {
+    let mut attacker_turn = board.clone();
+    attacker_turn.current_player = attacker;
+    if !attacker_turn.is_legal_for_color(mv, attacker) {
+        return None;
+    }
+
+    let mut after_forcing = attacker_turn;
+    match after_forcing.apply_trusted_legal_move(mv) {
+        GameResult::Winner(winner) if winner == attacker => Some(LocalThreatContinuation {
+            mv,
+            legal_cost_squares: vec![mv],
+        }),
+        GameResult::Winner(_) | GameResult::Draw => None,
+        GameResult::Ongoing => {
+            let legal_cost_squares =
+                local_immediate_winning_squares_after_continuation(&after_forcing, attacker, mv);
+            (!legal_cost_squares.is_empty()).then_some(LocalThreatContinuation {
+                mv,
+                legal_cost_squares,
+            })
+        }
+    }
+}
+
+fn local_immediate_winning_squares_after_continuation(
+    board_after_forcing: &Board,
+    attacker: Color,
+    mv: Move,
+) -> Vec<Move> {
+    let mut wins = Vec::new();
+    for fact in raw_local_threat_facts_at_existing_move(board_after_forcing, attacker, mv) {
+        if !matches!(
+            fact.kind,
+            LocalThreatKind::OpenFour | LocalThreatKind::ClosedFour | LocalThreatKind::BrokenFour
+        ) {
+            continue;
+        }
+
+        for completion in fact.defense_squares {
+            if board_after_forcing.is_immediate_winning_move_for(completion, attacker) {
+                push_unique_move(&mut wins, completion);
+            }
+        }
+    }
+    wins.sort_by_key(|mv| (mv.row, mv.col));
+    wins
 }
 
 fn forcing_continuation_squares(fact: &LocalThreatFact) -> &[Move] {
@@ -1427,23 +1462,7 @@ fn renju_black_local_threat_continuation_is_effective_inner(
     board_after_gain: &Board,
     mv: Move,
 ) -> bool {
-    let mut attacker_turn = board_after_gain.clone();
-    attacker_turn.current_player = Color::Black;
-    if !attacker_turn.is_legal_for_color(mv, Color::Black) {
-        return false;
-    }
-
-    let mut after_forcing = attacker_turn.clone();
-    if after_forcing.apply_move(mv).is_err() {
-        return false;
-    }
-    match after_forcing.result {
-        GameResult::Winner(Color::Black) => true,
-        GameResult::Winner(_) | GameResult::Draw => false,
-        GameResult::Ongoing => !after_forcing
-            .immediate_winning_moves_for(Color::Black)
-            .is_empty(),
-    }
+    local_forcing_continuation(board_after_gain, Color::Black, mv).is_some()
 }
 
 struct BoardAfterMove<'a> {
