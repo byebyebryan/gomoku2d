@@ -1189,6 +1189,22 @@ mod tests {
     }
 
     #[test]
+    fn renju_forbidden_metrics_count_exact_checks() {
+        let mut b = renju_board();
+        setup(
+            &mut b,
+            &[(5, 7), W[0], (6, 7), W[1], (7, 5), W[2], (7, 6), W[3]],
+        );
+
+        crate::renju::renju_forbidden_metrics_reset();
+        assert!(!b.is_legal_for_color(Move { row: 7, col: 7 }, Color::Black));
+        let metrics = crate::renju::renju_forbidden_metrics_snapshot();
+
+        assert_eq!(metrics.checks, 1);
+        assert!(metrics.ns > 0);
+    }
+
+    #[test]
     fn legality_can_be_checked_for_non_current_color() {
         let mut b = renju_board();
         // Black: (5,7),(6,7) vertical + (7,5),(7,6) horizontal; White scattered.

@@ -520,6 +520,14 @@ pub struct StandingReport {
     #[serde(default)]
     pub search_illegal_moves_skipped: u64,
     #[serde(default)]
+    pub renju_forbidden_checks: u64,
+    #[serde(default)]
+    pub avg_renju_forbidden_checks: f64,
+    #[serde(default)]
+    pub renju_forbidden_ns: u64,
+    #[serde(default)]
+    pub avg_renju_forbidden_ns: f64,
+    #[serde(default)]
     pub stage_move_gen_ns: u64,
     #[serde(default)]
     pub stage_ordering_ns: u64,
@@ -927,6 +935,14 @@ pub struct SideStatsReport {
     #[serde(default)]
     pub search_illegal_moves_skipped: u64,
     #[serde(default)]
+    pub renju_forbidden_checks: u64,
+    #[serde(default)]
+    pub avg_renju_forbidden_checks: f64,
+    #[serde(default)]
+    pub renju_forbidden_ns: u64,
+    #[serde(default)]
+    pub avg_renju_forbidden_ns: f64,
+    #[serde(default)]
     pub stage_move_gen_ns: u64,
     #[serde(default)]
     pub stage_ordering_ns: u64,
@@ -1141,6 +1157,8 @@ struct SideStatsAccumulator {
     root_illegal_moves_skipped: u64,
     search_legality_checks: u64,
     search_illegal_moves_skipped: u64,
+    renju_forbidden_checks: u64,
+    renju_forbidden_ns: u64,
     stage_move_gen_ns: u64,
     stage_ordering_ns: u64,
     stage_eval_ns: u64,
@@ -1270,6 +1288,8 @@ impl SideStatsAccumulator {
             self.search_legality_checks += trace_value_u64(metrics, "search_legality_checks");
             self.search_illegal_moves_skipped +=
                 trace_value_u64(metrics, "search_illegal_moves_skipped");
+            self.renju_forbidden_checks += trace_value_u64(metrics, "renju_forbidden_checks");
+            self.renju_forbidden_ns += trace_value_u64(metrics, "renju_forbidden_ns");
             self.stage_move_gen_ns += trace_value_u64(metrics, "stage_move_gen_ns");
             self.stage_ordering_ns += trace_value_u64(metrics, "stage_ordering_ns");
             self.stage_eval_ns += trace_value_u64(metrics, "stage_eval_ns");
@@ -1564,6 +1584,8 @@ impl SideStatsAccumulator {
         self.root_illegal_moves_skipped += stats.root_illegal_moves_skipped;
         self.search_legality_checks += stats.search_legality_checks;
         self.search_illegal_moves_skipped += stats.search_illegal_moves_skipped;
+        self.renju_forbidden_checks += stats.renju_forbidden_checks;
+        self.renju_forbidden_ns += stats.renju_forbidden_ns;
         self.stage_move_gen_ns += stats.stage_move_gen_ns;
         self.stage_ordering_ns += stats.stage_ordering_ns;
         self.stage_eval_ns += stats.stage_eval_ns;
@@ -1702,6 +1724,12 @@ impl SideStatsAccumulator {
             self.child_limit_applications as u32,
         );
         let avg_legality_checks = avg(self.legality_checks as f64, self.search_move_count);
+        let avg_renju_forbidden_checks =
+            avg(self.renju_forbidden_checks as f64, self.search_move_count);
+        let avg_renju_forbidden_ns = avg(
+            self.renju_forbidden_ns as f64,
+            self.renju_forbidden_checks as u32,
+        );
         let avg_depth = avg(self.depth_sum as f64, self.search_move_count);
         let avg_effective_depth = avg(self.effective_depth_sum as f64, self.search_move_count);
         let budget_exhausted_rate = avg(self.budget_exhausted_count as f64, self.search_move_count);
@@ -1812,6 +1840,10 @@ impl SideStatsAccumulator {
             root_illegal_moves_skipped: self.root_illegal_moves_skipped,
             search_legality_checks: self.search_legality_checks,
             search_illegal_moves_skipped: self.search_illegal_moves_skipped,
+            renju_forbidden_checks: self.renju_forbidden_checks,
+            avg_renju_forbidden_checks,
+            renju_forbidden_ns: self.renju_forbidden_ns,
+            avg_renju_forbidden_ns,
             stage_move_gen_ns: self.stage_move_gen_ns,
             stage_ordering_ns: self.stage_ordering_ns,
             stage_eval_ns: self.stage_eval_ns,
@@ -2059,6 +2091,10 @@ fn standings(
                 root_illegal_moves_skipped: side_stats.root_illegal_moves_skipped,
                 search_legality_checks: side_stats.search_legality_checks,
                 search_illegal_moves_skipped: side_stats.search_illegal_moves_skipped,
+                renju_forbidden_checks: side_stats.renju_forbidden_checks,
+                avg_renju_forbidden_checks: side_stats.avg_renju_forbidden_checks,
+                renju_forbidden_ns: side_stats.renju_forbidden_ns,
+                avg_renju_forbidden_ns: side_stats.avg_renju_forbidden_ns,
                 stage_move_gen_ns: side_stats.stage_move_gen_ns,
                 stage_ordering_ns: side_stats.stage_ordering_ns,
                 stage_eval_ns: side_stats.stage_eval_ns,
@@ -3339,7 +3375,7 @@ fn render_how_to_read_section(html: &mut String) {
     term_row(
         html,
         "Search Cost",
-        "Width is the average number of moves searched. The Search tab splits measured time into move generation, ordering, scoring, threat detection, corridor proof, and uncategorized search overhead.",
+        "Width is the average number of moves searched. The Search tab splits measured time into move generation, ordering, scoring, threat detection, corridor proof, and uncategorized search overhead. Renju shows exact forbidden-check load separately because it can be nested inside several stages.",
     );
     html.push_str("</dl></section>");
 }
@@ -3399,6 +3435,7 @@ fn render_entrant_header(html: &mut String, has_pool: bool) {
         "Scoring",
         "Threat detection",
         "Proof",
+        "Renju",
         "Other",
         "TT",
     ];
@@ -3500,6 +3537,7 @@ fn render_entrant_row(
     render_stage_time_metric_cell(html, "Scoring", row.stage_eval_ns, row);
     render_stage_time_metric_cell(html, "Threat detection", row.stage_threat_ns, row);
     render_stage_time_metric_cell(html, "Proof", row.stage_proof_ns, row);
+    render_renju_forbidden_metric_cell(html, row);
     render_stage_time_metric_cell(html, "Other", stage_other_ns(row), row);
     render_metric_cell(
         html,
@@ -3639,6 +3677,24 @@ fn render_pooled_budget_metric_cell(html: &mut String, row: &StandingReport) {
             "exh {:.0}% / min {} ms",
             row.pooled_budget_reserve_exhausted_rate * 100.0,
             row.pooled_budget_min_reserve_after_ms
+        )),
+    );
+}
+
+fn render_renju_forbidden_metric_cell(html: &mut String, row: &StandingReport) {
+    if row.renju_forbidden_checks == 0 {
+        render_metric_cell(html, "metric-search", "Renju", "n/a", None);
+        return;
+    }
+
+    render_metric_cell(
+        html,
+        "metric-search",
+        "Renju",
+        &compact_number_label(row.avg_renju_forbidden_checks),
+        Some(stage_avg_ms_label(
+            row.renju_forbidden_ns,
+            row.search_move_count,
         )),
     );
 }
@@ -4342,7 +4398,7 @@ main{display:grid;gap:24px;margin:0 auto;max-width:1180px;padding:32px}h1,h2,p{m
 .section-heading{display:grid}.section-heading h2{color:var(--accent);font-size:1.2rem}
 table{border-collapse:collapse;min-width:820px;width:100%}th,td{border-bottom:1px solid var(--border);padding:9px 10px;text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{color:var(--text-muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
 .view-toggle{display:flex;flex-wrap:wrap;gap:8px}.report-view-radio{height:1px;opacity:0;position:absolute;width:1px}.view-toggle label{background:var(--surface-strong);border:1px solid var(--border);cursor:pointer;padding:8px 12px;text-transform:uppercase}.view-toggle label:hover{border-color:var(--teal)}.entrant-workbench:has(#view-results:checked) label[for=view-results],.entrant-workbench:has(#view-search:checked) label[for=view-search],.entrant-workbench:has(#view-pairwise:checked) label[for=view-pairwise]{border-color:var(--accent);color:var(--accent)}
-.entrant-grid,.match-list{display:grid;gap:12px}.entrant-head,.entrant-row summary{display:grid;gap:10px;align-items:center}.entrant-workbench:has(#view-results:checked) .entrant-head,.entrant-workbench:has(#view-results:checked) .entrant-row summary{grid-template-columns:minmax(260px,1.6fr) repeat(8,minmax(82px,1fr))}.entrant-workbench:has(#view-search:checked) .entrant-head,.entrant-workbench:has(#view-search:checked) .entrant-row summary{grid-template-columns:minmax(240px,1.4fr) repeat(8,minmax(84px,1fr))}.entrant-workbench.has-pool:has(#view-search:checked) .entrant-head,.entrant-workbench.has-pool:has(#view-search:checked) .entrant-row summary{grid-template-columns:minmax(240px,1.4fr) repeat(9,minmax(84px,1fr))}.entrant-workbench:has(#view-pairwise:checked) .entrant-head,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{grid-template-columns:minmax(280px,1.6fr) repeat(3,minmax(120px,1fr))}.entrant-head{color:var(--text-muted);font-size:12px;letter-spacing:.08em;padding:0 14px;text-transform:uppercase}.entrant-row,.opponent-row,.match{padding:0}.entrant-row summary,.opponent-row summary,.match summary{cursor:pointer;padding:12px 14px}.entrant-row summary>*,.opponent-row summary>*{min-width:0}.entrant-row summary .bot-label,.opponent-row summary strong,.match summary strong{color:var(--text);overflow-wrap:anywhere}.bot-label span,.metric span{display:block}.metric-nowrap,.metric-nowrap span{white-space:nowrap}.entrant-row summary .bot-label span:first-child{color:var(--text)}.entrant-row summary .bot-label span+span,.metric span+span{color:var(--text-muted);font-size:11px;letter-spacing:.08em;margin-top:2px}.entrant-row summary span,.opponent-row summary span,.match summary span{color:var(--text-muted)}.metric-search,.metric-pairwise{display:none}.entrant-workbench:not(.has-pool) .metric-pool{display:none!important}.entrant-workbench:has(#view-search:checked) .metric-results,.entrant-workbench:has(#view-search:checked) .metric-pairwise,.entrant-workbench:has(#view-pairwise:checked) .metric-results,.entrant-workbench:has(#view-pairwise:checked) .metric-search{display:none}.entrant-workbench:has(#view-search:checked) .metric-search,.entrant-workbench:has(#view-pairwise:checked) .metric-pairwise{display:block}.entrant-head .metric,.entrant-row summary .metric{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;line-height:1.22;padding-left:10px;text-align:right}.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs{display:none;gap:10px;padding:8px 18px 18px}.entrant-workbench:has(#view-results:checked) .entrant-result-comparisons,.entrant-workbench:has(#view-search:checked) .entrant-search-comparisons,.entrant-workbench:has(#view-pairwise:checked) .entrant-pairs{display:grid}.comparison-head,.comparison-row{align-items:center;display:grid;gap:12px}.entrant-result-comparisons .comparison-head,.entrant-result-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(78px,96px) minmax(92px,120px) minmax(120px,140px)}.entrant-search-comparisons .comparison-head,.entrant-search-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(78px,96px) minmax(86px,120px) minmax(96px,120px) minmax(104px,130px) minmax(96px,120px)}.comparison-head{border:1px solid transparent;color:var(--text-muted);font-size:11px;letter-spacing:.08em;padding:0 12px;text-transform:uppercase}.comparison-row{background:var(--surface-strong);border:1px solid var(--border);padding:10px 12px}.comparison-row span:not(:first-child),.comparison-head span:not(:first-child){border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.delta-good,.score-good{color:var(--green)!important}.delta-bad,.score-bad{color:#e78f85!important}.delta-neutral{color:var(--text-muted)!important}.opponent-row summary{display:grid;gap:12px;grid-template-columns:minmax(0,1fr) repeat(3,max-content);align-items:center}.opponent-row summary span{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.match summary{display:grid;gap:12px;grid-template-columns:repeat(4,minmax(82px,max-content));align-items:center}.pair-overview{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));padding:0 18px 16px}.pair-overview p{background:var(--surface-strong);border:1px solid var(--border);margin:0;padding:12px}.match-grid{display:grid;gap:12px;grid-template-columns:1fr;padding:0 14px 14px}.match-grid p{margin:0;word-break:break-word}.reference-pair-note{background:var(--surface-strong);border:1px solid var(--border);color:var(--text-muted);margin:0;padding:10px 12px}.pair-overview b,.match-grid b{color:var(--text)}.board-panel,.raw-data{grid-column:1/-1}.board-ascii,.raw-data{background:var(--surface-strong);border:1px solid var(--border)}.board-ascii{color:var(--text);font:14px/1.35 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:8px 0 0;overflow:auto;padding:12px;white-space:pre}.raw-data{padding:10px}.raw-data summary{cursor:pointer;padding:0}.raw-data p{margin:8px 0 0}
+.entrant-grid,.match-list{display:grid;gap:12px}.entrant-head,.entrant-row summary{display:grid;gap:10px;align-items:center}.entrant-workbench:has(#view-results:checked) .entrant-head,.entrant-workbench:has(#view-results:checked) .entrant-row summary{grid-template-columns:minmax(260px,1.6fr) repeat(8,minmax(82px,1fr))}.entrant-workbench:has(#view-search:checked) .entrant-head,.entrant-workbench:has(#view-search:checked) .entrant-row summary{grid-template-columns:minmax(240px,1.4fr) repeat(9,minmax(84px,1fr))}.entrant-workbench.has-pool:has(#view-search:checked) .entrant-head,.entrant-workbench.has-pool:has(#view-search:checked) .entrant-row summary{grid-template-columns:minmax(240px,1.4fr) repeat(10,minmax(84px,1fr))}.entrant-workbench:has(#view-pairwise:checked) .entrant-head,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{grid-template-columns:minmax(280px,1.6fr) repeat(3,minmax(120px,1fr))}.entrant-head{color:var(--text-muted);font-size:12px;letter-spacing:.08em;padding:0 14px;text-transform:uppercase}.entrant-row,.opponent-row,.match{padding:0}.entrant-row summary,.opponent-row summary,.match summary{cursor:pointer;padding:12px 14px}.entrant-row summary>*,.opponent-row summary>*{min-width:0}.entrant-row summary .bot-label,.opponent-row summary strong,.match summary strong{color:var(--text);overflow-wrap:anywhere}.bot-label span,.metric span{display:block}.metric-nowrap,.metric-nowrap span{white-space:nowrap}.entrant-row summary .bot-label span:first-child{color:var(--text)}.entrant-row summary .bot-label span+span,.metric span+span{color:var(--text-muted);font-size:11px;letter-spacing:.08em;margin-top:2px}.entrant-row summary span,.opponent-row summary span,.match summary span{color:var(--text-muted)}.metric-search,.metric-pairwise{display:none}.entrant-workbench:not(.has-pool) .metric-pool{display:none!important}.entrant-workbench:has(#view-search:checked) .metric-results,.entrant-workbench:has(#view-search:checked) .metric-pairwise,.entrant-workbench:has(#view-pairwise:checked) .metric-results,.entrant-workbench:has(#view-pairwise:checked) .metric-search{display:none}.entrant-workbench:has(#view-search:checked) .metric-search,.entrant-workbench:has(#view-pairwise:checked) .metric-pairwise{display:block}.entrant-head .metric,.entrant-row summary .metric{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;line-height:1.22;padding-left:10px;text-align:right}.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs{display:none;gap:10px;padding:8px 18px 18px}.entrant-workbench:has(#view-results:checked) .entrant-result-comparisons,.entrant-workbench:has(#view-search:checked) .entrant-search-comparisons,.entrant-workbench:has(#view-pairwise:checked) .entrant-pairs{display:grid}.comparison-head,.comparison-row{align-items:center;display:grid;gap:12px}.entrant-result-comparisons .comparison-head,.entrant-result-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(78px,96px) minmax(92px,120px) minmax(120px,140px)}.entrant-search-comparisons .comparison-head,.entrant-search-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(78px,96px) minmax(86px,120px) minmax(96px,120px) minmax(104px,130px) minmax(96px,120px)}.comparison-head{border:1px solid transparent;color:var(--text-muted);font-size:11px;letter-spacing:.08em;padding:0 12px;text-transform:uppercase}.comparison-row{background:var(--surface-strong);border:1px solid var(--border);padding:10px 12px}.comparison-row span:not(:first-child),.comparison-head span:not(:first-child){border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.delta-good,.score-good{color:var(--green)!important}.delta-bad,.score-bad{color:#e78f85!important}.delta-neutral{color:var(--text-muted)!important}.opponent-row summary{display:grid;gap:12px;grid-template-columns:minmax(0,1fr) repeat(3,max-content);align-items:center}.opponent-row summary span{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.match summary{display:grid;gap:12px;grid-template-columns:repeat(4,minmax(82px,max-content));align-items:center}.pair-overview{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));padding:0 18px 16px}.pair-overview p{background:var(--surface-strong);border:1px solid var(--border);margin:0;padding:12px}.match-grid{display:grid;gap:12px;grid-template-columns:1fr;padding:0 14px 14px}.match-grid p{margin:0;word-break:break-word}.reference-pair-note{background:var(--surface-strong);border:1px solid var(--border);color:var(--text-muted);margin:0;padding:10px 12px}.pair-overview b,.match-grid b{color:var(--text)}.board-panel,.raw-data{grid-column:1/-1}.board-ascii,.raw-data{background:var(--surface-strong);border:1px solid var(--border)}.board-ascii{color:var(--text);font:14px/1.35 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:8px 0 0;overflow:auto;padding:12px;white-space:pre}.raw-data{padding:10px}.raw-data summary{cursor:pointer;padding:0}.raw-data p{margin:8px 0 0}
 .provenance dl{display:grid;gap:8px 18px;grid-template-columns:max-content 1fr;margin:0}.provenance dt{color:var(--text-muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase}.provenance dd{margin:0}.command{background:var(--surface-strong);border:1px solid var(--border);margin:0;overflow:auto;padding:12px}
 @media (max-width:760px){main{padding:16px}.hero,section,.run-warning{padding:16px}.run-chip{justify-content:space-between;width:100%}.rolling-comparison-list p{grid-template-columns:1fr}.rolling-comparison-list span{text-align:left}.entrant-head,.comparison-head{display:none}.entrant-grid,.entrant-row,.opponent-row,.match,.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs,.comparison-row{min-width:0;width:100%}.entrant-row summary,.entrant-workbench:has(#view-results:checked) .entrant-row summary,.entrant-workbench:has(#view-search:checked) .entrant-row summary,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{gap:8px 12px;grid-template-columns:repeat(2,minmax(0,1fr))}.entrant-row summary .bot-label{grid-column:1/-1}.entrant-row summary .metric{border-left:0;display:grid;gap:2px 10px;grid-template-columns:minmax(0,1fr) auto;padding:8px 0 0;text-align:right}.entrant-row summary .metric::before,.comparison-row span::before,.opponent-row summary span::before,.match summary span::before{color:var(--text-muted);content:attr(data-label);font-size:11px;letter-spacing:.08em;text-align:left;text-transform:uppercase}.entrant-row summary .metric::before{align-self:start;grid-column:1;grid-row:1/span 2}.entrant-row summary .metric span{grid-column:2}.entrant-row summary .metric-search,.entrant-row summary .metric-pairwise,.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-results,.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-pairwise,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-results,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-search{display:none}.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-search,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-pairwise{display:grid}.opponent-row summary,.match summary,.entrant-result-comparisons .comparison-row,.entrant-search-comparisons .comparison-row{grid-template-columns:1fr}.comparison-row span,.opponent-row summary span,.match summary span{border-left:0!important;display:flex;gap:12px;justify-content:space-between;min-width:0;overflow-wrap:anywhere;padding-left:0!important;text-align:right}.comparison-row span:not(:first-child),.opponent-row summary span,.match summary span{border-top:1px solid var(--border);padding-top:8px}.opponent-row summary span:first-of-type,.match summary span:first-child{border-top:0;padding-top:0}.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs{padding:4px 12px 14px}.match-grid,.term-row{grid-template-columns:1fr}.term-row{gap:4px}.board-ascii{font-size:12px}.provenance dl{grid-template-columns:1fr}table{min-width:760px}}
 @media (max-width:420px){.entrant-row summary,.entrant-workbench:has(#view-results:checked) .entrant-row summary,.entrant-workbench:has(#view-search:checked) .entrant-row summary,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{grid-template-columns:1fr}}
@@ -4690,6 +4746,7 @@ mod tests {
         assert!(html.contains("<span class=\"metric metric-search\">Scoring</span>"));
         assert!(html.contains("<span class=\"metric metric-search\">Threat detection</span>"));
         assert!(html.contains("<span class=\"metric metric-search\">Proof</span>"));
+        assert!(html.contains("<span class=\"metric metric-search\">Renju</span>"));
         assert!(html.contains("<span class=\"metric metric-search\">Other</span>"));
         assert!(html.contains("<span class=\"metric metric-search\">TT</span>"));
         assert!(!html.contains("<span class=\"metric metric-search\">Avg nodes</span>"));
@@ -4778,6 +4835,7 @@ mod tests {
         assert!(html.contains("Ordering"));
         assert!(html.contains("Threat detection"));
         assert!(html.contains("Proof"));
+        assert!(html.contains("Renju"));
         assert!(html.contains("Other"));
         assert!(!html.contains("Eval cost"));
         assert!(!html.contains("Pattern scan"));
@@ -4801,6 +4859,9 @@ mod tests {
         ));
         assert!(html.contains(
             "<span class=\"metric metric-search\" data-label=\"Proof\"><span>0%</span><span>0 ms</span></span>"
+        ));
+        assert!(html.contains(
+            "<span class=\"metric metric-search\" data-label=\"Renju\"><span>2</span><span>0.2 ms</span></span>"
         ));
         assert!(html.contains(
             "<span class=\"metric metric-search\" data-label=\"Other\"><span>35%</span><span>3.5 ms</span></span>"
@@ -6055,6 +6116,10 @@ mod tests {
             root_illegal_moves_skipped: 1,
             search_legality_checks: 20,
             search_illegal_moves_skipped: 1,
+            renju_forbidden_checks: 12,
+            avg_renju_forbidden_checks: 2.4,
+            renju_forbidden_ns: 1_000_000,
+            avg_renju_forbidden_ns: 83_333.3,
             stage_move_gen_ns: 5_000_000,
             stage_ordering_ns: 10_000_000,
             stage_eval_ns: 15_000_000,
@@ -6212,6 +6277,10 @@ mod tests {
             root_illegal_moves_skipped: 1,
             search_legality_checks: 20,
             search_illegal_moves_skipped: 1,
+            renju_forbidden_checks: 12,
+            avg_renju_forbidden_checks: 2.4,
+            renju_forbidden_ns: 1_000_000,
+            avg_renju_forbidden_ns: 83_333.3,
             stage_move_gen_ns: 5_000_000,
             stage_ordering_ns: 10_000_000,
             stage_eval_ns: 15_000_000,
