@@ -1,186 +1,69 @@
 # Renju Rules Model
 
-Purpose: define the Renju legality model Gomoku2D should implement before the
-next core legality change.
-
-The current core implementation uses a fast shape counter for overline,
-double-four, and double-three. That is not precise enough for Renju. Under RIF,
-an apparent three or four may stop existing if the continuation that would make
-it meaningful is itself forbidden. This doc separates the rule semantics, the
-implementation shape, and the validation plan so future tactical/search work can
-depend on one rules oracle instead of local interpretations.
+Purpose: document the Renju legality model Gomoku2D currently uses for Black
+forbidden moves.
 
 ## Sources
 
 Primary rule text:
 
 - RIF international rules: <https://www.renju.net/rifrules/>
-- RenjuNet advanced forbidden-move tutorial:
-  <https://www.renju.net/advanced/>
+- RenjuNet advanced forbidden-move tutorial: <https://www.renju.net/advanced/>
 
-Reference implementation candidates:
+Supporting implementation references:
 
-- Gomocup tournament information:
-  <https://gomocup.org/detail-information/>
 - Piskvork Renju fork: <https://github.com/wind23/piskvork_renju>
-- SlowRenju: <https://github.com/wind23/SlowRenju>
 - Rapfi: <https://github.com/dhbloo/rapfi>
 - `renju_forbid`: <https://github.com/realjustice/renju_forbid>
 
-Gomocup says its Renju tournament rule is based on international Renju rules,
-with tournament-specific changes around openings, passing, and automatic draws.
-Those changes do not affect forbidden-move legality.
-
-The Piskvork Renju fork is useful because it is Gomocup-era code that accepts
-`INFO rule 4` and implements recursive forbidden checks. SlowRenju is by the
-same author, supports Renju directly, and uses the same visible `foulr` /
-`A3r` / `B4` structure in its shape code. Rapfi is a newer strong open-source
-engine with an incremental pattern-board Renju checker. `renju_forbid` is a
-small MIT Go implementation that appears to be a port of the Piskvork-style
-line logic.
-
-Reference code should be treated as executable evidence, not source to copy.
-Piskvork Renju, SlowRenju, and Rapfi are GPL-licensed, so copying code into
-Gomoku2D is off-limits unless we deliberately change licensing. `renju_forbid`
-is MIT, but it should still be validated rather than trusted blindly.
-
-The inspected Piskvork path is:
-
-- `renju/global.cpp`: exported `forbid(board, pos, size)` wrapper;
-- `renju/Class_line4v.cpp`: `line4v::foulr`, the forbidden classifier;
-- `renju/Class_line.cpp`: line-level five, overline, four, and three helpers.
-
-`foulr` checks exact five first, then double-four, double-three, and overline.
-Its double-three path asks whether apparent threes can actually become straight
-fours, and calls back into forbidden checking for those imagined continuations.
-
-The inspected SlowRenju path is:
-
-- `Shape/line4v.cpp`: `line4v::foulr`, `line4v::A3r`, `line4v::B4`;
-- `Shape/line.cpp`: line-level `A3`, `B4`, `A5`, and `A6`.
-
-The inspected Rapfi path is:
-
-- `Rapfi/game/board.cpp`: `Board::checkForbiddenPoint`;
-- `Rapfi/game/board.h`: the public forbidden-point query;
-- `Rapfi/game/pattern.cpp`: Renju pattern table generation.
-
-Rapfi differs architecturally: it first marks possible forbidden points through
-incremental pattern tables, then recursively rejects false forbidden points in
-`checkForbiddenPoint`. That makes it a useful independent cross-check because it
-is not simply the same line-counter code shape as Piskvork/SlowRenju.
+Reference code is executable evidence, not source to copy. Piskvork and Rapfi
+are GPL-licensed; the project uses small external wrappers for validation rather
+than porting their code.
 
 ## Semantics
 
 Only Black has forbidden moves. White can win with a five or longer line and
 does not have overline, double-four, or double-three restrictions.
 
-For Black, the decision order should be:
+For Black, Gomoku2D applies this order:
 
-1. If the move creates an exact five-in-a-row, it is a legal win.
-2. Otherwise, if the move creates an overline, it is forbidden.
-3. Otherwise, if the move creates more than one real four, it is forbidden.
-4. Otherwise, if the move creates more than one real three after RIF 9.3
-   filtering, it is forbidden.
-5. Otherwise, it is legal.
+1. Exact five-in-a-row is a legal win.
+2. Otherwise, overline is forbidden.
+3. Otherwise, more than one real four is forbidden.
+4. Otherwise, more than one real three after RIF 9.3 filtering is forbidden.
+5. Otherwise, the move is legal.
 
-This order follows the RIF wording that White wins if Black creates a forbidden
-shape "without at the same time attaining five in a row." It also matches the
-Piskvork Renju `foulr` structure, which checks exact five before double-four,
-double-three, and overline.
+This matches the RIF wording that a forbidden shape loses only when Black does
+not also make five in a row, and matches the Piskvork `foulr` check order.
 
-### Real Four
+## Real Shapes
 
-A real four is not just any five-cell window with four Black stones and one
-empty point. It must have at least one legal completion to an exact five.
+A raw window count is not enough for Renju forbidden rules.
 
-Examples of apparent fours that should not count:
+A real four must have at least one legal completion to exact five. Apparent
+fours do not count when every completion is blocked, overline, or forbidden.
 
-- the only completion creates an overline;
-- the only completion is a forbidden double-four or double-three;
-- every completion is blocked by edge or White stone.
+A straight four is an unbroken four with two different legal exact-five
+completions. For Black, both completions must be legal.
 
-The double-four rule counts real fours, not apparent shape windows.
+A real three is a line where Black can add one stone, without making five
+immediately, to create a legal straight four. Apparent threes are dead when all
+extensions fail to create a straight four or land on forbidden points.
 
-### Straight Four
+Double-three uses the recursive RIF 9.3 test: only threes with at least one
+legal path to a straight four count.
 
-A straight four is an unbroken four with two different legal ways to add one
-stone and make an exact five.
+## Implementation
 
-For Black, both endpoint completions must be legal. If one endpoint is forbidden
-or makes an overline, that line is not a straight four for double-three
-evaluation.
-
-### Real Three
-
-A real three is a row of three stones where Black can add one stone, without
-making a five at the same time, to make a legal straight four.
-
-This is the source of the current bug class. A line that looks like an open
-three in raw geometry is dead if every possible extension either fails to become
-a straight four or lands on a forbidden point. The RenjuNet advanced tutorial
-shows exactly this kind of dead-line example: apparent threes and fours can be
-removed by forbidden continuations.
-
-### Double-Three
-
-A double-three is forbidden only when more than one real three remains after the
-recursive RIF 9.3 test.
-
-RIF 9.3 is recursive:
-
-- imagine Black made the candidate move;
-- for each apparent three, try the possible extensions that would make a
-  straight four;
-- ignore an extension if it also creates overline or double-four;
-- if an extension creates another double-three, determine whether that
-  double-three is itself forbidden by repeating the same test;
-- count only threes that have at least one legal path to a straight four.
-
-This means a double-three detector cannot be a single fixed-window shape count.
-It needs either explicit recursion or a logically equivalent search over legal
-continuations.
-
-## Fixed Mismatch
-
-The old core code over-forbade at least one real-game position.
-
-Fixture candidate:
-
-- source: analysis report match `#1548`, before Black's actual reply in the
-  contested frame
-- side to move: Black
-- candidate under question: `E6`
-- old Gomoku2D core result: forbidden
-- current Gomoku2D core result: legal
-- Piskvork Renju `forbid()` result: legal
-
-Position before `E6`:
-
-```text
-Black: H8 F8 G8 G6 F9 D7 F7 E8 C6 D10 F6
-White: H7 G9 I8 D9 F10 G10 E10 D8 B5 F11 F5
-Candidate: Black E6
-```
-
-The raw geometry around `E6` contains a horizontal apparent four and two
-apparent threes. Piskvork classifies the move as legal, which strongly suggests
-at least one apparent three is dead after recursive continuation checks.
-
-This is now a regression fixture in both `gomoku-core` and the eval-side Renju
-rule fixture runner.
-
-## Implementation Design
-
-Keep `Board` as the public rules authority:
+`Board` is the rules authority:
 
 - `is_legal_for_color`
 - `apply_move`
 - `forbidden_moves_for_current_player`
 - tactical and wasm threat views that query legal/effective facts
 
-Internally, the old shape-count forbidden detector has been replaced by a
-dedicated Renju legality oracle. The current boundary is:
+Internally, the old raw shape-count detector has been replaced by a dedicated
+Renju legality oracle:
 
 ```text
 renju_forbidden_reason(board, black_move) -> Option<ForbiddenReason>
@@ -192,235 +75,68 @@ where:
 ForbiddenReason = Overline | DoubleFour | DoubleThree
 ```
 
-The reason enum is useful for tests, reports, and future UI, even if the public
-game move error continues to expose a single `Forbidden` result.
+The oracle checks exact five and overline directly. Real four and real three
+classification then ask whether their completions/extensions are legal under the
+same oracle. Recursive double-three checks use a guard and fail open if they
+cannot resolve; false-forbidden is worse than missed-forbidden for normal play,
+and unresolved cases should become fixtures.
 
-### Oracle Layers
-
-The oracle should be built from small, testable layers:
-
-1. `creates_exact_five(board, black_move)`
-2. `creates_overline(board, black_move)`
-3. `real_four_lines(board_after_move, origin)`
-4. `legal_straight_four_extensions(board_after_move, three_line)`
-5. `real_three_lines(board_after_move, origin)`
-6. `forbidden_reason_inner(board, black_move, recursion_context)`
-
-The important dependency direction:
-
-- overline and exact five are direct line checks;
-- real four asks whether completions are legal exact-five moves;
-- real three asks whether extensions create legal straight fours;
-- double-three asks real-three count, which may recurse when an extension itself
-  creates another double-three.
-
-### Recursion Guard
-
-The recursive part needs an explicit guard. It should not rely on accidental call
-depth.
-
-The first implementation uses an explicit recursion depth guard and fails open
-if a continuation cannot be resolved within that bound. That is intentional:
-false-forbidden is worse than missed-forbidden for ordinary play. The target
-state is still no unresolved recursion in ordinary fixtures.
-
-Future cache keys should be based on:
-
-- board hash or compact stones around the tested lines;
-- candidate move;
-- recursion mode: root forbidden check versus "is this extension allowed for
-  making a straight four?"
-
-The guard should be diagnostic, not a normal semantic escape hatch. If the guard
-ever changes an answer, that position should become a fixture and the oracle
-should be fixed. In production, fail-open is less damaging than falsely marking
-a legal move forbidden, but the target state is no unresolved recursion in
-ordinary play.
-
-### Performance Boundary
-
-The existing `can_be_renju_forbidden_at` guard can stay as an optimization, but
-it is not part of the rule semantics.
-
-The exact oracle only needs to run for Black Renju candidates that pass a cheap
-necessary condition. The previous optimization that a forbidden move needs at
-least two nearby Black stones on one axis is still a good guard candidate, but
-the validation suite must prove the guard never changes oracle output.
-
-Do not expose guard choices as bot config. They are implementation details of
-`exact_rules`.
+Cheap necessary-condition guards such as `can_be_renju_forbidden_at` are
+performance details only. They must not change oracle output and are not bot
+configuration knobs.
 
 ## Consumers
 
-The core legality oracle should be the single source of truth.
+Search, corridor analysis, wasm hints, and report rendering may use raw tactical
+shape facts for diagnostics, but every Renju-active Black continuation must
+cross the legality oracle before it receives tactical credit.
 
-Search, corridor analysis, wasm hints, and report rendering can still use raw
-tactical shape facts, but every Renju-active continuation must cross the oracle
-before it receives tactical credit.
+Consumer rules:
 
-Rules for consumers:
+- raw Black gains/completions are diagnostics, not legal threats;
+- forbidden Black squares can be useful proof evidence for analysis;
+- White threats can become stronger when Black's natural reply is forbidden;
+- no consumer should locally infer double-three or double-four by raw window
+  counts.
 
-- raw Black gains/completions are useful diagnostics, not legal threats;
-- forbidden Black squares remain proof evidence for analysis;
-- White threats can become stronger because Black's natural reply is forbidden;
-- no consumer should locally infer double-three/double-four by counting raw
-  windows once the oracle exists.
+## Corpus And Validation
 
-## Validation
+The promoted golden corpus is documented in
+[`renju_corpus.md`](renju_corpus.md). It contains:
 
-### Local Golden Fixtures
+- 6 handwritten core cases;
+- 23 RenjuNet advanced tutorial cases covering apparent three/four edge cases.
 
-The reusable local fixture runner is:
+Run the Gomoku2D corpus check with:
 
 ```sh
 cargo run -p gomoku-eval -- renju-rules \
   --report-json outputs/renju-rule-fixtures.json
 ```
 
-It currently covers:
+The RenjuNet extraction/reference project lives in
+[`../gomoku-bot-lab/external/renjunet-advanced-examples/`](../gomoku-bot-lab/external/renjunet-advanced-examples/).
+That folder owns OCR/manual extraction notes, fixture JSON, and external
+Piskvork validation. It deliberately does not run Gomoku2D checks; those belong
+to the eval/core test surfaces that consume the corpus.
 
-- exact five for Black is legal;
-- Black overline without exact five is forbidden;
-- simple double-four is forbidden;
-- simple double-three with two real threes is forbidden;
-- legal `4+3` is legal;
-- White can play equivalent double-three geometry legally;
-- `#1548/E6` is legal, matching Piskvork.
-
-The core unit tests include the same critical rules plus focused regression
-coverage for the optimized forbidden-move candidate path.
-
-### Reference Harness
-
-Create dev-only harnesses that can compare Gomoku2D against external Renju
-checkers.
-
-Preferred shape:
-
-- keep external references cloned under `/tmp` or another external cache;
-- compile tiny C++ wrappers for Piskvork Renju, SlowRenju, and Rapfi;
-- call `renju_forbid` as a separate Go checker when useful;
-- feed fixtures as JSON/CSV;
-- write comparison output as a local artifact under `gomoku-bot-lab/outputs/`
-  or a temporary path, not as a production dependency.
-
-This avoids GPL contamination while giving us executable evidence for ambiguous
-cases.
-
-Use the references in priority order:
-
-1. RIF/RenjuNet examples when they directly describe the shape.
-2. Agreement between Piskvork Renju and SlowRenju.
-3. Rapfi as an independent modern engine cross-check.
-4. `renju_forbid` as a convenient MIT implementation and sanity check.
-
-If references disagree, keep the position as an ambiguity fixture and decide it
-from RIF/RenjuNet text rather than majority vote.
-
-### Golden Fixtures To Add
-
-Remaining useful fixtures before broader fuzzing:
-
-- apparent double-three with one dead three is legal;
-- apparent double-four with one dead four is legal;
-- edge-adjacent dead threes/fours that depend on board bounds;
-- exact-five plus another forbidden-looking shape in a crossing direction.
-
-Each fixture should store:
-
-- board size;
-- side to move;
-- existing stones;
-- candidate move;
-- expected legality;
-- expected reason when forbidden;
-- source: `rif`, `renjunet_tutorial`, `piskvork`, `slowrenju`, `rapfi`,
-  `renju_forbid`, or `project_regression`.
-
-### Differential Fuzz
-
-Run random legal-ish midgame boards and compare candidate Black moves against
-the external references.
-
-Useful constraints:
-
-- board size `15`;
-- only compare empty Black candidate moves;
-- generate both sparse and dense positions;
-- include positions near edges;
-- include positions with overline potential;
-- reduce mismatches into small golden fixtures.
-
-Classify every mismatch:
-
-- Gomoku2D bug;
-- external-reference bug;
-- rule ambiguity that needs manual RIF interpretation;
-- invalid generated position.
-
-### Integration Validation
-
-After core legality changes:
-
-- run `cargo test -p gomoku-core`;
-- run tactical and lethal scenario suites;
-- run replay-analysis smoke on the current published analysis sample;
-- run wasm threat-view tests/build;
-- inspect one report case with forbidden evidence, including `#1548`.
-
-If legality changes affect many moves, regenerate:
-
-- the anchor bot tournament data/report;
-- the analysis data/report;
-- any published static report artifacts.
-
-### Performance Validation
-
-Measure before and after:
+Run the external reference check with:
 
 ```sh
-cargo bench -p gomoku-core --bench board_perf -- \
-  "forbidden_moves/current_player/renju_forbidden_cross|candidate_legality/current_player/renju_forbidden_cross" \
-  --noplot
-
-cargo bench -p gomoku-bot --bench search_perf -- renju_forbidden_cross --noplot
+python gomoku-bot-lab/external/renjunet-advanced-examples/check_refs.py
 ```
 
-If the exact oracle is materially slower, optimize only behind the same public
-semantic boundary:
+Current status:
 
-- cache per-move forbidden results inside one board/search frame;
-- keep cheap necessary-condition guards;
-- reuse line projections;
-- expose diagnostics, not knobs.
+- RenjuNet extracted labels match Piskvork: 23/23.
+- Gomoku2D `renju-rules` corpus check passes: 29/29.
 
-## Implementation Status
+## Follow-Up Validation
 
-Implemented:
+After changing Renju legality:
 
-- design doc;
-- core Renju oracle replacing the raw shape-count detector;
-- #1548/E6 regression fixture;
-- eval-side `renju-rules` golden fixture command;
-- manual Piskvork cross-check for #1548/E6.
-
-Remaining:
-
-- persistent Piskvork/SlowRenju/Rapfi wrapper harnesses;
-- differential fuzz against external references;
-- more dead-four/dead-three golden fixtures from reference mismatches;
-- downstream tactical/corridor/wasm review after the core legality change;
-- report regeneration if analysis/tournament behavior changes materially.
-
-## Open Decisions
-
-- Should Piskvork be the default behavior oracle when RIF text is ambiguous?
-  Proposed answer: yes, unless RIF/RenjuNet examples clearly contradict it.
-- Should exact-five override overline when both appear in different directions?
-  Proposed answer: yes, matching RIF wording and Piskvork check order.
-- Should the public API expose `ForbiddenReason` now?
-  Proposed answer: expose internally first; add wasm/UI fields only when a
-  product surface needs to explain the reason.
-- How much recursion/memoization is necessary?
-  Proposed answer: implement the guard from the start, then benchmark before
-  adding specialized caches.
+- run `cargo test -p gomoku-core`;
+- run `cargo run -p gomoku-eval -- renju-rules`;
+- run tactical and lethal scenario suites if threat behavior changed;
+- run replay-analysis smoke if corridor/analysis behavior changed;
+- regenerate bot/analysis reports only if behavior changes materially.
