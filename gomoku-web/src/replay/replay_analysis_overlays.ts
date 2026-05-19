@@ -18,6 +18,12 @@ import type {
 export type ReplayAnalysisAnnotationsByPly = Record<number, ReplayFrameAnnotations>;
 
 export type ReplayTimelineAnalysis = {
+  analyzedEndPercent: string | null;
+  analyzedStartPercent: string | null;
+  lethalOnsetPercent: string | null;
+  lethalOnsetPly: number | null;
+  lethalTailEndPercent: string | null;
+  lethalTailStartPercent: string | null;
   setupEndPercent: string | null;
   setupEndPly: number | null;
   setupStartPercent: string | null;
@@ -119,16 +125,6 @@ function winningSideName(match: Pick<SavedMatchV2, "status">): ReplayAnalysisSid
   return null;
 }
 
-function setupCorridorDetail(timeline: ReplayTimelineAnalysis, totalMoves: number): string {
-  if (timeline.setupStartPly === null || timeline.setupEndPly === null) {
-    return "No setup corridor found";
-  }
-
-  const startMove = Math.min(totalMoves, timeline.setupStartPly + 1);
-  const endMove = Math.min(totalMoves, timeline.setupEndPly);
-  return `Setup corridor: moves ${startMove}-${endMove}`;
-}
-
 function setupCorridorFromAnalysis(analysis: ReplayAnalysisSummary | null | undefined) {
   const setup = analysis?.setup_corridor ?? null;
   if (
@@ -142,6 +138,11 @@ function setupCorridorFromAnalysis(analysis: ReplayAnalysisSummary | null | unde
   return null;
 }
 
+function lethalOnsetPlyFromAnalysis(analysis: ReplayAnalysisSummary | null | undefined): number | null {
+  const prefixPly = analysis?.lethal_onset?.prefix_ply;
+  return typeof prefixPly === "number" && Number.isFinite(prefixPly) ? prefixPly : null;
+}
+
 export function replayTimelineAnalysis(
   annotationsByPly: ReplayAnalysisAnnotationsByPly,
   totalMoves: number,
@@ -149,8 +150,15 @@ export function replayTimelineAnalysis(
 ): ReplayTimelineAnalysis {
   const plies = annotatedPlies(annotationsByPly);
   const setupCorridor = setupCorridorFromAnalysis(analysis);
-  if (plies.length === 0 && !setupCorridor) {
+  const lethalOnsetPly = lethalOnsetPlyFromAnalysis(analysis);
+  if (plies.length === 0 && !setupCorridor && lethalOnsetPly === null) {
     return {
+      analyzedEndPercent: null,
+      analyzedStartPercent: null,
+      lethalOnsetPercent: null,
+      lethalOnsetPly: null,
+      lethalTailEndPercent: null,
+      lethalTailStartPercent: null,
       setupEndPercent: null,
       setupEndPly: null,
       setupStartPercent: null,
@@ -160,15 +168,26 @@ export function replayTimelineAnalysis(
     };
   }
 
-  const setupStartPly = setupCorridor ? setupCorridor.start_ply : Math.min(...plies);
-  const setupEndPly = setupCorridor ? setupCorridor.end_ply : Math.max(totalMoves, ...plies);
+  const analyzedStartPly = plies.length === 0 ? null : Math.min(...plies);
+  const analyzedEndPly = plies.length === 0 ? null : Math.max(totalMoves, ...plies);
   const escapes = escapePlies(annotationsByPly);
   const escapePly = escapes.length > 0 ? Math.min(...escapes) : null;
+  const setupStartPly = setupCorridor ? setupCorridor.start_ply : null;
+  const setupEndPly = setupCorridor ? setupCorridor.end_ply : null;
+  const setupFillStartPly = setupStartPly === null
+    ? null
+    : Math.min(setupStartPly, escapePly ?? setupStartPly);
 
   return {
-    setupEndPercent: percentForPly(setupEndPly, totalMoves),
+    analyzedEndPercent: analyzedEndPly === null ? null : percentForPly(analyzedEndPly, totalMoves),
+    analyzedStartPercent: analyzedStartPly === null ? null : percentForPly(analyzedStartPly, totalMoves),
+    lethalOnsetPercent: lethalOnsetPly === null ? null : percentForPly(lethalOnsetPly, totalMoves),
+    lethalOnsetPly,
+    lethalTailEndPercent: lethalOnsetPly === null ? null : "100%",
+    lethalTailStartPercent: lethalOnsetPly === null ? null : percentForPly(lethalOnsetPly, totalMoves),
+    setupEndPercent: setupEndPly === null ? null : percentForPly(setupEndPly, totalMoves),
     setupEndPly,
-    setupStartPercent: percentForPly(setupStartPly, totalMoves),
+    setupStartPercent: setupFillStartPly === null ? null : percentForPly(setupFillStartPly, totalMoves),
     setupStartPly,
     escapePercent: escapePly === null ? null : percentForPly(escapePly, totalMoves),
     escapePly,
@@ -200,6 +219,7 @@ export function replayAnalysisStatusSummary(
 
   if (step.status === "resolved") {
     const timeline = replayTimelineAnalysis(annotationsByPly, totalMoves, step.analysis);
+    const lethalOnsetPly = lethalOnsetPlyFromAnalysis(step.analysis);
     const winner = winningSideName(match);
     const loser = loserSideToMove(match);
     const currentSide = sideNameForPlayer(frame.currentPlayer);
@@ -207,59 +227,62 @@ export function replayAnalysisStatusSummary(
       timeline.setupStartPly !== null &&
       timeline.setupEndPly !== null &&
       frame.moveIndex >= timeline.setupStartPly &&
-      frame.moveIndex <= timeline.setupEndPly
+      (lethalOnsetPly === null
+        ? frame.moveIndex <= timeline.setupEndPly
+        : frame.moveIndex < lethalOnsetPly)
     );
-    const afterSetupCorridor = (
-      timeline.setupEndPly !== null &&
-      frame.moveIndex > timeline.setupEndPly
+    const afterLethalOnset = (
+      lethalOnsetPly === null
+        ? timeline.setupEndPly !== null && frame.moveIndex > timeline.setupEndPly
+        : frame.moveIndex >= lethalOnsetPly
     );
 
     if (winner && frame.status !== "playing") {
-      if (timeline.setupStartPly !== null && timeline.setupEndPly !== null) {
-        return {
-          detail: `${Math.max(1, timeline.setupEndPly - timeline.setupStartPly + 1)}-ply setup corridor`,
-          label: `${winner} won`,
-        };
-      }
-
       return {
-        detail: nodeDetail(step),
-        label: `${winner} won`,
+        detail: "Guaranteed win",
+        label: `${winner} has won`,
+      };
+    }
+
+    if (timeline.escapePly !== null && frame.moveIndex === timeline.escapePly && loser) {
+      return {
+        detail: "Last chance to avoid loss",
+        label: `${loser}'s last escape`,
       };
     }
 
     if (!insideSetupCorridor) {
-      if (winner && afterSetupCorridor) {
+      if (winner && afterLethalOnset) {
+        if (lethalOnsetPly !== null && loser && currentSide === loser) {
+          return {
+            detail: "Guaranteed loss",
+            label: `${loser} has lost`,
+          };
+        }
+
         return {
-          detail: "After lethal onset",
-          label: `${winner} has a guaranteed win`,
+          detail: "Guaranteed win",
+          label: `${winner} has won`,
         };
       }
 
       return {
-        detail: "Outside the setup corridor",
+        detail: "Normal play",
         label: `${currentSide} to move`,
       };
     }
 
     if (timeline.escapePly !== null) {
-      if (frame.moveIndex === timeline.escapePly && loser) {
-        return {
-          detail: `Last chance before move ${Math.min(totalMoves, timeline.escapePly + 1)}`,
-          label: `${loser}'s last escape`,
-        };
-      }
-
       if (winner && currentSide === winner) {
         return {
-          detail: setupCorridorDetail(timeline, totalMoves),
+          detail: "No viable escape",
           label: `${winner} can force a win`,
         };
       }
 
       if (loser && currentSide === loser) {
         return {
-          detail: "No viable escape found",
+          detail: "No viable escape",
           label: `${loser} is locked in`,
         };
       }
@@ -278,7 +301,7 @@ export function replayAnalysisStatusSummary(
     }
 
     return {
-      detail: "Outside the setup corridor",
+      detail: "Normal play",
       label: `${currentSide} to move`,
     };
   }

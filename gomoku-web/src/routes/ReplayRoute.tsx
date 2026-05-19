@@ -228,6 +228,11 @@ export function ReplayRoute() {
   const analysisStatus = replayAnalysisStatusSummary(analysisStep, analysisAnnotations, match, frame);
   const timelineAnalysis = replayTimelineAnalysis(analysisAnnotations, match.move_count, analysisStep?.analysis ?? null);
   const timelineStyle = {
+    "--timeline-analyzed-end": timelineAnalysis.analyzedEndPercent ?? "0%",
+    "--timeline-analyzed-start": timelineAnalysis.analyzedStartPercent ?? "0%",
+    "--timeline-lethal-onset": timelineAnalysis.lethalOnsetPercent ?? "0%",
+    "--timeline-lethal-tail-end": timelineAnalysis.lethalTailEndPercent ?? "0%",
+    "--timeline-lethal-tail-start": timelineAnalysis.lethalTailStartPercent ?? "0%",
     "--timeline-setup-end": timelineAnalysis.setupEndPercent ?? "0%",
     "--timeline-setup-start": timelineAnalysis.setupStartPercent ?? "0%",
     "--timeline-escape": timelineAnalysis.escapePercent ?? "0%",
@@ -355,11 +360,20 @@ export function ReplayRoute() {
 
             <div className={styles.timeline} data-testid="replay-timeline" style={timelineStyle}>
               <div aria-hidden="true" className={styles.timelineTrack}>
+                {timelineAnalysis.analyzedStartPercent && timelineAnalysis.analyzedEndPercent ? (
+                  <span className={styles.timelineAnalyzed} data-testid="replay-timeline-analyzed" />
+                ) : null}
                 {timelineAnalysis.setupStartPercent && timelineAnalysis.setupEndPercent ? (
                   <span className={styles.timelineSetup} data-testid="replay-timeline-setup-corridor" />
                 ) : null}
+                {timelineAnalysis.lethalTailStartPercent && timelineAnalysis.lethalTailEndPercent ? (
+                  <span className={styles.timelineLethalTail} data-testid="replay-timeline-lethal-tail" />
+                ) : null}
                 {timelineAnalysis.escapePercent ? (
                   <span className={styles.timelineEscape} data-testid="replay-timeline-escape" />
+                ) : null}
+                {timelineAnalysis.lethalOnsetPercent ? (
+                  <span className={styles.timelineLethalOnset} data-testid="replay-timeline-lethal-onset" />
                 ) : null}
               </div>
               <input

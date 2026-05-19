@@ -53,8 +53,13 @@ export interface ReplayAnalysisInterval {
   start_ply: number;
 }
 
+export interface ReplayAnalysisLethalOnset {
+  prefix_ply: number;
+}
+
 export interface ReplayAnalysisSummary {
   final_forced_interval?: ReplayAnalysisInterval | null;
+  lethal_onset?: ReplayAnalysisLethalOnset | null;
   schema_version?: number;
   setup_corridor?: ReplayAnalysisInterval | null;
 }
