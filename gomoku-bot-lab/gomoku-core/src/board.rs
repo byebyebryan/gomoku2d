@@ -384,7 +384,7 @@ impl Board {
 
         self.renju_forbidden_candidate_moves()
             .into_iter()
-            .filter(|&mv| self.is_renju_forbidden_at(mv))
+            .filter(|&mv| self.can_be_renju_forbidden_at(mv) && self.is_renju_forbidden_at(mv))
             .collect()
     }
 
@@ -614,32 +614,7 @@ impl Board {
     // --- Renju restriction helpers ---
 
     fn can_be_renju_forbidden_at(&self, mv: Move) -> bool {
-        self.has_two_black_stones_on_any_axis(mv)
-    }
-
-    fn has_two_black_stones_on_any_axis(&self, mv: Move) -> bool {
-        let size = self.config.board_size as isize;
-        let row = mv.row as isize;
-        let col = mv.col as isize;
-
-        for (dr, dc) in DIRS {
-            let mut black = 0;
-            for step in [-4, -3, -2, -1, 1, 2, 3, 4] {
-                let r = row + dr * step;
-                let c = col + dc * step;
-                if r < 0 || r >= size || c < 0 || c >= size {
-                    continue;
-                }
-                if self.has_color_at(r as usize, c as usize, Color::Black) {
-                    black += 1;
-                    if black >= 2 {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        false
+        crate::renju::could_be_forbidden(self, mv)
     }
 
     /// True if placing a Black stone at `mv` would create an overline, double-four, or
@@ -1034,6 +1009,25 @@ mod tests {
         setup(&mut b, &[(7, 7), (0, 0)]);
 
         assert!(!b.can_be_renju_forbidden_at(Move { row: 7, col: 9 }));
+    }
+
+    #[test]
+    fn renju_forbidden_guard_rejects_single_raw_three_shape() {
+        let mut b = renju_board();
+        setup(&mut b, &[(7, 7), W[0], (7, 9), W[1]]);
+
+        crate::renju::renju_forbidden_metrics_reset();
+        assert!(b.is_legal_for_color(Move { row: 7, col: 8 }, Color::Black));
+        let metrics = crate::renju::renju_forbidden_metrics_snapshot();
+
+        assert!(
+            !b.can_be_renju_forbidden_at(Move { row: 7, col: 8 }),
+            "a single open-three shape cannot be forbidden by itself"
+        );
+        assert_eq!(
+            metrics.checks, 0,
+            "shape prefilter should avoid exact Renju proof for non-forbidden raw shapes"
+        );
     }
 
     #[test]
