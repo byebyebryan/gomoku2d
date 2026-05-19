@@ -10,8 +10,9 @@ use crate::frontier::{
 };
 use crate::pattern::{evaluate_pattern_scan, PatternFrame};
 use crate::tactical::{
-    local_threat_facts_after_move, CorridorThreatPolicy, LocalThreatKind, ScanThreatView,
-    SearchThreatPolicy, TacticalMoveAnnotation, TacticalOrderingSummary, ThreatView,
+    local_threat_facts_after_move, tactical_metrics_snapshot, CorridorThreatPolicy,
+    LocalThreatKind, ScanThreatView, SearchThreatPolicy, TacticalMetrics, TacticalMoveAnnotation,
+    TacticalOrderingSummary, ThreatView,
 };
 use crate::viability::{direction_bit, scan_cell_null, scan_cell_viability};
 use crate::Bot;
@@ -375,6 +376,8 @@ pub struct SearchMetrics {
     pub root_illegal_moves_skipped: u64,
     pub search_legality_checks: u64,
     pub search_illegal_moves_skipped: u64,
+    pub renju_forbidden_prefilter_checks: u64,
+    pub renju_forbidden_prefilter_ns: u64,
     pub renju_forbidden_checks: u64,
     pub renju_forbidden_ns: u64,
     pub renju_forbidden_search_gate_checks: u64,
@@ -385,6 +388,10 @@ pub struct SearchMetrics {
     pub renju_forbidden_threat_ns: u64,
     pub renju_forbidden_other_checks: u64,
     pub renju_forbidden_other_ns: u64,
+    pub renju_effective_filter_calls: u64,
+    pub renju_effective_filter_ns: u64,
+    pub renju_effective_filter_continuation_checks: u64,
+    pub renju_effective_filter_continuation_ns: u64,
     pub stage_move_gen_ns: u64,
     pub stage_ordering_ns: u64,
     pub stage_eval_ns: u64,
@@ -649,8 +656,30 @@ impl SearchMetrics {
     fn renju_forbidden_delta_since(before: RenjuForbiddenMetrics) -> RenjuForbiddenMetrics {
         let after = renju_forbidden_metrics_snapshot();
         RenjuForbiddenMetrics {
+            prefilter_checks: after
+                .prefilter_checks
+                .saturating_sub(before.prefilter_checks),
+            prefilter_ns: after.prefilter_ns.saturating_sub(before.prefilter_ns),
             checks: after.checks.saturating_sub(before.checks),
             ns: after.ns.saturating_sub(before.ns),
+        }
+    }
+
+    fn tactical_metrics_delta_since(before: TacticalMetrics) -> TacticalMetrics {
+        let after = tactical_metrics_snapshot();
+        TacticalMetrics {
+            renju_effective_filter_calls: after
+                .renju_effective_filter_calls
+                .saturating_sub(before.renju_effective_filter_calls),
+            renju_effective_filter_ns: after
+                .renju_effective_filter_ns
+                .saturating_sub(before.renju_effective_filter_ns),
+            renju_effective_filter_continuation_checks: after
+                .renju_effective_filter_continuation_checks
+                .saturating_sub(before.renju_effective_filter_continuation_checks),
+            renju_effective_filter_continuation_ns: after
+                .renju_effective_filter_continuation_ns
+                .saturating_sub(before.renju_effective_filter_continuation_ns),
         }
     }
 
@@ -687,6 +716,12 @@ impl SearchMetrics {
 
     fn record_renju_forbidden_total_delta(&mut self, before: RenjuForbiddenMetrics) {
         let delta = Self::renju_forbidden_delta_since(before);
+        self.renju_forbidden_prefilter_checks = self
+            .renju_forbidden_prefilter_checks
+            .saturating_add(delta.prefilter_checks);
+        self.renju_forbidden_prefilter_ns = self
+            .renju_forbidden_prefilter_ns
+            .saturating_add(delta.prefilter_ns);
         self.renju_forbidden_checks = self.renju_forbidden_checks.saturating_add(delta.checks);
         self.renju_forbidden_ns = self.renju_forbidden_ns.saturating_add(delta.ns);
 
@@ -704,6 +739,22 @@ impl SearchMetrics {
         self.renju_forbidden_other_ns = self
             .renju_forbidden_other_ns
             .saturating_add(delta.ns.saturating_sub(known_ns));
+    }
+
+    fn record_tactical_metric_total_delta(&mut self, before: TacticalMetrics) {
+        let delta = Self::tactical_metrics_delta_since(before);
+        self.renju_effective_filter_calls = self
+            .renju_effective_filter_calls
+            .saturating_add(delta.renju_effective_filter_calls);
+        self.renju_effective_filter_ns = self
+            .renju_effective_filter_ns
+            .saturating_add(delta.renju_effective_filter_ns);
+        self.renju_effective_filter_continuation_checks = self
+            .renju_effective_filter_continuation_checks
+            .saturating_add(delta.renju_effective_filter_continuation_checks);
+        self.renju_effective_filter_continuation_ns = self
+            .renju_effective_filter_continuation_ns
+            .saturating_add(delta.renju_effective_filter_continuation_ns);
     }
 
     fn record_tactical_annotation(&mut self, phase: SearchMetricPhase) {
@@ -4099,6 +4150,7 @@ impl Bot for SearchBot {
         let color = board.current_player;
         let mut metrics = SearchMetrics::default();
         let renju_metrics_before = renju_forbidden_metrics_snapshot();
+        let tactical_metrics_before = tactical_metrics_snapshot();
         let start = Instant::now();
         let time_budget = self.config.time_budget();
         let cpu_time_budget = self.config.cpu_time_budget();
@@ -4273,6 +4325,7 @@ impl Bot for SearchBot {
         }
 
         metrics.record_renju_forbidden_total_delta(renju_metrics_before);
+        metrics.record_tactical_metric_total_delta(tactical_metrics_before);
         self.last_info = Some(SearchInfo {
             depth_reached,
             nodes: total_nodes,
@@ -5314,6 +5367,18 @@ mod tests {
         assert!(metrics["search_legality_checks"].as_u64().is_some());
         assert!(metrics["renju_forbidden_checks"].as_u64().is_some());
         assert!(metrics["renju_forbidden_ns"].as_u64().is_some());
+        assert!(metrics["renju_forbidden_prefilter_checks"]
+            .as_u64()
+            .is_some());
+        assert!(metrics["renju_forbidden_prefilter_ns"].as_u64().is_some());
+        assert!(metrics["renju_effective_filter_calls"].as_u64().is_some());
+        assert!(metrics["renju_effective_filter_ns"].as_u64().is_some());
+        assert!(metrics["renju_effective_filter_continuation_checks"]
+            .as_u64()
+            .is_some());
+        assert!(metrics["renju_effective_filter_continuation_ns"]
+            .as_u64()
+            .is_some());
         assert!(metrics["root_tactical_annotations"].as_u64().is_some());
         assert!(metrics["search_tactical_annotations"].as_u64().is_some());
     }
