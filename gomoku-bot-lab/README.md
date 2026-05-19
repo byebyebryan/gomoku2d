@@ -205,7 +205,8 @@ Strict per-move budgets remain the default because they make anchor reports easy
 to compare. For product-shaped checks, `--search-budget-mode pooled` uses the
 same CPU budget as a per-game average: cheap moves bank CPU reserve, hard moves
 can spend it, and `--search-cpu-reserve-ms` caps how much burst time a side can
-carry.
+carry. `--search-cpu-max-move-ms` can cap a single move independently from the
+larger reserve pool.
 
 ```sh
 mkdir -p outputs
@@ -228,9 +229,10 @@ cargo run --release -p gomoku-eval -- tournament \
   --games-per-pair 64 \
   --opening-policy centered-suite \
   --opening-plies 4 \
-  --search-cpu-time-ms 1000 \
+  --search-cpu-time-ms 2000 \
   --search-budget-mode pooled \
-  --search-cpu-reserve-ms 4000 \
+  --search-cpu-reserve-ms 8000 \
+  --search-cpu-max-move-ms 4000 \
   --max-moves 120 \
   --seed 63 \
   --threads 22 \
@@ -253,6 +255,7 @@ Useful eval flags:
 | `--search-cpu-time-ms` | Applies a Linux thread CPU-time budget to search bots |
 | `--search-budget-mode` | Budget policy: `strict` per move by default, or `pooled` CPU reserve mode |
 | `--search-cpu-reserve-ms` | CPU reserve cap for pooled mode; defaults to `4000` |
+| `--search-cpu-max-move-ms` | Optional max CPU-time budget for one pooled move; useful when the reserve pool should be larger than the allowed spike |
 | `--max-game-ms` | Records a still-running game as a draw after this wall-clock cap |
 | `--max-moves` | Records a still-running game as a draw after this move count |
 | `--seed` | Base seed for reproducible random bots and tournament opening-suite rotation |

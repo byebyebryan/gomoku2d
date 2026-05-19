@@ -30,6 +30,8 @@ pub struct TournamentRunReport {
     pub search_budget_mode: String,
     #[serde(default)]
     pub search_cpu_reserve_ms: Option<u64>,
+    #[serde(default)]
+    pub search_cpu_max_move_ms: Option<u64>,
     pub max_moves: Option<usize>,
     pub max_game_ms: Option<u64>,
     #[serde(default)]
@@ -101,6 +103,8 @@ pub struct AnchorReferenceSource {
     pub search_budget_mode: String,
     #[serde(default)]
     pub search_cpu_reserve_ms: Option<u64>,
+    #[serde(default)]
+    pub search_cpu_max_move_ms: Option<u64>,
     #[serde(default)]
     pub max_moves: Option<usize>,
     #[serde(default)]
@@ -222,6 +226,7 @@ impl AnchorReferenceReport {
                 search_cpu_time_ms: source_report.run.search_cpu_time_ms,
                 search_budget_mode: source_report.run.search_budget_mode.clone(),
                 search_cpu_reserve_ms: source_report.run.search_cpu_reserve_ms,
+                search_cpu_max_move_ms: source_report.run.search_cpu_max_move_ms,
                 max_moves: source_report.run.max_moves,
                 max_game_ms: source_report.run.max_game_ms,
             },
@@ -258,6 +263,9 @@ impl AnchorReferenceReport {
         }
         if source.search_cpu_reserve_ms != run.search_cpu_reserve_ms {
             mismatches.push("search_cpu_reserve_ms".to_string());
+        }
+        if source.search_cpu_max_move_ms != run.search_cpu_max_move_ms {
+            mismatches.push("search_cpu_max_move_ms".to_string());
         }
         if source.max_moves != run.max_moves {
             mismatches.push("max_moves".to_string());
@@ -1606,7 +1614,8 @@ impl SideStatsAccumulator {
                 self.pooled_budget_over_base_count += 1;
             }
             if pool
-                .get("reserve_exhausted")
+                .get("budget_exhausted")
+                .or_else(|| pool.get("reserve_exhausted"))
                 .and_then(Value::as_bool)
                 .unwrap_or(false)
             {
@@ -3165,10 +3174,11 @@ fn anchor_budget_label(source: &AnchorReferenceSource) -> String {
         (None, None) => "no per-move budget".to_string(),
     };
     if source.search_budget_mode == "pooled" {
-        match source.search_cpu_reserve_ms {
-            Some(reserve_ms) => format!("{base}, pooled reserve {reserve_ms} ms"),
-            None => format!("{base}, pooled"),
-        }
+        pooled_budget_label(
+            base,
+            source.search_cpu_reserve_ms,
+            source.search_cpu_max_move_ms,
+        )
     } else {
         base
     }
@@ -3212,12 +3222,20 @@ fn budget_label(run: &TournamentRunReport) -> String {
         (None, None) => "no per-move budget".to_string(),
     };
     if run.search_budget_mode == "pooled" {
-        match run.search_cpu_reserve_ms {
-            Some(reserve_ms) => format!("{base}, pooled reserve {reserve_ms} ms"),
-            None => format!("{base}, pooled"),
-        }
+        pooled_budget_label(base, run.search_cpu_reserve_ms, run.search_cpu_max_move_ms)
     } else {
         base
+    }
+}
+
+fn pooled_budget_label(base: String, reserve_ms: Option<u64>, max_move_ms: Option<u64>) -> String {
+    match (reserve_ms, max_move_ms) {
+        (Some(reserve_ms), Some(max_move_ms)) => {
+            format!("{base}, pooled reserve {reserve_ms} ms, max move {max_move_ms} ms")
+        }
+        (Some(reserve_ms), None) => format!("{base}, pooled reserve {reserve_ms} ms"),
+        (None, Some(max_move_ms)) => format!("{base}, pooled max move {max_move_ms} ms"),
+        (None, None) => format!("{base}, pooled"),
     }
 }
 
@@ -4694,6 +4712,7 @@ mod tests {
         let mut report = sample_report();
         report.run.search_budget_mode = "pooled".to_string();
         report.run.search_cpu_reserve_ms = Some(4_000);
+        report.run.search_cpu_max_move_ms = Some(2_500);
         report.standings = vec![sample_standing_with_search_costs("search-d2")];
         report.standings[0].pooled_budget_moves = 5;
         report.standings[0].pooled_budget_over_base_count = 2;
@@ -4705,7 +4724,7 @@ mod tests {
 
         let html = render_tournament_report_html(&report);
 
-        assert!(html.contains("CPU 1000 ms/move, pooled reserve 4000 ms"));
+        assert!(html.contains("CPU 1000 ms/move, pooled reserve 4000 ms, max move 2500 ms"));
         assert!(html.contains("<section class=\"entrant-workbench has-pool\">"));
         assert!(html.contains("<span class=\"metric metric-search metric-pool\">Pool</span>"));
         assert!(html.contains("<span class=\"metric metric-search metric-pool\" data-label=\"Pool\"><span>40% over base</span><span>exh 20% / min 125 ms</span></span>"));
@@ -4808,6 +4827,7 @@ mod tests {
                 search_cpu_time_ms: Some(1000),
                 search_budget_mode: "strict".to_string(),
                 search_cpu_reserve_ms: None,
+                search_cpu_max_move_ms: None,
                 max_moves: Some(120),
                 max_game_ms: None,
             },
@@ -5208,10 +5228,11 @@ mod tests {
                 "base_ms": 1000,
                 "move_budget_ms": 1750,
                 "reserve_cap_ms": 4000,
+                "max_move_ms": null,
                 "reserve_before_ms": 750,
                 "reserve_after_ms": 250,
                 "consumed_ms": 1500,
-                "reserve_exhausted": false
+                "budget_exhausted": false
             },
             "metrics": metrics
         });
@@ -5564,6 +5585,7 @@ mod tests {
                 search_cpu_time_ms: Some(1000),
                 search_budget_mode: "strict".to_string(),
                 search_cpu_reserve_ms: None,
+                search_cpu_max_move_ms: None,
                 max_moves: Some(120),
                 max_game_ms: None,
             },
@@ -5754,10 +5776,12 @@ mod tests {
         let mut run = source.run.clone();
         run.search_budget_mode = "pooled".to_string();
         run.search_cpu_reserve_ms = Some(4_000);
+        run.search_cpu_max_move_ms = Some(2_000);
         let err = reference.validate_compatible_run(&run).unwrap_err();
 
         assert!(err.contains("search_budget_mode"));
         assert!(err.contains("search_cpu_reserve_ms"));
+        assert!(err.contains("search_cpu_max_move_ms"));
     }
 
     #[test]
@@ -5779,6 +5803,7 @@ mod tests {
                 search_cpu_time_ms: Some(1000),
                 search_budget_mode: "strict".to_string(),
                 search_cpu_reserve_ms: None,
+                search_cpu_max_move_ms: None,
                 max_moves: Some(120),
                 max_game_ms: None,
             },
@@ -5830,6 +5855,7 @@ mod tests {
                 search_cpu_time_ms: Some(1000),
                 search_budget_mode: "strict".to_string(),
                 search_cpu_reserve_ms: None,
+                search_cpu_max_move_ms: None,
                 max_moves: Some(120),
                 max_game_ms: None,
             },
@@ -5892,6 +5918,7 @@ mod tests {
                 search_cpu_time_ms: Some(1000),
                 search_budget_mode: "strict".to_string(),
                 search_cpu_reserve_ms: None,
+                search_cpu_max_move_ms: None,
                 max_moves: Some(120),
                 max_game_ms: None,
             },
@@ -6173,6 +6200,7 @@ mod tests {
                 search_cpu_time_ms: Some(1000),
                 search_budget_mode: "strict".to_string(),
                 search_cpu_reserve_ms: None,
+                search_cpu_max_move_ms: None,
                 max_moves: Some(120),
                 max_game_ms: None,
                 total_wall_time_ms: Some(100),

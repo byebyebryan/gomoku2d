@@ -129,6 +129,10 @@ struct EvalOptions {
     #[arg(long, default_value_t = 4_000)]
     search_cpu_reserve_ms: u64,
 
+    /// Max CPU-time budget for a single pooled move, in milliseconds
+    #[arg(long)]
+    search_cpu_max_move_ms: Option<u64>,
+
     /// Stop a game after this many moves and record it as a draw
     #[arg(long)]
     max_moves: Option<usize>,
@@ -150,6 +154,7 @@ struct EvalContext {
     search_cpu_time_ms: Option<u64>,
     search_budget_mode: CliSearchBudgetMode,
     search_cpu_reserve_ms: u64,
+    search_cpu_max_move_ms: Option<u64>,
     seed: u64,
 }
 
@@ -596,6 +601,7 @@ fn make_bot_factory(
     search_cpu_time_ms: Option<u64>,
     search_budget_mode: CliSearchBudgetMode,
     search_cpu_reserve_ms: u64,
+    search_cpu_max_move_ms: Option<u64>,
 ) -> Result<BotFactory, String> {
     let spec = spec.to_string();
     if spec == "random" {
@@ -620,12 +626,21 @@ fn make_bot_factory(
                         "Pooled search budgeting requires --search-cpu-time-ms.".to_string()
                     );
                 };
+                if let Some(max_move_ms) = search_cpu_max_move_ms {
+                    if max_move_ms < base_ms {
+                        return Err(
+                            "--search-cpu-max-move-ms must be greater than or equal to --search-cpu-time-ms."
+                                .to_string(),
+                        );
+                    }
+                }
                 Ok(Arc::new(move |_| {
                     Box::new(PooledSearchBot::new(
                         config,
                         PooledCpuBudgetConfig {
                             base_ms,
                             reserve_cap_ms: search_cpu_reserve_ms,
+                            max_move_ms: search_cpu_max_move_ms,
                         },
                     ))
                 }))
@@ -643,6 +658,15 @@ fn exit_with_error(message: impl AsRef<str>) -> ! {
     std::process::exit(2);
 }
 
+fn pooled_budget_label(reserve_cap_ms: u64, max_move_ms: Option<u64>) -> String {
+    match max_move_ms {
+        Some(max_move_ms) => format!(
+            "Search budget mode: pooled (reserve cap {reserve_cap_ms} ms, max move {max_move_ms} ms)"
+        ),
+        None => format!("Search budget mode: pooled (reserve cap {reserve_cap_ms} ms)"),
+    }
+}
+
 fn variant_label(variant: &Variant) -> &'static str {
     match variant {
         Variant::Freestyle => "freestyle",
@@ -651,6 +675,12 @@ fn variant_label(variant: &Variant) -> &'static str {
 }
 
 fn eval_context(options: &EvalOptions) -> EvalContext {
+    if options.search_budget_mode != CliSearchBudgetMode::Pooled
+        && options.search_cpu_max_move_ms.is_some()
+    {
+        exit_with_error("--search-cpu-max-move-ms requires --search-budget-mode pooled.");
+    }
+
     let variant = match options.rule.as_str() {
         "renju" => Variant::Renju,
         "freestyle" => Variant::Freestyle,
@@ -673,6 +703,7 @@ fn eval_context(options: &EvalOptions) -> EvalContext {
         search_cpu_time_ms: options.search_cpu_time_ms,
         search_budget_mode: options.search_budget_mode,
         search_cpu_reserve_ms: options.search_cpu_reserve_ms,
+        search_cpu_max_move_ms: options.search_cpu_max_move_ms,
         seed: options.seed,
     }
 }
@@ -1030,6 +1061,7 @@ fn main() {
                 search_cpu_time_ms,
                 search_budget_mode,
                 search_cpu_reserve_ms,
+                search_cpu_max_move_ms,
                 seed,
             } = eval_context(&options);
             println!("--- Versus: {} vs {} ({} games) ---", bot_a, bot_b, games);
@@ -1041,7 +1073,10 @@ fn main() {
                 println!("Search CPU-time budget: {ms} ms/move");
             }
             if search_budget_mode == CliSearchBudgetMode::Pooled {
-                println!("Search budget mode: pooled (reserve cap {search_cpu_reserve_ms} ms)");
+                println!(
+                    "{}",
+                    pooled_budget_label(search_cpu_reserve_ms, search_cpu_max_move_ms)
+                );
             }
 
             if let Some(dir) = &replay_dir {
@@ -1054,6 +1089,7 @@ fn main() {
                 search_cpu_time_ms,
                 search_budget_mode,
                 search_cpu_reserve_ms,
+                search_cpu_max_move_ms,
             ) {
                 Ok(factory) => factory,
                 Err(err) => exit_with_error(err),
@@ -1064,6 +1100,7 @@ fn main() {
                 search_cpu_time_ms,
                 search_budget_mode,
                 search_cpu_reserve_ms,
+                search_cpu_max_move_ms,
             ) {
                 Ok(factory) => factory,
                 Err(err) => exit_with_error(err),
@@ -1129,6 +1166,7 @@ fn main() {
                 search_cpu_time_ms,
                 search_budget_mode,
                 search_cpu_reserve_ms,
+                search_cpu_max_move_ms,
                 seed,
             } = eval_context(&options);
             println!("--- Self-Play: {} vs {} ({} games) ---", bot, bot, games);
@@ -1140,7 +1178,10 @@ fn main() {
                 println!("Search CPU-time budget: {ms} ms/move");
             }
             if search_budget_mode == CliSearchBudgetMode::Pooled {
-                println!("Search budget mode: pooled (reserve cap {search_cpu_reserve_ms} ms)");
+                println!(
+                    "{}",
+                    pooled_budget_label(search_cpu_reserve_ms, search_cpu_max_move_ms)
+                );
             }
 
             if let Some(dir) = &replay_dir {
@@ -1153,6 +1194,7 @@ fn main() {
                 search_cpu_time_ms,
                 search_budget_mode,
                 search_cpu_reserve_ms,
+                search_cpu_max_move_ms,
             ) {
                 Ok(factory) => factory,
                 Err(err) => exit_with_error(err),
@@ -1225,6 +1267,7 @@ fn main() {
                 search_cpu_time_ms,
                 search_budget_mode,
                 search_cpu_reserve_ms,
+                search_cpu_max_move_ms,
                 seed,
             } = eval_context(&options);
             let anchor_report_display = anchor_report
@@ -1284,7 +1327,10 @@ fn main() {
                 println!("Search CPU-time budget: {ms} ms/move");
             }
             if search_budget_mode == CliSearchBudgetMode::Pooled {
-                println!("Search budget mode: pooled (reserve cap {search_cpu_reserve_ms} ms)");
+                println!(
+                    "{}",
+                    pooled_budget_label(search_cpu_reserve_ms, search_cpu_max_move_ms)
+                );
             }
             if let Some(max_moves) = limits.max_moves {
                 println!("Max moves: {max_moves}");
@@ -1306,6 +1352,9 @@ fn main() {
                 search_budget_mode: search_budget_mode.label().to_string(),
                 search_cpu_reserve_ms: (search_budget_mode == CliSearchBudgetMode::Pooled)
                     .then_some(search_cpu_reserve_ms),
+                search_cpu_max_move_ms: (search_budget_mode == CliSearchBudgetMode::Pooled)
+                    .then_some(search_cpu_max_move_ms)
+                    .flatten(),
                 max_moves: limits.max_moves,
                 max_game_ms: limits.max_game_ms,
                 total_wall_time_ms: None,
@@ -1336,6 +1385,7 @@ fn main() {
                     search_cpu_time_ms,
                     search_budget_mode,
                     search_cpu_reserve_ms,
+                    search_cpu_max_move_ms,
                 ) {
                     Ok(factory) => factories.push((name.clone(), factory)),
                     Err(err) => exit_with_error(err),
@@ -1878,7 +1928,8 @@ mod tests {
     #[test]
     fn make_bot_factory_rejects_retired_corridor_lab_aliases() {
         for spec in ["corridor-random", "corridor-d1"] {
-            let err = match make_bot_factory(spec, None, None, CliSearchBudgetMode::Strict, 0) {
+            let err = match make_bot_factory(spec, None, None, CliSearchBudgetMode::Strict, 0, None)
+            {
                 Ok(_) => panic!("retired corridor bot alias should not parse: {spec}"),
                 Err(err) => err,
             };
@@ -1889,13 +1940,31 @@ mod tests {
     #[test]
     fn make_bot_factory_rejects_retired_corridor_quiescence_suffixes() {
         for spec in ["search-d1+corridor-q", "search-d1+corridor-qd4"] {
-            let err = match make_bot_factory(spec, None, Some(123), CliSearchBudgetMode::Strict, 0)
-            {
-                Ok(_) => panic!("retired corridor quiescence suffix should not parse: {spec}"),
-                Err(err) => err,
-            };
+            let err =
+                match make_bot_factory(spec, None, Some(123), CliSearchBudgetMode::Strict, 0, None)
+                {
+                    Ok(_) => panic!("retired corridor quiescence suffix should not parse: {spec}"),
+                    Err(err) => err,
+                };
             assert!(err.contains("Unknown bot"));
         }
+    }
+
+    #[test]
+    fn make_bot_factory_rejects_pooled_max_move_below_base_budget() {
+        let err = match make_bot_factory(
+            "search-d1",
+            None,
+            Some(2_000),
+            CliSearchBudgetMode::Pooled,
+            8_000,
+            Some(1_000),
+        ) {
+            Ok(_) => panic!("pooled max move below base budget should not parse"),
+            Err(err) => err,
+        };
+
+        assert!(err.contains("--search-cpu-max-move-ms"));
     }
 
     #[test]
@@ -2027,6 +2096,8 @@ mod tests {
             "pooled",
             "--search-cpu-reserve-ms",
             "8000",
+            "--search-cpu-max-move-ms",
+            "4000",
         ])
         .expect("tournament command should parse");
 
@@ -2037,6 +2108,7 @@ mod tests {
         assert_eq!(options.search_cpu_time_ms, Some(1000));
         assert_eq!(options.search_budget_mode, CliSearchBudgetMode::Pooled);
         assert_eq!(options.search_cpu_reserve_ms, 8000);
+        assert_eq!(options.search_cpu_max_move_ms, Some(4000));
     }
 
     #[test]
