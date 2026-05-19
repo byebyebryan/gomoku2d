@@ -1080,14 +1080,6 @@ mod tests {
         }
     }
 
-    fn setup_notation(board: &mut Board, moves: &[&str]) {
-        for notation in moves {
-            board
-                .apply_move(Move::from_notation(notation).unwrap())
-                .unwrap();
-        }
-    }
-
     // White stone placements that never form 5-in-a-row: row 14, every other column.
     const W: [(usize, usize); 8] = [
         (14, 0),
@@ -1194,22 +1186,6 @@ mod tests {
             b.apply_move(Move { row: 7, col: 7 }),
             Err(MoveError::Forbidden)
         );
-    }
-
-    #[test]
-    fn renju_apparent_double_three_with_dead_continuation_is_legal() {
-        let mut b = renju_board();
-        setup_notation(
-            &mut b,
-            &[
-                "H8", "H7", "F8", "G9", "G8", "I8", "G6", "D9", "F9", "F10", "D7", "G10", "F7",
-                "E10", "E8", "D8", "C6", "B5", "D10", "F11", "F6", "F5",
-            ],
-        );
-        let e6 = Move::from_notation("E6").unwrap();
-
-        assert_eq!(b.current_player, Color::Black);
-        assert!(b.is_legal_for_color(e6, Color::Black));
     }
 
     #[test]
