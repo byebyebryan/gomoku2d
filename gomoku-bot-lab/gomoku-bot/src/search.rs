@@ -377,6 +377,14 @@ pub struct SearchMetrics {
     pub search_illegal_moves_skipped: u64,
     pub renju_forbidden_checks: u64,
     pub renju_forbidden_ns: u64,
+    pub renju_forbidden_search_gate_checks: u64,
+    pub renju_forbidden_search_gate_ns: u64,
+    pub renju_forbidden_pattern_checks: u64,
+    pub renju_forbidden_pattern_ns: u64,
+    pub renju_forbidden_threat_checks: u64,
+    pub renju_forbidden_threat_ns: u64,
+    pub renju_forbidden_other_checks: u64,
+    pub renju_forbidden_other_ns: u64,
     pub stage_move_gen_ns: u64,
     pub stage_ordering_ns: u64,
     pub stage_eval_ns: u64,
@@ -474,6 +482,13 @@ pub struct SearchMetrics {
 enum SearchMetricPhase {
     Root,
     Search,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum RenjuForbiddenMetricSource {
+    SearchGate,
+    Pattern,
+    Threat,
 }
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -631,14 +646,64 @@ impl SearchMetrics {
         legal
     }
 
-    fn record_renju_forbidden_delta(&mut self, before: RenjuForbiddenMetrics) {
+    fn renju_forbidden_delta_since(before: RenjuForbiddenMetrics) -> RenjuForbiddenMetrics {
         let after = renju_forbidden_metrics_snapshot();
-        self.renju_forbidden_checks = self
-            .renju_forbidden_checks
-            .saturating_add(after.checks.saturating_sub(before.checks));
-        self.renju_forbidden_ns = self
-            .renju_forbidden_ns
-            .saturating_add(after.ns.saturating_sub(before.ns));
+        RenjuForbiddenMetrics {
+            checks: after.checks.saturating_sub(before.checks),
+            ns: after.ns.saturating_sub(before.ns),
+        }
+    }
+
+    fn record_renju_forbidden_source_delta(
+        &mut self,
+        source: RenjuForbiddenMetricSource,
+        before: RenjuForbiddenMetrics,
+    ) {
+        let delta = Self::renju_forbidden_delta_since(before);
+        match source {
+            RenjuForbiddenMetricSource::SearchGate => {
+                self.renju_forbidden_search_gate_checks = self
+                    .renju_forbidden_search_gate_checks
+                    .saturating_add(delta.checks);
+                self.renju_forbidden_search_gate_ns =
+                    self.renju_forbidden_search_gate_ns.saturating_add(delta.ns);
+            }
+            RenjuForbiddenMetricSource::Pattern => {
+                self.renju_forbidden_pattern_checks = self
+                    .renju_forbidden_pattern_checks
+                    .saturating_add(delta.checks);
+                self.renju_forbidden_pattern_ns =
+                    self.renju_forbidden_pattern_ns.saturating_add(delta.ns);
+            }
+            RenjuForbiddenMetricSource::Threat => {
+                self.renju_forbidden_threat_checks = self
+                    .renju_forbidden_threat_checks
+                    .saturating_add(delta.checks);
+                self.renju_forbidden_threat_ns =
+                    self.renju_forbidden_threat_ns.saturating_add(delta.ns);
+            }
+        }
+    }
+
+    fn record_renju_forbidden_total_delta(&mut self, before: RenjuForbiddenMetrics) {
+        let delta = Self::renju_forbidden_delta_since(before);
+        self.renju_forbidden_checks = self.renju_forbidden_checks.saturating_add(delta.checks);
+        self.renju_forbidden_ns = self.renju_forbidden_ns.saturating_add(delta.ns);
+
+        let known_checks = self
+            .renju_forbidden_search_gate_checks
+            .saturating_add(self.renju_forbidden_pattern_checks)
+            .saturating_add(self.renju_forbidden_threat_checks);
+        let known_ns = self
+            .renju_forbidden_search_gate_ns
+            .saturating_add(self.renju_forbidden_pattern_ns)
+            .saturating_add(self.renju_forbidden_threat_ns);
+        self.renju_forbidden_other_checks = self
+            .renju_forbidden_other_checks
+            .saturating_add(delta.checks.saturating_sub(known_checks));
+        self.renju_forbidden_other_ns = self
+            .renju_forbidden_other_ns
+            .saturating_add(delta.ns.saturating_sub(known_ns));
     }
 
     fn record_tactical_annotation(&mut self, phase: SearchMetricPhase) {
@@ -951,10 +1016,15 @@ impl SearchState {
             );
         }
         if let Some(pattern_frame) = &mut self.pattern_frame {
+            let renju_before = renju_forbidden_metrics_snapshot();
             let start = Instant::now();
             let pattern_result = pattern_frame.apply_trusted_legal_move(mv);
             if let Some(metrics) = metrics.as_mut() {
                 metrics.record_pattern_frame_update(start.elapsed());
+                metrics.record_renju_forbidden_source_delta(
+                    RenjuForbiddenMetricSource::Pattern,
+                    renju_before,
+                );
             }
             debug_assert_eq!(
                 board_result, pattern_result,
@@ -985,10 +1055,15 @@ impl SearchState {
             }
         }
         if let Some(pattern_frame) = &mut self.pattern_frame {
+            let renju_before = renju_forbidden_metrics_snapshot();
             let start = Instant::now();
             pattern_frame.undo_move(mv);
             if let Some(metrics) = metrics.as_mut() {
                 metrics.record_pattern_frame_update(start.elapsed());
+                metrics.record_renju_forbidden_source_delta(
+                    RenjuForbiddenMetricSource::Pattern,
+                    renju_before,
+                );
             }
         }
         self.hash = self
@@ -1022,9 +1097,15 @@ fn evaluate_counted(
     static_eval: StaticEvaluation,
     metrics: &mut SearchMetrics,
 ) -> i32 {
+    let renju_before =
+        (static_eval == StaticEvaluation::PatternEval).then(renju_forbidden_metrics_snapshot);
     let start = Instant::now();
     let score = evaluate_static(board, color, static_eval);
     metrics.record_static_eval(static_eval, start.elapsed());
+    if let Some(renju_before) = renju_before {
+        metrics
+            .record_renju_forbidden_source_delta(RenjuForbiddenMetricSource::Pattern, renju_before);
+    }
     score
 }
 
@@ -1306,9 +1387,11 @@ fn scan_tactical_ordering_summary_for_player_timed(
     mv: Move,
     metrics: &mut SearchMetrics,
 ) -> TacticalOrderingSummary {
+    let renju_before = renju_forbidden_metrics_snapshot();
     let start = Instant::now();
     let summary = SearchThreatPolicy.ordering_summary_for_legal_player(board, player, mv);
     metrics.record_threat_view_scan(start.elapsed());
+    metrics.record_renju_forbidden_source_delta(RenjuForbiddenMetricSource::Threat, renju_before);
     summary
 }
 
@@ -1318,10 +1401,13 @@ fn rolling_frontier_tactical_ordering_summary_for_player_timed(
     mv: Move,
     metrics: &mut SearchMetrics,
 ) -> TacticalOrderingSummary {
+    let renju_before = renju_forbidden_metrics_snapshot();
     let start = Instant::now();
     let key = state.frontier_annotation_memo_key(player, mv);
     if let Some(summary) = state.frontier_ordering_summary_memo.get(&key).copied() {
         metrics.record_threat_view_frontier_memo_annotation_query(start.elapsed());
+        metrics
+            .record_renju_forbidden_source_delta(RenjuForbiddenMetricSource::Threat, renju_before);
         return summary;
     }
 
@@ -1330,6 +1416,7 @@ fn rolling_frontier_tactical_ordering_summary_for_player_timed(
         frontier.search_ordering_summary_for_legal_player_with_source(player, mv)
     };
     metrics.record_threat_view_frontier_annotation_query(start.elapsed(), source);
+    metrics.record_renju_forbidden_source_delta(RenjuForbiddenMetricSource::Threat, renju_before);
     if source == FrontierAnnotationSource::DirtyRecompute {
         state.frontier_ordering_summary_memo.insert(key, summary);
     }
@@ -1821,9 +1908,15 @@ fn legal_by_gate_counted(
 ) -> bool {
     match legality_gate {
         LegalityGate::ExactRules => {
+            let renju_before = renju_forbidden_metrics_snapshot();
             let start = Instant::now();
             let legal = board.is_legal(mv);
-            metrics.record_legality(legal, start.elapsed(), phase)
+            let accepted = metrics.record_legality(legal, start.elapsed(), phase);
+            metrics.record_renju_forbidden_source_delta(
+                RenjuForbiddenMetricSource::SearchGate,
+                renju_before,
+            );
+            accepted
         }
     }
 }
@@ -3162,9 +3255,11 @@ fn scan_immediate_winning_moves_timed(
     player: Color,
     metrics: &mut SearchMetrics,
 ) -> Vec<Move> {
+    let renju_before = renju_forbidden_metrics_snapshot();
     let start = Instant::now();
     let moves = board.immediate_winning_moves_for(player);
     metrics.record_threat_view_scan(start.elapsed());
+    metrics.record_renju_forbidden_source_delta(RenjuForbiddenMetricSource::Threat, renju_before);
     moves
 }
 
@@ -3173,11 +3268,13 @@ fn rolling_immediate_winning_moves_timed(
     player: Color,
     metrics: &mut SearchMetrics,
 ) -> Vec<Move> {
+    let renju_before = renju_forbidden_metrics_snapshot();
     let start = Instant::now();
     let moves = state
         .threat_view_mut()
         .immediate_winning_moves_for_cached(player);
     metrics.record_threat_view_frontier_immediate_win_query(start.elapsed());
+    metrics.record_renju_forbidden_source_delta(RenjuForbiddenMetricSource::Threat, renju_before);
     moves
 }
 
@@ -3186,9 +3283,11 @@ fn scan_narrow_corridor_reply_moves_timed(
     attacker: Color,
     metrics: &mut SearchMetrics,
 ) -> Vec<Move> {
+    let renju_before = renju_forbidden_metrics_snapshot();
     let start = Instant::now();
     let moves = corridor::narrow_corridor_reply_moves(board, attacker);
     metrics.record_threat_view_scan(start.elapsed());
+    metrics.record_renju_forbidden_source_delta(RenjuForbiddenMetricSource::Threat, renju_before);
     moves
 }
 
@@ -3202,9 +3301,14 @@ fn rolling_narrow_corridor_reply_moves(
     if !winning_squares.is_empty() {
         let mut replies = Vec::new();
         for mv in winning_squares {
+            let renju_before = renju_forbidden_metrics_snapshot();
             if state.board().is_legal_for_color(mv, defender) {
                 push_unique_move(&mut replies, mv);
             }
+            metrics.record_renju_forbidden_source_delta(
+                RenjuForbiddenMetricSource::Threat,
+                renju_before,
+            );
         }
         for mv in rolling_immediate_winning_moves_timed(state, defender, metrics) {
             push_unique_move(&mut replies, mv);
@@ -3212,9 +3316,11 @@ fn rolling_narrow_corridor_reply_moves(
         return replies;
     }
 
+    let renju_before = renju_forbidden_metrics_snapshot();
     let start = Instant::now();
     let replies = state.threat_view().defender_reply_moves(attacker, None);
     metrics.record_threat_view_frontier_query(start.elapsed());
+    metrics.record_renju_forbidden_source_delta(RenjuForbiddenMetricSource::Threat, renju_before);
     replies
 }
 
@@ -4166,7 +4272,7 @@ impl Bot for SearchBot {
             }
         }
 
-        metrics.record_renju_forbidden_delta(renju_metrics_before);
+        metrics.record_renju_forbidden_total_delta(renju_metrics_before);
         self.last_info = Some(SearchInfo {
             depth_reached,
             nodes: total_nodes,

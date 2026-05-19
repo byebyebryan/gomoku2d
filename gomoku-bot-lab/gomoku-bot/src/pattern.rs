@@ -134,8 +134,7 @@ impl PatternFrame {
                 row: index / size,
                 col: index % size,
             };
-            let is_legal = self.board.is_empty(cell.row, cell.col)
-                && self.board.is_legal_for_color(cell, Color::Black);
+            let is_legal = tracked_black_legality_for_pattern(&self.board, cell);
             if self.black_legal[index] != is_legal {
                 previous.push((index, self.black_legal[index]));
                 self.black_legal[index] = is_legal;
@@ -259,11 +258,58 @@ fn black_legal_moves(board: &Board) -> Vec<bool> {
     for row in 0..size {
         for col in 0..size {
             let mv = Move { row, col };
-            legal[cell_index(size, mv)] =
-                board.is_empty(row, col) && board.is_legal_for_color(mv, Color::Black);
+            legal[cell_index(size, mv)] = tracked_black_legality_for_pattern(board, mv);
         }
     }
     legal
+}
+
+fn tracked_black_legality_for_pattern(board: &Board, mv: Move) -> bool {
+    if !board.is_empty(mv.row, mv.col) {
+        return false;
+    }
+    // Pattern scoring only reads black legality for pure-black 5-windows with at
+    // least two black stones. Skip exact Renju proof when this cell cannot
+    // affect any currently scored black pattern window.
+    if board.config.variant == Variant::Renju && !black_legality_affects_pattern_score(board, mv) {
+        return false;
+    }
+
+    board.is_legal_for_color(mv, Color::Black)
+}
+
+fn black_legality_affects_pattern_score(board: &Board, mv: Move) -> bool {
+    for &(dr, dc) in &DIRS {
+        for origin_pos in 0..=4isize {
+            let start = -origin_pos;
+            let mut black_count = 0usize;
+            let mut blocked_window = false;
+
+            for offset in 0..5isize {
+                let row = mv.row as isize + (start + offset) * dr;
+                let col = mv.col as isize + (start + offset) * dc;
+                if !in_bounds(board, row, col) {
+                    blocked_window = true;
+                    break;
+                }
+
+                match board.cell(row as usize, col as usize) {
+                    Some(Color::Black) => black_count += 1,
+                    Some(Color::White) => {
+                        blocked_window = true;
+                        break;
+                    }
+                    None => {}
+                }
+            }
+
+            if !blocked_window && black_count >= 2 {
+                return true;
+            }
+        }
+    }
+
+    false
 }
 
 fn affected_legality_indices(board: &Board, mv: Move) -> Vec<usize> {
