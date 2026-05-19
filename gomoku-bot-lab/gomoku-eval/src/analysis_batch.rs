@@ -1596,18 +1596,18 @@ fn proof_frames_for_actual_interval(
                 add_actual_marker(&mut markers, board, analysis.winner, actual_move);
             }
             markers.sort_by_key(|marker| (marker.mv.row, marker.mv.col));
-            Some(proof_frame(
-                &label,
+            Some(proof_frame(ProofFrameInput {
+                label: &label,
                 ply,
                 board,
-                proof
+                status: proof
                     .map(|proof| proof.status)
                     .unwrap_or(ProofStatus::Unknown),
-                actual_move,
+                move_played: actual_move,
                 lethal_onset_reached,
                 markers,
                 reply_outcomes,
-            ))
+            }))
         })
         .collect::<Vec<_>>()
 }
@@ -1780,27 +1780,29 @@ fn add_current_imminent_response_markers(
     }
 }
 
-fn proof_frame(
-    label: &str,
+struct ProofFrameInput<'a> {
+    label: &'a str,
     ply: usize,
-    board: &Board,
+    board: &'a Board,
     status: ProofStatus,
     move_played: Option<Move>,
     lethal_onset_reached: bool,
     markers: Vec<AnalysisBatchProofMarker>,
     reply_outcomes: Vec<DefenderReplyAnalysis>,
-) -> AnalysisBatchProofFrame {
+}
+
+fn proof_frame(input: ProofFrameInput<'_>) -> AnalysisBatchProofFrame {
     AnalysisBatchProofFrame {
-        label: label.to_string(),
-        ply,
-        side_to_move: board.current_player,
-        status,
-        move_played,
-        move_played_notation: move_played.map(Move::to_notation),
-        lethal_onset_reached,
-        rows: board_rows(board),
-        markers,
-        reply_outcomes,
+        label: input.label.to_string(),
+        ply: input.ply,
+        side_to_move: input.board.current_player,
+        status: input.status,
+        move_played: input.move_played,
+        move_played_notation: input.move_played.map(Move::to_notation),
+        lethal_onset_reached: input.lethal_onset_reached,
+        rows: board_rows(input.board),
+        markers: input.markers,
+        reply_outcomes: input.reply_outcomes,
     }
 }
 
