@@ -101,12 +101,12 @@ that create terminal coverage after each reply, and any escaping replies.
 
 ## Renju Rules
 
-Renju makes hardcoded shape shortcuts unsafe.
+Renju makes hardcoded shape shortcuts unsafe. The exact forbidden-move oracle
+design lives in [`renju_rules.md`](renju_rules.md).
 
 - Black attacker: every gain, completion, and next-lethal continuation must be
-  legal. Exact-five wins are legal in the current core rules; overlines are
-  forbidden. Double-three and double-four gain moves cannot be used as active
-  lethal continuations.
+  legal. Exact-five wins should be legal; overlines, double-three, and
+  double-four gain moves cannot be used as active lethal continuations.
 - White attacker: Black forbidden replies shrink the defender's legal coverage
   set. A single White terminal target can be lethal if the only Black cover is
   forbidden.

@@ -766,7 +766,8 @@ knobs.
 ## Renju Overlay
 
 Renju is a legality and threat-effect overlay on the same corridor model, not a
-separate proof model.
+separate proof model. The exact forbidden-move interpretation is tracked in
+[`renju_rules.md`](renju_rules.md).
 
 The analyzer should carry raw and legal tactical facts separately:
 
@@ -800,12 +801,13 @@ still reply coverage, but both sides see different legal move sets:
   White `4+4`, `4+3`, and `3+3` threats should be judged by whether any legal
   Black reply covers every terminal or known-lethal continuation.
 - Black attacker: every Black gain, completion, or next lethal continuation must
-  pass the Renju legality layer. Under the current core rule model, Black
-  exactly-five winning moves are not forbidden, while overlines are forbidden.
-  Black double-three or double-four gain moves cannot create active lethal
-  strength even if their raw freestyle shape looks decisive. A legal Black open
-  four is still lethal by reply coverage: White can cover only one legal
-  winning endpoint unless White can win immediately.
+  pass the Renju legality layer. Black exactly-five winning moves should be
+  legal; overlines, double-fours, and real double-threes are forbidden when no
+  exact five is made at the same time. Black double-three or double-four gain
+  moves cannot create active lethal strength even if their raw freestyle shape
+  looks decisive. A legal Black open four is still lethal by reply coverage:
+  White can cover only one legal winning endpoint unless White can win
+  immediately.
 - Black defender: a raw blocking square only covers a White continuation if the
   move is legal for Black and actually removes the continuation. A forbidden
   block remains visible proof evidence, but it is not a branch.
