@@ -50,6 +50,21 @@ pub(crate) fn forbidden_reason(board: &Board, mv: Move) -> Option<ForbiddenReaso
     reason
 }
 
+pub(crate) fn could_be_forbidden(board: &Board, mv: Move) -> bool {
+    if mv.row >= board.config.board_size
+        || mv.col >= board.config.board_size
+        || board.cell(mv.row, mv.col).is_some()
+    {
+        return false;
+    }
+
+    let Some(view) = RenjuView::new(board).with_black(mv) else {
+        return false;
+    };
+
+    !creates_exact_five(&view, mv) && could_be_forbidden_non_winning(&view, mv)
+}
+
 #[derive(Clone, Copy)]
 struct RenjuView<'a> {
     board: &'a Board,
@@ -125,14 +140,23 @@ fn forbidden_reason_in_view(
     if creates_overline(view, mv) {
         return Some(ForbiddenReason::Overline);
     }
-    if real_four_count(view, mv) >= 2 {
+    if raw_four_count(view, mv) >= 2 && real_four_count(view, mv) >= 2 {
         return Some(ForbiddenReason::DoubleFour);
     }
-    if real_three_direction_count(view, mv, depth_remaining) >= 2 {
+    if depth_remaining > 0
+        && raw_three_direction_count(view, mv) >= 2
+        && real_three_direction_count(view, mv, depth_remaining) >= 2
+    {
         return Some(ForbiddenReason::DoubleThree);
     }
 
     None
+}
+
+fn could_be_forbidden_non_winning(view: &RenjuView<'_>, mv: Move) -> bool {
+    creates_overline(view, mv)
+        || raw_four_count(view, mv) >= 2
+        || raw_three_direction_count(view, mv) >= 2
 }
 
 fn creates_exact_five(view: &RenjuView<'_>, mv: Move) -> bool {
@@ -169,6 +193,56 @@ fn real_four_count(view: &RenjuView<'_>, origin: Move) -> usize {
     keys.sort();
     keys.dedup();
     keys.len()
+}
+
+fn raw_four_count(view: &RenjuView<'_>, origin: Move) -> usize {
+    let mut keys = Vec::new();
+    for (dir_index, &dir) in DIRS.iter().enumerate() {
+        collect_raw_four_keys(view, origin, dir_index, dir, &mut keys);
+    }
+
+    keys.sort();
+    keys.dedup();
+    keys.len()
+}
+
+fn collect_raw_four_keys(
+    view: &RenjuView<'_>,
+    origin: Move,
+    dir_index: usize,
+    (dr, dc): (isize, isize),
+    keys: &mut Vec<(usize, [(usize, usize); 4])>,
+) {
+    for origin_pos in 0..=4isize {
+        let start = -origin_pos;
+        let mut black = 0usize;
+        let mut black_cells = [(0usize, 0usize); 4];
+        let mut empty = 0usize;
+        let mut valid = true;
+
+        for i in 0..5isize {
+            let row = origin.row as isize + (start + i) * dr;
+            let col = origin.col as isize + (start + i) * dc;
+            match view.cell(row, col) {
+                Some(Some(Color::Black)) => {
+                    if black < black_cells.len() {
+                        black_cells[black] = (row as usize, col as usize);
+                    }
+                    black += 1;
+                }
+                Some(None) => empty += 1,
+                _ => {
+                    valid = false;
+                    break;
+                }
+            }
+        }
+
+        if valid && black == 4 && empty == 1 {
+            black_cells.sort();
+            keys.push((dir_index, black_cells));
+        }
+    }
 }
 
 fn collect_real_four_keys(
@@ -231,6 +305,46 @@ fn real_three_direction_count(view: &RenjuView<'_>, origin: Move, depth_remainin
     DIRS.iter()
         .filter(|&&dir| has_real_three_in_direction(view, origin, dir, depth_remaining))
         .count()
+}
+
+fn raw_three_direction_count(view: &RenjuView<'_>, origin: Move) -> usize {
+    DIRS.iter()
+        .filter(|&&dir| has_raw_three_in_direction(view, origin, dir))
+        .count()
+}
+
+fn has_raw_three_in_direction(
+    view: &RenjuView<'_>,
+    origin: Move,
+    (dr, dc): (isize, isize),
+) -> bool {
+    for offset in -4..=4isize {
+        if offset == 0 {
+            continue;
+        }
+
+        let row = origin.row as isize + offset * dr;
+        let col = origin.col as isize + offset * dc;
+        let Some(None) = view.cell(row, col) else {
+            continue;
+        };
+
+        let extension = Move {
+            row: row as usize,
+            col: col as usize,
+        };
+        let Some(next) = view.with_black(extension) else {
+            continue;
+        };
+
+        if !creates_exact_five(&next, extension)
+            && creates_straight_four_containing_origin(&next, origin, extension, (dr, dc))
+        {
+            return true;
+        }
+    }
+
+    false
 }
 
 fn has_real_three_in_direction(
