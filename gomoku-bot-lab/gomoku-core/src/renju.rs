@@ -1,4 +1,25 @@
 use crate::board::{Board, Cell, Color, Move, DIRS};
+use std::cell::Cell as MetricCell;
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct RenjuForbiddenMetrics {
+    pub checks: u64,
+    pub ns: u64,
+}
+
+thread_local! {
+    static RENJU_FORBIDDEN_METRICS: MetricCell<RenjuForbiddenMetrics> =
+        const { MetricCell::new(RenjuForbiddenMetrics { checks: 0, ns: 0 }) };
+}
+
+pub fn renju_forbidden_metrics_snapshot() -> RenjuForbiddenMetrics {
+    RENJU_FORBIDDEN_METRICS.with(MetricCell::get)
+}
+
+#[cfg(test)]
+pub fn renju_forbidden_metrics_reset() {
+    RENJU_FORBIDDEN_METRICS.with(|metrics| metrics.set(RenjuForbiddenMetrics::default()));
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum ForbiddenReason {
@@ -8,6 +29,7 @@ pub(crate) enum ForbiddenReason {
 }
 
 const MAX_RECURSION_DEPTH: usize = 4;
+const MAX_BLACK_OVERLAYS: usize = MAX_RECURSION_DEPTH + 1;
 
 pub(crate) fn forbidden_reason(board: &Board, mv: Move) -> Option<ForbiddenReason> {
     if mv.row >= board.config.board_size
@@ -17,31 +39,44 @@ pub(crate) fn forbidden_reason(board: &Board, mv: Move) -> Option<ForbiddenReaso
         return None;
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
+    let start = std::time::Instant::now();
     let view = RenjuView::new(board).with_black(mv)?;
-    forbidden_reason_in_view(&view, mv, MAX_RECURSION_DEPTH)
+    let reason = forbidden_reason_in_view(&view, mv, MAX_RECURSION_DEPTH);
+    #[cfg(not(target_arch = "wasm32"))]
+    record_renju_forbidden_check(start.elapsed());
+    #[cfg(target_arch = "wasm32")]
+    record_renju_forbidden_check();
+    reason
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 struct RenjuView<'a> {
     board: &'a Board,
-    black_overlays: Vec<Move>,
+    black_overlays: [Move; MAX_BLACK_OVERLAYS],
+    black_overlay_count: usize,
 }
 
 impl<'a> RenjuView<'a> {
     fn new(board: &'a Board) -> Self {
         Self {
             board,
-            black_overlays: Vec::new(),
+            black_overlays: [Move {
+                row: usize::MAX,
+                col: usize::MAX,
+            }; MAX_BLACK_OVERLAYS],
+            black_overlay_count: 0,
         }
     }
 
     fn with_black(&self, mv: Move) -> Option<Self> {
-        if !self.is_empty(mv) {
+        if self.black_overlay_count >= MAX_BLACK_OVERLAYS || !self.is_empty(mv) {
             return None;
         }
 
-        let mut next = self.clone();
-        next.black_overlays.push(mv);
+        let mut next = *self;
+        next.black_overlays[next.black_overlay_count] = mv;
+        next.black_overlay_count += 1;
         Some(next)
     }
 
@@ -63,7 +98,7 @@ impl<'a> RenjuView<'a> {
             row: row as usize,
             col: col as usize,
         };
-        if self.black_overlays.contains(&mv) {
+        if self.black_overlays[..self.black_overlay_count].contains(&mv) {
             return Some(Some(Color::Black));
         }
 
@@ -283,4 +318,24 @@ fn creates_straight_four_containing_origin(
 
 fn point_in_bounds(view: &RenjuView<'_>, mv: Move) -> bool {
     mv.row < view.size() && mv.col < view.size()
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn record_renju_forbidden_check(elapsed: std::time::Duration) {
+    let ns = u64::try_from(elapsed.as_nanos()).unwrap_or(u64::MAX).max(1);
+    RENJU_FORBIDDEN_METRICS.with(|metrics| {
+        let mut current = metrics.get();
+        current.checks = current.checks.saturating_add(1);
+        current.ns = current.ns.saturating_add(ns);
+        metrics.set(current);
+    });
+}
+
+#[cfg(target_arch = "wasm32")]
+fn record_renju_forbidden_check() {
+    RENJU_FORBIDDEN_METRICS.with(|metrics| {
+        let mut current = metrics.get();
+        current.checks = current.checks.saturating_add(1);
+        metrics.set(current);
+    });
 }

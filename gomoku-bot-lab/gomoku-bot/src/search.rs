@@ -15,7 +15,10 @@ use crate::tactical::{
 };
 use crate::viability::{direction_bit, scan_cell_null, scan_cell_viability};
 use crate::Bot;
-use gomoku_core::{Board, Color, GameResult, Move, Variant, ZobristTable, DIRS};
+use gomoku_core::{
+    renju_forbidden_metrics_snapshot, Board, Color, GameResult, Move, RenjuForbiddenMetrics,
+    Variant, ZobristTable, DIRS,
+};
 
 #[cfg(test)]
 use crate::tactical::{LocalThreatFact, LocalThreatOrigin};
@@ -372,6 +375,8 @@ pub struct SearchMetrics {
     pub root_illegal_moves_skipped: u64,
     pub search_legality_checks: u64,
     pub search_illegal_moves_skipped: u64,
+    pub renju_forbidden_checks: u64,
+    pub renju_forbidden_ns: u64,
     pub stage_move_gen_ns: u64,
     pub stage_ordering_ns: u64,
     pub stage_eval_ns: u64,
@@ -624,6 +629,16 @@ impl SearchMetrics {
         }
 
         legal
+    }
+
+    fn record_renju_forbidden_delta(&mut self, before: RenjuForbiddenMetrics) {
+        let after = renju_forbidden_metrics_snapshot();
+        self.renju_forbidden_checks = self
+            .renju_forbidden_checks
+            .saturating_add(after.checks.saturating_sub(before.checks));
+        self.renju_forbidden_ns = self
+            .renju_forbidden_ns
+            .saturating_add(after.ns.saturating_sub(before.ns));
     }
 
     fn record_tactical_annotation(&mut self, phase: SearchMetricPhase) {
@@ -3977,6 +3992,7 @@ impl Bot for SearchBot {
     fn choose_move(&mut self, board: &Board) -> Move {
         let color = board.current_player;
         let mut metrics = SearchMetrics::default();
+        let renju_metrics_before = renju_forbidden_metrics_snapshot();
         let start = Instant::now();
         let time_budget = self.config.time_budget();
         let cpu_time_budget = self.config.cpu_time_budget();
@@ -4150,6 +4166,7 @@ impl Bot for SearchBot {
             }
         }
 
+        metrics.record_renju_forbidden_delta(renju_metrics_before);
         self.last_info = Some(SearchInfo {
             depth_reached,
             nodes: total_nodes,
@@ -5189,6 +5206,8 @@ mod tests {
         assert!(metrics["search_candidate_generations"].as_u64().is_some());
         assert!(metrics["root_legality_checks"].as_u64().is_some());
         assert!(metrics["search_legality_checks"].as_u64().is_some());
+        assert!(metrics["renju_forbidden_checks"].as_u64().is_some());
+        assert!(metrics["renju_forbidden_ns"].as_u64().is_some());
         assert!(metrics["root_tactical_annotations"].as_u64().is_some());
         assert!(metrics["search_tactical_annotations"].as_u64().is_some());
     }
