@@ -19,10 +19,11 @@ development-run warning. That is useful for scratch reports, but release-quality
 curated reports should come from a clean committed toolchain.
 
 The curated published report uses pooled CPU budgeting: each move starts with a
-`1000 ms` base budget, cheaper moves bank unused time, and the reserve is capped
-at `4000 ms`. This is closer to product-like hard-bot behavior than the older
-strict-per-move report while keeping the run bounded. Use strict mode only for
-focused continuity checks against older reports.
+`2000 ms` base budget, cheaper moves bank unused time into an `8000 ms` reserve
+pool, and any single move is capped at `4000 ms`. This is closer to product-like
+hard-bot behavior than the older strict-per-move report while keeping the run
+bounded. Use strict mode only for focused continuity checks against older
+reports.
 
 ```sh
 git status --short
@@ -32,9 +33,10 @@ cargo run --release -p gomoku-eval -- tournament \
   --games-per-pair 64 \
   --opening-policy centered-suite \
   --opening-plies 4 \
-  --search-cpu-time-ms 1000 \
+  --search-cpu-time-ms 2000 \
   --search-budget-mode pooled \
-  --search-cpu-reserve-ms 4000 \
+  --search-cpu-reserve-ms 8000 \
+  --search-cpu-max-move-ms 4000 \
   --max-moves 120 \
   --seed 63 \
   --threads 22 \
