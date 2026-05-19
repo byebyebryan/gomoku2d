@@ -82,8 +82,9 @@ local example because both endpoints are legal terminal completions, but Renju
 means shape names cannot prove lethality by themselves. Black completions may be
 illegal, and White single-threat blocks may be forbidden for Black.
 
-See [`lethal_threats.md`](lethal_threats.md) for the coverage model, Renju
-caveats, and the dedicated `gomoku-eval lethal-scenarios` safety harness.
+See [`lethal_threats.md`](lethal_threats.md) for the coverage model,
+[`renju_rules.md`](renju_rules.md) for the exact forbidden-move model, and the
+dedicated `gomoku-eval lethal-scenarios` safety harness.
 
 ## Priority
 
@@ -161,10 +162,12 @@ are legal and tactically effective:
   legal Black replies than its raw shape suggests.
 - White can sometimes create threats whose natural Black answers are forbidden.
 
-Those are tactical judgments, not simple legality checks. A Renju-aware shape
-fact should preserve both the raw square and its legality result. Silent filtering
-is risky because "the only block is forbidden" is proof evidence for the
-analyzer and useful explanation for the report.
+Those are tactical judgments layered on exact legality. See
+[`renju_rules.md`](renju_rules.md) for the RIF-inspired oracle design; apparent
+threes/fours can be dead when their required continuation is forbidden. A
+Renju-aware shape fact should preserve both the raw square and its legality
+result. Silent filtering is risky because "the only block is forbidden" is proof
+evidence for the analyzer and useful explanation for the report.
 
 Corridor-facing shape facts should eventually distinguish:
 

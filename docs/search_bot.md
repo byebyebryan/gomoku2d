@@ -78,9 +78,10 @@ Local-threat annotation is policy-backed by `SearchThreatPolicy` in
 policy decides ordering score and must-keep status. Forbidden-only Renju Black
 raw shapes do not receive tactical ordering or safety-gate credit, and mixed
 legal/forbidden shapes keep only legal continuations for active threat strength.
-Renju forbidden-move checks still use exact core rules, but core first applies a
-cheap necessary-condition guard: a forbidden candidate must have at least two
-black stones on one of the four local axes before the exact detector runs.
+Renju forbidden-move checks are owned by core rules, but the exact RIF oracle is
+under active redesign; see [`renju_rules.md`](renju_rules.md). Core first
+applies a cheap necessary-condition guard: a forbidden candidate must have at
+least two black stones on one of the four local axes before the detector runs.
 
 That Renju guard is deliberately not exposed as a bot component. It is a
 correctness-preserving core legality optimization, not a playing-style knob:
