@@ -612,9 +612,6 @@ impl Board {
     }
 
     // --- Renju restriction helpers ---
-    //
-    // All functions below are called BEFORE the stone is placed.
-    // `cell_virtual` treats (vrow, vcol) as already containing `vcolor`.
 
     fn can_be_renju_forbidden_at(&self, mv: Move) -> bool {
         self.has_two_black_stones_on_any_axis(mv)
@@ -645,152 +642,11 @@ impl Board {
         false
     }
 
-    fn cell_virtual(
-        &self,
-        r: isize,
-        c: isize,
-        vrow: isize,
-        vcol: isize,
-        vcolor: Color,
-    ) -> Option<Cell> {
-        let size = self.config.board_size as isize;
-        if r < 0 || r >= size || c < 0 || c >= size {
-            return None;
-        }
-        if r == vrow && c == vcol {
-            return Some(Some(vcolor));
-        }
-        let idx = self.index(r as usize, c as usize);
-        if bit_is_set(&self.black_bits, idx) {
-            Some(Some(Color::Black))
-        } else if bit_is_set(&self.white_bits, idx) {
-            Some(Some(Color::White))
-        } else {
-            Some(None)
-        }
-    }
-
     /// True if placing a Black stone at `mv` would create an overline, double-four, or
-    /// double-three. Winning moves (exactly 5-in-a-row) are never forbidden.
+    /// double-three. Winning moves (exactly 5-in-a-row) are legal; three/four checks
+    /// use recursive Renju continuation rules instead of raw shape counts.
     fn is_renju_forbidden_at(&self, mv: Move) -> bool {
-        let row = mv.row as isize;
-        let col = mv.col as isize;
-        let win_len = self.config.win_length as isize;
-        let color = Color::Black;
-
-        let mut creates_win = false;
-
-        for (dr, dc) in DIRS {
-            let run = 1
-                + self.count_direction(row, col, dr, dc, color)
-                + self.count_direction(row, col, -dr, -dc, color);
-            if run > 5 {
-                return true;
-            } // overline → always forbidden
-            if run == win_len {
-                creates_win = true;
-            }
-        }
-
-        if creates_win {
-            return false;
-        } // winning move takes priority
-
-        let mut four_dirs = 0u32;
-        let mut three_dirs = 0u32;
-        for (dr, dc) in DIRS {
-            if self.has_four_at(row, col, dr, dc, color) {
-                four_dirs += 1;
-            }
-            if self.has_open_three_at(row, col, dr, dc, color) {
-                three_dirs += 1;
-            }
-        }
-
-        four_dirs >= 2 || three_dirs >= 2
-    }
-
-    /// True if placing `color` at (row, col) creates a four in direction (dr, dc).
-    /// A four = any window of 5 cells containing (row,col) with exactly 4 `color` stones
-    /// and 1 empty cell (no opponent stones in the window).
-    fn has_four_at(&self, row: isize, col: isize, dr: isize, dc: isize, color: Color) -> bool {
-        for stone_pos in 0..=4isize {
-            let start = -stone_pos;
-            let mut black = 0u32;
-            let mut empty = 0u32;
-            let mut valid = true;
-            for i in 0..5isize {
-                let r = row + (start + i) * dr;
-                let c = col + (start + i) * dc;
-                match self.cell_virtual(r, c, row, col, color) {
-                    None => {
-                        valid = false;
-                        break;
-                    }
-                    Some(Some(cl)) if cl == color => black += 1,
-                    Some(None) => empty += 1,
-                    Some(Some(_)) => {
-                        valid = false;
-                        break;
-                    } // opponent
-                }
-            }
-            if valid && black == 4 && empty == 1 {
-                return true;
-            }
-        }
-        false
-    }
-
-    /// True if placing `color` at (row, col) creates an open three in direction (dr, dc).
-    /// An open three = any 6-cell window where (row,col) is at an inner position (1–4),
-    /// both endpoints are in-bounds and empty, inner 4 cells have exactly 3 `color` + 1 empty,
-    /// and no opponent stones appear anywhere in the window.
-    fn has_open_three_at(
-        &self,
-        row: isize,
-        col: isize,
-        dr: isize,
-        dc: isize,
-        color: Color,
-    ) -> bool {
-        for stone_pos in 1..=4isize {
-            let start = -stone_pos;
-            let mut black = 0u32;
-            let mut empty = 0u32;
-            let mut valid = true;
-            for i in 0..6isize {
-                let r = row + (start + i) * dr;
-                let c = col + (start + i) * dc;
-                if i == 0 || i == 5 {
-                    // Endpoints must be on-board and empty
-                    match self.cell_virtual(r, c, row, col, color) {
-                        Some(None) => {}
-                        _ => {
-                            valid = false;
-                            break;
-                        }
-                    }
-                } else {
-                    match self.cell_virtual(r, c, row, col, color) {
-                        None => {
-                            valid = false;
-                            break;
-                        }
-                        Some(Some(cl)) if cl == color => black += 1,
-                        Some(None) => empty += 1,
-                        Some(Some(_)) => {
-                            valid = false;
-                            break;
-                        } // opponent
-                    }
-                }
-            }
-            if valid && black == 3 && empty == 1 {
-                return true;
-            }
-        }
-        false
+        crate::renju::forbidden_reason(self, mv).is_some()
     }
 
     /// Serialize board state to a compact string.
@@ -1159,28 +1015,6 @@ mod tests {
         })
     }
 
-    fn full_scan_forbidden_moves_for_current_player(board: &Board) -> Vec<Move> {
-        if board.result != GameResult::Ongoing
-            || board.config.variant != Variant::Renju
-            || board.current_player != Color::Black
-        {
-            return vec![];
-        }
-
-        let mut moves = Vec::new();
-        for row in 0..board.config.board_size {
-            for col in 0..board.config.board_size {
-                if board.cell(row, col).is_none() {
-                    let mv = Move { row, col };
-                    if board.is_renju_forbidden_at(mv) {
-                        moves.push(mv);
-                    }
-                }
-            }
-        }
-        moves
-    }
-
     #[test]
     fn renju_forbidden_candidate_moves_only_follow_black_stones() {
         let mut b = renju_board();
@@ -1203,7 +1037,7 @@ mod tests {
     }
 
     #[test]
-    fn optimized_renju_forbidden_moves_match_full_scan() {
+    fn renju_forbidden_candidates_cover_detected_forbidden_moves() {
         let mut double_three = renju_board();
         setup(
             &mut double_three,
@@ -1231,10 +1065,10 @@ mod tests {
         setup(&mut white_noise, &[(7, 7), (0, 0), (10, 10), (0, 2)]);
 
         for board in [&double_three, &overline, &white_noise] {
-            assert_eq!(
-                board.forbidden_moves_for_current_player(),
-                full_scan_forbidden_moves_for_current_player(board)
-            );
+            let candidates = board.renju_forbidden_candidate_moves();
+            for forbidden in board.forbidden_moves_for_current_player() {
+                assert!(candidates.contains(&forbidden));
+            }
         }
     }
 
@@ -1243,6 +1077,14 @@ mod tests {
     fn setup(board: &mut Board, moves: &[(usize, usize)]) {
         for &(row, col) in moves {
             board.apply_move(Move { row, col }).unwrap();
+        }
+    }
+
+    fn setup_notation(board: &mut Board, moves: &[&str]) {
+        for notation in moves {
+            board
+                .apply_move(Move::from_notation(notation).unwrap())
+                .unwrap();
         }
     }
 
@@ -1352,6 +1194,22 @@ mod tests {
             b.apply_move(Move { row: 7, col: 7 }),
             Err(MoveError::Forbidden)
         );
+    }
+
+    #[test]
+    fn renju_apparent_double_three_with_dead_continuation_is_legal() {
+        let mut b = renju_board();
+        setup_notation(
+            &mut b,
+            &[
+                "H8", "H7", "F8", "G9", "G8", "I8", "G6", "D9", "F9", "F10", "D7", "G10", "F7",
+                "E10", "E8", "D8", "C6", "B5", "D10", "F11", "F6", "F5",
+            ],
+        );
+        let e6 = Move::from_notation("E6").unwrap();
+
+        assert_eq!(b.current_player, Color::Black);
+        assert!(b.is_legal_for_color(e6, Color::Black));
     }
 
     #[test]

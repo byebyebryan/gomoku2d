@@ -7,6 +7,7 @@ pub mod budget;
 pub mod elo;
 pub mod lethal_scenario;
 pub mod opening;
+pub mod renju_rules;
 pub mod report;
 pub mod report_board;
 pub mod scenario;

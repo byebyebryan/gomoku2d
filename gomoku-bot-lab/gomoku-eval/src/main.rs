@@ -22,6 +22,9 @@ use gomoku_eval::lethal_scenario::{
     run_lethal_scenarios, LethalScenarioReport, LethalScenarioResult, LETHAL_SCENARIO_CASES,
 };
 use gomoku_eval::opening::{OpeningPolicy, CENTERED_SUITE_MAX_PLIES};
+use gomoku_eval::renju_rules::{
+    run_renju_rule_fixtures, RenjuRuleFixtureResult, RenjuRuleReport, RENJU_RULE_FIXTURES,
+};
 use gomoku_eval::report::{
     render_tournament_report_html_with_options, AnchorReferenceReport, ReportRenderOptions,
     TournamentReport, TournamentRunReport,
@@ -280,6 +283,16 @@ enum Commands {
         report_json: Option<PathBuf>,
 
         /// Print exact scenario boards after each result
+        #[arg(long)]
+        show_boards: bool,
+    },
+    /// Run focused Renju forbidden-move rule fixtures
+    RenjuRules {
+        /// Write reusable Renju rule fixture report JSON
+        #[arg(long)]
+        report_json: Option<PathBuf>,
+
+        /// Print exact fixture boards after each result
         #[arg(long)]
         show_boards: bool,
     },
@@ -840,6 +853,38 @@ fn print_lethal_scenario_board(result: &LethalScenarioResult) {
 fn print_lethal_report_summary(report: &LethalScenarioReport) {
     println!(
         "\n--- Summary ---\nLethal scenarios: {}/{} passed, {} failed",
+        report.passed, report.total, report.failed
+    );
+}
+
+fn print_renju_rule_fixture_result(result: &RenjuRuleFixtureResult) {
+    let status = if result.passed { "PASS" } else { "FAIL" };
+    let expected = if result.expected_legal {
+        "legal"
+    } else {
+        "forbidden"
+    };
+    let actual = if result.actual_legal {
+        "legal"
+    } else {
+        "forbidden"
+    };
+    println!(
+        "{:<5} {:<44} {:?} {:<3} expect {:<9} actual {:<9} source {}",
+        status, result.id, result.color, result.candidate, expected, actual, result.source
+    );
+}
+
+fn print_renju_rule_fixture_board(result: &RenjuRuleFixtureResult) {
+    println!();
+    for row in &result.board {
+        println!("{row}");
+    }
+}
+
+fn print_renju_rule_report_summary(report: &RenjuRuleReport) {
+    println!(
+        "\n--- Summary ---\nRenju rule fixtures: {}/{} passed, {} failed",
         report.passed, report.total, report.failed
     );
 }
@@ -1518,6 +1563,40 @@ fn main() {
                 std::process::exit(1);
             }
         }
+        Commands::RenjuRules {
+            report_json,
+            show_boards,
+        } => {
+            println!("--- Renju Rule Fixtures ---");
+            println!("Cases: {}", RENJU_RULE_FIXTURES.len());
+            println!();
+
+            let report = run_renju_rule_fixtures(RENJU_RULE_FIXTURES)
+                .unwrap_or_else(|err| exit_with_error(format!("Failed to run fixtures: {err}")));
+            for result in &report.results {
+                print_renju_rule_fixture_result(result);
+                if show_boards {
+                    print_renju_rule_fixture_board(result);
+                    println!();
+                }
+            }
+
+            print_renju_rule_report_summary(&report);
+
+            if let Some(path) = &report_json {
+                let json = report.to_json().unwrap_or_else(|err| {
+                    exit_with_error(format!("Failed to serialize Renju rule report: {err}"))
+                });
+                std::fs::write(path, json).unwrap_or_else(|err| {
+                    exit_with_error(format!("Failed to write Renju rule report: {err}"))
+                });
+                println!("Report JSON: {}", path.display());
+            }
+
+            if report.failed > 0 {
+                std::process::exit(1);
+            }
+        }
         Commands::AnalyzeReplay {
             input,
             output,
@@ -2051,6 +2130,32 @@ mod tests {
         };
 
         assert_eq!(max_scan_plies, DEFAULT_MAX_SCAN_PLIES);
+    }
+
+    #[test]
+    fn renju_rules_command_parses_report_and_board_flag() {
+        let cli = Cli::try_parse_from([
+            "gomoku-eval",
+            "renju-rules",
+            "--report-json",
+            "outputs/renju-rule-fixtures.json",
+            "--show-boards",
+        ])
+        .expect("renju-rules command should parse");
+
+        let Commands::RenjuRules {
+            report_json,
+            show_boards,
+        } = cli.command
+        else {
+            panic!("expected renju-rules command");
+        };
+
+        assert_eq!(
+            report_json,
+            Some(PathBuf::from("outputs/renju-rule-fixtures.json"))
+        );
+        assert!(show_boards);
     }
 
     #[test]

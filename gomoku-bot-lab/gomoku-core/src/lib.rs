@@ -1,4 +1,5 @@
 pub mod board;
+mod renju;
 pub mod replay;
 pub mod rules;
 pub mod zobrist;

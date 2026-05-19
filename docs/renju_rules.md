@@ -141,9 +141,9 @@ This means a double-three detector cannot be a single fixed-window shape count.
 It needs either explicit recursion or a logically equivalent search over legal
 continuations.
 
-## Current Mismatch
+## Fixed Mismatch
 
-The current core code appears to over-forbid at least one real-game position.
+The old core code over-forbade at least one real-game position.
 
 Fixture candidate:
 
@@ -151,7 +151,8 @@ Fixture candidate:
   contested frame
 - side to move: Black
 - candidate under question: `E6`
-- current Gomoku2D core result: forbidden
+- old Gomoku2D core result: forbidden
+- current Gomoku2D core result: legal
 - Piskvork Renju `forbid()` result: legal
 
 Position before `E6`:
@@ -166,7 +167,8 @@ The raw geometry around `E6` contains a horizontal apparent four and two
 apparent threes. Piskvork classifies the move as legal, which strongly suggests
 at least one apparent three is dead after recursive continuation checks.
 
-This should become the first regression fixture for the new oracle.
+This is now a regression fixture in both `gomoku-core` and the eval-side Renju
+rule fixture runner.
 
 ## Implementation Design
 
@@ -177,9 +179,8 @@ Keep `Board` as the public rules authority:
 - `forbidden_moves_for_current_player`
 - tactical and wasm threat views that query legal/effective facts
 
-Internally, replace the current shape-count forbidden detector with a dedicated
-Renju legality oracle. The exact type name is not important yet; the useful
-boundary is:
+Internally, the old shape-count forbidden detector has been replaced by a
+dedicated Renju legality oracle. The current boundary is:
 
 ```text
 renju_forbidden_reason(board, black_move) -> Option<ForbiddenReason>
@@ -218,7 +219,12 @@ The important dependency direction:
 The recursive part needs an explicit guard. It should not rely on accidental call
 depth.
 
-Use a memo/stack key based on:
+The first implementation uses an explicit recursion depth guard and fails open
+if a continuation cannot be resolved within that bound. That is intentional:
+false-forbidden is worse than missed-forbidden for ordinary play. The target
+state is still no unresolved recursion in ordinary fixtures.
+
+Future cache keys should be based on:
 
 - board hash or compact stones around the tested lines;
 - candidate move;
@@ -260,9 +266,31 @@ Rules for consumers:
 - no consumer should locally infer double-three/double-four by counting raw
   windows once the oracle exists.
 
-## Validation Plan
+## Validation
 
-### 1. Reference Harness
+### Local Golden Fixtures
+
+The reusable local fixture runner is:
+
+```sh
+cargo run -p gomoku-eval -- renju-rules \
+  --report-json outputs/renju-rule-fixtures.json
+```
+
+It currently covers:
+
+- exact five for Black is legal;
+- Black overline without exact five is forbidden;
+- simple double-four is forbidden;
+- simple double-three with two real threes is forbidden;
+- legal `4+3` is legal;
+- White can play equivalent double-three geometry legally;
+- `#1548/E6` is legal, matching Piskvork.
+
+The core unit tests include the same critical rules plus focused regression
+coverage for the optimized forbidden-move candidate path.
+
+### Reference Harness
 
 Create dev-only harnesses that can compare Gomoku2D against external Renju
 checkers.
@@ -289,19 +317,14 @@ Use the references in priority order:
 If references disagree, keep the position as an ambiguity fixture and decide it
 from RIF/RenjuNet text rather than majority vote.
 
-### 2. Golden Fixtures
+### Golden Fixtures To Add
 
-Add focused core fixtures before broader fuzzing:
+Remaining useful fixtures before broader fuzzing:
 
-- exact five for Black is legal;
-- Black overline without exact five is forbidden;
-- simple double-four is forbidden;
-- simple double-three with two real threes is forbidden;
-- legal `4+3` is legal;
 - apparent double-three with one dead three is legal;
 - apparent double-four with one dead four is legal;
-- White can play equivalent shapes legally;
-- `#1548/E6` is legal, matching Piskvork.
+- edge-adjacent dead threes/fours that depend on board bounds;
+- exact-five plus another forbidden-looking shape in a crossing direction.
 
 Each fixture should store:
 
@@ -314,7 +337,7 @@ Each fixture should store:
 - source: `rif`, `renjunet_tutorial`, `piskvork`, `slowrenju`, `rapfi`,
   `renju_forbid`, or `project_regression`.
 
-### 3. Differential Fuzz
+### Differential Fuzz
 
 Run random legal-ish midgame boards and compare candidate Black moves against
 the external references.
@@ -335,7 +358,7 @@ Classify every mismatch:
 - rule ambiguity that needs manual RIF interpretation;
 - invalid generated position.
 
-### 4. Integration Validation
+### Integration Validation
 
 After core legality changes:
 
@@ -351,7 +374,7 @@ If legality changes affect many moves, regenerate:
 - the analysis data/report;
 - any published static report artifacts.
 
-### 5. Performance Validation
+### Performance Validation
 
 Measure before and after:
 
@@ -371,17 +394,23 @@ semantic boundary:
 - reuse line projections;
 - expose diagnostics, not knobs.
 
-## Implementation Slices
+## Implementation Status
 
-1. Land this design doc.
-2. Add the Piskvork comparison harness and `#1548/E6` reference check.
-3. Add core golden fixtures with current failures allowed or ignored only while
-   the oracle is being replaced.
-4. Replace the core forbidden detector with the oracle layers.
-5. Run differential fuzz and promote mismatches into fixtures.
-6. Review tactical/corridor/wasm consumers for any remaining raw-shape Renju
-   assumptions.
-7. Regenerate reports and publish once legality behavior is stable.
+Implemented:
+
+- design doc;
+- core Renju oracle replacing the raw shape-count detector;
+- #1548/E6 regression fixture;
+- eval-side `renju-rules` golden fixture command;
+- manual Piskvork cross-check for #1548/E6.
+
+Remaining:
+
+- persistent Piskvork/SlowRenju/Rapfi wrapper harnesses;
+- differential fuzz against external references;
+- more dead-four/dead-three golden fixtures from reference mismatches;
+- downstream tactical/corridor/wasm review after the core legality change;
+- report regeneration if analysis/tournament behavior changes materially.
 
 ## Open Decisions
 
