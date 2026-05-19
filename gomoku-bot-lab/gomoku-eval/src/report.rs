@@ -528,6 +528,22 @@ pub struct StandingReport {
     #[serde(default)]
     pub avg_renju_forbidden_ns: f64,
     #[serde(default)]
+    pub renju_forbidden_search_gate_checks: u64,
+    #[serde(default)]
+    pub renju_forbidden_search_gate_ns: u64,
+    #[serde(default)]
+    pub renju_forbidden_pattern_checks: u64,
+    #[serde(default)]
+    pub renju_forbidden_pattern_ns: u64,
+    #[serde(default)]
+    pub renju_forbidden_threat_checks: u64,
+    #[serde(default)]
+    pub renju_forbidden_threat_ns: u64,
+    #[serde(default)]
+    pub renju_forbidden_other_checks: u64,
+    #[serde(default)]
+    pub renju_forbidden_other_ns: u64,
+    #[serde(default)]
     pub stage_move_gen_ns: u64,
     #[serde(default)]
     pub stage_ordering_ns: u64,
@@ -943,6 +959,22 @@ pub struct SideStatsReport {
     #[serde(default)]
     pub avg_renju_forbidden_ns: f64,
     #[serde(default)]
+    pub renju_forbidden_search_gate_checks: u64,
+    #[serde(default)]
+    pub renju_forbidden_search_gate_ns: u64,
+    #[serde(default)]
+    pub renju_forbidden_pattern_checks: u64,
+    #[serde(default)]
+    pub renju_forbidden_pattern_ns: u64,
+    #[serde(default)]
+    pub renju_forbidden_threat_checks: u64,
+    #[serde(default)]
+    pub renju_forbidden_threat_ns: u64,
+    #[serde(default)]
+    pub renju_forbidden_other_checks: u64,
+    #[serde(default)]
+    pub renju_forbidden_other_ns: u64,
+    #[serde(default)]
     pub stage_move_gen_ns: u64,
     #[serde(default)]
     pub stage_ordering_ns: u64,
@@ -1159,6 +1191,14 @@ struct SideStatsAccumulator {
     search_illegal_moves_skipped: u64,
     renju_forbidden_checks: u64,
     renju_forbidden_ns: u64,
+    renju_forbidden_search_gate_checks: u64,
+    renju_forbidden_search_gate_ns: u64,
+    renju_forbidden_pattern_checks: u64,
+    renju_forbidden_pattern_ns: u64,
+    renju_forbidden_threat_checks: u64,
+    renju_forbidden_threat_ns: u64,
+    renju_forbidden_other_checks: u64,
+    renju_forbidden_other_ns: u64,
     stage_move_gen_ns: u64,
     stage_ordering_ns: u64,
     stage_eval_ns: u64,
@@ -1290,6 +1330,20 @@ impl SideStatsAccumulator {
                 trace_value_u64(metrics, "search_illegal_moves_skipped");
             self.renju_forbidden_checks += trace_value_u64(metrics, "renju_forbidden_checks");
             self.renju_forbidden_ns += trace_value_u64(metrics, "renju_forbidden_ns");
+            self.renju_forbidden_search_gate_checks +=
+                trace_value_u64(metrics, "renju_forbidden_search_gate_checks");
+            self.renju_forbidden_search_gate_ns +=
+                trace_value_u64(metrics, "renju_forbidden_search_gate_ns");
+            self.renju_forbidden_pattern_checks +=
+                trace_value_u64(metrics, "renju_forbidden_pattern_checks");
+            self.renju_forbidden_pattern_ns +=
+                trace_value_u64(metrics, "renju_forbidden_pattern_ns");
+            self.renju_forbidden_threat_checks +=
+                trace_value_u64(metrics, "renju_forbidden_threat_checks");
+            self.renju_forbidden_threat_ns += trace_value_u64(metrics, "renju_forbidden_threat_ns");
+            self.renju_forbidden_other_checks +=
+                trace_value_u64(metrics, "renju_forbidden_other_checks");
+            self.renju_forbidden_other_ns += trace_value_u64(metrics, "renju_forbidden_other_ns");
             self.stage_move_gen_ns += trace_value_u64(metrics, "stage_move_gen_ns");
             self.stage_ordering_ns += trace_value_u64(metrics, "stage_ordering_ns");
             self.stage_eval_ns += trace_value_u64(metrics, "stage_eval_ns");
@@ -1586,6 +1640,14 @@ impl SideStatsAccumulator {
         self.search_illegal_moves_skipped += stats.search_illegal_moves_skipped;
         self.renju_forbidden_checks += stats.renju_forbidden_checks;
         self.renju_forbidden_ns += stats.renju_forbidden_ns;
+        self.renju_forbidden_search_gate_checks += stats.renju_forbidden_search_gate_checks;
+        self.renju_forbidden_search_gate_ns += stats.renju_forbidden_search_gate_ns;
+        self.renju_forbidden_pattern_checks += stats.renju_forbidden_pattern_checks;
+        self.renju_forbidden_pattern_ns += stats.renju_forbidden_pattern_ns;
+        self.renju_forbidden_threat_checks += stats.renju_forbidden_threat_checks;
+        self.renju_forbidden_threat_ns += stats.renju_forbidden_threat_ns;
+        self.renju_forbidden_other_checks += stats.renju_forbidden_other_checks;
+        self.renju_forbidden_other_ns += stats.renju_forbidden_other_ns;
         self.stage_move_gen_ns += stats.stage_move_gen_ns;
         self.stage_ordering_ns += stats.stage_ordering_ns;
         self.stage_eval_ns += stats.stage_eval_ns;
@@ -1844,6 +1906,14 @@ impl SideStatsAccumulator {
             avg_renju_forbidden_checks,
             renju_forbidden_ns: self.renju_forbidden_ns,
             avg_renju_forbidden_ns,
+            renju_forbidden_search_gate_checks: self.renju_forbidden_search_gate_checks,
+            renju_forbidden_search_gate_ns: self.renju_forbidden_search_gate_ns,
+            renju_forbidden_pattern_checks: self.renju_forbidden_pattern_checks,
+            renju_forbidden_pattern_ns: self.renju_forbidden_pattern_ns,
+            renju_forbidden_threat_checks: self.renju_forbidden_threat_checks,
+            renju_forbidden_threat_ns: self.renju_forbidden_threat_ns,
+            renju_forbidden_other_checks: self.renju_forbidden_other_checks,
+            renju_forbidden_other_ns: self.renju_forbidden_other_ns,
             stage_move_gen_ns: self.stage_move_gen_ns,
             stage_ordering_ns: self.stage_ordering_ns,
             stage_eval_ns: self.stage_eval_ns,
@@ -2095,6 +2165,14 @@ fn standings(
                 avg_renju_forbidden_checks: side_stats.avg_renju_forbidden_checks,
                 renju_forbidden_ns: side_stats.renju_forbidden_ns,
                 avg_renju_forbidden_ns: side_stats.avg_renju_forbidden_ns,
+                renju_forbidden_search_gate_checks: side_stats.renju_forbidden_search_gate_checks,
+                renju_forbidden_search_gate_ns: side_stats.renju_forbidden_search_gate_ns,
+                renju_forbidden_pattern_checks: side_stats.renju_forbidden_pattern_checks,
+                renju_forbidden_pattern_ns: side_stats.renju_forbidden_pattern_ns,
+                renju_forbidden_threat_checks: side_stats.renju_forbidden_threat_checks,
+                renju_forbidden_threat_ns: side_stats.renju_forbidden_threat_ns,
+                renju_forbidden_other_checks: side_stats.renju_forbidden_other_checks,
+                renju_forbidden_other_ns: side_stats.renju_forbidden_other_ns,
                 stage_move_gen_ns: side_stats.stage_move_gen_ns,
                 stage_ordering_ns: side_stats.stage_ordering_ns,
                 stage_eval_ns: side_stats.stage_eval_ns,
@@ -6120,6 +6198,14 @@ mod tests {
             avg_renju_forbidden_checks: 2.4,
             renju_forbidden_ns: 1_000_000,
             avg_renju_forbidden_ns: 83_333.3,
+            renju_forbidden_search_gate_checks: 2,
+            renju_forbidden_search_gate_ns: 100_000,
+            renju_forbidden_pattern_checks: 6,
+            renju_forbidden_pattern_ns: 600_000,
+            renju_forbidden_threat_checks: 3,
+            renju_forbidden_threat_ns: 250_000,
+            renju_forbidden_other_checks: 1,
+            renju_forbidden_other_ns: 50_000,
             stage_move_gen_ns: 5_000_000,
             stage_ordering_ns: 10_000_000,
             stage_eval_ns: 15_000_000,
@@ -6281,6 +6367,14 @@ mod tests {
             avg_renju_forbidden_checks: 2.4,
             renju_forbidden_ns: 1_000_000,
             avg_renju_forbidden_ns: 83_333.3,
+            renju_forbidden_search_gate_checks: 2,
+            renju_forbidden_search_gate_ns: 100_000,
+            renju_forbidden_pattern_checks: 6,
+            renju_forbidden_pattern_ns: 600_000,
+            renju_forbidden_threat_checks: 3,
+            renju_forbidden_threat_ns: 250_000,
+            renju_forbidden_other_checks: 1,
+            renju_forbidden_other_ns: 50_000,
             stage_move_gen_ns: 5_000_000,
             stage_ordering_ns: 10_000_000,
             stage_eval_ns: 15_000_000,
