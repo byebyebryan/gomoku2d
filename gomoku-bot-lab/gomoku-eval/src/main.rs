@@ -23,7 +23,7 @@ use gomoku_eval::lethal_scenario::{
 };
 use gomoku_eval::opening::{OpeningPolicy, CENTERED_SUITE_MAX_PLIES};
 use gomoku_eval::renju_rules::{
-    run_renju_rule_fixtures, RenjuRuleFixtureResult, RenjuRuleReport, RENJU_RULE_FIXTURES,
+    all_renju_rule_fixtures, run_renju_rule_fixtures, RenjuRuleFixtureResult, RenjuRuleReport,
 };
 use gomoku_eval::report::{
     render_tournament_report_html_with_options, AnchorReferenceReport, ReportRenderOptions,
@@ -1568,10 +1568,12 @@ fn main() {
             show_boards,
         } => {
             println!("--- Renju Rule Fixtures ---");
-            println!("Cases: {}", RENJU_RULE_FIXTURES.len());
+            let fixtures = all_renju_rule_fixtures()
+                .unwrap_or_else(|err| exit_with_error(format!("Failed to load fixtures: {err}")));
+            println!("Cases: {}", fixtures.len());
             println!();
 
-            let report = run_renju_rule_fixtures(RENJU_RULE_FIXTURES)
+            let report = run_renju_rule_fixtures(&fixtures)
                 .unwrap_or_else(|err| exit_with_error(format!("Failed to run fixtures: {err}")));
             for result in &report.results {
                 print_renju_rule_fixture_result(result);

@@ -1,0 +1,186 @@
+[
+  {
+    "id": "01a_forbiddens_4x4",
+    "probe": "E14",
+    "expected_forbidden": true,
+    "actual_forbidden": true,
+    "reason": 2,
+    "passed": true
+  },
+  {
+    "id": "01b_forbiddens_overline_6",
+    "probe": "G8",
+    "expected_forbidden": true,
+    "actual_forbidden": true,
+    "reason": 3,
+    "passed": true
+  },
+  {
+    "id": "01c_forbiddens_3x3",
+    "probe": "L5",
+    "expected_forbidden": true,
+    "actual_forbidden": true,
+    "reason": 1,
+    "passed": true
+  },
+  {
+    "id": "01d_forbiddens_false_3x3_dead_diag",
+    "probe": "C3",
+    "expected_forbidden": false,
+    "actual_forbidden": false,
+    "reason": 0,
+    "passed": true
+  },
+  {
+    "id": "02_problem1_false_3x3_dead_diag",
+    "probe": "J10",
+    "expected_forbidden": false,
+    "actual_forbidden": false,
+    "reason": 0,
+    "passed": true
+  },
+  {
+    "id": "04a_problem2_false_3x3_dead_horizontal",
+    "probe": "D12",
+    "expected_forbidden": false,
+    "actual_forbidden": false,
+    "reason": 0,
+    "passed": true
+  },
+  {
+    "id": "04b_problem2_false_4x4_dead_diag",
+    "probe": "N13",
+    "expected_forbidden": false,
+    "actual_forbidden": false,
+    "reason": 0,
+    "passed": true
+  },
+  {
+    "id": "04c_problem2_3x3",
+    "probe": "D4",
+    "expected_forbidden": true,
+    "actual_forbidden": true,
+    "reason": 1,
+    "passed": true
+  },
+  {
+    "id": "04d_problem2_3x3",
+    "probe": "L3",
+    "expected_forbidden": true,
+    "actual_forbidden": true,
+    "reason": 1,
+    "passed": true
+  },
+  {
+    "id": "05_problem3_false_3x3",
+    "probe": "J9",
+    "expected_forbidden": false,
+    "actual_forbidden": false,
+    "reason": 0,
+    "passed": true
+  },
+  {
+    "id": "06a_game1_false_3x3",
+    "probe": "H11",
+    "expected_forbidden": false,
+    "actual_forbidden": false,
+    "reason": 0,
+    "passed": true
+  },
+  {
+    "id": "06b_game1_after_h11_4x4",
+    "probe": "I10",
+    "expected_forbidden": true,
+    "actual_forbidden": true,
+    "reason": 2,
+    "passed": true
+  },
+  {
+    "id": "08_problem4a_3x3",
+    "probe": "G8",
+    "expected_forbidden": true,
+    "actual_forbidden": true,
+    "reason": 1,
+    "passed": true
+  },
+  {
+    "id": "10a_problem4c_4x4",
+    "probe": "G7",
+    "expected_forbidden": true,
+    "actual_forbidden": true,
+    "reason": 2,
+    "passed": true
+  },
+  {
+    "id": "10b_problem4c_without_g8_false_3x3",
+    "probe": "G8",
+    "expected_forbidden": false,
+    "actual_forbidden": false,
+    "reason": 0,
+    "passed": true
+  },
+  {
+    "id": "11a_heavyforks_3x3x3",
+    "probe": "D12",
+    "expected_forbidden": true,
+    "actual_forbidden": true,
+    "reason": 1,
+    "passed": true
+  },
+  {
+    "id": "11b_heavyforks_4x4x4",
+    "probe": "M12",
+    "expected_forbidden": true,
+    "actual_forbidden": true,
+    "reason": 2,
+    "passed": true
+  },
+  {
+    "id": "11c_heavyforks_4x4x3",
+    "probe": "D5",
+    "expected_forbidden": true,
+    "actual_forbidden": true,
+    "reason": 2,
+    "passed": true
+  },
+  {
+    "id": "11d_heavyforks_4x3x3",
+    "probe": "M5",
+    "expected_forbidden": true,
+    "actual_forbidden": true,
+    "reason": 1,
+    "passed": true
+  },
+  {
+    "id": "12_problem5_3x3",
+    "probe": "K8",
+    "expected_forbidden": true,
+    "actual_forbidden": true,
+    "reason": 1,
+    "passed": true
+  },
+  {
+    "id": "14_problem5b_4x3x3",
+    "probe": "K8",
+    "expected_forbidden": true,
+    "actual_forbidden": true,
+    "reason": 1,
+    "passed": true
+  },
+  {
+    "id": "15_problem6_4x4x3",
+    "probe": "H10",
+    "expected_forbidden": true,
+    "actual_forbidden": true,
+    "reason": 2,
+    "passed": true
+  },
+  {
+    "id": "16_problem6a_without_h10_false",
+    "probe": "H10",
+    "expected_forbidden": false,
+    "actual_forbidden": false,
+    "reason": 0,
+    "passed": true
+  }
+]
