@@ -420,18 +420,40 @@ Keep the claim bounded: this is not a solver and not a full proof-tree browser.
 It is the first in-product version of corridor search: saved replays can explain
 the final forced sequence and the last visible escape.
 
-`0.4.7` should be the polish/wrap-up pass for the `0.4` line rather than another
-large lab pivot. Candidate work: clearer replay-analysis explanation, timeline
-and marker readability, screenshot/mobile polish, and release-quality cleanup
-before moving to the next product phase.
+`0.4.7` closes the main `0.4` analyzer line by formalizing lethal threats and
+hardening Renju legality. The original target was to mark the effective end
+state of a forced sequence: once the loser faces a lethal threat, the rest of
+the replay is conversion rather than the interesting cause. That forced us to
+make combo threats explicit. Renju.net calls many of these "forks"; Gomoku2D
+models them as legality-aware coverage problems: can the defender make one legal
+reply that covers every terminal or already-lethal continuation?
+
+That work exposed that shape-only Renju forbidden checks were not reliable
+enough for analysis, bot search, or hints. `0.4.7` therefore also ships the
+recursive Renju forbidden checker, the extracted Renju example corpus, reference
+validation notes, and the performance filters needed to keep the corrected
+checker practical.
+
+The product-facing polish is deliberately narrow: Replay uses lethal onset to
+separate setup corridor from lethal tail, improves the timeline/status language,
+and keeps last-move animation readable without breaking stone removal. This is
+still a hardening release, not the start of a new UI theme line.
+
+`0.4.8` is the only analyzer feature that still plausibly belongs before the
+`0.5` polish line: human/bot mistake detection. The current analyzer mostly
+assumes ideal response play inside a detected corridor. A better mistake model
+should classify actual replay deviations from the response candidate set, while
+not blaming moves after lethal onset where every response is already losing.
+Keep this scoped to analyzer semantics and minimal replay/report labels; broader
+presentation work belongs to `0.5`.
 
 ### Possible Work
 
-- replay-analysis copy and marker readability polish
-- screenshot/mobile review for the settings and replay surfaces
+- `0.4.7` focused replay screenshot review and release cleanup
+- `0.4.8` mistake detection based on missed response/escape candidates, not
+  corridor length
 - test/doc cleanup after the 0.4 lab-to-product pivot
 - measured analyzer follow-up if replay-screen usage exposes confusing cases
-- replay analysis with critical-moment tagging
 - better-move suggestions and opponent best-reply previews
 - generated puzzles from real games or curated positions
 - "save this game" challenges from losing positions
