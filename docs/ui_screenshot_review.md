@@ -467,6 +467,51 @@ replay after browser-side analysis has resolved to the last-escape frame.
 - The marker set should remain restrained. More proof symbols will make the
   replay page feel like the internal analysis report again.
 
+## v0.4.7
+
+### References
+
+These captures are replay-focused because `v0.4.7` changes the Replay page
+timeline/status interpretation rather than the full app shell. They use the
+`v0.4.7` web package version, a seeded decisive Renju replay, and the
+last-escape frame after browser-side analysis has resolved.
+
+<table>
+  <tr>
+    <td width="60%">
+      <img src="assets/screenshot_v0_4_7_replay_desktop.png" alt="v0.4.7 analyzed replay screen on desktop" width="100%">
+      <br>
+      <sub>Analyzed Replay / Desktop</sub>
+    </td>
+    <td width="40%">
+      <img src="assets/screenshot_v0_4_7_replay_mobile.png" alt="v0.4.7 analyzed replay screen on mobile" width="100%">
+      <br>
+      <sub>Analyzed Replay / Mobile</sub>
+    </td>
+  </tr>
+</table>
+
+### What v0.4.7 improved
+
+- The timeline now separates traceback progress, setup corridor, lethal tail,
+  lethal onset, and last escape instead of presenting one undifferentiated
+  forced suffix.
+- Status copy distinguishes terminal win, guaranteed loss after onset, locked-in
+  setup-corridor states, and last-escape frames.
+- The last-move idle animation is less busy because it pauses on the static
+  stone between loops.
+- The Replay board remains board-first on mobile; the focused analysis frame is
+  still readable without adding a separate explanation panel.
+
+### Remaining watch points
+
+- The next analyzer feature should be mistake detection before lethal onset, not
+  more symbols on the current replay board.
+- Mobile still depends on marker/highlighter readability because verbose status
+  copy is intentionally hidden in the first viewport.
+- The replay surface should stay compact until `0.5` takes on broader product
+  polish and onboarding.
+
 ## Design takeaway
 
 - keep v0.1's retro punch and board-first confidence
@@ -477,5 +522,7 @@ replay after browser-side analysis has resolved to the last-escape frame.
 - keep v0.4.5's dedicated settings route and controlled bot-lab layer
 - keep v0.4.6's replay-analysis foundation while deferring explanation polish
   to a focused follow-up
+- keep v0.4.7's separated replay-analysis timeline semantics and restrained
+  marker vocabulary
 - avoid reintroducing v0.1's scene-bound UI
 - avoid rebuilding dense sidebars or over-explained controls as the shell grows

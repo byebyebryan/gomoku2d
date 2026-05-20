@@ -347,6 +347,27 @@ reintroduce mistake/tactical/strategic labels later, but they should be based on
 the type of missed opportunity and player-facing explanation, not a simple span
 threshold.
 
+`0.4.7` intentionally stops short of full mistake detection. Lethal onset gives
+the analyzer a better boundary first: after onset, the loser is already in a
+guaranteed-loss state under the model, so a later reply should not be called the
+mistake just because it fails to save the game. The useful question for a
+follow-up is whether an earlier actual move ignored a concrete response or
+escape candidate before the position became lethal.
+
+The planned `0.4.8` mistake layer should use response semantics, not corridor
+length:
+
+- Before lethal onset, if a player faces immediate or imminent threats and plays
+  outside the highest-priority response candidate set, classify that as a missed
+  response candidate.
+- If a legal escape or corridor-entry prevention candidate exists and the actual
+  move instead enters or preserves the forced-loss corridor, classify that as
+  the critical mistake boundary.
+- If no legal response or escape exists, do not blame the current move; keep the
+  explanation on the earlier setup corridor.
+- If proof is bounded or unknown, label cautiously as a possible mistake or
+  unclear boundary rather than overclaiming.
+
 Root-detail categories:
 
 - `corridor_entry`: a move changes the position from `escape_found` to

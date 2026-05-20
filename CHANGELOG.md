@@ -12,6 +12,60 @@ their own section.
 
 ## [Unreleased]
 
+## [0.4.7] - 2026-05-19
+
+**Theme: close the `0.4` analyzer line with lethal-threat semantics and Renju
+rule correctness.**
+
+`0.4.7` started as the lethal-threat pass: mark the point where a replay becomes
+effectively lost, so the analyzer can explain the setup corridor instead of
+spending attention on the obvious final conversion. That forced combo threats
+and Renju forbidden moves into the same model. The result is a hardening release:
+the analyzer now has a clearer endpoint, and the rule engine has a more reliable
+Renju legality foundation.
+
+### Rules and analysis correctness
+
+- Added lethal-threat detection for terminal coverage and one-step combo/fork
+  threats, including open fours, four-three coverage, double-three coverage,
+  shared-block rejects, and Renju forbidden-block cases.
+- Split replay explanation into setup corridor, lethal onset, and lethal tail so
+  the UI/report can show how the loser reached an already-lethal state instead
+  of treating every final conversion ply as equally meaningful.
+- Replaced the old shape-only Renju forbidden shortcut with a recursive
+  legality-aware checker, then added extracted Renju.net advanced examples,
+  handwritten fixtures, and external-reference validation notes.
+- Added metrics and prefilters for the corrected Renju checker so the legality
+  fix remains practical for bot search, hints, tournament reports, and replay
+  analysis.
+- Refreshed the curated bot and analysis reports after the Renju-rule and
+  lethal-onset changes.
+
+### Web
+
+- Refined Replay status copy around lethal onset: terminal frames read as a won
+  state, post-onset loser frames read as guaranteed loss, setup-corridor frames
+  read as no viable escape, and last-escape frames use focused player-facing
+  language.
+- Updated the replay timeline to separate traceback progress, setup corridor,
+  lethal tail, last escape, and lethal onset instead of treating the whole
+  analyzed suffix as one red block.
+- Made Replay turn navigation and board animation calmer by pacing the
+  opponent's last-move idle animation and fixing animation listener ownership so
+  stone-destroy callbacks cannot get stuck on the last frame.
+
+### Repo and docs
+
+- Promoted lethal-threat terminology and examples into `docs/lethal_threats.md`
+  and aligned `docs/game_analysis.md` / `docs/corridor_search.md` around setup
+  corridor versus lethal tail.
+- Documented the Renju validation process and corpus so future legality changes
+  can be tested against known hard examples instead of relying on intuition.
+- Added a focused `v0.4.7` replay screenshot review for the updated timeline,
+  status, and last-escape presentation.
+- Left mistake detection as the narrow remaining analyzer feature for a possible
+  `0.4.8`; broader product cleanup moves to the `0.5` polish line.
+
 ## [0.4.6] - 2026-05-17
 
 **Theme: bring corridor-search replay analysis into the playable web app.**
@@ -868,7 +922,8 @@ together in one canvas-driven surface. That lesson drove the `v0.2.1` rewrite.
   concerns blurred together.
 - Expressive UI language, but not scalable beyond one canvas.
 
-[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.6...HEAD
+[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.7...HEAD
+[0.4.7]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.6...v0.4.7
 [0.4.6]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.5...v0.4.6
 [0.4.5]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.3...v0.4.4
