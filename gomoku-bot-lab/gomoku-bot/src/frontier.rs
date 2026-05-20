@@ -4,10 +4,11 @@ use std::time::Duration;
 use gomoku_core::{Board, Color, GameResult, Move, MoveError, DIRS};
 
 use crate::tactical::{
-    defender_reply_candidates, defender_reply_candidates_from_view,
-    raw_local_threat_facts_at_existing_move, raw_local_threat_facts_for_player, CorridorEntryRank,
+    defender_reply_candidates_from_view, raw_local_threat_facts_at_existing_move,
+    raw_local_threat_facts_for_player, threat_obligation_from_facts, CorridorEntryRank,
     CorridorThreatPolicy, DefenderReplyCandidate, LocalThreatFact, ScanThreatView,
-    SearchThreatPolicy, TacticalMoveAnnotation, TacticalOrderingSummary, ThreatView,
+    SearchThreatPolicy, TacticalMoveAnnotation, TacticalOrderingSummary, ThreatObligation,
+    ThreatView,
 };
 use crate::viability::{scan_cell_viability, CellViability};
 
@@ -605,6 +606,15 @@ impl ThreatView for RebuildThreatFrontier {
         facts
     }
 
+    fn threat_obligation(&self, attacker: Color) -> Option<ThreatObligation> {
+        threat_obligation_from_facts(
+            &self.board,
+            attacker,
+            self.immediate_winning_moves_for(attacker),
+            self.facts_for(attacker).iter().cloned(),
+        )
+    }
+
     fn has_move_local_corridor_entry(&self, attacker: Color, mv: Move) -> bool {
         self.local_corridor_entry_rank(attacker, mv) > 0
     }
@@ -619,10 +629,17 @@ impl ThreatView for RebuildThreatFrontier {
     }
 
     fn defender_reply_moves(&self, attacker: Color, actual_reply: Option<Move>) -> Vec<Move> {
-        // Keep reply selection delegated for the rebuild checkpoint. The cache
-        // already owns the active facts; reply-set extraction becomes the first
-        // target after fixture parity proves the fact index.
-        CorridorThreatPolicy.defender_reply_moves(&self.board, attacker, actual_reply)
+        let mut replies = self
+            .threat_obligation(attacker)
+            .map(|obligation| obligation.legal_replies)
+            .unwrap_or_default();
+        if let Some(mv) = actual_reply {
+            if self.board.is_legal_for_color(mv, attacker.opponent()) {
+                push_unique_move(&mut replies, mv);
+            }
+        }
+        normalize_moves(&mut replies);
+        replies
     }
 
     fn defender_reply_candidates(
@@ -630,7 +647,7 @@ impl ThreatView for RebuildThreatFrontier {
         attacker: Color,
         actual_reply: Option<Move>,
     ) -> Vec<DefenderReplyCandidate> {
-        defender_reply_candidates(&self.board, attacker, actual_reply)
+        defender_reply_candidates_from_view(&self.board, self, attacker, actual_reply)
     }
 }
 
@@ -682,6 +699,20 @@ impl ThreatView for RollingThreatFrontier {
         )
     }
 
+    fn threat_obligation(&self, attacker: Color) -> Option<ThreatObligation> {
+        let Some(facts_by_origin) = self.move_facts_for(attacker) else {
+            return ScanThreatView::new(&self.board).threat_obligation(attacker);
+        };
+        threat_obligation_from_facts(
+            &self.board,
+            attacker,
+            self.immediate_winning_moves_for(attacker),
+            facts_by_origin
+                .iter()
+                .flat_map(|facts| facts.iter().cloned()),
+        )
+    }
+
     fn has_move_local_corridor_entry(&self, attacker: Color, mv: Move) -> bool {
         self.local_corridor_entry_rank(attacker, mv) > 0
     }
@@ -705,22 +736,17 @@ impl ThreatView for RollingThreatFrontier {
     }
 
     fn defender_reply_moves(&self, attacker: Color, actual_reply: Option<Move>) -> Vec<Move> {
-        let Some(facts_by_origin) = self.move_facts_for(attacker) else {
-            return ScanThreatView::new(&self.board).defender_reply_moves(attacker, actual_reply);
-        };
-        let active = CorridorThreatPolicy.active_threats_from_facts(
-            &self.board,
-            attacker,
-            facts_by_origin
-                .iter()
-                .flat_map(|facts| facts.iter().cloned()),
-        );
-        CorridorThreatPolicy.defender_reply_moves_for_active_threats(
-            &self.board,
-            attacker,
-            active,
-            actual_reply,
-        )
+        let mut replies = self
+            .threat_obligation(attacker)
+            .map(|obligation| obligation.legal_replies)
+            .unwrap_or_default();
+        if let Some(mv) = actual_reply {
+            if self.board.is_legal_for_color(mv, attacker.opponent()) {
+                push_unique_move(&mut replies, mv);
+            }
+        }
+        normalize_moves(&mut replies);
+        replies
     }
 
     fn defender_reply_candidates(
@@ -911,6 +937,17 @@ fn move_from_index(size: usize, index: usize) -> Move {
     }
 }
 
+fn normalize_moves(moves: &mut Vec<Move>) {
+    moves.sort_by_key(|mv| (mv.row, mv.col));
+    moves.dedup();
+}
+
+fn push_unique_move(moves: &mut Vec<Move>, mv: Move) {
+    if !moves.contains(&mv) {
+        moves.push(mv);
+    }
+}
+
 fn raw_local_threat_facts_for_player_by_origin(
     board: &Board,
     player: Color,
@@ -1004,6 +1041,10 @@ mod tests {
         assert_eq!(
             view.active_corridor_threats(attacker),
             scan.active_corridor_threats(attacker)
+        );
+        assert_eq!(
+            view.threat_obligation(attacker),
+            scan.threat_obligation(attacker)
         );
         assert_eq!(
             view.has_move_local_corridor_entry(attacker, probe),

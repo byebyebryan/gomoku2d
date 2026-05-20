@@ -83,6 +83,33 @@ move-choice sweep. The current lethal harness covers terminal coverage plus
 crossed one-step `4+3` / `3+3` coverage and non-lethal escape cases. See
 [`lethal_threats.md`](lethal_threats.md) for the model and case list.
 
+Position-obligation regressions are narrower than bot-choice scenarios. For
+example, match `#1577` prefix 32 is covered by tactical unit fixtures instead of
+`gomoku-eval tactical-scenarios`: White has several individually non-forcing
+three facts, but `B6` is a one-step entry into lethal coverage. The correct
+Black reply set includes `B6` as an imminent-defense reply, while `J10`/`K10`
+remain counter-threat alternatives.
+
+```text
+    A B C D E F G H I J K L M N O
+15  . . . . . . . . . . . . . . .  15
+14  . . . . . . . . . . . . . . .  14
+13  . . . W . . . . . . . . . . .  13
+12  . . . . B . . . . . . . . . .  12
+11  . . . . . B B W . W . . . . .  11
+10  . . . . . W B B B . . . . . .  10
+ 9  . . . . W . W B W . . . . . .  9
+ 8  . . . W B B B B W . . . . . .  8
+ 7  . . . . W . W . B . . . . . .  7
+ 6  . ? . W W W B W . . . . . . .  6
+ 5  . . . . . . B . . . . . . . .  5
+ 4  . . . . . . B . . . . . . . .  4
+ 3  . . . . . . B . . . . . . . .  3
+ 2  . . . . . . W . . . . . . . .  2
+ 1  . . . . . . . . . . . . . . .  1
+    A B C D E F G H I J K L M N O
+```
+
 ## How This Maps To Bot Strategy
 
 The scenario corpus should drive the next search work, but only at the right

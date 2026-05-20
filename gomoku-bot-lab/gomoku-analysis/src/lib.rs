@@ -1,6 +1,6 @@
 use gomoku_bot::corridor as bot_corridor;
 use gomoku_bot::tactical::{
-    corridor_active_threats, lethal_threat, LethalThreat, LethalThreatKind, LocalThreatKind,
+    corridor_active_threats, lethal_threat, LethalThreat, LethalThreatKind,
 };
 use gomoku_core::{replay::ReplayResult, Board, Color, GameResult, Move, Replay, Variant};
 use serde::Serialize;
@@ -73,7 +73,6 @@ pub enum FailureMode {
     MissedImminentResponse,
     MissedEscape,
     MissedLethalPrevention,
-    ForcedLoss,
     Unclear,
 }
 
@@ -599,7 +598,7 @@ fn replay_frame_annotations_from_proof(
     };
 
     let candidates = if board.current_player == winner.opponent() {
-        defender_reply_candidates(board, winner, actual_reply)
+        visible_defender_reply_candidates(board, winner, actual_reply)
     } else {
         Vec::new()
     };
@@ -608,10 +607,9 @@ fn replay_frame_annotations_from_proof(
     } else {
         Vec::new()
     };
+    push_current_loser_candidate_annotations(&mut frame, board, winner, &candidates);
     if candidates.is_empty() {
-        push_current_loser_tactical_annotations(&mut frame, board, winner);
-    } else {
-        push_current_loser_candidate_annotations(&mut frame, board, winner, &candidates);
+        push_current_loser_immediate_win_annotations(&mut frame, board, winner);
     }
 
     if board.current_player == winner.opponent() {
@@ -730,7 +728,7 @@ fn actual_move_at_prefix(replay: &Replay, prefix_ply: usize) -> Option<Move> {
     Move::from_notation(&replay_move.mv).ok()
 }
 
-fn push_current_loser_tactical_annotations(
+fn push_current_loser_immediate_win_annotations(
     frame: &mut ReplayFrameAnnotations,
     board: &Board,
     winner: Color,
@@ -741,8 +739,6 @@ fn push_current_loser_tactical_annotations(
     }
 
     let defender_wins = board.immediate_winning_moves_for(defender);
-    let attacker_wins = board.immediate_winning_moves_for(winner);
-
     for mv in defender_wins.iter().copied() {
         push_replay_highlight(
             &mut frame.highlights,
@@ -750,56 +746,6 @@ fn push_current_loser_tactical_annotations(
             mv,
             defender,
         );
-    }
-    for mv in attacker_wins.iter().copied() {
-        push_replay_highlight(
-            &mut frame.highlights,
-            ReplayFrameHighlightRole::ImmediateThreat,
-            mv,
-            winner,
-        );
-        if !board.is_legal_for_color(mv, defender) {
-            push_replay_marker(
-                &mut frame.markers,
-                ReplayFrameMarkerRole::Forbidden,
-                mv,
-                defender,
-            );
-        }
-    }
-
-    if !defender_wins.is_empty() || !attacker_wins.is_empty() {
-        return;
-    }
-
-    for fact in corridor_active_threats(board, winner)
-        .into_iter()
-        .filter(|fact| {
-            matches!(
-                fact.kind,
-                LocalThreatKind::OpenThree | LocalThreatKind::BrokenThree
-            )
-        })
-    {
-        for mv in fact.defense_squares.iter().copied() {
-            if !board.is_empty(mv.row, mv.col) {
-                continue;
-            }
-            push_replay_highlight(
-                &mut frame.highlights,
-                ReplayFrameHighlightRole::ImminentThreat,
-                mv,
-                winner,
-            );
-            if !board.is_legal_for_color(mv, defender) {
-                push_replay_marker(
-                    &mut frame.markers,
-                    ReplayFrameMarkerRole::Forbidden,
-                    mv,
-                    defender,
-                );
-            }
-        }
     }
 }
 
@@ -1225,7 +1171,15 @@ pub fn defender_reply_candidates(
     attacker: Color,
     actual_reply: Option<Move>,
 ) -> Vec<DefenderReplyCandidate> {
-    bot_corridor::defender_reply_candidates(board, attacker, actual_reply)
+    visible_defender_reply_candidates(board, attacker, actual_reply)
+}
+
+pub fn visible_defender_reply_candidates(
+    board: &Board,
+    attacker: Color,
+    actual_reply: Option<Move>,
+) -> Vec<DefenderReplyCandidate> {
+    bot_corridor::visible_defender_reply_candidates(board, attacker, actual_reply)
         .into_iter()
         .map(defender_reply_candidate_with_notation)
         .collect()
@@ -1989,7 +1943,7 @@ fn corridor_defender_reply_moves(
     threat: &ThreatReplySet,
 ) -> Vec<Move> {
     let mut replies = Vec::new();
-    for candidate in bot_corridor::defender_model_reply_candidates(
+    for candidate in bot_corridor::probed_defender_reply_candidates(
         board,
         threat.attacker,
         actual_moves.get(prefix_ply).copied(),
@@ -2289,12 +2243,11 @@ fn failure_analysis(input: FailureAnalysisInput<'_>) -> Option<FailureAnalysis> 
     if let Some(failure) = missed_lethal_prevention_failure(&input) {
         return Some(failure);
     }
+    if let Some(failure) = missed_escape_failure(&input) {
+        return Some(failure);
+    }
 
-    let mode = if input.root_cause == RootCause::Unclear || !input.final_forced_interval_found {
-        FailureMode::Unclear
-    } else {
-        FailureMode::ForcedLoss
-    };
+    let mode = FailureMode::Unclear;
     let confidence = match mode {
         FailureMode::Unclear => FailureConfidence::Unclear,
         _ => FailureConfidence::Confirmed,
@@ -2371,13 +2324,7 @@ fn missed_response_failure(input: &FailureAnalysisInput<'_>) -> Option<FailureAn
 
         let actual_roles = failure_candidate_roles(board, input.winner, actual_move);
         if is_response_role_set(&actual_roles) {
-            return Some(missed_candidate_failure(
-                FailureMode::MissedEscape,
-                input,
-                prefix_ply,
-                actual_move,
-                candidates,
-            ));
+            continue;
         }
 
         let immediate = candidates
@@ -2426,48 +2373,21 @@ fn missed_response_failure(input: &FailureAnalysisInput<'_>) -> Option<FailureAn
 
 fn missed_lethal_prevention_failure(input: &FailureAnalysisInput<'_>) -> Option<FailureAnalysis> {
     let before_ply = failure_blame_cutoff(input)?;
-    let prefix_ply = find_last_chance(
-        input.boards,
-        input.proof_summary,
-        input.scan_start,
-        before_ply,
-        Some(input.loser),
-    )?;
+    let prefix_ply =
+        latest_loser_decision_before(input.boards, input.scan_start, before_ply, input.loser)?;
     let proof = proof_at(input.proof_summary, input.scan_start, prefix_ply)?;
-    let actual_move = replay_move_at(input.replay, prefix_ply)?;
-    let board = input.boards.get(prefix_ply)?;
-    let outcome = if input.lethal_onset.is_some() {
-        MissedCandidateOutcome::PreventsLethalOnset
-    } else {
-        MissedCandidateOutcome::PreventsCorridorEntry
-    };
-    let mut escape_moves = proof.escape_moves.clone();
-    if escape_moves.is_empty() {
-        for evidence in proof
-            .threat_evidence
-            .iter()
-            .filter(|evidence| evidence.prefix_ply == Some(prefix_ply))
-        {
-            for mv in &evidence.escape_replies {
-                push_unique_move(&mut escape_moves, *mv);
-            }
-        }
-    }
-    normalize_moves(&mut escape_moves);
-    if escape_moves.is_empty() || escape_moves.contains(&actual_move) {
+    if proof.status != ProofStatus::EscapeFound {
         return None;
     }
-    let missed_candidates = escape_moves
-        .into_iter()
-        .map(|mv| {
-            missed_candidate(
-                mv,
-                failure_candidate_roles(board, input.winner, mv),
-                outcome,
-            )
-        })
-        .collect::<Vec<_>>();
-    if missed_candidates.is_empty() {
+    let actual_move = replay_move_at(input.replay, prefix_ply)?;
+    let board = input.boards.get(prefix_ply)?;
+    let missed_candidates =
+        missed_prevention_candidates(board, input.winner, proof, prefix_ply, input.lethal_onset)?;
+    if missed_candidates.is_empty()
+        || missed_candidates
+            .iter()
+            .any(|candidate| candidate.mv == actual_move)
+    {
         return None;
     }
 
@@ -2487,6 +2407,101 @@ fn missed_lethal_prevention_failure(input: &FailureAnalysisInput<'_>) -> Option<
     })
 }
 
+fn missed_escape_failure(input: &FailureAnalysisInput<'_>) -> Option<FailureAnalysis> {
+    if input.root_cause == RootCause::Unclear || !input.final_forced_interval_found {
+        return None;
+    }
+
+    let before_ply = failure_blame_cutoff(input)?;
+    if let Some(prefix_ply) = find_last_chance(
+        input.boards,
+        input.proof_summary,
+        input.scan_start,
+        before_ply,
+        Some(input.loser),
+    ) {
+        let proof = proof_at(input.proof_summary, input.scan_start, prefix_ply)?;
+        let actual_move = replay_move_at(input.replay, prefix_ply)?;
+        let board = input.boards.get(prefix_ply)?;
+        let missed_candidates = missed_prevention_candidates(
+            board,
+            input.winner,
+            proof,
+            prefix_ply,
+            input.lethal_onset,
+        )?;
+        if missed_candidates.is_empty()
+            || missed_candidates
+                .iter()
+                .any(|candidate| candidate.mv == actual_move)
+        {
+            return None;
+        }
+
+        return Some(FailureAnalysis {
+            mode: FailureMode::MissedEscape,
+            side: input.loser,
+            prefix_ply: Some(prefix_ply),
+            actual_move: Some(actual_move),
+            actual_notation: Some(actual_move.to_notation()),
+            confidence: if proof_has_limit_hit(proof) {
+                FailureConfidence::Possible
+            } else {
+                FailureConfidence::Confirmed
+            },
+            missed_candidates,
+            prevented_onset_ply: input.lethal_onset.map(|onset| onset.prefix_ply),
+        });
+    }
+
+    Some(FailureAnalysis {
+        mode: FailureMode::MissedEscape,
+        side: input.loser,
+        prefix_ply: input
+            .lethal_onset
+            .map(|onset| onset.prefix_ply)
+            .or(Some(input.final_forced_interval.start_ply)),
+        actual_move: None,
+        actual_notation: None,
+        missed_candidates: Vec::new(),
+        prevented_onset_ply: input.lethal_onset.map(|onset| onset.prefix_ply),
+        confidence: FailureConfidence::Confirmed,
+    })
+}
+
+fn missed_prevention_candidates(
+    board: &Board,
+    attacker: Color,
+    proof: &ProofResult,
+    prefix_ply: usize,
+    lethal_onset: Option<&LethalOnset>,
+) -> Option<Vec<MissedCandidate>> {
+    let outcome = if lethal_onset.is_some() {
+        MissedCandidateOutcome::PreventsLethalOnset
+    } else {
+        MissedCandidateOutcome::PreventsCorridorEntry
+    };
+    let mut escape_moves = proof.escape_moves.clone();
+    if escape_moves.is_empty() {
+        for evidence in proof
+            .threat_evidence
+            .iter()
+            .filter(|evidence| evidence.prefix_ply == Some(prefix_ply))
+        {
+            for mv in &evidence.escape_replies {
+                push_unique_move(&mut escape_moves, *mv);
+            }
+        }
+    }
+    normalize_moves(&mut escape_moves);
+    Some(
+        escape_moves
+            .into_iter()
+            .map(|mv| missed_candidate(mv, failure_candidate_roles(board, attacker, mv), outcome))
+            .collect::<Vec<_>>(),
+    )
+}
+
 fn failure_blame_cutoff(input: &FailureAnalysisInput<'_>) -> Option<usize> {
     Some(
         input
@@ -2495,6 +2510,17 @@ fn failure_blame_cutoff(input: &FailureAnalysisInput<'_>) -> Option<usize> {
             .unwrap_or(input.final_forced_interval.start_ply)
             .min(input.replay.moves.len()),
     )
+}
+
+fn latest_loser_decision_before(
+    boards: &[Board],
+    scan_start: usize,
+    before_ply: usize,
+    loser: Color,
+) -> Option<usize> {
+    (scan_start..before_ply)
+        .rev()
+        .find(|&ply| boards[ply].current_player == loser)
 }
 
 fn missed_candidate_failure(
@@ -2913,11 +2939,13 @@ mod tests {
 
     use super::{
         analyze_alternate_defender_reply_options, analyze_defender_reply_options, analyze_replay,
-        corridor_analysis_model, replay_frame_annotations_from_proof, replay_moves,
-        replay_prefix_boards, replay_proof_summary, AnalysisOptions, DefenderReplyOutcome,
-        DefenderReplyRole, FailureMode, ProofLimitCause, ProofResult, ProofStatus,
+        corridor_analysis_model, failure_analysis, replay_frame_annotations_from_proof,
+        replay_moves, replay_prefix_boards, replay_proof_summary, AnalysisOptions,
+        DefenderReplyOutcome, DefenderReplyRole, FailureAnalysisInput, FailureMode, ForcedInterval,
+        LethalOnset, MissedCandidateOutcome, ProofLimitCause, ProofResult, ProofStatus,
         ReplayAnalysisSession, ReplayFrameHighlightRole, ReplayFrameMarkerRole,
-        ReplyClassification, ReplyPolicy, RootCause, TacticalNote, UnclearReason,
+        ReplyClassification, ReplyPolicy, RootCause, TacticalNote, ThreatSequenceEvidence,
+        UnclearReason,
     };
 
     fn mv(notation: &str) -> Move {
@@ -2965,6 +2993,78 @@ mod tests {
             threat_evidence: Vec::new(),
             limit_hit: false,
             limit_causes: Vec::new(),
+        }
+    }
+
+    fn test_analysis_options() -> AnalysisOptions {
+        AnalysisOptions {
+            reply_policy: ReplyPolicy::CorridorReplies,
+            max_depth: 4,
+            max_scan_plies: Some(64),
+        }
+    }
+
+    fn proof_summary_with_escape(
+        boards: &[Board],
+        scan_start: usize,
+        attacker: Color,
+        prefix_ply: usize,
+        escape_moves: Vec<Move>,
+        reply_classification: ReplyClassification,
+        limit_hit: bool,
+    ) -> Vec<ProofResult> {
+        let options = test_analysis_options();
+        let mut proofs = (scan_start..boards.len())
+            .map(|ply| proof_for_board(&boards[ply], attacker, &options))
+            .collect::<Vec<_>>();
+        proofs[prefix_ply - scan_start] = ProofResult {
+            status: ProofStatus::EscapeFound,
+            attacker,
+            side_to_move: boards[prefix_ply].current_player,
+            model: corridor_analysis_model(&boards[prefix_ply], &options),
+            principal_line: Vec::new(),
+            escape_moves: escape_moves.clone(),
+            threat_evidence: vec![ThreatSequenceEvidence {
+                prefix_ply: Some(prefix_ply),
+                attacker,
+                defender: attacker.opponent(),
+                winning_squares: Vec::new(),
+                raw_cost_squares: Vec::new(),
+                legal_cost_squares: Vec::new(),
+                illegal_cost_squares: Vec::new(),
+                defender_immediate_wins: Vec::new(),
+                actual_reply: None,
+                reply_classification,
+                escape_replies: escape_moves,
+                forced_replies: Vec::new(),
+                next_forcing_move: None,
+                proof_status: ProofStatus::EscapeFound,
+                limit_hit,
+                limit_causes: if limit_hit {
+                    vec![ProofLimitCause::DepthCutoff]
+                } else {
+                    Vec::new()
+                },
+            }],
+            limit_hit,
+            limit_causes: if limit_hit {
+                vec![ProofLimitCause::DepthCutoff]
+            } else {
+                Vec::new()
+            },
+        };
+        proofs
+    }
+
+    fn test_lethal_onset(prefix_ply: usize, attacker: Color) -> LethalOnset {
+        LethalOnset {
+            prefix_ply,
+            attacker,
+            defender: attacker.opponent(),
+            kind: LethalThreatKind::OneStepCoverage,
+            terminal_targets: Vec::new(),
+            covering_replies: Vec::new(),
+            one_step_replies: Vec::new(),
         }
     }
 
@@ -3676,6 +3776,139 @@ mod tests {
     }
 
     #[test]
+    fn replay_analysis_does_not_treat_combo_imminent_actual_reply_as_miss() {
+        let replay = replay_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "I9", "G8", "H6", "F8", "I8", "I7", "G9", "H9", "E6", "I10", "J11", "H10",
+                "H11", "G10", "F10", "E8", "D8", "F11", "E9", "G11", "F6", "G6", "E7", "G5", "D6",
+                "E12", "D13", "G4", "G7", "G3", "G2", "B6", "C9", "B10", "D9", "F9", "D7", "D5",
+                "D10",
+            ],
+        );
+
+        let analysis = analyze_replay(
+            &replay,
+            AnalysisOptions {
+                reply_policy: ReplyPolicy::CorridorReplies,
+                max_depth: 4,
+                max_scan_plies: Some(64),
+            },
+        )
+        .expect("finished replay should analyze");
+
+        let failure = analysis.failure.as_ref().expect("failure should classify");
+        assert_eq!(failure.mode, FailureMode::MissedEscape);
+        assert_eq!(failure.prefix_ply, Some(36));
+        assert!(failure.actual_notation.is_none());
+    }
+
+    #[test]
+    fn failure_analysis_classifies_late_imminent_miss_before_lethal_prevention() {
+        let replay = replay_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "H9", "J8", "I7", "I8", "G8", "I10", "L7", "K7", "I9", "J9", "G9", "J7",
+                "J6", "K8", "L8", "K9", "K10", "J10", "J11", "G12", "H11", "L9", "F9", "E9", "I6",
+                "N9", "M9", "H7", "G6", "K6", "K5", "G10", "I11", "H10", "F10", "G11", "F7", "F6",
+                "L5", "N11", "M10", "G14", "G13", "N10", "L4", "M3", "L6",
+            ],
+        );
+
+        let boards = replay_prefix_boards(&replay).expect("replay boards should build");
+        let scan_start = 40;
+        let proof_summary = proof_summary_with_escape(
+            &boards,
+            scan_start,
+            Color::White,
+            44,
+            vec![mv("M3"), mv("L4"), mv("L6")],
+            ReplyClassification::PossibleEscape,
+            true,
+        );
+        let forced_interval = ForcedInterval {
+            start_ply: 45,
+            end_ply: replay.moves.len(),
+        };
+        let onset = test_lethal_onset(46, Color::White);
+
+        let failure = failure_analysis(FailureAnalysisInput {
+            replay: &replay,
+            boards: &boards,
+            proof_summary: &proof_summary,
+            scan_start,
+            final_forced_interval_found: true,
+            final_forced_interval: &forced_interval,
+            lethal_onset: Some(&onset),
+            root_cause: RootCause::MissedDefense,
+            winner: Color::White,
+            loser: Color::Black,
+        })
+        .expect("failure should classify");
+        assert_eq!(failure.mode, FailureMode::MissedImminentResponse);
+        assert_eq!(failure.prefix_ply, Some(44));
+        assert_eq!(failure.actual_notation.as_deref(), Some("N10"));
+        for notation in ["M3", "L4", "L6"] {
+            assert!(
+                failure
+                    .missed_candidates
+                    .iter()
+                    .any(|candidate| candidate.notation == notation),
+                "{notation} should be listed as a missed imminent response: {failure:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn failure_analysis_classifies_early_prevention_as_missed_escape() {
+        let replay = replay_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "H7", "F8", "G9", "G8", "I8", "G6", "D9", "F9", "F10", "D7", "G10", "F7",
+                "E10", "E8", "D8", "C6", "B5", "F6", "F5", "E6", "D6", "D5", "C4", "H9",
+            ],
+        );
+
+        let boards = replay_prefix_boards(&replay).expect("replay boards should build");
+        let scan_start = 13;
+        let proof_summary = proof_summary_with_escape(
+            &boards,
+            scan_start,
+            Color::Black,
+            13,
+            vec![mv("E8")],
+            ReplyClassification::PossibleEscape,
+            true,
+        );
+        let forced_interval = ForcedInterval {
+            start_ply: 14,
+            end_ply: replay.moves.len(),
+        };
+        let onset = test_lethal_onset(21, Color::Black);
+
+        let failure = failure_analysis(FailureAnalysisInput {
+            replay: &replay,
+            boards: &boards,
+            proof_summary: &proof_summary,
+            scan_start,
+            final_forced_interval_found: true,
+            final_forced_interval: &forced_interval,
+            lethal_onset: Some(&onset),
+            root_cause: RootCause::MissedDefense,
+            winner: Color::Black,
+            loser: Color::White,
+        })
+        .expect("failure should classify");
+        assert_eq!(failure.mode, FailureMode::MissedEscape);
+        assert_eq!(failure.prefix_ply, Some(13));
+        assert_eq!(failure.actual_notation.as_deref(), Some("E10"));
+        assert!(failure.missed_candidates.iter().any(|candidate| {
+            candidate.notation == "E8"
+                && candidate.outcome == MissedCandidateOutcome::PreventsLethalOnset
+        }));
+    }
+
+    #[test]
     fn replay_annotations_do_not_show_lower_tier_forbidden_replies_during_immediate_threats() {
         let board = board_from_moves(
             Variant::Renju,
@@ -3909,7 +4142,7 @@ mod tests {
 
         assert!(
             !replies.contains(&mv("A2")),
-            "non-corridor actual defender move must not become a model reply: {replies:?}"
+            "non-corridor actual defender move must not become a probed reply: {replies:?}"
         );
         assert!(
             replies.contains(&mv("J8")),
