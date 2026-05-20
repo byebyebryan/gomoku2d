@@ -1,13 +1,13 @@
 {
-  "schema_version": 18,
+  "schema_version": 19,
   "source_kind": "report_replays",
   "source": "reports/latest.json:Top 2 entrants",
   "replay_dir": "reports/latest.json:Top 2 entrants",
   "total": 64,
   "analyzed": 64,
   "failed": 0,
-  "elapsed_ms": 336864,
-  "total_elapsed_ms": 1439087,
+  "elapsed_ms": 335418,
+  "total_elapsed_ms": 1450763,
   "model": {
     "reply_policy": "corridor_replies",
     "max_depth": 4,
@@ -88,6 +88,31 @@
       "last_chance_ply": 11,
       "critical_loser_ply": 12,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 11,
+        "actual_move": {
+          "row": 4,
+          "col": 9
+        },
+        "actual_notation": "J5",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 9,
+              "col": 8
+            },
+            "notation": "I10",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 15,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 5,
@@ -925,7 +950,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 8999,
+      "elapsed_ms": 9535,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -1000,6 +1025,31 @@
       "last_chance_ply": 11,
       "critical_loser_ply": 12,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 11,
+        "actual_move": {
+          "row": 4,
+          "col": 9
+        },
+        "actual_notation": "J5",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 9,
+              "col": 8
+            },
+            "notation": "I10",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 15,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 5,
@@ -1837,7 +1887,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 8969,
+      "elapsed_ms": 8926,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -1912,6 +1962,31 @@
       "last_chance_ply": 17,
       "critical_loser_ply": 18,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 17,
+        "actual_move": {
+          "row": 8,
+          "col": 4
+        },
+        "actual_notation": "E9",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 4,
+              "col": 8
+            },
+            "notation": "I5",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 21,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 5,
@@ -2744,7 +2819,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 16277,
+      "elapsed_ms": 15484,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -2819,6 +2894,53 @@
       "last_chance_ply": 15,
       "critical_loser_ply": 16,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 15,
+        "actual_move": {
+          "row": 5,
+          "col": 9
+        },
+        "actual_notation": "J6",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 8,
+              "col": 10
+            },
+            "notation": "K9",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 8,
+              "col": 11
+            },
+            "notation": "L9",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 9,
+              "col": 5
+            },
+            "notation": "F10",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 21,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 6,
@@ -3681,7 +3803,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 22203,
+      "elapsed_ms": 22402,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -3756,6 +3878,53 @@
       "last_chance_ply": 29,
       "critical_loser_ply": 30,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 29,
+        "actual_move": {
+          "row": 4,
+          "col": 8
+        },
+        "actual_notation": "I5",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 8,
+              "col": 10
+            },
+            "notation": "K9",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 9,
+              "col": 11
+            },
+            "notation": "L10",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 12,
+              "col": 8
+            },
+            "notation": "I13",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 35,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 7,
@@ -4861,7 +5030,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 192910,
+      "elapsed_ms": 192947,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -4936,6 +5105,42 @@
       "last_chance_ply": 27,
       "critical_loser_ply": 28,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 27,
+        "actual_move": {
+          "row": 10,
+          "col": 8
+        },
+        "actual_notation": "I11",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 8,
+              "col": 10
+            },
+            "notation": "K9",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 9,
+              "col": 11
+            },
+            "notation": "L10",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 33,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 7,
@@ -5843,7 +6048,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 60725,
+      "elapsed_ms": 59644,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -5934,6 +6139,31 @@
       "last_chance_ply": 30,
       "critical_loser_ply": 31,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "Black",
+        "prefix_ply": 30,
+        "actual_move": {
+          "row": 5,
+          "col": 6
+        },
+        "actual_notation": "G6",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 4,
+              "col": 5
+            },
+            "notation": "F5",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 40,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 4,
@@ -8605,7 +8835,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 2720,
+      "elapsed_ms": 2876,
       "prefixes_analyzed": 15,
       "forced_prefix_count": 14,
       "unknown_prefix_count": 0,
@@ -8659,6 +8889,29 @@
       "last_chance_ply": 44,
       "critical_loser_ply": 45,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_lethal_prevention",
+        "side": "Black",
+        "prefix_ply": 44,
+        "actual_move": {
+          "row": 9,
+          "col": 13
+        },
+        "actual_notation": "N10",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 3,
+              "col": 11
+            },
+            "notation": "L4",
+            "roles": [],
+            "outcome": "prevents_lethal_onset"
+          }
+        ],
+        "prevented_onset_ply": 46,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 3,
@@ -9076,7 +9329,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 2626,
+      "elapsed_ms": 2735,
       "prefixes_analyzed": 5,
       "forced_prefix_count": 4,
       "unknown_prefix_count": 0,
@@ -9169,6 +9422,16 @@
       "tactical_notes": [
         "strong_attack"
       ],
+      "failure": {
+        "mode": "forced_loss",
+        "side": "White",
+        "prefix_ply": 23,
+        "actual_move": null,
+        "actual_notation": null,
+        "missed_candidates": [],
+        "prevented_onset_ply": 23,
+        "confidence": "confirmed"
+      },
       "principal_line": [
         {
           "row": 10,
@@ -10082,7 +10345,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 6256,
+      "elapsed_ms": 5991,
       "prefixes_analyzed": 12,
       "forced_prefix_count": 11,
       "unknown_prefix_count": 0,
@@ -10175,6 +10438,16 @@
       "tactical_notes": [
         "strong_attack"
       ],
+      "failure": {
+        "mode": "forced_loss",
+        "side": "White",
+        "prefix_ply": 23,
+        "actual_move": null,
+        "actual_notation": null,
+        "missed_candidates": [],
+        "prevented_onset_ply": 23,
+        "confidence": "confirmed"
+      },
       "principal_line": [
         {
           "row": 10,
@@ -11088,7 +11361,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 6348,
+      "elapsed_ms": 6272,
       "prefixes_analyzed": 12,
       "forced_prefix_count": 11,
       "unknown_prefix_count": 0,
@@ -11181,6 +11454,16 @@
       "tactical_notes": [
         "strong_attack"
       ],
+      "failure": {
+        "mode": "forced_loss",
+        "side": "White",
+        "prefix_ply": 21,
+        "actual_move": null,
+        "actual_notation": null,
+        "missed_candidates": [],
+        "prevented_onset_ply": 21,
+        "confidence": "confirmed"
+      },
       "principal_line": [
         {
           "row": 5,
@@ -11872,7 +12155,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 1853,
+      "elapsed_ms": 1758,
       "prefixes_analyzed": 12,
       "forced_prefix_count": 11,
       "unknown_prefix_count": 0,
@@ -11963,6 +12246,29 @@
       "last_chance_ply": 13,
       "critical_loser_ply": 14,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_lethal_prevention",
+        "side": "White",
+        "prefix_ply": 13,
+        "actual_move": {
+          "row": 9,
+          "col": 4
+        },
+        "actual_notation": "E10",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 7,
+              "col": 4
+            },
+            "notation": "E8",
+            "roles": [],
+            "outcome": "prevents_lethal_onset"
+          }
+        ],
+        "prevented_onset_ply": 21,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 7,
@@ -12840,7 +13146,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 6366,
+      "elapsed_ms": 6320,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -12911,6 +13217,86 @@
       "last_chance_ply": 52,
       "critical_loser_ply": 53,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "Black",
+        "prefix_ply": 52,
+        "actual_move": {
+          "row": 11,
+          "col": 6
+        },
+        "actual_notation": "G12",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 0,
+              "col": 5
+            },
+            "notation": "F1",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 2,
+              "col": 5
+            },
+            "notation": "F3",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 5,
+              "col": 3
+            },
+            "notation": "D6",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 6,
+              "col": 2
+            },
+            "notation": "C7",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 7,
+              "col": 10
+            },
+            "notation": "K8",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 8,
+              "col": 11
+            },
+            "notation": "L9",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 66,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 9,
@@ -14374,7 +14760,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 19639,
+      "elapsed_ms": 19953,
       "prefixes_analyzed": 19,
       "forced_prefix_count": 18,
       "unknown_prefix_count": 0,
@@ -14449,6 +14835,53 @@
       "last_chance_ply": 17,
       "critical_loser_ply": 18,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 17,
+        "actual_move": {
+          "row": 8,
+          "col": 5
+        },
+        "actual_notation": "F9",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 4,
+              "col": 9
+            },
+            "notation": "J5",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 10,
+              "col": 5
+            },
+            "notation": "F11",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 11,
+              "col": 4
+            },
+            "notation": "E12",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 25,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 4,
@@ -16269,7 +16702,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 56571,
+      "elapsed_ms": 54669,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -16360,6 +16793,31 @@
       "last_chance_ply": 44,
       "critical_loser_ply": 45,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "Black",
+        "prefix_ply": 44,
+        "actual_move": {
+          "row": 4,
+          "col": 2
+        },
+        "actual_notation": "C5",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 4,
+              "col": 6
+            },
+            "notation": "G5",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 46,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 4,
@@ -16920,7 +17378,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 1575,
+      "elapsed_ms": 1696,
       "prefixes_analyzed": 7,
       "forced_prefix_count": 6,
       "unknown_prefix_count": 0,
@@ -17011,6 +17469,53 @@
       "last_chance_ply": 17,
       "critical_loser_ply": 18,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 17,
+        "actual_move": {
+          "row": 5,
+          "col": 8
+        },
+        "actual_notation": "I6",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 4,
+              "col": 11
+            },
+            "notation": "L5",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 5,
+              "col": 10
+            },
+            "notation": "K6",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 9,
+              "col": 4
+            },
+            "notation": "E10",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 31,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 9,
@@ -19215,7 +19720,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 49460,
+      "elapsed_ms": 51118,
       "prefixes_analyzed": 19,
       "forced_prefix_count": 18,
       "unknown_prefix_count": 0,
@@ -19306,6 +19811,42 @@
       "last_chance_ply": 27,
       "critical_loser_ply": 28,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 27,
+        "actual_move": {
+          "row": 7,
+          "col": 5
+        },
+        "actual_notation": "F8",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 9,
+              "col": 4
+            },
+            "notation": "E10",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 11,
+              "col": 9
+            },
+            "notation": "J12",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 37,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 6,
@@ -20443,7 +20984,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 26313,
+      "elapsed_ms": 27324,
       "prefixes_analyzed": 15,
       "forced_prefix_count": 14,
       "unknown_prefix_count": 0,
@@ -20534,6 +21075,42 @@
       "last_chance_ply": 27,
       "critical_loser_ply": 28,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 27,
+        "actual_move": {
+          "row": 7,
+          "col": 5
+        },
+        "actual_notation": "F8",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 9,
+              "col": 4
+            },
+            "notation": "E10",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 11,
+              "col": 9
+            },
+            "notation": "J12",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 37,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 6,
@@ -21671,7 +22248,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 25392,
+      "elapsed_ms": 27415,
       "prefixes_analyzed": 15,
       "forced_prefix_count": 14,
       "unknown_prefix_count": 0,
@@ -21764,6 +22341,16 @@
       "tactical_notes": [
         "strong_attack"
       ],
+      "failure": {
+        "mode": "forced_loss",
+        "side": "White",
+        "prefix_ply": 27,
+        "actual_move": null,
+        "actual_notation": null,
+        "missed_candidates": [],
+        "prevented_onset_ply": 27,
+        "confidence": "confirmed"
+      },
       "principal_line": [
         {
           "row": 9,
@@ -22388,7 +22975,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 2769,
+      "elapsed_ms": 2536,
       "prefixes_analyzed": 10,
       "forced_prefix_count": 9,
       "unknown_prefix_count": 0,
@@ -22481,6 +23068,16 @@
       "tactical_notes": [
         "strong_attack"
       ],
+      "failure": {
+        "mode": "forced_loss",
+        "side": "White",
+        "prefix_ply": 23,
+        "actual_move": null,
+        "actual_notation": null,
+        "missed_candidates": [],
+        "prevented_onset_ply": 23,
+        "confidence": "confirmed"
+      },
       "principal_line": [
         {
           "row": 10,
@@ -23376,7 +23973,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 8193,
+      "elapsed_ms": 7663,
       "prefixes_analyzed": 12,
       "forced_prefix_count": 11,
       "unknown_prefix_count": 0,
@@ -23451,6 +24048,53 @@
       "last_chance_ply": 15,
       "critical_loser_ply": 16,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 15,
+        "actual_move": {
+          "row": 6,
+          "col": 5
+        },
+        "actual_notation": "F7",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 2,
+              "col": 5
+            },
+            "notation": "F3",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 9,
+              "col": 4
+            },
+            "notation": "E10",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 10,
+              "col": 3
+            },
+            "notation": "D11",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 21,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 4,
@@ -24665,7 +25309,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 28215,
+      "elapsed_ms": 26475,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -24742,6 +25386,16 @@
       "tactical_notes": [
         "strong_attack"
       ],
+      "failure": {
+        "mode": "forced_loss",
+        "side": "White",
+        "prefix_ply": 19,
+        "actual_move": null,
+        "actual_notation": null,
+        "missed_candidates": [],
+        "prevented_onset_ply": 19,
+        "confidence": "confirmed"
+      },
       "principal_line": [
         {
           "row": 2,
@@ -25742,7 +26396,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 13854,
+      "elapsed_ms": 12922,
       "prefixes_analyzed": 12,
       "forced_prefix_count": 11,
       "unknown_prefix_count": 0,
@@ -25771,6 +26425,7 @@
       "last_chance_ply": null,
       "critical_loser_ply": null,
       "tactical_notes": [],
+      "failure": null,
       "principal_line": [],
       "unknown_gaps": [],
       "unknown_gap_count": 0,
@@ -25826,6 +26481,29 @@
       "last_chance_ply": 50,
       "critical_loser_ply": 51,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_lethal_prevention",
+        "side": "Black",
+        "prefix_ply": 50,
+        "actual_move": {
+          "row": 1,
+          "col": 8
+        },
+        "actual_notation": "I2",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 7,
+              "col": 4
+            },
+            "notation": "E8",
+            "roles": [],
+            "outcome": "prevents_lethal_onset"
+          }
+        ],
+        "prevented_onset_ply": 52,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 7,
@@ -26193,7 +26871,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 574,
+      "elapsed_ms": 832,
       "prefixes_analyzed": 5,
       "forced_prefix_count": 4,
       "unknown_prefix_count": 0,
@@ -26268,6 +26946,75 @@
       "last_chance_ply": 13,
       "critical_loser_ply": 14,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 13,
+        "actual_move": {
+          "row": 10,
+          "col": 6
+        },
+        "actual_notation": "G11",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 4,
+              "col": 2
+            },
+            "notation": "C5",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 5,
+              "col": 3
+            },
+            "notation": "D6",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 6,
+              "col": 10
+            },
+            "notation": "K7",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 8,
+              "col": 5
+            },
+            "notation": "F9",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 9,
+              "col": 5
+            },
+            "notation": "F10",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 23,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 9,
@@ -28002,7 +28749,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 58180,
+      "elapsed_ms": 60538,
       "prefixes_analyzed": 15,
       "forced_prefix_count": 14,
       "unknown_prefix_count": 0,
@@ -28077,6 +28824,75 @@
       "last_chance_ply": 13,
       "critical_loser_ply": 14,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 13,
+        "actual_move": {
+          "row": 10,
+          "col": 6
+        },
+        "actual_notation": "G11",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 4,
+              "col": 2
+            },
+            "notation": "C5",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 5,
+              "col": 3
+            },
+            "notation": "D6",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 6,
+              "col": 10
+            },
+            "notation": "K7",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 8,
+              "col": 5
+            },
+            "notation": "F9",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 9,
+              "col": 5
+            },
+            "notation": "F10",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 23,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 9,
@@ -29811,7 +30627,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 61541,
+      "elapsed_ms": 61393,
       "prefixes_analyzed": 15,
       "forced_prefix_count": 14,
       "unknown_prefix_count": 0,
@@ -29902,6 +30718,53 @@
       "last_chance_ply": 17,
       "critical_loser_ply": 18,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 17,
+        "actual_move": {
+          "row": 4,
+          "col": 6
+        },
+        "actual_notation": "G5",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 2,
+              "col": 10
+            },
+            "notation": "K3",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 3,
+              "col": 9
+            },
+            "notation": "J4",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 8,
+              "col": 2
+            },
+            "notation": "C9",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 25,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 9,
@@ -31077,7 +31940,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 41537,
+      "elapsed_ms": 40190,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -31168,6 +32031,53 @@
       "last_chance_ply": 17,
       "critical_loser_ply": 18,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 17,
+        "actual_move": {
+          "row": 4,
+          "col": 6
+        },
+        "actual_notation": "G5",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 2,
+              "col": 10
+            },
+            "notation": "K3",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 3,
+              "col": 9
+            },
+            "notation": "J4",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 8,
+              "col": 2
+            },
+            "notation": "C9",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 25,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 9,
@@ -32145,7 +33055,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 24492,
+      "elapsed_ms": 23296,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -32220,6 +33130,31 @@
       "last_chance_ply": 11,
       "critical_loser_ply": 12,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 11,
+        "actual_move": {
+          "row": 3,
+          "col": 6
+        },
+        "actual_notation": "G4",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 7,
+              "col": 6
+            },
+            "notation": "G8",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 17,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 4,
@@ -33134,7 +34069,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 22078,
+      "elapsed_ms": 23286,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -33209,6 +34144,31 @@
       "last_chance_ply": 11,
       "critical_loser_ply": 12,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 11,
+        "actual_move": {
+          "row": 3,
+          "col": 6
+        },
+        "actual_notation": "G4",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 7,
+              "col": 6
+            },
+            "notation": "G8",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 17,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 4,
@@ -34123,7 +35083,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 21724,
+      "elapsed_ms": 22940,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -34198,6 +35158,53 @@
       "last_chance_ply": 43,
       "critical_loser_ply": 44,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_imminent_response",
+        "side": "White",
+        "prefix_ply": 43,
+        "actual_move": {
+          "row": 9,
+          "col": 8
+        },
+        "actual_notation": "I10",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 4,
+              "col": 3
+            },
+            "notation": "D5",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "confirmed_escape"
+          },
+          {
+            "mv": {
+              "row": 5,
+              "col": 13
+            },
+            "notation": "N6",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "confirmed_escape"
+          },
+          {
+            "mv": {
+              "row": 6,
+              "col": 12
+            },
+            "notation": "M7",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "confirmed_escape"
+          }
+        ],
+        "prevented_onset_ply": 55,
+        "confidence": "confirmed"
+      },
       "principal_line": [
         {
           "row": 4,
@@ -35422,7 +36429,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 5975,
+      "elapsed_ms": 5761,
       "prefixes_analyzed": 17,
       "forced_prefix_count": 16,
       "unknown_prefix_count": 0,
@@ -35497,6 +36504,53 @@
       "last_chance_ply": 43,
       "critical_loser_ply": 44,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_imminent_response",
+        "side": "White",
+        "prefix_ply": 43,
+        "actual_move": {
+          "row": 9,
+          "col": 8
+        },
+        "actual_notation": "I10",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 4,
+              "col": 3
+            },
+            "notation": "D5",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "confirmed_escape"
+          },
+          {
+            "mv": {
+              "row": 5,
+              "col": 13
+            },
+            "notation": "N6",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "confirmed_escape"
+          },
+          {
+            "mv": {
+              "row": 6,
+              "col": 12
+            },
+            "notation": "M7",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "confirmed_escape"
+          }
+        ],
+        "prevented_onset_ply": 55,
+        "confidence": "confirmed"
+      },
       "principal_line": [
         {
           "row": 4,
@@ -36721,7 +37775,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 5707,
+      "elapsed_ms": 5762,
       "prefixes_analyzed": 17,
       "forced_prefix_count": 16,
       "unknown_prefix_count": 0,
@@ -36812,6 +37866,53 @@
       "last_chance_ply": 17,
       "critical_loser_ply": 18,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 17,
+        "actual_move": {
+          "row": 4,
+          "col": 8
+        },
+        "actual_notation": "I5",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 2,
+              "col": 4
+            },
+            "notation": "E3",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 3,
+              "col": 5
+            },
+            "notation": "F4",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 8,
+              "col": 12
+            },
+            "notation": "M9",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 25,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 9,
@@ -37987,7 +39088,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 37529,
+      "elapsed_ms": 35325,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -38078,6 +39179,42 @@
       "last_chance_ply": 23,
       "critical_loser_ply": 24,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 23,
+        "actual_move": {
+          "row": 8,
+          "col": 10
+        },
+        "actual_notation": "K9",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 2,
+              "col": 4
+            },
+            "notation": "E3",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 3,
+              "col": 5
+            },
+            "notation": "F4",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 29,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 9,
@@ -39438,7 +40575,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 13628,
+      "elapsed_ms": 13571,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -39529,6 +40666,42 @@
       "last_chance_ply": 21,
       "critical_loser_ply": 22,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 21,
+        "actual_move": {
+          "row": 11,
+          "col": 7
+        },
+        "actual_notation": "H12",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 4,
+              "col": 12
+            },
+            "notation": "M5",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 6,
+              "col": 10
+            },
+            "notation": "K7",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 27,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 7,
@@ -40718,7 +41891,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 54404,
+      "elapsed_ms": 59835,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -40809,6 +41982,42 @@
       "last_chance_ply": 21,
       "critical_loser_ply": 22,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 21,
+        "actual_move": {
+          "row": 11,
+          "col": 7
+        },
+        "actual_notation": "H12",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 4,
+              "col": 12
+            },
+            "notation": "M5",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 6,
+              "col": 10
+            },
+            "notation": "K7",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 27,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 7,
@@ -41998,7 +43207,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 47583,
+      "elapsed_ms": 54433,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -42073,6 +43282,31 @@
       "last_chance_ply": 13,
       "critical_loser_ply": 14,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 13,
+        "actual_move": {
+          "row": 3,
+          "col": 8
+        },
+        "actual_notation": "I4",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 7,
+              "col": 8
+            },
+            "notation": "I8",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 17,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 3,
@@ -42824,7 +44058,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 31402,
+      "elapsed_ms": 31264,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -42899,6 +44133,31 @@
       "last_chance_ply": 13,
       "critical_loser_ply": 14,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 13,
+        "actual_move": {
+          "row": 3,
+          "col": 8
+        },
+        "actual_notation": "I4",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 7,
+              "col": 8
+            },
+            "notation": "I8",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 17,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 3,
@@ -43650,7 +44909,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 23290,
+      "elapsed_ms": 27337,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -43741,6 +45000,31 @@
       "last_chance_ply": 25,
       "critical_loser_ply": 26,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 25,
+        "actual_move": {
+          "row": 2,
+          "col": 9
+        },
+        "actual_notation": "J3",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 1,
+              "col": 10
+            },
+            "notation": "K2",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 33,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 1,
@@ -44782,7 +46066,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 15898,
+      "elapsed_ms": 16861,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -44873,6 +46157,42 @@
       "last_chance_ply": 23,
       "critical_loser_ply": 24,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 23,
+        "actual_move": {
+          "row": 5,
+          "col": 6
+        },
+        "actual_notation": "G6",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 8,
+              "col": 6
+            },
+            "notation": "G9",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 10,
+              "col": 6
+            },
+            "notation": "G11",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 29,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 10,
@@ -45699,7 +47019,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 14197,
+      "elapsed_ms": 14880,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -45774,6 +47094,42 @@
       "last_chance_ply": 32,
       "critical_loser_ply": 33,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_imminent_response",
+        "side": "Black",
+        "prefix_ply": 32,
+        "actual_move": {
+          "row": 5,
+          "col": 1
+        },
+        "actual_notation": "B6",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 9,
+              "col": 9
+            },
+            "notation": "J10",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "confirmed_escape"
+          },
+          {
+            "mv": {
+              "row": 9,
+              "col": 10
+            },
+            "notation": "K10",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "confirmed_escape"
+          }
+        ],
+        "prevented_onset_ply": 36,
+        "confidence": "confirmed"
+      },
       "principal_line": [
         {
           "row": 8,
@@ -46477,7 +47833,7 @@
         "max_depth_reached": 1
       },
       "limit_causes": [],
-      "elapsed_ms": 121,
+      "elapsed_ms": 319,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -46568,6 +47924,64 @@
       "last_chance_ply": 29,
       "critical_loser_ply": 30,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_imminent_response",
+        "side": "White",
+        "prefix_ply": 29,
+        "actual_move": {
+          "row": 9,
+          "col": 3
+        },
+        "actual_notation": "D10",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 6,
+              "col": 11
+            },
+            "notation": "L7",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "confirmed_escape"
+          },
+          {
+            "mv": {
+              "row": 7,
+              "col": 10
+            },
+            "notation": "K8",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "confirmed_escape"
+          },
+          {
+            "mv": {
+              "row": 9,
+              "col": 10
+            },
+            "notation": "K10",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "confirmed_escape"
+          },
+          {
+            "mv": {
+              "row": 10,
+              "col": 11
+            },
+            "notation": "L11",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "confirmed_escape"
+          }
+        ],
+        "prevented_onset_ply": 37,
+        "confidence": "confirmed"
+      },
       "principal_line": [
         {
           "row": 3,
@@ -47564,7 +48978,7 @@
         "max_depth_reached": 1
       },
       "limit_causes": [],
-      "elapsed_ms": 9484,
+      "elapsed_ms": 9075,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -47639,6 +49053,53 @@
       "last_chance_ply": 20,
       "critical_loser_ply": 21,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "Black",
+        "prefix_ply": 20,
+        "actual_move": {
+          "row": 11,
+          "col": 9
+        },
+        "actual_notation": "J12",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 3,
+              "col": 7
+            },
+            "notation": "H4",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 4,
+              "col": 7
+            },
+            "notation": "H5",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 12,
+              "col": 10
+            },
+            "notation": "K13",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 28,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 7,
@@ -48911,7 +50372,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 2196,
+      "elapsed_ms": 2407,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -48986,6 +50447,31 @@
       "last_chance_ply": 14,
       "critical_loser_ply": 15,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "Black",
+        "prefix_ply": 14,
+        "actual_move": {
+          "row": 6,
+          "col": 10
+        },
+        "actual_notation": "K7",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 10,
+              "col": 6
+            },
+            "notation": "G11",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 20,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 9,
@@ -49971,7 +51457,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 1075,
+      "elapsed_ms": 1174,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -50062,6 +51548,29 @@
       "last_chance_ply": 28,
       "critical_loser_ply": 29,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_lethal_prevention",
+        "side": "Black",
+        "prefix_ply": 28,
+        "actual_move": {
+          "row": 11,
+          "col": 4
+        },
+        "actual_notation": "E12",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 6,
+              "col": 5
+            },
+            "notation": "F7",
+            "roles": [],
+            "outcome": "prevents_lethal_onset"
+          }
+        ],
+        "prevented_onset_ply": 40,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 6,
@@ -51169,7 +52678,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 661,
+      "elapsed_ms": 859,
       "prefixes_analyzed": 17,
       "forced_prefix_count": 16,
       "unknown_prefix_count": 0,
@@ -51244,6 +52753,42 @@
       "last_chance_ply": 63,
       "critical_loser_ply": 64,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 63,
+        "actual_move": {
+          "row": 2,
+          "col": 5
+        },
+        "actual_notation": "F3",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 6,
+              "col": 9
+            },
+            "notation": "J7",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 8,
+              "col": 12
+            },
+            "notation": "M9",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 67,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 8,
@@ -52509,7 +54054,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 52675,
+      "elapsed_ms": 52137,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -52584,6 +54129,31 @@
       "last_chance_ply": 22,
       "critical_loser_ply": 23,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "Black",
+        "prefix_ply": 22,
+        "actual_move": {
+          "row": 9,
+          "col": 4
+        },
+        "actual_notation": "E10",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 9,
+              "col": 8
+            },
+            "notation": "I10",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 24,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 9,
@@ -53139,7 +54709,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 284,
+      "elapsed_ms": 449,
       "prefixes_analyzed": 7,
       "forced_prefix_count": 6,
       "unknown_prefix_count": 0,
@@ -53214,6 +54784,53 @@
       "last_chance_ply": 18,
       "critical_loser_ply": 19,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "Black",
+        "prefix_ply": 18,
+        "actual_move": {
+          "row": 5,
+          "col": 5
+        },
+        "actual_notation": "F6",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 5,
+              "col": 9
+            },
+            "notation": "J6",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 6,
+              "col": 9
+            },
+            "notation": "J7",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 6,
+              "col": 11
+            },
+            "notation": "L7",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 24,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 5,
@@ -54065,7 +55682,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 1225,
+      "elapsed_ms": 1539,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -54140,6 +55757,42 @@
       "last_chance_ply": 36,
       "critical_loser_ply": 37,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "Black",
+        "prefix_ply": 36,
+        "actual_move": {
+          "row": 7,
+          "col": 11
+        },
+        "actual_notation": "L8",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 3,
+              "col": 7
+            },
+            "notation": "H4",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 6,
+              "col": 6
+            },
+            "notation": "G7",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 42,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 7,
@@ -55226,7 +56879,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 2227,
+      "elapsed_ms": 2411,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -55317,6 +56970,29 @@
       "last_chance_ply": 28,
       "critical_loser_ply": 29,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_lethal_prevention",
+        "side": "Black",
+        "prefix_ply": 28,
+        "actual_move": {
+          "row": 10,
+          "col": 3
+        },
+        "actual_notation": "D11",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 9,
+              "col": 8
+            },
+            "notation": "I10",
+            "roles": [],
+            "outcome": "prevents_lethal_onset"
+          }
+        ],
+        "prevented_onset_ply": 40,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 9,
@@ -56424,7 +58100,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 707,
+      "elapsed_ms": 880,
       "prefixes_analyzed": 17,
       "forced_prefix_count": 16,
       "unknown_prefix_count": 0,
@@ -56515,6 +58191,31 @@
       "last_chance_ply": 25,
       "critical_loser_ply": 26,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 25,
+        "actual_move": {
+          "row": 9,
+          "col": 2
+        },
+        "actual_notation": "C10",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 10,
+              "col": 1
+            },
+            "notation": "B11",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 33,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 10,
@@ -57594,7 +59295,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 17485,
+      "elapsed_ms": 17481,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -57685,6 +59386,42 @@
       "last_chance_ply": 23,
       "critical_loser_ply": 24,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 23,
+        "actual_move": {
+          "row": 6,
+          "col": 5
+        },
+        "actual_notation": "F7",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 6,
+              "col": 8
+            },
+            "notation": "I7",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          },
+          {
+            "mv": {
+              "row": 6,
+              "col": 10
+            },
+            "notation": "K7",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 29,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 7,
@@ -58511,7 +60248,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 15141,
+      "elapsed_ms": 14067,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -58561,6 +60298,31 @@
       "last_chance_ply": 14,
       "critical_loser_ply": 15,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "Black",
+        "prefix_ply": 14,
+        "actual_move": {
+          "row": 8,
+          "col": 4
+        },
+        "actual_notation": "E9",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 3,
+              "col": 9
+            },
+            "notation": "J4",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 16,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 3,
@@ -58962,7 +60724,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 174,
+      "elapsed_ms": 367,
       "prefixes_analyzed": 5,
       "forced_prefix_count": 4,
       "unknown_prefix_count": 0,
@@ -59055,6 +60817,16 @@
       "tactical_notes": [
         "strong_attack"
       ],
+      "failure": {
+        "mode": "forced_loss",
+        "side": "Black",
+        "prefix_ply": 20,
+        "actual_move": null,
+        "actual_notation": null,
+        "missed_candidates": [],
+        "prevented_onset_ply": 20,
+        "confidence": "confirmed"
+      },
       "principal_line": [
         {
           "row": 8,
@@ -59679,7 +61451,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 429,
+      "elapsed_ms": 466,
       "prefixes_analyzed": 10,
       "forced_prefix_count": 9,
       "unknown_prefix_count": 0,
@@ -59754,6 +61526,31 @@
       "last_chance_ply": 11,
       "critical_loser_ply": 12,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 11,
+        "actual_move": {
+          "row": 5,
+          "col": 9
+        },
+        "actual_notation": "J6",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 10,
+              "col": 8
+            },
+            "notation": "I11",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 15,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 6,
@@ -60591,7 +62388,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 8931,
+      "elapsed_ms": 9431,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -60666,6 +62463,31 @@
       "last_chance_ply": 11,
       "critical_loser_ply": 12,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 11,
+        "actual_move": {
+          "row": 5,
+          "col": 9
+        },
+        "actual_notation": "J6",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 10,
+              "col": 8
+            },
+            "notation": "I11",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 15,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 6,
@@ -61503,7 +63325,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 9474,
+      "elapsed_ms": 9513,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -61578,6 +63400,31 @@
       "last_chance_ply": 17,
       "critical_loser_ply": 18,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 17,
+        "actual_move": {
+          "row": 8,
+          "col": 3
+        },
+        "actual_notation": "D9",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 4,
+              "col": 7
+            },
+            "notation": "H5",
+            "roles": [
+              "imminent_defense"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 21,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 5,
@@ -62410,7 +64257,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 15491,
+      "elapsed_ms": 15384,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -62485,6 +64332,31 @@
       "last_chance_ply": 17,
       "critical_loser_ply": 18,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 17,
+        "actual_move": {
+          "row": 8,
+          "col": 9
+        },
+        "actual_notation": "J9",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 8,
+              "col": 10
+            },
+            "notation": "K9",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 25,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 8,
@@ -63719,7 +65591,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 49261,
+      "elapsed_ms": 47276,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -63794,6 +65666,31 @@
       "last_chance_ply": 11,
       "critical_loser_ply": 12,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 11,
+        "actual_move": {
+          "row": 4,
+          "col": 5
+        },
+        "actual_notation": "F5",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 9,
+              "col": 6
+            },
+            "notation": "G10",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 15,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 5,
@@ -64631,7 +66528,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 8863,
+      "elapsed_ms": 8704,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -64706,6 +66603,31 @@
       "last_chance_ply": 11,
       "critical_loser_ply": 12,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 11,
+        "actual_move": {
+          "row": 4,
+          "col": 5
+        },
+        "actual_notation": "F5",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 9,
+              "col": 6
+            },
+            "notation": "G10",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 15,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 5,
@@ -65543,7 +67465,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 9306,
+      "elapsed_ms": 9200,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -65618,6 +67540,31 @@
       "last_chance_ply": 31,
       "critical_loser_ply": 32,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 31,
+        "actual_move": {
+          "row": 4,
+          "col": 9
+        },
+        "actual_notation": "J5",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 12,
+              "col": 9
+            },
+            "notation": "J13",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 35,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 8,
@@ -66698,7 +68645,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 92358,
+      "elapsed_ms": 90095,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -66773,6 +68720,31 @@
       "last_chance_ply": 31,
       "critical_loser_ply": 32,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 31,
+        "actual_move": {
+          "row": 4,
+          "col": 9
+        },
+        "actual_notation": "J5",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 12,
+              "col": 9
+            },
+            "notation": "J13",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 35,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 8,
@@ -67853,7 +69825,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 75590,
+      "elapsed_ms": 75366,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -67928,6 +69900,31 @@
       "last_chance_ply": 11,
       "critical_loser_ply": 12,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 11,
+        "actual_move": {
+          "row": 5,
+          "col": 5
+        },
+        "actual_notation": "F6",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 10,
+              "col": 6
+            },
+            "notation": "G11",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 15,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 6,
@@ -68765,7 +70762,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 9220,
+      "elapsed_ms": 9260,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -68840,6 +70837,31 @@
       "last_chance_ply": 11,
       "critical_loser_ply": 12,
       "tactical_notes": [],
+      "failure": {
+        "mode": "missed_escape",
+        "side": "White",
+        "prefix_ply": 11,
+        "actual_move": {
+          "row": 5,
+          "col": 5
+        },
+        "actual_notation": "F6",
+        "missed_candidates": [
+          {
+            "mv": {
+              "row": 10,
+              "col": 6
+            },
+            "notation": "G11",
+            "roles": [
+              "offensive_counter"
+            ],
+            "outcome": "possible_escape"
+          }
+        ],
+        "prevented_onset_ply": 15,
+        "confidence": "possible"
+      },
       "principal_line": [
         {
           "row": 6,
@@ -69677,7 +71699,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 8737,
+      "elapsed_ms": 8738,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
