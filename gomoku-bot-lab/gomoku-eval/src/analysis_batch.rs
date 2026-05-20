@@ -10,10 +10,10 @@ use serde::Serialize;
 use crate::analysis::{
     analyze_alternate_defender_reply_options, analyze_replay, defender_reply_candidates,
     defender_reply_roles_for_move, AnalysisBoardSnapshot, AnalysisOptions, DefenderReplyAnalysis,
-    DefenderReplyCandidate, DefenderReplyOutcome, DefenderReplyRole, ForcedInterval, GameAnalysis,
-    LethalOnset, ProofLimitCause, ProofResult, ProofStatus, ReplyClassification, ReplyPolicy,
-    RootCause, SearchDiagnostics, TacticalNote, UnclearContext, UnclearReason,
-    ANALYSIS_SCHEMA_VERSION,
+    DefenderReplyCandidate, DefenderReplyOutcome, DefenderReplyRole, FailureAnalysis, FailureMode,
+    ForcedInterval, GameAnalysis, LethalOnset, MissedCandidateOutcome, ProofLimitCause,
+    ProofResult, ProofStatus, ReplyClassification, ReplyPolicy, RootCause, SearchDiagnostics,
+    TacticalNote, UnclearContext, UnclearReason, ANALYSIS_SCHEMA_VERSION,
 };
 use crate::report_board::{render_report_board, report_board_css, ReportBoardMarker};
 
@@ -71,6 +71,7 @@ pub struct AnalysisBatchEntry {
     pub last_chance_ply: Option<usize>,
     pub critical_loser_ply: Option<usize>,
     pub tactical_notes: Vec<TacticalNote>,
+    pub failure: Option<FailureAnalysis>,
     pub principal_line: Vec<Move>,
     pub unknown_gaps: Vec<usize>,
     pub unknown_gap_count: usize,
@@ -357,6 +358,7 @@ fn error_entry(path: String, error: String, elapsed_ms: u64) -> AnalysisBatchEnt
         last_chance_ply: None,
         critical_loser_ply: None,
         tactical_notes: Vec::new(),
+        failure: None,
         principal_line: Vec::new(),
         unknown_gaps: Vec::new(),
         unknown_gap_count: 0,
@@ -534,7 +536,7 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       cursor: pointer;
       display: grid;
       gap: 10px;
-      grid-template-columns: minmax(68px, max-content) minmax(210px, 1.25fr) minmax(210px, 1.25fr) repeat(4, minmax(82px, 1fr));
+      grid-template-columns: minmax(68px, max-content) minmax(210px, 1fr) minmax(210px, 1fr);
       align-items: center;
       padding: 12px 14px;
     }}
@@ -600,11 +602,17 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       font-size: 11px;
       text-transform: uppercase;
     }}
+    .entry-metrics {{
+      border-top: 1px solid var(--border);
+      display: grid;
+      gap: 8px;
+      grid-column: 1 / -1;
+      grid-template-columns: repeat(6, minmax(92px, 1fr));
+      padding-top: 10px;
+    }}
     .entry-metric {{
-      border-left: 1px solid var(--border);
       font-variant-numeric: tabular-nums;
-      padding-left: 10px;
-      text-align: right;
+      min-width: 0;
     }}
     .entry-metric span {{
       white-space: nowrap;
@@ -907,21 +915,19 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
         width: 100%;
       }}
       .analysis-entry summary {{
-        grid-template-columns: minmax(0, 1fr) max-content;
+        grid-template-columns: minmax(0, 1fr);
       }}
       .entry-title, .entry-player {{
         grid-column: 1 / -1;
       }}
+      .entry-metrics {{
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }}
       .entry-metric {{
         border-left: 0;
-        display: flex;
-        grid-column: 1 / -1;
-        justify-content: space-between;
-        padding-left: 0;
       }}
       .entry-metric strong {{
-        display: inline;
-        text-align: right;
+        display: block;
       }}
       .proof-frame {{
         grid-template-columns: minmax(0, 1fr);
@@ -978,6 +984,8 @@ fn analysis_entry_card_html(entry: &AnalysisBatchEntry) -> String {
     let lethal = lethal_onset_label(entry.lethal_onset.as_ref());
     let setup_range = forced_interval_range_label(entry.setup_corridor.as_ref());
     let setup_length = forced_interval_length_label(entry.setup_corridor.as_ref());
+    let failure = failure_mode_label(entry.failure.as_ref());
+    let critical = failure_critical_ply_label(entry.failure.as_ref());
     let detail_sections = analysis_entry_detail_sections_html(entry);
     let title = replay_entry_title(&entry.path);
     let (first_player, second_player) = ordered_player_columns_html(&title, entry.winner);
@@ -989,10 +997,14 @@ fn analysis_entry_card_html(entry: &AnalysisBatchEntry) -> String {
     <strong class="entry-title"><span class="entry-match">{match_label}</span></strong>
     {first_player}
     {second_player}
-    <span class="entry-metric"><span>Lethal onset</span><strong>{lethal}</strong></span>
-    <span class="entry-metric"><span>Setup corridor</span><strong>{setup_range}</strong></span>
-    <span class="entry-metric"><span>Corridor len</span><strong>{setup_length}</strong></span>
-    <span class="entry-metric"><span>Game len</span><strong>{length}</strong></span>
+    <span class="entry-metrics" aria-label="Analysis metrics">
+      <span class="entry-metric"><span>Failure</span><strong>{failure}</strong></span>
+      <span class="entry-metric"><span>Critical ply</span><strong>{critical}</strong></span>
+      <span class="entry-metric"><span>Lethal onset</span><strong>{lethal}</strong></span>
+      <span class="entry-metric"><span>Setup corridor</span><strong>{setup_range}</strong></span>
+      <span class="entry-metric"><span>Corridor len</span><strong>{setup_length}</strong></span>
+      <span class="entry-metric"><span>Game len</span><strong>{length}</strong></span>
+    </span>
   </summary>
   <div class="entry-body">
     {detail_sections}
@@ -1002,6 +1014,8 @@ fn analysis_entry_card_html(entry: &AnalysisBatchEntry) -> String {
         match_label = html_escape(&title.match_label),
         first_player = first_player,
         second_player = second_player,
+        failure = html_escape(&failure),
+        critical = html_escape(&critical),
         lethal = html_escape(&lethal),
         setup_range = html_escape(&setup_range),
         setup_length = html_escape(&setup_length),
@@ -1041,6 +1055,12 @@ fn analysis_entry_detail_sections_html(entry: &AnalysisBatchEntry) -> String {
     let unclear_reason = unclear_reason_label(entry.unclear_reason);
 
     let mut details = Vec::new();
+    if let Some(failure) = entry.failure.as_ref() {
+        details.push(detail_html("Failure", &failure_detail_label(failure)));
+        if let Some(candidates) = failure_candidates_label(failure) {
+            details.push(detail_html("Missed candidates", &candidates));
+        }
+    }
     if unclear_reason != "-" {
         details.push(detail_html("Unclear", &unclear_reason));
     }
@@ -1328,6 +1348,78 @@ fn lethal_onset_label(onset: Option<&LethalOnset>) -> String {
         .unwrap_or_else(|| "-".to_string())
 }
 
+fn failure_mode_label(failure: Option<&FailureAnalysis>) -> String {
+    failure
+        .map(|failure| failure_mode_text(failure.mode).to_string())
+        .unwrap_or_else(|| "-".to_string())
+}
+
+fn failure_critical_ply_label(failure: Option<&FailureAnalysis>) -> String {
+    failure
+        .and_then(|failure| failure.prefix_ply)
+        .map(|ply| ply.to_string())
+        .unwrap_or_else(|| "-".to_string())
+}
+
+fn failure_detail_label(failure: &FailureAnalysis) -> String {
+    let side = match failure.side {
+        Color::Black => "Black",
+        Color::White => "White",
+    };
+    let actual = failure.actual_notation.as_deref().unwrap_or("-");
+    let prefix = failure
+        .prefix_ply
+        .map(|ply| ply.to_string())
+        .unwrap_or_else(|| "-".to_string());
+    format!(
+        "{} / {} / before ply {} / actual {}",
+        failure_mode_text(failure.mode),
+        side,
+        prefix,
+        actual
+    )
+}
+
+fn failure_candidates_label(failure: &FailureAnalysis) -> Option<String> {
+    (!failure.missed_candidates.is_empty()).then(|| {
+        failure
+            .missed_candidates
+            .iter()
+            .map(|candidate| {
+                let roles = reply_roles_label(&candidate.roles);
+                let outcome = missed_candidate_outcome_label(candidate.outcome);
+                if roles.is_empty() {
+                    format!("{} ({})", candidate.notation, outcome)
+                } else {
+                    format!("{}: {} ({})", candidate.notation, roles, outcome)
+                }
+            })
+            .collect::<Vec<_>>()
+            .join(", ")
+    })
+}
+
+fn failure_mode_text(mode: FailureMode) -> &'static str {
+    match mode {
+        FailureMode::MissedImmediateWin => "missed immediate win",
+        FailureMode::MissedImmediateResponse => "missed immediate response",
+        FailureMode::MissedImminentResponse => "missed imminent response",
+        FailureMode::MissedEscape => "missed escape",
+        FailureMode::MissedLethalPrevention => "missed lethal prevention",
+        FailureMode::ForcedLoss => "forced loss",
+        FailureMode::Unclear => "unclear",
+    }
+}
+
+fn missed_candidate_outcome_label(outcome: MissedCandidateOutcome) -> &'static str {
+    match outcome {
+        MissedCandidateOutcome::ConfirmedEscape => "confirmed escape",
+        MissedCandidateOutcome::PossibleEscape => "possible escape",
+        MissedCandidateOutcome::PreventsLethalOnset => "prevents onset",
+        MissedCandidateOutcome::PreventsCorridorEntry => "prevents corridor",
+    }
+}
+
 fn ply_count_label(value: Option<usize>) -> String {
     value
         .map(|value| format!("{value} ply"))
@@ -1408,6 +1500,7 @@ fn entry_from_analysis(
         last_chance_ply: analysis.last_chance_ply,
         critical_loser_ply: analysis.critical_loser_ply,
         tactical_notes: analysis.tactical_notes,
+        failure: analysis.failure,
         principal_line: analysis.principal_line,
         unknown_gaps: analysis.unknown_gaps.clone(),
         unknown_gap_count: analysis.unknown_gaps.len(),
@@ -2645,9 +2738,9 @@ mod tests {
     use crate::analysis::{
         analyze_replay, replay_frame_annotations_for_analysis, AnalysisModel, AnalysisOptions,
         DefenderReplyAnalysis, DefenderReplyCandidate, DefenderReplyOutcome, DefenderReplyRole,
-        ForcedInterval, GameAnalysis, ProofLimitCause, ProofStatus, ReplayFrameHighlightRole,
-        ReplayFrameMarkerRole, ReplyClassification, ReplyPolicy, RootCause, SearchDiagnostics,
-        UnclearReason, ANALYSIS_SCHEMA_VERSION,
+        FailureMode, ForcedInterval, GameAnalysis, ProofLimitCause, ProofStatus,
+        ReplayFrameHighlightRole, ReplayFrameMarkerRole, ReplyClassification, ReplyPolicy,
+        RootCause, SearchDiagnostics, UnclearReason, ANALYSIS_SCHEMA_VERSION,
     };
 
     fn replay_from_moves(variant: Variant, moves: &[&str]) -> Replay {
@@ -2715,6 +2808,7 @@ mod tests {
             decisive_attack_ply: None,
             critical_loser_ply: None,
             root_cause: RootCause::Unclear,
+            failure: None,
             tactical_notes: Vec::new(),
             principal_line: Vec::new(),
             proof_summary: Vec::new(),
@@ -2801,6 +2895,13 @@ mod tests {
         assert_eq!(report.model.max_depth, AnalysisOptions::default().max_depth);
         assert_eq!(report.summary.unclear, 0);
         assert_eq!(report.entries[0].root_cause, Some(RootCause::MissedDefense));
+        assert_eq!(
+            report.entries[0]
+                .failure
+                .as_ref()
+                .map(|failure| failure.mode),
+            Some(FailureMode::MissedImmediateResponse)
+        );
         assert_eq!(report.entries[0].path, "missed_defense.json");
 
         let _ = fs::remove_dir_all(&dir);
@@ -2866,6 +2967,9 @@ mod tests {
         assert!(html.contains("<span>Setup corridor</span><strong>"));
         assert!(html.contains("<span>Corridor len</span><strong>"));
         assert!(html.contains("<span>Game len</span><strong>9 ply</strong>"));
+        assert!(html.contains("<span>Failure</span><strong>missed immediate response</strong>"));
+        assert!(html.contains("<span>Critical ply</span><strong>7</strong>"));
+        assert!(html.contains("<span>Missed candidates</span><strong>L8: immediate"));
         assert!(!html.contains("<span>Time</span>"));
 
         let _ = fs::remove_dir_all(&dir);

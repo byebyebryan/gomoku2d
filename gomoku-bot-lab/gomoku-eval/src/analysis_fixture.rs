@@ -3,8 +3,8 @@ use serde::Serialize;
 
 use crate::analysis::{
     analyze_replay, corridor_analysis_model, rule_label, AnalysisError, AnalysisModel,
-    AnalysisOptions, ForcedInterval, ProofStatus, ReplyClassification, RootCause, TacticalNote,
-    ANALYSIS_SCHEMA_VERSION,
+    AnalysisOptions, FailureAnalysis, FailureMode, ForcedInterval, ProofStatus,
+    ReplyClassification, RootCause, TacticalNote, ANALYSIS_SCHEMA_VERSION,
 };
 
 #[derive(Debug, Clone)]
@@ -32,6 +32,9 @@ pub struct AnalysisFixtureExpected {
     pub last_chance_ply: Option<usize>,
     pub critical_loser_ply: Option<usize>,
     pub tactical_notes: &'static [TacticalNote],
+    pub failure_mode: Option<FailureMode>,
+    pub failure_prefix_ply: Option<usize>,
+    pub failure_candidates: &'static [&'static str],
     pub required_unknown_gaps: &'static [usize],
     pub required_reply_classifications: &'static [ReplyClassification],
 }
@@ -57,6 +60,9 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
             last_chance_ply: Some(7),
             critical_loser_ply: Some(8),
             tactical_notes: &[],
+            failure_mode: Some(FailureMode::MissedImmediateResponse),
+            failure_prefix_ply: Some(7),
+            failure_candidates: &["L8"],
             required_unknown_gaps: &[],
             required_reply_classifications: &[],
         },
@@ -83,6 +89,9 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
             last_chance_ply: Some(9),
             critical_loser_ply: Some(10),
             tactical_notes: &[TacticalNote::ConversionError, TacticalNote::MissedWin],
+            failure_mode: Some(FailureMode::MissedImmediateResponse),
+            failure_prefix_ply: Some(9),
+            failure_candidates: &["L8"],
             required_unknown_gaps: &[],
             required_reply_classifications: &[],
         },
@@ -109,6 +118,9 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
             last_chance_ply: Some(9),
             critical_loser_ply: Some(10),
             tactical_notes: &[TacticalNote::MissedWin],
+            failure_mode: Some(FailureMode::MissedImmediateWin),
+            failure_prefix_ply: Some(9),
+            failure_candidates: &["G8", "L8"],
             required_unknown_gaps: &[],
             required_reply_classifications: &[],
         },
@@ -133,6 +145,9 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
             last_chance_ply: Some(5),
             critical_loser_ply: Some(6),
             tactical_notes: &[],
+            failure_mode: Some(FailureMode::MissedImminentResponse),
+            failure_prefix_ply: Some(5),
+            failure_candidates: &["G8", "K8"],
             required_unknown_gaps: &[],
             required_reply_classifications: &[],
         },
@@ -160,6 +175,9 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
             last_chance_ply: Some(9),
             critical_loser_ply: Some(10),
             tactical_notes: &[],
+            failure_mode: Some(FailureMode::MissedImminentResponse),
+            failure_prefix_ply: Some(9),
+            failure_candidates: &["B1", "D1"],
             required_unknown_gaps: &[],
             required_reply_classifications: &[ReplyClassification::BlockedButForced],
         },
@@ -186,6 +204,9 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
             last_chance_ply: Some(8),
             critical_loser_ply: Some(9),
             tactical_notes: &[TacticalNote::MissedWin],
+            failure_mode: Some(FailureMode::MissedImmediateWin),
+            failure_prefix_ply: Some(8),
+            failure_candidates: &["A5"],
             required_unknown_gaps: &[],
             required_reply_classifications: &[ReplyClassification::ConfirmedEscape],
         },
@@ -213,6 +234,9 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
             last_chance_ply: Some(8),
             critical_loser_ply: Some(9),
             tactical_notes: &[TacticalNote::MissedWin],
+            failure_mode: Some(FailureMode::MissedImmediateResponse),
+            failure_prefix_ply: Some(8),
+            failure_candidates: &["H8"],
             required_unknown_gaps: &[],
             required_reply_classifications: &[ReplyClassification::NoLegalBlock],
         },
@@ -237,6 +261,9 @@ pub const ANALYSIS_FIXTURE_CASES: &[AnalysisFixtureCase] = &[
             last_chance_ply: None,
             critical_loser_ply: None,
             tactical_notes: &[],
+            failure_mode: None,
+            failure_prefix_ply: None,
+            failure_candidates: &[],
             required_unknown_gaps: &[],
             required_reply_classifications: &[],
         },
@@ -275,6 +302,9 @@ pub struct AnalysisFixtureExpectationReport {
     pub last_chance_ply: Option<usize>,
     pub critical_loser_ply: Option<usize>,
     pub tactical_notes: Vec<TacticalNote>,
+    pub failure_mode: Option<FailureMode>,
+    pub failure_prefix_ply: Option<usize>,
+    pub failure_candidates: Vec<String>,
     pub required_unknown_gaps: Vec<usize>,
     pub required_reply_classifications: Vec<ReplyClassification>,
 }
@@ -287,6 +317,7 @@ pub struct AnalysisFixtureActualReport {
     pub last_chance_ply: Option<usize>,
     pub critical_loser_ply: Option<usize>,
     pub tactical_notes: Vec<TacticalNote>,
+    pub failure: Option<FailureAnalysis>,
     pub unknown_gaps: Vec<usize>,
     pub reply_classifications: Vec<ReplyClassification>,
     pub model: AnalysisModel,
@@ -347,6 +378,7 @@ fn run_analysis_fixture(
         last_chance_ply: analysis.last_chance_ply,
         critical_loser_ply: analysis.critical_loser_ply,
         tactical_notes: analysis.tactical_notes.clone(),
+        failure: analysis.failure.clone(),
         unknown_gaps: analysis.unknown_gaps.clone(),
         reply_classifications: analysis
             .proof_summary
@@ -440,6 +472,13 @@ fn expectation_report(expected: &AnalysisFixtureExpected) -> AnalysisFixtureExpe
         last_chance_ply: expected.last_chance_ply,
         critical_loser_ply: expected.critical_loser_ply,
         tactical_notes: expected.tactical_notes.to_vec(),
+        failure_mode: expected.failure_mode,
+        failure_prefix_ply: expected.failure_prefix_ply,
+        failure_candidates: expected
+            .failure_candidates
+            .iter()
+            .map(|candidate| (*candidate).to_string())
+            .collect(),
         required_unknown_gaps: expected.required_unknown_gaps.to_vec(),
         required_reply_classifications: expected.required_reply_classifications.to_vec(),
     }
@@ -485,6 +524,46 @@ fn fixture_failures(
             "tactical_notes expected {:?}, got {:?}",
             expected.tactical_notes, actual.tactical_notes
         ));
+    }
+    if let Some(expected_mode) = expected.failure_mode {
+        let actual_mode = actual.failure.as_ref().map(|failure| failure.mode);
+        if actual_mode != Some(expected_mode) {
+            failures.push(format!(
+                "failure.mode expected {:?}, got {:?}",
+                expected_mode, actual_mode
+            ));
+        }
+    }
+    if let Some(expected_prefix) = expected.failure_prefix_ply {
+        let actual_prefix = actual
+            .failure
+            .as_ref()
+            .and_then(|failure| failure.prefix_ply);
+        if actual_prefix != Some(expected_prefix) {
+            failures.push(format!(
+                "failure.prefix_ply expected {:?}, got {:?}",
+                expected_prefix, actual_prefix
+            ));
+        }
+    }
+    for candidate in &expected.failure_candidates {
+        let has_candidate = actual.failure.as_ref().is_some_and(|failure| {
+            failure
+                .missed_candidates
+                .iter()
+                .any(|missed| missed.notation == *candidate)
+        });
+        if !has_candidate {
+            failures.push(format!(
+                "failure.missed_candidates expected to contain {}, got {:?}",
+                candidate,
+                actual.failure.as_ref().map(|failure| failure
+                    .missed_candidates
+                    .iter()
+                    .map(|missed| missed.notation.clone())
+                    .collect::<Vec<_>>())
+            ));
+        }
     }
     for gap in &expected.required_unknown_gaps {
         if !actual.unknown_gaps.contains(gap) {
@@ -767,6 +846,12 @@ fn expectation_table(expected: &AnalysisFixtureExpectationReport) -> String {
         ("Last Chance", option_usize(expected.last_chance_ply)),
         ("Critical loser", option_usize(expected.critical_loser_ply)),
         ("Notes", notes_label(&expected.tactical_notes)),
+        ("Failure", option_debug(expected.failure_mode)),
+        ("Failure ply", option_usize(expected.failure_prefix_ply)),
+        (
+            "Failure candidates",
+            string_list_label(&expected.failure_candidates),
+        ),
         (
             "Unknown Gaps",
             usize_list_label(&expected.required_unknown_gaps),
@@ -786,6 +871,7 @@ fn actual_table(actual: &AnalysisFixtureActualReport) -> String {
         ("Last Chance", option_usize(actual.last_chance_ply)),
         ("Critical loser", option_usize(actual.critical_loser_ply)),
         ("Notes", notes_label(&actual.tactical_notes)),
+        ("Failure", failure_label(actual.failure.as_ref())),
         ("Unknown Gaps", usize_list_label(&actual.unknown_gaps)),
         (
             "Reply Classes",
@@ -854,6 +940,36 @@ fn usize_list_label(values: &[usize]) -> String {
     }
 }
 
+fn string_list_label(values: &[String]) -> String {
+    if values.is_empty() {
+        "-".to_string()
+    } else {
+        values.join(", ")
+    }
+}
+
+fn failure_label(failure: Option<&FailureAnalysis>) -> String {
+    let Some(failure) = failure else {
+        return "-".to_string();
+    };
+    let candidates = failure
+        .missed_candidates
+        .iter()
+        .map(|candidate| candidate.notation.clone())
+        .collect::<Vec<_>>();
+    format!(
+        "{:?} at {:?}; actual {}; candidates {}",
+        failure.mode,
+        failure.prefix_ply,
+        failure.actual_notation.as_deref().unwrap_or("-"),
+        if candidates.is_empty() {
+            "-".to_string()
+        } else {
+            candidates.join(", ")
+        }
+    )
+}
+
 fn reply_classifications_label(classifications: &[ReplyClassification]) -> String {
     if classifications.is_empty() {
         "-".to_string()
@@ -895,7 +1011,7 @@ mod tests {
         render_analysis_fixture_report_html, run_analysis_fixtures, ANALYSIS_FIXTURE_CASES,
     };
     use crate::analysis::{
-        AnalysisOptions, ForcedInterval, ProofStatus, ReplyClassification, RootCause,
+        AnalysisOptions, FailureMode, ForcedInterval, ProofStatus, ReplyClassification, RootCause,
         ANALYSIS_SCHEMA_VERSION,
     };
 
@@ -930,6 +1046,17 @@ mod tests {
             && row.status == ProofStatus::EscapeFound
             && row.actual_reply == Some(mv("B1"))
             && row.escape_moves == vec![mv("L8")]));
+        let failure = missed_defense
+            .actual
+            .failure
+            .as_ref()
+            .expect("missed defense should produce failure analysis");
+        assert_eq!(failure.mode, FailureMode::MissedImmediateResponse);
+        assert_eq!(failure.prefix_ply, Some(7));
+        assert!(failure
+            .missed_candidates
+            .iter()
+            .any(|candidate| candidate.notation == "L8"));
 
         let renju_terminal = report
             .results
@@ -954,6 +1081,8 @@ mod tests {
         assert!(json.contains("\"case_id\": \"missed_defense_closed_four\""));
         assert!(json.contains("\"expected\""));
         assert!(json.contains("\"actual\""));
+        assert!(json.contains("\"failure\""));
+        assert!(json.contains("\"missed_immediate_response\""));
         assert!(json.contains("\"proof_rows\""));
     }
 
@@ -969,5 +1098,7 @@ mod tests {
         assert!(html.contains("Expected"));
         assert!(html.contains("Proof Rows"));
         assert!(html.contains("Actual Reply"));
+        assert!(html.contains("Failure"));
+        assert!(html.contains("MissedImmediateResponse"));
     }
 }

@@ -10,7 +10,7 @@ pub use gomoku_bot::corridor::{
     SearchDiagnostics,
 };
 
-pub const ANALYSIS_SCHEMA_VERSION: u32 = 18;
+pub const ANALYSIS_SCHEMA_VERSION: u32 = 19;
 pub const DEFAULT_MAX_SCAN_PLIES: usize = 64;
 const MAX_CORRIDOR_REPLY_WIDTH: usize = 8;
 
@@ -63,6 +63,55 @@ pub enum ReplyClassification {
     PossibleEscape,
     NoLegalBlock,
     Unknown,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum FailureMode {
+    MissedImmediateWin,
+    MissedImmediateResponse,
+    MissedImminentResponse,
+    MissedEscape,
+    MissedLethalPrevention,
+    ForcedLoss,
+    Unclear,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum FailureConfidence {
+    Confirmed,
+    Possible,
+    Unclear,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum MissedCandidateOutcome {
+    ConfirmedEscape,
+    PossibleEscape,
+    PreventsLethalOnset,
+    PreventsCorridorEntry,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct MissedCandidate {
+    pub mv: Move,
+    pub notation: String,
+    pub roles: Vec<DefenderReplyRole>,
+    pub outcome: MissedCandidateOutcome,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct FailureAnalysis {
+    pub mode: FailureMode,
+    pub side: Color,
+    pub prefix_ply: Option<usize>,
+    pub actual_move: Option<Move>,
+    pub actual_notation: Option<String>,
+    pub missed_candidates: Vec<MissedCandidate>,
+    pub prevented_onset_ply: Option<usize>,
+    pub confidence: FailureConfidence,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -205,6 +254,7 @@ pub struct GameAnalysis {
     pub decisive_attack_ply: Option<usize>,
     pub critical_loser_ply: Option<usize>,
     pub root_cause: RootCause,
+    pub failure: Option<FailureAnalysis>,
     pub tactical_notes: Vec<TacticalNote>,
     pub principal_line: Vec<Move>,
     pub proof_summary: Vec<ProofResult>,
@@ -998,6 +1048,7 @@ fn no_winner_analysis(replay: &Replay, final_board: &Board, model: AnalysisModel
         decisive_attack_ply: None,
         critical_loser_ply: None,
         root_cause: RootCause::Unclear,
+        failure: None,
         tactical_notes: Vec::new(),
         principal_line: Vec::new(),
         proof_summary: Vec::new(),
@@ -1076,6 +1127,18 @@ fn finalize_replay_analysis(
         winner,
         root_cause,
     });
+    let failure = failure_analysis(FailureAnalysisInput {
+        replay,
+        boards,
+        proof_summary: &proof_summary,
+        scan_start,
+        final_forced_interval_found,
+        final_forced_interval: &final_forced_interval,
+        lethal_onset: lethal_onset.as_ref(),
+        root_cause,
+        winner,
+        loser: winner.opponent(),
+    });
     let principal_line = proof_at(&proof_summary, scan_start, final_forced_interval.start_ply)
         .map(|proof| proof.principal_line.clone())
         .unwrap_or_default();
@@ -1122,6 +1185,7 @@ fn finalize_replay_analysis(
         decisive_attack_ply,
         critical_loser_ply,
         root_cause,
+        failure,
         tactical_notes,
         principal_line,
         proof_summary,
@@ -2202,6 +2266,361 @@ fn lethal_onset_from_threat(prefix_ply: usize, threat: LethalThreat) -> LethalOn
     }
 }
 
+struct FailureAnalysisInput<'a> {
+    replay: &'a Replay,
+    boards: &'a [Board],
+    proof_summary: &'a [ProofResult],
+    scan_start: usize,
+    final_forced_interval_found: bool,
+    final_forced_interval: &'a ForcedInterval,
+    lethal_onset: Option<&'a LethalOnset>,
+    root_cause: RootCause,
+    winner: Color,
+    loser: Color,
+}
+
+fn failure_analysis(input: FailureAnalysisInput<'_>) -> Option<FailureAnalysis> {
+    if let Some(failure) = missed_immediate_win_failure(&input) {
+        return Some(failure);
+    }
+    if let Some(failure) = missed_response_failure(&input) {
+        return Some(failure);
+    }
+    if let Some(failure) = missed_lethal_prevention_failure(&input) {
+        return Some(failure);
+    }
+
+    let mode = if input.root_cause == RootCause::Unclear || !input.final_forced_interval_found {
+        FailureMode::Unclear
+    } else {
+        FailureMode::ForcedLoss
+    };
+    let confidence = match mode {
+        FailureMode::Unclear => FailureConfidence::Unclear,
+        _ => FailureConfidence::Confirmed,
+    };
+    Some(FailureAnalysis {
+        mode,
+        side: input.loser,
+        prefix_ply: input
+            .lethal_onset
+            .map(|onset| onset.prefix_ply)
+            .or(Some(input.final_forced_interval.start_ply)),
+        actual_move: None,
+        actual_notation: None,
+        missed_candidates: Vec::new(),
+        prevented_onset_ply: input.lethal_onset.map(|onset| onset.prefix_ply),
+        confidence,
+    })
+}
+
+fn missed_immediate_win_failure(input: &FailureAnalysisInput<'_>) -> Option<FailureAnalysis> {
+    let prefix_ply = input.final_forced_interval.start_ply.checked_sub(1)?;
+    let board = input.boards.get(prefix_ply)?;
+    if board.current_player != input.loser {
+        return None;
+    }
+    let mut immediate_wins = board.immediate_winning_moves_for(input.loser);
+    if immediate_wins.is_empty() {
+        return None;
+    }
+    normalize_moves(&mut immediate_wins);
+    let actual_move = replay_move_at(input.replay, prefix_ply)?;
+    if immediate_wins.contains(&actual_move) {
+        return None;
+    }
+
+    Some(FailureAnalysis {
+        mode: FailureMode::MissedImmediateWin,
+        side: input.loser,
+        prefix_ply: Some(prefix_ply),
+        actual_move: Some(actual_move),
+        actual_notation: Some(actual_move.to_notation()),
+        missed_candidates: immediate_wins
+            .into_iter()
+            .map(|mv| {
+                missed_candidate(
+                    mv,
+                    vec![DefenderReplyRole::OffensiveCounter],
+                    MissedCandidateOutcome::ConfirmedEscape,
+                )
+            })
+            .collect(),
+        prevented_onset_ply: input.lethal_onset.map(|onset| onset.prefix_ply),
+        confidence: FailureConfidence::Confirmed,
+    })
+}
+
+fn missed_response_failure(input: &FailureAnalysisInput<'_>) -> Option<FailureAnalysis> {
+    let max_prefix = failure_blame_cutoff(input)?.checked_sub(1)?;
+    for prefix_ply in (input.scan_start..=max_prefix).rev() {
+        let board = input.boards.get(prefix_ply)?;
+        if board.current_player != input.loser {
+            continue;
+        }
+        let proof = proof_at(input.proof_summary, input.scan_start, prefix_ply)?;
+        if proof.status != ProofStatus::EscapeFound {
+            continue;
+        }
+        let actual_move = replay_move_at(input.replay, prefix_ply)?;
+        let mut candidates = escape_candidates_from_proof(board, input.winner, proof, prefix_ply);
+        candidates.retain(|candidate| candidate.mv != actual_move);
+        if candidates.is_empty() {
+            continue;
+        }
+
+        let actual_roles = failure_candidate_roles(board, input.winner, actual_move);
+        if is_response_role_set(&actual_roles) {
+            return Some(missed_candidate_failure(
+                FailureMode::MissedEscape,
+                input,
+                prefix_ply,
+                actual_move,
+                candidates,
+            ));
+        }
+
+        let immediate = candidates
+            .iter()
+            .filter(|candidate| {
+                candidate
+                    .roles
+                    .contains(&DefenderReplyRole::ImmediateDefense)
+            })
+            .cloned()
+            .collect::<Vec<_>>();
+        if !immediate.is_empty() {
+            return Some(missed_candidate_failure(
+                FailureMode::MissedImmediateResponse,
+                input,
+                prefix_ply,
+                actual_move,
+                immediate,
+            ));
+        }
+
+        let imminent = candidates
+            .iter()
+            .filter(|candidate| {
+                candidate.roles.iter().any(|role| {
+                    matches!(
+                        role,
+                        DefenderReplyRole::ImminentDefense | DefenderReplyRole::OffensiveCounter
+                    )
+                })
+            })
+            .cloned()
+            .collect::<Vec<_>>();
+        if !imminent.is_empty() {
+            return Some(missed_candidate_failure(
+                FailureMode::MissedImminentResponse,
+                input,
+                prefix_ply,
+                actual_move,
+                imminent,
+            ));
+        }
+    }
+    None
+}
+
+fn missed_lethal_prevention_failure(input: &FailureAnalysisInput<'_>) -> Option<FailureAnalysis> {
+    let before_ply = failure_blame_cutoff(input)?;
+    let prefix_ply = find_last_chance(
+        input.boards,
+        input.proof_summary,
+        input.scan_start,
+        before_ply,
+        Some(input.loser),
+    )?;
+    let proof = proof_at(input.proof_summary, input.scan_start, prefix_ply)?;
+    let actual_move = replay_move_at(input.replay, prefix_ply)?;
+    let board = input.boards.get(prefix_ply)?;
+    let outcome = if input.lethal_onset.is_some() {
+        MissedCandidateOutcome::PreventsLethalOnset
+    } else {
+        MissedCandidateOutcome::PreventsCorridorEntry
+    };
+    let mut escape_moves = proof.escape_moves.clone();
+    if escape_moves.is_empty() {
+        for evidence in proof
+            .threat_evidence
+            .iter()
+            .filter(|evidence| evidence.prefix_ply == Some(prefix_ply))
+        {
+            for mv in &evidence.escape_replies {
+                push_unique_move(&mut escape_moves, *mv);
+            }
+        }
+    }
+    normalize_moves(&mut escape_moves);
+    if escape_moves.is_empty() || escape_moves.contains(&actual_move) {
+        return None;
+    }
+    let missed_candidates = escape_moves
+        .into_iter()
+        .map(|mv| {
+            missed_candidate(
+                mv,
+                failure_candidate_roles(board, input.winner, mv),
+                outcome,
+            )
+        })
+        .collect::<Vec<_>>();
+    if missed_candidates.is_empty() {
+        return None;
+    }
+
+    Some(FailureAnalysis {
+        mode: FailureMode::MissedLethalPrevention,
+        side: input.loser,
+        prefix_ply: Some(prefix_ply),
+        actual_move: Some(actual_move),
+        actual_notation: Some(actual_move.to_notation()),
+        confidence: if proof_has_limit_hit(proof) {
+            FailureConfidence::Possible
+        } else {
+            FailureConfidence::Confirmed
+        },
+        missed_candidates,
+        prevented_onset_ply: input.lethal_onset.map(|onset| onset.prefix_ply),
+    })
+}
+
+fn failure_blame_cutoff(input: &FailureAnalysisInput<'_>) -> Option<usize> {
+    Some(
+        input
+            .lethal_onset
+            .map(|onset| onset.prefix_ply)
+            .unwrap_or(input.final_forced_interval.start_ply)
+            .min(input.replay.moves.len()),
+    )
+}
+
+fn missed_candidate_failure(
+    mode: FailureMode,
+    input: &FailureAnalysisInput<'_>,
+    prefix_ply: usize,
+    actual_move: Move,
+    missed_candidates: Vec<MissedCandidate>,
+) -> FailureAnalysis {
+    FailureAnalysis {
+        mode,
+        side: input.loser,
+        prefix_ply: Some(prefix_ply),
+        actual_move: Some(actual_move),
+        actual_notation: Some(actual_move.to_notation()),
+        confidence: failure_confidence_for_candidates(&missed_candidates),
+        missed_candidates,
+        prevented_onset_ply: input.lethal_onset.map(|onset| onset.prefix_ply),
+    }
+}
+
+fn escape_candidates_from_proof(
+    board: &Board,
+    attacker: Color,
+    proof: &ProofResult,
+    prefix_ply: usize,
+) -> Vec<MissedCandidate> {
+    let mut candidates = Vec::new();
+    for evidence in proof
+        .threat_evidence
+        .iter()
+        .filter(|evidence| evidence.prefix_ply == Some(prefix_ply))
+    {
+        let outcome = match evidence.reply_classification {
+            ReplyClassification::ConfirmedEscape => MissedCandidateOutcome::ConfirmedEscape,
+            ReplyClassification::PossibleEscape => MissedCandidateOutcome::PossibleEscape,
+            _ => continue,
+        };
+        for mv in &evidence.escape_replies {
+            push_missed_candidate(
+                &mut candidates,
+                missed_candidate(*mv, failure_candidate_roles(board, attacker, *mv), outcome),
+            );
+        }
+    }
+    candidates.sort_by_key(|candidate| (candidate.mv.row, candidate.mv.col));
+    candidates
+}
+
+fn failure_candidate_roles(board: &Board, attacker: Color, mv: Move) -> Vec<DefenderReplyRole> {
+    let mut roles = defender_reply_roles_for_move(board, attacker, mv);
+    if roles.is_empty()
+        && board
+            .immediate_winning_moves_for(attacker.opponent())
+            .contains(&mv)
+    {
+        roles.push(DefenderReplyRole::OffensiveCounter);
+    }
+    roles
+}
+
+fn is_response_role_set(roles: &[DefenderReplyRole]) -> bool {
+    roles.iter().any(|role| {
+        matches!(
+            role,
+            DefenderReplyRole::ImmediateDefense
+                | DefenderReplyRole::ImminentDefense
+                | DefenderReplyRole::OffensiveCounter
+        )
+    })
+}
+
+fn missed_candidate(
+    mv: Move,
+    roles: Vec<DefenderReplyRole>,
+    outcome: MissedCandidateOutcome,
+) -> MissedCandidate {
+    MissedCandidate {
+        mv,
+        notation: mv.to_notation(),
+        roles,
+        outcome,
+    }
+}
+
+fn push_missed_candidate(candidates: &mut Vec<MissedCandidate>, candidate: MissedCandidate) {
+    if let Some(existing) = candidates
+        .iter_mut()
+        .find(|existing| existing.mv == candidate.mv)
+    {
+        for role in candidate.roles {
+            if !existing.roles.contains(&role) {
+                existing.roles.push(role);
+            }
+        }
+        if candidate.outcome == MissedCandidateOutcome::ConfirmedEscape {
+            existing.outcome = MissedCandidateOutcome::ConfirmedEscape;
+        }
+        return;
+    }
+    candidates.push(candidate);
+}
+
+fn failure_confidence_for_candidates(candidates: &[MissedCandidate]) -> FailureConfidence {
+    if candidates
+        .iter()
+        .any(|candidate| candidate.outcome == MissedCandidateOutcome::PossibleEscape)
+    {
+        FailureConfidence::Possible
+    } else {
+        FailureConfidence::Confirmed
+    }
+}
+
+fn replay_move_at(replay: &Replay, prefix_ply: usize) -> Option<Move> {
+    replay
+        .moves
+        .get(prefix_ply)
+        .and_then(|mv| Move::from_notation(&mv.mv).ok())
+}
+
+fn normalize_moves(moves: &mut Vec<Move>) {
+    moves.sort_by_key(|mv| (mv.row, mv.col));
+    moves.dedup();
+}
+
 fn classify_root_cause(
     previous_status: Option<ProofStatus>,
     move_color: Option<Color>,
@@ -2496,9 +2915,9 @@ mod tests {
         analyze_alternate_defender_reply_options, analyze_defender_reply_options, analyze_replay,
         corridor_analysis_model, replay_frame_annotations_from_proof, replay_moves,
         replay_prefix_boards, replay_proof_summary, AnalysisOptions, DefenderReplyOutcome,
-        DefenderReplyRole, ProofLimitCause, ProofResult, ProofStatus, ReplayAnalysisSession,
-        ReplayFrameHighlightRole, ReplayFrameMarkerRole, ReplyClassification, ReplyPolicy,
-        RootCause, TacticalNote, UnclearReason,
+        DefenderReplyRole, FailureMode, ProofLimitCause, ProofResult, ProofStatus,
+        ReplayAnalysisSession, ReplayFrameHighlightRole, ReplayFrameMarkerRole,
+        ReplyClassification, ReplyPolicy, RootCause, TacticalNote, UnclearReason,
     };
 
     fn mv(notation: &str) -> Move {
@@ -3033,6 +3452,17 @@ mod tests {
         assert_eq!(analysis.final_forced_interval.start_ply, 14);
         assert_eq!(analysis.last_chance_ply, Some(13));
         assert_eq!(analysis.critical_loser_ply, Some(14));
+        let failure = analysis
+            .failure
+            .as_ref()
+            .expect("bounded escape should produce failure detail");
+        assert_eq!(failure.mode, FailureMode::MissedEscape);
+        assert_eq!(failure.prefix_ply, Some(13));
+        assert_eq!(failure.actual_notation.as_deref(), Some("G7"));
+        assert!(failure
+            .missed_candidates
+            .iter()
+            .any(|candidate| candidate.notation == "I10"));
 
         let scan_start = replay.moves.len() + 1 - analysis.proof_summary.len();
         assert_eq!(scan_start, 13);
