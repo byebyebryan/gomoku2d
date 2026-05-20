@@ -451,7 +451,9 @@ presentation work belongs to `0.5`.
 
 - `0.4.7` focused replay screenshot review and release cleanup
 - `0.4.8` mistake detection based on missed response/escape candidates, not
-  corridor length
+  corridor length. First slice: derive compact failure modes for reports and
+  fixtures from existing corridor/lethal-onset evidence before moving this into
+  replay UI.
 - test/doc cleanup after the 0.4 lab-to-product pivot
 - measured analyzer follow-up if replay-screen usage exposes confusing cases
 - better-move suggestions and opponent best-reply previews
