@@ -8,12 +8,13 @@ use rayon::prelude::*;
 use serde::Serialize;
 
 use crate::analysis::{
-    analyze_alternate_defender_reply_options, analyze_replay, defender_reply_candidates,
-    defender_reply_roles_for_move, AnalysisBoardSnapshot, AnalysisOptions, DefenderReplyAnalysis,
-    DefenderReplyCandidate, DefenderReplyOutcome, DefenderReplyRole, FailureAnalysis, FailureMode,
-    ForcedInterval, GameAnalysis, LethalOnset, MissedCandidateOutcome, ProofLimitCause,
-    ProofResult, ProofStatus, ReplyClassification, ReplyPolicy, RootCause, SearchDiagnostics,
-    TacticalNote, UnclearContext, UnclearReason, ANALYSIS_SCHEMA_VERSION,
+    analyze_alternate_defender_reply_options, analyze_replay, defender_reply_roles_for_move,
+    visible_defender_reply_candidates, AnalysisBoardSnapshot, AnalysisOptions,
+    DefenderReplyAnalysis, DefenderReplyCandidate, DefenderReplyOutcome, DefenderReplyRole,
+    FailureAnalysis, FailureMode, ForcedInterval, GameAnalysis, LethalOnset,
+    MissedCandidateOutcome, ProofLimitCause, ProofResult, ProofStatus, ReplyClassification,
+    ReplyPolicy, RootCause, SearchDiagnostics, TacticalNote, UnclearContext, UnclearReason,
+    ANALYSIS_SCHEMA_VERSION,
 };
 use crate::report_board::{render_report_board, report_board_css, ReportBoardMarker};
 
@@ -1406,7 +1407,6 @@ fn failure_mode_text(mode: FailureMode) -> &'static str {
         FailureMode::MissedImminentResponse => "missed imminent response",
         FailureMode::MissedEscape => "missed escape",
         FailureMode::MissedLethalPrevention => "missed lethal prevention",
-        FailureMode::ForcedLoss => "forced loss",
         FailureMode::Unclear => "unclear",
     }
 }
@@ -1761,7 +1761,7 @@ fn defender_reply_candidates_for_frame(
         return Vec::new();
     }
 
-    defender_reply_candidates(board, attacker, actual_move)
+    visible_defender_reply_candidates(board, attacker, actual_move)
 }
 
 fn actual_frame_label(ply: usize, interval: &ForcedInterval) -> String {

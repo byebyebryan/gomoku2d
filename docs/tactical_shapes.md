@@ -104,6 +104,11 @@ This priority is not one global truth. It is interpreted by consumer policy:
   low-priority non-forcing material.
 - Corridor policy ignores closed threes but treats valid broken threes as active
   imminent threats when their rest squares have legal forcing continuations.
+- Position-level threat obligations add a compound-imminent layer for positions
+  where several individually non-forcing three facts combine into a one-step
+  lethal entry. This is not a new `LocalThreatKind`: the model asks whether the
+  attacker has a legal next move into lethal coverage, then marks defender moves
+  that remove those entries as imminent-defense replies.
 - Renju filtering is policy-aware. Raw facts preserve shape squares; search
   credit and corridor activity only use legal/effective Black continuations.
 

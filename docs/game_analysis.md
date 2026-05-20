@@ -360,14 +360,12 @@ length:
 - Before lethal onset, if a player faces immediate or imminent threats and plays
   outside the highest-priority response candidate set, classify that as a missed
   response.
-- If the player did respond to the local threat, but chose a valid response that
-  still preserves the forced-loss corridor while another response escapes it,
-  classify that as a missed escape.
-- If a legal corridor-entry prevention candidate exists before any local
-  response is demanded and the actual move instead allows the lethal onset,
-  classify that as the critical mistake boundary.
-- If no legal response or escape exists, do not blame the current move; keep the
-  explanation on the earlier setup corridor.
+- At the last losing-side decision before lethal onset, if a viable prevention
+  move exists and the actual move is not a missed response, classify that as
+  missed lethal prevention.
+- If the viable escape/prevention point is earlier in the setup corridor, or the
+  model finds no viable late prevention at all, classify the loss as a missed
+  escape from the setup corridor.
 - If proof is bounded or unknown, label cautiously as a possible mistake or
   unclear boundary rather than overclaiming.
 
@@ -382,12 +380,10 @@ before onset:
   four threat.
 - `missed_imminent_response`: the losing side ignored a legal response or
   counter-threat against a forcing three threat.
-- `missed_escape`: the losing side responded to the local threat, but picked a
-  losing response while another response escaped the bounded corridor model.
-- `missed_lethal_prevention`: no simple response was missed, but a visible
-  escape/prevention candidate would have denied the lethal onset or corridor
-  entry.
-- `forced_loss`: the model found no legal escape before onset.
+- `missed_lethal_prevention`: immediately before lethal onset, the losing side
+  had a viable way to avoid onset but chose another non-obvious losing line.
+- `missed_escape`: the losing side failed to escape the setup corridor earlier,
+  or the model found no viable late prevention before onset.
 - `unclear`: the proof boundary is unknown or outside the scan window.
 
 Root-detail categories:

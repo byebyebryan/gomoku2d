@@ -81,7 +81,7 @@ inside the modeled corridor for the attacker to claim a forced win.
 | Term | Meaning |
 |------|---------|
 | Immediate threat | A four threat that wins next turn unless answered, such as a closed four or broken four. |
-| Imminent threat | A three threat that can become a four and creates a bounded reply set, such as an open three. |
+| Imminent threat | A three threat that can become a four and creates a bounded reply set, such as an open three. A compound imminent threat can also come from multiple individually non-forcing threes when the attacker has a legal one-step entry into lethal coverage. |
 | Lethal threat | A position-level threat where the defender has no legal single reply that avoids the attacker's terminal or already-known lethal continuation. |
 | Corridor entry | The move that starts the active corridor being analyzed. |
 | Full forced interval | The implementation/proof span from the detected forced start through the terminal move. Code keeps this as `final_forced_interval` because proof recursion still needs the full suffix. |
@@ -98,11 +98,12 @@ The shape vocabulary behind these terms lives in
 report fields live in [`game_analysis.md`](game_analysis.md).
 
 Implementation boundary: `gomoku-bot::tactical` owns raw local-threat facts and
-`CorridorThreatPolicy` owns corridor-specific interpretation of those facts:
-active-threat filtering, legal forcing continuations, defender reply generation,
-and attacker corridor-move ranking. `gomoku-bot::corridor` owns proof recursion,
-outcomes, diagnostics, and bridge-bot fallback behavior. It should not duplicate
-shape definitions or reply-selection rules.
+position-level threat obligations. `CorridorThreatPolicy` owns
+corridor-specific interpretation of local facts: active-threat filtering, legal
+forcing continuations, defender reply generation, and attacker corridor-move
+ranking. `gomoku-bot::corridor` owns proof recursion, outcomes, diagnostics,
+and bridge-bot fallback behavior. It should not duplicate shape definitions or
+reply-selection rules.
 
 ## Lethal Threats
 
@@ -144,6 +145,17 @@ search, but lethal detection cannot blindly suppress lower tiers. If the
 question is "what must the defender answer this move?", immediate threats can
 suppress imminent threats. If the question is "is this already winning?", the
 model must consider how immediate and imminent facts combine.
+
+The same coverage idea now feeds the shared position-obligation query used by
+search safety, corridor proof, web hints, and replay analysis. Direct imminent
+facts and compound imminent facts live at the same tier: immediate threats still
+suppress imminent replies, but a direct open/broken three must not suppress a
+separate compound imminent threat. Compound detection is a derived position
+fact, not a new local shape. It starts from cached rolling frontier facts when
+available, prefilters candidate entries from existing three-material facts, then
+only runs a bounded terminal-target coverage check on those entry candidates in
+hot search paths. The full lethal analyzer still keeps richer defender-cover
+details for reports and fixtures.
 
 The primary value is analysis and cleaner tactical semantics, but search
 integration is still worth testing. Lethal detection can compress proof depth:
@@ -276,11 +288,13 @@ Corridor reply generation is tiered before any proof search runs:
 
 1. Collect immediate replies first: direct blocks to the attacker's immediate
    wins, plus defender immediate wins.
-2. Collect imminent replies only when there are no immediate replies: direct
-   replies to active open/broken-three threats, plus legal counter-threats that
-   create an immediate threat for the defender.
+2. If there is no immediate obligation, collect imminent replies from the
+   shared position-obligation query: direct active open/broken-three replies,
+   compound imminent replies from one-step lethal entries, plus legal
+   counter-threats that create an immediate threat for the defender.
 3. Keep only the highest non-empty tier. Immediate replies suppress imminent
-   replies; multiple threats in the surviving tier all remain visible.
+   replies; direct and compound imminent threats live in the same surviving
+   tier.
 4. Render every surviving reply as a tactical box. Actual replay moves and
    Renju-forbidden Black replies are still visible markers, but they are not
    proof branches.
@@ -288,6 +302,10 @@ Corridor reply generation is tiered before any proof search runs:
    listed in report proof details.
 6. If no legal non-actual reply remains, the replay analyzer keeps walking
    backward through the actual line.
+
+The code mirrors this split: visible defender candidates drive UI/report
+markers, while probed defender candidates filter out actual replay context and
+illegal replies before corridor proof runs.
 
 This split keeps presentation and proof aligned. The report should not invent
 extra forbidden markers from lower-tier or future proof evidence; a forbidden
@@ -728,6 +746,8 @@ The future rolling contract should grow only when a consumer needs more detail:
   before it is played.
 - `active_threats(side)`: current immediate/imminent corridor threats for one
   side.
+- `threat_obligation(side)`: the highest-priority position-level obligation
+  imposed by one side, including compound imminent threats.
 - `corridor_replies(attacker)`: legal defender replies to the current active
   corridor threat.
 - `legal_forcing_continuations(attacker, fact)`: legal gain/completion moves

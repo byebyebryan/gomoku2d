@@ -12,7 +12,7 @@ use crate::pattern::{evaluate_pattern_scan, PatternFrame};
 use crate::tactical::{
     local_threat_facts_after_move, tactical_metrics_snapshot, CorridorThreatPolicy,
     LocalThreatKind, ScanThreatView, SearchThreatPolicy, TacticalMetrics, TacticalMoveAnnotation,
-    TacticalOrderingSummary, ThreatView,
+    TacticalOrderingSummary, ThreatObligationKind, ThreatView,
 };
 use crate::viability::{direction_bit, scan_cell_null, scan_cell_viability};
 use crate::Bot;
@@ -392,6 +392,11 @@ pub struct SearchMetrics {
     pub renju_effective_filter_ns: u64,
     pub renju_effective_filter_continuation_checks: u64,
     pub renju_effective_filter_continuation_ns: u64,
+    pub compound_imminent_queries: u64,
+    pub compound_imminent_ns: u64,
+    pub compound_imminent_prefilter_candidates: u64,
+    pub compound_imminent_confirmed_entries: u64,
+    pub compound_imminent_hits: u64,
     pub stage_move_gen_ns: u64,
     pub stage_ordering_ns: u64,
     pub stage_eval_ns: u64,
@@ -680,6 +685,21 @@ impl SearchMetrics {
             renju_effective_filter_continuation_ns: after
                 .renju_effective_filter_continuation_ns
                 .saturating_sub(before.renju_effective_filter_continuation_ns),
+            compound_imminent_queries: after
+                .compound_imminent_queries
+                .saturating_sub(before.compound_imminent_queries),
+            compound_imminent_ns: after
+                .compound_imminent_ns
+                .saturating_sub(before.compound_imminent_ns),
+            compound_imminent_prefilter_candidates: after
+                .compound_imminent_prefilter_candidates
+                .saturating_sub(before.compound_imminent_prefilter_candidates),
+            compound_imminent_confirmed_entries: after
+                .compound_imminent_confirmed_entries
+                .saturating_sub(before.compound_imminent_confirmed_entries),
+            compound_imminent_hits: after
+                .compound_imminent_hits
+                .saturating_sub(before.compound_imminent_hits),
         }
     }
 
@@ -755,6 +775,21 @@ impl SearchMetrics {
         self.renju_effective_filter_continuation_ns = self
             .renju_effective_filter_continuation_ns
             .saturating_add(delta.renju_effective_filter_continuation_ns);
+        self.compound_imminent_queries = self
+            .compound_imminent_queries
+            .saturating_add(delta.compound_imminent_queries);
+        self.compound_imminent_ns = self
+            .compound_imminent_ns
+            .saturating_add(delta.compound_imminent_ns);
+        self.compound_imminent_prefilter_candidates = self
+            .compound_imminent_prefilter_candidates
+            .saturating_add(delta.compound_imminent_prefilter_candidates);
+        self.compound_imminent_confirmed_entries = self
+            .compound_imminent_confirmed_entries
+            .saturating_add(delta.compound_imminent_confirmed_entries);
+        self.compound_imminent_hits = self
+            .compound_imminent_hits
+            .saturating_add(delta.compound_imminent_hits);
     }
 
     fn record_tactical_annotation(&mut self, phase: SearchMetricPhase) {
@@ -2161,24 +2196,20 @@ fn current_obligation_safety_policy_after_immediate(
     view: &impl ThreatView,
 ) -> SafetyFilterOutcome {
     let opponent = board.current_player.opponent();
-    let active_imminent_threats = view
-        .active_corridor_threats(opponent)
-        .into_iter()
-        .filter(|fact| CorridorThreatPolicy.is_visible_imminent_hint(board, opponent, fact))
-        .collect::<Vec<_>>();
-    if active_imminent_threats.is_empty() {
+    let Some(obligation) = view.threat_obligation(opponent) else {
+        return SafetyFilterOutcome {
+            moves: moves.to_vec(),
+            work_units: 0,
+        };
+    };
+    if obligation.kind != ThreatObligationKind::Imminent {
         return SafetyFilterOutcome {
             moves: moves.to_vec(),
             work_units: 0,
         };
     }
 
-    let replies = CorridorThreatPolicy.defender_reply_moves_for_active_threats(
-        board,
-        opponent,
-        active_imminent_threats,
-        None,
-    );
+    let replies = obligation.legal_replies;
     let mut work_units = moves.len() as u64;
     let filtered = moves
         .iter()
@@ -5385,11 +5416,15 @@ mod tests {
 
     #[test]
     fn trace_records_corridor_proof_config_and_metrics() {
+        let recorded_leaf_loss = [
+            112, 111, 127, 126, 97, 142, 113, 141, 82, 67, 96, 110, 94, 156, 171, 95, 128, 80, 65,
+            140, 125, 139, 143, 138,
+        ];
         let mut board = Board::new(RuleConfig::default());
-        apply_moves(&mut board, &["H8", "A1", "I8", "A2", "J8"]);
-        assert_eq!(board.current_player, Color::White);
+        apply_cell_moves(&mut board, &recorded_leaf_loss[..4]);
+        assert_eq!(board.current_player, Color::Black);
 
-        let mut config = SearchBotConfig::custom_depth(1);
+        let mut config = SearchBotConfig::custom_depth(3);
         config.safety_gate = SafetyGate::None;
         config.corridor_proof = CorridorProofConfig {
             enabled: true,

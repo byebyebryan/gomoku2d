@@ -9,6 +9,11 @@ pub struct TacticalMetrics {
     pub renju_effective_filter_ns: u64,
     pub renju_effective_filter_continuation_checks: u64,
     pub renju_effective_filter_continuation_ns: u64,
+    pub compound_imminent_queries: u64,
+    pub compound_imminent_ns: u64,
+    pub compound_imminent_prefilter_candidates: u64,
+    pub compound_imminent_confirmed_entries: u64,
+    pub compound_imminent_hits: u64,
 }
 
 thread_local! {
@@ -17,6 +22,11 @@ thread_local! {
         renju_effective_filter_ns: 0,
         renju_effective_filter_continuation_checks: 0,
         renju_effective_filter_continuation_ns: 0,
+        compound_imminent_queries: 0,
+        compound_imminent_ns: 0,
+        compound_imminent_prefilter_candidates: 0,
+        compound_imminent_confirmed_entries: 0,
+        compound_imminent_hits: 0,
     }) };
 }
 
@@ -68,6 +78,49 @@ fn record_renju_effective_filter_continuation() {
         current.renju_effective_filter_continuation_checks = current
             .renju_effective_filter_continuation_checks
             .saturating_add(1);
+        metrics.set(current);
+    });
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn record_compound_imminent_query(
+    elapsed: std::time::Duration,
+    prefilter_candidates: usize,
+    confirmed_entries: usize,
+) {
+    TACTICAL_METRICS.with(|metrics| {
+        let mut current = metrics.get();
+        current.compound_imminent_queries = current.compound_imminent_queries.saturating_add(1);
+        current.compound_imminent_ns = current
+            .compound_imminent_ns
+            .saturating_add(u64::try_from(elapsed.as_nanos()).unwrap_or(u64::MAX).max(1));
+        current.compound_imminent_prefilter_candidates = current
+            .compound_imminent_prefilter_candidates
+            .saturating_add(prefilter_candidates as u64);
+        current.compound_imminent_confirmed_entries = current
+            .compound_imminent_confirmed_entries
+            .saturating_add(confirmed_entries as u64);
+        if confirmed_entries > 0 {
+            current.compound_imminent_hits = current.compound_imminent_hits.saturating_add(1);
+        }
+        metrics.set(current);
+    });
+}
+
+#[cfg(target_arch = "wasm32")]
+fn record_compound_imminent_query(prefilter_candidates: usize, confirmed_entries: usize) {
+    TACTICAL_METRICS.with(|metrics| {
+        let mut current = metrics.get();
+        current.compound_imminent_queries = current.compound_imminent_queries.saturating_add(1);
+        current.compound_imminent_prefilter_candidates = current
+            .compound_imminent_prefilter_candidates
+            .saturating_add(prefilter_candidates as u64);
+        current.compound_imminent_confirmed_entries = current
+            .compound_imminent_confirmed_entries
+            .saturating_add(confirmed_entries as u64);
+        if confirmed_entries > 0 {
+            current.compound_imminent_hits = current.compound_imminent_hits.saturating_add(1);
+        }
         metrics.set(current);
     });
 }
@@ -133,6 +186,26 @@ pub enum DefenderReplyRole {
 pub struct DefenderReplyCandidate {
     pub mv: Move,
     pub roles: Vec<DefenderReplyRole>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ThreatObligationKind {
+    Immediate,
+    Imminent,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ThreatObligation {
+    pub attacker: Color,
+    pub defender: Color,
+    pub kind: ThreatObligationKind,
+    pub local_facts: Vec<LocalThreatFact>,
+    pub compound_entries: Vec<OneStepLethalEntry>,
+    /// Empty response squares relevant to this obligation, before defender-side
+    /// legality filtering. Analysis uses these to show forbidden responses.
+    pub candidate_replies: Vec<Move>,
+    /// Legal defender responses usable by search/safety gates.
+    pub legal_replies: Vec<Move>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -543,12 +616,21 @@ impl CorridorThreatPolicy {
         attacker: Color,
         actual_reply: Option<Move>,
     ) -> Vec<Move> {
-        self.defender_reply_moves_for_active_threats(
+        let mut replies = threat_obligation_from_facts(
             board,
             attacker,
-            self.active_threats(board, attacker),
-            actual_reply,
+            board.immediate_winning_moves_for(attacker),
+            raw_local_threat_facts_for_player(board, attacker),
         )
+        .map(|obligation| obligation.legal_replies)
+        .unwrap_or_default();
+        if let Some(mv) = actual_reply {
+            if board.is_legal_for_color(mv, attacker.opponent()) {
+                push_unique_move(&mut replies, mv);
+            }
+        }
+        normalize_moves(&mut replies);
+        replies
     }
 
     pub fn defender_reply_moves_for_active_threats(
@@ -620,6 +702,8 @@ pub trait ThreatView {
     fn candidate_corridor_entry_rank(&self, attacker: Color, mv: Move) -> u8;
     /// Active immediate/imminent corridor threats for `attacker` on this board.
     fn active_corridor_threats(&self, attacker: Color) -> Vec<LocalThreatFact>;
+    /// Highest-priority position-level obligation currently imposed by `attacker`.
+    fn threat_obligation(&self, attacker: Color) -> Option<ThreatObligation>;
     /// True when `mv` is already occupied by `attacker` and that local move is
     /// itself part of an active corridor threat.
     fn has_move_local_corridor_entry(&self, attacker: Color, mv: Move) -> bool;
@@ -787,6 +871,15 @@ impl ThreatView for ScanThreatView<'_> {
 
     fn active_corridor_threats(&self, attacker: Color) -> Vec<LocalThreatFact> {
         CorridorThreatPolicy.active_threats(self.board, attacker)
+    }
+
+    fn threat_obligation(&self, attacker: Color) -> Option<ThreatObligation> {
+        threat_obligation_from_facts(
+            self.board,
+            attacker,
+            self.immediate_winning_moves_for(attacker),
+            raw_local_threat_facts_for_player(self.board, attacker),
+        )
     }
 
     fn has_move_local_corridor_entry(&self, attacker: Color, mv: Move) -> bool {
@@ -1103,6 +1196,90 @@ fn forcing_continuation_squares(fact: &LocalThreatFact) -> &[Move] {
     }
 }
 
+pub fn threat_obligation_from_facts(
+    board: &Board,
+    attacker: Color,
+    mut immediate_targets: Vec<Move>,
+    facts: impl IntoIterator<Item = LocalThreatFact>,
+) -> Option<ThreatObligation> {
+    let defender = attacker.opponent();
+    if board.current_player != defender || board.result != GameResult::Ongoing {
+        return None;
+    }
+
+    normalize_moves(&mut immediate_targets);
+    if !immediate_targets.is_empty() {
+        let legal_replies = legal_defender_replies(board, defender, &immediate_targets);
+        return Some(ThreatObligation {
+            attacker,
+            defender,
+            kind: ThreatObligationKind::Immediate,
+            local_facts: Vec::new(),
+            compound_entries: Vec::new(),
+            candidate_replies: immediate_targets,
+            legal_replies,
+        });
+    }
+
+    let facts = normalize_local_threat_facts(
+        facts
+            .into_iter()
+            .filter(|fact| fact.player == attacker)
+            .collect(),
+    );
+    let policy = CorridorThreatPolicy;
+    let local_facts = policy
+        .active_threats_from_facts(board, attacker, facts.iter().cloned())
+        .into_iter()
+        .filter(|fact| {
+            matches!(
+                fact.kind,
+                LocalThreatKind::OpenThree | LocalThreatKind::BrokenThree
+            )
+        })
+        .collect::<Vec<_>>();
+    let compound_entries = compound_imminent_entries_from_facts(board, attacker, facts.iter());
+
+    let mut candidate_replies = Vec::new();
+    for fact in &local_facts {
+        add_corridor_defender_candidate_replies_for_fact(
+            board,
+            attacker,
+            defender,
+            fact,
+            &mut candidate_replies,
+        );
+    }
+    for mv in compound_imminent_candidate_replies_for_entries(board, attacker, &compound_entries) {
+        push_unique_move(&mut candidate_replies, mv);
+    }
+    normalize_moves(&mut candidate_replies);
+    if candidate_replies.is_empty() {
+        return None;
+    }
+
+    let legal_replies = legal_defender_replies(board, defender, &candidate_replies);
+    Some(ThreatObligation {
+        attacker,
+        defender,
+        kind: ThreatObligationKind::Imminent,
+        local_facts,
+        compound_entries,
+        candidate_replies,
+        legal_replies,
+    })
+}
+
+fn legal_defender_replies(board: &Board, defender: Color, candidates: &[Move]) -> Vec<Move> {
+    let mut legal = candidates
+        .iter()
+        .copied()
+        .filter(|&mv| board.is_legal_for_color(mv, defender))
+        .collect::<Vec<_>>();
+    normalize_moves(&mut legal);
+    legal
+}
+
 pub(crate) fn defender_reply_candidates_from_view<V: ThreatView + ?Sized>(
     board: &Board,
     view: &V,
@@ -1113,39 +1290,26 @@ pub(crate) fn defender_reply_candidates_from_view<V: ThreatView + ?Sized>(
         return Vec::new();
     }
 
-    let winning_squares = view.immediate_winning_moves_for(attacker);
     let defender = attacker.opponent();
-    let defender_wins = view.immediate_winning_moves_for(defender);
     let mut replies = Vec::<DefenderReplyCandidate>::new();
 
-    for mv in winning_squares.iter().copied() {
-        push_reply_role(&mut replies, mv, DefenderReplyRole::ImmediateDefense);
-    }
-    for mv in defender_wins {
-        push_reply_role(&mut replies, mv, DefenderReplyRole::OffensiveCounter);
-    }
-    if winning_squares.is_empty() && replies.is_empty() {
-        let policy = CorridorThreatPolicy;
-        let imminent_facts = view
-            .active_corridor_threats(attacker)
-            .into_iter()
-            .filter(|fact| policy.is_visible_imminent_hint(board, attacker, fact))
-            .collect::<Vec<_>>();
-        let mut imminent_reply_moves = Vec::new();
-        for fact in &imminent_facts {
-            add_corridor_defender_candidate_replies_for_fact(
-                board,
-                attacker,
-                defender,
-                fact,
-                &mut imminent_reply_moves,
-            );
-        }
-        for mv in imminent_reply_moves {
-            push_reply_role(&mut replies, mv, DefenderReplyRole::ImminentDefense);
-        }
-        for mv in offensive_counter_reply_moves(board, defender) {
+    if let Some(obligation) = view.threat_obligation(attacker) {
+        for mv in view.immediate_winning_moves_for(defender) {
             push_reply_role(&mut replies, mv, DefenderReplyRole::OffensiveCounter);
+        }
+
+        let role = match obligation.kind {
+            ThreatObligationKind::Immediate => DefenderReplyRole::ImmediateDefense,
+            ThreatObligationKind::Imminent => DefenderReplyRole::ImminentDefense,
+        };
+        for mv in obligation.candidate_replies {
+            push_reply_role(&mut replies, mv, role);
+        }
+
+        if obligation.kind == ThreatObligationKind::Imminent {
+            for mv in offensive_counter_reply_moves(board, defender) {
+                push_reply_role(&mut replies, mv, DefenderReplyRole::OffensiveCounter);
+            }
         }
     }
     if let Some(mv) = actual_reply {
@@ -1165,44 +1329,19 @@ pub fn defender_hint_reply_candidates_from_view<V: ThreatView + ?Sized>(
     }
 
     let defender = attacker.opponent();
-    let policy = CorridorThreatPolicy;
     let mut replies = Vec::<DefenderReplyCandidate>::new();
 
-    let winning_squares = view.immediate_winning_moves_for(attacker);
-    for mv in winning_squares.iter().copied() {
-        if board.is_legal_for_color(mv, defender) {
-            push_reply_role(&mut replies, mv, DefenderReplyRole::ImmediateDefense);
+    if let Some(obligation) = view.threat_obligation(attacker) {
+        let role = match obligation.kind {
+            ThreatObligationKind::Immediate => DefenderReplyRole::ImmediateDefense,
+            ThreatObligationKind::Imminent => DefenderReplyRole::ImminentDefense,
+        };
+        for mv in obligation.legal_replies {
+            push_reply_role(&mut replies, mv, role);
         }
-    }
-    if !winning_squares.is_empty() {
-        return replies;
-    }
-
-    let imminent_facts = view
-        .active_corridor_threats(attacker)
-        .into_iter()
-        .filter(|fact| policy.is_visible_imminent_hint(board, attacker, fact))
-        .collect::<Vec<_>>();
-    let mut imminent_reply_moves = Vec::new();
-    for fact in &imminent_facts {
-        add_corridor_defender_replies_for_fact(
-            board,
-            attacker,
-            defender,
-            fact,
-            &mut imminent_reply_moves,
-        );
-    }
-    for mv in imminent_reply_moves {
-        push_reply_role(&mut replies, mv, DefenderReplyRole::ImminentDefense);
-    }
-
-    let has_imminent_reply = replies.iter().any(|candidate| {
-        candidate
-            .roles
-            .contains(&DefenderReplyRole::ImminentDefense)
-    });
-    if has_imminent_reply {
+        if obligation.kind == ThreatObligationKind::Immediate {
+            return replies;
+        }
         for mv in offensive_counter_reply_moves(board, defender) {
             push_reply_role(&mut replies, mv, DefenderReplyRole::OffensiveCounter);
         }
@@ -1222,6 +1361,199 @@ fn offensive_counter_reply_moves(board: &Board, defender: Color) -> Vec<Move> {
                 && !next.immediate_winning_moves_for(defender).is_empty()
         })
         .collect()
+}
+
+fn compound_imminent_candidate_replies_for_entries(
+    board: &Board,
+    attacker: Color,
+    entries: &[OneStepLethalEntry],
+) -> Vec<Move> {
+    let mut candidates = Vec::new();
+    for entry in entries {
+        push_unique_move(&mut candidates, entry.mv);
+        for &target in &entry.terminal_targets {
+            push_unique_move(&mut candidates, target);
+        }
+    }
+
+    let mut replies = Vec::new();
+    for mv in candidates {
+        if !board.is_empty(mv.row, mv.col) {
+            continue;
+        }
+        if defender_move_neutralizes_compound_imminent(board, attacker, mv) {
+            push_unique_move(&mut replies, mv);
+        }
+    }
+    normalize_moves(&mut replies);
+    replies
+}
+
+fn defender_move_neutralizes_compound_imminent(board: &Board, attacker: Color, mv: Move) -> bool {
+    let defender = attacker.opponent();
+    if !board.is_empty(mv.row, mv.col) {
+        return false;
+    }
+
+    let mut after_reply = board.clone();
+    after_reply.current_player = defender;
+    match after_reply.apply_trusted_legal_move(mv) {
+        GameResult::Winner(winner) => winner == defender,
+        GameResult::Draw => true,
+        GameResult::Ongoing => {
+            after_reply.immediate_winning_moves_for(attacker).is_empty()
+                && compound_imminent_entries(&after_reply, attacker).is_empty()
+        }
+    }
+}
+
+fn compound_imminent_entries(board: &Board, attacker: Color) -> Vec<OneStepLethalEntry> {
+    compound_imminent_entries_from_facts(
+        board,
+        attacker,
+        raw_local_threat_facts_for_player(board, attacker).iter(),
+    )
+}
+
+fn compound_imminent_entries_from_facts<'a>(
+    board: &Board,
+    attacker: Color,
+    facts: impl IntoIterator<Item = &'a LocalThreatFact>,
+) -> Vec<OneStepLethalEntry> {
+    #[cfg(not(target_arch = "wasm32"))]
+    let start = std::time::Instant::now();
+
+    let material = normalize_local_threat_facts(
+        facts
+            .into_iter()
+            .filter(|fact| fact.player == attacker)
+            .cloned()
+            .filter(|fact| {
+                matches!(
+                    fact.kind,
+                    LocalThreatKind::OpenThree
+                        | LocalThreatKind::ClosedThree
+                        | LocalThreatKind::BrokenThree
+                )
+            })
+            .collect(),
+    );
+    if material.len() < 2 {
+        #[cfg(not(target_arch = "wasm32"))]
+        record_compound_imminent_query(start.elapsed(), 0, 0);
+        #[cfg(target_arch = "wasm32")]
+        record_compound_imminent_query(0, 0);
+        return Vec::new();
+    }
+
+    let candidates = compound_imminent_entry_candidates(board, &material);
+
+    let mut entries = Vec::new();
+    for mv in candidates.iter().copied() {
+        if let Some(entry) = compound_imminent_entry(board, attacker, mv) {
+            entries.push(entry);
+        }
+    }
+    entries.sort_by_key(|entry| (entry.mv.row, entry.mv.col));
+    entries.dedup_by_key(|entry| (entry.mv.row, entry.mv.col));
+    #[cfg(not(target_arch = "wasm32"))]
+    record_compound_imminent_query(start.elapsed(), candidates.len(), entries.len());
+    #[cfg(target_arch = "wasm32")]
+    record_compound_imminent_query(candidates.len(), entries.len());
+    entries
+}
+
+fn compound_imminent_entry_candidates(board: &Board, material: &[LocalThreatFact]) -> Vec<Move> {
+    let mut candidates = Vec::new();
+    for fact in material {
+        let mut moves = materialization_squares_for_fact(board, fact)
+            .into_iter()
+            .filter(|mv| board.is_empty(mv.row, mv.col))
+            .collect::<Vec<_>>();
+        normalize_moves(&mut moves);
+        for mv in moves {
+            push_unique_move(&mut candidates, mv);
+        }
+    }
+    normalize_moves(&mut candidates);
+    candidates
+}
+
+fn materialization_squares_for_fact(board: &Board, fact: &LocalThreatFact) -> Vec<Move> {
+    let mut moves = forcing_continuation_squares(fact).to_vec();
+    let origin = fact.origin_move();
+    for &mv in forcing_continuation_squares(fact) {
+        let dr = (mv.row as isize - origin.row as isize).signum();
+        let dc = (mv.col as isize - origin.col as isize).signum();
+        if dr == 0 && dc == 0 {
+            continue;
+        }
+        let outer_row = mv.row as isize + dr;
+        let outer_col = mv.col as isize + dc;
+        if in_bounds(board, outer_row, outer_col)
+            && board.is_empty(outer_row as usize, outer_col as usize)
+        {
+            push_unique_move(
+                &mut moves,
+                Move {
+                    row: outer_row as usize,
+                    col: outer_col as usize,
+                },
+            );
+        }
+    }
+    normalize_moves(&mut moves);
+    moves
+}
+
+fn compound_imminent_entry(board: &Board, attacker: Color, mv: Move) -> Option<OneStepLethalEntry> {
+    let mut attacker_turn = board.clone();
+    attacker_turn.current_player = attacker;
+    if !attacker_turn.is_legal_for_color(mv, attacker) {
+        return None;
+    }
+
+    match attacker_turn.apply_trusted_legal_move(mv) {
+        GameResult::Winner(winner) if winner == attacker => Some(OneStepLethalEntry {
+            mv,
+            terminal_targets: vec![mv],
+        }),
+        GameResult::Winner(_) | GameResult::Draw => None,
+        GameResult::Ongoing => terminal_targets_if_lethal_after_entry(&attacker_turn, attacker)
+            .map(|terminal_targets| OneStepLethalEntry {
+                mv,
+                terminal_targets,
+            }),
+    }
+}
+
+fn terminal_targets_if_lethal_after_entry(board: &Board, attacker: Color) -> Option<Vec<Move>> {
+    let defender = attacker.opponent();
+    if board.result != GameResult::Ongoing || board.current_player != defender {
+        return None;
+    }
+
+    let mut terminal_targets = board.immediate_winning_moves_for(attacker);
+    normalize_moves(&mut terminal_targets);
+    if terminal_targets.is_empty() {
+        return None;
+    }
+
+    let mut defender_wins = board.immediate_winning_moves_for(defender);
+    normalize_moves(&mut defender_wins);
+    if !defender_wins.is_empty() {
+        return None;
+    }
+
+    let legal_covers = terminal_targets
+        .iter()
+        .filter(|&&mv| board.is_legal_for_color(mv, defender))
+        .count();
+    if terminal_targets.len() >= 2 || legal_covers == 0 {
+        Some(terminal_targets)
+    } else {
+        None
+    }
 }
 
 fn terminal_threat_covering_replies(board: &Board, attacker: Color) -> Vec<Move> {
@@ -1930,7 +2262,7 @@ mod tests {
         raw_local_threat_facts_for_player, terminal_lethal_threat, terminal_lethal_threat_analysis,
         CorridorThreatPolicy, DefenderReplyCandidate, DefenderReplyRole, LethalThreatKind,
         LocalThreatFact, LocalThreatKind, LocalThreatOrigin, ScanThreatView, SearchThreatPolicy,
-        ThreatView,
+        ThreatObligationKind, ThreatView,
     };
     use gomoku_core::{Board, Color, Move, RuleConfig, Variant};
 
@@ -2603,6 +2935,21 @@ mod tests {
     }
 
     #[test]
+    fn defender_reply_candidates_require_imminent_threat_for_counter() {
+        let board = board_from_moves(Variant::Freestyle, &["H8", "A1", "I8", "O1", "J8", "A15"]);
+        assert_eq!(board.current_player, Color::Black);
+
+        let candidates = defender_reply_candidates(&board, Color::White, None);
+
+        assert!(
+            candidates.iter().all(|candidate| !candidate
+                .roles
+                .contains(&DefenderReplyRole::OffensiveCounter)),
+            "quiet positions should not expose offensive counters as corridor replies: {candidates:?}"
+        );
+    }
+
+    #[test]
     fn defender_hint_candidates_prioritize_immediate_replies_over_imminent_replies() {
         let board = board_from_moves(
             Variant::Freestyle,
@@ -2690,6 +3037,45 @@ mod tests {
     }
 
     #[test]
+    fn defender_reply_candidates_cover_combo_from_individually_nonforcing_threes() {
+        let board = board_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "I9", "G8", "H6", "F8", "I8", "I7", "G9", "H9", "E6", "I10", "J11", "H10",
+                "H11", "G10", "F10", "E8", "D8", "F11", "E9", "G11", "F6", "G6", "E7", "G5", "D6",
+                "E12", "D13", "G4", "G7", "G3", "G2",
+            ],
+        );
+        assert_eq!(board.current_player, Color::Black);
+
+        let obligation = ScanThreatView::new(&board)
+            .threat_obligation(Color::White)
+            .expect("compound imminent threat should produce a position obligation");
+        assert_eq!(obligation.kind, ThreatObligationKind::Imminent);
+        assert!(
+            obligation
+                .compound_entries
+                .iter()
+                .any(|entry| entry.mv == mv("B6")),
+            "B6 should be recognized as a one-step entry into lethal coverage: {obligation:?}"
+        );
+
+        let candidates = defender_reply_candidates(&board, Color::White, Some(mv("B6")));
+
+        assert!(
+            has_reply_role(&candidates, "B6", DefenderReplyRole::ImminentDefense),
+            "B6 should be visible as a defensive reply to the combined imminent threat: {candidates:?}"
+        );
+        assert!(has_reply_role(&candidates, "B6", DefenderReplyRole::Actual));
+        for notation in ["J10", "K10"] {
+            assert!(
+                has_reply_role(&candidates, notation, DefenderReplyRole::OffensiveCounter),
+                "{notation} should remain visible as counter-threat escape: {candidates:?}"
+            );
+        }
+    }
+
+    #[test]
     fn raw_after_move_and_existing_board_facts_share_shape_logic() {
         assert_raw_fact_parity(
             &["H8", "A1", "I8", "A2"],
@@ -2768,7 +3154,7 @@ mod tests {
         );
         assert_eq!(
             corridor_defender_reply_moves(&existing, Color::Black, None),
-            vec![mv("I8"), mv("G8"), mv("L8")]
+            vec![mv("G8"), mv("I8"), mv("L8")]
         );
     }
 

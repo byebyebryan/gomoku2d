@@ -113,7 +113,7 @@ pub fn analyze_alternate_defender_reply_options(
     analyze_defender_reply_options_inner(board, attacker, None, excluded_reply, options)
 }
 
-pub fn defender_reply_candidates(
+pub fn visible_defender_reply_candidates(
     board: &Board,
     attacker: Color,
     actual_reply: Option<Move>,
@@ -121,13 +121,13 @@ pub fn defender_reply_candidates(
     tactical_defender_reply_candidates(board, attacker, actual_reply)
 }
 
-pub fn defender_model_reply_candidates(
+pub fn probed_defender_reply_candidates(
     board: &Board,
     attacker: Color,
     actual_reply: Option<Move>,
 ) -> Vec<DefenderReplyCandidate> {
     let defender = attacker.opponent();
-    defender_reply_candidates(board, attacker, actual_reply)
+    visible_defender_reply_candidates(board, attacker, actual_reply)
         .into_iter()
         .filter(|candidate| {
             !candidate.roles.contains(&DefenderReplyRole::Actual)
@@ -141,7 +141,7 @@ pub fn defender_reply_roles_for_move(
     attacker: Color,
     mv: Move,
 ) -> Vec<DefenderReplyRole> {
-    defender_reply_candidates(board, attacker, None)
+    visible_defender_reply_candidates(board, attacker, None)
         .into_iter()
         .find_map(|candidate| (candidate.mv == mv).then_some(candidate.roles))
         .unwrap_or_default()
@@ -155,7 +155,7 @@ fn analyze_defender_reply_options_inner(
     options: &CorridorOptions,
 ) -> Vec<DefenderReplyAnalysis> {
     let defender = attacker.opponent();
-    defender_reply_candidates(board, attacker, actual_reply)
+    visible_defender_reply_candidates(board, attacker, actual_reply)
         .into_iter()
         .filter(|candidate| excluded_reply != Some(candidate.mv))
         .filter(|candidate| board.is_legal_for_color(candidate.mv, defender))
@@ -657,9 +657,9 @@ fn extend_limit_causes(
 #[cfg(test)]
 mod tests {
     use super::{
-        analyze_defender_reply_options, defender_model_reply_candidates, defender_reply_candidates,
-        is_corridor_attacker_move, CorridorOptions, DefenderReplyOutcome, DefenderReplyRole,
-        ProofLimitCause,
+        analyze_defender_reply_options, is_corridor_attacker_move,
+        probed_defender_reply_candidates, visible_defender_reply_candidates, CorridorOptions,
+        DefenderReplyOutcome, DefenderReplyRole, ProofLimitCause,
     };
     use gomoku_core::{Board, Color, Move, RuleConfig, Variant};
 
@@ -811,7 +811,7 @@ mod tests {
             "G10 is a renju-forbidden direct defense for Black in this fixture"
         );
 
-        let visible = defender_reply_candidates(&board, Color::White, None);
+        let visible = visible_defender_reply_candidates(&board, Color::White, None);
         assert!(
             visible.iter().any(|candidate| candidate.mv == mv("G10")
                 && candidate
@@ -820,7 +820,7 @@ mod tests {
             "forbidden direct defenses should remain visible candidates: {visible:?}"
         );
 
-        let probed = defender_model_reply_candidates(&board, Color::White, None);
+        let probed = probed_defender_reply_candidates(&board, Color::White, None);
         assert!(
             probed.iter().all(|candidate| candidate.mv != mv("G10")),
             "forbidden candidates should be rendered, not probed: {probed:?}"
@@ -828,7 +828,7 @@ mod tests {
     }
 
     #[test]
-    fn model_reply_candidates_filter_actual_context_moves() {
+    fn probed_reply_candidates_filter_actual_context_moves() {
         let board = board_from_moves(
             Variant::Renju,
             &[
@@ -838,7 +838,7 @@ mod tests {
         );
         assert_eq!(board.current_player, Color::Black);
 
-        let visible = defender_reply_candidates(&board, Color::White, Some(mv("C8")));
+        let visible = visible_defender_reply_candidates(&board, Color::White, Some(mv("C8")));
         assert!(
             visible.iter().any(|candidate| candidate.mv == mv("C8")
                 && candidate.roles.contains(&DefenderReplyRole::Actual)
@@ -848,7 +848,7 @@ mod tests {
             "the actual reply should remain visible with its tactical role: {visible:?}"
         );
 
-        let probed = defender_model_reply_candidates(&board, Color::White, Some(mv("C8")));
+        let probed = probed_defender_reply_candidates(&board, Color::White, Some(mv("C8")));
         assert!(
             probed.iter().all(|candidate| candidate.mv != mv("C8")),
             "the actual replay move is context, not a branch to prove: {probed:?}"
