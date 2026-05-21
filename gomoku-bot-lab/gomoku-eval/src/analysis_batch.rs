@@ -750,40 +750,30 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
     .marker--imminent-defense,
     .marker--offensive-counter,
     .marker--corridor-entry-black,
-    .marker--corridor-entry-white {{
-      --proof-hint-color: transparent;
-    }}
+    .marker--corridor-entry-white,
     .marker--winning-evidence,
     .marker--threat-evidence,
     .marker--imminent-evidence,
     .marker--offensive-evidence {{
-      --proof-evidence-color: transparent;
+      --proof-hint-color: transparent;
     }}
     .marker--winning::after,
     .marker--threat::after,
     .marker--imminent-defense::after,
     .marker--offensive-counter::after,
     .marker--corridor-entry-black::after,
-    .marker--corridor-entry-white::after {{
+    .marker--corridor-entry-white::after,
+    .marker--winning-evidence::after,
+    .marker--threat-evidence::after,
+    .marker--imminent-evidence::after,
+    .marker--offensive-evidence::after {{
       content: "";
       position: absolute;
-      inset: 0;
+      inset: -1px;
       z-index: 3;
       pointer-events: none;
-      box-shadow: inset 0 0 0 2px var(--proof-hint-color);
-      transform: translateY(-1px);
-    }}
-    .marker--winning-evidence::before,
-    .marker--threat-evidence::before,
-    .marker--imminent-evidence::before,
-    .marker--offensive-evidence::before {{
-      content: "";
-      position: absolute;
-      inset: 3px;
-      z-index: 2;
-      pointer-events: none;
-      border-radius: 999px;
-      box-shadow: inset 0 0 0 2px var(--proof-evidence-color);
+      border: 2px solid var(--proof-hint-color);
+      box-sizing: border-box;
       transform: translateY(-1px);
     }}
     .marker--winning {{
@@ -799,16 +789,16 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       --proof-hint-color: var(--purple);
     }}
     .marker--winning-evidence {{
-      --proof-evidence-color: var(--green);
+      --proof-hint-color: var(--green);
     }}
     .marker--threat-evidence {{
-      --proof-evidence-color: var(--red);
+      --proof-hint-color: var(--red);
     }}
     .marker--imminent-evidence {{
-      --proof-evidence-color: var(--pink);
+      --proof-hint-color: var(--pink);
     }}
     .marker--offensive-evidence {{
-      --proof-evidence-color: var(--purple);
+      --proof-hint-color: var(--purple);
     }}
     .marker--corridor-entry-black {{
       --proof-hint-color: #050505;
@@ -820,31 +810,34 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
     }}
     .marker--actual-black .proof-marker {{
       color: #07090c;
-      text-shadow: 0 1px 0 rgba(255,255,255,0.36);
     }}
     .marker--actual-white .proof-marker {{
       color: #f6eed8;
-      text-shadow: 0 1px 0 #000;
     }}
     .proof-cell--stone-black.marker--actual .proof-marker {{
       color: var(--text);
-      text-shadow: 0 1px 0 #000;
     }}
     .marker--side-black .proof-marker {{
       color: #07090c;
-      text-shadow: 0 1px 0 rgba(255,255,255,0.36);
     }}
     .marker--side-white .proof-marker {{
       color: #f6eed8;
-      text-shadow: 0 1px 0 #000;
     }}
     .marker--confirmed-escape .proof-marker {{
       color: var(--green);
-      text-shadow: 0 1px 0 rgba(0,0,0,0.45);
     }}
     .marker--possible-escape .proof-marker {{
       color: var(--cyan);
-      text-shadow: 0 1px 0 rgba(0,0,0,0.45);
+    }}
+    .marker--forbidden .proof-marker,
+    .marker--forced-loss .proof-marker,
+    .marker--immediate-loss .proof-marker {{
+      color: var(--red);
+    }}
+    .marker--immediate-loss .proof-marker {{
+      font-size: 16px;
+      font-weight: 1000;
+      transform: translateY(-2px) scaleX(1.16);
     }}
     .marker--unknown-outcome .proof-marker {{
       color: var(--muted);
@@ -875,10 +868,6 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
     .legend-imminent::before {{ color: var(--pink); }}
     .legend-offensive::before {{ color: var(--purple); }}
     .legend-corridor-entry::before {{ color: #fff; }}
-    .legend-forbidden .legend-marker {{
-      color: #f6eed8;
-      text-shadow: 0 1px 0 #000;
-    }}
     .legend-outcome {{
       display: inline-flex;
       align-items: baseline;
@@ -887,11 +876,14 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
     .legend-marker {{
       font-weight: 900;
       letter-spacing: 0.02em;
-      text-shadow: 0 1px 0 rgba(0,0,0,0.45);
     }}
     .legend-marker--white {{
       color: #f6eed8;
-      text-shadow: 0 1px 0 #000;
+    }}
+    .legend-immediate-loss .legend-marker,
+    .legend-forced .legend-marker,
+    .legend-forbidden .legend-marker {{
+      color: var(--red);
     }}
     .legend-confirmed .legend-marker {{
       color: var(--green);
@@ -1094,8 +1086,8 @@ fn analysis_entry_detail_sections_html(entry: &AnalysisBatchEntry) -> String {
     let mut details = Vec::new();
     if let Some(failure) = entry.failure.as_ref() {
         details.push(detail_html(
-            "Failure",
-            &failure_detail_label(failure, entry.lethal_onset.as_ref()),
+            "Failure step",
+            &failure_step_label(failure, entry.lethal_onset.as_ref()),
         ));
         if let Some(candidates) = failure_candidates_label(failure) {
             details.push(detail_html("Missed candidates", &candidates));
@@ -1407,23 +1399,13 @@ fn failure_critical_ply_label(failure: Option<&FailureAnalysis>) -> String {
         .unwrap_or_else(|| "-".to_string())
 }
 
-fn failure_detail_label(failure: &FailureAnalysis, onset: Option<&LethalOnset>) -> String {
-    let side = match failure.side {
-        Color::Black => "Black",
-        Color::White => "White",
-    };
-    let actual = failure.actual_notation.as_deref().unwrap_or("-");
-    let prefix = failure
-        .prefix_ply
-        .map(|ply| ply.to_string())
-        .unwrap_or_else(|| "-".to_string());
-    format!(
-        "{} / {} / before ply {} / actual {}",
-        failure_mode_text(failure.mode, onset),
-        side,
-        prefix,
-        actual
-    )
+fn failure_step_label(failure: &FailureAnalysis, onset: Option<&LethalOnset>) -> String {
+    let reason = failure_mode_text(failure.mode, onset);
+    failure
+        .actual_notation
+        .as_deref()
+        .map(|actual| format!("{actual}: {reason}"))
+        .unwrap_or(reason)
 }
 
 fn failure_candidates_label(failure: &FailureAnalysis) -> Option<String> {
@@ -1432,13 +1414,8 @@ fn failure_candidates_label(failure: &FailureAnalysis) -> Option<String> {
             .missed_candidates
             .iter()
             .map(|candidate| {
-                let roles = reply_roles_label(&candidate.roles);
                 let outcome = missed_candidate_outcome_label(candidate.outcome);
-                if roles.is_empty() {
-                    format!("{} ({})", candidate.notation, outcome)
-                } else {
-                    format!("{}: {} ({})", candidate.notation, roles, outcome)
-                }
+                format!("{}: {}", candidate.notation, outcome)
             })
             .collect::<Vec<_>>()
             .join(", ")
@@ -3131,7 +3108,9 @@ mod tests {
         assert!(html.contains("<span>Game len</span><strong>9 ply</strong>"));
         assert!(html.contains("<span>Failure</span><strong>missed 4</strong>"));
         assert!(html.contains("<span>Critical ply</span><strong>7</strong>"));
-        assert!(html.contains("<span>Missed candidates</span><strong>L8: immediate"));
+        assert!(html.contains("<span>Failure step</span><strong>B1: missed 4</strong>"));
+        assert!(html.contains("<span>Missed candidates</span><strong>L8:"));
+        assert!(!html.contains("<span>Missed candidates</span><strong>L8: immediate"));
         assert!(!html.contains("<span>Time</span>"));
 
         let _ = fs::remove_dir_all(&dir);
@@ -3884,6 +3863,13 @@ mod tests {
             ],
         };
         assert_eq!(marker_label(&forbidden_threat), "F");
+
+        let immediate_loss = AnalysisBatchProofMarker {
+            mv,
+            notation: mv.to_notation(),
+            kinds: vec![AnalysisBatchProofMarkerKind::ImmediateLoss],
+        };
+        assert_eq!(marker_label(&immediate_loss), "!");
 
         let possible_escape = AnalysisBatchProofMarker {
             mv,
