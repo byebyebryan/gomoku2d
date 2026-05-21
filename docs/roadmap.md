@@ -439,21 +439,25 @@ separate setup corridor from lethal tail, improves the timeline/status language,
 and keeps last-move animation readable without breaking stone removal. This is
 still a hardening release, not the start of a new UI theme line.
 
-`0.4.8` is the only analyzer feature that still plausibly belongs before the
-`0.5` polish line: human/bot mistake detection. The current analyzer mostly
-assumes ideal response play inside a detected corridor. A better mistake model
-should classify actual replay deviations from the response candidate set, while
-not blaming moves after lethal onset where every response is already losing.
-Keep this scoped to analyzer semantics and minimal replay/report labels; broader
-presentation work belongs to `0.5`.
+`0.4.8` wraps the `0.4` lab-powered line with the last analyzer feature that
+belongs before the `0.5` polish pass: human/bot mistake detection. The analyzer
+now classifies losing-side failures from response semantics rather than from
+corridor length: missed immediate wins, missed four replies, missed forcing-
+three replies, missed lethal prevention, missed setup-corridor escape, and
+unclear boundaries. It also carries threat evidence into the replay board and
+static analysis report so the UI can show why a cell matters, not only where the
+model says to play.
+
+That makes `0.4` a coherent foundation: configurable bots, measured reports,
+rolling threat facts, replay traceback, lethal onset, Renju correctness, and
+mistake-aware explanations now all exist. The remaining work is no longer to
+prove the lab direction. `0.5` should turn these capabilities into a cleaner
+presentation system, stronger onboarding, and more intentional player education
+without expanding the analyzer scope by default.
 
 ### Possible Work
 
-- `0.4.7` focused replay screenshot review and release cleanup
-- `0.4.8` mistake detection based on missed response/escape candidates, not
-  corridor length. First slice: derive compact failure modes for reports and
-  fixtures from existing corridor/lethal-onset evidence before moving this into
-  replay UI.
+- `0.4.8` focused replay screenshot review and release cleanup
 - test/doc cleanup after the 0.4 lab-to-product pivot
 - measured analyzer follow-up if replay-screen usage exposes confusing cases
 - better-move suggestions and opponent best-reply previews

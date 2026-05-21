@@ -512,6 +512,58 @@ last-escape frame after browser-side analysis has resolved.
 - The replay surface should stay compact until `0.5` takes on broader product
   polish and onboarding.
 
+## v0.4.8
+
+### References
+
+These captures are replay-focused because `v0.4.8` wraps the `0.4` analyzer
+line rather than changing the whole app shell. They use the `v0.4.8` web package
+version, a seeded decisive Freestyle replay, and the last-escape frame after
+browser-side analysis has resolved.
+
+<table>
+  <tr>
+    <td width="60%">
+      <img src="assets/screenshot_v0_4_8_replay_desktop.png" alt="v0.4.8 analyzed replay last-escape screen on desktop" width="100%">
+      <br>
+      <sub>Analyzed Replay / Desktop</sub>
+    </td>
+    <td width="40%">
+      <img src="assets/screenshot_v0_4_8_replay_mobile.png" alt="v0.4.8 analyzed replay last-escape screen on mobile" width="100%">
+      <br>
+      <sub>Analyzed Replay / Mobile</sub>
+    </td>
+  </tr>
+</table>
+
+### What v0.4.8 improved
+
+- Replay analysis now carries mistake-aware failure semantics behind the board:
+  missed responses, missed lethal prevention, missed setup-corridor escape, and
+  unclear boundaries are model concepts instead of inferred from corridor
+  length.
+- Threat evidence overlays can show which stones make an immediate, imminent,
+  counter, or winning-line annotation matter. This makes the board explain a bit
+  more without adding another panel.
+- Hover is reserved for the current replay move target. Winning lines and
+  evidence now use highlighter roles, which keeps "about to play here" visually
+  distinct from "this shape explains the analysis."
+- The desktop view keeps status copy and player context readable while the board
+  remains dominant. Mobile keeps the board, timeline, and controls in the first
+  flow without reintroducing pinned controls.
+
+### Remaining watch points
+
+- Evidence overlays can become busy in dense tactical clusters. They are useful
+  enough to keep, but `0.5` should decide whether the default UI needs clearer
+  onboarding or a lighter visual preset.
+- Mobile still hides status copy to protect the board. If mistake labels become
+  player-facing teaching moments, `0.5` needs a compact mobile explanation
+  surface instead of simply adding more board symbols.
+- The `0.4` line now has enough analyzer capability. Further work should focus
+  on presentation, onboarding, and education rather than adding another proof
+  layer by default.
+
 ## Design takeaway
 
 - keep v0.1's retro punch and board-first confidence
@@ -524,5 +576,7 @@ last-escape frame after browser-side analysis has resolved.
   to a focused follow-up
 - keep v0.4.7's separated replay-analysis timeline semantics and restrained
   marker vocabulary
+- keep v0.4.8's mistake-aware analyzer semantics and evidence overlays as the
+  `0.4` wrap reference
 - avoid reintroducing v0.1's scene-bound UI
 - avoid rebuilding dense sidebars or over-explained controls as the shell grows

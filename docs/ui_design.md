@@ -27,8 +27,9 @@ weight, spacing, typography, and accent roles. Current screen captures live in
 
 For the comparative screenshot set and critique, see
 [ui_screenshot_review.md](ui_screenshot_review.md). That document embeds the
-historical shell references plus focused `v0.4.5` through `v0.4.7` product
-captures for settings, replay analysis, and analyzer-timeline polish.
+historical shell references plus focused `v0.4.5` through `v0.4.8` product
+captures for settings, replay analysis, analyzer-timeline polish, and
+mistake-aware replay annotations.
 
 The rule of thumb:
 
@@ -53,8 +54,9 @@ The current release assumption is:
 
 - `v0.2.4` remains the broad shell baseline for paired desktop/mobile layout.
 - `v0.4.5` is the current settings/profile/product-control reference.
-- `v0.4.6` and `v0.4.7` are the current replay-analysis references.
-- `v0.4.7` is a focused analyzer readability pass, not a structural layout redo.
+- `v0.4.6` through `v0.4.8` are the current replay-analysis references.
+- `v0.4.8` is a focused analyzer readability and mistake-explanation pass, not
+  a structural layout redo.
 - `v0.5` can broaden product polish, but should preserve the board-first replay
   and match layout constraints unless screenshot review shows a real issue.
 
@@ -66,7 +68,8 @@ The current release assumption is:
 - keep v0.2.3's intentional mobile layouts and tighter transport language
 - keep v0.2.4's tighter icon scale, profile density, and documented asset set
 - keep v0.4.5's dedicated settings route and controlled bot-lab layer
-- keep v0.4.7's replay-analysis timeline semantics and restrained marker set
+- keep v0.4.8's replay-analysis timeline semantics, restrained marker set, and
+  evidence overlays
 - avoid reintroducing v0.1's scene-bound UI
 - avoid rebuilding dense sidebars or over-explained controls as the shell grows
 
