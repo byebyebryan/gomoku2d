@@ -14,7 +14,7 @@ For a visual inspection page, open [preview.html](./preview.html).
 |------|------|--------|-------------|
 | `caution.png` | 96x48 | 6 cols x 3 rows | Tactical caution and forbidden overlays |
 | `highlighter.png` | 96x48 | 6 cols x 3 rows | Board-cell highlight variants for hints and replay analysis |
-| `hover.png` | 96x16 | 6 cols x 1 row | Winning-line hover overlay |
+| `hover.png` | 96x16 | 6 cols x 1 row | Actionable next-move hover target |
 | `marker.png` | 96x96 | 6 cols x 6 rows | Warning and proof/result marker variants |
 | `pointer.png` | 160x32 | 10 cols x 2 rows | Touch/mouse pointer idle cues |
 | `stone.png` | 96x64 | 6 cols x 4 rows | Stone destroy and idle loops |
@@ -23,8 +23,8 @@ For a visual inspection page, open [preview.html](./preview.html).
 ## Z-Order
 
 `caution.png`, `highlighter.png`, and `marker.png` are board-surface features.
-They sit above the board/grid and below pointer, stone, sequence, and hover
-layers.
+They sit above the board/grid and below pointer, stone, sequence, and
+next-move hover layers.
 
 Surface sub-order:
 
@@ -36,7 +36,7 @@ Surface sub-order:
 
 | Role | Tint |
 |---|---|
-| `highlight-strong` | Red for immediate threat/loss, green for immediate win; preview uses red |
+| `highlight-strong` | Red for immediate threat/loss, green for immediate win and result winning line; preview uses red |
 | `highlight-soft` | Pink for imminent threat, purple for counter-threat; preview uses pink |
 | `highlight-entry` | Per-side corridor-entry context; preview uses white |
 | `marker-warning` | Red for immediate loss/threat, green for immediate win; preview uses red |
@@ -62,7 +62,7 @@ Frame numbers are row-major.
 
 | Frames | Animation | FPS | Runtime use |
 |--------|-----------|-----|-------------|
-| 0-5 | `highlight-strong` | 12 | Strong board-cell highlight |
+| 0-5 | `highlight-strong` | 12 | Strong board-cell highlight, including result winning lines |
 | 6-11 | `highlight-soft` | 12 | Subtle board-cell highlight |
 | 12-17 | `highlight-entry` | 12 | Corridor-entry or critical-point highlight |
 
@@ -70,7 +70,7 @@ Frame numbers are row-major.
 
 | Frames | Animation | FPS | Runtime use |
 |--------|-----------|-----|-------------|
-| 0-5 | `hover` | 12 | Winning line, tinted green |
+| 0-5 | `hover` | 12 | Current side's "about to play here" target |
 
 ### `marker.png`
 

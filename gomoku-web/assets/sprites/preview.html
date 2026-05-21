@@ -447,12 +447,12 @@
         <h2>Z-order cases</h2>
         <p class="note">
           Representative board-cell stacks for pointer, surface features,
-          stone, sequence, and win-line overlap.
+          stone, sequence, next-move hover, and win-line overlap.
         </p>
       </div>
       <div class="zCaseGrid" id="zCases"></div>
       <ol class="layerList">
-        <li>winning-line hover</li>
+        <li>next-move hover</li>
         <li>sequence number</li>
         <li>stone</li>
         <li>pointer</li>
@@ -469,7 +469,7 @@
     const sheets = [
       { file: "caution.png", cols: 6, rows: 3, label: "tactical caution and forbidden overlays" },
       { file: "highlighter.png", cols: 6, rows: 3, label: "board-cell highlight variants" },
-      { file: "hover.png", cols: 6, rows: 1, label: "winning-line hover overlay" },
+      { file: "hover.png", cols: 6, rows: 1, label: "actionable next-move hover target" },
       { file: "marker.png", cols: 6, rows: 6, label: "replay-analysis proof/result markers" },
       { file: "pointer.png", cols: 10, rows: 2, label: "touch/mouse pointer cues" },
       { file: "stone.png", cols: 6, rows: 4, label: "stone destroy and idle loops" },
@@ -481,7 +481,7 @@
       { group: "Pointer", name: "pointer-static / black", role: "black player pointer reset pose", file: "pointer.png", cols: 10, rows: 2, frame: 0, tint: "black" },
       { group: "Stone", name: "stone-static / white", role: "white resting stone", file: "stone.png", cols: 6, rows: 4, frame: 0 },
       { group: "Stone", name: "stone-static / black", role: "black resting stone", file: "stone.png", cols: 6, rows: 4, frame: 0, tint: "black" },
-      { group: "Hover", name: "hover static", role: "winning-line hover rest pose", file: "hover.png", cols: 6, rows: 1, frame: 0, tint: "green" },
+      { group: "Hover", name: "hover static", role: "next-move target rest pose", file: "hover.png", cols: 6, rows: 1, frame: 0, tint: "green" },
       { group: "Caution", name: "caution-forbidden static", role: "forbidden caution rest pose", file: "caution.png", cols: 6, rows: 3, frame: 6, tint: "red" },
       { group: "Caution", name: "caution-forbidden-warning static", role: "combined forbidden + warning caution rest pose", file: "caution.png", cols: 6, rows: 3, frame: 0, tint: "red" },
       { group: "Highlight", name: "highlight static", role: "board-cell highlight rest pose", file: "highlighter.png", cols: 6, rows: 3, frame: 0 },
@@ -506,7 +506,7 @@
       { group: "Caution", name: "caution-forbidden-warning", role: "combined forbidden + warning caution loop", file: "caution.png", cols: 6, rows: 3, start: 0, end: 5, fps: 12, tint: "red" },
       { group: "Caution", name: "caution-forbidden-out", role: "forbidden move loop half", file: "caution.png", cols: 6, rows: 3, start: 6, end: 11, fps: 12, tint: "red" },
       { group: "Caution", name: "caution-forbidden-in", role: "forbidden move loop half", file: "caution.png", cols: 6, rows: 3, start: 12, end: 17, fps: 12, tint: "red" },
-      { group: "Highlight", name: "highlight-strong", role: "strong board-cell highlight, immediate threat/loss/win", file: "highlighter.png", cols: 6, rows: 3, start: 0, end: 5, fps: 12, tint: "red" },
+      { group: "Highlight", name: "highlight-strong", role: "strong board-cell highlight, immediate threat/loss/win or result line", file: "highlighter.png", cols: 6, rows: 3, start: 0, end: 5, fps: 12, tint: "red" },
       { group: "Highlight", name: "highlight-soft", role: "subtle board-cell highlight, imminent or counter-threat", file: "highlighter.png", cols: 6, rows: 3, start: 6, end: 11, fps: 12, tint: "pink" },
       { group: "Highlight", name: "highlight-entry", role: "corridor-entry or critical-point highlight", file: "highlighter.png", cols: 6, rows: 3, start: 12, end: 17, fps: 12 },
       { group: "Marker", name: "marker-warning", role: "immediate-loss marker", file: "marker.png", cols: 6, rows: 6, start: 0, end: 5, fps: 12, tint: "red" },
@@ -515,7 +515,7 @@
       { group: "Marker", name: "marker-F", role: "forbidden-reply marker", file: "marker.png", cols: 6, rows: 6, start: 18, end: 23, fps: 12, tint: "red" },
       { group: "Marker", name: "marker-E", role: "confirmed-escape marker", file: "marker.png", cols: 6, rows: 6, start: 24, end: 29, fps: 12, tint: "green" },
       { group: "Marker", name: "marker-P", role: "possible-escape marker", file: "marker.png", cols: 6, rows: 6, start: 30, end: 35, fps: 12, tint: "teal" },
-      { group: "Hover", name: "hover", role: "winning line, green tint", file: "hover.png", cols: 6, rows: 1, start: 0, end: 5, fps: 12, tint: "green" },
+      { group: "Hover", name: "hover", role: "about-to-play target", file: "hover.png", cols: 6, rows: 1, start: 0, end: 5, fps: 12, tint: "green" },
     ];
 
     const zCases = [
@@ -567,11 +567,11 @@
       {
         name: "result-winning-line",
         title: "Result winning line",
-        note: "End-state chronology and winning-line emphasis sit above the committed stone.",
+        note: "Winning-line emphasis is a board-surface highlight below the committed stone and sequence number.",
         sequence: "7",
         layers: [
+          { className: "zHighlight", name: "highlight-strong", file: "highlighter.png", cols: 6, rows: 3, start: 0, end: 5, fps: 12, tint: "green" },
           { className: "zWhiteStone", name: "stone-static / white", file: "stone.png", cols: 6, rows: 4, frame: 0 },
-          { className: "zHover", name: "hover", file: "hover.png", cols: 6, rows: 1, start: 0, end: 5, fps: 12, tint: "green" },
         ],
       },
     ];

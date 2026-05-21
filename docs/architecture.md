@@ -89,8 +89,9 @@ direction. Decided after the first screen builds landed.
 This is the load-bearing architectural decision for the FE rewrite.
 
 **Phaser owns:** the 15x15 grid, stone sprites, pointer, tactical warnings,
-forbidden move overlays, result sequence numbers, and win-line hover. Anything
-that benefits from pixel-level control or frame-based animation.
+forbidden move overlays, result sequence numbers, next-move hover targets, and
+winning-line highlighters. Anything that benefits from pixel-level control or
+frame-based animation.
 
 **DOM owns:** everything else. Status HUD, player identity/info, rule toggles,
 result strips, replay transport/timeline, local record/history views, menus,

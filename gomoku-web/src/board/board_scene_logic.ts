@@ -1,6 +1,6 @@
 import type { CellPosition, CellStone, MatchMove, MatchStatus } from "../game/types";
 
-import { CAUTION_ANIMS, COLOR, HIGHLIGHTER_ANIMS, HOVER_ANIMS, MARKER_ANIMS, SPRITE } from "./constants";
+import { CAUTION_ANIMS, COLOR, HIGHLIGHTER_ANIMS, MARKER_ANIMS, SPRITE } from "./constants";
 
 const TOUCH_DRAG_SENSITIVITY = 1.0;
 const DEFAULT_BOARD_SIZE = 15;
@@ -150,13 +150,13 @@ export function overlayAnimationForRole(role: BoardOverlayRole, isForbidden = fa
     case "winningMove":
       return MARKER_ANIMS.WARNING.key;
     case "winningLine":
-      return HOVER_ANIMS.HOVER.key;
+      return HIGHLIGHTER_ANIMS.STRONG.key;
   }
 }
 
 export function overlaySpriteForRole(role: BoardOverlayRole, isForbidden = false): string {
   if (role === "winningLine") {
-    return SPRITE.HOVER;
+    return SPRITE.HIGHLIGHTER;
   }
 
   if (role === "forbidden" || (role === "threatMove" && isForbidden)) {
