@@ -12,6 +12,55 @@ their own section.
 
 ## [Unreleased]
 
+## [0.4.8] - 2026-05-21
+
+**Theme: wrap the `0.4` lab-powered line with mistake-aware replay analysis.**
+
+`0.4.8` is the closing release for the `0.4` line. The earlier `0.4.x`
+releases built the bot lab, rolling threat model, configurable bot surface, and
+browser-side corridor analyzer. This release uses that foundation to make replay
+analysis more human-facing: not just where the final forced line exists, but
+what kind of losing-side failure led into it.
+
+### Replay analysis
+
+- Added compact failure classification on top of setup-corridor and lethal-onset
+  evidence, including missed immediate wins, missed four replies, missed
+  forcing-three replies, missed lethal prevention, missed setup-corridor escape,
+  and unclear boundaries.
+- Tightened corridor candidate handling around multi-threat positions so
+  immediate threats, forcing-three replies, counter-threats, actual moves, and
+  forbidden moves are shown and probed consistently in stepped UI analysis and
+  static reports.
+- Promoted lethal-onset shape data through the analysis bridge so reports and
+  Replay status can describe common endings as open-four, 4+3, 4+4, or 3+3
+  style failures instead of only showing raw proof-state labels.
+- Refreshed the curated analysis report with failure steps, missed candidates,
+  onset evidence, and cleaner proof marker styling.
+
+### Web
+
+- Updated Replay status copy so terminal, onset, last-escape, and failure frames
+  read from the current player's perspective without overloading the board with
+  extra controls.
+- Added configurable evidence overlays that highlight the stones forming
+  immediate, imminent, counter-threat, and winning-line annotations, using the
+  same hint vocabulary as the analysis report.
+- Reserved hover for "about to play here" targets and moved winning-line /
+  evidence emphasis onto highlighter overlays.
+- Tuned marker/highlighter styling, hover animation speed, and board hint
+  weights so dense adjacent annotations stay readable.
+
+### Bot lab, reports, and docs
+
+- Extended tactical detection for combined non-forcing-three cases that together
+  become actionable imminent threats.
+- Cleaned up bot report tables by removing low-value Pool/Renju visible columns,
+  replacing Pairwise best/worst with score, W-D-L, and shuffled Elo, and showing
+  score versus each opponent in first-level pairwise expansion rows.
+- Updated analyzer, tactic, visual, and roadmap docs around failure modes,
+  evidence overlays, and the `0.4` line handoff to `0.5` presentation polish.
+
 ## [0.4.7] - 2026-05-19
 
 **Theme: close the `0.4` analyzer line with lethal-threat semantics and Renju
@@ -922,7 +971,8 @@ together in one canvas-driven surface. That lesson drove the `v0.2.1` rewrite.
   concerns blurred together.
 - Expressive UI language, but not scalable beyond one canvas.
 
-[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.7...HEAD
+[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.8...HEAD
+[0.4.8]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.7...v0.4.8
 [0.4.7]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.6...v0.4.7
 [0.4.6]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.5...v0.4.6
 [0.4.5]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.4...v0.4.5
