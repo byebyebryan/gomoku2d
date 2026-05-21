@@ -3592,20 +3592,20 @@ fn render_how_to_read_section(html: &mut String) {
     term_row(
         html,
         "Budget Exhausted",
-        "Share of searched moves that hit the active CPU cap before search finished naturally. In pooled mode, Pool shows how often a move spent reserve above the base budget and how often the reserve still ran out.",
+        "Share of searched moves that hit the active CPU cap before search finished naturally. Pooled-budget reserve details stay in the JSON report.",
     );
     term_row(
         html,
         "Search Cost",
-        "Width is the average number of moves searched. The Search tab splits measured time into move generation, ordering, scoring, threat detection, corridor proof, and uncategorized search overhead. Renju shows exact forbidden-check load separately because it can be nested inside several stages.",
+        "Width is the average number of moves searched. The Search tab splits measured time into move generation, ordering, scoring, threat detection, corridor proof, and uncategorized search overhead.",
     );
     html.push_str("</dl></section>");
 }
 
 fn render_entrant_workbench(html: &mut String, report: &TournamentReport) {
-    let has_pool = report_has_pooled_budget(report);
-    let pool_class = if has_pool { " has-pool" } else { "" };
-    html.push_str(&format!("<section class=\"entrant-workbench{pool_class}\"><div class=\"section-heading\"><h2>Results</h2></div>"));
+    html.push_str(
+        "<section class=\"entrant-workbench\"><div class=\"section-heading\"><h2>Results</h2></div>",
+    );
     html.push_str("<div class=\"view-toggle\" aria-label=\"Entrant table mode\">");
     html.push_str("<input class=\"report-view-radio\" type=\"radio\" name=\"entrant-view\" id=\"view-results\" checked>");
     html.push_str("<label for=\"view-results\">Ranking</label>");
@@ -3615,22 +3615,14 @@ fn render_entrant_workbench(html: &mut String, report: &TournamentReport) {
     html.push_str("<label for=\"view-pairwise\">Pairwise</label>");
     html.push_str("</div>");
     html.push_str("<div class=\"entrant-grid\">");
-    render_entrant_header(html, has_pool);
+    render_entrant_header(html);
     for (index, row) in report.standings.iter().enumerate() {
-        render_entrant_row(html, report, row, index + 1, has_pool);
+        render_entrant_row(html, report, row, index + 1);
     }
     html.push_str("</div></section>");
 }
 
-fn report_has_pooled_budget(report: &TournamentReport) -> bool {
-    report.run.search_budget_mode == "pooled"
-        || report
-            .standings
-            .iter()
-            .any(|row| row.pooled_budget_moves > 0)
-}
-
-fn render_entrant_header(html: &mut String, has_pool: bool) {
+fn render_entrant_header(html: &mut String) {
     html.push_str("<div class=\"entrant-head\">");
     html.push_str("<span>Spec</span>");
     for head in [
@@ -3650,32 +3642,27 @@ fn render_entrant_header(html: &mut String, has_pool: bool) {
         };
         html.push_str(&format!("<span class=\"{metric_class}\">{head}</span>"));
     }
-    let mut search_heads = vec![
+    for head in [
         "Nodes",
         "Move gen",
         "Ordering",
         "Scoring",
         "Threat detection",
         "Proof",
-        "Renju",
         "Other",
         "TT",
-    ];
-    if has_pool {
-        search_heads.push("Pool");
+    ] {
+        html.push_str(&format!(
+            "<span class=\"metric metric-search\">{head}</span>"
+        ));
     }
-    for head in search_heads {
-        let metric_class = if head == "Pool" {
-            "metric metric-search metric-pool"
+    for head in ["Score %", "W-D-L", "Shuffled Elo"] {
+        let metric_class = if head == "W-D-L" {
+            "metric metric-pairwise metric-nowrap"
         } else {
-            "metric metric-search"
+            "metric metric-pairwise"
         };
         html.push_str(&format!("<span class=\"{metric_class}\">{head}</span>"));
-    }
-    for head in ["Pairs", "Best", "Worst"] {
-        html.push_str(&format!(
-            "<span class=\"metric metric-pairwise\">{head}</span>"
-        ));
     }
     html.push_str("</div>");
 }
@@ -3685,11 +3672,8 @@ fn render_entrant_row(
     report: &TournamentReport,
     row: &StandingReport,
     rank: usize,
-    has_pool: bool,
 ) {
     let pairwise_entries = ranked_pairwise_entries_for_bot(report, &row.bot);
-    let best_pair = best_pair_for_bot(report, &row.bot, &pairwise_entries);
-    let worst_pair = worst_pair_for_bot(report, &row.bot, &pairwise_entries);
     let role = gauntlet_role(report, &row.bot);
     let role_class = role
         .map(|role| format!(" role-{}", role.key()))
@@ -3759,7 +3743,6 @@ fn render_entrant_row(
     render_stage_time_metric_cell(html, "Scoring", row.stage_eval_ns, row);
     render_stage_time_metric_cell(html, "Threat detection", row.stage_threat_ns, row);
     render_stage_time_metric_cell(html, "Proof", row.stage_proof_ns, row);
-    render_renju_forbidden_metric_cell(html, row);
     render_stage_time_metric_cell(html, "Other", stage_other_ns(row), row);
     render_metric_cell(
         html,
@@ -3768,23 +3751,29 @@ fn render_entrant_row(
         &phase_average_label(row.tt_hits, row.tt_cutoffs, row.search_move_count),
         None,
     );
-    if has_pool {
-        render_pooled_budget_metric_cell(html, row);
-    }
     render_metric_cell(
         html,
         "metric-pairwise",
-        "Pairs",
-        &format!("{} opponents", pairwise_entries.len()),
+        "Score %",
+        &format!(
+            "{:.1}%",
+            score_rate(row.wins, row.draws, row.match_count) * 100.0
+        ),
         None,
     );
-    render_metric_cell(html, "metric-pairwise", "Best", &best_pair.0, best_pair.1);
+    render_metric_cell(
+        html,
+        "metric-pairwise metric-nowrap",
+        "W-D-L",
+        &format!("{}-{}-{}", row.wins, row.draws, row.losses),
+        None,
+    );
     render_metric_cell(
         html,
         "metric-pairwise",
-        "Worst",
-        &worst_pair.0,
-        worst_pair.1,
+        "Shuffled Elo",
+        &format!("{:.1}", row.shuffled_elo_avg),
+        Some(format!("+/- {:.1}", row.shuffled_elo_stddev)),
     );
     html.push_str("</summary>");
     render_entrant_result_comparisons(html, report, row, &pairwise_entries);
@@ -3882,51 +3871,6 @@ fn render_width_metric_cell(
 ) {
     let (primary, secondary) = width_metric_label(row);
     render_metric_cell(html, metric_class, label, &primary, secondary);
-}
-
-fn render_pooled_budget_metric_cell(html: &mut String, row: &StandingReport) {
-    if row.pooled_budget_moves == 0 {
-        render_metric_cell(html, "metric-search metric-pool", "Pool", "n/a", None);
-        return;
-    }
-
-    render_metric_cell(
-        html,
-        "metric-search metric-pool",
-        "Pool",
-        &format!("{:.0}% over base", row.pooled_budget_over_base_rate * 100.0),
-        Some(format!(
-            "exh {:.0}% / min {} ms",
-            row.pooled_budget_reserve_exhausted_rate * 100.0,
-            row.pooled_budget_min_reserve_after_ms
-        )),
-    );
-}
-
-fn render_renju_forbidden_metric_cell(html: &mut String, row: &StandingReport) {
-    if row.renju_forbidden_checks == 0
-        && row.renju_forbidden_prefilter_checks == 0
-        && row.renju_effective_filter_calls == 0
-    {
-        render_metric_cell(html, "metric-search", "Renju", "n/a", None);
-        return;
-    }
-
-    let proof_ms = stage_avg_ms_label(row.renju_forbidden_ns, row.search_move_count);
-    let prefilter_ms = stage_avg_ms_label(row.renju_forbidden_prefilter_ns, row.search_move_count);
-    let effective_ms = stage_avg_ms_label(row.renju_effective_filter_ns, row.search_move_count);
-    render_metric_cell(
-        html,
-        "metric-search",
-        "Renju",
-        &format!(
-            "proof {}",
-            compact_number_label(row.avg_renju_forbidden_checks)
-        ),
-        Some(format!(
-            "pre {prefilter_ms} / eff {effective_ms} / proof {proof_ms}"
-        )),
-    );
 }
 
 fn width_metric_label(row: &StandingReport) -> (String, Option<String>) {
@@ -4097,16 +4041,11 @@ fn render_entrant_pairwise(
             .iter()
             .filter(|report_match| same_pair(report_match, &pair.bot_a, &pair.bot_b))
             .collect::<Vec<_>>();
-        let match_label = match entry.source {
-            PairwiseSource::Current => format!("{} matches", matches.len()),
-            PairwiseSource::Reference => format!("{} reference matches", pair.total),
-        };
-
         html.push_str("<details class=\"opponent-row\"><summary>");
         render_bot_label_with_prefix(html, report, opponent, "Vs ");
         html.push_str(&format!(
-            "<span data-label=\"Matches\">{}</span><span data-label=\"W-D-L\">{}</span><span data-label=\"Points\">{}</span></summary>",
-            html_escape(&match_label),
+            "<span data-label=\"Score\">{:.1}%</span><span data-label=\"W-D-L\">{}</span><span data-label=\"Points\">{}</span></summary>",
+            pair_score_rate_for_bot(pair, bot),
             html_escape(&pair_record_for_bot_standing_label(pair, bot)),
             html_escape(&pair_score_for_bot_label(pair, bot)),
         ));
@@ -4220,54 +4159,6 @@ fn pair_score_rate_for_bot(pair: &PairwiseReport, bot: &str) -> f64 {
         pair.score_b
     };
     avg(score * 100.0, pair.total)
-}
-
-fn best_pair_for_bot(
-    report: &TournamentReport,
-    bot: &str,
-    pairs: &[PairwiseEntry<'_>],
-) -> (String, Option<String>) {
-    pairs
-        .iter()
-        .max_by(|a, b| {
-            pair_score_rate_for_bot(a.pair, bot)
-                .partial_cmp(&pair_score_rate_for_bot(b.pair, bot))
-                .unwrap_or(std::cmp::Ordering::Equal)
-        })
-        .map(|entry| {
-            (
-                format!("{:.1}%", pair_score_rate_for_bot(entry.pair, bot)),
-                Some(compact_bot_label(
-                    report,
-                    opponent_for_pair(entry.pair, bot),
-                )),
-            )
-        })
-        .unwrap_or_else(|| ("n/a".to_string(), None))
-}
-
-fn worst_pair_for_bot(
-    report: &TournamentReport,
-    bot: &str,
-    pairs: &[PairwiseEntry<'_>],
-) -> (String, Option<String>) {
-    pairs
-        .iter()
-        .min_by(|a, b| {
-            pair_score_rate_for_bot(a.pair, bot)
-                .partial_cmp(&pair_score_rate_for_bot(b.pair, bot))
-                .unwrap_or(std::cmp::Ordering::Equal)
-        })
-        .map(|entry| {
-            (
-                format!("{:.1}%", pair_score_rate_for_bot(entry.pair, bot)),
-                Some(compact_bot_label(
-                    report,
-                    opponent_for_pair(entry.pair, bot),
-                )),
-            )
-        })
-        .unwrap_or_else(|| ("n/a".to_string(), None))
 }
 
 #[derive(Default)]
@@ -4628,7 +4519,7 @@ main{display:grid;gap:24px;margin:0 auto;max-width:1180px;padding:32px}h1,h2,p{m
 .section-heading{display:grid}.section-heading h2{color:var(--accent);font-size:1.2rem}
 table{border-collapse:collapse;min-width:820px;width:100%}th,td{border-bottom:1px solid var(--border);padding:9px 10px;text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{color:var(--text-muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
 .view-toggle{display:flex;flex-wrap:wrap;gap:8px}.report-view-radio{height:1px;opacity:0;position:absolute;width:1px}.view-toggle label{background:var(--surface-strong);border:1px solid var(--border);cursor:pointer;padding:8px 12px;text-transform:uppercase}.view-toggle label:hover{border-color:var(--teal)}.entrant-workbench:has(#view-results:checked) label[for=view-results],.entrant-workbench:has(#view-search:checked) label[for=view-search],.entrant-workbench:has(#view-pairwise:checked) label[for=view-pairwise]{border-color:var(--accent);color:var(--accent)}
-.entrant-grid,.match-list{display:grid;gap:12px}.entrant-head,.entrant-row summary{display:grid;gap:10px;align-items:center}.entrant-workbench:has(#view-results:checked) .entrant-head,.entrant-workbench:has(#view-results:checked) .entrant-row summary{grid-template-columns:minmax(260px,1.6fr) repeat(8,minmax(82px,1fr))}.entrant-workbench:has(#view-search:checked) .entrant-head,.entrant-workbench:has(#view-search:checked) .entrant-row summary{grid-template-columns:minmax(240px,1.4fr) repeat(9,minmax(84px,1fr))}.entrant-workbench.has-pool:has(#view-search:checked) .entrant-head,.entrant-workbench.has-pool:has(#view-search:checked) .entrant-row summary{grid-template-columns:minmax(240px,1.4fr) repeat(10,minmax(84px,1fr))}.entrant-workbench:has(#view-pairwise:checked) .entrant-head,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{grid-template-columns:minmax(280px,1.6fr) repeat(3,minmax(120px,1fr))}.entrant-head{color:var(--text-muted);font-size:12px;letter-spacing:.08em;padding:0 14px;text-transform:uppercase}.entrant-row,.opponent-row,.match{padding:0}.entrant-row summary,.opponent-row summary,.match summary{cursor:pointer;padding:12px 14px}.entrant-row summary>*,.opponent-row summary>*{min-width:0}.entrant-row summary .bot-label,.opponent-row summary strong,.match summary strong{color:var(--text);overflow-wrap:anywhere}.bot-label span,.metric span{display:block}.metric-nowrap,.metric-nowrap span{white-space:nowrap}.entrant-row summary .bot-label span:first-child{color:var(--text)}.entrant-row summary .bot-label span+span,.metric span+span{color:var(--text-muted);font-size:11px;letter-spacing:.08em;margin-top:2px}.entrant-row summary span,.opponent-row summary span,.match summary span{color:var(--text-muted)}.metric-search,.metric-pairwise{display:none}.entrant-workbench:not(.has-pool) .metric-pool{display:none!important}.entrant-workbench:has(#view-search:checked) .metric-results,.entrant-workbench:has(#view-search:checked) .metric-pairwise,.entrant-workbench:has(#view-pairwise:checked) .metric-results,.entrant-workbench:has(#view-pairwise:checked) .metric-search{display:none}.entrant-workbench:has(#view-search:checked) .metric-search,.entrant-workbench:has(#view-pairwise:checked) .metric-pairwise{display:block}.entrant-head .metric,.entrant-row summary .metric{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;line-height:1.22;padding-left:10px;text-align:right}.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs{display:none;gap:10px;padding:8px 18px 18px}.entrant-workbench:has(#view-results:checked) .entrant-result-comparisons,.entrant-workbench:has(#view-search:checked) .entrant-search-comparisons,.entrant-workbench:has(#view-pairwise:checked) .entrant-pairs{display:grid}.comparison-head,.comparison-row{align-items:center;display:grid;gap:12px}.entrant-result-comparisons .comparison-head,.entrant-result-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(78px,96px) minmax(92px,120px) minmax(120px,140px)}.entrant-search-comparisons .comparison-head,.entrant-search-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(78px,96px) minmax(86px,120px) minmax(96px,120px) minmax(104px,130px) minmax(96px,120px)}.comparison-head{border:1px solid transparent;color:var(--text-muted);font-size:11px;letter-spacing:.08em;padding:0 12px;text-transform:uppercase}.comparison-row{background:var(--surface-strong);border:1px solid var(--border);padding:10px 12px}.comparison-row span:not(:first-child),.comparison-head span:not(:first-child){border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.delta-good,.score-good{color:var(--green)!important}.delta-bad,.score-bad{color:#e78f85!important}.delta-neutral{color:var(--text-muted)!important}.opponent-row summary{display:grid;gap:12px;grid-template-columns:minmax(0,1fr) repeat(3,max-content);align-items:center}.opponent-row summary span{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.match summary{display:grid;gap:12px;grid-template-columns:repeat(4,minmax(82px,max-content));align-items:center}.pair-overview{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));padding:0 18px 16px}.pair-overview p{background:var(--surface-strong);border:1px solid var(--border);margin:0;padding:12px}.match-grid{display:grid;gap:12px;grid-template-columns:1fr;padding:0 14px 14px}.match-grid p{margin:0;word-break:break-word}.reference-pair-note{background:var(--surface-strong);border:1px solid var(--border);color:var(--text-muted);margin:0;padding:10px 12px}.pair-overview b,.match-grid b{color:var(--text)}.board-panel,.raw-data{grid-column:1/-1}.board-ascii,.raw-data{background:var(--surface-strong);border:1px solid var(--border)}.board-ascii{color:var(--text);font:14px/1.35 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:8px 0 0;overflow:auto;padding:12px;white-space:pre}.raw-data{padding:10px}.raw-data summary{cursor:pointer;padding:0}.raw-data p{margin:8px 0 0}
+.entrant-grid,.match-list{display:grid;gap:12px}.entrant-head,.entrant-row summary{display:grid;gap:10px;align-items:center}.entrant-workbench:has(#view-results:checked) .entrant-head,.entrant-workbench:has(#view-results:checked) .entrant-row summary{grid-template-columns:minmax(260px,1.6fr) repeat(8,minmax(82px,1fr))}.entrant-workbench:has(#view-search:checked) .entrant-head,.entrant-workbench:has(#view-search:checked) .entrant-row summary{grid-template-columns:minmax(240px,1.4fr) repeat(8,minmax(84px,1fr))}.entrant-workbench:has(#view-pairwise:checked) .entrant-head,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{grid-template-columns:minmax(280px,1.6fr) repeat(3,minmax(120px,1fr))}.entrant-head{color:var(--text-muted);font-size:12px;letter-spacing:.08em;padding:0 14px;text-transform:uppercase}.entrant-row,.opponent-row,.match{padding:0}.entrant-row summary,.opponent-row summary,.match summary{cursor:pointer;padding:12px 14px}.entrant-row summary>*,.opponent-row summary>*{min-width:0}.entrant-row summary .bot-label,.opponent-row summary strong,.match summary strong{color:var(--text);overflow-wrap:anywhere}.bot-label span,.metric span{display:block}.metric-nowrap,.metric-nowrap span{white-space:nowrap}.entrant-row summary .bot-label span:first-child{color:var(--text)}.entrant-row summary .bot-label span+span,.metric span+span{color:var(--text-muted);font-size:11px;letter-spacing:.08em;margin-top:2px}.entrant-row summary span,.opponent-row summary span,.match summary span{color:var(--text-muted)}.metric-search,.metric-pairwise{display:none}.entrant-workbench:has(#view-search:checked) .metric-results,.entrant-workbench:has(#view-search:checked) .metric-pairwise,.entrant-workbench:has(#view-pairwise:checked) .metric-results,.entrant-workbench:has(#view-pairwise:checked) .metric-search{display:none}.entrant-workbench:has(#view-search:checked) .metric-search,.entrant-workbench:has(#view-pairwise:checked) .metric-pairwise{display:block}.entrant-head .metric,.entrant-row summary .metric{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;line-height:1.22;padding-left:10px;text-align:right}.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs{display:none;gap:10px;padding:8px 18px 18px}.entrant-workbench:has(#view-results:checked) .entrant-result-comparisons,.entrant-workbench:has(#view-search:checked) .entrant-search-comparisons,.entrant-workbench:has(#view-pairwise:checked) .entrant-pairs{display:grid}.comparison-head,.comparison-row{align-items:center;display:grid;gap:12px}.entrant-result-comparisons .comparison-head,.entrant-result-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(78px,96px) minmax(92px,120px) minmax(120px,140px)}.entrant-search-comparisons .comparison-head,.entrant-search-comparisons .comparison-row{grid-template-columns:minmax(180px,1fr) minmax(78px,96px) minmax(86px,120px) minmax(96px,120px) minmax(104px,130px) minmax(96px,120px)}.comparison-head{border:1px solid transparent;color:var(--text-muted);font-size:11px;letter-spacing:.08em;padding:0 12px;text-transform:uppercase}.comparison-row{background:var(--surface-strong);border:1px solid var(--border);padding:10px 12px}.comparison-row span:not(:first-child),.comparison-head span:not(:first-child){border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.delta-good,.score-good{color:var(--green)!important}.delta-bad,.score-bad{color:#e78f85!important}.delta-neutral{color:var(--text-muted)!important}.opponent-row summary{display:grid;gap:12px;grid-template-columns:minmax(0,1fr) repeat(3,max-content);align-items:center}.opponent-row summary span{border-left:1px solid var(--border);font-variant-numeric:tabular-nums;padding-left:12px;text-align:right}.match summary{display:grid;gap:12px;grid-template-columns:repeat(4,minmax(82px,max-content));align-items:center}.pair-overview{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));padding:0 18px 16px}.pair-overview p{background:var(--surface-strong);border:1px solid var(--border);margin:0;padding:12px}.match-grid{display:grid;gap:12px;grid-template-columns:1fr;padding:0 14px 14px}.match-grid p{margin:0;word-break:break-word}.reference-pair-note{background:var(--surface-strong);border:1px solid var(--border);color:var(--text-muted);margin:0;padding:10px 12px}.pair-overview b,.match-grid b{color:var(--text)}.board-panel,.raw-data{grid-column:1/-1}.board-ascii,.raw-data{background:var(--surface-strong);border:1px solid var(--border)}.board-ascii{color:var(--text);font:14px/1.35 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:8px 0 0;overflow:auto;padding:12px;white-space:pre}.raw-data{padding:10px}.raw-data summary{cursor:pointer;padding:0}.raw-data p{margin:8px 0 0}
 .provenance dl{display:grid;gap:8px 18px;grid-template-columns:max-content 1fr;margin:0}.provenance dt{color:var(--text-muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase}.provenance dd{margin:0}.command{background:var(--surface-strong);border:1px solid var(--border);margin:0;overflow:auto;padding:12px}
 @media (max-width:760px){main{padding:16px}.hero,section,.run-warning{padding:16px}.run-chip{justify-content:space-between;width:100%}.rolling-comparison-list p{grid-template-columns:1fr}.rolling-comparison-list span{text-align:left}.entrant-head,.comparison-head{display:none}.entrant-grid,.entrant-row,.opponent-row,.match,.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs,.comparison-row{min-width:0;width:100%}.entrant-row summary,.entrant-workbench:has(#view-results:checked) .entrant-row summary,.entrant-workbench:has(#view-search:checked) .entrant-row summary,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{gap:8px 12px;grid-template-columns:repeat(2,minmax(0,1fr))}.entrant-row summary .bot-label{grid-column:1/-1}.entrant-row summary .metric{border-left:0;display:grid;gap:2px 10px;grid-template-columns:minmax(0,1fr) auto;padding:8px 0 0;text-align:right}.entrant-row summary .metric::before,.comparison-row span::before,.opponent-row summary span::before,.match summary span::before{color:var(--text-muted);content:attr(data-label);font-size:11px;letter-spacing:.08em;text-align:left;text-transform:uppercase}.entrant-row summary .metric::before{align-self:start;grid-column:1;grid-row:1/span 2}.entrant-row summary .metric span{grid-column:2}.entrant-row summary .metric-search,.entrant-row summary .metric-pairwise,.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-results,.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-pairwise,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-results,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-search{display:none}.entrant-workbench:has(#view-search:checked) .entrant-row summary .metric-search,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary .metric-pairwise{display:grid}.opponent-row summary,.match summary,.entrant-result-comparisons .comparison-row,.entrant-search-comparisons .comparison-row{grid-template-columns:1fr}.comparison-row span,.opponent-row summary span,.match summary span{border-left:0!important;display:flex;gap:12px;justify-content:space-between;min-width:0;overflow-wrap:anywhere;padding-left:0!important;text-align:right}.comparison-row span:not(:first-child),.opponent-row summary span,.match summary span{border-top:1px solid var(--border);padding-top:8px}.opponent-row summary span:first-of-type,.match summary span:first-child{border-top:0;padding-top:0}.entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs{padding:4px 12px 14px}.match-grid,.term-row{grid-template-columns:1fr}.term-row{gap:4px}.board-ascii{font-size:12px}.provenance dl{grid-template-columns:1fr}table{min-width:760px}}
 @media (max-width:420px){.entrant-row summary,.entrant-workbench:has(#view-results:checked) .entrant-row summary,.entrant-workbench:has(#view-search:checked) .entrant-row summary,.entrant-workbench:has(#view-pairwise:checked) .entrant-row summary{grid-template-columns:1fr}}
@@ -4725,10 +4616,10 @@ mod tests {
         let html = render_tournament_report_html(&report);
 
         assert!(html.contains("CPU 1000 ms/move, pooled reserve 4000 ms, max move 2500 ms"));
-        assert!(html.contains("<section class=\"entrant-workbench has-pool\">"));
-        assert!(html.contains("<span class=\"metric metric-search metric-pool\">Pool</span>"));
-        assert!(html.contains("<span class=\"metric metric-search metric-pool\" data-label=\"Pool\"><span>40% over base</span><span>exh 20% / min 125 ms</span></span>"));
-        assert!(html.contains("Pool shows how often a move spent reserve above the base budget"));
+        assert!(html.contains("<section class=\"entrant-workbench\">"));
+        assert!(!html.contains("metric-pool"));
+        assert!(!html.contains("data-label=\"Pool\""));
+        assert!(html.contains("Pooled-budget reserve details stay in the JSON report."));
     }
 
     #[test]
@@ -4945,8 +4836,17 @@ mod tests {
         assert!(!html.contains("removeAttribute('open')"));
         assert!(!html.contains("<span class=\"metric metric-pairwise\">Open row</span>"));
         assert!(html.contains(
-            "<span class=\"metric metric-pairwise\" data-label=\"Worst\"><span>0.0%</span><span>SearchBot_D3</span>"
+            "<span class=\"metric metric-pairwise\" data-label=\"Score %\"><span>50.0%</span></span>"
         ));
+        assert!(html.contains(
+            "<span class=\"metric metric-pairwise metric-nowrap\" data-label=\"W-D-L\"><span>1-0-1</span></span>"
+        ));
+        assert!(html.contains(
+            "<span class=\"metric metric-pairwise\" data-label=\"Shuffled Elo\"><span>1000.0</span><span>+/- 0.0</span></span>"
+        ));
+        assert!(!html.contains("<span class=\"metric metric-pairwise\">Pairs</span>"));
+        assert!(!html.contains("<span class=\"metric metric-pairwise\">Best</span>"));
+        assert!(!html.contains("<span class=\"metric metric-pairwise\">Worst</span>"));
         assert!(html.contains(
             ".entrant-result-comparisons,.entrant-search-comparisons,.entrant-pairs{display:none"
         ));
@@ -4978,9 +4878,10 @@ mod tests {
         assert!(html.contains("<span class=\"metric metric-search\">Scoring</span>"));
         assert!(html.contains("<span class=\"metric metric-search\">Threat detection</span>"));
         assert!(html.contains("<span class=\"metric metric-search\">Proof</span>"));
-        assert!(html.contains("<span class=\"metric metric-search\">Renju</span>"));
         assert!(html.contains("<span class=\"metric metric-search\">Other</span>"));
         assert!(html.contains("<span class=\"metric metric-search\">TT</span>"));
+        assert!(!html.contains("<span class=\"metric metric-search\">Renju</span>"));
+        assert!(!html.contains("data-label=\"Renju\""));
         assert!(!html.contains("<span class=\"metric metric-search\">Avg nodes</span>"));
         assert!(!html.contains("<span class=\"metric metric-search\">Eval cost</span>"));
         assert!(!html.contains("<span class=\"metric metric-search\">Cand gen</span>"));
@@ -5067,8 +4968,9 @@ mod tests {
         assert!(html.contains("Ordering"));
         assert!(html.contains("Threat detection"));
         assert!(html.contains("Proof"));
-        assert!(html.contains("Renju"));
         assert!(html.contains("Other"));
+        assert!(!html.contains("<span class=\"metric metric-search\">Renju</span>"));
+        assert!(!html.contains("data-label=\"Renju\""));
         assert!(!html.contains("Eval cost"));
         assert!(!html.contains("Pattern scan"));
         assert!(html.contains("200"));
@@ -5091,9 +4993,6 @@ mod tests {
         ));
         assert!(html.contains(
             "<span class=\"metric metric-search\" data-label=\"Proof\"><span>0%</span><span>0 ms</span></span>"
-        ));
-        assert!(html.contains(
-            "<span class=\"metric metric-search\" data-label=\"Renju\"><span>proof 2</span><span>pre 0.1 ms / eff 0.4 ms / proof 0.2 ms</span></span>"
         ));
         assert!(html.contains(
             "<span class=\"metric metric-search\" data-label=\"Other\"><span>35%</span><span>3.5 ms</span></span>"
@@ -5955,10 +5854,9 @@ mod tests {
 
         let html = render_tournament_report_html(&report);
 
-        assert!(html.contains(
-            "<span class=\"metric metric-pairwise\" data-label=\"Pairs\"><span>2 opponents</span>"
-        ));
-        assert!(html.contains("<span data-label=\"Matches\">64 reference matches</span>"));
+        assert!(!html.contains("<span class=\"metric metric-pairwise\">Pairs</span>"));
+        assert!(html.contains("<span data-label=\"Score\">54.7%</span>"));
+        assert!(!html.contains("<span data-label=\"Matches\">64 reference matches</span>"));
         assert!(html.contains(
             "Reference anchor aggregate; per-match details live in the source anchor report."
         ));
