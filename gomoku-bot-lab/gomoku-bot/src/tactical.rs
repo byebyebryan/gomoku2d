@@ -1481,7 +1481,6 @@ fn compound_imminent_entries_from_facts<'a>(
         facts
             .into_iter()
             .filter(|fact| fact.player == attacker)
-            .cloned()
             .filter(|fact| {
                 matches!(
                     fact.kind,
@@ -1490,6 +1489,7 @@ fn compound_imminent_entries_from_facts<'a>(
                         | LocalThreatKind::BrokenThree
                 )
             })
+            .cloned()
             .collect(),
     );
     if material.len() < 2 {
