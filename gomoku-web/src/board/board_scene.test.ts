@@ -122,7 +122,7 @@ describe("animation sheet inventory", () => {
 });
 
 describe("board render depths", () => {
-  it("keeps render containers ordered from board surface up to hover overlays", () => {
+  it("keeps render containers ordered from board surface up to next-move hover overlays", () => {
     expect(BOARD_RENDER_LAYER_ORDER).toEqual([
       "BOARD",
       "OVERLAY",
@@ -133,7 +133,7 @@ describe("board render depths", () => {
     ]);
   });
 
-  it("keeps board overlays below the pointer and hover overlays above result labels", () => {
+  it("keeps board overlays below the pointer and next-move hover overlays above result labels", () => {
     const depths = BOARD_RENDER_DEPTHS as Record<string, number>;
 
     expect(depths.BOARD).toBeLessThan(depths.OVERLAY_SURFACE);
@@ -377,7 +377,7 @@ describe("canPlaceTouchCandidate", () => {
 
 describe("overlayAnimationForRole", () => {
   it("maps board overlays to the intended sprite language", () => {
-    expect(overlayAnimationForRole("winningLine")).toBe("hover");
+    expect(overlayAnimationForRole("winningLine")).toBe("highlight-strong");
     expect(overlayAnimationForRole("winningMove")).toBe("marker-warning");
     expect(overlayAnimationForRole("threatMove")).toBe("marker-warning");
     expect(overlayAnimationForRole("imminentThreatMove")).toBe("marker-warning");
@@ -421,8 +421,8 @@ describe("analysis overlay visual mapping", () => {
 });
 
 describe("overlaySpriteForRole", () => {
-  it("uses the dedicated hover sheet for winning-line hover overlays", () => {
-    expect(overlaySpriteForRole("winningLine")).toBe(SPRITE.HOVER);
+  it("uses the highlighter sheet for winning-line overlays", () => {
+    expect(overlaySpriteForRole("winningLine")).toBe(SPRITE.HIGHLIGHTER);
   });
 
   it("uses marker and caution sheets for tactical and forbidden overlays", () => {

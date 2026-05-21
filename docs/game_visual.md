@@ -87,7 +87,7 @@ covering the pointer.
 | Imminent threat move | defensive reply to an opponent open/broken three: `marker-warning` tinted pink |
 | Counter-threat move | counter-threat reply that can defer defense: `marker-warning` tinted purple |
 | Forbidden move | alternating `caution-forbidden-out` and `caution-forbidden-in` |
-| Winning line | `hover` tinted green |
+| Winning line | `highlight-strong` tinted green |
 
 Winning, immediate-threat, imminent-threat, and counter-threat hints are
 profile-synced assistive overlays controlled by two Settings rows: immediate
@@ -111,14 +111,16 @@ the detected corridor" from the replay user's perspective. Forbidden analysis
 evidence renders with the caution sprite, immediate loss renders with the red
 warning marker, and unknown proof markers are suppressed in the replay UI.
 The current side's next actual replay move uses the hover surface, matching the
-"this is where I will play" reading without adding another marker type.
+"this is where I will play" reading without adding another marker type. Reserve
+the hover sprite for actionable "about to play here" targets; result winning
+lines use the highlighter surface instead.
 
 ### Sequence Numbers
 
 Sequence numbers are chronology aids, not live-match UI.
 
 - show them on result/replay states where move order matters
-- keep them above stones and below winning-line hover
+- keep them above stones and below next-move hover
 - use whole-pixel positioning to avoid text shimmer
 - keep size readable but subordinate to the stones
 
@@ -126,11 +128,11 @@ Sequence numbers are chronology aids, not live-match UI.
 
 Top to bottom:
 
-1. winning-line hover
+1. next-move hover target
 2. sequence number
 3. stone
 4. pointer
-5. marker/caution/highlighter surface
+5. marker/caution/highlighter surface, including winning-line result emphasis
 6. board
 
 This order is intentional. The pointer is the actionable target, while overlay
@@ -151,7 +153,7 @@ Use animation for:
 - current pointer target
 - tactical overlay cells
 - forbidden cells
-- winning-line result emphasis
+- winning-line result emphasis via `highlight-strong`
 
 Avoid animation for:
 

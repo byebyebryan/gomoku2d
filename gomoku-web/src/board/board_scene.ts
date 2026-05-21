@@ -922,7 +922,7 @@ export class BoardScene extends Phaser.Scene {
           point.y,
           COLOR.WIN_CELLS,
           overlayAnimationForRole("winningLine"),
-          BOARD_RENDER_DEPTHS.OVERLAY_HOVER,
+          BOARD_RENDER_DEPTHS.OVERLAY_SURFACE,
           overlaySpriteForRole("winningLine"),
         ),
       );
