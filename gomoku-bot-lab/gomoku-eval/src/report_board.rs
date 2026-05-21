@@ -130,8 +130,9 @@ pub fn report_board_css() -> &'static str {
       display: grid;
       place-items: center;
       color: #101214;
-      font-size: 12px;
-      font-weight: 800;
+      font-size: 14px;
+      font-weight: 950;
+      letter-spacing: -0.04em;
       line-height: 1;
       pointer-events: none;
       transform: translateY(-2px);
