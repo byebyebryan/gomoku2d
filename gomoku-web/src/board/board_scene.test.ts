@@ -401,10 +401,12 @@ describe("analysis overlay visual mapping", () => {
     expect(analysisMarkerAnimationForRole("forbidden")).toBe(CAUTION_ANIMS.FORBIDDEN_OUT.key);
     expect(analysisMarkerAnimationForRole("escape")).toBe(MARKER_ANIMS.E.key);
     expect(analysisMarkerAnimationForRole("immediateLoss")).toBe(MARKER_ANIMS.WARNING.key);
+    expect(analysisMarkerAnimationForRole("mistake")).toBe(MARKER_ANIMS.WARNING.key);
     expect(analysisMarkerSpriteForRole("forbidden")).toBe(SPRITE.CAUTION);
     expect(analysisMarkerSpriteForRole("forcedLoss")).toBe(SPRITE.MARKER);
     expect(analysisMarkerTintForRole("forcedLoss")).toBe(COLOR.THREAT);
     expect(analysisMarkerTintForRole("forbidden")).toBe(COLOR.THREAT);
+    expect(analysisMarkerTintForRole("mistake")).toBe(COLOR.THREAT);
     expect(analysisMarkerTintForRole("escape")).toBe(COLOR.WIN_MOVE);
   });
 

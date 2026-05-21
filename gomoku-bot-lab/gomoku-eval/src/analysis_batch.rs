@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::path::Path;
 use std::time::Instant;
 
-use gomoku_bot::tactical::{corridor_active_threats, LocalThreatKind};
+use gomoku_bot::tactical::{corridor_active_threats, LethalThreatKind, LocalThreatKind};
 use gomoku_core::{Board, Color, Move, Replay};
 use rayon::prelude::*;
 use serde::Serialize;
@@ -11,7 +11,7 @@ use crate::analysis::{
     analyze_alternate_defender_reply_options, analyze_replay, defender_reply_roles_for_move,
     visible_defender_reply_candidates, AnalysisBoardSnapshot, AnalysisOptions,
     DefenderReplyAnalysis, DefenderReplyCandidate, DefenderReplyOutcome, DefenderReplyRole,
-    FailureAnalysis, FailureMode, ForcedInterval, GameAnalysis, LethalOnset,
+    FailureAnalysis, FailureMode, ForcedInterval, GameAnalysis, LethalOnset, LethalOnsetMechanism,
     MissedCandidateOutcome, ProofLimitCause, ProofResult, ProofStatus, ReplyClassification,
     ReplyPolicy, RootCause, SearchDiagnostics, TacticalNote, UnclearContext, UnclearReason,
     ANALYSIS_SCHEMA_VERSION,
@@ -985,7 +985,7 @@ fn analysis_entry_card_html(entry: &AnalysisBatchEntry) -> String {
     let lethal = lethal_onset_label(entry.lethal_onset.as_ref());
     let setup_range = forced_interval_range_label(entry.setup_corridor.as_ref());
     let setup_length = forced_interval_length_label(entry.setup_corridor.as_ref());
-    let failure = failure_mode_label(entry.failure.as_ref());
+    let failure = failure_mode_label(entry.failure.as_ref(), entry.lethal_onset.as_ref());
     let critical = failure_critical_ply_label(entry.failure.as_ref());
     let detail_sections = analysis_entry_detail_sections_html(entry);
     let title = replay_entry_title(&entry.path);
@@ -1057,7 +1057,10 @@ fn analysis_entry_detail_sections_html(entry: &AnalysisBatchEntry) -> String {
 
     let mut details = Vec::new();
     if let Some(failure) = entry.failure.as_ref() {
-        details.push(detail_html("Failure", &failure_detail_label(failure)));
+        details.push(detail_html(
+            "Failure",
+            &failure_detail_label(failure, entry.lethal_onset.as_ref()),
+        ));
         if let Some(candidates) = failure_candidates_label(failure) {
             details.push(detail_html("Missed candidates", &candidates));
         }
@@ -1345,13 +1348,19 @@ fn forced_interval_length_label(interval: Option<&ForcedInterval>) -> String {
 
 fn lethal_onset_label(onset: Option<&LethalOnset>) -> String {
     onset
-        .map(|onset| onset.prefix_ply.to_string())
+        .map(|onset| {
+            if let Some(shape) = lethal_onset_shape_label(onset) {
+                format!("{} · {}", onset.prefix_ply, shape)
+            } else {
+                onset.prefix_ply.to_string()
+            }
+        })
         .unwrap_or_else(|| "-".to_string())
 }
 
-fn failure_mode_label(failure: Option<&FailureAnalysis>) -> String {
+fn failure_mode_label(failure: Option<&FailureAnalysis>, onset: Option<&LethalOnset>) -> String {
     failure
-        .map(|failure| failure_mode_text(failure.mode).to_string())
+        .map(|failure| failure_mode_text(failure.mode, onset))
         .unwrap_or_else(|| "-".to_string())
 }
 
@@ -1362,7 +1371,7 @@ fn failure_critical_ply_label(failure: Option<&FailureAnalysis>) -> String {
         .unwrap_or_else(|| "-".to_string())
 }
 
-fn failure_detail_label(failure: &FailureAnalysis) -> String {
+fn failure_detail_label(failure: &FailureAnalysis, onset: Option<&LethalOnset>) -> String {
     let side = match failure.side {
         Color::Black => "Black",
         Color::White => "White",
@@ -1374,7 +1383,7 @@ fn failure_detail_label(failure: &FailureAnalysis) -> String {
         .unwrap_or_else(|| "-".to_string());
     format!(
         "{} / {} / before ply {} / actual {}",
-        failure_mode_text(failure.mode),
+        failure_mode_text(failure.mode, onset),
         side,
         prefix,
         actual
@@ -1400,14 +1409,50 @@ fn failure_candidates_label(failure: &FailureAnalysis) -> Option<String> {
     })
 }
 
-fn failure_mode_text(mode: FailureMode) -> &'static str {
+fn failure_mode_text(mode: FailureMode, onset: Option<&LethalOnset>) -> String {
     match mode {
-        FailureMode::MissedImmediateWin => "missed immediate win",
-        FailureMode::MissedImmediateResponse => "missed immediate response",
-        FailureMode::MissedImminentResponse => "missed imminent response",
-        FailureMode::MissedEscape => "missed escape",
-        FailureMode::MissedLethalPrevention => "missed lethal prevention",
-        FailureMode::Unclear => "unclear",
+        FailureMode::MissedImmediateWin => "missed win".to_string(),
+        FailureMode::MissedImmediateResponse => "missed 4".to_string(),
+        FailureMode::MissedImminentResponse => "missed 3".to_string(),
+        FailureMode::MissedEscape => "missed escape".to_string(),
+        FailureMode::MissedLethalPrevention => missed_lethal_onset_label(onset),
+        FailureMode::Unclear => "unclear".to_string(),
+    }
+}
+
+fn missed_lethal_onset_label(onset: Option<&LethalOnset>) -> String {
+    let Some(onset) = onset else {
+        return "missed fork".to_string();
+    };
+    lethal_onset_shape_label(onset)
+        .map(|label| format!("missed {label}"))
+        .unwrap_or_else(|| "missed fork".to_string())
+}
+
+fn lethal_onset_shape_label(onset: &LethalOnset) -> Option<String> {
+    let label = onset.shape.label.trim();
+    if label.is_empty() {
+        return None;
+    }
+    let forbidden = onset
+        .shape
+        .mechanisms
+        .contains(&LethalOnsetMechanism::ForbiddenCover);
+    let multi_route = onset
+        .shape
+        .mechanisms
+        .contains(&LethalOnsetMechanism::MultiRoute);
+    if label == "4"
+        && onset.kind == LethalThreatKind::TerminalCoverage
+        && multi_route
+        && onset.terminal_targets.len() >= 2
+    {
+        return Some("open four".to_string());
+    }
+    if forbidden && !multi_route {
+        Some(format!("forbidden {label}"))
+    } else {
+        Some(label.to_string())
     }
 }
 
@@ -2967,7 +3012,7 @@ mod tests {
         assert!(html.contains("<span>Setup corridor</span><strong>"));
         assert!(html.contains("<span>Corridor len</span><strong>"));
         assert!(html.contains("<span>Game len</span><strong>9 ply</strong>"));
-        assert!(html.contains("<span>Failure</span><strong>missed immediate response</strong>"));
+        assert!(html.contains("<span>Failure</span><strong>missed 4</strong>"));
         assert!(html.contains("<span>Critical ply</span><strong>7</strong>"));
         assert!(html.contains("<span>Missed candidates</span><strong>L8: immediate"));
         assert!(!html.contains("<span>Time</span>"));
@@ -3309,6 +3354,7 @@ mod tests {
             .expect("analysis entry should carry lethal onset evidence");
         assert_eq!(onset.prefix_ply, 11);
         assert_eq!(onset.kind, LethalThreatKind::OneStepCoverage);
+        assert_eq!(onset.shape.label, "4x3");
         let setup_corridor = entry
             .setup_corridor
             .as_ref()
@@ -3328,7 +3374,7 @@ mod tests {
         assert!(onset_frame.lethal_onset_reached);
 
         let html = render_analysis_batch_report_html(&report);
-        assert!(html.contains("<span>Lethal onset</span><strong>11</strong>"));
+        assert!(html.contains("<span>Lethal onset</span><strong>11 · 4x3</strong>"));
         assert!(html.contains("<span>Setup corridor</span><strong>"));
         assert!(html.contains("<span>Corridor len</span><strong>"));
         assert!(!html.contains("<span>Forced corridor</span>"));

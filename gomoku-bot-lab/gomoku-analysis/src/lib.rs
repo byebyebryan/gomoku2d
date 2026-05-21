@@ -1,16 +1,18 @@
 use gomoku_bot::corridor as bot_corridor;
 use gomoku_bot::tactical::{
-    corridor_active_threats, lethal_threat, LethalThreat, LethalThreatKind,
+    corridor_active_threats, lethal_threat, normalize_local_threat_facts, LethalThreat,
+    LethalThreatKind, LocalThreatFact, LocalThreatKind,
 };
-use gomoku_core::{replay::ReplayResult, Board, Color, GameResult, Move, Replay, Variant};
+use gomoku_core::{replay::ReplayResult, Board, Color, GameResult, Move, Replay, Variant, DIRS};
 use serde::Serialize;
+use std::collections::BTreeSet;
 
 pub use gomoku_bot::corridor::{
     DefenderReplyAnalysis, DefenderReplyOutcome, DefenderReplyRole, ProofLimitCause,
     SearchDiagnostics,
 };
 
-pub const ANALYSIS_SCHEMA_VERSION: u32 = 19;
+pub const ANALYSIS_SCHEMA_VERSION: u32 = 20;
 pub const DEFAULT_MAX_SCAN_PLIES: usize = 64;
 const MAX_CORRIDOR_REPLY_WIDTH: usize = 8;
 
@@ -221,12 +223,40 @@ pub struct LethalOnsetReply {
     pub lethal_entries: Vec<LethalOnsetEntry>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum LethalOnsetComponentTier {
+    Four,
+    Three,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct LethalOnsetComponent {
+    pub tier: LethalOnsetComponentTier,
+    pub mv: Move,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum LethalOnsetMechanism {
+    MultiRoute,
+    ForbiddenCover,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct LethalOnsetShape {
+    pub label: String,
+    pub components: Vec<LethalOnsetComponent>,
+    pub mechanisms: Vec<LethalOnsetMechanism>,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct LethalOnset {
     pub prefix_ply: usize,
     pub attacker: Color,
     pub defender: Color,
     pub kind: LethalThreatKind,
+    pub shape: LethalOnsetShape,
     pub terminal_targets: Vec<Move>,
     pub covering_replies: Vec<Move>,
     pub one_step_replies: Vec<LethalOnsetReply>,
@@ -2184,7 +2214,7 @@ fn find_lethal_onset(
         }
 
         if let Some(threat) = lethal_threat(board, attacker) {
-            onset = Some(lethal_onset_from_threat(prefix_ply, threat));
+            onset = Some(lethal_onset_from_threat(prefix_ply, board, threat));
             found_final_suffix = true;
         } else if found_final_suffix {
             break;
@@ -2194,12 +2224,23 @@ fn find_lethal_onset(
     onset
 }
 
-fn lethal_onset_from_threat(prefix_ply: usize, threat: LethalThreat) -> LethalOnset {
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+enum OnsetLineKey {
+    Horizontal(usize),
+    Vertical(usize),
+    DiagonalDown(isize),
+    DiagonalUp(usize),
+    Point(usize, usize),
+}
+
+fn lethal_onset_from_threat(prefix_ply: usize, board: &Board, threat: LethalThreat) -> LethalOnset {
+    let shape = lethal_onset_shape(board, &threat);
     LethalOnset {
         prefix_ply,
         attacker: threat.attacker,
         defender: threat.defender,
         kind: threat.kind,
+        shape,
         terminal_targets: threat.terminal_targets,
         covering_replies: threat.covering_replies,
         one_step_replies: threat
@@ -2218,6 +2259,271 @@ fn lethal_onset_from_threat(prefix_ply: usize, threat: LethalThreat) -> LethalOn
             })
             .collect(),
     }
+}
+
+fn lethal_onset_shape(board: &Board, threat: &LethalThreat) -> LethalOnsetShape {
+    let mut components = Vec::new();
+    let mut seen = BTreeSet::new();
+
+    for &target in &threat.terminal_targets {
+        push_onset_component(
+            &mut components,
+            &mut seen,
+            LethalOnsetComponentTier::Four,
+            onset_line_key_for_terminal_target(board, threat.attacker, target),
+            target,
+        );
+    }
+
+    if threat.kind == LethalThreatKind::OneStepCoverage {
+        let local_three_facts = onset_local_three_facts(board, threat.attacker);
+        for fact in &local_three_facts {
+            push_onset_component(
+                &mut components,
+                &mut seen,
+                LethalOnsetComponentTier::Three,
+                onset_line_key_for_fact(fact),
+                fact.origin.mv(),
+            );
+        }
+    }
+
+    let has_three_component = components
+        .iter()
+        .any(|component| component.tier == LethalOnsetComponentTier::Three);
+    if threat.kind == LethalThreatKind::OneStepCoverage && !has_three_component {
+        for reply in &threat.one_step_replies {
+            for entry in &reply.lethal_entries {
+                push_onset_component(
+                    &mut components,
+                    &mut seen,
+                    LethalOnsetComponentTier::Three,
+                    onset_line_key_for_entry(entry.mv, &entry.terminal_targets),
+                    entry.mv,
+                );
+            }
+        }
+    }
+
+    components.sort_by_key(|component| {
+        (
+            onset_component_tier_sort_key(component.tier),
+            component.mv.row,
+            component.mv.col,
+        )
+    });
+
+    let mut mechanisms = Vec::new();
+    if lethal_onset_has_multiple_routes(threat, &components) {
+        mechanisms.push(LethalOnsetMechanism::MultiRoute);
+    }
+    if lethal_onset_has_forbidden_cover(board, threat) {
+        mechanisms.push(LethalOnsetMechanism::ForbiddenCover);
+    }
+
+    LethalOnsetShape {
+        label: onset_shape_label(&components, threat.kind),
+        components,
+        mechanisms,
+    }
+}
+
+fn onset_local_three_facts(board: &Board, attacker: Color) -> Vec<LocalThreatFact> {
+    normalize_local_threat_facts(
+        corridor_active_threats(board, attacker)
+            .into_iter()
+            .filter(|fact| {
+                matches!(
+                    fact.kind,
+                    LocalThreatKind::OpenThree | LocalThreatKind::BrokenThree
+                )
+            })
+            .collect(),
+    )
+}
+
+fn push_onset_component(
+    components: &mut Vec<LethalOnsetComponent>,
+    seen: &mut BTreeSet<(LethalOnsetComponentTierSort, OnsetLineKey)>,
+    tier: LethalOnsetComponentTier,
+    key: OnsetLineKey,
+    mv: Move,
+) {
+    let sort_tier = onset_component_tier_sort_key(tier);
+    if seen.insert((sort_tier, key)) {
+        components.push(LethalOnsetComponent { tier, mv });
+    }
+}
+
+type LethalOnsetComponentTierSort = u8;
+
+fn onset_component_tier_sort_key(tier: LethalOnsetComponentTier) -> LethalOnsetComponentTierSort {
+    match tier {
+        LethalOnsetComponentTier::Four => 0,
+        LethalOnsetComponentTier::Three => 1,
+    }
+}
+
+fn onset_shape_label(components: &[LethalOnsetComponent], kind: LethalThreatKind) -> String {
+    if components.is_empty() {
+        return match kind {
+            LethalThreatKind::TerminalCoverage => "4".to_string(),
+            LethalThreatKind::OneStepCoverage => "3".to_string(),
+        };
+    }
+
+    components
+        .iter()
+        .map(|component| match component.tier {
+            LethalOnsetComponentTier::Four => "4",
+            LethalOnsetComponentTier::Three => "3",
+        })
+        .collect::<Vec<_>>()
+        .join("x")
+}
+
+fn onset_line_key_for_fact(fact: &LocalThreatFact) -> OnsetLineKey {
+    let origin = fact.origin.mv();
+    fact.rest_squares
+        .iter()
+        .chain(fact.defense_squares.iter())
+        .find_map(|&mv| onset_line_key_between(origin, mv))
+        .unwrap_or(OnsetLineKey::Point(origin.row, origin.col))
+}
+
+fn onset_line_key_for_entry(mv: Move, terminal_targets: &[Move]) -> OnsetLineKey {
+    terminal_targets
+        .iter()
+        .copied()
+        .filter(|&target| target != mv)
+        .find_map(|target| onset_line_key_between(mv, target))
+        .unwrap_or(OnsetLineKey::Point(mv.row, mv.col))
+}
+
+fn onset_line_key_for_terminal_target(board: &Board, attacker: Color, target: Move) -> OnsetLineKey {
+    DIRS.iter()
+        .copied()
+        .find_map(|(dr, dc)| {
+            let run_len = 1
+                + count_attacker_stones(board, attacker, target, dr, dc)
+                + count_attacker_stones(board, attacker, target, -dr, -dc);
+            (run_len >= board.config.win_length).then(|| onset_line_key_for_direction(target, dr, dc))
+        })
+        .unwrap_or(OnsetLineKey::Point(target.row, target.col))
+}
+
+fn count_attacker_stones(
+    board: &Board,
+    attacker: Color,
+    target: Move,
+    row_delta: isize,
+    col_delta: isize,
+) -> usize {
+    let size = board.config.board_size as isize;
+    let mut count = 0;
+    let mut row = target.row as isize + row_delta;
+    let mut col = target.col as isize + col_delta;
+    while row >= 0
+        && col >= 0
+        && row < size
+        && col < size
+        && board.cell(row as usize, col as usize) == Some(attacker)
+    {
+        count += 1;
+        row += row_delta;
+        col += col_delta;
+    }
+    count
+}
+
+fn onset_line_key_for_direction(target: Move, row_delta: isize, col_delta: isize) -> OnsetLineKey {
+    match (row_delta, col_delta) {
+        (0, _) => OnsetLineKey::Horizontal(target.row),
+        (_, 0) => OnsetLineKey::Vertical(target.col),
+        (dr, dc) if dr == dc => {
+            OnsetLineKey::DiagonalDown(target.row as isize - target.col as isize)
+        }
+        _ => OnsetLineKey::DiagonalUp(target.row + target.col),
+    }
+}
+
+fn onset_line_key_between(a: Move, b: Move) -> Option<OnsetLineKey> {
+    if a.row == b.row && a.col != b.col {
+        Some(OnsetLineKey::Horizontal(a.row))
+    } else if a.col == b.col && a.row != b.row {
+        Some(OnsetLineKey::Vertical(a.col))
+    } else {
+        let row_delta = a.row.abs_diff(b.row);
+        let col_delta = a.col.abs_diff(b.col);
+        if row_delta == col_delta && row_delta != 0 {
+            let a_row = a.row as isize;
+            let a_col = a.col as isize;
+            if a_row - a_col == b.row as isize - b.col as isize {
+                Some(OnsetLineKey::DiagonalDown(a_row - a_col))
+            } else {
+                Some(OnsetLineKey::DiagonalUp(a.row + a.col))
+            }
+        } else {
+            None
+        }
+    }
+}
+
+fn lethal_onset_has_multiple_routes(
+    threat: &LethalThreat,
+    components: &[LethalOnsetComponent],
+) -> bool {
+    threat.terminal_targets.len() > 1
+        || components.len() > 1
+        || threat.one_step_replies.iter().any(|reply| {
+            reply.lethal_entries.len() > 1
+                || reply
+                    .lethal_entries
+                    .iter()
+                    .any(|entry| entry.terminal_targets.len() > 1)
+        })
+}
+
+fn lethal_onset_has_forbidden_cover(board: &Board, threat: &LethalThreat) -> bool {
+    terminal_targets_have_forbidden_cover(board, threat)
+        || one_step_entries_have_forbidden_cover(board, threat)
+}
+
+fn terminal_targets_have_forbidden_cover(board: &Board, threat: &LethalThreat) -> bool {
+    !threat.terminal_targets.is_empty()
+        && threat
+            .terminal_targets
+            .iter()
+            .any(|&target| !board.is_legal_for_color(target, threat.defender))
+}
+
+fn one_step_entries_have_forbidden_cover(board: &Board, threat: &LethalThreat) -> bool {
+    for reply in &threat.one_step_replies {
+        let mut after_reply = board.clone();
+        if after_reply.apply_move(reply.reply).is_err() {
+            continue;
+        }
+
+        for entry in &reply.lethal_entries {
+            let mut after_entry = after_reply.clone();
+            match after_entry.apply_move(entry.mv) {
+                Ok(GameResult::Ongoing) => {
+                    if entry
+                        .terminal_targets
+                        .iter()
+                        .copied()
+                        .filter(|&target| target != entry.mv)
+                        .any(|target| !after_entry.is_legal_for_color(target, threat.defender))
+                    {
+                        return true;
+                    }
+                }
+                Ok(GameResult::Winner(_)) | Ok(GameResult::Draw) | Err(_) => {}
+            }
+        }
+    }
+
+    false
 }
 
 struct FailureAnalysisInput<'a> {
@@ -2931,7 +3237,7 @@ pub fn rule_label(variant: &Variant) -> &'static str {
 #[cfg(test)]
 mod tests {
     use gomoku_bot::tactical::{
-        has_forcing_local_threat, legal_forcing_continuations_for_fact,
+        has_forcing_local_threat, legal_forcing_continuations_for_fact, lethal_threat,
         local_threat_facts_for_player as local_threat_facts, LethalThreatKind, LocalThreatFact,
         LocalThreatKind, LocalThreatOrigin,
     };
@@ -2942,10 +3248,10 @@ mod tests {
         corridor_analysis_model, failure_analysis, replay_frame_annotations_from_proof,
         replay_moves, replay_prefix_boards, replay_proof_summary, AnalysisOptions,
         DefenderReplyOutcome, DefenderReplyRole, FailureAnalysisInput, FailureMode, ForcedInterval,
-        LethalOnset, MissedCandidateOutcome, ProofLimitCause, ProofResult, ProofStatus,
-        ReplayAnalysisSession, ReplayFrameHighlightRole, ReplayFrameMarkerRole,
-        ReplyClassification, ReplyPolicy, RootCause, TacticalNote, ThreatSequenceEvidence,
-        UnclearReason,
+        LethalOnset, LethalOnsetComponentTier, LethalOnsetMechanism, LethalOnsetShape,
+        MissedCandidateOutcome, ProofLimitCause, ProofResult, ProofStatus, ReplayAnalysisSession,
+        ReplayFrameHighlightRole, ReplayFrameMarkerRole, ReplyClassification, ReplyPolicy,
+        RootCause, TacticalNote, ThreatSequenceEvidence, UnclearReason,
     };
 
     fn mv(notation: &str) -> Move {
@@ -3062,6 +3368,11 @@ mod tests {
             attacker,
             defender: attacker.opponent(),
             kind: LethalThreatKind::OneStepCoverage,
+            shape: LethalOnsetShape {
+                label: "3".to_string(),
+                components: Vec::new(),
+                mechanisms: vec![LethalOnsetMechanism::MultiRoute],
+            },
             terminal_targets: Vec::new(),
             covering_replies: Vec::new(),
             one_step_replies: Vec::new(),
@@ -3473,6 +3784,20 @@ mod tests {
         assert_eq!(onset.attacker, Color::Black);
         assert_eq!(onset.defender, Color::White);
         assert_eq!(onset.kind, LethalThreatKind::TerminalCoverage);
+        assert_eq!(onset.shape.label, "4");
+        assert_eq!(
+            onset
+                .shape
+                .components
+                .iter()
+                .map(|component| component.tier)
+                .collect::<Vec<_>>(),
+            vec![LethalOnsetComponentTier::Four]
+        );
+        assert_eq!(
+            onset.shape.mechanisms,
+            vec![LethalOnsetMechanism::MultiRoute]
+        );
         assert_eq!(onset.terminal_targets, vec![mv("G8"), mv("L8")]);
         assert!(onset.covering_replies.is_empty());
         assert!(onset.one_step_replies.is_empty());
@@ -3483,6 +3808,67 @@ mod tests {
                 .map(|interval| interval.end_ply),
             Some(onset.prefix_ply)
         );
+    }
+
+    #[test]
+    fn lethal_onset_shape_collapses_diagonal_open_four() {
+        let board = board_from_moves(
+            Variant::Freestyle,
+            &[
+                "F9", "E8", "I8", "G8", "I10", "I7", "L11", "H8", "L5", "G9", "K3", "F10",
+            ],
+        );
+        assert_eq!(board.current_player, Color::Black);
+
+        let threat = lethal_threat(&board, Color::White)
+            .expect("diagonal open four should be lethal");
+        let onset = super::lethal_onset_from_threat(12, &board, threat);
+
+        assert_eq!(onset.kind, LethalThreatKind::TerminalCoverage);
+        assert_eq!(onset.shape.label, "4");
+        assert_eq!(
+            onset
+                .shape
+                .components
+                .iter()
+                .map(|component| component.tier)
+                .collect::<Vec<_>>(),
+            vec![LethalOnsetComponentTier::Four]
+        );
+        assert_eq!(
+            onset.shape.mechanisms,
+            vec![LethalOnsetMechanism::MultiRoute]
+        );
+        assert_eq!(onset.terminal_targets, vec![mv("J6"), mv("E11")]);
+    }
+
+    #[test]
+    fn lethal_onset_shape_ignores_unrelated_threes_for_terminal_coverage() {
+        let board = board_from_moves(
+            Variant::Freestyle,
+            &[
+                "C3", "A15", "D3", "O15", "E3", "A14", "H8", "O14", "I8", "A13", "J8", "O13",
+                "K8",
+            ],
+        );
+        assert_eq!(board.current_player, Color::White);
+
+        let threat = lethal_threat(&board, Color::Black)
+            .expect("open four should be terminal lethal even with an unrelated three");
+        let onset = super::lethal_onset_from_threat(13, &board, threat);
+
+        assert_eq!(onset.kind, LethalThreatKind::TerminalCoverage);
+        assert_eq!(onset.shape.label, "4");
+        assert_eq!(
+            onset
+                .shape
+                .components
+                .iter()
+                .map(|component| component.tier)
+                .collect::<Vec<_>>(),
+            vec![LethalOnsetComponentTier::Four]
+        );
+        assert_eq!(onset.terminal_targets, vec![mv("G8"), mv("L8")]);
     }
 
     #[test]
@@ -3504,6 +3890,23 @@ mod tests {
             .expect("4+3 should be a one-step lethal onset");
         assert_eq!(onset.prefix_ply, 11);
         assert_eq!(onset.kind, LethalThreatKind::OneStepCoverage);
+        assert_eq!(onset.shape.label, "4x3");
+        assert_eq!(
+            onset
+                .shape
+                .components
+                .iter()
+                .map(|component| component.tier)
+                .collect::<Vec<_>>(),
+            vec![
+                LethalOnsetComponentTier::Four,
+                LethalOnsetComponentTier::Three
+            ]
+        );
+        assert_eq!(
+            onset.shape.mechanisms,
+            vec![LethalOnsetMechanism::MultiRoute]
+        );
         assert_eq!(onset.terminal_targets, vec![mv("L8")]);
         assert_eq!(onset.one_step_replies.len(), 1);
         assert_eq!(onset.one_step_replies[0].reply, mv("L8"));
@@ -3525,6 +3928,39 @@ mod tests {
                 (mv("I10"), vec![mv("I6"), mv("I11")]),
             ]
         );
+    }
+
+    #[test]
+    fn lethal_onset_shape_marks_single_renju_forbidden_cover() {
+        let board = board_from_moves(
+            Variant::Renju,
+            &[
+                "H8", "H7", "J8", "I9", "I8", "G8", "F9", "F7", "H9", "G7", "I7", "E7", "D7", "G9",
+                "G6", "G11",
+            ],
+        );
+        assert_eq!(board.current_player, Color::Black);
+        assert!(!board.is_legal_for_color(mv("G10"), Color::Black));
+
+        let threat = lethal_threat(&board, Color::White)
+            .expect("forbidden direct block should make the four lethal");
+        let onset = super::lethal_onset_from_threat(16, &board, threat);
+
+        assert_eq!(onset.shape.label, "4");
+        assert_eq!(
+            onset
+                .shape
+                .components
+                .iter()
+                .map(|component| component.tier)
+                .collect::<Vec<_>>(),
+            vec![LethalOnsetComponentTier::Four]
+        );
+        assert_eq!(
+            onset.shape.mechanisms,
+            vec![LethalOnsetMechanism::ForbiddenCover]
+        );
+        assert_eq!(onset.terminal_targets, vec![mv("G10")]);
     }
 
     #[test]
