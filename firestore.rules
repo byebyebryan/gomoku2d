@@ -144,8 +144,9 @@ service cloud.firestore {
 
     function validBoardHints(value) {
       return value is map
-        && value.keys().hasAll(['immediate', 'imminent'])
-        && value.keys().hasOnly(['immediate', 'imminent'])
+        && value.keys().hasAll(['evidence', 'immediate', 'imminent'])
+        && value.keys().hasOnly(['evidence', 'immediate', 'imminent'])
+        && value.evidence in ['off', 'on']
         && value.immediate in ['off', 'win', 'win_threat']
         && value.imminent in ['off', 'threat', 'threat_counter'];
     }

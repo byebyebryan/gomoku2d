@@ -351,6 +351,7 @@ export function cloudSettingsFromProfileSettings(settings: ProfileSettings): Clo
 export function cloudSettingsDocument(settings: CloudProfileSettings) {
   return {
     board_hints: {
+      evidence: settings.boardHints.evidence,
       immediate: settings.boardHints.immediate,
       imminent: settings.boardHints.imminent,
     },
@@ -384,6 +385,10 @@ function isSettingsDocument(value: unknown): boolean {
     && validVariant(candidate?.game_config?.ruleset) !== null
     && isBotConfigDocument(candidate?.bot_config)
     && (candidate?.touch_control === "pointer" || candidate?.touch_control === "touchpad")
+    && (
+      candidate?.board_hints?.evidence === "off"
+      || candidate?.board_hints?.evidence === "on"
+    )
     && (
       candidate?.board_hints?.immediate === "off"
       || candidate?.board_hints?.immediate === "win"

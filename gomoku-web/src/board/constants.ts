@@ -72,9 +72,9 @@ export const CAUTION_ANIMS = {
 } as const;
 
 export const HIGHLIGHTER_ANIMS = {
-  STRONG: { start: 0, end: 5, frameRate: 12, key: "highlight-strong" },
+  STRONG: { start: 12, end: 17, frameRate: 12, key: "highlight-strong" },
   SOFT: { start: 6, end: 11, frameRate: 12, key: "highlight-soft" },
-  ENTRY: { start: 12, end: 17, frameRate: 12, key: "highlight-entry" },
+  ENTRY: { start: 0, end: 5, frameRate: 12, key: "highlight-entry" },
 } as const;
 
 export const MARKER_ANIMS = {

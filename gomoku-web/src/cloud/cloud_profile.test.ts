@@ -41,6 +41,7 @@ function settingsFor(ruleset: "freestyle" | "renju" = "freestyle"): ProfileSetti
 function settingsDocumentFor(ruleset: "freestyle" | "renju" = "freestyle") {
   return {
     board_hints: {
+      evidence: "on",
       immediate: "win_threat",
       imminent: "threat_counter",
     },

@@ -8,10 +8,12 @@ import {
 export const DEFAULT_RULE_OPENING = "standard";
 
 export type TouchControlMode = "pointer" | "touchpad";
+export type EvidenceHintMode = "off" | "on";
 export type ImmediateHintMode = "off" | "win" | "win_threat";
 export type ImminentHintMode = "off" | "threat" | "threat_counter";
 
 export interface BoardHintSettings {
+  evidence: EvidenceHintMode;
   immediate: ImmediateHintMode;
   imminent: ImminentHintMode;
 }
@@ -29,6 +31,7 @@ export interface ProfileSettings {
 }
 
 export const DEFAULT_BOARD_HINTS: BoardHintSettings = {
+  evidence: "on",
   immediate: "win_threat",
   imminent: "threat_counter",
 };
@@ -69,10 +72,17 @@ export function sanitizeImminentHintMode(value: unknown): ImminentHintMode {
     : DEFAULT_BOARD_HINTS.imminent;
 }
 
+export function sanitizeEvidenceHintMode(value: unknown): EvidenceHintMode {
+  return value === "off" || value === "on"
+    ? value
+    : DEFAULT_BOARD_HINTS.evidence;
+}
+
 export function sanitizeBoardHints(value: unknown): BoardHintSettings {
   const candidate = value as Partial<Record<keyof BoardHintSettings, unknown>> | null;
 
   return {
+    evidence: sanitizeEvidenceHintMode(candidate?.evidence),
     immediate: sanitizeImmediateHintMode(candidate?.immediate),
     imminent: sanitizeImminentHintMode(candidate?.imminent),
   };

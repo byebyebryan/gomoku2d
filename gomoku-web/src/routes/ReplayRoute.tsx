@@ -54,6 +54,7 @@ export function ReplayRoute() {
   const cloudProfile = useStore(cloudProfileStore, (state) => state);
   const localHistory = useStore(localProfileStore, (state) => state.matchHistory.replayMatches);
   const localProfile = useStore(localProfileStore, (state) => state.profile);
+  const settings = useStore(localProfileStore, (state) => state.settings);
   const [moveIndex, setMoveIndex] = useState(defaultReplayMoveIndex(0));
   const [autoplaying, setAutoplaying] = useState(false);
   const [analysisAnnotations, setAnalysisAnnotations] = useState<ReplayAnalysisAnnotationsByPly>({});
@@ -225,7 +226,13 @@ export function ReplayRoute() {
 
   const frame = buildLocalReplayFrame(match, moveIndex, () => coreWinningCells);
   const analysisSummary = analysisStep?.analysis ?? null;
-  const analysisOverlays = analysisOverlaysForFrame(analysisAnnotations, match, frame.moveIndex, analysisSummary);
+  const analysisOverlays = analysisOverlaysForFrame(
+    analysisAnnotations,
+    match,
+    frame.moveIndex,
+    analysisSummary,
+    settings.boardHints.evidence === "on",
+  );
   const analysisStatus = replayAnalysisStatusSummary(analysisStep, analysisAnnotations, match, frame);
   const timelineAnalysis = replayTimelineAnalysis(analysisAnnotations, match.move_count, analysisSummary);
   const timelineStyle = {
@@ -270,9 +277,12 @@ export function ReplayRoute() {
           <Board
             analysisOverlays={analysisOverlays}
             cells={frame.cells}
+            counterThreatEvidenceCells={[]}
             counterThreatMoves={[]}
             currentPlayer={frame.currentPlayer}
             forbiddenMoves={[]}
+            immediateThreatEvidenceCells={[]}
+            imminentThreatEvidenceCells={[]}
             imminentThreatMoves={[]}
             interactive={false}
             lastMove={frame.lastMove}
@@ -286,6 +296,7 @@ export function ReplayRoute() {
             showSequenceNumbers={shouldShowReplaySequenceNumbers(frame)}
             status={frame.status}
             threatMoves={[]}
+            winningEvidenceCells={[]}
             winningMoves={[]}
             winningCells={frame.winningCells}
           />

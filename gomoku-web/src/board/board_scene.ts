@@ -311,9 +311,12 @@ class SequenceAnimationCycle {
 export interface BoardSceneState {
   analysisOverlays: BoardAnalysisOverlay[];
   cells: CellStone[][];
+  counterThreatEvidenceCells: CellPosition[];
   counterThreatMoves: CellPosition[];
   currentPlayer: 1 | 2;
   forbiddenMoves: CellPosition[];
+  immediateThreatEvidenceCells: CellPosition[];
+  imminentThreatEvidenceCells: CellPosition[];
   imminentThreatMoves: CellPosition[];
   interactive: boolean;
   lastMove: CellPosition | null;
@@ -327,6 +330,7 @@ export interface BoardSceneState {
   showSequenceNumbers: boolean;
   status: MatchStatus;
   threatMoves: CellPosition[];
+  winningEvidenceCells: CellPosition[];
   winningMoves: CellPosition[];
   winningCells: CellPosition[];
 }
@@ -336,9 +340,12 @@ const DEFAULT_STATE: BoardSceneState = {
   cells: Array.from({ length: BOARD_SIZE }, () =>
     Array.from({ length: BOARD_SIZE }, () => null),
   ),
+  counterThreatEvidenceCells: [],
   counterThreatMoves: [],
   currentPlayer: 1,
   forbiddenMoves: [],
+  immediateThreatEvidenceCells: [],
+  imminentThreatEvidenceCells: [],
   interactive: false,
   lastMove: null,
   moves: [],
@@ -352,6 +359,7 @@ const DEFAULT_STATE: BoardSceneState = {
   status: "playing",
   imminentThreatMoves: [],
   threatMoves: [],
+  winningEvidenceCells: [],
   winningMoves: [],
   winningCells: [],
 };
@@ -753,7 +761,12 @@ export class BoardScene extends Phaser.Scene {
   }
 
   private syncOverlaySprites(): void {
-    if (!this.board || !this.overlayLayer || !this.sequenceLayer || !this.hoverLayer) {
+    if (
+      !this.board ||
+      !this.overlayLayer ||
+      !this.sequenceLayer ||
+      !this.hoverLayer
+    ) {
       return;
     }
 
@@ -782,6 +795,11 @@ export class BoardScene extends Phaser.Scene {
       const sprite = this.createForbiddenSprite(point.x, point.y);
       this.forbiddenSprites.push(sprite);
     }
+
+    this.renderHintEvidenceCells(this.boardState.winningEvidenceCells, COLOR.WIN_MOVE);
+    this.renderHintEvidenceCells(this.boardState.immediateThreatEvidenceCells, COLOR.THREAT);
+    this.renderHintEvidenceCells(this.boardState.imminentThreatEvidenceCells, COLOR.IMMINENT_THREAT);
+    this.renderHintEvidenceCells(this.boardState.counterThreatEvidenceCells, COLOR.COUNTER_THREAT);
 
     for (const cell of this.boardState.winningMoves) {
       const point = this.board.cellToPixel(cell.row, cell.col);
@@ -924,6 +942,26 @@ export class BoardScene extends Phaser.Scene {
           overlayAnimationForRole("winningLine"),
           BOARD_RENDER_DEPTHS.OVERLAY_SURFACE,
           overlaySpriteForRole("winningLine"),
+        ),
+      );
+    }
+  }
+
+  private renderHintEvidenceCells(cells: CellPosition[], tint: number): void {
+    if (!this.board) {
+      return;
+    }
+
+    for (const cell of cells) {
+      const point = this.board.cellToPixel(cell.row, cell.col);
+      this.hintSprites.push(
+        this.createOverlaySprite(
+          point.x,
+          point.y,
+          tint,
+          HIGHLIGHTER_ANIMS.SOFT.key,
+          BOARD_RENDER_DEPTHS.OVERLAY_SURFACE,
+          SPRITE.HIGHLIGHTER,
         ),
       );
     }

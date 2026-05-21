@@ -96,14 +96,19 @@ describe("LocalMatchRoute", () => {
   it("filters optional board hints while keeping overlapping forbidden moves visible", () => {
     const matchStore = localMatchSessionStore.getState().matchStore;
     matchStore?.setState({
+      counterThreatEvidenceCells: [{ row: 4, col: 3 }],
       counterThreatMoves: [{ row: 4, col: 4 }],
       forbiddenMoves: [{ row: 8, col: 8 }],
+      immediateThreatEvidenceCells: [{ row: 8, col: 7 }],
+      imminentThreatEvidenceCells: [{ row: 3, col: 2 }],
       imminentThreatMoves: [{ row: 3, col: 3 }],
       threatMoves: [{ row: 8, col: 8 }],
+      winningEvidenceCells: [{ row: 1, col: 0 }],
       winningMoves: [{ row: 1, col: 1 }],
     });
     localProfileStore.getState().updateSettings({
       boardHints: {
+        evidence: "on",
         immediate: "win",
         imminent: "off",
       },
@@ -114,10 +119,51 @@ describe("LocalMatchRoute", () => {
     const latestBoardProps = mockedBoard.mock.calls[mockedBoard.mock.calls.length - 1]?.[0];
 
     expect(latestBoardProps).toMatchObject({
+      counterThreatEvidenceCells: [],
       counterThreatMoves: [],
       forbiddenMoves: [{ row: 8, col: 8 }],
+      immediateThreatEvidenceCells: [],
+      imminentThreatEvidenceCells: [],
       imminentThreatMoves: [],
       threatMoves: [],
+      winningEvidenceCells: [{ row: 1, col: 0 }],
+      winningMoves: [{ row: 1, col: 1 }],
+    });
+  });
+
+  it("can hide source-stone evidence while keeping hint targets visible", () => {
+    const matchStore = localMatchSessionStore.getState().matchStore;
+    matchStore?.setState({
+      counterThreatEvidenceCells: [{ row: 4, col: 3 }],
+      counterThreatMoves: [{ row: 4, col: 4 }],
+      forbiddenMoves: [],
+      immediateThreatEvidenceCells: [{ row: 8, col: 7 }],
+      imminentThreatEvidenceCells: [{ row: 3, col: 2 }],
+      imminentThreatMoves: [{ row: 3, col: 3 }],
+      threatMoves: [{ row: 8, col: 8 }],
+      winningEvidenceCells: [{ row: 1, col: 0 }],
+      winningMoves: [{ row: 1, col: 1 }],
+    });
+    localProfileStore.getState().updateSettings({
+      boardHints: {
+        evidence: "off",
+        immediate: "win_threat",
+        imminent: "threat_counter",
+      },
+    });
+
+    renderLocalMatchRoute();
+
+    const latestBoardProps = mockedBoard.mock.calls[mockedBoard.mock.calls.length - 1]?.[0];
+
+    expect(latestBoardProps).toMatchObject({
+      counterThreatEvidenceCells: [],
+      counterThreatMoves: [{ row: 4, col: 4 }],
+      immediateThreatEvidenceCells: [],
+      imminentThreatEvidenceCells: [],
+      imminentThreatMoves: [{ row: 3, col: 3 }],
+      threatMoves: [{ row: 8, col: 8 }],
+      winningEvidenceCells: [],
       winningMoves: [{ row: 1, col: 1 }],
     });
   });

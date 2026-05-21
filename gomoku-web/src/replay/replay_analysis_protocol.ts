@@ -76,6 +76,7 @@ export interface ReplayFrameMarker {
 }
 
 export interface ReplayFrameAnnotations {
+  evidence?: ReplayFrameHighlight[];
   highlights: ReplayFrameHighlight[];
   markers: ReplayFrameMarker[];
   ply: number;

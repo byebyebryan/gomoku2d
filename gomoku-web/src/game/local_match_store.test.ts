@@ -537,7 +537,19 @@ describe("createLocalMatchStore", () => {
         { row: 7, col: 11 },
       ]),
     );
+    expect(state.winningEvidenceCells).toEqual([
+      { row: 7, col: 7 },
+      { row: 7, col: 8 },
+      { row: 7, col: 9 },
+      { row: 7, col: 10 },
+    ]);
     expect(state.threatMoves).toEqual([{ row: 0, col: 4 }]);
+    expect(state.immediateThreatEvidenceCells).toEqual([
+      { row: 0, col: 0 },
+      { row: 0, col: 1 },
+      { row: 0, col: 2 },
+      { row: 0, col: 3 },
+    ]);
     expect(state.imminentThreatMoves).toEqual([]);
   });
 
@@ -574,9 +586,19 @@ describe("createLocalMatchStore", () => {
       { row: 7, col: 6 },
       { row: 7, col: 10 },
     ]);
+    expect(state.imminentThreatEvidenceCells).toEqual([
+      { row: 7, col: 7 },
+      { row: 7, col: 8 },
+      { row: 7, col: 9 },
+    ]);
     expect(state.counterThreatMoves).toEqual([
       { row: 0, col: 1 },
       { row: 0, col: 3 },
+    ]);
+    expect(state.counterThreatEvidenceCells).toEqual([
+      { row: 0, col: 0 },
+      { row: 0, col: 2 },
+      { row: 0, col: 4 },
     ]);
   });
 

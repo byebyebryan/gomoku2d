@@ -50,14 +50,18 @@ const emptyCells = (): CellStone[][] => Array.from({ length: 15 }, () =>
 const overlayState = (overrides: Partial<Parameters<typeof shouldSyncOverlaySprites>[1]> = {}) => ({
   analysisOverlays: [],
   cells: emptyCells(),
+  counterThreatEvidenceCells: [{ row: 12, col: 11 }],
   counterThreatMoves: [{ row: 12, col: 12 }],
   forbiddenMoves: [{ row: 8, col: 8 }],
+  immediateThreatEvidenceCells: [{ row: 9, col: 8 }],
+  imminentThreatEvidenceCells: [{ row: 11, col: 10 }],
   imminentThreatMoves: [{ row: 11, col: 11 }],
   moves: [{ row: 7, col: 7, moveNumber: 1, player: 1 as const }],
   nextReplayMove: null,
   showSequenceNumbers: true,
   status: "playing" as const,
   threatMoves: [{ row: 9, col: 9 }],
+  winningEvidenceCells: [{ row: 10, col: 9 }],
   winningCells: [],
   winningMoves: [{ row: 10, col: 10 }],
   ...overrides,
@@ -100,9 +104,9 @@ describe("animation sheet inventory", () => {
     });
 
     expect(HIGHLIGHTER_ANIMS).toMatchObject({
-      STRONG: { start: 0, end: 5, frameRate: 12, key: "highlight-strong" },
+      STRONG: { start: 12, end: 17, frameRate: 12, key: "highlight-strong" },
       SOFT: { start: 6, end: 11, frameRate: 12, key: "highlight-soft" },
-      ENTRY: { start: 12, end: 17, frameRate: 12, key: "highlight-entry" },
+      ENTRY: { start: 0, end: 5, frameRate: 12, key: "highlight-entry" },
     });
 
     expect(MARKER_ANIMS).toMatchObject({
@@ -228,6 +232,13 @@ describe("shouldSyncOverlaySprites", () => {
     expect(shouldSyncOverlaySprites(
       overlayState(),
       overlayState({ threatMoves: [{ row: 9, col: 10 }] }),
+    )).toBe(true);
+  });
+
+  it("syncs overlays when tactical evidence cells change", () => {
+    expect(shouldSyncOverlaySprites(
+      overlayState(),
+      overlayState({ imminentThreatEvidenceCells: [{ row: 10, col: 11 }] }),
     )).toBe(true);
   });
 

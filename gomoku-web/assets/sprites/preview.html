@@ -506,9 +506,9 @@
       { group: "Caution", name: "caution-forbidden-warning", role: "combined forbidden + warning caution loop", file: "caution.png", cols: 6, rows: 3, start: 0, end: 5, fps: 12, tint: "red" },
       { group: "Caution", name: "caution-forbidden-out", role: "forbidden move loop half", file: "caution.png", cols: 6, rows: 3, start: 6, end: 11, fps: 12, tint: "red" },
       { group: "Caution", name: "caution-forbidden-in", role: "forbidden move loop half", file: "caution.png", cols: 6, rows: 3, start: 12, end: 17, fps: 12, tint: "red" },
-      { group: "Highlight", name: "highlight-strong", role: "strong board-cell highlight, immediate threat/loss/win or result line", file: "highlighter.png", cols: 6, rows: 3, start: 0, end: 5, fps: 12, tint: "red" },
-      { group: "Highlight", name: "highlight-soft", role: "subtle board-cell highlight, imminent or counter-threat", file: "highlighter.png", cols: 6, rows: 3, start: 6, end: 11, fps: 12, tint: "pink" },
-      { group: "Highlight", name: "highlight-entry", role: "corridor-entry or critical-point highlight", file: "highlighter.png", cols: 6, rows: 3, start: 12, end: 17, fps: 12 },
+      { group: "Highlight", name: "highlight-strong", role: "strong board-cell highlight, immediate threat/loss/win or result line", file: "highlighter.png", cols: 6, rows: 3, start: 12, end: 17, fps: 12, tint: "red" },
+      { group: "Highlight", name: "highlight-soft", role: "source-stone evidence or soft context", file: "highlighter.png", cols: 6, rows: 3, start: 6, end: 11, fps: 12, tint: "pink" },
+      { group: "Highlight", name: "highlight-entry", role: "corridor-entry or critical-point highlight", file: "highlighter.png", cols: 6, rows: 3, start: 0, end: 5, fps: 12 },
       { group: "Marker", name: "marker-warning", role: "immediate-loss marker", file: "marker.png", cols: 6, rows: 6, start: 0, end: 5, fps: 12, tint: "red" },
       { group: "Marker", name: "marker-question", role: "unknown marker", file: "marker.png", cols: 6, rows: 6, start: 6, end: 11, fps: 12, tint: "gray" },
       { group: "Marker", name: "marker-L", role: "forced-loss marker", file: "marker.png", cols: 6, rows: 6, start: 12, end: 17, fps: 12, tint: "red" },
@@ -542,7 +542,7 @@
         title: "Analysis marker",
         note: "Replay proof can combine a context highlight with a letter marker on the same surface layer.",
         layers: [
-          { className: "zHighlight", name: "highlight-entry", file: "highlighter.png", cols: 6, rows: 3, start: 12, end: 17, fps: 12 },
+          { className: "zHighlight", name: "highlight-entry", file: "highlighter.png", cols: 6, rows: 3, start: 0, end: 5, fps: 12 },
           { className: "zSurface", name: "marker-E", file: "marker.png", cols: 6, rows: 6, start: 24, end: 29, fps: 12, tint: "green" },
         ],
       },
@@ -551,7 +551,7 @@
         title: "Actual move",
         note: "When the analyzed square has a committed stone, the highlight stays below the stone focus.",
         layers: [
-          { className: "zHighlight", name: "highlight-entry", file: "highlighter.png", cols: 6, rows: 3, start: 12, end: 17, fps: 12 },
+          { className: "zHighlight", name: "highlight-entry", file: "highlighter.png", cols: 6, rows: 3, start: 0, end: 5, fps: 12 },
           { className: "zWhiteStone", name: "stone-static / white", file: "stone.png", cols: 6, rows: 4, frame: 0 },
         ],
       },
@@ -565,12 +565,21 @@
         ],
       },
       {
+        name: "threat-evidence-under-stone",
+        title: "Threat evidence",
+        note: "Source-stone evidence is a board-surface highlight below the committed stone.",
+        layers: [
+          { className: "zHighlight", name: "highlight-soft", file: "highlighter.png", cols: 6, rows: 3, start: 6, end: 11, fps: 12, tint: "pink" },
+          { className: "zStone", name: "stone-static / black", file: "stone.png", cols: 6, rows: 4, frame: 0, tint: "black" },
+        ],
+      },
+      {
         name: "result-winning-line",
         title: "Result winning line",
         note: "Winning-line emphasis is a board-surface highlight below the committed stone and sequence number.",
         sequence: "7",
         layers: [
-          { className: "zHighlight", name: "highlight-strong", file: "highlighter.png", cols: 6, rows: 3, start: 0, end: 5, fps: 12, tint: "green" },
+          { className: "zHighlight", name: "highlight-strong", file: "highlighter.png", cols: 6, rows: 3, start: 12, end: 17, fps: 12, tint: "green" },
           { className: "zWhiteStone", name: "stone-static / white", file: "stone.png", cols: 6, rows: 4, frame: 0 },
         ],
       },

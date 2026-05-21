@@ -55,6 +55,7 @@ type CloudProfileDocument = {
   schema_version: 5;
   settings: {
     board_hints: {
+      evidence: "off" | "on";
       immediate: "off" | "win" | "win_threat";
       imminent: "off" | "threat" | "threat_counter";
     };

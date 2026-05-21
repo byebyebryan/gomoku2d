@@ -78,6 +78,7 @@ function defaultBot(): Record<string, unknown> {
 function defaultSettings(ruleset = "freestyle"): Record<string, unknown> {
   return {
     board_hints: {
+      evidence: "on",
       immediate: "win_threat",
       imminent: "threat_counter",
     },
@@ -452,6 +453,7 @@ describe("Firestore profile rules", () => {
           settings: {
             ...defaultSettings(),
             board_hints: {
+              evidence: "on",
               immediate: "maybe",
               imminent: "threat_counter",
             },

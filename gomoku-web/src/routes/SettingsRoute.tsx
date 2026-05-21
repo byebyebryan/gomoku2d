@@ -20,6 +20,7 @@ import {
 } from "../game/local_match_session";
 import { localProfileStore } from "../profile/local_profile_store";
 import {
+  type EvidenceHintMode,
   type ImmediateHintMode,
   type ImminentHintMode,
 } from "../profile/profile_settings";
@@ -59,7 +60,11 @@ function HintModeRow<TMode extends string>({
         <p className={styles.labLabel}>{label}</p>
         <p className={styles.labHint}>{hint}</p>
       </div>
-      <div aria-label={`${label} hints`} className={styles.segmentGridThree} role="group">
+      <div
+        aria-label={`${label} hints`}
+        className={options.length === 2 ? styles.segmentGrid : styles.segmentGridThree}
+        role="group"
+      >
         {options.map((option) => (
           <button
             className={selected === option.value ? "uiSegment uiSegmentActive" : "uiSegment"}
@@ -85,6 +90,11 @@ const IMMINENT_HINT_OPTIONS: Array<{ label: string; value: ImminentHintMode }> =
   { label: "Off", value: "off" },
   { label: "Threat", value: "threat" },
   { label: "+ Counter", value: "threat_counter" },
+];
+
+const EVIDENCE_HINT_OPTIONS: Array<{ label: string; value: EvidenceHintMode }> = [
+  { label: "Off", value: "off" },
+  { label: "On", value: "on" },
 ];
 
 export function SettingsRoute() {
@@ -303,6 +313,13 @@ export function SettingsRoute() {
                 onSelect={(imminent) => updateBoardHints({ imminent })}
                 options={IMMINENT_HINT_OPTIONS}
                 selected={settings.boardHints.imminent}
+              />
+              <HintModeRow
+                hint="Source stones behind visible threat hints."
+                label="Evidence"
+                onSelect={(evidence) => updateBoardHints({ evidence })}
+                options={EVIDENCE_HINT_OPTIONS}
+                selected={settings.boardHints.evidence}
               />
             </div>
           </section>
