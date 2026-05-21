@@ -800,6 +800,41 @@ describe("analysisOverlaysForFrame", () => {
       },
     })).toEqual([]);
   });
+
+  it("does not mark strategic response failures as unexpected mistake moves", () => {
+    expect(analysisOverlaysForFrame({}, match("black_won"), 5, {
+      failure: {
+        actual_move: { row: 7, col: 7 },
+        actual_notation: "H8",
+        confidence: "confirmed",
+        missed_candidates: [
+          {
+            mv: { row: 7, col: 6 },
+            notation: "G8",
+            outcome: "prevents_lethal_onset",
+            roles: ["imminent_defense"],
+          },
+        ],
+        mode: "missed_lethal_prevention",
+        prefix_ply: 5,
+        prevented_onset_ply: 7,
+        side: "White",
+      },
+    })).toEqual([]);
+
+    expect(analysisOverlaysForFrame({}, match("black_won"), 5, {
+      failure: {
+        actual_move: { row: 7, col: 7 },
+        actual_notation: "H8",
+        confidence: "confirmed",
+        missed_candidates: [],
+        mode: "missed_escape",
+        prefix_ply: 5,
+        prevented_onset_ply: 7,
+        side: "White",
+      },
+    })).toEqual([]);
+  });
 });
 
 describe("nextReplayMove", () => {
