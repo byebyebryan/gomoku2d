@@ -9,12 +9,13 @@ use serde::Serialize;
 
 use crate::analysis::{
     analyze_alternate_defender_reply_options, analyze_replay, defender_reply_roles_for_move,
-    visible_defender_reply_candidates, AnalysisBoardSnapshot, AnalysisOptions,
-    DefenderReplyAnalysis, DefenderReplyCandidate, DefenderReplyOutcome, DefenderReplyRole,
-    FailureAnalysis, FailureMode, ForcedInterval, GameAnalysis, LethalOnset, LethalOnsetMechanism,
-    MissedCandidateOutcome, ProofLimitCause, ProofResult, ProofStatus, ReplyClassification,
-    ReplyPolicy, RootCause, SearchDiagnostics, TacticalNote, UnclearContext, UnclearReason,
-    ANALYSIS_SCHEMA_VERSION,
+    replay_frame_annotations_for_analysis, visible_defender_reply_candidates,
+    AnalysisBoardSnapshot, AnalysisOptions, DefenderReplyAnalysis, DefenderReplyCandidate,
+    DefenderReplyOutcome, DefenderReplyRole, FailureAnalysis, FailureMode, ForcedInterval,
+    GameAnalysis, LethalOnset, LethalOnsetMechanism, MissedCandidateOutcome, ProofLimitCause,
+    ProofResult, ProofStatus, ReplayFrameAnnotations, ReplayFrameHighlightRole,
+    ReplayFrameMarkerRole, ReplyClassification, ReplyPolicy, RootCause, SearchDiagnostics,
+    TacticalNote, UnclearContext, UnclearReason, ANALYSIS_SCHEMA_VERSION,
 };
 use crate::report_board::{render_report_board, report_board_css, ReportBoardMarker};
 
@@ -147,6 +148,10 @@ pub enum AnalysisBatchProofMarkerKind {
     Threat,
     ImminentDefense,
     OffensiveCounter,
+    WinningEvidence,
+    ThreatEvidence,
+    ImminentEvidence,
+    OffensiveEvidence,
     CorridorEntryBlack,
     CorridorEntryWhite,
     Forbidden,
@@ -748,6 +753,12 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
     .marker--corridor-entry-white {{
       --proof-hint-color: transparent;
     }}
+    .marker--winning-evidence,
+    .marker--threat-evidence,
+    .marker--imminent-evidence,
+    .marker--offensive-evidence {{
+      --proof-evidence-color: transparent;
+    }}
     .marker--winning::after,
     .marker--threat::after,
     .marker--imminent-defense::after,
@@ -762,6 +773,19 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
       box-shadow: inset 0 0 0 2px var(--proof-hint-color);
       transform: translateY(-1px);
     }}
+    .marker--winning-evidence::before,
+    .marker--threat-evidence::before,
+    .marker--imminent-evidence::before,
+    .marker--offensive-evidence::before {{
+      content: "";
+      position: absolute;
+      inset: 3px;
+      z-index: 2;
+      pointer-events: none;
+      border-radius: 999px;
+      box-shadow: inset 0 0 0 2px var(--proof-evidence-color);
+      transform: translateY(-1px);
+    }}
     .marker--winning {{
       --proof-hint-color: var(--green);
     }}
@@ -773,6 +797,18 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
     }}
     .marker--offensive-counter {{
       --proof-hint-color: var(--purple);
+    }}
+    .marker--winning-evidence {{
+      --proof-evidence-color: var(--green);
+    }}
+    .marker--threat-evidence {{
+      --proof-evidence-color: var(--red);
+    }}
+    .marker--imminent-evidence {{
+      --proof-evidence-color: var(--pink);
+    }}
+    .marker--offensive-evidence {{
+      --proof-evidence-color: var(--purple);
     }}
     .marker--corridor-entry-black {{
       --proof-hint-color: #050505;
@@ -1689,6 +1725,11 @@ fn proof_frames_for_actual_interval(
     scan_start: usize,
 ) -> Vec<AnalysisBatchProofFrame> {
     let first_ply = proof_frame_start_ply(boards, analysis);
+    let replay_annotations = replay_frame_annotations_for_analysis(replay, analysis)
+        .unwrap_or_default()
+        .into_iter()
+        .map(|frame| (frame.ply, frame))
+        .collect::<BTreeMap<_, _>>();
     let plys = (first_ply..=analysis.final_forced_interval.end_ply)
         .rev()
         .collect::<Vec<_>>();
@@ -1732,6 +1773,9 @@ fn proof_frames_for_actual_interval(
             );
             if let Some(actual_move) = actual_move {
                 add_actual_marker(&mut markers, board, analysis.winner, actual_move);
+            }
+            if let Some(annotation) = replay_annotations.get(&board_ply) {
+                add_replay_annotation_markers(&mut markers, annotation);
             }
             markers.sort_by_key(|marker| (marker.mv.row, marker.mv.col));
             Some(proof_frame(ProofFrameInput {
@@ -1915,6 +1959,75 @@ fn add_current_imminent_response_markers(
                 add_marker_kind(markers, [mv], AnalysisBatchProofMarkerKind::Forbidden);
             }
         }
+    }
+}
+
+fn add_replay_annotation_markers(
+    markers: &mut Vec<AnalysisBatchProofMarker>,
+    annotation: &ReplayFrameAnnotations,
+) {
+    for highlight in &annotation.evidence {
+        if let Some(kind) = evidence_marker_kind_for_replay_highlight(highlight.role) {
+            add_marker_kind(markers, [highlight.mv], kind);
+        }
+    }
+    for highlight in &annotation.highlights {
+        add_marker_kind(
+            markers,
+            [highlight.mv],
+            marker_kind_for_replay_highlight(highlight.role, highlight.side),
+        );
+    }
+    for marker in &annotation.markers {
+        add_marker_kind(
+            markers,
+            [marker.mv],
+            marker_kind_for_replay_marker(marker.role),
+        );
+    }
+}
+
+fn marker_kind_for_replay_highlight(
+    role: ReplayFrameHighlightRole,
+    side: Color,
+) -> AnalysisBatchProofMarkerKind {
+    match role {
+        ReplayFrameHighlightRole::ImmediateWin => AnalysisBatchProofMarkerKind::Winning,
+        ReplayFrameHighlightRole::ImmediateThreat => AnalysisBatchProofMarkerKind::Threat,
+        ReplayFrameHighlightRole::ImminentThreat => AnalysisBatchProofMarkerKind::ImminentDefense,
+        ReplayFrameHighlightRole::CounterThreat => AnalysisBatchProofMarkerKind::OffensiveCounter,
+        ReplayFrameHighlightRole::CorridorEntry => corridor_entry_marker_kind(side),
+    }
+}
+
+fn evidence_marker_kind_for_replay_highlight(
+    role: ReplayFrameHighlightRole,
+) -> Option<AnalysisBatchProofMarkerKind> {
+    match role {
+        ReplayFrameHighlightRole::ImmediateWin => {
+            Some(AnalysisBatchProofMarkerKind::WinningEvidence)
+        }
+        ReplayFrameHighlightRole::ImmediateThreat => {
+            Some(AnalysisBatchProofMarkerKind::ThreatEvidence)
+        }
+        ReplayFrameHighlightRole::ImminentThreat => {
+            Some(AnalysisBatchProofMarkerKind::ImminentEvidence)
+        }
+        ReplayFrameHighlightRole::CounterThreat => {
+            Some(AnalysisBatchProofMarkerKind::OffensiveEvidence)
+        }
+        ReplayFrameHighlightRole::CorridorEntry => None,
+    }
+}
+
+fn marker_kind_for_replay_marker(role: ReplayFrameMarkerRole) -> AnalysisBatchProofMarkerKind {
+    match role {
+        ReplayFrameMarkerRole::ConfirmedEscape => AnalysisBatchProofMarkerKind::ConfirmedEscape,
+        ReplayFrameMarkerRole::PossibleEscape => AnalysisBatchProofMarkerKind::PossibleEscape,
+        ReplayFrameMarkerRole::ForcedLoss => AnalysisBatchProofMarkerKind::ForcedLoss,
+        ReplayFrameMarkerRole::ImmediateLoss => AnalysisBatchProofMarkerKind::ImmediateLoss,
+        ReplayFrameMarkerRole::Forbidden => AnalysisBatchProofMarkerKind::Forbidden,
+        ReplayFrameMarkerRole::Unknown => AnalysisBatchProofMarkerKind::UnknownOutcome,
     }
 }
 
@@ -2599,6 +2712,10 @@ fn marker_classes(
             AnalysisBatchProofMarkerKind::Threat => "marker--threat",
             AnalysisBatchProofMarkerKind::ImminentDefense => "marker--imminent-defense",
             AnalysisBatchProofMarkerKind::OffensiveCounter => "marker--offensive-counter",
+            AnalysisBatchProofMarkerKind::WinningEvidence => "marker--winning-evidence",
+            AnalysisBatchProofMarkerKind::ThreatEvidence => "marker--threat-evidence",
+            AnalysisBatchProofMarkerKind::ImminentEvidence => "marker--imminent-evidence",
+            AnalysisBatchProofMarkerKind::OffensiveEvidence => "marker--offensive-evidence",
             AnalysisBatchProofMarkerKind::CorridorEntryBlack => "marker--corridor-entry-black",
             AnalysisBatchProofMarkerKind::CorridorEntryWhite => "marker--corridor-entry-white",
             AnalysisBatchProofMarkerKind::Forbidden => "marker--forbidden",
@@ -3253,6 +3370,10 @@ mod tests {
                             | AnalysisBatchProofMarkerKind::Threat
                             | AnalysisBatchProofMarkerKind::ImminentDefense
                             | AnalysisBatchProofMarkerKind::OffensiveCounter
+                            | AnalysisBatchProofMarkerKind::WinningEvidence
+                            | AnalysisBatchProofMarkerKind::ThreatEvidence
+                            | AnalysisBatchProofMarkerKind::ImminentEvidence
+                            | AnalysisBatchProofMarkerKind::OffensiveEvidence
                             | AnalysisBatchProofMarkerKind::CorridorEntryBlack
                             | AnalysisBatchProofMarkerKind::CorridorEntryWhite
                             | AnalysisBatchProofMarkerKind::Forbidden
@@ -3372,11 +3493,30 @@ mod tests {
             .expect("onset frame should be recorded");
         assert_eq!(onset_frame.ply, 12);
         assert!(onset_frame.lethal_onset_reached);
+        let l8 = marker_for(onset_frame, "L8");
+        assert!(l8.kinds.contains(&AnalysisBatchProofMarkerKind::Threat));
+        let i6 = marker_for(onset_frame, "I6");
+        assert!(i6.kinds.contains(&AnalysisBatchProofMarkerKind::Threat));
+        assert!(i6
+            .kinds
+            .contains(&AnalysisBatchProofMarkerKind::ImmediateLoss));
+        let i10 = marker_for(onset_frame, "I10");
+        assert!(i10.kinds.contains(&AnalysisBatchProofMarkerKind::Threat));
+        assert!(i10
+            .kinds
+            .contains(&AnalysisBatchProofMarkerKind::ImmediateLoss));
+        assert!(marker_for(onset_frame, "H8")
+            .kinds
+            .contains(&AnalysisBatchProofMarkerKind::ThreatEvidence));
+        assert!(marker_for(onset_frame, "I7")
+            .kinds
+            .contains(&AnalysisBatchProofMarkerKind::ThreatEvidence));
 
         let html = render_analysis_batch_report_html(&report);
         assert!(html.contains("<span>Lethal onset</span><strong>11 · 4x3</strong>"));
         assert!(html.contains("<span>Setup corridor</span><strong>"));
         assert!(html.contains("<span>Corridor len</span><strong>"));
+        assert!(html.contains("marker--threat-evidence"));
         assert!(!html.contains("<span>Forced corridor</span>"));
         assert!(!html.contains("11 / one-step"));
         assert!(html.contains("White to respond / guaranteed loss"));
