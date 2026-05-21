@@ -1,13 +1,13 @@
 {
-  "schema_version": 19,
+  "schema_version": 20,
   "source_kind": "report_replays",
   "source": "reports/latest.json:Top 2 entrants",
   "replay_dir": "reports/latest.json:Top 2 entrants",
   "total": 64,
   "analyzed": 64,
   "failed": 0,
-  "elapsed_ms": 222542,
-  "total_elapsed_ms": 2459588,
+  "elapsed_ms": 172838,
+  "total_elapsed_ms": 1545982,
   "model": {
     "reply_policy": "corridor_replies",
     "max_depth": 4,
@@ -36,6 +36,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 7,
+                "col": 4
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 5,
+                "col": 5
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 7,
@@ -1197,7 +1219,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 67820,
+      "elapsed_ms": 38743,
       "prefixes_analyzed": 15,
       "forced_prefix_count": 14,
       "unknown_prefix_count": 0,
@@ -1220,6 +1242,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 5,
+                "col": 4
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 5,
+                "col": 5
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 5,
@@ -2621,7 +2665,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 29982,
+      "elapsed_ms": 27252,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -2644,6 +2688,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 4,
+                "col": 10
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 5,
+                "col": 6
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 4,
@@ -3605,7 +3671,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 78077,
+      "elapsed_ms": 46338,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -3628,6 +3694,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 4,
+                "col": 6
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 5,
+                "col": 6
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 4,
@@ -5029,7 +5117,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 51080,
+      "elapsed_ms": 29560,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -5052,6 +5140,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 10,
+                "col": 5
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 7,
+                "col": 7
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 10,
@@ -6222,7 +6332,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 165221,
+      "elapsed_ms": 116480,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -6245,6 +6355,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 6,
+                "col": 11
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 5,
+                "col": 8
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 6,
@@ -7104,7 +7236,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 6387,
+      "elapsed_ms": 4831,
       "prefixes_analyzed": 10,
       "forced_prefix_count": 9,
       "unknown_prefix_count": 0,
@@ -7127,6 +7259,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "3x3",
+          "components": [
+            {
+              "tier": "three",
+              "mv": {
+                "row": 6,
+                "col": 7
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 6,
+                "col": 9
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [],
         "covering_replies": [],
         "one_step_replies": [
@@ -9237,7 +9391,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 22595,
+      "elapsed_ms": 14394,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -9260,6 +9414,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 10,
+                "col": 9
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 8,
+                "col": 12
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 10,
@@ -10661,7 +10837,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 60954,
+      "elapsed_ms": 48704,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -10684,6 +10860,21 @@
         "attacker": "White",
         "defender": "Black",
         "kind": "terminal_coverage",
+        "shape": {
+          "label": "4",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 8,
+                "col": 10
+              }
+            }
+          ],
+          "mechanisms": [
+            "forbidden_cover"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 8,
@@ -11137,7 +11328,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 4446,
+      "elapsed_ms": 1591,
       "prefixes_analyzed": 5,
       "forced_prefix_count": 4,
       "unknown_prefix_count": 0,
@@ -11160,6 +11351,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 6,
+                "col": 9
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 4,
+                "col": 10
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 6,
@@ -11882,7 +12095,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 13997,
+      "elapsed_ms": 5223,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -11905,6 +12118,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 4,
+                "col": 3
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 5,
+                "col": 4
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 4,
@@ -12721,7 +12956,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 23311,
+      "elapsed_ms": 9849,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -12744,6 +12979,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 8,
+                "col": 10
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 8,
+                "col": 11
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 8,
@@ -13929,7 +14186,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 108895,
+      "elapsed_ms": 69757,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -13952,6 +14209,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 5,
+                "col": 4
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 3,
+                "col": 8
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 5,
@@ -15393,7 +15672,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 68355,
+      "elapsed_ms": 32775,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -15416,6 +15695,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 6,
+                "col": 12
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 6,
+                "col": 13
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 6,
@@ -17933,7 +18234,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 82726,
+      "elapsed_ms": 55779,
       "prefixes_analyzed": 15,
       "forced_prefix_count": 14,
       "unknown_prefix_count": 0,
@@ -17956,6 +18257,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 10,
+                "col": 3
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 7,
+                "col": 4
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 10,
@@ -18881,7 +19204,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 35214,
+      "elapsed_ms": 26982,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -18904,6 +19227,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 7,
+                "col": 4
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 7,
+                "col": 3
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 7,
@@ -19741,7 +20086,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 34543,
+      "elapsed_ms": 20157,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -19764,6 +20109,28 @@
         "attacker": "White",
         "defender": "Black",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 12,
+                "col": 8
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 8,
+                "col": 5
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 12,
@@ -20452,7 +20819,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 214,
+      "elapsed_ms": 146,
       "prefixes_analyzed": 10,
       "forced_prefix_count": 9,
       "unknown_prefix_count": 0,
@@ -20475,6 +20842,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 11,
+                "col": 7
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 8,
+                "col": 5
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 11,
@@ -21851,7 +22240,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 47553,
+      "elapsed_ms": 22097,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -21874,6 +22263,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 7,
+                "col": 9
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 6,
+                "col": 9
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 7,
@@ -22475,7 +22886,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 1656,
+      "elapsed_ms": 1012,
       "prefixes_analyzed": 8,
       "forced_prefix_count": 7,
       "unknown_prefix_count": 0,
@@ -22498,6 +22909,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 5,
+                "col": 4
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 4,
+                "col": 2
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 5,
@@ -23931,7 +24364,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 104020,
+      "elapsed_ms": 74273,
       "prefixes_analyzed": 21,
       "forced_prefix_count": 20,
       "unknown_prefix_count": 0,
@@ -23954,6 +24387,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 5,
+                "col": 6
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 3,
+                "col": 8
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 5,
@@ -24692,7 +25147,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 16885,
+      "elapsed_ms": 7891,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -24715,6 +25170,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 5,
+                "col": 11
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 5,
+                "col": 10
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 5,
@@ -25520,7 +25997,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 6672,
+      "elapsed_ms": 4067,
       "prefixes_analyzed": 10,
       "forced_prefix_count": 9,
       "unknown_prefix_count": 0,
@@ -25543,6 +26020,28 @@
         "attacker": "White",
         "defender": "Black",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 7,
+                "col": 3
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 5,
+                "col": 5
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 7,
@@ -26280,7 +26779,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 494,
+      "elapsed_ms": 208,
       "prefixes_analyzed": 12,
       "forced_prefix_count": 11,
       "unknown_prefix_count": 0,
@@ -26303,6 +26802,29 @@
         "attacker": "White",
         "defender": "Black",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 8,
+                "col": 4
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 5,
+                "col": 6
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route",
+            "forbidden_cover"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 8,
@@ -26930,7 +27452,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 3636,
+      "elapsed_ms": 1750,
       "prefixes_analyzed": 7,
       "forced_prefix_count": 6,
       "unknown_prefix_count": 0,
@@ -26953,6 +27475,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 6,
+                "col": 9
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 4,
+                "col": 8
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 6,
@@ -27836,7 +28380,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 114251,
+      "elapsed_ms": 57645,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -27859,6 +28403,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 5,
+                "col": 11
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 6,
+                "col": 8
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 5,
@@ -29547,7 +30113,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 14969,
+      "elapsed_ms": 13307,
       "prefixes_analyzed": 18,
       "forced_prefix_count": 17,
       "unknown_prefix_count": 0,
@@ -29570,6 +30136,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 10,
+                "col": 4
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 9,
+                "col": 5
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 10,
@@ -30649,7 +31237,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 21515,
+      "elapsed_ms": 15451,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -30672,6 +31260,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 7,
+                "col": 3
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 5,
+                "col": 6
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 7,
@@ -32100,7 +32710,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 30790,
+      "elapsed_ms": 32005,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -32123,6 +32733,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "3x3",
+          "components": [
+            {
+              "tier": "three",
+              "mv": {
+                "row": 5,
+                "col": 7
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 7,
+                "col": 5
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [],
         "covering_replies": [],
         "one_step_replies": [
@@ -33328,7 +33960,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 70481,
+      "elapsed_ms": 36178,
       "prefixes_analyzed": 7,
       "forced_prefix_count": 6,
       "unknown_prefix_count": 0,
@@ -33351,6 +33983,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 2,
+                "col": 10
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 3,
+                "col": 9
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 2,
@@ -34564,7 +35218,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 33108,
+      "elapsed_ms": 27739,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -34587,6 +35241,28 @@
         "attacker": "White",
         "defender": "Black",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 7,
+                "col": 11
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 5,
+                "col": 9
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 7,
@@ -35324,7 +36000,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 225,
+      "elapsed_ms": 205,
       "prefixes_analyzed": 12,
       "forced_prefix_count": 11,
       "unknown_prefix_count": 0,
@@ -35347,6 +36023,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 7,
+                "col": 4
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 4,
+                "col": 6
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 7,
@@ -37626,7 +38324,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 49543,
+      "elapsed_ms": 45307,
       "prefixes_analyzed": 17,
       "forced_prefix_count": 16,
       "unknown_prefix_count": 0,
@@ -37649,6 +38347,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 10,
+                "col": 10
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 9,
+                "col": 6
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 10,
@@ -38738,7 +39458,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 31679,
+      "elapsed_ms": 15569,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -38761,6 +39481,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 10,
+                "col": 9
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 8,
+                "col": 8
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 10,
@@ -40603,7 +41345,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 49248,
+      "elapsed_ms": 33316,
       "prefixes_analyzed": 15,
       "forced_prefix_count": 14,
       "unknown_prefix_count": 0,
@@ -40626,6 +41368,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 9,
+                "col": 3
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 7,
+                "col": 6
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 9,
@@ -42142,7 +42906,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 24832,
+      "elapsed_ms": 13630,
       "prefixes_analyzed": 15,
       "forced_prefix_count": 14,
       "unknown_prefix_count": 0,
@@ -42165,6 +42929,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 5,
+                "col": 3
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 6,
+                "col": 4
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 5,
@@ -43851,7 +44637,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 44411,
+      "elapsed_ms": 20347,
       "prefixes_analyzed": 18,
       "forced_prefix_count": 17,
       "unknown_prefix_count": 0,
@@ -43874,6 +44660,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "3x3",
+          "components": [
+            {
+              "tier": "three",
+              "mv": {
+                "row": 5,
+                "col": 7
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 7,
+                "col": 9
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [],
         "covering_replies": [],
         "one_step_replies": [
@@ -45079,7 +45887,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 79030,
+      "elapsed_ms": 44097,
       "prefixes_analyzed": 7,
       "forced_prefix_count": 6,
       "unknown_prefix_count": 0,
@@ -45102,6 +45910,28 @@
         "attacker": "White",
         "defender": "Black",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 6,
+                "col": 5
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 8,
+                "col": 5
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 6,
@@ -45725,7 +46555,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 5374,
+      "elapsed_ms": 4209,
       "prefixes_analyzed": 7,
       "forced_prefix_count": 6,
       "unknown_prefix_count": 0,
@@ -45748,6 +46578,28 @@
         "attacker": "White",
         "defender": "Black",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 3,
+                "col": 8
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 2,
+                "col": 8
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 3,
@@ -46743,7 +47595,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 14841,
+      "elapsed_ms": 9342,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -46766,6 +47618,28 @@
         "attacker": "White",
         "defender": "Black",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 6,
+                "col": 4
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 6,
+                "col": 5
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 6,
@@ -48381,7 +49255,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 7744,
+      "elapsed_ms": 4221,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -48404,6 +49278,21 @@
         "attacker": "White",
         "defender": "Black",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "3",
+          "components": [
+            {
+              "tier": "three",
+              "mv": {
+                "row": 5,
+                "col": 3
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [],
         "covering_replies": [],
         "one_step_replies": [
@@ -49844,7 +50733,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 2740,
+      "elapsed_ms": 1231,
       "prefixes_analyzed": 10,
       "forced_prefix_count": 9,
       "unknown_prefix_count": 0,
@@ -49867,6 +50756,28 @@
         "attacker": "White",
         "defender": "Black",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 9,
+                "col": 11
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 8,
+                "col": 8
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 9,
@@ -51263,7 +52174,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 3631,
+      "elapsed_ms": 2294,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -51286,6 +52197,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 5,
+                "col": 8
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 7,
+                "col": 5
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 5,
@@ -51853,7 +52786,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 3040,
+      "elapsed_ms": 1837,
       "prefixes_analyzed": 8,
       "forced_prefix_count": 7,
       "unknown_prefix_count": 0,
@@ -51876,6 +52809,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 2,
+                "col": 8
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 3,
+                "col": 8
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 2,
@@ -52905,7 +53860,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 23816,
+      "elapsed_ms": 13037,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -52928,6 +53883,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 5,
+                "col": 6
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 4,
+                "col": 5
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 5,
@@ -53857,7 +54834,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 15931,
+      "elapsed_ms": 13143,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -53880,6 +54857,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 9,
+                "col": 5
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 8,
+                "col": 4
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 9,
@@ -55801,7 +56800,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 21329,
+      "elapsed_ms": 18185,
       "prefixes_analyzed": 15,
       "forced_prefix_count": 14,
       "unknown_prefix_count": 0,
@@ -55824,6 +56823,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 3,
+                "col": 6
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 4,
+                "col": 5
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 3,
@@ -56576,7 +57597,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 55244,
+      "elapsed_ms": 50283,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -56599,6 +57620,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 11,
+                "col": 7
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 9,
+                "col": 6
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 11,
@@ -58440,7 +59483,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 44789,
+      "elapsed_ms": 48397,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -58463,6 +59506,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 11,
+                "col": 9
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 8,
+                "col": 7
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 11,
@@ -59380,7 +60445,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 17186,
+      "elapsed_ms": 7596,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -59403,6 +60468,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 3,
+                "col": 3
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 2,
+                "col": 8
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 3,
@@ -60653,7 +61740,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 65300,
+      "elapsed_ms": 39829,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -60676,6 +61763,28 @@
         "attacker": "White",
         "defender": "Black",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 4,
+                "col": 13
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 2,
+                "col": 10
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 4,
@@ -61822,7 +62931,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 6914,
+      "elapsed_ms": 4247,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -61845,6 +62954,28 @@
         "attacker": "White",
         "defender": "Black",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 10,
+                "col": 8
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 9,
+                "col": 11
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 10,
@@ -62902,7 +64033,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 2328,
+      "elapsed_ms": 1877,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -62925,6 +64056,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 5,
+                "col": 8
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 4,
+                "col": 9
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 5,
@@ -63854,7 +65007,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 17076,
+      "elapsed_ms": 9564,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -63877,6 +65030,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 4,
+                "col": 4
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 6,
+                "col": 6
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 4,
@@ -64720,7 +65895,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 11855,
+      "elapsed_ms": 6864,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -64743,6 +65918,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 6,
+                "col": 4
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 6,
+                "col": 5
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 6,
@@ -65350,7 +66547,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 7180,
+      "elapsed_ms": 5381,
       "prefixes_analyzed": 7,
       "forced_prefix_count": 6,
       "unknown_prefix_count": 0,
@@ -65373,6 +66570,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 6,
+                "col": 4
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 6,
+                "col": 5
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 6,
@@ -66774,7 +67993,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 46509,
+      "elapsed_ms": 27318,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -66797,6 +68016,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 6,
+                "col": 8
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 5,
+                "col": 5
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 6,
@@ -67726,7 +68967,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 18851,
+      "elapsed_ms": 9596,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -67749,6 +68990,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 4,
+                "col": 5
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 5,
+                "col": 5
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 4,
@@ -69150,7 +70413,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 43143,
+      "elapsed_ms": 29666,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -69173,6 +70436,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 7,
+                "col": 10
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 5,
+                "col": 9
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 7,
@@ -70334,7 +71619,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 83263,
+      "elapsed_ms": 36510,
       "prefixes_analyzed": 15,
       "forced_prefix_count": 14,
       "unknown_prefix_count": 0,
@@ -70357,6 +71642,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 5,
+                "col": 10
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 5,
+                "col": 9
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 5,
@@ -71748,7 +73055,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 55989,
+      "elapsed_ms": 23360,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -71771,6 +73078,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 11,
+                "col": 8
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 6,
+                "col": 5
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 11,
@@ -73480,7 +74809,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 128924,
+      "elapsed_ms": 75854,
       "prefixes_analyzed": 19,
       "forced_prefix_count": 18,
       "unknown_prefix_count": 0,
@@ -73538,6 +74867,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 8,
+                "col": 11
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 5,
+                "col": 6
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 8,
@@ -75410,7 +76761,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 106957,
+      "elapsed_ms": 58809,
       "prefixes_analyzed": 21,
       "forced_prefix_count": 20,
       "unknown_prefix_count": 0,
@@ -75433,6 +76784,28 @@
         "attacker": "Black",
         "defender": "White",
         "kind": "one_step_coverage",
+        "shape": {
+          "label": "4x3",
+          "components": [
+            {
+              "tier": "four",
+              "mv": {
+                "row": 6,
+                "col": 10
+              }
+            },
+            {
+              "tier": "three",
+              "mv": {
+                "row": 6,
+                "col": 9
+              }
+            }
+          ],
+          "mechanisms": [
+            "multi_route"
+          ]
+        },
         "terminal_targets": [
           {
             "row": 6,
@@ -76824,7 +78197,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 50819,
+      "elapsed_ms": 28677,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
