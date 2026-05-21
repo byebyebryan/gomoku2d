@@ -88,14 +88,19 @@ covering the pointer.
 | Counter-threat move | counter-threat reply that can defer defense: `marker-warning` tinted purple |
 | Forbidden move | alternating `caution-forbidden-out` and `caution-forbidden-in` |
 | Winning line | `highlight-strong` tinted green |
+| Threat evidence stone | `highlight-soft` under an existing stone, tinted to match the visible hint category |
 
 Winning, immediate-threat, imminent-threat, and counter-threat hints are
-profile-synced assistive overlays controlled by two Settings rows: immediate
-hints can be off, wins only, or wins plus immediate losses; imminent hints can
-be off, threat replies only, or threat replies plus counter-threats. Immediate
-hints have display priority: if the player has an immediate win or must answer
-an immediate loss, do not also show imminent/counter-threat hints in that board
-state. Forbidden move overlays are rule-legality feedback and remain always on.
+profile-synced assistive overlays controlled by Settings rows: immediate hints
+can be off, wins only, or wins plus immediate losses; imminent hints can be off,
+threat replies only, or threat replies plus counter-threats; evidence can add
+source-stone context for visible hints. Immediate hints have display priority:
+if the player has an immediate win or must answer an immediate loss, do not also
+show imminent/counter-threat hints in that board state. Evidence-stone
+highlights follow the same visibility settings as their target hints: green
+explains winning moves, red explains immediate threats, pink explains imminent
+threats, and purple explains counter-threats. Forbidden move overlays are
+rule-legality feedback and remain always on.
 
 Forbidden cells are not active threats for Black. If a raw Black shape looks
 dangerous but the required continuation is forbidden by Renju, the live board
@@ -132,7 +137,7 @@ Top to bottom:
 2. sequence number
 3. stone
 4. pointer
-5. marker/caution/highlighter surface, including winning-line result emphasis
+5. marker/caution/highlighter surface, including winning-line result emphasis and threat evidence
 6. board
 
 This order is intentional. The pointer is the actionable target, while overlay

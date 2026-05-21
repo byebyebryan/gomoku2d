@@ -962,6 +962,60 @@ impl LocalThreatFact {
     }
 }
 
+pub fn local_threat_evidence_stones(board: &Board, fact: &LocalThreatFact) -> Vec<Move> {
+    let mut evidence = match fact.origin {
+        LocalThreatOrigin::AfterMove(mv) => {
+            let view = BoardAfterMove {
+                board,
+                mv,
+                player: fact.player,
+            };
+            local_threat_evidence_stones_view(&view, fact, true)
+        }
+        LocalThreatOrigin::Existing(mv) => {
+            let view = BoardExistingMove {
+                board,
+                mv,
+                player: fact.player,
+            };
+            local_threat_evidence_stones_view(&view, fact, false)
+        }
+    };
+    normalize_moves(&mut evidence);
+    evidence
+}
+
+pub fn compound_imminent_evidence_stones(
+    board: &Board,
+    attacker: Color,
+    entries: &[OneStepLethalEntry],
+) -> Vec<Move> {
+    let entry_moves = entries.iter().map(|entry| entry.mv).collect::<Vec<_>>();
+    let mut evidence = Vec::new();
+    for fact in raw_local_threat_facts_for_player(board, attacker)
+        .iter()
+        .filter(|fact| {
+            matches!(
+                fact.kind,
+                LocalThreatKind::OpenThree
+                    | LocalThreatKind::ClosedThree
+                    | LocalThreatKind::BrokenThree
+            )
+        })
+        .filter(|fact| {
+            materialization_squares_for_fact(board, fact)
+                .iter()
+                .any(|mv| entry_moves.contains(mv))
+        })
+    {
+        for mv in local_threat_evidence_stones(board, fact) {
+            push_unique_move(&mut evidence, mv);
+        }
+    }
+    normalize_moves(&mut evidence);
+    evidence
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TacticalMoveAnnotation {
     pub player: Color,
@@ -2188,6 +2242,228 @@ fn broken_three_squares_through_view(
     squares
 }
 
+fn local_threat_evidence_stones_view(
+    view: &impl TacticalBoardView,
+    fact: &LocalThreatFact,
+    exclude_origin: bool,
+) -> Vec<Move> {
+    match fact.kind {
+        LocalThreatKind::Five => five_evidence_stones_view(view, exclude_origin),
+        LocalThreatKind::OpenFour | LocalThreatKind::ClosedFour | LocalThreatKind::BrokenFour => {
+            let mut evidence = Vec::new();
+            for defense in fact.defense_squares.iter().copied() {
+                completion_window_evidence_stones_view(
+                    view,
+                    defense,
+                    exclude_origin,
+                    &mut evidence,
+                );
+            }
+            if evidence.is_empty() {
+                span_evidence_stones_view(view, fact, exclude_origin)
+            } else {
+                evidence
+            }
+        }
+        LocalThreatKind::OpenThree
+        | LocalThreatKind::ClosedThree
+        | LocalThreatKind::BrokenThree => span_evidence_stones_view(view, fact, exclude_origin),
+    }
+}
+
+fn five_evidence_stones_view(view: &impl TacticalBoardView, exclude_origin: bool) -> Vec<Move> {
+    let mut evidence = Vec::new();
+    let origin = view.mv();
+
+    for &(dr, dc) in &DIRS {
+        let before = count_player_in_direction_view(view, -dr, -dc, view.player());
+        let after = count_player_in_direction_view(view, dr, dc, view.player());
+        if before + 1 + after < view.win_length() {
+            continue;
+        }
+
+        for offset in -(before as isize)..=(after as isize) {
+            let row = origin.row as isize + dr * offset;
+            let col = origin.col as isize + dc * offset;
+            if !view.in_bounds(row, col) {
+                continue;
+            }
+            let mv = Move {
+                row: row as usize,
+                col: col as usize,
+            };
+            if exclude_origin && mv == origin {
+                continue;
+            }
+            if view.has_color(mv.row, mv.col, view.player()) {
+                push_unique_move(&mut evidence, mv);
+            }
+        }
+    }
+
+    evidence
+}
+
+fn completion_window_evidence_stones_view(
+    view: &impl TacticalBoardView,
+    completion: Move,
+    exclude_origin: bool,
+    evidence: &mut Vec<Move>,
+) {
+    let origin = view.mv();
+    let win_len = view.win_length() as isize;
+
+    for &(dr, dc) in &DIRS {
+        for start in -(win_len - 1)..=0 {
+            let mut window_stones = Vec::new();
+            let mut saw_completion = false;
+            let mut blocked = false;
+
+            for offset in start..start + win_len {
+                let row = completion.row as isize + dr * offset;
+                let col = completion.col as isize + dc * offset;
+                if !view.in_bounds(row, col) {
+                    blocked = true;
+                    break;
+                }
+
+                let mv = Move {
+                    row: row as usize,
+                    col: col as usize,
+                };
+                if mv == completion {
+                    saw_completion = true;
+                } else if view.has_color(mv.row, mv.col, view.player()) {
+                    if !(exclude_origin && mv == origin) {
+                        window_stones.push(mv);
+                    }
+                } else {
+                    blocked = true;
+                    break;
+                }
+            }
+
+            if !blocked && saw_completion && window_stones.len() == view.win_length() - 1 {
+                for mv in window_stones {
+                    push_unique_move(evidence, mv);
+                }
+            }
+        }
+    }
+}
+
+fn span_evidence_stones_view(
+    view: &impl TacticalBoardView,
+    fact: &LocalThreatFact,
+    exclude_origin: bool,
+) -> Vec<Move> {
+    let Some((dr, dc, mut min_offset, mut max_offset)) = evidence_line_span(view, fact) else {
+        return Vec::new();
+    };
+
+    let origin = view.mv();
+    while player_at_offset(view, dr, dc, min_offset - 1) {
+        min_offset -= 1;
+    }
+    while player_at_offset(view, dr, dc, max_offset + 1) {
+        max_offset += 1;
+    }
+
+    let mut evidence = Vec::new();
+    for offset in min_offset..=max_offset {
+        let row = origin.row as isize + dr * offset;
+        let col = origin.col as isize + dc * offset;
+        if !view.in_bounds(row, col) {
+            continue;
+        }
+        let mv = Move {
+            row: row as usize,
+            col: col as usize,
+        };
+        if exclude_origin && mv == origin {
+            continue;
+        }
+        if view.has_color(mv.row, mv.col, view.player()) {
+            push_unique_move(&mut evidence, mv);
+        }
+    }
+
+    evidence
+}
+
+fn evidence_line_span(
+    view: &impl TacticalBoardView,
+    fact: &LocalThreatFact,
+) -> Option<(isize, isize, isize, isize)> {
+    let points = fact
+        .defense_squares
+        .iter()
+        .chain(fact.rest_squares.iter())
+        .copied()
+        .collect::<Vec<_>>();
+    if points.is_empty() {
+        return None;
+    }
+
+    for &(dr, dc) in &DIRS {
+        let mut offsets = vec![0isize];
+        let mut all_aligned = true;
+        for point in points.iter().copied() {
+            match line_offset(view.mv(), point, dr, dc) {
+                Some(offset) => offsets.push(offset),
+                None => {
+                    all_aligned = false;
+                    break;
+                }
+            }
+        }
+        if all_aligned {
+            let min_offset = *offsets.iter().min()?;
+            let max_offset = *offsets.iter().max()?;
+            return Some((dr, dc, min_offset, max_offset));
+        }
+    }
+
+    None
+}
+
+fn line_offset(origin: Move, point: Move, dr: isize, dc: isize) -> Option<isize> {
+    let row_delta = point.row as isize - origin.row as isize;
+    let col_delta = point.col as isize - origin.col as isize;
+
+    match (dr, dc) {
+        (0, dc) => {
+            if row_delta == 0 && dc != 0 && col_delta % dc == 0 {
+                Some(col_delta / dc)
+            } else {
+                None
+            }
+        }
+        (dr, 0) => {
+            if col_delta == 0 && dr != 0 && row_delta % dr == 0 {
+                Some(row_delta / dr)
+            } else {
+                None
+            }
+        }
+        (dr, dc) => {
+            if dr == 0 || dc == 0 || row_delta % dr != 0 || col_delta % dc != 0 {
+                return None;
+            }
+            let row_offset = row_delta / dr;
+            let col_offset = col_delta / dc;
+            (row_offset == col_offset).then_some(row_offset)
+        }
+    }
+}
+
+fn player_at_offset(view: &impl TacticalBoardView, dr: isize, dc: isize, offset: isize) -> bool {
+    let origin = view.mv();
+    let row = origin.row as isize + dr * offset;
+    let col = origin.col as isize + dc * offset;
+    view.in_bounds(row, col) && view.has_color(row as usize, col as usize, view.player())
+}
+
 fn in_bounds(board: &Board, row: isize, col: isize) -> bool {
     let size = board.config.board_size as isize;
     row >= 0 && row < size && col >= 0 && col < size
@@ -2256,9 +2532,9 @@ mod tests {
     use super::{
         corridor_active_threats, corridor_defender_reply_moves, defender_hint_reply_candidates,
         defender_reply_candidates, has_forcing_local_threat, has_forcing_local_threat_at_move,
-        legal_forcing_continuations_for_fact, lethal_threat, local_threat_facts_after_move,
-        local_threat_facts_for_player, normalize_local_threat_facts, one_step_lethal_threat,
-        one_step_lethal_threat_analysis, raw_local_threat_facts_after_move,
+        legal_forcing_continuations_for_fact, lethal_threat, local_threat_evidence_stones,
+        local_threat_facts_after_move, local_threat_facts_for_player, normalize_local_threat_facts,
+        one_step_lethal_threat, one_step_lethal_threat_analysis, raw_local_threat_facts_after_move,
         raw_local_threat_facts_for_player, terminal_lethal_threat, terminal_lethal_threat_analysis,
         CorridorThreatPolicy, DefenderReplyCandidate, DefenderReplyRole, LethalThreatKind,
         LocalThreatFact, LocalThreatKind, LocalThreatOrigin, ScanThreatView, SearchThreatPolicy,
@@ -2862,6 +3138,42 @@ mod tests {
                 defense_squares: vec![mv("G8"), mv("J8"), mv("L8")],
                 rest_squares: vec![mv("J8")],
             })
+        );
+    }
+
+    #[test]
+    fn local_threat_evidence_stones_identify_existing_open_three_shape() {
+        let board = board_from_moves(Variant::Freestyle, &["H8", "A1", "I8", "A2", "J8"]);
+        let fact = fact(
+            Color::Black,
+            LocalThreatKind::OpenThree,
+            "H8",
+            &["G8", "K8"],
+            &[],
+        );
+
+        assert_eq!(
+            notation_list(&local_threat_evidence_stones(&board, &fact)),
+            vec!["H8", "I8", "J8"],
+        );
+    }
+
+    #[test]
+    fn local_threat_evidence_stones_exclude_virtual_candidate_move() {
+        let board = board_from_moves(
+            Variant::Freestyle,
+            &["H8", "A1", "I8", "A2", "J8", "A3", "K8"],
+        );
+        let annotation = SearchThreatPolicy.annotation_for_player(&board, Color::Black, mv("L8"));
+        let five = annotation
+            .local_threats
+            .iter()
+            .find(|fact| fact.kind == LocalThreatKind::Five)
+            .expect("candidate should complete a five");
+
+        assert_eq!(
+            notation_list(&local_threat_evidence_stones(&board, five)),
+            vec!["H8", "I8", "J8", "K8"],
         );
     }
 

@@ -30,11 +30,14 @@ interface FinishedLocalMatch {
 
 export interface LocalMatchState {
   cells: CellStone[][];
+  counterThreatEvidenceCells: CellPosition[];
   counterThreatMoves: CellPosition[];
   currentPlayer: 1 | 2;
   currentBotConfig: BotConfig;
   currentVariant: GameVariant;
   forbiddenMoves: CellPosition[];
+  immediateThreatEvidenceCells: CellPosition[];
+  imminentThreatEvidenceCells: CellPosition[];
   imminentThreatMoves: CellPosition[];
   lastMove: CellPosition | null;
   moves: MatchMove[];
@@ -54,15 +57,20 @@ export interface LocalMatchState {
   undoLastTurn: () => boolean;
   placeHumanMove: (row: number, col: number) => boolean;
   dispose: () => void;
+  winningEvidenceCells: CellPosition[];
   winningMoves: CellPosition[];
   winningCells: CellPosition[];
 }
 
 interface WasmThreatSnapshot {
+  counterThreatEvidenceCells: Array<{ row: number; col: number }>;
   counterThreatMoves: Array<{ row: number; col: number }>;
   forbiddenMoves: Array<{ row: number; col: number }>;
+  immediateThreatEvidenceCells: Array<{ row: number; col: number }>;
   immediateThreatMoves: Array<{ row: number; col: number }>;
+  imminentThreatEvidenceCells: Array<{ row: number; col: number }>;
   imminentThreatMoves: Array<{ row: number; col: number }>;
+  winningEvidenceCells: Array<{ row: number; col: number }>;
   winningMoves: Array<{ row: number; col: number }>;
 }
 
@@ -197,14 +205,26 @@ function deriveHumanHints(
   status: MatchStatus,
 ): Pick<
   LocalMatchState,
-  "counterThreatMoves" | "forbiddenMoves" | "imminentThreatMoves" | "threatMoves" | "winningMoves"
+  | "counterThreatEvidenceCells"
+  | "counterThreatMoves"
+  | "forbiddenMoves"
+  | "immediateThreatEvidenceCells"
+  | "imminentThreatEvidenceCells"
+  | "imminentThreatMoves"
+  | "threatMoves"
+  | "winningEvidenceCells"
+  | "winningMoves"
 > {
   if (status !== "playing" || pendingBotMove) {
     return {
+      counterThreatEvidenceCells: [],
       counterThreatMoves: [],
       forbiddenMoves: [],
+      immediateThreatEvidenceCells: [],
+      imminentThreatEvidenceCells: [],
       imminentThreatMoves: [],
       threatMoves: [],
+      winningEvidenceCells: [],
       winningMoves: [],
     };
   }
@@ -214,10 +234,14 @@ function deriveHumanHints(
 
   if (players[currentIndex].kind !== "human") {
     return {
+      counterThreatEvidenceCells: [],
       counterThreatMoves: [],
       forbiddenMoves: [],
+      immediateThreatEvidenceCells: [],
+      imminentThreatEvidenceCells: [],
       imminentThreatMoves: [],
       threatMoves: [],
+      winningEvidenceCells: [],
       winningMoves: [],
     };
   }
@@ -225,10 +249,14 @@ function deriveHumanHints(
   const threatSnapshot = board.threatSnapshot() as WasmThreatSnapshot;
 
   return {
+    counterThreatEvidenceCells: normalizeMoves(threatSnapshot.counterThreatEvidenceCells ?? []),
     counterThreatMoves: normalizeMoves(threatSnapshot.counterThreatMoves),
     forbiddenMoves: normalizeMoves(threatSnapshot.forbiddenMoves),
+    immediateThreatEvidenceCells: normalizeMoves(threatSnapshot.immediateThreatEvidenceCells ?? []),
+    imminentThreatEvidenceCells: normalizeMoves(threatSnapshot.imminentThreatEvidenceCells ?? []),
     imminentThreatMoves: normalizeMoves(threatSnapshot.imminentThreatMoves),
     threatMoves: normalizeMoves(threatSnapshot.immediateThreatMoves),
+    winningEvidenceCells: normalizeMoves(threatSnapshot.winningEvidenceCells ?? []),
     winningMoves: normalizeMoves(threatSnapshot.winningMoves),
   };
 }
@@ -261,11 +289,14 @@ function snapshotState(
 
   return {
     cells: cellsFromBoard(board),
+    counterThreatEvidenceCells: hints.counterThreatEvidenceCells,
     counterThreatMoves: hints.counterThreatMoves,
     currentPlayer: board.currentPlayer() as 1 | 2,
     currentBotConfig,
     currentVariant,
     forbiddenMoves: hints.forbiddenMoves,
+    immediateThreatEvidenceCells: hints.immediateThreatEvidenceCells,
+    imminentThreatEvidenceCells: hints.imminentThreatEvidenceCells,
     imminentThreatMoves: hints.imminentThreatMoves,
     lastMove,
     moves,
@@ -278,6 +309,7 @@ function snapshotState(
     threatMoves: hints.threatMoves,
     turnStartedAtMs,
     undoFloor,
+    winningEvidenceCells: hints.winningEvidenceCells,
     winningMoves: hints.winningMoves,
     winningCells: normalizeMoves(board.winningCells() as Array<{ row: number; col: number }>),
   };

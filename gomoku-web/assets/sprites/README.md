@@ -24,7 +24,8 @@ For a visual inspection page, open [preview.html](./preview.html).
 
 `caution.png`, `highlighter.png`, and `marker.png` are board-surface features.
 They sit above the board/grid and below pointer, stone, sequence, and
-next-move hover layers.
+next-move hover layers. Evidence highlighters reuse `highlighter.png` and stay
+on this board-surface layer so the ring reads around existing stones.
 
 Surface sub-order:
 
@@ -37,8 +38,8 @@ Surface sub-order:
 | Role | Tint |
 |---|---|
 | `highlight-strong` | Red for immediate threat/loss, green for immediate win and result winning line; preview uses red |
-| `highlight-soft` | Pink for imminent threat, purple for counter-threat; preview uses pink |
-| `highlight-entry` | Per-side corridor-entry context; preview uses white |
+| `highlight-soft` | Source-stone evidence and soft context; preview uses pink |
+| `highlight-entry` | Per-side corridor-entry context for sparse cells; preview uses white |
 | `marker-warning` | Red for immediate loss/threat, green for immediate win; preview uses red |
 | `marker-question` | Gray |
 | `marker-L` | Red |
@@ -62,9 +63,9 @@ Frame numbers are row-major.
 
 | Frames | Animation | FPS | Runtime use |
 |--------|-----------|-----|-------------|
-| 0-5 | `highlight-strong` | 12 | Strong board-cell highlight, including result winning lines |
-| 6-11 | `highlight-soft` | 12 | Subtle board-cell highlight |
-| 12-17 | `highlight-entry` | 12 | Corridor-entry or critical-point highlight |
+| 0-5 | `highlight-entry` | 12 | Corridor-entry or critical-point highlight for sparse cells |
+| 6-11 | `highlight-soft` | 12 | Subtle board-cell highlight for evidence stones and soft context |
+| 12-17 | `highlight-strong` | 12 | Strong board-cell highlight, including result winning lines |
 
 ### `hover.png`
 

@@ -492,6 +492,7 @@ export function analysisOverlaysForFrame(
   match: SavedMatchV2,
   moveIndex: number,
   analysis?: ReplayAnalysisSummary | null,
+  showEvidence = true,
 ): BoardAnalysisOverlay[] {
   const annotation = annotationsByPly[moveIndex];
   const loserSide = loserSideToMove(match);
@@ -502,6 +503,14 @@ export function analysisOverlaysForFrame(
 
   const overlays: BoardAnalysisOverlay[] = [];
   if (annotation && annotation.side_to_move === loserSide) {
+    if (showEvidence) {
+      overlays.push(...(annotation.evidence ?? []).map((highlight) => ({
+        col: highlight.mv.col,
+        highlight: highlightRole(highlight.role),
+        row: highlight.mv.row,
+        side: overlaySide(highlight.side),
+      })));
+    }
     overlays.push(...annotation.highlights.map((highlight) => ({
       col: highlight.mv.col,
       highlight: highlightRole(highlight.role),

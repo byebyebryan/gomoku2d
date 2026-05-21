@@ -55,14 +55,18 @@ export type ResettableSprite = {
 export type BoardOverlayState = {
   analysisOverlays: BoardAnalysisOverlay[];
   cells: CellStone[][];
+  counterThreatEvidenceCells: CellPosition[];
   counterThreatMoves: CellPosition[];
   forbiddenMoves: CellPosition[];
+  immediateThreatEvidenceCells: CellPosition[];
+  imminentThreatEvidenceCells: CellPosition[];
   imminentThreatMoves: CellPosition[];
   moves: MatchMove[];
   nextReplayMove: CellPosition | null;
   showSequenceNumbers: boolean;
   status: MatchStatus;
   threatMoves: CellPosition[];
+  winningEvidenceCells: CellPosition[];
   winningCells: CellPosition[];
   winningMoves: CellPosition[];
 };
@@ -279,12 +283,16 @@ export function shouldSyncOverlaySprites(
     previous.status !== next.status ||
     !analysisOverlaysEqual(previous.analysisOverlays, next.analysisOverlays) ||
     !cellsEqual(previous.cells, next.cells) ||
+    !cellPositionsEqual(previous.counterThreatEvidenceCells, next.counterThreatEvidenceCells) ||
     !cellPositionsEqual(previous.counterThreatMoves, next.counterThreatMoves) ||
     !movesEqual(previous.moves, next.moves) ||
     !nullableCellPositionEqual(previous.nextReplayMove, next.nextReplayMove) ||
     !cellPositionsEqual(previous.forbiddenMoves, next.forbiddenMoves) ||
+    !cellPositionsEqual(previous.immediateThreatEvidenceCells, next.immediateThreatEvidenceCells) ||
+    !cellPositionsEqual(previous.imminentThreatEvidenceCells, next.imminentThreatEvidenceCells) ||
     !cellPositionsEqual(previous.imminentThreatMoves, next.imminentThreatMoves) ||
     !cellPositionsEqual(previous.threatMoves, next.threatMoves) ||
+    !cellPositionsEqual(previous.winningEvidenceCells, next.winningEvidenceCells) ||
     !cellPositionsEqual(previous.winningMoves, next.winningMoves) ||
     !cellPositionsEqual(previous.winningCells, next.winningCells)
   );

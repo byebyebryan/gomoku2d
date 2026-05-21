@@ -10,9 +10,12 @@ import styles from "./Board.module.css";
 export interface BoardProps {
   analysisOverlays: BoardAnalysisOverlay[];
   cells: CellStone[][];
+  counterThreatEvidenceCells: CellPosition[];
   counterThreatMoves: CellPosition[];
   currentPlayer: 1 | 2;
   forbiddenMoves: CellPosition[];
+  immediateThreatEvidenceCells: CellPosition[];
+  imminentThreatEvidenceCells: CellPosition[];
   imminentThreatMoves: CellPosition[];
   interactive: boolean;
   lastMove: CellPosition | null;
@@ -26,6 +29,7 @@ export interface BoardProps {
   showSequenceNumbers: boolean;
   status: MatchStatus;
   threatMoves: CellPosition[];
+  winningEvidenceCells: CellPosition[];
   winningMoves: CellPosition[];
   winningCells: CellPosition[];
 }

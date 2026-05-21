@@ -34,11 +34,14 @@ function loadingCells(): LocalMatchState["cells"] {
 
 const loadingMatchStore = createStore<LocalMatchState>(() => ({
   cells: loadingCells(),
+  counterThreatEvidenceCells: [],
   counterThreatMoves: [],
   currentPlayer: 1,
   currentBotConfig: DEFAULT_BOT_CONFIG,
   currentVariant: "freestyle",
   forbiddenMoves: [],
+  immediateThreatEvidenceCells: [],
+  imminentThreatEvidenceCells: [],
   imminentThreatMoves: [],
   lastMove: null,
   moves: [],
@@ -61,6 +64,7 @@ const loadingMatchStore = createStore<LocalMatchState>(() => ({
   undoFloor: 0,
   undoLastTurn: () => false,
   dispose: () => undefined,
+  winningEvidenceCells: [],
   winningMoves: [],
   winningCells: [],
 }));
@@ -123,17 +127,42 @@ function nextSetupLabel(
 function visibleBoardHints(
   state: Pick<
     LocalMatchState,
-    "counterThreatMoves" | "imminentThreatMoves" | "threatMoves" | "winningMoves"
+    | "counterThreatEvidenceCells"
+    | "counterThreatMoves"
+    | "immediateThreatEvidenceCells"
+    | "imminentThreatEvidenceCells"
+    | "imminentThreatMoves"
+    | "threatMoves"
+    | "winningEvidenceCells"
+    | "winningMoves"
   >,
   settings: BoardHintSettings,
 ): Pick<
   LocalMatchState,
-  "counterThreatMoves" | "imminentThreatMoves" | "threatMoves" | "winningMoves"
+  | "counterThreatEvidenceCells"
+  | "counterThreatMoves"
+  | "immediateThreatEvidenceCells"
+  | "imminentThreatEvidenceCells"
+  | "imminentThreatMoves"
+  | "threatMoves"
+  | "winningEvidenceCells"
+  | "winningMoves"
 > {
+  const showEvidence = settings.evidence === "on";
   return {
+    counterThreatEvidenceCells: showEvidence && settings.imminent === "threat_counter"
+      ? state.counterThreatEvidenceCells
+      : [],
     counterThreatMoves: settings.imminent === "threat_counter" ? state.counterThreatMoves : [],
+    immediateThreatEvidenceCells: showEvidence && settings.immediate === "win_threat"
+      ? state.immediateThreatEvidenceCells
+      : [],
+    imminentThreatEvidenceCells: showEvidence && settings.imminent !== "off"
+      ? state.imminentThreatEvidenceCells
+      : [],
     imminentThreatMoves: settings.imminent === "off" ? [] : state.imminentThreatMoves,
     threatMoves: settings.immediate === "win_threat" ? state.threatMoves : [],
+    winningEvidenceCells: showEvidence && settings.immediate !== "off" ? state.winningEvidenceCells : [],
     winningMoves: settings.immediate === "off" ? [] : state.winningMoves,
   };
 }
@@ -293,9 +322,12 @@ export function LocalMatchRoute() {
           <Board
             analysisOverlays={[]}
             cells={state.cells}
+            counterThreatEvidenceCells={visibleHints.counterThreatEvidenceCells}
             counterThreatMoves={visibleHints.counterThreatMoves}
             currentPlayer={state.currentPlayer}
             forbiddenMoves={state.forbiddenMoves}
+            immediateThreatEvidenceCells={visibleHints.immediateThreatEvidenceCells}
+            imminentThreatEvidenceCells={visibleHints.imminentThreatEvidenceCells}
             imminentThreatMoves={visibleHints.imminentThreatMoves}
             interactive={humanToMove}
             lastMove={state.lastMove}
@@ -323,6 +355,7 @@ export function LocalMatchRoute() {
             showSequenceNumbers
             status={state.status}
             threatMoves={visibleHints.threatMoves}
+            winningEvidenceCells={visibleHints.winningEvidenceCells}
             winningMoves={visibleHints.winningMoves}
             winningCells={state.winningCells}
           />

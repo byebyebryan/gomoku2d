@@ -55,6 +55,7 @@ function tenMoveMatch(status: "black_won" | "white_won" | "draw" = "black_won") 
 
 function annotation(ply: number, sideToMove: "Black" | "White"): ReplayFrameAnnotations {
   return {
+    evidence: [],
     highlights: [
       {
         mv: { col: 6, row: 7 },
@@ -674,6 +675,60 @@ describe("analysisOverlaysForFrame", () => {
 
     expect(analysisOverlaysForFrame(annotations, match("black_won"), 4)).toEqual([
       expect.objectContaining({ highlight: "corridorEntry", row: 7, col: 7, side: "black" }),
+      expect.objectContaining({ marker: "forcedLoss", row: 7, col: 8 }),
+    ]);
+  });
+
+  it("renders source-stone evidence annotations in the replay board overlay", () => {
+    const frame = annotation(4, "White");
+    frame.evidence = [
+      {
+        mv: { col: 4, row: 7 },
+        notation: "E8",
+        role: "imminent_threat",
+        side: "Black",
+      },
+      {
+        mv: { col: 5, row: 7 },
+        notation: "F8",
+        role: "counter_threat",
+        side: "White",
+      },
+    ];
+    frame.highlights = [];
+
+    const annotations = mergeReplayAnalysisAnnotations({}, step(frame));
+
+    expect(analysisOverlaysForFrame(annotations, match("black_won"), 4)).toEqual([
+      expect.objectContaining({ highlight: "imminentThreat", row: 7, col: 4, side: "black" }),
+      expect.objectContaining({ highlight: "counterThreat", row: 7, col: 5, side: "white" }),
+      expect.objectContaining({ marker: "forcedLoss", row: 7, col: 8 }),
+    ]);
+  });
+
+  it("can suppress source-stone evidence annotations in the replay board overlay", () => {
+    const frame = annotation(4, "White");
+    frame.evidence = [
+      {
+        mv: { col: 4, row: 7 },
+        notation: "E8",
+        role: "imminent_threat",
+        side: "Black",
+      },
+    ];
+    frame.highlights = [
+      {
+        mv: { col: 6, row: 7 },
+        notation: "G8",
+        role: "imminent_threat",
+        side: "Black",
+      },
+    ];
+
+    const annotations = mergeReplayAnalysisAnnotations({}, step(frame));
+
+    expect(analysisOverlaysForFrame(annotations, match("black_won"), 4, null, false)).toEqual([
+      expect.objectContaining({ highlight: "imminentThreat", row: 7, col: 6, side: "black" }),
       expect.objectContaining({ marker: "forcedLoss", row: 7, col: 8 }),
     ]);
   });

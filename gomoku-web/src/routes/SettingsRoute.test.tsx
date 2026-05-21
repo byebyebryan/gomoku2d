@@ -157,11 +157,16 @@ describe("SettingsRoute", () => {
     const imminent = screen.getByRole("group", { name: "Imminent hints" });
     expect(within(imminent).getByRole("button", { name: "Threat" })).toBeInTheDocument();
     expect(within(imminent).getByRole("button", { name: "+ Counter" })).toBeInTheDocument();
+    const evidence = screen.getByRole("group", { name: "Evidence hints" });
+    expect(within(evidence).getByRole("button", { name: "Off" })).toBeInTheDocument();
+    expect(within(evidence).getByRole("button", { name: "On" })).toBeInTheDocument();
 
     const immediate = screen.getByRole("group", { name: "Immediate hints" });
     fireEvent.click(within(immediate).getByRole("button", { name: "Win" }));
+    fireEvent.click(within(evidence).getByRole("button", { name: "Off" }));
 
     expect(localProfileStore.getState().settings.boardHints).toMatchObject({
+      evidence: "off",
       immediate: "win",
       imminent: "threat_counter",
     });

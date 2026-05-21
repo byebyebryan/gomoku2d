@@ -17,7 +17,11 @@ use gomoku_analysis::{
 };
 use gomoku_bot::{
     frontier::RollingThreatFrontier,
-    tactical::{defender_hint_reply_candidates_from_view, DefenderReplyRole, ThreatView},
+    tactical::{
+        compound_imminent_evidence_stones, defender_hint_reply_candidates_from_view,
+        local_threat_evidence_stones, DefenderReplyRole, LocalThreatFact, LocalThreatKind,
+        SearchThreatPolicy, ThreatView,
+    },
     Bot, CorridorProofConfig, MoveOrdering, RandomBot, SearchBot, SearchBotConfig,
     StaticEvaluation,
 };
@@ -173,6 +177,48 @@ fn set_moves(obj: &Object, key: &str, moves: Vec<Move>) {
 fn push_unique_move(moves: &mut Vec<Move>, mv: Move) {
     if !moves.contains(&mv) {
         moves.push(mv);
+    }
+}
+
+fn normalize_moves_for_snapshot(moves: &mut Vec<Move>) {
+    moves.sort_by_key(|mv| (mv.row, mv.col));
+    moves.dedup();
+}
+
+fn push_threat_fact_evidence(moves: &mut Vec<Move>, board: &Board, fact: &LocalThreatFact) {
+    for mv in local_threat_evidence_stones(board, fact) {
+        push_unique_move(moves, mv);
+    }
+}
+
+fn candidate_evidence_stones(
+    board: &Board,
+    player: Color,
+    mv: Move,
+    keep: impl Fn(LocalThreatKind) -> bool,
+) -> Vec<Move> {
+    let annotation = SearchThreatPolicy.annotation_for_player(board, player, mv);
+    let mut evidence = Vec::new();
+    for fact in annotation
+        .local_threats
+        .iter()
+        .filter(|fact| keep(fact.kind))
+    {
+        push_threat_fact_evidence(&mut evidence, board, fact);
+    }
+    normalize_moves_for_snapshot(&mut evidence);
+    evidence
+}
+
+fn push_candidate_evidence(
+    moves: &mut Vec<Move>,
+    board: &Board,
+    player: Color,
+    mv: Move,
+    keep: impl Fn(LocalThreatKind) -> bool,
+) {
+    for evidence in candidate_evidence_stones(board, player, mv, keep) {
+        push_unique_move(moves, evidence);
     }
 }
 
@@ -453,6 +499,17 @@ impl WasmBoard {
         let opponent = current.opponent();
 
         let winning_moves = self.threat_view.immediate_winning_moves_for(current);
+        let mut winning_evidence_cells = Vec::new();
+        for mv in winning_moves.iter().copied() {
+            push_candidate_evidence(
+                &mut winning_evidence_cells,
+                &self.inner,
+                current,
+                mv,
+                |kind| kind == LocalThreatKind::Five,
+            );
+        }
+
         let mut blocked = winning_moves.clone();
 
         let immediate_threat_moves = self
@@ -461,6 +518,16 @@ impl WasmBoard {
             .into_iter()
             .filter(|mv| !blocked.contains(mv))
             .collect::<Vec<_>>();
+        let mut immediate_threat_evidence_cells = Vec::new();
+        for mv in immediate_threat_moves.iter().copied() {
+            push_candidate_evidence(
+                &mut immediate_threat_evidence_cells,
+                &self.inner,
+                opponent,
+                mv,
+                |kind| kind == LocalThreatKind::Five,
+            );
+        }
         blocked.extend(immediate_threat_moves.iter().copied());
 
         let reply_candidates =
@@ -478,6 +545,27 @@ impl WasmBoard {
                 blocked.push(candidate.mv);
             }
         }
+        let mut imminent_threat_evidence_cells = Vec::new();
+        if !imminent_threat_moves.is_empty() {
+            if let Some(obligation) = self.threat_view.threat_obligation(opponent) {
+                for fact in &obligation.local_facts {
+                    push_threat_fact_evidence(
+                        &mut imminent_threat_evidence_cells,
+                        &self.inner,
+                        fact,
+                    );
+                }
+                if !obligation.compound_entries.is_empty() {
+                    for mv in compound_imminent_evidence_stones(
+                        &self.inner,
+                        opponent,
+                        &obligation.compound_entries,
+                    ) {
+                        push_unique_move(&mut imminent_threat_evidence_cells, mv);
+                    }
+                }
+            }
+        }
 
         let mut counter_threat_moves = Vec::new();
         for candidate in &reply_candidates {
@@ -492,12 +580,51 @@ impl WasmBoard {
                 blocked.push(candidate.mv);
             }
         }
+        let mut counter_threat_evidence_cells = Vec::new();
+        for mv in counter_threat_moves.iter().copied() {
+            push_candidate_evidence(
+                &mut counter_threat_evidence_cells,
+                &self.inner,
+                current,
+                mv,
+                |kind| {
+                    matches!(
+                        kind,
+                        LocalThreatKind::Five
+                            | LocalThreatKind::OpenFour
+                            | LocalThreatKind::ClosedFour
+                            | LocalThreatKind::BrokenFour
+                    )
+                },
+            );
+        }
+
+        normalize_moves_for_snapshot(&mut winning_evidence_cells);
+        normalize_moves_for_snapshot(&mut immediate_threat_evidence_cells);
+        normalize_moves_for_snapshot(&mut imminent_threat_evidence_cells);
+        normalize_moves_for_snapshot(&mut counter_threat_evidence_cells);
 
         let obj = Object::new();
         set_moves(&obj, "winningMoves", winning_moves);
+        set_moves(&obj, "winningEvidenceCells", winning_evidence_cells);
         set_moves(&obj, "immediateThreatMoves", immediate_threat_moves);
+        set_moves(
+            &obj,
+            "immediateThreatEvidenceCells",
+            immediate_threat_evidence_cells,
+        );
         set_moves(&obj, "imminentThreatMoves", imminent_threat_moves);
+        set_moves(
+            &obj,
+            "imminentThreatEvidenceCells",
+            imminent_threat_evidence_cells,
+        );
         set_moves(&obj, "counterThreatMoves", counter_threat_moves);
+        set_moves(
+            &obj,
+            "counterThreatEvidenceCells",
+            counter_threat_evidence_cells,
+        );
         set_moves(
             &obj,
             "forbiddenMoves",

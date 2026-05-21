@@ -1,7 +1,9 @@
 use gomoku_bot::corridor as bot_corridor;
 use gomoku_bot::tactical::{
-    corridor_active_threats, lethal_threat, normalize_local_threat_facts, LethalThreat,
-    LethalThreatKind, LocalThreatFact, LocalThreatKind,
+    compound_imminent_evidence_stones, corridor_active_threats, lethal_threat,
+    local_threat_evidence_stones, normalize_local_threat_facts, LethalThreat, LethalThreatKind,
+    LocalThreatFact, LocalThreatKind, ScanThreatView, SearchThreatPolicy, ThreatObligationKind,
+    ThreatView,
 };
 use gomoku_core::{replay::ReplayResult, Board, Color, GameResult, Move, Replay, Variant, DIRS};
 use serde::Serialize;
@@ -346,6 +348,7 @@ pub struct ReplayFrameMarker {
 pub struct ReplayFrameAnnotations {
     pub ply: usize,
     pub side_to_move: Color,
+    pub evidence: Vec<ReplayFrameHighlight>,
     pub highlights: Vec<ReplayFrameHighlight>,
     pub markers: Vec<ReplayFrameMarker>,
 }
@@ -623,6 +626,7 @@ fn replay_frame_annotations_from_proof(
     let mut frame = ReplayFrameAnnotations {
         ply,
         side_to_move: proof.side_to_move,
+        evidence: Vec::new(),
         highlights: Vec::new(),
         markers: Vec::new(),
     };
@@ -646,7 +650,7 @@ fn replay_frame_annotations_from_proof(
         if let Some(actual_reply) = actual_reply {
             push_actual_reply_hint_annotations(&mut frame, board, winner, actual_reply);
         }
-        push_reply_outcome_annotations(&mut frame, winner, &replies);
+        push_reply_outcome_annotations(&mut frame, board, winner, &replies);
     }
 
     frame
@@ -776,6 +780,15 @@ fn push_current_loser_immediate_win_annotations(
             mv,
             defender,
         );
+        push_candidate_threat_evidence(
+            frame,
+            board,
+            defender,
+            mv,
+            ReplayFrameHighlightRole::ImmediateWin,
+            defender,
+            |kind| kind == LocalThreatKind::Five,
+        );
     }
 }
 
@@ -792,7 +805,7 @@ fn push_current_loser_candidate_annotations(
 
     for candidate in candidates {
         for role in &candidate.roles {
-            push_defender_reply_role_highlight(frame, *role, candidate.mv, winner);
+            push_defender_reply_role_highlight(frame, board, *role, candidate.mv, winner);
         }
         if !board.is_legal_for_color(candidate.mv, defender) {
             push_replay_marker(
@@ -807,13 +820,14 @@ fn push_current_loser_candidate_annotations(
 
 fn push_reply_outcome_annotations(
     frame: &mut ReplayFrameAnnotations,
+    board: &Board,
     attacker: Color,
     replies: &[DefenderReplyAnalysis],
 ) {
     let defender = attacker.opponent();
     for reply in replies {
         for role in &reply.roles {
-            push_defender_reply_role_highlight(frame, *role, reply.mv, attacker);
+            push_defender_reply_role_highlight(frame, board, *role, reply.mv, attacker);
         }
 
         push_replay_marker(
@@ -837,12 +851,13 @@ fn push_actual_reply_hint_annotations(
     }
 
     for role in defender_reply_roles_for_move(board, attacker, mv) {
-        push_defender_reply_role_highlight(frame, role, mv, attacker);
+        push_defender_reply_role_highlight(frame, board, role, mv, attacker);
     }
 }
 
 fn push_defender_reply_role_highlight(
     frame: &mut ReplayFrameAnnotations,
+    board: &Board,
     role: DefenderReplyRole,
     mv: Move,
     attacker: Color,
@@ -852,6 +867,7 @@ fn push_defender_reply_role_highlight(
         return;
     };
     push_replay_highlight(&mut frame.highlights, highlight_role, mv, side);
+    push_defender_reply_role_evidence(frame, board, role, mv, attacker, highlight_role, side);
 }
 
 fn replay_highlight_for_defender_reply_role(
@@ -868,6 +884,86 @@ fn replay_highlight_for_defender_reply_role(
         }
         DefenderReplyRole::OffensiveCounter => {
             Some((ReplayFrameHighlightRole::CounterThreat, attacker.opponent()))
+        }
+    }
+}
+
+fn push_defender_reply_role_evidence(
+    frame: &mut ReplayFrameAnnotations,
+    board: &Board,
+    role: DefenderReplyRole,
+    mv: Move,
+    attacker: Color,
+    highlight_role: ReplayFrameHighlightRole,
+    side: Color,
+) {
+    match role {
+        DefenderReplyRole::Actual => {}
+        DefenderReplyRole::ImmediateDefense => push_candidate_threat_evidence(
+            frame,
+            board,
+            attacker,
+            mv,
+            highlight_role,
+            side,
+            |kind| kind == LocalThreatKind::Five,
+        ),
+        DefenderReplyRole::ImminentDefense => {
+            let view = ScanThreatView::new(board);
+            let Some(obligation) = view.threat_obligation(attacker) else {
+                return;
+            };
+            if obligation.kind != ThreatObligationKind::Imminent {
+                return;
+            }
+            for fact in &obligation.local_facts {
+                for evidence in local_threat_evidence_stones(board, fact) {
+                    push_replay_highlight(&mut frame.evidence, highlight_role, evidence, side);
+                }
+            }
+            for evidence in
+                compound_imminent_evidence_stones(board, attacker, &obligation.compound_entries)
+            {
+                push_replay_highlight(&mut frame.evidence, highlight_role, evidence, side);
+            }
+        }
+        DefenderReplyRole::OffensiveCounter => push_candidate_threat_evidence(
+            frame,
+            board,
+            attacker.opponent(),
+            mv,
+            highlight_role,
+            side,
+            |kind| {
+                matches!(
+                    kind,
+                    LocalThreatKind::Five
+                        | LocalThreatKind::OpenFour
+                        | LocalThreatKind::ClosedFour
+                        | LocalThreatKind::BrokenFour
+                )
+            },
+        ),
+    }
+}
+
+fn push_candidate_threat_evidence(
+    frame: &mut ReplayFrameAnnotations,
+    board: &Board,
+    player: Color,
+    mv: Move,
+    role: ReplayFrameHighlightRole,
+    side: Color,
+    keep: impl Fn(LocalThreatKind) -> bool,
+) {
+    let annotation = SearchThreatPolicy.annotation_for_player(board, player, mv);
+    for fact in annotation
+        .local_threats
+        .iter()
+        .filter(|fact| keep(fact.kind))
+    {
+        for evidence in local_threat_evidence_stones(board, fact) {
+            push_replay_highlight(&mut frame.evidence, role, evidence, side);
         }
     }
 }
@@ -2400,14 +2496,19 @@ fn onset_line_key_for_entry(mv: Move, terminal_targets: &[Move]) -> OnsetLineKey
         .unwrap_or(OnsetLineKey::Point(mv.row, mv.col))
 }
 
-fn onset_line_key_for_terminal_target(board: &Board, attacker: Color, target: Move) -> OnsetLineKey {
+fn onset_line_key_for_terminal_target(
+    board: &Board,
+    attacker: Color,
+    target: Move,
+) -> OnsetLineKey {
     DIRS.iter()
         .copied()
         .find_map(|(dr, dc)| {
             let run_len = 1
                 + count_attacker_stones(board, attacker, target, dr, dc)
                 + count_attacker_stones(board, attacker, target, -dr, -dc);
-            (run_len >= board.config.win_length).then(|| onset_line_key_for_direction(target, dr, dc))
+            (run_len >= board.config.win_length)
+                .then(|| onset_line_key_for_direction(target, dr, dc))
         })
         .unwrap_or(OnsetLineKey::Point(target.row, target.col))
 }
@@ -3820,8 +3921,8 @@ mod tests {
         );
         assert_eq!(board.current_player, Color::Black);
 
-        let threat = lethal_threat(&board, Color::White)
-            .expect("diagonal open four should be lethal");
+        let threat =
+            lethal_threat(&board, Color::White).expect("diagonal open four should be lethal");
         let onset = super::lethal_onset_from_threat(12, &board, threat);
 
         assert_eq!(onset.kind, LethalThreatKind::TerminalCoverage);
@@ -3847,8 +3948,7 @@ mod tests {
         let board = board_from_moves(
             Variant::Freestyle,
             &[
-                "C3", "A15", "D3", "O15", "E3", "A14", "H8", "O14", "I8", "A13", "J8", "O13",
-                "K8",
+                "C3", "A15", "D3", "O15", "E3", "A14", "H8", "O14", "I8", "A13", "J8", "O13", "K8",
             ],
         );
         assert_eq!(board.current_player, Color::White);
@@ -4129,6 +4229,23 @@ mod tests {
                 boundary.highlights
             );
         }
+
+        assert!(
+            boundary.evidence.iter().any(|highlight| {
+                highlight.role == ReplayFrameHighlightRole::ImminentThreat
+                    && highlight.side == Color::Black
+            }),
+            "imminent-threat source stones should be annotated as replay evidence: {:?}",
+            boundary.evidence
+        );
+        assert!(
+            boundary.evidence.iter().any(|highlight| {
+                highlight.role == ReplayFrameHighlightRole::CounterThreat
+                    && highlight.side == Color::White
+            }),
+            "counter-threat source stones should be annotated as replay evidence: {:?}",
+            boundary.evidence
+        );
     }
 
     #[test]
