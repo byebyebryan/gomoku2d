@@ -269,6 +269,15 @@ export function replayFailureSummary(
 export function replayMistakePoint(
   analysis: ReplayAnalysisSummary | null | undefined,
 ): ReplayMistakePoint | null {
+  const mode = analysis?.failure?.mode;
+  if (
+    mode !== "missed_immediate_win" &&
+    mode !== "missed_immediate_response" &&
+    mode !== "missed_imminent_response"
+  ) {
+    return null;
+  }
+
   const failure = replayFailureSummary(analysis);
   if (!failure?.actualMove) {
     return null;

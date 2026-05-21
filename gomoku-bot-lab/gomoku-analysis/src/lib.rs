@@ -1,9 +1,9 @@
 use gomoku_bot::corridor as bot_corridor;
 use gomoku_bot::tactical::{
-    compound_imminent_evidence_stones, corridor_active_threats, lethal_threat,
-    local_threat_evidence_stones, normalize_local_threat_facts, LethalThreat, LethalThreatKind,
-    LocalThreatFact, LocalThreatKind, ScanThreatView, SearchThreatPolicy, ThreatObligationKind,
-    ThreatView,
+    compound_imminent_evidence_stones, corridor_active_threats,
+    legal_forcing_continuations_for_fact, lethal_threat, local_threat_evidence_stones,
+    normalize_local_threat_facts, LethalThreat, LethalThreatKind, LocalThreatFact, LocalThreatKind,
+    ScanThreatView, SearchThreatPolicy, ThreatObligationKind, ThreatView,
 };
 use gomoku_core::{replay::ReplayResult, Board, Color, GameResult, Move, Replay, Variant, DIRS};
 use serde::Serialize;
@@ -724,6 +724,12 @@ fn replay_frame_annotations_for_analysis_with_boards(
             proof,
             previous_proof,
         );
+        push_lethal_onset_annotations(
+            &mut frame,
+            board,
+            analysis.lethal_onset.as_ref(),
+            actual_reply,
+        );
         frames.push(frame);
     }
     frames
@@ -966,6 +972,142 @@ fn push_candidate_threat_evidence(
             push_replay_highlight(&mut frame.evidence, role, evidence, side);
         }
     }
+}
+
+fn push_lethal_onset_annotations(
+    frame: &mut ReplayFrameAnnotations,
+    board: &Board,
+    onset: Option<&LethalOnset>,
+    actual_reply: Option<Move>,
+) {
+    let Some(onset) = onset else {
+        return;
+    };
+    if frame.ply != onset.prefix_ply {
+        return;
+    }
+
+    for &target in &onset.terminal_targets {
+        push_replay_highlight(
+            &mut frame.highlights,
+            ReplayFrameHighlightRole::ImmediateThreat,
+            target,
+            onset.attacker,
+        );
+        push_onset_immediate_loss_marker(frame, board, onset.defender, target, actual_reply);
+        push_candidate_threat_evidence(
+            frame,
+            board,
+            onset.attacker,
+            target,
+            ReplayFrameHighlightRole::ImmediateThreat,
+            onset.attacker,
+            |kind| kind == LocalThreatKind::Five,
+        );
+    }
+
+    for fact in onset_local_three_facts(board, onset.attacker)
+        .iter()
+        .filter(|fact| lethal_onset_includes_local_three_fact(onset, fact))
+    {
+        for mv in onset_defender_reply_moves_for_fact(board, onset.attacker, fact) {
+            push_replay_highlight(
+                &mut frame.highlights,
+                ReplayFrameHighlightRole::ImmediateThreat,
+                mv,
+                onset.attacker,
+            );
+            push_onset_immediate_loss_marker(frame, board, onset.defender, mv, actual_reply);
+        }
+        for evidence in local_threat_evidence_stones(board, fact) {
+            push_replay_highlight(
+                &mut frame.evidence,
+                ReplayFrameHighlightRole::ImmediateThreat,
+                evidence,
+                onset.attacker,
+            );
+        }
+    }
+}
+
+fn push_onset_immediate_loss_marker(
+    frame: &mut ReplayFrameAnnotations,
+    board: &Board,
+    defender: Color,
+    mv: Move,
+    actual_reply: Option<Move>,
+) {
+    if actual_reply == Some(mv) {
+        return;
+    }
+    if board.is_empty(mv.row, mv.col) {
+        push_replay_marker(
+            &mut frame.markers,
+            ReplayFrameMarkerRole::ImmediateLoss,
+            mv,
+            defender,
+        );
+    }
+}
+
+fn lethal_onset_includes_local_three_fact(onset: &LethalOnset, fact: &LocalThreatFact) -> bool {
+    onset
+        .shape
+        .components
+        .iter()
+        .filter(|component| component.tier == LethalOnsetComponentTier::Three)
+        .any(|component| lethal_onset_component_matches_fact(component, fact))
+}
+
+fn lethal_onset_component_matches_fact(
+    component: &LethalOnsetComponent,
+    fact: &LocalThreatFact,
+) -> bool {
+    let origin = fact.origin.mv();
+    if component.mv == origin {
+        return true;
+    }
+
+    let fact_key = onset_line_key_for_fact(fact);
+    onset_line_key_between(origin, component.mv).is_some_and(|key| key == fact_key)
+}
+
+fn onset_defender_reply_moves_for_fact(
+    board: &Board,
+    attacker: Color,
+    fact: &LocalThreatFact,
+) -> Vec<Move> {
+    let continuations = legal_forcing_continuations_for_fact(board, attacker, fact);
+    let mut replies = Vec::new();
+
+    for continuation in &continuations {
+        if board.is_empty(continuation.mv.row, continuation.mv.col) {
+            push_unique_move(&mut replies, continuation.mv);
+        }
+    }
+
+    let mut shared_cost_squares: Option<Vec<Move>> = None;
+    for continuation in continuations {
+        let costs = continuation
+            .legal_cost_squares
+            .into_iter()
+            .filter(|&mv| board.is_empty(mv.row, mv.col))
+            .collect::<Vec<_>>();
+
+        shared_cost_squares = Some(match shared_cost_squares {
+            Some(shared) => shared
+                .into_iter()
+                .filter(|mv| costs.contains(mv))
+                .collect::<Vec<_>>(),
+            None => costs,
+        });
+    }
+
+    for mv in shared_cost_squares.unwrap_or_default() {
+        push_unique_move(&mut replies, mv);
+    }
+    normalize_moves(&mut replies);
+    replies
 }
 
 fn replay_marker_role_for_defender_reply_outcome(
@@ -2371,17 +2513,15 @@ fn lethal_onset_shape(board: &Board, threat: &LethalThreat) -> LethalOnsetShape 
         );
     }
 
-    if threat.kind == LethalThreatKind::OneStepCoverage {
-        let local_three_facts = onset_local_three_facts(board, threat.attacker);
-        for fact in &local_three_facts {
-            push_onset_component(
-                &mut components,
-                &mut seen,
-                LethalOnsetComponentTier::Three,
-                onset_line_key_for_fact(fact),
-                fact.origin.mv(),
-            );
-        }
+    let local_three_facts = onset_local_three_facts(board, threat.attacker);
+    for fact in &local_three_facts {
+        push_onset_component(
+            &mut components,
+            &mut seen,
+            LethalOnsetComponentTier::Three,
+            onset_line_key_for_fact(fact),
+            fact.origin.mv(),
+        );
     }
 
     let has_three_component = components
@@ -3346,11 +3486,12 @@ mod tests {
 
     use super::{
         analyze_alternate_defender_reply_options, analyze_defender_reply_options, analyze_replay,
-        corridor_analysis_model, failure_analysis, replay_frame_annotations_from_proof,
-        replay_moves, replay_prefix_boards, replay_proof_summary, AnalysisOptions,
-        DefenderReplyOutcome, DefenderReplyRole, FailureAnalysisInput, FailureMode, ForcedInterval,
-        LethalOnset, LethalOnsetComponentTier, LethalOnsetMechanism, LethalOnsetShape,
-        MissedCandidateOutcome, ProofLimitCause, ProofResult, ProofStatus, ReplayAnalysisSession,
+        corridor_analysis_model, failure_analysis, replay_frame_annotations_for_analysis,
+        replay_frame_annotations_from_proof, replay_moves, replay_prefix_boards,
+        replay_proof_summary, AnalysisOptions, DefenderReplyOutcome, DefenderReplyRole,
+        FailureAnalysisInput, FailureMode, ForcedInterval, LethalOnset, LethalOnsetComponentTier,
+        LethalOnsetMechanism, LethalOnsetShape, MissedCandidateOutcome, ProofLimitCause,
+        ProofResult, ProofStatus, ReplayAnalysisSession, ReplayFrameAnnotations,
         ReplayFrameHighlightRole, ReplayFrameMarkerRole, ReplyClassification, ReplyPolicy,
         RootCause, TacticalNote, ThreatSequenceEvidence, UnclearReason,
     };
@@ -3944,7 +4085,7 @@ mod tests {
     }
 
     #[test]
-    fn lethal_onset_shape_ignores_unrelated_threes_for_terminal_coverage() {
+    fn lethal_onset_shape_includes_active_threes_for_terminal_coverage() {
         let board = board_from_moves(
             Variant::Freestyle,
             &[
@@ -3954,11 +4095,11 @@ mod tests {
         assert_eq!(board.current_player, Color::White);
 
         let threat = lethal_threat(&board, Color::Black)
-            .expect("open four should be terminal lethal even with an unrelated three");
+            .expect("open four should be terminal lethal even with an active three");
         let onset = super::lethal_onset_from_threat(13, &board, threat);
 
         assert_eq!(onset.kind, LethalThreatKind::TerminalCoverage);
-        assert_eq!(onset.shape.label, "4");
+        assert_eq!(onset.shape.label, "4x3");
         assert_eq!(
             onset
                 .shape
@@ -3966,9 +4107,48 @@ mod tests {
                 .iter()
                 .map(|component| component.tier)
                 .collect::<Vec<_>>(),
-            vec![LethalOnsetComponentTier::Four]
+            vec![
+                LethalOnsetComponentTier::Four,
+                LethalOnsetComponentTier::Three
+            ]
         );
         assert_eq!(onset.terminal_targets, vec![mv("G8"), mv("L8")]);
+    }
+
+    #[test]
+    fn lethal_onset_shape_includes_active_threes_for_terminal_four_by_four() {
+        let board = board_from_moves(
+            Variant::Freestyle,
+            &[
+                "C3", "A15", "D3", "O15", "E3", "A14", "H8", "O14", "I8", "B15", "J8", "N15", "K8",
+                "B14", "H10", "N14", "I10", "C15", "J10", "M15", "K10",
+            ],
+        );
+        assert_eq!(board.current_player, Color::White);
+
+        let threat = lethal_threat(&board, Color::Black)
+            .expect("parallel open fours should be terminal lethal");
+        let onset = super::lethal_onset_from_threat(21, &board, threat);
+
+        assert_eq!(onset.kind, LethalThreatKind::TerminalCoverage);
+        assert_eq!(onset.shape.label, "4x4x3");
+        assert_eq!(
+            onset
+                .shape
+                .components
+                .iter()
+                .map(|component| component.tier)
+                .collect::<Vec<_>>(),
+            vec![
+                LethalOnsetComponentTier::Four,
+                LethalOnsetComponentTier::Four,
+                LethalOnsetComponentTier::Three
+            ]
+        );
+        assert_eq!(
+            onset.terminal_targets,
+            vec![mv("G8"), mv("L8"), mv("G10"), mv("L10")]
+        );
     }
 
     #[test]
@@ -4027,6 +4207,137 @@ mod tests {
                 (mv("I6"), vec![mv("I5"), mv("I10")]),
                 (mv("I10"), vec![mv("I6"), mv("I11")]),
             ]
+        );
+    }
+
+    #[test]
+    fn replay_annotations_upgrade_all_one_step_lethal_components_to_immediate_threats() {
+        let replay = replay_from_moves(
+            Variant::Freestyle,
+            &[
+                "H8", "G8", "I8", "A1", "J8", "O1", "K8", "A15", "I7", "O15", "I9", "L8", "I6",
+                "A14", "I10",
+            ],
+        );
+        let analysis = analyze_replay(&replay, AnalysisOptions::default())
+            .expect("finished replay should analyze");
+        let onset = analysis
+            .lethal_onset
+            .as_ref()
+            .expect("fixture should have lethal onset");
+        assert_eq!(onset.prefix_ply, 11);
+        assert_eq!(onset.shape.label, "4x3");
+
+        let annotations = replay_frame_annotations_for_analysis(&replay, &analysis)
+            .expect("annotations should build");
+        let frame = annotations
+            .iter()
+            .find(|frame| frame.ply == onset.prefix_ply)
+            .expect("onset frame should be annotated");
+        let immediate_threats = frame
+            .highlights
+            .iter()
+            .filter(|highlight| highlight.role == ReplayFrameHighlightRole::ImmediateThreat)
+            .map(|highlight| highlight.mv)
+            .collect::<Vec<_>>();
+        let immediate_losses = frame
+            .markers
+            .iter()
+            .filter(|marker| marker.role == ReplayFrameMarkerRole::ImmediateLoss)
+            .map(|marker| marker.mv)
+            .collect::<Vec<_>>();
+
+        assert!(
+            immediate_threats.contains(&mv("L8")),
+            "four target should be highlighted as a lethal contributor: {:?}",
+            frame.highlights
+        );
+        assert!(
+            immediate_threats.contains(&mv("I6")) && immediate_threats.contains(&mv("I10")),
+            "three response squares should be promoted to immediate-threat visuals at onset: {:?}",
+            frame.highlights
+        );
+        assert!(
+            frame.evidence.iter().any(|highlight| {
+                highlight.role == ReplayFrameHighlightRole::ImmediateThreat
+                    && highlight.mv == mv("H8")
+                    && highlight.side == Color::Black
+            }),
+            "four source stones should be emitted as strong-red onset evidence: {:?}",
+            frame.evidence
+        );
+        assert!(
+            frame.evidence.iter().any(|highlight| {
+                highlight.role == ReplayFrameHighlightRole::ImmediateThreat
+                    && highlight.mv == mv("I7")
+                    && highlight.side == Color::Black
+            }) && frame.evidence.iter().any(|highlight| {
+                highlight.role == ReplayFrameHighlightRole::ImmediateThreat
+                    && highlight.mv == mv("I9")
+                    && highlight.side == Color::Black
+            }),
+            "three source stones should be emitted as strong-red onset evidence: {:?}",
+            frame.evidence
+        );
+        assert!(
+            !immediate_losses.contains(&mv("L8"))
+                && immediate_losses.contains(&mv("I6"))
+                && immediate_losses.contains(&mv("I10")),
+            "onset threat markers should skip the actual replay move: {:?}",
+            frame.markers
+        );
+    }
+
+    #[test]
+    fn lethal_onset_annotations_include_active_threes_for_terminal_coverage() {
+        let board = board_from_moves(
+            Variant::Freestyle,
+            &[
+                "C3", "A15", "D3", "O15", "E3", "A14", "H8", "O14", "I8", "A13", "J8", "O13", "K8",
+            ],
+        );
+        let threat =
+            lethal_threat(&board, Color::Black).expect("open four should be terminal lethal");
+        let onset = super::lethal_onset_from_threat(13, &board, threat);
+        let mut frame = ReplayFrameAnnotations {
+            ply: onset.prefix_ply,
+            side_to_move: board.current_player,
+            evidence: Vec::new(),
+            highlights: Vec::new(),
+            markers: Vec::new(),
+        };
+
+        super::push_lethal_onset_annotations(&mut frame, &board, Some(&onset), None);
+
+        let immediate_threats = frame
+            .highlights
+            .iter()
+            .filter(|highlight| highlight.role == ReplayFrameHighlightRole::ImmediateThreat)
+            .map(|highlight| highlight.mv)
+            .collect::<Vec<_>>();
+        let immediate_losses = frame
+            .markers
+            .iter()
+            .filter(|marker| marker.role == ReplayFrameMarkerRole::ImmediateLoss)
+            .map(|marker| marker.mv)
+            .collect::<Vec<_>>();
+
+        assert_eq!(
+            immediate_threats,
+            vec![mv("G8"), mv("L8"), mv("B3"), mv("F3")]
+        );
+        assert_eq!(
+            immediate_losses,
+            vec![mv("G8"), mv("L8"), mv("B3"), mv("F3")]
+        );
+        assert!(
+            frame.evidence.iter().any(|highlight| {
+                highlight.role == ReplayFrameHighlightRole::ImmediateThreat
+                    && highlight.mv == mv("C3")
+                    && highlight.side == Color::Black
+            }),
+            "terminal onset should emit active-three evidence as upgraded threat context: {:?}",
+            frame.evidence
         );
     }
 
