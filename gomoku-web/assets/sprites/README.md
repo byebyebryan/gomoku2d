@@ -71,7 +71,7 @@ Frame numbers are row-major.
 
 | Frames | Animation | FPS | Runtime use |
 |--------|-----------|-----|-------------|
-| 0-5 | `hover` | 12 | Current side's "about to play here" target |
+| 0-5 | `hover` | 6 | Current side's "about to play here" target |
 
 ### `marker.png`
 

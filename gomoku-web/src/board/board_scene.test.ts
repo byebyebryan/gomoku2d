@@ -94,7 +94,7 @@ describe("animation sheet inventory", () => {
     });
 
     expect(HOVER_ANIMS).toMatchObject({
-      HOVER: { start: 0, end: 5, frameRate: 12, key: "hover" },
+      HOVER: { start: 0, end: 5, frameRate: 6, key: "hover" },
     });
 
     expect(CAUTION_ANIMS).toMatchObject({

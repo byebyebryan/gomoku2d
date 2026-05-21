@@ -62,7 +62,7 @@ export const POINTER_ANIMS = {
 } as const;
 
 export const HOVER_ANIMS = {
-  HOVER: { start: 0, end: 5, frameRate: 12, key: "hover" },
+  HOVER: { start: 0, end: 5, frameRate: 6, key: "hover" },
 } as const;
 
 export const CAUTION_ANIMS = {
