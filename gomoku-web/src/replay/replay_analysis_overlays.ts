@@ -7,6 +7,8 @@ import {
 } from "../match/saved_match";
 
 import type {
+  ReplayAnalysisFailure,
+  ReplayAnalysisLethalOnset,
   ReplayAnalysisSide,
   ReplayAnalysisStepResult,
   ReplayAnalysisSummary,
@@ -35,6 +37,18 @@ export type ReplayTimelineAnalysis = {
 export type ReplayAnalysisStatusSummary = {
   detail: string;
   label: string;
+};
+
+export type ReplayFailureUiSummary = {
+  actualMove: CellPosition | null;
+  criticalPly: number;
+  detail: string;
+  label: string;
+  side: ReplayAnalysisSide;
+};
+
+export type ReplayMistakePoint = ReplayFailureUiSummary & {
+  actualMove: CellPosition;
 };
 
 export type ReplayAnalysisStatusFrame = {
@@ -143,6 +157,128 @@ function lethalOnsetPlyFromAnalysis(analysis: ReplayAnalysisSummary | null | und
   return typeof prefixPly === "number" && Number.isFinite(prefixPly) ? prefixPly : null;
 }
 
+function lethalOnsetDisplayLabel(onset: ReplayAnalysisLethalOnset | null | undefined): string | null {
+  const label = onset?.shape?.label?.trim();
+  if (!label) {
+    return null;
+  }
+  const display = label.replace(/x/g, "+");
+  const mechanisms = onset?.shape?.mechanisms ?? [];
+  if (
+    label === "4" &&
+    onset?.kind === "terminal_coverage" &&
+    mechanisms.includes("multi_route") &&
+    (onset.terminal_targets?.length ?? 0) >= 2
+  ) {
+    return "open four";
+  }
+  if (mechanisms.includes("forbidden_cover") && !mechanisms.includes("multi_route")) {
+    return `forbidden ${display}`;
+  }
+  return display;
+}
+
+function lethalOnsetFailureLabel(onset: ReplayAnalysisLethalOnset | null | undefined): string {
+  const label = lethalOnsetDisplayLabel(onset);
+  if (!label) {
+    return "Missed fork";
+  }
+  return `Missed ${label}`;
+}
+
+function failureModeLabel(
+  failure: ReplayAnalysisFailure,
+  onset: ReplayAnalysisLethalOnset | null | undefined,
+): string {
+  switch (failure.mode) {
+    case "missed_immediate_win":
+      return "Missed win";
+    case "missed_immediate_response":
+      return "Missed 4";
+    case "missed_imminent_response":
+      return "Missed 3";
+    case "missed_lethal_prevention":
+      return lethalOnsetFailureLabel(onset);
+    case "missed_escape":
+      return "Missed escape";
+    case "unclear":
+      return "Analysis unclear";
+  }
+}
+
+function failureCandidateLabel(failure: ReplayAnalysisFailure): string {
+  switch (failure.mode) {
+    case "missed_immediate_win":
+      return "Win";
+    case "missed_immediate_response":
+    case "missed_imminent_response":
+      return "Response";
+    case "missed_lethal_prevention":
+      return "Answer";
+    case "missed_escape":
+      return "Escape";
+    case "unclear":
+      return "Candidate";
+  }
+}
+
+function conciseNotationList(values: string[]): string {
+  if (values.length <= 2) {
+    return values.join(" or ");
+  }
+  return `${values.slice(0, 2).join(", ")} +${values.length - 2}`;
+}
+
+function failureDetail(failure: ReplayAnalysisFailure): string {
+  const actual = failure.actual_notation ? `Played ${failure.actual_notation}` : "Review the actual line";
+  const candidates = failure.missed_candidates
+    .map((candidate) => candidate.notation)
+    .filter((notation): notation is string => notation.length > 0);
+
+  if (candidates.length === 0) {
+    return actual;
+  }
+
+  return `${actual} · ${failureCandidateLabel(failure)}: ${conciseNotationList(candidates)}`;
+}
+
+export function replayFailureSummary(
+  analysis: ReplayAnalysisSummary | null | undefined,
+): ReplayFailureUiSummary | null {
+  const failure = analysis?.failure ?? null;
+  if (
+    !failure ||
+    failure.mode === "unclear" ||
+    typeof failure.prefix_ply !== "number" ||
+    !Number.isFinite(failure.prefix_ply)
+  ) {
+    return null;
+  }
+
+  return {
+    actualMove: failure.actual_move
+      ? { row: failure.actual_move.row, col: failure.actual_move.col }
+      : null,
+    criticalPly: failure.prefix_ply,
+    detail: failureDetail(failure),
+    label: failureModeLabel(failure, analysis?.lethal_onset),
+    side: failure.side,
+  };
+}
+
+export function replayMistakePoint(
+  analysis: ReplayAnalysisSummary | null | undefined,
+): ReplayMistakePoint | null {
+  const failure = replayFailureSummary(analysis);
+  if (!failure?.actualMove) {
+    return null;
+  }
+  return {
+    ...failure,
+    actualMove: failure.actualMove,
+  };
+}
+
 export function replayTimelineAnalysis(
   annotationsByPly: ReplayAnalysisAnnotationsByPly,
   totalMoves: number,
@@ -220,6 +356,8 @@ export function replayAnalysisStatusSummary(
   if (step.status === "resolved") {
     const timeline = replayTimelineAnalysis(annotationsByPly, totalMoves, step.analysis);
     const lethalOnsetPly = lethalOnsetPlyFromAnalysis(step.analysis);
+    const lethalOnsetLabel = lethalOnsetDisplayLabel(step.analysis?.lethal_onset);
+    const lethalOnsetDetail = lethalOnsetLabel ? `by ${lethalOnsetLabel}` : "Lethal sequence";
     const winner = winningSideName(match);
     const loser = loserSideToMove(match);
     const currentSide = sideNameForPlayer(frame.currentPlayer);
@@ -239,7 +377,7 @@ export function replayAnalysisStatusSummary(
 
     if (winner && frame.status !== "playing") {
       return {
-        detail: "Guaranteed win",
+        detail: lethalOnsetDetail,
         label: `${winner} has won`,
       };
     }
@@ -251,17 +389,25 @@ export function replayAnalysisStatusSummary(
       };
     }
 
+    const mistake = replayMistakePoint(step.analysis);
+    if (mistake && frame.moveIndex === mistake.criticalPly) {
+      return {
+        detail: mistake.detail,
+        label: mistake.label,
+      };
+    }
+
     if (!insideSetupCorridor) {
       if (winner && afterLethalOnset) {
         if (lethalOnsetPly !== null && loser && currentSide === loser) {
           return {
-            detail: "Guaranteed loss",
+            detail: lethalOnsetLabel ? `by ${lethalOnsetLabel}` : "Lethal sequence",
             label: `${loser} has lost`,
           };
         }
 
         return {
-          detail: "Guaranteed win",
+          detail: lethalOnsetDetail,
           label: `${winner} has won`,
         };
       }
@@ -345,22 +491,24 @@ export function analysisOverlaysForFrame(
   annotationsByPly: ReplayAnalysisAnnotationsByPly,
   match: SavedMatchV2,
   moveIndex: number,
+  analysis?: ReplayAnalysisSummary | null,
 ): BoardAnalysisOverlay[] {
   const annotation = annotationsByPly[moveIndex];
   const loserSide = loserSideToMove(match);
 
-  if (!annotation || !loserSide || annotation.side_to_move !== loserSide) {
+  if (!loserSide) {
     return [];
   }
 
-  return [
-    ...annotation.highlights.map((highlight) => ({
+  const overlays: BoardAnalysisOverlay[] = [];
+  if (annotation && annotation.side_to_move === loserSide) {
+    overlays.push(...annotation.highlights.map((highlight) => ({
       col: highlight.mv.col,
       highlight: highlightRole(highlight.role),
       row: highlight.mv.row,
       side: overlaySide(highlight.side),
-    })),
-    ...annotation.markers.flatMap((marker) => {
+    })));
+    overlays.push(...annotation.markers.flatMap((marker) => {
       const role = markerRole(marker.role);
       if (!role) {
         return [];
@@ -371,8 +519,19 @@ export function analysisOverlaysForFrame(
         marker: role,
         row: marker.mv.row,
       }];
-    }),
-  ];
+    }));
+  }
+
+  const failure = replayMistakePoint(analysis);
+  if (failure && failure.side === loserSide && failure.criticalPly === moveIndex) {
+    overlays.push({
+      col: failure.actualMove.col,
+      marker: "mistake",
+      row: failure.actualMove.row,
+    });
+  }
+
+  return overlays;
 }
 
 export function nextReplayMove(match: SavedMatchV2, moveIndex: number): CellPosition | null {

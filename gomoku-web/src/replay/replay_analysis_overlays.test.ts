@@ -9,6 +9,8 @@ import {
   mergeReplayAnalysisAnnotations,
   nextReplayMove,
   replayAnalysisStatusSummary,
+  replayFailureSummary,
+  replayMistakePoint,
   replayTimelineAnalysis,
 } from "./replay_analysis_overlays";
 
@@ -241,7 +243,7 @@ describe("replayAnalysisStatusSummary", () => {
       moveIndex: 10,
       status: "black_won",
     })).toEqual({
-      detail: "Guaranteed win",
+      detail: "Lethal sequence",
       label: "Black has won",
     });
   });
@@ -295,7 +297,7 @@ describe("replayAnalysisStatusSummary", () => {
       moveIndex: 9,
       status: "playing",
     })).toEqual({
-      detail: "Guaranteed win",
+      detail: "Lethal sequence",
       label: "Black has won",
     });
   });
@@ -307,7 +309,14 @@ describe("replayAnalysisStatusSummary", () => {
     const resolved = {
       ...step(escapeFrame),
       analysis: {
-        lethal_onset: { prefix_ply: 8 },
+        lethal_onset: {
+          prefix_ply: 8,
+          shape: {
+            components: [],
+            label: "4x3",
+            mechanisms: ["multi_route" as const],
+          },
+        },
         setup_corridor: { start_ply: 4, end_ply: 8 },
       },
       counters: { branch_roots: 1, prefixes_analyzed: 6, proof_nodes: 2048 },
@@ -328,7 +337,7 @@ describe("replayAnalysisStatusSummary", () => {
       moveIndex: 8,
       status: "playing",
     })).toEqual({
-      detail: "Guaranteed loss",
+      detail: "by 4+3",
       label: "White has lost",
     });
     expect(replayAnalysisStatusSummary(resolved, annotations, tenMoveMatch("black_won"), {
@@ -336,7 +345,37 @@ describe("replayAnalysisStatusSummary", () => {
       moveIndex: 9,
       status: "playing",
     })).toEqual({
-      detail: "Guaranteed win",
+      detail: "by 4+3",
+      label: "Black has won",
+    });
+  });
+
+  it("summarizes open-four onset as a local lethal shape", () => {
+    const resolved = {
+      ...step(annotation(8, "White")),
+      analysis: {
+        lethal_onset: {
+          kind: "terminal_coverage" as const,
+          prefix_ply: 8,
+          shape: {
+            components: [],
+            label: "4",
+            mechanisms: ["multi_route" as const],
+          },
+          terminal_targets: [{ row: 0, col: 2 }, { row: 0, col: 7 }],
+        },
+        setup_corridor: { start_ply: 6, end_ply: 8 },
+      },
+      done: true,
+      status: "resolved" as const,
+    };
+
+    expect(replayAnalysisStatusSummary(resolved, {}, tenMoveMatch("black_won"), {
+      currentPlayer: 2,
+      moveIndex: 10,
+      status: "black_won",
+    })).toEqual({
+      detail: "by open four",
       label: "Black has won",
     });
   });
@@ -364,6 +403,232 @@ describe("replayAnalysisStatusSummary", () => {
       detail: "Last chance to avoid loss",
       label: "Black's last escape",
     });
+  });
+
+  it("keeps escape-frame copy concise when failure candidates exist", () => {
+    const escapeFrame = annotation(5, "White");
+    escapeFrame.markers = [{ ...escapeFrame.markers[0], role: "confirmed_escape" }];
+    const annotations = mergeReplayAnalysisAnnotations({}, step(escapeFrame));
+    const resolved = {
+      ...step(escapeFrame),
+      analysis: {
+        failure: {
+          actual_move: { row: 0, col: 1 },
+          actual_notation: "B1",
+          confidence: "confirmed" as const,
+          missed_candidates: [
+            {
+              mv: { row: 7, col: 6 },
+              notation: "G8",
+              outcome: "confirmed_escape" as const,
+              roles: ["imminent_defense" as const],
+            },
+          ],
+          mode: "missed_imminent_response" as const,
+          prefix_ply: 5,
+          prevented_onset_ply: null,
+          side: "White" as const,
+        },
+      },
+      done: true,
+      status: "resolved" as const,
+    };
+
+    expect(replayAnalysisStatusSummary(resolved, annotations, tenMoveMatch("black_won"), {
+      currentPlayer: 2,
+      moveIndex: 5,
+      status: "playing",
+    })).toEqual({
+      detail: "Last chance to avoid loss",
+      label: "White's last escape",
+    });
+  });
+
+  it("summarizes the classified failure on its frame", () => {
+    const resolved = {
+      ...step(annotation(4, "White")),
+      analysis: {
+        failure: {
+          actual_move: { row: 0, col: 1 },
+          actual_notation: "B1",
+          confidence: "confirmed" as const,
+          missed_candidates: [
+            {
+              mv: { row: 7, col: 6 },
+              notation: "G8",
+              outcome: "confirmed_escape" as const,
+              roles: ["imminent_defense" as const],
+            },
+          ],
+          mode: "missed_imminent_response" as const,
+          prefix_ply: 5,
+          prevented_onset_ply: null,
+          side: "White" as const,
+        },
+        setup_corridor: { start_ply: 5, end_ply: 8 },
+      },
+      done: true,
+      status: "resolved" as const,
+    };
+
+    expect(replayAnalysisStatusSummary(resolved, {}, tenMoveMatch("black_won"), {
+      currentPlayer: 2,
+      moveIndex: 5,
+      status: "playing",
+    })).toEqual({
+      detail: "Played B1 · Response: G8",
+      label: "Missed 3",
+    });
+    expect(replayAnalysisStatusSummary(resolved, {}, tenMoveMatch("black_won"), {
+      currentPlayer: 2,
+      moveIndex: 10,
+      status: "black_won",
+    })).toEqual({
+      detail: "Lethal sequence",
+      label: "Black has won",
+    });
+  });
+
+  it("does not show non-actionable failure copy on terminal frames", () => {
+    const resolved = {
+      ...step(annotation(4, "White")),
+      analysis: {
+        failure: {
+          actual_move: null,
+          actual_notation: null,
+          confidence: "confirmed" as const,
+          missed_candidates: [],
+          mode: "missed_escape" as const,
+          prefix_ply: 8,
+          prevented_onset_ply: 8,
+          side: "White" as const,
+        },
+      },
+      done: true,
+      status: "resolved" as const,
+    };
+
+    expect(replayAnalysisStatusSummary(resolved, {}, tenMoveMatch("black_won"), {
+      currentPlayer: 2,
+      moveIndex: 10,
+      status: "black_won",
+    })).toEqual({
+      detail: "Lethal sequence",
+      label: "Black has won",
+    });
+  });
+});
+
+describe("replayFailureSummary", () => {
+  it("returns null for unclear or missing failures", () => {
+    expect(replayFailureSummary(null)).toBeNull();
+    expect(replayFailureSummary({
+      failure: {
+        actual_move: null,
+        actual_notation: null,
+        confidence: "unclear",
+        missed_candidates: [],
+        mode: "unclear",
+        prefix_ply: 4,
+        prevented_onset_ply: null,
+        side: "White",
+      },
+    })).toBeNull();
+  });
+
+  it("separates non-actionable failure summaries from mistake points", () => {
+    const analysis = {
+      failure: {
+        actual_move: null,
+        actual_notation: null,
+        confidence: "confirmed" as const,
+        missed_candidates: [],
+        mode: "missed_escape" as const,
+        prefix_ply: 8,
+        prevented_onset_ply: 8,
+        side: "White" as const,
+      },
+    };
+
+    expect(replayFailureSummary(analysis)).toEqual(expect.objectContaining({
+      actualMove: null,
+      criticalPly: 8,
+      label: "Missed escape",
+    }));
+    expect(replayMistakePoint(analysis)).toBeNull();
+  });
+
+  it("uses lethal onset shape copy for missed lethal prevention", () => {
+    expect(replayFailureSummary({
+      failure: {
+        actual_move: { row: 0, col: 1 },
+        actual_notation: "B1",
+        confidence: "confirmed" as const,
+        missed_candidates: [],
+        mode: "missed_lethal_prevention" as const,
+        prefix_ply: 8,
+        prevented_onset_ply: 8,
+        side: "White" as const,
+      },
+      lethal_onset: {
+        prefix_ply: 8,
+        shape: {
+          components: [],
+          label: "4x3",
+          mechanisms: ["multi_route" as const],
+        },
+      },
+    })).toEqual(expect.objectContaining({
+      label: "Missed 4+3",
+    }));
+
+    expect(replayFailureSummary({
+      failure: {
+        actual_move: { row: 0, col: 1 },
+        actual_notation: "B1",
+        confidence: "confirmed" as const,
+        missed_candidates: [],
+        mode: "missed_lethal_prevention" as const,
+        prefix_ply: 8,
+        prevented_onset_ply: 8,
+        side: "Black" as const,
+      },
+      lethal_onset: {
+        prefix_ply: 8,
+        shape: {
+          components: [],
+          label: "4",
+          mechanisms: ["forbidden_cover" as const],
+        },
+      },
+    })).toEqual(expect.objectContaining({
+      label: "Missed forbidden 4",
+    }));
+
+    expect(replayFailureSummary({
+      failure: {
+        actual_move: { row: 0, col: 1 },
+        actual_notation: "B1",
+        confidence: "confirmed" as const,
+        missed_candidates: [],
+        mode: "missed_lethal_prevention" as const,
+        prefix_ply: 8,
+        prevented_onset_ply: 8,
+        side: "White" as const,
+      },
+      lethal_onset: {
+        kind: "terminal_coverage" as const,
+        prefix_ply: 8,
+        shape: {
+          components: [],
+          label: "4",
+          mechanisms: ["multi_route" as const],
+        },
+        terminal_targets: [{ row: 0, col: 2 }, { row: 0, col: 7 }],
+      },
+    })).toEqual(expect.objectContaining({
+      label: "Missed open four",
+    }));
   });
 });
 
@@ -443,6 +708,42 @@ describe("analysisOverlaysForFrame", () => {
       expect.objectContaining({ marker: "escape", row: 7, col: 8 }),
       expect.objectContaining({ marker: "forbidden", row: 7, col: 9 }),
     ]);
+  });
+
+  it("marks only the classified actual mistake move", () => {
+    expect(analysisOverlaysForFrame({}, match("black_won"), 5, {
+      failure: {
+        actual_move: { row: 0, col: 1 },
+        actual_notation: "B1",
+        confidence: "confirmed",
+        missed_candidates: [
+          {
+            mv: { row: 7, col: 6 },
+            notation: "G8",
+            outcome: "confirmed_escape",
+            roles: ["imminent_defense"],
+          },
+        ],
+        mode: "missed_imminent_response",
+        prefix_ply: 5,
+        prevented_onset_ply: null,
+        side: "White",
+      },
+    })).toEqual([
+      expect.objectContaining({ marker: "mistake", row: 0, col: 1 }),
+    ]);
+    expect(analysisOverlaysForFrame({}, match("black_won"), 4, {
+      failure: {
+        actual_move: { row: 0, col: 1 },
+        actual_notation: "B1",
+        confidence: "confirmed",
+        missed_candidates: [],
+        mode: "missed_imminent_response",
+        prefix_ply: 5,
+        prevented_onset_ply: null,
+        side: "White",
+      },
+    })).toEqual([]);
   });
 });
 

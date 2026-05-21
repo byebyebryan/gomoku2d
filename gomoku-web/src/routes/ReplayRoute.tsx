@@ -224,9 +224,10 @@ export function ReplayRoute() {
   }
 
   const frame = buildLocalReplayFrame(match, moveIndex, () => coreWinningCells);
-  const analysisOverlays = analysisOverlaysForFrame(analysisAnnotations, match, frame.moveIndex);
+  const analysisSummary = analysisStep?.analysis ?? null;
+  const analysisOverlays = analysisOverlaysForFrame(analysisAnnotations, match, frame.moveIndex, analysisSummary);
   const analysisStatus = replayAnalysisStatusSummary(analysisStep, analysisAnnotations, match, frame);
-  const timelineAnalysis = replayTimelineAnalysis(analysisAnnotations, match.move_count, analysisStep?.analysis ?? null);
+  const timelineAnalysis = replayTimelineAnalysis(analysisAnnotations, match.move_count, analysisSummary);
   const timelineStyle = {
     "--timeline-analyzed-end": timelineAnalysis.analyzedEndPercent ?? "0%",
     "--timeline-analyzed-start": timelineAnalysis.analyzedStartPercent ?? "0%",
@@ -447,17 +448,19 @@ export function ReplayRoute() {
               </button>
             </div>
 
-            <button
-              className={`uiAction uiActionSecondary ${styles.resumeAction}`}
-              disabled={!canResumeReplay(frame, replayFloor)}
-              onClick={() => {
-                navigate("/match/local", { state: { resumeSeed } });
-              }}
-              type="button"
-            >
-              <Icon className="uiIconDesktop" name="plus" />
-              <span className="uiActionLabel">Play From Here</span>
-            </button>
+            <div className={styles.replayActions}>
+              <button
+                className={`uiAction uiActionSecondary ${styles.resumeAction}`}
+                disabled={!canResumeReplay(frame, replayFloor)}
+                onClick={() => {
+                  navigate("/match/local", { state: { resumeSeed } });
+                }}
+                type="button"
+              >
+                <Icon className="uiIconDesktop" name="plus" />
+                <span className="uiActionLabel">Play From Here</span>
+              </button>
+            </div>
           </section>
         </aside>
       </section>

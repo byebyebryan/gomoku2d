@@ -296,6 +296,79 @@ describe("ReplayRoute analysis overlays", () => {
     expect(screen.getByTestId("replay-timeline-escape")).toBeInTheDocument();
   });
 
+  it("does not show a classified mistake shortcut", () => {
+    renderReplayRoute();
+
+    act(() => {
+      runnerMock.callbacks?.onComplete?.({
+        analysis: {
+          failure: {
+            actual_move: { col: 2, row: 0 },
+            actual_notation: "C1",
+            confidence: "confirmed",
+            missed_candidates: [
+              {
+                mv: { col: 6, row: 7 },
+                notation: "G8",
+                outcome: "confirmed_escape",
+                roles: ["imminent_defense"],
+              },
+            ],
+            mode: "missed_imminent_response",
+            prefix_ply: 5,
+            prevented_onset_ply: null,
+            side: "White",
+          },
+          setup_corridor: { start_ply: 5, end_ply: 8 },
+        },
+        annotations: [],
+        counters: { branch_roots: 1, prefixes_analyzed: 4, proof_nodes: 512 },
+        current_ply: null,
+        done: true,
+        error: null,
+        schema_version: 1,
+        status: "resolved",
+      });
+    });
+
+    expect(screen.getByTestId("replay-analysis-status")).toHaveTextContent("Black has won");
+    expect(screen.getByTestId("replay-analysis-detail")).toHaveTextContent("Lethal sequence");
+    expect(screen.queryByRole("button", { name: "Review Mistake" })).not.toBeInTheDocument();
+  });
+
+  it("does not show mistake controls for non-actionable failures", () => {
+    renderReplayRoute();
+
+    act(() => {
+      runnerMock.callbacks?.onComplete?.({
+        analysis: {
+          failure: {
+            actual_move: null,
+            actual_notation: null,
+            confidence: "confirmed",
+            missed_candidates: [],
+            mode: "missed_escape",
+            prefix_ply: 7,
+            prevented_onset_ply: 7,
+            side: "White",
+          },
+        },
+        annotations: [],
+        counters: { branch_roots: 1, prefixes_analyzed: 4, proof_nodes: 512 },
+        current_ply: null,
+        done: true,
+        error: null,
+        schema_version: 1,
+        status: "resolved",
+      });
+    });
+
+    expect(screen.getByTestId("replay-analysis-status")).toHaveTextContent("Black has won");
+    expect(screen.getByTestId("replay-analysis-detail")).toHaveTextContent("Lethal sequence");
+    expect(screen.queryByRole("button", { name: "Review Mistake" })).not.toBeInTheDocument();
+    expect(latestBoardProps()?.analysisOverlays).toEqual([]);
+  });
+
   it("cancels analysis when leaving the replay", () => {
     const { unmount } = render(
       <MemoryRouter initialEntries={["/replay/match-1"]}>

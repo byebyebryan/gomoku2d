@@ -21,6 +21,46 @@ export interface ReplayAnalysisMove {
   row: number;
 }
 
+export type ReplayAnalysisDefenderReplyRole =
+  | "actual"
+  | "immediate_defense"
+  | "imminent_defense"
+  | "offensive_counter";
+
+export type ReplayAnalysisFailureMode =
+  | "missed_immediate_win"
+  | "missed_immediate_response"
+  | "missed_imminent_response"
+  | "missed_escape"
+  | "missed_lethal_prevention"
+  | "unclear";
+
+export type ReplayAnalysisFailureConfidence = "confirmed" | "possible" | "unclear";
+
+export type ReplayAnalysisMissedCandidateOutcome =
+  | "confirmed_escape"
+  | "possible_escape"
+  | "prevents_lethal_onset"
+  | "prevents_corridor_entry";
+
+export interface ReplayAnalysisMissedCandidate {
+  mv: ReplayAnalysisMove;
+  notation: string;
+  outcome: ReplayAnalysisMissedCandidateOutcome;
+  roles: ReplayAnalysisDefenderReplyRole[];
+}
+
+export interface ReplayAnalysisFailure {
+  actual_move?: ReplayAnalysisMove | null;
+  actual_notation?: string | null;
+  confidence: ReplayAnalysisFailureConfidence;
+  missed_candidates: ReplayAnalysisMissedCandidate[];
+  mode: ReplayAnalysisFailureMode;
+  prefix_ply?: number | null;
+  prevented_onset_ply?: number | null;
+  side: ReplayAnalysisSide;
+}
+
 export interface ReplayFrameHighlight {
   mv: ReplayAnalysisMove;
   notation: string;
@@ -53,11 +93,44 @@ export interface ReplayAnalysisInterval {
   start_ply: number;
 }
 
+export type ReplayAnalysisLethalOnsetKind = "terminal_coverage" | "one_step_coverage";
+export type ReplayAnalysisLethalOnsetComponentTier = "four" | "three";
+export type ReplayAnalysisLethalOnsetMechanism = "multi_route" | "forbidden_cover";
+
+export interface ReplayAnalysisLethalOnsetComponent {
+  mv: ReplayAnalysisMove;
+  tier: ReplayAnalysisLethalOnsetComponentTier;
+}
+
+export interface ReplayAnalysisLethalOnsetShape {
+  components: ReplayAnalysisLethalOnsetComponent[];
+  label: string;
+  mechanisms: ReplayAnalysisLethalOnsetMechanism[];
+}
+
+export interface ReplayAnalysisLethalOnsetEntry {
+  mv: ReplayAnalysisMove;
+  terminal_targets: ReplayAnalysisMove[];
+}
+
+export interface ReplayAnalysisLethalOnsetReply {
+  lethal_entries: ReplayAnalysisLethalOnsetEntry[];
+  reply: ReplayAnalysisMove;
+}
+
 export interface ReplayAnalysisLethalOnset {
+  attacker?: ReplayAnalysisSide;
+  covering_replies?: ReplayAnalysisMove[];
+  defender?: ReplayAnalysisSide;
+  kind?: ReplayAnalysisLethalOnsetKind;
   prefix_ply: number;
+  shape?: ReplayAnalysisLethalOnsetShape;
+  one_step_replies?: ReplayAnalysisLethalOnsetReply[];
+  terminal_targets?: ReplayAnalysisMove[];
 }
 
 export interface ReplayAnalysisSummary {
+  failure?: ReplayAnalysisFailure | null;
   final_forced_interval?: ReplayAnalysisInterval | null;
   lethal_onset?: ReplayAnalysisLethalOnset | null;
   schema_version?: number;
