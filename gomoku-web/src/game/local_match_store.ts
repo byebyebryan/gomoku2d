@@ -75,7 +75,6 @@ interface WasmThreatSnapshot {
 }
 
 export interface LocalMatchStoreOptions {
-  botDepth?: number;
   botRunner?: MatchBotRunner;
   boardFactory?: (variant: GameVariant) => WasmBoard;
   humanDisplayName?: string;
@@ -393,9 +392,7 @@ export function createLocalMatchStore(
     };
 
     const configureBots = (): void => {
-      const botSpec = options.botDepth === undefined
-        ? resolveBotConfig(currentBotConfig)
-        : { kind: "baseline", depth: options.botDepth } satisfies BotSpec;
+      const botSpec = resolveBotConfig(currentBotConfig);
 
       botRunner.configure(
         players.map((player) =>

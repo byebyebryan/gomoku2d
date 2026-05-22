@@ -1,4 +1,8 @@
 use crate::arena::MatchEndReason;
+use crate::bot_label::{
+    compact_bot_label as shared_compact_bot_label,
+    compact_bot_label_parts as shared_compact_bot_label_parts,
+};
 use crate::elo::{expected_score, DEFAULT_INITIAL_RATING, DEFAULT_K_FACTOR};
 use crate::tournament::TournamentResults;
 use gomoku_core::{Color, GameResult, Move, RuleConfig};
@@ -3335,91 +3339,15 @@ fn default_schedule() -> String {
 }
 
 fn compact_bot_label(report: &TournamentReport, bot: &str) -> String {
-    if bot == "random" {
-        return "RandomBot".to_string();
-    }
-
-    if let Some((depth, features)) = searchbot_spec(bot, &report.run) {
-        let mut label = format!("SearchBot_D{depth}");
-        for feature in features {
-            label.push('+');
-            label.push_str(&compact_searchbot_feature_label(feature));
-        }
-        return label;
-    }
-
-    bot.to_string()
+    shared_compact_bot_label(bot, report_uses_budgeted_unqualified_search(&report.run))
 }
 
 fn compact_bot_label_parts(report: &TournamentReport, bot: &str) -> (String, Option<String>) {
-    let label = compact_bot_label(report, bot);
-    let Some((primary, modifiers)) = label.split_once('+') else {
-        return (label, None);
-    };
-
-    (
-        primary.to_string(),
-        Some(modifiers.split('+').collect::<Vec<_>>().join(" + ")),
-    )
+    shared_compact_bot_label_parts(bot, report_uses_budgeted_unqualified_search(&report.run))
 }
 
-fn searchbot_spec<'a>(bot: &'a str, run: &TournamentRunReport) -> Option<(i32, Vec<&'a str>)> {
-    let mut parts = bot.split('+');
-    let base = parts.next()?;
-    let depth = searchbot_base_depth(base, run)?;
-    Some((depth, parts.collect()))
-}
-
-fn searchbot_base_depth(bot: &str, run: &TournamentRunReport) -> Option<i32> {
-    match bot {
-        "fast" => Some(2),
-        "balanced" => Some(3),
-        "deep" => Some(5),
-        "baseline" | "search"
-            if run.search_time_ms.is_some() || run.search_cpu_time_ms.is_some() =>
-        {
-            Some(20)
-        }
-        "baseline" | "search" => Some(5),
-        _ => bot
-            .strip_prefix("baseline-")
-            .or_else(|| bot.strip_prefix("search-"))
-            .map(|depth| depth.strip_prefix('d').unwrap_or(depth))
-            .and_then(|depth| depth.parse::<i32>().ok()),
-    }
-}
-
-fn compact_searchbot_feature_label(feature: &str) -> String {
-    if let Some(cap) = feature.strip_prefix("tactical-cap-") {
-        return format!("TCap{cap}");
-    }
-    if let Some(cap) = feature.strip_prefix("tactical-full-cap-") {
-        return format!("TFullCap{cap}");
-    }
-    if let Some(cap) = feature.strip_prefix("child-cap-") {
-        return format!("Cap{cap}");
-    }
-    if let Some(radius) = feature.strip_prefix("near-all-r") {
-        return format!("NearR{radius}");
-    }
-    if let Some(rest) = feature.strip_prefix("near-self-r") {
-        if let Some((self_radius, opponent_radius)) = rest.split_once("-opponent-r") {
-            return format!("SelfR{self_radius}OppR{opponent_radius}");
-        }
-    }
-    if feature.starts_with("corridor-proof-") {
-        return "Corridor Proof".to_string();
-    }
-    match feature {
-        "pattern-eval" => "Pattern".to_string(),
-        "rolling-frontier" => "Rolling".to_string(),
-        "rolling-frontier-shadow" => "RollingShadow".to_string(),
-        "tactical-full" => "TFull".to_string(),
-        "no-safety" => "NoSafety".to_string(),
-        "opponent-reply-search-probe" => "SearchProbe".to_string(),
-        "opponent-reply-local-threat-probe" => "LocalThreat".to_string(),
-        _ => feature.to_string(),
-    }
+fn report_uses_budgeted_unqualified_search(run: &TournamentRunReport) -> bool {
+    run.search_time_ms.is_some() || run.search_cpu_time_ms.is_some()
 }
 
 fn format_duration_ms(value: Option<u64>) -> String {

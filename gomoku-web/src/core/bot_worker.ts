@@ -15,8 +15,6 @@ function buildBot(spec: BotSpec): WasmBot | null {
   switch (spec.kind) {
     case "human":
       return null;
-    case "baseline":
-      return WasmBot.createBaseline(spec.depth);
     case "search":
       return WasmBot.createSearch(
         spec.depth,

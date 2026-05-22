@@ -427,7 +427,7 @@ mod tests {
     }
 
     #[test]
-    fn rejects_retired_ordering_suffixes() {
+    fn rejects_retired_search_suffixes() {
         for spec in [
             "search-d3+tactical-first",
             "search-d3+staged-tactical",
@@ -436,9 +436,24 @@ mod tests {
             "search-d7+priority-cap-8",
             "search-d5+tactical-lite",
             "search-d7+tactical-lite-cap-8",
+            "search-d5+corridor-own-d6-w3",
+            "search-d5+corridor-opponent-d4-w2",
+            "search-d5+corridor-own-d6-w3+corridor-opponent-d4-w2",
+            "search-d5+leaf-corridor-d8-w3",
+            "search-d5+leaf-corridor-d0-w3",
+            "search-d5+leaf-corridor-d4-w0",
+            "search-d5+leaf-proof-c6+leaf-corridor-d16-w4",
+            "search-d5+leaf-proof-c0",
+            "search-d5+leaf-corridor-d8-w3+leaf-proof-any-score",
+            "search-d5+leaf-proof-margin--1",
+            "search-d5+leaf-corridor-d8-w3+leaf-proof-margin-25000",
+            "search-d5+corridor-min-rank-3",
+            "search-d5+corridor-top-n-2",
+            "search-d5+corridor-depth-static",
+            "search-d5+corridor-proof-only",
         ] {
             assert!(
-                super::search_config_from_lab_spec(spec, 3, None, None).is_none(),
+                super::search_config_from_lab_spec(spec, 3, None, Some(1000)).is_none(),
                 "expected retired spec '{spec}' to be rejected"
             );
         }
@@ -492,39 +507,6 @@ mod tests {
     }
 
     #[test]
-    fn rejects_corridor_portal_suffixes() {
-        for spec in [
-            "search-d5+corridor-own-d6-w3",
-            "search-d5+corridor-opponent-d4-w2",
-            "search-d5+corridor-own-d6-w3+corridor-opponent-d4-w2",
-        ] {
-            assert!(
-                super::search_config_from_lab_spec(spec, 3, None, Some(1000)).is_none(),
-                "{spec} should be retired"
-            );
-        }
-    }
-
-    #[test]
-    fn rejects_legacy_leaf_corridor_suffixes() {
-        for spec in [
-            "search-d5+leaf-corridor-d8-w3",
-            "search-d5+leaf-corridor-d0-w3",
-            "search-d5+leaf-corridor-d4-w0",
-            "search-d5+leaf-proof-c6+leaf-corridor-d16-w4",
-            "search-d5+leaf-proof-c0",
-            "search-d5+leaf-corridor-d8-w3+leaf-proof-any-score",
-            "search-d5+leaf-proof-margin--1",
-            "search-d5+leaf-corridor-d8-w3+leaf-proof-margin-25000",
-        ] {
-            assert!(
-                super::search_config_from_lab_spec(spec, 3, None, None).is_none(),
-                "{spec} should be retired"
-            );
-        }
-    }
-
-    #[test]
     fn parses_corridor_proof_suffix() {
         let config = super::search_config_from_lab_spec(
             "search-d5+corridor-proof-c16-d8-w3",
@@ -545,57 +527,17 @@ mod tests {
         );
         assert_eq!(config.cpu_time_budget_ms, Some(1000));
 
-        assert!(super::search_config_from_lab_spec(
+        for spec in [
             "search-d5+corridor-proof-c0-d8-w3",
-            3,
-            None,
-            None
-        )
-        .is_none());
-        assert!(super::search_config_from_lab_spec(
             "search-d5+corridor-proof-c16-d0-w3",
-            3,
-            None,
-            None
-        )
-        .is_none());
-        assert!(super::search_config_from_lab_spec(
             "search-d5+corridor-proof-c16-d8-w0",
-            3,
-            None,
-            None
-        )
-        .is_none());
-        assert!(super::search_config_from_lab_spec(
             "search-d5+corridor-proof-c16-d8-w3-margin-50000",
-            3,
-            None,
-            None
-        )
-        .is_none());
-    }
-
-    #[test]
-    fn rejects_retired_corridor_portal_tuning_suffixes() {
-        assert!(
-            super::search_config_from_lab_spec("search-d5+corridor-min-rank-3", 3, None, None)
-                .is_none()
-        );
-        assert!(
-            super::search_config_from_lab_spec("search-d5+corridor-top-n-2", 3, None, None)
-                .is_none()
-        );
-        assert!(super::search_config_from_lab_spec(
-            "search-d5+corridor-depth-static",
-            3,
-            None,
-            None
-        )
-        .is_none());
-        assert!(
-            super::search_config_from_lab_spec("search-d5+corridor-proof-only", 3, None, None)
-                .is_none()
-        );
+        ] {
+            assert!(
+                super::search_config_from_lab_spec(spec, 3, None, None).is_none(),
+                "expected invalid corridor proof spec '{spec}' to be rejected"
+            );
+        }
     }
 
     #[test]

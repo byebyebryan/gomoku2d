@@ -3,6 +3,7 @@ pub mod analysis_batch;
 pub mod analysis_fixture;
 pub mod analysis_report;
 pub mod arena;
+pub mod bot_label;
 pub mod budget;
 pub mod elo;
 pub mod lethal_scenario;
