@@ -40,5 +40,8 @@ during implementation but should not compete with canonical docs:
 | `v0_4_search_bot_enhancement_plan.md` | Historical retrospective of `0.4.0`-`0.4.2` search-bot experiments and rejected paths | `docs/search_bot.md`, `docs/corridor_search.md`, `docs/performance_tuning.md` |
 | `v0_4_2_game_analysis_impl_notes.md` | Historical implementation notes, telemetry, and rejected replay-analysis proof policies from the `v0.4.2` corridor-search pass | `docs/corridor_search.md`, `docs/game_analysis.md` |
 | `v0_4_3_corridor_bot_plan.md` | Working plan for the lab-only corridor-search-in-bot pass before UI settings | `docs/roadmap.md`, `docs/corridor_search.md`, `docs/search_bot.md` |
+| `v0_4_4_frontier_plan.md` | Working plan for the rolling-frontier threat-view line | `docs/search_bot.md`, `docs/corridor_search.md`, `docs/performance_tuning.md` |
+| `v0_4_5_bot_controls_plan.md` | Working plan for exposing tested bot presets and narrow advanced bot controls in the web settings UI | `docs/search_bot.md`, `docs/app_design.md`, `docs/data_model.md` |
 | `v0_4_6_replay_analysis_plan.md` | Working plan for bringing corridor-search replay analysis into the product replay page and replacing the overloaded warning sprite sheet | `docs/game_analysis.md`, `docs/corridor_search.md`, `docs/game_visual.md` |
 | `v0_4_7_lethal_threat_plan.md` | Working plan for the lethal-threat layer and analyzer-onset follow-up | `docs/lethal_threats.md`, `docs/corridor_search.md`, `docs/game_analysis.md` |
+| `v0_5_public_release_plan.md` | Working plan for the `0.5` public-release reconciliation pass after the `0.4` lab-powered line | `docs/roadmap.md`, `docs/product.md`, `docs/project.md` |

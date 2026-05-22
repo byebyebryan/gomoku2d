@@ -1,0 +1,190 @@
+# v0.5 Public Release Reconciliation Plan
+
+Purpose: capture the post-`0.4` alignment pass before implementation starts.
+This is an ad-hoc working plan. The canonical phase summary lives in
+[`../roadmap.md`](../roadmap.md).
+
+## Context
+
+Gomoku2D started as a revival of an old, almost decade-old project. The early
+versions proved the stack and made the web game credible:
+
+- `0.1` proved Rust + Wasm + Phaser + GitHub Pages.
+- `0.2` turned the prototype into a local-first browser product.
+- `0.3` added optional cloud continuity without breaking guest-first play.
+- `0.4` built the lab-powered identity: configurable bots, reports, rolling
+  threat facts, replay analysis, lethal onset, Renju correctness, and
+  mistake-aware explanations.
+
+The important lesson from `0.4` is not that every experiment worked. Many bot
+tuning directions failed their promotion gates. The bigger achievement is that
+the project now has a real lab under the board and can explain finished games
+in a way a normal Gomoku clone cannot.
+
+`0.5` should therefore be a reconciliation and public-release line. The goal is
+to make the existing achievement legible, maintainable, and presentable enough
+for a first public push, not to start another broad research phase.
+
+## Product Thesis
+
+The public hook should be:
+
+> Play instantly, then learn where the game turned.
+
+For players, lead with the familiar loop:
+
+1. Play a quick Gomoku/Renju game.
+2. Review the ending.
+3. See the last escape, missed response, or lethal onset.
+4. Branch from the replay and try again.
+
+For developers and dev-log readers, the secondary hook is the production
+experiment: one developer using agents to cover more of a real product loop
+without dropping the quality bar.
+
+## What Worked
+
+- The Rust-core-first architecture worked. Rules, bots, eval tools, wasm, and
+  replay analysis share semantics instead of duplicating game logic.
+- The React/Phaser boundary worked. The browser shell can evolve while Phaser
+  stays focused on board rendering and animation.
+- The release spine worked. Each line produced a coherent product state rather
+  than a loose task bundle.
+- The lab discipline worked. Tournaments, reports, benchmarks, screenshot
+  reviews, and release notes turned experiments into evidence.
+- The biggest product win was the pivot from raw bot strength to explainable
+  play: corridor search, lethal onset, Renju correctness, and mistake
+  classification give Gomoku2D a distinctive identity.
+
+## What Did Not Go As Planned
+
+- Most direct bot-strength experiments were not worth promoting. Corridor
+  portals, broad shape eval, partial local-threat eval, and several tactical
+  shortcuts either cost too much, hurt strength, or only fixed narrow
+  diagnostics.
+- Corridor search as a live search extension is still not broadly useful under
+  browser-scale compute budgets. Its strongest role today is replay analysis
+  and report-backed diagnosis.
+- Renju correctness was deeper than expected. The old shape shortcut was not
+  reliable enough, and the project needed a proper recursive legality checker
+  plus external reference fixtures.
+- Presentation is behind capability. The app can do interesting things, but a
+  stranger can still miss why the lab, reports, and replay analysis matter.
+- Some repo artifacts are now heavier than they should be for a public-facing
+  project. The checked-in report data and generated report HTML are highlights,
+  but they should be handled intentionally.
+
+## Revisions To The `0.5` Direction
+
+### Keep The House In Shape
+
+Cleanup is not optional polish. How the project is built is part of the project
+claim. `0.5` should include code, test, doc, and artifact cleanup before public
+release.
+
+This does not mean churn for its own sake. It means removing dead paths,
+aligning stale docs, trimming generated artifacts, and keeping the repo
+reviewable after the intense `0.4` lab line.
+
+### Productize Reports
+
+The bot report and replay analysis report are highlights of the project, not
+throwaway developer artifacts. They show the lab working.
+
+Current state worth cleaning up:
+
+- `gomoku-bot-lab/reports/latest.json` is about `31 MB`.
+- `gomoku-bot-lab/reports/index.html` is about `4.6 MB`.
+- `gomoku-bot-lab/analysis-reports/index.html` is about `4.2 MB`.
+- `gomoku-bot-lab/analysis-reports/latest.json` is about `2.5 MB`.
+
+The report generation model should move toward:
+
+- Rust eval emits structured data.
+- The web app owns report presentation.
+- Published report pages use viewer + data instead of checked-in monolithic
+  generated HTML.
+- Only curated report data is versioned, and only when it is part of the
+  release story.
+- The report routes feel like first-class Gomoku2D pages, not lab dumps.
+
+This should also reduce GitHub language skew from generated HTML and make the
+repo easier to review.
+
+### Add Product Explanation Pages
+
+The app now has features that deserve short explanations. Add static/product
+pages in the same spirit as privacy/terms, but player-facing:
+
+- `About`: old favorite, built properly; product plus production experiment.
+- `Rules`: Gomoku, Freestyle, Renju, forbidden moves, and why Renju is tricky.
+- `Analysis`: last escape, lethal onset, missed response, setup corridor, and
+  bounded-model caveats.
+- `Bot Lab`: Easy/Normal/Hard, configurable bot settings, and what reports
+  measure.
+- Optional `Devlog` or `Lab Notes`: a bridge for public writing if we decide to
+  publish the build process.
+
+These pages should not be walls of documentation. They should make the product
+features understandable from inside the app.
+
+### Package For First Public Release
+
+Once the repo and product story are reconciled, prepare a public alpha:
+
+- refreshed README and homepage copy;
+- current hero GIF/video and screenshots;
+- Open Graph/social images;
+- itch.io page or equivalent first listing;
+- short dev-log series;
+- public-release smoke pass covering mobile, replay analysis, sign-in,
+  settings persistence, report pages, and no-config fallback.
+
+## Suggested Slices
+
+### Slice 1: Repo And Doc Reconciliation
+
+- Sync `docs/search_bot.md`, `docs/performance_tuning.md`, and roadmap notes
+  with the latest pooled-budget reports.
+- Remove or relocate stale generated artifacts and old one-off report outputs.
+- Review test/runtime cleanup opportunities after the `0.4` analyzer and Renju
+  work.
+- Make sure release docs describe how report data is generated, committed, and
+  published.
+
+### Slice 2: Report Viewer Architecture
+
+- Decide which report data remains checked in.
+- Move report presentation out of Rust-generated monolithic HTML and into web
+  viewer components.
+- Keep `latest.json` or a slimmed equivalent as the source data for published
+  pages.
+- Preserve direct published URLs: `/bot-report/` and `/analysis-report/`.
+- Make report pages visually consistent with the game shell and asset preview
+  pages.
+
+### Slice 3: Product Explanation Pages
+
+- Add concise pages for rules, analysis, bot lab, and project/about.
+- Link them from Home/footer in a way that does not crowd the main play path.
+- Use concrete screenshots or small board diagrams where text alone would be
+  unclear.
+- Keep model caveats honest: replay analysis is bounded explanation, not a full
+  solver.
+
+### Slice 4: Public Release Packaging
+
+- Refresh hero capture and screenshot review.
+- Update README and release copy around the current product loop.
+- Prepare itch.io/dev-log copy.
+- Run a public-alpha QA pass.
+- Cut the first public-facing `0.5` release.
+
+## Boundaries
+
+- Do not start another broad bot research line by default.
+- Do not add online/ranked/public-share scope in `0.5`.
+- Do not hide the lab; translate it into product language.
+- Do not make skins the headline. Visual polish matters, but only as part of
+  presentation and public-release readiness.
+- Do not overclaim replay analysis. Keep the bounded-model caveats visible.
