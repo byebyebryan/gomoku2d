@@ -4244,7 +4244,7 @@ impl Bot for SearchBot {
 }
 
 #[cfg(test)]
-#[path = "../../benchmarks/scenarios.rs"]
+#[path = "../../../benchmarks/scenarios.rs"]
 mod scenarios;
 
 #[cfg(test)]
