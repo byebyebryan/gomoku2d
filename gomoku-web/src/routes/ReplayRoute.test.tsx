@@ -7,6 +7,7 @@ import { createLocalSavedMatch } from "../match/saved_match";
 import type { LocalProfileSavedMatch } from "../profile/local_profile_store";
 import { emptyLocalMatchHistory, localProfileStore } from "../profile/local_profile_store";
 import { createDefaultProfileSettings } from "../profile/profile_settings";
+import type { ReplayAnalysisCachedResult } from "../replay/replay_analysis_cache";
 import type { ReplayAnalysisCallbacks } from "../replay/replay_analysis_runner";
 
 import { ReplayRoute } from "./ReplayRoute";
@@ -18,6 +19,10 @@ const runnerMock = vi.hoisted(() => ({
     cancel: ReturnType<typeof vi.fn>;
     dispose: ReturnType<typeof vi.fn>;
   }>,
+}));
+const cacheMock = vi.hoisted(() => ({
+  read: vi.fn((): ReplayAnalysisCachedResult | null => null),
+  write: vi.fn(),
 }));
 
 vi.mock("../components/Board/Board", () => ({
@@ -37,6 +42,11 @@ vi.mock("../replay/replay_analysis_runner", () => ({
     runnerMock.instances.push(instance);
     return instance;
   }),
+}));
+
+vi.mock("../replay/replay_analysis_cache", () => ({
+  readReplayAnalysisCache: cacheMock.read,
+  writeReplayAnalysisCache: cacheMock.write,
 }));
 
 vi.mock("../replay/local_replay_core", () => ({
@@ -104,6 +114,9 @@ describe("ReplayRoute analysis overlays", () => {
     mockedBoard.mockClear();
     runnerMock.callbacks = null;
     runnerMock.instances = [];
+    cacheMock.read.mockReset();
+    cacheMock.read.mockReturnValue(null);
+    cacheMock.write.mockReset();
   });
 
   beforeEach(() => {
@@ -203,6 +216,103 @@ describe("ReplayRoute analysis overlays", () => {
       expect.objectContaining({ highlight: "immediateThreat", row: 7, col: 6 }),
       expect.objectContaining({ marker: "forcedLoss", row: 7, col: 8 }),
     ]);
+  });
+
+  it("hydrates completed replay analysis from local cache before starting the worker", () => {
+    cacheMock.read.mockReturnValue({
+      annotationsByPly: {
+        9: {
+          highlights: [
+            {
+              mv: { col: 6, row: 7 },
+              notation: "G8",
+              role: "immediate_threat",
+              side: "Black",
+            },
+          ],
+          markers: [],
+          ply: 9,
+          side_to_move: "White",
+        },
+      },
+      step: {
+        analysis: { schema_version: 1 },
+        annotations: [],
+        counters: { branch_roots: 2, prefixes_analyzed: 3, proof_nodes: 321 },
+        current_ply: null,
+        done: true,
+        error: null,
+        schema_version: 1,
+        status: "resolved",
+      },
+    });
+
+    renderReplayRoute();
+
+    expect(runnerMock.instances).toHaveLength(0);
+    expect(latestBoardProps()?.analysisOverlays).toEqual([
+      expect.objectContaining({ highlight: "immediateThreat", row: 7, col: 6 }),
+    ]);
+  });
+
+  it("stores completed replay analysis with accumulated annotations", () => {
+    renderReplayRoute();
+    const progressAnnotation = {
+      highlights: [],
+      markers: [
+        {
+          mv: { col: 8, row: 7 },
+          notation: "I8",
+          role: "forced_loss" as const,
+          side: "White" as const,
+        },
+      ],
+      ply: 9,
+      side_to_move: "White" as const,
+    };
+    const completeStep = {
+      analysis: { schema_version: 1 },
+      annotations: [
+        {
+          highlights: [],
+          markers: [],
+          ply: 7,
+          side_to_move: "White" as const,
+        },
+      ],
+      counters: { branch_roots: 2, prefixes_analyzed: 3, proof_nodes: 321 },
+      current_ply: null,
+      done: true,
+      error: null,
+      schema_version: 1,
+      status: "resolved" as const,
+    };
+
+    act(() => {
+      runnerMock.callbacks?.onProgress?.({
+        analysis: null,
+        annotations: [progressAnnotation],
+        counters: { branch_roots: 1, prefixes_analyzed: 1, proof_nodes: 1 },
+        current_ply: 9,
+        done: false,
+        error: null,
+        schema_version: 1,
+        status: "running",
+      });
+      runnerMock.callbacks?.onComplete?.(completeStep);
+    });
+
+    expect(cacheMock.write).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "match-1" }),
+      { maxDepth: 4, maxScanPlies: 64 },
+      {
+        annotationsByPly: {
+          9: progressAnnotation,
+          7: completeStep.annotations[0],
+        },
+        step: completeStep,
+      },
+    );
   });
 
   it("shows analysis status and traceback progress timeline markers", () => {
