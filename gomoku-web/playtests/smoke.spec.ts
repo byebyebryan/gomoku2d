@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { seedLocalSavedMatch } from "./helpers/local_history.js";
+
 const DEFAULT_BASE_URL = "http://127.0.0.1:8001";
 
 async function waitForBotReply(page: Page) {
@@ -17,6 +19,72 @@ async function waitForBotReply(page: Page) {
     )
     .toBe("Move 2|Guest to move");
 }
+
+async function seedSmokeReplay(page: Page) {
+  await page.goto("/");
+  await seedLocalSavedMatch(page, {
+    displayName: "Bryan Guest",
+    id: "fixture-smoke-replay",
+    moves: [
+      { col: 7, row: 7 },
+      { col: 6, row: 5 },
+      { col: 8, row: 7 },
+      { col: 6, row: 6 },
+      { col: 9, row: 7 },
+      { col: 6, row: 7 },
+      { col: 0, row: 0 },
+      { col: 6, row: 8 },
+      { col: 1, row: 0 },
+      { col: 6, row: 9 },
+    ],
+    preferredVariant: "renju",
+    savedAt: "2026-04-22T18:30:00.000Z",
+    status: "white_won",
+    variant: "renju",
+  });
+}
+
+test("published static report routes render their current artifacts", async ({ page }) => {
+  const botJson = await page.request.head("/bot-report/latest.json");
+  expect(botJson.status()).toBe(200);
+
+  await page.goto("/bot-report/");
+  await expect(page).toHaveTitle(/Bot Lab Report/);
+  await expect(page.getByRole("heading", { name: "Bot Lab Report" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Analysis" })).toBeVisible();
+
+  const analysisJson = await page.request.head("/analysis-report/latest.json");
+  expect(analysisJson.status()).toBe(200);
+
+  await page.goto("/analysis-report/");
+  await expect(page).toHaveTitle(/Analysis Batch Report/);
+  await expect(page.getByRole("heading", { name: "Replay Analysis" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Bots" })).toBeVisible();
+});
+
+test("profile and replay analysis boot without requiring cloud configuration", async ({ page }) => {
+  await page.goto("/profile");
+  await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "Name" })).toBeVisible();
+
+  const signIn = page.getByRole("button", { name: "Sign in" });
+  if (await signIn.count()) {
+    await expect(signIn).toBeVisible();
+    if (await signIn.isDisabled()) {
+      await expect(page.getByText("Cloud sync unavailable.")).toBeVisible();
+    }
+  }
+
+  await seedSmokeReplay(page);
+  await page.goto("/replay/fixture-smoke-replay");
+  await expect(page.getByRole("heading", { name: "Replay" })).toBeVisible();
+  await expect(page.getByTestId("replay-rule")).toHaveText("Renju");
+  await expect(page.getByTestId("replay-move-count")).toHaveText("Move 10 / 10");
+  await expect(page.getByTestId("replay-analysis-status")).toBeVisible();
+  await expect
+    .poll(async () => page.getByTestId("replay-analysis-status").textContent(), { timeout: 15_000 })
+    .toMatch(/has won|last escape|locked in|can force|Analysis unclear|Analysis unavailable|Analysis error/);
+});
 
 test("home boot and local bot match smoke flow", async ({ page }) => {
   await page.goto("/");
@@ -76,6 +144,15 @@ test("home boot and local bot match smoke flow", async ({ page }) => {
 
   await page.getByRole("link", { name: "Settings" }).click();
   await page.getByRole("button", { name: "Start New Game" }).click();
+  await expect(page.getByTestId("match-move-count")).toHaveText("Move 0");
+  await expect(page.getByTestId("match-rule")).toHaveText("Renju");
+
+  await page.getByRole("link", { name: "Settings" }).click();
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.getByRole("group", { name: "Renju Normal Bot" })).toBeVisible();
+
+  await page.getByRole("link", { name: "Back to Game" }).first().click();
   await expect(page.getByTestId("match-move-count")).toHaveText("Move 0");
   await expect(page.getByTestId("match-rule")).toHaveText("Renju");
 
