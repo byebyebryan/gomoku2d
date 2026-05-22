@@ -7,7 +7,7 @@ use gomoku_bot::{lab_spec, RandomBot, SearchBot};
 use gomoku_core::{Color, GameResult, Move, Replay, RuleConfig, Variant};
 use gomoku_eval::analysis::{analyze_replay, AnalysisOptions, DEFAULT_MAX_SCAN_PLIES};
 use gomoku_eval::analysis_batch::{
-    render_analysis_batch_report_html, run_analysis_batch_replays_with_options,
+    render_analysis_batch_report_html, run_analysis_batch_replays_with_progress,
     run_analysis_batch_with_options, AnalysisBatchReport, AnalysisBatchRunOptions,
     ReplayAnalysisInput,
 };
@@ -1561,7 +1561,8 @@ pub fn run() {
                     replay,
                 });
             }
-            let batch_report = run_analysis_batch_replays_with_options(
+            let progress_interval = tournament_progress_interval(inputs.len());
+            let batch_report = run_analysis_batch_replays_with_progress(
                 report_replay_source_label(&report, &entrant_a, &entrant_b, default_top_two),
                 inputs,
                 AnalysisBatchRunOptions {
@@ -1572,6 +1573,7 @@ pub fn run() {
                     },
                     include_proof_details,
                 },
+                progress_interval,
             );
 
             print_analysis_batch_report_summary(&batch_report);
