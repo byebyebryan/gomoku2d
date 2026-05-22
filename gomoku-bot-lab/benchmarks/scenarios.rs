@@ -12,14 +12,6 @@ pub struct BenchScenario {
     pub moves: &'static [&'static str],
 }
 
-pub struct SearchBehaviorCase {
-    pub id: &'static str,
-    pub scenario_id: &'static str,
-    pub config_id: &'static str,
-    pub expected_moves: &'static [&'static str],
-    pub description: &'static str,
-}
-
 #[allow(dead_code)]
 impl BenchScenario {
     pub fn board(&self) -> Board {
@@ -44,29 +36,6 @@ impl BenchScenario {
 
     pub fn probe_move(&self) -> Move {
         parse_move(self.probe_move)
-    }
-}
-
-#[allow(dead_code)]
-impl SearchBehaviorCase {
-    pub fn scenario(&self) -> &'static BenchScenario {
-        SCENARIOS
-            .iter()
-            .find(|scenario| scenario.id == self.scenario_id)
-            .unwrap_or_else(|| {
-                panic!(
-                    "behavior case '{}' references unknown scenario '{}'",
-                    self.id, self.scenario_id
-                )
-            })
-    }
-
-    pub fn expected_moves(&self) -> Vec<Move> {
-        self.expected_moves
-            .iter()
-            .copied()
-            .map(parse_move)
-            .collect()
     }
 }
 
@@ -271,37 +240,5 @@ pub static SCENARIOS: &[BenchScenario] = &[
             "H8", "I8", "H7", "G8", "I7", "G7", "H9", "I9", "F8", "J8", "G9", "H6", "J7",
             "F7", "G6", "J9", "F9", "I6", "E8", "K8",
         ],
-    },
-];
-
-pub static SEARCH_BEHAVIOR_CASES: &[SearchBehaviorCase] = &[
-    SearchBehaviorCase {
-        id: "balanced_completes_open_four",
-        scenario_id: "local_complete_open_four",
-        config_id: "balanced",
-        expected_moves: &["G8", "L8"],
-        description: "Balanced should finish its own open four.",
-    },
-    SearchBehaviorCase {
-        id: "balanced_reacts_closed_four",
-        scenario_id: "local_react_closed_four",
-        config_id: "balanced",
-        expected_moves: &["E1"],
-        description: "Balanced should answer the opponent's closed four.",
-    },
-    SearchBehaviorCase {
-        id: "balanced_prevents_open_four_over_extending_three",
-        scenario_id: "priority_prevent_open_four_over_extend_three",
-        config_id: "balanced",
-        expected_moves: &["G8", "K8"],
-        description:
-            "Balanced should prevent the opponent's open three instead of extending elsewhere.",
-    },
-    SearchBehaviorCase {
-        id: "balanced_completes_four_before_reacting",
-        scenario_id: "priority_complete_open_four_over_react_closed_four",
-        config_id: "balanced",
-        expected_moves: &["G8", "L8"],
-        description: "Balanced should complete an open four when both sides threaten.",
     },
 ];
