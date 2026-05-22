@@ -1,4 +1,5 @@
 import type { SavedMatchV2 } from "../match/saved_match";
+import { ReadyQueueWorker, type WorkerFactory } from "../core/ready_queue_worker";
 
 import { replayAnalysisOptionsJson, savedMatchToReplayJson, type ReplayAnalysisOptions } from "./replay_analysis_core";
 import type { ReplayAnalysisStepResult, ReplayAnalysisWorkerRequest, ReplayAnalysisWorkerResponse } from "./replay_analysis_protocol";
@@ -10,15 +11,11 @@ export type ReplayAnalysisCallbacks = {
   onProgress?: (result: ReplayAnalysisStepResult) => void;
 };
 
-type WorkerFactory = () => Worker;
-
 export class ReplayAnalysisRunner {
   private activeCallbacks: ReplayAnalysisCallbacks | null = null;
   private activeRequestId: number | null = null;
   private nextRequestId = 1;
-  private outgoing: ReplayAnalysisWorkerRequest[] = [];
-  private worker: Worker | null = null;
-  private workerReady = false;
+  private worker: ReadyQueueWorker<ReplayAnalysisWorkerRequest, ReplayAnalysisWorkerResponse>;
 
   constructor(private readonly workerFactory: WorkerFactory = ReplayAnalysisRunner.createDefaultWorker) {
     this.worker = this.createWorker();
@@ -33,7 +30,6 @@ export class ReplayAnalysisRunner {
     const optionsJson = replayAnalysisOptionsJson(options);
     const replayJson = savedMatchToReplayJson(match);
 
-    this.ensureWorker();
     this.cancelActive(true);
 
     const requestId = this.nextRequestId++;
@@ -56,53 +52,25 @@ export class ReplayAnalysisRunner {
 
   dispose(): void {
     this.cancelActive(false);
-    this.worker?.terminate();
-    this.worker = null;
-    this.workerReady = false;
-    this.outgoing = [];
+    this.worker.terminate();
   }
 
   private static createDefaultWorker(): Worker {
     return new Worker(new URL("./replay_analysis_worker.ts", import.meta.url), { type: "module" });
   }
 
-  private ensureWorker(): void {
-    if (!this.worker) {
-      this.worker = this.createWorker();
-    }
-  }
-
-  private createWorker(): Worker {
-    this.workerReady = false;
-    this.outgoing = [];
-
-    const worker = this.workerFactory();
-    worker.addEventListener("message", (event: MessageEvent<ReplayAnalysisWorkerResponse>) => {
-      if (this.worker !== worker) return;
-      this.handleWorkerMessage(event.data);
+  private createWorker(): ReadyQueueWorker<ReplayAnalysisWorkerRequest, ReplayAnalysisWorkerResponse> {
+    return new ReadyQueueWorker({
+      factory: this.workerFactory,
+      onError: (error) => {
+        this.handleWorkerError(new Error(error.message || "replay analysis worker failed"));
+      },
+      onMessage: (message) => this.handleWorkerMessage(message),
     });
-    worker.addEventListener("error", (event: ErrorEvent) => {
-      if (this.worker !== worker) return;
-      this.handleWorkerError(new Error(event.message || "replay analysis worker failed"));
-    });
-    return worker;
   }
 
   private send(message: ReplayAnalysisWorkerRequest): void {
-    if (!this.worker) return;
-    if (this.workerReady) {
-      this.worker.postMessage(message);
-    } else {
-      this.outgoing.push(message);
-    }
-  }
-
-  private flushOutgoing(): void {
-    if (!this.worker) return;
-    for (const message of this.outgoing) {
-      this.worker.postMessage(message);
-    }
-    this.outgoing = [];
+    this.worker.post(message);
   }
 
   private cancelActive(notify: boolean): void {
@@ -122,17 +90,12 @@ export class ReplayAnalysisRunner {
     const callbacks = this.activeCallbacks;
     this.activeRequestId = null;
     this.activeCallbacks = null;
-    this.worker = null;
-    this.workerReady = false;
-    this.outgoing = [];
     callbacks?.onError?.(error);
   }
 
   private handleWorkerMessage(message: ReplayAnalysisWorkerResponse): void {
     switch (message.type) {
       case "ready":
-        this.workerReady = true;
-        this.flushOutgoing();
         break;
       case "progress":
         if (message.requestId !== this.activeRequestId) return;

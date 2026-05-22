@@ -1,186 +1,49 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useStore } from "zustand";
 
-import { Board } from "../components/Board/Board";
-import { cloudAuthStore } from "../cloud/auth_store";
-import { cloudHistoryStore } from "../cloud/cloud_history_store";
-import { cloudProfileStore } from "../cloud/cloud_profile_store";
-import type { LocalMatchResumeSeed } from "../game/local_match_store";
-import type { CellPosition } from "../game/types";
-import { savedMatchPlayers } from "../match/saved_match";
-import { resolveActiveHistory } from "../profile/active_history";
+import { buildReplayBoardModel } from "../board/board_model";
 import { localProfileStore } from "../profile/local_profile_store";
 import {
   buildLocalReplayFrame,
-  canResumeReplay,
   defaultReplayMoveIndex,
-  nextReplayTurnMoveIndex,
-  previousReplayTurnMoveIndex,
-  replayResumeUndoFloor,
-  replayUndoFloor,
-  replayPlayerName,
   shouldShowReplaySequenceNumbers,
-  variantLabel,
 } from "../replay/local_replay";
 import {
   analysisOverlaysForFrame,
-  mergeReplayAnalysisAnnotations,
   nextReplayMove,
   replayAnalysisStatusSummary,
   replayTimelineAnalysis,
-  type ReplayAnalysisAnnotationsByPly,
 } from "../replay/replay_analysis_overlays";
-import {
-  replayAnalysisErrorResult,
-  type ReplayAnalysisStepResult,
-} from "../replay/replay_analysis_protocol";
-import { ReplayAnalysisRunner } from "../replay/replay_analysis_runner";
-import {
-  readReplayAnalysisCache,
-  writeReplayAnalysisCache,
-} from "../replay/replay_analysis_cache";
+import { useReplayAnalysis } from "../replay/use_replay_analysis";
+import { useReplayMatch } from "../replay/use_replay_match";
+import { useReplayWinningCells } from "../replay/use_replay_winning_cells";
 import { Icon } from "../ui/Icon";
 
 import styles from "./ReplayRoute.module.css";
+import {
+  ReplayBoardPanel,
+  ReplayMatchPanel,
+  ReplayPlaybackPanel,
+  ReplayStatusPanel,
+} from "./ReplayRoutePanels";
 
 const AUTOPLAY_DELAY_MS = 700;
-const REPLAY_ANALYSIS_OPTIONS = { maxDepth: 4, maxScanPlies: 64 };
-const REPLAY_ANALYSIS_STEP_WORK_UNITS = 1;
-
-function moveCountLabel(moveIndex: number, totalMoves: number): string {
-  return `Move ${moveIndex} / ${totalMoves}`;
-}
 
 export function ReplayRoute() {
   const { matchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
-  const cloudAuth = useStore(cloudAuthStore, (state) => state);
-  const cloudHistory = useStore(cloudHistoryStore, (state) => state);
-  const cloudProfile = useStore(cloudProfileStore, (state) => state);
-  const localHistory = useStore(localProfileStore, (state) => state.matchHistory.replayMatches);
-  const localProfile = useStore(localProfileStore, (state) => state.profile);
+  const { localDisplayName, match, replayFloor, replayMayStillLoad } = useReplayMatch(matchId);
   const settings = useStore(localProfileStore, (state) => state.settings);
   const [moveIndex, setMoveIndex] = useState(defaultReplayMoveIndex(0));
   const [autoplaying, setAutoplaying] = useState(false);
-  const [analysisAnnotations, setAnalysisAnnotations] = useState<ReplayAnalysisAnnotationsByPly>({});
-  const [analysisStep, setAnalysisStep] = useState<ReplayAnalysisStepResult | null>(null);
-  const [coreWinningCells, setCoreWinningCells] = useState<CellPosition[]>([]);
-  const analysisRunnerRef = useRef<ReplayAnalysisRunner | null>(null);
-
-  useEffect(() => {
-    localProfileStore.getState().ensureLocalProfile();
-  }, []);
-
-  const cloudCache =
-    cloudAuth.status === "signed_in" && cloudAuth.user
-      ? cloudHistory.users[cloudAuth.user.uid]?.cachedMatches ?? []
-      : [];
-  const cloudUserCache =
-    cloudAuth.status === "signed_in" && cloudAuth.user
-      ? cloudHistory.users[cloudAuth.user.uid]
-      : null;
-  const history = resolveActiveHistory({
-    cloudHistory: cloudCache,
-    historyResetAt: cloudAuth.status === "signed_in" ? cloudProfile.profile?.resetAt : null,
-    localHistory,
-  });
-  const match = history.find((entry) => entry.id === matchId) ?? null;
-  const replayMayStillLoad = !match && (
-    (cloudAuth.isConfigured && cloudAuth.status === "loading")
-    || (
-      cloudAuth.status === "signed_in"
-      && (
-        cloudProfile.status === "loading"
-        || (
-          cloudProfile.status === "ready"
-          && !cloudUserCache?.loadedAt
-          && cloudHistory.loadStatus !== "error"
-        )
-      )
-    )
-  );
-  const localDisplayName = localProfile?.displayName ?? cloudAuth.user?.displayName ?? "Guest";
-  const replayFloor = match ? replayUndoFloor(match) : 0;
+  const { analysisAnnotations, analysisStep } = useReplayAnalysis(match);
+  const coreWinningCells = useReplayWinningCells(match, moveIndex);
 
   useEffect(() => {
     setMoveIndex(defaultReplayMoveIndex(match?.move_count ?? 0));
     setAutoplaying(false);
-    setAnalysisAnnotations({});
-    setAnalysisStep(null);
-    setCoreWinningCells([]);
   }, [match?.move_count, matchId]);
-
-  useEffect(() => {
-    return () => {
-      analysisRunnerRef.current?.cancel();
-      analysisRunnerRef.current?.dispose();
-      analysisRunnerRef.current = null;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!match) {
-      analysisRunnerRef.current?.cancel();
-      setAnalysisAnnotations({});
-      setAnalysisStep(null);
-      return undefined;
-    }
-
-    setAnalysisAnnotations({});
-    setAnalysisStep(null);
-    analysisRunnerRef.current?.cancel();
-
-    const cached = readReplayAnalysisCache(match, REPLAY_ANALYSIS_OPTIONS);
-    if (cached) {
-      setAnalysisAnnotations(cached.annotationsByPly);
-      setAnalysisStep(cached.step);
-      return undefined;
-    }
-
-    let accumulatedAnnotations: ReplayAnalysisAnnotationsByPly = {};
-    const mergeStep = (step: ReplayAnalysisStepResult) => {
-      accumulatedAnnotations = mergeReplayAnalysisAnnotations(accumulatedAnnotations, step);
-      setAnalysisStep(step);
-      setAnalysisAnnotations(accumulatedAnnotations);
-      return accumulatedAnnotations;
-    };
-
-    try {
-      let runner = analysisRunnerRef.current;
-      if (!runner) {
-        runner = new ReplayAnalysisRunner();
-        analysisRunnerRef.current = runner;
-      }
-
-      runner.analyze(
-        match,
-        {
-          onComplete: (step) => {
-            const annotationsByPly = mergeStep(step);
-            writeReplayAnalysisCache(match, REPLAY_ANALYSIS_OPTIONS, {
-              annotationsByPly,
-              step,
-            });
-          },
-          onError: (error) => {
-            setAnalysisAnnotations({});
-            setAnalysisStep(replayAnalysisErrorResult(error.message));
-          },
-          onProgress: mergeStep,
-        },
-        REPLAY_ANALYSIS_OPTIONS,
-        REPLAY_ANALYSIS_STEP_WORK_UNITS,
-      );
-    } catch {
-      setAnalysisAnnotations({});
-      setAnalysisStep(replayAnalysisErrorResult("Replay analyzer could not start"));
-    }
-
-    return () => {
-      analysisRunnerRef.current?.cancel();
-    };
-  }, [match]);
 
   useEffect(() => {
     if (!match || !autoplaying) {
@@ -200,33 +63,6 @@ export function ReplayRoute() {
       window.clearTimeout(timer);
     };
   }, [autoplaying, match, moveIndex]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    if (!match || moveIndex !== match.move_count) {
-      setCoreWinningCells([]);
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    void import("../replay/local_replay_core")
-      .then(({ winningCellsFromCore }) => {
-        if (!cancelled) {
-          setCoreWinningCells(winningCellsFromCore(match));
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setCoreWinningCells([]);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [match, moveIndex]);
 
   if (!match && replayMayStillLoad) {
     return (
@@ -276,12 +112,19 @@ export function ReplayRoute() {
     "--timeline-escape": timelineAnalysis.escapePercent ?? "0%",
   } as React.CSSProperties;
   const replayMovePreview = nextReplayMove(match, frame.moveIndex);
-  const resumeSeed: LocalMatchResumeSeed = {
-    currentPlayer: frame.currentPlayer,
-    moves: frame.moves.map((move) => ({ ...move })),
-    undoFloor: replayResumeUndoFloor(match, frame),
-    variant: match.ruleset,
-  };
+  const boardModel = buildReplayBoardModel({
+    analysisOverlays,
+    nextReplayMove: replayMovePreview,
+    position: {
+      cells: frame.cells,
+      currentPlayer: frame.currentPlayer,
+      lastMove: frame.lastMove,
+      moves: frame.moves,
+      showSequenceNumbers: shouldShowReplaySequenceNumbers(frame),
+      status: frame.status,
+    },
+    winningCells: frame.winningCells,
+  });
 
   return (
     <main className={styles.page}>
@@ -303,206 +146,30 @@ export function ReplayRoute() {
       </header>
 
       <section className={styles.layout}>
-        <div className={styles.boardPanel}>
-          <Board
-            analysisOverlays={analysisOverlays}
-            cells={frame.cells}
-            counterThreatEvidenceCells={[]}
-            counterThreatMoves={[]}
-            currentPlayer={frame.currentPlayer}
-            forbiddenMoves={[]}
-            immediateThreatEvidenceCells={[]}
-            imminentThreatEvidenceCells={[]}
-            imminentThreatMoves={[]}
-            interactive={false}
-            lastMove={frame.lastMove}
-            moves={frame.moves}
-            nextReplayMove={replayMovePreview}
-            onAdvanceRound={() => undefined}
-            onPlace={() => undefined}
-            onTouchCandidateChange={() => undefined}
-            touchControlMode="none"
-            touchCandidateResetVersion={0}
-            showSequenceNumbers={shouldShowReplaySequenceNumbers(frame)}
-            status={frame.status}
-            threatMoves={[]}
-            winningEvidenceCells={[]}
-            winningMoves={[]}
-            winningCells={frame.winningCells}
-          />
-        </div>
+        <ReplayBoardPanel model={boardModel} />
 
         <aside className={styles.deck}>
-          <section className={`${styles.deckSection} ${styles.statusSection}`}>
-            <p className="uiSectionLabel">Status</p>
-            <p className={styles.statusText} data-testid="replay-analysis-status">
-              {analysisStatus.label}
-            </p>
-            <p className={styles.statusDetail} data-testid="replay-analysis-detail">
-              {analysisStatus.detail}
-            </p>
-          </section>
+          <ReplayStatusPanel detail={analysisStatus.detail} label={analysisStatus.label} />
 
           <div className="uiDivider" />
 
-          <section className={`${styles.deckSection} ${styles.matchSection}`}>
-            <p className={`uiSectionLabel ${styles.matchLabel}`}>Match</p>
-            <div className={styles.metaRows}>
-              <div className={`${styles.metaRow} ${styles.ruleRow}`}>
-                <span className={styles.metaLabel}>Rule</span>
-                <span className={styles.metaValue} data-testid="replay-rule">
-                  {variantLabel(match.ruleset)}
-                </span>
-              </div>
-              <div className={`${styles.metaRow} ${styles.moveRow}`}>
-                <span className={styles.metaLabel}>Move</span>
-                <span className={styles.metaValue} data-testid="replay-move-count">
-                  {moveCountLabel(frame.moveIndex, match.move_count)}
-                </span>
-              </div>
-            </div>
-            <div className={styles.playerRows}>
-              {savedMatchPlayers(match).map(({ player, side }) => {
-                const active = frame.status === "playing" && frame.currentPlayer === (side === "black" ? 1 : 2);
-
-                return (
-                  <article
-                    className={[
-                      styles.playerRow,
-                      side === "black" ? styles.playerRowBlack : styles.playerRowWhite,
-                      active ? styles.playerRowActive : "",
-                    ].join(" ").trim()}
-                    data-testid={`replay-player-row-${side}`}
-                    key={side}
-                  >
-                    <div className={styles.playerCopy}>
-                      <div className={styles.playerHead}>
-                        <h2 className={styles.playerName}>{replayPlayerName(player, localDisplayName)}</h2>
-                        <span
-                          aria-label={player.kind === "human" ? "Player" : "Bot"}
-                          className={styles.playerKindIcon}
-                          role="img"
-                        >
-                          <Icon name={player.kind === "human" ? "human" : "bot"} />
-                        </span>
-                      </div>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          </section>
+          <ReplayMatchPanel frame={frame} localDisplayName={localDisplayName} match={match} />
 
           <div className="uiDivider" />
 
-          <section className={`${styles.deckSection} ${styles.playbackSection}`}>
-            <div className={styles.playbackHeader}>
-              <p className={`uiSectionLabel ${styles.playbackLabel}`}>Playback</p>
-            </div>
-
-            <div className={styles.timeline} data-testid="replay-timeline" style={timelineStyle}>
-              <div aria-hidden="true" className={styles.timelineTrack}>
-                {timelineAnalysis.analyzedStartPercent && timelineAnalysis.analyzedEndPercent ? (
-                  <span className={styles.timelineAnalyzed} data-testid="replay-timeline-analyzed" />
-                ) : null}
-                {timelineAnalysis.setupStartPercent && timelineAnalysis.setupEndPercent ? (
-                  <span className={styles.timelineSetup} data-testid="replay-timeline-setup-corridor" />
-                ) : null}
-                {timelineAnalysis.lethalTailStartPercent && timelineAnalysis.lethalTailEndPercent ? (
-                  <span className={styles.timelineLethalTail} data-testid="replay-timeline-lethal-tail" />
-                ) : null}
-                {timelineAnalysis.escapePercent ? (
-                  <span className={styles.timelineEscape} data-testid="replay-timeline-escape" />
-                ) : null}
-                {timelineAnalysis.lethalOnsetPercent ? (
-                  <span className={styles.timelineLethalOnset} data-testid="replay-timeline-lethal-onset" />
-                ) : null}
-              </div>
-              <input
-                aria-label="Replay timeline"
-                className={styles.timelineInput}
-                max={match.move_count}
-                min={0}
-                onChange={(event) => {
-                  setAutoplaying(false);
-                  setMoveIndex(Number(event.target.value));
-                }}
-                type="range"
-                value={frame.moveIndex}
-              />
-            </div>
-
-            <div className={styles.controlsRow} data-testid="replay-step-controls">
-              <button
-                aria-label="Previous turn"
-                className="uiAction uiActionNeutral uiActionIconOnly"
-                onClick={() => {
-                  setAutoplaying(false);
-                  setMoveIndex((current) => previousReplayTurnMoveIndex(current));
-                }}
-                type="button"
-              >
-                <Icon name="doublePrev" />
-              </button>
-              <button
-                aria-label="Previous move"
-                className="uiAction uiActionNeutral uiActionIconOnly"
-                onClick={() => {
-                  setAutoplaying(false);
-                  setMoveIndex((current) => Math.max(0, current - 1));
-                }}
-                type="button"
-              >
-                <Icon name="prev" />
-              </button>
-              <button
-                aria-label={autoplaying ? "Pause" : "Auto play"}
-                className="uiAction uiActionPrimary uiActionIconOnly"
-                onClick={() => {
-                  setAutoplaying((current) => !current);
-                }}
-                type="button"
-              >
-                <Icon name={autoplaying ? "pause" : "play"} />
-              </button>
-              <button
-                aria-label="Next move"
-                className="uiAction uiActionNeutral uiActionIconOnly"
-                onClick={() => {
-                  setAutoplaying(false);
-                  setMoveIndex((current) => Math.min(match.move_count, current + 1));
-                }}
-                type="button"
-              >
-                <Icon name="next" />
-              </button>
-              <button
-                aria-label="Next turn"
-                className="uiAction uiActionNeutral uiActionIconOnly"
-                onClick={() => {
-                  setAutoplaying(false);
-                  setMoveIndex((current) => nextReplayTurnMoveIndex(current, match.move_count));
-                }}
-                type="button"
-              >
-                <Icon name="doubleNext" />
-              </button>
-            </div>
-
-            <div className={styles.replayActions}>
-              <button
-                className={`uiAction uiActionSecondary ${styles.resumeAction}`}
-                disabled={!canResumeReplay(frame, replayFloor)}
-                onClick={() => {
-                  navigate("/match/local", { state: { resumeSeed } });
-                }}
-                type="button"
-              >
-                <Icon className="uiIconDesktop" name="plus" />
-                <span className="uiActionLabel">Play From Here</span>
-              </button>
-            </div>
-          </section>
+          <ReplayPlaybackPanel
+            autoplaying={autoplaying}
+            frame={frame}
+            match={match}
+            onResume={(resumeSeed) => {
+              navigate("/match/local", { state: { resumeSeed } });
+            }}
+            replayFloor={replayFloor}
+            setAutoplaying={setAutoplaying}
+            setMoveIndex={setMoveIndex}
+            timelineAnalysis={timelineAnalysis}
+            timelineStyle={timelineStyle}
+          />
         </aside>
       </section>
     </main>

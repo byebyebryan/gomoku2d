@@ -72,7 +72,7 @@ describe("LocalMatchRoute", () => {
 
     const latestBoardProps = mockedBoard.mock.calls[mockedBoard.mock.calls.length - 1]?.[0];
 
-    expect(latestBoardProps).toMatchObject({
+    expect(latestBoardProps?.model.interaction).toMatchObject({
       touchControlMode: "pointer",
     });
   });
@@ -102,17 +102,13 @@ describe("LocalMatchRoute", () => {
 
     const latestBoardProps = mockedBoard.mock.calls[mockedBoard.mock.calls.length - 1]?.[0];
 
-    expect(latestBoardProps).toMatchObject({
-      counterThreatEvidenceCells: [],
-      counterThreatMoves: [],
+    expect(latestBoardProps?.model).toMatchObject({
       forbiddenMoves: [{ row: 8, col: 8 }],
-      immediateThreatEvidenceCells: [],
-      imminentThreatEvidenceCells: [],
-      imminentThreatMoves: [],
-      threatMoves: [],
-      winningEvidenceCells: [{ row: 1, col: 0 }],
-      winningMoves: [{ row: 1, col: 1 }],
     });
+    expect(latestBoardProps?.model.overlays).toEqual([
+      { cell: { row: 1, col: 0 }, kind: "evidence", role: "winning" },
+      { cell: { row: 1, col: 1 }, kind: "hint", role: "winning" },
+    ]);
   });
 
   it("can hide source-stone evidence while keeping hint targets visible", () => {
@@ -140,16 +136,12 @@ describe("LocalMatchRoute", () => {
 
     const latestBoardProps = mockedBoard.mock.calls[mockedBoard.mock.calls.length - 1]?.[0];
 
-    expect(latestBoardProps).toMatchObject({
-      counterThreatEvidenceCells: [],
-      counterThreatMoves: [{ row: 4, col: 4 }],
-      immediateThreatEvidenceCells: [],
-      imminentThreatEvidenceCells: [],
-      imminentThreatMoves: [{ row: 3, col: 3 }],
-      threatMoves: [{ row: 8, col: 8 }],
-      winningEvidenceCells: [],
-      winningMoves: [{ row: 1, col: 1 }],
-    });
+    expect(latestBoardProps?.model.overlays).toEqual([
+      { cell: { row: 1, col: 1 }, kind: "hint", role: "winning" },
+      { cell: { row: 8, col: 8 }, kind: "hint", role: "immediateThreat" },
+      { cell: { row: 3, col: 3 }, kind: "hint", role: "imminentThreat" },
+      { cell: { row: 4, col: 4 }, kind: "hint", role: "counterThreat" },
+    ]);
   });
 
   it("shows compact player totals and the active move timer in player cards", () => {
