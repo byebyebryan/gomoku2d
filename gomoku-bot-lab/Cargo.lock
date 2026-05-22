@@ -362,6 +362,7 @@ dependencies = [
  "gomoku-bot",
  "gomoku-core",
  "serde",
+ "serde_json",
 ]
 
 [[package]]
