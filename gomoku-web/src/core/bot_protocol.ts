@@ -8,7 +8,6 @@ export interface CorridorProofSpec {
 
 export type BotSpec =
   | { kind: "human" }
-  | { kind: "baseline"; depth: number }
   | {
     childLimit: number | null;
     corridorProof: CorridorProofSpec | null;
