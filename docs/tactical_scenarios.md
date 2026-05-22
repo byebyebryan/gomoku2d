@@ -14,7 +14,7 @@ For ranking or product-strength claims, use tournaments after the scenario sweep
 
 Source of truth:
 
-- Scenario boards: `gomoku-bot-lab/benchmarks/scenarios.rs`
+- Scenario boards: `gomoku-bot-lab/gomoku-lab-support/src/scenarios.rs`
 - Tactical case definitions: `gomoku-bot-lab/gomoku-eval/src/scenario.rs`
 - Shape vocabulary: [`tactical_shapes.md`](tactical_shapes.md)
 
