@@ -171,7 +171,8 @@ Once the repo and product story are reconciled, prepare a public alpha:
 
 ### Slice 3: Product Explanation Pages
 
-- Add concise pages for rules, analysis, bot lab, and project/about.
+- Productize the existing concise docs for rules, analysis, bot lab, and
+  project/about.
 - Link them from Home/footer in a way that does not crowd the main play path.
 - Use concrete screenshots or small board diagrams where text alone would be
   unclear.

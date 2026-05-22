@@ -18,10 +18,11 @@ audience:
 
 ## Public Docs
 
-- [`About`](public/about.md)
-- [`Rules and Renju`](public/rules.md)
-- [`Replay Analysis`](public/analysis.md)
-- [`Bot Lab`](public/bot-lab.md)
+- [`About`](public/about.md) — what the project is and why it exists
+- [`Rules and Renju`](public/rules.md) — how Freestyle and Renju differ
+- [`Replay Analysis`](public/analysis.md) — how to read last escape, setup
+  corridor, and lethal sequence labels
+- [`Bot Lab`](public/bot-lab.md) — bot presets, advanced controls, and reports
 
 ## Canonical References
 

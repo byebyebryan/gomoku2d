@@ -2,8 +2,8 @@
 
 Scope: live setup and operational runbook for Gomoku2D's Firebase/GCP backend.
 This file records what exists now and how to reproduce or verify it. The target
-backend design lives in `backend.md`; free-tier estimates live in
-`backend_cost.md`.
+backend design lives in [`backend.md`](../backend/backend.md); free-tier
+estimates live in [`backend_cost.md`](backend_cost.md).
 
 ## Current Project
 

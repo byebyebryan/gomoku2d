@@ -129,62 +129,25 @@ Runbook and model docs:
 
 ## Replay format
 
-Both `gomoku-cli` and `gomoku-eval` write the same JSON. The web game consumes
-that replay format directly.
+Both `gomoku-cli` and `gomoku-eval` write the same replay JSON. The web game
+consumes that format directly.
 
 ```json
 {
-  "hash_algo": { "algorithm": "xorshift64", "seed": 16045690984833335166 },
   "rules": { "board_size": 15, "win_length": 5, "variant": "freestyle" },
   "black": "search-d3",
   "white": "random",
   "moves": [
-    { "mv": "H8", "time_ms": 120, "hash": 123456789 },
-    {
-      "mv": "D4",
-      "time_ms": 5,
-      "hash": 987654321,
-      "trace": {
-        "config": {
-          "max_depth": 3,
-          "time_budget_ms": null,
-          "cpu_time_budget_ms": null,
-          "candidate_radius": 2,
-          "candidate_source": "near_all_r2",
-          "null_cell_culling": "disabled",
-          "legality_gate": "exact_rules",
-          "safety_gate": "current_obligation",
-          "move_ordering": "tt_first_board_order",
-          "child_limit": null,
-          "search_algorithm": "alpha_beta_id",
-          "static_eval": "line_shape_eval"
-        },
-        "depth": 3,
-        "nodes": 42,
-        "safety_nodes": 4,
-        "total_nodes": 46,
-        "metrics": {
-          "root_candidate_generations": 1,
-          "search_candidate_generations": 12,
-          "null_cell_cull_checks": 0,
-          "null_cells_culled": 0,
-          "root_legality_checks": 4,
-          "search_legality_checks": 80,
-          "root_tactical_annotations": 4,
-          "search_tactical_annotations": 0,
-          "child_limit_applications": 0,
-          "search_child_limit_applications": 0,
-          "child_cap_hits": 0
-        },
-        "budget_exhausted": false,
-        "score": 100
-      }
-    }
+    { "mv": "H8", "time_ms": 120, "hash": 123456789 }
   ],
   "result": "black_wins",
   "duration_ms": 3520
 }
 ```
+
+Bot-produced moves may include a `trace` object with search config, node,
+budget, and metric counters. Compact web-saved matches use `move_cells`
+(`row * 15 + col`) for storage and report reconstruction.
 
 ## Build the web bridge
 

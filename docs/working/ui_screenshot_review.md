@@ -1,10 +1,11 @@
 # UI Screenshot Review
 
-This document is the screenshot-based companion to `ui_design.md`.
+This document is the screenshot-based companion to
+[`ui_design.md`](../reference/app/ui_design.md).
 
 Use it when reviewing mocks, UI tweaks, or layout passes against the actual
-evolution of the DOM shell. `ui_design.md` is the rulebook; this file is
-the evidence and critique set.
+evolution of the DOM shell. [`ui_design.md`](../reference/app/ui_design.md) is
+the rulebook; this file is the evidence and critique set.
 
 ## v0.1
 
