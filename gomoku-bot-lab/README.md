@@ -43,7 +43,7 @@ cargo run --release -p gomoku-cli -- --black search-d3 --white random --quiet --
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--black` | `baseline` | Bot for Black: `random`, `search-dN`, lab specs, or legacy `baseline` aliases |
+| `--black` | `search-d3` | Bot for Black: `random`, `search-dN`, lab specs, or legacy `baseline` aliases |
 | `--white` | `random`   | Bot for White: `random`, `search-dN`, lab specs, or legacy `baseline` aliases |
 | `--depth` | `5`        | Fixed depth for the legacy plain `baseline` spec |
 | `--time-ms` | —        | Time budget per move for search bots, including lab aliases |
@@ -68,7 +68,7 @@ fixed benchmark/tactical boards live in the shared `gomoku-lab-support` crate.
 | Spec | Config | Intent |
 |---|---|---|
 | `search-d1` | depth 1, `near_all_r2`, `current_obligation` | easy/beginner lane |
-| `search-d3` | depth 3, `near_all_r2`, `current_obligation` | current default baseline |
+| `search-d3` | depth 3, `near_all_r2`, `current_obligation` | current default search spec |
 | `search-d5` | depth 5, `near_all_r2`, `current_obligation` | uncapped depth reference |
 | `search-d5+tactical-cap-8` | depth 5, tactical ordering, non-root child cap 8 | efficient hard-side candidate |
 | `search-d7+tactical-cap-8` | depth 7, tactical ordering, non-root child cap 8 | stronger but slower hard-side candidate |
@@ -98,9 +98,9 @@ append `+scan-threat-view` to force the older scan-backed view for fallback
 comparisons, or `+rolling-frontier-shadow` to run scan-vs-rolling parity checks.
 
 Legacy specs still work: plain `baseline` uses `--depth`, `baseline-N` creates a
-custom fixed-depth baseline bot, and the old `fast`/`balanced`/`deep` aliases
-still parse for old scripts. New reports and gauntlets should use explicit
-`search-*` specs.
+custom fixed-depth legacy bot, and the old `fast`/`balanced`/`deep` aliases
+still parse for old scripts. Current defaults, reports, and gauntlets should use
+explicit `search-*` specs.
 
 ### Current corridor integration
 
