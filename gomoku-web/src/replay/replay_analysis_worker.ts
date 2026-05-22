@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-import { WasmReplayAnalyzer } from "../core/wasm_bridge";
+import { parseWasmReplayAnalysisStep, WasmReplayAnalyzer } from "../core/wasm_bridge";
 
 import type { ReplayAnalysisStepResult, ReplayAnalysisWorkerRequest, ReplayAnalysisWorkerResponse } from "./replay_analysis_protocol";
 
@@ -35,7 +35,7 @@ function cancelActiveAnalysis(postCancellation: boolean): void {
 }
 
 function parseStepResult(json: string): ReplayAnalysisStepResult {
-  return JSON.parse(json) as ReplayAnalysisStepResult;
+  return parseWasmReplayAnalysisStep<ReplayAnalysisStepResult>(json);
 }
 
 function runStep(active: ActiveAnalysis): void {

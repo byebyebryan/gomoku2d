@@ -1,8 +1,13 @@
 /// <reference lib="webworker" />
 
-import { WasmBoard, WasmBot } from "gomoku-wasm";
-
 import type { BotSpec, BotWorkerRequest, BotWorkerResponse } from "./bot_protocol";
+import {
+  chooseWasmBotMove,
+  createWasmBotFromSpec,
+  wasmBoardFromFenWithVariant,
+  type WasmBoard,
+  type WasmBot,
+} from "./wasm_bridge";
 
 const workerScope = self as DedicatedWorkerGlobalScope;
 let bots: [WasmBot | null, WasmBot | null] = [null, null];
@@ -12,19 +17,7 @@ function postMessage(message: BotWorkerResponse): void {
 }
 
 function buildBot(spec: BotSpec): WasmBot | null {
-  switch (spec.kind) {
-    case "human":
-      return null;
-    case "search":
-      return WasmBot.createSearch(
-        spec.depth,
-        spec.childLimit ?? 0,
-        spec.patternEval,
-        spec.corridorProof?.depth ?? 0,
-        spec.corridorProof?.width ?? 0,
-        spec.corridorProof?.candidateLimit ?? 0,
-      );
-  }
+  return createWasmBotFromSpec(spec);
 }
 
 function configure(specs: [BotSpec, BotSpec]): void {
@@ -43,8 +36,8 @@ function handleChooseMove(message: Extract<BotWorkerRequest, { type: "choose_mov
   let board: WasmBoard | null = null;
 
   try {
-    board = WasmBoard.fromFenWithVariant(message.fen, message.variant);
-    const move = bot.chooseMove(board) as { row: number; col: number } | null;
+    board = wasmBoardFromFenWithVariant(message.fen, message.variant);
+    const move = chooseWasmBotMove(bot, board);
 
     postMessage({
       type: "move",

@@ -242,6 +242,9 @@ reimplement corridor search in React or Phaser.
 - `gomoku-web` converts a saved match into exact `gomoku-core` replay JSON using
   `WasmBoard` hashes.
 - `gomoku-wasm` owns `WasmReplayAnalyzer.createFromReplayJson(...).step(...)`.
+- The wasm bridge returns structured analysis and board payloads as JSON
+  strings. `gomoku-web/src/core/wasm_bridge.ts` is the TypeScript parsing
+  boundary; route, store, and renderer code should consume typed helpers.
 - `gomoku-analysis` owns `ReplayAnalysisSession`, which walks backward from the
   ending and returns frame annotations before final analysis is ready.
 - `gomoku-web` runs the analyzer inside a cancellable web worker. Replay
@@ -641,7 +644,7 @@ the lab/report shell and `gomoku-wasm` as the browser bridge:
 - `--include-proof-details` adds previous-prefix/final-start proof snapshots and
   visual decision frames for audit runs.
 - `WasmReplayAnalyzer.createFromReplayJson(...).step(...)` exposes the same
-  model to browser code.
+  model to browser code through the JSON bridge.
 - `ReplayAnalysisRunner` runs that wasm analyzer in a web worker and streams
   step results back to the replay page, so route-level callers receive the same
   progressive shape as the lab report path.
