@@ -2,7 +2,7 @@
 
 Purpose: capture the post-`0.4` alignment pass before implementation starts.
 This is an ad-hoc working plan. The canonical phase summary lives in
-[`../roadmap.md`](../roadmap.md).
+[`Roadmap`](../reference/product/roadmap.md).
 
 ## Context
 
@@ -144,7 +144,7 @@ Once the repo and product story are reconciled, prepare a public alpha:
 
 ### Slice 1: Repo And Doc Reconciliation (`0.5.0`)
 
-- Sync `docs/search_bot.md`, `docs/performance_tuning.md`, and roadmap notes
+- Sync `docs/reference/lab/search_bot.md`, `docs/working/performance_tuning.md`, and roadmap notes
   with the latest pooled-budget reports.
 - Mark generated curated report artifacts explicitly so GitHub language stats and
   diffs do not treat them as hand-authored source.

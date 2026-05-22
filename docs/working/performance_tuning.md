@@ -115,11 +115,11 @@ exhausted the `1000 ms` CPU budget on `7.9%` of moves. D7-cap8 pattern averaged
 for now, not as a default.
 
 The tactical scenario corpus is documented in
-[`tactical_scenarios.md`](tactical_scenarios.md), including board prints,
+[`tactical_scenarios.md`](../reference/corpora/tactical_scenarios.md), including board prints,
 roles, and expected moves. Hard safety-gate cases are
 regression guards; diagnostic cases are not promotion gates on their own.
 The shape terms used by those scenarios and the bot's local facts are defined in
-[`tactical_shapes.md`](tactical_shapes.md).
+[`tactical_shapes.md`](../reference/lab/tactical_shapes.md).
 
 The next performance pass should start with measurement rather than another
 tactical consumer: identify how much time `search-d3` spends in eval,

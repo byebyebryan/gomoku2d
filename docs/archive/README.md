@@ -6,16 +6,16 @@ thinking, tradeoffs, and rejected options live here so the canonical docs in
 
 | Doc | What it was | Superseded by |
 |---|---|---|
-| `progress_v0.1.md` | Status log for the Phaser-era single-player game | `docs/roadmap.md` |
-| `web_frontend_plan.md` | Retrospective on the v0.1 Phaser FE work | `docs/architecture.md` |
-| `game_framework.md` | Generic "native core + bots + frontends" design doc that originally inspired the repo layout | `docs/architecture.md` |
-| `online_backend_design.md` | First-pass BE design — Firebase/Firestore/Cloud Run | `docs/backend.md` |
-| `fe_gap_analysis.md` | Gap analysis of the v0.1 FE vs. planned online features (invalidated by the FE rewrite decision) | `docs/architecture.md` (constraints), `docs/roadmap.md` (phases) |
-| `ui_ux_design_doc.md` | Drafty exploration of IA, screen strategy, visual language | `docs/app_design.md` |
-| `ui_language_doc.md` | Drafty design-system reference (overlapped with ui_ux_design_doc) | `docs/ui_design.md` |
-| `ui_implementation_backlog.md` | Drafty 14-milestone UI execution plan | `docs/roadmap.md` |
-| `fe_architecture_options.md` | Drafty FE stack options writeup | `docs/architecture.md` |
-| `v0_2_4_ui_polish_notes.md` | Triage/working notes captured during the `v0.2.4` shell polish pass | `docs/ui_design.md`, `docs/ui_screenshot_review.md` |
+| `progress_v0.1.md` | Status log for the Phaser-era single-player game | `docs/reference/product/roadmap.md` |
+| `web_frontend_plan.md` | Retrospective on the v0.1 Phaser FE work | `docs/reference/app/architecture.md` |
+| `game_framework.md` | Generic "native core + bots + frontends" design doc that originally inspired the repo layout | `docs/reference/app/architecture.md` |
+| `online_backend_design.md` | First-pass BE design — Firebase/Firestore/Cloud Run | `docs/reference/backend/backend.md` |
+| `fe_gap_analysis.md` | Gap analysis of the v0.1 FE vs. planned online features (invalidated by the FE rewrite decision) | `docs/reference/app/architecture.md` (constraints), `docs/reference/product/roadmap.md` (phases) |
+| `ui_ux_design_doc.md` | Drafty exploration of IA, screen strategy, visual language | `docs/reference/app/app_design.md` |
+| `ui_language_doc.md` | Drafty design-system reference (overlapped with ui_ux_design_doc) | `docs/reference/app/ui_design.md` |
+| `ui_implementation_backlog.md` | Drafty 14-milestone UI execution plan | `docs/reference/product/roadmap.md` |
+| `fe_architecture_options.md` | Drafty FE stack options writeup | `docs/reference/app/architecture.md` |
+| `v0_2_4_ui_polish_notes.md` | Triage/working notes captured during the `v0.2.4` shell polish pass | `docs/reference/app/ui_design.md`, `docs/working/ui_screenshot_review.md` |
 
 These drafts were exploratory and not grounded in the v0.1 codebase. They're
 preserved as artifacts of the "about to pivot" state but should not be read as
@@ -29,19 +29,19 @@ The archive also keeps a few visual-exploration artifacts from the early
 - `v0_2_ui.md`
 - `v0_2_themes.png`
 
-Current-line ad-hoc planning notes can also live here when they are useful
-during implementation but should not compete with canonical docs:
+Historical current-line ad-hoc planning notes also live here when they are
+useful as evidence but should not compete with canonical docs. Active working
+plans now live in [`../working/`](../working/).
 
 | Doc | What it is | Canonical docs |
 |---|---|---|
-| `v0_3_plan.md` | Working plan for the `v0.3` cloud-backed continuity line | `docs/roadmap.md`, `docs/backend.md`, `docs/app_design.md` |
-| `v0_3_completion_plan.md` | Practical rest-of-`0.3` release slicing after the product-identity roadmap pivot | `docs/roadmap.md`, `docs/backend.md`, `docs/backend_infra.md` |
-| `v0_4_plan.md` | Working plan for the `v0.4` lab-powered product identity line, from bot discovery through corridor-bot work before settings UI | `docs/roadmap.md`, `docs/product.md`, `docs/backend.md` |
-| `v0_4_search_bot_enhancement_plan.md` | Historical retrospective of `0.4.0`-`0.4.2` search-bot experiments and rejected paths | `docs/search_bot.md`, `docs/corridor_search.md`, `docs/performance_tuning.md` |
-| `v0_4_2_game_analysis_impl_notes.md` | Historical implementation notes, telemetry, and rejected replay-analysis proof policies from the `v0.4.2` corridor-search pass | `docs/corridor_search.md`, `docs/game_analysis.md` |
-| `v0_4_3_corridor_bot_plan.md` | Working plan for the lab-only corridor-search-in-bot pass before UI settings | `docs/roadmap.md`, `docs/corridor_search.md`, `docs/search_bot.md` |
-| `v0_4_4_frontier_plan.md` | Working plan for the rolling-frontier threat-view line | `docs/search_bot.md`, `docs/corridor_search.md`, `docs/performance_tuning.md` |
-| `v0_4_5_bot_controls_plan.md` | Working plan for exposing tested bot presets and narrow advanced bot controls in the web settings UI | `docs/search_bot.md`, `docs/app_design.md`, `docs/data_model.md` |
-| `v0_4_6_replay_analysis_plan.md` | Working plan for bringing corridor-search replay analysis into the product replay page and replacing the overloaded warning sprite sheet | `docs/game_analysis.md`, `docs/corridor_search.md`, `docs/game_visual.md` |
-| `v0_4_7_lethal_threat_plan.md` | Working plan for the lethal-threat layer and analyzer-onset follow-up | `docs/lethal_threats.md`, `docs/corridor_search.md`, `docs/game_analysis.md` |
-| `v0_5_public_release_plan.md` | Working plan for the `0.5` public-release reconciliation pass after the `0.4` lab-powered line | `docs/roadmap.md`, `docs/product.md`, `docs/project.md` |
+| `v0_3_plan.md` | Working plan for the `v0.3` cloud-backed continuity line | `docs/reference/product/roadmap.md`, `docs/reference/backend/backend.md`, `docs/reference/app/app_design.md` |
+| `v0_3_completion_plan.md` | Practical rest-of-`0.3` release slicing after the product-identity roadmap pivot | `docs/reference/product/roadmap.md`, `docs/reference/backend/backend.md`, `docs/reference/ops/backend_infra.md` |
+| `v0_4_plan.md` | Working plan for the `v0.4` lab-powered product identity line, from bot discovery through corridor-bot work before settings UI | `docs/reference/product/roadmap.md`, `docs/reference/product/product.md`, `docs/reference/backend/backend.md` |
+| `v0_4_search_bot_enhancement_plan.md` | Historical retrospective of `0.4.0`-`0.4.2` search-bot experiments and rejected paths | `docs/reference/lab/search_bot.md`, `docs/reference/lab/corridor_search.md`, `docs/working/performance_tuning.md` |
+| `v0_4_2_game_analysis_impl_notes.md` | Historical implementation notes, telemetry, and rejected replay-analysis proof policies from the `v0.4.2` corridor-search pass | `docs/reference/lab/corridor_search.md`, `docs/reference/lab/game_analysis.md` |
+| `v0_4_3_corridor_bot_plan.md` | Working plan for the lab-only corridor-search-in-bot pass before UI settings | `docs/reference/product/roadmap.md`, `docs/reference/lab/corridor_search.md`, `docs/reference/lab/search_bot.md` |
+| `v0_4_4_frontier_plan.md` | Working plan for the rolling-frontier threat-view line | `docs/reference/lab/search_bot.md`, `docs/reference/lab/corridor_search.md`, `docs/working/performance_tuning.md` |
+| `v0_4_5_bot_controls_plan.md` | Working plan for exposing tested bot presets and narrow advanced bot controls in the web settings UI | `docs/reference/lab/search_bot.md`, `docs/reference/app/app_design.md`, `docs/reference/backend/data_model.md` |
+| `v0_4_6_replay_analysis_plan.md` | Working plan for bringing corridor-search replay analysis into the product replay page and replacing the overloaded warning sprite sheet | `docs/reference/lab/game_analysis.md`, `docs/reference/lab/corridor_search.md`, `docs/reference/app/game_visual.md` |
+| `v0_4_7_lethal_threat_plan.md` | Working plan for the lethal-threat layer and analyzer-onset follow-up | `docs/reference/lab/lethal_threats.md`, `docs/reference/lab/corridor_search.md`, `docs/reference/lab/game_analysis.md` |

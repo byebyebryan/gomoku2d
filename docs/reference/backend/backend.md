@@ -25,7 +25,7 @@ backend services exist for durability, sharing, and trust boundaries.
 
 ## Version Mapping
 
-`docs/roadmap.md` owns sequencing. This backend doc describes the target
+`docs/reference/product/roadmap.md` owns sequencing. This backend doc describes the target
 service model and the feature menu, but not every piece lands at once.
 
 | Version | Backend intent | Included | Deferred |
@@ -327,7 +327,7 @@ Workflows live at:
 
 The live Firebase/GCP setup, Workload Identity Federation bootstrap, deploy
 model, and break-glass rules deploy path are documented in
-`docs/backend_infra.md`.
+`docs/reference/ops/backend_infra.md`.
 
 ## Feature catalog
 

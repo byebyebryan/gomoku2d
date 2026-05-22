@@ -4,8 +4,8 @@ Purpose: turn the corridor-search analyzer from a lab report artifact into a
 first player-facing replay feature.
 
 This is an ad-hoc working plan. It now records the `0.4.6` implementation
-checkpoint. Canonical concepts remain in `docs/game_analysis.md`,
-`docs/corridor_search.md`, and `docs/game_visual.md`.
+checkpoint. Canonical concepts remain in `docs/reference/lab/game_analysis.md`,
+`docs/reference/lab/corridor_search.md`, and `docs/reference/app/game_visual.md`.
 
 ## Context
 

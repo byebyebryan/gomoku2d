@@ -1,13 +1,13 @@
 # `v0.4.2` Game Analysis Implementation Notes
 
 Status: archived implementation/history notes extracted from
-[`../game_analysis.md`](../game_analysis.md) during `v0.4.2` release prep.
+[`../game_analysis.md`](../reference/lab/game_analysis.md) during `v0.4.2` release prep.
 
 Canonical current docs:
 
-- [`../corridor_search.md`](../corridor_search.md) — strategic corridor-search
+- [`../corridor_search.md`](../reference/lab/corridor_search.md) — strategic corridor-search
   model.
-- [`../game_analysis.md`](../game_analysis.md) — current replay analyzer
+- [`../game_analysis.md`](../reference/lab/game_analysis.md) — current replay analyzer
   contract and report shape.
 
 ## Why This Was Archived

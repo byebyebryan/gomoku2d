@@ -2,8 +2,8 @@
 
 Status: ad-hoc milestone plan captured near the start of the `v0.3` line. It
 is no longer the current status tracker; use `v0_3_completion_plan.md` for the
-active rest-of-`0.3` slice notes, and keep `docs/roadmap.md`, `docs/backend.md`,
-`docs/backend_infra.md`, `docs/backend_cost.md`, and `docs/app_design.md` as
+active rest-of-`0.3` slice notes, and keep `docs/reference/product/roadmap.md`, `docs/reference/backend/backend.md`,
+`docs/reference/ops/backend_infra.md`, `docs/reference/ops/backend_cost.md`, and `docs/reference/app/app_design.md` as
 the long-lived sources of truth.
 
 ## Frame
@@ -64,8 +64,8 @@ Initial state as of the first `v0.3` pass:
 - web Firebase config is env-driven and optional at runtime
 - Firestore is created as the default Native-mode database in `us-central1`
 - Firestore rules are in repo and deployed to the `cloud.firestore` release
-- live setup tracking lives in `docs/backend_infra.md`
-- backend cost tracking lives in `docs/backend_cost.md`
+- live setup tracking lives in `docs/reference/ops/backend_infra.md`
+- backend cost tracking lives in `docs/reference/ops/backend_cost.md`
 
 Checkpoint after the first implementation slice:
 
@@ -84,7 +84,7 @@ Checkpoint after the first implementation slice:
   intentionally left blank to avoid brand verification for this first cloud
   profile slice.
 - The production domain, policy pages, contact email, public sign-in smoke, and
-  no-config fallback smoke are recorded in `docs/backend_infra.md` and
+  no-config fallback smoke are recorded in `docs/reference/ops/backend_infra.md` and
   `docs/archive/v0_3_completion_plan.md`.
 
 ### 2. Auth State Layer
