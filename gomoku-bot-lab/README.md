@@ -51,145 +51,32 @@ cargo run --release -p gomoku-cli -- --black search-d3 --white random --quiet --
 | `--replay` | —         | Write replay JSON to this path |
 | `--quiet` | —          | Suppress per-move board printing |
 
-### Current `SearchBot`
+### Current search and analysis model
 
-Negamax with alpha-beta pruning, iterative deepening, and a transposition table
-keyed by incremental Zobrist hashing. Move candidates are pruned to empty cells
-within two rows/columns of any existing stone (`near_all_r2`). Static evaluation
-scores open and half-open runs of 2–4 in all four directions. It reliably beats
-`RandomBot` and is intentionally good enough for practice without trying to be a
-perfect Gomoku engine.
+The lab primarily uses explicit `search-*` specs over `SearchBotConfig`.
+`gomoku-bot` owns the engine and config; product presets resolve to tested
+specs but are not parser concepts.
 
-The lab primarily uses explicit search specs. `gomoku-bot` itself exposes
-`SearchBotConfig`; the spec strings are lab conveniences over that config, not
-canonical product presets. The parser lives in `gomoku_bot::lab_spec`, while
-fixed benchmark/tactical boards live in the shared `gomoku-lab-support` crate.
+Current defaults:
 
-| Spec | Config | Intent |
-|---|---|---|
-| `search-d1` | depth 1, `near_all_r2`, `current_obligation` | easy/beginner lane |
-| `search-d3` | depth 3, `near_all_r2`, `current_obligation` | current default search spec |
-| `search-d5` | depth 5, `near_all_r2`, `current_obligation` | uncapped depth reference |
-| `search-d5+tactical-cap-8` | depth 5, tactical ordering, non-root child cap 8 | efficient hard-side candidate |
-| `search-d7+tactical-cap-8` | depth 7, tactical ordering, non-root child cap 8 | stronger but slower hard-side candidate |
+- `SearchBot` is negamax with alpha-beta pruning, iterative deepening, a
+  transposition table, tactical ordering, and a rolling threat-view backend.
+- The web game exposes Easy / Normal / Hard plus narrow advanced controls.
+- Corridor search is a replay-analysis foundation first. The failed live
+  portal experiments remain historical evidence, not current bot surface.
+- Renju legality lives in `gomoku-core` and is validated through the Renju
+  corpus before it is trusted by bot/search/report code.
 
-Append `+near-all-r1`, `+near-all-r2`, or `+near-all-r3` to change the symmetric
-candidate source radius. Append `+near-self-rN-opponent-rM` to test asymmetric
-current-player versus opponent-stone frontiers, for example
-`+near-self-r2-opponent-r1`. Append `+null-cull` to remove generated cells that
-cannot make five for either color in any direction; it is an experimental
-candidate-filter axis, disabled by default. Append `+no-safety` to disable the
-root safety gate. For example, `search-d3+near-all-r1+no-safety` keeps the
-depth-3 search but uses a radius-1 candidate source and no root safety gate. The
-default `current_obligation` safety gate only filters already-generated legal
-root candidates against immediate wins, direct immediate blocks, and direct or
-counter-four replies to imminent threats. Append `+tactical-full` to try the
-older full local-threat move ordering before alpha-beta search.
-Append `+child-cap-N` to cap the ordered non-root child frontier after candidate
-generation, legality filtering, and move ordering. `+tactical-cap-N` is
-shorthand for the current tactical ordering plus `+child-cap-N`: immediate
-win/block checks stay global, then full tactical annotation runs only for moves
-that can plausibly create local tactical shapes. `+tactical-full-cap-N` keeps
-the older full-annotation path for direct comparisons. Root still considers
-every legal/safe candidate; candidate source controls discovery, while child
-cap controls how many ordered non-root children alpha-beta searches. Rolling
-frontier is the default threat-view backend;
-append `+scan-threat-view` to force the older scan-backed view for fallback
-comparisons, or `+rolling-frontier-shadow` to run scan-vs-rolling parity checks.
+Detailed references:
 
-Legacy specs still work: plain `baseline` uses `--depth`, `baseline-N` creates a
-custom fixed-depth legacy bot, and the old `fast`/`balanced`/`deep` aliases
-still parse for old scripts. Current defaults, reports, and gauntlets should use
-explicit `search-*` specs.
-
-### Current corridor integration
-
-The earlier standalone `CorridorBot` bridge is retired. The first `SearchBot`
-integration, the lab-only `+corridor-q` leaf-quiescence suffix, is also retired.
-It proved the shared corridor engine can be called from search, but it spent
-too much work probing depth-0 positions that usually fell back to static eval.
-
-Failed search experiments are intentionally removed instead of kept as dead lab
-suffixes. The broad shape-eval attempt fixed one depth-2 diagnostic but lost to
-plain `search-d3`, so it is documented rather than exposed as a live lab spec.
-The corridor leaf-quiescence result follows the same rule: keep the learning,
-not the suffix. Current notes live in
-[`../docs/archive/v0_4_search_bot_enhancement_plan.md`](../docs/archive/v0_4_search_bot_enhancement_plan.md).
-
-More detailed strategy notes live in [`../docs/search_bot.md`](../docs/search_bot.md).
-The `0.4.1` tactical-ladder work established the current bot baseline: local
-threat competence first, casual combo play next, then bounded corridor ideas
-only when they can be measured. Tactical facts are meant to buy effective depth
-through safer narrowing, ordering, and selective extension, not to replace
-alpha-beta search with broad shape scoring. At that checkpoint, the tactical
-annotation stage recorded its own trace metrics and could be paired with the
-lab-only child frontier cap to test whether better ordering bought effective
-depth; the later `0.4.4` rolling-frontier pass promoted that caching model after
-the metrics justified it.
-
-The `0.4.1` reference report compared the depth ladder, tactical-cap variants,
-and pattern-eval variants. Its product read was conservative: D1 was an easy
-lane, D3 remained the default baseline, D5 tactical-cap was the efficient
-hard-side candidate, D7 tactical-cap was stronger but slower, and pattern eval
-was still lab-only because the score gain came with real compute cost.
-
-The `0.4.2` lab pass kept that restraint rather than jumping straight to UI
-settings. It swept existing knobs with head-to-heads and gauntlets, then pivoted
-toward corridor search as the more useful foundation: explain why bots win or
-lose, identify final forced sequences, and use that evidence before promoting
-more product settings.
-
-The `0.4.2` sweeps still matter: pattern eval remains the strongest lab signal,
-cap16 is not a universal upgrade, cap4 is a viable narrowing point when paired
-with tactical ordering, and asymmetric `self2/opponent1` candidate discovery is
-most interesting as an efficiency tweak for `D3 + pattern-eval`. Treat these as
-historical lab evidence; the shipped product presets are the explicit Easy,
-Normal, and Hard mappings documented in
-[`../docs/search_bot.md`](../docs/search_bot.md). Corridor-search strategy is
-documented in [`../docs/corridor_search.md`](../docs/corridor_search.md).
-
-The `0.4.3` lab slice tested corridor search inside bot behavior before
-exposing more web settings. The result is useful evidence but not a candidate
-bot direction. `+corridor-own-dN-wM` and `+corridor-opponent-dN-wM` are now
-historical report evidence, not current parser surface. Focused checks stayed
-slower or weaker than the base anchors, so keep corridor portals out of anchors,
-sweeps, difficulty ladders, and UI work.
-
-The durable output was the scan-backed `ThreatView` seam, unified tactical
-facts, and honest corridor cost metrics. Those pieces set up the `0.4.4`
-rolling-frontier pass to replace hot-path scans behind a stable query contract
-without promoting the failed portal shape.
-The working plan lives in
-[`../docs/archive/v0_4_3_corridor_bot_plan.md`](../docs/archive/v0_4_3_corridor_bot_plan.md).
-
-`0.4.4` promotes the rolling-frontier pass after focused scan-vs-rolling and
-shadow parity checks. Scan remains available as an explicit fallback behind the
-same `ThreatView` seam, while shadow remains validation-only. The working plan lives in
-[`../docs/archive/v0_4_4_frontier_plan.md`](../docs/archive/v0_4_4_frontier_plan.md).
-
-Current frontier suffixes are intentionally narrow:
-
-- `+rolling-frontier-shadow`: compare rolling-backed tactical annotations,
-  current-obligation safety, and any remaining corridor diagnostic queries
-  against scan-backed answers, report shadow mismatch counts, and record
-  scan-vs-frontier update/query timing; behavior stays scan-backed.
-- `+rolling-frontier`: explicitly use the default rolling-backed tactical
-  annotations, indexed immediate-win checks, root win/block checks, and any
-  remaining corridor diagnostic queries. Current-obligation safety also uses a
-  root-only full frontier in this mode.
-- `+scan-threat-view`: force the scan-backed threat view for fallback and
-  comparison runs.
-
-Search now threads an optional frontier through recursive apply/undo with the
-board and hash. The default rolling mode enables it for normal search, while
-scan disables it and shadow runs both paths for parity. Immediate wins now have a
-dedicated per-player rolling index, so `TacticalOnly` mode can answer win/block
-queries without maintaining full corridor move facts. Current smoke data reached
-zero shadow mismatches, and focused promotion smokes make rolling faster than
-scan while preserving relaxed-budget parity.
-Non-shadow rolling search should keep threat-view scan counters at zero; scan
-queries are expected only in scan mode, rolling-shadow comparison, or explicit
-fallback diagnostics.
+- [`Search Bot`](../docs/reference/lab/search_bot.md): config axes, current
+  specs, rolling frontier, tactical ordering, and retired suffixes.
+- [`Corridor Search`](../docs/reference/lab/corridor_search.md): setup
+  corridor, exits, proof boundaries, and search reuse.
+- [`Game Analysis`](../docs/reference/lab/game_analysis.md): replay analyzer
+  contract, failure modes, and product interpretation.
+- [`Performance Tuning`](../docs/working/performance_tuning.md): current
+  benchmark snapshots and rejected optimization paths.
 
 ### Eval harness
 
@@ -282,7 +169,7 @@ include pairwise records, color splits, shuffled-order Elo averages,
 depth/budget stats, opening IDs, generated candidate width, post-ordering child
 width, and compact `move_cells` using the same `row * 15 + col` codec as saved
 web matches. The tournament harness and opening suite are documented in
-[`../docs/tournament.md`](../docs/tournament.md).
+[`../docs/reference/ops/tournament.md`](../docs/reference/ops/tournament.md).
 
 For replay analysis iteration, prefer `analyze-report-replays --sample-size 8`
 against an existing tournament report before running a full matchup. The
@@ -297,8 +184,8 @@ Replay analysis defaults to a `64`-ply backward scan cap; short resolved
 corridors stop early, and smoke runs can still override with
 `--max-scan-plies 8`.
 The strategic model is documented in
-[`../docs/corridor_search.md`](../docs/corridor_search.md); the replay-specific
-contract lives in [`../docs/game_analysis.md`](../docs/game_analysis.md).
+[`../docs/reference/lab/corridor_search.md`](../docs/reference/lab/corridor_search.md); the replay-specific
+contract lives in [`../docs/reference/lab/game_analysis.md`](../docs/reference/lab/game_analysis.md).
 Report rows intentionally avoid a category/severity label. The header keeps
 only compact total, unclear, and error counts; expanded rows focus on proof
 diagnostics such as reply probes, searched nodes, search time, unclear context,
@@ -341,11 +228,11 @@ Tournament reports answer "which config scores better over many games?"
 Tactical scenarios answer a narrower question: "does this config choose the
 expected one-move tactical response in this position, and what did it cost?"
 The current corpus is documented in
-[`../docs/tactical_scenarios.md`](../docs/tactical_scenarios.md), including
+[`../docs/reference/corpora/tactical_scenarios.md`](../docs/reference/corpora/tactical_scenarios.md), including
 exact board prints, hard safety-gate cases, diagnostic cases, expected moves,
 and the role/layer/intent/shape metadata used by reports.
 The shared shape terms behind those cases live in
-[`../docs/tactical_shapes.md`](../docs/tactical_shapes.md).
+[`../docs/reference/lab/tactical_shapes.md`](../docs/reference/lab/tactical_shapes.md).
 
 Run the baseline tactical sweep from `gomoku-bot-lab/`:
 
@@ -376,7 +263,7 @@ Lethal scenarios answer a different question from tactical scenarios:
 "does this position already leave the defender without legal coverage?" They
 validate the shared lethal classifier directly rather than asking a bot to pick
 a move. The model and current case list live in
-[`../docs/lethal_threats.md`](../docs/lethal_threats.md).
+[`../docs/reference/lab/lethal_threats.md`](../docs/reference/lab/lethal_threats.md).
 
 Run the lethal safety harness from `gomoku-bot-lab/`:
 
@@ -474,7 +361,7 @@ via a `file:` dep.
 ## Performance tuning
 
 Benchmark process, fixed scenario corpus, and baseline snapshots live in
-[`../docs/performance_tuning.md`](../docs/performance_tuning.md).
+[`../docs/working/performance_tuning.md`](../docs/working/performance_tuning.md).
 
 Run the current harnesses with:
 

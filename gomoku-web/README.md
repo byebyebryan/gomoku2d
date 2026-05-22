@@ -54,9 +54,9 @@ Single-player, local-first:
 
 Design intent is split across:
 
-- [`../docs/app_design.md`](../docs/app_design.md) — routes, flows, and screen contracts
-- [`../docs/ui_design.md`](../docs/ui_design.md) — DOM shell visual language
-- [`../docs/game_visual.md`](../docs/game_visual.md) — Phaser canvas visuals, sprite roles, and animation language
+- [`../docs/reference/app/app_design.md`](../docs/reference/app/app_design.md) — routes, flows, and screen contracts
+- [`../docs/reference/app/ui_design.md`](../docs/reference/app/ui_design.md) — DOM shell visual language
+- [`../docs/reference/app/game_visual.md`](../docs/reference/app/game_visual.md) — Phaser canvas visuals, sprite roles, and animation language
 
 Source assets and local visual preview pages live in
 [`assets/README.md`](assets/README.md). Published builds expose those previews
@@ -157,7 +157,7 @@ Required Vite env vars:
 - `VITE_FIREBASE_APP_ID`
 
 The current Firebase project is `gomoku2d`. Live setup details and API-based
-config fetch commands live in [`../docs/backend_infra.md`](../docs/backend_infra.md).
+config fetch commands live in [`../docs/reference/ops/backend_infra.md`](../docs/reference/ops/backend_infra.md).
 CI and tag deploy builds include these public config values so the released app
 can initialize Firebase.
 
@@ -193,7 +193,7 @@ skip those pages.
 
 ## Deploy
 
-Release and local-preview steps live in [`../docs/release.md`](../docs/release.md).
+Release and local-preview steps live in [`../docs/reference/ops/release.md`](../docs/reference/ops/release.md).
 
 Production deploys to GitHub Pages only when a `v*` tag is pushed. Normal
 commits to `main` run CI but do not publish the site.
@@ -227,5 +227,5 @@ barriers. The `v0.4` lab-powered line now has published bot and analysis
 reports, configurable bot settings, tactical hints, and the first browser replay
 analysis surface. Skins, published replays, richer review UI, and online play
 stay sequenced in later phases — see
-[`../docs/roadmap.md`](../docs/roadmap.md) for sequencing and
-[`../docs/architecture.md`](../docs/architecture.md) for the runtime boundary.
+[`../docs/reference/product/roadmap.md`](../docs/reference/product/roadmap.md) for sequencing and
+[`../docs/reference/app/architecture.md`](../docs/reference/app/architecture.md) for the runtime boundary.

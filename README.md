@@ -94,8 +94,8 @@ gomoku2d/
 | `gomoku-wasm` | `wasm-pack` bridge — exports the core + bots to the web game |
 
 Build, CLI usage, replay format, and `SearchBot` notes live in
-[`gomoku-bot-lab/README.md`](gomoku-bot-lab/README.md) and
-[`docs/search_bot.md`](docs/search_bot.md).
+[`gomoku-bot-lab/README.md`](gomoku-bot-lab/README.md). The broader docs index
+lives in [`docs/README.md`](docs/README.md).
 
 ---
 
@@ -114,40 +114,29 @@ in-product replay-analysis surface are now live. The `v0.5` line is now about
 public-release reconciliation: clean up the repo after the lab push, make the
 reports feel first-class, explain the game and analyzer in-product, and package
 the project for a stranger-facing alpha. For the longer-term sequencing, see
-[`docs/roadmap.md`](docs/roadmap.md).
+[`docs/reference/product/roadmap.md`](docs/reference/product/roadmap.md).
 
 ---
 
 ## Learn More
 
-The canonical design, architecture, and release docs live in `docs/`:
+Start with the public docs:
 
-- [`docs/project.md`](docs/project.md) — the product/production thesis and project tenets
-- [`docs/product.md`](docs/product.md) — what we're building and why
-- [`docs/architecture.md`](docs/architecture.md) — FE stack, DOM/Phaser boundary, core-sharing story
-- [`docs/app_design.md`](docs/app_design.md) — current local-first routes, flows, and screen contracts
-- [`docs/ui_design.md`](docs/ui_design.md) — DOM shell visual language and styling rules
-- [`docs/game_visual.md`](docs/game_visual.md) — Phaser canvas, sprite, warning, and animation language
-- [`docs/corridor_search.md`](docs/corridor_search.md) — strategic model behind replay analysis, bot diagnostics, and future forcing logic
-- [`docs/game_analysis.md`](docs/game_analysis.md) — replay analyzer mechanics, report schema, CLI workflow, and current limits
-- [`gomoku-web/assets/README.md`](gomoku-web/assets/README.md) — source asset folders and local preview pages
-- [Live asset previews](https://gomoku2d.byebyebryan.com/assets/) — published sprite, icon, and font previews
-- [Bot lab report](https://gomoku2d.byebyebryan.com/bot-report/) — published bot-lab tournament report target
-- [Replay analysis report](https://gomoku2d.byebyebryan.com/analysis-report/) — published setup-corridor analysis for the bot report's top matchup
-- [`docs/ui_screenshot_review.md`](docs/ui_screenshot_review.md) — screenshot history and UI critique
-- [`docs/backend.md`](docs/backend.md) — Firebase + Firestore + Cloud Run model for cloud, lab-powered, and online phases
-- [`docs/backend_infra.md`](docs/backend_infra.md) — live Firebase/GCP setup, rules deployment, and env checklist
-- [`docs/backend_cost.md`](docs/backend_cost.md) — backend free-tier assumptions, estimates, and headroom tracking
-- [`docs/roadmap.md`](docs/roadmap.md) — version-based phase plan from POC to cloud, lab-powered identity, skins, and online features
-- [`docs/release.md`](docs/release.md) — local preview, release checks, tagging, and publish workflow
-- [`docs/search_bot.md`](docs/search_bot.md) — configurable `SearchBot` strategy, pipeline, and experiment takeaways
-- [`docs/tactical_shapes.md`](docs/tactical_shapes.md) — canonical bot shape vocabulary for tactical facts and eval work
-- [`docs/tactical_scenarios.md`](docs/tactical_scenarios.md) — focused bot tactical cases with board prints and expected moves
-- [`docs/lethal_threats.md`](docs/lethal_threats.md) — position-level lethal-threat model, Renju caveats, and safety harness
-- [`docs/renju_rules.md`](docs/renju_rules.md) — Renju forbidden-move model and validation plan
-- [`docs/testing.md`](docs/testing.md) — test hygiene rules for durable contracts versus temporary scaffolding
-- [`gomoku-web/README.md`](gomoku-web/README.md) — web game stack, local dev, deploy/runtime details
-- [`gomoku-bot-lab/README.md`](gomoku-bot-lab/README.md) — bot-lab build/test, CLI usage, replay format, bot notes
+- [`About`](docs/public/about.md) — project story and current product shape
+- [`Rules And Renju`](docs/public/rules.md) — Freestyle, Renju, and forbidden moves
+- [`Replay Analysis`](docs/public/analysis.md) — how to read setup corridors, lethal onset, and last escape
+- [`Bot Lab`](docs/public/bot-lab.md) — presets, advanced controls, and published reports
 
-Superseded exploratory docs and mock briefs are preserved under
-[`docs/archive/`](docs/archive/).
+Reference docs, working notes, runbooks, and archives are organized from
+[`docs/README.md`](docs/README.md). The most useful technical entry points are
+[`Architecture`](docs/reference/app/architecture.md),
+[`Search Bot`](docs/reference/lab/search_bot.md),
+[`Corridor Search`](docs/reference/lab/corridor_search.md),
+[`Game Analysis`](docs/reference/lab/game_analysis.md), and
+[`Release`](docs/reference/ops/release.md).
+
+Live companion pages:
+
+- [Asset previews](https://gomoku2d.byebyebryan.com/assets/)
+- [Bot lab report](https://gomoku2d.byebyebryan.com/bot-report/)
+- [Replay analysis report](https://gomoku2d.byebyebryan.com/analysis-report/)

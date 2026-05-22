@@ -5,8 +5,8 @@ and imminent threat model, then use it to improve replay analysis before trying
 search integration.
 
 This is an ad-hoc working plan. Canonical tactical terminology lives in
-`docs/tactical_shapes.md`, `docs/corridor_search.md`, and
-`docs/game_analysis.md`.
+`docs/reference/lab/tactical_shapes.md`, `docs/reference/lab/corridor_search.md`, and
+`docs/reference/lab/game_analysis.md`.
 
 ## Context
 

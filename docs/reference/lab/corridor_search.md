@@ -778,7 +778,7 @@ shared tactical vocabulary, corridor cost metrics, and the scan-backed
 normal-search backend after parity checks and focused scan-vs-rolling runs.
 
 The `0.4.4` working plan lives in
-[`archive/v0_4_4_frontier_plan.md`](archive/v0_4_4_frontier_plan.md).
+[`../../archive/v0_4_4_frontier_plan.md`](../../archive/v0_4_4_frontier_plan.md).
 Player-facing bot settings should wait until a later `0.4.x` slice, likely
 `0.4.5`, so the UI exposes product language instead of unresolved cache/search
 knobs.
@@ -926,7 +926,7 @@ Known limits:
   and shape facts.
 - [`search_bot.md`](search_bot.md) — current `SearchBot` pipeline and tuning
   takeaways.
-- [`performance_tuning.md`](performance_tuning.md) — benchmark and tournament
+- [`performance_tuning.md`](../../working/performance_tuning.md) — benchmark and tournament
   evidence behind the current bot-lab direction.
-- [`archive/v0_4_3_corridor_bot_plan.md`](archive/v0_4_3_corridor_bot_plan.md)
+- [`../../archive/v0_4_3_corridor_bot_plan.md`](../../archive/v0_4_3_corridor_bot_plan.md)
   — working plan for the corridor-aware bot lab pass.

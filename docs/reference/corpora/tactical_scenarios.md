@@ -16,7 +16,7 @@ Source of truth:
 
 - Scenario boards: `gomoku-bot-lab/gomoku-lab-support/src/scenarios.rs`
 - Tactical case definitions: `gomoku-bot-lab/gomoku-eval/src/scenario.rs`
-- Shape vocabulary: [`tactical_shapes.md`](tactical_shapes.md)
+- Shape vocabulary: [`tactical_shapes.md`](../lab/tactical_shapes.md)
 
 ## Roles
 
@@ -65,7 +65,7 @@ The corpus is split into three explicit layers:
   value one. These cases are about ordering, not shape detection alone.
 - `combo_*`: one move creates or resolves multiple connected threats.
 
-The local layer uses the vocabulary in [`tactical_shapes.md`](tactical_shapes.md).
+The local layer uses the vocabulary in [`tactical_shapes.md`](../lab/tactical_shapes.md).
 It is intentionally asymmetric. Reacting to an opponent `OpenFour` by blocking
 one endpoint is not a meaningful local fixture because the opponent still has
 the other completion. The useful open-four cases are completing one, creating
@@ -81,7 +81,7 @@ Use `gomoku-eval lethal-scenarios` for lethal state classification. It is a
 separate pass/fail harness over the shared lethal classifier, not a bot
 move-choice sweep. The current lethal harness covers terminal coverage plus
 crossed one-step `4+3` / `3+3` coverage and non-lethal escape cases. See
-[`lethal_threats.md`](lethal_threats.md) for the model and case list.
+[`lethal_threats.md`](../lab/lethal_threats.md) for the model and case list.
 
 Position-obligation regressions are narrower than bot-choice scenarios. For
 example, match `#1577` prefix 32 is covered by tactical unit fixtures instead of

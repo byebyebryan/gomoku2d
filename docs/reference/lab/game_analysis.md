@@ -678,7 +678,7 @@ uses the step-wise wasm analyzer instead of loading that published batch JSON.
 
 Historical implementation notes, older telemetry, rejected proof policies, and
 debugging details are archived in
-[`archive/v0_4_2_game_analysis_impl_notes.md`](archive/v0_4_2_game_analysis_impl_notes.md).
+[`../../archive/v0_4_2_game_analysis_impl_notes.md`](../../archive/v0_4_2_game_analysis_impl_notes.md).
 
 ## Current Workflow
 

@@ -102,7 +102,7 @@ Consumer rules:
 ## Corpus And Validation
 
 The promoted golden corpus is documented in
-[`renju_corpus.md`](renju_corpus.md). It contains:
+[`renju_corpus.md`](../corpora/renju_corpus.md). It contains:
 
 - 6 handwritten core cases;
 - 23 RenjuNet advanced tutorial cases covering apparent three/four edge cases.
@@ -115,7 +115,7 @@ cargo run -p gomoku-eval -- renju-rules \
 ```
 
 The RenjuNet extraction/reference project lives in
-[`../gomoku-bot-lab/external/renjunet-advanced-examples/`](../gomoku-bot-lab/external/renjunet-advanced-examples/).
+[`../../../gomoku-bot-lab/external/renjunet-advanced-examples/`](../../../gomoku-bot-lab/external/renjunet-advanced-examples/).
 That folder owns OCR/manual extraction notes, fixture JSON, and external
 Piskvork validation. It deliberately does not run Gomoku2D checks; those belong
 to the eval/core test surfaces that consume the corpus.

@@ -1,7 +1,7 @@
 # `v0.4` Working Plan
 
 Status: active planning note. This doc captures the `v0.4` pivot after the
-first bot-lab experiments. `docs/roadmap.md` remains the canonical phase-level
+first bot-lab experiments. `docs/reference/product/roadmap.md` remains the canonical phase-level
 roadmap.
 
 ## Frame

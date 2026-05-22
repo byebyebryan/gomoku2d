@@ -280,7 +280,7 @@ tweak for `D3 + pattern-eval`. No anchor promotion yet; save another bot sweep
 for when we need to choose concrete product presets.
 
 `0.4.2` then pivoted from "stronger bot right now" to something more important:
-[`corridor search`](corridor_search.md) as a shared strategic model for
+[`corridor search`](../lab/corridor_search.md) as a shared strategic model for
 analysis, bot diagnostics, and future player education. The bot sweeps showed
 that obvious tuning gains are getting expensive. A better next step is to
 understand why a competent bot wins or loses, where the last escape existed,
@@ -366,7 +366,8 @@ against the current strategic branch, not only against older line-eval controls.
 The report still keeps `search-d1`, `search-d3`, and `search-d3+pattern-eval`
 as low/mid controls.
 
-The working plan lives in `docs/archive/v0_4_4_frontier_plan.md`.
+The working plan lives in
+[`v0_4_4_frontier_plan.md`](../../archive/v0_4_4_frontier_plan.md).
 
 `0.4.5` becomes the bot-controls UI bridge, with analysis explicitly deferred.
 The goal is not simply to say the bot became stronger or faster. The more
@@ -394,7 +395,8 @@ pattern-eval, child-cap, and corridor-proof spelling can appear as a generated
 spec for transparency, but the primary UI should describe what the setting
 means. Profile should not become a dumping ground for bot/debug preferences.
 
-The working plan lives in `docs/archive/v0_4_5_bot_controls_plan.md`.
+The working plan lives in
+[`v0_4_5_bot_controls_plan.md`](../../archive/v0_4_5_bot_controls_plan.md).
 
 `0.4.6` is the first replay-analysis product bridge. It turns the corridor
 analyzer from a static report artifact into something the Replay page can use
@@ -529,7 +531,8 @@ The project is ready to show to strangers as a coherent public alpha:
 - keep visual polish constrained so it supports the product story instead of
   becoming an endless cosmetics pass
 
-The working plan lives in `docs/archive/v0_5_public_release_plan.md`.
+The working plan lives in
+[`v0_5_public_release_plan.md`](../../working/v0_5_public_release_plan.md).
 
 ## P6 — `v0.6` Online Product Expansion
 

@@ -192,7 +192,7 @@ Source: <https://www.renju.net/advanced/>
 
 The following 23 cases are extracted from RenjuNet's advanced forbidden-move
 tutorial. The source extraction and external validation wrapper live in
-[`../gomoku-bot-lab/external/renjunet-advanced-examples/`](../gomoku-bot-lab/external/renjunet-advanced-examples/).
+[`../../../gomoku-bot-lab/external/renjunet-advanced-examples/`](../../../gomoku-bot-lab/external/renjunet-advanced-examples/).
 
 Removed proof frames: `problem1a.jpg`, `problem4.jpg`, `problem4b.jpg`, `problem5a.jpg`. Synthetic frames are called out in their expected text.
 

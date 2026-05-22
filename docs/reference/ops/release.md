@@ -75,7 +75,7 @@ When needed before tagging:
 - capture or refresh the README hero GIF
 - update `gomoku-web/assets/og_source.png`
 - regenerate `gomoku-web/public/og.png` at `1200x630`
-- update `docs/ui_screenshot_review.md`, `docs/ui_design.md`, `docs/roadmap.md`,
+- update `docs/working/ui_screenshot_review.md`, `docs/reference/app/ui_design.md`, `docs/reference/product/roadmap.md`,
   and `CHANGELOG.md`
 - leave `CHANGELOG.md` with an empty `[Unreleased]` section and a dated
   `[x.y.z]` section for the release

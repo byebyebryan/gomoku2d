@@ -1,6 +1,6 @@
 # v0.3 Completion Plan
 
-Status: completed ad-hoc planning note. `docs/roadmap.md` owns canonical phase
+Status: completed ad-hoc planning note. `docs/reference/product/roadmap.md` owns canonical phase
 intent; this file preserves the practical rest-of-`0.3` release plan after the
 roadmap pivot toward lab-powered product identity in `v0.4`.
 
@@ -58,7 +58,7 @@ Release prep now in place:
 - `gomoku-web/package.json` and lockfile are bumped to `0.3.0`.
 - `CHANGELOG.md` has a dated `0.3.0` section and updated compare links.
 - `scripts/release.sh --check 0.3.0` passes.
-- The full release checklist in `docs/release.md` has been run for the
+- The full release checklist in `docs/reference/ops/release.md` has been run for the
   prepared `0.3.0` diff.
 
 Release status:
@@ -91,7 +91,7 @@ Implementation status:
 - local history now has an explicit `guest-profile.v2` saved-match schema, with
   v1 history migrated on read and preserved as a rollback source
 - private cloud match v1 uses the same compact `move_cells` replay storage and
-  records field-level schema details in `docs/data_model.md`
+  records field-level schema details in `docs/reference/backend/data_model.md`
 - player records now carry stable human profile IDs and versioned practice-bot
   identity/config snapshots
 - Profile starts promotion in the background after cloud profile load

@@ -78,10 +78,11 @@ Local-threat annotation is policy-backed by `SearchThreatPolicy` in
 policy decides ordering score and must-keep status. Forbidden-only Renju Black
 raw shapes do not receive tactical ordering or safety-gate credit, and mixed
 legal/forbidden shapes keep only legal continuations for active threat strength.
-Renju forbidden-move checks are owned by core rules, but the exact RIF oracle is
-under active redesign; see [`renju_rules.md`](renju_rules.md). Core first
-applies a cheap necessary-condition guard: a forbidden candidate must have at
-least two black stones on one of the four local axes before the detector runs.
+Renju forbidden-move checks are owned by core rules; see
+[`renju_rules.md`](renju_rules.md) and the
+[`Renju Corpus`](../corpora/renju_corpus.md). Core first applies a cheap
+necessary-condition guard: a forbidden candidate must have at least two black
+stones on one of the four local axes before the detector runs.
 
 That Renju guard is deliberately not exposed as a bot component. It is a
 correctness-preserving core legality optimization, not a playing-style knob:
@@ -410,12 +411,12 @@ once with both color assignments. This replaced the older `random-legal` mode,
 which chose each opening move uniformly from the whole legal board and often
 created scattered, color-dominated positions. Keep `--opening-policy
 random-legal` only for noisy stress checks, not ranking. See
-[`tournament.md`](tournament.md) for the harness schedule and base templates.
+[`tournament.md`](../ops/tournament.md) for the harness schedule and base templates.
 
 ## `v0.4.0` experiment takeaways
 
 The detailed experiment log lives in
-[`archive/v0_4_search_bot_enhancement_plan.md`](archive/v0_4_search_bot_enhancement_plan.md).
+[`../../archive/v0_4_search_bot_enhancement_plan.md`](../../archive/v0_4_search_bot_enhancement_plan.md).
 The canonical lessons are:
 
 - Keep one `SearchBot` implementation for now. A separate `AdvancedSearchBot`
@@ -597,10 +598,10 @@ attempt showed that corridor portals are not useful as-is, but it left the bot
 with shared tactical facts, honest cost metrics, and a threat-view contract.
 Treat all corridor behavior as lab aliases or config flags until it survives
 tournament, search-cost, and replay-analysis checks. The working plan lives in
-[`archive/v0_4_3_corridor_bot_plan.md`](archive/v0_4_3_corridor_bot_plan.md).
+[`../../archive/v0_4_3_corridor_bot_plan.md`](../../archive/v0_4_3_corridor_bot_plan.md).
 
 The focused tactical scenario corpus is documented in
-[`tactical_scenarios.md`](tactical_scenarios.md). It is layered into `local_*`,
+[`tactical_scenarios.md`](../corpora/tactical_scenarios.md). It is layered into `local_*`,
 `priority_*`, and `combo_*` cases, with explicit role, layer, intent, and shape
 metadata in the JSON report. Use the hard safety-gate cases as regression
 guards before tournament ablations; use diagnostic cases to understand behavior
@@ -639,7 +640,7 @@ Current takeaways:
   `D5 cap4 pattern`, `D5 cap8 pattern`, `D7 cap4`, `D7 cap4 pattern`, and the
   current `D7 cap8` anchors.
 
-Detailed numbers live in [`performance_tuning.md`](performance_tuning.md).
+Detailed numbers live in [`performance_tuning.md`](../../working/performance_tuning.md).
 
 ### `0.4.2` sweep B/C read
 

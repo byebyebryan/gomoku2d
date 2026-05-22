@@ -5,28 +5,30 @@ React/UI shell around the board.
 
 It does **not** define the Phaser board art pipeline, sprite palettes, stone
 effects, tactical warning language, or board-theme asset rules. Those live in
-`game_visual.md`. The shell should stay compatible with multiple retro
+[`game_visual.md`](game_visual.md). The shell should stay compatible with multiple retro
 pixel-art board themes, not lock the project into one exact sprite pack.
 
-Paired with `app_design.md`, which defines screen roles and player-facing flows.
-Comparative screenshot review lives in `ui_screenshot_review.md`.
+Paired with [`app_design.md`](app_design.md), which defines screen roles and
+player-facing flows. Comparative screenshot review lives in
+[`ui_screenshot_review.md`](../../working/ui_screenshot_review.md).
 
 ## Reference image
 
 Static visual language reference sheet:
 
-![Gomoku2D DOM shell visual reference](assets/visual_reference_v0_2_2.png)
+![Gomoku2D DOM shell visual reference](../../assets/visual_reference_v0_2_2.png)
 
 Use this older sheet as a tone and component-language reference, not as the
 current screen baseline. The important takeaways are panel contrast, button
 weight, spacing, typography, and accent roles. Current screen captures live in
-`ui_screenshot_review.md`. Alternative explorations should stay in
-`docs/archive/` unless they become the new canonical reference.
+[`ui_screenshot_review.md`](../../working/ui_screenshot_review.md). Alternative
+explorations should stay in [`../../archive/`](../../archive/) unless they
+become the new canonical reference.
 
 ## Reference set
 
 For the comparative screenshot set and critique, see
-[ui_screenshot_review.md](ui_screenshot_review.md). That document embeds the
+[ui_screenshot_review.md](../../working/ui_screenshot_review.md). That document embeds the
 historical shell references plus focused `v0.4.5` through `v0.4.8` product
 captures for settings, replay analysis, analyzer-timeline polish, and
 mistake-aware replay annotations.
