@@ -103,14 +103,12 @@ fn main() {
     let mut board = Board::new(config.clone());
     let mut replay = Replay::new(config, &args.black, &args.white);
 
+    let black_label = args.black.clone();
+    let white_label = args.white.clone();
     let mut black_bot = make_bot(&args.black, args.depth, args.time_ms);
     let mut white_bot = make_bot(&args.white, args.depth, args.time_ms);
 
-    println!(
-        "Black: {}  |  White: {}",
-        black_bot.name(),
-        white_bot.name()
-    );
+    println!("Black: {black_label}  |  White: {white_label}");
     println!();
 
     let start = Instant::now();
@@ -134,8 +132,8 @@ fn main() {
         };
 
         let bot_name = match player {
-            Color::Black => black_bot.name(),
-            Color::White => white_bot.name(),
+            Color::Black => &black_label,
+            Color::White => &white_label,
         };
         println!(
             "Move {:3}  {}  {} {}",
