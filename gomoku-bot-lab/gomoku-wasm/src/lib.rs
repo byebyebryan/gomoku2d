@@ -6,12 +6,11 @@
 //! `gomoku-wasm` just exposes it across the Wasm boundary.
 
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use wasm_bindgen::prelude::*;
 
 use gomoku_analysis::{
-    AnalysisOptions, GameAnalysis, ReplayAnalysisCounters, ReplayAnalysisSession,
-    ReplayAnalysisStepStatus, ReplayFrameAnnotations, ReplyPolicy,
+    analysis_options_from_json, replay_analysis_error, ReplayAnalysisSession,
+    ReplayAnalysisStepEnvelope,
 };
 use gomoku_bot::{
     frontier::RollingThreatFrontier,
@@ -27,7 +26,8 @@ use gomoku_core::{Board, Color, GameResult, Move, Replay, RuleConfig};
 
 #[cfg(test)]
 mod replay_analysis_tests {
-    use super::{analysis_options_from_json, WasmReplayAnalyzer};
+    use super::WasmReplayAnalyzer;
+    use gomoku_analysis::analysis_options_from_json;
     use gomoku_analysis::DEFAULT_MAX_SCAN_PLIES;
     use gomoku_core::{Board, Move, Replay, RuleConfig};
     use serde_json::Value;
@@ -389,87 +389,6 @@ fn parse_bot_spec(spec_json: &str) -> Result<SearchBotConfig, String> {
     Ok(config)
 }
 
-const REPLAY_ANALYZER_STEP_SCHEMA_VERSION: u32 = 1;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "snake_case")]
-enum ReplayAnalysisStatus {
-    Running,
-    Resolved,
-    Unclear,
-    Unsupported,
-    Error,
-}
-
-#[derive(Debug, Clone, Serialize)]
-struct ReplayAnalysisStepResult {
-    schema_version: u32,
-    status: ReplayAnalysisStatus,
-    done: bool,
-    current_ply: Option<usize>,
-    annotations: Vec<ReplayFrameAnnotations>,
-    analysis: Option<GameAnalysis>,
-    error: Option<String>,
-    counters: ReplayAnalysisCounters,
-}
-
-fn replay_analysis_error(message: impl Into<String>) -> ReplayAnalysisStepResult {
-    ReplayAnalysisStepResult {
-        schema_version: REPLAY_ANALYZER_STEP_SCHEMA_VERSION,
-        status: ReplayAnalysisStatus::Error,
-        done: true,
-        current_ply: None,
-        annotations: Vec::new(),
-        analysis: None,
-        error: Some(message.into()),
-        counters: ReplayAnalysisCounters::default(),
-    }
-}
-
-fn analysis_options_from_json(options_json: &str) -> Result<AnalysisOptions, String> {
-    let trimmed = options_json.trim();
-    if trimmed.is_empty() {
-        return Ok(AnalysisOptions::default());
-    }
-
-    let value = serde_json::from_str::<Value>(trimmed)
-        .map_err(|err| format!("invalid options json: {err}"))?;
-    let mut options = AnalysisOptions::default();
-
-    let Some(object) = value.as_object() else {
-        return Err("analysis options must be a JSON object".to_string());
-    };
-
-    if let Some(max_depth) = object.get("max_depth") {
-        let value = max_depth
-            .as_u64()
-            .ok_or_else(|| "max_depth must be a non-negative integer".to_string())?;
-        options.max_depth = value as usize;
-    }
-
-    if let Some(max_scan_plies) = object.get("max_scan_plies") {
-        options.max_scan_plies = if max_scan_plies.is_null() {
-            None
-        } else {
-            Some(max_scan_plies.as_u64().ok_or_else(|| {
-                "max_scan_plies must be null or a non-negative integer".to_string()
-            })? as usize)
-        };
-    }
-
-    options.reply_policy = ReplyPolicy::CorridorReplies;
-    Ok(options)
-}
-
-fn replay_analysis_status(status: ReplayAnalysisStepStatus) -> ReplayAnalysisStatus {
-    match status {
-        ReplayAnalysisStepStatus::Running => ReplayAnalysisStatus::Running,
-        ReplayAnalysisStepStatus::Resolved => ReplayAnalysisStatus::Resolved,
-        ReplayAnalysisStepStatus::Unclear => ReplayAnalysisStatus::Unclear,
-        ReplayAnalysisStepStatus::Unsupported => ReplayAnalysisStatus::Unsupported,
-    }
-}
-
 #[wasm_bindgen]
 pub struct WasmReplayAnalyzer {
     completed_json: Option<String>,
@@ -513,16 +432,7 @@ impl WasmReplayAnalyzer {
             replay_analysis_error(init_error)
         } else if let Some(session) = self.session.as_mut() {
             let step = session.step(max_work_units);
-            ReplayAnalysisStepResult {
-                schema_version: REPLAY_ANALYZER_STEP_SCHEMA_VERSION,
-                status: replay_analysis_status(step.status),
-                done: step.done,
-                current_ply: step.current_ply,
-                annotations: step.annotations,
-                analysis: step.analysis,
-                error: None,
-                counters: step.counters,
-            }
+            ReplayAnalysisStepEnvelope::from_step(step)
         } else {
             replay_analysis_error("analysis session is not available")
         };
