@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use gomoku_core::{Board, Color, Move, RuleConfig, Variant};
 
 pub struct BenchScenario {
@@ -12,7 +10,6 @@ pub struct BenchScenario {
     pub moves: &'static [&'static str],
 }
 
-#[allow(dead_code)]
 impl BenchScenario {
     pub fn board(&self) -> Board {
         let mut board = Board::new(RuleConfig {

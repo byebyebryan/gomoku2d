@@ -4,9 +4,7 @@ use criterion::{criterion_group, criterion_main, BatchSize, BenchmarkId, Criteri
 use std::hint::black_box;
 
 use gomoku_core::{Board, Color, Move};
-
-#[path = "../../benchmarks/scenarios.rs"]
-mod scenarios;
+use gomoku_lab_support::scenarios;
 
 fn criterion_config() -> Criterion {
     Criterion::default()

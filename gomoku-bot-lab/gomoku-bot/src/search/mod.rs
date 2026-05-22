@@ -2453,14 +2453,11 @@ impl Bot for SearchBot {
 }
 
 #[cfg(test)]
-#[path = "../../../benchmarks/scenarios.rs"]
-mod scenarios;
-
-#[cfg(test)]
 mod tests {
     use super::*;
     use crate::tactical::ScanThreatView;
     use gomoku_core::RuleConfig;
+    use gomoku_lab_support::scenarios;
 
     fn mv(notation: &str) -> Move {
         Move::from_notation(notation).unwrap()

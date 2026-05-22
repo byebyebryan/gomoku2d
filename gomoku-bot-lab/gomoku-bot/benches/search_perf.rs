@@ -3,13 +3,8 @@ use std::time::Duration;
 use criterion::{criterion_group, criterion_main, BatchSize, BenchmarkId, Criterion};
 use std::hint::black_box;
 
-use gomoku_bot::{Bot, SearchBot};
-
-#[path = "../../benchmarks/scenarios.rs"]
-mod scenarios;
-
-#[path = "../../benchmarks/search_configs.rs"]
-mod search_configs;
+use gomoku_bot::{lab_spec as search_configs, Bot, SearchBot};
+use gomoku_lab_support::scenarios;
 
 fn criterion_config() -> Criterion {
     Criterion::default()

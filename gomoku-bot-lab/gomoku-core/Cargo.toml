@@ -9,6 +9,7 @@ serde_json = "1"
 
 [dev-dependencies]
 criterion = "0.8"
+gomoku-lab-support = { path = "../gomoku-lab-support" }
 
 [[bench]]
 name = "board_perf"

@@ -1,11 +1,8 @@
 use std::time::Instant;
 
 use clap::Parser;
-use gomoku_bot::{Bot, RandomBot, SearchBot};
+use gomoku_bot::{lab_spec, Bot, RandomBot, SearchBot};
 use gomoku_core::{Board, Color, GameResult, Move, Replay, RuleConfig, Variant};
-
-#[path = "../../benchmarks/search_configs.rs"]
-mod search_configs;
 
 #[derive(Parser, Debug)]
 #[command(name = "gomoku-cli", about = "Run a Gomoku match between bots")]
@@ -43,7 +40,7 @@ fn make_bot(name: &str, depth: i32, time_ms: Option<u64>) -> Box<dyn Bot> {
     if name == "random" {
         return Box::new(RandomBot::new());
     }
-    if let Some(config) = search_configs::search_config_from_lab_spec(name, depth, time_ms, None) {
+    if let Some(config) = lab_spec::search_config_from_lab_spec(name, depth, time_ms, None) {
         return Box::new(SearchBot::with_config(config));
     }
 

@@ -1,12 +1,8 @@
 use gomoku_bot::{Bot, SearchBot, SearchBotConfig};
 use gomoku_core::{Color, Move, Variant};
+use gomoku_lab_support::scenarios::{parse_move, BenchScenario, SCENARIOS};
 use serde::Serialize;
 use std::time::Instant;
-
-#[path = "../../benchmarks/scenarios.rs"]
-mod benchmark_scenarios;
-
-use benchmark_scenarios::{parse_move, BenchScenario, SCENARIOS};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TacticalScenarioRole {

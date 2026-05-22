@@ -13,6 +13,7 @@ libc = "0.2"
 
 [dev-dependencies]
 criterion = "0.8"
+gomoku-lab-support = { path = "../gomoku-lab-support" }
 
 [[bench]]
 name = "search_perf"

@@ -10,9 +10,7 @@ use gomoku_bot::search::{
 use gomoku_bot::tactical::SearchThreatPolicy;
 use gomoku_bot::StaticEvaluation;
 use gomoku_core::{Board, Color, Move};
-
-#[path = "../../benchmarks/scenarios.rs"]
-mod scenarios;
+use gomoku_lab_support::scenarios;
 
 fn criterion_config() -> Criterion {
     Criterion::default()

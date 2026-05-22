@@ -1,8 +1,6 @@
-#[path = "../../benchmarks/scenarios.rs"]
-mod scenarios;
-
 use gomoku_core::{Board, Color, Move};
 use gomoku_core::{GameResult, Variant};
+use gomoku_lab_support::scenarios;
 
 #[test]
 fn benchmark_scenarios_are_valid_and_ongoing() {
