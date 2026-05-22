@@ -4,8 +4,8 @@ Scope: track the cost shape of backend pieces as they are added. The goal is
 to keep Gomoku2D comfortably inside free tiers while the project is small, and
 to notice early when a feature changes the cost profile.
 
-Live setup state lives in `backend_infra.md`; backend architecture and trust
-lanes live in `backend.md`.
+Live setup state lives in [`backend_infra.md`](backend_infra.md); backend
+architecture and trust lanes live in [`backend.md`](../backend/backend.md).
 
 This is an estimate document, not billing truth. Re-check official pricing
 before each backend release and use the Firebase/GCP usage dashboards after

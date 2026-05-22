@@ -332,10 +332,10 @@ There is one persistent saved setup for casual local play.
 - Local Match can continue the current game or start a new game with the saved
   setup
 
-### Future cloud extension
+### Future shared/online extension
 
-When sign-in, sync, or shared replays arrive later, they should preserve the
-same screen roles:
+When shared replays or online flows arrive later, they should preserve the same
+screen roles:
 
 - Home stays a title/start surface
 - Match stays a board-first HUD

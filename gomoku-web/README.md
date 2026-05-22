@@ -103,7 +103,7 @@ src/
 ├── routes/         Home, LocalMatch, Profile, Replay, Settings
 ├── components/     Reusable UI (Board wrapper around Phaser)
 ├── board/          Phaser scene, renderer, board constants
-├── cloud/          Firebase config/bootstrap for cloud-backed v0.3 surfaces
+├── cloud/          Firebase config/bootstrap for cloud-backed profile/history
 ├── game/           Local match Zustand store + shared types
 ├── profile/        Local profile Zustand store (persisted to localStorage)
 ├── replay/         Replay frames, core conversion, and browser analysis runner
@@ -160,20 +160,6 @@ The current Firebase project is `gomoku2d`. Live setup details and API-based
 config fetch commands live in [`../docs/reference/ops/backend_infra.md`](../docs/reference/ops/backend_infra.md).
 CI and tag deploy builds include these public config values so the released app
 can initialize Firebase.
-
-Fetch registered web apps and then the selected app config with:
-
-```sh
-TOKEN=$(gcloud auth print-access-token)
-curl -H "Authorization: Bearer ${TOKEN}" \
-  -H "X-Goog-User-Project: gomoku2d" \
-  "https://firebase.googleapis.com/v1beta1/projects/gomoku2d/webApps"
-
-APP_ID="1:892554744656:web:..."
-curl -H "Authorization: Bearer ${TOKEN}" \
-  -H "X-Goog-User-Project: gomoku2d" \
-  "https://firebase.googleapis.com/v1beta1/projects/gomoku2d/webApps/${APP_ID}/config"
-```
 
 ```sh
 npm run build              # production build + static report/asset routes

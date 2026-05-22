@@ -32,7 +32,7 @@ once.
 | Version | Backend intent | Included | Deferred |
 |---|---|---|---|
 | `P3 / v0.3` | Backend foundation and cloud continuity | Firebase Auth, cloud profile, local profile promotion, private cloud history, owner-scoped Firestore rules | live PvP, ranked/trusted matches, public replay sharing, replay analysis, puzzles |
-| `P4 / v0.4` | Lab-powered product identity | replay analysis, critical moments, puzzles, save-this-game positions, bot personalities/customization; Cloud Run only if browser-side wasm is not enough | live PvP, ranked/trusted matches, broad public sharing |
+| `P4 / v0.4` | Lab-powered product identity | replay analysis, bot reports, configurable bots, tactical hints; Cloud Run only if browser-side wasm is not enough | live PvP, ranked/trusted matches, broad public sharing, puzzles, bot personalities |
 | `P5 / v0.5` | Public-release reconciliation | repo/artifact cleanup, report presentation, explanation pages, release packaging; backend usually unchanged | live PvP, ranked/trusted matches, broad public sharing |
 | `P6 / v0.6` | Online product expansion | Cloud Run match authority, direct challenge/PvP, trusted match history, matchmaking/ranked if useful, explicit public shareables | broad social features |
 

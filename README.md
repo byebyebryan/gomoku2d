@@ -87,9 +87,9 @@ lives in [`docs/README.md`](docs/README.md).
 
 ## Current Status
 
-The current alpha supports local-first play, optional Google sign-in for private
-cloud history, configurable bots, tactical hints, and replay analysis. The
-`v0.5` line is about public-release reconciliation: cleaner repo artifacts,
+The public app is on the `0.4.x` alpha line: local-first play, optional Google
+sign-in for private cloud history, configurable bots, tactical hints, and replay
+analysis. Current repo work is preparing `v0.5`: cleaner repo artifacts,
 first-class report surfaces, in-product explanations, and stranger-facing
 packaging. Longer-term sequencing lives in
 [`docs/reference/product/roadmap.md`](docs/reference/product/roadmap.md).

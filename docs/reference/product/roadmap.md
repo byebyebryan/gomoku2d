@@ -232,227 +232,45 @@ Make the Rust lab visible as a product differentiator.
 - keep the lab-to-product loop tight: core/bot findings should become UI
   features without a rewrite
 
-### Current Sequencing
+### Completed Outputs
 
-`0.4.0` is a foundation release, not the first visible analysis feature. The
-initial bot experiments showed that style labels and tactical shortcuts are easy
-to invent but hard to justify. The release therefore focuses on:
+The `0.4` line shipped the lab-powered identity in stages:
 
-- explicit bot config and lab specs
-- tactical scenario diagnostics
-- multi-threaded tournament/report output
-- search-pipeline metrics and ablation vocabulary
-- behavior-preserving core/search hot-path optimizations
-- written records of rejected tactical experiments
+- explicit `search-*` bot specs, tactical scenario diagnostics, tournament
+  reports, and search-pipeline metrics;
+- measured bot presets and controlled advanced settings for depth, width,
+  pattern scoring, corridor proof, tactical hints, and Renju feedback;
+- rolling threat facts and pattern-frame caching as the default hot-path backend,
+  with scan-backed modes kept as fallback/comparison tools;
+- corridor search as the shared strategic model for replay analysis, bot
+  diagnostics, and future player education;
+- the in-product Replay analyzer: setup corridor, lethal onset, last escape,
+  mistake-aware labels, and board evidence overlays;
+- exact Renju forbidden-move checking backed by extracted/reference fixtures and
+  practical performance filters;
+- curated bot and analysis reports published as visible proof of the lab.
 
-`0.4.1` uses that foundation for a narrower tactical ranking / move-ordering
-pass. The target is not "make one depth-2 fixture pass"; it is better reached
-depth, runtime, or match strength under the same budget.
+Detailed chronology and experiment evidence live in the archive and working
+notes, especially [`v0_4_plan.md`](../../archive/v0_4_plan.md),
+[`v0_4_search_bot_enhancement_plan.md`](../../archive/v0_4_search_bot_enhancement_plan.md),
+[`v0_4_3_corridor_bot_plan.md`](../../archive/v0_4_3_corridor_bot_plan.md),
+[`v0_4_4_frontier_plan.md`](../../archive/v0_4_4_frontier_plan.md), and
+[`performance_tuning.md`](../../working/performance_tuning.md).
 
-The current `0.4.1` checkpoint has produced and published the first clean
-8-entrant reference report: depth ladder, tactical-cap hard variants, and
-pattern-eval ablations under the same Renju rule, centered opening suite, and
-`1000 ms` CPU-per-move budget. The practical read is:
+### Durable Lessons
 
-- `search-d1` is now a plausible easy/beginner lane because the safety gate
-  covers hard local threats even at shallow depth.
-- `search-d3` remains the stable default bot baseline.
-- `search-d5+tactical-cap-8` is the efficient hard-side candidate.
-- `search-d7+tactical-cap-8` is stronger, but spends more budget.
-- `+pattern-eval` is promising enough to keep as a lab axis, but too expensive
-  and unsettled to promote as a default product preset.
-
-That became the coherent `0.4.1` checkpoint: bot ladder, report, tactical
-pipeline, and enough evidence to stop guessing at bot labels.
-
-`0.4.2` stayed in the lab for one more pass before UI. The harness was strong
-enough to justify a second measured pass, and product presets will be cleaner
-if they come from evidence rather than from raw knobs. The intended order was:
-
-- tune existing axes first: depth, child cap, candidate source, and pattern eval
-- prototype bounded corridor search second, using only concrete local
-  gain/defense replies with strict caps and explicit non-alpha-beta metrics
-- treat style/character last; offensive/defensive labels should emerge from
-  real budget allocation, not from ad hoc eval weights
-
-The first `0.4.2` sweeps covered child-cap, pattern-eval, symmetric candidate
-radius, and one asymmetric candidate source. They narrowed the bot question
-rather than closing it: pattern eval is still the strongest signal but remains a
-cost tradeoff, cap16 is not a general upgrade, cap4 is viable when paired with
-tactical ordering, and `self2/opponent1` mainly looks useful as an efficiency
-tweak for `D3 + pattern-eval`. No anchor promotion yet; save another bot sweep
-for when we need to choose concrete product presets.
-
-`0.4.2` then pivoted from "stronger bot right now" to something more important:
-[`corridor search`](../lab/corridor_search.md) as a shared strategic model for
-analysis, bot diagnostics, and future player education. The bot sweeps showed
-that obvious tuning gains are getting expensive. A better next step is to
-understand why a competent bot wins or loses, where the last escape existed,
-and which forced sequence made the position collapse.
-
-The analyzer has moved from lab artifact into the replay screen. It uses
-bounded corridor proof to explain the final forced sequence in finished games,
-records proof intervals instead of assuming one monotonic turning point, and
-separates ideal play from human mistakes such as missed defenses, missed wins,
-possible escapes, corridor entries, and unclear proof boundaries.
-
-This matters beyond the interim report: corridor search gives replay analysis a
-concrete foundation, formalizes the project's advanced-strategy vocabulary,
-gives the lab a way to inspect bot behavior beyond Elo, can feed back into bot
-search as focused forcing logic, and points toward a product identity where
-Gomoku2D can teach the game it is playing.
-
-The current public checkpoint is the curated top-two replay analysis report
-published at `/analysis-report/`, generated from the current bot report. That is
-the coherent `0.4.2` checkpoint: bot sweep evidence, a presentable corridor
-analysis workbench, and a real strategic foundation for deciding what should
-become player-facing later.
-
-`0.4.3` stayed in the lab for one more corridor-search pass before UI plumbing.
-Corridor search is now too central to the advanced-strategy story to expose only
-as an analyzer report and then immediately jump to settings. The checkpoint
-answered the first live-bot integration question: scan-backed corridor portals
-are not useful under the current bounded search budget. The durable output is
-unified tactical/corridor threat semantics and metrics that make the cost
-problem visible.
-
-That release remains lab-first:
-
-- reuse corridor-search vocabulary and tactical facts inside bot experiments
-  without turning the bot into a full solver
-- measure strength, search cost, and loss categories against the current
-  published anchors
-- reinforce or optimize corridor search where the bot integration exposes
-  obvious cost or correctness gaps
-- treat offensive/defensive behavior as an analysis and ordering question, not
-  as another corridor budget knob
-- keep UI, settings, and product preset work out of scope unless the lab result
-  is clear enough to name
-
-`0.4.4` is the rolling-frontier lab pass, not the UI bridge. The portal line is
-retired as a candidate bot primitive for now: resume portals distorted scores,
-and proof-only portals were safer but still too expensive for too few terminal
-proofs. The current parser/code path no longer carries portal controls. The
-durable `0.4.3` result is therefore the scan-backed `ThreatView` seam and
-unified threat vocabulary, not a promoted corridor bot.
-
-The `0.4.4` checkpoint treats rolling frontier as a correctness-sensitive cache
-architecture:
-
-- keep `Board` as the authority for stones, turn, result, and exact legality;
-- normalize tactical facts so scan-backed and cached views can be compared
-  exactly;
-- add a rolling `ThreatView` implementation that updates alongside apply/undo;
-- validate it against `ScanThreatView` on tactical fixtures, random sequences,
-  and Renju forbidden cases;
-- run it in shadow mode before promoting hot-path behavior;
-- promote rolling-backed tactical ordering and current-obligation safety as the
-  default threat-view backend after focused parity and smoke metrics are clean;
-- promote rolling-backed `+pattern-eval` from repeated full-window scans to a
-  cached pattern frame after fixed-depth parity, debug shadow checks, and
-  scan-vs-rolling H2H controls show lower cost without clear strength
-  regression;
-- keep scan-backed threat view as an explicit fallback/comparison suffix;
-- treat relaxed/no-budget scan-vs-rolling runs as the semantic parity check, and
-  normal-budget runs as budget-interaction/cost evidence.
-
-The current published anchor report now reflects that lab direction. It drops
-the old line-eval middle anchors (`search-d5`, `search-d5+tactical-cap-8`,
-`search-d7+tactical-cap-8`) and replaces them with the active
-pattern+corridor-proof lanes:
-
-- `search-d3+pattern-eval+corridor-proof-c16-d8-w4`
-- `search-d5+tactical-cap-16+pattern-eval+corridor-proof-c16-d8-w4`
-- `search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4`
-
-That keeps the report at eight entrants while making future sweeps compare
-against the current strategic branch, not only against older line-eval controls.
-The report still keeps `search-d1`, `search-d3`, and `search-d3+pattern-eval`
-as low/mid controls.
-
-The working plan lives in
-[`v0_4_4_frontier_plan.md`](../../archive/v0_4_4_frontier_plan.md).
-
-`0.4.5` becomes the bot-controls UI bridge, with analysis explicitly deferred.
-The goal is not simply to say the bot became stronger or faster. The more
-distinctive product story is that the bot is configurable and
-inspectable because there is a real Rust bot lab behind it.
-
-Use two layers:
-
-- tested presets for normal players, e.g. easy/normal/hard bot lanes
-  backed by current anchor reports;
-- an advanced Bot Lab layer that exposes the main tuning dimensions in product
-  language: search depth, search width, pattern scoring, corridor proof, and
-  generated lab spec, with browser-safe depth/width limits rather than every raw
-  lab combination.
-- defensive board hints for human turns, using the same tactical vocabulary to
-  mark opponent imminent threats and counter-threat replies before they become
-  one-move losses. Tactical hints are profile-synced immediate/imminent mode
-  controls; immediate wins/losses take display priority over imminent/counter
-  hints, and Renju forbidden moves stay always-on as legality feedback.
-
-Keep report-only diagnostics and retired lab axes out of the UI:
-`rolling-frontier-shadow`, `scan-threat-view`, safety ablations, retired
-portal/leaf-extension suffixes, and tournament-only CPU budget controls. Raw
-pattern-eval, child-cap, and corridor-proof spelling can appear as a generated
-spec for transparency, but the primary UI should describe what the setting
-means. Profile should not become a dumping ground for bot/debug preferences.
-
-The working plan lives in
-[`v0_4_5_bot_controls_plan.md`](../../archive/v0_4_5_bot_controls_plan.md).
-
-`0.4.6` is the first replay-analysis product bridge. It turns the corridor
-analyzer from a static report artifact into something the Replay page can use
-directly.
-
-The release lands the full foundation slice:
-
-- `gomoku-analysis` is now the shared Rust analyzer crate;
-- `gomoku-analysis` exposes a stepped `ReplayAnalysisSession` with frame
-  annotations and progress counters;
-- `gomoku-eval` keeps the CLI/report workflows by consuming that shared crate;
-- `gomoku-wasm` exposes a session-backed replay analyzer bridge and exact replay
-  hash helper;
-- `gomoku-web` converts saved matches into core replay JSON and runs analysis in
-  a cancellable worker;
-- Replay opens on the final board, then uses turn-based navigation, a
-  setup-corridor timeline, compact frame-aware status copy, and board
-  annotations to show the setup corridor, lethal onset, and latest escape;
-- the split caution/highlighter/marker sprite vocabulary now supports both live
-  hints and replay analysis overlays.
-
-Keep the claim bounded: this is not a solver and not a full proof-tree browser.
-It is the first in-product version of corridor search: saved replays can explain
-the final forced sequence and the last visible escape.
-
-`0.4.7` is the lethal-threat and Renju-correctness checkpoint inside the closing
-stretch of the `0.4` analyzer line. The original target was to mark the
-effective end state of a forced sequence: once the loser faces a lethal threat,
-the rest of the replay is conversion rather than the interesting cause. That
-forced us to make combo threats explicit. Renju.net calls many of these "forks";
-Gomoku2D models them as legality-aware coverage problems: can the defender make
-one legal reply that covers every terminal or already-lethal continuation?
-
-That work exposed that shape-only Renju forbidden checks were not reliable
-enough for analysis, bot search, or hints. `0.4.7` therefore also ships the
-recursive Renju forbidden checker, the extracted Renju example corpus, reference
-validation notes, and the performance filters needed to keep the corrected
-checker practical.
-
-The product-facing polish is deliberately narrow: Replay uses lethal onset to
-separate setup corridor from lethal tail, improves the timeline/status language,
-and keeps last-move animation readable without breaking stone removal. This is
-still a hardening release, not the start of a new UI theme line.
-
-`0.4.8` wraps the `0.4` lab-powered line with the last analyzer feature that
-belongs before the `0.5` polish pass: human/bot mistake detection. The analyzer
-now classifies losing-side failures from response semantics rather than from
-corridor length: missed immediate wins, missed four replies, missed forcing-
-three replies, missed lethal prevention, missed setup-corridor escape, and
-unclear boundaries. It also carries threat evidence into the replay board and
-static analysis report so the UI can show why a cell matters, not only where the
-model says to play.
+- Direct bot-strength tuning had diminishing returns. Depth, tactical ordering,
+  pattern scoring, and candidate caps matter, but most knobs only became useful
+  after tournaments and reports made their tradeoffs visible.
+- Corridor search was not broadly useful as a live bot shortcut under the current
+  browser-scale compute budget, but it became the right foundation for replay
+  explanation and shared tactical vocabulary.
+- Rolling threat facts were worth doing because they unified the hot path behind
+  a stable query contract while keeping scan-backed validation/fallback options.
+- Renju legality is too subtle for shape shortcuts. The corrected recursive
+  checker and corpus are core correctness work, not optional lab polish.
+- The strongest product direction is explainable play: configurable bots,
+  reports, and replay analysis that can show where a finished game turned.
 
 That makes `0.4` a coherent foundation: configurable bots, measured reports,
 rolling threat facts, replay traceback, lethal onset, Renju correctness, and
@@ -506,7 +324,8 @@ heavy lab work, and package the project for first public release.
   structured report data
 - slim or split committed report data if the current `latest.json` artifacts are
   too heavy for normal review after the viewer rewrite starts
-- add concise product pages such as About, Rules, Analysis, and Bot Lab
+- productize the existing concise docs for About, Rules, Analysis, and Bot Lab
+  inside the app
 - polish Home, Replay, report pages, and README copy around the lab-under-the-
   board story
 - refresh hero capture, screenshots, Open Graph image, and public release notes

@@ -244,8 +244,8 @@ moving casual gameplay out of the browser.
 From here, the version plan is:
 
 - **P4 / `v0.4` — lab-powered product identity.** Use the Rust core/bot/eval
-  tools for replay analysis, critical-moment tagging, puzzles, bot
-  personalities, and related learning modes.
+  tools for configurable bots, published reports, tactical hints, and replay
+  analysis. Puzzles and bot personalities remain possible later extensions.
 - **P5 / `v0.5` — public-release reconciliation.** Clean up repo artifacts,
   productize report surfaces, add concise explanatory pages, and package the
   app for a stranger-facing alpha. Skins remain optional supporting polish, not

@@ -29,3 +29,7 @@ scenarios, Renju validation, and performance checks.
 That lab is not just for stronger bots. It is how the project explains games:
 where a forced sequence started, where the defender last had an escape, and why
 a move became decisive.
+
+Next: [play the game](https://gomoku2d.byebyebryan.com/), read
+[`Rules and Renju`](rules.md), or see how [`Replay Analysis`](analysis.md)
+works.

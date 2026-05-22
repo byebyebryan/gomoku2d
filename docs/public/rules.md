@@ -25,6 +25,9 @@ but Black has forbidden moves:
 - double-four: one move creates multiple four threats;
 - double-three: one move creates multiple real three threats.
 
+These restrictions stop Black from creating several immediate winning threats
+at once.
+
 The important detail is "real." Gomoku2D does not rely only on rough pattern
 counting for Renju. The rules model checks whether a forbidden-looking shape is
 actually live under the rules, then uses that same legality model for play,

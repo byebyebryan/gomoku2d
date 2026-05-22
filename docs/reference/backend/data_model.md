@@ -3,8 +3,8 @@
 Scope: canonical persisted data shapes for Gomoku2D local and cloud state.
 
 This document is the schema contract for persisted app data. Backend design and
-trust boundaries live in `backend.md`; live project setup and deployed rulesets
-live in `backend_infra.md`.
+trust boundaries live in [`backend.md`](backend.md); live project setup and
+deployed rulesets live in [`backend_infra.md`](../ops/backend_infra.md).
 
 ## Schema Policy
 
