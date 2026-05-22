@@ -1762,8 +1762,7 @@ fn store_tt_entry(
     hash: u64,
     entry: TTEntry,
 ) {
-    let can_insert =
-        tt.contains_key(&hash) || max_tt_entries.map_or(true, |limit| tt.len() < limit);
+    let can_insert = tt.contains_key(&hash) || max_tt_entries.is_none_or(|limit| tt.len() < limit);
     if can_insert {
         tt.insert(hash, entry);
     } else {

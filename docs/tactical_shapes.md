@@ -10,7 +10,7 @@ cheaply around one candidate move or an existing corridor threat.
 Source of truth in code:
 
 - Shared tactical shape facts: `gomoku-bot-lab/gomoku-bot/src/tactical.rs`
-- Search consumer: `gomoku-bot-lab/gomoku-bot/src/search.rs`
+- Search consumer: `gomoku-bot-lab/gomoku-bot/src/search/mod.rs`
 - Corridor consumer: `gomoku-bot-lab/gomoku-bot/src/corridor.rs`
 - Replay-analysis consumer tests: `gomoku-bot-lab/gomoku-eval/src/analysis.rs`
 - Scenario boards: `gomoku-bot-lab/benchmarks/scenarios.rs`
