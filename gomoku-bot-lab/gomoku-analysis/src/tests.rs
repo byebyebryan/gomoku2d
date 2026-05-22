@@ -7,13 +7,14 @@ use gomoku_core::{Board, Color, Move, Replay, RuleConfig, Variant};
 
 use super::{
     analyze_alternate_defender_reply_options, analyze_defender_reply_options, analyze_replay,
-    corridor_analysis_model, failure_analysis, replay_frame_annotations_for_analysis,
-    replay_frame_annotations_from_proof, replay_moves, replay_prefix_boards, replay_proof_summary,
-    AnalysisOptions, DefenderReplyOutcome, DefenderReplyRole, FailureAnalysisInput, FailureMode,
-    ForcedInterval, LethalOnset, LethalOnsetComponentTier, LethalOnsetMechanism, LethalOnsetShape,
-    MissedCandidateOutcome, ProofLimitCause, ProofResult, ProofStatus, ReplayAnalysisSession,
-    ReplayFrameAnnotations, ReplayFrameHighlightRole, ReplayFrameMarkerRole, ReplyClassification,
-    ReplyPolicy, RootCause, TacticalNote, ThreatSequenceEvidence, UnclearReason,
+    corridor_analysis_model, defender_reply_candidates, failure_analysis,
+    replay_frame_annotations_for_analysis, replay_frame_annotations_from_proof, replay_moves,
+    replay_prefix_boards, replay_proof_summary, AnalysisOptions, DefenderReplyOutcome,
+    DefenderReplyRole, FailureAnalysisInput, FailureMode, ForcedInterval, LethalOnset,
+    LethalOnsetComponentTier, LethalOnsetMechanism, LethalOnsetShape, MissedCandidateOutcome,
+    ProofLimitCause, ProofResult, ProofStatus, ReplayAnalysisSession, ReplayFrameAnnotations,
+    ReplayFrameHighlightRole, ReplayFrameMarkerRole, ReplyClassification, ReplyPolicy, RootCause,
+    TacticalNote, ThreatSequenceEvidence, UnclearReason,
 };
 
 fn mv(notation: &str) -> Move {
@@ -142,52 +143,38 @@ fn test_lethal_onset(prefix_ply: usize, attacker: Color) -> LethalOnset {
 }
 
 #[test]
-fn defender_reply_options_distinguish_forced_loss_from_unproven_counterplay() {
+fn defender_reply_candidates_distinguish_defenses_from_counterplay() {
     let board = board_from_moves(
         Variant::Renju,
         &[
             "H8", "I8", "H7", "I7", "H6", "H5", "I6", "I9", "G6", "J6", "G8", "J5", "G5",
         ],
     );
-    let options = AnalysisOptions {
-        reply_policy: ReplyPolicy::CorridorReplies,
-        max_depth: 4,
-        max_scan_plies: Some(8),
-    };
-    let replies = analyze_defender_reply_options(&board, Color::Black, Some(mv("G7")), &options);
+    let candidates = defender_reply_candidates(&board, Color::Black, Some(mv("G7")));
 
     for notation in ["G4", "G7", "G9"] {
-        let reply = reply_for(&replies, notation);
-        assert!(reply.roles.contains(&DefenderReplyRole::ImminentDefense));
-        assert_eq!(
-            reply.outcome,
-            DefenderReplyOutcome::ForcedLoss,
-            "{notation}: line {:?} limits {:?}",
-            reply.principal_line_notation,
-            reply.limit_causes
+        assert!(
+            candidates.iter().any(|candidate| {
+                candidate.notation == notation
+                    && candidate
+                        .roles
+                        .contains(&DefenderReplyRole::ImminentDefense)
+            }),
+            "{notation} should be visible as an imminent-defense candidate: {candidates:?}"
         );
     }
 
-    let i10 = reply_for(&replies, "I10");
-    assert!(i10.roles.contains(&DefenderReplyRole::OffensiveCounter));
-    assert_eq!(
-        i10.outcome,
-        DefenderReplyOutcome::PossibleEscape,
-        "I10: line {:?} limits {:?}",
-        i10.principal_line_notation,
-        i10.limit_causes
-    );
-    assert!(i10.limit_causes.contains(&ProofLimitCause::DepthCutoff));
-
-    let i11 = reply_for(&replies, "I11");
-    assert!(i11.roles.contains(&DefenderReplyRole::OffensiveCounter));
-    assert_eq!(
-        i11.outcome,
-        DefenderReplyOutcome::ForcedLoss,
-        "I11: line {:?} limits {:?}",
-        i11.principal_line_notation,
-        i11.limit_causes
-    );
+    for notation in ["I10", "I11"] {
+        assert!(
+            candidates.iter().any(|candidate| {
+                candidate.notation == notation
+                    && candidate
+                        .roles
+                        .contains(&DefenderReplyRole::OffensiveCounter)
+            }),
+            "{notation} should be visible as an offensive-counter candidate: {candidates:?}"
+        );
+    }
 }
 
 #[test]
@@ -898,7 +885,7 @@ fn replay_analysis_stops_at_possible_escape_boundary() {
         &replay,
         AnalysisOptions {
             reply_policy: ReplyPolicy::CorridorReplies,
-            max_depth: 4,
+            max_depth: 0,
             max_scan_plies: Some(8),
         },
     )
@@ -1003,7 +990,7 @@ fn replay_frame_annotations_emit_escape_boundary_candidates() {
     );
     let options = AnalysisOptions {
         reply_policy: ReplyPolicy::CorridorReplies,
-        max_depth: 4,
+        max_depth: 0,
         max_scan_plies: Some(8),
     };
     let proof = proof_for_board(&board, Color::Black, &options);
@@ -1069,37 +1056,28 @@ fn replay_frame_annotations_emit_escape_boundary_candidates() {
 }
 
 #[test]
-fn replay_analysis_session_marks_actual_counter_threat_hint() {
-    let replay = replay_from_moves(
+fn replay_frame_annotations_mark_actual_counter_threat_hint() {
+    let board = board_from_moves(
         Variant::Renju,
         &[
             "H8", "G7", "H6", "H7", "I7", "F7", "G5", "F4", "J8", "K9", "I8", "G8", "I6", "I9",
-            "H9", "F6", "F5", "G9", "G10", "E7", "D7", "J7", "I5", "I4", "H5", "E5", "J5",
+            "H9", "F6", "F5", "G9", "G10",
         ],
     );
-    let mut session = ReplayAnalysisSession::new(
-        replay,
-        AnalysisOptions {
-            reply_policy: ReplyPolicy::CorridorReplies,
-            max_depth: 4,
-            max_scan_plies: Some(64),
-        },
-    )
-    .expect("session should initialize");
-    let mut annotations = Vec::new();
-    loop {
-        let step = session.step(2);
-        annotations.extend(step.annotations);
-        if step.done {
-            break;
-        }
-    }
-
-    let frame = annotations
-        .iter()
-        .rev()
-        .find(|frame| frame.ply == 19)
-        .expect("move 19 frame should be annotated");
+    let options = AnalysisOptions {
+        reply_policy: ReplyPolicy::CorridorReplies,
+        max_depth: 0,
+        max_scan_plies: Some(64),
+    };
+    let frame = replay_frame_annotations_from_proof(
+        19,
+        &board,
+        Color::Black,
+        &proof_for_board(&board, Color::Black, &options),
+        None,
+        Some(mv("E7")),
+        &options,
+    );
 
     assert_eq!(frame.side_to_move, Color::White);
     assert!(

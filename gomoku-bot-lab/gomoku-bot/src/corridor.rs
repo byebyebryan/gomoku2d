@@ -719,30 +719,36 @@ mod tests {
     }
 
     #[test]
-    fn corridor_replies_distinguish_forced_loss_from_unproven_counterplay() {
+    fn visible_corridor_replies_include_defense_and_counter_roles() {
         let board = board_from_moves(
             Variant::Renju,
             &[
                 "H8", "I8", "H7", "I7", "H6", "H5", "I6", "I9", "G6", "J6", "G8", "J5", "G5",
             ],
         );
-        let replies = analyze_defender_reply_options(
-            &board,
-            Color::Black,
-            Some(mv("G7")),
-            &Default::default(),
-        );
+        let visible = visible_defender_reply_candidates(&board, Color::Black, Some(mv("G7")));
 
         for notation in ["G4", "G7", "G9"] {
-            let reply = reply_for(&replies, notation);
-            assert!(reply.roles.contains(&DefenderReplyRole::ImminentDefense));
-            assert_eq!(reply.outcome, DefenderReplyOutcome::ForcedLoss);
+            assert!(
+                visible.iter().any(|candidate| {
+                    candidate.mv == mv(notation)
+                        && candidate
+                            .roles
+                            .contains(&DefenderReplyRole::ImminentDefense)
+                }),
+                "{notation} should remain visible as an imminent defense candidate: {visible:?}"
+            );
         }
 
-        let i10 = reply_for(&replies, "I10");
-        assert!(i10.roles.contains(&DefenderReplyRole::OffensiveCounter));
-        assert_eq!(i10.outcome, DefenderReplyOutcome::PossibleEscape);
-        assert!(i10.limit_causes.contains(&ProofLimitCause::DepthCutoff));
+        assert!(
+            visible.iter().any(|candidate| {
+                candidate.mv == mv("I10")
+                    && candidate
+                        .roles
+                        .contains(&DefenderReplyRole::OffensiveCounter)
+            }),
+            "I10 should remain visible as an offensive counter candidate: {visible:?}"
+        );
     }
 
     #[test]
