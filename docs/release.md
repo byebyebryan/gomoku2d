@@ -116,6 +116,11 @@ Curated replay-analysis report artifacts live in
 it samples the head-to-head games between the current top two standings in
 `gomoku-bot-lab/reports/latest.json`.
 
+The curated report artifacts are tracked generated outputs. `.gitattributes`
+marks their HTML/JSON files as generated and disables noisy diffs, but release
+builds still require them by default. Use `GOMOKU_ALLOW_MISSING_REPORTS=1` only
+for local/dev builds that intentionally skip report pages.
+
 The report JSON captures git provenance when the tournament command runs, so
 refresh it only from a clean committed toolchain:
 
@@ -166,11 +171,21 @@ jq '{source, total, analyzed, failed, model, summary}' analysis-reports/latest.j
 
 For the curated analysis report, sanity-check at minimum:
 
+- `source_kind == "report_replays"`
 - `source == "reports/latest.json:Top 2 entrants"`
 - `analyzed == total` and `failed == 0`
 - `model.reply_policy == "corridor_replies"`
 - `model.max_depth == 4` and `model.max_scan_plies == 64`
 - summary counts look intentional for the current report sample
+
+Before deployment, confirm the web build copied the required report files:
+
+```sh
+test -f gomoku-web/dist/bot-report/index.html
+test -f gomoku-web/dist/bot-report/latest.json
+test -f gomoku-web/dist/analysis-report/index.html
+test -f gomoku-web/dist/analysis-report/latest.json
+```
 
 ## Push And CI Baseline
 

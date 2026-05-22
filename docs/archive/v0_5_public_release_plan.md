@@ -142,17 +142,23 @@ Once the repo and product story are reconciled, prepare a public alpha:
 
 ## Suggested Slices
 
-### Slice 1: Repo And Doc Reconciliation
+### Slice 1: Repo And Doc Reconciliation (`0.5.0`)
 
 - Sync `docs/search_bot.md`, `docs/performance_tuning.md`, and roadmap notes
   with the latest pooled-budget reports.
-- Remove or relocate stale generated artifacts and old one-off report outputs.
+- Mark generated curated report artifacts explicitly so GitHub language stats and
+  diffs do not treat them as hand-authored source.
+- Keep the current generated bot and analysis report artifacts tracked for now:
+  the viewer-plus-data rewrite is a bigger architecture change reserved for the
+  next slice.
 - Review test/runtime cleanup opportunities after the `0.4` analyzer and Renju
   work.
-- Make sure release docs describe how report data is generated, committed, and
-  published.
+- Make release builds fail if curated report artifacts are accidentally missing,
+  with a local-only opt-out for development builds.
+- Make sure release docs describe how report data is generated, committed,
+  verified, and published.
 
-### Slice 2: Report Viewer Architecture
+### Slice 2: Report Viewer Architecture (`0.5.1`)
 
 - Decide which report data remains checked in.
 - Move report presentation out of Rust-generated monolithic HTML and into web
