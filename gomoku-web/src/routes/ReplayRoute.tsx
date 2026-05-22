@@ -36,11 +36,17 @@ import {
   type ReplayAnalysisStepResult,
 } from "../replay/replay_analysis_protocol";
 import { ReplayAnalysisRunner } from "../replay/replay_analysis_runner";
+import {
+  readReplayAnalysisCache,
+  writeReplayAnalysisCache,
+} from "../replay/replay_analysis_cache";
 import { Icon } from "../ui/Icon";
 
 import styles from "./ReplayRoute.module.css";
 
 const AUTOPLAY_DELAY_MS = 700;
+const REPLAY_ANALYSIS_OPTIONS = { maxDepth: 4, maxScanPlies: 64 };
+const REPLAY_ANALYSIS_STEP_WORK_UNITS = 1;
 
 function moveCountLabel(moveIndex: number, totalMoves: number): string {
   return `Move ${moveIndex} / ${totalMoves}`;
@@ -127,10 +133,21 @@ export function ReplayRoute() {
 
     setAnalysisAnnotations({});
     setAnalysisStep(null);
+    analysisRunnerRef.current?.cancel();
 
+    const cached = readReplayAnalysisCache(match, REPLAY_ANALYSIS_OPTIONS);
+    if (cached) {
+      setAnalysisAnnotations(cached.annotationsByPly);
+      setAnalysisStep(cached.step);
+      return undefined;
+    }
+
+    let accumulatedAnnotations: ReplayAnalysisAnnotationsByPly = {};
     const mergeStep = (step: ReplayAnalysisStepResult) => {
+      accumulatedAnnotations = mergeReplayAnalysisAnnotations(accumulatedAnnotations, step);
       setAnalysisStep(step);
-      setAnalysisAnnotations((current) => mergeReplayAnalysisAnnotations(current, step));
+      setAnalysisAnnotations(accumulatedAnnotations);
+      return accumulatedAnnotations;
     };
 
     try {
@@ -143,15 +160,21 @@ export function ReplayRoute() {
       runner.analyze(
         match,
         {
-          onComplete: mergeStep,
+          onComplete: (step) => {
+            const annotationsByPly = mergeStep(step);
+            writeReplayAnalysisCache(match, REPLAY_ANALYSIS_OPTIONS, {
+              annotationsByPly,
+              step,
+            });
+          },
           onError: (error) => {
             setAnalysisAnnotations({});
             setAnalysisStep(replayAnalysisErrorResult(error.message));
           },
           onProgress: mergeStep,
         },
-        { maxDepth: 4, maxScanPlies: 64 },
-        1,
+        REPLAY_ANALYSIS_OPTIONS,
+        REPLAY_ANALYSIS_STEP_WORK_UNITS,
       );
     } catch {
       setAnalysisAnnotations({});
