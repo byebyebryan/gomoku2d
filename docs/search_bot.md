@@ -162,14 +162,14 @@ the current anchor set.
 
 ### Product Control Surface
 
-`0.4.5` should expose the bot lab through product controls, not raw parser
-surface. The intent is two layers:
+`0.4.5` exposed the bot lab through product controls, not raw parser surface.
+The shipped surface has two layers:
 
 - tested presets for normal play;
 - advanced Bot Lab controls for players who want to inspect and shape the bot.
 
-Presets should resolve to explicit lab specs, but the UI label should describe
-the player experience:
+Presets resolve to explicit lab specs, but the UI label describes the player
+experience:
 
 | Product layer | Example UI label | Backing concept |
 |---|---|---|

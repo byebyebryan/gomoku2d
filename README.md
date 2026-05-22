@@ -108,11 +108,12 @@ Firebase/Firestore plumbing, local-to-cloud profile promotion, private
 cloud-backed history, schema/rules hardening, and Reset Profile without putting
 sign-in in front of the game.
 
-The lab-powered line is now underway. Bot-lab reports, the static replay
+The `v0.4` lab-powered line is complete. Bot-lab reports, the static replay
 analysis report, configurable bot settings, tactical hints, and the first
-in-product replay-analysis surface are now live. The next product questions are
-how much explanation to add around replay analysis, then puzzles, bot
-personalities, and broader game-review UI. For the longer-term sequencing, see
+in-product replay-analysis surface are now live. The `v0.5` line is now about
+public-release reconciliation: clean up the repo after the lab push, make the
+reports feel first-class, explain the game and analyzer in-product, and package
+the project for a stranger-facing alpha. For the longer-term sequencing, see
 [`docs/roadmap.md`](docs/roadmap.md).
 
 ---

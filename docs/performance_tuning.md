@@ -82,7 +82,7 @@ The corpus also defines `SEARCH_BEHAVIOR_CASES`, which pair scenarios with a
 named lab config and expected moves. These are not performance measurements; they
 are behavior anchors for the `v0.4` bot-discovery pass.
 
-Current cases exercise the `balanced` lab config:
+Legacy behavior cases still exercise the old `balanced` lab alias:
 
 - complete open four
 - react to closed four

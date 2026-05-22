@@ -1,6 +1,6 @@
 import { doc, setDoc, type Firestore } from "firebase/firestore";
 
-import { savedMatchIsAfterReset, type SavedMatchV2 } from "../match/saved_match";
+import { savedMatchIsAfterReset } from "../match/saved_match";
 import {
   DEFAULT_LOCAL_DISPLAY_NAME,
   type LocalProfileMatchHistory,

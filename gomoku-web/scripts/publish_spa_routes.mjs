@@ -12,6 +12,9 @@ const staticRoutes = [
   "settings",
 ];
 
+/**
+ * @param {string} route
+ */
 async function copyIndexToRoute(route) {
   const targetPath = join(distRoot, route, "index.html");
   await mkdir(dirname(targetPath), { recursive: true });

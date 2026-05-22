@@ -6,6 +6,7 @@ use crate::analysis::{
     AnalysisOptions, FailureAnalysis, FailureMode, ForcedInterval, ProofStatus,
     ReplyClassification, RootCause, TacticalNote, ANALYSIS_SCHEMA_VERSION,
 };
+use crate::html::{escape as html_escape, option_debug};
 
 #[derive(Debug, Clone)]
 pub struct AnalysisFixtureCase {
@@ -894,12 +895,6 @@ fn key_value_table(rows: &[(&str, String)]) -> String {
     format!("<table><tbody>{rows}</tbody></table>")
 }
 
-fn option_debug<T: std::fmt::Debug>(value: Option<T>) -> String {
-    value
-        .map(|value| format!("{value:?}"))
-        .unwrap_or_else(|| "-".to_string())
-}
-
 fn option_usize(value: Option<usize>) -> String {
     value
         .map(|value| value.to_string())
@@ -992,15 +987,6 @@ fn moves_label(moves: &[Move]) -> String {
             .collect::<Vec<_>>()
             .join(" ")
     }
-}
-
-fn html_escape(input: &str) -> String {
-    input
-        .replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('"', "&quot;")
-        .replace('\'', "&#39;")
 }
 
 #[cfg(test)]

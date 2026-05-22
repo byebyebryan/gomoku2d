@@ -127,15 +127,13 @@
 
 .fieldLabel,
 .summaryLabel,
-.historyCount,
 .historyHeadLabel {
   color: var(--text-soft);
   opacity: 0.88;
 }
 
 .fieldLabel,
-.summaryLabel,
-.historyCount {
+.summaryLabel {
   font-family: var(--font-display);
   font-size: var(--type-quiet);
   letter-spacing: 0.08em;
@@ -188,14 +186,6 @@
   filter: grayscale(0.4);
   opacity: 0.55;
   transform: none;
-}
-
-.settingValue {
-  margin: 0;
-  color: var(--text);
-  font-family: var(--font-display);
-  font-size: var(--type-body);
-  text-transform: uppercase;
 }
 
 .recordPanel {

@@ -1,13 +1,8 @@
-import backSvgRaw from "../../assets/icons/back.svg?raw";
 import botSvgRaw from "../../assets/icons/bot.svg?raw";
 import doubleNextSvgRaw from "../../assets/icons/double_next.svg?raw";
 import doublePrevSvgRaw from "../../assets/icons/double_prev.svg?raw";
-import fastForwardSvgRaw from "../../assets/icons/fast_forward.svg?raw";
-import fastRewindSvgRaw from "../../assets/icons/fast_rewind.svg?raw";
-import firstSvgRaw from "../../assets/icons/first.svg?raw";
 import homeSvgRaw from "../../assets/icons/home.svg?raw";
 import humanSvgRaw from "../../assets/icons/human.svg?raw";
-import lastSvgRaw from "../../assets/icons/last.svg?raw";
 import playSvgRaw from "../../assets/icons/play.svg?raw";
 import plusSvgRaw from "../../assets/icons/plus.svg?raw";
 import prevSvgRaw from "../../assets/icons/prev.svg?raw";
@@ -24,16 +19,11 @@ function sanitize(svg: string): string {
 }
 
 export const iconSvg = {
-  back: sanitize(backSvgRaw),
   bot: sanitize(botSvgRaw),
   doubleNext: sanitize(doubleNextSvgRaw),
   doublePrev: sanitize(doublePrevSvgRaw),
-  fastForward: sanitize(fastForwardSvgRaw),
-  fastRewind: sanitize(fastRewindSvgRaw),
-  first: sanitize(firstSvgRaw),
   home: sanitize(homeSvgRaw),
   human: sanitize(humanSvgRaw),
-  last: sanitize(lastSvgRaw),
   next: sanitize(nextSvgRaw),
   pause: sanitize(pauseSvgRaw),
   play: sanitize(playSvgRaw),

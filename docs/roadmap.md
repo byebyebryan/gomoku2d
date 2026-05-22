@@ -213,7 +213,7 @@ Signing in extends the same local-first product without breaking it:
 - keep cloud setup, cost estimates, auth caveats, and release gates documented
   well enough that future agents can continue without guessing
 
-## P4 — `v0.4` Lab-Powered Product Identity (current)
+## P4 — `v0.4` Lab-Powered Product Identity (complete)
 
 Make the Rust lab visible as a product differentiator.
 
@@ -455,18 +455,6 @@ prove the lab direction. `0.5` should turn these capabilities into a cleaner
 presentation system, stronger onboarding, and more intentional player education
 without expanding the analyzer scope by default.
 
-### Possible Work
-
-- `0.4.8` focused replay screenshot review and release cleanup
-- test/doc cleanup after the 0.4 lab-to-product pivot
-- measured analyzer follow-up if replay-screen usage exposes confusing cases
-- better-move suggestions and opponent best-reply previews
-- generated puzzles from real games or curated positions
-- "save this game" challenges from losing positions
-- bot personalities that build on the configurable bot settings
-- stronger bot endpoint only if browser-side wasm is not enough for the chosen
-  product surface
-
 ### Done When
 
 At least one player-facing feature clearly exists because the bot lab can run
@@ -482,7 +470,7 @@ why this is not just another Gomoku board with a bot.
 - learn how to present AI/search output in a way that helps players without
   making the UI feel like a debug dashboard
 
-## P5 — `v0.5` Public Release Reconciliation
+## P5 — `v0.5` Public Release Reconciliation (current)
 
 Turn the `0.4` lab-powered foundation into a cleaner, more understandable
 public alpha. The goal is not to add another broad research line; it is to make
@@ -500,6 +488,9 @@ heavy lab work, and package the project for first public release.
   the replay
 - prepare README, screenshots, social assets, itch/dev-log copy, and release QA
   for a first public-facing alpha
+- choose which 0.4 follow-ups belong in the public product now: better-move
+  suggestions, puzzle generation, bot personalities, or a stronger server-side
+  bot endpoint only if browser-side wasm is not enough
 
 ### Possible Work
 
