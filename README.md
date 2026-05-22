@@ -20,11 +20,6 @@ surface area can agents help cover without lowering the quality bar?
 
 **Replay analysis report:** https://gomoku2d.byebyebryan.com/analysis-report/
 
-The answer so far is not "type less code and ship anything." It is closer to
-running a tiny product team through agents: implementation, review, test
-coverage, infrastructure, asset iteration, release notes, and design critique
-all stay in the loop.
-
 ## What makes it different
 
 - **Personal, but not casual.** Gomoku was a paper-and-pencil childhood
@@ -84,15 +79,6 @@ gomoku2d/
 └── docs/
 ```
 
-| Crate | What it does |
-|-------|--------------|
-| `gomoku-core` | Board state, rules (Freestyle + Renju), win detection, FEN, replay JSON |
-| `gomoku-bot` | `Bot` trait + implementations: `RandomBot`, `SearchBot` (negamax + α-β + iterative deepening + transposition table) |
-| `gomoku-analysis` | Shared setup-corridor replay analyzer used by reports and the browser |
-| `gomoku-cli` | Run one match: pick the bots, print the board, optionally save a replay |
-| `gomoku-eval` | Run many matches: self-play arena, round-robin tournaments, Elo ratings |
-| `gomoku-wasm` | `wasm-pack` bridge — exports the core + bots to the web game |
-
 Build, CLI usage, replay format, and `SearchBot` notes live in
 [`gomoku-bot-lab/README.md`](gomoku-bot-lab/README.md). The broader docs index
 lives in [`docs/README.md`](docs/README.md).
@@ -101,19 +87,11 @@ lives in [`docs/README.md`](docs/README.md).
 
 ## Current Status
 
-The local-first `v0.2.x` product pass made the game feel complete without
-cloud: board-first play, desktop/mobile layout, replay, profile, and local
-history. The `v0.3` backend-continuity line added optional Google sign-in,
-Firebase/Firestore plumbing, local-to-cloud profile promotion, private
-cloud-backed history, schema/rules hardening, and Reset Profile without putting
-sign-in in front of the game.
-
-The `v0.4` lab-powered line is complete. Bot-lab reports, the static replay
-analysis report, configurable bot settings, tactical hints, and the first
-in-product replay-analysis surface are now live. The `v0.5` line is now about
-public-release reconciliation: clean up the repo after the lab push, make the
-reports feel first-class, explain the game and analyzer in-product, and package
-the project for a stranger-facing alpha. For the longer-term sequencing, see
+The current alpha supports local-first play, optional Google sign-in for private
+cloud history, configurable bots, tactical hints, and replay analysis. The
+`v0.5` line is about public-release reconciliation: cleaner repo artifacts,
+first-class report surfaces, in-product explanations, and stranger-facing
+packaging. Longer-term sequencing lives in
 [`docs/reference/product/roadmap.md`](docs/reference/product/roadmap.md).
 
 ---
@@ -123,7 +101,7 @@ the project for a stranger-facing alpha. For the longer-term sequencing, see
 Start with the public docs:
 
 - [`About`](docs/public/about.md) — project story and current product shape
-- [`Rules And Renju`](docs/public/rules.md) — Freestyle, Renju, and forbidden moves
+- [`Rules and Renju`](docs/public/rules.md) — Freestyle, Renju, and forbidden moves
 - [`Replay Analysis`](docs/public/analysis.md) — how to read setup corridors, lethal onset, and last escape
 - [`Bot Lab`](docs/public/bot-lab.md) — presets, advanced controls, and published reports
 

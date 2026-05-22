@@ -1,4 +1,4 @@
-# Rules And Renju
+# Rules and Renju
 
 Gomoku is a five-in-a-row game. Players alternate placing stones on a grid; the
 first player to make five connected stones horizontally, vertically, or
@@ -30,5 +30,5 @@ counting for Renju. The rules model checks whether a forbidden-looking shape is
 actually live under the rules, then uses that same legality model for play,
 hints, bots, and replay analysis.
 
-For implementation details and validation corpus notes, see
+Technical details and validation corpus notes live in
 [`Renju Rules`](../reference/lab/renju_rules.md).

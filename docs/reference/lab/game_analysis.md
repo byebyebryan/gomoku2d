@@ -357,8 +357,7 @@ mistake just because it fails to save the game. The useful question for a
 follow-up is whether an earlier actual move ignored a concrete response or
 escape candidate before the position became lethal.
 
-The planned `0.4.8` mistake layer should use response semantics, not corridor
-length:
+The `0.4.8` mistake layer uses response semantics, not corridor length:
 
 - Before lethal onset, if a player faces immediate or imminent threats and plays
   outside the highest-priority response candidate set, classify that as a missed

@@ -1,7 +1,8 @@
 # Bot Lab
 
-The Bot Lab is the native Rust side of Gomoku2D. It runs the same rules and bot
-logic that ship to the browser, but with stronger tooling:
+The Bot Lab is how Gomoku2D tests, compares, and explains its computer
+opponents. It runs the same rules and bot logic that ship to the browser, but
+with stronger tooling:
 
 - command-line games;
 - bot tournaments;
@@ -34,5 +35,5 @@ See the live reports:
 - [Bot report](https://gomoku2d.byebyebryan.com/bot-report/)
 - [Replay analysis report](https://gomoku2d.byebyebryan.com/analysis-report/)
 
-For implementation details, see [`Search Bot`](../reference/lab/search_bot.md)
+Technical details live in [`Search Bot`](../reference/lab/search_bot.md)
 and the [`gomoku-bot-lab` README](../../gomoku-bot-lab/README.md).

@@ -13,12 +13,12 @@ the evidence and critique set.
 <table>
   <tr>
     <td width="50%">
-      <img src="assets/screenshot_v0_1_match_desktop.png" alt="v0.1 match screen on desktop" width="100%">
+      <img src="../assets/screenshot_v0_1_match_desktop.png" alt="v0.1 match screen on desktop" width="100%">
       <br>
       <sub>Match / Desktop</sub>
     </td>
     <td width="50%">
-      <img src="assets/screenshot_v0_1_settings_desktop.png" alt="v0.1 settings screen on desktop" width="100%">
+      <img src="../assets/screenshot_v0_1_settings_desktop.png" alt="v0.1 settings screen on desktop" width="100%">
       <br>
       <sub>Settings / Desktop</sub>
     </td>
@@ -48,24 +48,24 @@ without rebuilding the whole app as one canvas-driven surface.
 <table>
   <tr>
     <td width="50%">
-      <img src="assets/screenshot_v0_2_1_home_desktop.png" alt="v0.2.1 home screen on desktop" width="100%">
+      <img src="../assets/screenshot_v0_2_1_home_desktop.png" alt="v0.2.1 home screen on desktop" width="100%">
       <br>
       <sub>Home / Desktop</sub>
     </td>
     <td width="50%">
-      <img src="assets/screenshot_v0_2_1_match_desktop.png" alt="v0.2.1 match screen on desktop" width="100%">
+      <img src="../assets/screenshot_v0_2_1_match_desktop.png" alt="v0.2.1 match screen on desktop" width="100%">
       <br>
       <sub>Match / Desktop</sub>
     </td>
   </tr>
   <tr>
     <td width="50%">
-      <img src="assets/screenshot_v0_2_1_replay_desktop.png" alt="v0.2.1 replay screen on desktop" width="100%">
+      <img src="../assets/screenshot_v0_2_1_replay_desktop.png" alt="v0.2.1 replay screen on desktop" width="100%">
       <br>
       <sub>Replay / Desktop</sub>
     </td>
     <td width="50%">
-      <img src="assets/screenshot_v0_2_1_profile_desktop.png" alt="v0.2.1 profile screen on desktop" width="100%">
+      <img src="../assets/screenshot_v0_2_1_profile_desktop.png" alt="v0.2.1 profile screen on desktop" width="100%">
       <br>
       <sub>Profile / Desktop</sub>
     </td>
@@ -96,24 +96,24 @@ density, not just idealized empty states.
 <table>
   <tr>
     <td width="50%">
-      <img src="assets/screenshot_v0_2_2_home_desktop.png" alt="v0.2.2 home screen on desktop" width="100%">
+      <img src="../assets/screenshot_v0_2_2_home_desktop.png" alt="v0.2.2 home screen on desktop" width="100%">
       <br>
       <sub>Home / Desktop</sub>
     </td>
     <td width="50%">
-      <img src="assets/screenshot_v0_2_2_match_desktop.png" alt="v0.2.2 match screen on desktop" width="100%">
+      <img src="../assets/screenshot_v0_2_2_match_desktop.png" alt="v0.2.2 match screen on desktop" width="100%">
       <br>
       <sub>Match / Desktop</sub>
     </td>
   </tr>
   <tr>
     <td width="50%">
-      <img src="assets/screenshot_v0_2_2_replay_desktop.png" alt="v0.2.2 replay screen on desktop" width="100%">
+      <img src="../assets/screenshot_v0_2_2_replay_desktop.png" alt="v0.2.2 replay screen on desktop" width="100%">
       <br>
       <sub>Replay / Desktop</sub>
     </td>
     <td width="50%">
-      <img src="assets/screenshot_v0_2_2_profile_desktop.png" alt="v0.2.2 profile screen on desktop" width="100%">
+      <img src="../assets/screenshot_v0_2_2_profile_desktop.png" alt="v0.2.2 profile screen on desktop" width="100%">
       <br>
       <sub>Profile / Desktop</sub>
     </td>
@@ -149,24 +149,24 @@ as the end of the visual pass.
 <table>
   <tr>
     <td width="50%">
-      <img src="assets/screenshot_v0_2_3_home_desktop.png" alt="v0.2.3 home screen on desktop" width="100%">
+      <img src="../assets/screenshot_v0_2_3_home_desktop.png" alt="v0.2.3 home screen on desktop" width="100%">
       <br>
       <sub>Home / Desktop</sub>
     </td>
     <td width="50%">
-      <img src="assets/screenshot_v0_2_3_match_desktop.png" alt="v0.2.3 match screen on desktop" width="100%">
+      <img src="../assets/screenshot_v0_2_3_match_desktop.png" alt="v0.2.3 match screen on desktop" width="100%">
       <br>
       <sub>Match / Desktop</sub>
     </td>
   </tr>
   <tr>
     <td width="50%">
-      <img src="assets/screenshot_v0_2_3_replay_desktop.png" alt="v0.2.3 replay screen on desktop" width="100%">
+      <img src="../assets/screenshot_v0_2_3_replay_desktop.png" alt="v0.2.3 replay screen on desktop" width="100%">
       <br>
       <sub>Replay / Desktop</sub>
     </td>
     <td width="50%">
-      <img src="assets/screenshot_v0_2_3_profile_desktop.png" alt="v0.2.3 profile screen on desktop" width="100%">
+      <img src="../assets/screenshot_v0_2_3_profile_desktop.png" alt="v0.2.3 profile screen on desktop" width="100%">
       <br>
       <sub>Profile / Desktop</sub>
     </td>
@@ -178,22 +178,22 @@ as the end of the visual pass.
 <table>
   <tr>
     <td width="25%">
-      <img src="assets/screenshot_v0_2_3_home_mobile.png" alt="v0.2.3 home screen on mobile" width="100%">
+      <img src="../assets/screenshot_v0_2_3_home_mobile.png" alt="v0.2.3 home screen on mobile" width="100%">
       <br>
       <sub>Home / Mobile</sub>
     </td>
     <td width="25%">
-      <img src="assets/screenshot_v0_2_3_match_mobile.png" alt="v0.2.3 match screen on mobile" width="100%">
+      <img src="../assets/screenshot_v0_2_3_match_mobile.png" alt="v0.2.3 match screen on mobile" width="100%">
       <br>
       <sub>Match / Mobile</sub>
     </td>
     <td width="25%">
-      <img src="assets/screenshot_v0_2_3_replay_mobile.png" alt="v0.2.3 replay screen on mobile" width="100%">
+      <img src="../assets/screenshot_v0_2_3_replay_mobile.png" alt="v0.2.3 replay screen on mobile" width="100%">
       <br>
       <sub>Replay / Mobile</sub>
     </td>
     <td width="25%">
-      <img src="assets/screenshot_v0_2_3_profile_mobile.png" alt="v0.2.3 profile screen on mobile" width="100%">
+      <img src="../assets/screenshot_v0_2_3_profile_mobile.png" alt="v0.2.3 profile screen on mobile" width="100%">
       <br>
       <sub>Profile / Mobile</sub>
     </td>
@@ -249,24 +249,24 @@ not the mobile layout or control model.
 <table>
   <tr>
     <td width="50%">
-      <img src="assets/screenshot_v0_2_4_home_desktop.png" alt="v0.2.4 home screen on desktop" width="100%">
+      <img src="../assets/screenshot_v0_2_4_home_desktop.png" alt="v0.2.4 home screen on desktop" width="100%">
       <br>
       <sub>Home / Desktop</sub>
     </td>
     <td width="50%">
-      <img src="assets/screenshot_v0_2_4_match_desktop.png" alt="v0.2.4 match screen on desktop" width="100%">
+      <img src="../assets/screenshot_v0_2_4_match_desktop.png" alt="v0.2.4 match screen on desktop" width="100%">
       <br>
       <sub>Match / Desktop</sub>
     </td>
   </tr>
   <tr>
     <td width="50%">
-      <img src="assets/screenshot_v0_2_4_replay_desktop.png" alt="v0.2.4 replay screen on desktop" width="100%">
+      <img src="../assets/screenshot_v0_2_4_replay_desktop.png" alt="v0.2.4 replay screen on desktop" width="100%">
       <br>
       <sub>Replay / Desktop</sub>
     </td>
     <td width="50%">
-      <img src="assets/screenshot_v0_2_4_profile_desktop.png" alt="v0.2.4 profile screen on desktop" width="100%">
+      <img src="../assets/screenshot_v0_2_4_profile_desktop.png" alt="v0.2.4 profile screen on desktop" width="100%">
       <br>
       <sub>Profile / Desktop</sub>
     </td>
@@ -278,22 +278,22 @@ not the mobile layout or control model.
 <table>
   <tr>
     <td width="25%">
-      <img src="assets/screenshot_v0_2_4_home_mobile.png" alt="v0.2.4 home screen on mobile" width="100%">
+      <img src="../assets/screenshot_v0_2_4_home_mobile.png" alt="v0.2.4 home screen on mobile" width="100%">
       <br>
       <sub>Home / Mobile</sub>
     </td>
     <td width="25%">
-      <img src="assets/screenshot_v0_2_4_match_mobile.png" alt="v0.2.4 match screen on mobile" width="100%">
+      <img src="../assets/screenshot_v0_2_4_match_mobile.png" alt="v0.2.4 match screen on mobile" width="100%">
       <br>
       <sub>Match / Mobile</sub>
     </td>
     <td width="25%">
-      <img src="assets/screenshot_v0_2_4_replay_mobile.png" alt="v0.2.4 replay screen on mobile" width="100%">
+      <img src="../assets/screenshot_v0_2_4_replay_mobile.png" alt="v0.2.4 replay screen on mobile" width="100%">
       <br>
       <sub>Replay / Mobile</sub>
     </td>
     <td width="25%">
-      <img src="assets/screenshot_v0_2_4_profile_mobile.png" alt="v0.2.4 profile screen on mobile" width="100%">
+      <img src="../assets/screenshot_v0_2_4_profile_mobile.png" alt="v0.2.4 profile screen on mobile" width="100%">
       <br>
       <sub>Profile / Mobile</sub>
     </td>
@@ -333,31 +333,31 @@ captures, so they show the same review frame across screens.
 <table>
   <tr>
     <td width="50%">
-      <img src="assets/screenshot_v0_4_5_home_desktop.png" alt="v0.4.5 home screen on desktop" width="100%">
+      <img src="../assets/screenshot_v0_4_5_home_desktop.png" alt="v0.4.5 home screen on desktop" width="100%">
       <br>
       <sub>Home / Desktop</sub>
     </td>
     <td width="50%">
-      <img src="assets/screenshot_v0_4_5_match_desktop.png" alt="v0.4.5 match screen on desktop" width="100%">
+      <img src="../assets/screenshot_v0_4_5_match_desktop.png" alt="v0.4.5 match screen on desktop" width="100%">
       <br>
       <sub>Match / Desktop</sub>
     </td>
   </tr>
   <tr>
     <td width="50%">
-      <img src="assets/screenshot_v0_4_5_replay_desktop.png" alt="v0.4.5 replay screen on desktop" width="100%">
+      <img src="../assets/screenshot_v0_4_5_replay_desktop.png" alt="v0.4.5 replay screen on desktop" width="100%">
       <br>
       <sub>Replay / Desktop</sub>
     </td>
     <td width="50%">
-      <img src="assets/screenshot_v0_4_5_profile_desktop.png" alt="v0.4.5 profile screen on desktop" width="100%">
+      <img src="../assets/screenshot_v0_4_5_profile_desktop.png" alt="v0.4.5 profile screen on desktop" width="100%">
       <br>
       <sub>Profile / Desktop</sub>
     </td>
   </tr>
   <tr>
     <td colspan="2">
-      <img src="assets/screenshot_v0_4_5_settings_desktop.png" alt="v0.4.5 settings screen on desktop" width="100%">
+      <img src="../assets/screenshot_v0_4_5_settings_desktop.png" alt="v0.4.5 settings screen on desktop" width="100%">
       <br>
       <sub>Settings / Desktop</sub>
     </td>
@@ -369,27 +369,27 @@ captures, so they show the same review frame across screens.
 <table>
   <tr>
     <td width="20%">
-      <img src="assets/screenshot_v0_4_5_home_mobile.png" alt="v0.4.5 home screen on mobile" width="100%">
+      <img src="../assets/screenshot_v0_4_5_home_mobile.png" alt="v0.4.5 home screen on mobile" width="100%">
       <br>
       <sub>Home / Mobile</sub>
     </td>
     <td width="20%">
-      <img src="assets/screenshot_v0_4_5_match_mobile.png" alt="v0.4.5 match screen on mobile" width="100%">
+      <img src="../assets/screenshot_v0_4_5_match_mobile.png" alt="v0.4.5 match screen on mobile" width="100%">
       <br>
       <sub>Match / Mobile</sub>
     </td>
     <td width="20%">
-      <img src="assets/screenshot_v0_4_5_settings_mobile.png" alt="v0.4.5 settings screen on mobile" width="100%">
+      <img src="../assets/screenshot_v0_4_5_settings_mobile.png" alt="v0.4.5 settings screen on mobile" width="100%">
       <br>
       <sub>Settings / Mobile</sub>
     </td>
     <td width="20%">
-      <img src="assets/screenshot_v0_4_5_replay_mobile.png" alt="v0.4.5 replay screen on mobile" width="100%">
+      <img src="../assets/screenshot_v0_4_5_replay_mobile.png" alt="v0.4.5 replay screen on mobile" width="100%">
       <br>
       <sub>Replay / Mobile</sub>
     </td>
     <td width="20%">
-      <img src="assets/screenshot_v0_4_5_profile_mobile.png" alt="v0.4.5 profile screen on mobile" width="100%">
+      <img src="../assets/screenshot_v0_4_5_profile_mobile.png" alt="v0.4.5 profile screen on mobile" width="100%">
       <br>
       <sub>Profile / Mobile</sub>
     </td>
@@ -432,12 +432,12 @@ replay after browser-side analysis has resolved to the last-escape frame.
 <table>
   <tr>
     <td width="60%">
-      <img src="assets/screenshot_v0_4_6_replay_desktop.png" alt="v0.4.6 analyzed replay screen on desktop" width="100%">
+      <img src="../assets/screenshot_v0_4_6_replay_desktop.png" alt="v0.4.6 analyzed replay screen on desktop" width="100%">
       <br>
       <sub>Analyzed Replay / Desktop</sub>
     </td>
     <td width="40%">
-      <img src="assets/screenshot_v0_4_6_replay_mobile.png" alt="v0.4.6 analyzed replay screen on mobile" width="100%">
+      <img src="../assets/screenshot_v0_4_6_replay_mobile.png" alt="v0.4.6 analyzed replay screen on mobile" width="100%">
       <br>
       <sub>Analyzed Replay / Mobile</sub>
     </td>
@@ -479,12 +479,12 @@ last-escape frame after browser-side analysis has resolved.
 <table>
   <tr>
     <td width="60%">
-      <img src="assets/screenshot_v0_4_7_replay_desktop.png" alt="v0.4.7 analyzed replay screen on desktop" width="100%">
+      <img src="../assets/screenshot_v0_4_7_replay_desktop.png" alt="v0.4.7 analyzed replay screen on desktop" width="100%">
       <br>
       <sub>Analyzed Replay / Desktop</sub>
     </td>
     <td width="40%">
-      <img src="assets/screenshot_v0_4_7_replay_mobile.png" alt="v0.4.7 analyzed replay screen on mobile" width="100%">
+      <img src="../assets/screenshot_v0_4_7_replay_mobile.png" alt="v0.4.7 analyzed replay screen on mobile" width="100%">
       <br>
       <sub>Analyzed Replay / Mobile</sub>
     </td>
@@ -524,12 +524,12 @@ browser-side analysis has resolved.
 <table>
   <tr>
     <td width="60%">
-      <img src="assets/screenshot_v0_4_8_replay_desktop.png" alt="v0.4.8 analyzed replay last-escape screen on desktop" width="100%">
+      <img src="../assets/screenshot_v0_4_8_replay_desktop.png" alt="v0.4.8 analyzed replay last-escape screen on desktop" width="100%">
       <br>
       <sub>Analyzed Replay / Desktop</sub>
     </td>
     <td width="40%">
-      <img src="assets/screenshot_v0_4_8_replay_mobile.png" alt="v0.4.8 analyzed replay last-escape screen on mobile" width="100%">
+      <img src="../assets/screenshot_v0_4_8_replay_mobile.png" alt="v0.4.8 analyzed replay last-escape screen on mobile" width="100%">
       <br>
       <sub>Analyzed Replay / Mobile</sub>
     </td>

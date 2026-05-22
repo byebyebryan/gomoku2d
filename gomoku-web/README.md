@@ -19,9 +19,9 @@ freezing the UI.
 
 ---
 
-## What works today
+## Product Surface
 
-Single-player, local-first:
+This package owns the browser app:
 
 - Start a match from Home with one click against the saved bot setup
 - Tune rule, bot, hints, and touch controls from Settings; changes mid-game can
@@ -118,7 +118,7 @@ Routes:
 - `/replay/:matchId` — replay viewer with browser-side corridor analysis for decisive saved matches
 - `/profile` — local/cloud player record and history
 - `/settings` — rule, bot, hint, and touch-control setup
-- `/privacy/` and `/terms/` — static info-page-template policy pages for the public app
+- `/privacy/` and `/terms/` — static Privacy and Terms pages for the public app
 
 ---
 
@@ -140,7 +140,7 @@ TypeScript changes hot-reload. After editing Rust, rebuild the Wasm package and
 re-run `npm install` so Vite picks up the relinked `file:` dependency.
 
 Firebase is optional during local development. Guest/local play works without
-any Firebase env vars. To enable the cloud-backed `v0.3` surfaces, copy the
+any Firebase env vars. To enable cloud-backed profile/history, copy the
 example file and fill the public web-app config from Firebase:
 
 ```sh
@@ -203,7 +203,7 @@ domain Vite build, and deploys `dist/` to Pages.
 
 ---
 
-## Where this fits
+## Where This Fits
 
 The game is the top-level product; the Rust side in `gomoku-bot-lab/` is a
 supporting workspace. The bot you play against in the browser is the same code
@@ -220,12 +220,7 @@ gomoku-bot-lab/gomoku-cli      — CLI match runner with replay export
 gomoku-bot-lab/gomoku-wasm     — wasm-pack bridge: WasmBoard + WasmBot + replay analyzer for JS
 ```
 
-The local-first `v0.2` product pass is complete. The `v0.3` backend-continuity
-line added optional Firebase config, Google sign-in, cloud profile/history
-continuity, cloud replay loading, auth fallback hardening, and reset/delete
-barriers. The `v0.4` lab-powered line now has published bot and analysis
-reports, configurable bot settings, tactical hints, and the first browser replay
-analysis surface. Skins, published replays, richer review UI, and online play
-stay sequenced in later phases — see
-[`../docs/reference/product/roadmap.md`](../docs/reference/product/roadmap.md) for sequencing and
-[`../docs/reference/app/architecture.md`](../docs/reference/app/architecture.md) for the runtime boundary.
+For product sequencing, see
+[`../docs/reference/product/roadmap.md`](../docs/reference/product/roadmap.md).
+For the React/Phaser/Rust boundary, see
+[`../docs/reference/app/architecture.md`](../docs/reference/app/architecture.md).
