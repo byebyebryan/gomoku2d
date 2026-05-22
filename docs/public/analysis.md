@@ -7,14 +7,15 @@ Replay analysis answers a focused question:
 It is not a full perfect-play solver. It follows the narrow tactical corridor
 near the end of a decisive game, then marks the important moments.
 
-## Terms
+## What The Labels Mean
 
-- **Lethal sequence:** the final forced line once the defender no longer has
-  coverage.
-- **Setup corridor:** the forcing sequence that led into the lethal state.
 - **Last escape:** the latest point where the losing side had a modeled way out.
-- **Mistake point:** the move that missed a required response or missed the last
-  modeled escape.
+- **Setup corridor:** the pressure sequence that led from that missed chance to
+  the already-lost state.
+- **Lethal sequence:** the final conversion after the defender no longer had
+  coverage.
+- **Mistake point:** the move that missed a required response or the last modeled
+  escape.
 
 ## How To Read It
 
@@ -26,6 +27,6 @@ win.
 The goal is educational: help a player see why the end collapsed and where a
 different response mattered.
 
-For the full model and implementation contract, see
+The full model and implementation contract live in
 [`Game Analysis`](../reference/lab/game_analysis.md) and
 [`Corridor Search`](../reference/lab/corridor_search.md).

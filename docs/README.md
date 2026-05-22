@@ -19,7 +19,7 @@ audience:
 ## Public Docs
 
 - [`About`](public/about.md)
-- [`Rules And Renju`](public/rules.md)
+- [`Rules and Renju`](public/rules.md)
 - [`Replay Analysis`](public/analysis.md)
 - [`Bot Lab`](public/bot-lab.md)
 

@@ -14,7 +14,7 @@ This roadmap tracks two things at once:
   of a small product team's surface area AI agents can help one developer cover
   without lowering the quality bar.
 
-The project thesis behind that split lives in `project.md`.
+The project thesis behind that split lives in [`project.md`](project.md).
 
 ## P1 — `v0.1` POC (done)
 
@@ -39,7 +39,8 @@ Production lens:
 - establish that repo docs, code review, and release notes can keep pace with
   rapid AI-centric iteration
 
-Historical state is preserved in `docs/archive/progress_v0.1.md`.
+Historical state is preserved in
+[`progress_v0.1.md`](../../archive/progress_v0.1.md).
 
 ## P2 — `v0.2` FE Foundation And Local Play (done)
 
@@ -101,8 +102,9 @@ A player can open the site and get a polished local experience:
 
 Add backend foundation without putting cloud in front of the local game.
 
-Detailed working notes live in `docs/archive/v0_3_plan.md`. That file is an
-ad-hoc planning artifact; this section remains the canonical roadmap.
+Detailed working notes live in
+[`v0_3_plan.md`](../../archive/v0_3_plan.md). That file is an ad-hoc planning
+artifact; this section remains the canonical roadmap.
 
 ### Goals
 
@@ -156,7 +158,8 @@ wrap-up state:
 - signed-in Delete Cloud path behind Reset Profile for deleting
   `profiles/{uid}`, clearing this device's cloud cache for that user, and
   signing out while leaving local browser history local
-- compact, versioned private match schema documented in `data_model.md`
+- compact, versioned private match schema documented in
+  [`data_model.md`](../backend/data_model.md)
 - local profile storage moved to the clean-break `local-profile.v3` key,
   aligned with the cloud replay/summary/archive retention tiers
 - local play/history still working without Firebase config
@@ -177,8 +180,9 @@ wrap-up state:
 - Firestore rules tests cover owner scoping, profile update cooldowns,
   reset-barrier writes, embedded-history caps, owner-only profile deletes, and
   closed casual match subcollection writes
-- infra and free-tier tracking split into `backend_infra.md` and
-  `backend_cost.md`
+- infra and free-tier tracking split into
+  [`backend_infra.md`](../ops/backend_infra.md) and
+  [`backend_cost.md`](../ops/backend_cost.md)
 
 Any future `0.3.x` work should be narrow hardening only: auth edge cases,
 offline/sync polish, or cloud-history fixes exposed by real usage. Do not add
@@ -593,6 +597,6 @@ Keep progress lightweight:
 
 - the repo history and deployed build tell most of the story
 - use this file to keep phase intent and sequencing clear
-- keep detailed temporary milestone notes in `docs/archive/`
+- keep detailed temporary milestone notes in [`archive`](../../archive/)
 - archive outdated exploratory docs instead of patching every one into
   permanence

@@ -358,30 +358,11 @@ after a child move, the bot checked whether that move entered an immediate or
 imminent threat corridor, followed the bounded replies, and tried to use the
 result as a deeper child score.
 
-The implementation improved over several passes:
-
-- `+corridor-q` proved the shared corridor module could be called from search,
-  but leaf quiescence asked too often and too late.
-- `+corridor-own-dN-wM` and `+corridor-opponent-dN-wM` moved the probe to child
-  moves and added side-specific portal controls.
-- Move-local entry checks and nested re-entry guards reduced obvious
-  over-acceptance.
-- Rank/top-N gates, static exits, and proof-only mode were tested as additional
-  tuning controls, then removed because they added parser/report surface without
-  producing a candidate bot direction.
-
-Those changes made the measurements honest, but they did not produce a useful
-bot knob:
-
-- Resume-from-exit portals distorted scores and multiplied normal searches from
-  corridor exits.
-- Proof-only portals were safer than resume-from-exit portals, but still paid
-  hundreds of branch probes per move for too few terminal proofs.
-- A `32` game D3 proof-only head-to-head at `1s/move` lost `13-19` to base
-  `search-d3` while costing about `176 ms/move` versus `60 ms/move`.
-- A `32` game D5+tactical-cap8 proof-only head-to-head lost `15-17` to base
-  `search-d5+tactical-cap-8` while costing about `175 ms/move` versus
-  `116 ms/move`.
+The live-search portal variants are retired. `+corridor-q`,
+`+corridor-own-dN-wM`, `+corridor-opponent-dN-wM`, rank/top-N gates, static
+exits, and proof-only mode are historical report evidence, not current parser
+surface. They made corridor cost measurable but did not produce a useful bot
+knob under the current compute budget.
 
 The conclusion is that portal search is not useful in this bounded-compute
 shape. The current parser no longer accepts portal suffixes. Treat
@@ -779,9 +760,8 @@ normal-search backend after parity checks and focused scan-vs-rolling runs.
 
 The `0.4.4` working plan lives in
 [`../../archive/v0_4_4_frontier_plan.md`](../../archive/v0_4_4_frontier_plan.md).
-Player-facing bot settings should wait until a later `0.4.x` slice, likely
-`0.4.5`, so the UI exposes product language instead of unresolved cache/search
-knobs.
+Player-facing bot settings now expose product language through presets and
+advanced controls rather than unresolved cache/search knobs.
 
 ## Renju Overlay
 
@@ -920,6 +900,7 @@ Known limits:
 
 ## Related Docs
 
+- [`../../README.md`](../../README.md) — full docs map.
 - [`game_analysis.md`](game_analysis.md) — replay analyzer mechanics, report
   schema, CLI workflow, and known implementation limits.
 - [`tactical_shapes.md`](tactical_shapes.md) — local tactical shape vocabulary

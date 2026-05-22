@@ -1,7 +1,8 @@
 # Product
 
 Product scope lives here. The broader reason this repo exists, including the
-AI-centric production experiment behind it, lives in `project.md`.
+AI-centric production experiment behind it, lives in
+[`project.md`](project.md).
 
 ## What we're building
 
@@ -15,8 +16,8 @@ it turned, turn a mistake into a puzzle, or practice against bots shaped by the
 same lab that powers the game.
 
 This document describes the broader target product and its long-term pillars.
-The local-first app baseline lives in `app_design.md`; version sequencing lives
-in `roadmap.md`.
+The local-first app baseline lives in [`app_design.md`](../app/app_design.md);
+version sequencing lives in [`roadmap.md`](roadmap.md).
 
 ## Pillars
 
@@ -37,7 +38,8 @@ Rust core and bots at arbitrary positions:
 
 Running the same Rust core on the server also lets trusted online matches be
 re-verified against the authoritative rules engine, but that is a trust
-boundary (see `backend.md`), not a lab-powered feature in its own right.
+boundary (see [`backend.md`](../backend/backend.md)), not a lab-powered feature
+in its own right.
 
 If a feature idea doesn't benefit from the lab, that's fine; but the features
 we're most excited about all do.
@@ -54,8 +56,9 @@ should feel durable once you choose to sign in. Specifically:
 - First meaningful interaction creates a **local profile** on the device.
   You can play bot matches and build up local history without creating a cloud
   account.
-- Signing in with Google or GitHub **promotes** the local state to a
-  cloud-backed profile without making the user feel they "started over."
+- Signing in with Google **promotes** the local state to a cloud-backed profile
+  without making the user feel they "started over." GitHub sign-in can follow
+  later if the product needs it.
 - **Local data** is the source of truth for local-only sessions. **Cloud
   state** becomes the source of truth for signed-in features such as synced
   history, shareable replays, online play, and anything public.

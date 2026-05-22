@@ -25,14 +25,15 @@ backend services exist for durability, sharing, and trust boundaries.
 
 ## Version Mapping
 
-`docs/reference/product/roadmap.md` owns sequencing. This backend doc describes the target
-service model and the feature menu, but not every piece lands at once.
+[`Roadmap`](../product/roadmap.md) owns sequencing. This backend doc describes
+the target service model and the feature menu, but not every piece lands at
+once.
 
 | Version | Backend intent | Included | Deferred |
 |---|---|---|---|
 | `P3 / v0.3` | Backend foundation and cloud continuity | Firebase Auth, cloud profile, local profile promotion, private cloud history, owner-scoped Firestore rules | live PvP, ranked/trusted matches, public replay sharing, replay analysis, puzzles |
 | `P4 / v0.4` | Lab-powered product identity | replay analysis, critical moments, puzzles, save-this-game positions, bot personalities/customization; Cloud Run only if browser-side wasm is not enough | live PvP, ranked/trusted matches, broad public sharing |
-| `P5 / v0.5` | Presentation systems and skins | theme/skin support and product polish; backend usually unchanged | live PvP, ranked/trusted matches, broad public sharing |
+| `P5 / v0.5` | Public-release reconciliation | repo/artifact cleanup, report presentation, explanation pages, release packaging; backend usually unchanged | live PvP, ranked/trusted matches, broad public sharing |
 | `P6 / v0.6` | Online product expansion | Cloud Run match authority, direct challenge/PvP, trusted match history, matchmaking/ranked if useful, explicit public shareables | broad social features |
 
 Cloud Run is part of the target backend, but `v0.3` does not need it. `v0.4`
@@ -44,9 +45,9 @@ otherwise it can wait until the online/trusted-match phase.
 This file is the backend design contract. Operational state and setup commands
 live elsewhere so the design doc does not become a deployment log:
 
-- `backend_infra.md` — live Firebase/GCP setup, locations, app IDs, enabled
+- [`backend_infra.md`](../ops/backend_infra.md) — live Firebase/GCP setup, locations, app IDs, enabled
   APIs, Firestore rules deployment, and pending infra checklist.
-- `backend_cost.md` — free-tier assumptions, rough usage estimates, and
+- [`backend_cost.md`](../ops/backend_cost.md) — free-tier assumptions, rough usage estimates, and
   headroom checks.
 
 ## Architecture
@@ -56,8 +57,8 @@ Four components:
 | Component | Role | Cost note |
 |---|---|---|
 | **Local profile** | Local identity, local settings, local match history | No backend cost |
-| **Firebase Auth** | Sign-in when cloud-backed features are needed | Auth is initialized as Identity Platform; keep providers inside the no-cost social-sign-in tier tracked in `backend_cost.md` |
-| **Firestore** | Document storage: cloud profiles, trusted matches, published replays, puzzles | Current database state lives in `backend_infra.md`; cost posture lives in `backend_cost.md` |
+| **Firebase Auth** | Sign-in when cloud-backed features are needed | Auth is initialized as Identity Platform; keep providers inside the no-cost social-sign-in tier tracked in [`backend_cost.md`](../ops/backend_cost.md) |
+| **Firestore** | Document storage: cloud profiles, trusted matches, published replays, puzzles | Current database state lives in [`backend_infra.md`](../ops/backend_infra.md); cost posture lives in [`backend_cost.md`](../ops/backend_cost.md) |
 | **Cloud Run** | Rust service: trusted match authority, username reservation, verification, strong bot, puzzle generation | For request-based billing: 2M requests · 180k vCPU-s · 360k GiB-s per month free (us-central1-based) |
 
 Everything scales to zero when idle. The browser is the fast path when
@@ -67,10 +68,10 @@ trust doesn't matter; Cloud Run is the path when it does.
 
 - `gomoku-bot-lab/gomoku-core` — rules engine, shared by browser (wasm) and
   server (native).
-- `gomoku-bot-lab/gomoku-api/` — the Cloud Run service. Starts here as a
-  new crate in the existing workspace so it can depend on core/bot via
-  path deps. Graduates to top-level `gomoku-backend/` when deploy cadence
-  diverges enough to justify the split.
+- planned `gomoku-bot-lab/gomoku-api/` — the future Cloud Run service. It
+  should start as a new crate in the existing workspace so it can depend on
+  core/bot via path deps, then graduate to top-level `gomoku-backend/` only
+  when deploy cadence diverges enough to justify the split.
 - `firestore.rules` at the repo root — security rules, deployable and
   reviewed alongside code.
 - `gomoku-web/src/cloud/firebase.ts` — browser Firebase initialization. It
@@ -92,7 +93,8 @@ Instead:
 This avoids creating backend identities for drive-by visitors while still
 letting players get a feel for the game immediately.
 
-The web uses the Firebase JS SDK directly (see `architecture.md`). Cloud Run
+The web uses the Firebase JS SDK directly (see
+[`architecture.md`](../app/architecture.md)). Cloud Run
 verifies callers by validating the Firebase ID token JWT against Google's
 public keys.
 
@@ -153,7 +155,7 @@ Cloud Run so the `usernames/{handle} → uid` transaction is atomic.
 
 When a local player decides to sign in:
 
-1. The app signs them in with Google or GitHub.
+1. The app signs them in with Google. GitHub can follow later if needed.
 2. Firebase returns a stable `uid`.
 3. The app creates or loads `profiles/{uid}`.
 4. Local settings and finished local match history are imported into
@@ -323,21 +325,21 @@ Workflows live at:
 
 - `.github/workflows/deploy.yml` — web (GitHub Pages), already exists
 - `.github/workflows/deploy-firestore.yml` — Firestore rules, tag/manual only
-- `.github/workflows/deploy-api.yml` — future Cloud Run service
+- planned `.github/workflows/deploy-api.yml` — future Cloud Run service
 
 The live Firebase/GCP setup, Workload Identity Federation bootstrap, deploy
 model, and break-glass rules deploy path are documented in
-`docs/reference/ops/backend_infra.md`.
+[`backend_infra.md`](../ops/backend_infra.md).
 
 ## Feature catalog
 
-Each is a standalone increment. `roadmap.md` sequences them; this is the
-menu.
+Each is a standalone increment. [`Roadmap`](../product/roadmap.md) sequences
+them; this is the menu.
 
 | Feature | Surface | Trust gate |
 |---|---|---|
 | Local profile | Browser-only local mode | None |
-| Auth + cloud profile | Google/GitHub sign-in, profile sync | Firebase Auth |
+| Auth + cloud profile | Google sign-in now; GitHub can follow later, profile sync | Firebase Auth |
 | Username reservation | `/reserve_username` | Cloud Run transaction |
 | Cloud match history | Coalesce finished signed-in casual matches into `profiles/{uid}.match_history` | Private; `client_uploaded` |
 | Trusted match history | Server-validated online/ranked history in `profiles/{uid}/matches/{id}` | `server_verified` |

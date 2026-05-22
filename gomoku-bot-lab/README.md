@@ -80,213 +80,52 @@ Detailed references:
 
 ### Eval harness
 
-`gomoku-eval` runs head-to-head series, self-play, and multi-threaded bot
-evaluation schedules. Full round-robin remains the release-quality coverage
-mode, but focused tuning should usually start with `head-to-head` or `gauntlet`
-so new knobs do not explode into every possible pairing. Tournament games run in
-parallel, then results are folded back in deterministic match order so replay
-names and sequential Elo updates are reported consistently. CPU-time-budgeted
-searches can still vary under scheduler load, so use repeated runs or
-fixed-depth eval for ranking confidence. Eval defaults to Renju because bot
-rankings are easier to compare when first-player advantage is constrained; pass
-`--rule freestyle` for freestyle-specific product checks.
+`gomoku-eval` runs focused head-to-heads, candidate gauntlets, full round-robin
+tournaments, tactical scenario sweeps, lethal scenario checks, and replay-analysis
+reports. Keep scratch output in ignored `outputs/`; curated published reports
+live in `reports/` and `analysis-reports/`.
 
-Strict per-move budgets remain the default because they make anchor reports easy
-to compare. For product-shaped checks, `--search-budget-mode pooled` uses the
-same CPU budget as a per-game average: cheap moves bank CPU reserve, hard moves
-can spend it, and `--search-cpu-reserve-ms` caps how much burst time a side can
-carry. `--search-cpu-max-move-ms` can cap a single move independently from the
-larger reserve pool.
+Common commands from `gomoku-bot-lab/`:
 
 ```sh
-mkdir -p outputs
-cargo run --release -p gomoku-eval -- tournament --bots search-d1,search-d3,search-d5 --games-per-pair 10 --opening-policy centered-suite --opening-plies 4 --search-cpu-time-ms 100 --max-game-ms 10000 --seed 42 --report-json outputs/gomoku-tournament.json
-cargo run --release -p gomoku-eval -- tournament --schedule head-to-head --bots search-d5+tactical-cap-8,search-d5+tactical-cap-8+pattern-eval --games-per-pair 64 --opening-policy centered-suite --opening-plies 4 --search-cpu-time-ms 1000 --report-json outputs/head-to-head.json
-cargo run --release -p gomoku-eval -- tournament --schedule gauntlet --candidates search-d5+tactical-cap-4+pattern-eval,search-d7+tactical-cap-4+pattern-eval,search-d7+tactical-cap-16+pattern-eval --anchors search-d3,search-d5+tactical-cap-16+pattern-eval,search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4 --anchor-report reports/latest.json --games-per-pair 32 --opening-policy centered-suite --opening-plies 4 --search-cpu-time-ms 1000 --max-moves 120 --report-json outputs/sweep-a-gauntlet.json
-cargo run --release -p gomoku-eval -- report-html --input outputs/gomoku-tournament.json --output outputs/gomoku-tournament.html --json-href gomoku-tournament.json
-cargo run --release -p gomoku-eval -- analyze-replay-batch --replay-dir outputs/replays --report-json outputs/analysis-batch.json --report-html outputs/analysis-batch.html
-cargo run --release -p gomoku-eval -- analyze-report-replays --report reports/latest.json --sample-size 8 --max-scan-plies 8 --report-json outputs/analysis/top2-smoke.json --report-html outputs/analysis/top2-smoke.html
-cargo run --release -p gomoku-eval -- analyze-report-replays --report reports/latest.json --sample-size 64 --include-proof-details --report-json outputs/analysis/top2-audit.json --report-html outputs/analysis/top2-audit.html
-```
-
-Use the larger curated-report run from `gomoku-bot-lab/` when publishing
-bot-lab results:
-
-```sh
-mkdir -p reports
+# quick focused comparison
 cargo run --release -p gomoku-eval -- tournament \
-  --bots search-d1,search-d3,search-d3+pattern-eval,search-d5+tactical-cap-16+pattern-eval,search-d7+tactical-cap-8+pattern-eval,search-d3+pattern-eval+corridor-proof-c16-d8-w4,search-d5+tactical-cap-16+pattern-eval+corridor-proof-c16-d8-w4,search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4 \
-  --games-per-pair 64 \
+  --schedule head-to-head \
+  --bots search-d3,search-d3+pattern-eval \
+  --games-per-pair 16 \
   --opening-policy centered-suite \
   --opening-plies 4 \
-  --search-cpu-time-ms 2000 \
-  --search-budget-mode pooled \
-  --search-cpu-reserve-ms 8000 \
-  --search-cpu-max-move-ms 4000 \
-  --max-moves 120 \
-  --seed 63 \
-  --threads 22 \
-  --report-json reports/latest.json
-cargo run --release -p gomoku-eval -- report-html --input reports/latest.json --output reports/index.html --json-href latest.json
-```
+  --search-cpu-time-ms 1000 \
+  --report-json outputs/head-to-head.json
 
-Useful eval flags:
+# render a tournament report
+cargo run --release -p gomoku-eval -- report-html \
+  --input outputs/head-to-head.json \
+  --output outputs/head-to-head.html \
+  --json-href head-to-head.json
 
-| Flag | Description |
-|------|-------------|
-| `--schedule` | Tournament pairing workflow: `round-robin` by default, `head-to-head`, or `gauntlet` |
-| `--bots` | Bot list for `round-robin`; exactly two bots for `head-to-head` |
-| `--candidate` | Single candidate bot for `gauntlet` |
-| `--candidates` | Comma-separated candidate bots for batch `gauntlet`; plays candidates against anchors only |
-| `--anchors` | Comma-separated anchor bots for `gauntlet` |
-| `--anchor-report` | Optional full round-robin report used as the gauntlet rating reference, usually `reports/latest.json`; validates rule/opening/budget/cap compatibility |
-| `--rule` | Rule variant: `renju` by default, or `freestyle` |
-| `--search-time-ms` | Applies a per-move budget to search bots, including lab aliases |
-| `--search-cpu-time-ms` | Applies a Linux thread CPU-time budget to search bots |
-| `--search-budget-mode` | Budget policy: `strict` per move by default, or `pooled` CPU reserve mode |
-| `--search-cpu-reserve-ms` | CPU reserve cap for pooled mode; defaults to `4000` |
-| `--search-cpu-max-move-ms` | Optional max CPU-time budget for one pooled move; useful when the reserve pool should be larger than the allowed spike |
-| `--max-game-ms` | Records a still-running game as a draw after this wall-clock cap |
-| `--max-moves` | Records a still-running game as a draw after this move count |
-| `--seed` | Base seed for reproducible random bots and tournament opening-suite rotation |
-| `--opening-policy` | Tournament opening policy; defaults to `centered-suite`; `random-legal` keeps the older whole-board random opening mode |
-| `--opening-plies` | Tournament-only opening moves before bots take over; defaults to `4` |
-| `--threads` | Tournament worker count; defaults to available CPU parallelism minus 2 |
-| `--games-per-pair` | Tournament games per bot pair; use an even number for color balance |
-| `--replay-dir` | Writes replay JSON for each eval game |
-| `--report-json` | Writes a compact tournament report with summary stats and `cell_index_v1` move lists |
-| `report-html --json-href` | Adds the raw JSON link shown in the rendered HTML |
-| `analyze-replay-batch --replay-dir` | Analyzes saved replay JSON files and writes grouped analysis JSON/HTML reports |
-| `analyze-report-replays --report` | Samples compact tournament report matches, reconstructs replay objects in memory, and writes grouped analysis JSON/HTML reports |
+# replay-analysis smoke from the current curated bot report
+cargo run --release -p gomoku-eval -- analyze-report-replays \
+  --report reports/latest.json \
+  --sample-size 8 \
+  --report-json outputs/analysis/top2-smoke.json \
+  --report-html outputs/analysis/top2-smoke.html
 
-The default centered opening suite gives every bot pair the same local 4-ply
-openings, with both color assignments, so rankings are less dominated by random
-whole-board stones. Wall-clock budgets are practical but noisy under
-multi-threaded load. CPU-time budgets are better for Linux ranking eval, pooled
-CPU budgets are closer to hard-bot product use, and fixed-depth configs remain
-the most reproducible option. Tournament reports
-include pairwise records, color splits, shuffled-order Elo averages,
-depth/budget stats, opening IDs, generated candidate width, post-ordering child
-width, and compact `move_cells` using the same `row * 15 + col` codec as saved
-web matches. The tournament harness and opening suite are documented in
-[`../docs/reference/ops/tournament.md`](../docs/reference/ops/tournament.md).
-
-For replay analysis iteration, prefer `analyze-report-replays --sample-size 8`
-against an existing tournament report before running a full matchup. The
-stratified sample is deterministic and tries to include both entrants, both
-colors where available, a draw or max-move game, and short/long games. Replay
-analysis now uses corridor-exit semantics: it follows the actual ending
-corridor and asks whether model-valid defender replies can leave it, rather than
-trying to prove every alternate state as a game-theoretic loss. The batch report
-includes `unclear_reason`, final forced-interval presence, prefix counts,
-per-entry elapsed time, limit-cause counts, and `unclear_context` drilldown.
-Replay analysis defaults to a `64`-ply backward scan cap; short resolved
-corridors stop early, and smoke runs can still override with
-`--max-scan-plies 8`.
-The strategic model is documented in
-[`../docs/reference/lab/corridor_search.md`](../docs/reference/lab/corridor_search.md); the replay-specific
-contract lives in [`../docs/reference/lab/game_analysis.md`](../docs/reference/lab/game_analysis.md).
-Report rows intentionally avoid a category/severity label. The header keeps
-only compact total, unclear, and error counts; expanded rows focus on proof
-diagnostics such as reply probes, searched nodes, search time, unclear context,
-and visual decision frames. The analyzer no longer assigns severity from
-forced-corridor length. Add
-`--include-proof-details` when auditing decisive replay labels; it records the
-previous-prefix and final-forced-start proof snapshots plus visual HTML
-decision frames for pre-move states from the winning ply backward through the
-final forced interval, without changing the default compact report shape. These
-frames separate reply role from reply outcome: outer hints show immediate or
-imminent defensive candidates, offensive counter-threat candidates, and actual
-replay moves, while marker characters show whether that reply is a confirmed
-escape, possible escape, immediate loss, unknown, or forced loss. Keep
-proof-detail audits at the base corridor depth until corridor search has better
-pruning, memoization, or a narrower transition model.
-
-Scratch reports should stay in ignored `outputs/`. Curated reports for the
-public site live in [`reports/`](reports/); the web build copies that folder to
-`/bot-report/`. To publish a selected run, write the JSON to
-`reports/latest.json` and render the HTML to `reports/index.html`.
-
-Curated replay-analysis reports for the public site live in
-[`analysis-reports/`](analysis-reports/); the web build copies that folder to
-`/analysis-report/`. The published analysis report should sample the head-to-head
-games between the current top two standings in `reports/latest.json`; omit
-explicit `--entrant-a` / `--entrant-b` so the CLI uses that default.
-
-Curated reports should be generated as a follow-up artifact commit after the
-bot/report code is already committed. Run `git status --short` first; a dirty
-worktree is intentionally captured as a `_dirty` git revision and shown as a
-development-run warning in the report. That warning is fine for scratch output
-under `outputs/`, but avoid publishing it as the canonical `/bot-report/`.
-The latest curated full round-robin report also acts as the anchor-rating source
-for focused gauntlet runs; do not maintain a separate anchor cache unless the
-published report workflow stops being enough.
-
-### Tactical scenario diagnostics
-
-Tournament reports answer "which config scores better over many games?"
-Tactical scenarios answer a narrower question: "does this config choose the
-expected one-move tactical response in this position, and what did it cost?"
-The current corpus is documented in
-[`../docs/reference/corpora/tactical_scenarios.md`](../docs/reference/corpora/tactical_scenarios.md), including
-exact board prints, hard safety-gate cases, diagnostic cases, expected moves,
-and the role/layer/intent/shape metadata used by reports.
-The shared shape terms behind those cases live in
-[`../docs/reference/lab/tactical_shapes.md`](../docs/reference/lab/tactical_shapes.md).
-
-Run the baseline tactical sweep from `gomoku-bot-lab/`:
-
-```sh
-cargo run -p gomoku-eval -- tactical-scenarios --bots search-d1,search-d3,search-d5,search-d5+tactical-cap-8,search-d7+tactical-cap-8 --search-cpu-time-ms 1000
-```
-
-The command reports `PASS`/`FAIL` for hard safety gates and `HIT`/`MISS` for
-diagnostic probes, followed by rule variant, side to move, case role, chosen
-move, expected move sets, layer, intent, shape, depth reached, nodes, root
-safety-gate work (`safety_nodes`), root/search candidate and legality costs,
-time, and budget exhaustion. To capture reusable JSON:
-
-```sh
-mkdir -p outputs
-cargo run -p gomoku-eval -- tactical-scenarios --bots search-d1,search-d3,search-d5,search-d5+tactical-cap-8,search-d7+tactical-cap-8 --search-cpu-time-ms 1000 --report-json outputs/tactical-scenarios.json
-```
-
-Treat this as diagnostic coverage, not a ranking system. Hard-gate failures are
-regressions; diagnostic misses are active behavior gaps. New search logic should
-be driven by diagnostics that expose real gaps, then confirmed with tournament
-ablation. The rejected broad threat-extension and broad shape-eval experiments
-are recorded in the v0.4 search plan rather than exposed as current lab specs.
-
-### Lethal scenario diagnostics
-
-Lethal scenarios answer a different question from tactical scenarios:
-"does this position already leave the defender without legal coverage?" They
-validate the shared lethal classifier directly rather than asking a bot to pick
-a move. The model and current case list live in
-[`../docs/reference/lab/lethal_threats.md`](../docs/reference/lab/lethal_threats.md).
-
-Run the lethal safety harness from `gomoku-bot-lab/`:
-
-```sh
+# tactical and lethal diagnostic harnesses
+cargo run -p gomoku-eval -- tactical-scenarios
 cargo run -p gomoku-eval -- lethal-scenarios
 ```
 
-Add `--show-boards` when reviewing the exact fixture positions in the terminal.
-The JSON report always includes each case's `board_ascii` field.
+Runbook and model docs:
 
-To capture reusable JSON:
-
-```sh
-mkdir -p outputs
-cargo run -p gomoku-eval -- lethal-scenarios --report-json outputs/lethal-scenarios.json
-```
-
-The current harness covers terminal coverage and one-step coverage: freestyle
-open four, blockable single four, defender immediate-win race, Renju forbidden
-block, Renju Black illegal-completion caveat, crossed `4+3`, crossed `3+3`, a
-non-lethal crossed broken-three pair with a shared block, and a non-lethal
-single open three. Replay analysis should consume this harness before lethal
-classification is used in bot search.
+- [`Tournament Eval`](../docs/reference/ops/tournament.md): schedules,
+  opening suite, report process, and published-report command.
+- [`Tactical Scenario Corpus`](../docs/reference/corpora/tactical_scenarios.md):
+  focused one-move tactical fixtures and expected moves.
+- [`Lethal Threats`](../docs/reference/lab/lethal_threats.md): lethal
+  classifier semantics and scenario harness.
+- [`Game Analysis`](../docs/reference/lab/game_analysis.md): replay-analysis
+  contract and report interpretation.
 
 ## Replay format
 

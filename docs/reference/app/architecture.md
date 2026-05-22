@@ -80,7 +80,8 @@ less code and closer to the truth.
 **Why no CSS framework (Tailwind / MUI / etc.)?**
 CSS Modules (`*.module.css`) plus a small hand-rolled token layer in
 `global.css` for color, spacing, and type. The shell is small, the look is
-deliberately distinctive, and the tokens are documented in `ui_design.md`.
+deliberately distinctive, and the tokens are documented in
+[`ui_design.md`](ui_design.md).
 A utility framework would add machinery and fight the retro/chunky visual
 direction. Decided after the first screen builds landed.
 
@@ -245,13 +246,14 @@ From here, the version plan is:
 - **P4 / `v0.4` — lab-powered product identity.** Use the Rust core/bot/eval
   tools for replay analysis, critical-moment tagging, puzzles, bot
   personalities, and related learning modes.
-- **P5 / `v0.5` — presentation systems and skins.** Extend the frontend visual
-  system so the product can support more than one tone without losing the
-  board-first design.
+- **P5 / `v0.5` — public-release reconciliation.** Clean up repo artifacts,
+  productize report surfaces, add concise explanatory pages, and package the
+  app for a stranger-facing alpha. Skins remain optional supporting polish, not
+  the phase spine.
 - **P6 / `v0.6` — online product expansion.** Add the Cloud Run authority,
   direct challenge / PvP flows, trusted match persistence, ranked or matchmaking
   surfaces, and deliberate public/shareable artifacts.
 
-Details are in `roadmap.md`. The architectural contract — what React owns, what
-Phaser owns, how they talk, and where `gomoku-core` is authoritative — is the
-part that needs to hold across all of it.
+Details are in [`Roadmap`](../product/roadmap.md). The architectural contract
+— what React owns, what Phaser owns, how they talk, and where `gomoku-core` is
+authoritative — is the part that needs to hold across all of it.
