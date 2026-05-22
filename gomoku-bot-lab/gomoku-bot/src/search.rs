@@ -425,6 +425,7 @@ pub struct SearchMetrics {
     pub search_child_moves_after_max: u64,
     pub tt_hits: u64,
     pub tt_cutoffs: u64,
+    pub tt_insert_skips: u64,
     pub beta_cutoffs: u64,
     pub corridor_nodes: u64,
     pub corridor_branch_probes: u64,
@@ -3241,6 +3242,22 @@ fn push_unique_move(moves: &mut Vec<Move>, mv: Move) {
 
 // --- Negamax with alpha-beta (incremental Zobrist hash) ---
 
+fn store_tt_entry(
+    tt: &mut HashMap<u64, TTEntry>,
+    max_tt_entries: Option<usize>,
+    metrics: &mut SearchMetrics,
+    hash: u64,
+    entry: TTEntry,
+) {
+    let can_insert =
+        tt.contains_key(&hash) || max_tt_entries.map_or(true, |limit| tt.len() < limit);
+    if can_insert {
+        tt.insert(hash, entry);
+    } else {
+        metrics.tt_insert_skips += 1;
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
 fn negamax(
     state: &mut SearchState,
@@ -3250,6 +3267,7 @@ fn negamax(
     color: Color,
     root_color: Color,
     tt: &mut HashMap<u64, TTEntry>,
+    max_tt_entries: Option<usize>,
     zobrist: &ZobristTable,
     candidate_source: CandidateSource,
     null_cell_culling: NullCellCulling,
@@ -3395,6 +3413,7 @@ fn negamax(
             color.opponent(),
             root_color,
             tt,
+            max_tt_entries,
             zobrist,
             candidate_source,
             null_cell_culling,
@@ -3452,7 +3471,10 @@ fn negamax(
     } else {
         TTFlag::Exact
     };
-    tt.insert(
+    store_tt_entry(
+        tt,
+        max_tt_entries,
+        metrics,
         hash,
         TTEntry {
             depth,
@@ -3476,6 +3498,7 @@ fn search_root(
     root_moves: &[Move],
     color: Color,
     tt: &mut HashMap<u64, TTEntry>,
+    max_tt_entries: Option<usize>,
     zobrist: &ZobristTable,
     candidate_source: CandidateSource,
     null_cell_culling: NullCellCulling,
@@ -3531,6 +3554,7 @@ fn search_root(
             color.opponent(),
             color,
             tt,
+            max_tt_entries,
             zobrist,
             candidate_source,
             null_cell_culling,
@@ -3592,7 +3616,10 @@ fn search_root(
     } else {
         TTFlag::Exact
     };
-    tt.insert(
+    store_tt_entry(
+        tt,
+        max_tt_entries,
+        metrics,
         hash,
         TTEntry {
             depth,
@@ -3799,6 +3826,7 @@ pub struct SearchBotConfig {
     pub max_depth: i32,
     pub time_budget_ms: Option<u64>,
     pub cpu_time_budget_ms: Option<u64>,
+    pub max_tt_entries: Option<usize>,
     pub candidate_radius: usize,
     pub candidate_opponent_radius: Option<usize>,
     pub safety_gate: SafetyGate,
@@ -3817,6 +3845,7 @@ impl SearchBotConfig {
             max_depth,
             time_budget_ms: None,
             cpu_time_budget_ms: None,
+            max_tt_entries: None,
             candidate_radius: 2,
             candidate_opponent_radius: None,
             safety_gate: SafetyGate::CurrentObligation,
@@ -3835,6 +3864,7 @@ impl SearchBotConfig {
             max_depth: 20,
             time_budget_ms: Some(time_budget_ms),
             cpu_time_budget_ms: None,
+            max_tt_entries: None,
             candidate_radius: 2,
             candidate_opponent_radius: None,
             safety_gate: SafetyGate::CurrentObligation,
@@ -3853,6 +3883,7 @@ impl SearchBotConfig {
             max_depth: 20,
             time_budget_ms: None,
             cpu_time_budget_ms: Some(cpu_time_budget_ms),
+            max_tt_entries: None,
             candidate_radius: 2,
             candidate_opponent_radius: None,
             safety_gate: SafetyGate::CurrentObligation,
@@ -3901,6 +3932,7 @@ impl SearchBotConfig {
             "max_depth": self.max_depth,
             "time_budget_ms": self.time_budget_ms,
             "cpu_time_budget_ms": self.cpu_time_budget_ms,
+            "max_tt_entries": self.max_tt_entries,
             "candidate_radius": self.candidate_radius,
             "candidate_opponent_radius": self.candidate_opponent_radius,
             "candidate_source": self.candidate_source().name(),
@@ -3927,6 +3959,8 @@ pub struct SearchInfo {
     pub budget_exhausted: bool,
     pub elapsed_ms: u64,
     pub cpu_time_ms: Option<u64>,
+    pub tt_entries: usize,
+    pub tt_max_entries: Option<usize>,
 }
 
 pub struct SearchBot {
@@ -3993,6 +4027,11 @@ impl Bot for SearchBot {
                     "depth_exits": info.metrics.corridor_depth_exits,
                     "neutral_exits": info.metrics.corridor_neutral_exits,
                     "terminal_exits": info.metrics.corridor_terminal_exits,
+                },
+                "tt": {
+                    "entries": info.tt_entries,
+                    "max_entries": info.tt_max_entries,
+                    "insert_skips": info.metrics.tt_insert_skips,
                 },
                 "total_nodes": total_nodes,
                 "metrics": info.metrics.trace(),
@@ -4080,6 +4119,7 @@ impl Bot for SearchBot {
                 &root_moves,
                 color,
                 &mut self.tt,
+                self.config.max_tt_entries,
                 &self.zobrist,
                 candidate_source,
                 null_cell_culling,
@@ -4195,6 +4235,8 @@ impl Bot for SearchBot {
             cpu_time_ms: cpu_start.and_then(|start| {
                 thread_cpu_time().map(|now| now.saturating_sub(start).as_millis() as u64)
             }),
+            tt_entries: self.tt.len(),
+            tt_max_entries: self.config.max_tt_entries,
         });
 
         best_move
@@ -5325,6 +5367,7 @@ mod tests {
             Color::Black,
             Color::Black,
             &mut tt,
+            None,
             &zobrist,
             CandidateSource::NearAll { radius: 2 },
             NullCellCulling::Disabled,
@@ -5358,6 +5401,7 @@ mod tests {
         assert_eq!(baseline.legality_gate(), LegalityGate::ExactRules);
         assert_eq!(baseline.safety_gate(), SafetyGate::CurrentObligation);
         assert_eq!(baseline.null_cell_culling, NullCellCulling::Disabled);
+        assert_eq!(baseline.max_tt_entries, None);
         assert_eq!(
             baseline.move_ordering,
             MoveOrdering::TranspositionFirstBoardOrder
@@ -5376,6 +5420,7 @@ mod tests {
             max_depth: 4,
             time_budget_ms: None,
             cpu_time_budget_ms: None,
+            max_tt_entries: None,
             candidate_radius: 3,
             candidate_opponent_radius: None,
             safety_gate: SafetyGate::None,
@@ -5410,6 +5455,34 @@ mod tests {
     }
 
     #[test]
+    fn tt_cap_skips_new_entries_but_updates_existing_entries() {
+        let mut tt = HashMap::new();
+        let mut metrics = SearchMetrics::default();
+        let first = TTEntry {
+            depth: 1,
+            score: 10,
+            flag: TTFlag::Exact,
+            best_move: Some(mv("H8")),
+        };
+        let replacement = TTEntry {
+            depth: 2,
+            score: 20,
+            flag: TTFlag::Exact,
+            best_move: Some(mv("I8")),
+        };
+
+        store_tt_entry(&mut tt, Some(1), &mut metrics, 1, first);
+        store_tt_entry(&mut tt, Some(1), &mut metrics, 2, first);
+        store_tt_entry(&mut tt, Some(1), &mut metrics, 1, replacement);
+
+        assert_eq!(tt.len(), 1);
+        assert!(!tt.contains_key(&2));
+        assert_eq!(tt.get(&1).map(|entry| entry.depth), Some(2));
+        assert_eq!(tt.get(&1).map(|entry| entry.score), Some(20));
+        assert_eq!(metrics.tt_insert_skips, 1);
+    }
+
+    #[test]
     fn trace_records_search_config() {
         let board = Board::new(RuleConfig {
             variant: Variant::Renju,
@@ -5427,6 +5500,7 @@ mod tests {
         assert_eq!(trace["config"]["safety_gate"], "current_obligation");
         assert_eq!(trace["config"]["move_ordering"], "tt_first_board_order");
         assert_eq!(trace["config"]["child_limit"], serde_json::Value::Null);
+        assert_eq!(trace["config"]["max_tt_entries"], serde_json::Value::Null);
         assert_eq!(trace["config"]["search_algorithm"], "alpha_beta_id");
         assert_eq!(trace["config"]["static_eval"], "line_shape_eval");
         assert_eq!(trace["config"]["threat_view_mode"], "rolling");
@@ -5435,6 +5509,8 @@ mod tests {
         assert!(trace["total_nodes"].as_u64().unwrap() >= trace["nodes"].as_u64().unwrap());
         assert_eq!(trace["budget_exhausted"], false);
         assert_eq!(trace["depth"], 3);
+        assert!(trace["tt"]["entries"].as_u64().is_some());
+        assert_eq!(trace["tt"]["max_entries"], serde_json::Value::Null);
 
         let metrics = &trace["metrics"];
         assert!(metrics["eval_calls"].as_u64().unwrap() > 0);
@@ -5442,6 +5518,7 @@ mod tests {
         assert!(metrics["legality_checks"].as_u64().unwrap() > 0);
         assert!(metrics["tt_hits"].as_u64().is_some());
         assert!(metrics["tt_cutoffs"].as_u64().is_some());
+        assert!(metrics["tt_insert_skips"].as_u64().is_some());
         assert!(metrics["beta_cutoffs"].as_u64().is_some());
         assert!(metrics["root_candidate_generations"].as_u64().is_some());
         assert!(metrics["search_candidate_generations"].as_u64().is_some());
@@ -6230,6 +6307,7 @@ mod tests {
             Color::Black,
             Color::Black,
             &mut tt,
+            None,
             &zobrist,
             CandidateSource::NearAll { radius: 2 },
             NullCellCulling::Enabled,
@@ -6308,6 +6386,7 @@ mod tests {
             max_depth: 1,
             time_budget_ms: None,
             cpu_time_budget_ms: None,
+            max_tt_entries: None,
             candidate_radius: 2,
             candidate_opponent_radius: None,
             safety_gate: SafetyGate::None,

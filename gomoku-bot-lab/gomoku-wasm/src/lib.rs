@@ -178,12 +178,13 @@ mod wasm_board_tests {
     #[test]
     fn bot_spec_json_configures_search_bot() {
         let config = parse_bot_spec(
-            r#"{"kind":"search","depth":5,"childLimit":16,"patternEval":true,"corridorProof":{"candidateLimit":16,"depth":8,"width":4}}"#,
+            r#"{"kind":"search","depth":5,"childLimit":16,"maxTtEntries":500000,"patternEval":true,"corridorProof":{"candidateLimit":16,"depth":8,"width":4}}"#,
         )
         .expect("bot spec should parse");
 
         assert_eq!(config.max_depth, 5);
         assert_eq!(config.child_limit, Some(16));
+        assert_eq!(config.max_tt_entries, Some(500_000));
         assert_eq!(config.move_ordering, MoveOrdering::Tactical);
         assert_eq!(config.static_eval, StaticEvaluation::PatternEval);
         assert!(config.corridor_proof.enabled);
@@ -326,6 +327,7 @@ enum WasmBotSpec {
         child_limit: Option<i32>,
         corridor_proof: Option<WasmCorridorProofSpec>,
         depth: i32,
+        max_tt_entries: Option<i32>,
         pattern_eval: bool,
     },
 }
@@ -338,6 +340,7 @@ fn parse_bot_spec(spec_json: &str) -> Result<SearchBotConfig, String> {
         child_limit,
         corridor_proof,
         depth,
+        max_tt_entries,
         pattern_eval,
     } = spec
     else {
@@ -347,8 +350,14 @@ fn parse_bot_spec(spec_json: &str) -> Result<SearchBotConfig, String> {
     if depth < 0 {
         return Err("bot depth must be non-negative".to_string());
     }
+    if let Some(max_tt_entries) = max_tt_entries {
+        if max_tt_entries <= 0 {
+            return Err("bot maxTtEntries must be null or a positive integer".to_string());
+        }
+    }
 
     let mut config = SearchBotConfig::custom_depth(depth);
+    config.max_tt_entries = max_tt_entries.map(|value| value as usize);
     if let Some(child_limit) = child_limit {
         if child_limit <= 0 {
             return Err("bot childLimit must be null or a positive integer".to_string());

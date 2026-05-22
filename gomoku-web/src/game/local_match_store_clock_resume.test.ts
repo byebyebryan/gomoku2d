@@ -145,6 +145,7 @@ describe("createLocalMatchStore clocks and resume", () => {
         },
         depth: 7,
         kind: "search",
+        maxTtEntries: 500_000,
         patternEval: true,
       },
     ]);

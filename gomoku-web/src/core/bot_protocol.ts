@@ -13,6 +13,7 @@ export type BotSpec =
     corridorProof: CorridorProofSpec | null;
     depth: number;
     kind: "search";
+    maxTtEntries?: number | null;
     patternEval: boolean;
   };
 

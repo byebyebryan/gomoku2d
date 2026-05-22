@@ -9,6 +9,7 @@ export type BotExtraPass = "corridor_proof" | "none";
 export const BOT_PRESET_IDS: BotPresetId[] = ["easy", "normal", "hard"];
 export const BOT_DEPTHS: BotDepth[] = [1, 3, 5, 7];
 export const BOT_WIDTHS: BotWidth[] = [8, 16, "full"];
+export const WEB_SEARCH_TT_LIMIT_ENTRIES = 500_000;
 
 export interface BotPresetConfigV1 {
   mode: "preset";
@@ -174,6 +175,7 @@ export function resolveBotConfig(config: BotConfig): BotSpec {
     corridorProof: custom.extraPass === "corridor_proof" ? CORRIDOR_PROOF_V1 : null,
     depth: custom.depth,
     kind: "search",
+    maxTtEntries: WEB_SEARCH_TT_LIMIT_ENTRIES,
     patternEval: custom.scoring === "pattern",
   };
 }
