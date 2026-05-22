@@ -32,7 +32,7 @@ doc.
 
 ## Fixed scenario corpus
 
-Source of truth: `gomoku-bot-lab/benchmarks/scenarios.rs`
+Source of truth: `gomoku-bot-lab/gomoku-lab-support/src/scenarios.rs`
 
 Scenarios are stored as:
 

@@ -8,7 +8,7 @@ the attacker's terminal or already-known lethal continuation?
 
 Source of truth in code:
 
-- Terminal classifier: `gomoku-bot-lab/gomoku-bot/src/tactical.rs`
+- Terminal classifier: `gomoku-bot-lab/gomoku-bot/src/tactical/mod.rs`
 - Lethal scenario harness: `gomoku-bot-lab/gomoku-eval/src/lethal_scenario.rs`
 
 Planned consumers:

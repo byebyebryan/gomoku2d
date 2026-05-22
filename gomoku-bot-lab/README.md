@@ -33,19 +33,19 @@ cargo test  --workspace
 ## Run a match
 
 ```sh
-cargo run --release -p gomoku-cli -- --black baseline --white random
+cargo run --release -p gomoku-cli -- --black search-d3 --white random
 cargo run --release -p gomoku-cli -- --black search-d3 --white search-d1 --rule renju
-cargo run --release -p gomoku-cli -- --black baseline --white random --time-ms 500
-cargo run --release -p gomoku-cli -- --black baseline --white random --quiet --replay /tmp/game.json
+cargo run --release -p gomoku-cli -- --black search-d5 --white random --time-ms 500
+cargo run --release -p gomoku-cli -- --black search-d3 --white random --quiet --replay /tmp/game.json
 ```
 
 ### CLI flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--black` | `baseline` | Bot for Black: `random`, `baseline`, `baseline-N`, or search aliases |
-| `--white` | `random`   | Bot for White: `random`, `baseline`, `baseline-N`, or search aliases |
-| `--depth` | `5`        | Fixed baseline depth for the plain `baseline` spec |
+| `--black` | `baseline` | Bot for Black: `random`, `search-dN`, lab specs, or legacy `baseline` aliases |
+| `--white` | `random`   | Bot for White: `random`, `search-dN`, lab specs, or legacy `baseline` aliases |
+| `--depth` | `5`        | Fixed depth for the legacy plain `baseline` spec |
 | `--time-ms` | —        | Time budget per move for search bots, including lab aliases |
 | `--rule` | `freestyle` | Rule variant: `freestyle` or `renju` |
 | `--replay` | —         | Write replay JSON to this path |
@@ -62,7 +62,8 @@ perfect Gomoku engine.
 
 The lab primarily uses explicit search specs. `gomoku-bot` itself exposes
 `SearchBotConfig`; the spec strings are lab conveniences over that config, not
-canonical product presets.
+canonical product presets. The parser lives in `gomoku_bot::lab_spec`, while
+fixed benchmark/tactical boards live in the shared `gomoku-lab-support` crate.
 
 | Spec | Config | Intent |
 |---|---|---|
@@ -409,7 +410,7 @@ that replay format directly.
 {
   "hash_algo": { "algorithm": "xorshift64", "seed": 16045690984833335166 },
   "rules": { "board_size": 15, "win_length": 5, "variant": "freestyle" },
-  "black": "baseline",
+  "black": "search-d3",
   "white": "random",
   "moves": [
     { "mv": "H8", "time_ms": 120, "hash": 123456789 },
