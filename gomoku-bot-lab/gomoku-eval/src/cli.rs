@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Instant;
 
-use gomoku_bot::{RandomBot, SearchBot};
+use gomoku_bot::{lab_spec, RandomBot, SearchBot};
 use gomoku_core::{Color, GameResult, Move, Replay, RuleConfig, Variant};
 use gomoku_eval::analysis::{analyze_replay, AnalysisOptions, DEFAULT_MAX_SCAN_PLIES};
 use gomoku_eval::analysis_batch::{
@@ -38,9 +38,6 @@ use gomoku_eval::tournament::{
     default_thread_count, round_robin_pairs, run_scheduled_pairs_parallel, TournamentBotFactory,
     TournamentOptions, TournamentPair,
 };
-
-#[path = "../../benchmarks/search_configs.rs"]
-mod search_configs;
 
 #[derive(Parser, Debug)]
 #[command(name = "gomoku-eval", about = "Evaluation harness for Gomoku bots")]
@@ -608,7 +605,7 @@ fn make_bot_factory(
         return Ok(Arc::new(|seed| Box::new(RandomBot::seeded(seed))));
     }
     if let Some(config) =
-        search_configs::search_config_from_lab_spec(&spec, 5, search_time_ms, search_cpu_time_ms)
+        lab_spec::search_config_from_lab_spec(&spec, 5, search_time_ms, search_cpu_time_ms)
     {
         return match search_budget_mode {
             CliSearchBudgetMode::Strict => {
@@ -761,7 +758,7 @@ fn parse_search_config_specs(
     names
         .into_iter()
         .map(|name| {
-            let config = search_configs::search_config_from_lab_spec(
+            let config = lab_spec::search_config_from_lab_spec(
                 &name,
                 5,
                 search_time_ms,

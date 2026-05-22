@@ -1,4 +1,4 @@
-use gomoku_bot::{
+use crate::{
     CorridorProofConfig, MoveOrdering, NullCellCulling, SafetyGate, SearchAlgorithm,
     SearchBotConfig, StaticEvaluation, ThreatViewMode,
 };
@@ -72,7 +72,6 @@ pub fn lab_search_config(id: &str) -> Option<&'static LabSearchConfig> {
     LAB_SEARCH_CONFIGS.iter().find(|config| config.id == id)
 }
 
-#[allow(dead_code)]
 pub fn search_config_from_lab_spec(
     spec: &str,
     default_depth: i32,
@@ -501,7 +500,7 @@ mod tests {
         assert_eq!(config.candidate_opponent_radius, Some(1));
         assert_eq!(
             config.candidate_source(),
-            gomoku_bot::CandidateSource::NearSelfOpponent {
+            crate::CandidateSource::NearSelfOpponent {
                 self_radius: 2,
                 opponent_radius: 1
             }

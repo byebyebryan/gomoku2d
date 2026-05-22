@@ -1,5 +1,6 @@
 pub mod corridor;
 pub mod frontier;
+pub mod lab_spec;
 mod pattern;
 pub mod random;
 pub mod search;

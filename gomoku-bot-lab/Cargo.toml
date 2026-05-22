@@ -3,6 +3,7 @@ members = [
     "gomoku-core",
     "gomoku-bot",
     "gomoku-analysis",
+    "gomoku-lab-support",
     "gomoku-eval",
     "gomoku-cli",
     "gomoku-wasm",

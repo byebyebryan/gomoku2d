@@ -371,6 +371,7 @@ version = "0.1.0"
 dependencies = [
  "criterion",
  "gomoku-core",
+ "gomoku-lab-support",
  "instant",
  "libc",
  "rand",
@@ -392,6 +393,7 @@ name = "gomoku-core"
 version = "0.1.0"
 dependencies = [
  "criterion",
+ "gomoku-lab-support",
  "serde",
  "serde_json",
 ]
@@ -404,9 +406,17 @@ dependencies = [
  "gomoku-analysis",
  "gomoku-bot",
  "gomoku-core",
+ "gomoku-lab-support",
  "rayon",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "gomoku-lab-support"
+version = "0.1.0"
+dependencies = [
+ "gomoku-core",
 ]
 
 [[package]]
