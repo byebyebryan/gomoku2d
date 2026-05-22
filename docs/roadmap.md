@@ -482,40 +482,63 @@ why this is not just another Gomoku board with a bot.
 - learn how to present AI/search output in a way that helps players without
   making the UI feel like a debug dashboard
 
-## P5 — `v0.5` Presentation Systems And Skins
+## P5 — `v0.5` Public Release Reconciliation
 
-Use the frontend foundation to broaden the product's visual range without
-losing the board-first design.
+Turn the `0.4` lab-powered foundation into a cleaner, more understandable
+public alpha. The goal is not to add another broad research line; it is to make
+the existing product story legible to strangers, clean up the repo after the
+heavy lab work, and package the project for first public release.
 
 ### Goals
 
-- support distinct visual skins or theme sets
-- keep the default retro pixel-art identity, but add room for a more serious or
-  quieter presentation
-- make the product feel more intentional and less locked to one aesthetic
-- improve showcase/onboarding surfaces once lab-powered features exist
+- reconcile code, tests, docs, and generated artifacts after the `0.4` lab line
+- make the bot and replay-analysis reports feel like first-class product pages
+  instead of developer artifacts
+- explain Gomoku, Renju, bot settings, and replay analysis from inside the app
+- refresh showcase/onboarding surfaces around the current product loop:
+  play instantly, review the ending, see where the game turned, and branch from
+  the replay
+- prepare README, screenshots, social assets, itch/dev-log copy, and release QA
+  for a first public-facing alpha
 
 ### Possible Work
 
-- theme/skin tokens that cover DOM shell, board colors, sprites, and previews
-- one alternate "serious board" skin, if it earns its way in
-- theme-aware asset preview pages
-- home/profile/replay copy and layout polish around the stronger product story
-- screenshot and release-asset refresh for the new product identity
+- remove or relocate generated report HTML and other heavy report artifacts
+  that should not dominate the repo as source content
+- move bot/analysis report presentation toward web-owned viewer components over
+  structured report data
+- slim or split committed report data if the current `latest.json` artifacts are
+  too heavy for normal review
+- add concise product pages such as About, Rules, Analysis, and Bot Lab
+- polish Home, Replay, report pages, and README copy around the lab-under-the-
+  board story
+- refresh hero capture, screenshots, Open Graph image, and public release notes
+- theme/skin work only if it supports the public story and does not become the
+  main scope
 
 ### Done When
 
-The app can change visual tone without becoming a different product, and the
-skin system proves the FE stack can support more than one presentation layer.
+The project is ready to show to strangers as a coherent public alpha:
+
+- the repo is clean enough that generated artifacts do not obscure source code;
+- report pages are understandable product surfaces, not lab dump pages;
+- the app explains its unusual features without requiring docs archaeology;
+- README/home/release assets reflect the current `0.4` capabilities;
+- public-release smoke covers play, settings, replay analysis, reports,
+  sign-in, mobile, and no-config fallback.
 
 ### Production Lens
 
-- test whether agents can extend a visual system without flattening it into
-  generic UI
-- learn how much design direction, asset tooling, and screenshot review are
-  needed to keep AI-centric frontend polish coherent
-- keep theme work constrained so it supports the product story instead of
+- test whether agents can help reconcile a research-heavy line into a clean
+  public-facing product
+- keep build process, repo hygiene, docs, and release artifacts at the same
+  quality bar as user-facing features
+- learn how to present lab/search output as product education rather than debug
+  UI
+- keep visual polish constrained so it supports the product story instead of
   becoming an endless cosmetics pass
+
+The working plan lives in `docs/archive/v0_5_public_release_plan.md`.
 
 ## P6 — `v0.6` Online Product Expansion
 
