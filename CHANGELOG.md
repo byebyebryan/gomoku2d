@@ -63,8 +63,7 @@ what kind of losing-side failure led into it.
 
 ## [0.4.7] - 2026-05-19
 
-**Theme: close the `0.4` analyzer line with lethal-threat semantics and Renju
-rule correctness.**
+**Theme: mark lethal-threat onset and harden Renju rule correctness.**
 
 `0.4.7` started as the lethal-threat pass: mark the point where a replay becomes
 effectively lost, so the analyzer can explain the setup corridor instead of
@@ -112,8 +111,8 @@ Renju legality foundation.
   can be tested against known hard examples instead of relying on intuition.
 - Added a focused `v0.4.7` replay screenshot review for the updated timeline,
   status, and last-escape presentation.
-- Left mistake detection as the narrow remaining analyzer feature for a possible
-  `0.4.8`; broader product cleanup moves to the `0.5` polish line.
+- Set up mistake detection as the narrow remaining analyzer follow-up, which
+  shipped in `0.4.8`; broader product cleanup moves to the `0.5` polish line.
 
 ## [0.4.6] - 2026-05-17
 

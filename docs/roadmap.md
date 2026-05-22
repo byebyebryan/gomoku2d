@@ -420,13 +420,13 @@ Keep the claim bounded: this is not a solver and not a full proof-tree browser.
 It is the first in-product version of corridor search: saved replays can explain
 the final forced sequence and the last visible escape.
 
-`0.4.7` closes the main `0.4` analyzer line by formalizing lethal threats and
-hardening Renju legality. The original target was to mark the effective end
-state of a forced sequence: once the loser faces a lethal threat, the rest of
-the replay is conversion rather than the interesting cause. That forced us to
-make combo threats explicit. Renju.net calls many of these "forks"; Gomoku2D
-models them as legality-aware coverage problems: can the defender make one legal
-reply that covers every terminal or already-lethal continuation?
+`0.4.7` is the lethal-threat and Renju-correctness checkpoint inside the closing
+stretch of the `0.4` analyzer line. The original target was to mark the
+effective end state of a forced sequence: once the loser faces a lethal threat,
+the rest of the replay is conversion rather than the interesting cause. That
+forced us to make combo threats explicit. Renju.net calls many of these "forks";
+Gomoku2D models them as legality-aware coverage problems: can the defender make
+one legal reply that covers every terminal or already-lethal continuation?
 
 That work exposed that shape-only Renju forbidden checks were not reliable
 enough for analysis, bot search, or hints. `0.4.7` therefore also ships the
