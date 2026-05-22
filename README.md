@@ -108,6 +108,8 @@ Start with the public docs:
 Reference docs, working notes, runbooks, and archives are organized from
 [`docs/README.md`](docs/README.md). The most useful technical entry points are
 [`Architecture`](docs/reference/app/architecture.md),
+[`Web Code Overview`](docs/reference/app/code_overview.md),
+[`Bot Lab Code Overview`](docs/reference/lab/code_overview.md),
 [`Search Bot`](docs/reference/lab/search_bot.md),
 [`Corridor Search`](docs/reference/lab/corridor_search.md),
 [`Game Analysis`](docs/reference/lab/game_analysis.md), and
