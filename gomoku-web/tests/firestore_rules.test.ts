@@ -6,6 +6,11 @@ import {
   initializeTestEnvironment,
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
+import type {
+  FieldValue,
+  FirebaseFirestore,
+  Timestamp,
+} from "@firebase/firestore-types";
 import firebase from "firebase/compat/app";
 import "firebase/compat/firestore";
 import { afterAll, beforeAll, beforeEach, describe, it } from "vitest";
@@ -16,16 +21,23 @@ const summaryMatchesLimit = 1024;
 
 let testEnv: RulesTestEnvironment;
 
-function timestamp(iso: string): firebase.firestore.Timestamp {
-  return firebase.firestore.Timestamp.fromDate(new Date(iso));
+const firebaseFirestore = (firebase as unknown as {
+  firestore: {
+    FieldValue: { serverTimestamp: () => FieldValue };
+    Timestamp: { fromDate: (date: Date) => Timestamp };
+  };
+}).firestore;
+
+function timestamp(iso: string): Timestamp {
+  return firebaseFirestore.Timestamp.fromDate(new Date(iso));
 }
 
-function serverTimestamp(): firebase.firestore.FieldValue {
-  return firebase.firestore.FieldValue.serverTimestamp();
+function serverTimestamp(): FieldValue {
+  return firebaseFirestore.FieldValue.serverTimestamp();
 }
 
-function ownerDb(uid = "uid-1"): firebase.firestore.Firestore {
-  return testEnv.authenticatedContext(uid).firestore();
+function ownerDb(uid = "uid-1"): FirebaseFirestore {
+  return testEnv.authenticatedContext(uid).firestore() as unknown as FirebaseFirestore;
 }
 
 function emptyStatsCounter(): Record<string, number> {

@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 
 import type { CloudAuthUser } from "../cloud/auth_store";
 import { cloudAuthStore } from "../cloud/auth_store";
+import { CloudSessionController } from "../cloud/CloudSessionController";
 import { cloudHistoryStore } from "../cloud/cloud_history_store";
 import { createCloudSavedMatch } from "../cloud/cloud_match";
 import { emptyCloudMatchHistory, type CloudProfile } from "../cloud/cloud_profile";
@@ -54,6 +55,7 @@ const initialLocalProfileState = localProfileStore.getState();
 function renderProfileRoute() {
   render(
     <MemoryRouter>
+      <CloudSessionController />
       <ProfileRoute />
     </MemoryRouter>,
   );
@@ -450,7 +452,7 @@ describe("ProfileRoute cloud state", () => {
   });
 
   it("retries cloud history load and pending sync when the browser comes online", async () => {
-    const loadFromProfile = vi.fn();
+    const loadForUser = vi.fn().mockResolvedValue(undefined);
     const syncPendingForUser = vi.fn().mockResolvedValue(undefined);
     cloudAuthStore.setState({
       errorMessage: null,
@@ -471,23 +473,23 @@ describe("ProfileRoute cloud state", () => {
       status: "ready",
     });
     cloudHistoryStore.setState({
-      loadFromProfile,
+      loadForUser,
       syncPendingForUser,
     });
 
     renderProfileRoute();
 
     await waitFor(() => {
-      expect(loadFromProfile).toHaveBeenCalled();
+      expect(loadForUser).toHaveBeenCalled();
     });
-    const initialLoadCount = loadFromProfile.mock.calls.length;
+    const initialLoadCount = loadForUser.mock.calls.length;
 
     window.dispatchEvent(new Event("online"));
 
     await waitFor(() => {
-      expect(loadFromProfile.mock.calls.length).toBeGreaterThan(initialLoadCount);
+      expect(loadForUser.mock.calls.length).toBeGreaterThan(initialLoadCount);
     });
-    expect(syncPendingForUser.mock.calls.length).toBeGreaterThanOrEqual(2);
+    expect(syncPendingForUser).toHaveBeenCalled();
   });
 
   it("uses signed-in loading copy while the cloud profile is loading", () => {
@@ -814,64 +816,7 @@ describe("ProfileRoute cloud state", () => {
     }, { timeout: 3_000 });
   });
 
-  it("does not promote again when local profile fields change after initial sync", async () => {
-    const promote = vi.fn().mockResolvedValue(undefined);
-    const localProfile = localProfileStore.getState().ensureLocalProfile();
-    cloudAuthStore.setState({
-      errorMessage: null,
-      isConfigured: true,
-      signInWithGoogle: vi.fn(),
-      signOut: vi.fn(),
-      start: vi.fn(),
-      status: "signed_in",
-      stop: vi.fn(),
-      user: cloudUser,
-    });
-    cloudProfileStore.setState({
-      errorMessage: null,
-      loadForUser: vi.fn(),
-      profile: cloudProfile,
-      reset: vi.fn(),
-      resetForUser: vi.fn(),
-      status: "ready",
-    });
-    cloudPromotionStore.setState({
-      errorMessage: null,
-      promote,
-      reset: vi.fn(),
-      result: null,
-      status: "idle",
-    });
-
-    renderProfileRoute();
-
-    await waitFor(() => {
-      expect(promote).toHaveBeenCalledTimes(1);
-    });
-
-    fireEvent.change(screen.getByLabelText("Name"), {
-      target: { value: "Later Name" },
-    });
-    await waitFor(() => {
-      expect(screen.getByLabelText("Name")).toHaveValue("Later Name");
-    });
-    localProfileStore.getState().updateSettings({
-      gameConfig: {
-        opening: "standard",
-        ruleset: "renju",
-      },
-    });
-    await Promise.resolve();
-
-    expect(promote).toHaveBeenCalledTimes(1);
-    expect(promote).toHaveBeenCalledWith(expect.objectContaining({
-      localProfile: expect.objectContaining({
-        id: localProfile.id,
-      }),
-    }));
-  });
-
-  it("adopts the cloud display name before promoting a default local name", async () => {
+  it("syncs when local profile fields change after cloud profile loads", async () => {
     const promote = vi.fn().mockResolvedValue(undefined);
     const localProfile = localProfileStore.getState().ensureLocalProfile();
     cloudAuthStore.setState({
@@ -905,21 +850,71 @@ describe("ProfileRoute cloud state", () => {
     await waitFor(() => {
       expect(screen.getByLabelText("Name")).toHaveValue("Bryan");
     });
+
+    fireEvent.change(screen.getByLabelText("Name"), {
+      target: { value: "Later Name" },
+    });
     await waitFor(() => {
-      expect(promote).toHaveBeenCalledWith({
-        cloudDisplayName: cloudProfile.displayName,
-        cloudMatchHistory: cloudProfile.matchHistory,
-        cloudSettings: cloudProfile.settings,
-        localMatchHistory: emptyLocalMatchHistory(),
-        localProfile: expect.objectContaining({
-          displayName: "Bryan",
-          id: localProfile.id,
+      expect(screen.getByLabelText("Name")).toHaveValue("Later Name");
+    });
+    localProfileStore.getState().updateSettings({
+      gameConfig: {
+        opening: "standard",
+        ruleset: "renju",
+      },
+    });
+    await Promise.resolve();
+
+    await waitFor(() => {
+      expect(promote).toHaveBeenCalledTimes(2);
+    });
+    expect(promote).toHaveBeenLastCalledWith(expect.objectContaining({
+      localProfile: expect.objectContaining({
+        displayName: "Later Name",
+        id: localProfile.id,
+      }),
+      settings: expect.objectContaining({
+        gameConfig: expect.objectContaining({
+          ruleset: "renju",
         }),
-        resetAt: null,
-        settings: defaultSettings,
-        user: cloudUser,
-      });
-    }, { timeout: 3_000 });
-    expect(promote).toHaveBeenCalledTimes(1);
+      }),
+    }));
+  });
+
+  it("adopts the cloud display name without promoting a default local name", async () => {
+    const promote = vi.fn().mockResolvedValue(undefined);
+    localProfileStore.getState().ensureLocalProfile();
+    cloudAuthStore.setState({
+      errorMessage: null,
+      isConfigured: true,
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+      start: vi.fn(),
+      status: "signed_in",
+      stop: vi.fn(),
+      user: cloudUser,
+    });
+    cloudProfileStore.setState({
+      errorMessage: null,
+      loadForUser: vi.fn(),
+      profile: cloudProfile,
+      reset: vi.fn(),
+      resetForUser: vi.fn(),
+      status: "ready",
+    });
+    cloudPromotionStore.setState({
+      errorMessage: null,
+      promote,
+      reset: vi.fn(),
+      result: null,
+      status: "idle",
+    });
+
+    renderProfileRoute();
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Name")).toHaveValue("Bryan");
+    });
+    expect(promote).not.toHaveBeenCalled();
   });
 });

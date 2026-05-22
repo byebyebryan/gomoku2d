@@ -1,5 +1,4 @@
 // Sprite assets — 16x16 per frame.
-// Loaded in boot scene via spritesheet configs.
 
 export const SPRITE = {
   CAUTION: "caution",
@@ -33,16 +32,6 @@ export const BOARD_RENDER_LAYER_ORDER = [
   "SEQUENCE_NUMBER",
   "HOVER",
 ] as const;
-
-export const SPRITESHEET_CONFIG = {
-  [SPRITE.CAUTION]: { url: "assets/sprites/caution.png", end: 17 },
-  [SPRITE.HIGHLIGHTER]: { url: "assets/sprites/highlighter.png", end: 17 },
-  [SPRITE.STONE]: { url: "assets/sprites/stone.png", end: 23 },
-  [SPRITE.POINTER]: { url: "assets/sprites/pointer.png", end: 19 },
-  [SPRITE.HOVER]: { url: "assets/sprites/hover.png", end: 5 },
-  [SPRITE.MARKER]: { url: "assets/sprites/marker.png", end: 35 },
-  [SPRITE.TRANSFORM]: { url: "assets/sprites/transform.png", end: 9 },
-} as const;
 
 // Animation definitions - frame ranges from assets/sprites/README.md.
 export const STONE_ANIMS = {

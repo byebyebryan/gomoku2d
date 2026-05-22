@@ -47,6 +47,7 @@
   grid-auto-rows: min-content;
   align-content: start;
   min-height: 0;
+  overflow: auto;
 }
 
 .deckSection {
@@ -286,8 +287,13 @@
   transform: translateX(-50%);
 }
 
-.timelineInput:focus {
+.timelineInput:focus:not(:focus-visible) {
   outline: none;
+}
+
+.timelineInput:focus-visible {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 8px;
 }
 
 .timelineInput::-webkit-slider-runnable-track {
@@ -360,6 +366,7 @@
   .deck {
     flex: none;
     min-height: auto;
+    overflow: visible;
   }
 }
 

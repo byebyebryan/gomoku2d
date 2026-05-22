@@ -23,8 +23,15 @@ export class BotRunner {
   }
 
   configure(specs: [BotSpec, BotSpec]): void {
+    const hadPendingRequest = this.pending.size > 0;
     this.specs = specs;
     this.rejectPending(new Error("bot configuration changed"));
+
+    if (hadPendingRequest) {
+      this.restartWorker();
+      return;
+    }
+
     this.send({ type: "configure", specs });
   }
 
@@ -43,7 +50,12 @@ export class BotRunner {
   }
 
   cancelPending(): void {
+    if (this.pending.size === 0) {
+      return;
+    }
+
     this.rejectPending(new Error("bot request cancelled"));
+    this.restartWorker();
   }
 
   dispose(): void {
@@ -59,6 +71,12 @@ export class BotRunner {
       this.worker = this.createWorker();
       this.send({ type: "configure", specs: this.specs });
     }
+  }
+
+  private restartWorker(): void {
+    this.worker?.terminate();
+    this.worker = this.createWorker();
+    this.send({ type: "configure", specs: this.specs });
   }
 
   private createWorker(): Worker {

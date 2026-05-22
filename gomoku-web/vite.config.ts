@@ -1,10 +1,12 @@
-import { defineConfig } from "vite";
+import { defineConfig, type PluginOption } from "vite";
 import react from "@vitejs/plugin-react";
 import { readFileSync } from "node:fs";
-import wasm from "vite-plugin-wasm";
-import topLevelAwait from "vite-plugin-top-level-await";
+import * as wasmModule from "vite-plugin-wasm";
+import * as topLevelAwaitModule from "vite-plugin-top-level-await";
 
 const appVersion = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8")).version;
+const wasm = wasmModule.default as unknown as () => PluginOption;
+const topLevelAwait = topLevelAwaitModule.default as unknown as () => PluginOption;
 
 function normalizeBasePath(basePath: string | undefined): string {
   if (!basePath || basePath === "/") {
@@ -15,7 +17,7 @@ function normalizeBasePath(basePath: string | undefined): string {
   return withLeadingSlash.endsWith("/") ? withLeadingSlash : `${withLeadingSlash}/`;
 }
 
-function sharedPlugins() {
+function sharedPlugins(): PluginOption[] {
   return [react(), wasm(), topLevelAwait()];
 }
 
@@ -34,7 +36,7 @@ export default defineConfig(() => ({
   },
   plugins: sharedPlugins(),
   worker: {
-    format: "es",
+    format: "es" as const,
     plugins: () => [wasm()],
   },
   resolve: {
@@ -51,7 +53,7 @@ export default defineConfig(() => ({
     host: "0.0.0.0",
     headers: popupAuthHeaders,
     port: 8001,
-    allowedHosts: true,
+    allowedHosts: true as const,
   },
   test: {
     environment: "jsdom",

@@ -1000,8 +1000,15 @@ export function cloudProfileSyncDue(
   profile: Pick<CloudProfile, "createdAt" | "matchHistory" | "updatedAt">,
   nowMs = Date.now(),
 ): boolean {
+  return cloudProfileSyncWaitMs(profile, nowMs) <= 0;
+}
+
+export function cloudProfileSyncWaitMs(
+  profile: Pick<CloudProfile, "createdAt" | "matchHistory" | "updatedAt">,
+  nowMs = Date.now(),
+): number {
   if (!profile.updatedAt) {
-    return true;
+    return 0;
   }
 
   if (
@@ -1009,11 +1016,15 @@ export function cloudProfileSyncDue(
     && profile.matchHistory.replayMatches.length === 0
     && profile.matchHistory.summaryMatches.length === 0
   ) {
-    return true;
+    return 0;
   }
 
   const updatedAtMs = Date.parse(profile.updatedAt);
-  return !Number.isFinite(updatedAtMs) || nowMs >= updatedAtMs + CLOUD_PROFILE_SYNC_INTERVAL_MS;
+  if (!Number.isFinite(updatedAtMs)) {
+    return 0;
+  }
+
+  return Math.max(0, updatedAtMs + CLOUD_PROFILE_SYNC_INTERVAL_MS - nowMs);
 }
 
 export function cloudProfileNeedsSnapshotSync(input: {
