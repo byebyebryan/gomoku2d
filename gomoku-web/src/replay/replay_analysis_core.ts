@@ -1,4 +1,4 @@
-import { WasmBoard } from "../core/wasm_bridge";
+import { applyWasmMove, createWasmBoard } from "../core/wasm_bridge";
 import { movesFromMoveCells, type SavedMatchStatus, type SavedMatchV2 } from "../match/saved_match";
 
 const CORE_REPLAY_SCHEMA_VERSION = 1;
@@ -87,11 +87,11 @@ function stringifyReplayWithExactIntegers(replay: CoreReplay): string {
 }
 
 export function savedMatchToReplayJson(match: SavedMatchV2): string {
-  const board = WasmBoard.createWithVariant(match.ruleset);
+  const board = createWasmBoard(match.ruleset);
 
   try {
     const moves = movesFromMoveCells(match.move_cells).map((move) => {
-      const result = board.applyMove(move.row, move.col) as { error?: string | null };
+      const result = applyWasmMove(board, move.row, move.col);
       if (result.error) {
         throw new Error(`Saved match cannot be replayed by core rules: ${result.error}`);
       }

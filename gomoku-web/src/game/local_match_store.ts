@@ -10,7 +10,13 @@ import {
   sanitizeBotConfig,
   type BotConfig,
 } from "../core/bot_config";
-import { WasmBoard } from "../core/wasm_bridge";
+import {
+  applyWasmMove,
+  createWasmBoard,
+  readWasmThreatSnapshot,
+  readWasmWinningCells,
+  type WasmBoard,
+} from "../core/wasm_bridge";
 
 import type { CellPosition, CellStone, MatchMove, MatchPlayer, MatchStatus } from "./types";
 
@@ -60,18 +66,6 @@ export interface LocalMatchState {
   winningEvidenceCells: CellPosition[];
   winningMoves: CellPosition[];
   winningCells: CellPosition[];
-}
-
-interface WasmThreatSnapshot {
-  counterThreatEvidenceCells: Array<{ row: number; col: number }>;
-  counterThreatMoves: Array<{ row: number; col: number }>;
-  forbiddenMoves: Array<{ row: number; col: number }>;
-  immediateThreatEvidenceCells: Array<{ row: number; col: number }>;
-  immediateThreatMoves: Array<{ row: number; col: number }>;
-  imminentThreatEvidenceCells: Array<{ row: number; col: number }>;
-  imminentThreatMoves: Array<{ row: number; col: number }>;
-  winningEvidenceCells: Array<{ row: number; col: number }>;
-  winningMoves: Array<{ row: number; col: number }>;
 }
 
 export interface LocalMatchStoreOptions {
@@ -154,7 +148,7 @@ function resumedPlayers(
 
 function seedBoard(board: WasmBoard, moves: MatchMove[]): boolean {
   for (const move of moves) {
-    const result = board.applyMove(move.row, move.col) as { error?: unknown };
+    const result = applyWasmMove(board, move.row, move.col);
     if (result?.error) {
       return false;
     }
@@ -245,7 +239,7 @@ function deriveHumanHints(
     };
   }
 
-  const threatSnapshot = board.threatSnapshot() as WasmThreatSnapshot;
+  const threatSnapshot = readWasmThreatSnapshot(board);
 
   return {
     counterThreatEvidenceCells: normalizeMoves(threatSnapshot.counterThreatEvidenceCells ?? []),
@@ -310,7 +304,7 @@ function snapshotState(
     undoFloor,
     winningEvidenceCells: hints.winningEvidenceCells,
     winningMoves: hints.winningMoves,
-    winningCells: normalizeMoves(board.winningCells() as Array<{ row: number; col: number }>),
+    winningCells: normalizeMoves(readWasmWinningCells(board)),
   };
 }
 
@@ -364,7 +358,7 @@ export function createLocalMatchStore(
   let selectedVariant = currentVariant;
   let currentBotConfig = sanitizeBotConfig(options.botConfig);
   let selectedBotConfig = currentBotConfig;
-  const boardFactory = options.boardFactory ?? WasmBoard.createWithVariant;
+  const boardFactory = options.boardFactory ?? createWasmBoard;
   const botRunner = options.botRunner ?? new BotRunner();
   const nowMs = options.nowMs ?? (() => Date.now());
   let players = initialResumeState
@@ -452,7 +446,7 @@ export function createLocalMatchStore(
     };
 
     const applyMove = (row: number, col: number, player: 1 | 2): boolean => {
-      const result = board.applyMove(row, col) as { error?: unknown };
+      const result = applyWasmMove(board, row, col);
 
       if (result?.error) {
         return false;

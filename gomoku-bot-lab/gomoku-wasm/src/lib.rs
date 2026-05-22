@@ -5,9 +5,7 @@
 //! All authoritative behaviour lives in `gomoku-core` and `gomoku-bot`;
 //! `gomoku-wasm` just exposes it across the Wasm boundary.
 
-use js_sys::Reflect;
-use js_sys::{Array, Object};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use wasm_bindgen::prelude::*;
 
@@ -22,8 +20,7 @@ use gomoku_bot::{
         local_threat_evidence_stones, DefenderReplyRole, LocalThreatFact, LocalThreatKind,
         SearchThreatPolicy, ThreatView,
     },
-    Bot, CorridorProofConfig, MoveOrdering, RandomBot, SearchBot, SearchBotConfig,
-    StaticEvaluation,
+    Bot, CorridorProofConfig, MoveOrdering, SearchBot, SearchBotConfig, StaticEvaluation,
 };
 use gomoku_core::rules::Variant;
 use gomoku_core::{Board, Color, GameResult, Move, Replay, RuleConfig};
@@ -135,12 +132,14 @@ mod replay_analysis_tests {
 
 #[cfg(test)]
 mod wasm_board_tests {
-    use super::WasmBoard;
+    use super::{parse_bot_spec, parse_variant_value, WasmBoard};
+    use gomoku_bot::{MoveOrdering, StaticEvaluation};
     use gomoku_core::Move;
+    use serde_json::Value;
 
     #[test]
     fn hash_string_exports_exact_unsigned_hash() {
-        let mut board = WasmBoard::create_with_variant("freestyle");
+        let mut board = WasmBoard::create_with_variant("freestyle").expect("variant should parse");
 
         board.inner.apply_move(Move { row: 7, col: 7 }).unwrap();
 
@@ -148,30 +147,58 @@ mod wasm_board_tests {
         assert!(hash.parse::<u64>().is_ok());
         assert_eq!(hash, board.inner.hash().to_string());
     }
-}
 
-fn moves_to_js(moves: Vec<Move>) -> Vec<JsValue> {
-    moves
-        .into_iter()
-        .map(|mv| {
-            let obj = Object::new();
-            let _ = Reflect::set(&obj, &"row".into(), &(mv.row as f64).into());
-            let _ = Reflect::set(&obj, &"col".into(), &(mv.col as f64).into());
-            obj.into()
-        })
-        .collect()
-}
-
-fn moves_to_js_array(moves: Vec<Move>) -> Array {
-    let arr = Array::new();
-    for mv in moves_to_js(moves) {
-        arr.push(&mv);
+    #[test]
+    fn parse_variant_rejects_unknown_values() {
+        assert!(parse_variant_value("freestyle").is_ok());
+        assert!(parse_variant_value("renju").is_ok());
+        assert!(parse_variant_value("gomoku").is_err());
     }
-    arr
-}
 
-fn set_moves(obj: &Object, key: &str, moves: Vec<Move>) {
-    let _ = Reflect::set(obj, &key.into(), &moves_to_js_array(moves).into());
+    #[test]
+    fn apply_move_exports_json_result() {
+        let mut board = WasmBoard::create_with_variant("freestyle").expect("variant should parse");
+        let result: Value = serde_json::from_str(&board.apply_move(7, 7))
+            .expect("apply move result should be JSON");
+
+        assert_eq!(result["result"], "ongoing");
+        assert!(result["error"].is_null());
+    }
+
+    #[test]
+    fn threat_snapshot_exports_json_payload() {
+        let board = WasmBoard::create_with_variant("freestyle").expect("variant should parse");
+        let snapshot: Value =
+            serde_json::from_str(&board.threat_snapshot()).expect("threat snapshot should be JSON");
+
+        assert!(snapshot["winningMoves"].is_array());
+        assert!(snapshot["forbiddenMoves"].is_array());
+    }
+
+    #[test]
+    fn bot_spec_json_configures_search_bot() {
+        let config = parse_bot_spec(
+            r#"{"kind":"search","depth":5,"childLimit":16,"patternEval":true,"corridorProof":{"candidateLimit":16,"depth":8,"width":4}}"#,
+        )
+        .expect("bot spec should parse");
+
+        assert_eq!(config.max_depth, 5);
+        assert_eq!(config.child_limit, Some(16));
+        assert_eq!(config.move_ordering, MoveOrdering::Tactical);
+        assert_eq!(config.static_eval, StaticEvaluation::PatternEval);
+        assert!(config.corridor_proof.enabled);
+        assert_eq!(config.corridor_proof.max_depth, 8);
+        assert_eq!(config.corridor_proof.max_reply_width, 4);
+        assert_eq!(config.corridor_proof.proof_candidate_limit, 16);
+    }
+
+    #[test]
+    fn bot_spec_json_rejects_non_search_bot() {
+        let err = parse_bot_spec(r#"{"kind":"human"}"#)
+            .expect_err("human bot spec should not construct a wasm bot");
+
+        assert!(err.contains("search bot"));
+    }
 }
 
 fn push_unique_move(moves: &mut Vec<Move>, mv: Move) {
@@ -225,6 +252,132 @@ fn push_candidate_evidence(
 fn wasm_board_from_inner(inner: Board) -> WasmBoard {
     let threat_view = RollingThreatFrontier::from_board(&inner);
     WasmBoard { inner, threat_view }
+}
+
+fn parse_variant_value(variant: &str) -> Result<Variant, String> {
+    match variant {
+        "freestyle" => Ok(Variant::Freestyle),
+        "renju" => Ok(Variant::Renju),
+        _ => Err(format!("unknown game variant: {variant}")),
+    }
+}
+
+fn to_bridge_json<T: Serialize>(value: &T) -> String {
+    serde_json::to_string(value).expect("wasm bridge payload should serialize")
+}
+
+#[derive(Debug, Clone, Copy, Serialize)]
+struct BridgeMove {
+    row: usize,
+    col: usize,
+}
+
+impl From<Move> for BridgeMove {
+    fn from(mv: Move) -> Self {
+        Self {
+            row: mv.row,
+            col: mv.col,
+        }
+    }
+}
+
+fn bridge_moves(moves: Vec<Move>) -> Vec<BridgeMove> {
+    moves.into_iter().map(BridgeMove::from).collect()
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ApplyMoveResult {
+    result: Option<&'static str>,
+    error: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ThreatSnapshot {
+    winning_moves: Vec<BridgeMove>,
+    winning_evidence_cells: Vec<BridgeMove>,
+    immediate_threat_moves: Vec<BridgeMove>,
+    immediate_threat_evidence_cells: Vec<BridgeMove>,
+    imminent_threat_moves: Vec<BridgeMove>,
+    imminent_threat_evidence_cells: Vec<BridgeMove>,
+    counter_threat_moves: Vec<BridgeMove>,
+    counter_threat_evidence_cells: Vec<BridgeMove>,
+    forbidden_moves: Vec<BridgeMove>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct WasmCorridorProofSpec {
+    candidate_limit: i32,
+    depth: i32,
+    width: i32,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(
+    tag = "kind",
+    rename_all = "snake_case",
+    rename_all_fields = "camelCase"
+)]
+enum WasmBotSpec {
+    Human,
+    Search {
+        child_limit: Option<i32>,
+        corridor_proof: Option<WasmCorridorProofSpec>,
+        depth: i32,
+        pattern_eval: bool,
+    },
+}
+
+fn parse_bot_spec(spec_json: &str) -> Result<SearchBotConfig, String> {
+    let spec = serde_json::from_str::<WasmBotSpec>(spec_json)
+        .map_err(|err| format!("invalid bot spec json: {err}"))?;
+
+    let WasmBotSpec::Search {
+        child_limit,
+        corridor_proof,
+        depth,
+        pattern_eval,
+    } = spec
+    else {
+        return Err("wasm bot spec must be a search bot".to_string());
+    };
+
+    if depth < 0 {
+        return Err("bot depth must be non-negative".to_string());
+    }
+
+    let mut config = SearchBotConfig::custom_depth(depth);
+    if let Some(child_limit) = child_limit {
+        if child_limit <= 0 {
+            return Err("bot childLimit must be null or a positive integer".to_string());
+        }
+        config.move_ordering = MoveOrdering::Tactical;
+        config.child_limit = Some(child_limit as usize);
+    }
+    if pattern_eval {
+        config.static_eval = StaticEvaluation::PatternEval;
+    }
+    if let Some(corridor_proof) = corridor_proof {
+        if corridor_proof.depth <= 0
+            || corridor_proof.width <= 0
+            || corridor_proof.candidate_limit <= 0
+        {
+            return Err(
+                "corridor proof depth, width, and candidateLimit must be positive integers"
+                    .to_string(),
+            );
+        }
+        config.corridor_proof = CorridorProofConfig {
+            enabled: true,
+            max_depth: corridor_proof.depth as usize,
+            max_reply_width: corridor_proof.width as usize,
+            proof_candidate_limit: corridor_proof.candidate_limit as usize,
+        };
+    }
+
+    Ok(config)
 }
 
 const REPLAY_ANALYZER_STEP_SCHEMA_VERSION: u32 = 1;
@@ -410,23 +563,19 @@ impl WasmBoard {
     }
 
     #[wasm_bindgen(js_name = "createWithVariant")]
-    pub fn create_with_variant(variant: &str) -> WasmBoard {
-        let v = match variant {
-            "renju" => Variant::Renju,
-            _ => Variant::Freestyle,
-        };
-        wasm_board_from_inner(Board::new(RuleConfig {
-            variant: v,
+    pub fn create_with_variant(variant: &str) -> Result<WasmBoard, JsValue> {
+        let parsed = parse_variant_value(variant).map_err(|err| JsValue::from_str(&err))?;
+        Ok(wasm_board_from_inner(Board::new(RuleConfig {
+            variant: parsed,
             ..RuleConfig::default()
-        }))
+        })))
     }
 
     #[wasm_bindgen(js_name = "applyMove")]
-    pub fn apply_move(&mut self, row: usize, col: usize) -> JsValue {
+    pub fn apply_move(&mut self, row: usize, col: usize) -> String {
         let mv = Move { row, col };
         let result = self.inner.apply_move(mv);
-        let obj = Object::new();
-        match result {
+        let result = match result {
             Ok(game_result) => {
                 if self.threat_view.apply_move(mv).is_err() {
                     self.threat_view = RollingThreatFrontier::from_board(&self.inner);
@@ -437,15 +586,17 @@ impl WasmBoard {
                     GameResult::Winner(Color::White) => "white",
                     GameResult::Draw => "draw",
                 };
-                let _ = Reflect::set(&obj, &"result".into(), &result_str.into());
-                let _ = Reflect::set(&obj, &"error".into(), &JsValue::NULL);
+                ApplyMoveResult {
+                    result: Some(result_str),
+                    error: None,
+                }
             }
-            Err(err) => {
-                let _ = Reflect::set(&obj, &"result".into(), &JsValue::NULL);
-                let _ = Reflect::set(&obj, &"error".into(), &err.to_string().into());
-            }
-        }
-        obj.into()
+            Err(err) => ApplyMoveResult {
+                result: None,
+                error: Some(err.to_string()),
+            },
+        };
+        to_bridge_json(&result)
     }
 
     #[wasm_bindgen(js_name = "isLegal")]
@@ -489,12 +640,12 @@ impl WasmBoard {
     }
 
     #[wasm_bindgen(js_name = "legalMoves")]
-    pub fn legal_moves(&self) -> Vec<JsValue> {
-        moves_to_js(self.inner.legal_moves())
+    pub fn legal_moves(&self) -> String {
+        to_bridge_json(&bridge_moves(self.inner.legal_moves()))
     }
 
     #[wasm_bindgen(js_name = "threatSnapshot")]
-    pub fn threat_snapshot(&self) -> JsValue {
+    pub fn threat_snapshot(&self) -> String {
         let current = self.inner.current_player;
         let opponent = current.opponent();
 
@@ -604,38 +755,22 @@ impl WasmBoard {
         normalize_moves_for_snapshot(&mut imminent_threat_evidence_cells);
         normalize_moves_for_snapshot(&mut counter_threat_evidence_cells);
 
-        let obj = Object::new();
-        set_moves(&obj, "winningMoves", winning_moves);
-        set_moves(&obj, "winningEvidenceCells", winning_evidence_cells);
-        set_moves(&obj, "immediateThreatMoves", immediate_threat_moves);
-        set_moves(
-            &obj,
-            "immediateThreatEvidenceCells",
-            immediate_threat_evidence_cells,
-        );
-        set_moves(&obj, "imminentThreatMoves", imminent_threat_moves);
-        set_moves(
-            &obj,
-            "imminentThreatEvidenceCells",
-            imminent_threat_evidence_cells,
-        );
-        set_moves(&obj, "counterThreatMoves", counter_threat_moves);
-        set_moves(
-            &obj,
-            "counterThreatEvidenceCells",
-            counter_threat_evidence_cells,
-        );
-        set_moves(
-            &obj,
-            "forbiddenMoves",
-            self.inner.forbidden_moves_for_current_player(),
-        );
-        obj.into()
+        to_bridge_json(&ThreatSnapshot {
+            winning_moves: bridge_moves(winning_moves),
+            winning_evidence_cells: bridge_moves(winning_evidence_cells),
+            immediate_threat_moves: bridge_moves(immediate_threat_moves),
+            immediate_threat_evidence_cells: bridge_moves(immediate_threat_evidence_cells),
+            imminent_threat_moves: bridge_moves(imminent_threat_moves),
+            imminent_threat_evidence_cells: bridge_moves(imminent_threat_evidence_cells),
+            counter_threat_moves: bridge_moves(counter_threat_moves),
+            counter_threat_evidence_cells: bridge_moves(counter_threat_evidence_cells),
+            forbidden_moves: bridge_moves(self.inner.forbidden_moves_for_current_player()),
+        })
     }
 
     #[wasm_bindgen(js_name = "winningCells")]
-    pub fn winning_cells(&self) -> Vec<JsValue> {
-        moves_to_js(self.inner.winning_line())
+    pub fn winning_cells(&self) -> String {
+        to_bridge_json(&bridge_moves(self.inner.winning_line()))
     }
 
     #[wasm_bindgen(js_name = "undoLastMove")]
@@ -660,12 +795,10 @@ impl WasmBoard {
 
     #[wasm_bindgen(js_name = "fromFenWithVariant")]
     pub fn from_fen_with_variant(fen: &str, variant: &str) -> Result<WasmBoard, JsValue> {
+        let parsed = parse_variant_value(variant).map_err(|err| JsValue::from_str(&err))?;
         Board::from_fen(fen)
             .map(|mut inner| {
-                inner.config.variant = match variant {
-                    "renju" => Variant::Renju,
-                    _ => Variant::Freestyle,
-                };
+                inner.config.variant = parsed;
                 wasm_board_from_inner(inner)
             })
             .map_err(|e| JsValue::from_str(&e))
@@ -677,86 +810,33 @@ impl WasmBoard {
     }
 }
 
-enum BotInner {
-    Random(Box<RandomBot>),
-    Search(Box<SearchBot>),
-}
-
 #[wasm_bindgen]
 pub struct WasmBot {
-    inner: BotInner,
+    inner: SearchBot,
 }
 
 #[wasm_bindgen]
 impl WasmBot {
-    #[wasm_bindgen(js_name = "createRandom")]
-    pub fn create_random() -> WasmBot {
-        WasmBot {
-            inner: BotInner::Random(Box::new(RandomBot::new())),
-        }
-    }
+    #[wasm_bindgen(js_name = "createFromSpec")]
+    pub fn create_from_spec(spec_json: &str) -> Result<WasmBot, JsValue> {
+        let config = parse_bot_spec(spec_json).map_err(|err| JsValue::from_str(&err))?;
 
-    #[wasm_bindgen(js_name = "createBaseline")]
-    pub fn create_baseline(depth: i32) -> WasmBot {
-        WasmBot {
-            inner: BotInner::Search(Box::new(SearchBot::new(depth))),
-        }
-    }
-
-    #[wasm_bindgen(js_name = "createSearch")]
-    pub fn create_search(
-        depth: i32,
-        child_limit: i32,
-        pattern_eval: bool,
-        corridor_proof_depth: i32,
-        corridor_proof_width: i32,
-        corridor_proof_candidate_limit: i32,
-    ) -> WasmBot {
-        let mut config = SearchBotConfig::custom_depth(depth);
-        if child_limit > 0 {
-            config.move_ordering = MoveOrdering::Tactical;
-            config.child_limit = Some(child_limit as usize);
-        }
-        if pattern_eval {
-            config.static_eval = StaticEvaluation::PatternEval;
-        }
-        if corridor_proof_depth > 0
-            && corridor_proof_width > 0
-            && corridor_proof_candidate_limit > 0
-        {
-            config.corridor_proof = CorridorProofConfig {
-                enabled: true,
-                max_depth: corridor_proof_depth as usize,
-                max_reply_width: corridor_proof_width as usize,
-                proof_candidate_limit: corridor_proof_candidate_limit as usize,
-            };
-        }
-
-        WasmBot {
-            inner: BotInner::Search(Box::new(SearchBot::with_config(config))),
-        }
+        Ok(WasmBot {
+            inner: SearchBot::with_config(config),
+        })
     }
 
     #[wasm_bindgen(js_name = "chooseMove")]
-    pub fn choose_move(&mut self, board: &WasmBoard) -> JsValue {
+    pub fn choose_move(&mut self, board: &WasmBoard) -> String {
         let moves = board.inner.legal_moves();
         if moves.is_empty() {
-            return JsValue::NULL;
+            return "null".to_string();
         }
-        let mv = match &mut self.inner {
-            BotInner::Random(bot) => bot.choose_move(&board.inner),
-            BotInner::Search(bot) => bot.choose_move(&board.inner),
-        };
-        let obj = Object::new();
-        let _ = Reflect::set(&obj, &"row".into(), &(mv.row as f64).into());
-        let _ = Reflect::set(&obj, &"col".into(), &(mv.col as f64).into());
-        obj.into()
+        let mv = self.inner.choose_move(&board.inner);
+        to_bridge_json(&Some(BridgeMove::from(mv)))
     }
 
     pub fn name(&self) -> String {
-        match &self.inner {
-            BotInner::Random(bot) => bot.name().into(),
-            BotInner::Search(bot) => bot.name().into(),
-        }
+        self.inner.name().into()
     }
 }

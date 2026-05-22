@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { WasmBoard } from "../core/wasm_bridge";
+import { applyWasmMove, createWasmBoard, readWasmWinningCells } from "../core/wasm_bridge";
 
 import { createLocalMatchStore } from "./local_match_store";
 
 describe("createLocalMatchStore tactical hints", () => {
   it("derives human-turn warning cues from the wasm board", () => {
-    const board = WasmBoard.createWithVariant("freestyle");
+    const board = createWasmBoard("freestyle");
     const moves: Array<[number, number]> = [
       [7, 7],
       [0, 0],
@@ -19,7 +19,7 @@ describe("createLocalMatchStore tactical hints", () => {
     ];
 
     for (const [row, col] of moves) {
-      board.applyMove(row, col);
+      applyWasmMove(board, row, col);
     }
 
     const store = createLocalMatchStore({
@@ -57,7 +57,7 @@ describe("createLocalMatchStore tactical hints", () => {
   });
 
   it("derives defensive replies to opponent imminent threats from the wasm board", () => {
-    const board = WasmBoard.createWithVariant("freestyle");
+    const board = createWasmBoard("freestyle");
     const moves: Array<[number, number]> = [
       [0, 0],
       [7, 7],
@@ -68,7 +68,7 @@ describe("createLocalMatchStore tactical hints", () => {
     ];
 
     for (const [row, col] of moves) {
-      board.applyMove(row, col);
+      applyWasmMove(board, row, col);
     }
 
     const store = createLocalMatchStore({
@@ -106,7 +106,7 @@ describe("createLocalMatchStore tactical hints", () => {
   });
 
   it("does not show counter-threat hints without an opponent imminent threat", () => {
-    const board = WasmBoard.createWithVariant("freestyle");
+    const board = createWasmBoard("freestyle");
     const moves: Array<[number, number]> = [
       [7, 7],
       [0, 0],
@@ -117,7 +117,7 @@ describe("createLocalMatchStore tactical hints", () => {
     ];
 
     for (const [row, col] of moves) {
-      board.applyMove(row, col);
+      applyWasmMove(board, row, col);
     }
 
     const store = createLocalMatchStore({
@@ -137,7 +137,7 @@ describe("createLocalMatchStore tactical hints", () => {
   });
 
   it("prioritizes immediate replies over imminent replies for opponent combo threats", () => {
-    const board = WasmBoard.createWithVariant("freestyle");
+    const board = createWasmBoard("freestyle");
     const moves: Array<[number, number]> = [
       [0, 0],
       [7, 7],
@@ -156,7 +156,7 @@ describe("createLocalMatchStore tactical hints", () => {
     ];
 
     for (const [row, col] of moves) {
-      board.applyMove(row, col);
+      applyWasmMove(board, row, col);
     }
 
     const store = createLocalMatchStore({
@@ -181,7 +181,7 @@ describe("createLocalMatchStore tactical hints", () => {
   });
 
   it("does not show closed broken threes as imminent threat hints", () => {
-    const board = WasmBoard.createWithVariant("freestyle");
+    const board = createWasmBoard("freestyle");
     const moves: Array<[number, number]> = [
       [0, 0],
       [7, 7],
@@ -192,7 +192,7 @@ describe("createLocalMatchStore tactical hints", () => {
     ];
 
     for (const [row, col] of moves) {
-      board.applyMove(row, col);
+      applyWasmMove(board, row, col);
     }
 
     const store = createLocalMatchStore({
@@ -264,7 +264,7 @@ describe("createLocalMatchStore tactical hints", () => {
   });
 
   it("exposes canonical winning cells from the wasm board", () => {
-    const board = WasmBoard.createWithVariant("freestyle");
+    const board = createWasmBoard("freestyle");
     const moves: Array<[number, number]> = [
       [0, 0],
       [14, 0],
@@ -279,11 +279,11 @@ describe("createLocalMatchStore tactical hints", () => {
     ];
 
     for (const [row, col] of moves) {
-      board.applyMove(row, col);
+      applyWasmMove(board, row, col);
     }
 
-    expect(board.applyMove(0, 4)).toMatchObject({ result: "black" });
-    expect(board.winningCells()).toEqual([
+    expect(applyWasmMove(board, 0, 4)).toMatchObject({ result: "black" });
+    expect(readWasmWinningCells(board)).toEqual([
       { row: 0, col: 0 },
       { row: 0, col: 1 },
       { row: 0, col: 2 },

@@ -138,7 +138,10 @@ One rules implementation, reused everywhere:
 
 - **Browser:** `gomoku-bot-lab/gomoku-wasm` compiles `gomoku-core` to wasm.
   Web imports it via `gomoku-wasm = "file:../gomoku-bot-lab/gomoku-wasm/pkg"`
-  in `package.json`. Vite's wasm plugin handles the load.
+  in `package.json`. Vite's wasm plugin handles the load. Structured bridge
+  payloads cross the wasm boundary as JSON strings and are parsed in
+  `gomoku-web/src/core/wasm_bridge.ts`; React, Phaser, and stores should not
+  cast raw wasm objects directly.
 - **Replay analysis:** `gomoku-analysis` owns bounded corridor traceback.
   `gomoku-eval` uses it for fixture/report generation; `gomoku-wasm` exposes a
   session-backed browser analyzer bridge; `gomoku-web` converts saved matches
@@ -151,9 +154,9 @@ One rules implementation, reused everywhere:
 This means "is this move legal?" and "did this player win?" have exactly
 one answer, regardless of where the question is asked. Tactical hint facts that
 depend on rules semantics also live below the UI layer. The browser keeps a
-rolling-frontier-backed `WasmBoard` and reads one threat snapshot for immediate
-wins, immediate threats, imminent replies, counter-threat replies, and Renju
-forbidden moves. The canonical winning line remains a separate result
+rolling-frontier-backed `WasmBoard` and reads one typed threat snapshot for
+immediate wins, immediate threats, imminent replies, counter-threat replies, and
+Renju forbidden moves. The canonical winning line remains a separate result
 visualization query. Rule-legality feedback such as Renju forbidden moves stays
 always on; tactical assistance categories are filtered by device-local UI
 preferences before they reach the board renderer.
@@ -165,7 +168,7 @@ preferences before they reach the board renderer.
 ```
 user clicks cell
   → React dispatches place-move
-    → gomoku-wasm applies move, returns new board
+    → gomoku-wasm applies move, returns JSON result
       → Zustand store updated
         → <Board> re-renders with new props
         → bot's turn: wasm bot picks a move, same loop
@@ -176,7 +179,7 @@ user clicks cell
 ```
 user clicks cell
   → React dispatches place-move
-    → gomoku-wasm applies move, returns new board
+    → gomoku-wasm applies move, returns JSON result
       → Zustand store updated
         → local history/profile persisted in browser storage
         → <Board> re-renders with new props

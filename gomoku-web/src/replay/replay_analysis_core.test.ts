@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { WasmReplayAnalyzer } from "../core/wasm_bridge";
+import { parseWasmReplayAnalysisStep, WasmReplayAnalyzer } from "../core/wasm_bridge";
 import { createLocalSavedMatch } from "../match/saved_match";
 import type { LocalProfileSavedMatch } from "../profile/local_profile_store";
 
@@ -78,7 +78,7 @@ describe("WasmReplayAnalyzer replay input", () => {
     );
 
     try {
-      const result = JSON.parse(analyzer.step(128)) as { analysis: unknown; done: boolean; status: string };
+      const result = parseWasmReplayAnalysisStep<{ analysis: unknown; done: boolean; status: string }>(analyzer.step(128));
 
       expect(result.done).toBe(true);
       expect(result.status).toBe("resolved");

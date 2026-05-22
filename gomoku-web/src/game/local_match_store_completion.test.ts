@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { DEFAULT_BOT_CONFIG } from "../core/bot_config";
-import { WasmBoard } from "../core/wasm_bridge";
+import { applyWasmMove, createWasmBoard } from "../core/wasm_bridge";
 
 import type { LocalMatchState } from "./local_match_store";
 import { createLocalMatchStore } from "./local_match_store";
 
 describe("createLocalMatchStore completion", () => {
   it("reports finished matches through the completion callback with the active variant", () => {
-    const board = WasmBoard.createWithVariant("renju");
+    const board = createWasmBoard("renju");
     const moves: Array<[number, number]> = [
       [7, 7],
       [0, 0],
@@ -21,7 +21,7 @@ describe("createLocalMatchStore completion", () => {
     ];
 
     for (const [row, col] of moves) {
-      board.applyMove(row, col);
+      applyWasmMove(board, row, col);
     }
 
     const finishedMatches: Array<{
