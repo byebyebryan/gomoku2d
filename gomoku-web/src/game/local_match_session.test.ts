@@ -1,8 +1,12 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { DEFAULT_BOT_CONFIG, type BotConfig } from "../core/bot_config";
-import { emptyLocalMatchHistory, localProfileStore } from "../profile/local_profile_store";
+import { localProfileStore } from "../profile/local_profile_store";
 import { createDefaultProfileSettings } from "../profile/profile_settings";
+import {
+  createLocalProfileTestState,
+  noOpBotRunner,
+} from "../test/local_match_fixtures";
 
 import {
   applySavedLocalMatchSetup,
@@ -12,21 +16,6 @@ import {
 } from "./local_match_session";
 
 const initialLocalProfileState = localProfileStore.getState();
-const localProfile = {
-  avatarUrl: null,
-  createdAt: "2026-05-15T00:00:00.000Z",
-  displayName: "Bryan",
-  id: "local-1",
-  kind: "local" as const,
-  updatedAt: "2026-05-15T00:00:00.000Z",
-  username: null,
-};
-const noOpBotRunner = {
-  chooseMove: async () => null,
-  configure: () => undefined,
-  dispose: () => undefined,
-};
-
 const defaultSettings = createDefaultProfileSettings();
 
 function settingsWith(ruleset: "freestyle" | "renju", botConfig: BotConfig = DEFAULT_BOT_CONFIG) {
@@ -47,11 +36,7 @@ describe("local match session", () => {
   });
 
   it("keeps the active match store across repeated route entries", () => {
-    localProfileStore.setState({
-      matchHistory: emptyLocalMatchHistory(),
-      profile: localProfile,
-      settings: settingsWith("freestyle"),
-    });
+    localProfileStore.setState(createLocalProfileTestState(settingsWith("freestyle")));
 
     const first = ensureLocalMatchSession({ botRunner: noOpBotRunner });
 
@@ -65,11 +50,7 @@ describe("local match session", () => {
 
   it("applies saved setup to the selected next game without mutating a game in progress", () => {
     const hard: BotConfig = { mode: "preset", preset: "hard", version: 1 };
-    localProfileStore.setState({
-      matchHistory: emptyLocalMatchHistory(),
-      profile: localProfile,
-      settings: settingsWith("freestyle"),
-    });
+    localProfileStore.setState(createLocalProfileTestState(settingsWith("freestyle")));
 
     const store = ensureLocalMatchSession({ botRunner: noOpBotRunner });
     expect(store.getState().placeHumanMove(7, 7)).toBe(true);
@@ -103,11 +84,7 @@ describe("local match session", () => {
 
   it("resumes replay branches with the current bot config and replay rule", () => {
     const hard: BotConfig = { mode: "preset", preset: "hard", version: 1 };
-    localProfileStore.setState({
-      matchHistory: emptyLocalMatchHistory(),
-      profile: localProfile,
-      settings: settingsWith("freestyle", hard),
-    });
+    localProfileStore.setState(createLocalProfileTestState(settingsWith("freestyle", hard)));
 
     const store = ensureLocalMatchSession({
       botRunner: noOpBotRunner,

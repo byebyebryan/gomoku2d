@@ -145,7 +145,7 @@ async function seedMatch(uid: string, matchId: string, document: Record<string, 
 }
 
 beforeAll(async () => {
-  const rules = await readFile(new URL("../../../firestore.rules", import.meta.url), "utf8");
+  const rules = await readFile(new URL("../../firestore.rules", import.meta.url), "utf8");
   testEnv = await initializeTestEnvironment({
     projectId,
     firestore: { rules },
