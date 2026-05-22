@@ -5,6 +5,7 @@ use std::time::Duration;
 
 use crate::corridor;
 use crate::frontier::{FrontierAnnotationSource, RollingFrontierFeatures, RollingThreatFrontier};
+#[cfg(any(test, debug_assertions))]
 use crate::pattern::evaluate_pattern_scan;
 use crate::tactical::{
     tactical_metrics_snapshot, CorridorThreatPolicy, LocalThreatKind, ScanThreatView,
