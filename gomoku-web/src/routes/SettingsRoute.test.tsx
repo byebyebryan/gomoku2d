@@ -6,27 +6,17 @@ import {
   disposeLocalMatchSession,
   ensureLocalMatchSession,
 } from "../game/local_match_session";
-import { emptyLocalMatchHistory, localProfileStore } from "../profile/local_profile_store";
+import { localProfileStore } from "../profile/local_profile_store";
 import { createDefaultProfileSettings } from "../profile/profile_settings";
+import {
+  createLocalProfileTestState,
+  noOpBotRunner,
+} from "../test/local_match_fixtures";
 
 import { SettingsRoute } from "./SettingsRoute";
 
 const initialLocalProfileState = localProfileStore.getState();
 const defaultSettings = createDefaultProfileSettings();
-const localProfile = {
-  avatarUrl: null,
-  createdAt: "2026-05-15T00:00:00.000Z",
-  displayName: "Bryan",
-  id: "local-1",
-  kind: "local" as const,
-  updatedAt: "2026-05-15T00:00:00.000Z",
-  username: null,
-};
-const noOpBotRunner = {
-  chooseMove: async () => null,
-  configure: () => undefined,
-  dispose: () => undefined,
-};
 
 function renderSettingsRoute() {
   render(
@@ -59,11 +49,7 @@ describe("SettingsRoute", () => {
   });
 
   beforeEach(() => {
-    localProfileStore.setState({
-      matchHistory: emptyLocalMatchHistory(),
-      profile: localProfile,
-      settings: defaultSettings,
-    });
+    localProfileStore.setState(createLocalProfileTestState(defaultSettings));
   });
 
   it("persists the selected rule and bot settings", () => {
