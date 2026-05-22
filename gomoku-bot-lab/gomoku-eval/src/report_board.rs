@@ -1,5 +1,7 @@
 use gomoku_core::{Color, Move};
 
+use crate::html::escape as html_escape;
+
 const CELL_SIZE: usize = 20;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -216,14 +218,6 @@ fn actual_stone_html(marker: &ReportBoardMarker) -> Option<&'static str> {
             Some("<span class=\"proof-actual-stone proof-actual-stone--white\"></span>")
         }
     }
-}
-
-fn html_escape(value: &str) -> String {
-    value
-        .replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('"', "&quot;")
 }
 
 #[cfg(test)]

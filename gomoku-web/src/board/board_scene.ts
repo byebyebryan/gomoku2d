@@ -1169,7 +1169,7 @@ export class BoardScene extends Phaser.Scene {
     this.boardState.onPlace(cell.row, cell.col);
   }
 
-  private handlePointerOut(pointer: Phaser.Input.Pointer): void {
+  private handlePointerOut(): void {
     if (usesTouchCandidate(this.boardState.touchControlMode)) {
       return;
     }

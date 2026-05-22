@@ -32,7 +32,6 @@ import {
   type BoardHintSettings,
   type GameConfig,
   type ProfileSettings,
-  type TouchControlMode,
 } from "../profile/profile_settings";
 
 import type { CloudAuthUser } from "./auth_store";
@@ -449,10 +448,6 @@ export function mergeCloudReplayMatches(
   resetAt: string | null | undefined = null,
 ): SavedMatchV2[] {
   return mergeCloudSavedMatches(user, matches, resetAt).slice(0, CLOUD_REPLAY_MATCHES_LIMIT);
-}
-
-function replayMatchesEqual(left: SavedMatchV2[], right: SavedMatchV2[]): boolean {
-  return JSON.stringify(left) === JSON.stringify(right);
 }
 
 function emptyStatsCounter(): CloudMatchStatsCounter {

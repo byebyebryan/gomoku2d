@@ -176,15 +176,18 @@ curl -H "Authorization: Bearer ${TOKEN}" \
 ```
 
 ```sh
-npm run build              # production build (tsc + vite build + 404.html copy)
+npm run build              # production build + static report/asset routes
 npm run preview            # serve the production build locally
 npm test                   # vitest
+npm run typecheck:scripts  # JS script type coverage
 npm run playtest:smoke     # playwright smoke run
 ```
 
-The `postbuild` step copies `dist/index.html` to `dist/404.html` so GitHub
-Pages serves the SPA on deep-linked routes like `/profile` and `/replay/:matchId`
-instead of a 404.
+The `postbuild` step publishes asset previews, curated bot and analysis reports,
+static SPA route entries, and the `404.html` fallback. Report publishing is
+guarded so release builds fail if the curated artifacts are missing; set
+`GOMOKU_ALLOW_MISSING_REPORTS=1` only for local/dev builds that intentionally
+skip those pages.
 
 ---
 

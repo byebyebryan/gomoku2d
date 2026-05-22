@@ -6,6 +6,10 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const sourceRoot = join(root, "assets");
 const distAssetRoot = join(root, "dist", "assets");
 
+/**
+ * @param {string} sourcePath
+ * @param {string} targetPath
+ */
 async function copyAssetFile(sourcePath, targetPath) {
   await mkdir(dirname(targetPath), { recursive: true });
   await copyFile(sourcePath, targetPath);
@@ -18,6 +22,10 @@ async function copyTopLevelPreview() {
   await copyAssetFile(join(sourceRoot, "README.md"), join(distAssetRoot, "README.md"));
 }
 
+/**
+ * @param {string} folder
+ * @param {readonly string[]} allowedExtensions
+ */
 async function copyFolderFiles(folder, allowedExtensions) {
   const sourceDir = join(sourceRoot, folder);
   const targetDir = join(distAssetRoot, folder);

@@ -18,6 +18,7 @@ use crate::analysis::{
     TacticalNote, UnclearContext, UnclearReason, ANALYSIS_SCHEMA_VERSION,
 };
 use crate::bot_label::compact_bot_label_parts;
+use crate::html::{escape as html_escape, option_debug};
 use crate::report_board::{render_report_board, report_board_css, ReportBoardMarker};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -2762,21 +2763,6 @@ fn proof_limit_cause_label(cause: ProofLimitCause) -> &'static str {
         ProofLimitCause::ModelScopeUnknown => "model-scope unknown",
         ProofLimitCause::OutsideScanWindow => "outside scan cap",
     }
-}
-
-fn option_debug<T: std::fmt::Debug>(value: Option<T>) -> String {
-    value
-        .map(|value| format!("{value:?}"))
-        .unwrap_or_else(|| "-".to_string())
-}
-
-fn html_escape(input: &str) -> String {
-    input
-        .replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('"', "&quot;")
-        .replace('\'', "&#39;")
 }
 
 #[cfg(test)]

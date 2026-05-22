@@ -4,6 +4,7 @@ use crate::bot_label::{
     compact_bot_label_parts as shared_compact_bot_label_parts,
 };
 use crate::elo::{expected_score, DEFAULT_INITIAL_RATING, DEFAULT_K_FACTOR};
+use crate::html::escape as html_escape;
 use crate::tournament::TournamentResults;
 use gomoku_core::{Color, GameResult, Move, RuleConfig};
 use serde::{Deserialize, Serialize};
@@ -4424,15 +4425,6 @@ fn column_label(col: usize) -> char {
     char::from(b'A'.saturating_add(col as u8))
 }
 
-fn html_escape(input: &str) -> String {
-    input
-        .replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('"', "&quot;")
-        .replace('\'', "&#39;")
-}
-
 const STYLE: &str = r#"
 <style>
 :root{color-scheme:dark;--bg:#1e1e1e;--surface:#2a2a2a;--surface-strong:#333333;--card:#232323;--border:#575756;--text:#f5f5f5;--text-muted:#a6a6a0;--accent:#fccb57;--green:#5ad17a;--teal:#5fc7c2}
@@ -4466,11 +4458,6 @@ mod tests {
             encode_move_cell(Move { row: 14, col: 14 }, 15).unwrap(),
             224
         );
-    }
-
-    #[test]
-    fn html_escape_handles_special_chars() {
-        assert_eq!(html_escape("<bot & 'x'>"), "&lt;bot &amp; &#39;x&#39;&gt;");
     }
 
     #[test]

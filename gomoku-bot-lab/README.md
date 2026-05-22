@@ -139,11 +139,13 @@ lose, identify final forced sequences, and use that evidence before promoting
 more product settings.
 
 The `0.4.2` sweeps still matter: pattern eval remains the strongest lab signal,
-cap16 is not a clear upgrade, cap4 is a viable narrowing point when paired with
-tactical ordering, and asymmetric `self2/opponent1` candidate discovery is most
-interesting as an efficiency tweak for `D3 + pattern-eval`. Treat these as lab
-candidates, not product presets yet. Corridor-search strategy is documented in
-[`../docs/corridor_search.md`](../docs/corridor_search.md).
+cap16 is not a universal upgrade, cap4 is a viable narrowing point when paired
+with tactical ordering, and asymmetric `self2/opponent1` candidate discovery is
+most interesting as an efficiency tweak for `D3 + pattern-eval`. Treat these as
+historical lab evidence; the shipped product presets are the explicit Easy,
+Normal, and Hard mappings documented in
+[`../docs/search_bot.md`](../docs/search_bot.md). Corridor-search strategy is
+documented in [`../docs/corridor_search.md`](../docs/corridor_search.md).
 
 The `0.4.3` lab slice tested corridor search inside bot behavior before
 exposing more web settings. The result is useful evidence but not a candidate

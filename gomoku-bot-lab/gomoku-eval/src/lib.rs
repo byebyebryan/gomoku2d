@@ -6,6 +6,7 @@ pub mod arena;
 pub mod bot_label;
 pub mod budget;
 pub mod elo;
+mod html;
 pub mod lethal_scenario;
 pub mod opening;
 pub mod renju_rules;
