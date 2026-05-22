@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 use std::path::Path;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
 
 use gomoku_bot::tactical::{corridor_active_threats, LethalThreatKind, LocalThreatKind};
@@ -39,10 +40,19 @@ pub fn run_analysis_batch_with_options(
     replay_dir: &Path,
     options: AnalysisBatchRunOptions,
 ) -> Result<AnalysisBatchReport, String> {
+    run_analysis_batch_with_progress(replay_dir, options, None)
+}
+
+pub fn run_analysis_batch_with_progress(
+    replay_dir: &Path,
+    options: AnalysisBatchRunOptions,
+    progress_interval: Option<usize>,
+) -> Result<AnalysisBatchReport, String> {
     let batch_started = Instant::now();
     let model = model_from_options(&options);
     let mut paths = replay_paths(replay_dir)?;
     paths.sort();
+    let progress = AnalysisBatchProgress::new(paths.len(), progress_interval, "replay analyses");
 
     let mut summary = AnalysisBatchSummary::default();
     let mut analyzed = 0;
@@ -57,7 +67,7 @@ pub fn run_analysis_batch_with_options(
                 .unwrap_or(path)
                 .display()
                 .to_string();
-            match analyze_replay_file(path, options.analysis.clone()) {
+            let entry = match analyze_replay_file(path, options.analysis.clone()) {
                 Ok((replay, analysis)) => entry_from_analysis(
                     relative_path,
                     analysis,
@@ -70,7 +80,9 @@ pub fn run_analysis_batch_with_options(
                     error,
                     elapsed_millis(entry_started.elapsed()),
                 ),
-            }
+            };
+            progress.record_completion();
+            entry
         })
         .collect::<Vec<_>>();
 
@@ -116,14 +128,24 @@ pub fn run_analysis_batch_replays_with_options(
     inputs: Vec<ReplayAnalysisInput>,
     options: AnalysisBatchRunOptions,
 ) -> AnalysisBatchReport {
+    run_analysis_batch_replays_with_progress(source, inputs, options, None)
+}
+
+pub fn run_analysis_batch_replays_with_progress(
+    source: String,
+    inputs: Vec<ReplayAnalysisInput>,
+    options: AnalysisBatchRunOptions,
+    progress_interval: Option<usize>,
+) -> AnalysisBatchReport {
     let batch_started = Instant::now();
     let model = model_from_options(&options);
+    let progress = AnalysisBatchProgress::new(inputs.len(), progress_interval, "replay analyses");
 
     let entries = inputs
         .par_iter()
         .map(|input| {
             let entry_started = Instant::now();
-            match analyze_replay(&input.replay, options.analysis.clone()) {
+            let entry = match analyze_replay(&input.replay, options.analysis.clone()) {
                 Ok(analysis) => entry_from_analysis(
                     input.label.clone(),
                     analysis,
@@ -136,7 +158,9 @@ pub fn run_analysis_batch_replays_with_options(
                     error.to_string(),
                     elapsed_millis(entry_started.elapsed()),
                 ),
-            }
+            };
+            progress.record_completion();
+            entry
         })
         .collect::<Vec<_>>();
 
@@ -169,6 +193,60 @@ pub fn run_analysis_batch_replays_with_options(
         summary,
         limit_cause_counts,
         entries,
+    }
+}
+
+struct AnalysisBatchProgress {
+    completed: AtomicUsize,
+    interval: Option<usize>,
+    label: &'static str,
+    started: Instant,
+    total: usize,
+}
+
+impl AnalysisBatchProgress {
+    fn new(total: usize, interval: Option<usize>, label: &'static str) -> Self {
+        let interval = interval.filter(|interval| total > 0 && *interval > 0);
+        if let Some(interval) = interval {
+            eprintln!("Progress: every {interval} completed {label}");
+            eprintln!("Progress: 0/{total} {label} complete");
+        }
+        Self {
+            completed: AtomicUsize::new(0),
+            interval,
+            label,
+            started: Instant::now(),
+            total,
+        }
+    }
+
+    fn record_completion(&self) {
+        let Some(interval) = self.interval else {
+            return;
+        };
+        let done = self.completed.fetch_add(1, Ordering::Relaxed) + 1;
+        if done != self.total && !done.is_multiple_of(interval) {
+            return;
+        }
+
+        let elapsed = self.started.elapsed().as_secs_f64();
+        let progress = done as f64 * 100.0 / self.total as f64;
+        let eta_secs = if done > 0 && done < self.total && elapsed > 0.0 {
+            let entries_per_sec = done as f64 / elapsed;
+            Some((self.total - done) as f64 / entries_per_sec)
+        } else {
+            None
+        };
+        match eta_secs {
+            Some(eta_secs) => eprintln!(
+                "Progress: {done}/{} {} complete ({progress:.1}%, elapsed {:.0}s, ETA {:.0}s)",
+                self.total, self.label, elapsed, eta_secs
+            ),
+            None => eprintln!(
+                "Progress: {done}/{} {} complete ({progress:.1}%, elapsed {:.0}s)",
+                self.total, self.label, elapsed
+            ),
+        }
     }
 }
 
