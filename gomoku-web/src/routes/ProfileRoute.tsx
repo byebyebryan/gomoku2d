@@ -19,13 +19,9 @@ import {
   type SavedMatchV2,
   type SavedMatchSide,
 } from "../match/saved_match";
-import { resolveActiveHistory } from "../profile/active_history";
-import {
-  DEFAULT_LOCAL_DISPLAY_NAME,
-  localProfileStore,
-  type LocalProfileMatchHistory,
-} from "../profile/local_profile_store";
+import { localProfileStore, type LocalProfileMatchHistory } from "../profile/local_profile_store";
 import { createDefaultProfileSettings } from "../profile/profile_settings";
+import { useActiveHistory } from "../profile/use_active_history";
 import { replayPlayerName, variantLabel } from "../replay/local_replay";
 import { Icon } from "../ui/Icon";
 
@@ -358,13 +354,19 @@ export function ProfileRoute() {
   const [confirmingProfileAction, setConfirmingProfileAction] = useState<ProfileDangerAction | null>(null);
   const [profileActionBusy, setProfileActionBusy] = useState(false);
   const [visibleHistoryCount, setVisibleHistoryCount] = useState(HISTORY_VISIBLE_BATCH_SIZE);
-  const cloudAuth = useStore(cloudAuthStore, (state) => state);
-  const cloudHistory = useStore(cloudHistoryStore, (state) => state);
-  const cloudProfile = useStore(cloudProfileStore, (state) => state);
+  const {
+    cloudAuth,
+    cloudHistory,
+    cloudProfile,
+    cloudUserCache,
+    hasPendingCloudMatchError,
+    history,
+    localDisplayName,
+    localProfile: profile,
+    pendingCloudMatchCount,
+    sourceHistory,
+  } = useActiveHistory();
   const cloudPromotion = useStore(cloudPromotionStore, (state) => state);
-  const localMatchHistory = useStore(localProfileStore, (state) => state.matchHistory);
-  const localHistory = localMatchHistory.replayMatches;
-  const profile = useStore(localProfileStore, (state) => state.profile);
 
   useEffect(() => {
     localProfileStore.getState().ensureLocalProfile();
@@ -374,40 +376,17 @@ export function ProfileRoute() {
     setVisibleHistoryCount(HISTORY_VISIBLE_BATCH_SIZE);
   }, [cloudAuth.status, cloudAuth.user?.uid, profile?.id]);
 
-  const cloudCache =
-    cloudAuth.status === "signed_in" && cloudAuth.user
-      ? cloudHistory.users[cloudAuth.user.uid]?.cachedMatches ?? []
-      : [];
-  const cloudUserCache =
-    cloudAuth.status === "signed_in" && cloudAuth.user
-      ? cloudHistory.users[cloudAuth.user.uid]
-      : null;
-  const pendingCloudMatches = cloudUserCache?.pendingMatches ?? {};
-  const pendingCloudMatchCount = Object.keys(pendingCloudMatches).length;
-  const hasPendingCloudMatchError = Object.values(cloudUserCache?.sync ?? {}).some((sync) => (
-    sync.status === "error" && sync.matchId in pendingCloudMatches
-  ));
-  const history = resolveActiveHistory({
-    cloudHistory: cloudCache,
-    historyResetAt: cloudAuth.status === "signed_in" ? cloudProfile.profile?.resetAt : null,
-    localHistory,
-  });
   const visibleHistory = history.slice(0, visibleHistoryCount);
   const hiddenHistoryCount = Math.max(0, history.length - visibleHistory.length);
   const historyIdentity: HistoryIdentity = {
     localProfileId: profile?.id,
     profileUid: cloudAuth.status === "signed_in" ? cloudAuth.user?.uid : null,
   };
-  const sourceHistory =
-    cloudAuth.status === "signed_in"
-      ? cloudProfile.profile?.matchHistory ?? null
-      : localMatchHistory;
   const stats = statsFromMatchHistory({
     identity: historyIdentity,
     replayHistory: history,
     sourceHistory,
   });
-  const localDisplayName = profile?.displayName ?? DEFAULT_LOCAL_DISPLAY_NAME;
   const cloudBadge = cloudStateLabel(cloudAuth.status, cloudProfile.status);
   const cloudIdentity = cloudProfile.profile ?? null;
   const cloudError =

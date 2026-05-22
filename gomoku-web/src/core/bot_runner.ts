@@ -1,4 +1,5 @@
 import type { BotMove, BotSpec, BotWorkerRequest, BotWorkerResponse, GameVariant } from "./bot_protocol";
+import { ReadyQueueWorker } from "./ready_queue_worker";
 
 type PendingRequest = {
   resolve: (move: BotMove | null) => void;
@@ -6,9 +7,7 @@ type PendingRequest = {
 };
 
 export class BotRunner {
-  private worker: Worker | null = null;
-  private workerReady: boolean = false;
-  private outgoing: BotWorkerRequest[] = [];
+  private worker: ReadyQueueWorker<BotWorkerRequest, BotWorkerResponse>;
   private specs: [BotSpec, BotSpec] = [{ kind: "human" }, { kind: "human" }];
   private nextRequestId: number = 1;
   private pending: Map<number, PendingRequest> = new Map();
@@ -40,7 +39,6 @@ export class BotRunner {
       return Promise.resolve(null);
     }
 
-    this.ensureWorker();
     const requestId = this.nextRequestId++;
 
     return new Promise<BotMove | null>((resolve, reject) => {
@@ -60,59 +58,26 @@ export class BotRunner {
 
   dispose(): void {
     this.rejectPending(new Error("bot runner disposed"));
-    this.worker?.terminate();
-    this.worker = null;
-    this.workerReady = false;
-    this.outgoing = [];
-  }
-
-  private ensureWorker(): void {
-    if (!this.worker) {
-      this.worker = this.createWorker();
-      this.send({ type: "configure", specs: this.specs });
-    }
+    this.worker.terminate();
   }
 
   private restartWorker(): void {
-    this.worker?.terminate();
-    this.worker = this.createWorker();
+    this.worker.restart();
     this.send({ type: "configure", specs: this.specs });
   }
 
-  private createWorker(): Worker {
-    this.workerReady = false;
-    this.outgoing = [];
-
-    const worker = new Worker(new URL("./bot_worker.ts", import.meta.url), { type: "module" });
-    worker.addEventListener("message", (event: MessageEvent<BotWorkerResponse>) => {
-      if (this.worker !== worker) return;
-      this.handleWorkerMessage(event.data);
+  private createWorker(): ReadyQueueWorker<BotWorkerRequest, BotWorkerResponse> {
+    return new ReadyQueueWorker({
+      factory: () => new Worker(new URL("./bot_worker.ts", import.meta.url), { type: "module" }),
+      onError: (error) => {
+        this.rejectPending(new Error(error.message || "bot worker failed"));
+      },
+      onMessage: (message) => this.handleWorkerMessage(message),
     });
-    worker.addEventListener("error", (event: ErrorEvent) => {
-      if (this.worker !== worker) return;
-      this.worker = null;
-      this.workerReady = false;
-      this.outgoing = [];
-      this.rejectPending(new Error(event.message || "bot worker failed"));
-    });
-    return worker;
   }
 
   private send(msg: BotWorkerRequest): void {
-    if (!this.worker) return;
-    if (this.workerReady) {
-      this.worker.postMessage(msg);
-    } else {
-      this.outgoing.push(msg);
-    }
-  }
-
-  private flushOutgoing(): void {
-    if (!this.worker) return;
-    for (const msg of this.outgoing) {
-      this.worker.postMessage(msg);
-    }
-    this.outgoing = [];
+    this.worker.post(msg);
   }
 
   private rejectPending(error: Error): void {
@@ -125,8 +90,6 @@ export class BotRunner {
   private handleWorkerMessage(message: BotWorkerResponse): void {
     switch (message.type) {
       case "ready": {
-        this.workerReady = true;
-        this.flushOutgoing();
         break;
       }
       case "move": {

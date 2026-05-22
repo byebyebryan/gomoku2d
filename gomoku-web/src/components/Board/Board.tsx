@@ -1,37 +1,13 @@
 import { useEffect, useRef } from "react";
 import * as Phaser from "phaser";
 
-import { BoardScene } from "../../board/board_scene";
-import type { BoardAnalysisOverlay, BoardTouchControlMode } from "../../board/board_scene_logic";
-import type { CellPosition, CellStone, MatchMove, MatchStatus } from "../../game/types";
+import { BoardScene, type BoardSceneState } from "../../board/board_scene";
+import type { BoardViewModel } from "../../board/board_model";
 
 import styles from "./Board.module.css";
 
 export interface BoardProps {
-  analysisOverlays: BoardAnalysisOverlay[];
-  cells: CellStone[][];
-  counterThreatEvidenceCells: CellPosition[];
-  counterThreatMoves: CellPosition[];
-  currentPlayer: 1 | 2;
-  forbiddenMoves: CellPosition[];
-  immediateThreatEvidenceCells: CellPosition[];
-  imminentThreatEvidenceCells: CellPosition[];
-  imminentThreatMoves: CellPosition[];
-  interactive: boolean;
-  lastMove: CellPosition | null;
-  moves: MatchMove[];
-  nextReplayMove: CellPosition | null;
-  onAdvanceRound: () => void;
-  onPlace: (row: number, col: number) => void;
-  onTouchCandidateChange: (candidate: CellPosition | null, canPlace: boolean) => void;
-  touchControlMode: BoardTouchControlMode;
-  touchCandidateResetVersion: number;
-  showSequenceNumbers: boolean;
-  status: MatchStatus;
-  threatMoves: CellPosition[];
-  winningEvidenceCells: CellPosition[];
-  winningMoves: CellPosition[];
-  winningCells: CellPosition[];
+  model: BoardViewModel;
 }
 
 function fitBoardViewport(width: number, height: number): { width: number; height: number } {
@@ -161,7 +137,7 @@ export function Board(props: BoardProps) {
   }, []);
 
   useEffect(() => {
-    sceneRef.current?.setBoardState(props);
+    sceneRef.current?.setBoardState(boardSceneStateFromModel(props.model));
   }, [props]);
 
   return (
@@ -169,4 +145,85 @@ export function Board(props: BoardProps) {
       <div className={styles.viewport} ref={hostRef} />
     </div>
   );
+}
+
+function boardSceneStateFromModel(model: BoardViewModel): BoardSceneState {
+  const state: BoardSceneState = {
+    analysisOverlays: [],
+    cells: model.position.cells,
+    counterThreatEvidenceCells: [],
+    counterThreatMoves: [],
+    currentPlayer: model.position.currentPlayer,
+    forbiddenMoves: model.forbiddenMoves,
+    immediateThreatEvidenceCells: [],
+    imminentThreatEvidenceCells: [],
+    imminentThreatMoves: [],
+    interactive: model.interaction.kind === "play" && model.interaction.interactive,
+    lastMove: model.position.lastMove,
+    moves: model.position.moves,
+    nextReplayMove: null,
+    onAdvanceRound: () => undefined,
+    onPlace: () => undefined,
+    onTouchCandidateChange: () => undefined,
+    touchControlMode: "none",
+    touchCandidateResetVersion: 0,
+    showSequenceNumbers: model.position.showSequenceNumbers,
+    status: model.position.status,
+    threatMoves: [],
+    winningEvidenceCells: [],
+    winningMoves: [],
+    winningCells: [],
+  };
+
+  if (model.interaction.kind === "play") {
+    state.onAdvanceRound = model.interaction.onAdvanceRound;
+    state.onPlace = model.interaction.onPlace;
+    state.onTouchCandidateChange = model.interaction.onTouchCandidateChange;
+    state.touchControlMode = model.interaction.touchControlMode;
+    state.touchCandidateResetVersion = model.interaction.touchCandidateResetVersion;
+  }
+
+  for (const overlay of model.overlays) {
+    switch (overlay.kind) {
+      case "analysis":
+        state.analysisOverlays.push({
+          col: overlay.cell.col,
+          highlight: overlay.highlight,
+          marker: overlay.marker,
+          row: overlay.cell.row,
+          side: overlay.side,
+        });
+        break;
+      case "evidence":
+        if (overlay.role === "winning") {
+          state.winningEvidenceCells.push(overlay.cell);
+        } else if (overlay.role === "immediateThreat") {
+          state.immediateThreatEvidenceCells.push(overlay.cell);
+        } else if (overlay.role === "imminentThreat") {
+          state.imminentThreatEvidenceCells.push(overlay.cell);
+        } else {
+          state.counterThreatEvidenceCells.push(overlay.cell);
+        }
+        break;
+      case "hint":
+        if (overlay.role === "winning") {
+          state.winningMoves.push(overlay.cell);
+        } else if (overlay.role === "immediateThreat") {
+          state.threatMoves.push(overlay.cell);
+        } else if (overlay.role === "imminentThreat") {
+          state.imminentThreatMoves.push(overlay.cell);
+        } else {
+          state.counterThreatMoves.push(overlay.cell);
+        }
+        break;
+      case "nextReplayMove":
+        state.nextReplayMove = overlay.cell;
+        break;
+      case "winningLine":
+        state.winningCells.push(overlay.cell);
+        break;
+    }
+  }
+
+  return state;
 }

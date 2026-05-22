@@ -143,6 +143,10 @@ function latestBoardProps() {
   return mockedBoard.mock.calls[mockedBoard.mock.calls.length - 1]?.[0];
 }
 
+function latestBoardOverlays() {
+  return latestBoardProps()?.model.overlays ?? [];
+}
+
 describe("ReplayRoute analysis overlays", () => {
   afterEach(() => {
     cleanup();
@@ -220,10 +224,10 @@ describe("ReplayRoute analysis overlays", () => {
       1,
     );
     expect(screen.getByTestId("replay-move-count")).toHaveTextContent("Move 9 / 9");
-    expect(latestBoardProps()).toMatchObject({
-      nextReplayMove: null,
+    expect(latestBoardProps()?.model.position).toMatchObject({
       status: "black_won",
     });
+    expect(latestBoardOverlays().some((overlay) => overlay.kind === "nextReplayMove")).toBe(false);
   });
 
   it("uses outer replay controls for turn stepping", () => {
@@ -231,10 +235,13 @@ describe("ReplayRoute analysis overlays", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Previous turn" }));
     expect(screen.getByTestId("replay-move-count")).toHaveTextContent("Move 7 / 9");
-    expect(latestBoardProps()).toMatchObject({
+    expect(latestBoardProps()?.model.position).toMatchObject({
       currentPlayer: 2,
-      nextReplayMove: { row: 0, col: 3 },
       status: "playing",
+    });
+    expect(latestBoardOverlays()).toContainEqual({
+      cell: { row: 0, col: 3 },
+      kind: "nextReplayMove",
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Next turn" }));
@@ -291,9 +298,9 @@ describe("ReplayRoute analysis overlays", () => {
       });
     });
 
-    expect(latestBoardProps()?.analysisOverlays).toEqual([
-      expect.objectContaining({ highlight: "immediateThreat", row: 7, col: 6 }),
-      expect.objectContaining({ marker: "forcedLoss", row: 7, col: 8 }),
+    expect(latestBoardOverlays()).toEqual([
+      expect.objectContaining({ cell: { row: 7, col: 6 }, highlight: "immediateThreat", kind: "analysis" }),
+      expect.objectContaining({ cell: { row: 7, col: 8 }, kind: "analysis", marker: "forcedLoss" }),
     ]);
   });
 
@@ -329,8 +336,8 @@ describe("ReplayRoute analysis overlays", () => {
     renderReplayRoute();
 
     expect(runnerMock.instances).toHaveLength(0);
-    expect(latestBoardProps()?.analysisOverlays).toEqual([
-      expect.objectContaining({ highlight: "immediateThreat", row: 7, col: 6 }),
+    expect(latestBoardOverlays()).toEqual([
+      expect.objectContaining({ cell: { row: 7, col: 6 }, highlight: "immediateThreat", kind: "analysis" }),
     ]);
   });
 
@@ -517,7 +524,7 @@ describe("ReplayRoute analysis overlays", () => {
     expect(screen.getByTestId("replay-analysis-status")).toHaveTextContent("Black has won");
     expect(screen.getByTestId("replay-analysis-detail")).toHaveTextContent("Lethal sequence");
     expect(screen.queryByRole("button", { name: "Review Mistake" })).not.toBeInTheDocument();
-    expect(latestBoardProps()?.analysisOverlays).toEqual([]);
+    expect(latestBoardOverlays()).toEqual([]);
   });
 
   it("cancels analysis when leaving the replay", () => {

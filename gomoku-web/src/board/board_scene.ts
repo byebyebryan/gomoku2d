@@ -7,66 +7,32 @@ import {
   CAUTION_ANIMS,
   COLOR,
   FRAME_SIZE,
-  HIGHLIGHTER_ANIMS,
-  HOVER_ANIMS,
-  MARKER_ANIMS,
   POINTER_ANIMS,
   SPRITE,
   STONE_ANIMS,
   TRANSFORM_ANIMS,
 } from "./constants";
 import { BoardRenderer } from "./board_renderer";
-import { SEQUENCE_FONT_FAMILY } from "./sequence_font";
+import { ensureBoardAnimations, preloadBoardAssets, STONE_IDLE_ANIMS } from "./board_assets";
+import { BoardInputController, pointerType } from "./board_input_controller";
+import { renderBoardOverlays } from "./board_overlay_renderer";
 import {
-  analysisHighlightAnimationForRole,
-  analysisHighlightTintForRole,
-  analysisMarkerAnimationForRole,
-  analysisMarkerSpriteForRole,
-  analysisMarkerTintForRole,
   canPlaceTouchCandidate,
   moveTouchCandidateFromPointerMove,
   pointerCueForCandidate,
   replayLastMoveFocusKey,
   resetSpriteToFrame,
-  sequenceNumberFontSize,
-  sequenceNumberPosition,
   shouldAnimatePlacedStone,
-  shouldRenderStandaloneForbiddenOverlay,
   shouldRestartPointerCycle,
   shouldSyncOverlaySprites,
   shouldStopStoneCycleBeforeStoneRemoval,
   shouldStopStoneIdleCycle,
   usesTouchCandidate,
   usesTouchpadDrag,
-  overlayAnimationForRole,
-  overlaySpriteForRole,
 } from "./board_scene_logic";
 
 import type { CellPosition, CellStone, MatchMove, MatchStatus } from "../game/types";
 import type { BoardAnalysisOverlay, BoardTouchControlMode, PointerCue } from "./board_scene_logic";
-
-const STONE_IDLE_ANIMS = [
-  STONE_ANIMS.IDLE_1,
-  STONE_ANIMS.IDLE_2,
-  STONE_ANIMS.IDLE_3,
-  STONE_ANIMS.IDLE_4,
-] as const;
-const ASSET_URLS = {
-  caution: new URL("../../assets/sprites/caution.png", import.meta.url).toString(),
-  highlighter: new URL("../../assets/sprites/highlighter.png", import.meta.url).toString(),
-  hover: new URL("../../assets/sprites/hover.png", import.meta.url).toString(),
-  marker: new URL("../../assets/sprites/marker.png", import.meta.url).toString(),
-  pointer: new URL("../../assets/sprites/pointer.png", import.meta.url).toString(),
-  stone: new URL("../../assets/sprites/stone.png", import.meta.url).toString(),
-  transform: new URL("../../assets/sprites/transform.png", import.meta.url).toString(),
-} as const;
-
-type AnimationRange = {
-  end: number;
-  frameRate: number;
-  key: string;
-  start: number;
-};
 
 type SpriteFrameRef = {
   frame: number;
@@ -114,10 +80,6 @@ const FORBIDDEN_STEPS: readonly SequenceStep[] = [
   { kind: "animation", key: CAUTION_ANIMS.FORBIDDEN_OUT.key },
   { kind: "animation", key: CAUTION_ANIMS.FORBIDDEN_IN.key },
 ] as const;
-
-function cssColor(color: number): string {
-  return `#${color.toString(16).padStart(6, "0")}`;
-}
 
 function animationCompleteEvent(key: string): string {
   return `${Phaser.Animations.Events.ANIMATION_COMPLETE_KEY}${key}`;
@@ -373,6 +335,7 @@ export class BoardScene extends Phaser.Scene {
   private forbiddenSprites: Phaser.GameObjects.Sprite[] = [];
   private hintSprites: Phaser.GameObjects.Sprite[] = [];
   private hoverLayer: Phaser.GameObjects.Container | null = null;
+  private inputController: BoardInputController | null = null;
   private pointer: Phaser.GameObjects.Sprite | null = null;
   private pointerCellKey: string | null = null;
   private pointerCycle: SequenceAnimationCycle | null = null;
@@ -399,25 +362,22 @@ export class BoardScene extends Phaser.Scene {
   }
 
   preload(): void {
-    this.preloadSpritesheet(SPRITE.CAUTION, ASSET_URLS.caution);
-    this.preloadSpritesheet(SPRITE.HIGHLIGHTER, ASSET_URLS.highlighter);
-    this.preloadSpritesheet(SPRITE.STONE, ASSET_URLS.stone);
-    this.preloadSpritesheet(SPRITE.POINTER, ASSET_URLS.pointer);
-    this.preloadSpritesheet(SPRITE.HOVER, ASSET_URLS.hover);
-    this.preloadSpritesheet(SPRITE.MARKER, ASSET_URLS.marker);
-    this.preloadSpritesheet(SPRITE.TRANSFORM, ASSET_URLS.transform);
+    preloadBoardAssets(this);
   }
 
   create(): void {
-    this.ensureAnimations();
+    ensureBoardAnimations(this);
     this.stoneCycle = new RandomAnimationCycle(this, STONE_IDLE_ANIMS, 700, 2200, STONE_STATIC_FRAME);
     this.replayStoneCycle = new SequenceAnimationCycle(this, REPLAY_LAST_MOVE_STEPS);
     this.createSceneGraph();
     this.scale.on(Phaser.Scale.Events.RESIZE, this.renderBoard, this);
-    this.input.on("pointermove", this.handlePointerMove, this);
-    this.input.on("pointerdown", this.handlePointerDown, this);
-    this.input.on("pointerup", this.handlePointerUp, this);
-    this.input.on("pointerout", this.handlePointerOut, this);
+    this.inputController = new BoardInputController(this.input, {
+      onPointerDown: (pointer) => this.handlePointerDown(pointer),
+      onPointerMove: (pointer) => this.handlePointerMove(pointer),
+      onPointerOut: () => this.handlePointerOut(),
+      onPointerUp: (pointer) => this.handlePointerUp(pointer),
+    });
+    this.inputController.attach();
     this.renderBoard();
   }
 
@@ -427,10 +387,8 @@ export class BoardScene extends Phaser.Scene {
     this.replayStoneCycle?.stop();
     this.stopForbiddenCycles();
     this.scale?.off?.(Phaser.Scale.Events.RESIZE, this.renderBoard, this);
-    this.input?.off?.("pointermove", this.handlePointerMove, this);
-    this.input?.off?.("pointerdown", this.handlePointerDown, this);
-    this.input?.off?.("pointerup", this.handlePointerUp, this);
-    this.input?.off?.("pointerout", this.handlePointerOut, this);
+    this.inputController?.detach();
+    this.inputController = null;
     this.root?.destroy(true);
     this.root = null;
     this.board = null;
@@ -466,79 +424,6 @@ export class BoardScene extends Phaser.Scene {
     if (this.sys?.isActive()) {
       this.syncBoardState(previousState, true);
     }
-  }
-
-  private preloadSpritesheet(key: string, url: string): void {
-    if (this.textures.exists(key)) {
-      return;
-    }
-
-    this.load.spritesheet(key, url, {
-      frameHeight: FRAME_SIZE,
-      frameWidth: FRAME_SIZE,
-    });
-  }
-
-  private ensureAnimations(): void {
-    this.ensureRangeAnimation(SPRITE.TRANSFORM, TRANSFORM_ANIMS.FORM);
-    this.ensureRangeAnimation(SPRITE.STONE, STONE_ANIMS.DESTROY);
-
-    for (const idle of STONE_IDLE_ANIMS) {
-      this.ensureRangeAnimation(SPRITE.STONE, idle);
-    }
-
-    for (const anim of [
-      POINTER_ANIMS.BLOCKED,
-      POINTER_ANIMS.OPEN,
-      POINTER_ANIMS.PREFERRED,
-    ]) {
-      this.ensureRangeAnimation(SPRITE.POINTER, anim);
-    }
-
-    this.ensureRangeAnimation(SPRITE.HOVER, HOVER_ANIMS.HOVER);
-
-    for (const anim of [
-      CAUTION_ANIMS.FORBIDDEN_WARNING,
-      CAUTION_ANIMS.FORBIDDEN_OUT,
-      CAUTION_ANIMS.FORBIDDEN_IN,
-    ]) {
-      this.ensureRangeAnimation(SPRITE.CAUTION, anim);
-    }
-
-    for (const anim of [
-      HIGHLIGHTER_ANIMS.STRONG,
-      HIGHLIGHTER_ANIMS.SOFT,
-      HIGHLIGHTER_ANIMS.ENTRY,
-    ]) {
-      this.ensureRangeAnimation(SPRITE.HIGHLIGHTER, anim);
-    }
-
-    for (const anim of [
-      MARKER_ANIMS.WARNING,
-      MARKER_ANIMS.QUESTION,
-      MARKER_ANIMS.L,
-      MARKER_ANIMS.F,
-      MARKER_ANIMS.E,
-      MARKER_ANIMS.P,
-    ]) {
-      this.ensureRangeAnimation(SPRITE.MARKER, anim);
-    }
-  }
-
-  private ensureRangeAnimation(sprite: string, anim: AnimationRange, repeat = 0): void {
-    if (this.anims.exists(anim.key)) {
-      return;
-    }
-
-    this.anims.create({
-      key: anim.key,
-      frames: this.anims.generateFrameNumbers(sprite, {
-        start: anim.start,
-        end: anim.end,
-      }),
-      frameRate: anim.frameRate,
-      repeat,
-    });
   }
 
   private createSceneGraph(): void {
@@ -782,189 +667,21 @@ export class BoardScene extends Phaser.Scene {
     this.sequenceLabels = [];
     this.winSprites = [];
 
-    const forbiddenKeys = new Set(
-      this.boardState.forbiddenMoves.map((cell) => this.cellKey(cell.row, cell.col)),
-    );
-
-    for (const cell of this.boardState.forbiddenMoves) {
-      if (!shouldRenderStandaloneForbiddenOverlay(cell, this.boardState.threatMoves)) {
-        continue;
-      }
-
-      const point = this.board.cellToPixel(cell.row, cell.col);
-      const sprite = this.createForbiddenSprite(point.x, point.y);
-      this.forbiddenSprites.push(sprite);
-    }
-
-    this.renderHintEvidenceCells(this.boardState.winningEvidenceCells, COLOR.WIN_MOVE);
-    this.renderHintEvidenceCells(this.boardState.immediateThreatEvidenceCells, COLOR.THREAT);
-    this.renderHintEvidenceCells(this.boardState.imminentThreatEvidenceCells, COLOR.IMMINENT_THREAT);
-    this.renderHintEvidenceCells(this.boardState.counterThreatEvidenceCells, COLOR.COUNTER_THREAT);
-
-    for (const cell of this.boardState.winningMoves) {
-      const point = this.board.cellToPixel(cell.row, cell.col);
-      this.hintSprites.push(
-        this.createOverlaySprite(
-          point.x,
-          point.y,
-          COLOR.WIN_MOVE,
-          overlayAnimationForRole("winningMove"),
-          BOARD_RENDER_DEPTHS.OVERLAY_SURFACE,
-          overlaySpriteForRole("winningMove"),
-        ),
-      );
-    }
-
-    for (const cell of this.boardState.threatMoves) {
-      const point = this.board.cellToPixel(cell.row, cell.col);
-      const isForbidden = forbiddenKeys.has(this.cellKey(cell.row, cell.col));
-      this.hintSprites.push(
-        this.createOverlaySprite(
-          point.x,
-          point.y,
-          COLOR.THREAT,
-          overlayAnimationForRole("threatMove", isForbidden),
-          BOARD_RENDER_DEPTHS.OVERLAY_SURFACE,
-          overlaySpriteForRole("threatMove", isForbidden),
-        ),
-      );
-    }
-
-    for (const cell of this.boardState.imminentThreatMoves) {
-      const point = this.board.cellToPixel(cell.row, cell.col);
-      this.hintSprites.push(
-        this.createOverlaySprite(
-          point.x,
-          point.y,
-          COLOR.IMMINENT_THREAT,
-          overlayAnimationForRole("imminentThreatMove"),
-          BOARD_RENDER_DEPTHS.OVERLAY_SURFACE,
-          overlaySpriteForRole("imminentThreatMove"),
-        ),
-      );
-    }
-
-    for (const cell of this.boardState.counterThreatMoves) {
-      const point = this.board.cellToPixel(cell.row, cell.col);
-      this.hintSprites.push(
-        this.createOverlaySprite(
-          point.x,
-          point.y,
-          COLOR.COUNTER_THREAT,
-          overlayAnimationForRole("counterThreatMove"),
-          BOARD_RENDER_DEPTHS.OVERLAY_SURFACE,
-          overlaySpriteForRole("counterThreatMove"),
-        ),
-      );
-    }
-
-    for (const overlay of this.boardState.analysisOverlays) {
-      if (!overlay.highlight) {
-        continue;
-      }
-
-      const point = this.board.cellToPixel(overlay.row, overlay.col);
-      this.analysisSprites.push(
-        this.createOverlaySprite(
-          point.x,
-          point.y,
-          analysisHighlightTintForRole(overlay.highlight, overlay.side),
-          analysisHighlightAnimationForRole(overlay.highlight),
-          BOARD_RENDER_DEPTHS.OVERLAY_SURFACE,
-          SPRITE.HIGHLIGHTER,
-        ),
-      );
-    }
-
-    for (const overlay of this.boardState.analysisOverlays) {
-      if (!overlay.marker) {
-        continue;
-      }
-
-      const point = this.board.cellToPixel(overlay.row, overlay.col);
-      this.analysisSprites.push(
-        this.createOverlaySprite(
-          point.x,
-          point.y,
-          analysisMarkerTintForRole(overlay.marker),
-          analysisMarkerAnimationForRole(overlay.marker),
-          BOARD_RENDER_DEPTHS.OVERLAY_MARKER,
-          analysisMarkerSpriteForRole(overlay.marker),
-        ),
-      );
-    }
-
-    if (this.boardState.nextReplayMove !== null) {
-      const point = this.board.cellToPixel(
-        this.boardState.nextReplayMove.row,
-        this.boardState.nextReplayMove.col,
-      );
-      this.analysisSprites.push(
-        this.createOverlaySprite(
-          point.x,
-          point.y,
-          this.boardState.currentPlayer === 1 ? COLOR.STONE_BLACK : COLOR.STONE_WHITE,
-          HOVER_ANIMS.HOVER.key,
-          BOARD_RENDER_DEPTHS.OVERLAY_HOVER,
-          SPRITE.HOVER,
-        ),
-      );
-    }
-
-    if (this.boardState.showSequenceNumbers && this.boardState.status !== "playing") {
-      for (const move of this.boardState.moves) {
-        const cell = this.boardState.cells[move.row][move.col];
-        if (cell === null) {
-          continue;
-        }
-
-        const point = this.board.cellToPixel(move.row, move.col);
-        const position = sequenceNumberPosition(point.x, point.y);
-        const label = this.add.text(position.x, position.y, String(move.moveNumber), {
-          color: cssColor(cell === 0 ? COLOR.SEQ_ON_BLACK : COLOR.SEQ_ON_WHITE),
-          fontFamily: SEQUENCE_FONT_FAMILY,
-          fontSize: `${sequenceNumberFontSize(this.currentCellSize)}px`,
-        });
-        label.setOrigin(0.5, 0.5);
-        label.setDepth(BOARD_RENDER_DEPTHS.SEQUENCE_NUMBER);
-        this.sequenceLayer.add(label);
-        this.sequenceLabels.push(label);
-      }
-    }
-
-    for (const cell of this.boardState.winningCells) {
-      const point = this.board.cellToPixel(cell.row, cell.col);
-      this.winSprites.push(
-        this.createOverlaySprite(
-          point.x,
-          point.y,
-          COLOR.WIN_CELLS,
-          overlayAnimationForRole("winningLine"),
-          BOARD_RENDER_DEPTHS.OVERLAY_SURFACE,
-          overlaySpriteForRole("winningLine"),
-        ),
-      );
-    }
-  }
-
-  private renderHintEvidenceCells(cells: CellPosition[], tint: number): void {
-    if (!this.board) {
-      return;
-    }
-
-    for (const cell of cells) {
-      const point = this.board.cellToPixel(cell.row, cell.col);
-      this.hintSprites.push(
-        this.createOverlaySprite(
-          point.x,
-          point.y,
-          tint,
-          HIGHLIGHTER_ANIMS.SOFT.key,
-          BOARD_RENDER_DEPTHS.OVERLAY_SURFACE,
-          SPRITE.HIGHLIGHTER,
-        ),
-      );
-    }
+    const rendered = renderBoardOverlays({
+      board: this.board,
+      cellSize: this.currentCellSize,
+      createForbiddenSprite: (x, y) => this.createForbiddenSprite(x, y),
+      createOverlaySprite: (x, y, tint, animKey, depth, texture) =>
+        this.createOverlaySprite(x, y, tint, animKey, depth, texture),
+      scene: this,
+      sequenceLayer: this.sequenceLayer,
+      state: this.boardState,
+    });
+    this.analysisSprites = rendered.analysisSprites;
+    this.forbiddenSprites = rendered.forbiddenSprites;
+    this.hintSprites = rendered.hintSprites;
+    this.sequenceLabels = rendered.sequenceLabels;
+    this.winSprites = rendered.winSprites;
   }
 
   private createOverlaySprite(
@@ -996,10 +713,6 @@ export class BoardScene extends Phaser.Scene {
     cycle.start(sprite);
     this.forbiddenCycles.push(cycle);
     return sprite;
-  }
-
-  private getPointerType(pointer: Phaser.Input.Pointer): string {
-    return (pointer as { pointerType?: string }).pointerType ?? "mouse";
   }
 
   private reportTouchCandidate(candidate: CellPosition | null): void {
@@ -1078,7 +791,7 @@ export class BoardScene extends Phaser.Scene {
     this.showPointerAtCandidate(
       this.board.pixelToCell(pointer.x, pointer.y),
       false,
-      this.getPointerType(pointer) === "mouse",
+      pointerType(pointer) === "mouse",
     );
   }
 
@@ -1114,7 +827,7 @@ export class BoardScene extends Phaser.Scene {
       return;
     }
 
-    if (this.getPointerType(pointer) !== "touch") {
+    if (pointerType(pointer) !== "touch") {
       return;
     }
 
@@ -1143,7 +856,7 @@ export class BoardScene extends Phaser.Scene {
       return;
     }
 
-    if (this.getPointerType(pointer) === "touch") {
+    if (pointerType(pointer) === "touch") {
       if (!this.pointer?.visible) {
         return;
       }

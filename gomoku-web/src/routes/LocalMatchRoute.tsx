@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useStore } from "zustand";
 import { createStore } from "zustand/vanilla";
 
+import { buildLocalMatchBoardModel } from "../board/board_model";
 import { Board } from "../components/Board/Board";
 import {
   DEFAULT_BOT_CONFIG,
@@ -262,6 +263,42 @@ export function LocalMatchRoute() {
     setTouchCandidatePlaceable(false);
     setTouchCandidateResetVersion((version) => version + 1);
   };
+  const boardModel = buildLocalMatchBoardModel({
+    forbiddenMoves: state.forbiddenMoves,
+    hints: visibleHints,
+    interaction: {
+      interactive: humanToMove,
+      kind: "play",
+      onAdvanceRound: state.startNextRound,
+      onPlace: state.placeHumanMove,
+      onTouchCandidateChange: (candidate, canPlace) => {
+        setTouchCandidate((previous) => {
+          if (
+            previous?.row === candidate?.row &&
+            previous?.col === candidate?.col
+          ) {
+            return previous;
+          }
+
+          return candidate;
+        });
+        setTouchCandidatePlaceable((previous) => (
+          previous === canPlace ? previous : canPlace
+        ));
+      },
+      touchCandidateResetVersion,
+      touchControlMode: compactTouchMode ? settings.touchControl : "none",
+    },
+    position: {
+      cells: state.cells,
+      currentPlayer: state.currentPlayer,
+      lastMove: state.lastMove,
+      moves: state.moves,
+      showSequenceNumbers: true,
+      status: state.status,
+    },
+    winningCells: state.winningCells,
+  });
 
   return (
     <main className={styles.page}>
@@ -300,46 +337,7 @@ export function LocalMatchRoute() {
 
       <section className={styles.layout}>
         <div className={styles.boardPanel}>
-          <Board
-            analysisOverlays={[]}
-            cells={state.cells}
-            counterThreatEvidenceCells={visibleHints.counterThreatEvidenceCells}
-            counterThreatMoves={visibleHints.counterThreatMoves}
-            currentPlayer={state.currentPlayer}
-            forbiddenMoves={state.forbiddenMoves}
-            immediateThreatEvidenceCells={visibleHints.immediateThreatEvidenceCells}
-            imminentThreatEvidenceCells={visibleHints.imminentThreatEvidenceCells}
-            imminentThreatMoves={visibleHints.imminentThreatMoves}
-            interactive={humanToMove}
-            lastMove={state.lastMove}
-            moves={state.moves}
-            nextReplayMove={null}
-            onAdvanceRound={state.startNextRound}
-            onPlace={state.placeHumanMove}
-            onTouchCandidateChange={(candidate, canPlace) => {
-              setTouchCandidate((previous) => {
-                if (
-                  previous?.row === candidate?.row &&
-                  previous?.col === candidate?.col
-                ) {
-                  return previous;
-                }
-
-                return candidate;
-              });
-              setTouchCandidatePlaceable((previous) => (
-                previous === canPlace ? previous : canPlace
-              ));
-            }}
-            touchControlMode={compactTouchMode ? settings.touchControl : "none"}
-            touchCandidateResetVersion={touchCandidateResetVersion}
-            showSequenceNumbers
-            status={state.status}
-            threatMoves={visibleHints.threatMoves}
-            winningEvidenceCells={visibleHints.winningEvidenceCells}
-            winningMoves={visibleHints.winningMoves}
-            winningCells={state.winningCells}
-          />
+          <Board model={boardModel} />
         </div>
 
         <aside className={styles.hud}>
