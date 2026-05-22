@@ -657,13 +657,21 @@ debug sample.
 
 The current analyzer checkpoint:
 
+- reads the curated public report from `reports/latest.json:Top 2 entrants`,
 - uses `reply_policy = corridor_replies`,
 - uses corridor proof depth `4`,
 - uses `max_scan_plies = 64`,
-- generates the curated 64-game top-two report under
+- generated the current curated 64-game top-two report with `64/64` analyzed
+  and `0` failed entries,
+- writes the curated batch report under
   `gomoku-bot-lab/analysis-reports/`,
 - powers replay-screen highlights and markers from saved replay data without
   persisting analysis results in local/cloud profile schema.
+
+The internal `GameAnalysis` result is not the same shape as the published batch
+report JSON. The batch report wraps many replay analyses with source provenance,
+summary counts, diagnostics, and rendered proof details; the browser replay UI
+uses the step-wise wasm analyzer instead of loading that published batch JSON.
 
 Historical implementation notes, older telemetry, rejected proof policies, and
 debugging details are archived in

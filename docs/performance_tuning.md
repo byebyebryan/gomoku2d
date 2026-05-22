@@ -772,48 +772,41 @@ Interpretation:
 
 ### Current anchor report refresh
 
-Date: `2026-05-14`
-
-The current clean curated report was generated from git commit `0c7657e47994`
-with `"git_dirty": false`. It keeps the anchor set at `8` entrants while
-promoting D5 from tactical-cap-8 to tactical-cap-16 for both its pattern and
-pattern+corridor-proof lanes. It used:
+The current clean curated report was generated from git commit `aab37a94f7bb`
+with `"git_dirty": false`. It keeps the anchor set at `8` entrants, uses the
+pooled lab budget now used for published reports, and keeps D5 tactical-cap-16
+plus D7 tactical-cap-8 as the hard-side comparison. It used:
 
 - Renju rules
 - centered-suite openings with `4` opening plies
 - `64` games per pair across `8` entrants, for `1792` total matches
-- `1000 ms` Linux thread CPU time per move
+- pooled Linux thread CPU budgeting: `2000 ms` nominal, `8000 ms` reserve, and
+  `4000 ms` per-move cap
 - `120` max moves
 - `22` worker threads on an AMD Ryzen 9 7900X host
-- `701786 ms` total wall time
 
 Standings:
 
 | Rank | Bot | W-D-L | Avg depth | Avg move time | Budget hit |
 |---:|---|---:|---:|---:|---:|
-| 1 | `search-d5+tactical-cap-16+pattern-eval+corridor-proof-c16-d8-w4` | `274-2-172` | `4.36` | `425.6 ms` | `21%` |
-| 2 | `search-d3+pattern-eval+corridor-proof-c16-d8-w4` | `274-0-174` | `2.82` | `262.6 ms` | `8%` |
-| 3 | `search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4` | `271-3-174` | `5.46` | `413.4 ms` | `21%` |
-| 4 | `search-d7+tactical-cap-8+pattern-eval` | `269-3-176` | `5.48` | `382.2 ms` | `17%` |
-| 5 | `search-d5+tactical-cap-16+pattern-eval` | `261-2-185` | `4.40` | `383.1 ms` | `17%` |
-| 6 | `search-d3+pattern-eval` | `248-1-199` | `2.83` | `224.2 ms` | `6%` |
-| 7 | `search-d3` | `149-3-296` | `2.90` | `65.2 ms` | `0%` |
-| 8 | `search-d1` | `39-0-409` | `1.00` | `1.0 ms` | `0%` |
+| 1 | `search-d7+tactical-cap-8+pattern-eval` | `303-5-140` | `5.43` | `1205.3 ms` | `13.0%` |
+| 2 | `search-d5+tactical-cap-16+pattern-eval+corridor-proof-c16-d8-w4` | `305-1-142` | `4.44` | `849.3 ms` | `2.6%` |
+| 3 | `search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4` | `293-2-153` | `5.38` | `1228.5 ms` | `15.3%` |
+| 4 | `search-d5+tactical-cap-16+pattern-eval` | `280-3-165` | `4.51` | `752.0 ms` | `1.2%` |
+| 5 | `search-d3+pattern-eval+corridor-proof-c16-d8-w4` | `217-1-230` | `2.86` | `552.8 ms` | `1.7%` |
+| 6 | `search-d3+pattern-eval` | `213-1-234` | `2.86` | `484.7 ms` | `2.0%` |
+| 7 | `search-d3` | `131-0-317` | `2.90` | `219.8 ms` | `0.2%` |
+| 8 | `search-d1` | `43-1-404` | `1.00` | `6.2 ms` | `0.0%` |
 
 Interpretation:
 
-- D5 tactical-cap-16 is now the stronger D5 lane. The proof variant beat its
-  non-proof counterpart `33-1-30`, beat D7 cap8 pattern `34-30`, and beat D7
-  cap8 pattern proof `35-29`.
-- D7 cap8 remains close and cheaper than the top D5 proof lane. Its proof
-  variant beat non-proof D7 `34-2-28`, but did not top D5 cap16 proof in the
-  full anchor report.
-- D3 pattern proof remains unusually competitive. It tied D7 proof `32-32` and
-  only lost to D5 cap16 proof `30-34`, so it stays useful as a lower-depth
-  strategic control.
-- The stronger D5 cap16 lanes raise total report wall time and budget pressure.
-  This is acceptable for the hard-side lab anchor, but it is not yet evidence
-  for raising the product default time budget.
+- D7 cap8 pattern is back on top by shuffled Elo under pooled budgeting.
+- D5 cap16 proof has the best raw win count and much lower budget pressure than
+  the D7 hard lanes, so it remains the efficient hard-side proof control.
+- Corridor proof helps enough to keep in the anchor set, but it is not decisive
+  enough to define the whole hard tier.
+- D3 pattern and D3 pattern proof remain useful lower-depth controls, but they
+  no longer look like hard-tier replacements under the pooled report.
 - The paired top-two analysis report sampled `64` games from this clean report
   and completed all `64` without failures. The current report UI intentionally
   avoids root-cause category counts, so use the JSON only when a deeper
@@ -1401,12 +1394,13 @@ cargo bench -p gomoku-bot --bench search_perf -- "balanced/(renju_forbidden_cros
 
 Date: `2026-05-14`
 
-The latest anchor report made tactical annotation volume the clearest remaining
-hot path: D5/D7 full tactical lanes were annotating about `85-88` children before
-keeping `8` or `16`, and tactical annotation was roughly `58-68%` of aggregate
-search time. Focused Criterion checks showed dirty rolling annotation is not
-individually catastrophic after the benchmark teardown was fixed; the problem is
-query volume.
+The latest anchor reports made tactical annotation volume the clearest remaining
+named hot path. Older strict-budget runs showed tactical annotation at roughly
+`58-68%` of aggregate search time. In the current pooled report, D5/D7 pattern
+lanes still generate roughly `87` candidates per search node and threat-stage
+time is about `43-47%` of captured stage time. Focused Criterion checks showed
+dirty rolling annotation is not individually catastrophic after the benchmark
+teardown was fixed; the problem is still query volume.
 
 Change:
 

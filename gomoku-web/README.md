@@ -69,6 +69,10 @@ Curated replay-analysis reports live in
 [`../gomoku-bot-lab/analysis-reports/`](../gomoku-bot-lab/analysis-reports/)
 and are copied into published builds under `/analysis-report/`.
 
+Production builds expect both curated report folders to contain `index.html`
+and `latest.json`. For local/dev builds that intentionally skip reports, set
+`GOMOKU_ALLOW_MISSING_REPORTS=1`.
+
 ---
 
 ## Stack

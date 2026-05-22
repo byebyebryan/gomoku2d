@@ -503,12 +503,12 @@ heavy lab work, and package the project for first public release.
 
 ### Possible Work
 
-- remove or relocate generated report HTML and other heavy report artifacts
-  that should not dominate the repo as source content
+- mark current generated report artifacts explicitly so they do not dominate
+  source-language stats or review diffs
 - move bot/analysis report presentation toward web-owned viewer components over
   structured report data
 - slim or split committed report data if the current `latest.json` artifacts are
-  too heavy for normal review
+  too heavy for normal review after the viewer rewrite starts
 - add concise product pages such as About, Rules, Analysis, and Bot Lab
 - polish Home, Replay, report pages, and README copy around the lab-under-the-
   board story

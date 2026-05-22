@@ -204,7 +204,7 @@ Corridor Proof` first, then show
 `search-d5+tactical-cap-16+pattern-eval+corridor-proof-c16-d8-w4` as the
 secondary lab spec.
 
-The initial `0.4.5` preset candidates from the `v0.4.4` report are:
+The current product presets remain intentionally simple:
 
 - `Easy`: `search-d1`
 - `Normal`: `search-d3+pattern-eval`
@@ -493,29 +493,28 @@ across D3, D5 cap8, and D7 cap8.
 
 The current curated anchor report promotes the pattern and candidate-proof lanes
 instead of keeping old line-eval middle anchors. The run used Renju, the
-centered opening suite, `64` games per pair, `1000 ms` Linux CPU time per move,
-and clean `0c7657e47994` report provenance. The latest refresh promotes D5
-from tactical-cap-8 to tactical-cap-16 for both its pattern and
-pattern+corridor-proof lanes. Its standings were:
+centered opening suite, `64` games per pair, pooled Linux CPU budgeting with a
+`2000 ms` nominal budget, `8000 ms` reserve, `4000 ms` per-move cap, and clean
+`aab37a94f7bb` report provenance. Its standings were:
 
-| Rank | Bot | W-D-L | Read |
-|---:|---|---:|---|
-| 1 | `search-d5+tactical-cap-16+pattern-eval+corridor-proof-c16-d8-w4` | `274-2-172` | current strongest anchor; high-cost hard proof lane |
-| 2 | `search-d3+pattern-eval+corridor-proof-c16-d8-w4` | `274-0-174` | unusually competitive lower-depth proof control |
-| 3 | `search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4` | `271-3-174` | close hard proof lane; slightly cheaper than D5 proof |
-| 4 | `search-d7+tactical-cap-8+pattern-eval` | `269-3-176` | close non-proof hard control |
-| 5 | `search-d5+tactical-cap-16+pattern-eval` | `261-2-185` | promoted D5 non-proof control |
-| 6 | `search-d3+pattern-eval` | `248-1-199` | useful mid-strength pattern control |
-| 7 | `search-d3` | `149-3-296` | stable default baseline |
-| 8 | `search-d1` | `39-0-409` | easy/beginner lane |
+| Rank | Bot | W-D-L | Avg move | Budget hit | Read |
+|---:|---|---:|---:|---:|---|
+| 1 | `search-d7+tactical-cap-8+pattern-eval` | `303-5-140` | `1205 ms` | `13.0%` | top shuffled-Elo hard control |
+| 2 | `search-d5+tactical-cap-16+pattern-eval+corridor-proof-c16-d8-w4` | `305-1-142` | `849 ms` | `2.6%` | strongest win count and efficient proof lane |
+| 3 | `search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4` | `293-2-153` | `1228 ms` | `15.3%` | close hard proof lane |
+| 4 | `search-d5+tactical-cap-16+pattern-eval` | `280-3-165` | `752 ms` | `1.2%` | efficient promoted D5 control |
+| 5 | `search-d3+pattern-eval+corridor-proof-c16-d8-w4` | `217-1-230` | `553 ms` | `1.7%` | lower-depth proof control |
+| 6 | `search-d3+pattern-eval` | `213-1-234` | `485 ms` | `2.0%` | normal preset lane |
+| 7 | `search-d3` | `131-0-317` | `220 ms` | `0.2%` | plain baseline |
+| 8 | `search-d1` | `43-1-404` | `6 ms` | `0.0%` | easy/beginner lane |
 
-The report makes candidate proof a serious lab branch but not a product default.
-D5 cap16 proof tops the current report, D7 proof remains close, and D3 pattern
-proof is strong enough to stay as a lower-depth strategic control. Keep corridor
-proof in anchors so future sweeps measure against it directly; do not expose it
-as a user-facing bot label yet. Reports render `corridor-proof-c16-d8-w4` as
-`Corridor Proof`, while raw JSON and docs commands keep the full spelling for
-reproducibility.
+The report keeps corridor proof as a serious lab branch, but the signal is not
+dominant enough to make proof the only hard-side story. D7 pattern without proof
+tops shuffled Elo; D5 cap16 proof has the best raw win count and a much lower
+budget-hit rate. Keep proof lanes in anchors and product advanced controls, but
+continue treating the exact proof suffix as a lab detail. Reports render
+`corridor-proof-c16-d8-w4` as `Corridor Proof`, while raw JSON and docs commands
+keep the full spelling for reproducibility.
 
 The key assumption is that depth remains the mechanism for seeing long play.
 Non-tactical alpha-beta should find winning combinations if it can search deep
@@ -785,10 +784,12 @@ product default.
 ## Tactical Ordering Cost Gate
 
 The latest tactical-ordering profile showed that full tactical ordering spends
-most of its time annotating candidate-created threats for children that are then
-dropped by `child_limit`. In the current anchor report, D5/D7 tactical lanes
-annotate roughly `85-88` children before keeping `8` or `16`, and tactical
-annotation accounts for about `58-68%` of total search time.
+too much time annotating candidate-created threats for children that are then
+dropped by `child_limit`. In the current pooled anchor report, D5/D7 pattern
+lanes still generate roughly `87` candidate moves per search node before
+keeping `8` or `16`, while threat-stage time sits around `43-47%` of the
+captured stage total. That is lower than the older strict-budget reports, but it
+is still the largest named stage.
 
 `+tactical-cap-N` is now the targeted cost-reduction path. It keeps immediate
 win/block checks global, then runs full tactical annotation only for moves that
