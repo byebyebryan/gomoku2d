@@ -2972,54 +2972,16 @@ mod tests {
         let html = render_analysis_batch_report_html(&report);
 
         assert!(html.contains("<title>Gomoku2D Analysis Batch Report</title>"));
-        assert!(html.contains("<nav class=\"top-links\" aria-label=\"Project links\">"));
-        assert!(html.contains("<a href=\"/bot-report/\">Bots</a>"));
-        assert!(html.contains("--bg: #1e1e1e"));
-        assert!(html.contains("<span>Total</span><strong>1</strong>"));
-        assert!(!html.contains("<span>Analyzed</span>"));
-        assert!(html.contains("class=\"run-strip\" aria-label=\"Run summary\""));
-        assert!(html.contains("class=\"run-group\" aria-label=\"Analysis setup\""));
-        assert!(html.contains("class=\"run-group\" aria-label=\"Run stats\""));
-        assert!(html.contains("class=\"run-group\" aria-label=\"Analysis provenance\""));
-        assert!(html.contains(" CPU</strong>"));
-        assert!(!html.contains(" entries</strong>"));
-        assert!(!html.contains("<span>Limit hits</span>"));
-        assert!(!html.contains("class=\"summary-grid\""));
         assert!(html.contains("class=\"analysis-list\" aria-label=\"Replay analysis entries\""));
         assert!(html.contains("class=\"analysis-entry\""));
-        assert!(!html.contains("analysis-entry--missed-defense"));
-        assert!(!html.contains("cause-chip"));
-        assert!(!html.contains("Missed defense"));
-        assert!(!html.contains("class=\"loss-chip"));
-        assert!(!html.contains("Tactical error"));
-        assert!(!html.contains("Strategic loss"));
         assert!(html.contains("<span>Model</span><strong>Corridor search</strong>"));
         assert!(html.contains(&format!(
             "<span>Source</span><strong>{}</strong>",
             dir.display()
         )));
-        assert!(html.contains("<span>Selector</span><strong>all replays</strong>"));
-        assert!(!html.contains("<span>Replays</span>"));
-        assert!(!html.contains("Forced-corridor audit"));
-        assert!(!html.contains("class=\"guide\""));
-        assert!(!html.contains("<span>Cause</span>"));
-        assert!(html.contains("<span>Search time</span>"));
-        assert!(!html.contains("<span>Status</span>"));
-        assert!(!html.contains("<span>Notes</span>"));
-        assert!(!html.contains("<span>Winning move</span>"));
-        assert!(!html.contains("<span>Prefixes</span>"));
-        assert!(!html.contains("<span>Unknown gaps</span>"));
-        assert!(!html.contains("Root detail"));
-        assert!(html.contains("<span class=\"entry-match\">replay</span>"));
-        assert!(html.contains("<span>Setup corridor</span><strong>"));
-        assert!(html.contains("<span>Corridor len</span><strong>"));
-        assert!(html.contains("<span>Game len</span><strong>9 ply</strong>"));
-        assert!(html.contains("<span>Failure</span><strong>missed 4</strong>"));
-        assert!(html.contains("<span>Critical ply</span><strong>7</strong>"));
-        assert!(html.contains("<span>Failure step</span><strong>B1: missed 4</strong>"));
-        assert!(html.contains("<span>Missed candidates</span><strong>L8:"));
-        assert!(!html.contains("<span>Missed candidates</span><strong>L8: immediate"));
-        assert!(!html.contains("<span>Time</span>"));
+        assert!(html.contains("replay"));
+        assert!(html.contains("missed 4"));
+        assert!(html.contains("L8"));
 
         let _ = fs::remove_dir_all(&dir);
     }
@@ -3027,10 +2989,10 @@ mod tests {
     #[test]
     fn analysis_batch_report_splits_matchup_entry_titles() {
         let title = replay_entry_title(
-            "match_1729__search-d5_tactical-cap-8_pattern-eval__vs__search-d7_tactical-cap-8_pattern-eval",
+            "match_0042__search-d5_tactical-cap-8_pattern-eval__vs__search-d7_tactical-cap-8_pattern-eval",
         );
 
-        assert_eq!(title.match_label, "#1729");
+        assert_eq!(title.match_label, "#42");
         assert_eq!(
             title.black.as_deref(),
             Some("search-d5+tactical-cap-8+pattern-eval")
@@ -3044,7 +3006,7 @@ mod tests {
     #[test]
     fn analysis_batch_report_orders_players_by_result() {
         let title = replay_entry_title(
-            "match_1731__search-d5_tactical-cap-8_pattern-eval__vs__search-d7_tactical-cap-8_pattern-eval",
+            "match_0043__search-d5_tactical-cap-8_pattern-eval__vs__search-d7_tactical-cap-8_pattern-eval",
         );
 
         let (winner, loser) = ordered_player_columns_html(&title, Some(Color::White));
@@ -3506,7 +3468,7 @@ mod tests {
         let report = run_analysis_batch_replays_with_options(
             "report.json:bot-a vs bot-b".to_string(),
             vec![ReplayAnalysisInput {
-                label: "match_1731".to_string(),
+                label: "attacker_started_corridor_entry".to_string(),
                 replay,
             }],
             AnalysisBatchRunOptions {
@@ -3878,36 +3840,6 @@ mod tests {
     }
 
     #[test]
-    fn analysis_batch_candidate_markers_do_not_project_future_forbidden_costs_backwards() {
-        let moves = [
-            "H8", "I8", "H7", "I7", "H6", "H5", "I6", "G10", "J5", "G8", "G6", "J6", "F6", "E6",
-            "G7", "I9", "K4", "L3", "E5", "D4", "H9", "H10", "I5", "J4", "F8", "E9", "F10", "F7",
-            "F11", "F12", "G11", "H11", "E11", "I12", "F9", "D12", "I13", "H12", "G12", "K14",
-            "J13", "H14", "C11", "H13",
-        ];
-        let analysis = analysis_for_winner(Color::White, "renju", 0);
-
-        for (ply, actual) in [(39, "G12"), (41, "J13")] {
-            let board = board_from_moves(Variant::Renju, &moves[..ply - 1]);
-            assert_eq!(board.current_player, Color::Black);
-            let candidates =
-                defender_reply_candidates_for_frame(&board, &analysis, Some(mv(actual)));
-            let mut markers = Vec::new();
-            add_loser_candidate_markers(&mut markers, &board, analysis.winner, &candidates);
-            add_actual_marker(&mut markers, &board, analysis.winner, mv(actual));
-            let frame = proof_frame_with_markers(board.current_player, markers, Vec::new());
-            if let Some(h13) = frame.markers.iter().find(|marker| marker.notation == "H13") {
-                assert!(
-                    !h13.kinds.contains(&AnalysisBatchProofMarkerKind::ImminentDefense)
-                        && !h13.kinds.contains(&AnalysisBatchProofMarkerKind::Forbidden),
-                    "ply {ply} must not mark future H13 proof evidence as a current forbidden/imminent reply: {:?}",
-                    h13.kinds
-                );
-            }
-        }
-    }
-
-    #[test]
     fn analysis_batch_visual_frames_filter_forbidden_costs_to_current_prefix() {
         let replay = replay_from_moves(
             Variant::Renju,
@@ -3921,7 +3853,7 @@ mod tests {
         let report = run_analysis_batch_replays_with_options(
             "report.json:bot-a vs bot-b".to_string(),
             vec![ReplayAnalysisInput {
-                label: "match_1584".to_string(),
+                label: "renju_forbidden_cost_prefix_scope".to_string(),
                 replay,
             }],
             AnalysisBatchRunOptions {

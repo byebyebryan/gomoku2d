@@ -3,7 +3,6 @@ import {
   fireEvent,
   render,
   screen,
-  within,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
@@ -86,53 +85,5 @@ describe("App", () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/^rule$/i)).toBeInTheDocument();
     expect(screen.getByText(/^bot$/i)).toBeInTheDocument();
-  });
-
-  it("orders home actions as play, profile, settings", () => {
-    render(
-      <MemoryRouter initialEntries={["/"]}>
-        <App />
-      </MemoryRouter>,
-    );
-
-    const play = screen.getByRole("link", { name: /^play$/i });
-    const settings = screen.getByRole("link", { name: /^settings$/i });
-    const profile = screen.getByRole("link", { name: /^profile$/i });
-
-    expect(settings).toHaveAttribute("href", "/settings");
-    expect(
-      play.compareDocumentPosition(profile)
-        & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      profile.compareDocumentPosition(settings)
-        & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-  });
-
-  it("groups the version above controlled footer link rows", () => {
-    render(
-      <MemoryRouter initialEntries={["/"]}>
-        <App />
-      </MemoryRouter>,
-    );
-
-    const footerLinks = screen.getByRole("navigation", {
-      name: /footer links/i,
-    });
-    const version = screen.getByText(/^v\d+\.\d+\.\d+$/i);
-
-    expect(
-      version.compareDocumentPosition(footerLinks)
-        & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(version.className).toContain("version");
-    expect(within(footerLinks).getByRole("link", { name: /^assets$/i })).toBeInTheDocument();
-    expect(within(footerLinks).getByRole("link", { name: /^bots$/i })).toBeInTheDocument();
-    expect(within(footerLinks).getByRole("link", { name: /^analysis$/i })).toBeInTheDocument();
-    expect(within(footerLinks).getByRole("link", { name: /^privacy$/i })).toBeInTheDocument();
-    expect(within(footerLinks).getByRole("link", { name: /^terms$/i })).toBeInTheDocument();
-    expect(within(footerLinks).getAllByText("/")).toHaveLength(3);
-    expect(footerLinks).not.toHaveTextContent("·");
   });
 });

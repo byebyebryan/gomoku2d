@@ -3178,57 +3178,24 @@ mod tests {
     }
 
     #[test]
-    fn match_1729_closed_three_endpoint_is_not_a_corridor_reply() {
-        const MATCH_1729_PREFIX_38: &[&str] = &[
-            "H8", "I8", "H7", "I7", "H6", "H5", "I6", "G10", "J5", "G8", "G6", "J6", "F6", "E6",
-            "G7", "I9", "K4", "L3", "E5", "D4", "H9", "H10", "I5", "J4", "F8", "E9", "F10", "F7",
-            "F11", "F12", "G11", "H11", "E11", "I12", "F9", "D12", "I13", "H12",
-        ];
-        const MATCH_1729_PREFIX_39: &[&str] = &[
-            "H8", "I8", "H7", "I7", "H6", "H5", "I6", "G10", "J5", "G8", "G6", "J6", "F6", "E6",
-            "G7", "I9", "K4", "L3", "E5", "D4", "H9", "H10", "I5", "J4", "F8", "E9", "F10", "F7",
-            "F11", "F12", "G11", "H11", "E11", "I12", "F9", "D12", "I13", "H12", "G12",
-        ];
-        const MATCH_1729_PREFIX_40: &[&str] = &[
-            "H8", "I8", "H7", "I7", "H6", "H5", "I6", "G10", "J5", "G8", "G6", "J6", "F6", "E6",
-            "G7", "I9", "K4", "L3", "E5", "D4", "H9", "H10", "I5", "J4", "F8", "E9", "F10", "F7",
-            "F11", "F12", "G11", "H11", "E11", "I12", "F9", "D12", "I13", "H12", "G12", "K14",
-        ];
-        const MATCH_1729_PREFIX_41: &[&str] = &[
-            "H8", "I8", "H7", "I7", "H6", "H5", "I6", "G10", "J5", "G8", "G6", "J6", "F6", "E6",
-            "G7", "I9", "K4", "L3", "E5", "D4", "H9", "H10", "I5", "J4", "F8", "E9", "F10", "F7",
-            "F11", "F12", "G11", "H11", "E11", "I12", "F9", "D12", "I13", "H12", "G12", "K14",
-            "J13",
-        ];
+    fn closed_three_endpoint_is_not_a_corridor_reply() {
+        let left_blocked = board_from_moves(Variant::Renju, &["G8", "H8", "A1", "I8", "A2", "J8"]);
+        assert_eq!(left_blocked.current_player, Color::Black);
 
-        for moves in [MATCH_1729_PREFIX_38, MATCH_1729_PREFIX_40] {
-            let board = board_from_moves(Variant::Renju, moves);
-            assert_eq!(board.current_player, Color::Black);
-            assert!(board.is_legal_for_color(mv("H13"), Color::Black));
-            assert!(
-                !board
-                    .immediate_winning_moves_for(Color::White)
-                    .contains(&mv("H13")),
-                "H13 is not an immediate white win at this prefix"
-            );
+        let replies = CorridorThreatPolicy.defender_reply_moves(&left_blocked, Color::White, None);
+        assert!(
+            !replies.contains(&mv("K8")),
+            "the open endpoint of OXXX_ is a closed-three extension, not a forced reply: {replies:?}"
+        );
 
-            let replies = CorridorThreatPolicy.defender_reply_moves(&board, Color::White, None);
-            assert!(
-                !replies.contains(&mv("H13")),
-                "H13 is only the endpoint of a closed white three and should not be a forced corridor reply: {replies:?}"
-            );
-        }
+        let right_blocked = board_from_moves(Variant::Renju, &["K8", "H8", "A1", "I8", "A2", "J8"]);
+        assert_eq!(right_blocked.current_player, Color::Black);
 
-        for moves in [MATCH_1729_PREFIX_39, MATCH_1729_PREFIX_41] {
-            let board = board_from_moves(Variant::Renju, moves);
-            assert_eq!(board.current_player, Color::White);
-            assert!(
-                !board
-                    .immediate_winning_moves_for(Color::White)
-                    .contains(&mv("H13")),
-                "H13 is not an immediate white win at this prefix"
-            );
-        }
+        let replies = CorridorThreatPolicy.defender_reply_moves(&right_blocked, Color::White, None);
+        assert!(
+            !replies.contains(&mv("G8")),
+            "the open endpoint of _XXXO is a closed-three extension, not a forced reply: {replies:?}"
+        );
     }
 
     #[test]

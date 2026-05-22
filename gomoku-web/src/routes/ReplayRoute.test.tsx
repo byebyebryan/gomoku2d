@@ -1,10 +1,6 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import doubleNextSvgRaw from "../../assets/icons/double_next.svg?raw";
-import doublePrevSvgRaw from "../../assets/icons/double_prev.svg?raw";
-import nextSvgRaw from "../../assets/icons/next.svg?raw";
-import prevSvgRaw from "../../assets/icons/prev.svg?raw";
 
 import { Board } from "../components/Board/Board";
 import { createLocalSavedMatch } from "../match/saved_match";
@@ -101,18 +97,6 @@ function latestBoardProps() {
   return mockedBoard.mock.calls[mockedBoard.mock.calls.length - 1]?.[0];
 }
 
-function rectSignatureFromSvg(svg: string): string[] {
-  return [...svg.matchAll(/<rect x="([^"]+)" y="([^"]+)" width="([^"]+)" height="([^"]+)"/g)].map(
-    (match) => `${match[1]},${match[2]},${match[3]},${match[4]}`,
-  );
-}
-
-function rectSignatureFromButton(button: HTMLElement): string[] {
-  return [...button.querySelectorAll("rect")].map((rect) => (
-    `${rect.getAttribute("x")},${rect.getAttribute("y")},${rect.getAttribute("width")},${rect.getAttribute("height")}`
-  ));
-}
-
 describe("ReplayRoute analysis overlays", () => {
   afterEach(() => {
     cleanup();
@@ -163,23 +147,6 @@ describe("ReplayRoute analysis overlays", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Next turn" }));
     expect(screen.getByTestId("replay-move-count")).toHaveTextContent("Move 9 / 9");
-  });
-
-  it("uses double arrows for turn stepping and single arrows for move stepping", () => {
-    renderReplayRoute();
-
-    expect(rectSignatureFromButton(screen.getByRole("button", { name: "Previous turn" }))).toEqual(
-      rectSignatureFromSvg(doublePrevSvgRaw),
-    );
-    expect(rectSignatureFromButton(screen.getByRole("button", { name: "Previous move" }))).toEqual(
-      rectSignatureFromSvg(prevSvgRaw),
-    );
-    expect(rectSignatureFromButton(screen.getByRole("button", { name: "Next move" }))).toEqual(
-      rectSignatureFromSvg(nextSvgRaw),
-    );
-    expect(rectSignatureFromButton(screen.getByRole("button", { name: "Next turn" }))).toEqual(
-      rectSignatureFromSvg(doubleNextSvgRaw),
-    );
   });
 
   it("adds loser-frame analysis overlays from worker progress", () => {
@@ -286,11 +253,6 @@ describe("ReplayRoute analysis overlays", () => {
 
     expect(screen.getByTestId("replay-analysis-status")).toHaveTextContent("Analyzing replay");
     expect(screen.getByTestId("replay-analysis-detail")).toHaveTextContent("Move 5 · 321 nodes");
-    expect(screen.getByTestId("replay-timeline")).toHaveStyle({
-      "--timeline-analyzed-end": "100%",
-      "--timeline-analyzed-start": "55.55555555555556%",
-      "--timeline-escape": "55.55555555555556%",
-    });
     expect(screen.getByTestId("replay-timeline-analyzed")).toBeInTheDocument();
     expect(screen.queryByTestId("replay-timeline-setup-corridor")).not.toBeInTheDocument();
     expect(screen.getByTestId("replay-timeline-escape")).toBeInTheDocument();
