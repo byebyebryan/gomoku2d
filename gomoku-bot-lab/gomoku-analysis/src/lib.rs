@@ -1,4 +1,5 @@
 mod annotations;
+mod bridge;
 mod failure;
 mod model;
 mod onset;
@@ -8,6 +9,7 @@ mod types;
 mod util;
 
 pub use annotations::replay_frame_annotations_for_analysis;
+pub use bridge::{analysis_options_from_json, replay_analysis_error, ReplayAnalysisStepEnvelope};
 pub use model::{corridor_analysis_model, rule_label};
 pub use replay::{analyze_replay, ReplayAnalysisSession};
 pub use trace::{
