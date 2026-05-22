@@ -4420,6 +4420,64 @@ mod tests {
         }
     }
 
+    struct SearchBehaviorCase {
+        id: &'static str,
+        scenario_id: &'static str,
+        config_id: &'static str,
+        expected_moves: &'static [&'static str],
+        description: &'static str,
+    }
+
+    impl SearchBehaviorCase {
+        fn scenario(&self) -> &'static scenarios::BenchScenario {
+            scenarios::SCENARIOS
+                .iter()
+                .find(|scenario| scenario.id == self.scenario_id)
+                .unwrap_or_else(|| {
+                    panic!(
+                        "behavior case '{}' references unknown scenario '{}'",
+                        self.id, self.scenario_id
+                    )
+                })
+        }
+
+        fn expected_moves(&self) -> Vec<Move> {
+            self.expected_moves.iter().map(|notation| mv(notation)).collect()
+        }
+    }
+
+    const SEARCH_BEHAVIOR_CASES: &[SearchBehaviorCase] = &[
+        SearchBehaviorCase {
+            id: "balanced_completes_open_four",
+            scenario_id: "local_complete_open_four",
+            config_id: "balanced",
+            expected_moves: &["G8", "L8"],
+            description: "Balanced should finish its own open four.",
+        },
+        SearchBehaviorCase {
+            id: "balanced_reacts_closed_four",
+            scenario_id: "local_react_closed_four",
+            config_id: "balanced",
+            expected_moves: &["E1"],
+            description: "Balanced should answer the opponent's closed four.",
+        },
+        SearchBehaviorCase {
+            id: "balanced_prevents_open_four_over_extending_three",
+            scenario_id: "priority_prevent_open_four_over_extend_three",
+            config_id: "balanced",
+            expected_moves: &["G8", "K8"],
+            description:
+                "Balanced should prevent the opponent's open three instead of extending elsewhere.",
+        },
+        SearchBehaviorCase {
+            id: "balanced_completes_four_before_reacting",
+            scenario_id: "priority_complete_open_four_over_react_closed_four",
+            config_id: "balanced",
+            expected_moves: &["G8", "L8"],
+            description: "Balanced should complete an open four when both sides threaten.",
+        },
+    ];
+
     #[test]
     fn optimized_eval_matches_reference_on_benchmark_scenarios() {
         for scenario in scenarios::SCENARIOS {
@@ -6538,7 +6596,7 @@ mod tests {
 
     #[test]
     fn behavior_cases_choose_expected_moves() {
-        for case in scenarios::SEARCH_BEHAVIOR_CASES {
+        for case in SEARCH_BEHAVIOR_CASES {
             let board = case.scenario().board();
             let config = match case.config_id {
                 "balanced" => SearchBotConfig::custom_depth(3),
