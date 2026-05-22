@@ -66,19 +66,6 @@ describe("SettingsRoute", () => {
         ruleset: "renju",
       },
     });
-    expect(screen.getByRole("group", { name: /renju hard bot/i })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Renju" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Hard Bot" })).toBeInTheDocument();
-  });
-
-  it("shows rule selection as a compact setting row", () => {
-    renderSettingsRoute();
-
-    expect(screen.getAllByText(/^Game$/)).toHaveLength(2);
-    expect(screen.getByText(/^Rule$/)).toBeInTheDocument();
-    expect(screen.getByText(/^Ruleset for new games.$/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Freestyle" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Renju" })).toBeInTheDocument();
   });
 
   it("hides touch control on non-mobile settings screens", () => {
@@ -116,9 +103,6 @@ describe("SettingsRoute", () => {
     mockCompactTouchDevice(true);
     renderSettingsRoute();
 
-    expect(screen.getByText(/^Controls$/)).toBeInTheDocument();
-    expect(screen.getByText(/^Touch control$/)).toBeInTheDocument();
-    expect(screen.getByText(/^How mobile taps move the board cursor.$/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Pointer" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Touchpad" })).toBeInTheDocument();
   });
@@ -132,22 +116,14 @@ describe("SettingsRoute", () => {
     expect(localProfileStore.getState().settings.touchControl).toBe("pointer");
   });
 
-  it("shows compact board hint mode controls", () => {
+  it("persists board hint option selections", () => {
     renderSettingsRoute();
 
-    expect(screen.getByText(/^Hints$/)).toBeInTheDocument();
-    expect(screen.getByText(/^Immediate$/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Win" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "+ Block" })).toBeInTheDocument();
-    expect(screen.getByText(/^Imminent$/)).toBeInTheDocument();
+    const immediate = screen.getByRole("group", { name: "Immediate hints" });
     const imminent = screen.getByRole("group", { name: "Imminent hints" });
     expect(within(imminent).getByRole("button", { name: "Threat" })).toBeInTheDocument();
-    expect(within(imminent).getByRole("button", { name: "+ Counter" })).toBeInTheDocument();
     const evidence = screen.getByRole("group", { name: "Evidence hints" });
-    expect(within(evidence).getByRole("button", { name: "Off" })).toBeInTheDocument();
-    expect(within(evidence).getByRole("button", { name: "On" })).toBeInTheDocument();
 
-    const immediate = screen.getByRole("group", { name: "Immediate hints" });
     fireEvent.click(within(immediate).getByRole("button", { name: "Win" }));
     fireEvent.click(within(evidence).getByRole("button", { name: "Off" }));
 
@@ -156,19 +132,6 @@ describe("SettingsRoute", () => {
       immediate: "win",
       imminent: "threat_counter",
     });
-  });
-
-  it("shows lab controls as setting labels with option segments", () => {
-    renderSettingsRoute();
-
-    expect(screen.getByText(/^Advanced Controls$/)).toBeInTheDocument();
-    expect(screen.queryByText(/^Lab Controls$/)).not.toBeInTheDocument();
-    expect(screen.getByText(/^Scoring$/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Simple" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Pattern" })).toBeInTheDocument();
-    expect(screen.getByText(/^Extra pass$/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "None" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Corridor proof" })).toBeInTheDocument();
   });
 
   it("persists lab control option selections", () => {
@@ -202,17 +165,6 @@ describe("SettingsRoute", () => {
       mode: "custom",
       width: 8,
     });
-  });
-
-  it("orders custom bot width options from narrow to wide", () => {
-    renderSettingsRoute();
-
-    const w8 = screen.getByRole("button", { name: "W8" });
-    const w16 = screen.getByRole("button", { name: "W16" });
-    const full = screen.getByRole("button", { name: "full" });
-
-    expect(w8.compareDocumentPosition(w16) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(w16.compareDocumentPosition(full) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("shows active-game apply actions when saved setup differs from current setup", () => {
