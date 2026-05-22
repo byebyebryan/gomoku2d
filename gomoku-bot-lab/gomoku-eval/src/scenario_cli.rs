@@ -102,15 +102,13 @@ fn parse_search_config_specs(
     names
         .into_iter()
         .map(|name| {
-            let config = lab_spec::search_config_from_lab_spec(
-                &name,
-                5,
-                search_time_ms,
-                search_cpu_time_ms,
-            )
-            .ok_or_else(|| {
-                format!("Unknown search config: '{name}'. Use search-dN or search-dN+suffixes.")
-            })?;
+            let config =
+                lab_spec::search_config_from_lab_spec(&name, 5, search_time_ms, search_cpu_time_ms)
+                    .ok_or_else(|| {
+                        format!(
+                            "Unknown search config: '{name}'. Use search-dN or search-dN+suffixes."
+                        )
+                    })?;
             Ok(ScenarioSearchConfig { id: name, config })
         })
         .collect()
