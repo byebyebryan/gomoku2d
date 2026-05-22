@@ -111,11 +111,13 @@ pub struct FailureAnalysis {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub struct DefenderReplyCandidate {
+pub struct VisibleDefenderReplyCandidate {
     pub mv: Move,
     pub notation: String,
     pub roles: Vec<DefenderReplyRole>,
 }
+
+pub type DefenderReplyCandidate = VisibleDefenderReplyCandidate;
 
 #[derive(Debug, Clone)]
 pub struct AnalysisOptions {
