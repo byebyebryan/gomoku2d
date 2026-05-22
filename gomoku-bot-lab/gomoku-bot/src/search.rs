@@ -10,9 +10,9 @@ use crate::frontier::{
 };
 use crate::pattern::{evaluate_pattern_scan, PatternFrame};
 use crate::tactical::{
-    local_threat_facts_after_move, tactical_metrics_snapshot, CorridorThreatPolicy,
-    LocalThreatKind, ScanThreatView, SearchThreatPolicy, TacticalMetrics, TacticalMoveAnnotation,
-    TacticalOrderingSummary, ThreatObligationKind, ThreatView,
+    tactical_metrics_snapshot, CorridorThreatPolicy, LocalThreatKind, ScanThreatView,
+    SearchThreatPolicy, TacticalMetrics, TacticalMoveAnnotation, TacticalOrderingSummary,
+    ThreatObligationKind, ThreatView,
 };
 use crate::viability::{direction_bit, scan_cell_null, scan_cell_viability};
 use crate::Bot;
@@ -22,7 +22,7 @@ use gomoku_core::{
 };
 
 #[cfg(test)]
-use crate::tactical::{LocalThreatFact, LocalThreatOrigin};
+use crate::tactical::{local_threat_facts_after_move, LocalThreatFact, LocalThreatOrigin};
 
 // ZobristTable is provided by gomoku-core with a stable shared seed,
 // so hashes are consistent between the search and replay recording.
@@ -1254,173 +1254,6 @@ pub fn pipeline_bench_evaluate_static(
     evaluate_static(board, color, static_eval)
 }
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
-#[cfg_attr(not(test), allow(dead_code))]
-struct TacticalMoveFeatures {
-    is_legal: bool,
-    immediate_win: bool,
-    immediate_block: bool,
-    open_four: bool,
-    closed_four: bool,
-    open_three: bool,
-    broken_three: bool,
-    double_threat: bool,
-}
-
-#[cfg_attr(not(test), allow(dead_code))]
-fn analyze_tactical_move(board: &Board, mv: Move) -> TacticalMoveFeatures {
-    let is_legal = board.is_legal(mv);
-    if !is_legal {
-        return TacticalMoveFeatures::default();
-    }
-
-    let player = board.current_player;
-    let opponent = player.opponent();
-    let immediate_wins_before = board.immediate_winning_moves_for(player).len();
-    let local_threats = local_threat_facts_after_move(board, mv);
-    let mut after = board.clone();
-    after.apply_move(mv).unwrap();
-    let immediate_wins_after = after.immediate_winning_moves_for(player).len();
-
-    TacticalMoveFeatures {
-        is_legal,
-        immediate_win: board.immediate_winning_moves_for(player).contains(&mv),
-        immediate_block: board.immediate_winning_moves_for(opponent).contains(&mv),
-        open_four: local_threats
-            .iter()
-            .any(|fact| fact.kind == LocalThreatKind::OpenFour),
-        closed_four: local_threats
-            .iter()
-            .any(|fact| fact.kind == LocalThreatKind::ClosedFour),
-        open_three: local_threats
-            .iter()
-            .any(|fact| fact.kind == LocalThreatKind::OpenThree),
-        broken_three: local_threats
-            .iter()
-            .any(|fact| fact.kind == LocalThreatKind::BrokenThree),
-        double_threat: immediate_wins_after >= 2 && immediate_wins_after > immediate_wins_before,
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[cfg_attr(not(test), allow(dead_code))]
-enum ForcedLineKind {
-    ImmediateWin,
-    ForcedBlock,
-    UnblockableImmediateLoss,
-    OpponentMultiThreat,
-    Quiet,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(not(test), allow(dead_code))]
-struct ForcedLineState {
-    player: Color,
-    kind: ForcedLineKind,
-    immediate_wins: Vec<Move>,
-    opponent_wins: Vec<Move>,
-    legal_blocks: Vec<Move>,
-}
-
-#[cfg_attr(not(test), allow(dead_code))]
-impl ForcedLineState {
-    fn forced_block(&self) -> Option<Move> {
-        if self.kind == ForcedLineKind::ForcedBlock {
-            self.legal_blocks.first().copied()
-        } else {
-            None
-        }
-    }
-}
-
-#[cfg_attr(not(test), allow(dead_code))]
-fn classify_forced_line_state(board: &Board) -> ForcedLineState {
-    let player = board.current_player;
-    let immediate_wins = board.immediate_winning_moves_for(player);
-    let opponent_wins = board.immediate_winning_moves_for(player.opponent());
-    let legal_blocks = opponent_wins
-        .iter()
-        .copied()
-        .filter(|&mv| board.is_legal(mv))
-        .collect::<Vec<_>>();
-    let kind = if !immediate_wins.is_empty() {
-        ForcedLineKind::ImmediateWin
-    } else {
-        match opponent_wins.len() {
-            0 => ForcedLineKind::Quiet,
-            1 if legal_blocks.len() == 1 => ForcedLineKind::ForcedBlock,
-            1 => ForcedLineKind::UnblockableImmediateLoss,
-            _ => ForcedLineKind::OpponentMultiThreat,
-        }
-    };
-
-    ForcedLineState {
-        player,
-        kind,
-        immediate_wins,
-        opponent_wins,
-        legal_blocks,
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[cfg_attr(not(test), allow(dead_code))]
-enum ThreatAfterMoveKind {
-    Illegal,
-    WinsNow,
-    SingleThreat,
-    MultiThreat,
-    Quiet,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(not(test), allow(dead_code))]
-struct ThreatAfterMoveState {
-    player: Color,
-    kind: ThreatAfterMoveKind,
-    winning_replies: Vec<Move>,
-}
-
-#[cfg_attr(not(test), allow(dead_code))]
-fn classify_threat_after_move(board: &Board, mv: Move) -> ThreatAfterMoveState {
-    let player = board.current_player;
-    if !board.is_legal(mv) {
-        return ThreatAfterMoveState {
-            player,
-            kind: ThreatAfterMoveKind::Illegal,
-            winning_replies: Vec::new(),
-        };
-    }
-
-    let mut after = board.clone();
-    let result = after.apply_move(mv).unwrap();
-    if matches!(result, GameResult::Winner(winner) if winner == player) {
-        return ThreatAfterMoveState {
-            player,
-            kind: ThreatAfterMoveKind::WinsNow,
-            winning_replies: Vec::new(),
-        };
-    }
-
-    let winning_replies = after.immediate_winning_moves_for(player);
-    let kind = match winning_replies.len() {
-        0 => ThreatAfterMoveKind::Quiet,
-        1 => ThreatAfterMoveKind::SingleThreat,
-        _ => ThreatAfterMoveKind::MultiThreat,
-    };
-
-    ThreatAfterMoveState {
-        player,
-        kind,
-        winning_replies,
-    }
-}
-
-#[cfg_attr(not(test), allow(dead_code))]
-fn annotate_tactical_move(board: &Board, mv: Move) -> TacticalMoveAnnotation {
-    SearchThreatPolicy.annotation_for_move(board, mv)
-}
-
 fn tactical_ordering_summary_counted(
     state: &mut SearchState,
     mv: Move,
@@ -1507,12 +1340,6 @@ fn rolling_frontier_tactical_ordering_summary_for_player_timed(
         state.frontier_ordering_summary_memo.insert(key, summary);
     }
     summary
-}
-
-#[cfg_attr(not(test), allow(dead_code))]
-fn in_bounds(board: &Board, row: isize, col: isize) -> bool {
-    let size = board.config.board_size as isize;
-    row >= 0 && row < size && col >= 0 && col < size
 }
 
 // --- Candidate move generation ---
@@ -4442,7 +4269,10 @@ mod tests {
         }
 
         fn expected_moves(&self) -> Vec<Move> {
-            self.expected_moves.iter().map(|notation| mv(notation)).collect()
+            self.expected_moves
+                .iter()
+                .map(|notation| mv(notation))
+                .collect()
         }
     }
 
@@ -4477,6 +4307,169 @@ mod tests {
             description: "Balanced should complete an open four when both sides threaten.",
         },
     ];
+
+    #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+    struct TacticalMoveFeatures {
+        is_legal: bool,
+        immediate_win: bool,
+        immediate_block: bool,
+        open_four: bool,
+        closed_four: bool,
+        open_three: bool,
+        broken_three: bool,
+        double_threat: bool,
+    }
+
+    fn analyze_tactical_move(board: &Board, mv: Move) -> TacticalMoveFeatures {
+        let is_legal = board.is_legal(mv);
+        if !is_legal {
+            return TacticalMoveFeatures::default();
+        }
+
+        let player = board.current_player;
+        let opponent = player.opponent();
+        let immediate_wins_before = board.immediate_winning_moves_for(player).len();
+        let local_threats = local_threat_facts_after_move(board, mv);
+        let mut after = board.clone();
+        after.apply_move(mv).unwrap();
+        let immediate_wins_after = after.immediate_winning_moves_for(player).len();
+
+        TacticalMoveFeatures {
+            is_legal,
+            immediate_win: board.immediate_winning_moves_for(player).contains(&mv),
+            immediate_block: board.immediate_winning_moves_for(opponent).contains(&mv),
+            open_four: local_threats
+                .iter()
+                .any(|fact| fact.kind == LocalThreatKind::OpenFour),
+            closed_four: local_threats
+                .iter()
+                .any(|fact| fact.kind == LocalThreatKind::ClosedFour),
+            open_three: local_threats
+                .iter()
+                .any(|fact| fact.kind == LocalThreatKind::OpenThree),
+            broken_three: local_threats
+                .iter()
+                .any(|fact| fact.kind == LocalThreatKind::BrokenThree),
+            double_threat: immediate_wins_after >= 2
+                && immediate_wins_after > immediate_wins_before,
+        }
+    }
+
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    enum ForcedLineKind {
+        ImmediateWin,
+        ForcedBlock,
+        UnblockableImmediateLoss,
+        OpponentMultiThreat,
+        Quiet,
+    }
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    struct ForcedLineState {
+        player: Color,
+        kind: ForcedLineKind,
+        immediate_wins: Vec<Move>,
+        opponent_wins: Vec<Move>,
+        legal_blocks: Vec<Move>,
+    }
+
+    impl ForcedLineState {
+        fn forced_block(&self) -> Option<Move> {
+            if self.kind == ForcedLineKind::ForcedBlock {
+                self.legal_blocks.first().copied()
+            } else {
+                None
+            }
+        }
+    }
+
+    fn classify_forced_line_state(board: &Board) -> ForcedLineState {
+        let player = board.current_player;
+        let immediate_wins = board.immediate_winning_moves_for(player);
+        let opponent_wins = board.immediate_winning_moves_for(player.opponent());
+        let legal_blocks = opponent_wins
+            .iter()
+            .copied()
+            .filter(|&mv| board.is_legal(mv))
+            .collect::<Vec<_>>();
+        let kind = if !immediate_wins.is_empty() {
+            ForcedLineKind::ImmediateWin
+        } else {
+            match opponent_wins.len() {
+                0 => ForcedLineKind::Quiet,
+                1 if legal_blocks.len() == 1 => ForcedLineKind::ForcedBlock,
+                1 => ForcedLineKind::UnblockableImmediateLoss,
+                _ => ForcedLineKind::OpponentMultiThreat,
+            }
+        };
+
+        ForcedLineState {
+            player,
+            kind,
+            immediate_wins,
+            opponent_wins,
+            legal_blocks,
+        }
+    }
+
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    enum ThreatAfterMoveKind {
+        Illegal,
+        WinsNow,
+        SingleThreat,
+        MultiThreat,
+        Quiet,
+    }
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    struct ThreatAfterMoveState {
+        player: Color,
+        kind: ThreatAfterMoveKind,
+        winning_replies: Vec<Move>,
+    }
+
+    fn classify_threat_after_move(board: &Board, mv: Move) -> ThreatAfterMoveState {
+        let player = board.current_player;
+        if !board.is_legal(mv) {
+            return ThreatAfterMoveState {
+                player,
+                kind: ThreatAfterMoveKind::Illegal,
+                winning_replies: Vec::new(),
+            };
+        }
+
+        let mut after = board.clone();
+        let result = after.apply_move(mv).unwrap();
+        if matches!(result, GameResult::Winner(winner) if winner == player) {
+            return ThreatAfterMoveState {
+                player,
+                kind: ThreatAfterMoveKind::WinsNow,
+                winning_replies: Vec::new(),
+            };
+        }
+
+        let winning_replies = after.immediate_winning_moves_for(player);
+        let kind = match winning_replies.len() {
+            0 => ThreatAfterMoveKind::Quiet,
+            1 => ThreatAfterMoveKind::SingleThreat,
+            _ => ThreatAfterMoveKind::MultiThreat,
+        };
+
+        ThreatAfterMoveState {
+            player,
+            kind,
+            winning_replies,
+        }
+    }
+
+    fn annotate_tactical_move(board: &Board, mv: Move) -> TacticalMoveAnnotation {
+        SearchThreatPolicy.annotation_for_move(board, mv)
+    }
+
+    fn in_bounds(board: &Board, row: isize, col: isize) -> bool {
+        let size = board.config.board_size as isize;
+        row >= 0 && row < size && col >= 0 && col < size
+    }
 
     #[test]
     fn optimized_eval_matches_reference_on_benchmark_scenarios() {
