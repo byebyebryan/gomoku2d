@@ -69,6 +69,8 @@ Current defaults:
 
 Detailed references:
 
+- [`Bot Lab Code Overview`](../docs/reference/lab/code_overview.md): crate
+  map, API boundaries, and common change paths.
 - [`Search Bot`](../docs/reference/lab/search_bot.md): config axes, current
   specs, rolling frontier, tactical ordering, and retired suffixes.
 - [`Corridor Search`](../docs/reference/lab/corridor_search.md): setup
