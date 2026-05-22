@@ -40,6 +40,7 @@ describe("bot config", () => {
       corridorProof: null,
       depth: 1,
       kind: "search",
+      maxTtEntries: 500_000,
       patternEval: false,
     });
     expect(resolveBotConfig({ mode: "preset", preset: "hard", version: 1 })).toMatchObject({
@@ -51,6 +52,7 @@ describe("bot config", () => {
       },
       depth: 7,
       kind: "search",
+      maxTtEntries: 500_000,
       patternEval: true,
     });
   });
