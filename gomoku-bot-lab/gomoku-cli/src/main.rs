@@ -7,15 +7,15 @@ use gomoku_core::{Board, Color, GameResult, Move, Replay, RuleConfig, Variant};
 #[derive(Parser, Debug)]
 #[command(name = "gomoku-cli", about = "Run a Gomoku match between bots")]
 struct Args {
-    /// Bot for Black: "random", search lab aliases, or "baseline-N"
-    #[arg(long, default_value = "baseline")]
+    /// Bot for Black: "random", "search-dN", lab specs, or legacy "baseline" aliases
+    #[arg(long, default_value = "search-d3")]
     black: String,
 
-    /// Bot for White: "random", search lab aliases, or "baseline-N"
+    /// Bot for White: "random", "search-dN", lab specs, or legacy "baseline" aliases
     #[arg(long, default_value = "random")]
     white: String,
 
-    /// Fixed search depth (used when bot is "baseline" and no time budget is set)
+    /// Fixed search depth for the legacy plain "baseline" spec
     #[arg(long, default_value_t = 5)]
     depth: i32,
 
@@ -44,7 +44,10 @@ fn make_bot(name: &str, depth: i32, time_ms: Option<u64>) -> Box<dyn Bot> {
         return Box::new(SearchBot::with_config(config));
     }
 
-    eprintln!("Unknown bot '{}'. Using random.", name);
+    eprintln!(
+        "Unknown bot '{}'. Use random, search-dN, lab specs, or legacy baseline aliases. Using random.",
+        name
+    );
     Box::new(RandomBot::new())
 }
 

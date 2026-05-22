@@ -93,7 +93,7 @@ The lab tools primarily use explicit search specs over these fields:
 | Spec | Max depth | Candidate source | Safety gate | Intent |
 |---|---:|---|---|---|
 | `search-d1` | 1 | `near_all_r2` | `current_obligation` | easy/beginner lane |
-| `search-d3` | 3 | `near_all_r2` | `current_obligation` | current default baseline |
+| `search-d3` | 3 | `near_all_r2` | `current_obligation` | current default search spec |
 | `search-d5` | 5 | `near_all_r2` | `current_obligation` | uncapped depth reference |
 | `search-d5+tactical-cap-8` | 5 | `near_all_r2` | `current_obligation` | efficient hard-side candidate |
 | `search-d7+tactical-cap-8` | 7 | `near_all_r2` | `current_obligation` | stronger but slower hard-side candidate |

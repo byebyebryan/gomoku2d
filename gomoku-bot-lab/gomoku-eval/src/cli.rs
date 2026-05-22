@@ -155,7 +155,7 @@ enum Commands {
         #[command(flatten)]
         options: EvalOptions,
 
-        #[arg(long, default_value = "baseline")]
+        #[arg(long, default_value = "search-d3")]
         bot_a: String,
 
         #[arg(long, default_value = "random")]
@@ -172,7 +172,7 @@ enum Commands {
         #[command(flatten)]
         options: EvalOptions,
 
-        #[arg(long, default_value = "baseline")]
+        #[arg(long, default_value = "search-d3")]
         bot: String,
 
         #[arg(long, default_value_t = 10)]
@@ -639,7 +639,7 @@ fn make_bot_factory(
     }
 
     Err(format!(
-        "Unknown bot type: '{spec}'. Use random, baseline-N, search-dN, or search-dN+suffixes."
+        "Unknown bot type: '{spec}'. Use random, search-dN, search-dN+suffixes, or legacy baseline aliases."
     ))
 }
 
