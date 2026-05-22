@@ -99,6 +99,15 @@ describe("SettingsRoute", () => {
     expect(screen.queryByRole("group", { name: /renju normal bot/i })).not.toBeInTheDocument();
   });
 
+  it("keeps compact header actions accessible", () => {
+    mockSettingsMedia({ compact: true, touch: true });
+    renderSettingsRoute();
+
+    expect(screen.getByRole("link", { name: "Back to Game" })).toHaveAttribute("href", "/match/local");
+    expect(screen.getByRole("link", { name: "Profile" })).toHaveAttribute("href", "/profile");
+    expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/");
+  });
+
   it("shows touch control on compact touch screens", () => {
     mockCompactTouchDevice(true);
     renderSettingsRoute();

@@ -4,7 +4,6 @@ import { useStore } from "zustand";
 import { createStore } from "zustand/vanilla";
 
 import { Board } from "../components/Board/Board";
-import { cloudAuthStore } from "../cloud/auth_store";
 import {
   DEFAULT_BOT_CONFIG,
   botConfigSummary,
@@ -189,14 +188,6 @@ export function LocalMatchRoute() {
   }, []);
 
   useEffect(() => {
-    cloudAuthStore.getState().start();
-
-    return () => {
-      cloudAuthStore.getState().stop();
-    };
-  }, []);
-
-  useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
       return undefined;
     }
@@ -292,16 +283,6 @@ export function LocalMatchRoute() {
             <Icon className="uiIconDesktop" name="plus" />
             <span className="uiActionLabel">New Game</span>
           </button>
-          {state.status !== "playing" && latestReplayId ? (
-            <Link
-              aria-label="Replay"
-              className="uiAction uiActionSecondary"
-              to={`/replay/${latestReplayId}`}
-            >
-              <Icon className="uiIconDesktop" name="replay" />
-              <span className="uiActionLabel">Replay</span>
-            </Link>
-          ) : null}
           <Link aria-label="Profile" className="uiAction uiActionSecondary" to="/profile">
             <Icon className="uiIconDesktop" name="profile" />
             <span className="uiActionLabel">Profile</span>
@@ -463,6 +444,16 @@ export function LocalMatchRoute() {
                 >
                   <span className="uiActionLabel">Place</span>
                 </button>
+              ) : null}
+              {state.status !== "playing" && latestReplayId ? (
+                <Link
+                  aria-label="Replay"
+                  className="uiAction uiActionSecondary"
+                  to={`/replay/${latestReplayId}`}
+                >
+                  <Icon className="uiIconDesktop" name="replay" />
+                  <span className="uiActionLabel">Replay</span>
+                </Link>
               ) : null}
               <button
                 aria-label="Undo"

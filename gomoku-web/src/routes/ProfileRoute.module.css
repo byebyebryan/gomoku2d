@@ -742,11 +742,6 @@
     border: 0;
   }
 
-  .historyField::before,
-  .historyPlayed::before {
-    content: none;
-  }
-
   .historyPlayed {
     display: flex;
     align-items: baseline;

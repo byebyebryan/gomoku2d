@@ -83,7 +83,7 @@ jobs:
 
       - name: Typecheck
         working-directory: gomoku-web
-        run: npx tsc --noEmit
+        run: npm run typecheck
 
       - name: Vitest
         working-directory: gomoku-web

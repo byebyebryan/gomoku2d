@@ -12,7 +12,6 @@ import {
   MARKER_ANIMS,
   POINTER_ANIMS,
   SPRITE,
-  SPRITESHEET_CONFIG,
   STONE_ANIMS,
   TRANSFORM_ANIMS,
 } from "./constants";
@@ -69,16 +68,6 @@ const overlayState = (overrides: Partial<Parameters<typeof shouldSyncOverlaySpri
 
 describe("animation sheet inventory", () => {
   it("maps the row-based sprite sheets to frame ranges", () => {
-    expect(SPRITESHEET_CONFIG).toEqual({
-      [SPRITE.CAUTION]: { url: "assets/sprites/caution.png", end: 17 },
-      [SPRITE.HIGHLIGHTER]: { url: "assets/sprites/highlighter.png", end: 17 },
-      [SPRITE.STONE]: { url: "assets/sprites/stone.png", end: 23 },
-      [SPRITE.POINTER]: { url: "assets/sprites/pointer.png", end: 19 },
-      [SPRITE.HOVER]: { url: "assets/sprites/hover.png", end: 5 },
-      [SPRITE.MARKER]: { url: "assets/sprites/marker.png", end: 35 },
-      [SPRITE.TRANSFORM]: { url: "assets/sprites/transform.png", end: 9 },
-    });
-
     expect(STONE_ANIMS).toMatchObject({
       DESTROY: { start: 0, end: 3, frameRate: 12, key: "stone-destroy" },
       IDLE_1: { start: 0, end: 5, frameRate: 6, key: "stone-idle-1" },

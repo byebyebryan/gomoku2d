@@ -173,15 +173,15 @@ export function SettingsRoute() {
           <h1 className={styles.title}>Settings</h1>
         </div>
         <div className={styles.headerActions}>
-          <Link className="uiAction uiActionPrimary" to="/match/local">
+          <Link aria-label="Back to Game" className="uiAction uiActionPrimary" to="/match/local">
             <Icon className="uiIconDesktop" name="play" />
             <span className="uiActionLabel">Back to Game</span>
           </Link>
-          <Link className="uiAction uiActionSecondary" to="/profile">
+          <Link aria-label="Profile" className="uiAction uiActionSecondary" to="/profile">
             <Icon className="uiIconDesktop" name="profile" />
             <span className="uiActionLabel">Profile</span>
           </Link>
-          <Link className="uiAction uiActionNeutral" to="/">
+          <Link aria-label="Home" className="uiAction uiActionNeutral" to="/">
             <Icon className="uiIconDesktop" name="home" />
             <span className="uiActionLabel">Home</span>
           </Link>

@@ -2,10 +2,6 @@ import { WasmBoard, WasmBot, WasmReplayAnalyzer } from "gomoku-wasm";
 
 import type { BotMove, BotSpec, GameVariant } from "./bot_protocol";
 
-export async function initWasm(): Promise<void> {
-  // WASM auto-initializes via ES module import with wasm-pack bundler target
-}
-
 export type WasmGameResult = "black" | "draw" | "ongoing" | "white";
 
 export interface WasmApplyMoveResult {
@@ -49,10 +45,6 @@ export function wasmBoardFromFenWithVariant(fen: string, variant: GameVariant): 
 
 export function applyWasmMove(board: WasmBoard, row: number, col: number): WasmApplyMoveResult {
   return parseBridgeJson<WasmApplyMoveResult>(board.applyMove(row, col), "apply move result");
-}
-
-export function readWasmLegalMoves(board: WasmBoard): WasmMove[] {
-  return parseBridgeJson<WasmMove[]>(board.legalMoves(), "legal moves");
 }
 
 export function readWasmThreatSnapshot(board: WasmBoard): WasmThreatSnapshot {

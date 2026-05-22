@@ -3,6 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 import { Board } from "../components/Board/Board";
+import type { CloudAuthUser } from "../cloud/auth_store";
+import { cloudAuthStore } from "../cloud/auth_store";
+import { cloudHistoryStore } from "../cloud/cloud_history_store";
+import { emptyCloudMatchHistory, type CloudProfile } from "../cloud/cloud_profile";
+import { cloudProfileStore } from "../cloud/cloud_profile_store";
 import { createLocalSavedMatch } from "../match/saved_match";
 import type { LocalProfileSavedMatch } from "../profile/local_profile_store";
 import { emptyLocalMatchHistory, localProfileStore } from "../profile/local_profile_store";
@@ -54,7 +59,18 @@ vi.mock("../replay/local_replay_core", () => ({
 }));
 
 const mockedBoard = vi.mocked(Board);
+const initialCloudAuthState = cloudAuthStore.getState();
+const initialCloudHistoryState = cloudHistoryStore.getState();
+const initialCloudProfileState = cloudProfileStore.getState();
 const initialLocalProfileState = localProfileStore.getState();
+
+const cloudUser: CloudAuthUser = {
+  avatarUrl: null,
+  displayName: "Bryan",
+  email: "bryan@example.com",
+  providerIds: ["google.com"],
+  uid: "uid-1",
+};
 
 const localProfile = {
   avatarUrl: null,
@@ -63,6 +79,26 @@ const localProfile = {
   id: "local-1",
   kind: "local" as const,
   updatedAt: "2026-05-15T00:00:00.000Z",
+  username: null,
+};
+
+const cloudProfile: CloudProfile = {
+  auth: {
+    providers: [
+      {
+        avatarUrl: null,
+        displayName: "Bryan",
+        provider: "google.com",
+      },
+    ],
+  },
+  createdAt: null,
+  displayName: "Bryan",
+  matchHistory: emptyCloudMatchHistory(),
+  resetAt: null,
+  settings: createDefaultProfileSettings(),
+  uid: "uid-1",
+  updatedAt: null,
   username: null,
 };
 
@@ -110,6 +146,9 @@ function latestBoardProps() {
 describe("ReplayRoute analysis overlays", () => {
   afterEach(() => {
     cleanup();
+    cloudAuthStore.setState(initialCloudAuthState, true);
+    cloudHistoryStore.setState(initialCloudHistoryState, true);
+    cloudProfileStore.setState(initialCloudProfileState, true);
     localProfileStore.setState(initialLocalProfileState, true);
     mockedBoard.mockClear();
     runnerMock.callbacks = null;
@@ -120,6 +159,9 @@ describe("ReplayRoute analysis overlays", () => {
   });
 
   beforeEach(() => {
+    cloudAuthStore.setState(initialCloudAuthState, true);
+    cloudHistoryStore.setState(initialCloudHistoryState, true);
+    cloudProfileStore.setState(initialCloudProfileState, true);
     localProfileStore.setState({
       matchHistory: {
         ...emptyLocalMatchHistory(),
@@ -128,6 +170,43 @@ describe("ReplayRoute analysis overlays", () => {
       profile: localProfile,
       settings: createDefaultProfileSettings(),
     });
+  });
+
+  it("waits for signed-in cloud history before declaring direct-entry replays unavailable", () => {
+    cloudAuthStore.setState({
+      errorMessage: null,
+      isConfigured: true,
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+      start: vi.fn(),
+      status: "signed_in",
+      stop: vi.fn(),
+      user: cloudUser,
+    });
+    cloudProfileStore.setState({
+      deleteForUser: vi.fn(),
+      errorMessage: null,
+      loadForUser: vi.fn(),
+      profile: cloudProfile,
+      reset: vi.fn(),
+      resetForUser: vi.fn(),
+      status: "ready",
+    });
+    cloudHistoryStore.setState({
+      errorMessage: null,
+      loadForUser: vi.fn(),
+      loadFromProfile: vi.fn(),
+      loadStatus: "loading",
+      syncMatchForUser: vi.fn(),
+      syncPendingForUser: vi.fn(),
+      syncStatus: "idle",
+      users: {},
+    });
+
+    renderReplayRoute("cloud-match");
+
+    expect(screen.getByRole("heading", { name: "Loading replay" })).toBeInTheDocument();
+    expect(screen.getByText("Checking saved match history.")).toBeInTheDocument();
   });
 
   it("starts replay analysis one frame at a time and previews the next actual move", () => {

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { seedLocalSavedMatch } from "./helpers/local_history";
+import { seedLocalSavedMatch } from "./helpers/local_history.js";
 
 function moveCount(value: string | null): number {
   const match = value?.match(/\d+/);

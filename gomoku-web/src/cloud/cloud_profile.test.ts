@@ -9,6 +9,7 @@ import {
   CLOUD_SUMMARY_MATCHES_LIMIT,
   cloudProfileFromDocument,
   cloudProfileSyncDue,
+  cloudProfileSyncWaitMs,
   emptyCloudArchivedMatchStats,
   emptyCloudMatchHistory,
   existingCloudProfileLoadUpdate,
@@ -386,7 +387,9 @@ describe("cloud profile writes", () => {
     };
 
     expect(cloudProfileSyncDue(profile, Date.parse("2026-04-28T08:04:59.999Z"))).toBe(false);
+    expect(cloudProfileSyncWaitMs(profile, Date.parse("2026-04-28T08:04:59.999Z"))).toBe(1);
     expect(cloudProfileSyncDue(profile, Date.parse("2026-04-28T08:05:00.000Z"))).toBe(true);
+    expect(cloudProfileSyncWaitMs(profile, Date.parse("2026-04-28T08:05:00.000Z"))).toBe(0);
   });
 
   it("merges local matches into a capped cloud replay tier", () => {

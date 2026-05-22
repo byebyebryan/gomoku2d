@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { seedLocalSavedMatch } from "./helpers/local_history";
+import { seedLocalSavedMatch } from "./helpers/local_history.js";
 
 test("guest profile persists locally and renders saved local matches", async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 900 });

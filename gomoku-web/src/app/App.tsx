@@ -1,6 +1,7 @@
 import { Suspense, lazy } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 
+import { CloudSessionController } from "../cloud/CloudSessionController";
 import { HomeRoute } from "../routes/HomeRoute";
 
 import styles from "./App.module.css";
@@ -21,6 +22,7 @@ const SettingsRoute = lazy(async () => ({
 export function App() {
   return (
     <div className={styles.app}>
+      <CloudSessionController />
       <Routes>
         <Route path="/" element={<HomeRoute />} />
         <Route

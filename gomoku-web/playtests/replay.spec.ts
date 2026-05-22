@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { seedLocalSavedMatch } from "./helpers/local_history";
+import { seedLocalSavedMatch } from "./helpers/local_history.js";
 
 async function openFinishedReplay(page: Page) {
   await page.goto("/profile");

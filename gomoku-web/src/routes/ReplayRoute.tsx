@@ -72,38 +72,34 @@ export function ReplayRoute() {
     localProfileStore.getState().ensureLocalProfile();
   }, []);
 
-  useEffect(() => {
-    cloudAuthStore.getState().start();
-
-    return () => {
-      cloudAuthStore.getState().stop();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (cloudAuth.status === "signed_in" && cloudAuth.user) {
-      void cloudProfileStore.getState().loadForUser(cloudAuth.user, localProfileStore.getState().settings);
-    } else {
-      cloudProfileStore.getState().reset();
-    }
-  }, [cloudAuth.status, cloudAuth.user]);
-
-  useEffect(() => {
-    if (cloudAuth.status === "signed_in" && cloudAuth.user && cloudProfile.status === "ready") {
-      void cloudHistoryStore.getState().loadForUser(cloudAuth.user, cloudProfile.profile?.resetAt ?? null);
-    }
-  }, [cloudAuth.status, cloudAuth.user, cloudProfile.profile?.resetAt, cloudProfile.status]);
-
   const cloudCache =
     cloudAuth.status === "signed_in" && cloudAuth.user
       ? cloudHistory.users[cloudAuth.user.uid]?.cachedMatches ?? []
       : [];
+  const cloudUserCache =
+    cloudAuth.status === "signed_in" && cloudAuth.user
+      ? cloudHistory.users[cloudAuth.user.uid]
+      : null;
   const history = resolveActiveHistory({
     cloudHistory: cloudCache,
     historyResetAt: cloudAuth.status === "signed_in" ? cloudProfile.profile?.resetAt : null,
     localHistory,
   });
   const match = history.find((entry) => entry.id === matchId) ?? null;
+  const replayMayStillLoad = !match && (
+    (cloudAuth.isConfigured && cloudAuth.status === "loading")
+    || (
+      cloudAuth.status === "signed_in"
+      && (
+        cloudProfile.status === "loading"
+        || (
+          cloudProfile.status === "ready"
+          && !cloudUserCache?.loadedAt
+          && cloudHistory.loadStatus !== "error"
+        )
+      )
+    )
+  );
   const localDisplayName = localProfile?.displayName ?? cloudAuth.user?.displayName ?? "Guest";
   const replayFloor = match ? replayUndoFloor(match) : 0;
 
@@ -231,6 +227,17 @@ export function ReplayRoute() {
       cancelled = true;
     };
   }, [match, moveIndex]);
+
+  if (!match && replayMayStillLoad) {
+    return (
+      <main className={styles.page}>
+        <section className={`${styles.notFound} uiPanel`}>
+          <h1 className={styles.title}>Loading replay</h1>
+          <p className={styles.notFoundText}>Checking saved match history.</p>
+        </section>
+      </main>
+    );
+  }
 
   if (!match) {
     return (
