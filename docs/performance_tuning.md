@@ -937,11 +937,11 @@ bot/eval code that produced the match data.
 
 From code inspection before the first benchmark pass:
 
-1. `gomoku-bot/src/search.rs:evaluate()`
+1. `gomoku-bot/src/search/mod.rs:evaluate()`
    - full-board scan at every leaf
    - likely the biggest long-term search cost
 
-2. `gomoku-bot/src/search.rs:candidate_moves()`
+2. `gomoku-bot/src/search/mod.rs:candidate_moves()`
    - rescans the full board at each node
 
 3. Root safety gate

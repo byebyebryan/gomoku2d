@@ -77,8 +77,6 @@ fn compact_searchbot_feature_label(feature: &str) -> String {
         "rolling-frontier-shadow" => "RollingShadow".to_string(),
         "tactical-full" => "TFull".to_string(),
         "no-safety" => "NoSafety".to_string(),
-        "opponent-reply-search-probe" => "SearchProbe".to_string(),
-        "opponent-reply-local-threat-probe" => "LocalThreat".to_string(),
         _ => feature.to_string(),
     }
 }

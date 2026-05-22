@@ -1,6 +1,6 @@
 # Bot: SearchBot
 
-- **File:** `gomoku-bot-lab/gomoku-bot/src/search.rs`
+- **File:** `gomoku-bot-lab/gomoku-bot/src/search/mod.rs`
 - **Legacy name string:** `"baseline"`
 - **Purpose:** Configurable alpha-beta search bot and the reference search
   implementation everything else gets compared against.
