@@ -428,7 +428,8 @@ mod tests {
             "win",
             2,
         )]);
-        let published = PublishedTournamentReport::from_tournament_report(&report);
+        let mut published = PublishedTournamentReport::from_tournament_report(&report);
+        published.matches[0].move_cells.clear();
 
         let err = ReportReplaySource::from_published_tournament_report(&published)
             .expect_err("compact published reports should not silently analyze empty games");

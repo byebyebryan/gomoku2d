@@ -652,14 +652,14 @@ the lab/report shell and `gomoku-wasm` as the browser bridge:
   constructs the analyzer.
 
 The curated public report lives under `gomoku-bot-lab/analysis-reports/` and is
-published as `/analysis-report/`. It should be generated from the full/debug
-tournament report used to produce the compact bot report, because the published
-bot report intentionally omits replay cells. The curated sample explains the
-in-game Easy/Normal/Hard preset triangle rather than an arbitrary debug matchup.
+published as `/analysis-report/`. It can be generated from the compact published
+bot report because that artifact keeps match move cells while dropping debug
+telemetry. The curated sample explains the in-game Easy/Normal/Hard preset
+triangle rather than an arbitrary debug matchup.
 
 The current analyzer checkpoint:
 
-- reads replay cells from the full tournament report under `outputs/`,
+- reads replay cells from `reports/report.json`,
 - publishes compact analysis JSON with `selector = "Preset triangle"`,
 - uses `reply_policy = corridor_replies`,
 - uses corridor proof depth `4`,
@@ -686,7 +686,7 @@ Use a small report-sampled run while tuning analyzer output:
 
 ```bash
 cargo run --release -p gomoku-eval -- analyze-report-replays \
-  --report outputs/full-tournament-report.json \
+  --report reports/report.json \
   --sample-size 8 \
   --report-json outputs/analysis/top2_smoke.json \
   --max-depth 4 \
@@ -698,7 +698,7 @@ for review:
 
 ```bash
 cargo run --release -p gomoku-eval -- analyze-report-replays \
-  --report outputs/full-tournament-report.json \
+  --report reports/report.json \
   --selector preset-triangle \
   --published-report-json analysis-reports/report.json \
   --max-depth 4 \

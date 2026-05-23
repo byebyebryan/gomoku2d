@@ -560,7 +560,6 @@ impl PublishedTournamentReport {
         next.schema_version = PUBLISHED_TOURNAMENT_REPORT_SCHEMA_VERSION;
         for match_report in &mut next.matches {
             match_report.opening = None;
-            match_report.move_cells.clear();
         }
         next
     }
@@ -639,7 +638,7 @@ impl PublishedMatchReport {
             winner: report_match.winner.clone(),
             end_reason: report_match.end_reason.clone(),
             opening: None,
-            move_cells: Vec::new(),
+            move_cells: report_match.move_cells.clone(),
             move_count: report_match.move_count,
         }
     }
@@ -6133,7 +6132,7 @@ mod tests {
     }
 
     #[test]
-    fn published_report_drops_replay_cells_and_debug_metrics() {
+    fn published_report_keeps_replay_cells_and_drops_debug_metrics() {
         let report = sample_report();
         let published = PublishedTournamentReport::from_tournament_report(&report);
         let json = published
@@ -6145,8 +6144,11 @@ mod tests {
             PUBLISHED_TOURNAMENT_REPORT_SCHEMA_VERSION
         );
         assert_eq!(published.report_kind, "published_tournament");
-        assert!(published.matches[0].move_cells.is_empty());
-        assert!(!json.contains("move_cells"));
+        assert_eq!(
+            published.matches[0].move_cells,
+            report.matches[0].move_cells
+        );
+        assert!(json.contains("move_cells"));
         assert!(!json.contains("black_stats"));
         assert!(!json.contains("white_stats"));
         assert!(!json.contains("duration_ms"));

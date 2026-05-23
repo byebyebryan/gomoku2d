@@ -90,6 +90,7 @@ export interface PublishedMatchReport {
   result: string;
   winner?: string | null;
   end_reason: string;
+  move_cells: number[];
   move_count: number;
 }
 
