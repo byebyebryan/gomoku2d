@@ -527,6 +527,7 @@
   grid-column: 1 / -1;
   align-items: start;
   background: var(--bg);
+  overflow-x: auto;
 }
 
 .boardPanel b,
@@ -534,8 +535,17 @@
   color: var(--text);
 }
 
+.boardCaption {
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: var(--type-meta);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
 .proofBoard {
-  --proof-cell-size: 20px;
+  --proof-cell-size: 24px;
+  --proof-label-size: 18px;
   position: relative;
   display: grid;
   gap: 0;
@@ -555,15 +565,32 @@
   content: "";
   position: absolute;
   z-index: 0;
-  left: calc(var(--proof-cell-size) / 2);
-  top: calc(var(--proof-cell-size) / 2);
+  left: calc(var(--proof-label-size) + var(--proof-cell-size) / 2);
+  top: calc(var(--proof-label-size) + var(--proof-cell-size) / 2);
   width: var(--proof-grid-span);
   height: var(--proof-grid-span);
   background-image:
-    linear-gradient(rgb(66 43 20 / 48%) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(66 43 20 / 48%) 1px, transparent 1px);
+    linear-gradient(rgb(0 0 0 / 72%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(0 0 0 / 72%) 1px, transparent 1px);
   background-size: var(--proof-cell-size) var(--proof-cell-size);
   pointer-events: none;
+}
+
+.proofCoordinate {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  color: rgb(0 0 0 / 82%);
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  user-select: none;
+}
+
+.proofCorner {
+  color: transparent;
 }
 
 .proofCell {
@@ -577,46 +604,33 @@
 
 .proofStone {
   position: absolute;
-  top: 2px;
-  right: 3px;
-  bottom: 4px;
-  left: 3px;
+  inset: 2px;
   z-index: 1;
+  display: grid;
+  place-items: center;
   border-radius: 999px;
-  box-shadow: 0 1px 1px rgb(0 0 0 / 50%);
+  box-shadow: 0 1px 1px rgb(0 0 0 / 28%);
+  font-family: var(--font-display);
+  font-size: 0.86rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  letter-spacing: -0.08em;
+  line-height: 1;
   transform: translateY(-1px);
 }
 
 .proofStoneBlack {
-  border: 1px solid #030405;
-  background: radial-gradient(circle at 35% 30%, #4d4f55 0%, #15171b 58%, #050608 100%);
+  border: 1px solid #000;
+  background: #000;
+  color: #fff7e6;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 90%);
 }
 
 .proofStoneWhite {
   border: 1px solid #8f8068;
   background: radial-gradient(circle at 35% 30%, #fff7e6 0%, #e4d7b8 62%, #9d8f75 100%);
-}
-
-.proofActualStone {
-  position: absolute;
-  top: 2px;
-  right: 3px;
-  bottom: 4px;
-  left: 3px;
-  z-index: 2;
-  border-radius: 999px;
-  background: transparent;
-  box-shadow: 0 1px 1px rgb(0 0 0 / 24%);
-  transform: translateY(-1px);
-}
-
-.proofActualStoneBlack {
-  border: 2px solid #07090c;
-}
-
-.proofActualStoneWhite {
-  border: 2px solid #f6eed8;
-  box-shadow: 0 1px 1px rgb(0 0 0 / 24%), 0 0 0 1px #8f8068;
+  color: #07090c;
+  text-shadow: 0 1px 1px rgb(255 255 255 / 60%);
 }
 
 .termList,

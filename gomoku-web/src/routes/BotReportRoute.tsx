@@ -481,6 +481,7 @@ function MatchDetails({
         <div className={styles.matchGrid}>
           {match.move_cells.length > 0 ? (
             <div className={styles.boardPanel}>
+              <span className={styles.boardCaption}>Game #{match.match_index}</span>
               <FinishedBoard moveCells={match.move_cells} boardSize={report.board_size} />
             </div>
           ) : (
@@ -492,6 +493,9 @@ function MatchDetails({
   );
 }
 
+const FINISHED_BOARD_CELL_SIZE = 24;
+const FINISHED_BOARD_LABEL_SIZE = 18;
+
 function FinishedBoard({
   moveCells,
   boardSize,
@@ -499,42 +503,67 @@ function FinishedBoard({
   moveCells: number[];
   boardSize: number;
 }) {
-  const stones = new Map<number, "black" | "white">();
+  const stones = new Map<number, { stone: "black" | "white"; sequence: number }>();
   moveCells.forEach((cell, index) => {
-    stones.set(cell, index % 2 === 0 ? "black" : "white");
+    stones.set(cell, {
+      stone: index % 2 === 0 ? "black" : "white",
+      sequence: index + 1,
+    });
   });
-  const lastCell = moveCells.length > 0 ? moveCells[moveCells.length - 1] : undefined;
-  const gridSpan = Math.max(0, boardSize - 1) * 20 + 1;
+  const gridSpan = Math.max(0, boardSize - 1) * FINISHED_BOARD_CELL_SIZE + 1;
+  const columnLabels = Array.from({ length: boardSize }, (_, col) =>
+    String.fromCharCode("A".charCodeAt(0) + col),
+  );
   const style = {
+    "--proof-cell-size": `${FINISHED_BOARD_CELL_SIZE}px`,
+    "--proof-label-size": `${FINISHED_BOARD_LABEL_SIZE}px`,
     "--proof-grid-span": `${gridSpan}px`,
-    gridTemplateColumns: `repeat(${boardSize}, var(--proof-cell-size))`,
-    gridTemplateRows: `repeat(${boardSize}, var(--proof-cell-size))`,
+    gridTemplateColumns: `var(--proof-label-size) repeat(${boardSize}, var(--proof-cell-size)) var(--proof-label-size)`,
+    gridTemplateRows: `var(--proof-label-size) repeat(${boardSize}, var(--proof-cell-size)) var(--proof-label-size)`,
   } as CSSProperties;
 
   return (
     <div className={styles.proofBoard} style={style}>
-      {Array.from({ length: boardSize * boardSize }, (_, cell) => {
-        const stone = stones.get(cell);
-        const isLast = cell === lastCell;
-        return (
-          <div className={styles.proofCell} key={cell} data-move={cellNotation(cell, boardSize)}>
-            {stone ? (
-              <span
-                className={`${styles.proofStone} ${
-                  stone === "black" ? styles.proofStoneBlack : styles.proofStoneWhite
-                }`}
-              />
-            ) : null}
-            {stone && isLast ? (
-              <span
-                className={`${styles.proofActualStone} ${
-                  stone === "black" ? styles.proofActualStoneBlack : styles.proofActualStoneWhite
-                }`}
-              />
-            ) : null}
-          </div>
-        );
-      })}
+      <div className={`${styles.proofCoordinate} ${styles.proofCorner}`} aria-hidden="true" />
+      {columnLabels.map((label) => (
+        <div className={styles.proofCoordinate} key={`col-${label}`}>
+          {label}
+        </div>
+      ))}
+      <div className={`${styles.proofCoordinate} ${styles.proofCorner}`} aria-hidden="true" />
+      {Array.from({ length: boardSize }, (_, row) => (
+        <Fragment key={`row-${row}`}>
+          <div className={styles.proofCoordinate}>{row + 1}</div>
+          {Array.from({ length: boardSize }, (_, col) => {
+            const cell = row * boardSize + col;
+            const marker = stones.get(cell);
+            return (
+              <div className={styles.proofCell} key={cell} data-move={cellNotation(cell, boardSize)}>
+                {marker ? (
+                  <span
+                    className={`${styles.proofStone} ${
+                      marker.stone === "black" ? styles.proofStoneBlack : styles.proofStoneWhite
+                    }`}
+                    aria-label={`${marker.stone} move ${marker.sequence} at ${cellNotation(cell, boardSize)}`}
+                  >
+                    {marker.sequence}
+                  </span>
+                ) : null}
+              </div>
+            );
+          })}
+          <div className={`${styles.proofCoordinate} ${styles.proofCorner}`} aria-hidden="true" />
+        </Fragment>
+      ))}
+      <div className={`${styles.proofCoordinate} ${styles.proofCorner}`} aria-hidden="true" />
+      {Array.from({ length: boardSize }, (_, col) => (
+        <div
+          className={`${styles.proofCoordinate} ${styles.proofCorner}`}
+          key={`bottom-${col}`}
+          aria-hidden="true"
+        />
+      ))}
+      <div className={`${styles.proofCoordinate} ${styles.proofCorner}`} aria-hidden="true" />
     </div>
   );
 }
