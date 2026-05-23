@@ -12,6 +12,53 @@ their own section.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-05-22
+
+**Theme: reconcile the `0.4` lab work into a public-release foundation.**
+
+`0.5.0` starts the polish line by turning the large `0.4.x` bot/analyzer push
+into a cleaner, safer, and easier-to-explain product base. The release does not
+try to add another major strategy concept. Instead, it tightens the web runtime,
+clarifies the Rust lab architecture, refreshes the curated reports, and
+organizes the docs around what is now worth showing publicly.
+
+### Web
+
+- Added a bounded transposition-table cap for browser search bots so stronger
+  presets stay more predictable in long sessions.
+- Added local replay-analysis result caching so repeat visits to analyzed
+  replays do not redo the same wasm analysis work.
+- Cleaned up the wasm bridge and frontend board/replay APIs so route code talks
+  to typed app contracts instead of raw wasm payloads or scene internals.
+- Refactored frontend lifecycle and board/replay plumbing after the `0.4.x`
+  UI work, including safer no-config paths and tighter smoke coverage for play,
+  replay, reports, and release builds.
+
+### Bot lab and reports
+
+- Split the search bot, tactical logic, replay-analysis bridge, eval CLI, report
+  plumbing, and analysis-batch code into clearer module boundaries without
+  changing the promoted anchor set.
+- Kept lab search configs independent from the web memory cap so tournament and
+  report runs remain controlled by lab-side specs.
+- Added guards around curated report artifacts and progress output for analysis
+  report generation, then refreshed the bot and analysis reports as the `0.5.0`
+  baseline.
+- Trimmed brittle/case-specific tests and moved coverage toward behavior
+  conditions, corpora, and release smoke checks.
+
+### Docs and repo
+
+- Reorganized the docs by audience so public-facing context, reference material,
+  working notes, runbooks, and archives are easier to navigate.
+- Added web and bot-lab code/API overview maps to make the main app contracts,
+  wasm boundary, bot pipeline, replay analyzer, and report stack easier to find.
+- Polished stale roadmap and cleanup references around the `0.4` handoff into
+  the `0.5` public-release/presentation line.
+- Captured the project-level framing for `0.5`: clean the repo, make reports
+  feel less like hidden dev artifacts, and prepare the strongest parts of the
+  project for first public presentation.
+
 ## [0.4.8] - 2026-05-21
 
 **Theme: wrap the `0.4` lab-powered line with mistake-aware replay analysis.**
@@ -970,7 +1017,8 @@ together in one canvas-driven surface. That lesson drove the `v0.2.1` rewrite.
   concerns blurred together.
 - Expressive UI language, but not scalable beyond one canvas.
 
-[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.8...HEAD
+[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.8...v0.5.0
 [0.4.8]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.7...v0.4.8
 [0.4.7]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.6...v0.4.7
 [0.4.6]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.5...v0.4.6
