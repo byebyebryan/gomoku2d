@@ -733,8 +733,8 @@ Interpretation:
   work is cheaper ordering/eval or better forced-branch handling, not raising
   max depth further under the same broad search shape.
 - Raw artifacts are under `gomoku-bot-lab/outputs/d9-sweep/`. The `3000
-  ms/move` run intentionally did not reuse `reports/latest.json` as an anchor
-  report because anchor-context validation rejects mismatched
+  ms/move` run intentionally did not reuse the published anchor report because
+  anchor-context validation rejects mismatched
   `search_cpu_time_ms`; the pairwise gauntlet result is still valid for this
   relaxed-budget check.
 
@@ -877,7 +877,7 @@ cargo run --release -p gomoku-cli -- --black balanced --white fast --quiet
 cargo run --release -p gomoku-eval -- versus --bot-a fast --bot-b balanced --games 1
 mkdir -p outputs
 cargo run --release -p gomoku-eval -- tournament --bots search-d1,search-d3,search-d5 --games-per-pair 10 --opening-policy centered-suite --opening-plies 4 --search-cpu-time-ms 100 --max-game-ms 10000 --seed 42 --report-json outputs/gomoku-tournament.json
-cargo run --release -p gomoku-eval -- report-html --input outputs/gomoku-tournament.json --output outputs/gomoku-tournament.html --json-href gomoku-tournament.json
+cargo run --release -p gomoku-eval -- report-json --input outputs/gomoku-tournament.json --output outputs/gomoku-tournament-published.json
 ```
 
 Curated ranking report, from `gomoku-bot-lab/`:
@@ -896,8 +896,7 @@ cargo run --release -p gomoku-eval -- tournament \
   --max-moves 120 \
   --seed 63 \
   --threads 22 \
-  --report-json reports/latest.json
-cargo run --release -p gomoku-eval -- report-html --input reports/latest.json --output reports/index.html --json-href latest.json
+  --published-report-json reports/report.json
 ```
 
 `gomoku-eval` defaults to Renju so ranking tournaments are less dominated by
@@ -910,28 +909,21 @@ random whole-board scatter. For Linux ranking eval, prefer
 budgets remain useful for focused continuity checks. Curated published reports
 now use `--search-budget-mode pooled` with a capped CPU reserve, which keeps the
 average budget bounded while allowing hard tactical positions to spend time
-saved by cheaper moves. The reusable JSON report is the source of truth for
-ranking analysis; the HTML report is a derived view that can be regenerated
-without rerunning the tournament. Keep scratch output under
-`gomoku-bot-lab/outputs/`; curated
-reports under `gomoku-bot-lab/reports/` are copied into the public web build as
+saved by cheaper moves. The compact `reports/report.json` artifact is the source
+of truth for published ranking pages; full debug telemetry belongs under ignored
+`gomoku-bot-lab/outputs/`. Curated reports under `gomoku-bot-lab/reports/` are
+copied into the public web build as
 `/bot-report/`.
 
 Curated replay-analysis reports under `gomoku-bot-lab/analysis-reports/` are
 copied into the public web build as `/analysis-report/`. Treat that report as a
 companion to the published bot report: it should sample the head-to-head games
-between the top two standings in `reports/latest.json`.
+between the top two standings in `reports/report.json`.
 
 For release-quality reports, commit the bot/report implementation first, then
-generate `reports/latest.json` and `reports/index.html` from a clean worktree
-and commit those artifacts separately. The report records the git revision; if
-the tree is dirty at tournament time, the HTML intentionally displays a
-`_dirty` suffix and a development-run warning.
-
-Renderer-only report polish is different: keep the clean `latest.json`, rerender
-`reports/index.html`, and commit the HTML/renderer change without rerunning the
-long tournament. The report JSON provenance should continue to identify the
-bot/eval code that produced the match data.
+generate `reports/report.json` from a clean worktree and commit that artifact
+separately. The report records the git revision; if the tree is dirty at
+tournament time, the web-rendered report can still expose the dirty provenance.
 
 ## Initial hotspot findings
 
@@ -1424,7 +1416,7 @@ cargo run --release -p gomoku-eval -- tournament \
   --schedule gauntlet \
   --candidates search-d5+tactical-cap-16+pattern-eval+corridor-proof-c16-d8-w4,search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4 \
   --anchors search-d5+tactical-full-cap-16+pattern-eval+corridor-proof-c16-d8-w4,search-d7+tactical-full-cap-8+pattern-eval+corridor-proof-c16-d8-w4 \
-  --anchor-report reports/latest.json \
+  --anchor-report reports/report.json \
   --games-per-pair 16 \
   --opening-policy centered-suite \
   --opening-plies 4 \

@@ -7,6 +7,8 @@ const distRoot = join(root, "dist");
 const indexPath = join(distRoot, "index.html");
 
 const staticRoutes = [
+  "analysis-report",
+  "bot-report",
   "match/local",
   "profile",
   "settings",

@@ -7,15 +7,15 @@ use gomoku_bot::{lab_spec, RandomBot, SearchBot};
 use gomoku_core::{Color, GameResult, Move, Replay, RuleConfig, Variant};
 use gomoku_eval::analysis::{analyze_replay, AnalysisOptions, DEFAULT_MAX_SCAN_PLIES};
 use gomoku_eval::analysis_batch::{
-    render_analysis_batch_report_html, run_analysis_batch_replays_with_progress,
-    run_analysis_batch_with_options, AnalysisBatchReport, AnalysisBatchRunOptions,
-    ReplayAnalysisInput,
+    run_analysis_batch_replays_with_progress, run_analysis_batch_with_options, AnalysisBatchReport,
+    AnalysisBatchRunOptions, ReplayAnalysisInput,
 };
 use gomoku_eval::analysis_fixture::{
-    render_analysis_fixture_report_html, run_analysis_fixtures, AnalysisFixtureReport,
-    AnalysisFixtureResult,
+    run_analysis_fixtures, AnalysisFixtureReport, AnalysisFixtureResult,
 };
-use gomoku_eval::analysis_report::{report_match_to_replay, select_report_matches};
+use gomoku_eval::analysis_report::{
+    report_match_to_replay, select_report_matches, ReportReplaySource,
+};
 use gomoku_eval::arena::{run_match_series_with_limits, MatchEndReason, MatchLimits, MatchResult};
 use gomoku_eval::budget::{PooledCpuBudgetConfig, PooledSearchBot};
 use gomoku_eval::opening::{OpeningPolicy, CENTERED_SUITE_MAX_PLIES};
@@ -23,8 +23,7 @@ use gomoku_eval::renju_rules::{
     all_renju_rule_fixtures, run_renju_rule_fixtures, RenjuRuleFixtureResult, RenjuRuleReport,
 };
 use gomoku_eval::report::{
-    render_tournament_report_html_with_options, AnchorReferenceReport, ReportRenderOptions,
-    TournamentReport, TournamentRunReport,
+    AnchorReferenceReport, PublishedTournamentReport, TournamentReport, TournamentRunReport,
 };
 use gomoku_eval::seed::derive_seed;
 use gomoku_eval::tournament::{
@@ -181,21 +180,13 @@ enum Commands {
         #[arg(long)]
         replay_dir: Option<PathBuf>,
     },
-    /// Render a saved tournament JSON report to standalone HTML
-    ReportHtml {
+    /// Export compact published tournament report JSON from a full tournament report
+    ReportJson {
         #[arg(long)]
         input: PathBuf,
 
         #[arg(long)]
         output: PathBuf,
-
-        /// Link to the raw JSON from the rendered HTML; defaults to the input file name
-        #[arg(long)]
-        json_href: Option<String>,
-
-        /// Include rolling frontier diagnostic cards in the rendered HTML
-        #[arg(long)]
-        include_rolling_health: bool,
     },
     /// Run a round-robin tournament among a list of bots
     Tournament {
@@ -236,6 +227,10 @@ enum Commands {
         /// Write reusable tournament report JSON
         #[arg(long)]
         report_json: Option<PathBuf>,
+
+        /// Write compact published tournament report JSON
+        #[arg(long)]
+        published_report_json: Option<PathBuf>,
 
         /// Number of opening plies before bots take over
         #[arg(long, default_value_t = 4)]
@@ -319,10 +314,6 @@ enum Commands {
         #[arg(long)]
         report_json: Option<PathBuf>,
 
-        /// Write standalone batch report HTML
-        #[arg(long)]
-        report_html: Option<PathBuf>,
-
         /// Maximum corridor proof depth
         #[arg(long, default_value_t = 4)]
         max_depth: usize,
@@ -357,10 +348,6 @@ enum Commands {
         #[arg(long)]
         report_json: Option<PathBuf>,
 
-        /// Write standalone batch report HTML
-        #[arg(long)]
-        report_html: Option<PathBuf>,
-
         /// Maximum corridor proof depth
         #[arg(long, default_value_t = 4)]
         max_depth: usize,
@@ -378,10 +365,6 @@ enum Commands {
         /// Write reusable fixture report JSON
         #[arg(long)]
         report_json: Option<PathBuf>,
-
-        /// Write standalone fixture report HTML
-        #[arg(long)]
-        report_html: Option<PathBuf>,
 
         /// Maximum corridor proof depth
         #[arg(long, default_value_t = 4)]
@@ -580,9 +563,28 @@ fn load_anchor_reference(
 ) -> Result<AnchorReferenceReport, String> {
     let json = std::fs::read_to_string(path)
         .map_err(|err| format!("Failed to read anchor report {}: {err}", path.display()))?;
-    let source_report = TournamentReport::from_json(&json)
+    let value: serde_json::Value = serde_json::from_str(&json)
         .map_err(|err| format!("Failed to parse anchor report {}: {err}", path.display()))?;
-    AnchorReferenceReport::from_report(Some(source_path), &source_report, anchor_names)
+    match value.get("report_kind").and_then(serde_json::Value::as_str) {
+        Some("tournament") => {
+            let source_report = TournamentReport::from_json(&json).map_err(|err| {
+                format!("Failed to parse anchor report {}: {err}", path.display())
+            })?;
+            AnchorReferenceReport::from_report(Some(source_path), &source_report, anchor_names)
+        }
+        Some("published_tournament") => {
+            let source_report = PublishedTournamentReport::from_json(&json).map_err(|err| {
+                format!("Failed to parse anchor report {}: {err}", path.display())
+            })?;
+            AnchorReferenceReport::from_published_report(
+                Some(source_path),
+                &source_report,
+                anchor_names,
+            )
+        }
+        Some(other) => Err(format!("unsupported anchor report kind: {other}")),
+        None => Err("anchor report is missing report_kind".to_string()),
+    }
 }
 
 fn make_bot_factory(
@@ -1091,6 +1093,7 @@ pub fn run() {
             games_per_pair,
             replay_dir,
             report_json,
+            published_report_json,
             opening_plies,
             opening_policy,
             threads,
@@ -1289,6 +1292,16 @@ pub fn run() {
                 });
                 println!("\nReport JSON: {}", path.display());
             }
+            if let Some(path) = &published_report_json {
+                let published_report = PublishedTournamentReport::from_tournament_report(&report);
+                let json = published_report.to_json().unwrap_or_else(|err| {
+                    exit_with_error(format!("Failed to serialize published report: {err}"))
+                });
+                std::fs::write(path, json).unwrap_or_else(|err| {
+                    exit_with_error(format!("Failed to write published report: {err}"))
+                });
+                println!("\nPublished report JSON: {}", path.display());
+            }
 
             println!("\n--- Standings ---");
             for row in &report.standings {
@@ -1342,33 +1355,19 @@ pub fn run() {
                 std::process::exit(1);
             }
         }
-        Commands::ReportHtml {
-            input,
-            output,
-            json_href,
-            include_rolling_health,
-        } => {
+        Commands::ReportJson { input, output } => {
             let json = std::fs::read_to_string(&input)
                 .unwrap_or_else(|err| exit_with_error(format!("Failed to read report: {err}")));
             let report = TournamentReport::from_json(&json)
                 .unwrap_or_else(|err| exit_with_error(format!("Failed to parse report: {err}")));
-            let raw_json_href = json_href.or_else(|| {
-                input
-                    .file_name()
-                    .and_then(|name| name.to_str())
-                    .map(str::to_string)
+            let published_report = PublishedTournamentReport::from_tournament_report(&report);
+            let json = published_report.to_json().unwrap_or_else(|err| {
+                exit_with_error(format!("Failed to serialize published report: {err}"))
             });
-            let html = render_tournament_report_html_with_options(
-                &report,
-                &ReportRenderOptions {
-                    raw_json_href,
-                    include_rolling_health,
-                },
-            );
-            std::fs::write(&output, html).unwrap_or_else(|err| {
-                exit_with_error(format!("Failed to write HTML report: {err}"))
+            std::fs::write(&output, json).unwrap_or_else(|err| {
+                exit_with_error(format!("Failed to write published report: {err}"))
             });
-            println!("HTML report: {}", output.display());
+            println!("Published report JSON: {}", output.display());
         }
         Commands::TacticalScenarios {
             bots,
@@ -1471,7 +1470,6 @@ pub fn run() {
         Commands::AnalyzeReplayBatch {
             replay_dir,
             report_json,
-            report_html,
             max_depth,
             max_scan_plies,
             include_proof_details,
@@ -1502,13 +1500,6 @@ pub fn run() {
                 });
                 println!("Report JSON: {}", path.display());
             }
-            if let Some(path) = report_html {
-                let html = render_analysis_batch_report_html(&report);
-                std::fs::write(&path, html).unwrap_or_else(|err| {
-                    exit_with_error(format!("Failed to write analysis batch HTML: {err}"))
-                });
-                println!("Report HTML: {}", path.display());
-            }
             if report.failed > 0 {
                 std::process::exit(1);
             }
@@ -1519,7 +1510,6 @@ pub fn run() {
             entrant_b,
             sample_size,
             report_json,
-            report_html,
             max_depth,
             max_scan_plies,
             include_proof_details,
@@ -1528,23 +1518,18 @@ pub fn run() {
             let json = std::fs::read_to_string(&report).unwrap_or_else(|err| {
                 exit_with_error(format!("Failed to read tournament report: {err}"))
             });
-            let tournament_report = TournamentReport::from_json(&json).unwrap_or_else(|err| {
+            let report_source = ReportReplaySource::from_json(&json).unwrap_or_else(|err| {
                 exit_with_error(format!("Failed to parse tournament report: {err}"))
             });
-            let standing_bots = tournament_report
-                .standings
-                .iter()
-                .map(|standing| standing.bot.clone())
-                .collect::<Vec<_>>();
             let (entrant_a, entrant_b) =
-                resolve_report_replay_entrants(&standing_bots, entrant_a, entrant_b)
+                resolve_report_replay_entrants(&report_source.standings, entrant_a, entrant_b)
                     .unwrap_or_else(|err| exit_with_error(err));
             let selections =
-                select_report_matches(&tournament_report, &entrant_a, &entrant_b, sample_size)
+                select_report_matches(&report_source, &entrant_a, &entrant_b, sample_size)
                     .unwrap_or_else(|err| exit_with_error(err));
             let mut inputs = Vec::with_capacity(selections.len());
             for selection in selections {
-                let replay = report_match_to_replay(&tournament_report, selection.match_report)
+                let replay = report_match_to_replay(&report_source, selection.match_report)
                     .unwrap_or_else(|err| {
                         exit_with_error(format!(
                             "Failed to convert match {} to replay: {err}",
@@ -1587,20 +1572,12 @@ pub fn run() {
                 });
                 println!("Report JSON: {}", path.display());
             }
-            if let Some(path) = report_html {
-                let html = render_analysis_batch_report_html(&batch_report);
-                std::fs::write(&path, html).unwrap_or_else(|err| {
-                    exit_with_error(format!("Failed to write analysis batch HTML: {err}"))
-                });
-                println!("Report HTML: {}", path.display());
-            }
             if batch_report.failed > 0 {
                 std::process::exit(1);
             }
         }
         Commands::AnalysisFixtures {
             report_json,
-            report_html,
             max_depth,
             max_scan_plies,
         } => {
@@ -1628,13 +1605,6 @@ pub fn run() {
                     exit_with_error(format!("Failed to write analysis fixture report: {err}"))
                 });
                 println!("Report JSON: {}", path.display());
-            }
-            if let Some(path) = report_html {
-                let html = render_analysis_fixture_report_html(&report);
-                std::fs::write(&path, html).unwrap_or_else(|err| {
-                    exit_with_error(format!("Failed to write analysis fixture HTML: {err}"))
-                });
-                println!("Report HTML: {}", path.display());
             }
             if report.failed > 0 {
                 std::process::exit(1);
@@ -1764,13 +1734,13 @@ mod tests {
             Some("candidate"),
             None,
             Some("anchor-a,anchor-b"),
-            Some("reports/latest.json"),
+            Some("reports/report.json"),
         )
         .expect("gauntlet plan should parse");
 
         assert_eq!(plan.bot_names, vec!["candidate", "anchor-a", "anchor-b"]);
         assert_eq!(plan.anchor_names, vec!["anchor-a", "anchor-b"]);
-        assert_eq!(plan.anchor_report.as_deref(), Some("reports/latest.json"));
+        assert_eq!(plan.anchor_report.as_deref(), Some("reports/report.json"));
         assert_eq!(
             plan.pairs,
             vec![
@@ -1794,7 +1764,7 @@ mod tests {
             None,
             Some("candidate-a,candidate-b"),
             Some("anchor-a,anchor-b"),
-            Some("reports/latest.json"),
+            Some("reports/report.json"),
         )
         .expect("batch gauntlet plan should parse");
 
@@ -1803,7 +1773,7 @@ mod tests {
             vec!["candidate-a", "candidate-b", "anchor-a", "anchor-b"]
         );
         assert_eq!(plan.anchor_names, vec!["anchor-a", "anchor-b"]);
-        assert_eq!(plan.anchor_report.as_deref(), Some("reports/latest.json"));
+        assert_eq!(plan.anchor_report.as_deref(), Some("reports/report.json"));
         assert_eq!(
             plan.pairs,
             vec![
@@ -1865,7 +1835,7 @@ mod tests {
             None,
             None,
             None,
-            Some("reports/latest.json"),
+            Some("reports/report.json"),
         )
         .unwrap_err();
 
@@ -1923,27 +1893,23 @@ mod tests {
     }
 
     #[test]
-    fn report_html_command_parses_rolling_health_flag() {
+    fn report_json_command_parses_input_and_output() {
         let cli = Cli::try_parse_from([
             "gomoku-eval",
-            "report-html",
+            "report-json",
             "--input",
-            "outputs/report.json",
+            "outputs/full-report.json",
             "--output",
-            "outputs/report.html",
-            "--include-rolling-health",
+            "outputs/report.json",
         ])
-        .expect("report-html command should parse");
+        .expect("report-json command should parse");
 
-        let Commands::ReportHtml {
-            include_rolling_health,
-            ..
-        } = cli.command
-        else {
-            panic!("expected report-html command");
+        let Commands::ReportJson { input, output } = cli.command else {
+            panic!("expected report-json command");
         };
 
-        assert!(include_rolling_health);
+        assert_eq!(input, PathBuf::from("outputs/full-report.json"));
+        assert_eq!(output, PathBuf::from("outputs/report.json"));
     }
 
     #[test]
@@ -2043,8 +2009,6 @@ mod tests {
             "analysis-fixtures",
             "--report-json",
             "outputs/analysis-fixtures.json",
-            "--report-html",
-            "outputs/analysis-fixtures.html",
             "--max-depth",
             "4",
             "--max-scan-plies",
@@ -2054,7 +2018,6 @@ mod tests {
 
         let Commands::AnalysisFixtures {
             report_json,
-            report_html,
             max_depth,
             max_scan_plies,
         } = cli.command
@@ -2065,10 +2028,6 @@ mod tests {
         assert_eq!(
             report_json,
             Some(PathBuf::from("outputs/analysis-fixtures.json"))
-        );
-        assert_eq!(
-            report_html,
-            Some(PathBuf::from("outputs/analysis-fixtures.html"))
         );
         assert_eq!(max_depth, 4);
         assert_eq!(max_scan_plies, 16);
@@ -2083,8 +2042,6 @@ mod tests {
             "outputs/replays",
             "--report-json",
             "outputs/analysis-batch.json",
-            "--report-html",
-            "outputs/analysis-batch.html",
             "--max-depth",
             "3",
             "--max-scan-plies",
@@ -2095,7 +2052,6 @@ mod tests {
         let Commands::AnalyzeReplayBatch {
             replay_dir,
             report_json,
-            report_html,
             max_depth,
             max_scan_plies,
             include_proof_details,
@@ -2109,10 +2065,6 @@ mod tests {
             report_json,
             Some(PathBuf::from("outputs/analysis-batch.json"))
         );
-        assert_eq!(
-            report_html,
-            Some(PathBuf::from("outputs/analysis-batch.html"))
-        );
         assert_eq!(max_depth, 3);
         assert_eq!(max_scan_plies, 12);
         assert!(!include_proof_details);
@@ -2124,7 +2076,7 @@ mod tests {
             "gomoku-eval",
             "analyze-report-replays",
             "--report",
-            "reports/latest.json",
+            "reports/report.json",
             "--entrant-a",
             "search-d7+tactical-cap-8+pattern-eval",
             "--entrant-b",
@@ -2133,8 +2085,6 @@ mod tests {
             "8",
             "--report-json",
             "outputs/analysis/top2-smoke.json",
-            "--report-html",
-            "outputs/analysis/top2-smoke.html",
             "--max-depth",
             "4",
             "--max-scan-plies",
@@ -2149,7 +2099,6 @@ mod tests {
             entrant_b,
             sample_size,
             report_json,
-            report_html,
             max_depth,
             max_scan_plies,
             include_proof_details,
@@ -2158,7 +2107,7 @@ mod tests {
             panic!("expected analyze-report-replays command");
         };
 
-        assert_eq!(report, PathBuf::from("reports/latest.json"));
+        assert_eq!(report, PathBuf::from("reports/report.json"));
         assert_eq!(
             entrant_a.as_deref(),
             Some("search-d7+tactical-cap-8+pattern-eval")
@@ -2171,10 +2120,6 @@ mod tests {
         assert_eq!(
             report_json,
             Some(PathBuf::from("outputs/analysis/top2-smoke.json"))
-        );
-        assert_eq!(
-            report_html,
-            Some(PathBuf::from("outputs/analysis/top2-smoke.html"))
         );
         assert_eq!(max_depth, 4);
         assert_eq!(max_scan_plies, 8);
@@ -2202,15 +2147,15 @@ mod tests {
 
     #[test]
     fn report_replay_source_label_keeps_default_selector_readable() {
-        let report = PathBuf::from("reports/latest.json");
+        let report = PathBuf::from("reports/report.json");
 
         assert_eq!(
             report_replay_source_label(&report, "search-d7", "search-d5", true),
-            "reports/latest.json:Top 2 entrants"
+            "reports/report.json:Top 2 entrants"
         );
         assert_eq!(
             report_replay_source_label(&report, "search-d7", "search-d5", false),
-            "reports/latest.json:search-d7 vs search-d5"
+            "reports/report.json:search-d7 vs search-d5"
         );
     }
 }

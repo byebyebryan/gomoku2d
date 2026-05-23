@@ -1,7 +1,7 @@
-import { access, cp, mkdir } from "node:fs/promises";
+import { access, copyFile, mkdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 
-const REQUIRED_REPORT_FILES = ["index.html", "latest.json"];
+const REQUIRED_REPORT_FILES = ["report.json"];
 
 /**
  * @param {{
@@ -40,11 +40,9 @@ export async function publishReportArtifact({
     throw error;
   }
 
+  await rm(targetRoot, { force: true, recursive: true });
   await mkdir(targetRoot, { recursive: true });
-  await cp(sourceRoot, targetRoot, {
-    recursive: true,
-    force: true,
-  });
+  await copyFile(join(sourceRoot, "report.json"), join(targetRoot, "report.json"));
 
   console.log(`Published ${label} reports to ${targetLabel}.`);
 }

@@ -18,6 +18,12 @@ const ReplayRoute = lazy(async () => ({
 const SettingsRoute = lazy(async () => ({
   default: (await import("../routes/SettingsRoute")).SettingsRoute,
 }));
+const BotReportRoute = lazy(async () => ({
+  default: (await import("../routes/BotReportRoute")).BotReportRoute,
+}));
+const AnalysisReportRoute = lazy(async () => ({
+  default: (await import("../routes/AnalysisReportRoute")).AnalysisReportRoute,
+}));
 
 export function App() {
   return (
@@ -54,6 +60,22 @@ export function App() {
           element={
             <Suspense fallback={<main className={styles.loading}>Loading replay…</main>}>
               <ReplayRoute />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/bot-report/*"
+          element={
+            <Suspense fallback={<main className={styles.loading}>Loading report…</main>}>
+              <BotReportRoute />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/analysis-report/*"
+          element={
+            <Suspense fallback={<main className={styles.loading}>Loading report…</main>}>
+              <AnalysisReportRoute />
             </Suspense>
           }
         />

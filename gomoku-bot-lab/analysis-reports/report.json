@@ -1,13 +1,13 @@
 {
   "schema_version": 20,
   "source_kind": "report_replays",
-  "source": "reports/latest.json:Top 2 entrants",
-  "replay_dir": "reports/latest.json:Top 2 entrants",
+  "source": "reports/report.json:Top 2 entrants",
+  "replay_dir": "reports/report.json:Top 2 entrants",
   "total": 64,
   "analyzed": 64,
   "failed": 0,
-  "elapsed_ms": 251909,
-  "total_elapsed_ms": 1515331,
+  "elapsed_ms": 236050,
+  "total_elapsed_ms": 1450173,
   "model": {
     "reply_policy": "corridor_replies",
     "max_depth": 4,
@@ -1522,7 +1522,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 40904,
+      "elapsed_ms": 37306,
       "prefixes_analyzed": 15,
       "forced_prefix_count": 14,
       "unknown_prefix_count": 0,
@@ -3251,7 +3251,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 26190,
+      "elapsed_ms": 25860,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -4530,7 +4530,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 45581,
+      "elapsed_ms": 44116,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -6259,7 +6259,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 30334,
+      "elapsed_ms": 31141,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -7716,7 +7716,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 131655,
+      "elapsed_ms": 120515,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -8772,7 +8772,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 4968,
+      "elapsed_ms": 4875,
       "prefixes_analyzed": 10,
       "forced_prefix_count": 9,
       "unknown_prefix_count": 0,
@@ -11249,7 +11249,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 15259,
+      "elapsed_ms": 15250,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -12978,7 +12978,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 49838,
+      "elapsed_ms": 48684,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -13760,7 +13760,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 572,
+      "elapsed_ms": 642,
       "prefixes_analyzed": 7,
       "forced_prefix_count": 6,
       "unknown_prefix_count": 0,
@@ -15131,7 +15131,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 7777,
+      "elapsed_ms": 7468,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -16174,7 +16174,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 9507,
+      "elapsed_ms": 9356,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -17686,7 +17686,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 71653,
+      "elapsed_ms": 70122,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -19455,7 +19455,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 33456,
+      "elapsed_ms": 32625,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -22500,7 +22500,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 78555,
+      "elapsed_ms": 86714,
       "prefixes_analyzed": 15,
       "forced_prefix_count": 14,
       "unknown_prefix_count": 0,
@@ -23652,7 +23652,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 27535,
+      "elapsed_ms": 26542,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -25581,7 +25581,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 5941,
+      "elapsed_ms": 5421,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -26487,7 +26487,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 111,
+      "elapsed_ms": 156,
       "prefixes_analyzed": 10,
       "forced_prefix_count": 9,
       "unknown_prefix_count": 0,
@@ -28220,7 +28220,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 21469,
+      "elapsed_ms": 21009,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -28988,7 +28988,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 1085,
+      "elapsed_ms": 1100,
       "prefixes_analyzed": 8,
       "forced_prefix_count": 7,
       "unknown_prefix_count": 0,
@@ -30422,7 +30422,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 40659,
+      "elapsed_ms": 39870,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -31367,7 +31367,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 8521,
+      "elapsed_ms": 8380,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -32152,7 +32152,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 10364,
+      "elapsed_ms": 10242,
       "prefixes_analyzed": 7,
       "forced_prefix_count": 6,
       "unknown_prefix_count": 0,
@@ -33147,7 +33147,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 230,
+      "elapsed_ms": 218,
       "prefixes_analyzed": 12,
       "forced_prefix_count": 11,
       "unknown_prefix_count": 0,
@@ -33930,7 +33930,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 1796,
+      "elapsed_ms": 1959,
       "prefixes_analyzed": 7,
       "forced_prefix_count": 6,
       "unknown_prefix_count": 0,
@@ -35090,7 +35090,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 59005,
+      "elapsed_ms": 59825,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -37216,7 +37216,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 13817,
+      "elapsed_ms": 13206,
       "prefixes_analyzed": 18,
       "forced_prefix_count": 17,
       "unknown_prefix_count": 0,
@@ -38633,7 +38633,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 15132,
+      "elapsed_ms": 15642,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -40418,7 +40418,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 31524,
+      "elapsed_ms": 30657,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -41832,7 +41832,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 37391,
+      "elapsed_ms": 36381,
       "prefixes_analyzed": 7,
       "forced_prefix_count": 6,
       "unknown_prefix_count": 0,
@@ -43373,7 +43373,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 27531,
+      "elapsed_ms": 22870,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -44368,7 +44368,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 212,
+      "elapsed_ms": 223,
       "prefixes_analyzed": 12,
       "forced_prefix_count": 11,
       "unknown_prefix_count": 0,
@@ -47185,7 +47185,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 46758,
+      "elapsed_ms": 45580,
       "prefixes_analyzed": 17,
       "forced_prefix_count": 16,
       "unknown_prefix_count": 0,
@@ -48612,7 +48612,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 16149,
+      "elapsed_ms": 15445,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -50402,7 +50402,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 3980,
+      "elapsed_ms": 3854,
       "prefixes_analyzed": 17,
       "forced_prefix_count": 16,
       "unknown_prefix_count": 0,
@@ -52265,7 +52265,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 14654,
+      "elapsed_ms": 13574,
       "prefixes_analyzed": 15,
       "forced_prefix_count": 14,
       "unknown_prefix_count": 0,
@@ -54389,7 +54389,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 22197,
+      "elapsed_ms": 20438,
       "prefixes_analyzed": 18,
       "forced_prefix_count": 17,
       "unknown_prefix_count": 0,
@@ -55803,7 +55803,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 47930,
+      "elapsed_ms": 46674,
       "prefixes_analyzed": 7,
       "forced_prefix_count": 6,
       "unknown_prefix_count": 0,
@@ -56593,7 +56593,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 4391,
+      "elapsed_ms": 4417,
       "prefixes_analyzed": 7,
       "forced_prefix_count": 6,
       "unknown_prefix_count": 0,
@@ -57906,7 +57906,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 9087,
+      "elapsed_ms": 9265,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -59878,7 +59878,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 4591,
+      "elapsed_ms": 4414,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -61654,7 +61654,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 1210,
+      "elapsed_ms": 1238,
       "prefixes_analyzed": 10,
       "forced_prefix_count": 9,
       "unknown_prefix_count": 0,
@@ -63388,7 +63388,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 2234,
+      "elapsed_ms": 2095,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -64133,7 +64133,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 1792,
+      "elapsed_ms": 1734,
       "prefixes_analyzed": 8,
       "forced_prefix_count": 7,
       "unknown_prefix_count": 0,
@@ -66004,7 +66004,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 15042,
+      "elapsed_ms": 14570,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -67200,7 +67200,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 12888,
+      "elapsed_ms": 12419,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -69558,7 +69558,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 17729,
+      "elapsed_ms": 17165,
       "prefixes_analyzed": 15,
       "forced_prefix_count": 14,
       "unknown_prefix_count": 0,
@@ -70558,7 +70558,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 49415,
+      "elapsed_ms": 47740,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -71843,7 +71843,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 694,
+      "elapsed_ms": 738,
       "prefixes_analyzed": 13,
       "forced_prefix_count": 12,
       "unknown_prefix_count": 0,
@@ -72628,7 +72628,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 4300,
+      "elapsed_ms": 4326,
       "prefixes_analyzed": 7,
       "forced_prefix_count": 6,
       "unknown_prefix_count": 0,
@@ -74216,7 +74216,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 40898,
+      "elapsed_ms": 41972,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -75710,7 +75710,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 4307,
+      "elapsed_ms": 4089,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -76866,7 +76866,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 532,
+      "elapsed_ms": 520,
       "prefixes_analyzed": 14,
       "forced_prefix_count": 13,
       "unknown_prefix_count": 0,
@@ -78062,7 +78062,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 10461,
+      "elapsed_ms": 9638,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -79143,7 +79143,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 7481,
+      "elapsed_ms": 6849,
       "prefixes_analyzed": 9,
       "forced_prefix_count": 8,
       "unknown_prefix_count": 0,
@@ -79928,7 +79928,7 @@
         "max_depth_reached": 0
       },
       "limit_causes": [],
-      "elapsed_ms": 5751,
+      "elapsed_ms": 5531,
       "prefixes_analyzed": 7,
       "forced_prefix_count": 6,
       "unknown_prefix_count": 0,
@@ -81657,7 +81657,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 28449,
+      "elapsed_ms": 23435,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -82853,7 +82853,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 10488,
+      "elapsed_ms": 9806,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -84582,7 +84582,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 31601,
+      "elapsed_ms": 29129,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -86091,7 +86091,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 41221,
+      "elapsed_ms": 38256,
       "prefixes_analyzed": 15,
       "forced_prefix_count": 14,
       "unknown_prefix_count": 0,
@@ -87810,7 +87810,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 27273,
+      "elapsed_ms": 24648,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,
@@ -90200,7 +90200,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 95048,
+      "elapsed_ms": 81865,
       "prefixes_analyzed": 21,
       "forced_prefix_count": 20,
       "unknown_prefix_count": 0,
@@ -92432,7 +92432,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 58870,
+      "elapsed_ms": 57444,
       "prefixes_analyzed": 19,
       "forced_prefix_count": 18,
       "unknown_prefix_count": 0,
@@ -94151,7 +94151,7 @@
         "max_depth_reached": 4
       },
       "limit_causes": [],
-      "elapsed_ms": 29338,
+      "elapsed_ms": 22930,
       "prefixes_analyzed": 11,
       "forced_prefix_count": 10,
       "unknown_prefix_count": 0,

@@ -114,32 +114,27 @@ Curated replay-analysis report artifacts live in
 `gomoku-bot-lab/analysis-reports/` and are published under
 `/analysis-report/`. The analysis report is intentionally tied to the bot report:
 it samples the head-to-head games between the current top two standings in
-`gomoku-bot-lab/reports/latest.json`.
+`gomoku-bot-lab/reports/report.json`.
 
 The curated report artifacts are tracked generated outputs. `.gitattributes`
-marks their HTML/JSON files as generated and disables noisy diffs, but release
-builds still require them by default. Use `GOMOKU_ALLOW_MISSING_REPORTS=1` only
-for local/dev builds that intentionally skip report pages.
+marks their JSON files as generated and disables noisy diffs, but release builds
+still require them by default. Use `GOMOKU_ALLOW_MISSING_REPORTS=1` only for
+local/dev builds that intentionally skip report pages.
 
 The report JSON captures git provenance when the tournament command runs, so
 refresh it only from a clean committed toolchain:
 
 1. Commit bot/report code changes first.
 2. Confirm `git status --short` is clean.
-3. Run the curated tournament into `gomoku-bot-lab/reports/latest.json`.
-4. Render `gomoku-bot-lab/reports/index.html` from that JSON.
-5. Confirm `reports/latest.json` says `"git_dirty": false`.
-6. Generate the top-two analysis report into
-   `gomoku-bot-lab/analysis-reports/latest.json` and
-   `gomoku-bot-lab/analysis-reports/index.html`.
-7. Commit the report artifacts as a follow-up commit.
+3. Run the curated tournament into `gomoku-bot-lab/reports/report.json`.
+4. Confirm `reports/report.json` says `"git_dirty": false`.
+5. Generate the top-two analysis report into
+   `gomoku-bot-lab/analysis-reports/report.json`.
+6. Commit the report artifacts as a follow-up commit.
 
-If only the HTML report renderer changed after a clean tournament, do not rerun
-the long tournament just to update presentation. Re-render
-`gomoku-bot-lab/reports/index.html` from the existing `latest.json`, confirm the
-JSON is still clean, and commit the HTML together with the renderer change or as
-its own report-render refresh. The JSON provenance remains the tournament
-provenance, not the renderer commit.
+For local diagnostics, add `--report-json outputs/full-tournament-report.json`
+to the tournament command. Keep the full telemetry report out of curated
+published artifacts.
 
 Current curated command, from `gomoku-bot-lab/`:
 
@@ -156,23 +151,22 @@ cargo run --release -p gomoku-eval -- tournament \
   --max-moves 120 \
   --seed 63 \
   --threads 22 \
-  --report-json reports/latest.json
-cargo run --release -p gomoku-eval -- report-html --input reports/latest.json --output reports/index.html --json-href latest.json
-jq '.provenance | {git_commit, git_dirty}' reports/latest.json
+  --published-report-json reports/report.json
+jq '.provenance | {git_commit, git_dirty}' reports/report.json
 cargo run --release -p gomoku-eval -- analyze-report-replays \
-  --report reports/latest.json \
+  --report reports/report.json \
   --sample-size 64 \
   --include-proof-details \
-  --report-json analysis-reports/latest.json \
-  --report-html analysis-reports/index.html \
-  --max-depth 4
-jq '{source, total, analyzed, failed, model, summary}' analysis-reports/latest.json
+  --report-json analysis-reports/report.json \
+  --max-depth 4 \
+  --max-scan-plies 64
+jq '{source, total, analyzed, failed, model, summary}' analysis-reports/report.json
 ```
 
 For the curated analysis report, sanity-check at minimum:
 
 - `source_kind == "report_replays"`
-- `source == "reports/latest.json:Top 2 entrants"`
+- `source == "reports/report.json:Top 2 entrants"`
 - `analyzed == total` and `failed == 0`
 - `model.reply_policy == "corridor_replies"`
 - `model.max_depth == 4` and `model.max_scan_plies == 64`
@@ -182,9 +176,9 @@ Before deployment, confirm the web build copied the required report files:
 
 ```sh
 test -f gomoku-web/dist/bot-report/index.html
-test -f gomoku-web/dist/bot-report/latest.json
+test -f gomoku-web/dist/bot-report/report.json
 test -f gomoku-web/dist/analysis-report/index.html
-test -f gomoku-web/dist/analysis-report/latest.json
+test -f gomoku-web/dist/analysis-report/report.json
 ```
 
 ## Push And CI Baseline
@@ -278,8 +272,8 @@ changed surface:
 
 - Home loads from `https://gomoku2d.byebyebryan.com/`.
 - `/profile`, `/privacy/`, and `/terms/` return `200`.
-- If report publishing changed: `/bot-report/`, `/bot-report/latest.json`,
-  `/analysis-report/`, and `/analysis-report/latest.json` return `200`.
+- If report publishing changed: `/bot-report/`, `/bot-report/report.json`,
+  `/analysis-report/`, and `/analysis-report/report.json` return `200`.
 - Local-only match/replay still works without signing in.
 - If auth/profile changed: sign in from production, refresh, sign out, sign in
   again, and confirm history/profile continuity.

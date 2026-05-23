@@ -318,12 +318,8 @@ heavy lab work, and package the project for first public release.
 
 ### Possible Work
 
-- mark current generated report artifacts explicitly so they do not dominate
-  source-language stats or review diffs
-- move bot/analysis report presentation toward web-owned viewer components over
-  structured report data
-- slim or split committed report data if the current `latest.json` artifacts are
-  too heavy for normal review after the viewer rewrite starts
+- continue slimming/report-viewer follow-up work now that bot/analysis reports
+  are web-rendered from compact `report.json`
 - productize the existing concise docs for About, Rules, Analysis, and Bot Lab
   inside the app
 - polish Home, Replay, report pages, and README copy around the lab-under-the-
