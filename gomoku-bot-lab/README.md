@@ -100,18 +100,16 @@ cargo run --release -p gomoku-eval -- tournament \
   --search-cpu-time-ms 1000 \
   --report-json outputs/head-to-head.json
 
-# render a tournament report
-cargo run --release -p gomoku-eval -- report-html \
+# export a compact published report from a full tournament report
+cargo run --release -p gomoku-eval -- report-json \
   --input outputs/head-to-head.json \
-  --output outputs/head-to-head.html \
-  --json-href head-to-head.json
+  --output outputs/head-to-head-published.json
 
 # replay-analysis smoke from the current curated bot report
 cargo run --release -p gomoku-eval -- analyze-report-replays \
-  --report reports/latest.json \
+  --report reports/report.json \
   --sample-size 8 \
-  --report-json outputs/analysis/top2-smoke.json \
-  --report-html outputs/analysis/top2-smoke.html
+  --report-json outputs/analysis/top2-smoke.json
 
 # tactical and lethal diagnostic harnesses
 cargo run -p gomoku-eval -- tactical-scenarios

@@ -168,7 +168,7 @@ without shelling out.
 Important commands:
 
 - `tournament`
-- `report-html`
+- `report-json`
 - `analyze-report-replays`
 - `analyze-replay-batch`
 - `tactical-scenarios`
@@ -178,10 +178,8 @@ Important commands:
 
 Curated artifacts:
 
-- `gomoku-bot-lab/reports/latest.json`
-- `gomoku-bot-lab/reports/index.html`
-- `gomoku-bot-lab/analysis-reports/latest.json`
-- `gomoku-bot-lab/analysis-reports/index.html`
+- `gomoku-bot-lab/reports/report.json`
+- `gomoku-bot-lab/analysis-reports/report.json`
 
 Scratch artifacts belong in ignored `gomoku-bot-lab/outputs/`.
 

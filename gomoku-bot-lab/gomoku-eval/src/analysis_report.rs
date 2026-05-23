@@ -1,16 +1,113 @@
 use std::collections::HashSet;
 
-use gomoku_core::{replay::ReplayResult, Move, Replay};
+use gomoku_core::{replay::ReplayResult, Move, Replay, RuleConfig};
+use serde_json::Value;
 
-use crate::report::{MatchReport, TournamentReport};
+use crate::report::{PublishedTournamentReport, TournamentReport};
 
 #[derive(Debug, Clone)]
 pub struct ReportReplaySelection<'a> {
-    pub match_report: &'a MatchReport,
+    pub match_report: &'a ReportReplayMatch,
+}
+
+#[derive(Debug, Clone)]
+pub struct ReportReplaySource {
+    pub board_size: usize,
+    pub move_codec: String,
+    pub rules: RuleConfig,
+    pub standings: Vec<String>,
+    pub matches: Vec<ReportReplayMatch>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ReportReplayMatch {
+    pub match_index: usize,
+    pub black: String,
+    pub white: String,
+    pub result: String,
+    pub winner: Option<String>,
+    pub end_reason: String,
+    pub duration_ms: Option<u64>,
+    pub move_cells: Vec<usize>,
+    pub move_count: usize,
+}
+
+impl ReportReplaySource {
+    pub fn from_json(input: &str) -> Result<Self, String> {
+        let value: Value = serde_json::from_str(input).map_err(|err| err.to_string())?;
+        match value.get("report_kind").and_then(Value::as_str) {
+            Some("tournament") => {
+                let report = TournamentReport::from_json(input)?;
+                Ok(Self::from_tournament_report(&report))
+            }
+            Some("published_tournament") => {
+                let report = PublishedTournamentReport::from_json(input)?;
+                Ok(Self::from_published_tournament_report(&report))
+            }
+            Some(other) => Err(format!("unsupported report kind: {other}")),
+            None => Err("report is missing report_kind".to_string()),
+        }
+    }
+
+    pub fn from_tournament_report(report: &TournamentReport) -> Self {
+        Self {
+            board_size: report.board_size,
+            move_codec: report.move_codec.clone(),
+            rules: report.run.rules.clone(),
+            standings: report
+                .standings
+                .iter()
+                .map(|standing| standing.bot.clone())
+                .collect(),
+            matches: report
+                .matches
+                .iter()
+                .map(|match_report| ReportReplayMatch {
+                    match_index: match_report.match_index,
+                    black: match_report.black.clone(),
+                    white: match_report.white.clone(),
+                    result: match_report.result.clone(),
+                    winner: match_report.winner.clone(),
+                    end_reason: match_report.end_reason.clone(),
+                    duration_ms: match_report.duration_ms,
+                    move_cells: match_report.move_cells.clone(),
+                    move_count: match_report.move_count,
+                })
+                .collect(),
+        }
+    }
+
+    pub fn from_published_tournament_report(report: &PublishedTournamentReport) -> Self {
+        Self {
+            board_size: report.board_size,
+            move_codec: report.move_codec.clone(),
+            rules: report.run.rules.clone(),
+            standings: report
+                .standings
+                .iter()
+                .map(|standing| standing.bot.clone())
+                .collect(),
+            matches: report
+                .matches
+                .iter()
+                .map(|match_report| ReportReplayMatch {
+                    match_index: match_report.match_index,
+                    black: match_report.black.clone(),
+                    white: match_report.white.clone(),
+                    result: match_report.result.clone(),
+                    winner: match_report.winner.clone(),
+                    end_reason: match_report.end_reason.clone(),
+                    duration_ms: None,
+                    move_cells: match_report.move_cells.clone(),
+                    move_count: match_report.move_count,
+                })
+                .collect(),
+        }
+    }
 }
 
 pub fn select_report_matches<'a>(
-    report: &'a TournamentReport,
+    report: &'a ReportReplaySource,
     entrant_a: &str,
     entrant_b: &str,
     sample_size: usize,
@@ -43,7 +140,7 @@ pub fn select_report_matches<'a>(
 
     let mut selected = Vec::new();
     let mut seen = HashSet::new();
-    let mut push_match = |match_report: &'a MatchReport| {
+    let mut push_match = |match_report: &'a ReportReplayMatch| {
         if selected.len() < sample_size && seen.insert(match_report.match_index) {
             selected.push(match_report);
         }
@@ -89,15 +186,15 @@ pub fn select_report_matches<'a>(
 }
 
 pub fn report_match_to_replay(
-    report: &TournamentReport,
-    match_report: &MatchReport,
+    report: &ReportReplaySource,
+    match_report: &ReportReplayMatch,
 ) -> Result<Replay, String> {
     if report.move_codec != crate::report::MOVE_CODEC {
         return Err(format!("unsupported move codec: {}", report.move_codec));
     }
 
     let mut replay = Replay::new(
-        report.run.rules.clone(),
+        report.rules.clone(),
         match_report.black.clone(),
         match_report.white.clone(),
     );
@@ -129,16 +226,16 @@ fn decode_move_cell(cell: usize, board_size: usize) -> Result<Move, String> {
     Ok(Move { row, col })
 }
 
-fn median_by_move_count<'a>(matches: &[&'a MatchReport]) -> Option<&'a MatchReport> {
+fn median_by_move_count<'a>(matches: &[&'a ReportReplayMatch]) -> Option<&'a ReportReplayMatch> {
     let mut sorted = matches.to_vec();
     sorted.sort_by_key(|match_report| (match_report.move_count, match_report.match_index));
     sorted.get(sorted.len() / 2).copied()
 }
 
 fn evenly_spaced_matches<'a>(
-    matches: &[&'a MatchReport],
+    matches: &[&'a ReportReplayMatch],
     sample_size: usize,
-) -> Vec<&'a MatchReport> {
+) -> Vec<&'a ReportReplayMatch> {
     if sample_size <= 1 {
         return matches.first().copied().into_iter().collect();
     }
@@ -155,7 +252,9 @@ fn evenly_spaced_matches<'a>(
 mod tests {
     use gomoku_core::{replay::ReplayResult, RuleConfig, Variant};
 
-    use crate::analysis_report::{report_match_to_replay, select_report_matches};
+    use crate::analysis_report::{
+        report_match_to_replay, select_report_matches, ReportReplaySource,
+    };
     use crate::report::{
         CountReport, MatchReport, ReportProvenance, SideStatsReport, TournamentReport,
         TournamentRunReport, MOVE_CODEC, TOURNAMENT_REPORT_SCHEMA_VERSION,
@@ -238,8 +337,9 @@ mod tests {
             match_report(5, "bot-a", "bot-b", "draw", None, "max_moves", 120),
             match_report(6, "bot-a", "bot-b", "black_won", Some("bot-a"), "win", 15),
         ]);
+        let replay_source = ReportReplaySource::from_tournament_report(&report);
 
-        let selected = select_report_matches(&report, "bot-a", "bot-b", 4)
+        let selected = select_report_matches(&replay_source, "bot-a", "bot-b", 4)
             .expect("head-to-head matches should sample");
         let selected_indices = selected
             .iter()
@@ -276,8 +376,9 @@ mod tests {
             "win",
             19,
         )]);
+        let replay_source = ReportReplaySource::from_tournament_report(&report);
 
-        let err = select_report_matches(&report, "bot-a", "bot-b", 0)
+        let err = select_report_matches(&replay_source, "bot-a", "bot-b", 0)
             .expect_err("zero-sized analysis samples should be rejected");
 
         assert!(err.contains("sample size"));
@@ -290,8 +391,9 @@ mod tests {
             move_count: 2,
             ..match_report(42, "bot-a", "bot-b", "white_won", Some("bot-b"), "win", 2)
         }]);
+        let replay_source = ReportReplaySource::from_tournament_report(&report);
 
-        let replay = report_match_to_replay(&report, &report.matches[0])
+        let replay = report_match_to_replay(&replay_source, &replay_source.matches[0])
             .expect("report match should convert to replay");
 
         assert_eq!(replay.black, "bot-a");

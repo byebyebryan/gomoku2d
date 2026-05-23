@@ -14,6 +14,7 @@ use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const TOURNAMENT_REPORT_SCHEMA_VERSION: u32 = 1;
+pub const PUBLISHED_TOURNAMENT_REPORT_SCHEMA_VERSION: u32 = 1;
 pub const MOVE_CODEC: &str = "cell_index_v1";
 const SHUFFLED_ELO_SAMPLES: usize = 256;
 
@@ -168,6 +169,78 @@ impl HostReport {
 }
 
 impl AnchorReferenceReport {
+    pub fn from_published_report(
+        source_path: Option<String>,
+        source_report: &PublishedTournamentReport,
+        anchor_names: &[String],
+    ) -> Result<Self, String> {
+        if source_report.run.schedule != "round-robin" {
+            return Err(format!(
+                "anchor report must come from a round-robin reference report, got {}",
+                source_report.run.schedule
+            ));
+        }
+
+        let mut standings_by_bot: HashMap<&str, &StandingReport> = HashMap::new();
+        for standing in &source_report.standings {
+            standings_by_bot.insert(&standing.bot, standing);
+        }
+
+        let mut missing = Vec::new();
+        let mut anchors = Vec::new();
+        for anchor_name in anchor_names {
+            let Some(standing) = standings_by_bot.get(anchor_name.as_str()) else {
+                missing.push(anchor_name.clone());
+                continue;
+            };
+            anchors.push(AnchorStandingReport::from_standing(standing));
+        }
+
+        if !missing.is_empty() {
+            return Err(format!(
+                "anchor report is missing standings for: {}",
+                missing.join(", ")
+            ));
+        }
+
+        let anchor_set = anchor_names
+            .iter()
+            .map(String::as_str)
+            .collect::<HashSet<_>>();
+        let pairwise: Vec<PairwiseReport> = source_report
+            .pairwise
+            .iter()
+            .filter(|pair| {
+                anchor_set.contains(pair.bot_a.as_str()) && anchor_set.contains(pair.bot_b.as_str())
+            })
+            .cloned()
+            .collect();
+
+        Ok(Self {
+            source: AnchorReferenceSource {
+                path: source_path,
+                schedule: source_report.run.schedule.clone(),
+                git_commit: source_report.provenance.git_commit.clone(),
+                git_dirty: source_report.provenance.git_dirty,
+                rules: source_report.run.rules.clone(),
+                games_per_pair: source_report.run.games_per_pair,
+                opening_policy: source_report.run.opening_policy.clone(),
+                opening_plies: source_report.run.opening_plies,
+                seed: source_report.run.seed,
+                search_time_ms: source_report.run.search_time_ms,
+                search_cpu_time_ms: source_report.run.search_cpu_time_ms,
+                search_budget_mode: source_report.run.search_budget_mode.clone(),
+                search_cpu_reserve_ms: source_report.run.search_cpu_reserve_ms,
+                search_cpu_max_move_ms: source_report.run.search_cpu_max_move_ms,
+                max_moves: source_report.run.max_moves,
+                max_game_ms: source_report.run.max_game_ms,
+            },
+            anchors,
+            pairwise,
+            pair_search: Vec::new(),
+        })
+    }
+
     pub fn from_report(
         source_path: Option<String>,
         source_report: &TournamentReport,
@@ -365,6 +438,107 @@ impl TournamentReport {
             return Err(format!("unsupported move codec: {}", self.move_codec));
         }
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PublishedTournamentReport {
+    pub schema_version: u32,
+    pub report_kind: String,
+    pub source_schema_version: u32,
+    pub board_size: usize,
+    pub move_codec: String,
+    pub shuffled_elo_samples: usize,
+    #[serde(default)]
+    pub provenance: ReportProvenance,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reference_anchors: Option<AnchorReferenceReport>,
+    pub run: TournamentRunReport,
+    pub standings: Vec<StandingReport>,
+    pub pairwise: Vec<PairwiseReport>,
+    pub color_splits: Vec<ColorSplitReport>,
+    pub end_reasons: Vec<CountReport>,
+    pub matches: Vec<PublishedMatchReport>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PublishedMatchReport {
+    pub match_index: usize,
+    pub black: String,
+    pub white: String,
+    pub result: String,
+    pub winner: Option<String>,
+    pub end_reason: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub opening: Option<MatchOpeningReport>,
+    pub move_cells: Vec<usize>,
+    pub move_count: usize,
+}
+
+impl PublishedTournamentReport {
+    pub fn from_tournament_report(report: &TournamentReport) -> Self {
+        Self {
+            schema_version: PUBLISHED_TOURNAMENT_REPORT_SCHEMA_VERSION,
+            report_kind: "published_tournament".to_string(),
+            source_schema_version: report.schema_version,
+            board_size: report.board_size,
+            move_codec: report.move_codec.clone(),
+            shuffled_elo_samples: report.shuffled_elo_samples,
+            provenance: report.provenance.clone(),
+            reference_anchors: report.reference_anchors.clone(),
+            run: report.run.clone(),
+            standings: report.standings.clone(),
+            pairwise: report.pairwise.clone(),
+            color_splits: report.color_splits.clone(),
+            end_reasons: report.end_reasons.clone(),
+            matches: report
+                .matches
+                .iter()
+                .map(PublishedMatchReport::from_match_report)
+                .collect(),
+        }
+    }
+
+    pub fn to_json(&self) -> serde_json::Result<String> {
+        serde_json::to_string_pretty(self)
+    }
+
+    pub fn from_json(input: &str) -> Result<Self, String> {
+        let report: Self = serde_json::from_str(input).map_err(|err| err.to_string())?;
+        report.validate()?;
+        Ok(report)
+    }
+
+    fn validate(&self) -> Result<(), String> {
+        if self.schema_version != PUBLISHED_TOURNAMENT_REPORT_SCHEMA_VERSION {
+            return Err(format!(
+                "unsupported published tournament report schema version: {}",
+                self.schema_version
+            ));
+        }
+        if self.report_kind != "published_tournament" {
+            return Err(format!("unsupported report kind: {}", self.report_kind));
+        }
+        if self.move_codec != MOVE_CODEC {
+            return Err(format!("unsupported move codec: {}", self.move_codec));
+        }
+        Ok(())
+    }
+}
+
+impl PublishedMatchReport {
+    fn from_match_report(report_match: &MatchReport) -> Self {
+        Self {
+            match_index: report_match.match_index,
+            black: report_match.black.clone(),
+            white: report_match.white.clone(),
+            result: report_match.result.clone(),
+            winner: report_match.winner.clone(),
+            end_reason: report_match.end_reason.clone(),
+            opening: report_match.opening.clone(),
+            move_cells: report_match.move_cells.clone(),
+            move_count: report_match.move_count,
+        }
     }
 }
 
@@ -4482,7 +4656,7 @@ mod tests {
         let html = render_tournament_report_html_with_options(
             &report,
             &ReportRenderOptions {
-                raw_json_href: Some("latest.json".to_string()),
+                raw_json_href: Some("report.json".to_string()),
                 include_rolling_health: false,
             },
         );
@@ -4490,8 +4664,8 @@ mod tests {
         assert!(html.contains("<div class=\"run-strip\" aria-label=\"Run summary\">"));
         assert!(html.contains("<nav class=\"top-links\"><a href=\"/\">Game</a><a href=\"/assets/\">Assets</a><a href=\"/analysis-report/\">Analysis</a></nav>"));
         assert!(!html.contains("<section class=\"run-strip\" aria-label=\"Run summary\">"));
-        assert!(!html.contains("<nav class=\"top-links\"><a href=\"/\">Game</a><a href=\"/assets/\">Assets</a><a href=\"latest.json\">Raw JSON</a></nav>"));
-        assert!(html.contains("<dt>Raw JSON</dt><dd><a href=\"latest.json\">latest.json</a></dd>"));
+        assert!(!html.contains("<nav class=\"top-links\"><a href=\"/\">Game</a><a href=\"/assets/\">Assets</a><a href=\"report.json\">Raw JSON</a></nav>"));
+        assert!(html.contains("<dt>Raw JSON</dt><dd><a href=\"report.json\">report.json</a></dd>"));
         assert!(html.contains("<div class=\"run-chip\"><span>Schedule</span>"));
         assert!(!html.contains(".run-chip:hover"));
         assert!(!html.contains("A bot evaluation report for comparing specs"));
@@ -4620,7 +4794,7 @@ mod tests {
         let mut report = sample_report();
         report.reference_anchors = Some(AnchorReferenceReport {
             source: AnchorReferenceSource {
-                path: Some("reports/latest.json".to_string()),
+                path: Some("reports/report.json".to_string()),
                 schedule: "round-robin".to_string(),
                 git_commit: Some("abc123".to_string()),
                 git_dirty: Some(false),
@@ -5386,7 +5560,7 @@ mod tests {
             .collect();
         report.reference_anchors = Some(AnchorReferenceReport {
             source: AnchorReferenceSource {
-                path: Some("reports/latest.json".to_string()),
+                path: Some("reports/report.json".to_string()),
                 schedule: "round-robin".to_string(),
                 git_commit: Some("abc123".to_string()),
                 git_dirty: Some(false),
@@ -5503,7 +5677,7 @@ mod tests {
         ];
 
         let reference = AnchorReferenceReport::from_report(
-            Some("reports/latest.json".to_string()),
+            Some("reports/report.json".to_string()),
             &source,
             &["anchor-a".to_string(), "anchor-b".to_string()],
         )
@@ -5511,7 +5685,7 @@ mod tests {
 
         assert_eq!(
             reference.source.path.as_deref(),
-            Some("reports/latest.json")
+            Some("reports/report.json")
         );
         assert_eq!(reference.source.schedule, "round-robin");
         assert_eq!(reference.source.git_commit.as_deref(), Some("abc123"));
@@ -5604,7 +5778,7 @@ mod tests {
         report.run.schedule = "gauntlet".to_string();
         report.reference_anchors = Some(AnchorReferenceReport {
             source: AnchorReferenceSource {
-                path: Some("reports/latest.json".to_string()),
+                path: Some("reports/report.json".to_string()),
                 schedule: "round-robin".to_string(),
                 git_commit: Some("abc123".to_string()),
                 git_dirty: Some(false),
@@ -5636,7 +5810,7 @@ mod tests {
         let html = render_tournament_report_html(&report);
 
         assert!(html.contains("<h2>Reference Anchors</h2>"));
-        assert!(html.contains("reports/latest.json"));
+        assert!(html.contains("reports/report.json"));
         assert!(html.contains("CPU 1000 ms/move"));
         assert!(html.contains("max 120 moves"));
         assert!(html.contains("abc123"));
@@ -5656,7 +5830,7 @@ mod tests {
         ];
         report.reference_anchors = Some(AnchorReferenceReport {
             source: AnchorReferenceSource {
-                path: Some("reports/latest.json".to_string()),
+                path: Some("reports/report.json".to_string()),
                 schedule: "round-robin".to_string(),
                 git_commit: Some("abc123".to_string()),
                 git_dirty: Some(false),
@@ -5719,7 +5893,7 @@ mod tests {
         }];
         report.reference_anchors = Some(AnchorReferenceReport {
             source: AnchorReferenceSource {
-                path: Some("reports/latest.json".to_string()),
+                path: Some("reports/report.json".to_string()),
                 schedule: "round-robin".to_string(),
                 git_commit: Some("abc123".to_string()),
                 git_dirty: Some(false),
@@ -5804,7 +5978,7 @@ mod tests {
         reference_match.white_stats.total_nodes = 1500;
         source.matches = vec![reference_match];
         let reference = AnchorReferenceReport::from_report(
-            Some("reports/latest.json".to_string()),
+            Some("reports/report.json".to_string()),
             &source,
             &["anchor-a".to_string(), "anchor-b".to_string()],
         )
@@ -5853,6 +6027,32 @@ mod tests {
         assert!(html.contains("<dt>Git revision</dt><dd>abcdef123456_dirty</dd>"));
         assert!(!html.contains("<dt>Git commit</dt>"));
         assert!(!html.contains("<dt>Git dirty</dt>"));
+    }
+
+    #[test]
+    fn published_report_keeps_replay_cells_and_drops_per_match_stats() {
+        let report = sample_report();
+        let published = PublishedTournamentReport::from_tournament_report(&report);
+        let json = published
+            .to_json()
+            .expect("published report should serialize");
+
+        assert_eq!(
+            published.schema_version,
+            PUBLISHED_TOURNAMENT_REPORT_SCHEMA_VERSION
+        );
+        assert_eq!(published.report_kind, "published_tournament");
+        assert_eq!(
+            published.matches[0].move_cells,
+            report.matches[0].move_cells
+        );
+        assert!(!json.contains("black_stats"));
+        assert!(!json.contains("white_stats"));
+        assert!(!json.contains("duration_ms"));
+
+        let parsed =
+            PublishedTournamentReport::from_json(&json).expect("published report should parse");
+        assert_eq!(parsed.matches.len(), report.matches.len());
     }
 
     #[test]

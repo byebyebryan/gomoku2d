@@ -653,13 +653,13 @@ the lab/report shell and `gomoku-wasm` as the browser bridge:
 
 The curated public report lives under `gomoku-bot-lab/analysis-reports/` and is
 published as `/analysis-report/`. It should be generated from
-`gomoku-bot-lab/reports/latest.json` without explicit entrants, so it explains
+`gomoku-bot-lab/reports/report.json` without explicit entrants, so it explains
 the current published bot report's top-two matchup rather than an arbitrary
 debug sample.
 
 The current analyzer checkpoint:
 
-- reads the curated public report from `reports/latest.json:Top 2 entrants`,
+- reads the curated public report from `reports/report.json:Top 2 entrants`,
 - uses `reply_policy = corridor_replies`,
 - uses corridor proof depth `4`,
 - uses `max_scan_plies = 64`,
@@ -685,10 +685,9 @@ Use a small report-sampled run while tuning analyzer output:
 
 ```bash
 cargo run --release -p gomoku-eval -- analyze-report-replays \
-  --report reports/latest.json \
+  --report reports/report.json \
   --sample-size 8 \
   --report-json outputs/analysis/top2_smoke.json \
-  --report-html outputs/analysis/top2_smoke.html \
   --max-depth 4 \
   --max-scan-plies 8
 ```
@@ -698,12 +697,12 @@ for review:
 
 ```bash
 cargo run --release -p gomoku-eval -- analyze-report-replays \
-  --report reports/latest.json \
+  --report reports/report.json \
   --sample-size 64 \
   --include-proof-details \
-  --report-json analysis-reports/latest.json \
-  --report-html analysis-reports/index.html \
-  --max-depth 4
+  --report-json analysis-reports/report.json \
+  --max-depth 4 \
+  --max-scan-plies 64
 ```
 
 Keep scratch output under `gomoku-bot-lab/outputs/analysis/`. Commit only

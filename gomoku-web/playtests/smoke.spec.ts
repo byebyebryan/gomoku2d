@@ -45,19 +45,36 @@ async function seedSmokeReplay(page: Page) {
 }
 
 test("published static report routes render their current artifacts", async ({ page }) => {
-  const botJson = await page.request.head("/bot-report/latest.json");
+  const botJson = await page.request.head("/bot-report/report.json");
   expect(botJson.status()).toBe(200);
 
   await page.goto("/bot-report/");
   await expect(page).toHaveTitle(/Bot Lab Report/);
   await expect(page.getByRole("heading", { name: "Bot Lab Report" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Analysis" })).toBeVisible();
+  await page.locator("tbody tr[role='button']").first().click();
+  await expect(page.getByText(/by opponent/).first()).toBeVisible();
+  const reportScroller = page.locator("main").first();
+  await expect
+    .poll(async () =>
+      reportScroller.evaluate((node) => node.scrollHeight > node.clientHeight)
+    )
+    .toBe(true);
+  await reportScroller.evaluate((node) => {
+    node.scrollTop = 1200;
+  });
+  await expect
+    .poll(async () => reportScroller.evaluate((node) => node.scrollTop))
+    .toBeGreaterThan(0);
+  await reportScroller.evaluate((node) => {
+    node.scrollTop = 0;
+  });
 
-  const analysisJson = await page.request.head("/analysis-report/latest.json");
+  const analysisJson = await page.request.head("/analysis-report/report.json");
   expect(analysisJson.status()).toBe(200);
 
   await page.goto("/analysis-report/");
-  await expect(page).toHaveTitle(/Analysis Batch Report/);
+  await expect(page).toHaveTitle(/Analysis Report/);
   await expect(page.getByRole("heading", { name: "Replay Analysis" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Bots" })).toBeVisible();
 });

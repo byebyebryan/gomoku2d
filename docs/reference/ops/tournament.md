@@ -53,7 +53,7 @@ cargo run --release -p gomoku-eval -- tournament \
   --max-moves 120 \
   --seed 63 \
   --threads 22 \
-  --report-json reports/latest.json
+  --published-report-json reports/report.json
 ```
 
 Long parallel tournaments print progress to stderr as games complete, including
@@ -85,7 +85,7 @@ cargo run --release -p gomoku-eval -- tournament \
   --schedule gauntlet \
   --candidate search-d5+tactical-cap-4+pattern-eval \
   --anchors search-d3,search-d5+tactical-cap-16+pattern-eval,search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4 \
-  --anchor-report reports/latest.json \
+  --anchor-report reports/report.json \
   --games-per-pair 64 \
   --opening-policy centered-suite \
   --opening-plies 4 \
@@ -101,7 +101,7 @@ cargo run --release -p gomoku-eval -- tournament \
   --schedule gauntlet \
   --candidates search-d5+tactical-cap-4+pattern-eval,search-d7+tactical-cap-4+pattern-eval,search-d7+tactical-cap-16+pattern-eval \
   --anchors search-d3,search-d5+tactical-cap-16+pattern-eval,search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4 \
-  --anchor-report reports/latest.json \
+  --anchor-report reports/report.json \
   --games-per-pair 32 \
   --opening-policy centered-suite \
   --opening-plies 4 \
@@ -119,11 +119,12 @@ Batch gauntlets play candidates against anchors only. They intentionally do not
 play candidate-vs-candidate games; promote surviving candidates to a focused
 head-to-head or the next curated round-robin when that comparison matters.
 
-`--anchor-report` points at a full round-robin report, normally
-`gomoku-bot-lab/reports/latest.json`. The gauntlet report embeds the requested
-anchor standings from that source, including source config and git provenance,
-anchor-vs-anchor pair summaries, and aggregate anchor search-cost summaries, so
-scratch gauntlets can be read without maintaining a separate rating cache. The
+`--anchor-report` points at a round-robin report, normally the compact published
+`gomoku-bot-lab/reports/report.json`. The gauntlet report embeds the requested
+anchor standings from that source, including source config, git provenance, and
+anchor-vs-anchor pair summaries, so scratch gauntlets can be read without
+maintaining a separate rating cache. Full debug reports can also provide
+aggregate anchor search-cost summaries. The
 HTML report marks comparison rows by `current` versus `reference`: current rows
 come from the gauntlet JSON itself; reference rows come from the embedded anchor
 report and do not include per-match boards in the scratch report. The source
@@ -212,12 +213,10 @@ For published reports:
 1. Commit code and docs first.
 2. From `gomoku-bot-lab/`, run the full tournament from a clean working tree.
 3. Confirm report provenance has `"git_dirty": false`.
-4. Commit report JSON/HTML as a follow-up report commit.
+4. Commit report JSON as a follow-up report commit.
 
-If the tournament JSON is still the desired data source and only report
-presentation changed, re-render the HTML from the existing clean
-`reports/latest.json` instead of rerunning the tournament. The JSON remains the
-source of truth for ranking and anchor ratings; the HTML is a derived view.
+The published report is web-rendered from `reports/report.json`. For local debug
+telemetry, write full reports under ignored `outputs/`.
 
 ## Known Limitations
 

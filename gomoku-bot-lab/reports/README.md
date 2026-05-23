@@ -1,29 +1,17 @@
 # Gomoku2D Bot Reports
 
-Curated bot-lab report artifacts for publishing.
+Curated bot-lab data for the published `/bot-report/` page.
 
-Scratch tournament output belongs in ignored `outputs/`. Put only reports that
-are worth publishing here. The web build copies this folder to
-`/bot-report/` on GitHub Pages.
+Rust owns the tournament run and data export. The web app owns report rendering,
+so this folder should contain `report.json` only. Scratch and full diagnostic
+reports belong in ignored `outputs/`.
 
 Recommended flow, from `gomoku-bot-lab/`:
 
-1. Commit the bot/report tooling change first.
+1. Commit bot/report tooling changes first.
 2. Confirm the worktree is clean before running the curated tournament.
-3. Generate the report directly into this folder.
-4. Commit `latest.json` and `index.html` as a follow-up artifact commit.
-
-The report captures git provenance. If the worktree is dirty when the
-tournament runs, the published report will show a `_dirty` revision and a
-development-run warning. That is useful for scratch reports, but release-quality
-curated reports should come from a clean committed toolchain.
-
-The curated published report uses pooled CPU budgeting: each move starts with a
-`2000 ms` base budget, cheaper moves bank unused time into an `8000 ms` reserve
-pool, and any single move is capped at `4000 ms`. This is closer to product-like
-hard-bot behavior than the older strict-per-move report while keeping the run
-bounded. Use strict mode only for focused continuity checks against older
-reports.
+3. Generate the compact published report directly into this folder.
+4. Commit `report.json` as the artifact update.
 
 ```sh
 git status --short
@@ -40,25 +28,23 @@ cargo run --release -p gomoku-eval -- tournament \
   --max-moves 120 \
   --seed 63 \
   --threads 22 \
-  --report-json reports/latest.json
-cargo run --release -p gomoku-eval -- report-html --input reports/latest.json --output reports/index.html --json-href latest.json
-jq '.provenance | {git_commit, git_dirty}' reports/latest.json
+  --published-report-json reports/report.json
+jq '.provenance | {git_commit, git_dirty}' reports/report.json
 ```
 
-Keep the raw JSON next to the generated HTML so the report can be inspected or
-re-rendered without rerunning the tournament.
+For local debug runs, add `--report-json outputs/full-tournament-report.json`
+to keep the rich per-match telemetry outside the published artifact.
 
-If only the HTML renderer changes, re-render `index.html` from the existing
-clean `latest.json`; do not spend another full tournament just to refresh
-presentation. The JSON provenance remains the match-data provenance, while the
-HTML can track later renderer polish.
+The curated published report uses pooled CPU budgeting: each move starts with a
+`2000 ms` base budget, cheaper moves bank unused time into an `8000 ms` reserve
+pool, and any single move is capped at `4000 ms`. This is closer to product-like
+hard-bot behavior than the older strict-per-move report while keeping the run
+bounded.
 
-`latest.json` is also the default anchor-rating source for focused gauntlet
-runs. Gauntlets can embed selected standings from this full round-robin report
-with `--anchor-report reports/latest.json`, which keeps scratch comparisons
-calibrated without maintaining a separate cache file. The gauntlet command
-validates rule, opening, search budget, and match-cap compatibility before it
-uses the reference standings.
+`report.json` can also be used as the anchor-rating source for focused gauntlet
+runs with `--anchor-report reports/report.json`. Compact published reports omit
+per-match side telemetry, so gauntlet anchors keep standings and pairwise
+context but not reference pair search-cost drilldowns.
 
 The curated replay-analysis report in `../analysis-reports/` is generated from
-this `latest.json` and should explain the current top-two matchup by default.
+this `report.json` and should explain the current top-two matchup by default.
