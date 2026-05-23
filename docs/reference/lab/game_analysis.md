@@ -652,18 +652,19 @@ the lab/report shell and `gomoku-wasm` as the browser bridge:
   constructs the analyzer.
 
 The curated public report lives under `gomoku-bot-lab/analysis-reports/` and is
-published as `/analysis-report/`. It should be generated from
-`gomoku-bot-lab/reports/report.json` without explicit entrants, so it explains
-the current published bot report's top-two matchup rather than an arbitrary
-debug sample.
+published as `/analysis-report/`. It should be generated from the full/debug
+tournament report used to produce the compact bot report, because the published
+bot report intentionally omits replay cells. The curated sample explains the
+in-game Easy/Normal/Hard preset triangle rather than an arbitrary debug matchup.
 
 The current analyzer checkpoint:
 
-- reads the curated public report from `reports/report.json:Top 2 entrants`,
+- reads replay cells from the full tournament report under `outputs/`,
+- publishes compact analysis JSON with `selector = "Preset triangle"`,
 - uses `reply_policy = corridor_replies`,
 - uses corridor proof depth `4`,
 - uses `max_scan_plies = 64`,
-- generated the current curated 64-game top-two report with `64/64` analyzed
+- generated the current curated 192-game preset-triangle report with `192/192` analyzed
   and `0` failed entries,
 - writes the curated batch report under
   `gomoku-bot-lab/analysis-reports/`,
@@ -685,7 +686,7 @@ Use a small report-sampled run while tuning analyzer output:
 
 ```bash
 cargo run --release -p gomoku-eval -- analyze-report-replays \
-  --report reports/report.json \
+  --report outputs/full-tournament-report.json \
   --sample-size 8 \
   --report-json outputs/analysis/top2_smoke.json \
   --max-depth 4 \
@@ -697,10 +698,9 @@ for review:
 
 ```bash
 cargo run --release -p gomoku-eval -- analyze-report-replays \
-  --report reports/report.json \
-  --sample-size 64 \
-  --include-proof-details \
-  --report-json analysis-reports/report.json \
+  --report outputs/full-tournament-report.json \
+  --selector preset-triangle \
+  --published-report-json analysis-reports/report.json \
   --max-depth 4 \
   --max-scan-plies 64
 ```

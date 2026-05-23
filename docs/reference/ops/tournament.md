@@ -40,6 +40,7 @@ published baseline.
 
 ```sh
 mkdir -p reports
+mkdir -p outputs
 
 cargo run --release -p gomoku-eval -- tournament \
   --bots search-d1,search-d3,search-d3+pattern-eval,search-d5+tactical-cap-16+pattern-eval,search-d7+tactical-cap-8+pattern-eval,search-d3+pattern-eval+corridor-proof-c16-d8-w4,search-d5+tactical-cap-16+pattern-eval+corridor-proof-c16-d8-w4,search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4 \
@@ -53,6 +54,7 @@ cargo run --release -p gomoku-eval -- tournament \
   --max-moves 120 \
   --seed 63 \
   --threads 22 \
+  --report-json outputs/full-tournament-report.json \
   --published-report-json reports/report.json
 ```
 
@@ -215,8 +217,9 @@ For published reports:
 3. Confirm report provenance has `"git_dirty": false`.
 4. Commit report JSON as a follow-up report commit.
 
-The published report is web-rendered from `reports/report.json`. For local debug
-telemetry, write full reports under ignored `outputs/`.
+The published bot report is web-rendered from compact `reports/report.json`.
+That artifact intentionally omits replay cells and debug telemetry; use a full
+report under ignored `outputs/` as the replay-analysis source.
 
 ## Known Limitations
 

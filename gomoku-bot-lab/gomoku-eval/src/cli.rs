@@ -7,14 +7,16 @@ use gomoku_bot::{lab_spec, RandomBot, SearchBot};
 use gomoku_core::{Color, GameResult, Move, Replay, RuleConfig, Variant};
 use gomoku_eval::analysis::{analyze_replay, AnalysisOptions, DEFAULT_MAX_SCAN_PLIES};
 use gomoku_eval::analysis_batch::{
-    run_analysis_batch_replays_with_progress, run_analysis_batch_with_options, AnalysisBatchReport,
-    AnalysisBatchRunOptions, ReplayAnalysisInput,
+    published_analysis_report_from_batch, run_analysis_batch_replays_with_progress,
+    run_analysis_batch_with_options, AnalysisBatchReport, AnalysisBatchRunOptions,
+    PublishedAnalysisMatchSummary, PublishedAnalysisSectionInput, ReplayAnalysisInput,
 };
 use gomoku_eval::analysis_fixture::{
     run_analysis_fixtures, AnalysisFixtureReport, AnalysisFixtureResult,
 };
 use gomoku_eval::analysis_report::{
-    report_match_to_replay, select_report_matches, ReportReplaySource,
+    report_match_to_replay, select_report_matches, ReportReplayMatch, ReportReplaySelection,
+    ReportReplaySource,
 };
 use gomoku_eval::arena::{run_match_series_with_limits, MatchEndReason, MatchLimits, MatchResult};
 use gomoku_eval::budget::{PooledCpuBudgetConfig, PooledSearchBot};
@@ -85,6 +87,22 @@ fn tournament_progress_interval(total_games: usize) -> Option<usize> {
 enum CliSearchBudgetMode {
     Strict,
     Pooled,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+#[clap(rename_all = "kebab-case")]
+enum CliReportReplaySelector {
+    HeadToHead,
+    PresetTriangle,
+}
+
+impl CliReportReplaySelector {
+    fn label(self) -> &'static str {
+        match self {
+            CliReportReplaySelector::HeadToHead => "Head-to-head",
+            CliReportReplaySelector::PresetTriangle => "Preset triangle",
+        }
+    }
 }
 
 impl CliSearchBudgetMode {
@@ -328,9 +346,13 @@ enum Commands {
     },
     /// Analyze sampled replays embedded in a tournament report
     AnalyzeReportReplays {
-        /// Tournament report JSON containing compact match move cells
+        /// Tournament report JSON containing replay move cells
         #[arg(long)]
         report: PathBuf,
+
+        /// Match selection mode for report replays
+        #[arg(long, value_enum, default_value = "head-to-head")]
+        selector: CliReportReplaySelector,
 
         /// First entrant in the head-to-head matchup; defaults to standing #1
         #[arg(long)]
@@ -347,6 +369,10 @@ enum Commands {
         /// Write reusable batch report JSON
         #[arg(long)]
         report_json: Option<PathBuf>,
+
+        /// Write compact published analysis report JSON
+        #[arg(long)]
+        published_report_json: Option<PathBuf>,
 
         /// Maximum corridor proof depth
         #[arg(long, default_value_t = 4)]
@@ -860,6 +886,136 @@ fn resolve_report_replay_entrants(
     }
 }
 
+struct ReportReplaySectionPlan<'a> {
+    label: String,
+    entrant_a: String,
+    entrant_b: String,
+    selections: Vec<ReportReplaySelection<'a>>,
+}
+
+const PRESET_EASY_BOT: &str = "search-d1";
+const PRESET_NORMAL_BOT: &str = "search-d3+pattern-eval";
+const PRESET_HARD_BOT: &str = "search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4";
+
+fn report_replay_section_plans<'a>(
+    report_source: &'a ReportReplaySource,
+    selector: CliReportReplaySelector,
+    entrant_a: Option<String>,
+    entrant_b: Option<String>,
+    sample_size: usize,
+) -> Result<Vec<ReportReplaySectionPlan<'a>>, String> {
+    match selector {
+        CliReportReplaySelector::HeadToHead => {
+            let (entrant_a, entrant_b) =
+                resolve_report_replay_entrants(&report_source.standings, entrant_a, entrant_b)?;
+            let selections =
+                select_report_matches(report_source, &entrant_a, &entrant_b, sample_size)?;
+            Ok(vec![ReportReplaySectionPlan {
+                label: if sample_size == usize::MAX {
+                    format!("{entrant_a} vs {entrant_b}")
+                } else {
+                    report_replay_selector_label(&entrant_a, &entrant_b, false)
+                },
+                entrant_a,
+                entrant_b,
+                selections,
+            }])
+        }
+        CliReportReplaySelector::PresetTriangle => {
+            if entrant_a.is_some() || entrant_b.is_some() {
+                return Err(
+                    "preset-triangle selector does not accept --entrant-a or --entrant-b"
+                        .to_string(),
+                );
+            }
+
+            [
+                ("Easy vs Normal", PRESET_EASY_BOT, PRESET_NORMAL_BOT),
+                ("Easy vs Hard", PRESET_EASY_BOT, PRESET_HARD_BOT),
+                ("Normal vs Hard", PRESET_NORMAL_BOT, PRESET_HARD_BOT),
+            ]
+            .into_iter()
+            .map(|(label, entrant_a, entrant_b)| {
+                let selections =
+                    select_report_matches(report_source, entrant_a, entrant_b, usize::MAX)?;
+                Ok(ReportReplaySectionPlan {
+                    label: label.to_string(),
+                    entrant_a: entrant_a.to_string(),
+                    entrant_b: entrant_b.to_string(),
+                    selections,
+                })
+            })
+            .collect()
+        }
+    }
+}
+
+fn flatten_report_replay_sections(
+    report_source: &ReportReplaySource,
+    sections: &[ReportReplaySectionPlan<'_>],
+) -> Vec<ReplayAnalysisInput> {
+    sections
+        .iter()
+        .flat_map(|section| {
+            section.selections.iter().map(|selection| {
+                let replay = report_match_to_replay(report_source, selection.match_report)
+                    .unwrap_or_else(|err| {
+                        exit_with_error(format!(
+                            "Failed to convert match {} to replay: {err}",
+                            selection.match_report.match_index
+                        ))
+                    });
+                ReplayAnalysisInput {
+                    label: report_replay_input_label(selection.match_report),
+                    replay,
+                }
+            })
+        })
+        .collect()
+}
+
+fn published_analysis_sections_from_plans(
+    sections: &[ReportReplaySectionPlan<'_>],
+) -> Vec<PublishedAnalysisSectionInput> {
+    sections
+        .iter()
+        .map(|section| PublishedAnalysisSectionInput {
+            label: section.label.clone(),
+            entrant_a: section.entrant_a.clone(),
+            entrant_b: section.entrant_b.clone(),
+            matches: section
+                .selections
+                .iter()
+                .map(|selection| published_analysis_match_summary(selection.match_report))
+                .collect(),
+        })
+        .collect()
+}
+
+fn published_analysis_match_summary(
+    match_report: &ReportReplayMatch,
+) -> PublishedAnalysisMatchSummary {
+    PublishedAnalysisMatchSummary {
+        match_index: match_report.match_index,
+        black: match_report.black.clone(),
+        white: match_report.white.clone(),
+        result: match_report.result.clone(),
+        winner: match_report.winner.clone(),
+        end_reason: match_report.end_reason.clone(),
+        move_cells: match_report.move_cells.clone(),
+        move_count: match_report.move_count,
+    }
+}
+
+fn report_replay_input_label(match_report: &ReportReplayMatch) -> String {
+    format!(
+        "match_{:04}__{}__vs__{}",
+        match_report.match_index,
+        match_report.black.replace('+', "_"),
+        match_report.white.replace('+', "_")
+    )
+}
+
 fn highest_different_standing(standing_bots: &[String], entrant: &str) -> Option<String> {
     standing_bots
         .iter()
@@ -873,12 +1029,19 @@ fn report_replay_source_label(
     entrant_b: &str,
     default_top_two: bool,
 ) -> String {
-    let selector = if default_top_two {
+    format!(
+        "{}:{}",
+        report.display(),
+        report_replay_selector_label(entrant_a, entrant_b, default_top_two)
+    )
+}
+
+fn report_replay_selector_label(entrant_a: &str, entrant_b: &str, default_top_two: bool) -> String {
+    if default_top_two {
         "Top 2 entrants".to_string()
     } else {
         format!("{entrant_a} vs {entrant_b}")
-    };
-    format!("{}:{selector}", report.display())
+    }
 }
 
 pub fn run() {
@@ -1358,9 +1521,26 @@ pub fn run() {
         Commands::ReportJson { input, output } => {
             let json = std::fs::read_to_string(&input)
                 .unwrap_or_else(|err| exit_with_error(format!("Failed to read report: {err}")));
-            let report = TournamentReport::from_json(&json)
+            let value: serde_json::Value = serde_json::from_str(&json)
                 .unwrap_or_else(|err| exit_with_error(format!("Failed to parse report: {err}")));
-            let published_report = PublishedTournamentReport::from_tournament_report(&report);
+            let published_report =
+                match value.get("report_kind").and_then(serde_json::Value::as_str) {
+                    Some("tournament") => {
+                        let report = TournamentReport::from_json(&json).unwrap_or_else(|err| {
+                            exit_with_error(format!("Failed to parse tournament report: {err}"))
+                        });
+                        PublishedTournamentReport::from_tournament_report(&report)
+                    }
+                    Some("published_tournament") => {
+                        let report =
+                            PublishedTournamentReport::from_json(&json).unwrap_or_else(|err| {
+                                exit_with_error(format!("Failed to parse published report: {err}"))
+                            });
+                        PublishedTournamentReport::from_published_report(&report)
+                    }
+                    Some(other) => exit_with_error(format!("Unsupported report kind: {other}")),
+                    None => exit_with_error("Report is missing report_kind"),
+                };
             let json = published_report.to_json().unwrap_or_else(|err| {
                 exit_with_error(format!("Failed to serialize published report: {err}"))
             });
@@ -1506,49 +1686,54 @@ pub fn run() {
         }
         Commands::AnalyzeReportReplays {
             report,
+            selector,
             entrant_a,
             entrant_b,
             sample_size,
             report_json,
+            published_report_json,
             max_depth,
             max_scan_plies,
             include_proof_details,
         } => {
-            let default_top_two = entrant_a.is_none() && entrant_b.is_none();
             let json = std::fs::read_to_string(&report).unwrap_or_else(|err| {
                 exit_with_error(format!("Failed to read tournament report: {err}"))
             });
             let report_source = ReportReplaySource::from_json(&json).unwrap_or_else(|err| {
                 exit_with_error(format!("Failed to parse tournament report: {err}"))
             });
-            let (entrant_a, entrant_b) =
-                resolve_report_replay_entrants(&report_source.standings, entrant_a, entrant_b)
-                    .unwrap_or_else(|err| exit_with_error(err));
-            let selections =
-                select_report_matches(&report_source, &entrant_a, &entrant_b, sample_size)
-                    .unwrap_or_else(|err| exit_with_error(err));
-            let mut inputs = Vec::with_capacity(selections.len());
-            for selection in selections {
-                let replay = report_match_to_replay(&report_source, selection.match_report)
-                    .unwrap_or_else(|err| {
-                        exit_with_error(format!(
-                            "Failed to convert match {} to replay: {err}",
-                            selection.match_report.match_index
-                        ))
-                    });
-                inputs.push(ReplayAnalysisInput {
-                    label: format!(
-                        "match_{:04}__{}__vs__{}",
-                        selection.match_report.match_index,
-                        selection.match_report.black.replace('+', "_"),
-                        selection.match_report.white.replace('+', "_")
-                    ),
-                    replay,
-                });
-            }
+            let default_top_two = selector == CliReportReplaySelector::HeadToHead
+                && entrant_a.is_none()
+                && entrant_b.is_none();
+            let section_plans = report_replay_section_plans(
+                &report_source,
+                selector,
+                entrant_a,
+                entrant_b,
+                sample_size,
+            )
+            .unwrap_or_else(|err| exit_with_error(err));
+            let published_sections = published_analysis_sections_from_plans(&section_plans);
+            let inputs = flatten_report_replay_sections(&report_source, &section_plans);
+            let source = match selector {
+                CliReportReplaySelector::HeadToHead => {
+                    let section = section_plans
+                        .first()
+                        .unwrap_or_else(|| exit_with_error("missing head-to-head section"));
+                    report_replay_source_label(
+                        &report,
+                        &section.entrant_a,
+                        &section.entrant_b,
+                        default_top_two,
+                    )
+                }
+                CliReportReplaySelector::PresetTriangle => {
+                    format!("{}:{}", report.display(), selector.label())
+                }
+            };
             let progress_interval = tournament_progress_interval(inputs.len());
             let batch_report = run_analysis_batch_replays_with_progress(
-                report_replay_source_label(&report, &entrant_a, &entrant_b, default_top_two),
+                source,
                 inputs,
                 AnalysisBatchRunOptions {
                     analysis: AnalysisOptions {
@@ -1556,7 +1741,7 @@ pub fn run() {
                         max_scan_plies: Some(max_scan_plies),
                         ..AnalysisOptions::default()
                     },
-                    include_proof_details,
+                    include_proof_details: include_proof_details || published_report_json.is_some(),
                 },
                 progress_interval,
             );
@@ -1571,6 +1756,26 @@ pub fn run() {
                     exit_with_error(format!("Failed to write analysis batch report: {err}"))
                 });
                 println!("Report JSON: {}", path.display());
+            }
+            if let Some(path) = published_report_json {
+                let published_report = published_analysis_report_from_batch(
+                    report.display().to_string(),
+                    selector.label().to_string(),
+                    &batch_report,
+                    &published_sections,
+                )
+                .unwrap_or_else(|err| {
+                    exit_with_error(format!("Failed to build published analysis report: {err}"))
+                });
+                let json = published_report.to_json().unwrap_or_else(|err| {
+                    exit_with_error(format!(
+                        "Failed to serialize published analysis report: {err}"
+                    ))
+                });
+                std::fs::write(&path, json).unwrap_or_else(|err| {
+                    exit_with_error(format!("Failed to write published analysis report: {err}"))
+                });
+                println!("Published report JSON: {}", path.display());
             }
             if batch_report.failed > 0 {
                 std::process::exit(1);
@@ -2085,6 +2290,8 @@ mod tests {
             "8",
             "--report-json",
             "outputs/analysis/top2-smoke.json",
+            "--published-report-json",
+            "analysis-reports/report.json",
             "--max-depth",
             "4",
             "--max-scan-plies",
@@ -2095,10 +2302,12 @@ mod tests {
 
         let Commands::AnalyzeReportReplays {
             report,
+            selector,
             entrant_a,
             entrant_b,
             sample_size,
             report_json,
+            published_report_json,
             max_depth,
             max_scan_plies,
             include_proof_details,
@@ -2108,6 +2317,7 @@ mod tests {
         };
 
         assert_eq!(report, PathBuf::from("reports/report.json"));
+        assert_eq!(selector, CliReportReplaySelector::HeadToHead);
         assert_eq!(
             entrant_a.as_deref(),
             Some("search-d7+tactical-cap-8+pattern-eval")
@@ -2121,9 +2331,45 @@ mod tests {
             report_json,
             Some(PathBuf::from("outputs/analysis/top2-smoke.json"))
         );
+        assert_eq!(
+            published_report_json,
+            Some(PathBuf::from("analysis-reports/report.json"))
+        );
         assert_eq!(max_depth, 4);
         assert_eq!(max_scan_plies, 8);
         assert!(include_proof_details);
+    }
+
+    #[test]
+    fn analyze_report_replays_command_parses_preset_triangle_selector() {
+        let cli = Cli::try_parse_from([
+            "gomoku-eval",
+            "analyze-report-replays",
+            "--report",
+            "reports/report.json",
+            "--selector",
+            "preset-triangle",
+            "--published-report-json",
+            "analysis-reports/report.json",
+        ])
+        .expect("analyze-report-replays command should parse");
+
+        let Commands::AnalyzeReportReplays {
+            selector,
+            report,
+            published_report_json,
+            ..
+        } = cli.command
+        else {
+            panic!("expected analyze-report-replays command");
+        };
+
+        assert_eq!(selector, CliReportReplaySelector::PresetTriangle);
+        assert_eq!(report, PathBuf::from("reports/report.json"));
+        assert_eq!(
+            published_report_json,
+            Some(PathBuf::from("analysis-reports/report.json"))
+        );
     }
 
     #[test]

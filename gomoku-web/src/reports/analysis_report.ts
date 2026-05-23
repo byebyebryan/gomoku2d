@@ -3,10 +3,12 @@ export interface MovePoint {
   col: number;
 }
 
-export interface AnalysisBatchReport {
+export interface PublishedAnalysisReport {
   schema_version: number;
+  report_kind: "published_analysis";
   source_kind: string;
-  source: string;
+  source_report: string;
+  selector: string;
   total: number;
   analyzed: number;
   failed: number;
@@ -21,14 +23,37 @@ export interface AnalysisBatchReport {
     ongoing_or_draw: number;
     analysis_error: number;
   };
+  sections: AnalysisSection[];
+}
+
+export interface AnalysisSection {
+  label: string;
+  entrant_a: string;
+  entrant_b: string;
+  total: number;
+  analyzed: number;
+  failed: number;
+  summary: {
+    unclear: number;
+    ongoing_or_draw: number;
+    analysis_error: number;
+  };
   entries: AnalysisEntry[];
 }
 
 export interface AnalysisEntry {
   path: string;
+  match_report: {
+    match_index: number;
+    black: string;
+    white: string;
+    result: string;
+    winner?: string | null;
+    end_reason: string;
+    move_cells: number[];
+    move_count: number;
+  };
   status: string;
-  winner?: string | null;
-  move_count?: number | null;
   root_cause?: string | null;
   unclear_reason?: string | null;
   lethal_onset?: {
@@ -78,13 +103,12 @@ export interface ProofFrame {
     notation: string;
     roles: string[];
     outcome: string;
-    principal_line_notation?: string[];
   }>;
 }
 
 const ANALYSIS_REPORT_URL = `${import.meta.env.BASE_URL}analysis-report/report.json`;
 
-export async function loadAnalysisReport(): Promise<AnalysisBatchReport> {
+export async function loadAnalysisReport(): Promise<PublishedAnalysisReport> {
   const response = await fetch(ANALYSIS_REPORT_URL, { cache: "no-cache" });
   if (!response.ok) {
     throw new Error(`Failed to load analysis report (${response.status})`);
@@ -97,22 +121,14 @@ export async function loadAnalysisReport(): Promise<AnalysisBatchReport> {
   return data;
 }
 
-function isAnalysisReport(data: unknown): data is AnalysisBatchReport {
+function isAnalysisReport(data: unknown): data is PublishedAnalysisReport {
   if (!data || typeof data !== "object") {
     return false;
   }
-  const report = data as Partial<AnalysisBatchReport>;
-  return Array.isArray(report.entries) && typeof report.total === "number";
+  const report = data as Partial<PublishedAnalysisReport>;
+  return (
+    report.report_kind === "published_analysis" &&
+    Array.isArray(report.sections) &&
+    typeof report.total === "number"
+  );
 }
-
-export function splitAnalysisSource(source: string): {
-  sourcePath: string;
-  selector: string;
-} {
-  const [sourcePath, selector] = source.split(":", 2);
-  return {
-    sourcePath: sourcePath || source,
-    selector: selector || "Top 2 entrants",
-  };
-}
-

@@ -112,9 +112,9 @@ ignored `gomoku-bot-lab/outputs/` folder.
 
 Curated replay-analysis report artifacts live in
 `gomoku-bot-lab/analysis-reports/` and are published under
-`/analysis-report/`. The analysis report is intentionally tied to the bot report:
-it samples the head-to-head games between the current top two standings in
-`gomoku-bot-lab/reports/report.json`.
+`/analysis-report/`. The analysis report is intentionally tied to product bot
+presets: it analyzes the Easy/Normal/Hard preset triangle from the same
+tournament source used to generate the published bot report.
 
 The curated report artifacts are tracked generated outputs. `.gitattributes`
 marks their JSON files as generated and disables noisy diffs, but release builds
@@ -126,15 +126,15 @@ refresh it only from a clean committed toolchain:
 
 1. Commit bot/report code changes first.
 2. Confirm `git status --short` is clean.
-3. Run the curated tournament into `gomoku-bot-lab/reports/report.json`.
+3. Run the curated tournament into ignored full output plus
+   `gomoku-bot-lab/reports/report.json`.
 4. Confirm `reports/report.json` says `"git_dirty": false`.
-5. Generate the top-two analysis report into
+5. Generate the preset-triangle analysis report from the full output into
    `gomoku-bot-lab/analysis-reports/report.json`.
 6. Commit the report artifacts as a follow-up commit.
 
-For local diagnostics, add `--report-json outputs/full-tournament-report.json`
-to the tournament command. Keep the full telemetry report out of curated
-published artifacts.
+Keep the full telemetry report out of curated published artifacts; it exists
+only to preserve replay cells and diagnostics for analysis generation.
 
 Current curated command, from `gomoku-bot-lab/`:
 
@@ -151,22 +151,23 @@ cargo run --release -p gomoku-eval -- tournament \
   --max-moves 120 \
   --seed 63 \
   --threads 22 \
+  --report-json outputs/full-tournament-report.json \
   --published-report-json reports/report.json
 jq '.provenance | {git_commit, git_dirty}' reports/report.json
 cargo run --release -p gomoku-eval -- analyze-report-replays \
-  --report reports/report.json \
-  --sample-size 64 \
-  --include-proof-details \
-  --report-json analysis-reports/report.json \
+  --report outputs/full-tournament-report.json \
+  --selector preset-triangle \
+  --published-report-json analysis-reports/report.json \
   --max-depth 4 \
   --max-scan-plies 64
-jq '{source, total, analyzed, failed, model, summary}' analysis-reports/report.json
+jq '{source_report, selector, total, analyzed, failed, model, summary}' analysis-reports/report.json
 ```
 
 For the curated analysis report, sanity-check at minimum:
 
 - `source_kind == "report_replays"`
-- `source == "reports/report.json:Top 2 entrants"`
+- `selector == "Preset triangle"`
+- `sections | length == 3`
 - `analyzed == total` and `failed == 0`
 - `model.reply_policy == "corridor_replies"`
 - `model.max_depth == 4` and `model.max_scan_plies == 64`

@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 
 import {
   loadAnalysisReport,
-  splitAnalysisSource,
-  type AnalysisBatchReport,
   type AnalysisEntry,
+  type AnalysisSection,
   type ProofFrame,
+  type PublishedAnalysisReport,
 } from "../reports/analysis_report";
 
 import styles from "./ReportRoute.module.css";
@@ -14,7 +14,7 @@ const baseUrl = import.meta.env.BASE_URL;
 
 type LoadState =
   | { status: "loading" }
-  | { status: "loaded"; report: AnalysisBatchReport }
+  | { status: "loaded"; report: PublishedAnalysisReport }
   | { status: "error"; message: string };
 
 export function AnalysisReportRoute() {
@@ -52,8 +52,7 @@ export function AnalysisReportRoute() {
   return <AnalysisReportPage report={state.report} />;
 }
 
-function AnalysisReportPage({ report }: { report: AnalysisBatchReport }) {
-  const source = splitAnalysisSource(report.source);
+function AnalysisReportPage({ report }: { report: PublishedAnalysisReport }) {
   return (
     <main className={styles.page}>
       <div className={styles.shell}>
@@ -70,8 +69,8 @@ function AnalysisReportPage({ report }: { report: AnalysisBatchReport }) {
             </nav>
           </div>
           <div className={styles.chips} aria-label="Analysis summary">
-            <ReportChip label="Source" value={source.sourcePath} />
-            <ReportChip label="Selector" value={source.selector} />
+            <ReportChip label="Source" value={report.source_report} />
+            <ReportChip label="Selector" value={report.selector} />
             <ReportChip label="Entries" value={`${report.analyzed}/${report.total}`} />
             <ReportChip label="Unclear" value={`${report.summary.unclear}`} />
             <ReportChip label="Errors" value={`${report.failed}`} />
@@ -79,20 +78,49 @@ function AnalysisReportPage({ report }: { report: AnalysisBatchReport }) {
           </div>
         </header>
 
-        <section className={styles.panel}>
-          <h2>Matches</h2>
-          <div className={styles.list}>
-            {report.entries.map((entry, index) => (
-              <AnalysisEntryCard
-                key={`${entry.path}-${index}`}
-                entry={entry}
-                defaultOpen={index === 0}
-              />
-            ))}
-          </div>
-        </section>
+        {report.sections.map((section, sectionIndex) => (
+          <AnalysisSectionPanel
+            key={section.label}
+            section={section}
+            defaultOpenFirst={sectionIndex === 0}
+          />
+        ))}
       </div>
     </main>
+  );
+}
+
+function AnalysisSectionPanel({
+  section,
+  defaultOpenFirst,
+}: {
+  section: AnalysisSection;
+  defaultOpenFirst: boolean;
+}) {
+  return (
+    <section className={styles.panel}>
+      <div className={styles.headerRow}>
+        <div>
+          <h2>{section.label}</h2>
+          <p className={styles.muted}>
+            {cleanBotName(section.entrant_a)} vs {cleanBotName(section.entrant_b)}
+          </p>
+        </div>
+        <span className={styles.metric}>
+          <span>Entries</span>
+          <strong>{section.analyzed}/{section.total}</strong>
+        </span>
+      </div>
+      <div className={styles.list}>
+        {section.entries.map((entry, index) => (
+          <AnalysisEntryCard
+            key={`${section.label}-${entry.match_report.match_index}`}
+            entry={entry}
+            defaultOpen={defaultOpenFirst && index === 0}
+          />
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -103,7 +131,7 @@ function AnalysisEntryCard({
   entry: AnalysisEntry;
   defaultOpen: boolean;
 }) {
-  const title = entryTitle(entry.path);
+  const title = entryTitle(entry);
   const setupLength = entry.setup_corridor
     ? entry.setup_corridor.end_ply - entry.setup_corridor.start_ply
     : null;
@@ -115,11 +143,11 @@ function AnalysisEntryCard({
           <strong>{title.match}</strong>
           <span>{title.players}</span>
         </span>
-        <SummaryMetric label="Winner" value={entry.winner ?? "-"} />
+        <SummaryMetric label="Winner" value={entry.match_report.winner ?? "-"} />
         <SummaryMetric label="Failure" value={failureLabel(entry)} />
         <SummaryMetric label="Onset" value={plyLabel(entry.lethal_onset?.ply)} />
         <SummaryMetric label="Corridor len" value={setupLength == null ? "-" : `${setupLength}`} />
-        <SummaryMetric label="Game len" value={entry.move_count == null ? "-" : `${entry.move_count}`} />
+        <SummaryMetric label="Game len" value={`${entry.match_report.move_count}`} />
       </summary>
       <div className={styles.details}>
         <div className={styles.detailGrid}>
@@ -220,14 +248,10 @@ function ReportState({ title, message }: { title: string; message: string }) {
   );
 }
 
-function entryTitle(path: string): { match: string; players: string } {
-  const match = path.match(/^match_(\d+)__(.+)__vs__(.+)$/);
-  if (!match) {
-    return { match: path, players: "" };
-  }
+function entryTitle(entry: AnalysisEntry): { match: string; players: string } {
   return {
-    match: `#${Number(match[1])}`,
-    players: `${cleanBotName(match[2])} vs ${cleanBotName(match[3])}`,
+    match: `#${entry.match_report.match_index}`,
+    players: `${cleanBotName(entry.match_report.black)} vs ${cleanBotName(entry.match_report.white)}`,
   };
 }
 

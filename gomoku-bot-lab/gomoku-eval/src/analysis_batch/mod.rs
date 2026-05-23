@@ -27,7 +27,10 @@ pub use types::{
     AnalysisBatchEntry, AnalysisBatchEntryStatus, AnalysisBatchModel, AnalysisBatchProofDetails,
     AnalysisBatchProofFrame, AnalysisBatchProofMarker, AnalysisBatchProofMarkerKind,
     AnalysisBatchProofSnapshot, AnalysisBatchReport, AnalysisBatchRunOptions, AnalysisBatchSummary,
-    ProofLimitCauseCount, ReplayAnalysisInput,
+    ProofLimitCauseCount, PublishedAnalysisEntry, PublishedAnalysisMatchSummary,
+    PublishedAnalysisProofDetails, PublishedAnalysisProofFrame, PublishedAnalysisProofMarker,
+    PublishedAnalysisReplyOutcome, PublishedAnalysisReport, PublishedAnalysisSection,
+    PublishedAnalysisSectionInput, ReplayAnalysisInput, PUBLISHED_ANALYSIS_REPORT_SCHEMA_VERSION,
 };
 pub fn run_analysis_batch(
     replay_dir: &Path,
@@ -193,6 +196,154 @@ pub fn run_analysis_batch_replays_with_progress(
         summary,
         limit_cause_counts,
         entries,
+    }
+}
+
+pub fn published_analysis_report_from_batch(
+    source_report: String,
+    selector: String,
+    batch: &AnalysisBatchReport,
+    sections: &[PublishedAnalysisSectionInput],
+) -> Result<PublishedAnalysisReport, String> {
+    let expected_entries = sections
+        .iter()
+        .map(|section| section.matches.len())
+        .sum::<usize>();
+    if expected_entries != batch.entries.len() {
+        return Err(format!(
+            "published analysis section inputs cover {expected_entries} entries, but batch contains {}",
+            batch.entries.len()
+        ));
+    }
+
+    let mut cursor = 0;
+    let sections = sections
+        .iter()
+        .map(|section| {
+            let start = cursor;
+            let end = start + section.matches.len();
+            cursor = end;
+            published_analysis_section(section, &batch.entries[start..end])
+        })
+        .collect::<Vec<_>>();
+
+    Ok(PublishedAnalysisReport {
+        schema_version: PUBLISHED_ANALYSIS_REPORT_SCHEMA_VERSION,
+        report_kind: "published_analysis".to_string(),
+        source_kind: batch.source_kind.clone(),
+        source_report,
+        selector,
+        total: batch.total,
+        analyzed: batch.analyzed,
+        failed: batch.failed,
+        elapsed_ms: batch.elapsed_ms,
+        total_elapsed_ms: batch.total_elapsed_ms,
+        model: batch.model.clone(),
+        summary: batch.summary.clone(),
+        sections,
+    })
+}
+
+impl PublishedAnalysisReport {
+    pub fn to_json(&self) -> serde_json::Result<String> {
+        serde_json::to_string(self)
+    }
+}
+
+fn published_analysis_section(
+    input: &PublishedAnalysisSectionInput,
+    entries: &[AnalysisBatchEntry],
+) -> PublishedAnalysisSection {
+    let mut summary = AnalysisBatchSummary::default();
+    let mut analyzed = 0;
+    let mut failed = 0;
+    for entry in entries {
+        if entry.status == AnalysisBatchEntryStatus::Analyzed {
+            analyzed += 1;
+            increment_summary_from_entry(&mut summary, entry);
+        } else {
+            failed += 1;
+            summary.analysis_error += 1;
+        }
+    }
+
+    PublishedAnalysisSection {
+        label: input.label.clone(),
+        entrant_a: input.entrant_a.clone(),
+        entrant_b: input.entrant_b.clone(),
+        total: entries.len(),
+        analyzed,
+        failed,
+        summary,
+        entries: entries
+            .iter()
+            .zip(input.matches.iter())
+            .map(|(entry, match_report)| published_analysis_entry(entry, match_report.clone()))
+            .collect(),
+    }
+}
+
+fn published_analysis_entry(
+    entry: &AnalysisBatchEntry,
+    match_report: PublishedAnalysisMatchSummary,
+) -> PublishedAnalysisEntry {
+    PublishedAnalysisEntry {
+        path: entry.path.clone(),
+        match_report,
+        status: entry.status.clone(),
+        root_cause: entry.root_cause,
+        unclear_reason: entry.unclear_reason,
+        lethal_onset: entry.lethal_onset.clone(),
+        setup_corridor: entry.setup_corridor.clone(),
+        last_chance_ply: entry.last_chance_ply,
+        critical_loser_ply: entry.critical_loser_ply,
+        failure: entry.failure.clone(),
+        proof_details: entry
+            .proof_details
+            .as_ref()
+            .map(published_analysis_proof_details),
+        elapsed_ms: entry.elapsed_ms,
+        error: entry.error.clone(),
+    }
+}
+
+fn published_analysis_proof_details(
+    details: &AnalysisBatchProofDetails,
+) -> PublishedAnalysisProofDetails {
+    PublishedAnalysisProofDetails {
+        proof_frames: details
+            .proof_frames
+            .iter()
+            .map(published_analysis_proof_frame)
+            .collect(),
+    }
+}
+
+fn published_analysis_proof_frame(frame: &AnalysisBatchProofFrame) -> PublishedAnalysisProofFrame {
+    PublishedAnalysisProofFrame {
+        label: frame.label.clone(),
+        ply: frame.ply,
+        side_to_move: frame.side_to_move,
+        status: frame.status,
+        move_played_notation: frame.move_played_notation.clone(),
+        lethal_onset_reached: frame.lethal_onset_reached,
+        markers: frame
+            .markers
+            .iter()
+            .map(|marker| PublishedAnalysisProofMarker {
+                notation: marker.notation.clone(),
+                kinds: marker.kinds.clone(),
+            })
+            .collect(),
+        reply_outcomes: frame
+            .reply_outcomes
+            .iter()
+            .map(|reply| PublishedAnalysisReplyOutcome {
+                notation: reply.notation.clone(),
+                roles: reply.roles.clone(),
+                outcome: reply.outcome,
+            })
+            .collect(),
     }
 }
 
@@ -2690,10 +2841,13 @@ mod tests {
         defender_reply_candidates_for_frame, defender_reply_detail_label,
         defender_reply_outcome_label, defender_reply_outcomes_for_frame, marker_label,
         ordered_player_columns_html, perspective_proof_status_label,
-        render_analysis_batch_report_html, replay_entry_title, run_analysis_batch,
-        run_analysis_batch_replays, run_analysis_batch_replays_with_options,
-        AnalysisBatchProofFrame, AnalysisBatchProofMarker, AnalysisBatchProofMarkerKind,
-        AnalysisBatchRunOptions, ReplayAnalysisInput,
+        published_analysis_report_from_batch, render_analysis_batch_report_html,
+        replay_entry_title, run_analysis_batch, run_analysis_batch_replays,
+        run_analysis_batch_replays_with_options, AnalysisBatchEntry, AnalysisBatchEntryStatus,
+        AnalysisBatchModel, AnalysisBatchProofDetails, AnalysisBatchProofFrame,
+        AnalysisBatchProofMarker, AnalysisBatchProofMarkerKind, AnalysisBatchReport,
+        AnalysisBatchRunOptions, AnalysisBatchSummary, PublishedAnalysisMatchSummary,
+        PublishedAnalysisSectionInput, ReplayAnalysisInput,
     };
     use crate::analysis::{
         analyze_replay, replay_frame_annotations_for_analysis, AnalysisModel, AnalysisOptions,
@@ -2829,6 +2983,122 @@ mod tests {
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(&dir).expect("temp report dir should be created");
         dir
+    }
+
+    #[test]
+    fn published_analysis_report_keeps_ui_frames_and_drops_debug_details() {
+        let mut frame = proof_frame_with_markers(
+            Color::White,
+            vec![AnalysisBatchProofMarker {
+                mv: mv("H8"),
+                notation: "H8".to_string(),
+                kinds: vec![AnalysisBatchProofMarkerKind::Threat],
+            }],
+            vec![reply_analysis(
+                "H8",
+                vec![DefenderReplyRole::ImmediateDefense],
+                DefenderReplyOutcome::ForcedLoss,
+            )],
+        );
+        frame.rows = vec!["debug board row".to_string()];
+        let interval = ForcedInterval {
+            start_ply: 1,
+            end_ply: 2,
+        };
+        let entry = AnalysisBatchEntry {
+            path: "match_0001__bot_a__vs__bot_b".to_string(),
+            status: AnalysisBatchEntryStatus::Analyzed,
+            winner: Some(Color::Black),
+            move_count: Some(2),
+            root_cause: Some(RootCause::CorridorEntry),
+            unclear_reason: None,
+            final_move: Some(mv("H8")),
+            lethal_onset: None,
+            setup_corridor: Some(interval.clone()),
+            final_forced_interval_found: true,
+            final_forced_interval: Some(interval.clone()),
+            proof_intervals: vec![interval],
+            last_chance_ply: Some(1),
+            critical_loser_ply: Some(2),
+            tactical_notes: Vec::new(),
+            failure: None,
+            principal_line: Vec::new(),
+            unknown_gaps: Vec::new(),
+            unknown_gap_count: 0,
+            unclear_context: None,
+            proof_details: Some(AnalysisBatchProofDetails {
+                previous_prefix_ply: Some(1),
+                final_forced_start_ply: 2,
+                previous_proof: None,
+                final_start_proof: None,
+                snapshots: Vec::new(),
+                proof_frames: vec![frame],
+            }),
+            proof_detail_diagnostics: Some(SearchDiagnostics {
+                search_nodes: 99,
+                branch_probes: 3,
+                max_depth_reached: 4,
+            }),
+            limit_causes: Vec::new(),
+            elapsed_ms: 7,
+            prefixes_analyzed: 1,
+            forced_prefix_count: 1,
+            unknown_prefix_count: 0,
+            escape_prefix_count: 0,
+            error: None,
+        };
+        let batch = AnalysisBatchReport {
+            schema_version: ANALYSIS_SCHEMA_VERSION,
+            source_kind: "report_replays".to_string(),
+            source: "outputs/full-report.json:Preset triangle".to_string(),
+            replay_dir: "outputs/full-report.json:Preset triangle".to_string(),
+            total: 1,
+            analyzed: 1,
+            failed: 0,
+            elapsed_ms: 7,
+            total_elapsed_ms: 7,
+            model: AnalysisBatchModel {
+                reply_policy: ReplyPolicy::CorridorReplies,
+                max_depth: 4,
+                max_scan_plies: Some(64),
+            },
+            summary: AnalysisBatchSummary::default(),
+            limit_cause_counts: Vec::new(),
+            entries: vec![entry],
+        };
+        let published = published_analysis_report_from_batch(
+            "outputs/full-report.json".to_string(),
+            "Preset triangle".to_string(),
+            &batch,
+            &[PublishedAnalysisSectionInput {
+                label: "Easy vs Normal".to_string(),
+                entrant_a: "search-d1".to_string(),
+                entrant_b: "search-d3+pattern-eval".to_string(),
+                matches: vec![PublishedAnalysisMatchSummary {
+                    match_index: 1,
+                    black: "bot-a".to_string(),
+                    white: "bot-b".to_string(),
+                    result: "black_won".to_string(),
+                    winner: Some("bot-a".to_string()),
+                    end_reason: "win".to_string(),
+                    move_cells: vec![112, 113],
+                    move_count: 2,
+                }],
+            }],
+        )
+        .expect("published analysis report should build");
+        let json = published
+            .to_json()
+            .expect("published analysis report should serialize");
+
+        assert_eq!(published.report_kind, "published_analysis");
+        assert_eq!(published.sections[0].entries[0].match_report.match_index, 1);
+        assert!(json.contains("\"proof_frames\""));
+        assert!(json.contains("\"markers\""));
+        assert!(json.contains("\"reply_outcomes\""));
+        assert!(!json.contains("proof_detail_diagnostics"));
+        assert!(!json.contains("debug board row"));
+        assert!(!json.contains("search_nodes"));
     }
 
     #[test]

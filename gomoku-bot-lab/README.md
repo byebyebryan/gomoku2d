@@ -105,9 +105,9 @@ cargo run --release -p gomoku-eval -- report-json \
   --input outputs/head-to-head.json \
   --output outputs/head-to-head-published.json
 
-# replay-analysis smoke from the current curated bot report
+# replay-analysis smoke from a full/debug tournament report
 cargo run --release -p gomoku-eval -- analyze-report-replays \
-  --report reports/report.json \
+  --report outputs/head-to-head.json \
   --sample-size 8 \
   --report-json outputs/analysis/top2-smoke.json
 

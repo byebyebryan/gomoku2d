@@ -90,7 +90,6 @@ export interface PublishedMatchReport {
   result: string;
   winner?: string | null;
   end_reason: string;
-  move_cells: number[];
   move_count: number;
 }
 
@@ -100,7 +99,6 @@ export interface PublishedBotReport {
   source_schema_version: number;
   board_size: number;
   move_codec: string;
-  shuffled_elo_samples: number;
   provenance?: ReportProvenance;
   run: TournamentRunReport;
   standings: StandingReport[];
@@ -152,4 +150,3 @@ export function scorePercent(wins: number, draws: number, total: number): number
   }
   return ((wins + draws * 0.5) / total) * 100;
 }
-
