@@ -2,6 +2,8 @@
   height: 100dvh;
   min-height: 100dvh;
   padding: 28px;
+  font-size: var(--type-body);
+  line-height: 1.18;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -36,7 +38,7 @@
 
 .title {
   margin: 0;
-  color: var(--accent);
+  color: var(--text);
   font-family: var(--font-display);
   font-size: clamp(2.4rem, 7vw, 4.8rem);
   line-height: 0.92;
@@ -77,7 +79,8 @@
   gap: 1px;
   min-width: 120px;
   border: 1px solid var(--border);
-  background: var(--surface-muted);
+  border-left: 3px solid var(--info-border);
+  background: color-mix(in srgb, var(--surface-muted) 84%, var(--info-soft));
   padding: 8px 10px;
 }
 
@@ -108,6 +111,537 @@
   font-size: 1.5rem;
 }
 
+.warning {
+  margin: 0;
+  border: 1px solid color-mix(in srgb, var(--accent) 75%, var(--border));
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface-muted));
+  padding: 8px 10px;
+  color: var(--text);
+}
+
+.viewToggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.viewToggle button {
+  border: 2px solid var(--border);
+  background: var(--surface-muted);
+  padding: 7px 11px;
+  color: var(--text-soft);
+  font-family: var(--font-display);
+  font-size: var(--type-quiet);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.viewToggle button:hover,
+.viewToggle button:focus-visible,
+.viewToggle .activeToggle {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--surface-strong) 72%, var(--accent-soft));
+  color: var(--accent);
+}
+
+.entrantGrid,
+.matchList {
+  display: grid;
+  gap: 12px;
+}
+
+.entrantHead,
+.entrantRow summary {
+  display: grid;
+  gap: 10px;
+  align-items: center;
+}
+
+.entrantWorkbench[data-view="ranking"] .entrantHead,
+.entrantWorkbench[data-view="ranking"] .entrantRow summary {
+  grid-template-columns: minmax(260px, 1.6fr) repeat(8, minmax(82px, 1fr));
+}
+
+.entrantWorkbench[data-view="search"] .entrantHead,
+.entrantWorkbench[data-view="search"] .entrantRow summary {
+  grid-template-columns: minmax(240px, 1.4fr) repeat(7, minmax(84px, 1fr));
+}
+
+.entrantWorkbench[data-view="pairwise"] .entrantHead,
+.entrantWorkbench[data-view="pairwise"] .entrantRow summary {
+  grid-template-columns: minmax(280px, 1.6fr) repeat(3, minmax(120px, 1fr));
+}
+
+.entrantHead {
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  padding: 2px 14px 8px;
+  color: var(--text-soft);
+  font-family: var(--font-display);
+  font-size: var(--type-quiet);
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.entrantHead .metric {
+  border-left-color: color-mix(in srgb, var(--border) 70%, transparent);
+  color: inherit;
+}
+
+.entrantHead > span:first-child {
+  color: var(--text-muted);
+}
+
+.entrantRow summary .metric {
+  color: var(--text);
+}
+
+.entrantRow summary .metric > span:first-child {
+  color: var(--text);
+}
+
+.entrantRow,
+.opponentRow,
+.match {
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.match {
+  background: var(--bg);
+}
+
+.opponentRow {
+  background: transparent;
+}
+
+.entrantRow:nth-of-type(even) {
+  background: var(--bg);
+}
+
+.entrantRow[open] {
+  border-color: color-mix(in srgb, var(--info-border) 65%, var(--border));
+  background: var(--bg);
+}
+
+.entrantRow summary,
+.opponentRow summary,
+.match summary {
+  cursor: pointer;
+  padding: 12px 14px;
+}
+
+.entrantRow summary:hover,
+.entrantRow summary:focus-visible {
+  background: var(--bg);
+}
+
+.entrantRow summary.staticSummary {
+  cursor: default;
+}
+
+.entrantRow summary.staticSummary:hover,
+.entrantRow summary.staticSummary:focus-visible {
+  background: transparent;
+}
+
+.entrantRow summary > *,
+.opponentRow summary > * {
+  min-width: 0;
+}
+
+.botLabel {
+  display: grid;
+  gap: 2px;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.botLabel span + span {
+  color: var(--text-soft);
+  font-size: var(--type-meta);
+  font-weight: 400;
+  letter-spacing: 0.05em;
+}
+
+.metricNowrap,
+.metricNowrap span {
+  white-space: nowrap;
+}
+
+.entrantHead .metric,
+.entrantRow summary .metric {
+  border-left: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.22;
+  padding-left: 10px;
+  text-align: right;
+}
+
+.entrantHead .metric {
+  display: block;
+}
+
+.entrantRow summary .metric span {
+  display: block;
+  font-size: 1.12rem;
+}
+
+.entrantRow summary .metric span + span {
+  color: var(--text-soft);
+  font-size: var(--type-meta);
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+.entrantWorkbench[data-view="ranking"] .entrantHead .metricSearch,
+.entrantWorkbench[data-view="ranking"] .entrantHead .metricPairwise,
+.entrantWorkbench[data-view="ranking"] .entrantRow summary .metricSearch,
+.entrantWorkbench[data-view="ranking"] .entrantRow summary .metricPairwise,
+.entrantWorkbench[data-view="search"] .entrantHead .metricResults,
+.entrantWorkbench[data-view="search"] .entrantHead .metricPairwise,
+.entrantWorkbench[data-view="search"] .entrantRow summary .metricResults,
+.entrantWorkbench[data-view="search"] .entrantRow summary .metricPairwise,
+.entrantWorkbench[data-view="pairwise"] .entrantHead .metricResults,
+.entrantWorkbench[data-view="pairwise"] .entrantHead .metricSearch,
+.entrantWorkbench[data-view="pairwise"] .entrantRow summary .metricResults,
+.entrantWorkbench[data-view="pairwise"] .entrantRow summary .metricSearch {
+  display: none;
+}
+
+.entrantWorkbench[data-view="ranking"] .entrantHead .metricResults,
+.entrantWorkbench[data-view="ranking"] .entrantRow summary .metricResults,
+.entrantWorkbench[data-view="search"] .entrantHead .metricSearch,
+.entrantWorkbench[data-view="search"] .entrantRow summary .metricSearch,
+.entrantWorkbench[data-view="pairwise"] .entrantHead .metricPairwise,
+.entrantWorkbench[data-view="pairwise"] .entrantRow summary .metricPairwise {
+  display: block;
+}
+
+.entrantResultComparisons,
+.entrantSearchComparisons,
+.entrantPairs {
+  display: grid;
+  gap: 10px;
+  background: var(--bg);
+  padding: 8px 18px 18px;
+}
+
+.comparisonHead,
+.comparisonRow {
+  display: grid;
+  gap: 12px;
+  align-items: center;
+}
+
+.entrantResultComparisons .comparisonHead,
+.entrantResultComparisons .comparisonRow,
+.entrantSearchComparisons .comparisonHead,
+.entrantSearchComparisons .comparisonRow {
+  grid-template-columns: minmax(260px, 1fr) minmax(76px, 92px) minmax(104px, 118px) minmax(136px, 150px);
+}
+
+.comparisonHead {
+  border: 1px solid color-mix(in srgb, var(--info-border) 56%, var(--border));
+  background: color-mix(in srgb, var(--surface-muted) 72%, var(--info-soft));
+  padding: 8px 12px;
+  color: var(--info-ink);
+  font-family: var(--font-display);
+  font-size: var(--type-quiet);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.comparisonRow {
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  padding: 10px 12px;
+}
+
+.comparisonRow:nth-child(odd) {
+  background: color-mix(in srgb, var(--surface-strong) 82%, var(--surface-muted));
+}
+
+.comparisonHead > span:not(:first-child) {
+  border-left: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+  padding-left: 12px;
+  padding-right: 6px;
+  text-align: right;
+}
+
+.comparisonRow > span:not(:first-child) {
+  border-left: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+  padding-left: 12px;
+  padding-right: 6px;
+  text-align: right;
+}
+
+.comparisonOpponent {
+  display: grid;
+  align-items: center;
+  min-width: 0;
+}
+
+.comparisonOpponent .botLabel {
+  display: grid;
+  gap: 1px;
+  text-align: left;
+}
+
+.comparisonOpponent .botLabel span {
+  border-left: 0;
+  padding-left: 0;
+  text-align: left;
+}
+
+.comparisonOpponent .botLabel span:first-child {
+  color: var(--text);
+}
+
+.comparisonOpponent .botLabel span + span {
+  color: var(--text-muted);
+  font-size: var(--type-meta);
+  letter-spacing: 0.045em;
+  overflow-wrap: anywhere;
+}
+
+.comparisonValue {
+  align-self: stretch;
+  color: var(--text);
+  display: grid;
+  align-content: center;
+  font-family: var(--font-display);
+  font-size: 0.94rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.scoreGood {
+  color: #78d88f !important;
+}
+
+.scoreBad {
+  color: #e78f85 !important;
+}
+
+.opponentRow summary {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) repeat(3, max-content);
+  align-items: center;
+  background: var(--surface-strong);
+}
+
+.opponentRow:nth-child(odd) summary {
+  background: color-mix(in srgb, var(--surface-strong) 82%, var(--surface-muted));
+}
+
+.opponentRow summary:hover,
+.opponentRow summary:focus-visible {
+  background: color-mix(in srgb, var(--surface-strong) 70%, var(--surface-muted));
+}
+
+.opponentRow summary > .botLabel {
+  justify-items: end;
+  text-align: right;
+}
+
+.opponentRow summary > .botLabel span {
+  text-align: right;
+}
+
+.opponentRow summary > span {
+  border-left: 1px solid color-mix(in srgb, var(--info-border) 50%, var(--border));
+  font-variant-numeric: tabular-nums;
+  padding-left: 12px;
+  text-align: right;
+}
+
+.match summary {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(360px, 1fr) repeat(3, max-content);
+  align-items: center;
+  background: var(--bg);
+}
+
+.match summary:hover,
+.match summary:focus-visible {
+  background: var(--bg);
+}
+
+.match summary > span {
+  color: var(--text-muted);
+}
+
+.match summary > span:not(:first-child) {
+  border-left: 1px solid color-mix(in srgb, var(--info-border) 50%, var(--border));
+  font-variant-numeric: tabular-nums;
+  padding-left: 12px;
+  text-align: right;
+}
+
+.matchSides {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: center;
+  min-width: 0;
+  color: var(--text-soft);
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.matchSides span:first-child {
+  color: var(--text);
+  text-align: left;
+}
+
+.matchSides span:last-child {
+  text-align: right;
+}
+
+.matchGrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  padding: 14px;
+}
+
+.matchGrid p {
+  margin: 0;
+  word-break: break-word;
+}
+
+.boardPanel {
+  display: grid;
+  gap: 8px;
+  grid-column: 1 / -1;
+  align-items: start;
+  background: var(--bg);
+}
+
+.boardPanel b,
+.matchGrid b {
+  color: var(--text);
+}
+
+.proofBoard {
+  --proof-cell-size: 20px;
+  position: relative;
+  display: grid;
+  gap: 0;
+  align-self: start;
+  justify-self: start;
+  width: max-content;
+  height: max-content;
+  padding: 0;
+  background: #d7ad63;
+  border: 1px solid #7d592f;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 18%), 0 2px 0 rgb(0 0 0 / 26%);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.proofBoard::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  left: calc(var(--proof-cell-size) / 2);
+  top: calc(var(--proof-cell-size) / 2);
+  width: var(--proof-grid-span);
+  height: var(--proof-grid-span);
+  background-image:
+    linear-gradient(rgb(66 43 20 / 48%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(66 43 20 / 48%) 1px, transparent 1px);
+  background-size: var(--proof-cell-size) var(--proof-cell-size);
+  pointer-events: none;
+}
+
+.proofCell {
+  position: relative;
+  z-index: 1;
+  width: var(--proof-cell-size);
+  height: var(--proof-cell-size);
+  background: transparent;
+  box-sizing: border-box;
+}
+
+.proofStone {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  bottom: 4px;
+  left: 3px;
+  z-index: 1;
+  border-radius: 999px;
+  box-shadow: 0 1px 1px rgb(0 0 0 / 50%);
+  transform: translateY(-1px);
+}
+
+.proofStoneBlack {
+  border: 1px solid #030405;
+  background: radial-gradient(circle at 35% 30%, #4d4f55 0%, #15171b 58%, #050608 100%);
+}
+
+.proofStoneWhite {
+  border: 1px solid #8f8068;
+  background: radial-gradient(circle at 35% 30%, #fff7e6 0%, #e4d7b8 62%, #9d8f75 100%);
+}
+
+.proofActualStone {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  bottom: 4px;
+  left: 3px;
+  z-index: 2;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: 0 1px 1px rgb(0 0 0 / 24%);
+  transform: translateY(-1px);
+}
+
+.proofActualStoneBlack {
+  border: 2px solid #07090c;
+}
+
+.proofActualStoneWhite {
+  border: 2px solid #f6eed8;
+  box-shadow: 0 1px 1px rgb(0 0 0 / 24%), 0 0 0 1px #8f8068;
+}
+
+.termList,
+.provenance dl {
+  display: grid;
+  gap: 10px 18px;
+  grid-template-columns: minmax(120px, 0.32fr) minmax(0, 1fr);
+  margin: 0;
+}
+
+.termList dt,
+.provenance dt {
+  color: var(--info-ink);
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.termList dd,
+.provenance dd {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: var(--type-body);
+}
+
 .tableWrap {
   overflow-x: auto;
 }
@@ -136,7 +670,7 @@
 .table th {
   color: var(--text-soft);
   font-family: var(--font-display);
-  font-size: 0.92rem;
+  font-size: var(--type-meta);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -231,6 +765,7 @@
   grid-template-columns: minmax(220px, 1fr) repeat(5, minmax(94px, max-content));
   gap: 12px;
   align-items: center;
+  background: color-mix(in srgb, var(--surface-muted) 88%, var(--info-soft));
   padding: 12px 14px;
   cursor: pointer;
 }
@@ -246,7 +781,7 @@
 .metric span {
   color: var(--text-soft);
   font-family: var(--font-display);
-  font-size: 0.9rem;
+  font-size: var(--type-quiet);
   letter-spacing: 0.09em;
   text-transform: uppercase;
 }
@@ -323,7 +858,7 @@
 
 .state h1 {
   margin: 0;
-  color: var(--accent);
+  color: var(--text);
 }
 
 @media (max-width: 760px) {
@@ -347,6 +882,140 @@
     grid-template-columns: 1fr;
   }
 
+  .viewToggle {
+    justify-content: start;
+  }
+
+  .entrantHead,
+  .comparisonHead {
+    display: none;
+  }
+
+  .entrantGrid,
+  .entrantRow,
+  .opponentRow,
+  .match,
+  .entrantResultComparisons,
+  .entrantSearchComparisons,
+  .entrantPairs,
+  .comparisonRow {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .entrantRow summary,
+  .entrantWorkbench[data-view="ranking"] .entrantRow summary,
+  .entrantWorkbench[data-view="search"] .entrantRow summary,
+  .entrantWorkbench[data-view="pairwise"] .entrantRow summary {
+    gap: 8px 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .entrantRow summary .botLabel {
+    grid-column: 1 / -1;
+  }
+
+  .entrantRow summary .metric {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2px 10px;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+    padding: 8px 0 0;
+    text-align: right;
+  }
+
+  .entrantRow summary .metric::before,
+  .comparisonRow > span::before,
+  .opponentRow summary > span::before,
+  .match summary > span::before {
+    color: var(--text-soft);
+    content: attr(data-label);
+    font-family: var(--font-display);
+    font-size: 0.88rem;
+    letter-spacing: 0.09em;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  .entrantRow summary .metric::before {
+    align-self: start;
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+
+  .entrantRow summary .metric span {
+    grid-column: 2;
+  }
+
+  .entrantRow summary .metricSearch,
+  .entrantRow summary .metricPairwise,
+  .entrantWorkbench[data-view="search"] .entrantRow summary .metricResults,
+  .entrantWorkbench[data-view="search"] .entrantRow summary .metricPairwise,
+  .entrantWorkbench[data-view="pairwise"] .entrantRow summary .metricResults,
+  .entrantWorkbench[data-view="pairwise"] .entrantRow summary .metricSearch {
+    display: none;
+  }
+
+  .entrantWorkbench[data-view="search"] .entrantRow summary .metricSearch,
+  .entrantWorkbench[data-view="pairwise"] .entrantRow summary .metricPairwise {
+    display: grid;
+  }
+
+  .opponentRow summary,
+  .match summary,
+  .entrantResultComparisons .comparisonRow,
+  .entrantSearchComparisons .comparisonRow {
+    grid-template-columns: 1fr;
+  }
+
+  .comparisonRow > span,
+  .opponentRow summary > span,
+  .match summary > span {
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    min-width: 0;
+    border-left: 0 !important;
+    overflow-wrap: anywhere;
+    padding-left: 0 !important;
+    text-align: right;
+  }
+
+  .comparisonRow > span:not(:first-child),
+  .opponentRow summary > span,
+  .match summary > span {
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+  }
+
+  .opponentRow summary > span:first-of-type,
+  .match summary > span:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  .match summary > .matchSides {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .match summary > .matchSides::before {
+    margin-bottom: 2px;
+  }
+
+  .entrantResultComparisons,
+  .entrantSearchComparisons,
+  .entrantPairs {
+    padding: 4px 12px 14px;
+  }
+
+  .matchGrid,
+  .termList,
+  .provenance dl {
+    grid-template-columns: 1fr;
+  }
+
   .metric {
     grid-template-columns: minmax(0, 1fr) auto;
     border-left: 0;
@@ -356,5 +1025,9 @@
 
   .metric span {
     text-align: left;
+  }
+
+  .entrantRow summary .metric span {
+    text-align: right;
   }
 }

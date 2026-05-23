@@ -133,8 +133,9 @@ refresh it only from a clean committed toolchain:
    `gomoku-bot-lab/analysis-reports/report.json`.
 6. Commit the report artifacts as a follow-up commit.
 
-Keep the full telemetry report out of curated published artifacts; it exists
-only to preserve replay cells and diagnostics for analysis generation.
+Keep the full telemetry report out of curated published artifacts. The compact
+published bot report keeps match move cells for board rendering and replay
+analysis, but omits per-move/per-side diagnostics.
 
 Current curated command, from `gomoku-bot-lab/`:
 
@@ -155,7 +156,7 @@ cargo run --release -p gomoku-eval -- tournament \
   --published-report-json reports/report.json
 jq '.provenance | {git_commit, git_dirty}' reports/report.json
 cargo run --release -p gomoku-eval -- analyze-report-replays \
-  --report outputs/full-tournament-report.json \
+  --report reports/report.json \
   --selector preset-triangle \
   --published-report-json analysis-reports/report.json \
   --max-depth 4 \

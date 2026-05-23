@@ -910,9 +910,10 @@ budgets remain useful for focused continuity checks. Curated published reports
 now use `--search-budget-mode pooled` with a capped CPU reserve, which keeps the
 average budget bounded while allowing hard tactical positions to spend time
 saved by cheaper moves. The compact `reports/report.json` artifact is the source
-of truth for published ranking pages, but it omits replay cells and debug
-telemetry; full reports belong under ignored `gomoku-bot-lab/outputs/`. Curated
-reports under `gomoku-bot-lab/reports/` are copied into the public web build as
+of truth for published ranking pages. It keeps match move cells for board
+rendering and replay analysis, but omits debug telemetry; full reports belong
+under ignored `gomoku-bot-lab/outputs/`. Curated reports under
+`gomoku-bot-lab/reports/` are copied into the public web build as
 `/bot-report/`.
 
 Curated replay-analysis reports under `gomoku-bot-lab/analysis-reports/` are

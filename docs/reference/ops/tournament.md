@@ -218,8 +218,9 @@ For published reports:
 4. Commit report JSON as a follow-up report commit.
 
 The published bot report is web-rendered from compact `reports/report.json`.
-That artifact intentionally omits replay cells and debug telemetry; use a full
-report under ignored `outputs/` as the replay-analysis source.
+That artifact keeps match move cells for board rendering and replay analysis,
+but intentionally omits debug telemetry. Use a full report under ignored
+`outputs/` when diagnostics are needed.
 
 ## Known Limitations
 
