@@ -25,12 +25,11 @@ type LoadState =
   | { status: "loaded"; report: PublishedBotReport }
   | { status: "error"; message: string };
 
-type ReportView = "ranking" | "search" | "pairwise";
+type ReportView = "ranking" | "search";
 
 const REPORT_VIEWS: Array<{ id: ReportView; label: string }> = [
   { id: "ranking", label: "Ranking" },
   { id: "search", label: "Search" },
-  { id: "pairwise", label: "Games" },
 ];
 
 export function BotReportRoute() {
@@ -170,16 +169,6 @@ function EntrantHeader() {
           </span>
         ),
       )}
-      {["Score %", "W-D-L", "Shuffled Elo"].map((head) => (
-        <span
-          key={`pairwise-${head}`}
-          className={`${styles.metric} ${styles.metricPairwise} ${
-            head === "W-D-L" ? styles.metricNowrap : ""
-          }`}
-        >
-          {head}
-        </span>
-      ))}
     </div>
   );
 }
@@ -201,7 +190,7 @@ function EntrantRow({
 }) {
   const score = scorePercent(standing.wins, standing.draws, standing.match_count);
   const pairwiseEntries = rankedPairsForBot(report, standing.bot);
-  const canExpand = view !== "search";
+  const canExpand = view === "ranking";
   const expanded = canExpand && isOpen;
 
   return (
@@ -271,25 +260,9 @@ function EntrantRow({
         />
         <StageMetricCell label="Proof" stageNs={standing.stage_proof_ns ?? 0} standing={standing} />
         <StageMetricCell label="Other" stageNs={stageOtherNs(standing)} standing={standing} />
-        <MetricCell kind="pairwise" label="Score %" primary={formatPercent(score)} />
-        <MetricCell
-          kind="pairwise"
-          label="W-D-L"
-          primary={`${standing.wins}-${standing.draws}-${standing.losses}`}
-          nowrap
-        />
-        <MetricCell
-          kind="pairwise"
-          label="Shuffled Elo"
-          primary={formatNumber(standing.shuffled_elo_avg)}
-          secondary={`+/- ${formatNumber(standing.shuffled_elo_stddev)}`}
-        />
       </summary>
       {view === "ranking" && expanded ? (
-        <ResultComparisons bot={standing.bot} pairs={pairwiseEntries} />
-      ) : null}
-      {view === "pairwise" && expanded ? (
-        <EntrantPairwise report={report} bot={standing.bot} pairs={pairwiseEntries} />
+        <RankingDrilldown report={report} bot={standing.bot} pairs={pairwiseEntries} />
       ) : null}
     </details>
   );
@@ -313,18 +286,13 @@ function MetricCell({
   secondary,
   nowrap,
 }: {
-  kind: "results" | "search" | "pairwise";
+  kind: "results" | "search";
   label: string;
   primary: string;
   secondary?: string;
   nowrap?: boolean;
 }) {
-  const kindClass =
-    kind === "results"
-      ? styles.metricResults
-      : kind === "search"
-        ? styles.metricSearch
-        : styles.metricPairwise;
+  const kindClass = kind === "results" ? styles.metricResults : styles.metricSearch;
   return (
     <span
       className={`${styles.metric} ${kindClass} ${nowrap ? styles.metricNowrap : ""}`}
@@ -356,33 +324,7 @@ function StageMetricCell({
   );
 }
 
-function ResultComparisons({ bot, pairs }: { bot: string; pairs: PairwiseReport[] }) {
-  return (
-    <div className={styles.entrantResultComparisons}>
-      {pairs.map((pair) => {
-        const opponent = opponentForPair(pair, bot);
-        const score = pairScoreForBot(pair, bot);
-        return (
-          <div className={styles.comparisonRow} key={pairKey(pair)}>
-            <span className={styles.comparisonOpponent} data-label="Opponent">
-              <BotLabel bot={opponent} prefix="Vs " />
-            </span>
-            <span
-              className={`${styles.comparisonValue} ${scoreToneClass(score)}`}
-              data-label="Score"
-            >
-              {formatPercent(score)}
-            </span>
-            <span className={styles.comparisonValue} data-label="Record">{pairRecordForBot(pair, bot)} W-D-L</span>
-            <span className={styles.comparisonValue} data-label="Points">{pairPointsForBot(pair, bot)} points</span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function EntrantPairwise({
+function RankingDrilldown({
   report,
   bot,
   pairs,
