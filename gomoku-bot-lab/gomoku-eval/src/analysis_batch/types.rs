@@ -2,9 +2,10 @@ use gomoku_core::{Color, Move, Replay};
 use serde::Serialize;
 
 use crate::analysis::{
-    AnalysisBoardSnapshot, AnalysisOptions, DefenderReplyAnalysis, FailureAnalysis, ForcedInterval,
-    LethalOnset, ProofLimitCause, ProofStatus, ReplyClassification, ReplyPolicy, RootCause,
-    SearchDiagnostics, TacticalNote, UnclearContext, UnclearReason,
+    AnalysisBoardSnapshot, AnalysisOptions, DefenderReplyAnalysis, DefenderReplyOutcome,
+    DefenderReplyRole, FailureAnalysis, ForcedInterval, LethalOnset, ProofLimitCause, ProofStatus,
+    ReplyClassification, ReplyPolicy, RootCause, SearchDiagnostics, TacticalNote, UnclearContext,
+    UnclearReason,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -120,6 +121,105 @@ pub struct AnalysisBatchProofFrame {
     pub rows: Vec<String>,
     pub markers: Vec<AnalysisBatchProofMarker>,
     pub reply_outcomes: Vec<DefenderReplyAnalysis>,
+}
+
+pub const PUBLISHED_ANALYSIS_REPORT_SCHEMA_VERSION: u32 = 1;
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct PublishedAnalysisReport {
+    pub schema_version: u32,
+    pub report_kind: String,
+    pub source_kind: String,
+    pub source_report: String,
+    pub selector: String,
+    pub total: usize,
+    pub analyzed: usize,
+    pub failed: usize,
+    pub elapsed_ms: u64,
+    pub total_elapsed_ms: u64,
+    pub model: AnalysisBatchModel,
+    pub summary: AnalysisBatchSummary,
+    pub sections: Vec<PublishedAnalysisSection>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct PublishedAnalysisSection {
+    pub label: String,
+    pub entrant_a: String,
+    pub entrant_b: String,
+    pub total: usize,
+    pub analyzed: usize,
+    pub failed: usize,
+    pub summary: AnalysisBatchSummary,
+    pub entries: Vec<PublishedAnalysisEntry>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct PublishedAnalysisEntry {
+    pub path: String,
+    pub match_report: PublishedAnalysisMatchSummary,
+    pub status: AnalysisBatchEntryStatus,
+    pub root_cause: Option<RootCause>,
+    pub unclear_reason: Option<UnclearReason>,
+    pub lethal_onset: Option<LethalOnset>,
+    pub setup_corridor: Option<ForcedInterval>,
+    pub last_chance_ply: Option<usize>,
+    pub critical_loser_ply: Option<usize>,
+    pub failure: Option<FailureAnalysis>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub proof_details: Option<PublishedAnalysisProofDetails>,
+    pub elapsed_ms: u64,
+    pub error: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct PublishedAnalysisMatchSummary {
+    pub match_index: usize,
+    pub black: String,
+    pub white: String,
+    pub result: String,
+    pub winner: Option<String>,
+    pub end_reason: String,
+    pub move_cells: Vec<usize>,
+    pub move_count: usize,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct PublishedAnalysisProofDetails {
+    pub proof_frames: Vec<PublishedAnalysisProofFrame>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct PublishedAnalysisProofFrame {
+    pub label: String,
+    pub ply: usize,
+    pub side_to_move: Color,
+    pub status: ProofStatus,
+    pub move_played_notation: Option<String>,
+    pub lethal_onset_reached: bool,
+    pub markers: Vec<PublishedAnalysisProofMarker>,
+    pub reply_outcomes: Vec<PublishedAnalysisReplyOutcome>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct PublishedAnalysisProofMarker {
+    pub notation: String,
+    pub kinds: Vec<AnalysisBatchProofMarkerKind>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct PublishedAnalysisReplyOutcome {
+    pub notation: String,
+    pub roles: Vec<DefenderReplyRole>,
+    pub outcome: DefenderReplyOutcome,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PublishedAnalysisSectionInput {
+    pub label: String,
+    pub entrant_a: String,
+    pub entrant_b: String,
+    pub matches: Vec<PublishedAnalysisMatchSummary>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

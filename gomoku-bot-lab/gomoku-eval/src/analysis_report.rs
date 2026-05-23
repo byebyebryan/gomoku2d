@@ -42,7 +42,7 @@ impl ReportReplaySource {
             }
             Some("published_tournament") => {
                 let report = PublishedTournamentReport::from_json(input)?;
-                Ok(Self::from_published_tournament_report(&report))
+                Self::from_published_tournament_report(&report)
             }
             Some(other) => Err(format!("unsupported report kind: {other}")),
             None => Err("report is missing report_kind".to_string()),
@@ -77,8 +77,21 @@ impl ReportReplaySource {
         }
     }
 
-    pub fn from_published_tournament_report(report: &PublishedTournamentReport) -> Self {
-        Self {
+    pub fn from_published_tournament_report(
+        report: &PublishedTournamentReport,
+    ) -> Result<Self, String> {
+        if report
+            .matches
+            .iter()
+            .any(|match_report| match_report.move_count > 0 && match_report.move_cells.is_empty())
+        {
+            return Err(
+                "published tournament report does not include replay move cells; use a full tournament report for analysis"
+                    .to_string(),
+            );
+        }
+
+        Ok(Self {
             board_size: report.board_size,
             move_codec: report.move_codec.clone(),
             rules: report.run.rules.clone(),
@@ -102,7 +115,7 @@ impl ReportReplaySource {
                     move_count: match_report.move_count,
                 })
                 .collect(),
-        }
+        })
     }
 }
 
@@ -256,8 +269,8 @@ mod tests {
         report_match_to_replay, select_report_matches, ReportReplaySource,
     };
     use crate::report::{
-        CountReport, MatchReport, ReportProvenance, SideStatsReport, TournamentReport,
-        TournamentRunReport, MOVE_CODEC, TOURNAMENT_REPORT_SCHEMA_VERSION,
+        CountReport, MatchReport, PublishedTournamentReport, ReportProvenance, SideStatsReport,
+        TournamentReport, TournamentRunReport, MOVE_CODEC, TOURNAMENT_REPORT_SCHEMA_VERSION,
     };
 
     fn sample_report(matches: Vec<MatchReport>) -> TournamentReport {
@@ -402,5 +415,24 @@ mod tests {
         assert_eq!(replay.moves[0].mv, "H8");
         assert_eq!(replay.moves[1].mv, "I8");
         assert_eq!(replay.result, ReplayResult::WhiteWins);
+    }
+
+    #[test]
+    fn compact_published_report_without_replay_cells_is_not_analysis_input() {
+        let report = sample_report(vec![match_report(
+            1,
+            "bot-a",
+            "bot-b",
+            "black_won",
+            Some("bot-a"),
+            "win",
+            2,
+        )]);
+        let published = PublishedTournamentReport::from_tournament_report(&report);
+
+        let err = ReportReplaySource::from_published_tournament_report(&published)
+            .expect_err("compact published reports should not silently analyze empty games");
+
+        assert!(err.contains("does not include replay move cells"));
     }
 }

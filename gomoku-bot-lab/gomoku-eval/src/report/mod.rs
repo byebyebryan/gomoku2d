@@ -14,7 +14,7 @@ use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const TOURNAMENT_REPORT_SCHEMA_VERSION: u32 = 1;
-pub const PUBLISHED_TOURNAMENT_REPORT_SCHEMA_VERSION: u32 = 1;
+pub const PUBLISHED_TOURNAMENT_REPORT_SCHEMA_VERSION: u32 = 2;
 pub const MOVE_CODEC: &str = "cell_index_v1";
 const SHUFFLED_ELO_SAMPLES: usize = 256;
 
@@ -181,7 +181,7 @@ impl AnchorReferenceReport {
             ));
         }
 
-        let mut standings_by_bot: HashMap<&str, &StandingReport> = HashMap::new();
+        let mut standings_by_bot: HashMap<&str, &PublishedStandingReport> = HashMap::new();
         for standing in &source_report.standings {
             standings_by_bot.insert(&standing.bot, standing);
         }
@@ -193,7 +193,7 @@ impl AnchorReferenceReport {
                 missing.push(anchor_name.clone());
                 continue;
             };
-            anchors.push(AnchorStandingReport::from_standing(standing));
+            anchors.push(AnchorStandingReport::from_published_standing(standing));
         }
 
         if !missing.is_empty() {
@@ -375,6 +375,18 @@ impl AnchorStandingReport {
                 * 100.0,
         }
     }
+
+    fn from_published_standing(standing: &PublishedStandingReport) -> Self {
+        Self {
+            bot: standing.bot.clone(),
+            sequential_elo: standing.sequential_elo,
+            shuffled_elo_avg: standing.shuffled_elo_avg,
+            shuffled_elo_stddev: standing.shuffled_elo_stddev,
+            match_count: standing.match_count,
+            score_percentage: score_rate(standing.wins, standing.draws, standing.match_count)
+                * 100.0,
+        }
+    }
 }
 
 impl TournamentReport {
@@ -448,17 +460,58 @@ pub struct PublishedTournamentReport {
     pub source_schema_version: u32,
     pub board_size: usize,
     pub move_codec: String,
-    pub shuffled_elo_samples: usize,
     #[serde(default)]
     pub provenance: ReportProvenance,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reference_anchors: Option<AnchorReferenceReport>,
     pub run: TournamentRunReport,
-    pub standings: Vec<StandingReport>,
+    pub standings: Vec<PublishedStandingReport>,
     pub pairwise: Vec<PairwiseReport>,
-    pub color_splits: Vec<ColorSplitReport>,
     pub end_reasons: Vec<CountReport>,
     pub matches: Vec<PublishedMatchReport>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PublishedStandingReport {
+    pub bot: String,
+    pub wins: u32,
+    pub draws: u32,
+    pub losses: u32,
+    pub sequential_elo: f64,
+    pub shuffled_elo_avg: f64,
+    pub shuffled_elo_stddev: f64,
+    pub match_count: u32,
+    pub move_count: u32,
+    pub search_move_count: u32,
+    pub total_time_ms: u64,
+    pub avg_search_time_ms: f64,
+    pub total_nodes: u64,
+    pub avg_nodes: f64,
+    pub avg_depth: f64,
+    pub max_depth: u32,
+    #[serde(default)]
+    pub avg_effective_depth: f64,
+    #[serde(default)]
+    pub max_effective_depth: u32,
+    #[serde(default)]
+    pub avg_child_moves_before: f64,
+    #[serde(default)]
+    pub avg_child_moves_after: f64,
+    pub budget_exhausted_rate: f64,
+    #[serde(default)]
+    pub pooled_budget_over_base_rate: f64,
+    #[serde(default)]
+    pub pooled_budget_reserve_exhausted_rate: f64,
+    #[serde(default)]
+    pub stage_move_gen_ns: u64,
+    #[serde(default)]
+    pub stage_ordering_ns: u64,
+    #[serde(default)]
+    pub stage_eval_ns: u64,
+    #[serde(default)]
+    pub stage_threat_ns: u64,
+    #[serde(default)]
+    pub stage_proof_ns: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -471,6 +524,7 @@ pub struct PublishedMatchReport {
     pub end_reason: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub opening: Option<MatchOpeningReport>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub move_cells: Vec<usize>,
     pub move_count: usize,
 }
@@ -483,13 +537,15 @@ impl PublishedTournamentReport {
             source_schema_version: report.schema_version,
             board_size: report.board_size,
             move_codec: report.move_codec.clone(),
-            shuffled_elo_samples: report.shuffled_elo_samples,
             provenance: report.provenance.clone(),
             reference_anchors: report.reference_anchors.clone(),
             run: report.run.clone(),
-            standings: report.standings.clone(),
+            standings: report
+                .standings
+                .iter()
+                .map(PublishedStandingReport::from_standing_report)
+                .collect(),
             pairwise: report.pairwise.clone(),
-            color_splits: report.color_splits.clone(),
             end_reasons: report.end_reasons.clone(),
             matches: report
                 .matches
@@ -499,8 +555,18 @@ impl PublishedTournamentReport {
         }
     }
 
+    pub fn from_published_report(report: &PublishedTournamentReport) -> Self {
+        let mut next = report.clone();
+        next.schema_version = PUBLISHED_TOURNAMENT_REPORT_SCHEMA_VERSION;
+        for match_report in &mut next.matches {
+            match_report.opening = None;
+            match_report.move_cells.clear();
+        }
+        next
+    }
+
     pub fn to_json(&self) -> serde_json::Result<String> {
-        serde_json::to_string_pretty(self)
+        serde_json::to_string(self)
     }
 
     pub fn from_json(input: &str) -> Result<Self, String> {
@@ -510,7 +576,9 @@ impl PublishedTournamentReport {
     }
 
     fn validate(&self) -> Result<(), String> {
-        if self.schema_version != PUBLISHED_TOURNAMENT_REPORT_SCHEMA_VERSION {
+        if self.schema_version != 1
+            && self.schema_version != PUBLISHED_TOURNAMENT_REPORT_SCHEMA_VERSION
+        {
             return Err(format!(
                 "unsupported published tournament report schema version: {}",
                 self.schema_version
@@ -526,6 +594,41 @@ impl PublishedTournamentReport {
     }
 }
 
+impl PublishedStandingReport {
+    fn from_standing_report(standing: &StandingReport) -> Self {
+        Self {
+            bot: standing.bot.clone(),
+            wins: standing.wins,
+            draws: standing.draws,
+            losses: standing.losses,
+            sequential_elo: standing.sequential_elo,
+            shuffled_elo_avg: standing.shuffled_elo_avg,
+            shuffled_elo_stddev: standing.shuffled_elo_stddev,
+            match_count: standing.match_count,
+            move_count: standing.move_count,
+            search_move_count: standing.search_move_count,
+            total_time_ms: standing.total_time_ms,
+            avg_search_time_ms: standing.avg_search_time_ms,
+            total_nodes: standing.total_nodes,
+            avg_nodes: standing.avg_nodes,
+            avg_depth: standing.avg_depth,
+            max_depth: standing.max_depth,
+            avg_effective_depth: standing.avg_effective_depth,
+            max_effective_depth: standing.max_effective_depth,
+            avg_child_moves_before: standing.avg_child_moves_before,
+            avg_child_moves_after: standing.avg_child_moves_after,
+            budget_exhausted_rate: standing.budget_exhausted_rate,
+            pooled_budget_over_base_rate: standing.pooled_budget_over_base_rate,
+            pooled_budget_reserve_exhausted_rate: standing.pooled_budget_reserve_exhausted_rate,
+            stage_move_gen_ns: standing.stage_move_gen_ns,
+            stage_ordering_ns: standing.stage_ordering_ns,
+            stage_eval_ns: standing.stage_eval_ns,
+            stage_threat_ns: standing.stage_threat_ns,
+            stage_proof_ns: standing.stage_proof_ns,
+        }
+    }
+}
+
 impl PublishedMatchReport {
     fn from_match_report(report_match: &MatchReport) -> Self {
         Self {
@@ -535,8 +638,8 @@ impl PublishedMatchReport {
             result: report_match.result.clone(),
             winner: report_match.winner.clone(),
             end_reason: report_match.end_reason.clone(),
-            opening: report_match.opening.clone(),
-            move_cells: report_match.move_cells.clone(),
+            opening: None,
+            move_cells: Vec::new(),
             move_count: report_match.move_count,
         }
     }
@@ -6030,7 +6133,7 @@ mod tests {
     }
 
     #[test]
-    fn published_report_keeps_replay_cells_and_drops_per_match_stats() {
+    fn published_report_drops_replay_cells_and_debug_metrics() {
         let report = sample_report();
         let published = PublishedTournamentReport::from_tournament_report(&report);
         let json = published
@@ -6042,13 +6145,13 @@ mod tests {
             PUBLISHED_TOURNAMENT_REPORT_SCHEMA_VERSION
         );
         assert_eq!(published.report_kind, "published_tournament");
-        assert_eq!(
-            published.matches[0].move_cells,
-            report.matches[0].move_cells
-        );
+        assert!(published.matches[0].move_cells.is_empty());
+        assert!(!json.contains("move_cells"));
         assert!(!json.contains("black_stats"));
         assert!(!json.contains("white_stats"));
         assert!(!json.contains("duration_ms"));
+        assert!(!json.contains("\"opening\":"));
+        assert!(!json.contains("renju_forbidden_prefilter_checks"));
 
         let parsed =
             PublishedTournamentReport::from_json(&json).expect("published report should parse");

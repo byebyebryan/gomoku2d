@@ -807,10 +807,10 @@ Interpretation:
   enough to define the whole hard tier.
 - D3 pattern and D3 pattern proof remain useful lower-depth controls, but they
   no longer look like hard-tier replacements under the pooled report.
-- The paired top-two analysis report sampled `64` games from this clean report
-  and completed all `64` without failures. The current report UI intentionally
-  avoids root-cause category counts, so use the JSON only when a deeper
-  diagnostic breakdown is needed.
+- The curated analysis report now samples the Easy/Normal/Hard preset triangle
+  from the same clean tournament source. The compact published JSON keeps the
+  UI markers and outcomes, while full proof/debug telemetry stays under
+  ignored `outputs/`.
 
 ## Benchmark suites
 
@@ -910,15 +910,16 @@ budgets remain useful for focused continuity checks. Curated published reports
 now use `--search-budget-mode pooled` with a capped CPU reserve, which keeps the
 average budget bounded while allowing hard tactical positions to spend time
 saved by cheaper moves. The compact `reports/report.json` artifact is the source
-of truth for published ranking pages; full debug telemetry belongs under ignored
-`gomoku-bot-lab/outputs/`. Curated reports under `gomoku-bot-lab/reports/` are
-copied into the public web build as
+of truth for published ranking pages, but it omits replay cells and debug
+telemetry; full reports belong under ignored `gomoku-bot-lab/outputs/`. Curated
+reports under `gomoku-bot-lab/reports/` are copied into the public web build as
 `/bot-report/`.
 
 Curated replay-analysis reports under `gomoku-bot-lab/analysis-reports/` are
 copied into the public web build as `/analysis-report/`. Treat that report as a
-companion to the published bot report: it should sample the head-to-head games
-between the top two standings in `reports/report.json`.
+companion to the published bot report: it should analyze the Easy/Normal/Hard
+preset triangle from the same full tournament source used to produce the compact
+bot report.
 
 For release-quality reports, commit the bot/report implementation first, then
 generate `reports/report.json` from a clean worktree and commit that artifact
