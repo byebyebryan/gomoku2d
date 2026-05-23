@@ -169,11 +169,6 @@
   grid-template-columns: minmax(240px, 1.4fr) repeat(7, minmax(84px, 1fr));
 }
 
-.entrantWorkbench[data-view="pairwise"] .entrantHead,
-.entrantWorkbench[data-view="pairwise"] .entrantRow summary {
-  grid-template-columns: minmax(280px, 1.6fr) repeat(3, minmax(120px, 1fr));
-}
-
 .entrantHead {
   border-bottom: 1px solid var(--border);
   background: transparent;
@@ -297,128 +292,24 @@
 }
 
 .entrantWorkbench[data-view="ranking"] .entrantHead .metricSearch,
-.entrantWorkbench[data-view="ranking"] .entrantHead .metricPairwise,
 .entrantWorkbench[data-view="ranking"] .entrantRow summary .metricSearch,
-.entrantWorkbench[data-view="ranking"] .entrantRow summary .metricPairwise,
 .entrantWorkbench[data-view="search"] .entrantHead .metricResults,
-.entrantWorkbench[data-view="search"] .entrantHead .metricPairwise,
-.entrantWorkbench[data-view="search"] .entrantRow summary .metricResults,
-.entrantWorkbench[data-view="search"] .entrantRow summary .metricPairwise,
-.entrantWorkbench[data-view="pairwise"] .entrantHead .metricResults,
-.entrantWorkbench[data-view="pairwise"] .entrantHead .metricSearch,
-.entrantWorkbench[data-view="pairwise"] .entrantRow summary .metricResults,
-.entrantWorkbench[data-view="pairwise"] .entrantRow summary .metricSearch {
+.entrantWorkbench[data-view="search"] .entrantRow summary .metricResults {
   display: none;
 }
 
 .entrantWorkbench[data-view="ranking"] .entrantHead .metricResults,
 .entrantWorkbench[data-view="ranking"] .entrantRow summary .metricResults,
 .entrantWorkbench[data-view="search"] .entrantHead .metricSearch,
-.entrantWorkbench[data-view="search"] .entrantRow summary .metricSearch,
-.entrantWorkbench[data-view="pairwise"] .entrantHead .metricPairwise,
-.entrantWorkbench[data-view="pairwise"] .entrantRow summary .metricPairwise {
+.entrantWorkbench[data-view="search"] .entrantRow summary .metricSearch {
   display: block;
 }
 
-.entrantResultComparisons,
-.entrantSearchComparisons,
 .entrantPairs {
   display: grid;
   gap: 10px;
   background: var(--bg);
   padding: 8px 18px 18px;
-}
-
-.comparisonHead,
-.comparisonRow {
-  display: grid;
-  gap: 12px;
-  align-items: center;
-}
-
-.entrantResultComparisons .comparisonHead,
-.entrantResultComparisons .comparisonRow,
-.entrantSearchComparisons .comparisonHead,
-.entrantSearchComparisons .comparisonRow {
-  grid-template-columns: minmax(260px, 1fr) minmax(76px, 92px) minmax(104px, 118px) minmax(136px, 150px);
-}
-
-.comparisonHead {
-  border: 1px solid color-mix(in srgb, var(--info-border) 56%, var(--border));
-  background: color-mix(in srgb, var(--surface-muted) 72%, var(--info-soft));
-  padding: 8px 12px;
-  color: var(--info-ink);
-  font-family: var(--font-display);
-  font-size: var(--type-quiet);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.comparisonRow {
-  border: 1px solid var(--border);
-  background: var(--surface-strong);
-  padding: 10px 12px;
-}
-
-.comparisonRow:nth-child(odd) {
-  background: color-mix(in srgb, var(--surface-strong) 82%, var(--surface-muted));
-}
-
-.comparisonHead > span:not(:first-child) {
-  border-left: 1px solid var(--border);
-  font-variant-numeric: tabular-nums;
-  padding-left: 12px;
-  padding-right: 6px;
-  text-align: right;
-}
-
-.comparisonRow > span:not(:first-child) {
-  border-left: 1px solid var(--border);
-  font-variant-numeric: tabular-nums;
-  padding-left: 12px;
-  padding-right: 6px;
-  text-align: right;
-}
-
-.comparisonOpponent {
-  display: grid;
-  align-items: center;
-  min-width: 0;
-}
-
-.comparisonOpponent .botLabel {
-  display: grid;
-  gap: 1px;
-  text-align: left;
-}
-
-.comparisonOpponent .botLabel span {
-  border-left: 0;
-  padding-left: 0;
-  text-align: left;
-}
-
-.comparisonOpponent .botLabel span:first-child {
-  color: var(--text);
-}
-
-.comparisonOpponent .botLabel span + span {
-  color: var(--text-muted);
-  font-size: var(--type-meta);
-  letter-spacing: 0.045em;
-  overflow-wrap: anywhere;
-}
-
-.comparisonValue {
-  align-self: stretch;
-  color: var(--text);
-  display: grid;
-  align-content: center;
-  font-family: var(--font-display);
-  font-size: 0.94rem;
-  font-weight: 650;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
 }
 
 .scoreGood {
@@ -432,9 +323,13 @@
 .opponentRow summary {
   display: grid;
   gap: 12px;
-  grid-template-columns: minmax(0, 1fr) repeat(3, max-content);
+  grid-template-columns: minmax(280px, 1fr) minmax(86px, 0.34fr) minmax(118px, 0.5fr) minmax(136px, 0.58fr);
   align-items: center;
   background: var(--surface-strong);
+}
+
+.entrantWorkbench .entrantRow .opponentRow summary {
+  grid-template-columns: minmax(280px, 1fr) minmax(86px, 0.34fr) minmax(118px, 0.5fr) minmax(136px, 0.58fr);
 }
 
 .opponentRow:nth-child(odd) summary {
@@ -465,9 +360,13 @@
 .match summary {
   display: grid;
   gap: 12px;
-  grid-template-columns: minmax(360px, 1fr) repeat(3, max-content);
+  grid-template-columns: minmax(280px, 1fr) minmax(86px, 0.34fr) minmax(118px, 0.5fr) minmax(136px, 0.58fr);
   align-items: center;
   background: var(--bg);
+}
+
+.entrantWorkbench .entrantRow .match summary {
+  grid-template-columns: minmax(280px, 1fr) minmax(86px, 0.34fr) minmax(118px, 0.5fr) minmax(136px, 0.58fr);
 }
 
 .match summary:hover,
@@ -900,8 +799,7 @@
     justify-content: start;
   }
 
-  .entrantHead,
-  .comparisonHead {
+  .entrantHead {
     display: none;
   }
 
@@ -909,20 +807,21 @@
   .entrantRow,
   .opponentRow,
   .match,
-  .entrantResultComparisons,
-  .entrantSearchComparisons,
-  .entrantPairs,
-  .comparisonRow {
+  .entrantPairs {
     min-width: 0;
     width: 100%;
   }
 
   .entrantRow summary,
   .entrantWorkbench[data-view="ranking"] .entrantRow summary,
-  .entrantWorkbench[data-view="search"] .entrantRow summary,
-  .entrantWorkbench[data-view="pairwise"] .entrantRow summary {
+  .entrantWorkbench[data-view="search"] .entrantRow summary {
     gap: 8px 12px;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .entrantWorkbench .entrantRow .opponentRow summary,
+  .entrantWorkbench .entrantRow .match summary {
+    grid-template-columns: 1fr;
   }
 
   .entrantRow summary .botLabel {
@@ -940,7 +839,6 @@
   }
 
   .entrantRow summary .metric::before,
-  .comparisonRow > span::before,
   .opponentRow summary > span::before,
   .match summary > span::before {
     color: var(--text-soft);
@@ -963,27 +861,19 @@
   }
 
   .entrantRow summary .metricSearch,
-  .entrantRow summary .metricPairwise,
-  .entrantWorkbench[data-view="search"] .entrantRow summary .metricResults,
-  .entrantWorkbench[data-view="search"] .entrantRow summary .metricPairwise,
-  .entrantWorkbench[data-view="pairwise"] .entrantRow summary .metricResults,
-  .entrantWorkbench[data-view="pairwise"] .entrantRow summary .metricSearch {
+  .entrantWorkbench[data-view="search"] .entrantRow summary .metricResults {
     display: none;
   }
 
-  .entrantWorkbench[data-view="search"] .entrantRow summary .metricSearch,
-  .entrantWorkbench[data-view="pairwise"] .entrantRow summary .metricPairwise {
+  .entrantWorkbench[data-view="search"] .entrantRow summary .metricSearch {
     display: grid;
   }
 
   .opponentRow summary,
-  .match summary,
-  .entrantResultComparisons .comparisonRow,
-  .entrantSearchComparisons .comparisonRow {
+  .match summary {
     grid-template-columns: 1fr;
   }
 
-  .comparisonRow > span,
   .opponentRow summary > span,
   .match summary > span {
     display: flex;
@@ -996,7 +886,6 @@
     text-align: right;
   }
 
-  .comparisonRow > span:not(:first-child),
   .opponentRow summary > span,
   .match summary > span {
     border-top: 1px solid var(--border);
@@ -1018,8 +907,6 @@
     margin-bottom: 2px;
   }
 
-  .entrantResultComparisons,
-  .entrantSearchComparisons,
   .entrantPairs {
     padding: 4px 12px 14px;
   }
