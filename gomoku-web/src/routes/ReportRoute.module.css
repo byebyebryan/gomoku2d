@@ -68,36 +68,6 @@
   color: var(--accent);
 }
 
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.chip {
-  display: inline-grid;
-  gap: 1px;
-  min-width: 120px;
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--info-border);
-  background: color-mix(in srgb, var(--surface-muted) 84%, var(--info-soft));
-  padding: 8px 10px;
-}
-
-.chip span {
-  color: var(--text-soft);
-  font-family: var(--font-display);
-  font-size: 0.92rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.chip strong {
-  color: var(--text);
-  font-family: var(--font-display);
-  font-size: 1.12rem;
-}
-
 .panel {
   display: grid;
   gap: 14px;
@@ -167,6 +137,11 @@
 .entrantWorkbench[data-view="search"] .entrantHead,
 .entrantWorkbench[data-view="search"] .entrantRow summary {
   grid-template-columns: minmax(240px, 1.4fr) repeat(7, minmax(84px, 1fr));
+}
+
+.analysisWorkbench .entrantHead,
+.analysisWorkbench > .entrantGrid > .entrantRow > summary {
+  grid-template-columns: minmax(360px, 1.9fr) repeat(4, minmax(86px, 1fr));
 }
 
 .entrantHead {
@@ -369,6 +344,15 @@
   grid-template-columns: minmax(280px, 1fr) minmax(86px, 0.34fr) minmax(118px, 0.5fr) minmax(136px, 0.58fr);
 }
 
+.analysisWorkbench .entrantRow .match summary {
+  grid-template-columns:
+    minmax(260px, 1.2fr)
+    minmax(126px, 0.42fr)
+    minmax(118px, 0.4fr)
+    minmax(126px, 0.42fr)
+    minmax(86px, 0.28fr);
+}
+
 .match summary:hover,
 .match summary:focus-visible {
   background: var(--bg);
@@ -532,6 +516,126 @@
   text-shadow: 0 1px 1px rgb(255 255 255 / 60%);
 }
 
+.proofActualStone {
+  position: absolute;
+  inset: 2px;
+  z-index: 3;
+  border-radius: 999px;
+  background: transparent;
+  transform: translateY(-1px);
+}
+
+.proofActualStoneBlack {
+  border: 2px solid #07090c;
+  box-shadow: 0 1px 1px rgb(0 0 0 / 24%);
+}
+
+.proofActualStoneWhite {
+  border: 2px solid #f6eed8;
+  box-shadow: 0 1px 1px rgb(0 0 0 / 24%), 0 0 0 1px #8f8068;
+}
+
+.proofMarker {
+  position: absolute;
+  inset: 1px;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  color: #101214;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 950;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  pointer-events: none;
+  transform: translateY(-2px);
+}
+
+.markerWinning,
+.markerThreat,
+.markerImminentDefense,
+.markerOffensiveCounter,
+.markerCorridorEntryBlack,
+.markerCorridorEntryWhite,
+.markerWinningEvidence,
+.markerThreatEvidence,
+.markerImminentEvidence,
+.markerOffensiveEvidence {
+  --proof-hint-color: transparent;
+}
+
+.markerWinning::after,
+.markerThreat::after,
+.markerImminentDefense::after,
+.markerOffensiveCounter::after,
+.markerCorridorEntryBlack::after,
+.markerCorridorEntryWhite::after,
+.markerWinningEvidence::after,
+.markerThreatEvidence::after,
+.markerImminentEvidence::after,
+.markerOffensiveEvidence::after {
+  position: absolute;
+  inset: -1px;
+  z-index: 2;
+  border: 2px solid var(--proof-hint-color);
+  box-sizing: border-box;
+  content: "";
+  pointer-events: none;
+  transform: translateY(-1px);
+}
+
+.markerWinning,
+.markerWinningEvidence {
+  --proof-hint-color: var(--success);
+}
+
+.markerThreat,
+.markerThreatEvidence {
+  --proof-hint-color: var(--danger);
+}
+
+.markerImminentDefense,
+.markerImminentEvidence {
+  --proof-hint-color: #ff7aba;
+}
+
+.markerOffensiveCounter,
+.markerOffensiveEvidence {
+  --proof-hint-color: #9c7dff;
+}
+
+.markerCorridorEntryBlack {
+  --proof-hint-color: #050505;
+}
+
+.markerCorridorEntryWhite {
+  --proof-hint-color: #fff;
+}
+
+.markerConfirmedEscape .proofMarker {
+  color: var(--success);
+}
+
+.markerPossibleEscape .proofMarker {
+  color: #7dd9d3;
+}
+
+.markerForbidden .proofMarker,
+.markerForcedLoss .proofMarker,
+.markerImmediateLoss .proofMarker {
+  color: var(--danger);
+}
+
+.markerImmediateLoss .proofMarker {
+  font-size: 1.08rem;
+  font-weight: 1000;
+  transform: translateY(-2px) scaleX(1.16);
+}
+
+.markerUnknownOutcome .proofMarker {
+  color: var(--text-muted);
+}
+
 .termList,
 .provenance dl {
   display: grid;
@@ -663,6 +767,69 @@
   color: var(--text-soft);
 }
 
+.analysisSideList {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.analysisPairTitle {
+  gap: 4px;
+}
+
+.analysisPairLine {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.analysisPairLine strong {
+  flex: 0 0 auto;
+  color: var(--text) !important;
+}
+
+.analysisPairName {
+  min-width: 5.8rem;
+}
+
+.analysisSideLine {
+  display: flex;
+  gap: 7px;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.analysisSideTag {
+  flex: 0 0 auto;
+  min-width: 2.4em;
+  color: var(--text-soft) !important;
+  font-family: var(--font-display);
+  font-size: var(--type-quiet);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.analysisSidePrimary,
+.analysisSideSecondary {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.analysisSidePrimary {
+  color: var(--text) !important;
+}
+
+.analysisSideSecondary {
+  color: var(--info-ink) !important;
+}
+
+.analysisWinnerBadge {
+  color: var(--success) !important;
+  font-family: var(--font-display);
+  white-space: nowrap;
+}
+
 .list {
   display: grid;
   gap: 12px;
@@ -711,6 +878,12 @@
   padding: 0 14px 14px;
 }
 
+.match > .details {
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  padding: 14px;
+}
+
 .detailGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -742,12 +915,169 @@
   gap: 8px;
 }
 
+.proofLegend {
+  display: grid;
+  gap: 7px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  padding: 8px 10px;
+  color: var(--text-muted);
+}
+
+.proofLegendRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 14px;
+}
+
+.legendRole,
+.legendOutcome {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+  font-size: var(--type-meta);
+}
+
+.legendRole::before {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--proof-legend-color);
+  box-sizing: border-box;
+  content: "";
+}
+
+.legendWinning {
+  --proof-legend-color: var(--success);
+}
+
+.legendThreat {
+  --proof-legend-color: var(--danger);
+}
+
+.legendImminent {
+  --proof-legend-color: #ff7aba;
+}
+
+.legendOffensive {
+  --proof-legend-color: #9c7dff;
+}
+
+.legendCorridorEntry {
+  --proof-legend-color: #fff;
+}
+
+.legendOutcome strong {
+  min-width: 1ch;
+  font-family: var(--font-display);
+  font-size: 1.08rem;
+  font-weight: 950;
+  line-height: 1;
+  text-align: center;
+}
+
+.legendImmediateLoss,
+.legendForced,
+.legendForbidden {
+  color: var(--danger);
+}
+
+.legendConfirmed {
+  color: var(--success);
+}
+
+.legendPossible {
+  color: #7dd9d3;
+}
+
+.legendUnknown {
+  color: var(--text-muted);
+}
+
 .frame {
   display: grid;
   gap: 8px;
   border: 1px solid var(--border);
   background: var(--surface-strong);
   padding: 10px;
+}
+
+.analysisFrame {
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: start;
+}
+
+.proofFrameCopy {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.proofFrameCopy h3 {
+  margin: 0;
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 1.16rem;
+}
+
+.proofFrameLines {
+  display: grid;
+  gap: 6px;
+}
+
+.proofFrameLine {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  gap: 10px;
+  align-items: baseline;
+}
+
+.proofFrameLine span {
+  color: var(--text-soft);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.proofFrameLine strong {
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.replyOutcomes {
+  display: grid;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.replyOutcomeRow {
+  display: grid;
+  grid-template-columns: 74px minmax(92px, 0.5fr) minmax(0, 1fr);
+  gap: 8px;
+  align-items: baseline;
+  border-top: 1px solid var(--border);
+  padding: 6px 8px;
+}
+
+.replyOutcomeRow:first-child {
+  border-top: 0;
+}
+
+.replyOutcomeHeader {
+  color: var(--text-soft);
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.replyOutcomeRow strong {
+  color: var(--text);
+}
+
+.replyOutcomeRow span {
+  color: var(--text-muted);
 }
 
 .markerList {
@@ -785,10 +1115,6 @@
 
   .links {
     justify-content: start;
-  }
-
-  .chip {
-    width: 100%;
   }
 
   .entry summary {
@@ -915,6 +1241,17 @@
   .termList,
   .provenance dl {
     grid-template-columns: 1fr;
+  }
+
+  .analysisFrame {
+    grid-template-columns: 1fr;
+    overflow-x: auto;
+  }
+
+  .proofFrameLine,
+  .replyOutcomeRow {
+    grid-template-columns: 1fr;
+    gap: 2px;
   }
 
   .metric {

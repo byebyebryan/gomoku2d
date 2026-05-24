@@ -7,9 +7,7 @@ top of React, Phaser, and the Rust/WebAssembly core.
 
 **Pixel-art previews:** https://gomoku2d.byebyebryan.com/assets/
 
-**Bot lab report:** https://gomoku2d.byebyebryan.com/bot-report/
-
-**Replay analysis report:** https://gomoku2d.byebyebryan.com/analysis-report/
+**Lab report:** https://gomoku2d.byebyebryan.com/lab-report/
 
 React owns the app shell: home, match, replay, profile, auth, and local/cloud
 history. Phaser renders the board and nothing else. The rules engine and bot
@@ -63,16 +61,17 @@ Source assets and local visual preview pages live in
 under `/assets/`.
 
 Curated bot-lab reports live in [`../gomoku-bot-lab/reports/`](../gomoku-bot-lab/reports/)
-and are copied into published builds under `/bot-report/`.
+and are copied into published builds under `/bot-report/` as the ranking/search
+data source.
 
 Curated replay-analysis reports live in
 [`../gomoku-bot-lab/analysis-reports/`](../gomoku-bot-lab/analysis-reports/)
-and are copied into published builds under `/analysis-report/`.
+and are copied into published builds under `/analysis-report/` as the analysis
+data source.
 
 Production builds expect both curated report folders to contain `report.json`.
-The React app renders `/bot-report/` and `/analysis-report/` from those data
-files. For local/dev builds that intentionally skip reports, set
-`GOMOKU_ALLOW_MISSING_REPORTS=1`.
+The React app renders the unified `/lab-report/` from those split data files.
+For local/dev builds that intentionally skip reports, set `GOMOKU_ALLOW_MISSING_REPORTS=1`.
 
 ---
 

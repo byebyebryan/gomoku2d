@@ -163,7 +163,8 @@ Once the repo and product story are reconciled, prepare a public alpha:
 - Move report presentation out of Rust-generated monolithic HTML and into web
   viewer components.
 - Keep compact `report.json` as the source data for published pages.
-- Preserve direct published URLs: `/bot-report/` and `/analysis-report/`.
+- Preserve report JSON compatibility URLs while making `/lab-report/` the public
+  viewer route.
 - Make report pages visually consistent with the game shell and asset preview
   pages.
 

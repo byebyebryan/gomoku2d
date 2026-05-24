@@ -4,7 +4,9 @@ import {
   useState,
   type CSSProperties,
   type KeyboardEvent,
+  type ReactNode,
 } from "react";
+import { Navigate, useSearchParams } from "react-router-dom";
 
 import {
   displayBotSpec,
@@ -15,38 +17,63 @@ import {
   type PublishedMatchReport,
   type StandingReport,
 } from "../reports/bot_report";
+import {
+  loadAnalysisReport,
+  type PublishedAnalysisReport,
+} from "../reports/analysis_report";
+import { AnalysisReportContent } from "./AnalysisReportRoute";
 
 import styles from "./ReportRoute.module.css";
 
 const baseUrl = import.meta.env.BASE_URL;
 
-type LoadState =
+type LoadState<T> =
+  | { status: "idle" }
   | { status: "loading" }
-  | { status: "loaded"; report: PublishedBotReport }
+  | { status: "loaded"; report: T }
   | { status: "error"; message: string };
 
-type ReportView = "ranking" | "search";
+type ReportView = "ranking" | "search" | "analysis";
+type BotReportView = Exclude<ReportView, "analysis">;
 
 const REPORT_VIEWS: Array<{ id: ReportView; label: string }> = [
   { id: "ranking", label: "Ranking" },
   { id: "search", label: "Search" },
+  { id: "analysis", label: "Analysis" },
 ];
 
 export function BotReportRoute() {
-  const [state, setState] = useState<LoadState>({ status: "loading" });
+  return <Navigate to="/lab-report/" replace />;
+}
+
+export function LabReportRoute() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view = parseReportView(searchParams.get("tab"));
+  const [analysisState, setAnalysisState] = useState<LoadState<PublishedAnalysisReport>>({
+    status: "idle",
+  });
+  const [botState, setBotState] = useState<LoadState<PublishedBotReport>>({ status: "idle" });
 
   useEffect(() => {
-    document.title = "Gomoku2D Bot Lab Report";
+    document.title = "Gomoku2D Lab Report";
+  }, []);
+
+  useEffect(() => {
+    if (view === "analysis" || botState.status !== "idle") {
+      return;
+    }
+
     let cancelled = false;
+    setBotState({ status: "loading" });
     loadPublishedBotReport()
       .then((report) => {
         if (!cancelled) {
-          setState({ status: "loaded", report });
+          setBotState({ status: "loaded", report });
         }
       })
       .catch((error: unknown) => {
         if (!cancelled) {
-          setState({
+          setBotState({
             status: "error",
             message: error instanceof Error ? error.message : String(error),
           });
@@ -55,25 +82,66 @@ export function BotReportRoute() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [view]);
 
-  if (state.status === "loading") {
-    return <ReportState title="Bot Lab Report" message="Loading report…" />;
-  }
-  if (state.status === "error") {
-    return <ReportState title="Bot Lab Report" message={state.message} />;
-  }
+  useEffect(() => {
+    if (view !== "analysis" || analysisState.status !== "idle") {
+      return;
+    }
 
-  return <BotReportPage report={state.report} />;
-}
+    let cancelled = false;
+    setAnalysisState({ status: "loading" });
+    loadAnalysisReport()
+      .then((report) => {
+        if (!cancelled) {
+          setAnalysisState({ status: "loaded", report });
+        }
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setAnalysisState({
+            status: "error",
+            message: error instanceof Error ? error.message : String(error),
+          });
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [view]);
 
-function BotReportPage({ report }: { report: PublishedBotReport }) {
-  const [view, setView] = useState<ReportView>("ranking");
-  const [openBots, setOpenBots] = useState<Set<string>>(() => new Set());
-
-  const toggleBot = (bot: string) => {
-    setOpenBots((current) => toggleSetValue(current, bot));
+  const setView = (nextView: ReportView) => {
+    setSearchParams(nextView === "ranking" ? {} : { tab: nextView });
   };
+
+  let content: ReactNode;
+
+  if (view === "analysis") {
+    if (analysisState.status === "error") {
+      content = <ReportStatePanel title="Lab Report" message={analysisState.message} />;
+    } else if (analysisState.status !== "loaded") {
+      content = <ReportStatePanel title="Lab Report" message="Loading report…" />;
+    } else {
+      content = (
+        <>
+          <AnalysisReportContent report={analysisState.report} />
+          <AnalysisProvenanceSection report={analysisState.report} />
+        </>
+      );
+    }
+  } else if (botState.status === "error") {
+    content = <ReportStatePanel title="Lab Report" message={botState.message} />;
+  } else if (botState.status !== "loaded") {
+    content = <ReportStatePanel title="Lab Report" message="Loading report…" />;
+  } else {
+    content = (
+      <>
+        <BotReportPanel report={botState.report} view={view} />
+        <HowToReadSection />
+        <ProvenanceSection report={botState.report} />
+      </>
+    );
+  }
 
   return (
     <main className={styles.page}>
@@ -82,67 +150,89 @@ function BotReportPage({ report }: { report: PublishedBotReport }) {
           <div className={styles.headerRow}>
             <div>
               <p className="uiPageEyebrow">Gomoku2D lab</p>
-              <h1 className={styles.title}>Bot Lab Report</h1>
+              <h1 className={styles.title}>Lab Report</h1>
             </div>
             <nav className={styles.links} aria-label="Report links">
               <a href={baseUrl}>Game</a>
               <a href={`${baseUrl}assets/`}>Assets</a>
-              <a href={`${baseUrl}analysis-report/`}>Analysis</a>
             </nav>
           </div>
-          <div className={styles.chips} aria-label="Run summary">
-            <ReportChip label="Schedule" value={scheduleSummary(report)} />
-            <ReportChip label="Rule" value={report.run.rules.variant} />
-            <ReportChip label="Opening" value={openingSummary(report)} />
-            <ReportChip label="Budget" value={budgetLabel(report)} />
-            <ReportChip label="Wall" value={formatDurationMs(report.run.total_wall_time_ms)} />
-            <ReportChip label="Finish" value={finishSummary(report)} />
-          </div>
-          {report.provenance?.git_dirty ? (
+          <ReportTabs value={view} onChange={setView} />
+          {botState.status === "loaded" && botState.report.provenance?.git_dirty ? (
             <p className={styles.warning}>Development run: generated from a dirty git worktree.</p>
           ) : null}
         </header>
 
-        <section className={`${styles.panel} ${styles.entrantWorkbench}`} data-view={view}>
-          <div className={styles.headerRow}>
-            <h2>Results</h2>
-            <div className={styles.viewToggle} aria-label="Entrant table mode">
-              {REPORT_VIEWS.map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  className={view === option.id ? styles.activeToggle : undefined}
-                  onClick={() => setView(option.id)}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className={styles.entrantGrid}>
-            <EntrantHeader />
-            {report.standings.map((standing, index) => {
-              const isOpen = openBots.has(standing.bot);
-              return (
-                <EntrantRow
-                  key={standing.bot}
-                  report={report}
-                  standing={standing}
-                  rank={index + 1}
-                  view={view}
-                  isOpen={isOpen}
-                  onToggle={() => toggleBot(standing.bot)}
-                />
-              );
-            })}
-          </div>
-        </section>
-
-        <HowToReadSection />
-        <ProvenanceSection report={report} />
+        {content}
       </div>
     </main>
+  );
+}
+
+function ReportTabs({
+  value,
+  onChange,
+}: {
+  value: ReportView;
+  onChange: (view: ReportView) => void;
+}) {
+  return (
+    <div className={styles.viewToggle} aria-label="Lab report sections">
+      {REPORT_VIEWS.map((option) => (
+        <button
+          key={option.id}
+          type="button"
+          className={value === option.id ? styles.activeToggle : undefined}
+          onClick={() => onChange(option.id)}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function parseReportView(value: string | null): ReportView {
+  return value === "search" || value === "analysis" ? value : "ranking";
+}
+
+function BotReportPanel({
+  report,
+  view,
+}: {
+  report: PublishedBotReport;
+  view: BotReportView;
+}) {
+  const [openBots, setOpenBots] = useState<Set<string>>(() => new Set());
+
+  const toggleBot = (bot: string) => {
+    setOpenBots((current) => toggleSetValue(current, bot));
+  };
+
+  return (
+    <section className={`${styles.panel} ${styles.entrantWorkbench}`} data-view={view}>
+      <div className={styles.headerRow}>
+        <h2>Results</h2>
+      </div>
+
+      <div className={styles.entrantGrid}>
+        <EntrantHeader />
+        {report.standings.map((standing, index) => {
+          const isOpen = openBots.has(standing.bot);
+          return (
+            <EntrantRow
+              key={standing.bot}
+              report={report}
+              standing={standing}
+              rank={index + 1}
+              view={view}
+              isOpen={isOpen}
+              onToggle={() => toggleBot(standing.bot)}
+            />
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -184,7 +274,7 @@ function EntrantRow({
   report: PublishedBotReport;
   standing: StandingReport;
   rank: number;
-  view: ReportView;
+  view: BotReportView;
   isOpen: boolean;
   onToggle: () => void;
 }) {
@@ -554,6 +644,16 @@ function ProvenanceSection({ report }: { report: PublishedBotReport }) {
     <section className={`${styles.panel} ${styles.provenance}`}>
       <h2>Provenance</h2>
       <dl>
+        <dt>Schedule</dt>
+        <dd>{scheduleSummary(report)}</dd>
+        <dt>Rule</dt>
+        <dd>{report.run.rules.variant}</dd>
+        <dt>Opening</dt>
+        <dd>{openingSummary(report)}</dd>
+        <dt>Budget</dt>
+        <dd>{budgetLabel(report)}</dd>
+        <dt>Finish</dt>
+        <dd>{finishSummary(report)}</dd>
         <dt>Generated local</dt>
         <dd>{report.provenance?.generated_at_local ?? "unknown"}</dd>
         <dt>Generated UTC</dt>
@@ -569,23 +669,40 @@ function ProvenanceSection({ report }: { report: PublishedBotReport }) {
   );
 }
 
-function ReportChip({ label, value }: { label: string; value: string }) {
+function AnalysisProvenanceSection({ report }: { report: PublishedAnalysisReport }) {
   return (
-    <span className={styles.chip}>
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </span>
+    <section className={`${styles.panel} ${styles.provenance}`}>
+      <h2>Provenance</h2>
+      <dl>
+        <dt>Source</dt>
+        <dd>{report.source_report}</dd>
+        <dt>Selector</dt>
+        <dd>{report.selector}</dd>
+        <dt>Entries</dt>
+        <dd>{report.analyzed}/{report.total}</dd>
+        <dt>Unclear</dt>
+        <dd>{report.summary.unclear}</dd>
+        <dt>Errors</dt>
+        <dd>{report.failed}</dd>
+        <dt>Probe depth</dt>
+        <dd>{report.model.max_depth}</dd>
+        <dt>Elapsed</dt>
+        <dd>{formatDurationMs(report.elapsed_ms)}</dd>
+        <dt>Total elapsed</dt>
+        <dd>{formatDurationMs(report.total_elapsed_ms)}</dd>
+        <dt>Schema</dt>
+        <dd>v{report.schema_version}</dd>
+      </dl>
+    </section>
   );
 }
 
-function ReportState({ title, message }: { title: string; message: string }) {
+function ReportStatePanel({ title, message }: { title: string; message: string }) {
   return (
-    <main className={styles.page}>
-      <section className={styles.state}>
-        <h1>{title}</h1>
-        <p>{message}</p>
-      </section>
-    </main>
+    <section className={styles.state}>
+      <h1>{title}</h1>
+      <p>{message}</p>
+    </section>
   );
 }
 

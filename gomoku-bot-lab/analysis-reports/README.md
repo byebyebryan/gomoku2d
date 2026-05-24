@@ -1,11 +1,13 @@
 # Gomoku2D Analysis Reports
 
-Curated replay-analysis data for the published `/analysis-report/` page.
+Curated replay-analysis data for the analysis tab of the published
+`/lab-report/` page. The JSON remains available under
+`/analysis-report/report.json` for compatibility.
 
 The published analysis report is the companion to the published bot report:
 sample the head-to-head games between the current top two standings in
 `reports/report.json`, then export the forced-corridor explanation data here.
-The web app renders the page from this JSON.
+The web app renders the analysis tab from this JSON.
 
 Recommended flow, from `gomoku-bot-lab/`:
 
@@ -28,6 +30,7 @@ cargo run --release -p gomoku-eval -- analyze-report-replays \
 
 `analyze-report-replays` intentionally omits explicit entrants here. By default
 it selects standing #1 versus the highest different standing from the published
-bot report, so `/analysis-report/` always explains the current top matchup.
+bot report, so the lab report analysis tab always explains the current top
+matchup.
 
 Scratch analysis runs belong in ignored `outputs/`.
