@@ -603,14 +603,14 @@ function FinishedBoard({
     <div className={styles.proofBoard} style={style}>
       <div className={`${styles.proofCoordinate} ${styles.proofCorner}`} aria-hidden="true" />
       {columnLabels.map((label) => (
-        <div className={styles.proofCoordinate} key={`col-${label}`}>
+        <div className={`${styles.proofCoordinate} ${styles.proofCoordinateTop}`} key={`col-${label}`}>
           {label}
         </div>
       ))}
       <div className={`${styles.proofCoordinate} ${styles.proofCorner}`} aria-hidden="true" />
       {Array.from({ length: boardSize }, (_, row) => (
         <Fragment key={`row-${row}`}>
-          <div className={styles.proofCoordinate}>{row + 1}</div>
+          <div className={`${styles.proofCoordinate} ${styles.proofCoordinateLeft}`}>{row + 1}</div>
           {Array.from({ length: boardSize }, (_, col) => {
             const cell = row * boardSize + col;
             const marker = stones.get(cell);

@@ -237,7 +237,7 @@ function ProofLegend() {
       <div className={styles.proofLegendRow}>
         <LegendOutcome className={styles.legendImmediateLoss} marker="!" label="immediate loss" />
         <LegendOutcome className={styles.legendForced} marker="L" label="forced loss" />
-        <LegendOutcome className={styles.legendForbidden} marker="F" label="forbidden" />
+        <LegendOutcome className={styles.legendForbidden} marker="X" label="forbidden" />
         <LegendOutcome className={styles.legendConfirmed} marker="E" label="confirmed escape" />
         <LegendOutcome className={styles.legendPossible} marker="P" label="possible escape" />
         <LegendOutcome className={styles.legendUnknown} marker="?" label="unknown" />
@@ -356,14 +356,14 @@ function ProofBoard({
     <div className={styles.proofBoard} style={style} data-proof-board="analysis">
       <div className={`${styles.proofCoordinate} ${styles.proofCorner}`} aria-hidden="true" />
       {columnLabels.map((label) => (
-        <div className={styles.proofCoordinate} key={`col-${label}`}>
+        <div className={`${styles.proofCoordinate} ${styles.proofCoordinateTop}`} key={`col-${label}`}>
           {label}
         </div>
       ))}
       <div className={`${styles.proofCoordinate} ${styles.proofCorner}`} aria-hidden="true" />
       {Array.from({ length: boardSize }, (_, row) => (
         <Fragment key={`row-${row}`}>
-          <div className={styles.proofCoordinate}>{row + 1}</div>
+          <div className={`${styles.proofCoordinate} ${styles.proofCoordinateLeft}`}>{row + 1}</div>
           {Array.from({ length: boardSize }, (_, col) => {
             const cell = row * boardSize + col;
             const stone = stones.get(cell);
@@ -516,7 +516,7 @@ function markerLabel(marker: ProofMarker | undefined): string {
     return "";
   }
   if (marker.kinds.includes("forbidden")) {
-    return "F";
+    return "X";
   }
   if (marker.kinds.includes("immediate_loss")) {
     return "!";
