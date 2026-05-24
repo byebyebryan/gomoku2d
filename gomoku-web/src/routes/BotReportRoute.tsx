@@ -8,6 +8,7 @@ import {
 } from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
 
+import { presetForLabSpec, type BotPresetId } from "../core/bot_config";
 import {
   displayBotSpec,
   loadPublishedBotReport,
@@ -125,6 +126,7 @@ export function LabReportRoute() {
       content = (
         <>
           <AnalysisReportContent report={analysisState.report} />
+          <AnalysisHowToReadSection />
           <AnalysisProvenanceSection report={analysisState.report} />
         </>
       );
@@ -137,8 +139,8 @@ export function LabReportRoute() {
     content = (
       <>
         <BotReportPanel report={botState.report} view={view} />
-        <HowToReadSection />
-        <ProvenanceSection report={botState.report} />
+        <BotHowToReadSection view={view} />
+        <BotProvenanceSection report={botState.report} view={view} />
       </>
     );
   }
@@ -358,15 +360,58 @@ function EntrantRow({
   );
 }
 
-function BotLabel({ bot, prefix = "" }: { bot: string; prefix?: string }) {
+function BotLabel({
+  badgePlacement = "after",
+  bot,
+}: {
+  badgePlacement?: "after" | "before";
+  bot: string;
+}) {
   const label = displayBotSpec(bot);
   const [primary, ...rest] = label.split("+");
+  const preset = presetForLabSpec(bot);
   return (
     <strong className={styles.botLabel}>
-      <span>{prefix}{primary}</span>
-      {rest.length > 0 ? <span>{rest.join("+")}</span> : null}
+      <span className={styles.botLabelPrimary}>
+        {preset && badgePlacement === "before" ? <PresetBadge preset={preset} /> : null}
+        <span className={styles.botSpecPrimary}>{primary}</span>
+        {preset && badgePlacement === "after" ? <PresetBadge preset={preset} /> : null}
+      </span>
+      {rest.length > 0 ? <span className={styles.botSpecSecondary}>{rest.join("+")}</span> : null}
     </strong>
   );
+}
+
+function PresetBadge({ preset }: { preset: BotPresetId }) {
+  return (
+    <span className={`${styles.presetBadge} ${presetClassName(preset)}`}>
+      {presetLabel(preset)}
+    </span>
+  );
+}
+
+function presetLabel(preset: BotPresetId): string {
+  switch (preset) {
+    case "easy":
+      return "Easy";
+    case "hard":
+      return "Hard";
+    case "normal":
+      return "Normal";
+  }
+}
+
+function presetClassName(preset: BotPresetId | null): string {
+  switch (preset) {
+    case "easy":
+      return styles.presetEasy;
+    case "hard":
+      return styles.presetHard;
+    case "normal":
+      return styles.presetNormal;
+    default:
+      return "";
+  }
 }
 
 function MetricCell({
@@ -456,7 +501,7 @@ function OpponentDetails({
         }}
         onKeyDown={(event) => handleToggleKey(event, () => setIsOpen((current) => !current))}
       >
-        <BotLabel bot={opponent} prefix="Vs " />
+        <BotLabel badgePlacement="before" bot={opponent} />
         <span className={scoreToneClass(score)} data-label="Score">{formatPercent(score)}</span>
         <span data-label="W-D-L">{pairRecordForBot(pair, bot)} W-D-L</span>
         <span data-label="Points">{pairPointsForBot(pair, bot)} points</span>
@@ -600,35 +645,89 @@ function FinishedBoard({
   );
 }
 
-function HowToReadSection() {
+function BotHowToReadSection({ view }: { view: BotReportView }) {
+  const terms = view === "ranking" ? rankingTerms : searchTerms;
   return (
     <section className={`${styles.panel} ${styles.howToRead}`}>
       <h2>How To Read This</h2>
       <dl className={styles.termList}>
-        <TermRow
-          title="Run Shape"
-          body="Schedule shows the pairing count, games per pair, and total matches. Opening shows the seeded legal moves before bots take over."
-        />
-        <TermRow
-          title="Elo"
-          body="Relative rating within this report only. Shuffled Elo averages repeated Elo passes over randomized match order to reduce run-order noise."
-        />
-        <TermRow
-          title="Score"
-          body="Score % counts wins plus half draws. W-D-L is wins, draws, then losses. Comparisons above 50% are marked green."
-        />
-        <TermRow
-          title="Budget Hit"
-          body="Share of searched moves that hit the active CPU cap before search finished naturally."
-        />
-        <TermRow
-          title="Search Cost"
-          body="Width is the average number of moves searched. The Search tab splits measured time into move generation, ordering, scoring, threat detection, corridor proof, and uncategorized search overhead."
-        />
+        {terms.map((term) => (
+          <TermRow key={term.title} title={term.title} body={term.body} />
+        ))}
       </dl>
     </section>
   );
 }
+
+function AnalysisHowToReadSection() {
+  return (
+    <section className={`${styles.panel} ${styles.howToRead}`}>
+      <h2>How To Read This</h2>
+      <dl className={styles.termList}>
+        {analysisTerms.map((term) => (
+          <TermRow key={term.title} title={term.title} body={term.body} />
+        ))}
+      </dl>
+    </section>
+  );
+}
+
+const rankingTerms = [
+  {
+    title: "Score",
+    body: "Win = 1 point, draw = 0.5. Open a row to compare that bot against each opponent.",
+  },
+  {
+    title: "Elo",
+    body: "Relative rating within this report only. Shuffled Elo averages repeated passes over randomized match order.",
+  },
+  {
+    title: "Width",
+    body: "Average number of child moves searched after tactical filtering. The secondary pre value is width before trimming.",
+  },
+  {
+    title: "Games",
+    body: "Opponent rows show score against that bot. Open a game row to inspect the finished board.",
+  },
+];
+
+const searchTerms = [
+  {
+    title: "Nodes",
+    body: "Average search nodes per move. Higher is not automatically better; it mainly explains cost.",
+  },
+  {
+    title: "Time Split",
+    body: "Per-move CPU time split across move generation, ordering, scoring, threat detection, corridor proof, and remaining overhead.",
+  },
+  {
+    title: "Budget Hit",
+    body: "Share of moves cut off by the tournament CPU budget before search finished naturally.",
+  },
+  {
+    title: "Proof",
+    body: "Corridor proof is the extra tactical verification pass used by proof-enabled variants.",
+  },
+];
+
+const analysisTerms = [
+  {
+    title: "Failure",
+    body: "The losing-side failure mode: missed response, missed lethal prevention, missed escape, unclear, or error.",
+  },
+  {
+    title: "Lethal Onset",
+    body: "The ply where the position first became guaranteed lost under the analyzer model.",
+  },
+  {
+    title: "Setup Corridor",
+    body: "The forced setup before onset. The length value counts that corridor, not the dead turns after the loss was already guaranteed.",
+  },
+  {
+    title: "Frames",
+    body: "Open a game to read frames backward from the win. Boxes are candidate replies or threat evidence; letters are proof outcomes.",
+  },
+];
 
 function TermRow({ title, body }: { title: string; body: string }) {
   return (
@@ -639,31 +738,18 @@ function TermRow({ title, body }: { title: string; body: string }) {
   );
 }
 
-function ProvenanceSection({ report }: { report: PublishedBotReport }) {
+function BotProvenanceSection({ report, view }: { report: PublishedBotReport; view: BotReportView }) {
+  const terms = view === "ranking" ? rankingProvenanceRows(report) : searchProvenanceRows(report);
   return (
     <section className={`${styles.panel} ${styles.provenance}`}>
       <h2>Provenance</h2>
       <dl>
-        <dt>Schedule</dt>
-        <dd>{scheduleSummary(report)}</dd>
-        <dt>Rule</dt>
-        <dd>{report.run.rules.variant}</dd>
-        <dt>Opening</dt>
-        <dd>{openingSummary(report)}</dd>
-        <dt>Budget</dt>
-        <dd>{budgetLabel(report)}</dd>
-        <dt>Finish</dt>
-        <dd>{finishSummary(report)}</dd>
-        <dt>Generated local</dt>
-        <dd>{report.provenance?.generated_at_local ?? "unknown"}</dd>
-        <dt>Generated UTC</dt>
-        <dd>{report.provenance?.generated_at_utc ?? "unknown"}</dd>
-        <dt>Wall clock</dt>
-        <dd>{formatDurationMs(report.run.total_wall_time_ms)}</dd>
-        <dt>Git revision</dt>
-        <dd>{revisionLabel(report)}</dd>
-        <dt>Schema</dt>
-        <dd>v{report.schema_version} / {report.move_codec}</dd>
+        {terms.map(([label, value]) => (
+          <Fragment key={label}>
+            <dt>{label}</dt>
+            <dd>{value}</dd>
+          </Fragment>
+        ))}
       </dl>
     </section>
   );
@@ -678,23 +764,46 @@ function AnalysisProvenanceSection({ report }: { report: PublishedAnalysisReport
         <dd>{report.source_report}</dd>
         <dt>Selector</dt>
         <dd>{report.selector}</dd>
-        <dt>Entries</dt>
+        <dt>Games</dt>
         <dd>{report.analyzed}/{report.total}</dd>
-        <dt>Unclear</dt>
-        <dd>{report.summary.unclear}</dd>
-        <dt>Errors</dt>
-        <dd>{report.failed}</dd>
-        <dt>Probe depth</dt>
-        <dd>{report.model.max_depth}</dd>
-        <dt>Elapsed</dt>
-        <dd>{formatDurationMs(report.elapsed_ms)}</dd>
-        <dt>Total elapsed</dt>
+        <dt>Model</dt>
+        <dd>{analysisModelLabel(report)}</dd>
+        <dt>Generated in</dt>
         <dd>{formatDurationMs(report.total_elapsed_ms)}</dd>
         <dt>Schema</dt>
         <dd>v{report.schema_version}</dd>
       </dl>
     </section>
   );
+}
+
+function rankingProvenanceRows(report: PublishedBotReport): Array<[string, string]> {
+  return [
+    ["Schedule", scheduleSummary(report)],
+    ["Rules", report.run.rules.variant],
+    ["Opening", openingSummary(report)],
+    ["Budget", budgetLabel(report)],
+    ["Finish", finishSummary(report)],
+    ["Generated", report.provenance?.generated_at_local ?? "unknown"],
+    ["Git revision", revisionLabel(report)],
+    ["Schema", `v${report.schema_version} / ${report.move_codec}`],
+  ];
+}
+
+function searchProvenanceRows(report: PublishedBotReport): Array<[string, string]> {
+  return [
+    ["Schedule", scheduleSummary(report)],
+    ["Rules", report.run.rules.variant],
+    ["Budget", budgetLabel(report)],
+    ["Wall clock", formatDurationMs(report.run.total_wall_time_ms)],
+    ["Generated", report.provenance?.generated_at_local ?? "unknown"],
+    ["Git revision", revisionLabel(report)],
+    ["Schema", `v${report.schema_version} / ${report.move_codec}`],
+  ];
+}
+
+function analysisModelLabel(report: PublishedAnalysisReport): string {
+  return `corridor search, depth ${report.model.max_depth}, traceback ${report.model.max_scan_plies}`;
 }
 
 function ReportStatePanel({ title, message }: { title: string; message: string }) {

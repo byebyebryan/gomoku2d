@@ -5,6 +5,7 @@ import {
   botConfigSummary,
   botPlayerName,
   labSpecForBot,
+  presetForLabSpec,
   resolveBotConfig,
   sanitizeBotConfig,
 } from "./bot_config";
@@ -55,6 +56,15 @@ describe("bot config", () => {
       maxTtEntries: 500_000,
       patternEval: true,
     });
+  });
+
+  it("recognizes current preset lab specs in reports", () => {
+    expect(presetForLabSpec("search-d1")).toBe("easy");
+    expect(presetForLabSpec("search-d3+pattern-eval")).toBe("normal");
+    expect(
+      presetForLabSpec("search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4"),
+    ).toBe("hard");
+    expect(presetForLabSpec("search-d7+tactical-cap-8+pattern-eval")).toBeNull();
   });
 
   it("keeps custom configs constrained and derives lab specs from product state", () => {

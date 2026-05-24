@@ -57,8 +57,9 @@ test("published static report routes render their current artifacts", async ({ p
   await expect(page.getByRole("button", { name: "Ranking" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Search" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Analysis" })).toBeVisible();
-  await page.locator("section", { hasText: "Results" }).locator("summary").first().click();
-  await expect(page.getByText(/^Vs /).first()).toBeVisible();
+  const resultsSection = page.locator("section", { hasText: "Results" });
+  await resultsSection.locator("summary").first().click();
+  await expect(resultsSection.locator("details details summary").first()).toBeVisible();
   const reportScroller = page.locator("main").first();
   await expect
     .poll(async () =>
