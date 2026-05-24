@@ -210,6 +210,7 @@ function BotReportPanel({
   view: BotReportView;
 }) {
   const [openBots, setOpenBots] = useState<Set<string>>(() => new Set());
+  const maxSearchAvgNs = maxSearchAverageNs(report.standings);
 
   const toggleBot = (bot: string) => {
     setOpenBots((current) => toggleSetValue(current, bot));
@@ -233,6 +234,7 @@ function BotReportPanel({
               rank={index + 1}
               view={view}
               isOpen={isOpen}
+              maxSearchAvgNs={maxSearchAvgNs}
               onToggle={() => toggleBot(standing.bot)}
             />
           );
@@ -275,6 +277,7 @@ function EntrantRow({
   rank,
   view,
   isOpen,
+  maxSearchAvgNs,
   onToggle,
 }: {
   report: PublishedBotReport;
@@ -282,6 +285,7 @@ function EntrantRow({
   rank: number;
   view: BotReportView;
   isOpen: boolean;
+  maxSearchAvgNs: number;
   onToggle: () => void;
 }) {
   const score = scorePercent(standing.wins, standing.draws, standing.match_count);
@@ -356,6 +360,7 @@ function EntrantRow({
         />
         <StageMetricCell label="Proof" stageNs={standing.stage_proof_ns ?? 0} standing={standing} />
         <StageMetricCell label="Other" stageNs={stageOtherNs(standing)} standing={standing} />
+        <SearchTimeSplit maxSearchAvgNs={maxSearchAvgNs} standing={standing} />
       </summary>
       {view === "ranking" && expanded ? (
         <RankingDrilldown report={report} bot={standing.bot} pairs={pairwiseEntries} />
@@ -461,6 +466,110 @@ function StageMetricCell({
       secondary={stageAvgMsLabel(stageNs, standing.search_move_count)}
     />
   );
+}
+
+function SearchTimeSplit({
+  maxSearchAvgNs,
+  standing,
+}: {
+  maxSearchAvgNs: number;
+  standing: StandingReport;
+}) {
+  const segments = stageSegments(standing).filter((segment) => segment.percent > 0.05);
+  const totalPercent =
+    maxSearchAvgNs <= 0 ? 0 : Math.min(100, (averageSearchNs(standing) / maxSearchAvgNs) * 100);
+  const label = segments
+    .map((segment) => `${segment.label} ${formatPercent(segment.percent)}`)
+    .join(", ");
+  return (
+    <span
+      className={`${styles.metricSearch} ${styles.searchTimeSplit}`}
+      aria-label={`Search time ${formatNumber(averageSearchNs(standing) / 1_000_000)} ms vs slowest ${formatNumber(maxSearchAvgNs / 1_000_000)} ms. Split: ${label}`}
+    >
+      <span className={styles.searchTimeScale}>
+        <span className={styles.searchTimeTrack} style={{ width: `${totalPercent}%` }}>
+          {segments.map((segment) => (
+            <span
+              className={`${styles.searchTimeSegment} ${segment.className}`}
+              key={segment.key}
+              style={{ width: `${Math.max(segment.percent, 1)}%` }}
+              title={`${segment.label}: ${formatPercent(segment.percent)} (${stageAvgMsLabel(
+                segment.stageNs,
+                standing.search_move_count,
+              )})`}
+            />
+          ))}
+        </span>
+      </span>
+      <span className={styles.searchTimeLegend}>
+        {segments.map((segment) => (
+          <span className={styles.searchTimeLegendItem} key={`${segment.key}-legend`}>
+            <span className={`${styles.searchTimeSwatch} ${segment.className}`} aria-hidden="true" />
+            {segment.shortLabel}
+          </span>
+        ))}
+      </span>
+    </span>
+  );
+}
+
+interface SearchStageSegment {
+  className: string;
+  key: string;
+  label: string;
+  percent: number;
+  shortLabel: string;
+  stageNs: number;
+}
+
+function stageSegments(standing: StandingReport) {
+  return [
+    {
+      className: styles.searchTimeMoveGen,
+      key: "move-gen",
+      label: "Move gen",
+      shortLabel: "gen",
+      stageNs: standing.stage_move_gen_ns ?? 0,
+    },
+    {
+      className: styles.searchTimeOrdering,
+      key: "ordering",
+      label: "Ordering",
+      shortLabel: "order",
+      stageNs: standing.stage_ordering_ns ?? 0,
+    },
+    {
+      className: styles.searchTimeScoring,
+      key: "scoring",
+      label: "Scoring",
+      shortLabel: "score",
+      stageNs: standing.stage_eval_ns ?? 0,
+    },
+    {
+      className: styles.searchTimeThreat,
+      key: "threat",
+      label: "Threat detection",
+      shortLabel: "threat",
+      stageNs: standing.stage_threat_ns ?? 0,
+    },
+    {
+      className: styles.searchTimeProof,
+      key: "proof",
+      label: "Proof",
+      shortLabel: "proof",
+      stageNs: standing.stage_proof_ns ?? 0,
+    },
+    {
+      className: styles.searchTimeOther,
+      key: "other",
+      label: "Other",
+      shortLabel: "other",
+      stageNs: stageOtherNs(standing),
+    },
+  ].map((segment): SearchStageSegment => ({
+    ...segment,
+    percent: stageSharePercent(segment.stageNs, standing),
+  }));
 }
 
 function RankingDrilldown({
@@ -900,6 +1009,17 @@ function stageDenominatorNs(standing: StandingReport): number {
 
 function stageOtherNs(standing: StandingReport): number {
   return Math.max(0, stageDenominatorNs(standing) - stageKnownNs(standing));
+}
+
+function averageSearchNs(standing: StandingReport): number {
+  if (standing.search_move_count > 0) {
+    return stageDenominatorNs(standing) / standing.search_move_count;
+  }
+  return Math.max(0, standing.avg_search_time_ms) * 1_000_000;
+}
+
+function maxSearchAverageNs(standings: StandingReport[]): number {
+  return Math.max(1, ...standings.map(averageSearchNs));
 }
 
 function stageSharePercent(stageNs: number, standing: StandingReport): number {
