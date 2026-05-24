@@ -89,6 +89,11 @@ export interface AnalysisEntry {
   proof_details?: {
     proof_frames: ProofFrame[];
   } | null;
+  search_details?: {
+    search_nodes: number;
+    branch_probes: number;
+    max_depth_reached: number;
+  } | null;
   elapsed_ms: number;
   error?: string | null;
 }

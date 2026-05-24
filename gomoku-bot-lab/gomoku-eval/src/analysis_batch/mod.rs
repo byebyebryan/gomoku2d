@@ -29,8 +29,9 @@ pub use types::{
     AnalysisBatchProofSnapshot, AnalysisBatchReport, AnalysisBatchRunOptions, AnalysisBatchSummary,
     ProofLimitCauseCount, PublishedAnalysisEntry, PublishedAnalysisMatchSummary,
     PublishedAnalysisProofDetails, PublishedAnalysisProofFrame, PublishedAnalysisProofMarker,
-    PublishedAnalysisReplyOutcome, PublishedAnalysisReport, PublishedAnalysisSection,
-    PublishedAnalysisSectionInput, ReplayAnalysisInput, PUBLISHED_ANALYSIS_REPORT_SCHEMA_VERSION,
+    PublishedAnalysisReplyOutcome, PublishedAnalysisReport, PublishedAnalysisSearchDetails,
+    PublishedAnalysisSection, PublishedAnalysisSectionInput, ReplayAnalysisInput,
+    PUBLISHED_ANALYSIS_REPORT_SCHEMA_VERSION,
 };
 pub fn run_analysis_batch(
     replay_dir: &Path,
@@ -302,8 +303,22 @@ fn published_analysis_entry(
             .proof_details
             .as_ref()
             .map(published_analysis_proof_details),
+        search_details: entry
+            .proof_detail_diagnostics
+            .as_ref()
+            .map(published_analysis_search_details),
         elapsed_ms: entry.elapsed_ms,
         error: entry.error.clone(),
+    }
+}
+
+fn published_analysis_search_details(
+    diagnostics: &SearchDiagnostics,
+) -> PublishedAnalysisSearchDetails {
+    PublishedAnalysisSearchDetails {
+        search_nodes: diagnostics.search_nodes,
+        branch_probes: diagnostics.branch_probes,
+        max_depth_reached: diagnostics.max_depth_reached,
     }
 }
 
@@ -3097,8 +3112,11 @@ mod tests {
         assert!(json.contains("\"markers\""));
         assert!(json.contains("\"reply_outcomes\""));
         assert!(!json.contains("proof_detail_diagnostics"));
+        assert!(json.contains("\"search_details\""));
+        assert!(json.contains("\"search_nodes\""));
+        assert!(json.contains("\"branch_probes\""));
+        assert!(json.contains("\"max_depth_reached\""));
         assert!(!json.contains("debug board row"));
-        assert!(!json.contains("search_nodes"));
     }
 
     #[test]
