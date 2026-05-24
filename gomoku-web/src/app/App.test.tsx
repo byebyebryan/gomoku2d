@@ -28,6 +28,14 @@ vi.mock("../routes/SettingsRoute", () => ({
   ),
 }));
 
+vi.mock("../routes/BotReportRoute", () => ({
+  LabReportRoute: () => (
+    <main>
+      <h1>Lab Report</h1>
+    </main>
+  ),
+}));
+
 describe("App", () => {
   afterEach(() => {
     cleanup();
@@ -63,14 +71,24 @@ describe("App", () => {
       "href",
       "/assets/",
     );
-    expect(screen.getByRole("link", { name: /^bots$/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /^lab$/i })).toHaveAttribute(
       "href",
-      "/bot-report/",
+      "/lab-report/",
     );
-    expect(screen.getByRole("link", { name: /^analysis$/i })).toHaveAttribute(
-      "href",
-      "/analysis-report/",
+  });
+
+  it.each([
+    ["/lab-report/"],
+    ["/bot-report/"],
+    ["/analysis-report/"],
+  ])("routes %s through the unified lab report", async (path) => {
+    render(
+      <MemoryRouter initialEntries={[path]}>
+        <App />
+      </MemoryRouter>,
     );
+
+    expect(await screen.findByRole("heading", { name: /^lab report$/i })).toBeInTheDocument();
   });
 
   it("routes to settings", async () => {

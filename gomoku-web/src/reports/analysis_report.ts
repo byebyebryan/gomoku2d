@@ -57,10 +57,15 @@ export interface AnalysisEntry {
   root_cause?: string | null;
   unclear_reason?: string | null;
   lethal_onset?: {
-    ply: number;
+    prefix_ply: number;
     attacker: string;
     defender: string;
     kind?: string;
+    shape?: {
+      label?: string;
+      mechanisms?: string[];
+    };
+    terminal_targets?: MovePoint[];
   } | null;
   setup_corridor?: {
     start_ply: number;

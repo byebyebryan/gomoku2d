@@ -48,10 +48,15 @@ test("published static report routes render their current artifacts", async ({ p
   const botJson = await page.request.head("/bot-report/report.json");
   expect(botJson.status()).toBe(200);
 
-  await page.goto("/bot-report/");
-  await expect(page).toHaveTitle(/Bot Lab Report/);
-  await expect(page.getByRole("heading", { name: "Bot Lab Report" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Analysis" })).toBeVisible();
+  const analysisJson = await page.request.head("/analysis-report/report.json");
+  expect(analysisJson.status()).toBe(200);
+
+  await page.goto("/lab-report/");
+  await expect(page).toHaveTitle(/Lab Report/);
+  await expect(page.getByRole("heading", { name: "Lab Report" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Ranking" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Search" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Analysis" })).toBeVisible();
   await page.locator("section", { hasText: "Results" }).locator("summary").first().click();
   await expect(page.getByText(/^Vs /).first()).toBeVisible();
   const reportScroller = page.locator("main").first();
@@ -70,13 +75,20 @@ test("published static report routes render their current artifacts", async ({ p
     node.scrollTop = 0;
   });
 
-  const analysisJson = await page.request.head("/analysis-report/report.json");
-  expect(analysisJson.status()).toBe(200);
+  await page.getByRole("button", { name: "Analysis" }).click();
+  await expect(page).toHaveURL(/\/lab-report\/\?tab=analysis$/);
+  await expect(page.getByText("Easy").first()).toBeVisible();
+  await expect(page.locator("[data-proof-board='analysis']")).toHaveCount(0);
+  const analysis = page.locator("[data-view='analysis']");
+  await analysis.locator("summary").first().click();
+  await expect(analysis.getByText("#65")).toBeVisible();
+  await analysis.locator("summary", { hasText: "#65" }).click();
+  await expect(analysis.locator("[data-proof-board='analysis']").first()).toBeVisible();
 
+  await page.goto("/bot-report/");
+  await expect(page).toHaveURL(/\/lab-report\/?$/);
   await page.goto("/analysis-report/");
-  await expect(page).toHaveTitle(/Analysis Report/);
-  await expect(page.getByRole("heading", { name: "Replay Analysis" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Bots" })).toBeVisible();
+  await expect(page).toHaveURL(/\/lab-report\/\?tab=analysis$/);
 });
 
 test("profile and replay analysis boot without requiring cloud configuration", async ({ page }) => {

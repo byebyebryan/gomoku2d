@@ -18,11 +18,8 @@ const ReplayRoute = lazy(async () => ({
 const SettingsRoute = lazy(async () => ({
   default: (await import("../routes/SettingsRoute")).SettingsRoute,
 }));
-const BotReportRoute = lazy(async () => ({
-  default: (await import("../routes/BotReportRoute")).BotReportRoute,
-}));
-const AnalysisReportRoute = lazy(async () => ({
-  default: (await import("../routes/AnalysisReportRoute")).AnalysisReportRoute,
+const LabReportRoute = lazy(async () => ({
+  default: (await import("../routes/BotReportRoute")).LabReportRoute,
 }));
 
 export function App() {
@@ -64,21 +61,15 @@ export function App() {
           }
         />
         <Route
-          path="/bot-report/*"
+          path="/lab-report/*"
           element={
             <Suspense fallback={<main className={styles.loading}>Loading report…</main>}>
-              <BotReportRoute />
+              <LabReportRoute />
             </Suspense>
           }
         />
-        <Route
-          path="/analysis-report/*"
-          element={
-            <Suspense fallback={<main className={styles.loading}>Loading report…</main>}>
-              <AnalysisReportRoute />
-            </Suspense>
-          }
-        />
+        <Route path="/bot-report/*" element={<Navigate to="/lab-report/" replace />} />
+        <Route path="/analysis-report/*" element={<Navigate to="/lab-report/?tab=analysis" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>

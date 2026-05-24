@@ -1,6 +1,8 @@
 # Gomoku2D Bot Reports
 
-Curated bot-lab data for the published `/bot-report/` page.
+Curated bot-lab data for the ranking and search tabs of the published
+`/lab-report/` page. The JSON remains available under `/bot-report/report.json`
+for compatibility.
 
 Rust owns the tournament run and data export. The web app owns report rendering,
 so this folder should contain `report.json` only. Scratch and full diagnostic

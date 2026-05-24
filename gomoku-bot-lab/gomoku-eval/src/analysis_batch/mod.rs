@@ -1036,7 +1036,7 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
     <nav class="top-links" aria-label="Project links">
       <a href="/">Game</a>
       <a href="/assets/">Assets</a>
-      <a href="/bot-report/">Bots</a>
+      <a href="/lab-report/">Lab</a>
     </nav>
     <p class="eyebrow">Gomoku2D Bot Lab</p>
     <h1>Replay Analysis</h1>

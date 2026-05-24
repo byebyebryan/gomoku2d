@@ -140,9 +140,9 @@ function isPublishedBotReport(data: unknown): data is PublishedBotReport {
 
 export function displayBotSpec(spec: string): string {
   return spec
-    .replace(/\+corridor-proof-c\d+-d\d+-w\d+/g, "+corridor-proof")
+    .replace(/\+corridor-proof(?:-c\d+-d\d+-w\d+)?/g, "+proof")
     .replace(/\+pattern-eval/g, "+pattern")
-    .replace(/\+tactical-cap-/g, "+w");
+    .replace(/\+tactical-cap-(\d+)/g, "+tcap$1");
 }
 
 export function scorePercent(wins: number, draws: number, total: number): number {
