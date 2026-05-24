@@ -15,18 +15,17 @@
   margin: 0 auto;
 }
 
-.hero,
 .panel,
 .state {
   border: 2px solid var(--border);
   background: var(--surface);
-  box-shadow: var(--shadow);
+  box-shadow: none;
 }
 
 .hero {
   display: grid;
-  gap: 18px;
-  padding: 22px;
+  gap: 16px;
+  padding: 0;
 }
 
 .headerRow {
@@ -36,36 +35,27 @@
   gap: 18px;
 }
 
+.headerCopy {
+  min-width: 0;
+}
+
 .title {
   margin: 0;
   color: var(--text);
   font-family: var(--font-display);
-  font-size: clamp(2.4rem, 7vw, 4.8rem);
+  font-size: clamp(2.6rem, 6vw, 4.4rem);
   line-height: 0.92;
 }
 
 .links {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 12px;
   justify-content: flex-end;
 }
 
-.links a {
-  border: 2px solid var(--border);
-  background: var(--surface-strong);
-  padding: 7px 10px;
-  color: var(--text);
-  font-family: var(--font-display);
-  font-size: var(--type-quiet);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.links a:hover,
-.links a:focus-visible {
-  border-color: var(--accent);
-  color: var(--accent);
+.links :global(.uiAction) {
+  text-decoration: none;
 }
 
 .panel {
@@ -78,7 +68,10 @@
   margin: 0;
   color: var(--accent);
   font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-size: 1.35rem;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .warning {
@@ -1168,11 +1161,16 @@
   }
 
   .headerRow {
-    display: grid;
+    flex-direction: column;
   }
 
   .links {
+    width: 100%;
     justify-content: start;
+  }
+
+  .links :global(.uiAction) {
+    flex: 1 1 0;
   }
 
   .entry summary {
@@ -1325,5 +1323,40 @@
 
   .entrantRow summary .metric span {
     text-align: right;
+  }
+}
+
+@media (max-width: 760px) and (orientation: portrait) {
+  .page {
+    gap: 14px;
+    padding: 10px 12px 16px;
+  }
+
+  .headerRow {
+    align-items: center;
+    flex-direction: row;
+    gap: 12px;
+  }
+
+  .headerCopy :global(.uiPageEyebrow) {
+    display: none;
+  }
+
+  .title {
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+
+  .links {
+    display: flex;
+    gap: 6px;
+    width: auto;
+  }
+
+  .links :global(.uiAction) {
+    min-width: auto;
+    min-height: 42px;
+    padding: 0 10px;
+    font-size: var(--type-quiet);
   }
 }
