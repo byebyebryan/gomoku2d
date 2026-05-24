@@ -150,13 +150,17 @@ export function LabReportRoute() {
       <div className={styles.shell}>
         <header className={styles.hero}>
           <div className={styles.headerRow}>
-            <div>
+            <div className={styles.headerCopy}>
               <p className="uiPageEyebrow">Gomoku2D lab</p>
               <h1 className={styles.title}>Lab Report</h1>
             </div>
             <nav className={styles.links} aria-label="Report links">
-              <a href={baseUrl}>Game</a>
-              <a href={`${baseUrl}assets/`}>Assets</a>
+              <a className="uiAction uiActionNeutral" href={baseUrl}>
+                <span className="uiActionLabel">Home</span>
+              </a>
+              <a className="uiAction uiActionNeutral" href={`${baseUrl}assets/`}>
+                <span className="uiActionLabel">Assets</span>
+              </a>
             </nav>
           </div>
           <ReportTabs value={view} onChange={setView} />
