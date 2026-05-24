@@ -469,6 +469,7 @@
 .proofBoard {
   --proof-cell-size: 24px;
   --proof-label-size: 18px;
+  --proof-board-font: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   position: relative;
   display: grid;
   gap: 0;
@@ -505,11 +506,20 @@
   display: grid;
   place-items: center;
   color: rgb(0 0 0 / 82%);
-  font-family: var(--font-display);
+  font-family: var(--proof-board-font);
   font-size: 0.82rem;
   font-variant-numeric: tabular-nums;
+  font-weight: 400;
   line-height: 1;
   user-select: none;
+}
+
+.proofCoordinateTop {
+  transform: translateY(6px);
+}
+
+.proofCoordinateLeft {
+  transform: translateX(6px);
 }
 
 .proofCorner {
@@ -532,28 +542,28 @@
   display: grid;
   place-items: center;
   border-radius: 999px;
-  box-shadow: 0 1px 1px rgb(0 0 0 / 28%);
-  font-family: var(--font-display);
-  font-size: 0.86rem;
+  box-shadow: none;
+  font-family: var(--proof-board-font);
+  font-size: 0.95rem;
   font-variant-numeric: tabular-nums;
-  font-weight: 900;
+  font-weight: 600;
   letter-spacing: -0.08em;
   line-height: 1;
   transform: translateY(-1px);
 }
 
 .proofStoneBlack {
-  border: 1px solid #000;
+  border: 0;
   background: #000;
-  color: #fff7e6;
-  text-shadow: 0 1px 1px rgb(0 0 0 / 90%);
+  color: #f7f1df;
+  text-shadow: none;
 }
 
 .proofStoneWhite {
-  border: 1px solid #8f8068;
-  background: radial-gradient(circle at 35% 30%, #fff7e6 0%, #e4d7b8 62%, #9d8f75 100%);
+  border: 0;
+  background: #f7f1df;
   color: #07090c;
-  text-shadow: 0 1px 1px rgb(255 255 255 / 60%);
+  text-shadow: none;
 }
 
 .proofActualStone {
@@ -567,12 +577,12 @@
 
 .proofActualStoneBlack {
   border: 2px solid #07090c;
-  box-shadow: 0 1px 1px rgb(0 0 0 / 24%);
+  box-shadow: none;
 }
 
 .proofActualStoneWhite {
   border: 2px solid #f6eed8;
-  box-shadow: 0 1px 1px rgb(0 0 0 / 24%), 0 0 0 1px #8f8068;
+  box-shadow: none;
 }
 
 .proofMarker {
@@ -582,9 +592,9 @@
   display: grid;
   place-items: center;
   color: #101214;
-  font-family: var(--font-display);
-  font-size: 1rem;
-  font-weight: 950;
+  font-family: var(--proof-board-font);
+  font-size: 1.14rem;
+  font-weight: 1000;
   letter-spacing: -0.04em;
   line-height: 1;
   pointer-events: none;
@@ -667,7 +677,7 @@
 }
 
 .markerImmediateLoss .proofMarker {
-  font-size: 1.08rem;
+  font-size: 1.18rem;
   font-weight: 1000;
   transform: translateY(-2px) scaleX(1.16);
 }
@@ -1017,9 +1027,9 @@
 
 .legendOutcome strong {
   min-width: 1ch;
-  font-family: var(--font-display);
-  font-size: 1.08rem;
-  font-weight: 950;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 1.14rem;
+  font-weight: 1000;
   line-height: 1;
   text-align: center;
 }
