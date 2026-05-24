@@ -229,11 +229,51 @@
   overflow-wrap: anywhere;
 }
 
-.botLabel span + span {
+.botLabelPrimary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.botSpecPrimary {
+  min-width: 0;
+}
+
+.botSpecSecondary {
   color: var(--text-soft);
   font-size: var(--type-meta);
   font-weight: 400;
   letter-spacing: 0.05em;
+}
+
+.presetBadge {
+  --preset-color: var(--text-muted);
+  --preset-soft: color-mix(in srgb, var(--preset-color) 18%, transparent);
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--preset-color) 68%, var(--border));
+  background: var(--preset-soft);
+  padding: 1px 5px 0;
+  color: var(--preset-color);
+  font-family: var(--font-display);
+  font-size: 0.76rem;
+  letter-spacing: 0.12em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.presetEasy {
+  --preset-color: #78d88f;
+}
+
+.presetNormal {
+  --preset-color: #7dd9d3;
+}
+
+.presetHard {
+  --preset-color: #e78f85;
 }
 
 .metricNowrap,
@@ -786,10 +826,11 @@
 
 .analysisPairLine strong {
   flex: 0 0 auto;
-  color: var(--text) !important;
+  color: var(--preset-color, var(--text)) !important;
 }
 
 .analysisPairName {
+  color: var(--preset-color, var(--text));
   min-width: 5.8rem;
 }
 
@@ -822,6 +863,15 @@
 
 .analysisSideSecondary {
   color: var(--info-ink) !important;
+}
+
+.analysisSidePrimary.presetEasy,
+.analysisSidePrimary.presetNormal,
+.analysisSidePrimary.presetHard,
+.analysisSideSecondary.presetEasy,
+.analysisSideSecondary.presetNormal,
+.analysisSideSecondary.presetHard {
+  color: var(--preset-color) !important;
 }
 
 .analysisWinnerBadge {

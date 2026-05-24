@@ -191,6 +191,22 @@ export function labSpecForBot(config: BotConfig): string {
   return [`search-d${custom.depth}`, ...suffixes].join("+");
 }
 
+export function presetForLabSpec(spec: string): BotPresetId | null {
+  const normalized = normalizeLabSpec(spec);
+  for (const preset of BOT_PRESET_IDS) {
+    const presetSpec = labSpecForBot({ mode: "preset", preset, version: 1 });
+    if (normalizeLabSpec(presetSpec) === normalized) {
+      return preset;
+    }
+  }
+
+  return null;
+}
+
+function normalizeLabSpec(spec: string): string {
+  return spec.replace(/_/g, "+").trim();
+}
+
 export function botConfigSummary(config: BotConfig): string {
   const custom = customConfigForBot(config);
   return [

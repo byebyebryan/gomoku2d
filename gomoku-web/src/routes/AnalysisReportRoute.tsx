@@ -1,6 +1,7 @@
 import { Fragment, type CSSProperties, useState } from "react";
 import { Navigate } from "react-router-dom";
 
+import { presetForLabSpec, type BotPresetId } from "../core/bot_config";
 import {
   type AnalysisEntry,
   type AnalysisSection,
@@ -82,11 +83,15 @@ function AnalysisPairRow({
       <summary>
         <span className={`${styles.entryTitle} ${styles.analysisPairTitle}`}>
           <span className={styles.analysisPairLine}>
-            <strong className={styles.analysisPairName}>{title.firstName}</strong>
+            <strong className={`${styles.analysisPairName} ${presetClassName(title.firstPreset)}`}>
+              {title.firstName}
+            </strong>
             <span className={styles.analysisSidePrimary}>{title.firstConfig}</span>
           </span>
           <span className={styles.analysisPairLine}>
-            <strong className={styles.analysisPairName}>{title.secondName}</strong>
+            <strong className={`${styles.analysisPairName} ${presetClassName(title.secondPreset)}`}>
+              {title.secondName}
+            </strong>
             <span className={styles.analysisSideSecondary}>{title.secondConfig}</span>
           </span>
         </span>
@@ -143,7 +148,9 @@ function AnalysisGameRow({
             {title.players.map((player, index) => (
               <span className={styles.analysisSideLine} key={`${player.side}-${player.config}`}>
                 <span className={styles.analysisSideTag}>({player.side})</span>
-                <span className={index === 0 ? styles.analysisSidePrimary : styles.analysisSideSecondary}>
+                <span
+                  className={`${index === 0 ? styles.analysisSidePrimary : styles.analysisSideSecondary} ${presetClassName(player.preset)}`}
+                >
                   {player.config}
                   {player.won ? <span className={styles.analysisWinnerBadge}> (Won)</span> : null}
                 </span>
@@ -651,6 +658,7 @@ function entryTitle(entry: AnalysisEntry, pair: AnalysisSection): {
   match: string;
   players: Array<{
     config: string;
+    preset: BotPresetId | null;
     side: "B" | "W";
     won: boolean;
   }>;
@@ -660,6 +668,7 @@ function entryTitle(entry: AnalysisEntry, pair: AnalysisSection): {
     match: `#${entry.match_report.match_index}`,
     players: entrants.map((entrant) => ({
       config: cleanBotName(entrant),
+      preset: presetForLabSpec(entrant),
       side: sideForEntrant(entry, entrant),
       won: entrantWon(entry, entrant),
     })),
@@ -687,20 +696,37 @@ function sameBotSpec(left: string, right: string): boolean {
 function analysisPairTitle(section: AnalysisSection): {
   firstName: string;
   firstConfig: string;
+  firstPreset: BotPresetId | null;
   secondName: string;
   secondConfig: string;
+  secondPreset: BotPresetId | null;
 } {
   const [firstName, secondName] = section.label.split(/\s+vs\s+/i);
   return {
     firstName: firstName || "Bot",
     firstConfig: cleanBotName(section.entrant_a),
+    firstPreset: presetForLabSpec(section.entrant_a),
     secondName: secondName || "Opponent",
     secondConfig: cleanBotName(section.entrant_b),
+    secondPreset: presetForLabSpec(section.entrant_b),
   };
 }
 
 function cleanBotName(value: string): string {
   return displayBotSpec(value.replace(/_/g, "+"));
+}
+
+function presetClassName(preset: BotPresetId | null): string {
+  switch (preset) {
+    case "easy":
+      return styles.presetEasy;
+    case "hard":
+      return styles.presetHard;
+    case "normal":
+      return styles.presetNormal;
+    default:
+      return "";
+  }
 }
 
 function failureLabel(entry: AnalysisEntry): string {
