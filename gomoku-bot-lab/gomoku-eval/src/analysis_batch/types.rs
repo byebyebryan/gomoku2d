@@ -123,7 +123,7 @@ pub struct AnalysisBatchProofFrame {
     pub reply_outcomes: Vec<DefenderReplyAnalysis>,
 }
 
-pub const PUBLISHED_ANALYSIS_REPORT_SCHEMA_VERSION: u32 = 1;
+pub const PUBLISHED_ANALYSIS_REPORT_SCHEMA_VERSION: u32 = 2;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct PublishedAnalysisReport {
@@ -168,6 +168,8 @@ pub struct PublishedAnalysisEntry {
     pub failure: Option<FailureAnalysis>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub proof_details: Option<PublishedAnalysisProofDetails>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub search_details: Option<PublishedAnalysisSearchDetails>,
     pub elapsed_ms: u64,
     pub error: Option<String>,
 }
@@ -187,6 +189,13 @@ pub struct PublishedAnalysisMatchSummary {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct PublishedAnalysisProofDetails {
     pub proof_frames: Vec<PublishedAnalysisProofFrame>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct PublishedAnalysisSearchDetails {
+    pub search_nodes: usize,
+    pub branch_probes: usize,
+    pub max_depth_reached: usize,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

@@ -27,7 +27,6 @@ export function AnalysisReportContent({ report }: { report: PublishedAnalysisRep
         <h2>Results</h2>
       </div>
       <div className={styles.entrantGrid}>
-        <AnalysisHeader />
         {report.sections.map((section) => (
           <AnalysisPairRow
             key={section.label}
@@ -38,19 +37,6 @@ export function AnalysisReportContent({ report }: { report: PublishedAnalysisRep
         ))}
       </div>
     </section>
-  );
-}
-
-function AnalysisHeader() {
-  return (
-    <div className={styles.entrantHead}>
-      <span>Pair</span>
-      {["Games", "Failures", "Unclear", "Errors"].map((head) => (
-        <span key={head} className={`${styles.metric} ${styles.metricResults}`}>
-          {head}
-        </span>
-      ))}
-    </div>
   );
 }
 
@@ -86,13 +72,13 @@ function AnalysisPairRow({
             <strong className={`${styles.analysisPairName} ${presetClassName(title.firstPreset)}`}>
               {title.firstName}
             </strong>
-            <span className={styles.analysisSidePrimary}>{title.firstConfig}</span>
+            <span className={styles.analysisRowValue}>{title.firstConfig}</span>
           </span>
           <span className={styles.analysisPairLine}>
             <strong className={`${styles.analysisPairName} ${presetClassName(title.secondPreset)}`}>
               {title.secondName}
             </strong>
-            <span className={styles.analysisSideSecondary}>{title.secondConfig}</span>
+            <span className={styles.analysisRowValue}>{title.secondConfig}</span>
           </span>
         </span>
         <SummaryMetric label="Games" value={`${section.analyzed}/${section.total}`} />
@@ -145,12 +131,10 @@ function AnalysisGameRow({
         <span className={styles.entryTitle}>
           <strong>{title.match}</strong>
           <span className={styles.analysisSideList}>
-            {title.players.map((player, index) => (
+            {title.players.map((player) => (
               <span className={styles.analysisSideLine} key={`${player.side}-${player.config}`}>
                 <span className={styles.analysisSideTag}>({player.side})</span>
-                <span
-                  className={`${index === 0 ? styles.analysisSidePrimary : styles.analysisSideSecondary} ${presetClassName(player.preset)}`}
-                >
+                <span className={styles.analysisRowValue}>
                   {player.config}
                   {player.won ? <span className={styles.analysisWinnerBadge}> (Won)</span> : null}
                 </span>
@@ -166,17 +150,9 @@ function AnalysisGameRow({
       {renderDetails ? (
         <div className={styles.details}>
           <div className={styles.detailGrid}>
-            <DetailCard label="Root cause" value={entry.root_cause ?? "-"} />
-            <DetailCard label="Last chance" value={plyLabel(entry.last_chance_ply)} />
-            <DetailCard label="Critical ply" value={plyLabel(entry.critical_loser_ply)} />
-            <DetailCard label="Search time" value={`${entry.elapsed_ms}ms`} />
+            <DetailCard label="Failure step" value={failureStepLabel(entry)} />
+            <DetailCard label="Search details" value={searchDetailsLabel(entry)} />
           </div>
-          {entry.failure ? (
-            <DetailCard
-              label="Failure step"
-              value={`${entry.failure.actual_notation ?? "-"}: ${entry.failure.mode}`}
-            />
-          ) : null}
           <ProofFrames entry={entry} />
         </div>
       ) : null}
@@ -658,8 +634,7 @@ function entryTitle(entry: AnalysisEntry, pair: AnalysisSection): {
   match: string;
   players: Array<{
     config: string;
-    preset: BotPresetId | null;
-    side: "B" | "W";
+    side: "BLACK" | "WHITE";
     won: boolean;
   }>;
 } {
@@ -668,15 +643,14 @@ function entryTitle(entry: AnalysisEntry, pair: AnalysisSection): {
     match: `#${entry.match_report.match_index}`,
     players: entrants.map((entrant) => ({
       config: cleanBotName(entrant),
-      preset: presetForLabSpec(entrant),
       side: sideForEntrant(entry, entrant),
       won: entrantWon(entry, entrant),
     })),
   };
 }
 
-function sideForEntrant(entry: AnalysisEntry, entrant: string): "B" | "W" {
-  return sameBotSpec(entrant, entry.match_report.white) ? "W" : "B";
+function sideForEntrant(entry: AnalysisEntry, entrant: string): "BLACK" | "WHITE" {
+  return sameBotSpec(entrant, entry.match_report.white) ? "WHITE" : "BLACK";
 }
 
 function entrantWon(entry: AnalysisEntry, entrant: string): boolean {
@@ -751,6 +725,26 @@ function failureLabel(entry: AnalysisEntry): string {
   }
 }
 
+function failureStepLabel(entry: AnalysisEntry): string {
+  const ply = `Ply ${plyLabel(entry.critical_loser_ply)}`;
+  const move = entry.failure?.actual_notation?.trim();
+  const outcome = failureLabel(entry);
+  return move ? `${ply} - ${move}: ${outcome}` : `${ply}: ${outcome}`;
+}
+
+function searchDetailsLabel(entry: AnalysisEntry): string {
+  const details = entry.search_details;
+  if (!details) {
+    return `${entry.elapsed_ms}ms`;
+  }
+  return [
+    `${entry.elapsed_ms}ms`,
+    `${formatCompact(details.branch_probes)} probes`,
+    `${formatCompact(details.search_nodes)} nodes`,
+    `d${details.max_depth_reached}`,
+  ].join(" / ");
+}
+
 function lethalOnsetLabel(onset: AnalysisEntry["lethal_onset"]): string {
   if (!onset) {
     return "-";
@@ -808,4 +802,8 @@ function setupCorridorLengthLabel(interval: AnalysisEntry["setup_corridor"]): st
 
 function plyLabel(value: number | null | undefined): string {
   return value == null ? "-" : `${value}`;
+}
+
+function formatCompact(value: number): string {
+  return Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(value);
 }

@@ -826,12 +826,32 @@
 
 .analysisPairLine strong {
   flex: 0 0 auto;
-  color: var(--preset-color, var(--text)) !important;
+  color: var(--preset-color, var(--text-soft)) !important;
 }
 
 .analysisPairName {
-  color: var(--preset-color, var(--text));
   min-width: 5.8rem;
+}
+
+.analysisWorkbench .entryTitle > strong,
+.analysisSideTag {
+  color: var(--text-soft) !important;
+}
+
+.analysisWorkbench .entrantRow summary .metric > span:first-child,
+.analysisWorkbench .match summary .metric > span:first-child {
+  color: var(--text-soft);
+}
+
+.analysisWorkbench .entrantRow summary .metric strong,
+.analysisWorkbench .match summary .metric strong {
+  color: var(--text);
+}
+
+.analysisRowValue {
+  color: var(--text) !important;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .analysisSideLine {
@@ -843,35 +863,13 @@
 
 .analysisSideTag {
   flex: 0 0 auto;
-  min-width: 2.4em;
+  width: 5.8em;
   color: var(--text-soft) !important;
   font-family: var(--font-display);
   font-size: var(--type-quiet);
   letter-spacing: 0.08em;
+  text-align: left;
   text-transform: uppercase;
-}
-
-.analysisSidePrimary,
-.analysisSideSecondary {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.analysisSidePrimary {
-  color: var(--text) !important;
-}
-
-.analysisSideSecondary {
-  color: var(--info-ink) !important;
-}
-
-.analysisSidePrimary.presetEasy,
-.analysisSidePrimary.presetNormal,
-.analysisSidePrimary.presetHard,
-.analysisSideSecondary.presetEasy,
-.analysisSideSecondary.presetNormal,
-.analysisSideSecondary.presetHard {
-  color: var(--preset-color) !important;
 }
 
 .analysisWinnerBadge {
