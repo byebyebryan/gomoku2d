@@ -49,4 +49,5 @@ per-match side telemetry, so gauntlet anchors keep standings and pairwise
 context but not reference pair search-cost drilldowns.
 
 The curated replay-analysis report in `../analysis-reports/` is generated from
-this `report.json` and should explain the current top-two matchup by default.
+this `report.json` and should explain the Easy/Normal/Hard preset triangle used
+by the current product bots.

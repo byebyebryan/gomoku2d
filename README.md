@@ -14,11 +14,9 @@ surface area can agents help cover without lowering the quality bar?
 
 **Play in browser:** https://gomoku2d.byebyebryan.com/
 
-**Pixel-art previews:** https://gomoku2d.byebyebryan.com/assets/
+**Visual guide:** https://gomoku2d.byebyebryan.com/assets/
 
-**Bot lab report:** https://gomoku2d.byebyebryan.com/bot-report/
-
-**Replay analysis report:** https://gomoku2d.byebyebryan.com/analysis-report/
+**Lab report:** https://gomoku2d.byebyebryan.com/lab-report/
 
 ## What makes it different
 
@@ -37,9 +35,9 @@ surface area can agents help cover without lowering the quality bar?
   generate code quickly. It is whether one person can use agents to cover more
   of the product loop while still preserving taste, scope control, and review
   discipline.
-- **Retro assets with a real workflow.** Sprites, icons, and fonts have source
-  assets, manifests, and live preview pages, so the pixel-art style can be
-  iterated deliberately instead of treated as decoration.
+- **Retro assets with a real workflow.** Sprites, icons, fonts, manifests, and
+  the Visual Guide keep the pixel-art style inspectable instead of treating it
+  as decoration.
 
 ## What works today
 
@@ -87,11 +85,12 @@ lives in [`docs/README.md`](docs/README.md).
 
 ## Current Status
 
-The public app is on the `0.4.x` alpha line: local-first play, optional Google
-sign-in for private cloud history, configurable bots, tactical hints, and replay
-analysis. Current repo work is preparing `v0.5`: cleaner repo artifacts,
-first-class report surfaces, in-product explanations, and stranger-facing
-packaging. Longer-term sequencing lives in
+The public app is on the `0.5.x` alpha line: local-first play, optional Google
+sign-in for private cloud history, configurable bots, tactical hints, replay
+analysis, first-class lab reports, and a cleaner visual-guide/report surface.
+Current repo work is preparing the rest of `v0.5`: in-product explanations,
+release packaging, and stranger-facing presentation. Longer-term sequencing
+lives in
 [`docs/reference/product/roadmap.md`](docs/reference/product/roadmap.md).
 
 ---
@@ -117,6 +116,5 @@ Reference docs, working notes, runbooks, and archives are organized from
 
 Live companion pages:
 
-- [Asset previews](https://gomoku2d.byebyebryan.com/assets/)
-- [Bot lab report](https://gomoku2d.byebyebryan.com/bot-report/)
-- [Replay analysis report](https://gomoku2d.byebyebryan.com/analysis-report/)
+- [Visual guide](https://gomoku2d.byebyebryan.com/assets/)
+- [Lab report](https://gomoku2d.byebyebryan.com/lab-report/)

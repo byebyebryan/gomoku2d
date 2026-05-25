@@ -15,7 +15,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "postbuild": "node scripts/publish_asset_previews.mjs && node scripts/publish_bot_reports.mjs && node scripts/publish_analysis_reports.mjs && node scripts/publish_spa_routes.mjs",
+    "postbuild": "node scripts/publish_visual_guide_assets.mjs && node scripts/publish_bot_reports.mjs && node scripts/publish_analysis_reports.mjs && node scripts/publish_spa_routes.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit && npm run typecheck:scripts && tsc --project tsconfig.tools.json",
