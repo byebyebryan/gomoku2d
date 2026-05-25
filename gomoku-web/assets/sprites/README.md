@@ -2,12 +2,12 @@
 
 All runtime board spritesheets use 16x16 frames. The source files in this
 folder are the authoritative copies. The build/publish scripts sync matching
-files under `public/assets/sprites/` and the generated preview site.
+files under `public/assets/sprites/` and the published asset viewer.
 
 For the meaning of each board-space visual role, see
 [`ui_design.md`](../../../docs/reference/app/ui_design.md). This README is only
 the frame inventory.
-For a visual inspection page, open [preview.html](./preview.html).
+For visual inspection, use the published `/assets/` route.
 
 ## Published Sprites
 

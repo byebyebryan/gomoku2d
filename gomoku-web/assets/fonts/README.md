@@ -2,7 +2,8 @@
 
 PixelOperator font files used by the DOM shell and board sequence numbers.
 
-For a visual inspection page, open [preview.html](./preview.html).
+Fonts are external runtime dependencies. The published `/assets/` route focuses
+on project-authored sprites and icons instead of showcasing font variants.
 
 ## Runtime Fonts
 

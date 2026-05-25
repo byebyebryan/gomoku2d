@@ -9,8 +9,8 @@ that sheet.
 ## Files
 
 - `icon_sheet.png`: current source sheet
-- `manifest.json`: inferred icon naming, grid positions, categories, and notes
-- `preview.html`: human preview of the source sheet and exported SVG pack
+- `manifest.json`: inferred icon naming, grid positions, categories, notes,
+  and source data for the published `/assets/` viewer
 - `*.svg`: per-icon runtime assets
 
 ## Grid Map

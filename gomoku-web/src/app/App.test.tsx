@@ -36,6 +36,14 @@ vi.mock("../routes/BotReportRoute", () => ({
   ),
 }));
 
+vi.mock("../routes/AssetPreviewRoute", () => ({
+  AssetPreviewRoute: () => (
+    <main>
+      <h1>Assets</h1>
+    </main>
+  ),
+}));
+
 describe("App", () => {
   afterEach(() => {
     cleanup();
@@ -89,6 +97,16 @@ describe("App", () => {
     );
 
     expect(await screen.findByRole("heading", { name: /^lab report$/i })).toBeInTheDocument();
+  });
+
+  it("routes the asset preview through the app", async () => {
+    render(
+      <MemoryRouter initialEntries={["/assets/"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("heading", { name: /^assets$/i })).toBeInTheDocument();
   });
 
   it("routes to settings", async () => {

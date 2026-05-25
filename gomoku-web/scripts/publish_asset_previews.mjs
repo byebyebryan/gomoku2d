@@ -15,11 +15,8 @@ async function copyAssetFile(sourcePath, targetPath) {
   await copyFile(sourcePath, targetPath);
 }
 
-async function copyTopLevelPreview() {
-  const source = join(sourceRoot, "preview.html");
-  await copyAssetFile(source, join(distAssetRoot, "index.html"));
-  await copyAssetFile(source, join(distAssetRoot, "preview.html"));
-  await copyAssetFile(join(sourceRoot, "README.md"), join(distAssetRoot, "README.md"));
+async function copyTopLevelAssets() {
+  await copyFolderFiles(".", [".json", ".md", ".png"]);
 }
 
 /**
@@ -40,9 +37,9 @@ async function copyFolderFiles(folder, allowedExtensions) {
   );
 }
 
-await copyTopLevelPreview();
-await copyFolderFiles("sprites", [".html", ".md", ".png"]);
-await copyFolderFiles("icons", [".html", ".md", ".json", ".png", ".svg"]);
-await copyFolderFiles("fonts", [".html", ".md", ".ttf", ".txt"]);
+await copyTopLevelAssets();
+await copyFolderFiles("sprites", [".md", ".png"]);
+await copyFolderFiles("icons", [".md", ".json", ".png", ".svg"]);
+await copyFolderFiles("fonts", [".md", ".ttf", ".txt"]);
 
-console.log("Published asset previews to dist/assets/.");
+console.log("Published asset source files to dist/assets/.");
