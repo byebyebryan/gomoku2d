@@ -66,7 +66,7 @@ Move from proof-of-concept to a proper frontend product surface.
 - replay branching back into local practice
 - board-first desktop and mobile match layouts
 - mobile pointer/touchpad placement modes for cramped boards
-- asset previews, screenshot/reference assets, release hygiene
+- visual guide, screenshot/reference assets, release hygiene
 - dependency/runtime maintenance after `v0.2.4` without cutting another product
   release
 
@@ -93,7 +93,7 @@ A player can open the site and get a polished local experience:
 
 - learn how far agents can help shape a frontend product, not just generate UI
   code
-- establish screenshot review, asset preview, animation inventory, and release
+- establish screenshot review, visual-guide, animation-inventory, and release
   polish loops as first-class project practices
 - validate the React/Phaser/Rust boundaries that let agents work in one layer
   without constantly breaking another

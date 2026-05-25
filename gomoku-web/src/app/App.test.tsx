@@ -39,7 +39,7 @@ vi.mock("../routes/BotReportRoute", () => ({
 vi.mock("../routes/AssetPreviewRoute", () => ({
   AssetPreviewRoute: () => (
     <main>
-      <h1>Assets</h1>
+      <h1>Visual Guide</h1>
     </main>
   ),
 }));
@@ -75,7 +75,7 @@ describe("App", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("link", { name: /^assets$/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /^guide$/i })).toHaveAttribute(
       "href",
       "/assets/",
     );
@@ -99,14 +99,14 @@ describe("App", () => {
     expect(await screen.findByRole("heading", { name: /^lab report$/i })).toBeInTheDocument();
   });
 
-  it("routes the asset preview through the app", async () => {
+  it("routes the visual guide through the app", async () => {
     render(
       <MemoryRouter initialEntries={["/assets/"]}>
         <App />
       </MemoryRouter>,
     );
 
-    expect(await screen.findByRole("heading", { name: /^assets$/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /^visual guide$/i })).toBeInTheDocument();
   });
 
   it("routes to settings", async () => {

@@ -92,17 +92,21 @@ test("published static report routes render their current artifacts", async ({ p
   await expect(page).toHaveURL(/\/lab-report\/\?tab=analysis$/);
 });
 
-test("published asset preview route renders manifest-driven assets", async ({ page }) => {
+test("published visual guide route renders manifest-driven assets", async ({ page }) => {
   const manifest = await page.request.head("/assets/asset_manifest.json");
   expect(manifest.status()).toBe(200);
 
   await page.goto("/assets/");
-  await expect(page).toHaveTitle(/Assets/);
-  await expect(page.getByRole("heading", { name: "Assets" })).toBeVisible();
+  await expect(page).toHaveTitle(/Visual Guide/);
+  await expect(page.getByRole("heading", { name: "Visual Guide" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Guide" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Sprites" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Icons" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Fonts" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Inventory" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Palette" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Primary" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Typography" })).toBeVisible();
 
   await page.getByRole("button", { name: "Sprites" }).click();
   await expect(page.getByRole("heading", { name: "pointer-idle-blocked" })).toBeVisible();

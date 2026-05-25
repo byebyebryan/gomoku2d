@@ -5,7 +5,7 @@ top of React, Phaser, and the Rust/WebAssembly core.
 
 **Play:** https://gomoku2d.byebyebryan.com/
 
-**Pixel-art previews:** https://gomoku2d.byebyebryan.com/assets/
+**Visual guide:** https://gomoku2d.byebyebryan.com/assets/
 
 **Lab report:** https://gomoku2d.byebyebryan.com/lab-report/
 
@@ -56,9 +56,9 @@ Design intent is split across:
 - [`../docs/reference/app/ui_design.md`](../docs/reference/app/ui_design.md) — DOM shell visual language
 - [`../docs/reference/app/game_visual.md`](../docs/reference/app/game_visual.md) — Phaser canvas visuals, sprite roles, and animation language
 
-Source assets and local visual preview pages live in
-[`assets/README.md`](assets/README.md). Published builds expose those previews
-under `/assets/`.
+Source assets and the manifest-backed visual guide live in
+[`assets/README.md`](assets/README.md). Published builds expose the guide under
+`/assets/`.
 
 Curated bot-lab reports live in [`../gomoku-bot-lab/reports/`](../gomoku-bot-lab/reports/)
 and are copied into published builds under `/bot-report/` as the ranking/search
@@ -169,7 +169,7 @@ npm run typecheck:scripts  # JS script type coverage
 npm run playtest:smoke     # playwright smoke run
 ```
 
-The `postbuild` step publishes asset previews, curated bot and analysis reports,
+The `postbuild` step publishes the visual guide, curated bot and analysis reports,
 static SPA route entries, and the `404.html` fallback. Report publishing is
 guarded so release builds fail if the curated artifacts are missing; set
 `GOMOKU_ALLOW_MISSING_REPORTS=1` only for local/dev builds that intentionally

@@ -9,6 +9,7 @@ import {
   loadAssetManifest,
   loadIconManifest,
   type AssetManifest,
+  type AssetGuideFontRole,
   type AssetSpriteAnimation,
   type AssetSpriteStaticPose,
   type AssetSpriteZLayer,
@@ -24,19 +25,20 @@ type LoadState =
   | { status: "loaded"; manifest: AssetManifest; icons: IconManifest }
   | { status: "error"; message: string };
 
-type AssetTab = "sprites" | "icons";
+type AssetTab = "guide" | "sprites" | "icons";
 
 const ASSET_TABS: Array<{ id: AssetTab; label: string }> = [
+  { id: "guide", label: "Guide" },
   { id: "sprites", label: "Sprites" },
   { id: "icons", label: "Icons" },
 ];
 
 export function AssetPreviewRoute() {
   const [state, setState] = useState<LoadState>({ status: "loading" });
-  const [tab, setTab] = useState<AssetTab>("sprites");
+  const [tab, setTab] = useState<AssetTab>("guide");
 
   useEffect(() => {
-    document.title = "Gomoku2D Assets";
+    document.title = "Gomoku2D Visual Guide";
   }, []);
 
   useEffect(() => {
@@ -78,12 +80,12 @@ export function AssetPreviewRoute() {
           <div className={styles.headerRow}>
             <div>
               <p className="uiPageEyebrow">Gomoku2D source</p>
-              <h1 className={styles.title}>Assets</h1>
+              <h1 className={styles.title}>Visual Guide</h1>
               {state.status === "loaded" ? (
                 <p className={styles.summary}>{state.manifest.summary}</p>
               ) : null}
             </div>
-            <nav className={styles.links} aria-label="Asset preview links">
+            <nav className={styles.links} aria-label="Visual guide links">
               <a className="uiAction uiActionNeutral" href={baseUrl}>
                 <span className="uiActionLabel">Home</span>
               </a>
@@ -92,7 +94,7 @@ export function AssetPreviewRoute() {
               </a>
             </nav>
           </div>
-          <div className={styles.tabs} aria-label="Asset preview sections">
+          <div className={styles.tabs} aria-label="Visual guide sections">
             {ASSET_TABS.map((option) => (
               <button
                 key={option.id}
@@ -120,6 +122,9 @@ function AssetTabContent({
   manifest: AssetManifest;
   icons: IconManifest;
 }) {
+  if (tab === "guide") {
+    return <GuidePanel manifest={manifest} />;
+  }
   if (tab === "sprites") {
     return <SpritesPanel manifest={manifest} />;
   }
@@ -127,6 +132,99 @@ function AssetTabContent({
     return <IconsPanel manifest={manifest} icons={icons} />;
   }
   return <SpritesPanel manifest={manifest} />;
+}
+
+function GuidePanel({ manifest }: { manifest: AssetManifest }) {
+  return (
+    <>
+      <section className={`${styles.panel} ${styles.guideIntro}`}>
+        <div>
+          <h2>Visual Language</h2>
+          <p className={styles.note}>
+            A small reference for how Gomoku2D should look and feel: dark cabinet shell,
+            tactile controls, semantic colors, and board-space cues that stay below the
+            action.
+          </p>
+        </div>
+      </section>
+
+      <section className={styles.panel}>
+        <h2>Palette</h2>
+        <div className={styles.paletteGrid}>
+          {manifest.guide.palette.map((group) => (
+            <article key={group.title} className={styles.guideCard}>
+              <h3>{group.title}</h3>
+              <div className={styles.swatchList}>
+                {group.tokens.map((token) => (
+                  <div key={token.name} className={styles.swatchRow}>
+                    <span
+                      className={styles.swatch}
+                      style={{ "--swatch-color": token.value } as CSSProperties}
+                    />
+                    <span className={styles.swatchCopy}>
+                      <span className={styles.swatchName}>{token.label}</span>
+                      <span className={styles.meta}>
+                        {token.name} · {token.value}
+                      </span>
+                      <span className={styles.note}>{token.role}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className={styles.panel}>
+        <h2>Buttons</h2>
+        <p className={styles.note}>
+          Buttons are chunky, high-contrast, and role-coded. These examples use the live
+          app button classes rather than a separate showcase style.
+        </p>
+        <div className={styles.buttonGrid}>
+          <button className="uiAction uiActionPrimary" type="button">Primary</button>
+          <button className="uiAction uiActionSecondary" type="button">Secondary</button>
+          <button className="uiAction uiActionNeutral" type="button">Neutral</button>
+          <button className="uiAction uiActionDanger" type="button">Danger</button>
+          <button className="uiAction uiActionAccent" type="button">Accent</button>
+          <button className="uiAction uiActionNeutral uiActionIconOnly" type="button" aria-label="Icon-only sample">
+            <span className={styles.iconGlyph} aria-hidden="true">&gt;</span>
+          </button>
+        </div>
+      </section>
+
+      <section className={styles.panel}>
+        <h2>Typography</h2>
+        <p className={styles.note}>
+          PixelOperator is an external runtime font family. The guide shows how the app uses
+          it; sprites and icons remain the project-authored source assets.
+        </p>
+        <div className={styles.fontRoleGrid}>
+          {manifest.guide.font_roles.map((font) => (
+            <article key={font.file} className={styles.guideCard}>
+              <h3>{font.role}</h3>
+              <p className={fontSampleClass(font)}>{font.sample}</p>
+              <p className={styles.meta}>{basename(font.file)}</p>
+              <p className={styles.note}>{font.note}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className={styles.panel}>
+        <h2>Principles</h2>
+        <div className={styles.principleGrid}>
+          {manifest.guide.principles.map((principle) => (
+            <article key={principle.title} className={styles.guideCard}>
+              <h3>{principle.title}</h3>
+              <p className={styles.note}>{principle.description}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+    </>
+  );
 }
 
 function SpritesPanel({ manifest }: { manifest: AssetManifest }) {
@@ -423,6 +521,16 @@ function zClassName(z: string): string {
     surface: styles.zSurface,
   };
   return [styles.stackSprite, zClasses[z] ?? styles.zSurface].join(" ");
+}
+
+function fontSampleClass(font: AssetGuideFontRole): string {
+  if (font.family === "PixelOperatorBold") {
+    return `${styles.fontSample} ${styles.fontDisplay}`;
+  }
+  if (font.family === "PixelOperator8Bold") {
+    return `${styles.fontSample} ${styles.fontSequence}`;
+  }
+  return `${styles.fontSample} ${styles.fontBody}`;
 }
 
 function TintFilters() {

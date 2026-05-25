@@ -1,7 +1,126 @@
 {
   "schema_version": 1,
-  "title": "Gomoku2D Assets",
-  "summary": "Source sprites and icons for the current Gomoku2D web UI.",
+  "title": "Gomoku2D Visual Guide",
+  "summary": "A compact visual guide and source asset viewer for the current Gomoku2D web UI.",
+  "guide": {
+    "palette": [
+      {
+        "title": "Shell neutrals",
+        "tokens": [
+          {
+            "name": "--bg",
+            "label": "Background",
+            "value": "#1e1e1e",
+            "role": "Page base and empty space"
+          },
+          {
+            "name": "--surface",
+            "label": "Panel",
+            "value": "#2a2a2a",
+            "role": "Primary content panels"
+          },
+          {
+            "name": "--surface-muted",
+            "label": "Muted panel",
+            "value": "#232323",
+            "role": "Quiet controls and nested surfaces"
+          },
+          {
+            "name": "--border",
+            "label": "Border",
+            "value": "#575756",
+            "role": "Pixel-outline structure"
+          },
+          {
+            "name": "--text",
+            "label": "Text",
+            "value": "#f5f5f5",
+            "role": "Primary readable copy"
+          },
+          {
+            "name": "--text-muted",
+            "label": "Muted text",
+            "value": "#a6a6a0",
+            "role": "Secondary notes and metadata"
+          }
+        ]
+      },
+      {
+        "title": "Semantic accents",
+        "tokens": [
+          {
+            "name": "--accent",
+            "label": "Gold",
+            "value": "#fccb57",
+            "role": "Section headings and emphasis"
+          },
+          {
+            "name": "--success",
+            "label": "Green",
+            "value": "#30a860",
+            "role": "Primary action and confirmed positive state"
+          },
+          {
+            "name": "--info",
+            "label": "Teal",
+            "value": "#5f8b82",
+            "role": "Secondary action and supporting state"
+          },
+          {
+            "name": "--danger",
+            "label": "Red",
+            "value": "#e04747",
+            "role": "Danger, loss, and critical warnings"
+          }
+        ]
+      }
+    ],
+    "font_roles": [
+      {
+        "role": "Body",
+        "file": "fonts/PixelOperator.ttf",
+        "family": "PixelOperator",
+        "sample": "An old favorite, built properly.",
+        "note": "Readable pixel body copy for the DOM shell."
+      },
+      {
+        "role": "Display",
+        "file": "fonts/PixelOperator-Bold.ttf",
+        "family": "PixelOperatorBold",
+        "sample": "Gomoku2D",
+        "note": "Page titles, section labels, and button text."
+      },
+      {
+        "role": "Sequence",
+        "file": "fonts/PixelOperator8-Bold.ttf",
+        "family": "PixelOperator8Bold",
+        "sample": "1 2 3 13 42",
+        "note": "Board sequence numbers in result and replay views."
+      }
+    ],
+    "principles": [
+      {
+        "title": "Board first",
+        "description": "The shell stays quiet so the board remains the main object."
+      },
+      {
+        "title": "Pixel snapped",
+        "description": "Hard edges, square corners, and whole-pixel asset reads."
+      },
+      {
+        "title": "Sparse chrome",
+        "description": "Spacing and alignment should carry more weight than nested boxes."
+      },
+      {
+        "title": "Semantic color",
+        "description": "Gold, green, teal, and red each keep narrow, repeatable jobs."
+      },
+      {
+        "title": "Surface below action",
+        "description": "Hints and proof marks sit under pointer, stone, and hover intent."
+      }
+    ]
+  },
   "sprites": {
     "frame_size": 16,
     "sheets": [

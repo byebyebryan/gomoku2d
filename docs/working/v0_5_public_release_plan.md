@@ -165,7 +165,7 @@ Once the repo and product story are reconciled, prepare a public alpha:
 - Keep compact `report.json` as the source data for published pages.
 - Preserve report JSON compatibility URLs while making `/lab-report/` the public
   viewer route.
-- Make report pages visually consistent with the game shell and asset preview
+- Make report pages visually consistent with the game shell and visual-guide
   pages.
 
 ### Slice 3: Product Explanation Pages

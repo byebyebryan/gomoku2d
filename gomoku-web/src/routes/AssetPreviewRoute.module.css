@@ -123,7 +123,11 @@
 
 .sheetGrid,
 .assetGrid,
-.zCaseGrid {
+.zCaseGrid,
+.paletteGrid,
+.buttonGrid,
+.fontRoleGrid,
+.principleGrid {
   display: grid;
   gap: 12px;
 }
@@ -132,14 +136,26 @@
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
+.paletteGrid {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
 .assetGrid,
-.zCaseGrid {
+.zCaseGrid,
+.fontRoleGrid,
+.principleGrid {
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+.buttonGrid {
+  align-items: center;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 }
 
 .sheetCard,
 .assetCard,
-.zCaseCard {
+.zCaseCard,
+.guideCard {
   display: grid;
   gap: 10px;
   border: 1px solid var(--border);
@@ -158,6 +174,72 @@
 .meta {
   color: var(--text-soft);
   font-size: var(--type-meta);
+}
+
+.guideIntro {
+  background:
+    linear-gradient(135deg, rgba(252, 203, 87, 0.08), transparent 46%),
+    var(--surface);
+}
+
+.swatchList {
+  display: grid;
+  gap: 10px;
+}
+
+.swatchRow {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.swatch {
+  display: block;
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--border);
+  background: var(--swatch-color);
+}
+
+.swatchCopy {
+  display: grid;
+  gap: 2px;
+}
+
+.swatchName {
+  color: var(--text);
+  font-family: var(--font-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.iconGlyph {
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  font-family: var(--font-display);
+  line-height: 1;
+}
+
+.fontSample {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1;
+}
+
+.fontBody {
+  font-family: "PixelOperator", var(--font-body);
+}
+
+.fontDisplay {
+  font-family: "PixelOperatorBold", var(--font-display);
+}
+
+.fontSequence {
+  font-family: "PixelOperator8Bold", var(--font-display);
 }
 
 .controls {

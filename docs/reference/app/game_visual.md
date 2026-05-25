@@ -12,9 +12,9 @@ The low-level sprite-sheet inventory lives in
 `gomoku-web/assets/sprites/README.md`. This document describes how those
 assets should read in play.
 
-For local visual inspection, open
-`gomoku-web/assets/preview.html` or the sprite-specific
-`gomoku-web/assets/sprites/preview.html`.
+For local visual inspection, run the web app and open `/assets/`. The Visual
+Guide includes the board-space sprite inventory, static poses, animation loops,
+and z-order cases from `gomoku-web/assets/asset_manifest.json`.
 
 ## Goal
 
@@ -180,8 +180,8 @@ When changing canvas assets:
 
 - update both source and public copies
 - update `gomoku-web/assets/sprites/README.md`
-- update `gomoku-web/assets/sprites/preview.html` when frame layout, z-order,
-  or representative cases change
+- update `gomoku-web/assets/asset_manifest.json` when frame layout, z-order, or
+  representative cases change
 - update runtime animation constants in `gomoku-web/src/board/constants.ts`
 - keep sprite roles documented here if the visual language changes
 
