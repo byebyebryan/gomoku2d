@@ -98,7 +98,7 @@ test("published visual guide route renders manifest-driven assets", async ({ pag
 
   await page.goto("/assets/");
   await expect(page).toHaveTitle(/Visual Guide/);
-  await expect(page.getByRole("heading", { name: "Visual Guide" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Visual Guide" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Guide" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Sprites" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Icons" })).toBeVisible();
