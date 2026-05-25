@@ -45,10 +45,10 @@ The current refinement direction is:
 
 - keep `v0.2.2` shell tone, spacing, and button-role clarity
 - keep `v0.2.3`'s screen-specific portrait layouts and compact top-bar pattern
-- keep `v0.2.4`'s icon scale, denser profile treatment, and asset-preview
+- keep `v0.2.4`'s icon scale, denser profile treatment, and visual-guide
   documentation
-- use `gomoku-web/assets/icons/preview.html` and
-  `gomoku-web/assets/fonts/preview.html` when checking icon or type rendering
+- use the `/assets/` Visual Guide when checking palette, button, type, sprite,
+  and icon rendering
 - keep tightening dense secondary surfaces like profile instead of re-expanding
   the shell
 

@@ -43,10 +43,40 @@ export interface AssetSpriteZCase {
   layers: AssetSpriteZLayer[];
 }
 
+export interface AssetGuidePaletteToken {
+  name: string;
+  label: string;
+  value: string;
+  role: string;
+}
+
+export interface AssetGuidePaletteGroup {
+  title: string;
+  tokens: AssetGuidePaletteToken[];
+}
+
+export interface AssetGuideFontRole {
+  role: string;
+  file: string;
+  family: string;
+  sample: string;
+  note: string;
+}
+
+export interface AssetGuidePrinciple {
+  title: string;
+  description: string;
+}
+
 export interface AssetManifest {
   schema_version: 1;
   title: string;
   summary: string;
+  guide: {
+    palette: AssetGuidePaletteGroup[];
+    font_roles: AssetGuideFontRole[];
+    principles: AssetGuidePrinciple[];
+  };
   sprites: {
     frame_size: number;
     sheets: AssetSpriteSheet[];
@@ -111,6 +141,10 @@ function isAssetManifest(data: unknown): data is AssetManifest {
   return (
     manifest.schema_version === 1 &&
     typeof manifest.title === "string" &&
+    !!manifest.guide &&
+    Array.isArray(manifest.guide.palette) &&
+    Array.isArray(manifest.guide.font_roles) &&
+    Array.isArray(manifest.guide.principles) &&
     !!manifest.sprites &&
     Array.isArray(manifest.sprites.sheets) &&
     Array.isArray(manifest.sprites.static_poses) &&

@@ -6,14 +6,20 @@ These are the authoring/reference assets imported by the app or used to derive
 runtime visuals. Deployed static copies, when needed, live under
 `public/assets/`.
 
-## Published Preview
+## Published Guide
 
-- Published asset viewer after deploy:
+- Published visual guide after deploy:
   <https://gomoku2d.byebyebryan.com/assets/>
 
-GitHub renders this Markdown file, but the visual preview is now part of the
-React app. The web build publishes raw files and `asset_manifest.json` to
+GitHub renders this Markdown file, but the browsable guide is part of the React
+app. The web build publishes raw files and `asset_manifest.json` to
 `dist/assets/`, then serves the app route at `/assets/`.
+
+The guide has three sections:
+
+- Guide: palette, button roles, type roles, and visual principles
+- Sprites: board-space spritesheets, static poses, animation loops, and z-order
+- Icons: DOM shell icon inventory from the icon manifest
 
 ## Folders
 

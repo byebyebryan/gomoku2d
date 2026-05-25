@@ -159,7 +159,7 @@ export function LabReportRoute() {
                 <span className="uiActionLabel">Home</span>
               </a>
               <a className="uiAction uiActionNeutral" href={`${baseUrl}assets/`}>
-                <span className="uiActionLabel">Assets</span>
+                <span className="uiActionLabel">Guide</span>
               </a>
             </nav>
           </div>

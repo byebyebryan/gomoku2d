@@ -37,7 +37,7 @@ threat, bot, or replay-analysis semantics.
 | Replay UI | `src/replay/*`, `src/routes/ReplayRoute.tsx` | Replay reconstruction, timeline, analysis overlays, cache, and worker runner |
 | Bot worker | `src/core/bot_runner.ts`, `src/core/bot_worker.ts`, `src/core/bot_protocol.ts` | Async bot move requests with cancellation and worker restart safety |
 | Wasm bridge | `src/core/wasm_bridge.ts` | Typed JSON parsing boundary over `gomoku-wasm` exports |
-| Static publishing | `scripts/publish_*.mjs` | Copies asset previews and curated reports into `dist/` during build |
+| Static publishing | `scripts/publish_*.mjs` | Copies visual-guide assets and curated reports into `dist/` during build |
 | Playwright smoke | `playtests/*.spec.ts` | Browser-level release smoke for play, layout, replay, reports, and no-config paths |
 
 ## Wasm Boundary
@@ -153,7 +153,7 @@ surfaces separate.
 | Change replay analysis UI | `ReplayRoute.tsx`, `replay_analysis_overlays.ts` | `replay_analysis_protocol.ts`, wasm analyzer tests, Playwright replay smoke |
 | Change persisted settings | `profile_settings.ts`, `local_profile_store.ts` | cloud profile schema, Firestore rules tests, Settings UI |
 | Change saved match schema | `src/match/saved_match.ts` | replay conversion, profile history, cloud history, Playwright replay tests |
-| Change board visuals | `src/board/*`, `assets/sprites/*` | `public/assets/sprites/*`, asset preview, screenshot review |
+| Change board visuals | `src/board/*`, `assets/sprites/*` | `public/assets/sprites/*`, visual guide, screenshot review |
 | Change static report publishing | `scripts/publish_*` | release runbook and Playwright report smoke |
 
 ## Verification
