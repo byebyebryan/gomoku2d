@@ -8,6 +8,7 @@ const indexPath = join(distRoot, "index.html");
 
 const staticRoutes = [
   "analysis-report",
+  "assets",
   "bot-report",
   "lab-report",
   "match/local",

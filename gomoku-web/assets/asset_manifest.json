@@ -1,0 +1,643 @@
+{
+  "schema_version": 1,
+  "title": "Gomoku2D Assets",
+  "summary": "Source sprites and icons for the current Gomoku2D web UI.",
+  "sprites": {
+    "frame_size": 16,
+    "sheets": [
+      {
+        "file": "sprites/caution.png",
+        "cols": 6,
+        "rows": 3,
+        "label": "Tactical caution and forbidden overlays"
+      },
+      {
+        "file": "sprites/highlighter.png",
+        "cols": 6,
+        "rows": 3,
+        "label": "Board-cell highlight variants"
+      },
+      {
+        "file": "sprites/hover.png",
+        "cols": 6,
+        "rows": 1,
+        "label": "Actionable next-move hover target"
+      },
+      {
+        "file": "sprites/marker.png",
+        "cols": 6,
+        "rows": 6,
+        "label": "Replay-analysis proof and result markers"
+      },
+      {
+        "file": "sprites/pointer.png",
+        "cols": 10,
+        "rows": 2,
+        "label": "Touch and mouse pointer cues"
+      },
+      {
+        "file": "sprites/stone.png",
+        "cols": 6,
+        "rows": 4,
+        "label": "Stone destroy and idle loops"
+      },
+      {
+        "file": "sprites/transform.png",
+        "cols": 10,
+        "rows": 1,
+        "label": "Stone placement transform"
+      }
+    ],
+    "static_poses": [
+      {
+        "group": "Pointer",
+        "name": "pointer-static",
+        "role": "Pointer reset pose",
+        "file": "sprites/pointer.png",
+        "cols": 10,
+        "rows": 2,
+        "frame": 0
+      },
+      {
+        "group": "Pointer",
+        "name": "pointer-static / black",
+        "role": "Black player pointer reset pose",
+        "file": "sprites/pointer.png",
+        "cols": 10,
+        "rows": 2,
+        "frame": 0,
+        "tint": "black"
+      },
+      {
+        "group": "Stone",
+        "name": "stone-static / white",
+        "role": "White resting stone",
+        "file": "sprites/stone.png",
+        "cols": 6,
+        "rows": 4,
+        "frame": 0
+      },
+      {
+        "group": "Stone",
+        "name": "stone-static / black",
+        "role": "Black resting stone",
+        "file": "sprites/stone.png",
+        "cols": 6,
+        "rows": 4,
+        "frame": 0,
+        "tint": "black"
+      },
+      {
+        "group": "Hover",
+        "name": "hover static",
+        "role": "Next-move target rest pose",
+        "file": "sprites/hover.png",
+        "cols": 6,
+        "rows": 1,
+        "frame": 0,
+        "tint": "green"
+      },
+      {
+        "group": "Caution",
+        "name": "caution-forbidden static",
+        "role": "Forbidden caution rest pose",
+        "file": "sprites/caution.png",
+        "cols": 6,
+        "rows": 3,
+        "frame": 6,
+        "tint": "red"
+      },
+      {
+        "group": "Caution",
+        "name": "caution-forbidden-warning static",
+        "role": "Combined forbidden and warning rest pose",
+        "file": "sprites/caution.png",
+        "cols": 6,
+        "rows": 3,
+        "frame": 0,
+        "tint": "red"
+      },
+      {
+        "group": "Highlight",
+        "name": "highlight static",
+        "role": "Board-cell highlight rest pose",
+        "file": "sprites/highlighter.png",
+        "cols": 6,
+        "rows": 3,
+        "frame": 0
+      },
+      {
+        "group": "Marker",
+        "name": "marker-warning static",
+        "role": "Immediate-loss marker rest pose",
+        "file": "sprites/marker.png",
+        "cols": 6,
+        "rows": 6,
+        "frame": 3,
+        "tint": "red"
+      },
+      {
+        "group": "Marker",
+        "name": "marker-question static",
+        "role": "Unknown marker rest pose",
+        "file": "sprites/marker.png",
+        "cols": 6,
+        "rows": 6,
+        "frame": 9,
+        "tint": "gray"
+      },
+      {
+        "group": "Marker",
+        "name": "marker-L static",
+        "role": "Forced-loss marker rest pose",
+        "file": "sprites/marker.png",
+        "cols": 6,
+        "rows": 6,
+        "frame": 15,
+        "tint": "red"
+      },
+      {
+        "group": "Marker",
+        "name": "marker-F static",
+        "role": "Forbidden-reply marker rest pose",
+        "file": "sprites/marker.png",
+        "cols": 6,
+        "rows": 6,
+        "frame": 21,
+        "tint": "red"
+      },
+      {
+        "group": "Marker",
+        "name": "marker-E static",
+        "role": "Confirmed-escape marker rest pose",
+        "file": "sprites/marker.png",
+        "cols": 6,
+        "rows": 6,
+        "frame": 27,
+        "tint": "green"
+      },
+      {
+        "group": "Marker",
+        "name": "marker-P static",
+        "role": "Possible-escape marker rest pose",
+        "file": "sprites/marker.png",
+        "cols": 6,
+        "rows": 6,
+        "frame": 33,
+        "tint": "teal"
+      }
+    ],
+    "animations": [
+      {
+        "group": "Pointer",
+        "name": "pointer-idle-blocked",
+        "role": "Blocked pointer cue",
+        "file": "sprites/pointer.png",
+        "cols": 10,
+        "rows": 2,
+        "start": 0,
+        "end": 5,
+        "fps": 12
+      },
+      {
+        "group": "Pointer",
+        "name": "pointer-idle-open",
+        "role": "Normal open-cell cue",
+        "file": "sprites/pointer.png",
+        "cols": 10,
+        "rows": 2,
+        "start": 6,
+        "end": 9,
+        "fps": 12
+      },
+      {
+        "group": "Pointer",
+        "name": "pointer-idle-preferred",
+        "role": "Preferred winning or threat cue",
+        "file": "sprites/pointer.png",
+        "cols": 10,
+        "rows": 2,
+        "start": 10,
+        "end": 19,
+        "fps": 12
+      },
+      {
+        "group": "Stone",
+        "name": "transform-form",
+        "role": "Stone placement",
+        "file": "sprites/transform.png",
+        "cols": 10,
+        "rows": 1,
+        "start": 0,
+        "end": 9,
+        "fps": 18
+      },
+      {
+        "group": "Stone",
+        "name": "stone-destroy",
+        "role": "Stone removal",
+        "file": "sprites/stone.png",
+        "cols": 6,
+        "rows": 4,
+        "start": 0,
+        "end": 3,
+        "fps": 12
+      },
+      {
+        "group": "Stone",
+        "name": "stone-idle-1",
+        "role": "Last stone idle variant",
+        "file": "sprites/stone.png",
+        "cols": 6,
+        "rows": 4,
+        "start": 0,
+        "end": 5,
+        "fps": 6
+      },
+      {
+        "group": "Stone",
+        "name": "stone-idle-2",
+        "role": "Last stone idle variant",
+        "file": "sprites/stone.png",
+        "cols": 6,
+        "rows": 4,
+        "start": 6,
+        "end": 11,
+        "fps": 6
+      },
+      {
+        "group": "Stone",
+        "name": "stone-idle-3",
+        "role": "Last stone idle variant",
+        "file": "sprites/stone.png",
+        "cols": 6,
+        "rows": 4,
+        "start": 12,
+        "end": 17,
+        "fps": 6
+      },
+      {
+        "group": "Stone",
+        "name": "stone-idle-4",
+        "role": "Last stone idle variant",
+        "file": "sprites/stone.png",
+        "cols": 6,
+        "rows": 4,
+        "start": 18,
+        "end": 23,
+        "fps": 6
+      },
+      {
+        "group": "Caution",
+        "name": "caution-forbidden-warning",
+        "role": "Combined forbidden and warning caution loop",
+        "file": "sprites/caution.png",
+        "cols": 6,
+        "rows": 3,
+        "start": 0,
+        "end": 5,
+        "fps": 12,
+        "tint": "red"
+      },
+      {
+        "group": "Caution",
+        "name": "caution-forbidden-out",
+        "role": "Forbidden move loop half",
+        "file": "sprites/caution.png",
+        "cols": 6,
+        "rows": 3,
+        "start": 6,
+        "end": 11,
+        "fps": 12,
+        "tint": "red"
+      },
+      {
+        "group": "Caution",
+        "name": "caution-forbidden-in",
+        "role": "Forbidden move loop half",
+        "file": "sprites/caution.png",
+        "cols": 6,
+        "rows": 3,
+        "start": 12,
+        "end": 17,
+        "fps": 12,
+        "tint": "red"
+      },
+      {
+        "group": "Highlight",
+        "name": "highlight-strong",
+        "role": "Strong board-cell highlight for immediate threats, loss, win, or result line",
+        "file": "sprites/highlighter.png",
+        "cols": 6,
+        "rows": 3,
+        "start": 12,
+        "end": 17,
+        "fps": 12,
+        "tint": "red"
+      },
+      {
+        "group": "Highlight",
+        "name": "highlight-soft",
+        "role": "Source-stone evidence or soft context",
+        "file": "sprites/highlighter.png",
+        "cols": 6,
+        "rows": 3,
+        "start": 6,
+        "end": 11,
+        "fps": 12,
+        "tint": "pink"
+      },
+      {
+        "group": "Highlight",
+        "name": "highlight-entry",
+        "role": "Corridor-entry or critical-point highlight",
+        "file": "sprites/highlighter.png",
+        "cols": 6,
+        "rows": 3,
+        "start": 0,
+        "end": 5,
+        "fps": 12
+      },
+      {
+        "group": "Marker",
+        "name": "marker-warning",
+        "role": "Immediate-loss marker",
+        "file": "sprites/marker.png",
+        "cols": 6,
+        "rows": 6,
+        "start": 0,
+        "end": 5,
+        "fps": 12,
+        "tint": "red"
+      },
+      {
+        "group": "Marker",
+        "name": "marker-question",
+        "role": "Unknown marker",
+        "file": "sprites/marker.png",
+        "cols": 6,
+        "rows": 6,
+        "start": 6,
+        "end": 11,
+        "fps": 12,
+        "tint": "gray"
+      },
+      {
+        "group": "Marker",
+        "name": "marker-L",
+        "role": "Forced-loss marker",
+        "file": "sprites/marker.png",
+        "cols": 6,
+        "rows": 6,
+        "start": 12,
+        "end": 17,
+        "fps": 12,
+        "tint": "red"
+      },
+      {
+        "group": "Marker",
+        "name": "marker-F",
+        "role": "Forbidden-reply marker",
+        "file": "sprites/marker.png",
+        "cols": 6,
+        "rows": 6,
+        "start": 18,
+        "end": 23,
+        "fps": 12,
+        "tint": "red"
+      },
+      {
+        "group": "Marker",
+        "name": "marker-E",
+        "role": "Confirmed-escape marker",
+        "file": "sprites/marker.png",
+        "cols": 6,
+        "rows": 6,
+        "start": 24,
+        "end": 29,
+        "fps": 12,
+        "tint": "green"
+      },
+      {
+        "group": "Marker",
+        "name": "marker-P",
+        "role": "Possible-escape marker",
+        "file": "sprites/marker.png",
+        "cols": 6,
+        "rows": 6,
+        "start": 30,
+        "end": 35,
+        "fps": 12,
+        "tint": "teal"
+      },
+      {
+        "group": "Hover",
+        "name": "hover",
+        "role": "About-to-play target",
+        "file": "sprites/hover.png",
+        "cols": 6,
+        "rows": 1,
+        "start": 0,
+        "end": 5,
+        "fps": 6,
+        "tint": "green"
+      }
+    ],
+    "z_cases": [
+      {
+        "name": "preferred-pointer-over-marker",
+        "title": "Preferred target",
+        "note": "A legal winning or threat-response cell uses the warning marker below the pointer.",
+        "layers": [
+          {
+            "z": "surface",
+            "name": "marker-warning",
+            "file": "sprites/marker.png",
+            "cols": 6,
+            "rows": 6,
+            "start": 0,
+            "end": 5,
+            "fps": 12,
+            "tint": "red"
+          },
+          {
+            "z": "pointer",
+            "name": "pointer-idle-preferred",
+            "file": "sprites/pointer.png",
+            "cols": 10,
+            "rows": 2,
+            "start": 10,
+            "end": 19,
+            "fps": 12
+          }
+        ]
+      },
+      {
+        "name": "forbidden-caution-under-pointer",
+        "title": "Forbidden caution",
+        "note": "A forbidden or dangerous target is a surface cue; the blocked pointer reads above it.",
+        "layers": [
+          {
+            "z": "surface",
+            "name": "caution-forbidden-warning",
+            "file": "sprites/caution.png",
+            "cols": 6,
+            "rows": 3,
+            "start": 0,
+            "end": 5,
+            "fps": 12,
+            "tint": "red"
+          },
+          {
+            "z": "pointer",
+            "name": "pointer-idle-blocked / black",
+            "file": "sprites/pointer.png",
+            "cols": 10,
+            "rows": 2,
+            "start": 0,
+            "end": 5,
+            "fps": 12,
+            "tint": "black"
+          }
+        ]
+      },
+      {
+        "name": "analysis-highlight-marker",
+        "title": "Analysis marker",
+        "note": "Replay proof can combine a context highlight with a letter marker on the same surface layer.",
+        "layers": [
+          {
+            "z": "highlight",
+            "name": "highlight-entry",
+            "file": "sprites/highlighter.png",
+            "cols": 6,
+            "rows": 3,
+            "start": 0,
+            "end": 5,
+            "fps": 12
+          },
+          {
+            "z": "surface",
+            "name": "marker-E",
+            "file": "sprites/marker.png",
+            "cols": 6,
+            "rows": 6,
+            "start": 24,
+            "end": 29,
+            "fps": 12,
+            "tint": "green"
+          }
+        ]
+      },
+      {
+        "name": "analysis-highlight-actual-move",
+        "title": "Actual move",
+        "note": "When the analyzed square has a committed stone, the highlight stays below the stone focus.",
+        "layers": [
+          {
+            "z": "highlight",
+            "name": "highlight-entry",
+            "file": "sprites/highlighter.png",
+            "cols": 6,
+            "rows": 3,
+            "start": 0,
+            "end": 5,
+            "fps": 12
+          },
+          {
+            "z": "stoneWhite",
+            "name": "stone-static / white",
+            "file": "sprites/stone.png",
+            "cols": 6,
+            "rows": 4,
+            "frame": 0
+          }
+        ]
+      },
+      {
+        "name": "mobile-occupied-target",
+        "title": "Mobile occupied target",
+        "note": "Touchpad pointer can land on an occupied cell, but the committed stone still outranks it.",
+        "layers": [
+          {
+            "z": "pointer",
+            "name": "pointer-idle-blocked",
+            "file": "sprites/pointer.png",
+            "cols": 10,
+            "rows": 2,
+            "start": 0,
+            "end": 5,
+            "fps": 12
+          },
+          {
+            "z": "stone",
+            "name": "stone-static / black",
+            "file": "sprites/stone.png",
+            "cols": 6,
+            "rows": 4,
+            "frame": 0,
+            "tint": "black"
+          }
+        ]
+      },
+      {
+        "name": "threat-evidence-under-stone",
+        "title": "Threat evidence",
+        "note": "Source-stone evidence is a board-surface highlight below the committed stone.",
+        "layers": [
+          {
+            "z": "highlight",
+            "name": "highlight-soft",
+            "file": "sprites/highlighter.png",
+            "cols": 6,
+            "rows": 3,
+            "start": 6,
+            "end": 11,
+            "fps": 12,
+            "tint": "pink"
+          },
+          {
+            "z": "stone",
+            "name": "stone-static / black",
+            "file": "sprites/stone.png",
+            "cols": 6,
+            "rows": 4,
+            "frame": 0,
+            "tint": "black"
+          }
+        ]
+      },
+      {
+        "name": "result-winning-line",
+        "title": "Result winning line",
+        "note": "Winning-line emphasis is a board-surface highlight below the committed stone and sequence number.",
+        "sequence": "7",
+        "layers": [
+          {
+            "z": "highlight",
+            "name": "highlight-strong",
+            "file": "sprites/highlighter.png",
+            "cols": 6,
+            "rows": 3,
+            "start": 12,
+            "end": 17,
+            "fps": 12,
+            "tint": "green"
+          },
+          {
+            "z": "stoneWhite",
+            "name": "stone-static / white",
+            "file": "sprites/stone.png",
+            "cols": 6,
+            "rows": 4,
+            "frame": 0
+          }
+        ]
+      }
+    ]
+  },
+  "icons": {
+    "manifest": "icons/manifest.json",
+    "directory": "icons"
+  }
+}

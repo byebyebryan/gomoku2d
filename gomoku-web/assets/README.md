@@ -6,20 +6,14 @@ These are the authoring/reference assets imported by the app or used to derive
 runtime visuals. Deployed static copies, when needed, live under
 `public/assets/`.
 
-## Preview Pages
+## Published Preview
 
-- Published preview index after deploy:
+- Published asset viewer after deploy:
   <https://gomoku2d.byebyebryan.com/assets/>
-- [sprites/preview.html](./sprites/preview.html): board-space sprites,
-  animation loops, static poses, and z-order cases
-- [icons/preview.html](./icons/preview.html): icon sheet and exported SVG pack
-- [fonts/preview.html](./fonts/preview.html): PixelOperator font variants and
-  runtime text samples
 
-GitHub renders this Markdown file, but it does not execute these standalone
-HTML previews in the repository browser. The web build publishes a curated copy
-to `dist/assets/`, so GitHub Pages can serve the live previews under
-`/assets/`.
+GitHub renders this Markdown file, but the visual preview is now part of the
+React app. The web build publishes raw files and `asset_manifest.json` to
+`dist/assets/`, then serves the app route at `/assets/`.
 
 ## Folders
 

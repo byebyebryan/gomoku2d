@@ -21,6 +21,9 @@ const SettingsRoute = lazy(async () => ({
 const LabReportRoute = lazy(async () => ({
   default: (await import("../routes/BotReportRoute")).LabReportRoute,
 }));
+const AssetPreviewRoute = lazy(async () => ({
+  default: (await import("../routes/AssetPreviewRoute")).AssetPreviewRoute,
+}));
 
 export function App() {
   return (
@@ -65,6 +68,14 @@ export function App() {
           element={
             <Suspense fallback={<main className={styles.loading}>Loading report…</main>}>
               <LabReportRoute />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/assets/*"
+          element={
+            <Suspense fallback={<main className={styles.loading}>Loading assets…</main>}>
+              <AssetPreviewRoute />
             </Suspense>
           }
         />
