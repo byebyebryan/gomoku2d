@@ -291,7 +291,7 @@ fn published_analysis_entry(
     PublishedAnalysisEntry {
         path: entry.path.clone(),
         match_report,
-        status: entry.status.clone(),
+        status: entry.status,
         root_cause: entry.root_cause,
         unclear_reason: entry.unclear_reason,
         lethal_onset: entry.lethal_onset.clone(),

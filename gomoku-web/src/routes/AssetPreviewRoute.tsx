@@ -424,7 +424,7 @@ function IconsPanel({
           <h2>Icons</h2>
           <p className={styles.note}>
             Source sheet plus exported SVG pack. The grid uses external SVG files for visual
-            inspection, filtered to white like the old preview.
+            inspection and filters them to white for a consistent guide view.
           </p>
         </div>
         <img
@@ -454,7 +454,7 @@ function IconsPanel({
 function StatePanel({ message }: { message: string }) {
   return (
     <section className={styles.state}>
-      <h2>Asset Preview</h2>
+      <h2>Visual Guide</h2>
       <p className={styles.note}>{message}</p>
     </section>
   );

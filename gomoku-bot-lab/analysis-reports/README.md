@@ -5,9 +5,9 @@ Curated replay-analysis data for the analysis tab of the published
 `/analysis-report/report.json` for compatibility.
 
 The published analysis report is the companion to the published bot report:
-sample the head-to-head games between the current top two standings in
-`reports/report.json`, then export the forced-corridor explanation data here.
-The web app renders the analysis tab from this JSON.
+sample the Easy/Normal/Hard preset triangle from `reports/report.json`, then
+export the forced-corridor explanation data here. The web app renders the
+analysis tab from this JSON.
 
 Recommended flow, from `gomoku-bot-lab/`:
 
@@ -21,16 +21,14 @@ git status --short
 mkdir -p analysis-reports
 cargo run --release -p gomoku-eval -- analyze-report-replays \
   --report reports/report.json \
-  --sample-size 64 \
-  --include-proof-details \
-  --report-json analysis-reports/report.json \
+  --selector preset-triangle \
+  --published-report-json analysis-reports/report.json \
   --max-depth 4 \
   --max-scan-plies 64
 ```
 
-`analyze-report-replays` intentionally omits explicit entrants here. By default
-it selects standing #1 versus the highest different standing from the published
-bot report, so the lab report analysis tab always explains the current top
-matchup.
+`analyze-report-replays` intentionally uses the named selector here instead of
+explicit entrants, so the lab report analysis tab stays aligned with the current
+in-game bot presets.
 
 Scratch analysis runs belong in ignored `outputs/`.
