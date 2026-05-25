@@ -12,6 +12,43 @@ their own section.
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-05-25
+
+**Theme: turn static lab artifacts into first-class public surfaces.**
+
+`0.5.1` continues the `0.5` public-readiness line by moving the report and
+asset surfaces out of generated one-off HTML and into the web app itself. The
+release does not change bot strength or analyzer semantics. Instead, it makes
+the project’s strongest lab outputs easier to ship, inspect, and explain.
+
+### Web
+
+- Replaced generated bot-report and replay-analysis HTML with a unified React
+  `/lab-report/` viewer backed by compact published JSON data.
+- Kept legacy `/bot-report/` and `/analysis-report/` routes compatible while
+  making `/lab-report/` the canonical public report surface.
+- Rebuilt the asset preview as a React Visual Guide with sprites, icons, color,
+  typography, and UI examples in the same product shell.
+- Aligned report, Visual Guide, privacy, and terms pages more closely with the
+  game UI so static/supporting pages no longer feel detached from the product.
+
+### Bot lab and reports
+
+- Trimmed published report artifacts away from large generated HTML and debug
+  dumps toward compact data exports consumed by the web app.
+- Updated curated report docs around the preset-triangle analysis flow used by
+  the public lab report.
+- Preserved generated report JSON as no-diff artifacts while moving visual
+  presentation responsibility to the frontend.
+
+### Docs and repo
+
+- Updated public-facing README links and status copy around the Visual Guide and
+  canonical lab report.
+- Cleaned up stale asset-preview naming in docs and build scripts after the
+  Visual Guide replacement.
+- Tightened release-copy details without rerunning the curated tournament data.
+
 ## [0.5.0] - 2026-05-22
 
 **Theme: reconcile the `0.4` lab work into a public-release foundation.**
@@ -1017,7 +1054,8 @@ together in one canvas-driven surface. That lesson drove the `v0.2.1` rewrite.
   concerns blurred together.
 - Expressive UI language, but not scalable beyond one canvas.
 
-[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.8...v0.5.0
 [0.4.8]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.7...v0.4.8
 [0.4.7]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.6...v0.4.7
