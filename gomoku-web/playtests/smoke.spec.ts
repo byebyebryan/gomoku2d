@@ -51,7 +51,7 @@ test("published static report routes render their current artifacts", async ({ p
   const analysisJson = await page.request.head("/analysis-report/report.json");
   expect(analysisJson.status()).toBe(200);
 
-  await page.goto("/lab-report/");
+  await page.goto("/lab/");
   await expect(page).toHaveTitle(/Lab Report/);
   await expect(page.getByRole("heading", { name: "Lab Report" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Ranking" })).toBeVisible();
@@ -77,7 +77,7 @@ test("published static report routes render their current artifacts", async ({ p
   });
 
   await page.getByRole("button", { name: "Analysis" }).click();
-  await expect(page).toHaveURL(/\/lab-report\/\?tab=analysis$/);
+  await expect(page).toHaveURL(/\/lab\/\?tab=analysis$/);
   await expect(page.getByText("Easy").first()).toBeVisible();
   await expect(page.locator("[data-proof-board='analysis']")).toHaveCount(0);
   const analysis = page.locator("[data-view='analysis']");
@@ -86,20 +86,18 @@ test("published static report routes render their current artifacts", async ({ p
   await analysis.locator("summary", { hasText: "#65" }).click();
   await expect(analysis.locator("[data-proof-board='analysis']").first()).toBeVisible();
 
-  await page.goto("/bot-report/");
-  await expect(page).toHaveURL(/\/lab-report\/?$/);
-  await page.goto("/analysis-report/");
-  await expect(page).toHaveURL(/\/lab-report\/\?tab=analysis$/);
+  await page.goto("/lab/?tab=search");
+  await expect(page).toHaveURL(/\/lab\/\?tab=search$/);
 });
 
-test("published visual guide route renders manifest-driven assets", async ({ page }) => {
+test("published visual design route renders manifest-driven assets", async ({ page }) => {
   const manifest = await page.request.head("/assets/asset_manifest.json");
   expect(manifest.status()).toBe(200);
 
-  await page.goto("/assets/");
-  await expect(page).toHaveTitle(/Visual Guide/);
-  await expect(page.getByRole("heading", { level: 1, name: "Visual Guide" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Guide" })).toBeVisible();
+  await page.goto("/visuals/");
+  await expect(page).toHaveTitle(/Visual Design/);
+  await expect(page.getByRole("heading", { level: 1, name: "Visual Design" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Style" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Sprites" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Icons" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Fonts" })).toHaveCount(0);
@@ -120,6 +118,8 @@ test("published visual guide route renders manifest-driven assets", async ({ pag
 test("rules explanation route renders inside the app shell", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("link", { name: "Rules" })).toHaveAttribute("href", "/rules/");
+  await expect(page.getByRole("link", { name: "Visuals" })).toHaveAttribute("href", "/visuals/");
+  await expect(page.getByRole("link", { name: "Lab" })).toHaveAttribute("href", "/lab/");
   await expect(page.getByRole("link", { name: "About" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Analysis" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Bots" })).toHaveCount(0);

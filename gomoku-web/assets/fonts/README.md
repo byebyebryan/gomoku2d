@@ -2,9 +2,9 @@
 
 PixelOperator font files used by the DOM shell and board sequence numbers.
 
-Fonts are external runtime dependencies. The published `/assets/` Visual Guide
-shows the runtime type roles, but this folder keeps the full source font set for
-future UI or canvas tuning.
+Fonts are external runtime dependencies. The published `/visuals/` Visual Design
+reference shows the runtime type roles, but this folder keeps the full source
+font set for future UI or canvas tuning.
 
 ## Runtime Fonts
 

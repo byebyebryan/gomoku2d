@@ -66,7 +66,7 @@ Move from proof-of-concept to a proper frontend product surface.
 - replay branching back into local practice
 - board-first desktop and mobile match layouts
 - mobile pointer/touchpad placement modes for cramped boards
-- visual guide, screenshot/reference assets, release hygiene
+- visual design reference, screenshot/reference assets, release hygiene
 - dependency/runtime maintenance after `v0.2.4` without cutting another product
   release
 
@@ -93,7 +93,7 @@ A player can open the site and get a polished local experience:
 
 - learn how far agents can help shape a frontend product, not just generate UI
   code
-- establish screenshot review, visual-guide, animation-inventory, and release
+- establish screenshot review, visual-design, animation-inventory, and release
   polish loops as first-class project practices
 - validate the React/Phaser/Rust boundaries that let agents work in one layer
   without constantly breaking another
@@ -306,7 +306,9 @@ heavy lab work, and package the project for first public release.
 - reconcile code, tests, docs, and generated artifacts after the `0.4` lab line
 - make the bot and replay-analysis reports feel like first-class product pages
   instead of developer artifacts
-- explain Gomoku, Renju, bot settings, and replay analysis from inside the app
+- explain basic Gomoku/Renju rules from inside the app, and reserve the future
+  `Guide` surface for actual play lessons such as threes, fours, combo threats,
+  and forced corridors
 - refresh showcase/onboarding surfaces around the current product loop:
   play instantly, review the ending, see where the game turned, and branch from
   the replay
@@ -320,8 +322,8 @@ heavy lab work, and package the project for first public release.
 
 - continue slimming/report-viewer follow-up work now that bot/analysis reports
   are web-rendered from compact `report.json`
-- productize the existing concise docs for About, Rules, Analysis, and Bot Lab
-  inside the app
+- keep the in-app `Rules` page focused on basic game mechanics; keep About on
+  GitHub/README and let the Lab Report explain bot and analyzer behavior
 - polish Home, Replay, report pages, and README copy around the lab-under-the-
   board story
 - refresh hero capture, screenshots, Open Graph image, and public release notes

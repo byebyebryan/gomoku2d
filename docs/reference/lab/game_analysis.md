@@ -652,7 +652,7 @@ the lab/report shell and `gomoku-wasm` as the browser bridge:
   constructs the analyzer.
 
 The curated public report lives under `gomoku-bot-lab/analysis-reports/` and is
-published as the analysis tab of `/lab-report/`, with JSON retained at
+published as the analysis tab of `/lab/`, with JSON retained at
 `/analysis-report/report.json`. It can be generated from the compact published
 bot report because that artifact keeps match move cells while dropping debug
 telemetry. The curated sample explains the in-game Easy/Normal/Hard preset

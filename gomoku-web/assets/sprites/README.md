@@ -2,12 +2,12 @@
 
 All runtime board spritesheets use 16x16 frames. The source files in this
 folder are the authoritative copies. The build/publish scripts sync matching
-files under `public/assets/sprites/` and the published Visual Guide.
+files under `public/assets/sprites/` and the published Visual Design reference.
 
 For the meaning of each board-space visual role, see
 [`game_visual.md`](../../../docs/reference/app/game_visual.md). This README is
 only the frame inventory.
-For visual inspection, use the published `/assets/` route.
+For visual inspection, use the published `/visuals/` route.
 
 ## Published Sprites
 

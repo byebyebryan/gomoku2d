@@ -47,8 +47,8 @@ The current refinement direction is:
 - keep `v0.2.3`'s screen-specific portrait layouts and compact top-bar pattern
 - keep `v0.2.4`'s icon scale, denser profile treatment, and visual-guide
   documentation
-- use the `/assets/` Visual Guide when checking palette, button, type, sprite,
-  and icon rendering
+- use the `/visuals/` Visual Design reference when checking palette, button,
+  type, sprite, and icon rendering
 - keep tightening dense secondary surfaces like profile instead of re-expanding
   the shell
 

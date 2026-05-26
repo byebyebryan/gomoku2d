@@ -28,7 +28,7 @@ type LoadState =
 type AssetTab = "guide" | "sprites" | "icons";
 
 const ASSET_TABS: Array<{ id: AssetTab; label: string }> = [
-  { id: "guide", label: "Guide" },
+  { id: "guide", label: "Style" },
   { id: "sprites", label: "Sprites" },
   { id: "icons", label: "Icons" },
 ];
@@ -38,7 +38,7 @@ export function AssetPreviewRoute() {
   const [tab, setTab] = useState<AssetTab>("guide");
 
   useEffect(() => {
-    document.title = "Gomoku2D Visual Guide";
+    document.title = "Gomoku2D Visual Design";
   }, []);
 
   useEffect(() => {
@@ -80,21 +80,21 @@ export function AssetPreviewRoute() {
           <div className={styles.headerRow}>
             <div>
               <p className="uiPageEyebrow">Gomoku2D source</p>
-              <h1 className={styles.title}>Visual Guide</h1>
+              <h1 className={styles.title}>Visual Design</h1>
               {state.status === "loaded" ? (
                 <p className={styles.summary}>{state.manifest.summary}</p>
               ) : null}
             </div>
-            <nav className={styles.links} aria-label="Visual guide links">
+            <nav className={styles.links} aria-label="Visual design links">
               <a className="uiAction uiActionNeutral" href={baseUrl}>
                 <span className="uiActionLabel">Home</span>
               </a>
-              <a className="uiAction uiActionNeutral" href={`${baseUrl}lab-report/`}>
+              <a className="uiAction uiActionNeutral" href={`${baseUrl}lab/`}>
                 <span className="uiActionLabel">Lab</span>
               </a>
             </nav>
           </div>
-          <div className={styles.tabs} aria-label="Visual guide sections">
+          <div className={styles.tabs} aria-label="Visual design sections">
             {ASSET_TABS.map((option) => (
               <button
                 key={option.id}
@@ -454,7 +454,7 @@ function IconsPanel({
 function StatePanel({ message }: { message: string }) {
   return (
     <section className={styles.state}>
-      <h2>Visual Guide</h2>
+      <h2>Visual Design</h2>
       <p className={styles.note}>{message}</p>
     </section>
   );

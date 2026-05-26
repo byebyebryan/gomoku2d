@@ -12,9 +12,9 @@ The low-level sprite-sheet inventory lives in
 `gomoku-web/assets/sprites/README.md`. This document describes how those
 assets should read in play.
 
-For local visual inspection, run the web app and open `/assets/`. The Visual
-Guide includes the board-space sprite inventory, static poses, animation loops,
-and z-order cases from `gomoku-web/assets/asset_manifest.json`.
+For local visual inspection, run the web app and open `/visuals/`. The Visual
+Design reference includes the board-space sprite inventory, static poses,
+animation loops, and z-order cases from `gomoku-web/assets/asset_manifest.json`.
 
 ## Goal
 

@@ -67,7 +67,7 @@ export function App() {
           }
         />
         <Route
-          path="/lab-report/*"
+          path="/lab/*"
           element={
             <Suspense fallback={<main className={styles.loading}>Loading report…</main>}>
               <LabReportRoute />
@@ -75,7 +75,7 @@ export function App() {
           }
         />
         <Route
-          path="/assets/*"
+          path="/visuals/*"
           element={
             <Suspense fallback={<main className={styles.loading}>Loading assets…</main>}>
               <AssetPreviewRoute />
@@ -90,8 +90,6 @@ export function App() {
             </Suspense>
           }
         />
-        <Route path="/bot-report/*" element={<Navigate to="/lab-report/" replace />} />
-        <Route path="/analysis-report/*" element={<Navigate to="/lab-report/?tab=analysis" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
