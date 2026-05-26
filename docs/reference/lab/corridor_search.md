@@ -881,7 +881,7 @@ The current checkpoint provides:
 - proof-detail JSON and HTML report generation,
 - visual proof frames with board rendering and semantic markers,
 - Renju-aware handling for forbidden black replies and illegal black threats,
-- published lab-report analysis artifacts generated from the in-game preset
+- published lab analysis artifacts generated from the in-game preset
   triangle,
 - docs that separate strategic model, replay implementation, tactical shapes,
   and bot-tuning evidence.

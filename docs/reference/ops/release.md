@@ -107,13 +107,12 @@ release-blocking.
 ## Bot And Analysis Report Refresh
 
 Curated bot-lab report artifacts live in `gomoku-bot-lab/reports/` and are
-published under `/bot-report/` as the ranking/search data source for
-`/lab-report/`. Scratch reports belong in the ignored `gomoku-bot-lab/outputs/`
-folder.
+published as `/bot-report/report.json`, the ranking/search data source for
+`/lab/`. Scratch reports belong in the ignored `gomoku-bot-lab/outputs/` folder.
 
 Curated replay-analysis report artifacts live in
-`gomoku-bot-lab/analysis-reports/` and are published under
-`/analysis-report/` as the analysis data source for `/lab-report/`. The
+`gomoku-bot-lab/analysis-reports/` and are published as
+`/analysis-report/report.json`, the analysis data source for `/lab/`. The
 analysis report is intentionally tied to product bot presets: it analyzes the
 Easy/Normal/Hard preset triangle from the same tournament source used to
 generate the published bot report.
@@ -179,11 +178,10 @@ For the curated analysis report, sanity-check at minimum:
 Before deployment, confirm the web build copied the required report files:
 
 ```sh
-test -f gomoku-web/dist/bot-report/index.html
 test -f gomoku-web/dist/bot-report/report.json
-test -f gomoku-web/dist/analysis-report/index.html
 test -f gomoku-web/dist/analysis-report/report.json
-test -f gomoku-web/dist/lab-report/index.html
+test -f gomoku-web/dist/lab/index.html
+test -f gomoku-web/dist/visuals/index.html
 ```
 
 ## Push And CI Baseline
@@ -277,9 +275,8 @@ changed surface:
 
 - Home loads from `https://gomoku2d.byebyebryan.com/`.
 - `/profile`, `/privacy/`, and `/terms/` return `200`.
-- If report publishing changed: `/lab-report/`, `/bot-report/report.json`,
-  and `/analysis-report/report.json` return `200`; legacy `/bot-report/` and
-  `/analysis-report/` redirect into the lab report.
+- If report publishing changed: `/lab/`, `/bot-report/report.json`,
+  and `/analysis-report/report.json` return `200`.
 - Local-only match/replay still works without signing in.
 - If auth/profile changed: sign in from production, refresh, sign out, sign in
   again, and confirm history/profile continuity.

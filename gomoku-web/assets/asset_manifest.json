@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "title": "Gomoku2D Visual Guide",
-  "summary": "A compact visual guide and source asset viewer for the current Gomoku2D web UI.",
+  "title": "Gomoku2D Visual Design",
+  "summary": "A compact visual design reference and source asset viewer for the current Gomoku2D web UI.",
   "guide": {
     "palette": [
       {

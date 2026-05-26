@@ -5,9 +5,9 @@ top of React, Phaser, and the Rust/WebAssembly core.
 
 **Play:** https://gomoku2d.byebyebryan.com/
 
-**Visual guide:** https://gomoku2d.byebyebryan.com/assets/
+**Visuals:** https://gomoku2d.byebyebryan.com/visuals/
 
-**Lab report:** https://gomoku2d.byebyebryan.com/lab-report/
+**Lab:** https://gomoku2d.byebyebryan.com/lab/
 
 React owns the app shell: home, match, replay, profile, auth, and local/cloud
 history. Phaser renders the board and nothing else. The rules engine and bot
@@ -56,21 +56,21 @@ Design intent is split across:
 - [`../docs/reference/app/ui_design.md`](../docs/reference/app/ui_design.md) — DOM shell visual language
 - [`../docs/reference/app/game_visual.md`](../docs/reference/app/game_visual.md) — Phaser canvas visuals, sprite roles, and animation language
 
-Source assets and the manifest-backed visual guide live in
-[`assets/README.md`](assets/README.md). Published builds expose the guide under
-`/assets/`.
+Source assets and the manifest-backed visual design reference live in
+[`assets/README.md`](assets/README.md). Published builds expose the reference
+under `/visuals/`.
 
 Curated bot-lab reports live in [`../gomoku-bot-lab/reports/`](../gomoku-bot-lab/reports/)
-and are copied into published builds under `/bot-report/` as the ranking/search
-data source.
+and are copied into published builds as `/bot-report/report.json`, the
+ranking/search data source.
 
 Curated replay-analysis reports live in
 [`../gomoku-bot-lab/analysis-reports/`](../gomoku-bot-lab/analysis-reports/)
-and are copied into published builds under `/analysis-report/` as the analysis
-data source.
+and are copied into published builds as `/analysis-report/report.json`, the
+analysis data source.
 
 Production builds expect both curated report folders to contain `report.json`.
-The React app renders the unified `/lab-report/` from those split data files.
+The React app renders the unified `/lab/` from those split data files.
 For local/dev builds that intentionally skip reports, set `GOMOKU_ALLOW_MISSING_REPORTS=1`.
 
 ---
@@ -169,11 +169,11 @@ npm run typecheck:scripts  # JS script type coverage
 npm run playtest:smoke     # playwright smoke run
 ```
 
-The `postbuild` step publishes the visual guide, curated bot and analysis reports,
-static SPA route entries, and the `404.html` fallback. Report publishing is
-guarded so release builds fail if the curated artifacts are missing; set
-`GOMOKU_ALLOW_MISSING_REPORTS=1` only for local/dev builds that intentionally
-skip those pages.
+The `postbuild` step publishes the visual design reference, curated bot and
+analysis reports, static SPA route entries, and the `404.html` fallback. Report
+publishing is guarded so release builds fail if the curated artifacts are
+missing; set `GOMOKU_ALLOW_MISSING_REPORTS=1` only for local/dev builds that
+intentionally skip those pages.
 
 ---
 

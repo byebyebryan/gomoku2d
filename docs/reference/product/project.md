@@ -56,7 +56,7 @@ experiment gives the product discipline.
 - **Let agents accelerate, not decide.** Agents can explore, implement, test,
   review, and draft. Product judgment, taste, scope control, and final calls
   stay human.
-- **Record the process.** Roadmaps, design notes, release docs, visual guides,
+- **Record the process.** Roadmaps, design notes, release docs, visual references,
   and post-review cleanup are part of the experiment, not just project
   administration.
 - **Stay honest about scale.** This is a personal project, not a venture-backed

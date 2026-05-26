@@ -10,7 +10,7 @@ that sheet.
 
 - `icon_sheet.png`: current source sheet
 - `manifest.json`: inferred icon naming, grid positions, categories, notes,
-  and source data for the published `/assets/` Visual Guide
+  and source data for the published `/visuals/` Visual Design reference
 - `*.svg`: per-icon runtime assets
 
 ## Grid Map

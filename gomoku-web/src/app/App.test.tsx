@@ -39,7 +39,7 @@ vi.mock("../routes/BotReportRoute", () => ({
 vi.mock("../routes/AssetPreviewRoute", () => ({
   AssetPreviewRoute: () => (
     <main>
-      <h1>Visual Guide</h1>
+      <h1>Visual Design</h1>
     </main>
   ),
 }));
@@ -83,13 +83,13 @@ describe("App", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("link", { name: /^guide$/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /^visuals$/i })).toHaveAttribute(
       "href",
-      "/assets/",
+      "/visuals/",
     );
     expect(screen.getByRole("link", { name: /^lab$/i })).toHaveAttribute(
       "href",
-      "/lab-report/",
+      "/lab/",
     );
     expect(screen.getByRole("link", { name: /^rules$/i })).toHaveAttribute(
       "href",
@@ -100,13 +100,9 @@ describe("App", () => {
     expect(screen.queryByRole("link", { name: /^bots$/i })).not.toBeInTheDocument();
   });
 
-  it.each([
-    ["/lab-report/"],
-    ["/bot-report/"],
-    ["/analysis-report/"],
-  ])("routes %s through the unified lab report", async (path) => {
+  it("routes the lab report through the app", async () => {
     render(
-      <MemoryRouter initialEntries={[path]}>
+      <MemoryRouter initialEntries={["/lab/"]}>
         <App />
       </MemoryRouter>,
     );
@@ -114,14 +110,14 @@ describe("App", () => {
     expect(await screen.findByRole("heading", { name: /^lab report$/i })).toBeInTheDocument();
   });
 
-  it("routes the visual guide through the app", async () => {
+  it("routes the visual design reference through the app", async () => {
     render(
-      <MemoryRouter initialEntries={["/assets/"]}>
+      <MemoryRouter initialEntries={["/visuals/"]}>
         <App />
       </MemoryRouter>,
     );
 
-    expect(await screen.findByRole("heading", { name: /^visual guide$/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /^visual design$/i })).toBeInTheDocument();
   });
 
   it("routes the rules page through the app", async () => {

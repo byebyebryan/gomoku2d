@@ -6,7 +6,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from "react";
-import { Navigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 
 import { presetForLabSpec, type BotPresetId } from "../core/bot_config";
 import {
@@ -42,10 +42,6 @@ const REPORT_VIEWS: Array<{ id: ReportView; label: string }> = [
   { id: "search", label: "Search" },
   { id: "analysis", label: "Analysis" },
 ];
-
-export function BotReportRoute() {
-  return <Navigate to="/lab-report/" replace />;
-}
 
 export function LabReportRoute() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -158,8 +154,8 @@ export function LabReportRoute() {
               <a className="uiAction uiActionNeutral" href={baseUrl}>
                 <span className="uiActionLabel">Home</span>
               </a>
-              <a className="uiAction uiActionNeutral" href={`${baseUrl}assets/`}>
-                <span className="uiActionLabel">Guide</span>
+              <a className="uiAction uiActionNeutral" href={`${baseUrl}visuals/`}>
+                <span className="uiActionLabel">Visuals</span>
               </a>
             </nav>
           </div>

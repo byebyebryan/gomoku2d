@@ -1,5 +1,4 @@
 import { Fragment, type CSSProperties, useState } from "react";
-import { Navigate } from "react-router-dom";
 
 import { presetForLabSpec, type BotPresetId } from "../core/bot_config";
 import {
@@ -15,10 +14,6 @@ import styles from "./ReportRoute.module.css";
 const DEFAULT_REPORT_BOARD_SIZE = 15;
 const ANALYSIS_BOARD_CELL_SIZE = 20;
 const ANALYSIS_BOARD_LABEL_SIZE = 16;
-
-export function AnalysisReportRoute() {
-  return <Navigate to="/lab-report/?tab=analysis" replace />;
-}
 
 export function AnalysisReportContent({ report }: { report: PublishedAnalysisReport }) {
   return (

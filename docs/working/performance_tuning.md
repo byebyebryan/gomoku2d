@@ -914,11 +914,11 @@ of truth for published ranking pages. It keeps match move cells for board
 rendering and replay analysis, but omits debug telemetry; full reports belong
 under ignored `gomoku-bot-lab/outputs/`. Curated reports under
 `gomoku-bot-lab/reports/` are copied into the public web build as
-`/bot-report/report.json` and rendered by `/lab-report/`.
+`/bot-report/report.json` and rendered by `/lab/`.
 
 Curated replay-analysis reports under `gomoku-bot-lab/analysis-reports/` are
 copied into the public web build as `/analysis-report/report.json` and rendered
-by `/lab-report/?tab=analysis`. Treat that report as a companion to the
+by `/lab/?tab=analysis`. Treat that report as a companion to the
 published bot report: it should analyze the Easy/Normal/Hard preset triangle
 from the same full tournament source used to produce the compact bot report.
 

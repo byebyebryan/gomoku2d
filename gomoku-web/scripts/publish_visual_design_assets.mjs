@@ -42,4 +42,4 @@ await copyFolderFiles("sprites", [".md", ".png"]);
 await copyFolderFiles("icons", [".md", ".json", ".png", ".svg"]);
 await copyFolderFiles("fonts", [".md", ".ttf", ".txt"]);
 
-console.log("Published Visual Guide asset source files to dist/assets/.");
+console.log("Published visual design asset source files to dist/assets/.");

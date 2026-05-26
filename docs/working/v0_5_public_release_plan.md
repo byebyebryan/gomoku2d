@@ -163,16 +163,21 @@ Once the repo and product story are reconciled, prepare a public alpha:
 - Move report presentation out of Rust-generated monolithic HTML and into web
   viewer components.
 - Keep compact `report.json` as the source data for published pages.
-- Preserve report JSON compatibility URLs while making `/lab-report/` the public
-  viewer route.
-- Make report pages visually consistent with the game shell and visual-guide
+- Keep compact report JSON under `/bot-report/report.json` and
+  `/analysis-report/report.json`, while making `/lab/` the public viewer route.
+- Make report pages visually consistent with the game shell and visual-design
   pages.
 
 ### Slice 3: Product Explanation Pages
 
-- Productize the existing concise docs for rules, analysis, bot lab, and
-  project/about.
-- Link them from Home/footer in a way that does not crowd the main play path.
+- Productize the concise rules explanation inside the app.
+- Keep `Rules` basic: Gomoku, Freestyle, Renju, forbidden moves, and why Renju
+  legality is more than rough shape counting.
+- Reserve `Guide` for a future play lesson surface covering threes, fours,
+  combo threats, and forced corridors.
+- Keep About on GitHub/README; keep bot and analyzer explanations in the Lab
+  Report instead of duplicating them as shallow app pages.
+- Link it from Home/footer in a way that does not crowd the main play path.
 - Use concrete screenshots or small board diagrams where text alone would be
   unclear.
 - Keep model caveats honest: replay analysis is bounded explanation, not a full

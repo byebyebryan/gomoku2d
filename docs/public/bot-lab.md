@@ -32,7 +32,7 @@ matchups and shows how the replay analyzer explains decisive endings.
 
 See the live report:
 
-- [Lab report](https://gomoku2d.byebyebryan.com/lab-report/)
+- [Lab report](https://gomoku2d.byebyebryan.com/lab/)
 
 Technical details live in [`Search Bot`](../reference/lab/search_bot.md)
 and the [`gomoku-bot-lab` README](../../gomoku-bot-lab/README.md).
