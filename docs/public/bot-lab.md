@@ -27,8 +27,8 @@ opaque.
 ## Reports
 
 The published bot report compares tested bot configurations under one rule set,
-opening policy, and budget model. The analysis report samples games from the
-top matchup and shows how the replay analyzer explains decisive endings.
+opening policy, and budget model. The analysis tab samples the product preset
+matchups and shows how the replay analyzer explains decisive endings.
 
 See the live report:
 
