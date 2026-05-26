@@ -27,6 +27,9 @@ const AssetPreviewRoute = lazy(async () => ({
 const RulesRoute = lazy(async () => ({
   default: (await import("../routes/RulesRoute")).RulesRoute,
 }));
+const GuideRoute = lazy(async () => ({
+  default: (await import("../routes/GuideRoute")).GuideRoute,
+}));
 
 export function App() {
   return (
@@ -87,6 +90,14 @@ export function App() {
           element={
             <Suspense fallback={<main className={styles.loading}>Loading page…</main>}>
               <RulesRoute />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/guide/*"
+          element={
+            <Suspense fallback={<main className={styles.loading}>Loading page…</main>}>
+              <GuideRoute />
             </Suspense>
           }
         />

@@ -5,6 +5,8 @@ top of React, Phaser, and the Rust/WebAssembly core.
 
 **Play:** https://gomoku2d.byebyebryan.com/
 
+**Guide:** https://gomoku2d.byebyebryan.com/guide/
+
 **Visuals:** https://gomoku2d.byebyebryan.com/visuals/
 
 **Lab:** https://gomoku2d.byebyebryan.com/lab/

@@ -56,6 +56,17 @@ function createMockGameObject(): MockGameObject {
 }
 
 describe("BoardRenderer depths", () => {
+  it("uses the configured board size for bounds and cell hit testing", () => {
+    const renderer = new BoardRenderer({} as never, 10, 0, 0, 7);
+
+    expect(renderer.getBounds()).toMatchObject({
+      height: 70,
+      width: 70,
+    });
+    expect(renderer.pixelToCell(60, 60)).toEqual({ row: 6, col: 6 });
+    expect(renderer.pixelToCell(70, 60)).toBeNull();
+  });
+
   it("renders the pointer below stones but above the board surface", () => {
     const scene = {
       add: {
@@ -81,7 +92,7 @@ describe("BoardRenderer depths", () => {
     };
     const boardLayer = createMockContainer();
     const stoneLayer = createMockContainer();
-    const renderer = new BoardRenderer(scene as never, 32, 0, 0, boardLayer as never);
+    const renderer = new BoardRenderer(scene as never, 32, 0, 0, 15, boardLayer as never);
 
     const stone = renderer.placeStone(7, 7, 0, stoneLayer as never) as unknown as MockGameObject;
 
