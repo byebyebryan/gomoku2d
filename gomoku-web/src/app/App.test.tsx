@@ -52,6 +52,14 @@ vi.mock("../routes/RulesRoute", () => ({
   ),
 }));
 
+vi.mock("../routes/GuideRoute", () => ({
+  GuideRoute: () => (
+    <main>
+      <h1>Guide</h1>
+    </main>
+  ),
+}));
+
 describe("App", () => {
   afterEach(() => {
     cleanup();
@@ -95,6 +103,10 @@ describe("App", () => {
       "href",
       "/rules/",
     );
+    expect(screen.getByRole("link", { name: /^guide$/i })).toHaveAttribute(
+      "href",
+      "/guide/",
+    );
     expect(screen.queryByRole("link", { name: /^about$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /^analysis$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /^bots$/i })).not.toBeInTheDocument();
@@ -128,6 +140,16 @@ describe("App", () => {
     );
 
     expect(await screen.findByRole("heading", { name: /^rules$/i })).toBeInTheDocument();
+  });
+
+  it("routes the guide page through the app", async () => {
+    render(
+      <MemoryRouter initialEntries={["/guide/"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("heading", { name: /^guide$/i })).toBeInTheDocument();
   });
 
   it("routes to settings", async () => {

@@ -150,6 +150,7 @@ export function Board(props: BoardProps) {
 function boardSceneStateFromModel(model: BoardViewModel): BoardSceneState {
   const state: BoardSceneState = {
     analysisOverlays: [],
+    boardSize: model.boardSize,
     cells: model.position.cells,
     counterThreatEvidenceCells: [],
     counterThreatMoves: [],

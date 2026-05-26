@@ -170,11 +170,11 @@ Once the repo and product story are reconciled, prepare a public alpha:
 
 ### Slice 3: Product Explanation Pages
 
-- Productize the concise rules explanation inside the app.
+- Productize concise rules and guide explanations inside the app.
 - Keep `Rules` basic: Gomoku, Freestyle, Renju, forbidden moves, and why Renju
   legality is more than rough shape counting.
-- Reserve `Guide` for a future play lesson surface covering threes, fours,
-  combo threats, and forced corridors.
+- Use `Guide` for actual play lessons covering threes, fours, combo threats,
+  and forced corridors.
 - Keep About on GitHub/README; keep bot and analyzer explanations in the Lab
   Report instead of duplicating them as shallow app pages.
 - Link it from Home/footer in a way that does not crowd the main play path.

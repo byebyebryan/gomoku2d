@@ -4,6 +4,7 @@ import type {
   BoardAnalysisOverlay,
   BoardTouchControlMode,
 } from "./board_scene_logic";
+import { BOARD_SIZE } from "./constants";
 import type { CellPosition, CellStone, MatchMove, MatchStatus } from "../game/types";
 
 export type BoardEvidenceRole = "counterThreat" | "immediateThreat" | "imminentThreat" | "winning";
@@ -45,6 +46,7 @@ export type BoardInteraction =
   | { kind: "replay" };
 
 export interface BoardViewModel {
+  boardSize: number;
   forbiddenMoves: CellPosition[];
   interaction: BoardInteraction;
   overlays: BoardOverlay[];
@@ -79,6 +81,7 @@ export interface BuildReplayBoardModelInput {
 
 export function buildLocalMatchBoardModel(input: BuildLocalMatchBoardModelInput): BoardViewModel {
   return {
+    boardSize: BOARD_SIZE,
     forbiddenMoves: input.forbiddenMoves,
     interaction: input.interaction,
     overlays: [
@@ -98,6 +101,7 @@ export function buildLocalMatchBoardModel(input: BuildLocalMatchBoardModelInput)
 
 export function buildReplayBoardModel(input: BuildReplayBoardModelInput): BoardViewModel {
   return {
+    boardSize: BOARD_SIZE,
     forbiddenMoves: [],
     interaction: { kind: "replay" },
     overlays: [

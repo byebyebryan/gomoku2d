@@ -15,6 +15,7 @@ export interface BoardBounds {
 export class BoardRenderer {
   private scene: Phaser.Scene;
   private cellSize: number;
+  private boardSize: number;
   private originX: number;
   private originY: number;
   private parent: Phaser.GameObjects.Container | null;
@@ -24,10 +25,12 @@ export class BoardRenderer {
     cellSize: number,
     originX: number,
     originY: number,
+    boardSize = BOARD_SIZE,
     parent?: Phaser.GameObjects.Container,
   ) {
     this.scene = scene;
     this.cellSize = cellSize;
+    this.boardSize = boardSize;
     this.originX = originX;
     this.originY = originY;
     this.parent = parent ?? null;
@@ -55,7 +58,7 @@ export class BoardRenderer {
   pixelToCell(px: number, py: number): { row: number; col: number } | null {
     const col = Math.round((px - this.originX) / this.cellSize);
     const row = Math.round((py - this.originY) / this.cellSize);
-    if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE) return null;
+    if (row < 0 || row >= this.boardSize || col < 0 || col >= this.boardSize) return null;
     return { row, col };
   }
 
@@ -66,8 +69,8 @@ export class BoardRenderer {
   getBounds(): BoardBounds {
     const top = this.originY - this.cellSize / 2;
     const left = this.originX - this.cellSize / 2;
-    const width = BOARD_SIZE * this.cellSize;
-    const height = BOARD_SIZE * this.cellSize;
+    const width = this.boardSize * this.cellSize;
+    const height = this.boardSize * this.cellSize;
 
     return {
       left,
@@ -100,18 +103,18 @@ export class BoardRenderer {
     const lineThickness = Math.max(1, Math.round(this.cellSize / FRAME_SIZE));
     gfx.lineStyle(lineThickness, COLOR.GRID, 1);
 
-    for (let row = 0; row < BOARD_SIZE; row++) {
+    for (let row = 0; row < this.boardSize; row++) {
       const { x: x0, y } = this.cellToPixel(row, 0);
-      const { x: x1 } = this.cellToPixel(row, BOARD_SIZE - 1);
+      const { x: x1 } = this.cellToPixel(row, this.boardSize - 1);
       gfx.beginPath();
       gfx.moveTo(Math.round(x0), Math.round(y) + 0.5);
       gfx.lineTo(Math.round(x1), Math.round(y) + 0.5);
       gfx.strokePath();
     }
 
-    for (let col = 0; col < BOARD_SIZE; col++) {
+    for (let col = 0; col < this.boardSize; col++) {
       const { x, y: y0 } = this.cellToPixel(0, col);
-      const { y: y1 } = this.cellToPixel(BOARD_SIZE - 1, col);
+      const { y: y1 } = this.cellToPixel(this.boardSize - 1, col);
       gfx.beginPath();
       gfx.moveTo(Math.round(x) + 0.5, Math.round(y0));
       gfx.lineTo(Math.round(x) + 0.5, Math.round(y1));
@@ -151,8 +154,8 @@ export class BoardRenderer {
   createInteractiveZones(onCellClick: (row: number, col: number) => void): Phaser.GameObjects.Zone[] {
     const zones: Phaser.GameObjects.Zone[] = [];
 
-    for (let row = 0; row < BOARD_SIZE; row++) {
-      for (let col = 0; col < BOARD_SIZE; col++) {
+    for (let row = 0; row < this.boardSize; row++) {
+      for (let col = 0; col < this.boardSize; col++) {
         const { x, y } = this.cellToPixel(row, col);
         const zone = this.scene.add.zone(x, y, this.cellSize, this.cellSize);
         zone.setInteractive({ useHandCursor: true });

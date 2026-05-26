@@ -118,6 +118,7 @@ test("published visual design route renders manifest-driven assets", async ({ pa
 test("rules explanation route renders inside the app shell", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("link", { name: "Rules" })).toHaveAttribute("href", "/rules/");
+  await expect(page.getByRole("link", { name: "Guide" })).toHaveAttribute("href", "/guide/");
   await expect(page.getByRole("link", { name: "Visuals" })).toHaveAttribute("href", "/visuals/");
   await expect(page.getByRole("link", { name: "Lab" })).toHaveAttribute("href", "/lab/");
   await expect(page.getByRole("link", { name: "About" })).toHaveCount(0);
@@ -128,6 +129,17 @@ test("rules explanation route renders inside the app shell", async ({ page }) =>
   await expect(page).toHaveTitle(/Gomoku2D Rules/);
   await expect(page.getByRole("heading", { level: 1, name: "Rules" })).toBeVisible();
   await expect(page.getByText("Renju forbidden moves apply only to Black.")).toBeVisible();
+});
+
+test("guide route explains threat vocabulary inside the app shell", async ({ page }) => {
+  await page.goto("/guide/");
+  await expect(page).toHaveTitle(/Gomoku2D Guide/);
+  await expect(page.getByRole("heading", { level: 1, name: "Guide" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Immediate Threat" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Imminent Threat" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Lethal Threat" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Forced Corridor" })).toBeVisible();
+  await expect(page.getByText("Start from the end, then walk back.")).toBeVisible();
 });
 
 test("profile and replay analysis boot without requiring cloud configuration", async ({ page }) => {

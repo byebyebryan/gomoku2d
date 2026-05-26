@@ -306,9 +306,9 @@ heavy lab work, and package the project for first public release.
 - reconcile code, tests, docs, and generated artifacts after the `0.4` lab line
 - make the bot and replay-analysis reports feel like first-class product pages
   instead of developer artifacts
-- explain basic Gomoku/Renju rules from inside the app, and reserve the future
-  `Guide` surface for actual play lessons such as threes, fours, combo threats,
-  and forced corridors
+- explain basic Gomoku/Renju rules from inside the app, and add a `Guide`
+  surface for actual play lessons such as threes, fours, combo threats, and
+  forced corridors
 - refresh showcase/onboarding surfaces around the current product loop:
   play instantly, review the ending, see where the game turned, and branch from
   the replay

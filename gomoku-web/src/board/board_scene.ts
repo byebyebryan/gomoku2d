@@ -272,6 +272,7 @@ class SequenceAnimationCycle {
 
 export interface BoardSceneState {
   analysisOverlays: BoardAnalysisOverlay[];
+  boardSize: number;
   cells: CellStone[][];
   counterThreatEvidenceCells: CellPosition[];
   counterThreatMoves: CellPosition[];
@@ -299,6 +300,7 @@ export interface BoardSceneState {
 
 const DEFAULT_STATE: BoardSceneState = {
   analysisOverlays: [],
+  boardSize: BOARD_SIZE,
   cells: Array.from({ length: BOARD_SIZE }, () =>
     Array.from({ length: BOARD_SIZE }, () => null),
   ),
@@ -411,6 +413,7 @@ export class BoardScene extends Phaser.Scene {
   setBoardState(state: BoardSceneState): void {
     const previousState = this.boardState;
     this.boardState = state;
+    const boardSizeChanged = previousState.boardSize !== state.boardSize;
 
     if (shouldStopStoneIdleCycle(previousState.status, state.status)) {
       this.stoneCycle?.stop();
@@ -421,7 +424,9 @@ export class BoardScene extends Phaser.Scene {
       this.hidePointer();
     }
 
-    if (this.sys?.isActive()) {
+    if (this.sys?.isActive() && boardSizeChanged) {
+      this.renderBoard();
+    } else if (this.sys?.isActive()) {
       this.syncBoardState(previousState, true);
     }
   }
@@ -480,13 +485,14 @@ export class BoardScene extends Phaser.Scene {
 
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
-    const cellSize = Math.min(width / BOARD_SIZE, height / BOARD_SIZE);
-    const boardHeight = BOARD_SIZE * cellSize;
-    const originX = (width - (BOARD_SIZE - 1) * cellSize) / 2;
+    const boardSize = Math.max(1, this.boardState.boardSize);
+    const cellSize = Math.min(width / boardSize, height / boardSize);
+    const boardHeight = boardSize * cellSize;
+    const originX = (width - (boardSize - 1) * cellSize) / 2;
     const originY = (height - boardHeight) / 2 + cellSize / 2;
 
     this.currentCellSize = cellSize;
-    this.board = new BoardRenderer(this, cellSize, originX, originY, this.boardLayer);
+    this.board = new BoardRenderer(this, cellSize, originX, originY, boardSize, this.boardLayer);
     this.board.drawBoard();
     this.pointer = this.board.createPointer(this.pointerLayer);
     this.syncBoardState(undefined, false);
@@ -514,9 +520,9 @@ export class BoardScene extends Phaser.Scene {
     const renderVersion = this.renderVersion;
     const existingKeys = new Set(this.stoneSprites.keys());
 
-    for (let row = 0; row < BOARD_SIZE; row += 1) {
-      for (let col = 0; col < BOARD_SIZE; col += 1) {
-        const cell = this.boardState.cells[row][col];
+    for (let row = 0; row < this.boardState.boardSize; row += 1) {
+      for (let col = 0; col < this.boardState.boardSize; col += 1) {
+        const cell = this.boardState.cells[row]?.[col] ?? null;
         const key = this.cellKey(row, col);
 
         if (cell === null) {
@@ -783,6 +789,7 @@ export class BoardScene extends Phaser.Scene {
           pointer.x - (this.touchDragOrigin?.x ?? pointer.x),
           pointer.y - (this.touchDragOrigin?.y ?? pointer.y),
           this.currentCellSize,
+          this.boardState.boardSize,
         ),
       );
       return;
