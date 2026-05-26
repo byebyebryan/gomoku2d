@@ -13,6 +13,7 @@ const staticRoutes = [
   "lab-report",
   "match/local",
   "profile",
+  "rules",
   "settings",
 ];
 

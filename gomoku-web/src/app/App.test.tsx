@@ -44,6 +44,14 @@ vi.mock("../routes/AssetPreviewRoute", () => ({
   ),
 }));
 
+vi.mock("../routes/RulesRoute", () => ({
+  RulesRoute: () => (
+    <main>
+      <h1>Rules</h1>
+    </main>
+  ),
+}));
+
 describe("App", () => {
   afterEach(() => {
     cleanup();
@@ -83,6 +91,13 @@ describe("App", () => {
       "href",
       "/lab-report/",
     );
+    expect(screen.getByRole("link", { name: /^rules$/i })).toHaveAttribute(
+      "href",
+      "/rules/",
+    );
+    expect(screen.queryByRole("link", { name: /^about$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /^analysis$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /^bots$/i })).not.toBeInTheDocument();
   });
 
   it.each([
@@ -107,6 +122,16 @@ describe("App", () => {
     );
 
     expect(await screen.findByRole("heading", { name: /^visual guide$/i })).toBeInTheDocument();
+  });
+
+  it("routes the rules page through the app", async () => {
+    render(
+      <MemoryRouter initialEntries={["/rules/"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("heading", { name: /^rules$/i })).toBeInTheDocument();
   });
 
   it("routes to settings", async () => {

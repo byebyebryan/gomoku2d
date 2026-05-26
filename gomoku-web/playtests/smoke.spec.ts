@@ -117,6 +117,19 @@ test("published visual guide route renders manifest-driven assets", async ({ pag
   await expect(page.getByRole("img", { name: "Home" })).toBeVisible();
 });
 
+test("rules explanation route renders inside the app shell", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("link", { name: "Rules" })).toHaveAttribute("href", "/rules/");
+  await expect(page.getByRole("link", { name: "About" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Analysis" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Bots" })).toHaveCount(0);
+
+  await page.goto("/rules/");
+  await expect(page).toHaveTitle(/Gomoku2D Rules/);
+  await expect(page.getByRole("heading", { level: 1, name: "Rules" })).toBeVisible();
+  await expect(page.getByText("Renju forbidden moves apply only to Black.")).toBeVisible();
+});
+
 test("profile and replay analysis boot without requiring cloud configuration", async ({ page }) => {
   await page.goto("/profile");
   await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();

@@ -30,6 +30,8 @@ export function HomeRoute() {
           <p className={styles.version}>{APP_VERSION}</p>
           <nav className={styles.footerLinks} aria-label="Footer links">
             <span className={styles.footerLinkGroup}>
+              <Link to="/rules/">Rules</Link>
+              <span aria-hidden="true">/</span>
               <a href={`${baseUrl}assets/`}>Guide</a>
               <span aria-hidden="true">/</span>
               <a href={`${baseUrl}lab-report/`}>Lab</a>
