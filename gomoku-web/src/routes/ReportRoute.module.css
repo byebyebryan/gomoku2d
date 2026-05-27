@@ -47,6 +47,14 @@
   line-height: 0.92;
 }
 
+.subtitle {
+  max-width: 68ch;
+  margin: 10px 0 0;
+  color: var(--text-muted);
+  font-size: var(--type-body);
+  line-height: 1.22;
+}
+
 .links {
   display: flex;
   flex-wrap: wrap;
@@ -72,6 +80,14 @@
   letter-spacing: 0.08em;
   line-height: 1;
   text-transform: uppercase;
+}
+
+.reportNote {
+  max-width: 68ch;
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: var(--type-meta);
+  line-height: 1.18;
 }
 
 .warning {

@@ -154,7 +154,7 @@ export function RulesRoute() {
             </div>
             <div className={styles.freestyleBody}>
               <RuleDiagram
-                label="Freestyle five in a row diagram"
+                label="Freestyle win diagram: Black has five connected stones."
                 model={ruleModelFromCells(FREESTYLE_FIVE)}
               />
               <p>
@@ -182,7 +182,7 @@ export function RulesRoute() {
             />
             <article className={`${styles.renjuInsert} ${styles.legalThreatInsert}`}>
               <RuleDiagram
-                label="Renju legal four-three threat diagram"
+                label="Renju legal four plus three diagram: Black can make a legal lethal combo."
                 model={ruleModelFromCells(RENJU_LEGAL_FOUR_THREE)}
               />
               <div>
@@ -194,7 +194,7 @@ export function RulesRoute() {
             </article>
             <article className={`${styles.renjuInsert} ${styles.trapInsert}`}>
               <RuleDiagram
-                label="Renju forbidden block trap diagram"
+                label="Renju trap diagram: White threat requires a forbidden Black block."
                 model={ruleModelFromCells(RENJU_FORBIDDEN_BLOCK_TRAP)}
               />
               <div>
@@ -270,7 +270,7 @@ function RuleFramePanel({
       <div className={`${styles.frameGrid} ${styles.tripleFrameGrid}`} aria-label={label}>
         {frames.map((frame) => (
           <div key={frame.label} className={styles.frame}>
-            <RuleDiagram label={`${label} ${frame.label.toLowerCase()} frame`} model={frame.model} />
+            <RuleDiagram label={`${label}: ${frame.label} board diagram.`} model={frame.model} />
             <p className={styles.frameLabel}>{frame.label}</p>
           </div>
         ))}
@@ -299,7 +299,7 @@ function RuleSequenceExample({
       <div className={styles.frameGrid} aria-label={label}>
         {frames.map((frame) => (
           <div key={frame.label} className={styles.frame}>
-            <RuleDiagram label={`${label} ${frame.label.toLowerCase()} frame`} model={frame.model} />
+            <RuleDiagram label={`${label}: ${frame.label} board diagram.`} model={frame.model} />
             <p className={styles.frameLabel}>{frame.label}</p>
           </div>
         ))}

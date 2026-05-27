@@ -149,6 +149,10 @@ export function LabReportRoute() {
             <div className={styles.headerCopy}>
               <p className="uiPageEyebrow">Gomoku2D lab</p>
               <h1 className={styles.title}>Lab Report</h1>
+              <p className={styles.subtitle}>
+                Inner workings of a Gomoku bot: rankings, search telemetry, and replay
+                analysis.
+              </p>
             </div>
             <nav className={styles.links} aria-label="Report links">
               <a className="uiAction uiActionNeutral" href={baseUrl}>
@@ -179,13 +183,17 @@ function ReportTabs({
   onChange: (view: ReportView) => void;
 }) {
   return (
-    <div className={styles.viewToggle} aria-label="Lab report sections">
+    <div className={styles.viewToggle} aria-label="Lab report sections" role="tablist">
       {REPORT_VIEWS.map((option) => (
         <button
           key={option.id}
           type="button"
+          id={`lab-report-tab-${option.id}`}
+          aria-controls={`lab-report-panel-${option.id}`}
+          aria-selected={value === option.id}
           className={value === option.id ? styles.activeToggle : undefined}
           onClick={() => onChange(option.id)}
+          role="tab"
         >
           {option.label}
         </button>
@@ -213,9 +221,18 @@ function BotReportPanel({
   };
 
   return (
-    <section className={`${styles.panel} ${styles.entrantWorkbench}`} data-view={view}>
+    <section
+      aria-labelledby={`lab-report-tab-${view}`}
+      className={`${styles.panel} ${styles.entrantWorkbench}`}
+      data-view={view}
+      id={`lab-report-panel-${view}`}
+      role="tabpanel"
+    >
       <div className={styles.headerRow}>
-        <h2>Results</h2>
+        <div>
+          <h2>Results</h2>
+          <p className={styles.reportNote}>{botReportIntro(view)}</p>
+        </div>
       </div>
 
       <div className={styles.entrantGrid}>
@@ -709,7 +726,12 @@ function FinishedBoard({
   } as CSSProperties;
 
   return (
-    <div className={styles.proofBoard} style={style}>
+    <div
+      aria-label={`Finished board for game with ${moveCells.length} moves`}
+      className={styles.proofBoard}
+      role="img"
+      style={style}
+    >
       <div className={`${styles.proofCoordinate} ${styles.proofCorner}`} aria-hidden="true" />
       {columnLabels.map((label) => (
         <div className={`${styles.proofCoordinate} ${styles.proofCoordinateTop}`} key={`col-${label}`}>
@@ -758,7 +780,7 @@ function BotHowToReadSection({ view }: { view: BotReportView }) {
   const terms = view === "ranking" ? rankingTerms : searchTerms;
   return (
     <section className={`${styles.panel} ${styles.howToRead}`}>
-      <h2>How To Read This</h2>
+      <h2>Lab Notes</h2>
       <dl className={styles.termList}>
         {terms.map((term) => (
           <TermRow key={term.title} title={term.title} body={term.body} />
@@ -771,7 +793,7 @@ function BotHowToReadSection({ view }: { view: BotReportView }) {
 function AnalysisHowToReadSection() {
   return (
     <section className={`${styles.panel} ${styles.howToRead}`}>
-      <h2>How To Read This</h2>
+      <h2>Lab Notes</h2>
       <dl className={styles.termList}>
         {analysisTerms.map((term) => (
           <TermRow key={term.title} title={term.title} body={term.body} />
@@ -837,6 +859,13 @@ const analysisTerms = [
     body: "Open a game to read frames backward from the win. Boxes are candidate replies or threat evidence; letters are proof outcomes.",
   },
 ];
+
+function botReportIntro(view: BotReportView): string {
+  if (view === "search") {
+    return "Per-move search cost profile. Width and budget hits show how each config spends compute.";
+  }
+  return "Round-robin bot results. Score is the primary outcome; shuffled Elo is a report-local stability check.";
+}
 
 function TermRow({ title, body }: { title: string; body: string }) {
   return (

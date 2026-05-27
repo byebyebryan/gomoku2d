@@ -3036,6 +3036,10 @@ fn cpuinfo_value(input: &str) -> Option<String> {
         .filter(|value| !value.is_empty())
 }
 
+/// Legacy standalone diagnostic renderer.
+///
+/// Published reports are exported as compact JSON and rendered by the web app.
+/// Keep this path out of the public publishing flow.
 pub fn render_tournament_report_html(report: &TournamentReport) -> String {
     render_tournament_report_html_with_options(report, &ReportRenderOptions::default())
 }
@@ -3070,7 +3074,7 @@ pub fn render_tournament_report_html_with_options(
     html.push_str("<title>Gomoku2D Bot Lab Report</title>");
     html.push_str(STYLE);
     html.push_str("</head><body><main><header class=\"hero\">");
-    html.push_str("<nav class=\"top-links\"><a href=\"/\">Game</a><a href=\"/assets/\">Assets</a><a href=\"/lab-report/\">Lab</a></nav>");
+    html.push_str("<nav class=\"top-links\"><a href=\"/\">Game</a><a href=\"/visuals/\">Visuals</a><a href=\"/lab/\">Lab</a></nav>");
     html.push_str("<p class=\"eyebrow\">Gomoku2D Bot Lab</p><h1>Bot Lab Report</h1>");
     html.push_str("<div class=\"run-strip\" aria-label=\"Run summary\">");
     run_chip(&mut html, "Schedule", schedule_summary(report));
@@ -4764,9 +4768,9 @@ mod tests {
         );
 
         assert!(html.contains("<div class=\"run-strip\" aria-label=\"Run summary\">"));
-        assert!(html.contains("<nav class=\"top-links\"><a href=\"/\">Game</a><a href=\"/assets/\">Assets</a><a href=\"/lab-report/\">Lab</a></nav>"));
+        assert!(html.contains("<nav class=\"top-links\"><a href=\"/\">Game</a><a href=\"/visuals/\">Visuals</a><a href=\"/lab/\">Lab</a></nav>"));
         assert!(!html.contains("<section class=\"run-strip\" aria-label=\"Run summary\">"));
-        assert!(!html.contains("<nav class=\"top-links\"><a href=\"/\">Game</a><a href=\"/assets/\">Assets</a><a href=\"report.json\">Raw JSON</a></nav>"));
+        assert!(!html.contains("<nav class=\"top-links\"><a href=\"/\">Game</a><a href=\"/visuals/\">Visuals</a><a href=\"report.json\">Raw JSON</a></nav>"));
         assert!(html.contains("<dt>Raw JSON</dt><dd><a href=\"report.json\">report.json</a></dd>"));
         assert!(html.contains("<div class=\"run-chip\"><span>Schedule</span>"));
         assert!(!html.contains(".run-chip:hover"));

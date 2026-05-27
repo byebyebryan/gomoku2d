@@ -1,8 +1,7 @@
 # Gomoku2D Analysis Reports
 
-Curated replay-analysis data for the analysis tab of the published
-`/lab-report/` page. The JSON remains available under
-`/analysis-report/report.json` for compatibility.
+Curated replay-analysis data for the analysis tab of the published `/lab/`
+page. The JSON is published under `/analysis-report/report.json`.
 
 The published analysis report is the companion to the published bot report:
 sample the Easy/Normal/Hard preset triangle from `reports/report.json`, then

@@ -14,9 +14,9 @@ surface area can agents help cover without lowering the quality bar?
 
 **Play in browser:** https://gomoku2d.byebyebryan.com/
 
-**Visual guide:** https://gomoku2d.byebyebryan.com/assets/
+**Visuals:** https://gomoku2d.byebyebryan.com/visuals/
 
-**Lab report:** https://gomoku2d.byebyebryan.com/lab-report/
+**Lab report:** https://gomoku2d.byebyebryan.com/lab/
 
 ## What makes it different
 
@@ -36,7 +36,7 @@ surface area can agents help cover without lowering the quality bar?
   of the product loop while still preserving taste, scope control, and review
   discipline.
 - **Retro assets with a real workflow.** Sprites, icons, fonts, manifests, and
-  the Visual Guide keep the pixel-art style inspectable instead of treating it
+  the Visuals page keep the pixel-art style inspectable instead of treating it
   as decoration.
 
 ## What works today
@@ -116,5 +116,5 @@ Reference docs, working notes, runbooks, and archives are organized from
 
 Live companion pages:
 
-- [Visual guide](https://gomoku2d.byebyebryan.com/assets/)
-- [Lab report](https://gomoku2d.byebyebryan.com/lab-report/)
+- [Visuals](https://gomoku2d.byebyebryan.com/visuals/)
+- [Lab report](https://gomoku2d.byebyebryan.com/lab/)

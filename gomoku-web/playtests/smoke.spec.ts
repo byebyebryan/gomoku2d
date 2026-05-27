@@ -54,9 +54,9 @@ test("published static report routes render their current artifacts", async ({ p
   await page.goto("/lab/");
   await expect(page).toHaveTitle(/Lab Report/);
   await expect(page.getByRole("heading", { name: "Lab Report" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Ranking" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Search" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Analysis" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Ranking" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Search" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Analysis" })).toBeVisible();
   const resultsSection = page.locator("section", { hasText: "Results" });
   await resultsSection.locator("summary").first().click();
   await expect(resultsSection.locator("details details summary").first()).toBeVisible();
@@ -76,7 +76,7 @@ test("published static report routes render their current artifacts", async ({ p
     node.scrollTop = 0;
   });
 
-  await page.getByRole("button", { name: "Analysis" }).click();
+  await page.getByRole("tab", { name: "Analysis" }).click();
   await expect(page).toHaveURL(/\/lab\/\?tab=analysis$/);
   await expect(page.getByText("Easy").first()).toBeVisible();
   await expect(page.locator("[data-proof-board='analysis']")).toHaveCount(0);
@@ -95,23 +95,23 @@ test("published visual design route renders manifest-driven assets", async ({ pa
   expect(manifest.status()).toBe(200);
 
   await page.goto("/visuals/");
-  await expect(page).toHaveTitle(/Visual Design/);
-  await expect(page.getByRole("heading", { level: 1, name: "Visual Design" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Style" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Sprites" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Icons" })).toBeVisible();
+  await expect(page).toHaveTitle(/Visuals/);
+  await expect(page.getByRole("heading", { level: 1, name: "Visuals" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Style" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Sprites" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Icons" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Fonts" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Inventory" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Palette" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Primary" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Typography" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Sprites" }).click();
+  await page.getByRole("tab", { name: "Sprites" }).click();
   await expect(page.getByRole("heading", { name: "pointer-idle-blocked" })).toBeVisible();
   await page.getByRole("button", { name: "Pause" }).click();
   await expect(page.getByRole("button", { name: "Play" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Icons" }).click();
+  await page.getByRole("tab", { name: "Icons" }).click();
   await expect(page.getByRole("img", { name: "Home" })).toBeVisible();
 });
 
@@ -128,7 +128,7 @@ test("rules explanation route renders inside the app shell", async ({ page }) =>
   await page.goto("/rules/");
   await expect(page).toHaveTitle(/Gomoku2D Rules/);
   await expect(page.getByRole("heading", { level: 1, name: "Rules" })).toBeVisible();
-  await expect(page.getByRole("img", { name: "Renju forbidden move examples overline frame" })).toBeVisible();
+  await expect(page.getByRole("img", { name: "Renju forbidden move examples: Overline board diagram." })).toBeVisible();
   await expect(page.getByText("Double-three", { exact: true })).toBeVisible();
   await expect(page.getByText("To reduce first-move advantage")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Four + Three" })).toBeVisible();
