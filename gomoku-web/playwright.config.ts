@@ -7,7 +7,6 @@ export default defineConfig({
   timeout: 30_000,
   use: {
     baseURL,
-    channel: "chrome",
     headless: true,
     screenshot: "only-on-failure",
     trace: "retain-on-failure",
