@@ -32,7 +32,12 @@ import {
 } from "./board_scene_logic";
 
 import type { CellPosition, CellStone, MatchMove, MatchStatus } from "../game/types";
-import type { BoardAnalysisOverlay, BoardTouchControlMode, PointerCue } from "./board_scene_logic";
+import type {
+  BoardAnalysisOverlay,
+  BoardFocusStoneOverlay,
+  BoardTouchControlMode,
+  PointerCue,
+} from "./board_scene_logic";
 
 type SpriteFrameRef = {
   frame: number;
@@ -278,6 +283,7 @@ export interface BoardSceneState {
   counterThreatMoves: CellPosition[];
   currentPlayer: 1 | 2;
   forbiddenMoves: CellPosition[];
+  focusStones: BoardFocusStoneOverlay[];
   immediateThreatEvidenceCells: CellPosition[];
   imminentThreatEvidenceCells: CellPosition[];
   imminentThreatMoves: CellPosition[];
@@ -308,6 +314,7 @@ const DEFAULT_STATE: BoardSceneState = {
   counterThreatMoves: [],
   currentPlayer: 1,
   forbiddenMoves: [],
+  focusStones: [],
   immediateThreatEvidenceCells: [],
   imminentThreatEvidenceCells: [],
   interactive: false,
@@ -703,7 +710,9 @@ export class BoardScene extends Phaser.Scene {
     sprite.setDepth(depth);
     sprite.setTint(tint);
     sprite.play({ key: animKey, repeat: -1 });
-    const layer = texture === SPRITE.HOVER ? this.hoverLayer : this.overlayLayer;
+    const layer = texture === SPRITE.HOVER || texture === SPRITE.STONE
+      ? this.hoverLayer
+      : this.overlayLayer;
     layer?.add(sprite);
     return sprite;
   }

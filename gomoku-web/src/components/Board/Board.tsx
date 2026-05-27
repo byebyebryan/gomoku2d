@@ -156,6 +156,7 @@ function boardSceneStateFromModel(model: BoardViewModel): BoardSceneState {
     counterThreatMoves: [],
     currentPlayer: model.position.currentPlayer,
     forbiddenMoves: model.forbiddenMoves,
+    focusStones: [],
     immediateThreatEvidenceCells: [],
     imminentThreatEvidenceCells: [],
     imminentThreatMoves: [],
@@ -205,6 +206,13 @@ function boardSceneStateFromModel(model: BoardViewModel): BoardSceneState {
         } else {
           state.counterThreatEvidenceCells.push(overlay.cell);
         }
+        break;
+      case "focusStone":
+        state.focusStones.push({
+          col: overlay.cell.col,
+          row: overlay.cell.row,
+          side: overlay.side,
+        });
         break;
       case "hint":
         if (overlay.role === "winning") {
