@@ -196,19 +196,19 @@ export function GuideRoute() {
             </div>
             <div className={styles.tileGrid}>
               <GuideTile
-                label="Immediate threat diagram"
+                label="Immediate threat diagram: Black has four stones and one winning target."
                 model={guideModelFromCells(IMMEDIATE_THREAT)}
                 title="Immediate threat"
                 tone="danger"
               />
               <GuideTile
-                label="Imminent threat diagram"
+                label="Imminent threat diagram: Black has an open three with two replies."
                 model={guideModelFromCells(IMMINENT_THREAT)}
                 title="Imminent threat"
                 tone="imminent"
               />
               <GuideTile
-                label="Counter threat diagram"
+                label="Counter threat diagram: White answers an open three by making a four."
                 model={guideModelFromCells(COUNTER_THREAT)}
                 title="Counter threat"
                 tone="counter"
@@ -227,19 +227,19 @@ export function GuideRoute() {
             </div>
             <div className={styles.tileGrid}>
               <GuideTile
-                label="Four plus four combo diagram"
+                label="Four plus four combo diagram: White has two immediate winning targets."
                 model={guideModelFromCells(WHITE_FOUR_FOUR)}
                 title="4+4 combo"
                 tone="danger"
               />
               <GuideTile
-                label="Three plus three combo diagram"
+                label="Three plus three combo diagram: White has multiple ways to make a lethal four."
                 model={guideModelFromCells(THREE_THREE)}
                 title="3+3 combo"
                 tone="danger"
               />
               <GuideTile
-                label="Four plus three combo diagram"
+                label="Four plus three combo diagram: Black's legal Renju combo."
                 model={guideModelFromCells(RENJU_FOUR_THREE)}
                 title="4+3 combo"
                 tone="danger"
@@ -345,7 +345,8 @@ export function GuideRoute() {
               <h2>Figure out what went wrong.</h2>
               <p>
                 The analyzer walks backward from the ending move to find what went
-                wrong for the losing side.
+                wrong for the losing side. The same vocabulary appears in the Lab
+                analysis report.
               </p>
             </div>
             <div className={styles.stepGrid}>
@@ -392,7 +393,7 @@ function GuideFramePanel({
         {frames.map((frame) => (
           <div key={frame.label} className={styles.frame}>
             <GuideDiagram
-              label={`${label} ${frame.label.toLowerCase()} frame`}
+              label={`${label}: ${frame.label} board diagram.`}
               model={frame.model}
             />
             <p className={styles.frameLabel}>{frame.label}</p>

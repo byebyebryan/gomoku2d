@@ -39,7 +39,7 @@ vi.mock("../routes/BotReportRoute", () => ({
 vi.mock("../routes/AssetPreviewRoute", () => ({
   AssetPreviewRoute: () => (
     <main>
-      <h1>Visual Design</h1>
+      <h1>Visuals</h1>
     </main>
   ),
 }));
@@ -122,14 +122,14 @@ describe("App", () => {
     expect(await screen.findByRole("heading", { name: /^lab report$/i })).toBeInTheDocument();
   });
 
-  it("routes the visual design reference through the app", async () => {
+  it("routes the visuals reference through the app", async () => {
     render(
       <MemoryRouter initialEntries={["/visuals/"]}>
         <App />
       </MemoryRouter>,
     );
 
-    expect(await screen.findByRole("heading", { name: /^visual design$/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /^visuals$/i })).toBeInTheDocument();
   });
 
   it("routes the rules page through the app", async () => {

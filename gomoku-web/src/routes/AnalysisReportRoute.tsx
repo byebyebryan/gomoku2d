@@ -17,9 +17,20 @@ const ANALYSIS_BOARD_LABEL_SIZE = 16;
 
 export function AnalysisReportContent({ report }: { report: PublishedAnalysisReport }) {
   return (
-    <section className={`${styles.panel} ${styles.entrantWorkbench} ${styles.analysisWorkbench}`} data-view="analysis">
+    <section
+      aria-labelledby="lab-report-tab-analysis"
+      className={`${styles.panel} ${styles.entrantWorkbench} ${styles.analysisWorkbench}`}
+      data-view="analysis"
+      id="lab-report-panel-analysis"
+      role="tabpanel"
+    >
       <div className={styles.headerRow}>
-        <h2>Results</h2>
+        <div>
+          <h2>Results</h2>
+          <p className={styles.reportNote}>
+            Replay analyzer sample. Corridor search walks backward from the win to lethal onset, setup corridor, and last escape.
+          </p>
+        </div>
       </div>
       <div className={styles.entrantGrid}>
         {report.sections.map((section) => (
@@ -348,7 +359,13 @@ function ProofBoard({
   } as CSSProperties;
 
   return (
-    <div className={styles.proofBoard} style={style} data-proof-board="analysis">
+    <div
+      aria-label={`Analysis board before ply ${frame.ply}: ${frame.side_to_move} to move, ${proofStatusLabel(frame.status)}`}
+      className={styles.proofBoard}
+      data-proof-board="analysis"
+      role="img"
+      style={style}
+    >
       <div className={`${styles.proofCoordinate} ${styles.proofCorner}`} aria-hidden="true" />
       {columnLabels.map((label) => (
         <div className={`${styles.proofCoordinate} ${styles.proofCoordinateTop}`} key={`col-${label}`}>

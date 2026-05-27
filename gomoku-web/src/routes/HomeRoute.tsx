@@ -34,9 +34,9 @@ export function HomeRoute() {
               <span aria-hidden="true">/</span>
               <Link to="/guide/">Guide</Link>
               <span aria-hidden="true">/</span>
-              <a href={`${baseUrl}visuals/`}>Visuals</a>
-              <span aria-hidden="true">/</span>
               <a href={`${baseUrl}lab/`}>Lab</a>
+              <span aria-hidden="true">/</span>
+              <a href={`${baseUrl}visuals/`}>Visuals</a>
             </span>
             <span className={styles.footerLinkGroup}>
               <a href={`${baseUrl}privacy/`}>Privacy</a>

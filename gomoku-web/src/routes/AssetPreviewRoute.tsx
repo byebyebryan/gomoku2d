@@ -38,7 +38,7 @@ export function AssetPreviewRoute() {
   const [tab, setTab] = useState<AssetTab>("guide");
 
   useEffect(() => {
-    document.title = "Gomoku2D Visual Design";
+    document.title = "Gomoku2D Visuals";
   }, []);
 
   useEffect(() => {
@@ -80,12 +80,12 @@ export function AssetPreviewRoute() {
           <div className={styles.headerRow}>
             <div>
               <p className="uiPageEyebrow">Gomoku2D source</p>
-              <h1 className={styles.title}>Visual Design</h1>
+              <h1 className={styles.title}>Visuals</h1>
               {state.status === "loaded" ? (
                 <p className={styles.summary}>{state.manifest.summary}</p>
               ) : null}
             </div>
-            <nav className={styles.links} aria-label="Visual design links">
+            <nav className={styles.links} aria-label="Visuals links">
               <a className="uiAction uiActionNeutral" href={baseUrl}>
                 <span className="uiActionLabel">Home</span>
               </a>
@@ -94,13 +94,17 @@ export function AssetPreviewRoute() {
               </a>
             </nav>
           </div>
-          <div className={styles.tabs} aria-label="Visual design sections">
+          <div className={styles.tabs} aria-label="Visuals sections" role="tablist">
             {ASSET_TABS.map((option) => (
               <button
                 key={option.id}
                 type="button"
+                id={`visuals-tab-${option.id}`}
+                aria-controls={`visuals-panel-${option.id}`}
+                aria-selected={tab === option.id}
                 className={tab === option.id ? styles.activeTab : undefined}
                 onClick={() => setTab(option.id)}
+                role="tab"
               >
                 {option.label}
               </button>
@@ -122,16 +126,22 @@ function AssetTabContent({
   manifest: AssetManifest;
   icons: IconManifest;
 }) {
+  let panel: ReactNode;
   if (tab === "guide") {
-    return <GuidePanel manifest={manifest} />;
+    panel = <GuidePanel manifest={manifest} />;
+  } else if (tab === "sprites") {
+    panel = <SpritesPanel manifest={manifest} />;
+  } else if (tab === "icons") {
+    panel = <IconsPanel manifest={manifest} icons={icons} />;
+  } else {
+    panel = <SpritesPanel manifest={manifest} />;
   }
-  if (tab === "sprites") {
-    return <SpritesPanel manifest={manifest} />;
-  }
-  if (tab === "icons") {
-    return <IconsPanel manifest={manifest} icons={icons} />;
-  }
-  return <SpritesPanel manifest={manifest} />;
+
+  return (
+    <div aria-labelledby={`visuals-tab-${tab}`} id={`visuals-panel-${tab}`} role="tabpanel">
+      {panel}
+    </div>
+  );
 }
 
 function GuidePanel({ manifest }: { manifest: AssetManifest }) {
@@ -454,7 +464,7 @@ function IconsPanel({
 function StatePanel({ message }: { message: string }) {
   return (
     <section className={styles.state}>
-      <h2>Visual Design</h2>
+      <h2>Visuals</h2>
       <p className={styles.note}>{message}</p>
     </section>
   );

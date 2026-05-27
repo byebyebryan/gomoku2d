@@ -124,18 +124,115 @@ export async function loadPublishedBotReport(): Promise<PublishedBotReport> {
 }
 
 function isPublishedBotReport(data: unknown): data is PublishedBotReport {
-  if (!data || typeof data !== "object") {
+  if (!isObject(data)) {
     return false;
   }
   const report = data as Partial<PublishedBotReport>;
-  return (
+  if (
+    report.schema_version === 2 &&
     report.report_kind === "published_tournament" &&
+    typeof report.source_schema_version === "number" &&
+    isPositiveInteger(report.board_size) &&
     report.move_codec === "cell_index_v1" &&
+    isTournamentRunReport(report.run) &&
     Array.isArray(report.standings) &&
+    report.standings.every(isStandingReport) &&
     Array.isArray(report.pairwise) &&
-    Array.isArray(report.matches) &&
-    !!report.run
+    report.pairwise.every(isPairwiseReport) &&
+    Array.isArray(report.end_reasons) &&
+    report.end_reasons.every(isCountReport) &&
+    Array.isArray(report.matches)
+  ) {
+    const boardSize = report.board_size;
+    return report.matches.every((match) => isPublishedMatchReport(match, boardSize));
+  }
+  return false;
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+function isNumberArray(value: unknown): value is number[] {
+  return Array.isArray(value) && value.every((item) => Number.isInteger(item) && item >= 0);
+}
+
+function isPositiveInteger(value: unknown): value is number {
+  return Number.isInteger(value) && (value as number) > 0;
+}
+
+function hasNumberFields(value: Record<string, unknown>, fields: string[]): boolean {
+  return fields.every((field) => typeof value[field] === "number");
+}
+
+function isTournamentRunReport(value: unknown): value is TournamentRunReport {
+  if (!isObject(value) || !isStringArray(value.bots) || !isObject(value.rules)) {
+    return false;
+  }
+  return (
+    isPositiveInteger(value.rules.board_size) &&
+    typeof value.rules.variant === "string" &&
+    typeof value.schedule === "string" &&
+    typeof value.opening_policy === "string" &&
+    hasNumberFields(value, ["games_per_pair", "seed", "opening_plies", "threads"])
   );
+}
+
+function isStandingReport(value: unknown): value is StandingReport {
+  if (!isObject(value) || typeof value.bot !== "string") {
+    return false;
+  }
+  return hasNumberFields(value, [
+    "wins",
+    "draws",
+    "losses",
+    "sequential_elo",
+    "shuffled_elo_avg",
+    "shuffled_elo_stddev",
+    "match_count",
+    "move_count",
+    "search_move_count",
+    "total_time_ms",
+    "avg_search_time_ms",
+    "total_nodes",
+    "avg_nodes",
+    "avg_depth",
+    "max_depth",
+    "budget_exhausted_rate",
+  ]);
+}
+
+function isPairwiseReport(value: unknown): value is PairwiseReport {
+  return (
+    isObject(value) &&
+    typeof value.bot_a === "string" &&
+    typeof value.bot_b === "string" &&
+    hasNumberFields(value, ["wins_a", "wins_b", "draws", "total", "score_a", "score_b"])
+  );
+}
+
+function isCountReport(value: unknown): value is CountReport {
+  return isObject(value) && typeof value.key === "string" && typeof value.count === "number";
+}
+
+function isPublishedMatchReport(value: unknown, boardSize: number): value is PublishedMatchReport {
+  if (
+    !isObject(value) ||
+    typeof value.black !== "string" ||
+    typeof value.white !== "string" ||
+    typeof value.result !== "string" ||
+    typeof value.end_reason !== "string" ||
+    !hasNumberFields(value, ["match_index", "move_count"]) ||
+    !isNumberArray(value.move_cells)
+  ) {
+    return false;
+  }
+  const maxCell = boardSize * boardSize;
+  return value.move_cells.every((cell) => cell < maxCell);
 }
 
 export function displayBotSpec(spec: string): string {

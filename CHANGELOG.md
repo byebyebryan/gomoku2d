@@ -24,12 +24,12 @@ the project’s strongest lab outputs easier to ship, inspect, and explain.
 ### Web
 
 - Replaced generated bot-report and replay-analysis HTML with a unified React
-  `/lab-report/` viewer backed by compact published JSON data.
-- Kept legacy `/bot-report/` and `/analysis-report/` routes compatible while
-  making `/lab-report/` the canonical public report surface.
-- Rebuilt the asset preview as a React Visual Guide with sprites, icons, color,
+  `/lab/` viewer backed by compact published JSON data.
+- Kept compact `/bot-report/report.json` and `/analysis-report/report.json`
+  data artifacts while making `/lab/` the canonical public report surface.
+- Rebuilt the asset preview as a React Visuals page with sprites, icons, color,
   typography, and UI examples in the same product shell.
-- Aligned report, Visual Guide, privacy, and terms pages more closely with the
+- Aligned report, Visuals, privacy, and terms pages more closely with the
   game UI so static/supporting pages no longer feel detached from the product.
 
 ### Bot lab and reports
@@ -43,10 +43,10 @@ the project’s strongest lab outputs easier to ship, inspect, and explain.
 
 ### Docs and repo
 
-- Updated public-facing README links and status copy around the Visual Guide and
+- Updated public-facing README links and status copy around the Visuals page and
   canonical lab report.
 - Cleaned up stale asset-preview naming in docs and build scripts after the
-  Visual Guide replacement.
+  Visuals replacement.
 - Tightened release-copy details without rerunning the curated tournament data.
 
 ## [0.5.0] - 2026-05-22

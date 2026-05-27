@@ -462,6 +462,10 @@ fn error_entry(path: String, error: String, elapsed_ms: u64) -> AnalysisBatchEnt
     }
 }
 
+/// Legacy standalone diagnostic renderer.
+///
+/// Published analysis reports are exported as compact JSON and rendered by the
+/// web app. Keep this path out of the public publishing flow.
 pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String {
     let entries = report
         .entries
@@ -1050,8 +1054,8 @@ pub fn render_analysis_batch_report_html(report: &AnalysisBatchReport) -> String
   <header class="hero">
     <nav class="top-links" aria-label="Project links">
       <a href="/">Game</a>
-      <a href="/assets/">Assets</a>
-      <a href="/lab-report/">Lab</a>
+      <a href="/visuals/">Visuals</a>
+      <a href="/lab/">Lab</a>
     </nav>
     <p class="eyebrow">Gomoku2D Bot Lab</p>
     <h1>Replay Analysis</h1>
