@@ -149,17 +149,22 @@ function GuidePanel({ manifest }: { manifest: AssetManifest }) {
     <>
       <section className={`${styles.panel} ${styles.guideIntro}`}>
         <div>
-          <h2>Visual Language</h2>
+          <h2>Style Guide</h2>
           <p className={styles.note}>
-            A small reference for how Gomoku2D should look and feel: dark cabinet shell,
+            A compact reference for Gomoku2D's visual language: dark cabinet shell,
             tactile controls, semantic colors, and board-space cues that stay below the
-            action.
+            stones.
           </p>
+        </div>
+        <div className={styles.visualStats} aria-label="Visual source summary">
+          <VisualStat label="palette groups" value={manifest.guide.palette.length} />
+          <VisualStat label="sprite loops" value={manifest.sprites.animations.length} />
+          <VisualStat label="z-order cases" value={manifest.sprites.z_cases.length} />
         </div>
       </section>
 
       <section className={styles.panel}>
-        <h2>Palette</h2>
+        <SectionHeader title="Palette" />
         <div className={styles.paletteGrid}>
           {manifest.guide.palette.map((group) => (
             <article key={group.title} className={styles.guideCard}>
@@ -187,11 +192,10 @@ function GuidePanel({ manifest }: { manifest: AssetManifest }) {
       </section>
 
       <section className={styles.panel}>
-        <h2>Buttons</h2>
-        <p className={styles.note}>
-          Buttons are chunky, high-contrast, and role-coded. These examples use the live
-          app button classes rather than a separate showcase style.
-        </p>
+        <SectionHeader
+          title="Buttons"
+          note="Chunky, high-contrast, and role-coded. These examples use the live app button classes."
+        />
         <div className={styles.buttonGrid}>
           <button className="uiAction uiActionPrimary" type="button">Primary</button>
           <button className="uiAction uiActionSecondary" type="button">Secondary</button>
@@ -205,11 +209,10 @@ function GuidePanel({ manifest }: { manifest: AssetManifest }) {
       </section>
 
       <section className={styles.panel}>
-        <h2>Typography</h2>
-        <p className={styles.note}>
-          PixelOperator is an external runtime font family. The guide shows how the app uses
-          it; sprites and icons remain the project-authored source assets.
-        </p>
+        <SectionHeader
+          title="Typography"
+          note="PixelOperator is the runtime font. This section only shows how the app uses it."
+        />
         <div className={styles.fontRoleGrid}>
           {manifest.guide.font_roles.map((font) => (
             <article key={font.file} className={styles.guideCard}>
@@ -223,7 +226,7 @@ function GuidePanel({ manifest }: { manifest: AssetManifest }) {
       </section>
 
       <section className={styles.panel}>
-        <h2>Principles</h2>
+        <SectionHeader title="Principles" />
         <div className={styles.principleGrid}>
           {manifest.guide.principles.map((principle) => (
             <article key={principle.title} className={styles.guideCard}>
@@ -245,13 +248,10 @@ function SpritesPanel({ manifest }: { manifest: AssetManifest }) {
   return (
     <>
       <section className={styles.panel}>
-        <div>
-          <h2>Sprites</h2>
-          <p className={styles.note}>
-            Board-space spritesheets, static poses, animation loops, and z-order cases. Frame
-            ranges follow the runtime board constants.
-          </p>
-        </div>
+        <SectionHeader
+          title="Sprites"
+          note="Board-space source sheets, static poses, animation loops, and z-order cases used by the live board."
+        />
         <div className={styles.controls}>
           <button className={styles.controlButton} type="button" onClick={() => setPaused((value) => !value)}>
             {paused ? "Play" : "Pause"}
@@ -274,7 +274,7 @@ function SpritesPanel({ manifest }: { manifest: AssetManifest }) {
       </section>
 
       <section className={styles.panel}>
-        <h2>Source Sheets</h2>
+        <SectionHeader title="Source Sheets" />
         <div className={styles.sheetGrid}>
           {manifest.sprites.sheets.map((sheet) => (
             <article key={sheet.file} className={styles.sheetCard}>
@@ -296,7 +296,7 @@ function SpritesPanel({ manifest }: { manifest: AssetManifest }) {
       </section>
 
       <section className={styles.panel}>
-        <h2>Static Poses</h2>
+        <SectionHeader title="Static Poses" />
         <div className={styles.assetGrid} style={{ "--preview-scale": scale } as CSSProperties}>
           {manifest.sprites.static_poses.map((pose) => (
             <SpriteCard key={pose.name} frameSize={manifest.sprites.frame_size} item={pose} />
@@ -305,7 +305,7 @@ function SpritesPanel({ manifest }: { manifest: AssetManifest }) {
       </section>
 
       <section className={styles.panel}>
-        <h2>Animation Loops</h2>
+        <SectionHeader title="Animation Loops" />
         <div className={styles.assetGrid} style={{ "--preview-scale": scale } as CSSProperties}>
           {manifest.sprites.animations.map((animation) => (
             <SpriteCard
@@ -319,7 +319,10 @@ function SpritesPanel({ manifest }: { manifest: AssetManifest }) {
       </section>
 
       <section className={styles.panel}>
-        <h2>Z-Order Cases</h2>
+        <SectionHeader
+          title="Z-Order Cases"
+          note="Surface features sit above the board and grid, but below stones, pointer, hover, and sequence text."
+        />
         <div className={styles.zCaseGrid}>
           {manifest.sprites.z_cases.map((zCase) => (
             <article key={zCase.name} className={styles.zCaseCard}>
@@ -430,13 +433,10 @@ function IconsPanel({
   return (
     <>
       <section className={styles.panel}>
-        <div>
-          <h2>Icons</h2>
-          <p className={styles.note}>
-            Source sheet plus exported SVG pack. The grid uses external SVG files for visual
-            inspection and filters them to white for a consistent guide view.
-          </p>
-        </div>
+        <SectionHeader
+          title="Icons"
+          note="Source sheet plus exported SVG pack. Icons are shown in white here for consistent inspection."
+        />
         <img
           alt="Current icon sheet"
           className={styles.iconSheet}
@@ -444,7 +444,7 @@ function IconsPanel({
         />
       </section>
       <section className={styles.panel}>
-        <h2>Exported SVGs</h2>
+        <SectionHeader title="Exported SVGs" />
         <div className={styles.iconGrid}>
           {icons.icons.map((icon) => (
             <article key={icon.name} className={styles.iconCard}>
@@ -458,6 +458,24 @@ function IconsPanel({
         </div>
       </section>
     </>
+  );
+}
+
+function SectionHeader({ note, title }: { note?: string; title: string }) {
+  return (
+    <div className={styles.sectionHeader}>
+      <h2>{title}</h2>
+      {note ? <p className={styles.note}>{note}</p> : null}
+    </div>
+  );
+}
+
+function VisualStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className={styles.visualStat}>
+      <span>{value}</span>
+      <span>{label}</span>
+    </div>
   );
 }
 

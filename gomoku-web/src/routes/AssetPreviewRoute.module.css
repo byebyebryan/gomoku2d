@@ -114,6 +114,11 @@
   font-size: var(--type-body);
 }
 
+.sectionHeader {
+  display: grid;
+  gap: 8px;
+}
+
 .note {
   margin: 0;
   max-width: 74ch;
@@ -159,7 +164,7 @@
   display: grid;
   gap: 10px;
   border: 1px solid var(--border);
-  background: var(--bg);
+  background: var(--surface-muted);
   padding: 14px;
 }
 
@@ -177,9 +182,38 @@
 }
 
 .guideIntro {
+  align-items: end;
+  grid-template-columns: minmax(0, 1fr) auto;
   background:
     linear-gradient(135deg, rgba(252, 203, 87, 0.08), transparent 46%),
     var(--surface);
+}
+
+.visualStats {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(92px, 1fr));
+}
+
+.visualStat {
+  display: grid;
+  gap: 2px;
+  border: 1px solid color-mix(in srgb, var(--accent) 58%, var(--border));
+  background: color-mix(in srgb, var(--accent) 9%, var(--surface-muted));
+  padding: 10px;
+}
+
+.visualStat span:first-child {
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--type-value);
+  line-height: 1;
+}
+
+.visualStat span:last-child {
+  color: var(--text-muted);
+  font-size: var(--type-quiet);
+  line-height: 1;
 }
 
 .swatchList {
@@ -376,7 +410,7 @@
   justify-items: center;
   gap: 8px;
   border: 1px solid var(--border);
-  background: var(--bg);
+  background: var(--surface-muted);
   padding: 12px;
 }
 
@@ -434,6 +468,14 @@
 
   .headerRow {
     display: grid;
+  }
+
+  .guideIntro {
+    grid-template-columns: 1fr;
+  }
+
+  .visualStats {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   }
 
   .links,
