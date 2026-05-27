@@ -28,7 +28,8 @@ export type BoardAnalysisMarkerRole =
   | "forbidden"
   | "forcedLoss"
   | "immediateLoss"
-  | "mistake";
+  | "mistake"
+  | "question";
 
 export type BoardAnalysisOverlay = {
   col: number;
@@ -212,6 +213,8 @@ export function analysisMarkerAnimationForRole(role: BoardAnalysisMarkerRole): s
     case "immediateLoss":
     case "mistake":
       return MARKER_ANIMS.WARNING.key;
+    case "question":
+      return MARKER_ANIMS.QUESTION.key;
   }
 }
 
@@ -228,6 +231,8 @@ export function analysisMarkerTintForRole(role: BoardAnalysisMarkerRole): number
     case "immediateLoss":
     case "mistake":
       return COLOR.THREAT;
+    case "question":
+      return COLOR.SUBTEXT;
   }
 }
 
