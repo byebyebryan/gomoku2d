@@ -405,7 +405,7 @@ describe("ReplayRoute analysis overlays", () => {
     renderReplayRoute();
 
     expect(screen.getByText("Status")).toBeInTheDocument();
-    expect(screen.getByTestId("replay-analysis-status")).toHaveTextContent("Analyzing replay");
+    expect(screen.getByTestId("replay-analysis-status")).toHaveTextContent("Tracing the finish");
 
     act(() => {
       runnerMock.callbacks?.onProgress?.({
@@ -447,7 +447,7 @@ describe("ReplayRoute analysis overlays", () => {
       });
     });
 
-    expect(screen.getByTestId("replay-analysis-status")).toHaveTextContent("Analyzing replay");
+    expect(screen.getByTestId("replay-analysis-status")).toHaveTextContent("Tracing the finish");
     expect(screen.getByTestId("replay-analysis-detail")).toHaveTextContent("Move 5 · 321 nodes");
     expect(screen.getByTestId("replay-timeline-analyzed")).toBeInTheDocument();
     expect(screen.queryByTestId("replay-timeline-setup-corridor")).not.toBeInTheDocument();

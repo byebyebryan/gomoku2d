@@ -348,8 +348,8 @@ export function replayAnalysisStatusSummary(
   const totalMoves = match.move_count;
   if (!step) {
     return {
-      detail: "Waiting for analyzer",
-      label: "Analyzing replay",
+      detail: "Finding the last escape",
+      label: "Tracing the finish",
     };
   }
 
@@ -358,7 +358,7 @@ export function replayAnalysisStatusSummary(
       detail: step.current_ply === null
         ? nodeDetail(step)
         : `Move ${step.current_ply} · ${nodeDetail(step)}`,
-      label: "Analyzing replay",
+      label: "Tracing the finish",
     };
   }
 

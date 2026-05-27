@@ -155,7 +155,7 @@ Keep the action set short:
 - `New Game`
 - `Profile`
 - `Home`
-- `Replay` only after match end
+- `Analyze` only after match end
 
 Rules:
 
@@ -192,7 +192,7 @@ Use a stronger result block than the normal in-play HUD:
 Preferred actions:
 
 - `Rematch` or `New Game`
-- `Replay`
+- `Analyze`
 - `Home`
 
 Arcade shortcut:
@@ -200,9 +200,11 @@ Arcade shortcut:
 - clicking the finished board can still advance to the next round quickly
 - shell buttons remain visible for discoverability and navigation
 
-### Replay (`/replay/:matchId`)
+### Replay Analysis (`/replay/:matchId`)
 
-Replay is the dedicated chronology surface, but it should still stay sparse.
+Replay Analysis is the dedicated chronology and post-game analysis surface, but
+it should still stay sparse. It is entered from the end-game `Analyze` action
+or from Profile history via `Inspect`.
 
 Primary structure:
 

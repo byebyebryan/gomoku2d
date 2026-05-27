@@ -92,7 +92,9 @@ across routes.
 
 ## Replay Analysis
 
-Replay analysis is intentionally progressive:
+Replay Analysis is intentionally progressive. The product enters it from
+end-game `Analyze` or Profile `Inspect`, then streams analysis while preserving
+normal replay navigation:
 
 ```text
 SavedMatchV2

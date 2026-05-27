@@ -445,12 +445,12 @@ export function LocalMatchRoute() {
               ) : null}
               {state.status !== "playing" && latestReplayId ? (
                 <Link
-                  aria-label="Replay"
+                  aria-label="Analyze"
                   className="uiAction uiActionSecondary"
                   to={`/replay/${latestReplayId}`}
                 >
                   <Icon className="uiIconDesktop" name="replay" />
-                  <span className="uiActionLabel">Replay</span>
+                  <span className="uiActionLabel">Analyze</span>
                 </Link>
               ) : null}
               <button
