@@ -107,7 +107,7 @@ jobs:
 
       - name: Install Playwright browser
         working-directory: gomoku-web
-        run: npx playwright install --with-deps chrome
+        run: npx playwright install --with-deps chromium
 
       - name: Playwright smoke
         working-directory: gomoku-web
