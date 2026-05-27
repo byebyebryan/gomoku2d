@@ -577,7 +577,7 @@ describe("ProfileRoute cloud state", () => {
 
     expect(screen.getByText("Win")).toBeInTheDocument();
     expect(screen.getByText("Moves 5")).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "Replay" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "Inspect" })).toHaveLength(1);
   });
 
   it("reveals replay history in batches", () => {
@@ -590,9 +590,9 @@ describe("ProfileRoute cloud state", () => {
 
     renderProfileRoute();
 
-    expect(screen.getAllByRole("button", { name: "Replay" })).toHaveLength(16);
+    expect(screen.getAllByRole("button", { name: "Inspect" })).toHaveLength(16);
     fireEvent.click(screen.getByRole("button", { name: "Show more" }));
-    expect(screen.getAllByRole("button", { name: "Replay" })).toHaveLength(20);
+    expect(screen.getAllByRole("button", { name: "Inspect" })).toHaveLength(20);
     expect(screen.queryByRole("button", { name: "Show more" })).not.toBeInTheDocument();
   });
 

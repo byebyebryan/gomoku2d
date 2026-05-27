@@ -44,8 +44,8 @@ surface area can agents help cover without lowering the quality bar?
 - Start a practice match immediately, no account required.
 - Play Freestyle or Renju against configurable Easy / Normal / Hard bots, with
   Renju forbidden-move feedback and mobile-friendly placement controls.
-- Review local replays, scrub the timeline, and branch from a replay position
-  into a fresh practice game.
+- Analyze finished games, scrub the Replay Analysis timeline, and branch from a
+  replay position into a fresh practice game.
 - Let the browser analyzer mark the setup corridor and latest escape in
   finished decisive replays.
 - Keep guest-local history by default, or sign in with Google for private
@@ -101,7 +101,7 @@ Start with the public docs:
 
 - [`About`](docs/public/about.md) — project story and current product shape
 - [`Rules and Renju`](docs/public/rules.md) — Freestyle, Renju, and forbidden moves
-- [`Replay Analysis`](docs/public/analysis.md) — how to read setup corridors, lethal onset, and last escape
+- [`Replay Analysis`](docs/public/analysis.md) — how Analyze / Inspect reveals setup corridors, lethal onset, and last escape
 - [`Bot Lab`](docs/public/bot-lab.md) — presets, advanced controls, and published reports
 
 Reference docs, working notes, runbooks, and archives are organized from

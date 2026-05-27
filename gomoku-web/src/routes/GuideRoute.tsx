@@ -344,9 +344,9 @@ export function GuideRoute() {
               <p className="uiSectionLabel">Replay analysis</p>
               <h2>Figure out what went wrong.</h2>
               <p>
-                The analyzer walks backward from the ending move to find what went
-                wrong for the losing side. The same vocabulary appears in the Lab
-                analysis report.
+                After a match ends, Analyze opens Replay Analysis. It still lets
+                you scrub the game, but the analyzer also walks backward from the
+                ending move to find what went wrong for the losing side.
               </p>
             </div>
             <div className={styles.stepGrid}>

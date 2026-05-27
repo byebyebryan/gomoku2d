@@ -223,7 +223,7 @@ describe("replayAnalysisStatusSummary", () => {
       status: "black_won",
     })).toEqual({
       detail: "Move 8 · 144 nodes",
-      label: "Analyzing replay",
+      label: "Tracing the finish",
     });
   });
 

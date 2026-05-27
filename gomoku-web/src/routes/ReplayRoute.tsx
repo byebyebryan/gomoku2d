@@ -41,6 +41,10 @@ export function ReplayRoute() {
   const coreWinningCells = useReplayWinningCells(match, moveIndex);
 
   useEffect(() => {
+    document.title = "Gomoku2D Replay Analysis";
+  }, []);
+
+  useEffect(() => {
     setMoveIndex(defaultReplayMoveIndex(match?.move_count ?? 0));
     setAutoplaying(false);
   }, [match?.move_count, matchId]);
@@ -131,7 +135,7 @@ export function ReplayRoute() {
       <header className={styles.header}>
         <div className={styles.headerCopy}>
           <p className="uiPageEyebrow">Saved match</p>
-          <h1 className={styles.title}>Replay</h1>
+          <h1 className={styles.title}>Replay Analysis</h1>
         </div>
         <div className={styles.headerActions}>
           <Link aria-label="Profile" className="uiAction uiActionSecondary" to="/profile">

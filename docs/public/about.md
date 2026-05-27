@@ -16,7 +16,7 @@ scope control, review discipline, design taste, and maintainable code.
 - Play immediately without an account.
 - Choose Freestyle or Renju.
 - Play against configurable Easy, Normal, and Hard bots.
-- Review finished games with replay analysis.
+- Analyze finished games to see where the loss became unavoidable.
 - Branch from a replay position into a new game.
 - Keep local history, or sign in for private cloud-backed history.
 

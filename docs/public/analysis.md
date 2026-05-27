@@ -1,6 +1,9 @@
 # Replay Analysis
 
-Replay analysis answers a focused question:
+Replay Analysis is what opens after a finished match when you choose
+**Analyze**, or later from Profile when you choose **Inspect**.
+
+It answers a focused question:
 
 > Where did this finished game become unavoidable?
 
@@ -19,10 +22,11 @@ near the end of a decisive game, then marks the important moments.
 
 ## How To Read It
 
-In a replay, analysis walks backward from the winning move. It highlights
-threats, legal replies, forbidden Renju replies, and escape candidates. The
-timeline separates normal play, the setup corridor, lethal onset, and the final
-win.
+The page still lets you scrub through the match, but it is more than playback.
+While the status says **Tracing the finish**, the analyzer walks backward from
+the winning move. It highlights threats, legal replies, forbidden Renju replies,
+and escape candidates. The timeline separates normal play, the setup corridor,
+lethal onset, and the final win.
 
 The goal is educational: help a player see why the end collapsed and where a
 different response mattered.

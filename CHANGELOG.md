@@ -12,6 +12,19 @@ their own section.
 
 ## [Unreleased]
 
+### Web
+
+- Renamed the finished-game action to `Analyze`, Profile history replay action
+  to `Inspect`, and the replay route title to `Replay Analysis` so the
+  analyzer is discoverable as more than passive playback.
+- Updated replay-analysis status copy to use `Tracing the finish` /
+  `Finding the last escape`.
+
+### Docs
+
+- Synced public and app-reference docs with the new Analyze / Inspect / Replay
+  Analysis language.
+
 ## [0.5.1] - 2026-05-25
 
 **Theme: turn static lab artifacts into first-class public surfaces.**

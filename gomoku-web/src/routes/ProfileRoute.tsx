@@ -716,7 +716,7 @@ export function ProfileRoute() {
                         </p>
                       </div>
                       <button
-                        aria-label="Replay"
+                        aria-label="Inspect"
                         className={`uiAction uiActionSecondary ${styles.historyReplayAction}`}
                         onClick={() => {
                           navigate(`/replay/${match.id}`);
@@ -724,7 +724,7 @@ export function ProfileRoute() {
                         type="button"
                       >
                         <Icon className="uiIconDesktop" name="replay" />
-                        <span className="uiActionLabel">Replay</span>
+                        <span className="uiActionLabel">Inspect</span>
                       </button>
                     </li>
                   );
