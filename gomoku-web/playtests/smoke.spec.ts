@@ -128,7 +128,14 @@ test("rules explanation route renders inside the app shell", async ({ page }) =>
   await page.goto("/rules/");
   await expect(page).toHaveTitle(/Gomoku2D Rules/);
   await expect(page.getByRole("heading", { level: 1, name: "Rules" })).toBeVisible();
-  await expect(page.getByText("Renju forbidden moves apply only to Black.")).toBeVisible();
+  await expect(page.getByRole("img", { name: "Renju forbidden move examples overline frame" })).toBeVisible();
+  await expect(page.getByText("Double-three", { exact: true })).toBeVisible();
+  await expect(page.getByText("To reduce first-move advantage")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Four + Three" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Trap" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Real double-four and double-three." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Blocked branch" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Forbidden continuation" })).toBeVisible();
 });
 
 test("guide route explains threat vocabulary inside the app shell", async ({ page }) => {
