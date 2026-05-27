@@ -38,6 +38,11 @@ export type BoardAnalysisOverlay = {
   row: number;
   side?: "black" | "white";
 };
+export type BoardFocusStoneOverlay = {
+  col: number;
+  row: number;
+  side: "black" | "white";
+};
 
 export type SpriteFrameTarget = {
   frame: number;
@@ -59,6 +64,7 @@ export type BoardOverlayState = {
   counterThreatEvidenceCells: CellPosition[];
   counterThreatMoves: CellPosition[];
   forbiddenMoves: CellPosition[];
+  focusStones: BoardFocusStoneOverlay[];
   immediateThreatEvidenceCells: CellPosition[];
   imminentThreatEvidenceCells: CellPosition[];
   imminentThreatMoves: CellPosition[];
@@ -110,6 +116,23 @@ function analysisOverlaysEqual(a: BoardAnalysisOverlay[], b: BoardAnalysisOverla
       overlay.col === other.col &&
       overlay.highlight === other.highlight &&
       overlay.marker === other.marker &&
+      overlay.side === other.side
+    );
+  });
+}
+
+function focusStoneOverlaysEqual(a: BoardFocusStoneOverlay[], b: BoardFocusStoneOverlay[]): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  return a.every((overlay, index) => {
+    const other = b[index];
+
+    return (
+      other !== undefined &&
+      overlay.row === other.row &&
+      overlay.col === other.col &&
       overlay.side === other.side
     );
   });
@@ -290,6 +313,7 @@ export function shouldSyncOverlaySprites(
     !cellsEqual(previous.cells, next.cells) ||
     !cellPositionsEqual(previous.counterThreatEvidenceCells, next.counterThreatEvidenceCells) ||
     !cellPositionsEqual(previous.counterThreatMoves, next.counterThreatMoves) ||
+    !focusStoneOverlaysEqual(previous.focusStones, next.focusStones) ||
     !movesEqual(previous.moves, next.moves) ||
     !nullableCellPositionEqual(previous.nextReplayMove, next.nextReplayMove) ||
     !cellPositionsEqual(previous.forbiddenMoves, next.forbiddenMoves) ||

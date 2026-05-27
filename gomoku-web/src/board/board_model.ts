@@ -28,6 +28,7 @@ export type BoardOverlay =
       side?: BoardAnalysisOverlay["side"];
     }
   | { cell: CellPosition; kind: "evidence"; role: BoardEvidenceRole }
+  | { cell: CellPosition; kind: "focusStone"; side: "black" | "white" }
   | { cell: CellPosition; kind: "hint"; role: BoardHintRole }
   | { cell: CellPosition; kind: "nextReplayMove" }
   | { cell: CellPosition; kind: "winningLine" };

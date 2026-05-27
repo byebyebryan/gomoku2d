@@ -142,11 +142,17 @@ test("guide route explains threat vocabulary inside the app shell", async ({ pag
   await page.goto("/guide/");
   await expect(page).toHaveTitle(/Gomoku2D Guide/);
   await expect(page.getByRole("heading", { level: 1, name: "Guide" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Immediate Threat" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Imminent Threat" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Lethal Threat" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Forced Corridor" })).toBeVisible();
-  await expect(page.getByText("Start from the end, then walk back.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Respond to threats." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Immediate threat" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Imminent threat" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Counter threat" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Make a combo." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "4+4 combo" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "4+3 combo" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Force a combo." })).toBeVisible();
+  await expect(page.getByText("3. 4+3 combo")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Figure out what went wrong." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Combo onset" })).toBeVisible();
 });
 
 test("profile and replay analysis boot without requiring cloud configuration", async ({ page }) => {

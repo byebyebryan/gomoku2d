@@ -52,6 +52,7 @@ const overlayState = (overrides: Partial<Parameters<typeof shouldSyncOverlaySpri
   counterThreatEvidenceCells: [{ row: 12, col: 11 }],
   counterThreatMoves: [{ row: 12, col: 12 }],
   forbiddenMoves: [{ row: 8, col: 8 }],
+  focusStones: [],
   immediateThreatEvidenceCells: [{ row: 9, col: 8 }],
   imminentThreatEvidenceCells: [{ row: 11, col: 10 }],
   imminentThreatMoves: [{ row: 11, col: 11 }],
@@ -249,6 +250,13 @@ describe("shouldSyncOverlaySprites", () => {
     expect(shouldSyncOverlaySprites(
       overlayState(),
       overlayState({ analysisOverlays: [{ row: 6, col: 7, marker: "forcedLoss" }] }),
+    )).toBe(true);
+  });
+
+  it("syncs overlays when focused stone highlights change", () => {
+    expect(shouldSyncOverlaySprites(
+      overlayState(),
+      overlayState({ focusStones: [{ row: 6, col: 7, side: "black" }] }),
     )).toBe(true);
   });
 

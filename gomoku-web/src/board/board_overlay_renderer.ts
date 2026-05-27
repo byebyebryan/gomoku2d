@@ -7,6 +7,7 @@ import {
   HIGHLIGHTER_ANIMS,
   HOVER_ANIMS,
   SPRITE,
+  STONE_ANIMS,
 } from "./constants";
 import { SEQUENCE_FONT_FAMILY } from "./sequence_font";
 import {
@@ -178,6 +179,20 @@ export function renderBoardOverlays(context: BoardOverlayRenderContext): BoardOv
         HOVER_ANIMS.HOVER.key,
         BOARD_RENDER_DEPTHS.OVERLAY_HOVER,
         SPRITE.HOVER,
+      ),
+    );
+  }
+
+  for (const focus of context.state.focusStones) {
+    const point = context.board.cellToPixel(focus.row, focus.col);
+    analysisSprites.push(
+      context.createOverlaySprite(
+        point.x,
+        point.y,
+        focus.side === "black" ? COLOR.STONE_BLACK : COLOR.STONE_WHITE,
+        STONE_ANIMS.IDLE_1.key,
+        BOARD_RENDER_DEPTHS.OVERLAY_HOVER,
+        SPRITE.STONE,
       ),
     );
   }
