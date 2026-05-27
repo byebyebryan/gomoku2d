@@ -12,18 +12,37 @@ their own section.
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-05-27
+
+**Theme: make Gomoku2D explain itself from inside the app.**
+
+`0.5.2` continues the public-readiness line by adding concise in-product rules
+and strategy surfaces, then tightening the supporting Lab, Visuals, and Replay
+Analysis copy. The release does not change bot strength or analyzer semantics;
+it makes existing capabilities more discoverable and easier to understand.
+
 ### Web
 
-- Renamed the finished-game action to `Analyze`, Profile history replay action
-  to `Inspect`, and the replay route title to `Replay Analysis` so the
-  analyzer is discoverable as more than passive playback.
-- Updated replay-analysis status copy to use `Tracing the finish` /
-  `Finding the last escape`.
+- Added an in-app Rules page covering Freestyle, Renju restrictions, and why
+  real double-three / double-four checks matter.
+- Added an in-app Guide page with board-rendered examples for immediate
+  threats, imminent threats, counter threats, combos, forced sequences, and
+  replay analysis.
+- Reused the live board renderer for Guide examples so public explanations
+  match the game board.
+- Renamed public support routes to `/lab/` and `/visuals/`, keeping the nav
+  focused on Rules, Guide, Lab, and Visuals.
+- Polished the Lab and Visuals pages so static/supporting surfaces match the
+  current product shell.
+- Renamed finished-game and history entry points around Replay Analysis:
+  `Analyze`, `Inspect`, and `Replay Analysis`.
 
-### Docs
+### Docs and repo
 
-- Synced public and app-reference docs with the new Analyze / Inspect / Replay
-  Analysis language.
+- Synced README, public docs, and app-reference docs with the Rules / Guide /
+  Replay Analysis / Lab / Visuals product shape.
+- Kept generated report data unchanged; no bot tournament or replay-analysis
+  report regeneration was required.
 
 ## [0.5.1] - 2026-05-25
 
@@ -1067,7 +1086,8 @@ together in one canvas-driven surface. That lesson drove the `v0.2.1` rewrite.
   concerns blurred together.
 - Expressive UI language, but not scalable beyond one canvas.
 
-[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.2...HEAD
+[0.5.2]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.8...v0.5.0
 [0.4.8]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.7...v0.4.8
