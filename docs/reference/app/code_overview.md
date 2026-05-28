@@ -155,7 +155,7 @@ surfaces separate.
 | Change replay analysis UI | `ReplayRoute.tsx`, `replay_analysis_overlays.ts` | `replay_analysis_protocol.ts`, wasm analyzer tests, Playwright replay smoke |
 | Change persisted settings | `profile_settings.ts`, `local_profile_store.ts` | cloud profile schema, Firestore rules tests, Settings UI |
 | Change saved match schema | `src/match/saved_match.ts` | replay conversion, profile history, cloud history, Playwright replay tests |
-| Change board visuals | `src/board/*`, `assets/sprites/*` | `public/assets/sprites/*`, visual design reference, screenshot review |
+| Change board visuals | `src/board/*`, `assets/sprites/*` | visual design reference, screenshot review |
 | Change static report publishing | `scripts/publish_*` | release runbook and Playwright report smoke |
 
 ## Verification
