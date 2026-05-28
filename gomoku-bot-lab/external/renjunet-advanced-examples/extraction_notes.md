@@ -5,7 +5,7 @@ Source: https://www.renju.net/advanced/
 This is a review aid for extracting fixture candidates. The raw corrected
 per-image board dump is in [`extracted_boards.md`](extracted_boards.md); the
 split fixture candidates are promoted in
-[`../../../../docs/renju_corpus.md`](../../../../docs/renju_corpus.md). Coordinate
+[`../../../docs/reference/corpora/renju_corpus.md`](../../../docs/reference/corpora/renju_corpus.md). Coordinate
 overlays were temporary extraction artifacts and are not tracked.
 
 Important caveat: the page uses hollow circles and small marks in ways that are

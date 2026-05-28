@@ -527,7 +527,14 @@ Expected after a successful Profile sign-in smoke test: at least one
 
 ## Smoke-Test State
 
-Current cloud UI / data smoke state:
+Current `0.5.x` cloud UI / data state:
+
+- Local profile storage uses `gomoku2d.local-profile.v5`.
+- Firestore profile documents are validated with `schema_version == 5`.
+- Settings, private match history, archived stats, and reset barriers are stored
+  inside the owner-scoped `profiles/{uid}` document.
+
+Historical cloud smoke state:
 
 - Localhost Google sign-in has been manually confirmed.
 - Production sign-in from `https://gomoku2d.byebyebryan.com/profile` has been
@@ -544,7 +551,7 @@ Current cloud UI / data smoke state:
   `profiles/DbsocAJ0vHVd9LYjk2oaeQx2qec2`: Chrome `localStorage`
   `gomoku2d.guest-profile.v2` had 24 local matches, and Firestore imported the
   matching private history under the then-current per-match document model.
-- `v0.3.3` local history now uses `gomoku2d.local-profile.v3`, mirroring the
+- `v0.3.3` local history used `gomoku2d.local-profile.v3`, mirroring the
   cloud replay/summary/archive retention tiers before sync.
 - The old alpha Firestore v2 profile documents were deleted before the v3
   rules/schema deployment prep. Current live `profiles` state is intentionally

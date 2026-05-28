@@ -1,7 +1,7 @@
 # v0.5 Public Release Reconciliation Plan
 
-Purpose: capture the post-`0.4` alignment pass before implementation starts.
-This is an ad-hoc working plan. The canonical phase summary lives in
+Purpose: track the evolving `0.5.x` reconciliation line after the `0.4`
+lab-heavy phase. This is an ad-hoc working plan. The canonical phase summary lives in
 [`Roadmap`](../reference/product/roadmap.md).
 
 ## Context
@@ -91,7 +91,7 @@ reviewable after the intense `0.4` lab line.
 The bot report and replay analysis report are highlights of the project, not
 throwaway developer artifacts. They show the lab working.
 
-Current state worth cleaning up:
+Historical state that motivated the rewrite:
 
 - Historical `gomoku-bot-lab/reports/latest.json` artifacts were about `31 MB`.
 - Historical generated report HTML artifacts were about `4 MB` each.
@@ -112,15 +112,13 @@ repo easier to review.
 
 ### Add Product Explanation Pages
 
-The app now has features that deserve short explanations. Add static/product
-pages in the same spirit as privacy/terms, but player-facing:
+The app now has features that deserve short explanations. Keep the split clear:
+in-app pages should stay concise and player-facing, while repo docs can carry
+release copy and deeper reference material.
 
-- `About`: old favorite, built properly; product plus production experiment.
-- `Rules`: Gomoku, Freestyle, Renju, forbidden moves, and why Renju is tricky.
-- `Analysis`: last escape, lethal onset, missed response, setup corridor, and
-  bounded-model caveats.
-- `Bot Lab`: Easy/Normal/Hard, configurable bot settings, and what reports
-  measure.
+- In app: `Rules`, `Guide`, `Visuals`, and `Lab`.
+- In repo/public docs: `About`, replay-analysis copy, bot-lab copy, and release
+  notes.
 - Optional `Devlog` or `Lab Notes`: a bridge for public writing if we decide to
   publish the build process.
 
@@ -141,7 +139,7 @@ Once the repo and product story are reconciled, prepare a public alpha:
 
 ## Suggested Slices
 
-### Slice 1: Repo And Doc Reconciliation (`0.5.0`)
+### Slice 1: Repo And Doc Reconciliation (`0.5.0`, done)
 
 - Sync `docs/reference/lab/search_bot.md`, `docs/working/performance_tuning.md`, and roadmap notes
   with the latest pooled-budget reports.
@@ -157,7 +155,7 @@ Once the repo and product story are reconciled, prepare a public alpha:
 - Make sure release docs describe how report data is generated, committed,
   verified, and published.
 
-### Slice 2: Report Viewer Architecture (`0.5.1`)
+### Slice 2: Report Viewer Architecture (`0.5.1`, done)
 
 - Decide which report data remains checked in.
 - Move report presentation out of Rust-generated monolithic HTML and into web
@@ -168,7 +166,7 @@ Once the repo and product story are reconciled, prepare a public alpha:
 - Make report pages visually consistent with the game shell and visual-design
   pages.
 
-### Slice 3: Product Explanation Pages
+### Slice 3: Product Explanation Pages (`0.5.2`, done)
 
 - Productize concise rules and guide explanations inside the app.
 - Keep `Rules` basic: Gomoku, Freestyle, Renju, forbidden moves, and why Renju
@@ -183,7 +181,29 @@ Once the repo and product story are reconciled, prepare a public alpha:
 - Keep model caveats honest: replay analysis is bounded explanation, not a full
   solver.
 
-### Slice 4: Public Release Packaging
+### Slice 4: Repo Housekeeping (`0.5.3`)
+
+Before public packaging, do one more housekeeping pass now that the report
+viewer, static pages, and replay-analysis presentation have all moved.
+
+- Audit tracked artifacts, generated data, and report payloads after the
+  viewer-plus-data rewrite.
+- Remove or archive stale working notes that no longer describe the current
+  implementation.
+- Review web/lab API boundaries for names that still reflect pre-`0.5`
+  experiments rather than current product concepts.
+- Re-run targeted cleanup on tests, especially brittle snapshot-like or
+  bug-specific tests that no longer protect a durable contract.
+- Check CI/deploy workflow simplicity after the browser-smoke split, and keep
+  heavyweight Playwright work manual until it is reliable in Actions.
+- Refresh dependency and package-script organization where the `0.5` static
+  page/report work left temporary wiring.
+
+This slice should not add new player-facing scope. The goal is to make the repo
+easier to review, easier to explain, and less dependent on stale lab-era
+scaffolding before asking strangers to look at it.
+
+### Slice 5: Public Release Packaging (`0.5.4` or final `0.5.x`)
 
 - Refresh hero capture and screenshot review.
 - Update README and release copy around the current product loop.

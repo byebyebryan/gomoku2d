@@ -322,6 +322,9 @@ heavy lab work, and package the project for first public release.
 
 - continue slimming/report-viewer follow-up work now that bot/analysis reports
   are web-rendered from compact `report.json`
+- run a dedicated `0.5.3` housekeeping pass before public packaging: artifact
+  audit, stale-doc cleanup, test cleanup, CI/deploy simplification, and API/name
+  cleanup left behind by the report/static-page rewrite
 - keep the in-app `Rules` page focused on basic game mechanics; keep About on
   GitHub/README and let the Lab Report explain bot and analyzer behavior
 - polish Home, Replay, report pages, and README copy around the lab-under-the-
