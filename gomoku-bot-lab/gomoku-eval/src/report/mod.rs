@@ -140,7 +140,7 @@ pub struct ReferencePairSearchReport {
 }
 
 impl ReportProvenance {
-    fn capture() -> Self {
+    pub(crate) fn capture() -> Self {
         Self {
             generated_at_utc: Some(detect_generated_at_utc()),
             generated_at_local: Some(detect_generated_at_local()),
