@@ -82,27 +82,41 @@ When needed before tagging:
 
 ## Checks
 
-Run the same checks the release candidate should pass:
+Run the same CI-equivalent checks the release candidate should pass from the
+repo root:
 
 ```sh
-cd gomoku-bot-lab
-cargo fmt --all --check
-cargo clippy --workspace --all-targets -- -D warnings
-cargo test --workspace
+(cd gomoku-bot-lab && cargo fmt --all --check)
+(cd gomoku-bot-lab && cargo clippy --workspace --all-targets -- -D warnings)
+(cd gomoku-bot-lab && cargo test --workspace)
 
-cd ..
 /home/bryan/.cargo/bin/wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler
 
-cd gomoku-web
-npm test
-npm run test:rules
-npm audit --omit=dev
-GOMOKU_BASE_PATH=/ npm run build
-PLAYWRIGHT_BASE_URL=http://127.0.0.1:8001 npm run playtest:smoke
+(cd gomoku-web && npm run typecheck)
+(cd gomoku-web && npm test)
+(cd gomoku-web && npm run test:rules)
+(cd gomoku-web && npm audit --omit=dev)
+(cd gomoku-web && GOMOKU_BASE_PATH=/ npm run build)
 ```
 
 The Vite chunk-size warning for Phaser is expected and is not currently
 release-blocking.
+
+## Manual Browser Smoke
+
+Playwright smoke is intentionally local/manual for now. CI and Pages deploy do
+not install browsers because browser provisioning has been unreliable in GitHub
+Actions and should not block normal deploys.
+
+Restart the local preview first using the command in
+[`Local Preview`](#local-preview), then run:
+
+```sh
+(cd gomoku-web && PLAYWRIGHT_BASE_URL=http://127.0.0.1:8001 npm run playtest:smoke)
+```
+
+When `PLAYWRIGHT_BASE_URL` is set, Playwright uses the already-running preview
+server. A stale preview means the smoke is testing the wrong build.
 
 ## Bot And Analysis Report Refresh
 
@@ -130,7 +144,8 @@ refresh it only from a clean committed toolchain:
 3. Run the curated tournament into ignored full output plus
    `gomoku-bot-lab/reports/report.json`.
 4. Confirm `reports/report.json` says `"git_dirty": false`.
-5. Generate the preset-triangle analysis report from the full output into
+5. Generate the preset-triangle analysis report from the compact published bot
+   report into
    `gomoku-bot-lab/analysis-reports/report.json`.
 6. Commit the report artifacts as a follow-up commit.
 

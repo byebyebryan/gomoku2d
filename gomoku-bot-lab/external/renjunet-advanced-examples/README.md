@@ -10,7 +10,7 @@ This lives under `gomoku-bot-lab/external/` rather than top-level `docs/`
 because it behaves like a small extraction/reference project: source data,
 machine-readable fixture data, generated reference results, and a checker
 wrapper. The promoted human-readable corpus is
-[`../../../../docs/renju_corpus.md`](../../../../docs/renju_corpus.md).
+[`../../../docs/reference/corpora/renju_corpus.md`](../../../docs/reference/corpora/renju_corpus.md).
 
 ## Files
 
@@ -55,7 +55,7 @@ the local forbidden proof. The goal is to keep each board usable as a legal
 Black-to-move fixture while preserving the local shape under review.
 
 Synthetic fixtures are called out in
-[`../../../../docs/renju_corpus.md`](../../../../docs/renju_corpus.md). They
+[`../../../docs/reference/corpora/renju_corpus.md`](../../../docs/reference/corpora/renju_corpus.md). They
 represent tutorial proof frames such as "after placing H11" or "after removing
 G8" when the source image explains a continuation rather than a standalone
 board.

@@ -26,6 +26,8 @@ Dependency shape: `core` has zero deps; `bot` / `analysis` / `eval` / `cli` /
 ## Build and test
 
 ```sh
+cargo fmt --all --check
+cargo clippy --workspace --all-targets -- -D warnings
 cargo build --release --workspace
 cargo test  --workspace
 ```

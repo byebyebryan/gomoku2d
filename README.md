@@ -29,8 +29,8 @@ surface area can agents help cover without lowering the quality bar?
   WebAssembly. The split keeps the UI light without trapping core game logic in
   the frontend.
 - **A lab under the board.** The Rust workspace is where rules, bots,
-  benchmarks, replay formats, and future analysis/puzzle features can be built
-  natively before they reach the browser.
+  benchmarks, replay formats, replay analysis, and future puzzle/lesson
+  features can be built natively before they reach the browser.
 - **AI as production leverage.** The experiment is not whether agents can
   generate code quickly. It is whether one person can use agents to cover more
   of the product loop while still preserving taste, scope control, and review
@@ -88,9 +88,9 @@ lives in [`docs/README.md`](docs/README.md).
 The public app is on the `0.5.x` alpha line: local-first play, optional Google
 sign-in for private cloud history, configurable bots, tactical hints, replay
 analysis, first-class lab reports, and a cleaner visual-guide/report surface.
-Current repo work is preparing the rest of `v0.5`: in-product explanations,
-release packaging, and stranger-facing presentation. Longer-term sequencing
-lives in
+Current repo work is preparing `v0.5.3`: a housekeeping pass across docs,
+generated artifacts, tests, CI/deploy runbooks, and lab/web API naming before
+the public-packaging slice. Longer-term sequencing lives in
 [`docs/reference/product/roadmap.md`](docs/reference/product/roadmap.md).
 
 ---

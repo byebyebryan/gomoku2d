@@ -166,9 +166,10 @@ can initialize Firebase.
 ```sh
 npm run build              # production build + static report/asset routes
 npm run preview            # serve the production build locally
+npm run typecheck          # TypeScript and checked JS scripts
 npm test                   # vitest
-npm run typecheck:scripts  # JS script type coverage
-npm run playtest:smoke     # playwright smoke run
+npm run typecheck:scripts  # JS script type coverage only
+npm run playtest:smoke     # local/manual Playwright smoke run
 ```
 
 The `postbuild` step publishes the visual design reference, curated bot and
