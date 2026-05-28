@@ -1760,6 +1760,7 @@ pub fn run() {
             if let Some(path) = published_report_json {
                 let published_report = published_analysis_report_from_batch(
                     report.display().to_string(),
+                    Some(&report_source.provenance),
                     selector.label().to_string(),
                     &batch_report,
                     &published_sections,

@@ -19,6 +19,7 @@ use crate::analysis::{
 };
 use crate::bot_label::compact_bot_label_parts;
 use crate::html::{escape as html_escape, option_debug};
+use crate::report::ReportProvenance;
 use crate::report_board::{render_report_board, report_board_css, ReportBoardMarker};
 
 mod types;
@@ -29,9 +30,9 @@ pub use types::{
     AnalysisBatchProofSnapshot, AnalysisBatchReport, AnalysisBatchRunOptions, AnalysisBatchSummary,
     ProofLimitCauseCount, PublishedAnalysisEntry, PublishedAnalysisMatchSummary,
     PublishedAnalysisProofDetails, PublishedAnalysisProofFrame, PublishedAnalysisProofMarker,
-    PublishedAnalysisReplyOutcome, PublishedAnalysisReport, PublishedAnalysisSearchDetails,
-    PublishedAnalysisSection, PublishedAnalysisSectionInput, ReplayAnalysisInput,
-    PUBLISHED_ANALYSIS_REPORT_SCHEMA_VERSION,
+    PublishedAnalysisProvenance, PublishedAnalysisReplyOutcome, PublishedAnalysisReport,
+    PublishedAnalysisSearchDetails, PublishedAnalysisSection, PublishedAnalysisSectionInput,
+    ReplayAnalysisInput, PUBLISHED_ANALYSIS_REPORT_SCHEMA_VERSION,
 };
 pub fn run_analysis_batch(
     replay_dir: &Path,
@@ -202,6 +203,7 @@ pub fn run_analysis_batch_replays_with_progress(
 
 pub fn published_analysis_report_from_batch(
     source_report: String,
+    source_report_provenance: Option<&ReportProvenance>,
     selector: String,
     batch: &AnalysisBatchReport,
     sections: &[PublishedAnalysisSectionInput],
@@ -233,6 +235,8 @@ pub fn published_analysis_report_from_batch(
         report_kind: "published_analysis".to_string(),
         source_kind: batch.source_kind.clone(),
         source_report,
+        provenance: PublishedAnalysisProvenance::from(&ReportProvenance::capture()),
+        source_report_provenance: source_report_provenance.map(PublishedAnalysisProvenance::from),
         selector,
         total: batch.total,
         analyzed: batch.analyzed,
@@ -2867,6 +2871,7 @@ mod tests {
         AnalysisBatchProofMarker, AnalysisBatchProofMarkerKind, AnalysisBatchReport,
         AnalysisBatchRunOptions, AnalysisBatchSummary, PublishedAnalysisMatchSummary,
         PublishedAnalysisSectionInput, ReplayAnalysisInput,
+        PUBLISHED_ANALYSIS_REPORT_SCHEMA_VERSION,
     };
     use crate::analysis::{
         analyze_replay, replay_frame_annotations_for_analysis, AnalysisModel, AnalysisOptions,
@@ -3087,6 +3092,7 @@ mod tests {
         };
         let published = published_analysis_report_from_batch(
             "outputs/full-report.json".to_string(),
+            None,
             "Preset triangle".to_string(),
             &batch,
             &[PublishedAnalysisSectionInput {
@@ -3111,6 +3117,11 @@ mod tests {
             .expect("published analysis report should serialize");
 
         assert_eq!(published.report_kind, "published_analysis");
+        assert_eq!(
+            published.schema_version,
+            PUBLISHED_ANALYSIS_REPORT_SCHEMA_VERSION
+        );
+        assert!(json.contains("\"provenance\""));
         assert_eq!(published.sections[0].entries[0].match_report.match_index, 1);
         assert!(json.contains("\"proof_frames\""));
         assert!(json.contains("\"markers\""));

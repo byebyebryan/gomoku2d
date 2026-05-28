@@ -1,3 +1,5 @@
+import type { ReportProvenance } from "./bot_report";
+
 export interface MovePoint {
   row: number;
   col: number;
@@ -8,6 +10,8 @@ export interface PublishedAnalysisReport {
   report_kind: "published_analysis";
   source_kind: string;
   source_report: string;
+  provenance?: ReportProvenance;
+  source_report_provenance?: ReportProvenance | null;
   selector: string;
   total: number;
   analyzed: number;
@@ -137,7 +141,7 @@ function isAnalysisReport(data: unknown): data is PublishedAnalysisReport {
   }
   const report = data as Partial<PublishedAnalysisReport>;
   return (
-    report.schema_version === 2 &&
+    (report.schema_version === 2 || report.schema_version === 3) &&
     report.report_kind === "published_analysis" &&
     typeof report.source_kind === "string" &&
     typeof report.source_report === "string" &&

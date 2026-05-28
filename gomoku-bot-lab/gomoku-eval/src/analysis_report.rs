@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use gomoku_core::{replay::ReplayResult, Move, Replay, RuleConfig};
 use serde_json::Value;
 
-use crate::report::{PublishedTournamentReport, TournamentReport};
+use crate::report::{PublishedTournamentReport, ReportProvenance, TournamentReport};
 
 #[derive(Debug, Clone)]
 pub struct ReportReplaySelection<'a> {
@@ -15,6 +15,7 @@ pub struct ReportReplaySource {
     pub board_size: usize,
     pub move_codec: String,
     pub rules: RuleConfig,
+    pub provenance: ReportProvenance,
     pub standings: Vec<String>,
     pub matches: Vec<ReportReplayMatch>,
 }
@@ -54,6 +55,7 @@ impl ReportReplaySource {
             board_size: report.board_size,
             move_codec: report.move_codec.clone(),
             rules: report.run.rules.clone(),
+            provenance: report.provenance.clone(),
             standings: report
                 .standings
                 .iter()
@@ -95,6 +97,7 @@ impl ReportReplaySource {
             board_size: report.board_size,
             move_codec: report.move_codec.clone(),
             rules: report.run.rules.clone(),
+            provenance: report.provenance.clone(),
             standings: report
                 .standings
                 .iter()

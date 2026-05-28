@@ -16,6 +16,7 @@ import {
   type PairwiseReport,
   type PublishedBotReport,
   type PublishedMatchReport,
+  type ReportProvenance,
   type StandingReport,
 } from "../reports/bot_report";
 import {
@@ -900,6 +901,12 @@ function AnalysisProvenanceSection({ report }: { report: PublishedAnalysisReport
       <dl>
         <dt>Source</dt>
         <dd>{report.source_report}</dd>
+        <dt>Generated</dt>
+        <dd>{report.provenance?.generated_at_local ?? "unknown"}</dd>
+        <dt>Revision</dt>
+        <dd>{provenanceRevisionLabel(report.provenance)}</dd>
+        <dt>Source revision</dt>
+        <dd>{provenanceRevisionLabel(report.source_report_provenance)}</dd>
         <dt>Selector</dt>
         <dd>{report.selector}</dd>
         <dt>Games</dt>
@@ -1000,8 +1007,12 @@ function countEndReason(report: PublishedBotReport, key: string): number {
 }
 
 function revisionLabel(report: PublishedBotReport): string {
-  const commit = report.provenance?.git_commit ?? "unknown";
-  return report.provenance?.git_dirty ? `${commit} dirty` : commit;
+  return provenanceRevisionLabel(report.provenance);
+}
+
+function provenanceRevisionLabel(provenance?: ReportProvenance | null): string {
+  const commit = provenance?.git_commit ?? "unknown";
+  return provenance?.git_dirty ? `${commit} dirty` : commit;
 }
 
 function widthPrimary(standing: StandingReport): string {

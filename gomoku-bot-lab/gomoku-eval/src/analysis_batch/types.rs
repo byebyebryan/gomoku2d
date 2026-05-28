@@ -7,6 +7,7 @@ use crate::analysis::{
     ReplyClassification, ReplyPolicy, RootCause, SearchDiagnostics, TacticalNote, UnclearContext,
     UnclearReason,
 };
+use crate::report::ReportProvenance;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct AnalysisBatchReport {
@@ -123,7 +124,29 @@ pub struct AnalysisBatchProofFrame {
     pub reply_outcomes: Vec<DefenderReplyAnalysis>,
 }
 
-pub const PUBLISHED_ANALYSIS_REPORT_SCHEMA_VERSION: u32 = 2;
+pub const PUBLISHED_ANALYSIS_REPORT_SCHEMA_VERSION: u32 = 3;
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
+pub struct PublishedAnalysisProvenance {
+    pub generated_at_utc: Option<String>,
+    pub generated_at_local: Option<String>,
+    pub git_commit: Option<String>,
+    pub git_dirty: Option<bool>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub command: Vec<String>,
+}
+
+impl From<&ReportProvenance> for PublishedAnalysisProvenance {
+    fn from(value: &ReportProvenance) -> Self {
+        Self {
+            generated_at_utc: value.generated_at_utc.clone(),
+            generated_at_local: value.generated_at_local.clone(),
+            git_commit: value.git_commit.clone(),
+            git_dirty: value.git_dirty,
+            command: value.command.clone(),
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct PublishedAnalysisReport {
@@ -131,6 +154,9 @@ pub struct PublishedAnalysisReport {
     pub report_kind: String,
     pub source_kind: String,
     pub source_report: String,
+    pub provenance: PublishedAnalysisProvenance,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_report_provenance: Option<PublishedAnalysisProvenance>,
     pub selector: String,
     pub total: usize,
     pub analyzed: usize,
