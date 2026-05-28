@@ -173,12 +173,12 @@ state changes may rebuild overlays; pointer-only movement should not.
 ## Asset Pipeline
 
 Authoritative sprite sources live under `gomoku-web/assets/sprites/`.
-Matching copies under `gomoku-web/public/assets/sprites/` must stay in sync
-because deployed asset URLs can read from `public`.
+Runtime code imports those files through Vite, and the Visual Design reference
+publishes them into `dist/assets/sprites/` during build.
 
 When changing canvas assets:
 
-- update both source and public copies
+- update source sprites under `gomoku-web/assets/sprites/`
 - update `gomoku-web/assets/sprites/README.md`
 - update `gomoku-web/assets/asset_manifest.json` when frame layout, z-order, or
   representative cases change

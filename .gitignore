@@ -1,6 +1,15 @@
 target/
 gomoku-bot-lab/outputs/
 
+gomoku-bot-lab/reports/*
+!gomoku-bot-lab/reports/
+!gomoku-bot-lab/reports/README.md
+!gomoku-bot-lab/reports/report.json
+gomoku-bot-lab/analysis-reports/*
+!gomoku-bot-lab/analysis-reports/
+!gomoku-bot-lab/analysis-reports/README.md
+!gomoku-bot-lab/analysis-reports/report.json
+
 .env
 .env.*
 !.env.example

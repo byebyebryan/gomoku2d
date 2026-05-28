@@ -1,8 +1,9 @@
 # Gomoku2D Sprite Assets
 
 All runtime board spritesheets use 16x16 frames. The source files in this
-folder are the authoritative copies. The build/publish scripts sync matching
-files under `public/assets/sprites/` and the published Visual Design reference.
+folder are the authoritative copies. Runtime code imports these source files
+through Vite, and the build/publish scripts copy them into `dist/assets/sprites/`
+for the published Visual Design reference.
 
 For the meaning of each board-space visual role, see
 [`game_visual.md`](../../../docs/reference/app/game_visual.md). This README is
