@@ -10,9 +10,11 @@ const staticRoutes = [
   "guide",
   "lab",
   "match/local",
+  "privacy",
   "profile",
   "rules",
   "settings",
+  "terms",
   "visuals",
 ];
 

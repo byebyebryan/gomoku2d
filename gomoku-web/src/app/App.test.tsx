@@ -60,6 +60,14 @@ vi.mock("../routes/GuideRoute", () => ({
   ),
 }));
 
+vi.mock("../routes/PolicyRoute", () => ({
+  PolicyRoute: ({ kind }: { kind: "privacy" | "terms" }) => (
+    <main>
+      <h1>{kind === "privacy" ? "Privacy" : "Terms"}</h1>
+    </main>
+  ),
+}));
+
 describe("App", () => {
   afterEach(() => {
     cleanup();
@@ -107,6 +115,18 @@ describe("App", () => {
       "href",
       "/guide/",
     );
+    expect(screen.getByRole("link", { name: /^source$/i })).toHaveAttribute(
+      "href",
+      "https://github.com/byebyebryan/gomoku2d",
+    );
+    expect(screen.getByRole("link", { name: /^privacy$/i })).toHaveAttribute(
+      "href",
+      "/privacy/",
+    );
+    expect(screen.getByRole("link", { name: /^terms$/i })).toHaveAttribute(
+      "href",
+      "/terms/",
+    );
     expect(screen.queryByRole("link", { name: /^about$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /^analysis$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /^bots$/i })).not.toBeInTheDocument();
@@ -150,6 +170,26 @@ describe("App", () => {
     );
 
     expect(await screen.findByRole("heading", { name: /^guide$/i })).toBeInTheDocument();
+  });
+
+  it("routes the privacy page through the app", async () => {
+    render(
+      <MemoryRouter initialEntries={["/privacy/"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("heading", { name: /^privacy$/i })).toBeInTheDocument();
+  });
+
+  it("routes the terms page through the app", async () => {
+    render(
+      <MemoryRouter initialEntries={["/terms/"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("heading", { name: /^terms$/i })).toBeInTheDocument();
   });
 
   it("routes to settings", async () => {

@@ -30,6 +30,9 @@ const RulesRoute = lazy(async () => ({
 const GuideRoute = lazy(async () => ({
   default: (await import("../routes/GuideRoute")).GuideRoute,
 }));
+const PolicyRoute = lazy(async () => ({
+  default: (await import("../routes/PolicyRoute")).PolicyRoute,
+}));
 
 export function App() {
   return (
@@ -98,6 +101,22 @@ export function App() {
           element={
             <Suspense fallback={<main className={styles.loading}>Loading page…</main>}>
               <GuideRoute />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/privacy/*"
+          element={
+            <Suspense fallback={<main className={styles.loading}>Loading page…</main>}>
+              <PolicyRoute kind="privacy" />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/terms/*"
+          element={
+            <Suspense fallback={<main className={styles.loading}>Loading page…</main>}>
+              <PolicyRoute kind="terms" />
             </Suspense>
           }
         />
