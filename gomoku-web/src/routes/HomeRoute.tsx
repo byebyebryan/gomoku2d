@@ -1,9 +1,8 @@
 import { Link } from "react-router-dom";
+import { PROJECT_SOURCE_URL } from "../app/links";
 import { APP_VERSION } from "../app/version";
 import { Icon } from "../ui/Icon";
 import styles from "./HomeRoute.module.css";
-
-const baseUrl = import.meta.env.BASE_URL;
 
 export function HomeRoute() {
   return (
@@ -34,14 +33,18 @@ export function HomeRoute() {
               <span aria-hidden="true">/</span>
               <Link to="/guide/">Guide</Link>
               <span aria-hidden="true">/</span>
-              <a href={`${baseUrl}lab/`}>Lab</a>
+              <Link to="/lab/">Lab</Link>
               <span aria-hidden="true">/</span>
-              <a href={`${baseUrl}visuals/`}>Visuals</a>
+              <Link to="/visuals/">Visuals</Link>
             </span>
             <span className={styles.footerLinkGroup}>
-              <a href={`${baseUrl}privacy/`}>Privacy</a>
+              <a href={PROJECT_SOURCE_URL} rel="noreferrer" target="_blank">
+                Source
+              </a>
               <span aria-hidden="true">/</span>
-              <a href={`${baseUrl}terms/`}>Terms</a>
+              <Link to="/privacy/">Privacy</Link>
+              <span aria-hidden="true">/</span>
+              <Link to="/terms/">Terms</Link>
             </span>
           </nav>
         </div>

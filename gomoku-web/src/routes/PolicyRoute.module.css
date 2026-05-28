@@ -1,0 +1,137 @@
+.page {
+  height: 100dvh;
+  min-height: 100dvh;
+  padding: 28px;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.shell {
+  display: grid;
+  gap: 22px;
+  width: min(920px, 100%);
+  margin: 0 auto;
+}
+
+.hero {
+  display: grid;
+  gap: 16px;
+}
+
+.headerRow {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 22px;
+}
+
+.title {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: clamp(2.7rem, 7vw, 4.8rem);
+  line-height: 0.9;
+}
+
+.updated {
+  margin: 10px 0 0;
+  color: var(--text-soft);
+  font-family: var(--font-display);
+  font-size: var(--type-quiet);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.links :global(.uiAction) {
+  text-decoration: none;
+}
+
+.panel {
+  display: grid;
+  gap: 18px;
+  border: 2px solid var(--border);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--info) 8%, transparent), transparent 52%),
+    var(--surface);
+  padding: 18px;
+  box-shadow: none;
+}
+
+.summary {
+  margin: 0;
+  max-width: 74ch;
+  color: var(--text);
+  font-size: 1.28rem;
+  line-height: 1.24;
+}
+
+.sections {
+  display: grid;
+  gap: 16px;
+}
+
+.section {
+  display: grid;
+  gap: 8px;
+  max-width: 78ch;
+}
+
+.section h2 {
+  margin: 0;
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 1.32rem;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.section p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-body);
+  line-height: 1.24;
+}
+
+.section a {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-underline-offset: 3px;
+}
+
+.callout {
+  border-left: 4px solid var(--accent);
+  padding-left: 12px;
+  color: var(--text);
+}
+
+@media (max-width: 720px) {
+  .page {
+    padding: 22px 14px;
+  }
+
+  .headerRow {
+    display: grid;
+  }
+
+  .links {
+    justify-content: start;
+  }
+
+  .links :global(.uiAction) {
+    min-width: 0;
+    padding-inline: 12px;
+  }
+
+  .panel {
+    padding: 14px;
+  }
+}

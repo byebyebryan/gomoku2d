@@ -120,7 +120,7 @@ Routes:
 - `/replay/:matchId` — replay viewer with browser-side corridor analysis for decisive saved matches
 - `/profile` — local/cloud player record and history
 - `/settings` — rule, bot, hint, and touch-control setup
-- `/privacy/` and `/terms/` — static Privacy and Terms pages for the public app
+- `/privacy/` and `/terms/` — SPA Privacy and Terms pages for the public app
 
 ---
 

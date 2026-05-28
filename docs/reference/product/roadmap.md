@@ -164,7 +164,7 @@ wrap-up state:
   aligned with the cloud replay/summary/archive retention tiers
 - local play/history still working without Firebase config
 - Google Auth Platform published to production for public sign-in
-- static `/privacy/` and `/terms/` pages plus contact/deletion email for OAuth
+- `/privacy/` and `/terms/` policy pages plus contact/deletion email for OAuth
   app readiness
 - GitHub Pages publishes direct SPA entries for `/profile` and `/match/local`
   in addition to the fallback `404.html` route, reducing visible deep-link
