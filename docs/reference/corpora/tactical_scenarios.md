@@ -123,23 +123,19 @@ layer:
 - `combo_*` cases test whether one move creates multiple problems for the
   opponent.
 
-The next strategic target is above these isolated fixtures: bounded corridor
-search. A corridor is a sequence where a gain move creates a local threat, the
+The strategic layer above these isolated fixtures is corridor and lethal-threat
+analysis. A corridor is a sequence where a gain move creates a local threat, the
 defender's concrete reply set is known from the shape, and the attacker uses
-that forced reply to steer toward another threat. The scenario corpus should
-verify each building block, but a single diagnostic miss should not justify a
-broad leaf scan or a product-facing config knob.
+that forced reply to steer toward another threat. This corpus verifies the local
+building blocks; corridor proof, replay analysis, and lethal scenarios verify
+the sequence/coverage layers.
 
-The corpus should also protect narrower search experiments. If future candidate
-caps or staged candidate sets are tried, the local and priority cases are the
-minimum check that tactical must-keep moves were not filtered out. Passing those
-cases is still not enough to promote a change; it only means the breadth
-reduction did not break the obvious tactical language before tournament testing.
-
-Offensive and defensive bot styles should eventually map to which side's forced
-chains receive extra budget. Offensive style searches own forcing continuations;
-defensive style searches opponent forcing continuations and avoids letting those
-lines start.
+The corpus also protects narrower search experiments. If candidate caps,
+staged candidate sets, or tactical-ordering gates are changed, the local and
+priority cases are the minimum check that tactical must-keep moves were not
+filtered out. Passing those cases is still not enough to promote a change; it
+only means the breadth reduction did not break the obvious tactical language
+before tournament testing.
 
 Exact board prints are included in the case list below.
 
