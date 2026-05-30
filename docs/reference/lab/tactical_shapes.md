@@ -1,7 +1,7 @@
 # Tactical Shape Vocabulary
 
 Purpose: define the tactical shape terms used by `SearchBot`, tactical
-scenarios, and future tactical eval work.
+scenarios, corridor search, replay analysis, and UI/report hints.
 
 This doc is intentionally local and practical. It does not try to be a complete
 Gomoku/Renju theory reference. It defines the shared facts our bot can detect
@@ -174,7 +174,7 @@ Renju-aware shape fact should preserve both the raw square and its legality
 result. Silent filtering is risky because "the only block is forbidden" is proof
 evidence for the analyzer and useful explanation for the report.
 
-Corridor-facing shape facts should eventually distinguish:
+Corridor-facing shape facts distinguish:
 
 - raw gain/completion/cost squares derived from line shape,
 - legal corridor squares the side can actually play,

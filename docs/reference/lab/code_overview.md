@@ -11,15 +11,18 @@ analysis, evaluation reports, native CLI tooling, and the wasm bridge.
 
 ```text
 gomoku-core
+  -> gomoku-lab-support
   -> gomoku-bot
-    -> gomoku-analysis
-    -> gomoku-eval
-    -> gomoku-cli
-    -> gomoku-wasm
+      -> gomoku-analysis
+      -> gomoku-eval
+      -> gomoku-cli
+      -> gomoku-wasm
 ```
 
 `gomoku-core` is the rules foundation. Every other crate should depend on it,
 not reimplement board, win, replay, or Renju legality behavior.
+`gomoku-lab-support` is fixture/scenario support for lab consumers; `gomoku-core`
+has a benchmark-only dev-dependency back to it.
 
 ## Crate Map
 
@@ -111,7 +114,7 @@ Current search model:
 
 - negamax with alpha-beta pruning
 - iterative deepening
-- transposition table with a bounded entry cap
+- transposition table with an optional bounded entry cap
 - tactical ordering
 - rolling threat-view backend
 - pattern evaluation

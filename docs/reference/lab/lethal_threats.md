@@ -11,7 +11,7 @@ Source of truth in code:
 - Terminal classifier: `gomoku-bot-lab/gomoku-bot/src/tactical/mod.rs`
 - Lethal scenario harness: `gomoku-bot-lab/gomoku-eval/src/lethal_scenario.rs`
 
-Planned consumers:
+Current consumers:
 
 - Corridor proof: `gomoku-bot-lab/gomoku-bot/src/corridor.rs`
 - Replay analysis: `gomoku-bot-lab/gomoku-analysis/src/lib.rs`
@@ -65,9 +65,9 @@ terminal_lethal_threat(board, attacker) -> Option<LethalThreat>
 terminal_lethal_threat_analysis(board, attacker) -> TerminalLethalThreatAnalysis
 ```
 
-The analysis form is what scenario reports and future UI/report surfaces should
-use, because it explains non-lethal cases through terminal targets, defender
-immediate wins, and legal covering replies.
+The analysis form is what scenario reports, replay analysis, and report/UI
+surfaces should use, because it explains non-lethal cases through terminal
+targets, defender immediate wins, and legal covering replies.
 
 ## One-Step Lethal Coverage
 

@@ -322,12 +322,10 @@ question is not "what is the best move in this position?" The question is:
 
 The analyzer follows the actual ending, checks losing-side decision points, and
 classifies alternate corridor replies as forced loss, confirmed escape, possible
-escape, forbidden, immediate loss, or unknown. The published report is an
-interim workbench for this model, not the final in-game replay UI.
-
-That interim report is still important. It makes the model visible enough to
-review the board states, proof frames, and markings before the concept is baked
-into a player-facing screen.
+escape, forbidden, immediate loss, or unknown. The in-product replay screen uses
+the same model progressively from the terminal frame backward, while the
+published lab report remains the denser review surface for comparing many games
+and inspecting proof frames.
 
 ## Bot Diagnostics Role
 
@@ -343,150 +341,34 @@ This is why corridor search belongs in the lab before it belongs in the UI. It
 lets bot changes be judged by the kinds of wins and losses they create, not just
 by aggregate score.
 
-## Bot Role
+## Bot Search Role
 
 `0.4.3` and `0.4.4` tested whether corridor search could become a live
-`SearchBot` shortcut before the product exposes bot settings. The result is
-negative for the current compute budget. Corridor search remains important for
-replay analysis, shared tactical vocabulary, and test fixtures, but corridor
-portals are not a candidate bot feature.
+`SearchBot` shortcut. The durable answer is narrower than the original hope:
+corridor search is essential for replay analysis and shared tactical semantics,
+but broad live-search portals are retired.
 
-### Retired Corridor Portal Experiment
+Retired paths:
 
-The portal idea treated a narrow corridor as a shortcut inside alpha-beta:
-after a child move, the bot checked whether that move entered an immediate or
-imminent threat corridor, followed the bounded replies, and tried to use the
-result as a deeper child score.
+- `+corridor-q`: leaf quiescence. Too many leaves fell back to ordinary static
+  evaluation.
+- `+corridor-own-dN-wM` / `+corridor-opponent-dN-wM`: portal extension after
+  child moves. Resume searches from corridor exits multiplied work and distorted
+  scores.
+- rank/top-N portal gates, static exits, and proof-only portal variants:
+  measurable, but not a useful bot knob under the browser-scale budget.
+- `+leaf-corridor-dM-wW` and `+leaf-proof-cN`: terminal-only leaf extension
+  could find real proofs, but too rarely and too expensively to promote.
 
-The live-search portal variants are retired. `+corridor-q`,
-`+corridor-own-dN-wM`, `+corridor-opponent-dN-wM`, rank/top-N gates, static
-exits, and proof-only mode are historical report evidence, not current parser
-surface. They made corridor cost measurable but did not produce a useful bot
-knob under the current compute budget.
+Those suffixes are no longer parser surface. Historical details live in
+[`performance_tuning.md`](../../working/performance_tuning.md) and the `0.4.x`
+archive notes. Do not include them in anchor tournaments, difficulty ladders,
+settings UI, or product copy.
 
-The conclusion is that portal search is not useful in this bounded-compute
-shape. The current parser no longer accepts portal suffixes. Treat
-`+corridor-own-dN-wM`, `+corridor-opponent-dN-wM`, and the later rank/top-N,
-proof-only, and static-exit controls as historical report evidence only. Do not
-include portal variants in anchor tournaments, difficulty ladders, settings UI,
-or product copy.
-
-The durable output from the portal work is not a stronger bot. It is the shared
-`ThreatView` seam, unified search/corridor tactical facts, and report metrics
-that make corridor cost visible. Future bot work should focus on cheaper threat
-facts, better ordering, and explicit analysis-first corridor proofing rather
-than adding more portal tuning knobs.
-
-### Retired Leaf Corridor Extension Candidate
-
-After rejecting portals, the next bot-facing corridor experiment did not revive
-the portal model. It tested leaf corridor extension: run normal iterative
-deepening first, then use any remaining budget on a corridor-enhanced pass that
-only extends non-quiet leaf nodes.
-
-The goal is narrower than portal search. Portal search asked whether a child
-move could shortcut into a deeper score. Leaf extension asks whether normal
-search stopped in the middle of an active tactical corridor. That makes it a
-better fit for horizon-effect repair:
-
-1. Run the normal `SearchBot` search exactly as today and keep its best move as
-   the safe fallback.
-2. If the normal search reaches its configured depth before the compute budget
-   expires, run a corridor-enhanced pass with the same root candidates and
-   baseline principal-variation ordering.
-3. At `depth == 0`, classify the leaf as quiet or non-quiet.
-4. Quiet leaves use normal static eval.
-5. Non-quiet leaves follow only named corridor moves up to max corridor depth,
-   terminal state, corridor exit, or deadline.
-6. Terminal corridor results can override immediately. Non-terminal exits must
-   not replace the normal-search result in the current terminal-only variant.
-7. If the enhanced pass does not finish a comparable root search, keep the
-   normal-search result and use partial corridor data only for diagnostics and
-   future ordering.
-
-This pass needs a separate transposition-table namespace, or a fresh table,
-because changing leaf evaluation changes the meaning of cached scores. Reusing
-normal-search TT entries for cutoffs would mix scores produced by different
-evaluators. Reusing the normal principal variation for move ordering is safe and
-desirable.
-
-Partial results should be tiered:
-
-- Proven terminal win for a root branch: safe decisive override.
-- Completed enhanced root search without a terminal win: diagnostics only.
-- Incomplete corridor probes: useful for metrics and next-pass ordering only.
-- Mixed enhanced/static scores from only some leaves: unsafe as a direct move
-  decision because explored leaves received deeper tactical treatment than
-  unexplored leaves.
-
-Leaf extension also needs explicit ordering so it spends leftover budget on
-meaningful corridors first:
-
-- Prioritize leaves on or near the normal-search principal variation.
-- Prioritize leaves with immediate wins or immediate defensive obligations.
-- Then prioritize imminent-threat leaves with narrow reply sets.
-- Then prioritize leaves whose static score is close enough to affect the root
-  choice.
-- Inside a corridor, order immediate wins, forced blocks, imminent-threat
-  replies, counter-threats, local threat rank, then stable board order.
-
-The first retired lab shape was explicit and conservative, for example
-`search-dN+leaf-corridor-dM-w3`: normal depth `N`, max leaf corridor depth `M`,
-and reply width `3`. That spelling is historical only and is no longer accepted
-by the lab parser. Required metrics at the time were:
-
-- leaf corridor checks,
-- active leaf hits,
-- terminal hits,
-- static exit evals,
-- max-depth exits,
-- deadline exits,
-- corridor nodes,
-- average extra plies,
-- enhanced pass completion rate,
-- terminal exits reached inside corridor probes,
-- terminal root candidates split by winning versus losing proof,
-- decisive winning terminal overrides,
-- budget exhausted rate.
-
-The first decision to test is not "does this make the bot stronger?" It is
-"does this cheaply identify and repair horizon-effect leaves often enough to
-justify a second pass?" If not, keep corridor search as analysis infrastructure
-and do not add another bot knob.
-
-Initial smoke result: the first static-exit implementation did not meet that
-bar. Against plain `search-d3` with a 1s/move budget,
-`search-d3+leaf-corridor-d1-w3` lost `1-7` while spending about `749 ms/move`
-and exhausting budget on about `53%` of moves;
-`search-d3+leaf-corridor-d2-w3` and `search-d3+leaf-corridor-d4-w3` both split
-`4-4` while spending about `922-937 ms/move` and exhausting budget on about
-`90-93%` of moves. A relaxed 5s smoke for `d2-w3` showed a small `3-1` signal,
-but still spent about `4.3 s/move` and exhausted budget on about `70%` of
-moves. The current shape is therefore diagnostic only: it extends too many
-leaves and mostly converts leftover budget into depth/static exits rather than
-cheap decisive proofs.
-
-The follow-up terminal-only conversion fixed the obvious correctness risk:
-non-terminal/static corridor work no longer overrides the normal-search move.
-That made the shallow smoke safer, but not cheaper. `d1-w3` moved from `1-7`
-to `4-4` against plain `search-d3`, while still spending about `759 ms/move`
-and exhausting budget on about `60%` of moves. It reached `13,031` terminal
-corridor exits, but produced no winning root overrides in the first smoke.
-`d2-w3` also split `4-4`, spending about `921 ms/move` and exhausting budget
-on about `89%` of moves; it reached `4,454` terminal corridor exits and found
-`2` winning terminal root candidates, both of which became root overrides.
-That confirms the terminal-only path can surface real decisive proofs, but it
-is still too expensive and too rare to promote without better leaf selection.
-
-Replacing attacker-side apply/undo materialization with cached candidate
-potential was a clear cost improvement, but not enough to promote the feature.
-`d1-w3` still split `4-4`, dropped to about `628 ms/move`, exhausted budget on
-about `33%` of moves, reached `27,695` terminal corridor exits, and produced no
-root overrides. `d2-w3` still split `4-4`, dropped to about `817 ms/move`,
-exhausted budget on about `66%` of moves, reached `20,866` terminal corridor
-exits, and produced `7` winning terminal root overrides. All `7` were move
-confirmations, not move changes, so the proof pass still mostly confirms wins
-the normal search already chose.
+The current bot-facing corridor shape is candidate proof: normal alpha-beta
+search ranks root moves first, then corridor proof spends remaining budget on a
+small selected set of those candidates. This turns corridor search into a
+decisive proof pass rather than a second evaluator.
 
 ### Candidate-Proof Corridor Pass
 
@@ -541,71 +423,20 @@ multiplying broad search work. This does not make corridor proof a product knob;
 it remains a lab-only experiment until it produces move changes at acceptable
 cost.
 
-Initial sweeps changed the status of this path from purely diagnostic to
-promising. The old default shape, `d4-w3` with three close-scoring candidates,
-mostly confirmed rank-1 normal-search wins. Widening candidates at proof depth
-`4` checked deeper ranks but still produced no move changes. The useful jump
-came from proof depth `8` and a power-of-two candidate cap:
-
-- `search-d3+corridor-proof-c16-d8-w3` beat `search-d3` by `42-22` in a
-  64-game head-to-head.
-- It averaged about `91 ms/move` against base D3's `51 ms/move`, with `0.1%`
-  budget exhaustion under a `1000 ms/move` CPU budget.
-- It checked `4363` proof candidates, found `167` proven wins and `87` proven
-  losses, produced `31` proof-driven move changes, and confirmed `136` normal
-  best moves.
-- Proven wins were not only rank-1 confirmations: average proven-win rank was
-  `1.62`, with a max rank of `14`.
-
-The broader 8-anchor gauntlet showed the limits of corridor proof by itself.
-`search-d3+corridor-proof-c16-d8-w3` beat `search-d1` and `search-d3`, but
-lost to every stronger anchor and finished `211-301` overall at about
-`115 ms/move`. Adding pattern eval made the shape competitive with the lower
-anchor tier:
-
-- `search-d3+pattern-eval+corridor-proof-c16-d8-w3` finished `302-210` across
-  the same 8-anchor gauntlet.
-- It beat `search-d3+pattern-eval` by `36-28`, beat plain `search-d5` by
-  `40-24`, tied `search-d5+tactical-cap-8` at `32-32`, and stayed close to
-  `search-d7+tactical-cap-8` at `30-34`.
-- The cost rose to about `264 ms/move` with `7.6%` budget exhaustion.
-
-Direct same-config head-to-heads are the cleanest read so far:
-
-| Base config | Corridor result | Cost read |
-| --- | ---: | --- |
-| `search-d1` | `43-21` | strong uplift, still cheap enough |
-| `search-d3` | `42-22` | strong uplift, about 2x move cost |
-| `search-d5` | `32-32` | no benefit; uncapped D5 is already budget-bound |
-| `search-d5+tactical-cap-8` | `30-34` | slight regression |
-| `search-d7+tactical-cap-8` | `36-28` | uplift, but already budget-heavy |
-| `search-d3+pattern-eval` | `37-27` | useful uplift |
-| `search-d5+tactical-cap-8+pattern-eval` | `38-26` | best current signal |
-| `search-d7+tactical-cap-8+pattern-eval` | `34-28-2` | uplift, but high budget pressure |
-
-That suggests the candidate-proof model can catch moves normal search misses
-when it has enough depth and a broad enough root candidate set, especially when
-paired with pattern eval. Proof depth `16` and `32` were much more expensive in
-small smokes and started hitting the budget hard.
-
-The reply-width sweep locked the current baseline to `w4`, mostly for cleaner
-power-of-two config semantics rather than a large strength gap. In a 640-game
-D5+tactical-cap8+pattern round-robin over base, `w3`, `w4`, `w5`, and `w8`,
-all proof widths beat base. `w4` and `w5` both beat base `40-24`; `w3` and
-`w8` beat base `38-26`. Direct width-vs-width pairings were effectively flat,
-with most pairs splitting `32-32`; `w5` edged `w3` by `33-31`. `w8` added no
-meaningful strength and cost more than the narrower lanes. Use
-`D5 tactical-cap-8 + pattern-eval + corridor-proof-c16-d8-w4` was the first
-useful candidate-proof branch, not plain non-pattern corridor proof. The latest
-anchor refresh promotes that D5 proof lane to tactical-cap-16 after focused
-head-to-head checks showed the wider cap was a better D5 control.
+Experiment evidence changed this path from diagnostic to useful but bounded:
+proof depth `8`, candidate cap `16`, and reply width `4` produced the best
+cost/strength tradeoff. The signal is strongest when paired with pattern eval;
+plain non-pattern corridor proof is not enough to define a product bot by
+itself. Proof depths `16` and `32` were much more expensive, while wider reply
+widths did not produce a clear strength gain. Detailed sweep numbers live in
+[`performance_tuning.md`](../../working/performance_tuning.md).
 
 ### Rolling Threat Frontier
 
-Longer term, the cheap local question should be backed by a rolling frontier
-model for threat facts. Full-board threat scans are acceptable for the analyzer
-and early lab prototypes, but they are the wrong shape for a hot search path as
-more search stages depend on threat detection.
+The cheap local question is now backed by the same rolling threat-view model
+used by normal search. Full-board threat scans remain valuable as a fallback and
+comparison implementation, but they are the wrong shape for the hot path as more
+search stages depend on threat detection.
 
 The frontier should not replace `Board` or core legality. It should be a derived
 index that stays synchronized with apply/undo and answers corridor/search
@@ -641,7 +472,7 @@ Important tradeoffs:
 - Memory overhead is acceptable; semantic drift is not. Favor explicit,
   testable facts over clever compact encodings until the model is stable.
 
-The safe migration path is incremental:
+The migration path was deliberately incremental:
 
 1. Define a `ThreatView` interface for the exact queries used by search and
    corridor search.
@@ -718,8 +549,8 @@ That invalidation window is intentionally conservative. It is acceptable to
 rebuild more local facts than strictly necessary. It is not acceptable to miss a
 fact or keep a stale legal/forbidden classification.
 
-The current `ThreatView` is intentionally smaller than the final frontier API.
-The future rolling contract should grow only when a consumer needs more detail:
+The current `ThreatView` is intentionally smaller than the possible full
+frontier API. Grow it only when a consumer needs more detail:
 
 - `move_threat_delta(board, mv)`: what threat facts are created, materialized,
   continued, neutralized, or made illegal by this exact move?
@@ -891,7 +722,8 @@ Known limits:
 - The analyzer is still model-bounded and intentionally conservative.
 - `possible_escape` is common and acceptable; it means the current model cannot
   prove the branch remains inside the setup corridor or lethal tail.
-- The report is a lab artifact, not a polished replay-screen feature.
+- The replay screen is the player-facing progressive view; the report is the
+  dense lab/product reference for comparing many games.
 - The retired `+corridor-q` leaf integration was too expensive for live play and
   is no longer a lab suffix.
 - The first selective-extension implementation is measurable but not promoted
