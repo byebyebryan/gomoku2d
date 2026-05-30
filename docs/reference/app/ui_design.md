@@ -9,7 +9,7 @@ effects, tactical warning language, or board-theme asset rules. Those live in
 pixel-art board themes, not lock the project into one exact sprite pack.
 
 Paired with [`app_design.md`](app_design.md), which defines screen roles and
-player-facing flows. Comparative screenshot review lives in
+player-facing flows. Current screenshot QA procedure lives in
 [`ui_screenshot_review.md`](../../working/ui_screenshot_review.md).
 
 ## Reference image
@@ -25,54 +25,40 @@ weight, spacing, typography, and accent roles. Current screen captures live in
 explorations should stay in [`../../archive/`](../../archive/) unless they
 become the new canonical reference.
 
-## Reference set
+## Current Direction
 
-For the comparative screenshot set and critique, see
-[ui_screenshot_review.md](../../working/ui_screenshot_review.md). That document embeds the
-historical shell references plus focused `v0.4.5` through `v0.4.8` product
-captures for settings, replay analysis, analyzer-timeline polish, and
-mistake-aware replay annotations.
+Use the `/visuals/` page as the live visual guide for palette, typography,
+buttons, icons, sprites, and board overlay language. Use
+[`ui_screenshot_review.md`](../../working/ui_screenshot_review.md) for the
+capture checklist, not as a historical gallery.
 
-The rule of thumb:
+The current refinement direction:
 
-- `v0_1_*` is tone and retro feel
-- `v0_2_1_*` is the first practical DOM-shell baseline
-- `v0_2_2_*` is the flatter-shell baseline before the mobile-specific pass
-- `v0_2_3_*` is the paired desktop/mobile baseline
-- `v0_2_4_*` is the final polish/reference set for the current `0.2.x` shell
-
-The current refinement direction is:
-
-- keep `v0.2.2` shell tone, spacing, and button-role clarity
-- keep `v0.2.3`'s screen-specific portrait layouts and compact top-bar pattern
-- keep `v0.2.4`'s icon scale, denser profile treatment, and visual-guide
-  documentation
-- use the `/visuals/` Visual Design reference when checking palette, button,
-  type, sprite, and icon rendering
-- keep tightening dense secondary surfaces like profile instead of re-expanding
-  the shell
+- keep the board-first layout on Match and Replay;
+- keep secondary surfaces dense but readable;
+- make public/static pages share the same navigation and panel rhythm as the
+  app;
+- keep report pages product-readable rather than telemetry-first;
+- avoid adding chrome that competes with the board.
 
 The current release assumption is:
 
-- `v0.2.4` remains the broad shell baseline for paired desktop/mobile layout.
-- `v0.4.5` is the current settings/profile/product-control reference.
-- `v0.4.6` through `v0.4.8` are the current replay-analysis references.
-- `v0.4.8` is a focused analyzer readability and mistake-explanation pass, not
-  a structural layout redo.
-- `v0.5` can broaden product polish, but should preserve the board-first replay
-  and match layout constraints unless screenshot review shows a real issue.
+- settings/profile/product controls are part of the main app surface;
+- replay analysis is the main differentiating UI surface;
+- `/rules/`, `/guide/`, `/lab/`, and `/visuals/` are public explanation pages;
+- screenshot review should focus on changed surfaces instead of recapturing old
+  historical baselines.
 
 ## Design takeaway
 
-- keep v0.1's retro punch and board-first confidence
-- keep v0.2.1's structure, separation, and scalability
-- keep v0.2.2's flatter shell and clearer button-role language
-- keep v0.2.3's intentional mobile layouts and tighter transport language
-- keep v0.2.4's tighter icon scale, profile density, and documented asset set
-- keep v0.4.5's dedicated settings route and controlled bot-lab layer
-- keep v0.4.8's replay-analysis timeline semantics, restrained marker set, and
-  evidence overlays
-- avoid reintroducing v0.1's scene-bound UI
+- preserve the retro punch and board-first confidence
+- keep screen roles separate and scalable
+- keep button roles clear and physically weighted
+- keep mobile layouts intentional, not just compressed desktop
+- keep settings as the controlled bot-lab surface
+- keep replay-analysis timeline semantics, restrained marker set, and evidence
+  overlays
+- avoid reintroducing scene-bound UI
 - avoid rebuilding dense sidebars or over-explained controls as the shell grows
 
 ## Goal

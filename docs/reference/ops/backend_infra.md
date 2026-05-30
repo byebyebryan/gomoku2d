@@ -1,9 +1,10 @@
 # Backend Infra
 
-Scope: live setup and operational runbook for Gomoku2D's Firebase/GCP backend.
-This file records what exists now and how to reproduce or verify it. The target
-backend design lives in [`backend.md`](../backend/backend.md); free-tier
-estimates live in [`backend_cost.md`](backend_cost.md).
+Purpose: live Firebase/GCP setup and operational checks.
+
+Backend product contract lives in [`backend.md`](../backend/backend.md). Future
+Cloud Run design lives in [`future_cloud_run.md`](../backend/future_cloud_run.md).
+Cost posture lives in [`backend_cost.md`](backend_cost.md).
 
 ## Current Project
 
@@ -11,45 +12,37 @@ estimates live in [`backend_cost.md`](backend_cost.md).
 |---|---|
 | GCP/Firebase project | `gomoku2d` |
 | Project number | `892554744656` |
-| Cloud billing | Enabled |
 | Firebase web app | `Gomoku2D Web` |
 | Firebase web app ID | `1:892554744656:web:17524b73c8afb856841255` |
-| Auth config | Initialized; subtype `IDENTITY_PLATFORM` |
-| Auth providers | Google enabled |
-| Authorized Auth domains | `gomoku2d.firebaseapp.com`, `gomoku2d.web.app`, `localhost`, `dev.byebyebryan.com`, `gomoku2d.byebyebryan.com` |
-| OAuth publishing status | `In production` |
-| OAuth scopes observed | `openid`, `userinfo.email`, `profile` |
-| OAuth logo | Not set; intentionally blank to avoid brand verification for `v0.3.0` |
-| Google OAuth client ID | `892554744656-hksl91isq2pb4pp4dga2h3mi2d02ris2.apps.googleusercontent.com` |
-| Public policy pages | `https://gomoku2d.byebyebryan.com/privacy/`, `https://gomoku2d.byebyebryan.com/terms/` |
-| Contact/deletion email | `gomoku2d@byebyebryan.com` |
+| Auth provider | Google |
+| OAuth status | In production |
 | Firestore database | `(default)` |
-| Firestore mode | Native |
-| Firestore location | `us-central1` |
-| Firestore edition | Standard |
-| Firestore free tier | `true` |
-| Firestore rules release | `projects/gomoku2d/releases/cloud.firestore` |
-| Firestore rules deployer | GitHub Actions OIDC as `github-firestore-deploy@gomoku2d.iam.gserviceaccount.com` |
-| Last manual ruleset before CD | `projects/gomoku2d/rulesets/4c4fcf1f-6e05-466c-aeb6-2588241a779f` |
-| GitHub Actions default token | Read-only |
+| Firestore mode/location | Native, `us-central1` |
+| Firestore edition/free tier | Standard, free tier |
+| Rules deployer | `github-firestore-deploy@gomoku2d.iam.gserviceaccount.com` via GitHub OIDC |
+| Public policy pages | `/privacy/`, `/terms/` |
+| Contact/deletion email | `gomoku2d@byebyebryan.com` |
 
-Important irreversible choice: the default Firestore database is in
-`us-central1`. Do not delete/recreate it casually; the database location is a
-foundational project decision.
+Do not delete/recreate the default Firestore database casually; database
+location is a foundational project decision.
 
-## Enabled APIs
+## Repo Infra Files
 
-Required for the released `v0.3` backend foundation:
+| File | Purpose |
+|---|---|
+| `.firebaserc` | Firebase project mapping |
+| `firebase.json` | Firebase rules/index config |
+| `firestore.rules` | Owner-scoped profile and private-history rules |
+| `firestore.indexes.json` | Index config; disables bulky replay payload fields |
+| `gomoku-web/.env.example` | Public Vite Firebase config template |
+| `gomoku-web/src/cloud/firebase.ts` | Optional browser Firebase bootstrap |
 
-- `firebase.googleapis.com`
-- `firestore.googleapis.com`
-- `firebaserules.googleapis.com`
-- `identitytoolkit.googleapis.com`
-- `iam.googleapis.com`
-- `iamcredentials.googleapis.com`
-- `sts.googleapis.com`
+The browser bootstrap stays inert until every required `VITE_FIREBASE_*` value
+is present.
 
-Verify:
+## Verify Project State
+
+Enabled APIs:
 
 ```sh
 gcloud services list \
@@ -60,55 +53,27 @@ gcloud services list \
   | sort
 ```
 
-## Repo Infra Files
-
-| File | Purpose |
-|---|---|
-| `.firebaserc` | Maps default Firebase project to `gomoku2d` |
-| `firebase.json` | Points Firebase tooling at Firestore rules/index files |
-| `firestore.rules` | Hardened owner-scoped profile rules and embedded private-history snapshots |
-| `firestore.indexes.json` | Firestore index config; disables indexing for bulky match replay payload fields |
-| `gomoku-web/.env.example` | Public Vite Firebase config template |
-| `gomoku-web/src/cloud/firebase.ts` | Optional Firebase browser bootstrap |
-
-The browser bootstrap stays inert until every required `VITE_FIREBASE_*` value
-is present.
-
-## Verify Firestore
+Firestore:
 
 ```sh
 gcloud firestore databases describe \
   --project=gomoku2d \
   --database='(default)' \
-  --format='yaml(name,locationId,type,databaseEdition,freeTier,realtimeUpdatesMode,deleteProtectionState,pointInTimeRecoveryEnablement)'
+  --format='yaml(name,locationId,type,databaseEdition,freeTier,deleteProtectionState)'
 ```
 
-Expected essentials:
-
-- `locationId: us-central1`
-- `type: FIRESTORE_NATIVE`
-- `databaseEdition: STANDARD`
-- `freeTier: true`
-
-## Verify Auth
+Auth config:
 
 ```sh
 TOKEN=$(gcloud auth print-access-token)
-
 curl -sS \
   -H "Authorization: Bearer ${TOKEN}" \
   -H "X-Goog-User-Project: gomoku2d" \
   "https://identitytoolkit.googleapis.com/admin/v2/projects/892554744656/config" \
-  | jq '{name, subtype, authorizedDomains, client}'
+  | jq '{name, subtype, authorizedDomains}'
 ```
 
-Expected essentials:
-
-- `subtype: IDENTITY_PLATFORM`
-- authorized domains include `localhost`, `dev.byebyebryan.com`, and
-  `gomoku2d.byebyebryan.com`
-
-Verify the Google provider:
+Google provider:
 
 ```sh
 curl -sS \
@@ -120,475 +85,40 @@ curl -sS \
 
 Expected essentials:
 
-- `enabled: true`
-- `clientId` ends with `.apps.googleusercontent.com`
+- Firestore `locationId: us-central1`, `type: FIRESTORE_NATIVE`, `freeTier: true`.
+- Auth subtype `IDENTITY_PLATFORM`.
+- Authorized domains include localhost/dev/public domains.
+- Google provider enabled with an `.apps.googleusercontent.com` client ID.
 
-Important: `gcloud iam oauth-clients create` is not a valid substitute for a
-Google Auth Platform Web client here. It creates a Cloud IAM OAuth client with a
-UUID-style client ID, which Google Sign-In rejects with `invalid_client`.
+## Firestore Rules Deploy
 
-If the provider must be recreated, create the correct OAuth client in the
-Google Cloud console:
+Normal deploy goes through GitHub Actions OIDC and the dedicated deploy service
+account. Manual deploy should be break-glass only.
 
-1. Open
-   `https://console.cloud.google.com/auth/clients?project=gomoku2d`.
-2. If prompted to configure Google Auth Platform branding, use:
-   - App name: `Gomoku2D`
-   - User support email: `byebyebryan@gmail.com`
-   - Audience: external/public
-   - Developer contact: `byebyebryan@gmail.com`
-3. Create an OAuth client:
-   - Application type: `Web application`
-   - Name: `Gomoku2D Firebase Web`
-4. Add Authorized JavaScript origins:
-   - `http://localhost:8001`
-   - `http://localhost:3001`
-   - `https://gomoku2d.byebyebryan.com`
-   - `https://dev.byebyebryan.com`
-   - `https://gomoku2d.firebaseapp.com`
-   - `https://gomoku2d.web.app`
-5. Add Authorized redirect URIs:
-   - `https://gomoku2d.firebaseapp.com/__/auth/handler`
-   - `https://gomoku2d.web.app/__/auth/handler`
-   - `http://localhost:8001/__/auth/handler`
-   - `http://localhost:3001/__/auth/handler`
-6. Save the generated client ID and client secret outside the repo. The client
-   ID should look like `...apps.googleusercontent.com`.
-
-For remote development over SSH, prefer port forwarding so the browser origin
-stays `localhost`, for example:
-
-```sh
-ssh -L 8001:127.0.0.1:8001 bryan@starship.lan
-```
-
-After creating the Web client, configure Identity Toolkit:
-
-```sh
-TOKEN=$(gcloud auth print-access-token)
-CLIENT_ID='<Google Auth Platform Web client ID>'
-CLIENT_SECRET='<Google Auth Platform Web client secret>'
-
-jq -n \
-  --arg clientId "${CLIENT_ID}" \
-  --arg clientSecret "${CLIENT_SECRET}" \
-  '{
-    name: "projects/892554744656/defaultSupportedIdpConfigs/google.com",
-    enabled: true,
-    clientId: $clientId,
-    clientSecret: $clientSecret
-  }' \
-  | curl -sS -X POST \
-      -H "Authorization: Bearer ${TOKEN}" \
-      -H "X-Goog-User-Project: gomoku2d" \
-      -H "Content-Type: application/json" \
-      "https://identitytoolkit.googleapis.com/admin/v2/projects/892554744656/defaultSupportedIdpConfigs?idpId=google.com" \
-      -d @-
-```
-
-If the provider already exists, use the same JSON body with:
-
-```sh
-curl -sS -X PATCH \
-  -H "Authorization: Bearer ${TOKEN}" \
-  -H "X-Goog-User-Project: gomoku2d" \
-  -H "Content-Type: application/json" \
-  "https://identitytoolkit.googleapis.com/admin/v2/projects/892554744656/defaultSupportedIdpConfigs/google.com?updateMask=enabled,clientId,clientSecret" \
-  -d @-
-```
-
-### OAuth Audience And Public Access
-
-Google Auth Platform has two separate gates:
-
-- **User type**: `External` means the app can target any Google Account.
-- **Publishing status**: `Testing` still limits authorization to explicitly
-  listed test users. To let arbitrary Google users sign in, publish the app to
-  production.
-
-Before a public Gomoku2D release with Google sign-in:
-
-1. Open `https://console.cloud.google.com/auth/audience?project=gomoku2d`.
-2. Confirm user type is `External`.
-3. Confirm publishing status. If it is `Testing`, only configured test users
-   can authorize, up to Google's test-user limit.
-4. Use **Publish app** to move the app to `In production` when public sign-in is
-   intended.
-5. Review `https://console.cloud.google.com/auth/scopes?project=gomoku2d`.
-   Gomoku2D should only request the basic Google Sign-In scopes. Do not add
-   Gmail, Drive, Calendar, or other sensitive/restricted scopes without a
-   separate verification plan.
-6. Review `https://console.cloud.google.com/auth/branding?project=gomoku2d` if
-   Google asks for brand verification or if the consent screen needs public
-   app identity polish. Verification can require a public homepage, privacy
-   policy, and Search Console ownership for authorized domains.
-
-Current `v0.3` state: the OAuth app is `In production`, and runtime sign-in
-has been observed requesting only basic identity scopes:
-
-```text
-openid https://www.googleapis.com/auth/userinfo.email profile
-```
-
-Sensitive-scope verification should not be required as long as the app only
-uses Google Sign-In identity scopes. The OAuth logo is intentionally blank for
-the `v0.3` backend-continuity line; adding a logo or changing visible branding
-details can trigger brand verification.
-
-## Auth Popup And Redirect Behavior
-
-The web app uses Firebase Auth directly, with two browser sign-in paths:
-
-- top-level browsing contexts try `signInWithPopup` first, including mobile
-  browsers
-- redirect sign-in is only used when the current host can safely serve the
-  Firebase Auth helper, or as a fallback in that same safe-host configuration
-
-If the popup is blocked or unsupported and redirect is not safe for the current
-host, the client surfaces the popup error instead of sending the user through a
-redirect flow that cannot complete. If the user intentionally closes the popup,
-the client does not redirect behind their back.
-
-At startup, the auth store calls `getRedirectResult` so returning from a
-redirect sign-in can complete before the normal profile/cloud load path
-continues, but only when redirect sign-in is safe for the current host.
-
-In Chrome, the Firebase SDK may still log
-`Cross-Origin-Opener-Policy policy would block the window.closed call` while it
-polls a Google popup. If sign-in completes and the profile loads, this is
-popup-flow console noise rather than an Auth failure.
-
-For local development, Vite dev/preview responses set:
-
-- `Cross-Origin-Opener-Policy: same-origin-allow-popups`
-- `Referrer-Policy: no-referrer-when-downgrade`
-
-Google Identity Services recommends `same-origin-allow-popups` for popup flows
-when FedCM is disabled. GitHub Pages cannot set custom response headers, so the
-deployed GitHub Pages build may still show the popup warning even when sign-in
-works.
-
-Redirect sign-in depends on the Firebase Auth handler route. Because production
-is currently served from GitHub Pages at `gomoku2d.byebyebryan.com` while the
-configured Firebase `authDomain` is `gomoku2d.firebaseapp.com`, redirect is not
-treated as production-safe. Modern mobile/Safari-style storage partitioning can
-prevent that cross-origin redirect result from completing. To make redirect the
-primary mobile path later, either move the app to Firebase Hosting with the
-custom domain as `authDomain`, proxy `/__/auth/` to Firebase, or self-host the
-Firebase Auth helper files under the app domain.
-
-## Firebase Web Config
-
-Firebase web config is public configuration, not a secret, but keep local env
-files out of git anyway so deploy environments can differ cleanly.
-
-Required Vite env vars:
-
-- `VITE_FIREBASE_API_KEY`
-- `VITE_FIREBASE_AUTH_DOMAIN`
-- `VITE_FIREBASE_PROJECT_ID`
-- `VITE_FIREBASE_STORAGE_BUCKET`
-- `VITE_FIREBASE_MESSAGING_SENDER_ID`
-- `VITE_FIREBASE_APP_ID`
-
-Fetch registered web apps and config:
-
-```sh
-TOKEN=$(gcloud auth print-access-token)
-
-curl -H "Authorization: Bearer ${TOKEN}" \
-  -H "X-Goog-User-Project: gomoku2d" \
-  "https://firebase.googleapis.com/v1beta1/projects/gomoku2d/webApps"
-
-APP_ID="1:892554744656:web:17524b73c8afb856841255"
-curl -H "Authorization: Bearer ${TOKEN}" \
-  -H "X-Goog-User-Project: gomoku2d" \
-  "https://firebase.googleapis.com/v1beta1/projects/gomoku2d/webApps/${APP_ID}/config"
-```
-
-The `X-Goog-User-Project` header matters when using local user credentials with
-Firebase Management APIs.
-
-## Data Deployment
-
-Normal Firestore rules deployment is CD from GitHub Actions, but it is not tied
-to every `main` commit:
-
-- Workflow/job: `.github/workflows/deploy-firestore.yml` / `deploy`
-- Automatic trigger: `push` tags matching `v*`
-- Manual trigger: `workflow_dispatch` from `main`
-- Auth: GitHub OIDC through Workload Identity Federation, no JSON service-account
-  key and no long-lived GitHub secret
-- OIDC condition: only `byebyebryan/gomoku2d` runs from
-  `.github/workflows/deploy-firestore.yml`, and only `v*` tag pushes or manual
-  dispatches from `main`, can impersonate the deployer
-- GCP service account:
-  `github-firestore-deploy@gomoku2d.iam.gserviceaccount.com`
-- GCP role: `roles/firebaserules.admin`
-- WIF provider:
-  `projects/892554744656/locations/global/workloadIdentityPools/github-actions/providers/gomoku2d`
-- GitHub repo variables:
-  `GCP_WORKLOAD_IDENTITY_PROVIDER`,
-  `GCP_FIRESTORE_DEPLOY_SERVICE_ACCOUNT`
-
-The workflow creates a new ruleset from the checked-out `firestore.rules`,
-records the previous ruleset in the job summary, patches
-`projects/gomoku2d/releases/cloud.firestore` to the new ruleset, and verifies
-the live release points at the new ruleset. The live ruleset ID is an
-operational artifact, not source-of-truth code; query it when needed instead of
-committing a new docs-only ruleset update after every deploy.
-
-Release model:
-
-- `main` remains an integration branch; ordinary pushes run CI but do not publish
-  Firestore rules.
-- Version tags publish web assets and Firestore rules for the tagged source.
-- Manual dispatch from `main` is the controlled escape hatch for transitional
-  rules, rollback, or pre-release data migrations.
-
-Manual dispatch commands:
-
-```sh
-gh workflow run deploy-firestore.yml --ref main
-gh run list --workflow deploy-firestore.yml --limit 3
-```
-
-If the rules change depends on a matching web build, also dispatch Pages from
-the same `main` source or cut a version tag:
-
-```sh
-gh workflow run deploy.yml --ref main
-gh run list --workflow deploy.yml --limit 3
-```
-
-Live-data rollout rule: treat Firestore rules like an API/schema migration.
-When existing clients or data may still use the old shape, use expand/contract:
-
-1. Deploy transitional rules that accept both old and new valid shapes.
-2. Deploy the web app that writes the new shape.
-3. Wait for old cached/open clients to age out and smoke-test production writes.
-4. Tighten rules in a follow-up commit/deploy.
-
-Rollback path: the Firestore release can be patched back to the previous ruleset
-ID if permission errors spike. Keep the previous ruleset from the GitHub Actions
-summary or from the release history before tightening rules.
-
-Rules deploy smoke:
-
-1. Confirm the deploy workflow summary shows the expected source ref/SHA.
-2. Confirm the live `cloud.firestore` release points at the deployed ruleset.
-3. Run a no-config local build smoke if the change should preserve offline/local
-   behavior.
-4. Run one production signed-in write smoke if the change affects profile,
-   history, reset, or match creates.
-5. Check Firestore usage/error dashboards after the smoke if rules were
-   tightened.
-
-Do not use a local REST deploy for normal production changes unless GitHub
-Actions is unavailable. A local deploy is harder to tie back to a source ref and
-should be treated as break-glass.
-
-Local validation:
+Local checks:
 
 ```sh
 cd gomoku-web
 npm run test:rules
 ```
 
-This requires Java for the local Firestore emulator. It runs the emulator
-against the checked-in `firestore.rules` and covers owner scoping,
-`reset_at` movement, embedded `match_history` caps, profile
-update cooldowns, reset bypasses, and closed casual match subcollection writes.
-The regular CI web job installs Java and runs this command after Vitest and
-before the production build.
+Deploy workflow is tag/manual-gated; do not couple Firestore rules deployment
+to every web deploy unless the trust model changes.
 
-## Manual Firestore Rules Deploy
+## Remote Dev Note
 
-Manual deploys from a local machine are a break-glass path for local
-verification or rollback. Prefer the GitHub Actions workflow for normal changes
-so production rules are tied to a recorded source ref/SHA.
-
-`firebase-tools` expects its own interactive `firebase login`, even when
-`gcloud` is already authenticated. To keep this runbook usable with the current
-machine setup, deploy rules through the Firebase Rules REST API.
-
-Create a ruleset from the repo file:
+For SSH development, prefer port forwarding so the browser origin remains
+`localhost`:
 
 ```sh
-TOKEN=$(gcloud auth print-access-token)
-
-RULESET_BODY=$(jq -n --rawfile rules firestore.rules \
-  '{source:{files:[{name:"firestore.rules", content:$rules}]}}')
-
-RULESET_RESPONSE=$(curl -sS -X POST \
-  -H "Authorization: Bearer ${TOKEN}" \
-  -H "X-Goog-User-Project: gomoku2d" \
-  -H "Content-Type: application/json" \
-  "https://firebaserules.googleapis.com/v1/projects/gomoku2d/rulesets" \
-  -d "${RULESET_BODY}")
-
-RULESET_NAME=$(printf '%s\n' "${RULESET_RESPONSE}" | jq -r '.name')
-printf '%s\n' "${RULESET_NAME}"
+ssh -L 8001:127.0.0.1:8001 bryan@starship.lan
 ```
 
-If the `cloud.firestore` release does not exist yet, create it:
+## Change Policy
 
-```sh
-curl -sS -X POST \
-  -H "Authorization: Bearer ${TOKEN}" \
-  -H "X-Goog-User-Project: gomoku2d" \
-  -H "Content-Type: application/json" \
-  "https://firebaserules.googleapis.com/v1/projects/gomoku2d/releases" \
-  -d "{\"name\":\"projects/gomoku2d/releases/cloud.firestore\",\"rulesetName\":\"${RULESET_NAME}\"}"
-```
-
-For normal redeploys after the release exists, patch it:
-
-```sh
-curl -sS -X PATCH \
-  -H "Authorization: Bearer ${TOKEN}" \
-  -H "X-Goog-User-Project: gomoku2d" \
-  -H "Content-Type: application/json" \
-  "https://firebaserules.googleapis.com/v1/projects/gomoku2d/releases/cloud.firestore" \
-  -d "{\"release\":{\"name\":\"projects/gomoku2d/releases/cloud.firestore\",\"rulesetName\":\"${RULESET_NAME}\"},\"updateMask\":\"rulesetName\"}"
-```
-
-Verify the live release:
-
-```sh
-curl -sS \
-  -H "Authorization: Bearer ${TOKEN}" \
-  -H "X-Goog-User-Project: gomoku2d" \
-  "https://firebaserules.googleapis.com/v1/projects/gomoku2d/releases/cloud.firestore"
-```
-
-## Deploy Firestore Index Settings
-
-`firestore.indexes.json` is the repo source of truth. For the current local CLI
-setup, field exemptions can also be applied directly with `gcloud`.
-
-The embedded profile history fields are not queried directly, so disable
-indexing for them across the `profiles` collection group:
-
-```sh
-gcloud firestore indexes fields update match_history \
-  --project=gomoku2d \
-  --database='(default)' \
-  --collection-group=profiles \
-  --disable-indexes
-
-gcloud firestore indexes fields update match_history.replay_matches \
-  --project=gomoku2d \
-  --database='(default)' \
-  --collection-group=profiles \
-  --disable-indexes
-
-gcloud firestore indexes fields update match_history.summary_matches \
-  --project=gomoku2d \
-  --database='(default)' \
-  --collection-group=profiles \
-  --disable-indexes
-
-gcloud firestore indexes fields update match_history.archived_stats \
-  --project=gomoku2d \
-  --database='(default)' \
-  --collection-group=profiles \
-  --disable-indexes
-```
-
-Verify:
-
-```sh
-gcloud firestore indexes fields list \
-  --project=gomoku2d \
-  --database='(default)' \
-  --collection-group=profiles \
-  --format=json \
-  | jq '.[] | select(.name | endswith("/fields/match_history") or endswith("/fields/match_history.replay_matches") or endswith("/fields/match_history.summary_matches") or endswith("/fields/match_history.archived_stats"))'
-```
-
-## Verify Cloud Profile Documents
-
-`gcloud firestore` does not currently expose a `documents list` command in this
-local SDK install, so use the Firestore REST API when checking smoke-test data:
-
-```sh
-TOKEN=$(gcloud auth print-access-token)
-
-curl -sS \
-  -H "Authorization: Bearer ${TOKEN}" \
-  -H "X-Goog-User-Project: gomoku2d" \
-  "https://firestore.googleapis.com/v1/projects/gomoku2d/databases/(default)/documents/profiles?pageSize=5" \
-  | jq '{documents: (.documents // []) | map(.name), error}'
-```
-
-Expected after a successful Profile sign-in smoke test: at least one
-`profiles/{uid}` document.
-
-## Current Cloud Data State
-
-Current `0.5.x` cloud UI / data state:
-
-- Local profile storage uses `gomoku2d.local-profile.v5`.
-- Firestore profile documents are validated with `schema_version == 5`.
-- Settings, private match history, archived stats, and reset barriers are stored
-  inside the owner-scoped `profiles/{uid}` document.
-
-## Historical Smoke Evidence
-
-The following bullets are historical verification notes. They document how the
-cloud lane reached the current state; they are not the current schema contract.
-
-- Localhost Google sign-in has been manually confirmed.
-- Production sign-in from `https://gomoku2d.byebyebryan.com/profile` has been
-  manually confirmed after publishing the OAuth app to production.
-- Runtime OAuth requests from production use only basic identity scopes:
-  `openid`, `userinfo.email`, and `profile`.
-- The first live `profiles/{uid}` document has been observed in Firestore.
-- The no-Firebase-config production build path has been smoke-tested: Profile
-  reports cloud sign-in unavailable, the sign-in button is disabled, no
-  Auth/Firestore requests are made, and Home/Local Match still load.
-- Firebase/Auth/Firestore dashboards have been reviewed after the public smoke
-  test and looked normal.
-- Local-build local profile promotion has been manually smoke-tested for
-  `profiles/DbsocAJ0vHVd9LYjk2oaeQx2qec2`: Chrome `localStorage`
-  `gomoku2d.guest-profile.v2` had 24 local matches, and Firestore imported the
-  matching private history under the then-current per-match document model.
-- `v0.3.3` local history used `gomoku2d.local-profile.v3`, mirroring the
-  cloud replay/summary/archive retention tiers before sync.
-- The old alpha Firestore v2 profile documents were deleted before the v3
-  rules/schema deployment prep. Current live `profiles` state is intentionally
-  empty until the next production/local sign-in creates fresh v3 documents.
-- Local Phase 1 cloud-history sync has been manually smoke-tested: after
-  signing out and resetting local profile state, signing back in restored the
-  cloud-backed profile/history; a newly finished signed-in match also restored
-  after refresh/sign-out/sign-in and could be opened from Replay.
-- `v0.3.2` production and local-build smoke has been manually confirmed:
-  signed-in match save, profile/history reload, refresh/sign-out/sign-in
-  persistence, Reset Profile, old-row non-reimport after reset, post-reset save,
-  and live/local cross-profile sync are all green.
-- The matching `v0.3.2` web build and Firestore rules were manually dispatched
-  from `main` before release prep and both completed successfully.
-
-After the `v0.3.2` tag:
-
-- `v0.3.2` has been cut and published.
-- Keep the compatibility caveat in mind for future rules changes: cloud match
-  history writes require the matching web build because rules now expect profile
-  schema v3 with embedded `match_history`; old open clients may need a refresh
-  after deploy, and pre-v3 alpha profile docs are intentionally not migrated.
-- `v0.3.3` hardening has been validated locally across Vitest, Firestore rules
-  tests, production build, and targeted live/local cloud-sync smoke during the
-  development slice. Before tagging, deploy the final release candidate from
-  the current `main`, then smoke production sign-in, `/profile` direct load,
-  one signed-in match save, Profile history, Replay, Reset Profile, and Delete
-  Cloud on a disposable signed-in profile.
-- Refresh cost/headroom notes again after a little more real traffic if the
-  dashboard shows anything surprising.
-
-Deferred until later phases:
-
-- GitHub sign-in provider, unless Google-only feels too narrow.
-- Cloud Run service and runtime service account.
-- Composite Firestore indexes beyond the current field-exemption overrides.
-- Public replay storage and publish/share infra.
+- Update [`data_model.md`](../backend/data_model.md) and rules tests with any
+  profile schema change.
+- Update [`backend_cost.md`](backend_cost.md) when a backend feature changes
+  read/write/storage shape.
+- Update [`future_cloud_run.md`](../backend/future_cloud_run.md) rather than
+  this runbook for undeployed server-authority designs.

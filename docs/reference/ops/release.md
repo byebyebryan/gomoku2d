@@ -1,30 +1,25 @@
 # Release Workflow
 
-This is the release checklist for the web game and repo-level tags.
+Purpose: release checklist for the web game and repo-level tags.
+
+This file owns release sequencing. Test commands live in
+[`testing.md`](testing.md). Tournament/report generation lives in
+[`tournament.md`](tournament.md).
 
 ## Public Host
 
-The canonical public URL is:
+Canonical URL:
 
 ```text
 https://gomoku2d.byebyebryan.com/
 ```
 
-GitHub Pages is configured with that custom domain and HTTPS enforcement. DNS
-is managed in Cloudflare with `gomoku2d` as a `CNAME` to
-`byebyebryan.github.io`.
+GitHub Pages serves the custom domain root. Production builds use
+`GOMOKU_BASE_PATH=/`.
 
 ## Local Preview
 
-Reserve port `8001` for the local production preview.
-
-The tmux session name is:
-
-```sh
-gomoku-preview
-```
-
-To rebuild and restart it:
+Reserve port `8001` and tmux session `gomoku-preview`:
 
 ```sh
 /home/bryan/.cargo/bin/wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler
@@ -36,161 +31,36 @@ tmux new-session -d -s gomoku-preview -c /home/bryan/code/gomoku2d/gomoku-web \
   'npm run preview -- --host 0.0.0.0 --port 8001'
 ```
 
-Open:
+Open `http://localhost:8001/`.
 
-```text
-http://localhost:8001/
-```
+## Release Prep
 
-The local preview build uses Vite's default root base path. GitHub Pages also
-builds with `GOMOKU_BASE_PATH=/` because the public app is served from the
-custom domain root:
+1. Decide whether screenshots/OG/README hero need refresh.
+2. If captures should show the new version, run:
 
-```text
-https://gomoku2d.byebyebryan.com/
-```
+   ```sh
+   scripts/set-web-version.sh x.y.z
+   ```
 
-## Version For Captures
+3. Run relevant checks from [`testing.md`](testing.md).
+4. Refresh curated reports only when bot/analyzer/report behavior or source data
+   changed; use [`tournament.md`](tournament.md).
+5. Update `CHANGELOG.md` with an empty `[Unreleased]` section and dated release
+   section.
+6. Review `git diff` for accidental generated or scratch output.
 
-If screenshots or recordings should show the upcoming version, bump the web
-package version before capturing:
+## Report Artifact Gate
 
-```sh
-VERSION=x.y.z
-scripts/set-web-version.sh "$VERSION"
-```
+Before a release that includes reports:
 
-This updates `gomoku-web/package.json` and `gomoku-web/package-lock.json`
-without touching the changelog, committing, or tagging.
+- curated report JSON is committed under `gomoku-bot-lab/reports/` and
+  `gomoku-bot-lab/analysis-reports/`;
+- report provenance says `"git_dirty": false`;
+- `GOMOKU_ALLOW_MISSING_REPORTS=1` is not used for the production build;
+- web build copies `/bot-report/report.json`, `/analysis-report/report.json`,
+  `/lab/index.html`, and `/visuals/index.html`.
 
-## Release Asset Pass
-
-Run this pass for visual releases, asset changes, or releases where README/social
-captures should change. For backend/docs-only releases, record that the existing
-captures remain current and skip the refresh.
-
-When needed before tagging:
-
-- capture the desktop/mobile screenshot set
-- capture or refresh the README hero GIF
-- update `gomoku-web/assets/og_source.png`
-- regenerate `gomoku-web/public/og.png` at `1200x630`
-- update `docs/working/ui_screenshot_review.md`, `docs/reference/app/ui_design.md`, `docs/reference/product/roadmap.md`,
-  and `CHANGELOG.md`
-- leave `CHANGELOG.md` with an empty `[Unreleased]` section and a dated
-  `[x.y.z]` section for the release
-
-## Checks
-
-Run the same CI-equivalent checks the release candidate should pass from the
-repo root:
-
-```sh
-(cd gomoku-bot-lab && cargo fmt --all --check)
-(cd gomoku-bot-lab && cargo clippy --workspace --all-targets -- -D warnings)
-(cd gomoku-bot-lab && cargo test --workspace)
-
-/home/bryan/.cargo/bin/wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler
-
-(cd gomoku-web && npm run typecheck)
-(cd gomoku-web && npm test)
-(cd gomoku-web && npm run test:rules)
-(cd gomoku-web && npm audit --omit=dev)
-(cd gomoku-web && GOMOKU_BASE_PATH=/ npm run build)
-```
-
-The Vite chunk-size warning for Phaser is expected and is not currently
-release-blocking.
-
-## Manual Browser Smoke
-
-Playwright smoke is intentionally local/manual for now. CI and Pages deploy do
-not install browsers because browser provisioning has been unreliable in GitHub
-Actions and should not block normal deploys.
-
-Restart the local preview first using the command in
-[`Local Preview`](#local-preview), then run:
-
-```sh
-(cd gomoku-web && PLAYWRIGHT_BASE_URL=http://127.0.0.1:8001 npm run playtest:smoke)
-```
-
-When `PLAYWRIGHT_BASE_URL` is set, Playwright uses the already-running preview
-server. A stale preview means the smoke is testing the wrong build.
-
-## Bot And Analysis Report Refresh
-
-Curated bot-lab report artifacts live in `gomoku-bot-lab/reports/` and are
-published as `/bot-report/report.json`, the ranking/search data source for
-`/lab/`. Scratch reports belong in the ignored `gomoku-bot-lab/outputs/` folder.
-
-Curated replay-analysis report artifacts live in
-`gomoku-bot-lab/analysis-reports/` and are published as
-`/analysis-report/report.json`, the analysis data source for `/lab/`. The
-analysis report is intentionally tied to product bot presets: it analyzes the
-Easy/Normal/Hard preset triangle from the same tournament source used to
-generate the published bot report.
-
-The curated report artifacts are tracked generated outputs. `.gitattributes`
-marks their JSON files as generated and disables noisy diffs, but release builds
-still require them by default. Use `GOMOKU_ALLOW_MISSING_REPORTS=1` only for
-local/dev builds that intentionally skip report pages.
-
-The report JSON captures git provenance when the tournament command runs, so
-refresh it only from a clean committed toolchain:
-
-1. Commit bot/report code changes first.
-2. Confirm `git status --short` is clean.
-3. Run the curated tournament into ignored full output plus
-   `gomoku-bot-lab/reports/report.json`.
-4. Confirm `reports/report.json` says `"git_dirty": false`.
-5. Generate the preset-triangle analysis report from the compact published bot
-   report into
-   `gomoku-bot-lab/analysis-reports/report.json`.
-6. Commit the report artifacts as a follow-up commit.
-
-Keep the full telemetry report out of curated published artifacts. The compact
-published bot report keeps match move cells for board rendering and replay
-analysis, but omits per-move/per-side diagnostics.
-
-The canonical curated tournament command lives in
-[`Tournament Eval`](tournament.md). After it writes `reports/report.json`, run
-the curated analysis export from `gomoku-bot-lab/`:
-
-```sh
-jq '.provenance | {git_commit, git_dirty}' reports/report.json
-cargo run --release -p gomoku-eval -- analyze-report-replays \
-  --report reports/report.json \
-  --selector preset-triangle \
-  --published-report-json analysis-reports/report.json \
-  --max-depth 4 \
-  --max-scan-plies 64
-jq '{source_report, selector, total, analyzed, failed, model, summary}' analysis-reports/report.json
-```
-
-For the curated analysis report, sanity-check at minimum:
-
-- `source_kind == "report_replays"`
-- `selector == "Preset triangle"`
-- `sections | length == 3`
-- `analyzed == total` and `failed == 0`
-- `model.reply_policy == "corridor_replies"`
-- `model.max_depth == 4` and `model.max_scan_plies == 64`
-- summary counts look intentional for the current report sample
-
-Before deployment, confirm the web build copied the required report files:
-
-```sh
-test -f gomoku-web/dist/bot-report/report.json
-test -f gomoku-web/dist/analysis-report/report.json
-test -f gomoku-web/dist/lab/index.html
-test -f gomoku-web/dist/visuals/index.html
-```
-
-## Push And CI Baseline
-
-For normal hardening commits, push `main` and let CI prove the integration
-branch before dispatching any deploy workflow:
+## Push And CI
 
 ```sh
 git push origin main
@@ -198,18 +68,13 @@ gh run list --branch main --limit 5
 gh run watch <run-id> --exit-status
 ```
 
-`main` pushes run `.github/workflows/ci.yml` only. They do not publish the web
-site and do not deploy Firestore rules.
-
-If a run fails, inspect the failing job before retrying:
+If a run fails:
 
 ```sh
 gh run view <run-id> --log-failed
 ```
 
-## Finalize
-
-After reviewing `git status` and the diff, finalize the prepared release:
+## Cut Release
 
 ```sh
 VERSION=x.y.z
@@ -217,79 +82,5 @@ scripts/release.sh --check "$VERSION"
 scripts/release.sh "$VERSION"
 ```
 
-`release.sh` validates:
-
-- current branch is `main`
-- the local and remote tag do not already exist
-- `gomoku-web/package.json` matches the requested version
-- `CHANGELOG.md` has a dated release section for the version
-- `CHANGELOG.md` has an empty `[Unreleased]` section
-- compare links point from the new tag correctly
-
-If the working tree has changes, the script stages them, commits
-`release: vX.Y.Z`, and creates an annotated tag. If the tree is already clean,
-it tags the current `HEAD`.
-
-Push when ready:
-
-```sh
-git push origin main
-git push origin "v$VERSION"
-```
-
-Pushing `main` updates the release commit. It does not publish the site.
-
-Pushing the tag fires:
-
-- `.github/workflows/release.yml`
-- `.github/workflows/deploy.yml`
-- `.github/workflows/deploy-firestore.yml`
-
-For a custom-domain smoke redeploy without cutting a release, run the Pages
-workflow manually after the relevant deploy config has been pushed to `main`:
-
-```sh
-gh workflow run deploy.yml --ref main
-```
-
-For a Firestore-rules smoke deploy without cutting a release, run the Firestore
-workflow manually from `main`:
-
-```sh
-gh workflow run deploy-firestore.yml --ref main
-```
-
-Use manual dispatch only when the current `main` source is intentionally
-deployable. If Firestore rules require a new web write shape, deploy the
-matching web build as well or cut a tag so Pages and rules deploy from the same
-source.
-
-Watch deploy status:
-
-```sh
-gh run list --workflow deploy.yml --limit 3
-gh run list --workflow deploy-firestore.yml --limit 3
-```
-
-## Production Smoke
-
-After a tag release or manual deploy, run the smallest smoke that covers the
-changed surface:
-
-- Home loads from `https://gomoku2d.byebyebryan.com/`.
-- `/profile`, `/privacy/`, and `/terms/` return `200`.
-- If report publishing changed: `/lab/`, `/bot-report/report.json`,
-  and `/analysis-report/report.json` return `200`.
-- Local-only match/replay still works without signing in.
-- If auth/profile changed: sign in from production, refresh, sign out, sign in
-  again, and confirm history/profile continuity.
-- If match history or rules changed: finish one signed-in match, confirm it
-  appears in Profile, open Replay, and confirm Firestore rules deployment used
-  the intended source ref.
-- If Reset Profile changed: reset a signed-in test profile, confirm old rows do
-  not reappear, then save one post-reset match.
-- If Delete Cloud changed: delete a signed-in test profile, confirm the app
-  signs out and Firestore no longer has `profiles/{uid}`, then sign in again
-  only if recreating a fresh cloud profile is intended.
-- If profile schema changed without migration: confirm old alpha test documents
-  were deleted or rewritten before deploying stricter rules.
+The release script validates version/changelog/tag state and dispatches the
+published web workflow. After deployment, smoke the public URL manually.
