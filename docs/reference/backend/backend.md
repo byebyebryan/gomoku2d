@@ -32,13 +32,14 @@ once.
 | Version | Backend intent | Included | Deferred |
 |---|---|---|---|
 | `P3 / v0.3` | Backend foundation and cloud continuity | Firebase Auth, cloud profile, local profile promotion, private cloud history, owner-scoped Firestore rules | live PvP, ranked/trusted matches, public replay sharing, replay analysis, puzzles |
-| `P4 / v0.4` | Lab-powered product identity | replay analysis, bot reports, configurable bots, tactical hints; Cloud Run only if browser-side wasm is not enough | live PvP, ranked/trusted matches, broad public sharing, puzzles, bot personalities |
+| `P4 / v0.4` | Lab-powered product identity | replay analysis, bot reports, configurable bots, tactical hints | live PvP, ranked/trusted matches, broad public sharing, puzzles, bot personalities |
 | `P5 / v0.5` | Public-release reconciliation | repo/artifact cleanup, report presentation, explanation pages, release packaging; backend usually unchanged | live PvP, ranked/trusted matches, broad public sharing |
 | `P6 / v0.6` | Online product expansion | Cloud Run match authority, direct challenge/PvP, trusted match history, matchmaking/ranked if useful, explicit public shareables | broad social features |
 
-Cloud Run is part of the target backend, but `v0.3` does not need it. `v0.4`
-may use it for heavier lab-powered analysis if browser-side wasm is not enough;
-otherwise it can wait until the online/trusted-match phase.
+Cloud Run is part of the target backend, but it is not deployed in the current
+product. Browser-side wasm has been enough for local play, bot moves, replay
+analysis, and reports so far; Cloud Run can wait until a trust boundary or
+server-only workload actually needs it.
 
 ## Implementation References
 
@@ -50,19 +51,32 @@ live elsewhere so the design doc does not become a deployment log:
 - [`backend_cost.md`](../ops/backend_cost.md) — free-tier assumptions, rough usage estimates, and
   headroom checks.
 
-## Architecture
+## Current Deployed Backend
 
-Four components:
+The deployed backend today is Firebase:
+
+- Firebase Auth for optional Google sign-in.
+- Firestore `profiles/{uid}` for owner-scoped cloud profile, settings, and
+  private capped match history.
+- Firestore rules in this repo enforce ownership, schema shape, cooldowns,
+  reset barriers, and closed future namespaces.
+- No Cloud Run service exists yet; the app continues to run local/casual
+  gameplay, bot moves, and replay analysis in the browser through wasm.
+
+## Target Architecture
+
+The target service model has four components:
 
 | Component | Role | Cost note |
 |---|---|---|
 | **Local profile** | Local identity, local settings, local match history | No backend cost |
 | **Firebase Auth** | Sign-in when cloud-backed features are needed | Auth is initialized as Identity Platform; keep providers inside the no-cost social-sign-in tier tracked in [`backend_cost.md`](../ops/backend_cost.md) |
 | **Firestore** | Document storage: cloud profiles, trusted matches, published replays, puzzles | Current database state lives in [`backend_infra.md`](../ops/backend_infra.md); cost posture lives in [`backend_cost.md`](../ops/backend_cost.md) |
-| **Cloud Run** | Rust service: trusted match authority, username reservation, verification, strong bot, puzzle generation | For request-based billing: 2M requests · 180k vCPU-s · 360k GiB-s per month free (us-central1-based) |
+| **Cloud Run** | Future Rust service: trusted match authority, username reservation, verification, strong bot, puzzle generation | For request-based billing: 2M requests · 180k vCPU-s · 360k GiB-s per month free (us-central1-based) |
 
-Everything scales to zero when idle. The browser is the fast path when
-trust doesn't matter; Cloud Run is the path when it does.
+Firebase usage is the current backend footprint. Future Cloud Run work should
+scale to zero when idle. The browser remains the fast path when trust does not
+matter; Cloud Run is the path when it does.
 
 ### Where code lives
 
@@ -94,9 +108,8 @@ This avoids creating backend identities for drive-by visitors while still
 letting players get a feel for the game immediately.
 
 The web uses the Firebase JS SDK directly (see
-[`architecture.md`](../app/architecture.md)). Cloud Run
-verifies callers by validating the Firebase ID token JWT against Google's
-public keys.
+[`architecture.md`](../app/architecture.md)). Future Cloud Run endpoints verify
+callers by validating the Firebase ID token JWT against Google's public keys.
 
 ### Identity model
 
@@ -209,7 +222,7 @@ current rules intentionally keep the first public backend slice narrow:
 - private match subcollections are closed for the current casual path and kept
   reserved for future server-verified/shareable records
 
-## Cloud Run service
+## Future Cloud Run Service
 
 One binary, one container, one service to start. `axum` for HTTP, one
 endpoint per concern.
@@ -230,9 +243,10 @@ endpoint per concern.
 - **Puzzle generation.** Offline job that scans eligible trusted saved-match
   history for forced-win branches, verifies with search, publishes to
   `puzzles/`.
-- **Replay analysis.** Post-match or on-demand, runs each move through the
-  strong bot to produce an evaluation curve — feeds the replay viewer's
-  critical-move tags.
+- **Server-side replay analysis.** Optional future path for heavier analysis if
+  browser-side wasm stops being enough. The current replay analyzer runs in the
+  browser and uses corridor/lethal semantics rather than a generic evaluation
+  curve.
 - **Strong bot endpoint.** `POST /bot/move` — FEN + difficulty in, move
   out. Depth the browser can't afford.
 
@@ -346,7 +360,7 @@ them; this is the menu.
 | Replay sharing | Public URL via `replays/{id}` projected from a saved private match | Explicit publish step |
 | Online match (human vs human) | `matches/{id}` + Cloud Run authority | Server validates every move |
 | Strong bot endpoint | `/bot/move` at higher depth | Optional auth + rate limit |
-| Replay analysis | Private replay evaluation curve, critical moves | Private for all saved matches; public trust only for `server_verified` |
+| Server-side replay analysis | Optional heavier analysis beyond the browser-side wasm analyzer | Private for all saved matches; public trust only for `server_verified` |
 | Puzzle generation | Offline job → `puzzles/` | Derived from `server_verified` history and curated seed positions |
 | Puzzle play + progress | Per-user attempts, streaks | Owner-scoped |
 | Leaderboard | Verified results only | Server aggregates verified replays |

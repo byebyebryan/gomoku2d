@@ -120,6 +120,10 @@ Routes:
 - `/replay/:matchId` — replay viewer with browser-side corridor analysis for decisive saved matches
 - `/profile` — local/cloud player record and history
 - `/settings` — rule, bot, hint, and touch-control setup
+- `/rules/` — Freestyle/Renju rules and examples
+- `/guide/` — threat, combo, forced-corridor, and replay-analysis guide
+- `/lab/` — bot and replay-analysis report viewer
+- `/visuals/` — visual design reference
 - `/privacy/` and `/terms/` — SPA Privacy and Terms pages for the public app
 
 ---

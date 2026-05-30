@@ -59,19 +59,22 @@ should feel durable once you choose to sign in. Specifically:
 - Signing in with Google **promotes** the local state to a cloud-backed profile
   without making the user feel they "started over." GitHub sign-in can follow
   later if the product needs it.
-- **Local data** is the source of truth for local-only sessions. **Cloud
-  state** becomes the source of truth for signed-in features such as synced
-  history, shareable replays, online play, and anything public.
-- Online human matches and any replay we intend to trust or share go through
-  backend-managed flows rather than relying on client-only state.
+- **Local data** is the source of truth for guest/local-only sessions.
+- **Signed-in private history** is cloud-backed continuity for the owner. It can
+  sync local settings and client-uploaded casual matches across devices, but it
+  is not public or ranked evidence.
+- **Public/shared replays** require an explicit publish/share step from a saved
+  match. They are not created automatically for every finished game.
+- **Trusted online/ranked history** later goes through backend-managed flows
+  where each move is validated by the server before it can count as trusted.
 
 ### 3. Simple surface, serious stack
 
 The board keeps the pixel-art feel because it gives the game a distinct,
 personal tone. Everything around the board — menus, profile, replay controls,
-history, and future analysis surfaces — is a clean, modern DOM UI. A shared
-color palette keeps the two halves cohesive rather than feeling like two games
-glued together.
+history, replay analysis, reports, and future lesson surfaces — is a clean,
+modern DOM UI. A shared color palette keeps the two halves cohesive rather than
+feeling like two games glued together.
 
 This isn't "canvas in a web page." It's a proper SPA where the canvas is one
 component among many.
@@ -96,7 +99,8 @@ Calling these out so scope stays honest:
 - A stranger can open the URL, play a bot match as a local player, decide they care,
   sign in with Google, keep their progress, and review a saved game without
   reading instructions.
-- At least one feature in the game exists specifically *because* we have a
-  bot lab behind it (puzzles, critical-move tagging, or save-this-game).
+- At least one feature in the game exists specifically *because* we have a bot
+  lab behind it. Replay analysis and lab reports are the current examples;
+  puzzles and save-this-game challenges remain natural extensions.
 - The pieces stay legible: someone reading the repo can tell what the game
   is, what the lab is, and how they connect, without a tour.

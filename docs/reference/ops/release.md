@@ -153,23 +153,11 @@ Keep the full telemetry report out of curated published artifacts. The compact
 published bot report keeps match move cells for board rendering and replay
 analysis, but omits per-move/per-side diagnostics.
 
-Current curated command, from `gomoku-bot-lab/`:
+The canonical curated tournament command lives in
+[`Tournament Eval`](tournament.md). After it writes `reports/report.json`, run
+the curated analysis export from `gomoku-bot-lab/`:
 
 ```sh
-cargo run --release -p gomoku-eval -- tournament \
-  --bots search-d1,search-d3,search-d3+pattern-eval,search-d5+tactical-cap-16+pattern-eval,search-d7+tactical-cap-8+pattern-eval,search-d3+pattern-eval+corridor-proof-c16-d8-w4,search-d5+tactical-cap-16+pattern-eval+corridor-proof-c16-d8-w4,search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4 \
-  --games-per-pair 64 \
-  --opening-policy centered-suite \
-  --opening-plies 4 \
-  --search-cpu-time-ms 2000 \
-  --search-budget-mode pooled \
-  --search-cpu-reserve-ms 8000 \
-  --search-cpu-max-move-ms 4000 \
-  --max-moves 120 \
-  --seed 63 \
-  --threads 22 \
-  --report-json outputs/full-tournament-report.json \
-  --published-report-json reports/report.json
 jq '.provenance | {git_commit, git_dirty}' reports/report.json
 cargo run --release -p gomoku-eval -- analyze-report-replays \
   --report reports/report.json \

@@ -41,7 +41,9 @@ audience:
 
 ## Maintenance Rule
 
-Public docs explain the project. Reference docs define current behavior and
-contracts. Working docs can be verbose and preserve raw context. Archive docs
+Public docs explain the project to visitors. Product references can include
+target-state intent, but must say when a feature is future scope. App, backend,
+lab, corpus, and ops references define current implementation contracts and
+runbooks. Working docs can be verbose and preserve raw context. Archive docs
 should not be used as current direction unless a canonical doc explicitly points
 there for historical evidence.
