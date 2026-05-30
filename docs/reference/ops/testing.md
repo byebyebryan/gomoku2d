@@ -1,5 +1,25 @@
 # Testing Guidelines
 
+## Command Matrix
+
+Use the smallest command that protects the contract you changed. Before a broad
+release or after core/rules/search work, run the full relevant lane.
+
+| Area | Command |
+|---|---|
+| Rust formatting | `(cd gomoku-bot-lab && cargo fmt --all --check)` |
+| Rust lint | `(cd gomoku-bot-lab && cargo clippy --workspace --all-targets -- -D warnings)` |
+| Rust workspace tests | `(cd gomoku-bot-lab && cargo test --workspace)` |
+| Tactical scenarios | `(cd gomoku-bot-lab && cargo run -p gomoku-eval -- tactical-scenarios)` |
+| Lethal scenarios | `(cd gomoku-bot-lab && cargo run -p gomoku-eval -- lethal-scenarios)` |
+| Web typecheck | `(cd gomoku-web && npm run typecheck)` |
+| Web unit tests | `(cd gomoku-web && npm test)` |
+| Firestore rules | `(cd gomoku-web && npm run test:rules)` |
+| Production build/direct routes | `(cd gomoku-web && GOMOKU_BASE_PATH=/ npm run build)` |
+| Local browser smoke | `(cd gomoku-web && PLAYWRIGHT_BASE_URL=http://127.0.0.1:8001 npm run playtest:smoke)` |
+
+## Test Design
+
 Tests in this repo should protect durable behavior, not the temporary path used
 to debug a bug.
 

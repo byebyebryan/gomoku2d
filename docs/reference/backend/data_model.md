@@ -131,6 +131,9 @@ Rules:
   changes remain local-first and coalesce into the next eligible sync checkpoint.
   Reset-barrier writes can bypass the normal edit cooldown only when they clear
   history and advance `reset_at` inside the constrained reset shape.
+- A newly created profile can perform one immediate initial sync while
+  `created_at == updated_at`; this lets local profile promotion import settings
+  and local history right after sign-in without waiting for the normal cooldown.
 - Reset Profile while signed in writes `reset_at`, resets cloud profile
   display/settings fields to provider/default values, clears every
   `match_history` tier, and clears this device's local/cloud caches.
@@ -310,10 +313,10 @@ the UI/export layer later, but are not the canonical private storage format.
 
 ### Derived Fields
 
-Winning cells are not stored in v1. For a won match, reconstruct the board from
-`move_cells`, then ask the rules/core layer for the winning line from the final
-move. This avoids storing redundant derived state that can disagree with the move
-history.
+Winning cells are not stored in `SavedMatchV2`. For a won match, reconstruct
+the board from `move_cells`, then ask the rules/core layer for the winning line
+from the final move. This avoids storing redundant derived state that can
+disagree with the move history.
 
 `move_count` is stored even though it is derivable from `move_cells.length`
 because it is useful summary metadata. Embedded private-history records are

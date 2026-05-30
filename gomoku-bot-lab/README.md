@@ -16,12 +16,14 @@ first.
 | `gomoku-bot` | `Bot` trait + implementations: `RandomBot`, `SearchBot`, plus corridor proof helpers |
 | `gomoku-analysis` | Shared replay-analysis model and bounded corridor traceback |
 | `gomoku-eval` | Self-play arena, round-robin tournaments, Elo |
+| `gomoku-lab-support` | Shared scenario boards and fixtures for tests, reports, and perf work |
 | `gomoku-cli` | Native match runner with replay export |
 | `gomoku-wasm` | `wasm-pack` bridge exposing `WasmBoard`, `WasmBot`, and replay analysis to JS |
 
-Dependency shape: `core` has zero deps; `bot` / `analysis` / `eval` / `cli` /
-`wasm` all depend on `core`; `analysis`, `cli`, `eval`, and `wasm` depend on
-`bot`; `eval` and `wasm` consume `analysis`.
+Dependency shape: `core` is intentionally small and only carries serde-style
+data dependencies; `bot` / `analysis` / `eval` / `cli` / `wasm` all depend on
+`core`; `analysis`, `cli`, `eval`, and `wasm` depend on `bot`; `eval`, `wasm`,
+and tests consume `lab-support` where shared scenario fixtures are useful.
 
 ## Build and test
 

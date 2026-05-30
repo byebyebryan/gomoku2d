@@ -5,15 +5,14 @@ contracts for the current web app. Paired with `architecture.md` (runtime
 boundary), `ui_design.md` (DOM shell style system), and `game_visual.md`
 (Phaser canvas visual language).
 
-This document is the canonical UI/product-design guide for the local-first app
-baseline established in `v0.2`. It is intentionally focused on the playable
-surfaces we have now. The `v0.3` cloud-continuity line extends Profile and
-persistence, but cloud sync, published replays, and online play should not leak
-into the default local play flow.
+This document is the canonical UI/product-design guide for the current
+local-first app. It is intentionally focused on the playable surfaces we have
+now. Cloud sync extends Profile and persistence, but cloud-backed features and
+future online play should not leak into the default local play flow.
 
 ## Product frame
 
-The `v0.2` baseline is about four things:
+The app design is about four things:
 
 - move the web app onto a proper FE stack
 - make the UI scalable beyond one Phaser scene
@@ -74,6 +73,12 @@ Current canonical surfaces:
 | `/replay/:matchId` | Saved match replay viewer |
 | `/settings` | Saved game, bot, hint, and touch-control settings |
 | `/profile` | Local/cloud identity, reset/delete actions, stats, and history |
+| `/rules/` | Basic Freestyle/Renju rules and legality examples |
+| `/guide/` | Play guide for threats, combos, forced corridors, and replay analysis |
+| `/lab/` | Published bot and replay-analysis report viewer |
+| `/visuals/` | Visual design reference for sprites, icons, UI tokens, and examples |
+| `/privacy/` | SPA Privacy page for the public app |
+| `/terms/` | SPA Terms page for the public app |
 
 Future dedicated cloud or online routes can be added later. They are not part
 of the default local-play contract unless they preserve one-click play.

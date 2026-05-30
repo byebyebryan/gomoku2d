@@ -2,19 +2,18 @@
 
 ## Shape
 
-Three components, one repo:
+Current components, one repo:
 
 ```
 ┌────────────────────────────┐      ┌────────────────────────────┐
-│   gomoku-web (browser)     │      │ gomoku-api / backend       │
-│   ├─ React app shell (DOM) │◄────►│   ├─ HTTP API              │
-│   └─ Phaser board (canvas) │      │   └─ Firestore client      │
-│       ↑ shares core via    │      │       ↑ shares core via    │
-│       wasm bridge          │      │       cargo path dep       │
-└────────────────────────────┘      └────────────────────────────┘
-                │                                  │
-                └──────┐                  ┌────────┘
-                       ▼                  ▼
+│   gomoku-web (browser)     │◄────►│   Firebase / Firestore     │
+│   ├─ React app shell (DOM) │      │   Auth + private profile   │
+│   └─ Phaser board (canvas) │      │   and history persistence  │
+│       ↑ shares core via    │      └────────────────────────────┘
+│       wasm bridge          │
+└────────────────────────────┘
+                │
+                ▼
              ┌─────────────────────────────────────┐
              │   gomoku-bot-lab (Rust workspace)   │
              │   core · rules · bots · eval · cli  │
@@ -26,11 +25,13 @@ Three components, one repo:
 - **`gomoku-bot-lab`** is the Rust workspace. Core rules, bots, evaluation
   tools, and the wasm bridge live together because they share logic. The web
   and (future) server both borrow from it.
-- **`gomoku-api` / backend** is the future Rust service for the features that
-  need cloud durability or server trust. It starts as
-  `gomoku-bot-lab/gomoku-api/` so it can share workspace deps and graduate to a
-  top-level `gomoku-backend/` only when deploy cadence or ownership justifies
-  the split.
+- **Firebase Auth + Firestore** are the deployed backend today: optional Google
+  sign-in, owner-scoped profile documents, private settings/history sync, and
+  hardened rules.
+- **`gomoku-api` / Cloud Run** is future scope for features that need server
+  trust: online move authority, username reservation, public verification, or
+  server-only compute. It should start as `gomoku-bot-lab/gomoku-api/` if that
+  phase lands, then split only when deploy cadence or ownership justifies it.
 
 ## Frontend stack
 
@@ -38,8 +39,9 @@ Three components, one repo:
 
 - **React + TypeScript** — component model for the app shell.
 - **Vite** — dev server and bundler.
-- **React Router** — URL-driven screens for the current local-first app
-  (`/`, `/match/local`, `/replay/:matchId`, `/profile`), with future
+- **React Router** — URL-driven screens for the current app (`/`,
+  `/match/local`, `/replay/:matchId`, `/settings`, `/profile`, `/rules/`,
+  `/guide/`, `/lab/`, `/visuals/`, `/privacy/`, `/terms/`), with future
   cloud/online routes added later.
 - **Zustand** — client state (current view, draft moves, UI toggles).
 - **Firebase SDK directly** — sign-in, Firestore subscriptions, storage for
@@ -101,21 +103,23 @@ modals, auth UI, and any future cloud/online shell surfaces.
 **They communicate through a narrow interface:**
 
 ```ts
-// React → Phaser: simplified declarative board state
-interface BoardProps {
-  cells: Cell[][];
-  counterThreatMoves: Move[];
-  currentPlayer: 1 | 2;
-  forbiddenMoves: Move[];
-  lastMove?: Move;
-  interactive: boolean;
-  touchControlMode: 'none' | 'pointer' | 'touchpad';
-  showSequenceNumbers: boolean;
-  status: MatchStatus;
-  imminentThreatMoves: Move[];
-  threatMoves: Move[];
-  winningMoves: Move[];
-  winningCells: Move[];
+// React → Phaser: one declarative board view model
+interface BoardViewModel {
+  boardSize: number;
+  forbiddenMoves: CellPosition[];
+  interaction:
+    | PlayInteraction
+    | { kind: "readonly" }
+    | { kind: "replay" };
+  overlays: BoardOverlay[];
+  position: {
+    cells: CellStone[][];
+    currentPlayer: 1 | 2;
+    lastMove: CellPosition | null;
+    moves: MatchMove[];
+    showSequenceNumbers: boolean;
+    status: MatchStatus;
+  };
 }
 
 // Phaser → React: intent events
@@ -125,9 +129,9 @@ type BoardEvent =
   | { type: 'unhover' };
 ```
 
-A single `<Board>` React component wraps the Phaser instance, passes props
-in, subscribes to events out. Phaser never reads from the global store or
-Firestore directly.
+A single `<Board model={...}>` React component wraps the Phaser instance,
+passes a `BoardViewModel` in, and subscribes to intent events out. Phaser never
+reads from the global store or Firestore directly.
 
 This is a departure from v0.1, where Phaser scenes held game state and
 drove the UI. The rewrite flips it: state lives in React/Zustand, Phaser

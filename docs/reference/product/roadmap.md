@@ -320,8 +320,11 @@ heavy lab work, and package the project for first public release.
 
 ### Possible Work
 
-- continue slimming/report-viewer follow-up work now that bot/analysis reports
-  are web-rendered from compact `report.json`
+- completed so far: compact report JSON, a web-rendered `/lab/` report viewer,
+  `/rules/`, `/guide/`, `/visuals/`, SPA Privacy/Terms pages, Source link, and
+  the first docs/repo cleanup passes
+- continue report-viewer follow-up only where it improves the public product
+  story rather than adding more lab telemetry
 - run a dedicated `0.5.3` housekeeping pass before public packaging: artifact
   audit, stale-doc cleanup, test cleanup, CI/deploy simplification, and API/name
   cleanup left behind by the report/static-page rewrite

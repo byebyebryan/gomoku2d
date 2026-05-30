@@ -525,7 +525,7 @@ curl -sS \
 Expected after a successful Profile sign-in smoke test: at least one
 `profiles/{uid}` document.
 
-## Smoke-Test State
+## Current Cloud Data State
 
 Current `0.5.x` cloud UI / data state:
 
@@ -534,7 +534,10 @@ Current `0.5.x` cloud UI / data state:
 - Settings, private match history, archived stats, and reset barriers are stored
   inside the owner-scoped `profiles/{uid}` document.
 
-Historical cloud smoke state:
+## Historical Smoke Evidence
+
+The following bullets are historical verification notes. They document how the
+cloud lane reached the current state; they are not the current schema contract.
 
 - Localhost Google sign-in has been manually confirmed.
 - Production sign-in from `https://gomoku2d.byebyebryan.com/profile` has been
