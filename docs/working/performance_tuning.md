@@ -12,6 +12,26 @@ This is the working document for:
 This is intentionally an evolving engineering note, not a product or design
 doc.
 
+## Current State
+
+Use this section as the current read before digging into the older dated notes:
+
+- Rolling `ThreatView` is the default hot-path backend for search. Scan remains
+  the fallback/comparison implementation.
+- Pattern eval is implemented through the rolling `PatternFrame` path in normal
+  rolling mode; scan mode is still useful for fallback and parity checks.
+- The current tactical ordering path keeps global immediate win/block checks,
+  then gates expensive full annotations through local tactical potential before
+  applying child caps.
+- Corridor portals and leaf extension are retired. The only current
+  corridor-in-search branch is candidate proof, normally rendered as
+  `Corridor Proof` and spelled `+corridor-proof-c16-d8-w4` in raw lab specs.
+- Curated published reports should come from the command in
+  [`tournament.md`](../reference/ops/tournament.md), then be analyzed with the
+  preset-triangle report selector.
+- The detailed logs below are historical evidence. Prefer current reference docs
+  for contracts and current report artifacts for ranking/cost claims.
+
 ## Goals
 
 - measure performance changes before and after tuning
@@ -93,8 +113,8 @@ The tactical scenario runner can also compare ad-hoc search configs while a
 slice is under development. Treat those as diagnostic probes: if a config only
 reduces counted nodes on already-passing corridor-proof scenarios, it is useful
 evidence for the mechanism but not enough to become a product-facing preset.
-Discarded experiments should be documented in the active v0.4 plan and removed
-from the live lab spec surface. The broad `shape-eval` attempt fixed the
+Discarded experiments should be documented in archive/performance notes and
+removed from the live lab spec surface. The broad `shape-eval` attempt fixed the
 depth-2 broken-three diagnostic, but was discarded because it lost to simply
 using `search-d3` and reduced effective depth under CPU budgets.
 The follow-up selective frontier local-threat eval was also discarded. It only
@@ -102,7 +122,7 @@ scored legal local-threat moves near the last four plies, which avoided the full
 candidate scan, but the partial coverage made it inconsistent as a board-value
 term. It improved a small number of tactical or short tournament samples while
 remaining slower and unstable across D3/D5/D7 capped ablations.
-The current `+pattern-eval` experiment is intentionally different: it stays
+The retained `+pattern-eval` axis is intentionally different: it stays
 global, scans five-cell windows instead of recent plies, and filters
 completion/extension squares through exact Renju legality. Early 16-game Renju
 head-to-heads showed a possible strength signal, so we reran 64-game
@@ -111,8 +131,9 @@ comparisons. The stronger sample kept the D3 and D5-cap8 signal
 `39-0-25`) and made D7-cap8 slightly positive (`35-3-26`). The cost is still
 real: D3 pattern averaged `326 ms` per move versus `39 ms` for default eval and
 exhausted the `1000 ms` CPU budget on `7.9%` of moves. D7-cap8 pattern averaged
-`581 ms` and exhausted budget on `40.9%` of moves. Keep it as an active lab axis
-for now, not as a default.
+`581 ms` and exhausted budget on `40.9%` of moves. Later rolling `PatternFrame`
+work made it cheap enough to use in product presets, but the old scan-cost note
+remains useful historical evidence.
 
 The tactical scenario corpus is documented in
 [`tactical_scenarios.md`](../reference/corpora/tactical_scenarios.md), including board prints,

@@ -1,5 +1,9 @@
 # v0.4.7 Lethal Threat Plan
 
+Status: archived implementation plan. Lethal-threat classification and Renju
+legality validation have landed; current semantics live in
+`docs/reference/lab/lethal_threats.md` and `docs/reference/lab/renju_rules.md`.
+
 Purpose: add a precise lethal-threat layer on top of the existing immediate
 and imminent threat model, then use it to improve replay analysis before trying
 search integration.

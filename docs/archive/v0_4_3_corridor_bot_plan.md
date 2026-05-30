@@ -1,5 +1,10 @@
 # v0.4.3 Corridor-Bot Lab Plan
 
+Status: archived historical plan. Corridor portal/leaf-extension paths in this
+doc are retired; current corridor semantics live in
+`docs/reference/lab/corridor_search.md` and current bot integration lives in
+`docs/reference/lab/search_bot.md`.
+
 Purpose: keep `0.4.3` in the Rust lab for one more pass so corridor search can
 be tested inside bot behavior before the product exposes bot settings.
 
