@@ -2,8 +2,11 @@
 
 Status: historical retrospective. This started as the `0.4.0` bot-lab work
 loop; it records which experiments failed, which foundation pieces landed, and
-the path that led to corridor search. The current follow-up plan lives in
-[`v0_4_3_corridor_bot_plan.md`](v0_4_3_corridor_bot_plan.md).
+the path that led to corridor search. It is not current direction. Current
+search-bot contracts live in
+[`../reference/lab/search_bot.md`](../reference/lab/search_bot.md), with
+current performance context in
+[`../working/performance_tuning.md`](../working/performance_tuning.md).
 
 Current progress:
 
@@ -563,7 +566,7 @@ module instead of burying it inside `SearchBot`.
 
 ### Phase 12: Global Pattern Static Eval
 
-Status: active lab experiment.
+Historical status: active lab experiment during this archived slice.
 
 This phase tests whether a globally consistent tactical-ish leaf evaluator can
 beat the crude contiguous-run evaluator without repeating the failed local eval

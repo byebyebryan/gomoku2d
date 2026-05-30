@@ -1,8 +1,9 @@
 # `v0.4` Working Plan
 
-Status: active planning note. This doc captures the `v0.4` pivot after the
-first bot-lab experiments. `docs/reference/product/roadmap.md` remains the canonical phase-level
-roadmap.
+Status: archived historical planning note. This doc captures the `v0.4` pivot
+after the first bot-lab experiments; it is not current direction. Current
+phase-level planning lives in `docs/reference/product/roadmap.md`; current lab
+contracts live in `docs/reference/lab/`.
 
 ## Frame
 

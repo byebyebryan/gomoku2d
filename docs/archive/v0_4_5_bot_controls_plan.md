@@ -1,5 +1,9 @@
 # v0.4.5 Bot Controls Plan
 
+Status: archived implementation plan. Bot controls, profile-synced settings,
+touch controls, and hint modes have landed; current product/app contracts live
+in `docs/reference/app/app_design.md` and `docs/reference/backend/data_model.md`.
+
 Purpose: turn the `0.4.x` bot-lab foundation into a player-facing bot control
 surface without starting replay analysis UI yet.
 

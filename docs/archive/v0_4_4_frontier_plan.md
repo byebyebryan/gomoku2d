@@ -1,5 +1,9 @@
 # v0.4.4 Rolling Frontier Plan
 
+Status: archived historical plan. Rolling threat view has since landed as the
+default search backend; current contracts live in
+`docs/reference/lab/search_bot.md` and `docs/reference/lab/corridor_search.md`.
+
 Purpose: make local threat facts cheap enough for corridor-aware bot work by
 adding a correctness-first rolling frontier behind the existing `ThreatView`
 seam.

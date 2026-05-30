@@ -1,5 +1,9 @@
 # v0.4.6 Replay Analysis Plan
 
+Status: archived implementation plan. Browser-side progressive replay analysis
+has landed; current analyzer semantics live in
+`docs/reference/lab/game_analysis.md` and `docs/reference/lab/corridor_search.md`.
+
 Purpose: turn the corridor-search analyzer from a lab report artifact into a
 first player-facing replay feature.
 
