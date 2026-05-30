@@ -1,745 +1,94 @@
 # Corridor Search
 
-Purpose: define corridor search as the shared strategic model for replay
-analysis, bot diagnostics, and future player-facing education.
+Purpose: define the bounded forced-sequence model used by replay analysis and
+available to bot diagnostics.
 
-`v0.4.2` started as another bot-tuning slice. The lab had a real harness by
-then: configurable search specs, tactical scenarios, tournaments, gauntlets,
-reports, and cost metrics. That made the next lesson visible. The current bot
-is already competent enough that obvious strength gains are no longer cheap.
-More depth, wider candidates, pattern eval, and child caps all matter, but they
-quickly become tradeoffs between strength, runtime, and opacity.
+Corridor search is not broad minimax. It only follows named tactical obligations:
+immediate threats, imminent threats, counter-threats, immediate wins, and lethal
+coverage. If play reaches a quiet position with no named continuation, the
+corridor has ended for this model.
 
-Corridor search is the more important direction. It asks why a game collapsed:
-what forced sequence existed, what replies were available, where the last escape
-was, and whether the loss came from a missed reply or a longer forcing plan.
-That makes it useful in three ways:
+Source of truth in code:
 
-- It gives replay analysis a concrete foundation instead of a vague "AI review"
-  promise.
-- It gives the bot lab a way to inspect bot behavior instead of only comparing
-  Elo, score, and average search cost.
-- It gives future bots a path to become stronger in an explainable way: by
-  recognizing and using forcing logic, not by opaque eval-weight tuning.
+- proof/search model: `gomoku-bot-lab/gomoku-bot/src/corridor.rs`
+- tactical facts and policies: `gomoku-bot-lab/gomoku-bot/src/tactical/`
+- replay consumer: `gomoku-bot-lab/gomoku-analysis/`
 
-## Product Thesis
+## Core Model
 
-The long-term product value is not just "a Gomoku bot that wins." A more
-distinctive Gomoku2D should carry an understanding of the game it is playing.
-It should be able to show a player why a position became dangerous, which reply
-would have escaped the final sequence, and how a forcing line developed.
+A threat corridor exists when one side creates an obligation that must be
+answered. The branch space is bounded because perfect play does not ignore
+active threats.
 
-That matters because casual Gomoku often lives between two levels:
+State transitions:
 
-- A basic player or bot wins when the opponent misses an obvious local threat.
-- A stronger player wins by steering forced replies until a later threat becomes
-  impossible to cover.
+- enter when a side creates an immediate or imminent threat;
+- stay while each move answers an active threat, wins immediately, creates a new
+  immediate/imminent threat, or reaches lethal coverage;
+- prove when a side wins or creates a lethal threat;
+- escape when active threats are neutralized and no named forcing continuation
+  remains;
+- possible escape when a legal reply is visible but bounded proof cannot show it
+  remains losing.
 
-Corridor search targets that middle layer. It is not a full solver, but it can
-model the forced tactical corridor where many real games are decided.
-
-## Core Idea
-
-A threat corridor is a bounded forcing sequence created by active tactical
-threats. It is semantic, not a hard branch cap.
-
-The corridor exists when one side creates an immediate or imminent threat that
-must be answered. Those threats are non-lethal obligations: the defender must
-respond, but at least one legal response may still neutralize the danger. It
-stays active while replies create or answer more immediate or imminent threats.
-For proof recursion, the full forced interval can continue all the way to the
-terminal move. For replay explanation, the useful setup corridor stops at
-lethal onset: the point where the defender no longer has a legal reply that
-avoids terminal or known-lethal continuation. The remaining moves are the
-lethal tail, usually conversion rather than the cause of the loss.
-
-The search should never fall back to broad quiet-move search. If a move does not
-answer an active threat, win immediately, or create a new immediate/imminent
-threat, it is outside the corridor.
-
-Corridor state transitions:
-
-- Enter a corridor when either side creates an immediate or imminent threat.
-- Stay locked in the corridor while each reply creates or answers another
-  immediate/imminent threat.
-- End the corridor as proven when a side wins or creates a lethal threat.
-- Exit the corridor as unresolved/safe-for-this-model when all active
-  immediate/imminent threats are neutralized and the attacker has no named
-  forcing continuation.
-- Return a possible escape when a named legal defender reply exists but the
-  model cannot prove that reply remains forced.
-- Return unknown only when the model cannot enumerate a meaningful legal reply
-  or hits a structural guard before a concrete alternative exists.
-
-The attacker is the side we are proving a forced win for, even if that side is
-not currently to move. At attacker nodes, one named corridor move is enough to
-continue the proof. At defender nodes, every named corridor reply must remain
-inside the modeled corridor for the attacker to claim a forced win.
+The model never starts quiet broad search to decide whether a neutral escaped
+position is "really" winning later.
 
 ## Vocabulary
 
 | Term | Meaning |
-|------|---------|
-| Immediate threat | A four threat that wins next turn unless answered, such as a closed four or broken four. |
-| Imminent threat | A three threat that can become a four and creates a bounded reply set, such as an open three. A compound imminent threat can also come from multiple individually non-forcing threes when the attacker has a legal one-step entry into lethal coverage. |
-| Lethal threat | A position-level threat where the defender has no legal single reply that avoids the attacker's terminal or already-known lethal continuation. |
-| Corridor entry | The move that starts the active corridor being analyzed. |
-| Full forced interval | The implementation/proof span from the detected forced start through the terminal move. Code keeps this as `final_forced_interval` because proof recursion still needs the full suffix. |
-| Setup corridor | The replay-facing span from the forced start through lethal onset. It explains how the loser was forced into the already-lost state. |
-| Lethal tail | The suffix after lethal onset through terminal conversion. It is useful evidence, but it is not the main strategic explanation. |
-| Corridor reply | A named move that keeps play inside the threat corridor by answering or creating an active threat. |
-| Forced reply | A defender corridor reply that answers the current threat but still leaves the attacker a forced continuation. |
-| Escape reply | A legal defender move that exits the detected corridor. It does not prove the defender survives the rest of the game. |
-| Possible escape | A legal defender reply the bounded model cannot prove is still losing. Treat it as an escape from the current corridor, but keep the limit evidence. |
-| Root cause | The neutral reason the analyzer found the final corridor, such as a corridor entry, missed defense, missed win, or unclear boundary. |
+|---|---|
+| Immediate threat | A four threat that wins next turn unless answered. |
+| Imminent threat | A forcing three threat, including valid compound imminent obligations. |
+| Lethal threat | Position-level coverage where no legal defender reply avoids terminal or known-lethal continuation. |
+| Corridor reply | Named move that answers or creates an active corridor threat. |
+| Forced reply | Defender reply that is legal but still leaves attacker a proven corridor win. |
+| Escape | Defender reply that exits the detected corridor. |
+| Possible escape | Defender reply not proven losing within corridor limits. |
+| Full forced interval | Proof suffix from forced start through terminal conversion. |
+| Setup corridor | Replay-facing span from forced start through lethal onset. |
+| Lethal tail | Suffix after lethal onset through the terminal move. |
 
-The shape vocabulary behind these terms lives in
-[`tactical_shapes.md`](tactical_shapes.md). Replay-specific outcome labels and
-report fields live in [`game_analysis.md`](game_analysis.md).
+## Candidate Generation
 
-Implementation boundary: `gomoku-bot::tactical` owns raw local-threat facts and
-position-level threat obligations. `CorridorThreatPolicy` owns
-corridor-specific interpretation of local facts: active-threat filtering, legal
-forcing continuations, defender reply generation, and attacker corridor-move
-ranking. `gomoku-bot::corridor` owns proof recursion, outcomes, diagnostics,
-and bridge-bot fallback behavior. It should not duplicate shape definitions or
-reply-selection rules.
+Candidate generation is tiered:
 
-## Lethal Threats
+1. Immediate wins and immediate threats.
+2. Imminent threats and legal counter-threats.
+3. Corridor entry denial when the latest escape is before the active threat.
 
-The dedicated lethal-threat model and safety harness live in
-[`lethal_threats.md`](lethal_threats.md). This section keeps the corridor-search
-interpretation because corridors need to know where proof can terminate early.
+Only the highest active tier is used for defender replies: immediate threats
+suppress imminent replies. Within a tier, all surviving candidates are kept.
 
-`Lethal` should be treated as a proof result over a position, not merely a
-shape name. A local shape can suggest a lethal threat, but the model still has
-to ask whether one legal defender move can cover the whole danger.
+Then the model:
 
-Definition:
+- marks actual replay moves as already-resolved in replay context;
+- marks forbidden Black moves but does not probe them as legal alternatives;
+- probes remaining legal non-actual alternatives;
+- treats unresolved legal alternatives as possible escapes, not forced losses.
 
-1. The attacker has one or more legal terminal continuations, or one or more
-   legal continuations that create a known lethal threat.
-2. The defender has no legal reply that neutralizes all of those continuations.
-3. A defender immediate win takes priority; if the defender can win now, the
-   attacker's threat is not lethal in this position.
+## Renju
 
-This is a reply-coverage test. The model must not count raw threat shapes and
-declare lethal without checking overlap. Two threats that share one covering
-reply may still be non-lethal. A `4+3` may be non-lethal if the only four block
-also kills the three. A `3+3` may be non-lethal if one reply prevents both
-future open fours.
+Renju legality affects both sides of the proof:
 
-Freestyle baseline:
+- Black attack entries, completions, and defenses may be forbidden.
+- White threats can become stronger when Black's required block is forbidden.
+- Forbidden squares are evidence, not silent omissions.
 
-- `OpenFour` is lethal when its two winning endpoints are distinct and no
-  defender immediate win exists.
-- `4+4` is lethal only when no single defender reply covers all immediate
-  winning endpoints.
-- `4+3` is lethal only when every direct four defense still leaves the attacker
-  a legal open four or another known lethal continuation.
-- `3+3` is lethal only when every defender reply to the active threes still
-  leaves at least one legal continuation into a lethal threat.
+The exact legality model lives in [`renju_rules.md`](renju_rules.md).
 
-Immediate and imminent reply generation can remain tiered for normal corridor
-search, but lethal detection cannot blindly suppress lower tiers. If the
-question is "what must the defender answer this move?", immediate threats can
-suppress imminent threats. If the question is "is this already winning?", the
-model must consider how immediate and imminent facts combine.
+## Bot Integration Status
 
-The same coverage idea now feeds the shared position-obligation query used by
-search safety, corridor proof, web hints, and replay analysis. Direct imminent
-facts and compound imminent facts live at the same tier: immediate threats still
-suppress imminent replies, but a direct open/broken three must not suppress a
-separate compound imminent threat. Compound detection is a derived position
-fact, not a new local shape. It starts from cached rolling frontier facts when
-available, prefilters candidate entries from existing three-material facts, then
-only runs a bounded terminal-target coverage check on those entry candidates in
-hot search paths. The full lethal analyzer still keeps richer defender-cover
-details for reports and fixtures.
+Corridor search was tested as a live bot shortcut/portal and did not pay for
+itself under browser-scale compute budgets. The durable result is the shared
+proof model and tactical vocabulary, not a default live-search extension.
 
-The primary value is analysis and cleaner tactical semantics, but search
-integration is still worth testing. Lethal detection can compress proof depth:
-an open four saves roughly one ply of "play either endpoint," while a `3+3`
-combo may save roughly two plies before the open-four endpoint. That is limited
-per branch, and tactical ordering should already put those continuations near
-the front, so we should not expect it to magically transform broad search cost.
-However, because the compression happens at leaves and forcing frontiers, the
-aggregate savings or effective-depth gain may still be meaningful if detection
-is cheap and legality-correct.
+Current useful roles:
 
-The search experiment should therefore be judged on practical outcomes:
-stronger or more stable tactical play under the same budget, cleaner terminal
-handling for forcing leaves, and measurable cost improvements where they
-actually appear. Raw node savings are useful evidence, but not the primary
-reason to add the concept.
+- replay analysis and report generation;
+- tactical diagnostics;
+- future player education surfaces;
+- possible targeted proof after normal search, only if measured again.
 
-For replay analysis, the benefit is clearer. Once the loser is already facing a
-lethal threat, the remaining moves are usually the obvious conversion. The more
-useful explanation is to locate the earlier lethal onset, then ask how the
-loser entered that state.
-
-## Small Examples
-
-These examples use a one-line slice rather than a full board:
-
-- `X` is the side creating the threat.
-- `O` is the defender.
-- `_` is an empty playable point.
-- `#` is a blocked edge or opponent stone.
-
-### Immediate Threat
-
-```text
-XXXX_
-```
-
-`X` has four in a row and can win at the empty end. The defender has one direct
-job: play the empty point now, unless the defender has an immediate counter-win.
-This is an immediate corridor: the next reply is narrow and easy to explain.
-
-If the defender ignores it, the reply miss is local and direct. If the defender
-plays the block but `X` still has another forcing continuation elsewhere, the
-block is a forced reply, not an escape.
-
-### Lethal Threat
-
-```text
-_XXXX_
-```
-
-`X` has an open four. There are two winning squares and the defender can cover
-only one. In this layer, that is effectively terminal unless the defender wins
-immediately first. The corridor does not need broad search to explain the
-position.
-
-### Imminent Threat
-
-```text
-__XXX__
-```
-
-`X` does not win next move yet, but the shape can become a four from either
-side. The defender has a small named reply set instead of one forced square:
-direct defenses around the shape, plus possible counter-threats if the defender
-can create something at least as urgent.
-
-This is where corridor search becomes more useful than a simple "block the
-four" rule. There may be multiple plausible replies, but they are still
-tactical replies, not all legal board moves.
-
-### Asymmetric Open Three
-
-```text
-O_XXX__
-```
-
-One outer side is blocked, but the two-space side still matters. The defender
-must consider the adjacent reply and the far outer reply on the open side. This
-case is easy to miss if open-three defense is modeled as "only the two adjacent
-ends."
-
-The boxed version is different:
-
-```text
-O_XXX_O
-```
-
-Both outer sides are blocked. This is not an active corridor threat because it
-cannot become an open four in the same forcing sense.
-
-### Escape Versus Forced Reply
-
-Suppose `X` creates an imminent threat and `O` has three named replies:
-
-```text
-O replies: A, B, C
-```
-
-- If `A` neutralizes all active threats and `X` has no named forcing
-  continuation, `A` is a confirmed escape from this corridor.
-- If `B` blocks the visible threat but allows `X` to create a new immediate
-  threat, `B` is a forced reply.
-- If `C` is legal but the bounded model cannot prove whether it stays forced,
-  `C` is a possible escape. The analyzer should stop there for replay
-  classification instead of pretending the corridor is proven.
-
-This distinction is why corridor analysis is useful for player education: it can
-separate "you missed the only block" from "you had options, but all visible
-options still stayed inside the forcing line."
-
-### Renju Forbidden Reply
-
-Under Renju, Black may have a natural-looking block that is illegal because it
-creates a forbidden double-three, double-four, or overline.
-
-```text
-White threat -> natural Black block at G10
-G10 is forbidden for Black
-```
-
-For corridor search, that square is not missing data. It is proof evidence. The
-report should show why the square matters tactically and mark it as forbidden
-for Black. If every natural Black reply is forbidden, the threat may remain
-forced even with only one visible winning square.
-
-### Reply Candidate Contract
-
-Corridor reply generation is tiered before any proof search runs:
-
-1. Collect immediate replies first: direct blocks to the attacker's immediate
-   wins, plus defender immediate wins.
-2. If there is no immediate obligation, collect imminent replies from the
-   shared position-obligation query: direct active open/broken-three replies,
-   compound imminent replies from one-step lethal entries, plus legal
-   counter-threats that create an immediate threat for the defender.
-3. Keep only the highest non-empty tier. Immediate replies suppress imminent
-   replies; direct and compound imminent threats live in the same surviving
-   tier.
-4. Render every surviving reply as a tactical box. Actual replay moves and
-   Renju-forbidden Black replies are still visible markers, but they are not
-   proof branches.
-5. Probe only legal, non-actual surviving replies. These are the alternatives
-   listed in report proof details.
-6. If no legal non-actual reply remains, the replay analyzer keeps walking
-   backward through the actual line.
-
-The code mirrors this split: visible defender candidates drive UI/report
-markers, while probed defender candidates filter out actual replay context and
-illegal replies before corridor proof runs.
-
-This split keeps presentation and proof aligned. The report should not invent
-extra forbidden markers from lower-tier or future proof evidence; a forbidden
-marker is meaningful only when the square survived the current reply-candidate
-tiering.
-
-## Replay Analysis Role
-
-For finished games, corridor search works backward from the winning move. The
-question is not "what is the best move in this position?" The question is:
-
-> Where was the latest losing-side decision that could have escaped the setup
-> corridor before lethal onset?
-
-The analyzer follows the actual ending, checks losing-side decision points, and
-classifies alternate corridor replies as forced loss, confirmed escape, possible
-escape, forbidden, immediate loss, or unknown. The in-product replay screen uses
-the same model progressively from the terminal frame backward, while the
-published lab report remains the denser review surface for comparing many games
-and inspecting proof frames.
-
-## Bot Diagnostics Role
-
-Tournament score tells us which bot won. Corridor analysis can tell us more:
-
-- Did the loser miss a short forced defense?
-- Did the winner create a longer forcing corridor?
-- Did a bot appear strong because the opponent missed a local reply?
-- Did a bot lose despite reasonable search cost because it failed to see a
-  forcing plan?
-
-This is why corridor search belongs in the lab before it belongs in the UI. It
-lets bot changes be judged by the kinds of wins and losses they create, not just
-by aggregate score.
-
-## Bot Search Role
-
-`0.4.3` and `0.4.4` tested whether corridor search could become a live
-`SearchBot` shortcut. The durable answer is narrower than the original hope:
-corridor search is essential for replay analysis and shared tactical semantics,
-but broad live-search portals are retired.
-
-Retired paths:
-
-- `+corridor-q`: leaf quiescence. Too many leaves fell back to ordinary static
-  evaluation.
-- `+corridor-own-dN-wM` / `+corridor-opponent-dN-wM`: portal extension after
-  child moves. Resume searches from corridor exits multiplied work and distorted
-  scores.
-- rank/top-N portal gates, static exits, and proof-only portal variants:
-  measurable, but not a useful bot knob under the browser-scale budget.
-- `+leaf-corridor-dM-wW` and `+leaf-proof-cN`: terminal-only leaf extension
-  could find real proofs, but too rarely and too expensively to promote.
-
-Those suffixes are no longer parser surface. Historical details live in
-[`performance_tuning.md`](../../working/performance_tuning.md) and the `0.4.x`
-archive notes. Do not include them in anchor tournaments, difficulty ladders,
-settings UI, or product copy.
-
-The current bot-facing corridor shape is candidate proof: normal alpha-beta
-search ranks root moves first, then corridor proof spends remaining budget on a
-small selected set of those candidates. This turns corridor search into a
-decisive proof pass rather than a second evaluator.
-
-### Candidate-Proof Corridor Pass
-
-The next refinement changes the role of corridor search again. Normal search
-should rank moves first. Corridor search should then act as a proof pass over a
-small selected set of normal-search candidates, not as another evaluator that
-re-enters the whole root search.
-
-The contract is:
-
-1. Run normal iterative deepening with corridor proof disabled.
-2. Only start proof if normal search completes the configured max depth and the
-   shared wall/CPU deadline still has budget remaining.
-3. Capture the deepest completed root candidates and scores.
-4. Prove the normal best move first, then selected candidates from the
-   normal-search ranking.
-5. For each candidate, apply the candidate root move and run corridor proof from
-   that resulting position.
-6. Proof returns only `ProvenWin`, `ProvenLoss`, or `Unknown`.
-7. `Unknown` never outranks normal-search score by itself.
-
-This keeps normal search safe: if proof times out, exits the corridor, or cannot
-prove a terminal result, the bot keeps the normal-search answer. Proven terminal
-information can still change the move:
-
-- If normal best is `ProvenWin`, keep it and count a confirmation.
-- If another checked candidate is `ProvenWin` while normal best is not, switch
-  to it and count a move change.
-- If normal best is `ProvenLoss`, switch to the best checked candidate that is
-  not proven loss.
-
-The current lab spelling is `+corridor-proof-cN-dM-wW`: `cN` sets the root
-candidate cap, `dM` sets max corridor proof depth, and `wW` sets max reply
-width. The current baseline shape is `+corridor-proof-c16-d8-w4`. This spelling
-intentionally means "prove the top `N` normal-search candidates regardless of
-score gap." Score-gap filtering is intentionally not a config axis because it
-lets normal-search confidence suppress the proof pass that is supposed to
-challenge normal-search ranking.
-
-Reports display the current baseline suffix as `Corridor Proof` to keep the
-UI readable. The full `c16-d8-w4` spelling remains in commands and raw report
-JSON so experiments stay reproducible.
-
-The older split suffixes `+leaf-corridor-dM-wW` and `+leaf-proof-cN` are
-retired and no longer accepted by the parser or compact report-label helpers.
-Historical reports may still contain those raw names, but new experiments must
-use the single `+corridor-proof-cN-dM-wW` suffix so the report label reads as
-one concept.
-
-The goal is to spend leftover budget on decisive questions instead of
-multiplying broad search work. This does not make corridor proof a product knob;
-it remains a lab-only experiment until it produces move changes at acceptable
-cost.
-
-Experiment evidence changed this path from diagnostic to useful but bounded:
-proof depth `8`, candidate cap `16`, and reply width `4` produced the best
-cost/strength tradeoff. The signal is strongest when paired with pattern eval;
-plain non-pattern corridor proof is not enough to define a product bot by
-itself. Proof depths `16` and `32` were much more expensive, while wider reply
-widths did not produce a clear strength gain. Detailed sweep numbers live in
-[`performance_tuning.md`](../../working/performance_tuning.md).
-
-### Rolling Threat Frontier
-
-The cheap local question is now backed by the same rolling threat-view model
-used by normal search. Full-board threat scans remain valuable as a fallback and
-comparison implementation, but they are the wrong shape for the hot path as more
-search stages depend on threat detection.
-
-The frontier should not replace `Board` or core legality. It should be a derived
-index that stays synchronized with apply/undo and answers corridor/search
-queries cheaply:
-
-- did the last move create, materialize, or continue a corridor entry?
-- what active immediate/imminent threats exist for each side?
-- what are the legal defender replies for the current corridor?
-- which local facts changed because of the last applied or undone move?
-- did the corridor exit because threats were neutralized, became too wide, or
-  became illegal under Renju?
-
-The main design shift is from "scan the board to rediscover facts" to "update
-the small set of facts whose relevant lines changed." Shape facts are axis-local:
-a move affects facts on the four Gomoku axes crossing that move. Renju tactical
-annotations add one broader dependency for Black continuation effectiveness, so
-the current safe frontier refreshes those annotations globally until that logic
-is split into its own cache. In the successful shape, corridor search becomes
-close to free because it asks for the already-known active threat and its
-already-known reply set.
-
-Important tradeoffs:
-
-- Correctness risk is high. A stale or missing threat fact can make the bot miss
-  a forced loss, invent a fake corridor, or mishandle a Renju forbidden reply.
-- Renju makes the cache more delicate. Raw shape facts, legal continuations,
-  immediate-win checks, and forbidden black squares must stay separate because
-  legality can change the tactical meaning of a square.
-- Undo must be exact. Search applies and undoes thousands of moves; frontier
-  updates need stack discipline at least as strong as board history.
-- The cache has to serve the search API, not the analyzer UI. If we build it
-  around report frames, it will become too broad for the hot path.
-- Memory overhead is acceptable; semantic drift is not. Favor explicit,
-  testable facts over clever compact encodings until the model is stable.
-
-The migration path was deliberately incremental:
-
-1. Define a `ThreatView` interface for the exact queries used by search and
-   corridor search.
-2. Implement that interface with the current scan-backed logic first.
-3. Add differential tests that compare scan-backed answers after random
-   apply/undo sequences, tactical fixtures, and Renju forbidden fixtures.
-4. Add a rolling implementation behind a lab/shadow mode and compare it against
-   the scan-backed view during tests and selected eval runs.
-5. Validate normal-search tactical ordering through the same seam first, because
-   it is easier to compare against scan behavior than corridor recursion.
-6. Switch corridor proof and analysis queries to the rolling view only after
-   normal search parity is stable.
-
-Steps 1 and 2 became the `0.4.3` cleanup boundary, but only for the minimal
-search-facing seam. `gomoku-bot::tactical` exposes a `ThreatView` contract and a
-`ScanThreatView` reference backed by the existing scanner for the queries search,
-corridor proof, and analysis actually use:
-
-- current active immediate/imminent corridor threats,
-- defender replies to one active threat,
-- attacker move rank for tactical ordering,
-- search-ordering tactical annotation for a candidate before it is played.
-
-This seam became the bridge into the `0.4.4` rolling-frontier pass. Normal
-search and corridor proof now ask the same local questions through
-`ThreatView`; rolling mode answers the hot normal-search queries by default,
-while scan remains the fallback and comparison path.
-
-#### Rolling Frontier Drilldown
-
-The design should be interrogated as a cache architecture, not as a bot feature.
-The clean split is:
-
-- `Board`: authoritative stones, turn, result, rule config, apply/undo, and
-  exact legality.
-- `ThreatView`: read-only query contract used by search and corridor logic.
-- `ScanThreatView`: current scan-backed reference implementation.
-- `RollingThreatFrontier`: optional derived index that implements the same
-  contract by updating facts on apply/undo.
-
-The frontier should own normalized tactical facts, not gameplay state:
-
-```text
-ThreatFact {
-  side,
-  kind,
-  line_id,
-  origin,
-  gain_squares,
-  cost_squares,
-  rest_squares,
-  legal_gain_squares,
-  legal_cost_squares,
-  forbidden_black_squares
-}
-```
-
-The first implementation should favor explicit facts over compact bit-packing.
-Compact storage can come later if profiling proves memory or cache locality is
-the bottleneck. The more important invariant is that raw shape facts, legal
-continuations, and forbidden Black squares are represented separately.
-
-Update model:
-
-1. Search applies a move to `Board`.
-2. The frontier receives the same move and records an undo delta.
-3. It invalidates facts along the four axes crossing the move, conservatively
-   covering cells up to four steps away.
-4. It rebuilds raw shape facts for affected anchors.
-5. It reapplies rule/effect filtering, including Renju forbidden handling.
-6. Undo pops the exact frontier delta and restores the previous fact sets.
-
-That invalidation window is intentionally conservative. It is acceptable to
-rebuild more local facts than strictly necessary. It is not acceptable to miss a
-fact or keep a stale legal/forbidden classification.
-
-The current `ThreatView` is intentionally smaller than the possible full
-frontier API. Grow it only when a consumer needs more detail:
-
-- `move_threat_delta(board, mv)`: what threat facts are created, materialized,
-  continued, neutralized, or made illegal by this exact move?
-- `search_annotation_for_move(mv)`: search-ordering facts for a candidate
-  before it is played.
-- `active_threats(side)`: current immediate/imminent corridor threats for one
-  side.
-- `threat_obligation(side)`: the highest-priority position-level obligation
-  imposed by one side, including compound imminent threats.
-- `corridor_replies(attacker)`: legal defender replies to the current active
-  corridor threat.
-- `legal_forcing_continuations(attacker, fact)`: legal gain/completion moves
-  for one fact.
-
-Anything needed only for HTML reports should stay outside the hot frontier API.
-The analyzer can keep using scan-backed or batch-oriented helpers until the
-search-facing frontier is proven.
-
-Validation strategy:
-
-- Differential unit tests compare `ScanThreatView` and `RollingThreatFrontier`
-  on every tactical fixture.
-- Random apply/undo tests apply legal moves, compare views after each move, then
-  undo back to the start and compare again.
-- Renju-specific tests cover forbidden attacker continuations, forbidden
-  defender cost squares, and White threats whose natural Black replies are
-  forbidden.
-- Shadow eval runs compute both views while only scan-backed results affect
-  behavior, then fail fast on the first mismatch with a board dump and changed
-  fact list.
-- Only after normal-search shadow mode is clean should corridor entry/reply
-  paths become the next rolling consumer.
-
-The release-boundary implication has already played out: `0.4.3` finished the
-shared tactical vocabulary, corridor cost metrics, and the scan-backed
-`ThreatView` seam; `0.4.4` promotes rolling frontier as the default
-normal-search backend after parity checks and focused scan-vs-rolling runs.
-
-The `0.4.4` working plan lives in
-[`../../archive/v0_4_4_frontier_plan.md`](../../archive/v0_4_4_frontier_plan.md).
-Player-facing bot settings now expose product language through presets and
-advanced controls rather than unresolved cache/search knobs.
-
-## Renju Overlay
-
-Renju is a legality and threat-effect overlay on the same corridor model, not a
-separate proof model. The exact forbidden-move interpretation is tracked in
-[`renju_rules.md`](renju_rules.md).
-
-The analyzer should carry raw and legal tactical facts separately:
-
-- Raw threat square: a shape-derived gain, completion, or cost square before
-  Renju legality is applied.
-- Legal corridor square: a raw square that the side can legally play and that
-  still has the expected tactical effect under Renju.
-- Forbidden corridor square: a raw Black square rejected by Renju. This is proof
-  evidence, not missing data.
-
-Side-specific implications:
-
-- Black attacker: a raw gain or completion only creates a corridor threat if it
-  is legal for Black. Forbidden continuations do not create active threat
-  strength.
-- Black defender: forbidden cost squares are not valid replies. If every natural
-  Black answer to a White threat is forbidden, the threat remains forced for
-  rule reasons rather than becoming unknown.
-- White attacker: White can create threats whose natural Black answers are
-  forbidden. The report should surface those forbidden costs because they
-  explain why an apparently obvious block is unavailable.
-- White defender: White has no forbidden moves, but White counter-threats can be
-  strong specifically because they may force Black toward forbidden answers.
-
-Renju makes lethal detection especially easy to get wrong. The right rule is
-still reply coverage, but both sides see different legal move sets:
-
-- White attacker: terminal continuations are ordinary five-in-a-row moves.
-  Black forbidden replies shrink the defender coverage set. A White closed or
-  broken four can become lethal if its only natural Black block is forbidden.
-  White `4+4`, `4+3`, and `3+3` threats should be judged by whether any legal
-  Black reply covers every terminal or known-lethal continuation.
-- Black attacker: every Black gain, completion, or next lethal continuation must
-  pass the Renju legality layer. Black exactly-five winning moves should be
-  legal; overlines, double-fours, and real double-threes are forbidden when no
-  exact five is made at the same time. Black double-three or double-four gain
-  moves cannot create active lethal strength even if their raw freestyle shape
-  looks decisive. A legal Black open four is still lethal by reply coverage:
-  White can cover only one legal winning endpoint unless White can win
-  immediately.
-- Black defender: a raw blocking square only covers a White continuation if the
-  move is legal for Black and actually removes the continuation. A forbidden
-  block remains visible proof evidence, but it is not a branch.
-- White defender: White has no forbidden moves, so White coverage mostly follows
-  freestyle, except that a White counter-threat may be stronger because Black's
-  next reply can be forbidden.
-
-Do not encode a Renju shortcut such as "Black lethal equals only `4+3`." That is
-too shape-name driven and will drift from the rules engine. The durable model is
-legality-aware coverage: enumerate legal attacker terminal/lethal
-continuations, enumerate legal defender replies, and ask whether any defender
-reply covers all continuations or wins immediately.
-
-The presentation rule follows the same split. A square can carry a normal threat
-or defense hint from one side's perspective and forbidden evidence from Black's
-perspective. The hint explains why the square matters; the forbidden/caution
-visual explains why Black cannot use it. Internal reports may still expose the
-raw `forbidden` role explicitly, while the product replay UI should reuse the
-existing forbidden visual language.
-
-## Model Limits
-
-Corridor search is model-bounded. That is a feature, not a defect.
-
-The model should expose its limits rather than overclaim:
-
-- `forced_win`: the detected corridor was proven under the stated model and
-  limits.
-- `confirmed_escape`: a defender reply exits the active corridor.
-- `possible_escape`: a legal defender reply exists, but the model cannot prove
-  that reply is still forced.
-- `unknown`: the model could not enumerate a meaningful legal reply or hit a
-  structural guard before finding a concrete alternative.
-
-The current implementation uses a corridor depth budget as a safety and
-diagnostic control. Conceptually, the corridor itself should bound the search:
-every branch must be justified by an active immediate or imminent threat. In
-practice, depth and guard limits are still useful while the shape model,
-memoization, and pruning are evolving.
-
-The important invariant: a guard or cutoff must never turn an active corridor
-into a proven forced win. Once a legal defender reply exists, failure to prove
-the reply is still losing is evidence for a possible escape from the current
-corridor.
-
-## Non-Goals
-
-- Corridor search is not a full game-theoretic Gomoku/Renju solver.
-- It is not generic broad best-move analysis.
-- It is not a replacement for the existing alpha-beta bot.
-- It should not overclaim certainty without exposing model limits.
-- Player-facing uses should stay bounded to explainable replay annotations until
-  the model can support broader claims cleanly.
-
-## Current Implementation Checkpoint
-
-The current checkpoint provides:
-
-- a corridor-based replay analyzer,
-- worker-backed replay-screen annotations for saved local/cloud replays,
-- bot-owned corridor proof entry points under `gomoku-bot::corridor`,
-- shared local-threat facts and search/corridor policy views under
-  `gomoku-bot::tactical` consumed by both `SearchBot` and corridor search,
-- rolling-backed `ThreatView` as the default normal-search backend, with
-  scan-backed `ThreatView` retained for fallback and comparisons,
-- retired `SearchBot` corridor quiescence evidence from the former
-  `+corridor-q` suffix,
-- retired `SearchBot` portal evidence from former suffixes such as
-  `+corridor-own-dN-wM` and `+corridor-opponent-dN-wM`, which are no longer
-  accepted by the current parser,
-- proof-detail JSON and HTML report generation,
-- visual proof frames with board rendering and semantic markers,
-- Renju-aware handling for forbidden black replies and illegal black threats,
-- published lab analysis artifacts generated from the in-game preset
-  triangle,
-- docs that separate strategic model, replay implementation, tactical shapes,
-  and bot-tuning evidence.
-
-Known limits:
-
-- The analyzer is still model-bounded and intentionally conservative.
-- `possible_escape` is common and acceptable; it means the current model cannot
-  prove the branch remains inside the setup corridor or lethal tail.
-- The replay screen is the player-facing progressive view; the report is the
-  dense lab/product reference for comparing many games.
-- The retired `+corridor-q` leaf integration was too expensive for live play and
-  is no longer a lab suffix.
-- The first selective-extension implementation is measurable but not promoted
-  as a strength candidate; even after move-local/resume cleanup, smoke runs are
-  still weaker and much more budget-bound than base anchors.
-
-## Related Docs
-
-- [`../../README.md`](../../README.md) — full docs map.
-- [`game_analysis.md`](game_analysis.md) — replay analyzer mechanics, report
-  schema, CLI workflow, and known implementation limits.
-- [`tactical_shapes.md`](tactical_shapes.md) — local tactical shape vocabulary
-  and shape facts.
-- [`search_bot.md`](search_bot.md) — current `SearchBot` pipeline and tuning
-  takeaways.
-- [`performance_tuning.md`](../../working/performance_tuning.md) — benchmark and tournament
-  evidence behind the current bot-lab direction.
-- [`../../archive/v0_4_3_corridor_bot_plan.md`](../../archive/v0_4_3_corridor_bot_plan.md)
-  — working plan for the corridor-aware bot lab pass.
+Retired portal/leaf-proof tuning history belongs in performance/archive notes,
+not this model contract.

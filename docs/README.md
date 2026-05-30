@@ -1,49 +1,51 @@
 # Docs
 
 Gomoku2D keeps docs in the repo so product decisions, implementation contracts,
-working notes, and release history move with the code. The docs are split by
-audience:
+runbooks, and release history move with the code. Active docs should describe
+current intent or current behavior. Historical notes belong in
+[`archive/`](archive/).
 
-| Bucket | Audience | Purpose |
-|---|---|---|
-| [`public/`](public/) | Players, visitors, release copy | Short explanations of the project, rules, analysis, and bot lab |
-| [`reference/product/`](reference/product/) | Humans and agents | Product thesis, product model, and roadmap |
-| [`reference/app/`](reference/app/) | Humans and agents | Web app architecture, UI contracts, and visual language |
-| [`reference/backend/`](reference/backend/) | Humans and agents | Backend model and persisted data contracts |
-| [`reference/lab/`](reference/lab/) | Humans and agents | Bot, tactical, replay-analysis, corridor, lethal-threat, and Renju models |
-| [`reference/corpora/`](reference/corpora/) | Implementers | Validation corpora and scenario catalogs |
-| [`reference/ops/`](reference/ops/) | Maintainers | Release, infra, cost, tournament, and test runbooks |
-| [`working/`](working/) | Agents and maintainers | Active notes, benchmark logs, screenshot reviews, and current plans |
-| [`archive/`](archive/) | Maintainers | Superseded historical docs and rejected paths |
+## Start Here
 
-## Public Docs
+| Question | Read |
+|---|---|
+| What is the project trying to be? | [`Product Strategy`](reference/product/product_strategy.md) |
+| What is being built next? | [`Roadmap`](reference/product/roadmap.md) |
+| How is the web app structured? | [`Architecture`](reference/app/architecture.md), [`Web Code Overview`](reference/app/code_overview.md) |
+| How does the board/app UX work? | [`App Design`](reference/app/app_design.md), [`UI Design`](reference/app/ui_design.md), [`Game Visual`](reference/app/game_visual.md) |
+| How do the Rust rules, bot, and analyzer fit together? | [`Bot Lab Code Overview`](reference/lab/code_overview.md) |
+| How does search/replay analysis work? | [`Search Bot`](reference/lab/search_bot.md), [`Tactical Shapes`](reference/lab/tactical_shapes.md), [`Lethal Threats`](reference/lab/lethal_threats.md), [`Corridor Search`](reference/lab/corridor_search.md), [`Game Analysis`](reference/lab/game_analysis.md) |
+| How does Renju legality work? | [`Renju Rules`](reference/lab/renju_rules.md), [`Renju Corpus`](reference/corpora/renju_corpus.md) |
+| How do I test, release, or refresh reports? | [`Testing`](reference/ops/testing.md), [`Tournament Eval`](reference/ops/tournament.md), [`Release`](reference/ops/release.md) |
 
-- [`About`](public/about.md) — what the project is and why it exists
-- [`Rules and Renju`](public/rules.md) — how Freestyle and Renju differ
-- [`Replay Analysis`](public/analysis.md) — how Analyze / Inspect reveals last
-  escape, setup corridor, and lethal sequence labels
-- [`Bot Lab`](public/bot-lab.md) — bot presets, advanced controls, and reports
+## Public Surfaces
 
-## Canonical References
+Player-facing explanations live in the web app, not under `docs/public`:
 
-- [`Project Thesis`](reference/product/project.md)
-- [`Product`](reference/product/product.md)
-- [`Roadmap`](reference/product/roadmap.md)
-- [`Architecture`](reference/app/architecture.md)
-- [`Web Code Overview`](reference/app/code_overview.md)
-- [`App Design`](reference/app/app_design.md)
-- [`Bot Lab Code Overview`](reference/lab/code_overview.md)
-- [`Search Bot`](reference/lab/search_bot.md)
-- [`Corridor Search`](reference/lab/corridor_search.md)
-- [`Game Analysis`](reference/lab/game_analysis.md)
-- [`Renju Rules`](reference/lab/renju_rules.md)
-- [`Release`](reference/ops/release.md)
+- `/rules/` — basic Gomoku and Renju rules
+- `/guide/` — how to think about threats, combos, and forced sequences
+- `/lab/` — bot tournament and replay-analysis reports
+- `/visuals/` — visual guide and asset language
+- `/privacy/`, `/terms/`, and Source — project metadata/legal surfaces
+
+The root [`README`](../README.md) is the public repo landing page.
+
+## Buckets
+
+| Bucket | Purpose |
+|---|---|
+| [`reference/product/`](reference/product/) | Product thesis, current direction, and roadmap |
+| [`reference/app/`](reference/app/) | Web app architecture, screen contracts, and visual language |
+| [`reference/backend/`](reference/backend/) | Backend contracts, data model, and future backend design |
+| [`reference/lab/`](reference/lab/) | Current bot, tactical, replay-analysis, corridor, lethal-threat, and Renju models |
+| [`reference/corpora/`](reference/corpora/) | Fixture indexes and validation-corpus entrypoints |
+| [`reference/ops/`](reference/ops/) | Release, infra, cost, tournament, and test runbooks |
+| [`working/`](working/) | Active notes only; should be pruned or archived regularly |
+| [`archive/`](archive/) | Historical context, retired plans, rejected paths, and old release notes |
 
 ## Maintenance Rule
 
-Public docs explain the project to visitors. Product references can include
-target-state intent, but must say when a feature is future scope. App, backend,
-lab, corpus, and ops references define current implementation contracts and
-runbooks. Working docs can be verbose and preserve raw context. Archive docs
-should not be used as current direction unless a canonical doc explicitly points
-there for historical evidence.
+Active reference docs should be concise and current. Do not keep dated lab logs,
+old experiment tables, generated board dumps, or release diaries in canonical
+docs. Move that material to archive, generated outputs, or working notes with a
+clear owner.

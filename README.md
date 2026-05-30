@@ -97,15 +97,17 @@ the public-packaging slice. Longer-term sequencing lives in
 
 ## Learn More
 
-Start with the public docs:
+The live app owns player-facing explanations:
 
-- [`About`](docs/public/about.md) — project story and current product shape
-- [`Rules and Renju`](docs/public/rules.md) — Freestyle, Renju, and forbidden moves
-- [`Replay Analysis`](docs/public/analysis.md) — how Analyze / Inspect reveals setup corridors, lethal onset, and last escape
-- [`Bot Lab`](docs/public/bot-lab.md) — presets, advanced controls, and published reports
+- [Rules](https://gomoku2d.byebyebryan.com/rules/)
+- [Guide](https://gomoku2d.byebyebryan.com/guide/)
+- [Lab report](https://gomoku2d.byebyebryan.com/lab/)
+- [Visuals](https://gomoku2d.byebyebryan.com/visuals/)
 
 Reference docs, working notes, runbooks, and archives are organized from
 [`docs/README.md`](docs/README.md). The most useful technical entry points are
+[`Product Strategy`](docs/reference/product/product_strategy.md),
+[`Roadmap`](docs/reference/product/roadmap.md),
 [`Architecture`](docs/reference/app/architecture.md),
 [`Web Code Overview`](docs/reference/app/code_overview.md),
 [`Bot Lab Code Overview`](docs/reference/lab/code_overview.md),
@@ -114,7 +116,5 @@ Reference docs, working notes, runbooks, and archives are organized from
 [`Game Analysis`](docs/reference/lab/game_analysis.md), and
 [`Release`](docs/reference/ops/release.md).
 
-Live companion pages:
-
-- [Visuals](https://gomoku2d.byebyebryan.com/visuals/)
-- [Lab report](https://gomoku2d.byebyebryan.com/lab/)
+For the broader reason this repo exists, start with
+[`Product Strategy`](docs/reference/product/product_strategy.md).

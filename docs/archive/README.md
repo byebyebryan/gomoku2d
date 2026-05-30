@@ -1,8 +1,10 @@
 # Archive
 
-Superseded docs from the pre-pivot era (tag `v0.1`). Kept for reference — the
-thinking, tradeoffs, and rejected options live here so the canonical docs in
-`docs/` don't have to constantly caveat "but we considered X."
+Historical docs, superseded plans, rejected paths, and old release notes.
+
+Archive docs are not authoritative unless an active reference doc explicitly
+links to them for historical evidence. Prefer updating current reference docs
+over patching archive files into partial correctness.
 
 | Doc | What it was | Superseded by |
 |---|---|---|
@@ -37,7 +39,9 @@ plans now live in [`../working/`](../working/).
 |---|---|---|
 | `v0_3_plan.md` | Working plan for the `v0.3` cloud-backed continuity line | `docs/reference/product/roadmap.md`, `docs/reference/backend/backend.md`, `docs/reference/app/app_design.md` |
 | `v0_3_completion_plan.md` | Practical rest-of-`0.3` release slicing after the product-identity roadmap pivot | `docs/reference/product/roadmap.md`, `docs/reference/backend/backend.md`, `docs/reference/ops/backend_infra.md` |
-| `v0_4_plan.md` | Working plan for the `v0.4` lab-powered product identity line, from bot discovery through corridor-bot work before settings UI | `docs/reference/product/roadmap.md`, `docs/reference/product/product.md`, `docs/reference/backend/backend.md` |
+| `release_history.md` | Condensed completed phase history | `docs/reference/product/roadmap.md` |
+| `performance_history.md` | Condensed performance/search experiment history | `docs/working/performance_tuning.md`, `docs/reference/lab/search_bot.md`, `docs/reference/lab/corridor_search.md` |
+| `v0_4_plan.md` | Working plan for the `v0.4` lab-powered product identity line, from bot discovery through corridor-bot work before settings UI | `docs/reference/product/roadmap.md`, `docs/reference/product/product_strategy.md`, `docs/reference/backend/backend.md` |
 | `v0_4_search_bot_enhancement_plan.md` | Historical retrospective of `0.4.0`-`0.4.2` search-bot experiments and rejected paths | `docs/reference/lab/search_bot.md`, `docs/reference/lab/corridor_search.md`, `docs/working/performance_tuning.md` |
 | `v0_4_2_game_analysis_impl_notes.md` | Historical implementation notes, telemetry, and rejected replay-analysis proof policies from the `v0.4.2` corridor-search pass | `docs/reference/lab/corridor_search.md`, `docs/reference/lab/game_analysis.md` |
 | `v0_4_3_corridor_bot_plan.md` | Working plan for the lab-only corridor-search-in-bot pass before UI settings | `docs/reference/product/roadmap.md`, `docs/reference/lab/corridor_search.md`, `docs/reference/lab/search_bot.md` |

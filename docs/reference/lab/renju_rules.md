@@ -99,13 +99,10 @@ Consumer rules:
 - no consumer should locally infer double-three or double-four by raw window
   counts.
 
-## Corpus And Validation
+## Validation
 
-The promoted golden corpus is documented in
-[`renju_corpus.md`](../corpora/renju_corpus.md). It contains:
-
-- 6 handwritten core cases;
-- 23 RenjuNet advanced tutorial cases covering apparent three/four edge cases.
+The promoted golden corpus is indexed in
+[`renju_corpus.md`](../corpora/renju_corpus.md).
 
 Run the Gomoku2D corpus check with:
 
@@ -114,7 +111,7 @@ cargo run -p gomoku-eval -- renju-rules \
   --report-json outputs/renju-rule-fixtures.json
 ```
 
-The RenjuNet extraction/reference project lives in
+Extraction/reference details live in
 [`../../../gomoku-bot-lab/external/renjunet-advanced-examples/`](../../../gomoku-bot-lab/external/renjunet-advanced-examples/).
 That folder owns OCR/manual extraction notes, fixture JSON, and external
 Piskvork validation. It deliberately does not run Gomoku2D checks; those belong
@@ -126,12 +123,7 @@ Run the external reference check with:
 python gomoku-bot-lab/external/renjunet-advanced-examples/check_refs.py
 ```
 
-Current status:
-
-- RenjuNet extracted labels match Piskvork: 23/23.
-- Gomoku2D `renju-rules` corpus check passes: 29/29.
-
-## Follow-Up Validation
+## Follow-Up
 
 After changing Renju legality:
 
