@@ -181,8 +181,8 @@ Important commands:
 
 Curated artifacts:
 
-- `gomoku-bot-lab/reports/report.json`
-- `gomoku-bot-lab/analysis-reports/report.json`
+- `reports/lab/bot-report.json`
+- `reports/lab/analysis-report.json`
 
 Scratch artifacts belong in ignored `gomoku-bot-lab/outputs/`.
 

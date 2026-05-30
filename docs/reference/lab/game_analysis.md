@@ -100,7 +100,7 @@ Use both code paths when changing analysis semantics:
 cd gomoku-bot-lab
 cargo test -p gomoku-analysis
 cargo run --release -p gomoku-eval -- analyze-report-replays \
-  --report reports/report.json \
+  --report ../reports/lab/bot-report.json \
   --selector preset-triangle \
   --published-report-json outputs/analysis-smoke.json \
   --max-depth 4 \

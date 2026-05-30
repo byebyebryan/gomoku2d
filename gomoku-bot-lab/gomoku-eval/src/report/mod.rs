@@ -4900,7 +4900,7 @@ mod tests {
         let mut report = sample_report();
         report.reference_anchors = Some(AnchorReferenceReport {
             source: AnchorReferenceSource {
-                path: Some("reports/report.json".to_string()),
+                path: Some("../reports/lab/bot-report.json".to_string()),
                 schedule: "round-robin".to_string(),
                 git_commit: Some("abc123".to_string()),
                 git_dirty: Some(false),
@@ -5666,7 +5666,7 @@ mod tests {
             .collect();
         report.reference_anchors = Some(AnchorReferenceReport {
             source: AnchorReferenceSource {
-                path: Some("reports/report.json".to_string()),
+                path: Some("../reports/lab/bot-report.json".to_string()),
                 schedule: "round-robin".to_string(),
                 git_commit: Some("abc123".to_string()),
                 git_dirty: Some(false),
@@ -5783,7 +5783,7 @@ mod tests {
         ];
 
         let reference = AnchorReferenceReport::from_report(
-            Some("reports/report.json".to_string()),
+            Some("../reports/lab/bot-report.json".to_string()),
             &source,
             &["anchor-a".to_string(), "anchor-b".to_string()],
         )
@@ -5791,7 +5791,7 @@ mod tests {
 
         assert_eq!(
             reference.source.path.as_deref(),
-            Some("reports/report.json")
+            Some("../reports/lab/bot-report.json")
         );
         assert_eq!(reference.source.schedule, "round-robin");
         assert_eq!(reference.source.git_commit.as_deref(), Some("abc123"));
@@ -5884,7 +5884,7 @@ mod tests {
         report.run.schedule = "gauntlet".to_string();
         report.reference_anchors = Some(AnchorReferenceReport {
             source: AnchorReferenceSource {
-                path: Some("reports/report.json".to_string()),
+                path: Some("../reports/lab/bot-report.json".to_string()),
                 schedule: "round-robin".to_string(),
                 git_commit: Some("abc123".to_string()),
                 git_dirty: Some(false),
@@ -5916,7 +5916,7 @@ mod tests {
         let html = render_tournament_report_html(&report);
 
         assert!(html.contains("<h2>Reference Anchors</h2>"));
-        assert!(html.contains("reports/report.json"));
+        assert!(html.contains("../reports/lab/bot-report.json"));
         assert!(html.contains("CPU 1000 ms/move"));
         assert!(html.contains("max 120 moves"));
         assert!(html.contains("abc123"));
@@ -5936,7 +5936,7 @@ mod tests {
         ];
         report.reference_anchors = Some(AnchorReferenceReport {
             source: AnchorReferenceSource {
-                path: Some("reports/report.json".to_string()),
+                path: Some("../reports/lab/bot-report.json".to_string()),
                 schedule: "round-robin".to_string(),
                 git_commit: Some("abc123".to_string()),
                 git_dirty: Some(false),
@@ -5999,7 +5999,7 @@ mod tests {
         }];
         report.reference_anchors = Some(AnchorReferenceReport {
             source: AnchorReferenceSource {
-                path: Some("reports/report.json".to_string()),
+                path: Some("../reports/lab/bot-report.json".to_string()),
                 schedule: "round-robin".to_string(),
                 git_commit: Some("abc123".to_string()),
                 git_dirty: Some(false),
@@ -6084,7 +6084,7 @@ mod tests {
         reference_match.white_stats.total_nodes = 1500;
         source.matches = vec![reference_match];
         let reference = AnchorReferenceReport::from_report(
-            Some("reports/report.json".to_string()),
+            Some("../reports/lab/bot-report.json".to_string()),
             &source,
             &["anchor-a".to_string(), "anchor-b".to_string()],
         )

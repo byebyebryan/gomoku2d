@@ -62,16 +62,13 @@ Source assets and the manifest-backed visual design reference live in
 [`assets/README.md`](assets/README.md). Published builds expose the reference
 under `/visuals/`.
 
-Curated bot-lab reports live in [`../gomoku-bot-lab/reports/`](../gomoku-bot-lab/reports/)
-and are copied into published builds as `/bot-report/report.json`, the
-ranking/search data source.
+Curated lab report artifacts live in [`../reports/lab/`](../reports/lab/).
+`bot-report.json` is copied into published builds as
+`/bot-report/report.json`, the ranking/search data source.
+`analysis-report.json` is copied into published builds as
+`/analysis-report/report.json`, the analysis data source.
 
-Curated replay-analysis reports live in
-[`../gomoku-bot-lab/analysis-reports/`](../gomoku-bot-lab/analysis-reports/)
-and are copied into published builds as `/analysis-report/report.json`, the
-analysis data source.
-
-Production builds expect both curated report folders to contain `report.json`.
+Production builds expect both curated report JSON files to exist.
 The React app renders the unified `/lab/` from those split data files.
 For local/dev builds that intentionally skip reports, set `GOMOKU_ALLOW_MISSING_REPORTS=1`.
 

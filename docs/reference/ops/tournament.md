@@ -39,8 +39,7 @@ variants, and pattern-eval ablations without keeping no-safety bots in the
 published baseline.
 
 ```sh
-mkdir -p reports
-mkdir -p outputs
+mkdir -p ../reports/lab outputs
 
 cargo run --release -p gomoku-eval -- tournament \
   --bots search-d1,search-d3,search-d3+pattern-eval,search-d5+tactical-cap-16+pattern-eval,search-d7+tactical-cap-8+pattern-eval,search-d3+pattern-eval+corridor-proof-c16-d8-w4,search-d5+tactical-cap-16+pattern-eval+corridor-proof-c16-d8-w4,search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4 \
@@ -55,7 +54,7 @@ cargo run --release -p gomoku-eval -- tournament \
   --seed 63 \
   --threads 22 \
   --report-json outputs/full-tournament-report.json \
-  --published-report-json reports/report.json
+  --published-report-json ../reports/lab/bot-report.json
 ```
 
 Long parallel tournaments print progress to stderr as games complete, including
@@ -87,7 +86,7 @@ cargo run --release -p gomoku-eval -- tournament \
   --schedule gauntlet \
   --candidate search-d5+tactical-cap-4+pattern-eval \
   --anchors search-d3,search-d5+tactical-cap-16+pattern-eval,search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4 \
-  --anchor-report reports/report.json \
+  --anchor-report ../reports/lab/bot-report.json \
   --games-per-pair 64 \
   --opening-policy centered-suite \
   --opening-plies 4 \
@@ -103,7 +102,7 @@ cargo run --release -p gomoku-eval -- tournament \
   --schedule gauntlet \
   --candidates search-d5+tactical-cap-4+pattern-eval,search-d7+tactical-cap-4+pattern-eval,search-d7+tactical-cap-16+pattern-eval \
   --anchors search-d3,search-d5+tactical-cap-16+pattern-eval,search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4 \
-  --anchor-report reports/report.json \
+  --anchor-report ../reports/lab/bot-report.json \
   --games-per-pair 32 \
   --opening-policy centered-suite \
   --opening-plies 4 \
@@ -122,7 +121,7 @@ play candidate-vs-candidate games; promote surviving candidates to a focused
 head-to-head or the next curated round-robin when that comparison matters.
 
 `--anchor-report` points at a round-robin report, normally the compact published
-`gomoku-bot-lab/reports/report.json`. The gauntlet report embeds the requested
+`../reports/lab/bot-report.json`. The gauntlet report embeds the requested
 anchor standings from that source, including source config, git provenance, and
 anchor-vs-anchor pair summaries, so scratch gauntlets can be read without
 maintaining a separate rating cache. Full debug reports can also provide
@@ -208,7 +207,7 @@ shown when relevant.
 ## Report Process
 
 Scratch tournament JSON and HTML belong in `gomoku-bot-lab/outputs/`, which is
-ignored. Curated published reports belong in `gomoku-bot-lab/reports/`.
+ignored. Curated published report artifacts belong in repo-root `reports/lab/`.
 
 For published reports:
 
@@ -217,7 +216,8 @@ For published reports:
 3. Confirm report provenance has `"git_dirty": false`.
 4. Commit report JSON as a follow-up report commit.
 
-The published bot report is web-rendered from compact `reports/report.json`.
+The published bot report is web-rendered from compact
+`reports/lab/bot-report.json`.
 That artifact keeps match move cells for board rendering and replay analysis,
 but intentionally omits debug telemetry. Use a full report under ignored
 `outputs/` when diagnostics are needed.
