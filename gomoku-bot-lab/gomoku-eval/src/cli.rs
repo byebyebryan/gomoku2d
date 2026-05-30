@@ -1940,13 +1940,16 @@ mod tests {
             Some("candidate"),
             None,
             Some("anchor-a,anchor-b"),
-            Some("reports/report.json"),
+            Some("../reports/lab/bot-report.json"),
         )
         .expect("gauntlet plan should parse");
 
         assert_eq!(plan.bot_names, vec!["candidate", "anchor-a", "anchor-b"]);
         assert_eq!(plan.anchor_names, vec!["anchor-a", "anchor-b"]);
-        assert_eq!(plan.anchor_report.as_deref(), Some("reports/report.json"));
+        assert_eq!(
+            plan.anchor_report.as_deref(),
+            Some("../reports/lab/bot-report.json")
+        );
         assert_eq!(
             plan.pairs,
             vec![
@@ -1970,7 +1973,7 @@ mod tests {
             None,
             Some("candidate-a,candidate-b"),
             Some("anchor-a,anchor-b"),
-            Some("reports/report.json"),
+            Some("../reports/lab/bot-report.json"),
         )
         .expect("batch gauntlet plan should parse");
 
@@ -1979,7 +1982,10 @@ mod tests {
             vec!["candidate-a", "candidate-b", "anchor-a", "anchor-b"]
         );
         assert_eq!(plan.anchor_names, vec!["anchor-a", "anchor-b"]);
-        assert_eq!(plan.anchor_report.as_deref(), Some("reports/report.json"));
+        assert_eq!(
+            plan.anchor_report.as_deref(),
+            Some("../reports/lab/bot-report.json")
+        );
         assert_eq!(
             plan.pairs,
             vec![
@@ -2041,7 +2047,7 @@ mod tests {
             None,
             None,
             None,
-            Some("reports/report.json"),
+            Some("../reports/lab/bot-report.json"),
         )
         .unwrap_err();
 
@@ -2282,7 +2288,7 @@ mod tests {
             "gomoku-eval",
             "analyze-report-replays",
             "--report",
-            "reports/report.json",
+            "../reports/lab/bot-report.json",
             "--entrant-a",
             "search-d7+tactical-cap-8+pattern-eval",
             "--entrant-b",
@@ -2292,7 +2298,7 @@ mod tests {
             "--report-json",
             "outputs/analysis/top2-smoke.json",
             "--published-report-json",
-            "analysis-reports/report.json",
+            "../reports/lab/analysis-report.json",
             "--max-depth",
             "4",
             "--max-scan-plies",
@@ -2317,7 +2323,7 @@ mod tests {
             panic!("expected analyze-report-replays command");
         };
 
-        assert_eq!(report, PathBuf::from("reports/report.json"));
+        assert_eq!(report, PathBuf::from("../reports/lab/bot-report.json"));
         assert_eq!(selector, CliReportReplaySelector::HeadToHead);
         assert_eq!(
             entrant_a.as_deref(),
@@ -2334,7 +2340,7 @@ mod tests {
         );
         assert_eq!(
             published_report_json,
-            Some(PathBuf::from("analysis-reports/report.json"))
+            Some(PathBuf::from("../reports/lab/analysis-report.json"))
         );
         assert_eq!(max_depth, 4);
         assert_eq!(max_scan_plies, 8);
@@ -2347,11 +2353,11 @@ mod tests {
             "gomoku-eval",
             "analyze-report-replays",
             "--report",
-            "reports/report.json",
+            "../reports/lab/bot-report.json",
             "--selector",
             "preset-triangle",
             "--published-report-json",
-            "analysis-reports/report.json",
+            "../reports/lab/analysis-report.json",
         ])
         .expect("analyze-report-replays command should parse");
 
@@ -2366,10 +2372,10 @@ mod tests {
         };
 
         assert_eq!(selector, CliReportReplaySelector::PresetTriangle);
-        assert_eq!(report, PathBuf::from("reports/report.json"));
+        assert_eq!(report, PathBuf::from("../reports/lab/bot-report.json"));
         assert_eq!(
             published_report_json,
-            Some(PathBuf::from("analysis-reports/report.json"))
+            Some(PathBuf::from("../reports/lab/analysis-report.json"))
         );
     }
 
@@ -2394,15 +2400,15 @@ mod tests {
 
     #[test]
     fn report_replay_source_label_keeps_default_selector_readable() {
-        let report = PathBuf::from("reports/report.json");
+        let report = PathBuf::from("../reports/lab/bot-report.json");
 
         assert_eq!(
             report_replay_source_label(&report, "search-d7", "search-d5", true),
-            "reports/report.json:Top 2 entrants"
+            "../reports/lab/bot-report.json:Top 2 entrants"
         );
         assert_eq!(
             report_replay_source_label(&report, "search-d7", "search-d5", false),
-            "reports/report.json:search-d7 vs search-d5"
+            "../reports/lab/bot-report.json:search-d7 vs search-d5"
         );
     }
 }

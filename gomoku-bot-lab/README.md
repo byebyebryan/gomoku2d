@@ -72,8 +72,8 @@ Key docs:
 
 `gomoku-eval` owns tournaments, scenario sweeps, lethal checks, and
 replay-analysis report generation. Scratch output belongs in ignored
-`outputs/`; curated published report JSON lives in `reports/` and
-`analysis-reports/`.
+`outputs/`; curated published report JSON lives at repo root in
+`../reports/lab/`.
 
 Common diagnostics:
 

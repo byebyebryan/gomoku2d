@@ -53,8 +53,7 @@ Open `http://localhost:8001/`.
 
 Before a release that includes reports:
 
-- curated report JSON is committed under `gomoku-bot-lab/reports/` and
-  `gomoku-bot-lab/analysis-reports/`;
+- curated report JSON is committed under `reports/lab/`;
 - report provenance says `"git_dirty": false`;
 - `GOMOKU_ALLOW_MISSING_REPORTS=1` is not used for the production build;
 - web build copies `/bot-report/report.json`, `/analysis-report/report.json`,

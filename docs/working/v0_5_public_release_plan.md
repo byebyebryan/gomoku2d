@@ -95,7 +95,7 @@ Historical state that motivated the rewrite:
 
 - Historical `gomoku-bot-lab/reports/latest.json` artifacts were about `31 MB`.
 - Historical generated report HTML artifacts were about `4 MB` each.
-- Published reports now target compact `report.json` data rendered by the web app.
+- Published reports now target compact JSON data rendered by the web app.
 
 The report generation model should move toward:
 
@@ -160,8 +160,8 @@ Once the repo and product story are reconciled, prepare a public alpha:
 - Decide which report data remains checked in.
 - Move report presentation out of Rust-generated monolithic HTML and into web
   viewer components.
-- Keep compact `report.json` as the source data for published pages.
-- Keep compact report JSON under `/bot-report/report.json` and
+- Keep compact report JSON under `reports/lab/`.
+- Publish those files to `/bot-report/report.json` and
   `/analysis-report/report.json`, while making `/lab/` the public viewer route.
 - Make report pages visually consistent with the game shell and visual-design
   pages.
