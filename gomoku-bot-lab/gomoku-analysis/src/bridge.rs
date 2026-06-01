@@ -3,7 +3,7 @@ use serde_json::Value;
 
 use crate::{
     AnalysisOptions, GameAnalysis, ReplayAnalysisCounters, ReplayAnalysisStep,
-    ReplayAnalysisStepStatus, ReplayFrameAnnotations, ReplyPolicy,
+    ReplayAnalysisStepStatus, ReplayFrameAnnotations,
 };
 
 pub const REPLAY_ANALYZER_STEP_SCHEMA_VERSION: u32 = 1;
@@ -89,7 +89,6 @@ pub fn analysis_options_from_json(options_json: &str) -> Result<AnalysisOptions,
         };
     }
 
-    options.reply_policy = ReplyPolicy::CorridorReplies;
     Ok(options)
 }
 

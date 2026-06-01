@@ -57,7 +57,7 @@ Before a release that includes reports:
 - report provenance says `"git_dirty": false`;
 - `GOMOKU_ALLOW_MISSING_REPORTS=1` is not used for the production build;
 - web build copies `/bot-report/report.json`, `/analysis-report/report.json`,
-  `/lab/index.html`, and `/visuals/index.html`.
+  and all SPA route entries configured in `publish_spa_routes.mjs`.
 
 ## Push And CI
 
@@ -81,5 +81,6 @@ scripts/release.sh --check "$VERSION"
 scripts/release.sh "$VERSION"
 ```
 
-The release script validates version/changelog/tag state and dispatches the
-published web workflow. After deployment, smoke the public URL manually.
+The release script validates version/changelog/tag state. Pushing the release
+tag dispatches GitHub Release, Pages deploy, and Firestore rules deploy
+workflows. After deployment, smoke the public URL manually.

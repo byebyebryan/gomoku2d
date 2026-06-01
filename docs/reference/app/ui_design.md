@@ -16,7 +16,7 @@ player-facing flows. Current screenshot QA procedure lives in
 
 Static visual language reference sheet:
 
-![Gomoku2D DOM shell visual reference](../../assets/visual_reference_v0_2_2.png)
+![Gomoku2D DOM shell visual reference](../../archive/visual_reference_v0_2_2.png)
 
 Use this older sheet as a tone and component-language reference, not as the
 current screen baseline. The important takeaways are panel contrast, button

@@ -2086,33 +2086,33 @@ mod tests {
 
     const SEARCH_BEHAVIOR_CASES: &[SearchBehaviorCase] = &[
         SearchBehaviorCase {
-            id: "balanced_completes_open_four",
+            id: "search_d3_completes_open_four",
             scenario_id: "local_complete_open_four",
-            config_id: "balanced",
+            config_id: "search-d3",
             expected_moves: &["G8", "L8"],
-            description: "Balanced should finish its own open four.",
+            description: "search-d3 should finish its own open four.",
         },
         SearchBehaviorCase {
-            id: "balanced_reacts_closed_four",
+            id: "search_d3_reacts_closed_four",
             scenario_id: "local_react_closed_four",
-            config_id: "balanced",
+            config_id: "search-d3",
             expected_moves: &["E1"],
-            description: "Balanced should answer the opponent's closed four.",
+            description: "search-d3 should answer the opponent's closed four.",
         },
         SearchBehaviorCase {
-            id: "balanced_prevents_open_four_over_extending_three",
+            id: "search_d3_prevents_open_four_over_extending_three",
             scenario_id: "priority_prevent_open_four_over_extend_three",
-            config_id: "balanced",
+            config_id: "search-d3",
             expected_moves: &["G8", "K8"],
             description:
-                "Balanced should prevent the opponent's open three instead of extending elsewhere.",
+                "search-d3 should prevent the opponent's open three instead of extending elsewhere.",
         },
         SearchBehaviorCase {
-            id: "balanced_completes_four_before_reacting",
+            id: "search_d3_completes_four_before_reacting",
             scenario_id: "priority_complete_open_four_over_react_closed_four",
-            config_id: "balanced",
+            config_id: "search-d3",
             expected_moves: &["G8", "L8"],
-            description: "Balanced should complete an open four when both sides threaten.",
+            description: "search-d3 should complete an open four when both sides threaten.",
         },
     ];
 
@@ -4298,7 +4298,7 @@ mod tests {
         for case in SEARCH_BEHAVIOR_CASES {
             let board = case.scenario().board();
             let config = match case.config_id {
-                "balanced" => SearchBotConfig::custom_depth(3),
+                "search-d3" => SearchBotConfig::custom_depth(3),
                 other => panic!("unknown behavior config '{}'", other),
             };
             let mut bot = SearchBot::with_config(config);

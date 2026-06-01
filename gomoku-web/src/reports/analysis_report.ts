@@ -141,7 +141,7 @@ function isAnalysisReport(data: unknown): data is PublishedAnalysisReport {
   }
   const report = data as Partial<PublishedAnalysisReport>;
   return (
-    (report.schema_version === 2 || report.schema_version === 3) &&
+    (report.schema_version === 2 || report.schema_version === 3 || report.schema_version === 4) &&
     report.report_kind === "published_analysis" &&
     typeof report.source_kind === "string" &&
     typeof report.source_report === "string" &&

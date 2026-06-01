@@ -75,6 +75,8 @@ jobs:
       - name: Install web deps
         working-directory: gomoku-web
         run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
 
       - uses: actions/setup-java@v5
         with:

@@ -7,19 +7,15 @@ use gomoku_core::{Board, Color, GameResult, Move, Replay, RuleConfig, Variant};
 #[derive(Parser, Debug)]
 #[command(name = "gomoku-cli", about = "Run a Gomoku match between bots")]
 struct Args {
-    /// Bot for Black: "random", "search-dN", lab specs, or legacy "baseline" aliases
+    /// Bot for Black: "random", "search-dN", or lab specs
     #[arg(long, default_value = "search-d3")]
     black: String,
 
-    /// Bot for White: "random", "search-dN", lab specs, or legacy "baseline" aliases
+    /// Bot for White: "random", "search-dN", or lab specs
     #[arg(long, default_value = "random")]
     white: String,
 
-    /// Fixed search depth for the legacy plain "baseline" spec
-    #[arg(long, default_value_t = 5)]
-    depth: i32,
-
-    /// Time budget per move in milliseconds for the legacy "baseline" spec (overrides depth if set)
+    /// Time budget per move in milliseconds
     #[arg(long)]
     time_ms: Option<u64>,
 
@@ -36,16 +32,16 @@ struct Args {
     quiet: bool,
 }
 
-fn make_bot(name: &str, depth: i32, time_ms: Option<u64>) -> Box<dyn Bot> {
+fn make_bot(name: &str, time_ms: Option<u64>) -> Box<dyn Bot> {
     if name == "random" {
         return Box::new(RandomBot::new());
     }
-    if let Some(config) = lab_spec::search_config_from_lab_spec(name, depth, time_ms, None) {
+    if let Some(config) = lab_spec::search_config_from_lab_spec(name, time_ms, None) {
         return Box::new(SearchBot::with_config(config));
     }
 
     eprintln!(
-        "Unknown bot '{}'. Use random, search-dN, lab specs, or legacy baseline aliases. Using random.",
+        "Unknown bot '{}'. Use random, search-dN, or lab specs. Using random.",
         name
     );
     Box::new(RandomBot::new())
@@ -105,8 +101,8 @@ fn main() {
 
     let black_label = args.black.clone();
     let white_label = args.white.clone();
-    let mut black_bot = make_bot(&args.black, args.depth, args.time_ms);
-    let mut white_bot = make_bot(&args.white, args.depth, args.time_ms);
+    let mut black_bot = make_bot(&args.black, args.time_ms);
+    let mut white_bot = make_bot(&args.white, args.time_ms);
 
     println!("Black: {black_label}  |  White: {white_label}");
     println!();

@@ -3,8 +3,8 @@
 Source assets for the web game.
 
 These are the authoring/reference assets imported by the app or used to derive
-runtime visuals. Deployed static copies, when needed, live under
-`public/assets/`.
+runtime visuals. The web build publishes raw visual-guide files to
+`dist/assets/`.
 
 ## Published Visual Design
 

@@ -7,7 +7,7 @@ use gomoku_bot::tactical::LethalThreatKind;
 use gomoku_core::{Color, Move};
 use serde::Serialize;
 
-pub const ANALYSIS_SCHEMA_VERSION: u32 = 20;
+pub const ANALYSIS_SCHEMA_VERSION: u32 = 21;
 pub const DEFAULT_MAX_SCAN_PLIES: usize = 64;
 const MAX_CORRIDOR_REPLY_WIDTH: usize = 8;
 
@@ -17,12 +17,6 @@ pub enum ProofStatus {
     ForcedWin,
     EscapeFound,
     Unknown,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum ReplyPolicy {
-    CorridorReplies,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -121,7 +115,6 @@ pub type DefenderReplyCandidate = VisibleDefenderReplyCandidate;
 
 #[derive(Debug, Clone)]
 pub struct AnalysisOptions {
-    pub reply_policy: ReplyPolicy,
     pub max_depth: usize,
     pub max_scan_plies: Option<usize>,
 }
@@ -129,7 +122,6 @@ pub struct AnalysisOptions {
 impl Default for AnalysisOptions {
     fn default() -> Self {
         Self {
-            reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 4,
             max_scan_plies: Some(DEFAULT_MAX_SCAN_PLIES),
         }
@@ -147,7 +139,6 @@ impl AnalysisOptions {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct AnalysisModel {
-    pub reply_policy: ReplyPolicy,
     pub rule_set: String,
     pub max_depth: usize,
     pub max_scan_plies: Option<usize>,

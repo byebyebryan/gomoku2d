@@ -22,6 +22,19 @@ export function AnalysisReportContent({
   report: PublishedAnalysisReport;
   initialMatchPath?: string | null;
 }) {
+  useEffect(() => {
+    if (!initialMatchPath) return undefined;
+
+    const frame = window.requestAnimationFrame(() => {
+      const target = Array.from(
+        document.querySelectorAll<HTMLElement>("[data-analysis-match-path]"),
+      ).find((element) => element.dataset.analysisMatchPath === initialMatchPath);
+      target?.scrollIntoView({ block: "center", behavior: "smooth" });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [initialMatchPath, report]);
+
   return (
     <section
       aria-labelledby="lab-report-tab-analysis"

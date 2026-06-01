@@ -35,7 +35,7 @@ function cancelActiveAnalysis(postCancellation: boolean): void {
 }
 
 function parseStepResult(json: string): ReplayAnalysisStepResult {
-  return parseWasmReplayAnalysisStep<ReplayAnalysisStepResult>(json);
+  return parseWasmReplayAnalysisStep(json);
 }
 
 function runStep(active: ActiveAnalysis): void {
