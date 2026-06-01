@@ -43,6 +43,12 @@ The root [`README`](../README.md) is the public repo landing page.
 | [`working/`](working/) | Active notes only; should be pruned or archived regularly |
 | [`archive/`](archive/) | Historical context, retired plans, rejected paths, and old release notes |
 
+## Internal Working Notes
+
+- [`Process Story Mining`](working/process_story.md) tracks private extraction
+  and curation for future external devlog copy. It is not canonical product
+  documentation and should not be treated as public-ready source.
+
 ## Maintenance Rule
 
 Active reference docs should be concise and current. Do not keep dated lab logs,
