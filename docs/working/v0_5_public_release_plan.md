@@ -42,6 +42,11 @@ For developers and dev-log readers, the secondary hook is the production
 experiment: one developer using agents to cover more of a real product loop
 without dropping the quality bar.
 
+The source material for that secondary hook is tracked in
+[`Process Story Mining`](process_story.md). Keep the raw extraction private;
+use it to curate specific moments, release checkpoints, and hard lessons for
+future devlog or public-release copy.
+
 ## What Worked
 
 - The Rust-core-first architecture worked. Rules, bots, eval tools, wasm, and
@@ -119,8 +124,8 @@ release copy and deeper reference material.
 - In app: `Rules`, `Guide`, `Visuals`, and `Lab`.
 - In repo/public docs: `About`, replay-analysis copy, bot-lab copy, and release
   notes.
-- Optional `Devlog` or `Lab Notes`: a bridge for public writing if we decide to
-  publish the build process.
+- External: process-story devlog copy for itch.io, GitHub, or blog publishing.
+  Do not add an in-app process page in this slice.
 
 These pages should not be walls of documentation. They should make the product
 features understandable from inside the app.
@@ -207,7 +212,8 @@ scaffolding before asking strangers to look at it.
 
 - Refresh hero capture and screenshot review.
 - Update README and release copy around the current product loop.
-- Prepare itch.io/dev-log copy.
+- Prepare itch.io/dev-log copy using the external process-story devlog kit and
+  visual storyboard.
 - Run a public-alpha QA pass.
 - Cut the first public-facing `0.5` release.
 
