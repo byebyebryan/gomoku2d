@@ -47,6 +47,7 @@ const REPORT_VIEWS: Array<{ id: ReportView; label: string }> = [
 export function LabReportRoute() {
   const [searchParams, setSearchParams] = useSearchParams();
   const view = parseReportView(searchParams.get("tab"));
+  const analysisMatchPath = view === "analysis" ? searchParams.get("match") : null;
   const [analysisState, setAnalysisState] = useState<LoadState<PublishedAnalysisReport>>({
     status: "idle",
   });
@@ -109,7 +110,15 @@ export function LabReportRoute() {
   }, [view]);
 
   const setView = (nextView: ReportView) => {
-    setSearchParams(nextView === "ranking" ? {} : { tab: nextView });
+    const nextParams = new URLSearchParams();
+    if (nextView !== "ranking") {
+      nextParams.set("tab", nextView);
+    }
+    const currentMatch = searchParams.get("match");
+    if (nextView === "analysis" && currentMatch) {
+      nextParams.set("match", currentMatch);
+    }
+    setSearchParams(nextParams);
   };
 
   let content: ReactNode;
@@ -122,7 +131,7 @@ export function LabReportRoute() {
     } else {
       content = (
         <>
-          <AnalysisReportContent report={analysisState.report} />
+          <AnalysisReportContent report={analysisState.report} initialMatchPath={analysisMatchPath} />
           <AnalysisHowToReadSection />
           <AnalysisProvenanceSection report={analysisState.report} />
         </>

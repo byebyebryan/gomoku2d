@@ -1,4 +1,4 @@
-import { Fragment, type CSSProperties, useState } from "react";
+import { Fragment, type CSSProperties, useEffect, useState } from "react";
 
 import { presetForLabSpec, type BotPresetId } from "../core/bot_config";
 import {
@@ -15,7 +15,13 @@ const DEFAULT_REPORT_BOARD_SIZE = 15;
 const ANALYSIS_BOARD_CELL_SIZE = 20;
 const ANALYSIS_BOARD_LABEL_SIZE = 16;
 
-export function AnalysisReportContent({ report }: { report: PublishedAnalysisReport }) {
+export function AnalysisReportContent({
+  report,
+  initialMatchPath = null,
+}: {
+  report: PublishedAnalysisReport;
+  initialMatchPath?: string | null;
+}) {
   return (
     <section
       aria-labelledby="lab-report-tab-analysis"
@@ -33,14 +39,20 @@ export function AnalysisReportContent({ report }: { report: PublishedAnalysisRep
         </div>
       </div>
       <div className={styles.entrantGrid}>
-        {report.sections.map((section) => (
-          <AnalysisPairRow
-            key={section.label}
-            section={section}
-            defaultOpen={false}
-            defaultOpenFirstGame={false}
-          />
-        ))}
+        {report.sections.map((section) => {
+          const sectionHasInitialMatch = section.entries.some(
+            (entry) => entry.path === initialMatchPath,
+          );
+          return (
+            <AnalysisPairRow
+              key={section.label}
+              section={section}
+              defaultOpen={sectionHasInitialMatch}
+              defaultOpenFirstGame={false}
+              initialMatchPath={initialMatchPath}
+            />
+          );
+        })}
       </div>
     </section>
   );
@@ -50,15 +62,25 @@ function AnalysisPairRow({
   section,
   defaultOpen,
   defaultOpenFirstGame,
+  initialMatchPath,
 }: {
   section: AnalysisSection;
   defaultOpen: boolean;
   defaultOpenFirstGame: boolean;
+  initialMatchPath: string | null;
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [renderGames, setRenderGames] = useState(defaultOpen);
   const title = analysisPairTitle(section);
   const failureCount = section.entries.filter((entry) => entry.failure).length;
+
+  useEffect(() => {
+    if (!defaultOpen) {
+      return;
+    }
+    setIsOpen(true);
+    setRenderGames(true);
+  }, [defaultOpen]);
 
   return (
     <details
@@ -99,7 +121,9 @@ function AnalysisPairRow({
               key={`${section.label}-${entry.match_report.match_index}`}
               entry={entry}
               pair={section}
-              defaultOpen={defaultOpenFirstGame && index === 0}
+              defaultOpen={
+                entry.path === initialMatchPath || (defaultOpenFirstGame && index === 0)
+              }
             />
           ))}
         </div>
@@ -121,9 +145,18 @@ function AnalysisGameRow({
   const [renderDetails, setRenderDetails] = useState(defaultOpen);
   const title = entryTitle(entry, pair);
 
+  useEffect(() => {
+    if (!defaultOpen) {
+      return;
+    }
+    setIsOpen(true);
+    setRenderDetails(true);
+  }, [defaultOpen]);
+
   return (
     <details
       className={styles.match}
+      data-analysis-match-path={entry.path}
       onToggle={(event) => {
         const nextOpen = event.currentTarget.open;
         setIsOpen(nextOpen);
