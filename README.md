@@ -2,13 +2,12 @@
 
 *An old favorite, built properly.*
 
-Gomoku2D is a simple, fun web Gomoku with a retro feel and serious engineering
-underneath: a modern frontend, a Rust/WebAssembly rules core, and a Rust bot lab
-for game logic and AI experiments.
+Gomoku2D is a simple, fun web Gomoku with a retro feel, a Rust/WebAssembly
+rules core, and replay analysis that helps show where a finished match turned.
 
-It is also a production experiment: one developer, an AI-centric workflow, and
-a question more interesting than raw speed: how much of a real product team's
-surface area can agents help cover without lowering the quality bar?
+It is also a production experiment: one developer, an agent-assisted workflow,
+and a question more interesting than raw speed: how much of a real product
+team's surface area can agents help cover without lowering the quality bar?
 
 [![Gomoku2D hero capture — Local Match in progress on the pixel-art board](docs/assets/capture_v0_2_4_match_desktop.gif)](https://gomoku2d.byebyebryan.com/)
 
@@ -46,7 +45,7 @@ surface area can agents help cover without lowering the quality bar?
   Renju forbidden-move feedback and mobile-friendly placement controls.
 - Analyze finished games, scrub the Replay Analysis timeline, and branch from a
   replay position into a fresh practice game.
-- Let the browser analyzer mark the setup corridor and latest escape in
+- Let the browser analyzer mark the setup corridor and last escape in
   finished decisive replays.
 - Keep guest-local history by default, or sign in with Google for private
   cloud-backed history across browsers.
