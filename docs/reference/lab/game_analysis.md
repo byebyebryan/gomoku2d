@@ -85,7 +85,6 @@ status text, timeline spans, board hints, and replay navigation.
 
 Current replay analysis uses:
 
-- reply policy: `corridor_replies`;
 - `max_depth`: corridor proof depth, not broad minimax depth;
 - `max_scan_plies`: backward replay scan window.
 

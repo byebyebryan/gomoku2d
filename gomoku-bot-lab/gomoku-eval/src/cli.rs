@@ -626,7 +626,7 @@ fn make_bot_factory(
         return Ok(Arc::new(|seed| Box::new(RandomBot::seeded(seed))));
     }
     if let Some(config) =
-        lab_spec::search_config_from_lab_spec(&spec, 5, search_time_ms, search_cpu_time_ms)
+        lab_spec::search_config_from_lab_spec(&spec, search_time_ms, search_cpu_time_ms)
     {
         return match search_budget_mode {
             CliSearchBudgetMode::Strict => {
@@ -667,7 +667,7 @@ fn make_bot_factory(
     }
 
     Err(format!(
-        "Unknown bot type: '{spec}'. Use random, search-dN, search-dN+suffixes, or legacy baseline aliases."
+        "Unknown bot type: '{spec}'. Use random, search-dN, or search-dN+suffixes."
     ))
 }
 

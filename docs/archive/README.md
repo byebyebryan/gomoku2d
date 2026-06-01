@@ -30,6 +30,8 @@ The archive also keeps a few visual-exploration artifacts from the early
 - `v0_2_visual.png`
 - `v0_2_ui.md`
 - `v0_2_themes.png`
+- `visual_reference_v0_2_2.png`
+- `capture_v0_2_4_match_desktop.gif`
 
 Historical current-line ad-hoc planning notes also live here when they are
 useful as evidence but should not compete with canonical docs. Active working

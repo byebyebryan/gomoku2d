@@ -13,8 +13,8 @@ use super::{
     DefenderReplyRole, FailureAnalysisInput, FailureMode, ForcedInterval, LethalOnset,
     LethalOnsetComponentTier, LethalOnsetMechanism, LethalOnsetShape, MissedCandidateOutcome,
     ProofLimitCause, ProofResult, ProofStatus, ReplayAnalysisSession, ReplayFrameAnnotations,
-    ReplayFrameHighlightRole, ReplayFrameMarkerRole, ReplyClassification, ReplyPolicy, RootCause,
-    TacticalNote, ThreatSequenceEvidence, UnclearReason,
+    ReplayFrameHighlightRole, ReplayFrameMarkerRole, ReplyClassification, RootCause, TacticalNote,
+    ThreatSequenceEvidence, UnclearReason,
 };
 
 fn mv(notation: &str) -> Move {
@@ -67,7 +67,6 @@ fn proof_for_board(board: &Board, winner: Color, options: &AnalysisOptions) -> P
 
 fn test_analysis_options() -> AnalysisOptions {
     AnalysisOptions {
-        reply_policy: ReplyPolicy::CorridorReplies,
         max_depth: 4,
         max_scan_plies: Some(64),
     }
@@ -186,7 +185,6 @@ fn imminent_open_three_defense_excludes_outer_cost_squares() {
         ],
     );
     let options = AnalysisOptions {
-        reply_policy: ReplyPolicy::CorridorReplies,
         max_depth: 4,
         max_scan_plies: Some(8),
     };
@@ -222,7 +220,6 @@ fn open_three_with_blocked_outer_side_includes_far_defense_square() {
     );
 
     let options = AnalysisOptions {
-        reply_policy: ReplyPolicy::CorridorReplies,
         max_depth: 4,
         max_scan_plies: Some(8),
     };
@@ -243,7 +240,6 @@ fn boxed_three_is_not_a_forcing_open_three() {
     );
 
     let options = AnalysisOptions {
-        reply_policy: ReplyPolicy::CorridorReplies,
         max_depth: 4,
         max_scan_plies: Some(8),
     };
@@ -336,7 +332,6 @@ fn corridor_replies_finds_escape_for_single_closed_four() {
         Color::Black,
         None,
         &AnalysisOptions {
-            reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 4,
             ..AnalysisOptions::default()
         },
@@ -359,7 +354,6 @@ fn corridor_replies_proves_open_four_even_if_one_end_is_blocked() {
         Color::Black,
         None,
         &AnalysisOptions {
-            reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 4,
             ..AnalysisOptions::default()
         },
@@ -388,7 +382,6 @@ fn corridor_depth_proves_closed_four_block_into_open_four() {
     let analysis = analyze_replay(
         &replay,
         AnalysisOptions {
-            reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 4,
             max_scan_plies: Some(6),
         },
@@ -417,7 +410,6 @@ fn corridor_depth_cutoff_is_possible_escape() {
         Color::Black,
         Some(mv("L8")),
         &AnalysisOptions {
-            reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 0,
             ..AnalysisOptions::default()
         },
@@ -439,7 +431,6 @@ fn corridor_replies_allow_defender_immediate_win_escape() {
         Color::White,
         Some(mv("A5")),
         &AnalysisOptions {
-            reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 4,
             ..AnalysisOptions::default()
         },
@@ -463,7 +454,6 @@ fn corridor_replies_prove_renju_single_square_with_forbidden_block() {
     let analysis = analyze_replay(
         &replay,
         AnalysisOptions {
-            reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 4,
             max_scan_plies: Some(2),
         },
@@ -492,7 +482,6 @@ fn replay_analysis_labels_missed_defense_without_overclaiming_previous_position(
     let analysis = analyze_replay(
         &replay,
         AnalysisOptions {
-            reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 2,
             max_scan_plies: None,
         },
@@ -884,7 +873,6 @@ fn replay_analysis_stops_at_possible_escape_boundary() {
     let analysis = analyze_replay(
         &replay,
         AnalysisOptions {
-            reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 0,
             max_scan_plies: Some(8),
         },
@@ -928,7 +916,6 @@ fn replay_analysis_session_matches_blocking_analysis() {
         &["H8", "G8", "I8", "A1", "J8", "A2", "K8", "B1", "L8"],
     );
     let options = AnalysisOptions {
-        reply_policy: ReplyPolicy::CorridorReplies,
         max_depth: 2,
         max_scan_plies: Some(8),
     };
@@ -960,7 +947,6 @@ fn replay_analysis_session_clamps_zero_work_to_one_prefix() {
     let mut session = ReplayAnalysisSession::new(
         replay,
         AnalysisOptions {
-            reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 2,
             max_scan_plies: None,
         },
@@ -989,7 +975,6 @@ fn replay_frame_annotations_emit_escape_boundary_candidates() {
         ],
     );
     let options = AnalysisOptions {
-        reply_policy: ReplyPolicy::CorridorReplies,
         max_depth: 0,
         max_scan_plies: Some(8),
     };
@@ -1065,7 +1050,6 @@ fn replay_frame_annotations_mark_actual_counter_threat_hint() {
         ],
     );
     let options = AnalysisOptions {
-        reply_policy: ReplyPolicy::CorridorReplies,
         max_depth: 0,
         max_scan_plies: Some(64),
     };
@@ -1107,7 +1091,6 @@ fn replay_analysis_probes_all_imminent_combo_reply_outcomes() {
         Color::White,
         Some(mv("C8")),
         &AnalysisOptions {
-            reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 0,
             max_scan_plies: Some(64),
         },
@@ -1140,7 +1123,6 @@ fn replay_analysis_does_not_treat_combo_imminent_actual_reply_as_miss() {
     let analysis = analyze_replay(
         &replay,
         AnalysisOptions {
-            reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 4,
             max_scan_plies: Some(64),
         },
@@ -1271,7 +1253,6 @@ fn replay_annotations_do_not_show_lower_tier_forbidden_replies_during_immediate_
     );
     assert_eq!(board.current_player, Color::Black);
     let options = AnalysisOptions {
-        reply_policy: ReplyPolicy::CorridorReplies,
         max_depth: 0,
         max_scan_plies: Some(64),
     };
@@ -1317,7 +1298,6 @@ fn replay_analysis_session_marks_next_corridor_entry_on_escape_boundary() {
     let mut session = ReplayAnalysisSession::new(
         replay,
         AnalysisOptions {
-            reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 4,
             max_scan_plies: Some(64),
         },
@@ -1371,7 +1351,6 @@ fn replay_analysis_session_emits_corridor_entry_escape_boundary() {
     let mut session = ReplayAnalysisSession::new(
         replay,
         AnalysisOptions {
-            reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 4,
             max_scan_plies: Some(64),
         },
@@ -1424,7 +1403,6 @@ fn replay_analysis_does_not_label_actual_immediate_block_as_escape() {
         &actual_moves,
         Color::Black,
         &AnalysisOptions {
-            reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 4,
             max_scan_plies: Some(8),
         },
@@ -1460,7 +1438,6 @@ fn replay_analysis_extends_forced_corridor_through_forbidden_renju_defenses() {
     let analysis = analyze_replay(
         &replay,
         AnalysisOptions {
-            reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 4,
             max_scan_plies: Some(64),
         },
@@ -1538,7 +1515,6 @@ fn replay_analysis_attaches_actual_reply_to_actual_line_evidence() {
     let analysis = analyze_replay(
         &replay,
         AnalysisOptions {
-            reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 2,
             max_scan_plies: None,
         },
@@ -1569,7 +1545,6 @@ fn replay_analysis_tracks_conversion_error_before_final_interval() {
     let analysis = analyze_replay(
         &replay,
         AnalysisOptions {
-            reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 2,
             max_scan_plies: None,
         },
@@ -1596,7 +1571,6 @@ fn replay_analysis_labels_losing_side_missed_win_as_root_cause() {
     let analysis = analyze_replay(
         &replay,
         AnalysisOptions {
-            reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 2,
             ..AnalysisOptions::default()
         },
@@ -1619,7 +1593,6 @@ fn shallow_corridor_analysis_finds_open_four_point_of_no_return() {
     let analysis = analyze_replay(
         &replay,
         AnalysisOptions {
-            reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 1,
             max_scan_plies: Some(4),
         },
@@ -1654,13 +1627,11 @@ fn renju_forbidden_defense_remains_model_visible() {
     let analysis = analyze_replay(
         &replay,
         AnalysisOptions {
-            reply_policy: ReplyPolicy::CorridorReplies,
             max_depth: 4,
             ..AnalysisOptions::default()
         },
     )
     .expect("ongoing renju replay should analyze");
 
-    assert_eq!(analysis.model.reply_policy, ReplyPolicy::CorridorReplies);
     assert_eq!(analysis.root_cause, RootCause::Unclear);
 }

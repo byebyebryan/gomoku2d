@@ -32,7 +32,7 @@ Project: `gomoku2d`
 | Firebase Auth | Initialized as Identity Platform; Google provider enabled | Billing is enabled; stay inside no-cost MAU tier and avoid phone/SAML/OIDC |
 | Firestore | Default Native-mode database in `us-central1`; `freeTier: true` | Uses the one free Firestore database for the project |
 | Firestore rules | Repo rules deployed to `cloud.firestore` release | No runtime cost |
-| Cloud Run | Not created in `v0.3` | Future online/trusted-match phase, or earlier only if lab-powered analysis needs server compute; billing is enabled, but no service exists yet |
+| Cloud Run | Not created | Future online/trusted-match phase, or earlier only if lab-powered analysis needs server compute; billing is enabled, but no service exists yet |
 
 ## Firestore Free Tier
 
@@ -54,9 +54,9 @@ Features to avoid while we are intentionally staying free-tier-first:
 - backups/restores/clones
 - extra Firestore databases
 
-## Expected `v0.3` Firestore Usage
+## Expected Firestore Usage
 
-The `v0.3` cloud path is private profile/history continuity, not live gameplay.
+The current cloud path is private profile/history continuity, not live gameplay.
 Local play has no backend cost.
 
 Counting assumptions:
@@ -67,7 +67,7 @@ Counting assumptions:
   full replay, summary, and archived-stats tiers in the same profile document;
   there is no per-match document create in the current casual cloud path.
 - Replay currently resolves from the active Profile/history cache; there is no
-  dedicated cloud replay fetch route in `v0.3.3`.
+  dedicated cloud replay fetch route.
 
 Estimated operation budgets for the current implementation:
 
@@ -105,7 +105,7 @@ Initial implementation guardrails:
   knob is now the sync interval: `1440 / interval_minutes` writes per
   continuously dirty active user per day.
 
-## `v0.3.3` Cost Formulas
+## Cost Formulas
 
 These formulas are intentionally conservative enough for release planning.
 

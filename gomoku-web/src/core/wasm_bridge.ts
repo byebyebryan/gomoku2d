@@ -1,6 +1,11 @@
 import { WasmBoard, WasmBot, WasmReplayAnalyzer } from "gomoku-wasm";
 
 import type { BotMove, BotSpec, GameVariant } from "./bot_protocol";
+import type {
+  ReplayAnalysisCounters,
+  ReplayAnalysisMove,
+  ReplayAnalysisStepResult,
+} from "../replay/replay_analysis_protocol";
 
 export type WasmGameResult = "black" | "draw" | "ongoing" | "white";
 
@@ -73,6 +78,10 @@ function validateWasmMove(value: unknown, label = "move"): WasmMove {
   return { row, col };
 }
 
+function validateReplayAnalysisMove(value: unknown, label = "move"): ReplayAnalysisMove {
+  return validateWasmMove(value, label);
+}
+
 function validateWasmMoveList(value: unknown, label: string): WasmMove[] {
   if (!Array.isArray(value)) {
     throw new Error(`${label} must be an array`);
@@ -127,6 +136,87 @@ function validateBotMove(value: unknown): BotMove | null {
   return validateWasmMove(value, "bot move");
 }
 
+function validateReplayAnalysisCounters(value: unknown): ReplayAnalysisCounters {
+  const record = requireRecord(value, "replay analysis counters");
+  for (const field of ["branch_roots", "prefixes_analyzed", "proof_nodes"]) {
+    if (typeof record[field] !== "number") {
+      throw new Error(`replay analysis counters.${field} must be a number`);
+    }
+  }
+  return record as unknown as ReplayAnalysisCounters;
+}
+
+function validateReplayAnalysisStep(value: unknown): ReplayAnalysisStepResult {
+  const record = requireRecord(value, "replay analysis step");
+  const status = record.status;
+  if (
+    status !== "running" &&
+    status !== "resolved" &&
+    status !== "unclear" &&
+    status !== "unsupported" &&
+    status !== "error"
+  ) {
+    throw new Error("replay analysis step.status has an unknown value");
+  }
+  if (typeof record.schema_version !== "number") {
+    throw new Error("replay analysis step.schema_version must be a number");
+  }
+  if (typeof record.done !== "boolean") {
+    throw new Error("replay analysis step.done must be a boolean");
+  }
+  if (record.current_ply !== null && typeof record.current_ply !== "number") {
+    throw new Error("replay analysis step.current_ply must be a number or null");
+  }
+  if (record.error !== null && typeof record.error !== "string") {
+    throw new Error("replay analysis step.error must be a string or null");
+  }
+  if (!Array.isArray(record.annotations)) {
+    throw new Error("replay analysis step.annotations must be an array");
+  }
+  for (const [index, annotation] of record.annotations.entries()) {
+    validateReplayFrameAnnotations(annotation, `replay analysis step.annotations[${index}]`);
+  }
+  validateReplayAnalysisCounters(record.counters);
+  if (record.analysis !== null) {
+    requireRecord(record.analysis, "replay analysis step.analysis");
+  }
+  return record as unknown as ReplayAnalysisStepResult;
+}
+
+function validateReplayFrameAnnotations(value: unknown, label: string): void {
+  const record = requireRecord(value, label);
+  if (typeof record.ply !== "number") {
+    throw new Error(`${label}.ply must be a number`);
+  }
+  if (record.side_to_move !== "Black" && record.side_to_move !== "White") {
+    throw new Error(`${label}.side_to_move has an unknown value`);
+  }
+  validateReplayFrameHintList(record.highlights, `${label}.highlights`);
+  validateReplayFrameHintList(record.markers, `${label}.markers`);
+  if (record.evidence !== undefined) {
+    validateReplayFrameHintList(record.evidence, `${label}.evidence`);
+  }
+}
+
+function validateReplayFrameHintList(value: unknown, label: string): void {
+  if (!Array.isArray(value)) {
+    throw new Error(`${label} must be an array`);
+  }
+  for (const [index, hint] of value.entries()) {
+    const record = requireRecord(hint, `${label}[${index}]`);
+    validateReplayAnalysisMove(record.mv, `${label}[${index}].mv`);
+    if (typeof record.notation !== "string") {
+      throw new Error(`${label}[${index}].notation must be a string`);
+    }
+    if (typeof record.role !== "string") {
+      throw new Error(`${label}[${index}].role must be a string`);
+    }
+    if (record.side !== "Black" && record.side !== "White") {
+      throw new Error(`${label}[${index}].side has an unknown value`);
+    }
+  }
+}
+
 export function createWasmBoard(variant: GameVariant): WasmBoard {
   return WasmBoard.createWithVariant(variant);
 }
@@ -155,8 +245,8 @@ export function chooseWasmBotMove(bot: WasmBot, board: WasmBoard): BotMove | nul
   return parseBridgeJson(bot.chooseMove(board), "bot move", validateBotMove);
 }
 
-export function parseWasmReplayAnalysisStep<T>(json: string): T {
-  return parseBridgeJson<T>(json, "replay analysis step");
+export function parseWasmReplayAnalysisStep(json: string): ReplayAnalysisStepResult {
+  return parseBridgeJson(json, "replay analysis step", validateReplayAnalysisStep);
 }
 
 export { WasmBoard, WasmBot, WasmReplayAnalyzer };

@@ -41,6 +41,24 @@ if [ "$(git branch --show-current)" != "main" ]; then
   exit 1
 fi
 
+if git remote get-url origin >/dev/null 2>&1; then
+  git fetch --quiet origin main
+  LOCAL_MAIN="$(git rev-parse main)"
+  ORIGIN_MAIN="$(git rev-parse origin/main)"
+  MERGE_BASE="$(git merge-base main origin/main)"
+
+  if [ "$LOCAL_MAIN" != "$ORIGIN_MAIN" ]; then
+    if [ "$LOCAL_MAIN" = "$MERGE_BASE" ]; then
+      echo "Local main is behind origin/main; pull before releasing." >&2
+    elif [ "$ORIGIN_MAIN" = "$MERGE_BASE" ]; then
+      echo "Local main has unpushed commits; push main before releasing." >&2
+    else
+      echo "Local main and origin/main have diverged; resolve before releasing." >&2
+    fi
+    exit 1
+  fi
+fi
+
 if git rev-parse --verify --quiet "refs/tags/${TAG}" >/dev/null; then
   echo "Tag ${TAG} already exists locally" >&2
   exit 1
@@ -112,5 +130,6 @@ Release ${TAG} prepared locally.
   Push:    git push origin main && git push origin ${TAG}
 
 Pushing main updates the release commit without publishing the site. Pushing
-the tag fires the GitHub Release and Pages deploy workflows.
+the tag fires the GitHub Release, Pages deploy, and Firestore rules deploy
+workflows.
 EOF

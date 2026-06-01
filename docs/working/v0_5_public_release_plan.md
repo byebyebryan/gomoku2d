@@ -191,6 +191,10 @@ Once the repo and product story are reconciled, prepare a public alpha:
 Before public packaging, do one more housekeeping pass now that the report
 viewer, static pages, and replay-analysis presentation have all moved.
 
+Status: in cleanup execution. The remaining work is operational hygiene, stale
+compatibility removal, test consolidation, and refreshed report provenance, not
+new player-facing scope.
+
 - Audit tracked artifacts, generated data, and report payloads after the
   viewer-plus-data rewrite.
 - Remove or archive stale working notes that no longer describe the current

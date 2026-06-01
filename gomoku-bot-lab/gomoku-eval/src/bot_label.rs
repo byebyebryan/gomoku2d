@@ -34,18 +34,10 @@ pub fn compact_bot_label_parts(
     )
 }
 
-fn searchbot_base_depth(bot: &str, budgeted_unqualified_search: bool) -> Option<i32> {
-    match bot {
-        "fast" => Some(2),
-        "balanced" => Some(3),
-        "deep" => Some(5),
-        "baseline" | "search" if budgeted_unqualified_search => Some(20),
-        "baseline" | "search" => Some(5),
-        _ => bot
-            .strip_prefix("baseline-")
-            .or_else(|| bot.strip_prefix("search-"))
-            .map(|depth| depth.strip_prefix('d').unwrap_or(depth))
-            .and_then(|depth| depth.parse::<i32>().ok()),
+fn searchbot_base_depth(bot: &str, _budgeted_unqualified_search: bool) -> Option<i32> {
+    match bot.strip_prefix("search-d") {
+        Some(depth) => depth.parse::<i32>().ok(),
+        None => None,
     }
 }
 
@@ -93,7 +85,7 @@ mod tests {
             "SearchBot_D5+TCap16+Pattern+Corridor Proof"
         );
         assert_eq!(super::compact_bot_label("random", false), "RandomBot");
-        assert_eq!(super::compact_bot_label("search", false), "SearchBot_D5");
-        assert_eq!(super::compact_bot_label("search", true), "SearchBot_D20");
+        assert_eq!(super::compact_bot_label("search-d3", false), "SearchBot_D3");
+        assert_eq!(super::compact_bot_label("search", true), "search");
     }
 }

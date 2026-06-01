@@ -78,7 +78,7 @@ describe("WasmReplayAnalyzer replay input", () => {
     );
 
     try {
-      const result = parseWasmReplayAnalysisStep<{ analysis: unknown; done: boolean; status: string }>(analyzer.step(128));
+      const result = parseWasmReplayAnalysisStep(analyzer.step(128));
 
       expect(result.done).toBe(true);
       expect(result.status).toBe("resolved");

@@ -19,7 +19,7 @@ const SettingsRoute = lazy(async () => ({
   default: (await import("../routes/SettingsRoute")).SettingsRoute,
 }));
 const LabReportRoute = lazy(async () => ({
-  default: (await import("../routes/BotReportRoute")).LabReportRoute,
+  default: (await import("../routes/LabReportRoute")).LabReportRoute,
 }));
 const AssetPreviewRoute = lazy(async () => ({
   default: (await import("../routes/AssetPreviewRoute")).AssetPreviewRoute,

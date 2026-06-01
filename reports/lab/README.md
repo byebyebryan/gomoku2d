@@ -12,56 +12,16 @@ Scratch and full diagnostic reports still belong in ignored
 
 ## Refresh Bot Report
 
-Run from `gomoku-bot-lab/` after committing report/tooling changes and confirming
-the worktree is clean:
-
-```sh
-mkdir -p ../reports/lab outputs
-cargo run --release -p gomoku-eval -- tournament \
-  --bots search-d1,search-d3,search-d3+pattern-eval,search-d5+tactical-cap-16+pattern-eval,search-d7+tactical-cap-8+pattern-eval,search-d3+pattern-eval+corridor-proof-c16-d8-w4,search-d5+tactical-cap-16+pattern-eval+corridor-proof-c16-d8-w4,search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4 \
-  --games-per-pair 64 \
-  --opening-policy centered-suite \
-  --opening-plies 4 \
-  --search-cpu-time-ms 2000 \
-  --search-budget-mode pooled \
-  --search-cpu-reserve-ms 8000 \
-  --search-cpu-max-move-ms 4000 \
-  --max-moves 120 \
-  --seed 63 \
-  --threads 22 \
-  --report-json outputs/full-tournament-report.json \
-  --published-report-json ../reports/lab/bot-report.json
-jq '.provenance | {git_commit, git_dirty}' ../reports/lab/bot-report.json
-```
+Use the canonical command in
+[`Tournament Eval`](../../docs/reference/ops/tournament.md).
 
 ## Refresh Analysis Report
 
-Run from `gomoku-bot-lab/` after the bot report is current:
-
-```sh
-cargo run --release -p gomoku-eval -- analyze-report-replays \
-  --report ../reports/lab/bot-report.json \
-  --selector preset-triangle \
-  --published-report-json ../reports/lab/analysis-report.json \
-  --max-depth 4 \
-  --max-scan-plies 64
-```
+Run from `gomoku-bot-lab/` after the bot report is current. Use the canonical
+command in [`Tournament Eval`](../../docs/reference/ops/tournament.md).
 
 ## Lab Comparisons
 
 Use `../reports/lab/bot-report.json` as the current anchor source for focused
-gauntlets and comparisons:
-
-```sh
-cargo run --release -p gomoku-eval -- tournament \
-  --schedule gauntlet \
-  --candidate search-d5+tactical-cap-4+pattern-eval \
-  --anchors search-d3,search-d5+tactical-cap-16+pattern-eval,search-d7+tactical-cap-8+pattern-eval+corridor-proof-c16-d8-w4 \
-  --anchor-report ../reports/lab/bot-report.json \
-  --games-per-pair 64 \
-  --opening-policy centered-suite \
-  --opening-plies 4 \
-  --search-cpu-time-ms 1000 \
-  --max-moves 120 \
-  --report-json outputs/gauntlet.json
-```
+gauntlets and comparisons. See
+[`Tournament Eval`](../../docs/reference/ops/tournament.md) for examples.

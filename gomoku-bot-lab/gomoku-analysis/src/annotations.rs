@@ -109,7 +109,6 @@ pub(crate) fn replay_frame_annotations_for_analysis_with_boards(
             actual_child,
             actual_reply,
             &AnalysisOptions {
-                reply_policy: analysis.model.reply_policy,
                 max_depth: analysis.model.max_depth,
                 max_scan_plies: analysis.model.max_scan_plies,
             },

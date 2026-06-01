@@ -9,8 +9,6 @@ It is also a production experiment: one developer, an agent-assisted workflow,
 and a question more interesting than raw speed: how much of a real product
 team's surface area can agents help cover without lowering the quality bar?
 
-[![Gomoku2D hero capture — Local Match in progress on the pixel-art board](docs/assets/capture_v0_2_4_match_desktop.gif)](https://gomoku2d.byebyebryan.com/)
-
 **Play in browser:** https://gomoku2d.byebyebryan.com/
 
 **Visuals:** https://gomoku2d.byebyebryan.com/visuals/

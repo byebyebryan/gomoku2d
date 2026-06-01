@@ -4,8 +4,7 @@ use serde::Serialize;
 use crate::analysis::{
     AnalysisBoardSnapshot, AnalysisOptions, DefenderReplyAnalysis, DefenderReplyOutcome,
     DefenderReplyRole, FailureAnalysis, ForcedInterval, LethalOnset, ProofLimitCause, ProofStatus,
-    ReplyClassification, ReplyPolicy, RootCause, SearchDiagnostics, TacticalNote, UnclearContext,
-    UnclearReason,
+    ReplyClassification, RootCause, SearchDiagnostics, TacticalNote, UnclearContext, UnclearReason,
 };
 use crate::report::ReportProvenance;
 
@@ -28,7 +27,6 @@ pub struct AnalysisBatchReport {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct AnalysisBatchModel {
-    pub reply_policy: ReplyPolicy,
     pub max_depth: usize,
     pub max_scan_plies: Option<usize>,
 }
@@ -124,7 +122,7 @@ pub struct AnalysisBatchProofFrame {
     pub reply_outcomes: Vec<DefenderReplyAnalysis>,
 }
 
-pub const PUBLISHED_ANALYSIS_REPORT_SCHEMA_VERSION: u32 = 3;
+pub const PUBLISHED_ANALYSIS_REPORT_SCHEMA_VERSION: u32 = 4;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
 pub struct PublishedAnalysisProvenance {

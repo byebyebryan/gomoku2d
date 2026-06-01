@@ -28,7 +28,7 @@ vi.mock("../routes/SettingsRoute", () => ({
   ),
 }));
 
-vi.mock("../routes/BotReportRoute", () => ({
+vi.mock("../routes/LabReportRoute", () => ({
   LabReportRoute: () => (
     <main>
       <h1>Lab Report</h1>

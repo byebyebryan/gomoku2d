@@ -222,6 +222,17 @@ That artifact keeps match move cells for board rendering and replay analysis,
 but intentionally omits debug telemetry. Use a full report under ignored
 `outputs/` when diagnostics are needed.
 
+After the bot report is current, refresh the published analysis report:
+
+```sh
+cargo run --release -p gomoku-eval -- analyze-report-replays \
+  --report ../reports/lab/bot-report.json \
+  --selector preset-triangle \
+  --published-report-json ../reports/lab/analysis-report.json \
+  --max-depth 4 \
+  --max-scan-plies 64
+```
+
 ## Known Limitations
 
 The centered suite is hand-curated, not solved. It is a better baseline than
