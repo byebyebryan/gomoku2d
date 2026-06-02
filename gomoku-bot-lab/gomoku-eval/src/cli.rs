@@ -1630,7 +1630,6 @@ pub fn run() {
                 AnalysisOptions {
                     max_depth,
                     max_scan_plies: Some(max_scan_plies),
-                    ..AnalysisOptions::default()
                 },
             )
             .unwrap_or_else(|err| exit_with_error(format!("Failed to analyze replay: {err}")));
@@ -1660,7 +1659,6 @@ pub fn run() {
                     analysis: AnalysisOptions {
                         max_depth,
                         max_scan_plies: Some(max_scan_plies),
-                        ..AnalysisOptions::default()
                     },
                     include_proof_details,
                 },
@@ -1739,7 +1737,6 @@ pub fn run() {
                     analysis: AnalysisOptions {
                         max_depth,
                         max_scan_plies: Some(max_scan_plies),
-                        ..AnalysisOptions::default()
                     },
                     include_proof_details: include_proof_details || published_report_json.is_some(),
                 },
@@ -1790,7 +1787,6 @@ pub fn run() {
             let report = run_analysis_fixtures(AnalysisOptions {
                 max_depth,
                 max_scan_plies: Some(max_scan_plies),
-                ..AnalysisOptions::default()
             })
             .unwrap_or_else(|err| {
                 exit_with_error(format!("Failed to run analysis fixtures: {err}"))
