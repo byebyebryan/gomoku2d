@@ -29,8 +29,8 @@ type AssetTab = "guide" | "sprites" | "icons";
 
 const ASSET_TABS: Array<{ id: AssetTab; label: string }> = [
   { id: "guide", label: "Style" },
-  { id: "sprites", label: "Sprites" },
   { id: "icons", label: "Icons" },
+  { id: "sprites", label: "Sprites" },
 ];
 
 export function AssetPreviewRoute() {
@@ -274,28 +274,6 @@ function SpritesPanel({ manifest }: { manifest: AssetManifest }) {
       </section>
 
       <section className={styles.panel}>
-        <SectionHeader title="Source Sheets" />
-        <div className={styles.sheetGrid}>
-          {manifest.sprites.sheets.map((sheet) => (
-            <article key={sheet.file} className={styles.sheetCard}>
-              <div>
-                <h3>{basename(sheet.file)}</h3>
-                <p className={styles.meta}>
-                  {sheet.cols} cols x {sheet.rows} rows · {sheet.label}
-                </p>
-              </div>
-              <img
-                alt={`${basename(sheet.file)} source sheet`}
-                className={styles.sheetImage}
-                src={assetUrl(sheet.file)}
-                style={{ "--sheet-width": `${sheet.cols * manifest.sprites.frame_size * 4}px` } as CSSProperties}
-              />
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className={styles.panel}>
         <SectionHeader title="Static Poses" />
         <div className={styles.assetGrid} style={{ "--preview-scale": scale } as CSSProperties}>
           {manifest.sprites.static_poses.map((pose) => (
@@ -359,6 +337,29 @@ function SpritesPanel({ manifest }: { manifest: AssetManifest }) {
           <li>highlight surface</li>
           <li>board / grid</li>
         </ol>
+      </section>
+
+      <section className={styles.panel}>
+        <SourceDetails title="Source Sheets">
+          <div className={styles.sheetGrid}>
+            {manifest.sprites.sheets.map((sheet) => (
+              <article key={sheet.file} className={styles.sheetCard}>
+                <div>
+                  <h3>{basename(sheet.file)}</h3>
+                  <p className={styles.meta}>
+                    {sheet.cols} cols x {sheet.rows} rows · {sheet.label}
+                  </p>
+                </div>
+                <img
+                  alt={`${basename(sheet.file)} source sheet`}
+                  className={styles.sheetImage}
+                  src={assetUrl(sheet.file)}
+                  style={{ "--sheet-width": `${sheet.cols * manifest.sprites.frame_size * 4}px` } as CSSProperties}
+                />
+              </article>
+            ))}
+          </div>
+        </SourceDetails>
       </section>
     </>
   );
@@ -435,16 +436,8 @@ function IconsPanel({
       <section className={styles.panel}>
         <SectionHeader
           title="Icons"
-          note="Source sheet plus exported SVG pack. Icons are shown in white here for consistent inspection."
+          note="Exported SVGs used by navigation, replay controls, settings, and game actions. Icons are shown in white here for consistent inspection."
         />
-        <img
-          alt="Current icon sheet"
-          className={styles.iconSheet}
-          src={assetUrl(`${manifest.icons.directory}/${icons.source_sheet}`)}
-        />
-      </section>
-      <section className={styles.panel}>
-        <SectionHeader title="Exported SVGs" />
         <div className={styles.iconGrid}>
           {icons.icons.map((icon) => (
             <article key={icon.name} className={styles.iconCard}>
@@ -457,7 +450,25 @@ function IconsPanel({
           ))}
         </div>
       </section>
+      <section className={styles.panel}>
+        <SourceDetails title="Source Sheet">
+          <img
+            alt="Current icon sheet"
+            className={styles.iconSheet}
+            src={assetUrl(`${manifest.icons.directory}/${icons.source_sheet}`)}
+          />
+        </SourceDetails>
+      </section>
     </>
+  );
+}
+
+function SourceDetails({ children, title }: { children: ReactNode; title: string }) {
+  return (
+    <details className={styles.sourceDetails}>
+      <summary>{title}</summary>
+      <div className={styles.sourceDetailsBody}>{children}</div>
+    </details>
   );
 }
 

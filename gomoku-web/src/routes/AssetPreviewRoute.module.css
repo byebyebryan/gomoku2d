@@ -393,6 +393,31 @@
   color: var(--text-muted);
 }
 
+.sourceDetails {
+  display: grid;
+  gap: 12px;
+}
+
+.sourceDetails summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  list-style-position: inside;
+  text-transform: uppercase;
+}
+
+.sourceDetails summary:hover,
+.sourceDetails summary:focus-visible {
+  color: var(--text);
+}
+
+.sourceDetailsBody {
+  margin-top: 14px;
+}
+
 .iconSheet {
   width: min(768px, 100%);
   background: #000;
