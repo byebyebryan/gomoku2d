@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useStore } from "zustand";
 
 import { buildReplayBoardModel } from "../board/board_model";
@@ -33,6 +33,7 @@ const AUTOPLAY_DELAY_MS = 700;
 export function ReplayRoute() {
   const { matchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { localDisplayName, match, replayFloor, replayMayStillLoad } = useReplayMatch(matchId);
   const settings = useStore(localProfileStore, (state) => state.settings);
   const [moveIndex, setMoveIndex] = useState(defaultReplayMoveIndex(0));
@@ -116,6 +117,9 @@ export function ReplayRoute() {
     "--timeline-escape": timelineAnalysis.escapePercent ?? "0%",
   } as React.CSSProperties;
   const replayMovePreview = nextReplayMove(match, frame.moveIndex);
+  const localMatchResumePath = searchParams.get("media") === "og"
+    ? "/match/local?media=og"
+    : "/match/local";
   const boardModel = buildReplayBoardModel({
     analysisOverlays,
     nextReplayMove: replayMovePreview,
@@ -166,7 +170,7 @@ export function ReplayRoute() {
             frame={frame}
             match={match}
             onResume={(resumeSeed) => {
-              navigate("/match/local", { state: { resumeSeed } });
+              navigate(localMatchResumePath, { state: { resumeSeed } });
             }}
             replayFloor={replayFloor}
             setAutoplaying={setAutoplaying}

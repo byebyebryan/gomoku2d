@@ -17,6 +17,7 @@
     "build": "tsc && vite build",
     "postbuild": "node scripts/publish_visual_design_assets.mjs && node scripts/publish_bot_reports.mjs && node scripts/publish_analysis_reports.mjs && node scripts/publish_spa_routes.mjs",
     "preview": "vite preview",
+    "media:readme": "node scripts/capture_readme_media.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit && npm run typecheck:scripts && tsc --project tsconfig.tools.json",
     "typecheck:scripts": "tsc --allowJs --checkJs --noEmit --module NodeNext --moduleResolution NodeNext --target ES2022 --types node --ignoreConfig scripts/*.mjs",

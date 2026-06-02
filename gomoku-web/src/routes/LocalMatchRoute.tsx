@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useStore } from "zustand";
 import { createStore } from "zustand/vanilla";
 
@@ -169,6 +169,7 @@ function visibleBoardHints(
 
 export function LocalMatchRoute() {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const appliedResumeSeedKeyRef = useRef<string | null>(null);
   const [compactTouchMode, setCompactTouchMode] = useState(false);
   const [clockNowMs, setClockNowMs] = useState(() => Date.now());
@@ -183,6 +184,7 @@ export function LocalMatchRoute() {
   const resumeSeed = (location.state as { resumeSeed?: LocalMatchResumeSeed } | null)?.resumeSeed ?? null;
   const resumeSeedKey = resumeSeed ? JSON.stringify(resumeSeed) : null;
   const visibleHints = visibleBoardHints(state, settings.boardHints);
+  const suppressSequenceNumbers = searchParams.get("media") === "og";
 
   useEffect(() => {
     localProfileStore.getState().ensureLocalProfile();
@@ -294,7 +296,7 @@ export function LocalMatchRoute() {
       currentPlayer: state.currentPlayer,
       lastMove: state.lastMove,
       moves: state.moves,
-      showSequenceNumbers: true,
+      showSequenceNumbers: !suppressSequenceNumbers,
       status: state.status,
     },
     winningCells: state.winningCells,

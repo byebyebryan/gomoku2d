@@ -739,6 +739,7 @@ function FinishedBoard({
     <div
       aria-label={`Finished board for game with ${moveCells.length} moves`}
       className={styles.proofBoard}
+      data-report-board="finished"
       role="img"
       style={style}
     >

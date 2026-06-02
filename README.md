@@ -15,6 +15,8 @@ team's surface area can agents help cover without lowering the quality bar?
 
 **Lab report:** https://gomoku2d.byebyebryan.com/lab/
 
+![Gomoku2D gameplay with tactical hints and bot response](docs/assets/readme-gameplay.gif)
+
 ## What makes it different
 
 - **Personal, but not casual.** Gomoku was a paper-and-pencil childhood
@@ -48,6 +50,8 @@ team's surface area can agents help cover without lowering the quality bar?
 - Keep guest-local history by default, or sign in with Google for private
   cloud-backed history across browsers.
 - Use the same board-first app on desktop and portrait mobile.
+
+![Replay Analysis walks backward through the last escape, setup corridor, and lethal onset.](docs/assets/readme-analysis.gif)
 
 Lives in [`gomoku-web/`](gomoku-web/) — see its README for stack, local
 development, and deploy/runtime details.
