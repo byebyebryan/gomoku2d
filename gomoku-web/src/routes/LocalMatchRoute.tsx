@@ -184,7 +184,8 @@ export function LocalMatchRoute() {
   const resumeSeed = (location.state as { resumeSeed?: LocalMatchResumeSeed } | null)?.resumeSeed ?? null;
   const resumeSeedKey = resumeSeed ? JSON.stringify(resumeSeed) : null;
   const visibleHints = visibleBoardHints(state, settings.boardHints);
-  const suppressSequenceNumbers = searchParams.get("media") === "og";
+  const mediaMode = searchParams.get("media");
+  const suppressSequenceNumbers = mediaMode === "og" || mediaMode === "showcase";
 
   useEffect(() => {
     localProfileStore.getState().ensureLocalProfile();

@@ -117,8 +117,9 @@ export function ReplayRoute() {
     "--timeline-escape": timelineAnalysis.escapePercent ?? "0%",
   } as React.CSSProperties;
   const replayMovePreview = nextReplayMove(match, frame.moveIndex);
-  const localMatchResumePath = searchParams.get("media") === "og"
-    ? "/match/local?media=og"
+  const mediaMode = searchParams.get("media");
+  const localMatchResumePath = mediaMode
+    ? `/match/local?media=${encodeURIComponent(mediaMode)}`
     : "/match/local";
   const boardModel = buildReplayBoardModel({
     analysisOverlays,
