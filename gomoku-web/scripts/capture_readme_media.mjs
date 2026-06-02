@@ -33,10 +33,11 @@ const analysisGifFps = 5;
 const labGifFps = 5;
 const visualsGifFps = 5;
 const gifWidth = 960;
-const gameplayAnalysisPath = "match_0065__search-d1__vs__search-d3_pattern-eval";
+const gameplayAnalysisPath = "match_1129__search-d3_pattern-eval__vs__search-d7_tactical-cap-8_pattern-eval_corridor-proof-c16-d8-w4";
 const replayAnalysisPath = "match_0095__search-d1__vs__search-d3_pattern-eval";
 const labAnalysisPath = "match_1104__search-d7_tactical-cap-8_pattern-eval_corridor-proof-c16-d8-w4__vs__search-d3_pattern-eval";
 const gameplayReplayId = "readme-media-gameplay";
+const gameplayStartMoveIndex = 30;
 const analysisReplayId = "readme-media-analysis";
 const analysisReplayMoveLabels = [
   "Move 28 / 28",
@@ -363,16 +364,25 @@ function boardPoint(box, row, col) {
   };
 }
 
+/** @param {number} cell */
+function cellPosition(cell) {
+  return {
+    col: cell % 15,
+    row: Math.floor(cell / 15),
+  };
+}
+
 /**
  * @param {Page} page
  * @param {CaptureState} state
  * @param {string} targetFrameDir
+ * @param {MatchReport} matchReport
  */
-async function captureGameplayScene(page, state, targetFrameDir) {
-  await page.goto(urlFor(`/replay/${gameplayReplayId}`));
+async function captureGameplayScene(page, state, targetFrameDir, matchReport) {
+  await page.goto(urlFor(`/replay/${gameplayReplayId}?media=showcase`));
   await page.locator("canvas").first().waitFor({ state: "visible" });
   await waitForReplayAnalysis(page);
-  await goToReplayMove(page, "Move 14 / 18");
+  await goToReplayMove(page, `Move ${gameplayStartMoveIndex} / ${matchReport.move_cells.length}`);
   await page.getByRole("button", { name: "Play From Here" }).click();
   await page.getByRole("heading", { name: "Local Match" }).waitFor();
   await page.locator("canvas").first().waitFor({ state: "visible" });
@@ -385,25 +395,25 @@ async function captureGameplayScene(page, state, targetFrameDir) {
 
   await frameCapture(page, state, targetFrameDir, 6);
 
-  const firstMove = boardPoint(box, 7, 9);
-  await page.mouse.move(firstMove.x, firstMove.y);
-  await frameCapture(page, state, targetFrameDir, 5);
-  await page.mouse.click(firstMove.x, firstMove.y);
-  await frameCapture(page, state, targetFrameDir, 4);
+  for (let moveIndex = gameplayStartMoveIndex; moveIndex < matchReport.move_cells.length; moveIndex += 2) {
+    const cell = cellPosition(matchReport.move_cells[moveIndex]);
+    const move = boardPoint(box, cell.row, cell.col);
+    await page.mouse.move(move.x, move.y);
+    await frameCapture(page, state, targetFrameDir, moveIndex === gameplayStartMoveIndex ? 5 : 4);
+    await page.mouse.click(move.x, move.y);
+    await frameCapture(page, state, targetFrameDir, 3);
 
-  const botReplied = await frameCaptureUntil(page, state, targetFrameDir, 32, async () => {
-    const current = (await page.getByTestId("match-move-count").textContent())?.trim();
-    return current === "Move 16";
-  });
-  if (!botReplied) {
-    throw new Error("Timed out waiting for bot reply while capturing gameplay media");
+    const targetMoveCount = Math.min(moveIndex + 2, matchReport.move_cells.length);
+    const botReplied = await frameCaptureUntil(page, state, targetFrameDir, 36, async () => {
+      const current = (await page.getByTestId("match-move-count").textContent())?.trim();
+      return current === `Move ${targetMoveCount}`;
+    });
+    if (!botReplied) {
+      throw new Error(`Timed out waiting for move ${targetMoveCount} while capturing gameplay media`);
+    }
+
+    await frameCapture(page, state, targetFrameDir, targetMoveCount === matchReport.move_cells.length ? 12 : 4);
   }
-
-  const secondMove = boardPoint(box, 6, 10);
-  await page.mouse.move(secondMove.x, secondMove.y);
-  await frameCapture(page, state, targetFrameDir, 5);
-  await page.mouse.click(secondMove.x, secondMove.y);
-  await frameCapture(page, state, targetFrameDir, 8);
 }
 
 /** @param {Page} page */
@@ -788,7 +798,7 @@ async function main() {
   const page = await context.newPage();
   page.setDefaultTimeout(45_000);
 
-  await captureGameplayScene(page, { frame: 0 }, gameplayFrameDir);
+  await captureGameplayScene(page, { frame: 0 }, gameplayFrameDir, gameplayMatchReport);
   await captureReplayScene(page, { frame: 0 }, analysisFrameDir);
   await captureOgBoardScene(page);
   await captureLabScene(page, { frame: 0 }, labFrameDir);
