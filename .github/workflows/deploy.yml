@@ -45,7 +45,7 @@ jobs:
         run: wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler
 
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
