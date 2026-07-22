@@ -8,32 +8,6 @@ updates:
     commit-message:
       prefix: "chore(deps)"
 
-  - package-ecosystem: npm
-    directory: /gomoku-web
-    schedule:
-      interval: weekly
-    open-pull-requests-limit: 5
-    commit-message:
-      prefix: "chore(deps)"
-    groups:
-      react:
-        patterns:
-          - react
-          - react-dom
-          - react-router-dom
-          - "@types/react*"
-      vite:
-        patterns:
-          - vite
-          - "@vitejs/*"
-          - vite-plugin-*
-      testing:
-        patterns:
-          - vitest
-          - "@testing-library/*"
-          - jsdom
-          - "@playwright/test"
-
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -41,3 +15,7 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: "chore(ci)"
+
+# npm updates remain manual because gomoku-web consumes the generated
+# gomoku-wasm package through a local file dependency, which Dependabot cannot
+# resolve in its update environment.
