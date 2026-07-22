@@ -2,120 +2,88 @@
 
 *An old favorite, built properly.*
 
-Gomoku2D is a simple, fun web Gomoku with a retro feel, a Rust/WebAssembly
-rules core, and replay analysis that helps show where a finished match turned.
+Gomoku2D is a local-first browser Gomoku/Renju game with a retro board, a
+Rust/WebAssembly rules core, configurable bots, and replay analysis that walks
+backward through a finished game to show where it turned.
 
 It is also a production experiment: one developer, an agent-assisted workflow,
-and a question more interesting than raw speed: how much of a real product
-team's surface area can agents help cover without lowering the quality bar?
+and a serious question behind a small game. How much of a real product team's
+surface area can agents help cover while the human still owns taste, scope, and
+technical judgment?
 
-**Play in browser:** https://gomoku2d.byebyebryan.com/
+**Live site:** https://gomoku2d.byebyebryan.com/
 
-**Visuals:** https://gomoku2d.byebyebryan.com/visuals/
+![Gomoku2D gameplay with tactical hints, bot response, and a terminal winning frame](docs/assets/readme-gameplay.gif)
 
-**Lab report:** https://gomoku2d.byebyebryan.com/lab/
+## Highlights
 
-![Gomoku2D gameplay with tactical hints and bot response](docs/assets/readme-gameplay.gif)
-
-## What makes it different
-
-- **Personal, but not casual.** Gomoku was a paper-and-pencil childhood
-  favorite and one of my first game-dev targets. This version keeps that
-  sentimental thread, but treats it like a real alpha product instead of a
-  nostalgic weekend sketch.
-- **Small surface, serious foundation.** React owns the app shell, Phaser
-  renders the board, and Rust rules/bot logic ship to the browser through
-  WebAssembly. The split keeps the UI light without trapping core game logic in
-  the frontend.
-- **A lab under the board.** The Rust workspace is where rules, bots,
-  benchmarks, replay formats, replay analysis, and future puzzle/lesson
-  features can be built natively before they reach the browser.
-- **AI as production leverage.** The experiment is not whether agents can
-  generate code quickly. It is whether one person can use agents to cover more
-  of the product loop while still preserving taste, scope control, and review
-  discipline.
-- **Retro assets with a real workflow.** Sprites, icons, fonts, manifests, and
-  the Visuals page keep the pixel-art style inspectable instead of treating it
-  as decoration.
-
-## What works today
-
-- Start a practice match immediately, no account required.
-- Play Freestyle or Renju against configurable Easy / Normal / Hard bots, with
-  Renju forbidden-move feedback and mobile-friendly placement controls.
-- Analyze finished games, scrub the Replay Analysis timeline, and branch from a
-  replay position into a fresh practice game.
-- Let the browser analyzer mark the setup corridor and last escape in
-  finished decisive replays.
-- Keep guest-local history by default, or sign in with Google for private
-  cloud-backed history across browsers.
-- Use the same board-first app on desktop and portrait mobile.
+- **A personal game, built like a product.** Gomoku was a paper-and-pencil
+  childhood favorite and one of my first game-dev targets. This version keeps
+  that thread, but treats the project like a real product rather than a
+  nostalgia sketch.
+- **A simple game with a visible mind.** The goal is not to ship the strongest
+  possible Gomoku engine. The more interesting target is a game that can expose
+  what it understands: threats, combos, forced corridors, failed escapes, and
+  why a replay was lost.
 
 ![Replay Analysis walks backward through the last escape, setup corridor, and lethal onset.](docs/assets/readme-analysis.gif)
 
-Lives in [`gomoku-web/`](gomoku-web/) — see its README for stack, local
-development, and deploy/runtime details.
+- **A lab under the board.** The Rust bot lab produces the browser bot, the
+  Replay Analysis model, the published Lab report, and the vocabulary the app
+  uses to explain strategy.
 
----
+![The Lab report drills into bot rankings, search telemetry, and replay analysis examples.](docs/assets/readme-lab.gif)
 
-## The Bot Lab
+- **A visible visual system.** Pixel sprites, icons, fonts, source sheets, and
+  design tokens are published as a Visuals guide instead of hidden as incidental
+  assets.
 
-[`gomoku-bot-lab/`](gomoku-bot-lab/) is the other half of the project: a Rust
-workspace where the game can grow beyond "browser board plus bot." Rules,
-replay format, and bot behavior live here first, can be tested and benchmarked
-natively, and then ship to the web game through WebAssembly.
+![The Visuals guide shows the pixel-art style system, icons, sprites, and source sheets.](docs/assets/readme-visuals.gif)
 
-```
+- **An agent-assisted production experiment.** Agents expanded what one
+  developer could attempt across implementation, analysis, review, docs,
+  reports, and release chores. Taste, scope, and technical judgment still
+  remained human responsibilities.
+
+## Features
+
+- Play immediately against Easy / Normal / Hard bots with no account required.
+- Choose Freestyle or Renju, including Renju forbidden-move feedback.
+- Tune bot depth/width/scoring/proof options from Settings.
+- Enable tactical hints for immediate threats, imminent threats, counter
+  threats, and evidence stones.
+- Use desktop or portrait mobile layouts with dedicated touch controls.
+- Save local guest history in the browser, or sign in with Google for private
+  cloud-backed history across browsers.
+- Inspect finished games in Replay Analysis, step backward by turns, see the
+  lethal onset / setup corridor / last escape, and branch from a replay position
+  into a fresh practice game.
+- Open the Lab report to inspect bot rankings, search telemetry, and replay
+  analysis examples generated by the Rust harness.
+
+## Repository Map
+
+```text
 gomoku2d/
-├── gomoku-web/         ← the game (React + Phaser board + TypeScript)
-├── gomoku-bot-lab/     ← the Rust side
-│   ├── gomoku-core/      rules + board
-│   ├── gomoku-bot/       Bot trait + implementations
-│   ├── gomoku-analysis/  setup-corridor replay analysis
-│   ├── gomoku-eval/      self-play arena, tournaments, Elo
-│   ├── gomoku-cli/       native match runner
-│   └── gomoku-wasm/      wasm-pack bridge the game imports
-└── docs/
+├── gomoku-web/         browser app: React shell, Phaser board, wasm bridge
+├── gomoku-bot-lab/     Rust lab: rules, bots, analyzer, eval, CLI, wasm
+├── reports/lab/        curated JSON artifacts rendered by /lab/
+├── docs/               reference docs, working notes, and archives
+└── scripts/            release and process-story helpers
 ```
 
-Build, CLI usage, replay format, and `SearchBot` notes live in
-[`gomoku-bot-lab/README.md`](gomoku-bot-lab/README.md). The broader docs index
-lives in [`docs/README.md`](docs/README.md).
+The browser game lives in [`gomoku-web/`](gomoku-web/). The Rust side lives in
+[`gomoku-bot-lab/`](gomoku-bot-lab/). Player-facing explanations are published
+in the app; technical references start at [`docs/README.md`](docs/README.md).
 
----
+## Explore The Project
 
-## Current Status
-
-The public app is on the `0.5.x` alpha line: local-first play, optional Google
-sign-in for private cloud history, configurable bots, tactical hints, replay
-analysis, first-class lab reports, and a cleaner visual-guide/report surface.
-Current repo work is preparing `v0.5.3`: a housekeeping pass across docs,
-generated artifacts, tests, CI/deploy runbooks, and lab/web API naming before
-the public-packaging slice. Longer-term sequencing lives in
-[`docs/reference/product/roadmap.md`](docs/reference/product/roadmap.md).
-
----
-
-## Learn More
-
-The live app owns player-facing explanations:
-
-- [Rules](https://gomoku2d.byebyebryan.com/rules/)
-- [Guide](https://gomoku2d.byebyebryan.com/guide/)
-- [Lab report](https://gomoku2d.byebyebryan.com/lab/)
-- [Visuals](https://gomoku2d.byebyebryan.com/visuals/)
-
-Reference docs, working notes, runbooks, and archives are organized from
-[`docs/README.md`](docs/README.md). The most useful technical entry points are
-[`Product Strategy`](docs/reference/product/product_strategy.md),
-[`Roadmap`](docs/reference/product/roadmap.md),
-[`Architecture`](docs/reference/app/architecture.md),
-[`Web Code Overview`](docs/reference/app/code_overview.md),
-[`Bot Lab Code Overview`](docs/reference/lab/code_overview.md),
-[`Search Bot`](docs/reference/lab/search_bot.md),
-[`Corridor Search`](docs/reference/lab/corridor_search.md),
-[`Game Analysis`](docs/reference/lab/game_analysis.md), and
-[`Release`](docs/reference/ops/release.md).
-
-For the broader reason this repo exists, start with
-[`Product Strategy`](docs/reference/product/product_strategy.md).
+- [`gomoku-web/README.md`](gomoku-web/README.md): web app architecture, local
+  development, build, and deploy notes.
+- [`gomoku-bot-lab/README.md`](gomoku-bot-lab/README.md): Rust workspace,
+  native commands, eval harness, and wasm bridge.
+- [`docs/README.md`](docs/README.md): current product, architecture, lab, and
+  operations references.
+- [`docs/reference/product/roadmap.md`](docs/reference/product/roadmap.md):
+  current sequencing.
+- [`CHANGELOG.md`](CHANGELOG.md): release history and intent.
