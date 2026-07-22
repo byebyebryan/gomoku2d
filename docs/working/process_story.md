@@ -7,6 +7,10 @@ This is a working note, not canonical product documentation. The generated
 artifacts live under ignored output paths and should be treated as source
 material for curated writing.
 
+Status: parked after the `v0.5.3` public alpha. This material is available when
+there is time and interest to publish a personal process story, but it is not a
+release dependency or an active product task.
+
 Curated story candidates live in
 [`Process Story Leads`](process_story_leads.md). Rough public-copy drafts live
 in [`Process Story Drafts`](process_story_drafts.md). The current external
@@ -114,7 +118,7 @@ assistant rationale and outcome hints.
   agent-assisted process is production context, not a substitute for explaining
   why the game is worth trying.
 
-## Next Steps
+## If Resumed
 
 - Curate 5-8 concrete moments from `conversation_arcs.md`,
   `quote_candidates.md`, and `git_chronology.json`.
@@ -131,5 +135,5 @@ assistant rationale and outcome hints.
   to pair each moment with a screenshot, report excerpt, release tag, or commit.
 - Keep this external-only for now; do not add an in-app story route unless the
   product navigation is revisited later.
-- Archive or delete these process-story working notes after the public story has
+- Archive or delete these process-story working notes after a public story has
   been written; do not let them become permanent canonical docs.

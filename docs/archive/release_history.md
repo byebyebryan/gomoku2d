@@ -70,3 +70,23 @@ Detailed historical plans remain in the archive:
 - [`v0_4_5_bot_controls_plan.md`](v0_4_5_bot_controls_plan.md)
 - [`v0_4_6_replay_analysis_plan.md`](v0_4_6_replay_analysis_plan.md)
 - [`v0_4_7_lethal_threat_plan.md`](v0_4_7_lethal_threat_plan.md)
+
+## `v0.5` Public Release Reconciliation
+
+Turned the lab-heavy `0.4` foundation into a coherent public alpha:
+
+- replaced generated report HTML with compact curated JSON rendered by the
+  first-class `/lab/` web surface;
+- added concise Rules, Guide, Visuals, Privacy, and Terms pages inside the app;
+- made replay analysis easier to discover from the normal product flow;
+- refreshed gameplay, analysis, lab, visual, and social-preview media;
+- reconciled web/lab APIs, tests, docs, generated artifacts, CI, and release
+  runbooks after the long analyzer research line;
+- preserved private process-story evidence without making a devlog a condition
+  of shipping.
+
+The durable lesson was operational: a personal process story can strengthen a
+release, but it cannot be the release gate. The product and repository should be
+able to ship first, with longer-form writing remaining an optional follow-up.
+
+Historical plan: [`v0_5_public_release_plan.md`](v0_5_public_release_plan.md).

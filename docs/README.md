@@ -45,9 +45,9 @@ The root [`README`](../README.md) is the public repo landing page.
 
 ## Internal Working Notes
 
-- [`Process Story Mining`](working/process_story.md) tracks private extraction
-  and curation for future external devlog copy. It is not canonical product
-  documentation and should not be treated as public-ready source.
+- [`Process Story Mining`](working/process_story.md) preserves parked private
+  extraction and curation for a possible future devlog. It is not a release
+  dependency, canonical product documentation, or public-ready source.
 
 ## Maintenance Rule
 
