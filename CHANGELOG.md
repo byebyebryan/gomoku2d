@@ -12,6 +12,43 @@ their own section.
 
 ## [Unreleased]
 
+## [0.5.3] - 2026-07-22
+
+**Theme: close the `0.5` line with a clean public alpha.**
+
+`0.5.3` finishes the public-release reconciliation line. It does not add a new
+gameplay or analyzer model; it makes the existing product, lab, documentation,
+media, and release workflow coherent enough to ship without making a devlog or
+other long-form presentation work a prerequisite.
+
+### Web and public surfaces
+
+- Moved Privacy and Terms into the SPA and added direct links into individual
+  Lab analysis entries.
+- Refined the Visuals surface and refreshed gameplay, replay-analysis, Lab,
+  visual-guide, and social-preview media for the current product.
+- Reworked the root, web, and bot-lab READMEs around the shipped product loop,
+  current architecture, and practical contributor entry points.
+
+### Bot lab and reports
+
+- Centralized curated report artifacts under `reports/lab/`, recorded clean
+  generation provenance, and refreshed the published bot and analysis data.
+- Simplified report plumbing and generated-artifact boundaries without changing
+  the promoted bots, tactical semantics, or replay-analysis model.
+
+### Docs and operations
+
+- Reorganized reference, working, and archive documentation so current
+  contracts no longer compete with historical plans and experiment notes.
+- Preserved private process-story extraction and curation material as an
+  optional future writing resource rather than a release gate.
+- Simplified Playwright handling in CI and Pages deployment, tightened release
+  runbooks, and disabled the unsupported npm Dependabot updater for the local
+  generated wasm dependency.
+- Closed the `0.5` roadmap and moved the project to a fresh `0.6` online-product
+  planning checkpoint.
+
 ## [0.5.2] - 2026-05-27
 
 **Theme: make Gomoku2D explain itself from inside the app.**
@@ -1086,7 +1123,8 @@ together in one canvas-driven surface. That lesson drove the `v0.2.1` rewrite.
   concerns blurred together.
 - Expressive UI language, but not scalable beyond one canvas.
 
-[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.3...HEAD
+[0.5.3]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/byebyebryan/gomoku2d/compare/v0.4.8...v0.5.0

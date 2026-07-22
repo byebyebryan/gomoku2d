@@ -4,40 +4,25 @@ This roadmap tracks current sequencing. Completed phase detail lives in
 [`release_history.md`](../../archive/release_history.md); this file should stay
 short enough to answer "what is next and why?"
 
-## Current Line: `v0.5` Public Release Reconciliation
+## Current Line: `v0.6` Online Product Expansion Planning
 
-Goal: turn the heavy `0.4` lab/analyzer foundation into a clean public alpha.
-
-`0.5` is intentionally not another broad research line. It is about explaining
-the product, reducing repo noise, converting reports/static pages into durable
-web surfaces, and preparing a first public-facing release package.
-
-Done so far:
-
-- compact report JSON and a web-rendered `/lab/` report viewer;
-- `/rules/`, `/guide/`, `/visuals/`, SPA Privacy/Terms, and Source link;
-- replay-analysis surfacing through the product flow;
-- docs/repo/API cleanup passes after the `0.4` lab work.
-
-Remaining likely slices:
-
-- finish docs and artifact hygiene so source remains readable;
-- polish public copy and screenshots around the "lab under the board" story;
-- keep report pages understandable without turning them into telemetry dumps;
-- prepare README, release notes, screenshots, and public packaging.
-
-Release bar:
-
-- local play, settings, replay analysis, reports, sign-in, mobile, and
-  no-config fallback all smoke cleanly;
-- active docs describe current behavior without archaeology;
-- generated artifacts do not dominate the repo;
-- public pages explain the unusual features without requiring external docs.
-
-## Next Product Line: `v0.6` Online Product Expansion
+`v0.5.3` closes the public-release reconciliation line. The product, lab
+reports, explanation pages, repository, and release media now form a coherent
+public alpha; the optional process-story material is no longer a release gate.
 
 Goal: turn the cloud foundation and product identity into online human play and
 trusted/shareable records.
+
+The next step is a fresh design checkpoint, not immediate implementation. It
+should settle:
+
+- the smallest useful online loop, likely direct challenge before discovery or
+  matchmaking;
+- authoritative game state and where the Rust rules engine runs server-side;
+- reconnect, timeout, abandonment, and concurrent-session behavior;
+- how local, signed-in private, trusted online, and explicitly public records
+  remain distinct;
+- hosting, operational cost, abuse boundaries, and deployment ownership.
 
 Likely work:
 

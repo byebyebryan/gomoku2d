@@ -1,5 +1,8 @@
 # v0.5 Public Release Reconciliation Plan
 
+Status: completed by `v0.5.3`. Preserved for historical context; the canonical
+current direction lives in [`Roadmap`](../reference/product/roadmap.md).
+
 Purpose: track the evolving `0.5.x` reconciliation line after the `0.4`
 lab-heavy phase. This is an ad-hoc working plan. The canonical phase summary lives in
 [`Roadmap`](../reference/product/roadmap.md).
@@ -43,7 +46,7 @@ experiment: one developer using agents to cover more of a real product loop
 without dropping the quality bar.
 
 The source material for that secondary hook is tracked in
-[`Process Story Mining`](process_story.md). Keep the raw extraction private;
+[`Process Story Mining`](../working/process_story.md). Keep the raw extraction private;
 use it to curate specific moments, release checkpoints, and hard lessons for
 future devlog or public-release copy.
 
@@ -186,14 +189,14 @@ Once the repo and product story are reconciled, prepare a public alpha:
 - Keep model caveats honest: replay analysis is bounded explanation, not a full
   solver.
 
-### Slice 4: Repo Housekeeping (`0.5.3`)
+### Slice 4: Repo Housekeeping (`0.5.3`, done)
 
 Before public packaging, do one more housekeeping pass now that the report
 viewer, static pages, and replay-analysis presentation have all moved.
 
-Status: in cleanup execution. The remaining work is operational hygiene, stale
-compatibility removal, test consolidation, and refreshed report provenance, not
-new player-facing scope.
+Completed as operational hygiene, stale compatibility removal, test
+consolidation, refreshed report provenance, public media, and release cleanup,
+without adding another player-facing feature line.
 
 - Audit tracked artifacts, generated data, and report payloads after the
   viewer-plus-data rewrite.
@@ -212,12 +215,12 @@ This slice should not add new player-facing scope. The goal is to make the repo
 easier to review, easier to explain, and less dependent on stale lab-era
 scaffolding before asking strangers to look at it.
 
-### Slice 5: Public Release Packaging (`0.5.4` or final `0.5.x`)
+### Slice 5: Public Release Packaging (`0.5.3`, done)
 
 - Refresh hero capture and screenshot review.
 - Update README and release copy around the current product loop.
-- Prepare itch.io/dev-log copy using the external process-story devlog kit and
-  visual storyboard.
+- Preserve optional itch.io/dev-log source material without making it a release
+  dependency.
 - Run a public-alpha QA pass.
 - Cut the first public-facing `0.5` release.
 
