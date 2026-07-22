@@ -29,6 +29,8 @@ other long-form presentation work a prerequisite.
   visual-guide, and social-preview media for the current product.
 - Reworked the root, web, and bot-lab READMEs around the shipped product loop,
   current architecture, and practical contributor entry points.
+- Refreshed the web lockfile within existing version ranges, removing all known
+  production dependency advisories before release.
 
 ### Bot lab and reports
 
