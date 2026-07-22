@@ -1,156 +1,106 @@
 # gomoku-web
 
-The browser product surface for Gomoku2D: a retro-feeling board game shell on
-top of React, Phaser, and the Rust/WebAssembly core.
+The browser product surface for Gomoku2D.
+
+React owns routes, state, copy, settings, profile/history, replay UI, reports,
+and static learning pages. Phaser owns the board canvas. Rust/Wasm owns rules,
+bot moves, tactical snapshots, and replay-analysis facts.
 
 **Play:** https://gomoku2d.byebyebryan.com/
 
-**Guide:** https://gomoku2d.byebyebryan.com/guide/
+**Rules:** https://gomoku2d.byebyebryan.com/rules/
 
-**Visuals:** https://gomoku2d.byebyebryan.com/visuals/
+**Guide:** https://gomoku2d.byebyebryan.com/guide/
 
 **Lab:** https://gomoku2d.byebyebryan.com/lab/
 
-React owns the app shell: home, match, replay, profile, auth, and local/cloud
-history. Phaser renders the board and nothing else. The rules engine and bot
-are the same Rust code used by the native bot lab in this repo, compiled to
-Wasm and called from JS. The bot runs in a Web Worker so it can think without
-freezing the UI.
+**Visuals:** https://gomoku2d.byebyebryan.com/visuals/
 
----
+## What This Package Owns
 
-## Product Surface
+- Home, local match, replay, profile, settings, rules, guide, lab, visuals,
+  privacy, and terms routes.
+- Local-first guest play with browser-persisted profile/settings/history.
+- Optional Google sign-in for private cloud-backed profile/history continuity.
+- Configurable bot presets and advanced web-safe bot controls.
+- Freestyle/Renju play, Renju forbidden-move hints, tactical hints, and mobile
+  touch placement.
+- Replay Analysis in the browser: progressive wasm analysis, timeline markers,
+  board overlays, local result caching, and "Play From Here" branching.
+- The unified `/lab/` report viewer, rendered from curated JSON artifacts under
+  `../reports/lab/`.
+- The `/visuals/` guide generated from source icons, sprites, fonts, and design
+  tokens.
 
-This package owns the browser app:
+The UI should present game facts, not invent them. Rule legality, tactical
+semantics, bot choice, and replay-analysis annotations come from the Rust side
+through the wasm bridge.
 
-- Start a match from Home with one click against the saved bot setup
-- Tune rule, bot, hints, and touch controls from Settings; changes mid-game can
-  queue for the next round or start a new game
-- Live forbidden-move warnings when playing Black under Renju
-- Optional tactical hints for immediate and imminent threats
-- Undo the last turn during a live match
-- Finish a match, open the replay, step through turns with browser-side corridor
-  analysis, then branch off at any point to play the rest against the current bot
-  setup without undoing before the branch point
-- Local guest profile: display name and recent-match history —
-  persisted in browser storage, no sign-in required
-- Optional Google sign-in for private cloud-backed profile/history continuity
-  across browsers
-- Desktop and portrait/mobile layouts are intentional rather than collapsed —
-  mobile uses a dedicated touch-placement flow instead of direct tap-to-place
+## Runtime Shape
 
----
-
-## What gives it character
-
-- Pixel art sprites with frame-by-frame animations — stones form and shatter,
-  winning cells pulse, a hover pointer cycles through idle states
-- Board-first layouts: slim HUD on match, transport deck on replay, no move
-  list during live play
-- Icon language for desktop actions and replay transport, kept monochrome and
-  scoped so it doesn't become a separate skin
-- Responsive: the board fits its available space on any viewport; portrait
-  layouts are screen-specific rather than collapsed desktop
-
-Design intent is split across:
-
-- [`../docs/reference/app/app_design.md`](../docs/reference/app/app_design.md) — routes, flows, and screen contracts
-- [`../docs/reference/app/ui_design.md`](../docs/reference/app/ui_design.md) — DOM shell visual language
-- [`../docs/reference/app/game_visual.md`](../docs/reference/app/game_visual.md) — Phaser canvas visuals, sprite roles, and animation language
-
-Source assets and the manifest-backed visual design reference live in
-[`assets/README.md`](assets/README.md). Published builds expose the reference
-under `/visuals/`.
-
-Curated lab report artifacts live in [`../reports/lab/`](../reports/lab/).
-`bot-report.json` is copied into published builds as
-`/bot-report/report.json`, the ranking/search data source.
-`analysis-report.json` is copied into published builds as
-`/analysis-report/report.json`, the analysis data source.
-
-Production builds expect both curated report JSON files to exist.
-The React app renders the unified `/lab/` from those split data files.
-For local/dev builds that intentionally skip reports, set `GOMOKU_ALLOW_MISSING_REPORTS=1`.
-
----
-
-## Stack
-
-| Layer | Tech |
-|-------|------|
-| App shell | React 19 |
-| Routing | React Router 7 |
-| Client state | Zustand 5 (vanilla stores + `useStore` selectors) |
-| Board renderer | Phaser 4 (canvas, stateless view) |
-| Language | TypeScript 6 |
-| Build / dev server | Vite 8 (+ `vite-plugin-wasm`, `vite-plugin-top-level-await`) |
-| Game logic + bot | Rust (`gomoku-core`, `gomoku-bot`) → `wasm-pack --target bundler` |
-| Bot execution | Web Worker (off-thread) |
-| Unit tests | Vitest + Testing Library |
-| End-to-end smoke | Playwright |
-
-Styling is CSS Modules (`*.module.css`) with a shared token layer in
-`src/app/global.css`. No CSS framework.
-
----
-
-## Source layout
-
+```text
+React routes/stores
+  -> BoardViewModel
+    -> Phaser board scene
+  -> wasm bridge
+    -> gomoku-core / gomoku-bot / gomoku-analysis
+  -> Web Workers
+    -> bot search and replay analysis off the UI thread
 ```
+
+The active match and replay flows intentionally stay local-first. Cloud is a
+continuity layer for signed-in private history, not a requirement for playing.
+
+## Source Layout
+
+```text
 src/
-├── app/            React entry (App.tsx, routes, global tokens)
-├── routes/         Home, LocalMatch, Profile, Replay, Settings
-├── components/     Reusable UI (Board wrapper around Phaser)
-├── board/          Phaser scene, renderer, board constants
-├── cloud/          Firebase config/bootstrap for cloud-backed profile/history
-├── game/           Local match Zustand store + shared types
-├── profile/        Local profile Zustand store (persisted to localStorage)
-├── replay/         Replay frames, core conversion, and browser analysis runner
-├── core/           Wasm bridge + bot worker protocol/runner
-└── ui/             Icon component + icon registry
+├── app/          React entry, router, global CSS tokens
+├── routes/       product screens and page-level copy
+├── components/   reusable UI, including the Board wrapper
+├── board/        Phaser scene, renderer, overlays, input mapping
+├── core/         wasm bridge, bot worker protocol, bot runner
+├── game/         local match session/store, clocks, hints, undo, save
+├── profile/      local profile/settings/history persistence
+├── cloud/        Firebase auth/profile/history sync
+├── match/        saved-match schema and helpers
+├── replay/       replay frames, wasm analyzer runner, overlays, cache
+└── ui/           icon registry and shared UI helpers
 ```
 
-Routes:
+Static/publishing scripts live in `scripts/`. Source art lives in `assets/` and
+is published into the build by the postbuild scripts.
 
-- `/` — title screen, single `Play` CTA
-- `/match/local` — live match vs the configured bot
-- `/replay/:matchId` — replay viewer with browser-side corridor analysis for decisive saved matches
-- `/profile` — local/cloud player record and history
-- `/settings` — rule, bot, hint, and touch-control setup
-- `/rules/` — Freestyle/Renju rules and examples
-- `/guide/` — threat, combo, forced-corridor, and replay-analysis guide
-- `/lab/` — bot and replay-analysis report viewer
-- `/visuals/` — visual design reference
-- `/privacy/` and `/terms/` — SPA Privacy and Terms pages for the public app
+## Local Development
 
----
+Prerequisites: Node 24, Rust, and `wasm-pack`.
 
-## Local development
-
-Prerequisites: Node 24 (see repo-root `.nvmrc`), Rust, `wasm-pack`.
+From the repo root, build the wasm package once:
 
 ```sh
-# 1. Build the Wasm package (from repo root)
 wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler
+```
 
-# 2. Run the dev server
+Then run the web app:
+
+```sh
 cd gomoku-web
 npm install
 npm run dev
 ```
 
-TypeScript changes hot-reload. After editing Rust, rebuild the Wasm package and
-re-run `npm install` so Vite picks up the relinked `file:` dependency.
+After editing Rust code used by wasm, rebuild `gomoku-wasm` and rerun
+`npm install` in `gomoku-web` so Vite picks up the relinked local dependency.
 
-Firebase is optional during local development. Guest/local play works without
-any Firebase env vars. To enable cloud-backed profile/history, copy the
-example file and fill the public web-app config from Firebase:
+Firebase is optional for local development. Guest play works without env vars.
+To test cloud-backed profile/history, copy `.env.example` to `.env.local` and
+fill the public Firebase web-app config:
 
 ```sh
 cp .env.example .env.local
 ```
 
-Required Vite env vars:
+Required Vite vars:
 
 - `VITE_FIREBASE_API_KEY`
 - `VITE_FIREBASE_AUTH_DOMAIN`
@@ -159,58 +109,44 @@ Required Vite env vars:
 - `VITE_FIREBASE_MESSAGING_SENDER_ID`
 - `VITE_FIREBASE_APP_ID`
 
-The current Firebase project is `gomoku2d`. Live setup details and API-based
-config fetch commands live in [`../docs/reference/ops/backend_infra.md`](../docs/reference/ops/backend_infra.md).
-CI and tag deploy builds include these public config values so the released app
-can initialize Firebase.
+The current Firebase project is `gomoku2d`. Infra notes live in
+[`../docs/reference/ops/backend_infra.md`](../docs/reference/ops/backend_infra.md).
+
+## Common Commands
 
 ```sh
-npm run build              # production build + static report/asset routes
-npm run preview            # serve the production build locally
-npm run typecheck          # TypeScript and checked JS scripts
-npm test                   # vitest
-npm run typecheck:scripts  # JS script type coverage only
-npm run playtest:smoke     # local/manual Playwright smoke run
+npm run typecheck          # TS plus checked JS scripts
+npm test                   # Vitest
+npm run test:rules         # Firestore rules through Firebase emulators
+npm run build              # production build plus postbuild publishing
+npm run preview            # serve dist/ locally
+npm run playtest:smoke     # local/manual Playwright smoke
+npm run media:readme       # regenerate README/showcase media from preview
 ```
 
-The `postbuild` step publishes the visual design reference, curated bot and
-analysis reports, static SPA route entries, and the `404.html` fallback. Report
-publishing is guarded so release builds fail if the curated artifacts are
-missing; set `GOMOKU_ALLOW_MISSING_REPORTS=1` only for local/dev builds that
-intentionally skip those pages.
+The `postbuild` step publishes visual assets, curated lab reports, SPA route
+entries, and `404.html`. Production builds expect these report artifacts:
 
----
+- `../reports/lab/bot-report.json` -> `/bot-report/report.json`
+- `../reports/lab/analysis-report.json` -> `/analysis-report/report.json`
+
+Set `GOMOKU_ALLOW_MISSING_REPORTS=1` only for local/dev builds that
+intentionally skip report pages.
 
 ## Deploy
 
-Release and local-preview steps live in [`../docs/reference/ops/release.md`](../docs/reference/ops/release.md).
+Release and local-preview details live in
+[`../docs/reference/ops/release.md`](../docs/reference/ops/release.md).
 
-Production deploys to GitHub Pages only when a `v*` tag is pushed. Normal
-commits to `main` run CI but do not publish the site.
+Production deploys to GitHub Pages when a `v*` tag is pushed. Normal commits to
+`main` run CI but do not publish the site. The deploy workflow builds wasm,
+sets `GOMOKU_BASE_PATH=/` for the custom domain, and publishes `dist/`.
 
-The workflow builds the Wasm package, sets `GOMOKU_BASE_PATH=/` for the custom
-domain Vite build, and deploys `dist/` to Pages.
+## Deeper References
 
----
-
-## Where This Fits
-
-The game is the top-level product; the Rust side in `gomoku-bot-lab/` is a
-supporting workspace. The bot you play against in the browser is the same code
-you can pit against itself from the command line — `gomoku-wasm` exposes it to
-JS and this package calls it through a Web Worker.
-
-```
-gomoku-web                     — this package
-gomoku-bot-lab/gomoku-core     — board, rules, Renju enforcement, replay format
-gomoku-bot-lab/gomoku-bot      — Bot trait + implementations (RandomBot, SearchBot, …)
-gomoku-bot-lab/gomoku-analysis — shared replay-analysis model and corridor traceback
-gomoku-bot-lab/gomoku-eval     — self-play arena, tournaments, Elo
-gomoku-bot-lab/gomoku-cli      — CLI match runner with replay export
-gomoku-bot-lab/gomoku-wasm     — wasm-pack bridge: WasmBoard + WasmBot + replay analyzer for JS
-```
-
-For product sequencing, see
-[`../docs/reference/product/roadmap.md`](../docs/reference/product/roadmap.md).
-For the React/Phaser/Rust boundary, see
-[`../docs/reference/app/architecture.md`](../docs/reference/app/architecture.md).
+- [`../docs/reference/app/code_overview.md`](../docs/reference/app/code_overview.md)
+- [`../docs/reference/app/architecture.md`](../docs/reference/app/architecture.md)
+- [`../docs/reference/app/app_design.md`](../docs/reference/app/app_design.md)
+- [`../docs/reference/app/ui_design.md`](../docs/reference/app/ui_design.md)
+- [`../docs/reference/app/game_visual.md`](../docs/reference/app/game_visual.md)
+- [`assets/README.md`](assets/README.md)
