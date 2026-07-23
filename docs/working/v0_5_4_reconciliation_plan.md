@@ -27,6 +27,8 @@ each finding needs a concrete contract, benefit, and validation path.
   still exist.
 - Make test and release cost intentional rather than inherited.
 - Review the shipped product as a new player would experience it.
+- Reconcile the public story and release-facing artifacts around the playable
+  product before presenting the production experiment.
 - End with a trustworthy baseline for fresh `v0.6` planning.
 
 ## Workstream 1: Baseline And Finding Register
@@ -136,6 +138,15 @@ Run a fresh-player walkthrough rather than reviewing isolated screenshots:
 
 Fix concrete issues and copy drift. Avoid broad visual redesign unless a
 systemic problem is demonstrated across multiple surfaces.
+
+The public presentation pass should remain product-first:
+
+- keep Home minimal and let completed games lead naturally into Replay
+  Analysis;
+- structure the root README around Play, Analyze, and the inspectable system;
+- keep the agent-assisted process visible but secondary to the product;
+- refresh social metadata and media only when the current artifact no longer
+  represents the shipped surface.
 
 ## Sequence
 

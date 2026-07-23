@@ -63,6 +63,18 @@ pass.
 | A real Google sign-in and cloud-sync round trip requires live OAuth credentials and an interactive account. | defer | Keep Firestore rules and no-config fallback automated; repeat the live account flow during release review. | deferred |
 | Broad visual redesign would hide whether reconciliation preserved behavior. | defer | Limit v0.5.4 to demonstrated defects and copy drift; reconsider larger product work in v0.6 planning. | confirmed |
 
+## Public Presentation
+
+| Finding | Class | Decision | Status |
+|---|---|---|---|
+| The root README gives the production experiment equal weight before establishing the playable product, then repeats capabilities across Highlights and Features. | fix | Lead with Play, Replay Analysis, and the inspectable Lab/Visuals system; keep the agent-assisted process as supporting context. | complete |
+| Social metadata describes only a pixel-art board and Rust bot, omitting the product's strongest differentiator. | fix | Name tactical hints, configurable bots, and Replay Analysis while retaining the established title and social image. | complete |
+| A new Profile leaves the Match History area empty without explaining how it becomes useful. | fix | Add one compact empty state with a Play action; do not add onboarding panels elsewhere. | complete |
+| SPA navigation can leave stale document titles on Home, Match, Settings, and Profile. | fix | Give every route one shared title contract and cover the product flow in browser smoke. | complete |
+| Lab and Visuals use document links for internal navigation and reload the application. | fix | Use router links while preserving routes and report/manifest state contracts. | complete |
+| The current README GIFs and social image already show the shipped gameplay, analyzer, Lab, and Visuals surfaces accurately. | retain | Keep the binaries unchanged; recapture only when a visible source surface changes. | confirmed |
+| Replay Analysis is intentionally reached through a finished match or saved history rather than a bundled demo. | retain | Keep Home minimal and improve discovery through product flow, Guide copy, README structure, metadata, and media. | confirmed |
+
 ## Loop Boundaries
 
 - No bot-strength tuning, analyzer semantics, online play, theme work, or
@@ -98,6 +110,20 @@ IDs as implementation fixtures.
   no shipped product defect required a UI change.
 - Cloud-disabled behavior and Firestore authorization remain automated. A live
   Google sign-in/sync round trip stays as a manual release-review check.
+
+## Public Presentation Result
+
+- Desktop and portrait-mobile captures were compared for Home, Match, Settings,
+  Profile, Rules, Guide, Lab, and Visuals. The established visual hierarchy held
+  across the matrix; no systemic redesign problem was found.
+- The current seeded Replay Analysis animation was reviewed through terminal,
+  onset, setup-corridor, and last-escape frames.
+- The Profile empty state was reviewed at `1440x1000` and `390x844`; it explains
+  the next step without displacing the record summary or mobile controls.
+- Existing README GIFs and the Open Graph image remain current. Their tracked
+  files were left unchanged instead of producing equivalent binary outputs.
+- Curated bot and analysis JSON remain authoritative and unchanged because this
+  pass did not alter bot, analyzer, report schema, or source tournament behavior.
 
 ## Validation Result
 
