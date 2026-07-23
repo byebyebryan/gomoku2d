@@ -52,7 +52,7 @@ test("published static report routes render their current artifacts", async ({ p
   expect(analysisJson.status()).toBe(200);
 
   await page.goto("/lab/");
-  await expect(page).toHaveTitle(/Lab Report/);
+  await expect(page).toHaveTitle("Lab Report | Gomoku2D");
   await expect(page.getByRole("heading", { name: "Lab Report" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Ranking" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Search" })).toBeVisible();
@@ -95,7 +95,7 @@ test("published visual design route renders manifest-driven assets", async ({ pa
   expect(manifest.status()).toBe(200);
 
   await page.goto("/visuals/");
-  await expect(page).toHaveTitle(/Visuals/);
+  await expect(page).toHaveTitle("Visuals | Gomoku2D");
   await expect(page.getByRole("heading", { level: 1, name: "Visuals" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Style" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Sprites" })).toBeVisible();
@@ -126,7 +126,7 @@ test("rules explanation route renders inside the app shell", async ({ page }) =>
   await expect(page.getByRole("link", { name: "Bots" })).toHaveCount(0);
 
   await page.goto("/rules/");
-  await expect(page).toHaveTitle(/Gomoku2D Rules/);
+  await expect(page).toHaveTitle("Rules | Gomoku2D");
   await expect(page.getByRole("heading", { level: 1, name: "Rules" })).toBeVisible();
   await expect(page.getByRole("img", { name: "Renju forbidden move examples: Overline board diagram." })).toBeVisible();
   await expect(page.getByText("Double-three", { exact: true })).toBeVisible();
@@ -140,7 +140,7 @@ test("rules explanation route renders inside the app shell", async ({ page }) =>
 
 test("guide route explains threat vocabulary inside the app shell", async ({ page }) => {
   await page.goto("/guide/");
-  await expect(page).toHaveTitle(/Gomoku2D Guide/);
+  await expect(page).toHaveTitle("Guide | Gomoku2D");
   await expect(page.getByRole("heading", { level: 1, name: "Guide" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Respond to threats." })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Immediate threat" })).toBeVisible();
@@ -157,6 +157,7 @@ test("guide route explains threat vocabulary inside the app shell", async ({ pag
 
 test("profile and replay analysis boot without requiring cloud configuration", async ({ page }) => {
   await page.goto("/profile");
+  await expect(page).toHaveTitle("Profile | Gomoku2D");
   await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
   await expect(page.getByRole("textbox", { name: "Name" })).toBeVisible();
 
@@ -170,6 +171,7 @@ test("profile and replay analysis boot without requiring cloud configuration", a
 
   await seedSmokeReplay(page);
   await page.goto("/replay/fixture-smoke-replay");
+  await expect(page).toHaveTitle("Replay Analysis | Gomoku2D");
   await expect(page.getByRole("heading", { name: "Replay" })).toBeVisible();
   await expect(page.getByTestId("replay-rule")).toHaveText("Renju");
   await expect(page.getByTestId("replay-move-count")).toHaveText("Move 10 / 10");
@@ -182,11 +184,13 @@ test("profile and replay analysis boot without requiring cloud configuration", a
 test("home boot and local bot match smoke flow", async ({ page }) => {
   await page.goto("/");
 
+  await expect(page).toHaveTitle("Gomoku2D — An old favorite, built properly.");
   await expect(page.getByRole("heading", { name: "Gomoku2D" })).toBeVisible();
   await expect(page.getByText("An old favorite, built properly.")).toBeVisible();
 
   await page.getByRole("link", { name: "Play" }).click();
 
+  await expect(page).toHaveTitle("Local Match | Gomoku2D");
   await expect(page.getByRole("heading", { name: "Local Match" })).toBeVisible();
   await expect(page.getByTestId("match-move-count")).toHaveText("Move 0");
   await expect(page.getByTestId("match-rule")).toHaveText("Freestyle");
@@ -226,11 +230,13 @@ test("home boot and local bot match smoke flow", async ({ page }) => {
   await waitForBotReply(page);
 
   await page.getByRole("link", { name: "Settings" }).click();
+  await expect(page).toHaveTitle("Settings | Gomoku2D");
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
   await page.getByRole("button", { name: "Renju" }).click();
   await expect(page.getByText("Saved settings apply next game.")).toBeVisible();
 
   await page.getByRole("link", { name: "Back to Game" }).first().click();
+  await expect(page).toHaveTitle("Local Match | Gomoku2D");
   await expect(page.getByRole("heading", { name: "Local Match" })).toBeVisible();
   await expect(page.getByTestId("match-rule")).toHaveText("Freestyle");
   await expect(page.getByText("Next: Renju · Normal")).toBeVisible();

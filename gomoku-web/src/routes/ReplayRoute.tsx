@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useStore } from "zustand";
 
+import { useDocumentTitle } from "../app/useDocumentTitle";
 import { buildReplayBoardModel } from "../board/board_model";
 import { localProfileStore } from "../profile/local_profile_store";
 import {
@@ -31,6 +32,8 @@ import {
 const AUTOPLAY_DELAY_MS = 700;
 
 export function ReplayRoute() {
+  useDocumentTitle("Replay Analysis");
+
   const { matchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -40,10 +43,6 @@ export function ReplayRoute() {
   const [autoplaying, setAutoplaying] = useState(false);
   const { analysisAnnotations, analysisStep } = useReplayAnalysis(match);
   const coreWinningCells = useReplayWinningCells(match, moveIndex);
-
-  useEffect(() => {
-    document.title = "Gomoku2D Replay Analysis";
-  }, []);
 
   useEffect(() => {
     setMoveIndex(defaultReplayMoveIndex(match?.move_count ?? 0));

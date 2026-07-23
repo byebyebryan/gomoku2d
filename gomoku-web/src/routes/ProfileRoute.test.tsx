@@ -157,6 +157,12 @@ describe("ProfileRoute cloud state", () => {
     expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute("href", "/settings");
     expect(screen.getByText("Matches")).toBeInTheDocument();
     expect(screen.getByLabelText("Name")).toHaveValue("Guest");
+    expect(screen.getByText("No matches yet")).toBeInTheDocument();
+    expect(screen.getByText("Finish a game to inspect it here.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Play a game" })).toHaveAttribute(
+      "href",
+      "/match/local",
+    );
   });
 
   it("renders canonical local saved-match history", () => {

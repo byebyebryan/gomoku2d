@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useStore } from "zustand";
 
+import { useDocumentTitle } from "../app/useDocumentTitle";
 import { cloudAuthStore } from "../cloud/auth_store";
 import { cloudHistoryStore } from "../cloud/cloud_history_store";
 import {
@@ -350,6 +351,8 @@ function cloudTitleText({
 }
 
 export function ProfileRoute() {
+  useDocumentTitle("Profile");
+
   const navigate = useNavigate();
   const [confirmingProfileAction, setConfirmingProfileAction] = useState<ProfileDangerAction | null>(null);
   const [profileActionBusy, setProfileActionBusy] = useState(false);
@@ -730,7 +733,20 @@ export function ProfileRoute() {
                   );
                 })}
               </ol>
-            ) : null}
+            ) : (
+              <div className={styles.historyEmpty}>
+                <div className={styles.historyEmptyCopy}>
+                  <p className={styles.historyEmptyTitle}>No matches yet</p>
+                  <p className={styles.historyEmptyText}>
+                    Finish a game to inspect it here.
+                  </p>
+                </div>
+                <Link className="uiAction uiActionPrimary" to="/match/local">
+                  <Icon className="uiIconDesktop" name="play" />
+                  <span className="uiActionLabel">Play a game</span>
+                </Link>
+              </div>
+            )}
             {hiddenHistoryCount > 0 ? (
               <button
                 className={`uiAction uiActionNeutral ${styles.historyMoreAction}`}

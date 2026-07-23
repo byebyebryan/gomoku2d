@@ -341,6 +341,39 @@
   list-style: none;
 }
 
+.historyEmpty {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px;
+  padding: 28px 0;
+}
+
+.historyEmptyCopy {
+  display: grid;
+  gap: 6px;
+}
+
+.historyEmptyTitle,
+.historyEmptyText {
+  margin: 0;
+}
+
+.historyEmptyTitle {
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--type-value);
+}
+
+.historyEmptyText {
+  color: var(--text-muted);
+  font-size: var(--type-body);
+}
+
+.historyEmpty :global(.uiAction) {
+  min-width: 152px;
+}
+
 .historyMoreAction {
   width: 100%;
   min-height: 42px;
@@ -700,6 +733,16 @@
 
   .historyBody {
     padding-right: 0;
+  }
+
+  .historyEmpty {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 22px 0;
+  }
+
+  .historyEmpty :global(.uiAction) {
+    width: 100%;
   }
 
   .historyItem {

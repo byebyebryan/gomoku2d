@@ -4,7 +4,9 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
+import { Link } from "react-router-dom";
 
+import { useDocumentTitle } from "../app/useDocumentTitle";
 import {
   loadAssetManifest,
   loadIconManifest,
@@ -34,12 +36,10 @@ const ASSET_TABS: Array<{ id: AssetTab; label: string }> = [
 ];
 
 export function AssetPreviewRoute() {
+  useDocumentTitle("Visuals");
+
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const [tab, setTab] = useState<AssetTab>("guide");
-
-  useEffect(() => {
-    document.title = "Gomoku2D Visuals";
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -86,12 +86,12 @@ export function AssetPreviewRoute() {
               ) : null}
             </div>
             <nav className={styles.links} aria-label="Visuals links">
-              <a className="uiAction uiActionNeutral" href={baseUrl}>
+              <Link className="uiAction uiActionNeutral" to="/">
                 <span className="uiActionLabel">Home</span>
-              </a>
-              <a className="uiAction uiActionNeutral" href={`${baseUrl}lab/`}>
+              </Link>
+              <Link className="uiAction uiActionNeutral" to="/lab/">
                 <span className="uiActionLabel">Lab</span>
-              </a>
+              </Link>
             </nav>
           </div>
           <div className={styles.tabs} aria-label="Visuals sections" role="tablist">
