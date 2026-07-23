@@ -15,7 +15,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "postbuild": "node scripts/publish_visual_design_assets.mjs && node scripts/publish_bot_reports.mjs && node scripts/publish_analysis_reports.mjs && node scripts/publish_spa_routes.mjs",
+    "postbuild": "node scripts/publish_visual_design_assets.mjs && node scripts/publish_reports.mjs && node scripts/publish_spa_routes.mjs",
     "preview": "vite preview",
     "media:readme": "node scripts/capture_readme_media.mjs",
     "test": "vitest run",
