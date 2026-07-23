@@ -13,6 +13,10 @@ import { cloudPromotionStore } from "../cloud/cloud_promotion_store";
 import { createLocalSavedMatch } from "../match/saved_match";
 import { emptyLocalMatchHistory, localProfileStore, type LocalProfileSavedMatch } from "../profile/local_profile_store";
 import { createDefaultProfileSettings } from "../profile/profile_settings";
+import {
+  readReplayAnalysisCache,
+  writeReplayAnalysisCache,
+} from "../replay/replay_analysis_cache";
 
 import { ProfileRoute } from "./ProfileRoute";
 
@@ -83,6 +87,24 @@ function localSavedMatch(id: string, localProfileId: string, minuteOffset = 0): 
   });
 }
 
+const replayAnalysisOptions = { maxDepth: 4, maxScanPlies: 64 };
+
+function cacheReplayAnalysis(match: LocalProfileSavedMatch): void {
+  writeReplayAnalysisCache(match, replayAnalysisOptions, {
+    annotationsByPly: {},
+    step: {
+      analysis: { schema_version: 1 },
+      annotations: [],
+      counters: { branch_roots: 0, prefixes_analyzed: 0, proof_nodes: 0 },
+      current_ply: null,
+      done: true,
+      error: null,
+      schema_version: 1,
+      status: "resolved",
+    },
+  });
+}
+
 describe("ProfileRoute cloud state", () => {
   afterEach(() => {
     cleanup();
@@ -94,6 +116,7 @@ describe("ProfileRoute cloud state", () => {
   });
 
   beforeEach(() => {
+    localStorage.clear();
     localProfileStore.setState({
       matchHistory: emptyLocalMatchHistory(),
       profile: null,
@@ -196,22 +219,30 @@ describe("ProfileRoute cloud state", () => {
     expect(screen.getByText("Moves 9")).toBeInTheDocument();
   });
 
-  it("confirms before resetting the local-only profile", () => {
-    localProfileStore.getState().ensureLocalProfile();
+  it("confirms before clearing local profile data", () => {
+    const localProfile = localProfileStore.getState().ensureLocalProfile();
     localProfileStore.getState().renameDisplayName("ByeByeBryan");
+    const match = localSavedMatch("match-1", localProfile.id);
+    localProfileStore.setState({ matchHistory: localMatchHistoryWith([match]) });
+    cacheReplayAnalysis(match);
 
     renderProfileRoute();
 
     expect(screen.getByLabelText("Name")).toHaveValue("ByeByeBryan");
     fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
-    expect(screen.getByText("Reset local profile and clear local match history?")).toBeInTheDocument();
+    expect(
+      screen.getByText("Reset local profile data, including games and replay analyses?"),
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(screen.getByLabelText("Name")).toHaveValue("ByeByeBryan");
+    expect(readReplayAnalysisCache(match, replayAnalysisOptions)).not.toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
     fireEvent.click(screen.getByRole("button", { name: "Reset" }));
 
     expect(screen.getByLabelText("Name")).toHaveValue("Guest");
+    expect(localProfileStore.getState().matchHistory.replayMatches).toEqual([]);
+    expect(readReplayAnalysisCache(match, replayAnalysisOptions)).toBeNull();
   });
 
   it("shows the linked cloud profile and allows sign-out", () => {
@@ -648,7 +679,7 @@ describe("ProfileRoute cloud state", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
     expect(
-      screen.getByText("Reset cloud profile and clear both cloud and local match history?"),
+      screen.getByText("Reset cloud and local profile data, including games and replay analyses?"),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Reset" }));
 

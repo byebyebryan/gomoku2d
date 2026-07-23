@@ -72,6 +72,7 @@ pass.
 | A new Profile leaves the Match History area empty without explaining how it becomes useful. | fix | Add one compact empty state with a Play action; do not add onboarding panels elsewhere. | complete |
 | SPA navigation can leave stale document titles on Home, Match, Settings, and Profile. | fix | Give every route one shared title contract and cover the product flow in browser smoke. | complete |
 | Lab and Visuals use document links for internal navigation and reload the application. | fix | Use router links while preserving routes and report/manifest state contracts. | complete |
+| Profile reset omitted cached replay analyses, while the privacy page did not disclose all persisted settings and caches. | fix | Clear replay analyses with local profile data, preserve them for cloud-only deletion, and align the privacy and confirmation copy with actual storage behavior. | complete |
 | The current README GIFs and social image already show the shipped gameplay, analyzer, Lab, and Visuals surfaces accurately. | retain | Keep the binaries unchanged; recapture only when a visible source surface changes. | confirmed |
 | Replay Analysis is intentionally reached through a finished match or saved history rather than a bundled demo. | retain | Keep Home minimal and improve discovery through product flow, Guide copy, README structure, metadata, and media. | confirmed |
 
@@ -122,6 +123,9 @@ IDs as implementation fixtures.
   the next step without displacing the record summary or mobile controls.
 - Existing README GIFs and the Open Graph image remain current. Their tracked
   files were left unchanged instead of producing equivalent binary outputs.
+- Profile reset now clears cached replay analyses together with local games and
+  settings. Cloud-only deletion still preserves local data, and the policy copy
+  states both boundaries explicitly.
 - Curated bot and analysis JSON remain authoritative and unchanged because this
   pass did not alter bot, analyzer, report schema, or source tournament behavior.
 
@@ -131,7 +135,7 @@ IDs as implementation fixtures.
 - Tactical hard gates passed `12/12`; lethal scenarios passed `9/9`; Renju
   fixtures passed `29/29`; the external Renju reference check completed.
 - The Wasm package rebuilt successfully against the refreshed lockfile.
-- Web typecheck, 299 unit tests, 23 Firestore rules tests, production build,
+- Web typecheck, 300 unit tests, 23 Firestore rules tests, production build,
   production dependency audit, and all 23 browser tests passed.
 - The 20-route responsive audit and nine-route keyboard audit passed.
 - Curated bot and analysis report sources were not regenerated or changed.

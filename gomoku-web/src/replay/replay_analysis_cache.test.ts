@@ -4,6 +4,7 @@ import { createLocalSavedMatch } from "../match/saved_match";
 import type { LocalProfileSavedMatch } from "../profile/local_profile_store";
 
 import {
+  clearReplayAnalysisCache,
   readReplayAnalysisCache,
   replayAnalysisCacheKey,
   writeReplayAnalysisCache,
@@ -92,6 +93,16 @@ function cachedResult(status: ReplayAnalysisStepResult["status"] = "resolved"): 
 }
 
 describe("replay analysis cache", () => {
+  it("clears every cached analysis result", () => {
+    const storage = new MemoryStorage();
+    const options = { maxDepth: 4, maxScanPlies: 64 };
+
+    writeReplayAnalysisCache(localMatch(), options, cachedResult(), storage);
+    clearReplayAnalysisCache(storage);
+
+    expect(readReplayAnalysisCache(localMatch(), options, storage)).toBeNull();
+  });
+
   it("round-trips completed analysis with accumulated annotations", () => {
     const storage = new MemoryStorage();
     const match = localMatch();
