@@ -26,14 +26,14 @@ pass.
 | Tactical types, scan view, replies, lethal logic, shape recognition, evidence, and tests share one module. | refactor | Split semantic layers while preserving tactical behavior and re-exports. | planned |
 | Scan threat view remains reachable from diagnostics, shadow parity, and rolling fallbacks. | retain | Keep scan, rolling, and shadow modes; document scan as the correctness oracle and fallback. | confirmed |
 | Corridor proof is still a product/lab configuration and report metric. | retain | Keep corridor proof distinct from retired corridor-portal and leaf-extension experiments. | confirmed |
-| Parser tests enumerate unpublished experiment suffixes that are already intentionally unsupported. | fix | Retain generic unknown-suffix rejection instead of compatibility tests for each retired spelling. | planned |
+| Parser tests enumerate unpublished experiment suffixes that are already intentionally unsupported. | fix | Retain generic unknown-suffix rejection instead of compatibility tests for each retired spelling. | complete |
 
 ## Tests
 
 | Finding | Class | Decision | Status |
 |---|---|---|---|
-| Replay-analysis behavior is repeated across long one-off tests and the eval fixture corpus. | refactor | Share neutral replay scenarios and keep analyzer-specific expectations with their owners. | planned |
-| Analysis and eval dominate local Rust test time. | fix | Consolidate duplicate executions, measure before/after, and preserve every unique behavior contract. | planned |
+| Replay-analysis behavior is repeated across long one-off tests and report projection tests. | refactor | Replace repeated whole-replay executions with focused session, proof, and marker contracts; keep analyzer-specific expectations with their owners. | complete |
+| Analysis and eval dominate local Rust test time. | fix | Consolidate duplicate executions, measure before/after, and preserve every unique behavior contract. | complete |
 | Tactical, lethal, and Renju corpora protect distinct game contracts. | retain | Keep them as hard gates; do not trade correctness for suite speed. | confirmed |
 
 ## Web And Reports
@@ -68,3 +68,16 @@ pass.
 - No persisted-data, Wasm, CLI, report-schema, or public-route break.
 - No version bump, report regeneration, push, tag, release, or deployment before
   the review checkpoint.
+
+## Test Runtime Result
+
+Warm-cache local measurements after consolidation:
+
+- `gomoku-analysis`: 42 tests in 42.96 seconds, down from 59.06 seconds.
+- `gomoku-eval`: 98 tests in 19.19 seconds, down from 57.52 seconds.
+- Combined: 62.15 seconds, down from 116.58 seconds (46.7 percent).
+
+The removed cases repeated expensive full-replay work already protected by
+session parity, corridor proof, and report-marker contracts. Their replacements
+test the decision boundary directly rather than preserving historical replay
+IDs as implementation fixtures.

@@ -68,26 +68,20 @@ fn tournament_plan_requires_exactly_two_head_to_head_bots() {
 }
 
 #[test]
-fn make_bot_factory_rejects_retired_corridor_lab_aliases() {
-    for spec in ["corridor-random", "corridor-d1"] {
-        let err = match make_bot_factory(spec, None, None, CliSearchBudgetMode::Strict, 0, None) {
-            Ok(_) => panic!("retired corridor bot alias should not parse: {spec}"),
-            Err(err) => err,
-        };
-        assert!(err.contains("search-dN+suffixes"));
-    }
-}
+fn make_bot_factory_rejects_unknown_bot_spec() {
+    let error = match make_bot_factory(
+        "unknown-bot",
+        None,
+        None,
+        CliSearchBudgetMode::Strict,
+        0,
+        None,
+    ) {
+        Ok(_) => panic!("unknown bot spec should not parse"),
+        Err(error) => error,
+    };
 
-#[test]
-fn make_bot_factory_rejects_retired_corridor_quiescence_suffixes() {
-    for spec in ["search-d1+corridor-q", "search-d1+corridor-qd4"] {
-        let err =
-            match make_bot_factory(spec, None, Some(123), CliSearchBudgetMode::Strict, 0, None) {
-                Ok(_) => panic!("retired corridor quiescence suffix should not parse: {spec}"),
-                Err(err) => err,
-            };
-        assert!(err.contains("Unknown bot"));
-    }
+    assert!(error.contains("Unknown bot"));
 }
 
 #[test]
@@ -372,21 +366,6 @@ fn renju_rules_command_parses_report_and_board_flag() {
         Some(PathBuf::from("outputs/renju-rule-fixtures.json"))
     );
     assert!(show_boards);
-}
-
-#[test]
-fn analyze_replay_command_rejects_retired_reply_policy_flag() {
-    let err = Cli::try_parse_from([
-        "gomoku-eval",
-        "analyze-replay",
-        "--input",
-        "replays/match.json",
-        "--defense-policy",
-        "all-legal-defense",
-    ])
-    .unwrap_err();
-
-    assert!(err.to_string().contains("unexpected argument"));
 }
 
 #[test]

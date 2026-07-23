@@ -541,13 +541,13 @@ pub(super) fn add_reply_outcome_markers(
 }
 
 pub(super) struct PreCorridorEscapeMarkerInput<'a> {
-    replay: &'a Replay,
-    analysis: &'a GameAnalysis,
-    ply: usize,
-    board: &'a Board,
-    proof: Option<&'a ProofResult>,
-    previous_proof: Option<&'a ProofResult>,
-    reply_outcomes: &'a [DefenderReplyAnalysis],
+    pub(super) replay: &'a Replay,
+    pub(super) analysis: &'a GameAnalysis,
+    pub(super) ply: usize,
+    pub(super) board: &'a Board,
+    pub(super) proof: Option<&'a ProofResult>,
+    pub(super) previous_proof: Option<&'a ProofResult>,
+    pub(super) reply_outcomes: &'a [DefenderReplyAnalysis],
 }
 
 pub(super) fn add_pre_corridor_escape_marker(

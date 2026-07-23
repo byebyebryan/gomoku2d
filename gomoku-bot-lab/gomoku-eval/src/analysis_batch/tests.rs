@@ -4,21 +4,21 @@ use gomoku_bot::tactical::LethalThreatKind;
 use gomoku_core::{Board, Color, Move, Replay, RuleConfig, Variant};
 
 use super::{
-    add_actual_marker, add_loser_candidate_markers, add_reply_outcome_markers,
-    defender_reply_candidates_for_frame, defender_reply_outcomes_for_frame,
-    published_analysis_report_from_batch, run_analysis_batch, run_analysis_batch_replays,
-    run_analysis_batch_replays_with_options, AnalysisBatchEntry, AnalysisBatchEntryStatus,
-    AnalysisBatchModel, AnalysisBatchProofDetails, AnalysisBatchProofFrame,
-    AnalysisBatchProofMarker, AnalysisBatchProofMarkerKind, AnalysisBatchReport,
-    AnalysisBatchRunOptions, AnalysisBatchSummary, PublishedAnalysisMatchSummary,
-    PublishedAnalysisSectionInput, ReplayAnalysisInput, PUBLISHED_ANALYSIS_REPORT_SCHEMA_VERSION,
+    add_actual_marker, add_loser_candidate_markers, add_pre_corridor_escape_marker,
+    add_reply_outcome_markers, defender_reply_candidates_for_frame,
+    defender_reply_outcomes_for_frame, published_analysis_report_from_batch, run_analysis_batch,
+    run_analysis_batch_replays, run_analysis_batch_replays_with_options, AnalysisBatchEntry,
+    AnalysisBatchEntryStatus, AnalysisBatchModel, AnalysisBatchProofDetails,
+    AnalysisBatchProofFrame, AnalysisBatchProofMarker, AnalysisBatchProofMarkerKind,
+    AnalysisBatchReport, AnalysisBatchRunOptions, AnalysisBatchSummary,
+    PreCorridorEscapeMarkerInput, PublishedAnalysisMatchSummary, PublishedAnalysisSectionInput,
+    ReplayAnalysisInput, PUBLISHED_ANALYSIS_REPORT_SCHEMA_VERSION,
 };
 use crate::analysis::{
-    analyze_replay, replay_frame_annotations_for_analysis, AnalysisModel, AnalysisOptions,
-    DefenderReplyAnalysis, DefenderReplyCandidate, DefenderReplyOutcome, DefenderReplyRole,
-    FailureMode, ForcedInterval, GameAnalysis, ProofLimitCause, ProofStatus,
-    ReplayFrameHighlightRole, ReplayFrameMarkerRole, ReplyClassification, RootCause,
-    SearchDiagnostics, UnclearReason, ANALYSIS_SCHEMA_VERSION,
+    AnalysisModel, AnalysisOptions, DefenderReplyAnalysis, DefenderReplyCandidate,
+    DefenderReplyOutcome, DefenderReplyRole, FailureMode, ForcedInterval, GameAnalysis,
+    ProofLimitCause, ProofResult, ProofStatus, ReplyClassification, RootCause, SearchDiagnostics,
+    UnclearReason, ANALYSIS_SCHEMA_VERSION,
 };
 
 fn replay_from_moves(variant: Variant, moves: &[&str]) -> Replay {
@@ -689,88 +689,66 @@ fn analysis_batch_marks_pre_corridor_entry_as_escape_target() {
 }
 
 #[test]
-fn analysis_batch_marks_attacker_started_corridor_entry_as_escape_target() {
-    let replay = replay_from_moves(
-        Variant::Renju,
-        &[
-            "H8", "H9", "I8", "I9", "G8", "J8", "J9", "K7", "H10", "H7", "G9", "L6", "M5", "I7",
-            "G7", "G6", "F8", "E8", "E7", "D6", "I11",
-        ],
-    );
+fn pre_corridor_escape_marker_handles_attacker_started_corridor() {
+    let replay = replay_from_moves(Variant::Freestyle, &["H8"]);
+    let board = board_from_moves(Variant::Freestyle, &["H8"]);
+    let mut analysis = analysis_for_winner(Color::Black, "freestyle", 4);
+    analysis.final_forced_interval = ForcedInterval {
+        start_ply: 0,
+        end_ply: 1,
+    };
+    let model = AnalysisModel {
+        rule_set: "freestyle".to_string(),
+        max_depth: 4,
+        max_scan_plies: Some(1),
+    };
+    let previous_proof = ProofResult {
+        status: ProofStatus::EscapeFound,
+        attacker: Color::Black,
+        side_to_move: Color::Black,
+        model: model.clone(),
+        principal_line: Vec::new(),
+        escape_moves: vec![mv("J8")],
+        threat_evidence: Vec::new(),
+        limit_hit: false,
+        limit_causes: Vec::new(),
+    };
+    let proof = ProofResult {
+        status: ProofStatus::ForcedWin,
+        attacker: Color::Black,
+        side_to_move: Color::White,
+        model,
+        principal_line: vec![mv("J8")],
+        escape_moves: Vec::new(),
+        threat_evidence: Vec::new(),
+        limit_hit: false,
+        limit_causes: Vec::new(),
+    };
+    let mut markers = Vec::new();
 
-    let report = run_analysis_batch_replays_with_options(
-        "report.json:bot-a vs bot-b".to_string(),
-        vec![ReplayAnalysisInput {
-            label: "attacker_started_corridor_entry".to_string(),
-            replay,
-        }],
-        AnalysisBatchRunOptions {
-            analysis: AnalysisOptions {
-                max_depth: 4,
-                max_scan_plies: Some(64),
-            },
-            include_proof_details: true,
+    add_pre_corridor_escape_marker(
+        &mut markers,
+        PreCorridorEscapeMarkerInput {
+            replay: &replay,
+            analysis: &analysis,
+            ply: 1,
+            board: &board,
+            proof: Some(&proof),
+            previous_proof: Some(&previous_proof),
+            reply_outcomes: &[],
         },
     );
 
-    let details = report.entries[0]
-        .proof_details
-        .as_ref()
-        .expect("proof details should be recorded");
-    assert_eq!(details.final_forced_start_ply, 13);
-    let frame = details
-        .proof_frames
+    let marker = markers
         .iter()
-        .find(|frame| frame.label == "actual_ply_14")
-        .expect("defender frame after attacker corridor entry should be present");
-    assert_eq!(frame.side_to_move, Color::White);
-    assert_eq!(frame.status, ProofStatus::ForcedWin);
-    assert!(frame.reply_outcomes.is_empty());
-
-    let g7 = frame
-        .markers
-        .iter()
-        .find(|marker| marker.notation == "G7")
-        .expect("winner corridor entry should be shown as an escape target");
-    assert!(g7
+        .find(|marker| marker.notation == "J8")
+        .expect("attacker-started corridor entry should be marked");
+    assert!(marker
         .kinds
         .contains(&AnalysisBatchProofMarkerKind::CorridorEntryBlack));
-    assert!(g7
+    assert!(marker
         .kinds
         .contains(&AnalysisBatchProofMarkerKind::ConfirmedEscape));
-}
-
-#[test]
-fn shared_replay_annotations_match_report_corridor_entry_boundary() {
-    let replay = replay_from_moves(
-        Variant::Renju,
-        &[
-            "H8", "H9", "I8", "I9", "G8", "J8", "J9", "K7", "H10", "H7", "G9", "L6", "M5", "I7",
-            "G7", "G6", "F8", "E8", "E7", "D6", "I11",
-        ],
-    );
-    let options = AnalysisOptions {
-        max_depth: 4,
-        max_scan_plies: Some(64),
-    };
-    let analysis = analyze_replay(&replay, options).expect("analysis should run");
-    let annotations = replay_frame_annotations_for_analysis(&replay, &analysis)
-        .expect("shared replay annotations should build");
-
-    let boundary = annotations
-        .iter()
-        .find(|frame| frame.ply == 13)
-        .expect("shared annotation should include the report corridor-entry boundary");
-    assert!(boundary.highlights.iter().any(|highlight| {
-        highlight.role == ReplayFrameHighlightRole::CorridorEntry
-            && highlight.notation == "G7"
-            && highlight.side == Color::Black
-    }));
-    assert!(boundary.markers.iter().any(|marker| {
-        marker.role == ReplayFrameMarkerRole::ConfirmedEscape
-            && marker.notation == "G7"
-            && marker.side == Color::White
-    }));
 }
 
 #[test]

@@ -218,22 +218,6 @@ mod tests {
     }
 
     #[test]
-    fn rejects_retired_opponent_reply_safety_suffixes() {
-        assert!(super::search_config_from_lab_spec(
-            "search-d3+opponent-reply-local-threat-probe",
-            None,
-            None,
-        )
-        .is_none());
-        assert!(super::search_config_from_lab_spec(
-            "search-d3+opponent-reply-search-probe",
-            None,
-            None,
-        )
-        .is_none());
-    }
-
-    #[test]
     fn parses_tactical_full_ordering_suffixes() {
         let config = super::search_config_from_lab_spec("search-d3+tactical-full", None, None)
             .expect("expected tactical-full ordering spec to parse");
@@ -313,39 +297,6 @@ mod tests {
         assert!(
             super::search_config_from_lab_spec("search-d7+tactical-cap-0", None, None).is_none()
         );
-    }
-
-    #[test]
-    fn rejects_retired_search_suffixes() {
-        for spec in [
-            "search-d3+tactical-first",
-            "search-d3+staged-tactical",
-            "search-d7+staged-tactical-cap-8",
-            "search-d5+priority-first",
-            "search-d7+priority-cap-8",
-            "search-d5+tactical-lite",
-            "search-d7+tactical-lite-cap-8",
-            "search-d5+corridor-own-d6-w3",
-            "search-d5+corridor-opponent-d4-w2",
-            "search-d5+corridor-own-d6-w3+corridor-opponent-d4-w2",
-            "search-d5+leaf-corridor-d8-w3",
-            "search-d5+leaf-corridor-d0-w3",
-            "search-d5+leaf-corridor-d4-w0",
-            "search-d5+leaf-proof-c6+leaf-corridor-d16-w4",
-            "search-d5+leaf-proof-c0",
-            "search-d5+leaf-corridor-d8-w3+leaf-proof-any-score",
-            "search-d5+leaf-proof-margin--1",
-            "search-d5+leaf-corridor-d8-w3+leaf-proof-margin-25000",
-            "search-d5+corridor-min-rank-3",
-            "search-d5+corridor-top-n-2",
-            "search-d5+corridor-depth-static",
-            "search-d5+corridor-proof-only",
-        ] {
-            assert!(
-                super::search_config_from_lab_spec(spec, None, Some(1000)).is_none(),
-                "expected retired spec '{spec}' to be rejected"
-            );
-        }
     }
 
     #[test]

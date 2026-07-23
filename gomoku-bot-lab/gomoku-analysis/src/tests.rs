@@ -8,13 +8,13 @@ use gomoku_core::{Board, Color, Move, Replay, RuleConfig, Variant};
 use super::{
     analyze_alternate_defender_reply_options, analyze_defender_reply_options, analyze_replay,
     corridor_analysis_model, defender_reply_candidates, failure_analysis,
-    replay_frame_annotations_for_analysis, replay_frame_annotations_from_proof, replay_moves,
-    replay_prefix_boards, replay_proof_summary, AnalysisOptions, DefenderReplyOutcome,
-    DefenderReplyRole, FailureAnalysisInput, FailureMode, ForcedInterval, LethalOnset,
-    LethalOnsetComponentTier, LethalOnsetMechanism, LethalOnsetShape, MissedCandidateOutcome,
-    ProofLimitCause, ProofResult, ProofStatus, ReplayAnalysisSession, ReplayFrameAnnotations,
-    ReplayFrameHighlightRole, ReplayFrameMarkerRole, ReplyClassification, RootCause, TacticalNote,
-    ThreatSequenceEvidence, UnclearReason,
+    replay_frame_annotations_for_analysis, replay_frame_annotations_from_proof,
+    replay_prefix_boards, AnalysisOptions, DefenderReplyOutcome, DefenderReplyRole,
+    FailureAnalysisInput, FailureMode, ForcedInterval, LethalOnset, LethalOnsetComponentTier,
+    LethalOnsetMechanism, LethalOnsetShape, MissedCandidateOutcome, ProofLimitCause, ProofResult,
+    ProofStatus, ReplayAnalysisSession, ReplayFrameAnnotations, ReplayFrameHighlightRole,
+    ReplayFrameMarkerRole, ReplyClassification, RootCause, TacticalNote, ThreatSequenceEvidence,
+    UnclearReason,
 };
 
 fn mv(notation: &str) -> Move {
@@ -1340,92 +1340,6 @@ fn replay_analysis_session_marks_next_corridor_entry_on_escape_boundary() {
 }
 
 #[test]
-fn replay_analysis_session_emits_corridor_entry_escape_boundary() {
-    let replay = replay_from_moves(
-        Variant::Renju,
-        &[
-            "H8", "H9", "I8", "I9", "G8", "J8", "J9", "K7", "H10", "H7", "G9", "L6", "M5", "I7",
-            "G7", "G6", "F8", "E8", "E7", "D6", "I11",
-        ],
-    );
-    let mut session = ReplayAnalysisSession::new(
-        replay,
-        AnalysisOptions {
-            max_depth: 4,
-            max_scan_plies: Some(64),
-        },
-    )
-    .expect("session should initialize");
-    let mut annotations = Vec::new();
-
-    loop {
-        let step = session.step(2);
-        annotations.extend(step.annotations);
-        if step.done {
-            break;
-        }
-    }
-
-    let boundary = annotations
-        .iter()
-        .rev()
-        .find(|frame| frame.ply == 13)
-        .expect("attacker-started corridor boundary should be annotated");
-    assert!(boundary.highlights.iter().any(|highlight| {
-        highlight.role == ReplayFrameHighlightRole::CorridorEntry
-            && highlight.mv == mv("G7")
-            && highlight.side == Color::Black
-    }));
-    assert!(boundary.markers.iter().any(|marker| {
-        marker.role == ReplayFrameMarkerRole::ConfirmedEscape
-            && marker.mv == mv("G7")
-            && marker.side == Color::White
-    }));
-}
-
-#[test]
-fn replay_analysis_does_not_label_actual_immediate_block_as_escape() {
-    let replay = replay_from_moves(
-        Variant::Renju,
-        &[
-            "H8", "H7", "F8", "G9", "G8", "I8", "J9", "I7", "F7", "I10", "I9", "F6", "K9", "H9",
-            "J7", "H10", "L9", "M9", "I6", "K8", "E8", "D8", "G6", "H5", "J6", "J10", "K10", "G5",
-            "H4", "F11", "G10", "H6", "J8", "J5", "I5", "K7", "J11", "I12", "F9", "H11", "D7",
-            "C6", "E7", "C7", "E9", "E6", "D9", "C10", "C9", "B9", "D10", "C11", "E11", "E10",
-            "F12", "B8", "G13",
-        ],
-    );
-    let prefix_ply = 49;
-    let boards = replay_prefix_boards(&replay).expect("fixture replay should apply");
-    let actual_moves = replay_moves(&replay).expect("fixture replay should parse");
-    let proof_summary = replay_proof_summary(
-        &boards,
-        &actual_moves,
-        Color::Black,
-        &AnalysisOptions {
-            max_depth: 4,
-            max_scan_plies: Some(8),
-        },
-        prefix_ply,
-    );
-    let proof = proof_summary
-        .first()
-        .expect("target prefix should be in proof summary");
-
-    assert_eq!(proof.status, ProofStatus::ForcedWin);
-    assert!(proof
-        .threat_evidence
-        .iter()
-        .all(|evidence| evidence.actual_reply != Some(mv("B9"))
-            || evidence.reply_classification != ReplyClassification::ConfirmedEscape));
-    assert!(proof
-        .threat_evidence
-        .iter()
-        .flat_map(|evidence| evidence.escape_replies.iter())
-        .all(|&reply| reply != mv("B9")));
-}
-
-#[test]
 fn replay_analysis_extends_forced_corridor_through_forbidden_renju_defenses() {
     let replay = replay_from_moves(
         Variant::Renju,
@@ -1473,6 +1387,25 @@ fn corridor_reply_moves_exclude_non_corridor_actual_reply() {
         replies.contains(&mv("J8")),
         "the winner's next corridor-entry square should remain visible as the escape target"
     );
+}
+
+#[test]
+fn actual_corridor_reply_forced_child_is_not_escape() {
+    let board = board_from_moves(Variant::Freestyle, &["H8"]);
+    let options = AnalysisOptions::default();
+    let forced_child = proof_for_board(&board, Color::Black, &options);
+
+    let outcome = super::classify_actual_corridor_reply(
+        &board,
+        &[],
+        Color::Black,
+        &options,
+        1,
+        mv("A1"),
+        Some(&forced_child),
+    );
+
+    assert_eq!(outcome.status, super::CorridorReplyStatus::Forced);
 }
 
 #[test]
