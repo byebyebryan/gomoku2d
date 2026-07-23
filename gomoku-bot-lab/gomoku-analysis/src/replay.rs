@@ -449,32 +449,6 @@ fn replay_winner(replay: &Replay, final_board: &Board) -> Option<Color> {
     }
 }
 
-#[cfg(test)]
-pub(crate) fn replay_proof_summary(
-    boards: &[Board],
-    actual_moves: &[Move],
-    winner: Color,
-    options: &AnalysisOptions,
-    scan_start: usize,
-) -> Vec<ProofResult> {
-    let mut proof_summary = Vec::with_capacity(boards.len() - scan_start);
-    let mut actual_child = None;
-    for ply in (scan_start..boards.len()).rev() {
-        let proof = replay_corridor_status_with_actual_child(
-            &boards[ply],
-            actual_moves,
-            winner,
-            options,
-            ply,
-            actual_child.as_ref(),
-        );
-        actual_child = Some(proof.clone());
-        proof_summary.push(proof);
-    }
-    proof_summary.reverse();
-    proof_summary
-}
-
 fn final_forced_interval_has_boundary(
     proof_summary: &[ProofResult],
     scan_start: usize,

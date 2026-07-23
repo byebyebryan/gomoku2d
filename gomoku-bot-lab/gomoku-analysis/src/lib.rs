@@ -25,7 +25,7 @@ pub(crate) use failure::{failure_analysis, FailureAnalysisInput};
 #[cfg(test)]
 pub(crate) use onset::lethal_onset_from_threat;
 #[cfg(test)]
-pub(crate) use replay::{replay_moves, replay_prefix_boards, replay_proof_summary};
+pub(crate) use replay::replay_prefix_boards;
 #[cfg(test)]
 pub(crate) use trace::{
     classify_actual_corridor_reply, corridor_defender_reply_moves, corridor_proof_result,
