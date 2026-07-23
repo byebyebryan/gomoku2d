@@ -2,8 +2,10 @@ import type { BotMove, BotSpec, BotWorkerRequest, BotWorkerResponse, GameVariant
 import { ReadyQueueWorker } from "./ready_queue_worker";
 
 type PendingRequest = {
+  request: Extract<BotWorkerRequest, { type: "choose_move" }>;
   resolve: (move: BotMove | null) => void;
   reject: (error: Error) => void;
+  retriedAfterWorkerFailure: boolean;
 };
 
 export class BotRunner {
@@ -11,6 +13,7 @@ export class BotRunner {
   private specs: [BotSpec, BotSpec] = [{ kind: "human" }, { kind: "human" }];
   private nextRequestId: number = 1;
   private pending: Map<number, PendingRequest> = new Map();
+  private restartBeforeNextRequest = false;
 
   constructor() {
     this.worker = this.createWorker();
@@ -31,6 +34,7 @@ export class BotRunner {
       return;
     }
 
+    this.restartBeforeNextRequest = false;
     this.send({ type: "configure", specs });
   }
 
@@ -39,11 +43,27 @@ export class BotRunner {
       return Promise.resolve(null);
     }
 
+    if (this.restartBeforeNextRequest) {
+      this.restartWorker();
+    }
+
     const requestId = this.nextRequestId++;
+    const request: Extract<BotWorkerRequest, { type: "choose_move" }> = {
+      type: "choose_move",
+      requestId,
+      slot,
+      variant,
+      fen,
+    };
 
     return new Promise<BotMove | null>((resolve, reject) => {
-      this.pending.set(requestId, { resolve, reject });
-      this.send({ type: "choose_move", requestId, slot, variant, fen });
+      this.pending.set(requestId, {
+        request,
+        resolve,
+        reject,
+        retriedAfterWorkerFailure: false,
+      });
+      this.send(request);
     });
   }
 
@@ -63,6 +83,7 @@ export class BotRunner {
 
   private restartWorker(): void {
     this.worker.restart();
+    this.restartBeforeNextRequest = false;
     this.send({ type: "configure", specs: this.specs });
   }
 
@@ -70,7 +91,7 @@ export class BotRunner {
     return new ReadyQueueWorker({
       factory: () => new Worker(new URL("./bot_worker.ts", import.meta.url), { type: "module" }),
       onError: (error) => {
-        this.rejectPending(new Error(error.message || "bot worker failed"));
+        this.handleWorkerFailure(new Error(error.message || "bot worker failed"));
       },
       onMessage: (message) => this.handleWorkerMessage(message),
     });
@@ -85,6 +106,27 @@ export class BotRunner {
       reject(error);
     }
     this.pending.clear();
+  }
+
+  private handleWorkerFailure(error: Error): void {
+    const pending = [...this.pending.values()];
+    const canRetry = pending.length > 0
+      && pending.every((request) => !request.retriedAfterWorkerFailure);
+
+    if (!canRetry) {
+      this.rejectPending(error);
+      this.restartBeforeNextRequest = true;
+      return;
+    }
+
+    for (const request of pending) {
+      request.retriedAfterWorkerFailure = true;
+    }
+
+    this.restartWorker();
+    for (const request of pending) {
+      this.send(request.request);
+    }
   }
 
   private handleWorkerMessage(message: BotWorkerResponse): void {
