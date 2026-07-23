@@ -1,7 +1,7 @@
-use instant::Instant;
 use std::collections::HashMap;
 #[cfg(test)]
 use std::time::Duration;
+use web_time::Instant;
 
 use crate::corridor;
 use crate::frontier::{FrontierAnnotationSource, RollingFrontierFeatures, RollingThreatFrontier};

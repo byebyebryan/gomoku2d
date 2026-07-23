@@ -1,5 +1,5 @@
-use instant::Instant;
 use std::time::Duration;
+use web_time::Instant;
 
 #[cfg(target_os = "linux")]
 pub(super) fn thread_cpu_time() -> Option<Duration> {

@@ -1,5 +1,5 @@
-use instant::Instant;
 use std::time::Duration;
+use web_time::Instant;
 
 use gomoku_core::{Board, Color, GameResult, Move, MoveError, DIRS};
 
