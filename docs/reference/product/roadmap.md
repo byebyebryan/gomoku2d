@@ -22,6 +22,8 @@ Current work:
   active versus parked documentation;
 - run a fresh desktop/mobile product walkthrough and fix concrete usability,
   presentation, accessibility, loading, and error-state issues;
+- reconcile the README, metadata, and release-facing artifacts around a
+  product-first story without making a devlog or process essay a release gate;
 - preserve behavior unless a review finding identifies a real defect.
 
 Release bar:
