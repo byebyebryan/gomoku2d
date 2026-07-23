@@ -188,8 +188,8 @@ export function GuideRoute() {
               <p className="uiSectionLabel">Avoid mistakes</p>
               <h2>Respond to threats.</h2>
               <p>
-                A good move either wins, blocks the urgent threat, or creates a
-                stronger counter-threat.
+                When a threat appears, win now, block it, or answer with something
+                stronger.
               </p>
             </div>
             <div className={styles.tileGrid}>
@@ -219,8 +219,8 @@ export function GuideRoute() {
               <p className="uiSectionLabel">Tactics</p>
               <h2>Make a combo.</h2>
               <p>
-                A combo combines local threats into multiple ways to win. One move
-                cannot block them all.
+                A combo brings several threats together. One reply cannot stop them
+                all.
               </p>
             </div>
             <div className={styles.tileGrid}>
@@ -342,23 +342,23 @@ export function GuideRoute() {
               <p className="uiSectionLabel">Replay analysis</p>
               <h2>Figure out what went wrong.</h2>
               <p>
-                After a match ends, Analyze opens Replay Analysis. It still lets
-                you scrub the game, but the analyzer also walks backward from the
-                ending move to find what went wrong for the losing side.
+                After a match, Analyze opens the replay at the end and works
+                backward through the losing side&apos;s decisions. Scrub any move,
+                or follow the marked line from combo onset back to the last escape.
               </p>
             </div>
             <div className={styles.stepGrid}>
               <div>
                 <h3>Combo onset</h3>
-                <p>The lethal combo that sealed the game.</p>
+                <p>The lethal combo that made the result unavoidable.</p>
               </div>
               <div>
                 <h3>Setup corridor</h3>
-                <p>Every reply is forced, or every alternative still leads to a guaranteed loss.</p>
+                <p>The forced run into onset: every reply is mandatory, or every alternative still loses.</p>
               </div>
               <div>
                 <h3>Last escape</h3>
-                <p>The last move where the losing side could still avoid the loss.</p>
+                <p>The final position where a different move could still avoid the loss.</p>
               </div>
             </div>
           </section>

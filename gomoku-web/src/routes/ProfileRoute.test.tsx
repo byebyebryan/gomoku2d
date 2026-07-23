@@ -231,7 +231,7 @@ describe("ProfileRoute cloud state", () => {
     expect(screen.getByLabelText("Name")).toHaveValue("ByeByeBryan");
     fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
     expect(
-      screen.getByText("Reset local profile data, including games and replay analyses?"),
+      screen.getByText("Reset this profile? This clears settings, games, and replay analyses."),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(screen.getByLabelText("Name")).toHaveValue("ByeByeBryan");
@@ -270,7 +270,7 @@ describe("ProfileRoute cloud state", () => {
 
     expect(screen.getByText("Cloud profile")).toBeInTheDocument();
     expect(screen.queryByText("uid-1")).not.toBeInTheDocument();
-    expect(screen.getByText("Cloud history enabled.")).toBeInTheDocument();
+    expect(screen.getByText("Cloud sync is on.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
     expect(signOut).toHaveBeenCalledTimes(1);
   });
@@ -553,7 +553,7 @@ describe("ProfileRoute cloud state", () => {
 
     expect(screen.getByText("Cloud profile")).toBeInTheDocument();
     expect(screen.getByText("Loading cloud profile...")).toBeInTheDocument();
-    expect(screen.queryByText("Sign in for cloud history."))
+    expect(screen.queryByText("Sign in to sync this profile and its history."))
       .not
       .toBeInTheDocument();
   });
@@ -679,7 +679,9 @@ describe("ProfileRoute cloud state", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
     expect(
-      screen.getByText("Reset cloud and local profile data, including games and replay analyses?"),
+      screen.getByText(
+        "Reset profile data here and in the cloud? This clears settings, games, and local replay analyses.",
+      ),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Reset" }));
 
@@ -730,7 +732,9 @@ describe("ProfileRoute cloud state", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
     fireEvent.click(screen.getByRole("button", { name: "Delete Cloud" }));
     expect(
-      screen.getByText("Delete cloud profile, then sign out? Local profile stays on this device."),
+      screen.getByText(
+        "Delete your cloud profile and history, then sign out? Local data stays on this device.",
+      ),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(deleteForUser).not.toHaveBeenCalled();

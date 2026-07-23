@@ -133,7 +133,7 @@ test("rules explanation route renders inside the app shell", async ({ page }) =>
   await expect(page.getByText("To reduce first-move advantage")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Four + Three" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Trap" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Real double-four and double-three." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Only real threats count." })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Blocked branch" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Forbidden continuation" })).toBeVisible();
 });
@@ -233,7 +233,7 @@ test("home boot and local bot match smoke flow", async ({ page }) => {
   await expect(page).toHaveTitle("Settings | Gomoku2D");
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
   await page.getByRole("button", { name: "Renju" }).click();
-  await expect(page.getByText("Saved settings apply next game.")).toBeVisible();
+  await expect(page.getByText("Changes apply next game.")).toBeVisible();
 
   await page.getByRole("link", { name: "Back to Game" }).first().click();
   await expect(page).toHaveTitle("Local Match | Gomoku2D");
