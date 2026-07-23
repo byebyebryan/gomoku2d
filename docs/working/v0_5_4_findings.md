@@ -19,11 +19,11 @@ pass.
 
 | Finding | Class | Decision | Status |
 |---|---|---|---|
-| Tournament report schema, aggregation, provenance, and tests share one large module. | refactor | Split ownership behind the existing `gomoku_eval::report` facade without changing JSON. | planned |
-| Analysis batch execution, publication projection, proof frames, and tests share one large module. | refactor | Split runner, publication, and proof-frame ownership without changing output. | planned |
-| Eval CLI options, tournament planning, analysis planning, output, and dispatch are concentrated in one module. | refactor | Extract command-owned modules while preserving the CLI contract. | planned |
-| Search safety, ordering, threat adapters, engine traversal, and tests remain concentrated in `search/mod.rs`. | refactor | Extract cohesive internal modules behind the current search API. | planned |
-| Tactical types, scan view, replies, lethal logic, shape recognition, evidence, and tests share one module. | refactor | Split semantic layers while preserving tactical behavior and re-exports. | planned |
+| Tournament report schema, aggregation, provenance, and tests share one large module. | refactor | Split ownership behind the existing `gomoku_eval::report` facade without changing JSON. | complete |
+| Analysis batch execution, publication projection, proof frames, and tests share one large module. | refactor | Split runner, publication, and proof-frame ownership without changing output. | complete |
+| Eval CLI options, tournament planning, analysis planning, output, and dispatch are concentrated in one module. | refactor | Extract command-owned modules while preserving the CLI contract. | complete |
+| Search safety, ordering, threat adapters, engine traversal, and tests remain concentrated in `search/mod.rs`. | refactor | Extract cohesive internal modules behind the current search API. | complete |
+| Tactical types, scan view, replies, lethal logic, shape recognition, evidence, and tests share one module. | refactor | Split semantic layers while preserving tactical behavior and re-exports. | complete |
 | Scan threat view remains reachable from diagnostics, shadow parity, and rolling fallbacks. | retain | Keep scan, rolling, and shadow modes; document scan as the correctness oracle and fallback. | confirmed |
 | Corridor proof is still a product/lab configuration and report metric. | retain | Keep corridor proof distinct from retired corridor-portal and leaf-extension experiments. | confirmed |
 | Parser tests enumerate unpublished experiment suffixes that are already intentionally unsupported. | fix | Retain generic unknown-suffix rejection instead of compatibility tests for each retired spelling. | complete |
@@ -40,17 +40,17 @@ pass.
 
 | Finding | Class | Decision | Status |
 |---|---|---|---|
-| Lab and analysis routes mix loading, navigation, tables, drilldowns, board rendering, and help content. | refactor | Split stable components while preserving `/lab/`, query parameters, JSON endpoints, and appearance. | planned |
-| Report presentation shares one oversized CSS module. | refactor | Split styles by report shell, tournament tables, and analysis proof boards. | planned |
-| Bot and analysis report publishing use duplicate wrapper scripts. | fix | Replace them with one declarative report publisher and preserve output paths. | planned |
+| Lab and analysis routes mix loading, navigation, tables, drilldowns, board rendering, and help content. | refactor | Split stable components while preserving `/lab/`, query parameters, JSON endpoints, and appearance. | complete |
+| Report presentation shares one oversized CSS module. | refactor | Give analysis proof frames their own style owner; retain coupled responsive table/shell rules together and remove retired selectors. | complete |
+| Bot and analysis report publishing use duplicate wrapper scripts. | fix | Replace them with one declarative report publisher and preserve output paths. | complete |
 | Browser smoke previously caused expensive Playwright installation in CI. | retain | Keep browser smoke as a documented local release gate; do not restore browser downloads to CI. | confirmed |
 
 ## Docs, Dependencies, And Operations
 
 | Finding | Class | Decision | Status |
 |---|---|---|---|
-| The parked process-story source bundle occupies `docs/working/`. | fix | Move it to an indexed archive without rewriting or publishing it. | planned |
-| Cargo patch updates and GitHub Actions major updates are open. | fix | Apply Cargo and Actions updates as separate commits after structural work. | planned |
+| The parked process-story source bundle occupies `docs/working/`. | fix | Move it to an indexed archive without rewriting or publishing it. | complete |
+| Cargo patch updates and GitHub Actions major updates are open. | fix | Apply Cargo and Actions updates as separate commits after structural work. | complete |
 | CI and deploy duplicate some setup but remain readable and serve different purposes. | retain | Do not introduce a shared composite action in this loop. | confirmed |
 | npm Dependabot cannot model the local Wasm package dependency safely. | retain | Keep npm updates manual and production audit clean. | confirmed |
 

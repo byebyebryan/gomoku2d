@@ -29,9 +29,9 @@ has a benchmark-only dev-dependency back to it.
 | Crate | Main files | Ownership |
 |---|---|---|
 | `gomoku-core` | `src/board.rs`, `src/rules.rs`, `src/renju.rs`, `src/replay.rs` | Board state, move legality, win detection, Renju forbidden checks, FEN, replay JSON |
-| `gomoku-bot` | `src/lib.rs`, `src/search/*`, `src/tactical/mod.rs`, `src/frontier.rs`, `src/corridor.rs` | Bot trait, search bot, tactical facts, rolling threat view, corridor/proof helpers |
+| `gomoku-bot` | `src/lib.rs`, `src/search/*`, `src/tactical/*`, `src/frontier.rs`, `src/corridor.rs` | Bot trait, search bot, tactical facts, rolling threat view, corridor/proof helpers |
 | `gomoku-analysis` | `src/lib.rs`, `src/replay.rs`, `src/trace.rs`, `src/annotations.rs`, `src/failure.rs`, `src/onset.rs` | Replay traceback, setup-corridor model, lethal onset, failure classification, per-frame annotations |
-| `gomoku-eval` | `src/cli.rs`, `src/tournament.rs`, `src/report/*`, `src/analysis_batch/*`, `src/scenario.rs` | CLI harness, tournaments, reports, corpora/scenario checks, curated artifacts |
+| `gomoku-eval` | `src/cli.rs`, `src/cli/*`, `src/tournament.rs`, `src/report/*`, `src/analysis_batch/*`, `src/scenario.rs` | CLI harness, tournaments, reports, corpora/scenario checks, curated artifacts |
 | `gomoku-lab-support` | `src/scenarios.rs` | Shared benchmark/tactical boards for tests, reports, and perf work |
 | `gomoku-cli` | `src/main.rs` | Native playable match runner and replay exporter |
 | `gomoku-wasm` | `src/lib.rs` | Wasm bridge for board, bot, threat snapshots, and replay analysis |
@@ -108,7 +108,12 @@ the lab parser contract.
 | `timing.rs` | CPU budget and timing helpers |
 | `metrics.rs` | Trace/metric counters |
 | `corridor_proof.rs` | Optional root candidate proof pass |
-| `mod.rs` | `SearchBot` orchestration and tests |
+| `engine.rs` | Iterative-deepening and root-search orchestration |
+| `ordering.rs` | Tactical move ordering and candidate ranking |
+| `safety.rs` | First-order tactical safety gates |
+| `threat_view.rs` | Scan/rolling threat-view adapters and parity boundaries |
+| `tests.rs` | Search behavior and configuration contracts |
+| `mod.rs` | Stable `SearchBot` facade and public re-exports |
 
 Current search model:
 
@@ -123,9 +128,18 @@ Current search model:
 
 ## Tactical And Threat APIs
 
-`gomoku-bot/src/tactical/mod.rs` is the shared tactical fact source. Search,
-analysis, wasm hints, and report rendering should consume it rather than each
-owning shape logic.
+`gomoku-bot/src/tactical/` is the shared tactical fact source. Search,
+analysis, wasm hints, and report data should consume it rather than each owning
+shape logic.
+
+| Module | Role |
+|---|---|
+| `policies.rs` | Public tactical policy and reply contracts |
+| `scan.rs` | Board-scan tactical view |
+| `threats.rs` | Immediate, imminent, counter, and lethal threat facts |
+| `shapes.rs` | Local shape recognition and evidence extraction |
+| `tests.rs` | Tactical semantic contracts |
+| `mod.rs` | Stable facade and re-exports |
 
 Key concepts:
 
@@ -164,9 +178,14 @@ modules provide the authoritative rule and threat facts.
 
 ## Eval And Report APIs
 
-`gomoku-eval` is both a library crate and a CLI app. The CLI dispatcher is in
-`src/cli.rs`; report and scenario logic live in modules so tests can call them
-without shelling out.
+`gomoku-eval` is both a library crate and a CLI app. `src/cli.rs` owns parsing
+and dispatch while `src/cli/` owns command-specific options, tournament,
+analysis, output, and test behavior. Report and scenario logic live in modules
+so tests can call them without shelling out.
+
+Tournament report aggregation and provenance live under `src/report/`.
+Analysis batch execution, publication projection, and proof-frame construction
+live under `src/analysis_batch/`. Both keep stable facades in `mod.rs`.
 
 Important commands:
 
@@ -226,11 +245,12 @@ condition or promoted to a curated fixture with a clear reason.
 |---|---|---|
 | Change move legality or Renju rules | `gomoku-core/src/renju.rs`, `board.rs` | Renju corpus, wasm threat snapshots, search legality metrics |
 | Add or tune a search config | `gomoku-bot/src/search/config.rs`, `lab_spec.rs` | web `bot_config.ts`, wasm `parse_bot_spec`, report labels |
-| Change tactical shape semantics | `gomoku-bot/src/tactical/mod.rs` | tactical corpus, corridor analysis, wasm hints, report annotations |
+| Change tactical shape semantics | `gomoku-bot/src/tactical/shapes.rs`, `threats.rs` | tactical corpus, corridor analysis, wasm hints, report annotations |
 | Change rolling threat facts | `gomoku-bot/src/frontier.rs` | scan parity tests, search perf benches, wasm threat snapshots |
 | Change replay-analysis logic | `gomoku-analysis/src/*` | analysis fixtures, report generation, wasm `ReplayAnalysisSession`, web overlays |
-| Change report presentation | `gomoku-eval/src/report/*`, `analysis_batch/*` | web report publishing scripts and Playwright report smoke |
-| Add a new CLI command | `gomoku-eval/src/cli.rs` | ops docs, tests in CLI module |
+| Change report schema or projection | `gomoku-eval/src/report/*`, `analysis_batch/*` | web report types, publishing scripts, Playwright report smoke |
+| Change report presentation | `gomoku-web/src/routes/lab-report/*` | report route tests and Playwright report smoke |
+| Add a new CLI command | `gomoku-eval/src/cli.rs`, `src/cli/*` | ops docs and CLI tests |
 | Change wasm payloads | `gomoku-wasm/src/lib.rs` | web bridge validators, TypeScript protocol types, wasm tests |
 
 ## Verification
