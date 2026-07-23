@@ -1,5 +1,7 @@
 # Process Story Leads
 
+Status: archived editorial shortlist; not an active publication task.
+
 Purpose: turn the private process-story extraction into candidate public
 stories. This is not public copy yet. Treat it as an editorial shortlist.
 
@@ -11,8 +13,8 @@ Source material:
 - `gomoku-bot-lab/outputs/process-story/quote_candidates.md`
 - `gomoku-bot-lab/outputs/process-story/evidence_events.jsonl`
 - `gomoku-bot-lab/outputs/process-story/git_chronology.json`
-- `docs/working/process_story_evidence_map.md`
-- `docs/working/process_story_evidence_cards.md`
+- `docs/archive/process_story/process_story_evidence_map.md`
+- `docs/archive/process_story/process_story_evidence_cards.md`
 
 ## Strongest Story Candidates
 
@@ -274,7 +276,7 @@ Risk:
 
 ## Next Curation Pass
 
-- Review `process_story_evidence_cards.md` as the active proof packet.
+- Review `process_story_evidence_cards.md` as the selected proof packet.
 - Capture the selected report, Renju, guide, lab, and product visuals from the
   evidence cards.
 - Decide which story belongs in README, which belongs on itch.io, and which

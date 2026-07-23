@@ -4,7 +4,7 @@ Purpose: curate a small proof packet for the external Gomoku2D story.
 Each card connects one public claim to private conversation arcs, current
 product/lab artifacts, and a concrete screenshot target.
 
-Status: selected evidence targets, not final public copy. Screenshot capture is
+Status: archived evidence targets, not final public copy. Screenshot capture is
 a follow-up pass.
 
 ## Editorial Defaults

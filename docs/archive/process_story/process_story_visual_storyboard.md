@@ -1,5 +1,7 @@
 # Process Story Visual Storyboard
 
+Status: archived capture plan; not an active publication task.
+
 Purpose: capture plan for the external making-of devlog. This is not a
 screenshot review log. It is the list of visuals needed to make the process
 story richer than text.
@@ -9,7 +11,7 @@ The selected proof targets live in
 storyboard for capture defaults, caption tone, and cut rules.
 
 Source of truth for screenshot QA remains
-[`UI Screenshot Review`](ui_screenshot_review.md).
+[`UI Screenshot Review`](../../working/ui_screenshot_review.md).
 
 ## Capture Defaults
 

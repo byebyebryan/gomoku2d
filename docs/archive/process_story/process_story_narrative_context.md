@@ -3,7 +3,7 @@
 Purpose: shape the private process-story material into a coherent narrative
 before turning transcripts, commits, reports, and screenshots into public copy.
 
-This is a working note, not publish-ready copy. The goal is to preserve the
+This is an archived note, not publish-ready copy. The goal is to preserve the
 personal lens and the product arc, then use the extracted conversation arcs as
 evidence.
 

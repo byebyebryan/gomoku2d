@@ -3,7 +3,7 @@
 Purpose: collect private evidence for a future devlog or public "making of"
 story without turning raw agent transcripts into public copy.
 
-This is a working note, not canonical product documentation. The generated
+This is archived source material, not canonical product documentation. The generated
 artifacts live under ignored output paths and should be treated as source
 material for curated writing.
 
@@ -21,8 +21,8 @@ planning in
 The current process-framing note is
 [`Process Story Narrative Context`](process_story_narrative_context.md). The
 current evidence map is
-[`Process Story Evidence Map`](process_story_evidence_map.md). The active
-curated proof packet for the external story is
+[`Process Story Evidence Map`](process_story_evidence_map.md). The selected
+proof packet for the external story is
 [`Process Story Evidence Cards`](process_story_evidence_cards.md).
 
 ## Current Extraction
@@ -53,15 +53,15 @@ The default output path is ignored by git. The extractor refuses to write raw
 snippets into any trackable repo path because these outputs contain private
 transcript excerpts.
 
-Curated working notes:
+Curated archived notes:
 
-- `docs/working/process_story_narrative_context.md`
-- `docs/working/process_story_leads.md`
-- `docs/working/process_story_drafts.md`
-- `docs/working/process_story_devlog_kit.md`
-- `docs/working/process_story_visual_storyboard.md`
-- `docs/working/process_story_evidence_map.md`
-- `docs/working/process_story_evidence_cards.md`
+- `docs/archive/process_story/process_story_narrative_context.md`
+- `docs/archive/process_story/process_story_leads.md`
+- `docs/archive/process_story/process_story_drafts.md`
+- `docs/archive/process_story/process_story_devlog_kit.md`
+- `docs/archive/process_story/process_story_visual_storyboard.md`
+- `docs/archive/process_story/process_story_evidence_map.md`
+- `docs/archive/process_story/process_story_evidence_cards.md`
 
 Latest first pass:
 
@@ -127,7 +127,7 @@ assistant rationale and outcome hints.
 - Use [`Process Story Evidence Map`](process_story_evidence_map.md) to connect
   each chosen claim to arc IDs, commits, reports, and public surfaces.
 - Use [`Process Story Evidence Cards`](process_story_evidence_cards.md) as the
-  active proof packet before writing final public copy.
+  selected proof packet before writing final public copy.
 - Use [`Process Story Leads`](process_story_leads.md) as the editorial shortlist.
 - Refine [`Process Story Devlog Kit`](process_story_devlog_kit.md) into the
   chosen external format.

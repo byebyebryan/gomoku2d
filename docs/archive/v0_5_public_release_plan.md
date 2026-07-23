@@ -48,8 +48,8 @@ For developers and dev-log readers, the secondary hook is the production
 experiment: one developer using agents to cover more of a real product loop
 without dropping the quality bar.
 
-The source material for that secondary hook is tracked in
-[`Process Story Mining`](../working/process_story.md). Keep the raw extraction private;
+The source material for that secondary hook is archived in
+[`Process Story Mining`](process_story/). Keep the raw extraction private;
 use it to curate specific moments, release checkpoints, and hard lessons for
 future devlog or public-release copy.
 
