@@ -45,6 +45,9 @@ The root [`README`](../README.md) is the public repo landing page.
 
 ## Internal Working Notes
 
+- [`v0.5.4 Reconciliation Closeout`](working/v0_5_4_reconciliation_plan.md)
+  owns the active repository, test, docs, tooling, and product-polish pass
+  before `v0.6` planning.
 - [`Process Story Mining`](working/process_story.md) preserves parked private
   extraction and curation for a possible future devlog. It is not a release
   dependency, canonical product documentation, or public-ready source.
