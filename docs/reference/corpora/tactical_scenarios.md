@@ -10,7 +10,7 @@ tournament replacement and should not be used alone for bot-strength claims.
 
 ```sh
 cd gomoku-bot-lab
-cargo run -p gomoku-eval -- tactical-scenarios
+cargo run --release -p gomoku-eval -- tactical-scenarios
 ```
 
 Source of truth:
@@ -41,7 +41,7 @@ behavior.
 Lethal state classification is separate. Use:
 
 ```sh
-cargo run -p gomoku-eval -- lethal-scenarios
+cargo run --release -p gomoku-eval -- lethal-scenarios
 ```
 
 ## Active Case Index

@@ -10,8 +10,8 @@ release or after core/rules/search work, run the full relevant lane.
 | Rust formatting | `(cd gomoku-bot-lab && cargo fmt --all --check)` |
 | Rust lint | `(cd gomoku-bot-lab && cargo clippy --workspace --all-targets -- -D warnings)` |
 | Rust workspace tests | `(cd gomoku-bot-lab && cargo test --workspace)` |
-| Tactical scenarios | `(cd gomoku-bot-lab && cargo run -p gomoku-eval -- tactical-scenarios)` |
-| Lethal scenarios | `(cd gomoku-bot-lab && cargo run -p gomoku-eval -- lethal-scenarios)` |
+| Tactical scenarios | `(cd gomoku-bot-lab && cargo run --release -p gomoku-eval -- tactical-scenarios)` |
+| Lethal scenarios | `(cd gomoku-bot-lab && cargo run --release -p gomoku-eval -- lethal-scenarios)` |
 | Web typecheck | `(cd gomoku-web && npm run typecheck)` |
 | Web unit tests | `(cd gomoku-web && npm test)` |
 | Firestore rules | `(cd gomoku-web && npm run test:rules)` |

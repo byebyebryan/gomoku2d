@@ -69,8 +69,8 @@ cargo build --release --workspace
 Focused diagnostics:
 
 ```sh
-cargo run -p gomoku-eval -- tactical-scenarios
-cargo run -p gomoku-eval -- lethal-scenarios
+cargo run --release -p gomoku-eval -- tactical-scenarios
+cargo run --release -p gomoku-eval -- lethal-scenarios
 cargo run -p gomoku-eval -- renju-rules
 ```
 
