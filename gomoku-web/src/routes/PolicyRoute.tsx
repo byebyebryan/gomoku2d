@@ -10,7 +10,10 @@ interface PolicyRouteProps {
   kind: PolicyPageKind;
 }
 
-const UPDATED = "April 29, 2026";
+const UPDATED: Record<PolicyPageKind, string> = {
+  privacy: "July 22, 2026",
+  terms: "July 22, 2026",
+};
 
 export function PolicyRoute({ kind }: PolicyRouteProps) {
   const isPrivacy = kind === "privacy";
@@ -26,7 +29,7 @@ export function PolicyRoute({ kind }: PolicyRouteProps) {
             <div>
               <p className="uiPageEyebrow">Gomoku2D policy</p>
               <h1 className={styles.title}>{title}</h1>
-              <p className={styles.updated}>Last updated: {UPDATED}</p>
+              <p className={styles.updated}>Last updated: {UPDATED[kind]}</p>
             </div>
             <nav className={styles.links} aria-label={`${title} links`}>
               <Link className="uiAction uiActionNeutral" to="/">
@@ -72,11 +75,12 @@ function PrivacyContent() {
         <section className={styles.section}>
           <h2>Information stored locally</h2>
           <p>
-            When you play as a guest, Gomoku2D stores your profile name, preferred
-            rule setting, and local match history in your browser&apos;s local
-            storage. This stays on your device unless you clear site data, reset
-            your local profile, or sign in, which can sync eligible local history
-            to your private cloud history.
+            Gomoku2D stores your local profile, game and bot settings, board-hint
+            and touch preferences, match history, and cached replay analyses in
+            your browser&apos;s local storage. When you sign in, the browser also
+            keeps a local cache and pending sync queue for your private cloud
+            history. This data stays on the device unless you reset the profile or
+            clear the site&apos;s browser data.
           </p>
         </section>
 
@@ -85,11 +89,13 @@ function PrivacyContent() {
           <p>
             If you sign in with Google, Gomoku2D may store a private cloud profile
             in Firebase/Firestore. That profile can include your Google account
-            identifier, profile name, avatar URL, provider IDs, preferred rule
-            setting, and login/update timestamps. The app-owned profile does not
-            copy your email address into Firestore. Gomoku2D may also store private
-            match history, including game results, rule variants, players, moves,
-            timestamps, and replay metadata.
+            identifier, profile name, avatar URL, provider IDs, saved game and bot
+            settings, board-hint and touch preferences, and login/update
+            timestamps. The app-owned profile does not copy your email address
+            into Firestore. Gomoku2D may also store private match history,
+            including game results, rule variants, players, moves, timestamps, and
+            replay metadata. Replay-analysis results are cached locally and are
+            not synced to your cloud profile.
           </p>
         </section>
 
@@ -122,14 +128,15 @@ function PrivacyContent() {
           <h2>Data deletion</h2>
           <p>
             Use Reset Profile from the Profile screen to clear the current profile.
-            Signed out, it clears local profile and match-history data on this
-            device. Signed in, it resets your cloud profile and history, then clears
-            this device&apos;s local cache.
+            Signed out, it clears local settings, match history, and cached replay
+            analyses on this device. Signed in, it resets your cloud profile and
+            history, then clears the corresponding local profile data and caches
+            on this device.
           </p>
           <p>
             Signed-in users can choose Delete Cloud inside Reset Profile to delete
-            the Gomoku2D cloud profile and sign out. Browser-local data on a device
-            remains local unless you reset it or clear site data manually.
+            the Gomoku2D cloud profile and history, then sign out. That action
+            preserves the local profile, games, and analyses on this device.
           </p>
         </section>
 
@@ -149,9 +156,8 @@ function TermsContent() {
   return (
     <>
       <p className={styles.summary}>
-        Gomoku2D is an experimental browser Gomoku game. You can play locally
-        without an account, or sign in for cloud profile and private history
-        features.
+        Gomoku2D is a browser Gomoku/Renju game. You can play locally without an
+        account, or sign in for cloud profile and private history features.
       </p>
 
       <div className={styles.sections}>

@@ -126,6 +126,19 @@ export function replayAnalysisCacheKey(match: SavedMatchV2, options: ReplayAnaly
   });
 }
 
+export function clearReplayAnalysisCache(storage?: ReplayAnalysisCacheStorage): void {
+  const targetStorage = storageOrNull(storage);
+  if (!targetStorage) {
+    return;
+  }
+
+  try {
+    targetStorage.removeItem(CACHE_STORAGE_KEY);
+  } catch {
+    // localStorage can be unavailable; clearing a best-effort cache must not block profile reset.
+  }
+}
+
 export function readReplayAnalysisCache(
   match: SavedMatchV2,
   options: ReplayAnalysisOptions,

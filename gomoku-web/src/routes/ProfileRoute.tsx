@@ -24,6 +24,7 @@ import { localProfileStore, type LocalProfileMatchHistory } from "../profile/loc
 import { createDefaultProfileSettings } from "../profile/profile_settings";
 import { useActiveHistory } from "../profile/use_active_history";
 import { replayPlayerName, variantLabel } from "../replay/local_replay";
+import { clearReplayAnalysisCache } from "../replay/replay_analysis_cache";
 import { Icon } from "../ui/Icon";
 
 import styles from "./ProfileRoute.module.css";
@@ -434,9 +435,16 @@ export function ProfileRoute() {
   const confirmationText = confirmingProfileAction === "delete"
     ? "Delete cloud profile, then sign out? Local profile stays on this device."
     : signedIn
-      ? "Reset cloud profile and clear both cloud and local match history?"
-      : "Reset local profile and clear local match history?";
+      ? "Reset cloud and local profile data, including games and replay analyses?"
+      : "Reset local profile data, including games and replay analyses?";
   const confirmationButtonText = confirmingProfileAction === "delete" ? "Delete" : "Reset";
+
+  function resetLocalProfileData(): void {
+    const localStore = localProfileStore.getState();
+    localStore.resetLocalProfile();
+    clearReplayAnalysisCache();
+    localStore.ensureLocalProfile();
+  }
 
   async function resetSignedInProfile(): Promise<void> {
     if (cloudAuth.status !== "signed_in" || !cloudAuth.user) {
@@ -449,10 +457,7 @@ export function ProfileRoute() {
     await cloudHistoryStore.getState().clearForUser(user);
     cloudHistoryStore.getState().resetUserCache(user.uid);
     cloudPromotionStore.getState().reset();
-
-    const localStore = localProfileStore.getState();
-    localStore.resetLocalProfile();
-    localStore.ensureLocalProfile();
+    resetLocalProfileData();
   }
 
   async function deleteSignedInProfile(): Promise<void> {
@@ -481,9 +486,7 @@ export function ProfileRoute() {
       } else if (signedIn) {
         await resetSignedInProfile();
       } else {
-        const store = localProfileStore.getState();
-        store.resetLocalProfile();
-        store.ensureLocalProfile();
+        resetLocalProfileData();
       }
       setConfirmingProfileAction(null);
     } catch {
