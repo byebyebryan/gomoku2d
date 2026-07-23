@@ -1,22 +1,12 @@
 # gomoku-web
 
-The browser product surface for Gomoku2D.
+The browser app for Gomoku2D. React owns application state and DOM surfaces,
+Phaser owns the board canvas, and Rust/Wasm supplies rules, bot moves, tactical
+facts, and replay analysis.
 
-React owns routes, state, copy, settings, profile/history, replay UI, reports,
-and static learning pages. Phaser owns the board canvas. Rust/Wasm owns rules,
-bot moves, tactical snapshots, and replay-analysis facts.
+**Live app:** https://gomoku2d.byebyebryan.com/
 
-**Play:** https://gomoku2d.byebyebryan.com/
-
-**Rules:** https://gomoku2d.byebyebryan.com/rules/
-
-**Guide:** https://gomoku2d.byebyebryan.com/guide/
-
-**Lab:** https://gomoku2d.byebyebryan.com/lab/
-
-**Visuals:** https://gomoku2d.byebyebryan.com/visuals/
-
-## What This Package Owns
+## Responsibilities
 
 - Home, local match, replay, profile, settings, rules, guide, lab, visuals,
   privacy, and terms routes.
@@ -32,9 +22,12 @@ bot moves, tactical snapshots, and replay-analysis facts.
 - The `/visuals/` guide generated from source icons, sprites, fonts, and design
   tokens.
 
-The UI should present game facts, not invent them. Rule legality, tactical
-semantics, bot choice, and replay-analysis annotations come from the Rust side
-through the wasm bridge.
+## Core Boundary
+
+The UI presents game facts; it does not invent them. Rule legality, tactical
+semantics, bot decisions, and replay-analysis annotations come from Rust
+through the wasm bridge. TypeScript validates those payloads and turns them
+into product state, copy, and visuals.
 
 ## Runtime Shape
 
@@ -142,7 +135,7 @@ Production deploys to GitHub Pages when a `v*` tag is pushed. Normal commits to
 `main` run CI but do not publish the site. The deploy workflow builds wasm,
 sets `GOMOKU_BASE_PATH=/` for the custom domain, and publishes `dist/`.
 
-## Deeper References
+## Reference Docs
 
 - [`../docs/reference/app/code_overview.md`](../docs/reference/app/code_overview.md)
 - [`../docs/reference/app/architecture.md`](../docs/reference/app/architecture.md)

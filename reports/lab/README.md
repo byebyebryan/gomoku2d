@@ -22,6 +22,6 @@ command in [`Tournament Eval`](../../docs/reference/ops/tournament.md).
 
 ## Lab Comparisons
 
-Use `../reports/lab/bot-report.json` as the current anchor source for focused
-gauntlets and comparisons. See
+Use [`bot-report.json`](bot-report.json) as the current anchor source for
+focused gauntlets and comparisons. See
 [`Tournament Eval`](../../docs/reference/ops/tournament.md) for examples.

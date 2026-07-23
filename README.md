@@ -2,10 +2,10 @@
 
 *An old favorite, built properly.*
 
-Gomoku2D is a local-first browser Gomoku/Renju game built around a simple loop:
-play a match, then inspect what happened. It pairs a retro board with a
-Rust/WebAssembly rules core, configurable bots, tactical hints, and Replay
-Analysis that shows where a loss became forced.
+Gomoku2D is a local-first browser Gomoku/Renju game built around one loop: play
+a match, then work out why it ended that way. A retro board sits on top of a
+Rust/WebAssembly rules core, configurable search bots, tactical hints, and
+Replay Analysis that shows where a loss became forced.
 
 **Live site:** https://gomoku2d.byebyebryan.com/
 
@@ -21,9 +21,9 @@ Analysis that shows where a loss became forced.
 - Play on desktop or portrait mobile with dedicated touch controls.
 - Keep history locally, or sign in with Google for private cloud continuity.
 
-The target is not the strongest possible Gomoku engine. It is a competent,
-inspectable opponent whose decisions connect to the same tactical language the
-rest of the product uses.
+The aim is not the strongest possible Gomoku engine. It is a competent,
+inspectable opponent whose decisions connect to the same tactical language used
+by hints, replays, and the lab.
 
 ## Analyze
 
@@ -58,12 +58,13 @@ source sheets, design tokens, and the layering rules used on the board.
 
 ## How It Was Built
 
-Gomoku2D is also a one-developer, agent-assisted production experiment. Agents
-expanded what was practical across implementation, analysis, review, docs,
-reports, and release work. The human still owns the parts that define the
-project: taste, scope, domain reasoning, and technical judgment.
+Gomoku2D began as an unfinished project from nearly a decade ago and returned
+as a one-developer, agent-assisted production experiment. Agents made its
+breadth practical across implementation, analysis, review, docs, reports, and
+release work. The human still owns the decisions that define the project:
+taste, scope, domain reasoning, and technical judgment.
 
-## Repository Map
+## Inside The Repository
 
 ```text
 gomoku2d/
@@ -74,13 +75,13 @@ gomoku2d/
 └── scripts/            release and process-story helpers
 ```
 
-The browser game lives in [`gomoku-web/`](gomoku-web/). The Rust rules, bots,
-analyzer, and evaluation harness live in
-[`gomoku-bot-lab/`](gomoku-bot-lab/). Player-facing explanations are published
-inside the app; technical references start at
-[`docs/README.md`](docs/README.md).
+Start in [`gomoku-web/`](gomoku-web/) for product UI, browser state, board
+rendering, and cloud continuity. Start in
+[`gomoku-bot-lab/`](gomoku-bot-lab/) for rules, bots, tactical facts, replay
+analysis, evaluation, and the wasm bridge. Shared game facts originate in Rust;
+the web app presents them rather than maintaining a second rules model.
 
-## Explore The Project
+## Project References
 
 - [`gomoku-web/README.md`](gomoku-web/README.md): web app architecture, local
   development, build, and deploy notes.
@@ -91,3 +92,4 @@ inside the app; technical references start at
 - [`docs/reference/product/roadmap.md`](docs/reference/product/roadmap.md):
   current sequencing.
 - [`CHANGELOG.md`](CHANGELOG.md): release history and intent.
+- [`LICENSE`](LICENSE): MIT license.
