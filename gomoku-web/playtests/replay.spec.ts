@@ -28,7 +28,7 @@ async function openFinishedReplay(page: Page) {
 
   await page.goto("/profile");
   await expect(page.getByText("vs Normal Bot")).toBeVisible();
-  await page.getByRole("button", { name: "Replay" }).first().click();
+  await page.getByRole("button", { name: "Inspect" }).first().click();
   await expect(page.getByRole("heading", { name: "Replay" })).toBeVisible();
   await expect(page).toHaveURL(/\/replay\/fixture-replay-match$/);
 }
