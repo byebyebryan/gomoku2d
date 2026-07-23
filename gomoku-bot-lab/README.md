@@ -2,27 +2,26 @@
 
 The lab under the board.
 
-This Rust workspace owns the game rules, Renju legality, bot search, tactical
-facts, replay-analysis model, tournament/eval harness, native CLI, and
-WebAssembly bridge consumed by `gomoku-web`.
+This Rust workspace owns game rules, Renju legality, bot search, tactical facts,
+replay analysis, native evaluation, the CLI, and the WebAssembly bridge consumed
+by `gomoku-web`.
 
 The browser app is the product surface. The lab is where game understanding is
 made explicit before it is shipped to the browser.
 
 ## Why It Exists
 
-Gomoku2D is not only a board with a bot. The distinctive features come from
-being able to run positions outside the live browser game:
+Gomoku2D is not only a board with a bot. Its distinctive features depend on
+being able to run and compare positions outside a live browser game:
 
 - configurable search bots backed by native tournament results;
 - tactical hints from the same threat model used by search and analysis;
 - Replay Analysis that walks backward through lethal onset, setup corridor, and
   last escape;
-- curated Lab reports that make bot behavior and analyzer output inspectable;
-- future puzzles or lessons generated from real replay positions.
+- curated Lab reports that make bot behavior and analyzer output inspectable.
 
-That is why rules/search/analysis live here first and cross into the web app
-through wasm only after the contract is stable enough to expose.
+Rules, search, and analysis therefore live here and cross into the web app
+through explicit wasm contracts.
 
 ## Workspace Map
 
@@ -40,7 +39,7 @@ Dependency rule: `gomoku-core` owns rules and replay foundations. Consumers
 should depend on it rather than reimplementing board, legality, win, or replay
 logic.
 
-## Current Model
+## System Model
 
 - `SearchBot` uses negamax with alpha-beta pruning, iterative deepening,
   transposition table, tactical ordering, rolling threat facts, pattern
@@ -136,7 +135,7 @@ or the replay analysis protocol files.
 4. Add wasm/product exposure only when the lab config has a reason to ship.
 5. Refresh curated reports if anchor behavior changes.
 
-## Deeper References
+## Reference Docs
 
 - [`../docs/reference/lab/code_overview.md`](../docs/reference/lab/code_overview.md)
 - [`../docs/reference/lab/search_bot.md`](../docs/reference/lab/search_bot.md)

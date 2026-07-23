@@ -1,32 +1,32 @@
 # Docs
 
-Gomoku2D keeps docs in the repo so product decisions, implementation contracts,
-runbooks, and release history move with the code. Active docs should describe
-current intent or current behavior. Historical notes belong in
-[`archive/`](archive/).
+Gomoku2D keeps product decisions, implementation contracts, runbooks, and
+release history beside the code. Use this page to enter the docs by area rather
+than browsing the tree. Active docs describe current intent or behavior;
+historical context belongs in [`archive/`](archive/).
 
-## Start Here
+## Choose A Path
 
-| Question | Read |
-|---|---|
-| What is the project trying to be? | [`Product Strategy`](reference/product/product_strategy.md) |
-| What is being built next? | [`Roadmap`](reference/product/roadmap.md) |
-| How is the web app structured? | [`Architecture`](reference/app/architecture.md), [`Web Code Overview`](reference/app/code_overview.md) |
-| How does the board/app UX work? | [`App Design`](reference/app/app_design.md), [`UI Design`](reference/app/ui_design.md), [`Game Visual`](reference/app/game_visual.md) |
-| How do the Rust rules, bot, and analyzer fit together? | [`Bot Lab Code Overview`](reference/lab/code_overview.md) |
-| How does search/replay analysis work? | [`Search Bot`](reference/lab/search_bot.md), [`Tactical Shapes`](reference/lab/tactical_shapes.md), [`Lethal Threats`](reference/lab/lethal_threats.md), [`Corridor Search`](reference/lab/corridor_search.md), [`Game Analysis`](reference/lab/game_analysis.md) |
-| How does Renju legality work? | [`Renju Rules`](reference/lab/renju_rules.md), [`Renju Corpus`](reference/corpora/renju_corpus.md) |
-| How do I test, release, or refresh reports? | [`Testing`](reference/ops/testing.md), [`Tournament Eval`](reference/ops/tournament.md), [`Release`](reference/ops/release.md) |
+| Area | Start with | Continue with |
+|---|---|---|
+| Product direction | [`Product Strategy`](reference/product/product_strategy.md) | [`Roadmap`](reference/product/roadmap.md) |
+| Browser app | [`Web Code Overview`](reference/app/code_overview.md) | [`Architecture`](reference/app/architecture.md), [`App Design`](reference/app/app_design.md), [`UI Design`](reference/app/ui_design.md) |
+| Board visuals | [`Game Visual`](reference/app/game_visual.md) | [`Asset Sources`](../gomoku-web/assets/README.md) |
+| Rust rules, bots, and analyzer | [`Bot Lab Code Overview`](reference/lab/code_overview.md) | [`Search Bot`](reference/lab/search_bot.md), [`Game Analysis`](reference/lab/game_analysis.md) |
+| Tactical model | [`Tactical Shapes`](reference/lab/tactical_shapes.md) | [`Lethal Threats`](reference/lab/lethal_threats.md), [`Corridor Search`](reference/lab/corridor_search.md) |
+| Renju legality | [`Renju Rules`](reference/lab/renju_rules.md) | [`Renju Corpus`](reference/corpora/renju_corpus.md) |
+| Testing and releases | [`Testing`](reference/ops/testing.md) | [`Tournament Eval`](reference/ops/tournament.md), [`Release`](reference/ops/release.md) |
 
 ## Public Surfaces
 
-Player-facing explanations live in the web app, not under `docs/public`:
+Player-facing explanations live in the web app rather than a second
+documentation tree:
 
 - `/rules/` — basic Gomoku and Renju rules
 - `/guide/` — how to think about threats, combos, and forced sequences
 - `/lab/` — bot tournament and replay-analysis reports
 - `/visuals/` — visual guide and asset language
-- `/privacy/`, `/terms/`, and Source — project metadata/legal surfaces
+- `/privacy/`, `/terms/`, and Source — project and legal surfaces
 
 The root [`README`](../README.md) is the public repo landing page.
 
@@ -56,7 +56,7 @@ canonical product documentation.
 
 ## Maintenance Rule
 
-Active reference docs should be concise and current. Do not keep dated lab logs,
-old experiment tables, generated board dumps, or release diaries in canonical
-docs. Move that material to archive, generated outputs, or working notes with a
-clear owner.
+Reference docs are current contracts. Working notes are temporary and need an
+owner. Archive docs preserve context but are not authoritative. Dated lab logs,
+old experiment tables, generated board dumps, and release diaries do not belong
+in canonical references.
