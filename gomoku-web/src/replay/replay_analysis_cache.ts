@@ -54,13 +54,17 @@ function isReplayAnalysisCacheRecord(value: unknown): value is ReplayAnalysisCac
     && isRecord(value.result.annotationsByPly);
 }
 
-function loadCacheDocument(storage: ReplayAnalysisCacheStorage): ReplayAnalysisCacheDocument {
-  const raw = storage.getItem(CACHE_STORAGE_KEY);
-  if (!raw) {
-    return { records: [], version: CACHE_VERSION };
-  }
+function emptyCacheDocument(): ReplayAnalysisCacheDocument {
+  return { records: [], version: CACHE_VERSION };
+}
 
+function loadCacheDocument(storage: ReplayAnalysisCacheStorage): ReplayAnalysisCacheDocument {
   try {
+    const raw = storage.getItem(CACHE_STORAGE_KEY);
+    if (!raw) {
+      return emptyCacheDocument();
+    }
+
     const parsed = JSON.parse(raw) as unknown;
     if (!isRecord(parsed) || parsed.version !== CACHE_VERSION || !Array.isArray(parsed.records)) {
       throw new Error("invalid replay analysis cache document");
@@ -71,8 +75,12 @@ function loadCacheDocument(storage: ReplayAnalysisCacheStorage): ReplayAnalysisC
       version: CACHE_VERSION,
     };
   } catch {
-    storage.removeItem(CACHE_STORAGE_KEY);
-    return { records: [], version: CACHE_VERSION };
+    try {
+      storage.removeItem(CACHE_STORAGE_KEY);
+    } catch {
+      // Storage access can be blocked entirely; cache reads must remain best-effort.
+    }
+    return emptyCacheDocument();
   }
 }
 
