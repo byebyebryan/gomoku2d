@@ -78,7 +78,7 @@ const searchTerms = [
 const analysisTerms = [
   {
     title: "Failure",
-    body: "The losing-side failure mode: missed response, missed lethal prevention, missed escape, unclear, or error.",
+    body: "What the losing side missed: a response, lethal prevention, or an escape. Unresolved games are labeled unclear or error.",
   },
   {
     title: "Lethal Onset",
@@ -90,13 +90,13 @@ const analysisTerms = [
   },
   {
     title: "Frames",
-    body: "Open a game to read frames backward from the win. Boxes are candidate replies or threat evidence; letters are proof outcomes.",
+    body: "Open a game and read backward from the win. Boxes mark candidate replies or threat evidence; letters mark proof outcomes.",
   },
 ];
 
 export function botReportIntro(view: BotReportView): string {
   if (view === "search") {
-    return "Per-move search cost profile. Width and budget hits show how each config spends compute.";
+    return "Per-move search cost profile. The time split shows where each config spends its compute budget.";
   }
   return "Round-robin bot results. Score is the primary outcome; shuffled Elo is a report-local stability check.";
 }

@@ -307,7 +307,7 @@ function cloudCopyText({
       return "Cloud profile unavailable.";
     }
 
-    return "Sign in for cloud history.";
+    return "Sign in to sync this profile and its history.";
   }
 
   if (promotionStatus === "promoting") {
@@ -321,10 +321,10 @@ function cloudCopyText({
   if (promotionStatus === "complete") {
     return localMatchesSynced > 0
       ? "Local history synced to cloud."
-      : "Cloud history enabled.";
+      : "Cloud sync is on.";
   }
 
-  return "Cloud history enabled.";
+  return "Cloud sync is on.";
 }
 
 function cloudTitleText({
@@ -433,10 +433,10 @@ export function ProfileRoute() {
   const signedIn = cloudAuth.status === "signed_in" && Boolean(cloudAuth.user);
   const profileActionDisabled = profileActionBusy || (signedIn && cloudProfile.status === "loading");
   const confirmationText = confirmingProfileAction === "delete"
-    ? "Delete cloud profile, then sign out? Local profile stays on this device."
+    ? "Delete your cloud profile and history, then sign out? Local data stays on this device."
     : signedIn
-      ? "Reset cloud and local profile data, including games and replay analyses?"
-      : "Reset local profile data, including games and replay analyses?";
+      ? "Reset profile data here and in the cloud? This clears settings, games, and local replay analyses."
+      : "Reset this profile? This clears settings, games, and replay analyses.";
   const confirmationButtonText = confirmingProfileAction === "delete" ? "Delete" : "Reset";
 
   function resetLocalProfileData(): void {

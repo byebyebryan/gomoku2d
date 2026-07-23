@@ -94,7 +94,7 @@ describe("SettingsRoute", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /renju/i }));
 
-    expect(await screen.findByText(/saved settings apply next game/i)).toBeInTheDocument();
+    expect(await screen.findByText(/changes apply next game/i)).toBeInTheDocument();
     expect(screen.queryByText(/^Current settings$/)).not.toBeInTheDocument();
     expect(screen.queryByRole("group", { name: /renju normal bot/i })).not.toBeInTheDocument();
   });
@@ -184,7 +184,7 @@ describe("SettingsRoute", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /renju/i }));
 
-    expect(screen.getByText(/saved settings apply next game/i)).toBeInTheDocument();
+    expect(screen.getByText(/changes apply next game/i)).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /back to game/i })[0]).toHaveAttribute("href", "/match/local");
 
     fireEvent.click(screen.getByRole("button", { name: /start new game/i }));

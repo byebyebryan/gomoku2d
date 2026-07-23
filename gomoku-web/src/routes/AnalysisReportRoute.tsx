@@ -43,7 +43,8 @@ export function AnalysisReportContent({
         <div>
           <h2>Results</h2>
           <p className={styles.reportNote}>
-            Replay analyzer sample. Corridor search walks backward from the win to lethal onset, setup corridor, and last escape.
+            The analyzer reads each game backward: win, lethal onset, setup
+            corridor, last escape.
           </p>
         </div>
       </div>

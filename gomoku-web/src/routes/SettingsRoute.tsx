@@ -213,9 +213,9 @@ export function SettingsRoute() {
 
             {activeSetupDiffers ? (
               <div className={styles.applyPanel}>
-                <p className={styles.applyTitle}>Saved settings apply next game.</p>
+                <p className={styles.applyTitle}>Changes apply next game.</p>
                 <p className={styles.applyText}>
-                  Keep playing the current game, or start fresh with this setup now.
+                  Keep playing this game, or start fresh with the new setup.
                 </p>
                 <div className={styles.applyActions}>
                   <Link className="uiAction uiActionPrimary" to="/match/local">
@@ -245,7 +245,7 @@ export function SettingsRoute() {
             <div className={styles.labRow}>
               <div className={styles.labCopy}>
                 <p className={styles.labLabel}>Rule</p>
-                <p className={styles.labHint}>Ruleset for new games.</p>
+                <p className={styles.labHint}>Rules for the next game.</p>
               </div>
               <div className={styles.segmentGrid}>
                 {(["freestyle", "renju"] as const).map((variant) => (
@@ -273,7 +273,7 @@ export function SettingsRoute() {
                 <div className={styles.labRow}>
                   <div className={styles.labCopy}>
                     <p className={styles.labLabel}>Touch control</p>
-                    <p className={styles.labHint}>How mobile taps move the board cursor.</p>
+                    <p className={styles.labHint}>How taps and drags move the board cursor.</p>
                   </div>
                   <div className={styles.segmentGrid}>
                     <button
@@ -304,21 +304,21 @@ export function SettingsRoute() {
             </div>
             <div className={styles.labRows}>
               <HintModeRow
-                hint="One-move wins and urgent blocks."
+                hint="One-move wins and must-block threats."
                 label="Immediate"
                 onSelect={(immediate) => updateBoardHints({ immediate })}
                 options={IMMEDIATE_HINT_OPTIONS}
                 selected={settings.boardHints.immediate}
               />
               <HintModeRow
-                hint="Open/broken-three replies and counter threats."
+                hint="Forcing threes and their counter threats."
                 label="Imminent"
                 onSelect={(imminent) => updateBoardHints({ imminent })}
                 options={IMMINENT_HINT_OPTIONS}
                 selected={settings.boardHints.imminent}
               />
               <HintModeRow
-                hint="Source stones behind visible threat hints."
+                hint="Show the stones that create each threat."
                 label="Evidence"
                 onSelect={(evidence) => updateBoardHints({ evidence })}
                 options={EVIDENCE_HINT_OPTIONS}
@@ -421,7 +421,7 @@ export function SettingsRoute() {
               <div className={styles.labRow}>
                 <div className={styles.labCopy}>
                   <p className={styles.labLabel}>Scoring</p>
-                  <p className={styles.labHint}>Static evaluation used at search leaves.</p>
+                  <p className={styles.labHint}>How the bot judges a position at the search limit.</p>
                 </div>
                 <div className={styles.segmentGrid}>
                   <button
@@ -444,7 +444,7 @@ export function SettingsRoute() {
               <div className={styles.labRow}>
                 <div className={styles.labCopy}>
                   <p className={styles.labLabel}>Extra pass</p>
-                  <p className={styles.labHint}>Optional forced-line proof after search.</p>
+                  <p className={styles.labHint}>Optional forced-line proof after the main search.</p>
                 </div>
                 <div className={styles.segmentGrid}>
                   <button

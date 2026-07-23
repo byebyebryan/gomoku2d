@@ -79,7 +79,7 @@ export function AssetPreviewRoute() {
         <header className={styles.hero}>
           <div className={styles.headerRow}>
             <div>
-              <p className="uiPageEyebrow">Gomoku2D source</p>
+              <p className="uiPageEyebrow">Visual system</p>
               <h1 className={styles.title}>Visuals</h1>
               {state.status === "loaded" ? (
                 <p className={styles.summary}>{state.manifest.summary}</p>
@@ -151,9 +151,8 @@ function GuidePanel({ manifest }: { manifest: AssetManifest }) {
         <div>
           <h2>Style Guide</h2>
           <p className={styles.note}>
-            A compact reference for Gomoku2D's visual language: dark cabinet shell,
-            tactile controls, semantic colors, and board-space cues that stay below the
-            stones.
+            A dark cabinet shell, tactile controls, semantic color, and board cues
+            designed to stay out of the stones&apos; way.
           </p>
         </div>
         <div className={styles.visualStats} aria-label="Visual source summary">

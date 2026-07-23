@@ -73,6 +73,7 @@ pass.
 | SPA navigation can leave stale document titles on Home, Match, Settings, and Profile. | fix | Give every route one shared title contract and cover the product flow in browser smoke. | complete |
 | Lab and Visuals use document links for internal navigation and reload the application. | fix | Use router links while preserving routes and report/manifest state contracts. | complete |
 | Profile reset omitted cached replay analyses, while the privacy page did not disclose all persisted settings and caches. | fix | Clear replay analyses with local profile data, preserve them for cloud-only deletion, and align the privacy and confirmation copy with actual storage behavior. | complete |
+| Supporting copy drifts between player language, implementation notes, and generic tutorial prose. | fix | Preserve the chosen product vocabulary and home voice; rewrite only connective copy across Settings, Profile, Rules, Guide, Lab, and Visuals. | complete |
 | The current README GIFs and social image already show the shipped gameplay, analyzer, Lab, and Visuals surfaces accurately. | retain | Keep the binaries unchanged; recapture only when a visible source surface changes. | confirmed |
 | Replay Analysis is intentionally reached through a finished match or saved history rather than a bundled demo. | retain | Keep Home minimal and improve discovery through product flow, Guide copy, README structure, metadata, and media. | confirmed |
 
@@ -126,6 +127,9 @@ IDs as implementation fixtures.
 - Profile reset now clears cached replay analyses together with local games and
   settings. Cloud-only deletion still preserves local data, and the policy copy
   states both boundaries explicitly.
+- The editorial pass retained the home line, compact match/replay status, and
+  technical analysis terms. Helper copy now addresses the player directly,
+  explains only non-obvious mechanics, and avoids stale report terminology.
 - Curated bot and analysis JSON remain authoritative and unchanged because this
   pass did not alter bot, analyzer, report schema, or source tournament behavior.
 

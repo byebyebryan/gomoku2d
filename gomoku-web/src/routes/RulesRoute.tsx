@@ -186,7 +186,7 @@ export function RulesRoute() {
               <div>
                 <h3>Four + Three</h3>
                 <p>
-                  The only lethal combo Black is allowed to play is four + three.
+                  Under Renju, four + three is Black&apos;s only legal lethal combo.
                 </p>
               </div>
             </article>
@@ -208,15 +208,14 @@ export function RulesRoute() {
           <section className={`${styles.panel} ${styles.threatPanel}`}>
             <div className={styles.sectionIntro}>
               <p className="uiSectionLabel">Complex Renju</p>
-              <h2>Real double-four and double-three.</h2>
+              <h2>Only real threats count.</h2>
               <p>
-                A Black move is not forbidden just because it makes a four + four or
-                three + three shape. The real question is whether that shape would
-                force a win for Black.
+                A four + four or three + three shape is forbidden only when both
+                branches are real and the combination can force a win for Black.
               </p>
               <p className={styles.note}>
-                That means some double-four and double-three shapes are legal when one
-                or both threats are blocked or cannot be materialized.
+                If a branch is boxed in or can continue only through another
+                forbidden move, it does not count.
               </p>
             </div>
             <div className={styles.complexThreatGrid}>
@@ -227,7 +226,7 @@ export function RulesRoute() {
                   { label: "Result", model: ruleModelFromCells(BOXED_BRANCH_AFTER) },
                 ]}
                 title="Blocked branch"
-                text="The horizontal three is blocked on one side, so it is not a real second threat."
+                text="The horizontal three is boxed in on one side, so it cannot become a second lethal threat."
                 tone="quiet"
               />
               <RuleSequenceExample
@@ -237,7 +236,7 @@ export function RulesRoute() {
                   { label: "Result", model: ruleModelFromCells(ILLEGAL_BRANCH_AFTER) },
                 ]}
                 title="Forbidden continuation"
-                text="The horizontal three is nullified because materializing it would require a forbidden Black move."
+                text="The horizontal three can continue only through another forbidden move, so it does not count."
                 tone="quiet"
               />
             </div>

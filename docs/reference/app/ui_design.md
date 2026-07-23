@@ -209,6 +209,15 @@ Keep to four tiers max:
 - helper text should be sparse and visually quiet
 - timestamps, IDs, and other metadata should never compete with status/result
 
+## Copy voice
+
+- plain, direct, and slightly technical
+- explain the game model, not obvious controls
+- keep project terms such as `counter threat`, `combo onset`, `setup corridor`,
+  and `last escape` when the UI demonstrates them
+- prefer player actions and concrete outcomes over implementation language
+- avoid marketing superlatives, generic encouragement, and tutorial chatter
+
 ## Spacing
 
 Use a tight, consistent spacing scale:
