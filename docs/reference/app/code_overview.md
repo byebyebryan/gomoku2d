@@ -35,9 +35,10 @@ threat, bot, or replay-analysis semantics.
 | Cloud sync | `src/cloud/*` | Optional Firebase auth/profile/history stores and local-to-cloud promotion |
 | Saved matches | `src/match/saved_match.ts` | Compact persisted replay/history schema |
 | Replay UI | `src/replay/*`, `src/routes/ReplayRoute.tsx` | Replay reconstruction, timeline, analysis overlays, cache, and worker runner |
+| Lab reports | `src/routes/LabReportRoute.tsx`, `src/routes/AnalysisReportRoute.tsx`, `src/routes/lab-report/*` | Report loading/tabs, tournament drilldowns, analysis rows, proof boards, and help/provenance |
 | Bot worker | `src/core/bot_runner.ts`, `src/core/bot_worker.ts`, `src/core/bot_protocol.ts` | Async bot move requests with cancellation and worker restart safety |
 | Wasm bridge | `src/core/wasm_bridge.ts` | Typed JSON parsing boundary over `gomoku-wasm` exports |
-| Static publishing | `scripts/publish_*.mjs` | Copies visual-guide assets and curated reports into `dist/` during build |
+| Static publishing | `scripts/publish_reports.mjs`, `scripts/publish_visual_design_assets.mjs`, `scripts/publish_spa_routes.mjs` | Copies curated data/assets and SPA entries into `dist/` during build |
 | Playwright smoke | `playtests/*.spec.ts` | Browser-level release smoke for play, layout, replay, reports, and no-config paths |
 
 ## Wasm Boundary
@@ -156,7 +157,8 @@ surfaces separate.
 | Change persisted settings | `profile_settings.ts`, `local_profile_store.ts` | cloud profile schema, Firestore rules tests, Settings UI |
 | Change saved match schema | `src/match/saved_match.ts` | replay conversion, profile history, cloud history, Playwright replay tests |
 | Change board visuals | `src/board/*`, `assets/sprites/*` | visual design reference, screenshot review |
-| Change static report publishing | `scripts/publish_*` | release runbook and Playwright report smoke |
+| Change report presentation | `src/routes/lab-report/*`, `AnalysisReportRoute.tsx` | report JSON types, route tests, Playwright report smoke |
+| Change static report publishing | `scripts/publish_reports.mjs` | release runbook and Playwright report smoke |
 
 ## Verification
 
