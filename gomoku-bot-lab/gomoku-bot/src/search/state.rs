@@ -1,5 +1,5 @@
-use instant::Instant;
 use std::collections::HashMap;
+use web_time::Instant;
 
 use crate::frontier::{RollingFrontierFeatures, RollingThreatFrontier};
 use crate::pattern::PatternFrame;
