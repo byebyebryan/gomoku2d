@@ -35,8 +35,8 @@ cd gomoku-bot-lab
 cargo test -p gomoku-core --test bench_scenarios
 cargo bench -p gomoku-core --bench board_perf -- --noplot
 cargo bench -p gomoku-bot --bench search_perf -- --noplot
-cargo run -p gomoku-eval -- tactical-scenarios
-cargo run -p gomoku-eval -- lethal-scenarios
+cargo run --release -p gomoku-eval -- tactical-scenarios
+cargo run --release -p gomoku-eval -- lethal-scenarios
 ```
 
 For strength or report claims, use the tournament runbook instead of ad hoc

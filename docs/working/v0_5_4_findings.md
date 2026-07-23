@@ -53,12 +53,14 @@ pass.
 | Cargo patch updates and GitHub Actions major updates are open. | fix | Apply Cargo and Actions updates as separate commits after structural work. | complete |
 | CI and deploy duplicate some setup but remain readable and serve different purposes. | retain | Do not introduce a shared composite action in this loop. | confirmed |
 | npm Dependabot cannot model the local Wasm package dependency safely. | retain | Keep npm updates manual and production audit clean. | confirmed |
+| Tactical scenario docs invoke performance-sensitive D5 search in debug mode. | fix | Run tactical and lethal scenario commands with release binaries in active docs and runbooks. | complete |
 
 ## Product Walkthrough
 
 | Finding | Class | Decision | Status |
 |---|---|---|---|
-| The shipped product has not had a fresh-player walkthrough after the pause. | fix | Exercise public routes, game settings, replay analysis, profiles, responsive layout, keyboard access, and failure states. | planned |
+| The shipped product has not had a fresh-player walkthrough after the pause. | fix | Exercise public routes, game settings, replay analysis, profiles, responsive layout, keyboard access, and failure states. | complete |
+| A real Google sign-in and cloud-sync round trip requires live OAuth credentials and an interactive account. | defer | Keep Firestore rules and no-config fallback automated; repeat the live account flow during release review. | deferred |
 | Broad visual redesign would hide whether reconciliation preserved behavior. | defer | Limit v0.5.4 to demonstrated defects and copy drift; reconsider larger product work in v0.6 planning. | confirmed |
 
 ## Loop Boundaries
@@ -81,3 +83,29 @@ The removed cases repeated expensive full-replay work already protected by
 session parity, corridor proof, and report-marker contracts. Their replacements
 test the decision boundary directly rather than preserving historical replay
 IDs as implementation fixtures.
+
+## Product Walkthrough Result
+
+- The production build passed all 23 Playwright flows covering play, settings,
+  profile/history, replay analysis and branching, reports, visuals, rules,
+  guide, desktop layout, portrait layout, and touch input.
+- Direct navigation across 10 public routes at desktop and mobile widths found
+  no page errors, missing headings, failed responses, or horizontal overflow.
+- Keyboard tab traversal reached every visible interactive control on nine
+  public shell/report/settings surfaces.
+- The walkthrough found one stale Playwright locator: profile history now uses
+  `Inspect`, not the retired `Replay` action label. The shared helper was fixed;
+  no shipped product defect required a UI change.
+- Cloud-disabled behavior and Firestore authorization remain automated. A live
+  Google sign-in/sync round trip stays as a manual release-review check.
+
+## Validation Result
+
+- Rust format and workspace Clippy passed; 340 workspace tests passed.
+- Tactical hard gates passed `12/12`; lethal scenarios passed `9/9`; Renju
+  fixtures passed `29/29`; the external Renju reference check completed.
+- The Wasm package rebuilt successfully against the refreshed lockfile.
+- Web typecheck, 299 unit tests, 23 Firestore rules tests, production build,
+  production dependency audit, and all 23 browser tests passed.
+- The 20-route responsive audit and nine-route keyboard audit passed.
+- Curated bot and analysis report sources were not regenerated or changed.

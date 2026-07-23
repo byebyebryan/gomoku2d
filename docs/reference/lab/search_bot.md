@@ -104,8 +104,8 @@ Use the smallest check that protects the change:
 ```sh
 cd gomoku-bot-lab
 cargo test --workspace
-cargo run -p gomoku-eval -- tactical-scenarios
-cargo run -p gomoku-eval -- lethal-scenarios
+cargo run --release -p gomoku-eval -- tactical-scenarios
+cargo run --release -p gomoku-eval -- lethal-scenarios
 ```
 
 For strength or runtime claims, run focused head-to-heads or the curated

@@ -75,7 +75,7 @@ Focused local behavior is validated by the tactical scenario corpus:
 
 ```sh
 cd gomoku-bot-lab
-cargo run -p gomoku-eval -- tactical-scenarios
+cargo run --release -p gomoku-eval -- tactical-scenarios
 ```
 
 The corpus index lives in

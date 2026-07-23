@@ -82,8 +82,8 @@ Run the lethal scenario harness:
 
 ```sh
 cd gomoku-bot-lab
-cargo run -p gomoku-eval -- lethal-scenarios
-cargo run -p gomoku-eval -- lethal-scenarios --show-boards
+cargo run --release -p gomoku-eval -- lethal-scenarios
+cargo run --release -p gomoku-eval -- lethal-scenarios --show-boards
 ```
 
 The doc should not embed every board dump. The CLI owns detailed scenario
