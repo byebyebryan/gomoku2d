@@ -1,7 +1,7 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
 
 import { PROJECT_SOURCE_URL } from "../app/links";
+import { useDocumentTitle } from "../app/useDocumentTitle";
 import styles from "./PolicyRoute.module.css";
 
 type PolicyPageKind = "privacy" | "terms";
@@ -16,11 +16,7 @@ export function PolicyRoute({ kind }: PolicyRouteProps) {
   const isPrivacy = kind === "privacy";
   const title = isPrivacy ? "Privacy" : "Terms";
 
-  useEffect(() => {
-    document.title = isPrivacy
-      ? "Privacy Policy | Gomoku2D"
-      : "Terms of Service | Gomoku2D";
-  }, [isPrivacy]);
+  useDocumentTitle(isPrivacy ? "Privacy Policy" : "Terms of Service");
 
   return (
     <main className={styles.page}>

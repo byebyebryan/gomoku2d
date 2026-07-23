@@ -1,6 +1,6 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
 
+import { useDocumentTitle } from "../app/useDocumentTitle";
 import type { BoardOverlay, BoardViewModel } from "../board/board_model";
 import { Board } from "../components/Board/Board";
 import type { CellStone } from "../game/types";
@@ -157,9 +157,7 @@ const GUIDE_SEQUENCE_REPLY_2_MOVES: GuidePoint[] = [
 ];
 
 export function GuideRoute() {
-  useEffect(() => {
-    document.title = "Gomoku2D Guide";
-  }, []);
+  useDocumentTitle("Guide");
 
   return (
     <main className={styles.page}>

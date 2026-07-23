@@ -1,10 +1,13 @@
 import { Link } from "react-router-dom";
 import { PROJECT_SOURCE_URL } from "../app/links";
+import { useDocumentTitle } from "../app/useDocumentTitle";
 import { APP_VERSION } from "../app/version";
 import { Icon } from "../ui/Icon";
 import styles from "./HomeRoute.module.css";
 
 export function HomeRoute() {
+  useDocumentTitle();
+
   return (
     <main className={styles.page}>
       <section className={styles.hero}>

@@ -1,6 +1,6 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
 
+import { useDocumentTitle } from "../app/useDocumentTitle";
 import type { BoardOverlay, BoardViewModel } from "../board/board_model";
 import { Board } from "../components/Board/Board";
 import type { CellStone } from "../game/types";
@@ -119,9 +119,7 @@ const ILLEGAL_BRANCH_AFTER: RuleCell[][] = [
 ];
 
 export function RulesRoute() {
-  useEffect(() => {
-    document.title = "Gomoku2D Rules";
-  }, []);
+  useDocumentTitle("Rules");
 
   return (
     <main className={styles.page}>

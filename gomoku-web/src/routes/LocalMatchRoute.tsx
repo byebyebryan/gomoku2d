@@ -5,6 +5,7 @@ import { createStore } from "zustand/vanilla";
 
 import { buildLocalMatchBoardModel } from "../board/board_model";
 import { Board } from "../components/Board/Board";
+import { useDocumentTitle } from "../app/useDocumentTitle";
 import {
   DEFAULT_BOT_CONFIG,
   botConfigSummary,
@@ -168,6 +169,8 @@ function visibleBoardHints(
 }
 
 export function LocalMatchRoute() {
+  useDocumentTitle("Local Match");
+
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const appliedResumeSeedKeyRef = useRef<string | null>(null);

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useStore } from "zustand";
 
+import { useDocumentTitle } from "../app/useDocumentTitle";
 import {
   BOT_DEPTHS,
   BOT_PRESET_IDS,
@@ -98,6 +99,8 @@ const EVIDENCE_HINT_OPTIONS: Array<{ label: string; value: EvidenceHintMode }> =
 ];
 
 export function SettingsRoute() {
+  useDocumentTitle("Settings");
+
   const navigate = useNavigate();
   const [compactSettingsLayout, setCompactSettingsLayout] = useState(false);
   const [showTouchControls, setShowTouchControls] = useState(false);

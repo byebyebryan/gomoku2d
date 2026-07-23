@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
+import { useDocumentTitle } from "../app/useDocumentTitle";
 import {
   loadPublishedBotReport,
   type PublishedBotReport,
@@ -21,8 +22,6 @@ import {
 
 import styles from "./ReportRoute.module.css";
 
-const baseUrl = import.meta.env.BASE_URL;
-
 type LoadState<T> =
   | { status: "idle" }
   | { status: "loading" }
@@ -38,6 +37,8 @@ const REPORT_VIEWS: Array<{ id: ReportView; label: string }> = [
 ];
 
 export function LabReportRoute() {
+  useDocumentTitle("Lab Report");
+
   const [searchParams, setSearchParams] = useSearchParams();
   const view = parseReportView(searchParams.get("tab"));
   const analysisMatchPath = view === "analysis" ? searchParams.get("match") : null;
@@ -45,10 +46,6 @@ export function LabReportRoute() {
     status: "idle",
   });
   const [botState, setBotState] = useState<LoadState<PublishedBotReport>>({ status: "idle" });
-
-  useEffect(() => {
-    document.title = "Gomoku2D Lab Report";
-  }, []);
 
   useEffect(() => {
     if (view === "analysis" || botState.status !== "idle") {
@@ -158,12 +155,12 @@ export function LabReportRoute() {
               </p>
             </div>
             <nav className={styles.links} aria-label="Report links">
-              <a className="uiAction uiActionNeutral" href={baseUrl}>
+              <Link className="uiAction uiActionNeutral" to="/">
                 <span className="uiActionLabel">Home</span>
-              </a>
-              <a className="uiAction uiActionNeutral" href={`${baseUrl}visuals/`}>
+              </Link>
+              <Link className="uiAction uiActionNeutral" to="/visuals/">
                 <span className="uiActionLabel">Visuals</span>
-              </a>
+              </Link>
             </nav>
           </div>
           <ReportTabs value={view} onChange={setView} />
