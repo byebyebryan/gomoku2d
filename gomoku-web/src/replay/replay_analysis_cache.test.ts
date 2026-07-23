@@ -142,6 +142,26 @@ describe("replay analysis cache", () => {
     expect(storage.getItem("gomoku2d:replay-analysis-cache:v1")).toBeNull();
   });
 
+  it("keeps every cache operation best-effort when storage is unavailable", () => {
+    const storage = {
+      getItem: () => {
+        throw new Error("storage unavailable");
+      },
+      removeItem: vi.fn(() => {
+        throw new Error("storage unavailable");
+      }),
+      setItem: vi.fn(() => {
+        throw new Error("storage unavailable");
+      }),
+    };
+    const match = localMatch();
+    const options = { maxDepth: 4, maxScanPlies: 64 };
+
+    expect(readReplayAnalysisCache(match, options, storage)).toBeNull();
+    expect(() => writeReplayAnalysisCache(match, options, cachedResult(), storage)).not.toThrow();
+    expect(() => clearReplayAnalysisCache(storage)).not.toThrow();
+  });
+
   it("keeps only the latest twenty entries", () => {
     const storage = new MemoryStorage();
     const options = { maxDepth: 4, maxScanPlies: 64 };
