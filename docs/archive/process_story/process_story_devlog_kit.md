@@ -3,7 +3,7 @@
 Purpose: publishable external "making of" package for itch.io, GitHub, or a
 blog post. This is curated public copy, not a raw transcript dump.
 
-Status: first draft kit. It should be reviewed against the current app, release
+Status: archived first draft. It should be reviewed against the current app, release
 history, and screenshots before publishing.
 
 ## Positioning

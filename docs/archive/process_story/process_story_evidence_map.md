@@ -1,10 +1,12 @@
 # Process Story Evidence Map
 
+Status: archived evidence map; not an active publication task.
+
 Purpose: map the current process-story thesis to concrete private evidence so
 future public writing can pull from the right conversation arcs, commits,
 reports, and screenshots without publishing raw transcript dumps.
 
-The smaller active proof packet is
+The smaller selected proof packet is
 [`Process Story Evidence Cards`](process_story_evidence_cards.md). Use this
 file as the broader routing map.
 
@@ -13,10 +15,10 @@ Do not copy long transcript excerpts into public docs.
 
 ## Source Material
 
-- `docs/working/process_story_narrative_context.md`: current thesis and
+- `docs/archive/process_story/process_story_narrative_context.md`: current thesis and
   narrative arc.
-- `docs/working/process_story_leads.md`: editorial shortlist.
-- `docs/working/process_story_evidence_cards.md`: selected proof packet for
+- `docs/archive/process_story/process_story_leads.md`: editorial shortlist.
+- `docs/archive/process_story/process_story_evidence_cards.md`: selected proof packet for
   the external story.
 - `gomoku-bot-lab/outputs/process-story/conversation_arcs.md`: private arc
   index.

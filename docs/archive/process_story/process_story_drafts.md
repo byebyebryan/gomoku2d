@@ -1,5 +1,7 @@
 # Process Story Drafts
 
+Status: archived rough copy; not an active publication task.
+
 Purpose: rough public-copy drafts derived from the private process-story
 extraction. These are not final release notes. They are working drafts for
 README, itch.io, devlog, or a project writeup.
