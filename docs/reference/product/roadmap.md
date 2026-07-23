@@ -4,17 +4,43 @@ This roadmap tracks current sequencing. Completed phase detail lives in
 [`release_history.md`](../../archive/release_history.md); this file should stay
 short enough to answer "what is next and why?"
 
-## Current Line: `v0.6` Online Product Expansion Planning
+## Current Line: `v0.5.4` Reconciliation Closeout
 
-`v0.5.3` closes the public-release reconciliation line. The product, lab
-reports, explanation pages, repository, and release media now form a coherent
-public alpha; the optional process-story material is no longer a release gate.
+`v0.5.3` established a stable public-alpha checkpoint, but the resumed
+project-wide review found that declaring the `0.5` line complete was premature.
+The release remains a valid shipped snapshot; `v0.5.4` finishes the original
+reconciliation goal without rewriting that history.
 
-Goal: turn the cloud foundation and product identity into online human play and
-trusted/shareable records.
+Goal: leave the product and repository in a deliberately reviewed state before
+starting another feature line.
 
-The next step is a fresh design checkpoint, not immediate implementation. It
-should settle:
+Current work:
+
+- audit large Rust, report, and frontend ownership centers before refactoring;
+- remove or explicitly retain stale compatibility and experimental paths;
+- reconcile tests, suite runtime, dependencies, CI, generated artifacts, and
+  active versus parked documentation;
+- run a fresh desktop/mobile product walkthrough and fix concrete usability,
+  presentation, accessibility, loading, and error-state issues;
+- preserve behavior unless a review finding identifies a real defect.
+
+Release bar:
+
+- every review finding is fixed, deliberately retained, or explicitly deferred
+  with an owner and reason;
+- active docs describe current behavior and `docs/working/` contains only
+  genuinely active material;
+- full Rust, wasm, web, rules, report, and browser validation passes;
+- `v0.5.4` is a clean closeout, not a hidden online, bot-research, or redesign
+  release.
+
+Detailed execution lives in
+[`v0.5.4 Reconciliation Closeout Plan`](../../working/v0_5_4_reconciliation_plan.md).
+
+## Next Line: `v0.6` Online Product Expansion Planning
+
+After `v0.5.4`, the next step is a fresh design checkpoint, not immediate
+implementation. It should settle:
 
 - the smallest useful online loop, likely direct challenge before discovery or
   matchmaking;
@@ -33,7 +59,7 @@ Likely work:
 - public replay pages;
 - lightweight public identity only where sharing requires it.
 
-Release bar:
+Eventual release bar:
 
 - two people can reliably play a full online game;
 - the product clearly distinguishes local history, signed-in private history,

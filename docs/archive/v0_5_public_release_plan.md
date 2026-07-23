@@ -1,7 +1,10 @@
 # v0.5 Public Release Reconciliation Plan
 
-Status: completed by `v0.5.3`. Preserved for historical context; the canonical
-current direction lives in [`Roadmap`](../reference/product/roadmap.md).
+Status: delivered the first public-alpha checkpoint through `v0.5.3`.
+Preserved for historical context; the resumed reconciliation closeout is
+tracked in [`v0.5.4 Reconciliation Closeout`](../working/v0_5_4_reconciliation_plan.md)
+and the canonical current direction lives in
+[`Roadmap`](../reference/product/roadmap.md).
 
 Purpose: track the evolving `0.5.x` reconciliation line after the `0.4`
 lab-heavy phase. This is an ad-hoc working plan. The canonical phase summary lives in

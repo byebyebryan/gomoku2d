@@ -73,7 +73,8 @@ Detailed historical plans remain in the archive:
 
 ## `v0.5` Public Release Reconciliation
 
-Turned the lab-heavy `0.4` foundation into a coherent public alpha:
+Through `v0.5.3`, turned the lab-heavy `0.4` foundation into a coherent public
+alpha:
 
 - replaced generated report HTML with compact curated JSON rendered by the
   first-class `/lab/` web surface;
@@ -88,5 +89,9 @@ Turned the lab-heavy `0.4` foundation into a coherent public alpha:
 The durable lesson was operational: a personal process story can strengthen a
 release, but it cannot be the release gate. The product and repository should be
 able to ship first, with longer-form writing remaining an optional follow-up.
+
+`v0.5.3` is the first public-alpha checkpoint, not the final `0.5` release. The
+resumed closeout is tracked in
+[`v0.5.4 Reconciliation Closeout`](../working/v0_5_4_reconciliation_plan.md).
 
 Historical plan: [`v0_5_public_release_plan.md`](v0_5_public_release_plan.md).

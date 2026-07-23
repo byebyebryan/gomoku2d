@@ -14,12 +14,12 @@ their own section.
 
 ## [0.5.3] - 2026-07-22
 
-**Theme: close the `0.5` line with a clean public alpha.**
+**Theme: package Gomoku2D as a clean public alpha.**
 
-`0.5.3` finishes the public-release reconciliation line. It does not add a new
-gameplay or analyzer model; it makes the existing product, lab, documentation,
-media, and release workflow coherent enough to ship without making a devlog or
-other long-form presentation work a prerequisite.
+`0.5.3` establishes a public-alpha checkpoint in the reconciliation line. It
+does not add a new gameplay or analyzer model; it makes the existing product,
+lab, documentation, media, and release workflow coherent enough to ship
+without making a devlog or other long-form presentation work a prerequisite.
 
 ### Web and public surfaces
 
@@ -48,8 +48,8 @@ other long-form presentation work a prerequisite.
 - Simplified Playwright handling in CI and Pages deployment, tightened release
   runbooks, and disabled the unsupported npm Dependabot updater for the local
   generated wasm dependency.
-- Closed the `0.5` roadmap and moved the project to a fresh `0.6` online-product
-  planning checkpoint.
+- Established the public-alpha checkpoint before the remaining repository and
+  product reconciliation now tracked for `0.5.4`.
 
 ## [0.5.2] - 2026-05-27
 
