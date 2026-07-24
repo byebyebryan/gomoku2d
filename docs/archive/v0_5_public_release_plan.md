@@ -1,9 +1,9 @@
 # v0.5 Public Release Reconciliation Plan
 
-Status: delivered the first public-alpha checkpoint through `v0.5.3`.
-Preserved for historical context; the resumed reconciliation closeout is
-tracked in [`v0.5.4 Reconciliation Closeout`](../working/v0_5_4_reconciliation_plan.md)
-and the canonical current direction lives in
+Status: completed through `v0.5.4`. Preserved for historical context; the
+final reconciliation closeout is recorded in
+[`v0.5.4 Reconciliation Closeout`](v0_5_4_reconciliation_plan.md), and the
+canonical current direction lives in
 [`Roadmap`](../reference/product/roadmap.md).
 
 Purpose: track the evolving `0.5.x` reconciliation line after the `0.4`

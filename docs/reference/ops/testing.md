@@ -10,13 +10,18 @@ release or after core/rules/search work, run the full relevant lane.
 | Rust formatting | `(cd gomoku-bot-lab && cargo fmt --all --check)` |
 | Rust lint | `(cd gomoku-bot-lab && cargo clippy --workspace --all-targets -- -D warnings)` |
 | Rust workspace tests | `(cd gomoku-bot-lab && cargo test --workspace)` |
+| Rust dependency audit | `(cd gomoku-bot-lab && cargo audit)` |
 | Tactical scenarios | `(cd gomoku-bot-lab && cargo run --release -p gomoku-eval -- tactical-scenarios)` |
 | Lethal scenarios | `(cd gomoku-bot-lab && cargo run --release -p gomoku-eval -- lethal-scenarios)` |
 | Web typecheck | `(cd gomoku-web && npm run typecheck)` |
 | Web unit tests | `(cd gomoku-web && npm test)` |
+| Web production dependency audit | `(cd gomoku-web && npm audit --omit=dev)` |
 | Firestore rules | `(cd gomoku-web && npm run test:rules)` |
 | Production build/direct routes | `(cd gomoku-web && GOMOKU_BASE_PATH=/ npm run build)` |
 | Local browser smoke | `(cd gomoku-web && PLAYWRIGHT_BASE_URL=http://127.0.0.1:8001 npm run playtest:smoke)` |
+
+Install the Rust audit command once with `cargo install cargo-audit --locked` if
+it is not already available.
 
 ## Test Design
 

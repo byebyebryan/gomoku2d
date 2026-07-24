@@ -12,6 +12,53 @@ their own section.
 
 ## [Unreleased]
 
+## [0.5.4] - 2026-07-23
+
+**Theme: close the `0.5` reconciliation line on a deliberately reviewed baseline.**
+
+`0.5.4` finishes the repository and product reconciliation that remained after
+the `0.5.3` public-alpha checkpoint. It does not introduce a new gameplay,
+bot-strength, or analyzer model. Instead, it makes ownership clearer, removes
+inherited maintenance friction, validates the complete product loop, and leaves
+Gomoku2D in a trustworthy state for either a pause or fresh `0.6` planning.
+
+### Web and public surfaces
+
+- Split the Lab report surface into focused loading, table, drilldown, board,
+  and proof-frame owners while preserving its routes, data contracts, and
+  presentation.
+- Consolidated report publishing, removed retired report styles, and kept the
+  curated tournament and analysis data unchanged.
+- Refined document titles, internal navigation, profile empty/reset states,
+  privacy wording, public-page copy, and the product-first README structure.
+- Made bot-worker crashes recover once without stranding the current match and
+  made replay-analysis caching fully best-effort when browser storage fails.
+- Re-ran the desktop, mobile, keyboard, direct-route, replay-analysis, and
+  browser product walkthrough without finding a release-blocking regression.
+
+### Bot lab
+
+- Separated tournament reporting, analysis batches, CLI commands, search
+  orchestration, and tactical semantics into smaller modules behind their
+  existing public contracts.
+- Consolidated repeated replay-analysis tests around durable behavior,
+  reducing the measured analysis/eval test runtime by 46.7 percent while
+  retaining tactical, lethal, and Renju correctness gates.
+- Refreshed Rust dependencies, replaced the unmaintained browser timing crate,
+  and cleared the Rust dependency security audit.
+
+### Docs and operations
+
+- Archived the parked process-story material and completed reconciliation
+  plans so `docs/working/` contains only active notes.
+- Synced architecture, testing, roadmap, release-history, and contributor
+  entrypoints with current code ownership and product language.
+- Refreshed GitHub Actions, retained browser smoke as a local release gate, and
+  completed the full Rust, Wasm, web, Firestore, production-build, dependency,
+  and Playwright validation matrix.
+- Closed the `0.5` line as Gomoku2D's maintainable public-product baseline;
+  future online work starts from a separate `0.6` design checkpoint.
+
 ## [0.5.3] - 2026-07-22
 
 **Theme: package Gomoku2D as a clean public alpha.**
@@ -1125,7 +1172,8 @@ together in one canvas-driven surface. That lesson drove the `v0.2.1` rewrite.
   concerns blurred together.
 - Expressive UI language, but not scalable beyond one canvas.
 
-[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.3...HEAD
+[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.4...HEAD
+[0.5.4]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.0...v0.5.1

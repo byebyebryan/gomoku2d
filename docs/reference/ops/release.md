@@ -43,11 +43,15 @@ Open `http://localhost:8001/`.
    ```
 
 3. Run relevant checks from [`testing.md`](testing.md).
+   Production npm and Rust dependency audits are required for every release.
 4. Refresh curated reports only when bot/analyzer/report behavior or source data
    changed; use [`tournament.md`](tournament.md).
 5. Update `CHANGELOG.md` with an empty `[Unreleased]` section and dated release
    section.
-6. Review `git diff` for accidental generated or scratch output.
+6. When authentication, cloud sync, profile persistence, or Firestore behavior
+   changed, repeat one live Google sign-in and cloud-sync round trip. Automated
+   rules and no-config tests do not replace this account-level check.
+7. Review `git diff` for accidental generated or scratch output.
 
 ## Report Artifact Gate
 

@@ -73,8 +73,8 @@ Detailed historical plans remain in the archive:
 
 ## `v0.5` Public Release Reconciliation
 
-Through `v0.5.3`, turned the lab-heavy `0.4` foundation into a coherent public
-alpha:
+Through `v0.5.4`, turned the lab-heavy `0.4` foundation into a coherent,
+maintainable public product:
 
 - replaced generated report HTML with compact curated JSON rendered by the
   first-class `/lab/` web surface;
@@ -85,13 +85,19 @@ alpha:
   runbooks after the long analyzer research line;
 - preserved private process-story evidence without making a devlog a condition
   of shipping.
+- completed a repository-wide ownership, test, dependency, operations, and
+  fresh-player review without changing the promoted bot or analyzer model;
+- closed demonstrated worker/cache resilience gaps and left native, Wasm, web,
+  rules, dependency, and browser validation green.
 
 The durable lesson was operational: a personal process story can strengthen a
 release, but it cannot be the release gate. The product and repository should be
 able to ship first, with longer-form writing remaining an optional follow-up.
 
-`v0.5.3` is the first public-alpha checkpoint, not the final `0.5` release. The
-resumed closeout is tracked in
-[`v0.5.4 Reconciliation Closeout`](../working/v0_5_4_reconciliation_plan.md).
+`v0.5.3` remains the first public-alpha checkpoint. `v0.5.4` completes the
+reconciliation line and leaves `v0.6` to begin from a fresh product-design
+checkpoint rather than inherited cleanup.
 
 Historical plan: [`v0_5_public_release_plan.md`](v0_5_public_release_plan.md).
+Closeout plan:
+[`v0_5_4_reconciliation_plan.md`](v0_5_4_reconciliation_plan.md).
