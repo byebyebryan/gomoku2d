@@ -1,11 +1,10 @@
 # v0.5.4 Reconciliation Findings
 
-Status: active.
+Status: completed by `v0.5.4` on 2026-07-23.
 
-This register turns the v0.5.4 reconciliation plan into concrete, reviewable
-work. A finding is complete only after its implementation and validation are
-recorded here. The version remains open until a separate release-preparation
-pass.
+This register turned the v0.5.4 reconciliation plan into concrete, reviewable
+work. A finding was complete only after its implementation and validation were
+recorded here; this archived copy records the final closeout state.
 
 ## Baseline
 
@@ -44,6 +43,8 @@ pass.
 | Report presentation shares one oversized CSS module. | refactor | Give analysis proof frames their own style owner; retain coupled responsive table/shell rules together and remove retired selectors. | complete |
 | Bot and analysis report publishing use duplicate wrapper scripts. | fix | Replace them with one declarative report publisher and preserve output paths. | complete |
 | Browser smoke previously caused expensive Playwright installation in CI. | retain | Keep browser smoke as a documented local release gate; do not restore browser downloads to CI. | confirmed |
+| A hard bot-worker failure recreated an unconfigured worker and could strand the current match. | fix | Reconfigure and replay one pending request after a worker crash; reject repeated failures rather than looping. | complete |
+| Replay-analysis cache reads could throw when browser storage operations were blocked. | fix | Keep reads, writes, cleanup, and profile-reset clearing best-effort at the storage boundary. | complete |
 
 ## Docs, Dependencies, And Operations
 
@@ -54,6 +55,7 @@ pass.
 | CI and deploy duplicate some setup but remain readable and serve different purposes. | retain | Do not introduce a shared composite action in this loop. | confirmed |
 | npm Dependabot cannot model the local Wasm package dependency safely. | retain | Keep npm updates manual and production audit clean. | confirmed |
 | Tactical scenario docs invoke performance-sensitive D5 search in debug mode. | fix | Run tactical and lethal scenario commands with release binaries in active docs and runbooks. | complete |
+| Rust dependency audit found a patched Crossbeam advisory and the direct unmaintained `instant` timing crate. | fix | Upgrade Crossbeam and replace `instant` with the maintained Wasm-compatible `web-time` crate. | complete |
 
 ## Product Walkthrough
 
@@ -139,7 +141,9 @@ IDs as implementation fixtures.
 - Tactical hard gates passed `12/12`; lethal scenarios passed `9/9`; Renju
   fixtures passed `29/29`; the external Renju reference check completed.
 - The Wasm package rebuilt successfully against the refreshed lockfile.
-- Web typecheck, 300 unit tests, 23 Firestore rules tests, production build,
+- Web typecheck, 302 unit tests, 23 Firestore rules tests, production build,
   production dependency audit, and all 23 browser tests passed.
 - The 20-route responsive audit and nine-route keyboard audit passed.
 - Curated bot and analysis report sources were not regenerated or changed.
+- Rust and npm production dependency audits completed with no vulnerabilities
+  or unmaintained runtime dependencies.

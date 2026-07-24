@@ -1,6 +1,8 @@
 # v0.5.4 Reconciliation Closeout Plan
 
-Status: active.
+Status: completed by `v0.5.4` on 2026-07-23. Preserved for historical
+context; the canonical current direction lives in
+[`Roadmap`](../reference/product/roadmap.md).
 
 Purpose: finish the repository and product reconciliation that was declared
 complete too early at `v0.5.3`, while preserving that release as a valid public
@@ -181,3 +183,11 @@ Not part of `v0.5.4`:
 - Published reports remain valid and clean; regenerated artifacts carry clean
   provenance when regeneration was required.
 - `v0.5.4` can honestly close the `0.5` reconciliation line.
+
+## Completion
+
+All six workstreams completed. The final review added and resolved three
+bounded runtime/dependency findings: bot-worker crash recovery, fully
+best-effort replay caching, and a clean Rust dependency audit. The release
+closed without changing bot strength, analyzer semantics, report data, or
+persisted schemas.
