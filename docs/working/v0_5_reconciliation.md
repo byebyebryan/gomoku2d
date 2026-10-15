@@ -1,14 +1,285 @@
-# v0.5 Reconciliation Continuation
+# v0.5 Deep Reconciliation and Refinement Plan
 
-Status: reopened 2026-10-15 after the post-pause project review. This continues
-the `0.5.x` line; `v0.5.4` remains the July release checkpoint. No new release
-number or deployment is implied by reopening the work.
+Status: active goal loop, expanded 2026-10-15. Owner: Bryan. This is the active plan for
+the reopened `0.5.x` line. `v0.5.4` remains the July release checkpoint; the next
+patch version will be chosen when the work is ready to release.
 
-The [October review](project_review_2026_10_15.md) supplies the findings and
-evidence. The [July closeout](../archive/v0_5_4_reconciliation_plan.md) remains
-historical context. Preserve its settled architecture and scope boundaries.
+## Purpose and Review Stance
 
-## Active Finding Register
+Give the whole project a fresh, critical review after the pause and several
+generations of agent-assisted development. Establish which product decisions,
+implementation contracts, abstractions, tests, and visual choices still earn
+their place. Turn the findings into a coherent, polished version of the existing
+product before choosing the next feature cycle.
+
+Judge both older work and today's repairs by behavior, clarity, player benefit,
+and maintenance cost. Recheck the evidence behind earlier closeouts. Treat tests
+and docs as claims to examine alongside the implementation and actual use.
+
+The current local-first product, retro presentation, React/Phaser/Rust split,
+and lab-powered replay identity are starting hypotheses to evaluate. Retain or
+revise each with a reason. A substantial simplification or design refinement is
+in scope when it improves an existing product contract. For a large replacement,
+compare the smallest repair with the proposed replacement and its migration,
+dependency, performance, and validation costs before implementing it.
+
+## Baseline and Existing Evidence
+
+- Development baseline: `ee2505c`, including the first October repair batch.
+- The [October review](project_review_2026_10_15.md) is the initial assessment;
+  its findings do not exhaust this pass.
+- The [July closeout](../archive/v0_5_4_reconciliation_plan.md) and
+  [findings](../archive/v0_5_4_findings.md) explain prior decisions and validation.
+- Current code ownership maps are in the [web overview](../reference/app/code_overview.md)
+  and [lab overview](../reference/lab/code_overview.md). Verify them against code.
+- Keep the deployed release, development head, curated report provenance, and
+  new review evidence distinct. Reuse valid baseline checks; repeat them when
+  a relevant change or unresolved concern warrants it.
+
+The first repair batch and its validation are retained below. Its fixes,
+including the new keyboard grid and cloud guards, receive the same deeper
+review as the rest of the project.
+
+The [deep review evidence ledger](v0_5_review_evidence.md) records the current
+product/contract map, module ownership and coverage, fresh-game walkthrough,
+investigation priorities, and subsequent measurement/repair evidence.
+
+## Sequence and Checkpoints
+
+| Stage | Work | Exit evidence |
+|---|---|---|
+| 1. Reconstruct | Revisit the product thesis, release history, current behavior, and ownership; walk the main player journeys | Current product/contract map, coverage inventory, initial findings, and assumptions worth challenging |
+| 2. Review deeply | Trace high-risk flows end to end; examine Rust, web, persistence, reports, tests, performance, and UX | Reproductions, measurements, source-backed correctness checks, and classified findings across every workstream |
+| 3. Choose refinements | Resolve findings into a coherent target for the existing product; compare structural and visual alternatives where needed | Prioritized repair/refinement batches with intended behavior, acceptance, and explicit deferred opportunities |
+| 4. Implement and polish | Land small, reviewable batches; recheck the complete affected journey after each | Reviewed code, appropriate regression coverage, before/after evidence, and updated contracts |
+| 5. Verify and reconcile | Review the integrated result, run release gates, check live acceptance, and reconcile docs/media | Whole-product acceptance record and an explicit release-readiness decision |
+
+Review product behavior and code together. A blocking defect can be fixed once
+its contract and reproduction are understood; broad structural or visual changes
+should follow the synthesis checkpoint. Keep correctness fixes, structural
+refactors, and visual changes distinguishable in commits.
+
+## Review Workstreams
+
+### 1. Product Coherence and Player Journeys
+
+Revisit the [product strategy](../reference/product/product_strategy.md): who
+benefits from this game, why they return, and what the lab contributes to play.
+Trace first visit, setup, a complete fresh game, the finish, analysis, branching,
+and returning to saved history. Include both a novice and a returning player.
+
+- Check discoverability, terminology, default difficulty/hints, and whether the
+  next useful action is understandable without reading repository docs.
+- Examine whether replay analysis helps someone make a different decision,
+  including how uncertain findings are explained.
+- Separate observed friction from taste preferences and future feature ideas.
+  Identify product/taste decisions that need Bryan's judgment with concrete
+  alternatives. Where feasible, include an actual new player's walkthrough;
+  agent walkthroughs establish different evidence.
+
+Output: a concise current-product contract, journey findings, and priorities
+for refinement. Revisit Home, Settings complexity, and public Lab placement on
+their merits rather than inheriting their earlier disposition.
+
+### 2. Rules, Tactics, Bots, and Analyzer Correctness
+
+Review `gomoku-core`, `gomoku-bot`, and `gomoku-analysis` from rule definitions
+through player-visible explanations. Trace legality, win detection, apply/undo,
+FEN/replay parsing, tactical facts, candidate filtering, corridor proof, lethal
+onset, failure attribution, and confidence propagation.
+
+- Check Renju recursion guards and unresolved behavior against the documented
+  rule model, corpus provenance, and authoritative external references.
+- Challenge shared assumptions in scan/rolling parity and existing fixtures;
+  two implementations or tests can agree while sharing the same mistake.
+- Examine pruning, caches/TT state, budgets, cancellation boundaries, and
+  differences between native and Wasm execution.
+- Classify the existing non-gating tactical misses. Establish whether each is a
+  known model limit, fixture problem, correctness defect, or strength limitation.
+
+Output: justified semantic contracts, counterexamples where found, and explicit
+model limits. Correctness repairs are in scope; an open-ended strength/solver
+research program remains a separate decision.
+
+### 3. Architecture, State, and Data Contracts
+
+Inventory first-party crates, modules, routes, stores, workers, schemas,
+serializers, and publishing scripts. Record their owners, consumers, and review
+coverage. Deeply trace the boundaries carrying state or game facts.
+
+- Follow a move and a completed match through core, Wasm, worker, store, saved
+  record, cloud snapshot, replay conversion, analyzer, report, and presentation.
+- Compare exported JSON with actual consumers, TypeScript/Rust types, runtime
+  validators, fixtures, and versioning. Look for parallel representations that
+  have drifted or duplicated semantic decisions.
+- Examine async ownership, request/session identity, cancellation, disposal,
+  memory/resource lifetime, error propagation, and recovery after partial work.
+- Review speculative abstractions, dead paths, config axes, hidden fallbacks,
+  and mixed responsibilities. Simplify when a concrete consumer or maintenance
+  benefit supports it; file size alone does not establish a problem.
+
+Output: verified ownership and contract maps, targeted simplifications, and
+regressions for broken boundaries. Review generated/vendor artifacts through
+their source, reproducibility, and consumers rather than editing them directly.
+
+### 4. Local Persistence and Cloud Continuity
+
+Trace local identity, settings, replay/summary retention, promotion, private
+cloud history, cooldowns, pending work, and account/profile lifecycle.
+
+- Exercise sign-out/account switches, resets/deletion, delayed/out-of-order
+  operations, repeated requests, multiple tabs/devices, and reconnects.
+- Cover denied/full/corrupt storage, unavailable cloud configuration, network
+  failure, partial sync, reload, and recovery. Recheck the recent memory fallback
+  and its durable-save messaging.
+- Verify private ownership and trust distinctions through client validation,
+  Firestore rules, emulator scenarios, and read-only live configuration checks.
+- Use disposable test data for destructive lifecycle checks. Perform a real
+  account and cross-device round trip before claiming that level of acceptance.
+
+Output: a persistence/lifecycle state matrix, reproducible races or data-loss
+risks, and clearly separated emulator, deployed-config, and real-account evidence.
+
+### 5. Interaction, Visual Refinement, and Accessibility
+
+Review the complete app as an authored experience: Home, Match, Replay,
+Settings, Profile, Rules, Guide, Lab, Visuals, and policy/navigation surfaces.
+
+- Examine visual hierarchy, typography/readability, density, spacing, contrast,
+  control affordances, board markers, animation, copy, loading, empty, pending,
+  success, failure, and destructive-action states.
+- Check desktop, small laptop, narrow/short portrait, touch, landscape,
+  resizing, and browser zoom. Define the supported viewport/browser floor.
+- Complete play and replay through keyboard input; examine focus order,
+  announcements, disabled/selected state, coordinates, reduced motion, and an
+  actual screen reader. Check that the DOM/canvas combination stays coherent.
+- Compare current and proposed layouts at consistent viewports using the
+  [screenshot procedure](ui_screenshot_review.md), then exercise the interactions.
+  If a systemic design issue emerges, prototype one representative screen
+  before widening the change.
+
+Output: a prioritized UX critique, selected visual direction, and before/after
+interaction evidence. Include refinement of good-but-unfinished surfaces, with
+an explicit player benefit for each change.
+
+### 6. Browser Performance and Resource Behavior
+
+Measure the shipped web path on a documented desktop and representative lower-
+powered device. Use CPU throttling as diagnostic evidence, keeping it distinct
+from physical-device results and native tournament timings.
+
+- Measure cold/warm startup, transferred assets, Wasm/worker startup, preset
+  move latency and worst cases, and UI responsiveness while computation runs.
+- Measure time to useful analysis, completion/progress, cancellation, cache
+  behavior, and repeated match/replay/navigation memory growth.
+- Set explicit usability budgets after establishing the baseline; record
+  device, build, workload, latency distribution, and outliers. Optimize measured
+  bottlenecks while preserving relevant correctness gates.
+
+Output: a small reproducible browser workload set, supported-device expectations,
+and an agreed response to expensive work: bound it, cancel it, communicate it,
+or reduce its cost. Native self-play strength remains a separate measurement.
+
+### 7. Test Quality and Verification Cost
+
+Review whether coverage protects intended behavior and can fail for the right
+reason. Audit assertions alongside the implementation, particularly tests that
+were written from the same assumptions as the code under review.
+
+- Cover cross-boundary and failure-state behavior; check cold and warm paths,
+  no-config/offline operation, interrupted work, malformed inputs, and real
+  completed-game flows alongside seeded replay fixtures.
+- Use focused scenarios, independent references, and property/metamorphic or
+  perturbation checks where they answer a concrete correctness question.
+- Consolidate duplicated executions, brittle implementation assertions, and
+  temporary scaffolding. Keep unique slow coverage and measure its cost.
+- Validate promised browser engines; distinguish automated Chromium/Firefox/
+  WebKit checks from real mobile-browser acceptance.
+
+Output: a test/acceptance map and a practical local/CI/release command matrix.
+Add tests for meaningful behavior, and use visual inspection for visual changes
+that do not warrant an automated contract.
+
+### 8. Repository, Documentation, and Release Operations
+
+Check clean-checkout setup, generated Wasm/artifacts, dependencies/overrides,
+workflows, release scripts, public routing, live configuration, rollback, and
+operating-cost assumptions. Review current audit exceptions against upstream
+evidence when doing the dependency lane.
+
+- Reconcile code, active references, working notes, archives, README/public
+  claims, versions, and runnable commands. Expose unresolved contracts instead
+  of smoothing them over with prose.
+- Trace curated report JSON through generation, provenance, schema, publication,
+  and UI. Regenerate affected artifacts only when their behavior/data changes.
+- Review media, asset provenance, dead/generated files, and ignored outputs;
+  keep historical evidence where it remains useful.
+- Check release/deploy ownership, production smoke, recovery, and the boundary
+  between code publication and actual deployment/account acceptance.
+
+Output: a reproducible contributor/release path, current contracts and public
+claims, and explicit operating limits. A tagged release follows a readiness
+decision rather than serving as a deadline for the review.
+
+## Execution and Finding Discipline
+
+Use this document as the single entrypoint. Keep concise decisions and findings
+here; link detailed repros, measurements, or design comparisons only when needed.
+
+For each material finding, record the affected contract and source, trigger or
+observation, impact/priority, evidence level, disposition, intended change,
+acceptance, and remaining uncertainty. Use `fix`, `refactor`, `refine`, `retain`,
+or `defer`. Retained complexity needs a reason; deferred work needs a destination
+and an explicit effect on release readiness. Avoid a quota of findings or edits.
+
+Prioritize data/identity loss, incorrect game facts, and broken player flows;
+then clarity, usability/performance, and maintenance friction. Tie visual polish
+to a chosen experience rather than accumulating unrelated cosmetic edits.
+
+Execute in bounded loops, each with a concrete question, named ownership/scope,
+evidence to gather, a reviewable result, and a stopping condition. Update the
+coverage and finding tables before widening scope. Keep unrelated concurrent
+work intact and make validated changes in small commits under the current
+direct-maintenance workflow. A useful alternate implementation can be explored
+in isolation before replacing the working path.
+
+Each implementation batch ends with an affected-journey check and a second
+review of its assumptions, failure behavior, tests, and diff. Report automated,
+browser-observed, deployed, physical-device, and real-user acceptance separately.
+
+## Coverage Register
+
+The October repairs establish a starting baseline. Broader coverage below is
+pending until the corresponding review produces findings and dispositions.
+
+| Workstream | Deep review | Evidence and unresolved items |
+|---|---|---|
+| Product and journeys | in progress | Fresh keyboard game → finish → analysis → confirmed alternative → branch; actual new-player acceptance outstanding |
+| Rules, bots, analyzer | pending | Existing corpora/reports; guard semantics and diagnostic misses to classify |
+| Architecture and contracts | in progress | Current ownership/contract inventory and cross-boundary traces; runtime schema probes next |
+| Persistence and cloud | in progress | Storage, promotion and reset/delete trace; corrupt storage and stale foreground actions under investigation; real account/device acceptance outstanding |
+| UX, visuals, accessibility | pending | Initial layouts and keyboard fixes; full critique and screen reader outstanding |
+| Browser performance | pending | Native evidence exists; representative browser/device measurements outstanding |
+| Test quality | pending | Baseline suites pass; assumption and coverage review outstanding |
+| Repo, docs, operations | pending | Maintenance baseline and current CI; full reconciliation outstanding |
+
+## First Execution Loop
+
+Start with product/contract reconstruction and a whole-journey critique.
+
+1. Pin the development/deployment baselines and build the module/route/contract
+   coverage inventory using the existing ownership maps.
+2. Walk a fresh game through finish, replay, and branching, then settings,
+   history, and the public explanatory surfaces on desktop and mobile.
+3. Compare intended behavior, observed behavior, and the contracts/tests that
+   claim to establish it. Include the recent fixes in that comparison.
+4. Record a prioritized first finding set and the decisions it raises. Select
+   the first deep-trace targets and refinement batches before broad editing.
+
+Deliverable: a current product/contract map, populated coverage inventory, and
+an evidence-backed execution order. This loop does not finish the whole review.
+
+## Initial Finding Register
 
 | Finding | Class | Acceptance | Status |
 |---|---|---|---|
@@ -17,8 +288,8 @@ historical context. Preserve its settled architecture and scope boundaries.
 | Replay copy discards analyzer confidence | fix | Possible, confirmed, and unresolved outcomes retain their meaning in replay, reports, and Guide | implemented; unit and published-Lab browser checks passed |
 | Bot failures leave an unexplained blocked turn | fix | Failed-turn state and explicit retry; cancellation/new-game guards remain correct | implemented; repeated-worker-crash recovery passed on desktop/mobile |
 | Board input and selected settings lack accessible semantics | fix | Keyboard board interaction and semantic settings state, with browser verification | implemented; keyboard/browser checks passed; real screen-reader acceptance pending |
-| Shared Rust semantics and React/Phaser ownership | retain | Keep the existing boundaries and correctness oracles | confirmed |
-| New online product scope, solver changes, and bot-strength research | defer | Fresh product/design checkpoint after reconciliation | deferred |
+| Shared Rust semantics and React/Phaser ownership | retain provisionally | Recheck ownership, correctness oracles, and costs in the deeper review | initial assessment; deeper review pending |
+| New online product scope and open-ended solver/bot-strength research | defer | Fresh product/design checkpoint after reconciliation; demonstrated correctness fixes remain in scope | deferred |
 | Real OAuth and cross-device cloud continuity | acceptance | Manual real-account round trip before a release claiming cloud acceptance | pending |
 
 ## October Repair Batch
@@ -56,15 +327,26 @@ continuity/reset checks and actual screen-reader acceptance have not been
 substituted with automated evidence. Representative slow-device performance
 remains a separate acceptance question from the native tournament measurements.
 
-## Completion Bar
+## Completion and Release Readiness
 
-- Resolve the demonstrated failure paths with focused regression coverage.
-- Validate keyboard, desktop, mobile, finished-game, replay, and recovery flows.
-- Run checks appropriate to the changed layers and record their results.
-- Keep persisted schemas and curated report data stable unless a demonstrated
-  defect requires a separately documented change.
-- Keep manual cloud acceptance distinct from emulator and unit-test evidence.
-- Reconcile active docs and findings before deciding whether to release.
+- Every workstream has a review result and coverage record. Material findings
+  are resolved, deliberately retained, or deferred with their release impact.
+- Product intent, core rules/tactical semantics, persisted data, runtime
+  contracts, and player-facing explanations agree, including known limits.
+- Critical correctness, identity/data-loss, and broken-flow findings are closed
+  before release readiness is claimed.
+- The full local loop is coherent and polished across the declared input,
+  viewport, browser, and device support matrix, with uncertainty/recovery clear.
+- Representative browser performance has measured expectations and an explicit
+  disposition for workloads outside them.
+- Appropriate Rust/corpus/Wasm/web/rules/build/browser/audit gates pass on the
+  candidate; relevant real-account, screen-reader, and physical-device evidence
+  is recorded separately. Outstanding acceptance keeps readiness conditional.
+- Current docs, public copy, reports, and media describe the resulting product.
+- A final integrated review evaluates the experience and maintenance burden,
+  with a concrete reason to close this pass beyond a green test suite.
 
-This continuation does not start online implementation, a broad redesign, or a
-new bot/analyzer research phase. `v0.6` planning follows its completion.
+The pass refines the existing product. Online implementation, public sharing,
+puzzles, monetization, and open-ended engine research remain future product
+choices. A larger redesign or replacement must earn its place through the
+review above. Choose the next release and `v0.6` direction after reconciliation.
