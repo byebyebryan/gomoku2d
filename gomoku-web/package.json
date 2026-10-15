@@ -23,6 +23,7 @@
     "typecheck:scripts": "tsc --allowJs --checkJs --noEmit --module NodeNext --moduleResolution NodeNext --target ES2022 --types node --ignoreConfig scripts/*.mjs",
     "test:rules": "firebase emulators:exec --project demo-gomoku2d-rules-test --only firestore --config ../firebase.json \"vitest run --config vitest.rules.config.ts\"",
     "playtest": "playwright test",
+    "playtest:engines": "playwright test --browser=all",
     "playtest:smoke": "playwright test playtests/smoke.spec.ts"
   },
   "dependencies": {

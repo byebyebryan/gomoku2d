@@ -19,7 +19,10 @@ export default defineConfig({
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
     : {
-      command: "npm run build && npm run preview -- --host 127.0.0.1 --port 8001",
+      // CI already built this exact candidate in the preceding step.
+      command: process.env.CI
+        ? "npm run preview -- --host 127.0.0.1 --port 8001 --strictPort"
+        : "npm run build && npm run preview -- --host 127.0.0.1 --port 8001 --strictPort",
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
       url: baseURL,

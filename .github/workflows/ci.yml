@@ -44,8 +44,10 @@ jobs:
         run: cargo test --workspace
 
   web:
-    name: Web (typecheck, vitest)
-    runs-on: ubuntu-latest
+    name: Web (types, tests, rules, browser)
+    # Match Playwright's supported Linux dependencies; validate a new image
+    # deliberately before moving the browser lane.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
 
@@ -106,3 +108,20 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: '892554744656'
           VITE_FIREBASE_PROJECT_ID: gomoku2d
           VITE_FIREBASE_STORAGE_BUCKET: gomoku2d.firebasestorage.app
+
+      - name: Install test browsers
+        working-directory: gomoku-web
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: Browser journeys
+        working-directory: gomoku-web
+        run: npm run playtest:engines
+
+      - name: Retain browser failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: browser-failures
+          path: gomoku-web/test-results
+          if-no-files-found: ignore
+          retention-days: 7

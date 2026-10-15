@@ -20,14 +20,18 @@ release or after core/rules/search work, run the full relevant lane.
 | Production build/direct routes | `(cd gomoku-web && GOMOKU_BASE_PATH=/ npm run build)` |
 | Local browser smoke | `(cd gomoku-web && PLAYWRIGHT_BASE_URL=http://127.0.0.1:8001 npm run playtest:smoke)` |
 | Full local browser flows | `(cd gomoku-web && npm run playtest)` |
+| Chromium / Firefox / WebKit flows | `(cd gomoku-web && npm run playtest:engines)` |
 
 Install the Rust audit command once with `cargo install cargo-audit --locked` if
 it is not already available.
 
 The full browser lane builds and starts its own preview when
 `PLAYWRIGHT_BASE_URL` is unset. It includes keyboard completion/replay, denied
-and quota storage, and repeated bot-worker failure/recovery on desktop/mobile.
-These are local release checks; real OAuth, cross-device continuity, and a real
+quota/corrupt/newer storage, and repeated bot-worker failure/recovery on desktop/mobile.
+CI runs the full journeys across Chromium, Firefox, and WebKit against its
+preceding production build and retains failure screenshots/traces for seven days.
+Install those engines with `npx playwright install --with-deps chromium firefox webkit`.
+Engine automation is distinct from physical mobile-browser acceptance. Real OAuth, cross-device continuity, and a real
 screen reader still require their own acceptance evidence.
 
 ## Dependency Maintenance
