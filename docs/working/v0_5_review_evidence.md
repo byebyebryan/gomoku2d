@@ -246,3 +246,30 @@ their measured outcomes are not relabeled as current-engine benchmarks. The Lab
 now says this near its tabs. Retaining them preserves experiment provenance;
 fresh strength comparisons belong to the next deliberate evaluation baseline.
 The correction does not justify copying new results over historical evidence.
+
+## Interaction Refinement and Browser Coverage
+
+Retain the existing visual direction. Refine the observed friction: preset
+cards now explain their player intent; custom depth/width/scoring remain
+available behind an explicit disclosure that opens when Custom is selected.
+The finished game's header exposes Next round (swapping colors) through the
+same input path as the canvas. Board instructions distinguish readonly and
+finished states, and cell descriptions use readable overlay names. Match and
+Replay link directly to the Guide. Renju copy explains exact-five priority,
+valid directional continuations and the free opening without promising a
+whole-position win from every forbidden shape.
+
+Narrow portrait settings and disclosure expansion were inspected interactively
+at 390 × 844. All 32 browser journeys passed in Chromium (14.9 s) and Firefox
+(16.0 s), including keyboard next round and advanced disclosure. All 348 web
+tests across 38 files passed. These remain agent/automation observations;
+actual screen-reader and new-player acceptance are pending.
+
+CI previously ran no browser journeys. The new lane runs the full suite on
+Chromium/Firefox/WebKit, retains failure evidence, and reuses its preceding
+production build. The web runner is pinned to Ubuntu 24.04 for supported browser
+libraries. Local WebKit could not launch because this host lacks its required
+ICU/XML/Flite libraries; CI must establish that engine's result. An earlier
+all-engine attempt also had an expired local preview process; those connection
+failures are infrastructure evidence, not app regressions. The two successful
+engine runs used a freshly verified preview.

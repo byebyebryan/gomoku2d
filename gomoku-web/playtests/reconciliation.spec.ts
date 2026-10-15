@@ -44,7 +44,7 @@ test("a keyboard player can branch, finish, analyze, and find the saved game", a
   await expect(winningCell).toBeFocused();
   await winningCell.press("Enter");
   await expect(page.getByTestId("match-status")).toHaveText("Guest wins");
-  await expect(winningCell).toHaveAccessibleName("L8: Black stone");
+  await expect(winningCell).toHaveAccessibleName("L8: Black stone, winning line");
   await page.screenshot({ path: testInfo.outputPath("keyboard-finish.png") });
 
   const analyze = page.getByRole("link", { name: "Analyze", exact: true });
@@ -52,10 +52,16 @@ test("a keyboard player can branch, finish, analyze, and find the saved game", a
   await analyze.press("Enter");
   await expect(page).toHaveTitle("Replay Analysis | Gomoku2D");
   await expect(page.getByRole("grid", { name: "Gomoku board" })).toHaveAttribute("aria-readonly", "true");
+  await expect(page.getByText(/This board is read only/)).toHaveCount(1);
   const profile = page.getByRole("link", { name: "Profile", exact: true });
   await profile.focus();
   await profile.press("Enter");
   await expect(page.getByRole("button", { name: "Inspect" })).toHaveCount(2);
+  await page.getByRole("link", { name: "Play", exact: true }).press("Enter");
+  await page.getByRole("button", { name: "Next round", exact: true }).press("Enter");
+  await expect(page.getByTestId("player-row-black")).toContainText("Normal Bot");
+  await expect(page.getByTestId("player-row-white")).toContainText("Guest");
+  await expect(page.getByTestId("match-move-count")).toHaveText("Move 1");
 });
 
 test("settings expose their selected rule, bot, and hints", async ({ page }) => {
@@ -71,6 +77,9 @@ test("settings expose their selected rule, bot, and hints", async ({ page }) => 
   await expect(page.getByRole("button", { name: /^Normal/ })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("group", { name: "Evidence hints" }).getByRole("button", { name: "On", exact: true }))
     .toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: "D5", exact: true })).not.toBeVisible();
+  await page.getByRole("button", { name: /^Custom/ }).press("Enter");
+  await expect(page.getByRole("button", { name: "D5", exact: true })).toBeVisible();
 });
 
 for (const failure of ["denied getter", "write quota", "corrupt document", "newer document"] as const) {

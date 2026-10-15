@@ -320,16 +320,18 @@ export function LocalMatchRoute() {
         </div>
         <div className={styles.headerActions}>
           <button
-            aria-label="New Game"
+            aria-label={state.status === "playing" ? "New Game" : "Next round"}
             className="uiAction uiActionPrimary"
             onClick={() => {
               resetTouchCandidate();
-              state.startNewMatch();
+              if (state.status === "playing") state.startNewMatch();
+              else state.startNextRound();
             }}
+            title={state.status === "playing" ? "Start a new game" : "Swap colors and play again"}
             type="button"
           >
             <Icon className="uiIconDesktop" name="plus" />
-            <span className="uiActionLabel">New Game</span>
+            <span className="uiActionLabel">{state.status === "playing" ? "New Game" : "Next round"}</span>
           </button>
           <Link aria-label="Profile" className="uiAction uiActionSecondary" to="/profile">
             <Icon className="uiIconDesktop" name="profile" />
@@ -388,6 +390,7 @@ export function LocalMatchRoute() {
                   {moveCountLabel(state.moves.length)}
                 </span>
               </div>
+              <Link className="uiHelpLink" to="/guide/">Board guide</Link>
             </div>
 
             <div className={styles.playerRows}>

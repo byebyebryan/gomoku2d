@@ -33,6 +33,10 @@ Continues the `0.5.x` reconciliation line after the October project review.
   signing out a later account/session.
 - Align published analysis failure types with native exports, validate consumed
   report fields and compact moves, and clarify Lab loading/error states.
+- Simplify bot setup with readable preset descriptions and optional advanced
+  controls; expose next-round keyboard activation and direct board-guide links.
+- Clarify readonly board instructions, accessible overlay descriptions, and
+  Renju teaching copy.
 
 ### Bot lab
 
@@ -53,6 +57,8 @@ Continues the `0.5.x` reconciliation line after the October project review.
   with the refreshed toolchain while retaining the existing `esnext` target.
 - Documented the remaining Firebase CLI development dependency advisories and
   their upstream remediation limits.
+- Add complete Chromium, Firefox, and WebKit journeys to CI, with failure
+  artifacts and a supported, pinned Ubuntu browser-test image.
 
 ## [0.5.4] - 2026-07-23
 

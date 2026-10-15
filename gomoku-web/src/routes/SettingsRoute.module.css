@@ -242,6 +242,20 @@
   padding-top: 8px;
 }
 
+.advancedSummary {
+  color: var(--accent-strong);
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: var(--type-body);
+  letter-spacing: 0.08em;
+  padding-block: 8px;
+  text-transform: uppercase;
+}
+
+.labSection[open] .advancedSummary {
+  margin-bottom: 14px;
+}
+
 .labRows {
   display: grid;
   gap: 12px;

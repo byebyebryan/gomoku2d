@@ -146,6 +146,9 @@ describe("SettingsRoute", () => {
   it("persists lab control option selections", () => {
     renderSettingsRoute();
 
+    expect(screen.getByText("Advanced controls").closest("details")).not.toHaveAttribute("open");
+    fireEvent.click(screen.getByRole("button", { name: /custom/i }));
+    expect(screen.getByText("Advanced controls").closest("details")).toHaveAttribute("open");
     fireEvent.click(screen.getByRole("button", { name: "Simple" }));
     fireEvent.click(screen.getByRole("button", { name: "Corridor proof" }));
 

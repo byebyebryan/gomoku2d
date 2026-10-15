@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import * as Phaser from "phaser";
 
 import { BoardScene, type BoardSceneState } from "../../board/board_scene";
-import type { BoardViewModel } from "../../board/board_model";
+import type { BoardOverlay, BoardViewModel } from "../../board/board_model";
 
 import styles from "./Board.module.css";
 
@@ -154,7 +154,11 @@ export function Board(props: BoardProps) {
       <div className={styles.viewport} ref={hostRef}>
         <span className={styles.screenReaderText} id={instructionsId}>
           Use arrow keys to explore the board. Home and End move to the ends of a row.
-          Enter or Space places a stone on your turn.
+          {model.interaction.kind === "play"
+            ? model.position.status === "playing"
+              ? " Enter or Space places a stone on your turn."
+              : " Game finished. Choose Analyze to inspect it or Next round to play again."
+            : " This board is read only."}
         </span>
         <span className={styles.screenReaderText} role="status" aria-live="polite" aria-atomic="true">
           {positionStatus} {model.position.lastMove
@@ -179,11 +183,7 @@ export function Board(props: BoardProps) {
                 const placeable = interactive && stone === null && !forbidden;
                 const annotations = model.overlays
                   .filter((overlay) => overlay.cell.row === rowIndex && overlay.cell.col === colIndex)
-                  .map((overlay) => overlay.kind === "analysis"
-                    ? overlay.marker === "possibleEscape" ? "possible escape"
-                      : overlay.marker === "escape" ? "confirmed escape"
-                        : overlay.marker ?? overlay.highlight ?? ""
-                    : overlay.kind === "hint" ? overlay.role : "")
+                  .map(overlayDescription)
                   .filter(Boolean);
                 return (
                   <button
@@ -230,6 +230,25 @@ export function Board(props: BoardProps) {
 
 function cellNotation(row: number, col: number): string {
   return `${String.fromCharCode(65 + col)}${row + 1}`;
+}
+
+function overlayDescription(overlay: BoardOverlay): string {
+  if (overlay.kind === "analysis") {
+    if (overlay.marker === "escape") return "confirmed escape";
+    return (overlay.marker ?? overlay.highlight ?? "").replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
+  }
+  if (overlay.kind === "hint" || overlay.kind === "evidence") {
+    const label = {
+      winning: "winning move",
+      immediateThreat: "must-block threat",
+      imminentThreat: "forcing-three response",
+      counterThreat: "counter threat",
+    }[overlay.role];
+    return overlay.kind === "evidence" ? `${label} evidence` : label;
+  }
+  if (overlay.kind === "nextReplayMove") return "next replay move";
+  if (overlay.kind === "winningLine") return "winning line";
+  return "";
 }
 
 function boardSceneStateFromModel(model: BoardViewModel): BoardSceneState {

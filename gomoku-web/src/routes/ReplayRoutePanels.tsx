@@ -1,5 +1,6 @@
 import type React from "react";
 import type { Dispatch, SetStateAction } from "react";
+import { Link } from "react-router-dom";
 
 import { Board } from "../components/Board/Board";
 import type { BoardViewModel } from "../board/board_model";
@@ -241,6 +242,7 @@ export function ReplayPlaybackPanel({
           <Icon className="uiIconDesktop" name="plus" />
           <span className="uiActionLabel">Play From Here</span>
         </button>
+        <Link className="uiHelpLink" to="/guide/">Board and replay guide</Link>
       </div>
     </section>
   );

@@ -99,6 +99,12 @@ const EVIDENCE_HINT_OPTIONS: Array<{ label: string; value: EvidenceHintMode }> =
   { label: "On", value: "on" },
 ];
 
+const PRESET_DESCRIPTION = {
+  easy: "A relaxed opponent for learning.",
+  normal: "A good starting point.",
+  hard: "Deeper search; slower turns.",
+};
+
 export function SettingsRoute() {
   useDocumentTitle("Settings");
 
@@ -106,6 +112,7 @@ export function SettingsRoute() {
   const [compactSettingsLayout, setCompactSettingsLayout] = useState(false);
   const [showTouchControls, setShowTouchControls] = useState(false);
   const settings = useStore(localProfileStore, (state) => state.settings);
+  const [advancedOpen, setAdvancedOpen] = useState(() => settings.botConfig.mode === "custom");
   const matchStore = useStore(localMatchSessionStore, (state) => state.matchStore);
   const activeMatch = matchStore?.getState() ?? null;
   const custom = customConfigForBot(settings.botConfig);
@@ -353,7 +360,7 @@ export function SettingsRoute() {
                     type="button"
                   >
                     <span className={styles.presetName}>{botLabel(config)}</span>
-                    <span className={styles.presetDetails}>{setupSummary(config)}</span>
+                    <span className={styles.presetDetails}>{PRESET_DESCRIPTION[preset]}</span>
                   </button>
                 );
               })}
@@ -365,6 +372,7 @@ export function SettingsRoute() {
                     : styles.presetCard
                 }
                 onClick={() => {
+                  setAdvancedOpen(true);
                   updateBot({
                     ...custom,
                     mode: "custom",
@@ -374,15 +382,17 @@ export function SettingsRoute() {
                 type="button"
               >
                 <span className={styles.presetName}>Custom</span>
-                <span className={styles.presetDetails}>Tune the search knobs</span>
+                <span className={styles.presetDetails}>Choose your own search settings.</span>
               </button>
             </div>
           </section>
 
-          <section className={`${styles.controlSection} ${styles.labSection}`}>
-            <div className={styles.sectionHeader}>
-              <p className="uiSectionLabel">Advanced Controls</p>
-            </div>
+          <details
+            className={`${styles.controlSection} ${styles.labSection}`}
+            onToggle={(event) => setAdvancedOpen(event.currentTarget.open)}
+            open={advancedOpen}
+          >
+            <summary className={styles.advancedSummary}>Advanced controls</summary>
 
             <div className={styles.labRows}>
               <div className={styles.labRow}>
@@ -476,7 +486,7 @@ export function SettingsRoute() {
                 </div>
               </div>
             </div>
-          </section>
+          </details>
         </section>
       </section>
     </main>
