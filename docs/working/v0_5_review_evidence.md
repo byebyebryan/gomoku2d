@@ -153,3 +153,25 @@ passed (13.8 seconds), including denied/quota/corrupt/newer storage, live bot
 recovery, keyboard finish/replay/branch, and published Lab confidence. No Rust,
 Firestore schema/rules, curated report data, release tag, or deployment changed.
 Actual account and physical-device acceptance remain outstanding.
+
+## Published Report Contract Review
+
+Confirmed and repaired drift between the native export and the analysis type:
+failure uses `prefix_ply` and candidate `roles`/`outcome`, not `ply`/`role`.
+The type now shares the analyzer failure projection, preserving optional fields
+for older published projections. Missing confidence is presented as unconfirmed.
+
+Nine mutated-artifact cases reproduced acceptance of malformed consumed fields:
+failure notation, onset labels, reversed intervals, out-of-board cells, count
+mismatch, duplicate tournament cells, provenance objects and inconsistent board
+dimensions. Both loaders now reject these at their boundary; the two real curated
+artifacts still load. Analysis publication is the existing implicit 15 × 15
+format: removed the viewer's speculative board-size inference, which could not
+recover a different board's encoding from the largest move cell.
+
+A browser run exposed duplicate `h1` headings in the intermediate Lab loading
+state. Loading/error panels now use a distinct secondary heading. Disposition:
+**fix/refactor**, retaining the lazy report structure and historical data.
+Typecheck and all 345 web tests (37 files) passed after this batch. Production
+build and both affected published-report browser scenarios passed. Curated JSON
+is unchanged.

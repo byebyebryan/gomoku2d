@@ -134,7 +134,9 @@ function isPublishedBotReport(data: unknown): data is PublishedBotReport {
     typeof report.source_schema_version === "number" &&
     isPositiveInteger(report.board_size) &&
     report.move_codec === "cell_index_v1" &&
+    isReportProvenance(report.provenance) &&
     isTournamentRunReport(report.run) &&
+    report.run.rules.board_size === report.board_size &&
     Array.isArray(report.standings) &&
     report.standings.every(isStandingReport) &&
     Array.isArray(report.pairwise) &&
@@ -166,7 +168,7 @@ function isPositiveInteger(value: unknown): value is number {
 }
 
 function hasNumberFields(value: Record<string, unknown>, fields: string[]): boolean {
-  return fields.every((field) => typeof value[field] === "number");
+  return fields.every((field) => typeof value[field] === "number" && Number.isFinite(value[field]));
 }
 
 function isTournamentRunReport(value: unknown): value is TournamentRunReport {
@@ -175,6 +177,7 @@ function isTournamentRunReport(value: unknown): value is TournamentRunReport {
   }
   return (
     isPositiveInteger(value.rules.board_size) &&
+    isPositiveInteger(value.rules.win_length) &&
     typeof value.rules.variant === "string" &&
     typeof value.schedule === "string" &&
     typeof value.opening_policy === "string" &&
@@ -232,7 +235,25 @@ function isPublishedMatchReport(value: unknown, boardSize: number): value is Pub
     return false;
   }
   const maxCell = boardSize * boardSize;
-  return value.move_cells.every((cell) => cell < maxCell);
+  return value.move_cells.length <= maxCell
+    && value.move_count === value.move_cells.length
+    && new Set(value.move_cells).size === value.move_cells.length
+    && value.move_cells.every((cell) => cell < maxCell)
+    && (value.winner == null || typeof value.winner === "string");
+}
+
+export function isReportProvenance(value: unknown): value is ReportProvenance | undefined {
+  if (value === undefined) return true;
+  if (!isObject(value)) return false;
+  const optionalText = (item: unknown) => item == null || typeof item === "string";
+  const optionalNumber = (item: unknown) => item == null || (typeof item === "number" && Number.isFinite(item));
+  return ["generated_at_utc", "generated_at_local", "git_commit"].every((field) => optionalText(value[field]))
+    && (value.git_dirty == null || typeof value.git_dirty === "boolean")
+    && (value.command === undefined || isStringArray(value.command))
+    && (value.host == null || (isObject(value.host)
+      && typeof value.host.os === "string" && typeof value.host.arch === "string"
+      && optionalText(value.host.cpu_model)
+      && optionalNumber(value.host.logical_cpus) && optionalNumber(value.host.cpu_mhz)));
 }
 
 export function displayBotSpec(spec: string): string {

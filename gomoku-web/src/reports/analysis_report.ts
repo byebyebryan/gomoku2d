@@ -1,4 +1,6 @@
-import type { ReportProvenance } from "./bot_report";
+import { isReportProvenance, type ReportProvenance } from "./bot_report";
+import type { ReplayAnalysisFailure } from "../replay/replay_analysis_protocol";
+import { validateReplayAnalysisFailure } from "../replay/replay_analysis_validation";
 
 export interface MovePoint {
   row: number;
@@ -77,20 +79,11 @@ export interface AnalysisEntry {
   } | null;
   last_chance_ply?: number | null;
   critical_loser_ply?: number | null;
-  failure?: {
-    confidence?: "confirmed" | "possible" | "unclear";
-    ply: number;
-    side: string;
-    mode: string;
-    actual_move?: MovePoint | null;
-    actual_notation?: string | null;
-    summary?: string | null;
-    missed_candidates?: Array<{
-      mv: MovePoint;
-      notation: string;
-      role: string;
-    }>;
-  } | null;
+  failure?: (Omit<ReplayAnalysisFailure, "confidence" | "missed_candidates"> & {
+    // Older published projections can omit these fields.
+    confidence?: ReplayAnalysisFailure["confidence"];
+    missed_candidates?: ReplayAnalysisFailure["missed_candidates"];
+  }) | null;
   proof_details?: {
     proof_frames: ProofFrame[];
   } | null;
@@ -144,13 +137,12 @@ function isAnalysisReport(data: unknown): data is PublishedAnalysisReport {
   return (
     (report.schema_version === 2 || report.schema_version === 3 || report.schema_version === 4) &&
     report.report_kind === "published_analysis" &&
+    isReportProvenance(report.provenance) &&
+    (report.source_report_provenance == null || isReportProvenance(report.source_report_provenance)) &&
     typeof report.source_kind === "string" &&
     typeof report.source_report === "string" &&
     typeof report.selector === "string" &&
-    typeof report.analyzed === "number" &&
-    typeof report.failed === "number" &&
-    typeof report.elapsed_ms === "number" &&
-    typeof report.total_elapsed_ms === "number" &&
+    hasNumberFields(data, ["analyzed", "failed", "elapsed_ms", "total_elapsed_ms", "total"]) &&
     isAnalysisModel(report.model) &&
     isAnalysisSummary(report.summary) &&
     Array.isArray(report.sections) &&
@@ -168,15 +160,18 @@ function isStringArray(value: unknown): value is string[] {
 }
 
 function isMoveCellArray(value: unknown): value is number[] {
-  return Array.isArray(value) && value.every((item) => Number.isInteger(item) && item >= 0);
+  return Array.isArray(value) && value.length <= 225
+    && value.every((item) => Number.isInteger(item) && item >= 0 && item < 225)
+    && new Set(value).size === value.length;
 }
 
 function hasNumberFields(value: Record<string, unknown>, fields: string[]): boolean {
-  return fields.every((field) => typeof value[field] === "number");
+  return fields.every((field) => typeof value[field] === "number" && Number.isFinite(value[field]));
 }
 
 function isAnalysisModel(value: unknown): value is PublishedAnalysisReport["model"] {
-  return isObject(value) && typeof value.max_depth === "number";
+  return isObject(value) && hasNumberFields(value, ["max_depth"])
+    && nullable(value.max_scan_plies, isPly);
 }
 
 function isAnalysisSummary(value: unknown): value is PublishedAnalysisReport["summary"] {
@@ -205,7 +200,15 @@ function isAnalysisEntry(value: unknown): value is AnalysisEntry {
     typeof value.path === "string" &&
     isAnalysisMatchSummary(value.match_report) &&
     typeof value.status === "string" &&
-    typeof value.elapsed_ms === "number" &&
+    hasNumberFields(value, ["elapsed_ms"]) &&
+    nullable(value.root_cause, isString) &&
+    nullable(value.unclear_reason, isString) &&
+    nullable(value.error, isString) &&
+    nullable(value.last_chance_ply, isPly) &&
+    nullable(value.critical_loser_ply, isPly) &&
+    nullable(value.lethal_onset, isLethalOnset) &&
+    nullable(value.setup_corridor, isInterval) &&
+    nullable(value.failure, isFailure) &&
     (value.proof_details == null || isProofDetails(value.proof_details)) &&
     (value.search_details == null || isSearchDetails(value.search_details))
   );
@@ -219,7 +222,9 @@ function isAnalysisMatchSummary(value: unknown): value is AnalysisEntry["match_r
     typeof value.result === "string" &&
     typeof value.end_reason === "string" &&
     hasNumberFields(value, ["match_index", "move_count"]) &&
-    isMoveCellArray(value.move_cells)
+    isMoveCellArray(value.move_cells) &&
+    value.move_count === value.move_cells.length &&
+    nullable(value.winner, isString)
   );
 }
 
@@ -231,9 +236,10 @@ function isProofFrame(value: unknown): value is ProofFrame {
   return (
     isObject(value) &&
     typeof value.label === "string" &&
-    typeof value.ply === "number" &&
+    isPly(value.ply) &&
     typeof value.side_to_move === "string" &&
     typeof value.status === "string" &&
+    nullable(value.move_played_notation, isString) &&
     typeof value.lethal_onset_reached === "boolean" &&
     Array.isArray(value.markers) &&
     value.markers.every(isProofMarker) &&
@@ -257,4 +263,41 @@ function isReplyOutcome(value: unknown): value is ProofFrame["reply_outcomes"][n
 
 function isSearchDetails(value: unknown): value is NonNullable<AnalysisEntry["search_details"]> {
   return isObject(value) && hasNumberFields(value, ["search_nodes", "branch_probes", "max_depth_reached"]);
+}
+
+function isString(value: unknown): value is string { return typeof value === "string"; }
+function isPly(value: unknown): value is number {
+  return Number.isInteger(value) && (value as number) >= 0 && (value as number) <= 225;
+}
+function nullable(value: unknown, validate: (value: unknown) => boolean): boolean {
+  return value == null || validate(value);
+}
+function isMove(value: unknown): boolean {
+  return isObject(value) && Number.isInteger(value.row) && Number.isInteger(value.col)
+    && (value.row as number) >= 0 && (value.row as number) < 15
+    && (value.col as number) >= 0 && (value.col as number) < 15;
+}
+function isInterval(value: unknown): boolean {
+  return isObject(value) && isPly(value.start_ply) && isPly(value.end_ply) && value.end_ply >= value.start_ply;
+}
+function isLethalOnset(value: unknown): boolean {
+  if (!isObject(value)) return false;
+  return isPly(value.prefix_ply) && isString(value.attacker) && isString(value.defender)
+    && nullable(value.kind, isString)
+    && nullable(value.terminal_targets, (items) => Array.isArray(items) && items.every(isMove))
+    && nullable(value.shape, (shape) => isObject(shape)
+      && nullable(shape.label, isString) && nullable(shape.mechanisms, isStringArray));
+}
+function isFailure(value: unknown): boolean {
+  if (!isObject(value)) return false;
+  try {
+    validateReplayAnalysisFailure({
+      ...value,
+      confidence: value.confidence ?? "unclear",
+      missed_candidates: value.missed_candidates ?? [],
+    });
+    return true;
+  } catch {
+    return false;
+  }
 }

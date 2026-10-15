@@ -18,7 +18,7 @@ export function ProofFrames({ entry }: { entry: AnalysisEntry }) {
     return <p className={styles.muted}>No proof frames captured for this entry.</p>;
   }
 
-  const boardSize = boardSizeFromMoveCells(entry.match_report.move_cells);
+  const boardSize = DEFAULT_REPORT_BOARD_SIZE;
   const winner = winnerSide(entry);
   const winningFrame = frames.find((frame) => frame.label === "winning_ply") ?? frames[0];
   const turnFrames = winner
@@ -282,11 +282,6 @@ type ActualMove = {
   notation: string;
   side: Side;
 };
-
-function boardSizeFromMoveCells(moveCells: number[]): number {
-  const maxCell = moveCells.reduce((max, cell) => Math.max(max, cell), 0);
-  return Math.max(DEFAULT_REPORT_BOARD_SIZE, Math.ceil(Math.sqrt(maxCell + 1)));
-}
 
 function stonesBeforePly(moveCells: number[], ply: number): Map<number, "black" | "white"> {
   const stones = new Map<number, "black" | "white">();

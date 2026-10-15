@@ -187,7 +187,7 @@ function analysisModelLabel(report: PublishedAnalysisReport): string {
 export function ReportStatePanel({ title, message }: { title: string; message: string }) {
   return (
     <section className={styles.state}>
-      <h1>{title}</h1>
+      <h2>{title}</h2>
       <p>{message}</p>
     </section>
   );

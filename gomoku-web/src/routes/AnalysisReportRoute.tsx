@@ -302,7 +302,9 @@ function presetClassName(preset: BotPresetId | null): string {
 
 function failureLabel(entry: AnalysisEntry): string {
   const label = failureModeLabel(entry);
-  if (entry.failure?.confidence === "unclear") return `unconfirmed: ${label}`;
+  if (entry.failure && entry.failure.confidence !== "confirmed" && entry.failure.confidence !== "possible") {
+    return `unconfirmed: ${label}`;
+  }
   return entry.failure?.confidence === "possible" ? `possible: ${label}` : label;
 }
 
@@ -323,8 +325,6 @@ function failureModeLabel(entry: AnalysisEntry): string {
       return "missed escape";
     case "unclear":
       return "unclear";
-    default:
-      return entry.failure.mode.replace(/_/g, " ");
   }
 }
 

@@ -31,6 +31,8 @@ Continues the `0.5.x` reconciliation line after the October project review.
   memory, and reject malformed nested replay-analysis cache/worker payloads.
 - Prevent delayed foreground profile reset/delete actions from clearing or
   signing out a later account/session.
+- Align published analysis failure types with native exports, validate consumed
+  report fields and compact moves, and clarify Lab loading/error states.
 
 ### Maintenance
 

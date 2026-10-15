@@ -209,6 +209,8 @@ describe("LabReportRoute", () => {
     renderRoute();
 
     expect(await screen.findByText("report unavailable")).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(screen.getByRole("heading", { name: "Report unavailable", level: 2 })).toBeInTheDocument();
   });
 
   it("opens a deep-linked analysis match", async () => {

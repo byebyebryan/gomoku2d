@@ -115,9 +115,9 @@ export function LabReportRoute() {
 
   if (view === "analysis") {
     if (analysisState.status === "error") {
-      content = <ReportStatePanel title="Lab Report" message={analysisState.message} />;
+      content = <ReportStatePanel title="Report unavailable" message={analysisState.message} />;
     } else if (analysisState.status !== "loaded") {
-      content = <ReportStatePanel title="Lab Report" message="Loading report…" />;
+      content = <ReportStatePanel title="Loading report" message="Fetching the published data." />;
     } else {
       content = (
         <>
@@ -128,9 +128,9 @@ export function LabReportRoute() {
       );
     }
   } else if (botState.status === "error") {
-    content = <ReportStatePanel title="Lab Report" message={botState.message} />;
+    content = <ReportStatePanel title="Report unavailable" message={botState.message} />;
   } else if (botState.status !== "loaded") {
-    content = <ReportStatePanel title="Lab Report" message="Loading report…" />;
+    content = <ReportStatePanel title="Loading report" message="Fetching the published data." />;
   } else {
     content = (
       <>
