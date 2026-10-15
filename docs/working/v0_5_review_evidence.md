@@ -129,3 +129,27 @@ replaced. Actual novice and screen-reader acceptance remain separate.
 These are investigation priorities, not yet all confirmed defects. Rules/model,
 browser cost, multi-tab/device behavior, and operational review continue after
 the first contract repairs. Record each disposition before marking coverage done.
+
+## Contract Repair Batch 1
+
+The first three queue items reproduced against the development baseline:
+four corrupt/newer-storage cases overwrote the original bytes, delayed reset
+replaced the next local identity, delayed deletion called the next session's
+sign-out, and two malformed nested cache cases were accepted. Eight regression
+cases failed before the repairs.
+
+Disposition: **fix**. Put local document parsing inside the best-effort boundary,
+reject unsupported versions/root/identity shapes, and keep original storage
+untouched after a read/validation failure. Guard foreground reset/delete
+follow-up actions with the initiating auth object and, for local reset, local
+identity. Share nested analyzer payload validation between Wasm and cache
+readers; validate annotation roles, sides, coordinates, intervals, summary and
+failure objects before presentation. The step envelope and native summary have
+independent schema versions; current real-Wasm coverage exercises both.
+
+Validation: typecheck including scripts/tools passed; 334 web tests across
+35 files passed; production build passed; all 32 Chromium browser scenarios
+passed (13.8 seconds), including denied/quota/corrupt/newer storage, live bot
+recovery, keyboard finish/replay/branch, and published Lab confidence. No Rust,
+Firestore schema/rules, curated report data, release tag, or deployment changed.
+Actual account and physical-device acceptance remain outstanding.

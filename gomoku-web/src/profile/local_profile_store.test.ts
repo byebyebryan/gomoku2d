@@ -33,6 +33,21 @@ const customBotConfig: BotConfig = {
 };
 
 describe("createLocalProfileStore", () => {
+  it.each(["{not-json", "null", '{"state":null,"version":5}', '{"state":{},"version":6}'])(
+    "preserves unreadable or unsupported storage: %s",
+    (raw) => {
+      const storage = createMemoryStorage();
+      storage.setItem("gomoku2d.local-profile.v5", raw);
+      const onPersistenceUnavailable = vi.fn();
+      const store = createLocalProfileStore({ storage, onPersistenceUnavailable });
+      store.getState().ensureLocalProfile();
+      store.getState().renameDisplayName("Session player");
+      expect(store.getState().profile?.displayName).toBe("Session player");
+      expect(storage.getItem("gomoku2d.local-profile.v5")).toBe(raw);
+      expect(onPersistenceUnavailable).toHaveBeenCalledOnce();
+    },
+  );
+
   it("keeps a playable profile, settings, and finished replay when storage is full", () => {
     const onPersistenceUnavailable = vi.fn();
     const store = createLocalProfileStore({

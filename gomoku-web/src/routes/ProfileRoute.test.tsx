@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 
@@ -106,6 +106,44 @@ function cacheReplayAnalysis(match: LocalProfileSavedMatch): void {
 }
 
 describe("ProfileRoute cloud state", () => {
+  it.each(["reset", "delete"] as const)("does not let a delayed %s affect a later account", async (action) => {
+    let finish!: () => void;
+    const pending = new Promise<void>((resolve) => { finish = resolve; });
+    const operation = vi.fn(() => pending);
+    const signOut = vi.fn().mockResolvedValue(undefined);
+    localProfileStore.getState().ensureLocalProfile();
+    localProfileStore.getState().renameDisplayName("Local player");
+    cloudAuthStore.setState({ status: "signed_in", isConfigured: true, user: cloudUser, signOut });
+    cloudProfileStore.setState({
+      profile: cloudProfile,
+      status: "ready",
+      ...(action === "reset" ? { resetForUser: operation } : { deleteForUser: operation }),
+    });
+    renderProfileRoute();
+    fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
+    if (action === "delete") fireEvent.click(screen.getByRole("button", { name: "Delete Cloud" }));
+    fireEvent.click(screen.getByRole("button", { name: action === "reset" ? "Reset" : "Delete" }));
+    await waitFor(() => expect(operation).toHaveBeenCalledOnce());
+
+    const nextUser = { ...cloudUser, uid: "uid-2" };
+    let nextLocalId: string | undefined;
+    await act(async () => {
+      cloudAuthStore.setState({ user: nextUser });
+      cloudProfileStore.setState({ profile: { ...cloudProfile, uid: nextUser.uid }, status: "ready" });
+      localProfileStore.getState().resetLocalProfile();
+      nextLocalId = localProfileStore.getState().ensureLocalProfile().id;
+      localProfileStore.getState().renameDisplayName("Next player");
+      finish();
+      await pending;
+    });
+    await waitFor(() => expect(screen.getByRole("button", { name: "Reset Profile" })).toBeEnabled());
+    expect(signOut).not.toHaveBeenCalled();
+    expect(localProfileStore.getState().profile?.id).toBe(nextLocalId);
+    expect(localProfileStore.getState().profile?.displayName).toBe("Next player");
+    expect(cloudAuthStore.getState().user).toBe(nextUser);
+    expect(cloudPromotionStore.getState().reset).not.toHaveBeenCalled();
+  });
+
   afterEach(() => {
     cleanup();
     cloudAuthStore.setState(initialCloudAuthState, true);

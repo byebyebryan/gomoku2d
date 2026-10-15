@@ -56,7 +56,9 @@ Current bridge exports used by web:
 - `chooseWasmBotMove(bot, board)`
 - `parseWasmReplayAnalysisStep(json)`
 
-The bridge validates payload shape before data reaches React stores. If Rust
+The bridge validates payload shape before data reaches React stores. Nested
+analyzer validation lives in `src/replay/replay_analysis_validation.ts` and is
+shared with persistent cache reads so retained data meets the same contract. If Rust
 adds a new wasm payload field, update the validator and the matching TypeScript
 type here first.
 

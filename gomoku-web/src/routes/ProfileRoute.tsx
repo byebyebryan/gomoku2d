@@ -452,9 +452,13 @@ export function ProfileRoute() {
     }
 
     const user = cloudAuth.user;
+    const localProfileId = localProfileStore.getState().profile?.id;
+    const isCurrent = () => cloudAuthStore.getState().user === user
+      && localProfileStore.getState().profile?.id === localProfileId;
     await cloudProfileStore.getState().resetForUser(user, createDefaultProfileSettings());
-
+    if (!isCurrent()) return;
     await cloudHistoryStore.getState().clearForUser(user);
+    if (!isCurrent()) return;
     cloudHistoryStore.getState().resetUserCache(user.uid);
     cloudPromotionStore.getState().reset();
     resetLocalProfileData();
@@ -466,8 +470,11 @@ export function ProfileRoute() {
     }
 
     const user = cloudAuth.user;
+    const isCurrent = () => cloudAuthStore.getState().user === user;
     await cloudHistoryStore.getState().clearForUser(user);
+    if (!isCurrent()) return;
     await cloudProfileStore.getState().deleteForUser(user);
+    if (!isCurrent()) return;
     cloudHistoryStore.getState().resetUserCache(user.uid);
     cloudPromotionStore.getState().reset();
     await cloudAuthStore.getState().signOut();

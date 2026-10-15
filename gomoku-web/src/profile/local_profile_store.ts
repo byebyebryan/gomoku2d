@@ -116,20 +116,24 @@ function settingsFromRaw(value: unknown): LocalProfileSettings {
 }
 
 function persistedStateFromRaw(raw: string | null): PersistedLocalProfileState | null {
-  if (!raw) {
+  if (raw === null) {
     return null;
   }
 
-  try {
-    const parsed = JSON.parse(raw) as { state?: Partial<PersistedLocalProfileState> };
-    return {
-      matchHistory: parsed.state?.matchHistory ?? null,
-      profile: isLocalProfileIdentity(parsed.state?.profile) ? parsed.state.profile : null,
-      settings: settingsFromRaw(parsed.state?.settings),
-    };
-  } catch {
-    return null;
+  const parsed = JSON.parse(raw) as { state?: Partial<PersistedLocalProfileState>; version?: unknown } | null;
+  if (
+    !parsed || typeof parsed !== "object" || Array.isArray(parsed)
+    || parsed.version !== STORAGE_SCHEMA_VERSION
+    || !parsed.state || typeof parsed.state !== "object" || Array.isArray(parsed.state)
+    || (parsed.state.profile != null && !isLocalProfileIdentity(parsed.state.profile))
+  ) {
+    throw new Error("Local profile storage is unreadable or uses an unsupported version.");
   }
+  return {
+    matchHistory: parsed.state.matchHistory ?? null,
+    profile: parsed.state.profile ?? null,
+    settings: settingsFromRaw(parsed.state.settings),
+  };
 }
 
 export function emptyLocalMatchHistory(): LocalProfileMatchHistory {
@@ -247,10 +251,13 @@ function validatedLocalProfileStorage(storage: LocalProfileStorage): LocalProfil
 export function createLocalProfileStore(
   options: LocalProfileStoreOptions = {},
 ): StoreApi<LocalProfileState> {
-  const baseStorage = bestEffortStorage(() => options.storage ?? localStorage, options.onPersistenceUnavailable);
+  const baseStorage = bestEffortStorage(
+    () => validatedLocalProfileStorage(options.storage ?? localStorage),
+    options.onPersistenceUnavailable,
+  );
 
   const storage = createJSONStorage<Pick<LocalProfileState, "matchHistory" | "profile" | "settings">>(
-    () => validatedLocalProfileStorage(baseStorage),
+    () => baseStorage,
   );
 
   return createStore<LocalProfileState>()(

@@ -27,6 +27,10 @@ Continues the `0.5.x` reconciliation line after the October project review.
   current position.
 - Added keyboard board navigation and placement, accessible cell descriptions,
   and semantic selected states for settings.
+- Preserve corrupt or unsupported local-profile documents while continuing in
+  memory, and reject malformed nested replay-analysis cache/worker payloads.
+- Prevent delayed foreground profile reset/delete actions from clearing or
+  signing out a later account/session.
 
 ### Maintenance
 

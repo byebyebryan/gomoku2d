@@ -3,6 +3,7 @@ import type { SavedMatchV2 } from "../match/saved_match";
 import { replayAnalysisOptionsJson, type ReplayAnalysisOptions } from "./replay_analysis_core";
 import type { ReplayAnalysisAnnotationsByPly } from "./replay_analysis_overlays";
 import type { ReplayAnalysisStepResult } from "./replay_analysis_protocol";
+import { validateReplayAnalysisStep, validateReplayFrameAnnotations } from "./replay_analysis_validation";
 
 const CACHE_STORAGE_KEY = "gomoku2d:replay-analysis-cache:v1";
 const CACHE_VERSION = 1;
@@ -41,17 +42,27 @@ function storageOrNull(storage?: ReplayAnalysisCacheStorage): ReplayAnalysisCach
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object";
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
 function isReplayAnalysisCacheRecord(value: unknown): value is ReplayAnalysisCacheRecord {
-  return isRecord(value)
+  if (!(isRecord(value)
     && typeof value.key === "string"
     && typeof value.lastUsedAtMs === "number"
     && typeof value.savedAtMs === "number"
     && isRecord(value.result)
     && isRecord(value.result.step)
-    && isRecord(value.result.annotationsByPly);
+    && isRecord(value.result.annotationsByPly))) return false;
+  try {
+    const step = validateReplayAnalysisStep(value.result.step);
+    if (!step.done || step.status === "running" || step.status === "error") return false;
+    for (const [ply, annotation] of Object.entries(value.result.annotationsByPly)) {
+      if (String(validateReplayFrameAnnotations(annotation).ply) !== ply) return false;
+    }
+    return Number.isFinite(value.lastUsedAtMs) && Number.isFinite(value.savedAtMs);
+  } catch {
+    return false;
+  }
 }
 
 function emptyCacheDocument(): ReplayAnalysisCacheDocument {

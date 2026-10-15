@@ -73,7 +73,7 @@ test("settings expose their selected rule, bot, and hints", async ({ page }) => 
     .toHaveAttribute("aria-pressed", "true");
 });
 
-for (const failure of ["denied getter", "write quota"] as const) {
+for (const failure of ["denied getter", "write quota", "corrupt document", "newer document"] as const) {
   test(`local play survives ${failure} and explains session-only saves`, async ({ page }, testInfo) => {
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
@@ -83,8 +83,11 @@ for (const failure of ["denied getter", "write quota"] as const) {
           configurable: true,
           get: () => { throw new DOMException("Storage denied", "SecurityError"); },
         });
-      } else {
+      } else if (mode === "write quota") {
         Storage.prototype.setItem = () => { throw new DOMException("Storage full", "QuotaExceededError"); };
+      } else {
+        localStorage.setItem("gomoku2d.local-profile.v5", mode === "corrupt document"
+          ? "{not-json" : '{"state":{},"version":6}');
       }
     }, failure);
     await page.goto("/match/local");
@@ -95,6 +98,10 @@ for (const failure of ["denied getter", "write quota"] as const) {
     await expect(page.getByTestId("match-move-count")).toHaveText("Move 2");
     await expect(page.getByRole("button", { name: "Undo" })).toBeInViewport();
     expect(errors).toEqual([]);
+    if (failure === "corrupt document" || failure === "newer document") {
+      expect(await page.evaluate(() => localStorage.getItem("gomoku2d.local-profile.v5")))
+        .toBe(failure === "corrupt document" ? "{not-json" : '{"state":{},"version":6}');
+    }
     if (failure === "denied getter") {
       await page.screenshot({ path: testInfo.outputPath("storage-fallback.png") });
     }
