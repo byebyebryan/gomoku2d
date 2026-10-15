@@ -12,6 +12,19 @@ their own section.
 
 ## [Unreleased]
 
+### Maintenance
+
+- Moved dependency maintenance to direct manual review and disabled scheduled
+  Dependabot PRs while retaining GitHub vulnerability alerts.
+- Refreshed compatible Rust and npm dependencies and updated the Java setup
+  action used by CI.
+- Fixed the tournament test's new Rust stable Clippy warning and added a
+  scoped Firestore gRPC override for current security fixes.
+- Removed the redundant top-level-await transform, restoring production builds
+  with the refreshed toolchain while retaining the existing `esnext` target.
+- Documented the remaining Firebase CLI development dependency advisories and
+  their upstream remediation limits.
+
 ## [0.5.4] - 2026-07-23
 
 **Theme: close the `0.5` reconciliation line on a deliberately reviewed baseline.**

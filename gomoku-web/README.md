@@ -44,6 +44,10 @@ React routes/stores
 The active match and replay flows intentionally stay local-first. Cloud is a
 continuity layer for signed-in private history, not a requirement for playing.
 
+Production builds target `esnext` and use native top-level await to load Wasm
+in the app and ES workers. The build needs `vite-plugin-wasm`; it does not need
+a separate top-level-await transform.
+
 ## Source Layout
 
 ```text

@@ -2,11 +2,9 @@ import { defineConfig, type PluginOption } from "vite";
 import react from "@vitejs/plugin-react";
 import { readFileSync } from "node:fs";
 import * as wasmModule from "vite-plugin-wasm";
-import * as topLevelAwaitModule from "vite-plugin-top-level-await";
 
 const appVersion = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8")).version;
 const wasm = wasmModule.default as unknown as () => PluginOption;
-const topLevelAwait = topLevelAwaitModule.default as unknown as () => PluginOption;
 
 function normalizeBasePath(basePath: string | undefined): string {
   if (!basePath || basePath === "/") {
@@ -18,7 +16,7 @@ function normalizeBasePath(basePath: string | undefined): string {
 }
 
 function sharedPlugins(): PluginOption[] {
-  return [react(), wasm(), topLevelAwait()];
+  return [react(), wasm()];
 }
 
 const popupAuthHeaders = {
@@ -29,6 +27,7 @@ const popupAuthHeaders = {
 export default defineConfig(() => ({
   base: normalizeBasePath(process.env.GOMOKU_BASE_PATH),
   build: {
+    // Wasm loading uses native top-level await, including in ES workers.
     target: "esnext",
   },
   define: {

@@ -688,7 +688,7 @@ mod tests {
         assert!(first_metadata.suite_index.is_some());
         assert!(first_metadata.template_index.is_some());
         assert!(first_metadata.transform_index.is_some());
-        for pair_games in results.matches.chunks_exact(4) {
+        for pair_games in results.matches.as_chunks::<4>().0 {
             let first_color_opening = replay_moves(&pair_games[0]);
             let first_swapped_opening = replay_moves(&pair_games[1]);
             let second_color_opening = replay_moves(&pair_games[2]);

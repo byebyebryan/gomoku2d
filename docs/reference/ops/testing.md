@@ -43,6 +43,9 @@ update PRs remain disabled.
    CI on the pushed `main` commit. Refresh curated reports only when their
    behavior or source data changes.
 
+Current overrides and upstream audit limits are tracked in
+[`Dependency Maintenance Notes`](../../working/dependency_maintenance.md).
+
 ## Test Design
 
 Tests in this repo should protect durable behavior, not the temporary path used

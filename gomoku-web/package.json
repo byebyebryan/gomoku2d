@@ -7,10 +7,10 @@
     "node": ">=24"
   },
   "overrides": {
-    "uuid": "^14.0.0",
-    "vite-plugin-top-level-await": {
-      "uuid": "^14.0.0"
-    }
+    "@firebase/firestore": {
+      "@grpc/grpc-js": "^1.14.6"
+    },
+    "uuid": "^14.0.0"
   },
   "scripts": {
     "dev": "vite",
@@ -49,8 +49,7 @@
     "rollup": "^4.60.2",
     "typescript": "^6.0.3",
     "vite": "^8.0.10",
-    "vite-plugin-top-level-await": "^1.6.0",
     "vite-plugin-wasm": "^3.6.0",
-    "vitest": "^4.1.5"
+    "vitest": "^4.1.12"
   }
 }
