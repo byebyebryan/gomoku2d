@@ -301,6 +301,12 @@ function presetClassName(preset: BotPresetId | null): string {
 }
 
 function failureLabel(entry: AnalysisEntry): string {
+  const label = failureModeLabel(entry);
+  if (entry.failure?.confidence === "unclear") return `unconfirmed: ${label}`;
+  return entry.failure?.confidence === "possible" ? `possible: ${label}` : label;
+}
+
+function failureModeLabel(entry: AnalysisEntry): string {
   if (!entry.failure) {
     return entry.root_cause ?? entry.unclear_reason ?? "-";
   }

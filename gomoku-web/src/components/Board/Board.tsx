@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import * as Phaser from "phaser";
 
 import { BoardScene, type BoardSceneState } from "../../board/board_scene";
@@ -36,6 +36,15 @@ export function Board(props: BoardProps) {
   const gameRef = useRef<Phaser.Game | null>(null);
   const lastHostSizeRef = useRef<{ width: number; height: number } | null>(null);
   const sceneRef = useRef<BoardScene | null>(null);
+  const instructionsId = useId();
+  const [focusedCell, setFocusedCell] = useState(() => Math.floor(props.model.boardSize / 2) * (props.model.boardSize + 1));
+  const cellRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const model = props.model;
+  const interactive = model.interaction.kind === "play" && model.interaction.interactive;
+  const sideToMove = model.position.currentPlayer === 1 ? "Black" : "White";
+  const positionStatus = model.position.status === "playing"
+    ? `${sideToMove} to move.`
+    : model.position.status === "draw" ? "Draw." : model.position.status === "black_won" ? "Black wins." : "White wins.";
 
   useEffect(() => {
     if (!frameRef.current || !hostRef.current) {
@@ -142,9 +151,85 @@ export function Board(props: BoardProps) {
 
   return (
     <div className={styles.frame} ref={frameRef}>
-      <div className={styles.viewport} ref={hostRef} />
+      <div className={styles.viewport} ref={hostRef}>
+        <span className={styles.screenReaderText} id={instructionsId}>
+          Use arrow keys to explore the board. Home and End move to the ends of a row.
+          Enter or Space places a stone on your turn.
+        </span>
+        <span className={styles.screenReaderText} role="status" aria-live="polite" aria-atomic="true">
+          {positionStatus} {model.position.lastMove
+            ? `Last move ${cellNotation(model.position.lastMove.row, model.position.lastMove.col)}.`
+            : "Board empty."}
+        </span>
+        <div
+          aria-colcount={model.boardSize}
+          aria-describedby={instructionsId}
+          aria-label="Gomoku board"
+          aria-readonly={!interactive}
+          aria-rowcount={model.boardSize}
+          className={styles.keyboardGrid}
+          role="grid"
+          style={{ gridTemplateColumns: `repeat(${model.boardSize}, 1fr)`, gridTemplateRows: `repeat(${model.boardSize}, 1fr)` }}
+        >
+          {model.position.cells.map((row, rowIndex) => (
+            <div className={styles.keyboardRow} key={rowIndex} role="row" aria-rowindex={rowIndex + 1}>
+              {row.map((stone, colIndex) => {
+                const index = rowIndex * model.boardSize + colIndex;
+                const forbidden = model.forbiddenMoves.some((cell) => cell.row === rowIndex && cell.col === colIndex);
+                const placeable = interactive && stone === null && !forbidden;
+                const annotations = model.overlays
+                  .filter((overlay) => overlay.cell.row === rowIndex && overlay.cell.col === colIndex)
+                  .map((overlay) => overlay.kind === "analysis"
+                    ? overlay.marker === "possibleEscape" ? "possible escape"
+                      : overlay.marker === "escape" ? "confirmed escape"
+                        : overlay.marker ?? overlay.highlight ?? ""
+                    : overlay.kind === "hint" ? overlay.role : "")
+                  .filter(Boolean);
+                return (
+                  <button
+                    aria-colindex={colIndex + 1}
+                    aria-disabled={!placeable}
+                    aria-label={`${cellNotation(rowIndex, colIndex)}: ${stone === null ? "empty" : stone === 0 ? "Black stone" : "White stone"}${forbidden ? ", forbidden" : ""}${annotations.length ? `, ${annotations.join(", ")}` : ""}`}
+                    className={styles.keyboardCell}
+                    key={colIndex}
+                    onClick={() => {
+                      if (placeable && model.interaction.kind === "play") model.interaction.onPlace(rowIndex, colIndex);
+                    }}
+                    onFocus={() => setFocusedCell(index)}
+                    onKeyDown={(event) => {
+                      let nextRow = rowIndex;
+                      let nextCol = colIndex;
+                      switch (event.key) {
+                        case "ArrowUp": nextRow -= 1; break;
+                        case "ArrowDown": nextRow += 1; break;
+                        case "ArrowLeft": nextCol -= 1; break;
+                        case "ArrowRight": nextCol += 1; break;
+                        case "Home": nextCol = 0; if (event.ctrlKey) nextRow = 0; break;
+                        case "End": nextCol = model.boardSize - 1; if (event.ctrlKey) nextRow = model.boardSize - 1; break;
+                        default: return;
+                      }
+                      event.preventDefault();
+                      nextRow = Math.max(0, Math.min(model.boardSize - 1, nextRow));
+                      nextCol = Math.max(0, Math.min(model.boardSize - 1, nextCol));
+                      cellRefs.current[nextRow * model.boardSize + nextCol]?.focus();
+                    }}
+                    ref={(element) => { cellRefs.current[index] = element; }}
+                    role="gridcell"
+                    tabIndex={focusedCell === index ? 0 : -1}
+                    type="button"
+                  />
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
+}
+
+function cellNotation(row: number, col: number): string {
+  return `${String.fromCharCode(65 + col)}${row + 1}`;
 }
 
 function boardSceneStateFromModel(model: BoardViewModel): BoardSceneState {

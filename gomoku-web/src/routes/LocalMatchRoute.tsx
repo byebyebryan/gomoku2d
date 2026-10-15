@@ -34,6 +34,7 @@ function loadingCells(): LocalMatchState["cells"] {
 }
 
 const loadingMatchStore = createStore<LocalMatchState>(() => ({
+  botError: null,
   cells: loadingCells(),
   counterThreatEvidenceCells: [],
   counterThreatMoves: [],
@@ -48,6 +49,7 @@ const loadingMatchStore = createStore<LocalMatchState>(() => ({
   moves: [],
   pendingBotMove: false,
   placeHumanMove: () => false,
+  retryBotMove: () => undefined,
   players: [
     { kind: "human", name: "Guest", stone: "black" },
     { kind: "bot", name: botPlayerName(DEFAULT_BOT_CONFIG), stone: "white" },
@@ -71,7 +73,7 @@ const loadingMatchStore = createStore<LocalMatchState>(() => ({
 }));
 
 function statusLabel(
-  state: Pick<LocalMatchState, "currentPlayer" | "pendingBotMove" | "players" | "status">,
+  state: Pick<LocalMatchState, "botError" | "currentPlayer" | "pendingBotMove" | "players" | "status">,
 ): string {
   if (state.status === "black_won" || state.status === "white_won") {
     const winningStone = state.status === "black_won" ? "black" : "white";
@@ -83,6 +85,9 @@ function statusLabel(
   }
   if (state.pendingBotMove) {
     return "Thinking";
+  }
+  if (state.botError) {
+    return "Bot paused";
   }
 
   return `${state.players[state.currentPlayer - 1]?.name ?? "Unknown"} to move`;
@@ -432,7 +437,13 @@ export function LocalMatchRoute() {
           <div className="uiDivider" />
 
           <section className={`${styles.hudSection} ${styles.actionSection}`}>
+            {state.botError ? <p className={styles.pendingText} role="alert">{state.botError}</p> : null}
             <div className={styles.matchActions}>
+              {state.botError ? (
+                <button className="uiAction uiActionPrimary" onClick={state.retryBotMove} type="button">
+                  <span className="uiActionLabel">Retry bot</span>
+                </button>
+              ) : null}
               {compactTouchMode ? (
                 <button
                   className="uiAction uiActionPrimary"

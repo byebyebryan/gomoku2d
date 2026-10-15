@@ -25,6 +25,7 @@ export type BoardAnalysisHighlightRole =
   | "imminentThreat";
 export type BoardAnalysisMarkerRole =
   | "escape"
+  | "possibleEscape"
   | "forbidden"
   | "forcedLoss"
   | "immediateLoss"
@@ -229,6 +230,8 @@ export function analysisMarkerAnimationForRole(role: BoardAnalysisMarkerRole): s
   switch (role) {
     case "escape":
       return MARKER_ANIMS.E.key;
+    case "possibleEscape":
+      return MARKER_ANIMS.P.key;
     case "forbidden":
       return CAUTION_ANIMS.FORBIDDEN_OUT.key;
     case "forcedLoss":
@@ -248,6 +251,7 @@ export function analysisMarkerSpriteForRole(role: BoardAnalysisMarkerRole): stri
 export function analysisMarkerTintForRole(role: BoardAnalysisMarkerRole): number {
   switch (role) {
     case "escape":
+    case "possibleEscape":
       return COLOR.WIN_MOVE;
     case "forbidden":
     case "forcedLoss":

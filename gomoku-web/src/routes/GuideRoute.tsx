@@ -344,13 +344,13 @@ export function GuideRoute() {
               <p>
                 After a match, Analyze opens the replay at the end and works
                 backward through the losing side&apos;s decisions. Scrub any move,
-                or follow the marked line from combo onset back to the last escape.
+                or follow the marked line from combo onset back to an escape candidate.
               </p>
             </div>
             <div className={styles.stepGrid}>
               <div>
                 <h3>Combo onset</h3>
-                <p>The lethal combo that made the result unavoidable.</p>
+                <p>The lethal combo that forces the result within the analyzer&apos;s model.</p>
               </div>
               <div>
                 <h3>Setup corridor</h3>
@@ -358,7 +358,10 @@ export function GuideRoute() {
               </div>
               <div>
                 <h3>Last escape</h3>
-                <p>The final position where a different move could still avoid the loss.</p>
+                <p>
+                  E marks a confirmed escape in this analysis. P marks a possible
+                  escape: the search has not proved that candidate loses.
+                </p>
               </div>
             </div>
           </section>

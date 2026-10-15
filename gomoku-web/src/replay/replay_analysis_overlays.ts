@@ -87,8 +87,9 @@ function highlightRole(role: ReplayFrameHighlightRole): BoardAnalysisOverlay["hi
 function markerRole(role: ReplayFrameMarkerRole): BoardAnalysisOverlay["marker"] | null {
   switch (role) {
     case "confirmed_escape":
-    case "possible_escape":
       return "escape";
+    case "possible_escape":
+      return "possibleEscape";
     case "forbidden":
       return "forbidden";
     case "forced_loss":
@@ -261,7 +262,9 @@ export function replayFailureSummary(
       : null,
     criticalPly: failure.prefix_ply,
     detail: failureDetail(failure),
-    label: failureModeLabel(failure, analysis?.lethal_onset),
+    label: failure.confidence === "unclear"
+      ? "Unconfirmed finding"
+      : `${failure.confidence === "possible" ? "Possible: " : ""}${failureModeLabel(failure, analysis?.lethal_onset)}`,
     side: failure.side,
   };
 }
@@ -392,9 +395,10 @@ export function replayAnalysisStatusSummary(
     }
 
     if (timeline.escapePly !== null && frame.moveIndex === timeline.escapePly && loser) {
+      const confirmed = annotationsByPly[timeline.escapePly]?.markers.some((marker) => marker.role === "confirmed_escape");
       return {
-        detail: "Last chance to avoid loss",
-        label: `${loser}'s last escape`,
+        detail: confirmed ? "Last chance to avoid loss" : "No forced loss found within the analysis limit",
+        label: confirmed ? `${loser}'s last escape` : `${loser}: possible escape`,
       };
     }
 

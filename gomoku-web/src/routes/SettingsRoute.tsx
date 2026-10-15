@@ -68,6 +68,7 @@ function HintModeRow<TMode extends string>({
       >
         {options.map((option) => (
           <button
+            aria-pressed={selected === option.value}
             className={selected === option.value ? "uiSegment uiSegmentActive" : "uiSegment"}
             key={option.value}
             onClick={() => onSelect(option.value)}
@@ -250,6 +251,7 @@ export function SettingsRoute() {
               <div className={styles.segmentGrid}>
                 {(["freestyle", "renju"] as const).map((variant) => (
                   <button
+                    aria-pressed={settings.gameConfig.ruleset === variant}
                     className={settings.gameConfig.ruleset === variant ? "uiSegment uiSegmentActive" : "uiSegment"}
                     key={variant}
                     onClick={() => updateGameRuleset(variant)}
@@ -277,6 +279,7 @@ export function SettingsRoute() {
                   </div>
                   <div className={styles.segmentGrid}>
                     <button
+                      aria-pressed={settings.touchControl === "pointer"}
                       className={settings.touchControl === "pointer" ? "uiSegment uiSegmentActive" : "uiSegment"}
                       onClick={() => updateSetup({ touchControl: "pointer" })}
                       type="button"
@@ -284,6 +287,7 @@ export function SettingsRoute() {
                       Pointer
                     </button>
                     <button
+                      aria-pressed={settings.touchControl === "touchpad"}
                       className={settings.touchControl === "touchpad" ? "uiSegment uiSegmentActive" : "uiSegment"}
                       onClick={() => updateSetup({ touchControl: "touchpad" })}
                       type="button"
@@ -338,6 +342,7 @@ export function SettingsRoute() {
                 const config: BotConfig = { mode: "preset", preset, version: 1 };
                 return (
                   <button
+                    aria-pressed={settings.botConfig.mode === "preset" && settings.botConfig.preset === preset}
                     className={
                       settings.botConfig.mode === "preset" && settings.botConfig.preset === preset
                         ? `${styles.presetCard} ${styles.presetCardActive}`
@@ -353,6 +358,7 @@ export function SettingsRoute() {
                 );
               })}
               <button
+                aria-pressed={settings.botConfig.mode === "custom"}
                 className={
                   settings.botConfig.mode === "custom"
                     ? `${styles.presetCard} ${styles.presetCardActive}`
@@ -387,6 +393,7 @@ export function SettingsRoute() {
                 <div className={styles.segmentGridFour}>
                   {BOT_DEPTHS.map((depth) => (
                     <button
+                      aria-pressed={custom.depth === depth}
                       className={custom.depth === depth ? "uiSegment uiSegmentActive" : "uiSegment"}
                       key={depth}
                       onClick={() => updateCustomBot({ depth })}
@@ -406,6 +413,7 @@ export function SettingsRoute() {
                 <div className={styles.segmentGridThree}>
                   {BOT_WIDTHS.map((width) => (
                     <button
+                      aria-pressed={custom.width === width}
                       className={custom.width === width ? "uiSegment uiSegmentActive" : "uiSegment"}
                       disabled={!isBotWidthAllowed(custom.depth, width)}
                       key={width}
@@ -425,6 +433,7 @@ export function SettingsRoute() {
                 </div>
                 <div className={styles.segmentGrid}>
                   <button
+                    aria-pressed={custom.scoring === "simple"}
                     className={custom.scoring === "simple" ? "uiSegment uiSegmentActive" : "uiSegment"}
                     onClick={() => updateCustomBot({ scoring: "simple" })}
                     type="button"
@@ -432,6 +441,7 @@ export function SettingsRoute() {
                     Simple
                   </button>
                   <button
+                    aria-pressed={custom.scoring === "pattern"}
                     className={custom.scoring === "pattern" ? "uiSegment uiSegmentActive" : "uiSegment"}
                     onClick={() => updateCustomBot({ scoring: "pattern" })}
                     type="button"
@@ -448,6 +458,7 @@ export function SettingsRoute() {
                 </div>
                 <div className={styles.segmentGrid}>
                   <button
+                    aria-pressed={custom.extraPass === "none"}
                     className={custom.extraPass === "none" ? "uiSegment uiSegmentActive" : "uiSegment"}
                     onClick={() => updateCustomBot({ extraPass: "none" })}
                     type="button"
@@ -455,6 +466,7 @@ export function SettingsRoute() {
                     None
                   </button>
                   <button
+                    aria-pressed={custom.extraPass === "corridor_proof"}
                     className={custom.extraPass === "corridor_proof" ? "uiSegment uiSegmentActive" : "uiSegment"}
                     onClick={() => updateCustomBot({ extraPass: "corridor_proof" })}
                     type="button"

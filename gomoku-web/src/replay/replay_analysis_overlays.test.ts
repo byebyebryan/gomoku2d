@@ -91,6 +91,26 @@ function step(...annotations: ReplayFrameAnnotations[]): ReplayAnalysisStepResul
 }
 
 describe("mergeReplayAnalysisAnnotations", () => {
+  it.each([
+    { roles: ["possible_escape"], label: "White: possible escape" },
+    { roles: ["confirmed_escape"], label: "White's last escape" },
+    { roles: ["possible_escape", "confirmed_escape"], label: "White's last escape" },
+    { roles: ["unknown"], label: "White to move" },
+  ] as const)("preserves escape certainty for $roles", ({ roles, label }) => {
+    const frame = annotation(4, "White");
+    frame.markers = roles.map((role, index) => ({ ...frame.markers[0], mv: { row: 7, col: index }, role }));
+    const result = replayAnalysisStatusSummary(
+      { ...step(frame), status: "resolved", done: true },
+      { 4: frame },
+      match(),
+      { currentPlayer: 2, moveIndex: 4, status: "playing" },
+    );
+    expect(result.label).toBe(label);
+    if (roles[0] === "possible_escape" && roles.length === 1) {
+      expect(result.detail).toContain("analysis limit");
+    }
+  });
+
   it("stores the latest annotation for each ply without duplicating stale frames", () => {
     const first = mergeReplayAnalysisAnnotations({}, step(annotation(4, "White")));
     const replacement = annotation(4, "White");
@@ -521,6 +541,16 @@ describe("replayAnalysisStatusSummary", () => {
 });
 
 describe("replayFailureSummary", () => {
+  it.each([
+    { confidence: "confirmed", label: "Missed escape" },
+    { confidence: "possible", label: "Possible: Missed escape" },
+    { confidence: "unclear", label: "Unconfirmed finding" },
+  ] as const)("preserves $confidence attribution in the failure summary", ({ confidence, label }) => {
+    expect(replayFailureSummary({
+      failure: { confidence, mode: "missed_escape", prefix_ply: 4, side: "White", missed_candidates: [] },
+    })?.label).toBe(label);
+  });
+
   it("returns null for unclear or missing failures", () => {
     expect(replayFailureSummary(null)).toBeNull();
     expect(replayFailureSummary({
@@ -760,7 +790,7 @@ describe("analysisOverlaysForFrame", () => {
     const annotations = mergeReplayAnalysisAnnotations({}, step(frame));
 
     expect(analysisOverlaysForFrame(annotations, match("black_won"), 4)).toEqual([
-      expect.objectContaining({ marker: "escape", row: 7, col: 8 }),
+      expect.objectContaining({ marker: "possibleEscape", row: 7, col: 8 }),
       expect.objectContaining({ marker: "forbidden", row: 7, col: 9 }),
     ]);
   });

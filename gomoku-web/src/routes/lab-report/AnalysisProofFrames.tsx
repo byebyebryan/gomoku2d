@@ -442,7 +442,9 @@ function perspectiveProofStatusLabel(frame: ProofFrame, winner: Side): string {
     return frame.lethal_onset_reached ? "guaranteed loss" : "forced loss";
   }
   if (frame.status === "escape_found") {
-    return side === winner ? "win not forced" : "can escape";
+    const confirmed = frame.reply_outcomes.some((reply) => reply.outcome === "confirmed_escape")
+      || frame.markers.some((marker) => marker.kinds.includes("confirmed_escape"));
+    return side === winner ? "win not forced" : confirmed ? "can escape" : "possible escape";
   }
   return proofStatusLabel(frame.status);
 }

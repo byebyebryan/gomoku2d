@@ -78,6 +78,7 @@ export interface AnalysisEntry {
   last_chance_ply?: number | null;
   critical_loser_ply?: number | null;
   failure?: {
+    confidence?: "confirmed" | "possible" | "unclear";
     ply: number;
     side: string;
     mode: string;

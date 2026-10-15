@@ -35,6 +35,7 @@ interface FinishedLocalMatch {
 }
 
 export interface LocalMatchState {
+  botError: string | null;
   cells: CellStone[][];
   counterThreatEvidenceCells: CellPosition[];
   counterThreatMoves: CellPosition[];
@@ -62,6 +63,7 @@ export interface LocalMatchState {
   undoFloor: number;
   undoLastTurn: () => boolean;
   placeHumanMove: (row: number, col: number) => boolean;
+  retryBotMove: () => void;
   dispose: () => void;
   winningEvidenceCells: CellPosition[];
   winningMoves: CellPosition[];
@@ -269,7 +271,9 @@ function snapshotState(
 ): Omit<
   LocalMatchState,
   | "dispose"
+  | "botError"
   | "placeHumanMove"
+  | "retryBotMove"
   | "selectBotConfig"
   | "selectVariant"
   | "startNewMatch"
@@ -465,6 +469,7 @@ export function createLocalMatchStore(
       ];
 
       updateState(nextMoves, false);
+      set({ botError: null });
 
       const finishedMatch = snapshotFinishedMatch(
         board,
@@ -484,6 +489,7 @@ export function createLocalMatchStore(
     const queueBotMove = async (slot: 0 | 1): Promise<void> => {
       const activeToken = ++requestToken;
 
+      set({ botError: null });
       updateState(get().moves, true);
 
       try {
@@ -495,6 +501,7 @@ export function createLocalMatchStore(
 
         if (!move || !board.isLegal(move.row, move.col)) {
           updateState(get().moves, false);
+          set({ botError: "The bot could not make a legal move. Retry this turn." });
           return;
         }
 
@@ -503,6 +510,7 @@ export function createLocalMatchStore(
         if (activeToken === requestToken) {
           console.error("[local_match_store] bot move failed", error);
           updateState(get().moves, false);
+          set({ botError: "The bot could not finish its move. Retry this turn." });
         }
       }
     };
@@ -537,6 +545,7 @@ export function createLocalMatchStore(
       undoFloor = 0;
       resetClocks();
       configureBots();
+      set({ botError: null });
       updateState([], false);
       maybeQueueBotMove();
     };
@@ -544,6 +553,7 @@ export function createLocalMatchStore(
     configureBots();
 
     return {
+      botError: null,
       ...snapshotState(
         board,
         seededMoves,
@@ -561,6 +571,12 @@ export function createLocalMatchStore(
         interruptBotRequests();
         botRunner.dispose();
         board.free();
+      },
+      retryBotMove: () => {
+        const state = get();
+        if (state.botError && !state.pendingBotMove && state.status === "playing") {
+          maybeQueueBotMove();
+        }
       },
       placeHumanMove: (row: number, col: number) => {
         const state = get();
@@ -627,6 +643,7 @@ export function createLocalMatchStore(
         );
 
         turnStartedAtMs = nowMs();
+        set({ botError: null });
         updateState(nextMoves, false);
         return true;
       },

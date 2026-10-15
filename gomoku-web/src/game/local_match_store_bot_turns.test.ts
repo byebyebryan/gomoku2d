@@ -4,6 +4,48 @@ import type { LocalMatchState } from "./local_match_store";
 import { createLocalMatchStore } from "./local_match_store";
 
 describe("createLocalMatchStore bot turns and undo", () => {
+  it.each(["worker error", "null move", "illegal move"])("surfaces %s and retries the opening turn without losing the position", async (failure) => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    try {
+      const chooseMove = vi.fn();
+      if (failure === "worker error") chooseMove.mockRejectedValueOnce(new Error("Worker failed twice"));
+      else chooseMove.mockResolvedValueOnce(failure === "null move" ? null : { row: -1, col: -1 });
+      chooseMove.mockResolvedValueOnce({ row: 7, col: 7 });
+      const store = createLocalMatchStore({
+        botRunner: { chooseMove, configure: () => undefined, dispose: () => undefined },
+      });
+      store.getState().startNextRound();
+      await vi.waitFor(() => expect(store.getState().botError).not.toBeNull());
+      expect(store.getState()).toMatchObject({ currentPlayer: 1, moves: [], pendingBotMove: false });
+      expect(store.getState().placeHumanMove(7, 7)).toBe(false);
+      store.getState().retryBotMove();
+      expect(store.getState()).toMatchObject({ botError: null, pendingBotMove: true });
+      await vi.waitFor(() => expect(store.getState().moves).toHaveLength(1));
+      expect(store.getState()).toMatchObject({ botError: null, currentPlayer: 2, pendingBotMove: false });
+      expect(store.getState().moves[0]).toMatchObject({ row: 7, col: 7 });
+      expect(chooseMove).toHaveBeenCalledTimes(2);
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
+  it("ignores a retried bot result after undo cancels the turn", async () => {
+    let finishRetry!: (move: { row: number; col: number }) => void;
+    const chooseMove = vi.fn()
+      .mockResolvedValueOnce(null)
+      .mockImplementationOnce(() => new Promise((resolve) => { finishRetry = resolve; }));
+    const store = createLocalMatchStore({
+      botRunner: { chooseMove, configure: () => undefined, dispose: () => undefined },
+    });
+    store.getState().placeHumanMove(7, 7);
+    await vi.waitFor(() => expect(store.getState().botError).not.toBeNull());
+    store.getState().retryBotMove();
+    expect(store.getState().undoLastTurn()).toBe(true);
+    finishRetry({ row: 8, col: 8 });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(store.getState()).toMatchObject({ botError: null, currentPlayer: 1, moves: [], pendingBotMove: false });
+  });
+
   it("swaps colors for the next round and lets the black bot open", async () => {
     let resolveMove!: (move: { row: number; col: number }) => void;
     let hasQueuedMove = false;
