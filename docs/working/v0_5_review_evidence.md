@@ -175,3 +175,50 @@ state. Loading/error panels now use a distinct secondary heading. Disposition:
 Typecheck and all 345 web tests (37 files) passed after this batch. Production
 build and both affected published-report browser scenarios passed. Curated JSON
 is unchanged.
+
+## Core Rules and Corpus Review, First Boundary
+
+Confirmed a FEN boundary defect: imports contain stones but intentionally have
+no undo history; draw detection used history length. A nine-ply 3 × 3 regression
+compares every played prefix with its FEN import through apply, hash and undo.
+The final imported move incorrectly stayed ongoing. Draw detection now counts
+occupied bitset cells. Invalid zero/impossible/overflowing FEN dimensions return
+errors before allocation. FEN remains a position format: it does not reconstruct
+past moves or infer historical wins from arbitrary imported diagrams.
+
+Native fmt/Clippy and 342 workspace tests passed with the two new core
+regressions. A subsequent symmetry test checks all 29 Renju reference labels
+under all eight rotations/reflections, including actual application; all 232
+probes passed. The actual rebuilt Wasm bridge also passed imported draw/undo and
+invalid-dimension checks. Broader final gates follow the integrated candidate.
+
+The [federation definitions and rules 9.1–9.3](https://gomoku.renju.net/rifrules/)
+support the core's exact-five priority, unrestricted White overlines, and
+recursive legal-continuation checks. The 23 external diagram labels previously
+agreed with the separate Piskvork checker; symmetry broadens geometry coverage,
+not rule completeness. The depth-four continuation guard remains an explicit
+bounded approximation; no counterexample beyond that guard has been established
+in this review. Retain it pending focused reference work, and do not claim full
+tournament adjudication. Public teaching copy needs to distinguish shape
+legality from a whole-position forced-win proof and describe the free opening.
+
+The earlier 15 diagnostic misses are all non-forcing shape objectives under
+simple-evaluation `search-d2/d3/d5`, not the web presets and not forced best-move
+proofs. The four mandatory immediate-safety cases passed under each config.
+Classify the misses as search/evaluation preferences or limitations; preserve
+them as diagnostics rather than tuning the engine until it matches coordinate
+lists. No demonstrated illegal move or immediate-safety failure was found there.
+
+| Diagnostic objective | Misses across d2/d3/d5 | Observed alternatives |
+|---|---:|---|
+| Create closed four | 3 | I7 instead of K8 |
+| Create broken four | 3 | G8 or H7 instead of J8/K8 |
+| Create open three | 1 | d5 H7 instead of G8/J8 |
+| Create closed three | 3 | H7 instead of J8 |
+| Prevent closed-three upgrade | 2 | d3 G7 / d5 H7 instead of K8; upgrade is not an immediate win |
+| Create broken three | 3 | G7 or H7 instead of I8/J8 |
+
+Disposition: **fix** the demonstrated FEN boundary; **retain** the reference
+corpus and diagnostic distinction; **defer** strength tuning to the later product
+checkpoint. Continue reviewing tactics/proof limits, state/TT ownership and
+analysis attribution; this section does not certify the whole engine.

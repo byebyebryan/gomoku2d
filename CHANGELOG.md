@@ -34,6 +34,11 @@ Continues the `0.5.x` reconciliation line after the October project review.
 - Align published analysis failure types with native exports, validate consumed
   report fields and compact moves, and clarify Lab loading/error states.
 
+### Bot lab
+
+- Detect draws correctly after FEN-imported positions, reject invalid FEN
+  dimensions, and check Renju reference labels across all board symmetries.
+
 ### Maintenance
 
 - Moved dependency maintenance to direct manual review and disabled scheduled

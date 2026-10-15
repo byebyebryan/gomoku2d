@@ -575,7 +575,14 @@ impl Board {
 
         if self.check_win(mv, color) {
             self.result = GameResult::Winner(color);
-        } else if self.history.len() == size * size {
+        } else if self
+            .black_bits
+            .iter()
+            .zip(&self.white_bits)
+            .map(|(black, white)| (black | white).count_ones() as usize)
+            .sum::<usize>()
+            == size * size
+        {
             self.result = GameResult::Draw;
         }
 
@@ -689,13 +696,19 @@ impl Board {
         }
         let board_size: usize = parts[0].parse().map_err(|_| "invalid board_size")?;
         let win_length: usize = parts[1].parse().map_err(|_| "invalid win_length")?;
+        if board_size == 0 || win_length == 0 || win_length > board_size {
+            return Err("invalid FEN dimensions: require 1 <= win_length <= board_size".into());
+        }
+        let cell_count = board_size
+            .checked_mul(board_size)
+            .ok_or("FEN board dimensions overflow")?;
         let turn = match parts[2] {
             "B" => Color::Black,
             "W" => Color::White,
             _ => return Err("invalid turn".into()),
         };
         let cell_str = parts[3];
-        if cell_str.len() != board_size * board_size {
+        if cell_str.len() != cell_count {
             return Err("cell string length mismatch".into());
         }
 
@@ -894,6 +907,41 @@ mod tests {
         let b2 = Board::from_fen(&fen).unwrap();
         assert_eq!(b2.to_fen(), fen);
         assert_eq!(b2.current_player, b.current_player);
+    }
+
+    #[test]
+    fn fen_imported_prefixes_apply_and_undo_like_played_positions_through_draw() {
+        let mut played = Board::new(RuleConfig {
+            board_size: 3,
+            win_length: 3,
+            ..Default::default()
+        });
+        for notation in ["A1", "B1", "C1", "B2", "A2", "C2", "B3", "A3", "C3"] {
+            let before = played.to_fen();
+            let before_hash = played.hash();
+            let mut imported = Board::from_fen(&before).unwrap();
+            let mv = Move::from_notation(notation).unwrap();
+            let expected = played.apply_move(mv).unwrap();
+            assert_eq!(imported.apply_move(mv).unwrap(), expected, "{notation}");
+            assert_eq!(imported.to_fen(), played.to_fen());
+            assert_eq!(imported.hash(), played.hash());
+            imported.undo_move(mv);
+            assert_eq!(imported.to_fen(), before);
+            assert_eq!(imported.hash(), before_hash);
+        }
+        assert_eq!(played.result, GameResult::Draw);
+    }
+
+    #[test]
+    fn malformed_fen_dimensions_return_errors() {
+        for fen in [
+            "0/5/B/",
+            "3/0/B/.........",
+            "3/4/B/.........",
+            "18446744073709551615/5/B/",
+        ] {
+            assert!(Board::from_fen(fen).is_err(), "{fen}");
+        }
     }
 
     #[test]

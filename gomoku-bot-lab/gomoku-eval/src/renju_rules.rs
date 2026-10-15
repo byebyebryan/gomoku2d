@@ -276,6 +276,8 @@ fn render_fixture_board(board: &Board, candidate: Move) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::{all_renju_rule_fixtures, core_renju_rule_fixtures, run_renju_rule_fixtures};
+    use super::{build_board, RenjuRuleFixture, RENJU_RULE_BOARD_SIZE};
+    use gomoku_core::Move;
 
     #[test]
     fn renju_rule_fixtures_pass() {
@@ -283,6 +285,55 @@ mod tests {
         let report = run_renju_rule_fixtures(&cases).unwrap();
         assert_eq!(report.failed, 0);
         assert_eq!(report.total, 29);
+    }
+
+    #[test]
+    fn renju_reference_labels_survive_all_board_symmetries() {
+        let transform = |notation: &str, symmetry: usize| {
+            let mut mv = Move::from_notation(notation).unwrap();
+            if symmetry >= 4 {
+                mv.col = RENJU_RULE_BOARD_SIZE - 1 - mv.col;
+            }
+            for _ in 0..symmetry % 4 {
+                mv = Move {
+                    row: mv.col,
+                    col: RENJU_RULE_BOARD_SIZE - 1 - mv.row,
+                };
+            }
+            mv.to_notation()
+        };
+        for case in all_renju_rule_fixtures().unwrap() {
+            for symmetry in 0..8 {
+                let mapped = RenjuRuleFixture {
+                    black: case
+                        .black
+                        .iter()
+                        .map(|mv| transform(mv, symmetry))
+                        .collect(),
+                    white: case
+                        .white
+                        .iter()
+                        .map(|mv| transform(mv, symmetry))
+                        .collect(),
+                    candidate: transform(&case.candidate, symmetry),
+                    ..case.clone()
+                };
+                let mut board = build_board(&mapped).unwrap();
+                let candidate = Move::from_notation(&mapped.candidate).unwrap();
+                assert_eq!(
+                    board.is_legal_for_color(candidate, mapped.color),
+                    mapped.expected_legal,
+                    "{} symmetry {symmetry}",
+                    mapped.id
+                );
+                assert_eq!(
+                    board.apply_move(candidate).is_ok(),
+                    mapped.expected_legal,
+                    "{} apply symmetry {symmetry}",
+                    mapped.id
+                );
+            }
+        }
     }
 
     #[test]
