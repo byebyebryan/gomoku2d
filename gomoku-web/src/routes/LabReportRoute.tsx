@@ -164,6 +164,10 @@ export function LabReportRoute() {
             </nav>
           </div>
           <ReportTabs value={view} onChange={setView} />
+          <p className={styles.reportNote}>
+            Published reference runs describe their recorded engine revisions.
+            Current engine behavior can differ; see Provenance for dates and settings.
+          </p>
           {botState.status === "loaded" && botState.report.provenance?.git_dirty ? (
             <p className={styles.warning}>Development run: generated from a dirty git worktree.</p>
           ) : null}

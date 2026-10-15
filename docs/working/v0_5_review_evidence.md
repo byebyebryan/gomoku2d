@@ -222,3 +222,27 @@ Disposition: **fix** the demonstrated FEN boundary; **retain** the reference
 corpus and diagnostic distinction; **defer** strength tuning to the later product
 checkpoint. Continue reviewing tactics/proof limits, state/TT ownership and
 analysis attribution; this section does not certify the whole engine.
+
+### Directional Renju Counterexample
+
+The subsequent source trace found a demonstrated false-forbidden outside the old
+29 cases: four completion accepted an exact five in any direction. In the new
+corpus position, H8 was incorrectly rejected as double-four because I8 completes
+a vertical five while making a horizontal six. A horizontal four must complete
+to five horizontally. The pinned Piskvork checker returned legal (`reason=0`),
+matching the federation definitions and contradicting the old core.
+
+Disposition: **fix**. Completion checks now carry their direction, including both
+endpoints of a straight four. The new core test failed before the repair and
+passed after it. The corpus now has 30 cases / 240 symmetry probes. Native
+fmt/Clippy and 344 workspace tests passed; rebuilt Wasm has a corresponding
+board/hint/application regression. A separate compatibility check replayed all
+1,792 published tournament games legally under the repaired rules (0.41 s).
+That check is retained because future rule changes must make compatibility
+decisions explicit.
+
+June report data remain historical reference evidence with recorded revisions;
+their measured outcomes are not relabeled as current-engine benchmarks. The Lab
+now says this near its tabs. Retaining them preserves experiment provenance;
+fresh strength comparisons belong to the next deliberate evaluation baseline.
+The correction does not justify copying new results over historical evidence.

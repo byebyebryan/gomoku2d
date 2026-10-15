@@ -166,8 +166,13 @@ export function RulesRoute() {
               <p className="uiSectionLabel">Renju</p>
               <h2>Black plays under restrictions.</h2>
               <p>
-                To reduce first-move advantage, Black cannot play overlines,
-                double-four, or double-three. White does not have these restrictions.
+                Black needs exactly five; White can win with five or more.
+                Unless Black makes five, overlines, double-fours, and real
+                double-threes are forbidden.
+              </p>
+              <p className={styles.note}>
+                Play uses a free opening and blocks forbidden placements,
+                without tournament opening procedures.
               </p>
             </div>
             <RuleFramePanel
@@ -186,7 +191,7 @@ export function RulesRoute() {
               <div>
                 <h3>Four + Three</h3>
                 <p>
-                  Under Renju, four + three is Black&apos;s only legal lethal combo.
+                  A four + three can create a legal double threat for Black.
                 </p>
               </div>
             </article>
@@ -210,12 +215,13 @@ export function RulesRoute() {
               <p className="uiSectionLabel">Complex Renju</p>
               <h2>Only real threats count.</h2>
               <p>
-                A four + four or three + three shape is forbidden only when both
-                branches are real and the combination can force a win for Black.
+                A four needs a continuation to exactly five in its direction.
+                A real three can become an open four through a legal move.
               </p>
               <p className={styles.note}>
-                If a branch is boxed in or can continue only through another
-                forbidden move, it does not count.
+                Double-fours and double-threes count those valid branches,
+                even when the opponent has a stronger threat. A boxed-in three
+                or one whose continuations are all forbidden does not count.
               </p>
             </div>
             <div className={styles.complexThreatGrid}>

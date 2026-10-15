@@ -38,6 +38,8 @@ Continues the `0.5.x` reconciliation line after the October project review.
 
 - Detect draws correctly after FEN-imported positions, reject invalid FEN
   dimensions, and check Renju reference labels across all board symmetries.
+- Require Renju four completions to make five in the four's own direction;
+  add the independently checked regression to the shared reference corpus.
 
 ### Maintenance
 

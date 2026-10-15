@@ -1039,6 +1039,26 @@ mod tests {
     }
 
     #[test]
+    fn renju_four_completion_must_make_five_in_that_direction() {
+        let mut board = renju_board();
+        for notation in [
+            "E8", "A1", "F8", "A3", "G8", "A5", "J8", "A7", "I4", "C1", "I5", "C3", "I6", "C5",
+            "I7", "C7",
+        ] {
+            board
+                .apply_move(Move::from_notation(notation).unwrap())
+                .unwrap();
+        }
+        // H8 creates EFGH, with a real completion at D8. FGH.J is not
+        // another four: I8 would make the six EFGHIJ, even though it also
+        // makes an unrelated vertical five. That win cannot turn a horizontal
+        // overline into a second four for the H8 forbidden-move check.
+        let candidate = Move::from_notation("H8").unwrap();
+        assert!(board.is_legal(candidate));
+        assert!(board.apply_move(candidate).is_ok());
+    }
+
+    #[test]
     fn renju_forbidden_candidate_moves_only_follow_black_stones() {
         let mut b = renju_board();
         setup(&mut b, &[(7, 7), (0, 0), (10, 10), (0, 2)]);

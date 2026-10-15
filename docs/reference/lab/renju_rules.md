@@ -40,7 +40,9 @@ not also make five in a row, and matches the Piskvork `foulr` check order.
 
 A raw window count is not enough for Renju forbidden rules.
 
-A real four must have at least one legal completion to exact five. Apparent
+A real four must have at least one legal completion to exact five **in the
+four's own direction**. A five in another direction cannot make an overline
+completion count as a four. Apparent
 fours do not count when every completion is blocked, overline, or forbidden.
 
 A straight four is an unbroken four with two different legal exact-five
@@ -77,9 +79,12 @@ ForbiddenReason = Overline | DoubleFour | DoubleThree
 
 The oracle checks exact five and overline directly. Real four and real three
 classification then ask whether their completions/extensions are legal under the
-same oracle. Recursive double-three checks use a guard and fail open if they
-cannot resolve; false-forbidden is worse than missed-forbidden for normal play,
-and unresolved cases should become fixtures.
+same oracle. Recursive double-three checks stop after four continuation levels;
+at the limit, further double-threes are not rejected. This is a bounded
+approximation of RIF 9.3, not a completeness guarantee. Recursive dependencies
+can propagate the limit in either direction, so it does not guarantee that
+all remaining errors favor legal play. Unresolved cases need independent
+reference fixtures before a precision or cost tradeoff is changed.
 
 Cheap necessary-condition guards such as `can_be_renju_forbidden_at` are
 performance details only. They must not change oracle output and are not bot

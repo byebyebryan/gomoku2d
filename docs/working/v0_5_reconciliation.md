@@ -255,12 +255,12 @@ pending until the corresponding review produces findings and dispositions.
 | Workstream | Deep review | Evidence and unresolved items |
 |---|---|---|
 | Product and journeys | in progress | Fresh keyboard game → finish → analysis → confirmed alternative → branch; actual new-player acceptance outstanding |
-| Rules, bots, analyzer | pending | Existing corpora/reports; guard semantics and diagnostic misses to classify |
+| Rules, bots, analyzer | in progress | FEN and independently verified directional Renju defects repaired; diagnostic misses classified; deeper tactics/proof/attribution trace continues |
 | Architecture and contracts | in progress | Current ownership/contract inventory and cross-boundary traces; runtime schema probes next |
 | Persistence and cloud | in progress | Storage, promotion and reset/delete trace; corrupt storage and stale foreground actions under investigation; real account/device acceptance outstanding |
-| UX, visuals, accessibility | pending | Initial layouts and keyboard fixes; full critique and screen reader outstanding |
+| UX, visuals, accessibility | in progress | Fresh journey and responsive setup refinements; keyboard round/read-only guidance; full viewport critique and screen reader outstanding |
 | Browser performance | pending | Native evidence exists; representative browser/device measurements outstanding |
-| Test quality | pending | Baseline suites pass; assumption and coverage review outstanding |
+| Test quality | in progress | Real-artifact contract probes, rule metamorphic checks, and missing CI browser lane addressed; browser engine checks in progress |
 | Repo, docs, operations | pending | Maintenance baseline and current CI; full reconciliation outstanding |
 
 ## First Execution Loop

@@ -130,7 +130,8 @@ test("rules explanation route renders inside the app shell", async ({ page }) =>
   await expect(page.getByRole("heading", { level: 1, name: "Rules" })).toBeVisible();
   await expect(page.getByRole("img", { name: "Renju forbidden move examples: Overline board diagram." })).toBeVisible();
   await expect(page.getByText("Double-three", { exact: true })).toBeVisible();
-  await expect(page.getByText("To reduce first-move advantage")).toBeVisible();
+  await expect(page.getByText(/Black needs exactly five/)).toBeVisible();
+  await expect(page.getByText(/Play uses a free opening/)).toBeVisible();
   await expect(page.getByRole("heading", { name: "Four + Three" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Trap" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Only real threats count." })).toBeVisible();

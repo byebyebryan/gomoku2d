@@ -107,6 +107,18 @@ pub fn core_renju_rule_fixtures() -> Vec<RenjuRuleFixture> {
             true,
         ),
         fixture_from_moves(
+            "unrelated_five_does_not_complete_a_four",
+            "A vertical five at a hypothetical completion does not make its horizontal overline a second four",
+            "rif_definitions_and_piskvork_f76a43af",
+            &[
+                "E8", "A1", "F8", "A3", "G8", "A5", "J8", "A7",
+                "I4", "C1", "I5", "C3", "I6", "C5", "I7", "C7",
+            ],
+            "H8",
+            Color::Black,
+            true,
+        ),
+        fixture_from_moves(
             "white_double_three_unrestricted",
             "White can play the same double-three geometry legally",
             "rif",
@@ -284,7 +296,7 @@ mod tests {
         let cases = all_renju_rule_fixtures().unwrap();
         let report = run_renju_rule_fixtures(&cases).unwrap();
         assert_eq!(report.failed, 0);
-        assert_eq!(report.total, 29);
+        assert_eq!(report.total, 30);
     }
 
     #[test]

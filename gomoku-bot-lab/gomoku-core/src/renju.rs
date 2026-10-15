@@ -327,7 +327,8 @@ fn collect_real_four_keys(
 
         if valid
             && black == 4
-            && empty.is_some_and(|completion| legal_exact_five_completion(view, completion))
+            && empty
+                .is_some_and(|completion| legal_exact_five_completion(view, completion, (dr, dc)))
         {
             black_cells.sort();
             keys.push((dir_index, black_cells));
@@ -335,9 +336,11 @@ fn collect_real_four_keys(
     }
 }
 
-fn legal_exact_five_completion(view: &RenjuView<'_>, mv: Move) -> bool {
+fn legal_exact_five_completion(view: &RenjuView<'_>, mv: Move, dir: (isize, isize)) -> bool {
+    // A different direction's five makes the move legal, but cannot turn an
+    // overline in this direction into a four (or an open-four endpoint).
     view.with_black(mv)
-        .is_some_and(|next| creates_exact_five(&next, mv))
+        .is_some_and(|next| contiguous_run_len(&next, mv, dir) == next.win_len())
 }
 
 fn real_three_direction_count(view: &RenjuView<'_>, origin: Move, depth_remaining: usize) -> usize {
@@ -465,8 +468,8 @@ fn creates_straight_four_containing_origin(
         && point_in_bounds(view, right)
         && view.is_empty(left)
         && view.is_empty(right)
-        && legal_exact_five_completion(view, left)
-        && legal_exact_five_completion(view, right)
+        && legal_exact_five_completion(view, left, (dr, dc))
+        && legal_exact_five_completion(view, right, (dr, dc))
 }
 
 fn point_in_bounds(view: &RenjuView<'_>, mv: Move) -> bool {
