@@ -26,8 +26,11 @@ export async function flushCloudProfileSync(
   let cloudState = cloudProfileStore.getState();
 
   if (cloudState.profile?.uid !== user.uid || cloudState.status !== "ready") {
-    await cloudState.loadForUser(user, settings);
+    const loadedProfile = await cloudState.loadForUser(user, settings);
     cloudState = cloudProfileStore.getState();
+    if (!loadedProfile || cloudState.profile !== loadedProfile) {
+      return null;
+    }
   }
 
   if (cloudState.profile?.uid !== user.uid || cloudState.status !== "ready") {
@@ -80,7 +83,8 @@ export async function flushCloudProfileSync(
     return cloudState.profile;
   }
 
-  await cloudPromotionStore.getState().promote({
+  const sourceProfile = cloudState.profile;
+  const promotionResult = await cloudPromotionStore.getState().promote({
     cloudDisplayName: cloudState.profile.displayName,
     cloudMatchHistory: cloudState.profile.matchHistory,
     cloudSettings: cloudState.profile.settings,
@@ -91,11 +95,17 @@ export async function flushCloudProfileSync(
     user,
   });
 
-  if (cloudPromotionStore.getState().status !== "complete") {
-    return cloudProfileStore.getState().profile;
+  const currentCloudState = cloudProfileStore.getState();
+  if (
+    !promotionResult
+    || currentCloudState.status !== "ready"
+    || currentCloudState.profile !== sourceProfile
+    || currentCloudState.profile.uid !== user.uid
+    || localProfileStore.getState().profile?.id !== localProfile.id
+  ) {
+    return null;
   }
 
-  const promotionResult = cloudPromotionStore.getState().result;
   const syncedAt = new Date().toISOString();
   const profilePatch: Partial<CloudProfile> = {
     matchHistory: nextMatchHistory,
@@ -107,6 +117,8 @@ export async function flushCloudProfileSync(
     profilePatch.displayName = promotionResult.promotedDisplayName;
   }
 
-  cloudProfileStore.getState().applyLocalPatch(profilePatch);
+  if (!cloudProfileStore.getState().applyLocalPatch(sourceProfile, profilePatch)) {
+    return null;
+  }
   return cloudProfileStore.getState().profile;
 }

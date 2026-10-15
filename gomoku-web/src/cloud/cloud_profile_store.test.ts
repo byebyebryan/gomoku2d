@@ -37,6 +37,22 @@ const profile: CloudProfile = {
 };
 
 describe("createCloudProfileStore", () => {
+  it("returns null for a cancelled load instead of a later account's profile", async () => {
+    let finishOld!: (value: CloudProfile) => void;
+    const replacement = { ...profile, uid: "uid-2" };
+    const store = createCloudProfileStore({
+      loadProfile: vi.fn()
+        .mockImplementationOnce(() => new Promise((resolve) => { finishOld = resolve; }))
+        .mockResolvedValueOnce(replacement),
+    });
+    const oldLoad = store.getState().loadForUser(authUser, defaultSettings);
+    store.getState().reset();
+    expect(await store.getState().loadForUser({ ...authUser, uid: "uid-2" }, defaultSettings)).toBe(replacement);
+    finishOld(profile);
+    expect(await oldLoad).toBeNull();
+    expect(store.getState().profile).toBe(replacement);
+  });
+
   it("loads a cloud profile for a signed-in user", async () => {
     const loadProfile = vi.fn().mockResolvedValue(profile);
     const store = createCloudProfileStore({ loadProfile });
@@ -78,13 +94,24 @@ describe("createCloudProfileStore", () => {
     });
   });
 
+  it("rejects patches from a profile snapshot invalidated by reset or a new account", async () => {
+    const store = createCloudProfileStore({ loadProfile: vi.fn().mockResolvedValue(profile) });
+    await store.getState().loadForUser(authUser, defaultSettings);
+    store.getState().reset();
+    expect(store.getState().applyLocalPatch(profile, { displayName: "Stale" })).toBe(false);
+    const replacement = { ...profile, uid: "other-account" };
+    store.setState({ profile: replacement, status: "ready" });
+    expect(store.getState().applyLocalPatch(profile, { displayName: "Stale" })).toBe(false);
+    expect(store.getState().profile).toBe(replacement);
+  });
+
   it("applies local cloud profile patches after background sync", async () => {
     const store = createCloudProfileStore({
       loadProfile: vi.fn().mockResolvedValue(profile),
     });
 
     await store.getState().loadForUser(authUser, defaultSettings);
-    store.getState().applyLocalPatch({
+    store.getState().applyLocalPatch(profile, {
       displayName: "ByeByeBryan",
       settings: {
         ...defaultSettings,

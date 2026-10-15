@@ -3,6 +3,7 @@ import { createStore, type StoreApi } from "zustand/vanilla";
 import { cloudAuthStore } from "../cloud/auth_store";
 import { cloudHistoryStore } from "../cloud/cloud_history_store";
 import { cloudMatchHistoryHasMatch } from "../cloud/cloud_profile";
+import { cloudProfileStore } from "../cloud/cloud_profile_store";
 import { flushCloudProfileSync } from "../cloud/cloud_sync";
 import { localProfileStore } from "../profile/local_profile_store";
 
@@ -47,8 +48,16 @@ function createSessionMatchStore(options: LocalMatchSessionOptions = {}): StoreA
       if (savedMatch && cloudAuth.status === "signed_in" && cloudAuth.user) {
         const signedInUser = cloudAuth.user;
         void flushCloudProfileSync(signedInUser, { localMatchHistory }).then((cloudProfile) => {
+          if (cloudAuthStore.getState().user !== signedInUser) {
+            return;
+          }
           if (!cloudProfile) {
-            void cloudHistoryStore.getState().syncMatchForUser(signedInUser, savedMatch);
+            // A cancelled/reset flush must not upload a pre-reset match. Local
+            // history remains available for the next current-session sync.
+            return;
+          }
+
+          if (cloudProfileStore.getState().profile !== cloudProfile) {
             return;
           }
 
@@ -60,6 +69,8 @@ function createSessionMatchStore(options: LocalMatchSessionOptions = {}): StoreA
               cloudProfile.resetAt,
             );
           }
+        }).catch(() => {
+          // Cloud stores retain the failure; a local replay is still available.
         });
       }
 

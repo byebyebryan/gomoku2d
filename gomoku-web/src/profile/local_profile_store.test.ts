@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { CLOUD_REPLAY_MATCHES_LIMIT } from "../cloud/cloud_profile";
 import { DEFAULT_BOT_CONFIG } from "../core/bot_config";
@@ -33,6 +33,60 @@ const customBotConfig: BotConfig = {
 };
 
 describe("createLocalProfileStore", () => {
+  it("keeps a playable profile, settings, and finished replay when storage is full", () => {
+    const onPersistenceUnavailable = vi.fn();
+    const store = createLocalProfileStore({
+      onPersistenceUnavailable,
+      storage: {
+        ...createMemoryStorage(),
+        setItem: () => { throw new DOMException("Storage full", "QuotaExceededError"); },
+      },
+    });
+    expect(() => store.getState().ensureLocalProfile()).not.toThrow();
+    store.getState().updateSettings({ botConfig: customBotConfig });
+    const replayId = store.getState().recordFinishedMatch({
+      mode: "bot",
+      moves: [{ row: 7, col: 7, player: 1, moveNumber: 1 }],
+      players: [
+        { kind: "human", name: "Guest", stone: "black" },
+        { kind: "bot", name: "Normal", stone: "white" },
+      ],
+      status: "draw",
+      variant: "freestyle",
+    });
+    expect(store.getState().settings.botConfig).toEqual(customBotConfig);
+    expect(store.getState().matchHistory.replayMatches[0]?.id).toBe(replayId);
+    expect(onPersistenceUnavailable).toHaveBeenCalledTimes(1);
+    expect(() => store.getState().resetLocalProfile()).not.toThrow();
+    expect(store.getState().matchHistory.replayMatches).toEqual([]);
+  });
+
+  it("does not overwrite unreadable persistent data with an empty fallback profile", () => {
+    const storage = { ...createMemoryStorage(), getItem: () => { throw new Error("Read denied"); }, setItem: vi.fn() };
+    const onPersistenceUnavailable = vi.fn();
+    const store = createLocalProfileStore({ storage, onPersistenceUnavailable });
+    store.getState().ensureLocalProfile();
+    store.getState().renameDisplayName("Session player");
+    expect(store.getState().profile?.displayName).toBe("Session player");
+    expect(storage.setItem).not.toHaveBeenCalled();
+    expect(onPersistenceUnavailable).toHaveBeenCalledOnce();
+  });
+
+  it("handles a denied localStorage getter during startup", () => {
+    const getter = vi.spyOn(window, "localStorage", "get").mockImplementation(() => {
+      throw new DOMException("Storage denied", "SecurityError");
+    });
+    try {
+      const onPersistenceUnavailable = vi.fn();
+      const store = createLocalProfileStore({ onPersistenceUnavailable });
+      expect(() => store.getState().ensureLocalProfile()).not.toThrow();
+      expect(store.getState().profile?.kind).toBe("local");
+      expect(onPersistenceUnavailable).toHaveBeenCalledOnce();
+    } finally {
+      getter.mockRestore();
+    }
+  });
+
   it("creates a local profile on first meaningful interaction and persists edits", () => {
     const storage = createMemoryStorage();
     const store = createLocalProfileStore({ storage });

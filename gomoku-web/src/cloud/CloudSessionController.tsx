@@ -30,12 +30,19 @@ function shouldAdoptCloudDisplayName(
 }
 
 async function flushLocalStateToCloud(user: CloudAuthUser): Promise<CloudProfile | null> {
+  if (cloudAuthStore.getState().user !== user) {
+    return null;
+  }
   const localState = localProfileStore.getState();
   const cloudProfile = await flushCloudProfileSync(user, {
     localMatchHistory: localState.matchHistory,
   });
 
-  if (!cloudProfile) {
+  if (
+    !cloudProfile
+    || cloudAuthStore.getState().user !== user
+    || cloudProfileStore.getState().profile !== cloudProfile
+  ) {
     return null;
   }
 

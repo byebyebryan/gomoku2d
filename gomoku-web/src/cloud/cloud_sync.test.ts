@@ -6,8 +6,14 @@ import { cloudProfileStore } from "./cloud_profile_store";
 import { cloudPromotionStore } from "./cloud_promotion_store";
 import { flushCloudProfileSync } from "./cloud_sync";
 import type { LocalProfilePromotionInput, LocalProfilePromotionResult } from "./cloud_promotion";
+import { promoteLocalProfileToCloud } from "./cloud_promotion";
 import { emptyLocalMatchHistory, localProfileStore, type LocalProfileIdentity } from "../profile/local_profile_store";
 import { createDefaultProfileSettings } from "../profile/profile_settings";
+
+vi.mock("./cloud_promotion", async (importOriginal) => ({
+  ...await importOriginal<typeof import("./cloud_promotion")>(),
+  promoteLocalProfileToCloud: vi.fn(),
+}));
 
 const user: CloudAuthUser = {
   avatarUrl: null,
@@ -74,6 +80,8 @@ describe("flushCloudProfileSync", () => {
   });
 
   beforeEach(() => {
+    cloudPromotionStore.getState().reset();
+    vi.mocked(promoteLocalProfileToCloud).mockReset();
     localProfileStore.setState({
       matchHistory: emptyLocalMatchHistory(),
       profile: localProfile,
@@ -88,6 +96,7 @@ describe("flushCloudProfileSync", () => {
         result: promotionResult,
         status: "complete",
       });
+      return promotionResult;
     });
     cloudProfileStore.setState({
       errorMessage: null,
@@ -127,6 +136,7 @@ describe("flushCloudProfileSync", () => {
         profile: cloudProfile,
         status: "ready",
       });
+      return cloudProfile;
     });
     const promote = vi.fn(async () => {
       cloudPromotionStore.setState({
@@ -134,6 +144,7 @@ describe("flushCloudProfileSync", () => {
         result: { ...promotionResult, profileDisplayNamePromoted: false, promotedDisplayName: null },
         status: "complete",
       });
+      return { ...promotionResult, profileDisplayNamePromoted: false, promotedDisplayName: null };
     });
     cloudProfileStore.setState({
       errorMessage: null,
@@ -149,5 +160,63 @@ describe("flushCloudProfileSync", () => {
 
     expect(loadForUser).toHaveBeenCalledWith(user, renjuSettings);
     expect(promote).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(["account switch", "profile reset"])("discards an old flush after %s, even when the next promotion completes", async (change) => {
+    let finishOld!: (result: LocalProfilePromotionResult) => void;
+    vi.mocked(promoteLocalProfileToCloud)
+      .mockImplementationOnce(() => new Promise((resolve) => { finishOld = resolve; }))
+      .mockResolvedValueOnce(promotionResult);
+    cloudProfileStore.setState({ profile: cloudProfile, status: "ready" });
+    const oldFlush = flushCloudProfileSync(user);
+
+    cloudPromotionStore.getState().reset();
+    const nextUser = change === "account switch" ? { ...user, uid: "uid-2" } : user;
+    const nextProfile = {
+      ...cloudProfile,
+      resetAt: change === "profile reset" ? "2026-10-15T00:00:00.000Z" : null,
+      uid: nextUser.uid,
+    };
+    cloudProfileStore.setState({ profile: nextProfile, status: "ready" });
+    localProfileStore.setState({ settings: defaultSettings });
+    const current = await flushCloudProfileSync(nextUser);
+    expect(current?.settings.gameConfig.ruleset).toBe("freestyle");
+
+    finishOld(promotionResult);
+    expect(await oldFlush).toBeNull();
+    expect(cloudProfileStore.getState().profile).toBe(current);
+    expect(cloudPromotionStore.getState().status).toBe("complete");
+  });
+
+  it.each(["sign out", "local reset"])("discards an in-flight flush after %s", async (change) => {
+    let finish!: (result: LocalProfilePromotionResult) => void;
+    vi.mocked(promoteLocalProfileToCloud).mockImplementationOnce(() => new Promise((resolve) => { finish = resolve; }));
+    cloudProfileStore.setState({ profile: cloudProfile, status: "ready" });
+    const flush = flushCloudProfileSync(user);
+    if (change === "sign out") {
+      cloudProfileStore.getState().reset();
+      cloudPromotionStore.getState().reset();
+    } else {
+      localProfileStore.getState().resetLocalProfile();
+    }
+    const current = cloudProfileStore.getState().profile;
+    finish(promotionResult);
+    expect(await flush).toBeNull();
+    expect(cloudProfileStore.getState().profile).toBe(current);
+  });
+
+  it("keeps the newest settings when same-account flushes finish out of order", async () => {
+    let finishOld!: (result: LocalProfilePromotionResult) => void;
+    vi.mocked(promoteLocalProfileToCloud)
+      .mockImplementationOnce(() => new Promise((resolve) => { finishOld = resolve; }))
+      .mockResolvedValueOnce(promotionResult);
+    cloudProfileStore.setState({ profile: cloudProfile, status: "ready" });
+    const oldFlush = flushCloudProfileSync(user);
+    localProfileStore.setState({ settings: defaultSettings });
+    const current = await flushCloudProfileSync(user);
+    finishOld(promotionResult);
+    expect(await oldFlush).toBeNull();
+    expect(cloudProfileStore.getState().profile).toBe(current);
+    expect(current?.settings.gameConfig.ruleset).toBe("freestyle");
   });
 });

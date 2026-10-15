@@ -1,5 +1,6 @@
 import { createStore, type StoreApi } from "zustand/vanilla";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { bestEffortStorage, type BrowserStorage } from "./best_effort_storage";
 
 import {
   CLOUD_REPLAY_MATCHES_LIMIT,
@@ -25,11 +26,7 @@ import {
   type ProfileSettings,
 } from "./profile_settings";
 
-export interface LocalProfileStorage {
-  getItem: (name: string) => string | null;
-  setItem: (name: string, value: string) => void;
-  removeItem: (name: string) => void;
-}
+export type LocalProfileStorage = BrowserStorage;
 
 export interface LocalProfileIdentity {
   avatarUrl: null;
@@ -75,6 +72,7 @@ export interface LocalProfileState {
 
 export interface LocalProfileStoreOptions {
   storage?: LocalProfileStorage;
+  onPersistenceUnavailable?: () => void;
 }
 
 const STORAGE_KEY = "gomoku2d.local-profile.v5";
@@ -249,7 +247,7 @@ function validatedLocalProfileStorage(storage: LocalProfileStorage): LocalProfil
 export function createLocalProfileStore(
   options: LocalProfileStoreOptions = {},
 ): StoreApi<LocalProfileState> {
-  const baseStorage = options.storage ?? localStorage;
+  const baseStorage = bestEffortStorage(() => options.storage ?? localStorage, options.onPersistenceUnavailable);
 
   const storage = createJSONStorage<Pick<LocalProfileState, "matchHistory" | "profile" | "settings">>(
     () => validatedLocalProfileStorage(baseStorage),
@@ -341,4 +339,10 @@ export function createLocalProfileStore(
   );
 }
 
-export const localProfileStore = createLocalProfileStore();
+// Kept outside the persisted store so a storage error can report its status
+// without triggering another persistence write.
+export const localPersistenceStore = createStore<{ available: boolean }>(() => ({ available: true }));
+
+export const localProfileStore = createLocalProfileStore({
+  onPersistenceUnavailable: () => localPersistenceStore.setState({ available: false }),
+});

@@ -8,10 +8,10 @@ import { deleteCloudProfile, ensureCloudProfile, resetCloudProfile, type CloudPr
 export type CloudProfileStatus = "idle" | "loading" | "ready" | "error";
 
 export interface CloudProfileState {
-  applyLocalPatch: (patch: Partial<CloudProfile>) => void;
+  applyLocalPatch: (source: CloudProfile, patch: Partial<Omit<CloudProfile, "uid">>) => boolean;
   deleteForUser: (user: CloudAuthUser) => Promise<void>;
   errorMessage: string | null;
-  loadForUser: (user: CloudAuthUser, settings: ProfileSettings) => Promise<void>;
+  loadForUser: (user: CloudAuthUser, settings: ProfileSettings) => Promise<CloudProfile | null>;
   profile: CloudProfile | null;
   reset: () => void;
   resetForUser: (user: CloudAuthUser, settings: ProfileSettings) => Promise<void>;
@@ -36,11 +36,13 @@ export function createCloudProfileStore(
   const resetProfile = options.resetProfile ?? resetCloudProfile;
   let requestId = 0;
 
-  return createStore<CloudProfileState>((set) => ({
-    applyLocalPatch: (patch) => {
-      set((state) => ({
-        profile: state.profile ? { ...state.profile, ...patch } : state.profile,
-      }));
+  return createStore<CloudProfileState>((set, get) => ({
+    applyLocalPatch: (source, patch) => {
+      if (get().profile !== source || get().status !== "ready") {
+        return false;
+      }
+      set({ profile: { ...source, ...patch } });
+      return true;
     },
     deleteForUser: async (user) => {
       const currentRequestId = requestId + 1;
@@ -88,7 +90,7 @@ export function createCloudProfileStore(
       try {
         const profile = await loadProfile(user, settings);
         if (requestId !== currentRequestId) {
-          return;
+          return null;
         }
 
         set({
@@ -96,15 +98,17 @@ export function createCloudProfileStore(
           profile,
           status: "ready",
         });
+        return profile;
       } catch (error) {
         if (requestId !== currentRequestId) {
-          return;
+          return null;
         }
 
         set({
           errorMessage: errorMessageFor(error),
           status: "error",
         });
+        return null;
       }
     },
     profile: null,

@@ -3,9 +3,10 @@ import { createStore, type StoreApi } from "zustand/vanilla";
 
 import { savedMatchIsAfterReset, type SavedMatchV2 } from "../match/saved_match";
 import { localProfileStore } from "../profile/local_profile_store";
+import { bestEffortStorage } from "../profile/best_effort_storage";
 import type { ProfileSettings } from "../profile/profile_settings";
 
-import type { CloudAuthUser } from "./auth_store";
+import { cloudAuthStore, type CloudAuthUser } from "./auth_store";
 import { saveCloudHistorySnapshot } from "./cloud_history";
 import {
   CLOUD_REPLAY_MATCHES_LIMIT,
@@ -297,9 +298,10 @@ export function createCloudHistoryStore(
       return cloudProfileForUser(user.uid);
     }
 
-    await cloudProfileStore.getState().loadForUser(user, settings);
-    const profile = cloudProfileStore.getState().profile;
-    return profile?.uid === user.uid ? profile : null;
+    const currentUser = cloudAuthStore.getState().user;
+    if (currentUser?.uid !== user.uid) return null;
+    const profile = await cloudProfileStore.getState().loadForUser(user, settings);
+    return cloudAuthStore.getState().user === currentUser ? profile : null;
   });
   const historyResetAtForUser = options.historyResetAtForUser ?? ((uid) => cloudProfileForUser(uid)?.resetAt);
   const loadHistory = options.loadHistory ?? (async (_user, historyResetAt) => {
@@ -310,7 +312,7 @@ export function createCloudHistoryStore(
   });
   const saveHistory = options.saveHistory ?? saveCloudHistorySnapshot;
   const now = options.now ?? (() => new Date().toISOString());
-  const storage = createJSONStorage<Pick<CloudHistoryState, "users">>(() => options.storage ?? localStorage);
+  const storage = createJSONStorage<Pick<CloudHistoryState, "users">>(() => bestEffortStorage(() => options.storage ?? localStorage));
   const latestResetAt = (uid: string, requestedResetAt: string | null | undefined) =>
     newerResetAt(requestedResetAt, historyResetAtForUser(uid));
   const activeSyncs = new Map<string, Set<Promise<void>>>();
@@ -511,7 +513,7 @@ export function createCloudHistoryStore(
               settings: localProfile.settings,
             });
 
-            cloudProfileStore.getState().applyLocalPatch({
+            cloudProfileStore.getState().applyLocalPatch(profile, {
               displayName: result.profile.displayName,
               matchHistory: result.profile.matchHistory,
               settings: result.profile.settings,

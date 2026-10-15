@@ -11,7 +11,7 @@ export type CloudPromotionStatus = "idle" | "promoting" | "complete" | "error";
 
 export interface CloudPromotionState {
   errorMessage: string | null;
-  promote: (input: LocalProfilePromotionInput) => Promise<void>;
+  promote: (input: LocalProfilePromotionInput) => Promise<LocalProfilePromotionResult | null>;
   reset: () => void;
   result: LocalProfilePromotionResult | null;
   status: CloudPromotionStatus;
@@ -32,14 +32,14 @@ export function createCloudPromotionStore(
   let requestId = 0;
   let completedInputKey: string | null = null;
   let activeInputKey: string | null = null;
-  let activePromise: Promise<void> | null = null;
+  let activePromise: Promise<LocalProfilePromotionResult | null> | null = null;
 
-  return createStore<CloudPromotionState>((set) => ({
+  return createStore<CloudPromotionState>((set, get) => ({
     errorMessage: null,
     promote: async (input) => {
       const inputKey = promotionInputKey(input);
       if (completedInputKey === inputKey) {
-        return;
+        return get().result;
       }
       if (activeInputKey === inputKey && activePromise) {
         return activePromise;
@@ -59,7 +59,7 @@ export function createCloudPromotionStore(
         try {
           const result = await promoteLocalProfile(input);
           if (requestId !== currentRequestId) {
-            return;
+            return null;
           }
 
           completedInputKey = inputKey;
@@ -68,9 +68,10 @@ export function createCloudPromotionStore(
             result,
             status: "complete",
           });
+          return result;
         } catch (error) {
           if (requestId !== currentRequestId) {
-            return;
+            return null;
           }
 
           set({
@@ -78,6 +79,7 @@ export function createCloudPromotionStore(
             result: null,
             status: "error",
           });
+          return null;
         } finally {
           if (activeInputKey === inputKey && requestId === currentRequestId) {
             activeInputKey = null;

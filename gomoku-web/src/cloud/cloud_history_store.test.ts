@@ -83,6 +83,34 @@ function cloudProfile(overrides: Partial<CloudProfile> = {}): CloudProfile {
 }
 
 describe("createCloudHistoryStore", () => {
+  it.each(["read", "write"])("handles rejected asynchronous cache %s without rejecting cloud actions", async (failure) => {
+    const store = createCloudHistoryStore({
+      storage: {
+        getItem: async () => {
+          if (failure === "read") throw new Error("Read failed");
+          return null;
+        },
+        setItem: async () => { throw new Error("Write failed"); },
+        removeItem: async () => { throw new Error("Remove failed"); },
+      },
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(() => store.getState().loadFromProfile(user, cloudProfile())).not.toThrow();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(store.getState().users[user.uid]?.cachedMatches).toEqual([cloudMatch]);
+    await expect(store.getState().clearForUser(user)).resolves.toBeUndefined();
+  });
+
+  it("keeps cloud history usable in memory when its local cache cannot be written", async () => {
+    const store = createCloudHistoryStore({
+      storage: { ...createMemoryStorage(), setItem: () => { throw new Error("Quota exceeded"); } },
+    });
+    expect(() => store.getState().loadFromProfile(user, cloudProfile())).not.toThrow();
+    expect(store.getState().users[user.uid]?.cachedMatches).toEqual([cloudMatch]);
+    await expect(store.getState().clearForUser(user)).resolves.toBeUndefined();
+    expect(store.getState().users[user.uid]).toBeUndefined();
+  });
+
   it("loads and persists a per-user cloud history cache", async () => {
     const storage = createMemoryStorage();
     const loadHistory = vi.fn().mockResolvedValue([cloudMatch]);
