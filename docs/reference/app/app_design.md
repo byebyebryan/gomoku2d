@@ -92,6 +92,17 @@ The local-first model should stay simple and visible in the UI:
 - finished local matches are persisted locally
 - replay reads from saved local match history
 
+If browser storage is denied or full, play and finished replays remain usable
+in memory for the current session. A visible notice explains that new local
+history/settings are not durable unless synced. Existing unreadable data must
+not be replaced with a fallback profile.
+
+The board supports arrow-key navigation, Home/End, and Enter/Space placement,
+with coordinates, stones, forbidden cells, and analysis markers available to
+assistive technology. Selected settings expose semantic pressed state. After
+the bot runner exhausts its automatic recovery, the match shows a failed-turn
+message and an explicit Retry bot action without discarding the position.
+
 When cloud sync is enabled, it should extend these flows rather than replace
 them. Local profile-to-cloud promotion copies finished local matches into private cloud
 history while leaving the local copies on-device.

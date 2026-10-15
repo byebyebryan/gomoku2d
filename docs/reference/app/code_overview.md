@@ -86,6 +86,7 @@ than bypassing the runner.
 - per-player clocks
 - tactical hint snapshots from wasm
 - saved-match creation on completion
+- failed bot-turn state and explicit retry after the runner's bounded recovery
 
 `src/game/local_match_session.ts` owns the singleton session around that store:
 saved setup application, replay-branch resume seeds, and current match reuse
@@ -127,6 +128,7 @@ The board layer owns:
 - stone, hover, hint, marker, and highlighter z-order
 - pointer/touchpad input mapping
 - responsive canvas sizing
+- an accessible DOM cell grid with keyboard navigation and placement
 - visual-only animation timing
 
 The board layer should not decide whether a cell is forbidden, threatening, or
@@ -137,12 +139,20 @@ an escape. Those facts come from the game store and wasm analysis snapshots.
 Local profile state is the default. Cloud is optional and layered on top.
 
 - `local_profile_store.ts` persists local profile, settings, and local history.
+- `best_effort_storage.ts` keeps profile and cloud-cache actions usable in memory
+  after storage access or writes fail. A profile save failure shows a session-only
+  notice; unreadable persistent data is not overwritten by a fallback profile.
 - `profile_settings.ts` defines the persisted settings schema.
 - `cloud_profile.ts` / `cloud_profile_store.ts` define cloud profile shape.
 - `cloud_history.ts` / `cloud_history_store.ts` own private cloud history.
 - `cloud_promotion.ts` moves local profile/history/settings into cloud after
   sign-in.
 - Firestore rules live at repo root and are tested through `npm run test:rules`.
+
+Cloud loads and promotions return their own operation result or `null` after
+invalidation. A background profile patch must supply the exact source snapshot;
+the store rejects it after another load, reset, or patch. Follow-up history
+actions also check the current authentication session.
 
 Keep guest-local history, private cloud history, and future public/shared replay
 surfaces separate.

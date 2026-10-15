@@ -4,10 +4,10 @@ This roadmap tracks current sequencing. Completed phase detail lives in
 [`release_history.md`](../../archive/release_history.md); this file should stay
 short enough to answer "what is next and why?"
 
-## Current State: `v0.5` Reconciliation Complete
+## Current State: `v0.5` Reconciliation Reopened
 
-`v0.5.4` closes the public-release reconciliation line on a deliberately
-reviewed baseline. The product now carries a complete local loop across play,
+`v0.5.4` marked the July public-release reconciliation checkpoint. The product
+carries a complete local loop across play,
 configurable bots and hints, saved history, Replay Analysis, and the public Lab,
 Rules, Guide, and Visuals surfaces. The repository has current ownership maps,
 bounded tests, clean release operations, and archived historical context.
@@ -17,6 +17,12 @@ data and analyzer semantics remain unchanged; the work clarified ownership,
 fixed demonstrated resilience gaps, and validated the shipped product on
 desktop and mobile.
 
+The October post-pause review reopened `0.5.x` to address demonstrated cloud
+sync, persistence, analyzer-confidence, bot-recovery, and accessibility gaps.
+The active [continuation and finding register](../../working/v0_5_reconciliation.md)
+owns that work. Complete this bounded stabilization pass before opening the
+next feature cycle.
+
 Historical execution and findings:
 
 - [`v0.5.4 Reconciliation Closeout Plan`](../../archive/v0_5_4_reconciliation_plan.md)
@@ -25,7 +31,7 @@ Historical execution and findings:
 
 ## Next Line: `v0.6` Online Product Expansion Planning
 
-After `v0.5.4`, the next step is a fresh design checkpoint, not immediate
+After the reopened `v0.5` reconciliation pass, the next step is a fresh design checkpoint, not immediate
 implementation. It should settle:
 
 - the smallest useful online loop, likely direct challenge before discovery or

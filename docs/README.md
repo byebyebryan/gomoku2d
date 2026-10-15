@@ -46,6 +46,8 @@ The root [`README`](../README.md) is the public repo landing page.
 ## Internal Working Notes
 
 Active tuning and screenshot-review notes remain under [`working/`](working/).
+The reopened [`v0.5` reconciliation continuation](working/v0_5_reconciliation.md)
+tracks the October review findings and their acceptance.
 The completed `v0.5.4` plan and finding register live in [`archive/`](archive/)
 with the other historical release material.
 

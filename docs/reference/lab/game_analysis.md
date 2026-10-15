@@ -81,6 +81,12 @@ semantics:
 The report is the richer debugging surface. The browser UI should stay concise:
 status text, timeline spans, board hints, and replay navigation.
 
+Concise presentation must preserve confidence. E denotes a confirmed escape
+within the model; P denotes a possible escape that the bounded search has not
+proved losing. Possible failure attributions are labeled as possible, and
+unconfirmed findings must not acquire definitive wording. This applies to both
+Replay Analysis and the published Lab; the Guide explains the distinction.
+
 ## Model Settings
 
 Current replay analysis uses:

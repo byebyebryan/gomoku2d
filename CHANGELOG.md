@@ -12,6 +12,22 @@ their own section.
 
 ## [Unreleased]
 
+Continues the `0.5.x` reconciliation line after the October project review.
+
+### Web
+
+- Bound cloud loads, promotions, profile patches, and follow-up history actions
+  to their current operation/profile/session, preventing stale sync results
+  from patching a different account or a reset profile.
+- Kept local play, settings, replay recording, and cloud history caches usable
+  in memory when storage fails; show a notice when local saves are unavailable.
+- Preserved possible versus confirmed escape markers and attribution in Replay
+  Analysis, Lab reports, and the Guide.
+- Added a visible failed-bot-turn state and explicit retry without losing the
+  current position.
+- Added keyboard board navigation and placement, accessible cell descriptions,
+  and semantic selected states for settings.
+
 ### Maintenance
 
 - Moved dependency maintenance to direct manual review and disabled scheduled

@@ -133,6 +133,11 @@ A single `<Board model={...}>` React component wraps the Phaser instance,
 passes a `BoardViewModel` in, and subscribes to intent events out. Phaser never
 reads from the global store or Firestore directly.
 
+The React wrapper also mirrors the board as an accessible DOM grid. Keyboard
+placement uses the same `BoardViewModel` intent callback as pointer placement;
+legality remains in the game store and Rust core. Arrow keys explore cells,
+Home/End navigate a row, and Enter/Space place a stone on the human turn.
+
 This is a departure from v0.1, where Phaser scenes held game state and
 drove the UI. The rewrite flips it: state lives in React/Zustand, Phaser
 becomes a stateless view.
