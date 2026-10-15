@@ -23,6 +23,26 @@ release or after core/rules/search work, run the full relevant lane.
 Install the Rust audit command once with `cargo install cargo-audit --locked` if
 it is not already available.
 
+## Dependency Maintenance
+
+Cargo, npm, and GitHub Actions updates are reviewed and applied manually during
+maintenance passes and release preparation. Routine changes go directly to
+`main` after local review and validation. Scheduled Dependabot version PRs are
+disabled; GitHub vulnerability alerts remain enabled, and automatic security
+update PRs remain disabled.
+
+1. Review upstream release notes and update dependencies in small, scoped
+   batches. Check the current Rust stable toolchain for new lint failures too.
+2. Preserve the generated local `gomoku-wasm` dependency when updating npm.
+   Rebuild Wasm when Rust dependencies change and refresh the web dependency.
+   npm updates remain manual because Dependabot cannot resolve that generated
+   local package.
+3. Run the relevant checks above, including Rust and npm production dependency
+   audits. Use browser smoke when an update can affect player-facing behavior.
+4. Review manifest, lockfile, and workflow diffs before committing, then verify
+   CI on the pushed `main` commit. Refresh curated reports only when their
+   behavior or source data changes.
+
 ## Test Design
 
 Tests in this repo should protect durable behavior, not the temporary path used
