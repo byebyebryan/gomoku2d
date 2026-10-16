@@ -31,7 +31,7 @@ a broader workload set? Findings drive small repairs within those contracts.
 |---|---|---|---|
 | 1 | Build the isolated cloud harness and one signed-in round trip | Application signs in through emulated Auth, writes through the real SDK/rules, and restores state in a second browser context | complete; Chromium/Firefox smoke passed; three-engine CI added |
 | 2 | Complete the cloud continuity and failure matrix | Named assertions, emulator document readback, and repeatable recovery/isolation results | implemented; Chromium/Firefox matrix and race repeats verified; exact-head CI pending |
-| 3 | Expand and run production Wasm workloads | Reproducible cold/warm distributions, slow-case records, cancellation and cleanup evidence | planned |
+| 3 | Expand and run production Wasm workloads | Reproducible cold/warm distributions, slow-case records, cancellation and cleanup evidence | in progress; manifest and measurement harness validated |
 | 4 | Repair demonstrated failures, integrate checks, and close the extension | Affected regressions pass, appropriate full gates pass, and every finding has a disposition | planned |
 
 Run cloud and profiling stages sequentially. Use isolated output directories,

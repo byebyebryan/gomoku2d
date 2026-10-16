@@ -73,3 +73,31 @@ emulation does not supply the coarse-pointer/mobile-data policy inputs, so the
 redirect case uses the supported embedded-client path instead. An optional GAPI
 telemetry request needs a local empty response. Neither changes application
 authentication behavior or claims physical mobile acceptance.
+
+
+## Batch 3: Frozen Wasm Workloads
+
+The expanded opt-in profiler validates its manifest against the current Wasm
+core before collecting timings and checks that Vite serves that identical Wasm
+binary. Twelve ongoing positions span 4-80 plies (six per ruleset). Six decisive
+replays span 18, 20, 28, 31, 50, and 51 plies. Every prefix is legal/ongoing and
+every completed replay has the stated terminal result under its selected rules.
+The preserved published report is read only; no tournament/report regeneration
+or Renju-semantic change is part of this pass.
+
+The manifest SHA-256 is
+`fc7cf9ac62c3ec79701b8dce14ea739d25b3666b6ec845cb7e2b3a9178d29514`;
+source SHA-256 is
+`eb58c6e54ff02930289214802f38ae9560d8d641074d77dcb39350304a8d4b43`.
+The harness separates 108 fresh-worker bot requests, nine reused-worker groups
+(first request plus three warm repeats each), 18 uncached analyses and their
+cached revisits. Five further independent trials are automatically recorded for
+Normal/Hard or short-analysis trigger breaches. Startup uses five fresh contexts
+and warm reloads, plus a separately labeled page-only rate-6 diagnostic. Pending
+replacement, active-route cancellation, recovery and 30 navigation cycles use
+the production application/worker paths. A 28-minute test limit leaves cleanup
+and evidence writing inside the 30-minute global cap. Timing results follow.
+
+Additional cloud runner checks passed: occupied-port refusal preserved the
+existing listener; interrupting the runner after preview startup released all
+six owned ports. Successful/failing test runs also cleaned up before reuse.

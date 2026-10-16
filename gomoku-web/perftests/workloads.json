@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "source": "../reports/lab/bot-report.json",
+  "sourceSha256": "eb58c6e54ff02930289214802f38ae9560d8d641074d77dcb39350304a8d4b43",
+  "notes": [
+    "Frozen published-game prefixes; validates every move and completion with the current Wasm core before profiling.",
+    "Freestyle fixtures are revalidated under Freestyle, not assumed legal from Renju provenance."
+  ],
+  "positions": [
+    {
+      "id": "renju-65-p4",
+      "variant": "renju",
+      "matchIndex": 65,
+      "prefix": 4,
+      "phase": "opening"
+    },
+    {
+      "id": "renju-577-p12",
+      "variant": "renju",
+      "matchIndex": 577,
+      "prefix": 12,
+      "phase": "midgame"
+    },
+    {
+      "id": "renju-1089-p20",
+      "variant": "renju",
+      "matchIndex": 1089,
+      "prefix": 20,
+      "phase": "forcing"
+    },
+    {
+      "id": "renju-18-p36",
+      "variant": "renju",
+      "matchIndex": 18,
+      "prefix": 36,
+      "phase": "dense"
+    },
+    {
+      "id": "renju-38-p60",
+      "variant": "renju",
+      "matchIndex": 38,
+      "prefix": 60,
+      "phase": "dense-forcing"
+    },
+    {
+      "id": "renju-436-p80",
+      "variant": "renju",
+      "matchIndex": 436,
+      "prefix": 80,
+      "phase": "dense-late"
+    },
+    {
+      "id": "freestyle-577-p6",
+      "variant": "freestyle",
+      "matchIndex": 577,
+      "prefix": 6,
+      "phase": "opening"
+    },
+    {
+      "id": "freestyle-1089-p14",
+      "variant": "freestyle",
+      "matchIndex": 1089,
+      "prefix": 14,
+      "phase": "midgame"
+    },
+    {
+      "id": "freestyle-65-p16",
+      "variant": "freestyle",
+      "matchIndex": 65,
+      "prefix": 16,
+      "phase": "forcing"
+    },
+    {
+      "id": "freestyle-39-p38",
+      "variant": "freestyle",
+      "matchIndex": 39,
+      "prefix": 38,
+      "phase": "dense"
+    },
+    {
+      "id": "freestyle-234-p60",
+      "variant": "freestyle",
+      "matchIndex": 234,
+      "prefix": 60,
+      "phase": "dense-forcing"
+    },
+    {
+      "id": "freestyle-611-p80",
+      "variant": "freestyle",
+      "matchIndex": 611,
+      "prefix": 80,
+      "phase": "dense-late"
+    }
+  ],
+  "replays": [
+    {
+      "id": "renju-replay-65",
+      "variant": "renju",
+      "matchIndex": 65
+    },
+    {
+      "id": "renju-replay-1089",
+      "variant": "renju",
+      "matchIndex": 1089
+    },
+    {
+      "id": "renju-replay-18",
+      "variant": "renju",
+      "matchIndex": 18
+    },
+    {
+      "id": "freestyle-replay-577",
+      "variant": "freestyle",
+      "matchIndex": 577
+    },
+    {
+      "id": "freestyle-replay-26",
+      "variant": "freestyle",
+      "matchIndex": 26
+    },
+    {
+      "id": "freestyle-replay-39",
+      "variant": "freestyle",
+      "matchIndex": 39
+    }
+  ]
+}
