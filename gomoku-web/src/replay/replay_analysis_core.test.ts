@@ -90,6 +90,18 @@ describe("savedMatchToReplayJson", () => {
 });
 
 describe("WasmReplayAnalyzer replay input", () => {
+  it.each(["maxDepth", "maxScanPlies"] as const)("rejects %s overflow instead of truncating on wasm32", (field) => {
+    const analyzer = WasmReplayAnalyzer.createFromReplayJson(
+      savedMatchToReplayJson(localMatch()),
+      replayAnalysisOptionsJson({ maxDepth: 0, [field]: 2 ** 32 }),
+    );
+    try {
+      expect(parseWasmReplayAnalysisStep(analyzer.step(1)).status).toBe("error");
+    } finally {
+      analyzer.dispose();
+      analyzer.free();
+    }
+  });
   it("creates a wasm analyzer that can analyze the converted saved match", () => {
     const analyzer = WasmReplayAnalyzer.createFromReplayJson(
       savedMatchToReplayJson(localMatch()),

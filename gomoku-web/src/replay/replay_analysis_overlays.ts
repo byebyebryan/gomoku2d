@@ -126,7 +126,7 @@ function escapePlies(annotationsByPly: ReplayAnalysisAnnotationsByPly): number[]
 }
 
 function nodeDetail(step: Pick<ReplayAnalysisStepResult, "counters">): string {
-  return `${step.counters.proof_nodes} nodes`;
+  return `${step.counters.proof_nodes} line steps`;
 }
 
 function sideNameForPlayer(player: 1 | 2): ReplayAnalysisSide {

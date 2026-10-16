@@ -274,6 +274,7 @@ pub enum ReplayAnalysisStepStatus {
 pub struct ReplayAnalysisCounters {
     pub prefixes_analyzed: usize,
     pub branch_roots: usize,
+    /// Sum of retained principal-line lengths, not visited search nodes.
     pub proof_nodes: usize,
 }
 

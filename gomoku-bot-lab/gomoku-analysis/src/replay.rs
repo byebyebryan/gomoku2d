@@ -75,7 +75,11 @@ impl ReplayAnalysisSession {
         };
         let lower_bound = options
             .max_scan_plies
-            .map(|max_scan_plies| boards.len().saturating_sub(max_scan_plies + 1))
+            .map(|max_scan_plies| {
+                boards
+                    .len()
+                    .saturating_sub(max_scan_plies.saturating_add(1))
+            })
             .unwrap_or(0);
         let next_ply = winner.map(|_| boards.len().saturating_sub(1));
         let scan_start = boards.len();

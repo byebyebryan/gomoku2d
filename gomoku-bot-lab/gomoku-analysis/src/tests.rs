@@ -72,6 +72,19 @@ fn test_analysis_options() -> AnalysisOptions {
     }
 }
 
+#[test]
+fn scan_window_accepts_the_largest_representable_size_without_overflow() {
+    let replay = replay_from_moves(
+        Variant::Freestyle,
+        &["E8", "A1", "F8", "A2", "G8", "A3", "H8", "A4", "I8"],
+    );
+    let options = AnalysisOptions {
+        max_depth: 0,
+        max_scan_plies: Some(usize::MAX),
+    };
+    assert!(ReplayAnalysisSession::new(replay, options).is_ok());
+}
+
 fn proof_summary_with_escape(
     boards: &[Board],
     scan_start: usize,

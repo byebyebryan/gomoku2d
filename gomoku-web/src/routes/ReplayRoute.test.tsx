@@ -448,7 +448,7 @@ describe("ReplayRoute analysis overlays", () => {
     });
 
     expect(screen.getByTestId("replay-analysis-status")).toHaveTextContent("Tracing the finish");
-    expect(screen.getByTestId("replay-analysis-detail")).toHaveTextContent("Move 5 · 321 nodes");
+    expect(screen.getByTestId("replay-analysis-detail")).toHaveTextContent("Move 5 · 321 line steps");
     expect(screen.getByTestId("replay-timeline-analyzed")).toBeInTheDocument();
     expect(screen.queryByTestId("replay-timeline-setup-corridor")).not.toBeInTheDocument();
     expect(screen.getByTestId("replay-timeline-escape")).toBeInTheDocument();

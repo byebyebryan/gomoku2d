@@ -76,17 +76,22 @@ pub fn analysis_options_from_json(options_json: &str) -> Result<AnalysisOptions,
         let value = max_depth
             .as_u64()
             .ok_or_else(|| "max_depth must be a non-negative integer".to_string())?;
-        options.max_depth = value as usize;
+        options.max_depth = usize::try_from(value)
+            .map_err(|_| "max_depth exceeds the supported integer range".to_string())?;
     }
 
     if let Some(max_scan_plies) = object.get("max_scan_plies") {
-        options.max_scan_plies = if max_scan_plies.is_null() {
-            None
-        } else {
-            Some(max_scan_plies.as_u64().ok_or_else(|| {
-                "max_scan_plies must be null or a non-negative integer".to_string()
-            })? as usize)
-        };
+        options.max_scan_plies =
+            if max_scan_plies.is_null() {
+                None
+            } else {
+                let value = max_scan_plies.as_u64().ok_or_else(|| {
+                    "max_scan_plies must be null or a non-negative integer".to_string()
+                })?;
+                Some(usize::try_from(value).map_err(|_| {
+                    "max_scan_plies exceeds the supported integer range".to_string()
+                })?)
+            };
     }
 
     Ok(options)
