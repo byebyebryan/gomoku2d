@@ -16,6 +16,12 @@ Continues the `0.5.x` reconciliation line after the October project review.
 
 ### Web
 
+- Keep analyses started inside replay completion/error callbacks active.
+- Separate shared saved-history validation/aggregation from Firebase and use
+  one promoted-history projection for sync preflight and writes.
+- Reject malformed history-summary opponents without throwing during hydration.
+- Omit unused keyboard-cell markup from static teaching diagrams while
+  retaining their labeled images and interactive match/replay grids.
 - Increase muted-label and loss-text contrast; keep static Rules/Guide diagrams
   inert within their labeled images and give labeled example groups valid roles.
 - Bound cloud loads, promotions, profile patches, and follow-up history actions
@@ -56,6 +62,8 @@ Continues the `0.5.x` reconciliation line after the October project review.
 
 ### Bot lab
 
+- Report invalid replay-directory paths with a contextual CLI error instead
+  of panicking in versus, self-play and tournament commands.
 - Detect draws correctly after FEN-imported positions, reject invalid FEN
   dimensions, and check Renju reference labels across all board symmetries.
 - Require Renju four completions to make five in the four's own direction;
@@ -68,6 +76,8 @@ Continues the `0.5.x` reconciliation line after the October project review.
 
 ### Maintenance
 
+- Wait for scheduled deep-link scrolling in the report test to avoid a race
+  between rendered content and its animation-frame callback.
 - Moved dependency maintenance to direct manual review and disabled scheduled
   Dependabot PRs while retaining GitHub vulnerability alerts.
 - Refreshed compatible Rust and npm dependencies and updated the Java setup

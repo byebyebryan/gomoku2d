@@ -34,6 +34,7 @@ threat, bot, or replay-analysis semantics.
 | Profile/settings | `src/profile/*` | Local profile, persisted settings, local history, active-history selection |
 | Cloud sync | `src/cloud/*` | Optional Firebase auth/profile/history stores and local-to-cloud promotion |
 | Saved matches | `src/match/saved_match.ts` | Compact persisted replay/history schema |
+| Shared history | `src/match/match_history.ts` | Local/cloud summary validation, retention, archive statistics and identity projection without Firebase |
 | Replay UI | `src/replay/*`, `src/routes/ReplayRoute.tsx` | Replay reconstruction, timeline, analysis overlays, cache, and worker runner |
 | Lab reports | `src/routes/LabReportRoute.tsx`, `src/routes/AnalysisReportRoute.tsx`, `src/routes/lab-report/*` | Report loading/tabs, tournament drilldowns, analysis rows, proof boards, and help/provenance |
 | Bot worker | `src/core/bot_runner.ts`, `src/core/bot_worker.ts`, `src/core/bot_protocol.ts` | Async bot move requests with cancellation and worker restart safety |
@@ -141,6 +142,9 @@ an escape. Those facts come from the game store and wasm analysis snapshots.
 Local profile state is the default. Cloud is optional and layered on top.
 
 - `local_profile_store.ts` persists local profile, settings, and local history.
+- `match/match_history.ts` owns the shared history model. Guest persistence
+  imports it directly; cloud record conversion and Firestore profile I/O remain
+  in `cloud/`. The cloud profile facade retains its existing exported names.
 - `best_effort_storage.ts` keeps profile and cloud-cache actions usable in memory
   after storage access or writes fail. A profile save failure shows a session-only
   notice; unreadable persistent data is not overwritten by a fallback profile.
@@ -153,6 +157,8 @@ Local profile state is the default. Cloud is optional and layered on top.
 - `cloud_promotion.ts` moves local profile/history/settings into cloud after
 sign-in. `cloud_setup.ts` restores the account setup once before controller or
 background uploads; later local edits remain authoritative for that session.
+- `cloud_promotion.ts` owns the promoted-history projection used by both sync
+  preflight and the write path, including reset filtering and retention.
 - Firestore rules live at repo root and are tested through `npm run test:rules`.
 
 Cloud loads and promotions return their own operation result or `null` after

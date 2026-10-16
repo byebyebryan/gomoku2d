@@ -48,6 +48,8 @@ The root [`README`](../README.md) is the public repo landing page.
 Active tuning and screenshot-review notes remain under [`working/`](working/).
 The active [`v0.5` deep reconciliation and refinement plan](working/v0_5_reconciliation.md)
 owns the whole-project review, execution sequence, coverage, findings, and acceptance.
+The follow-up [systematic code review](working/code_review_2026_10_15.md) records
+structural cleanup, retained boundaries and conditional refactoring opportunities.
 The completed `v0.5.4` plan and finding register live in [`archive/`](archive/)
 with the other historical release material.
 
