@@ -72,7 +72,7 @@ export interface LocalProfileState {
 
 export interface LocalProfileStoreOptions {
   storage?: LocalProfileStorage;
-  onPersistenceUnavailable?: () => void;
+  onPersistenceUnavailable?: (error?: unknown) => void;
 }
 
 const STORAGE_KEY = "gomoku2d.local-profile.v5";
@@ -217,14 +217,25 @@ function matchHistoryFromPersisted(persisted: PersistedLocalProfileState): Local
   return mergeLocalProfileMatchHistory(base, localProfileId, localReplayMatchesFromRaw(candidate?.replayMatches));
 }
 
-function validatedLocalProfileStorage(storage: LocalProfileStorage): LocalProfileStorage {
+class LocalProfileWriteConflict extends Error {}
+
+function validatedLocalProfileStorage(storage: () => LocalProfileStorage): LocalProfileStorage {
+  let observedRaw: string | null | undefined;
+  const writableStorage = (name: string) => {
+    const target = storage();
+    if (name === STORAGE_KEY && observedRaw !== undefined && target.getItem(name) !== observedRaw) {
+      throw new LocalProfileWriteConflict("Local profile changed in another tab");
+    }
+    return target;
+  };
   return {
     getItem: (name) => {
       if (name !== STORAGE_KEY) {
-        return storage.getItem(name);
+        return storage().getItem(name);
       }
 
-      const raw = storage.getItem(name);
+      const raw = storage().getItem(name);
+      observedRaw = raw;
       const persisted = persistedStateFromRaw(raw);
       if (!persisted) {
         return null;
@@ -240,10 +251,12 @@ function validatedLocalProfileStorage(storage: LocalProfileStorage): LocalProfil
       return sanitizedRaw;
     },
     removeItem: (name) => {
-      storage.removeItem(name);
+      writableStorage(name).removeItem(name);
+      if (name === STORAGE_KEY) observedRaw = null;
     },
     setItem: (name, value) => {
-      storage.setItem(name, value);
+      writableStorage(name).setItem(name, value);
+      if (name === STORAGE_KEY) observedRaw = value;
     },
   };
 }
@@ -251,10 +264,8 @@ function validatedLocalProfileStorage(storage: LocalProfileStorage): LocalProfil
 export function createLocalProfileStore(
   options: LocalProfileStoreOptions = {},
 ): StoreApi<LocalProfileState> {
-  const baseStorage = bestEffortStorage(
-    () => validatedLocalProfileStorage(options.storage ?? localStorage),
-    options.onPersistenceUnavailable,
-  );
+  const validatedStorage = validatedLocalProfileStorage(() => options.storage ?? localStorage);
+  const baseStorage = bestEffortStorage(() => validatedStorage, options.onPersistenceUnavailable);
 
   const storage = createJSONStorage<Pick<LocalProfileState, "matchHistory" | "profile" | "settings">>(
     () => baseStorage,
@@ -348,8 +359,13 @@ export function createLocalProfileStore(
 
 // Kept outside the persisted store so a storage error can report its status
 // without triggering another persistence write.
-export const localPersistenceStore = createStore<{ available: boolean }>(() => ({ available: true }));
+export const localPersistenceStore = createStore<{ available: boolean; reason: "storage" | "changed" | null }>(
+  () => ({ available: true, reason: null }),
+);
 
 export const localProfileStore = createLocalProfileStore({
-  onPersistenceUnavailable: () => localPersistenceStore.setState({ available: false }),
+  onPersistenceUnavailable: (error) => localPersistenceStore.setState({
+    available: false,
+    reason: error instanceof LocalProfileWriteConflict ? "changed" : "storage",
+  }),
 });

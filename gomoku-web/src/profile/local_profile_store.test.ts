@@ -33,6 +33,35 @@ const customBotConfig: BotConfig = {
 };
 
 describe("createLocalProfileStore", () => {
+  it.each(["finished game", "profile reset"])("protects another tab's %s from a stale write", (change) => {
+    const storage = createMemoryStorage();
+    const first = createLocalProfileStore({ storage });
+    first.getState().ensureLocalProfile();
+    const onPersistenceUnavailable = vi.fn();
+    const stale = createLocalProfileStore({ storage, onPersistenceUnavailable });
+    if (change === "profile reset") {
+      first.getState().resetLocalProfile();
+      first.getState().ensureLocalProfile();
+    } else {
+      first.getState().recordFinishedMatch({
+        mode: "bot", status: "black_won", variant: "freestyle",
+        players: [{ kind: "human", name: "Guest", stone: "black" }, { kind: "bot", name: "Normal", stone: "white" }],
+        moves: Array.from({ length: 9 }, (_, i) => ({
+          row: i % 2 ? 0 : 7, col: i % 2 ? Math.floor(i / 2) : 3 + Math.floor(i / 2),
+          player: (i % 2 ? 2 : 1) as 1 | 2, moveNumber: i + 1,
+        })),
+      });
+    }
+    const saved = storage.getItem("gomoku2d.local-profile.v5");
+    stale.getState().updateSettings({ botConfig: customBotConfig });
+    expect(stale.getState().settings.botConfig).toEqual(customBotConfig);
+    expect(storage.getItem("gomoku2d.local-profile.v5")).toBe(saved);
+    const reloaded = createLocalProfileStore({ storage });
+    expect(reloaded.getState().matchHistory).toEqual(first.getState().matchHistory);
+    expect(reloaded.getState().profile?.id).toBe(first.getState().profile?.id);
+    expect(onPersistenceUnavailable).toHaveBeenCalledOnce();
+  });
+
   it.each(["{not-json", "null", '{"state":null,"version":5}', '{"state":{},"version":6}'])(
     "preserves unreadable or unsupported storage: %s",
     (raw) => {

@@ -16,6 +16,7 @@ import {
   type CloudProfile,
 } from "./cloud_profile";
 import { cloudProfileStore } from "./cloud_profile_store";
+import { restoreCloudSetup } from "./cloud_setup";
 
 export type CloudHistoryLoadStatus = "idle" | "loading" | "ready" | "error";
 export type CloudHistorySyncStatus = "idle" | "syncing" | "error";
@@ -459,7 +460,7 @@ export function createCloudHistoryStore(
             return;
           }
 
-          const localProfile = localProfileStore.getState();
+          let localProfile = localProfileStore.getState();
           const refreshedProfile = await refreshCloudProfileForUser(user, localProfile.settings);
           profile = refreshedProfile ?? cloudProfileForUser(user.uid);
           if (profile) {
@@ -485,6 +486,9 @@ export function createCloudHistoryStore(
           if (!profile || !cloudProfileSyncDue(profile)) {
             return;
           }
+
+          restoreCloudSetup(user, profile);
+          localProfile = localProfileStore.getState();
 
           const refreshedCache = get().users[user.uid] ?? defaultUserCache();
           const refreshedPending = Object.values(refreshedCache.pendingMatches);

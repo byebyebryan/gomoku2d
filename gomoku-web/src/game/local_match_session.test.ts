@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { DEFAULT_BOT_CONFIG, type BotConfig } from "../core/bot_config";
 import { localProfileStore } from "../profile/local_profile_store";
@@ -12,6 +12,7 @@ import {
   applySavedLocalMatchSetup,
   disposeLocalMatchSession,
   ensureLocalMatchSession,
+  localMatchSessionStore,
   startLocalMatchWithSavedSetup,
 } from "./local_match_session";
 
@@ -62,8 +63,6 @@ describe("local match session", () => {
         ruleset: "renju",
       },
     });
-    applySavedLocalMatchSetup();
-
     expect(store.getState()).toMatchObject({
       currentBotConfig: DEFAULT_BOT_CONFIG,
       currentVariant: "freestyle",
@@ -80,6 +79,26 @@ describe("local match session", () => {
       selectedBotConfig: hard,
       selectedVariant: "renju",
     });
+  });
+
+  it("disposes the old game when the local identity is reset", () => {
+    localProfileStore.setState(createLocalProfileTestState());
+    const dispose = vi.fn();
+    ensureLocalMatchSession({ botRunner: { ...noOpBotRunner, dispose } });
+    localProfileStore.getState().resetLocalProfile();
+    expect(dispose).toHaveBeenCalledOnce();
+    expect(localMatchSessionStore.getState().matchStore).toBeNull();
+  });
+
+  it("does not reset an empty game when only hint preferences change", () => {
+    localProfileStore.setState(createLocalProfileTestState());
+    const store = ensureLocalMatchSession({ botRunner: noOpBotRunner });
+    const initial = store.getState();
+    localProfileStore.getState().updateSettings({
+      boardHints: { ...defaultSettings.boardHints, immediate: "off" },
+    });
+    applySavedLocalMatchSetup();
+    expect(store.getState()).toBe(initial);
   });
 
   it("resumes replay branches with the current bot config and replay rule", () => {

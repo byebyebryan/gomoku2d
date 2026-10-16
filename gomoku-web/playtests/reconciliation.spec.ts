@@ -140,6 +140,7 @@ for (const width of [1440, 430]) {
     await expect(page.getByTestId("match-move-count")).toHaveText("Move 2");
     await expect(page.getByRole("button", { name: "Retry bot" })).toHaveCount(0);
     await expect(page.getByRole("alert")).toHaveCount(0);
+    await expect.poll(() => page.workers().length).toBeLessThanOrEqual(1);
   });
 }
 
@@ -151,4 +152,18 @@ test("the published Lab keeps possible findings and escapes qualified", async ({
   await expect(game).toContainText("possible: missed forbidden 4");
   await game.click();
   await expect(analysis.getByText("Black to respond / possible escape", { exact: true })).toBeVisible();
+});
+
+test("a stale tab keeps its changes in memory instead of replacing another tab's saved profile", async ({ page, context }) => {
+  await page.goto("/profile");
+  const other = await context.newPage();
+  await other.goto("/settings");
+  await expect(other.getByRole("button", { name: "Freestyle", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("textbox", { name: "Name", exact: true }).fill("Other tab player");
+  await other.getByRole("button", { name: "Renju", exact: true }).click();
+  await expect(other.getByRole("status")).toContainText("Saved data changed in another tab");
+  await expect(other.getByRole("button", { name: "Renju", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await page.reload();
+  await expect(page.getByRole("textbox", { name: "Name", exact: true })).toHaveValue("Other tab player");
+  await other.close();
 });

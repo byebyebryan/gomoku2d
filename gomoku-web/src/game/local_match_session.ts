@@ -115,8 +115,12 @@ export function applySavedLocalMatchSetup(): void {
   }
 
   const settings = localProfileStore.getState().settings;
-  matchStore.getState().selectVariant(settings.gameConfig.ruleset);
-  matchStore.getState().selectBotConfig(settings.botConfig);
+  if (matchStore.getState().selectedVariant !== settings.gameConfig.ruleset) {
+    matchStore.getState().selectVariant(settings.gameConfig.ruleset);
+  }
+  if (JSON.stringify(matchStore.getState().selectedBotConfig) !== JSON.stringify(settings.botConfig)) {
+    matchStore.getState().selectBotConfig(settings.botConfig);
+  }
 }
 
 export function startLocalMatchWithSavedSetup(): StoreApi<LocalMatchState> {
@@ -126,3 +130,14 @@ export function startLocalMatchWithSavedSetup(): StoreApi<LocalMatchState> {
   localMatchSessionStore.setState({ latestReplayId: null });
   return matchStore;
 }
+
+// The session owns this binding so optional cloud restoration does not eagerly
+// load the board/Wasm on public routes. Replay branches keep their own rules
+// until the player actually changes the saved setup.
+localProfileStore.subscribe((state, previous) => {
+  if (state.profile?.id !== previous.profile?.id) {
+    disposeLocalMatchSession();
+  } else if (state.settings !== previous.settings) {
+    applySavedLocalMatchSetup();
+  }
+});

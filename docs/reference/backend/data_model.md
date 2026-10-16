@@ -31,6 +31,12 @@ Local profile state is not mirrored one-to-one in Firestore. On sign-in, the app
 merges the latest local matches into the signed-in profile's capped
 `match_history` snapshot while leaving local copies on-device.
 
+Existing account settings restore once per sign-in before uploads capture the
+device setup. A new account initializes from the device; later edits sync at
+the next eligible checkpoint. Refreshes within the same sign-in do not replace
+unsynced device edits. Active games retain their starting rules/bot setup while
+saved setup changes stage the next game.
+
 ## `profiles/{uid}`
 
 Current profile documents are owned by the signed-in user.

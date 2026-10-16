@@ -15,7 +15,6 @@ import {
   type BotConfig,
 } from "../core/bot_config";
 import {
-  applySavedLocalMatchSetup,
   localMatchSessionStore,
   startLocalMatchWithSavedSetup,
 } from "../game/local_match_session";
@@ -152,7 +151,6 @@ export function SettingsRoute() {
 
   const updateSetup = (patch: Partial<typeof settings>) => {
     localProfileStore.getState().updateSettings(patch);
-    applySavedLocalMatchSetup();
   };
 
   const updateBot = (botConfig: BotConfig) => {

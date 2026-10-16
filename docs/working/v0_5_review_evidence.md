@@ -347,3 +347,34 @@ regressions failed before the change; idle completed workers can still be reused
 The obsolete cooperative cancel protocol is removed. Disposition: **fix**.
 All 33 Chromium journeys passed after the integrated repairs (14.4 s), including
 touch, resize, analysis and repeated failure/retry.
+
+
+## Local and Account Setup Lifecycle
+
+Two stale-store cases reproduced durable data loss: after one tab recorded a
+new ending or reset identity, a second tab saved its old snapshot over that
+history/identity. The local persistence adapter now compares the last observed
+raw document before writing. On a detected conflict, it preserves the newer
+saved bytes, keeps this tab's subsequent work in memory, and displays a distinct
+session-only notice. Both unit scenarios failed before; the two-page browser
+scenario now passes. This is stale-writer detection, not an atomic multi-tab
+merge; concurrent writing remains a single-active-tab contract. Do not reload a
+session-only tab expecting unsynced edits to survive.
+
+An account with Hard/Renju saved was overwritten by a fresh device's
+Normal/Freestyle defaults during promotion. Establish the review's default
+policy: restore saved cloud setup once per sign-in, then upload later local
+changes. New cloud accounts initialize from the device setup. Restoration runs
+before both controller and direct/background upload paths capture settings;
+later cloud refreshes in the same session do not clobber local edits. The
+failing sign-in reproduction and direct cold-load scenario now pass. Real OAuth
+and cross-device round-trip acceptance remain pending.
+
+The local session now owns profile/setup subscriptions. Resetting identity
+terminates/disposes its old game so it cannot record into the replacement
+profile. Saved setup changes stage the next game without changing a game in
+progress; hint-only changes do not reset clocks or restart an empty board.
+Three lifecycle cases failed before these repairs. This binding stays in the
+lazy session module so cloud setup restoration does not load Wasm on Home.
+Disposition: **fix/refactor**, retaining local-first identity and frozen current-
+game settings. All 358 web tests and all 33 Chromium journeys passed together.

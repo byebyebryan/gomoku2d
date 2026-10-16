@@ -10,6 +10,7 @@ import {
 } from "./cloud_profile";
 import { cloudProfileStore } from "./cloud_profile_store";
 import { cloudPromotionStore } from "./cloud_promotion_store";
+import { restoreCloudSetup } from "./cloud_setup";
 import { DEFAULT_LOCAL_DISPLAY_NAME, localProfileStore, type LocalProfileMatchHistory } from "../profile/local_profile_store";
 
 export interface FlushCloudProfileSyncOptions {
@@ -20,9 +21,9 @@ export async function flushCloudProfileSync(
   user: CloudAuthUser,
   options: FlushCloudProfileSyncOptions = {},
 ): Promise<CloudProfile | null> {
-  const localStore = localProfileStore.getState();
+  let localStore = localProfileStore.getState();
   const localProfile = localStore.profile ?? localStore.ensureLocalProfile();
-  const settings = localStore.settings;
+  let settings = localStore.settings;
   let cloudState = cloudProfileStore.getState();
 
   if (cloudState.profile?.uid !== user.uid || cloudState.status !== "ready") {
@@ -36,6 +37,11 @@ export async function flushCloudProfileSync(
   if (cloudState.profile?.uid !== user.uid || cloudState.status !== "ready") {
     return null;
   }
+
+  restoreCloudSetup(user, cloudState.profile);
+  localStore = localProfileStore.getState();
+  if (localStore.profile?.id !== localProfile.id) return null;
+  settings = localStore.settings;
 
   const localMatchHistory = options.localMatchHistory ?? localStore.matchHistory;
   const localReplayMatches = localMatchHistory.replayMatches;

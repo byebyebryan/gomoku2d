@@ -8,18 +8,18 @@ export interface BrowserStorage {
 
 // Once a read or write fails, keep this store in memory for the session. In
 // particular, never replace unreadable persisted data with a fallback profile.
-export function bestEffortStorage(backing: () => BrowserStorage, onUnavailable?: () => void): BrowserStorage;
-export function bestEffortStorage(backing: () => StateStorage, onUnavailable?: () => void): StateStorage;
+export function bestEffortStorage(backing: () => BrowserStorage, onUnavailable?: (error?: unknown) => void): BrowserStorage;
+export function bestEffortStorage(backing: () => StateStorage, onUnavailable?: (error?: unknown) => void): StateStorage;
 export function bestEffortStorage(
   backing: () => StateStorage,
-  onUnavailable: () => void = () => undefined,
+  onUnavailable: (error?: unknown) => void = () => undefined,
 ): StateStorage {
   const memory = new Map<string, string>();
   let memoryOnly = false;
-  const unavailable = () => {
+  const unavailable = (error?: unknown) => {
     if (memoryOnly) return;
     memoryOnly = true;
-    onUnavailable();
+    onUnavailable(error);
   };
 
   return {
@@ -32,16 +32,16 @@ export function bestEffortStorage(
               if (resolved === null) memory.delete(name);
               else memory.set(name, resolved);
               return resolved;
-            }).catch(() => {
-              unavailable();
+            }).catch((error: unknown) => {
+              unavailable(error);
               return memory.get(name) ?? null;
             });
           }
           if (value !== null) memory.set(name, value);
           else memory.delete(name);
           return value;
-        } catch {
-          unavailable();
+        } catch (error) {
+          unavailable(error);
         }
       }
       return memory.get(name) ?? null;
@@ -51,8 +51,8 @@ export function bestEffortStorage(
       if (!memoryOnly) {
         try {
           return Promise.resolve(backing().setItem(name, value)).catch(unavailable);
-        } catch {
-          unavailable();
+        } catch (error) {
+          unavailable(error);
         }
       }
     },
@@ -61,8 +61,8 @@ export function bestEffortStorage(
       if (!memoryOnly) {
         try {
           return Promise.resolve(backing().removeItem(name)).catch(unavailable);
-        } catch {
-          unavailable();
+        } catch (error) {
+          unavailable(error);
         }
       }
     },

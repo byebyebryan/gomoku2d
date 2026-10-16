@@ -66,7 +66,9 @@ When a local player signs in:
 
 1. Firebase returns a stable `uid`.
 2. The app creates or loads `profiles/{uid}`.
-3. Local settings and eligible finished local history are imported.
+3. Existing cloud settings restore once for that sign-in; a new account starts
+   from this device's settings. Later device edits upload at the next sync.
+   Eligible finished local history is merged into the account snapshot.
 4. Imported records keep stable local-origin IDs so retries are idempotent.
 5. Local-only history remains local unless explicitly promoted/synced.
 

@@ -960,6 +960,32 @@ describe("ProfileRoute cloud state", () => {
     }));
   });
 
+  it("restores the account setup before history promotion and retains later local edits", async () => {
+    const local = localProfileStore.getState().ensureLocalProfile();
+    localProfileStore.setState({ matchHistory: localMatchHistoryWith([localSavedMatch("pending-local", local.id)]) });
+    const savedSettings = {
+      ...defaultSettings,
+      botConfig: { mode: "preset", preset: "hard", version: 1 } as const,
+      gameConfig: { opening: "standard", ruleset: "renju" } as const,
+    };
+    const promote = vi.fn().mockResolvedValue(undefined);
+    cloudAuthStore.setState({ status: "signed_in", isConfigured: true, user: cloudUser });
+    cloudProfileStore.setState({ profile: { ...cloudProfile, settings: savedSettings }, status: "ready" });
+    cloudPromotionStore.setState({ promote });
+    renderProfileRoute();
+    await waitFor(() => expect(promote).toHaveBeenCalled());
+    expect(localProfileStore.getState().settings).toEqual(savedSettings);
+    expect(promote).toHaveBeenLastCalledWith(expect.objectContaining({ settings: savedSettings }));
+    await act(async () => {
+      localProfileStore.getState().updateSettings({ gameConfig: { opening: "standard", ruleset: "freestyle" } });
+      cloudProfileStore.setState({ profile: { ...cloudProfile, settings: savedSettings } });
+    });
+    await waitFor(() => expect(promote).toHaveBeenLastCalledWith(expect.objectContaining({
+      settings: expect.objectContaining({ gameConfig: { opening: "standard", ruleset: "freestyle" } }),
+    })));
+    expect(localProfileStore.getState().settings.gameConfig.ruleset).toBe("freestyle");
+  });
+
   it("adopts the cloud display name without promoting a default local name", async () => {
     const promote = vi.fn().mockResolvedValue(undefined);
     localProfileStore.getState().ensureLocalProfile();

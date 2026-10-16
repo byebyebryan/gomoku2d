@@ -144,11 +144,15 @@ Local profile state is the default. Cloud is optional and layered on top.
 - `best_effort_storage.ts` keeps profile and cloud-cache actions usable in memory
   after storage access or writes fail. A profile save failure shows a session-only
   notice; unreadable persistent data is not overwritten by a fallback profile.
+- Local writes detect changes since this tab's last read and become session-only
+  on conflict, preserving the newer saved document. Use one writing tab; this
+  does not provide an atomic multi-tab merge.
 - `profile_settings.ts` defines the persisted settings schema.
 - `cloud_profile.ts` / `cloud_profile_store.ts` define cloud profile shape.
 - `cloud_history.ts` / `cloud_history_store.ts` own private cloud history.
 - `cloud_promotion.ts` moves local profile/history/settings into cloud after
-  sign-in.
+sign-in. `cloud_setup.ts` restores the account setup once before controller or
+background uploads; later local edits remain authoritative for that session.
 - Firestore rules live at repo root and are tested through `npm run test:rules`.
 
 Cloud loads and promotions return their own operation result or `null` after

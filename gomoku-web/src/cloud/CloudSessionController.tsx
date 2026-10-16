@@ -14,6 +14,7 @@ import {
 import { cloudProfileStore } from "./cloud_profile_store";
 import { cloudPromotionStore } from "./cloud_promotion_store";
 import { flushCloudProfileSync } from "./cloud_sync";
+import { restoreCloudSetup } from "./cloud_setup";
 
 const SYNC_RETRY_BUFFER_MS = 100;
 const EMPTY_PENDING_CLOUD_MATCHES = {};
@@ -91,6 +92,23 @@ export function CloudSessionController() {
   }, [authStatus, authUser]);
 
   useEffect(() => {
+    if (authStatus !== "signed_in" || !authUser) {
+      return;
+    }
+    // Restore once for this auth session, before any local snapshot upload.
+    // A new account's initial cloud document already contains this device's setup.
+    const current = cloudProfileStore.getState();
+    if (
+      cloudProfileStatus !== "ready"
+      || !cloudProfile || cloudProfile.uid !== authUser.uid
+      || current.status !== "ready" || current.profile !== cloudProfile
+      || cloudAuthStore.getState().user !== authUser
+    ) return;
+
+    restoreCloudSetup(authUser, cloudProfile);
+  }, [authStatus, authUser, cloudProfile, cloudProfileStatus]);
+
+  useEffect(() => {
     if (authStatus === "signed_in" && authUser && cloudProfileStatus === "ready") {
       void cloudHistoryStore.getState().loadForUser(authUser, cloudProfile?.resetAt ?? null);
     }
@@ -137,6 +155,8 @@ export function CloudSessionController() {
       || !authUser
       || cloudProfileStatus !== "ready"
       || !cloudProfile
+      || cloudProfile.uid !== authUser.uid
+      || localProfileStore.getState().settings !== settings
       || !localProfile
       || shouldAdoptCloudDisplayName(localProfile.displayName, cloudProfile.displayName)
     ) {

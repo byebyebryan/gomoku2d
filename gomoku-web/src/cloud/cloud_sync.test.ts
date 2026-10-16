@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { CloudAuthUser } from "./auth_store";
+import { cloudAuthStore, type CloudAuthUser } from "./auth_store";
 import { emptyCloudMatchHistory, type CloudProfile } from "./cloud_profile";
 import { cloudProfileStore } from "./cloud_profile_store";
 import { cloudPromotionStore } from "./cloud_promotion_store";
@@ -69,11 +69,13 @@ const promotionResult: LocalProfilePromotionResult = {
 };
 
 const initialCloudProfileState = cloudProfileStore.getState();
+const initialAuthState = cloudAuthStore.getState();
 const initialCloudPromotionState = cloudPromotionStore.getState();
 const initialLocalProfileState = localProfileStore.getState();
 
 describe("flushCloudProfileSync", () => {
   afterEach(() => {
+    cloudAuthStore.setState(initialAuthState, true);
     cloudProfileStore.setState(initialCloudProfileState, true);
     cloudPromotionStore.setState(initialCloudPromotionState, true);
     localProfileStore.setState(initialLocalProfileState, true);
@@ -160,6 +162,21 @@ describe("flushCloudProfileSync", () => {
 
     expect(loadForUser).toHaveBeenCalledWith(user, renjuSettings);
     expect(promote).toHaveBeenCalledTimes(1);
+  });
+
+  it("restores settings before a cold-load upload outside the React controller", async () => {
+    cloudAuthStore.setState({ user, status: "signed_in" });
+    cloudProfileStore.setState({ profile: null, status: "loading", loadForUser: vi.fn(async () => {
+      cloudProfileStore.setState({ profile: cloudProfile, status: "ready" });
+      return cloudProfile;
+    }) });
+    const promote = vi.fn().mockResolvedValue(promotionResult);
+    cloudPromotionStore.setState({ promote });
+    await flushCloudProfileSync(user);
+    expect(promote).toHaveBeenCalledWith(expect.objectContaining({ settings: defaultSettings }));
+    expect(localProfileStore.getState().settings).toEqual(defaultSettings);
+    localProfileStore.getState().updateSettings(renjuSettings);
+    expect(localProfileStore.getState().settings).toEqual(renjuSettings);
   });
 
   it.each(["account switch", "profile reset"])("discards an old flush after %s, even when the next promotion completes", async (change) => {
