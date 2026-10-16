@@ -16,6 +16,8 @@ Continues the `0.5.x` reconciliation line after the October project review.
 
 ### Web
 
+- Increase muted-label and loss-text contrast; keep static Rules/Guide diagrams
+  inert within their labeled images and give labeled example groups valid roles.
 - Bound cloud loads, promotions, profile patches, and follow-up history actions
   to their current operation/profile/session, preventing stale sync results
   from patching a different account or a reset profile.

@@ -599,3 +599,60 @@ still excludes worker/Wasm/GPU heap. Identical-position TT repeats and page-only
 CPU throttling retain the earlier interpretation limits. Dynamic preload changes
 show no material local startup increase in this sample; test real-network/mobile
 latency before making a broader performance promise.
+
+
+## Unattended Acceptance and Manual Check Deferral
+
+Bryan requested that all remaining manual checks be deferred, while exercising
+whatever could run unattended. This decision supersedes earlier statements in
+this ledger that manual acceptance must keep the reconciliation review open.
+The review is complete with the deferrals below; a release remains a separate
+decision. Deferred checks are not recorded as passed.
+
+Installed Chrome connected through the ChatGPT browser extension and loaded the
+local production build. Its native accessibility tree exposes the named Gomoku
+grid, all 225 cells, keyboard instructions and a polite, atomic status region.
+Keyboard placement triggered the normal bot reply (Move 2). This confirms browser
+semantics and input behavior, not a real screen reader's speech or usability.
+
+An independent axe-core 4.14.0 audit initially reproduced insufficient contrast
+on Home links, match/profile labels, the selected preset description, Lab labels
+and profile loss text. It also found focusable descendants inside static
+Rules/Guide images. Repairs increase muted/loss text contrast and make teaching
+boards inert under their existing text alternatives. Labeled diagram/visual
+groups now have valid group roles. The obsolete test asserting the exact old
+muted RGB value was removed; behavioral contrast checks replace it.
+
+The final installed-Chrome audit covered ten routes at 1600 × 1000 and
+390 × 844: **20 checks, zero reported violations and no page-width overflow**.
+The [before/after JSON](assets/accessibility-audit-2026-10-15.json) records the
+axe version, audited routes, viewport sizes, bundle identity and remaining
+inconclusive checks. The browser suite now runs those 20 audits per engine and
+attaches full violation/inconclusive details. It checks WCAG 2 A/AA, 2.1 A/AA
+and best-practice rules; this is bounded automation, not WCAG certification.
+The [Chrome setup capture](assets/acceptance-chrome-2026-10-15.jpg) records the
+refined labels in their surrounding layout.
+
+Typecheck, production build and production dependency audit passed. Local
+Chromium and Firefox exercised all 56 journeys/audits per engine; two failures
+were the obsolete exact-color assertion, and that affected case passed in both
+after its removal. Local WebKit could not launch because this host lacks its
+required ICU/XML/Flite libraries; the supported Ubuntu CI browser lane supplies
+those dependencies and runs the full three-engine suite on the pushed head.
+
+Remaining inconclusive findings include contrast over gradients and whether the
+illustrative icon-only sample's visible glyph matches its accessible name.
+They remain visible in audit output and deferred for visual/screen-reader
+review. Static diagrams retain their descriptive labels; active match/replay
+boards retain their navigable grids.
+
+| Acceptance item | Unattended evidence | Current disposition |
+|---|---|---|
+| Real Google sign-in and two-device setup/history/reset continuity | Existing auth/session scenarios and real Firebase SDK transactions against Firestore emulator rules | Deferred; no designated disposable real-account round trip or production write performed |
+| Physical lower-powered/mobile performance and touch comfort | Existing production profiling, page CPU throttling, responsive and simulated-touch journeys | Deferred; desktop simulation does not establish physical-device comfort, thermals or mobile network latency |
+| Actual browser zoom | Existing constrained-layout probes; extension keyboard zoom attempt did not change viewport or device pixel ratio | Deferred; no actual browser-zoom result claimed |
+| Screen-reader use | Installed Chrome's native grid/cell/status semantics, keyboard journeys, independent accessibility audits | Deferred; speech, reading order in real use and inconclusive checks remain unverified |
+| New-player/human visual feedback | Earlier fresh game → analysis → branch walkthrough; browser captures | Deferred; agent observation is not novice/human acceptance |
+
+No version/tag, deployment, Firestore rules rollout, or production-account write
+was made. The next product checkpoint can proceed with these limits recorded.

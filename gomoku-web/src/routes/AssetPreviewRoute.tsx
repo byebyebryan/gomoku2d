@@ -155,7 +155,7 @@ function GuidePanel({ manifest }: { manifest: AssetManifest }) {
             designed to stay out of the stones&apos; way.
           </p>
         </div>
-        <div className={styles.visualStats} aria-label="Visual source summary">
+        <div className={styles.visualStats} aria-label="Visual source summary" role="group">
           <VisualStat label="palette groups" value={manifest.guide.palette.length} />
           <VisualStat label="sprite loops" value={manifest.sprites.animations.length} />
           <VisualStat label="z-order cases" value={manifest.sprites.z_cases.length} />
@@ -303,7 +303,7 @@ function SpritesPanel({ manifest }: { manifest: AssetManifest }) {
         <div className={styles.zCaseGrid}>
           {manifest.sprites.z_cases.map((zCase) => (
             <article key={zCase.name} className={styles.zCaseCard}>
-              <div className={styles.boardCell} aria-label={`${zCase.title} z-order preview`}>
+              <div className={styles.boardCell} aria-label={`${zCase.title} z-order preview`} role="img">
                 {zCase.layers.map((layer) => (
                   <SpriteLayer
                     key={`${zCase.name}-${layer.name}`}

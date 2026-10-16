@@ -1,0 +1,965 @@
+{
+  "baseCommit": "41fd63a",
+  "candidate": "working tree contrast and static-diagram repairs recorded with this evidence",
+  "bundleIndexSha256": "af444a18adcb098afcbd0569d4bc6d6d7588b0a782f1960afe9657a47a5e16a6",
+  "axeVersion": "4.14.0",
+  "conditions": "Installed Chrome through ChatGPT extension; localhost production build; WCAG 2 A/AA, 2.1 A/AA and best-practice tags; unauthenticated existing local profile; zero violations does not resolve incomplete checks",
+  "before": [
+    {
+      "viewport": "desktop",
+      "path": "/",
+      "incomplete": [],
+      "passes": 23,
+      "url": "http://127.0.0.1:8001/",
+      "violations": [
+        {
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.05 (foreground color: #7f7d78, background color: #1e1e1e, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "a[href$=\"rules/\"]"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.05 (foreground color: #7f7d78, background color: #1e1e1e, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "a[href$=\"guide/\"]"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.05 (foreground color: #7f7d78, background color: #1e1e1e, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "a[href$=\"lab/\"]"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.05 (foreground color: #7f7d78, background color: #1e1e1e, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "a[href$=\"visuals/\"]"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.05 (foreground color: #7f7d78, background color: #1e1e1e, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "a[rel=\"noreferrer\"]"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.05 (foreground color: #7f7d78, background color: #1e1e1e, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "a[href$=\"privacy/\"][data-discover=\"true\"]"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.05 (foreground color: #7f7d78, background color: #1e1e1e, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "a[href$=\"terms/\"][data-discover=\"true\"]"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "path": "/match/local",
+      "incomplete": [],
+      "passes": 36,
+      "url": "http://127.0.0.1:8001/match/local",
+      "violations": [
+        {
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.2 (foreground color: #81807a, background color: #1e1e1e, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._statusSection_mo2sd_362 > .uiSectionLabel"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.2 (foreground color: #81807a, background color: #1e1e1e, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._matchLabel_mo2sd_371"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.2 (foreground color: #81807a, background color: #1e1e1e, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._metaRow_mo2sd_73:nth-child(1) > ._metaLabel_mo2sd_85"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.2 (foreground color: #81807a, background color: #1e1e1e, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._metaRow_mo2sd_73:nth-child(2) > ._metaLabel_mo2sd_85"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.2 (foreground color: #81807a, background color: #1e1e1e, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._moveRow_mo2sd_388 > ._metaLabel_mo2sd_85"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "path": "/profile",
+      "incomplete": [],
+      "passes": 32,
+      "url": "http://127.0.0.1:8001/profile",
+      "violations": [
+        {
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.2 (foreground color: #81807a, background color: #1e1e1e, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._sectionHeader_1k5p6_104 > .uiSectionLabel"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.2 (foreground color: #81807a, background color: #1e1e1e, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._fieldLabel_1k5p6_128"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.2 (foreground color: #81807a, background color: #1e1e1e, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._recordHeader_1k5p6_207 > .uiSectionLabel"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.2 (foreground color: #81807a, background color: #1e1e1e, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "article:nth-child(1) > ._summaryLabel_1k5p6_129"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.2 (foreground color: #81807a, background color: #1e1e1e, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "article:nth-child(2) > ._summaryLabel_1k5p6_129"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.2 (foreground color: #81807a, background color: #1e1e1e, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "article:nth-child(3) > ._summaryLabel_1k5p6_129"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.2 (foreground color: #81807a, background color: #1e1e1e, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "article:nth-child(4) > ._summaryLabel_1k5p6_129"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.71 (foreground color: #787772, background color: #1e1e1e, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._historyHeadLabel_1k5p6_130:nth-child(1)"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.71 (foreground color: #787772, background color: #1e1e1e, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._historyHeadLabel_1k5p6_130:nth-child(2)"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.71 (foreground color: #787772, background color: #1e1e1e, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._historyHeadSide_1k5p6_315"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.71 (foreground color: #787772, background color: #1e1e1e, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._historyHeadRule_1k5p6_320"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.71 (foreground color: #787772, background color: #1e1e1e, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._historyHeadMoves_1k5p6_322"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.71 (foreground color: #787772, background color: #1e1e1e, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._historyHeadPlayed_1k5p6_324"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.09 (foreground color: #e04747, background color: #1e1e1e, font size: 14.2pt (18.88px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._historyResult_1k5p6_400"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "path": "/settings",
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 4
+        }
+      ],
+      "passes": 32,
+      "url": "http://127.0.0.1:8001/settings",
+      "violations": [
+        {
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.2 (foreground color: #81807a, background color: #1e1e1e, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._summaryCurrent_1mdz1_54 > .uiSectionLabel"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.38 (foreground color: #a6a6a0, background color: #463d28, font size: 12.5pt (16.64px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._presetCardActive_1mdz1_205 > ._presetDetails_1mdz1_234"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "path": "/rules/",
+      "incomplete": [
+        {
+          "id": "aria-prohibited-attr",
+          "nodes": 3
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 6
+        }
+      ],
+      "passes": 34,
+      "url": "http://127.0.0.1:8001/rules/",
+      "violations": [
+        {
+          "help": "Interactive controls must not be nested",
+          "id": "nested-interactive",
+          "impact": "serious",
+          "nodes": [
+            {
+              "summary": "Fix any of the following:\n  Using a negative tabindex on an element inside an interactive control does not prevent assistive technologies from focusing the element (even with aria-hidden=\"true\")",
+              "target": [
+                "._freestyleBody_1j4rx_116 > ._diagram_1j4rx_123[role=\"img\"]"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Using a negative tabindex on an element inside an interactive control does not prevent assistive technologies from focusing the element (even with aria-hidden=\"true\")",
+              "target": [
+                "._tripleFrameGrid_1j4rx_220 > ._frame_1j4rx_210:nth-child(1) > ._diagram_1j4rx_123[role=\"img\"]"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Using a negative tabindex on an element inside an interactive control does not prevent assistive technologies from focusing the element (even with aria-hidden=\"true\")",
+              "target": [
+                "._tripleFrameGrid_1j4rx_220 > ._frame_1j4rx_210:nth-child(2) > ._diagram_1j4rx_123[role=\"img\"]"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Using a negative tabindex on an element inside an interactive control does not prevent assistive technologies from focusing the element (even with aria-hidden=\"true\")",
+              "target": [
+                "._frame_1j4rx_210:nth-child(3) > ._diagram_1j4rx_123[role=\"img\"]"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Using a negative tabindex on an element inside an interactive control does not prevent assistive technologies from focusing the element (even with aria-hidden=\"true\")",
+              "target": [
+                "._legalThreatInsert_1j4rx_137 > ._diagram_1j4rx_123[role=\"img\"]"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Using a negative tabindex on an element inside an interactive control does not prevent assistive technologies from focusing the element (even with aria-hidden=\"true\")",
+              "target": [
+                "._trapInsert_1j4rx_142 > ._diagram_1j4rx_123[role=\"img\"]"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Using a negative tabindex on an element inside an interactive control does not prevent assistive technologies from focusing the element (even with aria-hidden=\"true\")",
+              "target": [
+                "._example_1j4rx_83._sequenceExample_1j4rx_203._quietExample_1j4rx_187:nth-child(1) > ._frameGrid_1j4rx_214 > ._frame_1j4rx_210:nth-child(1) > ._diagram_1j4rx_123[role=\"img\"]"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Using a negative tabindex on an element inside an interactive control does not prevent assistive technologies from focusing the element (even with aria-hidden=\"true\")",
+              "target": [
+                "._example_1j4rx_83._sequenceExample_1j4rx_203._quietExample_1j4rx_187:nth-child(1) > ._frameGrid_1j4rx_214 > ._frame_1j4rx_210:nth-child(2) > ._diagram_1j4rx_123[role=\"img\"]"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Using a negative tabindex on an element inside an interactive control does not prevent assistive technologies from focusing the element (even with aria-hidden=\"true\")",
+              "target": [
+                "._complexThreatGrid_1j4rx_165 > ._example_1j4rx_83._sequenceExample_1j4rx_203._quietExample_1j4rx_187:nth-child(2) > ._frameGrid_1j4rx_214 > ._frame_1j4rx_210:nth-child(1) > ._diagram_1j4rx_123[role=\"img\"]"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Using a negative tabindex on an element inside an interactive control does not prevent assistive technologies from focusing the element (even with aria-hidden=\"true\")",
+              "target": [
+                "._complexThreatGrid_1j4rx_165 > ._example_1j4rx_83._sequenceExample_1j4rx_203._quietExample_1j4rx_187:nth-child(2) > ._frameGrid_1j4rx_214 > ._frame_1j4rx_210:nth-child(2) > ._diagram_1j4rx_123[role=\"img\"]"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "path": "/guide/",
+      "incomplete": [
+        {
+          "id": "aria-prohibited-attr",
+          "nodes": 1
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 15
+        }
+      ],
+      "passes": 34,
+      "url": "http://127.0.0.1:8001/guide/",
+      "violations": [
+        {
+          "help": "Interactive controls must not be nested",
+          "id": "nested-interactive",
+          "impact": "serious",
+          "nodes": [
+            {
+              "summary": "Fix any of the following:\n  Using a negative tabindex on an element inside an interactive control does not prevent assistive technologies from focusing the element (even with aria-hidden=\"true\")",
+              "target": [
+                "._mistakePanel_ehoar_61 > ._tileGrid_ehoar_171 > ._dangerInsert_ehoar_191._guideTile_ehoar_93 > ._diagram_ehoar_156[role=\"img\"]"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Using a negative tabindex on an element inside an interactive control does not prevent assistive technologies from focusing the element (even with aria-hidden=\"true\")",
+              "target": [
+                "._imminentInsert_ehoar_196 > ._diagram_ehoar_156[role=\"img\"]"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Using a negative tabindex on an element inside an interactive control does not prevent assistive technologies from focusing the element (even with aria-hidden=\"true\")",
+              "target": [
+                "._counterInsert_ehoar_201 > ._diagram_ehoar_156[role=\"img\"]"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Using a negative tabindex on an element inside an interactive control does not prevent assistive technologies from focusing the element (even with aria-hidden=\"true\")",
+              "target": [
+                "._tacticsPanel_ehoar_67 > ._tileGrid_ehoar_171 > ._dangerInsert_ehoar_191._guideTile_ehoar_93:nth-child(1) > ._diagram_ehoar_156[role=\"img\"]"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Using a negative tabindex on an element inside an interactive control does not prevent assistive technologies from focusing the element (even with aria-hidden=\"true\")",
+              "target": [
+                "._dangerInsert_ehoar_191._guideTile_ehoar_93:nth-child(2) > ._diagram_ehoar_156[role=\"img\"]"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Using a negative tabindex on an element inside an interactive control does not prevent assistive technologies from focusing the element (even with aria-hidden=\"true\")",
+              "target": [
+                "._dangerInsert_ehoar_191._guideTile_ehoar_93:nth-child(3) > ._diagram_ehoar_156[role=\"img\"]"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Using a negative tabindex on an element inside an interactive control does not prevent assistive technologies from focusing the element (even with aria-hidden=\"true\")",
+              "target": [
+                "._frame_ehoar_128:nth-child(1) > ._diagram_ehoar_156[role=\"img\"]"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Using a negative tabindex on an element inside an interactive control does not prevent assistive technologies from focusing the element (even with aria-hidden=\"true\")",
+              "target": [
+                "._frame_ehoar_128:nth-child(2) > ._diagram_ehoar_156[role=\"img\"]"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Using a negative tabindex on an element inside an interactive control does not prevent assistive technologies from focusing the element (even with aria-hidden=\"true\")",
+              "target": [
+                "._frame_ehoar_128:nth-child(3) > ._diagram_ehoar_156[role=\"img\"]"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "path": "/lab/",
+      "incomplete": [],
+      "passes": 37,
+      "url": "http://127.0.0.1:8001/lab/",
+      "violations": [
+        {
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.32 (foreground color: #8f8d87, background color: #2a2a2a, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._entrantHead_19ss0_134 > ._metricResults_19ss0_320._metric_19ss0_167:nth-child(2)"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.32 (foreground color: #8f8d87, background color: #2a2a2a, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._entrantHead_19ss0_134 > ._metricResults_19ss0_320._metric_19ss0_167:nth-child(3)"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.32 (foreground color: #8f8d87, background color: #2a2a2a, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._entrantHead_19ss0_134 > ._metricNowrap_19ss0_288._metricResults_19ss0_320._metric_19ss0_167"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.32 (foreground color: #8f8d87, background color: #2a2a2a, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._entrantHead_19ss0_134 > ._metricResults_19ss0_320._metric_19ss0_167:nth-child(5)"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.32 (foreground color: #8f8d87, background color: #2a2a2a, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._entrantHead_19ss0_134 > ._metricResults_19ss0_320._metric_19ss0_167:nth-child(6)"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.32 (foreground color: #8f8d87, background color: #2a2a2a, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._entrantHead_19ss0_134 > ._metricResults_19ss0_320._metric_19ss0_167:nth-child(7)"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.32 (foreground color: #8f8d87, background color: #2a2a2a, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._entrantHead_19ss0_134 > ._metricResults_19ss0_320._metric_19ss0_167:nth-child(8)"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.32 (foreground color: #8f8d87, background color: #2a2a2a, font size: 11.8pt (15.68px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._entrantHead_19ss0_134 > ._metricResults_19ss0_320._metric_19ss0_167:nth-child(9)"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.32 (foreground color: #8f8d87, background color: #2a2a2a, font size: 14.6pt (19.52px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._termList_19ss0_663 > dd:nth-child(2)"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.32 (foreground color: #8f8d87, background color: #2a2a2a, font size: 14.6pt (19.52px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._termList_19ss0_663 > dd:nth-child(4)"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.32 (foreground color: #8f8d87, background color: #2a2a2a, font size: 14.6pt (19.52px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._termList_19ss0_663 > dd:nth-child(6)"
+              ]
+            },
+            {
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.32 (foreground color: #8f8d87, background color: #2a2a2a, font size: 14.6pt (19.52px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "target": [
+                "._termList_19ss0_663 > dd:nth-child(8)"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "path": "/visuals/",
+      "incomplete": [
+        {
+          "id": "aria-prohibited-attr",
+          "nodes": 1
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 2
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "nodes": 1
+        }
+      ],
+      "passes": 34,
+      "url": "http://127.0.0.1:8001/visuals/",
+      "violations": []
+    },
+    {
+      "viewport": "desktop",
+      "path": "/privacy/",
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 15
+        }
+      ],
+      "passes": 24,
+      "url": "http://127.0.0.1:8001/privacy/",
+      "violations": []
+    },
+    {
+      "viewport": "desktop",
+      "path": "/terms/",
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 18
+        }
+      ],
+      "passes": 24,
+      "url": "http://127.0.0.1:8001/terms/",
+      "violations": []
+    }
+  ],
+  "after": [
+    {
+      "viewport": {
+        "width": 1600,
+        "height": 1000
+      },
+      "path": "/",
+      "layout": {
+        "height": 1000,
+        "scrollWidth": 1600,
+        "width": 1600
+      },
+      "incomplete": [],
+      "passes": 23,
+      "url": "http://127.0.0.1:8001/",
+      "violations": []
+    },
+    {
+      "viewport": {
+        "width": 1600,
+        "height": 1000
+      },
+      "path": "/match/local",
+      "layout": {
+        "height": 1000,
+        "scrollWidth": 1600,
+        "width": 1600
+      },
+      "incomplete": [],
+      "passes": 36,
+      "url": "http://127.0.0.1:8001/match/local",
+      "violations": []
+    },
+    {
+      "viewport": {
+        "width": 1600,
+        "height": 1000
+      },
+      "path": "/profile",
+      "layout": {
+        "height": 1000,
+        "scrollWidth": 1600,
+        "width": 1600
+      },
+      "incomplete": [],
+      "passes": 32,
+      "url": "http://127.0.0.1:8001/profile",
+      "violations": []
+    },
+    {
+      "viewport": {
+        "width": 1600,
+        "height": 1000
+      },
+      "path": "/settings",
+      "layout": {
+        "height": 1000,
+        "scrollWidth": 1600,
+        "width": 1600
+      },
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 4
+        }
+      ],
+      "passes": 32,
+      "url": "http://127.0.0.1:8001/settings",
+      "violations": []
+    },
+    {
+      "viewport": {
+        "width": 1600,
+        "height": 1000
+      },
+      "path": "/rules/",
+      "layout": {
+        "height": 1000,
+        "scrollWidth": 1600,
+        "width": 1600
+      },
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 4
+        }
+      ],
+      "passes": 32,
+      "url": "http://127.0.0.1:8001/rules/",
+      "violations": []
+    },
+    {
+      "viewport": {
+        "width": 1600,
+        "height": 1000
+      },
+      "path": "/guide/",
+      "layout": {
+        "height": 1000,
+        "scrollWidth": 1600,
+        "width": 1600
+      },
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 9
+        }
+      ],
+      "passes": 32,
+      "url": "http://127.0.0.1:8001/guide/",
+      "violations": []
+    },
+    {
+      "viewport": {
+        "width": 1600,
+        "height": 1000
+      },
+      "path": "/lab/",
+      "layout": {
+        "height": 1000,
+        "scrollWidth": 1600,
+        "width": 1600
+      },
+      "incomplete": [],
+      "passes": 37,
+      "url": "http://127.0.0.1:8001/lab/",
+      "violations": []
+    },
+    {
+      "viewport": {
+        "width": 1600,
+        "height": 1000
+      },
+      "path": "/visuals/",
+      "layout": {
+        "height": 1000,
+        "scrollWidth": 1600,
+        "width": 1600
+      },
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 2
+        }
+      ],
+      "passes": 34,
+      "url": "http://127.0.0.1:8001/visuals/",
+      "violations": []
+    },
+    {
+      "viewport": {
+        "width": 1600,
+        "height": 1000
+      },
+      "path": "/privacy/",
+      "layout": {
+        "height": 1000,
+        "scrollWidth": 1600,
+        "width": 1600
+      },
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 10
+        }
+      ],
+      "passes": 24,
+      "url": "http://127.0.0.1:8001/privacy/",
+      "violations": []
+    },
+    {
+      "viewport": {
+        "width": 1600,
+        "height": 1000
+      },
+      "path": "/terms/",
+      "layout": {
+        "height": 1000,
+        "scrollWidth": 1600,
+        "width": 1600
+      },
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 15
+        }
+      ],
+      "passes": 24,
+      "url": "http://127.0.0.1:8001/terms/",
+      "violations": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "path": "/",
+      "layout": {
+        "height": 844,
+        "scrollWidth": 390,
+        "width": 390
+      },
+      "incomplete": [],
+      "passes": 23,
+      "url": "http://127.0.0.1:8001/",
+      "violations": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "path": "/match/local",
+      "layout": {
+        "height": 844,
+        "scrollWidth": 390,
+        "width": 390
+      },
+      "incomplete": [],
+      "passes": 36,
+      "url": "http://127.0.0.1:8001/match/local",
+      "violations": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "path": "/profile",
+      "layout": {
+        "height": 844,
+        "scrollWidth": 390,
+        "width": 390
+      },
+      "incomplete": [],
+      "passes": 31,
+      "url": "http://127.0.0.1:8001/profile",
+      "violations": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "path": "/settings",
+      "layout": {
+        "height": 844,
+        "scrollWidth": 380,
+        "width": 390
+      },
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 7
+        }
+      ],
+      "passes": 32,
+      "url": "http://127.0.0.1:8001/settings",
+      "violations": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "path": "/rules/",
+      "layout": {
+        "height": 844,
+        "scrollWidth": 380,
+        "width": 390
+      },
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 12
+        }
+      ],
+      "passes": 32,
+      "url": "http://127.0.0.1:8001/rules/",
+      "violations": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "path": "/guide/",
+      "layout": {
+        "height": 844,
+        "scrollWidth": 380,
+        "width": 390
+      },
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 18
+        }
+      ],
+      "passes": 32,
+      "url": "http://127.0.0.1:8001/guide/",
+      "violations": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "path": "/lab/",
+      "layout": {
+        "height": 844,
+        "scrollWidth": 380,
+        "width": 390
+      },
+      "incomplete": [],
+      "passes": 37,
+      "url": "http://127.0.0.1:8001/lab/",
+      "violations": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "path": "/visuals/",
+      "layout": {
+        "height": 844,
+        "scrollWidth": 380,
+        "width": 390
+      },
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 2
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "nodes": 1
+        }
+      ],
+      "passes": 34,
+      "url": "http://127.0.0.1:8001/visuals/",
+      "violations": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "path": "/privacy/",
+      "layout": {
+        "height": 844,
+        "scrollWidth": 380,
+        "width": 390
+      },
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 17
+        }
+      ],
+      "passes": 25,
+      "url": "http://127.0.0.1:8001/privacy/",
+      "violations": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "path": "/terms/",
+      "layout": {
+        "height": 844,
+        "scrollWidth": 380,
+        "width": 390
+      },
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 18
+        }
+      ],
+      "passes": 25,
+      "url": "http://127.0.0.1:8001/terms/",
+      "violations": []
+    }
+  ],
+  "nativeAccessibility": {
+    "cells": 225,
+    "grid": [
+      {
+        "name": "Gomoku board",
+        "description": "Use arrow keys to explore the board. Home and End move to the ends of a row. Enter or Space places a stone on your turn."
+      }
+    ],
+    "status": [
+      [
+        {
+          "name": "live",
+          "value": {
+            "type": "token",
+            "value": "polite"
+          }
+        },
+        {
+          "name": "atomic",
+          "value": {
+            "type": "boolean",
+            "value": true
+          }
+        },
+        {
+          "name": "relevant",
+          "value": {
+            "type": "tokenList",
+            "value": "additions text"
+          }
+        }
+      ]
+    ]
+  }
+}

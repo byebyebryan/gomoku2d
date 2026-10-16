@@ -1,9 +1,10 @@
 # v0.5 Deep Reconciliation and Refinement Plan
 
-Status: engineering review completed; integrated verification recorded in the
-[evidence ledger](v0_5_review_evidence.md). Owner: Bryan. This remains the plan for
-the reopened `0.5.x` line. `v0.5.4` remains the July release checkpoint; the next
-patch version will be chosen when the work is ready to release.
+Status: reconciliation review completed with manual acceptance deferred at
+Bryan's request. Integrated verification and the unattended acceptance follow-up
+are recorded in the [evidence ledger](v0_5_review_evidence.md). Owner: Bryan.
+`v0.5.4` remains the July release checkpoint; the next patch version and release
+decision are separate from completing this review.
 
 ## Purpose and Review Stance
 
@@ -252,16 +253,17 @@ browser-observed, deployed, physical-device, and real-user acceptance separately
 
 The October review produced the dispositions below. Detailed ownership traces,
 reproductions, samples and integrated results live in the evidence ledger.
-Engineering review completion does not close the phase or authorize a release.
+The manual checks below were subsequently deferred by Bryan; they no longer
+hold this review open. Review completion does not authorize a release.
 
 | Workstream | Deep review | Evidence and unresolved items |
 |---|---|---|
-| Product and journeys | reviewed; retain/refine | Fresh complete game, analyzed defense, branch and returning history; actual new-player acceptance pending |
+| Product and journeys | reviewed; retain/refine | Fresh complete game, analyzed defense, branch and returning history; actual new-player acceptance deferred |
 | Rules, bots, analyzer | reviewed; fix/retain limits | FEN, directional Renju, hash context and numeric boundaries fixed; independent corpus and historical replay legality checked; bounded proof/continuation limits retained |
 | Architecture and contracts | reviewed; targeted repairs | Ownership map, consumed payload validators, exact replay integers, cancellable workers and route recovery; retain shared core and current framework split |
-| Persistence and cloud | reviewed; fix lifecycle/conflicts | Corrupt storage, stale foreground actions/tabs, sign-in setup and transactional cloud writes covered; single local writing tab; real account/device acceptance pending |
-| UX, visuals, accessibility | reviewed; refine | Presets/disclosure, keyboard round/input, guidance, contrast and reduced motion; 40 route/viewport probes; actual zoom/screen reader/physical touch acceptance pending |
-| Browser performance | measured; bounded expectations | Production workload harness, desktop startup/preset/analysis and 30-cycle memory evidence; provisional diagnostic budgets; physical slow-device acceptance pending |
+| Persistence and cloud | reviewed; fix lifecycle/conflicts | Corrupt storage, stale foreground actions/tabs, sign-in setup and transactional cloud writes covered; single local writing tab; real account/device acceptance deferred |
+| UX, visuals, accessibility | reviewed; refine | Presets/disclosure, keyboard round/input, guidance, contrast and reduced motion; route/viewport probes and independent accessibility audits; actual zoom/screen reader/physical touch acceptance deferred |
+| Browser performance | measured; bounded expectations | Production workload harness, desktop startup/preset/analysis and 30-cycle memory evidence; provisional diagnostic budgets; physical slow-device acceptance deferred |
 | Test quality | reviewed; strengthen useful boundaries | Independent/metamorphic/perturbation/production-backend checks; all three browser engines in CI; timing profile stays opt-in |
 | Repo, docs, operations | reviewed; reconcile | Manual maintenance, artifact provenance, active docs/links, release no-auto-staging and recovery; historical media retained until next release acceptance |
 
@@ -343,7 +345,8 @@ remains a separate acceptance question from the native tournament measurements.
   disposition for workloads outside them.
 - Appropriate Rust/corpus/Wasm/web/rules/build/browser/audit gates pass on the
   candidate; relevant real-account, screen-reader, and physical-device evidence
-  is recorded separately. Outstanding acceptance keeps readiness conditional.
+  is recorded separately. Explicitly deferred acceptance carries its uncertainty
+  into the release decision without keeping the engineering review open.
 - Current docs, public copy, reports, and media describe the resulting product.
 - A final integrated review evaluates the experience and maintenance burden,
   with a concrete reason to close this pass beyond a green test suite.
@@ -356,16 +359,21 @@ review above. Choose the next release and `v0.6` direction after reconciliation.
 
 ## Readiness Decision After Engineering Review
 
-Keep `0.5.x` open. The reviewed development candidate repairs demonstrated
-correctness, data/identity, recovery and resource defects and improves the
-existing player loop. It does not justify expanding scope or replacing the
-architecture. No new version, release tag, or deployment is chosen here.
+Close the reconciliation review with explicit acceptance deferrals. Bryan asked
+to defer all manual checks and exercise whatever could run unattended. The
+follow-up used installed Chrome through the browser extension, checked native
+accessibility semantics, and added repeatable accessibility audits to the
+browser suite. Its contrast and static-diagram findings were repaired.
 
-Before declaring the next public patch ready, complete a disposable real-account
-Google sign-in/settings/history/reset round trip across two devices; check
-physical lower-powered/mobile performance and touch comfort; exercise actual
-browser zoom and a real screen reader; and obtain novice/human visual feedback.
-Then choose the patch version, refresh accepted release media, rerun affected
-gates and make the release decision. The existing corpora and bounded engine
-limits remain disclosed; a fresh strength baseline and online/puzzle/sharing
-choices belong to the later product checkpoint.
+Real Google OAuth/two-device continuity/reset, physical lower-powered/mobile
+performance and touch comfort, actual browser zoom, screen-reader speech/use,
+and novice/human visual feedback are deferred, not passed. Gradient contrast and
+the illustrative icon's accessible-name review remain inconclusive automation
+results. The [unattended acceptance record](v0_5_review_evidence.md#unattended-acceptance-and-manual-check-deferral)
+records coverage and limits. These items do not block moving on from this review.
+
+No new version, release tag, deployment, or production-account write is chosen
+here. Choose a patch/version, refresh release media and make a release decision
+with the deferrals visible; rerun affected automated gates on that candidate.
+The existing corpora and bounded engine limits remain disclosed. A fresh strength
+baseline and online/puzzle/sharing choices belong to the next product checkpoint.

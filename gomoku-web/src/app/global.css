@@ -27,8 +27,8 @@
   --border: #575756;
   --border-strong: #706c66;
   --text: #f5f5f5;
-  --text-muted: #a6a6a0;
-  --text-soft: #8f8d87;
+  --text-muted: #b5b5ae;
+  --text-soft: #a6a39c;
   --text-strong: #fccb57;
   --accent: #fccb57;
   --accent-strong: #fccb57;
@@ -42,7 +42,7 @@
   --success: #30a860;
   --success-border: #247f47;
   --success-ink: #121212;
-  --danger: #e04747;
+  --danger: #ef5c5c;
   --danger-border: #a83535;
   --danger-ink: #121212;
   --danger-soft: rgba(224, 71, 71, 0.08);

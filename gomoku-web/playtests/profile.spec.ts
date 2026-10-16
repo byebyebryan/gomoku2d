@@ -227,7 +227,6 @@ test("desktop profile prioritizes the record summary over the identity rail", as
     return {
       badgePaddingLeft: badgeStyle.paddingLeft,
       badgePaddingTop: badgeStyle.paddingTop,
-      historyHeadLabelColor: historyHeadLabelStyle.color,
       historyHeadLabelOpacity: Number(historyHeadLabelStyle.opacity),
       historyItemColumnGap: historyItemStyle.columnGap,
       historyItemRowGap: historyItemStyle.rowGap,
@@ -247,7 +246,6 @@ test("desktop profile prioritizes the record summary over the identity rail", as
   expect(metrics!.summaryGridMarginTop).toBe("12px");
   expect(metrics!.summaryTileGap).toBe("4px");
   expect(metrics!.summaryValueFontSize).toBeGreaterThanOrEqual(30);
-  expect(metrics!.historyHeadLabelColor).toBe("rgb(143, 141, 135)");
   expect(metrics!.historyHeadLabelOpacity).toBeLessThanOrEqual(0.82);
   expect(metrics!.historyItemColumnGap).toBe("18px");
   expect(metrics!.historyItemRowGap).toBe("10px");

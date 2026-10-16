@@ -7,6 +7,8 @@ import type { BoardOverlay, BoardViewModel } from "../../board/board_model";
 import styles from "./Board.module.css";
 
 export interface BoardProps {
+  // Teaching diagrams provide their own text alternative on the parent image.
+  decorative?: boolean;
   model: BoardViewModel;
 }
 
@@ -157,7 +159,7 @@ export function Board(props: BoardProps) {
 
   return (
     <div className={styles.frame} ref={frameRef}>
-      <div className={styles.viewport} ref={hostRef}>
+      <div aria-hidden={props.decorative || undefined} className={styles.viewport} inert={props.decorative || undefined} ref={hostRef}>
         <span className={styles.screenReaderText} id={instructionsId}>
           Use arrow keys to explore the board. Home and End move to the ends of a row.
           {model.interaction.kind === "play"

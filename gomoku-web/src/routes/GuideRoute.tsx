@@ -374,7 +374,7 @@ export function GuideRoute() {
 function GuideDiagram({ label, model }: { label: string; model: BoardViewModel }) {
   return (
     <div className={styles.diagram} aria-label={label} role="img">
-      <Board model={model} />
+      <Board decorative model={model} />
     </div>
   );
 }
@@ -390,7 +390,7 @@ function GuideFramePanel({
 
   return (
     <article className={`${styles.example} ${styles.frameOnlyExample}`}>
-      <div className={`${styles.frameGrid} ${frameLayout}`} aria-label={label}>
+      <div className={`${styles.frameGrid} ${frameLayout}`} aria-label={label} role="group">
         {frames.map((frame) => (
           <div key={frame.label} className={styles.frame}>
             <GuideDiagram

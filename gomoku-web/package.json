@@ -45,6 +45,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "axe-core": "^4.14.0",
     "esbuild": "^0.28.0",
     "firebase-tools": "^15.15.0",
     "jsdom": "^29.0.2",

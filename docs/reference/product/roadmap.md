@@ -4,7 +4,7 @@ This roadmap tracks current sequencing. Completed phase detail lives in
 [`release_history.md`](../../archive/release_history.md); this file should stay
 short enough to answer "what is next and why?"
 
-## Current State: `v0.5` Reconciliation Reopened
+## Current State: `v0.5` Reconciliation Reviewed
 
 `v0.5.4` marked the July public-release reconciliation checkpoint. The product
 carries a complete local loop across play, configurable bots and hints, saved
@@ -24,9 +24,13 @@ now covers the whole product: product assumptions, rules/tactics, architecture
 and data contracts, cloud continuity, UX/visual/accessibility refinement,
 browser performance, test quality, and repository/release operations.
 
-Existing decisions and recent fixes receive fresh scrutiny. Review first,
-choose coherent refinements, implement bounded batches, then establish whole-
-product acceptance before closing `0.5.x` or starting the next feature cycle.
+The engineering review and repair loop is complete. At Bryan's request, remaining
+manual account/device/accessibility/human checks are explicitly deferred; the
+unattended browser follow-up adds independent accessibility audits and repairs
+their findings. See the [readiness decision](../../working/v0_5_reconciliation.md#readiness-decision-after-engineering-review).
+These deferrals do not hold the review or next design checkpoint open. A new
+patch release, media refresh and deployment remain separate decisions, with
+the unverified acceptance limits visible.
 
 Historical execution and findings:
 

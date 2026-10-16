@@ -256,7 +256,7 @@ export function RulesRoute() {
 function RuleDiagram({ label, model }: { label: string; model: BoardViewModel }) {
   return (
     <div className={styles.diagram} aria-label={label} role="img">
-      <Board model={model} />
+      <Board decorative model={model} />
     </div>
   );
 }
@@ -270,7 +270,7 @@ function RuleFramePanel({
 }) {
   return (
     <article className={`${styles.example} ${styles.sequenceExample} ${styles.quietExample} ${styles.frameOnlyExample}`}>
-      <div className={`${styles.frameGrid} ${styles.tripleFrameGrid}`} aria-label={label}>
+      <div className={`${styles.frameGrid} ${styles.tripleFrameGrid}`} aria-label={label} role="group">
         {frames.map((frame) => (
           <div key={frame.label} className={styles.frame}>
             <RuleDiagram label={`${label}: ${frame.label} board diagram.`} model={frame.model} />
@@ -299,7 +299,7 @@ function RuleSequenceExample({
 
   return (
     <article className={`${styles.example} ${styles.sequenceExample} ${toneClass}`}>
-      <div className={styles.frameGrid} aria-label={label}>
+      <div className={styles.frameGrid} aria-label={label} role="group">
         {frames.map((frame) => (
           <div key={frame.label} className={styles.frame}>
             <RuleDiagram label={`${label}: ${frame.label} board diagram.`} model={frame.model} />

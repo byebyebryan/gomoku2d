@@ -55,8 +55,10 @@ route recovery checks cover retrying both route and shared dependency failures.
 The support baseline is a modern browser with WebAssembly, ES module workers,
 and native top-level await. CI exercises its installed Chromium, Firefox and
 WebKit versions. The October layout review covers widths from 320 CSS pixels;
-actual mobile-device, zoom and screen-reader acceptance are tracked separately
-in the reconciliation plan.
+actual mobile-device, zoom and screen-reader acceptance are explicitly deferred
+in the reconciliation plan. Browser journeys include independent axe-core audits
+of ten routes at desktop and portrait sizes; inconclusive checks are attached
+to test results and do not count as human acceptance.
 
 ## Source Layout
 
