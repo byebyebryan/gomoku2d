@@ -1,7 +1,7 @@
 # Dependency Maintenance Notes
 
 Owner: manual maintenance passes. Recheck these notes when updating Firebase
-or preparing a release. Last reviewed: 2026-10-15.
+or preparing a release. Last reviewed: 2026-10-16 for `0.5.5` release preparation.
 
 ## Overrides
 
@@ -37,3 +37,13 @@ passing them does not establish acceptance of other Firebase CLI features.
 Firebase 13, rules-unit-testing 6, Vitest 5, jsdom 30, testing-library/jest-dom 7,
 and TypeScript 7 remain separate migration work. The cleanup pass updates within
 the existing dependency ranges and validates the resulting product.
+
+## 0.5.5 Release Audit
+
+Fresh `npm audit --omit=dev --json` and `cargo audit --json` checks passed on
+October 16 with zero production npm vulnerabilities, zero Rust vulnerabilities,
+and no Rust informational warnings. Cargo used advisory database revision
+`f28da8c5d386e507fac79153655184056a20c054` (1,329 advisories). The full npm audit
+still reports the same five development-only affected entries from the two
+Firebase CLI issues above. The release version bump changes no dependency ranges
+or resolved package versions.

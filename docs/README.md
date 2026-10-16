@@ -8,8 +8,10 @@ historical context belongs in [`archive/`](archive/).
 ## Current Status
 
 The October `0.5.x` reconciliation, systematic code review, and selected mobile
-Rules/Guide refinement are complete on `main`. The public release remains
-`v0.5.4`; no new version or deployment is part of the review. Start with the
+Rules/Guide refinement are complete on `main` and packaged in the prepared
+`0.5.5` patch. The [release preparation record](archive/v0_5_5_release_preparation.md)
+tracks packaging and acceptance limits; [GitHub Releases](https://github.com/byebyebryan/gomoku2d/releases/latest)
+identifies the currently published build. Start with the
 [October closeout](archive/reconciliation_2026_10/README.md) for decisions,
 verification, and explicit acceptance deferrals, or the
 [roadmap](reference/product/roadmap.md) for what follows.

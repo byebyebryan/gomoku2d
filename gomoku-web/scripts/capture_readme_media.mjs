@@ -26,7 +26,7 @@ const visualsFrameDir = join(tmpRoot, "visuals-frames");
 const ogBoardCapture = join(tmpRoot, "og-board.png");
 
 const baseUrl = (process.env.GOMOKU_MEDIA_BASE_URL ?? "http://127.0.0.1:8001").replace(/\/?$/, "/");
-const viewport = { width: 1280, height: 720 };
+const viewport = { width: 1280, height: 800 };
 const captureFps = 5;
 const gameplayGifFps = 5;
 const analysisGifFps = 5;

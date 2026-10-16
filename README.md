@@ -18,8 +18,8 @@ Replay Analysis that shows where a loss became forced.
 
 ![Gomoku2D gameplay with tactical hints, bot response, and a terminal winning frame](docs/assets/readme-gameplay.gif)
 
-These captures show the public `v0.5.4` release. `main` contains the
-unreleased October reconciliation fixes; see [Project status](#project-status).
+These captures show the prepared `0.5.5` build; see [media provenance](docs/assets/README.md)
+and [Project status](#project-status).
 
 ## Play
 
@@ -114,13 +114,15 @@ lists checks by area.
 
 ## Project Status
 
-The latest public release is [`v0.5.4`](https://github.com/byebyebryan/gomoku2d/releases/tag/v0.5.4).
-The October review extended the `0.5.x` reconciliation line with correctness,
+`0.5.5` packages the completed October reconciliation. See
+[GitHub Releases](https://github.com/byebyebryan/gomoku2d/releases/latest) for the
+currently published build and the [release preparation record](docs/archive/v0_5_5_release_preparation.md)
+for this candidate. The review extended the `0.5.x` line with correctness,
 persistence, recovery, accessibility, and maintenance fixes. The review is
 complete, including the selected mobile Rules/Guide layout refinement; the
 existing UI and copy remain the chosen direction.
 
-These changes are on `main` and recorded under [Unreleased](CHANGELOG.md#unreleased).
+These changes are recorded in [0.5.5](CHANGELOG.md#055---2026-10-16).
 Pushing `main` runs CI; a release tag or explicit deployment is required to
 publish the site. Real-account, physical-device, and human accessibility checks
 remain explicitly deferred in the [review closeout](docs/archive/reconciliation_2026_10/README.md).

@@ -30,8 +30,11 @@ links the decisions, code review, measurements, and verified runtime baseline.
 
 Manual account/device/accessibility/human checks remain explicitly deferred at
 Bryan's request. These deferrals do not hold the review or next design checkpoint
-open and are not recorded as passes. A new patch release, media refresh, and
-deployment remain separate decisions; the public release is still `v0.5.4`.
+open and are not recorded as passes. The prepared `0.5.5` patch packages the
+completed review and refreshed media. Its [release record](../../archive/v0_5_5_release_preparation.md)
+keeps tagging/deployment separate from preparation; see
+[GitHub Releases](https://github.com/byebyebryan/gomoku2d/releases/latest) for the
+currently published build.
 
 The bounded [unattended follow-up](../../archive/reconciliation_2026_10/v0_5_unattended_evidence.md)
 is also complete: two-client Auth/Firestore application acceptance in all three

@@ -1,10 +1,15 @@
 # Current Media Assets
 
 This folder holds current release-facing media for the root README and related
-project showcase surfaces. These captures document the released `0.5.4`
-experience; they are not evidence of the October development head. Refresh them
-when the next release version and UI are accepted. The October review keeps
-focused development screenshots in the
+project showcase surfaces. These captures document the prepared `0.5.5` build,
+recorded on October 16, 2026 from a production preview whose application and
+version inputs match source
+`f300a30c7bda13738010637c700e67ec8aaa0670`. They show the retained UI and current
+replay-analysis presentation. The 1280×800 capture viewport keeps replay
+controls in frame; GIFs are 960px wide at 5 fps, and OG images are 1200×630.
+Publication/deployment is tracked separately in
+the [release preparation record](../archive/v0_5_5_release_preparation.md).
+The October review keeps focused development screenshots in the
 [October reconciliation archive](../archive/reconciliation_2026_10/README.md).
 
 Tracked outputs:

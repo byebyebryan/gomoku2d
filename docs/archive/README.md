@@ -16,6 +16,11 @@ completed review record, not an active feature plan. Its
 [unattended cloud and Wasm follow-up](reconciliation_2026_10/v0_5_unattended_evidence.md)
 records the later integration matrix, sync repair and fixed desktop workloads.
 
+## Release Preparation
+
+The [0.5.5 preparation record](v0_5_5_release_preparation.md) captures version,
+media provenance, release audits, acceptance limits, and the publication handoff.
+
 ## Earlier Plans and Context
 
 | Doc | What it was | Superseded by |
