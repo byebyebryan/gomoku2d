@@ -218,7 +218,7 @@ describe("LabReportRoute", () => {
 
     expect(await screen.findByText("Search details")).toBeInTheDocument();
     expect(screen.getByText("10ms / 3 probes / 12 nodes / d4")).toBeInTheDocument();
-    expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalled();
+    await waitFor(() => expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalled());
   });
 });
 
