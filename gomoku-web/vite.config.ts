@@ -29,6 +29,14 @@ export default defineConfig(() => ({
   build: {
     // Wasm loading uses native top-level await, including in ES workers.
     target: "esnext",
+    modulePreload: {
+      // Failed modulepreloads can poison WebKit's cache across reloads:
+      // https://bugs.webkit.org/show_bug.cgi?id=270357
+      // Let dynamic import fetch its JS graph; retain CSS and entry preloads.
+      resolveDependencies: (_filename, dependencies, { hostType }) => hostType === "js"
+        ? dependencies.filter((path) => path.endsWith(".css"))
+        : dependencies,
+    },
   },
   define: {
     __APP_VERSION__: JSON.stringify(appVersion),

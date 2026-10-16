@@ -531,7 +531,7 @@ acceptance, and run new strength comparisons as a deliberate future baseline.
   build passed. Production npm audit reports zero vulnerabilities.
 - All 27 Firestore emulator tests passed, including actual SDK transactions
   under owner rules. Firestore rules/schema remain unchanged.
-- All 35 local Chromium journeys passed (14.8 s), including page recovery,
+- All 36 local Chromium journeys passed after the preload repair (16.8 s), including page recovery,
   reduced-motion canvas stability/live preference change, keyboard completion,
   touch/resize, persistence failure/conflict, worker recovery and report proof
   confidence. CI runs these journeys in all three installed browser engines;
@@ -548,3 +548,24 @@ acceptance, and run new strength comparisons as a deliberate future baseline.
 The engineering review has a result for each owner/workstream and closes its
 reproduced high-priority failures. Keep the `0.5.x` phase open for the explicit
 acceptance gates; choose the next patch/version and product direction afterward.
+
+
+### Three-engine Recovery Finding
+
+CI at `52626a9` passed 104/105 browser checks but WebKit could not retry a
+blocked route chunk after returning Home. The trace showed the second page
+never requested that JS URL again. This matches the cache poisoning described
+in [WebKit 270357](https://bugs.webkit.org/show_bug.cgi?id=270357), whose fix
+landed on 2026-10-10 and cannot be assumed present in shipped/tested browsers.
+The error boundary itself worked; a plain reload did not clear the failed
+modulepreload resource in that engine.
+
+Disposition: **fix** the build behavior. Dynamic imports now fetch their own JS
+graph without Vite-injected JS modulepreloads. CSS and initial HTML-entry
+preloads remain. This avoids poisoned dynamic preload entries with a possible
+network-waterfall tradeoff, rather than adding speculative import URL rewriting.
+The unchanged recovery contract now probes both a route entry and a shared
+Wasm bridge dependency. Both pass in the full 36-journey local Chromium suite;
+typecheck/build passed. Verify both in all engines. Existing browser timing
+samples predate this build choice; real-network/device performance remains a
+release acceptance gate.

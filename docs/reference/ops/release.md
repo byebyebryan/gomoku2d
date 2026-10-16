@@ -50,7 +50,8 @@ run `npm run playtest`. Do not terminate an unrelated preview to claim its port.
 5. Update `CHANGELOG.md` with an empty `[Unreleased]` section and dated release
    section.
 6. When authentication, cloud sync, profile persistence, or Firestore behavior
-   changed, repeat one live Google sign-in and cloud-sync round trip. Automated
+   changed, repeat a live Google sign-in and settings/history/reset round trip
+   across two devices with disposable test data. Automated
    rules and no-config tests do not replace this account-level check.
 7. Review `git diff` for accidental generated or scratch output. Stage only the
    reviewed paths, commit and push the release preparation, and verify CI on

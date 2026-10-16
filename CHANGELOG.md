@@ -48,6 +48,8 @@ Continues the `0.5.x` reconciliation line after the October project review.
   corrupting player names, and invalidate pre-correction analysis caches.
 - Recover failed route downloads with Reload/Home actions; improve colored-control
   text contrast and honor reduced-motion preferences with still board cues.
+- Avoid poisoned dynamic JavaScript preload caches on WebKit so recovered route
+  and shared-dependency downloads can be retried after returning Home.
 - Describe analyzer progress as retained line steps rather than search nodes.
 
 ### Bot lab

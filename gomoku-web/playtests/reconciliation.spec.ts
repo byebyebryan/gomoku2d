@@ -32,18 +32,20 @@ test("reduced motion keeps replay cues visible and still, including a live prefe
   await expect.poll(async () => (await canvas.screenshot()).equals(still)).toBe(false);
 });
 
-test("a failed page download offers recovery without losing navigation", async ({ page }) => {
-  await page.route("**/assets/LocalMatchRoute-*.js", (route) => route.abort());
-  await page.goto("/");
-  await page.getByRole("link", { name: "Play", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Page unavailable" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Reload" })).toBeVisible();
-  await page.getByRole("link", { name: "Home", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Gomoku2D", exact: true })).toBeVisible();
-  await page.unroute("**/assets/LocalMatchRoute-*.js");
-  await page.getByRole("link", { name: "Play", exact: true }).click();
-  await expect(page.getByRole("grid", { name: "Gomoku board" })).toBeVisible();
-});
+for (const chunk of ["LocalMatchRoute", "wasm_bridge"]) {
+  test(`a failed ${chunk} download offers recovery without losing navigation`, async ({ page }) => {
+    await page.route(`**/assets/${chunk}-*.js`, (route) => route.abort());
+    await page.goto("/");
+    await page.getByRole("link", { name: "Play", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Page unavailable" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Reload" })).toBeVisible();
+    await page.getByRole("link", { name: "Home", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Gomoku2D", exact: true })).toBeVisible();
+    await page.unroute(`**/assets/${chunk}-*.js`);
+    await page.getByRole("link", { name: "Play", exact: true }).click();
+    await expect(page.getByRole("grid", { name: "Gomoku board" })).toBeVisible();
+  });
+}
 
 test("a keyboard player can branch, finish, analyze, and find the saved game", async ({ page }, testInfo) => {
   await page.goto("/");

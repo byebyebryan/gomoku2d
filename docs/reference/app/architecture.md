@@ -182,18 +182,17 @@ user clicks cell
     → gomoku-wasm applies move, returns JSON result
       → Zustand store updated
         → <Board> re-renders with new props
-        → bot's turn: wasm bot picks a move, same loop
+        → bot's turn: worker runs the wasm bot, guarded result uses the same loop
 ```
 
 ### Casual / local match
 
 ```
-user clicks cell
-  → React dispatches place-move
-    → gomoku-wasm applies move, returns JSON result
-      → Zustand store updated
-        → local history/profile persisted in browser storage
-        → <Board> re-renders with new props
+local game finishes
+  → game store emits one finished match
+    → local profile creates compact schema-2 replay
+      → retained replay/summary/stat tiers persist in browser storage
+        → Profile and Replay can inspect the ending
 ```
 
 This lane is intentionally low-friction and low-trust:

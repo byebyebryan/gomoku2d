@@ -48,6 +48,10 @@ Production builds target `esnext` and use native top-level await to load Wasm
 in the app and ES workers. The build needs `vite-plugin-wasm`; it does not need
 a separate top-level-await transform.
 
+Dynamic imports load their JavaScript graph directly, with CSS preloaded. This
+avoids WebKit retaining failed JavaScript modulepreloads across a reload; the
+route recovery checks cover retrying both route and shared dependency failures.
+
 The support baseline is a modern browser with WebAssembly, ES module workers,
 and native top-level await. CI exercises its installed Chromium, Firefox and
 WebKit versions. The October layout review covers widths from 320 CSS pixels;
