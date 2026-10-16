@@ -12,13 +12,14 @@ their own section.
 
 ## [Unreleased]
 
-**Theme: extend the `0.5.x` reconciliation after the October project review.**
+## [0.5.5] - 2026-10-16
 
-The completed review repairs correctness and recovery boundaries, strengthens
-accessible local play, and simplifies maintenance. The existing UI and copy
-remain the chosen direction; only the mobile Rules/Guide layout refinement was
-selected from the later visual study. These changes are on `main`; no new
-release or deployment has been made.
+**Theme: close the reopened `0.5` reconciliation.**
+
+This patch packages the October review: correctness and recovery repairs,
+accessible local play, tested cloud continuity, and simpler maintenance. The
+existing UI and copy remain the chosen direction; the mobile Rules/Guide layout
+refinement was selected from the visual study.
 
 ### Web
 
@@ -91,6 +92,20 @@ release or deployment has been made.
   completed October reviews and evidence. Polished repository entry points and
   preserved explicit manual acceptance deferrals and historical media/report
   provenance.
+
+### Acceptance and Retained Limits
+
+- Automated acceptance covers native/core tests, web unit and rules tests,
+  Chromium/Firefox/WebKit journeys, two-client Auth/Firestore emulator flows,
+  repeated cloud conflicts/account switches/resets, and production Wasm
+  profiling with active cancellation and resource cleanup.
+- Real Google OAuth, physical-device/touch performance, screen-reader use and
+  human feedback retain the explicitly agreed deferrals. Emulator/desktop
+  evidence does not claim those checks passed.
+- The curated June Lab measurements retain their historical source provenance.
+  Release media is refreshed from the prepared `0.5.5` build.
+- The Firebase CLI's existing development-only audit exceptions remain
+  documented; production npm and Rust dependency audits are separate gates.
 
 ## [0.5.4] - 2026-07-23
 
@@ -1252,7 +1267,8 @@ together in one canvas-driven surface. That lesson drove the `v0.2.1` rewrite.
   concerns blurred together.
 - Expressive UI language, but not scalable beyond one canvas.
 
-[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.4...HEAD
+[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.5...HEAD
+[0.5.5]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.4...v0.5.5
 [0.5.4]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.1...v0.5.2
