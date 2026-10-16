@@ -2,16 +2,13 @@ import type { CloudAuthUser } from "./auth_store";
 import {
   cloudProfileSyncDue,
   cloudSettingsFromProfileSettings,
-  cloudMatchHistoryIsEmpty,
-  mergeCloudArchivedMatchStats,
-  mergeCloudMatchSummaryState,
-  mergeCloudReplayMatches,
   type CloudProfile,
 } from "./cloud_profile";
 import { cloudProfileStore } from "./cloud_profile_store";
+import { cloudProfilePromotionUpdate, planPromotedMatchHistory, type LocalProfilePromotionInput } from "./cloud_promotion";
 import { cloudPromotionStore } from "./cloud_promotion_store";
 import { restoreCloudSetup } from "./cloud_setup";
-import { DEFAULT_LOCAL_DISPLAY_NAME, localProfileStore, type LocalProfileMatchHistory } from "../profile/local_profile_store";
+import { localProfileStore, type LocalProfileMatchHistory } from "../profile/local_profile_store";
 
 export interface FlushCloudProfileSyncOptions {
   localMatchHistory?: LocalProfileMatchHistory;
@@ -44,63 +41,28 @@ export async function flushCloudProfileSync(
   settings = localStore.settings;
 
   const localMatchHistory = options.localMatchHistory ?? localStore.matchHistory;
-  const localReplayMatches = localMatchHistory.replayMatches;
-  const replayMatches = mergeCloudReplayMatches(
+  const sourceProfile = cloudState.profile;
+  const promotionInput: LocalProfilePromotionInput = {
+    sourceProfile,
+    cloudDisplayName: sourceProfile.displayName,
+    cloudMatchHistory: sourceProfile.matchHistory,
+    cloudSettings: sourceProfile.settings,
+    localMatchHistory,
+    localProfile,
+    resetAt: sourceProfile.resetAt,
+    settings,
     user,
-    [...cloudState.profile.matchHistory.replayMatches, ...localReplayMatches],
-    cloudState.profile.resetAt,
-  );
-  const archivedStats = cloudMatchHistoryIsEmpty(cloudState.profile.matchHistory)
-    ? mergeCloudArchivedMatchStats(
-      cloudState.profile.matchHistory.archivedStats,
-      localMatchHistory.archivedStats,
-    )
-    : cloudState.profile.matchHistory.archivedStats;
-  const summaryState = mergeCloudMatchSummaryState({
-    archivedStats,
-    matches: [...cloudState.profile.matchHistory.replayMatches, ...localReplayMatches],
-    replayMatches,
-    resetAt: cloudState.profile.resetAt,
-    summaries: [
-      ...cloudState.profile.matchHistory.summaryMatches,
-      ...localMatchHistory.summaryMatches.map((summary) => ({
-        ...summary,
-        trust: "client_uploaded" as const,
-      })),
-    ],
-    user,
-  });
-  const nextMatchHistory = {
-    archivedStats: summaryState.archivedStats,
-    replayMatches,
-    summaryMatches: summaryState.summaryMatches,
   };
+  const { matchHistory: nextMatchHistory } = planPromotedMatchHistory(promotionInput);
   const nextSettings = cloudSettingsFromProfileSettings(settings);
-  const historyChanged = JSON.stringify(nextMatchHistory) !== JSON.stringify(cloudState.profile.matchHistory);
-  const profileChanged =
-    JSON.stringify(cloudState.profile.settings) !== JSON.stringify(nextSettings)
-    || (
-      localProfile.displayName.trim()
-      && localProfile.displayName !== DEFAULT_LOCAL_DISPLAY_NAME
-      && cloudState.profile.displayName === user.displayName
-    );
+  const historyChanged = JSON.stringify(nextMatchHistory) !== JSON.stringify(sourceProfile.matchHistory);
+  const profileChanged = cloudProfilePromotionUpdate(promotionInput) !== null;
 
   if ((historyChanged || profileChanged) && !cloudProfileSyncDue(cloudState.profile)) {
     return cloudState.profile;
   }
 
-  const sourceProfile = cloudState.profile;
-  const promotionResult = await cloudPromotionStore.getState().promote({
-    sourceProfile,
-    cloudDisplayName: cloudState.profile.displayName,
-    cloudMatchHistory: cloudState.profile.matchHistory,
-    cloudSettings: cloudState.profile.settings,
-    localMatchHistory,
-    localProfile,
-    resetAt: cloudState.profile.resetAt,
-    settings,
-    user,
-  });
+  const promotionResult = await cloudPromotionStore.getState().promote(promotionInput);
 
   const currentCloudState = cloudProfileStore.getState();
   if (

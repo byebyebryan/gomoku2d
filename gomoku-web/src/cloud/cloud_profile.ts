@@ -16,10 +16,6 @@ import {
 import {
   isSavedMatchV2,
   savedMatchIsAfterReset,
-  savedMatchPlayers,
-  savedMatchWinningSide,
-  type SavedMatchPlayer,
-  type SavedMatchSide,
   type SavedMatchV2,
 } from "../match/saved_match";
 import {
@@ -38,11 +34,42 @@ import type { CloudAuthUser } from "./auth_store";
 import { createCloudSavedMatch } from "./cloud_match";
 import { getFirebaseClients } from "./firebase";
 
+import {
+  REPLAY_MATCHES_LIMIT as CLOUD_REPLAY_MATCHES_LIMIT,
+  SUMMARY_MATCHES_LIMIT as CLOUD_SUMMARY_MATCHES_LIMIT,
+  isMatchSummaryV1 as isCloudMatchSummaryV1,
+  emptyMatchHistory as emptyCloudMatchHistory,
+  type MatchSummaryV1 as CloudMatchSummaryV1,
+  type MatchHistory as CloudMatchHistory,
+  archivedStatsFromDocument,
+  mergeMatchSummaryState,
+} from "../match/match_history";
+
+// Cloud callers retain their existing facade; guest history owns no Firebase dependency.
+export {
+  REPLAY_MATCHES_LIMIT as CLOUD_REPLAY_MATCHES_LIMIT,
+  SUMMARY_MATCHES_LIMIT as CLOUD_SUMMARY_MATCHES_LIMIT,
+  MATCH_SUMMARY_SCHEMA_VERSION as CLOUD_MATCH_SUMMARY_SCHEMA_VERSION,
+  ARCHIVED_MATCH_STATS_SCHEMA_VERSION as CLOUD_ARCHIVED_MATCH_STATS_SCHEMA_VERSION,
+  emptyArchivedMatchStats as emptyCloudArchivedMatchStats,
+  mergeArchivedMatchStats as mergeCloudArchivedMatchStats,
+  matchSummaryForMatch as cloudMatchSummaryForMatch,
+  isMatchSummaryV1 as isCloudMatchSummaryV1,
+  emptyMatchHistory as emptyCloudMatchHistory,
+  matchHistoryHasMatch as cloudMatchHistoryHasMatch,
+  matchHistoryIsEmpty as cloudMatchHistoryIsEmpty,
+  type MatchSummaryOutcome as CloudMatchSummaryOutcome,
+  type MatchSummaryOpponentKind as CloudMatchSummaryOpponentKind,
+  type MatchSummaryOpponent as CloudMatchSummaryOpponent,
+  type MatchSummaryV1 as CloudMatchSummaryV1,
+  type MatchStatsCounter as CloudMatchStatsCounter,
+  type ArchivedMatchStatsV1 as CloudArchivedMatchStatsV1,
+  type MatchHistory as CloudMatchHistory,
+  type MatchSummaryIdentity as CloudMatchSummaryIdentity,
+  archivedStatsFromDocument,
+} from "../match/match_history";
+
 export const CLOUD_PROFILE_SCHEMA_VERSION = 5;
-export const CLOUD_REPLAY_MATCHES_LIMIT = 128;
-export const CLOUD_SUMMARY_MATCHES_LIMIT = 1024;
-export const CLOUD_MATCH_SUMMARY_SCHEMA_VERSION = 1;
-export const CLOUD_ARCHIVED_MATCH_STATS_SCHEMA_VERSION = 1;
 export const CLOUD_PROFILE_SYNC_INTERVAL_MS = 5 * 60 * 1000;
 export const CLOUD_DEFAULT_RULE_OPENING = DEFAULT_RULE_OPENING;
 
@@ -60,59 +87,6 @@ export interface CloudProfileAuth {
 
 export type CloudGameConfig = GameConfig;
 export type CloudProfileSettings = ProfileSettings;
-
-export type CloudMatchSummaryOutcome = "draw" | "loss" | "win";
-export type CloudMatchSummaryOpponentKind = "bot" | "human";
-
-export interface CloudMatchSummaryOpponent {
-  bot_key: string | null;
-  display_name: string;
-  kind: CloudMatchSummaryOpponentKind;
-  profile_uid: string | null;
-}
-
-export interface CloudMatchSummaryV1 {
-  id: string;
-  match_kind: SavedMatchV2["match_kind"];
-  move_count: number;
-  opening: typeof CLOUD_DEFAULT_RULE_OPENING;
-  opponent: CloudMatchSummaryOpponent;
-  outcome: CloudMatchSummaryOutcome;
-  ruleset: GameVariant;
-  saved_at: string;
-  schema_version: typeof CLOUD_MATCH_SUMMARY_SCHEMA_VERSION;
-  side: SavedMatchSide;
-  trust: SavedMatchV2["trust"];
-}
-
-export interface CloudMatchStatsCounter {
-  draws: number;
-  losses: number;
-  matches: number;
-  moves: number;
-  wins: number;
-}
-
-export interface CloudArchivedMatchStatsV1 {
-  archived_before: string | null;
-  archived_count: number;
-  by_opponent_type: Record<CloudMatchSummaryOpponentKind, CloudMatchStatsCounter>;
-  by_ruleset: Record<GameVariant, CloudMatchStatsCounter>;
-  by_side: Record<SavedMatchSide, CloudMatchStatsCounter>;
-  schema_version: typeof CLOUD_ARCHIVED_MATCH_STATS_SCHEMA_VERSION;
-  totals: CloudMatchStatsCounter;
-}
-
-export interface CloudMatchHistory {
-  archivedStats: CloudArchivedMatchStatsV1;
-  replayMatches: SavedMatchV2[];
-  summaryMatches: CloudMatchSummaryV1[];
-}
-
-export interface CloudMatchSummaryIdentity {
-  localProfileId?: string | null;
-  profileUid?: string | null;
-}
 
 export interface CloudProfile {
   auth: CloudProfileAuth;
@@ -149,10 +123,6 @@ function validVariant(value: unknown): GameVariant | null {
 
 function stringOrNull(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value : null;
-}
-
-function isNullableString(value: unknown): value is string | null {
-  return value === null || typeof value === "string";
 }
 
 function timestampIsoOrNull(value: unknown): string | null {
@@ -450,257 +420,6 @@ export function mergeCloudReplayMatches(
   return mergeCloudSavedMatches(user, matches, resetAt).slice(0, CLOUD_REPLAY_MATCHES_LIMIT);
 }
 
-function emptyStatsCounter(): CloudMatchStatsCounter {
-  return {
-    draws: 0,
-    losses: 0,
-    matches: 0,
-    moves: 0,
-    wins: 0,
-  };
-}
-
-function emptyStatsByRuleset(): Record<GameVariant, CloudMatchStatsCounter> {
-  return {
-    freestyle: emptyStatsCounter(),
-    renju: emptyStatsCounter(),
-  };
-}
-
-function emptyStatsBySide(): Record<SavedMatchSide, CloudMatchStatsCounter> {
-  return {
-    black: emptyStatsCounter(),
-    white: emptyStatsCounter(),
-  };
-}
-
-function emptyStatsByOpponentType(): Record<CloudMatchSummaryOpponentKind, CloudMatchStatsCounter> {
-  return {
-    bot: emptyStatsCounter(),
-    human: emptyStatsCounter(),
-  };
-}
-
-export function emptyCloudArchivedMatchStats(): CloudArchivedMatchStatsV1 {
-  return {
-    archived_before: null,
-    archived_count: 0,
-    by_opponent_type: emptyStatsByOpponentType(),
-    by_ruleset: emptyStatsByRuleset(),
-    by_side: emptyStatsBySide(),
-    schema_version: CLOUD_ARCHIVED_MATCH_STATS_SCHEMA_VERSION,
-    totals: emptyStatsCounter(),
-  };
-}
-
-function counterFromDocument(value: unknown): CloudMatchStatsCounter | null {
-  const candidate = value as Partial<CloudMatchStatsCounter> | null;
-  if (
-    candidate === null
-    || typeof candidate !== "object"
-    || !Number.isFinite(candidate.draws)
-    || !Number.isFinite(candidate.losses)
-    || !Number.isFinite(candidate.matches)
-    || !Number.isFinite(candidate.moves)
-    || !Number.isFinite(candidate.wins)
-  ) {
-    return null;
-  }
-
-  return {
-    draws: Math.max(0, Math.floor(Number(candidate.draws))),
-    losses: Math.max(0, Math.floor(Number(candidate.losses))),
-    matches: Math.max(0, Math.floor(Number(candidate.matches))),
-    moves: Math.max(0, Math.floor(Number(candidate.moves))),
-    wins: Math.max(0, Math.floor(Number(candidate.wins))),
-  };
-}
-
-export function archivedStatsFromDocument(value: unknown): CloudArchivedMatchStatsV1 {
-  const candidate = value as Partial<CloudArchivedMatchStatsV1> | null;
-  const totals = counterFromDocument(candidate?.totals);
-  const freestyle = counterFromDocument(candidate?.by_ruleset?.freestyle);
-  const renju = counterFromDocument(candidate?.by_ruleset?.renju);
-  const black = counterFromDocument(candidate?.by_side?.black);
-  const white = counterFromDocument(candidate?.by_side?.white);
-  const bot = counterFromDocument(candidate?.by_opponent_type?.bot);
-  const human = counterFromDocument(candidate?.by_opponent_type?.human);
-
-  if (
-    candidate === null
-    || typeof candidate !== "object"
-    || candidate.schema_version !== CLOUD_ARCHIVED_MATCH_STATS_SCHEMA_VERSION
-    || !totals
-    || !freestyle
-    || !renju
-    || !black
-    || !white
-    || !bot
-    || !human
-  ) {
-    return emptyCloudArchivedMatchStats();
-  }
-
-  return {
-    archived_before: stringOrNull(candidate.archived_before),
-    archived_count: Math.max(0, Math.floor(Number(candidate.archived_count) || 0)),
-    by_opponent_type: { bot, human },
-    by_ruleset: { freestyle, renju },
-    by_side: { black, white },
-    schema_version: CLOUD_ARCHIVED_MATCH_STATS_SCHEMA_VERSION,
-    totals,
-  };
-}
-
-function incrementCounter(counter: CloudMatchStatsCounter, summary: CloudMatchSummaryV1): void {
-  counter.matches += 1;
-  counter.moves += summary.move_count;
-
-  if (summary.outcome === "win") {
-    counter.wins += 1;
-  } else if (summary.outcome === "loss") {
-    counter.losses += 1;
-  } else {
-    counter.draws += 1;
-  }
-}
-
-function addStatsCounter(target: CloudMatchStatsCounter, source: CloudMatchStatsCounter): void {
-  target.draws += source.draws;
-  target.losses += source.losses;
-  target.matches += source.matches;
-  target.moves += source.moves;
-  target.wins += source.wins;
-}
-
-export function mergeCloudArchivedMatchStats(
-  left: CloudArchivedMatchStatsV1,
-  right: CloudArchivedMatchStatsV1,
-): CloudArchivedMatchStatsV1 {
-  if (right.archived_count === 0) {
-    return left;
-  }
-
-  const next: CloudArchivedMatchStatsV1 = JSON.parse(JSON.stringify(left)) as CloudArchivedMatchStatsV1;
-  next.archived_count += right.archived_count;
-  const archivedBefore = [next.archived_before, right.archived_before]
-    .filter((value): value is string => Boolean(value))
-    .sort();
-  next.archived_before = archivedBefore.length > 0 ? archivedBefore[archivedBefore.length - 1]! : null;
-
-  addStatsCounter(next.totals, right.totals);
-  addStatsCounter(next.by_ruleset.freestyle, right.by_ruleset.freestyle);
-  addStatsCounter(next.by_ruleset.renju, right.by_ruleset.renju);
-  addStatsCounter(next.by_side.black, right.by_side.black);
-  addStatsCounter(next.by_side.white, right.by_side.white);
-  addStatsCounter(next.by_opponent_type.bot, right.by_opponent_type.bot);
-  addStatsCounter(next.by_opponent_type.human, right.by_opponent_type.human);
-
-  return next;
-}
-
-function archiveWithSummaries(
-  archivedStats: CloudArchivedMatchStatsV1,
-  summaries: CloudMatchSummaryV1[],
-): CloudArchivedMatchStatsV1 {
-  if (summaries.length === 0) {
-    return archivedStats;
-  }
-
-  const next: CloudArchivedMatchStatsV1 = JSON.parse(JSON.stringify(archivedStats)) as CloudArchivedMatchStatsV1;
-  for (const summary of summaries) {
-    incrementCounter(next.totals, summary);
-    incrementCounter(next.by_ruleset[summary.ruleset], summary);
-    incrementCounter(next.by_side[summary.side], summary);
-    incrementCounter(next.by_opponent_type[summary.opponent.kind], summary);
-  }
-
-  next.archived_count += summaries.length;
-  next.archived_before = summaries
-    .map((summary) => summary.saved_at)
-    .reduce((latest, savedAt) => (latest && latest > savedAt ? latest : savedAt), next.archived_before);
-
-  return next;
-}
-
-function botKeyForPlayer(player: SavedMatchPlayer): string | null {
-  if (player.kind !== "bot" || !player.bot) {
-    return null;
-  }
-
-  return [
-    `${player.bot.id}@${player.bot.version}`,
-    `${player.bot.engine}/${player.bot.lab_spec}`,
-  ].join(":");
-}
-
-export function cloudMatchSummaryForMatch(
-  identity: CloudMatchSummaryIdentity,
-  match: SavedMatchV2,
-): CloudMatchSummaryV1 {
-  const players = savedMatchPlayers(match);
-  const local = players.find(({ player }) => identity.profileUid && player.profile_uid === identity.profileUid)
-    ?? players.find(({ player }) => identity.localProfileId && player.local_profile_id === identity.localProfileId)
-    ?? players.find(({ player }) => player.kind === "human")
-    ?? players[0]!;
-  const opponent = players.find(({ side }) => side !== local.side)?.player ?? players[1]!.player;
-  const winningSide = savedMatchWinningSide(match);
-
-  return {
-    id: match.id,
-    match_kind: match.match_kind,
-    move_count: match.move_count,
-    opening: CLOUD_DEFAULT_RULE_OPENING,
-    opponent: {
-      bot_key: botKeyForPlayer(opponent),
-      display_name: opponent.display_name,
-      kind: opponent.kind === "bot" ? "bot" : "human",
-      profile_uid: opponent.profile_uid,
-    },
-    outcome: winningSide === null ? "draw" : winningSide === local.side ? "win" : "loss",
-    ruleset: match.ruleset,
-    saved_at: match.saved_at,
-    schema_version: CLOUD_MATCH_SUMMARY_SCHEMA_VERSION,
-    side: local.side,
-    trust: match.trust,
-  };
-}
-
-export function isCloudMatchSummaryV1(value: unknown): value is CloudMatchSummaryV1 {
-  const candidate = value as Partial<CloudMatchSummaryV1> | null;
-  const opponent = candidate?.opponent as Partial<CloudMatchSummaryOpponent> | undefined;
-
-  return (
-    candidate !== null
-    && typeof candidate === "object"
-    && typeof candidate.id === "string"
-    && candidate.id.length > 0
-    && candidate.schema_version === CLOUD_MATCH_SUMMARY_SCHEMA_VERSION
-    && typeof candidate.saved_at === "string"
-    && candidate.saved_at.length > 0
-    && typeof candidate.move_count === "number"
-    && Number.isInteger(candidate.move_count)
-    && candidate.move_count >= 0
-    && (candidate.match_kind === "local_vs_bot"
-      || candidate.match_kind === "local_pvp"
-      || candidate.match_kind === "online_pvp"
-      || candidate.match_kind === "puzzle_challenge")
-    && validVariant(candidate.ruleset) !== null
-    && candidate.opening === CLOUD_DEFAULT_RULE_OPENING
-    && (candidate.side === "black" || candidate.side === "white")
-    && (candidate.outcome === "win" || candidate.outcome === "loss" || candidate.outcome === "draw")
-    && (candidate.trust === "local_only"
-      || candidate.trust === "client_uploaded"
-      || candidate.trust === "server_verified")
-    && opponent !== undefined
-    && (opponent.kind === "bot" || opponent.kind === "human")
-    && typeof opponent.display_name === "string"
-    && opponent.display_name.length > 0
-    && isNullableString(opponent.profile_uid)
-    && isNullableString(opponent.bot_key)
-  );
-}
-
 function summaryMatchesFromDocument(
   matchHistoryValue: unknown,
   resetAt: string | null,
@@ -718,57 +437,18 @@ function summaryMatchesFromDocument(
     .slice(0, CLOUD_SUMMARY_MATCHES_LIMIT);
 }
 
-export function mergeCloudMatchSummaryState(input: {
-  archivedStats: CloudArchivedMatchStatsV1;
+export function mergeCloudMatchSummaryState(input: Parameters<typeof mergeMatchSummaryState>[0] & {
   convertLocalMatches?: boolean;
-  identity?: CloudMatchSummaryIdentity;
-  matches: SavedMatchV2[];
-  replayMatches: SavedMatchV2[];
-  resetAt?: string | null;
-  summaries: CloudMatchSummaryV1[];
   user?: Pick<CloudAuthUser, "uid">;
 }): Pick<CloudMatchHistory, "archivedStats" | "summaryMatches"> {
-  const byId = new Map<string, CloudMatchSummaryV1>();
-  const replayMatchIds = new Set(input.replayMatches.map((match) => match.id));
-
-  for (const summary of input.summaries) {
-    if (!savedMatchIsAfterReset({ saved_at: summary.saved_at }, input.resetAt)) {
-      continue;
-    }
-    if (replayMatchIds.has(summary.id)) {
-      continue;
-    }
-    byId.set(summary.id, summary);
-  }
-
-  for (const match of input.matches) {
-    if (!savedMatchIsAfterReset(match, input.resetAt)) {
-      continue;
-    }
-
-    const shouldConvertLocal = input.convertLocalMatches !== false && input.user;
-    const cloudMatch = shouldConvertLocal && match.source === "local_history"
-      ? createCloudSavedMatch(input.user!, match)
-      : match;
-    const summary = cloudMatchSummaryForMatch(input.identity ?? { profileUid: input.user?.uid ?? null }, cloudMatch);
-    if (replayMatchIds.has(summary.id)) {
-      continue;
-    }
-
-    const existing = byId.get(summary.id);
-    if (!existing || summary.saved_at >= existing.saved_at) {
-      byId.set(summary.id, summary);
-    }
-  }
-
-  const sorted = Array.from(byId.values()).sort((left, right) => right.saved_at.localeCompare(left.saved_at));
-  const summaryMatches = sorted.slice(0, CLOUD_SUMMARY_MATCHES_LIMIT);
-  const evicted = sorted.slice(CLOUD_SUMMARY_MATCHES_LIMIT);
-
-  return {
-    archivedStats: archiveWithSummaries(input.archivedStats, evicted),
-    summaryMatches,
-  };
+  return mergeMatchSummaryState({
+    ...input,
+    identity: input.identity ?? { profileUid: input.user?.uid ?? null },
+    matches: input.matches
+      .filter((match) => savedMatchIsAfterReset(match, input.resetAt))
+      .map((match) => input.convertLocalMatches !== false && input.user && match.source === "local_history"
+        ? createCloudSavedMatch(input.user, match) : match),
+  });
 }
 
 function matchHistoryFromDocument(
@@ -804,14 +484,6 @@ function matchHistoryDocument(history: CloudMatchHistory): Record<string, unknow
   };
 }
 
-export function emptyCloudMatchHistory(): CloudMatchHistory {
-  return {
-    archivedStats: emptyCloudArchivedMatchStats(),
-    replayMatches: [],
-    summaryMatches: [],
-  };
-}
-
 function isGroupedMatchHistoryDocument(value: unknown): boolean {
   const candidate = value as { archived_stats?: unknown; replay_matches?: unknown; summary_matches?: unknown } | null;
   return candidate !== null
@@ -823,17 +495,6 @@ function isGroupedMatchHistoryDocument(value: unknown): boolean {
 
 function matchHistoryEqual(left: CloudMatchHistory, right: CloudMatchHistory): boolean {
   return JSON.stringify(left) === JSON.stringify(right);
-}
-
-export function cloudMatchHistoryHasMatch(history: CloudMatchHistory, matchId: string): boolean {
-  return history.replayMatches.some((match) => match.id === matchId)
-    || history.summaryMatches.some((match) => match.id === matchId);
-}
-
-export function cloudMatchHistoryIsEmpty(history: CloudMatchHistory): boolean {
-  return history.replayMatches.length === 0
-    && history.summaryMatches.length === 0
-    && history.archivedStats.archived_count === 0;
 }
 
 function hasOwnField(document: CloudProfileDocument, field: keyof CloudProfileDocument): boolean {

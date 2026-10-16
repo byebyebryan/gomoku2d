@@ -3,14 +3,14 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import { bestEffortStorage, type BrowserStorage } from "./best_effort_storage";
 
 import {
-  CLOUD_REPLAY_MATCHES_LIMIT,
+  REPLAY_MATCHES_LIMIT,
   archivedStatsFromDocument,
-  emptyCloudArchivedMatchStats,
-  isCloudMatchSummaryV1,
-  mergeCloudMatchSummaryState,
-  type CloudArchivedMatchStatsV1,
-  type CloudMatchSummaryV1,
-} from "../cloud/cloud_profile";
+  emptyArchivedMatchStats,
+  isMatchSummaryV1,
+  mergeMatchSummaryState,
+  type ArchivedMatchStatsV1,
+  type MatchSummaryV1,
+} from "../match/match_history";
 import type { GameVariant } from "../core/bot_protocol";
 import type { BotConfig } from "../core/bot_config";
 import type { MatchMove, MatchPlayer } from "../game/types";
@@ -43,9 +43,9 @@ export type LocalProfileSettings = ProfileSettings;
 export type LocalProfileSavedMatch = LocalSavedMatchV2;
 
 export interface LocalProfileMatchHistory {
-  archivedStats: CloudArchivedMatchStatsV1;
+  archivedStats: ArchivedMatchStatsV1;
   replayMatches: LocalProfileSavedMatch[];
-  summaryMatches: CloudMatchSummaryV1[];
+  summaryMatches: MatchSummaryV1[];
 }
 
 export interface FinishedLocalMatchInput {
@@ -138,7 +138,7 @@ function persistedStateFromRaw(raw: string | null): PersistedLocalProfileState |
 
 export function emptyLocalMatchHistory(): LocalProfileMatchHistory {
   return {
-    archivedStats: emptyCloudArchivedMatchStats(),
+    archivedStats: emptyArchivedMatchStats(),
     replayMatches: [],
     summaryMatches: [],
   };
@@ -167,10 +167,9 @@ function mergeLocalProfileMatchHistory(
   matches: LocalProfileSavedMatch[],
 ): LocalProfileMatchHistory {
   const candidates = mergeLocalProfileSavedMatches([...matches, ...history.replayMatches]);
-  const replayMatches = candidates.slice(0, CLOUD_REPLAY_MATCHES_LIMIT);
-  const summaryState = mergeCloudMatchSummaryState({
+  const replayMatches = candidates.slice(0, REPLAY_MATCHES_LIMIT);
+  const summaryState = mergeMatchSummaryState({
     archivedStats: history.archivedStats,
-    convertLocalMatches: false,
     identity: { localProfileId },
     matches: candidates,
     replayMatches,
@@ -184,10 +183,10 @@ function mergeLocalProfileMatchHistory(
   };
 }
 
-function localSummaryMatchesFromRaw(value: unknown): CloudMatchSummaryV1[] {
+function localSummaryMatchesFromRaw(value: unknown): MatchSummaryV1[] {
   return Array.isArray(value)
     ? value
-      .filter(isCloudMatchSummaryV1)
+      .filter(isMatchSummaryV1)
       .sort((left, right) => right.saved_at.localeCompare(left.saved_at))
     : [];
 }
@@ -197,7 +196,7 @@ function localReplayMatchesFromRaw(value: unknown): LocalProfileSavedMatch[] {
     ? value
       .filter(isLocalSavedMatchV2)
       .sort((left, right) => right.saved_at.localeCompare(left.saved_at))
-      .slice(0, CLOUD_REPLAY_MATCHES_LIMIT)
+      .slice(0, REPLAY_MATCHES_LIMIT)
     : [];
 }
 

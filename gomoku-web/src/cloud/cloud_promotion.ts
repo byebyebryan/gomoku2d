@@ -126,11 +126,10 @@ export function promotionInputKey(input: LocalProfilePromotionInput): string {
   });
 }
 
-export async function promoteLocalProfileToCloud(
-  input: LocalProfilePromotionInput,
-  options: PromoteLocalProfileToCloudOptions = {},
-): Promise<LocalProfilePromotionResult> {
-  const backend = resolvePromotionBackend(input.user, options, input.sourceProfile);
+/** One history projection for sync preflight, writes and the local cache patch. */
+export function planPromotedMatchHistory(input: Pick<LocalProfilePromotionInput,
+  "cloudMatchHistory" | "localMatchHistory" | "resetAt" | "user"
+>): { matchHistory: CloudMatchHistory; localMatchesSynced: number } {
   const localReplayMatches = input.localMatchHistory.replayMatches;
   const eligibleHistory = localReplayMatches.filter((match) => savedMatchIsAfterReset(match, input.resetAt));
   const cloudMatchHistory = input.cloudMatchHistory ?? emptyCloudMatchHistory();
@@ -161,6 +160,16 @@ export async function promoteLocalProfileToCloud(
     replayMatches,
     summaryMatches: summaryState.summaryMatches,
   };
+  return { matchHistory, localMatchesSynced: eligibleHistory.length };
+}
+
+export async function promoteLocalProfileToCloud(
+  input: LocalProfilePromotionInput,
+  options: PromoteLocalProfileToCloudOptions = {},
+): Promise<LocalProfilePromotionResult> {
+  const backend = resolvePromotionBackend(input.user, options, input.sourceProfile);
+  const { matchHistory, localMatchesSynced } = planPromotedMatchHistory(input);
+  const cloudMatchHistory = input.cloudMatchHistory ?? emptyCloudMatchHistory();
   const profileUpdate = cloudProfilePromotionUpdate(input);
   const displayName = typeof profileUpdate?.display_name === "string"
     ? profileUpdate.display_name
@@ -187,7 +196,7 @@ export async function promoteLocalProfileToCloud(
   }
 
   return {
-    localMatchesSynced: eligibleHistory.length,
+    localMatchesSynced,
     profileDisplayNamePromoted: Boolean(
       profileUpdate && Object.prototype.hasOwnProperty.call(profileUpdate, "display_name"),
     ),

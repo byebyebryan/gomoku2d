@@ -10,6 +10,8 @@ import {
   cloudProfileFromDocument,
   cloudProfileSyncDue,
   cloudProfileSyncWaitMs,
+  cloudMatchSummaryForMatch,
+  isCloudMatchSummaryV1,
   emptyCloudArchivedMatchStats,
   emptyCloudMatchHistory,
   existingCloudProfileLoadUpdate,
@@ -28,6 +30,13 @@ const authUser: CloudAuthUser = {
   providerIds: ["google.com"],
   uid: "uid-1",
 };
+
+it("rejects malformed summary opponents without throwing during history hydration", () => {
+  const summary = cloudMatchSummaryForMatch({ localProfileId: "local-1" }, localMatch("invalid-opponent", "2026-01-01T00:00:00Z"));
+  for (const opponent of [null, undefined, false, 42, "bot", []]) {
+    expect(isCloudMatchSummaryV1({ ...summary, opponent })).toBe(false);
+  }
+});
 
 function settingsFor(ruleset: "freestyle" | "renju" = "freestyle"): ProfileSettings {
   return {
