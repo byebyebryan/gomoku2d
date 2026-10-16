@@ -2,13 +2,19 @@ import { expect, test as base, type BrowserContext, type Frame, type Page } from
 
 export const projectId = "demo-gomoku2d-acceptance";
 const firestoreRoot = `http://127.0.0.1:18081/v1/projects/${projectId}/databases/(default)/documents`;
+const readbacks = new Map<string, unknown>();
 
 export const test = base.extend<{ isolatedNetwork: void }>({
-  isolatedNetwork: [async ({ context }, use, testInfo) => {
+  isolatedNetwork: [async ({ context, browser }, use, testInfo) => {
     const external: string[] = [];
+    readbacks.clear();
     await protectContext(context, external);
     await use();
     await testInfo.attach("unexpected-network.json", { body: JSON.stringify(external), contentType: "application/json" });
+    if (testInfo.status !== testInfo.expectedStatus) {
+      await testInfo.attach("emulator-readback.json", { contentType: "application/json",
+        body: JSON.stringify({ browser: browser.version(), profiles: Object.fromEntries(readbacks) }, null, 2) });
+    }
     expect(external).toEqual([]);
   }, { auto: true }],
 });
@@ -50,7 +56,9 @@ export async function readProfile(uid: string): Promise<Record<string, any> | nu
   if (response.status === 404) return null;
   if (!response.ok) throw new Error(await response.text());
   const value = await response.json() as { fields: Record<string, unknown> };
-  return decodeFields(value.fields);
+  const profile = decodeFields(value.fields);
+  readbacks.set(uid, profile);
+  return profile;
 }
 
 function decodeFields(fields: Record<string, any>): Record<string, any> {
