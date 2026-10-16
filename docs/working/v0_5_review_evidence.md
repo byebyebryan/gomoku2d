@@ -656,3 +656,29 @@ boards retain their navigable grids.
 
 No version/tag, deployment, Firestore rules rollout, or production-account write
 was made. The next product checkpoint can proceed with these limits recorded.
+
+## Rules and Guide Mobile Layout Follow-up
+
+Bryan chose to retain the existing UI and copy after the visual proposal, and
+selected only the Rules/Guide mobile layout work. Changes are confined to those
+two route stylesheets at widths up to 720px: compact headers with visible
+navigation labels, responsive diagram grids, and centered teaching boards that
+stack when side-by-side examples would be too small. Desktop layout, page
+content, fonts, colors, and the other application screens retain their existing
+design.
+
+The production build passed. The focused route and accessibility checks passed
+in Chromium and Firefox (12 checks); local WebKit still cannot launch with this
+host's missing system libraries. The supported Ubuntu CI lane supplies those
+libraries and runs the existing full three-engine suite on the pushed head.
+
+Installed Chrome checked both pages at 320×568, 360×640, 390×844, 430×932,
+667×375, 720×480, 721×480, 768×1024, and 1280×900. All 18 layout checks showed
+one navigation row, square diagrams, and no clipped links/diagrams or horizontal
+page overflow. On phones the header is 42px tall; the smallest diagrams remain
+226px wide at a 320px viewport and 260px wide at 360–430px.
+
+Current captures: [Rules](assets/rules-mobile-2026-10-15.jpg) and
+[Guide](assets/guide-mobile-2026-10-15.jpg). The broader proposal remains a
+historical study, not an accepted implementation plan. Existing manual-check
+deferrals remain in force; this follow-up makes no release or deployment.
