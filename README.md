@@ -124,6 +124,8 @@ These changes are on `main` and recorded under [Unreleased](CHANGELOG.md#unrelea
 Pushing `main` runs CI; a release tag or explicit deployment is required to
 publish the site. Real-account, physical-device, and human accessibility checks
 remain explicitly deferred in the [review closeout](docs/archive/reconciliation_2026_10/README.md).
+The [unattended follow-up](docs/archive/reconciliation_2026_10/v0_5_unattended_evidence.md)
+adds two-client cloud-emulator acceptance and broader production Wasm evidence.
 The next release and feature direction are separate decisions in the
 [roadmap](docs/reference/product/roadmap.md).
 

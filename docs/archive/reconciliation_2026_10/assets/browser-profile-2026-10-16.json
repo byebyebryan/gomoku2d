@@ -1,0 +1,3088 @@
+{
+  "generatedAt": "2026-10-16T19:47:56.194Z",
+  "gitCommit": "2c2b2d308dc19e51b75a1012aa6e6d3ce6e633e2",
+  "trackedDirty": false,
+  "untracked": [],
+  "bundleSha256": "4bf2bab72eb771535b728d1941c814ea16332856d296e3ac470308afba79eb33",
+  "browser": "156.0.8078.4",
+  "node": "v26.11.1",
+  "host": {
+    "platform": "linux",
+    "release": "7.2.9-arch1-1",
+    "cpu": "AMD Ryzen 9 7900X 12-Core Processor",
+    "logicalCpus": 24
+  },
+  "manifestSha256": "fc7cf9ac62c3ec79701b8dce14ea739d25b3666b6ec845cb7e2b3a9178d29514",
+  "sourceSha256": "eb58c6e54ff02930289214802f38ae9560d8d641074d77dcb39350304a8d4b43",
+  "wasmSha256": "82e6be1525d83cca9bcb82c99a5e5a3f7c7cf51ed0c292acd54c5930b0ab417a",
+  "expected": {
+    "startupPairs": 5,
+    "coldBotRequests": 108,
+    "reusedWorkerGroups": 9,
+    "reusedWorkerRequests": 36,
+    "warmRepeatRequests": 27,
+    "uncachedAnalyses": 18,
+    "cachedAnalyses": 18,
+    "navigationCycles": 30
+  },
+  "completedStages": [
+    "startup",
+    "bot-cold",
+    "bot-warm",
+    "analysis",
+    "lifecycle"
+  ],
+  "notes": [
+    "localhost production preview; no network throttling",
+    "desktop Chromium, not a physical slow device",
+    "rate-6 diagnostic throttles only the page target; worker slowdown is not assumed",
+    "fixed-corpus timings are diagnostic, not device-population or strength evidence",
+    "all watchdog/error rows remain in the denominator"
+  ],
+  "rawArtifact": {
+    "path": "gomoku-bot-lab/outputs/browser-profile/1792179938965.json",
+    "sha256": "390c0e6417668a35b6e75707152755d56769033b567d820760e2b1436973157a"
+  },
+  "command": "cd gomoku-web && npm run profile:browser",
+  "coverage": {
+    "coldBotRequests": 108,
+    "reusedWorkerRequests": 36,
+    "warmRepeats": 27,
+    "uncachedAnalyses": 18,
+    "cachedRevisits": 18,
+    "navigationCycles": 30,
+    "errors": 0,
+    "watchdogTimeouts": 0,
+    "triggerInvestigations": 0
+  },
+  "pooledColdByPreset": {
+    "easy": {
+      "n": 36,
+      "medianMs": 10.0,
+      "p95Ms": 53.2,
+      "maxMs": 54
+    },
+    "normal": {
+      "n": 36,
+      "medianMs": 138.75,
+      "p95Ms": 678,
+      "maxMs": 685.9
+    },
+    "hard": {
+      "n": 36,
+      "medianMs": 392.1,
+      "p95Ms": 2332.6,
+      "maxMs": 2396
+    }
+  },
+  "botCases": [
+    {
+      "preset": "easy",
+      "id": "renju-65-p4",
+      "n": 3,
+      "medianMs": 12.9,
+      "p95Ms": 16.2,
+      "maxMs": 16.2,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 14.300000011920929,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 11.5,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 8.600000023841858,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 16.19999998807907,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 8.300000011920929,
+          "heartbeatMaxGapMs": 16.099999964237213,
+          "phase": "first-on-worker",
+          "durationMs": 12.899999976158142,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        }
+      ]
+    },
+    {
+      "preset": "easy",
+      "id": "renju-577-p12",
+      "n": 3,
+      "medianMs": 13.6,
+      "p95Ms": 16,
+      "maxMs": 16,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 7.699999988079071,
+          "heartbeatMaxGapMs": 16,
+          "phase": "first-on-worker",
+          "durationMs": 16,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 4,
+            "col": 4
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 7.799999952316284,
+          "heartbeatMaxGapMs": 16,
+          "phase": "first-on-worker",
+          "durationMs": 10.600000023841858,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 4,
+            "col": 4
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 8.200000047683716,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 13.599999964237213,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 4,
+            "col": 4
+          }
+        }
+      ]
+    },
+    {
+      "preset": "easy",
+      "id": "renju-1089-p20",
+      "n": 3,
+      "medianMs": 11.7,
+      "p95Ms": 11.9,
+      "maxMs": 11.9,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 7.700000047683716,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 11.699999988079071,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 7.699999988079071,
+          "heartbeatMaxGapMs": 16.099999964237213,
+          "phase": "first-on-worker",
+          "durationMs": 11.900000035762787,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 7.600000023841858,
+          "heartbeatMaxGapMs": 16,
+          "phase": "first-on-worker",
+          "durationMs": 11.100000023841858,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        }
+      ]
+    },
+    {
+      "preset": "easy",
+      "id": "renju-18-p36",
+      "n": 3,
+      "medianMs": 10.2,
+      "p95Ms": 11,
+      "maxMs": 11,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 8,
+          "heartbeatMaxGapMs": 16.099999964237213,
+          "phase": "first-on-worker",
+          "durationMs": 10.199999988079071,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 3
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 7.199999988079071,
+          "heartbeatMaxGapMs": 16,
+          "phase": "first-on-worker",
+          "durationMs": 10.199999988079071,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 3
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 7,
+          "heartbeatMaxGapMs": 16.099999964237213,
+          "phase": "first-on-worker",
+          "durationMs": 11,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 3
+          }
+        }
+      ]
+    },
+    {
+      "preset": "easy",
+      "id": "renju-38-p60",
+      "n": 3,
+      "medianMs": 53.2,
+      "p95Ms": 54,
+      "maxMs": 54,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 8.800000011920929,
+          "heartbeatMaxGapMs": 16,
+          "phase": "first-on-worker",
+          "durationMs": 54,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 7,
+            "col": 12
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 6.800000011920929,
+          "heartbeatMaxGapMs": 16.099999964237213,
+          "phase": "first-on-worker",
+          "durationMs": 53.19999998807907,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 7,
+            "col": 12
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 7.100000023841858,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 52.09999996423721,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 7,
+            "col": 12
+          }
+        }
+      ]
+    },
+    {
+      "preset": "easy",
+      "id": "renju-436-p80",
+      "n": 3,
+      "medianMs": 13,
+      "p95Ms": 13.6,
+      "maxMs": 13.6,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 8,
+          "heartbeatMaxGapMs": 16.099999964237213,
+          "phase": "first-on-worker",
+          "durationMs": 13.599999964237213,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 9,
+            "col": 6
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 7.799999952316284,
+          "heartbeatMaxGapMs": 16.099999964237213,
+          "phase": "first-on-worker",
+          "durationMs": 11.700000047683716,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 9,
+            "col": 6
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 7.399999976158142,
+          "heartbeatMaxGapMs": 16.19999998807907,
+          "phase": "first-on-worker",
+          "durationMs": 13,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 9,
+            "col": 6
+          }
+        }
+      ]
+    },
+    {
+      "preset": "easy",
+      "id": "freestyle-577-p6",
+      "n": 3,
+      "medianMs": 7.8,
+      "p95Ms": 9.8,
+      "maxMs": 9.8,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 7.399999976158142,
+          "heartbeatMaxGapMs": 0,
+          "phase": "first-on-worker",
+          "durationMs": 7.800000011920929,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 8.299999952316284,
+          "heartbeatMaxGapMs": 16.099999964237213,
+          "phase": "first-on-worker",
+          "durationMs": 9.800000011920929,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 10.399999976158142,
+          "heartbeatMaxGapMs": 16,
+          "phase": "first-on-worker",
+          "durationMs": 7.699999988079071,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        }
+      ]
+    },
+    {
+      "preset": "easy",
+      "id": "freestyle-1089-p14",
+      "n": 3,
+      "medianMs": 8.2,
+      "p95Ms": 9.5,
+      "maxMs": 9.5,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 10.800000011920929,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 9.5,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 7.899999976158142,
+          "heartbeatMaxGapMs": 0,
+          "phase": "first-on-worker",
+          "durationMs": 8.200000047683716,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 8.100000023841858,
+          "heartbeatMaxGapMs": 0,
+          "phase": "first-on-worker",
+          "durationMs": 6.699999988079071,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        }
+      ]
+    },
+    {
+      "preset": "easy",
+      "id": "freestyle-65-p16",
+      "n": 3,
+      "medianMs": 6.2,
+      "p95Ms": 6.5,
+      "maxMs": 6.5,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 9,
+          "heartbeatMaxGapMs": 0,
+          "phase": "first-on-worker",
+          "durationMs": 6.199999988079071,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 4,
+            "col": 9
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 8.5,
+          "heartbeatMaxGapMs": 0,
+          "phase": "first-on-worker",
+          "durationMs": 6.5,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 4,
+            "col": 9
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 7.699999988079071,
+          "heartbeatMaxGapMs": 0,
+          "phase": "first-on-worker",
+          "durationMs": 6.100000023841858,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 4,
+            "col": 9
+          }
+        }
+      ]
+    },
+    {
+      "preset": "easy",
+      "id": "freestyle-39-p38",
+      "n": 3,
+      "medianMs": 6.4,
+      "p95Ms": 7.4,
+      "maxMs": 7.4,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 8.099999964237213,
+          "heartbeatMaxGapMs": 0,
+          "phase": "first-on-worker",
+          "durationMs": 6,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 12,
+            "col": 6
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 7.5,
+          "heartbeatMaxGapMs": 0,
+          "phase": "first-on-worker",
+          "durationMs": 7.399999976158142,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 12,
+            "col": 6
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 8.200000047683716,
+          "heartbeatMaxGapMs": 0,
+          "phase": "first-on-worker",
+          "durationMs": 6.399999976158142,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 12,
+            "col": 6
+          }
+        }
+      ]
+    },
+    {
+      "preset": "easy",
+      "id": "freestyle-234-p60",
+      "n": 3,
+      "medianMs": 8.6,
+      "p95Ms": 9.2,
+      "maxMs": 9.2,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 7.5,
+          "heartbeatMaxGapMs": 0,
+          "phase": "first-on-worker",
+          "durationMs": 7.900000035762787,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 9,
+            "col": 8
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 8,
+          "heartbeatMaxGapMs": 16.19999998807907,
+          "phase": "first-on-worker",
+          "durationMs": 9.199999988079071,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 9,
+            "col": 8
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 9.300000011920929,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 8.599999964237213,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 9,
+            "col": 8
+          }
+        }
+      ]
+    },
+    {
+      "preset": "easy",
+      "id": "freestyle-611-p80",
+      "n": 3,
+      "medianMs": 7,
+      "p95Ms": 7.9,
+      "maxMs": 7.9,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 9.100000023841858,
+          "heartbeatMaxGapMs": 0,
+          "phase": "first-on-worker",
+          "durationMs": 6.5,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 3,
+            "col": 5
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 7.300000011920929,
+          "heartbeatMaxGapMs": 0,
+          "phase": "first-on-worker",
+          "durationMs": 7.899999976158142,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 3,
+            "col": 5
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 7.300000011920929,
+          "heartbeatMaxGapMs": 0,
+          "phase": "first-on-worker",
+          "durationMs": 7,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 3,
+            "col": 5
+          }
+        }
+      ]
+    },
+    {
+      "preset": "normal",
+      "id": "renju-65-p4",
+      "n": 3,
+      "medianMs": 102.4,
+      "p95Ms": 107.8,
+      "maxMs": 107.8,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 7.199999988079071,
+          "heartbeatMaxGapMs": 16.099999964237213,
+          "phase": "first-on-worker",
+          "durationMs": 102.39999997615814,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 8.5,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 98.90000003576279,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 8.699999988079071,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 107.80000001192093,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        }
+      ]
+    },
+    {
+      "preset": "normal",
+      "id": "renju-577-p12",
+      "n": 3,
+      "medianMs": 521.9,
+      "p95Ms": 527.9,
+      "maxMs": 527.9,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 8.199999988079071,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 527.9000000357628,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 4,
+            "col": 8
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 8.399999976158142,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 513.8000000119209,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 4,
+            "col": 8
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 8.199999988079071,
+          "heartbeatMaxGapMs": 16.099999964237213,
+          "phase": "first-on-worker",
+          "durationMs": 521.8999999761581,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 4,
+            "col": 8
+          }
+        }
+      ]
+    },
+    {
+      "preset": "normal",
+      "id": "renju-1089-p20",
+      "n": 3,
+      "medianMs": 246.2,
+      "p95Ms": 248.4,
+      "maxMs": 248.4,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 7.600000023841858,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 248.39999997615814,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 4
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 7.100000023841858,
+          "heartbeatMaxGapMs": 16.19999998807907,
+          "phase": "first-on-worker",
+          "durationMs": 235.89999997615814,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 4
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 8.300000011920929,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 246.19999998807907,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 4
+          }
+        }
+      ]
+    },
+    {
+      "preset": "normal",
+      "id": "renju-18-p36",
+      "n": 3,
+      "medianMs": 138.8,
+      "p95Ms": 148.1,
+      "maxMs": 148.1,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 8.399999976158142,
+          "heartbeatMaxGapMs": 16.19999998807907,
+          "phase": "first-on-worker",
+          "durationMs": 148.10000002384186,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 9,
+            "col": 7
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 7.900000035762787,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 138.79999995231628,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 9,
+            "col": 7
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 8.300000011920929,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 137.69999998807907,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 9,
+            "col": 7
+          }
+        }
+      ]
+    },
+    {
+      "preset": "normal",
+      "id": "renju-38-p60",
+      "n": 3,
+      "medianMs": 138.7,
+      "p95Ms": 142.3,
+      "maxMs": 142.3,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 7.699999988079071,
+          "heartbeatMaxGapMs": 16.099999964237213,
+          "phase": "first-on-worker",
+          "durationMs": 142.30000001192093,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 2,
+            "col": 9
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 6.899999976158142,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 138.70000004768372,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 2,
+            "col": 9
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 7.300000011920929,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 135,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 2,
+            "col": 9
+          }
+        }
+      ]
+    },
+    {
+      "preset": "normal",
+      "id": "renju-436-p80",
+      "n": 3,
+      "medianMs": 678,
+      "p95Ms": 685.9,
+      "maxMs": 685.9,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 7.5,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 662.8000000119209,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 9,
+            "col": 2
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 6.900000035762787,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 678,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 9,
+            "col": 2
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 7.300000011920929,
+          "heartbeatMaxGapMs": 16.200000047683716,
+          "phase": "first-on-worker",
+          "durationMs": 685.9000000357628,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 9,
+            "col": 2
+          }
+        }
+      ]
+    },
+    {
+      "preset": "normal",
+      "id": "freestyle-577-p6",
+      "n": 3,
+      "medianMs": 518.2,
+      "p95Ms": 520.8,
+      "maxMs": 520.8,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 7.5,
+          "heartbeatMaxGapMs": 16.099999964237213,
+          "phase": "first-on-worker",
+          "durationMs": 515.5999999642372,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 8
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 6.800000011920929,
+          "heartbeatMaxGapMs": 16.099999964237213,
+          "phase": "first-on-worker",
+          "durationMs": 520.7999999523163,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 8
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 7.099999964237213,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 518.1999999880791,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 8
+          }
+        }
+      ]
+    },
+    {
+      "preset": "normal",
+      "id": "freestyle-1089-p14",
+      "n": 3,
+      "medianMs": 42.4,
+      "p95Ms": 43.6,
+      "maxMs": 43.6,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 7.800000011920929,
+          "heartbeatMaxGapMs": 16.200000047683716,
+          "phase": "first-on-worker",
+          "durationMs": 42.10000002384186,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 4,
+            "col": 6
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 7.199999988079071,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 42.39999997615814,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 4,
+            "col": 6
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 7.100000023841858,
+          "heartbeatMaxGapMs": 16,
+          "phase": "first-on-worker",
+          "durationMs": 43.60000002384186,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 4,
+            "col": 6
+          }
+        }
+      ]
+    },
+    {
+      "preset": "normal",
+      "id": "freestyle-65-p16",
+      "n": 3,
+      "medianMs": 18.6,
+      "p95Ms": 18.9,
+      "maxMs": 18.9,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 7.699999988079071,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 18.600000023841858,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 4,
+            "col": 9
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 7,
+          "heartbeatMaxGapMs": 16.099999964237213,
+          "phase": "first-on-worker",
+          "durationMs": 18.299999952316284,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 4,
+            "col": 9
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 7,
+          "heartbeatMaxGapMs": 16.19999998807907,
+          "phase": "first-on-worker",
+          "durationMs": 18.899999976158142,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 4,
+            "col": 9
+          }
+        }
+      ]
+    },
+    {
+      "preset": "normal",
+      "id": "freestyle-39-p38",
+      "n": 3,
+      "medianMs": 33.5,
+      "p95Ms": 33.8,
+      "maxMs": 33.8,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 7.100000023841858,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 32.60000002384186,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 12,
+            "col": 6
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 7.100000023841858,
+          "heartbeatMaxGapMs": 16,
+          "phase": "first-on-worker",
+          "durationMs": 33.799999952316284,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 12,
+            "col": 6
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 7.199999988079071,
+          "heartbeatMaxGapMs": 16.19999998807907,
+          "phase": "first-on-worker",
+          "durationMs": 33.5,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 12,
+            "col": 6
+          }
+        }
+      ]
+    },
+    {
+      "preset": "normal",
+      "id": "freestyle-234-p60",
+      "n": 3,
+      "medianMs": 237.7,
+      "p95Ms": 239.8,
+      "maxMs": 239.8,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 7.200000047683716,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 230.5999999642372,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 10
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 6.899999976158142,
+          "heartbeatMaxGapMs": 16.099999964237213,
+          "phase": "first-on-worker",
+          "durationMs": 237.69999998807907,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 10
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 7.199999988079071,
+          "heartbeatMaxGapMs": 16.19999998807907,
+          "phase": "first-on-worker",
+          "durationMs": 239.80000001192093,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 10
+          }
+        }
+      ]
+    },
+    {
+      "preset": "normal",
+      "id": "freestyle-611-p80",
+      "n": 3,
+      "medianMs": 6,
+      "p95Ms": 6,
+      "maxMs": 6,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 7.199999988079071,
+          "heartbeatMaxGapMs": 0,
+          "phase": "first-on-worker",
+          "durationMs": 5.800000011920929,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 3,
+            "col": 5
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 6.600000023841858,
+          "heartbeatMaxGapMs": 0,
+          "phase": "first-on-worker",
+          "durationMs": 6,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 3,
+            "col": 5
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 7.200000047683716,
+          "heartbeatMaxGapMs": 0,
+          "phase": "first-on-worker",
+          "durationMs": 6,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 3,
+            "col": 5
+          }
+        }
+      ]
+    },
+    {
+      "preset": "hard",
+      "id": "renju-65-p4",
+      "n": 3,
+      "medianMs": 245.7,
+      "p95Ms": 252.2,
+      "maxMs": 252.2,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 7.199999988079071,
+          "heartbeatMaxGapMs": 16.099999964237213,
+          "phase": "first-on-worker",
+          "durationMs": 245.69999998807907,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 6.900000035762787,
+          "heartbeatMaxGapMs": 16,
+          "phase": "first-on-worker",
+          "durationMs": 240.89999997615814,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 7.800000011920929,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 252.19999998807907,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        }
+      ]
+    },
+    {
+      "preset": "hard",
+      "id": "renju-577-p12",
+      "n": 3,
+      "medianMs": 2332.6,
+      "p95Ms": 2396,
+      "maxMs": 2396,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 8.100000023841858,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 2332.599999964237,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 4,
+            "col": 8
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 7.699999988079071,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 2312.5,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 4,
+            "col": 8
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 7.599999964237213,
+          "heartbeatMaxGapMs": 16.099999964237213,
+          "phase": "first-on-worker",
+          "durationMs": 2396,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 4,
+            "col": 8
+          }
+        }
+      ]
+    },
+    {
+      "preset": "hard",
+      "id": "renju-1089-p20",
+      "n": 3,
+      "medianMs": 393,
+      "p95Ms": 393.1,
+      "maxMs": 393.1,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 6.5,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 393.0999999642372,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 6.800000011920929,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 389.5,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 7.099999964237213,
+          "heartbeatMaxGapMs": 16.099999964237213,
+          "phase": "first-on-worker",
+          "durationMs": 393,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        }
+      ]
+    },
+    {
+      "preset": "hard",
+      "id": "renju-18-p36",
+      "n": 3,
+      "medianMs": 391.2,
+      "p95Ms": 405.4,
+      "maxMs": 405.4,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 7.199999988079071,
+          "heartbeatMaxGapMs": 16.099999964237213,
+          "phase": "first-on-worker",
+          "durationMs": 390.30000001192093,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 9,
+            "col": 7
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 8.5,
+          "heartbeatMaxGapMs": 16.19999998807907,
+          "phase": "first-on-worker",
+          "durationMs": 405.39999997615814,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 9,
+            "col": 7
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 7.100000023841858,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 391.19999998807907,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 9,
+            "col": 7
+          }
+        }
+      ]
+    },
+    {
+      "preset": "hard",
+      "id": "renju-38-p60",
+      "n": 3,
+      "medianMs": 154.1,
+      "p95Ms": 156.2,
+      "maxMs": 156.2,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 7.5,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 153.69999998807907,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 2,
+            "col": 9
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 7.399999976158142,
+          "heartbeatMaxGapMs": 16.099999964237213,
+          "phase": "first-on-worker",
+          "durationMs": 154.0999999642372,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 2,
+            "col": 9
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 7.5,
+          "heartbeatMaxGapMs": 16.099999964237213,
+          "phase": "first-on-worker",
+          "durationMs": 156.19999998807907,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 2,
+            "col": 9
+          }
+        }
+      ]
+    },
+    {
+      "preset": "hard",
+      "id": "renju-436-p80",
+      "n": 3,
+      "medianMs": 756.8,
+      "p95Ms": 776.3,
+      "maxMs": 776.3,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 7.600000023841858,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 776.2999999523163,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 7,
+            "col": 2
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 7.199999988079071,
+          "heartbeatMaxGapMs": 16.19999998807907,
+          "phase": "first-on-worker",
+          "durationMs": 754.1999999880791,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 7,
+            "col": 2
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 7.700000047683716,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 756.8000000119209,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 7,
+            "col": 2
+          }
+        }
+      ]
+    },
+    {
+      "preset": "hard",
+      "id": "freestyle-577-p6",
+      "n": 3,
+      "medianMs": 525.2,
+      "p95Ms": 532.4,
+      "maxMs": 532.4,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 7.100000023841858,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 532.3999999761581,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 8
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 7.400000035762787,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 507.5999999642372,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 8
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 7.199999988079071,
+          "heartbeatMaxGapMs": 16.19999998807907,
+          "phase": "first-on-worker",
+          "durationMs": 525.1999999880791,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 8
+          }
+        }
+      ]
+    },
+    {
+      "preset": "hard",
+      "id": "freestyle-1089-p14",
+      "n": 3,
+      "medianMs": 453.8,
+      "p95Ms": 464.8,
+      "maxMs": 464.8,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 7.800000011920929,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 464.7999999523163,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 7.400000035762787,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 453.80000001192093,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 7.399999976158142,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 447.19999998807907,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        }
+      ]
+    },
+    {
+      "preset": "hard",
+      "id": "freestyle-65-p16",
+      "n": 3,
+      "medianMs": 45.3,
+      "p95Ms": 47.6,
+      "maxMs": 47.6,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 8.800000011920929,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 47.59999996423721,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 4,
+            "col": 9
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 7.100000023841858,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 45.30000001192093,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 4,
+            "col": 9
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 6.799999952316284,
+          "heartbeatMaxGapMs": 16.099999964237213,
+          "phase": "first-on-worker",
+          "durationMs": 44.10000002384186,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 4,
+            "col": 9
+          }
+        }
+      ]
+    },
+    {
+      "preset": "hard",
+      "id": "freestyle-39-p38",
+      "n": 3,
+      "medianMs": 29.2,
+      "p95Ms": 30.6,
+      "maxMs": 30.6,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 6.5,
+          "heartbeatMaxGapMs": 16.099999964237213,
+          "phase": "first-on-worker",
+          "durationMs": 27,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 12,
+            "col": 6
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 7.5,
+          "heartbeatMaxGapMs": 16,
+          "phase": "first-on-worker",
+          "durationMs": 29.200000047683716,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 12,
+            "col": 6
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 7.300000011920929,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 30.600000023841858,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 12,
+            "col": 6
+          }
+        }
+      ]
+    },
+    {
+      "preset": "hard",
+      "id": "freestyle-234-p60",
+      "n": 3,
+      "medianMs": 707.1,
+      "p95Ms": 708.4,
+      "maxMs": 708.4,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 6.699999988079071,
+          "heartbeatMaxGapMs": 16,
+          "phase": "first-on-worker",
+          "durationMs": 707.0999999642372,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 7,
+            "col": 11
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 7.699999988079071,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 708.4000000357628,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 7,
+            "col": 11
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 7.5,
+          "heartbeatMaxGapMs": 16.100000023841858,
+          "phase": "first-on-worker",
+          "durationMs": 703.4000000357628,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 7,
+            "col": 11
+          }
+        }
+      ]
+    },
+    {
+      "preset": "hard",
+      "id": "freestyle-611-p80",
+      "n": 3,
+      "medianMs": 6.8,
+      "p95Ms": 6.9,
+      "maxMs": 6.9,
+      "trials": [
+        {
+          "trial": 1,
+          "readyMs": 7.5,
+          "heartbeatMaxGapMs": 0,
+          "phase": "first-on-worker",
+          "durationMs": 6.699999988079071,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 3,
+            "col": 5
+          }
+        },
+        {
+          "trial": 2,
+          "readyMs": 7.400000035762787,
+          "heartbeatMaxGapMs": 0,
+          "phase": "first-on-worker",
+          "durationMs": 6.800000011920929,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 3,
+            "col": 5
+          }
+        },
+        {
+          "trial": 3,
+          "readyMs": 6.800000011920929,
+          "heartbeatMaxGapMs": 0,
+          "phase": "first-on-worker",
+          "durationMs": 6.899999976158142,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 3,
+            "col": 5
+          }
+        }
+      ]
+    }
+  ],
+  "warmWorkerGroups": [
+    {
+      "kind": "bot-reused-worker",
+      "id": "renju-65-p4",
+      "preset": "easy",
+      "trial": 1,
+      "readyMs": 8.700000047683716,
+      "samples": [
+        {
+          "phase": "first-on-worker",
+          "durationMs": 12.799999952316284,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 5.200000047683716,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 4.799999952316284,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 4.700000047683716,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        }
+      ],
+      "maxMainThreadHeartbeatGapMs": 16.100000023841858
+    },
+    {
+      "kind": "bot-reused-worker",
+      "id": "renju-65-p4",
+      "preset": "normal",
+      "trial": 1,
+      "readyMs": 7,
+      "samples": [
+        {
+          "phase": "first-on-worker",
+          "durationMs": 100.30000001192093,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 7.299999952316284,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 7,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 8.5,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        }
+      ],
+      "maxMainThreadHeartbeatGapMs": 16.100000023841858
+    },
+    {
+      "kind": "bot-reused-worker",
+      "id": "renju-65-p4",
+      "preset": "hard",
+      "trial": 1,
+      "readyMs": 7.099999964237213,
+      "samples": [
+        {
+          "phase": "first-on-worker",
+          "durationMs": 253.60000002384186,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 5.800000011920929,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 5.5,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 5.5,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        }
+      ],
+      "maxMainThreadHeartbeatGapMs": 16.099999964237213
+    },
+    {
+      "kind": "bot-reused-worker",
+      "id": "renju-1089-p20",
+      "preset": "easy",
+      "trial": 1,
+      "readyMs": 7.300000011920929,
+      "samples": [
+        {
+          "phase": "first-on-worker",
+          "durationMs": 10.5,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 5.399999976158142,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 6,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 5.300000011920929,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        }
+      ],
+      "maxMainThreadHeartbeatGapMs": 16.19999998807907
+    },
+    {
+      "kind": "bot-reused-worker",
+      "id": "renju-1089-p20",
+      "preset": "normal",
+      "trial": 1,
+      "readyMs": 6.900000035762787,
+      "samples": [
+        {
+          "phase": "first-on-worker",
+          "durationMs": 247,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 4
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 6.199999988079071,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 4
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 5.899999976158142,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 4
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 5.800000011920929,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 4
+          }
+        }
+      ],
+      "maxMainThreadHeartbeatGapMs": 16.100000023841858
+    },
+    {
+      "kind": "bot-reused-worker",
+      "id": "renju-1089-p20",
+      "preset": "hard",
+      "trial": 1,
+      "readyMs": 7.900000035762787,
+      "samples": [
+        {
+          "phase": "first-on-worker",
+          "durationMs": 405.5999999642372,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 201,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 195.9000000357628,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 197.0999999642372,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        }
+      ],
+      "maxMainThreadHeartbeatGapMs": 16.100000023841858
+    },
+    {
+      "kind": "bot-reused-worker",
+      "id": "freestyle-234-p60",
+      "preset": "easy",
+      "trial": 1,
+      "readyMs": 7.399999976158142,
+      "samples": [
+        {
+          "phase": "first-on-worker",
+          "durationMs": 7.800000011920929,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 9,
+            "col": 8
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 2.300000011920929,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 9,
+            "col": 8
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 2.099999964237213,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 9,
+            "col": 8
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 2.100000023841858,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 9,
+            "col": 8
+          }
+        }
+      ],
+      "maxMainThreadHeartbeatGapMs": 16
+    },
+    {
+      "kind": "bot-reused-worker",
+      "id": "freestyle-234-p60",
+      "preset": "normal",
+      "trial": 1,
+      "readyMs": 7.800000011920929,
+      "samples": [
+        {
+          "phase": "first-on-worker",
+          "durationMs": 232.19999998807907,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 10
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 3.600000023841858,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 10
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 3.300000011920929,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 10
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 3.199999988079071,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 8,
+            "col": 10
+          }
+        }
+      ],
+      "maxMainThreadHeartbeatGapMs": 16.100000023841858
+    },
+    {
+      "kind": "bot-reused-worker",
+      "id": "freestyle-234-p60",
+      "preset": "hard",
+      "trial": 1,
+      "readyMs": 7.399999976158142,
+      "samples": [
+        {
+          "phase": "first-on-worker",
+          "durationMs": 756,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 7,
+            "col": 11
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 86.10000002384186,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 7,
+            "col": 11
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 85.5,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 7,
+            "col": 11
+          }
+        },
+        {
+          "phase": "reused-worker",
+          "durationMs": 85.60000002384186,
+          "timeout": false,
+          "error": null,
+          "move": {
+            "row": 7,
+            "col": 11
+          }
+        }
+      ],
+      "maxMainThreadHeartbeatGapMs": 16.100000023841858
+    }
+  ],
+  "startup": [
+    {
+      "kind": "startup",
+      "trial": 1,
+      "phase": "fresh-context",
+      "cpuRate": 1,
+      "homeMs": 107.33426699999995,
+      "boardStateReadyMs": 839.140008,
+      "assetCount": 26,
+      "totalTransferredBytes": 1350347
+    },
+    {
+      "kind": "startup",
+      "trial": 1,
+      "phase": "warm-reload",
+      "cpuRate": 1,
+      "homeMs": 42.12262099999998,
+      "boardStateReadyMs": 368.90271499999994,
+      "assetCount": 26,
+      "totalTransferredBytes": 7800
+    },
+    {
+      "kind": "startup",
+      "trial": 2,
+      "phase": "fresh-context",
+      "cpuRate": 1,
+      "homeMs": 93.18610000000012,
+      "boardStateReadyMs": 821.2968299999998,
+      "assetCount": 26,
+      "totalTransferredBytes": 1350347
+    },
+    {
+      "kind": "startup",
+      "trial": 2,
+      "phase": "warm-reload",
+      "cpuRate": 1,
+      "homeMs": 37.366751999999906,
+      "boardStateReadyMs": 854.9181050000002,
+      "assetCount": 26,
+      "totalTransferredBytes": 7800
+    },
+    {
+      "kind": "startup",
+      "trial": 3,
+      "phase": "fresh-context",
+      "cpuRate": 1,
+      "homeMs": 90.8668859999998,
+      "boardStateReadyMs": 815.7207559999997,
+      "assetCount": 26,
+      "totalTransferredBytes": 1350347
+    },
+    {
+      "kind": "startup",
+      "trial": 3,
+      "phase": "warm-reload",
+      "cpuRate": 1,
+      "homeMs": 41.80721100000028,
+      "boardStateReadyMs": 370.2317489999996,
+      "assetCount": 26,
+      "totalTransferredBytes": 7800
+    },
+    {
+      "kind": "startup",
+      "trial": 4,
+      "phase": "fresh-context",
+      "cpuRate": 1,
+      "homeMs": 89.44812499999989,
+      "boardStateReadyMs": 827.8969319999997,
+      "assetCount": 26,
+      "totalTransferredBytes": 1350347
+    },
+    {
+      "kind": "startup",
+      "trial": 4,
+      "phase": "warm-reload",
+      "cpuRate": 1,
+      "homeMs": 37.78444000000036,
+      "boardStateReadyMs": 878.6293079999996,
+      "assetCount": 26,
+      "totalTransferredBytes": 7800
+    },
+    {
+      "kind": "startup",
+      "trial": 5,
+      "phase": "fresh-context",
+      "cpuRate": 1,
+      "homeMs": 89.10972799999945,
+      "boardStateReadyMs": 813.959006,
+      "assetCount": 26,
+      "totalTransferredBytes": 1350347
+    },
+    {
+      "kind": "startup",
+      "trial": 5,
+      "phase": "warm-reload",
+      "cpuRate": 1,
+      "homeMs": 44.41921300000013,
+      "boardStateReadyMs": 368.1605989999998,
+      "assetCount": 26,
+      "totalTransferredBytes": 7800
+    },
+    {
+      "kind": "startup",
+      "trial": 1,
+      "phase": "fresh-context",
+      "cpuRate": 6,
+      "homeMs": 355.82918600000085,
+      "boardStateReadyMs": 530.8207020000009,
+      "assetCount": 26,
+      "totalTransferredBytes": 1350347
+    },
+    {
+      "kind": "startup",
+      "trial": 1,
+      "phase": "warm-reload",
+      "cpuRate": 6,
+      "homeMs": 194.17591100000027,
+      "boardStateReadyMs": 453.55994999999893,
+      "assetCount": 26,
+      "totalTransferredBytes": 7800
+    }
+  ],
+  "firstFreshAssets": [
+    {
+      "path": "/assets/index-CdazNBp8.js",
+      "transfer": 68523,
+      "decoded": 221696
+    },
+    {
+      "path": "/assets/rolldown-runtime-XKyaHtl9.js",
+      "transfer": 1026,
+      "decoded": 726
+    },
+    {
+      "path": "/assets/bot_config-BQyrbE-n.js",
+      "transfer": 1215,
+      "decoded": 2408
+    },
+    {
+      "path": "/assets/jsx-runtime-Ckec-Cn1.js",
+      "transfer": 17568,
+      "decoded": 48767
+    },
+    {
+      "path": "/assets/constants-DKcsxR6O.js",
+      "transfer": 1408,
+      "decoded": 2717
+    },
+    {
+      "path": "/assets/saved_match-BBH_1WDD.js",
+      "transfer": 1735,
+      "decoded": 3771
+    },
+    {
+      "path": "/assets/Icon-BHJlVjUD.js",
+      "transfer": 169658,
+      "decoded": 595543
+    },
+    {
+      "path": "/assets/cloud_promotion_store-Bv_5Fz0w.js",
+      "transfer": 1553,
+      "decoded": 3161
+    },
+    {
+      "path": "/assets/cloud_sync-OrMYoEkL.js",
+      "transfer": 880,
+      "decoded": 1250
+    },
+    {
+      "path": "/assets/links-dgpv3VTZ.js",
+      "transfer": 363,
+      "decoded": 63
+    },
+    {
+      "path": "/assets/index-1mbLrPoM.css",
+      "transfer": 2635,
+      "decoded": 7695
+    },
+    {
+      "path": "/assets/sequence_font-BHmT62ms.js",
+      "transfer": 574,
+      "decoded": 274
+    },
+    {
+      "path": "/assets/PixelOperator8-Bold-DQXNZxi5.ttf",
+      "transfer": 18924,
+      "decoded": 18624
+    },
+    {
+      "path": "/assets/PixelOperator-Bold-CLeLR2Kg.ttf",
+      "transfer": 17284,
+      "decoded": 16984
+    },
+    {
+      "path": "/assets/PixelOperator-C4gCAeI2.ttf",
+      "transfer": 17572,
+      "decoded": 17272
+    },
+    {
+      "path": "/assets/Board-ev2mndZK.css",
+      "transfer": 1063,
+      "decoded": 763
+    },
+    {
+      "path": "/assets/LocalMatchRoute-jEMs5th3.css",
+      "transfer": 1906,
+      "decoded": 6050
+    },
+    {
+      "path": "/assets/LocalMatchRoute-BvojM__w.js",
+      "transfer": 3697,
+      "decoded": 11024
+    },
+    {
+      "path": "/assets/board_model-CZzAtTO9.js",
+      "transfer": 717,
+      "decoded": 1185
+    },
+    {
+      "path": "/assets/Board-C7aJuVJs.js",
+      "transfer": 372219,
+      "decoded": 1418972
+    },
+    {
+      "path": "/assets/local_replay-DPM-3bM0.js",
+      "transfer": 914,
+      "decoded": 1287
+    },
+    {
+      "path": "/assets/local_match_session-CT_9vxb3.js",
+      "transfer": 3724,
+      "decoded": 9224
+    },
+    {
+      "path": "/assets/wasm_bridge-Dn-XC-wI.js",
+      "transfer": 3690,
+      "decoded": 11673
+    },
+    {
+      "path": "/assets/ready_queue_worker-C9z-rPKP.js",
+      "transfer": 699,
+      "decoded": 1083
+    },
+    {
+      "path": "/assets/gomoku_wasm_bg-CckJkYUu.wasm",
+      "transfer": 637081,
+      "decoded": 636781
+    },
+    {
+      "path": "/assets/bot_worker-qceE-vPe.js",
+      "transfer": 3719,
+      "decoded": 11239
+    }
+  ],
+  "analysis": [
+    {
+      "kind": "analysis",
+      "id": "renju-replay-65",
+      "plies": 18,
+      "trial": 1,
+      "firstAnnotationMs": 807.0911689999994,
+      "completeMs": 1596.5641359999936,
+      "status": "WHITE HAS WON",
+      "error": null
+    },
+    {
+      "kind": "analysis",
+      "id": "renju-replay-65",
+      "plies": 18,
+      "trial": 2,
+      "firstAnnotationMs": 803.9239149999994,
+      "completeMs": 1590.1921290000028,
+      "status": "WHITE HAS WON",
+      "error": null
+    },
+    {
+      "kind": "analysis",
+      "id": "renju-replay-65",
+      "plies": 18,
+      "trial": 3,
+      "firstAnnotationMs": 806.653296000004,
+      "completeMs": 1597.1487380000035,
+      "status": "WHITE HAS WON",
+      "error": null
+    },
+    {
+      "kind": "analysis",
+      "id": "renju-replay-1089",
+      "plies": 28,
+      "trial": 1,
+      "firstAnnotationMs": 810.6534169999941,
+      "completeMs": 3603.0209439999962,
+      "status": "WHITE HAS WON",
+      "error": null
+    },
+    {
+      "kind": "analysis",
+      "id": "renju-replay-1089",
+      "plies": 28,
+      "trial": 2,
+      "firstAnnotationMs": 803.1048079999964,
+      "completeMs": 3602.5647979999994,
+      "status": "WHITE HAS WON",
+      "error": null
+    },
+    {
+      "kind": "analysis",
+      "id": "renju-replay-1089",
+      "plies": 28,
+      "trial": 3,
+      "firstAnnotationMs": 810.8120160000035,
+      "completeMs": 3604.9991930000033,
+      "status": "WHITE HAS WON",
+      "error": null
+    },
+    {
+      "kind": "analysis",
+      "id": "renju-replay-18",
+      "plies": 50,
+      "trial": 1,
+      "firstAnnotationMs": 809.8480399999971,
+      "completeMs": 6113.145724000002,
+      "status": "WHITE HAS WON",
+      "error": null
+    },
+    {
+      "kind": "analysis",
+      "id": "renju-replay-18",
+      "plies": 50,
+      "trial": 2,
+      "firstAnnotationMs": 811.107869000014,
+      "completeMs": 6121.105691000004,
+      "status": "WHITE HAS WON",
+      "error": null
+    },
+    {
+      "kind": "analysis",
+      "id": "renju-replay-18",
+      "plies": 50,
+      "trial": 3,
+      "firstAnnotationMs": 810.4187050000037,
+      "completeMs": 6612.386394999994,
+      "status": "WHITE HAS WON",
+      "error": null
+    },
+    {
+      "kind": "analysis",
+      "id": "freestyle-replay-577",
+      "plies": 20,
+      "trial": 1,
+      "firstAnnotationMs": 811.6461909999925,
+      "completeMs": 1599.404635999992,
+      "status": "WHITE HAS WON",
+      "error": null
+    },
+    {
+      "kind": "analysis",
+      "id": "freestyle-replay-577",
+      "plies": 20,
+      "trial": 2,
+      "firstAnnotationMs": 812.144060999999,
+      "completeMs": 1596.0870970000105,
+      "status": "WHITE HAS WON",
+      "error": null
+    },
+    {
+      "kind": "analysis",
+      "id": "freestyle-replay-577",
+      "plies": 20,
+      "trial": 3,
+      "firstAnnotationMs": 805.500807999997,
+      "completeMs": 1592.3544259999908,
+      "status": "WHITE HAS WON",
+      "error": null
+    },
+    {
+      "kind": "analysis",
+      "id": "freestyle-replay-26",
+      "plies": 31,
+      "trial": 1,
+      "firstAnnotationMs": 811.2467250000045,
+      "completeMs": 815.8400939999992,
+      "status": "BLACK HAS WON",
+      "error": null
+    },
+    {
+      "kind": "analysis",
+      "id": "freestyle-replay-26",
+      "plies": 31,
+      "trial": 2,
+      "firstAnnotationMs": 806.7490600000019,
+      "completeMs": 813.1318150000006,
+      "status": "BLACK HAS WON",
+      "error": null
+    },
+    {
+      "kind": "analysis",
+      "id": "freestyle-replay-26",
+      "plies": 31,
+      "trial": 3,
+      "firstAnnotationMs": 812.1706019999983,
+      "completeMs": 817.0394279999891,
+      "status": "BLACK HAS WON",
+      "error": null
+    },
+    {
+      "kind": "analysis",
+      "id": "freestyle-replay-39",
+      "plies": 51,
+      "trial": 1,
+      "firstAnnotationMs": 812.766466000001,
+      "completeMs": 7624.956260999999,
+      "status": "BLACK HAS WON",
+      "error": null
+    },
+    {
+      "kind": "analysis",
+      "id": "freestyle-replay-39",
+      "plies": 51,
+      "trial": 2,
+      "firstAnnotationMs": 804.8542270000034,
+      "completeMs": 7621.029877000008,
+      "status": "BLACK HAS WON",
+      "error": null
+    },
+    {
+      "kind": "analysis",
+      "id": "freestyle-replay-39",
+      "plies": 51,
+      "trial": 3,
+      "firstAnnotationMs": 811.590777999998,
+      "completeMs": 7126.3929840000055,
+      "status": "BLACK HAS WON",
+      "error": null
+    }
+  ],
+  "cachedRevisits": [
+    {
+      "kind": "analysis-cached",
+      "parentKind": "analysis",
+      "id": "renju-replay-65",
+      "trial": 1,
+      "completeMs": 828.5199539999958,
+      "status": "WHITE HAS WON",
+      "workers": 0
+    },
+    {
+      "kind": "analysis-cached",
+      "parentKind": "analysis",
+      "id": "renju-replay-65",
+      "trial": 2,
+      "completeMs": 890.118190000001,
+      "status": "WHITE HAS WON",
+      "workers": 0
+    },
+    {
+      "kind": "analysis-cached",
+      "parentKind": "analysis",
+      "id": "renju-replay-65",
+      "trial": 3,
+      "completeMs": 845.2896019999971,
+      "status": "WHITE HAS WON",
+      "workers": 0
+    },
+    {
+      "kind": "analysis-cached",
+      "parentKind": "analysis",
+      "id": "renju-replay-1089",
+      "trial": 1,
+      "completeMs": 828.8708189999961,
+      "status": "WHITE HAS WON",
+      "workers": 0
+    },
+    {
+      "kind": "analysis-cached",
+      "parentKind": "analysis",
+      "id": "renju-replay-1089",
+      "trial": 2,
+      "completeMs": 846.6595850000012,
+      "status": "WHITE HAS WON",
+      "workers": 0
+    },
+    {
+      "kind": "analysis-cached",
+      "parentKind": "analysis",
+      "id": "renju-replay-1089",
+      "trial": 3,
+      "completeMs": 846.2942780000012,
+      "status": "WHITE HAS WON",
+      "workers": 0
+    },
+    {
+      "kind": "analysis-cached",
+      "parentKind": "analysis",
+      "id": "renju-replay-18",
+      "trial": 1,
+      "completeMs": 831.8658379999979,
+      "status": "WHITE HAS WON",
+      "workers": 0
+    },
+    {
+      "kind": "analysis-cached",
+      "parentKind": "analysis",
+      "id": "renju-replay-18",
+      "trial": 2,
+      "completeMs": 900.4550960000051,
+      "status": "WHITE HAS WON",
+      "workers": 0
+    },
+    {
+      "kind": "analysis-cached",
+      "parentKind": "analysis",
+      "id": "renju-replay-18",
+      "trial": 3,
+      "completeMs": 847.7808419999928,
+      "status": "WHITE HAS WON",
+      "workers": 0
+    },
+    {
+      "kind": "analysis-cached",
+      "parentKind": "analysis",
+      "id": "freestyle-replay-577",
+      "trial": 1,
+      "completeMs": 844.4408469999908,
+      "status": "WHITE HAS WON",
+      "workers": 0
+    },
+    {
+      "kind": "analysis-cached",
+      "parentKind": "analysis",
+      "id": "freestyle-replay-577",
+      "trial": 2,
+      "completeMs": 829.0652360000095,
+      "status": "WHITE HAS WON",
+      "workers": 0
+    },
+    {
+      "kind": "analysis-cached",
+      "parentKind": "analysis",
+      "id": "freestyle-replay-577",
+      "trial": 3,
+      "completeMs": 845.0264599999937,
+      "status": "WHITE HAS WON",
+      "workers": 0
+    },
+    {
+      "kind": "analysis-cached",
+      "parentKind": "analysis",
+      "id": "freestyle-replay-26",
+      "trial": 1,
+      "completeMs": 892.8187730000063,
+      "status": "BLACK HAS WON",
+      "workers": 0
+    },
+    {
+      "kind": "analysis-cached",
+      "parentKind": "analysis",
+      "id": "freestyle-replay-26",
+      "trial": 2,
+      "completeMs": 847.2840629999992,
+      "status": "BLACK HAS WON",
+      "workers": 0
+    },
+    {
+      "kind": "analysis-cached",
+      "parentKind": "analysis",
+      "id": "freestyle-replay-26",
+      "trial": 3,
+      "completeMs": 845.8132679999981,
+      "status": "BLACK HAS WON",
+      "workers": 0
+    },
+    {
+      "kind": "analysis-cached",
+      "parentKind": "analysis",
+      "id": "freestyle-replay-39",
+      "trial": 1,
+      "completeMs": 846.6730639999878,
+      "status": "BLACK HAS WON",
+      "workers": 0
+    },
+    {
+      "kind": "analysis-cached",
+      "parentKind": "analysis",
+      "id": "freestyle-replay-39",
+      "trial": 2,
+      "completeMs": 849.6523469999956,
+      "status": "BLACK HAS WON",
+      "workers": 0
+    },
+    {
+      "kind": "analysis-cached",
+      "parentKind": "analysis",
+      "id": "freestyle-replay-39",
+      "trial": 3,
+      "completeMs": 903.7859579999931,
+      "status": "BLACK HAS WON",
+      "workers": 0
+    }
+  ],
+  "lifecycle": [
+    {
+      "kind": "replacement",
+      "from": "renju-replay-18",
+      "to": "renju-replay-65",
+      "completeMs": 895.6546979999985,
+      "status": "WHITE HAS WON",
+      "oldWorkerClosed": true,
+      "oldWorkerClosedMs": 608.9239910000033,
+      "afterProgress": true
+    },
+    {
+      "kind": "route-cancellation",
+      "idleMs": 883.2981960000034,
+      "workers": 0,
+      "afterProgress": true
+    },
+    {
+      "kind": "navigation",
+      "heapBefore": 9029676,
+      "cycles": [
+        {
+          "cycle": 1,
+          "completeMs": 1451.5582660000073,
+          "workers": 0
+        },
+        {
+          "cycle": 2,
+          "completeMs": 97.3740140000009,
+          "workers": 0
+        },
+        {
+          "cycle": 3,
+          "completeMs": 93.79222999999183,
+          "workers": 0
+        },
+        {
+          "cycle": 4,
+          "completeMs": 142.89849700000195,
+          "workers": 0
+        },
+        {
+          "cycle": 5,
+          "completeMs": 145.03388200000336,
+          "workers": 0,
+          "pageHeapBytes": 9718472
+        },
+        {
+          "cycle": 6,
+          "completeMs": 98.3649049999949,
+          "workers": 0
+        },
+        {
+          "cycle": 7,
+          "completeMs": 95.53533199999947,
+          "workers": 0
+        },
+        {
+          "cycle": 8,
+          "completeMs": 98.93248100002529,
+          "workers": 0
+        },
+        {
+          "cycle": 9,
+          "completeMs": 113.38140700000804,
+          "workers": 0
+        },
+        {
+          "cycle": 10,
+          "completeMs": 138.4366700000246,
+          "workers": 0,
+          "pageHeapBytes": 10958464
+        },
+        {
+          "cycle": 11,
+          "completeMs": 99.86260299998685,
+          "workers": 0
+        },
+        {
+          "cycle": 12,
+          "completeMs": 157.71133900000132,
+          "workers": 0
+        },
+        {
+          "cycle": 13,
+          "completeMs": 113.66266699999687,
+          "workers": 0
+        },
+        {
+          "cycle": 14,
+          "completeMs": 140.9695939999947,
+          "workers": 0
+        },
+        {
+          "cycle": 15,
+          "completeMs": 115.65305699998862,
+          "workers": 0
+        },
+        {
+          "cycle": 16,
+          "completeMs": 134.87323800000013,
+          "workers": 0
+        },
+        {
+          "cycle": 17,
+          "completeMs": 139.50405200000387,
+          "workers": 0
+        },
+        {
+          "cycle": 18,
+          "completeMs": 146.4023440000019,
+          "workers": 0
+        },
+        {
+          "cycle": 19,
+          "completeMs": 156.06163899999228,
+          "workers": 0
+        },
+        {
+          "cycle": 20,
+          "completeMs": 147.16533499999787,
+          "workers": 0,
+          "pageHeapBytes": 11279496
+        },
+        {
+          "cycle": 21,
+          "completeMs": 94.16199699998833,
+          "workers": 0
+        },
+        {
+          "cycle": 22,
+          "completeMs": 138.42056500000763,
+          "workers": 0
+        },
+        {
+          "cycle": 23,
+          "completeMs": 141.71551499998895,
+          "workers": 0
+        },
+        {
+          "cycle": 24,
+          "completeMs": 95.62048300000606,
+          "workers": 0
+        },
+        {
+          "cycle": 25,
+          "completeMs": 160.2239750000008,
+          "workers": 0
+        },
+        {
+          "cycle": 26,
+          "completeMs": 133.74486499998602,
+          "workers": 0
+        },
+        {
+          "cycle": 27,
+          "completeMs": 145.0164709999808,
+          "workers": 0
+        },
+        {
+          "cycle": 28,
+          "completeMs": 145.8878300000215,
+          "workers": 0
+        },
+        {
+          "cycle": 29,
+          "completeMs": 132.41555000000517,
+          "workers": 0
+        },
+        {
+          "cycle": 30,
+          "completeMs": 142.151446999982,
+          "workers": 0,
+          "pageHeapBytes": 11477052
+        }
+      ],
+      "heapScope": "page JS heap after forced GC; excludes worker/Wasm/GPU memory"
+    }
+  ],
+  "limitations": [
+    "All 12 bot positions are black-to-move; this finite corpus is diagnostic and not an exhaustive rules/side distribution.",
+    "Desktop localhost preview; page-only CPU throttling does not emulate worker speed on physical low-powered devices.",
+    "Heap numbers are forced-GC page JS only; worker/Wasm/GPU allocations are excluded.",
+    "Cached revisit times include route and board readiness, not just cache lookup.",
+    "This was the refined clean-source run; the initial a33c67d run remains separate in ignored output."
+  ],
+  "toolVersionsVerifiedAfterRun": {
+    "rustc": "1.99.0 (b940084d7 2026-09-28), Arch Linux 1:1.99.0-1",
+    "wasmPack": "0.14.0",
+    "playwright": "1.64.1",
+    "vite": "8.3.4"
+  }
+}

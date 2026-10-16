@@ -62,3 +62,18 @@ open. Carry them into any later release decision.
 Earlier entries in the ledger describe intermediate states. The readiness
 decision, manual-check deferral, and final follow-ups supersede earlier requests
 to keep the review open. No historical measurement was relabeled as a new run.
+
+
+## Unattended Cloud and Wasm Follow-up
+
+The [execution plan](v0_5_unattended_followup.md) and
+[evidence ledger](v0_5_unattended_evidence.md) record the October 16 extension:
+two-client Auth/Firestore application acceptance, a no-op sync cooldown repair,
+and broader production Wasm timing/cancellation workloads. The
+[retained profile](assets/browser-profile-2026-10-16.json) has its own clean
+source/build identity; it does not replace or relabel the earlier measurements.
+The ledger records integrated verification, finding dispositions and the
+extension's completed closeout decision. All 21 cloud journeys and 45 race
+repetitions passed across three engines in
+[exact implementation CI](https://github.com/byebyebryan/gomoku2d/actions/runs/38957667087).
+Existing UI/Renju decisions and manual deferrals remain in force.

@@ -127,6 +127,7 @@ The current Firebase project is `gomoku2d`. Infra notes live in
 npm run typecheck          # TS plus checked JS scripts
 npm test                   # Vitest
 npm run test:rules         # Firestore rules through Firebase emulators
+npm run test:cloud         # isolated two-client Auth/Firestore acceptance
 npm run build              # production build plus postbuild publishing
 npm run preview            # serve dist/ locally
 npm run playtest:smoke     # focused automated Playwright smoke

@@ -4,11 +4,13 @@ Maintained notes and procedures with an ongoing use. Completed reviews belong
 in the [archive](../archive/README.md); current product and implementation
 contracts belong in the [reference docs](../README.md#choose-a-path).
 
-## Active Follow-up
+## Completed Follow-up
 
-The [v0.5 unattended cloud and Wasm plan](v0_5_unattended_followup.md) scopes the
-selected extension: two-client emulator/browser integration and broader
-production Wasm workloads. Implementation is active; the plan records execution status and evidence. The earlier reconciliation remains a completed review.
+The [v0.5 cloud and Wasm evidence](../archive/reconciliation_2026_10/v0_5_unattended_evidence.md)
+records the fixed profiling matrix, cloud repair, passing three-engine CI,
+and the completed closeout decision. Its [execution plan](../archive/reconciliation_2026_10/v0_5_unattended_followup.md)
+is retained with the October review. The earlier reconciliation remains a
+completed review.
 
 ## Maintained Notes
 

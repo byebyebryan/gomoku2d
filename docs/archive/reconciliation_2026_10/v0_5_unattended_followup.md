@@ -1,10 +1,10 @@
 # v0.5 Unattended Cloud and Wasm Follow-up
 
-Status: active; implementation authorized through a goal loop. Owner: Bryan.
+Status: complete on October 16; implemented and validated through the authorized goal loop. Owner: Bryan.
 Planning baseline: `30430a4d74a0f05e27e50a239663bc3e8e97ab67`.
 
-This is a bounded extension after the completed
-[October reconciliation](../archive/reconciliation_2026_10/README.md). It adds
+This was a bounded extension after the completed
+[October reconciliation](README.md). It adds
 automated evidence for two remaining questions: does the signed-in application
 preserve its contracts across clients, and how does production Wasm behave on
 a broader workload set? Findings drive small repairs within those contracts.
@@ -30,9 +30,9 @@ a broader workload set? Findings drive small repairs within those contracts.
 | Stage | Work | Exit evidence | State |
 |---|---|---|---|
 | 1 | Build the isolated cloud harness and one signed-in round trip | Application signs in through emulated Auth, writes through the real SDK/rules, and restores state in a second browser context | complete; Chromium/Firefox smoke passed; three-engine CI added |
-| 2 | Complete the cloud continuity and failure matrix | Named assertions, emulator document readback, and repeatable recovery/isolation results | implemented; Chromium/Firefox matrix and race repeats verified; exact-head CI pending |
-| 3 | Expand and run production Wasm workloads | Reproducible cold/warm distributions, slow-case records, cancellation and cleanup evidence | in progress; manifest and measurement harness validated |
-| 4 | Repair demonstrated failures, integrate checks, and close the extension | Affected regressions pass, appropriate full gates pass, and every finding has a disposition | planned |
+| 2 | Complete the cloud continuity and failure matrix | Named assertions, emulator document readback, and repeatable recovery/isolation results | complete; all three engines and all 45 race repetitions passed |
+| 3 | Expand and run production Wasm workloads | Reproducible cold/warm distributions, slow-case records, cancellation and cleanup evidence | complete; clean-source fixed matrix and active cancellation passed |
+| 4 | Repair demonstrated failures, integrate checks, and close the extension | Affected regressions pass, appropriate full gates pass, and every finding has a disposition | complete; sync repair, exact implementation CI, evidence and closeout recorded |
 
 Run cloud and profiling stages sequentially. Use isolated output directories,
 ports, and reports; preserve the existing untracked visual-review artifacts and

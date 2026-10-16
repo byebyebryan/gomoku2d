@@ -12,7 +12,9 @@ The [October 2026 reconciliation](reconciliation_2026_10/README.md) groups the
 reopened `0.5.x` plan, initial and systematic reviews, evidence, and captures.
 Its closeout records the retained UI, completed mobile Rules/Guide work,
 conditional refactors, and explicit manual acceptance deferrals. It is a
-completed review record, not an active feature plan.
+completed review record, not an active feature plan. Its
+[unattended cloud and Wasm follow-up](reconciliation_2026_10/v0_5_unattended_evidence.md)
+records the later integration matrix, sync repair and fixed desktop workloads.
 
 ## Earlier Plans and Context
 

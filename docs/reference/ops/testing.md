@@ -21,6 +21,8 @@ release or after core/rules/search work, run the full relevant lane.
 | Local browser smoke | `(cd gomoku-web && PLAYWRIGHT_BASE_URL=http://127.0.0.1:8001 npm run playtest:smoke)` |
 | Full local browser flows | `(cd gomoku-web && npm run playtest)` |
 | Chromium / Firefox / WebKit flows | `(cd gomoku-web && npm run playtest:engines)` |
+| Emulated cloud application continuity | `(cd gomoku-web && npm run test:cloud)` |
+| Cloud conflict/account/reset repetition | `(cd gomoku-web && npm run test:cloud -- --grep 'C[467]' --repeat-each=5)` |
 | Opt-in browser profiling | `(cd gomoku-web && npm run profile:browser)` |
 
 Install the Rust audit command once with `cargo install cargo-audit --locked` if
@@ -32,14 +34,32 @@ quota/corrupt/newer storage, and repeated bot-worker failure/recovery on desktop
 CI runs the full journeys across Chromium, Firefox, and WebKit against its
 preceding production build and retains failure screenshots/traces for seven days.
 Install those engines with `npx playwright install --with-deps chromium firefox webkit`.
-Engine automation is distinct from physical mobile-browser acceptance. Real OAuth, cross-device continuity, and a real
-screen reader still require their own acceptance evidence.
+Engine automation is distinct from physical mobile-browser acceptance. Real
+OAuth, physical-device continuity, and a real screen reader still require their
+own acceptance evidence.
+
+The cloud command owns a demo-only Auth/Firestore emulator pair, disposable
+accounts, the actual repository rules, and a separate `dist-cloud` preview on
+port 8013. It refuses occupied ports, stops its own process groups, and blocks
+non-loopback identity/database requests. The SDK still loads Google's static
+GAPI library; cosmetic widget assets and generic telemetry/connectivity probes
+are fulfilled locally. There are no production account/data writes. CI runs all
+C1-C9 journeys and supported embedded redirect in three engines, plus five
+fresh-state repetitions of conflict, account-switch and reset races. The
+[unattended evidence ledger](../../archive/reconciliation_2026_10/v0_5_unattended_evidence.md) records
+scenarios, fixture-only timestamp eligibility, and the difference from real OAuth.
 
 The profiling lane builds its own production preview on port 8012 and writes
 JSON under ignored `gomoku-bot-lab/outputs/browser-profile/`. Set
 `GOMOKU_PROFILE_OUTPUT` to retain it elsewhere. It records build/host identity,
-startup/assets, real preset workers, analysis/cache cost, and 30 navigation
-cycles. It uses Chromium CDP for page CPU throttling and main-heap metrics;
+five fresh/warm startup pairs, 108 fresh-worker bot requests across 12 validated
+positions, three reused-worker positions, 18 uncached analyses across six
+replays, cached revisits, active cancellation/replacement, and 30 navigation
+cycles. Its frozen manifest is checked with the current Wasm core and the served
+binary before timing. Diagnostic trigger breaches add five independent trials;
+watchdogs and incomplete counts stay visible. Latency triggers are diagnostic
+and profiling remains opt-in. It uses Chromium CDP for page CPU throttling and
+main-heap metrics;
 worker/Wasm/GPU heap and physical-device performance require separate evidence.
 The [October review measurements](../../archive/reconciliation_2026_10/v0_5_review_evidence.md#browser-cost-and-worker-ownership)
 document the samples and their provisional diagnostic expectations.

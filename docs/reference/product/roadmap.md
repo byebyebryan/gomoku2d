@@ -33,11 +33,13 @@ Bryan's request. These deferrals do not hold the review or next design checkpoin
 open and are not recorded as passes. A new patch release, media refresh, and
 deployment remain separate decisions; the public release is still `v0.5.4`.
 
-A bounded [unattended follow-up](../../working/v0_5_unattended_followup.md) is now
-active for cloud application integration across two emulated clients and
-broader production Wasm performance/cancellation workloads. The authorized goal
-loop implements, validates, and commits bounded batches. This extends automated evidence while retaining
-the chosen UI, closed Renju review, and existing manual acceptance deferrals.
+The bounded [unattended follow-up](../../archive/reconciliation_2026_10/v0_5_unattended_evidence.md)
+is also complete: two-client Auth/Firestore application acceptance in all three
+engines, a repaired no-op sync cooldown, and broader production Wasm performance,
+active cancellation and recovery evidence. Exact implementation CI and all 45
+fresh-state race repetitions passed. The chosen UI, closed Renju review, and
+existing manual acceptance deferrals remain in force. Return to release
+packaging and the next design checkpoint; no further review phase is implied.
 
 Historical execution and findings:
 

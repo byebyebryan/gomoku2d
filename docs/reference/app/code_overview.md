@@ -40,7 +40,9 @@ threat, bot, or replay-analysis semantics.
 | Bot worker | `src/core/bot_runner.ts`, `src/core/bot_worker.ts`, `src/core/bot_protocol.ts` | Async bot move requests with cancellation and worker restart safety |
 | Wasm bridge | `src/core/wasm_bridge.ts` | Typed JSON parsing boundary over `gomoku-wasm` exports |
 | Static publishing | `scripts/publish_reports.mjs`, `scripts/publish_visual_design_assets.mjs`, `scripts/publish_spa_routes.mjs` | Copies curated data/assets and SPA entries into `dist/` during build |
-| Playwright smoke | `playtests/*.spec.ts` | Browser-level release smoke for play, layout, replay, reports, and no-config paths |
+| Playwright journeys | `playtests/*.spec.ts` | Browser-level acceptance for play, layout, replay, reports, recovery, and no-config paths |
+| Cloud acceptance | `cloudtests/*`, `scripts/run_cloud_acceptance.mjs` | Isolated emulated Auth/Firestore application journeys and two-client races |
+| Opt-in profiling | `perftests/*`, `scripts/profile_workloads.mjs` | Frozen/current-core-validated workloads, production worker timing, cache and lifecycle evidence |
 
 ## Wasm Boundary
 
@@ -160,6 +162,10 @@ background uploads; later local edits remain authoritative for that session.
 - `cloud_promotion.ts` owns the promoted-history projection used by both sync
   preflight and the write path, including reset filtering and retention.
 - Firestore rules live at repo root and are tested through `npm run test:rules`.
+  `npm run test:cloud` separately exercises the application/SDK across isolated
+  Auth/Firestore emulator clients using those rules.
+- A no-op cloud flush retains the server write timestamp; only a real write
+  closes the client sync gate.
 
 Cloud loads and promotions return their own operation result or `null` after
 invalidation. A background profile patch must supply the exact source snapshot;

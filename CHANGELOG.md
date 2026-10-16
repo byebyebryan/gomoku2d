@@ -25,6 +25,8 @@ release or deployment has been made.
 - Bound cloud operations and delayed profile actions to their originating
   operation, account, profile, and session. Reject stale cloud snapshots
   transactionally, retain pending work, and protect newer local-tab writes.
+- Preserved the actual cloud write timestamp after no-op syncs, keeping an
+  eligible upload from being delayed by a false five-minute client cooldown.
 - Kept local play, settings, replay recording, and history caches usable in
   memory when storage fails. Preserve corrupt or unsupported documents and
   show a notice when local saves are unavailable.
@@ -79,6 +81,8 @@ release or deployment has been made.
 - Added full Chromium, Firefox, and WebKit journeys and accessibility audits to
   CI on a supported Ubuntu image, with retained failure evidence. Fixed a
   scheduled-scroll race in a report test.
+- Added isolated Auth/Firestore application acceptance across two browser
+  clients and all three engines, with repeated conflict/account/reset races.
 - Added opt-in production browser profiling with measured workloads, artifact
   provenance, diagnostic expectations, and explicit device-acceptance limits.
 - Required clean, pushed release commits and correct prerelease labeling;
