@@ -83,6 +83,17 @@ function cloudProfile(overrides: Partial<CloudProfile> = {}): CloudProfile {
 }
 
 describe("createCloudHistoryStore", () => {
+  it.each([null, { cachedMatches: null, pendingMatches: null }, {
+    cachedMatches: [cloudMatch, { id: "invalid" }], pendingMatches: { [match.id]: match, broken: {} }, sync: null,
+  }])("recovers malformed retained cache fields while retaining valid pending games (%#)", (cache) => {
+    const storage = createMemoryStorage();
+    storage.setItem("gomoku2d.cloud-history.v5", JSON.stringify({ state: { users: { [user.uid]: cache } }, version: 0 }));
+    const store = createCloudHistoryStore({ storage });
+    expect(() => store.getState().loadFromProfile(user, cloudProfile({ matchHistory: emptyCloudMatchHistory() }))).not.toThrow();
+    const retained = store.getState().users[user.uid]!;
+    expect(retained.cachedMatches.every((entry) => entry.schema_version === 2)).toBe(true);
+    if (cache?.pendingMatches?.[match.id]) expect(retained.pendingMatches[match.id]).toEqual(match);
+  });
   it.each(["read", "write"])("handles rejected asynchronous cache %s without rejecting cloud actions", async (failure) => {
     const store = createCloudHistoryStore({
       storage: {

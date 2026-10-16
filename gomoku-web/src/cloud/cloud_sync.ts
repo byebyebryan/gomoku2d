@@ -91,6 +91,7 @@ export async function flushCloudProfileSync(
 
   const sourceProfile = cloudState.profile;
   const promotionResult = await cloudPromotionStore.getState().promote({
+    sourceProfile,
     cloudDisplayName: cloudState.profile.displayName,
     cloudMatchHistory: cloudState.profile.matchHistory,
     cloudSettings: cloudState.profile.settings,

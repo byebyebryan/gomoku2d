@@ -880,6 +880,7 @@ describe("ProfileRoute cloud state", () => {
 
     await waitFor(() => {
       expect(promote).toHaveBeenCalledWith({
+        sourceProfile: cloudProfile,
         cloudDisplayName: cloudProfile.displayName,
         cloudMatchHistory: cloudProfile.matchHistory,
         cloudSettings: cloudProfile.settings,

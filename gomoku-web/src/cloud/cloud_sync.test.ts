@@ -112,6 +112,7 @@ describe("flushCloudProfileSync", () => {
     const result = await flushCloudProfileSync(user);
 
     expect(promote).toHaveBeenCalledWith({
+      sourceProfile: cloudProfile,
       cloudDisplayName: "Bryan",
       cloudMatchHistory: emptyCloudMatchHistory(),
       cloudSettings: defaultSettings,

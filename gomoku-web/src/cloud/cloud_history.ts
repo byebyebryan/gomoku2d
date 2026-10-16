@@ -1,7 +1,6 @@
 import {
   doc,
   getDoc,
-  setDoc,
   type Firestore,
 } from "firebase/firestore";
 
@@ -21,6 +20,7 @@ import {
   type CloudProfileDocument,
 } from "./cloud_profile";
 import { getFirebaseClients } from "./firebase";
+import { writeCloudSnapshot } from "./cloud_snapshot_write";
 
 export const CLOUD_HISTORY_LIMIT = CLOUD_REPLAY_MATCHES_LIMIT;
 
@@ -39,7 +39,7 @@ export interface CloudSaveHistoryResult {
   profile: CloudProfile;
 }
 
-function createFirestoreCloudHistoryBackend(user: CloudAuthUser, firestore: Firestore): CloudHistoryBackend {
+function createFirestoreCloudHistoryBackend(user: CloudAuthUser, firestore: Firestore, expected?: CloudProfile): CloudHistoryBackend {
   const profileRef = doc(firestore, "profiles", user.uid);
 
   return {
@@ -48,12 +48,12 @@ function createFirestoreCloudHistoryBackend(user: CloudAuthUser, firestore: Fire
       return snapshot.exists() ? (snapshot.data() as CloudProfileDocument) : null;
     },
     updateProfile: async (patch) => {
-      await setDoc(profileRef, patch, { merge: true });
+      await writeCloudSnapshot(firestore, user, expected, patch);
     },
   };
 }
 
-function resolveCloudHistoryBackend(user: CloudAuthUser, options: CloudHistoryOptions): CloudHistoryBackend {
+function resolveCloudHistoryBackend(user: CloudAuthUser, options: CloudHistoryOptions, expected?: CloudProfile): CloudHistoryBackend {
   if (options.backend) {
     return options.backend;
   }
@@ -63,7 +63,7 @@ function resolveCloudHistoryBackend(user: CloudAuthUser, options: CloudHistoryOp
     throw new Error("Cloud history is not configured for this build.");
   }
 
-  return createFirestoreCloudHistoryBackend(user, firestore);
+  return createFirestoreCloudHistoryBackend(user, firestore, expected);
 }
 
 export function cloudHistoryFromProfile(
@@ -93,7 +93,7 @@ export async function saveCloudHistorySnapshot(
   },
   options: CloudHistoryOptions = {},
 ): Promise<CloudSaveHistoryResult> {
-  const backend = resolveCloudHistoryBackend(user, options);
+  const backend = resolveCloudHistoryBackend(user, options, input.cloudProfile);
   const replayMatches = mergeCloudReplayMatches(user, input.matches, input.cloudProfile.resetAt);
   const summaryState = mergeCloudMatchSummaryState({
     archivedStats: input.cloudProfile.matchHistory.archivedStats,

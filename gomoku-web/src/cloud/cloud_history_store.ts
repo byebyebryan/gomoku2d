@@ -1,7 +1,7 @@
 import { createJSONStorage, persist, type StateStorage } from "zustand/middleware";
 import { createStore, type StoreApi } from "zustand/vanilla";
 
-import { savedMatchIsAfterReset, type SavedMatchV2 } from "../match/saved_match";
+import { isSavedMatchV2, savedMatchIsAfterReset, type SavedMatchV2 } from "../match/saved_match";
 import { localProfileStore } from "../profile/local_profile_store";
 import { bestEffortStorage } from "../profile/best_effort_storage";
 import type { ProfileSettings } from "../profile/profile_settings";
@@ -80,6 +80,36 @@ function defaultUserCache(): CloudHistoryUserCache {
     pendingMatches: {},
     sync: {},
   };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function retainedUsers(value: unknown): Record<string, CloudHistoryUserCache> {
+  if (!isRecord(value)) return {};
+  return Object.fromEntries(Object.entries(value).filter(([, cache]) => isRecord(cache)).map(([uid, value]) => {
+    const cache = value as Record<string, unknown>;
+    const pendingMatches = Object.fromEntries(Object.entries(isRecord(cache.pendingMatches) ? cache.pendingMatches : {})
+      .filter(([id, match]) => isSavedMatchV2(match) && match.id === id)) as Record<string, SavedMatchV2>;
+    const sync = Object.fromEntries(Object.keys(pendingMatches).map((id) => {
+      const meta = isRecord(cache.sync) ? cache.sync[id] : null;
+      return [id, {
+        errorMessage: isRecord(meta) && typeof meta.errorMessage === "string" ? meta.errorMessage : null,
+        matchId: id,
+        // A browser reload interrupts in-flight work; leave it queued to retry.
+        status: "pending" as const,
+        updatedAt: isRecord(meta) && typeof meta.updatedAt === "string" ? meta.updatedAt : new Date().toISOString(),
+      }];
+    }));
+    return [uid, {
+      cachedMatches: sortMatches(Array.isArray(cache.cachedMatches) ? cache.cachedMatches.filter(isSavedMatchV2) : [])
+        .slice(0, CLOUD_REPLAY_MATCHES_LIMIT),
+      loadedAt: typeof cache.loadedAt === "string" ? cache.loadedAt : null,
+      pendingMatches,
+      sync,
+    }];
+  }));
 }
 
 function sortMatches(matches: SavedMatchV2[]): SavedMatchV2[] {
@@ -611,6 +641,10 @@ export function createCloudHistoryStore(
       {
         name: STORAGE_KEY,
         partialize: (state) => ({ users: state.users }),
+        merge: (persisted, current) => ({
+          ...current,
+          users: retainedUsers(isRecord(persisted) ? persisted.users : null),
+        }),
         storage,
       },
     ),

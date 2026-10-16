@@ -13,7 +13,8 @@ import type {
 } from "@firebase/firestore-types";
 import firebase from "firebase/compat/app";
 import "firebase/compat/firestore";
-import { afterAll, beforeAll, beforeEach, describe, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import type { Firestore } from "firebase/firestore";
 
 const projectId = "demo-gomoku2d-rules-test";
 const matchHistoryLimit = 128;
@@ -173,6 +174,59 @@ afterAll(async () => {
 });
 
 describe("Firestore profile rules", () => {
+  it.each(["history", "promotion"])("guards production %s writes against another device's settings/reset", async (path) => {
+    // Runtime imports keep this NodeNext tool file independent of the app's
+    // bundler resolution; the app sources are checked by its own tsconfig.
+    const profileModule = "../src/cloud/cloud_profile";
+    const historyModule = "../src/cloud/cloud_history";
+    const promotionModule = "../src/cloud/cloud_promotion";
+    const { cloudProfileFromDocument } = await import(profileModule);
+    const { saveCloudHistorySnapshot } = await import(historyModule);
+    const { promoteLocalProfileToCloud } = await import(promotionModule);
+    const user = { uid: "uid-1", avatarUrl: null, displayName: "Bryan", email: null, providerIds: ["google.com"] };
+    for (const change of ["settings", "reset"]) {
+      await seedProfile(user.uid);
+      const original = (await ownerDb().doc(`profiles/${user.uid}`).get()).data();
+      const stale = cloudProfileFromDocument(user, undefined, original);
+      await seedProfile(user.uid, change === "settings"
+        ? { settings: defaultSettings("renju") }
+        : { reset_at: timestamp("2020-01-02T00:00:00.000Z") });
+      const options = { firestore: ownerDb() as unknown as Firestore };
+      const operation = path === "history" ? saveCloudHistorySnapshot(user, {
+        cloudProfile: stale, displayName: stale.displayName, matches: [], settings: stale.settings,
+    }, options) : promoteLocalProfileToCloud({
+      sourceProfile: stale, cloudDisplayName: stale.displayName, cloudMatchHistory: stale.matchHistory,
+      cloudSettings: stale.settings, localMatchHistory: stale.matchHistory,
+      localProfile: { id: "local-test", displayName: "New name" }, settings: stale.settings, user,
+    }, options);
+    await expect(operation).rejects.toThrow(/changed.*device/i);
+    const retained = (await ownerDb().doc(`profiles/${user.uid}`).get()).data();
+    if (change === "settings") expect(retained?.settings.game_config.ruleset).toBe("renju");
+    else expect(retained?.reset_at.toDate().toISOString()).toBe("2020-01-02T00:00:00.000Z");
+    }
+  });
+
+  it.each(["history", "promotion"])("allows a current production %s snapshot through its transaction and rules", async (path) => {
+    const profileModule = "../src/cloud/cloud_profile";
+    const historyModule = "../src/cloud/cloud_history";
+    const promotionModule = "../src/cloud/cloud_promotion";
+    const { cloudProfileFromDocument } = await import(profileModule);
+    const { saveCloudHistorySnapshot } = await import(historyModule);
+    const { promoteLocalProfileToCloud } = await import(promotionModule);
+    const user = { uid: "uid-1", avatarUrl: null, displayName: "Bryan", email: null, providerIds: ["google.com"] };
+    await seedProfile(user.uid);
+    const current = cloudProfileFromDocument(user, undefined, (await ownerDb().doc(`profiles/${user.uid}`).get()).data());
+    const options = { firestore: ownerDb() as unknown as Firestore };
+    if (path === "history") await saveCloudHistorySnapshot(user, {
+      cloudProfile: current, displayName: "New name", matches: [], settings: current.settings,
+    }, options);
+    else await promoteLocalProfileToCloud({
+      sourceProfile: current, cloudDisplayName: current.displayName, cloudMatchHistory: current.matchHistory,
+      cloudSettings: current.settings, localMatchHistory: current.matchHistory,
+      localProfile: { id: "local-test", displayName: "New name" }, settings: current.settings, user,
+    }, options);
+    expect((await ownerDb().doc(`profiles/${user.uid}`).get()).data()?.display_name).toBe("New name");
+  });
   it("allows the owner to create and read their profile only", async () => {
     await assertSucceeds(ownerDb().doc("profiles/uid-1").set(profileCreateDocument("uid-1")));
     await assertSucceeds(ownerDb().doc("profiles/uid-1").get());

@@ -1,4 +1,4 @@
-import { doc, setDoc, type Firestore } from "firebase/firestore";
+import type { Firestore } from "firebase/firestore";
 
 import { savedMatchIsAfterReset } from "../match/saved_match";
 import {
@@ -22,10 +22,13 @@ import {
   mergeCloudReplayMatches,
   type CloudMatchHistory,
   type CloudProfileSettings,
+  type CloudProfile,
 } from "./cloud_profile";
 import { getFirebaseClients } from "./firebase";
+import { writeCloudSnapshot } from "./cloud_snapshot_write";
 
 export interface LocalProfilePromotionInput {
+  sourceProfile?: CloudProfile;
   /** Current display name on the cloud profile; undefined means not yet loaded. */
   cloudDisplayName?: string | null;
   cloudMatchHistory?: CloudMatchHistory | null;
@@ -81,12 +84,10 @@ export function cloudProfilePromotionUpdate(input: LocalProfilePromotionInput): 
   return Object.keys(update).length > 0 ? update : null;
 }
 
-function createFirestorePromotionBackend(user: CloudAuthUser, firestore: Firestore): CloudPromotionBackend {
-  const profileRef = doc(firestore, "profiles", user.uid);
-
+function createFirestorePromotionBackend(user: CloudAuthUser, firestore: Firestore, source?: CloudProfile): CloudPromotionBackend {
   return {
     updateProfile: async (patch) => {
-      await setDoc(profileRef, patch, { merge: true });
+      await writeCloudSnapshot(firestore, user, source, patch);
     },
   };
 }
@@ -94,6 +95,7 @@ function createFirestorePromotionBackend(user: CloudAuthUser, firestore: Firesto
 function resolvePromotionBackend(
   user: CloudAuthUser,
   options: PromoteLocalProfileToCloudOptions,
+  source?: CloudProfile,
 ): CloudPromotionBackend {
   if (options.backend) {
     return options.backend;
@@ -104,7 +106,7 @@ function resolvePromotionBackend(
     throw new Error("Cloud promotion is not configured for this build.");
   }
 
-  return createFirestorePromotionBackend(user, firestore);
+  return createFirestorePromotionBackend(user, firestore, source);
 }
 
 export function promotionInputKey(input: LocalProfilePromotionInput): string {
@@ -128,7 +130,7 @@ export async function promoteLocalProfileToCloud(
   input: LocalProfilePromotionInput,
   options: PromoteLocalProfileToCloudOptions = {},
 ): Promise<LocalProfilePromotionResult> {
-  const backend = resolvePromotionBackend(input.user, options);
+  const backend = resolvePromotionBackend(input.user, options, input.sourceProfile);
   const localReplayMatches = input.localMatchHistory.replayMatches;
   const eligibleHistory = localReplayMatches.filter((match) => savedMatchIsAfterReset(match, input.resetAt));
   const cloudMatchHistory = input.cloudMatchHistory ?? emptyCloudMatchHistory();
