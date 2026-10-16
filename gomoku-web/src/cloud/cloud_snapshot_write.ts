@@ -13,6 +13,10 @@ function snapshotState(profile: CloudProfile): string {
     resetAt: profile.resetAt,
     settings: profile.settings,
     matchHistory: profile.matchHistory,
+  }, (_key, value: unknown) => {
+    if (value === null || typeof value !== "object" || Array.isArray(value)) return value;
+    const record = value as Record<string, unknown>;
+    return Object.fromEntries(Object.keys(record).sort().map((key) => [key, record[key]]));
   });
 }
 

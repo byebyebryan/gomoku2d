@@ -215,7 +215,13 @@ describe("Firestore profile rules", () => {
     const { promoteLocalProfileToCloud } = await import(promotionModule);
     const user = { uid: "uid-1", avatarUrl: null, displayName: "Bryan", email: null, providerIds: ["google.com"] };
     await seedProfile(user.uid);
-    const current = cloudProfileFromDocument(user, undefined, (await ownerDb().doc(`profiles/${user.uid}`).get()).data());
+    const loaded = cloudProfileFromDocument(user, undefined, (await ownerDb().doc(`profiles/${user.uid}`).get()).data());
+    // Firestore maps and locally computed snapshots may enumerate keys in a
+    // different order while representing exactly the same content.
+    const current = JSON.parse(JSON.stringify(loaded, (_key, value) => (
+      value !== null && typeof value === "object" && !Array.isArray(value)
+        ? Object.fromEntries(Object.entries(value).reverse()) : value
+    )));
     const options = { firestore: ownerDb() as unknown as Firestore };
     if (path === "history") await saveCloudHistorySnapshot(user, {
       cloudProfile: current, displayName: "New name", matches: [], settings: current.settings,

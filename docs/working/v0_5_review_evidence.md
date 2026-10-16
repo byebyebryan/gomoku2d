@@ -413,7 +413,11 @@ replacement. A conflict or deleted document prevents the write and surfaces a
 reload/retry error; local history/pending records remain available. A concurrent
 change during the transaction causes the SDK to retry the comparison.
 
-The comparison excludes approximate client write timestamps and provider
+A second-review perturbation reversed map key enumeration without changing
+content. Both positive production write cases then failed, exposing a false
+conflict in the first comparison. Snapshot serialization now sorts map keys
+recursively while preserving array order; the same positive cases retain this
+check. The comparison excludes approximate client write timestamps and provider
 metadata; it includes all user settings/history/name fields a normal snapshot
 can replace and the reset barrier. This is optimistic conflict rejection,
 not live collaborative merging. Current clients still use explicit reads and
@@ -510,7 +514,7 @@ subscriptions and committed v0.6 to online play. They now describe explicit
 checkpoint reads/transactional writes and the later product checkpoint. Backend
 cost estimates include transaction and preflight reads; official Firestore,
 Firebase Auth and request-based Cloud Run quotas were rechecked on 2026-10-15.
-This is a planning estimate, not billing/dashboard acceptance. All 129 active
+This is a planning estimate, not billing/dashboard acceptance. All 131 active
 relative documentation links resolved. July release media and June report
 measurements stay historical; regenerate release media after version/UI
 acceptance, and run new strength comparisons as a deliberate future baseline.
@@ -520,6 +524,9 @@ acceptance, and run new strength comparisons as a deliberate future baseline.
 
 - Native fmt/Clippy and 348 workspace tests passed (80.6 s for tests); RustSec
   audit passed against the current advisory database.
+- The final current CLI run passed 12/12 mandatory tactical gates (21/36
+  diagnostic hits, the same 15 classified misses), 9/9 lethal scenarios and
+  30/30 Renju fixtures. Tactical run: 107.1 s.
 - Rebuilt Wasm, web/tool typecheck, all 363 web tests in 38 files and production
   build passed. Production npm audit reports zero vulnerabilities.
 - All 27 Firestore emulator tests passed, including actual SDK transactions
