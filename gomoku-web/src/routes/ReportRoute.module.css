@@ -670,7 +670,7 @@
 
 .termList dt,
 .provenance dt {
-  color: var(--info-ink);
+  color: var(--text);
   font-family: var(--font-display);
   letter-spacing: 0.08em;
   text-transform: uppercase;

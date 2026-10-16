@@ -1,19 +1,56 @@
 import { expect, test } from "@playwright/test";
-
 import { seedLocalSavedMatch } from "./helpers/local_history.js";
+
+const winningMoves = [
+  { row: 7, col: 7 }, { row: 0, col: 0 },
+  { row: 7, col: 8 }, { row: 1, col: 0 },
+  { row: 7, col: 9 }, { row: 2, col: 0 },
+  { row: 7, col: 10 }, { row: 3, col: 0 },
+  { row: 7, col: 11 },
+];
+
+test("reduced motion keeps replay cues visible and still, including a live preference change", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await seedLocalSavedMatch(page, {
+    id: "motion-source", displayName: "Guest", moves: winningMoves,
+    preferredVariant: "freestyle", variant: "freestyle", status: "black_won", savedAt: "2026-10-15T00:00:00Z",
+  });
+  await page.goto("/replay/motion-source");
+  await expect(page.getByTestId("replay-analysis-status")).toBeVisible();
+  await expect(page.getByTestId("replay-analysis-status")).not.toHaveText("Tracing the finish");
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(100);
+  const canvas = page.locator("canvas");
+  const still = await canvas.screenshot();
+  for (let i = 0; i < 4; i += 1) {
+    // Sample across a full one-second cue cycle; the canvas should stay still.
+    await page.waitForTimeout(250);
+    expect((await canvas.screenshot()).equals(still)).toBe(true);
+  }
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await expect.poll(async () => (await canvas.screenshot()).equals(still)).toBe(false);
+});
+
+test("a failed page download offers recovery without losing navigation", async ({ page }) => {
+  await page.route("**/assets/LocalMatchRoute-*.js", (route) => route.abort());
+  await page.goto("/");
+  await page.getByRole("link", { name: "Play", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Page unavailable" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Reload" })).toBeVisible();
+  await page.getByRole("link", { name: "Home", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Gomoku2D", exact: true })).toBeVisible();
+  await page.unroute("**/assets/LocalMatchRoute-*.js");
+  await page.getByRole("link", { name: "Play", exact: true }).click();
+  await expect(page.getByRole("grid", { name: "Gomoku board" })).toBeVisible();
+});
 
 test("a keyboard player can branch, finish, analyze, and find the saved game", async ({ page }, testInfo) => {
   await page.goto("/");
   await seedLocalSavedMatch(page, {
     displayName: "Guest",
     id: "keyboard-source",
-    moves: [
-      { row: 7, col: 7 }, { row: 0, col: 0 },
-      { row: 7, col: 8 }, { row: 1, col: 0 },
-      { row: 7, col: 9 }, { row: 2, col: 0 },
-      { row: 7, col: 10 }, { row: 3, col: 0 },
-      { row: 7, col: 11 },
-    ],
+    moves: winningMoves,
     preferredVariant: "freestyle",
     variant: "freestyle",
     savedAt: "2026-10-15T00:00:00.000Z",

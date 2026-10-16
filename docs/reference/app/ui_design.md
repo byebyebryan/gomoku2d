@@ -151,22 +151,18 @@ default assumption should remain: stable shell, swappable board theme.
 The shell should use a limited palette with neutral dark surfaces and a few
 high-contrast semantic accents.
 
-Suggested current base:
+Current source tokens in `src/app/global.css`:
 
-- `--bg: #232323`
-- `--surface: #323232`
-- `--surface-muted: #2a2a2a`
-- `--surface-strong: #575756`
-- `--text: #f3efe5`
-- `--text-muted: #a6a6a0`
-- `--accent: #f9cb58`
-- `--accent-deep: #a7873e`
-- `--success: #2f9247`
-- `--secondary: #658a90`
-- `--danger: #995f3b`
+- dark shell: `--bg: #1e1e1e`, `--surface: #2a2a2a`, `--surface-muted: #232323`
+- text: `--text: #f5f5f5`, `--text-muted: #a6a6a0`
+- accents: gold `#fccb57`, green `#30a860`, teal `#5f8b82`, red `#e04747`
+- colored-control ink: `#121212`; neutral dark surfaces retain light text
 
-These are role anchors, not immutable law. The bigger rule is that the shell
-should stay neutral and the accents should stay iconic.
+The four colored fills use dark labels for at least 4.5:1 text contrast; do not
+reuse their ink token for text on a dark panel. Keep glyph/state cues alongside
+color. The board honors reduced-motion preferences with still, visible cues and
+responds to preference changes; CSS movement is reduced too. Actual assistive-
+technology and player acceptance remain separate from token calculations.
 
 ### Color-role mapping
 

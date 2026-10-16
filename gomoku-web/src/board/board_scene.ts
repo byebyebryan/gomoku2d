@@ -365,9 +365,16 @@ export class BoardScene extends Phaser.Scene {
   private forbiddenCycles: SequenceAnimationCycle[] = [];
   private overlayLayer: Phaser.GameObjects.Container | null = null;
   private winSprites: Phaser.GameObjects.Sprite[] = [];
+  private reducedMotion = false;
 
   constructor() {
     super({ key: "BoardScene" });
+  }
+
+  setReducedMotion(reduced: boolean): void {
+    if (this.reducedMotion === reduced) return;
+    this.reducedMotion = reduced;
+    if (this.sys?.isActive()) this.renderBoard();
   }
 
   preload(): void {
@@ -548,7 +555,7 @@ export class BoardScene extends Phaser.Scene {
         const previousCell = previousState?.cells[row]?.[col] ?? null;
         const isNewStone = previousCell === null;
 
-        if (shouldAnimatePlacedStone(isNewStone, animateNewStones, this.boardState.status)) {
+        if (shouldAnimatePlacedStone(isNewStone, animateNewStones && !this.reducedMotion, this.boardState.status)) {
           stone.play(TRANSFORM_ANIMS.FORM.key);
           stone.once(animationCompleteEvent(TRANSFORM_ANIMS.FORM.key), () => {
             if (
@@ -559,7 +566,7 @@ export class BoardScene extends Phaser.Scene {
               return;
             }
 
-            if (this.boardState.status === "playing") {
+            if (this.boardState.status === "playing" && !this.reducedMotion) {
               this.stoneCycle?.start(stone);
             }
           });
@@ -579,7 +586,7 @@ export class BoardScene extends Phaser.Scene {
         this.replayStoneCycle?.stop();
         this.replayFocusedStoneKey = null;
       }
-      if (stone?.active && stone.scene) {
+      if (stone?.active && stone.scene && !this.reducedMotion) {
         stone.play(STONE_ANIMS.DESTROY.key);
         stone.once(animationCompleteEvent(STONE_ANIMS.DESTROY.key), () => {
           stone.destroy();
@@ -607,6 +614,10 @@ export class BoardScene extends Phaser.Scene {
   }
 
   private syncReplayLastMoveFocus(): void {
+    if (this.reducedMotion) {
+      this.clearReplayLastMoveFocus();
+      return;
+    }
     const focusKey = replayLastMoveFocusKey(this.boardState);
     if (!focusKey) {
       this.clearReplayLastMoveFocus();
@@ -709,7 +720,12 @@ export class BoardScene extends Phaser.Scene {
     sprite.setScale(this.currentCellSize / FRAME_SIZE);
     sprite.setDepth(depth);
     sprite.setTint(tint);
-    sprite.play({ key: animKey, repeat: -1 });
+    if (this.reducedMotion) {
+      const frames = this.anims.get(animKey)?.frames ?? [];
+      sprite.setFrame(texture === SPRITE.STONE ? STONE_ANIMS.STATIC.frame : frames[Math.floor(frames.length / 2)]?.textureFrame ?? 0);
+    } else {
+      sprite.play({ key: animKey, repeat: -1 });
+    }
     const layer = texture === SPRITE.HOVER || texture === SPRITE.STONE
       ? this.hoverLayer
       : this.overlayLayer;
@@ -723,6 +739,11 @@ export class BoardScene extends Phaser.Scene {
     sprite.setDepth(BOARD_RENDER_DEPTHS.OVERLAY_BLOCKED);
     sprite.setTint(COLOR.FORBIDDEN);
     this.overlayLayer?.add(sprite);
+
+    if (this.reducedMotion) {
+      sprite.setFrame(CAUTION_ANIMS.FORBIDDEN_WARNING.start + 3);
+      return sprite;
+    }
 
     const cycle = new SequenceAnimationCycle(this, FORBIDDEN_STEPS);
     cycle.start(sprite);
@@ -953,7 +974,7 @@ export class BoardScene extends Phaser.Scene {
       this.reportTouchCandidate(candidate);
     }
 
-    if (!animateCycle) {
+    if (!animateCycle || this.reducedMotion) {
       this.stopPointerCycle();
       resetSpriteToFrame(this.pointer, POINTER_STATIC_FRAME);
       return;

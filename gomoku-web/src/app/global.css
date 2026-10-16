@@ -33,18 +33,18 @@
   --accent: #fccb57;
   --accent-strong: #fccb57;
   --accent-border: #a7873e;
-  --accent-ink: #f5f5f5;
+  --accent-ink: #121212;
   --accent-soft: rgba(252, 203, 87, 0.18);
   --info: #5f8b82;
   --info-border: #4a6f68;
-  --info-ink: #f5f5f5;
+  --info-ink: #121212;
   --info-soft: rgba(95, 139, 130, 0.18);
   --success: #30a860;
   --success-border: #247f47;
-  --success-ink: #f5f5f5;
+  --success-ink: #121212;
   --danger: #e04747;
   --danger-border: #a83535;
-  --danger-ink: #f5f5f5;
+  --danger-ink: #121212;
   --danger-soft: rgba(224, 71, 71, 0.08);
   --danger-soft-border: rgba(224, 71, 71, 0.46);
   --danger-soft-text: #f0b4a8;
@@ -356,6 +356,15 @@ select:focus-visible {
 .uiSegment:disabled {
   cursor: default;
   opacity: 0.42;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @media (min-width: 721px) {

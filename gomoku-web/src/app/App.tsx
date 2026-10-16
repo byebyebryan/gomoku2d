@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import { Component, Suspense, lazy, type ReactNode } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import { CloudSessionController } from "../cloud/CloudSessionController";
@@ -35,96 +35,120 @@ const PolicyRoute = lazy(async () => ({
   default: (await import("../routes/PolicyRoute")).PolicyRoute,
 }));
 
+class PageRecovery extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  render() {
+    if (!this.state.failed) return this.props.children;
+    return (
+      <main className={styles.recovery}>
+        <h1>Page unavailable</h1>
+        <p>Reload to try again, or return Home.</p>
+        <div>
+          <button className="uiAction uiActionPrimary" onClick={() => window.location.reload()} type="button">Reload</button>
+          <a className="uiAction uiActionNeutral" href={import.meta.env.BASE_URL}>Home</a>
+        </div>
+      </main>
+    );
+  }
+}
+
 export function App() {
   return (
     <div className={styles.app}>
       <CloudSessionController />
       <LocalPersistenceNotice />
       <div className={styles.content}>
-        <Routes>
-          <Route path="/" element={<HomeRoute />} />
-          <Route
-            path="/match/local"
-            element={
-              <Suspense fallback={<main className={styles.loading}>Loading match…</main>}>
-                <LocalMatchRoute />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <Suspense fallback={<main className={styles.loading}>Loading settings…</main>}>
-                <SettingsRoute />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <Suspense fallback={<main className={styles.loading}>Loading profile…</main>}>
-                <ProfileRoute />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/replay/:matchId"
-            element={
-              <Suspense fallback={<main className={styles.loading}>Loading replay…</main>}>
-                <ReplayRoute />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/lab/*"
-            element={
-              <Suspense fallback={<main className={styles.loading}>Loading report…</main>}>
-                <LabReportRoute />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/visuals/*"
-            element={
-              <Suspense fallback={<main className={styles.loading}>Loading assets…</main>}>
-                <AssetPreviewRoute />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/rules/*"
-            element={
-              <Suspense fallback={<main className={styles.loading}>Loading page…</main>}>
-                <RulesRoute />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/guide/*"
-            element={
-              <Suspense fallback={<main className={styles.loading}>Loading page…</main>}>
-                <GuideRoute />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/privacy/*"
-            element={
-              <Suspense fallback={<main className={styles.loading}>Loading page…</main>}>
-                <PolicyRoute kind="privacy" />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/terms/*"
-            element={
-              <Suspense fallback={<main className={styles.loading}>Loading page…</main>}>
-                <PolicyRoute kind="terms" />
-              </Suspense>
-            }
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <PageRecovery>
+          <Routes>
+            <Route path="/" element={<HomeRoute />} />
+            <Route
+              path="/match/local"
+              element={
+                <Suspense fallback={<main className={styles.loading}>Loading match…</main>}>
+                  <LocalMatchRoute />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <Suspense fallback={<main className={styles.loading}>Loading settings…</main>}>
+                  <SettingsRoute />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <Suspense fallback={<main className={styles.loading}>Loading profile…</main>}>
+                  <ProfileRoute />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/replay/:matchId"
+              element={
+                <Suspense fallback={<main className={styles.loading}>Loading replay…</main>}>
+                  <ReplayRoute />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/lab/*"
+              element={
+                <Suspense fallback={<main className={styles.loading}>Loading report…</main>}>
+                  <LabReportRoute />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/visuals/*"
+              element={
+                <Suspense fallback={<main className={styles.loading}>Loading assets…</main>}>
+                  <AssetPreviewRoute />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/rules/*"
+              element={
+                <Suspense fallback={<main className={styles.loading}>Loading page…</main>}>
+                  <RulesRoute />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/guide/*"
+              element={
+                <Suspense fallback={<main className={styles.loading}>Loading page…</main>}>
+                  <GuideRoute />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/privacy/*"
+              element={
+                <Suspense fallback={<main className={styles.loading}>Loading page…</main>}>
+                  <PolicyRoute kind="privacy" />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/terms/*"
+              element={
+                <Suspense fallback={<main className={styles.loading}>Loading page…</main>}>
+                  <PolicyRoute kind="terms" />
+                </Suspense>
+              }
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </PageRecovery>
       </div>
     </div>
   );

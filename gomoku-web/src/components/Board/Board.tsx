@@ -55,6 +55,11 @@ export function Board(props: BoardProps) {
     const host = hostRef.current;
     const scene = new BoardScene();
     sceneRef.current = scene;
+    const motionQuery = typeof window.matchMedia === "function"
+      ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+    const syncMotion = () => scene.setReducedMotion(motionQuery?.matches ?? false);
+    syncMotion();
+    motionQuery?.addEventListener("change", syncMotion);
 
     const syncHostBox = (): { width: number; height: number } => {
       const nextSize = fitBoardViewport(frame.clientWidth, frame.clientHeight);
@@ -138,6 +143,7 @@ export function Board(props: BoardProps) {
       window.cancelAnimationFrame(frameSyncId);
       frameResizeObserver.disconnect();
       hostResizeObserver.disconnect();
+      motionQuery?.removeEventListener("change", syncMotion);
       game.destroy(true);
       gameRef.current = null;
       lastHostSizeRef.current = null;
