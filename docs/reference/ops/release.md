@@ -19,19 +19,20 @@ GitHub Pages serves the custom domain root. Production builds use
 
 ## Local Preview
 
-Reserve port `8001` and tmux session `gomoku-preview`:
+Use a foreground preview on port `8001` (stop it with Ctrl-C):
 
 ```sh
-/home/bryan/.cargo/bin/wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler
+wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler
 cd gomoku-web
+npm ci
 npm run build
-tmux kill-session -t gomoku2d-preview 2>/dev/null || true
-tmux kill-session -t gomoku-preview 2>/dev/null || true
-tmux new-session -d -s gomoku-preview -c /home/bryan/code/gomoku2d/gomoku-web \
-  'npm run preview -- --host 0.0.0.0 --port 8001'
+npm run preview -- --host 127.0.0.1 --port 8001 --strictPort
 ```
 
-Open `http://localhost:8001/`.
+Open `http://localhost:8001/`. Verify the listener before a test that sets
+`PLAYWRIGHT_BASE_URL`; that option delegates server/build ownership to you.
+For an automated run with owned startup/cleanup, leave the variable unset and
+run `npm run playtest`. Do not terminate an unrelated preview to claim its port.
 
 ## Release Prep
 
@@ -51,7 +52,10 @@ Open `http://localhost:8001/`.
 6. When authentication, cloud sync, profile persistence, or Firestore behavior
    changed, repeat one live Google sign-in and cloud-sync round trip. Automated
    rules and no-config tests do not replace this account-level check.
-7. Review `git diff` for accidental generated or scratch output.
+7. Review `git diff` for accidental generated or scratch output. Stage only the
+   reviewed paths, commit and push the release preparation, and verify CI on
+   that exact commit before tagging. The release script refuses dirty trees
+   and never stages or commits files for you.
 
 ## Report Artifact Gate
 
@@ -67,11 +71,11 @@ Before a release that includes reports:
 
 ```sh
 git push origin main
-gh run list --branch main --limit 5
+gh run list --branch main --limit 5 --json databaseId,headSha,status,conclusion
 gh run watch <run-id> --exit-status
 ```
 
-If a run fails:
+Confirm the successful run has `headSha == git rev-parse HEAD`. If a run fails:
 
 ```sh
 gh run view <run-id> --log-failed
@@ -85,6 +89,23 @@ scripts/release.sh --check "$VERSION"
 scripts/release.sh "$VERSION"
 ```
 
-The release script validates version/changelog/tag state. Pushing the release
+The release script validates clean, pushed main and version/changelog/tag state. Pushing the release
 tag dispatches GitHub Release, Pages deploy, and Firestore rules deploy
 workflows. After deployment, smoke the public URL manually.
+
+## Recovery
+
+A code push is not deployment. Record the Pages deployment run/tag/SHA and the
+Firestore workflow's previous/current ruleset IDs at release time. After a
+release, verify Home, direct public routes, a fresh local finish/replay/branch,
+and the account-level cloud round trip against the public origin.
+
+For a web regression, dispatch the Pages workflow at the previously accepted
+tag/ref and verify its deployment/SHA and public behavior. Do not move release
+tags. For a rules regression, restore the recorded previous Firestore ruleset
+release pointer through the authenticated operational path and read it back;
+redeploying main is not a rollback. Coordinate web/rules compatibility before
+choosing either. No rollback or deployment is performed by the reconciliation
+pass. Private replay URLs use Pages' `404.html` SPA fallback and can return HTTP
+404 on direct entry even when the client route works; public static routes have
+copied `index.html` entries.

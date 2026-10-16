@@ -89,4 +89,4 @@ jobs:
           name: ${{ steps.meta.outputs.title }}
           body_path: release_body.md
           draft: false
-          prerelease: false
+          prerelease: ${{ contains(github.ref_name, '-') }}

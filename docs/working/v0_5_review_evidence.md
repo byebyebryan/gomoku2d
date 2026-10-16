@@ -378,3 +378,166 @@ Three lifecycle cases failed before these repairs. This binding stays in the
 lazy session module so cloud setup restoration does not load Wasm on Home.
 Disposition: **fix/refactor**, retaining local-first identity and frozen current-
 game settings. All 358 web tests and all 33 Chromium journeys passed together.
+
+
+## Remaining Runtime Boundary Probes
+
+A blocked lazy page download reproduced a blank app with no navigation. A route
+error boundary now gives Reload and a full Home navigation; its browser scenario
+failed before and passed after recovery was added. This handles a route/render
+failure after the shell boots; it cannot recover a missing initial shell script
+without the browser's own reload/network recovery.
+
+Malformed retained cloud-history fields reproduced two crashes during profile
+refresh. Hydration now validates cached/pending games and rebuilds pending sync
+metadata, retaining valid pending records while ignoring malformed cache fields.
+A null user entry already fell back safely and remains in the scenario table.
+
+The analyzer's JSON options silently truncated values beyond wasm32 usize,
+changing depth/scan semantics; two actual-Wasm cases failed before checked
+conversion. A maximum native scan window also overflowed during construction;
+it now uses saturating arithmetic. These are boundary repairs, not larger solver
+budgets. Native fmt/Clippy, all 348 workspace tests, and RustSec audit passed.
+The retained `proof_nodes` wire field counts principal-line steps rather than
+visited search nodes; the progress label now says line steps. Do not use this
+field as search-cost telemetry. Disposition: **fix/clarify**.
+
+## Cloud Snapshot Conflicts
+
+The five-minute rules cooldown alone did not prevent a stale device from
+replacing newer cloud content after the gate opened. Two production-backend
+emulator reproductions overwrote another device's setup or ignored a newer
+reset barrier. Both history and promotion now compare the current normalized
+snapshot content and reset barrier inside a Firestore transaction before
+replacement. A conflict or deleted document prevents the write and surfaces a
+reload/retry error; local history/pending records remain available. A concurrent
+change during the transaction causes the SDK to retry the comparison.
+
+The comparison excludes approximate client write timestamps and provider
+metadata; it includes all user settings/history/name fields a normal snapshot
+can replace and the reset barrier. This is optimistic conflict rejection,
+not live collaborative merging. Current clients still use explicit reads and
+checkpoint sync, not always-on profile listeners. Older deployed clients do not
+acquire this protection until replaced. No Firestore schema/rules deployment
+was made. Disposition: **fix**, keeping real-account acceptance conditional.
+
+All 27 emulator scenarios passed, including stale settings/reset rejection
+through both production write paths and successful current-snapshot writes.
+These exercise the actual Firebase SDK with owner-scoped rules, extending the
+previous injected-backend unit coverage. A transaction adds a document read
+(and potentially retry reads); update cost estimates accordingly.
+
+
+## Integrated Experience and Review Dispositions
+
+Retain the board-first pixel identity and local-play → useful ending → alternative
+loop. The observed fresh game produced an actionable confirmed defense and a
+working branch. Default setup remains Normal/Freestyle with assistance; setup
+copy now explains intent before exposing experimental knobs. This is a coherent
+small product, with Lab/Visuals supporting its identity. A full interface/engine
+replacement has no demonstrated acceptance or cost benefit in this review.
+
+The contrast trace found white labels at 1.39:1 on gold, 2.79:1 on green, 3.50:1
+on teal and 3.73:1 on red. Colored controls now use #121212 ink while preserving
+the fills; each pair exceeds 4.5:1. Dark-panel explanatory labels keep light ink.
+This addresses [W3C's text contrast guidance](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html),
+not a claim that the whole application is WCAG-certified. The board now honors
+reduced motion for placement/removal, idle/pointer, warning, proof and replay
+cues, using visible static frames and responding to preference changes. CSS
+movement is reduced too. A real canvas test failed before and now stays pixel-
+still for a full cue cycle, then animates again when the preference changes.
+
+Interactive inspection covered desktop 1280 × 900, portrait 390 × 844 and
+320 × 568, plus 812 × 375 short landscape. A temporary QA scenario checked all
+ten main/public routes at 1280 × 720, 320 × 568, 640 × 450 and 812 × 375: 40
+route/viewport combinations had one visible primary heading, no page-width
+overflow and no runtime errors (28.6 s). The temporary scaffold was removed.
+640 × 450 is a constrained layout probe, not a claim of actual browser zoom
+acceptance. Portrait content scrolls instead of shrinking all controls onto one
+screen. Current development [setup capture](assets/reconciliation-settings-2026-10-15.png)
+records the selected visual direction. Actual zoom, screen-reader, touch-device
+comfort and novice acceptance remain separate gates.
+
+The native trace retains shared legality and tactical semantics below every
+consumer. Scan/rolling tests protect optimization parity, while core/FEN
+metamorphic checks, the independent Renju reference and legal replay corpus
+challenge different assumptions. Corridor reply-width/depth cutoffs propagate
+possible/unknown outcomes; confirmed escape means escape from the modeled
+forcing corridor, not a global game-theoretic draw/win. Replay attribution
+prefers immediate win/response, then prevention/escape and preserves confidence.
+Retain this bounded model with its recorded limits; do not turn diagnostic
+coordinate preferences into strength or best-move claims. Broad strength,
+uncapped Renju continuation and general-solver research remain deferred.
+
+The architecture keeps one rule core and typed payload boundaries. Session
+subscriptions own live-match identity/setup, workers own cancellable compute,
+and React owns accessible input and recovery. Splitting these into a replacement
+framework, adding a query cache, or moving casual moves to a backend would add
+migration and operational costs without repairing an observed player failure.
+The existing owner map remains useful after the targeted repairs.
+
+| Workstream / covered owners | Review disposition | Remaining limit or release effect |
+|---|---|---|
+| Product, Home, Match, saved endings, Replay, returning Profile | retain/refine existing complete loop | Actual new-player feedback before broad stranger-facing readiness |
+| Core, tactical/frontier, search/corridor, analyzer, CLI/eval, Wasm, corpora | fix demonstrated rule/hash/number boundaries; retain bounded shared semantics | Depth-four Renju guard, modeled proof scope and diagnostic misses remain explicit; new strength baseline deferred |
+| Shell/routes, board model/render/input, workers, reports/contracts | fix recovery/validation/resource ownership; retain React/Phaser/Rust split | Initial shell download still relies on browser network/reload; no formal whole-engine correctness claim |
+| Identity/history, active-history, saved schema, auth/profile/promotion/history, Firestore | fix stale actions/writers and setup restoration; retain private client trust | One active local writing tab; no live collaborative merge; real OAuth and two-device round trip required |
+| Settings/Profile, Replay presentation, Rules/Guide/Lab/Visuals/policies and UI/assets | refine intent, controls, labels, contrast and reduced motion | Actual screen reader, zoom, physical touch comfort and human visual acceptance pending |
+| Browser resources/startup/search/analysis/cache | measure and fix demonstrated worker leaks/cancellation; retain lazy off-thread work | Sampled desktop budgets are diagnostic; physical lower-powered-device distributions required |
+| Unit/scenario/corpus/Wasm/emulator/browser verification | keep independent/metamorphic/perturbation/fresh-flow checks; add three-engine CI | Automation is not real-account, physical-device or novice acceptance; keep opt-in profiling out of timing CI |
+| Builds, dependencies, artifacts, media, docs and release/recovery | reconcile contracts/commands/provenance; refuse release auto-staging | No tag/deploy; old media/reports are labeled historical; final media and cloud acceptance before release |
+
+## Operations Review
+
+Verified current ownership and generation paths for Wasm, published report JSON,
+visual manifests, static route entries, Pages 404 fallback, release notes/tags,
+and separate Pages/Firestore deployment workflows. Public routes get copied
+index entries; private dynamic replays use 404 fallback. Dependency locks remain
+manual maintenance; production npm and RustSec audits passed. The five existing
+Firebase CLI development advisories retain their documented upstream exception.
+
+The release helper used to `git add -A` and commit unrelated work automatically.
+It now requires a clean tree and pushed main, then only validates/tags. An
+isolated fixture verified clean --check, dirty/untracked refusal without staging
+or tags, and unpushed-commit refusal. No project tag was created. Release publication now marks hyphenated version
+tags as prereleases, matching the helper's accepted prerelease syntax. Preview docs
+now use a foreground, strict-port server instead of killing named sessions.
+Recovery notes distinguish redeploying a prior web ref from restoring a recorded
+Firestore ruleset pointer and require readback/behavior checks.
+
+Active architecture docs incorrectly described current profile sync as push
+subscriptions and committed v0.6 to online play. They now describe explicit
+checkpoint reads/transactional writes and the later product checkpoint. Backend
+cost estimates include transaction and preflight reads; official Firestore,
+Firebase Auth and request-based Cloud Run quotas were rechecked on 2026-10-15.
+This is a planning estimate, not billing/dashboard acceptance. All 129 active
+relative documentation links resolved. July release media and June report
+measurements stay historical; regenerate release media after version/UI
+acceptance, and run new strength comparisons as a deliberate future baseline.
+
+
+## Integrated Candidate Validation
+
+- Native fmt/Clippy and 348 workspace tests passed (80.6 s for tests); RustSec
+  audit passed against the current advisory database.
+- Rebuilt Wasm, web/tool typecheck, all 363 web tests in 38 files and production
+  build passed. Production npm audit reports zero vulnerabilities.
+- All 27 Firestore emulator tests passed, including actual SDK transactions
+  under owner rules. Firestore rules/schema remain unchanged.
+- All 35 local Chromium journeys passed (14.8 s), including page recovery,
+  reduced-motion canvas stability/live preference change, keyboard completion,
+  touch/resize, persistence failure/conflict, worker recovery and report proof
+  confidence. CI runs these journeys in all three installed browser engines;
+  verify its result against the exact pushed head before declaring publication
+  complete.
+- The 40 route/viewport probes passed. Profiling is opt-in and records the
+  earlier measured bundle `a7771b19fb793893bbb3f31f9f0ac67464ae016f34327731f0bd971edb1303c4`
+  (development work based on `346e83b`, dirty at measurement time); timings are
+  not relabeled as measurements of every subsequent code revision.
+- No release tag, deploy, production-account write or rules rollout was made.
+  Real OAuth/two-device reset/settings/history, lower-powered physical-device,
+  actual zoom, screen-reader and novice/human visual acceptance remain pending.
+
+The engineering review has a result for each owner/workstream and closes its
+reproduced high-priority failures. Keep the `0.5.x` phase open for the explicit
+acceptance gates; choose the next patch/version and product direction afterward.

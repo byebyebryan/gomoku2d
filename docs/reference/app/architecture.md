@@ -44,10 +44,10 @@ Current components, one repo:
   `/guide/`, `/lab/`, `/visuals/`, `/privacy/`, `/terms/`), with future
   cloud/online routes added later.
 - **Zustand** — client state (current view, draft moves, UI toggles).
-- **Firebase SDK directly** — sign-in, Firestore subscriptions, storage for
+- **Firebase SDK directly** — sign-in, explicit profile reads and checkpoint writes for
   cloud-backed features.
-- **Local persistence** — local profile + local history live in browser
-  storage until the user chooses to sign in.
+- **Local persistence** — local profile + local history remain in browser
+  storage, with optional account continuity layered on top.
 - **Phaser** — board rendering only. Receives a plain board state and emits
   intent events.
 
@@ -72,12 +72,13 @@ Context triggers too-broad re-renders for live game state. Zustand is a
 minimal store with selectors — the least machinery for the job.
 
 **Why Firebase SDK directly, not TanStack Query?**
-TanStack Query is the default answer for data-fetching these days, but it's
-built around a *pull* model (fetch, cache, invalidate, refetch). Firestore
-is *push* — you subscribe to a document or query via `onSnapshot` and the
-server streams updates. Wrapping that in TanStack Query fights the grain;
-you end up managing two caches. Small custom hooks over `onSnapshot` are
-less code and closer to the truth.
+The current app explicitly reads one private profile and coalesces settings and
+history into checkpoint writes. Small stores own auth identity, cooldown,
+pending work, and reset barriers; there is no always-on profile listener. A
+transaction checks current snapshot content before replacement to reject stale
+cross-device writes. Retain this small boundary while cloud remains optional.
+Revisit a query/subscription abstraction when actual live-data requirements
+justify it; future online `onSnapshot` flows are not the current implementation.
 
 **Why no CSS framework (Tailwind / MUI / etc.)?**
 CSS Modules (`*.module.css`) plus a small hand-rolled token layer in
@@ -168,7 +169,7 @@ rolling-frontier-backed `WasmBoard` and reads one typed threat snapshot for
 immediate wins, immediate threats, imminent replies, counter-threat replies, and
 Renju forbidden moves. The canonical winning line remains a separate result
 visualization query. Rule-legality feedback such as Renju forbidden moves stays
-always on; tactical assistance categories are filtered by device-local UI
+always on; tactical assistance categories are filtered by saved profile UI
 preferences before they reach the board renderer.
 
 ## Data flow
@@ -250,18 +251,14 @@ baseline. The `v0.3` backend-continuity line has since added optional Firebase
 Auth, private cloud profile/history, and owner-scoped Firestore rules without
 moving casual gameplay out of the browser.
 
-From here, the version plan is:
+The `v0.4` lab-powered loop and `v0.5` reconciliation are implemented. The
+October review reopens `0.5.x` for deeper correctness, lifecycle, usability and
+maintenance work. The review/acceptance record lives in
+[`v0_5_reconciliation.md`](../../working/v0_5_reconciliation.md).
 
-- **P4 / `v0.4` — lab-powered product identity.** Use the Rust core/bot/eval
-  tools for configurable bots, published reports, tactical hints, and replay
-  analysis. Puzzles and bot personalities remain possible later extensions.
-- **P5 / `v0.5` — public-release reconciliation.** Clean up repo artifacts,
-  productize report surfaces, add concise explanatory pages, and package the
-  app for a stranger-facing alpha. Skins remain optional supporting polish, not
-  the phase spine.
-- **P6 / `v0.6` — online product expansion.** Add the Cloud Run authority,
-  direct challenge / PvP flows, trusted match persistence, ranked or matchmaking
-  surfaces, and deliberate public/shareable artifacts.
+The next cycle starts with a fresh product/design checkpoint. Online authority,
+puzzles, public sharing and larger solver work remain possible directions;
+`v0.6` is not committed to a specific expansion before reconciliation closes.
 
 Details are in [`Roadmap`](../product/roadmap.md). The architectural contract
 — what React owns, what Phaser owns, how they talk, and where `gomoku-core` is

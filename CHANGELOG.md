@@ -38,12 +38,29 @@ Continues the `0.5.x` reconciliation line after the October project review.
 - Clarify readonly board instructions, accessible overlay descriptions, and
   Renju teaching copy.
 
+- Restore existing account setup before sign-in uploads, stage saved changes for
+  the next game, and dispose the active game when its local identity is reset.
+- Detect stale local-tab writers and preserve the newer saved document; reject
+  stale cloud history/setup snapshots transactionally against current content
+  and reset barriers, while retaining pending local work.
+- Validate retained cloud-cache records and preserve valid pending games.
+- Terminate failed/cancelled workers, preserve exact replay numbers without
+  corrupting player names, and invalidate pre-correction analysis caches.
+- Recover failed route downloads with Reload/Home actions; improve colored-control
+  text contrast and honor reduced-motion preferences with still board cues.
+- Describe analyzer progress as retained line steps rather than search nodes.
+
 ### Bot lab
 
 - Detect draws correctly after FEN-imported positions, reject invalid FEN
   dimensions, and check Renju reference labels across all board symmetries.
 - Require Renju four completions to make five in the four's own direction;
   add the independently checked regression to the shared reference corpus.
+
+- Size search hashing from the supplied board and isolate transposition entries
+  by rules and evaluation context.
+- Reject analyzer option overflow on wasm32 and avoid maximum scan-window
+  arithmetic overflow.
 
 ### Maintenance
 
@@ -59,6 +76,13 @@ Continues the `0.5.x` reconciliation line after the October project review.
   their upstream remediation limits.
 - Add complete Chromium, Firefox, and WebKit journeys to CI, with failure
   artifacts and a supported, pinned Ubuntu browser-test image.
+
+- Add opt-in production browser profiling and document measured workloads,
+  provisional expectations, artifact provenance and remaining acceptance gates.
+- Require a clean, pushed release commit and label prerelease tags correctly;
+  the tag helper no longer stages or
+  commits unrelated working-tree files. Reconcile deployment/recovery and cloud
+  transaction cost documentation.
 
 ## [0.5.4] - 2026-07-23
 

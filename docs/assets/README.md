@@ -1,7 +1,10 @@
 # Current Media Assets
 
 This folder holds current release-facing media for the root README and related
-project showcase surfaces.
+project showcase surfaces. These captures document the released `0.5.4`
+experience; they are not evidence of the October development head. Refresh them
+when the next release version and UI are accepted. The October review keeps
+focused development screenshots under `docs/working/assets/`.
 
 Tracked outputs:
 

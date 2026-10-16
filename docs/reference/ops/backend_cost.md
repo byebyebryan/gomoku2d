@@ -10,7 +10,7 @@ architecture and trust lanes live in [`backend.md`](../backend/backend.md).
 This is an estimate document, not billing truth. Re-check official pricing
 before each backend release and use the Firebase/GCP usage dashboards after
 deploying. Pricing assumptions below were last re-checked against Firebase's
-official pricing and Firestore billing docs on 2026-04-29.
+official pricing and Firestore billing docs on 2026-10-15.
 
 Sources:
 
@@ -77,7 +77,7 @@ Estimated operation budgets for the current implementation:
 | No-config build / signed-out Profile | 0 | 0 | 0 | Firebase bootstrap stays disabled |
 | First sign-in / cloud profile create | 1 | 1 | 0 | `getDoc(profiles/{uid})`, then create profile |
 | Cloud profile/history load | 1 | 0-1 | 0 | `getDoc(profiles/{uid})`; existing profiles only write when provider metadata or schema needs refresh |
-| Coalesced profile/history sync | 0 | 0-1 | 0 | One profile snapshot write at most every 5 minutes when local profile/history is dirty |
+| Coalesced profile/history sync | 1+ when writing | 0-1 | 0 | Transaction reads the current snapshot before replacement; history retry may add a preflight read and contention may retry |
 | Open Replay from loaded history | 0 | 0 | 0 | Uses active local/cloud history cache |
 | Reset signed-in profile | 1-2 | 1 | 0 | Profile reset write clears `match_history`; optional refresh read returns server timestamps |
 
@@ -105,13 +105,18 @@ Initial implementation guardrails:
   knob is now the sync interval: `1440 / interval_minutes` writes per
   continuously dirty active user per day.
 
+Snapshot writes use optimistic transactions: a stale content/reset barrier is
+rejected instead of replacing another device's data. Offline transactions fail
+and leave work pending; the app does not promise offline cloud commit. The
+five-minute gate remains a write coalescing policy, not concurrency control.
+
 ## Cost Formulas
 
 These formulas are intentionally conservative enough for release planning.
 
 Let:
 
-- `P = profile opens per signed-in user per day`.
+- `P = explicit profile loads per signed-in user per day` (sign-in, reconnect, or pending-sync refresh; route opens normally reuse memory).
 - `S = profile/history snapshot syncs per signed-in user per day`.
 - `I = sync interval in minutes`; currently `5`.
 
@@ -119,8 +124,8 @@ Approximate daily operations per signed-in user:
 
 | Flow | Reads | Writes | Deletes |
 |---|---:|---:|---:|
-| Signed-in Profile opens | `P` | `0` normally | `0` |
-| Dirty profile/history syncs | `0` | `S`, capped by `1440 / I` | `0` |
+| Explicit signed-in profile loads | `P` | `0` normally | `0` |
+| Dirty profile/history syncs | `S` minimum; retries/preflight add reads | `S`, capped by `1440 / I` | `0` |
 | Reset Profile | `1..2` | `1` | `0` |
 
 With `I = 5`, a continuously dirty signed-in user can write at most 288 profile
@@ -135,26 +140,27 @@ mistakes before implementation.
 
 ### Small Public Release
 
-Assumption: 100 signed-in users/day, each opens Profile twice and has one dirty
+Assumption: 100 signed-in users/day, each loads the account profile twice and has one dirty
 cloud snapshot sync.
 
 | Metric | Estimate | Free-tier headroom |
 |---|---:|---:|
-| Reads | ~200/day | ~250x below 50,000/day |
+| Reads | ~300/day before retries/preflight | ~166x below 50,000/day |
 | Writes | ~100/day | ~200x below 20,000/day |
 | Deletes | 0/day | No concern |
 
-This is safely inside the free tier.
+This estimate is inside the listed free quotas; actual usage and retries need monitoring.
 
 ### Profile-Heavy Usage
 
-Assumption: 500 signed-in users/day, each opens Profile 5 times.
+Assumption: 500 signed-in users/day, each explicitly reloads the account profile 5 times.
 
 | Metric | Estimate | Free-tier headroom |
 |---|---:|---:|
 | Reads | ~2,500/day | ~20x below 50,000/day |
 | Writes | ~0/day before match saves | No concern |
 
+Opening Profile with an already loaded account normally costs no network read.
 Embedding capped history in the profile removes the old history-query read
 amplification. If future history grows beyond the embedded cap, revisit
 pagination before adding more history-heavy surfaces.
@@ -183,11 +189,11 @@ matches each.
 
 | Metric | Estimate | Free-tier headroom |
 |---|---:|---:|
-| Reads | ~100 one-time reads | ~500x below 50,000/day |
+| Reads | ~200 one-time reads before retries | ~250x below 50,000/day |
 | Writes | ~200 one-time writes | ~100x below 20,000/day |
 | Deletes | 0 | No concern |
 
-This is fine for current scale because promotion writes one capped profile
+This estimate remains below the listed quotas because promotion writes one capped profile
 snapshot rather than one document per match.
 
 ### Reset-Heavy Debug Day

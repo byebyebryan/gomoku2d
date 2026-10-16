@@ -1,6 +1,7 @@
 # v0.5 Deep Reconciliation and Refinement Plan
 
-Status: active goal loop, expanded 2026-10-15. Owner: Bryan. This is the active plan for
+Status: engineering review completed; integrated verification recorded in the
+[evidence ledger](v0_5_review_evidence.md). Owner: Bryan. This remains the plan for
 the reopened `0.5.x` line. `v0.5.4` remains the July release checkpoint; the next
 patch version will be chosen when the work is ready to release.
 
@@ -249,23 +250,24 @@ browser-observed, deployed, physical-device, and real-user acceptance separately
 
 ## Coverage Register
 
-The October repairs establish a starting baseline. Broader coverage below is
-pending until the corresponding review produces findings and dispositions.
+The October review produced the dispositions below. Detailed ownership traces,
+reproductions, samples and integrated results live in the evidence ledger.
+Engineering review completion does not close the phase or authorize a release.
 
 | Workstream | Deep review | Evidence and unresolved items |
 |---|---|---|
-| Product and journeys | in progress | Fresh keyboard game → finish → analysis → confirmed alternative → branch; actual new-player acceptance outstanding |
-| Rules, bots, analyzer | in progress | FEN and independently verified directional Renju defects repaired; diagnostic misses classified; deeper tactics/proof/attribution trace continues |
-| Architecture and contracts | in progress | Current ownership/contract inventory and cross-boundary traces; runtime schema probes next |
-| Persistence and cloud | in progress | Storage, promotion and reset/delete trace; corrupt storage and stale foreground actions under investigation; real account/device acceptance outstanding |
-| UX, visuals, accessibility | in progress | Fresh journey and responsive setup refinements; keyboard round/read-only guidance; full viewport critique and screen reader outstanding |
-| Browser performance | pending | Native evidence exists; representative browser/device measurements outstanding |
-| Test quality | in progress | Real-artifact contract probes, rule metamorphic checks, and missing CI browser lane addressed; browser engine checks in progress |
-| Repo, docs, operations | pending | Maintenance baseline and current CI; full reconciliation outstanding |
+| Product and journeys | reviewed; retain/refine | Fresh complete game, analyzed defense, branch and returning history; actual new-player acceptance pending |
+| Rules, bots, analyzer | reviewed; fix/retain limits | FEN, directional Renju, hash context and numeric boundaries fixed; independent corpus and historical replay legality checked; bounded proof/continuation limits retained |
+| Architecture and contracts | reviewed; targeted repairs | Ownership map, consumed payload validators, exact replay integers, cancellable workers and route recovery; retain shared core and current framework split |
+| Persistence and cloud | reviewed; fix lifecycle/conflicts | Corrupt storage, stale foreground actions/tabs, sign-in setup and transactional cloud writes covered; single local writing tab; real account/device acceptance pending |
+| UX, visuals, accessibility | reviewed; refine | Presets/disclosure, keyboard round/input, guidance, contrast and reduced motion; 40 route/viewport probes; actual zoom/screen reader/physical touch acceptance pending |
+| Browser performance | measured; bounded expectations | Production workload harness, desktop startup/preset/analysis and 30-cycle memory evidence; provisional diagnostic budgets; physical slow-device acceptance pending |
+| Test quality | reviewed; strengthen useful boundaries | Independent/metamorphic/perturbation/production-backend checks; all three browser engines in CI; timing profile stays opt-in |
+| Repo, docs, operations | reviewed; reconcile | Manual maintenance, artifact provenance, active docs/links, release no-auto-staging and recovery; historical media retained until next release acceptance |
 
 ## First Execution Loop
 
-Start with product/contract reconstruction and a whole-journey critique.
+Completed entry loop: product/contract reconstruction and a whole-journey critique.
 
 1. Pin the development/deployment baselines and build the module/route/contract
    coverage inventory using the existing ownership maps.
@@ -277,7 +279,7 @@ Start with product/contract reconstruction and a whole-journey critique.
    the first deep-trace targets and refinement batches before broad editing.
 
 Deliverable: a current product/contract map, populated coverage inventory, and
-an evidence-backed execution order. This loop does not finish the whole review.
+an evidence-backed execution order. Subsequent loops and their review outcomes are recorded in the evidence ledger.
 
 ## Initial Finding Register
 
@@ -350,3 +352,20 @@ The pass refines the existing product. Online implementation, public sharing,
 puzzles, monetization, and open-ended engine research remain future product
 choices. A larger redesign or replacement must earn its place through the
 review above. Choose the next release and `v0.6` direction after reconciliation.
+
+
+## Readiness Decision After Engineering Review
+
+Keep `0.5.x` open. The reviewed development candidate repairs demonstrated
+correctness, data/identity, recovery and resource defects and improves the
+existing player loop. It does not justify expanding scope or replacing the
+architecture. No new version, release tag, or deployment is chosen here.
+
+Before declaring the next public patch ready, complete a disposable real-account
+Google sign-in/settings/history/reset round trip across two devices; check
+physical lower-powered/mobile performance and touch comfort; exercise actual
+browser zoom and a real screen reader; and obtain novice/human visual feedback.
+Then choose the patch version, refresh accepted release media, rerun affected
+gates and make the release decision. The existing corpora and bounded engine
+limits remain disclosed; a fresh strength baseline and online/puzzle/sharing
+choices belong to the later product checkpoint.

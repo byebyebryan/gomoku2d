@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# Finalize a prepared release: validate version/changelog, commit the current
-# release changes if needed, and create an annotated tag. Does not push.
+# Finalize a committed release: validate version/changelog and create an
+# annotated tag. Does not stage, commit, or push.
 #
 # Expected workflow:
 #   1. scripts/set-web-version.sh <version>
 #   2. Capture release screenshots/assets and update docs + CHANGELOG.md.
 #   3. Run release checks.
-#   4. scripts/release.sh <version>
+#   4. Commit reviewed release files, push main, and verify CI on that commit.
+#   5. scripts/release.sh <version>
 #
 # Usage:
 #   scripts/release.sh --check <version>
@@ -38,6 +39,11 @@ cd "$REPO_ROOT"
 
 if [ "$(git branch --show-current)" != "main" ]; then
   echo "Must run on main (current: $(git branch --show-current))" >&2
+  exit 1
+fi
+
+if [ -n "$(git status --porcelain)" ]; then
+  echo "Working tree is dirty. Commit reviewed release files and push main before releasing." >&2
   exit 1
 fi
 
@@ -112,14 +118,7 @@ if [ "$CHECK_ONLY" -eq 1 ]; then
   exit 0
 fi
 
-if [ -n "$(git status --porcelain)" ]; then
-  echo "Committing prepared release changes for ${TAG}"
-  git add -A
-  git commit -m "release: ${TAG}"
-else
-  echo "Working tree clean; tagging current HEAD as ${TAG}"
-fi
-
+echo "Working tree clean; tagging current HEAD as ${TAG}"
 git tag -a "${TAG}" -m "${TAG}"
 
 cat <<EOF

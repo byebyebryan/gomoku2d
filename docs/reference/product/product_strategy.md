@@ -46,7 +46,8 @@ the player asks for durable or shared state.
 
 - First meaningful interaction creates a local profile on the device.
 - Guests can play bot matches and keep local history without sign-in.
-- Google sign-in promotes settings and private history into a cloud profile.
+- Google sign-in restores existing account settings and merges eligible private
+  history; new accounts initialize from the device, and later edits sync.
 - Signed-in private history is cloud-backed continuity, not public evidence.
 - Public/shared replays require an explicit publish step.
 - Future ranked/trusted matches must be server-validated move by move.
