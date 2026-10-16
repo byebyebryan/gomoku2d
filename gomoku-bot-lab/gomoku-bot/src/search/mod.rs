@@ -385,10 +385,19 @@ pub struct SearchInfo {
     pub tt_max_entries: Option<usize>,
 }
 
+#[derive(PartialEq, Eq)]
+struct SearchContext {
+    board_size: usize,
+    win_length: usize,
+    variant: Variant,
+    root_color: Color,
+}
+
 pub struct SearchBot {
     config: SearchBotConfig,
     tt: HashMap<u64, TTEntry>,
     zobrist: ZobristTable,
+    context: Option<SearchContext>,
     pub last_info: Option<SearchInfo>,
 }
 
@@ -408,6 +417,7 @@ impl SearchBot {
             config,
             tt: HashMap::new(),
             zobrist: ZobristTable::new(board_size),
+            context: None,
             last_info: None,
         }
     }
@@ -466,6 +476,20 @@ impl Bot for SearchBot {
     }
 
     fn choose_move(&mut self, board: &Board) -> Move {
+        let context = SearchContext {
+            board_size: board.config.board_size,
+            win_length: board.config.win_length,
+            variant: board.config.variant.clone(),
+            root_color: board.current_player,
+        };
+        if self.context.as_ref() != Some(&context) {
+            // Position hashes describe stones and turn, not the rule/evaluation
+            // context. Reuse entries only within the same context and size the
+            // hash table for the board actually supplied by the caller.
+            self.tt.clear();
+            self.zobrist = ZobristTable::new(context.board_size);
+            self.context = Some(context);
+        }
         let color = board.current_player;
         let mut metrics = SearchMetrics::default();
         let renju_metrics_before = renju_forbidden_metrics_snapshot();

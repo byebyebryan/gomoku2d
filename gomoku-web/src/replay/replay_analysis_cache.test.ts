@@ -93,6 +93,17 @@ function cachedResult(status: ReplayAnalysisStepResult["status"] = "resolved"): 
 }
 
 describe("replay analysis cache", () => {
+  it("invalidates results from the previous rule/model revision", () => {
+    const storage = new MemoryStorage();
+    const match = localMatch();
+    const options = { maxDepth: 4, maxScanPlies: 64 };
+    writeReplayAnalysisCache(match, options, cachedResult(), storage);
+    const key = "gomoku2d:replay-analysis-cache:v1";
+    const document = JSON.parse(storage.getItem(key)!);
+    document.version = 1;
+    storage.setItem(key, JSON.stringify(document));
+    expect(readReplayAnalysisCache(match, options, storage)).toBeNull();
+  });
   it.each(["annotation", "summary"])("rejects a structurally corrupt cached %s", (part) => {
     const storage = new MemoryStorage();
     const match = localMatch();

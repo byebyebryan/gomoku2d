@@ -76,14 +76,10 @@ function stringifyReplayWithExactIntegers(replay: CoreReplay): string {
     assertUnsignedIntegerToken(token, index === 0 ? "seed" : "hash");
   }
 
-  let json = JSON.stringify(replay);
-  json = json.replace(`"${CORE_REPLAY_HASH_SEED}"`, CORE_REPLAY_HASH_SEED);
-
-  for (const move of replay.moves) {
-    json = json.replace(`"${move.hash}"`, move.hash);
-  }
-
-  return json;
+  // Replace the two numeric fields, never a matching player-name value.
+  // JSON.stringify escapes quotes inside strings, so text resembling a field
+  // cannot match these complete key/value tokens.
+  return JSON.stringify(replay).replace(/"(seed|hash)":"(\d+)"/g, '"$1":$2');
 }
 
 export function savedMatchToReplayJson(match: SavedMatchV2): string {

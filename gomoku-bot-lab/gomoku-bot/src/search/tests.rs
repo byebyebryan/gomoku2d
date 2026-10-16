@@ -25,6 +25,34 @@ fn apply_cell_moves(board: &mut Board, cells: &[usize]) {
     }
 }
 
+#[test]
+fn reused_search_bot_respects_changed_win_rules() {
+    let mut board = Board::new(RuleConfig::default());
+    apply_moves(&mut board, &["H8", "G8", "I8", "A1", "J8", "O15"]);
+    let mut reused = SearchBot::new(3);
+    reused.choose_move(&board);
+    board.config.win_length = 4;
+    let mut fresh = SearchBot::new(3);
+    let expected = fresh.choose_move(&board);
+    let actual = reused.choose_move(&board);
+    assert_eq!(actual, expected);
+    assert_eq!(
+        reused.last_info.as_ref().unwrap().score,
+        fresh.last_info.as_ref().unwrap().score
+    );
+}
+
+#[test]
+fn search_bot_hashing_matches_the_supplied_board_size() {
+    let mut board = Board::new(RuleConfig {
+        board_size: 19,
+        ..Default::default()
+    });
+    board.apply_move(mv("S19")).unwrap();
+    let chosen = SearchBot::new(1).choose_move(&board);
+    assert!(board.is_legal(chosen));
+}
+
 fn root_candidate_test_options(
     safety_gate: SafetyGate,
     deadline: SearchDeadline,

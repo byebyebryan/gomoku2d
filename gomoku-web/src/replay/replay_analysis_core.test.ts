@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseWasmReplayAnalysisStep, WasmReplayAnalyzer } from "../core/wasm_bridge";
+import { applyWasmMove, createWasmBoard, parseWasmReplayAnalysisStep, WasmReplayAnalyzer } from "../core/wasm_bridge";
 import { createLocalSavedMatch } from "../match/saved_match";
 import type { LocalProfileSavedMatch } from "../profile/local_profile_store";
 
@@ -37,6 +37,25 @@ function localMatch(patch: Partial<LocalProfileSavedMatch> = {}): LocalProfileSa
 }
 
 describe("savedMatchToReplayJson", () => {
+  it.each(["seed", "move hash", "quoted field text"])("preserves a player name resembling %s", (kind) => {
+    const board = createWasmBoard("renju");
+    let hash: string;
+    try {
+      applyWasmMove(board, WINNING_MOVES[0].row, WINNING_MOVES[0].col);
+      hash = board.hashString();
+    } finally { board.free(); }
+    const name = kind === "seed" ? "16045690984503098046" : kind === "move hash" ? hash
+      : '{"hash":"123","seed":"16045690984503098046"}';
+    const match = localMatch();
+    match.player_black.display_name = name;
+    match.player_white.display_name = name;
+    const json = savedMatchToReplayJson(match);
+    expect(JSON.parse(json)).toMatchObject({ black: name, white: name });
+    const analyzer = WasmReplayAnalyzer.createFromReplayJson(json, replayAnalysisOptionsJson());
+    analyzer.dispose();
+    analyzer.free();
+  });
+
   it("converts saved match history into core replay JSON with exact hashes", () => {
     const replayJson = savedMatchToReplayJson(localMatch());
     const replay = JSON.parse(replayJson) as {

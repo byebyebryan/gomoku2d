@@ -6,7 +6,9 @@ import type { ReplayAnalysisStepResult } from "./replay_analysis_protocol";
 import { validateReplayAnalysisStep, validateReplayFrameAnnotations } from "./replay_analysis_validation";
 
 const CACHE_STORAGE_KEY = "gomoku2d:replay-analysis-cache:v1";
-const CACHE_VERSION = 1;
+// Bump for rule/analyzer semantic changes as well as cache-shape changes.
+// Revision 2 invalidates pre-directional-Renju results without deleting history.
+const CACHE_VERSION = 2;
 const CACHE_MAX_ENTRIES = 20;
 const CACHE_MAX_BYTES = 2_000_000;
 

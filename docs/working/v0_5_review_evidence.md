@@ -273,3 +273,25 @@ ICU/XML/Flite libraries; CI must establish that engine's result. An earlier
 all-engine attempt also had an expired local preview process; those connection
 failures are infrastructure evidence, not app regressions. The two successful
 engine runs used a freshly verified preview.
+
+
+## Search and Exact Replay Boundaries
+
+A supported 19 × 19 native board with a far-edge stone panicked in search:
+SearchBot initialized a fixed 15 × 15 Zobrist table. It now sizes hashing from
+the supplied board and invalidates transposition entries when board size,
+win length, variant, or evaluation root side changes. A reused-versus-fresh
+win-length probe also passes; it is an invariant check, not evidence of a
+previously reproduced wrong score. Retain warm entries within one context.
+
+The exact-u64 replay serializer replaced matching string values globally.
+Player names equal to the seed or a move hash became numbers and failed native
+deserialization. Two name cases failed before the repair; replacement now
+matches complete numeric field tokens. Quoted field-like names are also covered
+through the real Wasm analyzer. Cache revision 2 invalidates results predating
+the rule correction; saved games remain intact. The cache revision must change
+when rule/analyzer semantics change, even if the payload shape stays compatible.
+
+Disposition: **fix/harden**. Native fmt/Clippy, all 347 workspace tests, and the
+rebuilt production Wasm passed. The integrated web suite passed 358 tests across
+38 files, including exact numeric names, old cache rejection and current Wasm.
