@@ -91,6 +91,21 @@ describe("flushCloudProfileSync", () => {
     });
   });
 
+  it("keeps the server write timestamp and an open sync gate when a flush changes nothing", async () => {
+    const currentUser = { ...user };
+    const unchanged = { ...cloudProfile, displayName: localProfile.displayName,
+      createdAt: "2000-01-01T00:00:00.000Z", updatedAt: "2000-01-02T00:00:00.000Z" };
+    localProfileStore.setState({ settings: defaultSettings });
+    cloudAuthStore.setState({ user: currentUser, status: "signed_in" });
+    cloudProfileStore.setState({ profile: unchanged, status: "ready" });
+    const promote = vi.fn().mockResolvedValue({ localMatchesSynced: 0,
+      profileDisplayNamePromoted: false, promotedDisplayName: null });
+    cloudPromotionStore.setState({ promote });
+    const result = await flushCloudProfileSync(currentUser);
+    expect(result?.updatedAt).toBe(unchanged.updatedAt);
+    expect(cloudProfileStore.getState().profile?.updatedAt).toBe(unchanged.updatedAt);
+  });
+
   it("flushes the current local profile/settings to cloud on demand", async () => {
     const promote = vi.fn(async (_input: LocalProfilePromotionInput) => {
       cloudPromotionStore.setState({

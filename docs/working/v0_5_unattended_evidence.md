@@ -37,3 +37,39 @@ both were corrected before these passing runs. Network isolation also exposed
 the SDK's GAPI static dependency, which is now explicitly distinguished from
 identity/database traffic. No application defect was inferred from those
 harness failures. Remaining cloud cases and Wasm profiling are still pending.
+
+## Batch 2: Cloud Continuity and a Confirmed Sync Repair
+
+C1-C9 now run through the application, actual SDK, and unchanged emulator rules:
+new/existing accounts, a real branched-game finish inspected in a second client,
+stale-client rejection, transport failure/reload/recovery without duplication,
+delayed account-A reads across an in-place switch to B, and the reset barrier
+plus immediate cooldown refusal. A separate embedded-client case exercises the
+supported redirect flow. Static GAPI telemetry and generic connectivity probes
+are fulfilled locally; identity/database operations remain loopback-only.
+
+**Fixed: a no-op flush advanced the cached write timestamp without a server
+write.** C3 exposed the resulting false five-minute client cooldown: a newly
+finished game remained queued despite an eligible server timestamp. The focused
+unit regression failed before the change and passes after it. A no-op now keeps
+the authoritative timestamp and does not claim a write. Actual write cooldowns,
+identity checks, schemas, rules, and UI are unchanged.
+
+Validation before the batch commit:
+
+- Full web unit suite: 378 passed (39 files).
+- Focused sync/promotion regressions: 23 passed; web/tools/scripts typecheck passed.
+- Chromium: the full C1-C9 matrix passed, plus the initial touch-policy redirect.
+- Firefox: the full C1-C9 matrix and embedded-policy redirect passed.
+- C4/C6/C7: five fresh-state repetitions each in Chromium and Firefox, 30 passed.
+- The same local all-engine repeat invocation recorded 15 WebKit launch failures
+  because this host lacks libicu74/libxml2/libflite1. These are incomplete local
+  coverage, not application passes; supported Ubuntu CI supplies those libraries.
+- CI now runs the full three-engine matrix and five repetitions of the conflict,
+  account-switch, and reset cases. Exact pushed-head results are recorded below.
+
+Harness findings were distinguished from the product defect: Firefox touch
+emulation does not supply the coarse-pointer/mobile-data policy inputs, so the
+redirect case uses the supported embedded-client path instead. An optional GAPI
+telemetry request needs a local empty response. Neither changes application
+authentication behavior or claims physical mobile acceptance.

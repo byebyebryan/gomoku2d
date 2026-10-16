@@ -121,6 +121,10 @@ jobs:
         working-directory: gomoku-web
         run: npm run test:cloud
 
+      - name: Repeat cloud conflict, account, and reset races
+        working-directory: gomoku-web
+        run: npm run test:cloud -- --grep 'C4|C6|C7' --repeat-each=5
+
       - name: Retain browser failure evidence
         if: failure()
         uses: actions/upload-artifact@v7

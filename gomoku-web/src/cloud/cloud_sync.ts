@@ -58,9 +58,11 @@ export async function flushCloudProfileSync(
   const historyChanged = JSON.stringify(nextMatchHistory) !== JSON.stringify(sourceProfile.matchHistory);
   const profileChanged = cloudProfilePromotionUpdate(promotionInput) !== null;
 
-  if ((historyChanged || profileChanged) && !cloudProfileSyncDue(cloudState.profile)) {
-    return cloudState.profile;
-  }
+  // A read/no-op is not a server write. Moving updatedAt would falsely close
+  // the client sync gate for five minutes even when the server is eligible.
+  if (!historyChanged && !profileChanged) return sourceProfile;
+
+  if (!cloudProfileSyncDue(sourceProfile)) return sourceProfile;
 
   const promotionResult = await cloudPromotionStore.getState().promote(promotionInput);
 

@@ -1,4 +1,4 @@
-import { expect, test as base, type BrowserContext, type Page } from "@playwright/test";
+import { expect, test as base, type BrowserContext, type Frame, type Page } from "@playwright/test";
 
 export const projectId = "demo-gomoku2d-acceptance";
 const firestoreRoot = `http://127.0.0.1:18081/v1/projects/${projectId}/databases/(default)/documents`;
@@ -6,29 +6,7 @@ const firestoreRoot = `http://127.0.0.1:18081/v1/projects/${projectId}/databases
 export const test = base.extend<{ isolatedNetwork: void }>({
   isolatedNetwork: [async ({ context }, use, testInfo) => {
     const external: string[] = [];
-    await context.route("**/*", async (route) => {
-      const url = new URL(route.request().url());
-      // The Firebase SDK's supported popup/redirect transport loads GAPI even
-      // in emulator mode. Permit only its static library, never live identity
-      // or Firestore endpoints. All account/data requests remain loopback.
-      if (url.hostname === "apis.google.com" && (url.pathname === "/js/api.js"
-        || url.pathname.startsWith("/_/scs/abc-static/"))) {
-        await route.continue(); return;
-      }
-      // Firebase's local provider widget references cosmetic CDN styles. Keep
-      // the run offline without replacing any authentication/SDK behavior.
-      if ((url.hostname === "fonts.googleapis.com" && ["/css2", "/icon"].includes(url.pathname))
-        || (url.hostname === "unpkg.com" && url.pathname.endsWith(".css"))) {
-        await route.fulfill({ body: "", contentType: "text/css" }); return;
-      }
-      if (url.hostname === "unpkg.com" && url.pathname === "/material-components-web@10/dist/material-components-web.min.js") {
-        await route.fulfill({ body: "", contentType: "application/javascript" }); return;
-      }
-      if (["http:", "https:"].includes(url.protocol) && url.hostname !== "127.0.0.1" && url.hostname !== "localhost") {
-        external.push(url.origin + url.pathname);
-        await route.abort();
-      } else await route.continue();
-    });
+    await protectContext(context, external);
     await use();
     await testInfo.attach("unexpected-network.json", { body: JSON.stringify(external), contentType: "application/json" });
     expect(external).toEqual([]);
@@ -36,11 +14,15 @@ export const test = base.extend<{ isolatedNetwork: void }>({
 });
 export { expect };
 
-export async function protectContext(context: BrowserContext): Promise<void> {
-  await context.route("**/*", (route) => {
+export async function protectContext(context: BrowserContext, external?: string[]): Promise<void> {
+  await context.route("**/*", async (route) => {
     const url = new URL(route.request().url());
+    // The SDK's supported popup/redirect transport needs static GAPI even in
+    // emulator mode. Live identity and database endpoints are always blocked.
     if (url.hostname === "apis.google.com" && (url.pathname === "/js/api.js"
       || url.pathname.startsWith("/_/scs/abc-static/"))) return route.continue();
+    // Optional emulator-widget decoration, and the SDK's generic connectivity
+    // probe, are fulfilled locally. No auth, rule, or write response is mocked.
     if ((url.hostname === "fonts.googleapis.com" && ["/css2", "/icon"].includes(url.pathname))
       || (url.hostname === "unpkg.com" && url.pathname.endsWith(".css"))) {
       return route.fulfill({ body: "", contentType: "text/css" });
@@ -48,10 +30,18 @@ export async function protectContext(context: BrowserContext): Promise<void> {
     if (url.hostname === "unpkg.com" && url.pathname === "/material-components-web@10/dist/material-components-web.min.js") {
       return route.fulfill({ body: "", contentType: "application/javascript" });
     }
-    if (["http:", "https:"].includes(url.protocol) && !["127.0.0.1", "localhost"].includes(url.hostname)) {
-      throw new Error(`Unexpected external request: ${url.origin}${url.pathname}`);
+    if (url.hostname === "apis.google.com" && url.pathname === "/js/gen_204") {
+      return route.fulfill({ status: 204, body: "" });
     }
-    return route.continue();
+    if (url.hostname === "www.google.com" && url.pathname === "/images/cleardot.gif") {
+      return route.fulfill({ body: Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64"), contentType: "image/gif" });
+    }
+    if (["http:", "https:"].includes(url.protocol) && !["127.0.0.1", "localhost"].includes(url.hostname)) {
+      await route.abort();
+      const target = url.origin + url.pathname;
+      if (external) external.push(target);
+      else throw new Error(`Unexpected external request: ${target}`);
+    } else await route.continue();
   });
 }
 
@@ -86,14 +76,14 @@ export async function makeProfileEligible(uid: string): Promise<void> {
   if (!response.ok) throw new Error(await response.text());
 }
 
-export async function signIn(page: Page, email: string, options: { navigate?: boolean; redirect?: boolean } = {}): Promise<string> {
+export async function signIn(page: Page | Frame, email: string, options: { navigate?: boolean; redirect?: boolean } = {}): Promise<string> {
   if (options.navigate !== false) await page.goto("/profile");
-  const popupPromise = options.redirect ? Promise.resolve(page) : page.waitForEvent("popup");
+  const popupPromise = options.redirect ? Promise.resolve(page) : (page as Page).waitForEvent("popup");
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   const popup = await popupPromise;
   await popup.waitForLoadState("domcontentloaded");
   if (options.redirect) await page.waitForURL("http://127.0.0.1:19099/**");
-  const closed = options.redirect ? Promise.resolve() : popup.waitForEvent("close");
+  const closed = options.redirect ? Promise.resolve() : (popup as Page).waitForEvent("close");
   if (await popup.getByText(email, { exact: true }).count()) {
     await popup.getByText(email, { exact: true }).click();
   } else {
