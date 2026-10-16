@@ -22,7 +22,11 @@ const stages: string[] = [];
 const output = process.env.GOMOKU_PROFILE_OUTPUT
   ?? resolve("../gomoku-bot-lab/outputs/browser-profile", `${Date.now()}.json`);
 
-function record(row: Record<string, unknown>) { measurements.push(row); console.log(JSON.stringify(row)); }
+function record(row: Record<string, unknown>) {
+  measurements.push(row);
+  const { assets, ...summary } = row;
+  console.log(JSON.stringify({ ...summary, ...(Array.isArray(assets) ? { assetCount: assets.length } : {}) }));
+}
 
 test.afterAll(async ({ browser }) => {
   const files = (await readdir("dist/assets")).filter((name) => /\.(js|wasm|css)$/.test(name)).sort();
@@ -187,6 +191,7 @@ async function lifecycle(browser: Browser) {
     }, savedShort);
     await page.goto(`/replay/${long.id}`);
     await expect.poll(() => page.workers().length).toBe(1);
+    await page.getByTestId("replay-timeline-analyzed").waitFor({ state: "attached", timeout: 60_000 });
     await expect(page.getByTestId("replay-analysis-status")).toHaveText("Tracing the finish");
     const oldWorker = page.workers()[0];
     const closed = oldWorker.waitForEvent("close");
@@ -198,21 +203,24 @@ async function lifecycle(browser: Browser) {
       dispatchEvent(new PopStateEvent("popstate"));
     }, short.id);
     await closed;
+    const oldWorkerClosedMs = performance.now() - start;
     await expect(page.getByTestId("replay-move-count")).toHaveText(`Move ${short.moveCells.length} / ${short.moveCells.length}`);
     const status = await completedAnalysis(page);
-    record({ kind: "replacement", from: long.id, to: short.id, completeMs: performance.now() - start, status, oldWorkerClosed: true });
+    record({ kind: "replacement", from: long.id, to: short.id, completeMs: performance.now() - start,
+      status, oldWorkerClosed: true, oldWorkerClosedMs, afterProgress: true });
     await page.getByRole("link", { name: "Home", exact: true }).click();
     await expect.poll(() => page.workers().length).toBe(0);
     await page.evaluate(() => localStorage.removeItem("gomoku2d:replay-analysis-cache:v1"));
     await page.getByRole("link", { name: "Profile", exact: true }).click();
     await page.getByRole("button", { name: "Inspect" }).first().click();
     await expect.poll(() => page.workers().length).toBe(1);
+    await page.getByTestId("replay-timeline-analyzed").waitFor({ state: "attached", timeout: 60_000 });
     await expect(page.getByTestId("replay-analysis-status")).toHaveText("Tracing the finish");
     const cancelStart = performance.now();
     await page.getByRole("link", { name: "Home", exact: true }).click();
     await expect.poll(() => page.workers().length).toBe(0);
     await expect(page.locator("canvas")).toHaveCount(0);
-    record({ kind: "route-cancellation", idleMs: performance.now() - cancelStart, workers: page.workers().length });
+    record({ kind: "route-cancellation", idleMs: performance.now() - cancelStart, workers: page.workers().length, afterProgress: true });
     const cdp = await context.newCDPSession(page); await cdp.send("Performance.enable");
     const heap = async () => {
       await cdp.send("HeapProfiler.collectGarbage");
