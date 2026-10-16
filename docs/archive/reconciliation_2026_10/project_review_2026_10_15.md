@@ -1,9 +1,12 @@
 # Project Review Before the Next Release Cycle
 
 Reviewed 2026-10-15 against `689e310bbe4a56c46337f6b1abe30b2bc73afe16`.
-Owner: Bryan. Keep this note active through the repair and product-direction
-decisions, then archive it. Findings below describe the reviewed baseline.
-Remediation status lives in the [reopened reconciliation register](v0_5_reconciliation.md).
+Owner: Bryan. Archived initial assessment: findings below describe the reviewed
+baseline, before the subsequent repairs. The reproduced defects were addressed;
+see the [completed reconciliation register](v0_5_reconciliation.md) and
+[closeout](README.md) for final dispositions and acceptance deferrals.
+Source links are pinned to the inspected revision so later refactors do not
+change the evidence cited here.
 
 The project has a coherent foundation: immediate local play, a shared Rust
 rules and tactical model, useful replay analysis, and an inspectable public
@@ -28,7 +31,7 @@ recovery, or usability issue to include in the stabilization decision.
 
 ### Stale cloud operations cross account boundaries
 
-[`cloud_sync.ts`](../../gomoku-web/src/cloud/cloud_sync.ts#L83) captures a
+[`cloud_sync.ts`](https://github.com/byebyebryan/gomoku2d/blob/689e310bbe4a56c46337f6b1abe30b2bc73afe16/gomoku-web/src/cloud/cloud_sync.ts#L83) captures a
 profile's merged history and settings, awaits promotion, then checks the
 *current global* promotion status and applies its captured patch to the
 *current global* profile. The patch has no expected UID or operation generation.
@@ -50,11 +53,11 @@ switches, profile reset, and overlapping flushes finishing out of order.
 
 ### Local persistence can interrupt local play
 
-[`local_profile_store.ts`](../../gomoku-web/src/profile/local_profile_store.ts#L218)
+[`local_profile_store.ts`](https://github.com/byebyebryan/gomoku2d/blob/689e310bbe4a56c46337f6b1abe30b2bc73afe16/gomoku-web/src/profile/local_profile_store.ts#L218)
 delegates storage reads/writes without a fallback; its `localStorage` lookup
 also occurs before the JSON-storage factory. The quota probe made
 `ensureLocalProfile()` throw after updating memory.
-[`CloudSessionController`](../../gomoku-web/src/cloud/CloudSessionController.tsx#L64)
+[`CloudSessionController`](https://github.com/byebyebryan/gomoku2d/blob/689e310bbe4a56c46337f6b1abe30b2bc73afe16/gomoku-web/src/cloud/CloudSessionController.tsx#L64)
 calls that action on app mount. Settings changes and finished-match recording
 use the same persistence path; a failed finished-match save can prevent the
 caller from receiving the replay ID. There is no app error boundary.
@@ -66,7 +69,7 @@ failure; a real browser storage-denial session was not exercised.
 
 ### Replay claims discard proof confidence
 
-[`replay_analysis_overlays.ts`](../../gomoku-web/src/replay/replay_analysis_overlays.ts#L87)
+[`replay_analysis_overlays.ts`](https://github.com/byebyebryan/gomoku2d/blob/689e310bbe4a56c46337f6b1abe30b2bc73afe16/gomoku-web/src/replay/replay_analysis_overlays.ts#L87)
 maps `confirmed_escape` and `possible_escape` to the same marker. Both also feed
 the same escape timeline, which can say “Last chance to avoid loss” and
 “Black's last escape” for a position with only a possible escape. The UI-mapper
@@ -74,7 +77,7 @@ probe reproduced exactly that result. Failure summaries similarly omit the
 confidence carried by the analyzer protocol.
 
 The public Lab's detailed legend distinguishes E from P, but
-[`AnalysisProofFrames.tsx`](../../gomoku-web/src/routes/lab-report/AnalysisProofFrames.tsx#L436)
+[`AnalysisProofFrames.tsx`](https://github.com/byebyebryan/gomoku2d/blob/689e310bbe4a56c46337f6b1abe30b2bc73afe16/gomoku-web/src/routes/lab-report/AnalysisProofFrames.tsx#L436)
 labels `escape_found` as “can escape.” Published game #65 visibly pairs that
 decision with a `possible escape` outcome. The Guide also describes the last
 escape without the analyzer's bounded-model qualification.
@@ -88,7 +91,7 @@ tournament results.
 
 ### Bot failure leaves a match unable to advance
 
-[`local_match_store.ts`](../../gomoku-web/src/game/local_match_store.ts#L484)
+[`local_match_store.ts`](https://github.com/byebyebryan/gomoku2d/blob/689e310bbe4a56c46337f6b1abe30b2bc73afe16/gomoku-web/src/game/local_match_store.ts#L484)
 clears `pendingBotMove` after a rejected, null, or illegal bot result without
 retaining a user-visible failure or retry action. The route then displays the
 bot's normal “to move” status while allowing input only for a human turn.
@@ -105,12 +108,12 @@ failure, invalid/null output, recovery, and cancellation during recovery.
 ### Accessibility stops at the app shell
 
 The local-match accessibility tree exposes navigation, player labels, clocks,
-and Undo, but no operable board. [`Board.tsx`](../../gomoku-web/src/components/Board/Board.tsx#L143)
+and Undo, but no operable board. [`Board.tsx`](https://github.com/byebyebryan/gomoku2d/blob/689e310bbe4a56c46337f6b1abe30b2bc73afe16/gomoku-web/src/components/Board/Board.tsx#L143)
 mounts a canvas host without keyboard or cell semantics, and board input is
 pointer-based. A keyboard audit of shell controls does not establish that a
 keyboard user can play.
 
-[`SettingsRoute.tsx`](../../gomoku-web/src/routes/SettingsRoute.tsx#L64)
+[`SettingsRoute.tsx`](https://github.com/byebyebryan/gomoku2d/blob/689e310bbe4a56c46337f6b1abe30b2bc73afe16/gomoku-web/src/routes/SettingsRoute.tsx#L64)
 uses active CSS classes for segmented selections without `aria-pressed` or
 equivalent checked state. Add keyboard placement, an accessible description of
 position and legal interaction, and semantic selection state. Acceptance should
@@ -130,7 +133,7 @@ settings through assistive technology.
 | October maintenance | Refreshed dependencies, current CI, manual maintenance policy | The next cycle starts from a validated development baseline |
 
 The archived plans explain decisions; they should not all become active work
-again. The [current roadmap](../reference/product/roadmap.md) correctly calls
+again. The [current roadmap](../../reference/product/roadmap.md) correctly calls
 for a fresh design checkpoint before online implementation. Parked process-story
 and devlog work remains optional.
 
@@ -151,7 +154,7 @@ distinct from retired experimental search work.
 Renju deserves an explicit authority decision before trusted online play. The
 oracle uses a recursion guard of four and deliberately fails open when it cannot
 resolve recursive legality. This is documented in
-[Renju Rules](../reference/lab/renju_rules.md#implementation). The 29-case
+[Renju Rules](../../reference/lab/renju_rules.md#implementation). The 29-case
 golden corpus passed, but that is not proof of completeness. No incorrect-rule
 counterexample was established in this review. Decide the required semantics
 and add adversarial coverage or guard-hit visibility before claiming trusted
@@ -213,7 +216,7 @@ evidence levels.
 
 Production dependency audits are clear. Five dev-only affected dependency
 entries remain in the Firebase CLI toolchain, documented with the overrides and
-deferred major upgrades in [Dependency Maintenance](dependency_maintenance.md).
+deferred major upgrades in [Dependency Maintenance](../../working/dependency_maintenance.md).
 No pull requests are open; updates are now owner-maintained. No release tag or
 deployment is part of this review.
 

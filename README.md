@@ -7,9 +7,19 @@ a match, then work out why it ended that way. A retro board sits on top of a
 Rust/WebAssembly rules core, configurable search bots, tactical hints, and
 Replay Analysis that shows where a loss became forced.
 
-**Live site:** https://gomoku2d.byebyebryan.com/
+[Play](https://gomoku2d.byebyebryan.com/) ·
+[Rules](https://gomoku2d.byebyebryan.com/rules/) ·
+[Guide](https://gomoku2d.byebyebryan.com/guide/) ·
+[Lab](https://gomoku2d.byebyebryan.com/lab/) ·
+[Visuals](https://gomoku2d.byebyebryan.com/visuals/) ·
+[Docs](docs/README.md)
+
+[![CI](https://github.com/byebyebryan/gomoku2d/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/byebyebryan/gomoku2d/actions/workflows/ci.yml)
 
 ![Gomoku2D gameplay with tactical hints, bot response, and a terminal winning frame](docs/assets/readme-gameplay.gif)
+
+These captures show the public `v0.5.4` release. `main` contains the
+unreleased October reconciliation fixes; see [Project status](#project-status).
 
 ## Play
 
@@ -39,6 +49,9 @@ and walks backward through the losing side's decisions:
 
 The replay can still be scrubbed normally, and any eligible frame can become a
 new practice game.
+
+Analysis is bounded: a confirmed escape clears the modeled forcing corridor;
+a possible escape still needs verification. It is not a full-game solution.
 
 ![Replay Analysis walks backward through the last escape, setup corridor, and lethal onset.](docs/assets/readme-analysis.gif)
 
@@ -80,6 +93,39 @@ rendering, and cloud continuity. Start in
 [`gomoku-bot-lab/`](gomoku-bot-lab/) for rules, bots, tactical facts, replay
 analysis, evaluation, and the wasm bridge. Shared game facts originate in Rust;
 the web app presents them rather than maintaining a second rules model.
+
+## Run Locally
+
+Install Node 24, Rust stable, and `wasm-pack`. From a fresh checkout:
+
+```sh
+git clone https://github.com/byebyebryan/gomoku2d.git
+cd gomoku2d
+wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler
+cd gomoku-web
+npm ci
+npm run dev
+```
+
+Open the local URL printed by Vite. Guest play needs no Firebase configuration.
+The [web README](gomoku-web/README.md#local-development) covers optional cloud
+setup and rebuilding Wasm; the [testing guide](docs/reference/ops/testing.md)
+lists checks by area.
+
+## Project Status
+
+The latest public release is [`v0.5.4`](https://github.com/byebyebryan/gomoku2d/releases/tag/v0.5.4).
+The October review extended the `0.5.x` reconciliation line with correctness,
+persistence, recovery, accessibility, and maintenance fixes. The review is
+complete, including the selected mobile Rules/Guide layout refinement; the
+existing UI and copy remain the chosen direction.
+
+These changes are on `main` and recorded under [Unreleased](CHANGELOG.md#unreleased).
+Pushing `main` runs CI; a release tag or explicit deployment is required to
+publish the site. Real-account, physical-device, and human accessibility checks
+remain explicitly deferred in the [review closeout](docs/archive/reconciliation_2026_10/README.md).
+The next release and feature direction are separate decisions in the
+[roadmap](docs/reference/product/roadmap.md).
 
 ## Project References
 

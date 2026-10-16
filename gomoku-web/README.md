@@ -72,7 +72,7 @@ src/
 ├── game/         local match session/store, clocks, hints, undo, save
 ├── profile/      local profile/settings/history persistence
 ├── cloud/        Firebase auth/profile/history sync
-├── match/        saved-match schema and helpers
+├── match/        saved-match schema, shared history model and helpers
 ├── replay/       replay frames, wasm analyzer runner, overlays, cache
 └── ui/           icon registry and shared UI helpers
 ```
@@ -94,7 +94,7 @@ Then run the web app:
 
 ```sh
 cd gomoku-web
-npm install
+npm ci
 npm run dev
 ```
 
@@ -129,7 +129,7 @@ npm test                   # Vitest
 npm run test:rules         # Firestore rules through Firebase emulators
 npm run build              # production build plus postbuild publishing
 npm run preview            # serve dist/ locally
-npm run playtest:smoke     # local/manual Playwright smoke
+npm run playtest:smoke     # focused automated Playwright smoke
 npm run playtest:engines   # full Chromium, Firefox and WebKit journeys
 npm run profile:browser    # opt-in production browser cost/resource samples
 npm run media:readme       # regenerate README/showcase media from preview

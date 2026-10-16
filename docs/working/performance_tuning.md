@@ -42,6 +42,11 @@ cargo run --release -p gomoku-eval -- lethal-scenarios
 For strength or report claims, use the tournament runbook instead of ad hoc
 benchmarks.
 
+Browser workloads have a separate [profiling lane](../reference/ops/testing.md#command-matrix).
+The [October measurements](../archive/reconciliation_2026_10/v0_5_review_evidence.md#final-build-browser-profile)
+retain their original host/build identity and diagnostic limits; they are not
+new timings for each subsequent revision.
+
 ## Active Backlog
 
 - Re-check whether any remaining scan-backed paths matter in default rolling

@@ -49,10 +49,12 @@ run `npm run playtest`. Do not terminate an unrelated preview to claim its port.
    changed; use [`tournament.md`](tournament.md).
 5. Update `CHANGELOG.md` with an empty `[Unreleased]` section and dated release
    section.
-6. When authentication, cloud sync, profile persistence, or Firestore behavior
-   changed, repeat a live Google sign-in and settings/history/reset round trip
-   across two devices with disposable test data. Automated
-   rules and no-config tests do not replace this account-level check.
+6. Record the available account, device, and accessibility acceptance evidence
+   and any explicit deferrals. Bryan's [October manual-check deferrals](../../archive/reconciliation_2026_10/README.md#deferred-acceptance)
+   remain in force; carry their limits into the release decision rather than
+   recording them as passes. When a real Google sign-in or two-device
+   settings/history/reset round trip is performed, use disposable test data.
+   Emulator and no-config checks establish a different level of evidence.
 7. Review `git diff` for accidental generated or scratch output. Stage only the
    reviewed paths, commit and push the release preparation, and verify CI on
    that exact commit before tagging. The release script refuses dirty trees
@@ -92,14 +94,16 @@ scripts/release.sh "$VERSION"
 
 The release script validates clean, pushed main and version/changelog/tag state. Pushing the release
 tag dispatches GitHub Release, Pages deploy, and Firestore rules deploy
-workflows. After deployment, smoke the public URL manually.
+workflows. After deployment, verify the public URL with the applicable browser
+journeys and read-only checks; record any remaining manual acceptance deferrals.
 
 ## Recovery
 
 A code push is not deployment. Record the Pages deployment run/tag/SHA and the
 Firestore workflow's previous/current ruleset IDs at release time. After a
-release, verify Home, direct public routes, a fresh local finish/replay/branch,
-and the account-level cloud round trip against the public origin.
+release, verify Home, direct public routes, and a fresh local finish/replay/branch
+against the public origin. Record an account-level cloud round trip separately
+when performed; otherwise retain its explicit acceptance deferral.
 
 For a web regression, dispatch the Pages workflow at the previously accepted
 tag/ref and verify its deployment/SHA and public behavior. Do not move release

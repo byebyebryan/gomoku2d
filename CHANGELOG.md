@@ -12,91 +12,81 @@ their own section.
 
 ## [Unreleased]
 
-Continues the `0.5.x` reconciliation line after the October project review.
+**Theme: extend the `0.5.x` reconciliation after the October project review.**
+
+The completed review repairs correctness and recovery boundaries, strengthens
+accessible local play, and simplifies maintenance. The existing UI and copy
+remain the chosen direction; only the mobile Rules/Guide layout refinement was
+selected from the later visual study. These changes are on `main`; no new
+release or deployment has been made.
 
 ### Web
 
-- Keep analyses started inside replay completion/error callbacks active.
-- Separate shared saved-history validation/aggregation from Firebase and use
-  one promoted-history projection for sync preflight and writes.
-- Reject malformed history-summary opponents without throwing during hydration.
-- Omit unused keyboard-cell markup from static teaching diagrams while
-  retaining their labeled images and interactive match/replay grids.
-- Increase muted-label and loss-text contrast; keep static Rules/Guide diagrams
-  inert within their labeled images and give labeled example groups valid roles.
-- Bound cloud loads, promotions, profile patches, and follow-up history actions
-  to their current operation/profile/session, preventing stale sync results
-  from patching a different account or a reset profile.
-- Kept local play, settings, replay recording, and cloud history caches usable
-  in memory when storage fails; show a notice when local saves are unavailable.
+- Bound cloud operations and delayed profile actions to their originating
+  operation, account, profile, and session. Reject stale cloud snapshots
+  transactionally, retain pending work, and protect newer local-tab writes.
+- Kept local play, settings, replay recording, and history caches usable in
+  memory when storage fails. Preserve corrupt or unsupported documents and
+  show a notice when local saves are unavailable.
+- Restored existing account setup before sign-in uploads, staged settings for
+  the next game, and disposed the active game when its local identity resets.
 - Preserved possible versus confirmed escape markers and attribution in Replay
-  Analysis, Lab reports, and the Guide.
+  Analysis, Lab reports, and the Guide. Progress describes retained line steps
+  rather than search nodes.
 - Added a visible failed-bot-turn state and explicit retry without losing the
-  current position.
+  current position; terminated failed/cancelled workers.
+- Kept analyses started by replay completion/error callbacks active, preserved
+  exact replay integers without changing player names, and invalidated obsolete
+  analysis caches.
+- Validated nested analysis/cache payloads, consumed report fields, compact
+  moves, retained cloud-cache records, and malformed history-summary opponents.
 - Added keyboard board navigation and placement, accessible cell descriptions,
-  and semantic selected states for settings.
-- Preserve corrupt or unsupported local-profile documents while continuing in
-  memory, and reject malformed nested replay-analysis cache/worker payloads.
-- Prevent delayed foreground profile reset/delete actions from clearing or
-  signing out a later account/session.
-- Align published analysis failure types with native exports, validate consumed
-  report fields and compact moves, and clarify Lab loading/error states.
-- Simplify bot setup with readable preset descriptions and optional advanced
-  controls; expose next-round keyboard activation and direct board-guide links.
-- Clarify readonly board instructions, accessible overlay descriptions, and
-  Renju teaching copy.
-
-- Restore existing account setup before sign-in uploads, stage saved changes for
-  the next game, and dispose the active game when its local identity is reset.
-- Detect stale local-tab writers and preserve the newer saved document; reject
-  stale cloud history/setup snapshots transactionally against current content
-  and reset barriers, while retaining pending local work.
-- Validate retained cloud-cache records and preserve valid pending games.
-- Terminate failed/cancelled workers, preserve exact replay numbers without
-  corrupting player names, and invalidate pre-correction analysis caches.
-- Recover failed route downloads with Reload/Home actions; improve colored-control
-  text contrast and honor reduced-motion preferences with still board cues.
-- Avoid poisoned dynamic JavaScript preload caches on WebKit so recovered route
-  and shared-dependency downloads can be retried after returning Home.
-- Describe analyzer progress as retained line steps rather than search nodes.
+  semantic settings selections, and keyboard next-round activation.
+- Explained bot presets and optional advanced controls, readonly board behavior,
+  overlay meanings, Renju examples, and Lab loading/error states.
+- Improved muted-label, loss-text, and colored-control contrast; honored reduced
+  motion with still board cues. Static teaching images retain labels without
+  unused keyboard grids or focusable descendants.
+- Recovered failed route downloads with Reload/Home actions and prevented
+  poisoned dynamic JavaScript preloads from blocking WebKit retries.
+- Refined mobile Rules/Guide headers and diagram grids from 320px upward,
+  retaining the existing styling, content, and desktop layouts.
 
 ### Bot lab
 
-- Report invalid replay-directory paths with a contextual CLI error instead
-  of panicking in versus, self-play and tournament commands.
-- Detect draws correctly after FEN-imported positions, reject invalid FEN
-  dimensions, and check Renju reference labels across all board symmetries.
-- Require Renju four completions to make five in the four's own direction;
-  add the independently checked regression to the shared reference corpus.
-
-- Size search hashing from the supplied board and isolate transposition entries
-  by rules and evaluation context.
-- Reject analyzer option overflow on wasm32 and avoid maximum scan-window
+- Detected draws after FEN-imported positions and rejected invalid dimensions.
+- Required Renju four completions to make five in the four's own direction;
+  promoted the independently checked regression into the shared corpus and
+  checked reference labels across all board symmetries.
+- Sized search hashing from the supplied board and isolated transposition
+  entries by rules and evaluation context.
+- Rejected analyzer option overflow on wasm32 and avoided maximum scan-window
   arithmetic overflow.
+- Reported invalid replay-directory paths with contextual CLI errors instead
+  of panicking in versus, self-play, and tournament commands.
 
 ### Maintenance
 
-- Wait for scheduled deep-link scrolling in the report test to avoid a race
-  between rendered content and its animation-frame callback.
 - Moved dependency maintenance to direct manual review and disabled scheduled
   Dependabot PRs while retaining GitHub vulnerability alerts.
-- Refreshed compatible Rust and npm dependencies and updated the Java setup
-  action used by CI.
-- Fixed the tournament test's new Rust stable Clippy warning and added a
-  scoped Firestore gRPC override for current security fixes.
-- Removed the redundant top-level-await transform, restoring production builds
-  with the refreshed toolchain while retaining the existing `esnext` target.
-- Documented the remaining Firebase CLI development dependency advisories and
-  their upstream remediation limits.
-- Add complete Chromium, Firefox, and WebKit journeys to CI, with failure
-  artifacts and a supported, pinned Ubuntu browser-test image.
-
-- Add opt-in production browser profiling and document measured workloads,
-  provisional expectations, artifact provenance and remaining acceptance gates.
-- Require a clean, pushed release commit and label prerelease tags correctly;
-  the tag helper no longer stages or
-  commits unrelated working-tree files. Reconcile deployment/recovery and cloud
-  transaction cost documentation.
+- Refreshed compatible Rust/npm dependencies and CI actions, addressed current
+  toolchain lint failures, and added the scoped Firestore gRPC override.
+  Documented remaining Firebase CLI development advisories and deferred majors.
+- Removed the redundant top-level-await transform while retaining the existing
+  `esnext` build target and native Wasm loading.
+- Separated the shared history model from Firebase and centralized promoted
+  history/preflight decisions without changing persisted schemas.
+- Added full Chromium, Firefox, and WebKit journeys and accessibility audits to
+  CI on a supported Ubuntu image, with retained failure evidence. Fixed a
+  scheduled-scroll race in a report test.
+- Added opt-in production browser profiling with measured workloads, artifact
+  provenance, diagnostic expectations, and explicit device-acceptance limits.
+- Required clean, pushed release commits and correct prerelease labeling;
+  release tooling no longer stages or commits unrelated files.
+- Reconciled docs, roadmap, release/recovery and cost runbooks; archived the
+  completed October reviews and evidence. Polished repository entry points and
+  preserved explicit manual acceptance deferrals and historical media/report
+  provenance.
 
 ## [0.5.4] - 2026-07-23
 

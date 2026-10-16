@@ -2,7 +2,9 @@
 
 Owner: Bryan. Baseline: `a0c32b2` on `main`. Scope: code ownership,
 dependencies, duplication, lifecycle order, test reliability and maintenance
-cost after the product reconciliation. This is a structural review of the
+cost after the product reconciliation. Archived: selected repairs and cleanup
+are complete; the [closeout](README.md) records the final runtime baseline.
+This is a structural review of the
 module boundaries and selected high-risk implementations, not a claim of
 line-by-line formal verification or a new engine-strength evaluation.
 

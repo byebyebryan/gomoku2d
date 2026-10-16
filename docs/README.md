@@ -5,6 +5,15 @@ release history beside the code. Use this page to enter the docs by area rather
 than browsing the tree. Active docs describe current intent or behavior;
 historical context belongs in [`archive/`](archive/).
 
+## Current Status
+
+The October `0.5.x` reconciliation, systematic code review, and selected mobile
+Rules/Guide refinement are complete on `main`. The public release remains
+`v0.5.4`; no new version or deployment is part of the review. Start with the
+[October closeout](archive/reconciliation_2026_10/README.md) for decisions,
+verification, and explicit acceptance deferrals, or the
+[roadmap](reference/product/roadmap.md) for what follows.
+
 ## Choose A Path
 
 | Area | Start with | Continue with |
@@ -45,13 +54,12 @@ The root [`README`](../README.md) is the public repo landing page.
 
 ## Internal Working Notes
 
-Active tuning and screenshot-review notes remain under [`working/`](working/).
-The active [`v0.5` deep reconciliation and refinement plan](working/v0_5_reconciliation.md)
-owns the whole-project review, execution sequence, coverage, findings, and acceptance.
-The follow-up [systematic code review](working/code_review_2026_10_15.md) records
-structural cleanup, retained boundaries and conditional refactoring opportunities.
-The completed `v0.5.4` plan and finding register live in [`archive/`](archive/)
-with the other historical release material.
+The [working-note index](working/README.md) lists the maintained dependency,
+performance, and screenshot-review notes. Completed October plans, code-review
+dispositions, measurements, and captures are grouped in the
+[reconciliation archive](archive/reconciliation_2026_10/README.md). They record
+what was reviewed and decided; they are not a new implementation backlog.
+The completed July `v0.5.4` material remains in [`archive/`](archive/).
 
 Parked process-story extraction and curation lives under
 [`archive/process_story/`](archive/process_story/). It is private source

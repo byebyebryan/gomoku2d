@@ -41,6 +41,12 @@ The current refinement direction:
 - keep report pages product-readable rather than telemetry-first;
 - avoid adding chrome that competes with the board.
 
+The October visual review reaffirmed the existing UI and copy. Only the mobile
+Rules/Guide layout refinement was selected: at widths up to 720px, headers keep
+visible navigation on one row and teaching diagrams stack before becoming too
+small. Other layouts retain their existing direction. Broader comparison mocks
+were not adopted; see the [review closeout](../../archive/reconciliation_2026_10/README.md).
+
 The current release assumption is:
 
 - settings/profile/product controls are part of the main app surface;

@@ -251,13 +251,13 @@ Auth, private cloud profile/history, and owner-scoped Firestore rules without
 moving casual gameplay out of the browser.
 
 The `v0.4` lab-powered loop and `v0.5` reconciliation are implemented. The
-October review reopens `0.5.x` for deeper correctness, lifecycle, usability and
-maintenance work. The review/acceptance record lives in
-[`v0_5_reconciliation.md`](../../working/v0_5_reconciliation.md).
+October `0.5.x` review completed deeper correctness, lifecycle, usability,
+and maintenance work. The [closeout](../../archive/reconciliation_2026_10/README.md)
+records the retained architecture, targeted repairs, and acceptance deferrals.
 
 The next cycle starts with a fresh product/design checkpoint. Online authority,
 puzzles, public sharing and larger solver work remain possible directions;
-`v0.6` is not committed to a specific expansion before reconciliation closes.
+`v0.6` is not committed to a specific expansion before that product decision.
 
 Details are in [`Roadmap`](../product/roadmap.md). The architectural contract
 — what React owns, what Phaser owns, how they talk, and where `gomoku-core` is

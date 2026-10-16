@@ -1,10 +1,14 @@
 # v0.5 Deep Reconciliation and Refinement Plan
 
-Status: reconciliation review completed with manual acceptance deferred at
-Bryan's request. Integrated verification and the unattended acceptance follow-up
+Archived review plan. Status: reconciliation review completed with manual
+acceptance deferred at Bryan's request. Integrated verification and the unattended acceptance follow-up
 are recorded in the [evidence ledger](v0_5_review_evidence.md). Owner: Bryan.
 `v0.5.4` remains the July release checkpoint; the next patch version and release
 decision are separate from completing this review.
+
+The [closeout](README.md) records the final code-review and UI decisions.
+The scope and execution instructions below describe the completed review;
+they do not reopen its workstreams or adopt the broader visual proposals.
 
 ## Purpose and Review Stance
 
@@ -30,10 +34,10 @@ dependency, performance, and validation costs before implementing it.
 - Development baseline: `ee2505c`, including the first October repair batch.
 - The [October review](project_review_2026_10_15.md) is the initial assessment;
   its findings do not exhaust this pass.
-- The [July closeout](../archive/v0_5_4_reconciliation_plan.md) and
-  [findings](../archive/v0_5_4_findings.md) explain prior decisions and validation.
-- Current code ownership maps are in the [web overview](../reference/app/code_overview.md)
-  and [lab overview](../reference/lab/code_overview.md). Verify them against code.
+- The [July closeout](../v0_5_4_reconciliation_plan.md) and
+  [findings](../v0_5_4_findings.md) explain prior decisions and validation.
+- Current code ownership maps are in the [web overview](../../reference/app/code_overview.md)
+  and [lab overview](../../reference/lab/code_overview.md). Verify them against code.
 - Keep the deployed release, development head, curated report provenance, and
   new review evidence distinct. Reuse valid baseline checks; repeat them when
   a relevant change or unresolved concern warrants it.
@@ -65,7 +69,7 @@ refactors, and visual changes distinguishable in commits.
 
 ### 1. Product Coherence and Player Journeys
 
-Revisit the [product strategy](../reference/product/product_strategy.md): who
+Revisit the [product strategy](../../reference/product/product_strategy.md): who
 benefits from this game, why they return, and what the lab contributes to play.
 Trace first visit, setup, a complete fresh game, the finish, analysis, branching,
 and returning to saved history. Include both a novice and a returning player.
@@ -156,7 +160,7 @@ Settings, Profile, Rules, Guide, Lab, Visuals, and policy/navigation surfaces.
   announcements, disabled/selected state, coordinates, reduced motion, and an
   actual screen reader. Check that the DOM/canvas combination stays coherent.
 - Compare current and proposed layouts at consistent viewports using the
-  [screenshot procedure](ui_screenshot_review.md), then exercise the interactions.
+  [screenshot procedure](../../working/ui_screenshot_review.md), then exercise the interactions.
   If a systemic design issue emerges, prototype one representative screen
   before widening the change.
 
@@ -292,9 +296,9 @@ an evidence-backed execution order. Subsequent loops and their review outcomes a
 | Replay copy discards analyzer confidence | fix | Possible, confirmed, and unresolved outcomes retain their meaning in replay, reports, and Guide | implemented; unit and published-Lab browser checks passed |
 | Bot failures leave an unexplained blocked turn | fix | Failed-turn state and explicit retry; cancellation/new-game guards remain correct | implemented; repeated-worker-crash recovery passed on desktop/mobile |
 | Board input and selected settings lack accessible semantics | fix | Keyboard board interaction and semantic settings state, with browser verification | implemented; keyboard/browser checks passed; real screen-reader acceptance pending |
-| Shared Rust semantics and React/Phaser ownership | retain provisionally | Recheck ownership, correctness oracles, and costs in the deeper review | initial assessment; deeper review pending |
+| Shared Rust semantics and React/Phaser ownership | retain | Recheck ownership, correctness oracles, and costs in the deeper review | reviewed and retained; targeted repairs and cleanup complete |
 | New online product scope and open-ended solver/bot-strength research | defer | Fresh product/design checkpoint after reconciliation; demonstrated correctness fixes remain in scope | deferred |
-| Real OAuth and cross-device cloud continuity | acceptance | Manual real-account round trip before a release claiming cloud acceptance | pending |
+| Real OAuth and cross-device cloud continuity | acceptance | Real-account evidence is required to claim that level of acceptance | explicitly deferred by Bryan; not passed |
 
 ## October Repair Batch
 
@@ -326,7 +330,8 @@ Validation on 2026-10-15:
   inspected from the browser test screenshots.
 - Curated report data, Rust behavior, and persisted schemas remain unchanged.
 
-No release tag or deployment was made. The phase remains open: real-account
+Batch-time status, superseded by the final readiness decision below:
+no release tag or deployment was made. The phase remained open: real-account
 continuity/reset checks and actual screen-reader acceptance have not been
 substituted with automated evidence. Representative slow-device performance
 remains a separate acceptance question from the native tournament measurements.
@@ -377,3 +382,12 @@ here. Choose a patch/version, refresh release media and make a release decision
 with the deferrals visible; rerun affected automated gates on that candidate.
 The existing corpora and bounded engine limits remain disclosed. A fresh strength
 baseline and online/puzzle/sharing choices belong to the next product checkpoint.
+
+## Subsequent Code and UI Review
+
+The [systematic code review](code_review_2026_10_15.md) completed the selected
+callback-order, shared-history, promotion, CLI-error, and diagram/test cleanup.
+Bryan retained the existing UI and copy after reviewing the visual alternatives;
+only the [Rules/Guide mobile refinement](v0_5_review_evidence.md#rules-and-guide-mobile-layout-follow-up)
+was selected and implemented. Other mock proposals are not an accepted backlog.
+The [closeout](README.md) records final verification and publication state.

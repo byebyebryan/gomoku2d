@@ -4,7 +4,7 @@ This roadmap tracks current sequencing. Completed phase detail lives in
 [`release_history.md`](../../archive/release_history.md); this file should stay
 short enough to answer "what is next and why?"
 
-## Current State: `v0.5` Reconciliation Reviewed
+## Current State: October `0.5.x` Review Complete
 
 `v0.5.4` marked the July public-release reconciliation checkpoint. The product
 carries a complete local loop across play, configurable bots and hints, saved
@@ -17,30 +17,32 @@ data and analyzer semantics remain unchanged; the work clarified ownership,
 fixed demonstrated resilience gaps, and validated the shipped product on
 desktop and mobile.
 
-The October post-pause review reopened `0.5.x`. The first repair batch addressed
-demonstrated cloud sync, persistence, analyzer-confidence, bot-recovery, and
-keyboard-access gaps. The active [deep reconciliation and refinement plan](../../working/v0_5_reconciliation.md)
-now covers the whole product: product assumptions, rules/tactics, architecture
-and data contracts, cloud continuity, UX/visual/accessibility refinement,
-browser performance, test quality, and repository/release operations.
+The October post-pause review reopened `0.5.x` and is now complete on `main`.
+It repaired cloud/session and persistence failures, rule and payload boundaries,
+analyzer-confidence presentation, bot recovery, keyboard access, accessibility,
+worker ownership, and route recovery. The systematic code review completed
+targeted history and lifecycle cleanup while retaining the main architecture.
 
-The engineering review and repair loop is complete. At Bryan's request, remaining
-manual account/device/accessibility/human checks are explicitly deferred; the
-unattended browser follow-up adds independent accessibility audits and repairs
-their findings. See the [readiness decision](../../working/v0_5_reconciliation.md#readiness-decision-after-engineering-review).
-These deferrals do not hold the review or next design checkpoint open. A new
-patch release, media refresh and deployment remain separate decisions, with
-the unverified acceptance limits visible.
+Bryan chose to keep the existing UI and copy. Only the Rules/Guide mobile layout
+refinement was selected from the visual study; broader mocks are not an accepted
+backlog. The [October closeout](../../archive/reconciliation_2026_10/README.md)
+links the decisions, code review, measurements, and verified runtime baseline.
+
+Manual account/device/accessibility/human checks remain explicitly deferred at
+Bryan's request. These deferrals do not hold the review or next design checkpoint
+open and are not recorded as passes. A new patch release, media refresh, and
+deployment remain separate decisions; the public release is still `v0.5.4`.
 
 Historical execution and findings:
 
+- [October review and closeout](../../archive/reconciliation_2026_10/README.md)
 - [`v0.5.4 Reconciliation Closeout Plan`](../../archive/v0_5_4_reconciliation_plan.md)
 - [`v0.5.4 Reconciliation Findings`](../../archive/v0_5_4_findings.md)
 - [`v0.5 Public Release Plan`](../../archive/v0_5_public_release_plan.md)
 
 ## Following Reconciliation: `v0.6` Design Checkpoint
 
-After the reopened `v0.5` pass, choose the next player benefit at a fresh design
+Choose the next player benefit at a fresh design
 checkpoint. Online expansion remains the existing candidate. If selected, settle:
 
 - the smallest useful online loop, likely direct challenge before discovery or

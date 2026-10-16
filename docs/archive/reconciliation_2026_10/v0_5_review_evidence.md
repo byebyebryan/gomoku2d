@@ -1,9 +1,10 @@
 # v0.5 Deep Review Evidence
 
-This is the evidence ledger for the [active reconciliation plan](v0_5_reconciliation.md),
-started 2026-10-15. Inspection is not certification. A mapped module remains
-pending until its behavior, assumptions, consumers, and verification have a
-recorded disposition. Generated dependencies are reviewed through their sources.
+Archived evidence for the [completed reconciliation plan](v0_5_reconciliation.md),
+started 2026-10-15. Intermediate counts, measurements, and pending items retain
+the revision they described. The [closeout](README.md) and final deferral/follow-up
+sections supersede earlier statements that manual acceptance keeps this review
+open. Inspection is not certification; current contracts live in the reference docs.
 
 ## Baselines
 
@@ -670,7 +671,8 @@ design.
 The production build passed. The focused route and accessibility checks passed
 in Chromium and Firefox (12 checks); local WebKit still cannot launch with this
 host's missing system libraries. The supported Ubuntu CI lane supplies those
-libraries and runs the existing full three-engine suite on the pushed head.
+libraries. [CI passed on the exact mobile-fix commit `a067040`](https://github.com/byebyebryan/gomoku2d/actions/runs/38855047048),
+including the full Chromium, Firefox, and WebKit journeys.
 
 Installed Chrome checked both pages at 320×568, 360×640, 390×844, 430×932,
 667×375, 720×480, 721×480, 768×1024, and 1280×900. All 18 layout checks showed
@@ -682,3 +684,22 @@ Current captures: [Rules](assets/rules-mobile-2026-10-15.jpg) and
 [Guide](assets/guide-mobile-2026-10-15.jpg). The broader proposal remains a
 historical study, not an accepted implementation plan. Existing manual-check
 deferrals remain in force; this follow-up makes no release or deployment.
+
+## Documentation Reconciliation
+
+The follow-up grouped the completed project/code reviews, plan, evidence, and
+captures in this archive. Reference docs and the roadmap now carry the final
+status and retained UI direction; maintained notes remain under `docs/working/`.
+The initial review source links are pinned to their inspected commit. The root
+README keeps the existing release media, labels its provenance, and adds direct
+product links, local setup, and a development/publication status explanation.
+The release runbook carries the existing manual-check deferrals forward. No
+runtime code, generated report data, release version, or deployment changed.
+
+Documentation validation covered 86 tracked Markdown files and 237 relative
+links/anchors with no failures. All eight pinned initial-review source links
+resolve within their inspected revision; all six moved evidence assets are
+byte-identical and published changelog history is unchanged. Documented npm
+commands and setup prerequisites match the manifests/CI. The five public
+README destinations returned HTTP 200. GitHub's description now names Gomoku,
+Renju, bots, and analysis; Renju and WebAssembly topics were added and read back.

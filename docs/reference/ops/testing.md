@@ -41,7 +41,7 @@ JSON under ignored `gomoku-bot-lab/outputs/browser-profile/`. Set
 startup/assets, real preset workers, analysis/cache cost, and 30 navigation
 cycles. It uses Chromium CDP for page CPU throttling and main-heap metrics;
 worker/Wasm/GPU heap and physical-device performance require separate evidence.
-The [October review measurements](../../working/v0_5_review_evidence.md#browser-cost-and-worker-ownership)
+The [October review measurements](../../archive/reconciliation_2026_10/v0_5_review_evidence.md#browser-cost-and-worker-ownership)
 document the samples and their provisional diagnostic expectations.
 
 ## Dependency Maintenance

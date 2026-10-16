@@ -6,6 +6,16 @@ Archive docs are not authoritative unless an active reference doc explicitly
 links to them for historical evidence. Prefer updating current reference docs
 over patching archive files into partial correctness.
 
+## Completed October Review
+
+The [October 2026 reconciliation](reconciliation_2026_10/README.md) groups the
+reopened `0.5.x` plan, initial and systematic reviews, evidence, and captures.
+Its closeout records the retained UI, completed mobile Rules/Guide work,
+conditional refactors, and explicit manual acceptance deferrals. It is a
+completed review record, not an active feature plan.
+
+## Earlier Plans and Context
+
 | Doc | What it was | Superseded by |
 |---|---|---|
 | `progress_v0.1.md` | Status log for the Phaser-era single-player game | `docs/reference/product/roadmap.md` |
