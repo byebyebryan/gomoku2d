@@ -81,7 +81,7 @@ pub fn run() {
             }
 
             if let Some(dir) = &replay_dir {
-                std::fs::create_dir_all(dir).unwrap();
+                prepare_replay_directory(dir);
             }
 
             let bot_a_factory = match make_bot_factory(
@@ -186,7 +186,7 @@ pub fn run() {
             }
 
             if let Some(dir) = &replay_dir {
-                std::fs::create_dir_all(dir).unwrap();
+                prepare_replay_directory(dir);
             }
 
             let bot_factory = match make_bot_factory(
@@ -376,7 +376,7 @@ pub fn run() {
             println!();
 
             if let Some(dir) = &replay_dir {
-                std::fs::create_dir_all(dir).unwrap();
+                prepare_replay_directory(dir);
             }
 
             let mut factories: Vec<NamedBotFactory> = vec![];

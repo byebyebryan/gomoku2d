@@ -5,6 +5,15 @@ pub(super) fn exit_with_error(message: impl AsRef<str>) -> ! {
     std::process::exit(2);
 }
 
+pub(super) fn prepare_replay_directory(dir: &Path) {
+    std::fs::create_dir_all(dir).unwrap_or_else(|error| {
+        exit_with_error(format!(
+            "Failed to create replay directory '{}': {error}",
+            dir.display()
+        ));
+    });
+}
+
 pub(super) fn pooled_budget_label(reserve_cap_ms: u64, max_move_ms: Option<u64>) -> String {
     match max_move_ms {
         Some(max_move_ms) => format!(
