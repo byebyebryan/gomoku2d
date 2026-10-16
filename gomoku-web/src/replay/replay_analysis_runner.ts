@@ -103,17 +103,18 @@ export class ReplayAnalysisRunner {
         if (message.requestId !== this.activeRequestId) return;
         this.activeCallbacks?.onProgress?.(message.result);
         break;
-      case "complete":
+      case "complete": {
         if (message.requestId !== this.activeRequestId) return;
-        this.activeCallbacks?.onComplete?.(message.result);
+        const callbacks = this.activeCallbacks;
         this.activeRequestId = null;
         this.activeCallbacks = null;
+        // Terminal callbacks may immediately start another analysis.
+        callbacks?.onComplete?.(message.result);
         break;
+      }
       case "error":
         if (message.requestId !== undefined && message.requestId !== this.activeRequestId) return;
-        this.activeCallbacks?.onError?.(new Error(message.message));
-        this.activeRequestId = null;
-        this.activeCallbacks = null;
+        this.handleWorkerError(new Error(message.message));
         break;
     }
   }

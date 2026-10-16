@@ -72,6 +72,37 @@ function createRunner(fakeWorker: FakeWorker): ReplayAnalysisRunner {
 }
 
 describe("ReplayAnalysisRunner", () => {
+  it.each(["complete", "error"] as const)("keeps an analysis started inside a %s callback active", (eventType) => {
+    const workers: FakeWorker[] = [];
+    const runner = new ReplayAnalysisRunner(() => {
+      const worker = new FakeWorker();
+      workers.push(worker);
+      return worker as unknown as Worker;
+    });
+    const onCancelled = vi.fn();
+    const nextComplete = vi.fn();
+    let nextRequestId = 0;
+    const startNext = () => {
+      nextRequestId = runner.analyze(localMatch(), { onComplete: nextComplete });
+    };
+    const requestId = runner.analyze(localMatch(), {
+      onCancelled,
+      onComplete: startNext,
+      onError: startNext,
+    });
+    workers[0].emit({ type: "ready" });
+    workers[0].emit(eventType === "complete"
+      ? { type: "complete", requestId, result: stepResult("resolved", true) }
+      : { type: "error", requestId, message: "Analysis failed" });
+    const nextWorker = workers[workers.length - 1];
+    nextWorker.emit({ type: "ready" });
+    nextWorker.emit({ type: "complete", requestId: nextRequestId, result: stepResult("resolved", true) });
+
+    expect(onCancelled).not.toHaveBeenCalled();
+    expect(nextComplete).toHaveBeenCalledOnce();
+    runner.dispose();
+  });
+
   it("queues analysis requests until the worker is ready", () => {
     const fakeWorker = new FakeWorker();
     const runner = createRunner(fakeWorker);
