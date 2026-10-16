@@ -66,6 +66,7 @@ export class ReadyQueueWorker<TRequest, TResponse extends { type: string }> {
         return;
       }
 
+      worker.terminate();
       this.worker = null;
       this.workerReady = false;
       this.outgoing = [];

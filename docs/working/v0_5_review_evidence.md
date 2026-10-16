@@ -295,3 +295,55 @@ when rule/analyzer semantics change, even if the payload shape stays compatible.
 Disposition: **fix/harden**. Native fmt/Clippy, all 347 workspace tests, and the
 rebuilt production Wasm passed. The integrated web suite passed 358 tests across
 38 files, including exact numeric names, old cache rejection and current Wasm.
+
+
+## Browser Cost and Worker Ownership
+
+An opt-in production profiling lane (`npm run profile:browser`) owns its preview
+on port 8012 and records host/browser/build identity, resources, page CPU rate,
+actual preset-worker samples and analysis/navigation memory. It stays outside
+the default CI lane and has diagnostic time caps, not flaky timing assertions.
+The workloads use legal published prefixes 4/12/20 from matches 65/577/1089,
+and complete game 65 for analysis. They are examples, not a worst-case proof.
+
+Measured on Ryzen 9 7900X / 24 logical CPUs, Chromium 156.0.8078.4, localhost
+production preview, at 1280 × 900:
+
+| Workload | Observation |
+|---|---|
+| Fresh Home / click to board state | 94 / 823 ms at normal page CPU; 324 / 513 ms at 6× page throttling |
+| Warm Home / click to board state | 32 / 839 ms normal; 169 / 503 ms throttled |
+| Local cold resources through board | 1,350,843 transferred / 3,040,912 decoded bytes; warm 7,800 / 649,617 |
+| Bot worker ready | 5.8–8.7 ms |
+| Easy first request, three positions | 9.6–10.9 ms |
+| Normal first request | 93.6 / 483 / 228.3 ms |
+| Hard first request | 238.4 / 2,250.3 / 370.8 ms |
+| Main-thread 16 ms heartbeat during worker requests | maximum observed gap 16.0–16.3 ms |
+| First analysis annotation / completion | 830 / 1,616 ms; repeat run 864 / 1,652 ms |
+| Cached analysis, 30 SPA navigation cycles | 58–124 ms; zero workers/canvases after returning Home |
+| Main JS heap after forced GC | 8.82 MB before; 10.48 / 11.07 / 11.35 / 11.59 MB after 5/10/20/30 cycles |
+
+Single startup samples include automation overhead; the throttle comparison is
+not evidence of a speedup or stable distribution. It applies to the page target,
+not assumed worker throttling, and localhost is not a mobile network. Identical
+position repeats benefit from warm transposition entries (Normal 5.5–8.9 ms,
+Hard 5–191.6 ms); do not present them as new-position latency. Main heap growth
+slows but these samples do not prove a plateau or measure worker/Wasm/GPU heap.
+Physical lower-powered-device acceptance remains pending.
+
+Disposition: **retain/refine** off-thread computation and lazy board loading.
+Use provisional diagnostic expectations of Home/board within 2 s locally,
+Normal new-position turns within 1 s, Hard within 3 s for this workload set,
+and useful/full short-ending analysis within 2/5 s. These are investigation
+triggers, not supported-device promises. Preserve visible thinking/progress and
+usable cancellation; collect real-device distributions before release claims.
+
+The lifecycle probes demonstrated two concrete resource issues. Repeated bot
+crashes left three workers alive; the error handler now terminates the failed
+thread before replacement (browser recovery leaves at most one). Replay cancel
+could only queue a message behind a synchronous Wasm step; it now terminates
+the active thread and creates another lazily for replacement work. Runner
+regressions failed before the change; idle completed workers can still be reused.
+The obsolete cooperative cancel protocol is removed. Disposition: **fix**.
+All 33 Chromium journeys passed after the integrated repairs (14.4 s), including
+touch, resize, analysis and repeated failure/retry.

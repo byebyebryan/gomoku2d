@@ -108,20 +108,28 @@ describe("ReplayAnalysisRunner", () => {
   });
 
   it("cancels the previous active request and ignores stale progress", () => {
-    const fakeWorker = new FakeWorker();
-    const runner = createRunner(fakeWorker);
+    const workers: FakeWorker[] = [];
+    const runner = new ReplayAnalysisRunner(() => {
+      const worker = new FakeWorker();
+      workers.push(worker);
+      return worker as unknown as Worker;
+    });
     const firstProgress = vi.fn();
     const secondProgress = vi.fn();
 
     const firstRequestId = runner.analyze(localMatch(), { onProgress: firstProgress });
-    fakeWorker.emit({ type: "ready" });
+    workers[0].emit({ type: "ready" });
     const secondRequestId = runner.analyze(localMatch(), { onProgress: secondProgress });
 
-    expect(fakeWorker.messages.map((message) => message.type)).toEqual(["analyze", "cancel", "analyze"]);
-    expect(fakeWorker.messages[1]).toMatchObject({ requestId: firstRequestId, type: "cancel" });
+    // A synchronous Wasm step cannot consume a cooperative cancel message.
+    // Replacing it must release the old thread before starting the next job.
+    expect(workers[0].terminated).toBe(true);
+    expect(workers).toHaveLength(2);
+    workers[1].emit({ type: "ready" });
+    expect(workers[1].messages).toMatchObject([{ requestId: secondRequestId, type: "analyze" }]);
 
-    fakeWorker.emit({ requestId: firstRequestId, result: stepResult("running", false), type: "progress" });
-    fakeWorker.emit({ requestId: secondRequestId, result: stepResult("running", false), type: "progress" });
+    workers[0].emit({ requestId: firstRequestId, result: stepResult("running", false), type: "progress" });
+    workers[1].emit({ requestId: secondRequestId, result: stepResult("running", false), type: "progress" });
 
     expect(firstProgress).not.toHaveBeenCalled();
     expect(secondProgress).toHaveBeenCalledOnce();
@@ -138,7 +146,7 @@ describe("ReplayAnalysisRunner", () => {
     runner.cancel();
     fakeWorker.emit({ requestId, result: stepResult("resolved", true), type: "complete" });
 
-    expect(fakeWorker.messages[fakeWorker.messages.length - 1]).toMatchObject({ requestId, type: "cancel" });
+    expect(fakeWorker.terminated).toBe(true);
     expect(onCancelled).toHaveBeenCalledOnce();
     expect(onComplete).not.toHaveBeenCalled();
   });

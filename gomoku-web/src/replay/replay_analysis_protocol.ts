@@ -162,19 +162,16 @@ export function replayAnalysisErrorResult(error: string): ReplayAnalysisStepResu
   };
 }
 
-export type ReplayAnalysisWorkerRequest =
-  | {
-      optionsJson: string;
-      replayJson: string;
-      requestId: number;
-      stepWorkUnits: number;
-      type: "analyze";
-    }
-  | { requestId: number; type: "cancel" };
+export type ReplayAnalysisWorkerRequest = {
+  optionsJson: string;
+  replayJson: string;
+  requestId: number;
+  stepWorkUnits: number;
+  type: "analyze";
+};
 
 export type ReplayAnalysisWorkerResponse =
   | { type: "ready" }
   | { requestId: number; result: ReplayAnalysisStepResult; type: "progress" }
   | { requestId: number; result: ReplayAnalysisStepResult; type: "complete" }
-  | { requestId: number; type: "cancelled" }
   | { message: string; requestId?: number; type: "error" };

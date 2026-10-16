@@ -17,8 +17,10 @@
   },
   "include": [
     "playtests/**/*.ts",
+    "perftests/**/*.ts",
     "tests/**/*.ts",
     "playwright.config.ts",
+    "playwright.profile.config.ts",
     "vite.config.ts",
     "vitest.rules.config.ts"
   ]

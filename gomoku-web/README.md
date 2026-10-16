@@ -118,6 +118,8 @@ npm run test:rules         # Firestore rules through Firebase emulators
 npm run build              # production build plus postbuild publishing
 npm run preview            # serve dist/ locally
 npm run playtest:smoke     # local/manual Playwright smoke
+npm run playtest:engines   # full Chromium, Firefox and WebKit journeys
+npm run profile:browser    # opt-in production browser cost/resource samples
 npm run media:readme       # regenerate README/showcase media from preview
 ```
 

@@ -21,6 +21,7 @@ release or after core/rules/search work, run the full relevant lane.
 | Local browser smoke | `(cd gomoku-web && PLAYWRIGHT_BASE_URL=http://127.0.0.1:8001 npm run playtest:smoke)` |
 | Full local browser flows | `(cd gomoku-web && npm run playtest)` |
 | Chromium / Firefox / WebKit flows | `(cd gomoku-web && npm run playtest:engines)` |
+| Opt-in browser profiling | `(cd gomoku-web && npm run profile:browser)` |
 
 Install the Rust audit command once with `cargo install cargo-audit --locked` if
 it is not already available.
@@ -33,6 +34,15 @@ preceding production build and retains failure screenshots/traces for seven days
 Install those engines with `npx playwright install --with-deps chromium firefox webkit`.
 Engine automation is distinct from physical mobile-browser acceptance. Real OAuth, cross-device continuity, and a real
 screen reader still require their own acceptance evidence.
+
+The profiling lane builds its own production preview on port 8012 and writes
+JSON under ignored `gomoku-bot-lab/outputs/browser-profile/`. Set
+`GOMOKU_PROFILE_OUTPUT` to retain it elsewhere. It records build/host identity,
+startup/assets, real preset workers, analysis/cache cost, and 30 navigation
+cycles. It uses Chromium CDP for page CPU throttling and main-heap metrics;
+worker/Wasm/GPU heap and physical-device performance require separate evidence.
+The [October review measurements](../../working/v0_5_review_evidence.md#browser-cost-and-worker-ownership)
+document the samples and their provisional diagnostic expectations.
 
 ## Dependency Maintenance
 

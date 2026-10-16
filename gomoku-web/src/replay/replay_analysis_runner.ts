@@ -78,9 +78,11 @@ export class ReplayAnalysisRunner {
     const callbacks = this.activeCallbacks;
     if (requestId === null) return;
 
-    this.send({ requestId, type: "cancel" });
     this.activeRequestId = null;
     this.activeCallbacks = null;
+    // A Wasm proof step is synchronous. Termination also interrupts that step,
+    // and the queue creates a fresh worker only when another job is posted.
+    this.worker.terminate();
     if (notify) {
       callbacks?.onCancelled?.();
     }
@@ -104,12 +106,6 @@ export class ReplayAnalysisRunner {
       case "complete":
         if (message.requestId !== this.activeRequestId) return;
         this.activeCallbacks?.onComplete?.(message.result);
-        this.activeRequestId = null;
-        this.activeCallbacks = null;
-        break;
-      case "cancelled":
-        if (message.requestId !== this.activeRequestId) return;
-        this.activeCallbacks?.onCancelled?.();
         this.activeRequestId = null;
         this.activeCallbacks = null;
         break;

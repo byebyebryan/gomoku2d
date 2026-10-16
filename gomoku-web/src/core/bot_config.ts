@@ -1,4 +1,4 @@
-import type { BotSpec, CorridorProofSpec } from "./bot_protocol";
+import type { BotSpec, CorridorProofSpec } from "./bot_protocol.js";
 
 export type BotPresetId = "easy" | "normal" | "hard";
 export type BotDepth = 1 | 3 | 5 | 7;

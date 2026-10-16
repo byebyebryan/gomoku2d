@@ -23,15 +23,12 @@ function freeAnalyzer(analyzer: WasmReplayAnalyzer): void {
   analyzer.free();
 }
 
-function cancelActiveAnalysis(postCancellation: boolean): void {
+function freeActiveAnalysis(): void {
   const active = activeAnalysis;
   if (!active) return;
 
   activeAnalysis = null;
   freeAnalyzer(active.analyzer);
-  if (postCancellation) {
-    postMessage({ requestId: active.requestId, type: "cancelled" });
-  }
 }
 
 function parseStepResult(json: string): ReplayAnalysisStepResult {
@@ -52,13 +49,13 @@ function runStep(active: ActiveAnalysis): void {
     });
 
     if (result.done) {
-      cancelActiveAnalysis(false);
+      freeActiveAnalysis();
       return;
     }
 
     workerScope.setTimeout(() => runStep(active), 0);
   } catch (error) {
-    cancelActiveAnalysis(false);
+    freeActiveAnalysis();
     postMessage({
       message: error instanceof Error ? error.message : String(error),
       requestId: active.requestId,
@@ -68,7 +65,7 @@ function runStep(active: ActiveAnalysis): void {
 }
 
 function handleAnalyze(message: Extract<ReplayAnalysisWorkerRequest, { type: "analyze" }>): void {
-  cancelActiveAnalysis(true);
+  freeActiveAnalysis();
 
   try {
     const analyzer = WasmReplayAnalyzer.createFromReplayJson(message.replayJson, message.optionsJson);
@@ -89,18 +86,7 @@ function handleAnalyze(message: Extract<ReplayAnalysisWorkerRequest, { type: "an
 }
 
 workerScope.addEventListener("message", (event: MessageEvent<ReplayAnalysisWorkerRequest>) => {
-  const message = event.data;
-
-  switch (message.type) {
-    case "analyze":
-      handleAnalyze(message);
-      break;
-    case "cancel":
-      if (activeAnalysis?.requestId === message.requestId) {
-        cancelActiveAnalysis(true);
-      }
-      break;
-  }
+  handleAnalyze(event.data);
 });
 
 postMessage({ type: "ready" });
