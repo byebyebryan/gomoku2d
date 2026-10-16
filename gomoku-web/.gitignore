@@ -1,5 +1,7 @@
 node_modules/
 dist/
+dist-cloud/
+firebase-debug.log
 playwright-report/
 test-results/
 firestore-debug.log

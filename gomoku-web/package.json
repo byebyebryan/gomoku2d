@@ -22,6 +22,7 @@
     "typecheck": "tsc --noEmit && npm run typecheck:scripts && tsc --project tsconfig.tools.json",
     "typecheck:scripts": "tsc --allowJs --checkJs --noEmit --module NodeNext --moduleResolution NodeNext --target ES2022 --types node --ignoreConfig scripts/*.mjs",
     "test:rules": "firebase emulators:exec --project demo-gomoku2d-rules-test --only firestore --config ../firebase.json \"vitest run --config vitest.rules.config.ts\"",
+    "test:cloud": "node scripts/run_cloud_acceptance.mjs",
     "playtest": "playwright test",
     "playtest:engines": "playwright test --browser=all",
     "profile:browser": "playwright test --config playwright.profile.config.ts",

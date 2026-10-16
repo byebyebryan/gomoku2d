@@ -29,8 +29,8 @@ a broader workload set? Findings drive small repairs within those contracts.
 
 | Stage | Work | Exit evidence | State |
 |---|---|---|---|
-| 1 | Build the isolated cloud harness and one signed-in round trip | Application signs in through emulated Auth, writes through the real SDK/rules, and restores state in a second browser context | in progress |
-| 2 | Complete the cloud continuity and failure matrix | Named assertions, emulator document readback, and repeatable recovery/isolation results | planned |
+| 1 | Build the isolated cloud harness and one signed-in round trip | Application signs in through emulated Auth, writes through the real SDK/rules, and restores state in a second browser context | complete; Chromium/Firefox smoke passed; three-engine CI added |
+| 2 | Complete the cloud continuity and failure matrix | Named assertions, emulator document readback, and repeatable recovery/isolation results | in progress |
 | 3 | Expand and run production Wasm workloads | Reproducible cold/warm distributions, slow-case records, cancellation and cleanup evidence | planned |
 | 4 | Repair demonstrated failures, integrate checks, and close the extension | Affected regressions pass, appropriate full gates pass, and every finding has a disposition | planned |
 
@@ -46,7 +46,8 @@ Add an explicit emulator mode to `gomoku-web/src/cloud/firebase.ts`, a separate
 cloud Playwright configuration/test directory, and an owned runner. Proposed
 files are `playwright.cloud.config.ts`, `cloudtests/`, a dedicated Firebase
 acceptance config, and `scripts/run_cloud_acceptance.mjs`. Include the new tools
-in `tsconfig.tools.json`. These files/commands do not exist yet.
+in `tsconfig.tools.json`. The initial harness and `npm run test:cloud` now exist;
+the [evidence ledger](v0_5_unattended_evidence.md) records execution.
 
 The runner will:
 
