@@ -569,3 +569,33 @@ Wasm bridge dependency. Both pass in the full 36-journey local Chromium suite;
 typecheck/build passed. Verify both in all engines. Existing browser timing
 samples predate this build choice; real-network/device performance remains a
 release acceptance gate.
+
+
+### Final Build Browser Profile
+
+The [committed measurement JSON](assets/browser-profile-2026-10-15.json) records
+all four profiling workloads after the WebKit build refinement: clean source
+`c5bc3d2`, bundle SHA-256
+`24ce131b55c9415c17ecbd5d127a8748b0fc66fb76ce128698fa09f13535b0b6`,
+the same host/Chromium and local-preview conditions. All four scenarios passed
+in 22.2 s. This is a current reproducible development sample, not a production
+network or physical-device measurement.
+
+| Final workload | Observation |
+|---|---|
+| Fresh / warm Home, normal CPU | 94 / 32 ms |
+| Click to board state, normal CPU | 816 / 843 ms |
+| Fresh / warm Home, 6× page CPU | 336 / 179 ms |
+| Click to board state, 6× page CPU | 488 / 453 ms |
+| Normal first worker requests | 100.5 / 505.2 / 232.8 ms |
+| Hard first worker requests | 256.5 / 2,353.5 / 387.9 ms |
+| Useful / complete short-ending analysis | 813 / 1,597 ms |
+| Cached analysis, 30 cycles | 60–135 ms; zero workers/canvases after Home |
+| Forced-GC page heap before / cycles 5/10/20/30 | 8.80 / 10.56 / 10.30 / 11.36 / 10.54 MB |
+
+The samples remain within the provisional desktop investigation budgets. Heap
+fluctuates within the later band rather than growing at every checkpoint; it
+still excludes worker/Wasm/GPU heap. Identical-position TT repeats and page-only
+CPU throttling retain the earlier interpretation limits. Dynamic preload changes
+show no material local startup increase in this sample; test real-network/mobile
+latency before making a broader performance promise.

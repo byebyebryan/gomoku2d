@@ -1,0 +1,943 @@
+{
+  "generatedAt": "2026-10-16T01:02:13.143Z",
+  "gitCommit": "c5bc3d2c2bc17486d9631ec8ff71e62d349a00eb",
+  "dirty": false,
+  "bundleSha256": "24ce131b55c9415c17ecbd5d127a8748b0fc66fb76ce128698fa09f13535b0b6",
+  "browser": "156.0.8078.4",
+  "host": {
+    "platform": "linux",
+    "release": "7.2.9-arch1-1",
+    "cpu": "AMD Ryzen 9 7900X 12-Core Processor",
+    "logicalCpus": 24
+  },
+  "notes": [
+    "localhost production preview; no internet/network throttling",
+    "fresh contexts and warm repeats, not a physical slow device",
+    "CPU throttling applies to the page target; worker slowdown is not assumed",
+    "diagnostic workload samples, not timing assertions or strength evidence"
+  ],
+  "measurements": [
+    {
+      "kind": "startup",
+      "phase": "fresh-context",
+      "cpuRate": 1,
+      "homeMs": 94.36514799999998,
+      "boardStateReadyMs": 815.7549110000001,
+      "assets": [
+        {
+          "path": "/assets/index-BBHDJbNR.js",
+          "transfer": 68493,
+          "decoded": 221689
+        },
+        {
+          "path": "/assets/rolldown-runtime-XKyaHtl9.js",
+          "transfer": 1026,
+          "decoded": 726
+        },
+        {
+          "path": "/assets/jsx-runtime-Ckec-Cn1.js",
+          "transfer": 17545,
+          "decoded": 48767
+        },
+        {
+          "path": "/assets/bot_config-BQyrbE-n.js",
+          "transfer": 1215,
+          "decoded": 2408
+        },
+        {
+          "path": "/assets/constants-DKcsxR6O.js",
+          "transfer": 1413,
+          "decoded": 2717
+        },
+        {
+          "path": "/assets/saved_match-BBH_1WDD.js",
+          "transfer": 1750,
+          "decoded": 3771
+        },
+        {
+          "path": "/assets/Icon-CofYd1oN.js",
+          "transfer": 169388,
+          "decoded": 594719
+        },
+        {
+          "path": "/assets/cloud_promotion_store-DoQur_mq.js",
+          "transfer": 1509,
+          "decoded": 3019
+        },
+        {
+          "path": "/assets/links-dgpv3VTZ.js",
+          "transfer": 363,
+          "decoded": 63
+        },
+        {
+          "path": "/assets/cloud_sync-Bd2M49P3.js",
+          "transfer": 1058,
+          "decoded": 1957
+        },
+        {
+          "path": "/assets/index-CIVSmAfG.css",
+          "transfer": 2639,
+          "decoded": 7695
+        },
+        {
+          "path": "/assets/sequence_font-BHmT62ms.js",
+          "transfer": 574,
+          "decoded": 274
+        },
+        {
+          "path": "/assets/PixelOperator8-Bold-DQXNZxi5.ttf",
+          "transfer": 18924,
+          "decoded": 18624
+        },
+        {
+          "path": "/assets/PixelOperator-Bold-CLeLR2Kg.ttf",
+          "transfer": 17284,
+          "decoded": 16984
+        },
+        {
+          "path": "/assets/PixelOperator-C4gCAeI2.ttf",
+          "transfer": 17572,
+          "decoded": 17272
+        },
+        {
+          "path": "/assets/Board-ev2mndZK.css",
+          "transfer": 1063,
+          "decoded": 763
+        },
+        {
+          "path": "/assets/LocalMatchRoute-jEMs5th3.css",
+          "transfer": 1908,
+          "decoded": 6050
+        },
+        {
+          "path": "/assets/LocalMatchRoute-CyvFGTxw.js",
+          "transfer": 3712,
+          "decoded": 11019
+        },
+        {
+          "path": "/assets/board_model-CZzAtTO9.js",
+          "transfer": 720,
+          "decoded": 1185
+        },
+        {
+          "path": "/assets/Board-BO8k3ANk.js",
+          "transfer": 373946,
+          "decoded": 1418860
+        },
+        {
+          "path": "/assets/local_replay-DPM-3bM0.js",
+          "transfer": 913,
+          "decoded": 1287
+        },
+        {
+          "path": "/assets/local_match_session-GLlmOq_f.js",
+          "transfer": 3720,
+          "decoded": 9224
+        },
+        {
+          "path": "/assets/wasm_bridge-Dn-XC-wI.js",
+          "transfer": 3681,
+          "decoded": 11673
+        },
+        {
+          "path": "/assets/ready_queue_worker-C9z-rPKP.js",
+          "transfer": 697,
+          "decoded": 1083
+        },
+        {
+          "path": "/assets/gomoku_wasm_bg-CckJkYUu.wasm",
+          "transfer": 637081,
+          "decoded": 636781
+        },
+        {
+          "path": "/assets/bot_worker-qceE-vPe.js",
+          "transfer": 3705,
+          "decoded": 11239
+        }
+      ]
+    },
+    {
+      "kind": "startup",
+      "phase": "warm-reload",
+      "cpuRate": 1,
+      "homeMs": 32.36202500000013,
+      "boardStateReadyMs": 842.643331,
+      "assets": [
+        {
+          "path": "/assets/index-BBHDJbNR.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/rolldown-runtime-XKyaHtl9.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/jsx-runtime-Ckec-Cn1.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/bot_config-BQyrbE-n.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/constants-DKcsxR6O.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/saved_match-BBH_1WDD.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/Icon-CofYd1oN.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/cloud_promotion_store-DoQur_mq.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/cloud_sync-Bd2M49P3.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/links-dgpv3VTZ.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/index-CIVSmAfG.css",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/sequence_font-BHmT62ms.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/PixelOperator8-Bold-DQXNZxi5.ttf",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/PixelOperator-Bold-CLeLR2Kg.ttf",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/PixelOperator-C4gCAeI2.ttf",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/Board-ev2mndZK.css",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/LocalMatchRoute-jEMs5th3.css",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/LocalMatchRoute-CyvFGTxw.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/Board-BO8k3ANk.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/board_model-CZzAtTO9.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/local_match_session-GLlmOq_f.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/local_replay-DPM-3bM0.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/wasm_bridge-Dn-XC-wI.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/ready_queue_worker-C9z-rPKP.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/gomoku_wasm_bg-CckJkYUu.wasm",
+          "transfer": 300,
+          "decoded": 636781
+        },
+        {
+          "path": "/assets/bot_worker-qceE-vPe.js",
+          "transfer": 300,
+          "decoded": 11239
+        }
+      ]
+    },
+    {
+      "kind": "startup",
+      "phase": "fresh-context",
+      "cpuRate": 6,
+      "homeMs": 335.89919899999995,
+      "boardStateReadyMs": 488.4607339999998,
+      "assets": [
+        {
+          "path": "/assets/jsx-runtime-Ckec-Cn1.js",
+          "transfer": 17545,
+          "decoded": 48767
+        },
+        {
+          "path": "/assets/rolldown-runtime-XKyaHtl9.js",
+          "transfer": 1026,
+          "decoded": 726
+        },
+        {
+          "path": "/assets/index-BBHDJbNR.js",
+          "transfer": 68493,
+          "decoded": 221689
+        },
+        {
+          "path": "/assets/bot_config-BQyrbE-n.js",
+          "transfer": 1215,
+          "decoded": 2408
+        },
+        {
+          "path": "/assets/saved_match-BBH_1WDD.js",
+          "transfer": 1750,
+          "decoded": 3771
+        },
+        {
+          "path": "/assets/constants-DKcsxR6O.js",
+          "transfer": 1413,
+          "decoded": 2717
+        },
+        {
+          "path": "/assets/Icon-CofYd1oN.js",
+          "transfer": 169388,
+          "decoded": 594719
+        },
+        {
+          "path": "/assets/cloud_promotion_store-DoQur_mq.js",
+          "transfer": 1509,
+          "decoded": 3019
+        },
+        {
+          "path": "/assets/cloud_sync-Bd2M49P3.js",
+          "transfer": 1058,
+          "decoded": 1957
+        },
+        {
+          "path": "/assets/index-CIVSmAfG.css",
+          "transfer": 2639,
+          "decoded": 7695
+        },
+        {
+          "path": "/assets/links-dgpv3VTZ.js",
+          "transfer": 363,
+          "decoded": 63
+        },
+        {
+          "path": "/assets/sequence_font-BHmT62ms.js",
+          "transfer": 574,
+          "decoded": 274
+        },
+        {
+          "path": "/assets/PixelOperator8-Bold-DQXNZxi5.ttf",
+          "transfer": 18924,
+          "decoded": 18624
+        },
+        {
+          "path": "/assets/PixelOperator-Bold-CLeLR2Kg.ttf",
+          "transfer": 17284,
+          "decoded": 16984
+        },
+        {
+          "path": "/assets/PixelOperator-C4gCAeI2.ttf",
+          "transfer": 17572,
+          "decoded": 17272
+        },
+        {
+          "path": "/assets/Board-ev2mndZK.css",
+          "transfer": 1063,
+          "decoded": 763
+        },
+        {
+          "path": "/assets/LocalMatchRoute-jEMs5th3.css",
+          "transfer": 1908,
+          "decoded": 6050
+        },
+        {
+          "path": "/assets/LocalMatchRoute-CyvFGTxw.js",
+          "transfer": 3712,
+          "decoded": 11019
+        },
+        {
+          "path": "/assets/board_model-CZzAtTO9.js",
+          "transfer": 720,
+          "decoded": 1185
+        },
+        {
+          "path": "/assets/local_match_session-GLlmOq_f.js",
+          "transfer": 3720,
+          "decoded": 9224
+        },
+        {
+          "path": "/assets/Board-BO8k3ANk.js",
+          "transfer": 373946,
+          "decoded": 1418860
+        },
+        {
+          "path": "/assets/local_replay-DPM-3bM0.js",
+          "transfer": 913,
+          "decoded": 1287
+        },
+        {
+          "path": "/assets/ready_queue_worker-C9z-rPKP.js",
+          "transfer": 697,
+          "decoded": 1083
+        },
+        {
+          "path": "/assets/wasm_bridge-Dn-XC-wI.js",
+          "transfer": 3681,
+          "decoded": 11673
+        },
+        {
+          "path": "/assets/gomoku_wasm_bg-CckJkYUu.wasm",
+          "transfer": 637081,
+          "decoded": 636781
+        },
+        {
+          "path": "/assets/bot_worker-qceE-vPe.js",
+          "transfer": 3705,
+          "decoded": 11239
+        }
+      ]
+    },
+    {
+      "kind": "startup",
+      "phase": "warm-reload",
+      "cpuRate": 6,
+      "homeMs": 179.3017759999998,
+      "boardStateReadyMs": 453.49120200000016,
+      "assets": [
+        {
+          "path": "/assets/index-BBHDJbNR.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/rolldown-runtime-XKyaHtl9.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/jsx-runtime-Ckec-Cn1.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/bot_config-BQyrbE-n.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/constants-DKcsxR6O.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/saved_match-BBH_1WDD.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/Icon-CofYd1oN.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/cloud_promotion_store-DoQur_mq.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/cloud_sync-Bd2M49P3.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/links-dgpv3VTZ.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/sequence_font-BHmT62ms.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/index-CIVSmAfG.css",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/PixelOperator8-Bold-DQXNZxi5.ttf",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/PixelOperator-Bold-CLeLR2Kg.ttf",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/PixelOperator-C4gCAeI2.ttf",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/Board-ev2mndZK.css",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/LocalMatchRoute-jEMs5th3.css",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/LocalMatchRoute-CyvFGTxw.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/Board-BO8k3ANk.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/board_model-CZzAtTO9.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/local_match_session-GLlmOq_f.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/local_replay-DPM-3bM0.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/wasm_bridge-Dn-XC-wI.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/ready_queue_worker-C9z-rPKP.js",
+          "transfer": 300,
+          "decoded": 0
+        },
+        {
+          "path": "/assets/gomoku_wasm_bg-CckJkYUu.wasm",
+          "transfer": 300,
+          "decoded": 636781
+        },
+        {
+          "path": "/assets/bot_worker-qceE-vPe.js",
+          "transfer": 300,
+          "decoded": 11239
+        }
+      ]
+    },
+    {
+      "kind": "bot",
+      "preset": "easy",
+      "matchIndex": 65,
+      "prefix": 4,
+      "readyMs": 12.400000005960464,
+      "samples": [
+        {
+          "durationMs": 10.800000011920929,
+          "timeout": false,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        },
+        {
+          "durationMs": 4.9000000059604645,
+          "timeout": false,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        },
+        {
+          "durationMs": 4.899999976158142,
+          "timeout": false,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        }
+      ],
+      "maxMainThreadHeartbeatGapMs": 16
+    },
+    {
+      "kind": "bot",
+      "preset": "easy",
+      "matchIndex": 577,
+      "prefix": 12,
+      "readyMs": 6.700000017881393,
+      "samples": [
+        {
+          "durationMs": 11.199999988079071,
+          "timeout": false,
+          "move": {
+            "row": 4,
+            "col": 4
+          }
+        },
+        {
+          "durationMs": 5.200000017881393,
+          "timeout": false,
+          "move": {
+            "row": 4,
+            "col": 4
+          }
+        },
+        {
+          "durationMs": 4.899999976158142,
+          "timeout": false,
+          "move": {
+            "row": 4,
+            "col": 4
+          }
+        }
+      ],
+      "maxMainThreadHeartbeatGapMs": 16
+    },
+    {
+      "kind": "bot",
+      "preset": "easy",
+      "matchIndex": 1089,
+      "prefix": 20,
+      "readyMs": 6.399999976158142,
+      "samples": [
+        {
+          "durationMs": 11.900000005960464,
+          "timeout": false,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        },
+        {
+          "durationMs": 5.700000017881393,
+          "timeout": false,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        },
+        {
+          "durationMs": 5.399999976158142,
+          "timeout": false,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        }
+      ],
+      "maxMainThreadHeartbeatGapMs": 16.099999994039536
+    },
+    {
+      "kind": "bot",
+      "preset": "normal",
+      "matchIndex": 65,
+      "prefix": 4,
+      "readyMs": 6.300000011920929,
+      "samples": [
+        {
+          "durationMs": 100.5,
+          "timeout": false,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        },
+        {
+          "durationMs": 6.800000011920929,
+          "timeout": false,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        },
+        {
+          "durationMs": 6.699999988079071,
+          "timeout": false,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        }
+      ],
+      "maxMainThreadHeartbeatGapMs": 16.100000023841858
+    },
+    {
+      "kind": "bot",
+      "preset": "normal",
+      "matchIndex": 577,
+      "prefix": 12,
+      "readyMs": 6.5999999940395355,
+      "samples": [
+        {
+          "durationMs": 505.19999998807907,
+          "timeout": false,
+          "move": {
+            "row": 4,
+            "col": 8
+          }
+        },
+        {
+          "durationMs": 9.200000017881393,
+          "timeout": false,
+          "move": {
+            "row": 4,
+            "col": 8
+          }
+        },
+        {
+          "durationMs": 9,
+          "timeout": false,
+          "move": {
+            "row": 4,
+            "col": 8
+          }
+        }
+      ],
+      "maxMainThreadHeartbeatGapMs": 16.099999994039536
+    },
+    {
+      "kind": "bot",
+      "preset": "normal",
+      "matchIndex": 1089,
+      "prefix": 20,
+      "readyMs": 7.4000000059604645,
+      "samples": [
+        {
+          "durationMs": 232.80000001192093,
+          "timeout": false,
+          "move": {
+            "row": 8,
+            "col": 4
+          }
+        },
+        {
+          "durationMs": 6.0999999940395355,
+          "timeout": false,
+          "move": {
+            "row": 8,
+            "col": 4
+          }
+        },
+        {
+          "durationMs": 5.699999988079071,
+          "timeout": false,
+          "move": {
+            "row": 8,
+            "col": 4
+          }
+        }
+      ],
+      "maxMainThreadHeartbeatGapMs": 16.099999994039536
+    },
+    {
+      "kind": "bot",
+      "preset": "hard",
+      "matchIndex": 65,
+      "prefix": 4,
+      "readyMs": 7.4000000059604645,
+      "samples": [
+        {
+          "durationMs": 256.5,
+          "timeout": false,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        },
+        {
+          "durationMs": 5.300000011920929,
+          "timeout": false,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        },
+        {
+          "durationMs": 5.5,
+          "timeout": false,
+          "move": {
+            "row": 5,
+            "col": 7
+          }
+        }
+      ],
+      "maxMainThreadHeartbeatGapMs": 16.099999994039536
+    },
+    {
+      "kind": "bot",
+      "preset": "hard",
+      "matchIndex": 577,
+      "prefix": 12,
+      "readyMs": 7.5999999940395355,
+      "samples": [
+        {
+          "durationMs": 2353.5,
+          "timeout": false,
+          "move": {
+            "row": 4,
+            "col": 8
+          }
+        },
+        {
+          "durationMs": 6.0999999940395355,
+          "timeout": false,
+          "move": {
+            "row": 4,
+            "col": 8
+          }
+        },
+        {
+          "durationMs": 6.0999999940395355,
+          "timeout": false,
+          "move": {
+            "row": 4,
+            "col": 8
+          }
+        }
+      ],
+      "maxMainThreadHeartbeatGapMs": 16.099999994039536
+    },
+    {
+      "kind": "bot",
+      "preset": "hard",
+      "matchIndex": 1089,
+      "prefix": 20,
+      "readyMs": 6.4000000059604645,
+      "samples": [
+        {
+          "durationMs": 387.90000000596046,
+          "timeout": false,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        },
+        {
+          "durationMs": 198.2999999821186,
+          "timeout": false,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        },
+        {
+          "durationMs": 199.60000002384186,
+          "timeout": false,
+          "move": {
+            "row": 8,
+            "col": 7
+          }
+        }
+      ],
+      "maxMainThreadHeartbeatGapMs": 16.099999994039536
+    },
+    {
+      "kind": "analysis",
+      "matchIndex": 65,
+      "firstAnnotationMs": 813.2594279999994,
+      "completeMs": 1596.7397170000004,
+      "status": "WHITE HAS WON",
+      "warmMs": [
+        73.67442599999958,
+        134.66560400000162,
+        112.81363799999963,
+        111.39214199999878,
+        89.44304999999986,
+        90.00594900000033,
+        60.86080999999831,
+        87.80433900000025,
+        119.81089199999951,
+        124.43209200000092,
+        70.70990199999869,
+        85.98778599999969,
+        114.00204499999927,
+        123.46454300000005,
+        60.667954000000464,
+        111.67156500000056,
+        114.33088399999906,
+        112.1502359999995,
+        108.60260599999856,
+        110.96180500000082,
+        84.87305299999935,
+        108.20650699999896,
+        60.57040499999857,
+        111.02731700000004,
+        122.63407999999981,
+        60.07898799999748,
+        111.03349600000001,
+        122.32769700000063,
+        114.0527089999996,
+        111.87695800000074
+      ],
+      "workerCountAfterCycles": 0,
+      "mainHeapBefore": 8804320,
+      "heapMilestones": [
+        {
+          "cycle": 5,
+          "bytes": 10562328
+        },
+        {
+          "cycle": 10,
+          "bytes": 10299104
+        },
+        {
+          "cycle": 20,
+          "bytes": 11356744
+        },
+        {
+          "cycle": 30,
+          "bytes": 10536976
+        }
+      ],
+      "heapScope": "page JS heap after forced GC across SPA cycles; excludes worker/Wasm/GPU memory"
+    }
+  ]
+}
