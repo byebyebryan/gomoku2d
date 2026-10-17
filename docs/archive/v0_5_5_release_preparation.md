@@ -35,7 +35,14 @@ homepage, topics, license and CI badge. It corrected:
 - public-doc navigation and the distinction between historical Lab data,
   editorial drafts and current release evidence.
 
-Validation covered 89 tracked Markdown files, 269 local paths/anchors and 11
+The focused README proposal was then adopted: a clearer invitation to play,
+confirmed/possible analysis language, and a shorter project status. It uses all
+four showcase animations, the existing local setup and the personal project
+story. The existing `gomoku-web/public/og.png` artwork is now the GitHub
+repository social preview, verified in Settings and through
+`usesCustomOpenGraphImage: true` API readback.
+
+Validation covered 89 tracked Markdown files, 267 local paths/anchors and 11
 public navigation, badge and release URLs, with no broken links found. This
 pass comprises Markdown and template changes; the existing media source identity
 above still describes the captured application/version inputs.

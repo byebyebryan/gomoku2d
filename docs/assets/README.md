@@ -27,6 +27,11 @@ Tracked outputs:
   preview images combining a separate board-only replay-branch capture with the
   project title and tagline.
 
+The OG artwork is also uploaded as the GitHub repository's social preview.
+GitHub stores its own copy; refresh it in repository Settings → General →
+Social preview when changing the artwork. See
+[GitHub's upload instructions](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/customizing-your-repositorys-social-media-preview).
+
 Regenerate the README media from a production preview:
 
 ```sh

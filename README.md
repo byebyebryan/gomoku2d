@@ -2,12 +2,12 @@
 
 *An old favorite, built properly.*
 
-Gomoku2D is a local-first browser Gomoku/Renju game built around one loop: play
-a match, then work out why it ended that way. A retro board sits on top of a
-Rust/WebAssembly rules core, configurable search bots, tactical hints, and
-Replay Analysis that shows where a loss became forced.
+Play Gomoku and Renju in your browser, review how a game turned, and try
+another line. Gomoku2D combines configurable bots, tactical hints, replay
+analysis, and practice from earlier positions.
 
-[Play](https://gomoku2d.byebyebryan.com/) ·
+**[Play in your browser](https://gomoku2d.byebyebryan.com/)** — no account required.
+
 [Rules](https://gomoku2d.byebyebryan.com/rules/) ·
 [Guide](https://gomoku2d.byebyebryan.com/guide/) ·
 [Lab](https://gomoku2d.byebyebryan.com/lab/) ·
@@ -31,19 +31,19 @@ and [Project status](#project-status).
 - Play on desktop or portrait mobile with dedicated touch controls.
 - Keep history locally, or sign in with Google for private cloud continuity.
 
-The aim is not the strongest possible Gomoku engine. It is a competent,
-inspectable opponent whose decisions connect to the same tactical language used
-by hints, replays, and the lab.
+Bot decisions use the same tactical model as hints, replays, and the lab, so
+you can examine the threats behind a move.
 
 ## Analyze
 
-A finished game is more than a move list. Replay Analysis starts from the ending
-and walks backward through the losing side's decisions:
+Replay Analysis walks backward from the ending through the losing side's
+decisions. It looks for forcing sequences and possible alternatives within a
+bounded tactical model:
 
 - **Combo onset:** the lethal threat that settled the result.
 - **Setup corridor:** the forced sequence that led into that threat.
-- **Last escape:** the final position where another move could still avoid the
-  loss.
+- **Last escape:** the latest position where the model finds a confirmed or
+  possible escape.
 - **Failure step:** the missed response, prevention, or escape when the analyzer
   can classify one.
 
@@ -57,10 +57,9 @@ a possible escape still needs verification. It is not a full-game solution.
 
 ## Inspect The System
 
-The Rust lab is not a separate benchmark toy. It produces the browser bot, the
-Replay Analysis model, and the tactical vocabulary shared by the game. Its
-published report exposes rankings, search telemetry, and analyzed games rather
-than reducing the result to a single strength number.
+The Rust lab powers the browser bot, Replay Analysis, and the tactical
+vocabulary shared by the game. The published report lets you inspect bot
+rankings, search telemetry, and analyzed games.
 
 The curated report data retains its historical measurement dates and source
 provenance.
@@ -117,22 +116,16 @@ lists checks by area.
 
 ## Project Status
 
-`0.5.5` packages the completed October reconciliation. See
-[GitHub Releases](https://github.com/byebyebryan/gomoku2d/releases/latest) for the
-currently published build and the [release preparation record](docs/archive/v0_5_5_release_preparation.md)
-for this candidate. The review extended the `0.5.x` line with correctness,
-persistence, recovery, accessibility, and maintenance fixes. The review is
-complete, including the selected mobile Rules/Guide layout refinement; the
-existing UI and copy remain the chosen direction.
+The `0.5.x` line packages the local-play and replay-analysis baseline.
+`0.5.5` includes the October correctness, recovery, accessibility, and mobile
+Rules/Guide fixes.
 
-These changes are recorded in [0.5.5](CHANGELOG.md#055---2026-10-16).
-Pushing `main` runs CI; a release tag or explicit deployment is required to
-publish the site. Real-account, physical-device, and human accessibility checks
-remain explicitly deferred in the [review closeout](docs/archive/reconciliation_2026_10/README.md).
-The [unattended follow-up](docs/archive/reconciliation_2026_10/v0_5_unattended_evidence.md)
-adds two-client cloud-emulator acceptance and broader production Wasm evidence.
-Future feature work starts with a fresh design checkpoint in the
-[roadmap](docs/reference/product/roadmap.md).
+[Published releases](https://github.com/byebyebryan/gomoku2d/releases/latest) ·
+[Changelog](CHANGELOG.md#055---2026-10-16) ·
+[Roadmap](docs/reference/product/roadmap.md)
+
+Verification evidence and the agreed account, device, and human accessibility
+deferrals are recorded in the [release preparation record](docs/archive/v0_5_5_release_preparation.md).
 
 ## Project References
 
