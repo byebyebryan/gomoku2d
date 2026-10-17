@@ -1,6 +1,6 @@
 # Process Story Archive
 
-Status: parked private source material. This archive is not a release
+Status: parked editorial drafts. This archive is not a release
 dependency, canonical product documentation, or publish-ready copy.
 
 Start with [`Process Story Mining`](process_story.md) for the extraction

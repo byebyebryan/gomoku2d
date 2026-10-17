@@ -127,7 +127,7 @@ Use this pack for:
 
 - validating extracted RenjuNet fixture labels against external code;
 - reviewing apparent-three/apparent-four edge cases;
-- feeding the promoted golden corpus in `docs/renju_corpus.md`;
+- feeding the promoted golden corpus in `docs/reference/corpora/renju_corpus.md`;
 - comparing future extraction changes against known tutorial examples.
 
 Do not put Gomoku2D implementation checks in this folder. They belong in the

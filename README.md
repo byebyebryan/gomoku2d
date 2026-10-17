@@ -62,6 +62,9 @@ Replay Analysis model, and the tactical vocabulary shared by the game. Its
 published report exposes rankings, search telemetry, and analyzed games rather
 than reducing the result to a single strength number.
 
+The curated report data retains its historical measurement dates and source
+provenance.
+
 ![The Lab report drills into bot rankings, search telemetry, and replay analysis examples.](docs/assets/readme-lab.gif)
 
 The Visuals guide publishes the other half of the system: pixel sprites, icons,
@@ -128,7 +131,7 @@ publish the site. Real-account, physical-device, and human accessibility checks
 remain explicitly deferred in the [review closeout](docs/archive/reconciliation_2026_10/README.md).
 The [unattended follow-up](docs/archive/reconciliation_2026_10/v0_5_unattended_evidence.md)
 adds two-client cloud-emulator acceptance and broader production Wasm evidence.
-The next release and feature direction are separate decisions in the
+Future feature work starts with a fresh design checkpoint in the
 [roadmap](docs/reference/product/roadmap.md).
 
 ## Project References

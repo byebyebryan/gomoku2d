@@ -1,21 +1,14 @@
-## What
+## Change
 
-<!-- One or two sentences on the change. -->
+<!-- What changes for players or maintainers, and why? Link an issue if relevant. -->
 
-## Why
+## Verification
 
-<!-- The motivation — bug, feature, doc drift, cleanup. Link issues if any. -->
+<!-- List the relevant automated commands and results, or link the CI run.
+Use docs/reference/ops/testing.md for the current command matrix.
+For visible changes, include screenshots or capture evidence.
+List relevant account/device/accessibility checks performed and retained acceptance limits. -->
 
-## Verified by
+## Follow-up
 
-<!-- How the change was tested. Delete lines that don't apply. -->
-
-- [ ] `cargo fmt --check` / `cargo clippy` / `cargo test --workspace`
-- [ ] `npx tsc --noEmit` / `npm test` in `gomoku-web/`
-- [ ] Manual browser check
-- [ ] Mobile/portrait check
-- [ ] Playwright smoke (`npm run playtest:smoke`)
-
-## Notes
-
-<!-- Anything reviewers should know: screenshots, follow-ups, risks. -->
+<!-- Remaining limitations, migrations, or work needed after this change. Delete if empty. -->

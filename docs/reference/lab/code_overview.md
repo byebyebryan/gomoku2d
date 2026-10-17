@@ -255,25 +255,26 @@ condition or promoted to a curated fixture with a clear reason.
 
 ## Verification
 
-For Rust-side changes:
+For Rust-side changes, start in `gomoku-bot-lab/`:
 
 ```sh
-cd /home/bryan/code/gomoku2d/gomoku-bot-lab
 cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 ```
 
-For wasm-boundary changes:
+For wasm-boundary changes, start at the repo root:
 
 ```sh
-cd /home/bryan/code/gomoku2d
-/home/bryan/.cargo/bin/wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler
-cd /home/bryan/code/gomoku2d/gomoku-web
+wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler
+cd gomoku-web
+npm install
 npm run typecheck
 npm test
 GOMOKU_BASE_PATH=/ npm run build
 ```
 
 For report/model changes, refresh or smoke the relevant report command before
-shipping. The release runbook owns the full curated report flow.
+shipping. [Tournament Eval](../ops/tournament.md) owns report generation;
+[Testing](../ops/testing.md) owns the full command matrix, and
+[Release](../ops/release.md) owns the publication gates.

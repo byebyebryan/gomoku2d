@@ -144,7 +144,7 @@ an escape. Those facts come from the game store and wasm analysis snapshots.
 Local profile state is the default. Cloud is optional and layered on top.
 
 - `local_profile_store.ts` persists local profile, settings, and local history.
-- `match/match_history.ts` owns the shared history model. Guest persistence
+- `src/match/match_history.ts` owns the shared history model. Guest persistence
   imports it directly; cloud record conversion and Firestore profile I/O remain
   in `cloud/`. The cloud profile facade retains its existing exported names.
 - `best_effort_storage.ts` keeps profile and cloud-cache actions usable in memory
@@ -157,8 +157,8 @@ Local profile state is the default. Cloud is optional and layered on top.
 - `cloud_profile.ts` / `cloud_profile_store.ts` define cloud profile shape.
 - `cloud_history.ts` / `cloud_history_store.ts` own private cloud history.
 - `cloud_promotion.ts` moves local profile/history/settings into cloud after
-sign-in. `cloud_setup.ts` restores the account setup once before controller or
-background uploads; later local edits remain authoritative for that session.
+  sign-in. `cloud_setup.ts` restores the account setup once before controller or
+  background uploads; later local edits remain authoritative for that session.
 - `cloud_promotion.ts` owns the promoted-history projection used by both sync
   preflight and the write path, including reset filtering and retention.
 - Firestore rules live at repo root and are tested through `npm run test:rules`.
@@ -190,20 +190,15 @@ surfaces separate.
 
 ## Verification
 
-Use the release-level stack when changing public behavior:
+Use the [testing command matrix](../ops/testing.md#command-matrix) for current
+typecheck, unit, rules, browser, and cloud checks. Public behavior changes need
+the relevant browser journeys; the full CI lane covers all three engines.
+
+If the change crosses the wasm bridge, rebuild wasm from the repo root first:
 
 ```sh
-cd /home/bryan/code/gomoku2d/gomoku-web
-npm run typecheck
-npm test
-npm run test:rules
-GOMOKU_BASE_PATH=/ npm run build
-npm run playtest:smoke
+wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler
 ```
 
-If the change crosses the wasm bridge, rebuild wasm first:
-
-```sh
-cd /home/bryan/code/gomoku2d
-/home/bryan/.cargo/bin/wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler
-```
+Then refresh the local dependency with `npm install` in `gomoku-web/` before
+running web checks, as described in the [web README](../../../gomoku-web/README.md#local-development).

@@ -18,7 +18,7 @@ release or after core/rules/search work, run the full relevant lane.
 | Web production dependency audit | `(cd gomoku-web && npm audit --omit=dev)` |
 | Firestore rules | `(cd gomoku-web && npm run test:rules)` |
 | Production build/direct routes | `(cd gomoku-web && GOMOKU_BASE_PATH=/ npm run build)` |
-| Local browser smoke | `(cd gomoku-web && PLAYWRIGHT_BASE_URL=http://127.0.0.1:8001 npm run playtest:smoke)` |
+| Local browser smoke | `(cd gomoku-web && npm run playtest:smoke)` |
 | Full local browser flows | `(cd gomoku-web && npm run playtest)` |
 | Chromium / Firefox / WebKit flows | `(cd gomoku-web && npm run playtest:engines)` |
 | Emulated cloud application continuity | `(cd gomoku-web && npm run test:cloud)` |
@@ -28,8 +28,12 @@ release or after core/rules/search work, run the full relevant lane.
 Install the Rust audit command once with `cargo install cargo-audit --locked` if
 it is not already available.
 
-The full browser lane builds and starts its own preview when
-`PLAYWRIGHT_BASE_URL` is unset. It includes keyboard completion/replay, denied
+With `PLAYWRIGHT_BASE_URL` unset, ordinary browser commands use port 8001.
+Locally, Playwright builds and starts a preview unless it finds an existing
+server to reuse; verify that an existing listener serves the intended build.
+Set `PLAYWRIGHT_BASE_URL` only when managing the target preview yourself. CI
+starts its own preview of the preceding production build and refuses reuse.
+The full browser lane includes keyboard completion/replay, denied
 quota/corrupt/newer storage, and repeated bot-worker failure/recovery on desktop/mobile.
 CI runs the full journeys across Chromium, Firefox, and WebKit against its
 preceding production build and retains failure screenshots/traces for seven days.

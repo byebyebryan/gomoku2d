@@ -22,6 +22,24 @@ this preparation record.
   and original source identities. No tournament/report regeneration is needed
   for this packaging pass.
 
+## Final Documentation and Repository Review
+
+The final pass before tagging checked the root/module READMEs, documentation navigation,
+current reference paths, release/media instructions, and GitHub description,
+homepage, topics, license and CI badge. It corrected:
+
+- verification commands tied to one workstation and duplicated command guidance;
+- the missing command to push the release tag;
+- OG capture provenance and the final build needed after media regeneration;
+- stale corpus paths and the PR template's older verification checklist;
+- public-doc navigation and the distinction between historical Lab data,
+  editorial drafts and current release evidence.
+
+Validation covered 89 tracked Markdown files, 269 local paths/anchors and 11
+public navigation, badge and release URLs, with no broken links found. This
+pass comprises Markdown and template changes; the existing media source identity
+above still describes the captured application/version inputs.
+
 ## Validation and Acceptance
 
 The completed [unattended review](reconciliation_2026_10/v0_5_unattended_evidence.md)

@@ -86,16 +86,22 @@ gh run view <run-id> --log-failed
 
 ## Cut Release
 
+After CI passes on the exact preparation commit, run from the repo root:
+
 ```sh
 VERSION=x.y.z
 scripts/release.sh --check "$VERSION"
 scripts/release.sh "$VERSION"
+git show "v${VERSION}"
+git push origin "v${VERSION}"
 ```
 
-The release script validates clean, pushed main and version/changelog/tag state. Pushing the release
-tag dispatches GitHub Release, Pages deploy, and Firestore rules deploy
-workflows. After deployment, verify the public URL with the applicable browser
-journeys and read-only checks; record any remaining manual acceptance deferrals.
+The release script validates clean, pushed main and version/changelog/tag state,
+then creates an annotated local tag. It does not push. The explicit tag push
+dispatches GitHub Release, Pages deploy, and Firestore rules deploy workflows.
+Wait for all three workflows to succeed before treating publication as complete.
+After deployment, verify the public URL with the applicable browser journeys and
+read-only checks; record any remaining manual acceptance deferrals.
 
 ## Recovery
 

@@ -22,17 +22,17 @@ Tracked outputs:
   long-corridor analysis proof drill-down.
 - `readme-visuals.gif`: a visual guide loop showing style, icon exports, and
   sprite previews.
-- `readme-replay-analysis.png`: a still Replay Analysis frame used as the Open
-  Graph source crop.
+- `readme-replay-analysis.png`: a still Replay Analysis frame.
 - `gomoku-web/public/og.png` and `gomoku-web/assets/og_source.png`: social
-  preview images generated from the Replay Analysis still.
+  preview images combining a separate board-only replay-branch capture with the
+  project title and tagline.
 
 Regenerate the README media from a production preview:
 
 ```sh
 cd gomoku-web
 npm run build
-npm run preview -- --host 0.0.0.0 --port 8001
+npm run preview -- --host 127.0.0.1 --port 8001 --strictPort
 ```
 
 Then, in a second shell:
@@ -41,6 +41,9 @@ Then, in a second shell:
 cd gomoku-web
 GOMOKU_MEDIA_BASE_URL=http://127.0.0.1:8001 npm run media:readme
 ```
+
+Stop the preview with Ctrl-C after capture. Run `npm run build` again to copy
+the updated public OG image into `dist/` before publishing.
 
 Only commit the polished outputs that are referenced by public docs. Scratch
 frames and intermediate files should stay under `/tmp/gomoku2d-readme-media`.

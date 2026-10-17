@@ -22,6 +22,7 @@ verification, and explicit acceptance deferrals, or the
 |---|---|---|
 | Product direction | [`Product Strategy`](reference/product/product_strategy.md) | [`Roadmap`](reference/product/roadmap.md) |
 | Browser app | [`Web Code Overview`](reference/app/code_overview.md) | [`Architecture`](reference/app/architecture.md), [`App Design`](reference/app/app_design.md), [`UI Design`](reference/app/ui_design.md) |
+| Cloud continuity | [`Backend`](reference/backend/backend.md) | [`Data Model`](reference/backend/data_model.md), [`Infra`](reference/ops/backend_infra.md), [`Cost`](reference/ops/backend_cost.md) |
 | Board visuals | [`Game Visual`](reference/app/game_visual.md) | [`Asset Sources`](../gomoku-web/assets/README.md) |
 | Rust rules, bots, and analyzer | [`Bot Lab Code Overview`](reference/lab/code_overview.md) | [`Search Bot`](reference/lab/search_bot.md), [`Game Analysis`](reference/lab/game_analysis.md) |
 | Tactical model | [`Tactical Shapes`](reference/lab/tactical_shapes.md) | [`Lethal Threats`](reference/lab/lethal_threats.md), [`Corridor Search`](reference/lab/corridor_search.md) |
@@ -33,11 +34,12 @@ verification, and explicit acceptance deferrals, or the
 Player-facing explanations live in the web app rather than a second
 documentation tree:
 
-- `/rules/` — basic Gomoku and Renju rules
-- `/guide/` — how to think about threats, combos, and forced sequences
-- `/lab/` — bot tournament and replay-analysis reports
-- `/visuals/` — visual guide and asset language
-- `/privacy/`, `/terms/`, and Source — project and legal surfaces
+- [Rules](https://gomoku2d.byebyebryan.com/rules/) — basic Gomoku and Renju rules
+- [Guide](https://gomoku2d.byebyebryan.com/guide/) — threats, combos, and forced sequences
+- [Lab](https://gomoku2d.byebyebryan.com/lab/) — bot tournament and replay-analysis reports
+- [Visuals](https://gomoku2d.byebyebryan.com/visuals/) — visual guide and asset language
+- [Privacy](https://gomoku2d.byebyebryan.com/privacy/) and
+  [Terms](https://gomoku2d.byebyebryan.com/terms/) — public policy pages
 
 The root [`README`](../README.md) is the public repo landing page.
 
@@ -64,8 +66,8 @@ what was reviewed and decided; they are not a new implementation backlog.
 The completed July `v0.5.4` material remains in [`archive/`](archive/).
 
 Parked process-story extraction and curation lives under
-[`archive/process_story/`](archive/process_story/). It is private source
-material for a possible future devlog, not an active release dependency or
+[`archive/process_story/`](archive/process_story/). It is draft material
+for a possible future devlog, not an active release dependency or
 canonical product documentation.
 
 ## Maintenance Rule
