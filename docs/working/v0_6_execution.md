@@ -60,8 +60,8 @@ a deployed release. No token budget was requested.
 
 | Milestone | Status | Evidence |
 |---|---|---|
-| M0 Contracts | Active | Product defaults accepted; portable-format investigation underway |
-| M1 Portable core | Pending | |
+| M0 Contracts | Active | Product defaults and portable format settled; backend limits under emulator validation |
+| M1 Portable core | Complete | 16 actual-Wasm contract tests; [wire contract](../reference/app/portable_replay.md) |
 | M2 Shared viewer | Pending | |
 | M3 Local library/practice | Pending | |
 | M4 Public profile/catalog | Pending | |
@@ -78,6 +78,14 @@ a deployed release. No token budget was requested.
   engines are present.
 - Baseline `npm run typecheck`: pass. Baseline `npm test`: 39 files / 378 tests
   pass. No application implementation was present for these baseline runs.
+- M1 Luna implementation reviewed by primary: strict portable codec, SHA-256
+  identity, legacy adapters, and actual-Wasm rejection of forbidden Renju moves,
+  invalid terminal progression, and malformed metadata/encodings. Focused
+  `npx vitest run src/replay/portable_replay.test.ts`: 16 tests pass.
+- Maximum fixture (225 moves, two maximum Unicode names/UIDs, practice origin):
+  1,353 decoded JSON bytes / 1,804 encoded payload characters, below the v1
+  6,144-byte / 8,192-character bounds. This measures payload size, not a
+  cross-application URL transport or hosting acceptance pass.
 
 ## Acceptance Limits
 
