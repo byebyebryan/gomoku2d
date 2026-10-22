@@ -12,6 +12,8 @@ const staticRoutes = [
   "match/local",
   "privacy",
   "profile",
+  "player",
+  "replay/shared",
   "rules",
   "settings",
   "terms",

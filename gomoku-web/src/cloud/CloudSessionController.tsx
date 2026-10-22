@@ -57,6 +57,16 @@ async function flushLocalStateToCloud(user: CloudAuthUser): Promise<CloudProfile
   return cloudProfile;
 }
 
+// Authentication can run on shared/public routes without initializing private
+// profile/history state. Keep its lifecycle independent of the private controller.
+export function CloudAuthController() {
+  useEffect(() => {
+    cloudAuthStore.getState().start();
+    return () => { cloudAuthStore.getState().stop(); };
+  }, []);
+  return null;
+}
+
 export function CloudSessionController() {
   const authStatus = useStore(cloudAuthStore, (state) => state.status);
   const authUser = useStore(cloudAuthStore, (state) => state.user);
@@ -71,14 +81,6 @@ export function CloudSessionController() {
 
   useEffect(() => {
     localProfileStore.getState().ensureLocalProfile();
-  }, []);
-
-  useEffect(() => {
-    cloudAuthStore.getState().start();
-
-    return () => {
-      cloudAuthStore.getState().stop();
-    };
   }, []);
 
   useEffect(() => {

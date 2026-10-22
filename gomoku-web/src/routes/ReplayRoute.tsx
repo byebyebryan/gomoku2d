@@ -20,6 +20,9 @@ import { useReplayAnalysis } from "../replay/use_replay_analysis";
 import { useReplayMatch } from "../replay/use_replay_match";
 import { useReplayWinningCells } from "../replay/use_replay_winning_cells";
 import { Icon } from "../ui/Icon";
+import type { SavedMatchV2 } from "../match/saved_match";
+import type { PortableReplayV1 } from "../replay/portable_replay";
+import { ShareReplayPanel } from "./ShareReplayPanel";
 
 import styles from "./ReplayRoute.module.css";
 import {
@@ -31,13 +34,17 @@ import {
 
 const AUTOPLAY_DELAY_MS = 700;
 
-export function ReplayRoute() {
+export function ReplayViewer({ match, localDisplayName, preserveNames = false, initialMoveIndex, source }: {
+  match: SavedMatchV2;
+  localDisplayName: string;
+  preserveNames?: boolean;
+  initialMoveIndex?: number;
+  source?: PortableReplayV1;
+}) {
   useDocumentTitle("Replay Analysis");
-
-  const { matchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { localDisplayName, match, replayFloor, replayMayStillLoad } = useReplayMatch(matchId);
+  const replayFloor = match.undo_floor;
   const settings = useStore(localProfileStore, (state) => state.settings);
   const [moveIndex, setMoveIndex] = useState(defaultReplayMoveIndex(0));
   const [autoplaying, setAutoplaying] = useState(false);
@@ -45,9 +52,9 @@ export function ReplayRoute() {
   const coreWinningCells = useReplayWinningCells(match, moveIndex);
 
   useEffect(() => {
-    setMoveIndex(defaultReplayMoveIndex(match?.move_count ?? 0));
+    setMoveIndex(initialMoveIndex ?? defaultReplayMoveIndex(match.move_count));
     setAutoplaying(false);
-  }, [match?.move_count, matchId]);
+  }, [match.id, match.move_count, initialMoveIndex]);
 
   useEffect(() => {
     if (!match || !autoplaying) {
@@ -67,32 +74,6 @@ export function ReplayRoute() {
       window.clearTimeout(timer);
     };
   }, [autoplaying, match, moveIndex]);
-
-  if (!match && replayMayStillLoad) {
-    return (
-      <main className={styles.page}>
-        <section className={`${styles.notFound} uiPanel`}>
-          <h1 className={styles.title}>Loading replay</h1>
-          <p className={styles.notFoundText}>Checking saved match history.</p>
-        </section>
-      </main>
-    );
-  }
-
-  if (!match) {
-    return (
-      <main className={styles.page}>
-        <section className={`${styles.notFound} uiPanel`}>
-          <h1 className={styles.title}>Replay unavailable</h1>
-          <p className={styles.notFoundText}>This replay is no longer available.</p>
-          <Link className="uiAction uiActionSecondary" to="/profile">
-            <Icon className="uiIconDesktop" name="profile" />
-            <span className="uiActionLabel">Back to Profile</span>
-          </Link>
-        </section>
-      </main>
-    );
-  }
 
   const frame = buildLocalReplayFrame(match, moveIndex, () => coreWinningCells);
   const analysisSummary = analysisStep?.analysis ?? null;
@@ -138,7 +119,7 @@ export function ReplayRoute() {
     <main className={styles.page}>
       <header className={styles.header}>
         <div className={styles.headerCopy}>
-          <p className="uiPageEyebrow">Saved match</p>
+          <p className="uiPageEyebrow">{preserveNames ? "Shared replay" : "Saved match"}</p>
           <h1 className={styles.title}>Replay Analysis</h1>
         </div>
         <div className={styles.headerActions}>
@@ -161,7 +142,7 @@ export function ReplayRoute() {
 
           <div className="uiDivider" />
 
-          <ReplayMatchPanel frame={frame} localDisplayName={localDisplayName} match={match} />
+          <ReplayMatchPanel frame={frame} localDisplayName={localDisplayName} match={match} preserveNames={preserveNames} />
 
           <div className="uiDivider" />
 
@@ -178,8 +159,24 @@ export function ReplayRoute() {
             timelineAnalysis={timelineAnalysis}
             timelineStyle={timelineStyle}
           />
+          <ShareReplayPanel match={match} moveIndex={frame.moveIndex} source={source} />
         </aside>
       </section>
     </main>
   );
+}
+
+export function ReplayRoute() {
+  const { matchId } = useParams<{ matchId: string }>();
+  const { localDisplayName, match, replayMayStillLoad } = useReplayMatch(matchId);
+  if (!match) return (
+    <main className={styles.page}>
+      <section className={`${styles.notFound} uiPanel`}>
+        <h1 className={styles.title}>{replayMayStillLoad ? "Loading replay" : "Replay unavailable"}</h1>
+        <p className={styles.notFoundText}>{replayMayStillLoad ? "Checking saved match history." : "This replay is no longer available."}</p>
+        <Link className="uiAction uiActionSecondary" to="/profile">Back to Profile</Link>
+      </section>
+    </main>
+  );
+  return <ReplayViewer key={matchId} match={match} localDisplayName={localDisplayName} />;
 }

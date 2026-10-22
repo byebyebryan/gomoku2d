@@ -62,7 +62,7 @@ a deployed release. No token budget was requested.
 |---|---|---|
 | M0 Contracts | Active | Product defaults and portable format settled; backend limits under emulator validation |
 | M1 Portable core | Complete | 16 actual-Wasm contract tests; [wire contract](../reference/app/portable_replay.md) |
-| M2 Shared viewer | Pending | |
+| M2 Shared viewer | Implemented | Guest direct-load/share/fallback: 15 checks across three engines; signed-in isolation awaits cloud acceptance |
 | M3 Local library/practice | Pending | |
 | M4 Public profile/catalog | Pending | |
 | M5 Private library sync | Pending | |
@@ -86,6 +86,15 @@ a deployed release. No token budget was requested.
   1,353 decoded JSON bytes / 1,804 encoded payload characters, below the v1
   6,144-byte / 8,192-character bounds. This measures payload size, not a
   cross-application URL transport or hosting acceptance pass.
+- M2 primary integration: reusable replay presentation, original shared labels,
+  optional profile links, share preview/redaction and clipboard fallback,
+  static entry, and separate authentication/private-cloud lifecycles.
+- `playtests/shared_replay.spec.ts`: five Chromium checks pass on the host;
+  all 15 checks pass across Chromium/Firefox/WebKit in the supported Ubuntu
+  container with the lockfile's Playwright 1.64.1 browser cache mounted. Host
+  WebKit cannot launch due to missing system libraries; the cached Ubuntu image
+  supplies those dependencies. This is production-build local browser evidence,
+  not public deployment or real OAuth acceptance.
 
 ## Acceptance Limits
 

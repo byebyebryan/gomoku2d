@@ -1,7 +1,7 @@
 import { Component, Suspense, lazy, type ReactNode } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
-import { CloudSessionController } from "../cloud/CloudSessionController";
+import { CloudAuthController, CloudSessionController } from "../cloud/CloudSessionController";
 import { HomeRoute } from "../routes/HomeRoute";
 import { LocalPersistenceNotice } from "../profile/LocalPersistenceNotice";
 
@@ -15,6 +15,9 @@ const ProfileRoute = lazy(async () => ({
 }));
 const ReplayRoute = lazy(async () => ({
   default: (await import("../routes/ReplayRoute")).ReplayRoute,
+}));
+const SharedReplayRoute = lazy(async () => ({
+  default: (await import("../routes/SharedReplayRoute")).SharedReplayRoute,
 }));
 const SettingsRoute = lazy(async () => ({
   default: (await import("../routes/SettingsRoute")).SettingsRoute,
@@ -58,9 +61,12 @@ class PageRecovery extends Component<{ children: ReactNode }, { failed: boolean 
 }
 
 export function App() {
+  const { pathname } = useLocation();
+  const standalone = /^\/(replay\/shared|player)\/?$/.test(pathname);
   return (
     <div className={styles.app}>
-      <CloudSessionController />
+      <CloudAuthController />
+      {!standalone && <CloudSessionController />}
       <LocalPersistenceNotice />
       <div className={styles.content}>
         <PageRecovery>
@@ -87,6 +93,14 @@ export function App() {
               element={
                 <Suspense fallback={<main className={styles.loading}>Loading profile…</main>}>
                   <ProfileRoute />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/replay/shared"
+              element={
+                <Suspense fallback={<main className={styles.loading}>Loading shared replay…</main>}>
+                  <SharedReplayRoute />
                 </Suspense>
               }
             />

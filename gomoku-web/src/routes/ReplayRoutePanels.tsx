@@ -58,9 +58,10 @@ interface ReplayMatchPanelProps {
   frame: ReplayFrame;
   localDisplayName: string;
   match: SavedMatchV2;
+  preserveNames?: boolean;
 }
 
-export function ReplayMatchPanel({ frame, localDisplayName, match }: ReplayMatchPanelProps) {
+export function ReplayMatchPanel({ frame, localDisplayName, match, preserveNames = false }: ReplayMatchPanelProps) {
   return (
     <section className={`${styles.deckSection} ${styles.matchSection}`}>
       <p className={`uiSectionLabel ${styles.matchLabel}`}>Match</p>
@@ -94,7 +95,11 @@ export function ReplayMatchPanel({ frame, localDisplayName, match }: ReplayMatch
             >
               <div className={styles.playerCopy}>
                 <div className={styles.playerHead}>
-                  <h2 className={styles.playerName}>{replayPlayerName(player, localDisplayName)}</h2>
+                  <h2 className={styles.playerName}>
+                    {preserveNames && player.profile_uid ? (
+                      <Link to={`/player/?id=${encodeURIComponent(player.profile_uid)}`}>{player.display_name}</Link>
+                    ) : preserveNames ? player.display_name : replayPlayerName(player, localDisplayName)}
+                  </h2>
                   <span
                     aria-label={player.kind === "human" ? "Player" : "Bot"}
                     className={styles.playerKindIcon}

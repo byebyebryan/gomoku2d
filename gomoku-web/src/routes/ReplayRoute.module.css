@@ -588,3 +588,12 @@
     height: 22px;
   }
 }
+
+.sharingSection { min-width: 0; overflow-wrap: anywhere; }
+.sharingSection label { display: block; }
+.shareInput { display: block; width: 100%; min-width: 0; box-sizing: border-box; }
+.playerName { overflow-wrap: anywhere; }
+.playerName a { color: inherit; }
+@media (max-width: 720px) and (orientation: portrait) {
+  .sharingSection { grid-row: 7; padding: 12px 0; }
+}
