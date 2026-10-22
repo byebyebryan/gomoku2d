@@ -4,6 +4,7 @@ import { cloudAuthStore, type CloudAuthUser } from "../cloud/auth_store";
 import type { PrivateLibrarySnapshot } from "../cloud/sharing_private";
 import { replayLibraryStore } from "./replay_library_store";
 import { replayLibrarySync } from "./replay_library_sync";
+import { EMPTY_LIBRARY_SYNC } from "./replay_library_sync";
 import type { PortableReplayV1 } from "./portable_replay";
 import { importGuestReplayCopies, saveReplayCopy } from "./replay_library_actions";
 
@@ -124,6 +125,21 @@ describe("replay library actions during cloud clearing", () => {
       revision: 9,
       status: "synced",
     });
+    expect(sharingMocks.savePrivateLibrary).not.toHaveBeenCalled();
+  });
+
+  it("requires review before importing guests after a failed cloud reload", async () => {
+    const uid = "review-after-error";
+    signIn(uid);
+    await replayLibraryStore.getState().saveReplay("guest", winningReplay(), "saved");
+    replayLibrarySync.store.setState({ users: { [uid]: {
+      ...EMPTY_LIBRARY_SYNC, loaded: true, revision: 9, status: "error", error: "Offline",
+      hasIncoming: true, incoming: clearedSnapshot(uid),
+    } } });
+
+    await expect(importGuestReplayCopies()).rejects.toThrow(/review/i);
+    expect(replayLibraryStore.getState().owners[`user:${uid}`]).toBeUndefined();
+    expect(replayLibraryStore.getState().owners.guest?.entries).toHaveLength(1);
     expect(sharingMocks.savePrivateLibrary).not.toHaveBeenCalled();
   });
 });

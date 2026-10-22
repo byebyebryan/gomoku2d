@@ -87,7 +87,12 @@ export function createReplayLibrarySync(options: {
     checkAccount(uid);
     if (!state(uid).loaded) await reload(uid);
     checkAccount(uid);
-    if (state(uid).status === "conflict") throw new SharingConflictError(state(uid).error ?? undefined);
+    const current = state(uid);
+    if (current.hasIncoming || current.status === "conflict") {
+      throw new SharingConflictError(current.hasIncoming
+        ? "Cloud and local copies need review. Choose the cloud library or explicitly merge copies."
+        : current.error ?? undefined);
+    }
     if (!dirty(uid)) return;
     if (state(uid).status === "syncing") throw new Error("Replay library sync is already in progress.");
     const outgoing = entries(uid);
@@ -102,7 +107,7 @@ export function createReplayLibrarySync(options: {
       patch(uid, { loaded: true, revision: saved.revision, status: unchanged ? "synced" : "pending",
         error: null, hasIncoming: false, incoming: null });
     } catch (error) {
-      if (currentUid() === uid) patch(uid, { status: error instanceof SharingConflictError ? "conflict" : "error",
+      if (currentUid() === uid && requests.get(uid) === request) patch(uid, { status: error instanceof SharingConflictError ? "conflict" : "error",
         error: message(error) });
       throw error;
     }
@@ -154,7 +159,7 @@ export function createReplayLibrarySync(options: {
       patch(uid, { loaded: true, revision: saved.revision, status: changed ? "pending" : "synced", error: null,
         hasIncoming: false, incoming: null });
     } catch (error) {
-      if (currentUid() === uid) patch(uid, { status: "conflict", error: message(error) });
+      if (currentUid() === uid && requests.get(uid) === request) patch(uid, { status: "conflict", error: message(error) });
       throw error;
     }
   }

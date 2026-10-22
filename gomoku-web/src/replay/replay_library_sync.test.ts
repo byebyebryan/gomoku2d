@@ -122,6 +122,38 @@ describe("explicit account replay-library sync", () => {
     expect((await cloud.load())?.entries).toEqual([]);
   });
 
+  it.each(["sync", "merge"] as const)("ignores a late failed %s after cloud clear supersedes it", async (operation) => {
+    const cloud = backend();
+    const local = createReplayLibraryStore({ storage: memoryStorage() });
+    let rejectSave!: (error: Error) => void;
+    let started!: () => void;
+    let saves = 0;
+    const saving = new Promise<void>((resolve) => { started = resolve; });
+    const sync = createReplayLibrarySync({ local, currentUid: () => "alice", load: cloud.load,
+      save: (...args) => saves++ === 0
+        ? new Promise((_resolve, reject) => { rejectSave = reject; started(); })
+        : cloud.save(args[0], args[1], args[2]) });
+    if (operation === "sync") await sync.reload("alice");
+    const kept = await local.getState().saveReplay("user:alice", replay(), "saved");
+    if (operation === "merge") await sync.reload("alice");
+    const pending = operation === "sync" ? sync.sync("alice") : sync.mergeCopies("alice");
+    const rejection = expect(pending).rejects.toThrow("Old request failed");
+    await saving;
+
+    const cleared = await cloud.save("alice", [], null);
+    sync.acceptCleared("alice", cleared);
+    const recovery = sync.store.getState().users.alice;
+    rejectSave(new Error("Old request failed"));
+    await rejection;
+
+    await expect(sync.sync("alice")).rejects.toThrow();
+    expect(sync.store.getState().users.alice).toEqual(recovery);
+    expect(sync.store.getState().users.alice).toMatchObject({ revision: 1, status: "conflict", hasIncoming: true });
+    expect(local.getState().owners["user:alice"]?.entries.map((entry) => entry.fingerprint)).toEqual([kept]);
+    expect((await cloud.load())?.entries).toEqual([]);
+    expect(cloud.counts().writes).toBe(1);
+  });
+
   it("keeps retained copies behind explicit review after clear and same-revision reload", async () => {
     const cloud = backend();
     const local = createReplayLibraryStore({ storage: memoryStorage() });
@@ -139,6 +171,26 @@ describe("explicit account replay-library sync", () => {
     expect((await cloud.load())?.entries).toEqual([]);
     await sync.mergeCopies("alice");
     expect((await cloud.load())?.entries).toHaveLength(1);
+  });
+
+  it("keeps the review barrier when a reload fails after cloud clear", async () => {
+    const cloud = backend();
+    const local = createReplayLibraryStore({ storage: memoryStorage() });
+    let offline = false;
+    const sync = createReplayLibrarySync({ local, currentUid: () => "alice", save: cloud.save,
+      load: async () => { if (offline) throw new Error("Offline"); return cloud.load(); } });
+    await sync.reload("alice");
+    await local.getState().saveReplay("user:alice", replay(), "saved");
+    const cleared = await cloud.save("alice", [], null);
+    sync.acceptCleared("alice", cleared);
+
+    offline = true;
+    await expect(sync.reload("alice")).rejects.toThrow("Offline");
+    offline = false;
+    await expect(sync.sync("alice")).rejects.toThrow(/review/i);
+    expect(sync.store.getState().users.alice?.hasIncoming).toBe(true);
+    expect((await cloud.load())?.entries).toEqual([]);
+    expect(cloud.counts().writes).toBe(1);
   });
 
   it("cancels a reviewed replacement invalidated by a later cloud clear", async () => {

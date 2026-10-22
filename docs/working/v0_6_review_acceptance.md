@@ -57,8 +57,23 @@ acceptance. Preserve unrelated work and user browser tabs.
 
 ## Execution and findings
 
-- R0: baseline verified; coverage review in progress.
-- R1–R5: pending.
+- R0: baseline verified; existing broad CI accepted. Named gaps are failed
+  recovery after cleanup, real signed-in route variants/public entry, and
+  maximum/hostile labels at narrow/enlarged-text layouts.
+- R1: portable codec/adapters, library store/sync/actions and cloud data APIs
+  traced. Public/private documents are separate; inputs are bounded before
+  Wasm; portable exports allowlist metadata and retain untrusted provenance.
+  Remaining UI/rules/cost review continues in R3/R4.
+- F1 (P1, fixed; final cloud validation pending): a failed reload changed
+  `status` from conflict to error while retaining an incoming cloud snapshot.
+  Ordinary Sync checked only status and could restore retained copies after
+  cloud clear without explicit merge. A late failed sync could similarly
+  overwrite a newer cleanup state. Reproduced before the fix in three failing
+  sync scenarios. Sync/import now require the pending-review flag to be clear,
+  affected buttons remain disabled during review, and superseded failures cannot
+  patch newer sync state. Five added sync/action/UI regressions pass; focused
+  library lane passes 22 checks.
+- R2–R5: pending.
 
 ## Manual handoff target
 

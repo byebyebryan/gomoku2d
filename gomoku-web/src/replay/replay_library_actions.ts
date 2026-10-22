@@ -31,7 +31,7 @@ export async function saveReplayCopy(replay: PortableReplayV1, kind: ReplayLibra
   check();
   if (uid && cloudAuthStore.getState().user?.uid === uid) {
     const sync = replayLibrarySync.store.getState().users[uid];
-    if (sync?.loaded && sync.status !== "conflict") {
+    if (sync?.loaded && !sync.hasIncoming && sync.status !== "conflict") {
       try { await replayLibrarySync.sync(uid); } catch { /* The sync state exposes pending/error recovery. */ }
     }
   }
@@ -45,7 +45,8 @@ export async function importGuestReplayCopies() {
   const check = actionGuard(owner);
   if (!replayLibrarySync.store.getState().users[uid]?.loaded) await replayLibrarySync.reload(uid);
   check();
-  if (replayLibrarySync.store.getState().users[uid]?.status === "conflict") {
+  const sync = replayLibrarySync.store.getState().users[uid];
+  if (sync?.hasIncoming || sync?.status === "conflict") {
     throw new Error("Review the account library conflict before importing guest copies.");
   }
   const guest = replayLibraryStore.getState().owners.guest?.entries ?? [];

@@ -122,8 +122,8 @@ export function ReplayLibraryPanel() {
         : sync.status === "syncing" ? "Syncing account library…" : "Local copies have not been confirmed in the cloud."}</p>
       <div className={styles.actions}>
         <button className="uiAction uiActionSecondary" type="button" disabled={busy} onClick={() => void run(() => replayLibrarySync.reload(uid))}>Reload cloud library</button>
-        <button className="uiAction uiActionSecondary" type="button" disabled={busy || sync.status === "conflict"} onClick={() => void run(() => replayLibrarySync.sync(uid))}>Sync saved replays</button>
-        {guestCount > 0 && <button className="uiAction uiActionNeutral" type="button" disabled={busy} onClick={() => void run(importGuestReplayCopies)}>Copy guest replays into account ({guestCount})</button>}
+        <button className="uiAction uiActionSecondary" type="button" disabled={busy || sync.hasIncoming || sync.status === "conflict"} onClick={() => void run(() => replayLibrarySync.sync(uid))}>Sync saved replays</button>
+        {guestCount > 0 && <button className="uiAction uiActionNeutral" type="button" disabled={busy || sync.hasIncoming || sync.status === "conflict"} onClick={() => void run(importGuestReplayCopies)}>Copy guest replays into account ({guestCount})</button>}
       </div>
       {sync.hasIncoming && <div className={styles.conflict}>
         <p>Review library changes: {bucket?.entries.length ?? 0} local copies; {sync.incoming?.entries.length ?? 0} cloud copies.</p>

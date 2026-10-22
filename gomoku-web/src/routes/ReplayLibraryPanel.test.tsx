@@ -132,4 +132,26 @@ describe("replay save persistence messages", () => {
     expect(screen.queryByText(/lost when you reload/i)).not.toBeInTheDocument();
     expect(sharing.savePrivateLibrary).toHaveBeenCalledOnce();
   });
+
+  it("keeps ordinary sync and guest import disabled while a failed reload still needs review", async () => {
+    const { replayLibraryStore, replayLibrarySync, ReplayLibraryPanel } = await setup(true);
+    await act(async () => {
+      await replayLibraryStore.getState().saveReplay("guest", REPLAY, "saved");
+      await replayLibraryStore.getState().saveReplay("user:library-reader", REPLAY, "saved");
+      replayLibrarySync.acceptCleared("library-reader", {
+        uid: "library-reader", revision: 9, entries: [], updatedAt: "2026-10-22T00:00:00.000Z",
+      });
+    });
+    sharing.loadPrivateLibrary.mockRejectedValue(new Error("Offline"));
+    cleanup();
+    render(<MemoryRouter><ReplayLibraryPanel /></MemoryRouter>);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Offline");
+    await waitFor(() => expect(screen.getByRole("button", { name: "Reload cloud library" })).toBeEnabled());
+    expect(screen.getByRole("button", { name: "Sync saved replays" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Copy guest replays into account (1)" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Use cloud library" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Merge copies into cloud" })).toBeEnabled();
+    expect(sharing.savePrivateLibrary).not.toHaveBeenCalled();
+  });
 });
