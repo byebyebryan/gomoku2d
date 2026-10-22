@@ -72,7 +72,8 @@ export function createReplayLibrarySync(options: {
           error: "Cloud and local copies need review. Choose the cloud library or explicitly merge copies." });
         return;
       }
-      await local.getState().replaceEntries(owner(uid), incoming?.entries ?? []);
+      await local.getState().replaceEntries(owner(uid), incoming?.entries ?? [],
+        () => currentUid() === uid && requests.get(uid) === request);
       checkAccount(uid);
       patch(uid, { loaded: true, revision: incoming?.revision ?? null, status: "synced",
         hasIncoming: false, incoming: null, error: null });
@@ -111,7 +112,9 @@ export function createReplayLibrarySync(options: {
     checkAccount(uid);
     const current = state(uid);
     if (!current.hasIncoming) throw new Error("Reload the cloud library before choosing its version.");
-    await local.getState().replaceEntries(owner(uid), current.incoming?.entries ?? []);
+    const request = requests.get(uid);
+    await local.getState().replaceEntries(owner(uid), current.incoming?.entries ?? [],
+      () => currentUid() === uid && requests.get(uid) === request && state(uid) === current);
     checkAccount(uid);
     patch(uid, { loaded: true, revision: current.incoming?.revision ?? null, status: "synced",
       error: null, hasIncoming: false, incoming: null });
@@ -144,7 +147,8 @@ export function createReplayLibrarySync(options: {
         const previous = new Map(before.map((entry) => [entry.fingerprint, entry]));
         for (const entry of after) if (previous.get(entry.fingerprint) !== entry) latest.set(entry.fingerprint, entry);
       }
-      await local.getState().replaceEntries(owner(uid), [...latest.values()]);
+      await local.getState().replaceEntries(owner(uid), [...latest.values()],
+        () => currentUid() === uid && requests.get(uid) === request);
       checkAccount(uid);
       if (changed) local.getState().markDirty(owner(uid));
       patch(uid, { loaded: true, revision: saved.revision, status: changed ? "pending" : "synced", error: null,

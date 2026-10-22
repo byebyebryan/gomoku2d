@@ -141,6 +141,28 @@ describe("explicit account replay-library sync", () => {
     expect((await cloud.load())?.entries).toHaveLength(1);
   });
 
+  it("cancels a reviewed replacement invalidated by a later cloud clear", async () => {
+    const cloud = backend();
+    const seed = createReplayLibraryStore({ storage: memoryStorage() });
+    await seed.getState().saveReplay("user:alice", replay(), "saved");
+    await cloud.save("alice", seed.getState().owners["user:alice"]!.entries, null);
+    const local = createReplayLibraryStore({ storage: memoryStorage() });
+    const kept = await local.getState().saveReplay("user:alice", replay("Carol"), "saved");
+    const sync = createReplayLibrarySync({ local, currentUid: () => "alice", ...cloud });
+    await sync.reload("alice");
+    let release!: () => void;
+    const barrier = new Promise<void>((resolve) => { release = resolve; });
+    const replace = local.getState().replaceEntries;
+    local.setState({ replaceEntries: async (...args) => { await barrier; return replace(...args); } });
+    const pending = sync.useCloud("alice");
+    const cleared = await cloud.save("alice", [], 1);
+    sync.acceptCleared("alice", cleared);
+    release();
+    await expect(pending).rejects.toThrow(/superseded/);
+    expect(local.getState().owners["user:alice"]?.entries.map((entry) => entry.fingerprint)).toEqual([kept]);
+    expect(sync.store.getState().users.alice).toMatchObject({ revision: 2, status: "conflict", hasIncoming: true });
+  });
+
   it("ignores an old-account read after an account switch", async () => {
     const local = createReplayLibraryStore({ storage: memoryStorage() });
     let uid: string | null = "alice";

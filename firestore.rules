@@ -410,6 +410,15 @@ service cloud.firestore {
         && data.entries_json.matches('^[ -~]*$');
     }
 
+    // Older clients cannot report cloud deletion complete while new sharing
+    // families still contain personal data. The current client clears them first.
+    function sharingDataClearedBeforeProfileDelete(uid) {
+      let root = publicProfilePath(uid);
+      let library = /databases/$(database)/documents/replay_libraries/$(uid);
+      return (!exists(root) || (get(root).data.enabled == false && get(root).data.display_name == ''))
+        && (!exists(library) || get(library).data.entries_json == '[]');
+    }
+
     match /profiles/{uid} {
       allow read: if isOwner(uid);
       allow create: if isOwner(uid)
@@ -429,7 +438,7 @@ service cloud.firestore {
           || initialProfileSyncBypass()
         )
         && validResetAtOnUpdate();
-      allow delete: if isOwner(uid);
+      allow delete: if isOwner(uid) && sharingDataClearedBeforeProfileDelete(uid);
 
       match /matches/{matchId} {
         allow read, write: if false;

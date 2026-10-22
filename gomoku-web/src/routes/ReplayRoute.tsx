@@ -110,6 +110,7 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
     "--timeline-escape": timelineAnalysis.escapePercent ?? "0%",
   } as React.CSSProperties;
   const replayMovePreview = nextReplayMove(match, frame.moveIndex);
+  const practiceAvailable = frame.status === "playing" && frame.moveIndex >= Math.max(4, replayFloor);
   const mediaMode = searchParams.get("media");
   const localMatchResumePath = mediaMode
     ? `/match/local?media=${encodeURIComponent(mediaMode)}`
@@ -183,12 +184,11 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
             timelineAnalysis={timelineAnalysis}
             timelineStyle={timelineStyle}
           />
-          <section className={`${styles.deckSection} ${styles.practiceContext}`}>
+          {(source?.practice || practiceAvailable || branchError) && <section className={`${styles.deckSection} ${styles.practiceContext}`}>
             {source?.practice && <p>Practice replay: the first {source.practice.inheritedPly} moves are inherited from another game.</p>}
-            {frame.status === "playing" && frame.moveIndex >= Math.max(4, replayFloor)
-              && <p>Practice from move {frame.moveIndex}: you play {frame.currentPlayer === 1 ? "Black" : "White"} against the selected {botLabel(settings.botConfig)} bot.</p>}
+            {practiceAvailable && <p>Practice from move {frame.moveIndex}: you play {frame.currentPlayer === 1 ? "Black" : "White"} against the selected {botLabel(settings.botConfig)} bot.</p>}
             {branchError && <p role="alert">{branchError}</p>}
-          </section>
+          </section>}
           <ShareReplayPanel match={match} moveIndex={frame.moveIndex} source={source} />
           {source && fingerprint && <SaveReplayButton replay={source} fingerprint={fingerprint} />}
           <PublishReplayPanel match={match} source={source} moveIndex={frame.moveIndex} eligible={publishEligible ?? !preserveNames} />

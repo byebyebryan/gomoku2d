@@ -85,3 +85,14 @@ all six documents with its initial read set and aborts on any difference.
 No sharing operation is part of gameplay, replay scrubbing, or analysis.
 `firestore.indexes.json` exempts the bounded payload fields from automatic
 indexing because the application uses direct document reads only.
+
+## Older-client deletion barrier
+
+Deleting `profiles/{uid}` also requires the public identity to be absent or
+cleared/disabled, and the private library to be absent or the canonical empty
+snapshot. An older client cannot delete only the legacy profile while leaving
+new public/private sharing data, then report cloud deletion complete. It receives
+a rules error and must reload the current cleanup flow. A never-sharing account
+retains its existing delete behavior. The current UI clears sharing first;
+partial failures remain retryable. Up to two dependent reads can be billed for
+this deletion guard. Older schema-5 writes otherwise remain unchanged.

@@ -129,3 +129,14 @@ physical-device evidence.
   lifecycle regressions were added. Production npm audit: zero vulnerabilities;
   Cargo audit: clean against the current advisory database. Rust/bot/core sources
   were unchanged, so no new tournament or behavioral Rust run was required.
+
+- Final lifecycle review added a conditional old-profile deletion barrier: legacy
+  deletion is rejected while new public/private data remains. Never-sharing
+  accounts keep prior behavior. All 43 rules checks pass with this guard.
+- Replacement hashing now accepts an operation/account guard, so reset/delete
+  or account changes invalidate an already reviewed local replacement before
+  it commits. Focused storage/sync/profile contracts pass 46/46 after this fix.
+- Full first browser regression: 168 passed, 21 failed solely on outdated Profile
+  heading selectors and practice/played-history expectations. Updated those
+  scenarios to require one ordinary history record plus separate practice and
+  unchanged played totals; rerunning all 189 checks, including new-state axe scans.

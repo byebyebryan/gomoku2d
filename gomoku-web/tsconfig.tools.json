@@ -16,6 +16,7 @@
     "types": ["node"]
   },
   "include": [
+    "src/vite-env.d.ts",
     "playtests/**/*.ts",
     "perftests/**/*.ts",
     "cloudtests/**/*.ts",

@@ -37,7 +37,7 @@ export interface ReplayLibraryState {
   markDirty: (owner: ReplayLibraryOwner) => void;
   markSynced: (owner: ReplayLibraryOwner) => void;
   removeReplay: (owner: ReplayLibraryOwner, fingerprint: string) => Promise<void>;
-  replaceEntries: (owner: ReplayLibraryOwner, entries: unknown) => Promise<void>;
+  replaceEntries: (owner: ReplayLibraryOwner, entries: unknown, canReplace?: () => boolean) => Promise<void>;
   saveReplay: (owner: ReplayLibraryOwner, replay: unknown, kind: ReplayLibraryKind) => Promise<string>;
 }
 
@@ -337,12 +337,13 @@ export function createReplayLibraryStore(
       }
       commitOwner(set, get, owner, { dirty: true, entries, error: null }, true);
     },
-    replaceEntries: async (owner, entries) => {
+    replaceEntries: async (owner, entries, canReplace) => {
       assertOwner(owner);
       const before = get().owners[owner]?.entries ?? EMPTY_OWNER_STATE.entries;
       try {
         const validated = await verifyPortableEntries(entries);
         const current = get().owners[owner] ?? EMPTY_OWNER_STATE;
+        if (canReplace && !canReplace()) throw new Error("Replay library replacement was superseded. Review the current account library before retrying.");
         if (current.entries !== before) {
           throw new Error("Replay library changed while validating replacement; retry after reviewing the latest local copies.");
         }

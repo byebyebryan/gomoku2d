@@ -473,7 +473,7 @@ export function ProfileRoute() {
     if (!isCurrent()) throw new ProfileActionAccountChanged();
     const cleared = await savePrivateLibrary(user.uid, [], library?.revision ?? null);
     if (!isCurrent()) throw new ProfileActionAccountChanged();
-    await replayLibraryStore.getState().replaceEntries(`user:${user.uid}`, []);
+    await replayLibraryStore.getState().replaceEntries(`user:${user.uid}`, [], isCurrent);
     if (!isCurrent()) throw new ProfileActionAccountChanged();
     replayLibrarySync.acceptCleared(user.uid, cleared);
     await cloudProfileStore.getState().resetForUser(user, createDefaultProfileSettings());

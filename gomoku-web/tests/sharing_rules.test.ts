@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 
 import {
   assertFails,
@@ -17,6 +17,50 @@ const sharingPublicModule = "../src/cloud/sharing_public.js";
 const sharingPrivateModule = "../src/cloud/sharing_private.js";
 const sharingLifecycleModule = "../src/cloud/sharing_lifecycle.js";
 let testEnv: RulesTestEnvironment;
+
+const firestoreCallCounts = vi.hoisted(() => {
+  let getDocFromServer = 0;
+  let transactionGet = 0;
+  let transactionSet = 0;
+  let byPath: Record<string, { transactionGet: number; transactionSet: number }> = {};
+  const pathOf = (reference: unknown): string => {
+    if (typeof reference !== "object" || reference === null || !("path" in reference)) return "<unknown>";
+    const path = (reference as { path?: unknown }).path;
+    return typeof path === "string" ? path : "<unknown>";
+  };
+  const record = (path: string, operation: "transactionGet" | "transactionSet") => {
+    const counts = byPath[path] ?? { transactionGet: 0, transactionSet: 0 };
+    counts[operation] += 1;
+    byPath[path] = counts;
+  };
+  return {
+    reset() {
+      getDocFromServer = 0;
+      transactionGet = 0;
+      transactionSet = 0;
+      byPath = {};
+    },
+    recordServerGet() { getDocFromServer += 1; },
+    recordTransactionGet(reference: unknown) {
+      transactionGet += 1;
+      record(pathOf(reference), "transactionGet");
+    },
+    recordTransactionSet(reference: unknown) {
+      transactionSet += 1;
+      record(pathOf(reference), "transactionSet");
+    },
+    snapshot() {
+      return {
+        getDocFromServer,
+        transactionGet,
+        transactionSet,
+        byPath: JSON.parse(JSON.stringify(Object.fromEntries(
+          Object.entries(byPath).sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0),
+        ))) as typeof byPath,
+      };
+    },
+  };
+});
 
 const clearTransactionPause = vi.hoisted(() => {
   let pauseNextTransaction = false;
@@ -57,11 +101,12 @@ const clearTransactionPause = vi.hoisted(() => {
 
 vi.mock("firebase/firestore", async (importOriginal) => {
   const actual = await importOriginal<typeof import("firebase/firestore")>();
+  const getDocFromServer = ((...args: Parameters<typeof actual.getDocFromServer>) => {
+    firestoreCallCounts.recordServerGet();
+    return actual.getDocFromServer(...args);
+  }) as typeof actual.getDocFromServer;
   const runTransaction = ((firestore: Firestore, updateFunction: (transaction: Transaction) => Promise<unknown>, options?: unknown) => {
-    if (!clearTransactionPause.consumePause()) {
-      return actual.runTransaction(firestore, updateFunction, options as never);
-    }
-
+    const pauseAfterSixthRead = clearTransactionPause.consumePause();
     return actual.runTransaction(firestore, async (transaction) => {
       let reads = 0;
       const pausedTransaction = new Proxy(transaction, {
@@ -69,9 +114,16 @@ vi.mock("firebase/firestore", async (importOriginal) => {
           if (property === "get") {
             return async (...args: unknown[]) => {
               const snapshot = await (target.get as (...getArgs: unknown[]) => Promise<unknown>)(...args);
+              firestoreCallCounts.recordTransactionGet(args[0]);
               reads += 1;
-              if (reads === 6) await clearTransactionPause.afterSixthRead();
+              if (pauseAfterSixthRead && reads === 6) await clearTransactionPause.afterSixthRead();
               return snapshot;
+            };
+          }
+          if (property === "set") {
+            return (...args: unknown[]) => {
+              firestoreCallCounts.recordTransactionSet(args[0]);
+              return (target.set as (...setArgs: unknown[]) => unknown)(...args);
             };
           }
           const value = Reflect.get(target, property, target) as unknown;
@@ -82,7 +134,7 @@ vi.mock("firebase/firestore", async (importOriginal) => {
     }, options as never);
   }) as typeof actual.runTransaction;
 
-  return { ...actual, runTransaction };
+  return { ...actual, getDocFromServer, runTransaction };
 });
 
 const firebaseFirestore = (firebase as unknown as {
@@ -133,6 +185,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await testEnv.clearFirestore();
+  firestoreCallCounts.reset();
 });
 
 afterAll(async () => {
@@ -140,6 +193,28 @@ afterAll(async () => {
 });
 
 describe("Firestore public replay sharing rules and APIs", () => {
+  it("blocks legacy profile deletion until newer sharing data is cleared", async () => {
+    const { savePrivateLibrary } = await import("../src/cloud/sharing_private.js");
+    const { clearSharingData } = await import("../src/cloud/sharing_lifecycle.js");
+    // Profile-delete rules depend on ownership and sharing state, not the
+    // legacy profile contents. Seed only the document needed by this scenario.
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().doc("profiles/uid-1").set({ uid: "uid-1" });
+    });
+    await createPublicProfile();
+    await assertFails(ownerDb().doc("profiles/uid-1").delete());
+    await clearSharingData("uid-1", { firestore: apiDb() });
+    await savePrivateLibrary("uid-1", [privateEntry()], 1, { firestore: apiDb() });
+    await assertFails(ownerDb().doc("profiles/uid-1").delete());
+    await clearSharingData("uid-1", { firestore: apiDb() });
+    await assertSucceeds(ownerDb().doc("profiles/uid-1").delete());
+    // A pre-v0.6 account with neither family retains its deletion behavior.
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().doc("profiles/uid-2").set({ uid: "uid-2" });
+    });
+    await assertSucceeds(ownerDb("uid-2").doc("profiles/uid-2").delete());
+  });
+
   it("creates all four empty pages atomically and exposes only enabled known-UID reads", async () => {
     const { loadCatalogPage, loadPublicProfile } = await import(sharingPublicModule);
     const created = await createPublicProfile();
@@ -393,6 +468,125 @@ describe("Firestore private replay library rules and APIs", () => {
         .resolves.toMatchObject({ revision: 1, entries: [privateEntry()] });
     } finally {
       await closedEnv.cleanup();
+    }
+  });
+});
+
+describe("Firestore sharing operation and document shape evidence", () => {
+  it("records API method counts and bounded JSON fixture sizes", async () => {
+    const { loadCatalogPage, loadPublicProfile, saveCatalogPage, setPublicProfile } = await import("../src/cloud/sharing_public.js");
+    const { loadPrivateLibrary, savePrivateLibrary } = await import("../src/cloud/sharing_private.js");
+    const { clearSharingData } = await import("../src/cloud/sharing_lifecycle.js");
+    const counts: Record<string, ReturnType<typeof firestoreCallCounts.snapshot>> = {};
+    const measure = async <T>(name: string, operation: () => Promise<T>): Promise<T> => {
+      firestoreCallCounts.reset();
+      const result = await operation();
+      counts[name] = firestoreCallCounts.snapshot();
+      return result;
+    };
+
+    const enabled = await measure("public_profile_enable_create", () => (
+      setPublicProfile("uid-1", "Public Name", true, null, { firestore: apiDb() })
+    ));
+    await measure("public_profile_load", () => loadPublicProfile("uid-1", { firestore: apiDb() }));
+    await measure("public_first_page_load", () => loadCatalogPage("uid-1", 0, { firestore: apiDb() }));
+    await measure("public_profile_manager_load_all_four_pages", async () => {
+      await loadPublicProfile("uid-1", { firestore: apiDb() });
+      for (let pageId = 0; pageId < 4; pageId += 1) {
+        await loadCatalogPage("uid-1", pageId, { firestore: apiDb() });
+      }
+    });
+    const renamed = await measure("public_profile_rename", () => (
+      setPublicProfile("uid-1", "Renamed Public Name", true, enabled.revision, { firestore: apiDb() })
+    ));
+    const published = await measure("public_page_publish", () => (
+      saveCatalogPage("uid-1", 0, [entry()], enabled.generation, 1, { firestore: apiDb() })
+    ));
+    await measure("public_page_remove", () => (
+      saveCatalogPage("uid-1", 0, [], enabled.generation, published.revision, { firestore: apiDb() })
+    ));
+    await measure("public_profile_disable", () => (
+      setPublicProfile("uid-1", "", false, renamed.revision, { firestore: apiDb() })
+    ));
+    await measure("private_library_load_missing", () => loadPrivateLibrary("uid-1", { firestore: apiDb() }));
+    await measure("private_library_save_create", () => (
+      savePrivateLibrary("uid-1", [privateEntry()], null, { firestore: apiDb() })
+    ));
+    await measure("private_library_load_existing", () => loadPrivateLibrary("uid-1", { firestore: apiDb() }));
+    await measure("sharing_clear_six_documents", () => clearSharingData("uid-1", { firestore: apiDb() }));
+
+    expect(counts.public_profile_enable_create).toMatchObject({ getDocFromServer: 0, transactionGet: 5, transactionSet: 5 });
+    expect(counts.public_profile_load).toMatchObject({ getDocFromServer: 1, transactionGet: 0, transactionSet: 0 });
+    expect(counts.public_first_page_load).toMatchObject({ getDocFromServer: 1, transactionGet: 0, transactionSet: 0 });
+    expect(counts.public_profile_manager_load_all_four_pages.getDocFromServer).toBe(5);
+    expect(counts.public_profile_rename).toMatchObject({ transactionGet: 1, transactionSet: 1 });
+    expect(counts.public_page_publish).toMatchObject({ transactionGet: 2, transactionSet: 1 });
+    expect(counts.public_page_remove).toMatchObject({ transactionGet: 2, transactionSet: 1 });
+    expect(counts.public_profile_disable).toMatchObject({ transactionGet: 5, transactionSet: 5 });
+    expect(counts.private_library_load_missing).toMatchObject({ getDocFromServer: 1, transactionGet: 0, transactionSet: 0 });
+    expect(counts.private_library_save_create).toMatchObject({ transactionGet: 1, transactionSet: 1 });
+    expect(counts.private_library_load_existing).toMatchObject({ getDocFromServer: 1, transactionGet: 0, transactionSet: 0 });
+    expect(counts.sharing_clear_six_documents).toMatchObject({ transactionGet: 6, transactionSet: 6 });
+
+    const fixtureTimestamp = "2026-10-21T12:00:00.000Z";
+    const pageDocument = (entries: unknown[]) => ({
+      schema_version: 1,
+      generation: 1,
+      revision: 1,
+      updated_at: fixtureTimestamp,
+      entries,
+    });
+    const privateEntries = Array.from({ length: 64 }, (_, index) => ({
+      ...privateEntry(index + 1),
+      payload: "A".repeat(8192),
+    }));
+    const fullPublicPage = pageDocument(Array.from({ length: 8 }, (_, index) => ({
+      ...entry(index + 1),
+      payload: "A".repeat(8192),
+    })));
+    const fullPrivateEntriesJson = JSON.stringify(privateEntries);
+    const privateDocument = (entriesJson: string) => ({
+      schema_version: 1,
+      uid: "uid-1",
+      revision: 1,
+      updated_at: fixtureTimestamp,
+      entries_json: entriesJson,
+    });
+    const jsonFixtureBytes = {
+      public_page_empty: Buffer.byteLength(JSON.stringify(pageDocument([])), "utf8"),
+      public_page_full_8_entries_8192_payload_each: Buffer.byteLength(JSON.stringify(fullPublicPage), "utf8"),
+      private_library_empty: Buffer.byteLength(JSON.stringify(privateDocument("[]")), "utf8"),
+      private_library_full_64_entries_8192_payload_each: Buffer.byteLength(JSON.stringify(privateDocument(fullPrivateEntriesJson)), "utf8"),
+      private_library_full_entries_json_chars: fullPrivateEntriesJson.length,
+    };
+    expect(fullPrivateEntriesJson.length).toBeLessThanOrEqual(600_000);
+    expect(jsonFixtureBytes.private_library_full_64_entries_8192_payload_each).toBeLessThan(600_000);
+
+    const clearByPath = counts.sharing_clear_six_documents.byPath;
+    const evidence = {
+      sources: {
+        operation_counts: "Logical SDK document operations captured at production Firebase Web SDK getDocFromServer and Transaction.get/set calls.",
+        json_fixture_bytes: "UTF-8 byte lengths for persisted-schema JSON fixtures; excludes Firestore/index/network overhead.",
+      },
+      measurement_scope: "Production sharing API calls instrumented around Firebase Web SDK getDocFromServer and Transaction.get/set while running against the Firestore emulator.",
+      caveat: "Method counts are not SDK transport request or billable-read estimates. Rules dependent reads, transaction retries, Firestore protocol encoding, indexes, and service overhead are excluded.",
+      operation_counts: {
+        ...counts,
+        private_library_clear_with_six_document_clear: {
+          transactionGet: clearByPath["replay_libraries/uid-1"].transactionGet,
+          transactionSet: clearByPath["replay_libraries/uid-1"].transactionSet,
+          included_in: "sharing_clear_six_documents",
+        },
+      },
+      json_fixture_bytes: {
+        definition: "UTF-8 byte length of JSON.stringify on representative persisted-schema fixtures; excludes Firestore/index/protocol overhead and billing.",
+        ...jsonFixtureBytes,
+      },
+    };
+    if (process.env.GOMOKU_WRITE_EVIDENCE === "1") {
+      const evidenceDirectory = new URL("../../docs/working/v0_6_evidence/", import.meta.url);
+      await mkdir(evidenceDirectory, { recursive: true });
+      await writeFile(new URL("sharing_shape.json", evidenceDirectory), `${JSON.stringify(evidence, null, 2)}\n`);
     }
   });
 });
