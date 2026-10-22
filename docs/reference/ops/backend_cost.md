@@ -226,8 +226,20 @@ signaling listeners when no longer needed. Direct-only connectivity is an
 accepted limit of the preferred PoC; neither TURN nor database move relaying is
 a selected fallback. There is no measured free-tier player/game capacity yet.
 
-Public replay pages and future server-authoritative matches would require
-separate estimates if selected later.
+### Selected v0.6 Sharing Design
+
+Public profiles and shareable replays are now the selected feature direction.
+The [design draft](../../working/v0_6_profiles_and_replays.md#storage-access-and-cost-proposal)
+keeps portable replay viewing independent of database reads and budgets public
+profile/catalog visits, deliberate publication, and optional private-library
+sync separately. Its page sizes and storage layouts remain proposals; measure
+the resulting document operations, egress, and retained data before setting a
+traffic allowance. This does not add a Cloud Run service or per-move backend.
+Per-account caps do not cap public visit costs. Include repeated/empty queries,
+rules-dependent reads, and a way to disable public access in that estimate;
+portable replay viewing should remain independent of public database access.
+
+Future server-authoritative matches would require a separate estimate.
 
 ## Auth Cost Notes
 

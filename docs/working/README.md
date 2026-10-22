@@ -1,8 +1,14 @@
 # Working Notes
 
-Maintained notes and procedures with an ongoing use. Completed reviews belong
-in the [archive](../archive/README.md); current product and implementation
-contracts belong in the [reference docs](../README.md#choose-a-path).
+Active design drafts and maintained procedures. Completed reviews belong in
+the [archive](../archive/README.md); current product and implementation contracts
+belong in the [reference docs](../README.md#choose-a-path).
+
+## Active Design
+
+| Note | Owner and next review |
+|---|---|
+| [v0.6 public profiles and shareable replays](v0_6_profiles_and_replays.md) | Bryan; settle profile visibility, library persistence, publication scope, and the portable replay contract before implementation |
 
 ## Completed Follow-up
 
@@ -20,6 +26,7 @@ completed review.
 | [Performance tuning](performance_tuning.md) | Native benchmarking process and conditional optimization work; revisit when changing search or starting a measured performance investigation |
 | [UI screenshot review](ui_screenshot_review.md) | Capture and visual QA procedure; use when changing a visible surface or refreshing release media |
 
-Bryan owns these maintenance decisions. None of these notes starts a new feature
-cycle. The [October reconciliation closeout](../archive/reconciliation_2026_10/README.md)
-records the completed review, retained UI, and deferred manual acceptance.
+Bryan owns these design and maintenance decisions. The maintenance notes do not
+reopen the completed [October reconciliation](../archive/reconciliation_2026_10/README.md),
+which records the retained UI and deferred manual acceptance. The v0.6 draft
+tracks the separate next feature direction.

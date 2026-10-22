@@ -7,6 +7,12 @@ records a preferred signaling-only backend and browser-owned gameplay, deferred
 from v0.6. It is not implemented or deployed. Longer-term authoritative service
 ideas remain parked in [`future_cloud_run.md`](future_cloud_run.md).
 
+The selected v0.6 direction is public profiles and shareable replays; its
+[design draft](../../working/v0_6_profiles_and_replays.md) proposes separate
+public/private records, portable replay links, and explicit client-managed
+publication through Firebase. Current deployed contracts below remain the
+private v0.5 baseline until implementation.
+
 ## Current Deployed Backend
 
 - Firebase Auth for optional Google sign-in.
@@ -61,7 +67,9 @@ contract:
 - lightweight summaries and archived stats for older history.
 
 Private match history is embedded in the profile document for the current
-casual path. Future trusted/public match records should use server-owned docs.
+casual path. The v0.6 draft separates public catalog records from private data;
+public publication does not make a game server-verified. A future trusted match
+service would need its own server-owned records.
 
 ## Promotion Flow
 
@@ -103,7 +111,7 @@ Use Cloud Run only when the browser cannot safely own the action:
 
 - username reservation;
 - trusted online match authority;
-- public replay verification/publishing;
+- trusted replay verification;
 - server-side puzzle generation;
 - strong bot endpoint if browser wasm is insufficient.
 

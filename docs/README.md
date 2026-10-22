@@ -16,6 +16,11 @@ identifies the currently published build. Start with the
 verification, and explicit acceptance deferrals, or the
 [roadmap](reference/product/roadmap.md) for what follows.
 
+The next selected direction is v0.6 public profiles and shareable replays. Its
+[design draft](working/v0_6_profiles_and_replays.md) separates accepted scope
+from proposed behavior and storage choices. Multiplayer research is retained
+as deferred work.
+
 ## Choose A Path
 
 | Area | Start with | Continue with |

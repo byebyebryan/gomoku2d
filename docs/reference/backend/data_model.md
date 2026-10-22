@@ -6,6 +6,10 @@ This document is the schema contract for persisted app data. Backend design and
 trust boundaries live in [`backend.md`](backend.md); live project setup and
 deployed rulesets live in [`backend_infra.md`](../ops/backend_infra.md).
 
+Proposed public-profile, replay-library, and publication shapes for v0.6 live in
+the [design draft](../../working/v0_6_profiles_and_replays.md). They are not part
+of the current schema contract below.
+
 ## Schema Policy
 
 - Every persisted document family with app-managed structure carries an explicit

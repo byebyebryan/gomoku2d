@@ -51,13 +51,18 @@ Historical execution and findings:
 - [`v0.5.4 Reconciliation Findings`](../../archive/v0_5_4_findings.md)
 - [`v0.5 Public Release Plan`](../../archive/v0_5_public_release_plan.md)
 
-## Following Reconciliation: `v0.6` Design Checkpoint
+## `v0.6` Design: Public Profiles and Shareable Replays
+
+The selected direction is public profiles plus shareable replays. The
+[design draft](../../working/v0_6_profiles_and_replays.md) maps the private/public
+profile split, portable replay links, explicit saving and publishing, practice
+continuations, public-page flows, and cost/lifecycle boundaries. Detailed
+behaviors remain proposals under discussion; implementation has not started.
 
 Multiplayer is deferred from v0.6 as of October 21. Its implementation and UX
 effort, uncertain usage, and difficulty demonstrating it with another player
-make it a weaker immediate fit for this demo/experiment. The next player-facing
-slice remains under discussion. Preserve the chosen visual language and
-existing screen roles when choosing that slice.
+make it a weaker immediate fit for this demo/experiment. Preserve the chosen
+visual language and existing screen roles through the new sharing flows.
 
 ## Deferred Multiplayer Research
 
