@@ -42,43 +42,36 @@ async function resetProfile(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: "Reset", exact: true }).click();
 }
 
-test("C3: a finished practice branch syncs separately and opens from a second client", async ({ page, browser }) => {
+test("C3: a completed continuation syncs as a regular game and opens from a second client", async ({ page, browser }) => {
   await seedHistory(page, "branch-source", "freestyle");
   const email = `finish-${Date.now()}@example.test`;
   const uid = await signIn(page, email);
   await readyCloud(page);
   await makeProfileEligible(uid);
-  await page.reload();
-  await readyCloud(page);
+  await page.reload(); await readyCloud(page);
   await finishBranch(page, "branch-source");
   await page.getByRole("link", { name: "Profile", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(1);
-  await expect(page.getByRole("region", { name: "Practice games" }).getByRole("link", { name: "Inspect replay", exact: true })).toHaveCount(1);
-  expect((await readProfile(uid))?.match_history.replay_matches.map((match: { id: string }) => match.id)).toEqual(["branch-source"]);
+  await expect(page.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(2);
+  await expect(page.getByRole("region", { name: "Practice games" })).toHaveCount(0);
+  await expect.poll(async () => (await readProfile(uid))?.match_history.replay_matches.length).toBe(2);
+  const continuation = (await readProfile(uid))?.match_history.replay_matches.find((match: { id: string }) => match.id !== "branch-source");
+  expect(continuation.replay_origin).toMatchObject({ inherited_ply: 8, source_fingerprint: expect.stringMatching(/^[A-Za-z0-9_-]{43}$/) });
+  expect(continuation.undo_floor).toBe(8);
+  expect(await readPrivateLibrary(uid)).toBeNull();
 
-  // The local practice copy is explicit account-library content, never a played-game history record.
-  await page.getByRole("tab", { name: "Saved replays", exact: true }).click();
-  await expect(page.getByText("Review library changes: 1 local copies; 0 cloud copies.", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Merge copies into cloud", exact: true }).click();
-  await expect(page.getByText("Account library synced.", { exact: true })).toBeVisible();
-  await expect.poll(async () => (await readPrivateLibrary(uid))?.entries.length).toBe(1);
-
-  const context = await browser.newContext();
-  await protectContext(context);
+  const context = await browser.newContext(); await protectContext(context);
   try {
-    const second = await context.newPage();
-    await signIn(second, email);
-    await expect(second.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(1);
-    await second.getByRole("tab", { name: "Saved replays", exact: true }).click();
-    await expect(second.getByText("Account library synced.", { exact: true })).toBeVisible();
-    await second.getByRole("tab", { name: "My games", exact: true }).click();
-    const practice = second.getByRole("region", { name: "Practice games" });
-    await expect(practice.getByRole("link", { name: "Inspect replay", exact: true })).toHaveCount(1);
-    await practice.getByRole("link", { name: "Inspect replay", exact: true }).click();
-    await expect(second).toHaveTitle("Replay Analysis | Gomoku2D");
+    const second = await context.newPage(); await signIn(second, email); await readyCloud(second);
+    await expect(second.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(2);
+    await second.goto(`/replay/${continuation.id}`);
+    await expect(second.getByTestId("replay-move-count")).toHaveText("Move 9 / 9");
     await expect(second.getByRole("grid", { name: "Gomoku board" })).toBeVisible();
-    await expect(second.getByText("Practice game", { exact: true })).toBeVisible();
-    await expect(second.getByText(/Practice replay: the first 8 moves are inherited from another game\./)).toBeVisible();
+    await expect(second.getByText("Practice game", { exact: true })).toHaveCount(0);
+    await second.getByRole("button", { name: "Share replay", exact: true }).click();
+    const url = await second.getByRole("textbox", { name: "Replay link", exact: true }).inputValue();
+    const wire = JSON.parse(Buffer.from(new URL(url).hash.slice("#g2r1=".length), "base64url").toString("utf8"));
+    expect(wire.o).toEqual({ f: continuation.replay_origin.source_fingerprint, p: 8 });
+    expect(wire.b.u).toBeUndefined(); // Profile references remain opt-in when exporting.
   } finally { await context.close(); }
 });
 
@@ -106,12 +99,11 @@ test("C4: a stale client cannot overwrite another client's setup", async ({ page
   } finally { await context.close(); }
 });
 
-test("C5/C8: failed transport preserves local practice, then syncs it once after explicit review", async ({ page, context }) => {
+test("C5/C8: failed transport preserves a completed continuation in My games and syncs it once on recovery", async ({ page, context }) => {
   await seedHistory(page, "offline-source", "freestyle");
   const email = `offline-${Date.now()}@example.test`;
   const uid = await signIn(page, email); await readyCloud(page);
   await makeProfileEligible(uid); await page.reload(); await readyCloud(page);
-  // Load all replay/match code first; only Firestore transport is failed below.
   await page.goto("/replay/offline-source");
   await page.getByRole("button", { name: "Previous move", exact: true }).click();
   await page.getByRole("button", { name: "Play From Here", exact: true }).click();
@@ -122,30 +114,19 @@ test("C5/C8: failed transport preserves local practice, then syncs it once after
   await expect(page.getByTestId("match-status")).toHaveText(/wins$/);
   await expect(page.getByRole("link", { name: "Analyze", exact: true })).toBeVisible();
   await page.getByRole("link", { name: "Profile", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(1);
-  await expect(page.getByRole("region", { name: "Practice games" }).getByRole("link", { name: "Inspect replay", exact: true })).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(2);
   expect((await readProfile(uid))?.match_history.replay_matches.map((match: { id: string }) => match.id)).toEqual(["offline-source"]);
   expect(await readPrivateLibrary(uid)).toBeNull();
 
-  // Reload offline: the finished practice replay stays local and separate from played history.
   await page.reload();
-  await expect(page.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(1);
-  await expect(page.getByRole("region", { name: "Practice games" }).getByRole("link", { name: "Inspect replay", exact: true })).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(2);
   await context.unroute("http://127.0.0.1:18081/**");
-  await page.reload();
-  await readyCloud(page);
-  await expect(page.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(1);
-  await expect(page.getByRole("region", { name: "Practice games" }).getByRole("link", { name: "Inspect replay", exact: true })).toHaveCount(1);
-  await page.getByRole("tab", { name: "Saved replays", exact: true }).click();
-  await expect(page.getByText("Review library changes: 1 local copies; 0 cloud copies.", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Merge copies into cloud", exact: true }).click();
-  await expect(page.getByText("Account library synced.", { exact: true })).toBeVisible();
-  await expect.poll(async () => (await readPrivateLibrary(uid))?.entries.length).toBe(1);
   await page.reload(); await readyCloud(page);
-  await expect(page.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(1);
-  await expect(page.getByRole("region", { name: "Practice games" }).getByRole("link", { name: "Inspect replay", exact: true })).toHaveCount(1);
-  expect((await readProfile(uid))?.match_history.replay_matches.map((match: { id: string }) => match.id)).toEqual(["offline-source"]);
-  expect((await readPrivateLibrary(uid))?.entries).toHaveLength(1);
+  await expect.poll(async () => (await readProfile(uid))?.match_history.replay_matches.length).toBe(2);
+  await page.reload(); await readyCloud(page);
+  await expect(page.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(2);
+  expect((await readProfile(uid))?.match_history.replay_matches.filter((match: { id: string }) => match.id !== "offline-source")).toHaveLength(1);
+  expect(await readPrivateLibrary(uid)).toBeNull();
 });
 
 test("C7/C9: reset survives a stale client and immediate repeated reset is denied", async ({ page, browser }) => {

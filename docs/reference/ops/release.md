@@ -146,9 +146,12 @@ For the first sharing release:
 
 Compatibility and rollback:
 
-- No migration of `profiles/{uid}` schema 5 or `SavedMatchV2` schema 2. Older
-  clients ignore the new Firestore families and local library key. New practice
-  never enters their promotion or statistics paths; legacy totals are retained.
+- No version bump of `profiles/{uid}` schema 5 or `SavedMatchV2` schema 2.
+  Completed continuations enter normal history and totals with additive optional
+  `replay_origin` metadata; existing validators and promotion preserve it. Older
+  clients ignore the new Firestore families and local library key. They can view
+  continuation matches but their export path does not include the new origin.
+  Earlier preview library completions remain readable in the current My games UI.
 - An old client trying to delete a profile while public identity or a nonempty
   library remains receives a rules denial. It must update/reload and use the
   current cleanup flow. Accounts without sharing data retain prior deletion.

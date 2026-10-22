@@ -177,7 +177,7 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
 
             <ReplayPlaybackPanel
               autoplaying={autoplaying}
-              practiceBotLabel={botLabel(settings.botConfig)}
+              resumeBotLabel={botLabel(settings.botConfig)}
               frame={frame}
               match={match}
               onResume={async (resumeSeed) => {
@@ -187,10 +187,10 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
                   const sourceFingerprint = fingerprint ?? await portableReplayFingerprint(validatePortableReplay(portable));
                   const active = localMatchSessionStore.getState().matchStore?.getState();
                   if (active?.status === "playing" && active.moves.length > 0
-                    && !window.confirm("Replace your active game with a practice game from this position?")) return;
+                    && !window.confirm("Replace your active game with a new game from this position?")) return;
                   navigate(localMatchResumePath, { state: { resumeSeed: { ...resumeSeed,
                     practiceOrigin: { sourceFingerprint, inheritedPly: resumeSeed.moves.length } } } });
-                } catch (error) { setBranchError(error instanceof Error ? error.message : "Practice could not start."); }
+                } catch (error) { setBranchError(error instanceof Error ? error.message : "The game could not start."); }
                 finally { setBranching(false); }
               }}
               replayFloor={replayFloor}
@@ -200,15 +200,8 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
               timelineAnalysis={timelineAnalysis}
               timelineStyle={timelineStyle}
             />
-            {(source?.practice || branchError) && <section className={`${styles.deckSection} ${styles.practiceContext}`} aria-label="Practice origin">
-              {source?.practice && <>
-                <p className="uiSectionLabel">Practice replay</p>
-                <div className={styles.metaRow}>
-                  <span className={styles.metaLabel}>Inherited</span>
-                  <span className={styles.metaValue}>First {source.practice.inheritedPly} moves</span>
-                </div>
-              </>}
-              {branchError && <p className={styles.contextError} role="alert">{branchError}</p>}
+            {branchError && <section className={styles.deckSection}>
+              <p className={styles.contextError} role="alert">{branchError}</p>
             </section>}
             <section className={`${styles.deckSection} ${styles.sharingSection}`}>
               <button className="uiAction uiActionSecondary" type="button" ref={shareTriggerRef} onClick={() => {

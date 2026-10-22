@@ -15,14 +15,19 @@ a deployed release. No token budget was requested.
 
 ## Accepted Product Defaults
 
-- Publish only the account's own played games or its clearly marked practice
+October 22 manual review revised continuation behavior as described below.
+The milestone receipts later in this record describe the earlier implementation;
+the [review follow-up](v0_6_review_acceptance.md) records subsequent checks.
+
+- Publish only the account's own played games, including replay
   completions; importing someone else's replay does not grant publication.
 - Confirm an independent public name, initially suggested from the in-game
   name. Do not automatically publish provider metadata.
 - Save guest copies locally and sync signed-in libraries separately. Guest
   import is explicit; account caches and pending work are scoped by UID.
-- Exclude new practice completions from ordinary win/loss totals. Do not
-  reconstruct historical practice statistics from archived aggregates.
+- Completed continuations are regular My games and count in ordinary win/loss
+  totals. Keep the source and starting ply as metadata, with no Practice badge
+  or separate section. Existing archived aggregates are retained.
 - Publish each game explicitly. Disable makes the public page unavailable and
   removes publications; re-enable starts empty. Portable copies cannot be
   recalled. Removal/reset/delete scopes are visible before destructive actions.
@@ -31,11 +36,12 @@ a deployed release. No token budget was requested.
 
 ## Architecture Decisions
 
-- Preserve existing `SavedMatchV2` and schema-5 cloud profiles. Keep imported
-  replays and new practice completions in a separate versioned replay-library
-  family, with practice exposed separately in My games and excluded from
-  ordinary played-history aggregation/promotion. Older clients cannot strip
-  provenance from a record family they never write.
+- Keep saved study copies in a separate versioned replay library. New completed
+  continuations use normal history, promotion and statistics, with optional
+  SavedMatchV2 `replay_origin` metadata carried into portable export. Schema
+  versions remain 2 and 5. Earlier preview `kind: practice` library records are
+  projected into the current owner's My games and displayed totals without
+  moving them into device-wide history.
 - Portable canonical identity includes participant snapshots and practice
   origin, but excludes the initial viewing ply. Different attribution creates
   a separate copy; identical repeated saves deduplicate. Fingerprints establish

@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useStore } from "zustand";
 
 import { cloudAuthStore } from "../cloud/auth_store";
@@ -10,6 +11,9 @@ import {
   type LocalProfileMatchHistory,
 } from "./local_profile_store";
 import { resolveActiveHistory } from "./active_history";
+import { decodePortableReplay } from "../replay/portable_replay_codec";
+import { portableReplaySavedMatch } from "../replay/portable_replay_adapters";
+import { currentReplayLibraryOwner, replayLibraryStore } from "../replay/replay_library_store";
 
 export interface ActiveHistoryView {
   cloudAuth: ReturnType<typeof cloudAuthStore.getState>;
@@ -31,6 +35,19 @@ export function useActiveHistory(): ActiveHistoryView {
   const cloudProfile = useStore(cloudProfileStore, (state) => state);
   const localMatchHistory = useStore(localProfileStore, (state) => state.matchHistory);
   const localProfile = useStore(localProfileStore, (state) => state.profile);
+  const owner = currentReplayLibraryOwner();
+  const libraryEntries = useStore(replayLibraryStore, (state) => state.owners[owner]?.entries);
+  // Early v0.6 previews saved completed continuations in the private library.
+  // Keep them in My games without moving account data into device-wide history
+  // or treating deliberately saved study copies as games the viewer played.
+  const earlierContinuations = useMemo(() => (libraryEntries ?? []).flatMap((entry) => {
+    if (entry.kind !== "practice") return [];
+    try {
+      return [portableReplaySavedMatch(decodePortableReplay(entry.payload), entry.fingerprint, entry.saved_at)];
+    } catch {
+      return [];
+    }
+  }), [libraryEntries]);
 
   const cloudUserCache =
     cloudAuth.status === "signed_in" && cloudAuth.user
@@ -51,7 +68,7 @@ export function useActiveHistory(): ActiveHistoryView {
     history: resolveActiveHistory({
       cloudHistory: cloudCache,
       historyResetAt: cloudAuth.status === "signed_in" ? cloudProfile.profile?.resetAt : null,
-      localHistory,
+      localHistory: [...localHistory, ...earlierContinuations],
     }),
     localDisplayName: localProfile?.displayName ?? cloudAuth.user?.displayName ?? DEFAULT_LOCAL_DISPLAY_NAME,
     localMatchHistory,

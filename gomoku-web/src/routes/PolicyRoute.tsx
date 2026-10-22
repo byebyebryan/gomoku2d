@@ -76,7 +76,7 @@ function PrivacyContent() {
           <h2>Information stored locally</h2>
           <p>
             Gomoku2D stores your local profile, game and bot settings, board-hint
-            and touch preferences, match history, saved replay and practice copies, and cached replay analyses in
+            and touch preferences, match history, saved replay copies, and cached replay analyses in
             your browser&apos;s local storage. When you sign in, the browser also
             keeps a local cache and pending sync queue for your private cloud
             history. This data stays on the device unless you reset the profile or
@@ -95,13 +95,13 @@ function PrivacyContent() {
             into Firestore. Gomoku2D may also store private match history,
             including game results, rule variants, players, moves, timestamps, and
             replay metadata. Replay-analysis results are cached locally and are
-            not synced to your cloud profile. Saved replay and practice copies use a separate private account library when you explicitly save, import or sync them.
+            not synced to your cloud profile. Games completed from an existing position use the same private match history and sync. Saved study copies use a separate private account library when you explicitly save, import or sync them.
           </p>
         </section>
 
         <section className={styles.section}>
           <h2>Sharing replays and public profiles</h2>
-          <p>A replay link contains the game moves, player names, optional public profile identifiers, bot settings and any practice origin shown in its preview. Anyone with the link can view or copy it without signing in. Sharing a link does not automatically publish it or save it to someone’s private history.</p>
+          <p>A replay link contains the game moves, player names, optional public profile identifiers, bot settings and any starting-position origin metadata. Anyone with the link can view or copy it without signing in. Sharing a link does not automatically publish it or save it to someone’s private history.</p>
           <p>Your public profile stays off until you choose and confirm a public name. Its name, account identifier and games you explicitly publish are readable by anyone with the profile link. Public profiles do not expose your private settings, provider metadata or private history. Player attribution is supplied by the publisher and is not independently verified.</p>
           <p>Unpublishing removes a catalog entry. Disabling your public profile hides it and removes its catalog; re-enabling starts empty. Replay links and copies already obtained by other people cannot be recalled.</p>
         </section>
@@ -135,7 +135,7 @@ function PrivacyContent() {
           <h2>Data deletion</h2>
           <p>
             Use Reset Profile from the Profile screen to clear the current profile.
-            Signed out, it clears local settings, match history, guest saved/practice copies and cached replay analyses on this device. Signed in, it resets your private cloud profile, history and replay library, then clears the corresponding local profile data and account copies. Guest copies remain separate. Private reset does not change your public profile or publications.
+            Signed out, it clears local settings, match history, guest saved copies and cached replay analyses on this device. Signed in, it resets your private cloud profile, history and replay library, then clears the corresponding local profile data and account copies. Guest copies remain separate. Private reset does not change your public profile or publications.
           </p>
           <p>
             Signed-in users can choose Delete Cloud inside Reset Profile to delete

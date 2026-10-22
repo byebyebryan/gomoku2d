@@ -42,6 +42,11 @@ export interface SavedMatchPlayer {
   profile_uid: string | null;
 }
 
+export interface SavedMatchReplayOrigin {
+  source_fingerprint: string;
+  inherited_ply: number;
+}
+
 export interface SavedMatchV2 {
   board_size: typeof SAVED_MATCH_BOARD_SIZE;
   id: string;
@@ -56,6 +61,7 @@ export interface SavedMatchV2 {
   status: SavedMatchStatus;
   trust: SavedMatchTrust;
   undo_floor: number;
+  replay_origin?: SavedMatchReplayOrigin;
   ruleset: GameVariant;
 }
 
@@ -72,6 +78,7 @@ export interface CreateLocalSavedMatchInput {
   savedAt: string;
   status: SavedMatchStatus;
   undoFloor?: number;
+  replayOrigin?: SavedMatchReplayOrigin;
   botConfig?: BotConfig;
   ruleset: GameVariant;
 }
@@ -155,6 +162,18 @@ function isValidMoveCell(cell: unknown): cell is number {
   );
 }
 
+function isReplayOrigin(value: unknown, moveCount: number, undoFloor: number): value is SavedMatchReplayOrigin {
+  const origin = value as Partial<SavedMatchReplayOrigin> | null;
+  return origin !== null && typeof origin === "object"
+    && typeof origin.source_fingerprint === "string"
+    && /^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$/.test(origin.source_fingerprint)
+    && typeof origin.inherited_ply === "number"
+    && Number.isInteger(origin.inherited_ply)
+    && origin.inherited_ply >= 4
+    && origin.inherited_ply < moveCount
+    && origin.inherited_ply === undoFloor;
+}
+
 export function isSavedMatchV2(value: unknown): value is SavedMatchV2 {
   const candidate = value as Partial<SavedMatchV2> | null;
   return (
@@ -180,6 +199,7 @@ export function isSavedMatchV2(value: unknown): value is SavedMatchV2 {
     && Number.isInteger(candidate.undo_floor)
     && candidate.undo_floor >= 0
     && candidate.undo_floor <= candidate.move_count
+    && (candidate.replay_origin === undefined || isReplayOrigin(candidate.replay_origin, candidate.move_count, candidate.undo_floor))
     && isSavedMatchRuleset(candidate.ruleset)
   );
 }
@@ -306,6 +326,10 @@ export function createLocalSavedMatch(input: CreateLocalSavedMatchInput): LocalS
     input.botConfig ?? DEFAULT_BOT_CONFIG,
   );
   const moveCells = encodeMoveCells(input.moves);
+  const undoFloor = normalizeUndoFloor(input.undoFloor, moveCells.length);
+  if (input.replayOrigin && !isReplayOrigin(input.replayOrigin, moveCells.length, undoFloor)) {
+    throw new Error("Saved match replay origin must identify its starting position.");
+  }
 
   return {
     board_size: SAVED_MATCH_BOARD_SIZE,
@@ -320,7 +344,8 @@ export function createLocalSavedMatch(input: CreateLocalSavedMatchInput): LocalS
     source: "local_history",
     status: input.status,
     trust: "local_only",
-    undo_floor: normalizeUndoFloor(input.undoFloor, moveCells.length),
+    undo_floor: undoFloor,
+    ...(input.replayOrigin ? { replay_origin: { ...input.replayOrigin } } : {}),
     ruleset: input.ruleset,
   };
 }

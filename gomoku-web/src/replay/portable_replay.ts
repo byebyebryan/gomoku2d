@@ -363,6 +363,10 @@ export function portableReplayFromSavedMatch(
   const replay: PortableReplayV1 = {
     black: participantFromSavedMatch(value.player_black),
     moves: value.move_cells,
+    ...(value.replay_origin ? { practice: {
+      sourceFingerprint: value.replay_origin.source_fingerprint,
+      inheritedPly: value.replay_origin.inherited_ply,
+    } } : {}),
     ruleset: value.ruleset,
     version: PORTABLE_REPLAY_VERSION,
     ...(viewPly === undefined ? {} : { viewPly }),

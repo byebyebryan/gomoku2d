@@ -239,6 +239,7 @@ type SavedMatchV2 = {
   move_count: number;
   move_cells: number[];
   undo_floor: number;
+  replay_origin?: { source_fingerprint: string; inherited_ply: number };
 
   player_black: SavedMatchPlayer;
   player_white: SavedMatchPlayer;
@@ -402,7 +403,7 @@ records when possible. Local archived stats are imported only when the target
 cloud history is empty, because archived counters no longer carry per-match IDs
 and cannot be safely deduped against an existing cloud archive.
 
-## Replay library and practice (v0.6)
+## Replay library and continuations (v0.6)
 
 The separate schema-1 library is specified in [Sharing data](sharing_data.md).
 Browser cache `gomoku2d.replay-library.v1` contains `{schema_version: 1, owners}`;
@@ -412,12 +413,17 @@ the whole device cache is capped at 600,000 UTF-8 bytes. Malformed/newer data is
 preserved and reported instead of silently overwritten. Persistence denial
 leaves a visible in-memory copy; it does not claim reload durability.
 
-Imported copies and newly completed practice never enter played-history
-promotion, summaries or archived totals. Practice retains the source fingerprint,
-inherited ply, visitor/current-bot participants and full move sequence. Existing
-legacy history/aggregates retain their previous interpretation; no historical
-practice provenance is invented. Older tabs write neither new document family
-nor the new local key, so they cannot downgrade the new provenance.
+Saving a study copy never adds a played game. Completing Play From Here records
+a normal `SavedMatchV2` through existing history, promotion and statistics. Its
+optional `replay_origin` contains `source_fingerprint` and `inherited_ply`, with
+the latter equal to `undo_floor`. Cloud promotion preserves this optional field;
+portable export maps it to the existing `o` origin. Full games omit it. Existing
+history and archived totals are retained without guessing missing origins.
+
+Early v0.6 previews stored completions as library entries with `kind: practice`.
+These remain readable and appear in the owner's regular My games list and
+displayed statistics; they are not copied into device-wide local history.
+Saved study copies remain excluded even when their payload has origin metadata.
 
 Reset while signed in clears the account library and this device's account
 copies, together with the existing private profile/history/settings/analysis

@@ -55,7 +55,7 @@ Historical execution and findings:
 
 The selected direction is public profiles plus shareable replays. The
 [design draft](../../working/v0_6_profiles_and_replays.md) maps the private/public
-profile split, portable replay links, explicit saving and publishing, practice
+profile split, portable replay links, explicit saving and publishing, replay
 continuations, public-page flows, and cost/lifecycle boundaries. Detailed
 technical bounds are now fixed in the portable/sharing reference contracts.
 M0–M5 and local M6 acceptance are complete; the [Luna execution record](../../working/v0_6_execution.md)
@@ -70,7 +70,7 @@ the work into reviewable milestones:
 | M0 | Settle bounded contracts and scope decisions | Portable format first; persistence choices before their writers |
 | M1 | Portable replay core | Legal round trips, explicit versions, size/input limits |
 | M2 | Sharing and standalone guest viewer | Open a chosen moment without sign-in, import, or replay/profile database work |
-| M3 | Local saved library and practice continuations | Separate imports/statistics and preserve branch provenance |
+| M3 | Local saved library and replay continuations | Study copies stay separate; completed continuations join normal My games and statistics with their origin retained |
 | M4 | Public profile and explicit publication | Full publish/unpublish/disable lifecycle with rules and cost evidence |
 | M5 | Private account-library sync | Bounded sync, account isolation, offline deletion/conflict recovery |
 | M6 | Release acceptance and rollout | Solo demo, compatibility, browser/cloud checks, and deployment verification |

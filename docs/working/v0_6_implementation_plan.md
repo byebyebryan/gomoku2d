@@ -6,6 +6,10 @@ record owns the acceptance evidence and separate release gates. The selected rel
 shareable replays. The [design draft](v0_6_profiles_and_replays.md) owns the
 product rationale and proposed behaviors; this plan owns order and acceptance.
 
+October 22 manual-review revision: completed continuations now use regular
+My games, statistics and history sync, retaining their origin internally.
+This supersedes the earlier separate practice-category acceptance policy.
+
 ## Readiness and Scope
 
 The milestones below preserve the implementation sequence and acceptance
@@ -31,7 +35,7 @@ Public profiles and catalogs do not depend on cross-device private-library sync.
 | M0: Contracts and decisions | Agreed behavior for sharing, saving, practice, and publication | Bounded contracts and compatibility decisions recorded |
 | M1: Portable replay core | A valid finished game can become a portable replay and back | Versioned fixtures, legal replay round trips, input limits |
 | M2: Share and guest viewer | Copy a chosen moment; another browser opens and studies it | Production-build guest demo with no replay/profile database calls |
-| M3: Local library and practice | Save a replay separately; continue it as a practice game | Reload, deduplication, provenance, and statistics isolation |
+| M3: Local library and continuations | Save a study copy separately; played continuations join regular My games | Reload, deduplication, origin retention, and normal played-game statistics |
 | M4: Public profile and publishing | Share a player page containing explicitly published games | Public/private access rules, publication lifecycle, measured operations |
 | M5: Account library sync | Saved copies follow the signed-in account | Two-client sync, account isolation, offline deletion/conflict recovery |
 | M6: Release acceptance | Complete solo demo and compatible release package | Browser, cloud, cost, compatibility, and release evidence |
@@ -49,10 +53,10 @@ Keep this a bounded contract pass, not another general research phase.
 
 | Decision | Recommended starting point | Needed before |
 |---|---|---|
-| Public publication scope | Own played games, including clearly marked own practice continuations; imported curation deferred | M4 |
+| Public publication scope | Own played games, including continuations; imported curation deferred | M4 |
 | Private library persistence | Guests local; signed-in account sync in M5; guest import is explicit | M3 storage contract / M5 |
 | Public name | Confirm an independent public name, prefilled from the in-game name; no automatic provider publication or coupled renaming | M4 |
-| Practice statistics | Exclude new practice completions from ordinary win/loss totals; define legacy treatment without guessing archived provenance | M3 |
+| Continuation statistics | Completed continuations count as regular played games; keep source/starting ply as metadata, with no badge or separate list | M3 |
 | Visibility lifecycle | Explicit publish; disabling hides and removes publications; re-enabling starts empty | M4 |
 
 Before M1, specify the versioned portable record, legal game/opening contract,
@@ -124,7 +128,7 @@ without import or replay/profile database traffic. Verify clipboard fallback,
 desktop/mobile layout, keyboard controls, and successful direct HTTP entry in
 the production build; verify the real public host separately at release.
 
-## M3: Local Saved Replays and Practice Continuations
+## M3: Local Saved Replays and Continuations
 
 - Add My games and Saved replays to the private profile without merging their
   data or statistics. Save is explicit, survives reload, and handles full or
@@ -133,13 +137,12 @@ the production build; verify the real public host separately at release.
   caches separately, even before cloud sync is enabled.
 - Connect Play From Here to the existing legal-frame/current-bot setup, show
   that setup, and confirm replacement of an active local match.
-- Save a completed continuation with its inherited prefix/source and practice
-  classification. Preserve this classification through export and every
-  private history tier it can enter; apply the agreed statistics policy.
-- Update existing played-history cloud promotion wherever new practice records
-  enter it, even before M5. An older promotion writer must not strip provenance
-  or turn a practice result into an ordinary win/loss. Keep the saved library
-  outside this existing promotion path.
+- Save a completed continuation as a regular played game, with optional source
+  and starting-ply metadata retained through private history, cloud promotion,
+  and export. Include it in normal statistics without a separate badge/list.
+- Keep saved study copies outside played-history promotion. Earlier preview
+  library completions appear in the owner's regular My games and displayed
+  totals without copying private account data into device-wide history.
 
 Primary touchpoints: [private profile](../../gomoku-web/src/routes/ProfileRoute.tsx),
 [local profile storage](../../gomoku-web/src/profile/local_profile_store.ts),
@@ -203,7 +206,7 @@ Run this solo demonstration against the complete candidate:
 
 1. Finish a game and copy a link at an interesting moment.
 2. Open it as a fresh guest; scrub, analyze, and save a private copy.
-3. Continue from a legal ply, finish as practice, and re-share it.
+3. Continue from a legal ply, finish into regular My games/statistics, and re-share it.
 4. Enable a public profile, publish a chosen game, and share the player page.
 5. Browse as a guest, open its replay, then verify unpublish/disable behavior.
 6. If included, recover the saved library on a second emulator client signed

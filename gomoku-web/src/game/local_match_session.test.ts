@@ -4,9 +4,8 @@ import { DEFAULT_BOT_CONFIG, type BotConfig } from "../core/bot_config";
 import { cloudAuthStore, type CloudAuthUser } from "../cloud/auth_store";
 import { localProfileStore } from "../profile/local_profile_store";
 import { createDefaultProfileSettings } from "../profile/profile_settings";
-import { decodePortableReplay } from "../replay/portable_replay_codec";
-import { createReplayLibraryStore, REPLAY_LIBRARY_LIMIT } from "../replay/replay_library_store";
-import type { PortableReplayV1 } from "../replay/portable_replay";
+import { portableReplayFromSavedMatch } from "../replay/portable_replay";
+import * as cloudSync from "../cloud/cloud_sync";
 import {
   createLocalProfileTestState,
   noOpBotRunner,
@@ -17,7 +16,6 @@ import {
   disposeLocalMatchSession,
   ensureLocalMatchSession,
   localMatchSessionStore,
-  retryPracticeSave,
   startLocalMatchWithSavedSetup,
 } from "./local_match_session";
 
@@ -58,44 +56,6 @@ function practiceBranch() {
     undoFloor: 8,
     variant: "freestyle" as const,
   };
-}
-
-function createMemoryReplayLibrary() {
-  const backing = new Map<string, string>();
-  return createReplayLibraryStore({
-    storage: {
-      getItem: (name) => backing.get(name) ?? null,
-      removeItem: (name) => { backing.delete(name); },
-      setItem: (name, value) => { backing.set(name, value); },
-    },
-  });
-}
-
-function libraryReplay(name: string): PortableReplayV1 {
-  return {
-    black: { kind: "human", name },
-    moves: [110, 0, 111, 1, 112, 2, 113, 3, 114],
-    ruleset: "freestyle",
-    version: 1,
-    white: {
-      bot: {
-        config: DEFAULT_BOT_CONFIG,
-        configVersion: 1,
-        engine: "search_bot",
-        version: 1,
-      },
-      kind: "bot",
-      name: "Normal Bot",
-    },
-  };
-}
-
-function deferReplayLibrarySave(store: ReturnType<typeof createMemoryReplayLibrary>) {
-  let resolveSave!: (fingerprint: string) => void;
-  const pending = new Promise<string>((resolve) => { resolveSave = resolve; });
-  const settled = pending.then(() => undefined);
-  store.setState({ saveReplay: () => pending });
-  return { resolveSave, settled };
 }
 
 function settingsWith(ruleset: "freestyle" | "renju", botConfig: BotConfig = DEFAULT_BOT_CONFIG) {
@@ -211,34 +171,32 @@ describe("local match session", () => {
     });
   });
 
-  it("saves a finished branch as practice and leaves ordinary match history untouched", async () => {
+  it("records a completed continuation as a regular game with its replay origin", () => {
     setSignedOut();
     localProfileStore.setState(createLocalProfileTestState(settingsWith("freestyle")));
-    const replayLibrary = createMemoryReplayLibrary();
     const recordFinishedMatch = vi.spyOn(localProfileStore.getState(), "recordFinishedMatch");
-    const store = ensureLocalMatchSession({
-      botRunner: noOpBotRunner,
-      replayLibraryStore: replayLibrary,
-      resumeState: practiceBranch(),
-    });
+    const store = ensureLocalMatchSession({ botRunner: noOpBotRunner, resumeState: practiceBranch() });
 
     expect(store.getState().placeHumanMove(7, 9)).toBe(true);
-    await vi.waitFor(() => expect(replayLibrary.getState().owners.guest?.entries).toHaveLength(1));
-
+    const [saved] = localProfileStore.getState().matchHistory.replayMatches;
     expect(store.getState().status).toBe("black_won");
-    expect(localProfileStore.getState().matchHistory.replayMatches).toEqual([]);
-    expect(recordFinishedMatch).not.toHaveBeenCalled();
-    expect(replayLibrary.getState().owners.guest?.entries[0]?.kind).toBe("practice");
-    expect(decodePortableReplay(replayLibrary.getState().owners.guest!.entries[0]!.payload).replay)
-      .toMatchObject({ moves: [110, 0, 111, 1, 112, 2, 113, 3, 114], practice: ORIGIN });
-    expect(localMatchSessionStore.getState().latestReplayId)
-      .toBe(`portable-${replayLibrary.getState().owners.guest!.entries[0]!.fingerprint}`);
+    expect(recordFinishedMatch).toHaveBeenCalledOnce();
+    expect(localProfileStore.getState().matchHistory.replayMatches).toHaveLength(1);
+    expect(saved).toMatchObject({
+      undo_floor: 8,
+      replay_origin: { source_fingerprint: ORIGIN.sourceFingerprint, inherited_ply: 8 },
+      move_cells: [110, 0, 111, 1, 112, 2, 113, 3, 114],
+      source: "local_history",
+      trust: "local_only",
+    });
+    expect(portableReplayFromSavedMatch(saved).replay.practice).toEqual(ORIGIN);
+    expect(localMatchSessionStore.getState().latestReplayId).toBe(saved?.id);
+    expect(saved?.id).not.toMatch(/^portable-/);
   });
 
-  it("returns to ordinary match history when a practice branch starts a new round", async () => {
+  it("clears the replay origin when a continuation starts a fresh round", async () => {
     setSignedOut();
     localProfileStore.setState(createLocalProfileTestState(settingsWith("freestyle")));
-    const replayLibrary = createMemoryReplayLibrary();
     const botCells = [110, 111, 112, 113, 114];
     const botRunner = {
       chooseMove: async () => {
@@ -248,138 +206,38 @@ describe("local match session", () => {
       configure: () => undefined,
       dispose: () => undefined,
     };
-    const store = ensureLocalMatchSession({
-      botRunner,
-      replayLibraryStore: replayLibrary,
-      resumeState: practiceBranch(),
-    });
-
+    const store = ensureLocalMatchSession({ botRunner, resumeState: practiceBranch() });
     expect(store.getState().placeHumanMove(7, 9)).toBe(true);
-    await vi.waitFor(() => expect(replayLibrary.getState().owners.guest?.entries).toHaveLength(1));
+    const continuationId = localMatchSessionStore.getState().latestReplayId;
     store.getState().startNextRound();
     await vi.waitFor(() => expect(store.getState()).toMatchObject({ pendingBotMove: false, moves: [{ row: 7, col: 5 }] }));
-
     for (let col = 0; col < 4; col += 1) {
       expect(store.getState().placeHumanMove(0, col)).toBe(true);
       await vi.waitFor(() => expect(store.getState().pendingBotMove).toBe(false));
     }
     await vi.waitFor(() => expect(store.getState().status).toBe("black_won"));
-
-    const ordinaryReplay = localProfileStore.getState().matchHistory.replayMatches[0];
-    expect(localProfileStore.getState().matchHistory.replayMatches).toHaveLength(1);
-    expect(ordinaryReplay?.undo_floor).toBe(0);
-    expect(JSON.stringify(ordinaryReplay)).not.toContain(ORIGIN.sourceFingerprint);
-    expect(replayLibrary.getState().owners.guest?.entries).toHaveLength(1);
-    expect(localMatchSessionStore.getState().latestReplayId).not.toMatch(/^portable-/);
+    const matches = localProfileStore.getState().matchHistory.replayMatches;
+    expect(matches).toHaveLength(2);
+    const fresh = matches.find((match) => match.id !== continuationId);
+    expect(fresh?.undo_floor).toBe(0);
+    expect(fresh?.replay_origin).toBeUndefined();
+    expect(matches.find((match) => match.id === continuationId)?.replay_origin?.inherited_ply).toBe(8);
+    expect(localMatchSessionStore.getState().latestReplayId).toBe(fresh?.id);
   });
 
-  it("keeps a branch under the account captured at finish if auth changes during hashing", async () => {
+  it("syncs a continuation through normal history under the account captured at finish", async () => {
     setSignedIn("account-A");
+    const flush = vi.spyOn(cloudSync, "flushCloudProfileSync").mockResolvedValue(null);
     localProfileStore.setState(createLocalProfileTestState(settingsWith("freestyle")));
-    const replayLibrary = createMemoryReplayLibrary();
-    const store = ensureLocalMatchSession({
-      botRunner: noOpBotRunner,
-      replayLibraryStore: replayLibrary,
-      resumeState: practiceBranch(),
-    });
-
+    const store = ensureLocalMatchSession({ botRunner: noOpBotRunner, resumeState: practiceBranch() });
     expect(store.getState().placeHumanMove(7, 9)).toBe(true);
     setSignedIn("account-B");
-    await vi.waitFor(() => expect(replayLibrary.getState().owners["user:account-A"]?.entries).toHaveLength(1));
-
-    const entry = replayLibrary.getState().owners["user:account-A"]!.entries[0]!;
-    expect(entry.kind).toBe("practice");
-    expect(replayLibrary.getState().owners["user:account-B"]).toBeUndefined();
-    expect(localMatchSessionStore.getState().latestReplayId).toBeNull();
-    expect(localMatchSessionStore.getState().pendingPracticeSave).toBeNull();
-    expect(decodePortableReplay(entry.payload).replay.black).toMatchObject({ profileUid: "account-A" });
-    expect(localProfileStore.getState().matchHistory.replayMatches).toEqual([]);
-  });
-
-  it("keeps a full-library completion pending and retries it after a replay is removed", async () => {
-    setSignedOut();
-    localProfileStore.setState(createLocalProfileTestState(settingsWith("freestyle")));
-    const replayLibrary = createMemoryReplayLibrary();
-    const fingerprints: string[] = [];
-    for (let index = 0; index < REPLAY_LIBRARY_LIMIT; index += 1) {
-      fingerprints.push(await replayLibrary.getState().saveReplay("guest", libraryReplay(`Existing ${index}`), "saved"));
-    }
-
-    const store = ensureLocalMatchSession({
-      botRunner: noOpBotRunner,
-      replayLibraryStore: replayLibrary,
-      resumeState: practiceBranch(),
+    expect(flush).toHaveBeenCalledOnce();
+    expect(flush).toHaveBeenCalledWith(expect.objectContaining({ uid: "account-A" }), {
+      localMatchHistory: expect.objectContaining({ replayMatches: [expect.objectContaining({
+        replay_origin: { source_fingerprint: ORIGIN.sourceFingerprint, inherited_ply: 8 },
+      })] }),
     });
-    expect(store.getState().placeHumanMove(7, 9)).toBe(true);
-    await vi.waitFor(() => expect(localMatchSessionStore.getState().pendingPracticeSave?.error).toContain("full"));
-    expect(localMatchSessionStore.getState().pendingPracticeSave?.replay.practice).toEqual(ORIGIN);
-    expect(localMatchSessionStore.getState().latestReplayId).toBeNull();
-    expect(store.getState().status).toBe("black_won");
-
-    await replayLibrary.getState().removeReplay("guest", fingerprints[0]!);
-    const fingerprint = await retryPracticeSave();
-
-    expect(fingerprint).toBeTruthy();
-    expect(localMatchSessionStore.getState().latestReplayId).toBe(`portable-${fingerprint}`);
-    expect(localMatchSessionStore.getState().pendingPracticeSave).toBeNull();
-    expect(replayLibrary.getState().owners.guest?.entries).toHaveLength(REPLAY_LIBRARY_LIMIT);
-    expect(replayLibrary.getState().owners.guest?.entries[0]?.kind).toBe("practice");
-  });
-
-  it.each(["replaced session", "new round"] as const)(
-    "does not attach a late practice save to a %s",
-    async (change) => {
-      setSignedOut();
-      localProfileStore.setState(createLocalProfileTestState(settingsWith("freestyle")));
-      const replayLibrary = createMemoryReplayLibrary();
-      const delayed = deferReplayLibrarySave(replayLibrary);
-      const store = ensureLocalMatchSession({
-        botRunner: noOpBotRunner,
-        replayLibraryStore: replayLibrary,
-        resumeState: practiceBranch(),
-      });
-      expect(store.getState().placeHumanMove(7, 9)).toBe(true);
-      expect(localMatchSessionStore.getState().pendingPracticeSave?.saving).toBe(true);
-
-      let activeStore = store;
-      if (change === "replaced session") {
-        disposeLocalMatchSession();
-        activeStore = ensureLocalMatchSession({ botRunner: noOpBotRunner });
-      } else {
-        store.getState().startNextRound();
-        expect(localMatchSessionStore.getState().pendingPracticeSave).toBeNull();
-      }
-      delayed.resolveSave("D".repeat(43));
-      await delayed.settled;
-
-      expect(localMatchSessionStore.getState().matchStore).toBe(activeStore);
-      expect(localMatchSessionStore.getState().latestReplayId).toBeNull();
-      expect(localMatchSessionStore.getState().pendingPracticeSave).toBeNull();
-    },
-  );
-
-  it("keeps a finished branch inspectable when browser storage rejects its save", async () => {
-    setSignedOut();
-    localProfileStore.setState(createLocalProfileTestState(settingsWith("freestyle")));
-    const replayLibrary = createReplayLibraryStore({
-      storage: {
-        getItem: () => null,
-        removeItem: () => undefined,
-        setItem: () => { throw new DOMException("Storage full", "QuotaExceededError"); },
-      },
-    });
-    const store = ensureLocalMatchSession({
-      botRunner: noOpBotRunner,
-      replayLibraryStore: replayLibrary,
-      resumeState: practiceBranch(),
-    });
-
-    expect(store.getState().placeHumanMove(7, 9)).toBe(true);
-    await vi.waitFor(() => expect(localMatchSessionStore.getState().latestReplayId).toMatch(/^portable-/));
-
-    expect(store.getState().status).toBe("black_won");
-    expect(store.getState().moves).toHaveLength(9);
-    expect(replayLibrary.getState().owners.guest?.entries).toHaveLength(1);
-    expect(replayLibrary.getState().owners.guest?.error).toContain("Storage full");
+    expect(localMatchSessionStore.getState().latestReplayId).toBe(localProfileStore.getState().matchHistory.replayMatches[0]?.id);
   });
 });

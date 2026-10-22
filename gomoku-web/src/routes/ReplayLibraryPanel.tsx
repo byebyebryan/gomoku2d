@@ -5,7 +5,7 @@ import { useStore } from "zustand";
 import { cloudAuthStore } from "../cloud/auth_store";
 import { decodePortableReplay } from "../replay/portable_replay_codec";
 import type { PortableReplayV1 } from "../replay/portable_replay";
-import { currentReplayLibraryOwner, replayLibraryStore, type ReplayLibraryKind } from "../replay/replay_library_store";
+import { currentReplayLibraryOwner, replayLibraryStore } from "../replay/replay_library_store";
 import { EMPTY_LIBRARY_SYNC, replayLibrarySync } from "../replay/replay_library_sync";
 import { importGuestReplayCopies, saveReplayCopy } from "../replay/replay_library_actions";
 import { Icon } from "../ui/Icon";
@@ -58,14 +58,14 @@ export function SaveReplayButton({ replay, fingerprint }: { replay: PortableRepl
   </section>;
 }
 
-export function ReplayLibraryEntries({ kind }: { kind: ReplayLibraryKind }) {
+function ReplayLibraryEntries() {
   const owner = useOwner();
   const bucket = useStore(replayLibraryStore, (state) => state.owners[owner]);
   const [visible, setVisible] = useState(8);
   const [error, setError] = useState("");
-  const entries = useMemo(() => (bucket?.entries ?? []).filter((entry) => entry.kind === kind), [bucket?.entries, kind]);
-  useEffect(() => { setVisible(8); setError(""); }, [owner, kind]);
-  if (entries.length === 0) return <p>{kind === "practice" ? "No practice games yet." : "No saved replays yet."}</p>;
+  const entries = useMemo(() => (bucket?.entries ?? []).filter((entry) => entry.kind === "saved"), [bucket?.entries]);
+  useEffect(() => { setVisible(8); setError(""); }, [owner]);
+  if (entries.length === 0) return <p>No saved replays yet.</p>;
   return <>
     <ul className={styles.entries}>
       {entries.slice(0, visible).map((entry) => {
@@ -116,7 +116,7 @@ export function ReplayLibraryPanel() {
   }, [uid]);
   return <section className={styles.panel} aria-label="Saved replays">
     <h2>Saved replays</h2>
-    <p>Private copies for study. These do not count as games you played. Practice completions appear in My games.</p>
+    <p>Private copies for study. These do not count as games you played.</p>
     {uid ? <>
       <p role="status">{sync.status === "synced" && !bucket?.dirty ? "Account library synced."
         : sync.status === "loading" ? "Loading account library…"
@@ -143,6 +143,6 @@ export function ReplayLibraryPanel() {
       ? "Guest copies are kept for this session only and will be lost when you reload or close this tab. Keep their replay links to open them again."
       : "Guest copies stay on this device."} Sign in to copy them to an account explicitly.</p>}
     {(error || sync.error || bucket?.error || storageError) && <p role="alert">{error || sync.error || bucket?.error || storageError}</p>}
-    <ReplayLibraryEntries kind="saved" />
+    <ReplayLibraryEntries />
   </section>;
 }

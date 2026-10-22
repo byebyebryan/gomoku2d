@@ -104,8 +104,9 @@ rules, and rules tests together.
 
 `public_profiles/{uid}` carries a separately confirmed name and four fixed catalog
 pages; it never exposes provider metadata or the private profile snapshot.
-`replay_libraries/{uid}` carries saved/practice copies, separate from ordinary
-played-history promotion and totals. Fresh shared/public route entry initializes
+`replay_libraries/{uid}` carries saved study copies and earlier preview
+continuations. New completed continuations use regular played history and totals,
+with optional origin metadata retained in the saved match. Fresh shared/public route entry initializes
 Auth without loading, promoting or syncing private profile/history/library data.
 Explicit Save can load/write the library; public visits load only public records.
 

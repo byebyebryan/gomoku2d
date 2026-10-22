@@ -66,6 +66,11 @@ the full snapshot, and increments the revision. Removal writes an empty array
 and retains the marker. Concurrent/offline changes produce a reload-and-review
 conflict instead of a merge or last-write-wins restore.
 
+New saves use `kind: saved`. The `practice` kind remains readable for completions
+created by early v0.6 previews; these appear in the owner's My games and displayed
+statistics. New Play From Here completions use regular played-game history and
+its existing sync instead of adding private-library entries.
+
 ## Client API and operational behavior
 
 `src/cloud/sharing_public.ts` exports `loadPublicProfile`, `loadCatalogPage`,

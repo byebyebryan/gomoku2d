@@ -231,7 +231,7 @@ a selected fallback. There is no measured free-tier player/game capacity yet.
 The local v0.6 candidate implements [bounded sharing data](../backend/sharing_data.md).
 It is not deployed. Portable copy/view/scrub/analysis and guest-library operations
 perform zero Firestore operations. Ordinary signed-in played-game history retains its existing coalesced profile
-sync; a new practice finish saves locally until explicit library sync. New
+sync, including completed Play From Here continuations. New
 account-library operations are deliberate,
 with no background polling or persistent application listener. SDK server reads
 may use a temporary Listen transport internally.

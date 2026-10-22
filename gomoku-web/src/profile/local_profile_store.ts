@@ -19,6 +19,7 @@ import {
   isLocalSavedMatchV2,
   type LocalSavedMatchV2,
   type SavedMatchStatus,
+  type SavedMatchReplayOrigin,
 } from "../match/saved_match";
 import {
   createDefaultProfileSettings,
@@ -55,6 +56,7 @@ export interface FinishedLocalMatchInput {
   botConfig?: BotConfig;
   status: SavedMatchStatus;
   undoFloor?: number;
+  replayOrigin?: SavedMatchReplayOrigin;
   variant: GameVariant;
   winningCells?: unknown;
 }
@@ -308,6 +310,7 @@ export function createLocalProfileStore(
             savedAt,
             status: match.status,
             undoFloor: match.undoFloor,
+            replayOrigin: match.replayOrigin,
             ruleset: match.variant,
           });
 

@@ -120,7 +120,7 @@ export function ReplayMatchPanel({ frame, localDisplayName, match, preserveNames
 
 interface ReplayPlaybackPanelProps {
   autoplaying: boolean;
-  practiceBotLabel: string;
+  resumeBotLabel: string;
   frame: ReplayFrame;
   match: SavedMatchV2;
   onResume: (seed: LocalMatchResumeSeed) => void;
@@ -134,7 +134,7 @@ interface ReplayPlaybackPanelProps {
 
 export function ReplayPlaybackPanel({
   autoplaying,
-  practiceBotLabel,
+  resumeBotLabel,
   frame,
   match,
   onResume,
@@ -257,11 +257,11 @@ export function ReplayPlaybackPanel({
             <Icon name="help" />
           </Link>
         </div>
-        {canResumeReplay(frame, replayFloor) && <div className={styles.practiceSetup} role="group" aria-label="Practice setup">
-          <p className="uiSectionLabel">Practice · Move {frame.moveIndex}</p>
-          <dl className={styles.practiceSeats}>
+        {canResumeReplay(frame, replayFloor) && <div className={styles.resumeSetup} role="group" aria-label="Game setup">
+          <p className="uiSectionLabel">From move {frame.moveIndex}</p>
+          <dl className={styles.resumeSeats}>
             <div><dt>You play</dt><dd>{frame.currentPlayer === 1 ? "Black" : "White"}</dd></div>
-            <div><dt>Bot</dt><dd>{practiceBotLabel}</dd></div>
+            <div><dt>Bot</dt><dd>{resumeBotLabel}</dd></div>
           </dl>
         </div>}
       </div>

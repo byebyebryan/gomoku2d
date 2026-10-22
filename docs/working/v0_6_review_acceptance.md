@@ -170,3 +170,35 @@ help button, play-from-here setup uses compact side/bot fields, private-save
 scope is a labelled row, and link visibility sits inside the recipient preview.
 Types, 23 unit tests, 60 browser scenarios across three engines and a narrow /
 enlarged-text accessibility capture passed for that increment.
+
+## Continuations as regular games — October 22
+
+Bryan requested that a finished Play From Here game behave as an ordinary game:
+one My games row, normal match/win/loss totals, and no Practice badge or separate
+section. A saved study copy remains separate and never creates a played-game
+entry. This supersedes the earlier separate-practice policy and walkthrough.
+
+Completions now use the existing local history and signed-in profile sync path.
+An optional SavedMatchV2 `replay_origin` preserves the source fingerprint and
+starting ply through storage, cloud promotion and portable export, alongside
+the existing undo floor. Root profile schema versions, Firestore rules and
+indexes remain unchanged; the former data-model source-parity receipt describes
+the earlier candidate. No new backend service or per-move write was introduced.
+
+Earlier preview `kind: practice` library entries remain in their original owner
+bucket and are projected into that owner's normal My games and displayed totals.
+Study copies, including saved copies of continuations, are excluded. This does
+not migrate private account records into shared device-wide history.
+
+Validation: application/script/tool types, production-style demo build and all
+45 web unit files / 467 tests pass. The scoped browser lane covers 54 scenarios
+across Chromium, Firefox and WebKit; the reset-copy assertion was updated and
+its three affected cases rerun successfully. The final built continuation
+journey passes again in all three engines. Six C3/C5/C8 cloud scenarios pass,
+covering normal history sync, a fresh second browser, exported origin metadata,
+offline persistence and recovery without duplicate history or library entries.
+Desktop/mobile captures show the normal My games row and ordinary win totals.
+
+The local Snap preview is updated for manual review. Saved-library and public
+profile presentation remain manual checks; production release, real OAuth,
+device acceptance and the Canvas stone-colour finding remain separate.

@@ -14,6 +14,7 @@ import {
 } from "./portable_replay_codec";
 import { portableReplayFromSavedMatch, validatePortableReplay } from "./portable_replay";
 import { portableReplayToSavedMatch } from "./portable_replay_adapters";
+import { createCloudSavedMatch } from "../cloud/cloud_match";
 import type { PortableReplayV1 } from "./portable_replay";
 
 const WIN_MOVES = [110, 0, 111, 1, 112, 2, 113, 3, 114];
@@ -339,6 +340,24 @@ describe("portable and saved-match adapters", () => {
     expect(match.player_black.local_profile_id).toBeNull();
     expect(match.player_white.local_profile_id).toBeNull();
     expect(replay.practice).toEqual(candidate.practice);
-    expect(JSON.stringify(match)).not.toContain(FINGERPRINT);
+    expect(match.replay_origin).toEqual({ source_fingerprint: FINGERPRINT, inherited_ply: 4 });
+    expect(portableReplayFromSavedMatch(match).replay.practice).toEqual(candidate.practice);
+  });
+
+  it("preserves a continuation origin through local persistence, cloud promotion and re-sharing", () => {
+    const base = savedMatchForWinningReplay();
+    const local = {
+      ...base,
+      undo_floor: 8,
+      replay_origin: { source_fingerprint: FINGERPRINT, inherited_ply: 8 },
+    };
+    const restored = JSON.parse(JSON.stringify(local));
+    const cloud = createCloudSavedMatch({ uid: "current-player" }, restored);
+    const exported = decodePortableReplay(encodePortableReplay(portableReplayFromSavedMatch(cloud).replay)).replay;
+    expect(exported.practice).toEqual({ sourceFingerprint: FINGERPRINT, inheritedPly: 8 });
+    expect(exported.moves).toEqual(WIN_MOVES);
+    expect(exported.black).toMatchObject({ profileUid: "current-player" });
+    expect(cloud.id).toBe(base.id);
+    expect(cloud.player_black.local_profile_id).toBeNull();
   });
 });

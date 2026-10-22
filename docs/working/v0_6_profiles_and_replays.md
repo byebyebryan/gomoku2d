@@ -6,6 +6,10 @@ contracts live in [portable replay](../reference/app/portable_replay.md) and
 [sharing data](../reference/backend/sharing_data.md). The
 [execution record](v0_6_execution.md) owns final defaults and acceptance evidence.
 
+October 22 manual-review decision: completing Play From Here creates a regular
+game in My games and ordinary statistics, with no Practice badge or separate
+section. Source/starting-ply metadata is retained internally. This supersedes
+the practice-category policy in the earlier execution and acceptance receipts.
 
 Owner: Bryan. Started October 21, 2026. The v0.6 direction is public profiles
 and shareable replays; multiplayer remains deferred. Implementation is active
@@ -90,7 +94,7 @@ format extensions rather than fabricated terminal states.
 | Game facts | Rules variant and ordered move cells; v1 fixes the board/opening contract |
 | Each human | Bounded name snapshot and optional public profile UID |
 | Each bot | Bounded label and versioned preset/custom configuration |
-| Practice origin | When applicable, inherited-prefix length and a bounded source fingerprint |
+| Continuation origin | When applicable, inherited-prefix length and a bounded source fingerprint |
 | Viewing position | Optional initial ply, separate from game identity |
 
 Profile references are optional. A guest or private player can share using a
@@ -105,9 +109,8 @@ The replay renders the snapshot without fetching the profile. Clicking the
 profile link loads current public identity. Missing/private/deleted profiles
 do not prevent replay viewing.
 
-Practice provenance must survive export and publication. Mark the inherited
-prefix separately from the moves played in the continuation; the continuation's
-player labels do not claim ownership of that prefix. Include no private source
+Continuation origin must survive export and publication as metadata, without a
+separate game category or badge. Include no private source
 record ID or recursively embedded ancestry. The complete move sequence still
 stands alone if the source is unavailable. These fields describe client-supplied
 provenance, not independently verified participation.
@@ -146,8 +149,8 @@ flowchart LR
   View --> Study[Scrub and analyze]
   View --> Save[Save copy to private library]
   View --> Continue[Play from selected ply]
-  Continue --> Practice[New local practice game]
-  Practice --> History[Save completed continuation with source and starting ply]
+  Continue --> Game[New local game from this position]
+  Game --> History[My games and statistics, with source and starting ply retained]
 ```
 
 | Action | Effect |
@@ -156,16 +159,16 @@ flowchart LR
 | Scrub or analyze | Change the view or local analysis cache; no account/history write |
 | Save replay | Create or find an explicit saved-library copy; show Saved without duplicates |
 | Play From Here | Start a local game from the chosen legal frame; leave the source replay intact |
-| Finish continuation | Save the new game with source and branch ply, clearly identified as practice |
+| Finish continuation | Add a regular played game and normal statistics, retaining source and branch ply internally |
 | Copy replay link | Build the portable link locally; no public catalog write |
 | Publish | Deliberately add a catalog entry under the owner's enabled public profile |
 
 The private profile UI distinguishes My games and Saved replays. Imported
-games do not enter played-game summaries or win/loss statistics. A continuation
-retains provenance rather than claiming its inherited prefix was played by
-the recipient. Proposed default: continuation results appear as practice and
-do not inflate ordinary win/loss totals; this extends the current branch
-record behavior and needs an explicit implementation/migration decision.
+games do not enter played-game summaries or win/loss statistics. Completing a
+continuation counts as playing a game, including ordinary win/loss statistics.
+Its source and inherited prefix remain metadata for replay/export behavior;
+they do not create a separate list or badge. These casual client-controlled
+statistics do not require a separate category to prevent inflated totals.
 
 Saving as a guest is local. Under the sync proposal, a signed-in user's library
 uses the existing account, with its own cap, merge/reset rules, pending state,
@@ -371,7 +374,7 @@ been demonstrated. Open choices below remain explicit implementation gates.
 - Own played games only versus imported replay curation on public profiles.
 - Cross-device Saved replays in v0.6 versus a local library first.
 - Independent public name versus an explicit coupled rename of the in-game name.
-- Confirmation of disable/reset/delete scopes and practice-result statistics.
+- Confirmation of disable/reset/delete scopes; continuation statistics now follow regular games.
 - Final caps, catalog layout, private-library import/merge/reset model, and stable codec.
 - Lifecycle invalidation, any retained deletion markers, and the public-read disable procedure.
 

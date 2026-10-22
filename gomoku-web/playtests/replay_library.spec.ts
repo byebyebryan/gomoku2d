@@ -152,7 +152,7 @@ test("a replay kept after a storage failure is clearly temporary and disappears 
   expect(await page.evaluate(() => localStorage.getItem("gomoku2d.replay-library.v1"))).toBeNull();
 });
 
-test("playing from a shared frame creates a separate practice replay with its source attribution", async ({ page }, testInfo) => {
+test("playing from a shared frame records a regular game and keeps its source attribution", async ({ page }, testInfo) => {
   await page.goto(sharedLink(8));
   await expect(page.getByTestId("replay-move-count")).toHaveText("Move 8 / 9");
   await expect(page.getByTestId("replay-player-row-black")).toContainText("Alice");
@@ -187,7 +187,7 @@ test("playing from a shared frame creates a separate practice replay with its so
   await expect(page.getByRole("heading", { name: "Local Match" })).toBeVisible();
   expect(dialogs).toEqual([]);
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(page.getByText(/practice|inherited/i).first()).toBeVisible();
+  await expect(page.getByText(/excluded from played-game totals/i)).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
 
   // The accessible board starts focused at H8. Two right-arrow moves reach J8,
@@ -203,11 +203,9 @@ test("playing from a shared frame creates a separate practice replay with its so
   await expect(page.getByRole("link", { name: "Analyze" })).toBeVisible();
 
   await page.getByRole("link", { name: "Analyze" }).click();
-  await expect(page).toHaveURL(/\/replay\/portable-[A-Za-z0-9_-]{43}$/);
+  await expect(page).toHaveURL(/\/replay\/(?!portable-)[A-Za-z0-9-]+$/);
   await expect(page.getByTestId("replay-move-count")).toHaveText("Move 9 / 9");
-  const practiceOrigin = page.getByRole("region", { name: "Practice origin" });
-  await expect(practiceOrigin).toContainText("Inherited");
-  await expect(practiceOrigin).toContainText("First 8 moves");
+  await expect(page.getByRole("region", { name: "Practice origin" })).toHaveCount(0);
   await expect(page.getByTestId("replay-player-row-black")).toContainText("Guest");
   await expect(page.getByTestId("replay-player-row-white")).toContainText("Normal Bot");
 
@@ -234,11 +232,14 @@ test("playing from a shared frame creates a separate practice replay with its so
 
   await page.goto("/profile");
   await expect(page.getByRole("tab", { name: "My games", exact: true })).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByRole("heading", { name: "Practice games", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Inspect replay", exact: true })).toHaveCount(1);
-  await expectProfileStat(page, "Matches", 0);
-  await expectProfileStat(page, "Wins", 0);
+  await expect(page.getByRole("heading", { name: "Practice games", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(1);
+  await expectProfileStat(page, "Matches", 1);
+  await expectProfileStat(page, "Wins", 1);
   await expectNoHorizontalOverflow(page);
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(1);
+  await expectProfileStat(page, "Matches", 1);
   await captureChromiumScreenshot(page, "../docs/working/v0_6_evidence/portable_replay_practice_mobile.png", testInfo);
 
   await page.setViewportSize({ width: 1440, height: 1100 });
@@ -251,8 +252,8 @@ test("playing from a shared frame creates a separate practice replay with its so
   await expect(page.getByRole("link", { name: "Inspect replay", exact: true })).toHaveCount(0);
 
   await page.getByRole("tab", { name: "My games", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Practice games", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Inspect replay", exact: true })).toHaveCount(1);
-  await expectProfileStat(page, "Matches", 0);
-  await expectProfileStat(page, "Wins", 0);
+  await expect(page.getByRole("heading", { name: "Practice games", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(1);
+  await expectProfileStat(page, "Matches", 1);
+  await expectProfileStat(page, "Wins", 1);
 });

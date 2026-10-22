@@ -82,8 +82,11 @@ The public TypeScript APIs are:
 The projection is marked `source: "cloud_saved"` and
 `trust: "client_uploaded"`, uses null local profile IDs, and derives result
 from Wasm. It is a viewer adapter, not a write into ordinary played history.
-Practice `inheritedPly` maps to the existing viewer's undo floor; retain the
-portable record alongside the projection so provenance remains available.
+The existing portable `practice` origin field describes a continuation, without
+creating a separate UI category. Its `inheritedPly` maps to the viewer's undo floor.
+Normal played continuations store the same origin as optional SavedMatchV2
+`replay_origin: {source_fingerprint, inherited_ply}`. Promotion preserves it and
+export maps it back to the portable origin; the complete game remains shareable.
 
 ## Identity and privacy
 

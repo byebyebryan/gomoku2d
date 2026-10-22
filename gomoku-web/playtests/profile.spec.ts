@@ -69,7 +69,7 @@ test("guest profile persists locally and renders saved local matches", async ({ 
 
   await page.getByRole("button", { name: "Reset Profile" }).click();
   await expect(
-    page.getByText("Reset this profile? This clears settings, games, saved replays, practice and replay analyses on this device."),
+    page.getByText("Reset this profile? This clears settings, games, saved replays and replay analyses on this device."),
   ).toBeVisible();
   await page.getByRole("button", { name: "Reset", exact: true }).click();
   await expect(displayName).toHaveValue("Guest");

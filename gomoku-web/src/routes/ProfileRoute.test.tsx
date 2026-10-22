@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 
@@ -10,7 +10,8 @@ import { createCloudSavedMatch } from "../cloud/cloud_match";
 import { emptyCloudMatchHistory, type CloudProfile } from "../cloud/cloud_profile";
 import { cloudProfileStore } from "../cloud/cloud_profile_store";
 import { cloudPromotionStore } from "../cloud/cloud_promotion_store";
-import { createLocalSavedMatch } from "../match/saved_match";
+import { createLocalSavedMatch, movesFromMoveCells } from "../match/saved_match";
+import { portableReplayFromSavedMatch } from "../replay/portable_replay";
 import { emptyLocalMatchHistory, localProfileStore, type LocalProfileSavedMatch } from "../profile/local_profile_store";
 import { createDefaultProfileSettings } from "../profile/profile_settings";
 import {
@@ -123,6 +124,41 @@ function cacheReplayAnalysis(match: LocalProfileSavedMatch): void {
 }
 
 describe("ProfileRoute cloud state", () => {
+  it("shows earlier completed continuations in regular My games and statistics, excluding study copies and other accounts", async () => {
+    const localId = localProfileStore.getState().ensureLocalProfile().id;
+    const match = createLocalSavedMatch({
+      id: "earlier-continuation", localProfileId: localId,
+      moves: movesFromMoveCells([110, 0, 111, 1, 112, 2, 113, 3, 114]),
+      players: [{ kind: "human", name: "Guest", stone: "black" }, { kind: "bot", name: "Normal Bot", stone: "white" }],
+      savedAt: new Date().toISOString(), status: "black_won", ruleset: "freestyle", undoFloor: 8,
+      replayOrigin: { source_fingerprint: "A".repeat(43), inherited_ply: 8 },
+    });
+    const replay = portableReplayFromSavedMatch(match).replay;
+    const ownFingerprint = await replayLibraryStore.getState().saveReplay("guest", replay, "practice");
+    await replayLibraryStore.getState().saveReplay("guest", { ...replay, black: { kind: "human", name: "Someone else" } }, "saved");
+    await replayLibraryStore.getState().saveReplay("user:other-account", { ...replay, black: { kind: "human", name: "Other account" } }, "practice");
+    renderProfileRoute();
+
+    expect(screen.getAllByRole("button", { name: "Inspect" })).toHaveLength(1);
+    expect(within(screen.getByText("Matches").parentElement!).getByText("1", { exact: true })).toBeVisible();
+    expect(within(screen.getByText("Wins").parentElement!).getByText("1", { exact: true })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Practice games" })).not.toBeInTheDocument();
+    expect(localProfileStore.getState().matchHistory.replayMatches).toEqual([]);
+    expect(replayLibraryStore.getState().owners.guest?.entries.some((entry) => entry.fingerprint === ownFingerprint)).toBe(true);
+
+    fireEvent.click(screen.getByRole("tab", { name: "Saved replays" }));
+    expect(screen.getAllByRole("link", { name: "Inspect replay" })).toHaveLength(1);
+    expect(screen.getByText(/Someone else/)).toBeVisible();
+    fireEvent.click(screen.getByRole("tab", { name: "My games" }));
+    await act(async () => {
+      cloudAuthStore.setState({ status: "signed_in", user: cloudUser });
+      cloudProfileStore.setState({ status: "ready", profile: cloudProfile });
+    });
+    expect(screen.queryByRole("button", { name: "Inspect" })).not.toBeInTheDocument();
+    expect(within(screen.getByText("Matches").parentElement!).getByText("0", { exact: true })).toBeVisible();
+    expect(localProfileStore.getState().matchHistory.replayMatches).toEqual([]);
+  });
+
   it.each(["reset", "delete"] as const)("does not let a delayed %s affect a later account", async (action) => {
     let finish!: () => void;
     const pending = new Promise<void>((resolve) => { finish = resolve; });
@@ -317,7 +353,7 @@ describe("ProfileRoute cloud state", () => {
     expect(screen.getByLabelText("Name")).toHaveValue("ByeByeBryan");
     fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
     expect(
-      screen.getByText("Reset this profile? This clears settings, games, saved replays, practice and replay analyses on this device."),
+      screen.getByText("Reset this profile? This clears settings, games, saved replays and replay analyses on this device."),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(screen.getByLabelText("Name")).toHaveValue("ByeByeBryan");
@@ -766,7 +802,7 @@ describe("ProfileRoute cloud state", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
     expect(
       screen.getByText(
-        "Reset private settings, games, saved replays and practice here and in the cloud? Local replay analyses are cleared. Your public profile and publications stay unchanged; empty cloud revision markers remain.",
+        "Reset private settings, games and saved replays here and in the cloud? Local replay analyses are cleared. Your public profile and publications stay unchanged; empty cloud revision markers remain.",
       ),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Reset" }));

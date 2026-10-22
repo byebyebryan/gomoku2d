@@ -289,7 +289,7 @@ export function PublishReplayPanel({
                   </p>
                   {preview.replay.practice && (
                     <p className={styles.mutedText}>
-                      This replay includes client supplied practice history with {preview.replay.practice.inheritedPly} inherited moves.
+                      This game starts from an existing position at move {preview.replay.practice.inheritedPly}.
                     </p>
                   )}
                   <p className={styles.disclosure}>

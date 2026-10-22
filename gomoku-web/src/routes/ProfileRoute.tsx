@@ -33,7 +33,7 @@ import { Icon } from "../ui/Icon";
 
 import styles from "./ProfileRoute.module.css";
 import { PublicProfileManager } from "./PublicProfileManager";
-import { ReplayLibraryPanel, ReplayLibraryEntries } from "./ReplayLibraryPanel";
+import { ReplayLibraryPanel } from "./ReplayLibraryPanel";
 
 interface HistoryIdentity {
   localProfileId?: string | null;
@@ -449,8 +449,8 @@ export function ProfileRoute() {
   const confirmationText = confirmingProfileAction === "delete"
     ? "Delete your cloud profile, history, saved replays, public name and publications, then sign out? Local copies stay on this device. Empty revision markers remain to block stale writes. Copied replay links still work."
     : signedIn
-      ? "Reset private settings, games, saved replays and practice here and in the cloud? Local replay analyses are cleared. Your public profile and publications stay unchanged; empty cloud revision markers remain."
-      : "Reset this profile? This clears settings, games, saved replays, practice and replay analyses on this device.";
+      ? "Reset private settings, games and saved replays here and in the cloud? Local replay analyses are cleared. Your public profile and publications stay unchanged; empty cloud revision markers remain."
+      : "Reset this profile? This clears settings, games, saved replays and replay analyses on this device.";
   const confirmationButtonText = confirmingProfileAction === "delete" ? "Delete" : "Reset";
 
   function resetLocalProfileData(): void {
@@ -810,12 +810,6 @@ export function ProfileRoute() {
                 </Link>
               </div>
             )}
-            <section aria-label="Practice games" className={styles.practiceGames}>
-              <h2>Practice games</h2>
-              <p>Continuations are separate from ordinary played-game statistics.</p>
-              {signedIn && <p>Open Saved replays to load or sync your account’s saved and practice copies.</p>}
-              <ReplayLibraryEntries kind="practice" />
-            </section>
             {hiddenHistoryCount > 0 ? (
               <button
                 className={`uiAction uiActionNeutral ${styles.historyMoreAction}`}

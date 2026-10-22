@@ -13,6 +13,11 @@ confirms byte-identical backend APIs, rules/indexes, legacy data models and
 dependency locks against the pushed baseline. Runtime behavior has separate
 test evidence below; source parity alone is not runtime or deployed parity.
 
+Subsequent manual review changed completed continuations to regular My games
+and statistics, without a Practice category. The counts and hashes below remain
+historical evidence for `f1bc7ee`; later implementation and validation are
+recorded in the [manual follow-up](../v0_6_review_acceptance.md).
+
 ## Completed checks
 
 | Lane | Result and scope |
@@ -125,11 +130,12 @@ if missing, the existing cloud acceptance command builds it before its test run.
 3. Save as a guest, reload and find it under Saved replays. Confirm it did not
    change ordinary played-game totals.
 4. At an ongoing frame of at least four moves, choose Play From Here. Check the
-   displayed side/bot, active-game replacement choice and practice explanation.
-   Finish and inspect/re-share the practice game; ordinary totals stay unchanged.
+   displayed side/bot and active-game replacement choice. Finish and inspect /
+   re-share the resulting game; it appears in regular My games and totals, while
+   the source replay stays unchanged.
 5. Sign into a disposable demo account. Explicitly copy guest replays into the
    account if wanted, then inspect them from a second context using that account.
-6. Choose and confirm an independent public name. Publish an own played/practice
+6. Choose and confirm an independent public name. Publish an own played
    replay with a title; open the player URL as a guest and inspect its game.
 7. Unpublish and disable the profile. Confirm the listing/page changes while the
    previously copied portable game URL still works. Re-enable starts empty.

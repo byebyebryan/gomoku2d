@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   createLocalSavedMatch,
   isLocalSavedMatchV2,
+  movesFromMoveCells,
   type CreateLocalSavedMatchInput,
 } from "./saved_match";
 
@@ -23,6 +24,27 @@ const baseInput: CreateLocalSavedMatchInput = {
 };
 
 describe("saved match bot identity", () => {
+  it("validates optional continuation origins while retaining older records without one", () => {
+    const match = createLocalSavedMatch({
+      ...baseInput,
+      moves: movesFromMoveCells([110, 0, 111, 1, 112, 2, 113, 3, 114]),
+      undoFloor: 8,
+      replayOrigin: { source_fingerprint: "A".repeat(43), inherited_ply: 8 },
+    });
+    expect(isLocalSavedMatchV2(JSON.parse(JSON.stringify(match)))).toBe(true);
+    for (const origin of [
+      { source_fingerprint: "private-id", inherited_ply: 8 },
+      { source_fingerprint: "B".repeat(43), inherited_ply: 8 },
+      { source_fingerprint: "A".repeat(43), inherited_ply: 3 },
+      { source_fingerprint: "A".repeat(43), inherited_ply: 9 },
+      { source_fingerprint: "A".repeat(43), inherited_ply: 6 },
+    ]) {
+      expect(isLocalSavedMatchV2({ ...match, replay_origin: origin })).toBe(false);
+    }
+    const { replay_origin: _origin, ...olderMatch } = match;
+    expect(isLocalSavedMatchV2(olderMatch)).toBe(true);
+  });
+
   it("snapshots the selected bot config into new local matches", () => {
     const match = createLocalSavedMatch({
       ...baseInput,

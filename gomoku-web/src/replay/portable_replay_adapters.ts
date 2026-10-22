@@ -14,6 +14,7 @@ import {
   validatePortableReplay,
   type PortableReplayParticipantV1,
   type PortableReplayV1,
+  type ValidatedPortableReplayV1,
 } from "./portable_replay";
 
 export interface PortableReplaySavedMatchProjection {
@@ -66,10 +67,19 @@ export async function portableReplayToSavedMatch(
 
   const validated = validatePortableReplay(value);
   const fingerprint = await portableReplayFingerprint(validated);
+  return { fingerprint, match: portableReplaySavedMatch(validated, fingerprint, viewedAt), replay: validated.replay };
+}
+
+/** Projects an already validated library record without hashing it again. */
+export function portableReplaySavedMatch(
+  validated: ValidatedPortableReplayV1,
+  fingerprint: string,
+  savedAt: string,
+): SavedMatchV2 {
   const humans = [validated.replay.black, validated.replay.white]
     .filter((player) => player.kind === "human").length;
   const bots = 2 - humans;
-  const match: SavedMatchV2 = {
+  return {
     board_size: SAVED_MATCH_BOARD_SIZE,
     id: `portable-${fingerprint}`,
     match_kind: humans === 1 && bots === 1 ? "local_vs_bot" : "local_pvp",
@@ -77,13 +87,16 @@ export async function portableReplayToSavedMatch(
     move_count: validated.replay.moves.length,
     player_black: savedPlayer(validated.replay.black),
     player_white: savedPlayer(validated.replay.white),
-    saved_at: viewedAt,
+    saved_at: savedAt,
     schema_version: SAVED_MATCH_SCHEMA_VERSION,
     source: "cloud_saved",
     status: validated.status,
     trust: "client_uploaded",
     undo_floor: validated.replay.practice?.inheritedPly ?? 0,
+    ...(validated.replay.practice ? { replay_origin: {
+      source_fingerprint: validated.replay.practice.sourceFingerprint,
+      inherited_ply: validated.replay.practice.inheritedPly,
+    } } : {}),
     ruleset: validated.replay.ruleset,
   };
-  return { fingerprint, match, replay: validated.replay };
 }

@@ -16,14 +16,11 @@ import {
   clearLocalMatchLatestReplay,
   ensureLocalMatchSession,
   localMatchSessionStore,
-  retryPracticeSave,
 } from "../game/local_match_session";
 import type { LocalMatchResumeSeed, LocalMatchState } from "../game/local_match_store";
 import type { CellPosition } from "../game/types";
 import { localProfileStore } from "../profile/local_profile_store";
 import type { BoardHintSettings } from "../profile/profile_settings";
-import { currentReplayLibraryOwner } from "../replay/replay_library_store";
-import { cloudAuthStore } from "../cloud/auth_store";
 import { variantLabel } from "../replay/local_replay";
 import { Icon } from "../ui/Icon";
 
@@ -190,10 +187,6 @@ export function LocalMatchRoute() {
   const profile = useStore(localProfileStore, (snapshot) => snapshot.profile);
   const matchStore = useStore(localMatchSessionStore, (snapshot) => snapshot.matchStore);
   const latestReplayId = useStore(localMatchSessionStore, (snapshot) => snapshot.latestReplayId);
-  const pendingPracticeSave = useStore(localMatchSessionStore, (snapshot) => snapshot.pendingPracticeSave);
-  useStore(cloudAuthStore, (snapshot) => snapshot.user?.uid);
-  useStore(cloudAuthStore, (snapshot) => snapshot.status);
-  const visiblePracticeSave = pendingPracticeSave?.owner === currentReplayLibraryOwner() ? pendingPracticeSave : null;
   const settings = useStore(localProfileStore, (snapshot) => snapshot.settings);
   const state = useStore(matchStore ?? loadingMatchStore, (snapshot) => snapshot);
   const resumeSeed = (location.state as { resumeSeed?: LocalMatchResumeSeed } | null)?.resumeSeed ?? null;
@@ -449,14 +442,8 @@ export function LocalMatchRoute() {
           <div className="uiDivider" />
 
           <section className={`${styles.hudSection} ${styles.actionSection}`}>
-            {state.undoFloor > 0 ? <p className={styles.practiceNote}>Practice game · the first {state.undoFloor} moves are inherited. This game is excluded from played-game totals.</p> : null}
             {state.botError ? <p className={styles.pendingText} role="alert">{state.botError}</p> : null}
-            {visiblePracticeSave ? <p className={styles.pendingText} role={visiblePracticeSave.error ? "alert" : "status"}>
-              {visiblePracticeSave.saving ? "Saving practice game…" : visiblePracticeSave.error}
-            </p> : null}
             <div className={styles.matchActions}>
-              {visiblePracticeSave?.error ? <button className="uiAction uiActionSecondary" type="button"
-                disabled={visiblePracticeSave.saving} onClick={() => { void retryPracticeSave(); }}>Retry practice save</button> : null}
               {state.botError ? (
                 <button className="uiAction uiActionPrimary" onClick={state.retryBotMove} type="button">
                   <span className="uiActionLabel">Retry bot</span>

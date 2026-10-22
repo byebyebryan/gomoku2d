@@ -37,7 +37,7 @@ export function StoredReplayRoute({ fingerprint }: { fingerprint: string }) {
   if (loaded?.owner === owner && entry?.payload === loaded.payload) return <ReplayViewer key={`${owner}:${fingerprint}`}
     match={loaded.value.match} localDisplayName="" preserveNames source={loaded.value.replay}
     fingerprint={fingerprint} publishEligible={entry.kind === "practice"}
-    contextLabel={entry.kind === "practice" ? "Practice game" : "Saved replay"} />;
+    contextLabel={entry.kind === "practice" ? "My game" : "Saved replay"} />;
   return <main className={styles.page}><section className={`${styles.notFound} uiPanel`}>
     <h1>{entry && !failure ? "Loading saved replay" : "Replay unavailable"}</h1>
     <p>{failure || "Open Saved replays in Profile to load your library."}</p>
