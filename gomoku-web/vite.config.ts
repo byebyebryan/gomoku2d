@@ -57,6 +57,8 @@ export default defineConfig(() => ({
     open: true,
   },
   preview: {
+    // Automated preview runs must not open a tab in the user’s browser.
+    open: false,
     host: "0.0.0.0",
     headers: popupAuthHeaders,
     port: 8001,

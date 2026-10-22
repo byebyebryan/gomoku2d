@@ -60,12 +60,12 @@ a deployed release. No token budget was requested.
 
 | Milestone | Status | Evidence |
 |---|---|---|
-| M0 Contracts | Active | Product defaults and portable format settled; backend limits under emulator validation |
+| M0 Contracts | Complete | Versioned portable/library/public contracts and bounded limits validated |
 | M1 Portable core | Complete | 16 actual-Wasm contract tests; [wire contract](../reference/app/portable_replay.md) |
-| M2 Shared viewer | Implemented | Guest direct-load/share/fallback: 15 checks across three engines; signed-in isolation awaits cloud acceptance |
-| M3 Local library/practice | Implemented | Store/session races and Chromium guest journeys pass |
-| M4 Public profile/catalog | Implemented | 12/12 new cloud checks across three engines; final regression lane pending |
-| M5 Private library sync | Implemented | Two-client sync/conflict journey plus reset/delete/action race contracts pass |
+| M2 Shared viewer | Complete | Guest direct-load/share/fallback plus signed-in isolation validated in three engines |
+| M3 Local library/practice | Complete | Store/session races and three-engine guest/practice journeys pass |
+| M4 Public profile/catalog | Complete | Three-engine publication/visibility, rules and measured operations pass |
+| M5 Private library sync | Complete | Two-client sync/conflict and reset/delete/action race contracts pass |
 | M6 Local acceptance | Pending | |
 
 ## Work and Validation Log
@@ -98,11 +98,10 @@ a deployed release. No token budget was requested.
 
 ## Acceptance Limits
 
-No implementation, local candidate acceptance, production deployment, real
-OAuth/device acceptance, or free-tier traffic envelope is claimed at this point.
-Update this record as actual evidence becomes available. Runtime test artifacts
-must identify the candidate and remain distinct from manually reviewed UI and
-physical-device evidence.
+Implementation and local acceptance evidence are recorded here and in the
+[evidence ledger](v0_6_evidence/README.md). No production deployment, real
+OAuth/device/screen-reader acceptance or free-tier traffic envelope is claimed.
+Those checks remain separate, with existing explicit manual deferrals retained.
 
 - M4 backend Luna handoff: bounded public and private schema-1 families, atomic
   lifecycle operations, stale revision/generation checks, public kill switch,
@@ -140,3 +139,23 @@ physical-device evidence.
   heading selectors and practice/played-history expectations. Updated those
   scenarios to require one ordinary history record plus separate practice and
   unchanged played totals; rerunning all 189 checks, including new-state axe scans.
+
+- Final browser candidate: all 189 checks pass across Chromium/Firefox/WebKit,
+  including new shared/library axe scans. Final web units: 44 files / 433 pass;
+  complete typecheck passes. Public manager/publish/visitor axe scans also pass
+  in the new cloud journeys. Full cloud continuation scenarios are being updated
+  to the new separate-practice contract before final acceptance.
+
+- Complete final-source cloud application lane: 36/36 pass in 3.1 minutes across
+  Chromium/Firefox/WebKit. C3/C5 now verify real practice finish, explicit sync,
+  second-client viewing, offline reload/recovery and no ordinary-history import.
+  C14 proves private reset preserves the public projection byte-for-byte, while
+  Delete Cloud clears it and retains local copies behind explicit review after
+  same-UID sign-in/reload. Final 45-run conflict/account/reset lane is running.
+
+- Bryan reported unintended browser tabs during acceptance. Installed Vite resolves
+  preview `open` from `server.open` when omitted, so every host preview inherited
+  the development auto-open setting. Set `preview.open: false`; resolved config
+  confirms preview false / development true. Closed the one remaining owned
+  `127.0.0.1:8013` tab via browser controls and verified none remain, preserving
+  the five other user tabs. This changes preview startup, not the web bundle.
