@@ -18,8 +18,10 @@ verification, and explicit acceptance deferrals, or the
 
 The next selected direction is v0.6 public profiles and shareable replays. Its
 [design draft](working/v0_6_profiles_and_replays.md) separates accepted scope
-from proposed behavior and storage choices. Multiplayer research is retained
-as deferred work.
+from proposed behavior and storage choices. The
+[implementation roadmap](working/v0_6_implementation_plan.md) sequences the guest
+sharing demo, private library, public publishing, and release checks.
+Multiplayer research is retained as deferred work.
 
 ## Choose A Path
 

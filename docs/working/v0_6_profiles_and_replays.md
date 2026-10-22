@@ -1,9 +1,10 @@
 # Public Profiles and Shareable Replays Design Draft
 
 Owner: Bryan. Started October 21, 2026. The v0.6 direction is public profiles
-and shareable replays; multiplayer remains deferred. The behaviors and bounds
-below are proposed defaults for discussion, not an implemented schema or a
-deployment plan.
+and shareable replays; multiplayer remains deferred. Implementation is active
+under the authorized Luna goal loop. The [execution record](v0_6_execution.md)
+distinguishes accepted defaults and implemented contracts from remaining
+proposals. Nothing here establishes a deployment or runtime acceptance pass.
 
 ## Product Goal
 
@@ -27,10 +28,10 @@ or replay scrubbing.
 | Public identity | Opt-in public name and a stable profile URL using the existing account UID |
 | Published games | A bounded list on that player's public profile, populated by explicit Publish actions |
 
-Two scope preferences remain open: whether publication initially covers only
-the player's own games or also imported replays, and whether Saved replays
-sync for signed-in users in this release. The working defaults are own games
-only and private-library sync; guests keep their library locally.
+The goal-loop instruction accepts own-game publication and private-library
+sync for signed-in users; guests keep their library locally. Imported replay
+curation remains deferred. Other recommended product defaults are recorded
+in the execution record; implementation measurements settle technical bounds.
 
 Global replay discovery, unique handles, uploaded avatars, social interactions,
 rankings, and multiplayer are outside this proposed slice. A built-in avatar
@@ -316,6 +317,10 @@ portable replay viewer should continue to work independently. Broader abuse
 controls remain a separate infrastructure decision if real usage warrants them.
 
 ## Delivery and Acceptance
+
+The [implementation roadmap](v0_6_implementation_plan.md) expands this sequence
+into milestones, code touchpoints, decision dependencies, and exit evidence.
+It does not turn the remaining proposed defaults into accepted behavior.
 
 1. Specify the portable record and build encode/decode/validation round trips,
    including maximum and malformed inputs and old-version behavior.

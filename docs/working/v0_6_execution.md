@@ -1,0 +1,88 @@
+# v0.6 Execution Record
+
+Started October 21, 2026. Owner: Bryan; implementation and acceptance owned by
+the primary with bounded Luna Max assignments under the explicitly invoked
+`luna-goal-loop` skill.
+
+## Outcome and Boundaries
+
+Implement M0–M5 in the [implementation roadmap](v0_6_implementation_plan.md),
+then pass its locally runnable M6 acceptance. Commit reviewed slices locally.
+Do not push, tag, deploy, or write production data. Preserve the current visual
+language, ordinary play, account/history/settings contracts, and existing
+explicit manual-check deferrals. The goal is a complete local candidate, not
+a deployed release. No token budget was requested.
+
+## Accepted Product Defaults
+
+- Publish only the account's own played games or its clearly marked practice
+  completions; importing someone else's replay does not grant publication.
+- Confirm an independent public name, initially suggested from the in-game
+  name. Do not automatically publish provider metadata.
+- Save guest copies locally and sync signed-in libraries separately. Guest
+  import is explicit; account caches and pending work are scoped by UID.
+- Exclude new practice completions from ordinary win/loss totals. Do not
+  reconstruct historical practice statistics from archived aggregates.
+- Publish each game explicitly. Disable makes the public page unavailable and
+  removes publications; re-enable starts empty. Portable copies cannot be
+  recalled. Removal/reset/delete scopes are visible before destructive actions.
+- Resolve routine format/layout/cap decisions from bounded tests and measured
+  payloads, recording consequential choices here and in the canonical contract.
+
+## Architecture Decisions
+
+- Preserve existing `SavedMatchV2` and schema-5 cloud profiles. Keep imported
+  replays and new practice completions in a separate versioned replay-library
+  family, with practice exposed separately in My games and excluded from
+  ordinary played-history aggregation/promotion. Older clients cannot strip
+  provenance from a record family they never write.
+- Portable canonical identity includes participant snapshots and practice
+  origin, but excludes the initial viewing ply. Different attribution creates
+  a separate copy; identical repeated saves deduplicate. Fingerprints establish
+  content identity only, never authenticated participation.
+- Public catalog: four fixed page documents, eight entries each (32 total),
+  with bounded ASCII portable payloads. The initial visitor view reads identity
+  plus one page, not eight separate game documents. Enable/disable rewrites the
+  identity and all four pages atomically. Revisions reject stale page writes;
+  generation changes invalidate previous publications. Validate this layout
+  against format measurements and emulator rules before acceptance.
+- Public identity and private library retain empty control documents after
+  cloud removal, with no names/game payloads. Monotonic revision barriers
+  reject stale writes after removal; the UI must disclose retained markers.
+- Private library: a separately loaded, capped snapshot, transactionally
+  compared against the revision the client actually loaded. Concurrent/offline
+  conflicts require explicit reload/review; they never silently replay stale
+  additions over a deletion. No listener or background polling is needed.
+- Public and private state are separate. No gameplay move, replay scrubbing,
+  or analysis operation uses a backend.
+
+## Milestones
+
+| Milestone | Status | Evidence |
+|---|---|---|
+| M0 Contracts | Active | Product defaults accepted; portable-format investigation underway |
+| M1 Portable core | Pending | |
+| M2 Shared viewer | Pending | |
+| M3 Local library/practice | Pending | |
+| M4 Public profile/catalog | Pending | |
+| M5 Private library sync | Pending | |
+| M6 Local acceptance | Pending | |
+
+## Work and Validation Log
+
+- Preflight: branch `main`, two existing unpushed design/research commits, and
+  only the known roadmap documentation edits present. No application edits.
+- Luna Max available and assigned a read-only investigation of existing replay,
+  Wasm validation, and bot identity contracts before its M1 implementation slice.
+- Local node dependencies, generated Wasm package, and all three Playwright
+  engines are present.
+- Baseline `npm run typecheck`: pass. Baseline `npm test`: 39 files / 378 tests
+  pass. No application implementation was present for these baseline runs.
+
+## Acceptance Limits
+
+No implementation, local candidate acceptance, production deployment, real
+OAuth/device acceptance, or free-tier traffic envelope is claimed at this point.
+Update this record as actual evidence becomes available. Runtime test artifacts
+must identify the candidate and remain distinct from manually reviewed UI and
+physical-device evidence.
