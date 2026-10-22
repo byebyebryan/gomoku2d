@@ -281,8 +281,8 @@ export function PublishReplayPanel({
                 <>
                   <label className={styles.field}>
                     <span>Public replay title</span>
-                    <input className="uiInput" maxLength={80} value={title}
-                      onChange={(event) => { setTitle(event.target.value); setError(null); }} />
+                    <input className="uiInput" maxLength={160} value={title}
+                      onChange={(event) => { setTitle(Array.from(event.target.value).slice(0, 80).join("")); setError(null); }} />
                   </label>
                   <p className={styles.preview}>
                     Opens at move {preview.openingPly}. Black: <strong>{preview.replay.black.name}</strong>; White: <strong>{preview.replay.white.name}</strong>.

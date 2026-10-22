@@ -312,8 +312,8 @@ export function PublicProfileManager() {
                     <>
                       <label className={styles.field}>
                         <span>Public name</span>
-                        <input className="uiInput" maxLength={80} value={draftName}
-                          onChange={(event) => setDraftName(event.target.value)} />
+                        <input className="uiInput" maxLength={160} value={draftName}
+                          onChange={(event) => setDraftName(Array.from(event.target.value).slice(0, 80).join(""))} />
                       </label>
                       <button className="uiAction uiActionPrimary" type="button"
                         disabled={pendingAction !== null || draftName.trim() === profile.displayName}
@@ -325,8 +325,8 @@ export function PublicProfileManager() {
                     <>
                       <label className={styles.field}>
                         <span>Choose your public name</span>
-                        <input className="uiInput" maxLength={80} value={draftName}
-                          onChange={(event) => { setDraftName(event.target.value); setConfirmEnable(false); }} />
+                        <input className="uiInput" maxLength={160} value={draftName}
+                          onChange={(event) => { setDraftName(Array.from(event.target.value).slice(0, 80).join("")); setConfirmEnable(false); }} />
                       </label>
                       <p className={styles.preview}>
                         Anyone with your profile link will see <strong>{draftName.trim() || "your chosen name"}</strong> and games you explicitly publish.

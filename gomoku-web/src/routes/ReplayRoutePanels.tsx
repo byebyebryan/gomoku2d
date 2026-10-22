@@ -82,6 +82,7 @@ export function ReplayMatchPanel({ frame, localDisplayName, match, preserveNames
       <div className={styles.playerRows}>
         {savedMatchPlayers(match).map(({ player, side }) => {
           const active = frame.status === "playing" && frame.currentPlayer === (side === "black" ? 1 : 2);
+          const displayName = preserveNames ? player.display_name : replayPlayerName(player, localDisplayName);
 
           return (
             <article
@@ -95,10 +96,10 @@ export function ReplayMatchPanel({ frame, localDisplayName, match, preserveNames
             >
               <div className={styles.playerCopy}>
                 <div className={styles.playerHead}>
-                  <h2 className={styles.playerName}>
+                  <h2 className={styles.playerName} title={displayName}>
                     {preserveNames && player.profile_uid ? (
-                      <Link to={`/player/?id=${encodeURIComponent(player.profile_uid)}`}>{player.display_name}</Link>
-                    ) : preserveNames ? player.display_name : replayPlayerName(player, localDisplayName)}
+                      <Link to={`/player/?id=${encodeURIComponent(player.profile_uid)}`}>{displayName}</Link>
+                    ) : displayName}
                   </h2>
                   <span
                     aria-label={player.kind === "human" ? "Player" : "Bot"}

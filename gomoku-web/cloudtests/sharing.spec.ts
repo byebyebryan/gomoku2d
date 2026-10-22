@@ -155,7 +155,7 @@ async function navigateWithinApp(page: Page, path: string): Promise<void> {
   }, path);
 }
 
-test("C10: a fresh signed-in shared replay page does no private Firestore work or history promotion", async ({ page, context }) => {
+test("C10: fresh signed-in shared/public route variants do no private Firestore work or history promotion", async ({ page, context }, testInfo) => {
   const email = `${unique("shared-auth")}@example.test`;
   const historyId = unique("local-only-history");
   const uid = await signIn(page, email);
@@ -163,6 +163,11 @@ test("C10: a fresh signed-in shared replay page does no private Firestore work o
   await prepareEligibleProfile(page, uid);
   const baseline = await readProfile(uid);
   expect(baseline).not.toBeNull();
+  await page.getByRole("button", { name: "Manage public profile", exact: true }).click();
+  await page.getByLabel("Choose your public name", { exact: true }).fill("Network-isolated public player");
+  await page.getByRole("checkbox", { name: /I want to enable this public profile/ }).check();
+  await page.getByRole("button", { name: "Enable public profile", exact: true }).click();
+  await expect(page.getByText("Public profile enabled with an empty catalog.", { exact: true })).toBeVisible();
 
   // Seed after sign-in so the source page's already-running cloud session never
   // sees it; the new page hydrates this unsynced history from local storage.
@@ -177,18 +182,47 @@ test("C10: a fresh signed-in shared replay page does no private Firestore work o
   });
   await page.close();
 
-  const freshPage = await context.newPage();
-  const firestoreRequests = watchFirestoreRequests(freshPage);
-  await freshPage.goto(sharedReplayUrl());
-  await expect(freshPage).toHaveTitle("Replay Analysis | Gomoku2D");
-  await expect(freshPage.getByRole("grid", { name: "Gomoku board" })).toBeVisible();
-  // Allow persisted auth hydration and the route's async replay decode to settle.
-  await freshPage.waitForTimeout(1_000);
-
-  expect(firestoreRequests).toEqual([]);
+  const fragment = sharedReplayUrl().slice(sharedReplayUrl().indexOf("#"));
+  const paths = ["/replay/shared/", "/Replay/Shared/", "/replay/shared//", "/replay/%73hared/"];
+  const publicPaths = ["/player/", "/PLAYER/", "/player//", "/%70layer/"];
+  const observations = [];
+  for (const path of [...paths, ...publicPaths]) {
+    const isPublic = publicPaths.includes(path);
+    const freshPage = await context.newPage();
+    const firestoreRequests = watchFirestoreRequests(freshPage);
+    const targets: string[] = [];
+    freshPage.on("request", (request) => {
+      if (!request.postData()) return;
+      let body = request.postData()!;
+      try { body = decodeURIComponent(body); } catch { /* JSON bodies can contain literal percent signs. */ }
+      if (body.includes("/documents/")) targets.push(body);
+    });
+    try {
+      await freshPage.goto(isPublic ? `${path}?id=${encodeURIComponent(uid)}` : `${path}${fragment}`);
+      if (isPublic) {
+        await expect(freshPage.getByRole("heading", { name: "Network-isolated public player", exact: true })).toBeVisible();
+      } else {
+        await expect(freshPage).toHaveTitle("Replay Analysis | Gomoku2D");
+        await expect(freshPage.getByRole("grid", { name: "Gomoku board" })).toBeVisible();
+      }
+      // Allow persisted auth hydration and any unintended private session to settle.
+      await freshPage.waitForTimeout(1_000);
+      const privateTargets = targets.filter((body) => /\/documents\/(?:profiles|replay_libraries)\//.test(body));
+      expect(privateTargets).toEqual([]);
+      if (isPublic) expect(targets.some((body) => body.includes("/documents/public_profiles/"))).toBe(true);
+      else expect(firestoreRequests).toEqual([]);
+      observations.push({ path, firestoreRequests: firestoreRequests.length, privateTargets: privateTargets.length });
+    } finally {
+      await freshPage.close();
+    }
+  }
+  await testInfo.attach("signed-in-route-network-boundaries", {
+    body: JSON.stringify(observations, null, 2), contentType: "application/json",
+  });
   const after = await readProfile(uid);
   expect(after?.match_history?.replay_matches).toEqual(baseline?.match_history?.replay_matches);
   expect(after?.match_history?.replay_matches?.some((match: { id: string }) => match.id === historyId)).toBe(false);
+  expect(await readFirestoreDocument(`replay_libraries/${uid}`)).toBeNull();
 });
 
 test("C11: public opt-in, visitor replay, unpublish, disable, re-enable, and copied-link behavior", async ({ page, browser }, testInfo) => {
@@ -478,4 +512,61 @@ test("C14: private reset keeps public sharing, while Delete Cloud clears markers
   const privateAfterSignin = await readFirestoreDocument(`replay_libraries/${uid}`);
   expect(privateAfterSignin?.entries_json).toBe("[]");
   expect(privateAfterSignin?.revision).toBe(privateAfterDelete?.revision);
+});
+
+test("C15: maximum Unicode public fields remain editable and reflow for owners and visitors", async ({ page, browser }, testInfo) => {
+  await page.setViewportSize({ width: 320, height: 900 });
+  const matchId = unique("maximum-public-fields");
+  const unicodeName = "💠".repeat(80);
+  const publicName = "W".repeat(80);
+  const title = "🎯".repeat(80);
+  await seedFinishedHistory(page, matchId);
+  const uid = await signIn(page, `${unique("unicode-owner")}@example.test`);
+  await readyCloud(page);
+  await expect.poll(async () => (await readProfile(uid))?.match_history?.replay_matches?.some(
+    (match: { id: string }) => match.id === matchId,
+  )).toBe(true);
+  await prepareEligibleProfile(page, uid);
+  await page.getByRole("button", { name: "Manage public profile", exact: true }).click();
+  const chosenName = page.getByRole("textbox", { name: "Choose your public name", exact: true });
+  await chosenName.fill(unicodeName);
+  await expect(chosenName).toHaveValue(unicodeName);
+  await page.getByRole("checkbox", { name: /I want to enable this public profile/ }).check();
+  await page.getByRole("button", { name: "Enable public profile", exact: true }).click();
+  await expect(page.getByText("Public profile enabled with an empty catalog.", { exact: true })).toBeVisible();
+  await page.getByRole("textbox", { name: "Public name", exact: true }).fill(publicName);
+  await page.getByRole("textbox", { name: "Public name", exact: true }).press("End");
+  await page.getByRole("textbox", { name: "Public name", exact: true }).pressSequentially("Z");
+  await expect(page.getByRole("textbox", { name: "Public name", exact: true })).toHaveValue(publicName);
+  await page.getByRole("button", { name: "Save public name", exact: true }).click();
+  await expect(page.getByText("Public name saved.", { exact: true })).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+  await captureSharingEvidence(page, testInfo, "maximum-owner", 'section[aria-labelledby="public-profile-manager-title"]');
+
+  await page.goto(`/replay/${matchId}`);
+  await page.getByRole("button", { name: "Publish replay", exact: true }).click();
+  const titleInput = page.getByRole("textbox", { name: "Public replay title", exact: true });
+  await titleInput.fill(title);
+  await expect(titleInput).toHaveValue(title);
+  await page.getByRole("button", { name: "Publish this replay", exact: true }).click();
+  await expect(page.getByRole("status").filter({ hasText: `Published “${title}”` })).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+
+  const visitorContext = await browser.newContext({ viewport: { width: 320, height: 900 } });
+  await protectContext(visitorContext);
+  try {
+    const visitor = await visitorContext.newPage();
+    await visitor.goto(`/player/?id=${uid}`);
+    await expect(visitor.getByRole("heading", { name: publicName, exact: true })).toBeVisible();
+    await expect(visitor.getByText(title, { exact: true })).toBeVisible();
+    await expectNoHorizontalOverflow(visitor);
+    await auditAccessibility(visitor, testInfo, "maximum-public-fields");
+    await captureSharingEvidence(visitor, testInfo, "maximum-visitor", "main");
+    await visitor.setViewportSize({ width: 640, height: 900 });
+    await visitor.addStyleTag({ content: "html { font-size: 200%; }" });
+    await expectNoHorizontalOverflow(visitor);
+    await captureSharingEvidence(visitor, testInfo, "maximum-visitor-enlarged", "main");
+  } finally {
+    await visitorContext.close();
+  }
 });

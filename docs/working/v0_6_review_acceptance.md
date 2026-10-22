@@ -73,7 +73,37 @@ acceptance. Preserve unrelated work and user browser tabs.
   affected buttons remain disabled during review, and superseded failures cannot
   patch newer sync state. Five added sync/action/UI regressions pass; focused
   library lane passes 22 checks.
-- R2–R5: pending.
+- F2 (P2, fixed): native `maxlength=80` counted UTF-16 units, truncating valid
+  80-code-point public names/titles to 40 supplementary Unicode characters.
+  Reproduced in Chromium using the actual form. Both public-name forms and the
+  publication title now allow the UTF-16 envelope and enforce 80 code points.
+  C15 verifies enabling, editing, publishing and guest rendering at the limit,
+  plus rejection of an additional ASCII character.
+- F3 (P2, fixed): screenshot review found 80-character player labels expanding
+  the mobile replay cards to hundreds of pixels and displacing the board.
+  Labels now display at most two lines while retaining complete accessible text
+  and a title. Reviewed the corrected 320px capture; the board is visible below
+  compact player cards. Three-engine checks protect the visual bound and text.
+- R2: six noncanonical equivalent encodings now have explicit rejection cases
+  (whitespace, duplicate keys, alternate numbers, escaped labels and field
+  order). Existing legality, size, Unicode, cache and malformed-input coverage
+  was reviewed; no further decoder defect found. The full web lane passes
+  45 files / 468 tests.
+- R3 targeted checks: 9/9 exploratory browser checks and 6/6 C10/C15 emulator
+  checks pass across three engines. These include maximum 225-move draw,
+  hostile labels/redaction, 320px reflow, 200% root-text scaling at 640px,
+  maximum public fields and eight fresh signed-in shared/public route variants
+  per engine with no private targets or history promotion. The primary inspected
+  replay, owner, visitor and enlarged-text screenshots. Broad final lanes remain.
+- R4: source review confirms explicit server reads/transactions, no sharing
+  listeners/timers, separate owner-only library/private profile documents,
+  known-UID public reads without listing, bounded payloads and retained markers.
+  Index exemptions and rules-first rollout/compatible rollback contracts match
+  the implemented families. Fresh emulator rules/SDK-operation lane passes
+  43/43, including method counts, sizes and stale-write/deletion barriers.
+  No rules/schema/backend implementation changes were required.
+- R5: pending. Shared sync and UI changes warrant fresh full browser/cloud lanes
+  and cloud race repetitions; Rust/bot/dependency sources remain unchanged.
 
 ## Manual handoff target
 

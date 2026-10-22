@@ -207,6 +207,23 @@ describe("portable replay v1 format and identity", () => {
     expect(() => decodePortableReplay("_w")).toThrow("not valid UTF-8");
   });
 
+  it.each([
+    ["leading whitespace", (json: string) => ` ${json}`],
+    ["trailing whitespace", (json: string) => `${json}\n`],
+    ["duplicate keys", (json: string) => json.replace('"v":1', '"v":1,"v":1')],
+    ["alternate number spelling", (json: string) => json.replace('"v":1', '"v":1.0')],
+    ["escaped labels", (json: string) => json.replace("Guest", "\\u0047uest")],
+    ["reordered keys", (json: string) => {
+      const { v, ...rest } = JSON.parse(json) as Record<string, unknown>;
+      return JSON.stringify({ ...rest, v });
+    }],
+  ])("rejects %s instead of silently changing a shared replay's canonical identity", (_label, mutate) => {
+    const payload = encodePortableReplay(winningReplay());
+    const json = JSON.stringify(wireFromPayload(payload));
+    const altered = btoa(mutate(json)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+    expect(() => decodePortableReplay(altered)).toThrow(/canonical v1 field order and encoding/i);
+  });
+
   it.each([-1, WIN_MOVES.length + 1])("rejects viewing ply %i outside the game", (viewPly) => {
     const replay = winningReplay();
     expect(() => validatePortableReplay({ ...replay, viewPly }))
