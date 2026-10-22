@@ -202,3 +202,25 @@ Desktop/mobile captures show the normal My games row and ordinary win totals.
 The local Snap preview is updated for manual review. Saved-library and public
 profile presentation remain manual checks; production release, real OAuth,
 device acceptance and the Canvas stone-colour finding remain separate.
+
+## Manual preview sign-in recovery — October 22
+
+The preview and Auth/Firestore tool-session processes received SIGTERM and
+exited while Snap's SSH forwarding ports remained open. An already loaded
+browser could still show the app, but sign-in could not reach its emulator.
+The recovery uses transient Starship user services with restart-on-failure:
+
+- `gomoku2d-v06-preview.service`: existing `dist-cloud`, loopback port 8013.
+- `gomoku2d-v06-emulators.service`: disposable `demo-gomoku2d-acceptance` only,
+  Auth 19099 and Firestore 18081, using `firebase.acceptance.json`. Clean exit
+  exports demo state to ignored `gomoku-web/test-results/manual-preview-emulators`.
+- `gomoku2d-v06-snap-tunnel.service`: the same three loopback ports on Snap.
+
+These services are owned by the manual review and should stay running until it
+ends. Stop them with `systemctl --user stop` and the three names above afterward.
+They replace the temporary process sessions; unrelated previews are untouched.
+
+Snap HTTP checks confirm the current index and emulator connectivity. C11's
+sign-in, enable/publish, guest replay, unpublish, disable/re-enable and copied-link
+flow passes in Chromium, Firefox and WebKit (3/3) against the served preview.
+This is demo-emulator evidence, separate from real Google OAuth acceptance.
