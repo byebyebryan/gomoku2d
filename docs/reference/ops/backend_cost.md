@@ -210,16 +210,24 @@ history during QA.
 Reset is not a cost risk at current scale. The bigger risk is correctness:
 reset-barrier writes and stale-match rejection must stay covered by rules tests.
 
-### Replay Sharing / Online Future
+### Deferred P2P Multiplayer Planning
 
-Public replay pages, online match subscriptions, and trusted server-written
-match state can change the read/write profile quickly. Before the online
-product-expansion phase, add a separate estimate for:
+The [October 21 research](../backend/p2p_multiplayer.md) favors direct WebRTC
+gameplay with backend signaling; multiplayer is deferred from v0.6. Moves would
+not use Firestore or Cloud Run. Budget backend usage by session setup and
+reconnection, rather than moves or game duration. The signaling mailbox would
+initially target existing Firestore; its schema, rules, expiry, and cleanup
+remain to be designed.
 
-- active online match listeners
-- per-move server writes
-- public replay page reads
-- profile/ranked leaderboard queries
+Measure room creation/joining, offers/answers, connection candidates, retries,
+reconnections, and cleanup. Account separately for existing auth and optional
+private-history sync. Bound payloads, attempts, and retained rooms, and detach
+signaling listeners when no longer needed. Direct-only connectivity is an
+accepted limit of the preferred PoC; neither TURN nor database move relaying is
+a selected fallback. There is no measured free-tier player/game capacity yet.
+
+Public replay pages and future server-authoritative matches would require
+separate estimates if selected later.
 
 ## Auth Cost Notes
 
@@ -242,10 +250,11 @@ Avoid:
 Re-check Auth pricing before adding any provider beyond Google/GitHub social
 sign-in.
 
-## Cloud Run Future Budget
+## Parked Cloud Run Budget
 
-Cloud Run is intentionally out of `v0.3`. When it arrives, use
-request-based billing in `us-central1` and keep minimum instances at zero.
+Cloud Run is outside the preferred P2P design, and multiplayer itself is
+deferred from v0.6. If a later phase selects Cloud Run, use request-based billing
+in `us-central1` and keep minimum instances at zero.
 
 Current free tier to plan against:
 

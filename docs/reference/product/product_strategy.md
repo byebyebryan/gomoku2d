@@ -50,10 +50,13 @@ the player asks for durable or shared state.
   history; new accounts initialize from the device, and later edits sync.
 - Signed-in private history is cloud-backed continuity, not public evidence.
 - Public/shared replays require an explicit publish step.
+- The [deferred casual P2P research](../backend/p2p_multiplayer.md) favors backend
+  signaling and browser-validated moves; its results would not be server-verified.
+  Keep backend work out of the per-move gameplay path if multiplayer is revisited.
 - Future ranked/trusted matches must be server-validated move by move.
 
 Keep these trust lanes separate: local/free play, signed-in private continuity,
-explicitly shared replay state, and future trusted online state.
+casual P2P play, explicitly shared replay state, and future trusted online state.
 
 ### Simple surface, serious stack
 

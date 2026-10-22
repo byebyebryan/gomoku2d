@@ -3,7 +3,13 @@
 Purpose: park target backend ideas that are not deployed today.
 
 The current backend contract lives in [`backend.md`](backend.md). This file is
-not current scope until the roadmap explicitly promotes an online/trusted slice.
+not current scope unless a later phase explicitly selects server authority or
+other trusted server-side work.
+
+The October 21 [P2P multiplayer research](p2p_multiplayer.md) favors backend
+signaling only, but multiplayer is deferred from v0.6. This Cloud Run sketch
+remains parked and is not a dependency of that preferred PoC. Its trusted-match
+assumptions apply only if a future phase explicitly selects server authority.
 
 ## Why Cloud Run
 

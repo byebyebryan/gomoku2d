@@ -53,31 +53,39 @@ Historical execution and findings:
 
 ## Following Reconciliation: `v0.6` Design Checkpoint
 
-Choose the next player benefit at a fresh design
-checkpoint. Online expansion remains the existing candidate. If selected, settle:
+Multiplayer is deferred from v0.6 as of October 21. Its implementation and UX
+effort, uncertain usage, and difficulty demonstrating it with another player
+make it a weaker immediate fit for this demo/experiment. The next player-facing
+slice remains under discussion. Preserve the chosen visual language and
+existing screen roles when choosing that slice.
 
-- the smallest useful online loop, likely direct challenge before discovery or
-  matchmaking;
-- authoritative game state and where the Rust rules engine runs server-side;
-- reconnect, timeout, abandonment, and concurrent-session behavior;
-- how local, signed-in private, trusted online, and explicitly public records
-  remain distinct;
-- hosting, operational cost, abuse boundaries, and deployment ownership.
+## Deferred Multiplayer Research
 
-Candidate online work:
+The [P2P research](../backend/p2p_multiplayer.md) preserves the preferred backend
+direction if multiplayer is revisited: direct WebRTC gameplay, validation in
+both Rust/Wasm clients, and a small backend role for finding/joining peers and
+signaling. Optimize for minimal backend usage as gameplay volume grows; ordinary
+moves should produce no server or database operations. Nothing is implemented
+or deployed.
 
-- direct challenge or live PvP flow;
-- trusted match authority using the Rust rules engine server-side;
-- server-verified match history;
-- explicit replay publish/share flow;
-- public replay pages;
-- lightweight public identity only where sharing requires it.
+An initial PoC would accept direct-connection failures on some networks. TURN
+and database move relaying remain separate decisions. An established game should
+remain playable without signaling while its peer connection remains usable.
+P2P results would be casual history, not server-verified records.
 
-Eventual release bar:
+UI/UX questions to resume with the feature:
 
-- two people can reliably play a full online game;
-- the product clearly distinguishes local history, signed-in private history,
-  trusted online history, and explicitly published public replays.
+- entry, invitation, waiting, joining, and rules/colors/readiness;
+- clear player turns, move acknowledgement, and connection status;
+- connection failure, reconnect, leaving, and interrupted sessions;
+- completion, rematch, replay, and optional private history continuity;
+- identity requirements and the treatment of hints, undo, and other assists.
+
+Future multiplayer acceptance should cover a complete two-player game on
+supported network paths, honest failure/recovery states, and measured signaling
+usage. Specific criteria follow its UI/UX and protocol design; no player capacity
+or connectivity success rate is claimed yet. Ranked/trusted match authority and
+wider discovery are outside the preferred PoC.
 
 ## Parking Lot
 

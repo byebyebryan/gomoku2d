@@ -2,8 +2,10 @@
 
 Purpose: document the current backend contract behind the web app.
 
-The current deployed backend is Firebase only. Future Cloud Run/live-match work
-lives in [`future_cloud_run.md`](future_cloud_run.md).
+The current deployed backend is Firebase only. [P2P multiplayer research](p2p_multiplayer.md)
+records a preferred signaling-only backend and browser-owned gameplay, deferred
+from v0.6. It is not implemented or deployed. Longer-term authoritative service
+ideas remain parked in [`future_cloud_run.md`](future_cloud_run.md).
 
 ## Current Deployed Backend
 
@@ -29,6 +31,7 @@ Keep these lanes separate:
 |---|---|---|---|
 | Local guest play | Browser | Local storage | No |
 | Signed-in casual history | Browser upload, owner-scoped rules | `profiles/{uid}.match_history` | Private only |
+| Casual P2P match (deferred research) | Both browsers validate through Rust/Wasm | Local history; optional private continuity | No server-verified result |
 | Published replay | Explicit future publish step | Public replay doc | Public, but trust depends on source |
 | Trusted online/ranked match | Future server authority | Server-written match record | Yes |
 
@@ -83,12 +86,18 @@ Rules also enforce:
 - update cooldowns for normal profile snapshots;
 - reset-barrier writes for destructive profile reset;
 - private match-history caps;
-- closed future namespaces until a server-authoritative design exists.
+- closed future namespaces until their corresponding designs and rules are
+  implemented; the P2P decision alone opens no namespace.
 
 Any change to cloud profile schema should update `data_model.md`, Firestore
 rules, and rules tests together.
 
 ## Future Backend Boundary
+
+If casual multiplayer is revisited, the preferred backend role is peer
+discovery/joining and signaling; moves would travel directly between browsers.
+The [deferred P2P research](p2p_multiplayer.md) records this architecture and its
+direct-connectivity limitation.
 
 Use Cloud Run only when the browser cannot safely own the action:
 
