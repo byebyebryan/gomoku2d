@@ -1,0 +1,23 @@
+{
+  "contract": "Direct copied index entries on a plain static HTTP server; browser journeys validate application behavior separately. Local build only, no public hosting claim.",
+  "routes": [
+    {
+      "route": "/",
+      "status": 200,
+      "bytes": 3484,
+      "sha256": "83af51e3b529411179604e149c3419f9415b4ab0c0e6ea6172fe9febdeec3d49"
+    },
+    {
+      "route": "/replay/shared/",
+      "status": 200,
+      "bytes": 3484,
+      "sha256": "83af51e3b529411179604e149c3419f9415b4ab0c0e6ea6172fe9febdeec3d49"
+    },
+    {
+      "route": "/player/?id=known-demo-uid",
+      "status": 200,
+      "bytes": 3484,
+      "sha256": "83af51e3b529411179604e149c3419f9415b4ab0c0e6ea6172fe9febdeec3d49"
+    }
+  ]
+}

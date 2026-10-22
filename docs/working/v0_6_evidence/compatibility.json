@@ -1,0 +1,39 @@
+{
+  "scope": "Source-byte compatibility receipt for existing saved/history/schema/promotion contracts. Rules/application acceptance proves behavior separately; this is not production or a real old-tab device run.",
+  "profile_schema": 5,
+  "saved_match_schema": 2,
+  "new_library_schema": 1,
+  "new_public_schema": 1,
+  "unchanged_sources": [
+    {
+      "path": "gomoku-web/src/match/saved_match.ts",
+      "sha256": "9c1e52ba9f56b0cc16dd101d352b7d9138b806c06e5d35b99afd9bdec415b741",
+      "unchanged_from": "656ec38"
+    },
+    {
+      "path": "gomoku-web/src/match/match_history.ts",
+      "sha256": "b3afe9924343997f7cad09b1869e65f0d70a515d0dd73b7a0ebffdee8d7c34ef",
+      "unchanged_from": "656ec38"
+    },
+    {
+      "path": "gomoku-web/src/cloud/cloud_profile.ts",
+      "sha256": "0b4be20ab8184aad39c22f13c1bf03485903fdc45f4b83f1b5bfe7e43e6606bd",
+      "unchanged_from": "656ec38"
+    },
+    {
+      "path": "gomoku-web/src/cloud/cloud_profile_store.ts",
+      "sha256": "fee05cbd01adf417e292830a6098c5cb46cdd4165093c6e7ed69d62620ab25d6",
+      "unchanged_from": "656ec38"
+    },
+    {
+      "path": "gomoku-web/src/cloud/cloud_promotion_store.ts",
+      "sha256": "f6516f7bc39802dfe3ec3b19fec2eb5863bcc5bc29beab608ccdae220274f5b4",
+      "unchanged_from": "656ec38"
+    },
+    {
+      "path": "gomoku-web/src/profile/local_profile_store.ts",
+      "sha256": "8847f0bfa5dca55ad58a5c7c53be122d0279eafeed6d16a5929fc9871a8a81fe",
+      "unchanged_from": "656ec38"
+    }
+  ]
+}

@@ -66,7 +66,7 @@ a deployed release. No token budget was requested.
 | M3 Local library/practice | Complete | Store/session races and three-engine guest/practice journeys pass |
 | M4 Public profile/catalog | Complete | Three-engine publication/visibility, rules and measured operations pass |
 | M5 Private library sync | Complete | Two-client sync/conflict and reset/delete/action race contracts pass |
-| M6 Local acceptance | Pending | |
+| M6 Local acceptance | Complete locally | 433 units, 43 rules, 189 browser, 36 cloud and 45 repeated race checks; build/audits/static routes pass |
 
 ## Work and Validation Log
 
@@ -159,3 +159,23 @@ Those checks remain separate, with existing explicit manual deferrals retained.
   confirms preview false / development true. Closed the one remaining owned
   `127.0.0.1:8013` tab via browser controls and verified none remain, preserving
   the five other user tabs. This changes preview startup, not the web bundle.
+
+- Final cloud race lane: 45/45 pass across Chromium/Firefox/WebKit, C4/C6/C7 five
+  times each, in 3.2 minutes. This is a complete fresh-state run, replacing the
+  interrupted earlier selector-debug run. No failures or required local checks
+  remain. Routine test screenshots now stay in test output unless explicitly
+  refreshing checked-in evidence.
+- Final build after the preview-only fix: all 134 dist files are byte-identical
+  to the browser-qualified candidate. Static-route, build-identity and unchanged
+  schema-source receipts are in the evidence directory. Types, whitespace and
+  changed-doc relative links pass. Test preview/emulator ports are closed.
+
+## Checkpoint outcome
+
+M0–M5 and all locally runnable M6 gates are complete. Luna Max implemented the
+portable core, library/session foundation, public UI/backend and browser/cloud
+acceptance slices; the primary owned integration, lifecycle/concurrency fixes,
+contract review, final gates and local commits. New sharing requires no Cloud
+Run service, move relay or server analysis. Production, real OAuth/devices and
+human accessibility remain separate as specified above. The next checkpoint is
+review and separately authorized release preparation, not more implementation.

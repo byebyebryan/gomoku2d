@@ -8,9 +8,9 @@ belong in the [reference docs](../README.md#choose-a-path).
 
 | Note | Owner and next review |
 |---|---|
-| [v0.6 public profiles and shareable replays](v0_6_profiles_and_replays.md) | Bryan; settle profile visibility, library persistence, publication scope, and the portable replay contract before implementation |
-| [v0.6 implementation roadmap](v0_6_implementation_plan.md) | Bryan; start with portable replay contracts/fixtures, then track milestone acceptance and remaining decisions |
-| [v0.6 execution record](v0_6_execution.md) | Bryan and the active Luna goal loop; update milestone status, decisions, commits, and acceptance evidence as work lands |
+| [v0.6 public profiles and shareable replays](v0_6_profiles_and_replays.md) | Bryan; design rationale; implemented contracts are linked from the execution record |
+| [v0.6 implementation roadmap](v0_6_implementation_plan.md) | Bryan; M0-M5 implemented; track local acceptance and separate release gates |
+| [v0.6 execution record](v0_6_execution.md) | Bryan; implementation decisions, local validation and release boundaries |
 
 ## Completed Follow-up
 

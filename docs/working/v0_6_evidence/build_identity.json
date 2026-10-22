@@ -1,0 +1,7 @@
+{
+  "definition": "SHA-256 of sorted relative filenames, NUL, and file bytes for the complete final local dist tree; excludes timestamps and filesystem metadata.",
+  "files": 134,
+  "dist_sha256": "e0962ce576c6e42112c26c0a85e6f0a47b0c4d80b7bef8ffb6b7f6e1cabea8d0",
+  "index_sha256": "83af51e3b529411179604e149c3419f9415b4ab0c0e6ea6172fe9febdeec3d49",
+  "preview_auto_open_fix": "Rebuilt after ecff07f and verified complete dist byte parity with the browser-qualified candidate."
+}

@@ -1,15 +1,16 @@
 # v0.6 Implementation Roadmap
 
-Owner: Bryan. Started October 21, 2026. Status: implementation active under the
-authorized Luna goal loop. The selected release combines public profiles and
+Owner: Bryan. Started October 21, 2026. Status: M0–M5 implemented under the
+authorized Luna goal loop; all locally runnable M6 checks pass. The execution
+record owns the acceptance evidence and separate release gates. The selected release combines public profiles and
 shareable replays. The [design draft](v0_6_profiles_and_replays.md) owns the
 product rationale and proposed behaviors; this plan owns order and acceptance.
 
 ## Readiness and Scope
 
-Ready to begin bounded contract work and the portable-replay implementation.
-The remaining choices below are resolved before their dependent milestone,
-rather than holding all implementation until every storage detail is settled.
+The milestones below preserve the implementation sequence and acceptance
+contract. Product defaults and storage/wire bounds are settled in the execution
+record and canonical reference contracts; they no longer await implementation.
 The complete v0.6 release includes both a useful guest replay journey and an
 opt-in public profile with explicit game publication.
 
@@ -224,9 +225,10 @@ journey verification. Implementation, deployment, and live acceptance are
 separate checkpoints. This roadmap authorizes no deployment or production data
 mutation and claims no measured free-tier capacity.
 
-## Immediate Next Step
+## Next checkpoint
 
-Begin M0/M1 with the portable record specification and representative fixtures.
-The first reviewable result should demonstrate a legal finished-game round trip
-with bounded URLs and no private-data leakage, then M2 turns it into the guest
-sharing demo. Keep later cloud choices explicit until their milestone begins.
+Review the complete local candidate and its [evidence](v0_6_evidence/README.md).
+Release preparation may then choose a version/date, obtain authorized push and
+exact-head CI, deploy compatible rules/indexes before the web release, and run
+the public-host/account journey. This implementation goal authorizes none of
+those publication steps and does not turn deferred manual checks into passes.

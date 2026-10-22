@@ -1,5 +1,12 @@
 # Public Profiles and Shareable Replays Design Draft
 
+Implementation status: M0–M5 now exist in the local candidate. This document
+retains the design rationale and original proposals; resolved portable/storage
+contracts live in [portable replay](../reference/app/portable_replay.md) and
+[sharing data](../reference/backend/sharing_data.md). The
+[execution record](v0_6_execution.md) owns final defaults and acceptance evidence.
+
+
 Owner: Bryan. Started October 21, 2026. The v0.6 direction is public profiles
 and shareable replays; multiplayer remains deferred. Implementation is active
 under the authorized Luna goal loop. The [execution record](v0_6_execution.md)

@@ -16,12 +16,15 @@ identifies the currently published build. Start with the
 verification, and explicit acceptance deferrals, or the
 [roadmap](reference/product/roadmap.md) for what follows.
 
-The next selected direction is v0.6 public profiles and shareable replays. Its
+The v0.6 local candidate implements public profiles and shareable replays. Its
 [design draft](working/v0_6_profiles_and_replays.md) separates accepted scope
-from proposed behavior and storage choices. The
+from the original proposals; final formats and storage contracts live in
+[portable replay](reference/app/portable_replay.md) and
+[sharing data](reference/backend/sharing_data.md). The
 [implementation roadmap](working/v0_6_implementation_plan.md) sequences the guest
 sharing demo, private library, public publishing, and release checks.
-Multiplayer research is retained as deferred work.
+[Execution and evidence](working/v0_6_execution.md) record the local acceptance
+and separate release gates. Multiplayer research is retained as deferred work.
 
 ## Choose A Path
 

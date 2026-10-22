@@ -51,14 +51,16 @@ Historical execution and findings:
 - [`v0.5.4 Reconciliation Findings`](../../archive/v0_5_4_findings.md)
 - [`v0.5 Public Release Plan`](../../archive/v0_5_public_release_plan.md)
 
-## `v0.6` Design: Public Profiles and Shareable Replays
+## `v0.6` Local Candidate: Public Profiles and Shareable Replays
 
 The selected direction is public profiles plus shareable replays. The
 [design draft](../../working/v0_6_profiles_and_replays.md) maps the private/public
 profile split, portable replay links, explicit saving and publishing, practice
 continuations, public-page flows, and cost/lifecycle boundaries. Detailed
-technical bounds remain proposals until measured. Implementation is active
-under the [Luna goal loop](../../working/v0_6_execution.md).
+technical bounds are now fixed in the portable/sharing reference contracts.
+M0–M5 and local M6 acceptance are complete; the [Luna execution record](../../working/v0_6_execution.md)
+and [evidence ledger](../../working/v0_6_evidence/README.md) own local acceptance.
+Versioning, push/CI, tagging, deployment and public acceptance remain separate.
 
 The [implementation roadmap](../../working/v0_6_implementation_plan.md) sequences
 the work into reviewable milestones:
