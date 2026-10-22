@@ -73,7 +73,7 @@ Estimated operation budgets for the current implementation:
 
 | Action | Expected reads | Expected writes | Expected deletes | Notes |
 |---|---:|---:|---:|---|
-| Local play / local match finish | 0 | 0 | 0 | LocalStorage only |
+| Guest play / local finish | 0 | 0 | 0 | LocalStorage only |
 | No-config build / signed-out Profile | 0 | 0 | 0 | Firebase bootstrap stays disabled |
 | First sign-in / cloud profile create | 1 | 1 | 0 | `getDoc(profiles/{uid})`, then create profile |
 | Cloud profile/history load | 1 | 0-1 | 0 | `getDoc(profiles/{uid})`; existing profiles only write when provider metadata or schema needs refresh |
@@ -228,16 +228,56 @@ a selected fallback. There is no measured free-tier player/game capacity yet.
 
 ### Selected v0.6 Sharing Design
 
-Public profiles and shareable replays are now the selected feature direction.
-The [design draft](../../working/v0_6_profiles_and_replays.md#storage-access-and-cost-proposal)
-keeps portable replay viewing independent of database reads and budgets public
-profile/catalog visits, deliberate publication, and optional private-library
-sync separately. Its page sizes and storage layouts remain proposals; measure
-the resulting document operations, egress, and retained data before setting a
-traffic allowance. This does not add a Cloud Run service or per-move backend.
-Per-account caps do not cap public visit costs. Include repeated/empty queries,
-rules-dependent reads, and a way to disable public access in that estimate;
-portable replay viewing should remain independent of public database access.
+The local v0.6 candidate implements [bounded sharing data](../backend/sharing_data.md).
+It is not deployed. Portable copy/view/scrub/analysis and guest-library operations
+perform zero Firestore operations. Ordinary signed-in played-game history retains its existing coalesced profile
+sync; a new practice finish saves locally until explicit library sync. New
+account-library operations are deliberate,
+with no background polling or persistent application listener. SDK server reads
+may use a temporary Listen transport internally.
+
+Logical document operations for a successful, uncontended attempt:
+
+| Action | Client document reads | Writes | Notes |
+|---|---:|---:|---|
+| Public identity + first catalog page | 2 | 0 | One further root-dependent rules read may be charged for the page |
+| Next public page | 1 | 0 | Root-dependent rules evaluation; revisiting cached pages costs no client read |
+| Open owner management | 5 | 0 | Identity and four pages, only on explicit open/reload |
+| Enable / disable | 5 | 5 | Atomic identity and four empty markers |
+| Rename enabled profile | 1 | 1 | Root only |
+| Open publication preview | 1 | 0 | Deliberate owner root load |
+| Commit publication from preview | 7 | 1 | Fresh root + four pages + transaction root/page; retries add reads |
+| Unpublish from loaded management | 2 | 1 | Transaction root/page, preserving private copies |
+| Load account library | 1 | 0 | Missing library is not created by read |
+| Save / remove after load | 1 | 1 | Transaction compares observed revision |
+| First account save | 2 | 1 | Baseline load plus transaction |
+| Reset account library | 2 | 1 | Additional to existing profile/history reset |
+| Clear sharing on Delete Cloud | 6 | 6 | Atomic public root, four pages and private empty marker; additional to old profile deletion |
+
+These are application document operations, not transport-request or billing
+measurements. Rules can charge dependent `get`/`exists`/`getAfter` reads, including
+on denied requests; retries cost more. Visibility batches check four pages and
+the root, so budget for those rule-dependent documents as well. Firebase's
+[billing contract](https://firebase.google.com/docs/firestore/pricing#cloud_firestore_security_rules)
+and [free quota](https://firebase.google.com/docs/firestore/quotas#free_quota)
+were checked October 21, 2026; emulator results cannot prove a billing allowance.
+
+The public catalog is 32 entries (four pages of eight); private library is 64
+entries. Payloads are at most 8,192 ASCII characters. The measured largest legal
+portable fixture uses 1,804 characters, including 225 moves and maximum Unicode
+names/UIDs. Size evidence and operation instrumentation live in the
+[v0.6 evidence](../../working/v0_6_evidence/README.md). JSON fixture sizes exclude
+Firestore document-name/field/index overhead and serialized network framing.
+Payload fields are exempted from automatic indexes. Six empty markers remain
+after cloud deletion, without names or replay payloads. The legacy profile-delete
+guard can add two dependent sharing-document reads to the prior deletion flow.
+
+Caps bound each account’s retained data. Public visits are still billable work,
+and repeated traffic is not globally rate-limited by this design. A shared URL
+is the zero-database demo path. The operational `publicSharingEnabled()` switch
+blocks public reads/new publications while retaining owner cleanup. This adds
+no Cloud Run service, move relay, scheduled cleanup, storage bucket or upload
+pipeline. No free-tier player/visit capacity is claimed.
 
 Future server-authoritative matches would require a separate estimate.
 

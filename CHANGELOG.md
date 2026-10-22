@@ -12,6 +12,25 @@ their own section.
 
 ## [Unreleased]
 
+### Web
+
+- Share finished games as self-contained replay links, with a chosen opening ply,
+  player-label preview, optional profile references and clipboard fallback.
+- Open shared games without importing private history or starting private cloud
+  sync. Save copies separately, continue legal positions as practice, and retain
+  inherited-move provenance without changing ordinary played-game totals.
+- Add My games / Saved replays, guest-local copies and explicit account-library
+  sync/import with bounded storage and visible conflict recovery.
+- Add opt-in public names, stable player links and explicit publication of own
+  games to a bounded catalog. Unpublish/disable/delete reject stale writes;
+  copied portable links remain usable. Explain private/public deletion scopes.
+
+### Repository
+
+- Add versioned replay/library contracts, additive Firestore rules, three-engine
+  replay/public/cloud journeys and a local candidate evidence ledger. Multiplayer
+  stays deferred; gameplay and analysis remain in the browser.
+
 ## [0.5.5] - 2026-10-16
 
 **Theme: close the reopened `0.5` reconciliation.**

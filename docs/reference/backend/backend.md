@@ -7,11 +7,11 @@ records a preferred signaling-only backend and browser-owned gameplay, deferred
 from v0.6. It is not implemented or deployed. Longer-term authoritative service
 ideas remain parked in [`future_cloud_run.md`](future_cloud_run.md).
 
-The selected v0.6 direction is public profiles and shareable replays; its
-[design draft](../../working/v0_6_profiles_and_replays.md) proposes separate
-public/private records, portable replay links, and explicit client-managed
-publication through Firebase. Current deployed contracts below remain the
-private v0.5 baseline until implementation.
+The local v0.6 candidate adds public profiles, portable replay links and an
+explicitly synced private library. [Sharing data](sharing_data.md) owns its
+additive schema-1 families; [cost operations](../ops/backend_cost.md#selected-v06-sharing-design)
+records their bounded request shape. Production remains the private v0.5
+baseline until an authorized release verifies deployment.
 
 ## Current Deployed Backend
 
@@ -38,7 +38,7 @@ Keep these lanes separate:
 | Local guest play | Browser | Local storage | No |
 | Signed-in casual history | Browser upload, owner-scoped rules | `profiles/{uid}.match_history` | Private only |
 | Casual P2P match (deferred research) | Both browsers validate through Rust/Wasm | Local history; optional private continuity | No server-verified result |
-| Published replay | Explicit future publish step | Public replay doc | Public, but trust depends on source |
+| Published replay | Explicit owner publication | Bounded public catalog carrying portable payload | Casual, unverified participant snapshots |
 | Trusted online/ranked match | Future server authority | Server-written match record | Yes |
 
 Local play should remain complete without Firebase config. Cloud sign-in extends
@@ -67,7 +67,7 @@ contract:
 - lightweight summaries and archived stats for older history.
 
 Private match history is embedded in the profile document for the current
-casual path. The v0.6 draft separates public catalog records from private data;
+casual path. The v0.6 candidate separates public catalog records from private data;
 public publication does not make a game server-verified. A future trusted match
 service would need its own server-owned records.
 
@@ -99,6 +99,21 @@ Rules also enforce:
 
 Any change to cloud profile schema should update `data_model.md`, Firestore
 rules, and rules tests together.
+
+## v0.6 candidate additions
+
+`public_profiles/{uid}` carries a separately confirmed name and four fixed catalog
+pages; it never exposes provider metadata or the private profile snapshot.
+`replay_libraries/{uid}` carries saved/practice copies, separate from ordinary
+played-history promotion and totals. Fresh shared/public route entry initializes
+Auth without loading, promoting or syncing private profile/history/library data.
+Explicit Save can load/write the library; public visits load only public records.
+
+Disable atomically empties the catalog; re-enable starts empty. Strict revisions
+and generations reject stale writes. Delete Cloud first clears all six sharing
+records atomically, retaining empty barriers, then performs existing profile
+cleanup and signs out. Partial failure stays visible for retry. Copied portable
+links keep working independently of the catalog and cannot be recalled.
 
 ## Future Backend Boundary
 

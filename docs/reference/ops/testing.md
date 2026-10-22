@@ -47,11 +47,23 @@ accounts, the actual repository rules, and a separate `dist-cloud` preview on
 port 8013. It refuses occupied ports, stops its own process groups, and blocks
 non-loopback identity/database requests. The SDK still loads Google's static
 GAPI library; cosmetic widget assets and generic telemetry/connectivity probes
-are fulfilled locally. There are no production account/data writes. CI runs all
-C1-C9 journeys and supported embedded redirect in three engines, plus five
+are fulfilled locally. There are no production account/data writes. The lane runs all
+C1-C14 journeys and supported embedded redirect in three engines, plus five
 fresh-state repetitions of conflict, account-switch and reset races. The
 [unattended evidence ledger](../../archive/reconciliation_2026_10/v0_5_unattended_evidence.md) records
 scenarios, fixture-only timestamp eligibility, and the difference from real OAuth.
+
+On Linux hosts missing WebKit libraries, `npm run test:cloud -- --container`
+keeps Java/emulators on the host and runs Playwright in the qualified Ubuntu
+container. Docker and the host's matching installed browser cache are required;
+`PLAYWRIGHT_BROWSERS_PATH` overrides its default `~/.cache/ms-playwright` location.
+The pinned Ubuntu image supplies libraries; mounted browsers match the lockfile.
+Ordinary browser output uses `test-results/browser`; cloud output uses
+`test-results/cloud`, allowing independent lanes without clearing each other’s
+artifacts. See [v0.6 evidence](../../working/v0_6_evidence/README.md) for exact
+candidate commands, logical storage operations and scope limits. Routine browser
+captures stay in test output; set `GOMOKU_WRITE_EVIDENCE=1` only when intentionally
+refreshing the checked-in candidate screenshots.
 
 The profiling lane builds its own production preview on port 8012 and writes
 JSON under ignored `gomoku-bot-lab/outputs/browser-profile/`. Set

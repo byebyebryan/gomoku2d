@@ -120,3 +120,56 @@ choosing either. No rollback or deployment is performed by the reconciliation
 pass. Private replay URLs use Pages' `404.html` SPA fallback and can return HTTP
 404 on direct entry even when the client route works; public static routes have
 copied `index.html` entries.
+
+## v0.6 sharing rollout and compatibility
+
+The v0.6 goal produces a local candidate only. Version bump, push, exact-head CI,
+release tag, deployment and public acceptance remain separate authorizations.
+The package version stays 0.5.5 and notes remain Unreleased until release prep.
+
+For the first sharing release:
+
+1. Record the currently served web SHA and previous Firestore ruleset ID.
+2. After an authorized push and exact-head CI, manually dispatch the existing
+   Firestore workflow on reviewed `main` **before** publishing the new web app.
+   This additive ruleset retains schema-5 profile writes and opens the two
+   schema-1 sharing families. Verify its live release pointer and scoped access.
+3. Apply the reviewed `firestore.indexes.json` exemptions through an authorized,
+   scoped index deployment. The existing rules-only workflow does not deploy
+   indexes. Record their actual applied state; checked-in JSON is not evidence
+   of deployed exemptions. New functionality uses direct document gets and does
+   not require composite indexes, but payload indexing affects retained cost.
+4. Publish the web release using the established workflow. Tag workflows run
+   independently, so do not rely on their scheduling to provide rules-first
+   order. Verify direct HTTP success for `/replay/shared/` and `/player/`, then
+   disposable-account publication, guest viewing and cleanup against the host.
+
+Compatibility and rollback:
+
+- No migration of `profiles/{uid}` schema 5 or `SavedMatchV2` schema 2. Older
+  clients ignore the new Firestore families and local library key. New practice
+  never enters their promotion or statistics paths; legacy totals are retained.
+- An old client trying to delete a profile while public identity or a nonempty
+  library remains receives a rules denial. It must update/reload and use the
+  current cleanup flow. Accounts without sharing data retain prior deletion.
+  Rules may charge up to two additional dependent document reads for deletion.
+- Empty public/profile-page/private markers must remain. Do not delete them
+  administratively to reclaim a tiny amount of storage: stale revision barriers
+  depend on them. Re-enable starts empty; retained local copies require explicit
+  merge after cloud removal.
+- Prefer a compatible forward fix or a previous v0.6 candidate that retains the
+  new cleanup controls. If rolling web back to v0.5, keep additive rules and
+  explain that old tabs cannot manage the new library/publication families.
+  Never bypass the deletion guard to make old Delete Cloud appear successful.
+- For a public incident, first set `publicSharingEnabled()` to `false` in the
+  reviewed rules source and deploy/read back that ruleset through the same
+  authorized path. This blocks visitor reads and new enabling/publication while
+  leaving owner disable/clear and the private library usable. Portable URLs
+  still work. The switch is not a traffic quota or a revocation mechanism.
+- Restoring the old v0.5 rules closes new families and prevents current cleanup;
+  it is not a compatible sharing rollback. Record and verify the selected
+  web/rules pairing instead of treating either deployment alone as recovery.
+
+Local fixtures and limits live in the [candidate evidence](../../working/v0_6_evidence/README.md).
+Real OAuth, physical devices, human screen-reader use and public-host acceptance
+remain separate from emulator and desktop-engine automation.

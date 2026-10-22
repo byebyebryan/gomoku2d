@@ -236,11 +236,12 @@ Two trust levels exist on purpose:
 - **Casual / free play** — no per-move backend validation; fine for local play,
   signed-in private bot history, and disposable local sessions.
 - **Trusted / cloud-backed play** — backend validates every move. Used for
-  ranked matches, server-owned online history, and any replay we intend to
-  trust or share publicly.
+  ranked matches, server-owned online history, and any future server-verified
+  replay. Casual public replay publication remains client supplied and explicitly
+  unverified.
 
-That keeps the hot path cheap for throwaway play while making persistent/public
-features trustworthy.
+Casual persistence and publication stay inexpensive client operations. Trusted
+results require the future authority boundary described above.
 
 ## Version sequence
 
@@ -255,9 +256,14 @@ October `0.5.x` review completed deeper correctness, lifecycle, usability,
 and maintenance work. The [closeout](../../archive/reconciliation_2026_10/README.md)
 records the retained architecture, targeted repairs, and acceptance deferrals.
 
-The next cycle starts with a fresh product/design checkpoint. Online authority,
-puzzles, public sharing and larger solver work remain possible directions;
-`v0.6` is not committed to a specific expansion before that product decision.
+The v0.6 local candidate adds self-contained shared replay links, an isolated
+private replay/practice library, and opt-in public profiles/catalogs. Shared and
+public routes initialize authentication independently of private history. New
+practice never enters existing played-history promotion or aggregate totals;
+legacy records keep their previous interpretation. The portable/library families
+are independently versioned so older schema-5 writers cannot strip provenance.
+See [portable format](portable_replay.md) and [sharing data](../backend/sharing_data.md).
+Multiplayer remains deferred; its preferred gameplay path is direct P2P.
 
 Details are in [`Roadmap`](../product/roadmap.md). The architectural contract
 — what React owns, what Phaser owns, how they talk, and where `gomoku-core` is

@@ -122,3 +122,18 @@ ssh -L 8001:127.0.0.1:8001 bryan@starship.lan
   read/write/storage shape.
 - Update [`future_cloud_run.md`](../backend/future_cloud_run.md) rather than
   this runbook for undeployed server-authority designs.
+
+## Local v0.6 sharing candidate
+
+No sharing rules, indexes, records or web changes were deployed by the goal loop.
+The candidate adds `public_profiles/{uid}` plus four fixed pages and
+`replay_libraries/{uid}`; see [data contract](../backend/sharing_data.md) and
+[rules-first rollout/rollback](release.md#v06-sharing-rollout-and-compatibility).
+The current workflow updates rules only; deploy index exemptions separately
+through the reviewed operational path when release authorization is given.
+
+To disable public access operationally, change `publicSharingEnabled()` in
+`firestore.rules` from `true` to `false`, validate rules, deploy the reviewed
+ruleset and read back its release pointer. Owner cleanup stays available;
+portable links and local analysis need no public Firestore access. No production
+switch was changed during implementation.
