@@ -103,3 +103,12 @@ OAuth/device acceptance, or free-tier traffic envelope is claimed at this point.
 Update this record as actual evidence becomes available. Runtime test artifacts
 must identify the candidate and remain distinct from manually reviewed UI and
 physical-device evidence.
+
+- M4 backend Luna handoff: bounded public and private schema-1 families, atomic
+  lifecycle operations, stale revision/generation checks, public kill switch,
+  index exemptions and 41 passing sharing-rule emulator checks. Primary reviewed
+  the additive rules; existing schema-5 profile behavior remains unchanged.
+- Primary integrated library sync and explicit conflict recovery, shared saves,
+  My games/Saved replays tabs, practice presentation, public route/management and
+  publication panels. Reset/delete confirmations now disclose exact scope and
+  retained markers. Delayed sync and explicit-merge concurrency tests pass.

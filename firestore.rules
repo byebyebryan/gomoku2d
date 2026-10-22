@@ -284,6 +284,132 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(profileWriteKeys());
     }
 
+    // This literal is the operational switch for directory reads and new
+    // publication. Setting it to false hides public data while retaining the
+    // owner-only paths needed to disable and clear accounts.
+    function publicSharingEnabled() {
+      return true;
+    }
+
+    function validSharingRevision(value) {
+      return value is int && value >= 1 && value <= 2147483647;
+    }
+
+    function validSharingUid(uid) {
+      return uid is string && uid.size() > 0 && uid.size() <= 128;
+    }
+
+    function publicProfilePath(uid) {
+      return /databases/$(database)/documents/public_profiles/$(uid);
+    }
+
+    function publicCatalogPagePath(uid, pageId) {
+      return /databases/$(database)/documents/public_profiles/$(uid)/pages/$(pageId);
+    }
+
+    function validPublicProfileDocument(uid, data) {
+      return data is map
+        && data.keys().hasAll([
+          'schema_version', 'uid', 'display_name', 'enabled', 'generation', 'revision', 'updated_at',
+        ])
+        && data.keys().hasOnly([
+          'schema_version', 'uid', 'display_name', 'enabled', 'generation', 'revision', 'updated_at',
+        ])
+        && data.schema_version == 1
+        && data.uid == uid
+        && validSharingUid(data.uid)
+        && data.display_name is string
+        && data.enabled is bool
+        && (data.enabled ? data.display_name.matches('^.{1,80}$') : data.display_name == '')
+        && validSharingRevision(data.generation)
+        && validSharingRevision(data.revision)
+        && data.updated_at is timestamp
+        && data.updated_at == request.time;
+    }
+
+    function validPublicCatalogEntry(entry) {
+      return entry is map
+        && entry.keys().hasOnly(['fingerprint', 'payload', 'title', 'view_ply'])
+        && entry.fingerprint.matches('^[A-Za-z0-9_-]{43}$')
+        && entry.payload.size() <= 8192
+        && entry.payload.matches('^[A-Za-z0-9_-]+$')
+        && validPublicCatalogTitle(entry.title)
+        && entry.view_ply is int
+        && entry.view_ply >= 0
+        && entry.view_ply <= 225;
+    }
+
+    function validPublicCatalogTitle(value) {
+      return value.matches('^[ -~]*$')
+        ? value.size() <= 80
+        : value.matches('^.{0,80}$');
+    }
+
+    function validPublicCatalogEntries(entries) {
+      return entries is list
+        && entries.size() <= 8
+        && (entries.size() < 1 || validPublicCatalogEntry(entries[0]))
+        && (entries.size() < 2 || validPublicCatalogEntry(entries[1]))
+        && (entries.size() < 3 || validPublicCatalogEntry(entries[2]))
+        && (entries.size() < 4 || validPublicCatalogEntry(entries[3]))
+        && (entries.size() < 5 || validPublicCatalogEntry(entries[4]))
+        && (entries.size() < 6 || validPublicCatalogEntry(entries[5]))
+        && (entries.size() < 7 || validPublicCatalogEntry(entries[6]))
+        && (entries.size() < 8 || validPublicCatalogEntry(entries[7]));
+    }
+
+    function validPublicCatalogPageDocument(data) {
+      return data is map
+        && data.keys().hasAll(['schema_version', 'generation', 'revision', 'updated_at', 'entries'])
+        && data.keys().hasOnly(['schema_version', 'generation', 'revision', 'updated_at', 'entries'])
+        && data.schema_version == 1
+        && validSharingRevision(data.generation)
+        && validSharingRevision(data.revision)
+        && data.updated_at is timestamp
+        && data.updated_at == request.time
+        && validPublicCatalogEntries(data.entries);
+    }
+
+    function validEmptyCatalogPageAfter(uid, pageId, generation) {
+      let path = publicCatalogPagePath(uid, pageId);
+      let page = getAfter(path).data;
+      return existsAfter(path)
+        && page.generation == generation
+        && page.entries is list
+        && page.entries.size() == 0;
+    }
+
+    function allPublicCatalogPagesClearedAfter(uid, generation) {
+      return validEmptyCatalogPageAfter(uid, '0', generation)
+        && validEmptyCatalogPageAfter(uid, '1', generation)
+        && validEmptyCatalogPageAfter(uid, '2', generation)
+        && validEmptyCatalogPageAfter(uid, '3', generation);
+    }
+
+    function publicProfileGenerationMatchesAfter(uid, generation) {
+      let path = publicProfilePath(uid);
+      let profileAfter = getAfter(path).data;
+      return existsAfter(path)
+        && profileAfter.uid == uid
+        && profileAfter.schema_version == 1
+        && profileAfter.generation == generation;
+    }
+
+    function validPrivateLibraryDocument(uid, data) {
+      return data is map
+        && data.keys().hasAll(['schema_version', 'uid', 'revision', 'updated_at', 'entries_json'])
+        && data.keys().hasOnly(['schema_version', 'uid', 'revision', 'updated_at', 'entries_json'])
+        && data.schema_version == 1
+        && data.uid == uid
+        && validSharingUid(data.uid)
+        && validSharingRevision(data.revision)
+        && data.updated_at is timestamp
+        && data.updated_at == request.time
+        && data.entries_json is string
+        && data.entries_json.size() <= 600000
+        && data.entries_json.matches('^[ -~]*$');
+    }
+
     match /profiles/{uid} {
       allow read: if isOwner(uid);
       allow create: if isOwner(uid)
@@ -308,6 +434,91 @@ service cloud.firestore {
       match /matches/{matchId} {
         allow read, write: if false;
       }
+    }
+
+    match /public_profiles/{uid} {
+      allow get: if isOwner(uid)
+        || (publicSharingEnabled() && resource != null && resource.data.enabled == true);
+      allow list: if false;
+      allow create: if isOwner(uid)
+        && validPublicProfileDocument(uid, request.resource.data)
+        && request.resource.data.revision == 1
+        && request.resource.data.generation == 1
+        && (!request.resource.data.enabled || publicSharingEnabled())
+        && allPublicCatalogPagesClearedAfter(uid, 1);
+      allow update: if isOwner(uid)
+        && validPublicProfileDocument(uid, request.resource.data)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.schema_version == resource.data.schema_version
+        && request.resource.data.revision == resource.data.revision + 1
+        && (
+          (
+            request.resource.data.generation == resource.data.generation
+            && request.resource.data.enabled == resource.data.enabled
+          )
+          || (
+            request.resource.data.generation == resource.data.generation + 1
+            && (
+              request.resource.data.enabled != resource.data.enabled
+              || (!resource.data.enabled && !request.resource.data.enabled)
+            )
+            && (!request.resource.data.enabled || publicSharingEnabled())
+            && allPublicCatalogPagesClearedAfter(uid, request.resource.data.generation)
+          )
+        );
+      allow delete: if false;
+
+      match /pages/{pageId} {
+        allow get: if isOwner(uid)
+          || (
+            publicSharingEnabled()
+            && resource != null
+            && exists(publicProfilePath(uid))
+            && get(publicProfilePath(uid)).data.enabled == true
+            && resource.data.generation == get(publicProfilePath(uid)).data.generation
+          );
+        allow list: if false;
+        allow create: if isOwner(uid)
+          && pageId in ['0', '1', '2', '3']
+          && validPublicCatalogPageDocument(request.resource.data)
+          && request.resource.data.revision == 1
+          && request.resource.data.entries.size() == 0
+          && publicProfileGenerationMatchesAfter(uid, request.resource.data.generation);
+        allow update: if isOwner(uid)
+          && pageId in ['0', '1', '2', '3']
+          && validPublicCatalogPageDocument(request.resource.data)
+          && request.resource.data.revision == resource.data.revision + 1
+          && publicProfileGenerationMatchesAfter(uid, request.resource.data.generation)
+          && (
+            (
+              request.resource.data.generation == resource.data.generation
+              && (
+                getAfter(publicProfilePath(uid)).data.enabled
+                || request.resource.data.entries.size() == 0
+              )
+              && (request.resource.data.entries.size() == 0 || publicSharingEnabled())
+            )
+            || (
+              request.resource.data.generation == resource.data.generation + 1
+              && request.resource.data.entries.size() == 0
+            )
+          );
+        allow delete: if false;
+      }
+    }
+
+    match /replay_libraries/{uid} {
+      allow get: if isOwner(uid);
+      allow list: if false;
+      allow create: if isOwner(uid)
+        && validPrivateLibraryDocument(uid, request.resource.data)
+        && request.resource.data.revision == 1;
+      allow update: if isOwner(uid)
+        && validPrivateLibraryDocument(uid, request.resource.data)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.schema_version == resource.data.schema_version
+        && request.resource.data.revision == resource.data.revision + 1;
+      allow delete: if false;
     }
   }
 }

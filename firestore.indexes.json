@@ -20,6 +20,21 @@
       "collectionGroup": "profiles",
       "fieldPath": "match_history.archived_stats",
       "indexes": []
+    },
+    {
+      "collectionGroup": "public_profiles",
+      "fieldPath": "display_name",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "pages",
+      "fieldPath": "entries",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "replay_libraries",
+      "fieldPath": "entries_json",
+      "indexes": []
     }
   ]
 }

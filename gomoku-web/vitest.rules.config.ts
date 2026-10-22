@@ -3,7 +3,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     environment: "node",
-    include: ["tests/firestore_rules.test.ts"],
+    include: ["tests/firestore_rules.test.ts", "tests/sharing_rules.test.ts"],
     testTimeout: 30_000,
   },
 });

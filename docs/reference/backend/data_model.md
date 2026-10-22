@@ -6,9 +6,10 @@ This document is the schema contract for persisted app data. Backend design and
 trust boundaries live in [`backend.md`](backend.md); live project setup and
 deployed rulesets live in [`backend_infra.md`](../ops/backend_infra.md).
 
-Proposed public-profile, replay-library, and publication shapes for v0.6 live in
-the [design draft](../../working/v0_6_profiles_and_replays.md). They are not part
-of the current schema contract below.
+The v0.6 public-profile, publication and private-library schema-1 contracts are
+specified in [Sharing data](sharing_data.md). Portable replay links use the
+independent [portable format v1](../app/portable_replay.md). Existing private
+profile schema 5 and saved-match schema 2 remain unchanged.
 
 ## Schema Policy
 
@@ -29,7 +30,10 @@ of the current schema contract below.
 | `profiles/{uid}` | owner read | owner client | Cloud identity, user settings, and capped private match history |
 | `profiles/{uid}/matches/{matchId}` | disabled for casual history | server later | Reserved for future server-verified/shareable match records |
 | `matches/{matchId}` | participants read | server | Future trusted live match state |
-| `replays/{replayId}` | public read | owner/server on explicit publish | Future shareable replay projection |
+| `public_profiles/{uid}` | known UID, enabled only; owner always | owner client | Independent public name and visibility/revision marker |
+| `public_profiles/{uid}/pages/{0..3}` | enabled profile; owner always | owner client | Four bounded catalog pages, eight portable games each |
+| `replay_libraries/{uid}` | owner get only | owner client | Separate capped private replay/practice snapshot |
+| `replays/{replayId}` | closed | none | Reserved; portable copies need no replay document |
 
 Local profile state is not mirrored one-to-one in Firestore. On sign-in, the app
 merges the latest local matches into the signed-in profile's capped
@@ -397,6 +401,35 @@ Cloud profile sync turns canonical local replay records into embedded
 records when possible. Local archived stats are imported only when the target
 cloud history is empty, because archived counters no longer carry per-match IDs
 and cannot be safely deduped against an existing cloud archive.
+
+## Replay library and practice (v0.6)
+
+The separate schema-1 library is specified in [Sharing data](sharing_data.md).
+Browser cache `gomoku2d.replay-library.v1` contains `{schema_version: 1, owners}`;
+owner keys are `guest` or `user:{uid}` and each value is `{entries, dirty}`.
+Entries have the same shape as the cloud library. Each owner is capped at 64;
+the whole device cache is capped at 600,000 UTF-8 bytes. Malformed/newer data is
+preserved and reported instead of silently overwritten. Persistence denial
+leaves a visible in-memory copy; it does not claim reload durability.
+
+Imported copies and newly completed practice never enter played-history
+promotion, summaries or archived totals. Practice retains the source fingerprint,
+inherited ply, visitor/current-bot participants and full move sequence. Existing
+legacy history/aggregates retain their previous interpretation; no historical
+practice provenance is invented. Older tabs write neither new document family
+nor the new local key, so they cannot downgrade the new provenance.
+
+Reset while signed in clears the account library and this device's account
+copies, together with the existing private profile/history/settings/analysis
+scope. Guest copies remain separate. Guest reset clears its guest library.
+Private reset leaves public identity/publications unchanged. Delete Cloud
+atomically clears public identity/pages and the private cloud library first,
+then performs existing private profile/history deletion and sign-out. Failures
+stay visible for retry; cleanup is not claimed complete after a partial failure.
+All local copies remain on-device after Delete Cloud, including account-scoped
+library copies. Those copies are marked pending and require explicit review/
+merge before uploading again. Six empty cloud markers retain revisions, with
+no name or game payload. Copied portable URLs cannot be recalled.
 
 ## Migration Notes
 
