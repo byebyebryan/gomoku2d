@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page, type TestInfo } from "@playwright/test";
+import axe from "axe-core";
 
 const WIN_MOVES = [110, 0, 111, 1, 112, 2, 113, 3, 114];
 
@@ -33,7 +34,49 @@ async function stabilizeScreenshot(page: Page) {
   });
 }
 
-test("shared replays save once across viewing plies, survive reload, and remove independently of played history", async ({ page }) => {
+async function auditAccessibility(page: Page, testInfo: TestInfo, stateName: string) {
+  await page.evaluate(() => document.fonts.ready);
+  await page.addScriptTag({ content: axe.source });
+  const result = await page.evaluate(async () => {
+    const report = await axe.run(document, {
+      runOnly: {
+        type: "tag",
+        values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"],
+      },
+    });
+    return {
+      testEngine: report.testEngine,
+      url: report.url,
+      violations: report.violations,
+      // Inconclusive checks remain available for manual follow-up.
+      incomplete: report.incomplete,
+    };
+  });
+  await testInfo.attach(`accessibility-audit-${stateName}`, {
+    body: JSON.stringify(result, null, 2), contentType: "application/json",
+  });
+  expect(result.violations).toEqual([]);
+}
+
+async function captureChromiumScreenshot(page: Page, screenshotPath: string, testInfo: TestInfo) {
+  await stabilizeScreenshot(page);
+  if (page.context().browser()?.browserType().name() === "chromium") {
+    await page.screenshot({ path: process.env.GOMOKU_WRITE_EVIDENCE === "1"
+      ? screenshotPath : testInfo.outputPath(screenshotPath.split("/").pop()!), fullPage: true });
+  }
+}
+
+async function captureEvidence(
+  page: Page,
+  testInfo: TestInfo,
+  stateName: string,
+  screenshotPath: string,
+) {
+  await auditAccessibility(page, testInfo, stateName);
+  await captureChromiumScreenshot(page, screenshotPath, testInfo);
+}
+
+test("shared replays save once across viewing plies, survive reload, and remove independently of played history", async ({ page }, testInfo) => {
   await page.goto(sharedLink(8));
   await expect(page.getByRole("heading", { name: "Replay Analysis" })).toBeVisible();
   await expect(page.getByTestId("replay-move-count")).toHaveText("Move 8 / 9");
@@ -60,15 +103,19 @@ test("shared replays save once across viewing plies, survive reload, and remove 
   await expect(page.getByRole("link", { name: "Inspect replay", exact: true })).toHaveCount(1);
   await expect(page.getByRole("button", { name: "Remove replay", exact: true })).toHaveCount(1);
   await expectNoHorizontalOverflow(page);
-  await stabilizeScreenshot(page);
-  await page.screenshot({ path: "../docs/working/v0_6_evidence/portable_replay_library_mobile.png", fullPage: true });
+  await captureEvidence(
+    page, testInfo, "saved-replays-mobile",
+    "../docs/working/v0_6_evidence/portable_replay_library_mobile.png",
+  );
 
   await page.setViewportSize({ width: 1440, height: 1100 });
   await expect(page.getByRole("tab", { name: "My games", exact: true })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Saved replays", exact: true })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Saved replays", exact: true })).toHaveAttribute("aria-selected", "true");
-  await stabilizeScreenshot(page);
-  await page.screenshot({ path: "../docs/working/v0_6_evidence/portable_replay_library_desktop.png", fullPage: true });
+  await captureEvidence(
+    page, testInfo, "saved-replays-desktop",
+    "../docs/working/v0_6_evidence/portable_replay_library_desktop.png",
+  );
 
   await page.getByRole("button", { name: "Remove replay", exact: true }).click();
   await expect(page.getByRole("link", { name: "Inspect replay", exact: true })).toHaveCount(0);
@@ -77,17 +124,21 @@ test("shared replays save once across viewing plies, survive reload, and remove 
   await expectProfileStat(page, "Wins", 0);
 });
 
-test("playing from a shared frame creates a separate practice replay with its source attribution", async ({ page }) => {
+test("playing from a shared frame creates a separate practice replay with its source attribution", async ({ page }, testInfo) => {
   await page.goto(sharedLink(8));
   await expect(page.getByTestId("replay-move-count")).toHaveText("Move 8 / 9");
   await expect(page.getByTestId("replay-player-row-black")).toContainText("Alice");
   await expect(page.getByTestId("replay-player-row-white")).toContainText("Bob");
-  await stabilizeScreenshot(page);
-  await page.screenshot({ path: "../docs/working/v0_6_evidence/portable_replay_shared_desktop.png", fullPage: true });
+  await captureEvidence(
+    page, testInfo, "shared-replay-desktop",
+    "../docs/working/v0_6_evidence/portable_replay_shared_desktop.png",
+  );
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await stabilizeScreenshot(page);
-  await page.screenshot({ path: "../docs/working/v0_6_evidence/portable_replay_shared_mobile.png", fullPage: true });
+  await captureEvidence(
+    page, testInfo, "shared-replay-mobile",
+    "../docs/working/v0_6_evidence/portable_replay_shared_mobile.png",
+  );
   await expectNoHorizontalOverflow(page);
 
   await page.getByRole("button", { name: "Save replay", exact: true }).click();
@@ -158,12 +209,10 @@ test("playing from a shared frame creates a separate practice replay with its so
   await expectProfileStat(page, "Matches", 0);
   await expectProfileStat(page, "Wins", 0);
   await expectNoHorizontalOverflow(page);
-  await stabilizeScreenshot(page);
-  await page.screenshot({ path: "../docs/working/v0_6_evidence/portable_replay_practice_mobile.png", fullPage: true });
+  await captureChromiumScreenshot(page, "../docs/working/v0_6_evidence/portable_replay_practice_mobile.png", testInfo);
 
   await page.setViewportSize({ width: 1440, height: 1100 });
-  await stabilizeScreenshot(page);
-  await page.screenshot({ path: "../docs/working/v0_6_evidence/portable_replay_practice_desktop.png", fullPage: true });
+  await captureChromiumScreenshot(page, "../docs/working/v0_6_evidence/portable_replay_practice_desktop.png", testInfo);
 
   await page.getByRole("tab", { name: "Saved replays", exact: true }).click();
   const sourceEntry = page.getByRole("listitem").filter({ hasText: /Alice.*Bob.*9 moves/ });

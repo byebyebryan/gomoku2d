@@ -159,7 +159,7 @@ test("guide route explains threat vocabulary inside the app shell", async ({ pag
 test("profile and replay analysis boot without requiring cloud configuration", async ({ page }) => {
   await page.goto("/profile");
   await expect(page).toHaveTitle("Profile | Gomoku2D");
-  await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Profile", exact: true })).toBeVisible();
   await expect(page.getByRole("textbox", { name: "Name" })).toBeVisible();
 
   const signIn = page.getByRole("button", { name: "Sign in" });

@@ -4,6 +4,7 @@ import { spawn } from "node:child_process";
 import { createServer } from "node:net";
 import { mkdir, open } from "node:fs/promises";
 import { resolve } from "node:path";
+import { homedir } from "node:os";
 
 const root = resolve(import.meta.dirname, "..");
 process.chdir(root);
@@ -25,7 +26,11 @@ deadline.unref();
 
 /** @param {string[]} args @param {object} [options] */
 function start(args, options = {}) {
-  const child = spawn(process.execPath, args, { cwd: root, detached: true, stdio: "inherit", ...options });
+  return startCommand(process.execPath, args, options);
+}
+/** @param {string} command @param {string[]} args @param {object} [options] */
+function startCommand(command, args, options = {}) {
+  const child = spawn(command, args, { cwd: root, detached: true, stdio: "inherit", ...options });
   children.add(child);
   return child;
 }
@@ -72,9 +77,20 @@ try {
   const preview = start(["node_modules/vite/bin/vite.js", "preview", "--outDir", "dist-cloud",
     "--host", "127.0.0.1", "--port", "8013", "--strictPort"]);
   await ready("http://127.0.0.1:8013/", preview);
-  const args = process.argv.slice(2);
-  await completed(start(["node_modules/@playwright/test/cli.js", "test", "--config", "playwright.cloud.config.ts",
-    ...(args.some((arg) => arg.startsWith("--browser")) ? [] : ["--browser=all"]), ...args]));
+  const inContainer = process.argv.includes("--container");
+  const args = process.argv.slice(2).filter((arg) => arg !== "--container");
+  const playwright = ["node_modules/@playwright/test/cli.js", "test", "--config", "playwright.cloud.config.ts",
+    ...(args.some((arg) => arg.startsWith("--browser")) ? [] : ["--browser=all"]), ...args];
+  if (inContainer) {
+    // The host owns Java/emulators. Ubuntu supplies browser libraries; use the
+    // host's installed browser cache so it matches the lockfile's Playwright.
+    const browserCache = process.env.PLAYWRIGHT_BROWSERS_PATH ?? resolve(homedir(), ".cache/ms-playwright");
+    await completed(startCommand("docker", ["run", "--rm", "--init", "--network", "host", "--ipc", "host",
+      "--user", `${process.getuid?.() ?? 1000}:${process.getgid?.() ?? 1000}`, "-e", "CI=1",
+      "-e", `GOMOKU_WRITE_EVIDENCE=${process.env.GOMOKU_WRITE_EVIDENCE === "1" ? "1" : "0"}`,
+      "-v", `${resolve(root, "..")}:/workspace`, "-v", `${browserCache}:/ms-playwright:ro`,
+      "-w", "/workspace/gomoku-web", "mcr.microsoft.com/playwright:v1.59.1-noble", "node", ...playwright]));
+  } else await completed(start(playwright));
 } catch (error) {
   console.error(error);
   process.exitCode = 1;

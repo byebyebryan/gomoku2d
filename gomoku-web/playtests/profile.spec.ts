@@ -6,7 +6,7 @@ test("guest profile persists locally and renders saved local matches", async ({ 
   await page.setViewportSize({ width: 1024, height: 900 });
   await page.goto("/profile");
 
-  await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Profile", exact: true })).toBeVisible();
   await expect(page.getByText("Reduced motion")).toHaveCount(0);
   await expect(page.getByText("Sound")).toHaveCount(0);
 
@@ -79,7 +79,7 @@ test("guest profile persists locally and renders saved local matches", async ({ 
 test("profile history keeps summary pinned while the history list scrolls", async ({ page }) => {
   await page.goto("/profile");
 
-  await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Profile", exact: true })).toBeVisible();
   await expect(page.getByText("Matches", { exact: true })).toBeVisible();
   await expect(page.getByText("Wins", { exact: true })).toBeVisible();
   await expect(page.getByText("Losses", { exact: true })).toBeVisible();
@@ -134,7 +134,7 @@ test("profile history keeps summary pinned while the history list scrolls", asyn
 test("profile uses quieter labels and compact shared action defaults", async ({ page }) => {
   await page.goto("/profile");
 
-  await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Profile", exact: true })).toBeVisible();
 
   const metrics = await page.evaluate(() => {
     const sectionLabel = document.querySelector(".uiSectionLabel");
@@ -175,7 +175,7 @@ test("profile uses quieter labels and compact shared action defaults", async ({ 
 test("desktop profile prioritizes the record summary over the identity rail", async ({ page }) => {
   await page.goto("/profile");
 
-  await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Profile", exact: true })).toBeVisible();
 
   await seedLocalSavedMatch(page, {
     displayName: "Guest",
@@ -193,7 +193,7 @@ test("desktop profile prioritizes the record summary over the identity rail", as
   });
 
   await page.reload();
-  await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Profile", exact: true })).toBeVisible();
 
   const metrics = await page.evaluate(() => {
     const sideSection = document.querySelector('[class*="sideSection"]');
@@ -255,7 +255,7 @@ test("portrait profile scrolls the page instead of the history pane", async ({ p
   await page.setViewportSize({ width: 430, height: 932 });
   await page.goto("/profile");
 
-  await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Profile", exact: true })).toBeVisible();
   await expect(page.getByRole("tab", { name: "My games" })).toBeVisible();
 
   await page.evaluate(() => {

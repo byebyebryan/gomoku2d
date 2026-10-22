@@ -4,6 +4,7 @@ const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:8001";
 
 export default defineConfig({
   testDir: "./playtests",
+  outputDir: "test-results/browser",
   timeout: 30_000,
   use: {
     baseURL,
