@@ -1,11 +1,13 @@
 import { Component, Suspense, lazy, type ReactNode } from "react";
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { matchRoutes, Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import { CloudAuthController, CloudSessionController } from "../cloud/CloudSessionController";
 import { HomeRoute } from "../routes/HomeRoute";
 import { LocalPersistenceNotice } from "../profile/LocalPersistenceNotice";
 
 import styles from "./App.module.css";
+
+const standaloneRoutes = [{ path: "/replay/shared" }, { path: "/player" }];
 
 const LocalMatchRoute = lazy(async () => ({
   default: (await import("../routes/LocalMatchRoute")).LocalMatchRoute,
@@ -65,7 +67,7 @@ class PageRecovery extends Component<{ children: ReactNode }, { failed: boolean 
 
 export function App() {
   const { pathname } = useLocation();
-  const standalone = /^\/(replay\/shared|player)\/?$/.test(pathname);
+  const standalone = matchRoutes(standaloneRoutes, { pathname }) !== null;
   return (
     <div className={styles.app}>
       <CloudAuthController />

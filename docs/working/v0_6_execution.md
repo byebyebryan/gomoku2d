@@ -179,3 +179,25 @@ contract review, final gates and local commits. New sharing requires no Cloud
 Run service, move relay or server analysis. Production, real OAuth/devices and
 human accessibility remain separate as specified above. The next checkpoint is
 review and separately authorized release preparation, not more implementation.
+
+## Post-review fixes
+
+After `da0491a`, Bryan requested fixes for both review findings:
+
+- Public/shared entry now uses React Router's matcher for the private-session
+  guard, including case variants, repeated trailing slashes and encoded path
+  segments. Component checks prove these entries never mount the private cloud
+  controller and ordinary private navigation still enables it.
+- Save and library messages distinguish session-only fallback from device
+  persistence. They disclose reload/close loss and advise keeping the replay
+  link. Confirmed cloud copies retain their account-saved message when only the
+  device cache fails.
+
+Both defects were reproduced by failing regression tests before the fixes.
+Final scoped checks: 56 unit/component tests across five files, complete web
+typecheck, production build and 24 shared/library browser journeys across all
+three engines pass. The browser lane includes a real injected quota failure,
+reload loss and mobile accessibility/overflow checks. Full earlier matrices and
+checked-in build/capture receipts remain evidence of the original checkpoint;
+the follow-up did not rerun the full cloud suite. No release or deployment was
+performed.

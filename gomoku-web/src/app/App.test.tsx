@@ -4,10 +4,32 @@ import {
   render,
   screen,
 } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { MemoryRouter } from "react-router-dom";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { MemoryRouter, useNavigate } from "react-router-dom";
 
 import { App } from "./App";
+import { CloudSessionController } from "../cloud/CloudSessionController";
+
+vi.mock("../cloud/CloudSessionController", () => ({
+  CloudAuthController: () => null,
+  CloudSessionController: vi.fn(() => null),
+}));
+
+vi.mock("../routes/SharedReplayRoute", () => ({
+  SharedReplayRoute: () => <main><h1>Shared replay</h1></main>,
+}));
+
+vi.mock("../routes/PublicPlayerRoute", () => ({
+  PublicPlayerRoute: () => <main><h1>Public player</h1></main>,
+}));
+
+vi.mock("../routes/ProfileRoute", () => ({
+  ProfileRoute: () => <main><h1>Private profile</h1></main>,
+}));
+
+vi.mock("../routes/ReplayRoute", () => ({
+  ReplayRoute: () => <main><h1>Private replay</h1></main>,
+}));
 
 vi.mock("../routes/LocalMatchRoute", () => ({
   LocalMatchRoute: () => (
@@ -69,8 +91,58 @@ vi.mock("../routes/PolicyRoute", () => ({
 }));
 
 describe("App", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   afterEach(() => {
     cleanup();
+  });
+
+  it.each([
+    ["/replay/shared", "Shared replay"],
+    ["/replay/shared/", "Shared replay"],
+    ["/Replay/Shared/", "Shared replay"],
+    ["/replay/shared//", "Shared replay"],
+    ["/replay/%73hared/", "Shared replay"],
+    ["/%72eplay/shared", "Shared replay"],
+    ["/player", "Public player"],
+    ["/player/", "Public player"],
+    ["/PLAYER/", "Public player"],
+    ["/player///", "Public player"],
+    ["/%70layer/", "Public player"],
+  ])("renders %s without starting the private cloud session", async (path, heading) => {
+    render(<MemoryRouter initialEntries={[path]}><App /></MemoryRouter>);
+
+    expect(await screen.findByRole("heading", { name: heading })).toBeInTheDocument();
+    expect(CloudSessionController).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["/profile/", "Private profile"],
+    ["/replay/private-match/", "Private replay"],
+    ["/replay/shared-copy/", "Private replay"],
+    ["/player/extra", "gomoku2d"],
+    ["/replay/shared/extra", "gomoku2d"],
+  ])("keeps the private cloud session enabled on %s", async (path, heading) => {
+    render(<MemoryRouter initialEntries={[path]}><App /></MemoryRouter>);
+
+    expect(await screen.findByRole("heading", { name: new RegExp(heading, "i") })).toBeInTheDocument();
+    expect(CloudSessionController).toHaveBeenCalled();
+  });
+
+  it("starts the private cloud session when leaving a shared replay", async () => {
+    function OpenProfile() {
+      const navigate = useNavigate();
+      return <button onClick={() => navigate("/profile/")}>Open private profile</button>;
+    }
+    render(<MemoryRouter initialEntries={["/Replay/Shared//"]}><OpenProfile /><App /></MemoryRouter>);
+
+    expect(await screen.findByRole("heading", { name: "Shared replay" })).toBeInTheDocument();
+    expect(CloudSessionController).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Open private profile" }));
+    expect(await screen.findByRole("heading", { name: "Private profile" })).toBeInTheDocument();
+    expect(CloudSessionController).toHaveBeenCalled();
   });
 
   it("starts on home and routes into a local bot match", async () => {

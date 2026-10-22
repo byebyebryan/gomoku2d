@@ -20,21 +20,40 @@ export function SaveReplayButton({ replay, fingerprint }: { replay: PortableRepl
   const owner = useOwner();
   const authStatus = useStore(cloudAuthStore, (state) => state.status);
   const bucket = useStore(replayLibraryStore, (state) => state.owners[owner]);
+  const storageError = useStore(replayLibraryStore, (state) => state.storageError);
   const sync = useStore(replayLibrarySync.store, (state) => owner === "guest" ? EMPTY_LIBRARY_SYNC : state.users[owner.slice(5)] ?? EMPTY_LIBRARY_SYNC);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const saved = bucket?.entries.some((entry) => entry.fingerprint === fingerprint);
+  const cloudSaved = saved && owner !== "guest" && !bucket?.dirty && sync.loaded && sync.status === "synced";
+  const sessionOnly = !!storageError && !cloudSaved;
+  let saveMessage: string;
+  if (cloudSaved) {
+    saveMessage = "Saved in your account library.";
+    if (storageError) saveMessage += " A copy could not be stored on this device.";
+  } else if (storageError) {
+    saveMessage = saved
+      ? "Saved for this session only. This copy will be lost when you reload or close this tab. Keep the replay link to open it again."
+      : "Device storage is unavailable. Saving keeps a copy for this session only; keep the replay link to open it again.";
+    if (owner !== "guest") saveMessage += " Account sync has not been confirmed. Open Saved replays in Profile to review.";
+  } else if (owner === "guest") {
+    saveMessage = saved ? "Saved on this device" : "Saving keeps a private copy on this device.";
+  } else {
+    saveMessage = saved
+      ? bucket?.dirty
+        ? "Saved on this device; account sync is pending. Open Saved replays in Profile to review."
+        : "Saved on this device; open Saved replays to confirm cloud copies."
+      : "Save a private copy to your account library.";
+  }
   return <section className={styles.panel} aria-label="Save replay">
     <button className="uiAction uiActionSecondary" type="button" disabled={saved || busy || authStatus === "loading"}
       onClick={async () => {
         setBusy(true); setError("");
         try { await saveReplayCopy(replay); } catch (failure) { setError(String(failure instanceof Error ? failure.message : failure)); }
         finally { setBusy(false); }
-      }}>{saved ? "Saved replay" : busy ? "Saving replay" : "Save replay"}</button>
-    <p>{owner === "guest" ? saved ? "Saved on this device" : "Saving keeps a private copy on this device."
-      : saved ? bucket?.dirty ? "Saved on this device; account sync is pending. Open Saved replays in Profile to review."
-        : sync.loaded && sync.status === "synced" ? "Saved in your account library." : "Saved on this device; open Saved replays to confirm cloud copies." : "Save a private copy to your account library."}</p>
-    {(error || bucket?.error) && <p role="alert">{error || bucket?.error}</p>}
+      }}>{saved ? sessionOnly ? "Saved for this session" : "Saved replay" : busy ? "Saving replay" : "Save replay"}</button>
+    <p>{saveMessage}</p>
+    {(error || bucket?.error || storageError) && <p role="alert">{error || bucket?.error || storageError}</p>}
   </section>;
 }
 
@@ -118,7 +137,10 @@ export function ReplayLibraryPanel() {
           <button className="uiAction uiActionSecondary" type="button" disabled={busy} onClick={() => void run(() => replayLibrarySync.mergeCopies(uid))}>Merge copies into cloud</button>
         </div>
       </div>}
-    </> : <p>Guest copies stay on this device. Sign in to copy them to an account explicitly.</p>}
+      {storageError && <p>Device storage is unavailable. Copies not confirmed in your account library are kept for this session only; keep their replay links in case you reload or close this tab.</p>}
+    </> : <p>{storageError
+      ? "Guest copies are kept for this session only and will be lost when you reload or close this tab. Keep their replay links to open them again."
+      : "Guest copies stay on this device."} Sign in to copy them to an account explicitly.</p>}
     {(error || sync.error || bucket?.error || storageError) && <p role="alert">{error || sync.error || bucket?.error || storageError}</p>}
     <ReplayLibraryEntries kind="saved" />
   </section>;

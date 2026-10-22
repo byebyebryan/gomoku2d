@@ -2,12 +2,13 @@
 
 October 21, 2026. This is local production-build and emulator evidence from the
 Luna goal loop, not a deployed release. The package version remains 0.5.5;
-v0.6 changes are Unreleased. Application modules were last changed at `e98f4f7`; `ecff07f` disables preview
-auto-open. [Final build identity](build_identity.json) proves the rebuilt 134-file
-dist tree is byte-identical to the browser-qualified candidate. Implementation commits start at `e4a8a44`; see the
+v0.6 changes are Unreleased. The original accepted application snapshot was `e98f4f7`; `ecff07f` disables preview
+auto-open. [Final build identity](build_identity.json) proves that snapshot's rebuilt 134-file
+dist tree is byte-identical to the browser-qualified candidate. Later application fixes have separate
+[scoped validation below](#post-review-fixes). Implementation commits start at `e4a8a44`; see the
 [execution record](../v0_6_execution.md) and repository history for slice heads.
 
-## Confirmed checks
+## Original full-candidate checks
 
 | Lane | Result |
 |---|---|
@@ -54,6 +55,29 @@ The existing manual-check deferrals remain in force. Incomplete axe findings
 are retained in Playwright attachments; automated scans do not prove human
 screen-reader use. New scans cover guest shared viewing/Saved replays at both
 sizes plus public management/publishing/visitor views in the cloud journey.
+
+## Post-review fixes
+
+Review after `da0491a` found two UI defects. The private cloud-session guard used
+a stricter path expression than React Router, allowing public-route case,
+trailing-slash and encoded-path variants to initialize private synchronization.
+The guard now uses React Router's route matcher; regressions verify public
+variants, private routes and navigation back into the private profile.
+
+Replay saves now disclose when copies are kept only for the current session,
+explain reload/close loss and recommend retaining the replay link. The Save
+control and guest library no longer promise a device save after persistence
+fails. A confirmed cloud save still reports account durability even if the
+device cache is unavailable. Tests exercise actual quota failures, unusable
+caches, guest fallback and successful/failed account sync.
+
+Scoped revalidation: 56 unit/component checks across five files, complete web
+typecheck and a fresh production build pass. Shared/library journeys pass 24/24
+across Chromium/Firefox/WebKit, including an injected quota failure, temporary
+copy loss on reload, 390px overflow checks and an axe scan of the failure state.
+Browser output is in `gomoku-web/test-results/review-fixes`; checked-in captures
+and original build receipts above retain their earlier snapshot meaning. The
+full browser/cloud matrices above were not rerun for this follow-up.
 
 ## Journeys and review
 

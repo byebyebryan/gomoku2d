@@ -124,6 +124,34 @@ test("shared replays save once across viewing plies, survive reload, and remove 
   await expectProfileStat(page, "Wins", 0);
 });
 
+test("a replay kept after a storage failure is clearly temporary and disappears on reload", async ({ page }, testInfo) => {
+  await page.addInitScript(() => {
+    const setItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key, value) {
+      if (key === "gomoku2d.replay-library.v1") {
+        throw new DOMException("Storage full", "QuotaExceededError");
+      }
+      setItem.call(this, key, value);
+    };
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(sharedLink(8));
+  await page.getByRole("button", { name: "Save replay", exact: true }).click();
+
+  await expect(page.getByRole("button", { name: "Saved for this session", exact: true })).toBeDisabled();
+  await expect(page.getByText(/lost when you reload or close this tab/i)).toBeVisible();
+  await expect(page.getByText(/keep the replay link/i)).toBeVisible();
+  await expect(page.getByRole("alert")).toContainText("Storage full");
+  await expect(page.getByText("Saved on this device", { exact: true })).toHaveCount(0);
+  await expectNoHorizontalOverflow(page);
+  await auditAccessibility(page, testInfo, "session-only-replay-mobile");
+
+  await page.reload();
+  await expect(page.getByTestId("replay-move-count")).toHaveText("Move 8 / 9");
+  await expect(page.getByRole("button", { name: "Save replay", exact: true })).toBeEnabled();
+  expect(await page.evaluate(() => localStorage.getItem("gomoku2d.replay-library.v1"))).toBeNull();
+});
+
 test("playing from a shared frame creates a separate practice replay with its source attribution", async ({ page }, testInfo) => {
   await page.goto(sharedLink(8));
   await expect(page.getByTestId("replay-move-count")).toHaveText("Move 8 / 9");
