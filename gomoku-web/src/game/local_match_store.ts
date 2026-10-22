@@ -17,6 +17,7 @@ import {
   readWasmWinningCells,
   type WasmBoard,
 } from "../core/wasm_bridge";
+import type { PortableReplayPracticeOriginV1 } from "../replay/portable_replay";
 
 import type { CellPosition, CellStone, MatchMove, MatchPlayer, MatchStatus } from "./types";
 
@@ -84,6 +85,7 @@ export interface LocalMatchStoreOptions {
 export interface LocalMatchResumeSeed {
   currentPlayer: 1 | 2;
   moves: MatchMove[];
+  practiceOrigin?: PortableReplayPracticeOriginV1;
   undoFloor?: number;
   variant: GameVariant;
 }

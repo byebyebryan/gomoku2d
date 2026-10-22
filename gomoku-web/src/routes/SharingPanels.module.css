@@ -1,0 +1,318 @@
+.page {
+  display: grid;
+  height: 100dvh;
+  min-height: 100dvh;
+  align-content: start;
+  justify-items: center;
+  overflow: auto;
+  padding: clamp(16px, 4vw, 40px);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.pageCard {
+  display: grid;
+  width: min(100%, 820px);
+  min-width: 0;
+  gap: 16px;
+  padding: clamp(18px, 4vw, 34px);
+}
+
+.pageTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.sectionTitle,
+.subTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  line-height: 1.15;
+}
+
+.sectionTitle {
+  font-size: clamp(1.3rem, 3vw, 1.8rem);
+}
+
+.subTitle {
+  font-size: 1.15rem;
+}
+
+.mutedText,
+.disclosure,
+.preview,
+.emptyState,
+.successText,
+.errorText {
+  margin: 0;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.mutedText {
+  color: var(--text-muted);
+}
+
+.disclosure {
+  padding: 12px 14px;
+  border-left: 3px solid var(--info-border);
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-size: var(--type-meta);
+}
+
+.preview {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+}
+
+.emptyState {
+  color: var(--text-muted);
+  padding: 12px 0;
+}
+
+.successText {
+  color: var(--success);
+}
+
+.errorText {
+  color: var(--danger-soft-text);
+}
+
+.publicGameList,
+.publicationList {
+  display: grid;
+  min-width: 0;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.publicGame,
+.publicationRow {
+  display: grid;
+  min-width: 0;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+}
+
+.publicGame {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.publicGameTitle {
+  min-width: 0;
+  font-family: var(--font-display);
+  overflow-wrap: anywhere;
+}
+
+.publicGameMeta {
+  grid-column: 1;
+  color: var(--text-muted);
+  font-size: var(--type-meta);
+}
+
+.publicGame :global(.uiAction) {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  width: fit-content;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.pagingControls,
+.managerActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.pagingControls {
+  justify-content: space-between;
+  color: var(--text-muted);
+}
+
+.manager {
+  display: grid;
+  min-width: 0;
+  gap: 16px;
+  padding: clamp(16px, 3vw, 24px);
+}
+
+.managerHeader {
+  display: flex;
+  min-width: 0;
+  align-items: stretch;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.managerHeader > div,
+.managerBody,
+.publishBody {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+}
+
+.managerBody > :global(.uiAction),
+.publishBody > :global(.uiAction) {
+  justify-self: start;
+  max-width: 100%;
+}
+
+.field {
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+  color: var(--text-muted);
+  font-size: var(--type-meta);
+}
+
+.field input {
+  min-width: 0;
+  max-width: 100%;
+  font-size: var(--type-body);
+}
+
+.confirmRow {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.45;
+}
+
+.confirmRow input {
+  flex: 0 0 auto;
+  margin-top: 4px;
+}
+
+.publicationSection,
+.dangerSection {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.publicationRow {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.publicationRow > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.confirmPanel {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--danger-border);
+  background: var(--surface-muted);
+  line-height: 1.5;
+}
+
+.confirmPanel p {
+  margin: 0;
+}
+
+.publishPanel {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+}
+
+.publishPanel > :global(.uiAction) {
+  justify-self: start;
+  max-width: 100%;
+}
+
+.publishBody {
+  padding: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.publisherName {
+  margin: 0;
+  font-family: var(--font-display);
+  overflow-wrap: anywhere;
+}
+
+.profileRequired {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+}
+
+.profileRequired p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+@media (max-width: 620px) {
+  .page {
+    padding: 12px;
+  }
+
+  .pageCard {
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .managerHeader {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .managerHeader :global(.uiAction) {
+    width: 100%;
+  }
+
+  .managerActions > :global(.uiAction) {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .publicGame {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .publicGameMeta,
+  .publicGame :global(.uiAction) {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .publicGame :global(.uiAction),
+  .publicationRow :global(.uiAction) {
+    width: 100%;
+  }
+
+  .publicationRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pagingControls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pagingControls :global(.uiAction),
+  .pageCard > :global(.uiAction) {
+    width: 100%;
+  }
+}

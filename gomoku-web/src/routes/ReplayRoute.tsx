@@ -23,6 +23,13 @@ import { Icon } from "../ui/Icon";
 import type { SavedMatchV2 } from "../match/saved_match";
 import type { PortableReplayV1 } from "../replay/portable_replay";
 import { ShareReplayPanel } from "./ShareReplayPanel";
+import { SaveReplayButton } from "./ReplayLibraryPanel";
+import { StoredReplayRoute } from "./StoredReplayRoute";
+import { PublishReplayPanel } from "./PublishReplayPanel";
+import { portableReplayFromSavedMatch, validatePortableReplay } from "../replay/portable_replay";
+import { portableReplayFingerprint } from "../replay/portable_replay_codec";
+import { localMatchSessionStore } from "../game/local_match_session";
+import { botLabel } from "../core/bot_config";
 
 import styles from "./ReplayRoute.module.css";
 import {
@@ -34,12 +41,16 @@ import {
 
 const AUTOPLAY_DELAY_MS = 700;
 
-export function ReplayViewer({ match, localDisplayName, preserveNames = false, initialMoveIndex, source }: {
+export function ReplayViewer({ match, localDisplayName, preserveNames = false, initialMoveIndex, source,
+  fingerprint, publishEligible, contextLabel }: {
   match: SavedMatchV2;
   localDisplayName: string;
   preserveNames?: boolean;
   initialMoveIndex?: number;
   source?: PortableReplayV1;
+  fingerprint?: string;
+  publishEligible?: boolean;
+  contextLabel?: string;
 }) {
   useDocumentTitle("Replay Analysis");
   const navigate = useNavigate();
@@ -48,6 +59,8 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
   const settings = useStore(localProfileStore, (state) => state.settings);
   const [moveIndex, setMoveIndex] = useState(defaultReplayMoveIndex(0));
   const [autoplaying, setAutoplaying] = useState(false);
+  const [branching, setBranching] = useState(false);
+  const [branchError, setBranchError] = useState("");
   const { analysisAnnotations, analysisStep } = useReplayAnalysis(match);
   const coreWinningCells = useReplayWinningCells(match, moveIndex);
 
@@ -119,7 +132,7 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
     <main className={styles.page}>
       <header className={styles.header}>
         <div className={styles.headerCopy}>
-          <p className="uiPageEyebrow">{preserveNames ? "Shared replay" : "Saved match"}</p>
+          <p className="uiPageEyebrow">{contextLabel ?? (preserveNames ? "Shared replay" : "Saved match")}</p>
           <h1 className={styles.title}>Replay Analysis</h1>
         </div>
         <div className={styles.headerActions}>
@@ -150,16 +163,35 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
             autoplaying={autoplaying}
             frame={frame}
             match={match}
-            onResume={(resumeSeed) => {
-              navigate(localMatchResumePath, { state: { resumeSeed } });
+            onResume={async (resumeSeed) => {
+              setBranching(true); setBranchError("");
+              try {
+                const portable = source ?? portableReplayFromSavedMatch(match).replay;
+                const sourceFingerprint = fingerprint ?? await portableReplayFingerprint(validatePortableReplay(portable));
+                const active = localMatchSessionStore.getState().matchStore?.getState();
+                if (active?.status === "playing" && active.moves.length > 0
+                  && !window.confirm("Replace your active game with a practice game from this position?")) return;
+                navigate(localMatchResumePath, { state: { resumeSeed: { ...resumeSeed,
+                  practiceOrigin: { sourceFingerprint, inheritedPly: resumeSeed.moves.length } } } });
+              } catch (error) { setBranchError(error instanceof Error ? error.message : "Practice could not start."); }
+              finally { setBranching(false); }
             }}
             replayFloor={replayFloor}
+            resumePending={branching}
             setAutoplaying={setAutoplaying}
             setMoveIndex={setMoveIndex}
             timelineAnalysis={timelineAnalysis}
             timelineStyle={timelineStyle}
           />
+          <section className={`${styles.deckSection} ${styles.practiceContext}`}>
+            {source?.practice && <p>Practice replay: the first {source.practice.inheritedPly} moves are inherited from another game.</p>}
+            {frame.status === "playing" && frame.moveIndex >= Math.max(4, replayFloor)
+              && <p>Practice from move {frame.moveIndex}: you play {frame.currentPlayer === 1 ? "Black" : "White"} against the selected {botLabel(settings.botConfig)} bot.</p>}
+            {branchError && <p role="alert">{branchError}</p>}
+          </section>
           <ShareReplayPanel match={match} moveIndex={frame.moveIndex} source={source} />
+          {source && fingerprint && <SaveReplayButton replay={source} fingerprint={fingerprint} />}
+          <PublishReplayPanel match={match} source={source} moveIndex={frame.moveIndex} eligible={publishEligible ?? !preserveNames} />
         </aside>
       </section>
     </main>
@@ -168,6 +200,10 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
 
 export function ReplayRoute() {
   const { matchId } = useParams<{ matchId: string }>();
+  return matchId?.startsWith("portable-") ? <StoredReplayRoute fingerprint={matchId.slice(9)} /> : <PrivateReplayRoute matchId={matchId} />;
+}
+
+function PrivateReplayRoute({ matchId }: { matchId?: string }) {
   const { localDisplayName, match, replayMayStillLoad } = useReplayMatch(matchId);
   if (!match) return (
     <main className={styles.page}>

@@ -829,3 +829,15 @@
     align-self: start;
   }
 }
+
+.recordPanel { grid-template-rows: auto minmax(0, 1fr); }
+.recordContents { display: grid; grid-template-rows: auto auto minmax(0, 1fr); min-height: 0; }
+.libraryContents { min-height: 0; overflow: auto; }
+.recordTabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.practiceGames { border-top: 1px solid var(--border); margin-top: 16px; padding-top: 12px; }
+.practiceGames h2 { font-family: var(--font-display); }
+.sidePanel { overflow: auto; }
+@media (max-width: 1220px) {
+  .recordPanel, .recordContents { grid-template-rows: auto; }
+  .sidePanel, .libraryContents { overflow: visible; }
+}

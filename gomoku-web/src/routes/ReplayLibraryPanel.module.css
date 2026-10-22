@@ -1,0 +1,9 @@
+.panel { display: grid; gap: 12px; min-width: 0; padding: 16px; overflow-wrap: anywhere; }
+.panel h2, .panel p, .entry p { margin: 0; }
+.panel h2 { font-family: var(--font-display); }
+.entries { display: grid; gap: 12px; list-style: none; padding: 0; margin: 0; }
+.entry { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.entry small { color: var(--text-muted); }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.conflict { border: 1px solid var(--border); display: grid; gap: 12px; padding: 12px; }
+@media (max-width: 720px) { .entry { grid-template-columns: minmax(0, 1fr); } .panel { padding: 12px 0; } }

@@ -69,11 +69,11 @@ test("guest profile persists locally and renders saved local matches", async ({ 
 
   await page.getByRole("button", { name: "Reset Profile" }).click();
   await expect(
-    page.getByText("Reset this profile? This clears settings, games, and replay analyses."),
+    page.getByText("Reset this profile? This clears settings, games, saved replays, practice and replay analyses on this device."),
   ).toBeVisible();
   await page.getByRole("button", { name: "Reset", exact: true }).click();
   await expect(displayName).toHaveValue("Guest");
-  await expect(page.getByText("Match History")).toBeVisible();
+  await expect(page.getByRole("tab", { name: "My games" })).toBeVisible();
 });
 
 test("profile history keeps summary pinned while the history list scrolls", async ({ page }) => {
@@ -256,7 +256,7 @@ test("portrait profile scrolls the page instead of the history pane", async ({ p
   await page.goto("/profile");
 
   await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
-  await expect(page.getByText("Match History")).toBeVisible();
+  await expect(page.getByRole("tab", { name: "My games" })).toBeVisible();
 
   await page.evaluate(() => {
     const historyBody = document.querySelector('[class*="historyBody"]');

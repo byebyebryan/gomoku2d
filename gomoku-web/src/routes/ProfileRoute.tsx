@@ -11,6 +11,10 @@ import {
   type CloudMatchSummaryV1,
 } from "../cloud/cloud_profile";
 import { cloudProfileStore } from "../cloud/cloud_profile_store";
+import { clearSharingData } from "../cloud/sharing_lifecycle";
+import { loadPrivateLibrary, savePrivateLibrary } from "../cloud/sharing_private";
+import { replayLibraryStore } from "../replay/replay_library_store";
+import { replayLibrarySync } from "../replay/replay_library_sync";
 import { cloudPromotionStore } from "../cloud/cloud_promotion_store";
 import {
   matchUserSide,
@@ -28,6 +32,8 @@ import { clearReplayAnalysisCache } from "../replay/replay_analysis_cache";
 import { Icon } from "../ui/Icon";
 
 import styles from "./ProfileRoute.module.css";
+import { PublicProfileManager } from "./PublicProfileManager";
+import { ReplayLibraryPanel, ReplayLibraryEntries } from "./ReplayLibraryPanel";
 
 interface HistoryIdentity {
   localProfileId?: string | null;
@@ -36,6 +42,10 @@ interface HistoryIdentity {
 
 type HistorySyncTone = "busy" | "error" | "pending" | "synced";
 type ProfileDangerAction = "delete" | "reset";
+
+class ProfileActionAccountChanged extends Error {
+  constructor() { super("Account changed before cleanup finished. Sign in to the original account and retry; some cleanup may already have completed."); }
+}
 
 interface HistorySyncStatus {
   label: string;
@@ -353,10 +363,12 @@ function cloudTitleText({
 
 export function ProfileRoute() {
   useDocumentTitle("Profile");
+  const [recordTab, setRecordTab] = useState<"games" | "saved">("games");
 
   const navigate = useNavigate();
   const [confirmingProfileAction, setConfirmingProfileAction] = useState<ProfileDangerAction | null>(null);
   const [profileActionBusy, setProfileActionBusy] = useState(false);
+  const [profileActionError, setProfileActionError] = useState<string | null>(null);
   const [visibleHistoryCount, setVisibleHistoryCount] = useState(HISTORY_VISIBLE_BATCH_SIZE);
   const {
     cloudAuth,
@@ -371,6 +383,8 @@ export function ProfileRoute() {
     sourceHistory,
   } = useActiveHistory();
   const cloudPromotion = useStore(cloudPromotionStore, (state) => state);
+
+  useEffect(() => { setConfirmingProfileAction(null); setProfileActionError(null); }, [cloudAuth.user?.uid]);
 
   useEffect(() => {
     localProfileStore.getState().ensureLocalProfile();
@@ -433,10 +447,10 @@ export function ProfileRoute() {
   const signedIn = cloudAuth.status === "signed_in" && Boolean(cloudAuth.user);
   const profileActionDisabled = profileActionBusy || (signedIn && cloudProfile.status === "loading");
   const confirmationText = confirmingProfileAction === "delete"
-    ? "Delete your cloud profile and history, then sign out? Local data stays on this device."
+    ? "Delete your cloud profile, history, saved replays, public name and publications, then sign out? Local copies stay on this device. Empty revision markers remain to block stale writes. Copied replay links still work."
     : signedIn
-      ? "Reset profile data here and in the cloud? This clears settings, games, and local replay analyses."
-      : "Reset this profile? This clears settings, games, and replay analyses.";
+      ? "Reset private settings, games, saved replays and practice here and in the cloud? Local replay analyses are cleared. Your public profile and publications stay unchanged; empty cloud revision markers remain."
+      : "Reset this profile? This clears settings, games, saved replays, practice and replay analyses on this device.";
   const confirmationButtonText = confirmingProfileAction === "delete" ? "Delete" : "Reset";
 
   function resetLocalProfileData(): void {
@@ -455,10 +469,17 @@ export function ProfileRoute() {
     const localProfileId = localProfileStore.getState().profile?.id;
     const isCurrent = () => cloudAuthStore.getState().user === user
       && localProfileStore.getState().profile?.id === localProfileId;
+    const library = await loadPrivateLibrary(user.uid);
+    if (!isCurrent()) throw new ProfileActionAccountChanged();
+    const cleared = await savePrivateLibrary(user.uid, [], library?.revision ?? null);
+    if (!isCurrent()) throw new ProfileActionAccountChanged();
+    await replayLibraryStore.getState().replaceEntries(`user:${user.uid}`, []);
+    if (!isCurrent()) throw new ProfileActionAccountChanged();
+    replayLibrarySync.acceptCleared(user.uid, cleared);
     await cloudProfileStore.getState().resetForUser(user, createDefaultProfileSettings());
-    if (!isCurrent()) return;
+    if (!isCurrent()) throw new ProfileActionAccountChanged();
     await cloudHistoryStore.getState().clearForUser(user);
-    if (!isCurrent()) return;
+    if (!isCurrent()) throw new ProfileActionAccountChanged();
     cloudHistoryStore.getState().resetUserCache(user.uid);
     cloudPromotionStore.getState().reset();
     resetLocalProfileData();
@@ -471,10 +492,17 @@ export function ProfileRoute() {
 
     const user = cloudAuth.user;
     const isCurrent = () => cloudAuthStore.getState().user === user;
+    const cleared = await clearSharingData(user.uid);
+    if (!isCurrent()) throw new ProfileActionAccountChanged();
+    // Preserve local copies, but require review before any future re-upload.
+    if (replayLibraryStore.getState().owners[`user:${user.uid}`]?.entries.length) {
+      replayLibraryStore.getState().markDirty(`user:${user.uid}`);
+    }
+    replayLibrarySync.acceptCleared(user.uid, cleared.privateLibrary);
     await cloudHistoryStore.getState().clearForUser(user);
-    if (!isCurrent()) return;
+    if (!isCurrent()) throw new ProfileActionAccountChanged();
     await cloudProfileStore.getState().deleteForUser(user);
-    if (!isCurrent()) return;
+    if (!isCurrent()) throw new ProfileActionAccountChanged();
     cloudHistoryStore.getState().resetUserCache(user.uid);
     cloudPromotionStore.getState().reset();
     await cloudAuthStore.getState().signOut();
@@ -486,18 +514,25 @@ export function ProfileRoute() {
       return;
     }
 
+    const actionUser = cloudAuthStore.getState().user;
+    const actionLocalId = localProfileStore.getState().profile?.id;
     setProfileActionBusy(true);
+    setProfileActionError(null);
     try {
       if (action === "delete") {
         await deleteSignedInProfile();
       } else if (signedIn) {
         await resetSignedInProfile();
       } else {
+        await replayLibraryStore.getState().clearOwner("guest");
         resetLocalProfileData();
       }
       setConfirmingProfileAction(null);
-    } catch {
-      // Store actions already expose foreground failures through cloudError.
+    } catch (error) {
+      if (error instanceof ProfileActionAccountChanged ||
+        (cloudAuthStore.getState().user === actionUser && localProfileStore.getState().profile?.id === actionLocalId)) {
+        setProfileActionError(error instanceof Error ? error.message : "The operation could not finish. Retry to complete cleanup.");
+      }
     } finally {
       setProfileActionBusy(false);
     }
@@ -554,6 +589,7 @@ export function ProfileRoute() {
               {cloudAuth.status === "signed_in" ? (
                 <button
                   className="uiAction uiActionNeutral"
+                  disabled={profileActionBusy}
                   onClick={() => {
                     void cloudAuthStore.getState().signOut();
                   }}
@@ -581,6 +617,7 @@ export function ProfileRoute() {
           <div className="uiDivider" />
 
           <section className={`${styles.sideSection} ${styles.resetSection}`}>
+            {profileActionError ? <p role="alert">{profileActionError}</p> : null}
             {confirmingProfileAction ? (
               <div className={styles.resetConfirm}>
                 <p className={styles.resetConfirmText}>{confirmationText}</p>
@@ -626,6 +663,7 @@ export function ProfileRoute() {
                 className={`uiAction uiActionNeutral ${styles.resetTrigger}`}
                 disabled={profileActionDisabled}
                 onClick={() => {
+                  setProfileActionError(null);
                   setConfirmingProfileAction("reset");
                 }}
                 type="button"
@@ -635,15 +673,30 @@ export function ProfileRoute() {
               </button>
             )}
           </section>
+          <PublicProfileManager />
         </aside>
 
         <section className={styles.recordPanel}>
           <div className={styles.recordHeader}>
-            <p className="uiSectionLabel">Match History</p>
+            <div role="tablist" aria-label="Private records" className={styles.recordTabs}>
+              {([['games', 'My games'], ['saved', 'Saved replays']] as const).map(([tab, label]) =>
+                <button key={tab} id={`${tab}-tab`} type="button" role="tab" aria-selected={recordTab === tab}
+                  aria-controls={`${tab}-records`} tabIndex={recordTab === tab ? 0 : -1}
+                  className={`uiAction ${recordTab === tab ? 'uiActionSecondary' : 'uiActionNeutral'}`}
+                  onClick={() => setRecordTab(tab)} onKeyDown={(event) => {
+                    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                      const next = recordTab === 'games' ? 'saved' : 'games';
+                      setRecordTab(next); document.getElementById(`${next}-tab`)?.focus(); event.preventDefault();
+                    }
+                  }}>{label}</button>)}
+            </div>
             {historyStatus ? (
               <p className={historyStatusClassName} aria-live="polite">{historyStatus.label}</p>
             ) : null}
           </div>
+          <div id={`${recordTab}-records`} role="tabpanel" aria-labelledby={`${recordTab}-tab`}
+            className={recordTab === 'games' ? styles.recordContents : styles.libraryContents}>
+          {recordTab === 'saved' ? <ReplayLibraryPanel /> : <>
           <div className={styles.summaryGrid}>
             <article className={styles.summaryTile}>
               <span className={styles.summaryValue}>{stats.matches}</span>
@@ -757,6 +810,12 @@ export function ProfileRoute() {
                 </Link>
               </div>
             )}
+            <section aria-label="Practice games" className={styles.practiceGames}>
+              <h2>Practice games</h2>
+              <p>Continuations are separate from ordinary played-game statistics.</p>
+              {signedIn && <p>Open Saved replays to load or sync your account’s saved and practice copies.</p>}
+              <ReplayLibraryEntries kind="practice" />
+            </section>
             {hiddenHistoryCount > 0 ? (
               <button
                 className={`uiAction uiActionNeutral ${styles.historyMoreAction}`}
@@ -770,6 +829,8 @@ export function ProfileRoute() {
                 <span className="uiActionLabel">Show more</span>
               </button>
             ) : null}
+          </div>
+          </>}
           </div>
         </section>
       </section>

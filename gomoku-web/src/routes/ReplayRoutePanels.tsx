@@ -123,6 +123,7 @@ interface ReplayPlaybackPanelProps {
   match: SavedMatchV2;
   onResume: (seed: LocalMatchResumeSeed) => void;
   replayFloor: number;
+  resumePending?: boolean;
   setAutoplaying: Dispatch<SetStateAction<boolean>>;
   setMoveIndex: Dispatch<SetStateAction<number>>;
   timelineAnalysis: ReplayTimelineAnalysis;
@@ -135,6 +136,7 @@ export function ReplayPlaybackPanel({
   match,
   onResume,
   replayFloor,
+  resumePending = false,
   setAutoplaying,
   setMoveIndex,
   timelineAnalysis,
@@ -238,7 +240,7 @@ export function ReplayPlaybackPanel({
       <div className={styles.replayActions}>
         <button
           className={`uiAction uiActionSecondary ${styles.resumeAction}`}
-          disabled={!canResumeReplay(frame, replayFloor)}
+          disabled={resumePending || !canResumeReplay(frame, replayFloor)}
           onClick={() => {
             onResume(resumeSeedFromFrame(match, frame));
           }}

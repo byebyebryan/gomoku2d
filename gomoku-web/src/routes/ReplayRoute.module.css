@@ -468,8 +468,8 @@
   .layout {
     display: grid;
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto auto auto auto minmax(0, 1fr);
-    align-content: stretch;
+    grid-template-rows: repeat(10, auto);
+    align-content: start;
     justify-items: stretch;
     gap: 10px;
     min-height: calc(100dvh - 74px);
@@ -595,5 +595,6 @@
 .playerName { overflow-wrap: anywhere; }
 .playerName a { color: inherit; }
 @media (max-width: 720px) and (orientation: portrait) {
-  .sharingSection { grid-row: 7; padding: 12px 0; }
+  .practiceContext { grid-row: 7; padding: 12px 0; }
+  .sharingSection { grid-row: 8; padding: 12px 0; }
 }

@@ -27,6 +27,7 @@ export function SharedReplayRoute() {
   }, [hash]);
   if (loaded?.hash === hash) return <ReplayViewer key={hash} match={loaded.value.match}
     localDisplayName="" preserveNames source={loaded.value.replay}
+    fingerprint={loaded.value.fingerprint}
     initialMoveIndex={loaded.value.replay.viewPly ?? loaded.value.match.move_count} />;
   return <main className={styles.page}><section className={`${styles.notFound} uiPanel`}>
     <h1>{failure?.hash === hash ? "Replay unavailable" : "Loading shared replay"}</h1>

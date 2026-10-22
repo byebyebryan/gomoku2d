@@ -63,9 +63,9 @@ a deployed release. No token budget was requested.
 | M0 Contracts | Active | Product defaults and portable format settled; backend limits under emulator validation |
 | M1 Portable core | Complete | 16 actual-Wasm contract tests; [wire contract](../reference/app/portable_replay.md) |
 | M2 Shared viewer | Implemented | Guest direct-load/share/fallback: 15 checks across three engines; signed-in isolation awaits cloud acceptance |
-| M3 Local library/practice | Pending | |
-| M4 Public profile/catalog | Pending | |
-| M5 Private library sync | Pending | |
+| M3 Local library/practice | Implemented | Store/session races and Chromium guest journeys pass |
+| M4 Public profile/catalog | Implemented | 12/12 new cloud checks across three engines; final regression lane pending |
+| M5 Private library sync | Implemented | Two-client sync/conflict journey plus reset/delete/action race contracts pass |
 | M6 Local acceptance | Pending | |
 
 ## Work and Validation Log
@@ -112,3 +112,20 @@ physical-device evidence.
   My games/Saved replays tabs, practice presentation, public route/management and
   publication panels. Reset/delete confirmations now disclose exact scope and
   retained markers. Delayed sync and explicit-merge concurrency tests pass.
+
+- M3 Luna store/session implementation and primary route integration: guest save,
+  identity deduplication across plies, reload/removal, legal practice completion,
+  source preservation, re-share, and zero played totals pass Chromium journeys.
+  Async local replacement/clear tests reject stale hashes without losing new work.
+- M4/M5 Luna public UI and cloud journey work plus primary sync/lifecycle review:
+  C10–C13 pass 12/12 in Chromium/Firefox/WebKit, including fresh signed-in shared
+  entry with zero Firestore work, 390px layouts, publication lifecycle, two-client
+  removal and stale-client review. Full legacy cloud regression remains pending.
+- Review found and fixed pre-clear pending Save/import intent, same-revision
+  post-delete review bypass, and account-switch partial-cleanup reporting. These
+  now have focused contract coverage. No user-visible success is claimed after
+  a guarded cleanup abort.
+- Production build and web typecheck pass; all 429 tests passed before the last
+  lifecycle regressions were added. Production npm audit: zero vulnerabilities;
+  Cargo audit: clean against the current advisory database. Rust/bot/core sources
+  were unchanged, so no new tournament or behavioral Rust run was required.

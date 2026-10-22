@@ -17,8 +17,25 @@ import {
   readReplayAnalysisCache,
   writeReplayAnalysisCache,
 } from "../replay/replay_analysis_cache";
+import { replayLibraryStore } from "../replay/replay_library_store";
+import { replayLibrarySync } from "../replay/replay_library_sync";
 
 import { ProfileRoute } from "./ProfileRoute";
+
+const sharingMocks = vi.hoisted(() => ({
+  clearSharingData: vi.fn(),
+  loadPrivateLibrary: vi.fn(),
+  savePrivateLibrary: vi.fn(),
+}));
+
+vi.mock("../cloud/sharing_lifecycle", () => ({
+  clearSharingData: sharingMocks.clearSharingData,
+}));
+
+vi.mock("../cloud/sharing_private", () => ({
+  loadPrivateLibrary: sharingMocks.loadPrivateLibrary,
+  savePrivateLibrary: sharingMocks.savePrivateLibrary,
+}));
 
 const cloudUser: CloudAuthUser = {
   avatarUrl: null,
@@ -137,6 +154,7 @@ describe("ProfileRoute cloud state", () => {
       await pending;
     });
     await waitFor(() => expect(screen.getByRole("button", { name: "Reset Profile" })).toBeEnabled());
+    expect(screen.getByRole("alert")).toHaveTextContent(/account changed before cleanup finished/i);
     expect(signOut).not.toHaveBeenCalled();
     expect(localProfileStore.getState().profile?.id).toBe(nextLocalId);
     expect(localProfileStore.getState().profile?.displayName).toBe("Next player");
@@ -151,10 +169,40 @@ describe("ProfileRoute cloud state", () => {
     cloudProfileStore.setState(initialCloudProfileState, true);
     cloudPromotionStore.setState(initialCloudPromotionState, true);
     localProfileStore.setState(initialLocalProfileState, true);
+    replayLibraryStore.setState({ owners: {}, storageError: null });
+    replayLibrarySync.store.setState({ users: {} }, true);
   });
 
   beforeEach(() => {
     localStorage.clear();
+    replayLibraryStore.setState({ owners: {}, storageError: null });
+    replayLibrarySync.store.setState({ users: {} }, true);
+    sharingMocks.clearSharingData.mockReset();
+    sharingMocks.clearSharingData.mockImplementation(async (uid: string) => ({
+      publicProfile: {
+        uid,
+        displayName: "",
+        enabled: false,
+        generation: 2,
+        revision: 2,
+        updatedAt: "2026-04-28T01:00:00.000Z",
+      },
+      pages: [],
+      privateLibrary: { uid, revision: 3, entries: [], updatedAt: "2026-04-28T01:00:00.000Z" },
+    }));
+    sharingMocks.loadPrivateLibrary.mockReset();
+    sharingMocks.loadPrivateLibrary.mockResolvedValue(null);
+    sharingMocks.savePrivateLibrary.mockReset();
+    sharingMocks.savePrivateLibrary.mockImplementation(async (
+      uid: string,
+      entries: unknown,
+      expectedRevision: number | null,
+    ) => ({
+      uid,
+      revision: (expectedRevision ?? 0) + 1,
+      entries: Array.isArray(entries) ? entries : [],
+      updatedAt: "2026-04-28T01:00:00.000Z",
+    }));
     localProfileStore.setState({
       matchHistory: emptyLocalMatchHistory(),
       profile: null,
@@ -257,7 +305,7 @@ describe("ProfileRoute cloud state", () => {
     expect(screen.getByText("Moves 9")).toBeInTheDocument();
   });
 
-  it("confirms before clearing local profile data", () => {
+  it("confirms before clearing local profile data", async () => {
     const localProfile = localProfileStore.getState().ensureLocalProfile();
     localProfileStore.getState().renameDisplayName("ByeByeBryan");
     const match = localSavedMatch("match-1", localProfile.id);
@@ -269,7 +317,7 @@ describe("ProfileRoute cloud state", () => {
     expect(screen.getByLabelText("Name")).toHaveValue("ByeByeBryan");
     fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
     expect(
-      screen.getByText("Reset this profile? This clears settings, games, and replay analyses."),
+      screen.getByText("Reset this profile? This clears settings, games, saved replays, practice and replay analyses on this device."),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(screen.getByLabelText("Name")).toHaveValue("ByeByeBryan");
@@ -278,7 +326,7 @@ describe("ProfileRoute cloud state", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
     fireEvent.click(screen.getByRole("button", { name: "Reset" }));
 
-    expect(screen.getByLabelText("Name")).toHaveValue("Guest");
+    await waitFor(() => expect(screen.getByLabelText("Name")).toHaveValue("Guest"));
     expect(localProfileStore.getState().matchHistory.replayMatches).toEqual([]);
     expect(readReplayAnalysisCache(match, replayAnalysisOptions)).toBeNull();
   });
@@ -718,7 +766,7 @@ describe("ProfileRoute cloud state", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
     expect(
       screen.getByText(
-        "Reset profile data here and in the cloud? This clears settings, games, and local replay analyses.",
+        "Reset private settings, games, saved replays and practice here and in the cloud? Local replay analyses are cleared. Your public profile and publications stay unchanged; empty cloud revision markers remain.",
       ),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Reset" }));
@@ -731,6 +779,66 @@ describe("ProfileRoute cloud state", () => {
     expect(localProfileStore.getState().matchHistory.replayMatches).toEqual([]);
   });
 
+  it("clears the account replay library on reset without changing public sharing", async () => {
+    localProfileStore.getState().ensureLocalProfile();
+    const localCopy = {
+      fingerprint: "A".repeat(43),
+      payload: "AQ",
+      kind: "saved" as const,
+      saved_at: "2026-04-28T01:00:00.000Z",
+    };
+    replayLibraryStore.setState({
+      owners: { "user:uid-1": { dirty: true, entries: [localCopy], error: null } },
+    });
+    sharingMocks.loadPrivateLibrary.mockResolvedValue({
+      uid: "uid-1",
+      revision: 6,
+      entries: [localCopy],
+      updatedAt: "2026-04-28T01:00:00.000Z",
+    });
+    sharingMocks.savePrivateLibrary.mockResolvedValue({
+      uid: "uid-1",
+      revision: 7,
+      entries: [],
+      updatedAt: "2026-04-28T01:01:00.000Z",
+    });
+    const resetForUser = vi.fn().mockResolvedValue(undefined);
+    cloudAuthStore.setState({
+      errorMessage: null,
+      isConfigured: true,
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+      start: vi.fn(),
+      status: "signed_in",
+      stop: vi.fn(),
+      user: cloudUser,
+    });
+    cloudProfileStore.setState({
+      errorMessage: null,
+      loadForUser: vi.fn(),
+      profile: cloudProfile,
+      reset: vi.fn(),
+      resetForUser,
+      status: "ready",
+    });
+
+    renderProfileRoute();
+    fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+
+    await waitFor(() => expect(resetForUser).toHaveBeenCalledOnce());
+    expect(sharingMocks.loadPrivateLibrary).toHaveBeenCalledWith("uid-1");
+    expect(sharingMocks.savePrivateLibrary).toHaveBeenCalledWith("uid-1", [], 6);
+    expect(sharingMocks.clearSharingData).not.toHaveBeenCalled();
+    expect(replayLibraryStore.getState().owners["user:uid-1"]?.entries).toEqual([]);
+    expect(replayLibrarySync.store.getState().users["uid-1"]).toMatchObject({
+      loaded: true,
+      revision: 7,
+      status: "synced",
+      hasIncoming: false,
+    });
+  });
+
   it("deletes the online profile and signs out without clearing local history", async () => {
     const deleteForUser = vi.fn().mockResolvedValue(undefined);
     const clearForUser = vi.fn().mockResolvedValue(undefined);
@@ -738,8 +846,17 @@ describe("ProfileRoute cloud state", () => {
     const signOut = vi.fn().mockResolvedValue(undefined);
     const localProfile = localProfileStore.getState().ensureLocalProfile();
     const localMatch = localSavedMatch("match-1", localProfile.id);
+    const accountCopy = {
+      fingerprint: "B".repeat(43),
+      payload: "AQ",
+      kind: "saved" as const,
+      saved_at: "2026-04-28T01:00:00.000Z",
+    };
 
     localProfileStore.setState({ matchHistory: localMatchHistoryWith([localMatch]) });
+    replayLibraryStore.setState({
+      owners: { "user:uid-1": { dirty: false, entries: [accountCopy], error: null } },
+    });
     cloudAuthStore.setState({
       errorMessage: null,
       isConfigured: true,
@@ -771,7 +888,7 @@ describe("ProfileRoute cloud state", () => {
     fireEvent.click(screen.getByRole("button", { name: "Delete Cloud" }));
     expect(
       screen.getByText(
-        "Delete your cloud profile and history, then sign out? Local data stays on this device.",
+        "Delete your cloud profile, history, saved replays, public name and publications, then sign out? Local copies stay on this device. Empty revision markers remain to block stale writes. Copied replay links still work.",
       ),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
@@ -784,10 +901,69 @@ describe("ProfileRoute cloud state", () => {
     await waitFor(() => {
       expect(deleteForUser).toHaveBeenCalledWith(cloudUser);
     });
+    expect(sharingMocks.clearSharingData).toHaveBeenCalledWith("uid-1");
     expect(clearForUser).toHaveBeenCalledWith(cloudUser);
     expect(resetUserCache).toHaveBeenCalledWith("uid-1");
     expect(signOut).toHaveBeenCalledTimes(1);
     expect(localProfileStore.getState().matchHistory.replayMatches).toEqual([localMatch]);
+    expect(replayLibraryStore.getState().owners["user:uid-1"]).toMatchObject({
+      dirty: true,
+      entries: [accountCopy],
+    });
+    expect(replayLibrarySync.store.getState().users["uid-1"]).toMatchObject({
+      status: "conflict",
+      hasIncoming: true,
+      incoming: { entries: [] },
+    });
+    expect(sharingMocks.clearSharingData.mock.invocationCallOrder[0]).toBeLessThan(
+      clearForUser.mock.invocationCallOrder[0],
+    );
+    expect(clearForUser.mock.invocationCallOrder[0]).toBeLessThan(deleteForUser.mock.invocationCallOrder[0]);
+    expect(deleteForUser.mock.invocationCallOrder[0]).toBeLessThan(signOut.mock.invocationCallOrder[0]);
+  });
+
+  it("keeps Delete Cloud retryable when sharing clear fails and skips profile deletion/sign-out", async () => {
+    const deleteForUser = vi.fn().mockResolvedValue(undefined);
+    const clearForUser = vi.fn().mockResolvedValue(undefined);
+    const signOut = vi.fn().mockResolvedValue(undefined);
+    sharingMocks.clearSharingData.mockRejectedValueOnce(new Error("Sharing cleanup failed."));
+    cloudAuthStore.setState({
+      errorMessage: null,
+      isConfigured: true,
+      signInWithGoogle: vi.fn(),
+      signOut,
+      start: vi.fn(),
+      status: "signed_in",
+      stop: vi.fn(),
+      user: cloudUser,
+    });
+    cloudProfileStore.setState({
+      deleteForUser,
+      errorMessage: null,
+      loadForUser: vi.fn(),
+      profile: cloudProfile,
+      reset: vi.fn(),
+      resetForUser: vi.fn(),
+      status: "ready",
+    });
+    cloudHistoryStore.setState({ clearForUser });
+
+    renderProfileRoute();
+    fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete Cloud" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Sharing cleanup failed.");
+    expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
+    expect(clearForUser).not.toHaveBeenCalled();
+    expect(deleteForUser).not.toHaveBeenCalled();
+    expect(signOut).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    await waitFor(() => expect(deleteForUser).toHaveBeenCalledWith(cloudUser));
+    expect(sharingMocks.clearSharingData).toHaveBeenCalledTimes(2);
+    expect(clearForUser).toHaveBeenCalledWith(cloudUser);
+    expect(signOut).toHaveBeenCalledOnce();
   });
 
   it("keeps signed-in reset confirmation open and local history intact when cloud clear fails", async () => {

@@ -19,6 +19,9 @@ const ReplayRoute = lazy(async () => ({
 const SharedReplayRoute = lazy(async () => ({
   default: (await import("../routes/SharedReplayRoute")).SharedReplayRoute,
 }));
+const PublicPlayerRoute = lazy(async () => ({
+  default: (await import("../routes/PublicPlayerRoute")).PublicPlayerRoute,
+}));
 const SettingsRoute = lazy(async () => ({
   default: (await import("../routes/SettingsRoute")).SettingsRoute,
 }));
@@ -93,6 +96,14 @@ export function App() {
               element={
                 <Suspense fallback={<main className={styles.loading}>Loading profile…</main>}>
                   <ProfileRoute />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/player"
+              element={
+                <Suspense fallback={<main className={styles.loading}>Loading public profile…</main>}>
+                  <PublicPlayerRoute />
                 </Suspense>
               }
             />
