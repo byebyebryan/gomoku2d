@@ -97,8 +97,8 @@ export interface IconManifest {
   rows: number;
   icons: Array<{
     name: string;
-    row: number;
-    col: number;
+    row?: number;
+    col?: number;
     category: string;
     label: string;
     note: string;

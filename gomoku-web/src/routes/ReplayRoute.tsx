@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useStore } from "zustand";
 
@@ -61,6 +61,11 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
   const [autoplaying, setAutoplaying] = useState(false);
   const [branching, setBranching] = useState(false);
   const [branchError, setBranchError] = useState("");
+  const [sharing, setSharing] = useState(false);
+  const deckRef = useRef<HTMLElement>(null);
+  const shareTriggerRef = useRef<HTMLButtonElement>(null);
+  const deckScrollRef = useRef(0);
+  const wasSharingRef = useRef(false);
   const { analysisAnnotations, analysisStep } = useReplayAnalysis(match);
   const coreWinningCells = useReplayWinningCells(match, moveIndex);
 
@@ -87,6 +92,16 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
       window.clearTimeout(timer);
     };
   }, [autoplaying, match, moveIndex]);
+
+  useEffect(() => {
+    if (sharing) {
+      if (deckRef.current) deckRef.current.scrollTop = 0;
+    } else if (wasSharingRef.current) {
+      if (deckRef.current) deckRef.current.scrollTop = deckScrollRef.current;
+      shareTriggerRef.current?.focus();
+    }
+    wasSharingRef.current = sharing;
+  }, [sharing]);
 
   const frame = buildLocalReplayFrame(match, moveIndex, () => coreWinningCells);
   const analysisSummary = analysisStep?.analysis ?? null;
@@ -148,50 +163,59 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
         </div>
       </header>
 
-      <section className={styles.layout}>
+      <section className={`${styles.layout} ${sharing ? styles.layoutSharing : ""}`}>
         <ReplayBoardPanel model={boardModel} />
 
-        <aside className={styles.deck}>
-          <ReplayStatusPanel detail={analysisStatus.detail} label={analysisStatus.label} />
+        <aside className={`${styles.deck} ${sharing ? styles.deckSharing : ""}`} ref={deckRef}>
+          <div className={styles.replayDeck} hidden={sharing}>
+            <ReplayStatusPanel detail={analysisStatus.detail} label={analysisStatus.label} />
 
-          <div className="uiDivider" />
+            <div className="uiDivider" />
 
-          <ReplayMatchPanel frame={frame} localDisplayName={localDisplayName} match={match} preserveNames={preserveNames} />
+            <ReplayMatchPanel frame={frame} localDisplayName={localDisplayName} match={match} preserveNames={preserveNames} />
 
-          <div className="uiDivider" />
+            <div className="uiDivider" />
 
-          <ReplayPlaybackPanel
-            autoplaying={autoplaying}
-            frame={frame}
-            match={match}
-            onResume={async (resumeSeed) => {
-              setBranching(true); setBranchError("");
-              try {
-                const portable = source ?? portableReplayFromSavedMatch(match).replay;
-                const sourceFingerprint = fingerprint ?? await portableReplayFingerprint(validatePortableReplay(portable));
-                const active = localMatchSessionStore.getState().matchStore?.getState();
-                if (active?.status === "playing" && active.moves.length > 0
-                  && !window.confirm("Replace your active game with a practice game from this position?")) return;
-                navigate(localMatchResumePath, { state: { resumeSeed: { ...resumeSeed,
-                  practiceOrigin: { sourceFingerprint, inheritedPly: resumeSeed.moves.length } } } });
-              } catch (error) { setBranchError(error instanceof Error ? error.message : "Practice could not start."); }
-              finally { setBranching(false); }
-            }}
-            replayFloor={replayFloor}
-            resumePending={branching}
-            setAutoplaying={setAutoplaying}
-            setMoveIndex={setMoveIndex}
-            timelineAnalysis={timelineAnalysis}
-            timelineStyle={timelineStyle}
-          />
-          {(source?.practice || practiceAvailable || branchError) && <section className={`${styles.deckSection} ${styles.practiceContext}`}>
-            {source?.practice && <p>Practice replay: the first {source.practice.inheritedPly} moves are inherited from another game.</p>}
-            {practiceAvailable && <p>Practice from move {frame.moveIndex}: you play {frame.currentPlayer === 1 ? "Black" : "White"} against the selected {botLabel(settings.botConfig)} bot.</p>}
-            {branchError && <p role="alert">{branchError}</p>}
-          </section>}
-          <ShareReplayPanel match={match} moveIndex={frame.moveIndex} source={source} />
-          {source && fingerprint && <SaveReplayButton replay={source} fingerprint={fingerprint} />}
-          <PublishReplayPanel match={match} source={source} moveIndex={frame.moveIndex} eligible={publishEligible ?? !preserveNames} />
+            <ReplayPlaybackPanel
+              autoplaying={autoplaying}
+              frame={frame}
+              match={match}
+              onResume={async (resumeSeed) => {
+                setBranching(true); setBranchError("");
+                try {
+                  const portable = source ?? portableReplayFromSavedMatch(match).replay;
+                  const sourceFingerprint = fingerprint ?? await portableReplayFingerprint(validatePortableReplay(portable));
+                  const active = localMatchSessionStore.getState().matchStore?.getState();
+                  if (active?.status === "playing" && active.moves.length > 0
+                    && !window.confirm("Replace your active game with a practice game from this position?")) return;
+                  navigate(localMatchResumePath, { state: { resumeSeed: { ...resumeSeed,
+                    practiceOrigin: { sourceFingerprint, inheritedPly: resumeSeed.moves.length } } } });
+                } catch (error) { setBranchError(error instanceof Error ? error.message : "Practice could not start."); }
+                finally { setBranching(false); }
+              }}
+              replayFloor={replayFloor}
+              resumePending={branching}
+              setAutoplaying={setAutoplaying}
+              setMoveIndex={setMoveIndex}
+              timelineAnalysis={timelineAnalysis}
+              timelineStyle={timelineStyle}
+            />
+            {(source?.practice || practiceAvailable || branchError) && <section className={`${styles.deckSection} ${styles.practiceContext}`}>
+              {source?.practice && <p>Practice replay: the first {source.practice.inheritedPly} moves are inherited from another game.</p>}
+              {practiceAvailable && <p>Practice from move {frame.moveIndex}: you play {frame.currentPlayer === 1 ? "Black" : "White"} against the selected {botLabel(settings.botConfig)} bot.</p>}
+              {branchError && <p role="alert">{branchError}</p>}
+            </section>}
+            <section className={`${styles.deckSection} ${styles.sharingSection}`}>
+              <button className="uiAction uiActionSecondary" type="button" ref={shareTriggerRef} onClick={() => {
+                deckScrollRef.current = deckRef.current?.scrollTop ?? 0;
+                setAutoplaying(false);
+                setSharing(true);
+              }}><Icon name="share" /><span className="uiActionLabel">Share replay</span></button>
+            </section>
+            {source && fingerprint && <SaveReplayButton replay={source} fingerprint={fingerprint} />}
+            <PublishReplayPanel match={match} source={source} moveIndex={frame.moveIndex} eligible={publishEligible ?? !preserveNames} />
+          </div>
+          <ShareReplayPanel match={match} moveIndex={frame.moveIndex} source={source} open={sharing} onClose={() => setSharing(false)} />
         </aside>
       </section>
     </main>

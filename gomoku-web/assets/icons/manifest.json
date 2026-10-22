@@ -259,6 +259,24 @@
       "category": "utility",
       "label": "Help",
       "note": "Help / question / unsure state."
+    },
+    {
+      "name": "share",
+      "category": "action",
+      "label": "Share",
+      "note": "Standalone 24x24 addition: centred upload arrow and tray."
+    },
+    {
+      "name": "copy",
+      "category": "action",
+      "label": "Copy",
+      "note": "Standalone 24x24 addition: overlapping pages."
+    },
+    {
+      "name": "save",
+      "category": "action",
+      "label": "Save",
+      "note": "Standalone 24x24 addition: floppy disk."
     }
   ]
 }

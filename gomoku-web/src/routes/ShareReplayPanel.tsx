@@ -1,22 +1,33 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import type { SavedMatchV2 } from "../match/saved_match";
 import { portableReplayFromSavedMatch, type PortableReplayV1 } from "../replay/portable_replay";
 import { encodePortableReplayFragment } from "../replay/portable_replay_codec";
+import { Icon } from "../ui/Icon";
 
-import styles from "./ReplayRoute.module.css";
+import styles from "./ShareReplayPanel.module.css";
 
-export function ShareReplayPanel({ match, moveIndex, source }: {
+export function ShareReplayPanel({ match, moveIndex, source, open, onClose }: {
   match: SavedMatchV2;
   moveIndex: number;
   source?: PortableReplayV1;
+  open: boolean;
+  onClose: () => void;
 }) {
-  const [open, setOpen] = useState(false);
   const [currentMoment, setCurrentMoment] = useState(true);
   const [genericNames, setGenericNames] = useState(false);
   const [includeProfiles, setIncludeProfiles] = useState(false);
   const [message, setMessage] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const backRef = useRef<HTMLButtonElement>(null);
+  const profileHintId = useId();
+
+  useEffect(() => {
+    if (!open) return;
+    setMessage("");
+    backRef.current?.focus({ preventScroll: true });
+    backRef.current?.scrollIntoView?.({ block: "nearest" });
+  }, [open]);
   const preview = useMemo(() => {
     if (!open) return null;
     try {
@@ -38,47 +49,86 @@ export function ShareReplayPanel({ match, moveIndex, source }: {
       const fragment = encodePortableReplayFragment(replay);
       const url = new URL(`${import.meta.env.BASE_URL}replay/shared/`, window.location.origin);
       url.hash = fragment;
-      return { replay, url: url.href, error: null };
+      const hasProfiles = [original.black, original.white].some((player) =>
+        player.kind === "human" && Boolean(player.profileUid));
+      return { replay, url: url.href, error: null, hasProfiles };
     } catch (error) {
-      return { replay: null, url: "", error: error instanceof Error ? error.message : "This game cannot be shared." };
+      return { replay: null, url: "", error: error instanceof Error ? error.message : "This game cannot be shared.", hasProfiles: false };
     }
   }, [currentMoment, genericNames, includeProfiles, match, moveIndex, open, source]);
 
   return (
-    <section className={`${styles.deckSection} ${styles.sharingSection}`} aria-label="Replay sharing">
-      <button className="uiAction uiActionSecondary" type="button" aria-expanded={open} onClick={() => {
-        setOpen(!open); setMessage("");
-      }}>Share replay</button>
-      {open && <>
-        <p className={styles.notFoundText}>The link contains a copy of this game and the player labels shown below.</p>
-        <label><input type="checkbox" checked={currentMoment} onChange={(event) => {
-          setCurrentMoment(event.target.checked); setMessage("");
-        }} /> Open at current move ({moveIndex})</label>
-        <label><input type="checkbox" checked={genericNames} onChange={(event) => {
-          setGenericNames(event.target.checked); setMessage("");
-        }} /> Use generic player names</label>
-        <label><input type="checkbox" checked={includeProfiles} disabled={genericNames} onChange={(event) => {
-          setIncludeProfiles(event.target.checked); setMessage("");
-        }} /> Include available player profile links</label>
-        {preview?.replay && <p>{preview.replay.black.name} · {preview.replay.white.name}</p>}
-        {preview?.error ? <p role="alert">{preview.error}</p> : <>
-          <label>Replay link
-            <input ref={inputRef} className={styles.shareInput} readOnly value={preview?.url ?? ""}
-              onFocus={(event) => event.currentTarget.select()} />
-          </label>
-          <button className="uiAction uiActionPrimary" type="button" onClick={async () => {
+    <section className={styles.section} aria-label="Replay sharing" hidden={!open} onKeyDown={(event) => {
+      if (event.key === "Escape") { event.preventDefault(); onClose(); }
+    }}>
+      <button className={`uiAction uiActionNeutral ${styles.back}`} type="button" ref={backRef} onClick={onClose}>
+        <Icon name="back" /><span className="uiActionLabel">Back to replay</span>
+      </button>
+      <div className={styles.heading}>
+        <Icon name="share" /><h2>Share replay</h2>
+      </div>
+      {open && <div className={styles.body}>
+        <div className={styles.choice} role="group" aria-label="Replay opening position">
+          <p className="uiSectionLabel">Open at</p>
+          <div className={styles.segments}>
+            <button className={currentMoment ? "uiSegment uiSegmentActive" : "uiSegment"} type="button" aria-pressed={currentMoment}
+              onClick={() => { setCurrentMoment(true); setMessage(""); }}>Move {moveIndex}</button>
+            <button className={!currentMoment ? "uiSegment uiSegmentActive" : "uiSegment"} type="button" aria-pressed={!currentMoment}
+              onClick={() => { setCurrentMoment(false); setMessage(""); }}>Final move</button>
+          </div>
+        </div>
+        <div className={styles.choice} role="group" aria-label="Player names">
+          <p className="uiSectionLabel">Player names</p>
+          <div className={styles.segments}>
+            <button className={!genericNames ? "uiSegment uiSegmentActive" : "uiSegment"} type="button" aria-pressed={!genericNames}
+              onClick={() => { setGenericNames(false); setMessage(""); }}>As played</button>
+            <button className={genericNames ? "uiSegment uiSegmentActive" : "uiSegment"} type="button" aria-pressed={genericNames}
+              onClick={() => { setGenericNames(true); setMessage(""); }}>Generic names</button>
+          </div>
+        </div>
+        <label className={styles.profileOption}>
+          <span className={styles.optionCopy}>
+            <span className={styles.optionLabel}>Profile links</span>
+            <span className={styles.hint} id={profileHintId}>
+              {genericNames ? "Hidden with generic names." : preview?.hasProfiles ? "Include available public profiles." : "No profiles in this replay."}
+            </span>
+          </span>
+          <input className={styles.checkbox} type="checkbox" aria-label="Include available player profile links" aria-describedby={profileHintId}
+            checked={includeProfiles && !genericNames && Boolean(preview?.hasProfiles)} disabled={genericNames || !preview?.hasProfiles}
+            onChange={(event) => { setIncludeProfiles(event.target.checked); setMessage(""); }} />
+        </label>
+        {preview?.replay && <div className={styles.preview} role="group" aria-label="Link preview">
+          <div className={styles.previewHeading}>
+            <span className="uiSectionLabel">In the link</span>
+            <span className={styles.moment}>Move {preview.replay.viewPly} / {match.move_count}</span>
+          </div>
+          {[preview.replay.black, preview.replay.white].map((player, index) => <div className={styles.player} key={index}>
+            <span className={`${styles.stone} ${index === 0 ? styles.stoneBlack : styles.stoneWhite}`} aria-hidden="true" />
+            <span className="uiSrOnly">{index === 0 ? "Black" : "White"}:</span>
+            <span className={styles.playerName} title={player.name}>{player.name}</span>
+            {player.kind === "human" && player.profileUid && <span className={styles.profileIcon} role="img" aria-label="Public profile link included"><Icon name="profile" /></span>}
+          </div>)}
+        </div>}
+        <p className={styles.hint}>Anyone with the link can replay the full game.</p>
+        {preview?.error ? <p className={styles.error} role="alert">{preview.error}</p> : <>
+          <button className={`uiAction uiActionPrimary ${styles.copyButton}`} type="button" onClick={async () => {
             if (!preview?.url) return;
             try {
               await navigator.clipboard.writeText(preview.url);
               setMessage("Link copied.");
             } catch {
               inputRef.current?.focus(); inputRef.current?.select();
-              setMessage("Copy the selected link above.");
+              setMessage("Copy the selected link below.");
             }
-          }}>Copy replay link</button>
+          }}><Icon name="copy" />Copy link</button>
+          <label className={styles.linkField}>
+            <span className="uiSectionLabel">Replay link</span>
+            <input ref={inputRef} className={`uiInput ${styles.linkInput}`} readOnly value={preview?.url ?? ""}
+              onFocus={(event) => event.currentTarget.select()} spellCheck={false} />
+          </label>
         </>}
-        <p role="status" aria-live="polite">{message}</p>
-      </>}
+        <p className={styles.message} role="status" aria-live="polite">{message}</p>
+      </div>}
     </section>
   );
 }

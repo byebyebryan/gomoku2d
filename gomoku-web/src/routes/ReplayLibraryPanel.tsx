@@ -8,6 +8,7 @@ import type { PortableReplayV1 } from "../replay/portable_replay";
 import { currentReplayLibraryOwner, replayLibraryStore, type ReplayLibraryKind } from "../replay/replay_library_store";
 import { EMPTY_LIBRARY_SYNC, replayLibrarySync } from "../replay/replay_library_sync";
 import { importGuestReplayCopies, saveReplayCopy } from "../replay/replay_library_actions";
+import { Icon } from "../ui/Icon";
 import styles from "./ReplayLibraryPanel.module.css";
 
 function useOwner() {
@@ -51,7 +52,7 @@ export function SaveReplayButton({ replay, fingerprint }: { replay: PortableRepl
         setBusy(true); setError("");
         try { await saveReplayCopy(replay); } catch (failure) { setError(String(failure instanceof Error ? failure.message : failure)); }
         finally { setBusy(false); }
-      }}>{saved ? sessionOnly ? "Saved for this session" : "Saved replay" : busy ? "Saving replay" : "Save replay"}</button>
+      }}><Icon name="save" /><span className="uiActionLabel">{saved ? sessionOnly ? "Saved for this session" : "Saved replay" : busy ? "Saving replay" : "Save replay"}</span></button>
     <p>{saveMessage}</p>
     {(error || bucket?.error || storageError) && <p role="alert">{error || bucket?.error || storageError}</p>}
   </section>;

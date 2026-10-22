@@ -56,6 +56,18 @@
   padding: 16px;
 }
 
+.replayDeck {
+  display: contents;
+}
+
+.replayDeck[hidden] {
+  display: none;
+}
+
+.deckSharing {
+  overflow-x: hidden;
+}
+
 .statusText {
   margin: 0;
   color: var(--accent-strong);
@@ -596,11 +608,26 @@
   }
 }
 
-.sharingSection { min-width: 0; overflow-wrap: anywhere; }
-.sharingSection label { display: block; }
-.shareInput { display: block; width: 100%; min-width: 0; box-sizing: border-box; }
+.sharingSection {
+  min-width: 0;
+  border-top: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
 .playerName a { color: inherit; }
 @media (max-width: 720px) and (orientation: portrait) {
   .practiceContext { grid-row: 7; padding: 12px 0; }
   .sharingSection { grid-row: 8; padding: 12px 0; }
+  .layoutSharing {
+    grid-template-rows: auto auto;
+  }
+  .layoutSharing .boardPanel {
+    grid-row: 1;
+  }
+  .deckSharing {
+    display: grid;
+    grid-row: 2;
+    min-width: 0;
+    width: 100%;
+    overflow: clip;
+  }
 }

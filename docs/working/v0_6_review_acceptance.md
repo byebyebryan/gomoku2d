@@ -1,11 +1,12 @@
 # v0.6 unattended review and acceptance
 
-Owner: Bryan. Started October 22, 2026. Status: complete; ready for manual review.
+Owner: Bryan. Started October 22, 2026. Status: unattended review complete;
+manual review in progress.
 
 The [acceptance report and manual walkthrough](v0_6_review_evidence/README.md)
-contain the final results, selected inspected screenshots and build identity.
-Application source is `f1bc7ee`; subsequent closeout changes are documentation
-and evidence only. The new goal commits remain local and unpushed.
+contain the unattended results, selected inspected screenshots and build identity
+for application source `f1bc7ee`. The manual UI follow-up below is a later,
+separately checked increment. The new commits remain local and unpushed.
 
 ## Objective and boundaries
 
@@ -133,3 +134,33 @@ public name, publish, browse as a guest, unpublish and disable. Keep the manual
 questions focused on comprehension and feel. Separately identify real Google
 sign-in/consent, an actual phone/touch session, human accessibility and public-host
 acceptance. Release/deployment preparation is a later checkpoint.
+
+## Manual review follow-up — October 22
+
+Bryan confirmed share-replay functionality and accepted the refined presentation:
+sharing replaces the replay sidebar, with segmented opening-position/name
+choices, an explicit recipient preview and a prominent copy action. Back to
+replay and Escape restore the controls and selected move; opening sharing pauses
+autoplay, preserves the board and retains the sharing choices. The approved
+icons are the centred share arrow with its bottom tip row trimmed, overlapping
+copy pages and a floppy disk on Save replay. The additions use the original
+24-pixel grid and are identified as standalone additions in the visual guide.
+
+Scoped validation passed: types, production-style demo build, 18 replay/library
+unit tests and 36 browser checks across Chromium, Firefox and WebKit, including
+narrow/enlarged-text layouts, automated accessibility, keyboard return/focus,
+clipboard fallback and practice/library behavior. Icon inspection also checked
+integer coordinates, symmetry and crisp native/2× rendering. The final icon-only
+trim was rebuilt, checked for its exact four-pixel removal and symmetry, then
+visually rechecked in the served preview. Earlier broad acceptance counts above
+remain evidence for their original source, rather than this UI increment.
+
+Open finding from the manual demo: the shared board renderer uses a white sprite
+and tint for Black, but Phaser's Canvas renderer ignores that tint. The demo
+Chrome session selected Canvas and showed both sides white despite correct game
+data. The same tint-only implementation exists in v0.5.5. A Canvas fallback fix
+and appropriate rendering coverage remain required before release acceptance.
+
+The saved-library, practice and public-profile manual journeys remain open.
+The demo preview/emulators are running for that review; production publication
+and real OAuth/device acceptance remain separate.

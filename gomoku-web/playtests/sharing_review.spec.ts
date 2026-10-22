@@ -40,9 +40,10 @@ for (const [width, fontSize] of [[320, "100%"], [640, "200%"]] as const) {
       expect(height).toBeLessThanOrEqual(lineHeight * 2 + 1);
       expect(await name.getAttribute("title")).toBe(await name.textContent());
     }
+    await expect(page.getByRole("button", { name: "Play From Here", exact: true })).toBeDisabled();
     await page.getByRole("button", { name: "Share replay", exact: true }).click();
     await expect(page.getByRole("textbox", { name: "Replay link", exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Play From Here", exact: true })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "Play From Here", exact: true })).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(2);
     await page.addScriptTag({ content: axe.source });
     const report = await page.evaluate(async () => {
@@ -74,8 +75,15 @@ test("hostile player labels remain text and sharing only exports profile links w
   expect((await exported()).b).toEqual({ k: "h", n: hostile });
   await page.getByRole("checkbox", { name: "Include available player profile links" }).check();
   expect((await exported()).b.u).toBe("public_black");
-  await page.getByRole("checkbox", { name: "Use generic player names" }).check();
+  await page.getByRole("button", { name: "Generic names", exact: true }).click();
   expect((await exported()).b).toEqual({ k: "h", n: "Player 1" });
   expect((await exported()).w).toEqual({ k: "h", n: "Player 2" });
+  const profileLinks = page.getByRole("checkbox", { name: "Include available player profile links" });
+  await expect(profileLinks).toBeDisabled();
+  await expect(profileLinks).not.toBeChecked();
+  await page.getByRole("button", { name: "As played", exact: true }).click();
+  await expect(profileLinks).toBeEnabled();
+  await expect(profileLinks).toBeChecked();
+  expect((await exported()).b.u).toBe("public_black");
   expect(dialogs).toEqual([]);
 });

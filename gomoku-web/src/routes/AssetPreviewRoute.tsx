@@ -443,7 +443,7 @@ function IconsPanel({
               <img src={assetUrl(`${manifest.icons.directory}/${icon.name}.svg`)} alt={icon.label} />
               <div className={styles.iconName}>{icon.name}</div>
               <div className={styles.meta}>
-                r{icon.row} c{icon.col} · {icon.category}
+                {icon.row !== undefined && icon.col !== undefined ? `r${icon.row} c${icon.col}` : "24 × 24"} · {icon.category}
               </div>
             </article>
           ))}

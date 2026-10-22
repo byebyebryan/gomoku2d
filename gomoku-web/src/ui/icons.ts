@@ -1,4 +1,6 @@
 import botSvgRaw from "../../assets/icons/bot.svg?raw";
+import backSvgRaw from "../../assets/icons/back.svg?raw";
+import copySvgRaw from "../../assets/icons/copy.svg?raw";
 import doubleNextSvgRaw from "../../assets/icons/double_next.svg?raw";
 import doublePrevSvgRaw from "../../assets/icons/double_prev.svg?raw";
 import homeSvgRaw from "../../assets/icons/home.svg?raw";
@@ -11,7 +13,9 @@ import pauseSvgRaw from "../../assets/icons/pause.svg?raw";
 import profileSvgRaw from "../../assets/icons/profile.svg?raw";
 import replaySvgRaw from "../../assets/icons/replay.svg?raw";
 import resetSvgRaw from "../../assets/icons/reset.svg?raw";
+import saveSvgRaw from "../../assets/icons/save.svg?raw";
 import settingsSvgRaw from "../../assets/icons/settings.svg?raw";
+import shareSvgRaw from "../../assets/icons/share.svg?raw";
 import undoSvgRaw from "../../assets/icons/undo.svg?raw";
 
 function sanitize(svg: string): string {
@@ -19,7 +23,9 @@ function sanitize(svg: string): string {
 }
 
 export const iconSvg = {
+  back: sanitize(backSvgRaw),
   bot: sanitize(botSvgRaw),
+  copy: sanitize(copySvgRaw),
   doubleNext: sanitize(doubleNextSvgRaw),
   doublePrev: sanitize(doublePrevSvgRaw),
   home: sanitize(homeSvgRaw),
@@ -32,7 +38,9 @@ export const iconSvg = {
   profile: sanitize(profileSvgRaw),
   replay: sanitize(replaySvgRaw),
   reset: sanitize(resetSvgRaw),
+  save: sanitize(saveSvgRaw),
   settings: sanitize(settingsSvgRaw),
+  share: sanitize(shareSvgRaw),
   undo: sanitize(undoSvgRaw),
 } as const;
 
