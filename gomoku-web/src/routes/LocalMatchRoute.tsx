@@ -397,7 +397,9 @@ export function LocalMatchRoute() {
                   {moveCountLabel(state.moves.length)}
                 </span>
               </div>
-              <Link className="uiHelpLink" to="/guide/">Board guide</Link>
+              <Link className="uiAction uiActionNeutral" to="/guide/">
+                <Icon name="help" /><span className="uiActionLabel">Board guide</span>
+              </Link>
             </div>
 
             <div className={styles.playerRows}>

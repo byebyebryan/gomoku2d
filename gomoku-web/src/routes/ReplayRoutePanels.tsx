@@ -120,6 +120,7 @@ export function ReplayMatchPanel({ frame, localDisplayName, match, preserveNames
 
 interface ReplayPlaybackPanelProps {
   autoplaying: boolean;
+  practiceBotLabel: string;
   frame: ReplayFrame;
   match: SavedMatchV2;
   onResume: (seed: LocalMatchResumeSeed) => void;
@@ -133,6 +134,7 @@ interface ReplayPlaybackPanelProps {
 
 export function ReplayPlaybackPanel({
   autoplaying,
+  practiceBotLabel,
   frame,
   match,
   onResume,
@@ -239,18 +241,29 @@ export function ReplayPlaybackPanel({
       </div>
 
       <div className={styles.replayActions}>
-        <button
-          className={`uiAction uiActionSecondary ${styles.resumeAction}`}
-          disabled={resumePending || !canResumeReplay(frame, replayFloor)}
-          onClick={() => {
-            onResume(resumeSeedFromFrame(match, frame));
-          }}
-          type="button"
-        >
-          <Icon className="uiIconDesktop" name="plus" />
-          <span className="uiActionLabel">Play From Here</span>
-        </button>
-        <Link className="uiHelpLink" to="/guide/">Board and replay guide</Link>
+        <div className={styles.resumeRow}>
+          <button
+            className={`uiAction uiActionSecondary ${styles.resumeAction}`}
+            disabled={resumePending || !canResumeReplay(frame, replayFloor)}
+            onClick={() => {
+              onResume(resumeSeedFromFrame(match, frame));
+            }}
+            type="button"
+          >
+            <Icon className="uiIconDesktop" name="plus" />
+            <span className="uiActionLabel">Play From Here</span>
+          </button>
+          <Link aria-label="Board and replay guide" className="uiAction uiActionNeutral uiActionIconOnly" title="Board and replay guide" to="/guide/">
+            <Icon name="help" />
+          </Link>
+        </div>
+        {canResumeReplay(frame, replayFloor) && <div className={styles.practiceSetup} role="group" aria-label="Practice setup">
+          <p className="uiSectionLabel">Practice · Move {frame.moveIndex}</p>
+          <dl className={styles.practiceSeats}>
+            <div><dt>You play</dt><dd>{frame.currentPlayer === 1 ? "Black" : "White"}</dd></div>
+            <div><dt>Bot</dt><dd>{practiceBotLabel}</dd></div>
+          </dl>
+        </div>}
       </div>
     </section>
   );

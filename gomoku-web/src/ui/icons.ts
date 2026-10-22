@@ -4,6 +4,7 @@ import copySvgRaw from "../../assets/icons/copy.svg?raw";
 import doubleNextSvgRaw from "../../assets/icons/double_next.svg?raw";
 import doublePrevSvgRaw from "../../assets/icons/double_prev.svg?raw";
 import homeSvgRaw from "../../assets/icons/home.svg?raw";
+import helpSvgRaw from "../../assets/icons/help.svg?raw";
 import humanSvgRaw from "../../assets/icons/human.svg?raw";
 import playSvgRaw from "../../assets/icons/play.svg?raw";
 import plusSvgRaw from "../../assets/icons/plus.svg?raw";
@@ -29,6 +30,7 @@ export const iconSvg = {
   doubleNext: sanitize(doubleNextSvgRaw),
   doublePrev: sanitize(doublePrevSvgRaw),
   home: sanitize(homeSvgRaw),
+  help: sanitize(helpSvgRaw),
   human: sanitize(humanSvgRaw),
   next: sanitize(nextSvgRaw),
   pause: sanitize(pauseSvgRaw),

@@ -89,8 +89,8 @@ export function ShareReplayPanel({ match, moveIndex, source, open, onClose }: {
         <label className={styles.profileOption}>
           <span className={styles.optionCopy}>
             <span className={styles.optionLabel}>Profile links</span>
-            <span className={styles.hint} id={profileHintId}>
-              {genericNames ? "Hidden with generic names." : preview?.hasProfiles ? "Include available public profiles." : "No profiles in this replay."}
+            <span className={styles.optionState} id={profileHintId}>
+              {genericNames ? "Off · Generic names" : preview?.hasProfiles ? includeProfiles ? "Included" : "Not included" : "None available"}
             </span>
           </span>
           <input className={styles.checkbox} type="checkbox" aria-label="Include available player profile links" aria-describedby={profileHintId}
@@ -108,8 +108,8 @@ export function ShareReplayPanel({ match, moveIndex, source, open, onClose }: {
             <span className={styles.playerName} title={player.name}>{player.name}</span>
             {player.kind === "human" && player.profileUid && <span className={styles.profileIcon} role="img" aria-label="Public profile link included"><Icon name="profile" /></span>}
           </div>)}
+          <p className={styles.access}>Full game · Anyone with link</p>
         </div>}
-        <p className={styles.hint}>Anyone with the link can replay the full game.</p>
         {preview?.error ? <p className={styles.error} role="alert">{preview.error}</p> : <>
           <button className={`uiAction uiActionPrimary ${styles.copyButton}`} type="button" onClick={async () => {
             if (!preview?.url) return;

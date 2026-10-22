@@ -28,7 +28,7 @@ export function SaveReplayButton({ replay, fingerprint }: { replay: PortableRepl
   const saved = bucket?.entries.some((entry) => entry.fingerprint === fingerprint);
   const cloudSaved = saved && owner !== "guest" && !bucket?.dirty && sync.loaded && sync.status === "synced";
   const sessionOnly = !!storageError && !cloudSaved;
-  let saveMessage: string;
+  let saveMessage = "";
   if (cloudSaved) {
     saveMessage = "Saved in your account library.";
     if (storageError) saveMessage += " A copy could not be stored on this device.";
@@ -37,14 +37,11 @@ export function SaveReplayButton({ replay, fingerprint }: { replay: PortableRepl
       ? "Saved for this session only. This copy will be lost when you reload or close this tab. Keep the replay link to open it again."
       : "Device storage is unavailable. Saving keeps a copy for this session only; keep the replay link to open it again.";
     if (owner !== "guest") saveMessage += " Account sync has not been confirmed. Open Saved replays in Profile to review.";
-  } else if (owner === "guest") {
-    saveMessage = saved ? "Saved on this device" : "Saving keeps a private copy on this device.";
-  } else {
-    saveMessage = saved
-      ? bucket?.dirty
+  } else if (saved) {
+    saveMessage = owner === "guest" ? "Saved on this device"
+      : bucket?.dirty
         ? "Saved on this device; account sync is pending. Open Saved replays in Profile to review."
-        : "Saved on this device; open Saved replays to confirm cloud copies."
-      : "Save a private copy to your account library.";
+        : "Saved on this device; open Saved replays to confirm cloud copies.";
   }
   return <section className={styles.panel} aria-label="Save replay">
     <button className="uiAction uiActionSecondary" type="button" disabled={saved || busy || authStatus === "loading"}
@@ -53,7 +50,10 @@ export function SaveReplayButton({ replay, fingerprint }: { replay: PortableRepl
         try { await saveReplayCopy(replay); } catch (failure) { setError(String(failure instanceof Error ? failure.message : failure)); }
         finally { setBusy(false); }
       }}><Icon name="save" /><span className="uiActionLabel">{saved ? sessionOnly ? "Saved for this session" : "Saved replay" : busy ? "Saving replay" : "Save replay"}</span></button>
-    <p>{saveMessage}</p>
+    {!saved && !storageError ? <div className={styles.saveScope}>
+      <span className="uiSectionLabel">Private copy</span>
+      <span className={styles.saveTarget}>{owner === "guest" ? "This device" : "Account library"}</span>
+    </div> : <p className={storageError || (owner !== "guest" && !cloudSaved) ? styles.saveNotice : styles.saveStatus}>{saveMessage}</p>}
     {(error || bucket?.error || storageError) && <p role="alert">{error || bucket?.error || storageError}</p>}
   </section>;
 }

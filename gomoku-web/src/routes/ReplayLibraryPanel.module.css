@@ -1,6 +1,10 @@
 .panel { display: grid; gap: 12px; min-width: 0; padding: 16px; overflow-wrap: anywhere; }
 .panel h2, .panel p, .entry p { margin: 0; }
 .panel h2 { font-family: var(--font-display); }
+.saveScope { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; }
+.saveTarget { font-family: var(--font-display); font-size: var(--type-label); text-transform: uppercase; }
+.saveStatus { color: var(--accent-strong); font-family: var(--font-display); font-size: var(--type-label); line-height: 1.3; }
+.saveNotice { color: var(--text-muted); font-size: var(--type-body); line-height: 1.35; }
 .entries { display: grid; gap: 12px; list-style: none; padding: 0; margin: 0; }
 .entry { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
 .entry small { color: var(--text-muted); }

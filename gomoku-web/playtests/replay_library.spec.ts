@@ -205,7 +205,9 @@ test("playing from a shared frame creates a separate practice replay with its so
   await page.getByRole("link", { name: "Analyze" }).click();
   await expect(page).toHaveURL(/\/replay\/portable-[A-Za-z0-9_-]{43}$/);
   await expect(page.getByTestId("replay-move-count")).toHaveText("Move 9 / 9");
-  await expect(page.getByText(/first 8 moves are inherited from another game/i)).toBeVisible();
+  const practiceOrigin = page.getByRole("region", { name: "Practice origin" });
+  await expect(practiceOrigin).toContainText("Inherited");
+  await expect(practiceOrigin).toContainText("First 8 moves");
   await expect(page.getByTestId("replay-player-row-black")).toContainText("Guest");
   await expect(page.getByTestId("replay-player-row-white")).toContainText("Normal Bot");
 

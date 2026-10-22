@@ -164,3 +164,9 @@ and appropriate rendering coverage remain required before release acceptance.
 The saved-library, practice and public-profile manual journeys remain open.
 The demo preview/emulators are running for that review; production publication
 and real OAuth/device acceptance remain separate.
+
+Bryan also accepted the supporting-control refinement: the guide uses a neutral
+help button, play-from-here setup uses compact side/bot fields, private-save
+scope is a labelled row, and link visibility sits inside the recipient preview.
+Types, 23 unit tests, 60 browser scenarios across three engines and a narrow /
+enlarged-text accessibility capture passed for that increment.

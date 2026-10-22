@@ -125,7 +125,6 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
     "--timeline-escape": timelineAnalysis.escapePercent ?? "0%",
   } as React.CSSProperties;
   const replayMovePreview = nextReplayMove(match, frame.moveIndex);
-  const practiceAvailable = frame.status === "playing" && frame.moveIndex >= Math.max(4, replayFloor);
   const mediaMode = searchParams.get("media");
   const localMatchResumePath = mediaMode
     ? `/match/local?media=${encodeURIComponent(mediaMode)}`
@@ -178,6 +177,7 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
 
             <ReplayPlaybackPanel
               autoplaying={autoplaying}
+              practiceBotLabel={botLabel(settings.botConfig)}
               frame={frame}
               match={match}
               onResume={async (resumeSeed) => {
@@ -200,10 +200,15 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
               timelineAnalysis={timelineAnalysis}
               timelineStyle={timelineStyle}
             />
-            {(source?.practice || practiceAvailable || branchError) && <section className={`${styles.deckSection} ${styles.practiceContext}`}>
-              {source?.practice && <p>Practice replay: the first {source.practice.inheritedPly} moves are inherited from another game.</p>}
-              {practiceAvailable && <p>Practice from move {frame.moveIndex}: you play {frame.currentPlayer === 1 ? "Black" : "White"} against the selected {botLabel(settings.botConfig)} bot.</p>}
-              {branchError && <p role="alert">{branchError}</p>}
+            {(source?.practice || branchError) && <section className={`${styles.deckSection} ${styles.practiceContext}`} aria-label="Practice origin">
+              {source?.practice && <>
+                <p className="uiSectionLabel">Practice replay</p>
+                <div className={styles.metaRow}>
+                  <span className={styles.metaLabel}>Inherited</span>
+                  <span className={styles.metaValue}>First {source.practice.inheritedPly} moves</span>
+                </div>
+              </>}
+              {branchError && <p className={styles.contextError} role="alert">{branchError}</p>}
             </section>}
             <section className={`${styles.deckSection} ${styles.sharingSection}`}>
               <button className="uiAction uiActionSecondary" type="button" ref={shareTriggerRef} onClick={() => {
