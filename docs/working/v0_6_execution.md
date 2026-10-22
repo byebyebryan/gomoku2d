@@ -201,3 +201,22 @@ reload loss and mobile accessibility/overflow checks. Full earlier matrices and
 checked-in build/capture receipts remain evidence of the original checkpoint;
 the follow-up did not rerun the full cloud suite. No release or deployment was
 performed.
+
+## Unattended review closeout — October 22
+
+Bryan authorized a planned goal loop before the manual pass. The
+[review plan](v0_6_review_acceptance.md) and
+[acceptance report](v0_6_review_evidence/README.md) record the complete scope.
+Pushed baseline `0995af8` passed full GitHub CI. Local checkpoints `ae6364c`,
+`7f1e1a7` and `f1bc7ee` add the plan, recovery-barrier fix and Unicode/compact-label
+fixes. The primary performed this bounded review and retained four inspected
+product captures; no new delegation, UI research or infrastructure was added.
+
+Final application source `f1bc7ee`: types/build, 468 web tests, 43 rules checks,
+201 browser checks and 39 cloud journeys pass. Library C13/C14 repetitions pass
+18/18 across three fresh runs per engine. Production npm/Rust audits pass;
+backend/rules/schema/dependency byte parity is recorded separately. No known
+blocking findings remain. New commits are local, with no new push, version bump,
+tag, deployment or production data mutation. The next checkpoint is the short
+manual walkthrough in the report, with real OAuth/physical/human-accessibility
+acceptance still explicit.

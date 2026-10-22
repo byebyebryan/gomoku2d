@@ -1,0 +1,72 @@
+{
+  "recorded_at": "2026-10-22T09:27:00.635327+00:00",
+  "application_source_commit": "f1bc7ee32e2b197478eed26ada4f20ff0baea9fe",
+  "verification": {
+    "source_matches_receipt": true,
+    "ordinary_build_matches_receipt": true,
+    "emulator_build_matches_receipt": true,
+    "screenshots_match_receipt": true,
+    "owned_test_ports_closed": true,
+    "all_completion_receipts_passed": true,
+    "changed_document_relative_links_passed": true
+  },
+  "closed_ports": {
+    "8001": true,
+    "8013": true,
+    "18080": true,
+    "18081": true,
+    "19099": true,
+    "19151": true,
+    "14401": true,
+    "14501": true,
+    "9150": true,
+    "4400": true,
+    "4500": true
+  },
+  "last_run_receipts": {
+    "review-browser-final": {
+      "status": "passed",
+      "failedTests": []
+    },
+    "review-cloud-final": {
+      "status": "passed",
+      "failedTests": []
+    },
+    "review-library-races": {
+      "status": "passed",
+      "failedTests": []
+    },
+    "review-exploration-final": {
+      "status": "passed",
+      "failedTests": []
+    },
+    "review-cloud-targeted": {
+      "status": "passed",
+      "failedTests": []
+    }
+  },
+  "results": {
+    "web_test_files": 45,
+    "web_tests_passed": 468,
+    "rules_checks_passed": 43,
+    "browser_checks_passed": 201,
+    "cloud_journeys_passed": 39,
+    "library_lifecycle_repetitions_passed": 18,
+    "targeted_cloud_checks_passed": 6,
+    "exploratory_browser_checks_passed": 9,
+    "typecheck": "passed",
+    "build": "passed",
+    "production_npm_vulnerabilities": 0,
+    "cargo_audit": "passed"
+  },
+  "browser_summary": {
+    "start_time": "2026-10-22T09:15:47.187Z",
+    "duration_ms": 96152.132,
+    "expected": 201,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0,
+    "source": "Playwright CLI JSON summary emitted to stdout; no separate JSON report file was configured."
+  },
+  "scope": "Local final-source checks recorded from CLI completion and independently checked local last-run receipts. No deployment, live billing/capacity, real OAuth, physical-device or human accessibility claims."
+}

@@ -1,0 +1,63 @@
+{
+  "recorded_at": "2026-10-22T09:21:22.784034+00:00",
+  "application_source_commit": "f1bc7ee32e2b197478eed26ada4f20ff0baea9fe",
+  "pushed_baseline": "0995af835a5e81377f1270b19d0cc780dce44f36",
+  "comparison": [
+    {
+      "path": "firestore.rules",
+      "unchanged_from_pushed_baseline": true,
+      "sha256": "1208b2127a4416b315d87e06f2cba0eb1143d3c35e078b87d658929af55f825f"
+    },
+    {
+      "path": "firestore.indexes.json",
+      "unchanged_from_pushed_baseline": true,
+      "sha256": "110dc940246f9ef1aa68271ab2b0db6feeb941b8ca74918d7e7e06067a9826b1"
+    },
+    {
+      "path": "gomoku-web/src/cloud/sharing_common.ts",
+      "unchanged_from_pushed_baseline": true,
+      "sha256": "a7993bd4642ed0c57dc31f602dba86ddc7ee5d35a40ce6f2216ee48826962e9f"
+    },
+    {
+      "path": "gomoku-web/src/cloud/sharing_public.ts",
+      "unchanged_from_pushed_baseline": true,
+      "sha256": "0021a7a6195d528709d206eee8e01c99c25052134d9da693baa89618a5d8d4b2"
+    },
+    {
+      "path": "gomoku-web/src/cloud/sharing_private.ts",
+      "unchanged_from_pushed_baseline": true,
+      "sha256": "38ea8f7f6ddf7c656a7774daf95a0e69bf5f94de0470f77ca19646c8df77d489"
+    },
+    {
+      "path": "gomoku-web/src/cloud/sharing_lifecycle.ts",
+      "unchanged_from_pushed_baseline": true,
+      "sha256": "75321f6b2960dc14e1115164a6d1af272979786aa201f1439aa2580bbe218ca7"
+    },
+    {
+      "path": "gomoku-web/src/cloud/cloud_profile.ts",
+      "unchanged_from_pushed_baseline": true,
+      "sha256": "0b4be20ab8184aad39c22f13c1bf03485903fdc45f4b83f1b5bfe7e43e6606bd"
+    },
+    {
+      "path": "gomoku-web/src/match/saved_match.ts",
+      "unchanged_from_pushed_baseline": true,
+      "sha256": "9c1e52ba9f56b0cc16dd101d352b7d9138b806c06e5d35b99afd9bdec415b741"
+    },
+    {
+      "path": "gomoku-web/src/profile/local_profile_store.ts",
+      "unchanged_from_pushed_baseline": true,
+      "sha256": "8847f0bfa5dca55ad58a5c7c53be122d0279eafeed6d16a5929fc9871a8a81fe"
+    },
+    {
+      "path": "gomoku-web/package-lock.json",
+      "unchanged_from_pushed_baseline": true,
+      "sha256": "3eae1fbb8f369c968786bea675f2eeeb6098d15f6731844cece6d9a34c8b6dd2"
+    },
+    {
+      "path": "gomoku-bot-lab/Cargo.lock",
+      "unchanged_from_pushed_baseline": true,
+      "sha256": "121d5802eb56a1f79f933aa3baf326a0e1aa13ae2786809489ea36dac88e56f1"
+    }
+  ],
+  "scope": "Source byte parity. Executable rules and application tests establish runtime behavior separately; this is not deployed parity."
+}

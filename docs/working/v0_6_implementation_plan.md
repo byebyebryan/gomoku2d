@@ -227,7 +227,10 @@ mutation and claims no measured free-tier capacity.
 
 ## Next checkpoint
 
-Review the complete local candidate and its [evidence](v0_6_evidence/README.md).
+The later [unattended review](v0_6_review_acceptance.md) is complete. Follow the
+[manual walkthrough](v0_6_review_evidence/README.md#manual-walkthrough) against the
+reviewed local candidate; the report separates current evidence from the
+original [implementation receipts](v0_6_evidence/README.md).
 Release preparation may then choose a version/date, obtain authorized push and
 exact-head CI, deploy compatible rules/indexes before the web release, and run
 the public-host/account journey. This implementation goal authorizes none of

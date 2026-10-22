@@ -7,6 +7,8 @@ auto-open. [Final build identity](build_identity.json) proves that snapshot's re
 dist tree is byte-identical to the browser-qualified candidate. Later application fixes have separate
 [scoped validation below](#post-review-fixes). Implementation commits start at `e4a8a44`; see the
 [execution record](../v0_6_execution.md) and repository history for slice heads.
+The later [unattended review report](../v0_6_review_evidence/README.md) qualifies
+application source `f1bc7ee` and records its fixes, fresh checks and manual handoff.
 
 ## Original full-candidate checks
 
@@ -134,10 +136,11 @@ revision/generation writes and visibility changes without atomic page clearing.
 requires rules-first deployment, separately applied index exemptions, retained
 empty markers and a compatible cleanup UI.
 
-No push, tag, public-host deployment, production data mutation, real Google OAuth,
-physical mobile-device continuity, or human screen-reader acceptance occurred.
-Those checks remain separate release gates, with the prior explicit deferrals
-recorded as deferrals rather than passes.
+The original goal ended without a push, tag, public-host deployment, production
+data mutation, real Google OAuth, physical mobile-device continuity or human
+screen-reader acceptance. Bryan subsequently authorized pushing `0995af8`; its
+full GitHub CI passed. Later local review fixes and remaining acceptance gates
+are recorded in the newer report linked above.
 
 Final cleanup: preview, cloud preview and Auth/Firestore emulator ports 8001,
 8013, 18080, 18081 and 19099 are closed. The unintended external preview tab was

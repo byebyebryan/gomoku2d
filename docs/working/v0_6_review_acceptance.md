@@ -1,6 +1,11 @@
 # v0.6 unattended review and acceptance
 
-Owner: Bryan. Started October 22, 2026. Status: active.
+Owner: Bryan. Started October 22, 2026. Status: complete; ready for manual review.
+
+The [acceptance report and manual walkthrough](v0_6_review_evidence/README.md)
+contain the final results, selected inspected screenshots and build identity.
+Application source is `f1bc7ee`; subsequent closeout changes are documentation
+and evidence only. The new goal commits remain local and unpushed.
 
 ## Objective and boundaries
 
@@ -64,7 +69,7 @@ acceptance. Preserve unrelated work and user browser tabs.
   traced. Public/private documents are separate; inputs are bounded before
   Wasm; portable exports allowlist metadata and retain untrusted provenance.
   Remaining UI/rules/cost review continues in R3/R4.
-- F1 (P1, fixed; final cloud validation pending): a failed reload changed
+- F1 (P1, fixed and validated): a failed reload changed
   `status` from conflict to error while retaining an incoming cloud snapshot.
   Ordinary Sync checked only status and could restore retained copies after
   cloud clear without explicit merge. A late failed sync could similarly
@@ -102,8 +107,23 @@ acceptance. Preserve unrelated work and user browser tabs.
   the implemented families. Fresh emulator rules/SDK-operation lane passes
   43/43, including method counts, sizes and stale-write/deletion barriers.
   No rules/schema/backend implementation changes were required.
-- R5: pending. Shared sync and UI changes warrant fresh full browser/cloud lanes
-  and cloud race repetitions; Rust/bot/dependency sources remain unchanged.
+- R5: complete. Final types/build, 468 web tests, 43 rules/operation checks,
+  201 browser checks and 39 cloud journeys pass. C13/C14 library deletion/reset
+  checks pass 18/18 across three fresh runs in all three engines. The baseline's
+  45 older C4/C6/C7 repetitions remain accepted for unchanged legacy sources;
+  the new repetitions target the library behavior changed here. Production npm
+  and Rust audits pass. No known blocking defects remain after this bounded
+  review. Real OAuth/devices/human accessibility and deployment remain separate.
+
+## Outcome
+
+Three findings were resolved in scope: the P1 cleanup review-barrier bypass,
+the P2 Unicode input mismatch and P2 replay-card expansion. No backend/schema,
+Rust/bot, dependency, release-version or production changes were needed. Final
+evidence distinguishes the successful pushed baseline CI from local final-source
+acceptance. The primary inspected the selected runtime captures; source/bundle
+hashes and unchanged compatibility inputs are recorded. Owned previews and
+emulators are stopped at closeout. No user browser tabs were created by this goal.
 
 ## Manual handoff target
 
