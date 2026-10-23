@@ -5,11 +5,6 @@ import { useStore } from "zustand";
 import { useDocumentTitle } from "../app/useDocumentTitle";
 import { cloudAuthStore } from "../cloud/auth_store";
 import { cloudHistoryStore } from "../cloud/cloud_history_store";
-import {
-  type CloudArchivedMatchStatsV1,
-  type CloudMatchHistory,
-  type CloudMatchSummaryV1,
-} from "../cloud/cloud_profile";
 import { cloudProfileStore } from "../cloud/cloud_profile_store";
 import { clearSharingData } from "../cloud/sharing_lifecycle";
 import { loadPrivateLibrary, savePrivateLibrary } from "../cloud/sharing_private";
@@ -17,16 +12,18 @@ import { replayLibraryStore } from "../replay/replay_library_store";
 import { replayLibrarySync } from "../replay/replay_library_sync";
 import { cloudPromotionStore } from "../cloud/cloud_promotion_store";
 import {
-  matchUserSide,
   savedMatchPlayerForSide,
-  savedMatchPlayers,
-  savedMatchWinningSide,
   type SavedMatchV2,
   type SavedMatchSide,
 } from "../match/saved_match";
-import { localProfileStore, type LocalProfileMatchHistory } from "../profile/local_profile_store";
+import { localProfileStore } from "../profile/local_profile_store";
 import { createDefaultProfileSettings } from "../profile/profile_settings";
 import { useActiveHistory } from "../profile/use_active_history";
+import {
+  playerSideForMatch as historyLocalSide,
+  playerResultForMatch as historyResultLabel,
+  playerStatsFromHistory,
+} from "../profile/player_stats";
 import { replayPlayerName, variantLabel } from "../replay/local_replay";
 import { clearReplayAnalysisCache } from "../replay/replay_analysis_cache";
 import { Icon } from "../ui/Icon";
@@ -52,117 +49,7 @@ interface HistorySyncStatus {
   tone: HistorySyncTone;
 }
 
-interface HistoryStats {
-  draws: number;
-  losses: number;
-  matches: number;
-  wins: number;
-}
-
 const HISTORY_VISIBLE_BATCH_SIZE = 16;
-
-function historyLocalSide(match: SavedMatchV2, identity: HistoryIdentity): SavedMatchSide | null {
-  const localSide = matchUserSide(match, identity);
-  if (localSide) {
-    return localSide;
-  }
-
-  return savedMatchPlayers(match).find(({ player }) => player.kind === "human")?.side ?? null;
-}
-
-function historyResultLabel(
-  match: SavedMatchV2,
-  identity: HistoryIdentity,
-): "Win" | "Loss" | "Draw" {
-  if (match.status === "draw") {
-    return "Draw";
-  }
-
-  return savedMatchWinningSide(match) === historyLocalSide(match, identity) ? "Win" : "Loss";
-}
-
-function emptyHistoryStats(): HistoryStats {
-  return {
-    draws: 0,
-    losses: 0,
-    matches: 0,
-    wins: 0,
-  };
-}
-
-function addHistoryStats(target: HistoryStats, source: HistoryStats): void {
-  target.draws += source.draws;
-  target.losses += source.losses;
-  target.matches += source.matches;
-  target.wins += source.wins;
-}
-
-function statsFromReplayMatches(matches: SavedMatchV2[], identity: HistoryIdentity): HistoryStats {
-  const stats = emptyHistoryStats();
-
-  for (const match of matches) {
-    stats.matches += 1;
-    const result = historyResultLabel(match, identity);
-    if (result === "Win") {
-      stats.wins += 1;
-    } else if (result === "Loss") {
-      stats.losses += 1;
-    } else {
-      stats.draws += 1;
-    }
-  }
-
-  return stats;
-}
-
-function statsFromSummaryMatches(
-  summaries: CloudMatchSummaryV1[],
-  replayIds: Set<string>,
-): HistoryStats {
-  const stats = emptyHistoryStats();
-
-  for (const summary of summaries) {
-    if (replayIds.has(summary.id)) {
-      continue;
-    }
-
-    stats.matches += 1;
-    if (summary.outcome === "win") {
-      stats.wins += 1;
-    } else if (summary.outcome === "loss") {
-      stats.losses += 1;
-    } else {
-      stats.draws += 1;
-    }
-  }
-
-  return stats;
-}
-
-function statsFromArchive(archive: CloudArchivedMatchStatsV1): HistoryStats {
-  return {
-    draws: archive.totals.draws,
-    losses: archive.totals.losses,
-    matches: archive.totals.matches,
-    wins: archive.totals.wins,
-  };
-}
-
-function statsFromMatchHistory(input: {
-  identity: HistoryIdentity;
-  replayHistory: SavedMatchV2[];
-  sourceHistory: CloudMatchHistory | LocalProfileMatchHistory | null;
-}): HistoryStats {
-  const stats = statsFromReplayMatches(input.replayHistory, input.identity);
-  if (!input.sourceHistory) {
-    return stats;
-  }
-
-  const replayIds = new Set(input.replayHistory.map((match) => match.id));
-  addHistoryStats(stats, statsFromSummaryMatches(input.sourceHistory.summaryMatches, replayIds));
-  addHistoryStats(stats, statsFromArchive(input.sourceHistory.archivedStats));
-  return stats;
-}
 
 function historyOpponentLabel(
   match: SavedMatchV2,
@@ -400,7 +287,7 @@ export function ProfileRoute() {
     localProfileId: profile?.id,
     profileUid: cloudAuth.status === "signed_in" ? cloudAuth.user?.uid : null,
   };
-  const stats = statsFromMatchHistory({
+  const stats = playerStatsFromHistory({
     identity: historyIdentity,
     replayHistory: history,
     sourceHistory,
