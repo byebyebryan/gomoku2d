@@ -4,8 +4,9 @@ Pixel-style SVG icon pack for the outer DOM shell.
 
 This folder is built around [icon_sheet.png](./icon_sheet.png), which is now the
 canonical source sheet for the original 32 icons. Those SVGs are direct `24x24`
-cell conversions of that sheet. The `share`, `copy`, and `save` additions are
-standalone SVGs on the same grid; they are not cells in the original sheet.
+cell conversions of that sheet. Share, Copy, Save, Publish, Sign in, Sign out,
+Trash, Sync and Exit are standalone SVGs on the same grid; they are not cells
+in the original sheet. The cloud proposal is deferred and excluded.
 
 ## Files
 
@@ -52,6 +53,11 @@ The sharing additions use the same integer rectangle runs, two-pixel outer
 gutter, transparent background and monochrome fill as the original pack.
 `share` is horizontally symmetric, including its arrow and tray. `save` is a
 floppy disk with a clipped upper-right corner and separate shutter/label areas.
+`publish` uses the selected globe. The account pair uses the same fixed frame:
+`sign_out` is Share rotated clockwise, and `sign_in` reverses only its arrow.
+`trash` uses a two-pixel lid and bin, `sync` opposing arrows, and `exit` the
+selected power symbol derived from Circle. Exit is available in the pack for a
+future quit action; account sign-out uses its distinct account icon.
 
 The SVGs are authored as:
 

@@ -99,7 +99,7 @@ tab loads owner data; public visits must not initialise private state.
 
 The owner controls follow General Settings: grouped sections with explanatory
 labels on the left and bounded fields/actions on the right, stacking at narrow
-card widths. Publish replay uses the existing profile icon and replaces the
+card widths. Publish replay uses the dedicated globe icon and replaces the
 whole replay sidebar, matching Share replay's entry animation, paused playback,
 Back/Escape dismissal and focus/scroll restoration. Its compact publication
 preview shows the destination profile, title, opening move and both players.

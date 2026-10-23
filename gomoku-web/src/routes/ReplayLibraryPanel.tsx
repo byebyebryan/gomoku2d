@@ -77,7 +77,7 @@ function ReplayLibraryEntries() {
         return <li className={styles.entry} key={entry.fingerprint}>
           <div><p>{description}</p><small>{new Date(entry.saved_at).toLocaleString()}</small></div>
           <div className={styles.actions}>
-            <Link className="uiAction uiActionSecondary" to={`/replay/portable-${entry.fingerprint}`}>Inspect replay</Link>
+            <Link className="uiAction uiActionSecondary" to={`/replay/portable-${entry.fingerprint}`}><Icon name="replay" />Inspect replay</Link>
             <button className="uiAction uiActionNeutral" type="button" onClick={async () => {
               setError("");
               try {
@@ -86,7 +86,7 @@ function ReplayLibraryEntries() {
                   await replayLibrarySync.sync(owner.slice(5));
                 }
               } catch (failure) { setError(failure instanceof Error ? failure.message : "Removal could not sync."); }
-            }}>Remove replay</button>
+            }}><Icon name="trash" />Remove replay</button>
           </div>
         </li>;
       })}
@@ -122,9 +122,9 @@ export function ReplayLibraryPanel() {
         : sync.status === "loading" ? "Loading account library…"
         : sync.status === "syncing" ? "Syncing account library…" : "Local copies have not been confirmed in the cloud."}</p>
       <div className={styles.actions}>
-        <button className="uiAction uiActionSecondary" type="button" disabled={busy} onClick={() => void run(() => replayLibrarySync.reload(uid))}>Reload cloud library</button>
-        <button className="uiAction uiActionSecondary" type="button" disabled={busy || sync.hasIncoming || sync.status === "conflict"} onClick={() => void run(() => replayLibrarySync.sync(uid))}>Sync saved replays</button>
-        {guestCount > 0 && <button className="uiAction uiActionNeutral" type="button" disabled={busy || sync.hasIncoming || sync.status === "conflict"} onClick={() => void run(importGuestReplayCopies)}>Copy guest replays into account ({guestCount})</button>}
+        <button className="uiAction uiActionSecondary" type="button" disabled={busy} onClick={() => void run(() => replayLibrarySync.reload(uid))}><Icon name="reset" />Reload cloud library</button>
+        <button className="uiAction uiActionSecondary" type="button" disabled={busy || sync.hasIncoming || sync.status === "conflict"} onClick={() => void run(() => replayLibrarySync.sync(uid))}><Icon name="sync" />Sync saved replays</button>
+        {guestCount > 0 && <button className="uiAction uiActionNeutral" type="button" disabled={busy || sync.hasIncoming || sync.status === "conflict"} onClick={() => void run(importGuestReplayCopies)}><Icon name="copy" />Copy guest replays into account ({guestCount})</button>}
       </div>
       {sync.hasIncoming && <div className={styles.conflict}>
         <p>Review library changes: {bucket?.entries.length ?? 0} local copies; {sync.incoming?.entries.length ?? 0} cloud copies.</p>

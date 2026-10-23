@@ -432,7 +432,7 @@ export function PublicProfileManager({
                           <span>{entry.title}</span>
                           <button className="uiAction uiActionDanger" type="button" disabled={pendingAction !== null}
                             onClick={() => void unpublish(page, entry.fingerprint)}>
-                            {pendingAction === entry.fingerprint ? "Removing" : "Unpublish"}
+                            <Icon name="minus" />{pendingAction === entry.fingerprint ? "Removing" : "Unpublish"}
                           </button>
                         </li> : null)}
                       </ul> : <p className={styles.emptyState}>No games are currently published.</p>

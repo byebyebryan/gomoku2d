@@ -31,6 +31,9 @@ their own section.
 - Align public-profile controls with General Settings and give replay publishing
   the same full-sidebar interaction and compact preview as Share replay.
 
+- Add matching pixel icons for replay publication, account sign-in/out, deletion
+  and synchronization, plus the selected power/quit glyph in the icon pack.
+
 ### Repository
 
 - Add versioned replay/library contracts, additive Firestore rules, three-engine

@@ -1,57 +1,17 @@
 {
-  "scope": "Draft source geometry, not app integration",
+  "scope": "Accepted canonical icon source geometry; cloud deferred",
   "icons": {
-    "cloud": {
-      "sha256": "ce3d1f0accddb010cbf8fc4bee57c2d4fcb917c693aebe0219b6a5acce6978c5",
-      "margins_ltrb": [
-        2,
-        5,
-        2,
-        5
-      ],
-      "filled_pixels": 98,
-      "horizontal_symmetry": false,
-      "content_size": [
-        20,
-        14
-      ],
-      "previous_file": "cloud_previous.svg",
-      "added_pixels": 10,
-      "removed_pixels": 5
-    },
-    "cloud_previous": {
-      "sha256": "d805dddedc107670934d19ad5b91beaad27c4bd49ca6ac09667c4b1e635b0c1d",
-      "margins_ltrb": [
-        2,
-        5,
-        2,
-        5
-      ],
-      "filled_pixels": 93
-    },
-    "exit": {
-      "sha256": "ef1a727f5310e91d47ff52f8e3072697ec44ef7c0686686e7aa69a8fed667e8e",
+    "publish": {
+      "sha256": "c70d4cae4469345452918e161fa8b701d7b4f51f4b95279737b05b867688a019",
       "margins_ltrb": [
         2,
         2,
         2,
         2
       ],
-      "filled_pixels": 174,
+      "filled_pixels": 196,
       "horizontal_symmetry": true,
-      "derived_from": "original circle contour, opened at top, with centered four-pixel power stem"
-    },
-    "sign_out": {
-      "sha256": "2ac57e81bcd8f02ab4e991fe1920e36265d7cf4c8e1b9ced9c5a41a17ebaf5fa",
-      "margins_ltrb": [
-        2,
-        2,
-        2,
-        2
-      ],
-      "filled_pixels": 160,
-      "vertical_symmetry": true,
-      "derived_from": "share, rotated 90 degrees clockwise"
+      "vertical_symmetry": true
     },
     "sign_in": {
       "sha256": "68ac9701f65122fd6abdb7bde3604bff2bb5bba8c8624e40529523e78aa4d9ea",
@@ -64,6 +24,18 @@
       "filled_pixels": 160,
       "vertical_symmetry": true,
       "fixed_frame_shared_with": "sign_out"
+    },
+    "sign_out": {
+      "sha256": "2ac57e81bcd8f02ab4e991fe1920e36265d7cf4c8e1b9ced9c5a41a17ebaf5fa",
+      "margins_ltrb": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "filled_pixels": 160,
+      "vertical_symmetry": true,
+      "derived_from": "share, rotated 90 degrees clockwise"
     },
     "trash": {
       "sha256": "3042595eb7eac9728033309b2d5492a4b2552186b421c6f9ba54488f934d9e28",
@@ -87,17 +59,17 @@
       "filled_pixels": 152,
       "rotation_180_symmetry": true
     },
-    "publish": {
-      "sha256": "c70d4cae4469345452918e161fa8b701d7b4f51f4b95279737b05b867688a019",
+    "exit": {
+      "sha256": "ef1a727f5310e91d47ff52f8e3072697ec44ef7c0686686e7aa69a8fed667e8e",
       "margins_ltrb": [
         2,
         2,
         2,
         2
       ],
-      "filled_pixels": 196,
+      "filled_pixels": 174,
       "horizontal_symmetry": true,
-      "vertical_symmetry": true
+      "derived_from": "original circle contour, opened at top, with centered four-pixel power stem"
     },
     "share": {
       "sha256": "5bef75b55f7aed217e66664012737b7963d7b23e4e41badcd28627f4662b4f4f",

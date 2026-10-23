@@ -78,7 +78,7 @@ was rerun alone in all engines; the temporary target has since been stopped.
 The subsequent visual pass (`81922a4`) follows General Settings' grouped label/control
 rows, stacking by available card width. Public identity, profile links,
 statistics and publication controls have bounded actions and existing icons.
-Publish replay uses the existing profile icon and swaps the whole replay
+Publish replay uses the dedicated globe icon and swaps the whole replay
 sidebar, sharing the Share replay styling, entry motion, paused playback and
 Back/Escape return with focus and scroll restoration. A compact preview replaces
 paragraphs with the destination, title, opening move and black/white players;
@@ -121,6 +121,20 @@ passed, and the emulator preview build passed. C11/C14/C15 passed 9/9 across
 Chromium, Firefox and WebKit; the eighteen [current audits](accessibility.json)
 have zero violations and incomplete checks. Owner desktop/mobile captures were
 refreshed; raw artifacts are in ignored `gomoku-web/test-results/v061-stats-buttons`.
+
+## Accepted icon integration
+
+The reviewed Publish, Sign in/out, Trash, Sync and power-style Exit icons are
+canonical assets and appear in Visuals. Publish uses the globe; account entry /
+exit, deletion and account-library sync use their dedicated icons. Existing
+Replay, Copy, Reset and Minus complete related controls. Exit is registered for
+future quit controls. Cloud is deferred and removed from the current pack and
+review gallery.
+
+App/scripts/tools type checks, the production and emulator builds, 60 affected
+route component tests and 9 C11/C14/C15 journeys passed. Eighteen [current
+audits](accessibility.json) have zero violations and incomplete checks. Raw
+artifacts are under ignored `gomoku-web/test-results/v061-accepted-icons`.
 
 ## Contract review
 

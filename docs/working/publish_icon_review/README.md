@@ -1,72 +1,51 @@
-# Publish and account action icon review
+# Accepted action icon additions
 
-The Publish globe and power-style Exit were selected by the user. Sign in,
-Sign out, Trash, Sync and Cloud are additional visual proposals. This is an asset review: no runtime icon
-registration, canonical manifest change, application rebuild or cloud-data
-mutation is included.
+The six retained icons are now canonical assets under `gomoku-web/assets/icons/`:
+Publish, Sign in, Sign out, Trash, Sync and Exit. Their SVG bytes match the
+reviewed versions. Cloud is deferred; its SVG drafts and comparison rows were
+removed. Prior experiments remain available in Git history.
 
-## Geometry and visual treatment
+## Integration
 
-All seven additions are transparent 24×24 currentColor SVGs made of integer
-rectangle runs. Cloud uses a naturally wide 20×14 silhouette, centered with
-2 / 5 / 2 / 5 margins; the other additions have two-pixel margins on all sides.
+The runtime icon registry and the Visuals manifest include all six additions.
+Publish replaces the ambiguous Profile icon on the replay trigger, panel heading
+and confirmation action. Sign in/out use the account pair. Delete Cloud and
+private replay removal use Trash; explicit account-library sync uses Sync.
+Existing Replay, Copy, Reset and Minus icons complete related controls. Minus
+marks Unpublish because that removes a listing rather than the private game.
+The selected power-style Exit is available in the pack; no new quit action was
+introduced.
 
-- Publish retains the selected globe unchanged: stepped Circle silhouette,
-  two-pixel meridians and equator, symmetry on both axes.
-- Sign out is the approved Share mask rotated exactly 90 degrees clockwise.
-  Sign in retains exactly that C-shaped frame and reverses only the arrow
-  within the same bounds. Both are vertically symmetric.
-- Trash has a two-pixel handle, lid, body and inner bars, with horizontal
-  symmetry and a one-pixel gap separating the lid from the bin.
-- Sync has two opposing arrows and short return tails, with two-pixel shafts
-  and 180-degree rotational symmetry.
-- Cloud has asymmetric rounded lobes: one larger hump on the right and a
-  smaller puff on the left, with a two-pixel outline and flat two-pixel base.
-  The latest cleanup removes the one-pixel hooked join, gives the small lobe
-  a defined cap, compensates diagonal runs to match the straight stroke weight,
-  and uses matching one-pixel steps into the bottom corners. Its proportions
-  retain the same centered 20×14 bounds. `cloud_previous.svg` preserves the exact
-  prior draft for adjacent before/after inspection.
-- The selected Exit uses a power/quit symbol following feedback that the doorway
-  duplicated Sign out. It reuses the original Circle mask, opens the top arc and
-  adds a centered four-pixel stem. It is horizontally symmetric. No product
-  action or sign-out behavior has changed.
+The original 32-icon sheet stays unchanged. Every added glyph uses a transparent
+24×24 currentColor SVG, integer rectangle runs and two-pixel margins.
+Sign out is Share rotated clockwise; Sign in reverses only its arrow within the
+fixed frame. Publish and Exit retain the selected circle-derived shapes.
 
-`index.html` compares fifteen actual source SVGs: the five proposals, selected
-Publish and Exit icons, prior Cloud, and existing Share, Save, Profile, Reset,
-Copy, Circle and Home.
-It offers 1× and 2× samples plus a 10× pixel grid, centre axes, light/dark
-surfaces and grid visibility controls. Existing Reset retains its original
-margins; the page reports each source's measured margins rather than changing
-old assets to match the additions.
+## Comparison and validation
 
-`comparison.png` is the full comparison; `new-icons.png` and
-`new-icons-light.png` show the top six cards in dark and light surfaces.
+`index.html` compares thirteen canonical source SVGs, with native 1×/2× samples,
+a 10× pixel grid, centre axes, and dark/light surface controls. Existing Reset
+retains its original margins. `new-icons.png` and `new-icons-light.png` show the
+six accepted additions; `comparison.png` includes the reference icons.
 
-## Validation and regeneration
+`geometry.json` verifies bounds, integer rectangles, symmetry and the account /
+power source derivations. `render.json` compares the preview against current
+canonical source masks and validates exact raster pixels at 1×/2×/10×, controls
+and 320px reflow. `preview.json` records Carbon served-byte verification.
 
-`geometry.json` records source hashes, margins, filled pixels and symmetry.
-The generator also proves both account masks derive from the same Share frame
-and arrow. `render.json` records exact browser raster readback at 1×/2×/10× for
-all fifteen assets, working grid/theme controls, no preview load errors and no
-horizontal overflow at 320px. Dark and light renders were visually inspected.
-The renderer compares the preview's pixel masks to current source SVG files
-before capturing, using the generated HTML hash to identify the preview revision.
-`preview.json` verifies Carbon serves identical source/review bytes.
+The integration passed app/scripts/tools type checks, the production and manual
+emulator builds, 60 affected route component tests, and 9 C11/C14/C15 journeys
+across Chromium, Firefox and WebKit. Eighteen current accessibility reports have
+zero violations and incomplete checks. Raw cloud artifacts are under ignored
+`gomoku-web/test-results/v061-accepted-icons`.
 
-Regenerate the HTML and geometry receipt from the repository root with:
+Rebuild the comparison from the repository root with:
 
 ```sh
 rtk proxy python3 docs/working/publish_icon_review/build_review.py
 ```
 
-The browser renderer is `render_review.mjs`. Run it with the repository's pinned
-Playwright container, matching read-only browser cache and host networking,
-after copying the HTML and source SVGs to the running local preview directory.
-
-The review is available through the existing Starship/Carbon preview at
-<http://127.0.0.1:8013/icon-review/actions/>. The earlier Publish review URL
-continues to work. The HTML, source SVGs and PNGs are copied under both
-`dist-cloud/icon-review/actions/` and `dist-cloud/icon-review/publish/`; the
-existing comparison index links to Action icon drafts. Existing app files,
-approved source icons and emulator demo data are untouched.
+Run `render_review.mjs` in the pinned Playwright container after copying the
+comparison HTML to the running local preview. Both
+<http://127.0.0.1:8013/icon-review/actions/> and the earlier Publish URL remain
+available. Canonical assets are also published through `/visuals/`.

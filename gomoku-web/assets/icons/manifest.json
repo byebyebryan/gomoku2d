@@ -277,6 +277,42 @@
       "category": "action",
       "label": "Save",
       "note": "Standalone 24x24 addition: floppy disk."
+    },
+    {
+      "name": "publish",
+      "category": "action",
+      "label": "Publish",
+      "note": "Standalone 24x24 addition: Globe: publish a replay to the public catalog."
+    },
+    {
+      "name": "sign_in",
+      "category": "action",
+      "label": "Sign in",
+      "note": "Standalone 24x24 addition: Inward arrow in the fixed account frame."
+    },
+    {
+      "name": "sign_out",
+      "category": "action",
+      "label": "Sign out",
+      "note": "Standalone 24x24 addition: Outward arrow in the fixed account frame; a quarter-turn of Share."
+    },
+    {
+      "name": "trash",
+      "category": "action",
+      "label": "Trash",
+      "note": "Standalone 24x24 addition: Delete a private replay copy or cloud data."
+    },
+    {
+      "name": "sync",
+      "category": "action",
+      "label": "Sync",
+      "note": "Standalone 24x24 addition: Opposing arrows for explicit account-library synchronization."
+    },
+    {
+      "name": "exit",
+      "category": "action",
+      "label": "Exit",
+      "note": "Standalone 24x24 addition: Power / quit symbol using the original Circle contour."
     }
   ]
 }

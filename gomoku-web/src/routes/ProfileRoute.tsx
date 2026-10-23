@@ -555,7 +555,7 @@ export function ProfileRoute() {
                   }}
                   type="button"
                 >
-                  <span className="uiActionLabel">Sign out</span>
+                  <Icon name="signOut" /><span className="uiActionLabel">Sign out</span>
                 </button>
               ) : (
                 <button
@@ -566,6 +566,7 @@ export function ProfileRoute() {
                   }}
                   type="button"
                 >
+                  <Icon name="signIn" />
                   <span className="uiActionLabel">
                     {cloudAuth.status === "loading" ? "Checking" : "Sign in"}
                   </span>
@@ -591,6 +592,7 @@ export function ProfileRoute() {
                       }}
                       type="button"
                     >
+                      <Icon name={confirmingProfileAction === "delete" ? "trash" : "reset"} />
                       <span className="uiActionLabel">{confirmationButtonText}</span>
                     </button>
                     <button
@@ -613,7 +615,7 @@ export function ProfileRoute() {
                       }}
                       type="button"
                     >
-                      <span className="uiActionLabel">Delete Cloud</span>
+                      <Icon name="trash" /><span className="uiActionLabel">Delete Cloud</span>
                     </button>
                   ) : null}
                 </div>

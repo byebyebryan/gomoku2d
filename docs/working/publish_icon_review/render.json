@@ -2,37 +2,7 @@
   "browser": "156.0.8078.4",
   "raster": [
     {
-      "icon": "Cloud",
-      "scales": [
-        1,
-        2,
-        10
-      ],
-      "exact_pixels": true,
-      "current_source": true
-    },
-    {
-      "icon": "Cloud Previous",
-      "scales": [
-        1,
-        2,
-        10
-      ],
-      "exact_pixels": true,
-      "current_source": true
-    },
-    {
-      "icon": "Exit",
-      "scales": [
-        1,
-        2,
-        10
-      ],
-      "exact_pixels": true,
-      "current_source": true
-    },
-    {
-      "icon": "Sign Out",
+      "icon": "Publish",
       "scales": [
         1,
         2,
@@ -43,6 +13,16 @@
     },
     {
       "icon": "Sign In",
+      "scales": [
+        1,
+        2,
+        10
+      ],
+      "exact_pixels": true,
+      "current_source": true
+    },
+    {
+      "icon": "Sign Out",
       "scales": [
         1,
         2,
@@ -72,7 +52,7 @@
       "current_source": true
     },
     {
-      "icon": "Publish",
+      "icon": "Exit",
       "scales": [
         1,
         2,

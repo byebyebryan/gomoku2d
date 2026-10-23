@@ -223,7 +223,7 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
               <button className="uiAction uiActionSecondary" type="button" ref={shareTriggerRef}
                 onClick={() => openSidebar("share")}><Icon name="share" /><span className="uiActionLabel">Share replay</span></button>
               {canPublish && <button className="uiAction uiActionSecondary" type="button" ref={publishTriggerRef}
-                onClick={() => openSidebar("publish")}><Icon name="profile" /><span className="uiActionLabel">Publish replay</span></button>}
+                onClick={() => openSidebar("publish")}><Icon name="publish" /><span className="uiActionLabel">Publish replay</span></button>}
             </section>
             {source && fingerprint && <SaveReplayButton replay={source} fingerprint={fingerprint} />}
           </div>

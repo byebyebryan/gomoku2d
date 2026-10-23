@@ -255,7 +255,7 @@ export function PublishReplayPanel({
       <button className={`uiAction uiActionNeutral ${styles.back}`} type="button" ref={backRef} onClick={onClose}>
         <Icon name="back" /><span className="uiActionLabel">Back to replay</span>
       </button>
-      <div className={styles.heading}><Icon name="profile" /><h2>Publish replay</h2></div>
+      <div className={styles.heading}><Icon name="publish" /><h2>Publish replay</h2></div>
       {open && (
         <div className={styles.body}>
           {publisherForCurrentUid?.status === "loading" && <p role="status">Loading your public profile.</p>}
@@ -313,7 +313,7 @@ export function PublishReplayPanel({
                   </div>
                   <button className="uiAction uiActionPrimary" type="button" disabled={pending || !title.trim()}
                     onClick={() => void publish()}>
-                    <Icon name="profile" />{pending ? "Publishing replay" : "Publish this replay"}
+                    <Icon name="publish" />{pending ? "Publishing replay" : "Publish this replay"}
                   </button>
                   <p className={styles.note}>Anyone can copy this replay. Unpublishing removes the listing; shared copies remain.</p>
                   <p className={styles.access}>Casual record · Unverified result</p>

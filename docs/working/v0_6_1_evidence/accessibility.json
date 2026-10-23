@@ -1,6 +1,6 @@
 {
-  "scope": "Public statistics Off/On segmented buttons. C11/C14/C15 passed in all three engines, including removal without ready history (component coverage), private-reset preservation, and owner/publishing reflow at 200% text. Automated checks do not establish human screen-reader/device acceptance.",
-  "raw_directory": "gomoku-web/test-results/v061-stats-buttons",
+  "scope": "Accepted icon integration: C11/C14/C15 passed 9/9 across all three engines. App component suites passed 60/60. Browser audits do not establish human screen-reader/device acceptance.",
+  "raw_directory": "gomoku-web/test-results/v061-accepted-icons",
   "reports": [
     {
       "engine": "chromium",

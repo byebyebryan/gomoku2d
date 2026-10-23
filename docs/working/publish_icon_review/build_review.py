@@ -7,20 +7,16 @@ import xml.etree.ElementTree as ET
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
-PROPOSALS = {"sign_in", "sign_out", "trash", "sync", "cloud"}
-SELECTED = {"publish", "exit"}
-LOCAL = PROPOSALS | SELECTED | {"cloud_previous"}
-NAMES = ["cloud", "cloud_previous", "exit", "sign_out", "sign_in", "trash", "sync", "publish", "share",
+SELECTED = {"publish", "sign_in", "sign_out", "trash", "sync", "exit"}
+NAMES = ["publish", "sign_in", "sign_out", "trash", "sync", "exit", "share",
          "save", "profile", "reset", "copy", "circle", "home"]
 NOTES = {
-    "cloud": "Refined · lobe join / diagonal curve weight",
-    "cloud_previous": "Previous draft · before curve cleanup",
-    "exit": "Selected · power / quit symbol",
-    "sign_in": "New draft · fixed C frame / inward arrow",
-    "sign_out": "New draft · fixed C frame / outward arrow",
-    "trash": "New draft · 2px lid, body and bin details",
-    "sync": "New draft · opposing arrows / return tails",
-    "publish": "Selected · globe · 2px meridians / equator",
+    "exit": "Accepted · power / quit symbol",
+    "sign_in": "Accepted · fixed C frame / inward arrow",
+    "sign_out": "Accepted · fixed C frame / outward arrow",
+    "trash": "Accepted · 2px lid, body and bin details",
+    "sync": "Accepted · opposing arrows / return tails",
+    "publish": "Accepted · globe · 2px meridians / equator",
     "share": "Current addition · 2px tray / stepped arrow",
     "save": "Current addition · 2px frame / floppy disk",
     "profile": "Original set · 2px frame / filled details",
@@ -51,12 +47,11 @@ cards = []
 receipts = {}
 masks = {}
 for name in NAMES:
-    path = HERE / f"{name}.svg" if name in LOCAL else ROOT / f"gomoku-web/assets/icons/{name}.svg"
+    path = ROOT / f"gomoku-web/assets/icons/{name}.svg"
     svg, pixels, receipt = inspect(path)
     masks[name] = pixels
-    if name in LOCAL:
-        expected = [2, 5, 2, 5] if name in {"cloud", "cloud_previous"} else [2, 2, 2, 2]
-        assert receipt["margins_ltrb"] == expected, name
+    if name in SELECTED:
+        assert receipt["margins_ltrb"] == [2, 2, 2, 2], name
     if name == "publish":
         assert pixels == {(23 - x, y) for x, y in pixels}
         assert pixels == {(x, 23 - y) for x, y in pixels}
@@ -70,18 +65,15 @@ for name in NAMES:
     if name == "exit":
         assert pixels == {(23 - x, y) for x, y in pixels}
         receipt.update(horizontal_symmetry=True)
-    if name == "cloud":
-        assert pixels != {(23 - x, y) for x, y in pixels}
-        receipt.update(horizontal_symmetry=False)
     if name == "sync":
         assert pixels == {(23 - x, 23 - y) for x, y in pixels}
         receipt.update(rotation_180_symmetry=True)
     receipts[name] = receipt
     svg = re.sub(r"<title>.*?</title>\s*", "", svg, flags=re.S).replace('<svg ', '<svg aria-hidden="true" ')
     label = name.replace("_", " ").title()
-    href = f"{name}.svg" if name in LOCAL else f"/assets/icons/{name}.svg"
+    href = f"/assets/icons/{name}.svg"
     margins = " / ".join(map(str, receipt["margins_ltrb"]))
-    state = "candidate" if name in PROPOSALS else "accepted" if name in SELECTED else ""
+    state = "accepted" if name in SELECTED else ""
     cards.append(f'''<article class="card {state}" id="{name}" aria-labelledby="{name}-title">
       <h2 id="{name}-title">{label}</h2><p class="note">{NOTES[name]}</p>
       <div class="sizes"><div><span>1×</span><div class="native">{svg}</div></div><div><span>2×</span><div class="double">{svg}</div></div></div>
@@ -103,10 +95,6 @@ power_ring = {p for p in masks["circle"] if not (p[1] <= 8 and 7 <= p[0] <= 16)}
 power_stem = {(x, y) for x in range(10, 14) for y in range(2, 12)}
 assert masks["exit"] == power_ring | power_stem
 receipts["exit"]["derived_from"] = "original circle contour, opened at top, with centered four-pixel power stem"
-receipts["cloud"]["content_size"] = [20, 14]
-receipts["cloud"]["previous_file"] = "cloud_previous.svg"
-receipts["cloud"]["added_pixels"] = len(masks["cloud"] - masks["cloud_previous"])
-receipts["cloud"]["removed_pixels"] = len(masks["cloud_previous"] - masks["cloud"])
 html = '''<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Action icons — pixel comparison</title><style>
@@ -127,7 +115,6 @@ button { font:inherit; padding:8px 14px; background:var(--panel); color:var(--te
 button:focus-visible,a:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
 .comparison { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
 .card { display:grid; justify-items:center; align-content:start; min-width:0; padding:16px; background:var(--panel); border:1px solid var(--border); }
-.candidate { border-color:var(--accent); }
 .accepted { border-color:#5f8b82; }
 h2 { font-size:28px; margin:0; justify-self:start; }
 .note { font-size:16px; min-height:38px; justify-self:start; margin:4px 0 8px; }
@@ -148,18 +135,18 @@ footer { margin-top:20px; }
 @media(max-width:940px) { .comparison { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:620px) { body { padding:16px; } .comparison { grid-template-columns:minmax(0,1fr); } h1 { font-size:32px; } }
 </style></head><body><main>
-<nav aria-label="Icon reviews"><a href="/icon-review/">Existing icon comparison</a><a href="#cloud">Cloud</a><a href="#exit">Exit</a><a href="#sign_in">Sign in / out</a><a href="#trash">Trash</a><a href="#sync">Sync</a><a href="new-icons.png">New icon image</a><a href="new-icons-light.png">Light image</a><a href="comparison.png">Full comparison image</a></nav>
-<h1>Action icons · cloud curve refinement</h1>
+<nav aria-label="Icon reviews"><a href="/icon-review/">Existing icon comparison</a><a href="#publish">Publish</a><a href="#exit">Exit</a><a href="#sign_in">Sign in / out</a><a href="#trash">Trash</a><a href="#sync">Sync</a><a href="new-icons.png">New icon image</a><a href="new-icons-light.png">Light image</a><a href="comparison.png">Full comparison image</a></nav>
+<h1>Action icons · accepted additions</h1>
 <p>24 × 24 source pixels · 10× pixel grid · measured margins below each icon</p>
 <p>Gold lines mark the centre axes. The 1× and 2× samples show the actual SVGs without grid overlays.</p>
-<p>Cloud is shown before and after cleanup. Gold cards are proposals; teal marks the selected Publish and Exit icons.</p>
+<p>Teal cards are the accepted additions. Cloud is deferred and excluded from the icon pack.</p>
 <div class="toolbar"><button id="grid-toggle" type="button" aria-pressed="true">Grid on</button><button id="theme-toggle" type="button" aria-pressed="false">Light surface</button></div>
 <section class="comparison" aria-label="New action icons compared with current icons">''' + "".join(cards) + '''</section>
-<footer><p>Icon review only. The app controls have not changed.</p><p>Geometry uses integer rectangle runs, transparent backgrounds and currentColor. Existing icons are copied directly from their source SVGs.</p></footer>
+<footer><p>Accepted assets are registered in the app. Power / Exit is available for a future quit action.</p><p>Geometry uses integer rectangle runs, transparent backgrounds and currentColor. Existing icons are copied directly from their source SVGs.</p></footer>
 </main><script>
 document.querySelector('#grid-toggle').addEventListener('click',event=>{ const hidden=document.body.classList.toggle('no-grid'); event.currentTarget.setAttribute('aria-pressed',String(!hidden)); event.currentTarget.textContent=hidden?'Grid off':'Grid on'; });
 document.querySelector('#theme-toggle').addEventListener('click',event=>{ const light=document.body.classList.toggle('light'); event.currentTarget.setAttribute('aria-pressed',String(light)); event.currentTarget.textContent=light?'Dark surface':'Light surface'; });
 </script></body></html>'''
 (HERE / "index.html").write_text(html)
-(HERE / "geometry.json").write_text(json.dumps({"scope":"Draft source geometry, not app integration", "icons":receipts}, indent=2)+"\n")
+(HERE / "geometry.json").write_text(json.dumps({"scope":"Accepted canonical icon source geometry; cloud deferred", "icons":receipts}, indent=2)+"\n")
 print("Built comparison for " + ", ".join(NAMES))
