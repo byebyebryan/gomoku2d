@@ -7,12 +7,15 @@ import xml.etree.ElementTree as ET
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
-PROPOSALS = {"sign_in", "sign_out", "trash", "sync", "cloud", "exit"}
-NAMES = ["cloud", "exit", "sign_out", "sign_in", "trash", "sync", "publish", "share",
+PROPOSALS = {"sign_in", "sign_out", "trash", "sync", "cloud"}
+SELECTED = {"publish", "exit"}
+LOCAL = PROPOSALS | SELECTED | {"cloud_previous"}
+NAMES = ["cloud", "cloud_previous", "exit", "sign_out", "sign_in", "trash", "sync", "publish", "share",
          "save", "profile", "reset", "copy", "circle", "home"]
 NOTES = {
-    "cloud": "Revised · asymmetric lobes / flat base",
-    "exit": "Revised · power / quit alternative",
+    "cloud": "Refined · lobe join / diagonal curve weight",
+    "cloud_previous": "Previous draft · before curve cleanup",
+    "exit": "Selected · power / quit symbol",
     "sign_in": "New draft · fixed C frame / inward arrow",
     "sign_out": "New draft · fixed C frame / outward arrow",
     "trash": "New draft · 2px lid, body and bin details",
@@ -48,11 +51,11 @@ cards = []
 receipts = {}
 masks = {}
 for name in NAMES:
-    path = HERE / f"{name}.svg" if name in PROPOSALS | {"publish"} else ROOT / f"gomoku-web/assets/icons/{name}.svg"
+    path = HERE / f"{name}.svg" if name in LOCAL else ROOT / f"gomoku-web/assets/icons/{name}.svg"
     svg, pixels, receipt = inspect(path)
     masks[name] = pixels
-    if name in PROPOSALS | {"publish"}:
-        expected = [2, 5, 2, 5] if name == "cloud" else [2, 2, 2, 2]
+    if name in LOCAL:
+        expected = [2, 5, 2, 5] if name in {"cloud", "cloud_previous"} else [2, 2, 2, 2]
         assert receipt["margins_ltrb"] == expected, name
     if name == "publish":
         assert pixels == {(23 - x, y) for x, y in pixels}
@@ -76,9 +79,9 @@ for name in NAMES:
     receipts[name] = receipt
     svg = re.sub(r"<title>.*?</title>\s*", "", svg, flags=re.S).replace('<svg ', '<svg aria-hidden="true" ')
     label = name.replace("_", " ").title()
-    href = f"{name}.svg" if name in PROPOSALS | {"publish"} else f"/assets/icons/{name}.svg"
+    href = f"{name}.svg" if name in LOCAL else f"/assets/icons/{name}.svg"
     margins = " / ".join(map(str, receipt["margins_ltrb"]))
-    state = "candidate" if name in PROPOSALS else "accepted" if name == "publish" else ""
+    state = "candidate" if name in PROPOSALS else "accepted" if name in SELECTED else ""
     cards.append(f'''<article class="card {state}" id="{name}" aria-labelledby="{name}-title">
       <h2 id="{name}-title">{label}</h2><p class="note">{NOTES[name]}</p>
       <div class="sizes"><div><span>1×</span><div class="native">{svg}</div></div><div><span>2×</span><div class="double">{svg}</div></div></div>
@@ -101,6 +104,9 @@ power_stem = {(x, y) for x in range(10, 14) for y in range(2, 12)}
 assert masks["exit"] == power_ring | power_stem
 receipts["exit"]["derived_from"] = "original circle contour, opened at top, with centered four-pixel power stem"
 receipts["cloud"]["content_size"] = [20, 14]
+receipts["cloud"]["previous_file"] = "cloud_previous.svg"
+receipts["cloud"]["added_pixels"] = len(masks["cloud"] - masks["cloud_previous"])
+receipts["cloud"]["removed_pixels"] = len(masks["cloud_previous"] - masks["cloud"])
 html = '''<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Action icons — pixel comparison</title><style>
@@ -143,10 +149,10 @@ footer { margin-top:20px; }
 @media(max-width:620px) { body { padding:16px; } .comparison { grid-template-columns:minmax(0,1fr); } h1 { font-size:32px; } }
 </style></head><body><main>
 <nav aria-label="Icon reviews"><a href="/icon-review/">Existing icon comparison</a><a href="#cloud">Cloud</a><a href="#exit">Exit</a><a href="#sign_in">Sign in / out</a><a href="#trash">Trash</a><a href="#sync">Sync</a><a href="new-icons.png">New icon image</a><a href="new-icons-light.png">Light image</a><a href="comparison.png">Full comparison image</a></nav>
-<h1>Action icons · six new drafts</h1>
+<h1>Action icons · cloud curve refinement</h1>
 <p>24 × 24 source pixels · 10× pixel grid · measured margins below each icon</p>
 <p>Gold lines mark the centre axes. The 1× and 2× samples show the actual SVGs without grid overlays.</p>
-<p>Gold cards are the new proposals. Teal marks the selected Publish globe; plain cards are existing assets.</p>
+<p>Cloud is shown before and after cleanup. Gold cards are proposals; teal marks the selected Publish and Exit icons.</p>
 <div class="toolbar"><button id="grid-toggle" type="button" aria-pressed="true">Grid on</button><button id="theme-toggle" type="button" aria-pressed="false">Light surface</button></div>
 <section class="comparison" aria-label="New action icons compared with current icons">''' + "".join(cards) + '''</section>
 <footer><p>Icon review only. The app controls have not changed.</p><p>Geometry uses integer rectangle runs, transparent backgrounds and currentColor. Existing icons are copied directly from their source SVGs.</p></footer>

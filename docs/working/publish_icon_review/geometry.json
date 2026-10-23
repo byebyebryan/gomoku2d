@@ -2,6 +2,24 @@
   "scope": "Draft source geometry, not app integration",
   "icons": {
     "cloud": {
+      "sha256": "ce3d1f0accddb010cbf8fc4bee57c2d4fcb917c693aebe0219b6a5acce6978c5",
+      "margins_ltrb": [
+        2,
+        5,
+        2,
+        5
+      ],
+      "filled_pixels": 98,
+      "horizontal_symmetry": false,
+      "content_size": [
+        20,
+        14
+      ],
+      "previous_file": "cloud_previous.svg",
+      "added_pixels": 10,
+      "removed_pixels": 5
+    },
+    "cloud_previous": {
       "sha256": "d805dddedc107670934d19ad5b91beaad27c4bd49ca6ac09667c4b1e635b0c1d",
       "margins_ltrb": [
         2,
@@ -9,12 +27,7 @@
         2,
         5
       ],
-      "filled_pixels": 93,
-      "horizontal_symmetry": false,
-      "content_size": [
-        20,
-        14
-      ]
+      "filled_pixels": 93
     },
     "exit": {
       "sha256": "ef1a727f5310e91d47ff52f8e3072697ec44ef7c0686686e7aa69a8fed667e8e",

@@ -8,7 +8,18 @@
         2,
         10
       ],
-      "exact_pixels": true
+      "exact_pixels": true,
+      "current_source": true
+    },
+    {
+      "icon": "Cloud Previous",
+      "scales": [
+        1,
+        2,
+        10
+      ],
+      "exact_pixels": true,
+      "current_source": true
     },
     {
       "icon": "Exit",
@@ -17,7 +28,8 @@
         2,
         10
       ],
-      "exact_pixels": true
+      "exact_pixels": true,
+      "current_source": true
     },
     {
       "icon": "Sign Out",
@@ -26,7 +38,8 @@
         2,
         10
       ],
-      "exact_pixels": true
+      "exact_pixels": true,
+      "current_source": true
     },
     {
       "icon": "Sign In",
@@ -35,7 +48,8 @@
         2,
         10
       ],
-      "exact_pixels": true
+      "exact_pixels": true,
+      "current_source": true
     },
     {
       "icon": "Trash",
@@ -44,7 +58,8 @@
         2,
         10
       ],
-      "exact_pixels": true
+      "exact_pixels": true,
+      "current_source": true
     },
     {
       "icon": "Sync",
@@ -53,7 +68,8 @@
         2,
         10
       ],
-      "exact_pixels": true
+      "exact_pixels": true,
+      "current_source": true
     },
     {
       "icon": "Publish",
@@ -62,7 +78,8 @@
         2,
         10
       ],
-      "exact_pixels": true
+      "exact_pixels": true,
+      "current_source": true
     },
     {
       "icon": "Share",
@@ -71,7 +88,8 @@
         2,
         10
       ],
-      "exact_pixels": true
+      "exact_pixels": true,
+      "current_source": true
     },
     {
       "icon": "Save",
@@ -80,7 +98,8 @@
         2,
         10
       ],
-      "exact_pixels": true
+      "exact_pixels": true,
+      "current_source": true
     },
     {
       "icon": "Profile",
@@ -89,7 +108,8 @@
         2,
         10
       ],
-      "exact_pixels": true
+      "exact_pixels": true,
+      "current_source": true
     },
     {
       "icon": "Reset",
@@ -98,7 +118,8 @@
         2,
         10
       ],
-      "exact_pixels": true
+      "exact_pixels": true,
+      "current_source": true
     },
     {
       "icon": "Copy",
@@ -107,7 +128,8 @@
         2,
         10
       ],
-      "exact_pixels": true
+      "exact_pixels": true,
+      "current_source": true
     },
     {
       "icon": "Circle",
@@ -116,7 +138,8 @@
         2,
         10
       ],
-      "exact_pixels": true
+      "exact_pixels": true,
+      "current_source": true
     },
     {
       "icon": "Home",
@@ -125,7 +148,8 @@
         2,
         10
       ],
-      "exact_pixels": true
+      "exact_pixels": true,
+      "current_source": true
     }
   ],
   "preview_errors": [],

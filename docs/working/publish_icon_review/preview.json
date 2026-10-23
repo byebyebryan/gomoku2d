@@ -1,12 +1,12 @@
 {
   "url": "http://127.0.0.1:8013/icon-review/actions/",
   "previous_url": "http://127.0.0.1:8013/icon-review/publish/",
-  "revision": "asymmetric cloud and power-style exit",
+  "revision": "cloud curve cleanup with exact previous source alongside; selected power icon retained",
   "carbon": {
     "actions": {
       "index.html": {
         "status": 200,
-        "sha256": "62c103d66dc51473fc2c73c9c293917eaef0f86abf206562cb2e128e0cf0d941"
+        "sha256": "862197fb9307bf200adb770b98facb56a6e2ad0a29cc4605aad77265e1a5e706"
       },
       "publish.svg": {
         "status": 200,
@@ -30,6 +30,10 @@
       },
       "cloud.svg": {
         "status": 200,
+        "sha256": "ce3d1f0accddb010cbf8fc4bee57c2d4fcb917c693aebe0219b6a5acce6978c5"
+      },
+      "cloud_previous.svg": {
+        "status": 200,
         "sha256": "d805dddedc107670934d19ad5b91beaad27c4bd49ca6ac09667c4b1e635b0c1d"
       },
       "exit.svg": {
@@ -38,21 +42,21 @@
       },
       "comparison.png": {
         "status": 200,
-        "sha256": "4a0a1a1c57476e7859b3b8a02c4018baeeea933979bfc1c206034636b066ea2e"
+        "sha256": "934da584ad4aa4dabdd9a94664500c03821e308397485de2908ba3ec9d534328"
       },
       "new-icons.png": {
         "status": 200,
-        "sha256": "37be45d0b919fbbfc23914d2d0e1b6f3ce4fa817545a2c7d3cb19e14464f2af4"
+        "sha256": "1860a78201de8907012935938b2c37e6826d3d674d9e5687c9d5fa6cea0ed635"
       },
       "new-icons-light.png": {
         "status": 200,
-        "sha256": "c2d7729f44c48e7fe3b2d05a97ba4ec8728c4bd89df9b3f544d0ee4a2bf0dd93"
+        "sha256": "e338a06173fd5e92f4c9b9038d5c6c307d9efc3b0d8972256fc75cd53c842942"
       }
     },
     "publish": {
       "index.html": {
         "status": 200,
-        "sha256": "62c103d66dc51473fc2c73c9c293917eaef0f86abf206562cb2e128e0cf0d941"
+        "sha256": "862197fb9307bf200adb770b98facb56a6e2ad0a29cc4605aad77265e1a5e706"
       },
       "publish.svg": {
         "status": 200,
@@ -76,6 +80,10 @@
       },
       "cloud.svg": {
         "status": 200,
+        "sha256": "ce3d1f0accddb010cbf8fc4bee57c2d4fcb917c693aebe0219b6a5acce6978c5"
+      },
+      "cloud_previous.svg": {
+        "status": 200,
         "sha256": "d805dddedc107670934d19ad5b91beaad27c4bd49ca6ac09667c4b1e635b0c1d"
       },
       "exit.svg": {
@@ -84,19 +92,20 @@
       },
       "comparison.png": {
         "status": 200,
-        "sha256": "4a0a1a1c57476e7859b3b8a02c4018baeeea933979bfc1c206034636b066ea2e"
+        "sha256": "934da584ad4aa4dabdd9a94664500c03821e308397485de2908ba3ec9d534328"
       },
       "new-icons.png": {
         "status": 200,
-        "sha256": "37be45d0b919fbbfc23914d2d0e1b6f3ce4fa817545a2c7d3cb19e14464f2af4"
+        "sha256": "1860a78201de8907012935938b2c37e6826d3d674d9e5687c9d5fa6cea0ed635"
       },
       "new-icons-light.png": {
         "status": 200,
-        "sha256": "c2d7729f44c48e7fe3b2d05a97ba4ec8728c4bd89df9b3f544d0ee4a2bf0dd93"
+        "sha256": "e338a06173fd5e92f4c9b9038d5c6c307d9efc3b0d8972256fc75cd53c842942"
       }
     }
   },
   "app_integration": false,
   "selected_globe_unchanged": true,
+  "selected_exit_unchanged": true,
   "previous_four_drafts_unchanged": true
 }

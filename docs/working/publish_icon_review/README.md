@@ -1,7 +1,7 @@
 # Publish and account action icon review
 
-The Publish globe was selected by the user. Sign in, Sign out, Trash, Sync,
-Cloud and Exit are additional visual proposals. This is an asset review: no runtime icon
+The Publish globe and power-style Exit were selected by the user. Sign in,
+Sign out, Trash, Sync and Cloud are additional visual proposals. This is an asset review: no runtime icon
 registration, canonical manifest change, application rebuild or cloud-data
 mutation is included.
 
@@ -22,15 +22,19 @@ rectangle runs. Cloud uses a naturally wide 20×14 silhouette, centered with
   and 180-degree rotational symmetry.
 - Cloud has asymmetric rounded lobes: one larger hump on the right and a
   smaller puff on the left, with a two-pixel outline and flat two-pixel base.
-  It is hand-tuned in row runs to keep the lobe junction and native silhouette
-  clear. Its wider proportions retain the same centered 20×14 bounds.
-- Exit tries a power/quit symbol following feedback that the doorway duplicated
-  Sign out. It reuses the original Circle mask, opens the top arc and adds a
-  centered four-pixel stem. It is horizontally symmetric. This remains a visual
-  alternative; no product action or sign-out behavior has changed.
+  The latest cleanup removes the one-pixel hooked join, gives the small lobe
+  a defined cap, compensates diagonal runs to match the straight stroke weight,
+  and uses matching one-pixel steps into the bottom corners. Its proportions
+  retain the same centered 20×14 bounds. `cloud_previous.svg` preserves the exact
+  prior draft for adjacent before/after inspection.
+- The selected Exit uses a power/quit symbol following feedback that the doorway
+  duplicated Sign out. It reuses the original Circle mask, opens the top arc and
+  adds a centered four-pixel stem. It is horizontally symmetric. No product
+  action or sign-out behavior has changed.
 
-`index.html` compares fourteen actual source SVGs: the six proposals, selected
-Publish globe, and existing Share, Save, Profile, Reset, Copy, Circle and Home.
+`index.html` compares fifteen actual source SVGs: the five proposals, selected
+Publish and Exit icons, prior Cloud, and existing Share, Save, Profile, Reset,
+Copy, Circle and Home.
 It offers 1× and 2× samples plus a 10× pixel grid, centre axes, light/dark
 surfaces and grid visibility controls. Existing Reset retains its original
 margins; the page reports each source's measured margins rather than changing
@@ -44,8 +48,10 @@ old assets to match the additions.
 `geometry.json` records source hashes, margins, filled pixels and symmetry.
 The generator also proves both account masks derive from the same Share frame
 and arrow. `render.json` records exact browser raster readback at 1×/2×/10× for
-all fourteen assets, working grid/theme controls, no preview load errors and no
+all fifteen assets, working grid/theme controls, no preview load errors and no
 horizontal overflow at 320px. Dark and light renders were visually inspected.
+The renderer compares the preview's pixel masks to current source SVG files
+before capturing, using the generated HTML hash to identify the preview revision.
 `preview.json` verifies Carbon serves identical source/review bytes.
 
 Regenerate the HTML and geometry receipt from the repository root with:
