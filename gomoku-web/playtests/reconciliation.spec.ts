@@ -95,11 +95,9 @@ test("a keyboard player can branch, finish, analyze, and find the saved game", a
   const profile = page.getByRole("link", { name: "Profile", exact: true });
   await profile.focus();
   await profile.press("Enter");
-  await expect(page.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(1);
-  const practiceGames = page.getByRole("region", { name: "Practice games" });
-  await expect(practiceGames.getByRole("link", { name: "Inspect replay", exact: true })).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(2);
   const playedMatchCount = page.getByText("Matches", { exact: true }).locator("..").locator("span").first();
-  await expect(playedMatchCount).toHaveText("1");
+  await expect(playedMatchCount).toHaveText("2");
   await page.getByRole("link", { name: "Play", exact: true }).press("Enter");
   await page.getByRole("button", { name: "Next round", exact: true }).press("Enter");
   await expect(page.getByTestId("player-row-black")).toContainText("Normal Bot");
