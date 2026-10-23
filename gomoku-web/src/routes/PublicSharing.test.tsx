@@ -13,6 +13,7 @@ import { encodePortableReplay } from "../replay/portable_replay_codec";
 import { PublicPlayerRoute } from "./PublicPlayerRoute";
 import { PublicProfileManager } from "./PublicProfileManager";
 import { PublishReplayPanel } from "./PublishReplayPanel";
+import { publicProfileDateLabel } from "./public_catalog";
 
 const sharing = vi.hoisted(() => ({
   loadCatalogPage: vi.fn(),
@@ -65,6 +66,7 @@ function replayPayload(uid: string): string {
 }
 
 const ownerStats = { matches: 1, wins: 1, losses: 0, draws: 0 };
+const publishedStatsAt = "2026-10-22T00:00:00.000Z";
 
 function page(pageId: 0 | 1 | 2 | 3, entries: PublicCatalogEntry[] = [], overrides: Partial<PublicCatalogPageSnapshot> = {}): PublicCatalogPageSnapshot {
   return {
@@ -173,7 +175,7 @@ beforeEach(() => {
   sharing.setPublicProfileStats.mockImplementation(async (uid: string, stats: typeof ownerStats | null, revision: number) => publicProfile({
     uid,
     revision: revision + 1,
-    sharedStats: stats ? { ...stats, updatedAt: "2026-10-22T00:00:00.000Z" } : null,
+    sharedStats: stats ? { ...stats, updatedAt: publishedStatsAt } : null,
   }));
 });
 
@@ -403,7 +405,7 @@ describe("public profile routes and controls", () => {
     );
     fireEvent.click(visibility.getByRole("button", { name: "On" }));
     await waitFor(() => expect(sharing.setPublicProfileStats).toHaveBeenCalledWith(signedInUser.uid, ownerStats, 4));
-    expect(await screen.findByText("Published October 21, 2026")).toBeInTheDocument();
+    expect(await screen.findByText(`Published ${publicProfileDateLabel(publishedStatsAt)}`)).toBeInTheDocument();
     expect(screen.getByText("100.0%")).toBeInTheDocument();
     expect(visibility.getByRole("button", { name: "On" })).toHaveAttribute("aria-pressed", "true");
     fireEvent.click(visibility.getByRole("button", { name: "On" }));
