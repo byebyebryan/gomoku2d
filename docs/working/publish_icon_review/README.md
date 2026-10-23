@@ -31,7 +31,9 @@ six accepted additions; `comparison.png` includes the reference icons.
 `geometry.json` verifies bounds, integer rectangles, symmetry and the account /
 power source derivations. `render.json` compares the preview against current
 canonical source masks and validates exact raster pixels at 1×/2×/10×, controls
-and 320px reflow. `preview.json` records Carbon served-byte verification.
+and 320px reflow. `preview.json` records served-byte verification. The current build is verified
+on Starship; Carbon SSH is temporarily unreachable, so current remote parity
+is unverified. The existing reverse-forwarding service keeps retrying.
 
 The integration passed app/scripts/tools type checks, the production and manual
 emulator builds, 60 affected route component tests, and 9 C11/C14/C15 journeys

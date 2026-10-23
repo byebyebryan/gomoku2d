@@ -129,7 +129,9 @@ canonical assets and appear in Visuals. Publish uses the globe; account entry /
 exit, deletion and account-library sync use their dedicated icons. Existing
 Replay, Copy, Reset and Minus complete related controls. Exit is registered for
 future quit controls. Cloud is deferred and removed from the current pack and
-review gallery.
+review gallery. The manual preview is refreshed and verified locally; Carbon
+SSH currently times out, so its current served-byte parity remains unverified
+until the existing tunnel reconnects.
 
 App/scripts/tools type checks, the production and emulator builds, 60 affected
 route component tests and 9 C11/C14/C15 journeys passed. Eighteen [current

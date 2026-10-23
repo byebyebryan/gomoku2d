@@ -1,26 +1,27 @@
 {
-  "source_commit": "e39e4aa",
-  "scope": "Local emulator candidate; no production deployment. Carbon loopback is reverse-forwarded to Starship. Existing demo data, approved icons and old hashed assets retained.",
+  "source_commit": "b99fa79",
+  "scope": "Local emulator preview with accepted icons; cloud glyph deferred. Preview and demo verified on Starship. Carbon SSH currently times out, so current remote parity is unverified; the owned tunnel keeps retrying.",
   "carbon": {
     "host": "carbon",
-    "profile_status": 200,
-    "index_sha256": "9b460c4eb4a225ae942913bd7cf5c47e6172466a5423c25f939f9da50c5acc0a",
-    "entry_script": "/assets/index-CL9DPf7S.js",
-    "entry_sha256": "1604143c745bbdb7233d0f87f0a149f09645448e5bf0e09833aea1d0c3e07d90",
-    "auth_ready": true,
-    "public_demo_name": "Demo Player"
+    "verified": false,
+    "status": "ssh_unreachable",
+    "reason": "Connection to carbon port 22 timed out."
   },
   "starship": {
     "host": "starship",
-    "index_sha256": "9b460c4eb4a225ae942913bd7cf5c47e6172466a5423c25f939f9da50c5acc0a",
-    "entry_script": "/assets/index-CL9DPf7S.js",
-    "entry_sha256": "1604143c745bbdb7233d0f87f0a149f09645448e5bf0e09833aea1d0c3e07d90",
+    "index_sha256": "7888c1f8ab699d0f37b08ba3b30a19922d25cd8964df1089a9cc72acfe9d2848",
+    "entry_script": "/assets/index-JN-ybI1l.js",
+    "entry_sha256": "b4aeac59a41db37889beb6081c4e6024a68f76ae24011daf868ba40232711165",
     "managed_services": [
       "active",
       "active",
       "active"
     ],
-    "share_icon_sha256": "5bef75b55f7aed217e66664012737b7963d7b23e4e41badcd28627f4662b4f4f"
+    "share_icon_sha256": "5bef75b55f7aed217e66664012737b7963d7b23e4e41badcd28627f4662b4f4f",
+    "profile_status": 200,
+    "auth_ready": true,
+    "public_demo_name": "Demo Player",
+    "tunnel_state": "retrying; destination SSH unreachable"
   },
   "profile_url": "http://127.0.0.1:8013/profile?tab=public",
   "demo_url": "http://127.0.0.1:8013/player/?id=v061-demo-player"

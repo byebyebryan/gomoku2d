@@ -1,111 +1,71 @@
 {
+  "source_commit": "b99fa79",
   "url": "http://127.0.0.1:8013/icon-review/actions/",
-  "previous_url": "http://127.0.0.1:8013/icon-review/publish/",
-  "revision": "cloud curve cleanup with exact previous source alongside; selected power icon retained",
-  "carbon": {
-    "actions": {
-      "index.html": {
-        "status": 200,
-        "sha256": "862197fb9307bf200adb770b98facb56a6e2ad0a29cc4605aad77265e1a5e706"
-      },
-      "publish.svg": {
-        "status": 200,
-        "sha256": "c70d4cae4469345452918e161fa8b701d7b4f51f4b95279737b05b867688a019"
-      },
-      "sign_in.svg": {
-        "status": 200,
-        "sha256": "68ac9701f65122fd6abdb7bde3604bff2bb5bba8c8624e40529523e78aa4d9ea"
-      },
-      "sign_out.svg": {
-        "status": 200,
-        "sha256": "2ac57e81bcd8f02ab4e991fe1920e36265d7cf4c8e1b9ced9c5a41a17ebaf5fa"
-      },
-      "trash.svg": {
-        "status": 200,
-        "sha256": "3042595eb7eac9728033309b2d5492a4b2552186b421c6f9ba54488f934d9e28"
-      },
-      "sync.svg": {
-        "status": 200,
-        "sha256": "d0a7e4538080634634e690288eff544bd87e9bf8feb50cbdb411a217ddc20a33"
-      },
-      "cloud.svg": {
-        "status": 200,
-        "sha256": "ce3d1f0accddb010cbf8fc4bee57c2d4fcb917c693aebe0219b6a5acce6978c5"
-      },
-      "cloud_previous.svg": {
-        "status": 200,
-        "sha256": "d805dddedc107670934d19ad5b91beaad27c4bd49ca6ac09667c4b1e635b0c1d"
-      },
-      "exit.svg": {
-        "status": 200,
-        "sha256": "ef1a727f5310e91d47ff52f8e3072697ec44ef7c0686686e7aa69a8fed667e8e"
-      },
-      "comparison.png": {
-        "status": 200,
-        "sha256": "934da584ad4aa4dabdd9a94664500c03821e308397485de2908ba3ec9d534328"
-      },
-      "new-icons.png": {
-        "status": 200,
-        "sha256": "1860a78201de8907012935938b2c37e6826d3d674d9e5687c9d5fa6cea0ed635"
-      },
-      "new-icons-light.png": {
-        "status": 200,
-        "sha256": "e338a06173fd5e92f4c9b9038d5c6c307d9efc3b0d8972256fc75cd53c842942"
-      }
+  "canonical_gallery": "http://127.0.0.1:8013/visuals/",
+  "revision": "accepted icons integrated; cloud removed",
+  "starship": {
+    "/icon-review/actions/index.html": {
+      "status": 200,
+      "sha256": "e3cd4163e0518f1779b62ddc17e2d98dfdb04c278e3aac939a80cbe1d1f5c831"
     },
-    "publish": {
-      "index.html": {
-        "status": 200,
-        "sha256": "862197fb9307bf200adb770b98facb56a6e2ad0a29cc4605aad77265e1a5e706"
-      },
-      "publish.svg": {
-        "status": 200,
-        "sha256": "c70d4cae4469345452918e161fa8b701d7b4f51f4b95279737b05b867688a019"
-      },
-      "sign_in.svg": {
-        "status": 200,
-        "sha256": "68ac9701f65122fd6abdb7bde3604bff2bb5bba8c8624e40529523e78aa4d9ea"
-      },
-      "sign_out.svg": {
-        "status": 200,
-        "sha256": "2ac57e81bcd8f02ab4e991fe1920e36265d7cf4c8e1b9ced9c5a41a17ebaf5fa"
-      },
-      "trash.svg": {
-        "status": 200,
-        "sha256": "3042595eb7eac9728033309b2d5492a4b2552186b421c6f9ba54488f934d9e28"
-      },
-      "sync.svg": {
-        "status": 200,
-        "sha256": "d0a7e4538080634634e690288eff544bd87e9bf8feb50cbdb411a217ddc20a33"
-      },
-      "cloud.svg": {
-        "status": 200,
-        "sha256": "ce3d1f0accddb010cbf8fc4bee57c2d4fcb917c693aebe0219b6a5acce6978c5"
-      },
-      "cloud_previous.svg": {
-        "status": 200,
-        "sha256": "d805dddedc107670934d19ad5b91beaad27c4bd49ca6ac09667c4b1e635b0c1d"
-      },
-      "exit.svg": {
-        "status": 200,
-        "sha256": "ef1a727f5310e91d47ff52f8e3072697ec44ef7c0686686e7aa69a8fed667e8e"
-      },
-      "comparison.png": {
-        "status": 200,
-        "sha256": "934da584ad4aa4dabdd9a94664500c03821e308397485de2908ba3ec9d534328"
-      },
-      "new-icons.png": {
-        "status": 200,
-        "sha256": "1860a78201de8907012935938b2c37e6826d3d674d9e5687c9d5fa6cea0ed635"
-      },
-      "new-icons-light.png": {
-        "status": 200,
-        "sha256": "e338a06173fd5e92f4c9b9038d5c6c307d9efc3b0d8972256fc75cd53c842942"
-      }
+    "/icon-review/actions/comparison.png": {
+      "status": 200,
+      "sha256": "1e39cd0788f8f641e4aee2d3b3a9348c1343509d7c6121d2828f72dd28e085a2"
+    },
+    "/icon-review/actions/new-icons.png": {
+      "status": 200,
+      "sha256": "c43959d37403dce4a713fd8dc1730842f8c6842e9c99747efc1818593e692ea1"
+    },
+    "/icon-review/actions/new-icons-light.png": {
+      "status": 200,
+      "sha256": "5db7648b99a9b10d34d5975367a226bcb7f2cfc75b81c6ed2251ba26677468ec"
+    },
+    "/icon-review/publish/index.html": {
+      "status": 200,
+      "sha256": "e3cd4163e0518f1779b62ddc17e2d98dfdb04c278e3aac939a80cbe1d1f5c831"
+    },
+    "/icon-review/publish/comparison.png": {
+      "status": 200,
+      "sha256": "1e39cd0788f8f641e4aee2d3b3a9348c1343509d7c6121d2828f72dd28e085a2"
+    },
+    "/icon-review/publish/new-icons.png": {
+      "status": 200,
+      "sha256": "c43959d37403dce4a713fd8dc1730842f8c6842e9c99747efc1818593e692ea1"
+    },
+    "/icon-review/publish/new-icons-light.png": {
+      "status": 200,
+      "sha256": "5db7648b99a9b10d34d5975367a226bcb7f2cfc75b81c6ed2251ba26677468ec"
+    },
+    "/assets/icons/publish.svg": {
+      "status": 200,
+      "sha256": "c70d4cae4469345452918e161fa8b701d7b4f51f4b95279737b05b867688a019"
+    },
+    "/assets/icons/sign_in.svg": {
+      "status": 200,
+      "sha256": "68ac9701f65122fd6abdb7bde3604bff2bb5bba8c8624e40529523e78aa4d9ea"
+    },
+    "/assets/icons/sign_out.svg": {
+      "status": 200,
+      "sha256": "2ac57e81bcd8f02ab4e991fe1920e36265d7cf4c8e1b9ced9c5a41a17ebaf5fa"
+    },
+    "/assets/icons/trash.svg": {
+      "status": 200,
+      "sha256": "3042595eb7eac9728033309b2d5492a4b2552186b421c6f9ba54488f934d9e28"
+    },
+    "/assets/icons/sync.svg": {
+      "status": 200,
+      "sha256": "d0a7e4538080634634e690288eff544bd87e9bf8feb50cbdb411a217ddc20a33"
+    },
+    "/assets/icons/exit.svg": {
+      "status": 200,
+      "sha256": "ef1a727f5310e91d47ff52f8e3072697ec44ef7c0686686e7aa69a8fed667e8e"
     }
   },
-  "app_integration": false,
-  "selected_globe_unchanged": true,
-  "selected_exit_unchanged": true,
-  "previous_four_drafts_unchanged": true
+  "carbon": {
+    "verified": false,
+    "status": "ssh_unreachable",
+    "reason": "Connection to carbon port 22 timed out."
+  },
+  "app_integration": true,
+  "cloud_in_pack": false
 }
