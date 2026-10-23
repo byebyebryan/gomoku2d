@@ -222,6 +222,7 @@
 }
 
 .manager {
+  container: profile-settings / inline-size;
   display: grid;
   min-width: 0;
   gap: 16px;
@@ -231,37 +232,93 @@
 .managerHeader {
   display: flex;
   min-width: 0;
-  align-items: stretch;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
   gap: 16px;
 }
 
 .managerHeader > div,
-.managerBody,
-.publishBody {
+.managerBody {
   display: grid;
   min-width: 0;
   gap: 12px;
 }
 
-.managerBody > :global(.uiAction),
-.publishBody > :global(.uiAction) {
+.settingsSection {
+  display: grid;
+  min-width: 0;
+  gap: 16px;
+  padding-block: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.settingsSection > :global(.uiSectionLabel) {
+  color: var(--accent-strong);
+}
+
+.settingRow {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.8fr) minmax(0, 1.4fr);
+  align-items: start;
+  gap: 14px 24px;
+}
+
+.settingCopy,
+.settingControls {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+}
+
+.settingCopy {
+  gap: 4px;
+}
+
+.settingLabel {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--type-meta);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.settingHint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-meta);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.settingControls > :global(.uiAction) {
   justify-self: start;
   max-width: 100%;
 }
 
-.field {
-  display: grid;
+.settingControls :global(.uiInput) {
+  width: 100%;
   min-width: 0;
-  gap: 7px;
-  color: var(--text-muted);
+}
+
+.profileLink {
   font-size: var(--type-meta);
 }
 
-.field input {
-  min-width: 0;
-  max-width: 100%;
-  font-size: var(--type-body);
+.managerStatsGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.managerStatsGrid > :last-child {
+  grid-column: span 2;
+}
+
+.managerStatsGrid .publicStatsValue {
+  font-size: 1.25rem;
+}
+
+.managerStatsGrid .publicStatsLabel {
+  overflow-wrap: anywhere;
 }
 
 .confirmRow {
@@ -275,15 +332,6 @@
 .confirmRow input {
   flex: 0 0 auto;
   margin-top: 4px;
-}
-
-.publicationSection,
-.dangerSection {
-  display: grid;
-  min-width: 0;
-  gap: 12px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
 }
 
 .publicationRow {
@@ -309,40 +357,6 @@
   margin: 0;
 }
 
-.publishPanel {
-  display: grid;
-  min-width: 0;
-  gap: 12px;
-}
-
-.publishPanel > :global(.uiAction) {
-  justify-self: start;
-  max-width: 100%;
-}
-
-.publishBody {
-  padding: 16px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-}
-
-.publisherName {
-  margin: 0;
-  font-family: var(--font-display);
-  overflow-wrap: anywhere;
-}
-
-.profileRequired {
-  display: grid;
-  min-width: 0;
-  gap: 12px;
-}
-
-.profileRequired p {
-  margin: 0;
-  line-height: 1.5;
-}
-
 @media (max-width: 620px) {
   .page {
     padding: 12px;
@@ -351,20 +365,6 @@
   .pageCard {
     gap: 12px;
     padding: 16px;
-  }
-
-  .managerHeader {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .managerHeader :global(.uiAction) {
-    width: 100%;
-  }
-
-  .managerActions > :global(.uiAction) {
-    flex: 1 1 100%;
-    width: 100%;
   }
 
   .publicationRow :global(.uiAction) {
@@ -383,6 +383,21 @@
   .pagingControls :global(.uiAction),
   .pageCard > :global(.uiAction) {
     width: 100%;
+  }
+}
+
+@container profile-settings (max-width: 34rem) {
+  .settingRow {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .managerHeader {
+    flex-wrap: wrap;
+  }
+
+  .managerActions > :global(.uiAction) {
+    flex: 1 1 auto;
   }
 }
 

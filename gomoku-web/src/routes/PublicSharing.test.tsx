@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
@@ -92,6 +93,14 @@ function renderManager() {
       <PublicProfileManager stats={ownerStats} statsReady statsBlocker="History is still loading." />
     </MemoryRouter>,
   );
+}
+
+function PublisherHarness() {
+  const [open, setOpen] = useState(false);
+  return <>
+    {!open && <button type="button" onClick={() => setOpen(true)}>Publish replay</button>}
+    <PublishReplayPanel match={winningMatch()} eligible moveIndex={8} open={open} onClose={() => setOpen(false)} />
+  </>;
 }
 
 function SwitchProfileButton() {
@@ -354,7 +363,7 @@ describe("public profile routes and controls", () => {
     await waitFor(() => expect(sharing.loadPublicProfile).toHaveBeenCalledWith(signedInUser.uid));
     expect(sharing.loadCatalogPage).toHaveBeenCalledTimes(4);
     expect(screen.getByDisplayValue("Local suggested name")).toBeInTheDocument();
-    expect(screen.getByText(/Anyone with your profile link will see/)).toHaveTextContent("Local suggested name");
+    expect(screen.getByText("Shown to anyone with your profile link.")).toBeInTheDocument();
     expect(screen.queryByText(signedInUser.displayName)).not.toBeInTheDocument();
     expect(sharing.setPublicProfile).not.toHaveBeenCalled();
 
@@ -483,7 +492,7 @@ describe("public profile routes and controls", () => {
     expect(await screen.findByRole("status")).toHaveTextContent("Publication removed");
 
     fireEvent.click(screen.getByRole("button", { name: "Disable public profile" }));
-    expect(screen.getByText(/Re-enabling starts empty with statistics off/)).toHaveTextContent("Portable replay copies already made by others cannot be recalled");
+    expect(screen.getByText(/Re-enabling starts empty with statistics off/)).toHaveTextContent("Shared replay copies remain");
     fireEvent.click(screen.getByRole("button", { name: "Confirm disable" }));
     await waitFor(() => expect(sharing.setPublicProfile).toHaveBeenCalledWith(
       signedInUser.uid,
@@ -517,7 +526,7 @@ describe("public profile routes and controls", () => {
 
     render(
       <MemoryRouter>
-        <PublishReplayPanel match={winningMatch()} eligible moveIndex={8} />
+        <PublisherHarness />
       </MemoryRouter>,
     );
     expect(sharing.loadPublicProfile).not.toHaveBeenCalled();
@@ -547,7 +556,7 @@ describe("public profile routes and controls", () => {
 
     render(
       <MemoryRouter>
-        <PublishReplayPanel match={winningMatch()} eligible moveIndex={8} />
+        <PublisherHarness />
       </MemoryRouter>,
     );
     fireEvent.click(screen.getByRole("button", { name: "Publish replay" }));

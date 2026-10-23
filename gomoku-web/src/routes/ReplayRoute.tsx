@@ -5,6 +5,7 @@ import { useStore } from "zustand";
 import { useDocumentTitle } from "../app/useDocumentTitle";
 import { buildReplayBoardModel } from "../board/board_model";
 import { localProfileStore } from "../profile/local_profile_store";
+import { cloudAuthStore } from "../cloud/auth_store";
 import {
   buildLocalReplayFrame,
   defaultReplayMoveIndex,
@@ -61,11 +62,15 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
   const [autoplaying, setAutoplaying] = useState(false);
   const [branching, setBranching] = useState(false);
   const [branchError, setBranchError] = useState("");
-  const [sharing, setSharing] = useState(false);
+  const [sidebar, setSidebar] = useState<"replay" | "share" | "publish">("replay");
+  const signedInUid = useStore(cloudAuthStore, (state) => state.status === "signed_in" ? state.user?.uid : null);
+  const canPublish = Boolean((publishEligible ?? !preserveNames) && signedInUid);
+  const sidebarOpen = sidebar !== "replay";
   const deckRef = useRef<HTMLElement>(null);
   const shareTriggerRef = useRef<HTMLButtonElement>(null);
+  const publishTriggerRef = useRef<HTMLButtonElement>(null);
   const deckScrollRef = useRef(0);
-  const wasSharingRef = useRef(false);
+  const previousSidebarRef = useRef(sidebar);
   const { analysisAnnotations, analysisStep } = useReplayAnalysis(match);
   const coreWinningCells = useReplayWinningCells(match, moveIndex);
 
@@ -94,14 +99,25 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
   }, [autoplaying, match, moveIndex]);
 
   useEffect(() => {
-    if (sharing) {
+    if (sidebarOpen) {
       if (deckRef.current) deckRef.current.scrollTop = 0;
-    } else if (wasSharingRef.current) {
+    } else if (previousSidebarRef.current !== "replay") {
+      const trigger = previousSidebarRef.current === "share" ? shareTriggerRef : publishTriggerRef;
+      trigger.current?.focus({ preventScroll: true });
       if (deckRef.current) deckRef.current.scrollTop = deckScrollRef.current;
-      shareTriggerRef.current?.focus();
     }
-    wasSharingRef.current = sharing;
-  }, [sharing]);
+    previousSidebarRef.current = sidebar;
+  }, [sidebar, sidebarOpen]);
+
+  useEffect(() => {
+    if (!canPublish && sidebar === "publish") setSidebar("replay");
+  }, [canPublish, sidebar]);
+
+  const openSidebar = (panel: "share" | "publish") => {
+    deckScrollRef.current = deckRef.current?.scrollTop ?? 0;
+    setAutoplaying(false);
+    setSidebar(panel);
+  };
 
   const frame = buildLocalReplayFrame(match, moveIndex, () => coreWinningCells);
   const analysisSummary = analysisStep?.analysis ?? null;
@@ -162,11 +178,11 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
         </div>
       </header>
 
-      <section className={`${styles.layout} ${sharing ? styles.layoutSharing : ""}`}>
+      <section className={`${styles.layout} ${sidebarOpen ? styles.layoutSharing : ""}`}>
         <ReplayBoardPanel model={boardModel} />
 
-        <aside className={`${styles.deck} ${sharing ? styles.deckSharing : ""}`} ref={deckRef}>
-          <div className={styles.replayDeck} hidden={sharing}>
+        <aside className={`${styles.deck} ${sidebarOpen ? styles.deckSharing : ""}`} ref={deckRef}>
+          <div className={styles.replayDeck} hidden={sidebarOpen}>
             <ReplayStatusPanel detail={analysisStatus.detail} label={analysisStatus.label} />
 
             <div className="uiDivider" />
@@ -204,16 +220,16 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
               <p className={styles.contextError} role="alert">{branchError}</p>
             </section>}
             <section className={`${styles.deckSection} ${styles.sharingSection}`}>
-              <button className="uiAction uiActionSecondary" type="button" ref={shareTriggerRef} onClick={() => {
-                deckScrollRef.current = deckRef.current?.scrollTop ?? 0;
-                setAutoplaying(false);
-                setSharing(true);
-              }}><Icon name="share" /><span className="uiActionLabel">Share replay</span></button>
+              <button className="uiAction uiActionSecondary" type="button" ref={shareTriggerRef}
+                onClick={() => openSidebar("share")}><Icon name="share" /><span className="uiActionLabel">Share replay</span></button>
+              {canPublish && <button className="uiAction uiActionSecondary" type="button" ref={publishTriggerRef}
+                onClick={() => openSidebar("publish")}><Icon name="profile" /><span className="uiActionLabel">Publish replay</span></button>}
             </section>
             {source && fingerprint && <SaveReplayButton replay={source} fingerprint={fingerprint} />}
-            <PublishReplayPanel match={match} source={source} moveIndex={frame.moveIndex} eligible={publishEligible ?? !preserveNames} />
           </div>
-          <ShareReplayPanel match={match} moveIndex={frame.moveIndex} source={source} open={sharing} onClose={() => setSharing(false)} />
+          <ShareReplayPanel match={match} moveIndex={frame.moveIndex} source={source} open={sidebar === "share"} onClose={() => setSidebar("replay")} />
+          <PublishReplayPanel match={match} source={source} moveIndex={frame.moveIndex} eligible={canPublish}
+            open={sidebar === "publish"} onClose={() => setSidebar("replay")} />
         </aside>
       </section>
     </main>

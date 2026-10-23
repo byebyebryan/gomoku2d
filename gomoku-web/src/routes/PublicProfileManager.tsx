@@ -15,6 +15,7 @@ import {
 import { playerWinRate, type PlayerStats } from "../profile/player_stats";
 import { localProfileStore } from "../profile/local_profile_store";
 import { publicProfileDateLabel } from "./public_catalog";
+import { Icon } from "../ui/Icon";
 
 import styles from "./SharingPanels.module.css";
 
@@ -306,27 +307,13 @@ export function PublicProfileManager({
     <section className={`${styles.manager} uiPanel`} aria-labelledby="public-profile-manager-title">
       <div className={styles.managerHeader}>
         <div>
-          <p className="uiPageEyebrow">Optional sharing</p>
+          <p className="uiPageEyebrow">Optional sharing · {profile?.enabled ? "Enabled" : "Off"}</p>
           <h2 className={styles.sectionTitle} id="public-profile-manager-title">Public profile</h2>
         </div>
-        {uid ? (
-          <div className={styles.managerActions}>
-            <button className="uiAction uiActionNeutral" type="button" disabled={loading || pendingAction !== null}
-              onClick={() => void reload(uid)}>
-              {loading ? "Loading profile" : "Reload public profile"}
-            </button>
-            {profile?.enabled ? (
-              <>
-                <button className="uiAction uiActionNeutral" type="button" onClick={() => void copyLink()}>
-                  Copy link
-                </button>
-                <a className="uiAction uiActionSecondary" href={publicProfileHref(uid)}>
-                  View public profile
-                </a>
-              </>
-            ) : null}
-          </div>
-        ) : null}
+        {uid && <button className="uiAction uiActionNeutral" type="button" aria-label={loading ? "Loading profile" : "Reload public profile"}
+          disabled={loading || pendingAction !== null} onClick={() => void reload(uid)}>
+          <Icon name="reset" /><span className="uiActionLabel">{loading ? "Loading" : "Reload"}</span>
+        </button>}
       </div>
 
       {!uid ? (
@@ -340,140 +327,142 @@ export function PublicProfileManager({
           {notice && <p className={styles.successText} role="status">{notice}</p>}
           {linkMessage && <p className={styles.mutedText} role="status">{linkMessage}</p>}
 
-          {profile?.enabled ? (
-            <label className={styles.field}>
-              <span>Public profile link</span>
-              <input ref={linkRef} className="uiInput" readOnly value={publicProfileHref(uid)} />
-            </label>
-          ) : null}
-
           {isProfileLoaded ? (
-            profile?.enabled ? (
-              <>
-                <label className={styles.field}>
-                  <span>Public name</span>
-                  <input className="uiInput" maxLength={160} value={draftName}
-                    onChange={(event) => setDraftName(Array.from(event.target.value).slice(0, 80).join(""))} />
-                </label>
-                <button className="uiAction uiActionPrimary" type="button"
-                  disabled={pendingAction !== null || draftName.trim() === profile.displayName}
-                  onClick={() => void saveName()}>
-                  {pendingAction === "name" ? "Saving name" : "Save public name"}
-                </button>
+            <>
+              <section className={styles.settingsSection} aria-labelledby="public-identity-title">
+                <h3 className="uiSectionLabel" id="public-identity-title">Identity</h3>
+                <div className={styles.settingRow}>
+                  <div className={styles.settingCopy}>
+                    <label className={styles.settingLabel} htmlFor="public-name">{profile?.enabled ? "Public name" : "Choose your public name"}</label>
+                    <p className={styles.settingHint}>Shown to anyone with your profile link.</p>
+                  </div>
+                  <div className={styles.settingControls}>
+                    <input id="public-name" className="uiInput" maxLength={160} value={draftName}
+                      onChange={(event) => { setDraftName(Array.from(event.target.value).slice(0, 80).join("")); setConfirmEnable(false); }} />
+                    {profile?.enabled && <button className="uiAction uiActionPrimary" type="button"
+                      disabled={pendingAction !== null || draftName.trim() === profile.displayName}
+                      onClick={() => void saveName()}>
+                      <Icon name="save" />{pendingAction === "name" ? "Saving name" : "Save public name"}
+                    </button>}
+                  </div>
+                </div>
+                {profile?.enabled ? <div className={styles.settingRow}>
+                  <div className={styles.settingCopy}>
+                    <label className={styles.settingLabel} htmlFor="public-profile-link">Profile link</label>
+                    <p className={styles.settingHint}>Your public page and published games.</p>
+                  </div>
+                  <div className={styles.settingControls}>
+                    <input id="public-profile-link" aria-label="Public profile link" ref={linkRef} className={`uiInput ${styles.profileLink}`} readOnly value={publicProfileHref(uid)} />
+                    <div className={styles.managerActions}>
+                      <button className="uiAction uiActionNeutral" type="button" onClick={() => void copyLink()}>
+                        <Icon name="copy" />Copy link
+                      </button>
+                      <a className="uiAction uiActionSecondary" href={publicProfileHref(uid)}>
+                        <Icon name="profile" />View public profile
+                      </a>
+                    </div>
+                  </div>
+                </div> : <div className={styles.settingRow}>
+                  <div className={styles.settingCopy}>
+                    <p className={styles.settingLabel}>Visibility</p>
+                    <p className={styles.settingHint}>Starts empty. Publish games individually; statistics stay off until you opt in.</p>
+                  </div>
+                  <div className={styles.settingControls}>
+                    <label className={styles.confirmRow}>
+                      <input type="checkbox" checked={confirmEnable} onChange={(event) => setConfirmEnable(event.target.checked)} />
+                      <span>I want to enable this public profile with the name shown above.</span>
+                    </label>
+                    <button className="uiAction uiActionPrimary" type="button"
+                      disabled={!confirmEnable || pendingAction !== null} onClick={() => void enableProfile()}>
+                      <Icon name="profile" />{pendingAction === "enable" ? "Enabling public profile" : "Enable public profile"}
+                    </button>
+                  </div>
+                </div>}
+              </section>
 
-                <section className={styles.statsSection} aria-labelledby="public-stats-title">
-                  <h3 className={styles.subTitle} id="public-stats-title">Public statistics</h3>
-                  <p className={styles.mutedText}>
-                    Statistics are separate from game sharing and start off. Only the latest summary is shown.
-                  </p>
-                  <label className={styles.confirmRow}>
-                    <input
-                      type="checkbox"
-                      checked={sharedStats !== null}
-                      disabled={pendingAction !== null || (sharedStats === null && !statsReady)}
-                      onChange={(event) => void setStatsSharing(event.target.checked)}
-                    />
-                    <span>Share My games statistics publicly</span>
-                  </label>
-                  {!statsReady && sharedStats === null ? <p className={styles.mutedText}>{statsBlocker}</p> : null}
-                  {sharedStats ? (
-                    <>
-                      <div className={styles.publicStatsGrid} role="group" aria-label="Published statistics snapshot">
-                        {([
-                          ["Matches", sharedStats.matches],
-                          ["Wins", sharedStats.wins],
-                          ["Losses", sharedStats.losses],
-                          ["Draws", sharedStats.draws],
-                          ["Win rate", winRate === null ? "—" : `${(winRate * 100).toFixed(1)}%`],
-                        ] as const).map(([label, value]) => (
-                          <div className={styles.publicStatsTile} key={label}>
+              {profile?.enabled && <>
+                <section className={styles.settingsSection} aria-labelledby="public-stats-title">
+                  <h3 className="uiSectionLabel" id="public-stats-title">Public statistics</h3>
+                  <div className={styles.settingRow}>
+                    <div className={styles.settingCopy}>
+                      <p className={styles.settingLabel}>My games summary</p>
+                      <p className={styles.settingHint}>An optional snapshot. Update it when you choose.</p>
+                    </div>
+                    <div className={styles.settingControls}>
+                      <label className={styles.confirmRow}>
+                        <input type="checkbox" checked={sharedStats !== null}
+                          disabled={pendingAction !== null || (sharedStats === null && !statsReady)}
+                          onChange={(event) => void setStatsSharing(event.target.checked)} />
+                        <span>Share My games statistics publicly</span>
+                      </label>
+                      {!statsReady && <p className={styles.settingHint}>{statsBlocker}</p>}
+                      {sharedStats && <>
+                        <div className={`${styles.publicStatsGrid} ${styles.managerStatsGrid}`} role="group" aria-label="Published statistics snapshot">
+                          {([
+                            ["Matches", sharedStats.matches], ["Wins", sharedStats.wins],
+                            ["Losses", sharedStats.losses], ["Draws", sharedStats.draws],
+                            ["Win rate", winRate === null ? "—" : `${(winRate * 100).toFixed(1)}%`],
+                          ] as const).map(([label, value]) => <div className={styles.publicStatsTile} key={label}>
                             <span className={styles.publicStatsValue}>{value}</span>
                             <span className={styles.publicStatsLabel}>{label}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <p className={styles.publicStatsDate}>Published {publicProfileDateLabel(sharedStats.updatedAt)}</p>
-                      <button className="uiAction uiActionSecondary" type="button"
-                        disabled={pendingAction !== null || !statsReady}
-                        onClick={() => void setStatsSharing(true)}>
-                        {pendingAction === "share-stats" ? "Updating public stats" : "Update public stats"}
-                      </button>
-                      {!statsReady ? <p className={styles.mutedText}>{statsBlocker}</p> : null}
-                    </>
-                  ) : null}
+                          </div>)}
+                        </div>
+                        <p className={styles.publicStatsDate}>Published {publicProfileDateLabel(sharedStats.updatedAt)}</p>
+                        <button className="uiAction uiActionSecondary" type="button" disabled={pendingAction !== null || !statsReady}
+                          onClick={() => void setStatsSharing(true)}>
+                          <Icon name="reset" />{pendingAction === "share-stats" ? "Updating public stats" : "Update public stats"}
+                        </button>
+                      </>}
+                    </div>
+                  </div>
                 </section>
 
-                {readyCatalog ? (
-                  <div className={styles.publicationSection}>
-                    <h3 className={styles.subTitle}>Published games</h3>
-                    <p className={styles.mutedText}>Unpublishing removes a catalog entry. Portable copies already shared cannot be recalled.</p>
-                    {publishedEntries.length ? (
-                      <ul className={styles.publicationList}>
-                        {publishedEntries.map(({ page, entry }) => page ? (
-                          <li className={styles.publicationRow} key={entry.fingerprint}>
-                            <span>{entry.title}</span>
-                            <button className="uiAction uiActionDanger" type="button"
-                              disabled={pendingAction !== null}
-                              onClick={() => void unpublish(page, entry.fingerprint)}>
-                              {pendingAction === entry.fingerprint ? "Removing" : "Unpublish"}
-                            </button>
-                          </li>
-                        ) : null)}
-                      </ul>
-                    ) : <p className={styles.emptyState}>No games are currently published.</p>}
-                  </div>
-                ) : <p className={styles.mutedText}>Reload your public profile before managing publications.</p>}
-
-                <div className={styles.dangerSection}>
-                  <h3 className={styles.subTitle}>Disable public profile</h3>
-                  {!confirmDisable ? (
-                    <button className="uiAction uiActionDanger" type="button" disabled={pendingAction !== null}
-                      onClick={() => setConfirmDisable(true)}>
-                      Disable public profile
-                    </button>
-                  ) : (
-                    <div className={styles.confirmPanel}>
-                      <p>
-                        Disabling removes public statistics and every published game, and makes this page unavailable. Re-enabling starts empty with statistics off. Portable replay copies already made by others cannot be recalled.
-                      </p>
-                      <div className={styles.managerActions}>
-                        <button className="uiAction uiActionDanger" type="button" disabled={pendingAction !== null}
-                          onClick={() => void disableProfile()}>
-                          {pendingAction === "disable" ? "Disabling profile" : "Confirm disable"}
-                        </button>
-                        <button className="uiAction uiActionNeutral" type="button" disabled={pendingAction !== null}
-                          onClick={() => setConfirmDisable(false)}>
-                          Keep profile enabled
-                        </button>
-                      </div>
+                <section className={styles.settingsSection} aria-labelledby="public-games-title">
+                  <h3 className="uiSectionLabel" id="public-games-title">Published games</h3>
+                  <div className={styles.settingRow}>
+                    <div className={styles.settingCopy}>
+                      <p className={styles.settingLabel}>{publishedEntries.length} / 32 games</p>
+                      <p className={styles.settingHint}>Publish from a replay. Unpublishing removes the listing; shared copies remain.</p>
                     </div>
-                  )}
-                </div>
-              </>
-            ) : (
-              <>
-                <label className={styles.field}>
-                  <span>Choose your public name</span>
-                  <input className="uiInput" maxLength={160} value={draftName}
-                    onChange={(event) => { setDraftName(Array.from(event.target.value).slice(0, 80).join("")); setConfirmEnable(false); }} />
-                </label>
-                <p className={styles.preview}>
-                  Anyone with your profile link will see <strong>{draftName.trim() || "your chosen name"}</strong> and games you explicitly publish. Statistics stay off until you opt in.
-                </p>
-                <label className={styles.confirmRow}>
-                  <input type="checkbox" checked={confirmEnable} onChange={(event) => setConfirmEnable(event.target.checked)} />
-                  <span>I want to enable this public profile with the name shown above.</span>
-                </label>
-                <button className="uiAction uiActionPrimary" type="button"
-                  disabled={!confirmEnable || pendingAction !== null}
-                  onClick={() => void enableProfile()}>
-                  {pendingAction === "enable" ? "Enabling public profile" : "Enable public profile"}
-                </button>
-              </>
-            )
-          ) : !loading && !error ? (
-            <p className={styles.mutedText}>Public profile data is not ready yet. Reload to try again.</p>
-          ) : null}
+                    <div className={styles.settingControls}>
+                      {readyCatalog ? publishedEntries.length ? <ul className={styles.publicationList}>
+                        {publishedEntries.map(({ page, entry }) => page ? <li className={styles.publicationRow} key={entry.fingerprint}>
+                          <span>{entry.title}</span>
+                          <button className="uiAction uiActionDanger" type="button" disabled={pendingAction !== null}
+                            onClick={() => void unpublish(page, entry.fingerprint)}>
+                            {pendingAction === entry.fingerprint ? "Removing" : "Unpublish"}
+                          </button>
+                        </li> : null)}
+                      </ul> : <p className={styles.emptyState}>No games are currently published.</p>
+                        : <p className={styles.settingHint}>Reload your public profile before managing publications.</p>}
+                    </div>
+                  </div>
+                </section>
+
+                <section className={styles.settingsSection} aria-labelledby="public-visibility-title">
+                  <h3 className="uiSectionLabel" id="public-visibility-title">Visibility</h3>
+                  <div className={styles.settingRow}>
+                    <div className={styles.settingCopy}>
+                      <p className={styles.settingLabel}>Disable public profile</p>
+                      <p className={styles.settingHint}>Removes the public page, statistics, and published games.</p>
+                    </div>
+                    <div className={styles.settingControls}>
+                      {!confirmDisable ? <button className="uiAction uiActionDanger" type="button" disabled={pendingAction !== null}
+                        onClick={() => setConfirmDisable(true)}>Disable public profile</button> : <div className={styles.confirmPanel}>
+                        <p>Disabling removes public statistics and every published game. Re-enabling starts empty with statistics off. Shared replay copies remain.</p>
+                        <div className={styles.managerActions}>
+                          <button className="uiAction uiActionDanger" type="button" disabled={pendingAction !== null}
+                            onClick={() => void disableProfile()}>{pendingAction === "disable" ? "Disabling profile" : "Confirm disable"}</button>
+                          <button className="uiAction uiActionNeutral" type="button" disabled={pendingAction !== null}
+                            onClick={() => setConfirmDisable(false)}>Keep profile enabled</button>
+                        </div>
+                      </div>}
+                    </div>
+                  </div>
+                </section>
+              </>}
+            </>
+          ) : !loading && !error ? <p className={styles.mutedText}>Public profile data is not ready yet. Reload to try again.</p> : null}
         </div>
       )}
     </section>

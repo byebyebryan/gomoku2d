@@ -308,13 +308,40 @@ test("C11: public opt-in, visitor replay, unpublish, disable, re-enable, and cop
   await auditAccessibility(page, testInfo, "public-manager");
   await expectNoHorizontalOverflow(page);
   await captureSharingEvidence(page, testInfo, "profile-manager", 'section[aria-labelledby="public-profile-manager-title"]');
+  await page.setViewportSize({ width: 1280, height: 1800 });
+  await expectNoHorizontalOverflow(page);
+  await captureSharingEvidence(page, testInfo, "profile-manager-desktop", 'section[aria-labelledby="public-profile-manager-title"]');
+  await page.setViewportSize({ width: 390, height: 844 });
 
   await page.goto(`/replay/${matchId}`);
   await expect(page).toHaveTitle("Replay Analysis | Gomoku2D");
-  await page.getByRole("button", { name: "Publish replay", exact: true }).click();
+  await page.getByRole("button", { name: "Previous move", exact: true }).click();
+  await expect(page.getByTestId("replay-move-count")).toHaveText("Move 8 / 9");
+  const canvas = await page.locator("canvas").elementHandle();
+  const publishTrigger = page.getByRole("button", { name: "Publish replay", exact: true });
+  await expect(publishTrigger.locator("svg")).toHaveCount(1);
+  await page.getByRole("button", { name: "Auto play", exact: true }).click();
+  await publishTrigger.click();
+  const backToReplay = page.getByRole("button", { name: "Back to replay", exact: true });
+  await expect(backToReplay).toBeFocused();
+  await expect(page.getByRole("button", { name: "Next move", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Share replay", exact: true })).toHaveCount(0);
+  expect(await canvas!.evaluate((element) => element.isConnected)).toBe(true);
   await expect(page.getByRole("textbox", { name: "Public replay title", exact: true })).toBeVisible();
+  // Escape restores the same paused position and the originating action.
+  const openingTitle = await page.getByRole("textbox", { name: "Public replay title", exact: true }).inputValue();
+  await page.keyboard.press("Escape");
+  await expect(publishTrigger).toBeFocused();
+  await expect(page.getByRole("button", { name: "Auto play", exact: true })).toBeVisible();
+  const openingMove = Number(openingTitle.match(/\d+$/)![0]);
+  await expect(page.getByTestId("replay-move-count")).toHaveText(`Move ${openingMove} / 9`);
+  await publishTrigger.click();
   await page.getByRole("textbox", { name: "Public replay title", exact: true }).fill(title);
   await auditAccessibility(page, testInfo, "publish-form");
+  await page.setViewportSize({ width: 1280, height: 1000 });
+  await expectNoHorizontalOverflow(page);
+  await captureSharingEvidence(page, testInfo, "publish-replay-desktop", 'section[aria-label="Publish replay"]');
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole("button", { name: "Publish this replay", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: `Published “${title}”` })).toBeVisible();
   await expectNoHorizontalOverflow(page);
@@ -616,8 +643,14 @@ test("C15: maximum Unicode public fields remain editable and reflow for owners a
   await expect(page.getByRole("button", { name: "Update public stats", exact: true })).toBeEnabled();
   await expectNoHorizontalOverflow(page);
   await captureSharingEvidence(page, testInfo, "maximum-owner", 'section[aria-labelledby="public-profile-manager-title"]');
+  await page.setViewportSize({ width: 640, height: 900 });
+  await page.addStyleTag({ content: "html { font-size: 200%; }" });
+  await expectNoHorizontalOverflow(page);
+  await auditAccessibility(page, testInfo, "maximum-owner-enlarged");
+  await captureSharingEvidence(page, testInfo, "maximum-owner-enlarged", 'section[aria-labelledby="public-profile-manager-title"]');
 
   await page.goto(`/replay/${matchId}`);
+  await page.setViewportSize({ width: 320, height: 900 });
   await page.getByRole("button", { name: "Publish replay", exact: true }).click();
   const titleInput = page.getByRole("textbox", { name: "Public replay title", exact: true });
   await titleInput.fill(title);
@@ -625,6 +658,11 @@ test("C15: maximum Unicode public fields remain editable and reflow for owners a
   await page.getByRole("button", { name: "Publish this replay", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: `Published “${title}”` })).toBeVisible();
   await expectNoHorizontalOverflow(page);
+  await page.setViewportSize({ width: 640, height: 900 });
+  await page.addStyleTag({ content: "html { font-size: 200%; }" });
+  await expectNoHorizontalOverflow(page);
+  await auditAccessibility(page, testInfo, "maximum-publish-enlarged");
+  await captureSharingEvidence(page, testInfo, "maximum-publish-enlarged", 'section[aria-label="Publish replay"]');
 
   const visitorContext = await browser.newContext({ viewport: { width: 320, height: 900 } });
   await protectContext(visitorContext);

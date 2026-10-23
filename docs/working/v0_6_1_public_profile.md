@@ -97,6 +97,14 @@ published-game management, and Copy link / View public profile actions.
 Public manager entry points from replays should land on this tab. Opening the
 tab loads owner data; public visits must not initialise private state.
 
+The owner controls follow General Settings: grouped sections with explanatory
+labels on the left and bounded fields/actions on the right, stacking at narrow
+card widths. Publish replay uses the existing profile icon and replaces the
+whole replay sidebar, matching Share replay's entry animation, paused playback,
+Back/Escape dismissal and focus/scroll restoration. Its compact publication
+preview shows the destination profile, title, opening move and both players.
+Public-copy and unverified-result notices remain concise and visible.
+
 ## Review and execution
 
 Luna Max reviewed the code before implementation. The review confirmed the

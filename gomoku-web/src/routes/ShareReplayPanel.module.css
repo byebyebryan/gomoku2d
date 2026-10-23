@@ -3,6 +3,7 @@
   min-width: 0;
   gap: 24px;
   padding: 16px;
+  background: var(--bg);
   overflow-wrap: anywhere;
   animation: enterShare 140ms ease-out;
 }
@@ -40,6 +41,26 @@
   display: grid;
   min-width: 0;
   gap: 8px;
+}
+
+.choice :global(.uiInput) {
+  min-width: 0;
+  width: 100%;
+}
+
+.publisherName {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--type-value);
+  line-height: 1.2;
+}
+
+.note,
+.origin {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-meta);
+  line-height: 1.4;
 }
 
 .segments {

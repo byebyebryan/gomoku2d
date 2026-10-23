@@ -1,6 +1,6 @@
 {
-  "scope": "Final C11/C15 focused 6-case three-engine replay after semantic label correction. Raw JSON is explicitly persisted even with the line reporter. Automated checks do not establish human screen-reader/device acceptance.",
-  "raw_directory": "gomoku-web/test-results/v061-accessibility",
+  "scope": "Public-profile settings and Publish replay UI refinement. Final C11/C15 passed in all three engines, including owner controls and publishing at 640px/200% text. Automated checks do not establish human screen-reader/device acceptance.",
+  "raw_directory": "gomoku-web/test-results/v061-ui-final",
   "reports": [
     {
       "engine": "chromium",
@@ -11,13 +11,6 @@
     },
     {
       "engine": "chromium",
-      "audit": "publish-form",
-      "violations": 0,
-      "incomplete": [],
-      "raw_report": "sharing-C11-public-opt-in--130ba-le-and-copied-link-behavior-chromium/sharing-accessibility-publish-form.json"
-    },
-    {
-      "engine": "chromium",
       "audit": "public-visitor-profile",
       "violations": 0,
       "incomplete": [],
@@ -25,10 +18,10 @@
     },
     {
       "engine": "chromium",
-      "audit": "maximum-public-fields",
+      "audit": "publish-form",
       "violations": 0,
       "incomplete": [],
-      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-chromium/sharing-accessibility-maximum-public-fields.json"
+      "raw_report": "sharing-C11-public-opt-in--130ba-le-and-copied-link-behavior-chromium/sharing-accessibility-publish-form.json"
     },
     {
       "engine": "firefox",
@@ -39,13 +32,6 @@
     },
     {
       "engine": "firefox",
-      "audit": "publish-form",
-      "violations": 0,
-      "incomplete": [],
-      "raw_report": "sharing-C11-public-opt-in--130ba-le-and-copied-link-behavior-firefox/sharing-accessibility-publish-form.json"
-    },
-    {
-      "engine": "firefox",
       "audit": "public-visitor-profile",
       "violations": 0,
       "incomplete": [],
@@ -53,10 +39,10 @@
     },
     {
       "engine": "firefox",
-      "audit": "maximum-public-fields",
+      "audit": "publish-form",
       "violations": 0,
       "incomplete": [],
-      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-firefox/sharing-accessibility-maximum-public-fields.json"
+      "raw_report": "sharing-C11-public-opt-in--130ba-le-and-copied-link-behavior-firefox/sharing-accessibility-publish-form.json"
     },
     {
       "engine": "webkit",
@@ -67,13 +53,6 @@
     },
     {
       "engine": "webkit",
-      "audit": "publish-form",
-      "violations": 0,
-      "incomplete": [],
-      "raw_report": "sharing-C11-public-opt-in--130ba-le-and-copied-link-behavior-webkit/sharing-accessibility-publish-form.json"
-    },
-    {
-      "engine": "webkit",
       "audit": "public-visitor-profile",
       "violations": 0,
       "incomplete": [],
@@ -81,10 +60,73 @@
     },
     {
       "engine": "webkit",
+      "audit": "publish-form",
+      "violations": 0,
+      "incomplete": [],
+      "raw_report": "sharing-C11-public-opt-in--130ba-le-and-copied-link-behavior-webkit/sharing-accessibility-publish-form.json"
+    },
+    {
+      "engine": "chromium",
+      "audit": "maximum-owner-enlarged",
+      "violations": 0,
+      "incomplete": [],
+      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-chromium/sharing-accessibility-maximum-owner-enlarged.json"
+    },
+    {
+      "engine": "chromium",
+      "audit": "maximum-public-fields",
+      "violations": 0,
+      "incomplete": [],
+      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-chromium/sharing-accessibility-maximum-public-fields.json"
+    },
+    {
+      "engine": "chromium",
+      "audit": "maximum-publish-enlarged",
+      "violations": 0,
+      "incomplete": [],
+      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-chromium/sharing-accessibility-maximum-publish-enlarged.json"
+    },
+    {
+      "engine": "firefox",
+      "audit": "maximum-owner-enlarged",
+      "violations": 0,
+      "incomplete": [],
+      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-firefox/sharing-accessibility-maximum-owner-enlarged.json"
+    },
+    {
+      "engine": "firefox",
+      "audit": "maximum-public-fields",
+      "violations": 0,
+      "incomplete": [],
+      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-firefox/sharing-accessibility-maximum-public-fields.json"
+    },
+    {
+      "engine": "firefox",
+      "audit": "maximum-publish-enlarged",
+      "violations": 0,
+      "incomplete": [],
+      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-firefox/sharing-accessibility-maximum-publish-enlarged.json"
+    },
+    {
+      "engine": "webkit",
+      "audit": "maximum-owner-enlarged",
+      "violations": 0,
+      "incomplete": [],
+      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-webkit/sharing-accessibility-maximum-owner-enlarged.json"
+    },
+    {
+      "engine": "webkit",
       "audit": "maximum-public-fields",
       "violations": 0,
       "incomplete": [],
       "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-webkit/sharing-accessibility-maximum-public-fields.json"
+    },
+    {
+      "engine": "webkit",
+      "audit": "maximum-publish-enlarged",
+      "violations": 0,
+      "incomplete": [],
+      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-webkit/sharing-accessibility-maximum-publish-enlarged.json"
     }
   ]
 }

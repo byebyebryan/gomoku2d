@@ -13,8 +13,9 @@ import { matchUserSide, type SavedMatchSide, type SavedMatchV2 } from "../match/
 import { localProfileStore } from "../profile/local_profile_store";
 import { portableReplayFromSavedMatch, validatePortableReplay, type PortableReplayV1 } from "../replay/portable_replay";
 import { encodePortableReplay, portableReplayFingerprint } from "../replay/portable_replay_codec";
+import { Icon } from "../ui/Icon";
 
-import styles from "./SharingPanels.module.css";
+import styles from "./ShareReplayPanel.module.css";
 
 interface ReplayPreview {
   replay: PortableReplayV1 | null;
@@ -70,16 +71,20 @@ export function PublishReplayPanel({
   source,
   eligible,
   moveIndex,
+  open,
+  onClose,
 }: {
   match: SavedMatchV2;
   source?: PortableReplayV1;
   eligible: boolean;
   moveIndex: number;
+  open: boolean;
+  onClose: () => void;
 }) {
   const auth = useStore(cloudAuthStore);
   const localProfileId = useStore(localProfileStore, (state) => state.profile?.id ?? null);
   const uid = auth.status === "signed_in" ? auth.user?.uid ?? null : null;
-  const [open, setOpen] = useState(false);
+  const backRef = useRef<HTMLButtonElement>(null);
   const [publisher, setPublisher] = useState<LoadedPublisher | null>(null);
   const [title, setTitle] = useState("");
   const [pending, setPending] = useState(false);
@@ -226,31 +231,33 @@ export function PublishReplayPanel({
     }
   };
 
-  if (!eligible || !uid) return null;
-
-  const toggleOpen = () => {
-    const nextOpen = !open;
-    setOpen(nextOpen);
-    setError(null);
-    setNotice(null);
-    if (nextOpen) {
+  useEffect(() => {
+    if (open && uid && eligible) {
       setTitle(`Replay after move ${moveIndex}`);
       void loadPublisher(uid);
+      backRef.current?.focus({ preventScroll: true });
+      backRef.current?.scrollIntoView?.({ block: "nearest" });
+    } else {
+      requestRef.current += 1;
+      setPending(false);
     }
-  };
+    // The opening position is fixed while this sidebar replaces playback controls.
+  }, [open, uid, eligible, match.id]);
+
+  useEffect(() => () => { requestRef.current += 1; }, []);
+
+  if (!eligible || !uid) return null;
 
   return (
-    <section className={styles.publishPanel} aria-label="Publish replay">
-      <button className="uiAction uiActionSecondary" type="button" aria-expanded={open}
-        onClick={toggleOpen}>
-        Publish replay
+    <section className={styles.section} aria-label="Publish replay" hidden={!open} onKeyDown={(event) => {
+      if (event.key === "Escape") { event.preventDefault(); onClose(); }
+    }}>
+      <button className={`uiAction uiActionNeutral ${styles.back}`} type="button" ref={backRef} onClick={onClose}>
+        <Icon name="back" /><span className="uiActionLabel">Back to replay</span>
       </button>
+      <div className={styles.heading}><Icon name="profile" /><h2>Publish replay</h2></div>
       {open && (
-        <div className={styles.publishBody}>
-          <p className={styles.mutedText}>
-            Publishing creates a public copy of this game. It is a casual client supplied record, not a verified result.
-          </p>
-
+        <div className={styles.body}>
           {publisherForCurrentUid?.status === "loading" && <p role="status">Loading your public profile.</p>}
           {!publisherForCurrentUid && (
             <button className="uiAction uiActionNeutral" type="button" onClick={() => void loadPublisher(uid)}>
@@ -258,50 +265,58 @@ export function PublishReplayPanel({
             </button>
           )}
           {publisherForCurrentUid?.status === "error" && (
-            <p className={styles.errorText} role="alert">{publisherForCurrentUid.message}</p>
+            <p className={styles.error} role="alert">{publisherForCurrentUid.message}</p>
           )}
           {publisherForCurrentUid?.status === "error" && (
             <button className="uiAction uiActionNeutral" type="button" onClick={() => void loadPublisher(uid)}>
               {previewReloadRequired ? "Reload preview" : "Retry profile load"}
             </button>
           )}
-          {error && <p className={styles.errorText} role="alert">{error}</p>}
-          {notice && <p className={styles.successText} role="status">{notice}</p>}
+          {error && <p className={styles.error} role="alert">{error}</p>}
+          {notice && <p className={styles.message} role="status">{notice}</p>}
 
           {publisherForCurrentUid?.status === "ready" && !publisherForCurrentUid.profile?.enabled && (
-            <div className={styles.profileRequired}>
-              <p>Your public profile is not enabled. Review and enable it from Profile before publishing games.</p>
-              <Link className="uiAction uiActionSecondary" to="/profile?tab=public">Manage public profile</Link>
+            <div className={styles.choice}>
+              <p className={styles.note}>Enable your public profile to publish games.</p>
+              <Link className="uiAction uiActionSecondary" to="/profile?tab=public"><Icon name="settings" />Manage public profile</Link>
             </div>
           )}
 
           {publisherForCurrentUid?.status === "ready" && publisherForCurrentUid.profile?.enabled && (
             <>
-              <p className={styles.publisherName}>Publishing as <strong>{publisherForCurrentUid.profile.displayName}</strong></p>
+              <div className={styles.choice}>
+                <p className="uiSectionLabel">Public profile</p>
+                <p className={styles.publisherName}>{publisherForCurrentUid.profile.displayName}</p>
+              </div>
               {preview.error || !preview.replay ? (
-                <p className={styles.errorText} role="alert">{preview.error ?? "This game cannot be published."}</p>
+                <p className={styles.error} role="alert">{preview.error ?? "This game cannot be published."}</p>
               ) : (
                 <>
-                  <label className={styles.field}>
-                    <span>Public replay title</span>
+                  <label className={styles.choice}>
+                    <span className="uiSectionLabel">Public replay title</span>
                     <input className="uiInput" maxLength={160} value={title}
                       onChange={(event) => { setTitle(Array.from(event.target.value).slice(0, 80).join("")); setError(null); }} />
                   </label>
-                  <p className={styles.preview}>
-                    Opens at move {preview.openingPly}. Black: <strong>{preview.replay.black.name}</strong>; White: <strong>{preview.replay.white.name}</strong>.
-                  </p>
-                  {preview.replay.practice && (
-                    <p className={styles.mutedText}>
-                      This game starts from an existing position at move {preview.replay.practice.inheritedPly}.
-                    </p>
-                  )}
-                  <p className={styles.disclosure}>
-                    Anyone can copy a public replay. Unpublishing removes the catalog entry, but portable copies already made by others cannot be recalled.
-                  </p>
+                  <div className={styles.preview} role="group" aria-label="Publication preview">
+                    <div className={styles.previewHeading}>
+                      <span className="uiSectionLabel">In your profile</span>
+                      <span className={styles.moment}>Move {preview.openingPly} / {match.move_count}</span>
+                    </div>
+                    {[preview.replay.black, preview.replay.white].map((player, index) => <div className={styles.player} key={index}>
+                      <span className={`${styles.stone} ${index === 0 ? styles.stoneBlack : styles.stoneWhite}`} aria-hidden="true" />
+                      <span className="uiSrOnly">{index === 0 ? "Black" : "White"}:</span>
+                      <span className={styles.playerName} title={player.name}>{player.name}</span>
+                      {player.kind === "human" && player.profileUid && <span className={styles.profileIcon} role="img" aria-label="Public profile link included"><Icon name="profile" /></span>}
+                    </div>)}
+                    <p className={styles.access}>Full game · Public catalog</p>
+                    {preview.replay.practice && <p className={styles.origin}>Starts from move {preview.replay.practice.inheritedPly}</p>}
+                  </div>
                   <button className="uiAction uiActionPrimary" type="button" disabled={pending || !title.trim()}
                     onClick={() => void publish()}>
-                    {pending ? "Publishing replay" : "Publish this replay"}
+                    <Icon name="profile" />{pending ? "Publishing replay" : "Publish this replay"}
                   </button>
+                  <p className={styles.note}>Anyone can copy this replay. Unpublishing removes the listing; shared copies remain.</p>
+                  <p className={styles.access}>Casual record · Unverified result</p>
                 </>
               )}
             </>

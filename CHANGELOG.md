@@ -28,6 +28,8 @@ their own section.
   snapshots, and compact eight-game visitor pages based on actual publications.
   Refresh statistics explicitly; private Reset preserves the public snapshot,
   while Disable and Delete Cloud remove it.
+- Align public-profile controls with General Settings and give replay publishing
+  the same full-sidebar interaction and compact preview as Share replay.
 
 ### Repository
 

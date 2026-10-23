@@ -20,7 +20,7 @@ or production deployment is part of this checkpoint.
 - Real Google OAuth, public-host/release acceptance, and the existing Canvas
   stone-colour defect remain separate. No rendering/core changes are included.
 
-## Final gate
+## Functional checkpoint
 
 Runtime implementation: `bf7d963` on local `main` (main feature slice `7e9f803`),
 following reviewed data/rules
@@ -48,9 +48,8 @@ Rust/core code and dependencies are unchanged in this checkpoint.
 Review of the retained reports exposed labels on generic containers. The
 final semantic correction names the stats group properly and uses hidden text
 for row context. Its affected route units passed 42/42, the production build
-passed again, and C11/C15 passed 6/6 across the engines. [Twelve final audit
-summaries](accessibility.json) record **zero violations and zero incomplete
-checks**; raw JSON survives the line reporter under ignored
+passed again, and C11/C15 passed 6/6 across the engines. That pass recorded
+twelve audits with **zero violations and zero incomplete checks**; raw JSON survives the line reporter under ignored
 `gomoku-web/test-results/v061-accessibility`. These assertions do not establish
 complete WCAG or human screen-reader acceptance. The visible layout is unchanged
 by this final semantic correction.
@@ -73,6 +72,38 @@ Ordinary journeys used the repository's Playwright configuration in the pinned
 the matching read-only browser cache, `PLAYWRIGHT_BASE_URL=http://127.0.0.1:8014`,
 `--browser=all --workers=3 --reporter=line`. The corrected keyboard scenario
 was rerun alone in all engines; the temporary target has since been stopped.
+
+## Public-profile and publishing UI refinement
+
+The subsequent visual pass follows General Settings' grouped label/control
+rows, stacking by available card width. Public identity, profile links,
+statistics and publication controls have bounded actions and existing icons.
+Publish replay uses the existing profile icon and swaps the whole replay
+sidebar, sharing the Share replay styling, entry motion, paused playback and
+Back/Escape return with focus and scroll restoration. A compact preview replaces
+paragraphs with the destination, title, opening move and black/white players;
+short copy keeps the public-copy and unverified-record disclosures visible.
+Both sidebar panels explicitly paint their existing background, so offscreen
+text has a defined background during scrolling and accessibility inspection.
+
+Validation after this UI change:
+
+- App/scripts/tools type checks passed. The production build and final isolated
+  cloud/manual emulator builds passed.
+- Affected PublicSharing, ProfileRoute and ReplayRoute component suites: **52/52**.
+- Shared replay browser scenarios: **18/18**, across Chromium, Firefox and WebKit.
+- Final C11/C15: **6/6** across the three engines, including public opt-in,
+  publishing, unchanged board canvas, playback pause, sidebar replacement,
+  Escape/focus return, unpublish/disable and maximum Unicode fields.
+- C15 additionally covers owner-settings and publishing reflow at 640px / 200%
+  text. [Eighteen current audits](accessibility.json) report zero violations and
+  zero incomplete checks. Desktop and mobile screenshots were inspected.
+- The backend, rules, indexes and public visitor behavior are unchanged; their
+  earlier full-lane results above are the functional baseline, not new runs.
+
+Raw final cloud artifacts are retained under ignored
+`gomoku-web/test-results/v061-ui-final`. The current
+[preview receipt](preview.json) identifies the served runtime commit.
 
 ## Contract review
 
@@ -106,7 +137,8 @@ managed manual preview, emulator and Carbon tunnel remain available.
 
 Inspected examples:
 
-- [Desktop owner tab](owner-desktop-tab.png) and [mobile owner controls](sharing-chromium-profile-manager.png).
+- [Desktop owner controls](sharing-chromium-profile-manager-desktop.png) and [mobile controls](sharing-chromium-profile-manager.png).
+- [Desktop publishing sidebar](sharing-chromium-publish-replay-desktop.png) and [mobile sidebar](sharing-chromium-publish-replay.png).
 - [Desktop paged visitor list](public-demo-1280.png) and [mobile list](public-demo-390.png).
 - [Actual owner-published visitor page](sharing-chromium-public-profile.png).
 
@@ -123,7 +155,8 @@ no push, tag, production deployment or real cloud-data mutation occurred.
 2. Sign in to the local demo. Enable a public name; check that public statistics
    start off. Share the current summary, view the public page, then update or
    remove the snapshot. A zero-game record should show an em dash for win rate.
-3. Publish games from My games. Browse the public list, open a replay, and
+3. Publish games from My games. Check the sidebar replacement, preview, Back /
+   Escape return, and unchanged opening position. Browse the public list, open a replay, and
    unpublish an item from management. Fewer than nine games need no pagination.
 4. Check that private Reset explains that public stats and publications stay.
    Disable public sharing if desired; enabling again starts empty, stats off.
