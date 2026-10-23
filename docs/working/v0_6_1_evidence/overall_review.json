@@ -1,0 +1,236 @@
+{
+  "reviewed_source": "70e7f254b8aa9cd262bba5c9f07114db8a301600",
+  "date": "2026-10-23",
+  "scope": "0.6.1 public profile data/rules/UI and integrated replay sharing; review only, no application changes.",
+  "decision": "No new 0.6.1 functional/privacy/data-integrity defect found. Existing Canvas rendering defect remains a release blocker.",
+  "findings": [
+    {
+      "priority": "P1",
+      "status": "open",
+      "existing": true,
+      "source": "gomoku-web/src/board/board_renderer.ts:140",
+      "finding": "Black and White share an untinted white sprite in Canvas; setTint is WebGL-only.",
+      "impact": "Both sides appear white when Phaser.AUTO selects Canvas, including replay/game boards.",
+      "evidence": "Forced Canvas in a fresh Chromium context against the real shared replay; screenshot inspected. The renderer file matches v0.5.5 exactly.",
+      "probe": {
+        "renderer": "Canvas (WebGL contexts disabled)",
+        "viewPly": 4,
+        "samples": [
+          {
+            "cell": 110,
+            "point": [
+              283,
+              382
+            ],
+            "rgba": [
+              128,
+              128,
+              128,
+              255
+            ]
+          },
+          {
+            "cell": 0,
+            "point": [
+              35,
+              35
+            ],
+            "rgba": [
+              128,
+              128,
+              128,
+              255
+            ]
+          }
+        ],
+        "knownDefectReproduced": true
+      },
+      "capture": "gomoku-web/test-results/v061-overall/canvas-stones.png",
+      "next_step": "Render distinct stone colours in the Canvas fallback and cover actual rendered pixels."
+    },
+    {
+      "priority": "P3",
+      "status": "open",
+      "existing": true,
+      "source": "gomoku-web/cloudtests/continuity.spec.ts:79",
+      "finding": "Date.now-only test account names collide when repeated tests start in parallel.",
+      "impact": "Extra three-worker run: three Chromium C4 failures before the app race assertions because the emulator account picker contains duplicate emails.",
+      "extra_parallel_run": {
+        "passed": 42,
+        "failed": 3,
+        "workers": 3,
+        "repeat_each": 5,
+        "raw_directory": "gomoku-web/test-results/v061-overall/races-parallel-failed"
+      },
+      "configured_run": {
+        "passed": 45,
+        "failed": 0,
+        "workers": 1,
+        "repeat_each": 5,
+        "raw_directory": "gomoku-web/test-results/v061-overall/races-configured"
+      },
+      "next_step": "Use collision-proof per-test account names; retain strict sign-in selectors."
+    }
+  ],
+  "checks": {
+    "typecheck": {
+      "passed": true
+    },
+    "production_build": {
+      "passed": true,
+      "command": "GOMOKU_BASE_PATH=/ npm run build"
+    },
+    "unit": {
+      "passed": 488,
+      "files": 48
+    },
+    "firestore_rules_sdk": {
+      "passed": 49
+    },
+    "ordinary_browser": {
+      "passed": 207,
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "workers": 3
+    },
+    "cloud": {
+      "passed": 42,
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "workers": 1,
+      "port_offset": 1000
+    },
+    "configured_race_repetitions": {
+      "passed": 45,
+      "repeat_each": 5,
+      "workers": 1,
+      "grep": "C4:|C6:|C7/C9:",
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ]
+    },
+    "accessibility": {
+      "audits": 18,
+      "violations": 0,
+      "incomplete": 0
+    },
+    "static_routes": {
+      "source_commit": "70e7f254b8aa9cd262bba5c9f07114db8a301600",
+      "routes": [
+        {
+          "path": "/",
+          "status": 200,
+          "static_entry_matches": true
+        },
+        {
+          "path": "/guide/",
+          "status": 200,
+          "static_entry_matches": true
+        },
+        {
+          "path": "/lab/",
+          "status": 200,
+          "static_entry_matches": true
+        },
+        {
+          "path": "/match/local/",
+          "status": 200,
+          "static_entry_matches": true
+        },
+        {
+          "path": "/privacy/",
+          "status": 200,
+          "static_entry_matches": true
+        },
+        {
+          "path": "/profile/",
+          "status": 200,
+          "static_entry_matches": true
+        },
+        {
+          "path": "/player/",
+          "status": 200,
+          "static_entry_matches": true
+        },
+        {
+          "path": "/replay/shared/",
+          "status": 200,
+          "static_entry_matches": true
+        },
+        {
+          "path": "/rules/",
+          "status": 200,
+          "static_entry_matches": true
+        },
+        {
+          "path": "/settings/",
+          "status": 200,
+          "static_entry_matches": true
+        },
+        {
+          "path": "/terms/",
+          "status": 200,
+          "static_entry_matches": true
+        },
+        {
+          "path": "/visuals/",
+          "status": 200,
+          "static_entry_matches": true
+        }
+      ],
+      "entry_script": "/assets/index-BgXm6cna.js",
+      "entry_sha256": "2717f9eed82d6b5335d22bc69afd3612a76a283e681efab5793d639efdf12fbb"
+    },
+    "production_npm_audit": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    }
+  },
+  "reviewed_contracts": [
+    "Current-account history readiness and ordinary played-game statistics; study copies excluded.",
+    "Explicit stats opt-in/refresh/removal and preservation during name/catalog changes.",
+    "Generation/root/page revision guards and delayed account-change callbacks.",
+    "Public routes avoid private history/promotion and have bounded direct document reads.",
+    "Sparse/legacy catalogs, eight-row logical pages and current fixed pagination positions.",
+    "Private reset preserves public sharing; disable/Delete Cloud clear public data while retaining revision barriers.",
+    "No new service, polling, automatic statistics writes or per-move sharing traffic."
+  ],
+  "raw_directory": "gomoku-web/test-results/v061-overall",
+  "log_sha256": {
+    "typecheck.log": "5b86e9651bd003d64f42d1321e239007e088ec1000e0b2967492a980ac4d6cd9",
+    "build.log": "54474d95fafe78f58d86e93a3117f4d0d0cde6e07424b8f04f24b5d036ded817",
+    "unit.log": "952364e0cac67e4f042dcfc7b86e21e2b8c7d0df1b2e14b0267b20134de60ae3",
+    "rules.log": "4da164a0064688c1208bfd5ec4d4845e6bd65c7fffa5ccf88cd6c301dbf723f2",
+    "browser.log": "af498237ad6d53b4f27ac76c959edc3404b9d59185dff0b674276cc315b81373",
+    "cloud.log": "953344c3f2eea9fb8aebda53bd8c2e28221dd024e25c40c3b713120fe6d96006",
+    "races.log": "1856eb22faff2c06a74f8c727543bb87ca2e92d595f2d4f9de73a55f6c2edb9c",
+    "races-configured.log": "d8e3fe97e3fd373c15f288d73d08304d6f23d5eefdd28d4e005dfd16c05e58e6",
+    "audit.json": "b00b699665b549d10b0dada1171abd8d23625b5f18afff0eaf09b0b9107a4b35"
+  },
+  "boundaries": {
+    "user_browser_tabs_opened": 0,
+    "feature_code_changed": false,
+    "manual_demo_data_preserved": true,
+    "production_data_mutated": false,
+    "version_changed": false,
+    "pushed": false,
+    "released_or_deployed": false,
+    "temporary_browser_preview": "stopped",
+    "real_oauth": "not validated by emulator tests",
+    "public_host_and_rules_indexes": "not deployed or validated by this pass",
+    "physical_devices_and_human_assistive_technology": "not established",
+    "carbon_at_final_check": "offline on Tailscale; SSH timeout; current remote parity unverified"
+  }
+}

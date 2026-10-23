@@ -20,6 +20,69 @@ or production deployment is part of this checkpoint.
 - Real Google OAuth, public-host/release acceptance, and the existing Canvas
   stone-colour defect remain separate. No rendering/core changes are included.
 
+## Overall review — October 23, 2026
+
+Reviewed runtime `70e7f25`, including the accepted profile/publishing UI, action
+icons and fixed pagination positions. Bryan accepted the current presentation
+in the conversation. This pass traced the data, rules and route contracts and
+reran the complete relevant web gates; it changes no application code.
+The [review receipt](overall_review.json) records the current results, findings,
+raw artifact locations and remaining boundaries.
+
+Two findings remain:
+
+1. **P1 — existing Canvas stone colours block release acceptance.**
+   [BoardRenderer](../../../gomoku-web/src/board/board_renderer.ts) draws both
+   sides with the same white sprite and relies on `setTint` for Black. Phaser's
+   tint component is WebGL-only, while the board selects `Phaser.AUTO`. A fresh
+   Chromium context with WebGL disabled reproduced both sides appearing white
+   in the real shared replay. The renderer source is unchanged from v0.5.5.
+   Flow tests passing does not close this finding; fix the fallback and add
+   actual rendered-colour coverage before release.
+2. **P3 — timestamp-only cloud fixtures collide under parallel repetition.**
+   [C4's account name](../../../gomoku-web/cloudtests/continuity.spec.ts) uses
+   only `Date.now()`. An extra three-worker repetition run produced identical
+   account emails and duplicate emulator account-picker entries: 42/45 passed,
+   with three Chromium failures at the sign-in selector before the application
+   race assertions. Preserved traces show the duplicate email. The configured
+   one-worker run passed 45/45. Give each fixture a collision-proof identifier
+   before relying on parallel runs; keep the strict selector.
+
+No new functional, privacy or data-integrity defect was found in the 0.6.1
+changes. The reviewed implementation keeps statistics as explicit snapshots of
+the My games totals, waits for the current account's complete history, excludes
+study copies, and preserves stale-write/account barriers. Sparse and legacy
+catalogs still form eight-row logical pages. Private Reset preserves public
+sharing; disable and Delete Cloud clear it with the revision markers retained.
+Fresh public routes avoid private history work. Sharing adds no polling,
+per-move traffic or service. Logical SDK operation checks remain distinct from
+billing or a promised free-tier traffic capacity.
+
+| Fresh gate at `70e7f25` | Result |
+|---|---|
+| App/scripts/tools type checks and production build | Passed |
+| Web unit tests | 488/488, 48 files |
+| Firestore rules and production SDK scenarios | 49/49 |
+| Ordinary browser journeys, three engines | 207/207 |
+| Full cloud journeys, three engines | 42/42 |
+| Configured C4/C6/C7 repetitions, five per engine | 45/45 |
+| Public-profile/publishing accessibility audits | 18 reports, zero violations and zero incomplete checks |
+| Production direct/static entries | 12/12, served HTML and entry script match the build |
+| Production dependency audit | Zero reported vulnerabilities |
+
+Raw artifacts are retained under ignored
+`gomoku-web/test-results/v061-overall/`. Both the failed extra parallel run and
+the successful configured run survive there. The temporary ordinary-browser
+preview was stopped; the manual preview/emulators and Carbon forwarder remain.
+Starship serves the reviewed emulator build. Carbon is offline on Tailscale at
+the final check, so current Carbon reachability is unverified.
+
+The next implementation should close the Canvas finding and harden the test
+fixture IDs. Release preparation then needs its own version/exact-head CI,
+real OAuth/public-host round trip, and reviewed rules/index deployment gates.
+Physical-device and human assistive-technology acceptance are not established
+by this pass. No push, version change, tag or production deployment occurred.
+
 ## Functional checkpoint
 
 Runtime implementation: `bf7d963` on local `main` (main feature slice `7e9f803`),

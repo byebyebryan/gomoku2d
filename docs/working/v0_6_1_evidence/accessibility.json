@@ -1,6 +1,7 @@
 {
-  "scope": "Accepted icon integration: C11/C14/C15 passed 9/9 across all three engines. App component suites passed 60/60. Browser audits do not establish human screen-reader/device acceptance.",
-  "raw_directory": "gomoku-web/test-results/v061-accepted-icons",
+  "scope": "Full 0.6.1 overall review at 70e7f254b8aa9cd262bba5c9f07114db8a301600. Eighteen public-profile/publishing audits in the 42/42 three-engine cloud run. This is automated desktop-engine evidence, not human/device acceptance.",
+  "source_commit": "70e7f254b8aa9cd262bba5c9f07114db8a301600",
+  "raw_directory": "gomoku-web/test-results/v061-overall/cloud",
   "reports": [
     {
       "engine": "chromium",

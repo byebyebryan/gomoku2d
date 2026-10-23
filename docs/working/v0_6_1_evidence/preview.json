@@ -1,17 +1,17 @@
 {
-  "source_commit": "b99fa79",
-  "scope": "Local emulator preview with accepted icons; cloud glyph deferred. Preview and demo verified on Starship. Carbon SSH currently times out, so current remote parity is unverified; the owned tunnel keeps retrying.",
+  "source_commit": "70e7f254b8aa9cd262bba5c9f07114db8a301600",
+  "scope": "Local emulator preview with accepted action icons and fixed public pagination. Reviewed on Starship; Carbon is offline on Tailscale at the final check, so current remote parity is unverified. The owned forwarder remains configured to retry.",
   "carbon": {
     "host": "carbon",
     "verified": false,
-    "status": "ssh_unreachable",
-    "reason": "Connection to carbon port 22 timed out."
+    "status": "offline",
+    "reason": "Tailscale reports Online=false; SSH to carbon port 22 times out."
   },
   "starship": {
     "host": "starship",
-    "index_sha256": "7888c1f8ab699d0f37b08ba3b30a19922d25cd8964df1089a9cc72acfe9d2848",
-    "entry_script": "/assets/index-JN-ybI1l.js",
-    "entry_sha256": "b4aeac59a41db37889beb6081c4e6024a68f76ae24011daf868ba40232711165",
+    "index_sha256": "0935e5d724cbaed6c9fa944e78e90433bdf7e93ea29479368d4a41c9f0ede4b3",
+    "entry_script": "/assets/index-BnZBEBs_.js",
+    "entry_sha256": "487f4b37a6719ba9338afa6c9db412f0ea5f0f071f9b4072cde29c65d67df015",
     "managed_services": [
       "active",
       "active",
@@ -21,7 +21,7 @@
     "profile_status": 200,
     "auth_ready": true,
     "public_demo_name": "Demo Player",
-    "tunnel_state": "retrying; destination SSH unreachable"
+    "tunnel_state": "Carbon offline; current remote reachability unverified"
   },
   "profile_url": "http://127.0.0.1:8013/profile?tab=public",
   "demo_url": "http://127.0.0.1:8013/player/?id=v061-demo-player"
