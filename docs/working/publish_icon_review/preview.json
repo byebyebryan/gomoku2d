@@ -5,7 +5,7 @@
     "actions": {
       "index.html": {
         "status": 200,
-        "sha256": "019490b9e08a523bb3195ad5c1a6c2493a9fa5ea4d6775f5535e53d561d15db5"
+        "sha256": "4346ad9e06d35f03141c06463c58d2e193d609f9a7987f136a6903ac351377f0"
       },
       "publish.svg": {
         "status": 200,
@@ -27,23 +27,31 @@
         "status": 200,
         "sha256": "d0a7e4538080634634e690288eff544bd87e9bf8feb50cbdb411a217ddc20a33"
       },
+      "cloud.svg": {
+        "status": 200,
+        "sha256": "4e162ff95b0b6a6547b39773b8802a59ae0dfe46b1934f9e3b925a032a812c30"
+      },
+      "exit.svg": {
+        "status": 200,
+        "sha256": "3e93f055c9d5e89913717b64cf69ceac648ae7e3a068c99d7bdf623373078da4"
+      },
       "comparison.png": {
         "status": 200,
-        "sha256": "f6deba861ee965f101f5466c6f93e0350e0f41db1fbf6e5626de49e45a9fabde"
+        "sha256": "2a37358617f28dcc515a4957e33c0d299f12d14203636107360a1ae125aea186"
       },
       "new-icons.png": {
         "status": 200,
-        "sha256": "a9ddc6950e5fea65816708be4223c3894c96f3a5e15b73c4ff106da5fdf208e7"
+        "sha256": "3a1060311ecdbd11af399c0e8d0567072657fb94b014c888b4c6de36878bdbdd"
       },
       "new-icons-light.png": {
         "status": 200,
-        "sha256": "4db1b1367f7ca41b52be25347a0803fa6f667dc59e4c24ecc73f9e420557fc97"
+        "sha256": "8acb4a61fd3e8e2318c1d7e6d9317a55f297e28c4e400560797b73388a7043b8"
       }
     },
     "publish": {
       "index.html": {
         "status": 200,
-        "sha256": "019490b9e08a523bb3195ad5c1a6c2493a9fa5ea4d6775f5535e53d561d15db5"
+        "sha256": "4346ad9e06d35f03141c06463c58d2e193d609f9a7987f136a6903ac351377f0"
       },
       "publish.svg": {
         "status": 200,
@@ -65,20 +73,29 @@
         "status": 200,
         "sha256": "d0a7e4538080634634e690288eff544bd87e9bf8feb50cbdb411a217ddc20a33"
       },
+      "cloud.svg": {
+        "status": 200,
+        "sha256": "4e162ff95b0b6a6547b39773b8802a59ae0dfe46b1934f9e3b925a032a812c30"
+      },
+      "exit.svg": {
+        "status": 200,
+        "sha256": "3e93f055c9d5e89913717b64cf69ceac648ae7e3a068c99d7bdf623373078da4"
+      },
       "comparison.png": {
         "status": 200,
-        "sha256": "f6deba861ee965f101f5466c6f93e0350e0f41db1fbf6e5626de49e45a9fabde"
+        "sha256": "2a37358617f28dcc515a4957e33c0d299f12d14203636107360a1ae125aea186"
       },
       "new-icons.png": {
         "status": 200,
-        "sha256": "a9ddc6950e5fea65816708be4223c3894c96f3a5e15b73c4ff106da5fdf208e7"
+        "sha256": "3a1060311ecdbd11af399c0e8d0567072657fb94b014c888b4c6de36878bdbdd"
       },
       "new-icons-light.png": {
         "status": 200,
-        "sha256": "4db1b1367f7ca41b52be25347a0803fa6f667dc59e4c24ecc73f9e420557fc97"
+        "sha256": "8acb4a61fd3e8e2318c1d7e6d9317a55f297e28c4e400560797b73388a7043b8"
       }
     }
   },
   "app_integration": false,
-  "selected_globe_unchanged": true
+  "selected_globe_unchanged": true,
+  "previous_four_drafts_unchanged": true
 }

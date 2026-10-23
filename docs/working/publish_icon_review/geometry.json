@@ -1,17 +1,32 @@
 {
   "scope": "Draft source geometry, not app integration",
   "icons": {
-    "sign_in": {
-      "sha256": "68ac9701f65122fd6abdb7bde3604bff2bb5bba8c8624e40529523e78aa4d9ea",
+    "cloud": {
+      "sha256": "4e162ff95b0b6a6547b39773b8802a59ae0dfe46b1934f9e3b925a032a812c30",
+      "margins_ltrb": [
+        2,
+        5,
+        2,
+        5
+      ],
+      "filled_pixels": 96,
+      "horizontal_symmetry": true,
+      "content_size": [
+        20,
+        14
+      ]
+    },
+    "exit": {
+      "sha256": "3e93f055c9d5e89913717b64cf69ceac648ae7e3a068c99d7bdf623373078da4",
       "margins_ltrb": [
         2,
         2,
         2,
         2
       ],
-      "filled_pixels": 160,
+      "filled_pixels": 200,
       "vertical_symmetry": true,
-      "fixed_frame_shared_with": "sign_out"
+      "arrow_derived_from": "share, rotated clockwise then mirrored horizontally"
     },
     "sign_out": {
       "sha256": "2ac57e81bcd8f02ab4e991fe1920e36265d7cf4c8e1b9ced9c5a41a17ebaf5fa",
@@ -24,6 +39,18 @@
       "filled_pixels": 160,
       "vertical_symmetry": true,
       "derived_from": "share, rotated 90 degrees clockwise"
+    },
+    "sign_in": {
+      "sha256": "68ac9701f65122fd6abdb7bde3604bff2bb5bba8c8624e40529523e78aa4d9ea",
+      "margins_ltrb": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "filled_pixels": 160,
+      "vertical_symmetry": true,
+      "fixed_frame_shared_with": "sign_out"
     },
     "trash": {
       "sha256": "3042595eb7eac9728033309b2d5492a4b2552186b421c6f9ba54488f934d9e28",

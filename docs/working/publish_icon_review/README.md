@@ -1,14 +1,15 @@
 # Publish and account action icon review
 
-The Publish globe was selected by the user. Sign in, Sign out, Trash and Sync
-are additional visual proposals. This is an asset review: no runtime icon
+The Publish globe was selected by the user. Sign in, Sign out, Trash, Sync,
+Cloud and Exit are additional visual proposals. This is an asset review: no runtime icon
 registration, canonical manifest change, application rebuild or cloud-data
 mutation is included.
 
 ## Geometry and visual treatment
 
-All five additions are transparent 24×24 currentColor SVGs made of integer
-rectangle runs, with two-pixel margins on all four sides.
+All seven additions are transparent 24×24 currentColor SVGs made of integer
+rectangle runs. Cloud uses a naturally wide 20×14 silhouette, centered with
+2 / 5 / 2 / 5 margins; the other additions have two-pixel margins on all sides.
 
 - Publish retains the selected globe unchanged: stepped Circle silhouette,
   two-pixel meridians and equator, symmetry on both axes.
@@ -19,8 +20,13 @@ rectangle runs, with two-pixel margins on all four sides.
   symmetry and a one-pixel gap separating the lid from the bin.
 - Sync has two opposing arrows and short return tails, with two-pixel shafts
   and 180-degree rotational symmetry.
+- Cloud has stepped rounded lobes and a flat base, with a two-pixel outline
+  and horizontal symmetry. Its wider proportions keep it recognizable at 1×.
+- Exit offers an open doorway treatment alongside Sign out. The door is on
+  the right with a perspective leaf and an outward left arrow derived from
+  Share. It is vertically symmetric.
 
-`index.html` compares twelve actual source SVGs: the four proposals, selected
+`index.html` compares fourteen actual source SVGs: the six proposals, selected
 Publish globe, and existing Share, Save, Profile, Reset, Copy, Circle and Home.
 It offers 1× and 2× samples plus a 10× pixel grid, centre axes, light/dark
 surfaces and grid visibility controls. Existing Reset retains its original
@@ -35,7 +41,7 @@ old assets to match the additions.
 `geometry.json` records source hashes, margins, filled pixels and symmetry.
 The generator also proves both account masks derive from the same Share frame
 and arrow. `render.json` records exact browser raster readback at 1×/2×/10× for
-all twelve assets, working grid/theme controls, no preview load errors and no
+all fourteen assets, working grid/theme controls, no preview load errors and no
 horizontal overflow at 320px. Dark and light renders were visually inspected.
 `preview.json` verifies Carbon serves identical source/review bytes.
 

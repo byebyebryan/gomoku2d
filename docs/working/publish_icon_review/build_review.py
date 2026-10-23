@@ -7,10 +7,12 @@ import xml.etree.ElementTree as ET
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
-PROPOSALS = {"sign_in", "sign_out", "trash", "sync"}
-NAMES = ["sign_in", "sign_out", "trash", "sync", "publish", "share",
+PROPOSALS = {"sign_in", "sign_out", "trash", "sync", "cloud", "exit"}
+NAMES = ["cloud", "exit", "sign_out", "sign_in", "trash", "sync", "publish", "share",
          "save", "profile", "reset", "copy", "circle", "home"]
 NOTES = {
+    "cloud": "New draft · stepped lobes / 2px outline",
+    "exit": "New draft · open doorway / outward arrow",
     "sign_in": "New draft · fixed C frame / inward arrow",
     "sign_out": "New draft · fixed C frame / outward arrow",
     "trash": "New draft · 2px lid, body and bin details",
@@ -50,15 +52,19 @@ for name in NAMES:
     svg, pixels, receipt = inspect(path)
     masks[name] = pixels
     if name in PROPOSALS | {"publish"}:
-        assert receipt["margins_ltrb"] == [2, 2, 2, 2], name
+        expected = [2, 5, 2, 5] if name == "cloud" else [2, 2, 2, 2]
+        assert receipt["margins_ltrb"] == expected, name
     if name == "publish":
         assert pixels == {(23 - x, y) for x, y in pixels}
         assert pixels == {(x, 23 - y) for x, y in pixels}
         receipt.update(horizontal_symmetry=True, vertical_symmetry=True)
-    if name in {"sign_in", "sign_out"}:
+    if name in {"sign_in", "sign_out", "exit"}:
         assert pixels == {(x, 23 - y) for x, y in pixels}
         receipt.update(vertical_symmetry=True)
     if name == "trash":
+        assert pixels == {(23 - x, y) for x, y in pixels}
+        receipt.update(horizontal_symmetry=True)
+    if name == "cloud":
         assert pixels == {(23 - x, y) for x, y in pixels}
         receipt.update(horizontal_symmetry=True)
     if name == "sync":
@@ -87,6 +93,9 @@ assert masks["sign_out"] == frame | arrow
 assert masks["sign_in"] == frame | {(29 - x, y) for x, y in arrow}
 receipts["sign_in"]["fixed_frame_shared_with"] = "sign_out"
 receipts["sign_out"]["derived_from"] = "share, rotated 90 degrees clockwise"
+assert {(y, x) for x, y in masks["share"] - tray}.issubset(masks["exit"])
+receipts["exit"]["arrow_derived_from"] = "share, rotated clockwise then mirrored horizontally"
+receipts["cloud"]["content_size"] = [20, 14]
 html = '''<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Action icons — pixel comparison</title><style>
@@ -128,9 +137,9 @@ footer { margin-top:20px; }
 @media(max-width:940px) { .comparison { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:620px) { body { padding:16px; } .comparison { grid-template-columns:minmax(0,1fr); } h1 { font-size:32px; } }
 </style></head><body><main>
-<nav aria-label="Icon reviews"><a href="/icon-review/">Existing icon comparison</a><a href="#sign_in">Sign in / out</a><a href="#trash">Trash</a><a href="#sync">Sync</a><a href="new-icons.png">New icon image</a><a href="new-icons-light.png">Light image</a><a href="comparison.png">Full comparison image</a></nav>
-<h1>Action icons · four new drafts</h1>
-<p>24 × 24 source pixels · 10× pixel grid · two-pixel outer margins</p>
+<nav aria-label="Icon reviews"><a href="/icon-review/">Existing icon comparison</a><a href="#cloud">Cloud</a><a href="#exit">Exit</a><a href="#sign_in">Sign in / out</a><a href="#trash">Trash</a><a href="#sync">Sync</a><a href="new-icons.png">New icon image</a><a href="new-icons-light.png">Light image</a><a href="comparison.png">Full comparison image</a></nav>
+<h1>Action icons · six new drafts</h1>
+<p>24 × 24 source pixels · 10× pixel grid · measured margins below each icon</p>
 <p>Gold lines mark the centre axes. The 1× and 2× samples show the actual SVGs without grid overlays.</p>
 <p>Gold cards are the new proposals. Teal marks the selected Publish globe; plain cards are existing assets.</p>
 <div class="toolbar"><button id="grid-toggle" type="button" aria-pressed="true">Grid on</button><button id="theme-toggle" type="button" aria-pressed="false">Light surface</button></div>

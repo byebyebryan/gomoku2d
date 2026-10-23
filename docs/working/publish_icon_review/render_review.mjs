@@ -16,7 +16,7 @@ try {
   page.on("response", (response) => { if (!response.ok()) errors.push(`${response.status()} ${response.url()}`); });
   await page.goto("http://127.0.0.1:8013/icon-review/actions/");
   await page.evaluate(() => document.fonts.ready);
-  await expect(page.locator(".card")).toHaveCount(12);
+  await expect(page.locator(".card")).toHaveCount(14);
   const raster = await page.evaluate(async () => {
     const results = [];
     for (const card of document.querySelectorAll(".card")) {
@@ -67,7 +67,7 @@ try {
   await writeFile(join(here, "render.json"), JSON.stringify({
     browser: browser.version(), raster, preview_errors: errors, mobile_width: 320, mobile_overflow: false,
   }, null, 2) + "\n");
-  console.log("12 SVGs match source pixels at 1x/2x/10x; grid, theme and 320px reflow checks passed.");
+  console.log("14 SVGs match source pixels at 1x/2x/10x; grid, theme and 320px reflow checks passed.");
 } finally {
   await browser.close();
 }
