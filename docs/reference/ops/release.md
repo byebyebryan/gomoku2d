@@ -123,6 +123,10 @@ copied `index.html` entries.
 
 ## v0.6 sharing rollout and compatibility
 
+The proposed [v0.6.1 release plan](../../working/v0_6_1_release_plan.md) records
+the verified production baseline, scoped index changes, ordered checkpoints and
+public acceptance handoff for the first sharing publication.
+
 The v0.6 goal produces a local candidate only. Version bump, push, exact-head CI,
 release tag, deployment and public acceptance remain separate authorizations.
 The package version stays 0.5.5 and notes remain Unreleased until release prep.

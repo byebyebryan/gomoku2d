@@ -28,6 +28,8 @@ fix in `8bcaad0`. No new functional, privacy or data-integrity finding remains
 from this pass. The local 0.6.1 functional checkpoint is ready to wrap; this is
 not production release acceptance. The [final receipt](wrap_review.json) records
 the source identity, fresh results, raw-artifact hashes and remaining gates.
+The proposed [release plan](../v0_6_1_release_plan.md) sequences the remaining
+preparation, backend rollout, publication and public acceptance checkpoints.
 
 | Fresh integrated gate | Result |
 |---|---|
