@@ -217,8 +217,19 @@
 }
 
 .pagingControls {
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   color: var(--text-muted);
+}
+
+.previousPage {
+  grid-column: 2;
+  justify-self: center;
+}
+
+.nextPage {
+  grid-column: 3;
+  justify-self: end;
 }
 
 .manager {
@@ -382,8 +393,14 @@
   }
 
   .pagingControls {
+    grid-template-columns: minmax(0, 1fr);
     align-items: stretch;
-    flex-direction: column;
+  }
+
+  .previousPage,
+  .nextPage {
+    grid-column: 1;
+    justify-self: stretch;
   }
 
   .pagingControls :global(.uiAction),

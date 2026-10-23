@@ -290,14 +290,14 @@ export function PublicPlayerRoute() {
               <div className={styles.pagingControls}>
                 <span>Page {visibleView.pageIndex + 1} of {pageCount}</span>
                 {visibleView.pageIndex > 0 ? (
-                  <button className="uiAction uiActionNeutral" type="button" disabled={visibleView.pageLoading}
+                  <button className={`uiAction uiActionNeutral ${styles.previousPage}`} type="button" disabled={visibleView.pageLoading}
                     onClick={() => void loadLogicalPage(visibleView.pageIndex - 1)}>
                     Previous page
                   </button>
                 ) : null}
                 {visibleView.pageIndex < pageCount - 1 ? (
                   <button
-                    className="uiAction uiActionNeutral"
+                    className={`uiAction uiActionNeutral ${styles.nextPage}`}
                     type="button"
                     disabled={visibleView.pageLoading}
                     onClick={() => void loadLogicalPage(visibleView.pageIndex + 1)}
