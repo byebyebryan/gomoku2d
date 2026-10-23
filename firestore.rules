@@ -459,7 +459,7 @@ service cloud.firestore {
           !afterHasStats
           || request.resource.data.shared_stats == null
           || (beforeHasStats && request.resource.data.shared_stats == resource.data.shared_stats)
-          || request.resource.data.shared_stats.updated_at == request.time
+          || (publicSharingEnabled() && request.resource.data.shared_stats.updated_at == request.time)
         );
     }
 

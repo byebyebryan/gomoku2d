@@ -674,13 +674,17 @@ describe("Firestore private replay library rules and APIs", () => {
       });
       const closedOwner = closedEnv.authenticatedContext("uid-1").firestore() as unknown as Firestore;
       await assertFails(closedEnv.unauthenticatedContext().firestore().doc("public_profiles/uid-1").get());
-      const { saveCatalogPage, setPublicProfile } = await import(sharingPublicModule);
+      const { saveCatalogPage, setPublicProfile, setPublicProfileStats } = await import(sharingPublicModule);
       const { savePrivateLibrary } = await import(sharingPrivateModule);
       await expect(saveCatalogPage("uid-1", 0, [entry()], 1, 1, 1, { firestore: closedOwner })).rejects.toMatchObject({ code: "permission-denied" });
       await expect(setPublicProfile("uid-2", "Public Name", true, null, {
         firestore: closedEnv.authenticatedContext("uid-2").firestore() as unknown as Firestore,
       })).rejects.toMatchObject({ code: "permission-denied" });
-      await expect(setPublicProfile("uid-1", "", false, 1, { firestore: closedOwner }))
+      await expect(setPublicProfileStats("uid-1", { matches: 0, wins: 0, losses: 0, draws: 0 }, 1, { firestore: closedOwner }))
+        .rejects.toMatchObject({ code: "permission-denied" });
+      await expect(setPublicProfileStats("uid-1", null, 1, { firestore: closedOwner }))
+        .resolves.toMatchObject({ revision: 2, sharedStats: null });
+      await expect(setPublicProfile("uid-1", "", false, 2, { firestore: closedOwner }))
         .resolves.toMatchObject({ enabled: false, generation: 2 });
       await expect(savePrivateLibrary("uid-1", [privateEntry()], null, { firestore: closedOwner }))
         .resolves.toMatchObject({ revision: 1, entries: [privateEntry()] });

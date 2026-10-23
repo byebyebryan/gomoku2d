@@ -70,7 +70,8 @@ sharing nulls statistics and resets page counts. Deleting the legacy profile
 is blocked while a disabled public root still contains statistics.
 
 The `publicSharingEnabled()` Firestore rule helper is the operational switch.
-Changing its literal result to `false` blocks visitor reads and new enabling or
+Changing its literal result to `false` blocks visitor reads, new statistics
+snapshots, and new enabling or
 nonempty publication writes. Owners can still disable and clear their data.
 
 ## Private library
