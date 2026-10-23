@@ -21,6 +21,55 @@ or production deployment is part of this checkpoint.
   initial profile checkpoint included no rendering/core changes; the later
   colour remediation below closes the Canvas finding without core changes.
 
+## Final integrated verification — October 23, 2026
+
+Reviewed candidate `334d53d`, including the renderer fix in `31096e4` and fixture
+fix in `8bcaad0`. No new functional, privacy or data-integrity finding remains
+from this pass. The local 0.6.1 functional checkpoint is ready to wrap; this is
+not production release acceptance. The [final receipt](wrap_review.json) records
+the source identity, fresh results, raw-artifact hashes and remaining gates.
+
+| Fresh integrated gate | Result |
+|---|---|
+| App/scripts/tools type checks and production build | Passed |
+| Web unit tests | 493/493, 49 files |
+| Firestore rules and production SDK scenarios | 49/49 |
+| Ordinary browser journeys, three engines | 219 passed, 6 explicit skips, zero failures |
+| Full cloud journeys, three engines | 42/42 |
+| C4/C6/C7 race matrix, five repetitions and three workers | 45/45 |
+| Public-profile/publishing accessibility | 18 audits, zero violations and zero incomplete checks |
+| Production direct/static entries | 12/12; served HTML and entry script match the build |
+| Production npm dependency audit | Zero reported vulnerabilities |
+
+The complete cloud and rules suites now pass against the final integrated
+candidate after the renderer change. All three engines check actual forced
+Canvas colours; Chromium also qualifies actual WebGL. The six intentional
+skips are the three WebGL pixel cases in each of Firefox and WebKit. Twelve
+successful animation measurements survive in this run's artifacts.
+
+Source review covered portable replay/import boundaries, ordinary continuation
+history and totals, public statistics readiness, sparse/legacy catalogs,
+account/revision barriers, reset/disable/deletion semantics, public-route
+privacy, sidebar navigation and renderer lifecycle. No backend service,
+per-move sharing traffic, polling or automatic statistics refresh was added.
+The bounded SDK operation evidence remains distinct from billing or a traffic
+capacity guarantee. Rust/core sources are unchanged and were not rerun here.
+
+Raw artifacts are under ignored `gomoku-web/test-results/v061-wrap/`.
+Starship's manual preview still serves the accepted `31096e4` runtime bytes;
+the public demo root and four pages match the preceding receipt. A fresh
+headless check followed its 8/8/2 logical pages and opened the actual replay
+with correct forced-Canvas Black/White colours and zero page errors. No user
+browser tabs were opened. The temporary browser preview and disposable test
+emulators were stopped; the manual services remain running. Carbon is still
+offline on Tailscale, so access from that device remains unverified.
+
+Real Google OAuth, public-host round trips, versioning, exact-head CI, scoped
+production rules/index deployment and release remain separate gates. Prior
+physical-device and human assistive-technology acceptance limits still apply.
+The package remains 0.5.5/Unreleased. This pass changes evidence only; no push,
+tag, version change or production deployment occurred.
+
 ## Overall review — October 23, 2026
 
 Reviewed runtime `70e7f25`, including the accepted profile/publishing UI, action

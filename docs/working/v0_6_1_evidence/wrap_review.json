@@ -1,0 +1,473 @@
+{
+  "date": "2026-10-23",
+  "completed_at_utc": "2026-10-23T18:18:14+00:00",
+  "reviewed_source": "334d53dadf14542482daaf1f0a1866e5da901be2",
+  "runtime_source": "31096e46145aeb9170deefd3559f0c04f4fee4c4",
+  "fixture_commit": "8bcaad0",
+  "scope": "Final integrated local 0.6.1 source review and verification; evidence-only changes. No release/version/push/production actions.",
+  "decision": "Ready to wrap the local functional checkpoint. No new functional, privacy or data-integrity finding; the preceding Canvas and parallel-fixture findings remain closed. Production acceptance remains separate.",
+  "findings": [],
+  "previous_findings": [
+    {
+      "priority": "P1",
+      "finding": "Canvas stone and overlay colours",
+      "status": "closed",
+      "resolution_commit": "31096e46145aeb9170deefd3559f0c04f4fee4c4"
+    },
+    {
+      "priority": "P3",
+      "finding": "Parallel cloud fixture identity collisions",
+      "status": "closed",
+      "resolution_commit": "8bcaad0"
+    }
+  ],
+  "source_review": [
+    "Portable URL validation, bounded payloads, source attribution and explicit import/save boundaries.",
+    "Continuation games remain ordinary My games matches and totals; study copies are excluded.",
+    "Public stats opt-in, explicit complete-current-account snapshots and zero-history readiness.",
+    "Eight-row logical pagination over sparse/legacy catalogs; fixed pagination control positions.",
+    "Root/page generation and revision checks; stale writes, account switching and delayed callbacks.",
+    "Private reset versus public disable/Delete Cloud cleanup; retained markers and empty re-enable.",
+    "Public-route Auth-only bootstrap; no private-history promotion or loading.",
+    "Existing sidebar controls, publishing/share swaps, focus restoration and narrow/enlarged text coverage.",
+    "Actual coloured sprite/animation variants, frame-index conversion and per-game manager ownership.",
+    "Bounded direct-document sharing operations; no added per-move traffic, polling, service or automatic stats refresh."
+  ],
+  "checks": {
+    "typecheck": {
+      "passed": true,
+      "scope": "App, scripts and tools"
+    },
+    "unit": {
+      "passed": 493,
+      "files": 49
+    },
+    "firestore_rules_sdk": {
+      "passed": 49,
+      "files": 2
+    },
+    "production_build": {
+      "passed": true,
+      "command": "GOMOKU_BASE_PATH=/ npm run build"
+    },
+    "ordinary_browser": {
+      "passed": 219,
+      "failed": 0,
+      "skipped": 6,
+      "workers": 3,
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "skip_reason": "Three explicit WebGL pixel cases in each of Firefox and WebKit; forced Canvas runs in all three engines and verified WebGL in Chromium."
+    },
+    "full_cloud": {
+      "passed": 42,
+      "failed": 0,
+      "workers": 1,
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "port_offset": 1000,
+      "integration": "Final candidate after both fixture and renderer fixes."
+    },
+    "parallel_cloud_races": {
+      "passed": 45,
+      "failed": 0,
+      "workers": 3,
+      "repeat_each": 5,
+      "grep": "C4:|C6:|C7/C9:",
+      "port_offset": 1000,
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ]
+    },
+    "accessibility": {
+      "audits": 18,
+      "violations": 0,
+      "incomplete": 0,
+      "receipt": "accessibility.json"
+    },
+    "static_entries": {
+      "source_commit": "334d53d",
+      "routes": [
+        {
+          "path": "/",
+          "status": 200,
+          "static_entry_matches": true,
+          "sha256": "7428281c9c222d6686cb532c5e7ddf2ef4b735be5e066e52dae89f162beb9553"
+        },
+        {
+          "path": "/guide/",
+          "status": 200,
+          "static_entry_matches": true,
+          "sha256": "7428281c9c222d6686cb532c5e7ddf2ef4b735be5e066e52dae89f162beb9553"
+        },
+        {
+          "path": "/lab/",
+          "status": 200,
+          "static_entry_matches": true,
+          "sha256": "7428281c9c222d6686cb532c5e7ddf2ef4b735be5e066e52dae89f162beb9553"
+        },
+        {
+          "path": "/match/local/",
+          "status": 200,
+          "static_entry_matches": true,
+          "sha256": "7428281c9c222d6686cb532c5e7ddf2ef4b735be5e066e52dae89f162beb9553"
+        },
+        {
+          "path": "/privacy/",
+          "status": 200,
+          "static_entry_matches": true,
+          "sha256": "7428281c9c222d6686cb532c5e7ddf2ef4b735be5e066e52dae89f162beb9553"
+        },
+        {
+          "path": "/profile/",
+          "status": 200,
+          "static_entry_matches": true,
+          "sha256": "7428281c9c222d6686cb532c5e7ddf2ef4b735be5e066e52dae89f162beb9553"
+        },
+        {
+          "path": "/player/",
+          "status": 200,
+          "static_entry_matches": true,
+          "sha256": "7428281c9c222d6686cb532c5e7ddf2ef4b735be5e066e52dae89f162beb9553"
+        },
+        {
+          "path": "/replay/shared/",
+          "status": 200,
+          "static_entry_matches": true,
+          "sha256": "7428281c9c222d6686cb532c5e7ddf2ef4b735be5e066e52dae89f162beb9553"
+        },
+        {
+          "path": "/rules/",
+          "status": 200,
+          "static_entry_matches": true,
+          "sha256": "7428281c9c222d6686cb532c5e7ddf2ef4b735be5e066e52dae89f162beb9553"
+        },
+        {
+          "path": "/settings/",
+          "status": 200,
+          "static_entry_matches": true,
+          "sha256": "7428281c9c222d6686cb532c5e7ddf2ef4b735be5e066e52dae89f162beb9553"
+        },
+        {
+          "path": "/terms/",
+          "status": 200,
+          "static_entry_matches": true,
+          "sha256": "7428281c9c222d6686cb532c5e7ddf2ef4b735be5e066e52dae89f162beb9553"
+        },
+        {
+          "path": "/visuals/",
+          "status": 200,
+          "static_entry_matches": true,
+          "sha256": "7428281c9c222d6686cb532c5e7ddf2ef4b735be5e066e52dae89f162beb9553"
+        }
+      ],
+      "entry_script": "/assets/index-Czlwk5XV.js",
+      "entry_sha256": "fa2b73d746e75dfe62367a6292f3e9cb8e0159e3d778b823989586faa1130208"
+    },
+    "production_npm_audit": {
+      "reported_vulnerabilities": 0
+    },
+    "rust_core": {
+      "changed": false,
+      "freshly_rerun": false,
+      "scope": "No Rust source, dependency, rules/search or Wasm API changes in this candidate. Exact-head release CI and required release audits remain separate."
+    },
+    "pixel_motion_reports": [
+      {
+        "file": "gomoku-web/test-results/v061-wrap/browser/board_colours-board-colour-01f89-stone-use-the-player-colour-chromium/black-placement-animation.json",
+        "sha256": "68f1ba23eed2c0b6728968c777459cbaa72e9586d047d71f85b2d6c0ce241019",
+        "measurement": {
+          "frames": 181,
+          "distinctFrames": 1,
+          "maximumGrey": 64,
+          "blackPixels": 278016,
+          "glError": 0
+        }
+      },
+      {
+        "file": "gomoku-web/test-results/v061-wrap/browser/board_colours-board-colour-24a49--rebuild-and-reduced-motion-chromium/black-removal-animation.json",
+        "sha256": "3b7738621df6715d345d8324fdd4d7106528fb79259f5804a17ec3a6b4db7632",
+        "measurement": {
+          "frames": 28,
+          "distinctFrames": 5,
+          "maximumGrey": 64,
+          "blackPixels": 9664,
+          "glError": 0
+        }
+      },
+      {
+        "file": "gomoku-web/test-results/v061-wrap/browser/board_colours-board-colour-24a49--rebuild-and-reduced-motion-chromium/black-replay-animation.json",
+        "sha256": "44b5f93bcfffe27c7a90c3fcce45d1a9506df324c2e4f1a12028bd025d78b967",
+        "measurement": {
+          "frames": 139,
+          "distinctFrames": 16,
+          "maximumGrey": 64,
+          "blackPixels": 139104,
+          "glError": 0
+        }
+      },
+      {
+        "file": "gomoku-web/test-results/v061-wrap/browser/board_colours-board-colour-24a49--rebuild-and-reduced-motion-firefox/black-removal-animation.json",
+        "sha256": "c1d6a9ab04d559a40333a62232d013737fa6d4fb340e400a1f7b6b536527400c",
+        "measurement": {
+          "frames": 28,
+          "distinctFrames": 6,
+          "maximumGrey": 64,
+          "blackPixels": 5824,
+          "glError": 0
+        }
+      },
+      {
+        "file": "gomoku-web/test-results/v061-wrap/browser/board_colours-board-colour-24a49--rebuild-and-reduced-motion-firefox/black-replay-animation.json",
+        "sha256": "44b5f93bcfffe27c7a90c3fcce45d1a9506df324c2e4f1a12028bd025d78b967",
+        "measurement": {
+          "frames": 139,
+          "distinctFrames": 16,
+          "maximumGrey": 64,
+          "blackPixels": 139104,
+          "glError": 0
+        }
+      },
+      {
+        "file": "gomoku-web/test-results/v061-wrap/browser/board_colours-board-colour-24a49--rebuild-and-reduced-motion-webkit/black-removal-animation.json",
+        "sha256": "b1402c467a9f4e9d7928f5cd3a57af9a346993f53fe2dc20f7ec0d166182595a",
+        "measurement": {
+          "frames": 29,
+          "distinctFrames": 5,
+          "maximumGrey": 64,
+          "blackPixels": 10272,
+          "glError": 0
+        }
+      },
+      {
+        "file": "gomoku-web/test-results/v061-wrap/browser/board_colours-board-colour-24a49--rebuild-and-reduced-motion-webkit/black-replay-animation.json",
+        "sha256": "59f627e7c5c17e4f71287a3a6acab67a0015415245d7cbeae0181bf3f8ffde91",
+        "measurement": {
+          "frames": 144,
+          "distinctFrames": 16,
+          "maximumGrey": 64,
+          "blackPixels": 145280,
+          "glError": 0
+        }
+      },
+      {
+        "file": "gomoku-web/test-results/v061-wrap/browser/board_colours-board-colour-84ece--rebuild-and-reduced-motion-chromium/black-removal-animation.json",
+        "sha256": "eea3d53aac28ea26980c84e700746695c803e357222d688336663dceaf3d5508",
+        "measurement": {
+          "frames": 28,
+          "distinctFrames": 6,
+          "maximumGrey": 64,
+          "blackPixels": 8480,
+          "glError": 0
+        }
+      },
+      {
+        "file": "gomoku-web/test-results/v061-wrap/browser/board_colours-board-colour-84ece--rebuild-and-reduced-motion-chromium/black-replay-animation.json",
+        "sha256": "0bc289d912a4af6a352e641f38d8b8bebbc2bb837337c32364b734325e45b65a",
+        "measurement": {
+          "frames": 139,
+          "distinctFrames": 4,
+          "maximumGrey": 64,
+          "blackPixels": 137984,
+          "glError": 0
+        }
+      },
+      {
+        "file": "gomoku-web/test-results/v061-wrap/browser/board_colours-board-colour-e659d-stone-use-the-player-colour-chromium/black-placement-animation.json",
+        "sha256": "68f1ba23eed2c0b6728968c777459cbaa72e9586d047d71f85b2d6c0ce241019",
+        "measurement": {
+          "frames": 181,
+          "distinctFrames": 1,
+          "maximumGrey": 64,
+          "blackPixels": 278016,
+          "glError": 0
+        }
+      },
+      {
+        "file": "gomoku-web/test-results/v061-wrap/browser/board_colours-board-colour-e659d-stone-use-the-player-colour-firefox/black-placement-animation.json",
+        "sha256": "68f1ba23eed2c0b6728968c777459cbaa72e9586d047d71f85b2d6c0ce241019",
+        "measurement": {
+          "frames": 181,
+          "distinctFrames": 1,
+          "maximumGrey": 64,
+          "blackPixels": 278016,
+          "glError": 0
+        }
+      },
+      {
+        "file": "gomoku-web/test-results/v061-wrap/browser/board_colours-board-colour-e659d-stone-use-the-player-colour-webkit/black-placement-animation.json",
+        "sha256": "d21c77c298d59feebf440bf37d95ffc68ce3a980a1c9b6cbd33efff5c7da454c",
+        "measurement": {
+          "frames": 187,
+          "distinctFrames": 1,
+          "maximumGrey": 64,
+          "blackPixels": 287232,
+          "glError": 0
+        }
+      }
+    ]
+  },
+  "manual_preview": {
+    "served_identity": {
+      "origin": "http://127.0.0.1:8013",
+      "runtime_source": "31096e4",
+      "index_sha256": "378095f8c7b23d703dde011473a6e4bedf1a4856c92f9b25331baa353e8a32ed",
+      "entry_script": "/assets/index-Bc-e3CR9.js",
+      "entry_sha256": "dac9da2c01ce4f8b3817e723789a99a7ab1e7ea3a3e5f6ff891f34ef98ff8621",
+      "profile_status": 200,
+      "public_player_status": 200,
+      "auth_ready": true,
+      "firestore_ready": true,
+      "demo_documents": {
+        "root": {
+          "sha256": "c2a68ff4bb4d7eb11fbf850204d0cdb93c699818b9c1ea36a0d8bce1d15083b8",
+          "createTime": "2026-10-23T03:30:45.849099Z",
+          "updateTime": "2026-10-23T03:30:45.849099Z"
+        },
+        "/pages/0": {
+          "sha256": "9b127b795002645b81bfc32b298d7c89e5474fc890d3bb412245a33e7807d0a3",
+          "createTime": "2026-10-23T03:30:45.849099Z",
+          "updateTime": "2026-10-23T03:30:45.849099Z"
+        },
+        "/pages/1": {
+          "sha256": "cd19af4a6201c3cebc5954a99e66583cc2301027a9303a575ec407447e93d4e2",
+          "createTime": "2026-10-23T03:30:45.849099Z",
+          "updateTime": "2026-10-23T03:30:45.849099Z"
+        },
+        "/pages/2": {
+          "sha256": "8ad1e1850cb9d25c12729e047cbb1ac031d974bdb6bfb48fef54dc058faa53dc",
+          "createTime": "2026-10-23T03:30:45.849099Z",
+          "updateTime": "2026-10-23T03:30:45.849099Z"
+        },
+        "/pages/3": {
+          "sha256": "88465a5759206277073fb83c344d443c290c7f1822b4db4ff25c85c5980be68b",
+          "createTime": "2026-10-23T03:30:45.849099Z",
+          "updateTime": "2026-10-23T03:30:45.849099Z"
+        }
+      },
+      "demo_matches_previous": true,
+      "demo_hash_method": "SHA-256 of Python json.dumps(REST document, sort_keys=True), matching the preceding acceptance receipt."
+    },
+    "browser": {
+      "origin": "http://127.0.0.1:8013",
+      "runtime_source": "31096e4",
+      "renderer": "forced Canvas",
+      "logical_pages": [
+        8,
+        8,
+        2
+      ],
+      "last_page_previous_button": {
+        "x": 550.828125,
+        "y": 610.5,
+        "width": 178.3125,
+        "height": 48
+      },
+      "replay_ply": "4 / 9",
+      "colours": {
+        "black": [
+          64,
+          64,
+          64
+        ],
+        "white": [
+          255,
+          255,
+          255
+        ]
+      },
+      "page_errors": []
+    },
+    "screenshots": [
+      "gomoku-web/test-results/v061-wrap/manual-public-last-page.png",
+      "gomoku-web/test-results/v061-wrap/manual-canvas-replay.png"
+    ],
+    "visually_inspected": true,
+    "user_browser_tabs_opened": 0,
+    "carbon": {
+      "host": "carbon",
+      "verified": false,
+      "status": "offline",
+      "reason": "Tailscale reports Online=false; last seen 2026-10-23T16:00:00.1Z. No current device-level access claim."
+    }
+  },
+  "artifacts": {
+    "raw_directory": "gomoku-web/test-results/v061-wrap",
+    "files": [
+      {
+        "path": "gomoku-web/test-results/v061-wrap/accessibility.json",
+        "sha256": "15195dc6184b0ce02e5cf9eabecfc4e112c410b0b1f24b08e8bed066af41424f"
+      },
+      {
+        "path": "gomoku-web/test-results/v061-wrap/audit.log",
+        "sha256": "b00b699665b549d10b0dada1171abd8d23625b5f18afff0eaf09b0b9107a4b35"
+      },
+      {
+        "path": "gomoku-web/test-results/v061-wrap/browser.log",
+        "sha256": "72f5c8e8cba90daa85ab64247f8be7000fd2d8ca1bcebc335f36161716eeba91"
+      },
+      {
+        "path": "gomoku-web/test-results/v061-wrap/build.log",
+        "sha256": "d9fe25efd52c3d9a7d9ed9d20ed0afd2ee89b2f34d5bd108ca1d17f98f14486a"
+      },
+      {
+        "path": "gomoku-web/test-results/v061-wrap/cloud.log",
+        "sha256": "b77ec343940024671c558f69684a80f6c56380044b2eddf7393e9f5e0b35ca97"
+      },
+      {
+        "path": "gomoku-web/test-results/v061-wrap/manual-browser.json",
+        "sha256": "4381cdc984c4b62ddc2d8e1435a8ff33ce65850b43e9bd5ebf481731ebbce8f8"
+      },
+      {
+        "path": "gomoku-web/test-results/v061-wrap/manual-preview.json",
+        "sha256": "91046d9b8e1e0996f5b94336547a362d9b7697d1795daf8eee94791a50db1e06"
+      },
+      {
+        "path": "gomoku-web/test-results/v061-wrap/races.log",
+        "sha256": "bff2b5b8a7fbe47141b6d7cef93eb489b188b71a61170781caadf03fdd9557c7"
+      },
+      {
+        "path": "gomoku-web/test-results/v061-wrap/rules.log",
+        "sha256": "dd5675c97c52f4bdcb1cf69d368d1d4452dd4f087d16b2316f8e45b258d8dbd0"
+      },
+      {
+        "path": "gomoku-web/test-results/v061-wrap/static-routes.json",
+        "sha256": "8a9c31a2f39ba51caeb5912e0e2dec10b2c029640196968ef0a20f793b956f43"
+      },
+      {
+        "path": "gomoku-web/test-results/v061-wrap/typecheck.log",
+        "sha256": "5b86e9651bd003d64f42d1321e239007e088ec1000e0b2967492a980ac4d6cd9"
+      },
+      {
+        "path": "gomoku-web/test-results/v061-wrap/unit.log",
+        "sha256": "3d8c1c7ef8e0b5e3dfe165f7214f7c22ef31fc9791d118cabdea528700da9583"
+      }
+    ]
+  },
+  "cleanup": {
+    "temporary_browser_preview": "gomoku2d-v061-wrap-preview.service stopped; port 8014 free.",
+    "disposable_cloud_lanes": "Both offset-1000 lanes exited and stopped their process groups.",
+    "manual_preview_emulators_tunnel": "Preserved; manual documents verified unchanged. Carbon forwarder active does not establish remote reachability.",
+    "unrelated_port_8001": "Untouched."
+  },
+  "remaining_gates": [
+    "Release version/changelog preparation and required release dependency audits.",
+    "Authorized push followed by CI on the exact preparation commit.",
+    "Real Google OAuth and disposable-account public-host publication/view/cleanup round trip.",
+    "Reviewed rules-first production rollout and separately verified index exemptions.",
+    "Prior physical-device and human assistive-technology acceptance deferrals remain explicit."
+  ],
+  "limits": [
+    "Local emulators and desktop engine automation do not establish real OAuth, physical devices or human assistive-technology acceptance.",
+    "SDK operation counts are not billing measurements or a promised free-tier capacity.",
+    "Carbon is offline on Tailscale; current access from that device remains unverified."
+  ]
+}

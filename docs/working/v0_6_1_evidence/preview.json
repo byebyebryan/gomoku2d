@@ -1,11 +1,11 @@
 {
   "source_commit": "31096e46145aeb9170deefd3559f0c04f4fee4c4",
-  "scope": "Local emulator preview with Canvas/WebGL colour remediation. Starship served bytes and forced-Canvas browser verified; all manual demo public documents unchanged. Carbon remains offline on Tailscale and SSH times out, so current Carbon reachability/parity is unverified.",
+  "scope": "Local emulator preview still serving the accepted Canvas/WebGL runtime. Starship served-byte parity and fresh forced-Canvas public-demo replay verified; root and four pages match the preceding receipt. Carbon remains offline on Tailscale, so current access from that device is unverified.",
   "carbon": {
     "host": "carbon",
     "verified": false,
     "status": "offline",
-    "reason": "Tailscale reports Online=false; SSH to carbon port 22 times out."
+    "reason": "Tailscale reports Online=false; last seen 2026-10-23T16:00:00.1Z. No current device-level access claim."
   },
   "starship": {
     "host": "starship",
@@ -22,8 +22,15 @@
     "auth_ready": true,
     "public_demo_name": "Demo Player",
     "tunnel_state": "Carbon offline; current remote reachability unverified",
-    "manual_demo_unchanged": true
+    "manual_demo_unchanged": true,
+    "public_demo_logical_page_sizes": [
+      8,
+      8,
+      2
+    ]
   },
   "profile_url": "http://127.0.0.1:8013/profile?tab=public",
-  "demo_url": "http://127.0.0.1:8013/player/?id=v061-demo-player"
+  "demo_url": "http://127.0.0.1:8013/player/?id=v061-demo-player",
+  "verified_at_utc": "2026-10-23T18:18:14+00:00",
+  "verification_commit": "334d53dadf14542482daaf1f0a1866e5da901be2"
 }

@@ -1,133 +1,151 @@
 {
-  "scope": "Full 0.6.1 overall review at 70e7f254b8aa9cd262bba5c9f07114db8a301600. Eighteen public-profile/publishing audits in the 42/42 three-engine cloud run. This is automated desktop-engine evidence, not human/device acceptance.",
-  "source_commit": "70e7f254b8aa9cd262bba5c9f07114db8a301600",
-  "raw_directory": "gomoku-web/test-results/v061-overall/cloud",
+  "scope": "Final integrated 0.6.1 verification at 334d53dadf14542482daaf1f0a1866e5da901be2. Eighteen public-profile/publishing audits in the fresh 42/42 cloud lane. Automated desktop-engine evidence; physical-device and human assistive-technology acceptance remain separate.",
+  "source_commit": "334d53dadf14542482daaf1f0a1866e5da901be2",
+  "raw_directory": "gomoku-web/test-results/v061-wrap/cloud",
   "reports": [
     {
       "engine": "chromium",
       "audit": "public-manager",
       "violations": 0,
       "incomplete": [],
-      "raw_report": "sharing-C11-public-opt-in--130ba-le-and-copied-link-behavior-chromium/sharing-accessibility-public-manager.json"
+      "raw_report": "sharing-C11-public-opt-in--130ba-le-and-copied-link-behavior-chromium/sharing-accessibility-public-manager.json",
+      "sha256": "187e4c642b7b70eb46b5bed8b7f23c218281025cd8009e9569f5f3abef8bba7e"
     },
     {
       "engine": "chromium",
       "audit": "public-visitor-profile",
       "violations": 0,
       "incomplete": [],
-      "raw_report": "sharing-C11-public-opt-in--130ba-le-and-copied-link-behavior-chromium/sharing-accessibility-public-visitor-profile.json"
+      "raw_report": "sharing-C11-public-opt-in--130ba-le-and-copied-link-behavior-chromium/sharing-accessibility-public-visitor-profile.json",
+      "sha256": "996d49b60dd741e1528211724e05d9f1660425f4375c3c2577966128ebc0c978"
     },
     {
       "engine": "chromium",
       "audit": "publish-form",
       "violations": 0,
       "incomplete": [],
-      "raw_report": "sharing-C11-public-opt-in--130ba-le-and-copied-link-behavior-chromium/sharing-accessibility-publish-form.json"
+      "raw_report": "sharing-C11-public-opt-in--130ba-le-and-copied-link-behavior-chromium/sharing-accessibility-publish-form.json",
+      "sha256": "00c50870b9724d3dc99253fd00d486eb6dd60086ac49f45444c3e67bca117fa3"
     },
     {
       "engine": "firefox",
       "audit": "public-manager",
       "violations": 0,
       "incomplete": [],
-      "raw_report": "sharing-C11-public-opt-in--130ba-le-and-copied-link-behavior-firefox/sharing-accessibility-public-manager.json"
+      "raw_report": "sharing-C11-public-opt-in--130ba-le-and-copied-link-behavior-firefox/sharing-accessibility-public-manager.json",
+      "sha256": "187e4c642b7b70eb46b5bed8b7f23c218281025cd8009e9569f5f3abef8bba7e"
     },
     {
       "engine": "firefox",
       "audit": "public-visitor-profile",
       "violations": 0,
       "incomplete": [],
-      "raw_report": "sharing-C11-public-opt-in--130ba-le-and-copied-link-behavior-firefox/sharing-accessibility-public-visitor-profile.json"
+      "raw_report": "sharing-C11-public-opt-in--130ba-le-and-copied-link-behavior-firefox/sharing-accessibility-public-visitor-profile.json",
+      "sha256": "301b74fa24cddf3182530cfcafcf2cbf8e8b9e8dac43e2aa0a4098512a987e89"
     },
     {
       "engine": "firefox",
       "audit": "publish-form",
       "violations": 0,
       "incomplete": [],
-      "raw_report": "sharing-C11-public-opt-in--130ba-le-and-copied-link-behavior-firefox/sharing-accessibility-publish-form.json"
+      "raw_report": "sharing-C11-public-opt-in--130ba-le-and-copied-link-behavior-firefox/sharing-accessibility-publish-form.json",
+      "sha256": "abda244b14e1a5425003ce89e3083904d5777022b369034c5f29182c6f1d401c"
     },
     {
       "engine": "webkit",
       "audit": "public-manager",
       "violations": 0,
       "incomplete": [],
-      "raw_report": "sharing-C11-public-opt-in--130ba-le-and-copied-link-behavior-webkit/sharing-accessibility-public-manager.json"
+      "raw_report": "sharing-C11-public-opt-in--130ba-le-and-copied-link-behavior-webkit/sharing-accessibility-public-manager.json",
+      "sha256": "187e4c642b7b70eb46b5bed8b7f23c218281025cd8009e9569f5f3abef8bba7e"
     },
     {
       "engine": "webkit",
       "audit": "public-visitor-profile",
       "violations": 0,
       "incomplete": [],
-      "raw_report": "sharing-C11-public-opt-in--130ba-le-and-copied-link-behavior-webkit/sharing-accessibility-public-visitor-profile.json"
+      "raw_report": "sharing-C11-public-opt-in--130ba-le-and-copied-link-behavior-webkit/sharing-accessibility-public-visitor-profile.json",
+      "sha256": "5cb1d5a22eef6b56678281674d908b1c530749ac01a6f03d7f1314f3bde5068d"
     },
     {
       "engine": "webkit",
       "audit": "publish-form",
       "violations": 0,
       "incomplete": [],
-      "raw_report": "sharing-C11-public-opt-in--130ba-le-and-copied-link-behavior-webkit/sharing-accessibility-publish-form.json"
+      "raw_report": "sharing-C11-public-opt-in--130ba-le-and-copied-link-behavior-webkit/sharing-accessibility-publish-form.json",
+      "sha256": "ec7de47cd6c776182bb3ca906d830173b38ef231b557af54593afa791ca52556"
     },
     {
       "engine": "chromium",
       "audit": "maximum-owner-enlarged",
       "violations": 0,
       "incomplete": [],
-      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-chromium/sharing-accessibility-maximum-owner-enlarged.json"
+      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-chromium/sharing-accessibility-maximum-owner-enlarged.json",
+      "sha256": "187e4c642b7b70eb46b5bed8b7f23c218281025cd8009e9569f5f3abef8bba7e"
     },
     {
       "engine": "chromium",
       "audit": "maximum-public-fields",
       "violations": 0,
       "incomplete": [],
-      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-chromium/sharing-accessibility-maximum-public-fields.json"
+      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-chromium/sharing-accessibility-maximum-public-fields.json",
+      "sha256": "97cd535c448c3bbcb947ea11e7b51c06ce9833120d694147de191eecced3e5cb"
     },
     {
       "engine": "chromium",
       "audit": "maximum-publish-enlarged",
       "violations": 0,
       "incomplete": [],
-      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-chromium/sharing-accessibility-maximum-publish-enlarged.json"
+      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-chromium/sharing-accessibility-maximum-publish-enlarged.json",
+      "sha256": "d2f7e67e3212ed62d842496df2507932a54dcf18e520e856b5f3fbaef8c6f2cf"
     },
     {
       "engine": "firefox",
       "audit": "maximum-owner-enlarged",
       "violations": 0,
       "incomplete": [],
-      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-firefox/sharing-accessibility-maximum-owner-enlarged.json"
+      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-firefox/sharing-accessibility-maximum-owner-enlarged.json",
+      "sha256": "187e4c642b7b70eb46b5bed8b7f23c218281025cd8009e9569f5f3abef8bba7e"
     },
     {
       "engine": "firefox",
       "audit": "maximum-public-fields",
       "violations": 0,
       "incomplete": [],
-      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-firefox/sharing-accessibility-maximum-public-fields.json"
+      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-firefox/sharing-accessibility-maximum-public-fields.json",
+      "sha256": "67b3b8f6b085c601fb2de27944f4f353bb3197f7e1a1a42d5e10cb9f88272906"
     },
     {
       "engine": "firefox",
       "audit": "maximum-publish-enlarged",
       "violations": 0,
       "incomplete": [],
-      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-firefox/sharing-accessibility-maximum-publish-enlarged.json"
+      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-firefox/sharing-accessibility-maximum-publish-enlarged.json",
+      "sha256": "139c2629a8b27c948af4be5423eed70e73703bf7b7655cd513706ac7b7870818"
     },
     {
       "engine": "webkit",
       "audit": "maximum-owner-enlarged",
       "violations": 0,
       "incomplete": [],
-      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-webkit/sharing-accessibility-maximum-owner-enlarged.json"
+      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-webkit/sharing-accessibility-maximum-owner-enlarged.json",
+      "sha256": "187e4c642b7b70eb46b5bed8b7f23c218281025cd8009e9569f5f3abef8bba7e"
     },
     {
       "engine": "webkit",
       "audit": "maximum-public-fields",
       "violations": 0,
       "incomplete": [],
-      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-webkit/sharing-accessibility-maximum-public-fields.json"
+      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-webkit/sharing-accessibility-maximum-public-fields.json",
+      "sha256": "afa82489db411da538d21d55fc1c5a8852c6c9b7c73ff512e90f273ecccefe12"
     },
     {
       "engine": "webkit",
       "audit": "maximum-publish-enlarged",
       "violations": 0,
       "incomplete": [],
-      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-webkit/sharing-accessibility-maximum-publish-enlarged.json"
+      "raw_report": "sharing-C15-maximum-Unicod-b9156-low-for-owners-and-visitors-webkit/sharing-accessibility-maximum-publish-enlarged.json",
+      "sha256": "d19170ba17169d944fd08e22f8cad2a0fb245cc9559b0d9e6f5b20558ee5ab05"
     }
   ]
 }
