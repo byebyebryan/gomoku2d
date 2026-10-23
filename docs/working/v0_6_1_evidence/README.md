@@ -3,8 +3,35 @@
 Local functional candidate for the [reviewed contract](../v0_6_1_public_profile.md).
 Luna Max implemented the data/rules and UI slices; the primary reviewed the
 contracts, extracted shared played-game stats, isolated cloud acceptance from
-the manual preview, and owns integration and final acceptance. No release, push
-or production deployment is part of this checkpoint.
+the manual preview, and owns integration and final acceptance. This historical
+functional checkpoint did not include a release, push or production deployment.
+
+## Current release preparation
+
+Release execution was authorized on October 23, 2026. The web version and
+release-facing documentation are prepared locally for `0.6.1`, directly after
+`v0.5.5`; no intermediate `v0.6.0` release is planned. The receipts below
+record local candidate evidence at their stated source revisions. They do not
+qualify the final preparation commit or establish a public release.
+
+Fresh release-preparation production npm and Rust advisory audits passed with
+zero vulnerabilities; the Rust audit also reported zero warnings using
+advisory DB `84d943a6deeb8cc6c6f632531aaf4f1c62275239` (1,351 advisories). The
+full npm audit retains three moderate dev-only affected entries through Firebase
+CLI (`firebase-tools` → `@google-cloud/pubsub` → `@opentelemetry/core`,
+GHSA-8988-4f7v-96qf), with no dependency resolution change. The production-
+configured `0.6.1` build passed with the visible version and 12/12 direct
+entries at byte parity; current reports retain `git_dirty: false` provenance.
+The focused three-engine replay/profile/colour smoke passed 18 checks with six
+intentional Firefox/WebKit WebGL pixel skips. Exact-commit CI remains pending.
+Raw check logs are under `gomoku-bot-lab/outputs/release-prep/0.6.1/`.
+
+Rules/index rollout, tagged deployment, and a production signed-in
+sharing/public-profile round trip also remain pending. Google sign-ins were
+recorded and Bryan reports that renaming the OAuth client cleared its inactivity
+warning; this is separate from the new-sharing round trip. Track these release
+gates in the [release plan](../v0_6_1_release_plan.md) and record deployment
+evidence in the future release receipt.
 
 ## Evidence boundaries
 
@@ -69,8 +96,9 @@ offline on Tailscale, so access from that device remains unverified.
 Real Google OAuth, public-host round trips, versioning, exact-head CI, scoped
 production rules/index deployment and release remain separate gates. Prior
 physical-device and human assistive-technology acceptance limits still apply.
-The package remains 0.5.5/Unreleased. This pass changes evidence only; no push,
-tag, version change or production deployment occurred.
+At this evidence checkpoint, the package remained 0.5.5/Unreleased. This pass
+changed evidence only; no push, tag, version change or production deployment
+occurred in that checkpoint.
 
 ## Overall review — October 23, 2026
 
@@ -278,7 +306,8 @@ The work is local and leaves backend contracts and the accepted profile UI alone
 Runtime implementation: `bf7d963` on local `main` (main feature slice `7e9f803`),
 following reviewed data/rules
 commit `a01d1ec`, the sharing-switch fix `c36ff48`, and unused-index exemptions
-`c9d894c`. Package version remains 0.5.5 until separate release preparation.
+`c9d894c`. At the time of this functional checkpoint, package version remained
+0.5.5 pending separate release preparation.
 
 | Gate | Result |
 |---|---|

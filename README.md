@@ -116,16 +116,21 @@ lists checks by area.
 
 ## Project Status
 
-The `0.5.x` line packages the local-play and replay-analysis baseline.
-`0.5.5` includes the October correctness, recovery, accessibility, and mobile
-Rules/Guide fixes.
+The `0.6.1` version and release documentation are prepared as the direct
+successor to `v0.5.5`, with shareable games and opt-in public player profiles.
+There is no intermediate `v0.6.0` release. The release has not been published;
+exact-head CI, backend preparation, tagging, deployment, and public acceptance
+remain to be completed.
 
 [Published releases](https://github.com/byebyebryan/gomoku2d/releases/latest) ·
-[Changelog](CHANGELOG.md#055---2026-10-16) ·
+[v0.6.1 changelog](CHANGELOG.md#061---2026-10-23) ·
 [Roadmap](docs/reference/product/roadmap.md)
 
-Verification evidence and the agreed account, device, and human accessibility
-deferrals are recorded in the [release preparation record](docs/archive/v0_5_5_release_preparation.md).
+The local review receipts and remaining release gates are in the
+[v0.6.1 candidate evidence](docs/working/v0_6_1_evidence/README.md) and
+[release plan](docs/working/v0_6_1_release_plan.md). The accepted account,
+device, and human accessibility deferrals remain recorded in the
+[October release preparation record](docs/archive/v0_5_5_release_preparation.md).
 
 ## Project References
 

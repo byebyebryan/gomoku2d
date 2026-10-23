@@ -12,6 +12,12 @@ facts, and replay analysis.
   privacy, and terms routes.
 - Local-first guest play with browser-persisted profile/settings/history.
 - Optional Google sign-in for private cloud-backed profile/history continuity.
+- Self-contained links to finished games, with explicit local replay saves and
+  account-library import/sync.
+- Continuations from shared replays that enter ordinary My games and totals
+  while retaining their inherited-move provenance.
+- Opt-in public player profiles with explicitly shared dated statistics and a
+  paged catalog of games the player chose to publish.
 - Configurable bot presets and advanced web-safe bot controls.
 - Freestyle/Renju play, Renju forbidden-move hints, tactical hints, and mobile
   touch placement.

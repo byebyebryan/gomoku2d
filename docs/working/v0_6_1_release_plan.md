@@ -1,6 +1,6 @@
 # v0.6.1 release plan
 
-Owner: Bryan. Proposed October 23, 2026; execution is not yet authorized.
+Owner: Bryan. Release execution authorized October 23, 2026.
 This plans a direct `v0.5.5` to `v0.6.1` publication. It does not require an
 intermediate `v0.6.0` release. The maintained
 [release workflow](../reference/ops/release.md) owns the general process;
@@ -26,13 +26,14 @@ functional/privacy/data-integrity defect: 493 web units, 49 rules/SDK checks,
 12 direct routes and the production npm audit passed. Retain these receipts;
 release CI must qualify the final preparation commit separately.
 
-Read-only baseline at October 23, 2026, approximately 20:54 UTC:
+Read-only baseline immediately before version/documentation preparation,
+October 23, 2026:
 
 | Item | Observed state |
 |---|---|
-| Local `main` | `c5c4462`, clean, 39 commits ahead of the verified remote head |
+| Local `main` | `95eb5ab`, clean before preparation, 40 commits ahead of the verified remote head |
 | Remote `main` | `0995af835a5e81377f1270b19d0cc780dce44f36` |
-| Package/changelog | `0.5.5`, new work under Unreleased |
+| Package/changelog | `0.5.5`, new work under Unreleased before this preparation |
 | Latest published release | `v0.5.5`; no remote `v0.6*` tags |
 | Successful Pages deployment | `7142877612`, source `73658d0a546ba558c746854d38cdac7ec2465802` / `v0.5.5` |
 | Live Firestore ruleset | `projects/gomoku2d/rulesets/bb6ecb9e-0c7d-4e31-b601-82f95799b3b6` |
@@ -46,7 +47,16 @@ Current public HTML SHA-256:
 Entry script `/assets/index-DVVTG5oM.js` SHA-256:
 `e9c8c0e5a559e8e0328516395ea8aa6d5bbf248bff751e6be80f29d1b8ae39dd`.
 Refresh the baseline immediately before execution; do not infer live state from
-the recorded IDs alone. The planning document itself will advance local HEAD.
+the recorded IDs alone. The version and release-documentation updates are now
+prepared locally. Fresh release-preparation production npm and Rust audits both
+passed with zero vulnerabilities; the Rust audit also reported zero warnings.
+The full npm audit retains three moderate dev-only affected entries through
+Firebase CLI, with no dependency resolution change. The production-configured
+0.6.1 build passed with the visible version and 12/12 direct entries at byte
+parity; current reports retain `git_dirty: false` provenance. A focused
+three-engine replay/profile/colour smoke passed 18 checks with six intentional
+Firefox/WebKit WebGL pixel skips. Exact-commit CI and the live rollout gates
+remain pending; the release has not been published.
 
 ## 1. Prepare one release commit
 
@@ -75,9 +85,9 @@ attached; any runtime/dependency fix reopens its affected validation gates.
 
 ## 2. Push main and qualify the exact commit
 
-After release execution is authorized, push the reviewed preparation commit
-directly to `main`, following the repository's existing workflow. This push
-starts CI; the deployment workflows are tag/manual triggered.
+Push the reviewed preparation commit directly to `main`, following the
+repository's existing workflow. This push starts CI; the deployment workflows
+are tag/manual triggered.
 
 Require CI success with `headSha` exactly equal to the preparation SHA:
 

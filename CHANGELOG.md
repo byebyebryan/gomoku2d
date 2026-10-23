@@ -12,6 +12,10 @@ their own section.
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-10-23
+
+**Theme: share games and public player profiles.**
+
 ### Web
 
 - Share finished games as self-contained replay links, with a chosen opening ply,
@@ -1299,7 +1303,8 @@ together in one canvas-driven surface. That lesson drove the `v0.2.1` rewrite.
   concerns blurred together.
 - Expressive UI language, but not scalable beyond one canvas.
 
-[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.5...HEAD
+[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.5...v0.6.1
 [0.5.5]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.4...v0.5.5
 [0.5.4]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.2...v0.5.3

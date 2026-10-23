@@ -121,24 +121,25 @@ pass. Private replay URLs use Pages' `404.html` SPA fallback and can return HTTP
 404 on direct entry even when the client route works; public static routes have
 copied `index.html` entries.
 
-## v0.6 sharing rollout and compatibility
+## v0.6.1 sharing release and compatibility
 
-The proposed [v0.6.1 release plan](../../working/v0_6_1_release_plan.md) records
-the verified production baseline, scoped index changes, ordered checkpoints and
-public acceptance handoff for the first sharing publication.
-
-The v0.6 goal produces a local candidate only. Version bump, push, exact-head CI,
-release tag, deployment and public acceptance remain separate authorizations.
-The package version stays 0.5.5 and notes remain Unreleased until release prep.
+The [v0.6.1 release plan](../../working/v0_6_1_release_plan.md) records the
+production baseline, scoped index changes, ordered checkpoints and public
+acceptance handoff for the first sharing publication. Release execution is
+authorized, and the version/changelog/product documentation are prepared
+locally as a direct follow-up to `v0.5.5`; the release is not published yet.
+Exact-head CI, backend preparation, tagging, deployment and public acceptance
+remain ordered release gates.
 
 For the first sharing release:
 
 1. Record the currently served web SHA and previous Firestore ruleset ID.
-2. After an authorized push and exact-head CI, manually dispatch the existing
-   Firestore workflow on reviewed `main` **before** publishing the new web app.
+2. After the reviewed preparation commit reaches `main` and exact-head CI passes,
+   manually dispatch the existing Firestore workflow on reviewed `main`
+   **before** publishing the new web app.
    This additive ruleset retains schema-5 profile writes and opens the two
    schema-1 sharing families. Verify its live release pointer and scoped access.
-3. Apply the reviewed `firestore.indexes.json` exemptions through an authorized,
+3. Apply the reviewed `firestore.indexes.json` exemptions through the documented
    scoped index deployment. The existing rules-only workflow does not deploy
    indexes. Record their actual applied state; checked-in JSON is not evidence
    of deployed exemptions. New functionality uses direct document gets and does

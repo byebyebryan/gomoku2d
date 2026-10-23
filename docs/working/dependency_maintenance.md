@@ -1,7 +1,7 @@
 # Dependency Maintenance Notes
 
 Owner: manual maintenance passes. Recheck these notes when updating Firebase
-or preparing a release. Last reviewed: 2026-10-16 for `0.5.5` release preparation.
+or preparing a release. Last reviewed: 2026-10-23 for `0.6.1` release preparation.
 
 ## Overrides
 
@@ -19,16 +19,17 @@ plugin-specific override have been removed.
 
 ## Firebase CLI Audit Limits
 
-The current `firebase-tools` 15.34.0 development dependency still carries two
-upstream issues. These packages are outside the production dependency tree.
+The current `firebase-tools` 15.34.0 development dependency still carries one
+upstream issue. These packages are outside the production dependency tree.
 
 | Chain | Finding | Follow-up |
 |---|---|---|
-| `firebase-tools` → `chokidar` 3.6.0 → `braces` 3.0.3 | [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm): deeply nested patterns can exhaust the stack. No patched `braces` release is published. | Update when an upstream fix or compatible CLI dependency change is available. |
 | `firebase-tools` → `@google-cloud/pubsub` 5.3.1 → `@opentelemetry/core` 1.30.1 | [GHSA-8988-4f7v-96qf](https://github.com/advisories/GHSA-8988-4f7v-96qf): unbounded baggage allocation. The fix starts at 2.8.0, outside Pub/Sub's 1.x range. | Prefer a Firebase CLI update that adopts patched Pub/Sub; review a major migration separately if needed. |
 
-The full npm audit reports five affected package entries from these two issues
-(three high, two moderate), including parent packages. The production npm audit
+The October 23 full npm audit reports three moderate affected package entries
+from this issue, including parent packages. It no longer reports the `braces`
+finding listed in the 0.5.5 audit; dependency resolutions did not change during
+0.6.1 packaging. The production npm audit
 is a separate required gate. Local rules checks use the Firestore emulator;
 passing them does not establish acceptance of other Firebase CLI features.
 
@@ -44,6 +45,17 @@ Fresh `npm audit --omit=dev --json` and `cargo audit --json` checks passed on
 October 16 with zero production npm vulnerabilities, zero Rust vulnerabilities,
 and no Rust informational warnings. Cargo used advisory database revision
 `f28da8c5d386e507fac79153655184056a20c054` (1,329 advisories). The full npm audit
-still reports the same five development-only affected entries from the two
-Firebase CLI issues above. The release version bump changes no dependency ranges
-or resolved package versions.
+reported five development-only affected entries from the two Firebase CLI
+issues recorded at that checkpoint. The release version bump changes no
+dependency ranges or resolved package versions.
+
+## 0.6.1 Release Audit
+
+Fresh `npm audit --omit=dev --json` and `cargo audit --json` checks passed on
+October 23 with zero production npm vulnerabilities, zero Rust vulnerabilities,
+and no Rust informational warnings. Cargo used advisory database revision
+`84d943a6deeb8cc6c6f632531aaf4f1c62275239` (1,351 advisories). The full npm audit
+reports only the three moderate development-only entries described above.
+The 0.6.1 version bump changes no dependency ranges or resolved versions.
+Raw reports are retained under ignored
+`gomoku-bot-lab/outputs/release-prep/0.6.1/`.
