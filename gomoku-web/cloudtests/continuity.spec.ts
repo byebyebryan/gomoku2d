@@ -1,4 +1,4 @@
-import { test, expect, signIn, readProfile, protectContext, makeProfileEligible, projectId, cloudTestOrigins } from "./helpers.js";
+import { test, expect, signIn, readProfile, protectContext, makeProfileEligible, projectId, cloudTestOrigins, fixtureId } from "./helpers.js";
 import { seedLocalSavedMatch } from "../playtests/helpers/local_history.js";
 
 const ending = [112, 0, 113, 15, 114, 30, 115, 1, 116].map((cell) => ({ row: Math.floor(cell / 15), col: cell % 15 }));
@@ -44,7 +44,7 @@ async function resetProfile(page: import("@playwright/test").Page) {
 
 test("C3: a completed continuation syncs as a regular game and opens from a second client", async ({ page, browser }) => {
   await seedHistory(page, "branch-source", "freestyle");
-  const email = `finish-${Date.now()}@example.test`;
+  const email = `${fixtureId("finish")}@example.test`;
   const uid = await signIn(page, email);
   await readyCloud(page);
   await makeProfileEligible(uid);
@@ -76,7 +76,7 @@ test("C3: a completed continuation syncs as a regular game and opens from a seco
 });
 
 test("C4: a stale client cannot overwrite another client's setup", async ({ page, browser }) => {
-  const email = `conflict-${Date.now()}@example.test`;
+  const email = `${fixtureId("conflict")}@example.test`;
   const uid = await signIn(page, email);
   await readyCloud(page);
   await makeProfileEligible(uid);
@@ -101,7 +101,7 @@ test("C4: a stale client cannot overwrite another client's setup", async ({ page
 
 test("C5/C8: failed transport preserves a completed continuation in My games and syncs it once on recovery", async ({ page, context }) => {
   await seedHistory(page, "offline-source", "freestyle");
-  const email = `offline-${Date.now()}@example.test`;
+  const email = `${fixtureId("offline")}@example.test`;
   const uid = await signIn(page, email); await readyCloud(page);
   await makeProfileEligible(uid); await page.reload(); await readyCloud(page);
   await page.goto("/replay/offline-source");
@@ -131,7 +131,7 @@ test("C5/C8: failed transport preserves a completed continuation in My games and
 
 test("C7/C9: reset survives a stale client and immediate repeated reset is denied", async ({ page, browser }) => {
   await seedHistory(page, "pre-reset", "freestyle");
-  const email = `reset-${Date.now()}@example.test`;
+  const email = `${fixtureId("reset")}@example.test`;
   const uid = await signIn(page, email); await readyCloud(page);
   await makeProfileEligible(uid); await page.reload(); await readyCloud(page);
   const context = await browser.newContext(); await protectContext(context);
@@ -157,7 +157,7 @@ test("C7/C9: reset survives a stale client and immediate repeated reset is denie
 });
 
 test("C6: a delayed account-A load cannot replace account B after switching", async ({ page, browser }) => {
-  const emailA = `account-a-${Date.now()}@example.test`;
+  const emailA = `${fixtureId("account-a")}@example.test`;
   const uidA = await signIn(page, emailA); await readyCloud(page);
   await page.getByRole("link", { name: "Settings", exact: true }).click();
   await page.getByRole("button", { name: "Renju", exact: true }).click();
@@ -171,7 +171,7 @@ test("C6: a delayed account-A load cannot replace account B after switching", as
   let intercepted = false;
   try {
     const second = await context.newPage();
-    const emailB = `account-b-${Date.now()}@example.test`;
+    const emailB = `${fixtureId("account-b")}@example.test`;
     const uidB = await signIn(second, emailB); await readyCloud(second);
     await page.route("**/google.firestore.v1.Firestore/Listen/channel**", async (route) => {
       if (!intercepted && route.request().method() === "POST") {
@@ -192,7 +192,7 @@ test("C6: a delayed account-A load cannot replace account B after switching", as
 });
 
 test("C1/C2/C8: promote guest history, restore account setup, merge another client's history and reload", async ({ page, browser }) => {
-  const email = `cloud-${Date.now()}@example.test`;
+  const email = `${fixtureId("cloud")}@example.test`;
   await seedHistory(page, "first-game", "renju");
   const uid = await signIn(page, email);
   await expect.poll(async () => (await readProfile(uid))?.match_history.replay_matches.length).toBe(1);

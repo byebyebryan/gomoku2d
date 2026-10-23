@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import type { Page, TestInfo } from "@playwright/test";
 import axe from "axe-core";
 
-import { makeProfileEligible, projectId, protectContext, readProfile, signIn, test, expect, cloudTestOrigins, cloudTestPorts } from "./helpers.js";
+import { fixtureId, makeProfileEligible, projectId, protectContext, readProfile, signIn, test, expect, cloudTestOrigins, cloudTestPorts } from "./helpers.js";
 import { seedLocalSavedMatch } from "../playtests/helpers/local_history.js";
 
 const WIN_MOVES = [110, 0, 111, 1, 112, 2, 113, 3, 114];
@@ -13,10 +13,6 @@ const FINISHED_MATCH_MOVES = [112, 0, 113, 15, 114, 30, 115, 1, 116].map((cell) 
   row: Math.floor(cell / 15),
   col: cell % 15,
 }));
-
-function unique(label: string): string {
-  return `${label}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
 
 function sharedReplayUrl(blackName = "Alice", whiteName = "Bob", moves: number[] = WIN_MOVES): string {
   const wire = {
@@ -201,8 +197,8 @@ async function navigateWithinApp(page: Page, path: string): Promise<void> {
 }
 
 test("C10: fresh signed-in shared/public route variants do no private Firestore work or history promotion", async ({ page, context }, testInfo) => {
-  const email = `${unique("shared-auth")}@example.test`;
-  const historyId = unique("local-only-history");
+  const email = `${fixtureId("shared-auth")}@example.test`;
+  const historyId = fixtureId("local-only-history");
   const uid = await signIn(page, email);
   await readyCloud(page);
   await prepareEligibleProfile(page, uid);
@@ -272,10 +268,10 @@ test("C10: fresh signed-in shared/public route variants do no private Firestore 
 
 test("C11: public opt-in, visitor replay, unpublish, disable, re-enable, and copied-link behavior", async ({ page, browser }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  const email = `${unique("public-owner")}@example.test`;
-  const matchId = unique("publishable-match");
-  const title = unique("Public replay");
-  const publicName = `Public ${unique("player")}`;
+  const email = `${fixtureId("public-owner")}@example.test`;
+  const matchId = fixtureId("publishable-match");
+  const title = fixtureId("Public replay");
+  const publicName = `Public ${fixtureId("player")}`;
   await seedFinishedHistory(page, matchId);
   const uid = await signIn(page, email);
   await readyCloud(page);
@@ -409,7 +405,7 @@ test("C11: public opt-in, visitor replay, unpublish, disable, re-enable, and cop
 });
 
 test("C12: two clients explicitly reload and remove a saved replay from the account library", async ({ page, browser }) => {
-  const email = `${unique("library-sync")}@example.test`;
+  const email = `${fixtureId("library-sync")}@example.test`;
   const portableUrl = sharedReplayUrl("Library owner");
   await signIn(page, email);
   await page.goto(portableUrl);
@@ -447,7 +443,7 @@ test("C12: two clients explicitly reload and remove a saved replay from the acco
 });
 
 test("C13: stale offline library data requires review and cannot restore another client's deletion", async ({ page, browser }) => {
-  const email = `${unique("library-conflict")}@example.test`;
+  const email = `${fixtureId("library-conflict")}@example.test`;
   const firstUrl = sharedReplayUrl("First client");
   const secondUrl = sharedReplayUrl("Offline client", "Bob", [95, 1, 96, 2, 97, 3, 98, 4, 99]);
   await signIn(page, email);
@@ -503,10 +499,10 @@ test("C13: stale offline library data requires review and cannot restore another
 });
 
 test("C14: private reset keeps public sharing, while Delete Cloud clears markers and reviews local copies", async ({ page }) => {
-  const email = `${unique("reset-delete-cloud")}@example.test`;
-  const matchId = unique("public-before-reset");
-  const publicName = unique("Reset-safe public name");
-  const title = unique("Reset-safe publication");
+  const email = `${fixtureId("reset-delete-cloud")}@example.test`;
+  const matchId = fixtureId("public-before-reset");
+  const publicName = fixtureId("Reset-safe public name");
+  const title = fixtureId("Reset-safe publication");
   const firstPrivateUrl = sharedReplayUrl("Private before reset");
   const retainedPrivateUrl = sharedReplayUrl("Local after delete", "Bob", [95, 1, 96, 2, 97, 3, 98, 4, 99]);
 
@@ -613,12 +609,12 @@ test("C14: private reset keeps public sharing, while Delete Cloud clears markers
 
 test("C15: maximum Unicode public fields remain editable and reflow for owners and visitors", async ({ page, browser }, testInfo) => {
   await page.setViewportSize({ width: 320, height: 900 });
-  const matchId = unique("maximum-public-fields");
+  const matchId = fixtureId("maximum-public-fields");
   const unicodeName = "💠".repeat(80);
   const publicName = "W".repeat(80);
   const title = "🎯".repeat(80);
   await seedFinishedHistory(page, matchId);
-  const uid = await signIn(page, `${unique("unicode-owner")}@example.test`);
+  const uid = await signIn(page, `${fixtureId("unicode-owner")}@example.test`);
   await readyCloud(page);
   await expect.poll(async () => (await readProfile(uid))?.match_history?.replay_matches?.some(
     (match: { id: string }) => match.id === matchId,
@@ -685,7 +681,7 @@ test("C15: maximum Unicode public fields remain editable and reflow for owners a
 
 test("C16: sparse catalog pages, zero stats, last-page removal and legacy roots remain navigable", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 900 });
-  const uid = unique("sparse-public-catalog");
+  const uid = fixtureId("sparse-public-catalog");
   const pageCounts = [5, 0, 8, 5];
   const updatedAt = "2026-10-22T00:00:00.000Z";
   const rootFields = {

@@ -1,9 +1,14 @@
+import { randomUUID } from "node:crypto";
 import { expect, test as base, type BrowserContext, type Frame, type Page } from "@playwright/test";
 import { cloudTestOrigins, cloudTestPorts } from "../scripts/cloud_test_environment.mjs";
 
 export { cloudTestOrigins, cloudTestPorts };
 
 export const projectId = "demo-gomoku2d-acceptance";
+export function fixtureId(label: string): string {
+  return `${label}-${randomUUID()}`;
+}
+
 const firestoreRoot = `${cloudTestOrigins.firestore}/v1/projects/${projectId}/databases/(default)/documents`;
 const readbacks = new Map<string, unknown>();
 
