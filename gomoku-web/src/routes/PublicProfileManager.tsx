@@ -378,7 +378,7 @@ export function PublicProfileManager({
                   {!statsReady && sharedStats === null ? <p className={styles.mutedText}>{statsBlocker}</p> : null}
                   {sharedStats ? (
                     <>
-                      <div className={styles.publicStatsGrid} aria-label="Published statistics snapshot">
+                      <div className={styles.publicStatsGrid} role="group" aria-label="Published statistics snapshot">
                         {([
                           ["Matches", sharedStats.matches],
                           ["Wins", sharedStats.wins],

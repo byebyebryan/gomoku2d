@@ -310,10 +310,10 @@ describe("public profile routes and controls", () => {
     expect(sharing.loadCatalogPage).toHaveBeenCalledTimes(1);
     expect(sharing.loadCatalogPage).toHaveBeenLastCalledWith("uid-1", 0);
     expect(screen.getAllByRole("link", { name: "Replay" })).toHaveLength(8);
-    expect(screen.getAllByLabelText("Result: Win")).toHaveLength(8);
-    expect(screen.getAllByLabelText("Opponent: vs Normal Bot")).toHaveLength(8);
-    expect(screen.getAllByLabelText("Rule: Freestyle")).toHaveLength(8);
-    expect(screen.getAllByLabelText("Moves: 9")).toHaveLength(8);
+    expect(screen.getAllByText("Win", { exact: true })).toHaveLength(8);
+    expect(screen.getAllByText("vs Normal Bot", { exact: true })).toHaveLength(8);
+    expect(screen.getAllByText("Freestyle", { exact: true })).toHaveLength(8);
+    expect(screen.getAllByText("9 moves", { exact: true })).toHaveLength(8);
 
     fireEvent.click(screen.getByRole("button", { name: "Next page" }));
     await waitFor(() => expect(sharing.loadCatalogPage).toHaveBeenLastCalledWith("uid-1", 1));

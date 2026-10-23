@@ -1,4 +1,4 @@
-import { mkdir } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Page, TestInfo } from "@playwright/test";
@@ -117,8 +117,11 @@ async function auditAccessibility(page: Page, testInfo: TestInfo, name: string):
     });
     return { testEngine: report.testEngine, url: report.url, violations: report.violations, incomplete: report.incomplete };
   });
+  const auditPath = testInfo.outputPath(`sharing-accessibility-${name}.json`);
+  await mkdir(dirname(auditPath), { recursive: true });
+  await writeFile(auditPath, JSON.stringify(result, null, 2));
   await testInfo.attach(`sharing-accessibility-${name}`, {
-    body: JSON.stringify(result, null, 2),
+    path: auditPath,
     contentType: "application/json",
   });
   expect(result.violations).toEqual([]);

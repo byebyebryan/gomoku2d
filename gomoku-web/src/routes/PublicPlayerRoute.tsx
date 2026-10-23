@@ -250,20 +250,24 @@ export function PublicPlayerRoute() {
                 {visibleRows.map(({ entry, details }) => (
                   <li className={styles.publicGame} key={entry.fingerprint}>
                     <span className={styles.publicGameTitle}>{entry.title}</span>
-                    <span className={styles.publicGameOpponent} aria-label={`Opponent: ${details.opponent ? `vs ${details.opponent}` : "unavailable"}`}>
+                    <span className={styles.publicGameOpponent}>
+                      <span className="uiSrOnly">Opponent: </span>
                       {details.opponent ? `vs ${details.opponent}` : "Unavailable"}
                     </span>
                     <span className={`${styles.publicGameResult} ${
                       details.result === "Win" ? styles.publicGameResultWin
                         : details.result === "Loss" ? styles.publicGameResultLoss
                           : details.result === "Draw" ? styles.publicGameResultDraw : ""
-                    }`} aria-label={`Result: ${details.result ?? "unavailable"}`}>
+                    }`}>
+                      <span className="uiSrOnly">Result: </span>
                       {details.result ?? "Unavailable"}
                     </span>
-                    <span className={styles.publicGameMeta} aria-label={`Rule: ${details.rule ?? "unavailable"}`}>
+                    <span className={styles.publicGameMeta}>
+                      <span className="uiSrOnly">Rule: </span>
                       {details.rule ?? "Unavailable"}
                     </span>
-                    <span className={styles.publicGameMeta} aria-label={`Moves: ${details.moves ?? "unavailable"}`}>
+                    <span className={styles.publicGameMeta}>
+                      <span className="uiSrOnly">Move count: </span>
                       {details.moves === null ? "Unavailable" : `${details.moves} moves`}
                     </span>
                     {details.canReplay ? (
