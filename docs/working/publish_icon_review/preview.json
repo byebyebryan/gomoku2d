@@ -1,11 +1,12 @@
 {
   "url": "http://127.0.0.1:8013/icon-review/actions/",
   "previous_url": "http://127.0.0.1:8013/icon-review/publish/",
+  "revision": "asymmetric cloud and power-style exit",
   "carbon": {
     "actions": {
       "index.html": {
         "status": 200,
-        "sha256": "4346ad9e06d35f03141c06463c58d2e193d609f9a7987f136a6903ac351377f0"
+        "sha256": "62c103d66dc51473fc2c73c9c293917eaef0f86abf206562cb2e128e0cf0d941"
       },
       "publish.svg": {
         "status": 200,
@@ -29,29 +30,29 @@
       },
       "cloud.svg": {
         "status": 200,
-        "sha256": "4e162ff95b0b6a6547b39773b8802a59ae0dfe46b1934f9e3b925a032a812c30"
+        "sha256": "d805dddedc107670934d19ad5b91beaad27c4bd49ca6ac09667c4b1e635b0c1d"
       },
       "exit.svg": {
         "status": 200,
-        "sha256": "3e93f055c9d5e89913717b64cf69ceac648ae7e3a068c99d7bdf623373078da4"
+        "sha256": "ef1a727f5310e91d47ff52f8e3072697ec44ef7c0686686e7aa69a8fed667e8e"
       },
       "comparison.png": {
         "status": 200,
-        "sha256": "2a37358617f28dcc515a4957e33c0d299f12d14203636107360a1ae125aea186"
+        "sha256": "4a0a1a1c57476e7859b3b8a02c4018baeeea933979bfc1c206034636b066ea2e"
       },
       "new-icons.png": {
         "status": 200,
-        "sha256": "3a1060311ecdbd11af399c0e8d0567072657fb94b014c888b4c6de36878bdbdd"
+        "sha256": "37be45d0b919fbbfc23914d2d0e1b6f3ce4fa817545a2c7d3cb19e14464f2af4"
       },
       "new-icons-light.png": {
         "status": 200,
-        "sha256": "8acb4a61fd3e8e2318c1d7e6d9317a55f297e28c4e400560797b73388a7043b8"
+        "sha256": "c2d7729f44c48e7fe3b2d05a97ba4ec8728c4bd89df9b3f544d0ee4a2bf0dd93"
       }
     },
     "publish": {
       "index.html": {
         "status": 200,
-        "sha256": "4346ad9e06d35f03141c06463c58d2e193d609f9a7987f136a6903ac351377f0"
+        "sha256": "62c103d66dc51473fc2c73c9c293917eaef0f86abf206562cb2e128e0cf0d941"
       },
       "publish.svg": {
         "status": 200,
@@ -75,23 +76,23 @@
       },
       "cloud.svg": {
         "status": 200,
-        "sha256": "4e162ff95b0b6a6547b39773b8802a59ae0dfe46b1934f9e3b925a032a812c30"
+        "sha256": "d805dddedc107670934d19ad5b91beaad27c4bd49ca6ac09667c4b1e635b0c1d"
       },
       "exit.svg": {
         "status": 200,
-        "sha256": "3e93f055c9d5e89913717b64cf69ceac648ae7e3a068c99d7bdf623373078da4"
+        "sha256": "ef1a727f5310e91d47ff52f8e3072697ec44ef7c0686686e7aa69a8fed667e8e"
       },
       "comparison.png": {
         "status": 200,
-        "sha256": "2a37358617f28dcc515a4957e33c0d299f12d14203636107360a1ae125aea186"
+        "sha256": "4a0a1a1c57476e7859b3b8a02c4018baeeea933979bfc1c206034636b066ea2e"
       },
       "new-icons.png": {
         "status": 200,
-        "sha256": "3a1060311ecdbd11af399c0e8d0567072657fb94b014c888b4c6de36878bdbdd"
+        "sha256": "37be45d0b919fbbfc23914d2d0e1b6f3ce4fa817545a2c7d3cb19e14464f2af4"
       },
       "new-icons-light.png": {
         "status": 200,
-        "sha256": "8acb4a61fd3e8e2318c1d7e6d9317a55f297e28c4e400560797b73388a7043b8"
+        "sha256": "c2d7729f44c48e7fe3b2d05a97ba4ec8728c4bd89df9b3f544d0ee4a2bf0dd93"
       }
     }
   },

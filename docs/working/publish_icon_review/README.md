@@ -20,11 +20,14 @@ rectangle runs. Cloud uses a naturally wide 20×14 silhouette, centered with
   symmetry and a one-pixel gap separating the lid from the bin.
 - Sync has two opposing arrows and short return tails, with two-pixel shafts
   and 180-degree rotational symmetry.
-- Cloud has stepped rounded lobes and a flat base, with a two-pixel outline
-  and horizontal symmetry. Its wider proportions keep it recognizable at 1×.
-- Exit offers an open doorway treatment alongside Sign out. The door is on
-  the right with a perspective leaf and an outward left arrow derived from
-  Share. It is vertically symmetric.
+- Cloud has asymmetric rounded lobes: one larger hump on the right and a
+  smaller puff on the left, with a two-pixel outline and flat two-pixel base.
+  It is hand-tuned in row runs to keep the lobe junction and native silhouette
+  clear. Its wider proportions retain the same centered 20×14 bounds.
+- Exit tries a power/quit symbol following feedback that the doorway duplicated
+  Sign out. It reuses the original Circle mask, opens the top arc and adds a
+  centered four-pixel stem. It is horizontally symmetric. This remains a visual
+  alternative; no product action or sign-out behavior has changed.
 
 `index.html` compares fourteen actual source SVGs: the six proposals, selected
 Publish globe, and existing Share, Save, Profile, Reset, Copy, Circle and Home.

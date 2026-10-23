@@ -11,8 +11,8 @@ PROPOSALS = {"sign_in", "sign_out", "trash", "sync", "cloud", "exit"}
 NAMES = ["cloud", "exit", "sign_out", "sign_in", "trash", "sync", "publish", "share",
          "save", "profile", "reset", "copy", "circle", "home"]
 NOTES = {
-    "cloud": "New draft · stepped lobes / 2px outline",
-    "exit": "New draft · open doorway / outward arrow",
+    "cloud": "Revised · asymmetric lobes / flat base",
+    "exit": "Revised · power / quit alternative",
     "sign_in": "New draft · fixed C frame / inward arrow",
     "sign_out": "New draft · fixed C frame / outward arrow",
     "trash": "New draft · 2px lid, body and bin details",
@@ -58,15 +58,18 @@ for name in NAMES:
         assert pixels == {(23 - x, y) for x, y in pixels}
         assert pixels == {(x, 23 - y) for x, y in pixels}
         receipt.update(horizontal_symmetry=True, vertical_symmetry=True)
-    if name in {"sign_in", "sign_out", "exit"}:
+    if name in {"sign_in", "sign_out"}:
         assert pixels == {(x, 23 - y) for x, y in pixels}
         receipt.update(vertical_symmetry=True)
     if name == "trash":
         assert pixels == {(23 - x, y) for x, y in pixels}
         receipt.update(horizontal_symmetry=True)
-    if name == "cloud":
+    if name == "exit":
         assert pixels == {(23 - x, y) for x, y in pixels}
         receipt.update(horizontal_symmetry=True)
+    if name == "cloud":
+        assert pixels != {(23 - x, y) for x, y in pixels}
+        receipt.update(horizontal_symmetry=False)
     if name == "sync":
         assert pixels == {(23 - x, 23 - y) for x, y in pixels}
         receipt.update(rotation_180_symmetry=True)
@@ -93,8 +96,10 @@ assert masks["sign_out"] == frame | arrow
 assert masks["sign_in"] == frame | {(29 - x, y) for x, y in arrow}
 receipts["sign_in"]["fixed_frame_shared_with"] = "sign_out"
 receipts["sign_out"]["derived_from"] = "share, rotated 90 degrees clockwise"
-assert {(y, x) for x, y in masks["share"] - tray}.issubset(masks["exit"])
-receipts["exit"]["arrow_derived_from"] = "share, rotated clockwise then mirrored horizontally"
+power_ring = {p for p in masks["circle"] if not (p[1] <= 8 and 7 <= p[0] <= 16)}
+power_stem = {(x, y) for x in range(10, 14) for y in range(2, 12)}
+assert masks["exit"] == power_ring | power_stem
+receipts["exit"]["derived_from"] = "original circle contour, opened at top, with centered four-pixel power stem"
 receipts["cloud"]["content_size"] = [20, 14]
 html = '''<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">

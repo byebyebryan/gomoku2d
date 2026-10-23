@@ -2,31 +2,31 @@
   "scope": "Draft source geometry, not app integration",
   "icons": {
     "cloud": {
-      "sha256": "4e162ff95b0b6a6547b39773b8802a59ae0dfe46b1934f9e3b925a032a812c30",
+      "sha256": "d805dddedc107670934d19ad5b91beaad27c4bd49ca6ac09667c4b1e635b0c1d",
       "margins_ltrb": [
         2,
         5,
         2,
         5
       ],
-      "filled_pixels": 96,
-      "horizontal_symmetry": true,
+      "filled_pixels": 93,
+      "horizontal_symmetry": false,
       "content_size": [
         20,
         14
       ]
     },
     "exit": {
-      "sha256": "3e93f055c9d5e89913717b64cf69ceac648ae7e3a068c99d7bdf623373078da4",
+      "sha256": "ef1a727f5310e91d47ff52f8e3072697ec44ef7c0686686e7aa69a8fed667e8e",
       "margins_ltrb": [
         2,
         2,
         2,
         2
       ],
-      "filled_pixels": 200,
-      "vertical_symmetry": true,
-      "arrow_derived_from": "share, rotated clockwise then mirrored horizontally"
+      "filled_pixels": 174,
+      "horizontal_symmetry": true,
+      "derived_from": "original circle contour, opened at top, with centered four-pixel power stem"
     },
     "sign_out": {
       "sha256": "2ac57e81bcd8f02ab4e991fe1920e36265d7cf4c8e1b9ced9c5a41a17ebaf5fa",
