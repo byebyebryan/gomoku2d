@@ -83,6 +83,82 @@ real OAuth/public-host round trip, and reviewed rules/index deployment gates.
 Physical-device and human assistive-technology acceptance are not established
 by this pass. No push, version change, tag or production deployment occurred.
 
+## Proposed remediation plan
+
+Planning checkpoint after the overall review; implementation has not started.
+Keep Phaser 4.2.1 and automatic renderer selection. Address the shared colour
+assumption in the board code, then prove the Canvas and WebGL paths explicitly.
+The work is local and leaves backend contracts and the accepted profile UI alone.
+
+### 1. Make cloud fixture identities independent
+
+- Add one Node-side fixture-ID helper in `cloudtests/helpers.ts`, using
+  `node:crypto`'s `randomUUID()` with a readable prefix. No dependency is needed.
+- Use it for every continuity/redirect account and replace the sharing suite's
+  separate timestamp/random helper. Generate once per test and deliberately
+  reuse that identity for its second client; distinct tests, engines and
+  repetitions must get distinct accounts/resources.
+- Keep strict account-picker selectors. Selecting the first duplicate entry
+  would conceal the isolation failure.
+- Acceptance: the exact extra repetition matrix that exposed the collision
+  passes 45/45 with `--repeat-each=5 --workers=3`; the complete cloud lane also
+  passes with its configured worker count. Preserve the original failed run.
+- Commit this as a self-contained test-fixture change, making the validation
+  harness reliable before the renderer change.
+
+### 2. Give board sprites actual colours in both renderers
+
+- Add a small board-local texture/animation resolver. Generate colour variants
+  from the original loaded sprite sheets by applying the same multiplicative
+  RGB tint and preserving alpha, sheet dimensions and 16px frame boundaries.
+  Reuse the original for white; always derive variants from the original,
+  avoiding repeated tinting or double multiplication in WebGL.
+- Use the resolved coloured sheets in both renderers. Cache each source-sheet /
+  colour combination once per Phaser game, with no per-frame pixel processing,
+  new asset download or global cache retaining destroyed games. Reuse animation
+  variants keyed by the original animation and colour.
+- Route sprite creation, animation selection and static-frame resets through
+  this resolver. Cover placed Black/White stones, placement transforms, idle and
+  destruction, replay last-move focus, pointer/hover cues, forbidden warnings,
+  tactical/analysis markers and winning highlights. The pure board-state logic
+  stays independent of Phaser's texture APIs.
+- Preserve colour when animations switch sheets or reset to their static frame.
+  Completion handlers must follow the resolved animation key so placement,
+  destruction and repeating cycles still finish correctly. Handle current-player
+  colour changes and reduced-motion snapshots through the same boundary.
+- Keep the existing source PNGs, palette, animation timing, layers and geometry.
+  Stop and investigate if the WebGL appearance changes or a reset/transition
+  flashes the untinted source sheet.
+- Commit the integrated renderer fix together with its focused coverage; do not
+  mark the finding closed on a static-stone-only demonstration.
+
+### 3. Validate and refresh the candidate
+
+- Focused tests protect colour/alpha preservation, colour persistence across
+  animation/reset transitions, and cache reuse. Avoid assertions that only
+  replace `setTint` call checks with texture-helper call checks.
+- Browser checks sample known interior pixels of both stone colours, excluding
+  shadows, text and overlays. Force and verify Canvas; compare with a verified
+  WebGL renderer, qualifying software WebGL if the headless environment needs it.
+  A silent fallback must not count as a WebGL pass. Establish a small explicit
+  channel-rounding tolerance rather than accepting two merely different pixels.
+- Exercise static and animated stones, removal/rebuild, replay focus, turn-changing
+  pointers, coloured warnings/highlights, and reduced motion. Add coverage to the
+  ordinary browser lane so it runs in CI; existing three-engine journeys protect
+  gameplay, resizing, replay and sidebar behavior.
+- Run app/scripts/tools type checks, relevant full web units, the production build
+  and full ordinary browser journeys. The fixture checkpoint supplies the full
+  cloud and parallel-repetition coverage; rerun it if integration changes cloud
+  code or the harness again. Unchanged rules/core retain the preceding review's
+  evidence without claiming new runs.
+- Keep port 8001 untouched. Cloud validation uses
+  `GOMOKU_CLOUD_PORT_OFFSET=1000`; owned test processes and artifacts remain
+  separate from the manual preview and its demo data.
+- Refresh the existing preview and verify its served bytes, then verify Carbon
+  access when Carbon is online. Keep engine tests, manual appearance, real OAuth
+  and deployment acceptance distinct. Record actual results and remaining gates
+  in a final evidence commit; push/version/release remain separate work.
+
 ## Functional checkpoint
 
 Runtime implementation: `bf7d963` on local `main` (main feature slice `7e9f803`),
