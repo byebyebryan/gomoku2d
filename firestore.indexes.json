@@ -27,6 +27,16 @@
       "indexes": []
     },
     {
+      "collectionGroup": "public_profiles",
+      "fieldPath": "shared_stats",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "public_profiles",
+      "fieldPath": "catalog_page_counts",
+      "indexes": []
+    },
+    {
       "collectionGroup": "pages",
       "fieldPath": "entries",
       "indexes": []

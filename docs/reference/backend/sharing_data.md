@@ -132,3 +132,9 @@ a rules error and must reload the current cleanup flow. A never-sharing account
 retains its existing delete behavior. The current UI clears sharing first;
 partial failures remain retryable. Up to two dependent reads can be billed for
 this deletion guard. Older schema-5 writes otherwise remain unchanged.
+
+The checked-in index configuration exempts public `shared_stats` and
+`catalog_page_counts` from automatic indexing: both are read by known document
+UID and are never queried. Applying these exemptions to production remains a
+separate scoped deployment; local source/emulator validation does not prove
+their deployed state.
