@@ -1,0 +1,212 @@
+{
+  "sources": {
+    "operation_counts": "Logical SDK document operations captured at production Firebase Web SDK getDocFromServer and Transaction.get/set calls.",
+    "json_fixture_bytes": "UTF-8 byte lengths for persisted-schema JSON fixtures; excludes Firestore/index/network overhead."
+  },
+  "measurement_scope": "Production sharing API calls instrumented around Firebase Web SDK getDocFromServer and Transaction.get/set while running against the Firestore emulator.",
+  "caveat": "Method counts are not SDK transport request or billable-read estimates. Rules dependent reads, transaction retries, Firestore protocol encoding, indexes, and service overhead are excluded.",
+  "operation_counts": {
+    "public_profile_enable_create": {
+      "getDocFromServer": 0,
+      "transactionGet": 5,
+      "transactionSet": 5,
+      "byPath": {
+        "public_profiles/uid-1": {
+          "transactionGet": 1,
+          "transactionSet": 1
+        },
+        "public_profiles/uid-1/pages/0": {
+          "transactionGet": 1,
+          "transactionSet": 1
+        },
+        "public_profiles/uid-1/pages/1": {
+          "transactionGet": 1,
+          "transactionSet": 1
+        },
+        "public_profiles/uid-1/pages/2": {
+          "transactionGet": 1,
+          "transactionSet": 1
+        },
+        "public_profiles/uid-1/pages/3": {
+          "transactionGet": 1,
+          "transactionSet": 1
+        }
+      }
+    },
+    "public_stats_share": {
+      "getDocFromServer": 0,
+      "transactionGet": 1,
+      "transactionSet": 1,
+      "byPath": {
+        "public_profiles/uid-1": {
+          "transactionGet": 1,
+          "transactionSet": 1
+        }
+      }
+    },
+    "public_stats_opt_out": {
+      "getDocFromServer": 0,
+      "transactionGet": 1,
+      "transactionSet": 1,
+      "byPath": {
+        "public_profiles/uid-1": {
+          "transactionGet": 1,
+          "transactionSet": 1
+        }
+      }
+    },
+    "public_profile_load": {
+      "getDocFromServer": 1,
+      "transactionGet": 0,
+      "transactionSet": 0,
+      "byPath": {}
+    },
+    "public_first_page_load": {
+      "getDocFromServer": 1,
+      "transactionGet": 0,
+      "transactionSet": 0,
+      "byPath": {}
+    },
+    "public_profile_manager_load_all_four_pages": {
+      "getDocFromServer": 5,
+      "transactionGet": 0,
+      "transactionSet": 0,
+      "byPath": {}
+    },
+    "public_profile_rename": {
+      "getDocFromServer": 0,
+      "transactionGet": 1,
+      "transactionSet": 1,
+      "byPath": {
+        "public_profiles/uid-1": {
+          "transactionGet": 1,
+          "transactionSet": 1
+        }
+      }
+    },
+    "public_page_publish": {
+      "getDocFromServer": 0,
+      "transactionGet": 2,
+      "transactionSet": 2,
+      "byPath": {
+        "public_profiles/uid-1": {
+          "transactionGet": 1,
+          "transactionSet": 1
+        },
+        "public_profiles/uid-1/pages/0": {
+          "transactionGet": 1,
+          "transactionSet": 1
+        }
+      }
+    },
+    "public_page_remove": {
+      "getDocFromServer": 0,
+      "transactionGet": 2,
+      "transactionSet": 2,
+      "byPath": {
+        "public_profiles/uid-1": {
+          "transactionGet": 1,
+          "transactionSet": 1
+        },
+        "public_profiles/uid-1/pages/0": {
+          "transactionGet": 1,
+          "transactionSet": 1
+        }
+      }
+    },
+    "public_profile_disable": {
+      "getDocFromServer": 0,
+      "transactionGet": 5,
+      "transactionSet": 5,
+      "byPath": {
+        "public_profiles/uid-1": {
+          "transactionGet": 1,
+          "transactionSet": 1
+        },
+        "public_profiles/uid-1/pages/0": {
+          "transactionGet": 1,
+          "transactionSet": 1
+        },
+        "public_profiles/uid-1/pages/1": {
+          "transactionGet": 1,
+          "transactionSet": 1
+        },
+        "public_profiles/uid-1/pages/2": {
+          "transactionGet": 1,
+          "transactionSet": 1
+        },
+        "public_profiles/uid-1/pages/3": {
+          "transactionGet": 1,
+          "transactionSet": 1
+        }
+      }
+    },
+    "private_library_load_missing": {
+      "getDocFromServer": 1,
+      "transactionGet": 0,
+      "transactionSet": 0,
+      "byPath": {}
+    },
+    "private_library_save_create": {
+      "getDocFromServer": 0,
+      "transactionGet": 1,
+      "transactionSet": 1,
+      "byPath": {
+        "replay_libraries/uid-1": {
+          "transactionGet": 1,
+          "transactionSet": 1
+        }
+      }
+    },
+    "private_library_load_existing": {
+      "getDocFromServer": 1,
+      "transactionGet": 0,
+      "transactionSet": 0,
+      "byPath": {}
+    },
+    "sharing_clear_six_documents": {
+      "getDocFromServer": 0,
+      "transactionGet": 6,
+      "transactionSet": 6,
+      "byPath": {
+        "public_profiles/uid-1": {
+          "transactionGet": 1,
+          "transactionSet": 1
+        },
+        "public_profiles/uid-1/pages/0": {
+          "transactionGet": 1,
+          "transactionSet": 1
+        },
+        "public_profiles/uid-1/pages/1": {
+          "transactionGet": 1,
+          "transactionSet": 1
+        },
+        "public_profiles/uid-1/pages/2": {
+          "transactionGet": 1,
+          "transactionSet": 1
+        },
+        "public_profiles/uid-1/pages/3": {
+          "transactionGet": 1,
+          "transactionSet": 1
+        },
+        "replay_libraries/uid-1": {
+          "transactionGet": 1,
+          "transactionSet": 1
+        }
+      }
+    },
+    "private_library_clear_with_six_document_clear": {
+      "transactionGet": 1,
+      "transactionSet": 1,
+      "included_in": "sharing_clear_six_documents"
+    }
+  },
+  "json_fixture_bytes": {
+    "definition": "UTF-8 byte length of JSON.stringify on representative persisted-schema fixtures; excludes Firestore/index/protocol overhead and billing.",
+    "public_page_empty": 101,
+    "public_page_full_8_entries_8192_payload_each": 66500,
+    "private_library_empty": 107,
+    "private_library_full_64_entries_8192_payload_each": 533610,
+    "private_library_full_entries_json_chars": 532481
+  }
+}

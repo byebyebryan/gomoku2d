@@ -810,7 +810,7 @@ describe("Firestore sharing operation and document shape evidence", () => {
       },
     };
     if (process.env.GOMOKU_WRITE_EVIDENCE === "1") {
-      const evidenceDirectory = new URL("../../docs/working/v0_6_evidence/", import.meta.url);
+      const evidenceDirectory = new URL("../../docs/working/v0_6_1_evidence/", import.meta.url);
       await mkdir(evidenceDirectory, { recursive: true });
       await writeFile(new URL("sharing_shape.json", evidenceDirectory), `${JSON.stringify(evidence, null, 2)}\n`);
     }

@@ -270,8 +270,10 @@ were checked October 21, 2026; emulator results cannot prove a billing allowance
 The public catalog is 32 entries (four pages of eight); private library is 64
 entries. Payloads are at most 8,192 ASCII characters. The measured largest legal
 portable fixture uses 1,804 characters, including 225 moves and maximum Unicode
-names/UIDs. Size evidence and operation instrumentation live in the
-[v0.6 evidence](../../working/v0_6_evidence/README.md). JSON fixture sizes exclude
+names/UIDs. Current operation instrumentation and bounded document sizes live in
+the [0.6.1 sharing receipt](../../working/v0_6_1_evidence/sharing_shape.json);
+the [original v0.6 evidence](../../working/v0_6_evidence/README.md) retains portable
+fixture and earlier candidate measurements. JSON fixture sizes exclude
 Firestore document-name/field/index overhead and serialized network framing.
 Payload fields are exempted from automatic indexes. Six empty markers remain
 after cloud deletion, without names, statistics or replay payloads. The legacy profile-delete
