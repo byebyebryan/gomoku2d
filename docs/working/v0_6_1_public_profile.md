@@ -132,3 +132,20 @@ not clear the manual-review database. Do not push, tag or publish production.
   a manual review handoff, without claiming human/accessibility/device acceptance.
 - Commit source, document actual validation and limitations, preserve demo data,
   and verify the final build and all three services from Carbon.
+
+## Implementation checkpoint
+
+The functional candidate is implemented in local commit `7e9f803`, with final
+accessible metadata semantics in `bf7d963`. The primary
+review corrected the logical-page offset helper, strengthened current-account
+readiness, closed the stats-sharing kill-switch gap, and fixed internal
+horizontal overflow with enlarged text. Luna delivered the backend and UI
+slices plus focused regressions; the primary owns the integrated acceptance.
+
+The [0.6.1 acceptance ledger](v0_6_1_evidence/README.md) records requirements,
+actual commands/results, inspected captures, operation receipts and Carbon
+served-byte parity. Its automated gate is complete; public profile and replay
+functionality is ready for the next human pass. Further visual refinement
+and richer profile content remain later 0.6 work. Versioning, push, release,
+production rules/index deployment, real OAuth and the existing Canvas finding
+remain separate from this local checkpoint.

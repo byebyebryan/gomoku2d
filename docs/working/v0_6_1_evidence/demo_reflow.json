@@ -1,0 +1,95 @@
+{
+  "reflow": [
+    {
+      "width": 320,
+      "font": "100%",
+      "documentWidth": 320,
+      "mainWidth": 320,
+      "mainScrollWidth": 320,
+      "rows": 8
+    },
+    {
+      "width": 390,
+      "font": "100%",
+      "documentWidth": 390,
+      "mainWidth": 390,
+      "mainScrollWidth": 390,
+      "rows": 8
+    },
+    {
+      "width": 640,
+      "font": "200%",
+      "documentWidth": 640,
+      "mainWidth": 640,
+      "mainScrollWidth": 640,
+      "rows": 8
+    },
+    {
+      "width": 721,
+      "font": "100%",
+      "documentWidth": 721,
+      "mainWidth": 721,
+      "mainScrollWidth": 721,
+      "rows": 8
+    },
+    {
+      "width": 740,
+      "font": "100%",
+      "documentWidth": 740,
+      "mainWidth": 740,
+      "mainScrollWidth": 740,
+      "rows": 8
+    },
+    {
+      "width": 768,
+      "font": "100%",
+      "documentWidth": 768,
+      "mainWidth": 768,
+      "mainScrollWidth": 768,
+      "rows": 8
+    },
+    {
+      "width": 820,
+      "font": "100%",
+      "documentWidth": 820,
+      "mainWidth": 820,
+      "mainScrollWidth": 820,
+      "rows": 8
+    },
+    {
+      "width": 1024,
+      "font": "100%",
+      "documentWidth": 1024,
+      "mainWidth": 1024,
+      "mainScrollWidth": 1024,
+      "rows": 8
+    },
+    {
+      "width": 1280,
+      "font": "100%",
+      "documentWidth": 1280,
+      "mainWidth": 1280,
+      "mainScrollWidth": 1280,
+      "rows": 8
+    },
+    {
+      "width": 1280,
+      "font": "200%",
+      "documentWidth": 1280,
+      "mainWidth": 1280,
+      "mainScrollWidth": 1280,
+      "rows": 8
+    },
+    {
+      "width": 1440,
+      "font": "100%",
+      "documentWidth": 1440,
+      "mainWidth": 1440,
+      "mainScrollWidth": 1440,
+      "rows": 8
+    }
+  ],
+  "axe_640_200_violations": 0,
+  "replay": "Demo first Replay opens at Move 4 / 9",
+  "fixture": "Demo-only emulator profile, independently seeded; owner API verified separately by C11/C14."
+}

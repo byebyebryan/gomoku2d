@@ -17,13 +17,17 @@ their own section.
 - Share finished games as self-contained replay links, with a chosen opening ply,
   player-label preview, optional profile references and clipboard fallback.
 - Open shared games without importing private history or starting private cloud
-  sync. Save copies separately, continue legal positions as practice, and retain
-  inherited-move provenance without changing ordinary played-game totals.
+  sync. Keep saved study copies separate; completed continuations join My games
+  and ordinary totals, with their inherited-move provenance retained.
 - Add My games / Saved replays, guest-local copies and explicit account-library
   sync/import with bounded storage and visible conflict recovery.
 - Add opt-in public names, stable player links and explicit publication of own
   games to a bounded catalog. Unpublish/disable/delete reject stale writes;
   copied portable links remain usable. Explain private/public deletion scopes.
+- Give public profiles a full Profile tab, separately opt-in dated statistics
+  snapshots, and compact eight-game visitor pages based on actual publications.
+  Refresh statistics explicitly; private Reset preserves the public snapshot,
+  while Disable and Delete Cloud remove it.
 
 ### Repository
 

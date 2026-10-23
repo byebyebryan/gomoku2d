@@ -1,0 +1,27 @@
+{
+  "source_commit": "bf7d963",
+  "scope": "Local emulator candidate; no production deployment. Carbon loopback is reverse-forwarded to Starship. Existing demo data, approved icons and old hashed assets retained.",
+  "carbon": {
+    "host": "carbon",
+    "profile_status": 200,
+    "index_sha256": "64bcc786e8c70de029cb3b9d0806e9deeb5d0d2cfce196bd8222c77c5567914a",
+    "entry_script": "/assets/index-BAcVH0GQ.js",
+    "entry_sha256": "520a5cde775f5c70e93cb901521bcc3d5604466008bb753df93aa7929b22aaa4",
+    "auth_ready": true,
+    "public_demo_name": "Demo Player"
+  },
+  "starship": {
+    "host": "starship",
+    "index_sha256": "64bcc786e8c70de029cb3b9d0806e9deeb5d0d2cfce196bd8222c77c5567914a",
+    "entry_script": "/assets/index-BAcVH0GQ.js",
+    "entry_sha256": "520a5cde775f5c70e93cb901521bcc3d5604466008bb753df93aa7929b22aaa4",
+    "managed_services": [
+      "active",
+      "active",
+      "active"
+    ],
+    "share_icon_sha256": "5bef75b55f7aed217e66664012737b7963d7b23e4e41badcd28627f4662b4f4f"
+  },
+  "profile_url": "http://127.0.0.1:8013/profile?tab=public",
+  "demo_url": "http://127.0.0.1:8013/player/?id=v061-demo-player"
+}

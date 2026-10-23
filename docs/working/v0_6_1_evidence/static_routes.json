@@ -1,0 +1,69 @@
+{
+  "source_commit": "bf7d963",
+  "scope": "Final local production build and owned loopback preview; not deployed production.",
+  "index_sha256": "038a216eb1e88e931e25eb6eee36389b4d35d9398922b957185019b8e6e75b70",
+  "entry_script": "/assets/index-97odJQeN.js",
+  "entry_sha256": "2f6b4ce9c5a1c0577c2b0aa5f11f3d1004d96c9e98521b0ecf85554e3d3ffd7d",
+  "routes": [
+    {
+      "route": "/",
+      "status": 200,
+      "index_sha256": "038a216eb1e88e931e25eb6eee36389b4d35d9398922b957185019b8e6e75b70"
+    },
+    {
+      "route": "/guide/",
+      "status": 200,
+      "index_sha256": "038a216eb1e88e931e25eb6eee36389b4d35d9398922b957185019b8e6e75b70"
+    },
+    {
+      "route": "/lab/",
+      "status": 200,
+      "index_sha256": "038a216eb1e88e931e25eb6eee36389b4d35d9398922b957185019b8e6e75b70"
+    },
+    {
+      "route": "/match/local/",
+      "status": 200,
+      "index_sha256": "038a216eb1e88e931e25eb6eee36389b4d35d9398922b957185019b8e6e75b70"
+    },
+    {
+      "route": "/privacy/",
+      "status": 200,
+      "index_sha256": "038a216eb1e88e931e25eb6eee36389b4d35d9398922b957185019b8e6e75b70"
+    },
+    {
+      "route": "/profile/",
+      "status": 200,
+      "index_sha256": "038a216eb1e88e931e25eb6eee36389b4d35d9398922b957185019b8e6e75b70"
+    },
+    {
+      "route": "/player/",
+      "status": 200,
+      "index_sha256": "038a216eb1e88e931e25eb6eee36389b4d35d9398922b957185019b8e6e75b70"
+    },
+    {
+      "route": "/replay/shared/",
+      "status": 200,
+      "index_sha256": "038a216eb1e88e931e25eb6eee36389b4d35d9398922b957185019b8e6e75b70"
+    },
+    {
+      "route": "/rules/",
+      "status": 200,
+      "index_sha256": "038a216eb1e88e931e25eb6eee36389b4d35d9398922b957185019b8e6e75b70"
+    },
+    {
+      "route": "/settings/",
+      "status": 200,
+      "index_sha256": "038a216eb1e88e931e25eb6eee36389b4d35d9398922b957185019b8e6e75b70"
+    },
+    {
+      "route": "/terms/",
+      "status": 200,
+      "index_sha256": "038a216eb1e88e931e25eb6eee36389b4d35d9398922b957185019b8e6e75b70"
+    },
+    {
+      "route": "/visuals/",
+      "status": 200,
+      "index_sha256": "038a216eb1e88e931e25eb6eee36389b4d35d9398922b957185019b8e6e75b70"
+    }
+  ]
+}
