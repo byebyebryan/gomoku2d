@@ -75,7 +75,7 @@ was rerun alone in all engines; the temporary target has since been stopped.
 
 ## Public-profile and publishing UI refinement
 
-The subsequent visual pass follows General Settings' grouped label/control
+The subsequent visual pass (`81922a4`) follows General Settings' grouped label/control
 rows, stacking by available card width. Public identity, profile links,
 statistics and publication controls have bounded actions and existing icons.
 Publish replay uses the existing profile icon and swaps the whole replay
@@ -100,6 +100,10 @@ Validation after this UI change:
   zero incomplete checks. Desktop and mobile screenshots were inspected.
 - The backend, rules, indexes and public visitor behavior are unchanged; their
   earlier full-lane results above are the functional baseline, not new runs.
+
+The manual preview was refreshed from `81922a4`; Carbon and Starship served
+identical HTML and entry-script bytes. Auth and the existing public demo fixture
+were reachable, and all three managed services remained active.
 
 Raw final cloud artifacts are retained under ignored
 `gomoku-web/test-results/v061-ui-final`. The current
